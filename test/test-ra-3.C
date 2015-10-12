@@ -1,0 +1,104 @@
+
+// (c) Daniel Llorens - 2013, 2014
+
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
+/// @file test-ra-3.C
+/// @brief Checks for ra:: arrays, assignment.
+
+#include <iostream>
+#include <iterator>
+#include "ra/mpdebug.H"
+#include "ra/complex.H"
+#include "ra/test.H"
+#include "ra/ra-large.H"
+#include "ra/ra-operators.H"
+
+using std::cout; using std::endl; using std::flush;
+using std::tuple;
+
+// TODO Use noweb to label & ref the sections.
+
+int main()
+{
+    TestRecorder tr;
+    section("[sec10] assignment cases with scalar or RANK_ANY arguments"); // cf [sec10] in test-ra-0.C
+    {
+        section("assignment of 0 rank <- scalar expr");
+        {
+            ra::Unique<real, 0> a ({}, ra::scalar(99));
+            tr.test_equal(99, a());
+            a = ra::scalar(77);
+            tr.test_equal(77, a());
+        }
+        section("assignment of var rank <- scalar expr");
+        {
+            ra::Unique<real> a ({3, 2}, ra::scalar(99));
+            tr.test_equal(99, a(0, 0));
+            tr.test_equal(99, a(0, 1));
+            tr.test_equal(99, a(1, 0));
+            tr.test_equal(99, a(1, 1));
+            tr.test_equal(99, a(2, 0));
+            tr.test_equal(99, a(2, 1));
+            a = ra::scalar(77);
+            tr.test_equal(77, a(0, 0));
+            tr.test_equal(77, a(0, 1));
+            tr.test_equal(77, a(1, 0));
+            tr.test_equal(77, a(1, 1));
+            tr.test_equal(77, a(2, 0));
+            tr.test_equal(77, a(2, 1));
+        }
+        section("assignment of var rank <- lower rank expr I");
+        {
+            ra::Unique<real, 1> b ({3}, {1, 2, 3});
+            ra::Unique<real> a ({3, 2}, ra::scalar(99));
+            a  = b.iter();
+            tr.test_equal(1, a(0, 0));
+            tr.test_equal(1, a(0, 1));
+            tr.test_equal(2, a(1, 0));
+            tr.test_equal(2, a(1, 1));
+            tr.test_equal(3, a(2, 0));
+            tr.test_equal(3, a(2, 1));
+        }
+        section("construction of var rank <- lower rank expr II");
+        {
+            ra::Unique<real, 2> b ({3, 2}, {1, 2, 3, 4, 5, 6});
+            ra::Unique<real> a ({3, 2, 4}, ra::scalar(99));
+            a  = b.iter();
+            for (int i=0; i<3; ++i) {
+                for (int j=0; j<2; ++j) {
+                    tr.test_equal(i*2+j+1, b(i, j));
+                    for (int k=0; k<4; ++k) {
+                        tr.test_equal(b(i, j), a(i, j, k));
+                    }
+                }
+            }
+        }
+// this succeeds because of the two var ranks, the top rank comes first (and so it's selected as driver). @TODO Have run time driver selection so this is safe.
+        section("construction of var rank <- lower rank expr III (var rank)");
+        {
+            ra::Unique<real> b ({3}, {1, 2, 3});
+            ra::Unique<real> a ({3, 2}, ra::scalar(99));
+            a = b.iter();
+            tr.test_equal(1, a(0, 0));
+            tr.test_equal(1, a(0, 1));
+            tr.test_equal(2, a(1, 0));
+            tr.test_equal(2, a(1, 1));
+            tr.test_equal(3, a(2, 0));
+            tr.test_equal(3, a(2, 1));
+        }
+// driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. @TODO Do run time driver selection to avoid this error.
+        // section("construction of var rank <- higher rank expr");
+        // {
+        //     ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});
+        //     cout << "b: " << b << endl;
+        //     ra::Unique<real> a ({4}, ra::scalar(99));
+        //     a = b.iter();
+        //     cout << "a: " << a << endl;
+        // }
+    }
+    return tr.summary();
+}

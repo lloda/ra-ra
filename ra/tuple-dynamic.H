@@ -1,0 +1,88 @@
+
+// (c) Daniel Llorens - 2013-2015
+
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
+#ifndef RA_TUPLE_DYNAMIC_H
+#define RA_TUPLE_DYNAMIC_H
+
+/// @file tuple-dynamic.H
+/// @brief Use tuples with dynamic parameters.
+
+// @TODO Think about struct <int k> { int const value = k; static int const static_value = k; }
+// where the tuple can be cast to an array ref.
+
+#include <tuple>
+#include <cassert>
+
+namespace mp {
+
+template <class T, class C>
+struct tuple_copy;
+
+template <class C, class ... t>
+struct tuple_copy<std::tuple<t ...>, C>
+{
+    constexpr static C f()
+    {
+        return C { {t::value} ... };
+    }
+};
+
+// Do things along a tuple.
+template <class T, int k=0>
+struct on_tuple;
+
+template <class t0, class ... ti, int k>
+struct on_tuple<std::tuple<t0, ti ...>, k>
+{
+    using T = std::tuple<t0, ti ...>;
+    using next = on_tuple<std::tuple<ti ...>, k+1>;
+
+    template <class I, class J> static void map_indices(I const & i, J & j)
+    {
+        j[k] = i[t0::value];
+        next::map_indices(i, j);
+    }
+// @TODO merge with mp::Index?
+    static int constexpr index(int const q)
+    {
+        return (q==t0::value) ? k : next::index(q);
+    }
+// @TODO merge with mp::Ref?
+    static int constexpr ref(int const i)
+    {
+        return k==i ? t0::value : next::ref(i);
+    }
+};
+
+template <int k>
+struct on_tuple<std::tuple<>, k>
+{
+    using T = std::tuple<>;
+
+    template <class I, class J> static void map_indices(I const & i, J & j)
+    {
+        static_assert(j.size()==k, "bad indices in map_indices");
+    }
+    template <class I, class T, size_t N> static void map_indices(I const & i, std::array<T, N> & j)
+    {
+        static_assert(N==k, "bad indices in map_indices");
+    }
+    static int constexpr index(int const q)
+    {
+        return -1;
+    }
+    static int constexpr ref(int const i)
+    {
+        static_assert(true, "bad ref");
+        return -1;
+    }
+};
+
+} // namespace mp
+
+#endif // RA_TUPLE_DYNAMIC_H

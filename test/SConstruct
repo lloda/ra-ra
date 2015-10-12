@@ -1,0 +1,97 @@
+# -*- mode: Python -*-
+# -*- coding: utf-8 -*-
+
+# (c) Daniel Llorens - 2015
+
+# This library is free software; you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+
+# SConstruct for ra/test
+# @todo Shared pieces with lsolver/test/SConstruct
+
+import os
+from os.path import join, abspath
+from subprocess import call
+import string
+
+arch = os.popen('./config.guess').read()
+
+# from top level ek.py
+def take_from_environ(env, var, wrapper=(lambda x: x), default=None):
+    if var in os.environ:
+        env[var] = wrapper(os.environ[var])
+    elif default is not None:
+        env[var] = default
+
+vars = Variables()
+vars.AddVariables(PathVariable('variant_dir', 'build directory', '.', PathVariable.PathIsDirCreate))
+
+env = Environment(options=vars,
+                    ENV=dict([(k, os.environ[k] if k in os.environ else '')
+                              for k in ['PATH', 'HOME', 'TERM', 'LD_RUN_PATH', 'EK_CONFIG_DIR',
+                                        'DYLD_LIBRARY_PATH', 'RPATH', 'LIBRARY_PATH', 'TEXINPUTS',
+                                        'GCC_COLORS', 'BOOST_ROOT']]))
+variant_dir = env['variant_dir']
+
+for var, default in [('CC', 'gcc'), ('CXX', 'g++'), ('FORTRAN', 'gfortran')]:
+    take_from_environ(env, var, default=default)
+for var in ['FORTRANFLAGS', 'LINKFLAGS', 'CCFLAGS', 'CXXFLAGS']:
+    take_from_environ(env, var, wrapper=string.split)
+for var in ['RPATH', 'LIBPATH']:
+    take_from_environ(env, var, wrapper=lambda x: [x])
+
+if arch.find('86-apple-darwin') >= 0:
+    archflags=['-march=native', '-Wa,-q']
+else:
+    archflags=['-march=native']
+
+env.Append(CPPPATH=['..', 'test'], CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
+           CXXFLAGS=['-std=c++14', '-Wall', '-Werror', '-Wno-unknown-pragmas', #'-Wconversion',
+                     '-Wno-parentheses', '-fdiagnostics-color=always',
+                     '-Wno-error=strict-overflow'
+                     #    '-funsafe-math-optimizations' # @TODO Test with this.
+                 ])
+
+# from top SConstruct
+def to_test(env, source, args):
+    """
+    Run program with args to produce a check stamp. The name of the first source
+    is used to generate the name of the stamp.
+    """
+
+    class tester:
+        def __init__(self, args):
+            self.args = args
+
+        def __call__(self, target, source, env):
+            print "-> running %s \n___________________" % str(self.args)
+            r = os.spawnl(os.P_WAIT, self.args[0], self.args[0], *self.args[1:])
+            print "^^^^^^^^^^^^^^^^^^^"
+            print 'r ', r
+            if not r:
+                print "PASSED %s" % str(self.args)
+                call(['touch', target[0].abspath])
+            else:
+                print "FAILED %s" % str(self.args)
+            return r
+
+    stamp = File(join(variant_dir, str(source[0])) + string.join(args[1:]) + '.check')
+    return env.Command(stamp, source, tester(args))
+
+def to_test_ra(env, source):
+    test = env.Program(source, [source + '.C'])
+    to_test(env, test, [test[0].abspath])
+
+[to_test_ra(env, test)
+ for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
+              'test-ra-io', 'test-ra-from', 'test-ra-nested', 'test-ra-owned',
+              'test-ra-ownership', 'test-ra-ply', 'test-ra-small',
+              'test-ra-wrank', 'test-ra-return-expr', 'test-ra-reduction',
+              'test-ra-frame-matching', 'test-ra-compatibility',
+              'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
+              'test-ra-operators']]
+
+[to_test_ra(env, test)
+ for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from']]

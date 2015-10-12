@@ -1,0 +1,90 @@
+
+// (c) Daniel Llorens - 2013-2014
+
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
+/// @file test-ra-io.C
+/// @brief IO checks for ra::. Some ported from old test-traversal.C.
+
+#include <iostream>
+#include <iterator>
+#include "ra/complex.H"
+#include "ra/test.H"
+#include "ra/ra-large.H"
+#include "ra/ra-operators.H"
+
+using std::cout; using std::endl; using std::flush;
+
+template <int i> using TI = ra::TensorIndex<i>;
+using int3 = ra::Small<int, 3>;
+using int2 = ra::Small<int, 2>;
+
+template <class AA, class CC>
+void iocheck(TestRecorder & tr, AA && a, CC && check)
+{
+    std::ostringstream o;
+    o << a;
+    cout << "\nwritten: " << o.str() << endl;
+    std::istringstream i(o.str());
+    std::decay_t<CC> c(ra::init_not);
+    i >> c;
+    cout << "\nread: " << c << endl;
+    tr.test_equal(start(check).shape(), start(c).shape()); // @TODO specific check in TestRecorder
+    tr.test_equal(check, c);
+}
+
+template <class AA, class CC>
+bool iocheck_ref(AA & a, CC && check)
+{
+    return iocheck(a, check);
+}
+
+int main()
+{
+    TestRecorder tr;
+    section("common arrays or slices");
+    {
+        ra::Unique<int, 2> a({5, 3}, ra::_0 - ra::_1);
+        ra::Unique<int, 2> ref({5, 3}, a); // @TODO how about an explicit copy() function?
+        iocheck(tr.info("output of Unique (1)"), a, ref);
+        iocheck(tr.info("output of Unique (1)"), a, ref);
+    }
+    section("[ra02a] printing Expr");
+    {
+        iocheck(tr.info("output of expr (1)"),
+                ra::expr([](real i) { return -i; }, ra::vector(ra::Small<real, 3>{0, 1, 2})),
+                ra::Small<real, 3>{0, -1, -2});
+    }
+    {
+        ra::Unique<int, 2> a({2, 3}, { 1, 2, 3, 4, 5, 6 });
+        iocheck(tr.info("output of expr (2)"),
+                ra::expr([](int i) { return -i; }, a.iter()),
+                ra::Unique<int, 2>({2, 3}, { -1, -2, -3, -4, -5, -6 }));
+    }
+    section("[ra02b] printing array iterators");
+    {
+        ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 4, 5, 6 });
+        iocheck(tr.info("output of array through its iterator"), a.iter(), a);
+        iocheck(tr.info("output of transposed array through its iterator"),
+                transpose(a, {1, 0}).iter(),
+                ra::Unique<int, 2>({2, 3}, { 1, 3, 5, 2, 4, 6 }));
+    }
+    section("[ra02c] printing array iterators");
+    {
+        ra::Small<int, 3, 2> a { 1, 2, 3, 4, 5, 6 };
+        iocheck(tr.info("output of array through its iterator"), a.iter(), a);
+        iocheck(tr.info("output of transposed array through its iterator"),
+                transpose(a).iter(),
+                ra::Small<int, 2, 3> { 1, 3, 5, 2, 4, 6 });
+    }
+    section("IO can handle tensorindex, too");
+    {
+        iocheck(tr.info("output of expr (1)"),
+                ra::expr([](real i, auto j) { return -i*real(j); }, ra::Small<real, 3>{0, 1, 2}.iter(), TI<0>()),
+                ra::Small<real, 3>{0, -1, -4});
+    }
+    return tr.summary();
+}
