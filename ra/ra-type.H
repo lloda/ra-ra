@@ -117,8 +117,7 @@ auto start(T && t)
     return t.iter(); // @BUG if t is rvalue, t.iter() won't retain it...
 }
 
-// decay_<> here is a courtesy to make registration as is_scalar easier.
-template <class T, enableif_<is_scalar<std::decay_t<T> >, int> = 0>
+template <class T, enableif_<is_scalar<T>, int> = 0>
 auto start(T && t)
 {
     return ra::scalar(std::forward<T>(t));

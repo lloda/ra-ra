@@ -114,6 +114,26 @@ int main()
         check_selection_shortcuts(tr, Ureal<2>({4, 4}, ra::_0-ra::_1));
         check_selection_shortcuts(tr, Ureal<>({4, 4}, ra::_0-ra::_1));
     }
+    section("ra::Iota<int> or ra::Iota<ra::dim_t> are both beatable");
+    {
+        Ureal<2> a({4, 4}, 0.);
+        {
+            ra::Iota<int> i(2, 1);
+            auto b = a(i);
+            tr.test_equal(2, b.dim[0].size);
+            tr.test_equal(4, b.dim[1].size);
+            tr.test_equal(4, b.dim[0].stride);
+            tr.test_equal(1, b.dim[1].stride);
+        }
+        {
+            ra::Iota<ra::dim_t> i(2, 1);
+            auto b = a(i);
+            tr.test_equal(2, b.dim[0].size);
+            tr.test_equal(4, b.dim[1].size);
+            tr.test_equal(4, b.dim[0].stride);
+            tr.test_equal(1, b.dim[1].stride);
+        }
+    }
     section("unbetable, 1D");
     {
         check_selection_unbeatable_1(tr, Ureal<1> {7, 9, 3, 4});

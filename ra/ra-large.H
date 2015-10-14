@@ -135,7 +135,8 @@ inline dim_t select(Dim * dim, Dim const * dim_src, all_t i)
     *dim = *dim_src;
     return 0;
 }
-inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<dim_t> i)
+template <class II>
+inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
     CHECK_BOUNDS((inside(i.org_, dim_src->size) && inside(i.org_+(i.size_-1)*i.stride_, dim_src->size))
                  || (i.size_==0 && i.org_<=dim_src->size));

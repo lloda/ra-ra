@@ -133,9 +133,9 @@ struct Vector
     void adv(rank_t const k, dim_t const d)
     {
 // k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-ra-compatibility.C.
-// k==0 && d!=1 happens on turning back at end of ply; @TODO which we don't need.
+// k==0 && d!=1 happens on turning back at end of ply; @TODO we need this only on outer products and such.
         CHECK_BOUNDS(d==1 || d<0);
-        p__ += (k==0); // (k==0) * d;
+        p__ += (k==0) * d; // (k==0) * d;
     }
     template <class I>
     decltype(auto) at(I const & i)
@@ -182,7 +182,6 @@ struct IotaLeaf
     template <class I> bool operator==(I const & i0) const { return i_==i0; }
 };
 
-// @TODO Unify with jvec; make jvec be Iota when standing alone, or look out for from(A, Iota...).
 // @TODO Could simplify to iota(z) and then (iota(z)*s + o) where needed...
 template <class T>
 struct Iota
@@ -205,12 +204,12 @@ struct Iota
 
     void adv(rank_t const k, dim_t const d)
     {
-        i_ += (k==0) * stride_; // cf Vector::adv below.
+        i_ += (k==0) * stride_ * d; // cf Vector::adv below.
     }
     template <class I>
     decltype(auto) at(I const & i)
     {
-        return org_ + i*stride_;
+        return org_ + i[0]*stride_;
     }
 
     dim_t stride(int const i) const { return i==0 ? stride_ : 0; }
@@ -227,11 +226,17 @@ inline auto jvec(dim_t size, dim_t org=0, dim_t stride=1) { return Iota<dim_t> {
 struct all_t {};
 constexpr all_t all = all_t();
 
-template <class I_> struct is_beatable
+template <class I> struct is_beatable_def
 {
-    using I = std::decay_t<I_>;
-    constexpr static bool value = mp::Or<std::is_integral<I>, std::is_same<I, all_t>, std::is_same<I, Iota<dim_t>>>::value;
+    constexpr static bool value = mp::Or<std::is_integral<I>, std::is_same<I, all_t> >::value;
 };
+
+template <class II> struct is_beatable_def<Iota<II>>
+{
+    constexpr static bool value = std::numeric_limits<II>::is_integer;
+};
+
+template <class I> using is_beatable = is_beatable_def<std::decay_t<I> >;
 
 // others:
 // * 'static': Like expr, but the operator is compile time (e.g. ::apply()).

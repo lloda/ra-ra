@@ -54,11 +54,10 @@ struct Indexer0
         static_assert(mp::Len<sizes>::value>=P::size(), "too many indices"); // gcc accepts p.size()
         return Indexer0<sizes, strides>::template index_p_<P::size(), 0>(0, p);
     }
-
     template <class P>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
-        static_assert(mp::Len<sizes>::value<=P::size(), "too few indices"); // gcc accepts p.size()
+        static_assert(mp::Len<sizes>::value<=ra_traits<P>::size_s(), "too few indices"); // gcc accepts p.size(), but I also need P = std::array to work.
         return Indexer0<sizes, strides>::template index_p_<mp::Len<sizes>::value, 0>(0, p);
     }
 };

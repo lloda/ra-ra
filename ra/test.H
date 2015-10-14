@@ -83,7 +83,7 @@ struct TestRecorder
         test(c);
     }
     template <class W, class A>
-    bool test_equal(W && wanted, A && got, double req_err=0)
+    bool test_equal(W && wanted, A && got)
     {
         bool c = every(wanted==got);
         info("equal(wanted: ", where(true, wanted, got), ", got: ", got, ")")
