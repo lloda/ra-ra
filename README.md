@@ -1,5 +1,7 @@
 
-ra:: is an expression template / multidimensional array library for C. It has
+# ra-ra #
+
+ra-ra is an expression template / multidimensional array library for C. It has
 bugs and many half-baked features. If you need an array library for
 'production', you should probably look somewhere else.
 
@@ -41,9 +43,15 @@ than anyone else in exploring how array operations should work, and yet when new
 array languages or libraries come out they seem for the most part to try and
 copy Matlab. It's a pity.
 
+There may still be some library out there that already does everything this one
+does, but it's been a lot more fun doing my own and I hope to have learned some
+C++ in the process.
+
 
 Sui generis
 -----------
+
+* Index and size types are all signed.
 
 * Index base is always 0.
 
@@ -114,7 +122,7 @@ Non-features (things I won't try to add)
 
 * Linear algebra, quaternions, etc. Those things belong in other libraries. The
   library includes a dual number implementation but it's more of a demo of how
-  to use user types with the library.
+  to adapt user types to the library.
 
 * Sparse arrays. These are fundamentally different and probably belong somewhere
   else. I'm not entirely sure though. You'd still want to mix & match with dense
