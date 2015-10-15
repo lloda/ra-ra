@@ -7,7 +7,7 @@
 // later version.
 
 // Regression test for a bug with > 2 non-beatable selectors. The bug was due to
-// optimistic assumptions in ra::Iota::adv() and ra::Vector::adv().
+// bad assumptions in ra::Iota::adv() and ra::Vector::adv().
 
 #include "ra/ra-operators.H"
 #include "ra/test.H"

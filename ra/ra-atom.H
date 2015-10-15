@@ -47,7 +47,6 @@ struct TensorIndex
     void adv(rank_t const k, dim_t const d) {}
     template <class I> value_type at(I const & i) const
     {
-        // std::cout << "i[w] i: " << i << std::endl;
         return value_type(i[w]);  // @CONVERSION
     }
 
@@ -135,7 +134,7 @@ struct Vector
 // k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-ra-compatibility.C.
 // k==0 && d!=1 happens on turning back at end of ply; @TODO we need this only on outer products and such.
         CHECK_BOUNDS(d==1 || d<0);
-        p__ += (k==0) * d; // (k==0) * d;
+        p__ += (k==0) * d;
     }
     template <class I>
     decltype(auto) at(I const & i)
@@ -199,7 +198,7 @@ struct Iota
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return DIM_ANY; }
 
-    Iota(dim_t size, dim_t org=0, dim_t stride=1): size_(size), org_(org), stride_(stride), i_(org) {}
+    Iota(dim_t size, dim_t org=0, dim_t stride=1): size_(size), org_(org), stride_(stride), i_(org) { CHECK_BOUNDS(size>=0); }
     bool done() const { return i_==org_+stride_*size_; }
 
     void adv(rank_t const k, dim_t const d)

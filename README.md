@@ -14,13 +14,15 @@ test internal details and are not meant as demonstrations of how to use the
 library.
 
 I have tested in g++-5.2 and clang++-3.8. For clang on OS X you have to remove
-the -Wa,q option in the SConstruct which is meant for gcc. There are some errors
-which are different with each compiler. I hope to sort these out as soon as
-possible. I haven't tested on Windows.
+the -Wa,q option in the SConstruct which is meant for gcc by setting CCFLAGS to
+something else, for example:
 
-* On g++-5.2 there are some tests that fail with -Os or -O0, these are due to an
-  iffy return type deduction on ra-operators.H: where() that works fine on
-  clang.
+  ```CCFLAGS="-march=native" CXXFLAGS=-O3 CXX=clang++-3.8 scons -j4```
+
+I haven't tested on Windows.
+
+There is a compilation error, only on clang++. I hope to fix this as soon as
+possible.
 
 * On clang++-3.8 there's a failed assertion on test-ra-operators.C for a
   compile-time computation that works fine in gcc.

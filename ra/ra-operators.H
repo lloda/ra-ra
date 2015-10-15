@@ -119,6 +119,7 @@ DEFINE_BINARY_OP(operator==, ==)
 DEFINE_BINARY_OP(operator!=, !=)
 #undef DEFINE_BINARY_OP
 
+// @TODO Make these for arbitrary arity (see [ref:examples/useret.C:0]).
 #define DEFINE_BINARY_NAME_OP(OPNAME, OP)                               \
     using ::OP;                                                         \
     template <class A, class B,                                         \
@@ -209,6 +210,34 @@ DEFINE_UNARY_NAME_NAMESPACED_OP(isinf)
 // Ternary op
 // --------------------------------
 
+// needed when ? returns rvalue reference.
+template <class T>
+auto safe_rvalue(T & t) -> decltype(auto)
+{
+    return t;
+}
+
+template <class T>
+auto safe_rvalue(T && t) -> T
+{
+    return t;
+}
+
+// @TODO use instead
+// typename safe_rvalue<decltype(t_), decltype(f_), decltype(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_))>::type
+
+// template <class T, class F, class R, class Enable=void>
+// struct safe_rvalue
+// {
+//     using type = R;
+// };
+
+// template <class T, class F, class R>
+// struct safe_rvalue<T, F, R, enableif_<mp::And<std::is_rvalue_reference<T>, std::is_rvalue_reference<F> > > >
+// {
+//     using type = std::decay_t<R>;
+// };
+
 // http://scottmeyers.blogspot.ch/2013/05/c14-lambdas-and-perfect-forwarding.html
 // @TODO only one of t or f should be evaluated. But that probably requires where() to be a different type from Expr.
 template <class W, class T, class F, enableif_<mp::Or<is_ra_pos_rank<W>, is_ra_pos_rank<T>, is_ra_pos_rank<F> >, int> = 0>
@@ -216,9 +245,7 @@ auto where(W && w, T && t, F && f)
 {
     return expr([](auto && w_, auto && t_, auto && f_) -> decltype(auto)
                 {
-                    // std::cout << "w_ is " << w_ << std::endl;
-                    // std::cout << "returns: " << (w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_)) << std::endl;
-                    return w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_);
+                    return safe_rvalue(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_));
                 },
                 start(std::forward<W>(w)), start(std::forward<T>(t)), start(std::forward<F>(f)));
 }

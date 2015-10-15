@@ -135,11 +135,6 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     template <class J>
     decltype(auto) at(J const & i)
     {
-        // using R = decltype(op(std::get<I::value>(t).at(i) ...));
-        // std::cout << "value: " << op(std::get<I::value>(t).at(i) ...) << std::endl;
-        // std::cout << "has_ti(t): " << has_tensorindex<Expr>::value << std::endl;
-        // std::cout << "is_lvalue(t): " << std::is_lvalue_reference<R>::value << std::endl;
-        // std::cout << "is_rvalue(t): " << std::is_rvalue_reference<R>::value << std::endl;
         return op(std::get<I::value>(t).at(i) ...);
     }
 

@@ -55,6 +55,7 @@ env.Append(CPPPATH=['..', 'examples'], CCFLAGS=archflags if str(env['CCFLAGS']).
                      #    '-funsafe-math-optimizations' # @TODO Test with this.
                  ])
 
+
 # from top SConstruct
 def to_test(env, source, args):
     """
@@ -86,4 +87,4 @@ def to_test_ra(env, source):
     to_test(env, test, [test[0].abspath])
 
 [to_test_ra(env, example)
- for example in ['array']]
+ for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv', 'indirect']]

@@ -249,69 +249,6 @@ int main()
         int checka[] = { 7, 7, 22, 33, 7, 55, 7 };
         tr.test(std::equal(checka, checka+7, a.begin()));
     }
-    section("where as rvalue");
-    {
-        tr.test_equal(ra::Unique<int, 1> { 1, 2, 2, 1 }, where(ra::Unique<bool, 1> { true, false, false, true }, 1, 2));
-        tr.test_equal(ra::Unique<int, 1> { 17, 2, 3, 17 }, where(ra::_0>0 && ra::_0<3, ra::Unique<int, 1> { 1, 2, 3, 4 }, 17));
-// [raop00] TensorIndex returs value; so where()'s lambda must also return value.
-        tr.test_equal(ra::Unique<int, 1> { 1, 2, 4, 7 }, where(ra::Unique<bool, 1> { true, false, false, true }, 2*ra::_0+1, 2*ra::_0));
-// Using frame matching... @TODO directly with ==expr?
-        ra::Unique<int, 2> a({4, 3}, ra::_0-ra::_1);
-        ra::Unique<int, 2> b = where(ra::Unique<bool, 1> { true, false, false, true }, 99, a);
-        tr.test_equal(ra::Unique<int, 2> ({4, 3}, { 99, 99, 99, 1, 0, -1, 2, 1, 0, 99, 99, 99 }), b);
-    }
-    section("where nested");
-    {
-        {
-            ra::Small<int, 3> a {-1, 0, 1};
-            ra::Small<int, 3> b = where(a>=0, where(a>=1, 99, 77), 44);
-            tr.test_equal(ra::Small<int, 3> {44, 77, 99}, b);
-        }
-        {
-            int a = 0;
-            ra::Small<int, 2, 2> b = where(a>=0, where(a>=1, 99, 77), 44);
-            tr.test_equal(ra::Small<int, 2, 2> {77, 77, 77, 77}, b);
-        }
-    }
-    section("where, scalar W, array arguments in T/F");
-    {
-        real a = 1./7;
-        ra::Small<real, 2> b {1, 2};
-        ra::Small<real, 2> c = where(a>0, b, 3.);
-        tr.test_equal(ra::Small<real, 2> {1, 2}, c);
-    }
-    section("where as lvalue, scalar");
-    {
-        real a=0, b=0;
-        bool w = true;
-        where(w, a, b) = 99;
-        tr.test_equal(a, 99);
-        tr.test_equal(b, 0);
-        where(!w, a, b) = 77;
-        tr.test_equal(99, a);
-        tr.test_equal(77, b);
-    }
-    section("where, scalar + rank 0 array");
-    {
-        ra::Small<real> a { 33. };
-        real b = 22.;
-        tr.test_equal(33, real(where(true, a, b)));
-        tr.test_equal(22, real(where(true, b, a)));
-    }
-    section("where as lvalue, xpr [raop01]");
-    {
-        ra::Unique<int, 1> a { 0, 0, 0, 0 };
-        ra::Unique<int, 1> b { 0, 0, 0, 0 };
-        where(ra::_0>0 && ra::_0<3, a, b) = 7;
-        tr.test_equal(ra::Unique<int, 1> {0, 7, 7, 0}, a);
-        tr.test_equal(ra::Unique<int, 1> {7, 0, 0, 7}, b);
-        where(ra::_0<=0 || ra::_0>=3, a, b) += 2;
-        tr.test_equal(ra::Unique<int, 1> {2, 7, 7, 2}, a);
-        tr.test_equal(ra::Unique<int, 1> {7, 2, 2, 7}, b);
-// Both must be lvalues; @TODO check that either of these is an error.
-        // where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
-        // where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
-    }
     section("wedge");
     {
         {
