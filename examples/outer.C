@@ -20,5 +20,10 @@ int main()
     A = x(i) * y(j);
 
     cout << A << endl;
+
+// [ra] an alternative
+
+    cout << from(std::multiplies<float>(), x, y) << endl;
+
     return 0;
 }

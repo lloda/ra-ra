@@ -1,9 +1,10 @@
 
 # ra-ra #
 
-ra-ra is an expression template / multidimensional array library for C. It has
-bugs and many half-baked features. If you need an array library for
-'production', you should probably look somewhere else.
+ra-ra is an expression template / multidimensional array library for
+C++. It's not very mature, so if you need an array library for
+'production', you may want to look somewhere else.
+
 
 Building
 -----------
@@ -38,7 +39,7 @@ great early array library and it hasn't really been replaced as far as I can
 tell.
 
 I don't focus on performance as much as Blitz++ did, but I avoid stuff that I
-think would become a barrier if I tried to make things really fast.
+think would become a barrier if I really tried to make things fast.
 
 My other inspiration are the array languages, APL and J. They have gone further
 than anyone else in exploring how array operations should work, and yet when new
