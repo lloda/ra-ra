@@ -92,8 +92,8 @@ def to_test_ra(env, source):
               'test-ra-wrank', 'test-ra-return-expr', 'test-ra-reduction',
               'test-ra-frame-matching', 'test-ra-compatibility',
               'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
-              'test-ra-operators', 'test-ra-6',
-              'test-ra-where']]
+              'test-ra-6', 'test-ra-where', 'test-tuplelist',
+              'test-wedge-product', 'test-ra-operators']]
 
 [to_test_ra(env, test)
  for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from']]

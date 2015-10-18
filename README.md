@@ -22,12 +22,8 @@ something else, for example:
 
 I haven't tested on Windows.
 
-There is a compilation error, only on clang++. I hope to fix this as soon as
-possible.
-
-* On clang++-3.8 there's a failed assertion on test-ra-operators.C for a
-  compile-time computation that works fine in gcc.
-
+test-wedge-product.C and test-ra-operators.C fail to compile under
+clang++-3.8. I hope to fix these issues as soon as possible.
 
 Motivation
 -----------
