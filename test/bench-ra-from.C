@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-ra-from.H
+/// @file bench-ra-from.C
 /// @brief Benchmark for ra:: selection ops.
 
 #include <iostream>
@@ -23,7 +23,7 @@
 using std::cout; using std::endl; using std::flush;
 auto now() { return std::chrono::high_resolution_clock::now(); }
 using time_unit = std::chrono::nanoseconds;
-std::string unit_name = "ns";
+std::string tunit = "ns";
 
 int main()
 {
@@ -50,7 +50,7 @@ int main()
                     }
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " loop on raw pointer []" << endl;
                 tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
             }
 // 1. vectorized selection
@@ -62,7 +62,7 @@ int main()
                     B = A(I);
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " vector selection" << endl;
                 tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
             }
 // 2. write out the indexing loop
@@ -74,7 +74,7 @@ int main()
                     for_each([&A](auto & b, auto i) { b = A(i); }, B, I);
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " ra::expr on scalar ra:: ()" << endl;
                 tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
             }
 // 3. loop on scalar selection
@@ -88,7 +88,7 @@ int main()
                     }
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " loop on scalar ra:: ()" << endl;
                 tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
             }
         };
@@ -122,7 +122,7 @@ int main()
                     }
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " " << endl;
                 tr.quiet().test_equal(Istep*(ra::_0 + ra::_1), B);
             }
 // 1. vectorized selection
@@ -134,7 +134,7 @@ int main()
                     B = A(I, I);
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " " << endl;
                 tr.quiet().test_equal(Istep*(ra::_0 + ra::_1), B);
             }
         };
@@ -169,7 +169,7 @@ int main()
                     }
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " " << endl;
                 tr.quiet().test_equal(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
             }
 // 1. vectorized selection
@@ -181,7 +181,7 @@ int main()
                     B = A(I, I, I);
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " " << endl;
                 tr.quiet().test_equal(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
             }
         };
@@ -216,7 +216,7 @@ int main()
                     }
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " " << endl;
                 tr.quiet().test_equal(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             }
 // 1. vectorized selection
@@ -228,7 +228,7 @@ int main()
                     B = A(I, I, I, I);
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " " << endl;
                 tr.quiet().test_equal(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             }
 // 2. slice one axis at a time, @TODO one way A(i, i, i, i) could work
@@ -246,7 +246,7 @@ int main()
                     }
                     dt += now()-t0;
                 }
-                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << unit_name << " " << endl;
+                cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " " << endl;
                 tr.quiet().test_equal(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             }
         };

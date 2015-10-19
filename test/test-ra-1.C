@@ -327,7 +327,7 @@ int main()
     {
         section("sub is real to super complex");
         {
-            ra::Unique<complex, 2> A({4, 4}, to_double(ra::_0)*complex(4, 1) + to_double(ra::_1)*complex(1, 4));
+            ra::Unique<complex, 2> A({4, 4}, ra::cast<double>(ra::_0)*complex(4, 1) + ra::cast<double>(ra::_1)*complex(1, 4));
             auto B = ra::compress<real>(A);
             tr.test_equal(real_part(A), B(ra::all, ra::all, 0));
             tr.test_equal(imag_part(A), B(ra::all, ra::all, 1));

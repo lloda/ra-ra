@@ -33,7 +33,7 @@
     #define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
-// See ::wedge() in src/base/wedge.H. Used to be in src/base/int_t.H, but I don't have access to ra::is_scalar<> there. @TODO A solution would be a partial traits class (to be fully defined in ra::) at the level of src/base/int_t.H or src/real.H.
+// See ::wedge() in ra/wedge.H, need ra::is_scalar<> to define.
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F,
           enableif_<mp::And<mp::Or<ra::is_scalar<T>, ra::is_ra_zero_rank<T> >,
@@ -57,24 +57,26 @@ void for_each(F && f, A && ... a)
 }
 
 // I considered three options for lookup.
-// 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for the old expr:: operators (src/base/vector-ops.H). It results in the narrowest scope, but since those types are used in the definition (ra::expr is an ArrayIterator), it requires lots of forwarding and traits:: .
+// 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.H). It results in the narrowest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. FlatIterator). Possible solution: don't ever use + != == for FlatIterator.
 // 3. enable_if'd ADL is what you see here.
 
-template <class A, class B>
+template <class ... A>
 struct ra_pos_and_any
 {
-    static bool const value = mp::And<is_ra_pos_rank<A>, mp::Or<is_ra<B>, is_scalar<B> > >::value;
+    static bool const value = mp::And<mp::Or<is_ra_pos_rank<A> ...>,
+                                      mp::And<mp::Or<is_ra<A>, is_scalar<A> > ...> >::value;
 };
 
-template <class A, class B>
-struct ra_zero_and_scalar
+template <class ... A>
+struct ra_zero_or_scalar
 {
-    static bool const value = mp::And<is_ra_zero_rank<A>, is_scalar<B> >::value;
+    static bool const value = mp::And<mp::Not<mp::And<is_scalar<A> ...> >,
+                                      mp::And<mp::Or<is_ra_zero_rank<A>, is_scalar<A> > ...> >::value;
 };
 
 // --------------------------------
-// Binary ops
+// Array versions of operators and functions
 // --------------------------------
 
 // We need the zero/scalar specializations because the scalar/scalar operators
@@ -83,24 +85,13 @@ struct ra_zero_and_scalar
 // specializations, ra::Raw<complex, 0> * complex will fail.
 // @TODO Probably can simplify a bit...
 #define DEFINE_BINARY_OP(OPNAME, OP)                                    \
-    template <class A, class B,                                         \
-              enableif_<mp::Or<ra_pos_and_any<A, B>, ra_pos_and_any<B, A> >, int> =0> \
+    template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
     auto OPNAME(A && a, B && b)                                         \
     {                                                                   \
-        return expr([](auto && a, auto && b) { return a OP b; }, \
+        return expr([](auto && a, auto && b) { return a OP b; },        \
                     start(std::forward<A>(a)), start(std::forward<B>(b))); \
     }                                                                   \
-    template <class A, class B, enableif_<ra_zero_and_scalar<A, B>, int> =0> \
-    auto OPNAME(A && a, B && b)                                         \
-    {                                                                   \
-        return *(start(a).flat()) OP b;                                 \
-    }                                                                   \
-    template <class A, class B, enableif_<ra_zero_and_scalar<B, A>, int> =0> \
-    auto OPNAME(A && a, B && b)                                         \
-    {                                                                   \
-        return a OP *(start(b).flat());                                 \
-    }                                                                   \
-    template <class A, class B, enableif_<mp::And<is_ra_zero_rank<A>, is_ra_zero_rank<B>>, int> =0> \
+    template <class A, class B, enableif_<ra_zero_or_scalar<A, B>, int> =0> \
     auto OPNAME(A && a, B && b)                                         \
     {                                                                   \
         return *(start(a).flat()) OP *(start(b).flat());                \
@@ -119,39 +110,6 @@ DEFINE_BINARY_OP(operator==, ==)
 DEFINE_BINARY_OP(operator!=, !=)
 #undef DEFINE_BINARY_OP
 
-// @TODO Make these for arbitrary arity (see [ref:examples/useret.C:0]).
-#define DEFINE_BINARY_NAME_OP(OPNAME, OP)                               \
-    using ::OP;                                                         \
-    template <class A, class B,                                         \
-              enableif_<mp::Or<ra_pos_and_any<A, B>, ra_pos_and_any<B, A> >, int> =0> \
-    auto OPNAME(A && a, B && b)                                         \
-    {                                                                   \
-        return expr([](auto && a, auto && b) { return OP(a, b); },      \
-                    start(std::forward<A>(a)), start(std::forward<B>(b))); \
-    }                                                                   \
-    template <class A, class B, enableif_<ra_zero_and_scalar<A, B>, int> =0> \
-    auto OPNAME(A && a, B && b)                                         \
-    {                                                                   \
-        return OP(*(start(a).flat()), b);                               \
-    }                                                                   \
-    template <class A, class B, enableif_<ra_zero_and_scalar<B, A>, int> =0> \
-    auto OPNAME(A && a, B && b)                                         \
-    {                                                                   \
-        return OP(a, *(start(b).flat()));                               \
-    }                                                                   \
-    template <class A, class B, enableif_<mp::And<is_ra_zero_rank<A>, is_ra_zero_rank<B>>, int> =0> \
-                           auto OPNAME(A && a, B && b)                  \
-    {                                                                   \
-        return OP(*(start(a).flat()), *(start(b).flat()));              \
-    }
-DEFINE_BINARY_NAME_OP(rel_error, rel_error)
-DEFINE_BINARY_NAME_OP(pow, pow)
-#undef DEFINE_BINARY_NAME_OP
-
-// --------------------------------
-// Unary ops
-// --------------------------------
-
 #define DEFINE_UNARY_OP(OPNAME, OP)                                     \
     template <class A, enableif_<is_ra_pos_rank<A>, int> = 0>           \
     auto OPNAME(A && a)                                                 \
@@ -163,48 +121,45 @@ DEFINE_UNARY_OP(operator+, +) // @TODO Make into nop.
 DEFINE_UNARY_OP(operator-, -)
 #undef DEFINE_UNARY_OP
 
-#define DEFINE_UNARY_NAME_OP(OPNAME, OP)                                \
-    template <class A, enableif_<is_ra_pos_rank<A>, int> = 0>           \
-    auto OPNAME(A && a)                                                 \
-    {                                                                   \
-        return expr([](auto && a) { return OP(a); }, start(std::forward<A>(a)));  \
-    }
-DEFINE_UNARY_NAME_OP(to_int, int)
-DEFINE_UNARY_NAME_OP(to_uint, uint) // @TODO for vec:: ra:: size type clashes, remove.
-DEFINE_UNARY_NAME_OP(to_bool, bool)
-DEFINE_UNARY_NAME_OP(to_double, double)
-#undef DEFINE_UNARY_NAME_OP
-
 // When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
-#define DEFINE_UNARY_NAME_NAMESPACED_OP(OP)                             \
+// @TODO Cf [ref:examples/useret.C:0] for examples.
+#define DEFINE_NAME_OP(OPNAME, OP)                                      \
     using ::OP;                                                         \
-    template <class A, enableif_<is_ra_pos_rank<A>, int> = 0>           \
-    auto OP(A && a)                                                     \
+    template <class ... A, enableif_<ra_pos_and_any<A ...>, int> =0>    \
+    auto OPNAME(A && ... a)                                             \
     {                                                                   \
-        return expr([](auto && a) { return OP(a); }, start(std::forward<A>(a))); \
+        return expr([](auto && ... a) { return OP(a ...); }, start(std::forward<A>(a)) ...); \
     }                                                                   \
-    template <class A, enableif_<is_ra_zero_rank<A>, int> = 0>          \
-    auto OP(A && a)                                                     \
+    template <class ... A, enableif_<ra_zero_or_scalar<A ...>, int> =0> \
+    auto OPNAME(A && ... a)                                             \
     {                                                                   \
-        return OP(*(start(a).flat()));                                  \
+        return OP(*(start(a).flat()) ...);                              \
     }
-DEFINE_UNARY_NAME_NAMESPACED_OP(xI)
-DEFINE_UNARY_NAME_NAMESPACED_OP(conj)
-DEFINE_UNARY_NAME_NAMESPACED_OP(sqr)
-DEFINE_UNARY_NAME_NAMESPACED_OP(sqrm)
-DEFINE_UNARY_NAME_NAMESPACED_OP(abs)
-DEFINE_UNARY_NAME_NAMESPACED_OP(real_part)
-DEFINE_UNARY_NAME_NAMESPACED_OP(imag_part)
-DEFINE_UNARY_NAME_NAMESPACED_OP(cos)
-DEFINE_UNARY_NAME_NAMESPACED_OP(sin)
-DEFINE_UNARY_NAME_NAMESPACED_OP(exp)
-DEFINE_UNARY_NAME_NAMESPACED_OP(sqrt)
-DEFINE_UNARY_NAME_NAMESPACED_OP(log)
-DEFINE_UNARY_NAME_NAMESPACED_OP(log1p)
-DEFINE_UNARY_NAME_NAMESPACED_OP(isfinite)
-DEFINE_UNARY_NAME_NAMESPACED_OP(isnan)
-DEFINE_UNARY_NAME_NAMESPACED_OP(isinf)
-#undef DEFINE_UNARY_NAME_NAMESPACED_OP
+DEFINE_NAME_OP(rel_error, rel_error)
+DEFINE_NAME_OP(pow, pow)
+DEFINE_NAME_OP(xI, xI)
+DEFINE_NAME_OP(conj, conj)
+DEFINE_NAME_OP(sqr, sqr)
+DEFINE_NAME_OP(sqrm, sqrm)
+DEFINE_NAME_OP(abs, abs)
+DEFINE_NAME_OP(real_part, real_part)
+DEFINE_NAME_OP(imag_part, imag_part)
+DEFINE_NAME_OP(cos, cos)
+DEFINE_NAME_OP(sin, sin)
+DEFINE_NAME_OP(exp, exp)
+DEFINE_NAME_OP(sqrt, sqrt)
+DEFINE_NAME_OP(log, log)
+DEFINE_NAME_OP(log1p, log1p)
+DEFINE_NAME_OP(isfinite, isfinite)
+DEFINE_NAME_OP(isnan, isnan)
+DEFINE_NAME_OP(isinf, isinf)
+#undef DEFINE_NAME_OP
+
+template <class T, class A>
+auto cast(A && a)
+{
+    return expr([](auto && a) { return T(a); }, start(std::forward<A>(a)));
+}
 
 // --------------------------------
 // Ternary op
