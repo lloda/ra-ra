@@ -17,14 +17,14 @@
 
 // @TODO About the commented constexpr, keep an eye on http://gcc.gnu.org/bugzilla/show_bug.cgi?id=60511
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_SMALL EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_SMALL RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_SMALL
-        #define EK_CHECK_BOUNDS_RA_SMALL 1
+    #ifndef RA_CHECK_BOUNDS_RA_SMALL
+        #define RA_CHECK_BOUNDS_RA_SMALL 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_SMALL==0
+#if RA_CHECK_BOUNDS_RA_SMALL==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -628,6 +628,6 @@ auto cat(A1 const & a1, A2 const & a2)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_SMALL
+#undef RA_CHECK_BOUNDS_RA_SMALL
 
 #endif // RA_SMALL_H

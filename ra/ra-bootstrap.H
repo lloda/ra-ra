@@ -15,14 +15,14 @@
 #include "ra/tuple-list.H"
 #include "ra/tuple-dynamic.H"
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_BOOTSTRAP EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_BOOTSTRAP RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_BOOTSTRAP
-        #define EK_CHECK_BOUNDS_RA_BOOTSTRAP 1
+    #ifndef RA_CHECK_BOUNDS_RA_BOOTSTRAP
+        #define RA_CHECK_BOUNDS_RA_BOOTSTRAP 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_BOOTSTRAP==0
+#if RA_CHECK_BOUNDS_RA_BOOTSTRAP==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -122,6 +122,6 @@ template <class V> struct ra_traits_def;
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_BOOTSTRAP
+#undef RA_CHECK_BOUNDS_RA_BOOTSTRAP
 
 #endif // RA_BOOTSTRAP_H

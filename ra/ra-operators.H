@@ -20,14 +20,14 @@
 #include "ra/complex.H"
 #include "ra/wedge.H"
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_OPERATORS EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_OPERATORS RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_OPERATORS
-        #define EK_CHECK_BOUNDS_RA_OPERATORS 1
+    #ifndef RA_CHECK_BOUNDS_RA_OPERATORS
+        #define RA_CHECK_BOUNDS_RA_OPERATORS 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_OPERATORS==0
+#if RA_CHECK_BOUNDS_RA_OPERATORS==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -580,6 +580,6 @@ operator>>(std::istream & i, C & c)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_OPERATORS
+#undef RA_CHECK_BOUNDS_RA_OPERATORS
 
 #endif // RA_OPERATORS_H

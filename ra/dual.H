@@ -6,8 +6,8 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef EK_DUAL_H
-#define EK_DUAL_H
+#ifndef RA_DUAL_H
+#define RA_DUAL_H
 
 /// @file dual.H
 /// @brief Dual numbers.
@@ -256,4 +256,4 @@ std::istream & operator>>(std::istream & i, Dual<A> & a)
     }
 }
 
-#endif // EK_DUAL_H
+#endif // RA_DUAL_H

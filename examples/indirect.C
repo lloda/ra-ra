@@ -128,6 +128,11 @@ void example4()
     // or more reasonably
     for_each([&A, &B](auto && c) { A(std::get<0>(c), std::get<1>(c)) = B(std::get<0>(c), std::get<1>(c)); }, circle);
 
+    // but it would be easier to just do
+    A  = 0.;
+    B  = 1.;
+    A = where(sqr(ra::_0-centre_i)+sqr(ra::_1-centre_j)<sqr(radius), B, A);
+
     cout << "A = " << A << endl;
 
     // A = 7 x 7

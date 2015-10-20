@@ -14,14 +14,14 @@
 
 #include "ra/ra-expr.H"
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_WRANK EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_WRANK RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_WRANK
-        #define EK_CHECK_BOUNDS_RA_WRANK 1
+    #ifndef RA_CHECK_BOUNDS_RA_WRANK
+        #define RA_CHECK_BOUNDS_RA_WRANK 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_WRANK==0
+#if RA_CHECK_BOUNDS_RA_WRANK==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -476,6 +476,6 @@ auto from(A && a, I && ... i)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_WRANK
+#undef RA_CHECK_BOUNDS_RA_WRANK
 
 #endif // RA_WRANK_H

@@ -17,14 +17,14 @@
 #include "ra/ra-wrank.H"
 #include <memory>
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_LARGE EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_LARGE RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_LARGE
-        #define EK_CHECK_BOUNDS_RA_LARGE 1
+    #ifndef RA_CHECK_BOUNDS_RA_LARGE
+        #define RA_CHECK_BOUNDS_RA_LARGE 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_LARGE==0
+#if RA_CHECK_BOUNDS_RA_LARGE==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -696,6 +696,6 @@ inline bool const crm(A const & a, Int const nrow, Jnt const ncol)
 } // namespace ra::
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_LARGE
+#undef RA_CHECK_BOUNDS_RA_LARGE
 
 #endif // RA_LARGE_H

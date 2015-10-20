@@ -14,14 +14,14 @@
 
 #include "ra/ra-ply.H"
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_EXPR EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_EXPR RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_EXPR
-        #define EK_CHECK_BOUNDS_RA_EXPR 1
+    #ifndef RA_CHECK_BOUNDS_RA_EXPR
+        #define RA_CHECK_BOUNDS_RA_EXPR 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_EXPR==0
+#if RA_CHECK_BOUNDS_RA_EXPR==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -223,6 +223,6 @@ FOR_EACH(DEF_VECTOR_EQOPS, =, *=, +=, -=, /=)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_EXPR
+#undef RA_CHECK_BOUNDS_RA_EXPR
 
 #endif // RA_EXPR_H

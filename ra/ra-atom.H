@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011-2012, 2013-2015
+// (c) Daniel Llorens - 2011-2015
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -15,14 +15,14 @@
 #include "ra/ra-traits.H"
 #include "ra/ra-opcheck.H"
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_ATOM EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_ATOM RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_ATOM
-        #define EK_CHECK_BOUNDS_RA_ATOM 1
+    #ifndef RA_CHECK_BOUNDS_RA_ATOM
+        #define RA_CHECK_BOUNDS_RA_ATOM 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_ATOM==0
+#if RA_CHECK_BOUNDS_RA_ATOM==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -181,7 +181,6 @@ struct IotaLeaf
     template <class I> bool operator==(I const & i0) const { return i_==i0; }
 };
 
-// @TODO Could simplify to iota(z) and then (iota(z)*s + o) where needed...
 template <class T>
 struct Iota
 {
@@ -242,48 +241,47 @@ template <class I> using is_beatable = is_beatable_def<std::decay_t<I> >;
 // * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
 // * ...
 
-template <class X, class Enable=void>
-struct has_tensorindex
+template <class X>
+struct has_tensorindex_def
 {
     static bool const value = false;
 };
 
-template <class X>
-struct has_tensorindex<X, enableif_<std::is_same<std::decay_t<X>, TensorIndex<X::w, typename X::value_type>>>>
+template <class T> using has_tensorindex = has_tensorindex_def<std::decay_t<T> >;
+
+template <int w_, class value_type_>
+struct has_tensorindex_def<TensorIndex<w_, value_type_> >
 {
     static bool const value = true;
 };
 
-template <class Op, class T, class K=mp::index_tuple_<T>>
-struct Expr;
+template <class Op, class T, class K=mp::index_tuple_<T>> struct Expr;
 
 template <class Op, class ... Ti, class K>
-struct has_tensorindex<Expr<Op, std::tuple<Ti ...>, K>>
+struct has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>>
 {
-    static bool const value = mp::Or<has_tensorindex<std::decay_t<Ti>> ...>::value;
+    static bool const value = mp::Or<has_tensorindex<Ti> ...>::value;
 };
 
-template <class LiveAxes, int depth, class A>
-struct ApplyFrames;
+template <class LiveAxes, int depth, class A> struct ApplyFrames;
 
 template <class LiveAxes, int depth, class A>
-struct has_tensorindex<ApplyFrames<LiveAxes, depth, A>>
+struct has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>>
 {
-    static bool const value = has_tensorindex<std::decay_t<A>>::value;
+    static bool const value = has_tensorindex<A>::value;
 };
 
-template <class FM, class Op, class T, class K=mp::index_tuple_<T>>
-struct Ryn;
+template <class FM, class Op, class T, class K=mp::index_tuple_<T>> struct Ryn;
 
 template <class FM, class Op, class ... Ti, class K>
-struct has_tensorindex<Ryn<FM, Op, std::tuple<Ti ...>, K>>
+struct has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>>
 {
-    static bool const value = mp::Or<has_tensorindex<std::decay_t<Ti>> ...>::value;
+    static bool const value = mp::Or<has_tensorindex<Ti> ...>::value;
 };
 
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_ATOM
+#undef RA_CHECK_BOUNDS_RA_ATOM
 
 #endif // RA_ATOM_H

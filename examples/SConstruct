@@ -31,9 +31,8 @@ vars.AddVariables(PathVariable('variant_dir', 'build directory', '.', PathVariab
 
 env = Environment(options=vars,
                     ENV=dict([(k, os.environ[k] if k in os.environ else '')
-                              for k in ['PATH', 'HOME', 'TERM', 'LD_RUN_PATH', 'EK_CONFIG_DIR',
-                                        'DYLD_LIBRARY_PATH', 'RPATH', 'LIBRARY_PATH', 'TEXINPUTS',
-                                        'GCC_COLORS', 'BOOST_ROOT']]))
+                              for k in ['PATH', 'HOME', 'TERM', 'LD_RUN_PATH', 'DYLD_LIBRARY_PATH',
+                                        'RPATH', 'LIBRARY_PATH', 'TEXINPUTS', 'GCC_COLORS', 'BOOST_ROOT']]))
 variant_dir = env['variant_dir']
 
 for var, default in [('CC', 'gcc'), ('CXX', 'g++'), ('FORTRAN', 'gfortran')]:
@@ -87,4 +86,5 @@ def to_test_ra(env, source):
     to_test(env, test, [test[0].abspath])
 
 [to_test_ra(env, example)
- for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv', 'indirect']]
+ for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv',
+                 'indirect', 'cast', 'nested', 'agreement']]

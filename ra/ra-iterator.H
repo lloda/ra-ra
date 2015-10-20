@@ -16,14 +16,14 @@
 #include "ra/ra-opcheck.H"
 #include <iostream>
 
-#ifdef EK_CHECK_BOUNDS
-    #define EK_CHECK_BOUNDS_RA_ITERATOR EK_CHECK_BOUNDS
+#ifdef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_ITERATOR RA_CHECK_BOUNDS
 #else
-    #ifndef EK_CHECK_BOUNDS_RA_ITERATOR
-        #define EK_CHECK_BOUNDS_RA_ITERATOR 1
+    #ifndef RA_CHECK_BOUNDS_RA_ITERATOR
+        #define RA_CHECK_BOUNDS_RA_ITERATOR 1
     #endif
 #endif
-#if EK_CHECK_BOUNDS_RA_ITERATOR==0
+#if RA_CHECK_BOUNDS_RA_ITERATOR==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -217,6 +217,6 @@ struct stl_iterator: private Iterator
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef EK_CHECK_BOUNDS_RA_ITERATOR
+#undef RA_CHECK_BOUNDS_RA_ITERATOR
 
 #endif // RA_ITERATOR_H
