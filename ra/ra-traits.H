@@ -52,7 +52,7 @@ struct ra_traits_def<std::vector<T, A>>
 template <class T, class A>
 struct ra_traits_def<std::vector<T, A> const>: public ra_traits_def<std::vector<T, A>> {};
 
-template <class T, size_t N>
+template <class T, std::size_t N>
 struct ra_traits_def<std::array<T, N>>
 {
     using V = std::array<T, N>;
@@ -79,7 +79,7 @@ struct ra_traits_def<std::array<T, N>>
     static rank_t constexpr rank_s() { return 1; };
 };
 
-template <class T, size_t N>
+template <class T, std::size_t N>
 struct ra_traits_def<std::array<T, N> const>: public ra_traits_def<std::array<T, N>> {};
 
 template <class T>

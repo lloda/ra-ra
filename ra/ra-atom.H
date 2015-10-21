@@ -145,7 +145,11 @@ struct Vector
 
     dim_t stride(int const i) const { return i==0 ? 1 : 0; }
     dim_t preferred_stride(int const i) const { return stride(i); }
-    bool compact_stride(dim_t const step, int const z, int const j) const { return (z>0 && j>0) ? true : false; }
+    bool compact_stride(dim_t const step, int const z, int const j) const
+    {
+// reduced from cell_iterator::compact_stride()
+        return (z==0) == (j==0);
+    }
 
     auto flat() { return p__; }
     auto flat() const { return p__; }
@@ -212,13 +216,15 @@ struct Iota
 
     dim_t stride(int const i) const { return i==0 ? stride_ : 0; }
     dim_t preferred_stride(int const i) const { return stride(i); }
-    bool compact_stride(dim_t const step, int const z, int const j) const { return (z>0 && j>0) ? true : false; }
-
-    auto flat() const { return IotaLeaf<T>{ i_ }; }
+    bool compact_stride(dim_t const step, int const z, int const j) const
+    {
+// reduced from cell_iterator::compact_stride()
+        return (z==0) == (j==0);
+    }
+    auto flat() const { return IotaLeaf<T> { i_ }; }
 };
 
 inline auto iota(int size, int org=0, int stride=1) { return Iota<int> { size, org, stride }; }
-
 inline auto jvec(dim_t size, dim_t org=0, dim_t stride=1) { return Iota<dim_t> { size, org, stride }; }
 
 struct all_t {};

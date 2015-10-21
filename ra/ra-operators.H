@@ -61,20 +61,6 @@ void for_each(F && f, A && ... a)
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. FlatIterator). Possible solution: don't ever use + != == for FlatIterator.
 // 3. enable_if'd ADL is what you see here.
 
-template <class ... A>
-struct ra_pos_and_any
-{
-    static bool const value = mp::And<mp::Or<is_ra_pos_rank<A> ...>,
-                                      mp::And<mp::Or<is_ra<A>, is_scalar<A> > ...> >::value;
-};
-
-template <class ... A>
-struct ra_zero_or_scalar
-{
-    static bool const value = mp::And<mp::Not<mp::And<is_scalar<A> ...> >,
-                                      mp::And<mp::Or<is_ra_zero_rank<A>, is_scalar<A> > ...> >::value;
-};
-
 // --------------------------------
 // Array versions of operators and functions
 // --------------------------------
@@ -551,8 +537,9 @@ template <class T, class A> inline
 std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
-    size_t n;
+    dim_t n;
     i >> n;
+    assert(n>=0);
     if (i) {
         c.resize(n);
         std::copy_n(std::istream_iterator<T>(i), c.size(), c.begin());

@@ -18,8 +18,8 @@ int main()
     TestRecorder tr(std::cout);
     section("where, scalar W, array arguments in T/F");
     {
-        std::array<real, 2> bb {1, 2};
-        std::array<real, 2> cc {99, 99};
+        std::array<real, 2> bb {{1, 2}};
+        std::array<real, 2> cc {{99, 99}};
         auto b = ra::vector(bb);
         auto c = ra::vector(cc);
 

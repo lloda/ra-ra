@@ -97,6 +97,24 @@ struct is_foreign_vector<A, enableif_<mp::And<mp::Not<is_slice<A>>, mp::exists<d
 };
 
 // --------------
+// to provide extension of scalar functions to ra:: types
+// --------------
+
+template <class ... A>
+struct ra_pos_and_any
+{
+    static bool const value = mp::And<mp::Or<is_ra_pos_rank<A> ...>,
+                                      mp::And<mp::Or<is_ra<A>, is_scalar<A> > ...> >::value;
+};
+
+template <class ... A>
+struct ra_zero_or_scalar
+{
+    static bool const value = mp::And<mp::Not<mp::And<is_scalar<A> ...> >,
+                                      mp::And<mp::Or<is_ra_zero_rank<A>, is_scalar<A> > ...> >::value;
+};
+
+// --------------
 // Coerce potential ArrayIterators
 // --------------
 

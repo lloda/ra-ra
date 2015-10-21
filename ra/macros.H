@@ -17,10 +17,7 @@
 #include <cstddef>
 #include <sys/types.h> // ssize_t
 #include <type_traits>
-
-using size_t = std::size_t;
-using uint = unsigned int;
-using ulong = unsigned long;
+#include <utility>
 
 #define X_STRINGIZE(s) STRINGIZE_1(s)
 #define STRINGIZE_1(x) #x
@@ -74,7 +71,19 @@ template <class B, class T=void>
 using disableif_ = typename std::enable_if<!B::value, T>::type;
 
 namespace mp {
-    template <class B> struct exists { static bool const value = true; };
-}
+
+template <class B> struct exists { static bool const value = true; };
+
+// should be in std::
+struct identity
+{
+    template<class T>
+    constexpr auto operator()(T && t) const noexcept -> decltype(auto)
+    {
+        return std::forward<T>(t);
+    }
+};
+
+} // namespace mp
 
 #endif // RA_MACROS_H

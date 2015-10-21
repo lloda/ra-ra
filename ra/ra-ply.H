@@ -15,6 +15,7 @@
 // @TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
 
 #include "ra/ra-type.H"
+#include <functional>
 
 namespace ra {
 
@@ -58,7 +59,7 @@ void ply_index(A && a)
     }
 }
 
-// Traverse array expression looking for compact inner loop.
+// Traverse array expression looking to ravel the inner loop.
 // size() and preferred_stride() are only used on the driving argument (largest rank).
 // adv(), stride(), compact_stride() and flat() are used on all the leaf arguments. The strides must give 0 for k>=their own rank, to allow frame matching.
 // @TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
@@ -113,7 +114,7 @@ void ply_ravel(A && a)
 }
 
 // -------------------------
-// Compile time order. See bench-array-dot-ra.C for use. Index version.
+// Compile time order. See bench-ra-dot.C for use. Index version.
 // -------------------------
 
 template <class order, class A, class S>
@@ -251,62 +252,60 @@ ply_either(A && a)
 // ---------------------------
 
 // @BUG Slow. Options for ply should be the same as for non-short circuit.
-#define DEF_SHORT_CIRCUIT_PLY(NAME, OP)                                 \
-template <class A, enableifc_<A::rank_s()!=1 || has_tensorindex<std::decay_t<A>>::value, int> = 0> \
-bool JOIN(ply_, NAME)(A && a)                                           \
-{                                                                       \
-    /* @TODO try and merge the singular cases. */                       \
-    if (a.done()) {                                                     \
-        return OP false;                                                \
-    }                                                                   \
-    rank_t const rank = a.rank();                                       \
-    auto s(a.shape());                                                  \
-    using Shape = decltype(s);                                          \
-    Shape i(ra_traits<Shape>::make(rank, 0));                           \
-                                                                        \
-    rank_t order[rank];                                                 \
-    for (rank_t i=0; i<rank; ++i) {                                     \
-        order[i] = rank-1-i;                                            \
-    }                                                                   \
-    for (;;) {                                                          \
-        if (OP a.at(i)) {                                               \
-            return OP true;                                             \
-        }                                                               \
-        for (int k=0; ; ++k) {                                          \
-            if (k==rank) {                                              \
-                return OP false;                                        \
-            } else if (++i[order[k]]<s[order[k]]) {                     \
-                break;                                                  \
-            } else {                                                    \
-                i[order[k]] = 0;                                        \
-            }                                                           \
-        }                                                               \
-    }                                                                   \
-}                                                                       \
-                                                                        \
-template <class A, enableifc_<A::rank_s()==1 && !has_tensorindex<std::decay_t<A>>::value, int> = 0> \
-bool JOIN(ply_, NAME)(A && a)                                           \
-{                                                                       \
-    auto s = a.size(0)*a.preferred_stride(0);                           \
-    auto ss0 = a.stride(0);                                             \
-    auto p = a.flat();                                                  \
-    for (auto end=p+s; p!=end; p+=ss0) {                                \
-        if (OP (*p)) {                                                  \
-            return OP true;                                             \
-        }                                                               \
-    }                                                                   \
-    return OP false;                                                    \
-}                                                                       \
-                                                                        \
-template <class A> bool NAME(A && a)                                    \
-{                                                                       \
-    return JOIN(ply_, NAME)(start(a));                                  \
+template <class Op, class A, enableifc_<is_array_iterator<A>::value && (A::rank_s()!=1 || has_tensorindex<A>::value), int> = 0>
+bool ply_index_short_circuit(A && a)
+{
+    /* @TODO try and merge the singular cases. */
+    if (a.done()) {
+        return Op()(false);
+    }
+    rank_t const rank = a.rank();
+    auto s(a.shape());
+    using Shape = decltype(s);
+    Shape i(ra_traits<Shape>::make(rank, 0));
+
+    rank_t order[rank];
+    for (rank_t i=0; i<rank; ++i) {
+        order[i] = rank-1-i;
+    }
+    for (;;) {
+        if (Op()(a.at(i))) {
+            return Op()(true);
+        }
+        for (int k=0; ; ++k) {
+            if (k==rank) {
+                return Op()(false);
+            } else if (++i[order[k]]<s[order[k]]) {
+                break;
+            } else {
+                i[order[k]] = 0;
+            }
+        }
+    }
 }
 
-DEF_SHORT_CIRCUIT_PLY(every, !)
-DEF_SHORT_CIRCUIT_PLY(any, /* nop */)
+template <class Op, class A, enableifc_<is_array_iterator<A>::value && (A::rank_s()==1 && !has_tensorindex<A>::value), int> = 0>
+bool ply_index_short_circuit(A && a)
+{
+    auto s = a.size(0)*a.preferred_stride(0);
+    auto ss0 = a.stride(0);
+    auto p = a.flat();
+    for (auto end=p+s; p!=end; p+=ss0) {
+        if (Op()(*p)) {
+            return Op()(true);
+        }
+    }
+    return Op()(false);
+}
 
-#undef DEF_SHORT_CIRCUIT_PLY
+template <class Op, class A, disableif_<is_array_iterator<A>, int> = 0>
+bool ply_index_short_circuit(A && a)
+{
+    return ply_index_short_circuit<Op>(start(std::forward<A>(a)));
+}
+
+template <class A> bool any(A && a) { return ply_index_short_circuit<mp::identity>(std::forward<A>(a)); }
+template <class A> bool every(A && a) { return ply_index_short_circuit<std::logical_not<bool> >(std::forward<A>(a)); }
 
 } // namespace ra
 

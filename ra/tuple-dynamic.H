@@ -68,7 +68,7 @@ struct on_tuple<std::tuple<>, k>
     {
         static_assert(j.size()==k, "bad indices in map_indices");
     }
-    template <class I, class T, size_t N> static void map_indices(I const & i, std::array<T, N> & j)
+    template <class I, class T, std::size_t N> static void map_indices(I const & i, std::array<T, N> & j)
     {
         static_assert(N==k, "bad indices in map_indices");
     }

@@ -1,9 +1,9 @@
 
 # ra-ra #
 
-ra-ra is an expression template / multidimensional array library for
-C++. It's not very mature, so if you need an array library for
-'production', you may want to look somewhere else.
+ra-ra is an expression template / multidimensional array library for C++. It's
+not very mature, so if you need an array library for 'production', you may want
+to look somewhere else.
 
 
 Building
@@ -34,13 +34,16 @@ small objects people need for low-dimensional vector algebra. Blitz++ was a
 great early array library and it hasn't really been replaced as far as I can
 tell.
 
-I don't focus on performance as much as Blitz++ did, but I avoid stuff that I
-think would become a barrier if I really tried to make things fast.
-
 My other inspiration are the array languages, APL and J. They have gone further
 than anyone else in exploring how array operations should work, and yet when new
 array languages or libraries come out they seem for the most part to try and
 copy Matlab. It's a pity.
+
+This is a simple library. For example, array traversal is almost naive, and
+expression templates are traversed as constructed and not simplified. I tend to
+trust the compiler. I don't focus on performance as much as Blitz++ did, but I
+do avoid stuff that I think would become a barrier if I really tried to make
+things fast.
 
 There may still be some library out there that already does everything this one
 does, but it's been a lot more fun doing my own and I hope to have learned some
@@ -107,9 +110,7 @@ Missing (things that should be added or fixed at some point)
 
 * Stencils, like in Blitz++.
 
-* More clever traversal of arrays, like in Blitz++. Currently the traversal is
-  always in row-major order, although the library does linearize the loop
-  consistent with this limitation.
+* More clever traversal of arrays, like in Blitz++.
 
 
 Non-features (things I won't try to add)

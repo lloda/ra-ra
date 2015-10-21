@@ -48,7 +48,7 @@ DEFINE_CASE(7, fma(x, x, 3.*x),
 template <class Case, class X>
 void test1(TestRecorder & tr, std::string info, X && x, real const rspec=2e-15)
 {
-    for (uint i=0; i!=x.size(); ++i) {
+    for (unsigned int i=0; i!=x.size(); ++i) {
         tr.info(info, " ", i, " f vs Dual").test_rel_error(Case::f(x[i]), Case::f(dual(x[i], 1.)).re, rspec);
         tr.info(info, " ", i, " df vs Dual").test_rel_error(Case::df(x[i]), Case::f(dual(x[i], 1.)).du, rspec);
     }

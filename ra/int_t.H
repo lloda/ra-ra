@@ -50,7 +50,7 @@ struct n_over_p
 } // namespace mp
 
 // @TODO All users be int, then this take int.
-inline constexpr bool odd(uint N) { return N & 1; }
+inline constexpr bool odd(unsigned int N) { return N & 1; }
 inline constexpr bool any(bool const x) { return x; }
 inline constexpr bool every(bool const x) { return x; }
 
