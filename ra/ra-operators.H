@@ -473,54 +473,39 @@ mv_mul(ra::Raw<S, 2> const & a, ra::Raw<T, 1> const & b)
 // I/O operators.
 // --------------------
 
-// @TODO Have it work for ArrayIterator. Try reusing ply_either.
-// is_foreign_vector b/c std::vector or std::array may be used as shape_type.
-template <class C> inline
-enableif_<mp::Or<is_slice<C>, is_foreign_vector<C>>, std::ostream &>
-operator<<(std::ostream & o, C && c)
+// a version of ply_index(). @TODO Eventually try to merge with that.
+// is_foreign_vector is included b/c std::vector or std::array may be used as shape_type.
+template <class A> inline
+enableif_<mp::Or<is_ra<A>, is_foreign_vector<A> >, std::ostream &>
+operator<<(std::ostream & o, A && a_)
 {
-    auto s = ra_traits<C>::shape(c);
-    using Shape = decltype(s);
-    Shape i(ra_traits<Shape>::make(s.size(), 0));
-
-    if (ra_traits<C>::size_s()==DIM_ANY) {
-        o << s << "\n";
+// work with ArrayIterator
+    auto a = ra::start(std::forward<A>(a_));
+    rank_t const rank = a.rank();
+    auto sha(a.shape());
+    if (a.size_s()==DIM_ANY) {
+        o << sha << "\n";
     }
-    auto a = c.begin();
-    if (a==c.end()) {
+// @TODO Scalar doesn't have done(), so avoid that. Concepts aren't well specified...
+    if (prod(sha)==0) {
         return o;
     }
-// @BUG carrying index twice. Iterator should suffice.
-    rank_t const rank = ra_traits<C>::rank(c);
-    while (1) {
-        o << *a << " ";
-        ++a;
-        for (rank_t j=rank-1; j>=0; --j) {
-            if (++i[j]<s[j]) {
-                std::fill_n(std::ostream_iterator<char>(o, ""), rank-j-1, '\n');
+    auto ind = ra_traits<decltype(sha)>::make(rank, 0);
+// unlike in ply_index(), order here is row-major on purpose.
+    for (;;) {
+    next: ;
+        o << a.at(ind) << " ";
+        for (int k=0; k<rank; ++k) {
+            if (++ind[rank-1-k]<sha[rank-1-k]) {
+                std::fill_n(std::ostream_iterator<char>(o, ""), k, '\n');
                 goto next;
             } else {
-                i[j] = 0;
+                ind[rank-1-k] = 0;
             }
         }
         return o;
-next: ;
     }
 }
-
-// @TODO Fix formatting, should be as ostream & << Container or Slice
-template <class A> inline
-enableif_<is_array_iterator<A>, std::ostream &>
-operator<<(std::ostream & o, A && a)
-{
-    if (std::decay_t<A>::size_s()==DIM_ANY) {
-        o << a.shape() << "\n";
-    }
-// @BUG Rely on ply_either using row-major.
-    ply_either(expr([&o](auto && a) { o << a << " "; }, a));
-    return o;
-}
-
 
 // Static size.
 template <class C> inline

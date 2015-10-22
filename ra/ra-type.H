@@ -141,6 +141,12 @@ auto start(T && t)
     return ra::scalar(std::forward<T>(t));
 }
 
+template <class T, enableif_<is_foreign_vector<T>, int> = 0>
+auto start(T && t)
+{
+    return ra::vector(std::forward<T>(t));
+}
+
 } // namespace ra
 
 #endif // RA_TYPE_H

@@ -55,8 +55,11 @@ int main()
     section("[ra02a] printing Expr");
     {
         iocheck(tr.info("output of expr (1)"),
-                ra::expr([](real i) { return -i; }, ra::vector(ra::Small<real, 3>{0, 1, 2})),
+                ra::expr([](real i) { return -i; }, start(ra::Small<real, 3>{0, 1, 2})),
                 ra::Small<real, 3>{0, -1, -2});
+        iocheck(tr.info("output of expr (1)"),
+                ra::expr([](real i) { return -i; }, start(ra::Small<real, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
+                (ra::Small<real, 3, 2, 3> (-(ra::_0 - ra::_1 + ra::_2))));
     }
     {
         ra::Unique<int, 2> a({2, 3}, { 1, 2, 3, 4, 5, 6 });
