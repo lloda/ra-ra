@@ -41,17 +41,17 @@ std::ostream & operator<<(std::ostream & o, Rawp<V> const & r)
 inline void format(std::ostringstream & o) {}
 
 template <class A0, class ... A>
-inline void format(std::ostringstream & o, A0 && a0, A && ... a)
+inline void format(std::ostringstream & o, A0 const & a0, A const & ... a)
 {
-    o << std::forward<A0>(a0);
+    o << a0;
     format(o, a ...);
 }
 
 template <class A0, class ... A>
-inline std::string format(A0 && a0, A && ... a)
+inline std::string format(A0 const & a0, A const & ... a)
 {
     std::ostringstream o;
-    o << std::forward<A0>(a0);
+    o << a0;
     format(o, a ...);
     return o.str();
 }
@@ -59,7 +59,7 @@ inline std::string format(A0 && a0, A && ... a)
 template <class A0, class ... A>
 inline decltype(auto) format(std::string && s)
 {
-    return s;
+    return std::forward<decltype(s)>(s);
 }
 
 #endif // RA_FORMAT_H

@@ -29,7 +29,7 @@ char const * esc_yellow = "\033[33m";
 char const * esc_blue = "\033[34m";
 char const * esc_plain = "\033[39m";
 
-template <class ... A> void section(A && ... a)
+template <class ... A> void section(A const & ... a)
 {
     std::cout << "\n\n" << esc_bold << format(a ...) << esc_unbold << std::endl;
 }
@@ -50,7 +50,7 @@ struct TestRecorder
         return format(esc_yellow, std::setprecision(2), e, esc_plain);
     }
 
-    template <class ... A> TestRecorder & info(A && ... a)
+    template <class ... A> TestRecorder & info(A const & ... a)
     {
         info_string += (info_string=="" ? "" : "; ") + format(a ...);
         return *this;
@@ -83,7 +83,7 @@ struct TestRecorder
         test(c);
     }
     template <class W, class A>
-    bool test_equal(W && wanted, A && got)
+    bool test_equal(W const & wanted, A const & got)
     {
         bool c = every(wanted==got);
         info("equal(wanted: ", where(true, wanted, got), ", got: ", got, ")")
@@ -91,7 +91,7 @@ struct TestRecorder
         return c;
     }
     template <class W, class A>
-    double test_rel_error(W && wanted, A && got, double req_err=0)
+    double test_rel_error(W const & wanted, A const & got, double req_err=0)
     {
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),
@@ -101,7 +101,7 @@ struct TestRecorder
         return e;
     }
     template <class W, class A>
-    double test_abs_error(W && wanted, A && got, double req_err=0)
+    double test_abs_error(W const & wanted, A const & got, double req_err=0)
     {
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),
