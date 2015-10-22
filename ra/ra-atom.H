@@ -79,7 +79,7 @@ struct Scalar
     constexpr static shape_type shape() { return shape_type {}; }
 
     S const s;
-    Scalar(S && s_): s(s_) {}
+    Scalar(S && s_): s(std::forward<S>(s_)) {}
 
     constexpr static void adv(rank_t const k, dim_t const d) {}
     template <class I> constexpr S const & at(I const & i) const { return s; }
@@ -127,7 +127,8 @@ struct Vector
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return traits::size_s(); }
 
-    Vector(V && v_): v(v_), p__(v.begin()) {}
+// see test-ra-compatibility.C [a1] for forward() here.
+    Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
 
     void adv(rank_t const k, dim_t const d)
     {

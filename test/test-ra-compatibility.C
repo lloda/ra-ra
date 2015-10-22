@@ -23,14 +23,20 @@ int main()
     {
         section("plain ra::vector()");
         {
-            ply_ravel(expr([](int i) { std::cout << "Ai: " << i << std::endl; return i; },
-                           ra::vector(std::array<int, 3> {{1, 2, 0}})));
-// [1] @BUG Only on jastpc19 with gcc-5.2, haven't figured it out
-            std::cout << expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
-                              ra::vector(std::vector<int> {1, 2, 0})).at(ra::Small<int, 1>{0}) << std::endl;
-
-            ply_ravel(expr([](int i) { std::cout << "Ci: " << i << std::endl; return i; },
-                           ra::vector(std::vector<int> {1, 2, 0})));
+            auto ref = std::array<int, 4> {{12, 77, 44, 1}};
+            tr.test_equal(2, expr([](int i) { return i; },
+                                  ra::vector(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
+            tr.test_equal(ra::vector(ref), expr([](int i) { return i; }, ra::vector(std::array<int, 4> {{12, 77, 44, 1}})));
+// [a1] these require ra::Vector and ra::Expr to forward in the constructor (only on
+// linux gcc-5.2, weirdly). Clue of why is in the ra::Unique case below.
+            tr.test_equal(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Owned<int, 1> {12, 77, 44, 1})));
+            tr.test_equal(ra::vector(ref), expr([](int i) { return i; }, ra::vector(std::vector<int> {12, 77, 44, 1})));
+// these require ra::Vector and ra::Expr constructors to forward (otherwise
+// CTE), but this makes sense, as argname is otherwise always an lref.
+            ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
+                           ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
+// @BUG This still gives a CTE (ra::start for ra::vector does work --that uses Unique<>.iter()).
+            // tr.test_equal(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
         }
         section("frame match ra::vector on 1st axis");
         {

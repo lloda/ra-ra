@@ -125,10 +125,11 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
         return check<iarg+1>(driver_rank);
     }
 
-    Expr(Op op_, P ... p_): op(op_), t(p_ ...)
+// see test-ra-compatibility.C [a1] for forward() here.
+    Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
 // @TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
-// @TODO Should check only the top xpr: do this on ply.
+// @TODO Should check only the driver: do this on ply.
         check<1>(rank());
     }
 
