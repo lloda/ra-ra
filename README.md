@@ -1,9 +1,7 @@
 
 # ra-ra #
 
-ra-ra is an expression template / multidimensional array library for C++. It's
-not very mature, so if you need an array library for 'production', you may want
-to look somewhere else.
+ra-ra is an expression template / multidimensional array library for C++14.
 
 
 Building
@@ -28,26 +26,23 @@ clang++-3.8. I hope to fix these issues as soon as possible.
 Motivation
 -----------
 
-I do numerical work in C++ so I need a multidimensional array library. Most C++
-array libraries seem to support little more than vectors and matrices, or the
-small objects people need for low-dimensional vector algebra. Blitz++ was a
-great early array library and it hasn't really been replaced as far as I can
-tell.
+I do numerical work in C++ so I need a library of this kind. Most C++ array
+libraries seem to support little more than vectors and matrices, or the small
+objects people need for low-dimensional vector algebra. Blitz++ was a great
+early array library and it hasn't really been replaced as far as I can tell.
 
 My other inspiration are the array languages, APL and J. They have gone further
 than anyone else in exploring how array operations should work, and yet when new
 array languages or libraries come out they seem for the most part to try and
 copy Matlab. It's a pity.
 
-This is a simple library. For example, array traversal is almost naive, and
-expression templates are traversed as constructed and not simplified. I tend to
-trust the compiler. I don't focus on performance as much as Blitz++ did, but I
-do avoid stuff that I think would become a barrier if I really tried to make
-things fast.
-
-There may still be some library out there that already does everything this one
-does, but it's been a lot more fun doing my own and I hope to have learned some
-C++ in the process.
+I try to keep this a simple library. Array traversal is by indices or by
+unraveling the last axes. Expression templates are traversed as constructed. I
+tend to avoid second-guessing the compiler and I don't focus on performance as
+much as Blitz++ did, but I avoid stuff that I think would become a barrier if I
+really tried to make things fast. I believe that extensions such as new
+traversal methods or the optimization of specific expression patterns should be
+easy to implement.
 
 
 Sui generis
@@ -76,7 +71,7 @@ Features (not all working properly)
 -----------
 
 * Dynamic or static array rank. Dynamic or static array shape (all dimensions or
-  none, alas).
+  none, alas). Both memory-owning types and views.
 
 * J-style shape agreement rules and rank extension for rank-0 operations of any
   arity and operands of any rank, any of which can a reference (so you can write
