@@ -119,7 +119,8 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
             for (int k=0; k!=ranki; ++k) {
                 dim_t sk = std::get<mp::Ref_<AK, iarg>::value>(t).size(k);
                 dim_t sk0 = std::get<A>(t).size(k);
-                assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
+// sk0==DIM_BAD might happen on subexpressions.
+                assert((sk==sk0 || sk==DIM_BAD || sk0==DIM_BAD) && "mismatched dimensions");
             }
         }
         return check<iarg+1>(driver_rank);

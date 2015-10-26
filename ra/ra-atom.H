@@ -40,8 +40,8 @@ struct TensorIndex
 
     static constexpr int w = w_;
     static_assert(w>=0, "bad TensorIndex");
-    constexpr static rank_t rank_s() { return RANK_BAD; } // w+1
-    constexpr static rank_t rank() { return RANK_BAD; } // w+1
+    constexpr static rank_t rank_s() { return w+1; }
+    constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t size_s() { return DIM_BAD; }
 
     void adv(rank_t const k, dim_t const d) {}
@@ -186,9 +186,10 @@ struct IotaLeaf
     template <class I> bool operator==(I const & i0) const { return i_==i0; }
 };
 
-template <class T>
+template <class T_>
 struct Iota
 {
+    using T = T_;
     T const size_, org_, stride_;
     T i_;
 

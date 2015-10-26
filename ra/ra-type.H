@@ -65,6 +65,18 @@ struct is_array_iterator<A, enableif_<mp::exists<decltype(std::declval<std::deca
     static bool const value = true;
 };
 
+template <class A, class Enable=void>
+struct is_array_iterator_pos_rank
+{
+    static bool const value = false;
+};
+
+template <class A>
+struct is_array_iterator_pos_rank<A, enableifc_<std::decay_t<A>::rank_s()!=0> >
+{
+    static bool const value = is_array_iterator<A>::value;
+};
+
 template <class A>
 struct is_ra
 {
@@ -74,13 +86,19 @@ struct is_ra
 template <class A>
 struct is_ra_pos_rank
 {
-    static bool const value = mp::Or<is_array_iterator<A>, is_slice_pos_rank<A>>::value;
+    static bool const value = mp::Or<is_array_iterator_pos_rank<A>, is_slice_pos_rank<A> >::value;
 };
 
 template <class A>
 struct is_ra_zero_rank
 {
     static bool const value = mp::And<is_ra<A>, mp::Not<is_ra_pos_rank<A>>>::value;
+};
+
+template <class A>
+struct is_zero_or_scalar
+{
+    static bool const value = mp::Or<is_ra_zero_rank<A>, is_scalar<A> >::value;
 };
 
 template <class A, class Enable=void>
@@ -107,11 +125,12 @@ struct ra_pos_and_any
                                       mp::And<mp::Or<is_ra<A>, is_scalar<A> > ...> >::value;
 };
 
+// all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).
 template <class ... A>
-struct ra_zero_or_scalar
+struct ra_zero
 {
     static bool const value = mp::And<mp::Not<mp::And<is_scalar<A> ...> >,
-                                      mp::And<mp::Or<is_ra_zero_rank<A>, is_scalar<A> > ...> >::value;
+                                      mp::And<is_zero_or_scalar<A> ...> >::value;
 };
 
 // --------------

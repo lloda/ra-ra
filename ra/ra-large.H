@@ -363,7 +363,8 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     template <class XX> WithStorage(XX && x): WithStorage(start(x).shape(), default_init) // @TODO ahem...
     {
 // @TODO resize in init() should be doing compile time checks as possible. We don't accept <=RANK b/c we need to define the size.
-        static_assert(decltype(start(x))::rank_s()==RANK || decltype(start(x))::rank_s()==RANK_ANY || RANK==RANK_ANY,
+        static_assert(std::decay_t<decltype(start(x))>::rank_s()==RANK
+                      || std::decay_t<decltype(start(x))>::rank_s()==RANK_ANY || RANK==RANK_ANY,
                       "bad data");
         ply_either(expr([](T & dest, T const & src) { dest = src; }, Raw::iter(), start(x)));
     }

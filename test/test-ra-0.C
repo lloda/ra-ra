@@ -265,6 +265,48 @@ int main()
         cout << "o rank: " << o.rank() << endl;
         assert(std::equal(pool, pool+6, o.begin()));
     }
+    section("driver selection");
+    {
+        static_assert(TI<0>::rank_s()==1, "bad");
+        static_assert(TI<1>::rank_s()==2, "bad");
+        static_assert(ra::pick_driver<UU<0>, UU<1> >::value==1, "bad driver 1a");
+        static_assert(ra::pick_driver<TI<0>, TI<1> >::value==1, "bad driver 1b");
+        static_assert(ra::pick_driver<TI<1>, UU<2> >::value==1, "bad driver 1c");
+        static_assert(UU<0>::size_s()==1, "bad size_s 0");
+        static_assert(SS::size_s()==1, "bad size_s 1");
+        static_assert(ra::pick_driver<UU<0>, SS>::value==0, "bad size_s 2");
+// static size/rank identical; prefer the first.
+        static_assert(ra::largest_rank<UU<0>, SS>::value==0, "bad match 1a");
+        static_assert(ra::largest_rank<SS, UU<0>>::value==0, "bad match 1b");
+// prefer the larger rank.
+        static_assert(ra::largest_rank<SS, UU<1>>::value==1, "bad match 2a");
+        static_assert(ra::largest_rank<UU<1>, SS>::value==0, "bad match 2b");
+// never choose TensorIndex.
+        static_assert(ra::pick_driver<UU<2>, TI<0>>::value==0, "bad match 3a");
+        static_assert(ra::pick_driver<TI<0>, UU<2>>::value==1, "bad match 3b");
+// static size/rank identical; prefer the first.
+        static_assert(ra::pick_driver<UU<2>, UU<2>>::value==0, "bad match 4");
+        static_assert(ra::largest_rank<UU<2>, TI<0>, UU<2>>::value==0, "bad match 5a");
+// dynamic rank counts as +inf.
+        static_assert(ra::gt_rank(ra::RANK_ANY, 2), "bad match 6a");
+        static_assert(ra::gt_rank(UU<ra::RANK_ANY>::rank_s(), UU<2>::rank_s()), "bad match 6b");
+        static_assert(!ra::gt_rank(UU<2>::rank_s(), UU<ra::RANK_ANY>::rank_s()), "bad match 6c");
+        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<2>>::value==0, "bad match 6d");
+        static_assert(ra::pick_driver<UU<2>, UU<ra::RANK_ANY>>::value==1, "bad match 6e");
+        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<ra::RANK_ANY>>::value==0, "bad match 6f");
+        static_assert(ra::pick_driver<TI<0>, UU<ra::RANK_ANY>>::value==1, "bad match 6g");
+        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, TI<0>>::value==0, "bad match 6h");
+        static_assert(ra::largest_rank<TI<0>, UU<ra::RANK_ANY>>::value==1, "bad match 6i");
+        static_assert(ra::largest_rank<UU<ra::RANK_ANY>, TI<0>>::value==0, "bad match 6j");
+        static_assert(ra::largest_rank<UU<2>, UU<ra::RANK_ANY>, TI<0>>::value==1, "bad match 6k");
+        static_assert(ra::largest_rank<UU<1>, UU<2>, UU<3>>::value==2, "bad match 6l");
+        static_assert(ra::largest_rank<UU<2>, TI<0>, UU<ra::RANK_ANY>>::value==2, "bad match 6m");
+// more cases with +2 candidates.
+        static_assert(ra::largest_rank<UU<3>, UU<1>, TI<0>>::value==0, "bad match 7b");
+        static_assert(ra::largest_rank<TI<0>, UU<3>, UU<1>>::value==1, "bad match 7c");
+        static_assert(ra::largest_rank<UU<1>, TI<0>, UU<3>>::value==2, "bad match 7d");
+        static_assert(ra::largest_rank<UU<1>, TI<0>, UU<3>>::value==2, "bad match 7e");
+    }
     section("copy between arrays, construct from iterator pair");
     {
         // copy from Fortran order to C order.
@@ -655,43 +697,6 @@ int main()
             auto s = ra::scalar(a);
             cout << "s: " << s.s << endl;
         }
-    }
-    section("driver selection");
-    {
-        static_assert(UU<0>::size_s()==1, "bad size_s 0");
-        static_assert(SS::size_s()==1, "bad size_s 1");
-        static_assert(ra::pick_driver<UU<0>, SS>::value==0, "bad size_s 2");
-// static size/rank identical; prefer the first.
-        static_assert(ra::largest_rank<UU<0>, SS>::value==0, "bad match 1a");
-        static_assert(ra::largest_rank<SS, UU<0>>::value==0, "bad match 1b");
-// prefer the larger rank.
-        static_assert(ra::largest_rank<SS, UU<1>>::value==1, "bad match 2a");
-        static_assert(ra::largest_rank<UU<1>, SS>::value==0, "bad match 2b");
-// never choose TensorIndex.
-        static_assert(ra::pick_driver<UU<2>, TI<0>>::value==0, "bad match 3a");
-        static_assert(ra::pick_driver<TI<0>, UU<2>>::value==1, "bad match 3b");
-// static size/rank identical; prefer the first.
-        static_assert(ra::pick_driver<UU<2>, UU<2>>::value==0, "bad match 4");
-        static_assert(ra::largest_rank<UU<2>, TI<0>, UU<2>>::value==0, "bad match 5a");
-// dynamic rank counts as +inf.
-        static_assert(ra::gt_rank(ra::RANK_ANY, 2), "bad match 6a");
-        static_assert(ra::gt_rank(UU<ra::RANK_ANY>::rank_s(), UU<2>::rank_s()), "bad match 6b");
-        static_assert(!ra::gt_rank(UU<2>::rank_s(), UU<ra::RANK_ANY>::rank_s()), "bad match 6c");
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<2>>::value==0, "bad match 6d");
-        static_assert(ra::pick_driver<UU<2>, UU<ra::RANK_ANY>>::value==1, "bad match 6e");
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<ra::RANK_ANY>>::value==0, "bad match 6f");
-        static_assert(ra::pick_driver<TI<0>, UU<ra::RANK_ANY>>::value==1, "bad match 6g");
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, TI<0>>::value==0, "bad match 6h");
-        static_assert(ra::largest_rank<TI<0>, UU<ra::RANK_ANY>>::value==1, "bad match 6i");
-        static_assert(ra::largest_rank<UU<ra::RANK_ANY>, TI<0>>::value==0, "bad match 6j");
-        static_assert(ra::largest_rank<UU<2>, UU<ra::RANK_ANY>, TI<0>>::value==1, "bad match 6k");
-        static_assert(ra::largest_rank<UU<1>, UU<2>, UU<3>>::value==2, "bad match 6l");
-        static_assert(ra::largest_rank<UU<2>, TI<0>, UU<ra::RANK_ANY>>::value==2, "bad match 6m");
-// more cases with +2 candidates.
-        static_assert(ra::largest_rank<UU<3>, UU<1>, TI<0>>::value==0, "bad match 7b");
-        static_assert(ra::largest_rank<TI<0>, UU<3>, UU<1>>::value==1, "bad match 7c");
-        static_assert(ra::largest_rank<UU<1>, TI<0>, UU<3>>::value==2, "bad match 7d");
-        static_assert(ra::largest_rank<UU<1>, TI<0>, UU<3>>::value==2, "bad match 7e");
     }
     section("ra::iota");
     {

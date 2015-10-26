@@ -24,11 +24,11 @@ int main()
 
     section("frame matching - TensorIndex/Scalar");
     {
-        // Fails b/c Scalar cannot be iterated by ply_index. Instead, @TODO it
-        // should be a rank error (expr rank is 0 and ra::_0 requires at least
-        // rank 1).
+// driver is highest rank, which is ra::_0 (1).
         auto e = ra::_0+1;
-        static_assert(e.rank_s()==0, "bad driver"); // @TODO CWG1684 should allow .rank() (gcc bug #66297)
+        static_assert(e.rank_s()==1, "bad driver"); // @TODO CWG1684 should allow .rank() (gcc bug #66297)
+// but TensorIndex cannot be a driver.
+        static_assert(decltype(e)::HAS_DRIVER==0, "bad driver check");
     }
     section("frame matching - Unique/TensorIndex");
     {
@@ -116,7 +116,7 @@ int main()
     {
         ra::Unique<real, 2> a({2, 2}, 0.);
         ra::Unique<real, 1> b {1., 2.};
-// @TODO Currently min rank required by TensorIndex isn't checked, so this works anyway.
+// note that b-c has no driver, but all that matters is that the full expression does.
         auto e = expr([](real & a, real bc) { a = bc; },
                       a.iter(), expr([](real b, real c) { return b-c; },  b.iter(), ra::_1));
         static_assert(e.A==0, "bad driver selection");

@@ -40,12 +40,10 @@ int main()
         for (int i=0; i<numIters; ++i) {
 
             auto t0 = now();
-
             B(I, J, K) = c * (.5 * A(I, J, K) + A(I+1, J, K) + A(I-1, J, K)
                               + A(I, J+1, K) + A(I, J-1, K) + A(I, J, K+1) + A(I, J, K-1));
             A(I, J, K) = c * (.5 * B(I, J, K) + B(I+1, J, K) + B(I-1, J, K)
                               + B(I, J+1, K) + B(I, J-1, K) + B(I, J, K+1) + B(I, J, K-1));
-
             dt += (now()-t0);
 // Output the result along a line through the centre
             cout << std::setprecision(4) << std::fixed << rawp(A(N/2, N/2, ra::jvec(8, 0, N/8))) << endl;
@@ -63,12 +61,10 @@ int main()
         for (int i=0; i<numIters; ++i) {
 
             auto t0 = now();
-
             B(I, I, I) = c * (.5 * A(I, I, I) + A(Ip, I, I) + A(Im, I, I)
                               + A(I, Ip, I) + A(I, Im, I) + A(I, I, Ip) + A(I, I, Im));
             A(I, I, I) = c * (.5 * B(I, I, I) + B(Ip, I, I) + B(Im, I, I)
                               + B(I, Ip, I) + B(I, Im, I) + B(I, I, Ip) + B(I, I, Im));
-
             dt += (now()-t0);
 // Output the result along a line through the centre
             cout << std::setprecision(4) << std::fixed << rawp(A(N/2, N/2, ra::jvec(8, 0, N/8))) << endl;

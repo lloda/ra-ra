@@ -41,14 +41,14 @@ std::ostream & operator<<(std::ostream & o, Rawp<V> const & r)
 inline void format(std::ostringstream & o) {}
 
 template <class A0, class ... A>
-inline void format(std::ostringstream & o, A0 const & a0, A const & ... a)
+inline void format(std::ostringstream & o, A0 && a0, A && ... a)
 {
     o << a0;
     format(o, a ...);
 }
 
 template <class A0, class ... A>
-inline std::string format(A0 const & a0, A const & ... a)
+inline std::string format(A0 && a0, A && ... a)
 {
     std::ostringstream o;
     o << a0;

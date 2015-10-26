@@ -17,6 +17,12 @@
 
 namespace ra {
 
+// Pick arg of largest rank as driver. Var rank counts as Inf, because it might
+// be larger. (This might be wrong; proper pick should be done at run time.) For
+// equal rank, prefer static size, because sizes must match. When I can pick
+// either, pick always the first.
+// @TODO Should check dimensions down to smallest rank, as old opcheck() (??)
+
 // |-------------+----------+----------+--------------------|
 // | ranks B \ A | RANK_BAD | RANK_ANY | fixed              |
 // |-------------+----------+----------+--------------------|
@@ -37,9 +43,6 @@ namespace ra {
 // | fixed       | B       | B       | A>=B  |
 // |-------------+---------+---------+-------|
 
-// Pick arg of largest rank as driver. Var rank counts as Inf. For equal rank, prefer static size. When I can pick either, pick always the first.
-// @todo Should check dimensions down to smallest rank, as old opcheck() (??)
-
 template <class A, class B>
 struct pick_driver
 {
@@ -48,12 +51,9 @@ struct pick_driver
     constexpr static int sa = A::size_s();
     constexpr static int sb = B::size_s();
 
-    static_assert((ra==RANK_BAD) == (sa==DIM_BAD), "bad bad for A");
-    static_assert((rb==RANK_BAD) == (sb==DIM_BAD), "bad bad for B");
-
     constexpr static bool value_ =
 // check by rank
-        sb==RANK_BAD
+        rb==RANK_BAD
           ? 1
           : rb==RANK_ANY
             ? ra==RANK_ANY
@@ -65,10 +65,14 @@ struct pick_driver
                     ? 1
                     : ra<rb
                       ? 0
-// check by size
-                      : sb==DIM_ANY
+  // check by size
+                      : sb==DIM_BAD
                         ? 1
-                        : (sa!=DIM_ANY && sa>=sb);
+                        : sa==DIM_BAD
+                          ? 0
+                          : sb==DIM_ANY
+                              ? 1
+                              : (sa!=DIM_ANY && sa>=sb);
 
     constexpr static int value = value_ ? 0 : 1; // 0 if ra wins, else 1
 };

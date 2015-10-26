@@ -92,6 +92,7 @@ def to_test_ra(env, source):
               'test-ra-frame-matching', 'test-ra-compatibility',
               'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
               'test-ra-6', 'test-ra-where', 'test-tuplelist',
+              'test-ra-7',
               'test-wedge-product', 'test-ra-operators']]
 
 [to_test_ra(env, test)

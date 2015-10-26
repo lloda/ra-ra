@@ -422,7 +422,7 @@ decltype(auto) ryn(V && v, Ti && ... t)
 template <class I>
 struct index_rank
 {
-    using type = mp::int_t<I::rank_s()>;
+    using type = mp::int_t<std::decay_t<I>::rank_s()>;
     static_assert(type::value!=RANK_ANY, "dynamic rank not supported");
 };
 

@@ -50,7 +50,7 @@ struct TestRecorder
         return format(esc_yellow, std::setprecision(2), e, esc_plain);
     }
 
-    template <class ... A> TestRecorder & info(A const & ... a)
+    template <class ... A> TestRecorder & info(A && ... a)
     {
         info_string += (info_string=="" ? "" : "; ") + format(a ...);
         return *this;
@@ -83,15 +83,16 @@ struct TestRecorder
         test(c);
     }
     template <class W, class A>
-    bool test_equal(W const & wanted, A const & got)
+    bool test_equal(W && wanted, A && got)
     {
         bool c = every(wanted==got);
+// where() to match shapes if either doesn't have one
         info("equal(wanted: ", where(true, wanted, got), ", got: ", got, ")")
             .test(c);
         return c;
     }
     template <class W, class A>
-    double test_rel_error(W const & wanted, A const & got, double req_err=0)
+    double test_rel_error(W && wanted, A && got, double req_err=0)
     {
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),
@@ -101,7 +102,7 @@ struct TestRecorder
         return e;
     }
     template <class W, class A>
-    double test_abs_error(W const & wanted, A const & got, double req_err=0)
+    double test_abs_error(W && wanted, A && got, double req_err=0)
     {
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),

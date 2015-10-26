@@ -84,6 +84,13 @@ int main()
         static_assert(!ra::is_scalar<decltype(ra::start(3))>::value, "bad is_scalar Scalar");
         int a = 3;
         static_assert(!ra::is_scalar<decltype(ra::start(a))>::value, "bad is_scalar Scalar");
+// a regression.
+        static_assert(ra::is_ra_zero_rank<ra::Scalar<int>>::value, "bad");
+        static_assert(!ra::is_ra_pos_rank<ra::Scalar<int>>::value, "bad");
+        static_assert(!ra::is_ra_zero_rank<ra::TensorIndex<0>>::value, "bad");
+        static_assert(ra::is_ra_pos_rank<ra::TensorIndex<0>>::value, "bad");
+        static_assert(!ra::ra_zero<ra::TensorIndex<0>>::value, "bad");
+        static_assert(ra::is_ra_pos_rank<ra::Expr<ra::plus, std::tuple<ra::TensorIndex<0, int>, ra::Scalar<int> > > >::value, "bad");
     }
     section("check decay of rank 0 Containers/Slices w/ operators");
     {

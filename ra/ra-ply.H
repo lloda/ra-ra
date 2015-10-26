@@ -157,7 +157,6 @@ subindex(A & a, dim_t const s, S const & ss0)
     for (auto end=p+s; p!=end; p+=ss0) {
         *p;
     }
-
 }
 
 template <class order, int ravel_rank, class A, class S>

@@ -36,8 +36,7 @@
 // See ::wedge() in ra/wedge.H, need ra::is_scalar<> to define.
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F,
-          enableif_<mp::And<mp::Or<ra::is_scalar<T>, ra::is_ra_zero_rank<T> >,
-                            mp::Or<ra::is_scalar<F>, ra::is_ra_zero_rank<F> > >, int> =0>
+          enableif_<mp::And<ra::is_zero_or_scalar<T>, ra::is_zero_or_scalar<F> >, int> =0>
 inline decltype(auto) where(bool const w, T && t, F && f) { return w ? *(ra::start(t).flat()) : *(ra::start(f).flat()); }
 
 namespace ra {
@@ -69,23 +68,42 @@ void for_each(F && f, A && ... a)
 // maybe be templated (e.g. complex<>), so they won't be found when an implicit
 // conversion from zero->scalar is also needed. That is, without those
 // specializations, ra::Raw<complex, 0> * complex will fail.
-// @TODO Probably can simplify a bit...
-#define DEFINE_BINARY_OP(OPNAME, OP)                                    \
+
+// These are named to match & transform Expr<OPNAME, ...> later on.
+#define DEFINE_NAMED_BINARY_OP(OPERATOR, OP, OPNAME)                    \
+    struct OPNAME                                                       \
+    {                                                                   \
+        template <class A, class B>                                     \
+        decltype(auto) operator()(A && a, B && b) { return std::forward<A>(a) OP std::forward<B>(b); } \
+    };                                                                  \
     template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
-    auto OPNAME(A && a, B && b)                                         \
+    auto OPERATOR(A && a, B && b)                                       \
+    {                                                                   \
+        return expr(OPNAME(), start(std::forward<A>(a)), start(std::forward<B>(b))); \
+    }                                                                   \
+    template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
+    auto OPERATOR(A && a, B && b)                                       \
+    {                                                                   \
+        return *(start(a).flat()) OP *(start(b).flat());                \
+    }
+DEFINE_NAMED_BINARY_OP(operator+, +, plus)
+DEFINE_NAMED_BINARY_OP(operator-, -, minus)
+DEFINE_NAMED_BINARY_OP(operator*, *, times)
+DEFINE_NAMED_BINARY_OP(operator/, /, slash)
+#undef DEFINE_NAMED_OP
+
+#define DEFINE_BINARY_OP(OPERATOR, OP)                                  \
+    template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
+    auto OPERATOR(A && a, B && b)                                       \
     {                                                                   \
         return expr([](auto && a, auto && b) { return a OP b; },        \
                     start(std::forward<A>(a)), start(std::forward<B>(b))); \
     }                                                                   \
-    template <class A, class B, enableif_<ra_zero_or_scalar<A, B>, int> =0> \
-    auto OPNAME(A && a, B && b)                                         \
+    template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
+    auto OPERATOR(A && a, B && b)                                       \
     {                                                                   \
         return *(start(a).flat()) OP *(start(b).flat());                \
     }
-DEFINE_BINARY_OP(operator+, +)
-DEFINE_BINARY_OP(operator-, -)
-DEFINE_BINARY_OP(operator*, *)
-DEFINE_BINARY_OP(operator/, /)
 DEFINE_BINARY_OP(operator&&, &&)
 DEFINE_BINARY_OP(operator||, ||)
 DEFINE_BINARY_OP(operator>, >)
@@ -116,7 +134,7 @@ DEFINE_UNARY_OP(operator-, -)
     {                                                                   \
         return expr([](auto && ... a) { return OP(a ...); }, start(std::forward<A>(a)) ...); \
     }                                                                   \
-    template <class ... A, enableif_<ra_zero_or_scalar<A ...>, int> =0> \
+    template <class ... A, enableif_<ra_zero<A ...>, int> =0>           \
     auto OPNAME(A && ... a)                                             \
     {                                                                   \
         return OP(*(start(a).flat()) ...);                              \
