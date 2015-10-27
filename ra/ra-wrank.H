@@ -292,7 +292,7 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     enableifc_<(iarg==mp::Len<K>::value), int>
     driver(int const k)
     {
-        assert(0 && "there was no driver");
+        assert(0 && "there was no driver"); abort();
     }
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
@@ -307,7 +307,7 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     enableifc_<(iarg==mp::Len<K>::value), dim_t>
     size(int const k) const
     {
-        assert(0);
+        assert(0 && "internal error"); abort();
     }
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
@@ -322,7 +322,7 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     enableifc_<(iarg==mp::Len<K>::value), dim_t>
     preferred_stride(int const k) const
     {
-        assert(0);
+        assert(0 && "internal error"); abort();
     }
 
     auto shape() const

@@ -117,10 +117,12 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
 // Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Disable this test when it's known statically that it isn't needed. @TODO Do dynamic driver selection if static is uncertain.
             assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
             for (int k=0; k!=ranki; ++k) {
+#ifndef NDEBUG
                 dim_t sk = std::get<mp::Ref_<AK, iarg>::value>(t).size(k);
                 dim_t sk0 = std::get<A>(t).size(k);
 // sk0==DIM_BAD might happen on subexpressions.
                 assert((sk==sk0 || sk==DIM_BAD || sk0==DIM_BAD) && "mismatched dimensions");
+#endif // NDEBUG
             }
         }
         return check<iarg+1>(driver_rank);

@@ -575,6 +575,14 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
     return r;
 }
 
+#ifndef NDEBUG
+#define TRANSPOSE_BODY_CHECK                                            \
+        for (Dim const & dest: r.dim) {                                 \
+            assert(dest.size!=DIM_BAD && "axes left unset");            \
+        }
+#else
+#define TRANSPOSE_BODY_CHECK
+#endif
 #define TRANSPOSE_BODY                                                  \
     {                                                                   \
         auto rp = std::max_element(s.begin(), s.end());                 \
@@ -589,9 +597,7 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
             dest.size = dest.size>=0 ? std::min(dest.size, raw.dim[k].size) : raw.dim[k].size; \
             ++k;                                                        \
         }                                                               \
-        for (Dim const & dest: r.dim) {                                 \
-            assert(dest.size!=DIM_BAD && "axes left unset");            \
-        }                                                               \
+        TRANSPOSE_BODY_CHECK                                            \
         return r;                                                       \
     }
 
@@ -600,6 +606,9 @@ Raw<T, RANK> transpose(Raw<T, RANK> const & raw, S const & s) TRANSPOSE_BODY
 
 template <class T, int RANK, class I>
 Raw<T, RANK> transpose(Raw<T, RANK> const & raw, std::initializer_list<I> s) TRANSPOSE_BODY
+
+#undef TRANSPOSE_BODY
+#undef TRANSPOSE_BODY_CHECK
 
 template <class T, int RANK>
 Raw<T, RANK> transpose(Raw<T, RANK> const & raw)

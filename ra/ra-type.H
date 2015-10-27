@@ -138,30 +138,30 @@ struct ra_zero
 // --------------
 
 template <class T, int a>
-auto start(T && t)
+inline auto start(T && t)
 {
     static_assert(!mp::exists<T>::value, "bad type for ra:: operator");
 }
 
 template <class T, enableif_<is_array_iterator<T>, int> = 0>
-auto start(T && t)
+inline auto start(T && t)
 {
     return std::forward<T>(t);
 }
 template <class T, enableif_<is_slice<T>, int> = 0>
-auto start(T && t)
+inline auto start(T && t)
 {
     return t.iter(); // @BUG if t is rvalue, t.iter() won't retain it...
 }
 
 template <class T, enableif_<is_scalar<T>, int> = 0>
-auto start(T && t)
+inline auto start(T && t)
 {
     return ra::scalar(std::forward<T>(t));
 }
 
 template <class T, enableif_<is_foreign_vector<T>, int> = 0>
-auto start(T && t)
+inline auto start(T && t)
 {
     return ra::vector(std::forward<T>(t));
 }

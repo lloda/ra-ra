@@ -44,13 +44,13 @@ namespace ra {
 // Wrappers over expr & ply_either.
 
 template <class F, class ... A>
-auto map(F && f, A && ... a) -> decltype(expr(std::forward<F>(f), start(std::forward<A>(a)) ...))
+inline auto map(F && f, A && ... a) -> decltype(expr(std::forward<F>(f), start(std::forward<A>(a)) ...))
 {
     return expr(std::forward<F>(f), start(std::forward<A>(a)) ...);
 }
 
 template <class F, class ... A>
-void for_each(F && f, A && ... a)
+inline void for_each(F && f, A && ... a)
 {
     ply_either(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));
 }
@@ -77,12 +77,12 @@ void for_each(F && f, A && ... a)
         decltype(auto) operator()(A && a, B && b) { return std::forward<A>(a) OP std::forward<B>(b); } \
     };                                                                  \
     template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
-    auto OPERATOR(A && a, B && b)                                       \
+    inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return expr(OPNAME(), start(std::forward<A>(a)), start(std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
-    auto OPERATOR(A && a, B && b)                                       \
+    inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return *(start(a).flat()) OP *(start(b).flat());                \
     }
@@ -94,13 +94,13 @@ DEFINE_NAMED_BINARY_OP(operator/, /, slash)
 
 #define DEFINE_BINARY_OP(OPERATOR, OP)                                  \
     template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
-    auto OPERATOR(A && a, B && b)                                       \
+    inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return expr([](auto && a, auto && b) { return a OP b; },        \
                     start(std::forward<A>(a)), start(std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
-    auto OPERATOR(A && a, B && b)                                       \
+    inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return *(start(a).flat()) OP *(start(b).flat());                \
     }
@@ -116,7 +116,7 @@ DEFINE_BINARY_OP(operator!=, !=)
 
 #define DEFINE_UNARY_OP(OPNAME, OP)                                     \
     template <class A, enableif_<is_ra_pos_rank<A>, int> = 0>           \
-    auto OPNAME(A && a)                                                 \
+    inline auto OPNAME(A && a)                                          \
     {                                                                   \
         return expr([](auto && a) { return OP a; }, start(std::forward<A>(a))); \
     }
@@ -130,12 +130,12 @@ DEFINE_UNARY_OP(operator-, -)
 #define DEFINE_NAME_OP(OPNAME, OP)                                      \
     using ::OP;                                                         \
     template <class ... A, enableif_<ra_pos_and_any<A ...>, int> =0>    \
-    auto OPNAME(A && ... a)                                             \
+    inline auto OPNAME(A && ... a)                                      \
     {                                                                   \
         return expr([](auto && ... a) { return OP(a ...); }, start(std::forward<A>(a)) ...); \
     }                                                                   \
     template <class ... A, enableif_<ra_zero<A ...>, int> =0>           \
-    auto OPNAME(A && ... a)                                             \
+    inline auto OPNAME(A && ... a)                                             \
     {                                                                   \
         return OP(*(start(a).flat()) ...);                              \
     }
@@ -160,7 +160,7 @@ DEFINE_NAME_OP(isinf, isinf)
 #undef DEFINE_NAME_OP
 
 template <class T, class A>
-auto cast(A && a)
+inline auto cast(A && a)
 {
     return expr([](auto && a) { return T(a); }, start(std::forward<A>(a)));
 }
@@ -171,13 +171,13 @@ auto cast(A && a)
 
 // needed when ? returns rvalue reference.
 template <class T>
-auto safe_rvalue(T & t) -> decltype(auto)
+inline auto safe_rvalue(T & t) -> decltype(auto)
 {
     return t;
 }
 
 template <class T>
-auto safe_rvalue(T && t) -> T
+inline auto safe_rvalue(T && t) -> T
 {
     return t;
 }
@@ -200,7 +200,7 @@ auto safe_rvalue(T && t) -> T
 // http://scottmeyers.blogspot.ch/2013/05/c14-lambdas-and-perfect-forwarding.html
 // @TODO only one of t or f should be evaluated. But that probably requires where() to be a different type from Expr.
 template <class W, class T, class F, enableif_<mp::Or<is_ra_pos_rank<W>, is_ra_pos_rank<T>, is_ra_pos_rank<F> >, int> = 0>
-auto where(W && w, T && t, F && f)
+inline auto where(W && w, T && t, F && f)
 {
     return expr([](auto && w_, auto && t_, auto && f_) -> decltype(auto)
                 {
@@ -216,7 +216,7 @@ auto where(W && w, T && t, F && f)
 // @TODO First rank reductions? Variable rank reductions?
 // @TODO Give return type once. gcc gives trouble.
 template <class A>
-auto reduce_sqrm(A && a) -> std::decay_t<decltype(sqrm(*(start(a).flat())))>
+inline auto reduce_sqrm(A && a) -> std::decay_t<decltype(sqrm(*(start(a).flat())))>
 {
     std::decay_t<decltype(sqrm(*(start(a).flat())))> c(0.);
     ply_either(expr([&c](auto a) { c += sqrm(a); }, start(a)));
@@ -224,7 +224,7 @@ auto reduce_sqrm(A && a) -> std::decay_t<decltype(sqrm(*(start(a).flat())))>
 }
 
 template <class A>
-auto norm2(A && a)
+inline auto norm2(A && a)
 {
     return sqrt(reduce_sqrm(a));
 }
@@ -234,7 +234,7 @@ using std::max;
 
 #define START(a) *(start(a).flat())
 template <class A>
-auto amin(A && a) -> std::decay_t<decltype(START(a))>
+inline auto amin(A && a) -> std::decay_t<decltype(START(a))>
 {
     using T = std::decay_t<decltype(START(a))>;
     T c(std::numeric_limits<T>::max());
@@ -243,7 +243,7 @@ auto amin(A && a) -> std::decay_t<decltype(START(a))>
 }
 
 template <class A>
-auto amax(A && a) -> std::decay_t<decltype(START(a))>
+inline auto amax(A && a) -> std::decay_t<decltype(START(a))>
 {
     using T = std::decay_t<decltype(START(a))>;
     T c(std::numeric_limits<T>::lowest());
@@ -252,7 +252,7 @@ auto amax(A && a) -> std::decay_t<decltype(START(a))>
 }
 
 template <class A>
-auto sum(A && a) -> std::decay_t<decltype(START(a))>
+inline auto sum(A && a) -> std::decay_t<decltype(START(a))>
 {
     std::decay_t<decltype(START(a))> c(0.);
     ply_either(expr([&c](auto && a) { c += a; }, start(a)));
@@ -260,7 +260,7 @@ auto sum(A && a) -> std::decay_t<decltype(START(a))>
 }
 
 template <class A>
-auto prod(A && a) -> std::decay_t<decltype(START(a))>
+inline auto prod(A && a) -> std::decay_t<decltype(START(a))>
 {
     std::decay_t<decltype(START(a))> c(1.);
     ply_either(expr([&c](auto && a) { c *= a; }, start(a)));
@@ -268,7 +268,7 @@ auto prod(A && a) -> std::decay_t<decltype(START(a))>
 }
 
 template <class A, class B>
-auto dot(A && a, B && b) -> std::decay_t<decltype(START(a) * START(b))>
+inline auto dot(A && a, B && b) -> std::decay_t<decltype(START(a) * START(b))>
 {
     std::decay_t<decltype(START(a) * START(b))> c(0.);
     ply_either(expr([&c](auto && a, auto && b) { c = fma(a, b, c); }, start(a), start(b)));
@@ -276,7 +276,7 @@ auto dot(A && a, B && b) -> std::decay_t<decltype(START(a) * START(b))>
 }
 
 template <class A, class B>
-auto cdot(A && a, B && b) -> std::decay_t<decltype(conj(START(a)) * START(b))>
+inline auto cdot(A && a, B && b) -> std::decay_t<decltype(conj(START(a)) * START(b))>
 {
     std::decay_t<decltype(conj(START(a)) * START(b))> c(0.);
     ply_either(expr([&c](auto && a, auto && b) { c = fma_conj(a, b, c); }, start(a), start(b)));
@@ -345,7 +345,7 @@ DECL_WEDGE(general_case)
 #undef DECL_WEDGE
 
 template <class A, class B, enableifc_<std::decay_t<A>::size_s()==2 && std::decay_t<B>::size_s()==2, int> =0>
-auto cross(A const & a_, B const & b_)
+inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(*(start(a_).flat()))>, 2> a = a_;
     Small<std::decay_t<decltype(*(start(b_).flat()))>, 2> b = b_;
@@ -355,7 +355,7 @@ auto cross(A const & a_, B const & b_)
 }
 
 template <class A, class B, enableifc_<std::decay_t<A>::size_s()==3 && std::decay_t<B>::size_s()==3, int> =0>
-auto cross(A const & a_, B const & b_)
+inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(*(start(a_).flat()))>, 3> a = a_;
     Small<std::decay_t<decltype(*(start(b_).flat()))>, 3> b = b_;
@@ -365,19 +365,19 @@ auto cross(A const & a_, B const & b_)
 }
 
 template <class V>
-auto perp(V const & v)
+inline auto perp(V const & v)
 {
     static_assert(v.size()==2, "dimension error");
     return Small<std::decay_t<decltype(*(start(v).flat()))>, 2> {v[1], -v[0]};
 }
 template <class V, class U, enableif_<is_scalar<U>, int> =0>
-auto perp(V const & v, U const & n)
+inline auto perp(V const & v, U const & n)
 {
     static_assert(v.size()==2, "dimension error");
     return Small<std::decay_t<decltype(*(start(v).flat()) * n)>, 2> {v[1]*n, -v[0]*n};
 }
 template <class V, class U, enableifc_<!is_scalar<U>::value, int> =0>
-auto perp(V const & v, U const & n)
+inline auto perp(V const & v, U const & n)
 {
     static_assert(v.size()==3, "dimension error");
     return cross(v, n);
@@ -409,7 +409,7 @@ inline auto normv(A const & a)
 // @TODO Define within generalization...
 // @TODO Plain auto causes problems witn transform() in mat-fun.H:transform().
 template <class A, class B>
-ra::Small<decltype(std::declval<A>()(0, 0)*std::declval<B>()(0, 0)), A::size(0), B::size(1)>
+inline ra::Small<decltype(std::declval<A>()(0, 0)*std::declval<B>()(0, 0)), A::size(0), B::size(1)>
 mm_mul(A const & a, B const & b)
 {
     constexpr int M = a.size(0);

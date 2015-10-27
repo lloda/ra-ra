@@ -519,8 +519,8 @@ struct SmallArray<T, mp::int_list<0>, strides>: public SmallBase<SmallArray, T, 
 
     SMALLARRAY_DEFINITIONS
 
-    T & operator[](dim_t const i) { assert(0); }
-    T const & operator[](dim_t const i) const { assert(0); }
+    T & operator[](dim_t const i) { assert(0 && "internal error"); abort(); }
+    T const & operator[](dim_t const i) const { assert(0 && "internal error"); abort(); }
     operator SmallSlice<T, sizes, strides> () { return SmallSlice<T, sizes, strides>(p); }
     operator SmallSlice<T const, sizes, strides> const () { return SmallSlice<T const, sizes, strides>(p); }
 };

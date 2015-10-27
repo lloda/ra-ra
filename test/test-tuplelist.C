@@ -12,6 +12,7 @@
 #include <iostream>
 #include "ra/tuple-dynamic.H"
 #include "ra/tuple-list.H"
+#include "ra/test.H"
 
 using std::tuple;
 using std::tuple_size;
@@ -61,6 +62,7 @@ struct True
 
 int main()
 {
+    TestRecorder tr(std::cout);
 // Basic constexpr stulff.
     {
         static_assert(mp::fact(0)==1, "bad fact(0)");
@@ -409,10 +411,10 @@ static_assert(PermutationSign<int_list A , \
 // tuple-dynamic.
     {
         using l = int_list<3, 4, 5>;
-        assert(mp::on_tuple<l>::ref(0)==3);
-        assert(mp::on_tuple<l>::ref(1)==4);
-        assert(mp::on_tuple<l>::ref(2)==5);
+        tr.test_equal(3, mp::on_tuple<l>::ref(0));
+        tr.test_equal(4, mp::on_tuple<l>::ref(1));
+        tr.test_equal(5, mp::on_tuple<l>::ref(2));
         // assert(mp::on_tuple<l>::ref(3)==-1); // @TODO Check that this fails at runtime.
     }
-    return 0;
+    return tr.summary();
 };

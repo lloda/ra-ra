@@ -14,9 +14,9 @@
 
 using std::cout; using std::endl;
 
-namespace ra
-{
-template <class E, int a=0> decltype(auto) optimize(E && e) { return std::forward<E>(e); }
+namespace ra {
+
+template <class E, int a=0> inline decltype(auto) optimize(E && e) { return std::forward<E>(e); }
 
 // @TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
@@ -27,19 +27,19 @@ template <class E, int a=0> decltype(auto) optimize(E && e) { return std::forwar
 // --------------
 
 template <class I, class J, enableif_<mp::And<IS_IOTA(I), ra::is_zero_or_scalar<J> >, int> =0>
-auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0).org_+ITEM(1))> { ITEM(0).size_, ITEM(0).org_+ITEM(1), ITEM(0).stride_ };
 }
 
 template <class I, class J, enableif_<mp::And<ra::is_zero_or_scalar<I>, IS_IOTA(J)>, int> =0>
-auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0)+ITEM(1).org_)> { ITEM(1).size_, ITEM(0)+ITEM(1).org_, ITEM(1).stride_ };
 }
 
 template <class I, class J, enableif_<mp::And<IS_IOTA(I), IS_IOTA(J)>, int> =0>
-auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return Iota<decltype(ITEM(0).org_+ITEM(1).org_)> { ITEM(0).size_, ITEM(0).org_+ITEM(1).org_, ITEM(0).stride_+ITEM(1).stride_ };
@@ -50,19 +50,19 @@ auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 // --------------
 
 template <class I, class J, enableif_<mp::And<IS_IOTA(I), ra::is_zero_or_scalar<J> >, int> =0>
-auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0).org_-ITEM(1))> { ITEM(0).size_, ITEM(0).org_-ITEM(1), ITEM(0).stride_ };
 }
 
 template <class I, class J, enableif_<mp::And<ra::is_zero_or_scalar<I>, IS_IOTA(J)>, int> =0>
-auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0)-ITEM(1).org_)> { ITEM(1).size_, ITEM(0)-ITEM(1).org_, -ITEM(1).stride_ };
 }
 
 template <class I, class J, enableif_<mp::And<IS_IOTA(I), IS_IOTA(J)>, int> =0>
-auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return Iota<decltype(ITEM(0).org_-ITEM(1).org_)> { ITEM(0).size_, ITEM(0).org_-ITEM(1).org_, ITEM(0).stride_-ITEM(1).stride_ };
@@ -73,13 +73,13 @@ auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 // --------------
 
 template <class I, class J, enableif_<mp::And<IS_IOTA(I), ra::is_zero_or_scalar<J> >, int> =0>
-auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0).org_*ITEM(1))> { ITEM(0).size_, ITEM(0).org_*ITEM(1), ITEM(0).stride_*ITEM(1) };
 }
 
 template <class I, class J, enableif_<mp::And<ra::is_zero_or_scalar<I>, IS_IOTA(J)>, int> =0>
-auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
+inline auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0)*ITEM(1).org_)> { ITEM(1).size_, ITEM(0)*ITEM(1).org_, ITEM(0)*ITEM(1).stride_ };
 }
