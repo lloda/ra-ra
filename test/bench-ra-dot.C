@@ -79,6 +79,12 @@ DEFINE_BY_SMALL_PLY(by_small_plyf, plyf)
 DEFINE_BY_SMALL_PLY(by_small_plyf_index, plyf_index)
 DEFINE_BY_SMALL_PLY(by_small_ply_either, ply_either)
 
+// optimize() plugs into the definition of operator*, etc.
+DEFINE_BY_SMALL(by_small_op,                                            \
+                [](real & y, auto && A, auto && B) {                    \
+                    y = sum(A*B);                                       \
+                })
+
 template <class A, class B>
 enableifc_<ra_traits<A>::rank_s()==1, real>
 by_raw(A const & a, B const & b)
@@ -200,9 +206,10 @@ int main()
         tr.quiet().test_rel_error(ref, by_small_indexed<n>(a, b), rspec); \
         tr.quiet().test_rel_error(ref, by_small_ply_ravel<n>(a, b), rspec); \
         tr.quiet().test_rel_error(ref, by_small_ply_index<n>(a, b), rspec); \
-        tr.quiet().test_rel_error(ref, by_small_plyf<n>(a, b), rspec); \
+        tr.quiet().test_rel_error(ref, by_small_plyf<n>(a, b), rspec);  \
         tr.quiet().test_rel_error(ref, by_small_plyf_index<n>(a, b), rspec); \
-        tr.quiet().test_rel_error(ref, by_small_ply_either<n>(a, b), rspec);
+        tr.quiet().test_rel_error(ref, by_small_ply_either<n>(a, b), rspec); \
+        tr.quiet().test_rel_error(ref, by_small_op<n>(a, b), rspec);
         BENCH(2); cout << endl;
         BENCH(3); cout << endl;
         BENCH(4); cout << endl;

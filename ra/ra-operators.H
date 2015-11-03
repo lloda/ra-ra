@@ -33,6 +33,17 @@
     #define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
+#include "ra/ra-optimize.H"
+
+#ifndef RA_OPTIMIZE
+#define RA_OPTIMIZE 1 // enabled by default
+#endif
+#if RA_OPTIMIZE==1
+#define OPTIMIZE optimize
+#else
+#define OPTIMIZE
+#endif
+
 // See ::wedge() in ra/wedge.H, need ra::is_scalar<> to define.
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F,
@@ -69,17 +80,12 @@ inline void for_each(F && f, A && ... a)
 // conversion from zero->scalar is also needed. That is, without those
 // specializations, ra::Raw<complex, 0> * complex will fail.
 
-// These are named to match & transform Expr<OPNAME, ...> later on.
+// These depend on OPNAME defined in ra-optimize.H and used there to match ET patterns.
 #define DEFINE_NAMED_BINARY_OP(OPERATOR, OP, OPNAME)                    \
-    struct OPNAME                                                       \
-    {                                                                   \
-        template <class A, class B>                                     \
-        decltype(auto) operator()(A && a, B && b) { return std::forward<A>(a) OP std::forward<B>(b); } \
-    };                                                                  \
     template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
-        return expr(OPNAME(), start(std::forward<A>(a)), start(std::forward<B>(b))); \
+        return OPTIMIZE(expr(OPNAME(), start(std::forward<A>(a)), start(std::forward<B>(b)))); \
     }                                                                   \
     template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
     inline auto OPERATOR(A && a, B && b)                                \
@@ -90,7 +96,7 @@ DEFINE_NAMED_BINARY_OP(operator+, +, plus)
 DEFINE_NAMED_BINARY_OP(operator-, -, minus)
 DEFINE_NAMED_BINARY_OP(operator*, *, times)
 DEFINE_NAMED_BINARY_OP(operator/, /, slash)
-#undef DEFINE_NAMED_OP
+#undef DEFINE_NAMED_BINARY_OP
 
 #define DEFINE_BINARY_OP(OPERATOR, OP)                                  \
     template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
@@ -423,18 +429,17 @@ mm_mul(A const & a, B const & b)
     return c;
 }
 
-// A temporary for smatrix:: functions, @TODO refactor. @TODO loop over rank 1 pieces.
+// the default for row-major x row-major. See bench-ra-mmul.C for variants.
 template <class S, class T>
 inline auto
 mm_mul(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
 {
     int const M = a.size(0);
     int const N = b.size(1);
-    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::default_init);
-    for (int i=0; i<M; ++i) {
-        for (int j=0; j<N; ++j) {
-            c(i, j) = dot(a(i), b(ra::all, j));
-        }
+    int const K = a.size(1);
+    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, 0.);
+    for (int k=0; k<K; ++k) {
+        c += from(times(), a(ra::all, k), b(k, ra::all));
     }
     return c;
 }

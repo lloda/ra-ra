@@ -9,84 +9,13 @@
 // @TODO Check that Iota+scalar, etc. is also a Iota. Currently, it's an Expr,
 // because the ops below are overriden by the generic ops in ra-operators.H.
 
+#define RA_OPTIMIZE 0 // disable automatic use, so we can compare with (forced) and without
+#define RA_OPTIMIZE_IOTA 1 // enable all definitions
+#define RA_OPTIMIZE_SMALLVECTOR 1
 #include "ra/ra-operators.H"
 #include "ra/test.H"
 
 using std::cout; using std::endl;
-
-namespace ra {
-
-template <class E, int a=0> inline decltype(auto) optimize(E && e) { return std::forward<E>(e); }
-
-// @TODO need something to handle the & variants...
-#define ITEM(i) std::get<(i)>(e.t)
-#define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T> >
-
-// --------------
-// plus
-// --------------
-
-template <class I, class J, enableif_<mp::And<IS_IOTA(I), ra::is_zero_or_scalar<J> >, int> =0>
-inline auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
-{
-    return Iota<decltype(ITEM(0).org_+ITEM(1))> { ITEM(0).size_, ITEM(0).org_+ITEM(1), ITEM(0).stride_ };
-}
-
-template <class I, class J, enableif_<mp::And<ra::is_zero_or_scalar<I>, IS_IOTA(J)>, int> =0>
-inline auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
-{
-    return Iota<decltype(ITEM(0)+ITEM(1).org_)> { ITEM(1).size_, ITEM(0)+ITEM(1).org_, ITEM(1).stride_ };
-}
-
-template <class I, class J, enableif_<mp::And<IS_IOTA(I), IS_IOTA(J)>, int> =0>
-inline auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
-{
-    assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
-    return Iota<decltype(ITEM(0).org_+ITEM(1).org_)> { ITEM(0).size_, ITEM(0).org_+ITEM(1).org_, ITEM(0).stride_+ITEM(1).stride_ };
-}
-
-// --------------
-// minus
-// --------------
-
-template <class I, class J, enableif_<mp::And<IS_IOTA(I), ra::is_zero_or_scalar<J> >, int> =0>
-inline auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
-{
-    return Iota<decltype(ITEM(0).org_-ITEM(1))> { ITEM(0).size_, ITEM(0).org_-ITEM(1), ITEM(0).stride_ };
-}
-
-template <class I, class J, enableif_<mp::And<ra::is_zero_or_scalar<I>, IS_IOTA(J)>, int> =0>
-inline auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
-{
-    return Iota<decltype(ITEM(0)-ITEM(1).org_)> { ITEM(1).size_, ITEM(0)-ITEM(1).org_, -ITEM(1).stride_ };
-}
-
-template <class I, class J, enableif_<mp::And<IS_IOTA(I), IS_IOTA(J)>, int> =0>
-inline auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
-{
-    assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
-    return Iota<decltype(ITEM(0).org_-ITEM(1).org_)> { ITEM(0).size_, ITEM(0).org_-ITEM(1).org_, ITEM(0).stride_-ITEM(1).stride_ };
-}
-
-// --------------
-// times
-// --------------
-
-template <class I, class J, enableif_<mp::And<IS_IOTA(I), ra::is_zero_or_scalar<J> >, int> =0>
-inline auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
-{
-    return Iota<decltype(ITEM(0).org_*ITEM(1))> { ITEM(0).size_, ITEM(0).org_*ITEM(1), ITEM(0).stride_*ITEM(1) };
-}
-
-template <class I, class J, enableif_<mp::And<ra::is_zero_or_scalar<I>, IS_IOTA(J)>, int> =0>
-inline auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
-{
-    return Iota<decltype(ITEM(0)*ITEM(1).org_)> { ITEM(1).size_, ITEM(0)*ITEM(1).org_, ITEM(0)*ITEM(1).stride_ };
-}
-
-#undef IS_IOTA
-#undef ITEM
-}
 
 int main()
 {
@@ -132,6 +61,14 @@ int main()
         tr.test_equal(ra::vector({0, 2, 4, 6, 8}), k2);
         tr.test_equal(ra::vector({0, 2, 4, 6, 8}), k3);
         tr.test_equal(ra::vector({0, 2, 4, 6, 8}), k4);
+    }
+    section("small vector ops through vector extensions");
+    {
+        auto x = optimize(ra::Small<double, 4>{1, 2, 3, 4} + ra::Small<double, 4>{5, 6, 7, 8});
+        auto y = ra::Small<double, 4>{1, 2, 3, 4} + ra::Small<double, 4>{5, 6, 7, 8};
+        static_assert(std::is_same<decltype(x), ra::Small<double, 4> >::value, "bad optimization");
+        static_assert(!std::is_same<decltype(y), ra::Small<double, 4> >::value, "bad non-optimization");
+        tr.test_equal(x, y);
     }
     return tr.summary();
 }

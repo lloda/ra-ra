@@ -243,5 +243,30 @@ int main()
         ra::ply_ravel(ra::ryn(ra::verb<0, 0>::make([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
         tr.test_equal(16, y);
     }
+    section("outer product variants");
+    {
+        ra::Owned<real, 2> a({2, 3}, ra::_0 - ra::_1);
+        ra::Owned<real, 2> b({3, 2}, ra::_1 - 2*ra::_0);
+        ra::Owned<real, 2> c1 = mm_mul(a, b);
+        cout << "matrix a * b: \n" << c1 << endl;
+// matrix product as outer product + reduction (no reductions yet, so manually).
+        {
+            ra::Owned<real, 3> d = ra::ryn(ra::wrank<1, 2>::make(ra::wrank<0, 1>::make(ra::times())), start(a), start(b));
+            cout << "d(i,k,j) = a(i,k)*b(k,j): \n" << d << endl;
+            ra::Owned<real, 2> c2({d.size(0), d.size(2)}, 0.);
+            for (int k=0; k<d.size(1); ++k) {
+                c2 += d(ra::all, k, ra::all);
+            }
+            tr.test_equal(c1, c2);
+        }
+// do the k-reduction by plying with wrank.
+        {
+            ra::Owned<real, 2> c2({a.size(0), b.size(1)}, 0.);
+            ra::ply_either(ra::ryn(ra::wrank<1, 1, 2>::make(ra::wrank<1, 0, 1>::make([](auto & c, auto && a, auto && b) { c += a*b; })),
+                                   start(c2), start(a), start(b)));
+            cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
+            tr.test_equal(c1, c2);
+        }
+    }
     return tr.summary();
 }

@@ -2,14 +2,10 @@
 // Daniel Llorens - 2015
 // Adapted from blitz++/examples/array.cpp
 
-// @TODO For this example I need linear expressions of ra::Iota to
-// yield ra::Iota so that selectors can beat on them. Right now,
-// ra::Iota + 1 is ra::Expr that the selector doesn't know how to beat
-// on. It will still work through the regular selector-of-expr
-// mechanism, but will be slower.
 // @TODO Better traversal...
 
 #include "ra/ra-operators.H"
+#include "ra/test.H"
 #include "ra/format.H"
 #include <iomanip>
 #include <chrono>
@@ -50,10 +46,11 @@ int main()
         }
         cout << std::setw(10) << std::fixed << (ms(dt)/double(numIters)) << " ms / iter " << endl;
     }
+    ra::Owned<float, 3> first_A = A;
 
     A = 22.;
     A(interior, interior, interior) = 30.;
-// These are beatable where I+1 and I-1 are not (@TODO a defect. They should be the same.)
+// These are always beatable. I+1 and I-1 are also beatable if RA_OPTIMIZE is #defined to 1, which is the default.
     ra::Iota<int> Im(N-2, 0), Ip(N-2, 2);
     {
         std::chrono::duration<float> dt(0);
@@ -71,5 +68,8 @@ int main()
         }
         cout << std::setw(10) << std::fixed << (ms(dt)/double(numIters)) << " ms / iter " << endl;
     }
-    return 0;
+
+    TestRecorder tr(std::cout);
+    tr.quiet().test_rel_error(first_A, A, 0.);
+    return tr.summary();
 }
