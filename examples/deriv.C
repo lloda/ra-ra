@@ -47,7 +47,7 @@ int main()
     // we need one element on either side to apply the mask.
     // [ra] @TODO I-1 etc. are not beatable, which makes this expressions slower than they should be. Cf. examples/array.C.
     ra::Iota<int> I(numSamples-2, 1);
-    Array1D y2({numSamples}, ra::default_init);
+    Array1D y2({numSamples}, ra::unspecified);
     y2(I) = (y(I-1) - 2 * y(I) + y(I+1)) / (delta*delta);
 
     // The above difference equation will be transformed into

@@ -35,8 +35,8 @@ int main()
     {
         {
             real check[6] = {0-3, 1-3, 2-3, 3-3, 4-3, 5-3};
-            ra::Unique<real, 2> a({3, 2}, ra::default_init);
-            ra::Unique<real, 2> c({3, 2}, ra::default_init);
+            ra::Unique<real, 2> a({3, 2}, ra::unspecified);
+            ra::Unique<real, 2> c({3, 2}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
 #define TEST(plier)                                                     \
             {                                                           \
@@ -71,9 +71,9 @@ int main()
         TEST(plyf_index);
 #undef TEST
         {
-            ra::Unique<int, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::default_init);
-            ra::Unique<int, 3> b(std::vector<ra::dim_t> {3, 2, 4}, ra::default_init);
-            ra::Unique<int, 3> c(std::vector<ra::dim_t> {3, 2, 4}, ra::default_init);
+            ra::Unique<int, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<int, 3> b(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<int, 3> c(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             std::iota(b.begin(), b.end(), 0);
 #define TEST(plier)                                                     \
@@ -103,9 +103,9 @@ int main()
                 tr.test(std::equal(check, check+1, c.begin()));        \
             }
 #define TEST2(plier) \
-            TEST(plier)(ra::Unique<real, 0>({}, ra::default_init), ra::Unique<real, 0>({}, ra::default_init)); \
+            TEST(plier)(ra::Unique<real, 0>({}, ra::unspecified), ra::Unique<real, 0>({}, ra::unspecified)); \
             TEST(plier)(ra::Small<real> {}, ra::Small<real> {});        \
-            TEST(plier)(ra::Small<real> {}, ra::Unique<real, 0>({}, ra::default_init));
+            TEST(plier)(ra::Small<real> {}, ra::Unique<real, 0>({}, ra::unspecified));
             TEST2(ply_ravel);
             TEST2(ply_index);
             TEST2(plyf);
@@ -130,19 +130,19 @@ int main()
 
 #define TEST2(plier)                                                    \
             TEST(plier, "00")(ra::Small<int, 0> {}, false);             \
-            TEST(plier, "01")(ra::Unique<int, 1>({ 0 }, ra::default_init), false); \
-            TEST(plier, "02")(ra::Unique<int, 2>({ 2, 0 }, ra::default_init), false); \
-            TEST(plier, "03")(ra::Unique<int, 2>({ 0, 2 }, ra::default_init), false); \
+            TEST(plier, "01")(ra::Unique<int, 1>({ 0 }, ra::unspecified), false); \
+            TEST(plier, "02")(ra::Unique<int, 2>({ 2, 0 }, ra::unspecified), false); \
+            TEST(plier, "03")(ra::Unique<int, 2>({ 0, 2 }, ra::unspecified), false); \
             TEST(plier, "04")(ra::Small<int> {}, true);                 \
-            TEST(plier, "05")(ra::Unique<int, 0>({}, ra::default_init), true);
+            TEST(plier, "05")(ra::Unique<int, 0>({}, ra::unspecified), true);
 
             TEST2(ply_ravel);
             TEST2(ply_index);
             TEST2(plyf);
             TEST2(plyf_index);
 // this one cannot be done with plyf.
-            TEST(ply_ravel, "06")(ra::Unique<int>({ 0 }, ra::default_init), false);
-            TEST(ply_index, "07")(ra::Unique<int>({ 0 }, ra::default_init), false);
+            TEST(ply_ravel, "06")(ra::Unique<int>({ 0 }, ra::unspecified), false);
+            TEST(ply_index, "07")(ra::Unique<int>({ 0 }, ra::unspecified), false);
 #undef TEST2
 #undef TEST
 // With ra::expr, non-slices.
@@ -156,12 +156,12 @@ int main()
                 tr.test(check.used()==used && STRINGIZE(plier) id " after"); \
             }
 #define TEST2(plier)                                                    \
-            TEST(plier, "10")(ra::Unique<int, 1>({ 0 }, ra::default_init)+ra::Small<int, 0>(), false); \
-            TEST(plier, "11")(ra::Unique<int, 2>({ 2, 0 }, ra::default_init)+ra::Small<int, 2, 0>(), false); \
-            TEST(plier, "12")(ra::Unique<int, 2>({ 0, 2 }, ra::default_init)+ra::Small<int, 0, 2>(), false); \
-            TEST(plier, "13")(ra::Unique<int, 1>({ 0 }, ra::default_init)+ra::scalar(1), false); \
-            TEST(plier, "14")(ra::Unique<int, 2>({ 2, 0 }, ra::default_init)+ra::scalar(1), false); \
-            TEST(plier, "15")(ra::Unique<int, 2>({ 0, 2 }, ra::default_init)+ra::scalar(1), false);
+            TEST(plier, "10")(ra::Unique<int, 1>({ 0 }, ra::unspecified)+ra::Small<int, 0>(), false); \
+            TEST(plier, "11")(ra::Unique<int, 2>({ 2, 0 }, ra::unspecified)+ra::Small<int, 2, 0>(), false); \
+            TEST(plier, "12")(ra::Unique<int, 2>({ 0, 2 }, ra::unspecified)+ra::Small<int, 0, 2>(), false); \
+            TEST(plier, "13")(ra::Unique<int, 1>({ 0 }, ra::unspecified)+ra::scalar(1), false); \
+            TEST(plier, "14")(ra::Unique<int, 2>({ 2, 0 }, ra::unspecified)+ra::scalar(1), false); \
+            TEST(plier, "15")(ra::Unique<int, 2>({ 0, 2 }, ra::unspecified)+ra::scalar(1), false);
 
             TEST2(ply_index);
             TEST2(plyf_index);
@@ -183,7 +183,7 @@ int main()
                     ra::plyf(ra::expr(print, a.iter())); cout << endl;
                     ra::plyf_index(ra::expr(print, a.iter()));
                 };
-            ra::Unique<real, 3> a(std::vector<ra::dim_t> {1, 2, 3}, ra::default_init);
+            ra::Unique<real, 3> a(std::vector<ra::dim_t> {1, 2, 3}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             test(a);
             test(a()); // also Raw.
@@ -195,7 +195,7 @@ int main()
                     ra::ply_index(ra::expr(print, a.iter())); cout << endl;
                     ra::ply_ravel(ra::expr(print, a.iter())); cout << endl;
                 };
-            ra::Unique<real> a(std::vector<ra::dim_t> {1, 2, 3}, ra::default_init);
+            ra::Unique<real> a(std::vector<ra::dim_t> {1, 2, 3}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             test(a);
             test(a()); // also Raw.
@@ -268,7 +268,7 @@ int main()
 
     section("cf plying with and without driver (error)");
     {
-        ra::Unique<real, 1> a({3}, ra::default_init);
+        ra::Unique<real, 1> a({3}, ra::unspecified);
         ply_ravel(expr([](real & a, int b) { a = b; }, a.iter(), ra::scalar(7)));
         tr.test_equal(7, a[0]);
         tr.test_equal(7, a[1]);
@@ -283,9 +283,9 @@ int main()
     }
     section("traversal - rank matching - Unique/Unique 1");
     {
-        ra::Unique<real, 3> a({ 3, 2, 4 }, ra::default_init);
-        ra::Unique<real, 2> b({ 3, 2 }, ra::default_init);
-        ra::Unique<real, 3> c({ 3, 2, 4 }, ra::default_init);
+        ra::Unique<real, 3> a({ 3, 2, 4 }, ra::unspecified);
+        ra::Unique<real, 2> b({ 3, 2 }, ra::unspecified);
+        ra::Unique<real, 3> c({ 3, 2, 4 }, ra::unspecified);
         real check[24] = { 0, 1, 2, 3,     3, 4, 5, 6,      6, 7, 8, 9,
                            9, 10, 11, 12,  12, 13, 14, 15,  15, 16, 17, 18 };
         std::iota(a.begin(), a.end(), 1);
@@ -315,8 +315,8 @@ int main()
     }
     section("traversal - op uses from");
     {
-        ra::Unique<int, 1> a({3}, ra::default_init);
-        ra::Unique<int, 1> b({3}, ra::default_init);
+        ra::Unique<int, 1> a({3}, ra::unspecified);
+        ra::Unique<int, 1> b({3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
 // @BUG with ra::vector(std::vector) instead of ra::vector(std::array), see test-ra-compatibility.C [1]
             // plier(expr([&a](int & b, int & i) { std::cout << "0i: " << b << ", " << i << std::endl; b = a(i); },

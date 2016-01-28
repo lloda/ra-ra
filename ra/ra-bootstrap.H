@@ -53,8 +53,8 @@ constexpr rank_t rank_sum(rank_t const a, rank_t const b)
 
 enum class init_not_t { value };
 constexpr init_not_t init_not = init_not_t::value;
-enum class default_init_t { value };
-constexpr default_init_t default_init = default_init_t::value;
+enum class unspecified_t { value };
+constexpr unspecified_t unspecified = unspecified_t::value;
 
 // This is returned by ra_iterator::flat() when cellr > 0, or SmallBase::iterator::flat (@TODO When?)
 template <class C>

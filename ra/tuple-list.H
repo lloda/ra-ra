@@ -43,7 +43,7 @@ template <class A, class B>
 using Cons_ = typename Cons<A, B>::type;
 
 template <class A, class B> struct Append;
-template <class ... A, class ...B>
+template <class ... A, class ... B>
 struct Append<tuple<A ...>, tuple<B ...>>
 {
     using type = tuple<A ..., B ...>;

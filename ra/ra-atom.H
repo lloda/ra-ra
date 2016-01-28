@@ -119,10 +119,10 @@ struct Vector
     static_assert(!std::is_reference<decltype(p__)>::value, "bad iterator type");
 
     using shape_type = std::array<dim_t, 1>;
-    auto shape() const { return shape_type { { dim_t(v.size()) } }; }
+    auto shape() const { return shape_type { { dim_t(traits::size(v)) } }; }
 
-    dim_t size() const { return v.size(); }
-    dim_t size(int const i) const { CHECK_BOUNDS(i==0); return v.size(); }
+    dim_t size() const { return traits::size(v); }
+    dim_t size(int const i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
     rank_t constexpr rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return traits::size_s(); }
@@ -229,20 +229,35 @@ struct Iota
 inline auto iota(int size, int org=0, int stride=1) { return Iota<int> { size, org, stride }; }
 inline auto jvec(dim_t size, dim_t org=0, dim_t stride=1) { return Iota<dim_t> { size, org, stride }; }
 
-struct all_t {};
+template <int n> struct dots_t {};
+template <int n> constexpr dots_t<n> dots = dots_t<n>();
+using all_t = dots_t<1>;
 constexpr all_t all = all_t();
 
 template <class I> struct is_beatable_def
 {
-    constexpr static bool value = mp::Or<std::is_integral<I>, std::is_same<I, all_t> >::value;
+    constexpr static bool value = mp::Or<std::is_integral<I> >::value;
+    constexpr static int skip_src = 1;
+    constexpr static int skip = 0;
 };
 
 template <class II> struct is_beatable_def<Iota<II>>
 {
     constexpr static bool value = std::numeric_limits<II>::is_integer;
+    constexpr static int skip_src = 1;
+    constexpr static int skip = 1;
+};
+
+template <int n> struct is_beatable_def<dots_t<n> >
+{
+    static_assert(n>=0, "bad count for dots_n");
+    constexpr static bool value = (n>=0);
+    constexpr static int skip_src = n;
+    constexpr static int skip = n;
 };
 
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I> >;
+template <class I> struct beatable_skip { struct type { constexpr static int value = is_beatable<I>::skip; }; };
 
 // others:
 // * 'static': Like expr, but the operator is compile time (e.g. ::apply()).

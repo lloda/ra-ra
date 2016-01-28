@@ -93,7 +93,8 @@ def to_test_ra(env, source):
               'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
               'test-ra-6', 'test-ra-where', 'test-tuplelist',
               'test-ra-7',
-              'test-wedge-product', 'test-ra-operators']]
+              'test-wedge-product', 'test-ra-operators',
+              'test-ra-tensorindex']]
 
 [to_test_ra(env, test)
  for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-mmul']]

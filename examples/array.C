@@ -19,8 +19,8 @@ int main()
     int numIters = 301;
 
     int N = 64;
-    ra::Owned<float, 3> A({N, N, N}, ra::default_init);
-    ra::Owned<float, 3> B({N, N, N}, ra::default_init);
+    ra::Owned<float, 3> A({N, N, N}, ra::unspecified);
+    ra::Owned<float, 3> B({N, N, N}, ra::unspecified);
 
     ra::Iota<int> interior(N/2, N/4);
 // Set up initial conditions: +30 C over an interior block, and +22 C elsewhere

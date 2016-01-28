@@ -51,6 +51,9 @@ void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
         i >> b;
         auto as = ra::ra_traits<A>::shape(a);
         auto bs = ra::ra_traits<A>::shape(b);
+        cout << "o: " << o.str() << endl;
+        cout << "as: " << ra::vector(as) << ", bs: " << ra::vector(bs) << endl;
+        cout << "a: " << a << ", b: " << b << endl;
         tr.test(std::equal(as.begin(), as.end(), bs.begin()));
         tr.test(std::equal(a.begin(), a.begin(), b.begin()));
     }
@@ -270,11 +273,14 @@ int main()
     }
     section("driver selection");
     {
-        static_assert(TI<0>::rank_s()==1, "bad");
-        static_assert(TI<1>::rank_s()==2, "bad");
+        static_assert(TI<0>::rank_s()==1, "bad TI rank");
         static_assert(ra::pick_driver<UU<0>, UU<1> >::value==1, "bad driver 1a");
-        static_assert(ra::pick_driver<TI<0>, TI<1> >::value==1, "bad driver 1b");
-        static_assert(ra::pick_driver<TI<1>, UU<2> >::value==1, "bad driver 1c");
+        static_assert(ra::pick_driver<TI<1>, UU<2> >::value==1, "bad driver 1b");
+
+// these two depend on TI<w>::rank_s() being w+1, which I haven't settled on.
+        static_assert(TI<1>::rank_s()==2, "bad TI rank");
+        static_assert(ra::pick_driver<TI<0>, TI<1> >::value==1, "bad driver 1c");
+
         static_assert(UU<0>::size_s()==1, "bad size_s 0");
         static_assert(SS::size_s()==1, "bad size_s 1");
         static_assert(ra::pick_driver<UU<0>, SS>::value==0, "bad size_s 2");
@@ -342,7 +348,7 @@ int main()
         static_assert(ra::has_tensorindex<TI<0>>::value,
                       "bad has_tensorindex test 1");
 
-        ra::Unique<int, 2> a({3, 2}, ra::default_init);
+        ra::Unique<int, 2> a({3, 2}, ra::unspecified);
         auto dyn = ra::expr([](int & a, int b) { a = b; }, a.iter(), ra::_0);
         static_assert(ra::has_tensorindex<std::decay_t<decltype(dyn)>>::value,
                       "bad has_tensorindex test 2");
@@ -482,9 +488,16 @@ int main()
             tr.test(std::equal(b.begin(), b.end(), checka));
         }
     }
+    section("transpose of 0 rank");
+    {
+        ra::Unique<real, 0> a({}, 99);
+        auto b = transpose(a, ra::Small<int, 0> {});
+        tr.test_equal(0, b.rank());
+        tr.test_equal(99, b());
+    }
     section("row-major assignment from initializer_list, rank 2");
     {
-        ra::Unique<real, 2> a({3, 2}, ra::default_init);
+        ra::Unique<real, 2> a({3, 2}, ra::unspecified);
         a = { 2, 3, 1, 4, 8, 9 };
         tr.test_equal(2, a(0, 0));
         tr.test_equal(3, a(0, 1));
@@ -517,7 +530,7 @@ int main()
     }
     section("row-major assignment from initializer_list, rank 1");
     {
-        ra::Owned<real, 1> a({5}, ra::default_init);
+        ra::Owned<real, 1> a({5}, ra::unspecified);
         a = { 2, 3, 1, 4, 8 };
         tr.test_equal(2, a(0));
         tr.test_equal(3, a(1));
@@ -527,7 +540,21 @@ int main()
     }
     section("subscripts");
     {
-        section("Raw fixed rank");
+        section("Raw fixed rank == 0");
+        {
+            real x = 99;
+            ra::Raw<real, 0> y(ra::Small<int, 0>{}, &x);
+            tr.test_equal(99, y());
+            tr.test_equal(99, y);
+            real u = 77.;
+            ra::Raw<real, 0> v(ra::Small<int, 0>{}, &u);
+            y = v;
+            tr.test_equal(77, u);
+            tr.test_equal(77, v);
+            tr.test_equal(77, x);
+            tr.test_equal(77, y);
+        }
+        section("Raw fixed rank > 0");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::Raw<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
@@ -540,7 +567,7 @@ int main()
             std::copy(r0.begin(), r0.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
             tr.test(std::equal(r0.begin(), r0.end(), rcheck0));
             ra::Small<int, 0> i0 {};
-            cout << "i0 rank: " << i0.rank() << endl;
+            tr.info("ra::Small<int, 0> rank").test_equal(1, i0.rank());
             auto r0a = r.at(ra::Small<int, 0> {});
             tr.test(std::equal(r0a.begin(), r0a.end(), rcheck0));
 
@@ -634,7 +661,7 @@ int main()
     }
     section("construct from shape");
     {
-        ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::default_init);
+        ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
         std::iota(a.begin(), a.end(), 0);
         auto sa = ra::ra_traits<ra::Unique<real>>::shape(a);
         tr.test_equal(3, sa[0]);
@@ -646,7 +673,7 @@ int main()
     }
     section("Var rank Raw from fixed rank Raw");
     {
-        ra::Unique<real, 3> a({3, 2, 4}, ra::default_init);
+        ra::Unique<real, 3> a({3, 2, 4}, ra::unspecified);
         ra::Raw<real> b(a);
         tr.test(a.data()==b.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
         tr.test_equal(a.rank(), b.rank());
@@ -719,7 +746,7 @@ int main()
         }
         section("9");
         {
-            ra::Unique<real, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::default_init);
+            ra::Unique<real, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             real check[3+24] = { 3, 2, 4 };
             std::iota(check+3, check+3+24, 0);
@@ -727,7 +754,7 @@ int main()
         }
         section("10");
         {
-            ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::default_init);
+            ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             real check[4+24] = { 3, 3, 2, 4 };
             std::iota(check+4, check+4+24, 0);
@@ -745,7 +772,7 @@ int main()
             cout << "s: " << s.s << endl;
         }
         {
-            ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::default_init);
+            ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             auto s = ra::scalar(a);
             cout << "s: " << s.s << endl;
@@ -769,7 +796,7 @@ int main()
 // Cf [trc-01] in test-ra-compatibility.C.
         section("[tr0-01] frame-matching, forbidding unroll");
         {
-            ra::Owned<int, 3> b ({3, 4, 2}, ra::default_init);
+            ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
             transpose(b, {0, 2, 1}) = ra::iota(3, 1);
             cout << b << endl;
             tr.test(every(b(0)==1));
@@ -779,16 +806,16 @@ int main()
     }
     section("reverse array types");
     {
-        CheckReverse(tr, ra::Unique<real>({ 3, 2, 4 }, ra::default_init));
-        CheckReverse(tr, ra::Unique<real, 3>({ 3, 2, 4 }, ra::default_init));
+        CheckReverse(tr, ra::Unique<real>({ 3, 2, 4 }, ra::unspecified));
+        CheckReverse(tr, ra::Unique<real, 3>({ 3, 2, 4 }, ra::unspecified));
     }
     section("transpose");
     {
-        CheckTranspose1(tr, ra::Unique<real>({ 3, 2 }, ra::default_init));
-        CheckTranspose1(tr, ra::Unique<real, 2>({ 3, 2 }, ra::default_init));
+        CheckTranspose1(tr, ra::Unique<real>({ 3, 2 }, ra::unspecified));
+        CheckTranspose1(tr, ra::Unique<real, 2>({ 3, 2 }, ra::unspecified));
 // can do these only with var-rank. @TODO Static-axes version of transpose.
         {
-            ra::Unique<real> a({3, 2}, ra::default_init);
+            ra::Unique<real> a({3, 2}, ra::unspecified);
             std::iota(a.begin(), a.end(), 1);
             auto b = transpose(a, ra::Small<int, 2> { 0, 0 });
             cout << "b: " << b << endl;
@@ -798,7 +825,7 @@ int main()
             tr.test_equal(4, b[1]);
         }
         {
-            ra::Unique<real> a({2, 3}, ra::default_init);
+            ra::Unique<real> a({2, 3}, ra::unspecified);
             std::iota(a.begin(), a.end(), 1);
             auto b = transpose(a, ra::Small<int, 2> { 0, 0 });
             cout << "b: " << b << endl;

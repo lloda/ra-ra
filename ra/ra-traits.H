@@ -44,8 +44,8 @@ struct ra_traits_def<std::vector<T, A>>
     }
 
     static dim_t size(V const & v) { return v.size(); }
-    static rank_t constexpr rank(V const & v) { return 1; }
     static dim_t constexpr size_s() { return DIM_ANY; }
+    static rank_t constexpr rank(V const & v) { return 1; }
     static rank_t constexpr rank_s() { return 1; }
 };
 
@@ -71,8 +71,8 @@ struct ra_traits_def<std::array<T, N>>
     }
 
     static dim_t constexpr size(V const & v) { return v.size(); }
-    static rank_t constexpr rank(V const & v) { return 1; }
     static dim_t constexpr size_s() { return N; }
+    static rank_t constexpr rank(V const & v) { return 1; }
     static rank_t constexpr rank_s() { return 1; };
 };
 
@@ -82,6 +82,8 @@ struct ra_traits_def<T *>
     using V = T *;
     using value_type = T;
 
+    // static dim_t constexpr size(V const & v) { return DIM_BAD; }
+    // static dim_t constexpr size_s() { return DIM_BAD; }
     static rank_t constexpr rank(V const & v) { return 1; }
     static rank_t constexpr rank_s() { return 1; }
 };

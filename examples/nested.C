@@ -10,7 +10,7 @@ using std::cout; using std::endl;
 
 int main()
 {
-    ra::Owned<ra::Owned<int, 1>, 1> A({3}, ra::default_init);
+    ra::Owned<ra::Owned<int, 1>, 1> A({3}, ra::unspecified);
 
     A(0).resize(3);
     A(0) = { 0, 1, 2 };

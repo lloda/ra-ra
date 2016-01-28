@@ -134,7 +134,37 @@ int main()
             tr.test_equal(1, b.dim[1].stride);
         }
     }
-    section("unbetable, 1D");
+    section("beatable multi-axis selectors, var size");
+    {
+        static_assert(ra::is_beatable<ra::dots_t<0> >::value, "dots_t<0> is beatable");
+        ra::Owned<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
+        tr.info("a(ra::dots<0> ...)").test_equal(a(0), a(ra::dots<0>, 0));
+        tr.info("a(ra::dots<0> ...)").test_equal(a(1), a(ra::dots<0>, 1));
+        tr.info("a(ra::dots<1> ...)").test_equal(a(ra::all, 0), a(ra::dots<1>, 0));
+        tr.info("a(ra::dots<1> ...)").test_equal(a(ra::all, 1), a(ra::dots<1>, 1));
+        tr.info("a(ra::dots<2> ...)").test_equal(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
+        tr.info("a(ra::dots<2> ...)").test_equal(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
+        tr.info("a(0)").test_equal(a(0, ra::all, ra::all), a(0));
+        tr.info("a(1)").test_equal(a(1, ra::all, ra::all), a(1));
+        tr.info("a(0, ra::dots<2>)").test_equal(a(0, ra::all, ra::all), a(0, ra::dots<2>));
+        tr.info("a(1, ra::dots<2>)").test_equal(a(1, ra::all, ra::all), a(1, ra::dots<2>));
+    }
+    section("beatable multi-axis selectors, fixed size");
+    {
+        static_assert(ra::is_beatable<ra::dots_t<0> >::value, "dots_t<0> is beatable");
+        ra::Small<int, 2, 3, 4> a = ra::_0*100 + ra::_1*10 + ra::_2;
+        tr.info("a(ra::dots<0> ...)").test_equal(a(0), a(ra::dots<0>, 0));
+        tr.info("a(ra::dots<0> ...)").test_equal(a(1), a(ra::dots<0>, 1));
+        tr.info("a(ra::dots<1> ...)").test_equal(a(ra::all, 0), a(ra::dots<1>, 0));
+        tr.info("a(ra::dots<1> ...)").test_equal(a(ra::all, 1), a(ra::dots<1>, 1));
+        tr.info("a(ra::dots<2> ...)").test_equal(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
+        tr.info("a(ra::dots<2> ...)").test_equal(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
+        tr.info("a(0)").test_equal(a(0, ra::all, ra::all), a(0));
+        tr.info("a(1)").test_equal(a(1, ra::all, ra::all), a(1));
+        tr.info("a(0, ra::dots<2>)").test_equal(a(0, ra::all, ra::all), a(0, ra::dots<2>));
+        tr.info("a(1, ra::dots<2>)").test_equal(a(1, ra::all, ra::all), a(1, ra::dots<2>));
+    }
+    section("unbeatable, 1D");
     {
         check_selection_unbeatable_1(tr, Ureal<1> {7, 9, 3, 4});
         check_selection_unbeatable_1(tr, ra::Small<real, 4> {7, 9, 3, 4});

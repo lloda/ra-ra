@@ -85,7 +85,7 @@ inline void for_each(F && f, A && ... a)
     template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
-        return OPTIMIZE(expr(OPNAME(), start(std::forward<A>(a)), start(std::forward<B>(b)))); \
+        return OPTIMIZE(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
     inline auto OPERATOR(A && a, B && b)                                \
@@ -102,8 +102,8 @@ DEFINE_NAMED_BINARY_OP(operator/, /, slash)
     template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
-        return expr([](auto && a, auto && b) { return a OP b; },        \
-                    start(std::forward<A>(a)), start(std::forward<B>(b))); \
+        return map([](auto && a, auto && b) { return a OP b; },         \
+                   std::forward<A>(a), std::forward<B>(b));             \
     }                                                                   \
     template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
     inline auto OPERATOR(A && a, B && b)                                \
@@ -124,7 +124,7 @@ DEFINE_BINARY_OP(operator!=, !=)
     template <class A, enableif_<is_ra_pos_rank<A>, int> = 0>           \
     inline auto OPNAME(A && a)                                          \
     {                                                                   \
-        return expr([](auto && a) { return OP a; }, start(std::forward<A>(a))); \
+        return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
     }
 DEFINE_UNARY_OP(operator!, !)
 DEFINE_UNARY_OP(operator+, +) // @TODO Make into nop.
@@ -138,7 +138,7 @@ DEFINE_UNARY_OP(operator-, -)
     template <class ... A, enableif_<ra_pos_and_any<A ...>, int> =0>    \
     inline auto OPNAME(A && ... a)                                      \
     {                                                                   \
-        return expr([](auto && ... a) { return OP(a ...); }, start(std::forward<A>(a)) ...); \
+        return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
     template <class ... A, enableif_<ra_zero<A ...>, int> =0>           \
     inline auto OPNAME(A && ... a)                                             \
@@ -168,7 +168,7 @@ DEFINE_NAME_OP(isinf, isinf)
 template <class T, class A>
 inline auto cast(A && a)
 {
-    return expr([](auto && a) { return T(a); }, start(std::forward<A>(a)));
+    return map([](auto && a) { return T(a); }, std::forward<A>(a));
 }
 
 // --------------------------------
@@ -208,11 +208,11 @@ inline auto safe_rvalue(T && t) -> T
 template <class W, class T, class F, enableif_<mp::Or<is_ra_pos_rank<W>, is_ra_pos_rank<T>, is_ra_pos_rank<F> >, int> = 0>
 inline auto where(W && w, T && t, F && f)
 {
-    return expr([](auto && w_, auto && t_, auto && f_) -> decltype(auto)
+    return map([](auto && w_, auto && t_, auto && f_) -> decltype(auto)
                 {
                     return safe_rvalue(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_));
                 },
-                start(std::forward<W>(w)), start(std::forward<T>(t)), start(std::forward<F>(f)));
+                std::forward<W>(w), std::forward<T>(t), std::forward<F>(f));
 }
 
 // --------------------------------
@@ -225,7 +225,7 @@ template <class A>
 inline auto reduce_sqrm(A && a) -> std::decay_t<decltype(sqrm(*(start(a).flat())))>
 {
     std::decay_t<decltype(sqrm(*(start(a).flat())))> c(0.);
-    ply_either(expr([&c](auto a) { c += sqrm(a); }, start(a)));
+    for_each([&c](auto a) { c += sqrm(a); }, a);
     return c;
 }
 
@@ -244,7 +244,7 @@ inline auto amin(A && a) -> std::decay_t<decltype(START(a))>
 {
     using T = std::decay_t<decltype(START(a))>;
     T c(std::numeric_limits<T>::max());
-    ply_either(expr([&c](auto && a) { c = min(c, a); }, start(a)));
+    for_each([&c](auto && a) { c = min(c, a); }, a);
     return c;
 }
 
@@ -253,7 +253,7 @@ inline auto amax(A && a) -> std::decay_t<decltype(START(a))>
 {
     using T = std::decay_t<decltype(START(a))>;
     T c(std::numeric_limits<T>::lowest());
-    ply_either(expr([&c](auto && a) { c = max(c, a); }, start(a)));
+    for_each([&c](auto && a) { c = max(c, a); }, a);
     return c;
 }
 
@@ -261,7 +261,7 @@ template <class A>
 inline auto sum(A && a) -> std::decay_t<decltype(START(a))>
 {
     std::decay_t<decltype(START(a))> c(0.);
-    ply_either(expr([&c](auto && a) { c += a; }, start(a)));
+    for_each([&c](auto && a) { c += a; }, a);
     return c;
 }
 
@@ -269,7 +269,7 @@ template <class A>
 inline auto prod(A && a) -> std::decay_t<decltype(START(a))>
 {
     std::decay_t<decltype(START(a))> c(1.);
-    ply_either(expr([&c](auto && a) { c *= a; }, start(a)));
+    for_each([&c](auto && a) { c *= a; }, a);
     return c;
 }
 
@@ -277,7 +277,7 @@ template <class A, class B>
 inline auto dot(A && a, B && b) -> std::decay_t<decltype(START(a) * START(b))>
 {
     std::decay_t<decltype(START(a) * START(b))> c(0.);
-    ply_either(expr([&c](auto && a, auto && b) { c = fma(a, b, c); }, start(a), start(b)));
+    for_each([&c](auto && a, auto && b) { c = fma(a, b, c); }, a, b);
     return c;
 }
 
@@ -285,7 +285,7 @@ template <class A, class B>
 inline auto cdot(A && a, B && b) -> std::decay_t<decltype(conj(START(a)) * START(b))>
 {
     std::decay_t<decltype(conj(START(a)) * START(b))> c(0.);
-    ply_either(expr([&c](auto && a, auto && b) { c = fma_conj(a, b, c); }, start(a), start(b)));
+    for_each([&c](auto && a, auto && b) { c = fma_conj(a, b, c); }, a, b);
     return c;
 }
 #undef START
@@ -416,7 +416,7 @@ inline auto normv(A const & a)
 // @TODO Plain auto causes problems witn transform() in mat-fun.H:transform().
 template <class A, class B>
 inline ra::Small<decltype(std::declval<A>()(0, 0)*std::declval<B>()(0, 0)), A::size(0), B::size(1)>
-mm_mul(A const & a, B const & b)
+gemm(A const & a, B const & b)
 {
     constexpr int M = a.size(0);
     constexpr int N = b.size(1);
@@ -432,7 +432,7 @@ mm_mul(A const & a, B const & b)
 // the default for row-major x row-major. See bench-ra-mmul.C for variants.
 template <class S, class T>
 inline auto
-mm_mul(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
+gemm(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
 {
     int const M = a.size(0);
     int const N = b.size(1);
@@ -446,7 +446,7 @@ mm_mul(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
 
 template <class A, class B>
 inline ra::Small<decltype(std::declval<A>()(0)*std::declval<B>()(0, 0)), B::size(1)>
-vm_mul(A const & a, B const & b)
+gevm(A const & a, B const & b)
 {
     constexpr int N = b.size(1);
     ra::Small<decltype(a(0)*b(0, 0)), N> c;
@@ -458,10 +458,10 @@ vm_mul(A const & a, B const & b)
 
 template <class S, class T>
 inline auto
-vm_mul(ra::Raw<S, 1> const & a, ra::Raw<T, 2> const & b)
+gevm(ra::Raw<S, 1> const & a, ra::Raw<T, 2> const & b)
 {
     int N = b.size(1);
-    ra::Owned<decltype(a(0)*b(0, 0))> c({N}, ra::default_init);
+    ra::Owned<decltype(a(0)*b(0, 0))> c({N}, ra::unspecified);
     for (int j=0; j<N; ++j) {
         c(j) = dot(a, b(ra::all, j));
     }
@@ -470,7 +470,7 @@ vm_mul(ra::Raw<S, 1> const & a, ra::Raw<T, 2> const & b)
 
 template <class A, class B>
 inline ra::Small<decltype(std::declval<A>()(0, 0)*std::declval<B>()(0)), A::size(0)>
-mv_mul(A const & a, B const & b)
+gemv(A const & a, B const & b)
 {
     constexpr int M = a.size(0);
     ra::Small<decltype(a(0, 0)*b(0)), M> c;
@@ -482,10 +482,10 @@ mv_mul(A const & a, B const & b)
 
 template <class S, class T>
 inline auto
-mv_mul(ra::Raw<S, 2> const & a, ra::Raw<T, 1> const & b)
+gemv(ra::Raw<S, 2> const & a, ra::Raw<T, 1> const & b)
 {
     int M = a.size(0);
-    ra::Owned<decltype(a(0, 0)*b(0)), 1> c({M}, ra::default_init);
+    ra::Owned<decltype(a(0, 0)*b(0)), 1> c({M}, ra::unspecified);
     for (int i=0; i<M; ++i) {
         c(i) = dot(a(i), b);
     }
@@ -504,13 +504,14 @@ operator<<(std::ostream & o, A && a_)
 {
 // work with ArrayIterator
     auto a = ra::start(std::forward<A>(a_));
+    static_assert(decltype(a)::size_s()!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
     auto sha(a.shape());
     if (a.size_s()==DIM_ANY) {
-        o << sha << "\n";
+        o << start(sha) << '\n';
     }
 // @TODO Scalar doesn't have done(), so avoid that. Concepts aren't well specified...
-    if (prod(sha)==0) {
+    if (any(start(sha)==0)) {
         return o;
     }
     auto ind = ra_traits<decltype(sha)>::make(rank, 0);
@@ -564,7 +565,7 @@ operator>>(std::istream & i, C & c)
     typename ra_traits<C>::shape_type s;
     i >> s;
     if (i) {
-        c = std::decay_t<C>(s, ra::default_init);
+        c = std::decay_t<C>(s, ra::unspecified);
         if (c.size()>0) { // I'd say a bug in copy_n; see failing case in test-ra-nested.C.
             std::copy_n(std::istream_iterator<T>(i), c.size(), c.begin());
         }

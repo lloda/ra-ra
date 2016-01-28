@@ -118,16 +118,23 @@ template <class T, class sizes, class strides> struct SmallSlice; // Used as typ
 
 template <class sizes_, class strides_, class ... I> struct FilterDims
 {
-    using mask = mp::Map_<mp::Not, mp::Map_<std::is_integral, std::tuple<I...>>>;
-    using sizes = mp::Filter_<mask, sizes_>;
-    using strides = mp::Filter_<mask, strides_>;
+    using sizes = sizes_;
+    using strides = strides_;
+};
+template <class sizes_, class strides_, class I0, class ... I> struct FilterDims<sizes_, strides_, I0, I ...>
+{
+    constexpr static int s = is_beatable<I0>::skip;
+    constexpr static int s_src = is_beatable<I0>::skip_src;
+    using next = FilterDims<mp::Drop_<sizes_, s_src>, mp::Drop_<strides_, s_src>, I ...>;
+    using sizes = mp::Append_<mp::Take_<sizes_, s>, typename next::sizes>;
+    using strides = mp::Append_<mp::Take_<strides_, s>, typename next::strides>;
 };
 
 template <dim_t size0, dim_t stride0> constexpr dim_t select(dim_t i0)
 {
     return ([i0](){ CHECK_BOUNDS(i0<size0); })(), i0*stride0;
 };
-template <dim_t size0, dim_t stride0> constexpr dim_t select(all_t i0)
+template <dim_t size0, dim_t stride0, int n> constexpr dim_t select(dots_t<n> i0)
 {
     return 0;
 }
@@ -140,8 +147,9 @@ constexpr dim_t select_loop()
 template <class sizes, class strides, class I0, class ... I>
 constexpr dim_t select_loop(I0 i0, I ... i)
 {
+    constexpr int s_src = is_beatable<I0>::skip_src;
     return select<mp::First_<sizes>::value, mp::First_<strides>::value>(i0)
-        + select_loop<mp::Drop1_<sizes>, mp::Drop1_<strides>>(i ...);
+        + select_loop<mp::Drop_<sizes, s_src>, mp::Drop_<strides, s_src>>(i ...);
 }
 
 // Component renames. // @TODO Tests.
@@ -245,7 +253,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
 
-// Specialize for rank() integer-args -> scalar, same in ra::Raw in ra-large.H.
+// Specialize for rank() integer-args -> scalar, same in ra::Raw in ra-large.H. @TODO Allow ra::Iota as general expr.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I, enableifc_<(mp::Count<std::is_integral<I> ...>::value<rank() \
                                        && mp::Count<is_beatable<I> ...>::value==sizeof...(I)), int> = 0> \
@@ -259,7 +267,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
-    } /* @TODO More than one selector... merge jvec, iota */            \
+    } /* @TODO More than one selector... */                             \
     template <class ... I, enableif_<mp::Not<mp::And<is_beatable<I> ...> >, int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \

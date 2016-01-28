@@ -28,37 +28,32 @@ using std::isfinite;
 using std::fma;
 // using std::isinf;  // there's apparently an ::isinf already
 
-#define IS_REAL(T) (std::is_integral<T>::value || std::is_floating_point<T>::value)
+#define IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)
 
-// As an array op; special definition for rank 0.
-template <class T> inline
-enableifc_<IS_REAL(T), T>
-amax(T const x) { return x; }
-
-template <class T> inline
-enableifc_<IS_REAL(T), T>
-amin(T const x) { return x; }
+// As an array op; special definitions for rank 0.
+template <class T> inline enableifc_<IS_REAL(T), T> amax(T const x) { return x; }
+template <class T> inline enableifc_<IS_REAL(T), T> amin(T const x) { return x; }
 
 #undef IS_REAL
 
 // @TODO see is_scalar in wedge.H>
 template <class T, enableif_<std::is_integral<T>, int> =0> T sqr(T const x) { return x*x; }
 
-inline real sqr(real const x) { return x*x; }
-inline real real_part(real const x)                  { return x; }
-inline constexpr real imag_part(real const x)        { return 0.; }
-inline real conj(real const x)                       { return x; }
-inline real mul_conj(real const x, real const y)     { return x*y; }
-inline real fma_conj(real const a, real const b, real const c) { return a*b + c; }
+inline constexpr real sqr(real const x)                 { return x*x; }
+inline constexpr real real_part(real const x)           { return x; }
+inline constexpr real imag_part(real const x)           { return 0.; }
+inline constexpr real conj(real const x)                { return x; }
+inline constexpr real mul_conj(real const x, real const y) { return x*y; }
+inline constexpr real fma_conj(real const a, real const b, real const c) { return a*b + c; }
 
-inline float sqrm(float const x)                     { return x*x; }
-inline real sqrm(real const x)                       { return x*x; }
-inline real sqrm(real const x, real const y)         { return sqrm(x-y); }
-inline real norm2(real const x)                      { return std::abs(x); }
-inline real norm2(real const x, real const y)        { return std::abs(x-y); }
-inline real abs(real const x, real const y)          { return std::abs(x-y); }
-inline real dot(real const x, real const y)          { return x*y; }
-inline void swap(real & a, real & b)                 { std::swap(a, b); }
+inline constexpr float sqrm(float const x)              { return x*x; }
+inline constexpr real sqrm(real const x)                { return x*x; }
+inline constexpr real sqrm(real const x, real const y)  { return sqrm(x-y); }
+inline /* constexpr */ real norm2(real const x)               { return std::abs(x); }
+inline /* constexpr */ real norm2(real const x, real const y) { return std::abs(x-y); }
+inline /* constexpr */ real abs(real const x, real const y)   { return std::abs(x-y); }
+inline constexpr real dot(real const x, real const y)   { return x*y; }
+inline void swap(real & a, real & b)                    { std::swap(a, b); }
 
 inline real rel_error(real const a, real const b)
 {

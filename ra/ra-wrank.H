@@ -416,14 +416,14 @@ decltype(auto) ryn(V && v, Ti && ... t)
 // ---------------------------
 // from, after APL, like (from) in guile-ploy
 // @TODO integrate with is_beatable shortcuts, operator() in the various array types.
-// @TODO complete any-arity version.
 // ---------------------------
 
 template <class I>
 struct index_rank
 {
     using type = mp::int_t<std::decay_t<I>::rank_s()>;
-    static_assert(type::value!=RANK_ANY, "dynamic rank not supported");
+    static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
+    static_assert(std::decay_t<I>::size_s()!=DIM_BAD, "undelimited extent subscript unsupported");
 };
 
 template <class II, int take>

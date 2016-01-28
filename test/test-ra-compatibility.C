@@ -53,7 +53,7 @@ int main()
         section("[trc01] frame match ra::vector on 1st axis, forbid unroll");
         {
             std::vector<int> const a = { 1, 2, 3 };
-            ra::Owned<int, 3> b ({3, 4, 2}, ra::default_init);
+            ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
             transpose(b, {0, 2, 1}) = ra::vector(a);
             tr.test_equal(a[0], b(0));
             tr.test_equal(a[1], b(1));

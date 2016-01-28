@@ -24,7 +24,7 @@ int main()
     TestRecorder tr;
     section("iterators on cell rank > 0");
     {
-        ra::Unique<real, 2> a({4, 3}, ra::default_init);
+        ra::Unique<real, 2> a({4, 3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
         {
             ra::ra_iterator<decltype(a), 1> i;
@@ -41,7 +41,7 @@ int main()
 #define ARGd dump.iter()
     section("ply on cell rank > 0");
     {
-        ra::Unique<real, 2> a({4, 3}, ra::default_init);
+        ra::Unique<real, 2> a({4, 3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
         real check[4] = {6, 15, 24, 33};
         section("not driving");
@@ -101,7 +101,7 @@ int main()
     section("ply on cell rank > 0, ref argument");
     {
         ra::Small<real, 4> dump { 1, 2, 3, 4 };
-        ra::Unique<real, 2> a({4, 3}, ra::default_init);
+        ra::Unique<real, 2> a({4, 3}, ra::unspecified);
         real check[12] = {1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6};
         section("not driving");
         {

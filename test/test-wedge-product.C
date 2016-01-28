@@ -129,6 +129,14 @@ R test_one_scalar_case(A const & a, B const & b)
 int main()
 {
     TestRecorder tr(std::cout);
+    section("@TODO clang issue that causes errors all the way down");
+    {
+        using thematch = MatchPermutationP< int_list<1, 0> >::type<int_list<0, 1> >;
+        cout << "A... " << (thematch::value) << endl;
+        using index_if = IndexIf<std::tuple<int_list<1, 0> >, MatchPermutationP< int_list<0, 1> >::template type>;
+        cout << "B... " << index_if::value << endl;
+        static_assert(index_if::value==0, "this fails in clang 3.8");
+    }
     section("Testing FindCombination");
     {
         using la = Iota<3>::type;

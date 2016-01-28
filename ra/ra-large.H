@@ -130,11 +130,6 @@ inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
     CHECK_BOUNDS(inside(i, dim_src->size));
     return dim_src->stride*i;
 }
-inline dim_t select(Dim * dim, Dim const * dim_src, all_t i)
-{
-    *dim = *dim_src;
-    return 0;
-}
 template <class II>
 inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
@@ -147,7 +142,15 @@ inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 template <class I0, class ... I>
 inline dim_t select_loop(Dim * dim, Dim const * dim_src, I0 i0, I ... i)
 {
-    return select(dim, dim_src, i0)+select_loop(dim+bool(!std::is_integral<I0>::value), dim_src+1, i ...);
+    return select(dim, dim_src, i0)+select_loop(dim+is_beatable<I0>::skip, dim_src+is_beatable<I0>::skip_src, i ...);
+}
+template <int n, class ... I>
+inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I ... i)
+{
+    for (int i=0; i<n; ++i, ++dim, ++dim_src) {
+        *dim = *dim_src;
+    }
+    return select_loop(dim, dim_src, i ...);
 }
 inline dim_t select_loop(Dim * dim, Dim const * dim_src)
 {
@@ -183,7 +186,8 @@ struct Raw
         constexpr int reduced = mp::Count<std::is_integral<I> ...>::value; \
         Raw<T CONST, RANK-reduced> sub;                                 \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
-        for (int i=sizeof...(I)-reduced; i<sub.rank(); ++i) {           \
+        /* fill the rest of dim, skipping over beatable subscripts */   \
+        for (int i=mp::Apply_<mp::Sum, mp::Map_<beatable_skip, mp::tuple<I ...> > >::value; i<sub.rank(); ++i) { \
             sub.dim[i] = this->dim[i+reduced];                          \
         }                                                               \
         return sub;                                                     \
@@ -342,25 +346,25 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
         Raw::p = storage_traits<Ptr>::data(store);
     }
 
-    template <class SS> WithStorage(SS const & s, default_init_t) { init(s); }
-    WithStorage(std::initializer_list<dim_t> const s, default_init_t) { init(s); }
-    template <class SS, class XX> WithStorage(SS const & s, XX && x): WithStorage(s, default_init)
+    template <class SS> WithStorage(SS const & s, unspecified_t) { init(s); }
+    WithStorage(std::initializer_list<dim_t> const s, unspecified_t) { init(s); }
+    template <class SS, class XX> WithStorage(SS const & s, XX && x): WithStorage(s, unspecified)
     {
         ply_either(expr([](T & dest, T const & src) { dest = src; }, Raw::iter(), start(x)));
     }
-    template <class XX> WithStorage(std::initializer_list<dim_t> const s, XX && x): WithStorage(s, default_init)
+    template <class XX> WithStorage(std::initializer_list<dim_t> const s, XX && x): WithStorage(s, unspecified)
     {
         ply_either(expr([](T & dest, T const & src) { dest = src; }, Raw::iter(), start(x)));
     }
-    WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, default_init)
+    WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
         std::copy(x.begin(), x.end(), this->begin()); // @TODO Use xpr traversal.
     }
-    template <class SS> WithStorage(SS const & s, std::initializer_list<T> const x): WithStorage(s, default_init)
+    template <class SS> WithStorage(SS const & s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
         std::copy(x.begin(), x.end(), this->begin()); // @TODO Use xpr traversal.
     }
-    template <class XX> WithStorage(XX && x): WithStorage(start(x).shape(), default_init) // @TODO ahem...
+    template <class XX> WithStorage(XX && x): WithStorage(start(x).shape(), unspecified) // @TODO ahem...
     {
 // @TODO resize in init() should be doing compile time checks as possible. We don't accept <=RANK b/c we need to define the size.
         static_assert(std::decay_t<decltype(start(x))>::rank_s()==RANK
@@ -368,13 +372,13 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
                       "bad data");
         ply_either(expr([](T & dest, T const & src) { dest = src; }, Raw::iter(), start(x)));
     }
-    WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, default_init)
+    WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
     {
         static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
         std::copy(x.begin(), x.end(), this->begin());
     }
     template <class P>
-    WithStorage(std::initializer_list<dim_t> const s, P pbegin, P pend): WithStorage(s, default_init)
+    WithStorage(std::initializer_list<dim_t> const s, P pbegin, P pend): WithStorage(s, unspecified)
     {
         std::copy(pbegin, pend, this->begin()); // @TODO Use xpr traversal.
     }
@@ -384,7 +388,7 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     void resize(dim_t const s)
     {
         assert(this->rank()>0);
-        store.resize(proddim(Raw::dim.begin()+1, Raw::dim.end())*s /* std::default_init_t someday... */);
+        store.resize(proddim(Raw::dim.begin()+1, Raw::dim.end())*s /* std::unspecified_t someday... */);
         Raw::dim[0].size = s;
         Raw::p = store.data();
     }
@@ -585,6 +589,10 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
 #endif
 #define TRANSPOSE_BODY                                                  \
     {                                                                   \
+        if (raw.rank()==0) {                                            \
+            assert(s.size()==0);                                        \
+            return raw;                                                 \
+        }                                                               \
         auto rp = std::max_element(s.begin(), s.end());                 \
         assert(rp!=s.end() && "bad axes spec");                         \
         rank_t rr = *rp;                                                \

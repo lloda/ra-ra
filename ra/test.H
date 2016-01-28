@@ -25,6 +25,7 @@ char const * esc_bold = "\033[01m";
 char const * esc_unbold = "\033[0m";
 char const * esc_red = "\033[31m";
 char const * esc_green = "\033[32m";
+char const * esc_cyan = "\033[36m";
 char const * esc_yellow = "\033[33m";
 char const * esc_blue = "\033[34m";
 char const * esc_plain = "\033[39m";
@@ -37,13 +38,13 @@ template <class ... A> void section(A const & ... a)
 struct TestRecorder
 {
     std::ostream & o;
-    int total, failed;
+    int total = 0;
+    std::vector<int> failed;
     std::string info_string;
     bool isquiet_default, isquiet;
 
     TestRecorder(std::ostream & o_=std::cout, bool isquiet_default_=false)
-        : o(o_), total(0), failed(0), isquiet_default(isquiet_default_),
-          isquiet(isquiet_default_) {}
+        : o(o_), isquiet_default(isquiet_default_), isquiet(isquiet_default_) {}
 
     static std::string format_error(double e)
     {
@@ -63,20 +64,23 @@ struct TestRecorder
 
     void test(bool c)
     {
-        ++total;
-        failed += !c;
+        if (!c) {
+            failed.push_back(total);
+        }
         if (isquiet) {
             if (!c) {
-                o << std::string(esc_bold)+esc_red+"FAILED"+esc_plain+esc_unbold
+                o << esc_cyan << "[" << total << "] " << esc_plain << esc_bold << esc_red << "FAILED" << esc_plain << esc_unbold
                   << "... " << info_string << std::endl;
             }
         } else {
-            o << (c ? std::string(esc_green)+"ok"+esc_plain
+            o << esc_cyan << "[" << total << "] " << esc_plain
+              << (c ? std::string(esc_green)+"ok"+esc_plain
                   : std::string(esc_bold)+esc_red+"FAILED"+esc_plain+esc_unbold)
               << "... " << info_string << std::endl;
         }
         info_string = "";
         isquiet = isquiet_default;
+        ++total;
     }
     void operator+=(bool c)
     {
@@ -87,8 +91,15 @@ struct TestRecorder
     {
         bool c = every(wanted==got);
 // where() to match shapes if either doesn't have one
-        info("equal(wanted: ", where(true, wanted, got), ", got: ", got, ")")
-            .test(c);
+        info("equal(wanted: ", where(true, wanted, got), ", got: ", got, ")").test(c);
+        return c;
+    }
+    template <class W, class A, class Comp>
+    bool test_comp(W && wanted, A && got, Comp && comp)
+    {
+        bool c = every(map(comp, wanted, got));
+// where() to match shapes if either doesn't have one
+        info("comp(wanted: ", where(true, wanted, got), ", got: ", got, ")").test(c);
         return c;
     }
     template <class W, class A>
@@ -113,13 +124,13 @@ struct TestRecorder
     }
     int summary() const
     {
-        if (failed>0) {
-            o << esc_bold << esc_red << failed << " tests of " << total << " failed";
-        } else {
+        if (failed.empty()) {
             o << esc_bold << esc_green << total << " tests passed";
+        } else {
+            o << esc_bold << esc_red << failed.size() << " tests of " << total << " failed (" << rawp(failed) << ")";
         }
         o << esc_plain << esc_unbold << std::flush;
-        return failed;
+        return failed.size();
     }
 };
 

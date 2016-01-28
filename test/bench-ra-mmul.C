@@ -34,11 +34,11 @@ template <class DT> auto us(DT && dt) { return std::chrono::duration_cast<std::c
 
 template <class S, class T>
 inline auto
-mm_mul_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
+gemm_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
 {
     int const M = a.size(0);
     int const N = b.size(1);
-    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::default_init);
+    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::unspecified);
     for (int i=0; i<M; ++i) {
         for (int j=0; j<N; ++j) {
             c(i, j) = dot(a(i), b(ra::all, j));
@@ -51,17 +51,17 @@ mm_mul_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
 // @TODO based on this, allow a Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k) without actually using TensorIndex (e.g. no ply_index).
 template <class S, class T>
 inline auto
-mm_mul_reduce_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
+gemm_reduce_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
 {
     int const M = a.size(0);
     int const N = b.size(1);
-    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::default_init);
+    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::unspecified);
     ra::ply_either(ra::ryn(ra::wrank<1, 1, 2>::make(ra::wrank<1, 0, 1>::make([](auto & c, auto && a, auto && b) { c += a*b; })),
                            start(c), start(a), start(b)));
     return c;
 }
 
-#define DEFINE_MM_MUL_RESTRICT(NAME_K, NAME_IJ, RESTRICT)               \
+#define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT)               \
     template <class S, class T>                                         \
     inline auto                                                         \
     NAME_K(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)            \
@@ -69,7 +69,7 @@ mm_mul_reduce_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
         int const M = a.size(0);                                        \
         int const N = b.size(1);                                        \
         int const K = a.size(1);                                        \
-        ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::default_init); \
+        ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::unspecified); \
         T * RESTRICT cc = c.data();                                     \
         T const * RESTRICT aa = a.data();                               \
         T const * RESTRICT bb = b.data();                               \
@@ -90,7 +90,7 @@ mm_mul_reduce_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
         int const M = a.size(0);                                        \
         int const N = b.size(1);                                        \
         int const K = a.size(1);                                        \
-        ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::default_init); \
+        ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::unspecified); \
         T * RESTRICT cc = c.data();                                     \
         T const * RESTRICT aa = a.data();                               \
         T const * RESTRICT bb = b.data();                               \
@@ -103,9 +103,9 @@ mm_mul_reduce_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
         }                                                               \
         return c;                                                       \
     }
-DEFINE_MM_MUL_RESTRICT(mm_mul_k_raw, mm_mul_ij_raw, /* */)
-DEFINE_MM_MUL_RESTRICT(mm_mul_k_raw_restrict, mm_mul_ij_raw_restrict, __restrict__)
-#undef DEFINE_MM_MUL_RESTRICT
+DEFINE_GEMM_RESTRICT(gemm_k_raw, gemm_ij_raw, /* */)
+DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
+#undef DEFINE_GEMM_RESTRICT
 
 int main()
 {
@@ -117,7 +117,7 @@ int main()
         ra::Owned<real, 2> B({S, S}, ra::_1-2*ra::_0);
         cout << "N: " << N << endl;
 
-#define MM_MUL_BENCHMARK(OP, OUTVAR)                                    \
+#define GEMM_BENCHMARK(OP, OUTVAR)                                    \
         ra::Owned<real, 2> OUTVAR({S, S}, 0);                           \
         {                                                               \
             std::chrono::duration<float> dt(0);                         \
@@ -129,13 +129,13 @@ int main()
             cout << "S: " << S << setw(26) << " " STRINGIZE(OP) ": " << setw(10) << setprecision(8) << (ms(dt)/double(N)) << " ms / iter " << endl; \
         }
 
-        MM_MUL_BENCHMARK(mm_mul_k, C0)
-        MM_MUL_BENCHMARK(mm_mul_reduce_k, C1)
-        MM_MUL_BENCHMARK(mm_mul_k_raw, C2)
-        MM_MUL_BENCHMARK(mm_mul_k_raw_restrict, C2b)
-        MM_MUL_BENCHMARK(mm_mul_ij_raw, C3)
-        MM_MUL_BENCHMARK(mm_mul_ij_raw_restrict, C3b)
-        MM_MUL_BENCHMARK(mm_mul, C4)
+        GEMM_BENCHMARK(gemm_k, C0)
+        GEMM_BENCHMARK(gemm_reduce_k, C1)
+        GEMM_BENCHMARK(gemm_k_raw, C2)
+        GEMM_BENCHMARK(gemm_k_raw_restrict, C2b)
+        GEMM_BENCHMARK(gemm_ij_raw, C3)
+        GEMM_BENCHMARK(gemm_ij_raw_restrict, C3b)
+        GEMM_BENCHMARK(gemm, C4)
 
         tr.quiet().test_rel_error(C0, C0, 0.);
         tr.quiet().test_rel_error(C0, C1, 0.);
