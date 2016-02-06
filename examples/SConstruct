@@ -11,10 +11,16 @@
 # SConstruct for ra/test
 # @todo Shared pieces with ra/examples
 
-import os
+import os, atexit
+from colorama import Fore, Back, Style
 from os.path import join, abspath
 from subprocess import call
 import string
+
+try:
+    Import('top')
+except:
+    top = {}
 
 arch = os.popen('./config.guess').read()
 
@@ -87,3 +93,28 @@ def to_test_ra(env, source):
 [to_test_ra(env, example)
  for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv',
                  'indirect', 'cast', 'nested', 'agreement', 'small']]
+
+
+def print_summary():
+    from SCons.Script import GetBuildFailures
+    test_item_tally = 0
+    test_tally = 0
+    build_tally = 0
+
+    print '\n' + Style.BRIGHT + 'Summary for ra/examples' + Style.RESET_ALL + '\n--------'
+    for bf in GetBuildFailures():
+        if str(bf.node).endswith('.check') and (bf.status > 0):
+            print (Style.BRIGHT + Fore.RED + '%s ' + Style.RESET_ALL + Fore.RESET + ' failed (%d)') \
+                % (bf.node, bf.status)
+            test_item_tally += bf.status
+            test_tally += 1
+        else:
+            print (Style.BRIGHT + Fore.YELLOW + '%s ' + Style.RESET_ALL + Fore.RESET + ' failed (%s)') \
+                % (bf.node, bf.errstr)
+            build_tally += 1
+
+    print 'total %d targets failed to build.' % build_tally
+    print 'total %d tests failed with %d total failures.' % (test_tally, test_item_tally)
+
+if 'skip_summary' not in top:
+    atexit.register(print_summary)
