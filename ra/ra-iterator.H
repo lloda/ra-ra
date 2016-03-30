@@ -132,7 +132,7 @@ struct cell_iterator
         return s;
     }
 
-    dim_t size(int const j) const { CHECK_BOUNDS(j<rank()); return dim[j].size; }
+    dim_t size(int const j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
     dim_t stride(int const j) const { return j<rank() ? dim[j].stride : 0; }
     dim_t preferred_stride(int const j) const { return stride(j); }
     bool compact_stride(dim_t const step, int const z, int const j) const

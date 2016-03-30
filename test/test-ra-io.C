@@ -32,8 +32,8 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
     std::decay_t<CC> c(ra::init_not);
     i >> c;
     cout << "\nread: " << c << endl;
-    tr.test_equal(start(check).shape(), start(c).shape()); // @TODO specific check in TestRecorder
-    tr.test_equal(check, c);
+    tr.test_eq(start(check).shape(), start(c).shape()); // @TODO specific check in TestRecorder
+    tr.test_eq(check, c);
 }
 
 template <class AA, class CC>

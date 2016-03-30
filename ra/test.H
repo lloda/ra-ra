@@ -21,14 +21,14 @@
 // @TODO Only for where(); unfortunately I can't declare the scalar version in an earlier header.
 #include "ra/ra-operators.H"
 
-char const * esc_bold = "\033[01m";
-char const * esc_unbold = "\033[0m";
-char const * esc_red = "\033[31m";
-char const * esc_green = "\033[32m";
-char const * esc_cyan = "\033[36m";
-char const * esc_yellow = "\033[33m";
-char const * esc_blue = "\033[34m";
-char const * esc_plain = "\033[39m";
+char const * esc_bold = "\x1b[01m";
+char const * esc_unbold = "\x1b[0m";
+char const * esc_red = "\x1b[31m";
+char const * esc_green = "\x1b[32m";
+char const * esc_cyan = "\x1b[36m";
+char const * esc_yellow = "\x1b[33m";
+char const * esc_blue = "\x1b[34m";
+char const * esc_plain = "\x1b[39m";
 
 template <class ... A> void section(A const & ... a)
 {
@@ -87,7 +87,7 @@ struct TestRecorder
         test(c);
     }
     template <class W, class A>
-    bool test_equal(W && wanted, A && got)
+    bool test_eq(W && wanted, A && got)
     {
         bool c = every(wanted==got);
 // where() to match shapes if either doesn't have one

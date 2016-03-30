@@ -30,38 +30,38 @@ int main()
         section("assignment of 0 rank <- scalar expr");
         {
             ra::Unique<real, 0> a ({}, ra::scalar(99));
-            tr.test_equal(99, a());
+            tr.test_eq(99, a());
             a = ra::scalar(77);
-            tr.test_equal(77, a());
+            tr.test_eq(77, a());
         }
         section("assignment of var rank <- scalar expr");
         {
             ra::Unique<real> a ({3, 2}, ra::scalar(99));
-            tr.test_equal(99, a(0, 0));
-            tr.test_equal(99, a(0, 1));
-            tr.test_equal(99, a(1, 0));
-            tr.test_equal(99, a(1, 1));
-            tr.test_equal(99, a(2, 0));
-            tr.test_equal(99, a(2, 1));
+            tr.test_eq(99, a(0, 0));
+            tr.test_eq(99, a(0, 1));
+            tr.test_eq(99, a(1, 0));
+            tr.test_eq(99, a(1, 1));
+            tr.test_eq(99, a(2, 0));
+            tr.test_eq(99, a(2, 1));
             a = ra::scalar(77);
-            tr.test_equal(77, a(0, 0));
-            tr.test_equal(77, a(0, 1));
-            tr.test_equal(77, a(1, 0));
-            tr.test_equal(77, a(1, 1));
-            tr.test_equal(77, a(2, 0));
-            tr.test_equal(77, a(2, 1));
+            tr.test_eq(77, a(0, 0));
+            tr.test_eq(77, a(0, 1));
+            tr.test_eq(77, a(1, 0));
+            tr.test_eq(77, a(1, 1));
+            tr.test_eq(77, a(2, 0));
+            tr.test_eq(77, a(2, 1));
         }
         section("assignment of var rank <- lower rank expr I");
         {
             ra::Unique<real, 1> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, ra::scalar(99));
             a  = b.iter();
-            tr.test_equal(1, a(0, 0));
-            tr.test_equal(1, a(0, 1));
-            tr.test_equal(2, a(1, 0));
-            tr.test_equal(2, a(1, 1));
-            tr.test_equal(3, a(2, 0));
-            tr.test_equal(3, a(2, 1));
+            tr.test_eq(1, a(0, 0));
+            tr.test_eq(1, a(0, 1));
+            tr.test_eq(2, a(1, 0));
+            tr.test_eq(2, a(1, 1));
+            tr.test_eq(3, a(2, 0));
+            tr.test_eq(3, a(2, 1));
         }
         section("construction of var rank <- lower rank expr II");
         {
@@ -70,9 +70,9 @@ int main()
             a  = b.iter();
             for (int i=0; i<3; ++i) {
                 for (int j=0; j<2; ++j) {
-                    tr.test_equal(i*2+j+1, b(i, j));
+                    tr.test_eq(i*2+j+1, b(i, j));
                     for (int k=0; k<4; ++k) {
-                        tr.test_equal(b(i, j), a(i, j, k));
+                        tr.test_eq(b(i, j), a(i, j, k));
                     }
                 }
             }
@@ -83,12 +83,12 @@ int main()
             ra::Unique<real> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, ra::scalar(99));
             a = b.iter();
-            tr.test_equal(1, a(0, 0));
-            tr.test_equal(1, a(0, 1));
-            tr.test_equal(2, a(1, 0));
-            tr.test_equal(2, a(1, 1));
-            tr.test_equal(3, a(2, 0));
-            tr.test_equal(3, a(2, 1));
+            tr.test_eq(1, a(0, 0));
+            tr.test_eq(1, a(0, 1));
+            tr.test_eq(2, a(1, 0));
+            tr.test_eq(2, a(1, 1));
+            tr.test_eq(3, a(2, 0));
+            tr.test_eq(3, a(2, 1));
         }
 // driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. @TODO Do run time driver selection to avoid this error.
         // section("construction of var rank <- higher rank expr");

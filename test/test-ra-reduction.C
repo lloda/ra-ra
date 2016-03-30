@@ -29,9 +29,9 @@ int main()
         auto test_amax_expr = [&tr](auto && a, auto && b)
             {
                 a = ra::Small<real, 2, 2> {1, 2, 9, -10};
-                tr.test_equal(amax(a), 9);
+                tr.test_eq(amax(a), 9);
                 b = ra::Small<real, 2, 2> {1, 1, 1, 1};
-                tr.test_equal(amax(a+b), 10);
+                tr.test_eq(amax(a+b), 10);
             };
         test_amax_expr(ra::Unique<real, 2>({2, 2}, 0.), ra::Unique<real, 2>({2, 2}, 0.));
         test_amax_expr(ra::Small<real, 2, 2>(), ra::Small<real, 2, 2>());
@@ -72,13 +72,13 @@ int main()
 
         b = normv(a);
         cout << "normv of lvalue: " << b << endl;
-        tr.test_equal(b[0], 1./sqrt(5));
-        tr.test_equal(b[1], 2./sqrt(5));
+        tr.test_eq(b[0], 1./sqrt(5));
+        tr.test_eq(b[1], 2./sqrt(5));
 
         b = normv(ra::Small<real, 2> {2, 1});
         cout << "normv of rvalue: "<< b << endl;
-        tr.test_equal(b[0], 2./sqrt(5));
-        tr.test_equal(b[1], 1./sqrt(5));
+        tr.test_eq(b[0], 2./sqrt(5));
+        tr.test_eq(b[1], 1./sqrt(5));
     }
 
     section("reductions");
@@ -105,10 +105,10 @@ int main()
                 test(ra::Owned<real, 1>{1, 2}, ra::Small<real, 2>{3, 4});
                 test(ra::Owned<complex, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
             };
-        test_dot([&tr](auto && a, auto && b) { tr.test_equal(11., dot(a, b)); });
-        test_dot([&tr](auto && a, auto && b) { tr.test_equal(11., cdot(a, b)); });
-        test_dot([&tr](auto && a, auto && b) { tr.test_equal(sqrt(8.), norm2(a-b)); });
-        test_dot([&tr](auto && a, auto && b) { tr.test_equal(8., reduce_sqrm(a-b)); });
+        test_dot([&tr](auto && a, auto && b) { tr.test_eq(11., dot(a, b)); });
+        test_dot([&tr](auto && a, auto && b) { tr.test_eq(11., cdot(a, b)); });
+        test_dot([&tr](auto && a, auto && b) { tr.test_eq(sqrt(8.), norm2(a-b)); });
+        test_dot([&tr](auto && a, auto && b) { tr.test_eq(8., reduce_sqrm(a-b)); });
 
         auto test_cdot = [&tr](auto && test)
             {
@@ -118,27 +118,27 @@ int main()
                 test(ra::Owned<complex, 1>{1, complex(2, 3)}, ra::Owned<complex, 1>{complex(4, 5), 6});
             };
         complex value = conj(1.)*complex(4., 5.) + conj(complex(2., 3.))*6.;
-        tr.test_equal(value, complex(16, -13));
-        test_cdot([&tr](auto && a, auto && b) { tr.test_equal(complex(16., -13.), cdot(a, b)); });
-        test_cdot([&tr](auto && a, auto && b) { tr.test_equal(sqrt(59.), norm2(a-b)); });
-        test_cdot([&tr](auto && a, auto && b) { tr.test_equal(59., reduce_sqrm(a-b)); });
+        tr.test_eq(value, complex(16, -13));
+        test_cdot([&tr](auto && a, auto && b) { tr.test_eq(complex(16., -13.), cdot(a, b)); });
+        test_cdot([&tr](auto && a, auto && b) { tr.test_eq(sqrt(59.), norm2(a-b)); });
+        test_cdot([&tr](auto && a, auto && b) { tr.test_eq(59., reduce_sqrm(a-b)); });
 
         auto test_sum = [&tr](auto && test)
             {
                 test(ra::Small<complex, 2>{complex(4, 5), 6});
                 test(ra::Owned<complex, 1>{complex(4, 5), 6});
             };
-        test_sum([&tr](auto && a) { tr.test_equal(complex(10, 5), sum(a)); });
-        test_sum([&tr](auto && a) { tr.test_equal(complex(24, 30), prod(a)); });
-        test_sum([&tr](auto && a) { tr.test_equal(sqrt(41.), amax(abs(a))); });
-        test_sum([&tr](auto && a) { tr.test_equal(6., amin(abs(a))); });
+        test_sum([&tr](auto && a) { tr.test_eq(complex(10, 5), sum(a)); });
+        test_sum([&tr](auto && a) { tr.test_eq(complex(24, 30), prod(a)); });
+        test_sum([&tr](auto && a) { tr.test_eq(sqrt(41.), amax(abs(a))); });
+        test_sum([&tr](auto && a) { tr.test_eq(6., amin(abs(a))); });
     }
 
     section("amax/amin ignore NaN");
     {
-        tr.test_equal(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN));
-        tr.test_equal(std::numeric_limits<real>::lowest(), amax(ra::Small<real, 3>(QNAN)));
-        tr.test_equal(std::numeric_limits<real>::max(), amin(ra::Small<real, 3>(QNAN)));
+        tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN));
+        tr.test_eq(std::numeric_limits<real>::lowest(), amax(ra::Small<real, 3>(QNAN)));
+        tr.test_eq(std::numeric_limits<real>::max(), amin(ra::Small<real, 3>(QNAN)));
     }
 
 // @TODO these reductions require a destination argument; there are no exprs really.
@@ -154,21 +154,21 @@ int main()
         {
             ra::Unique<real, 1> C({100}, 0.);
             for_each([](auto & c, auto a) { c += a; }, C, A);
-            tr.quiet().test_equal(B, C);
+            tr.quiet().test_eq(B, C);
         }
 // This depends on matching frames for += just as for any other op, which is at odds with
 // e.g. amend.
         {
             ra::Unique<real, 1> C({100}, 0.);
             C += A;
-            tr.quiet().test_equal(B, C);
+            tr.quiet().test_eq(B, C);
         }
 // It cannot work with a lhs scalar value since += must be a class member, but it will work
 // with a rank 0 array.
         {
             ra::Unique<real, 0> C({}, 0.);
             C += A(0);
-            tr.quiet().test_equal(B(0), C);
+            tr.quiet().test_eq(B(0), C);
         }
 // This will fail because the assumed driver (RANK_ANY) has lower actual rank than the other argument. @TODO check that it fails.
         // {
@@ -192,17 +192,17 @@ int main()
         {
             ra::Unique<real, 1> C({111}, 0.);
             for_each([&C](auto && a) { C += a; }, A.iter<1>());
-            tr.quiet().test_equal(B, C);
+            tr.quiet().test_eq(B, C);
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
             ply_either(ra::ryn(ra::verb<1, 1>::make([](auto & c, auto && a) { c += a; }), C.iter(), A.iter()));
-            tr.quiet().test_equal(B, C);
+            tr.quiet().test_eq(B, C);
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
             ply_either(ra::ryn(ra::wrank<1, 1>::make(ra::verb<0, 0>::make([](auto & c, auto a) { c += a; })), C.iter(), A.iter()));
-            tr.quiet().test_equal(B, C);
+            tr.quiet().test_eq(B, C);
         }
     }
 

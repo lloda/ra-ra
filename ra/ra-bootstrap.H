@@ -38,8 +38,6 @@ dim_t const DIM_BAD = -1073741824;
 rank_t const RANK_ANY = DIM_ANY;
 rank_t const RANK_BAD = DIM_BAD;
 
-// utilities.
-
 constexpr dim_t dim_prod(dim_t const a, dim_t const b)
 {
     return (a==DIM_ANY) ? DIM_ANY : ((b==DIM_ANY) ? DIM_ANY : a*b);
@@ -49,8 +47,13 @@ constexpr rank_t rank_sum(rank_t const a, rank_t const b)
     return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a+b);
 }
 
-// used in array constructors.
+// used in CHECK_BOUNDS
+constexpr bool inside(dim_t const i, dim_t const b)
+{
+    return i>=0 && i<b;
+}
 
+// used in array constructors.
 enum class init_not_t { value };
 constexpr init_not_t init_not = init_not_t::value;
 enum class unspecified_t { value };

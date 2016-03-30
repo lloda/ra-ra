@@ -29,6 +29,31 @@ int main()
 // Set the bottom right element to 8
     A(5, 5) = 8;
 
-    cout << "A = " << A << endl;
+    cout << "\nA = " << A << endl;
+
+// Demonstrating multi-axis selectors. Use these to skip over any number of
+// axes, just as ra::all skips over one axis.
+
+    ra::Owned<int, 3> B({3, 5, 5}, 99);
+
+// These are equivalent.
+    B(ra::all, ra::all, 2) = 3.;
+    B(ra::dots<2>, 2) = 3.;
+
+// These are all equivalent.
+    B(1, ra::all, ra::all) = 7.;
+    B(1) = 7.;
+    B(1, ra::dots<2>) = 7.;
+
+// These are equivalent.
+    B(2, ra::all, 1) = 5.;
+    B(2, ra::dots<1>, 1) = 5.;
+
+// These are equivalent.
+    B(0, 2, 3) = 1.;
+    B(ra::dots<0>, 0, ra::dots<0>, 2, ra::dots<0>, 3, ra::dots<0>) = 1.;
+
+    cout << "\nB = " << B << endl;
+
     return 0;
 }

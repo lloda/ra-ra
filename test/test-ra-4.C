@@ -30,6 +30,6 @@ int main()
 {
     TestRecorder tr;
     ra::Unique<complex, 1> a({3}, {1, 2, 3});
-    tr.test_equal(14, sqrm_ai(ra::expr([](complex a) { return a; }, a.iter())));
+    tr.test_eq(14, sqrm_ai(ra::expr([](complex a) { return a; }, a.iter())));
     return tr.summary();
 }

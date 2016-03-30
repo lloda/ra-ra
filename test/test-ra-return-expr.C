@@ -48,15 +48,15 @@ int main()
                 std::istringstream i(o.str());
                 i >> p;
                 cout << "q2. " << p << endl;
-                tr.test_equal(1-x, p[0]);
-                tr.test_equal(-x, p[1]);
-                tr.test_equal(-x, p[2]);
+                tr.test_eq(1-x, p[0]);
+                tr.test_eq(-x, p[1]);
+                tr.test_eq(-x, p[2]);
 
                 V q = retex_vs(a, 2);
                 cout << "q3. " << q << endl;
-                tr.test_equal(1-x, p[0]);
-                tr.test_equal(-x, p[1]);
-                tr.test_equal(-x, p[2]);
+                tr.test_eq(1-x, p[0]);
+                tr.test_eq(-x, p[1]);
+                tr.test_eq(-x, p[2]);
             }
             using V = decltype(t);
             {
@@ -69,15 +69,15 @@ int main()
                 std::istringstream i(o.str());
                 i >> p;
                 cout << "q2. " << p << endl;
-                tr.test_equal(1-x, p[0]);
-                tr.test_equal(-x, p[1]);
-                tr.test_equal(-x, p[2]);
+                tr.test_eq(1-x, p[0]);
+                tr.test_eq(-x, p[1]);
+                tr.test_eq(-x, p[2]);
 
                 V q = retex_vsref(a, 2);
                 cout << "q3. " << q << endl;
-                tr.test_equal(1-x, p[0]);
-                tr.test_equal(-x, p[1]);
-                tr.test_equal(-x, p[2]);
+                tr.test_eq(1-x, p[0]);
+                tr.test_eq(-x, p[1]);
+                tr.test_eq(-x, p[2]);
             }
         };
     section("vs, small");

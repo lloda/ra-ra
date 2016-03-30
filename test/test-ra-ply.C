@@ -56,14 +56,14 @@ int main()
             ra::Small<int, 3> C {0, 0, 0};                              \
             ra::Small<int, 3> A {1, 2, 3};                              \
             plier(ra::expr([](int a, int & c) { c = -a; }, A.iter(), C.iter())); \
-            tr.test_equal(-1, C[0]);                                   \
-            tr.test_equal(-2, C[1]);                                   \
-            tr.test_equal(-3, C[2]);                                   \
+            tr.test_eq(-1, C[0]);                                   \
+            tr.test_eq(-2, C[1]);                                   \
+            tr.test_eq(-3, C[2]);                                   \
             ra::Small<int, 3> B {+1, -2, +3};                           \
             plier(ra::expr([](int a, int b, int & c) { c = a*b; }, A.iter(), B.iter(), C.iter())); \
-            tr.test_equal(+1, C[0]);                                   \
-            tr.test_equal(-4, C[1]);                                   \
-            tr.test_equal(+9, C[2]);                                   \
+            tr.test_eq(+1, C[0]);                                   \
+            tr.test_eq(-4, C[1]);                                   \
+            tr.test_eq(+9, C[2]);                                   \
         }
         TEST(ply_ravel);
         TEST(ply_index);
@@ -80,7 +80,7 @@ int main()
             {                                                           \
                 std::iota(c.begin(), c.end(), 99);                      \
                 plier(ra::expr([](int a, int b, int & c) { c = a-b; }, a.iter(), b.iter(), c.iter())); \
-                for (int ci: c) { tr.test_equal(0, ci); }              \
+                for (int ci: c) { tr.test_eq(0, ci); }              \
             }
             TEST(ply_ravel);
             TEST(ply_index);
@@ -207,28 +207,28 @@ int main()
         section("construction of 0 rank <- scalar expr");
         {
             ra::Unique<real, 0> a ({}, ra::scalar(77));
-            tr.test_equal(77, a());
+            tr.test_eq(77, a());
         }
         section("construction of var rank <- scalar expr");
         {
             ra::Unique<real> a ({3, 2}, ra::scalar(77));
-            tr.test_equal(77, a(0, 0));
-            tr.test_equal(77, a(0, 1));
-            tr.test_equal(77, a(1, 0));
-            tr.test_equal(77, a(1, 1));
-            tr.test_equal(77, a(2, 0));
-            tr.test_equal(77, a(2, 1));
+            tr.test_eq(77, a(0, 0));
+            tr.test_eq(77, a(0, 1));
+            tr.test_eq(77, a(1, 0));
+            tr.test_eq(77, a(1, 1));
+            tr.test_eq(77, a(2, 0));
+            tr.test_eq(77, a(2, 1));
         }
         section("construction of var rank <- lower rank expr I");
         {
             ra::Unique<real, 1> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, b.iter());
-            tr.test_equal(1, a(0, 0));
-            tr.test_equal(1, a(0, 1));
-            tr.test_equal(2, a(1, 0));
-            tr.test_equal(2, a(1, 1));
-            tr.test_equal(3, a(2, 0));
-            tr.test_equal(3, a(2, 1));
+            tr.test_eq(1, a(0, 0));
+            tr.test_eq(1, a(0, 1));
+            tr.test_eq(2, a(1, 0));
+            tr.test_eq(2, a(1, 1));
+            tr.test_eq(3, a(2, 0));
+            tr.test_eq(3, a(2, 1));
         }
         section("construction of var rank <- lower rank expr II");
         {
@@ -239,7 +239,7 @@ int main()
             for (int i=0; i<3; ++i) {
                 for (int j=0; j<2; ++j) {
                     for (int k=0; k<4; ++k) {
-                        tr.test_equal(a(i, j, k), b(i, j));
+                        tr.test_eq(a(i, j, k), b(i, j));
                     }
                 }
             }
@@ -249,12 +249,12 @@ int main()
         {
             ra::Unique<real> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, b.iter());
-            tr.test_equal(1, a(0, 0));
-            tr.test_equal(1, a(0, 1));
-            tr.test_equal(2, a(1, 0));
-            tr.test_equal(2, a(1, 1));
-            tr.test_equal(3, a(2, 0));
-            tr.test_equal(3, a(2, 1));
+            tr.test_eq(1, a(0, 0));
+            tr.test_eq(1, a(0, 1));
+            tr.test_eq(2, a(1, 0));
+            tr.test_eq(2, a(1, 1));
+            tr.test_eq(3, a(2, 0));
+            tr.test_eq(3, a(2, 1));
         }
 // driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. @TODO Do run time driver selection to avoid this error.
         // section("construction of var rank <- higher rank expr");
@@ -270,13 +270,13 @@ int main()
     {
         ra::Unique<real, 1> a({3}, ra::unspecified);
         ply_ravel(expr([](real & a, int b) { a = b; }, a.iter(), ra::scalar(7)));
-        tr.test_equal(7, a[0]);
-        tr.test_equal(7, a[1]);
-        tr.test_equal(7, a[2]);
+        tr.test_eq(7, a[0]);
+        tr.test_eq(7, a[1]);
+        tr.test_eq(7, a[2]);
         ply_index(expr([](real & a, int b) { a = b; }, a.iter(), TI<0>()));
-        tr.test_equal(0, a[0]);
-        tr.test_equal(1, a[1]);
-        tr.test_equal(2, a[2]);
+        tr.test_eq(0, a[0]);
+        tr.test_eq(1, a[1]);
+        tr.test_eq(2, a[2]);
 // @TODO Check that these give ct error. Not clear that the second one should...
         // ply_index(expr([](int b) { cout << b << endl; }, TI<0>()));
         // ply_index(expr([](int b) { cout << b << endl; }, ra::scalar(3)));
@@ -338,10 +338,10 @@ int main()
     {
 // @TODO Test need for map() -> decltype(...) in the declaration of map, eg in ModelGenome::eval() in src/asof.H.
         ra::Unique<real, 1> b = map([](auto x) { return exp(x); }, ra::Unique<int, 1>({1, 2}));
-        tr.test_equal(b, ra::Unique<real, 1>({exp(1), exp(2)}));
+        tr.test_eq(b, ra::Unique<real, 1>({exp(1), exp(2)}));
         real x = 0.;
         for_each([&x](auto y) { x += y; }, ra::Unique<int, 1>({13, 21}));
-        tr.test_equal(34, x);
+        tr.test_eq(34, x);
     }
     return tr.summary();
 }

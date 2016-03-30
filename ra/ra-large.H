@@ -123,8 +123,6 @@ dim_t proddim(D d, D dend)
     }                                                                   \
     bool const empty() { return size()==0; } /* @TODO Optimize */
 
-inline bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
-
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
     CHECK_BOUNDS(inside(i, dim_src->size));
@@ -212,7 +210,7 @@ struct Raw
     T CONST & operator[](dim_t const i) CONST                           \
     {                                                                   \
         static_assert(rank()==1, "bad rank");                           \
-        CHECK_BOUNDS(i<dim[0].size && "out of bounds");                 \
+        CHECK_BOUNDS(inside(i, dim[0].size));                           \
         return data()[i*dim[0].stride];                                 \
     }
     SUBSCRIPTS(const)
@@ -358,6 +356,7 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     }
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
+        CHECK_BOUNDS(this->size()==dim_t(x.size()) && "mismatched sizes");
         std::copy(x.begin(), x.end(), this->begin()); // @TODO Use xpr traversal.
     }
     template <class SS> WithStorage(SS const & s, std::initializer_list<T> const x): WithStorage(s, unspecified)
@@ -524,7 +523,7 @@ struct Raw<T, RANK_ANY>
     T CONST & operator[](dim_t const i) CONST                           \
     {                                                                   \
         CHECK_BOUNDS(rank()==1 && "bad rank");                          \
-        CHECK_BOUNDS(i<dim[0].size && "out of bounds");                 \
+        CHECK_BOUNDS(inside(i, dim[0].size));                           \
         return data()[i*dim[0].stride];                                 \
     }
     SUBSCRIPTS(const)

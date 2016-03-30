@@ -30,8 +30,8 @@ int main()
 // default init is required to make vector-of-vector, but I still want Vec {} to mean 'an empty vector' and not a default-init vector.
         {
             auto c = Vec<int> {};
-            tr.test_equal(0, c.size(0));
-            tr.test_equal(0, c.size());
+            tr.test_eq(0, c.size(0));
+            tr.test_eq(0, c.size());
         }
         {
             auto c = Vec<Vec<int>> { Vec<int> {}, Vec<int> {1}, Vec<int> {1, 2} };
@@ -42,10 +42,10 @@ int main()
             Vec<Vec<int>> d;
             is >> d;
             cout << "d: " << d << "\n" << endl;
-            tr.test_equal(3, d.size());
-            tr.test_equal(d[0], Vec<int>{});
-            tr.test_equal(d[1], Vec<int>{1});
-            tr.test_equal(d[2], Vec<int>{1, 2});
+            tr.test_eq(3, d.size());
+            tr.test_eq(d[0], Vec<int>{});
+            tr.test_eq(d[1], Vec<int>{1});
+            tr.test_eq(d[2], Vec<int>{1, 2});
 // @TODO Actually nested 'as if higher rank' should allow just (every(c==d)). This is explicit nesting.
             tr.test(every(ra::expr([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
         }

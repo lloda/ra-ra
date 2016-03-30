@@ -140,7 +140,7 @@ int main()
             // Check that shared_borrowing really borrowed.
             tr.test(o.data()==borrower.data());
         }
-        tr.test_equal(o, 99.);
+        tr.test_eq(o, 99.);
     }
 
     return tr.summary();

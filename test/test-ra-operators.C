@@ -97,17 +97,17 @@ int main()
         {
             auto test = [&tr](auto && a)
                 {
-                    tr.test_equal(12, a*4.);
+                    tr.test_eq(12, a*4.);
                     auto b = a();
                     static_assert(std::is_same<int, decltype(b)>::value, "unexpected b non-decay to real");
                     static_assert(std::is_same<decltype(b*4.), real>::value, "expected b decay to real");
                     static_assert(std::is_same<decltype(4.*b), real>::value, "expected b decay to real");
-                    tr.test_equal(12., b*4.);
-                    tr.test_equal(12., 4.*b);
+                    tr.test_eq(12., b*4.);
+                    tr.test_eq(12., 4.*b);
                     static_assert(std::is_same<decltype(a*4.), real>::value, "expected a decay to real");
                     static_assert(std::is_same<decltype(4.*a), real>::value, "expected a decay to real");
-                    tr.test_equal(12., a*4.);
-                    tr.test_equal(12., 4.*a);
+                    tr.test_eq(12., a*4.);
+                    tr.test_eq(12., 4.*a);
                 };
             test(ra::Small<int>(3));
             test(ra::Unique<int, 0>({}, 3));
@@ -116,16 +116,16 @@ int main()
             ra::Small<int, 3> a { 1, 2, 3 };
             ra::Small<int> b { 5 };
             a *= b;
-            tr.test_equal(a[0], 5);
-            tr.test_equal(a[1], 10);
-            tr.test_equal(a[2], 15);
+            tr.test_eq(a[0], 5);
+            tr.test_eq(a[1], 10);
+            tr.test_eq(a[2], 15);
         }
         {
             ra::Small<int> a { 3 };
             ra::Small<int> b { 2 };
             auto c = a*b;
             static_assert(std::is_same<decltype(a*b), int>::value, "expected a, b decay to real"); \
-            tr.test_equal(c, 6);
+            tr.test_eq(c, 6);
         }
     }
 
@@ -134,13 +134,13 @@ int main()
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Unique<int, 1> b({3}, { 10, 20, 30 });
 #define TESTSUM(expr)                                                   \
-        tr.test_equal(expr, ra::Small<int, 3, 2> {11, 12, 23, 40, 35, 36});
+        tr.test_eq(expr, ra::Small<int, 3, 2> {11, 12, 23, 40, 35, 36});
         TESTSUM(ra::expr([](int a, int b) { return a + b; }, a.iter(), b.iter()));
         TESTSUM(a.iter() + b.iter());
         TESTSUM(a+b);
 #undef TESTSUM
 #define TESTEQ(expr)                                                   \
-        tr.test_equal(expr, ra::Small<bool, 3, 2> {false, false, false, true, false, false});
+        tr.test_eq(expr, ra::Small<bool, 3, 2> {false, false, false, true, false, false});
         TESTEQ(a==b);
         TESTEQ(!(a!=b));
 #undef TESTEQ
@@ -152,24 +152,24 @@ int main()
             ra::Unique<complex, 2> const a({2, 3}, {1, 2, 3, 4, 5, 6});
             {
                 auto a0 = a(0);
-                tr.test_equal(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
+                tr.test_eq(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
             }
             {
                 auto a0 = a.at(ra::Small<int, 1> { 0 }); // @BUG Not sure this is what I want
-                tr.test_equal(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
+                tr.test_eq(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
             }
         }
         {
             ra::Unique<complex, 1> const a({3}, {1, 2, 3});
             {
                 auto a0 = a(0);
-                tr.test_equal(0.5, 0.5*a0);
+                tr.test_eq(0.5, 0.5*a0);
             }
             {
                 auto a0 = a.at(ra::Small<int, 1> { 0 }); // @BUG Not sure this is what I want, see above
-                tr.test_equal(2.1, 2.1*a0);
-                tr.test_equal(0.5, 0.5*a0);
-                tr.test_equal(0.5, complex(0.5)*a0);
+                tr.test_eq(2.1, 2.1*a0);
+                tr.test_eq(0.5, 0.5*a0);
+                tr.test_eq(0.5, complex(0.5)*a0);
             }
         }
     }
@@ -178,9 +178,9 @@ int main()
     {
         ra::Small<int, 3> a { 1, 2, 3 };
         ra::Small<int, 3> b { 1, 2, 4 };
-        tr.test_equal(ra::Small<int, 3> {2, 4, 7}, ra::expr([](int a, int b) { return a + b; }, a.iter(), b.iter()));
-        tr.test_equal(ra::Small<int, 3> {2, 4, 7}, (a.iter() + b.iter()));
-        tr.test_equal(ra::Small<int, 3> {2, 4, 7}, a+b);
+        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, ra::expr([](int a, int b) { return a + b; }, a.iter(), b.iter()));
+        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, (a.iter() + b.iter()));
+        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, a+b);
     }
 
     section("constructors from expr"); // @TODO For all other Container types.
@@ -190,15 +190,15 @@ int main()
             ra::Unique<int, 1> a({3}, { 1, 2, 3 });
             ra::Unique<int, 1> b({3}, { 10, 20, 30 });
             ra::Unique<int, 1> c(a.iter() + b.iter());
-            tr.test_equal(ra::Small<int, 3> {11, 22, 33}, c);
+            tr.test_eq(ra::Small<int, 3> {11, 22, 33}, c);
         }
         {
             ra::Unique<int, 2> a({3, 2}, 77);
-            tr.test_equal(a, ra::Small<int, 3, 2> {77, 77, 77, 77, 77, 77});
+            tr.test_eq(a, ra::Small<int, 3, 2> {77, 77, 77, 77, 77, 77});
         }
         {
             ra::Unique<int, 2> a({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>()));
-            tr.test_equal(ra::Small<int, 3, 2> {0, -1, 1, 0, 2, 1}, a);
+            tr.test_eq(ra::Small<int, 3, 2> {0, -1, 1, 0, 2, 1}, a);
         }
     }
 
@@ -206,12 +206,12 @@ int main()
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Small<int, 3, 2> ref {4, 5, 6, 23, 8, 9};
-        tr.test_equal(ref, ra::expr([](int a, int b) { return a + b; }, ra::start(a), ra::start(3)));
-        tr.test_equal(ref, ra::start(a) + ra::start(3));
-        tr.test_equal(ref, a+3);
+        tr.test_eq(ref, ra::expr([](int a, int b) { return a + b; }, ra::start(a), ra::start(3)));
+        tr.test_eq(ref, ra::start(a) + ra::start(3));
+        tr.test_eq(ref, a+3);
     }
 // These are rather different because they have to be defined in-class.
-    section("constructors & assignment operators with expr rhs"); // @TODO use TestRecorder::test_equal().
+    section("constructors & assignment operators with expr rhs"); // @TODO use TestRecorder::test_eq().
     {
         real check0[6] = { 0, -1, 1, 0, 2, 1 };
         real check1[6] = { 4, 3, 5, 4, 6, 5 };
@@ -227,7 +227,7 @@ int main()
         test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
         test(ra::Small<int, 3, 2>(ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
     }
-    section("operator= for Raw, WithStorage. Also see test-ra-ownership.C"); // @TODO use TestRecorder::test_equal().
+    section("operator= for Raw, WithStorage. Also see test-ra-ownership.C"); // @TODO use TestRecorder::test_eq().
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };
         real check9[6] = { 9, 9, 9, 9, 9, 9 };
@@ -263,18 +263,18 @@ int main()
             ra::Small<real, 3> b {4, 5, 7};
             ra::Small<real, 3> c;
             fun::Wedge<3, 1, 1>::product(a, b, c);
-            tr.test_equal(ra::Small<real, 3> {-1, 5, -3}, c);
+            tr.test_eq(ra::Small<real, 3> {-1, 5, -3}, c);
         }
         {
             ra::Small<real, 1> a {2};
             ra::Small<real, 1> b {3};
             ra::Small<real, 1> r;
             fun::Wedge<1, 0, 0>::product(a, b, r);
-            tr.test_equal(6, r[0]);
-            tr.test_equal(6, wedge<1, 0, 0>(ra::Small<real, 1>{2}, ra::Small<real, 1>{3}));
-            tr.test_equal(6, wedge<1, 0, 0>(ra::Small<real, 1>{2}, 3.));
-            tr.test_equal(6, wedge<1, 0, 0>(2., ra::Small<real, 1>{3}));
-            tr.test_equal(6, wedge<1, 0, 0>(2., 3));
+            tr.test_eq(6, r[0]);
+            tr.test_eq(6, wedge<1, 0, 0>(ra::Small<real, 1>{2}, ra::Small<real, 1>{3}));
+            tr.test_eq(6, wedge<1, 0, 0>(ra::Small<real, 1>{2}, 3.));
+            tr.test_eq(6, wedge<1, 0, 0>(2., ra::Small<real, 1>{3}));
+            tr.test_eq(6, wedge<1, 0, 0>(2., 3));
         }
     }
     section("hodge / hodgex");
@@ -282,9 +282,9 @@ int main()
         ra::Small<real, 3> a {1, 2, 3};
         ra::Small<real, 3> c;
         fun::hodgex<3, 1>(a, c);
-        tr.test_equal(a, c);
+        tr.test_eq(a, c);
         auto d = fun::hodge<3, 1>(a);
-        tr.test_equal(a, d);
+        tr.test_eq(a, d);
     }
 
     return tr.summary();

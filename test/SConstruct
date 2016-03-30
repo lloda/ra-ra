@@ -123,8 +123,8 @@ def print_summary():
                 % (bf.node, bf.errstr)
             build_tally += 1
 
-    print 'total %d targets failed to build.' % build_tally
-    print 'total %d tests failed with %d total failures.' % (test_tally, test_item_tally)
+    print '%d targets failed to build.' % build_tally
+    print '%d tests failed with %d total failures.' % (test_tally, test_item_tally)
 
 if 'skip_summary' not in top:
     atexit.register(print_summary)

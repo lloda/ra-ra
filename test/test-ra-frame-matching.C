@@ -121,10 +121,10 @@ int main()
                       a.iter(), expr([](real b, real c) { return b-c; },  b.iter(), ra::_1));
         static_assert(e.A==0, "bad driver selection");
         ply_index(e);
-        tr.test_equal(1, a(0, 0));
-        tr.test_equal(0, a(0, 1));
-        tr.test_equal(2, a(1, 0));
-        tr.test_equal(1, a(1, 1));
+        tr.test_eq(1, a(0, 0));
+        tr.test_eq(0, a(0, 1));
+        tr.test_eq(2, a(1, 0));
+        tr.test_eq(1, a(1, 1));
     }
     section("frame matching should-be-error cases [untested]");
 // @TODO Check that this is an error.

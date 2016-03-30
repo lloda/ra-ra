@@ -219,7 +219,7 @@ int main()
 // Using expr as lvalue.
         EXPR = 7.;
         cout << EXPR << endl;
-// expr-way @BUG use of test_equal fails (??)
+// expr-way @BUG use of test_eq fails (??)
         assert(every(c==where(ra::_0>=10 && ra::_0<=12 && ra::_1>=1 && ra::_1<=4, 7, ra::_0*100+ra::_1)));
 // looping...
         bool valid = true;
@@ -241,7 +241,7 @@ int main()
         auto e = ra::ryn(ra::verb<0, 0>::make([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
         static_assert(3==e.rank(), "bad rank in static rank expr");
         ra::ply_ravel(ra::ryn(ra::verb<0, 0>::make([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
-        tr.test_equal(16, y);
+        tr.test_eq(16, y);
     }
     section("outer product variants");
     {
@@ -257,7 +257,7 @@ int main()
             for (int k=0; k<d.size(1); ++k) {
                 c2 += d(ra::all, k, ra::all);
             }
-            tr.test_equal(c1, c2);
+            tr.test_eq(c1, c2);
         }
 // do the k-reduction by plying with wrank.
         {
@@ -265,7 +265,7 @@ int main()
             ra::ply_either(ra::ryn(ra::wrank<1, 1, 2>::make(ra::wrank<1, 0, 1>::make([](auto & c, auto && a, auto && b) { c += a*b; })),
                                    start(c2), start(a), start(b)));
             cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
-            tr.test_equal(c1, c2);
+            tr.test_eq(c1, c2);
         }
     }
     return tr.summary();

@@ -28,11 +28,11 @@ int main()
         std::iota(a.begin(), a.end(), 1);
         {
             ra::ra_iterator<decltype(a), 1> i;
-            tr.test_equal(1, i.rank());
+            tr.test_eq(1, i.rank());
         }
         {
             ra::ra_iterator<decltype(a), 1> i(a.dim, a.p);
-            tr.test_equal(1, i.rank());
+            tr.test_eq(1, i.rank());
             ply_ravel(expr([](ra::Raw<real, 1> const & x) { cout << x << endl; }, i));
         }
     }
@@ -132,17 +132,17 @@ int main()
         ra::Owned<int, 2> as({5, 2}, ra::_0 - ra::_1);
         ra::Owned<int, 2> b({5, 2}, (ra::_0 - ra::_1)*2);
 
-        tr.test_equal(1, as.iter<-1>().rank());
-        auto cellr = as.iter<-1>().cellr; tr.test_equal(1, cellr);
-        tr.test_equal(1, ad.iter<-1>().rank());
-        tr.test_equal(ra::RANK_ANY, ad.iter<-1>().rank_s());
+        tr.test_eq(1, as.iter<-1>().rank());
+        auto cellr = as.iter<-1>().cellr; tr.test_eq(1, cellr);
+        tr.test_eq(1, ad.iter<-1>().rank());
+        tr.test_eq(ra::RANK_ANY, ad.iter<-1>().rank_s());
         auto e = ra::expr([](auto const & a, auto const & b) { cout << (b-2*a) << endl; },
                           ad.iter<-1>(), b.iter<-1>());
-        tr.test_equal(1, e.rank());
+        tr.test_eq(1, e.rank());
 
-        tr.test_equal(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
+        tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                               as.iter<-1>(), b.iter<-1>()));
-        tr.test_equal(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
+        tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                               ad.iter<-1>(), b.iter<-1>()));
     }
     section("FYI");

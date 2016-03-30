@@ -33,7 +33,7 @@ int main()
         // cout << where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, ra::Unique<int, 1> { 0, 2 }) << endl << endl;
         // cout << ra::Unique<int, 1> { 1, -2 } + ra::_0 << endl;
         // cout << where(ra::Unique<bool, 1> { true, false }, ra::Unique<int, 1> { 0, 3 }, ra::Unique<int, 1> { 0, 2 }) << endl;
-        // tr.test_equal(ra::Unique<int, 1> { 0, 2 }, where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
+        // tr.test_eq(ra::Unique<int, 1> { 0, 2 }, where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
     }
 
     return tr.summary();

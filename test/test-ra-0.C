@@ -122,10 +122,10 @@ int main()
             real aa[20];
             aa[19] = 77;
             ra::Raw<real> a = { {{10, 2}, {2, 1}}, aa };
-            tr.test_equal(10, a.dim[0].size);
-            tr.test_equal(2, a.dim[1].size);
+            tr.test_eq(10, a.dim[0].size);
+            tr.test_eq(2, a.dim[1].size);
             cout << "a.p(3, 4): " << a.p[19] << endl;
-            tr.test_equal(77, a.p[19]);
+            tr.test_eq(77, a.p[19]);
         }
         {
             auto pp = std::unique_ptr<real []>(new real[10]);
@@ -135,10 +135,10 @@ int main()
             a.store = std::move(pp);
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
-            tr.test_equal(5, a.dim[0].size);
-            tr.test_equal(2, a.dim[1].size);
+            tr.test_eq(5, a.dim[0].size);
+            tr.test_eq(2, a.dim[1].size);
             cout << "a.p(3, 4): " << a.p[9] << endl;
-            tr.test_equal(77, a.p[9]);
+            tr.test_eq(77, a.p[9]);
         }
         {
             auto pp = std::shared_ptr<real>(new real[10]);
@@ -148,10 +148,10 @@ int main()
             a.store = pp;
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
-            tr.test_equal(5, a.dim[0].size);
-            tr.test_equal(2, a.dim[1].size);
+            tr.test_eq(5, a.dim[0].size);
+            tr.test_eq(2, a.dim[1].size);
             cout << "a.p(3, 4): " << a.p[9] << endl;
-            tr.test_equal(88, a.p[9]);
+            tr.test_eq(88, a.p[9]);
         }
         {
             auto pp = std::vector<real>(10);
@@ -161,10 +161,10 @@ int main()
             a.store = pp;
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
-            tr.test_equal(5, a.dim[0].size);
-            tr.test_equal(2, a.dim[1].size);
+            tr.test_eq(5, a.dim[0].size);
+            tr.test_eq(2, a.dim[1].size);
             cout << "a.p(3, 4): " << a.p[9] << endl;
-            tr.test_equal(99, a.p[9]);
+            tr.test_eq(99, a.p[9]);
         }
     }
     section("rank 0 -> scalar with Small");
@@ -174,10 +174,10 @@ int main()
         ra::Small<real> a { 33 };
         static_assert(sizeof(a)==sizeof(real), "bad assumption");
         rank0test0(a);
-        tr.test_equal(66, a);
+        tr.test_eq(66, a);
         real b = rank0test1(a);
-        tr.test_equal(66, a);
-        tr.test_equal(132, b);
+        tr.test_eq(66, a);
+        tr.test_eq(132, b);
     }
     section("(170) rank 0 -> scalar with Raw");
     {
@@ -185,7 +185,7 @@ int main()
         auto rank0test1 = [](real const & a) { return a*2; };
         real x { 99 };
         ra::Raw<real, 0> a { {}, &x };
-        tr.test_equal(1, a.size());
+        tr.test_eq(1, a.size());
 
 // ra::Raw<T, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0. That was specific of gcc, so better not to depend on it anyway...
         cout << "a()" << a() << endl;
@@ -194,10 +194,10 @@ int main()
         // static_assert(sizeof(a())==sizeof(real *), "bad assumption");
 
         rank0test0(a);
-        tr.test_equal(198, a);
+        tr.test_eq(198, a);
         real b = rank0test1(a);
-        tr.test_equal(198, a);
-        tr.test_equal(396, b);
+        tr.test_eq(198, a);
+        tr.test_eq(396, b);
     }
     section("ra traits");
     {
@@ -205,19 +205,19 @@ int main()
             using real2x3 = ra::Small<real, 2, 3>;
             real2x3 r { 1, 2, 3, 4, 5, 6 };
             cout << "r rank: " << ra::ra_traits<real2x3>::rank(r) << endl;
-            tr.test_equal(6, ra::ra_traits<real2x3>::size(r));
+            tr.test_eq(6, ra::ra_traits<real2x3>::size(r));
         }
         {
             real pool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::Raw<real> r { {{3, 2}, {2, 1}}, pool };
             cout << "r rank: " << ra::ra_traits<ra::Raw<real>>::rank(r) << endl;
-            tr.test_equal(6, ra::ra_traits<ra::Raw<real>>::size(r));
+            tr.test_eq(6, ra::ra_traits<ra::Raw<real>>::size(r));
         }
         {
             real pool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::Raw<real, 2> r { { ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
             cout << "r rank: " << ra::ra_traits<ra::Raw<real, 2>>::rank(r) << endl;
-            tr.test_equal(6, ra::ra_traits<ra::Raw<real, 2>>::size(r));
+            tr.test_eq(6, ra::ra_traits<ra::Raw<real, 2>>::size(r));
         }
     }
     section("iterator");
@@ -417,74 +417,74 @@ int main()
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
 // b.rank() is runtime, so b()==44. and the whole assert argument become array xprs when ra-operators.H is included.
-        tr.test_equal(0, b.rank());
-        tr.test_equal(1, b.size());
-        tr.test_equal(44, b());
+        tr.test_eq(0, b.rank());
+        tr.test_eq(1, b.size());
+        tr.test_eq(44, b());
         b = 55.;
         cout << "b: " << b << endl;
 // see above for b.rank().
-        tr.test_equal(0, b.rank());
-        tr.test_equal(1, b.size());
-        tr.test_equal(55., b());
+        tr.test_eq(0, b.rank());
+        tr.test_eq(1, b.size());
+        tr.test_eq(55., b());
     }
     section("rank 0 -> scalar with storage type");
     {
         auto rank0test0 = [](real & a) { a *= 2; };
         auto rank0test1 = [](real const & a) { return a*2; };
         ra::Unique<real, 0> a(ra::scalar(33));
-        tr.test_equal(1, a.size());
+        tr.test_eq(1, a.size());
 
 // See note in (170).
         // static_assert(sizeof(a())==sizeof(real *), "bad assumption");
 
         rank0test0(a);
-        tr.test_equal(66, a);
+        tr.test_eq(66, a);
         real b = rank0test1(a);
-        tr.test_equal(66, a);
-        tr.test_equal(132, b);
+        tr.test_eq(66, a);
+        tr.test_eq(132, b);
     }
     section("rank 0 -> scalar with storage type, explicit size");
     {
         auto rank0test0 = [](real & a) { a *= 2; };
         auto rank0test1 = [](real const & a) { return a*2; };
         ra::Unique<real, 0> a({}, ra::scalar(33));
-        tr.test_equal(1, a.size());
+        tr.test_eq(1, a.size());
 
 // See note in (170).
         // static_assert(sizeof(a())==sizeof(real *), "bad assumption");
         rank0test0(a);
-        tr.test_equal(66, a);
+        tr.test_eq(66, a);
         real b = rank0test1(a);
-        tr.test_equal(66, a);
-        tr.test_equal(132, b);
+        tr.test_eq(66, a);
+        tr.test_eq(132, b);
     }
     section("constructors from data in initializer_list");
     {
         real checka[6] = { 2, 3, 1, 4, 8, 9 };
         {
             ra::Unique<real, 2> a({2, 3}, { 2, 3, 1, 4, 8, 9 });
-            tr.test_equal(2, a.dim[0].size);
-            tr.test_equal(3, a.dim[1].size);
+            tr.test_eq(2, a.dim[0].size);
+            tr.test_eq(3, a.dim[1].size);
             tr.test(std::equal(a.begin(), a.end(), checka));
         }
         {
             ra::Unique<real> a { 2, 3, 1, 4, 8, 9 };
-            tr.test_equal(6, a.size());
-            tr.test_equal(1, a.rank());
+            tr.test_eq(6, a.size());
+            tr.test_eq(1, a.rank());
             tr.test(std::equal(a.begin(), a.end(), checka));
             ra::Unique<real> b ({ 2, 3, 1, 4, 8, 9 });
-            tr.test_equal(6, b.size());
-            tr.test_equal(1, b.rank());
+            tr.test_eq(6, b.size());
+            tr.test_eq(1, b.rank());
             tr.test(std::equal(b.begin(), b.end(), checka));
         }
         {
             ra::Unique<real, 1> a { 2, 3, 1, 4, 8, 9 };
-            tr.test_equal(6, a.size());
-            tr.test_equal(1, a.rank());
+            tr.test_eq(6, a.size());
+            tr.test_eq(1, a.rank());
             tr.test(std::equal(a.begin(), a.end(), checka));
             ra::Unique<real, 1> b ({ 2, 3, 1, 4, 8, 9 });
-            tr.test_equal(6, b.size());
-            tr.test_equal(1, b.rank());
+            tr.test_eq(6, b.size());
+            tr.test_eq(1, b.rank());
             tr.test(std::equal(b.begin(), b.end(), checka));
         }
     }
@@ -492,51 +492,51 @@ int main()
     {
         ra::Unique<real, 0> a({}, 99);
         auto b = transpose(a, ra::Small<int, 0> {});
-        tr.test_equal(0, b.rank());
-        tr.test_equal(99, b());
+        tr.test_eq(0, b.rank());
+        tr.test_eq(99, b());
     }
     section("row-major assignment from initializer_list, rank 2");
     {
         ra::Unique<real, 2> a({3, 2}, ra::unspecified);
         a = { 2, 3, 1, 4, 8, 9 };
-        tr.test_equal(2, a(0, 0));
-        tr.test_equal(3, a(0, 1));
-        tr.test_equal(1, a(1, 0));
-        tr.test_equal(4, a(1, 1));
-        tr.test_equal(8, a(2, 0));
-        tr.test_equal(9, a(2, 1));
+        tr.test_eq(2, a(0, 0));
+        tr.test_eq(3, a(0, 1));
+        tr.test_eq(1, a(1, 0));
+        tr.test_eq(4, a(1, 1));
+        tr.test_eq(8, a(2, 0));
+        tr.test_eq(9, a(2, 1));
 
         auto b = transpose(a, {1, 0});
         b = { 2, 3, 1, 4, 8, 9 };
-        tr.test_equal(2, b(0, 0));
-        tr.test_equal(3, b(0, 1));
-        tr.test_equal(1, b(0, 2));
-        tr.test_equal(4, b(1, 0));
-        tr.test_equal(8, b(1, 1));
-        tr.test_equal(9, b(1, 2));
+        tr.test_eq(2, b(0, 0));
+        tr.test_eq(3, b(0, 1));
+        tr.test_eq(1, b(0, 2));
+        tr.test_eq(4, b(1, 0));
+        tr.test_eq(8, b(1, 1));
+        tr.test_eq(9, b(1, 2));
 
-        tr.test_equal(2, a(0, 0));
-        tr.test_equal(4, a(0, 1));
-        tr.test_equal(3, a(1, 0));
-        tr.test_equal(8, a(1, 1));
-        tr.test_equal(1, a(2, 0));
-        tr.test_equal(9, a(2, 1));
+        tr.test_eq(2, a(0, 0));
+        tr.test_eq(4, a(0, 1));
+        tr.test_eq(3, a(1, 0));
+        tr.test_eq(8, a(1, 1));
+        tr.test_eq(1, a(2, 0));
+        tr.test_eq(9, a(2, 1));
 
         auto c = transpose(a, {1, 0});
         tr.test(a.data()==c.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
-        tr.test_equal(a.size(0), c.size(1));
-        tr.test_equal(a.size(1), c.size(0));
-        tr.test_equal(b, c);
+        tr.test_eq(a.size(0), c.size(1));
+        tr.test_eq(a.size(1), c.size(0));
+        tr.test_eq(b, c);
     }
     section("row-major assignment from initializer_list, rank 1");
     {
         ra::Owned<real, 1> a({5}, ra::unspecified);
         a = { 2, 3, 1, 4, 8 };
-        tr.test_equal(2, a(0));
-        tr.test_equal(3, a(1));
-        tr.test_equal(1, a(2));
-        tr.test_equal(4, a(3));
-        tr.test_equal(8, a(4));
+        tr.test_eq(2, a(0));
+        tr.test_eq(3, a(1));
+        tr.test_eq(1, a(2));
+        tr.test_eq(4, a(3));
+        tr.test_eq(8, a(4));
     }
     section("subscripts");
     {
@@ -544,15 +544,15 @@ int main()
         {
             real x = 99;
             ra::Raw<real, 0> y(ra::Small<int, 0>{}, &x);
-            tr.test_equal(99, y());
-            tr.test_equal(99, y);
+            tr.test_eq(99, y());
+            tr.test_eq(99, y);
             real u = 77.;
             ra::Raw<real, 0> v(ra::Small<int, 0>{}, &u);
             y = v;
-            tr.test_equal(77, u);
-            tr.test_equal(77, v);
-            tr.test_equal(77, x);
-            tr.test_equal(77, y);
+            tr.test_eq(77, u);
+            tr.test_eq(77, v);
+            tr.test_eq(77, x);
+            tr.test_eq(77, y);
         }
         section("Raw fixed rank > 0");
         {
@@ -567,7 +567,7 @@ int main()
             std::copy(r0.begin(), r0.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
             tr.test(std::equal(r0.begin(), r0.end(), rcheck0));
             ra::Small<int, 0> i0 {};
-            tr.info("ra::Small<int, 0> rank").test_equal(1, i0.rank());
+            tr.info("ra::Small<int, 0> rank").test_eq(1, i0.rank());
             auto r0a = r.at(ra::Small<int, 0> {});
             tr.test(std::equal(r0a.begin(), r0a.end(), rcheck0));
 
@@ -587,7 +587,7 @@ int main()
             // std::copy(r2.begin(), r2.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
             // tr.test(std::equal(r2.begin(), r2.end(), rcheck2));
             cout << r2 << endl;
-            tr.test_equal(5, r2);
+            tr.test_eq(5, r2);
 
             auto r2a = r.at(ra::Small<int, 2> {1, 1});
             tr.test(std::equal(r2a.begin(), r2a.end(), rcheck2));
@@ -599,31 +599,31 @@ int main()
             ra::Unique<int, 1> i = {3, 1, 2};
             cout << a(i) << endl;
             ra::Unique<real, 1> ai = a(i);
-            tr.test_equal(i.size(), ai.size());
-            tr.test_equal(a[i[0]], ai[0]);
-            tr.test_equal(a[i[1]], ai[1]);
-            tr.test_equal(a[i[2]], ai[2]);
+            tr.test_eq(i.size(), ai.size());
+            tr.test_eq(a[i[0]], ai[0]);
+            tr.test_eq(a[i[1]], ai[1]);
+            tr.test_eq(a[i[2]], ai[2]);
             a(i) = ra::Unique<real, 1> {7, 8, 9};
             cout << a << endl;
-            tr.test_equal(4, a.size());
-            tr.test_equal(1, a[0]);
-            tr.test_equal(a[i[0]], 7);
-            tr.test_equal(a[i[1]], 8);
-            tr.test_equal(a[i[2]], 9);
+            tr.test_eq(4, a.size());
+            tr.test_eq(1, a[0]);
+            tr.test_eq(a[i[0]], 7);
+            tr.test_eq(a[i[1]], 8);
+            tr.test_eq(a[i[2]], 9);
         }
         section("Raw var rank");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::Raw<real> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
-            tr.test_equal(2, r.rank());
+            tr.test_eq(2, r.rank());
             cout << "org" << endl;
             std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
 
             real rcheck0[6] = { 1, 4, 2, 5, 3, 6 };
             auto r0 = r();
             auto r0a = r.at(ra::Small<int, 0> {});
-            tr.test_equal(2, r0a.rank());
-            tr.test_equal(2, r0.rank());
+            tr.test_eq(2, r0a.rank());
+            tr.test_eq(2, r0.rank());
             cout << "r0" << endl;
             std::copy(r0.begin(), r0.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
             tr.test(std::equal(r0.begin(), r0.end(), rcheck0));
@@ -632,8 +632,8 @@ int main()
             real rcheck1[2] = { 2, 5 };
             auto r1 = r(1);
             auto r1a = r.at(ra::Small<int, 1> {1});
-            tr.test_equal(1, r1a.rank());
-            tr.test_equal(1, r1.rank());
+            tr.test_eq(1, r1a.rank());
+            tr.test_eq(1, r1.rank());
             cout << "r1" << endl;
             std::copy(r1.begin(), r1.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
             tr.test(std::equal(r1.begin(), r1.end(), rcheck1));
@@ -642,7 +642,7 @@ int main()
             real rcheck2[2] = { 5 };
             auto r2 = r(1, 1);
             auto r2a = r.at(ra::Small<int, 2> {1, 1});
-            tr.test_equal(0, r2a.rank());
+            tr.test_eq(0, r2a.rank());
             cout << "r2" << endl;
             std::copy(r2.begin(), r2.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
             tr.test(std::equal(r2.begin(), r2.end(), rcheck2));
@@ -664,9 +664,9 @@ int main()
         ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
         std::iota(a.begin(), a.end(), 0);
         auto sa = ra::ra_traits<ra::Unique<real>>::shape(a);
-        tr.test_equal(3, sa[0]);
-        tr.test_equal(2, sa[1]);
-        tr.test_equal(4, sa[2]);
+        tr.test_eq(3, sa[0]);
+        tr.test_eq(2, sa[1]);
+        tr.test_eq(4, sa[2]);
         real check[24];
         std::iota(check, check+24, 0);
         tr.test(std::equal(check, check+24, a.begin()));
@@ -676,10 +676,10 @@ int main()
         ra::Unique<real, 3> a({3, 2, 4}, ra::unspecified);
         ra::Raw<real> b(a);
         tr.test(a.data()==b.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
-        tr.test_equal(a.rank(), b.rank());
-        tr.test_equal(a.size(0), b.size(0));
-        tr.test_equal(a.size(1), b.size(1));
-        tr.test_equal(a.size(2), b.size(2));
+        tr.test_eq(a.rank(), b.rank());
+        tr.test_eq(a.size(0), b.size(0));
+        tr.test_eq(a.size(1), b.size(1));
+        tr.test_eq(a.size(2), b.size(2));
         tr.test(every(a==b));
     }
     section("I/O");
@@ -729,10 +729,10 @@ int main()
             ra::Raw<real, 0> r { {}, rpool };
             real check[1] = { 88 };
             CheckArrayOutput(tr, r, check);
-            tr.test_equal(1, r.size());
+            tr.test_eq(1, r.size());
 // See note in (170).
             // static_assert(sizeof(r)==sizeof(real *), "bad assumption");
-            tr.test_equal(88, r);
+            tr.test_eq(88, r);
         }
         section("8");
         {
@@ -819,20 +819,20 @@ int main()
             std::iota(a.begin(), a.end(), 1);
             auto b = transpose(a, ra::Small<int, 2> { 0, 0 });
             cout << "b: " << b << endl;
-            tr.test_equal(1, b.rank());
-            tr.test_equal(2, b.size());
-            tr.test_equal(1, b[0]);
-            tr.test_equal(4, b[1]);
+            tr.test_eq(1, b.rank());
+            tr.test_eq(2, b.size());
+            tr.test_eq(1, b[0]);
+            tr.test_eq(4, b[1]);
         }
         {
             ra::Unique<real> a({2, 3}, ra::unspecified);
             std::iota(a.begin(), a.end(), 1);
             auto b = transpose(a, ra::Small<int, 2> { 0, 0 });
             cout << "b: " << b << endl;
-            tr.test_equal(1, b.rank());
-            tr.test_equal(2, b.size());
-            tr.test_equal(1, b[0]);
-            tr.test_equal(5, b[1]);
+            tr.test_eq(1, b.rank());
+            tr.test_eq(2, b.size());
+            tr.test_eq(1, b[0]);
+            tr.test_eq(5, b[1]);
         }
     }
     return tr.summary();

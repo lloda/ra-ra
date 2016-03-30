@@ -51,7 +51,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " loop on raw pointer []" << endl;
-                tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
+                tr.quiet().test_eq(ra::iota(Isize)*Istep, B);
             }
 // 1. vectorized selection
             {
@@ -63,7 +63,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " array selection" << endl;
-                tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
+                tr.quiet().test_eq(ra::iota(Isize)*Istep, B);
             }
 // 2. write out the indexing loop
             {
@@ -75,7 +75,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " ra::expr on scalar ra:: ()" << endl;
-                tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
+                tr.quiet().test_eq(ra::iota(Isize)*Istep, B);
             }
 // 3. loop on scalar selection
             {
@@ -89,7 +89,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " loop on scalar ra:: ()" << endl;
-                tr.quiet().test_equal(ra::iota(Isize)*Istep, B);
+                tr.quiet().test_eq(ra::iota(Isize)*Istep, B);
             }
         };
         rank1_test(10000, 500, 20, 10000);
@@ -123,7 +123,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " loop on raw pointer []" << endl;
-                tr.quiet().test_equal(Istep*(ra::_0 + ra::_1), B);
+                tr.quiet().test_eq(Istep*(ra::_0 + ra::_1), B);
             }
 // 1. vectorized selection
             {
@@ -135,7 +135,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " array selection" << endl;
-                tr.quiet().test_equal(Istep*(ra::_0 + ra::_1), B);
+                tr.quiet().test_eq(Istep*(ra::_0 + ra::_1), B);
             }
         };
         rank1_11_test(1000, 50, 20, 10000);
@@ -170,7 +170,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " loop on raw pointer []" << endl;
-                tr.quiet().test_equal(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
+                tr.quiet().test_eq(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
             }
 // 1. vectorized selection
             {
@@ -182,7 +182,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " array selection" << endl;
-                tr.quiet().test_equal(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
+                tr.quiet().test_eq(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
             }
         };
         rank1_111_test(40, 20, 2, 4000);
@@ -217,7 +217,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " loop on raw pointer []" << endl;
-                tr.quiet().test_equal(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
+                tr.quiet().test_eq(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             }
 // 1. vectorized selection
             {
@@ -229,7 +229,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " array selection" << endl;
-                tr.quiet().test_equal(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
+                tr.quiet().test_eq(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             }
 // 2. slice one axis at a time, @TODO one way A(i, i, i, i) could work
             {
@@ -247,7 +247,7 @@ int main()
                     dt += now()-t0;
                 }
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " array selection on last axis" << endl;
-                tr.quiet().test_equal(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
+                tr.quiet().test_eq(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             }
         };
         rank1_1111_test(40, 20, 2, 200);

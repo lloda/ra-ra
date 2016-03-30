@@ -36,13 +36,13 @@ int main()
             ra::Owned<int, 1> a = { 1, 2, 3 };
             ra::Owned<int, 1> b = { 0, 0, 0 };
             std::transform(a.begin(), a.end(), b.begin(), [](int a) { return -a; });
-            tr.test_equal(a, -b);
+            tr.test_eq(a, -b);
         }
         {
             ra::Owned<int, 2> a({2, 3}, ra::_0 - 2*ra::_1);
             ra::Owned<int, 2> b({2, 3}, 99);
             std::transform(a.begin(), a.end(), b.begin(), [](int a) { return -a; });
-            tr.test_equal(a, -b);
+            tr.test_eq(a, -b);
         }
     }
     section("restricted iterators");

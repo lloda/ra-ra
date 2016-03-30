@@ -34,13 +34,13 @@ void CheckPlyReverse1(TestRecorder & tr, AA && a)
     auto invert = [](int & a) { a = -a; return a; };
     ply_ravel(ra::expr(invert, a.iter()));
     for (int i=0; i<6; ++i) {
-        tr.test_equal(-(i+1), a(i));
+        tr.test_eq(-(i+1), a(i));
     }
     auto b = reverse(a, 0);
     ply_ravel(ra::expr(invert, b.iter()));
     for (int i=0; i<6; ++i) {
-        tr.test_equal(6-i, b(i));
-        tr.test_equal(i+1, a(i));
+        tr.test_eq(6-i, b(i));
+        tr.test_eq(i+1, a(i));
     }
 }
 
@@ -54,14 +54,14 @@ void CheckPly(TestRecorder & tr, AA && A, BB && B)
     ra::ply_ravel(ra::expr(sub, B.iter(), A.iter()));
     for (int i=0; i!=A.size(0); ++i) {
         for (int j=0; j!=A.size(1); ++j) {
-            tr.test_equal(C(i, j)-A(i, j), B(i, j));
+            tr.test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
     ra::ply_ravel(ra::expr(add, B.iter(), A.iter()));
     ra::ply_index(ra::expr(sub, B.iter(), A.iter()));
     for (int i=0; i!=A.size(0); ++i) {
         for (int j=0; j!=A.size(1); ++j) {
-            tr.test_equal(C(i, j)-A(i, j), B(i, j));
+            tr.test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
 }
@@ -105,9 +105,9 @@ int main()
         {                                                               \
             plier(ra::expr([](int & k, int const i, int const j) { k = i+j; return k; }, \
                            Citer, Biter, Biter));                       \
-            tr.test_equal(2, C[0]);                                    \
-            tr.test_equal(4, C[1]);                                    \
-            tr.test_equal(6, C[2]);                                    \
+            tr.test_eq(2, C[0]);                                    \
+            tr.test_eq(4, C[1]);                                    \
+            tr.test_eq(6, C[2]);                                    \
         }
 #define TEST2(plier)                                                    \
         TEST(plier, B.iter(), C.iter())(int3 { 1, 2, 3 }, int3 { 77, 88, 99 }); \
@@ -126,9 +126,9 @@ int main()
         {                                                               \
             plier(ra::expr([](int & k, int const i, int const j) { k = i*j; return k; }, \
                            Citer, Btemp, Biter));                       \
-            tr.test_equal(1, C[0]);                                    \
-            tr.test_equal(4, C[1]);                                    \
-            tr.test_equal(9, C[2]);                                    \
+            tr.test_eq(1, C[0]);                                    \
+            tr.test_eq(4, C[1]);                                    \
+            tr.test_eq(9, C[2]);                                    \
         }
         TEST(ply_ravel, B.iter(), C.iter(), (int3 {1, 2, 3}.iter()))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
         TEST(ply_index, B.iter(), C.iter(), (int3 {1, 2, 3}.iter()))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
@@ -156,23 +156,23 @@ int main()
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_index(ra::expr(sum2, A.iter(), ra::scalar(int2{2, 2}), B.iter()));
         cout << B << endl;
-        i=2; for (int2 & b: B) { tr.test_equal(i, b[0]); tr.test_equal(i, b[1]); ++i; }
+        i=2; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_index(ra::expr(sum2, ra::scalar(int2{3, 3}), A.iter(), B.iter()));
         cout << B << endl;
-        i=3; for (int2 & b: B) { tr.test_equal(i, b[0]); tr.test_equal(i, b[1]); ++i; }
+        i=3; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
         cout << "\ntraverse..." << endl;
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_ravel(ra::expr(sum2, A.iter(), ra::scalar(int2{4, 5}), B.iter()));
         cout << B << endl;
-        i=4; for (int2 & b: B) { tr.test_equal(i, b[0]); tr.test_equal(i+1, b[1]); ++i; }
+        i=4; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i+1, b[1]); ++i; }
 
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_ravel(ra::expr(sum2, ra::scalar(int2{5, 5}), A.iter(), B.iter()));
         cout << B << endl;
-        i=5; for (int2 & b: B) { tr.test_equal(i, b[0]); tr.test_equal(i, b[1]); ++i; }
+        i=5; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
     }
     section("[ra06] reversed arrays, ply_index");
     {
@@ -183,11 +183,11 @@ int main()
         auto copy = [](int & b, int const a) { b = a; return b; };
         ply_index(ra::expr(copy, B.iter(), A.iter()));
         for (int i=0; i<6; ++i) {
-            tr.test_equal(i+1, B(i));
+            tr.test_eq(i+1, B(i));
         }
         ply_index(ra::expr(copy, B.iter(), reverse(A, 0).iter()));
         for (int i=0; i<6; ++i) {
-            tr.test_equal(6-i, B(i));
+            tr.test_eq(6-i, B(i));
         }
     }
     section("[ra07] reversed arrays, traverse, only one");
@@ -230,11 +230,11 @@ int main()
         plier(ra::expr(copy, b.iter(), a.iter()));                      \
         cout << flush;                                                  \
         for (int i=0; i<6; ++i) {                                       \
-            tr.test_equal(i+1, b[i]);                                  \
+            tr.test_eq(i+1, b[i]);                                  \
         }                                                               \
         plier(ra::expr(copy, b.iter(), reverse(a, 0).iter()));          \
         for (int i=0; i<6; ++i) {                                       \
-            tr.test_equal(6-i, b(i));                                  \
+            tr.test_eq(6-i, b(i));                                  \
         }                                                               \
     }
     TEST(ply_index)
@@ -282,8 +282,8 @@ int main()
             {
                 auto B = ra::explode<ra::Small<real, 2>>(A);
                 for (int i=0; i<3; ++i) {
-                    tr.test_equal(i*2, B[i](0));
-                    tr.test_equal(i*2+1, B[i](1));
+                    tr.test_eq(i*2, B[i](0));
+                    tr.test_eq(i*2+1, B[i](1));
                 }
             };
             test(ra::Unique<real, 2>({4, 2}, ra::_0*2 + ra::_1));
@@ -299,8 +299,8 @@ int main()
                 cout << B << endl;                                      \
                 /* @TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should. */ \
                 for (int i=0; i<3; ++i) {                               \
-                    tr.test_equal(i*2, B[i].real());                    \
-                    tr.test_equal(i*2+1, B[i].imag());                  \
+                    tr.test_eq(i*2, B[i].real());                    \
+                    tr.test_eq(i*2+1, B[i].imag());                  \
                 }                                                       \
             }
             TEST(ra::RANK_ANY)(ra::Unique<real>({4, 2}, ra::_0*2 + ra::_1));
@@ -312,12 +312,12 @@ int main()
             auto test = [&tr](auto && A)
             {
                 auto B = ra::explode<r2x2>(A);
-                tr.test_equal(1, B.rank());
+                tr.test_eq(1, B.rank());
 // @TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should.
-                tr.test_equal(r2x2 { 0, 1, 2, 3 }, B[0]);
-                tr.test_equal(r2x2 { 4, 5, 6, 7 }, B[1]);
-                tr.test_equal(r2x2 { 8, 9, 10, 11 }, B[2]);
-                tr.test_equal(r2x2 { 12, 13, 14, 15}, B[3]);
+                tr.test_eq(r2x2 { 0, 1, 2, 3 }, B[0]);
+                tr.test_eq(r2x2 { 4, 5, 6, 7 }, B[1]);
+                tr.test_eq(r2x2 { 8, 9, 10, 11 }, B[2]);
+                tr.test_eq(r2x2 { 12, 13, 14, 15}, B[3]);
             };
             test(ra::Unique<real, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
             test(ra::Unique<real>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
@@ -329,18 +329,18 @@ int main()
         {
             ra::Unique<complex, 2> A({4, 4}, ra::cast<double>(ra::_0)*complex(4, 1) + ra::cast<double>(ra::_1)*complex(1, 4));
             auto B = ra::compress<real>(A);
-            tr.test_equal(real_part(A), B(ra::all, ra::all, 0));
-            tr.test_equal(imag_part(A), B(ra::all, ra::all, 1));
+            tr.test_eq(real_part(A), B(ra::all, ra::all, 0));
+            tr.test_eq(imag_part(A), B(ra::all, ra::all, 1));
         }
         section("sub is real to super Small");
         {
             using r2 = ra::Small<real, 2>;
             ra::Unique<r2, 2> A({4, 4}, ra::expr([](int i, int j) { return r2 {real(i+j), real(i-j)}; }, ra::_0, ra::_1));
             auto B = ra::compress<real>(A);
-            tr.test_equal(ra::_0+ra::_1, B(ra::all, ra::all, 0));
-            tr.test_equal(B(ra::all, ra::all, 0), ra::expr([](auto && a) { return a(0); }, ra::start(A)));
-            tr.test_equal(ra::_0-ra::_1, B(ra::all, ra::all, 1));
-            tr.test_equal(B(ra::all, ra::all, 1), ra::expr([](auto && a) { return a(1); }, ra::start(A)));
+            tr.test_eq(ra::_0+ra::_1, B(ra::all, ra::all, 0));
+            tr.test_eq(B(ra::all, ra::all, 0), ra::expr([](auto && a) { return a(0); }, ra::start(A)));
+            tr.test_eq(ra::_0-ra::_1, B(ra::all, ra::all, 1));
+            tr.test_eq(B(ra::all, ra::all, 1), ra::expr([](auto && a) { return a(1); }, ra::start(A)));
         }
     }
     return tr.summary();

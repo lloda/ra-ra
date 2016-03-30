@@ -44,11 +44,13 @@
 #define OPTIMIZE
 #endif
 
+#define START(a) *(ra::start(a).flat())
+
 // See ::wedge() in ra/wedge.H, need ra::is_scalar<> to define.
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F,
           enableif_<mp::And<ra::is_zero_or_scalar<T>, ra::is_zero_or_scalar<F> >, int> =0>
-inline decltype(auto) where(bool const w, T && t, F && f) { return w ? *(ra::start(t).flat()) : *(ra::start(f).flat()); }
+inline decltype(auto) where(bool const w, T && t, F && f) { return w ? START(t) : START(f); }
 
 namespace ra {
 
@@ -90,7 +92,7 @@ inline void for_each(F && f, A && ... a)
     template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
-        return *(start(a).flat()) OP *(start(b).flat());                \
+        return START(a) OP START(b);                                    \
     }
 DEFINE_NAMED_BINARY_OP(operator+, +, plus)
 DEFINE_NAMED_BINARY_OP(operator-, -, minus)
@@ -108,7 +110,7 @@ DEFINE_NAMED_BINARY_OP(operator/, /, slash)
     template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
-        return *(start(a).flat()) OP *(start(b).flat());                \
+        return START(a) OP START(b);                                    \
     }
 DEFINE_BINARY_OP(operator&&, &&)
 DEFINE_BINARY_OP(operator||, ||)
@@ -141,9 +143,9 @@ DEFINE_UNARY_OP(operator-, -)
         return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
     template <class ... A, enableif_<ra_zero<A ...>, int> =0>           \
-    inline auto OPNAME(A && ... a)                                             \
+    inline auto OPNAME(A && ... a)                                      \
     {                                                                   \
-        return OP(*(start(a).flat()) ...);                              \
+        return OP(START(a) ...);                                        \
     }
 DEFINE_NAME_OP(rel_error, rel_error)
 DEFINE_NAME_OP(pow, pow)
@@ -222,9 +224,9 @@ inline auto where(W && w, T && t, F && f)
 // @TODO First rank reductions? Variable rank reductions?
 // @TODO Give return type once. gcc gives trouble.
 template <class A>
-inline auto reduce_sqrm(A && a) -> std::decay_t<decltype(sqrm(*(start(a).flat())))>
+inline auto reduce_sqrm(A && a) -> std::decay_t<decltype(sqrm(START(a)))>
 {
-    std::decay_t<decltype(sqrm(*(start(a).flat())))> c(0.);
+    std::decay_t<decltype(sqrm(START(a)))> c(0.);
     for_each([&c](auto a) { c += sqrm(a); }, a);
     return c;
 }
@@ -238,7 +240,6 @@ inline auto norm2(A && a)
 using std::min;
 using std::max;
 
-#define START(a) *(start(a).flat())
 template <class A>
 inline auto amin(A && a) -> std::decay_t<decltype(START(a))>
 {
@@ -288,7 +289,6 @@ inline auto cdot(A && a, B && b) -> std::decay_t<decltype(conj(START(a)) * START
     for_each([&c](auto && a, auto && b) { c = fma_conj(a, b, c); }, a, b);
     return c;
 }
-#undef START
 
 // --------------------
 // Wedge product
@@ -314,8 +314,8 @@ struct fromrank1
     decltype(auto) wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(*(start(a).flat()))>, decltype(start(a))::size_s()> aa = a;
-    Small<std::decay_t<decltype(*(start(b).flat()))>, decltype(start(b))::size_s()> bb = b;
+    Small<std::decay_t<decltype(START(a))>, decltype(start(a))::size_s()> aa = a;
+    Small<std::decay_t<decltype(START(b))>, decltype(start(b))::size_s()> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
@@ -337,8 +337,8 @@ DECL_WEDGE(general_case)
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(*(start(a).flat()))>, decltype(start(a))::size_s()> aa = a;
-    Small<std::decay_t<decltype(*(start(b).flat()))>, decltype(start(b))::size_s()> bb = b;
+    Small<std::decay_t<decltype(START(a))>, decltype(start(a))::size_s()> aa = a;
+    Small<std::decay_t<decltype(START(b))>, decltype(start(b))::size_s()> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
@@ -353,9 +353,9 @@ DECL_WEDGE(general_case)
 template <class A, class B, enableifc_<std::decay_t<A>::size_s()==2 && std::decay_t<B>::size_s()==2, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
-    Small<std::decay_t<decltype(*(start(a_).flat()))>, 2> a = a_;
-    Small<std::decay_t<decltype(*(start(b_).flat()))>, 2> b = b_;
-    Small<std::decay_t<decltype(*(start(a_).flat()) * *(start(b_).flat()))>, 1> r;
+    Small<std::decay_t<decltype(START(a_))>, 2> a = a_;
+    Small<std::decay_t<decltype(START(b_))>, 2> b = b_;
+    Small<std::decay_t<decltype(START(a_) * START(b_))>, 1> r;
     fun::Wedge<2, 1, 1>::product(a, b, r);
     return r[0];
 }
@@ -363,9 +363,9 @@ inline auto cross(A const & a_, B const & b_)
 template <class A, class B, enableifc_<std::decay_t<A>::size_s()==3 && std::decay_t<B>::size_s()==3, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
-    Small<std::decay_t<decltype(*(start(a_).flat()))>, 3> a = a_;
-    Small<std::decay_t<decltype(*(start(b_).flat()))>, 3> b = b_;
-    Small<std::decay_t<decltype(*(start(a_).flat()) * *(start(b_).flat()))>, 3> r;
+    Small<std::decay_t<decltype(START(a_))>, 3> a = a_;
+    Small<std::decay_t<decltype(START(b_))>, 3> b = b_;
+    Small<std::decay_t<decltype(START(a_) * START(b_))>, 3> r;
     fun::Wedge<3, 1, 1>::product(a, b, r);
     return r;
 }
@@ -374,13 +374,13 @@ template <class V>
 inline auto perp(V const & v)
 {
     static_assert(v.size()==2, "dimension error");
-    return Small<std::decay_t<decltype(*(start(v).flat()))>, 2> {v[1], -v[0]};
+    return Small<std::decay_t<decltype(START(v))>, 2> {v[1], -v[0]};
 }
 template <class V, class U, enableif_<is_scalar<U>, int> =0>
 inline auto perp(V const & v, U const & n)
 {
     static_assert(v.size()==2, "dimension error");
-    return Small<std::decay_t<decltype(*(start(v).flat()) * n)>, 2> {v[1]*n, -v[0]*n};
+    return Small<std::decay_t<decltype(START(v) * n)>, 2> {v[1]*n, -v[0]*n};
 }
 template <class V, class U, enableifc_<!is_scalar<U>::value, int> =0>
 inline auto perp(V const & v, U const & n)
@@ -398,7 +398,7 @@ template <class A, enableif_<is_slice<A>, int> =0>
 inline auto normv(A const & a)
 {
     static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such"); // gcc accepts a.size_s()
-    using V = Small<std::decay_t<decltype(*(start(a).flat()))>, A::size_s()>;
+    using V = Small<std::decay_t<decltype(START(a))>, A::size_s()>;
     return V(a/norm2(a));
 }
 
@@ -406,11 +406,13 @@ template <class A, enableifc_<!is_slice<A>::value && is_ra<A>::value, int> =0>
 inline auto normv(A const & a)
 {
     static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such");  // gcc accepts a.size_s()
-    using V = Small<std::decay_t<decltype(*(start(a).flat()))>, A::size_s()>;
+    using V = Small<std::decay_t<decltype(START(a))>, A::size_s()>;
     V b = a;
     b /= norm2(b);
     return b;
 }
+
+#undef START
 
 // @TODO Define within generalization...
 // @TODO Plain auto causes problems witn transform() in mat-fun.H:transform().

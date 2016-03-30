@@ -1,10 +1,11 @@
 
 # ra-ra #
 
-ra-ra is an expression template / multidimensional array library for C++14.
+ra-ra is an expression template / multidimensional array library for C++14. It
+is a work in progress.
 
 
-Features (not all working properly)
+Features
 -----------
 
 * Dynamic or static array rank. Dynamic or static array shape (all dimensions or
@@ -42,51 +43,53 @@ Sui generis
   strides yourself, but all newly created arrays use C-order.
 
 * The selection operator is (). [] is supported for rank-1 arrays only, where it
-  works in the exact same way as ().
+  means the same as ().
 
-* Array constructors have a very regularized format which isn't STL
-  compatible. Single argument constructors always take an 'init-expression'
-  which must provide enough shape information to construct the new array (unless
-  the array type has static shape), and is otherwise subject to the regular
-  argument shape agreement rules.
+* Array constructors have a very regularized format. Single argument
+  constructors always take an 'init-expression' which must provide enough shape
+  information to construct the new array (unless the array type has static
+  shape), and is otherwise subject to the regular argument shape agreement
+  rules. Two argument constructors always have a shape argument and an content
+  argument.
 
+* Indices are checked by default and can be disabled with a compilation flag.
 
-Missing (bugs or wishlist)
+Bugs & wishes
 -----------
 
 * Be namespace-clean.
 
-* Concatenation, search, reshape, and other infinite rank or rank-!=0
-  operations.
-
 * Proper reductions. There are some reduction operations but no general
   mechanism. This may be the most obvious feature hole.
 
+* Concatenation, search, reshape, and other infinite rank or rank>0 operations.
+
 * Stencils, like in Blitz++.
 
-* More clever traversal of arrays, like in Blitz++.
+* More clever/faster traversal of arrays, like in Blitz++.
+
+* Handling of nested arrays; there's no real support for this.
 
 
-Non-features (things I won't try to add)
+Out of scope
 -----------
 
-* No GPU / parallel support.
+* No GPU / parallelization / calls to external libraries.
 
 * Linear algebra, quaternions, etc. Those things belong in other libraries. The
   library includes a dual number implementation but it's more of a demo of how
   to adapt user types to the library.
 
-* Sparse arrays. These are fundamentally different and probably belong somewhere
-  else. I'm not entirely sure though. You'd still want to mix & match with dense
-  arrays, so maybe at some point.
+* Sparse arrays. You'd still want to mix & match with dense arrays, so
+  maybe at some point.
 
 
 Building
 -----------
 
 The library is header-only and has no dependencies beyond a C++14 compiler and
-the standard C++ library. There is a test suite of sorts in test/. These tests
-test internal details and are not meant as demonstrations of how to use the
+the standard C++ library. There is a test suite in test/. These tests test
+internal details and are not meant as demonstrations of how to use the
 library. There is a directory with examples/, mostly ported from Blitz++.
 
 I have tested with g++-5.3 and clang++-3.8. For clang on OS X you have to remove
@@ -100,20 +103,21 @@ I haven't tested on Windows.
 test-wedge-product.C and test-ra-operators.C fail to compile under
 clang++-3.8. I hope to fix these issues as soon as possible.
 
+
 Motivation
 -----------
 
 I do numerical work in C++ so I need a library of this kind. Most C++ array
-libraries seem to support only vectors and matrices, or the small objects people
-need for low-dimensional vector algebra. Blitz++ was a great early array library
-and it hasn't really been replaced as far as I can tell.
+libraries seem to support only vectors and matrices, or small objects for
+low-dimensional vector algebra. Blitz++ was a great early array library and it
+hasn't really been replaced as far as I can tell.
 
-My other inspirations are APL and J, which have gone further than anyone else in
-exploring how array operations should work.
+My other inspirations are APL and J, which have gone further than most in
+exploring how array operations could or should be generalized.
 
 This is a simple library. I tend to avoid second-guessing the compiler and I
-don't focus on performance as much as Blitz++ did, although I avoid stuff that I
-think could become a barrier if I really tried to make things fast. I believe
-that improvements such as new traversal methods or the optimization of specific
-expression patterns should be easy to implement without turning the library
-upside down.
+don't focus on performance as much as Blitz++ did. However, I am wary of adding
+stuff if I think it could become a barrier if I really tried to make things
+fast. I believe that improvements such as new traversal methods or the
+optimization of specific expression patterns should be easy to implement without
+turning the library inside out.

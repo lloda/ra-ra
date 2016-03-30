@@ -53,27 +53,27 @@ int main()
     TestRecorder tr(std::cout);
     {
         ra::Small<int, 2, 2, 2> ref3 {21, 22, 25, 26, 37, 38, 41, 42};
-        tr.test_equal(ref3, A(i, i, i));
-        // tr.test_equal(ref3, A(j, j, j));
-        tr.test_equal(ref3, A(k, k, k));
-        tr.test_equal(ref3, A(ra::vector(l), ra::vector(l), ra::vector(l)));
-        tr.test_equal(ref3, A(ll, ll, ll));
+        tr.test_eq(ref3, A(i, i, i));
+        // tr.test_eq(ref3, A(j, j, j));
+        tr.test_eq(ref3, A(k, k, k));
+        tr.test_eq(ref3, A(ra::vector(l), ra::vector(l), ra::vector(l)));
+        tr.test_eq(ref3, A(ll, ll, ll));
 
 // @TODO have a proper rank / shape match error when comparing these with ref3
         ra::Small<int, 2, 2> ref2 {5, 6, 9, 10};
-        tr.test_equal(ref2, B(i, i));
-        tr.test_equal(ref2, B(j, j));
-        tr.test_equal(ref2, B(k, k));
-        tr.test_equal(ref2, B(ra::vector(l), ra::vector(l)));
-        tr.test_equal(ref2, B(ll, ll));
+        tr.test_eq(ref2, B(i, i));
+        tr.test_eq(ref2, B(j, j));
+        tr.test_eq(ref2, B(k, k));
+        tr.test_eq(ref2, B(ra::vector(l), ra::vector(l)));
+        tr.test_eq(ref2, B(ll, ll));
 
 // @TODO have a proper rank / shape match error when comparing these with ref3
         ra::Small<int, 2> ref1 {1, 2};
-        tr.test_equal(ref1, C(i));
-        tr.test_equal(ref1, C(j));
-        tr.test_equal(ref1, C(k));
-        tr.test_equal(ref1, C(ra::vector(l)));
-        tr.test_equal(ref1, C(ll));
+        tr.test_eq(ref1, C(i));
+        tr.test_eq(ref1, C(j));
+        tr.test_eq(ref1, C(k));
+        tr.test_eq(ref1, C(ra::vector(l)));
+        tr.test_eq(ref1, C(ll));
     }
     return tr.summary();
 }

@@ -45,7 +45,7 @@ struct Indexer0
     template <rank_t end, rank_t k, class P>
     constexpr static enableifc_<(k<end), dim_t> index_p_(dim_t const c, P const & p)
     {
-        CHECK_BOUNDS(p[k]<mp::First_<sizes>::value);
+        CHECK_BOUNDS(inside(p[k], mp::First_<sizes>::value));
         return Indexer0<mp::Drop1_<sizes>, mp::Drop1_<strides>>::template index_p_<end, k+1>(c + p[k] * mp::First_<strides>::value, p);
     }
     template <class P>
@@ -72,7 +72,7 @@ struct Indexer1
     template <rank_t k, class Dim, class Iarg0, class ... Iarg>
     constexpr static dim_t index_(Dim const & dim, Iarg0 const i0_, Iarg const ... i_)
     {
-        CHECK_BOUNDS(i0_<dim[k].size);
+        CHECK_BOUNDS(inside(i0_, dim[k].size));
         return i0_ * dim[k].stride + index_<k+1>(dim, i_ ...);
     }
     template <class Dim, class ... Iarg>
@@ -87,7 +87,7 @@ struct Indexer1
     {
         dim_t c = 0;
         for (rank_t k=0; k<p.size(); ++k) {
-            CHECK_BOUNDS(p[k]<dim[k].size);
+            CHECK_BOUNDS(inside(p[k], dim[k].size));
             c += dim[k].stride * p[k];
         }
         return c;
@@ -105,7 +105,7 @@ struct Indexer1
     {
         dim_t c = 0;
         for (rank_t k=0; k<framer; ++k) {
-            CHECK_BOUNDS(p[k]<dim[k].size);
+            CHECK_BOUNDS(inside(p[k], dim[k].size));
             c += dim[k].stride * p[k];
         }
         return c;
@@ -116,12 +116,14 @@ struct Indexer1
 template <class T, class sizes, class strides> struct SmallArray; // Used as type of Small::iterator::shape().
 template <class T, class sizes, class strides> struct SmallSlice; // Used as types of Small::iterator::at().
 
-template <class sizes_, class strides_, class ... I> struct FilterDims
+template <class sizes_, class strides_, class ... I>
+struct FilterDims
 {
     using sizes = sizes_;
     using strides = strides_;
 };
-template <class sizes_, class strides_, class I0, class ... I> struct FilterDims<sizes_, strides_, I0, I ...>
+template <class sizes_, class strides_, class I0, class ... I>
+struct FilterDims<sizes_, strides_, I0, I ...>
 {
     constexpr static int s = is_beatable<I0>::skip;
     constexpr static int s_src = is_beatable<I0>::skip_src;
@@ -132,7 +134,7 @@ template <class sizes_, class strides_, class I0, class ... I> struct FilterDims
 
 template <dim_t size0, dim_t stride0> constexpr dim_t select(dim_t i0)
 {
-    return ([i0](){ CHECK_BOUNDS(i0<size0); })(), i0*stride0;
+    return ([i0](){ CHECK_BOUNDS(inside(i0, size0)); })(), i0*stride0;
 };
 template <dim_t size0, dim_t stride0, int n> constexpr dim_t select(dots_t<n> i0)
 {
@@ -253,11 +255,13 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
 
-// Specialize for rank() integer-args -> scalar, same in ra::Raw in ra-large.H. @TODO Allow ra::Iota as general expr.
+// Specialize for rank() integer-args -> scalar, same in ra::Raw in ra-large.H.
+// @TODO waiting for fold expressions (N4191) on some of these enableifs.
+// @TODO Cf https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations#recs.cpp17
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I, enableifc_<(mp::Count<std::is_integral<I> ...>::value<rank() \
-                                       && mp::Count<is_beatable<I> ...>::value==sizeof...(I)), int> = 0> \
-    constexpr auto operator()(I ... i) CONST                      \
+                                       && mp::And<mp::int_t<is_beatable<I>::static_p> ...>::value), int> = 0> \
+    constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
         using FD = FilterDims<sizes, strides, I ...>;                   \
         return SmallSlice<T CONST, typename FD::sizes, typename FD::strides> \
@@ -268,7 +272,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
     } /* @TODO More than one selector... */                             \
-    template <class ... I, enableif_<mp::Not<mp::And<is_beatable<I> ...> >, int> = 0> \
+    template <class ... I, enableif_< mp::Or<mp::int_t< !is_beatable<I>::static_p> ...>, int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \

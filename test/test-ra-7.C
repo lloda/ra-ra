@@ -11,7 +11,11 @@
 
 #define RA_OPTIMIZE 0 // disable automatic use, so we can compare with (forced) and without
 #define RA_OPTIMIZE_IOTA 1 // enable all definitions
+
+#ifndef RA_OPTIMIZE_SMALLVECTOR // test is for 1; forcing 0 makes that part of the test moot
 #define RA_OPTIMIZE_SMALLVECTOR 1
+#endif
+
 #include "ra/ra-operators.H"
 #include "ra/test.H"
 
@@ -24,7 +28,7 @@ int main()
     section("optimize is nop by default");
     {
         auto l = optimize(i*i);
-        tr.test_equal(ra::vector({0, 1, 4, 9, 16}), l);
+        tr.test_eq(ra::vector({0, 1, 4, 9, 16}), l);
     }
     section("operations with Iota, plus");
     {
@@ -34,15 +38,15 @@ int main()
         auto k3 = optimize(ra::jvec(5)+1);
         auto k4 = optimize(1+ra::jvec(5));
 // it's actually a Iota
-        tr.test_equal(1, k1.org_);
-        tr.test_equal(1, k2.org_);
-        tr.test_equal(1, k3.org_);
-        tr.test_equal(1, k4.org_);
-        tr.test_equal(ra::vector({1, 2, 3, 4, 5}), j);
-        tr.test_equal(ra::vector({1, 2, 3, 4, 5}), k1);
-        tr.test_equal(ra::vector({1, 2, 3, 4, 5}), k2);
-        tr.test_equal(ra::vector({1, 2, 3, 4, 5}), k3);
-        tr.test_equal(ra::vector({1, 2, 3, 4, 5}), k4);
+        tr.test_eq(1, k1.org_);
+        tr.test_eq(1, k2.org_);
+        tr.test_eq(1, k3.org_);
+        tr.test_eq(1, k4.org_);
+        tr.test_eq(ra::vector({1, 2, 3, 4, 5}), j);
+        tr.test_eq(ra::vector({1, 2, 3, 4, 5}), k1);
+        tr.test_eq(ra::vector({1, 2, 3, 4, 5}), k2);
+        tr.test_eq(ra::vector({1, 2, 3, 4, 5}), k3);
+        tr.test_eq(ra::vector({1, 2, 3, 4, 5}), k4);
     }
     section("operations with Iota, times");
     {
@@ -52,23 +56,25 @@ int main()
         auto k3 = optimize(ra::jvec(5)*2);
         auto k4 = optimize(2*ra::jvec(5));
 // it's actually a Iota
-        tr.test_equal(0, k1.org_);
-        tr.test_equal(0, k2.org_);
-        tr.test_equal(0, k3.org_);
-        tr.test_equal(0, k4.org_);
-        tr.test_equal(ra::vector({0, 2, 4, 6, 8}), j);
-        tr.test_equal(ra::vector({0, 2, 4, 6, 8}), k1);
-        tr.test_equal(ra::vector({0, 2, 4, 6, 8}), k2);
-        tr.test_equal(ra::vector({0, 2, 4, 6, 8}), k3);
-        tr.test_equal(ra::vector({0, 2, 4, 6, 8}), k4);
+        tr.test_eq(0, k1.org_);
+        tr.test_eq(0, k2.org_);
+        tr.test_eq(0, k3.org_);
+        tr.test_eq(0, k4.org_);
+        tr.test_eq(ra::vector({0, 2, 4, 6, 8}), j);
+        tr.test_eq(ra::vector({0, 2, 4, 6, 8}), k1);
+        tr.test_eq(ra::vector({0, 2, 4, 6, 8}), k2);
+        tr.test_eq(ra::vector({0, 2, 4, 6, 8}), k3);
+        tr.test_eq(ra::vector({0, 2, 4, 6, 8}), k4);
     }
+#if RA_OPTIMIZE_SMALLVECTOR==1
     section("small vector ops through vector extensions");
     {
         auto x = optimize(ra::Small<double, 4>{1, 2, 3, 4} + ra::Small<double, 4>{5, 6, 7, 8});
         auto y = ra::Small<double, 4>{1, 2, 3, 4} + ra::Small<double, 4>{5, 6, 7, 8};
         static_assert(std::is_same<decltype(x), ra::Small<double, 4> >::value, "bad optimization");
         static_assert(!std::is_same<decltype(y), ra::Small<double, 4> >::value, "bad non-optimization");
-        tr.test_equal(x, y);
+        tr.test_eq(x, y);
     }
+#endif
     return tr.summary();
 }

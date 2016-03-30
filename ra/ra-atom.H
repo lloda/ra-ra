@@ -140,7 +140,7 @@ struct Vector
     template <class I>
     decltype(auto) at(I const & i)
     {
-        CHECK_BOUNDS(i[0]>=0 && i[0]<this->size());
+        CHECK_BOUNDS(inside(i[0], this->size()));
         return p__[i[0]];
     }
 
@@ -239,6 +239,7 @@ template <class I> struct is_beatable_def
     constexpr static bool value = mp::Or<std::is_integral<I> >::value;
     constexpr static int skip_src = 1;
     constexpr static int skip = 0;
+    constexpr static bool static_p = value; // can the beating can be resolved statically?
 };
 
 template <class II> struct is_beatable_def<Iota<II>>
@@ -246,6 +247,7 @@ template <class II> struct is_beatable_def<Iota<II>>
     constexpr static bool value = std::numeric_limits<II>::is_integer;
     constexpr static int skip_src = 1;
     constexpr static int skip = 1;
+    constexpr static bool static_p = false; // it cannot for Iota
 };
 
 template <int n> struct is_beatable_def<dots_t<n> >
@@ -254,6 +256,7 @@ template <int n> struct is_beatable_def<dots_t<n> >
     constexpr static bool value = (n>=0);
     constexpr static int skip_src = n;
     constexpr static int skip = n;
+    constexpr static bool static_p = true;
 };
 
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I> >;

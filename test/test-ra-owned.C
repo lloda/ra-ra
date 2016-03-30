@@ -27,12 +27,12 @@ int main()
         auto test = [&tr](auto const & ref, auto & a, int newsize, int testsize)
             {
                 a.resize(newsize);
-                tr.test_equal(ref.rank(), a.rank());
-                tr.test_equal(newsize, a.size(0));
+                tr.test_eq(ref.rank(), a.rank());
+                tr.test_eq(newsize, a.size(0));
                 for (int i=1; i<a.rank(); ++i) {
-                    tr.test_equal(ref.size(i), a.size(i));
+                    tr.test_eq(ref.size(i), a.size(i));
                 }
-                tr.test_equal(ref(ra::jvec(testsize)), a(ra::jvec(testsize)));
+                tr.test_eq(ref(ra::jvec(testsize)), a(ra::jvec(testsize)));
             };
         {
             ra::Owned<int, 2> a({5, 3}, ra::_0 - ra::_1);
@@ -45,10 +45,10 @@ int main()
         {
             ra::Owned<int, 1> a({2}, 3);
             a.resize(4, 9);
-            tr.test_equal(3, a[0]);
-            tr.test_equal(3, a[1]);
-            tr.test_equal(9, a[2]);
-            tr.test_equal(9, a[3]);
+            tr.test_eq(3, a[0]);
+            tr.test_eq(3, a[1]);
+            tr.test_eq(9, a[2]);
+            tr.test_eq(9, a[3]);
         }
         {
             ra::Owned<int, 3> a({0, 3, 2}, ra::_0 - ra::_1 + ra::_2); // @BUG If <int, 2>, I get [can't drive] instead of [rank error].
@@ -64,13 +64,13 @@ int main()
         real check[] = { 2, 3, 4, 7 };
         auto test = [&tr, &check](auto && z)
             {
-                tr.test_equal(0, z.size(0));
-                tr.test_equal(1, z.stride(0));
+                tr.test_eq(0, z.size(0));
+                tr.test_eq(1, z.stride(0));
                 for (int i=0; i<4; ++i) {
                     z.push_back(check[i]);
-                    tr.test_equal(i+1, z.size());
+                    tr.test_eq(i+1, z.size());
                     for (int j=0; j<=i; ++j) {
-                        tr.test_equal(check[j], z[j]);
+                        tr.test_eq(check[j], z[j]);
                     }
                 }
             };

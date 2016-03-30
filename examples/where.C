@@ -32,6 +32,6 @@ int main()
          << y << endl;
 
     TestRecorder tr;
-    tr.test_equal(ra::vector({7, -12, -11, -10, -9, -8, 13}), y);
+    tr.test_eq(ra::vector({7, -12, -11, -10, -9, -8, 13}), y);
     return tr.summary();
 }
