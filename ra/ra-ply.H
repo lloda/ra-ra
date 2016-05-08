@@ -81,9 +81,9 @@ void ply_ravel(A && a)
     }
 // find outermost compact dim.
     auto step = a.size(order[0]);
-    int j = 1;
-    for (; j!=rank && a.compact_stride(step, order[0], order[j]); ++j) {
-        step *= a.size(order[j]);
+    int ocd = 1;
+    for (; ocd!=rank && a.compact_stride(step, order[0], order[ocd]); ++ocd) {
+        step *= a.size(order[ocd]);
     }
     step *= a.preferred_stride(order[0]);
 // all sub xpr strides advance in compact dims, as they might be different.
@@ -98,7 +98,7 @@ void ply_ravel(A && a)
         for (auto end=p+step; p!=end; p+=ss0) {
             *p;
         }
-        for (int k=j; ; ++k) {
+        for (int k=ocd; ; ++k) {
             if (k>=rank) {
                 return;
             } else if (ind[order[k]]<sha[order[k]]-1) {

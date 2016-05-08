@@ -333,6 +333,7 @@ int main()
         TEST(ply_index);
         TEST(plyf);
         TEST(plyf_index);
+#undef TEST
     }
     section("helpers for ply - map, for_each");
     {
@@ -342,6 +343,24 @@ int main()
         real x = 0.;
         for_each([&x](auto y) { x += y; }, ra::Unique<int, 1>({13, 21}));
         tr.test_eq(34, x);
+    }
+    section("the loop cannot be unrolled entirely and one of the outside dims is zero");
+    {
+        real aa = 100;
+        ra::Raw<real, 3> a { {{0, 22}, {11, 2}, {2, 1}}, &aa };
+        ra::Raw<real, 3> b { {{0, 1}, {11, 2}, {2, 1}}, &aa };
+#define TEST(plier)                                             \
+        {                                                       \
+            real c = 99;                                        \
+            plier(ra::expr([&c](real a, real b) { c = 77; },    \
+                           a.iter(), b.iter()));                \
+            tr.info(STRINGIZE(plier)).test(c==99);              \
+        }
+        TEST(ply_ravel);
+        TEST(ply_index);
+        TEST(plyf);
+        TEST(plyf_index);
+#undef TEST
     }
     return tr.summary();
 }

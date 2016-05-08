@@ -204,7 +204,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
         return *flat();
     }
 
-// forward to make sure value y is not misused as ref.
+// forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
 #define DEF_EXPR_EQOPS(OP)                                              \
     template <class X> void operator OP(X && x)                         \
     {                                                                   \
@@ -214,7 +214,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
 #undef DEF_EXPR_EQOPS
 };
 
-// forward to make sure value y is not misused as ref.
+// forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
 #define DEF_VECTOR_EQOPS(OP)                                            \
     template <class V> template <class X> void Vector<V>::operator OP(X && x) \
     {                                                                   \

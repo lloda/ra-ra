@@ -375,7 +375,7 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     }
     bool done() const { return std::get<OuterA>(t).done(); }
 
-// forward to make sure value y is not misused as ref.
+// forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
 #define DEF_RYN_EQOPS(OP)                                               \
     template <class X> void operator OP(X && x)                         \
     {                                                                   \
