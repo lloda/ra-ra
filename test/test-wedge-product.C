@@ -129,13 +129,15 @@ R test_one_scalar_case(A const & a, B const & b)
 int main()
 {
     TestRecorder tr(std::cout);
-    section("@TODO clang issue that causes errors all the way down");
+// gcc let a bug pass by https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57891. Cf http://stackoverflow.com/a/24346350.
+// @TODO We weren't getting the proper diagnostic from clang, probably due to disable_if doing !(integer).
+    section("MatchPermutationP");
     {
         using thematch = MatchPermutationP< int_list<1, 0> >::type<int_list<0, 1> >;
         cout << "A... " << (thematch::value) << endl;
         using index_if = IndexIf<std::tuple<int_list<1, 0> >, MatchPermutationP< int_list<0, 1> >::template type>;
         cout << "B... " << index_if::value << endl;
-        static_assert(index_if::value==0, "this fails in clang 3.8");
+        static_assert(index_if::value==0, "bad MatchPermutationP");
     }
     section("Testing FindCombination");
     {

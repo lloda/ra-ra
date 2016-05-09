@@ -23,14 +23,20 @@ auto wedge(A const & a, B const & b) { return a*b; }
 namespace mp {
 
 template <class P>
+struct NonZeroP
+{
+    static bool const value = (P::value!=0);
+};
+
+template <class P>
 struct MatchPermutationP
 {
-    template <class A> using type = PermutationSign<P, A>;
+    template <class A> using type = NonZeroP<PermutationSign<P, A> >;
 };
 
 template <class P, class Plist> struct FindCombination
 {
-    using type = IndexIf<Plist, MatchPermutationP<P>::template type>;
+    using type = IndexIf<Plist, mp::MatchPermutationP<P>::template type>;
     static int const where = type::value;
     static int const sign = (where>=0) ? PermutationSign<P, typename type::type>::value :0;
 };
