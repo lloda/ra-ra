@@ -80,7 +80,7 @@ void by_traversal2(std::string const & s, Timer & t, A const & a, B const & b)
 }
 
 template <class A, class B>
-enableifc_<A::rank()==1, void>
+std::enable_if_t<A::rank()==1, void>
 by_raw(std::string const & s, Timer & t, A const & a, B const & b)
 {
     t.start();
@@ -97,7 +97,7 @@ by_raw(std::string const & s, Timer & t, A const & a, B const & b)
 }
 
 template <class A, class B>
-enableifc_<A::rank()==2, void>
+std::enable_if_t<A::rank()==2, void>
 by_raw(std::string const & s, Timer & t, A const & a, B const & b)
 {
     t.start();
@@ -116,7 +116,7 @@ by_raw(std::string const & s, Timer & t, A const & a, B const & b)
 }
 
 template <class A, class B>
-enableifc_<A::rank()==3, void>
+std::enable_if_t<A::rank()==3, void>
 by_raw(std::string const & s, Timer & t, A const & a, B const & b)
 {
     t.start();

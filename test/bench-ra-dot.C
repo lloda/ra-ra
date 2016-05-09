@@ -86,7 +86,7 @@ DEFINE_BY_SMALL(by_small_op,                                            \
                 })
 
 template <class A, class B>
-enableifc_<ra_traits<A>::rank_s()==1, real>
+std::enable_if_t<ra_traits<A>::rank_s()==1, real>
 by_raw(A const & a, B const & b)
 {
     real x(0.);
@@ -104,7 +104,7 @@ by_raw(A const & a, B const & b)
 }
 
 template <class A, class B>
-enableifc_<ra_traits<A>::rank_s()==2, real>
+std::enable_if_t<ra_traits<A>::rank_s()==2, real>
 by_raw(A const & a, B const & b)
 {
     real x(0.);
@@ -124,7 +124,7 @@ by_raw(A const & a, B const & b)
 }
 
 template <class A, class B>
-enableifc_<ra_traits<A>::rank_s()==3, real>
+std::enable_if_t<ra_traits<A>::rank_s()==3, real>
 by_raw(A const & a, B const & b)
 {
     real x(0.);
@@ -194,7 +194,7 @@ int main()
     srand(999);
     real a = randr();
     real b = randr();
-    real ref = a*b*S1[0]*N;
+    real ref = a*b*real(S1[0]*N);
 
     TestRecorder tr;
 

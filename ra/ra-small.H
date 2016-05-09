@@ -38,12 +38,12 @@ struct Indexer0
     static_assert(mp::Len<sizes>::value==mp::Len<strides>::value, "mismatched sizes & strides");
 
     template <rank_t end, rank_t k, class P>
-    constexpr static enableifc_<k==end, dim_t> index_p_(dim_t const c, P const & p)
+    constexpr static std::enable_if_t<k==end, dim_t> index_p_(dim_t const c, P const & p)
     {
         return c;
     }
     template <rank_t end, rank_t k, class P>
-    constexpr static enableifc_<(k<end), dim_t> index_p_(dim_t const c, P const & p)
+    constexpr static std::enable_if_t<(k<end), dim_t> index_p_(dim_t const c, P const & p)
     {
         CHECK_BOUNDS(inside(p[k], mp::First_<sizes>::value));
         return Indexer0<mp::Drop1_<sizes>, mp::Drop1_<strides>>::template index_p_<end, k+1>(c + p[k] * mp::First_<strides>::value, p);
@@ -259,7 +259,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 // @TODO waiting for fold expressions (N4191) on some of these enableifs.
 // @TODO Cf https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations#recs.cpp17
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I, enableifc_<(mp::Count<std::is_integral<I> ...>::value<rank() \
+    template <class ... I, std::enable_if_t<(mp::Count<std::is_integral<I> ...>::value<rank() \
                                        && mp::And<mp::int_t<is_beatable<I>::static_p> ...>::value), int> = 0> \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
@@ -267,7 +267,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         return SmallSlice<T CONST, typename FD::sizes, typename FD::strides> \
             (data()+select_loop<sizes, strides>(i ...));                \
     }                                                                   \
-    template <class ... I, enableifc_<mp::Count<std::is_integral<I> ...>::value==rank(), int> = 0> \
+    template <class ... I, std::enable_if_t<mp::Count<std::is_integral<I> ...>::value==rank(), int> = 0> \
     decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
@@ -397,7 +397,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         decltype(auto) operator*() const { return *Iterator::p; }
         decltype(auto) operator*() { return *Iterator::p; }
         template <int k=rank()-1>
-        enableifc_<(k>=0)> next_in_cube()
+        std::enable_if_t<(k>=0)> next_in_cube()
         {
             ++i[k];
             if (i[k]<mp::Ref_<sizes, k>::value) {
@@ -409,7 +409,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
                 return;
             }
         }
-        template <int k> enableifc_<(k<0)> next_in_cube() { Iterator::p = nullptr; }
+        template <int k> std::enable_if_t<(k<0)> next_in_cube() { Iterator::p = nullptr; }
         general_stl_iterator & operator++() { next_in_cube(); return *this; }
     };
 
@@ -590,7 +590,7 @@ inline auto transpose(Small<T, M, N> const & a)
 }
 
 // @TODO Merge with transpose(). Work for any SmallBase.
-template <class AA, enableifc_<ra_traits<AA>::size_s()!=DIM_ANY, int> =0>
+template <class AA, std::enable_if_t<ra_traits<AA>::size_s()!=DIM_ANY, int> =0>
 inline auto diag(AA && a)
 {
     using A = std::decay_t<AA>;
@@ -600,7 +600,7 @@ inline auto diag(AA && a)
 
 // @TODO Used by ProductRule; waiting for proper generalization.
 template <class AA1, class AA2,
-          enableifc_<ra_traits<AA1>::size_s()!=DIM_ANY && ra_traits<AA2>::size_s()!=DIM_ANY, int> =0>
+          std::enable_if_t<ra_traits<AA1>::size_s()!=DIM_ANY && ra_traits<AA2>::size_s()!=DIM_ANY, int> =0>
 auto cat(AA1 const & a1, AA2 const & a2)
 {
     using A1 = std::decay_t<AA1>;
@@ -614,7 +614,7 @@ auto cat(AA1 const & a1, AA2 const & a2)
 }
 
 template <class A1, class A2,
-          enableifc_<ra_traits<A1>::size_s()!=DIM_ANY && is_scalar<A2>::value, int> =0>
+          std::enable_if_t<ra_traits<A1>::size_s()!=DIM_ANY && is_scalar<A2>::value, int> =0>
 auto cat(A1 const & a1, A2 const & a2)
 {
     static_assert(a1.rank()==1, "bad ranks for cat");
@@ -626,7 +626,7 @@ auto cat(A1 const & a1, A2 const & a2)
 }
 
 template <class A1, class A2,
-          enableifc_<is_scalar<A1>::value && ra_traits<A2>::size_s()!=DIM_ANY, int> =0>
+          std::enable_if_t<is_scalar<A1>::value && ra_traits<A2>::size_s()!=DIM_ANY, int> =0>
 auto cat(A1 const & a1, A2 const & a2)
 {
     static_assert(a2.rank()==1, "bad ranks for cat");

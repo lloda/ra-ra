@@ -101,14 +101,14 @@ struct ra_traits_def<std::initializer_list<T>>
 };
 
 // To handle rank-1 arrays of static/dynamic size. TODO: clean up, see temporary.H.
-template <class Dim, enableifc_<ra_traits<Dim>::size_s()!=DIM_ANY, int> =0>
+template <class Dim, std::enable_if_t<ra_traits<Dim>::size_s()!=DIM_ANY, int> =0>
 void resize(Dim & dim, dim_t k)
 {
     static_assert(ra_traits<Dim>::rank_s()==1, "bad rank");
     assert(k==dim_t(dim.size()));
 }
 
-template <class Dim, enableifc_<ra_traits<Dim>::size_s()==DIM_ANY, int> =0>
+template <class Dim, std::enable_if_t<ra_traits<Dim>::size_s()==DIM_ANY, int> =0>
 void resize(Dim & dim, dim_t k)
 {
     static_assert(ra_traits<Dim>::rank_s()==1 || ra_traits<Dim>::rank_s()==RANK_ANY, "bad rank");

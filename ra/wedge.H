@@ -23,15 +23,9 @@ auto wedge(A const & a, B const & b) { return a*b; }
 namespace mp {
 
 template <class P>
-struct NonZeroP
-{
-    static bool const value = (P::value!=0);
-};
-
-template <class P>
 struct MatchPermutationP
 {
-    template <class A> using type = NonZeroP<PermutationSign<P, A> >;
+    template <class A> using type = int_t<(PermutationSign<P, A>::value!=0)>;
 };
 
 template <class P, class Plist> struct FindCombination
@@ -79,7 +73,7 @@ struct ChooseComponents
     using type = Combinations_<Iota_<D>, O>;
 };
 template <int D, int O>
-struct ChooseComponents<D, O, enableifc_<(D>1) && (2*O>D)>>
+struct ChooseComponents<D, O, std::enable_if_t<(D>1) && (2*O>D)>>
 {
     static_assert(D>=O, "bad dimension or form order");
     using C = typename ChooseComponents<D, D-O>::type;
@@ -125,7 +119,7 @@ struct Wedge
         return 0.;
     }
     template <class Xr, class Fa, class Va, class Vb>
-    static disableif_<mp::NilP<Fa>, valtype<Va, Vb>>
+    static enableif_<mp::Not<mp::NilP<Fa>>, valtype<Va, Vb>>
     term(Va const & a, Vb const & b)
     {
         using Fa0 = mp::First_<Fa>;
@@ -137,7 +131,7 @@ struct Wedge
         return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::Drop1_<Fa>>(a, b);
     }
     template <class Va, class Vb, class Vr, int wr>
-    static enableifc_<(wr<Nr)>
+    static std::enable_if_t<(wr<Nr)>
     coeff(Va const & a, Vb const & b, Vr & r)
     {
         using Xr = mp::Ref_<Cr, wr>;
@@ -146,7 +140,7 @@ struct Wedge
         coeff<Va, Vb, Vr, wr+1>(a, b, r);
     }
     template <class Va, class Vb, class Vr, int wr>
-    static enableifc_<(wr==Nr)>
+    static std::enable_if_t<(wr==Nr)>
     coeff(Va const & a, Vb const & b, Vr & r)
     {
     }
@@ -173,12 +167,12 @@ struct Hodge
     static int const Nb = W::Nb;
 
     template <int i, class Va, class Vb>
-    static enableifc_<(i==W::Na)>
+    static std::enable_if_t<(i==W::Na)>
     hodge_aux(Va const & a, Vb & b)
     {
     }
     template <int i, class Va, class Vb>
-    static enableifc_<(i<W::Na)>
+    static std::enable_if_t<(i<W::Na)>
     hodge_aux(Va const & a, Vb & b)
     {
         using Cai = mp::Ref_<Ca, i>;
@@ -214,25 +208,25 @@ void hodgex(Va const & a, Vb & b)
 // Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w in that case, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
 #define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !odd(O*(D-O))))
 template <int D, int O, class Va, class Vb>
-enableifc_<TRIVIAL(D, O)> hodge(Va const & a, Vb & b)
+std::enable_if_t<TRIVIAL(D, O)> hodge(Va const & a, Vb & b)
 {
     static_assert(Va::size()==fun::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc
     static_assert(Vb::size()==fun::Hodge<D, O>::Nb, "error");
     b = a;
 }
 template <int D, int O, class Va>
-enableifc_<TRIVIAL(D, O), Va const &> hodge(Va const & a)
+std::enable_if_t<TRIVIAL(D, O), Va const &> hodge(Va const & a)
 {
     static_assert(Va::size()==fun::Hodge<D, O>::Na, "error"); // gcc accepts a.size()
     return a;
 }
 template <int D, int O, class Va, class Vb>
-enableifc_<!TRIVIAL(D, O)> hodge(Va const & a, Vb & b)
+std::enable_if_t<!TRIVIAL(D, O)> hodge(Va const & a, Vb & b)
 {
     fun::hodgex<D, O>(a, b);
 }
 template <int D, int O, class Va>
-enableifc_<!TRIVIAL(D, O), Va &> hodge(Va & a)
+std::enable_if_t<!TRIVIAL(D, O), Va &> hodge(Va & a)
 {
     Va b(a);
     fun::hodgex<D, O>(b, a);

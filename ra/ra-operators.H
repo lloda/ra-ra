@@ -310,7 +310,7 @@ struct fromrank1
 
 #define DECL_WEDGE(condition)                                           \
     template <int D, int Oa, int Ob, class Va, class Vb,                \
-              disableif_<mp::And<is_scalar<Va>, is_scalar<Vb> >, int> =0> \
+              enableif_<mp::Not<mp::And<is_scalar<Va>, is_scalar<Vb>>>, int> =0> \
     decltype(auto) wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
@@ -333,7 +333,7 @@ DECL_WEDGE(general_case)
 
 #define DECL_WEDGE(condition)                                      \
     template <int D, int Oa, int Ob, class Va, class Vb, class Vr, \
-              disableif_<mp::And<is_scalar<Va>, is_scalar<Vb> >, int> =0> \
+              enableif_<mp::Not<mp::And<is_scalar<Va>, is_scalar<Vb>>>, int> =0> \
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
@@ -350,7 +350,7 @@ DECL_WEDGE(general_case)
 }
 #undef DECL_WEDGE
 
-template <class A, class B, enableifc_<std::decay_t<A>::size_s()==2 && std::decay_t<B>::size_s()==2, int> =0>
+template <class A, class B, std::enable_if_t<std::decay_t<A>::size_s()==2 && std::decay_t<B>::size_s()==2, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(START(a_))>, 2> a = a_;
@@ -360,7 +360,7 @@ inline auto cross(A const & a_, B const & b_)
     return r[0];
 }
 
-template <class A, class B, enableifc_<std::decay_t<A>::size_s()==3 && std::decay_t<B>::size_s()==3, int> =0>
+template <class A, class B, std::enable_if_t<std::decay_t<A>::size_s()==3 && std::decay_t<B>::size_s()==3, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(START(a_))>, 3> a = a_;
@@ -382,7 +382,7 @@ inline auto perp(V const & v, U const & n)
     static_assert(v.size()==2, "dimension error");
     return Small<std::decay_t<decltype(START(v) * n)>, 2> {v[1]*n, -v[0]*n};
 }
-template <class V, class U, enableifc_<!is_scalar<U>::value, int> =0>
+template <class V, class U, std::enable_if_t<!is_scalar<U>::value, int> =0>
 inline auto perp(V const & v, U const & n)
 {
     static_assert(v.size()==3, "dimension error");
@@ -402,7 +402,7 @@ inline auto normv(A const & a)
     return V(a/norm2(a));
 }
 
-template <class A, enableifc_<!is_slice<A>::value && is_ra<A>::value, int> =0>
+template <class A, std::enable_if_t<!is_slice<A>::value && is_ra<A>::value, int> =0>
 inline auto normv(A const & a)
 {
     static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such");  // gcc accepts a.size_s()
@@ -535,7 +535,7 @@ operator<<(std::ostream & o, A && a_)
 
 // Static size.
 template <class C> inline
-enableifc_<ra_traits<C>::size_s()!=DIM_ANY, std::istream &>
+std::enable_if_t<ra_traits<C>::size_s()!=DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
 {
     using T = typename ra_traits<C>::value_type;
@@ -560,7 +560,7 @@ operator>>(std::istream & i, std::vector<T, A> & c)
 
 // Expr size, so read shape and possibly allocate (@TODO try to avoid).
 template <class C> inline
-enableifc_<ra_traits<C>::size_s()==DIM_ANY, std::istream &>
+std::enable_if_t<ra_traits<C>::size_s()==DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
 {
     using T = typename ra_traits<C>::value_type;

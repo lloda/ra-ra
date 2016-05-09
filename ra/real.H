@@ -31,8 +31,8 @@ using std::fma;
 #define IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)
 
 // As an array op; special definitions for rank 0.
-template <class T> inline enableifc_<IS_REAL(T), T> amax(T const x) { return x; }
-template <class T> inline enableifc_<IS_REAL(T), T> amin(T const x) { return x; }
+template <class T> inline std::enable_if_t<IS_REAL(T), T> amax(T const x) { return x; }
+template <class T> inline std::enable_if_t<IS_REAL(T), T> amin(T const x) { return x; }
 
 #undef IS_REAL
 

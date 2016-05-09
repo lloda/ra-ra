@@ -61,14 +61,8 @@
 #define FOR_EACH_(N, what, x, ...) JOIN(FOR_EACH_, N)(what, x, __VA_ARGS__)
 #define FOR_EACH(what, x, ...) FOR_EACH_(FOR_EACH_NARG(x, __VA_ARGS__), what, x, __VA_ARGS__)
 
-template <bool b, class T=void>
-using enableifc_ = typename std::enable_if<b, T>::type;
-
 template <class B, class T=void>
-using enableif_ = typename std::enable_if<B::value, T>::type;
-
-template <class B, class T=void>
-using disableif_ = typename std::enable_if<!B::value, T>::type;
+using enableif_ = std::enable_if_t<B::value, T>;
 
 namespace mp {
 

@@ -121,7 +121,7 @@ int main()
             [&tr](auto && a, bool used)                                 \
             {                                                           \
                 tr.info(STRINGIZE(plier) "/" id)                        \
-                    .test(used || (a.begin()==a.end() && a.size()==0) && STRINGIZE(plier) id " before"); \
+                    .test((used || (a.begin()==a.end() && a.size()==0)) && STRINGIZE(plier) id " before"); \
                 Never check;                                            \
                 plier(ra::expr([&check](int a) { check = a; }, a.iter())); \
                 tr.info(STRINGIZE(plier) id " after")                   \

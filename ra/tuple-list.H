@@ -119,15 +119,29 @@ struct Last
 };
 template <class A> using Last_ = typename Last<A>::type;
 
-// An alias for std::conditional, which is a bit long.
-template <bool c, class A, class B>
-struct If
-{
-    using type = typename std::conditional<c, A, B>::type;
-};
+template <bool c, class A, class B> using If = std::conditional<c, A, B>;
+template <bool c, class A, class B> using If_ = typename If<c, A, B>::type;
 
-template <bool c, class A, class B>
-using If_ = typename If<c, A, B>::type;
+template <class A>
+struct Not
+{
+    static bool const value = !(A::value);
+    using type = int_t<value>;
+};
+template <class A> using Not_ = typename Not<A>::type;
+
+template <bool a>
+struct When
+{
+    static bool const value = a;
+    using type = int_t<value>;
+};
+template <bool a>
+struct Unless
+{
+    static bool const value = !a;
+    using type = int_t<value>;
+};
 
 // Return the index of a type in a type list, or -1 if not found.
 template <class A, class Val, int i=0>
@@ -160,7 +174,7 @@ struct IndexIf<tuple<A0, A ...>, Pred, i, enableif_<Pred<A0>>>
     static int const value = i;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, disableif_<Pred<A0>>>
+struct IndexIf<tuple<A0, A ...>, Pred, i, enableif_<Not<Pred<A0>>>>
 {
     using next = IndexIf<tuple<A ...>, Pred, i+1>;
     using type = typename next::type;
@@ -436,26 +450,6 @@ template <class A0, class ... A>
 struct Or<A0, A ...>
 {
     using type = int_t<A0::value || Or<A ...>::type::value>;
-    static int const value = type::value;
-};
-
-template <class A>
-struct Not
-{
-    using type = int_t<!A::value>;
-    static int const value = type::value;
-};
-
-template <bool a>
-struct When
-{
-    using type = int_t<a>;
-    static int const value = type::value;
-};
-template <bool a>
-struct Unless
-{
-    using type = int_t<!a>;
     static int const value = type::value;
 };
 

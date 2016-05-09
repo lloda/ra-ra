@@ -21,7 +21,7 @@ template <int i, class T, class Enable=void>
 struct nth_arg_impl;
 
 template <int i, class P0, class ... P>
-struct nth_arg_impl<i, std::tuple<P0, P ...>, enableifc_<i==0>>
+struct nth_arg_impl<i, std::tuple<P0, P ...>, std::enable_if_t<i==0>>
 {
     static P0 && f(P0 && p0, P && ... p)
     {
@@ -30,7 +30,7 @@ struct nth_arg_impl<i, std::tuple<P0, P ...>, enableifc_<i==0>>
 };
 
 template <int i, class P0, class ... P>
-struct nth_arg_impl<i, std::tuple<P0, P ...>, enableifc_<(i>0)>>
+struct nth_arg_impl<i, std::tuple<P0, P ...>, std::enable_if_t<(i>0)>>
 {
     static_assert(i<=sizeof...(P), "bad argument index");
     using rest = std::tuple<P ...>;

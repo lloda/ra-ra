@@ -53,10 +53,9 @@ else:
     archflags=['-march=native']
 
 env.Append(CPPPATH=['..', 'examples'], CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-           CXXFLAGS=['-std=c++14', '-Wall', '-Werror', '-Wno-unknown-pragmas', #'-Wconversion',
-                     '-Wno-parentheses', '-fdiagnostics-color=always',
-                     '-Wno-error=strict-overflow'
-                     #    '-funsafe-math-optimizations' # @TODO Test with this.
+           CXXFLAGS=['-std=c++14', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+                     #'-Wconversion',
+                     # '-funsafe-math-optimizations', # @TODO Test with this.
                  ])
 
 

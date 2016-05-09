@@ -251,13 +251,13 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     T t;
 
     template <int iarg>
-    enableifc_<(iarg==mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg==mp::Len<K>::value), bool>
     check(dim_t const s0, int const k)
     {
         return true;
     }
     template <int iarg>
-    enableifc_<(iarg<mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg<mp::Len<K>::value), bool>
     check(dim_t const s0, int const k)
     {
         dim_t sk = std::get<mp::Ref_<K, iarg>::value>(t).size(k);
@@ -282,14 +282,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // DEBUGGING --find the driver for given axis. This pattern is used below.
     template <int iarg=0>
-    enableifc_<(iarg<mp::Len<K>::value), int>
+    std::enable_if_t<(iarg<mp::Len<K>::value), int>
     driver(int const k)
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? iarg : driver<iarg+1>(k);
     }
     template <int iarg>
-    enableifc_<(iarg==mp::Len<K>::value), int>
+    std::enable_if_t<(iarg==mp::Len<K>::value), int>
     driver(int const k)
     {
         assert(0 && "there was no driver"); abort();
@@ -297,14 +297,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
     template <int iarg=0>
-    enableifc_<(iarg<mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg<mp::Len<K>::value), dim_t>
     size(int const k) const
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? s : size<iarg+1>(k);
     }
     template <int iarg>
-    enableifc_<(iarg==mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg==mp::Len<K>::value), dim_t>
     size(int const k) const
     {
         assert(0 && "internal error"); abort();
@@ -312,14 +312,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
     template <int iarg=0>
-    enableifc_<(iarg<mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg<mp::Len<K>::value), dim_t>
     preferred_stride(int const k) const
     {
         return std::get<iarg>(t).live(k)>=0 ? std::get<iarg>(t).preferred_stride(k)
                                             : preferred_stride<iarg+1>(k);
     }
     template <int iarg>
-    enableifc_<(iarg==mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg==mp::Len<K>::value), dim_t>
     preferred_stride(int const k) const
     {
         assert(0 && "internal error"); abort();
@@ -339,27 +339,27 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // @TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
     template <int iarg=0>
-    enableifc_<(iarg<mp::Len<K>::value), void>
+    std::enable_if_t<(iarg<mp::Len<K>::value), void>
     adv(rank_t const k, dim_t const d)
     {
         std::get<iarg>(t).adv(k, d);
         adv<iarg+1>(k, d);
     }
     template <int iarg>
-    enableifc_<(iarg==mp::Len<K>::value), void>
+    std::enable_if_t<(iarg==mp::Len<K>::value), void>
     adv(rank_t const k, dim_t const d)
     {
     }
 
     template <int iarg=0>
-    enableifc_<(iarg<mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg<mp::Len<K>::value), bool>
     compact_stride(dim_t const step, int const z, int const j) const
     {
         return std::get<mp::Ref_<K, iarg>::value>(t).compact_stride(step, z, j)
                && compact_stride<iarg+1>(step, z, j);
     }
     template <int iarg>
-    enableifc_<(iarg==mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg==mp::Len<K>::value), bool>
     compact_stride(dim_t const step, int const z, int const j) const
     {
         return true;

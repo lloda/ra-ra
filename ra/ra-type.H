@@ -47,7 +47,7 @@ struct is_slice_pos_rank
 };
 
 template <class C>
-struct is_slice_pos_rank<C, enableifc_<(is_slice<C>::value && ra_traits<C>::rank_s()!=0)>>
+struct is_slice_pos_rank<C, std::enable_if_t<(is_slice<C>::value && ra_traits<C>::rank_s()!=0)>>
 {
     static bool const value = true;
 };
@@ -72,7 +72,7 @@ struct is_array_iterator_pos_rank
 };
 
 template <class A>
-struct is_array_iterator_pos_rank<A, enableifc_<std::decay_t<A>::rank_s()!=0> >
+struct is_array_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0> >
 {
     static bool const value = is_array_iterator<A>::value;
 };

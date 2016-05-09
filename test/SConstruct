@@ -52,10 +52,9 @@ else:
     archflags=['-march=native']
 
 env.Append(CPPPATH=['..', 'test'], CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-           CXXFLAGS=['-std=c++14', '-Wall', '-Werror', '-Wno-unknown-pragmas', #'-Wconversion',
-                     '-Wno-parentheses', '-fdiagnostics-color=always',
-                     '-Wno-error=strict-overflow'
-                     #    '-funsafe-math-optimizations' # @TODO Test with this.
+           CXXFLAGS=['-std=c++14', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+                     #'-Wconversion',
+                     # '-funsafe-math-optimizations', # @TODO Test with this.
                  ])
 
 
@@ -99,7 +98,8 @@ def to_test_ra(env, source):
               'test-ra-6', 'test-ra-where', 'test-tuplelist',
               'test-ra-7',
               'test-wedge-product', 'test-ra-operators',
-              'test-ra-tensorindex']]
+              'test-ra-tensorindex',
+              'test-ra-8']]
 
 [to_test_ra(env, test)
  for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-mmul']]

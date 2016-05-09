@@ -37,10 +37,10 @@ struct FindCombinationTester
 };
 
 template <int N, int O>
-enableifc_<(O>N)> test_optimized_hodge_aux(TestRecorder & tr) {}
+std::enable_if_t<(O>N)> test_optimized_hodge_aux(TestRecorder & tr) {}
 
 template <int N, int O>
-enableifc_<(O<=N)> test_optimized_hodge_aux(TestRecorder & tr)
+std::enable_if_t<(O<=N)> test_optimized_hodge_aux(TestRecorder & tr)
 {
     section(format("hodge() vs hodgex() with N=", N, " O=", O));
     static_assert(N>=O, "bad_N_or_bad_O");

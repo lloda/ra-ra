@@ -177,7 +177,7 @@ struct Raw
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in ra-small.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I,                                              \
-              enableifc_<(mp::Count<std::is_integral<I> ...>::value<RANK \
+              std::enable_if_t<(mp::Count<std::is_integral<I> ...>::value<RANK \
                           && mp::Count<is_beatable<I> ...>::value==sizeof...(I)), int> = 0> \
     auto operator()(I ... i) CONST                                      \
     {                                                                   \
@@ -190,7 +190,7 @@ struct Raw
         }                                                               \
         return sub;                                                     \
     } /* @BUG doesn't handle generic zero-rank indices */               \
-    template <class ... I, enableifc_<mp::Count<std::is_integral<I> ...>::value==RANK, int> = 0> \
+    template <class ... I, std::enable_if_t<mp::Count<std::is_integral<I> ...>::value==RANK, int> = 0> \
     decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
@@ -626,7 +626,7 @@ Raw<T, RANK> transpose(Raw<T, RANK> const & raw)
 }
 
 // @TODO Merge with transpose(); transpose(A, {0, 0}) should work. Also from(A, ra::_0, ra::_0) should work.
-template <class A, enableifc_<ra_traits<A>::size_s()==DIM_ANY, int> =0>
+template <class A, std::enable_if_t<ra_traits<A>::size_s()==DIM_ANY, int> =0>
 inline auto diag(A && a)
 {
     assert(a.rank()==2 && a.size(0)==a.size(1) && "bad rank for diag");
@@ -653,7 +653,7 @@ auto explode_(Raw<T, RANK> const & a)
         b.dim[i].stride = a.stride(i) / r;
         b.dim[i].size = a.size(i);
     }
-    assert(b.rank()==0 || a.stride(b.rank()-1)==r && "super type is not compact in array");
+    assert((b.rank()==0 || a.stride(b.rank()-1)==r) && "super type is not compact in array");
     b.p = reinterpret_cast<super_t *>(a.data());
     return b;
 }
