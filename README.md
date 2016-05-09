@@ -45,14 +45,13 @@ Sui generis
 * The selection operator is (). [] is supported for rank-1 arrays only, where it
   means the same as ().
 
-* Array constructors have a very regularized format. Single argument
-  constructors always take an 'init-expression' which must provide enough shape
-  information to construct the new array (unless the array type has static
-  shape), and is otherwise subject to the regular argument shape agreement
-  rules. Two argument constructors always have a shape argument and an content
-  argument.
+* Array constructors have a very regular format. Single argument constructors
+  always take an 'init-expression' which must provide enough shape information
+  to construct the new array (unless the array type has static shape), and is
+  otherwise subject to the regular argument shape agreement rules. Two argument
+  constructors always take a shape argument and a content argument.
 
-* Indices are checked by default and can be disabled with a compilation flag.
+* Indices are checked by default. This can be disabled with a compilation flag.
 
 Bugs & wishes
 -----------
@@ -92,16 +91,17 @@ the standard C++ library. There is a test suite in test/. These tests test
 internal details and are not meant as demonstrations of how to use the
 library. There is a directory with examples/, mostly ported from Blitz++.
 
-I have tested with g++-5.3 and clang++-3.8. For clang on OS X you have to remove
-the -Wa,q option in the SConstruct which is meant for gcc by setting CCFLAGS to
-something else, for example:
+All tests should pass under g++-5.3 and clang++-3.7/8/9. For clang on OS X you
+have to remove the -Wa,q option in the SConstruct which is meant for gcc by
+setting CCFLAGS to something else, for example:
 
-  ```CCFLAGS="-march=native" CXXFLAGS=-O3 CXX=clang++-3.8 scons -j4```
+  ```CCFLAGS="-march=native -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3
+  CXX=clang++-3.9 scons -j4```
+
+g++-6.1 fails to build the tests because of this bug:
+https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70942.
 
 I haven't tested on Windows.
-
-test-wedge-product.C and test-ra-operators.C fail to compile under
-clang++-3.8. I hope to fix these issues as soon as possible.
 
 
 Motivation
@@ -112,12 +112,12 @@ libraries seem to support only vectors and matrices, or small objects for
 low-dimensional vector algebra. Blitz++ was a great early array library and it
 hasn't really been replaced as far as I can tell.
 
-My other inspirations are APL and J, which have gone further than most in
-exploring how array operations could or should be generalized.
+I've also been inspired by APL and J, which have led the way in exploring how
+array operations could be generalized.
 
-This is a simple library. I tend to avoid second-guessing the compiler and I
-don't focus on performance as much as Blitz++ did. However, I am wary of adding
-stuff if I think it could become a barrier if I really tried to make things
-fast. I believe that improvements such as new traversal methods or the
-optimization of specific expression patterns should be easy to implement without
-turning the library inside out.
+This is a simple library. I don't want to second-guess the compiler and I don't
+stress performance as much as Blitz++ did. However, I am wary of adding features
+that could become an obstacle if I ever tried to make things fast(er). I believe
+that improvements such as new traversal methods or the optimization of specific
+expression patterns should be easy to implement without turning the library
+inside out.
