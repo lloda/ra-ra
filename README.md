@@ -1,32 +1,32 @@
 
 # ra-ra #
 
-ra-ra is an expression template / multidimensional array library for C++14. It
-is a work in progress.
+ra-ra is an expression template / multidimensional array library for C++14, with
+a few APL/J features.
+
+The primary public repo is at: https://notabug.org/lloda/ra-ra
 
 
 Features
 -----------
 
 * Dynamic or static array rank. Dynamic or static array shape (all dimensions or
-  none, alas).
+  none).
 
-* Both memory-owning types and views. You can make array views over any piece of
+* Memory-owning types and views. You can make array views over any piece of
   memory.
 
-* Shape agreement rules and rank extension for rank-0 operations of any arity
-  and operands of any rank, any of which can a reference (so you can write on
-  them). These rules are taken from the array language, J.
+* Shape agreement rules and rank extension (broadcasting) for rank-0 operations
+  of any arity and operands of any rank, any of which can a reference (so you
+  can write on them). These rules are taken from the array language, J.
 
 * Iterators over cells of arbitrary rank.
 
-* A rank conjunction (only for static rank operands and somewhat fragile).
+* A rank conjunction (only for static rank and somewhat fragile).
 
-* A proper selection operator with 'beating' of range or scalar
-  subscripts. Beatable subscripts are not beaten if mixed with non-beatable
-  subscripts, which is a defect.
+* A proper selection operator with 'beating' of range or scalar subscripts.
 
-* A TensorIndex object as in Blitz++ (doesn't work in the same exact way).
+* A TensorIndex object as in Blitz++ (with some differences).
 
 * Some compatibility with the STL.
 
@@ -45,10 +45,10 @@ Sui generis
 * The selection operator is (). [] is supported for rank-1 arrays only, where it
   means the same as ().
 
-* Array constructors have a very regular format. Single argument constructors
+* Array constructors follow a regular format. Single argument constructors
   always take an 'init-expression' which must provide enough shape information
   to construct the new array (unless the array type has static shape), and is
-  otherwise subject to the regular argument shape agreement rules. Two argument
+  otherwise subject to the regular argument shape agreement rules. Two-argument
   constructors always take a shape argument and a content argument.
 
 * Indices are checked by default. This can be disabled with a compilation flag.
@@ -56,24 +56,29 @@ Sui generis
 Bugs & wishes
 -----------
 
-* Be namespace-clean.
+* Should be namespace-clean.
 
-* Proper reductions. There are some reduction operations but no general
-  mechanism. This may be the most obvious feature hole.
+* Beatable subscripts are not beaten if mixed with non-beatable subscripts.
 
-* Concatenation, search, reshape, and other infinite rank or rank>0 operations.
+* Reductions. There are some full-array reduction operations but no general
+  mechanism for choosing axes etc.
+
+* The where() operator isn't short-circuiting.
+
+* Concatenation, search, reshape, and other infinite rank or rank>0 operations
+  are missing.
 
 * Stencils, like in Blitz++.
 
 * More clever/faster traversal of arrays, like in Blitz++.
 
-* Handling of nested arrays; there's no real support for this.
+* Handling of nested arrays.
 
 
 Out of scope
 -----------
 
-* No GPU / parallelization / calls to external libraries.
+* GPU / parallelization / calls to external libraries.
 
 * Linear algebra, quaternions, etc. Those things belong in other libraries. The
   library includes a dual number implementation but it's more of a demo of how
