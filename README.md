@@ -64,10 +64,10 @@ ra::Owned<float, 2> A({2, 3}, { 1, 2, 3, 1, 2, 3 });
 ra::Owned<float, 1> B({-1, +1});
 
 ra::Owned<float, 2> C({2, 3}, 99.);
-C = A * B;   // C(i, j) = A(i, j) * C(i)
+C = A * B;   // C(i, j) = A(i, j) * B(i)
 
 ra::Owned<float, 1> D({2}, 0.);
-D += A * B;  // D(i) += A(i, j) * C(i)
+D += A * B;  // D(i) += A(i, j) * B(i)
 ```
 ```
 C: 2 3

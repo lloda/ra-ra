@@ -80,7 +80,7 @@ int main()
         ra::Small<int, 3, 2> a { 1, 2, 3, 4, 5, 6 };
         iocheck(tr.info("output of array through its iterator"), a.iter(), a);
         iocheck(tr.info("output of transposed array through its iterator"),
-                transpose(a).iter(),
+                transpose<1, 0>(a).iter(),
                 ra::Small<int, 2, 3> { 1, 3, 5, 2, 4, 6 });
     }
     section("IO can handle tensorindex, too");

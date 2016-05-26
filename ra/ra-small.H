@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -575,27 +575,62 @@ struct ra_traits_def<SmallArray<T, sizes, strides>>: public ra_traits_small<Smal
 template <class T, class sizes, class strides>
 struct ra_traits_def<SmallSlice<T, sizes, strides>>: public ra_traits_small<SmallSlice, T, sizes, strides> {};
 
-// @TODO Generalize, like in ra-large.H.
-template <class T, int M, int N>
-inline auto transpose(Small<T, M, N> & a)
+template <class A, class i>
+struct axis_indices
 {
-    using S = Small<T, M, N>; // gcc accepts a.stride(0), etc.
-    return SmallSlice<T, mp::int_list<N, M>, mp::int_list<S::stride(1), S::stride(0)>> { a.data() };
-}
-template <class T, int M, int N>
-inline auto transpose(Small<T, M, N> const & a)
-{
-    using S = Small<T, M, N>; // gcc accepts a.stride(0), etc.
-    return SmallSlice<T const, mp::int_list<N, M>, mp::int_list<S::stride(1), S::stride(0)>> { a.data() };
-}
+    template <class T> struct MatchIndex
+    {
+        using type = mp::int_t<(T::value==i::value)>;
+    };
+    using I = mp::Iota_<mp::Len<A>::value>;
+    using W = mp::Map_<MatchIndex, A>;
+    using type = mp::Filter_<W, I>;
+    static_assert(mp::Len<type>::value > 0, "dst axis doesn't appear in transposed axes list");
+};
 
-// @TODO Merge with transpose(). Work for any SmallBase.
+template <class axes_list, class Dst, class sizes_, class strides_>
+struct axes_list_indices
+{
+    template <class dst_i> struct dst_indices
+    {
+        using type = typename axis_indices<axes_list, dst_i>::type;
+
+        template <class i> using sizesi = mp::Ref<sizes_, i::value>;
+        template <class i> using stridesi = mp::Ref<strides_, i::value>;
+
+        using stride = mp::Fold_<mp::Sum, void, mp::Map_<stridesi, type> >;
+        using size = mp::Fold_<mp::Min, void, mp::Map_<sizesi, type> >;
+    };
+    template <class dst_i> struct dst_size { using type = typename dst_indices<dst_i>::size; };
+    template <class dst_i> struct dst_stride { using type = typename dst_indices<dst_i>::stride; };
+
+    using type = mp::Map_<dst_indices, Dst>;
+    using sizes =  mp::Map_<dst_size, Dst>;
+    using strides =  mp::Map_<dst_stride, Dst>;
+};
+
+#define DEF_TRANSPOSE(CONST)                                           \
+template <int ... Iarg, template <class, class, class> class Child, class T, class sizes, class strides> \
+inline auto transpose(SmallBase<Child, T, sizes, strides> CONST & a)   \
+{                                                                       \
+    using axes_list = mp::int_list<Iarg ...>;                                 \
+    static_assert(mp::Len<axes_list>::value==mp::Len<sizes>::value, "bad size for transposed axes list"); \
+    static constexpr int talmax = mp::Fold_<mp::Max, void, axes_list>::value; \
+    static constexpr int talmin = mp::Fold_<mp::Min, void, axes_list>::value; \
+    static_assert(talmax < mp::Len<sizes>::value, "bad index in transposed axes list"); \
+    static_assert(talmin >= 0, "bad index in transposed axes list");    \
+    using dst = mp::Iota_<1+mp::Fold_<mp::Max, void, axes_list>::value>;      \
+    using ti = axes_list_indices<axes_list, dst, sizes, strides>;                   \
+    return SmallSlice<T CONST, typename ti::sizes, typename ti::strides>(a.data()); \
+};
+DEF_TRANSPOSE(const)
+DEF_TRANSPOSE(/* */)
+#undef DEF_TRANSPOSE
+
 template <class AA, std::enable_if_t<ra_traits<AA>::size_s()!=DIM_ANY, int> =0>
 inline auto diag(AA && a)
 {
-    using A = std::decay_t<AA>;
-    static_assert(A::rank()==2 && A::size(0)==A::size(1), "bad rank for diag"); // gcc accepts a.size(0), etc.
-    return SmallSlice<typename std::remove_reference<decltype(a(0, 0))>::type, mp::int_list<A::size(0)>, mp::int_list<A::stride(0)+A::stride(1)>> { a.data() };
+    return transpose<0, 0>(a);
 }
 
 // @TODO Used by ProductRule; waiting for proper generalization.

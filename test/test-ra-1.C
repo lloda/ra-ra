@@ -274,7 +274,7 @@ int main()
         CheckPly<A2>(tr, reverse(reverse(transpose(A, {1, 0}), 1), 0), B);
         CheckPly<A2>(tr, A, reverse(reverse(transpose(B, {1, 0}), 1), 0));
     }
-    section("explode (formerly compact)");
+    section("explode");
     {
         section("super rank 1");
         {
@@ -299,8 +299,8 @@ int main()
                 cout << B << endl;                                      \
                 /* @TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should. */ \
                 for (int i=0; i<3; ++i) {                               \
-                    tr.test_eq(i*2, B[i].real());                    \
-                    tr.test_eq(i*2+1, B[i].imag());                  \
+                    tr.test_eq(i*2, B[i].real());                       \
+                    tr.test_eq(i*2+1, B[i].imag());                     \
                 }                                                       \
             }
             TEST(ra::RANK_ANY)(ra::Unique<real>({4, 2}, ra::_0*2 + ra::_1));

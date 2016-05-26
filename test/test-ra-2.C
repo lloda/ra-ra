@@ -145,6 +145,14 @@ int main()
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                               ad.iter<-1>(), b.iter<-1>()));
     }
+    section("ply on cell rank > 0, static sizes (@TODO)");
+    {
+        ra::Small<int, 2, 3, 4> a(ra::_0 - ra::_1 + ra::_2);
+        cout << a << endl;
+        cout << "iter " << a.iter() << endl;
+        // auto ai = a.iter<1>();
+        // cout << "iter<1> " << sizeof(a) << endl;
+    }
     section("FYI");
     {
         cout << "..." << sizeof(ra::Raw<real, 0>) << endl;

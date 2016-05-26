@@ -18,7 +18,7 @@
 #include <limits>
 #include "ra/format.H"
 #include "ra/real.H"
-// @TODO Only for where(); unfortunately I can't declare the scalar version in an earlier header.
+// @TODO For where() unfortunately I can't declare the scalar version in an earlier header. Also ra::map()
 #include "ra/ra-operators.H"
 
 char const * esc_bold = "\x1b[01m";
@@ -86,21 +86,19 @@ struct TestRecorder
     {
         test(c);
     }
-    template <class W, class A>
-    bool test_eq(W && wanted, A && got)
-    {
-        bool c = every(wanted==got);
-// where() to match shapes if either doesn't have one
-        info("equal(wanted: ", where(true, wanted, got), ", got: ", got, ")").test(c);
-        return c;
-    }
+// Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
     template <class W, class A, class Comp>
     bool test_comp(W && wanted, A && got, Comp && comp)
     {
-        bool c = every(map(comp, wanted, got));
+        bool c = every(ra::map(comp, wanted, got));
 // where() to match shapes if either doesn't have one
         info("comp(wanted: ", where(true, wanted, got), ", got: ", got, ")").test(c);
         return c;
+    }
+    template <class W, class A>
+    bool test_eq(W && wanted, A && got)
+    {
+        return test_comp(std::forward<W>(wanted), std::forward<A>(got), std::equal_to<>());
     }
     template <class W, class A>
     double test_rel_error(W && wanted, A && got, double req_err=0)

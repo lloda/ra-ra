@@ -14,6 +14,7 @@
 
 #include "ra/int_t.H"
 #include <tuple>
+#include <limits>
 
 namespace mp {
 
@@ -332,20 +333,23 @@ using Filter_ = typename Filter<A, B>::type;
 template <template <class ... A> class F, class Def, class ... L>
 struct Fold
 {
+    using def = If_<std::is_same<void, Def>::value, F<>, Def>;
     using type = typename Fold<F,
-                               typename F<Def, First_<L> ...>::type,
+                               typename F<def, First_<L> ...>::type,
                                typename Drop1<L>::type ...>::type;
 };
 template <template <class ... A> class F, class Def, class ... L>
 struct Fold<F, Def, nil, L ...>
 {
-    using type = Def;
+    using type = If_<std::is_same<void, Def>::value, F<>, Def>;
 };
 template <template <class ... A> class F, class Def>
 struct Fold<F, Def>
 {
-    using type = Def;
+    using type = If_<std::is_same<void, Def>::value, F<>, Def>;
 };
+template <template <class ... A> class F, class Def, class ... L>
+using Fold_ = typename Fold<F, Def, L ...>::type;
 
 // Pass F(A) to templates expecting F(A ...). @todo Wait for C++ to be fixed.
 template <template <class A> class F>
@@ -405,10 +409,34 @@ struct Sum<A0, A ...>
     static int const value = type::value;
 };
 
+template <class ... A> struct Max
+{
+    static int const value = std::numeric_limits<int>::min();
+    using type = int_t<value>;
+};
+template <class A0, class ... A>
+struct Max<A0, A ...>
+{
+    static int const value = std::max(A0::value, Max<A ...>::type::value);
+    using type = int_t<value>;
+};
+
+template <class ... A> struct Min
+{
+    static int const value = std::numeric_limits<int>::max();
+    using type = int_t<value>;
+};
+template <class A0, class ... A>
+struct Min<A0, A ...>
+{
+    static int const value = std::min(A0::value, Min<A ...>::type::value);
+    using type = int_t<value>;
+};
+
 template <class ... A> struct Prod
 {
-    using type = int_t<1>;
     static int const value = 1;
+    using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Prod<A0, A ...>
@@ -419,38 +447,38 @@ struct Prod<A0, A ...>
 
 template <class ... A> struct And
 {
-    using type = int_t<1>;
-    static int const value = type::value;
+    static int const value = 1;
+    using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct And<A0, A ...>
 {
-    using type = int_t<A0::value && And<A ...>::type::value>;
-    static int const value = type::value;
+    static int const value = A0::value && And<A ...>::type::value;
+    using type = int_t<value>;
 };
 
 template <class ... A> struct Count
 {
-    using type = int_t<0>;
-    static int const value = type::value;
+    static int const value = 0;
+    using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Count<A0, A ...>
 {
-    using type = int_t<bool(A0::value) + Count<A ...>::type::value>;
-    static int const value = type::value;
+    static int const value = bool(A0::value) + Count<A ...>::type::value;
+    using type = int_t<value>;
 };
 
 template <class ... A> struct Or
 {
-    using type = int_t<0>;
-    static int const value = type::value;
+    static int const value = 0;
+    using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Or<A0, A ...>
 {
-    using type = int_t<A0::value || Or<A ...>::type::value>;
-    static int const value = type::value;
+    static int const value = A0::value || Or<A ...>::type::value;
+    using type = int_t<value>;
 };
 
 // Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.

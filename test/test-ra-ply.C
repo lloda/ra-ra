@@ -362,5 +362,10 @@ int main()
         TEST(plyf_index);
 #undef TEST
     }
+    section("more pliers on scalar");
+    {
+        tr.test_eq(-99, ra::map([](auto && x) { return -x; }, ra::scalar(99)));
+        tr.test_eq(true, every(ra::expr([](auto && x) { return x>0; }, ra::start(99))));
+    }
     return tr.summary();
 }

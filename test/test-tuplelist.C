@@ -98,6 +98,12 @@ int main()
         using B = int_list<2, 3, -1>;
         static_assert(Fold<Sum, int_t<1>, A>::type::value==15, "");
         static_assert(Fold<Sum, int_t<3>, B>::type::value==7, "");
+        static_assert(Fold<Max, int_t<4>, A>::type::value==6, "");
+        static_assert(Fold<Max, void, A>::type::value==6, "");
+        static_assert(Fold<Max, int_t<9>, A>::type::value==9, "");
+        static_assert(Fold<Min, int_t<4>, A>::type::value==3, "");
+        static_assert(Fold<Min, void, A>::type::value==3, "");
+        static_assert(Fold<Min, int_t<1>, A>::type::value==1, "");
         static_assert(Fold<Coerce2<Sum2>::type_, int_t<3>, B>::type::value==7, "");
     }
 // product_test, product_testn

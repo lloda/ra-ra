@@ -67,7 +67,8 @@ constexpr TensorIndex<2, int> _2 {};
 constexpr TensorIndex<3, int> _3 {};
 
 // Wrap a scalar for traversal.
-// flat() returns self, so implements both the Expr and the Leaves interface. But it's never a driver, so it doesn't need e.g. done() (in Expr) or preferred_stride() (in Leaves).
+// flat() returns self, so Scalar implements both the Expr and the Leaves interface.
+// f(T) will normally be a specialization, so this doesn't drive. done() (in Expr) or preferred_stride() (in Leaves) are only needed when map(f, T) is written out explicitly.
 template <class S>
 struct Scalar
 {
@@ -91,6 +92,7 @@ struct Scalar
     constexpr static dim_t stride(int const i) { return 0; }
     constexpr static bool compact_stride(dim_t const step, int const z, int const j) { return true; }
     constexpr Scalar const & flat() const { return *this; }
+    constexpr static bool done() { return false; }
 
 // Scalar acts as driver in a few places where I didn't bother to specialize (e.g. ra::from). Elsewhere (e.g. in +, *, operator=, etc.) there's always another expr to be driver, or a specialization (e.g. array constructors). Use in ra::from should be removed since a scalar subscript can be beaten; this is probably true of all other uses, and @TODO then we could remove this.
     constexpr static dim_t preferred_stride(int const i) { return 0; }

@@ -46,6 +46,14 @@
 
 #define START(a) *(ra::start(a).flat())
 
+// This global version must be available so that ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 . See also wedge() in ra/wedge.H.
+template <class ... Iarg, class A, enableif_<ra::is_scalar<A>, int> =0>
+decltype(auto) transpose(A && a)
+{
+    static_assert(sizeof...(Iarg)==0, "bad transpose axes list for scalar");
+    return START(a);
+}
+
 // See ::wedge() in ra/wedge.H, need ra::is_scalar<> to define.
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F,
@@ -512,8 +520,7 @@ operator<<(std::ostream & o, A && a_)
     if (a.size_s()==DIM_ANY) {
         o << start(sha) << '\n';
     }
-// @TODO Scalar doesn't have done(), so avoid that. Concepts aren't well specified...
-    if (any(start(sha)==0)) {
+    if (a.done()) {
         return o;
     }
     auto ind = ra_traits<decltype(sha)>::make(rank, 0);

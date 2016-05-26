@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2014
+// (c) Daniel Llorens - 2014, 2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@
 #include "ra/ra-large.H"
 #include "ra/format.H"
 #include "ra/test.H"
+#include "ra/mpdebug.H"
 
 using std::cout; using std::endl; using std::flush;
 
@@ -27,6 +28,30 @@ using small_iterator = ra::ra_iterator<ra::SmallBase<ra::SmallSlice, T, sizes_, 
 int main()
 {
     TestRecorder tr;
+    section("pieces of transpose(ra::Small)"); // @TODO actually check
+    {
+        using sizes = mp::int_list<1, 2, 3, 4, 5>;
+        using strides = mp::int_list<1, 10, 100, 1000, 10000>;
+        using case0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0> >;
+        cout << "0...type " << mp::Len<case0::type>::value << ": " ; mp::print_int_list<case0::type>::f(cout) << endl;
+        using case1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1> >;
+        cout << "1...type " << mp::Len<case1::type>::value << ": " ; mp::print_int_list<case1::type>::f(cout) << endl;
+        using caseall = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_list<0, 1, 2, 3>, sizes, strides>;
+        cout << "caseall...type " << mp::Len<caseall::type>::value << ": " ; mp::print_int_list<caseall::type>::f(cout) << endl;
+    }
+    section("transpose(ra::Small)");
+    {
+        ra::Small<real, 2, 3> const a(ra::_0 + 10*ra::_1);
+        tr.info("<0 1>").test_eq(a, ra::transpose<0, 1>(a));
+        tr.info("<1 0>").test_eq(ra::Small<real, 3, 2>(10*ra::_0 + ra::_1), ra::transpose<1, 0>(a));
+        tr.info("<0 0>").test_eq(ra::Small<real, 2> {0, 11}, ra::transpose<0, 0>(a));
+
+        ra::Small<real, 2, 3> b(ra::_0 + 10*ra::_1);
+        tr.info("<0 1>").test_eq(a, ra::transpose<0, 1>(a));
+        tr.info("<1 0>").test_eq(ra::Small<real, 3, 2>(10*ra::_0 + ra::_1), ra::transpose<1, 0>(a));
+        ra::transpose<0, 0>(b) = {7, 9};
+        tr.info("<0 0>").test_eq(ra::Small<real, 2, 3>{7, 10, 20, 1, 9, 21}, b);
+    }
     section("constructors");
     {
         {
@@ -365,12 +390,12 @@ int main()
     section("transpose");
     {
         ra::Small<real, 2, 3> a { 1, 2, 3, 4, 5, 6 };
-        tr.test_eq(ra::Small<real, 3, 2> { 1, 4, 2, 5, 3, 6 }, transpose(a));
-        transpose(a) = { 1, 2, 3, 4, 5, 6 };
+        tr.test_eq(ra::Small<real, 3, 2> { 1, 4, 2, 5, 3, 6 }, transpose<1, 0>(a));
+        ra::transpose<1, 0>(a) = { 1, 2, 3, 4, 5, 6 };
         tr.test_eq(ra::Small<real, 2, 3> { 1, 3, 5, 2, 4, 6 }, a);
     }
 
-    section("diag"); // @TODO merge with transpose.
+    section("diag");
     {
         ra::Small<real, 3, 3> a = ra::_0*3 + ra::_1;
         tr.test_eq(ra::Small<real, 3> { 0, 4, 8 }, diag(a));

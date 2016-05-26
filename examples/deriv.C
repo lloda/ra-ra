@@ -45,7 +45,7 @@ int main()
     // Approximate the 2nd derivative using a [ 1 -2  1 ] mask
     // We can only apply this mask to the elements 1 .. 98, since
     // we need one element on either side to apply the mask.
-    // [ra] @TODO I-1 etc. are not beatable, which makes this expressions slower than they should be. Cf. examples/array.C.
+    // I-1 etc. are beatable if RA_OPTIMIZE is true.
     ra::Iota<int> I(numSamples-2, 1);
     Array1D y2({numSamples}, ra::unspecified);
     y2(I) = (y(I-1) - 2 * y(I) + y(I+1)) / (delta*delta);
