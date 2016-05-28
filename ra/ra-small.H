@@ -588,41 +588,40 @@ struct axis_indices
     static_assert(mp::Len<type>::value > 0, "dst axis doesn't appear in transposed axes list");
 };
 
-template <class axes_list, class Dst, class sizes_, class strides_>
+template <class axes_list, class src_sizes, class src_strides>
 struct axes_list_indices
 {
+    static_assert(mp::Len<axes_list>::value==mp::Len<src_sizes>::value, "bad size for transposed axes list");
+    static constexpr int talmax = mp::Fold_<mp::Max, void, axes_list>::value;
+    static constexpr int talmin = mp::Fold_<mp::Min, void, axes_list>::value;
+    static_assert(talmax < mp::Len<src_sizes>::value, "bad index in transposed axes list");
+    static_assert(talmin >= 0, "bad index in transposed axes list");
+
     template <class dst_i> struct dst_indices
     {
         using type = typename axis_indices<axes_list, dst_i>::type;
-
-        template <class i> using sizesi = mp::Ref<sizes_, i::value>;
-        template <class i> using stridesi = mp::Ref<strides_, i::value>;
-
+        template <class i> using sizesi = mp::Ref<src_sizes, i::value>;
+        template <class i> using stridesi = mp::Ref<src_strides, i::value>;
         using stride = mp::Fold_<mp::Sum, void, mp::Map_<stridesi, type> >;
         using size = mp::Fold_<mp::Min, void, mp::Map_<sizesi, type> >;
     };
+
     template <class dst_i> struct dst_size { using type = typename dst_indices<dst_i>::size; };
     template <class dst_i> struct dst_stride { using type = typename dst_indices<dst_i>::stride; };
 
-    using type = mp::Map_<dst_indices, Dst>;
-    using sizes =  mp::Map_<dst_size, Dst>;
-    using strides =  mp::Map_<dst_stride, Dst>;
+    using dst = mp::Iota_<(talmax>=0 ? (1+talmax) : 0)>;
+    using type = mp::Map_<dst_indices, dst>;
+    using sizes =  mp::Map_<dst_size, dst>;
+    using strides =  mp::Map_<dst_stride, dst>;
 };
 
-#define DEF_TRANSPOSE(CONST)                                           \
-template <int ... Iarg, template <class, class, class> class Child, class T, class sizes, class strides> \
-inline auto transpose(SmallBase<Child, T, sizes, strides> CONST & a)   \
-{                                                                       \
-    using axes_list = mp::int_list<Iarg ...>;                                 \
-    static_assert(mp::Len<axes_list>::value==mp::Len<sizes>::value, "bad size for transposed axes list"); \
-    static constexpr int talmax = mp::Fold_<mp::Max, void, axes_list>::value; \
-    static constexpr int talmin = mp::Fold_<mp::Min, void, axes_list>::value; \
-    static_assert(talmax < mp::Len<sizes>::value, "bad index in transposed axes list"); \
-    static_assert(talmin >= 0, "bad index in transposed axes list");    \
-    using dst = mp::Iota_<1+mp::Fold_<mp::Max, void, axes_list>::value>;      \
-    using ti = axes_list_indices<axes_list, dst, sizes, strides>;                   \
-    return SmallSlice<T CONST, typename ti::sizes, typename ti::strides>(a.data()); \
-};
+#define DEF_TRANSPOSE(CONST)                                            \
+    template <int ... Iarg, template <class, class, class> class Child, class T, class sizes, class strides> \
+    inline auto transpose(SmallBase<Child, T, sizes, strides> CONST & a) \
+    {                                                                   \
+        using ti = axes_list_indices<mp::int_list<Iarg ...>, sizes, strides>; \
+        return SmallSlice<T CONST, typename ti::sizes, typename ti::strides>(a.data()); \
+    };
 DEF_TRANSPOSE(const)
 DEF_TRANSPOSE(/* */)
 #undef DEF_TRANSPOSE

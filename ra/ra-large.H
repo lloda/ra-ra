@@ -578,25 +578,17 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
     return r;
 }
 
-#ifndef NDEBUG
-#define TRANSPOSE_BODY_CHECK                                            \
-        for (Dim const & dest: r.dim) {                                 \
-            assert(dest.size!=DIM_BAD && "axes left unset");            \
-        }
-#else
-#define TRANSPOSE_BODY_CHECK
-#endif
-#define TRANSPOSE_BODY                                                  \
+// dynamic transposed axes list.
+// @TODO when S has static size 1 or 0, the values are a given; we could decide dstrank statically.
+#define DEFINE_TRANSPOSE(AXES_LIST)                                     \
+    template <class T, int RANK, class S>                               \
+    Raw<T, RANK_ANY> transpose(Raw<T, RANK> const & raw, AXES_LIST)     \
     {                                                                   \
-        if (raw.rank()==0) {                                            \
-            assert(s.size()==0);                                        \
-            return raw;                                                 \
-        }                                                               \
+        assert(raw.rank()==s.size());                                   \
         auto rp = std::max_element(s.begin(), s.end());                 \
-        assert(rp!=s.end() && "bad axes spec");                         \
-        rank_t rr = *rp;                                                \
-        assert((RANK==RANK_ANY || RANK==rr+1) && "bad output rank");    \
-        Raw<T, RANK> r { ra_traits<decltype(r.dim)>::make(rr+1, Dim { DIM_BAD, 0 }), raw.data() }; \
+        rank_t dstrank = (rp==s.end() ? 0 : *rp+1);                     \
+                                                                        \
+        Raw<T, RANK_ANY> r { ra_traits<decltype(r.dim)>::make(dstrank, Dim { DIM_BAD, 0 }), raw.data() }; \
         int k = 0;                                                      \
         for (int sk: s) {                                               \
             Dim & dest = r.dim[sk];                                     \
@@ -604,34 +596,45 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
             dest.size = dest.size>=0 ? std::min(dest.size, raw.dim[k].size) : raw.dim[k].size; \
             ++k;                                                        \
         }                                                               \
-        TRANSPOSE_BODY_CHECK                                            \
+        for (Dim const & dest: r.dim) {                                 \
+            assert(dest.size!=DIM_BAD && "axes left unset");            \
+        }                                                               \
         return r;                                                       \
     }
+DEFINE_TRANSPOSE(S const & s)
+DEFINE_TRANSPOSE(std::initializer_list<S> s)
+#undef DEFINE_TRANSPOSE
 
-template <class T, int RANK, class S>
-Raw<T, RANK> transpose(Raw<T, RANK> const & raw, S const & s) TRANSPOSE_BODY
+// static transposed axes list.
+template <int ... Iarg, class T, int RANK>
+auto transpose(Raw<T, RANK> const & raw)
+{
+    static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "bad output rank");
+    assert((raw.rank()==sizeof...(Iarg)) && "bad output rank");
 
-template <class T, int RANK, class I>
-Raw<T, RANK> transpose(Raw<T, RANK> const & raw, std::initializer_list<I> s) TRANSPOSE_BODY
+    using dummy_s = mp::MakeList_<sizeof...(Iarg), mp::int_t<0>>;
+    using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
+    constexpr rank_t DSTRANK = mp::Len<typename ti::dst>::value;
+
+    Raw<T, DSTRANK> r { ra_traits<decltype(r.dim)>::make(DSTRANK, Dim { DIM_BAD, 0 }), raw.data() };
+    int k = 0;
+    std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
+    for (int sk: s) {
+        Dim & dest = r.dim[sk];
+        dest.stride += raw.dim[k].stride;
+        dest.size = dest.size>=0 ? std::min(dest.size, raw.dim[k].size) : raw.dim[k].size;
+        ++k;
+    }
+    return r;
+}
 
 #undef TRANSPOSE_BODY
 #undef TRANSPOSE_BODY_CHECK
 
-template <class T, int RANK>
-Raw<T, RANK> transpose(Raw<T, RANK> const & raw)
+template <int ... Iarg, class T, int RANK> // typename std::remove_reference<decltype(*a.data())>
+auto diag(Raw<T, RANK> const & raw)
 {
-    static_assert(RANK==2 || RANK==RANK_ANY, "bad rank");
-    assert(raw.rank()==2 && "bad rank");  // @TODO reduce to 'static where possible'.
-    return transpose(raw, {1, 0});
-}
-
-// @TODO Merge with transpose(); transpose(A, {0, 0}) should work. Also from(A, ra::_0, ra::_0) should work.
-template <class A, std::enable_if_t<ra_traits<A>::size_s()==DIM_ANY, int> =0>
-inline auto diag(A && a)
-{
-    assert(a.rank()==2 && a.size(0)==a.size(1) && "bad rank for diag");
-    return Raw<typename std::remove_reference<decltype(*a.data())>::type, 1>
-        ({{a.size(0), a.stride(0)+a.stride(1)}}, a.data());
+    return transpose<0, 0>(raw);
 }
 
 // Make last sizes of Raw<> be compile-time constants.

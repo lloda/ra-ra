@@ -205,12 +205,12 @@ int main()
 #define TEST(plier)                                                     \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
-            plier(ra::expr(sum2, a.iter(), transpose(b, {1, 0}).iter(), c.iter())); \
+            plier(ra::expr(sum2, a.iter(), transpose<1, 0>(b).iter(), c.iter())); \
             tr.test(std::equal(check, check+6, c.begin()));            \
         }                                                               \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
-            plier(ra::expr(sum2, transpose(a, {1, 0}).iter(), b.iter(), transpose(c, {1, 0}).iter())); \
+            plier(ra::expr(sum2, transpose<1, 0>(a).iter(), b.iter(), transpose<1, 0>(c).iter())); \
             tr.test(std::equal(check, check+6, c.begin()));            \
         }
         TEST(ply_ravel);
@@ -273,6 +273,16 @@ int main()
         CheckPly<A2>(tr, A, transpose(B, {1, 0}));
         CheckPly<A2>(tr, reverse(reverse(transpose(A, {1, 0}), 1), 0), B);
         CheckPly<A2>(tr, A, reverse(reverse(transpose(B, {1, 0}), 1), 0));
+
+        CheckPly<A2>(tr, transpose<1, 0>(A), B);
+        CheckPly<A2>(tr, A, transpose<1, 0>(B));
+        CheckPly<A2>(tr, reverse(reverse(transpose<1, 0>(A), 1), 0), B);
+        CheckPly<A2>(tr, A, reverse(reverse(transpose<1, 0>(B), 1), 0));
+
+        CheckPly<A2>(tr, transpose(A, mp::int_list<1, 0>()), B);
+        CheckPly<A2>(tr, A, transpose(B, mp::int_list<1, 0>()));
+        CheckPly<A2>(tr, reverse(reverse(transpose(A, mp::int_list<1, 0>()), 1), 0), B);
+        CheckPly<A2>(tr, A, reverse(reverse(transpose(B, mp::int_list<1, 0>()), 1), 0));
     }
     section("explode");
     {

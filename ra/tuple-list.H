@@ -62,19 +62,19 @@ struct Zip<tuple<A ...>, tuple<B ...>>
 template <class A, class B> using Zip_ = typename Zip<A, B>::type;
 
 // The list is [a .. a+n).
-template <int n, int a=0>
+template <int n, int a=0, int step=1>
 struct Iota
 {
     static_assert(n>=0, "bad size for Iota");
-    using type = typename Cons<int_t<a>, typename Iota<n-1, a+1>::type>::type;
+    using type = typename Cons<int_t<a>, typename Iota<n-1, a+step, step>::type>::type;
 };
-template <int a>
-struct Iota<0, a>
+template <int a, int step>
+struct Iota<0, a, step>
 {
     using type = nil;
 };
-template <int n, int a=0>
-using Iota_ = typename Iota<n, a>::type;
+template <int n, int a=0, int step=1>
+using Iota_ = typename Iota<n, a, step>::type;
 
 template <int n, class T>
 struct MakeList

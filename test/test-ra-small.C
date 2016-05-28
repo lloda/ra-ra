@@ -36,7 +36,7 @@ int main()
         cout << "0...type " << mp::Len<case0::type>::value << ": " ; mp::print_int_list<case0::type>::f(cout) << endl;
         using case1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1> >;
         cout << "1...type " << mp::Len<case1::type>::value << ": " ; mp::print_int_list<case1::type>::f(cout) << endl;
-        using caseall = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_list<0, 1, 2, 3>, sizes, strides>;
+        using caseall = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>;
         cout << "caseall...type " << mp::Len<caseall::type>::value << ": " ; mp::print_int_list<caseall::type>::f(cout) << endl;
     }
     section("transpose(ra::Small)");
@@ -51,6 +51,11 @@ int main()
         tr.info("<1 0>").test_eq(ra::Small<real, 3, 2>(10*ra::_0 + ra::_1), ra::transpose<1, 0>(a));
         ra::transpose<0, 0>(b) = {7, 9};
         tr.info("<0 0>").test_eq(ra::Small<real, 2, 3>{7, 10, 20, 1, 9, 21}, b);
+
+        ra::Small<real> x {99};
+        auto xt = transpose<>(x);
+        tr.info("<> rank").test_eq(0, xt.rank());
+        tr.info("<>").test_eq(99, xt);
     }
     section("constructors");
     {

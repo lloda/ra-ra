@@ -62,6 +62,12 @@ inline decltype(auto) where(bool const w, T && t, F && f) { return w ? START(t) 
 
 namespace ra {
 
+template <int ... Iarg, class A>
+decltype(auto) transpose(A && a, mp::int_list<Iarg ...>)
+{
+    return transpose<Iarg ...>(std::forward<A>(a));
+}
+
 // Wrappers over expr & ply_either.
 
 template <class F, class ... A>

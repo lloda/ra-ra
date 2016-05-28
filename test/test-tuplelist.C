@@ -162,6 +162,7 @@ int main()
     static_assert(check_idx<Iota<0, 3>::type>::value, "0c");
     static_assert(check_idx<Iota<1, 3>::type, 3>::value, "0d");
     static_assert(check_idx<Iota<3, -2>::type, -2, -1, 0>::value, "0e");
+    static_assert(check_idx<Iota<4, 3, -1>::type, 3, 2, 1, 0>::value, "0a");
 // MakeList.
     static_assert(check_idx<MakeList<2, int_t<9>>::type, 9, 9>::value, "1a");
     static_assert(check_idx<MakeList<0, int_t<9>>::type>::value, "1b");
