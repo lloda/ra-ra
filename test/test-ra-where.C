@@ -12,6 +12,7 @@
 #include "ra/test.H"
 
 using std::cout; using std::endl;
+using real = double;
 
 int main()
 {

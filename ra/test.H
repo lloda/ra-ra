@@ -98,7 +98,8 @@ struct TestRecorder
     template <class W, class A>
     bool test_eq(W && wanted, A && got)
     {
-        return test_comp(std::forward<W>(wanted), std::forward<A>(got), std::equal_to<>());
+        return test_comp(std::forward<W>(wanted), std::forward<A>(got),
+                         [](auto && a, auto && b) { return every(a==b); });
     }
     template <class W, class A>
     double test_rel_error(W && wanted, A && got, double req_err=0)

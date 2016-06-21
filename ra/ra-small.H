@@ -328,7 +328,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     DEFINE_AS(/* const */)
 #undef DEFINE_AS
 
-// @TODO This is scalar only and default strides only. Eventually reuse cell_iterator.
+// @TODO This is scalar only. Eventually reuse cell_iterator.
     template <class P>
     struct Iterator
     {
@@ -621,24 +621,24 @@ struct axes_list_indices
     {                                                                   \
         using ti = axes_list_indices<mp::int_list<Iarg ...>, sizes, strides>; \
         return SmallSlice<T CONST, typename ti::sizes, typename ti::strides>(a.data()); \
-    };
+    };                                                                  \
+                                                                        \
+    template <template <class, class, class> class Child, class T, class sizes, class strides> \
+    inline auto diag(SmallBase<Child, T, sizes, strides> CONST & a)     \
+    {                                                                   \
+        return transpose<0, 0>(a);                                      \
+    }
 DEF_TRANSPOSE(const)
 DEF_TRANSPOSE(/* */)
 #undef DEF_TRANSPOSE
 
-template <class AA, std::enable_if_t<ra_traits<AA>::size_s()!=DIM_ANY, int> =0>
-inline auto diag(AA && a)
-{
-    return transpose<0, 0>(a);
-}
-
 // @TODO Used by ProductRule; waiting for proper generalization.
-template <class AA1, class AA2,
-          std::enable_if_t<ra_traits<AA1>::size_s()!=DIM_ANY && ra_traits<AA2>::size_s()!=DIM_ANY, int> =0>
-auto cat(AA1 const & a1, AA2 const & a2)
+template <template <class, class, class> class Child1, class T1, class sizes1, class strides1,
+          template <class, class, class> class Child2, class T2, class sizes2, class strides2>
+auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 {
-    using A1 = std::decay_t<AA1>;
-    using A2 = std::decay_t<AA2>;
+    using A1 = SmallBase<Child1, T1, sizes1, strides1>;
+    using A2 = SmallBase<Child2, T2, sizes2, strides2>;
     static_assert(A1::rank()==1 && A2::rank()==1, "bad ranks for cat"); // gcc accepts a1.rank(), etc.
     using T = std::decay_t<decltype(a1[0])>;
     Small<T, a1.size()+a2.size()> val;
@@ -647,11 +647,12 @@ auto cat(AA1 const & a1, AA2 const & a2)
     return val;
 }
 
-template <class A1, class A2,
-          std::enable_if_t<ra_traits<A1>::size_s()!=DIM_ANY && is_scalar<A2>::value, int> =0>
-auto cat(A1 const & a1, A2 const & a2)
+template <template <class, class, class> class Child1, class T1, class sizes1, class strides1,
+          class A2,
+          std::enable_if_t<is_scalar<A2>::value, int> =0>
+auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
 {
-    static_assert(a1.rank()==1, "bad ranks for cat");
+    static_assert(mp::Len<sizes1>::value==1, "bad ranks for cat");
     using T = std::decay_t<decltype(a1[0])>;
     Small<T, a1.size()+1> val;
     std::copy(a1.begin(), a1.end(), val.begin());
@@ -659,15 +660,16 @@ auto cat(A1 const & a1, A2 const & a2)
     return val;
 }
 
-template <class A1, class A2,
-          std::enable_if_t<is_scalar<A1>::value && ra_traits<A2>::size_s()!=DIM_ANY, int> =0>
-auto cat(A1 const & a1, A2 const & a2)
+template <class A1,
+          template <class, class, class> class Child2, class T2, class sizes2, class strides2,
+          std::enable_if_t<is_scalar<A1>::value, int> =0>
+auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 {
-    static_assert(a2.rank()==1, "bad ranks for cat");
+    static_assert(mp::Len<sizes2>::value==1, "bad ranks for cat");
     using T = std::decay_t<decltype(a2[0])>;
     Small<T, 1+a2.size()> val;
     val[0] = a1;
-    std::copy(a1.begin(), a1.end(), val.begin()+1);
+    std::copy(a2.begin(), a2.end(), val.begin()+1);
     return val;
 }
 

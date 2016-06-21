@@ -22,6 +22,7 @@ int const N = 2000000;
 ra::Small<ra::dim_t, 1> S1 { 24*24 };
 ra::Small<ra::dim_t, 2> S2 { 24, 24 };
 ra::Small<ra::dim_t, 3> S3 { 8, 8, 9 };
+using real = double;
 using real4 = ra::Small<real, 4>;
 
 template <class T>

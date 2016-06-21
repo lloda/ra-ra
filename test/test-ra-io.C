@@ -17,6 +17,7 @@
 #include "ra/ra-operators.H"
 
 using std::cout; using std::endl; using std::flush;
+using real = double;
 
 template <int i> using TI = ra::TensorIndex<i>;
 using int3 = ra::Small<int, 3>;

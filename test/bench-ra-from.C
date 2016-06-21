@@ -24,6 +24,7 @@ using std::cout; using std::endl; using std::flush;
 auto now() { return std::chrono::high_resolution_clock::now(); }
 using time_unit = std::chrono::nanoseconds;
 std::string tunit = "ns";
+using real = double;
 
 int main()
 {

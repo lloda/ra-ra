@@ -19,6 +19,7 @@
 
 using std::cout; using std::endl; using std::flush;
 template <int i> using TI = ra::TensorIndex<i, int>;
+using real = double;
 
 struct Never
 {

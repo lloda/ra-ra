@@ -120,7 +120,7 @@ using Small = SmallArray<T, mp::int_list<sizes ...>, default_strides_<mp::int_li
 struct Dim { dim_t size, stride; };
 
 // Order of decl issues.
-template <class V> struct ra_traits_def;
+template <class V, class Enable=void> struct ra_traits_def;
 
 } // namespace ra
 

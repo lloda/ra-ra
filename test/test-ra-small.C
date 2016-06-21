@@ -24,6 +24,8 @@ using std::cout; using std::endl; using std::flush;
 
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
 using small_iterator = ra::ra_iterator<ra::SmallBase<ra::SmallSlice, T, sizes_, strides_>, 0>;
+using real = double;
+using complex = std::complex<double>;
 
 int main()
 {
@@ -470,7 +472,12 @@ int main()
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }
-
+    section("cat");
+    {
+        tr.test_eq(ra::Small<int, 4> {1, 2, 3, 4}, cat(ra::Small<int, 3> {1, 2, 3}, 4));
+        tr.test_eq(ra::Small<int, 4> {4, 1, 2, 3}, cat(4, ra::Small<int, 3> {1, 2, 3}));
+        tr.test_eq(ra::Small<int, 5> {1, 2, 3, 4, 5}, cat(ra::Small<int, 2> {1, 2}, ra::Small<int, 3> {3, 4, 5}));
+    }
     section("a demo on rank1of1 vs rank2 [ref01]");
     {
 // by prefix matching, first dim is 2 for both so they get matched. Then {1 2}
@@ -483,6 +490,8 @@ int main()
         // a = b; // @TODO Check that this static fails
         cout << "a = b, a: " << a << endl;
     }
+
+
 
     return tr.summary();
 }

@@ -19,6 +19,8 @@
 // @brief Tests for dual numbers.
 
 using std::cout; using std::endl; using std::flush;
+using real = double;
+using complex = std::complex<double>;
 
 #define DEFINE_CASE(N,  F, DF)                                          \
     struct JOIN(case, N)                                                \

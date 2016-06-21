@@ -23,6 +23,7 @@
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;
 using ra::Small; using ra::Raw; using ra::Unique; using ra::ra_traits; using ra::dim_t;
+using real = double;
 
 auto now() { return std::chrono::high_resolution_clock::now(); }
 template <class DT> auto ms(DT && dt) { return std::chrono::duration_cast<std::chrono::milliseconds>(dt).count(); }

@@ -96,10 +96,10 @@ def to_test_ra(env, source):
               'test-ra-frame-matching', 'test-ra-compatibility',
               'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
               'test-ra-6', 'test-ra-where', 'test-tuplelist',
-              'test-ra-7',
-              'test-wedge-product', 'test-ra-operators',
-              'test-ra-tensorindex',
-              'test-ra-8']]
+              'test-ra-7', 'test-ra-8',
+              'test-wedge-product', 'test-ra-operators', 'test-ra-tensorindex',
+              'test-ra-explode-collapse',
+              ]]
 
 [to_test_ra(env, test)
  for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-mmul']]

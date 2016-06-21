@@ -109,7 +109,9 @@ struct is_foreign_vector
 
 // @TODO Forbid pointers b/c ra:: operator<<(ostream) would pick them up. It probably shouldn't.
 template <class A>
-struct is_foreign_vector<A, enableif_<mp::And<mp::Not<is_slice<A>>, mp::exists<decltype(ra_traits<A>::size_s())>>>>
+struct is_foreign_vector<A, enableif_<mp::And<mp::Not<is_slice<A> >,
+                                              mp::exists<decltype(ra_traits<A>::size_s())>,
+                                              mp::Not<is_zero_or_scalar<A> > > > >
 {
     constexpr static bool value = true;
 };
@@ -131,6 +133,17 @@ struct ra_zero
 {
     static bool const value = mp::And<mp::Not<mp::And<is_scalar<A> ...> >,
                                       mp::And<is_zero_or_scalar<A> ...> >::value;
+};
+
+template <class T>
+struct ra_traits_def<T, enableif_<is_scalar<T> > >
+{
+    using V = T;
+    using value_type = T;
+    static dim_t constexpr size(V const & v) { return 1; }
+    static dim_t constexpr size_s() { return 1; }
+    static rank_t constexpr rank(V const & v) { return 0; }
+    static rank_t constexpr rank_s() { return 0; }
 };
 
 // --------------

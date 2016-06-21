@@ -17,11 +17,12 @@
 #include "ra/ra-expr.H"
 
 using std::cout; using std::endl; using std::flush;
+using complex = std::complex<double>;
 
 template <class AA>
-real sqrm_ai(AA && a)
+double sqrm_ai(AA && a)
 {
-    real c(0.);
+    double c(0.);
     ply_either(ra::expr([&c](complex const a) { c += sqrm(a); }, a));
     return c;
 }

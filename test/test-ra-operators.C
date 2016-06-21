@@ -17,6 +17,8 @@
 #include "ra/wedge.H"
 
 using std::cout; using std::endl;
+using real = double;
+using complex = std::complex<double>;
 
 int main()
 {
@@ -127,6 +129,14 @@ int main()
             static_assert(std::is_same<decltype(a*b), int>::value, "expected a, b decay to real"); \
             tr.test_eq(c, 6);
         }
+    }
+
+    section("lvalue-rvalue operators");
+    {
+        ra::Unique<complex, 1> a({3}, 0.);
+        imag_part(a) = ra::Unique<real, 1> { 7., 2., 3. }; // @TODO operator=(initializer_list) ?
+        real_part(a) = -imag_part(ra::Unique<complex, 1> { xI(7.), xI(2.), xI(3.) })+1;
+        tr.test_eq(ra::Unique<complex, 1> {{-6., 7.}, {-1., 2.}, {-2., 3.}}, a);
     }
 
     section("operators with Unique");

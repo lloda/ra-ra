@@ -22,6 +22,8 @@
 #include "ra/ra-operators.H"
 
 using std::cout; using std::endl; using std::flush; using std::tuple;
+
+using real = double;
 template <int rank=ra::RANK_ANY> using Ureal = ra::Unique<real, rank>;
 template <int rank=ra::RANK_ANY> using Uint = ra::Unique<int, rank>;
 

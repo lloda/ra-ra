@@ -18,6 +18,7 @@
 #include "ra/ra-operators.H"
 
 using std::cout; using std::endl; using std::flush;
+using real = double;
 
 int main()
 {

@@ -667,29 +667,44 @@ auto explode(Raw<T, RANK> const & a)
     return explode_<super_t, ra_traits<super_t>::rank_s()>(a);
 }
 
-// Suporting rank>1 would require poking into the ranks of sub_t.
-template <class sub_t, rank_t SUBR, class T, int RANK>
-auto compress_(Raw<T, RANK> const & a)
+// @TODO Consider these in ra_traits<>.
+template <class T, enableif_<is_scalar<T>, int> =0> int gstride(int i) { return 1; }
+template <class T, std::enable_if_t<!is_scalar<T>::value, int> =0> int gstride(int i) { return T::stride(i); }
+template <class T, enableif_<is_scalar<T>, int> =0> int gsize(int i) { return 1; }
+template <class T, std::enable_if_t<!is_scalar<T>::value, int> =0> int gsize(int i) { return T::size(i); }
+
+// @TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
+template <class sub_t, class super_t, int RANK>
+auto collapse(Raw<super_t, RANK> const & a)
 {
+    using super_v = typename ra_traits<super_t>::value_type;
+    using sub_v = typename ra_traits<sub_t>::value_type;
+    constexpr int subtype = sizeof(super_v)/sizeof(sub_t);
+    constexpr int SUBR = ra_traits<super_t>::rank_s()-ra_traits<sub_t>::rank_s();
+
     static_assert(RANK!=RANK_ANY, "var rank tbd");
-    Raw<sub_t, RANK+SUBR> b;
-    constexpr dim_t r = sizeof(T)/sizeof(sub_t);
-    static_assert(sizeof(T)==r*sizeof(sub_t), "cannot make axis of T from sub type");
+
+    Raw<sub_t, RANK+SUBR+int(subtype>1)> b;
+    constexpr dim_t r = sizeof(super_t)/sizeof(sub_t);
+    static_assert(sizeof(super_t)==r*sizeof(sub_t), "cannot make axis of super_t from sub_t");
     for (int i=0; i<a.rank(); ++i) {
         b.dim[i].stride = a.stride(i) * r;
         b.dim[i].size = a.size(i);
     }
-    static_assert(SUBR==1, "SUBR!=1 tbd");
-    b.dim[a.rank()].stride = 1;
-    b.dim[a.rank()].size = r;
+    constexpr int t = sizeof(super_v)/sizeof(sub_v);
+    constexpr int s = sizeof(sub_t)/sizeof(sub_v);
+    static_assert(t*sizeof(sub_v)>=1, "bad subtype");
+    for (int i=0; i<SUBR; ++i) {
+        assert(((gstride<super_t>(i)/s)*s==gstride<super_t>(i)) && "bad strides"); // @TODO is actually static
+        b.dim[a.rank()+i].stride = gstride<super_t>(i) / s * t;
+        b.dim[a.rank()+i].size = gsize<super_t>(i);
+    }
+    if (subtype>1) {
+        b.dim[a.rank()+SUBR].stride = 1;
+        b.dim[a.rank()+SUBR].size = t;
+    }
     b.p = reinterpret_cast<sub_t *>(a.data());
     return b;
-}
-
-template <class sub_t, class T, int RANK>
-auto compress(Raw<T, RANK> const & a)
-{
-    return compress_<sub_t, 1>(a);
 }
 
 // Checks for functions that require compact arrays (@todo they really shouldn't).

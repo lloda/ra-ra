@@ -17,6 +17,7 @@
 #include "ra/ra-large.H"
 
 using std::cout; using std::endl; using std::flush;
+using real = double;
 
 int main()
 {

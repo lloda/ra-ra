@@ -25,7 +25,7 @@ int main()
 
     section("where with rvalue TensorIndex, fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
     {
-        // ply_index(where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>())); // WORKS
+        ply_index(where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>())); // WORKS
         cout << where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>()) << endl; // DOESN'T WORK
         // cout << "\nx\n" << endl;
         // ply_index(expr([](int a) { cout << "a: " << a << endl; }, where(ra::Unique<bool, 1> { true, false }, 3, 2)));

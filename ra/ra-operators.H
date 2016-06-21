@@ -168,8 +168,6 @@ DEFINE_NAME_OP(conj, conj)
 DEFINE_NAME_OP(sqr, sqr)
 DEFINE_NAME_OP(sqrm, sqrm)
 DEFINE_NAME_OP(abs, abs)
-DEFINE_NAME_OP(real_part, real_part)
-DEFINE_NAME_OP(imag_part, imag_part)
 DEFINE_NAME_OP(cos, cos)
 DEFINE_NAME_OP(sin, sin)
 DEFINE_NAME_OP(exp, exp)
@@ -180,6 +178,21 @@ DEFINE_NAME_OP(isfinite, isfinite)
 DEFINE_NAME_OP(isnan, isnan)
 DEFINE_NAME_OP(isinf, isinf)
 #undef DEFINE_NAME_OP
+
+#define DEFINE_NAME_OP(OPNAME, OP)                                      \
+    using ::OP;                                                         \
+    template <class ... A, enableif_<ra_pos_and_any<A ...>, int> =0>    \
+    inline auto OPNAME(A && ... a)                                      \
+    {                                                                   \
+        return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
+    }                                                                   \
+    template <class ... A, enableif_<ra_zero<A ...>, int> =0>           \
+    inline decltype(auto) OPNAME(A && ... a)                            \
+    {                                                                   \
+        return OP(START(a) ...);                                        \
+    }
+DEFINE_NAME_OP(real_part, real_part)
+DEFINE_NAME_OP(imag_part, imag_part)
 
 template <class T, class A>
 inline auto cast(A && a)

@@ -7,7 +7,7 @@
 // later version.
 
 /// @file test-ra-1.C
-/// @brief Checks for ra:: ported from old test-traversal.C.
+/// @brief Fundamental tests for ra:: ported from old test-traversal.C.
 
 #include <iostream>
 #include <iterator>
@@ -66,13 +66,15 @@ void CheckPly(TestRecorder & tr, AA && A, BB && B)
     }
 }
 
+using complex = std::complex<double>;
+
 int main()
 {
     static_assert(ra::is_scalar<complex>::value, "bad is_scalar<complex>");
     static_assert(!ra::is_slice<complex>::value, "bad is_slice<complex>");
     static_assert(!ra::is_foreign_vector<complex>::value, "bad is_foreign_vector<complex>");
 
-    TestRecorder tr;
+    TestRecorder tr(std::cout);
     section("[ra01] nested, with references, ply_index or ply_ravel");
     {
         int check[3] = {0, 2, 4};
@@ -290,14 +292,14 @@ int main()
         {
             auto test = [&tr](auto && A)
             {
-                auto B = ra::explode<ra::Small<real, 2>>(A);
+                auto B = ra::explode<ra::Small<double, 2>>(A);
                 for (int i=0; i<3; ++i) {
                     tr.test_eq(i*2, B[i](0));
                     tr.test_eq(i*2+1, B[i](1));
                 }
             };
-            test(ra::Unique<real, 2>({4, 2}, ra::_0*2 + ra::_1));
-            test(ra::Unique<real>({4, 2}, ra::_0*2 + ra::_1));
+            test(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
+            test(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
         }
         section("super rank 0");
         {
@@ -313,12 +315,12 @@ int main()
                     tr.test_eq(i*2+1, B[i].imag());                     \
                 }                                                       \
             }
-            TEST(ra::RANK_ANY)(ra::Unique<real>({4, 2}, ra::_0*2 + ra::_1));
-            TEST(1)(ra::Unique<real, 2>({4, 2}, ra::_0*2 + ra::_1));
+            TEST(ra::RANK_ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
+            TEST(1)(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
         }
         section("super rank 2");
         {
-            using r2x2 = ra::Small<real, 2, 2>;
+            using r2x2 = ra::Small<double, 2, 2>;
             auto test = [&tr](auto && A)
             {
                 auto B = ra::explode<r2x2>(A);
@@ -329,28 +331,8 @@ int main()
                 tr.test_eq(r2x2 { 8, 9, 10, 11 }, B[2]);
                 tr.test_eq(r2x2 { 12, 13, 14, 15}, B[3]);
             };
-            test(ra::Unique<real, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
-            test(ra::Unique<real>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
-        }
-    }
-    section("compress (~ multicomponents in Blitz++");
-    {
-        section("sub is real to super complex");
-        {
-            ra::Unique<complex, 2> A({4, 4}, ra::cast<double>(ra::_0)*complex(4, 1) + ra::cast<double>(ra::_1)*complex(1, 4));
-            auto B = ra::compress<real>(A);
-            tr.test_eq(real_part(A), B(ra::all, ra::all, 0));
-            tr.test_eq(imag_part(A), B(ra::all, ra::all, 1));
-        }
-        section("sub is real to super Small");
-        {
-            using r2 = ra::Small<real, 2>;
-            ra::Unique<r2, 2> A({4, 4}, ra::expr([](int i, int j) { return r2 {real(i+j), real(i-j)}; }, ra::_0, ra::_1));
-            auto B = ra::compress<real>(A);
-            tr.test_eq(ra::_0+ra::_1, B(ra::all, ra::all, 0));
-            tr.test_eq(B(ra::all, ra::all, 0), ra::expr([](auto && a) { return a(0); }, ra::start(A)));
-            tr.test_eq(ra::_0-ra::_1, B(ra::all, ra::all, 1));
-            tr.test_eq(B(ra::all, ra::all, 1), ra::expr([](auto && a) { return a(1); }, ra::start(A)));
+            test(ra::Unique<double, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
+            test(ra::Unique<double>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
         }
     }
     return tr.summary();

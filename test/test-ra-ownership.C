@@ -17,6 +17,7 @@
 #include "ra/ra-operators.H"
 
 using std::cout; using std::endl;
+using real = double;
 
 // @TODO Test construction both by-value and by-ref, and between types.
 

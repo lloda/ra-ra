@@ -19,9 +19,9 @@
 
 using std::cout; using std::endl; using std::flush;
 using std::tuple;
+using real = double;
 
-// TODO Use noweb to label & ref the sections.
-
+// @TODO Use noweb (??) to label & ref the sections
 int main()
 {
     TestRecorder tr;

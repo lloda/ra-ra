@@ -19,6 +19,7 @@
 #include <sstream>
 
 using std::cout; using std::endl; using std::flush;
+using real = double;
 
 template <class A>
 inline auto retex_vs(A const & a, real const c)

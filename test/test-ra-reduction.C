@@ -19,6 +19,8 @@
 #include "ra/ra-operators.H"
 
 using std::cout; using std::endl; using std::flush; using std::tuple;
+using real = double;
+using complex = std::complex<double>;
 
 int main()
 {

@@ -23,6 +23,7 @@
 
 using std::cout; using std::endl; using std::flush;
 using std::tuple;
+using real = double;
 
 template <class V, class A, class B>
 void framematch_demo(V && v, A && a, B && b)

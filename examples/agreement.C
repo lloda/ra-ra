@@ -1,6 +1,8 @@
 
 // (c) Daniel Llorens - 2015
-// Shape agreement rules
+
+/// @file explode-collapse.C
+/// @brief Demo shape agreement rules
 
 #include "ra/ra-operators.H"
 #include <iostream>

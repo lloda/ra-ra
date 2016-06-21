@@ -17,6 +17,9 @@ using std::cout; using std::endl; using std::flush;
 using fun::Wedge; using fun::hodge; using fun::hodgex;
 using namespace mp;
 
+using real = double;
+using complex = std::complex<double>;
+
 real const GARBAGE(99);
 template <class T, ra::dim_t N> using vec = ra::Small<T, N>;
 using real1 = vec<real, 1>;
