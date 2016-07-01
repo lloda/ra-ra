@@ -42,9 +42,10 @@ struct TestRecorder
     std::vector<int> failed;
     std::string info_string;
     bool isquiet_default, isquiet;
+    bool willskip;
 
     TestRecorder(std::ostream & o_=std::cout, bool isquiet_default_=false)
-        : o(o_), isquiet_default(isquiet_default_), isquiet(isquiet_default_) {}
+        : o(o_), isquiet_default(isquiet_default_), isquiet(isquiet_default_), willskip(false) {}
 
     static std::string format_error(double e)
     {
@@ -61,12 +62,14 @@ struct TestRecorder
         isquiet = q;
         return *this;
     }
+    TestRecorder & skip(bool s=true)
+    {
+        willskip = s;
+        return *this;
+    }
 
     void test(bool c)
     {
-        if (!c) {
-            failed.push_back(total);
-        }
         if (isquiet) {
             if (!c) {
                 o << esc_cyan << "[" << total << "] " << esc_plain << esc_bold << esc_red << "FAILED" << esc_plain << esc_unbold
@@ -80,7 +83,13 @@ struct TestRecorder
         }
         info_string = "";
         isquiet = isquiet_default;
-        ++total;
+        if (!willskip) {
+            ++total;
+            if (!c) {
+                failed.push_back(total);
+            }
+        }
+        willskip = false;
     }
     void operator+=(bool c)
     {

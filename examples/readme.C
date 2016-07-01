@@ -1,6 +1,13 @@
 
 // (c) Daniel Llorens - 2016
-// Examples used in top-level README.md
+
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
+// @file readme.C
+// @brief Examples used in top-level README.md
 
 // @TODO Generate README.md and/or these examples.
 
@@ -13,7 +20,7 @@ using std::cout; using std::endl;
 int main()
 {
     section("dynamic/static shape");
-    // Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).
+// Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).
     {
         ra::Owned<char> A({2, 3}, 'a');     // dynamic rank = 2, dynamic shape = {2, 3}
         ra::Owned<char, 2> B({2, 3}, 'b');  // static rank = 2, dynamic shape = {2, 3}
@@ -23,7 +30,7 @@ int main()
         cout << "C: " << C << "\n\n";
     }
     section("storage");
-    // Memory-owning types and views. You can make array views over any piece of memory.
+// Memory-owning types and views. You can make array views over any piece of memory.
     {
         // memory-owning types
         ra::Owned<char, 2> A({2, 3}, 'a');   // storage is std::vector inside A
@@ -47,10 +54,10 @@ int main()
         cout << "D4: " << D4 << "\n\n";
     }
     section("shape agreement");
-    // Shape agreement rules and rank extension (broadcasting) for rank-0 operations of any arity
-    // and operands of any rank, any of which can a reference (so you can write on them). These
-    // rules are taken from the array language, J.
-    // (See examples/agreement.C for more examples.)
+// Shape agreement rules and rank extension (broadcasting) for rank-0 operations of any arity
+// and operands of any rank, any of which can a reference (so you can write on them). These
+// rules are taken from the array language, J.
+// (See examples/agreement.C for more examples.)
     {
         ra::Owned<float, 2> A({2, 3}, { 1, 2, 3, 1, 2, 3 });
         ra::Owned<float, 1> B({-1, +1});
@@ -64,7 +71,7 @@ int main()
         cout << "D: " << D << "\n\n";
     }
     section("rank iterators");
-    // Iterators over cells of arbitrary rank.
+// Iterators over cells of arbitrary rank.
     {
         ra::TensorIndex<0> i;
         ra::TensorIndex<1> j;
@@ -73,60 +80,60 @@ int main()
         ra::Owned<float, 2> B({2, 3}, 0);
         cout << "A: " << A << "\n\n";
 
-        // store the sum of A(i, j, ...) in B(i, j). All these are equivalent.
+// store the sum of A(i, j, ...) in B(i, j). All these are equivalent.
         B = 0; B += A;                                                           // default agreement matches prefixes
         for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A);            // default agreement matches prefixes
         for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<1>());  // give cell rank
         for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<-2>()); // give frame rank
         cout << "B: " << B << "\n\n";
 
-        // store the sum of A(i, ...) in B(i, j). The op is re-executed for each j, so don't do it this way.
+// store the sum of A(i, ...) in B(i, j). The op is re-executed for each j, so don't do it this way.
         for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<2>()); // give cell rank
         cout << "B: " << B << "\n\n";
     }
-    // A rank conjunction (only for static rank and somewhat fragile).
+// A rank conjunction (only for static rank and somewhat fragile).
     section("rank conjuction");
     {
-        // This is a translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
-        // @TODO ra::map doesn't support verbs-with-rank yet. When it does, map will replace ryn here.
+// This is a translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
+// @TODO ra::map doesn't support verbs-with-rank yet. When it does, map will replace ryn here.
         ra::Owned<float, 2> A = ryn(ra::wrank<0, 1>::make(std::minus<float>()), ra::iota(3), ra::iota(4));
         cout << "A: " << A << "\n\n";
     }
-    // A proper selection operator with 'beating' of range or scalar subscripts.
-    // See examples/slicing.C for more examples.
+// A proper selection operator with 'beating' of range or scalar subscripts.
+// See examples/slicing.C for more examples.
     section("selector");
     {
-        // @TODO do implicit reshape in constructors?? so I can accept any 1-array and not only an initializer_list.
+// @TODO do implicit reshape in constructors?? so I can accept any 1-array and not only an initializer_list.
         ra::Owned<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
         cout << "A: " << A << "\n\n";
 
-        // these are all equivalent to e.g. A(:, 0, :) in Octave.
+// these are all equivalent to e.g. A(:, 0, :) in Octave.
         cout << "A1: " << A(ra::all, 0) << "\n\n";
         cout << "A2: " << A(ra::all, 0, ra::all) << "\n\n";
         cout << "A3: " << A(ra::all, 0, ra::dots<1>) << "\n\n";
 
-        // an inverted range.
+// an inverted range.
         cout << "A4: " << A(ra::iota(2, 1, -1)) << "\n\n";
 
-        // indices can be arrays of any rank.
+// indices can be arrays of any rank.
         ra::Owned<int, 2> I({2, 2}, {0, 3, 1, 2});
         ra::Owned<char, 1> B({4}, {'a', 'b', 'c', 'd'});
         cout << "B(I): " << B(I) << "\n\n";
 
-        // multiple indexing performs an implicit outer product.
-        // this results in a rank 4 array X = A(J, 1, J) -> X(i, j, k, l) = A(J(i, j), 1, J(k, l))
+// multiple indexing performs an implicit outer product.  this results in a rank
+// 4 array X = A(J, 1, J) -> X(i, j, k, l) = A(J(i, j), 1, J(k, l))
         ra::Owned<int, 2> J({2, 2}, {1, 0, 0, 1});
         cout << "A(J, 1, J): " << A(J, 1, J) << "\n\n";
 
-        // explicit indices do not result in a Raw view (= pointer + strides), but the resulting
-        // expression can still be written on.
+// explicit indices do not result in a Raw view (= pointer + strides), but the
+// resulting expression can still be written on.
         B(I) = ra::Owned<char, 2>({2, 2}, {'x', 'y', 'z', 'w'});
         cout << "B: " << B << endl;
     }
     // A TensorIndex object as in Blitz++ (with some differences).
     section("tensorindex");
     {
-        // as shown above.
+// as shown above.
     }
     section("STL compat");
     {

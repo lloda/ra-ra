@@ -682,9 +682,9 @@ auto collapse(Raw<super_t, RANK> const & a)
     constexpr int subtype = sizeof(super_v)/sizeof(sub_t);
     constexpr int SUBR = ra_traits<super_t>::rank_s()-ra_traits<sub_t>::rank_s();
 
-    static_assert(RANK!=RANK_ANY, "var rank tbd");
+    Raw<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
+    resize(b.dim, a.rank()+SUBR+int(subtype>1));
 
-    Raw<sub_t, RANK+SUBR+int(subtype>1)> b;
     constexpr dim_t r = sizeof(super_t)/sizeof(sub_t);
     static_assert(sizeof(super_t)==r*sizeof(sub_t), "cannot make axis of super_t from sub_t");
     for (int i=0; i<a.rank(); ++i) {

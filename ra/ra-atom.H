@@ -38,7 +38,7 @@ struct TensorIndex
 {
     using value_type = value_type_;
 
-    static constexpr int w = w_;
+    constexpr static int w = w_;
     static_assert(w>=0, "bad TensorIndex");
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
@@ -47,7 +47,7 @@ struct TensorIndex
     void adv(rank_t const k, dim_t const d) {}
     template <class I> value_type at(I const & i) const
     {
-        return value_type(i[w]);  // @CONVERSION
+        return value_type(i[w]);
     }
 
 // Used in shape checks with dynamic rank. Needs special marker...

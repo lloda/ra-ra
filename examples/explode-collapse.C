@@ -1,6 +1,11 @@
 
 // (c) Daniel Llorens - 2016
 
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
 /// @file explode-collapse.C
 /// @brief Demo collapse and explode operations.
 
@@ -14,9 +19,9 @@ int main()
 {
 // These operations let you view an array of rank n in an array of rank (n-k) of
 // subarrays of rank k (explode) or the opposite (collapse). However, there is a
-// caveat: the subarrays must be compact (stored contiguously) and sizes of the
-// subarrays must be known statically. In effect, the subarray must be of type
-// ra::Small. For example:
+// caveat: the subarrays must be compact (stored contiguously) and the sizes of
+// the subarrays must be known statically. In effect, the subarray must be of
+// type ra::Small. For example:
     cout << "\nexplode\n" << endl;
     {
         Array<int, 2> A({2, 3}, ra::_0 - ra::_1);
@@ -51,16 +56,30 @@ int main()
     {
         using complex = std::complex<double>;
         Array<complex, 2> A({2, 2}, 0.);
-        auto B = ra::collapse<double>(A);
 
-        B(ra::all, ra::all, 0) = ra::_0-ra::_1; // set real part of A
-        B(ra::all, ra::all, 1) = -3; // set imaginary part of A
-        cout << "A after: " << A << endl;
+// construct array views into real and imag parts of A
+        auto B = ra::collapse<double>(A);
+        auto Bre = B(ra::all, ra::all, 0);
+        auto Bim = B(ra::all, ra::all, 1);
+
+// set real and imag parts of A
+        Bre = ra::_0-ra::_1;
+        Bim = -3;
+        cout << "Aa: " << A << endl;
+
 // of course, you could also do
         imag_part(A) = 7.;
-        cout << "A after: " << A << endl;
+        cout << "Ab: " << A << endl;
 // which doesn't construct an array view as collapse() does, but relies on the
 // expression template mechanism instead.
+
+// Constructing an array view is useful for example when you need to pass a
+// pointer to an external library. But be aware of the strides!
+        double * re_ptr = Bre.data();
+        double * im_ptr = Bim.data();
+        re_ptr[0] = 77;
+        im_ptr[0] = 99;
+        cout << "Ac: " << A << endl;
     }
     return 0;
 }

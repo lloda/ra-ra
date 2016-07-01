@@ -393,7 +393,6 @@ int main()
             tr.test_eq(1, v[1]);
         }
     }
-
     section("transpose");
     {
         ra::Small<real, 2, 3> a { 1, 2, 3, 4, 5, 6 };
@@ -401,7 +400,6 @@ int main()
         ra::transpose<1, 0>(a) = { 1, 2, 3, 4, 5, 6 };
         tr.test_eq(ra::Small<real, 2, 3> { 1, 3, 5, 2, 4, 6 }, a);
     }
-
     section("diag");
     {
         ra::Small<real, 3, 3> a = ra::_0*3 + ra::_1;
@@ -409,7 +407,15 @@ int main()
         diag(a) = { 11, 22, 33 };
         tr.test_eq(ra::Small<real, 3, 3> { 11, 1, 2, 3, 22, 5, 6, 7, 33 }, a);
     }
-
+    section("renames");
+    {
+        ra::Small<real, 2, 2> a { 13, 8, 75, 19 };
+        ra::mat_uv<real> b(a);
+        assert(b.uu==13 && b.uv==8 && b.vu==75 && b.vv==19);
+        ra::Small<real, 3> x { 13, 8, 75 };
+        ra::vec_xyz<real> y(x);
+        assert(y.x==13 && y.y==8 && y.z==75);
+    }
     section(".back()");
     {
         ra::Small<real, 3> a = ra::_0*3;

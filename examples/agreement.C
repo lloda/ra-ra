@@ -1,7 +1,12 @@
 
-// (c) Daniel Llorens - 2015
+// (c) Daniel Llorens - 2015-2016
 
-/// @file explode-collapse.C
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
+/// @file agreement.C
 /// @brief Demo shape agreement rules
 
 #include "ra/ra-operators.H"

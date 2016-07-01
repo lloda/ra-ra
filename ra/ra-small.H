@@ -15,8 +15,6 @@
 /// @file ra-small.H
 /// @brief Fixed-size multidimensional arrays.
 
-// @TODO About the commented constexpr, keep an eye on http://gcc.gnu.org/bugzilla/show_bug.cgi?id=60511
-
 #ifdef RA_CHECK_BOUNDS
     #define RA_CHECK_BOUNDS_RA_SMALL RA_CHECK_BOUNDS
 #else
@@ -592,8 +590,8 @@ template <class axes_list, class src_sizes, class src_strides>
 struct axes_list_indices
 {
     static_assert(mp::Len<axes_list>::value==mp::Len<src_sizes>::value, "bad size for transposed axes list");
-    static constexpr int talmax = mp::Fold_<mp::Max, void, axes_list>::value;
-    static constexpr int talmin = mp::Fold_<mp::Min, void, axes_list>::value;
+    constexpr static int talmax = mp::Fold_<mp::Max, void, axes_list>::value;
+    constexpr static int talmin = mp::Fold_<mp::Min, void, axes_list>::value;
     static_assert(talmax < mp::Len<src_sizes>::value, "bad index in transposed axes list");
     static_assert(talmin >= 0, "bad index in transposed axes list");
 
@@ -641,7 +639,7 @@ auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, SmallBase<Child2, T
     using A2 = SmallBase<Child2, T2, sizes2, strides2>;
     static_assert(A1::rank()==1 && A2::rank()==1, "bad ranks for cat"); // gcc accepts a1.rank(), etc.
     using T = std::decay_t<decltype(a1[0])>;
-    Small<T, a1.size()+a2.size()> val;
+    Small<T, A1::size()+A2::size()> val;
     std::copy(a1.begin(), a1.end(), val.begin());
     std::copy(a2.begin(), a2.end(), val.begin()+a1.size());
     return val;
@@ -652,9 +650,10 @@ template <template <class, class, class> class Child1, class T1, class sizes1, c
           std::enable_if_t<is_scalar<A2>::value, int> =0>
 auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
 {
-    static_assert(mp::Len<sizes1>::value==1, "bad ranks for cat");
+    using A1 = SmallBase<Child1, T1, sizes1, strides1>;
+    static_assert(A1::rank()==1, "bad ranks for cat");
     using T = std::decay_t<decltype(a1[0])>;
-    Small<T, a1.size()+1> val;
+    Small<T, A1::size()+1> val;
     std::copy(a1.begin(), a1.end(), val.begin());
     val[a1.size()] = a2;
     return val;
@@ -665,9 +664,10 @@ template <class A1,
           std::enable_if_t<is_scalar<A1>::value, int> =0>
 auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 {
-    static_assert(mp::Len<sizes2>::value==1, "bad ranks for cat");
+    using A2 = SmallBase<Child2, T2, sizes2, strides2>;
+    static_assert(A2::rank()==1, "bad ranks for cat");
     using T = std::decay_t<decltype(a2[0])>;
-    Small<T, 1+a2.size()> val;
+    Small<T, 1+A2::size()> val;
     val[0] = a1;
     std::copy(a2.begin(), a2.end(), val.begin()+1);
     return val;

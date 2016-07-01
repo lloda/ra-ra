@@ -12,7 +12,7 @@
 /// @file tuple-dynamic.H
 /// @brief Use tuples with dynamic parameters.
 
-// @TODO Think about struct <int k> { int const value = k; static int const static_value = k; }
+// @TODO Think about struct <int k> { int const value = k; constexpr static int static_value = k; }
 // where the tuple can be cast to an array ref.
 
 #include <tuple>
@@ -48,12 +48,12 @@ struct on_tuple<std::tuple<t0, ti ...>, k>
         next::map_indices(i, j);
     }
 // @TODO merge with mp::Index?
-    static int constexpr index(int const q)
+    constexpr static int index(int const q)
     {
         return (q==t0::value) ? k : next::index(q);
     }
 // @TODO merge with mp::Ref?
-    static int constexpr ref(int const i)
+    constexpr static int ref(int const i)
     {
         return k==i ? t0::value : next::ref(i);
     }
@@ -72,11 +72,11 @@ struct on_tuple<std::tuple<>, k>
     {
         static_assert(N==k, "bad indices in map_indices");
     }
-    static int constexpr index(int const q)
+    constexpr static int index(int const q)
     {
         return -1;
     }
-    static int constexpr ref(int const i)
+    constexpr static int ref(int const i)
     {
         static_assert(true, "bad ref");
         return -1;

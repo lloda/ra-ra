@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2014
+// (c) Daniel Llorens - 2013-2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -11,10 +11,6 @@
 
 /// @file ra-traits.H
 /// @brief Array traits: dimension, rank, extent, etc.
-
-// Previously vtraits.H, this is a cleanup. Now it does not look inside class
-// for rank/size/etc members, so it's necessary to declare a traits
-// specialization for each class to be handled.
 
 #include <cstdint>
 #include <vector>

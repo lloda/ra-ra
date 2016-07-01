@@ -148,7 +148,7 @@ DEFINE_UNARY_OP(operator-, -)
 #undef DEFINE_UNARY_OP
 
 // When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
-// @TODO Cf [ref:examples/useret.C:0] for examples.
+// @TODO Cf [ref:examples/useret.C:0].
 #define DEFINE_NAME_OP(OPNAME, OP)                                      \
     using ::OP;                                                         \
     template <class ... A, enableif_<ra_pos_and_any<A ...>, int> =0>    \
@@ -439,17 +439,15 @@ inline auto normv(A const & a)
     return b;
 }
 
-#undef START
-
 // @TODO Define within generalization...
 // @TODO Plain auto causes problems witn transform() in mat-fun.H:transform().
 template <class A, class B>
-inline ra::Small<decltype(std::declval<A>()(0, 0)*std::declval<B>()(0, 0)), A::size(0), B::size(1)>
+inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0), B::size(1)>
 gemm(A const & a, B const & b)
 {
     constexpr int M = a.size(0);
     constexpr int N = b.size(1);
-    ra::Small<decltype(a(0, 0)*b(0, 0)), M, N> c;
+    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0), B::size(1)> c;
     for (int i=0; i<M; ++i) {
         for (int j=0; j<N; ++j) {
             c(i, j) = dot(a(i), b(ra::all, j));
@@ -466,7 +464,7 @@ gemm(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
     int const M = a.size(0);
     int const N = b.size(1);
     int const K = a.size(1);
-    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, 0.);
+    ra::Owned<std::decay_t<decltype(START(a)*START(b))>, 2> c({M, N}, 0.);
     for (int k=0; k<K; ++k) {
         c += from(times(), a(ra::all, k), b(k, ra::all));
     }
@@ -474,11 +472,11 @@ gemm(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
 }
 
 template <class A, class B>
-inline ra::Small<decltype(std::declval<A>()(0)*std::declval<B>()(0, 0)), B::size(1)>
+inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, B::size(1)>
 gevm(A const & a, B const & b)
 {
     constexpr int N = b.size(1);
-    ra::Small<decltype(a(0)*b(0, 0)), N> c;
+    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, B::size(1)> c;
     for (int j=0; j<N; ++j) {
         c(j) = dot(a, b(ra::all, j));
     }
@@ -489,7 +487,7 @@ template <class S, class T>
 inline auto
 gevm(ra::Raw<S, 1> const & a, ra::Raw<T, 2> const & b)
 {
-    int N = b.size(1);
+    int const N = b.size(1);
     ra::Owned<decltype(a(0)*b(0, 0))> c({N}, ra::unspecified);
     for (int j=0; j<N; ++j) {
         c(j) = dot(a, b(ra::all, j));
@@ -498,11 +496,11 @@ gevm(ra::Raw<S, 1> const & a, ra::Raw<T, 2> const & b)
 }
 
 template <class A, class B>
-inline ra::Small<decltype(std::declval<A>()(0, 0)*std::declval<B>()(0)), A::size(0)>
+inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0)>
 gemv(A const & a, B const & b)
 {
     constexpr int M = a.size(0);
-    ra::Small<decltype(a(0, 0)*b(0)), M> c;
+    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0)> c;
     for (int i=0; i<M; ++i) {
         c(i) = dot(a(i), b);
     }
@@ -513,13 +511,15 @@ template <class S, class T>
 inline auto
 gemv(ra::Raw<S, 2> const & a, ra::Raw<T, 1> const & b)
 {
-    int M = a.size(0);
-    ra::Owned<decltype(a(0, 0)*b(0)), 1> c({M}, ra::unspecified);
+    int const M = a.size(0);
+    ra::Owned<std::decay_t<decltype(START(a)*START(b))>, 1> c({M}, ra::unspecified);
     for (int i=0; i<M; ++i) {
         c(i) = dot(a(i), b);
     }
     return c;
 }
+
+#undef START
 
 // --------------------
 // I/O operators.
