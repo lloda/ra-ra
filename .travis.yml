@@ -1,0 +1,21 @@
+
+install:
+  - sudo pip install colorama
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
+
+language: cpp
+
+script:
+ - (cd test && scons)
+ - (cd examples && scons)
+env:
+ - CXXFLAGS=-O3
+compiler:
+ - g++-5
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-5

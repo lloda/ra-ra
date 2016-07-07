@@ -1,8 +1,9 @@
 
-# ra-ra #
 
-ra-ra is an expression template / multidimensional array library for C++14, with
-an APL/J bent.
+# ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
+
+ra-ra is a C++14, header-only, expression template / multidimensional
+array library with an APL/J bent.
 
 The primary public repo is at: https://notabug.org/lloda/ra-ra
 

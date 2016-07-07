@@ -17,7 +17,7 @@ template <class T, int ... sizes> using Small = ra::Small<T, sizes ...>;
 
 int main()
 {
-// These operations let you view an array of rank n in an array of rank (n-k) of
+// These operations let you view an array of rank n as an array of rank (n-k) of
 // subarrays of rank k (explode) or the opposite (collapse). However, there is a
 // caveat: the subarrays must be compact (stored contiguously) and the sizes of
 // the subarrays must be known statically. In effect, the subarray must be of
