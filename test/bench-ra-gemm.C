@@ -20,6 +20,7 @@
 #include "ra/format.H"
 #include "ra/ra-large.H"
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;
 using ra::Small; using ra::Raw; using ra::Unique; using ra::ra_traits; using ra::dim_t;

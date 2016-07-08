@@ -3,6 +3,7 @@
 // Adapted from blitz++/examples/deriv.cpp
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 
 using std::cout; using std::endl; using std::flush;
 

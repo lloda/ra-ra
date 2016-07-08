@@ -6,6 +6,7 @@
 // $CXX -o small.s -S -O3 -DRA_CHECK_BOUNDS=0 -std=c++14 -Wall -Werror -Wno-unknown-pragmas -Wno-parentheses -Wno-error=strict-overflow -march=native -I.. small.C -funroll-loops -ffast-math -fno-exceptions
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include <iostream>
 
 using std::cout; using std::endl; using std::flush;

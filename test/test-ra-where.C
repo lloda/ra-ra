@@ -9,6 +9,7 @@
 // Regression test for a bug in where() when both T/F arms are Expr.
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include "ra/test.H"
 
 using std::cout; using std::endl;

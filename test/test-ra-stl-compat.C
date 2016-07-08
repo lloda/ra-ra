@@ -10,8 +10,8 @@
 /// @brief Using ra:: array & iterator types with the STL algos & types.
 
 // ra:: iterators are only partially STL compatible, because of copiability,
-// lack of random access (where by the nature of the container it should be
-// available), etc. Check some cases here.
+// lack of random access (which for the STL also means linear, but at least for
+// 1D expressions it should be available), etc. Check some cases here.
 
 #include <iostream>
 #include <iterator>
@@ -19,6 +19,7 @@
 #include "ra/test.H"
 #include "ra/ra-large.H"
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 
 using std::cout; using std::endl; using std::flush;
 

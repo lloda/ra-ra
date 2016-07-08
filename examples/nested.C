@@ -4,6 +4,7 @@
 // Nested heterogeneous arrays
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include <iostream>
 
 using std::cout; using std::endl;

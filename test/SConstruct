@@ -102,7 +102,7 @@ def to_test_ra(env, source):
               ]]
 
 [to_test_ra(env, test)
- for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-mmul']]
+ for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-gemm']]
 
 
 def print_summary():

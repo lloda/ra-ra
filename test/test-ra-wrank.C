@@ -20,6 +20,7 @@
 #include "ra/ra-large.H"
 #include "ra/ra-wrank.H"
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 
 using std::cout; using std::endl; using std::flush;
 using std::tuple;

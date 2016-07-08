@@ -17,6 +17,7 @@
 #include "ra/ra-large.H"
 #include "ra/ra-wrank.H"
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include <chrono>
 #include <string>
 

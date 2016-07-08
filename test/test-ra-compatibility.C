@@ -13,6 +13,7 @@
 #include "ra/test.H"
 #include "ra/ra-large.H"
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 
 using std::cout; using std::endl; using std::flush;
 
@@ -25,7 +26,7 @@ int main()
         {
             auto ref = std::array<int, 4> {{12, 77, 44, 1}};
             tr.test_eq(2, expr([](int i) { return i; },
-                                  ra::vector(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
+                               ra::vector(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
             tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(std::array<int, 4> {{12, 77, 44, 1}})));
 // [a1] these require ra::Vector and ra::Expr to forward in the constructor (only on linux gcc-5.2,
 // weirdly). Clue of why is in the ra::Unique case below.

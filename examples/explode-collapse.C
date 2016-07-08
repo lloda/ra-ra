@@ -10,6 +10,7 @@
 /// @brief Demo collapse and explode operations.
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 
 using std::cout; using std::endl; using std::flush;
 template <class T, int rank> using Array = ra::Owned<T, rank>;

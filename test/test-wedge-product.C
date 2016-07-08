@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include "ra/test.H"
 
 using std::cout; using std::endl; using std::flush;

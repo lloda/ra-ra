@@ -10,6 +10,7 @@
 /// @brief Demo shape agreement rules
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include <iostream>
 
 using std::cout; using std::endl;
@@ -33,6 +34,7 @@ int main()
     // X: [3 4 5] (taken from the shape of the right hand side)
     // All the first dimensions are 3, all the second dimensions are 4, and all
     // the third dimensions are 5, so the expression is valid.
+    // Note that the agreement rules are applied equally to the destination argument.
     X = map([](auto && a, auto && b, auto && c) { return a+b-c; }, A, B, C);
     cout << "\nX: " << X << endl;
     // (you can write the expression above as X = A+B-C).

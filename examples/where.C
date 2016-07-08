@@ -3,6 +3,7 @@
 // Adapted from blitz++/examples/where.cpp
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include "ra/test.H"
 
 using std::cout; using std::endl; using std::flush;

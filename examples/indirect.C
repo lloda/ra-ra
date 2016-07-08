@@ -11,6 +11,7 @@
 // the kind of indexing they do.
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include <vector>
 #include <iostream>
 

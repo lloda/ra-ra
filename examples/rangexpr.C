@@ -3,7 +3,7 @@
 // Adapted from blitz++/examples/rangexpr.cpp
 
 #include "ra/ra-operators.H"
-#include "ra/test.H"
+#include "ra/ra-io.H"
 
 using std::cout; using std::endl;
 

@@ -3,6 +3,7 @@
 // Adapted from blitz++/examples/cast.cpp
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include <iostream>
 
 using std::cout; using std::endl;

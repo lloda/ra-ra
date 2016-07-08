@@ -2,21 +2,36 @@
 // Daniel Llorens - 2015
 // Adapted from blitz++/examples/useret.cpp
 
-// This is cheating since Blitz++'s ETs have a static applicator vs ra::Expr
-// where it's kept as a member. The other difference is the naming
-// convenience. There's a method for naming array ops in ra-operators.H
-// (DEFINE_BINARY_OP etc, [ref:examples/useret.C:0]) but it's undeveloped.
+// Blitz++'s ETs have a static applicator, so declaring new operations requires
+// a new class. Thanks to C++14, declaring new ET operations is much easier in
+// ra::. Just declare a function.
 
+#include "ra/ra-io.H"
 #include "ra/ra-operators.H"
+#include <iostream>
 
 using std::cout; using std::endl; using std::flush;
 
 double myFunction(double x)
-{ return 1.0 / (1 + x); }
+{
+    return 1.0 / (1 + x);
+}
 
 double foobar(double x, double y)
 {
     return x*y;
+}
+
+template <class A>
+auto myFunction_ra(A && a)
+{
+    return ra::map(myFunction, std::forward<A>(a));
+}
+
+template <class A, class B>
+auto foobar_ra(A && a, B && b)
+{
+    return ra::map(foobar, std::forward<A>(a), std::forward<B>(b));
 }
 
 int main()
@@ -29,17 +44,18 @@ int main()
           12, 13, 14, 15 };
     C = 3;
 
-    cout << "A = " << A << endl
-         << "C = " << C << endl;
+    cout << "A = " << A << endl;
+    cout << "C = " << C << endl;
 
-// This is not exactly the same
-
-    B = map(myFunction, A);
+    B = myFunction_ra(A);
     cout << "B = myFunction(A) = " << B << endl;
 
-    B = map(foobar, A, C);
-    cout << "B = foobar(A,C) = " << B << endl;
+    B = foobar_ra(A, C);
+    cout << "B = foobar(A, C) = " << B << endl;
 
-    B = map(foobar, ra::_0, ra::_1);
+    B = foobar_ra(A, 1.);
+    cout << "B = foobar(A, 1.) = " << B << endl;
+
+    B = foobar_ra(ra::_0, ra::_1);
     cout << "B = foobar(tensor::i, tensor::j) = " << B << endl;
 }

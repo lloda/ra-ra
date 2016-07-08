@@ -14,6 +14,7 @@
 #include "ra/test.H"
 #include "ra/ra-large.H"
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include "ra/mpdebug.H"
 #include "ra/format.H"
 

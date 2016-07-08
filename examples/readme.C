@@ -12,6 +12,7 @@
 // @TODO Generate README.md and/or these examples.
 
 #include "ra/ra-operators.H"
+#include "ra/ra-io.H"
 #include "ra/test.H"
 #include <iostream>
 
