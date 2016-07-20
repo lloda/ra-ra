@@ -24,25 +24,25 @@ using std::cout; using std::endl;
 template <class A>
 struct Inc1
 {
-    typedef int_t<A::value+1> type;
+    using type = int_t<A::value+1>;
 };
 
 template <class A, class B>
 struct Sum2
 {
-    typedef int_t<A::value+B::value> type;
+    using type = int_t<A::value+B::value>;
 };
 
 template <class ... A> struct SumV;
 template <class A0, class ... A>
 struct SumV<A0, A ...>
 {
-    static int const value = A0::value + SumV<A ...>::value;
+    constexpr static int value = A0::value + SumV<A ...>::value;
 };
 template <>
 struct SumV<>
 {
-    static int const value = 0;
+    constexpr static int value = 0;
 };
 
 template <class A>
@@ -51,19 +51,19 @@ struct SamePP
     template <class B>
     struct type
     {
-        static bool const value = std::is_same<A, B>::value;
+        constexpr static bool value = std::is_same<A, B>::value;
     };
 };
 
 struct True
 {
-    static bool const value = true;
+    constexpr static bool value = true;
 };
 
 int main()
 {
     TestRecorder tr(std::cout);
-// Basic constexpr stulff.
+// Basic constexpr stuff.
     {
         static_assert(mp::fact(0)==1, "bad fact(0)");
         static_assert(mp::fact(1)==1, "bad fact(1)");
@@ -72,7 +72,7 @@ int main()
     }
 // Booleans.
     {
-        static_assert(True::value && !mp::Not<True>::value, "bad Not");
+        static_assert(True::value, "bad True");
     }
 // Apply, Typer, Valuer.
     {
@@ -211,7 +211,7 @@ int main()
     static_assert(is_same<FindTail<A, int_t<0>>::type, A>::value, "4a");
     static_assert(check_idx<FindTail<A, int_t<2>>::type, 2, 3>::value, "4b");
     static_assert(check_idx<FindTail<A, int_t<3>>::type, 3>::value, "4c");
-    static_assert(NilP<FindTail<A, int_t<4>>::type>::value, "4d");
+    static_assert(nilp<FindTail<A, int_t<4>>::type>, "4d");
     static_assert(is_same<FindTail<S3, S2BC>::type, tuple<S2BC>>::value, "4e");
 // Reverse.
     static_assert(check_idx<Reverse<A_B>::type, 7, 6, 5, 3, 2, 0>::value, "5a");
@@ -306,16 +306,16 @@ static_assert(check_idx<ComplementList<int_list A , B >::type \
     }
 // Combinations.
     {
-        static_assert(n_over_p<0, 0>::value==1, "");
-        static_assert(Len<Combinations<nil, 0>::type>::value==1, "");
+        static_assert(n_over_p(0, 0)==1, "");
+        static_assert(len<Combinations<nil, 0>::type> == 1, "");
         using l3 = Iota<3>::type;
         using c31 = Combinations<l3, 1>::type;
         using c32 = Combinations<l3, 2>::type;
-        static_assert(Len<c31>::value==3, "a");
+        static_assert(len<c31> == 3, "a");
         static_assert(check_idx<Ref<c31, 0>::type, 0>::value, "a");
         static_assert(check_idx<Ref<c31, 1>::type, 1>::value, "b");
         static_assert(check_idx<Ref<c31, 2>::type, 2>::value, "c");
-        static_assert(Len<c32>::value==3, "b");
+        static_assert(len<c32> == 3, "b");
         static_assert(check_idx<Ref<c32, 0>::type, 0, 1>::value, "d");
         static_assert(check_idx<Ref<c32, 1>::type, 0, 2>::value, "e");
         static_assert(check_idx<Ref<c32, 2>::type, 1, 2>::value, "f");
@@ -325,44 +325,44 @@ static_assert(check_idx<ComplementList<int_list A , B >::type \
         using c42 = Combinations<l4, 2>::type;
         using c43 = Combinations<l4, 3>::type;
         using c44 = Combinations<l4, 4>::type;
-        static_assert(Len<c40>::value==1, "a");
+        static_assert(len<c40> == 1, "a");
         static_assert(check_idx<Ref<c40, 0>::type>::value, "a");
-        static_assert(Len<c41>::value==4, "b");
+        static_assert(len<c41> == 4, "b");
         static_assert(check_idx<Ref<c41, 0>::type, 0>::value, "b");
         static_assert(check_idx<Ref<c41, 1>::type, 1>::value, "b");
         static_assert(check_idx<Ref<c41, 2>::type, 2>::value, "b");
         static_assert(check_idx<Ref<c41, 3>::type, 3>::value, "b");
-        static_assert(Len<c42>::value==6, "c");
+        static_assert(len<c42> == 6, "c");
         static_assert(check_idx<Ref<c42, 0>::type, 0, 1>::value, "c");
         static_assert(check_idx<Ref<c42, 1>::type, 0, 2>::value, "c");
         static_assert(check_idx<Ref<c42, 2>::type, 0, 3>::value, "c");
         static_assert(check_idx<Ref<c42, 3>::type, 1, 2>::value, "c");
         static_assert(check_idx<Ref<c42, 4>::type, 1, 3>::value, "c");
         static_assert(check_idx<Ref<c42, 5>::type, 2, 3>::value, "c");
-        static_assert(Len<c43>::value==4, "d");
+        static_assert(len<c43> == 4, "d");
         static_assert(check_idx<Ref<c43, 0>::type, 0, 1, 2>::value, "d");
         static_assert(check_idx<Ref<c43, 1>::type, 0, 1, 3>::value, "d");
         static_assert(check_idx<Ref<c43, 2>::type, 0, 2, 3>::value, "d");
         static_assert(check_idx<Ref<c43, 3>::type, 1, 2, 3>::value, "d");
-        static_assert(Len<c44>::value==1, "e");
+        static_assert(len<c44> == 1, "e");
         static_assert(check_idx<Ref<c44, 0>::type, 0, 1, 2, 3>::value, "e");
     }
 // MapPrepend & ProductAppend.
     {
-        typedef Iota<3>::type la;
-        typedef Combinations<la, 1>::type ca;
-        typedef Iota<3>::type lb;
-        typedef Combinations<lb, 1>::type cb;
-        typedef MapPrepend<nil, cb>::type test0;
+        using la = Iota<3>::type;
+        using ca = Combinations<la, 1>::type;
+        using lb = Iota<3>::type;
+        using cb = Combinations<lb, 1>::type;
+        using test0 = MapPrepend<nil, cb>::type;
         static_assert(std::is_same<test0, cb>::value, "");
-        typedef MapPrepend<la, cb>::type test1;
-        static_assert(Len<test1>::value==int(Len<cb>::value), "");
+        using test1 = MapPrepend<la, cb>::type;
+        static_assert(len<test1> == int(len<cb>), "");
         static_assert(check_idx<Ref<test1, 0>::type, 0, 1, 2, 0>::value, "");
         static_assert(check_idx<Ref<test1, 1>::type, 0, 1, 2, 1>::value, "");
         static_assert(check_idx<Ref<test1, 2>::type, 0, 1, 2, 2>::value, "");
 
-        typedef ProductAppend<ca, cb>::type test2;
-        static_assert(Len<test2>::value==9, "");
+        using test2 = ProductAppend<ca, cb>::type;
+        static_assert(len<test2> == 9, "");
         static_assert(check_idx<Ref<test2, 0>::type, 0, 0>::value, "");
         static_assert(check_idx<Ref<test2, 1>::type, 0, 1>::value, "");
         static_assert(check_idx<Ref<test2, 2>::type, 0, 2>::value, "");

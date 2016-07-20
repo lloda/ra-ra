@@ -88,5 +88,11 @@ int main()
                 ra::expr([](real i, auto j) { return -i*real(j); }, ra::Small<real, 3>{0, 1, 2}.iter(), TI<0>()),
                 ra::Small<real, 3>{0, -1, -4});
     }
+    section("IO of var rank expression");
+    {
+        ra::Small<int, 2, 2> A {1, 2, 3, 4};
+        ra::Unique<int> B({2, 2}, {1, 2, 3, 4});
+        iocheck(tr.info("var rank expr"), A+B, ra::Unique<int>({2, 2}, { 2, 4, 6, 8 }));
+    }
     return tr.summary();
 }

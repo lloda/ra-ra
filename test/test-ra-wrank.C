@@ -30,7 +30,7 @@ template <class V, class A, class B>
 void framematch_demo(V && v, A && a, B && b)
 {
     using FM = ra::Framematch<std::decay_t<V>, tuple<decltype(a.iter()), decltype(b.iter())>>;
-    cout << "width of fm: " << mp::Len<typename FM::R>::value << ", depth: " << FM::depth << endl;
+    cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
     cout << "FM::R: "; mp::print_int_list<typename FM::R>::f(cout) << endl;
     cout << "FM::framedrivers: "; mp::print_int_list<typename FM::framedrivers>::f(cout) << endl;
     cout << "FM::axisdrivers: "; mp::print_int_list<typename FM::axisdrivers>::f(cout) << endl;
@@ -46,7 +46,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
     std::iota(b.begin(), b.end(), 1);
     {
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
-        cout << "width of fm: " << mp::Len<typename FM::R>::value << ", depth: " << FM::depth << endl;
+        cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
         mp::print_int_list<typename FM::R>::f(cout) << endl;
         auto af0 = ra::applyframes<mp::Ref_<typename FM::R, 0>, FM::depth>::f(a.iter());
         auto af1 = ra::applyframes<mp::Ref_<typename FM::R, 1>, FM::depth>::f(b.iter());
@@ -113,7 +113,7 @@ int main()
         {
             auto v = ra::verb<0, 2>::make(plus2real_print);
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
-            cout << "width of fm: " << mp::Len<FM::R>::value << ", depth: " << FM::depth << endl;
+            cout << "width of fm: " << mp::len<FM::R> << ", depth: " << FM::depth << endl;
             mp::print_int_list<FM::R>::f(cout) << endl;
             auto af0 = ra::applyframes<mp::Ref_<FM::R, 0>, FM::depth>::f(a.iter());
             auto af1 = ra::applyframes<mp::Ref_<FM::R, 1>, FM::depth>::f(b.iter());

@@ -40,9 +40,9 @@ struct ra_traits_def<std::vector<T, A>>
     }
 
     static dim_t size(V const & v) { return v.size(); }
-    static dim_t constexpr size_s() { return DIM_ANY; }
-    static rank_t constexpr rank(V const & v) { return 1; }
-    static rank_t constexpr rank_s() { return 1; }
+    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static rank_t rank(V const & v) { return 1; }
+    constexpr static rank_t rank_s() { return 1; }
 };
 
 template <class T, std::size_t N>
@@ -66,10 +66,10 @@ struct ra_traits_def<std::array<T, N>>
         return r;
     }
 
-    static dim_t constexpr size(V const & v) { return v.size(); }
-    static dim_t constexpr size_s() { return N; }
-    static rank_t constexpr rank(V const & v) { return 1; }
-    static rank_t constexpr rank_s() { return 1; };
+    constexpr static dim_t size(V const & v) { return v.size(); }
+    constexpr static dim_t size_s() { return N; }
+    constexpr static rank_t rank(V const & v) { return 1; }
+    constexpr static rank_t rank_s() { return 1; };
 };
 
 template <class T>
@@ -80,8 +80,8 @@ struct ra_traits_def<T *>
 
     // static dim_t constexpr size(V const & v) { return DIM_BAD; }
     // static dim_t constexpr size_s() { return DIM_BAD; }
-    static rank_t constexpr rank(V const & v) { return 1; }
-    static rank_t constexpr rank_s() { return 1; }
+    constexpr static rank_t  rank(V const & v) { return 1; }
+    constexpr static rank_t rank_s() { return 1; }
 };
 
 template <class T>
@@ -90,10 +90,10 @@ struct ra_traits_def<std::initializer_list<T>>
     using V = std::initializer_list<T>;
     using value_type = T;
 
-    static rank_t constexpr size(V const & v) { return v.size(); }
-    static rank_t constexpr rank(V const & v) { return 1; }
-    static rank_t constexpr rank_s() { return 1; }
-    static rank_t constexpr size_s() { return DIM_ANY; }
+    constexpr static rank_t size(V const & v) { return v.size(); }
+    constexpr static rank_t rank(V const & v) { return 1; }
+    constexpr static rank_t rank_s() { return 1; }
+    constexpr static rank_t size_s() { return DIM_ANY; }
 };
 
 // To handle rank-1 arrays of static/dynamic size. TODO: clean up, see temporary.H.

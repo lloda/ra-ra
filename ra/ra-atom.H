@@ -231,11 +231,6 @@ struct Iota
 inline auto iota(int size, int org=0, int stride=1) { return Iota<int> { size, org, stride }; }
 inline auto jvec(dim_t size, dim_t org=0, dim_t stride=1) { return Iota<dim_t> { size, org, stride }; }
 
-template <int n> struct dots_t {};
-template <int n> constexpr dots_t<n> dots = dots_t<n>();
-using all_t = dots_t<1>;
-constexpr all_t all = all_t();
-
 template <class I> struct is_beatable_def
 {
     constexpr static bool value = mp::Or<std::is_integral<I> >::value;
@@ -275,7 +270,7 @@ struct has_tensorindex_def
     static bool const value = false;
 };
 
-template <class T> using has_tensorindex = has_tensorindex_def<std::decay_t<T> >;
+template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T> >::value;
 
 template <int w_, class value_type_>
 struct has_tensorindex_def<TensorIndex<w_, value_type_> >
@@ -288,7 +283,7 @@ template <class Op, class T, class K=mp::index_tuple_<T>> struct Expr;
 template <class Op, class ... Ti, class K>
 struct has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>>
 {
-    static bool const value = mp::Or<has_tensorindex<Ti> ...>::value;
+    static bool const value = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
 };
 
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
@@ -296,7 +291,7 @@ template <class LiveAxes, int depth, class A> struct ApplyFrames;
 template <class LiveAxes, int depth, class A>
 struct has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>>
 {
-    static bool const value = has_tensorindex<A>::value;
+    static bool const value = has_tensorindex<A>;
 };
 
 template <class FM, class Op, class T, class K=mp::index_tuple_<T>> struct Ryn;
@@ -304,7 +299,7 @@ template <class FM, class Op, class T, class K=mp::index_tuple_<T>> struct Ryn;
 template <class FM, class Op, class ... Ti, class K>
 struct has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>>
 {
-    static bool const value = mp::Or<has_tensorindex<Ti> ...>::value;
+    static bool const value = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
 };
 
 } // namespace ra

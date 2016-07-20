@@ -67,7 +67,7 @@ struct AddFrameAxes
     using type = mp::Append_<R, mp::Iota_<frank::value, skip::value>>;
 };
 
-template <class V, class T, class R=mp::MakeList_<mp::Len<T>::value, mp::nil>,
+template <class V, class T, class R=mp::MakeList_<mp::len<T>, mp::nil>,
           rank_t skip=0>
 struct Framematch;
 
@@ -84,7 +84,7 @@ struct Framematch<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple
 
 // @TODO functions of arg rank, negative, inf.
 // live = number of live axes on this frame, for each argument.
-    using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::Len<Ri>::value-crank::value) ...>;
+    using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>-crank::value) ...>;
     static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "no dynamic ranks allowed");
 
 // select driver for this stage.
@@ -99,7 +99,7 @@ struct Framematch<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple
     using framedrivers = mp::Cons_<mp::int_t<driver>, typename FM::framedrivers>;
     using axisdrivers = mp::Append_<mp::MakeList_<mp::Ref_<live, driver>::value, mp::int_t<driver>>,
                                     typename FM::axisdrivers>;
-    using axisaxes = mp::Append_<mp::Iota_<mp::Ref_<live, driver>::value, mp::Len<mp::Ref_<R_, driver>>::value>,
+    using axisaxes = mp::Append_<mp::Iota_<mp::Ref_<live, driver>::value, mp::len<mp::Ref_<R_, driver>>>,
                                  typename FM::axisaxes>;
     using argindices = mp::Zip_<axisdrivers, axisaxes>;
 
@@ -126,7 +126,7 @@ struct Framematch<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
     using R_ = std::tuple<Ri ...>;
 
 // @TODO -crank::value when the actual verb rank is used (e.g. to use ra_iterator<A, that_rank> instead of just begin()).
-    using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::Len<Ri>::value) ...>;
+    using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>) ...>;
     static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "no dynamic ranks allowed");
     static int const driver = largest_i_tuple<live>::value;
 
@@ -135,7 +135,7 @@ struct Framematch<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
     static int const depth = mp::Ref_<live, driver>::value;
     using framedrivers = mp::int_list<driver>;
     using axisdrivers = mp::MakeList_<mp::Ref_<live, driver>::value, mp::int_t<driver>>;
-    using axisaxes = mp::Iota_<mp::Ref_<live, driver>::value, mp::Len<mp::Ref_<R_, driver>>::value>;
+    using axisaxes = mp::Iota_<mp::Ref_<live, driver>::value, mp::len<mp::Ref_<R_, driver>>>;
     using argindices = mp::Zip_<axisdrivers, axisaxes>;
 
     template <class VV>
@@ -177,7 +177,7 @@ struct ApplyFrames
     template <class I>
     decltype(auto) at(I const & i)
     {
-        std::array<dim_t, mp::Len<LiveAxes>::value> j;
+        std::array<dim_t, mp::len<LiveAxes>> j;
         mp::on_tuple<LiveAxes>::map_indices(i, j);
         return a.at(j);
     }
@@ -223,7 +223,7 @@ struct applyframes
 
 // // No-op case. @TODO Maybe apply to any Iota<n> where n<=depth. @TODO Need to offer a default live().
 // template <class LiveAxes, int depth>
-// struct applyframes<LiveAxes, depth, enableif_<std::is_same<LiveAxes, mp::Iota_<depth>>>>
+// struct applyframes<LiveAxes, depth, enableif<std::is_same<LiveAxes, mp::Iota_<depth>>>>
 // {
 //     template <class A>
 //     static decltype(auto) f(A && a)
@@ -251,13 +251,13 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     T t;
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg==mp::len<K>), bool>
     check(dim_t const s0, int const k)
     {
         return true;
     }
     template <int iarg>
-    std::enable_if_t<(iarg<mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg<mp::len<K>), bool>
     check(dim_t const s0, int const k)
     {
         dim_t sk = std::get<mp::Ref_<K, iarg>::value>(t).size(k);
@@ -282,14 +282,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // DEBUGGING --find the driver for given axis. This pattern is used below.
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::Len<K>::value), int>
+    std::enable_if_t<(iarg<mp::len<K>), int>
     driver(int const k)
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? iarg : driver<iarg+1>(k);
     }
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<K>::value), int>
+    std::enable_if_t<(iarg==mp::len<K>), int>
     driver(int const k)
     {
         assert(0 && "there was no driver"); abort();
@@ -297,14 +297,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg<mp::len<K>), dim_t>
     size(int const k) const
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? s : size<iarg+1>(k);
     }
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg==mp::len<K>), dim_t>
     size(int const k) const
     {
         assert(0 && "internal error"); abort();
@@ -312,14 +312,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg<mp::len<K>), dim_t>
     preferred_stride(int const k) const
     {
         return std::get<iarg>(t).live(k)>=0 ? std::get<iarg>(t).preferred_stride(k)
                                             : preferred_stride<iarg+1>(k);
     }
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<K>::value), dim_t>
+    std::enable_if_t<(iarg==mp::len<K>), dim_t>
     preferred_stride(int const k) const
     {
         assert(0 && "internal error"); abort();
@@ -339,27 +339,27 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
 // @TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::Len<K>::value), void>
+    std::enable_if_t<(iarg<mp::len<K>), void>
     adv(rank_t const k, dim_t const d)
     {
         std::get<iarg>(t).adv(k, d);
         adv<iarg+1>(k, d);
     }
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<K>::value), void>
+    std::enable_if_t<(iarg==mp::len<K>), void>
     adv(rank_t const k, dim_t const d)
     {
     }
 
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg<mp::len<K>), bool>
     compact_stride(dim_t const step, int const z, int const j) const
     {
         return std::get<mp::Ref_<K, iarg>::value>(t).compact_stride(step, z, j)
                && compact_stride<iarg+1>(step, z, j);
     }
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg==mp::len<K>), bool>
     compact_stride(dim_t const step, int const z, int const j) const
     {
         return true;
@@ -421,7 +421,7 @@ decltype(auto) ryn(V && v, Ti && ... t)
 template <class I>
 struct index_rank
 {
-    using type = mp::int_t<std::decay_t<I>::rank_s()>;
+    using type = mp::int_t<std::decay_t<I>::rank_s()>; // see ra_traits for ra::types (?)
     static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
     static_assert(std::decay_t<I>::size_s()!=DIM_BAD, "undelimited extent subscript unsupported");
 };
@@ -430,7 +430,7 @@ template <class II, int take>
 struct from_partial_wrank
 {
     template <class ... I> struct wrank_int_t { using type = wrank<I::value ...>; };
-    constexpr static int drop = mp::Len<II>::value-take;
+    constexpr static int drop = mp::len<II>-take;
     using type = mp::Apply_<wrank_int_t,
                             mp::Append_<mp::MakeList_<drop, mp::int_t<0>>,
                                         mp::Drop_<II, drop> > >;
@@ -468,7 +468,7 @@ template <class A, class ... I>
 auto from(A && a, I && ... i)
 {
     using II = mp::Map_<index_rank, mp::tuple<decltype(start(i)) ...> >;
-    return ryn(from_partial<II, mp::Len<II>::value-1>
+    return ryn(from_partial<II, mp::len<II>-1>
                ::make([&a](auto && ... i) -> decltype(auto) { return a(i ...); } ),
                start(std::forward<I>(i)) ...);
 }

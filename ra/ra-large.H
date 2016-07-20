@@ -15,6 +15,7 @@
 #include "ra/ra-small.H"
 #include "ra/ra-iterator.H"
 #include "ra/ra-wrank.H"
+#include <complex>
 #include <memory>
 
 #ifdef RA_CHECK_BOUNDS
@@ -138,17 +139,18 @@ inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
     return dim_src->stride*i.org_;
 }
 template <class I0, class ... I>
-inline dim_t select_loop(Dim * dim, Dim const * dim_src, I0 i0, I ... i)
+inline dim_t select_loop(Dim * dim, Dim const * dim_src, I0 && i0, I && ... i)
 {
-    return select(dim, dim_src, i0)+select_loop(dim+is_beatable<I0>::skip, dim_src+is_beatable<I0>::skip_src, i ...);
+    return select(dim, dim_src, std::forward<I0>(i0))
+        + select_loop(dim+is_beatable<I0>::skip, dim_src+is_beatable<I0>::skip_src, std::forward<I>(i) ...);
 }
 template <int n, class ... I>
-inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I ... i)
+inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ... i)
 {
-    for (int i=0; i<n; ++i, ++dim, ++dim_src) {
+    for (Dim * end = dim+n; dim!=end; ++dim, ++dim_src) {
         *dim = *dim_src;
     }
-    return select_loop(dim, dim_src, i ...);
+    return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
 inline dim_t select_loop(Dim * dim, Dim const * dim_src)
 {
@@ -179,7 +181,7 @@ struct Raw
     template <class ... I,                                              \
               std::enable_if_t<(mp::Count<std::is_integral<I> ...>::value<RANK \
                           && mp::Count<is_beatable<I> ...>::value==sizeof...(I)), int> = 0> \
-    auto operator()(I ... i) CONST                                      \
+    auto operator()(I const & ... i) CONST                              \
     {                                                                   \
         constexpr int reduced = mp::Count<std::is_integral<I> ...>::value; \
         Raw<T CONST, RANK-reduced> sub;                                 \
@@ -191,11 +193,11 @@ struct Raw
         return sub;                                                     \
     } /* @BUG doesn't handle generic zero-rank indices */               \
     template <class ... I, std::enable_if_t<mp::Count<std::is_integral<I> ...>::value==RANK, int> = 0> \
-    decltype(auto) operator()(I ... i) CONST                            \
+    decltype(auto) operator()(I const & ... i) CONST                            \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     } /* @TODO More than one selector... */                             \
-    template <class ... I, enableif_<mp::Not<mp::And<is_beatable<I> ...> >, int> = 0> \
+    template <class ... I, std::enable_if_t<!mp::And<is_beatable<I> ...>::value, int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -500,9 +502,11 @@ struct Raw<T, RANK_ANY>
 
     template <rank_t SRANK> Raw(Raw<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 
+// Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case.
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I>                                              \
-    auto operator()(I ... i) CONST                                      \
+    template <class ... I,                                              \
+              std::enable_if_t<mp::And<is_beatable<I> ...>::value, int> = 0> \
+    auto operator()(I const & ... i) CONST                              \
     {                                                                   \
         constexpr int reduced = mp::Count<std::is_integral<I> ...>::value; \
         assert(this->rank()>=reduced);                                  \
@@ -513,6 +517,12 @@ struct Raw<T, RANK_ANY>
             sub.dim[i] = this->dim[i+reduced];                          \
         }                                                               \
         return sub;                                                     \
+    } /* @TODO More than one selector... */                             \
+    template <class ... I,                                              \
+              std::enable_if_t<!mp::And<is_beatable<I> ...>::value, int> = 0> \
+    auto operator()(I && ... i) CONST                                   \
+    {                                                                   \
+        return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
     template <class I>                                                  \
     auto at(I const & i) CONST                                          \
@@ -614,7 +624,7 @@ auto transpose(Raw<T, RANK> const & raw)
 
     using dummy_s = mp::MakeList_<sizeof...(Iarg), mp::int_t<0>>;
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
-    constexpr rank_t DSTRANK = mp::Len<typename ti::dst>::value;
+    constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
 
     Raw<T, DSTRANK> r { ra_traits<decltype(r.dim)>::make(DSTRANK, Dim { DIM_BAD, 0 }), raw.data() };
     int k = 0;
@@ -664,14 +674,14 @@ auto explode_(Raw<T, RANK> const & a)
 template <class super_t, class T, int RANK>
 auto explode(Raw<T, RANK> const & a)
 {
-    return explode_<super_t, ra_traits<super_t>::rank_s()>(a);
+    return explode_<super_t, (std::is_same<super_t, std::complex<T> >::value ? 1 : ra_traits<super_t>::rank_s())>(a);
 }
 
 // @TODO Consider these in ra_traits<>.
-template <class T, enableif_<is_scalar<T>, int> =0> int gstride(int i) { return 1; }
-template <class T, std::enable_if_t<!is_scalar<T>::value, int> =0> int gstride(int i) { return T::stride(i); }
-template <class T, enableif_<is_scalar<T>, int> =0> int gsize(int i) { return 1; }
-template <class T, std::enable_if_t<!is_scalar<T>::value, int> =0> int gsize(int i) { return T::size(i); }
+template <class T, std::enable_if_t<is_scalar<T>, int> =0> int gstride(int i) { return 1; }
+template <class T, std::enable_if_t<!is_scalar<T>, int> =0> int gstride(int i) { return T::stride(i); }
+template <class T, std::enable_if_t<is_scalar<T>, int> =0> int gsize(int i) { return 1; }
+template <class T, std::enable_if_t<!is_scalar<T>, int> =0> int gsize(int i) { return T::size(i); }
 
 // @TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
 template <class sub_t, class super_t, int RANK>

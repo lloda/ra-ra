@@ -174,25 +174,25 @@ int main()
     section("Testing ChooseComponents");
     {
         using c1 = ChooseComponents<3, 1>::type;
-        static_assert(Len<c1>::value==3, "bad");
+        static_assert(len<c1> == 3, "bad");
         static_assert(check_idx<Ref<c1, 0>::type, 0>::value, "bad");
         static_assert(check_idx<Ref<c1, 1>::type, 1>::value, "bad");
         static_assert(check_idx<Ref<c1, 2>::type, 2>::value, "bad");
         using c2 = ChooseComponents<3, 2>::type;
-        static_assert(Len<c2>::value==3, "bad");
+        static_assert(len<c2> == 3, "bad");
         static_assert(check_idx<Ref<c2, 0>::type, 1, 2>::value, "bad");
         static_assert(check_idx<Ref<c2, 1>::type, 2, 0>::value, "bad");
         static_assert(check_idx<Ref<c2, 2>::type, 0, 1>::value, "bad");
         using c3 = ChooseComponents<3, 3>::type;
-        static_assert(Len<c3>::value==1, "bad");
+        static_assert(len<c3> == 1, "bad");
         static_assert(check_idx<Ref<c3, 0>::type, 0, 1, 2>::value, "bad");
     }
     {
         using c0 = ChooseComponents<1, 0>::type;
-        static_assert(Len<c0>::value==1, "bad");
+        static_assert(len<c0> == 1, "bad");
         static_assert(check_idx<Ref<c0, 0>::type>::value, "bad");
         using c1 = ChooseComponents<1, 1>::type;
-        static_assert(Len<c1>::value==1, "bad");
+        static_assert(len<c1> == 1, "bad");
         static_assert(check_idx<Ref<c1, 0>::type, 0>::value, "bad");
     }
 

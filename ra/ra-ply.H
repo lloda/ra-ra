@@ -118,14 +118,14 @@ void ply_ravel(A && a)
 // -------------------------
 
 template <class order, class A, class S>
-std::enable_if_t<mp::Len<order>::value==0>
+std::enable_if_t<mp::len<order> == 0>
 subindexf(A & a, S & s, S & i)
 {
     a.at(i);
 }
 
 template <class order, class A, class S>
-std::enable_if_t<(mp::Len<order>::value>0)>
+std::enable_if_t<(mp::len<order> > 0)>
 subindexf(A & a, S & s_, S & i_)
 {
     dim_t & i = i_[mp::First_<order>::value];
@@ -150,7 +150,7 @@ void plyf_index(A && a)
 // -------------------------
 
 template <class order, int ravel_rank, class A, class S>
-std::enable_if_t<mp::Len<order>::value==ravel_rank>
+std::enable_if_t<mp::len<order> == ravel_rank>
 subindex(A & a, dim_t const s, S const & ss0)
 {
     auto p = a.flat();
@@ -160,7 +160,7 @@ subindex(A & a, dim_t const s, S const & ss0)
 }
 
 template <class order, int ravel_rank, class A, class S>
-std::enable_if_t<(mp::Len<order>::value>ravel_rank)>
+std::enable_if_t<(mp::len<order> > ravel_rank)>
 subindex(A & a, dim_t const s, S const & ss0)
 {
     dim_t size = a.size(mp::First_<order>::value); // @TODO Precompute these at the top
@@ -174,14 +174,14 @@ subindex(A & a, dim_t const s, S const & ss0)
 // until() converts runtime jj into compile time j. @TODO a.adv<k>().
 
 template <class order, int j, class A, class S>
-std::enable_if_t<(mp::Len<order>::value<j)>
+std::enable_if_t<(mp::len<order> < j)>
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
     assert(0 && "rank too high");
 }
 
 template <class order, int j, class A, class S>
-std::enable_if_t<(mp::Len<order>::value>=j)>
+std::enable_if_t<(mp::len<order> >= j)>
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
     if (jj==j) {
@@ -226,21 +226,21 @@ auto plyf(A && a) -> std::enable_if_t<(A::rank_s()>1)>
 // ---------------------------
 
 template <class A>
-enableif_<has_tensorindex<std::decay_t<A>>>
+std::enable_if_t<has_tensorindex<A>>
 ply_either(A && a)
 {
     ply_index(std::forward<A>(a));
 }
 
 template <class A>
-std::enable_if_t<!has_tensorindex<std::decay_t<A>>::value && (A::size_s()==DIM_ANY || (A::rank_s()!=0 && A::rank_s()!=1))>
+std::enable_if_t<!has_tensorindex<A> && (A::size_s()==DIM_ANY || (A::rank_s()!=0 && A::rank_s()!=1))>
 ply_either(A && a)
 {
     ply_ravel(std::forward<A>(a));
 }
 
 template <class A>
-std::enable_if_t<!has_tensorindex<std::decay_t<A>>::value && (A::size_s()!=DIM_ANY && (A::rank_s()==0 || A::rank_s()==1))>
+std::enable_if_t<!has_tensorindex<A> && (A::size_s()!=DIM_ANY && (A::rank_s()==0 || A::rank_s()==1))>
 ply_either(A && a)
 {
     plyf(std::forward<A>(a));
@@ -251,7 +251,7 @@ ply_either(A && a)
 // ---------------------------
 
 // @BUG Slow. Options for ply should be the same as for non-short circuit.
-template <class Op, class A, std::enable_if_t<is_array_iterator<A>::value && (A::rank_s()!=1 || has_tensorindex<A>::value), int> = 0>
+template <class Op, class A, std::enable_if_t<is_array_iterator<A>::value && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
 bool ply_index_short_circuit(A && a)
 {
     /* @TODO try and merge the singular cases. */
@@ -283,7 +283,7 @@ bool ply_index_short_circuit(A && a)
     }
 }
 
-template <class Op, class A, std::enable_if_t<is_array_iterator<A>::value && (A::rank_s()==1 && !has_tensorindex<A>::value), int> = 0>
+template <class Op, class A, std::enable_if_t<is_array_iterator<A>::value && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
 bool ply_index_short_circuit(A && a)
 {
     auto s = a.size(0)*a.preferred_stride(0);
@@ -297,7 +297,7 @@ bool ply_index_short_circuit(A && a)
     return Op()(false);
 }
 
-template <class Op, class A, enableif_<mp::Not<is_array_iterator<A>>, int> = 0>
+template <class Op, class A, std::enable_if_t<!is_array_iterator<A>::value, int> = 0>
 bool ply_index_short_circuit(A && a)
 {
     return ply_index_short_circuit<Op>(start(std::forward<A>(a)));

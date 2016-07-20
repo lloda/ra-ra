@@ -20,11 +20,11 @@ namespace ra {
 // a version of ply_index(). @TODO Eventually try to merge with that.
 // is_foreign_vector is included b/c std::vector or std::array may be used as shape_type.
 template <class A> inline
-enableif_<mp::Or<is_ra<A>, is_foreign_vector<A> >, std::ostream &>
+std::enable_if_t<is_ra<A> || is_foreign_vector<A>, std::ostream &>
 operator<<(std::ostream & o, A && a_)
 {
 // work with ArrayIterator
-    auto a = ra::start(std::forward<A>(a_));
+    auto a = ra::start(a_);
     static_assert(decltype(a)::size_s()!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
     auto sha(a.shape());

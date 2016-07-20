@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2005-2012
+// (c) Daniel Llorens - 2005-2012, 2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -16,42 +16,44 @@
 
 namespace mp {
 
-// cf http://stackoverflow.com/questions/14395967/proper-initialization-of-static-constexpr-array-in-class-template
-template <int V> struct int_t
-{
-    constexpr static int value = V;
-};
-template <int V> int constexpr int_t<V>::value;
+template <int V> using int_t = std::integral_constant<int, V>;
+template <bool V> using bool_t = std::integral_constant<bool, V>;
 
-long constexpr pown(int n, int p)
+constexpr long pown(int n, int p)
 {
     return p==0 ? 1 : n*pown(n, p-1);
 }
 
-long constexpr pow2(int n)
+constexpr long pow2(int n)
 {
     return pown(2, n);
 }
 
-long constexpr fact(int i)
+constexpr long fact(int i)
 {
     return (i<2) ? 1 : i*fact(i-1);
 }
 
-template <int N, int P>
-struct n_over_p
+// Works *almost* to the range of size_t.
+constexpr size_t n_over_p(size_t const n, size_t p)
 {
-    static_assert(N>=P, "bad args to n_over_p");
-    static long constexpr value = fact(N)/fact(P)/fact(N-P);
-};
-
-// @TODO See what we can replace by signbit, copysign, or sgn x === ((x>0)-(x<0)).
+    if (p>n) {
+        return 0;
+    } else if (p>(n-p)) {
+        p = n-p;
+    }
+    size_t v = 1;
+    for (size_t i=0; i!=p; ++i) {
+        v = v*(n-i)/(i+1);
+    }
+    return v;
+}
 
 } // namespace mp
 
 // @TODO All users be int, then this take int.
-inline constexpr bool odd(unsigned int N) { return N & 1; }
-inline constexpr bool any(bool const x) { return x; }
-inline constexpr bool every(bool const x) { return x; }
+constexpr bool odd(unsigned int N) { return N & 1; }
+constexpr bool any(bool const x) { return x; }
+constexpr bool every(bool const x) { return x; }
 
 #endif // RA_INT_T_H

@@ -71,10 +71,6 @@ using complex = std::complex<double>;
 
 int main()
 {
-    static_assert(ra::is_scalar<complex>::value, "bad is_scalar<complex>");
-    static_assert(!ra::is_slice<complex>::value, "bad is_slice<complex>");
-    static_assert(!ra::is_foreign_vector<complex>::value, "bad is_foreign_vector<complex>");
-
     TestRecorder tr(std::cout);
     section("[ra01] nested, with references, ply_index or ply_ravel");
     {
@@ -286,55 +282,6 @@ int main()
         CheckPly<A2>(tr, A, transpose(B, mp::int_list<1, 0>()));
         CheckPly<A2>(tr, reverse(reverse(transpose(A, mp::int_list<1, 0>()), 1), 0), B);
         CheckPly<A2>(tr, A, reverse(reverse(transpose(B, mp::int_list<1, 0>()), 1), 0));
-    }
-    section("explode");
-    {
-        section("super rank 1");
-        {
-            auto test = [&tr](auto && A)
-            {
-                auto B = ra::explode<ra::Small<double, 2>>(A);
-                for (int i=0; i<3; ++i) {
-                    tr.test_eq(i*2, B[i](0));
-                    tr.test_eq(i*2+1, B[i](1));
-                }
-            };
-            test(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
-            test(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
-        }
-        section("super rank 0");
-        {
-#define TEST(CHECK_RANK_S)                                              \
-            [&tr](auto && A)                                            \
-            {                                                           \
-                auto B = ra::explode_<complex, 1>(A);                   \
-                static_assert(ra::ra_traits<decltype(B)>::rank_s()==CHECK_RANK_S, "bad static rank"); \
-                cout << B << endl;                                      \
-                /* @TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should. */ \
-                for (int i=0; i<3; ++i) {                               \
-                    tr.test_eq(i*2, B[i].real());                       \
-                    tr.test_eq(i*2+1, B[i].imag());                     \
-                }                                                       \
-            }
-            TEST(ra::RANK_ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
-            TEST(1)(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
-        }
-        section("super rank 2");
-        {
-            using r2x2 = ra::Small<double, 2, 2>;
-            auto test = [&tr](auto && A)
-            {
-                auto B = ra::explode<r2x2>(A);
-                tr.test_eq(1, B.rank());
-// @TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should.
-                tr.test_eq(r2x2 { 0, 1, 2, 3 }, B[0]);
-                tr.test_eq(r2x2 { 4, 5, 6, 7 }, B[1]);
-                tr.test_eq(r2x2 { 8, 9, 10, 11 }, B[2]);
-                tr.test_eq(r2x2 { 12, 13, 14, 15}, B[3]);
-            };
-            test(ra::Unique<double, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
-            test(ra::Unique<double>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
-        }
     }
     return tr.summary();
 }

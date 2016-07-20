@@ -60,41 +60,6 @@ int main()
 #undef DEF_TEST_UNARY_OP
     }
 
-    section("establish meaning of selectors");
-    {
-// rank 0 containers/slices are not is_slice (and therefore not is_ra) so that their conversions to scalar are used instead.
-        static_assert(ra::is_ra<ra::Small<int>>::value, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallSlice<int, mp::nil, mp::nil>>::value, "bad is_ra SmallSlice");
-        static_assert(ra::is_ra<ra::Unique<int, 0>>::value, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::Raw<int, 0>>::value, "bad is_ra Raw");
-
-        static_assert(ra::is_ra<ra::Small<int, 1>>::value, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallSlice<int, mp::int_list<1>, mp::int_list<1>>>::value, "bad is_ra SmallSlice");
-        static_assert(ra::is_ra<ra::Unique<int, 1>>::value, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::Raw<int, 1>>::value, "bad is_ra Raw");
-        static_assert(ra::is_ra<ra::Raw<int>>::value, "bad is_ra Raw");
-
-        static_assert(ra::is_ra<decltype(ra::scalar(3))>::value, "bad is_ra Scalar");
-        static_assert(ra::is_ra<decltype(ra::vector({1, 2, 3}))>::value, "bad is_ra Vector");
-        static_assert(!ra::is_ra<int *>::value, "bad is_ra int *");
-
-        static_assert(ra::is_scalar<real>::value, "bad is_scalar real");
-        static_assert(ra::is_scalar<complex>::value, "bad is_scalar complex");
-        static_assert(ra::is_scalar<int>::value, "bad is_scalar int");
-
-        static_assert(!ra::is_scalar<decltype(ra::scalar(3))>::value, "bad is_scalar Scalar");
-        static_assert(!ra::is_scalar<decltype(ra::vector({1, 2, 3}))>::value, "bad is_scalar Scalar");
-        static_assert(!ra::is_scalar<decltype(ra::start(3))>::value, "bad is_scalar Scalar");
-        int a = 3;
-        static_assert(!ra::is_scalar<decltype(ra::start(a))>::value, "bad is_scalar Scalar");
-// a regression.
-        static_assert(ra::is_ra_zero_rank<ra::Scalar<int>>::value, "bad");
-        static_assert(!ra::is_ra_pos_rank<ra::Scalar<int>>::value, "bad");
-        static_assert(!ra::is_ra_zero_rank<ra::TensorIndex<0>>::value, "bad");
-        static_assert(ra::is_ra_pos_rank<ra::TensorIndex<0>>::value, "bad");
-        static_assert(!ra::ra_zero<ra::TensorIndex<0>>::value, "bad");
-        static_assert(ra::is_ra_pos_rank<ra::Expr<ra::plus, std::tuple<ra::TensorIndex<0, int>, ra::Scalar<int> > > >::value, "bad");
-    }
     section("check decay of rank 0 Containers/Slices w/ operators");
     {
         {

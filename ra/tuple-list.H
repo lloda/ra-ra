@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2005-2013
+// (c) Daniel Llorens - 2005-2013, 2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -19,20 +19,10 @@
 namespace mp {
 
 using std::tuple;
-
 using nil = tuple<>;
 
-template <class T>
-struct NilP
-{
-    static bool const value = std::is_same<nil, T>::value;
-};
-
-template <class A>
-struct Len
-{
-    static int const value = std::tuple_size<A>::value;
-};
+template <class T> constexpr bool nilp = std::is_same<nil, T>::value;
+template <class A> constexpr int len = std::tuple_size<A>::value;
 
 template <class A, class B> struct Cons;
 template <class A0, class ... A>
@@ -116,31 +106,23 @@ template <class A> using First_ = typename First<A>::type;
 template <class A>
 struct Last
 {
-    using type = Ref_<A, Len<A>::value-1>;
+    using type = Ref_<A, len<A>-1>;
 };
 template <class A> using Last_ = typename Last<A>::type;
 
 template <bool c, class A, class B> using If = std::conditional<c, A, B>;
 template <bool c, class A, class B> using If_ = typename If<c, A, B>::type;
 
-template <class A>
-struct Not
-{
-    static bool const value = !(A::value);
-    using type = int_t<value>;
-};
-template <class A> using Not_ = typename Not<A>::type;
-
 template <bool a>
 struct When
 {
-    static bool const value = a;
+    constexpr static bool value = a;
     using type = int_t<value>;
 };
 template <bool a>
 struct Unless
 {
-    static bool const value = !a;
+    constexpr static bool value = !a;
     using type = int_t<value>;
 };
 
@@ -148,38 +130,38 @@ struct Unless
 template <class A, class Val, int i=0>
 struct Index
 {
-    static int const value = -1;
+    constexpr static int value = -1;
 };
 template <class ... A, class Val, int i>
 struct Index<tuple<Val, A ...>, Val, i>
 {
-    static int const value = i;
+    constexpr static int value = i;
 };
 template <class A0, class ... A, class Val, int i>
 struct Index<tuple<A0, A ...>, Val, i>
 {
-    static int const value = Index<tuple<A ...>, Val, i+1>::value;
+    constexpr static int value = Index<tuple<A ...>, Val, i+1>::value;
 };
 
 // Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
 template <class A, template <class> class Pred, int i=0, class Enable=void>
 struct IndexIf
 {
-    static int const value = -1;
+    constexpr static int value = -1;
     using type = nil;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, enableif_<Pred<A0>>>
+struct IndexIf<tuple<A0, A ...>, Pred, i, enableif<Pred<A0>>>
 {
     using type = A0;
-    static int const value = i;
+    constexpr static int value = i;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, enableif_<Not<Pred<A0>>>>
+struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<!(Pred<A0>::value)> >
 {
     using next = IndexIf<tuple<A ...>, Pred, i+1>;
     using type = typename next::type;
-    static int const value = next::value;
+    constexpr static int value = next::value;
 };
 
 // Index (& type) of pairwise winner. A variant of Fold.
@@ -188,16 +170,16 @@ struct IndexOf;
 template <template <class A, class B> class pick_i, class T0, int k, int sel>
 struct IndexOf<pick_i, tuple<T0>, k, sel>
 {
-    static int const value = sel;
+    constexpr static int value = sel;
     using type = T0;
 };
 template <template <class A, class B> class pick_i, class T0, class T1, class ... Ti, int k, int sel>
 struct IndexOf<pick_i, tuple<T0, T1, Ti ...>, k, sel>
 {
-    static int const i = pick_i<std::decay_t<T0>, std::decay_t<T1>>::value;
+    constexpr static int i = pick_i<std::decay_t<T0>, std::decay_t<T1>>::value;
     using next = IndexOf<pick_i, tuple<mp::If_<i==0, T0, T1>, Ti ...>, k+1, i==0 ? sel : k>;
     using type = typename next::type;
-    static int const value = next::value;
+    constexpr static int value = next::value;
 };
 
 // Return the first tail of A headed by Val, like find-tail.
@@ -275,7 +257,7 @@ using Take_ = typename Take<A, n>::type;
 template <template <class ... A> class F, class L>
 struct Apply
 {
-    static_assert(std::tuple_size<L>::value>=0, "arg must be a tuple");
+    static_assert(len<L> >= 0, "arg must be a tuple");
 };
 template <template <class ... A> class F, class ... L>
 struct Apply<F, tuple<L ...>>
@@ -289,7 +271,7 @@ using Apply_ = typename Apply<F, L>::type;
 template <template <class ... A> class F, class L>
 struct ApplyV
 {
-    static_assert(std::tuple_size<L>::value>=0, "arg must be a tuple"); // ??
+    static_assert(len<L> >= 0, "arg must be a tuple"); // ??
 };
 template <template <class ... A> class F, class ... L>
 struct ApplyV<F, tuple<L ...>>
@@ -382,7 +364,7 @@ struct Valuer
     template <class ... B>
     struct type
     {
-        static int const value = F<B ...>::type::value;
+        constexpr static int value = F<B ...>::type::value;
     };
 };
 
@@ -400,84 +382,84 @@ struct Typer
 template <class ... A> struct Sum
 {
     using type = int_t<0>;
-    static int const value = type::value;
+    constexpr static int value = type::value;
 };
 template <class A0, class ... A>
 struct Sum<A0, A ...>
 {
     using type = int_t<A0::value + Sum<A ...>::type::value>;
-    static int const value = type::value;
+    constexpr static int value = type::value;
 };
 
 template <class ... A> struct Max
 {
-    static int const value = std::numeric_limits<int>::min();
+    constexpr static int value = std::numeric_limits<int>::min();
     using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Max<A0, A ...>
 {
-    static int const value = std::max(A0::value, Max<A ...>::type::value);
+    constexpr static int value = std::max(A0::value, Max<A ...>::type::value);
     using type = int_t<value>;
 };
 
 template <class ... A> struct Min
 {
-    static int const value = std::numeric_limits<int>::max();
+    constexpr static int value = std::numeric_limits<int>::max();
     using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Min<A0, A ...>
 {
-    static int const value = std::min(A0::value, Min<A ...>::type::value);
+    constexpr static int value = std::min(A0::value, Min<A ...>::type::value);
     using type = int_t<value>;
 };
 
 template <class ... A> struct Prod
 {
-    static int const value = 1;
+    constexpr static int value = 1;
     using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Prod<A0, A ...>
 {
-    using type = int_t<A0::value * Prod<A ...>::type::value>;
-    static int const value = type::value;
+    constexpr static int value = A0::value * Prod<A ...>::type::value;
+    using type = int_t<value>;
 };
 
 template <class ... A> struct And
 {
-    static int const value = 1;
+    constexpr static int value = 1;
     using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct And<A0, A ...>
 {
-    static int const value = A0::value && And<A ...>::type::value;
+    constexpr static int value = A0::value && And<A ...>::type::value;
     using type = int_t<value>;
 };
 
 template <class ... A> struct Count
 {
-    static int const value = 0;
+    constexpr static int value = 0;
     using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Count<A0, A ...>
 {
-    static int const value = bool(A0::value) + Count<A ...>::type::value;
+    constexpr static int value = bool(A0::value) + Count<A ...>::type::value;
     using type = int_t<value>;
 };
 
 template <class ... A> struct Or
 {
-    static int const value = 0;
+    constexpr static int value = 0;
     using type = int_t<value>;
 };
 template <class A0, class ... A>
 struct Or<A0, A ...>
 {
-    static int const value = A0::value || Or<A ...>::type::value;
+    constexpr static int value = A0::value || Or<A ...>::type::value;
     using type = int_t<value>;
 };
 
@@ -577,7 +559,7 @@ struct ProductAppend<tuple<A0, A ...>, B>
 //
 // @param A  type list.
 // @param K  take combinations of length K.
-template <class A, int K, int N=Len<A>::value>
+template <class A, int K, int N=len<A>>
 struct Combinations
 {
     static_assert(N>=0 && K>=0, "N and K must be positive in Combinations");
@@ -609,7 +591,7 @@ struct Combinations<nil, 0>
 {
     using type = tuple<nil>;
 };
-template <class A, int k, int N=Len<A>::value>
+template <class A, int k, int N=len<A>>
 using Combinations_ = typename Combinations<A, k, N>::type;
 
 // Sign of permutations.
@@ -618,7 +600,7 @@ template <class C, class R> struct PermutationSign;
 template <int w, class C, class R>
 struct PermutationSignIfFound
 {
-    static int const value
+    constexpr static int value
         = ((w & 1) ? -1 : +1)
           * PermutationSign<typename Append<typename Take<C, w>::type,
                                             typename Drop<C, w+1>::type>::type,
@@ -627,27 +609,27 @@ struct PermutationSignIfFound
 template <class C, class R>
 struct PermutationSignIfFound<-1, C, R>
 {
-    static int const value = 0;
+    constexpr static int value = 0;
 };
 template <>
 struct PermutationSign<nil, nil>
 {
-    static int const value = 1;
+    constexpr static int value = 1;
 };
 template <class C>
 struct PermutationSign<C, nil>
 {
-    static int const value = 0;
+    constexpr static int value = 0;
 };
 template <class R>
 struct PermutationSign<nil, R>
 {
-    static int const value = 0;
+    constexpr static int value = 0;
 };
 template <class C, class Org>
 struct PermutationSign
 {
-    static int const value
+    constexpr static int value
         = PermutationSignIfFound<Index<C, First_<Org>>::value,
                                  C, Org>::value;
 };
@@ -679,19 +661,19 @@ using index_tuple_ = typename index_tuple<A>::type;
 template <class A, int ... I>
 struct check_idx
 {
-    static bool const value = false;
+    constexpr static bool value = false;
 };
 
 template <>
 struct check_idx<nil>
 {
-    static bool const value = true;
+    constexpr static bool value = true;
 };
 
 template <class A0, int I0, class ... A, int ... I>
 struct check_idx<std::tuple<A0, A ...>, I0, I ...>
 {
-    static bool const value = (A0::value==I0)
+    constexpr static bool value = (A0::value==I0)
                               && check_idx<std::tuple<A ...>, I ...>::value;
 };
 

@@ -62,6 +62,8 @@ void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
 }
 
 template <int i> using UU = decltype(std::declval<ra::Unique<real, i>>().iter());
+using SM1 = decltype(std::declval<ra::Small<real, 2>>().iter());
+using SM2 = decltype(std::declval<ra::Small<real, 2, 2>>().iter());
 using SS = decltype(ra::scalar(1));
 
 template <class A>
@@ -322,6 +324,11 @@ int main()
         static_assert(ra::largest_rank<UU<2>, UU<ra::RANK_ANY>, TI<0>>::value==1, "bad match 6k");
         static_assert(ra::largest_rank<UU<1>, UU<2>, UU<3>>::value==2, "bad match 6l");
         static_assert(ra::largest_rank<UU<2>, TI<0>, UU<ra::RANK_ANY>>::value==2, "bad match 6m");
+// dynamic rank vs static size & rank
+        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, SM1 >::value==0, "bad match 7a");
+        static_assert(ra::pick_driver<SM1, UU<ra::RANK_ANY> >::value==1, "bad match 7b");
+        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, SM2 >::value==0, "bad match 7c");
+        static_assert(ra::pick_driver<SM2, UU<ra::RANK_ANY> >::value==1, "bad match 7d");
 // more cases with +2 candidates.
         static_assert(ra::largest_rank<UU<3>, UU<1>, TI<0>>::value==0, "bad match 7b");
         static_assert(ra::largest_rank<TI<0>, UU<3>, UU<1>>::value==1, "bad match 7c");
@@ -355,19 +362,15 @@ int main()
 // In this case, the Raw + shape provides the driver.
     section("construct Raw from shape + driverless xpr");
     {
-        static_assert(ra::has_tensorindex<std::decay_t<decltype(ra::_0)>>::value,
-                      "bad has_tensorindex test 0");
-        static_assert(ra::has_tensorindex<TI<0>>::value,
-                      "bad has_tensorindex test 1");
+        static_assert(ra::has_tensorindex<decltype(ra::_0)>, "bad has_tensorindex test 0");
+        static_assert(ra::has_tensorindex<TI<0>>, "bad has_tensorindex test 1");
 
         ra::Unique<int, 2> a({3, 2}, ra::unspecified);
         auto dyn = ra::expr([](int & a, int b) { a = b; }, a.iter(), ra::_0);
-        static_assert(ra::has_tensorindex<std::decay_t<decltype(dyn)>>::value,
-                      "bad has_tensorindex test 2");
+        static_assert(ra::has_tensorindex<decltype(dyn)>, "bad has_tensorindex test 2");
 
         auto dyn2 = ra::expr([](int & dest, int const & src) { dest = src; }, a.iter(), ra::_0);
-        static_assert(ra::has_tensorindex<std::decay_t<decltype(dyn2)>>::value,
-                      "bad has_tensorindex test 3");
+        static_assert(ra::has_tensorindex<decltype(dyn2)>, "bad has_tensorindex test 3");
 
         {
             int checkb[6] = { 0, 0, 1, 1, 2, 2 };

@@ -36,11 +36,11 @@ int main()
         using sizes = mp::int_list<1, 2, 3, 4, 5>;
         using strides = mp::int_list<1, 10, 100, 1000, 10000>;
         using case0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0> >;
-        cout << "0...type " << mp::Len<case0::type>::value << ": " ; mp::print_int_list<case0::type>::f(cout) << endl;
+        cout << "0...type " << mp::len<case0::type> << ": " ; mp::print_int_list<case0::type>::f(cout) << endl;
         using case1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1> >;
-        cout << "1...type " << mp::Len<case1::type>::value << ": " ; mp::print_int_list<case1::type>::f(cout) << endl;
+        cout << "1...type " << mp::len<case1::type> << ": " ; mp::print_int_list<case1::type>::f(cout) << endl;
         using caseall = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>;
-        cout << "caseall...type " << mp::Len<caseall::type>::value << ": " ; mp::print_int_list<caseall::type>::f(cout) << endl;
+        cout << "caseall...type " << mp::len<caseall::type> << ": " ; mp::print_int_list<caseall::type>::f(cout) << endl;
     }
     section("transpose(ra::Small)");
     {

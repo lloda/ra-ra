@@ -89,7 +89,8 @@ def to_test_ra(env, source):
     to_test(env, test, [test[0].abspath])
 
 [to_test_ra(env, test)
- for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
+ for test in ['test-ra-types',
+              'test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
               'test-ra-io', 'test-ra-from', 'test-ra-nested', 'test-ra-owned',
               'test-ra-ownership', 'test-ra-ply', 'test-ra-small',
               'test-ra-wrank', 'test-ra-return-expr', 'test-ra-reduction',

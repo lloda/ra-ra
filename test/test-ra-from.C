@@ -108,6 +108,17 @@ void check_selection_unbeatable_mixed(TestRecorder & tr, AA && a)
     tr.info("a(1, [1 0])").test_eq(CT2 {a(1, 1), a(1, 0)}, a(1, Vint {1, 0}));
 }
 
+// @TODO not yet enabled, see below
+template <class AA>
+void check_selection_unbeatable_dots(TestRecorder & tr, AA && a)
+{
+    using CT2 = ra::Small<real, 2>;
+    tr.info("a({0, 0}, ra::all)").test_eq(a(CT2 {0, 0}, ra::all), a(CT2 {0, 0}, CT2 {0, 1}));
+    tr.info("a({0, 1}, ra::all)").test_eq(a(CT2 {0, 1}, ra::all), a(CT2 {0, 1}, CT2 {0, 1}));
+    tr.info("a({1, 0}, ra::all)").test_eq(a(CT2 {1, 0}, ra::all), a(CT2 {1, 0}, CT2 {0, 1}));
+    tr.info("a({1, 1}, ra::all)").test_eq(a(CT2 {1, 1}, ra::all), a(CT2 {1, 1}, CT2 {0, 1}));
+}
+
 int main()
 {
     TestRecorder tr(std::cout);
@@ -170,21 +181,24 @@ int main()
     {
         check_selection_unbeatable_1(tr, Ureal<1> {7, 9, 3, 4});
         check_selection_unbeatable_1(tr, ra::Small<real, 4> {7, 9, 3, 4});
+        check_selection_unbeatable_1(tr, Ureal<>({4}, {7, 9, 3, 4}));
     }
-    // section("unbeatable, dynamic rank 1D"); // @TODO should work.
-    // {
-    //     cout << Ureal<>({4}, {7, 9, 3, 4}) << endl;
-    //     check_selection_unbeatable_1(tr, Ureal<>({4}, {7, 9, 3, 4}));
-    // }
     section("unbeatable, 2D");
     {
         check_selection_unbeatable_2(tr, Ureal<2>({2, 2}, {1, 2, 3, 4}));
         check_selection_unbeatable_2(tr, ra::Small<real, 2, 2>({1, 2, 3, 4}));
+        check_selection_unbeatable_2(tr, Ureal<>({2, 2}, {1, 2, 3, 4}));
     }
     section("mixed scalar/unbeatable, 2D -> 1D");
     {
         check_selection_unbeatable_mixed(tr, Ureal<2>({2, 2}, {1, 2, 3, 4}));
         check_selection_unbeatable_mixed(tr, ra::Small<real, 2, 2>({1, 2, 3, 4}));
+    }
+// @TODO this cannot work because dots_t<> can only be beaten on, not iterated on. Still, those beating cases should be implemented.
+    section("mixed unbeatable/dots, 2D -> 2D (@TODO)");
+    {
+        // check_selection_unbeatable_dots(tr, Ureal<2>({2, 2}, {1, 2, 3, 4}));
+        // check_selection_unbeatable_dots(tr, ra::Small<real, 2, 2>({1, 2, 3, 4}));
     }
     section("unbeatable, 3D & higher");
     {
@@ -232,13 +246,13 @@ int main()
         Ureal<2> b({4, 4}, 0.);
         cout << a << endl;
         cout << b << endl;
-        tr.info("has_tensorindex(TensorIndex)").test(ra::has_tensorindex<decltype(ra::_1)>::value);
-        tr.info("has_tensorindex(Expr)").test(ra::has_tensorindex<decltype(ra::_1+ra::_0)>::value);
+        tr.info("has_tensorindex(TensorIndex)").test(ra::has_tensorindex<decltype(ra::_1)>);
+        tr.info("has_tensorindex(Expr)").test(ra::has_tensorindex<decltype(ra::_1+ra::_0)>);
 // @TODO these instantiate flat() when they should not
-        // tr.info("has_tensorindex(Ryn)").test(ra::has_tensorindex<decltype(a(ra::_1, ra::_0))>::value);
+        // tr.info("has_tensorindex(Ryn)").test(ra::has_tensorindex<decltype(a(ra::_1, ra::_0))>);
         // cout << mp::Ref_<decltype(a(ra::_1, ra::_0))>::rank_s() << endl;
 // these don't work because a(j, i) has rank 3 = [(w=1)+1 + (w=0)+1] and so it drives, but tensorindex exprs shouldn't ever drive.
-        // tr.info("has_tensorindex(Ryn)").test(ra::has_tensorindex<decltype(b+a(ra::_1, ra::_0))>::value);
+        // tr.info("has_tensorindex(Ryn)").test(ra::has_tensorindex<decltype(b+a(ra::_1, ra::_0))>);
         // cout << mp::Ref_<decltype(b+a(ra::_1, ra::_0))::T, 0>::rank_s() << endl;
         // cout << mp::Ref_<decltype(b+a(ra::_1, ra::_0))::T, 1>::rank_s() << endl;
         cout << mp::Ref_<decltype(ra::_1)>::rank_s() << endl;

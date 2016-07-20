@@ -17,7 +17,7 @@
 
 // This global version must be available so that ra::wedge<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
 template <int D, int Oa, int Ob, class A, class B,
-          enableif_<mp::And<ra::is_scalar<A>, ra::is_scalar<B> >, int> =0>
+          std::enable_if_t<ra::is_scalar<A> && ra::is_scalar<B>, int> =0>
 auto wedge(A const & a, B const & b) { return a*b; }
 
 namespace mp {
@@ -53,7 +53,7 @@ template <class C, int D>
 struct AntiCombination
 {
     using EC = typename Complement<C, D>::type;
-    static_assert(Len<EC>::value>=2, "can't correct this complement");
+    static_assert((len<EC>)>=2, "can't correct this complement");
     using type = typename PermutationFlipSign
         <PermutationSign<Append_<C, EC>, Iota_<D>>::value,
          EC>::type;
@@ -89,11 +89,11 @@ namespace fun {
 template <int D, int Oa, int Ob>
 struct Wedge
 {
-    static int const Or = Oa+Ob;
+    constexpr static int Or = Oa+Ob;
     static_assert(Oa<=D && Ob<=D && Or<=D, "bad orders");
-    static int const Na = mp::n_over_p<D, Oa>::value;
-    static int const Nb = mp::n_over_p<D, Ob>::value;
-    static int const Nr = mp::n_over_p<D, Or>::value;
+    constexpr static int Na = mp::n_over_p(D, Oa);
+    constexpr static int Nb = mp::n_over_p(D, Ob);
+    constexpr static int Nr = mp::n_over_p(D, Or);
 // in lexicographic order. Can be used to sort Ca below with FindPermutation.
     using LexOrCa = mp::Combinations_<mp::Iota_<D>, Oa>;
 // the actual components used, which are in lex. order only in some cases.
@@ -101,32 +101,32 @@ struct Wedge
     using Cb = mp::ChooseComponents_<D, Ob>;
     using Cr = mp::ChooseComponents_<D, Or>;
 // optimizations.
-    static bool const yields_expr = (Na>1) != (Nb>1);
-    static bool const yields_expr_a1 = yields_expr && Na==1;
-    static bool const yields_expr_b1 = yields_expr && Nb==1;
-    static bool const both_scalars = (Na==1 && Nb==1);
-    static bool const dot_plus = Na>1 && Nb>1 && Or==D && (Oa<Ob || (Oa>Ob && !odd(Oa*Ob)));
-    static bool const dot_minus = Na>1 && Nb>1 && Or==D && (Oa>Ob && odd(Oa*Ob));
-    static bool const general_case = (Na>1 && Nb>1) && ((Oa+Ob!=D) || (Oa==Ob));
+    constexpr static bool yields_expr = (Na>1) != (Nb>1);
+    constexpr static bool yields_expr_a1 = yields_expr && Na==1;
+    constexpr static bool yields_expr_b1 = yields_expr && Nb==1;
+    constexpr static bool both_scalars = (Na==1 && Nb==1);
+    constexpr static bool dot_plus = Na>1 && Nb>1 && Or==D && (Oa<Ob || (Oa>Ob && !odd(Oa*Ob)));
+    constexpr static bool dot_minus = Na>1 && Nb>1 && Or==D && (Oa>Ob && odd(Oa*Ob));
+    constexpr static bool general_case = (Na>1 && Nb>1) && ((Oa+Ob!=D) || (Oa==Ob));
 
     template <class Va, class Vb>
     using valtype = std::decay_t<decltype(std::declval<Va>()[0] * std::declval<Vb>()[0])>;
 
     template <class Xr, class Fa, class Va, class Vb>
-    static enableif_<mp::NilP<Fa>, valtype<Va, Vb>>
+    static std::enable_if_t<mp::nilp<Fa>, valtype<Va, Vb>>
     term(Va const & a, Vb const & b)
     {
         return 0.;
     }
     template <class Xr, class Fa, class Va, class Vb>
-    static enableif_<mp::Not<mp::NilP<Fa>>, valtype<Va, Vb>>
+    static std::enable_if_t<!mp::nilp<Fa>, valtype<Va, Vb>>
     term(Va const & a, Vb const & b)
     {
         using Fa0 = mp::First_<Fa>;
         using Fb = mp::ComplementList_<Fa0, Xr>;
         using Sa = mp::FindCombination<Fa0, Ca>;
         using Sb = mp::FindCombination<Fb, Cb>;
-        int const sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::Append_<Fa0, Fb>, Xr>::value;
+        constexpr int sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::Append_<Fa0, Fb>, Xr>::value;
         static_assert(sign==+1 || sign==-1, "bad sign in wedge term");
         return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::Drop1_<Fa>>(a, b);
     }
@@ -163,8 +163,8 @@ struct Hodge
     using Cb = typename W::Cb;
     using Cr = typename W::Cr;
     using LexOrCa = typename W::LexOrCa;
-    static int const Na = W::Na;
-    static int const Nb = W::Nb;
+    constexpr static int Na = W::Na;
+    constexpr static int Nb = W::Nb;
 
     template <int i, class Va, class Vb>
     static std::enable_if_t<(i==W::Na)>
@@ -176,12 +176,12 @@ struct Hodge
     hodge_aux(Va const & a, Vb & b)
     {
         using Cai = mp::Ref_<Ca, i>;
-        static_assert(mp::Len<Cai>::value==O, "bad");
+        static_assert(mp::len<Cai> == O, "bad");
 // sort Cai, because Complement only accepts sorted combinations.
 // Ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
         using SCai = mp::Ref_<LexOrCa, mp::FindCombination<Cai, LexOrCa>::where>;
         using CompCai = typename mp::Complement<SCai, D>::type;
-        static_assert(mp::Len<CompCai>::value==D-O, "bad");
+        static_assert(mp::len<CompCai> == D-O, "bad");
         using fpw = mp::FindCombination<CompCai, Cb>;
 // for the sign see e.g. DoCarmo1991 I.Ex 10.
         using fps = mp::FindCombination<mp::Append_<Cai, mp::Ref_<Cb, fpw::where>>, Cr>;

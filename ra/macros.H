@@ -23,11 +23,8 @@
 #define STRINGIZE_1(x) #x
 #define STRINGIZE(x) STRINGIZE_1(x)
 
-// join two preprocessor identifiers. actually only one level of indirection is
-// needed: see http://lists.boost.org/MailArchives/boost-users/msg01967.php
 #define JOIN( X, Y ) DO_JOIN( X, Y )
-#define DO_JOIN( X, Y ) DO_JOIN2(X,Y)
-#define DO_JOIN2( X, Y ) X##Y
+#define DO_JOIN( X, Y ) X##Y
 
 // by G. Pakosz @ http://stackoverflow.com/a/1872506
 #define FOR_EACH_1(what, x, ...) what(x)
@@ -61,14 +58,14 @@
 #define FOR_EACH_(N, what, x, ...) JOIN(FOR_EACH_, N)(what, x, __VA_ARGS__)
 #define FOR_EACH(what, x, ...) FOR_EACH_(FOR_EACH_NARG(x, __VA_ARGS__), what, x, __VA_ARGS__)
 
+// @TODO probably want to make is_xxx<> into variable templates and then remove this.
 template <class B, class T=void>
-using enableif_ = std::enable_if_t<B::value, T>;
+using enableif = std::enable_if_t<B::value, T>;
 
 namespace mp {
 
-template <class B> struct exists { static bool const value = true; };
+template <class B> constexpr bool exists = true;
 
-// should be in std::
 struct identity
 {
     template<class T>

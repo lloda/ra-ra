@@ -46,8 +46,6 @@ constexpr rank_t rank_sum(rank_t const a, rank_t const b)
 {
     return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a+b);
 }
-
-// used in CHECK_BOUNDS
 constexpr bool inside(dim_t const i, dim_t const b)
 {
     return i>=0 && i<b;
@@ -91,9 +89,8 @@ inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 
 // Order of decl issues.
 template <class T, rank_t RANK=RANK_ANY> struct Raw;
-
-// Order of decl issues. Decl here because of ra_traits::shaped/make in ra-traits.H.
 template <class T, class sizes, class strides> struct SmallArray;
+template <class V, class Enable=void> struct ra_traits_def;
 
 template <class S> struct default_strides {};
 
@@ -116,11 +113,16 @@ template <class S> using default_strides_ = typename default_strides<S>::type;
 template <class T, dim_t ... sizes>
 using Small = SmallArray<T, mp::int_list<sizes ...>, default_strides_<mp::int_list<sizes ...> >>;
 
-// Slice basic data type.
+// Dope vector element
 struct Dim { dim_t size, stride; };
 
-// Order of decl issues.
-template <class V, class Enable=void> struct ra_traits_def;
+template <int n> struct dots_t
+{
+    constexpr static rank_t rank_s() { return n; }
+};
+template <int n> constexpr dots_t<n> dots = dots_t<n>();
+using all_t = dots_t<1>;
+constexpr all_t all = all_t();
 
 } // namespace ra
 

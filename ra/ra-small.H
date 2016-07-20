@@ -33,7 +33,7 @@ namespace ra {
 template <class sizes, class strides>
 struct Indexer0
 {
-    static_assert(mp::Len<sizes>::value==mp::Len<strides>::value, "mismatched sizes & strides");
+    static_assert(mp::len<sizes> == mp::len<strides>, "mismatched sizes & strides");
 
     template <rank_t end, rank_t k, class P>
     constexpr static std::enable_if_t<k==end, dim_t> index_p_(dim_t const c, P const & p)
@@ -49,14 +49,21 @@ struct Indexer0
     template <class P>
     constexpr static dim_t index_p(P const & p) // for Container::at().
     {
-        static_assert(mp::Len<sizes>::value>=P::size(), "too many indices"); // gcc accepts p.size()
+        static_assert(mp::len<sizes> >= P::size(), "too many indices"); // gcc accepts p.size()
         return Indexer0<sizes, strides>::template index_p_<P::size(), 0>(0, p);
     }
-    template <class P>
+    template <class P, std::enable_if_t<ra_traits<P>::size_s()!=RANK_ANY, int> =0>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
-        static_assert(mp::Len<sizes>::value<=ra_traits<P>::size_s(), "too few indices"); // gcc accepts p.size(), but I also need P = std::array to work.
-        return Indexer0<sizes, strides>::template index_p_<mp::Len<sizes>::value, 0>(0, p);
+// gcc accepts p.size(), but I also need P = std::array to work.
+        static_assert(mp::len<sizes> <= ra_traits<P>::size_s(), "too few indices");
+        return Indexer0<sizes, strides>::template index_p_<mp::len<sizes>, 0>(0, p);
+    }
+    template <class P, std::enable_if_t<ra_traits<P>::size_s()==RANK_ANY, int> =0>
+    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
+    {
+        CHECK_BOUNDS(mp::len<sizes> <= p.size());
+        return Indexer0<sizes, strides>::template index_p_<mp::len<sizes>, 0>(0, p);
     }
 };
 
@@ -237,14 +244,14 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     {
         using type = mp::int_t<(TTT::value<0 || TTT::value==DIM_ANY || TTT::value==DIM_BAD)>;
     };
-    static_assert(mp::Len<sizes>::value==mp::Len<strides>::value, "bad strides");
+    static_assert(mp::len<sizes> == mp::len<strides>, "bad strides");
     static_assert(!mp::Apply_<mp::Or, mp::Map_<BadDimension, sizes>>::value, "negative dimensions");
 
 // @TODO look at Dim below; useable in the same way?
     using Child = Child_<T, sizes, strides>;
 
     constexpr static dim_t size() { return mp::Apply_<mp::Prod, sizes>::value; }
-    constexpr static rank_t rank()  { return mp::Len<sizes>::value; }
+    constexpr static rank_t rank()  { return mp::len<sizes>; }
 // @TODO Remove; used by ra::cross() to treat is_slice & is_array_iterator uniformly, which can't be done in general.
     constexpr static dim_t size_s() { return size(); }
     constexpr static dim_t size(int const j) { return mp::on_tuple<sizes>::ref(j); }
@@ -270,7 +277,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
     } /* @TODO More than one selector... */                             \
-    template <class ... I, enableif_< mp::Or<mp::int_t< !is_beatable<I>::static_p> ...>, int> = 0> \
+    template <class ... I, enableif< mp::Or<mp::int_t< !is_beatable<I>::static_p> ...>, int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -296,7 +303,8 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     template <class X> Child & OPNAME(X && x)                           \
     {                                                                   \
         /* @TODO generally forbid writing to smaller rank from larger rank (ra-small.H [ref01]) */ \
-        static_assert(decltype(start(x))::rank_s()<=rank() || decltype(start(x))::rank_s()==RANK_ANY, "bad assigment"); \
+        static_assert(std::decay_t<decltype(start(x))>::rank_s()<=rank() \
+                      || std::decay_t<decltype(start(x))>::rank_s()==RANK_ANY, "bad assigment"); \
         ply_either(expr([](T & dest, T const & src) { dest OP src; }, this->iter(), start(x))); \
         return static_cast<Child &>(*this);                             \
     }
@@ -331,7 +339,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     struct Iterator
     {
 // @TODO See ra_traits<Small>. Why do these twice?
-        using shape_type = Small<dim_t, mp::Len<sizes>::value>;
+        using shape_type = Small<dim_t, mp::len<sizes> >;
         static auto shape() { return mp::tuple_copy<sizes, shape_type>::f(); }
 
         P p;
@@ -482,12 +490,12 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
     {                                                                   \
         std::fill(this->begin(), this->end(), t);                       \
     }                                                                   \
-    template <class R, enableif_<mp::And<std::is_convertible<R, T>, is_scalar<R> >, int> = 0> \
+    template <class R, std::enable_if_t<std::is_convertible<R, T>::value && is_scalar<R>, int> = 0> \
     SmallArray(R const & r)                                             \
     {                                                                   \
         std::fill(this->begin(), this->end(), r);                       \
     }                                                                   \
-    template <class X, enableif_<is_ra<X>, int> = 0>                    \
+    template <class X, std::enable_if_t<is_ra<X>, int> = 0>                        \
     SmallArray(X && x)                                                  \
     {                                                                   \
         ply_either(expr([](T & dest, T const & src) { dest = src; }, Base::iter(), start(x))); \
@@ -580,19 +588,19 @@ struct axis_indices
     {
         using type = mp::int_t<(T::value==i::value)>;
     };
-    using I = mp::Iota_<mp::Len<A>::value>;
+    using I = mp::Iota_<mp::len<A> >;
     using W = mp::Map_<MatchIndex, A>;
     using type = mp::Filter_<W, I>;
-    static_assert(mp::Len<type>::value > 0, "dst axis doesn't appear in transposed axes list");
+    static_assert(mp::len<type> > 0, "dst axis doesn't appear in transposed axes list");
 };
 
 template <class axes_list, class src_sizes, class src_strides>
 struct axes_list_indices
 {
-    static_assert(mp::Len<axes_list>::value==mp::Len<src_sizes>::value, "bad size for transposed axes list");
+    static_assert(mp::len<axes_list> == mp::len<src_sizes>, "bad size for transposed axes list");
     constexpr static int talmax = mp::Fold_<mp::Max, void, axes_list>::value;
     constexpr static int talmin = mp::Fold_<mp::Min, void, axes_list>::value;
-    static_assert(talmax < mp::Len<src_sizes>::value, "bad index in transposed axes list");
+    static_assert(talmax < mp::len<src_sizes>, "bad index in transposed axes list");
     static_assert(talmin >= 0, "bad index in transposed axes list");
 
     template <class dst_i> struct dst_indices
@@ -647,7 +655,7 @@ auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, SmallBase<Child2, T
 
 template <template <class, class, class> class Child1, class T1, class sizes1, class strides1,
           class A2,
-          std::enable_if_t<is_scalar<A2>::value, int> =0>
+          std::enable_if_t<is_scalar<A2>, int> =0>
 auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
 {
     using A1 = SmallBase<Child1, T1, sizes1, strides1>;
@@ -661,7 +669,7 @@ auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
 
 template <class A1,
           template <class, class, class> class Child2, class T2, class sizes2, class strides2,
-          std::enable_if_t<is_scalar<A1>::value, int> =0>
+          std::enable_if_t<is_scalar<A1>, int> =0>
 auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 {
     using A2 = SmallBase<Child2, T2, sizes2, strides2>;

@@ -47,7 +47,7 @@
 #define START(a) *(ra::start(a).flat())
 
 // This global version must be available so that ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 . See also wedge() in ra/wedge.H.
-template <class ... Iarg, class A, enableif_<ra::is_scalar<A>, int> =0>
+template <class ... Iarg, class A, std::enable_if_t<ra::is_scalar<A>, int> =0>
 decltype(auto) transpose(A && a)
 {
     static_assert(sizeof...(Iarg)==0, "bad transpose axes list for scalar");
@@ -57,7 +57,7 @@ decltype(auto) transpose(A && a)
 // See ::wedge() in ra/wedge.H, need ra::is_scalar<> to define.
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F,
-          enableif_<mp::And<ra::is_zero_or_scalar<T>, ra::is_zero_or_scalar<F> >, int> =0>
+          std::enable_if_t<ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>, int> =0>
 inline decltype(auto) where(bool const w, T && t, F && f) { return w ? START(t) : START(f); }
 
 namespace ra {
@@ -98,12 +98,12 @@ inline void for_each(F && f, A && ... a)
 
 // These depend on OPNAME defined in ra-optimize.H and used there to match ET patterns.
 #define DEFINE_NAMED_BINARY_OP(OPERATOR, OP, OPNAME)                    \
-    template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
+    template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return OPTIMIZE(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
-    template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
+    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0>           \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return START(a) OP START(b);                                    \
@@ -115,13 +115,13 @@ DEFINE_NAMED_BINARY_OP(operator/, /, slash)
 #undef DEFINE_NAMED_BINARY_OP
 
 #define DEFINE_BINARY_OP(OPERATOR, OP)                                  \
-    template <class A, class B, enableif_<ra_pos_and_any<A, B>, int> =0> \
+    template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return map([](auto && a, auto && b) { return a OP b; },         \
                    std::forward<A>(a), std::forward<B>(b));             \
     }                                                                   \
-    template <class A, class B, enableif_<ra_zero<A, B>, int> =0>       \
+    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0>           \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return START(a) OP START(b);                                    \
@@ -137,7 +137,7 @@ DEFINE_BINARY_OP(operator!=, !=)
 #undef DEFINE_BINARY_OP
 
 #define DEFINE_UNARY_OP(OPNAME, OP)                                     \
-    template <class A, enableif_<is_ra_pos_rank<A>, int> = 0>           \
+    template <class A, std::enable_if_t<is_ra_pos_rank<A>, int> = 0>    \
     inline auto OPNAME(A && a)                                          \
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
@@ -151,12 +151,12 @@ DEFINE_UNARY_OP(operator-, -)
 // @TODO Cf [ref:examples/useret.C:0].
 #define DEFINE_NAME_OP(OPNAME, OP)                                      \
     using ::OP;                                                         \
-    template <class ... A, enableif_<ra_pos_and_any<A ...>, int> =0>    \
+    template <class ... A, std::enable_if_t<ra_pos_and_any<A ...>, int> =0> \
     inline auto OPNAME(A && ... a)                                      \
     {                                                                   \
         return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A, enableif_<ra_zero<A ...>, int> =0>           \
+    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>               \
     inline auto OPNAME(A && ... a)                                      \
     {                                                                   \
         return OP(START(a) ...);                                        \
@@ -177,16 +177,18 @@ DEFINE_NAME_OP(log1p, log1p)
 DEFINE_NAME_OP(isfinite, isfinite)
 DEFINE_NAME_OP(isnan, isnan)
 DEFINE_NAME_OP(isinf, isinf)
+DEFINE_NAME_OP(max, max)
+DEFINE_NAME_OP(min, min)
 #undef DEFINE_NAME_OP
 
 #define DEFINE_NAME_OP(OPNAME, OP)                                      \
     using ::OP;                                                         \
-    template <class ... A, enableif_<ra_pos_and_any<A ...>, int> =0>    \
+    template <class ... A, std::enable_if_t<ra_pos_and_any<A ...>, int> =0> \
     inline auto OPNAME(A && ... a)                                      \
     {                                                                   \
         return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A, enableif_<ra_zero<A ...>, int> =0>           \
+    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>               \
     inline decltype(auto) OPNAME(A && ... a)                            \
     {                                                                   \
         return OP(START(a) ...);                                        \
@@ -227,14 +229,14 @@ inline auto safe_rvalue(T && t) -> T
 // };
 
 // template <class T, class F, class R>
-// struct safe_rvalue<T, F, R, enableif_<mp::And<std::is_rvalue_reference<T>, std::is_rvalue_reference<F> > > >
+// struct safe_rvalue<T, F, R, std::enable_if_t<std::is_rvalue_reference<T>::value && std::is_rvalue_reference<F>::value> >
 // {
 //     using type = std::decay_t<R>;
 // };
 
 // http://scottmeyers.blogspot.ch/2013/05/c14-lambdas-and-perfect-forwarding.html
 // @TODO only one of t or f should be evaluated. But that probably requires where() to be a different type from Expr.
-template <class W, class T, class F, enableif_<mp::Or<is_ra_pos_rank<W>, is_ra_pos_rank<T>, is_ra_pos_rank<F> >, int> = 0>
+template <class W, class T, class F, std::enable_if_t<is_ra_pos_rank<W> || is_ra_pos_rank<T> || is_ra_pos_rank<F>, int> = 0>
 inline auto where(W && w, T && t, F && f)
 {
     return map([](auto && w_, auto && t_, auto && f_) -> decltype(auto)
@@ -325,7 +327,7 @@ inline auto cdot(A && a, B && b) -> std::decay_t<decltype(conj(START(a)) * START
 template <class A>
 struct torank1
 {
-    using type = mp::If_<is_scalar<A>::value, Small<std::decay_t<A>, 1>, A>;
+    using type = mp::If_<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
 };
 
 template <class Wedge, class Va, class Vb, class Enable=void>
@@ -337,7 +339,7 @@ struct fromrank1
 
 #define DECL_WEDGE(condition)                                           \
     template <int D, int Oa, int Ob, class Va, class Vb,                \
-              enableif_<mp::Not<mp::And<is_scalar<Va>, is_scalar<Vb>>>, int> =0> \
+              std::enable_if_t<!(is_scalar<Va> && is_scalar<Vb>), int> =0> \
     decltype(auto) wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
@@ -360,7 +362,7 @@ DECL_WEDGE(general_case)
 
 #define DECL_WEDGE(condition)                                      \
     template <int D, int Oa, int Ob, class Va, class Vb, class Vr, \
-              enableif_<mp::Not<mp::And<is_scalar<Va>, is_scalar<Vb>>>, int> =0> \
+              std::enable_if_t<!(is_scalar<Va> && is_scalar<Vb>), int> =0> \
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
@@ -403,13 +405,13 @@ inline auto perp(V const & v)
     static_assert(v.size()==2, "dimension error");
     return Small<std::decay_t<decltype(START(v))>, 2> {v[1], -v[0]};
 }
-template <class V, class U, enableif_<is_scalar<U>, int> =0>
+template <class V, class U, std::enable_if_t<is_scalar<U>, int> =0>
 inline auto perp(V const & v, U const & n)
 {
     static_assert(v.size()==2, "dimension error");
     return Small<std::decay_t<decltype(START(v) * n)>, 2> {v[1]*n, -v[0]*n};
 }
-template <class V, class U, std::enable_if_t<!is_scalar<U>::value, int> =0>
+template <class V, class U, std::enable_if_t<!is_scalar<U>, int> =0>
 inline auto perp(V const & v, U const & n)
 {
     static_assert(v.size()==3, "dimension error");
@@ -421,7 +423,7 @@ inline auto perp(V const & v, U const & n)
 // --------------------
 
 // @TODO Would like to be able to return just a/norm2(a) without temp-ref errors.
-template <class A, enableif_<is_slice<A>, int> =0>
+template <class A, std::enable_if_t<is_slice<A>, int> =0>
 inline auto normv(A const & a)
 {
     static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such"); // gcc accepts a.size_s()
@@ -429,7 +431,7 @@ inline auto normv(A const & a)
     return V(a/norm2(a));
 }
 
-template <class A, std::enable_if_t<!is_slice<A>::value && is_ra<A>::value, int> =0>
+template <class A, std::enable_if_t<!is_slice<A> && is_ra<A>, int> =0>
 inline auto normv(A const & a)
 {
     static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such");  // gcc accepts a.size_s()

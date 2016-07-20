@@ -46,17 +46,17 @@ struct Leaves<F, A, std::tuple<P ...>, std::tuple<I ...>>
     decltype(auto) operator*() { return f(*std::get<I::value>(t) ...); }
 
     template <int II, class S>
-    std::enable_if_t<(II==mp::Len<K>::value)> add(S const & s)  {}
+    std::enable_if_t<(II==mp::len<K>)> add(S const & s)  {}
 
 // @TODO Step over (or flag) sub xpr without stride (TensorIndex, Scalar).
     template <int II, class S>
-    std::enable_if_t<(II<mp::Len<K>::value && std::is_integral<S>::value)> add(S const & s)
+    std::enable_if_t<(II<mp::len<K> && std::is_integral<S>::value)> add(S const & s)
     {
         std::get<mp::Ref_<K, II>::value>(t) += s;
         add<II+1>(s);
     }
     template <int II, class S>
-    std::enable_if_t<(II<mp::Len<K>::value && !std::is_integral<S>::value)> add(S const & s)
+    std::enable_if_t<(II<mp::len<K> && !std::is_integral<S>::value)> add(S const & s)
     {
         std::get<mp::Ref_<K, II>::value>(t) += std::get<mp::Ref_<K, II>::value>(s);
         add<II+1>(s);
@@ -104,11 +104,11 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     }
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<AK>::value)>
+    std::enable_if_t<(iarg==mp::len<AK>)>
     check(int const driver_rank) const {}
 
     template <int iarg>
-    std::enable_if_t<(iarg<mp::Len<AK>::value)>
+    std::enable_if_t<(iarg<mp::len<AK>)>
     check(int const driver_rank) const
     {
         rank_t ranki = std::get<mp::Ref_<AK, iarg>::value>(t).rank();
@@ -142,11 +142,11 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     }
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<T>::value)>
+    std::enable_if_t<(iarg==mp::len<T>)>
     adv(rank_t const k, dim_t const d) {}
 
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::Len<T>::value)>
+    std::enable_if_t<(iarg<mp::len<T>)>
     adv(rank_t const k, dim_t const d)
     {
         std::get<iarg>(t).adv(k, d);
@@ -169,13 +169,13 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     }
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg==mp::len<K>), bool>
     compact_stride(dim_t const step, int const z, int const j) const
     {
         return true;
     }
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::Len<K>::value), bool>
+    std::enable_if_t<(iarg<mp::len<K>), bool>
     compact_stride(dim_t const step, int const z, int const j) const
     {
         return std::get<mp::Ref_<K, iarg>::value>(t).compact_stride(step, z, j)

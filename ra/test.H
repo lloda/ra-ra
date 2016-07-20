@@ -28,6 +28,7 @@ char const * esc_green = "\x1b[32m";
 char const * esc_cyan = "\x1b[36m";
 char const * esc_yellow = "\x1b[33m";
 char const * esc_blue = "\x1b[34m";
+char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
 char const * esc_plain = "\x1b[39m";
 
 template <class ... A> void section(A const & ... a)
@@ -54,7 +55,17 @@ struct TestRecorder
 
     template <class ... A> TestRecorder & info(A && ... a)
     {
-        info_string += (info_string=="" ? "" : "; ") + format(a ...);
+        bool empty = (info_string=="");
+        info_string += esc_white;
+        info_string += (empty ? "" : "; ");
+        info_string += format(a ...);
+        info_string += esc_plain;
+        return *this;
+    }
+    template <class ... A> TestRecorder & info_self(A && ... a)
+    {
+        info_string += (info_string=="" ? "" : "; ");
+        info_string += format(a ...);
         return *this;
     }
     TestRecorder & quiet(bool q=true)
@@ -101,7 +112,7 @@ struct TestRecorder
     {
         bool c = every(ra::map(comp, wanted, got));
 // where() to match shapes if either doesn't have one
-        info("comp(wanted: ", where(true, wanted, got), ", got: ", got, ")").test(c);
+        info_self("comp(wanted: ", where(true, wanted, got), ", got: ", got, ")").test(c);
         return c;
     }
     template <class W, class A>
@@ -116,7 +127,7 @@ struct TestRecorder
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),
                               rel_error(wanted, got)));
-        info("rel_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err)
+        info_self("rel_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err)
             .test(e<=req_err);
         return e;
     }
@@ -126,7 +137,7 @@ struct TestRecorder
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),
                               abs(wanted-got)));
-        info("abs_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err)
+        info_self("abs_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err)
             .test(e<=req_err);
         return e;
     }
