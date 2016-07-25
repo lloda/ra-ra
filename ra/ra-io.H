@@ -11,6 +11,7 @@
 
 #include "ra/ra-type.H"
 #include "ra/ra-traits.H"
+#include <iostream>
 
 /// @file ra-io.H
 /// @brief Write and read arrays, expressions.
@@ -67,9 +68,8 @@ std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
     dim_t n;
-    i >> n;
-    assert(n>=0);
-    if (i) {
+    if (i >> n) {
+        assert(n>=0);
         c.resize(n);
         std::copy_n(std::istream_iterator<T>(i), c.size(), c.begin());
     }
@@ -83,8 +83,7 @@ operator>>(std::istream & i, C & c)
 {
     using T = typename ra_traits<C>::value_type;
     typename ra_traits<C>::shape_type s;
-    i >> s;
-    if (i) {
+    if (i >> s) {
         c = std::decay_t<C>(s, ra::unspecified);
         if (c.size()>0) { // I'd say a bug in copy_n; see failing case in test-ra-nested.C.
             std::copy_n(std::istream_iterator<T>(i), c.size(), c.begin());

@@ -46,6 +46,14 @@ int main()
             tr.test_eq(a, -b);
         }
     }
+    section("raw, slippery pointers");
+    {
+        ra::Owned<int, 1> a = {1, 2, 3};
+        int b[] = { +1, -1, +1 };
+        tr.test_eq(ra::Small<int, 3> {2, 1, 4}, a + ra::start(b));
+        ra::start(b) = ra::Small<int, 3> {7, 4, 5};
+        tr.test_eq(ra::Small<int, 3> {7, 4, 5}, ra::start(b));
+    }
     section("restricted iterators");
     {
 

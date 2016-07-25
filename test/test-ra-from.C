@@ -25,107 +25,31 @@ using real = double;
 template <int rank=ra::RANK_ANY> using Ureal = ra::Unique<real, rank>;
 using Vint = ra::Unique<int, 1>;
 
-template <class AA>
-void check_selection_shortcuts(TestRecorder & tr, AA && a)
-{
-    tr.info("a()").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a());
-    tr.info("a(2, :)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2, ra::all));
-    tr.info("a(2)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2));
-    tr.info("a(:, 3)").test_eq(Ureal<1>({4}, ra::_0-3), a(ra::all, 3));
-    tr.info("a(:, :)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all, ra::all));
-    tr.info("a(:)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all));
-    tr.info("a(1)").test_eq(Ureal<1>({4}, 1-ra::_0), a(1));
-    tr.info("a(2, 2)").test_eq(0, a(2, 2));
-    tr.info("a(0:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*(ra::_0-ra::_1)), a(ra::jvec(2, 0, 2), ra::jvec(2, 0, 2)));
-    tr.info("a(1:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*ra::_0+1-2*ra::_1), a(ra::jvec(2, 1, 2), ra::jvec(2, 0, 2)));
-    tr.info("a(0:2:, :)").test_eq(Ureal<2>({2, 4}, 2*ra::_0-ra::_1), a(ra::jvec(2, 0, 2), ra::all));
-    tr.info("a(0:2:)").test_eq(a(ra::jvec(2, 0, 2), ra::all), a(ra::jvec(2, 0, 2)));
-}
-
-template <class AA>
-void check_selection_unbeatable_1(TestRecorder & tr, AA && a)
-{
-    using CT = ra::Small<real, 4>;
-
-    tr.info("a(i ...)").test_eq(CT {a[3], a[2], a[0], a[1]}, a(Vint {3, 2, 0, 1}));
-    tr.info("a(i ...)").test_eq(CT {a[3], a[2], a[0], a[1]}, from(a, Vint {3, 2, 0, 1}));
-
-    a = 0.;
-    a(Vint {3, 2, 0, 1}) = CT {9, 7, 1, 4};
-    tr.info("a(i ...) as lvalue").test_eq(CT {1, 4, 7, 9}, a);
-
-    a = 0.;
-    from(a, Vint {3, 2, 0, 1}) = CT {9, 7, 1, 4};
-    tr.info("from(a i ...) as lvalue").test_eq(CT {1, 4, 7, 9}, a);
-
-    a = 0.;
-    from(a, Vint {3, 2, 0, 1}) = 77.;
-    tr.info("from(a i ...) as lvalue, rank extend of right hand").test_eq(a, 77.);
-
-    ra::Small<real, 2, 2> c = from(a, ra::Small<int, 2, 2> {3, 2, 0, 1});
-    tr.info("a([x y; z w])").test_eq(ra::Small<real, 2, 2> {a[3], a[2], a[0], a[1]}, c);
-}
-
-template <class AA>
-void check_selection_unbeatable_2(TestRecorder & tr, AA && a)
-{
-    using CT22 = ra::Small<real, 2, 2>;
-    using CT2 = ra::Small<real, 2>;
-
-    tr.info("a([0 1], [0 1])").test_eq(CT22 {a(0, 0), a(0, 1), a(1, 0), a(1, 1)}, from(a, Vint {0, 1}, Vint {0, 1}));
-    tr.info("a([0 1], [1 0])").test_eq(CT22 {a(0, 1), a(0, 0), a(1, 1), a(1, 0)}, from(a, Vint {0, 1}, Vint {1, 0}));
-    tr.info("a([1 0], [0 1])").test_eq(CT22 {a(1, 0), a(1, 1), a(0, 0), a(0, 1)}, from(a, Vint {1, 0}, Vint {0, 1}));
-    tr.info("a([1 0], [1 0])").test_eq(CT22 {a(1, 1), a(1, 0), a(0, 1), a(0, 0)}, from(a, Vint {1, 0}, Vint {1, 0}));
-
-    a = 0.;
-    from(a, Vint {1, 0}, Vint {1, 0}) = CT22 {9, 7, 1, 4};
-    tr.info("a([1 0], [1 0]) as lvalue").test_eq(CT22 {4, 1, 7, 9}, a);
-    from(a, Vint {1, 0}, Vint {1, 0}) *= CT22 {9, 7, 1, 4};
-    tr.info("a([1 0], [1 0]) as lvalue, *=").test_eq(CT22 {16, 1, 49, 81}, a);
-
-// Note the difference with J amend, which requires x in (x m} y) ~ (y[m] = x) to be a suffix of y[m]; but we apply the general mechanism which is prefix matching.
-    from(a, Vint {1, 0}, Vint {1, 0}) = CT2 {9, 7};
-    tr.info("a([1 0], [1 0]) as lvalue, rank extend of right hand").test_eq(CT22 {7, 7, 9, 9}, a);
-
-// @TODO Test cases with rank!=1, starting with this couple which should work the same.
-    // std::cout << "-> " << from(a, Vint{1, 0}, 0) << std::endl;
-    a = CT22 {4, 1, 7, 9};
-    tr.info("a(rank1, rank0)").test_eq(ra::Small<real, 2>{9, 1}, from(a, Vint{1, 0}, ra::Small<int>(1).iter()));
-    tr.info("a(rank0, rank1)").test_eq(ra::Small<real, 2>{9, 7}, from(a, ra::Small<int>(1).iter(), Vint{1, 0}));
-}
-
-template <class AA>
-void check_selection_unbeatable_mixed(TestRecorder & tr, AA && a)
-{
-    using CT2 = ra::Small<real, 2>;
-    tr.info("from(a [0 1], 1)").test_eq(CT2 {a(0, 1), a(1, 1)}, from(a, Vint {0, 1}, 1));
-    tr.info("from(a [1 0], 1)").test_eq(CT2 {a(1, 1), a(0, 1)}, from(a, Vint {1, 0}, 1));
-    tr.info("from(a 1, [0 1])").test_eq(CT2 {a(1, 0), a(1, 1)}, from(a, 1, Vint {0, 1}));
-    tr.info("from(a 1, [1 0])").test_eq(CT2 {a(1, 1), a(1, 0)}, from(a, 1, Vint {1, 0}));
-    tr.info("a([0 1], 1)").test_eq(CT2 {a(0, 1), a(1, 1)}, a(Vint {0, 1}, 1));
-    tr.info("a([1 0], 1)").test_eq(CT2 {a(1, 1), a(0, 1)}, a(Vint {1, 0}, 1));
-    tr.info("a(1, [0 1])").test_eq(CT2 {a(1, 0), a(1, 1)}, a(1, Vint {0, 1}));
-    tr.info("a(1, [1 0])").test_eq(CT2 {a(1, 1), a(1, 0)}, a(1, Vint {1, 0}));
-}
-
-// @TODO not yet enabled, see below
-template <class AA>
-void check_selection_unbeatable_dots(TestRecorder & tr, AA && a)
-{
-    using CT2 = ra::Small<real, 2>;
-    tr.info("a({0, 0}, ra::all)").test_eq(a(CT2 {0, 0}, ra::all), a(CT2 {0, 0}, CT2 {0, 1}));
-    tr.info("a({0, 1}, ra::all)").test_eq(a(CT2 {0, 1}, ra::all), a(CT2 {0, 1}, CT2 {0, 1}));
-    tr.info("a({1, 0}, ra::all)").test_eq(a(CT2 {1, 0}, ra::all), a(CT2 {1, 0}, CT2 {0, 1}));
-    tr.info("a({1, 1}, ra::all)").test_eq(a(CT2 {1, 1}, ra::all), a(CT2 {1, 1}, CT2 {0, 1}));
-}
-
 int main()
 {
     TestRecorder tr(std::cout);
     section("shortcuts");
     {
-        check_selection_shortcuts(tr, Ureal<2>({4, 4}, ra::_0-ra::_1));
-        check_selection_shortcuts(tr, Ureal<>({4, 4}, ra::_0-ra::_1));
+        auto check_selection_shortcuts = [&tr](auto && a)
+            {
+                tr.info("a()").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a());
+                tr.info("a(2, :)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2, ra::all));
+                tr.info("a(2)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2));
+                tr.info("a(:, 3)").test_eq(Ureal<1>({4}, ra::_0-3), a(ra::all, 3));
+                tr.info("a(:, :)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all, ra::all));
+                tr.info("a(:)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all));
+                tr.info("a(1)").test_eq(Ureal<1>({4}, 1-ra::_0), a(1));
+                tr.info("a(2, 2)").test_eq(0, a(2, 2));
+                tr.info("a(0:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*(ra::_0-ra::_1)),
+                                                 a(ra::jvec(2, 0, 2), ra::jvec(2, 0, 2)));
+                tr.info("a(1:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*ra::_0+1-2*ra::_1),
+                                                 a(ra::jvec(2, 1, 2), ra::jvec(2, 0, 2)));
+                tr.info("a(0:2:, :)").test_eq(Ureal<2>({2, 4}, 2*ra::_0-ra::_1),
+                                              a(ra::jvec(2, 0, 2), ra::all));
+                tr.info("a(0:2:)").test_eq(a(ra::jvec(2, 0, 2), ra::all), a(ra::jvec(2, 0, 2)));
+            };
+        check_selection_shortcuts(Ureal<2>({4, 4}, ra::_0-ra::_1));
+        check_selection_shortcuts(Ureal<>({4, 4}, ra::_0-ra::_1));
     }
     section("ra::Iota<int> or ra::Iota<ra::dim_t> are both beatable");
     {
@@ -179,26 +103,94 @@ int main()
     }
     section("unbeatable, 1D");
     {
-        check_selection_unbeatable_1(tr, Ureal<1> {7, 9, 3, 4});
-        check_selection_unbeatable_1(tr, ra::Small<real, 4> {7, 9, 3, 4});
-        check_selection_unbeatable_1(tr, Ureal<>({4}, {7, 9, 3, 4}));
+        auto check_selection_unbeatable_1 = [&tr](auto && a)
+            {
+                using CT = ra::Small<real, 4>;
+
+                tr.info("a(i ...)").test_eq(CT {a[3], a[2], a[0], a[1]}, a(Vint {3, 2, 0, 1}));
+                tr.info("a(i ...)").test_eq(CT {a[3], a[2], a[0], a[1]}, from(a, Vint {3, 2, 0, 1}));
+
+                a = 0.;
+                a(Vint {3, 2, 0, 1}) = CT {9, 7, 1, 4};
+                tr.info("a(i ...) as lvalue").test_eq(CT {1, 4, 7, 9}, a);
+                a = 0.;
+                from(a, Vint {3, 2, 0, 1}) = CT {9, 7, 1, 4};
+                tr.info("from(a i ...) as lvalue").test_eq(CT {1, 4, 7, 9}, a);
+                a = 0.;
+                from(a, Vint {3, 2, 0, 1}) = 77.;
+                tr.info("from(a i ...) as lvalue, rank extend of right hand").test_eq(a, 77.);
+
+                ra::Small<real, 2, 2> c = from(a, ra::Small<int, 2, 2> {3, 2, 0, 1});
+                tr.info("a([x y; z w])").test_eq(ra::Small<real, 2, 2> {a[3], a[2], a[0], a[1]}, c);
+            };
+        check_selection_unbeatable_1(Ureal<1> {7, 9, 3, 4});
+        check_selection_unbeatable_1(ra::Small<real, 4> {7, 9, 3, 4});
+        check_selection_unbeatable_1(Ureal<>({4}, {7, 9, 3, 4}));
     }
     section("unbeatable, 2D");
     {
-        check_selection_unbeatable_2(tr, Ureal<2>({2, 2}, {1, 2, 3, 4}));
-        check_selection_unbeatable_2(tr, ra::Small<real, 2, 2>({1, 2, 3, 4}));
-        check_selection_unbeatable_2(tr, Ureal<>({2, 2}, {1, 2, 3, 4}));
+        auto check_selection_unbeatable_2 = [&tr](auto && a)
+            {
+                using CT22 = ra::Small<real, 2, 2>;
+                using CT2 = ra::Small<real, 2>;
+
+                tr.info("a([0 1], [0 1])").test_eq(CT22 {a(0, 0), a(0, 1), a(1, 0), a(1, 1)},
+                                                   from(a, Vint {0, 1}, Vint {0, 1}));
+                tr.info("a([0 1], [1 0])").test_eq(CT22 {a(0, 1), a(0, 0), a(1, 1), a(1, 0)},
+                                                   from(a, Vint {0, 1}, Vint {1, 0}));
+                tr.info("a([1 0], [0 1])").test_eq(CT22 {a(1, 0), a(1, 1), a(0, 0), a(0, 1)},
+                                                   from(a, Vint {1, 0}, Vint {0, 1}));
+                tr.info("a([1 0], [1 0])").test_eq(CT22 {a(1, 1), a(1, 0), a(0, 1), a(0, 0)},
+                                                   from(a, Vint {1, 0}, Vint {1, 0}));
+
+                a = 0.;
+                from(a, Vint {1, 0}, Vint {1, 0}) = CT22 {9, 7, 1, 4};
+                tr.info("a([1 0], [1 0]) as lvalue").test_eq(CT22 {4, 1, 7, 9}, a);
+                from(a, Vint {1, 0}, Vint {1, 0}) *= CT22 {9, 7, 1, 4};
+                tr.info("a([1 0], [1 0]) as lvalue, *=").test_eq(CT22 {16, 1, 49, 81}, a);
+// Note the difference with J amend, which requires x in (x m} y) ~ (y[m] = x) to be a suffix of y[m]; but we apply the general mechanism which is prefix matching.
+                from(a, Vint {1, 0}, Vint {1, 0}) = CT2 {9, 7};
+                tr.info("a([1 0], [1 0]) as lvalue, rank extend of right hand").test_eq(CT22 {7, 7, 9, 9}, a);
+// @TODO Test cases with rank!=1, starting with this couple which should work the same.
+                std::cout << "-> " << from(a, Vint{1, 0}, 0) << std::endl;
+                a = CT22 {4, 1, 7, 9};
+                tr.info("a(rank1, rank0)").test_eq(ra::Small<real, 2>{9, 1}, from(a, Vint{1, 0}, ra::Small<int>(1).iter()));
+                tr.info("a(rank0, rank1)").test_eq(ra::Small<real, 2>{9, 7}, from(a, ra::Small<int>(1).iter(), Vint{1, 0}));
+            };
+        check_selection_unbeatable_2(Ureal<2>({2, 2}, {1, 2, 3, 4}));
+        check_selection_unbeatable_2(ra::Small<real, 2, 2>({1, 2, 3, 4}));
+        check_selection_unbeatable_2(Ureal<>({2, 2}, {1, 2, 3, 4}));
     }
     section("mixed scalar/unbeatable, 2D -> 1D");
     {
-        check_selection_unbeatable_mixed(tr, Ureal<2>({2, 2}, {1, 2, 3, 4}));
-        check_selection_unbeatable_mixed(tr, ra::Small<real, 2, 2>({1, 2, 3, 4}));
+        auto check_selection_unbeatable_mixed = [&tr](auto && a)
+            {
+                using CT2 = ra::Small<real, 2>;
+                tr.info("from(a [0 1], 1)").test_eq(CT2 {a(0, 1), a(1, 1)}, from(a, Vint {0, 1}, 1));
+                tr.info("from(a [1 0], 1)").test_eq(CT2 {a(1, 1), a(0, 1)}, from(a, Vint {1, 0}, 1));
+                tr.info("from(a 1, [0 1])").test_eq(CT2 {a(1, 0), a(1, 1)}, from(a, 1, Vint {0, 1}));
+                tr.info("from(a 1, [1 0])").test_eq(CT2 {a(1, 1), a(1, 0)}, from(a, 1, Vint {1, 0}));
+                tr.info("a([0 1], 1)").test_eq(CT2 {a(0, 1), a(1, 1)}, a(Vint {0, 1}, 1));
+                tr.info("a([1 0], 1)").test_eq(CT2 {a(1, 1), a(0, 1)}, a(Vint {1, 0}, 1));
+                tr.info("a(1, [0 1])").test_eq(CT2 {a(1, 0), a(1, 1)}, a(1, Vint {0, 1}));
+                tr.info("a(1, [1 0])").test_eq(CT2 {a(1, 1), a(1, 0)}, a(1, Vint {1, 0}));
+            };
+        check_selection_unbeatable_mixed(Ureal<2>({2, 2}, {1, 2, 3, 4}));
+        check_selection_unbeatable_mixed(ra::Small<real, 2, 2>({1, 2, 3, 4}));
     }
-// @TODO this cannot work because dots_t<> can only be beaten on, not iterated on. Still, those beating cases should be implemented.
     section("mixed unbeatable/dots, 2D -> 2D (@TODO)");
     {
-        // check_selection_unbeatable_dots(tr, Ureal<2>({2, 2}, {1, 2, 3, 4}));
-        // check_selection_unbeatable_dots(tr, ra::Small<real, 2, 2>({1, 2, 3, 4}));
+        // auto check_selection_unbeatable_dots = [&tr](auto && a)
+        //     {
+        //         using CT2 = ra::Small<real, 2>;
+        //         tr.info("a({0, 0}, ra::all)").test_eq(a(CT2 {0, 0}, ra::all), a(CT2 {0, 0}, CT2 {0, 1}));
+        //         tr.info("a({0, 1}, ra::all)").test_eq(a(CT2 {0, 1}, ra::all), a(CT2 {0, 1}, CT2 {0, 1}));
+        //         tr.info("a({1, 0}, ra::all)").test_eq(a(CT2 {1, 0}, ra::all), a(CT2 {1, 0}, CT2 {0, 1}));
+        //         tr.info("a({1, 1}, ra::all)").test_eq(a(CT2 {1, 1}, ra::all), a(CT2 {1, 1}, CT2 {0, 1}));
+        //     };
+// @TODO doesn't work because dots_t<> can only be beaten on, not iterated on, and the beating cases are missing.
+        // check_selection_unbeatable_dots(Ureal<2>({2, 2}, {1, 2, 3, 4}));
+        // check_selection_unbeatable_dots(ra::Small<real, 2, 2>({1, 2, 3, 4}));
     }
     section("unbeatable, 3D & higher");
     {

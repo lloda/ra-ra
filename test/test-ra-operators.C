@@ -203,6 +203,14 @@ int main()
         test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
         test(ra::Small<int, 3, 2>(ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
     }
+    section("pack operator");
+    {
+        ra::Small<real, 6> a = { 0, -1, 1, 0, 2, 1 };
+        ra::Small<int, 6> b = { 4, 3, 5, 4, 6, 5 };
+        ra::Owned<std::tuple<real, int>, 1> x = ra::pack<std::tuple<real, int> >(a, b); // @TODO kinda redundant...
+        tr.test_eq(a, map([](auto && x) -> decltype(auto) { return std::get<0>(x); }, x));
+        tr.test_eq(b, map([](auto && x) -> decltype(auto) { return std::get<1>(x); }, x));
+    }
     section("operator= for Raw, WithStorage. Also see test-ra-ownership.C"); // @TODO use TestRecorder::test_eq().
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };

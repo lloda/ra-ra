@@ -188,7 +188,7 @@ DEFINE_NAME_OP(min, min)
     {                                                                   \
         return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>               \
+    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>    \
     inline decltype(auto) OPNAME(A && ... a)                            \
     {                                                                   \
         return OP(START(a) ...);                                        \
@@ -200,6 +200,12 @@ template <class T, class A>
 inline auto cast(A && a)
 {
     return map([](auto && a) { return T(a); }, std::forward<A>(a));
+}
+
+template <class T, class ... A>
+inline auto pack(A && ... a)
+{
+    return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
 }
 
 // --------------------------------

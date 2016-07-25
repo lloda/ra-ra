@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2012, 2014-2015
+// (c) Daniel Llorens - 2012, 2014-2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -112,7 +112,7 @@ struct TestRecorder
     {
         bool c = every(ra::map(comp, wanted, got));
 // where() to match shapes if either doesn't have one
-        info_self("comp(wanted: ", where(true, wanted, got), ", got: ", got, ")").test(c);
+        info_self("comp(wanted: ", where(true, wanted, got), ", got: ", where(false, wanted, got), ")").test(c);
         return c;
     }
     template <class W, class A>

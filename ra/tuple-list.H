@@ -151,7 +151,7 @@ struct IndexIf
     using type = nil;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, enableif<Pred<A0>>>
+struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<Pred<A0>::value> >
 {
     using type = A0;
     constexpr static int value = i;

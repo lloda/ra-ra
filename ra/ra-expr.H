@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011-2014
+// (c) Daniel Llorens - 2011-2014, 2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -204,24 +204,24 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
         return *flat();
     }
 
-// forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
-#define DEF_EXPR_EQOPS(OP)                                              \
-    template <class X> void operator OP(X && x)                         \
-    {                                                                   \
+#define DEF_EQOPS_(OP)                                                  \
+    OP(X && x)                                                          \
+    {  /* forward to make sure value y is not misused as ref. Cf. test-ra-8.C */ \
         ply_either(expr([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, start(x))); \
     }
-    FOR_EACH(DEF_EXPR_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EXPR_EQOPS
+#define DEF_EQOPS(OP) template <class X> void operator DEF_EQOPS_(OP)
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
 };
 
-// forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
-#define DEF_VECTOR_EQOPS(OP)                                            \
-    template <class V> template <class X> void Vector<V>::operator OP(X && x) \
-    {                                                                   \
-        ply_either(expr([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, start(x))); \
-    }
-FOR_EACH(DEF_VECTOR_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_VECTOR_EQOPS
+#define DEF_EQOPS(OP) template <class V> template <class X> void Vector<V>::operator DEF_EQOPS_(OP)
+FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
+#define DEF_EQOPS(OP) template <class V> template <class X> void Ptr<V>::operator DEF_EQOPS_(OP)
+FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
+
+#undef DEF_EQOPS_
 
 } // namespace ra
 

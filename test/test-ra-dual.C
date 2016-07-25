@@ -27,11 +27,7 @@ namespace ra {
 
 // Register our type as a scalar with ra:: . This isn't needed to have
 // containers of Dual<>, only to use Dual<>s by themselves as expr terms.
-template <class T>
-struct is_scalar_def<Dual<T> >
-{
-    static bool const value = true;
-};
+template <class T> constexpr bool is_scalar_def<Dual<T> > = true;
 
 } // namespace ra
 

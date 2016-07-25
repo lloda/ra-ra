@@ -78,8 +78,8 @@ struct ra_traits_def<T *>
     using V = T *;
     using value_type = T;
 
-    // static dim_t constexpr size(V const & v) { return DIM_BAD; }
-    // static dim_t constexpr size_s() { return DIM_BAD; }
+    static dim_t constexpr size(V const & v) { return DIM_BAD; }
+    static dim_t constexpr size_s() { return DIM_BAD; }
     constexpr static rank_t  rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; }
 };

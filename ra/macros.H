@@ -58,10 +58,6 @@
 #define FOR_EACH_(N, what, x, ...) JOIN(FOR_EACH_, N)(what, x, __VA_ARGS__)
 #define FOR_EACH(what, x, ...) FOR_EACH_(FOR_EACH_NARG(x, __VA_ARGS__), what, x, __VA_ARGS__)
 
-// @TODO probably want to make is_xxx<> into variable templates and then remove this.
-template <class B, class T=void>
-using enableif = std::enable_if_t<B::value, T>;
-
 namespace mp {
 
 template <class B> constexpr bool exists = true;

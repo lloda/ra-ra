@@ -21,14 +21,10 @@
 namespace ra {
 
 // specialize this for new types for which is_scalar<> should be true.
-template <class A_>
-struct is_scalar_def
-{
-    using A = std::decay_t<A_>;
-    constexpr static bool value = !std::is_pointer<A>::value && std::is_scalar<A>::value;
-};
+template <class A>
+constexpr bool is_scalar_def = !std::is_pointer<A>::value && std::is_scalar<A>::value;
 
-template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A> >::value;
+template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A> >;
 
 template <class C, class Enable=void>
 constexpr bool is_slice = false;
@@ -52,10 +48,11 @@ struct is_array_iterator
     constexpr static bool value = false;
 };
 
+// @TODO make things is_array_iterator explicitly, as with is_scalar, and not by poking in the insides.
+// @TODO check the rest of the required interface of A and A::flat() right here.
 template <class A>
 struct is_array_iterator<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<A>>().flat())>>>
 {
-    // @TODO check the rest of the required interface of A and A::flat() right here.
     constexpr static bool value = true;
 };
 
@@ -83,15 +80,17 @@ constexpr bool is_ra_zero_rank = is_ra<A> && !is_ra_pos_rank<A>;
 template <class A>
 constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_scalar<A>;
 
-template <class A, class Enable=void>
-constexpr bool is_foreign_vector = false;
-
-// @TODO Forbid pointers b/c ra:: operator<<(ostream) would pick them up. It probably shouldn't.
 template <class A>
-constexpr bool is_foreign_vector<A, std::enable_if_t<!is_slice<A>
-                                                     && mp::exists<decltype(ra_traits<A>::size_s())>
-                                                     && !is_zero_or_scalar<A> > >
-    = true;
+constexpr bool is_foreign_vector_def = false;
+
+template <class A, class Enable=void>
+constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A> >;
+
+template <class T, class A>
+constexpr bool is_foreign_vector_def<std::vector<T, A> > = true;
+
+template <class T, std::size_t N>
+constexpr bool is_foreign_vector_def<std::array<T, N> > = true;
 
 // --------------
 // to provide extension of scalar functions to ra:: types
@@ -156,6 +155,12 @@ template <class T, std::enable_if_t<is_foreign_vector<T>, int> = 0>
 inline auto start(T && t)
 {
     return ra::vector(std::forward<T>(t));
+}
+
+template <class T>
+inline auto start(T * t)
+{
+    return ra::ptr(t);
 }
 
 } // namespace ra

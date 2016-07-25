@@ -66,7 +66,7 @@ dim_t proddim(D d, D dend)
 // [rank] [size...] p -> [data...] (var rank)
 // @TODO size is immutable so that it can be kept with rank.
 
-// Would do this with a base class, but I like Raw being a POD.
+// Would do this with a base class, but I like Raw being POD.
 #define DEFINE_ITERATORS(RANK)                                          \
     template <rank_t c=0> using iterator = ra::ra_iterator<Raw<T, RANK>, c>; \
     template <rank_t c=0> using const_iterator = ra::ra_iterator<Raw<T const, RANK>, c>; \

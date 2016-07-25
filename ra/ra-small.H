@@ -261,7 +261,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
 
 // Specialize for rank() integer-args -> scalar, same in ra::Raw in ra-large.H.
-// @TODO waiting for fold expressions (N4191) on some of these enableifs.
+// @TODO waiting for fold expressions (N4191) on some of these enable_if_ts.
 // @TODO Cf https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations#recs.cpp17
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I, std::enable_if_t<(mp::Count<std::is_integral<I> ...>::value<rank() \
@@ -277,7 +277,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
     } /* @TODO More than one selector... */                             \
-    template <class ... I, enableif< mp::Or<mp::int_t< !is_beatable<I>::static_p> ...>, int> = 0> \
+    template <class ... I, std::enable_if_t<mp::Or<mp::int_t< !is_beatable<I>::static_p> ...>::value, int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \

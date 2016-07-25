@@ -46,33 +46,30 @@ DEFINE_NAMED_BINARY_OP(/, slash)
 #define ITEM(i) std::get<(i)>(e.t)
 
 #if RA_OPTIMIZE_IOTA==1
-#define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T> >
+#define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T> >::value
 
 // The second condition is to disallow Iota(3)*float, since Iota doesn't support float yet. @TODO Eventually allow.
 template <class X>
-struct iota_operand
-{
-    constexpr static bool value = ra::is_zero_or_scalar<X>
-        && std::numeric_limits<std::decay_t<decltype(*(start(std::declval<X>()).flat()))> >::is_integer;
-};
+constexpr bool iota_operand = ra::is_zero_or_scalar<X>
+    && std::numeric_limits<std::decay_t<decltype(*(start(std::declval<X>()).flat()))> >::is_integer;
 
 // --------------
 // plus
 // --------------
 
-template <class I, class J, enableif<mp::And<IS_IOTA(I), iota_operand<J> >, int> =0>
+template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_operand<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0).org_+ITEM(1))> { ITEM(0).size_, ITEM(0).org_+ITEM(1), ITEM(0).stride_ };
 }
 
-template <class I, class J, enableif<mp::And<iota_operand<I>, IS_IOTA(J)>, int> =0>
+template <class I, class J, std::enable_if_t<iota_operand<I> && IS_IOTA(J), int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0)+ITEM(1).org_)> { ITEM(1).size_, ITEM(0)+ITEM(1).org_, ITEM(1).stride_ };
 }
 
-template <class I, class J, enableif<mp::And<IS_IOTA(I), IS_IOTA(J)>, int> =0>
+template <class I, class J, std::enable_if_t<IS_IOTA(I) && IS_IOTA(J), int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
@@ -83,19 +80,19 @@ inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 // minus
 // --------------
 
-template <class I, class J, enableif<mp::And<IS_IOTA(I), iota_operand<J> >, int> =0>
+template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_operand<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0).org_-ITEM(1))> { ITEM(0).size_, ITEM(0).org_-ITEM(1), ITEM(0).stride_ };
 }
 
-template <class I, class J, enableif<mp::And<iota_operand<I>, IS_IOTA(J)>, int> =0>
+template <class I, class J, std::enable_if_t<iota_operand<I> && IS_IOTA(J), int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0)-ITEM(1).org_)> { ITEM(1).size_, ITEM(0)-ITEM(1).org_, -ITEM(1).stride_ };
 }
 
-template <class I, class J, enableif<mp::And<IS_IOTA(I), IS_IOTA(J)>, int> =0>
+template <class I, class J, std::enable_if_t<IS_IOTA(I) && IS_IOTA(J), int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
@@ -106,13 +103,13 @@ inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 // times
 // --------------
 
-template <class I, class J, enableif<mp::And<IS_IOTA(I), iota_operand<J> >, int> =0>
+template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_operand<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0).org_*ITEM(1))> { ITEM(0).size_, ITEM(0).org_*ITEM(1), ITEM(0).stride_*ITEM(1) };
 }
 
-template <class I, class J, enableif<mp::And<iota_operand<I>, IS_IOTA(J)>, int> =0>
+template <class I, class J, std::enable_if_t<iota_operand<I> && IS_IOTA(J), int> =0>
 inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
 {
     return Iota<decltype(ITEM(0)*ITEM(1).org_)> { ITEM(1).size_, ITEM(0)*ITEM(1).org_, ITEM(0)*ITEM(1).stride_ };

@@ -223,7 +223,7 @@ struct applyframes
 
 // // No-op case. @TODO Maybe apply to any Iota<n> where n<=depth. @TODO Need to offer a default live().
 // template <class LiveAxes, int depth>
-// struct applyframes<LiveAxes, depth, enableif<std::is_same<LiveAxes, mp::Iota_<depth>>>>
+// struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same<LiveAxes, mp::Iota_<depth>>::value>>
 // {
 //     template <class A>
 //     static decltype(auto) f(A && a)

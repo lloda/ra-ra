@@ -17,57 +17,52 @@
 #include "ra/ra-large.H"
 #include "ra/ra-operators.H"
 #include "ra/ra-io.H"
+#include <typeinfo>
+#include <string>
 
 using std::cout; using std::endl; using std::flush;
 
-template <class A>
-struct type_preds
-{
-    static void test(TestRecorder & tr, bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector)
-    {
-// maybe https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54483 for the need of bool() here
-        tr.test_eq(ra, bool(ra::is_ra<A>));
-        tr.test_eq(slice, bool(ra::is_slice<A>));
-        tr.test_eq(array_iterator, bool(ra::is_array_iterator<A>::value));
-        tr.test_eq(scalar, bool(ra::is_scalar<A>));
-        tr.test_eq(foreign_vector, bool(ra::is_foreign_vector<A>));
+#define TEST_PREDICATES(A)                                              \
+    [&tr](bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector) \
+    {                                                                   \
+        /* maybe https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54483 for the need of bool() here with -O0 and -O1. */ \
+        tr.info(STRINGIZE(A)).info("bool").test_eq(ra, bool(ra::is_ra<A>)); \
+        tr.info(STRINGIZE(A)).info("slice").test_eq(slice, bool(ra::is_slice<A>)); \
+        tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, bool(ra::is_array_iterator<A>::value)); \
+        tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, bool(ra::is_scalar<A>)); \
+        tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, bool(ra::is_foreign_vector<A>)); \
     }
-};
 
 int main()
 {
     TestRecorder tr(std::cout);
     {
-        type_preds<int>
-            ::test(tr.info("int"),
-                   false, false, false, true, false);
-        type_preds<std::complex<double> >
-            ::test(tr.info("int"),
-                   false, false, false, true, false);
-        type_preds<ra::Unique<int, 2> >
-            ::test(tr.info("Unique<..., 2>"),
-                   true, true, false, false, false);
-        type_preds<decltype(ra::Unique<int, 2>({2, 2}, ra::unspecified).iter())>
-            ::test(tr.info("Unique<..., 2>.iter()"),
-                   true, false, true, false, false);
-        type_preds<ra::Iota<int> >
-            ::test(tr.info("Iota<int>"),
-                   true, false, true, false, false);
-        type_preds<ra::TensorIndex<0> >
-            ::test(tr.info("TensorIndex<>"),
-                   true, false, true, false, false);
-        type_preds<ra::Small<int, 2> >
-            ::test(tr.info("Small<..., 2>"),
-                   true, true, false, false, false);
-        type_preds<decltype(ra::Small<int, 2, 2>()(0))>
-            ::test(tr.info("Small<..., 2, 2>(0)"),
-                   true, true, false, false, false);
-        type_preds<decltype(ra::Small<int, 2> {1, 2}+3)>
-            ::test(tr.info("ET with Small, scalar"),
-                   true, false, true, false, false);
-        type_preds<decltype(3+ra::Owned<int>({2, 2}, {1, 2, 3, 4}))>
-            ::test(tr.info("ET with scalar, Owned"),
-                   true, false, true, false, false);
+        TEST_PREDICATES(int)
+            (false, false, false, true, false);
+        TEST_PREDICATES(std::complex<double>)
+            (false, false, false, true, false);
+        TEST_PREDICATES(decltype(ra::Unique<int, 2>()))
+            (true, true, false, false, false);
+        TEST_PREDICATES(decltype(ra::Unique<int, 2>().iter()))
+            (true, false, true, false, false);
+        TEST_PREDICATES(ra::Iota<int>)
+            (true, false, true, false, false);
+        TEST_PREDICATES(ra::TensorIndex<0>)
+            (true, false, true, false, false);
+        TEST_PREDICATES(decltype(ra::Small<int, 2>()))
+            (true, true, false, false, false);
+        TEST_PREDICATES(decltype(ra::Small<int, 2, 2>()()))
+            (true, true, false, false, false);
+        TEST_PREDICATES(decltype(ra::Small<int, 2>()+3))
+            (true, false, true, false, false);
+        TEST_PREDICATES(decltype(3+ra::Owned<int>()))
+            (true, false, true, false, false);
+        TEST_PREDICATES(std::vector<int>)
+            (false, false, false, false, true);
+        TEST_PREDICATES(decltype(ra::start(std::vector<int> {})))
+            (true, false, true, false, false);
+        TEST_PREDICATES(int *)
+            (false, false, false, false, false);
     }
     section("establish meaning of selectors (@TODO / convert to TestRecorder)");
     {

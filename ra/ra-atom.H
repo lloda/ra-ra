@@ -96,7 +96,6 @@ struct Scalar
 
 // Scalar acts as driver in a few places where I didn't bother to specialize (e.g. ra::from). Elsewhere (e.g. in +, *, operator=, etc.) there's always another expr to be driver, or a specialization (e.g. array constructors). Use in ra::from should be removed since a scalar subscript can be beaten; this is probably true of all other uses, and @TODO then we could remove this.
     constexpr static dim_t preferred_stride(int const i) { return 0; }
-
     constexpr void operator+=(dim_t const d) const {}
     constexpr S const & operator*() const { return s; }
 };
@@ -125,7 +124,7 @@ struct Vector
 
     dim_t size() const { return traits::size(v); }
     dim_t size(int const i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
-    rank_t constexpr rank() const { return 1; }
+    constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return traits::size_s(); }
 
@@ -150,19 +149,18 @@ struct Vector
     dim_t preferred_stride(int const i) const { return stride(i); }
     bool compact_stride(dim_t const step, int const z, int const j) const
     {
-// reduced from cell_iterator::compact_stride()
-        return (z==0) == (j==0);
+        return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
 
     auto flat() { return p__; }
     auto flat() const { return p__; }
     bool done() const { return p__==v.end(); }
 
-// depend on ra::Expr, see ra-expr.H
-#define DEF_VECTOR_EQOPS(OP)                        \
+// impl depends on ra::Expr, see ra-expr.H
+#define DEF_EQOPS(OP)                               \
     template <class X> void operator OP(X && x);
-    FOR_EACH(DEF_VECTOR_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_VECTOR_EQOPS
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
 };
 
 template <class V>
@@ -174,6 +172,61 @@ template <class T>
 Vector<std::initializer_list<T>> vector(std::initializer_list<T> && v)
 {
     return Vector<std::initializer_list<T>> { std::move(v) };
+}
+
+// @TODO Maybe try to merge with Vector...
+template <class P>
+struct Ptr
+{
+    using traits = ra_traits<P>;
+    static_assert(traits::rank_s()==1, "unsupported arg for Ptr");
+
+    P p__;
+
+    using shape_type = std::array<dim_t, 1>;
+    auto shape() const { return shape_type { { dim_t(size_s()) } }; }
+
+    constexpr static dim_t size() { return size_s(); }
+    constexpr static dim_t size(int const i) { CHECK_BOUNDS(i==0); return size_s(); }
+    constexpr static rank_t rank() { return 1; }
+    constexpr static rank_t rank_s() { return 1; };
+    constexpr static dim_t size_s() { return traits::size_s(); }
+
+    Ptr(P const & p_): p__(p_) {}
+
+    void adv(rank_t const k, dim_t const d)
+    {
+        CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
+        p__ += (k==0) * d;
+    }
+    template <class I>
+    decltype(auto) at(I const & i)
+    {
+        return p__[i[0]]; // look ma no hands
+    }
+
+    dim_t stride(int const i) const { return i==0 ? 1 : 0; }
+    dim_t preferred_stride(int const i) const { return stride(i); }
+    bool compact_stride(dim_t const step, int const z, int const j) const
+    {
+        return (z==0) == (j==0); // cf Vector::compact_stride
+    }
+
+    auto flat() { return p__; }
+    auto flat() const { return p__; }
+    constexpr static bool done() { return false; }
+
+// impl depends on ra::Expr, see ra-expr.H
+#define DEF_EQOPS(OP)                               \
+    template <class X> void operator OP(X && x);
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
+};
+
+template <class T>
+Ptr<T *> ptr(T * p)
+{
+    return Ptr<T *> { p };
 }
 
 template <class T>
@@ -265,42 +318,30 @@ template <class I> struct beatable_skip { struct type { constexpr static int val
 // * ...
 
 template <class X>
-struct has_tensorindex_def
-{
-    static bool const value = false;
-};
+constexpr bool has_tensorindex_def = false;
 
-template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T> >::value;
+template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T> >;
 
 template <int w_, class value_type_>
-struct has_tensorindex_def<TensorIndex<w_, value_type_> >
-{
-    static bool const value = true;
-};
+constexpr bool has_tensorindex_def<TensorIndex<w_, value_type_> > = true;
 
 template <class Op, class T, class K=mp::index_tuple_<T>> struct Expr;
 
 template <class Op, class ... Ti, class K>
-struct has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>>
-{
-    static bool const value = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
-};
+constexpr bool has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>>
+    = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
 
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
 
 template <class LiveAxes, int depth, class A>
-struct has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>>
-{
-    static bool const value = has_tensorindex<A>;
-};
+constexpr bool has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>>
+    = has_tensorindex<A>;
 
 template <class FM, class Op, class T, class K=mp::index_tuple_<T>> struct Ryn;
 
 template <class FM, class Op, class ... Ti, class K>
-struct has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>>
-{
-    static bool const value = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
-};
+constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>>
+    = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
 
 } // namespace ra
 

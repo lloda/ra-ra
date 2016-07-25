@@ -35,7 +35,7 @@ template <class T> inline std::enable_if_t<IS_REAL(T), T> amin(T const x) { retu
 #undef IS_REAL
 
 // @TODO see is_scalar in wedge.H>
-template <class T, enableif<std::is_integral<T>, int> =0> T sqr(T const x) { return x*x; }
+template <class T, std::enable_if_t<std::is_integral<T>::value, int> =0> T sqr(T const x) { return x*x; }
 
 inline constexpr double sqr(double const x)                         { return x*x; }
 inline constexpr double real_part(double const x)                   { return x; }
