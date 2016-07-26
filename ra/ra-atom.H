@@ -245,11 +245,11 @@ template <class T_>
 struct Iota
 {
     using T = T_;
-    T const size_, org_, stride_;
-    T i_;
+    dim_t const size_;
+    T org_, stride_, i_;
 
     using shape_type = std::array<dim_t, 1>;
-    auto shape() const { return shape_type { { dim_t(size_) } }; }
+    auto shape() const { return shape_type { { size_ } }; }
 
     dim_t size() const { return size_; }
     dim_t size(int const i) const { CHECK_BOUNDS(i==0); return size_; }
@@ -258,7 +258,7 @@ struct Iota
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return DIM_ANY; }
 
-    Iota(dim_t size, dim_t org=0, dim_t stride=1): size_(size), org_(org), stride_(stride), i_(org) { CHECK_BOUNDS(size>=0); }
+    Iota(dim_t size, T org=0, T stride=1): size_(size), org_(org), stride_(stride), i_(org) { CHECK_BOUNDS(size>=0); }
     bool done() const { return i_==org_+stride_*size_; }
 
     void adv(rank_t const k, dim_t const d)
@@ -271,8 +271,8 @@ struct Iota
         return org_ + i[0]*stride_;
     }
 
-    dim_t stride(int const i) const { return i==0 ? stride_ : 0; }
-    dim_t preferred_stride(int const i) const { return stride(i); }
+    dim_t stride(rank_t const i) const { return i==0 ? stride_ : 0; }
+    dim_t preferred_stride(rank_t const i) const { return stride(i); }
     bool compact_stride(dim_t const step, int const z, int const j) const
     {
 // reduced from cell_iterator::compact_stride()
@@ -281,8 +281,12 @@ struct Iota
     auto flat() const { return IotaLeaf<T> { i_ }; }
 };
 
-inline auto iota(int size, int org=0, int stride=1) { return Iota<int> { size, org, stride }; }
-inline auto jvec(dim_t size, dim_t org=0, dim_t stride=1) { return Iota<dim_t> { size, org, stride }; }
+template <class O=dim_t, class S=dim_t> inline auto
+iota(dim_t size, O org=0, S stride=1)
+{
+    using T = std::common_type_t<O, S>;
+    return Iota<T> { size, T(org), T(stride) };
+}
 
 template <class I> struct is_beatable_def
 {

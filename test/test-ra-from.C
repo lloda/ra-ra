@@ -41,12 +41,12 @@ int main()
                 tr.info("a(1)").test_eq(Ureal<1>({4}, 1-ra::_0), a(1));
                 tr.info("a(2, 2)").test_eq(0, a(2, 2));
                 tr.info("a(0:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*(ra::_0-ra::_1)),
-                                                 a(ra::jvec(2, 0, 2), ra::jvec(2, 0, 2)));
+                                                 a(ra::iota(2, 0, 2), ra::iota(2, 0, 2)));
                 tr.info("a(1:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*ra::_0+1-2*ra::_1),
-                                                 a(ra::jvec(2, 1, 2), ra::jvec(2, 0, 2)));
+                                                 a(ra::iota(2, 1, 2), ra::iota(2, 0, 2)));
                 tr.info("a(0:2:, :)").test_eq(Ureal<2>({2, 4}, 2*ra::_0-ra::_1),
-                                              a(ra::jvec(2, 0, 2), ra::all));
-                tr.info("a(0:2:)").test_eq(a(ra::jvec(2, 0, 2), ra::all), a(ra::jvec(2, 0, 2)));
+                                              a(ra::iota(2, 0, 2), ra::all));
+                tr.info("a(0:2:)").test_eq(a(ra::iota(2, 0, 2), ra::all), a(ra::iota(2, 0, 2)));
             };
         check_selection_shortcuts(Ureal<2>({4, 4}, ra::_0-ra::_1));
         check_selection_shortcuts(Ureal<>({4, 4}, ra::_0-ra::_1));

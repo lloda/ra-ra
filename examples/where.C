@@ -10,7 +10,7 @@ using std::cout; using std::endl; using std::flush;
 
 int main()
 {
-    ra::Owned<int, 1> x = ra::jvec(7, -3);   // [ -3 -2 -1  0  1  2  3 ]
+    ra::Owned<int, 1> x = ra::iota(7, -3);   // [ -3 -2 -1  0  1  2  3 ]
 
     // The where(X,Y,Z) function is similar to the X ? Y : Z operator.
     // If X is logical true, then Y is returned; otherwise, Z is

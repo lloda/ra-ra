@@ -321,7 +321,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         return static_cast<Child &>(*this);
     }
 
-// @TODO Would replace by s(ra::jvec) if that could be made constexpr
+// @TODO Would replace by s(ra::iota) if that could be made constexpr
 #define DEFINE_AS(CONST)                                                \
     template <int ss, int oo=0>                                         \
     auto as() CONST                                                     \

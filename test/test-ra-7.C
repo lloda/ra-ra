@@ -25,7 +25,7 @@ using std::cout; using std::endl;
 int main()
 {
     TestRecorder tr(std::cout);
-    auto i = ra::jvec(5);
+    auto i = ra::iota(5);
     section("optimize is nop by default");
     {
         auto l = optimize(i*i);
@@ -36,8 +36,8 @@ int main()
         auto j = i+1;
         auto k1 = optimize(i+1);
         auto k2 = optimize(1+i);
-        auto k3 = optimize(ra::jvec(5)+1);
-        auto k4 = optimize(1+ra::jvec(5));
+        auto k3 = optimize(ra::iota(5)+1);
+        auto k4 = optimize(1+ra::iota(5));
 // it's actually a Iota
         tr.test_eq(1, k1.org_);
         tr.test_eq(1, k2.org_);
@@ -54,8 +54,8 @@ int main()
         auto j = i*2;
         auto k1 = optimize(i*2);
         auto k2 = optimize(2*i);
-        auto k3 = optimize(ra::jvec(5)*2);
-        auto k4 = optimize(2*ra::jvec(5));
+        auto k3 = optimize(ra::iota(5)*2);
+        auto k4 = optimize(2*ra::iota(5));
 // it's actually a Iota
         tr.test_eq(0, k1.org_);
         tr.test_eq(0, k2.org_);

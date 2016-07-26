@@ -426,7 +426,7 @@ int main()
         tr.test_eq(6, a.back());
     }
 
-// @TODO Replace with uniform subscripting (ra::jvec).
+// @TODO Replace with uniform subscripting (ra::iota).
     section("compile time subscripting of ra::Small (as)");
     {
         auto test_as = [&tr](auto && a, auto && b)

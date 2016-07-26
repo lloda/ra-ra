@@ -44,22 +44,22 @@ int main()
 
     section("every / any");
     {
-        tr += every(ra::Unique<real, 2>({4, 4}, 10+ra::_0-ra::_1));
-        tr += any(ra::Unique<real, 2>({4, 4}, ra::_0-ra::_1));
-        tr += every(true);
-        tr += !every(false);
-        tr += any(true);
-        tr += !any(false);
+        tr.test(every(ra::Unique<real, 2>({4, 4}, 10+ra::_0-ra::_1)));
+        tr.test(any(ra::Unique<real, 2>({4, 4}, ra::_0-ra::_1)));
+        tr.test(every(true));
+        tr.test(!every(false));
+        tr.test(any(true));
+        tr.test(!any(false));
 
-        tr += every(ra::Unique<int, 1> {5, 5}==5);
-        tr += !every(ra::Unique<int, 1> {2, 5}==5);
-        tr += !every(ra::Unique<int, 1> {5, 2}==5);
-        tr += !every(ra::Unique<int, 1> {2, 3}==5);
+        tr.test(every(ra::Unique<int, 1> {5, 5}==5));
+        tr.test(!every(ra::Unique<int, 1> {2, 5}==5));
+        tr.test(!every(ra::Unique<int, 1> {5, 2}==5));
+        tr.test(!every(ra::Unique<int, 1> {2, 3}==5));
 
-        tr += any(ra::Unique<int, 1> {5, 5}==5);
-        tr += any(ra::Unique<int, 1> {2, 5}==5);
-        tr += any(ra::Unique<int, 1> {5, 2}==5);
-        tr += !any(ra::Unique<int, 1> {2, 3}==5);
+        tr.test(any(ra::Unique<int, 1> {5, 5}==5));
+        tr.test(any(ra::Unique<int, 1> {2, 5}==5));
+        tr.test(any(ra::Unique<int, 1> {5, 2}==5));
+        tr.test(!any(ra::Unique<int, 1> {2, 3}==5));
     }
 
     section("norm2");

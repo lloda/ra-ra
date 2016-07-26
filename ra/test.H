@@ -33,7 +33,7 @@ char const * esc_plain = "\x1b[39m";
 
 template <class ... A> void section(A const & ... a)
 {
-    std::cout << "\n\n" << esc_bold << format(a ...) << esc_unbold << std::endl;
+    std::cout << "\n" << esc_bold << format(a ...) << esc_unbold << std::endl;
 }
 
 struct TestRecorder
@@ -62,12 +62,6 @@ struct TestRecorder
         info_string += esc_plain;
         return *this;
     }
-    template <class ... A> TestRecorder & info_self(A && ... a)
-    {
-        info_string += (info_string=="" ? "" : "; ");
-        info_string += format(a ...);
-        return *this;
-    }
     TestRecorder & quiet(bool q=true)
     {
         isquiet = q;
@@ -79,18 +73,19 @@ struct TestRecorder
         return *this;
     }
 
-    void test(bool c)
+    template <class A>
+    void test(bool c, A && make_info)
     {
         if (isquiet) {
             if (!c) {
-                o << esc_cyan << "[" << total << "] " << esc_plain << esc_bold << esc_red << "FAILED" << esc_plain << esc_unbold
-                  << "... " << info_string << std::endl;
+                o << esc_cyan << "[" << total << "] " << esc_plain << esc_bold << esc_red << "FAILED"
+                  << esc_plain << esc_unbold << "... " << make_info() << std::endl;
             }
         } else {
             o << esc_cyan << "[" << total << "] " << esc_plain
               << (c ? std::string(esc_green)+"ok"+esc_plain
                   : std::string(esc_bold)+esc_red+"FAILED"+esc_plain+esc_unbold)
-              << "... " << info_string << std::endl;
+              << "... " << make_info() << std::endl;
         }
         info_string = "";
         isquiet = isquiet_default;
@@ -102,17 +97,20 @@ struct TestRecorder
         }
         willskip = false;
     }
-    void operator+=(bool c)
+    void test(bool c)
     {
-        test(c);
+        test(c, [this]() { return this->info_string; });
     }
+
+#define LAZYINFO(...) [&]() { return format((this->info_string=="" ? "" : "; "), __VA_ARGS__); }
+
 // Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
     template <class W, class A, class Comp>
     bool test_comp(W && wanted, A && got, Comp && comp)
     {
         bool c = every(ra::map(comp, wanted, got));
 // where() to match shapes if either doesn't have one
-        info_self("comp(wanted: ", where(true, wanted, got), ", got: ", where(false, wanted, got), ")").test(c);
+        test(c, LAZYINFO("comp(wanted: ", where(true, wanted, got), ", got: ", where(false, wanted, got), ")"));
         return c;
     }
     template <class W, class A>
@@ -127,8 +125,7 @@ struct TestRecorder
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),
                               rel_error(wanted, got)));
-        info_self("rel_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err)
-            .test(e<=req_err);
+        test(e<=req_err, LAZYINFO("rel_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err));
         return e;
     }
     template <class W, class A>
@@ -137,10 +134,12 @@ struct TestRecorder
         double e = amax(where(isnan(wanted),
                               where(isnan(got), 0., std::numeric_limits<double>::infinity()),
                               abs(wanted-got)));
-        info_self("abs_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err)
-            .test(e<=req_err);
+        test(e<=req_err, LAZYINFO("abs_error(wanted: ", wanted, ", got: ", got, ") = ", format_error(e), ", req. ", req_err));
         return e;
     }
+
+#undef LAZYINFO
+
     int summary() const
     {
         if (failed.empty()) {

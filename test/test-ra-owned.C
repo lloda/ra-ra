@@ -34,7 +34,7 @@ int main()
                 for (int i=1; i<a.rank(); ++i) {
                     tr.test_eq(ref.size(i), a.size(i));
                 }
-                tr.test_eq(ref(ra::jvec(testsize)), a(ra::jvec(testsize)));
+                tr.test_eq(ref(ra::iota(testsize)), a(ra::iota(testsize)));
             };
         {
             ra::Owned<int, 2> a({5, 3}, ra::_0 - ra::_1);

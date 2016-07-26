@@ -84,7 +84,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     using K = std::tuple<I ...>;
 
 // A-th argument decides rank and shape.
-    static int const A = largest_rank<P ...>::value;
+    constexpr static int A = largest_rank<P ...>::value;
     using PA = std::decay_t<mp::Ref_<T, A>>;
 
     using AK = mp::Cons_<mp::int_t<A>, mp::ComplementList_<mp::int_list<A>, K>>;
@@ -95,7 +95,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     T t;
 
 // If driver is RANK_ANY, driver selection should be delayed to run time, except when we can tell statically that RANK_ANY would be selected anyway.
-    static bool const HAS_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
+    constexpr static bool HAS_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
     template <bool depend=true> constexpr auto & driver() const
     {
