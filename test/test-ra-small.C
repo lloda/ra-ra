@@ -276,7 +276,6 @@ int main()
         tr.test_eq(5, a(1)(1));
         tr.test_eq(6, a(1)(2));
     }
-
     section("SmallArray converted to SmallSlice");
     {
         ra::Small<real, 2, 3> a { 1, 2, 3, 4, 5, 6 };
@@ -292,12 +291,10 @@ int main()
         b = 99.;
         tr.test_eq(99., a);
     }
-
     section("using ra_iterator with SmallBase");
     {
         cout << "@TODO" << endl;
     }
-
     section("expr with Small, rank 1, ply_index");
     {
         ra::Small<real, 3> a { 1, 4, 2 };
@@ -312,7 +309,6 @@ int main()
         TEST(ply_index)
 #undef TEST
     }
-
     section("expr with Small, rank 2");
     {
         ra::Small<real, 3, 2> a { 1, 4, 2, 5, 3, 6 };
@@ -342,7 +338,6 @@ int main()
         TEST(ply_index);
 #undef TEST
     }
-
     section("Small as value type in var-size array");
     {
         {
@@ -497,8 +492,5 @@ int main()
         // a = b; // @TODO Check that this static fails
         cout << "a = b, a: " << a << endl;
     }
-
-
-
     return tr.summary();
 }

@@ -211,7 +211,17 @@ int main()
         tr.test_eq(a, map([](auto && x) -> decltype(auto) { return std::get<0>(x); }, x));
         tr.test_eq(b, map([](auto && x) -> decltype(auto) { return std::get<1>(x); }, x));
     }
-    section("operator= for Raw, WithStorage. Also see test-ra-ownership.C"); // @TODO use TestRecorder::test_eq().
+    section("pack operator as ref");
+    {
+        using T = std::tuple<real, int>;
+        ra::Owned<T> x { T(0., 1), T(2., 3), T(4., 5) };
+        ra::Small<real, 3> a = -99.;
+        ra::Small<int, 3> b = -77;
+        ra::pack<std::tuple<real &, int &> >(a, b) = x;
+        tr.test_eq(ra::Small<real, 3> {0., 2., 4.}, a);
+        tr.test_eq(ra::Small<int, 3> {1, 3, 5}, b);
+    }
+    section("operator= for Raw, WithStorage. Also see test-ra-ownership.C");
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };
         real check9[6] = { 9, 9, 9, 9, 9, 9 };
@@ -226,10 +236,8 @@ int main()
         tr.test(std::equal(a.begin(), a.end(), check9));
         a = d;
         tr.test(std::equal(a.begin(), a.end(), check5));
-        {
-            ra::Unique<int, 2> e = d;
-            tr.test(std::equal(e.begin(), e.end(), check5));
-        }
+        ra::Unique<int, 2> e = d;
+        tr.test(std::equal(e.begin(), e.end(), check5));
     }
     section("operator= for Dynamic");
     {

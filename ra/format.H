@@ -22,12 +22,11 @@ struct Rawp
 {
     V const & v;
     char const * sep;
-    Rawp(V const & v_, char const * sep_=" "): v(v_), sep(sep_) {}
 };
 
 template <class V> Rawp<V> rawp(V const & v_, char const * sep_=" ")
 {
-    return Rawp<V>(v_, sep_);
+    return Rawp<V> { v_, sep_ };
 }
 
 template <class V>

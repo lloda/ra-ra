@@ -305,6 +305,9 @@ setting CCFLAGS to something else, for example:
 g++-6.1 fails to build the tests because of this bug:
 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70942.
 
+Commits after e7c14a91f27960c6a9a3b865f00117b4d06e9992 crash clang
+(3.7 to 3.9).
+
 I haven't tested on Windows.
 
 

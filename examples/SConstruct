@@ -92,7 +92,8 @@ def to_test_ra(env, source):
 [to_test_ra(env, example)
  for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv',
                  'indirect', 'cast', 'nested', 'agreement', 'small',
-                 'readme', 'explode-collapse']]
+                 'readme', 'explode-collapse',
+                 'newton', 'maxwell']]
 
 
 def print_summary():

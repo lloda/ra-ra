@@ -275,8 +275,7 @@ struct Iota
     dim_t preferred_stride(rank_t const i) const { return stride(i); }
     bool compact_stride(dim_t const step, int const z, int const j) const
     {
-// reduced from cell_iterator::compact_stride()
-        return (z==0) == (j==0);
+        return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
     auto flat() const { return IotaLeaf<T> { i_ }; }
 };

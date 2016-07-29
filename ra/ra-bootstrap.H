@@ -46,6 +46,10 @@ constexpr rank_t rank_sum(rank_t const a, rank_t const b)
 {
     return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a+b);
 }
+constexpr rank_t rank_diff(rank_t const a, rank_t const b)
+{
+    return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a-b);
+}
 constexpr bool inside(dim_t const i, dim_t const b)
 {
     return i>=0 && i<b;

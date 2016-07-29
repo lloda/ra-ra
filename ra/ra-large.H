@@ -205,7 +205,7 @@ struct Raw
     template <class I>                                                  \
     auto at(I const & i) CONST                                          \
     {                                                                   \
-        using Sub = Raw<T CONST, RANK-I::size()>; /* gcc accepts i.size() */ \
+        using Sub = Raw<T CONST, rank_diff(RANK, I::size_s())>; /* gcc accepts i.size() */ \
         return Sub { typename Sub::Dimv(dim.begin()+i.size(), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \

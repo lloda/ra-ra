@@ -3,12 +3,12 @@
 // Adapted from blitz++/examples/indirect.cpp
 
 // ra:: doesn't support ad hoc sparse selectors, so here I show
-// alternatives. The whole point of this example seems to be the compact
-// notation, so the alternatives look terrible, but I don't know if it's
-// worthwhile to clog every expr type with additional variants of operator() or
-// operator[] (which on C++14 still need to be members). The sparse selectors
-// should be defined as standalone functions with separate names depending on
-// the kind of indexing they do.
+// alternatives. The whole point of this example in Blitz++ seems to be the
+// compact notation, so the alternatives look more verbose, but I don't know if
+// it's worthwhile to clog every expr type with additional variants of
+// operator() or operator[] (which on C++14 still need to be members). The
+// sparse selectors should be defined as standalone functions with separate
+// names depending on the kind of indexing they do.
 
 #include "ra/ra-operators.H"
 #include "ra/ra-io.H"
@@ -23,17 +23,20 @@ void example1()
 
     ra::Owned<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
     using coord = ra::Small<int, 2>;
-    ra::Owned<coord, 1> I = { coord{1, 1}, coord{2, 2} };
+    ra::Owned<coord, 1> I = { {1, 1}, {2, 2} };
 
     // Blitz++ had A[I] = B.
     // In ra::, both sides of = must agree in shape.
-    // Also, the selector () is outer product (to index two axes, you need two arguments). The 'coord' selector is at(), for which there's no array version yet (@TODO would allow at(A, I) = at(B, I)).
+    // Also, the selector () is outer product (to index two axes, you need two arguments). The 'coord' selector is at().
     // So this is the most direct translation. Note the -> decltype(auto) to construct a reference expr.
     map([&A](auto && c) -> decltype(auto) { return A.at(c); }, I)
         = map([&B](auto && c) { return B.at(c); }, I);
 
     // More reasonably
     for_each([&A, &B](auto && c) { A.at(c) = B.at(c); }, I);
+
+    // There is an array op for at(). See also example5 below.
+    at(A, I) = at(B, I);
 
     cout << "B = " << B << endl << "A = " << A << endl;
 
@@ -146,10 +149,27 @@ void example4()
     //  0  0  0  0  0  0  0
 }
 
+void example5()
+{
+    // suppose you have the x coordinates in one array and the y coordinates in another array.
+    ra::Owned<int, 2> x({4, 4}, {0, 1, 2, 0, /* */ 0, 1, 2, 0, /*  */ 0, 1, 2, 0, /* */ 0, 1, 2, 0});
+    ra::Owned<int, 2> y({4, 4}, {1, 2, 0, 1, /* */ 1, 2, 0, 1, /*  */ 1, 2, 0, 1, /* */ 1, 2, 0, 1});
+    cout << "coordinates: " << format_array(ra::pack<ra::Small<int, 2> >(x, y), "|") << endl;
+
+    // you can use these for indirect access without creating temporaries.
+    ra::Owned<int, 2> a({3, 3}, {0, 1, 2, 3, 4, 5, 6, 7, 8});
+    ra::Owned<int, 2> b = at(a, ra::pack<ra::Small<int, 2> >(x, y));
+    cout << "sampling of a using coordinates: " << b << endl;
+
+    // cf the default selection operator, which creates an outer product a(x(i, j), y(k, l)) (a 4x4x4x4 array).
+    cout << "outer product selection: " << a(x, y) << endl;
+}
+
 int main()
 {
     example1();
     example2();
     example3();
     example4();
+    example5();
 }

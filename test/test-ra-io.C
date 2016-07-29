@@ -40,9 +40,30 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
     tr.test_eq(check, c);
 }
 
+namespace ra {
+
+// TestRecorder wants its args to be array elements.
+template <> constexpr bool is_scalar_def<std::string> = true;
+
+} // namespace ra
+
 int main()
 {
     TestRecorder tr;
+    section("IO format parameters (I)");
+    {
+        ra::Small<int, 2, 2> A {1, 2, 3, 4};
+        std::ostringstream o;
+        o << format_array(A, "|", "-");
+        tr.test_eq(o.str(), std::string("1|2-3|4"));
+    }
+    section("IO format parameters (II)");
+    {
+        ra::Owned<int, 2> A({2, 2}, {1, 2, 3, 4});
+        std::ostringstream o;
+        o << format_array(A, "|", "-", false);
+        tr.test_eq(o.str(), std::string("1|2-3|4"));
+    }
     section("common arrays or slices");
     {
         ra::Unique<int, 2> a({5, 3}, ra::_0 - ra::_1);

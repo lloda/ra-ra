@@ -34,17 +34,15 @@ int main()
     auto bench = [&tr](auto && f, auto A_, char const * tag, int size, int n)
         {
             using A = decltype(A_);
-            {
-                time_unit dt(0);
-                A a({size}, ra::unspecified);
-                auto t0 = now();
-                for (int i=0; i<n; ++i) {
-                    f(a, size);
-                }
-                dt += now()-t0;
-                cout << std::setw(10) << std::fixed << (dt.count()/double(n*size)) << " " << tunit << " " << tag << endl;
-                tr.quiet().test_eq(ra::pack<complex>(ra::iota<real>(size), size-ra::iota<real>(size)), a);
+            time_unit dt(0);
+            A a({size}, ra::unspecified);
+            auto t0 = now();
+            for (int i=0; i<n; ++i) {
+                f(a, size);
             }
+            dt += now()-t0;
+            cout << std::setw(10) << std::fixed << (dt.count()/double(n*size)) << " " << tunit << " " << tag << endl;
+            tr.quiet().test_eq(ra::pack<complex>(ra::iota<real>(size), size-ra::iota<real>(size)), a);
         };
 
     auto f_raw = [](auto & a, int size)

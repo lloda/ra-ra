@@ -202,10 +202,17 @@ inline auto cast(A && a)
     return map([](auto && a) { return T(a); }, std::forward<A>(a));
 }
 
+// @TODO could be useful to deduce T as tuple of value_types (&).
 template <class T, class ... A>
 inline auto pack(A && ... a)
 {
     return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
+}
+
+template <class A, class I>
+inline auto at(A && a, I && i)
+{
+    return map([&a](auto && i) -> decltype(auto) { return a.at(i); }, i);
 }
 
 // --------------------------------
