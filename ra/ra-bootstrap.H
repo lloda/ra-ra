@@ -54,6 +54,10 @@ constexpr bool inside(dim_t const i, dim_t const b)
 {
     return i>=0 && i<b;
 }
+constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
+{
+    return i>=a && i<b;
+}
 
 // used in array constructors.
 enum class init_not_t { value };

@@ -66,8 +66,17 @@ constexpr TensorIndex<1, int> _1 {};
 constexpr TensorIndex<2, int> _2 {};
 constexpr TensorIndex<3, int> _3 {};
 
+template <class S> struct Scalar;
+
+// Leaf type for Scalar. This is separate from Scalar itself so that operator+=, etc. can have the default use.
+template <class S>
+struct ScalarLeaf: public Scalar<S>
+{
+    constexpr void operator+=(dim_t const d) const {}
+    constexpr S const & operator*() const { return this->s; }
+};
+
 // Wrap a scalar for traversal.
-// flat() returns self, so Scalar implements both the Expr and the Leaves interface.
 // f(T) will normally be a specialization, so this doesn't drive. done() (in Expr) or preferred_stride() (in Leaves) are only needed when map(f, T) is written out explicitly.
 template <class S>
 struct Scalar
@@ -79,7 +88,7 @@ struct Scalar
     using shape_type = std::array<dim_t, 0>;
     constexpr static shape_type shape() { return shape_type {}; }
 
-    S const s;
+    S s;
     Scalar(S && s_): s(std::forward<S>(s_)) {}
 
     constexpr static void adv(rank_t const k, dim_t const d) {}
@@ -91,13 +100,16 @@ struct Scalar
 // @TODO The result is never used, so maybe there's a way to remove this. @TODO All constexpr.
     constexpr static dim_t stride(int const i) { return 0; }
     constexpr static bool compact_stride(dim_t const step, int const z, int const j) { return true; }
-    constexpr Scalar const & flat() const { return *this; }
-    constexpr static bool done() { return false; }
+    constexpr ScalarLeaf<S> const & flat() const { return static_cast<ScalarLeaf<S> const &>(*this); }
 
 // Scalar acts as driver in a few places where I didn't bother to specialize (e.g. ra::from). Elsewhere (e.g. in +, *, operator=, etc.) there's always another expr to be driver, or a specialization (e.g. array constructors). Use in ra::from should be removed since a scalar subscript can be beaten; this is probably true of all other uses, and @TODO then we could remove this.
+    constexpr static bool done() { return false; }
     constexpr static dim_t preferred_stride(int const i) { return 0; }
-    constexpr void operator+=(dim_t const d) const {}
-    constexpr S const & operator*() const { return s; }
+
+// impl depends on ra::Expr, see ra-expr.H
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
 };
 
 // For the use of std::forward<>, see eg http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
@@ -254,7 +266,7 @@ struct Iota
     dim_t size() const { return size_; }
     dim_t size(int const i) const { CHECK_BOUNDS(i==0); return size_; }
 
-    rank_t constexpr rank() const { return 1; }
+    constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return DIM_ANY; }
 

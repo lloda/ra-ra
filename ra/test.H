@@ -41,12 +41,17 @@ struct TestRecorder
     std::ostream & o;
     int total = 0;
     std::vector<int> failed;
-    std::string info_string;
+    std::string info_str;
     bool isquiet_default, isquiet;
     bool willskip;
 
     TestRecorder(std::ostream & o_=std::cout, bool isquiet_default_=false)
         : o(o_), isquiet_default(isquiet_default_), isquiet(isquiet_default_), willskip(false) {}
+
+    template <class ... A> void section(A const & ... a)
+    {
+        o << "\n" << esc_bold << format(a ...) << esc_unbold << std::endl;
+    }
 
     static std::string format_error(double e)
     {
@@ -55,11 +60,11 @@ struct TestRecorder
 
     template <class ... A> TestRecorder & info(A && ... a)
     {
-        bool empty = (info_string=="");
-        info_string += esc_white;
-        info_string += (empty ? "" : "; ");
-        info_string += format(a ...);
-        info_string += esc_plain;
+        bool empty = (info_str=="");
+        info_str += esc_white;
+        info_str += (empty ? "" : "; ");
+        info_str += format(a ...);
+        info_str += esc_plain;
         return *this;
     }
     TestRecorder & quiet(bool q=true)
@@ -87,7 +92,7 @@ struct TestRecorder
                   : std::string(esc_bold)+esc_red+"FAILED"+esc_plain+esc_unbold)
               << "... " << make_info() << std::endl;
         }
-        info_string = "";
+        info_str = "";
         isquiet = isquiet_default;
         if (!willskip) {
             ++total;
@@ -99,10 +104,10 @@ struct TestRecorder
     }
     void test(bool c)
     {
-        test(c, [this]() { return this->info_string; });
+        test(c, [this]() { return this->info_str; });
     }
 
-#define LAZYINFO(...) [&]() { return format((this->info_string=="" ? "" : "; "), __VA_ARGS__); }
+#define LAZYINFO(...) [&]() { return format(info_str, (this->info_str=="" ? "" : "; "), __VA_ARGS__); }
 
 // Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
     template <class W, class A, class Comp>

@@ -26,7 +26,7 @@ using std::cout; using std::endl;
 
 int main()
 {
-    std::ostream::sync_with_stdio(false);
+    TestRecorder tr(cout);
 
     real delta = 1;
     int o=20, n=20, m=2, l=2;
@@ -82,15 +82,15 @@ int main()
 
     F = ra::transpose<0, 1, 2, 3, 5, 4>(DA) - DA;
 
-// as always, no proper reductions yet. Just abuse shape matching.
+// abuse shape matching to reduce last axis.
     divA = 0;
     divA += ra::transpose<0, 1, 2, 3, 4, 4>(DA);
-    cout << "check div (I): " << amax(divA) << endl;
+    tr.info("Lorentz test max div A (1)").test_eq(0., amax(divA));
 // an alternative without a temporary.
-    real maxdivA = amax(map([](auto && a) { return sum(a); }, ra::transpose<0, 1, 2, 3, 4, 4>(DA).iter<1>()));
-    cout << "check div (II): " << maxdivA << endl;
+    tr.info("Lorentz test max div A (2)")
+        .test_eq(0., amax(map([](auto && a) { return sum(a); },
+                              ra::transpose<0, 1, 2, 3, 4, 4>(DA).iter<1>())));
 
-    TestRecorder tr(cout);
     auto show = [&tr, &delta, &o](char const * name, int t, auto && F)
         {
             tr.quiet().test(amin(F)>=-1);

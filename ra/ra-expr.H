@@ -220,6 +220,9 @@ FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #define DEF_EQOPS(OP) template <class V> template <class X> void Ptr<V>::operator DEF_EQOPS_(OP)
 FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
+#define DEF_EQOPS(OP) template <class V> template <class X> void Scalar<V>::operator DEF_EQOPS_(OP)
+FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
 
 #undef DEF_EQOPS_
 

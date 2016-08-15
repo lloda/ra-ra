@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-ra-mmul.H
+/// @file bench-ra-gemm.H
 /// @brief Benchmark for BLAS-3 type ops
 
 // These operations aren't really part of the ET framework, just

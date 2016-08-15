@@ -203,6 +203,14 @@ int main()
         test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
         test(ra::Small<int, 3, 2>(ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
     }
+    section("assignment ops with ra::scalar");
+    {
+        ra::Small<real, 2> a { 0, 0 };
+        ra::Owned<ra::Small<real, 2>, 1> b { {1, 10}, {2, 20}, {3, 30} };
+// use scalar to match 1 (a) vs 3 (b) instead of 2 vs 3.
+        ra::scalar(a) += b;
+        tr.test_eq(ra::Small<real, 2> { 6, 60 }, a);
+    }
     section("pack operator");
     {
         ra::Small<real, 6> a = { 0, -1, 1, 0, 2, 1 };

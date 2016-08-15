@@ -468,8 +468,7 @@ template <class A, class ... I>
 auto from(A && a, I && ... i)
 {
     using II = mp::Map_<index_rank, mp::tuple<decltype(start(i)) ...> >;
-    return ryn(from_partial<II, mp::len<II>-1>
-               ::make([&a](auto && ... i) -> decltype(auto) { return a(i ...); } ),
+    return ryn(from_partial<II, mp::len<II>-1>::make([&a](auto && ... i) -> decltype(auto) { return a(i ...); } ),
                start(std::forward<I>(i)) ...);
 }
 

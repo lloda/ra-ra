@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <thread>
 #include "ra/ra-io.H"
 #include "ra/ra-operators.H"
 #include "ra/format.H"
@@ -16,8 +17,6 @@ template <class T, int rank> using array = ra::Owned<T, rank>;
 
 int main()
 {
-    std::ostream::sync_with_stdio(false);
-
     constexpr real G = 6.674e-11;
     real delta = 50;
     int bodies = 2;
@@ -42,8 +41,14 @@ int main()
         {
             auto mapc = [](real x) { return max(0, min(49, int(round(25+x/5e5)))); };
 // @TODO there are bugs with array.at(index) to do orbit.at(mapc(x)).
+
+// 1. clang accepts, gcc rejects (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67041 ??) wait for gcc 6. Note that we still can't use iter<1> on an ET.
+            // array<int, 2> xi = map(mapc, x);
+            // at(orbit, xi(ra::all, ra::iota(2)).template iter<1>()) = c;
+// 2. for the time being, or w/o temps
             for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
                      x.template iter<1>(), c);
+
             std::cout << "TIME IN HOURS " << (t/3600.) << " " << format_array(orbit, "") << "\n";
         };
 
@@ -61,6 +66,7 @@ int main()
         v += a*delta;
         x += v*delta;
         draw(x, t);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     return 0;
 }

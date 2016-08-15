@@ -143,6 +143,9 @@ int main()
                 tr.info("a([1 0], [1 0])").test_eq(CT22 {a(1, 1), a(1, 0), a(0, 1), a(0, 0)},
                                                    from(a, Vint {1, 0}, Vint {1, 0}));
 
+                // @TODO This is a nested array, which is a problem, we would use it just as from(a, [0 1], [0 1]).
+                std::cout << "TODO [" << from(a, Vint {0, 1}) << "]" << std::endl;
+
                 a = 0.;
                 from(a, Vint {1, 0}, Vint {1, 0}) = CT22 {9, 7, 1, 4};
                 tr.info("a([1 0], [1 0]) as lvalue").test_eq(CT22 {4, 1, 7, 9}, a);
@@ -264,11 +267,11 @@ int main()
         ra::Owned<coord, 1> I = { {1, 1}, {2, 2} };
 
         at(A, I) = at(B, I);
-        tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /* */ 0, 11, 0, 0,  /* */ 0, 0, 22, 0,  /* */  0, 0, 0, 0}), A);
+        tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 0, 0}), A);
 
 // @TODO this is why we need ops to have explicit rank.
         at(A, ra::scalar(coord{3, 2})) = 99.;
-        tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /* */ 0, 11, 0, 0,  /* */ 0, 0, 22, 0,  /* */  0, 0, 99, 0}), A);
+        tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 99, 0}), A);
     }
     return tr.summary();
 }

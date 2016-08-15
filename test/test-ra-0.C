@@ -583,37 +583,53 @@ int main()
             ra::Raw<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             cout << "org" << endl;
             std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+            {
+                real rcheck[6] = { 1, 4, 2, 5, 3, 6 };
+                auto r0 = r();
+                tr.test(std::equal(r0.begin(), r0.end(), rcheck));
+                ra::Small<int, 0> i0 {};
+                tr.info("ra::Small<int, 0> rank").test_eq(1, i0.rank());
+                auto r0a = r.at(ra::Small<int, 0> {});
+                tr.info("fix size").test(std::equal(r0a.begin(), r0a.end(), rcheck));
+                auto r0b = r.at(ra::Owned<int, 1> {});
+                tr.info("fix rank").test(std::equal(r0b.begin(), r0b.end(), rcheck));
+                auto r0c = r.at(0+ra::Owned<int, 1> {});
+                tr.info("fix rank expr").test(std::equal(r0c.begin(), r0c.end(), rcheck));
+                // @TODO check out why ra::Owned<int> {} is rank 0.
+                auto r0d = r.at(0+ra::Owned<int>({0}, {}));
+                tr.info("r0d: [", r0d, "]").test(std::equal(r0d.begin(), r0d.end(), rcheck));
+            }
+            {
+                real rcheck[2] = { 2, 5 };
+                auto r1 = r(1);
+                tr.test_eq(ra::start(rcheck), r1);
+                auto r1a = r.at(ra::Small<int, 1> {1});
+                tr.test_eq(ra::start(rcheck), r1a);
+                auto r1b = r.at(ra::Owned<int, 1> {1});
+                tr.test_eq(ra::start(rcheck), r1b);
+                auto r1c = r.at(0+ra::Owned<int, 1> {1});
+                tr.test_eq(ra::start(rcheck), r1c);
+                auto r1d = r.at(0+ra::Owned<int> {1});
+                tr.test_eq(ra::start(rcheck), r1d);
+            }
+            {
+                real rcheck[2] = { 5 };
 
-            real rcheck0[6] = { 1, 4, 2, 5, 3, 6 };
-            auto r0 = r();
-            cout << "r0" << endl;
-            std::copy(r0.begin(), r0.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
-            tr.test(std::equal(r0.begin(), r0.end(), rcheck0));
-            ra::Small<int, 0> i0 {};
-            tr.info("ra::Small<int, 0> rank").test_eq(1, i0.rank());
-            auto r0a = r.at(ra::Small<int, 0> {});
-            tr.test(std::equal(r0a.begin(), r0a.end(), rcheck0));
+                // Does r(1, 1) return rank 0, or a scalar directly?
+                // std::copy(r2.begin(), r2.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+                // tr.test(std::equal(r2.begin(), r2.end(), rcheck));
+                auto r2 = r(1, 1);
+                tr.test_eq(5, r2);
 
-            real rcheck1[2] = { 2, 5 };
-            auto r1 = r(1);
-            cout << "r1" << endl;
-            std::copy(r1.begin(), r1.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
-            tr.test(std::equal(r1.begin(), r1.end(), rcheck1));
-            auto r1a = r.at(ra::Small<int, 1> {1});
-            tr.test(std::equal(r1a.begin(), r1a.end(), rcheck1));
-
-            real rcheck2[2] = { 5 };
-            auto r2 = r(1, 1);
-            cout << "r2" << endl;
-
-            // Does r(1, 1) return rank 0, or a scalar directly?
-            // std::copy(r2.begin(), r2.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
-            // tr.test(std::equal(r2.begin(), r2.end(), rcheck2));
-            cout << r2 << endl;
-            tr.test_eq(5, r2);
-
-            auto r2a = r.at(ra::Small<int, 2> {1, 1});
-            tr.test(std::equal(r2a.begin(), r2a.end(), rcheck2));
+                auto r2a = r.at(ra::Small<int, 2> {1, 1});
+                tr.test(std::equal(r2a.begin(), r2a.end(), rcheck));
+                auto r2b = r.at(ra::Owned<int, 1> {1, 1});
+                tr.test(std::equal(r2a.begin(), r2a.end(), rcheck));
+                auto r2c = r.at(0+ra::Owned<int, 1> {1, 1});
+                tr.test(std::equal(r2c.begin(), r2c.end(), rcheck));
+                auto r2d = r.at(0+ra::Owned<int> {1, 1});
+                tr.test(std::equal(r2d.begin(), r2d.end(), rcheck));
+            }
         }
         // @TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.
         section("Raw fixed rank, unbeatable subscripts");

@@ -167,6 +167,7 @@ struct Raw
     T * p;
     constexpr static rank_t rank() { return RANK; }
     constexpr static rank_t rank_s() { return RANK; };
+    constexpr static dim_t size_s() { return DIM_ANY; }
     dim_t size() const { return proddim(dim.begin(), dim.end()); }
     constexpr dim_t size(rank_t const j) const { return dim[j].size; }
     constexpr dim_t stride(rank_t const j) const { return dim[j].stride; }
@@ -179,34 +180,40 @@ struct Raw
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in ra-small.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I,                                              \
-              std::enable_if_t<(mp::Count<std::is_integral<I> ...>::value<RANK \
-                          && mp::Count<is_beatable<I> ...>::value==sizeof...(I)), int> = 0> \
+              std::enable_if_t<((mp::count<std::is_integral<I> ...>)<RANK \
+                          && mp::count<is_beatable<I> ...> ==sizeof...(I)), int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
-        constexpr int reduced = mp::Count<std::is_integral<I> ...>::value; \
-        Raw<T CONST, RANK-reduced> sub;                                 \
+        constexpr int reduced = mp::count<std::is_integral<I> ...>; \
+        constexpr rank_t subrank = rank_diff(RANK, reduced);            \
+        static_assert(subrank>=0, "bad subrank");                       \
+        Raw<T CONST, subrank> sub;                                      \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
         /* fill the rest of dim, skipping over beatable subscripts */   \
-        for (int i=mp::Apply_<mp::Sum, mp::Map_<beatable_skip, mp::tuple<I ...> > >::value; i<sub.rank(); ++i) { \
+        for (int i=mp::Apply_<mp::Sum, mp::Map_<beatable_skip, mp::tuple<I ...> > >::value; i<subrank; ++i) { \
             sub.dim[i] = this->dim[i+reduced];                          \
         }                                                               \
         return sub;                                                     \
-    } /* @BUG doesn't handle generic zero-rank indices */               \
-    template <class ... I, std::enable_if_t<mp::Count<std::is_integral<I> ...>::value==RANK, int> = 0> \
+    }                                                                   \
+    /* @BUG doesn't handle generic zero-rank indices */                 \
+    template <class ... I, std::enable_if_t<mp::count<std::is_integral<I> ...> ==RANK, int> = 0> \
     decltype(auto) operator()(I const & ... i) CONST                            \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
-    } /* @TODO More than one selector... */                             \
+    }                                                                   \
+    /* @TODO More than one selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
     template <class ... I, std::enable_if_t<!mp::And<is_beatable<I> ...>::value, int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
-    template <class I>                                                  \
+    template <class ... I>                                              \
+    auto wipparens(I && ... i) CONST;                                   \
+    template <class  I>                                                 \
     auto at(I const & i) CONST                                          \
     {                                                                   \
         using Sub = Raw<T CONST, rank_diff(RANK, I::size_s())>; /* gcc accepts i.size() */ \
-        return Sub { typename Sub::Dimv(dim.begin()+i.size(), dim.end()), \
+        return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
     T CONST & operator[](dim_t const i) CONST                           \
@@ -222,6 +229,13 @@ struct Raw
     operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
 };
+
+// @TODO To be placed as specialization of operator() above.
+template <class T, rank_t RANK>
+template <class ... I>
+auto Raw<T, RANK>::wipparens(I && ... i) /* const */
+{
+}
 
 template <class T, rank_t RANK>
 struct ra_traits_def<Raw<T, RANK>>
@@ -492,6 +506,7 @@ struct Raw<T, RANK_ANY>
     T * p;
     rank_t rank() const { return rank_t(dim.size()); } // @CONVERSION
     dim_t size() const { return proddim(dim.begin(), dim.end()); }
+    constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr dim_t size(rank_t const j) const { return dim[j].size; }
     constexpr dim_t stride(rank_t const j) const { return dim[j].stride; }
     auto data() { return p; }
@@ -508,7 +523,7 @@ struct Raw<T, RANK_ANY>
               std::enable_if_t<mp::And<is_beatable<I> ...>::value, int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
-        constexpr int reduced = mp::Count<std::is_integral<I> ...>::value; \
+        constexpr int reduced = mp::count<std::is_integral<I> ...>;     \
         assert(this->rank()>=reduced);                                  \
         Raw<T CONST, RANK_ANY> sub;                                     \
         sub.dim.resize(this->rank()-reduced);                           \
@@ -517,7 +532,8 @@ struct Raw<T, RANK_ANY>
             sub.dim[i] = this->dim[i+reduced];                          \
         }                                                               \
         return sub;                                                     \
-    } /* @TODO More than one selector... */                             \
+    }                                                                   \
+    /* @TODO More than one selector... */                               \
     template <class ... I,                                              \
               std::enable_if_t<!mp::And<is_beatable<I> ...>::value, int> = 0> \
     auto operator()(I && ... i) CONST                                   \

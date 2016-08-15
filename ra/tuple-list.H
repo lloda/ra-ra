@@ -439,17 +439,8 @@ struct And<A0, A ...>
     using type = int_t<value>;
 };
 
-template <class ... A> struct Count
-{
-    constexpr static int value = 0;
-    using type = int_t<value>;
-};
-template <class A0, class ... A>
-struct Count<A0, A ...>
-{
-    constexpr static int value = bool(A0::value) + Count<A ...>::type::value;
-    using type = int_t<value>;
-};
+template <class ... A> constexpr int count = 0;
+template <class A0, class ... A> constexpr int count<A0, A ...> = bool(A0::value) + count<A ...>;
 
 template <class ... A> struct Or
 {

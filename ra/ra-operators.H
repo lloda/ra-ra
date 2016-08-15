@@ -471,7 +471,7 @@ gemm(A const & a, B const & b)
     return c;
 }
 
-// the default for row-major x row-major. See bench-ra-mmul.C for variants.
+// the default for row-major x row-major. See bench-ra-gemm.C for variants.
 template <class S, class T>
 inline auto
 gemm(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)

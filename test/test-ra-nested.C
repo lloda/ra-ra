@@ -21,7 +21,8 @@
 #include "ra/ra-io.H"
 
 using std::cout; using std::endl; using std::flush;
-template <class T> using Vec = ra::Owned<T, 1>;
+template <class T, int N> using Array = ra::Owned<T, N>;
+template <class T> using Vec = Array<T, 1>;
 
 int main()
 {
@@ -50,6 +51,35 @@ int main()
 // @TODO Actually nested 'as if higher rank' should allow just (every(c==d)). This is explicit nesting.
             tr.test(every(ra::expr([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
         }
+    }
+    section("selector experiments");
+    {
+// These is an investigation of how to make a(ra::all, i) or a(i, ra::all) work.
+// The problem with a(ra::all, i) here is that we probably want to leave the iteration on ra::all for last. Otherwise the indexing is redone for each rank-1 cell.
+        Vec<int> i = {0, 3, 1, 2};
+        Array<double, 2> a({4, 4}, ra::_0-ra::_1);
+        Array<double, 2> b = from([](auto && a, auto && i) -> decltype(auto) { return a(i); }, a.iter<1>(), start(i));
+        tr.test_eq(a(0, i), b(0));
+        tr.test_eq(a(1, i), b(1));
+        tr.test_eq(a(2, i), b(2));
+        tr.test_eq(a(3, i), b(3));
+// The problem with a(i) = a(i, ra::all) is that a(i) returns a nested expression, so it isn't equivalent to a(i, [0 1 ...]), and if we want to write it as a rank 2 expression, we can't use from() as above because the iterator we want is a(i).iter(), it depends on i.
+// So ...
+    }
+    section("copying between arrays nested in the same way");
+    {
+        Vec<ra::Small<int, 2> > a {{1, 2}, {3, 4}, {5, 6}};
+        ra::Small<ra::Small<int, 2>, 3> b = a;
+        tr.test_eq(ra::Small<int, 2> {1, 2}, b(0));
+        tr.test_eq(ra::Small<int, 2> {3, 4}, b(1));
+        tr.test_eq(ra::Small<int, 2> {5, 6}, b(2));
+        b(0) = ra::Small<int, 2> {7, 9};
+        b(1) = ra::Small<int, 2> {3, 4};
+        b(2) = ra::Small<int, 2> {1, 6};
+        a = b;
+        tr.test_eq(ra::Small<int, 2> {7, 9}, a(0));
+        tr.test_eq(ra::Small<int, 2> {3, 4}, a(1));
+        tr.test_eq(ra::Small<int, 2> {1, 6}, a(2));
     }
     return tr.summary();
 }

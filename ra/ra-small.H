@@ -90,17 +90,16 @@ struct Indexer1
     template <class Dim, class P>
     constexpr static dim_t index_p_(Dim const & dim, P const & p)
     {
+// use dim.data() to skip the size check.
         dim_t c = 0;
-        for (rank_t k=0; k<p.size(); ++k) {
-            CHECK_BOUNDS(inside(p[k], dim[k].size));
-            c += dim[k].stride * p[k];
-        }
+        ply_either(expr([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
+                        start(dim.data()), start(p)));
         return c;
     }
     template <class Dim, class P>
     static dim_t index_p(Dim const & dim, P const & p)
     {
-        CHECK_BOUNDS(dim.size()>=p.size() && "too many indices");
+        CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
         return index_p_(dim, p);
     }
 
@@ -264,7 +263,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 // @TODO waiting for fold expressions (N4191) on some of these enable_if_ts.
 // @TODO Cf https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations#recs.cpp17
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I, std::enable_if_t<(mp::Count<std::is_integral<I> ...>::value<rank() \
+    template <class ... I, std::enable_if_t<((mp::count<std::is_integral<I> ...>)<rank() \
                                        && mp::And<mp::int_t<is_beatable<I>::static_p> ...>::value), int> = 0> \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
@@ -272,7 +271,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         return SmallSlice<T CONST, typename FD::sizes, typename FD::strides> \
             (data()+select_loop<sizes, strides>(i ...));                \
     }                                                                   \
-    template <class ... I, std::enable_if_t<mp::Count<std::is_integral<I> ...>::value==rank(), int> = 0> \
+    template <class ... I, std::enable_if_t<(mp::count<std::is_integral<I> ...>)==rank(), int> = 0> \
     decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
