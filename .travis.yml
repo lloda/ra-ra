@@ -1,21 +1,44 @@
 
-install:
-  - sudo pip install colorama
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
-
 language: cpp
 
 script:
- - (cd test && scons)
- - (cd examples && scons)
-env:
- - CXXFLAGS=-O3
-compiler:
- - g++-5
+ - (cd test && scons -k)
+ - (cd examples && scons -k)
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - g++-5
+matrix:
+  include:
+    - compiler: gcc
+      env: CXX=g++-6 CXXFLAGS="-O3"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      install:
+        - sudo pip install colorama
+        - if [ "$CXX" = "g++" ]; then export CXX="g++-6" CC="gcc-6"; fi
+    - compiler: clang-3.8
+      env: CXX=clang++-3.8 CXXFLAGS="-O3 -DRA_OPTIMIZE_SMALLVECTOR=0"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+          packages:
+            - clang-3.8
+      install:
+        - sudo pip install colorama
+        - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.8" CC="clang-3.8"; fi
+    - compiler: clang-3.9
+      env: CXX=clang++-3.9 CXXFLAGS="-O3 -DRA_OPTIMIZE_SMALLVECTOR=0"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.9
+          packages:
+            - clang-3.9
+      install:
+        - sudo pip install colorama
+        - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.9" CC="clang-3.9"; fi
