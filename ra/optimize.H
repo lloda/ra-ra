@@ -9,11 +9,11 @@
 #ifndef RA_OPTIMIZE_H
 #define RA_OPTIMIZE_H
 
-/// @file ra-optimize.H
+/// @file optimize.H
 /// @brief Naive optimization pass over ETs.
 
-#include "ra/ra-expr.H"
-#include "ra/ra-small.H"
+#include "ra/expr.H"
+#include "ra/small.H"
 
 // no real downside to this.
 #ifndef RA_OPTIMIZE_IOTA
@@ -50,8 +50,7 @@ DEFINE_NAMED_BINARY_OP(/, slash)
 
 // The second condition is to disallow Iota(3)*float, since Iota doesn't support float yet. @TODO Eventually allow.
 template <class X>
-constexpr bool iota_operand = ra::is_zero_or_scalar<X>
-    && std::numeric_limits<std::decay_t<decltype(*(start(std::declval<X>()).flat()))> >::is_integer;
+constexpr bool iota_operand = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X> >::is_integer;
 
 // --------------
 // plus
@@ -121,24 +120,20 @@ inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
 #if RA_OPTIMIZE_SMALLVECTOR==1
 template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 
-inline auto
-optimize(ra::Expr<ra::plus,
-                  std::tuple<decltype(start(std::declval<ra::Small<double, 4> >())),
-                             decltype(start(std::declval<ra::Small<double, 4> >()))> > && e)
-{
-    ra::Small<double, 4> val;
-    (extvector<double, 4> &)(val) = ((extvector<double, 4> &)(*(ITEM(0).p)) + (extvector<double, 4> &)(*(ITEM(1).p)));
-    return val;
+#define OPTIMIZE_SMALLVECTOR_OP(OP, NAME)                               \
+inline auto                                                             \
+optimize(ra::Expr<NAME,                                                 \
+                  std::tuple<decltype(start(std::declval<ra::Small<double, 4> >())), \
+                             decltype(start(std::declval<ra::Small<double, 4> >()))> > && e) \
+{                                                                       \
+    ra::Small<double, 4> val;                                           \
+    (extvector<double, 4> &)(val) = (extvector<double, 4> &)(*(ITEM(0).p)) OP (extvector<double, 4> &)(*(ITEM(1).p)); \
+    return val;                                                         \
 }
-inline auto
-optimize(ra::Expr<ra::times,
-                  std::tuple<decltype(start(std::declval<ra::Small<double, 4> >())),
-                             decltype(start(std::declval<ra::Small<double, 4> >()))> > && e)
-{
-    ra::Small<double, 4> val;
-    (extvector<double, 4> &)(val) = ((extvector<double, 4> &)(*(ITEM(0).p)) * (extvector<double, 4> &)(*(ITEM(1).p)));
-    return val;
-}
+OPTIMIZE_SMALLVECTOR_OP(+, ra::plus)
+OPTIMIZE_SMALLVECTOR_OP(*, ra::times)
+#undef OPTIMIZE_SMALLVECTOR_OP
+
 #endif // RA_OPTIMIZE_SMALLVECTOR
 
 #undef ITEM

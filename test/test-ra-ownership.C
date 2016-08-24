@@ -13,9 +13,9 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl;
 using real = double;
@@ -72,7 +72,7 @@ int main()
         tr.test(std::equal(check11, check11+5, c.begin())); // was moved
         {
             ra::Unique<real, 1> o({5}, 11.);
-            ra::Unique<real, 1> q(ra::init_not);
+            ra::Unique<real, 1> q {};
             q = std::move(o);
             tr.test(o.store==nullptr);
             tr.test(std::equal(check11, check11+5, q.begin())); // was moved

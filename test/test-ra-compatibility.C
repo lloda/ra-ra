@@ -11,9 +11,9 @@
 
 #include <iostream>
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 

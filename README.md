@@ -2,8 +2,9 @@
 
 # ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
 
-ra-ra is a C++14, header-only, expression template / multidimensional
-array library with an APL/J bent.
+ra-ra is a C++ header-only, expression template / multidimensional array
+library with an APL/J bent. Some C++17 features are used, see below for
+compiler support.
 
 The primary public repo is at: https://notabug.org/lloda/ra-ra
 
@@ -252,6 +253,7 @@ Sui generis
 
 * Indices are checked by default. This can be disabled with a compilation flag.
 
+
 Bugs & wishes
 -----------
 
@@ -259,8 +261,7 @@ Bugs & wishes
 
 * Beatable subscripts are not beaten if mixed with non-beatable subscripts.
 
-* Reductions. There are some full-array reduction operations but no general
-  mechanism for choosing axes etc.
+* Better reduction mechanisms.
 
 * The where() operator isn't short-circuiting.
 
@@ -290,23 +291,19 @@ Out of scope
 Building
 -----------
 
-The library is header-only and has no dependencies beyond a C++14 compiler and
-the standard C++ library. There is a test suite in ```test/```. These tests test
-internal details and are not meant as demonstrations of how to use the
-library. There is a directory with ```examples/```, mostly ported from Blitz++.
+The library is header-only and has no dependencies other than a C++14/C++17
+compiler (-std=c++1z, partial C++17 support) and the standard library. There is
+a test suite in ```test/```. These tests test internal details and are not meant
+as demonstrations of how to use the library. There is a directory with
+```examples/```, some ported from Blitz++.
 
-All tests should pass under g++-5.3 and clang++-3.7/8/9. For clang on OS X you
-have to remove the -Wa,q option in the SConstruct which is meant for gcc by
-setting CCFLAGS to something else, for example:
+All tests pass under g++-6.2. All tests pass under clang++-3.8/9 except for
+test/test-ra-small.C which crashes clang. For clang on OS X you have to remove
+the -Wa,q option in the SConstruct which is meant for gcc by setting CCFLAGS to
+something else, for example:
 
   ```CCFLAGS="-march=native -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3
   CXX=clang++-3.9 scons -j4```
-
-g++-6.1 fails to build the tests because of this bug:
-https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70942.
-
-Commits after e7c14a91f27960c6a9a3b865f00117b4d06e9992 crash clang
-(3.7 to 3.9).
 
 I haven't tested on Windows.
 

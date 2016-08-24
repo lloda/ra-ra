@@ -4,8 +4,8 @@
 
 // @TODO Better traversal...
 
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include "ra/test.H"
 #include "ra/format.H"
 #include <iomanip>

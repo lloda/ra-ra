@@ -9,14 +9,14 @@
 #ifndef RA_TRAITS_H
 #define RA_TRAITS_H
 
-/// @file ra-traits.H
+/// @file traits.H
 /// @brief Array traits: dimension, rank, extent, etc.
 
 #include <cstdint>
 #include <vector>
 #include <array>
 #include <algorithm>
-#include "ra/ra-bootstrap.H"
+#include "ra/bootstrap.H"
 
 namespace ra {
 

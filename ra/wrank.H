@@ -9,10 +9,10 @@
 #ifndef RA_WRANK_H
 #define RA_WRANK_H
 
-/// @file ra-wrank.H
+/// @file wrank.H
 /// @brief Rank conjunction for arrays and expr templates.
 
-#include "ra/ra-expr.H"
+#include "ra/expr.H"
 
 #ifdef RA_CHECK_BOUNDS
     #define RA_CHECK_BOUNDS_RA_WRANK RA_CHECK_BOUNDS
@@ -233,7 +233,7 @@ struct applyframes
 // };
 
 // like Expr, except don't do driver selection here, but leave it to the args, as with Expr::adv(k, d). The args may need to be ApplyFrames... don't know yet.
-// forward decl in ra-atom.H.
+// forward decl in atom.H.
 template <class FM, class Op, class ... Ti, class ... Ki>
 struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 {

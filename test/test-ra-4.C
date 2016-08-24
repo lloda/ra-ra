@@ -13,8 +13,8 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-expr.H"
+#include "ra/large.H"
+#include "ra/expr.H"
 
 using std::cout; using std::endl; using std::flush;
 using complex = std::complex<double>;

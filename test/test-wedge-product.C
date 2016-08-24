@@ -10,8 +10,8 @@
 /// @brief Test generic wedge product with compile-time dimensions.
 
 #include <iostream>
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include "ra/test.H"
 
 using std::cout; using std::endl; using std::flush;

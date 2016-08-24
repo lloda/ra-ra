@@ -6,8 +6,8 @@
 // a new class. Thanks to C++14, declaring new ET operations is much easier in
 // ra::. Just declare a function.
 
-#include "ra/ra-io.H"
-#include "ra/ra-operators.H"
+#include "ra/io.H"
+#include "ra/operators.H"
 #include <iostream>
 
 using std::cout; using std::endl; using std::flush;

@@ -9,18 +9,17 @@
 #ifndef RA_PLY_H
 #define RA_PLY_H
 
-/// @file ra-ply.H
+/// @file ply.H
 /// @brief Traverse (ply) array or array expression or array statement.
 
 // @TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
 
-#include "ra/ra-type.H"
+#include "ra/type.H"
 #include <functional>
 
 namespace ra {
 
-// @TODO this to protect against older convention in vtraits; eventually remove.
-static_assert(mp::And<std::is_signed<rank_t>, std::is_signed<dim_t>>::value, "bad rank_t");
+static_assert(std::is_signed<rank_t>::value && std::is_signed<dim_t>::value, "bad rank_t");
 
 // --------------
 // Run time order, two versions.
@@ -251,7 +250,7 @@ ply_either(A && a)
 // ---------------------------
 
 // @BUG Slow. Options for ply should be the same as for non-short circuit.
-template <class Op, class A, std::enable_if_t<is_array_iterator<A>::value && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
+template <class Op, class A, std::enable_if_t<is_array_iterator<A> && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
 bool ply_index_short_circuit(A && a)
 {
     /* @TODO try and merge the singular cases. */
@@ -283,7 +282,7 @@ bool ply_index_short_circuit(A && a)
     }
 }
 
-template <class Op, class A, std::enable_if_t<is_array_iterator<A>::value && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
+template <class Op, class A, std::enable_if_t<is_array_iterator<A> && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
 bool ply_index_short_circuit(A && a)
 {
     auto s = a.size(0)*a.preferred_stride(0);
@@ -297,7 +296,7 @@ bool ply_index_short_circuit(A && a)
     return Op()(false);
 }
 
-template <class Op, class A, std::enable_if_t<!is_array_iterator<A>::value, int> = 0>
+template <class Op, class A, std::enable_if_t<!is_array_iterator<A>, int> = 0>
 bool ply_index_short_circuit(A && a)
 {
     return ply_index_short_circuit<Op>(start(std::forward<A>(a)));

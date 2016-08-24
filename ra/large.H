@@ -9,12 +9,12 @@
 #ifndef RA_LARGE_H
 #define RA_LARGE_H
 
-/// @file ra-large.H
+/// @file large.H
 /// @brief Variable size arrays.
 
-#include "ra/ra-small.H"
-#include "ra/ra-iterator.H"
-#include "ra/ra-wrank.H"
+#include "ra/small.H"
+#include "ra/iterator.H"
+#include "ra/wrank.H"
 #include <complex>
 #include <memory>
 
@@ -67,6 +67,7 @@ dim_t proddim(D d, D dend)
 // @TODO size is immutable so that it can be kept with rank.
 
 // Would do this with a base class, but I like Raw being POD.
+// @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
 #define DEFINE_ITERATORS(RANK)                                          \
     template <rank_t c=0> using iterator = ra::ra_iterator<Raw<T, RANK>, c>; \
     template <rank_t c=0> using const_iterator = ra::ra_iterator<Raw<T const, RANK>, c>; \
@@ -81,7 +82,7 @@ dim_t proddim(D d, D dend)
 #define DEFINE_ASSIGNMENT_OP(OPNAME, OP)                                \
     template <class X> Raw & OPNAME(X && x)                             \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest OP src; }, this->iter(), start(x))); \
+        ply_either(expr([](T & dest, T const & src) { dest OP src; }, this->iter(), rstart(x))); \
         return *this;                                                   \
     }
 #define DEFINE_ASSIGNMENT_OPS                                           \
@@ -91,7 +92,7 @@ dim_t proddim(D d, D dend)
     DEFINE_ASSIGNMENT_OP(operator/=, /=)                                \
     DEFINE_ASSIGNMENT_OP(operator*=, *=)                                \
     /* These three are unsafe */                                        \
-    Raw() {}                                                            \
+    Raw(): p(nullptr) {}                                                \
     Raw(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                 \
     Raw(std::initializer_list<dim_t> const s, T * p_): p(p_)            \
     {                                                                   \
@@ -107,12 +108,12 @@ dim_t proddim(D d, D dend)
     Raw(Raw const & x): dim(x.dim), p(x.p) {}                           \
     Raw & operator=(Raw && x)                                           \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x))); \
+        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), rstart(x))); \
         return *this;                                                   \
     }                                                                   \
     Raw & operator=(Raw const & x)                                      \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x))); \
+        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), rstart(x))); \
         return *this;                                                   \
     }                                                                   \
     /* Ignore rank, row-major fill. @TODO Use xpr traversal */          \
@@ -177,14 +178,14 @@ struct Raw
     DEFINE_ITERATORS(RANK)
     DEFINE_ASSIGNMENT_OPS
 
-// Specialize for rank() integer-args -> scalar, same in ra::SmallBase in ra-small.H.
+// Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I,                                              \
-              std::enable_if_t<((mp::count<std::is_integral<I> ...>)<RANK \
-                          && mp::count<is_beatable<I> ...> ==sizeof...(I)), int> = 0> \
+              std::enable_if_t<((0 + ... + std::is_integral<I>::value)<RANK \
+                                && (0 + ... + is_beatable<I>::value)==sizeof...(I)), int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
-        constexpr int reduced = mp::count<std::is_integral<I> ...>; \
+        constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
         constexpr rank_t subrank = rank_diff(RANK, reduced);            \
         static_assert(subrank>=0, "bad subrank");                       \
         Raw<T CONST, subrank> sub;                                      \
@@ -196,13 +197,13 @@ struct Raw
         return sub;                                                     \
     }                                                                   \
     /* @BUG doesn't handle generic zero-rank indices */                 \
-    template <class ... I, std::enable_if_t<mp::count<std::is_integral<I> ...> ==RANK, int> = 0> \
+    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==RANK, int> = 0> \
     decltype(auto) operator()(I const & ... i) CONST                            \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     }                                                                   \
     /* @TODO More than one selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
-    template <class ... I, std::enable_if_t<!mp::And<is_beatable<I> ...>::value, int> = 0> \
+    template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -318,7 +319,7 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
         Raw::dim = w.dim;
         Raw::p = storage_traits<Ptr>::data(store);
     }
-// Override Raw::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use Raw::operator= and frame match. @TODO Document this in the tests. Likely not what I want.
+// Override Raw::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use Raw::operator= and frame match. @TODO Document this in the tests.
     WithStorage & operator=(WithStorage && w)
     {
         store = std::move(w.store);
@@ -341,19 +342,16 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
         return *this;
     }
 
-// Provided b/c want {} to call initializer_list constructor below.
-// @BUG Don't see why I need to init p; bogus warning on test-ra-io.C.
-    explicit WithStorage(init_not_t) { Raw::p = nullptr; }
+// Provided b/c want {} to call initializer_list constructor below. @TODO Why do I need to init p; warning on test-ra-io.C.
     WithStorage()
     {
-        for (Dim & dimi: Raw::dim) { dimi = {0, 1}; }
-        Raw::p = nullptr;
+        for (Dim & dimi: Raw::dim) { dimi = {0, 1}; } // 1 so we can push_back()
     }
 
     template <class SS> void init(SS const & s)
     {
         constexpr dim_t sr = ra_traits<decltype(s)>::size_s();
-        static_assert(sr==DIM_ANY || RANK==RANK_ANY || sr==RANK, "rank mismatch for init shape");
+        static_assert(sr==RANK || sr==DIM_ANY || RANK==RANK_ANY, "rank mismatch for init shape");
         ra::resize(Raw::dim, s.size());
         dim_t t = filldim(s.begin(), s.end(), Raw::dim.begin(), Raw::dim.end());
         store = storage_traits<Ptr>::create(t);
@@ -364,12 +362,17 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     WithStorage(std::initializer_list<dim_t> const s, unspecified_t) { init(s); }
     template <class SS, class XX> WithStorage(SS const & s, XX && x): WithStorage(s, unspecified)
     {
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, Raw::iter(), start(x)));
+        static_cast<Raw &>(*this) = x;
     }
     template <class XX> WithStorage(std::initializer_list<dim_t> const s, XX && x): WithStorage(s, unspecified)
     {
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, Raw::iter(), start(x)));
+        static_cast<Raw &>(*this) = x;
     }
+    template <class XX> WithStorage(XX && x): WithStorage(start(x).shape(), unspecified)
+    {
+        static_cast<Raw &>(*this) = x;
+    }
+ // @TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
         CHECK_BOUNDS(this->size()==dim_t(x.size()) && "mismatched sizes");
@@ -377,15 +380,7 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     }
     template <class SS> WithStorage(SS const & s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
-        std::copy(x.begin(), x.end(), this->begin()); // @TODO Use xpr traversal.
-    }
-    template <class XX> WithStorage(XX && x): WithStorage(start(x).shape(), unspecified) // @TODO ahem...
-    {
-// @TODO resize in init() should be doing compile time checks as possible. We don't accept <=RANK b/c we need to define the size.
-        static_assert(std::decay_t<decltype(start(x))>::rank_s()==RANK
-                      || std::decay_t<decltype(start(x))>::rank_s()==RANK_ANY || RANK==RANK_ANY,
-                      "bad data");
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, Raw::iter(), start(x)));
+        std::copy(x.begin(), x.end(), this->begin());
     }
     WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
     {
@@ -395,7 +390,7 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     template <class P>
     WithStorage(std::initializer_list<dim_t> const s, P pbegin, P pend): WithStorage(s, unspecified)
     {
-        std::copy(pbegin, pend, this->begin()); // @TODO Use xpr traversal.
+        std::copy(pbegin, pend, this->begin());
     }
     using Raw::operator=;
 
@@ -450,7 +445,7 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     T const & back() const { assert(this->rank()==1 && "bad rank for back"); return store[this->size()-1]; }
     T & back() { assert(this->rank()==1 && "bad rank for back"); return store[this->size()-1]; }
 
-// WithStorage is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. @TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or ellidable.
+// WithStorage is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. @TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or elidable.
 
     auto begin() { assert(is_c_order(*this)); return this->data(); }
     auto begin() const { assert(is_c_order(*this)); return this->data(); }
@@ -476,26 +471,12 @@ struct Deleter { template <class T> void operator()(T * p) { delete[] p; } };
 template <rank_t RANK, class T>
 Shared<T, RANK> shared_borrowing(Raw<T, RANK> & raw)
 {
-    Shared<T, RANK> a(ra::init_not);
+    Shared<T, RANK> a;
     a.dim = raw.dim;
     a.p = raw.p;
     a.store = std::shared_ptr<T>(raw.data(), NullDeleter());
     return a;
 }
-
-// @TODO Used to forbid; replace by a positive generic guarantee that V(a) works as values.
-// @TODO Possibly in ra-type.H.
-template <class V>
-struct is_shared
-{
-    static bool const value = false;
-};
-
-template <class T, rank_t RANK>
-struct is_shared<Shared<T, RANK> >
-{
-    static bool const value = true;
-};
 
 template <class T>
 struct Raw<T, RANK_ANY>
@@ -519,11 +500,10 @@ struct Raw<T, RANK_ANY>
 
 // Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case.
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I,                                              \
-              std::enable_if_t<mp::And<is_beatable<I> ...>::value, int> = 0> \
+    template <class ... I, std::enable_if_t<(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
-        constexpr int reduced = mp::count<std::is_integral<I> ...>;     \
+        constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
         assert(this->rank()>=reduced);                                  \
         Raw<T CONST, RANK_ANY> sub;                                     \
         sub.dim.resize(this->rank()-reduced);                           \
@@ -534,8 +514,7 @@ struct Raw<T, RANK_ANY>
         return sub;                                                     \
     }                                                                   \
     /* @TODO More than one selector... */                               \
-    template <class ... I,                                              \
-              std::enable_if_t<!mp::And<is_beatable<I> ...>::value, int> = 0> \
+    template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -569,7 +548,7 @@ struct ra_traits_def<Raw<T, RANK_ANY>>
     using V = Raw<T, RANK_ANY>;
     using value_type = T;
 
-    using shape_type = std::vector<dim_t>; // maybe use Unique<Dim, 1> here.
+    using shape_type = std::vector<dim_t>;
     static shape_type shape(V const & v)
     {
         rank_t const iend = v.rank();
@@ -605,7 +584,6 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
 }
 
 // dynamic transposed axes list.
-// @TODO when S has static size 1 or 0, the values are a given; we could decide dstrank statically.
 #define DEFINE_TRANSPOSE(AXES_LIST)                                     \
     template <class T, int RANK, class S>                               \
     Raw<T, RANK_ANY> transpose(Raw<T, RANK> const & raw, AXES_LIST)     \
@@ -667,7 +645,7 @@ auto diag(Raw<T, RANK> const & raw)
 template <class super_t, rank_t SUPERR, class T, int RANK>
 auto explode_(Raw<T, RANK> const & a)
 {
-// @TODO Reduce to a single check, either the first or the second.
+// @TODO Reduce to single check, either the first or the second.
     static_assert(RANK>=SUPERR || RANK==RANK_ANY, "rank of a is too low");
     assert(a.rank()>=SUPERR && "rank of a is too low");
     Raw<super_t, rank_sum(RANK, -SUPERR)> b;

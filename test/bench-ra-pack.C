@@ -13,10 +13,10 @@
 #include <iomanip>
 #include "ra/test.H"
 #include "ra/complex.H"
-#include "ra/ra-large.H"
-#include "ra/ra-wrank.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/wrank.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include <chrono>
 
 using std::cout; using std::endl; using std::flush;

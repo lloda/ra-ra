@@ -1,7 +1,7 @@
 # -*- mode: Python -*-
 # -*- coding: utf-8 -*-
 
-# (c) Daniel Llorens - 2015
+# (c) Daniel Llorens - 2015-2016
 
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -9,13 +9,12 @@
 # later version.
 
 # SConstruct for ra/test
-# @todo Shared pieces with ra/examples
+# @todo Shared pieces with test/SConstruct
 
-import os, atexit
+import os, string, atexit
 from colorama import Fore, Back, Style
 from os.path import join, abspath
 from subprocess import call
-import string
 
 try:
     Import('top')
@@ -52,8 +51,9 @@ if arch.find('86-apple-darwin') >= 0:
 else:
     archflags=['-march=native']
 
-env.Append(CPPPATH=['..', 'examples'], CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-           CXXFLAGS=['-std=c++14', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+env.Append(CPPPATH=['..', 'examples'],
+           CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
+           CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
                      #'-Wconversion',
                      # '-funsafe-math-optimizations', # @TODO Test with this.
                  ])
@@ -89,13 +89,6 @@ def to_test_ra(env, source):
     test = env.Program(source, [source + '.C'])
     to_test(env, test, [test[0].abspath])
 
-[to_test_ra(env, example)
- for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv',
-                 'indirect', 'cast', 'nested', 'agreement', 'small',
-                 'readme', 'explode-collapse',
-                 'newton', 'maxwell']]
-
-
 def print_summary():
     from SCons.Script import GetBuildFailures
     test_item_tally = 0
@@ -116,6 +109,12 @@ def print_summary():
 
     print '%d targets failed to build.' % build_tally
     print '%d tests failed with %d total failures.' % (test_tally, test_item_tally)
+
+[to_test_ra(env, example)
+ for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv',
+                 'indirect', 'cast', 'nested', 'agreement', 'small',
+                 'readme', 'explode-collapse',
+                 'newton', 'maxwell']]
 
 if 'skip_summary' not in top:
     atexit.register(print_summary)

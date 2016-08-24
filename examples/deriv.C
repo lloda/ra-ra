@@ -2,8 +2,8 @@
 // Daniel Llorens - 2015
 // Adapted from blitz++/examples/deriv.cpp
 
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 

@@ -16,9 +16,9 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 template <class T, int N> using Array = ra::Owned<T, N>;
@@ -36,14 +36,12 @@ int main()
             tr.test_eq(0, c.size());
         }
         {
-            auto c = Vec<Vec<int>> { Vec<int> {}, Vec<int> {1}, Vec<int> {1, 2} };
+            auto c = Vec<Vec<int>> { {} , {1}, {1, 2} };
             std::ostringstream os;
-            cout << "c: " << c << "\n" << endl;
             os << c;
             std::istringstream is(os.str());
             Vec<Vec<int>> d;
             is >> d;
-            cout << "d: " << d << "\n" << endl;
             tr.test_eq(3, d.size());
             tr.test_eq(d[0], Vec<int>{});
             tr.test_eq(d[1], Vec<int>{1});
@@ -66,7 +64,7 @@ int main()
 // The problem with a(i) = a(i, ra::all) is that a(i) returns a nested expression, so it isn't equivalent to a(i, [0 1 ...]), and if we want to write it as a rank 2 expression, we can't use from() as above because the iterator we want is a(i).iter(), it depends on i.
 // So ...
     }
-    section("copying between arrays nested in the same way");
+    section("copying btw arrays nested in the same way");
     {
         Vec<ra::Small<int, 2> > a {{1, 2}, {3, 4}, {5, 6}};
         ra::Small<ra::Small<int, 2>, 3> b = a;
@@ -80,6 +78,15 @@ int main()
         tr.test_eq(ra::Small<int, 2> {7, 9}, a(0));
         tr.test_eq(ra::Small<int, 2> {3, 4}, a(1));
         tr.test_eq(ra::Small<int, 2> {1, 6}, a(2));
+    }
+    section("@TODO copying btw arrays nested in different ways");
+    {
+        Vec<ra::Small<int, 2> > a {{1, 2}, {3, 4}, {5, 6}};
+        Array<int, 2> b({3, 2}, {1, 2, 3, 4, 5, 6});
+// there's one level of matching so a(0) matches to b(0, 0) and b(0, 1), a(1) to b(1, 0) and b(1, 1), etc. So this results in a(0) = 1 overwritten with a(0) = 2, etc. finally a = [[2, 2], [4, 4], [6, 6]]. Probably not what we want.
+        a = b;
+        // b = a; // dnc b/c [x, y] ← z is ok but z ← [x, y] is not.
+        cout << a << endl;
     }
     return tr.summary();
 }

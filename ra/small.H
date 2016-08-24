@@ -9,10 +9,10 @@
 #ifndef RA_SMALL_H
 #define RA_SMALL_H
 
-#include "ra/ra-ply.H"
+#include "ra/ply.H"
 #include <iterator>
 
-/// @file ra-small.H
+/// @file small.H
 /// @brief Fixed-size multidimensional arrays.
 
 #ifdef RA_CHECK_BOUNDS
@@ -259,24 +259,22 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
 
-// Specialize for rank() integer-args -> scalar, same in ra::Raw in ra-large.H.
-// @TODO waiting for fold expressions (N4191) on some of these enable_if_ts.
-// @TODO Cf https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations#recs.cpp17
+// Specialize for rank() integer-args -> scalar, same in ra::Raw in large.H.
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I, std::enable_if_t<((mp::count<std::is_integral<I> ...>)<rank() \
-                                       && mp::And<mp::int_t<is_beatable<I>::static_p> ...>::value), int> = 0> \
+    template <class ... I, std::enable_if_t<((0 + ... + std::is_integral<I>::value)<rank() \
+                                             && (is_beatable<I>::static_p && ...)), int> = 0> \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
         using FD = FilterDims<sizes, strides, I ...>;                   \
         return SmallSlice<T CONST, typename FD::sizes, typename FD::strides> \
             (data()+select_loop<sizes, strides>(i ...));                \
     }                                                                   \
-    template <class ... I, std::enable_if_t<(mp::count<std::is_integral<I> ...>)==rank(), int> = 0> \
+    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==rank(), int> = 0> \
     decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
     } /* @TODO More than one selector... */                             \
-    template <class ... I, std::enable_if_t<mp::Or<mp::int_t< !is_beatable<I>::static_p> ...>::value, int> = 0> \
+    template <class ... I, std::enable_if_t<(!is_beatable<I>::static_p || ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -299,12 +297,12 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
 // See same thing for Raw.
 #define DEFINE_ASSIGNMENT_OP(OPNAME, OP)                                \
-    template <class X> Child & OPNAME(X && x)                           \
+        template <class X> Child & OPNAME(X && x)                       \
     {                                                                   \
-        /* @TODO generally forbid writing to smaller rank from larger rank (ra-small.H [ref01]) */ \
-        static_assert(std::decay_t<decltype(start(x))>::rank_s()<=rank() \
-                      || std::decay_t<decltype(start(x))>::rank_s()==RANK_ANY, "bad assigment"); \
-        ply_either(expr([](T & dest, T const & src) { dest OP src; }, this->iter(), start(x))); \
+        /* @TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
+        constexpr rank_t xrank = std::decay_t<decltype(start(x))>::rank_s(); \
+        static_assert(xrank<=rank() || xrank==RANK_ANY, "bad assigment"); \
+        ply_either(expr([](T & dest, T const & src) { dest OP src; }, this->iter(), rstart(x))); \
         return static_cast<Child &>(*this);                             \
     }
     DEFINE_ASSIGNMENT_OP(operator=, =)
@@ -333,7 +331,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     DEFINE_AS(/* const */)
 #undef DEFINE_AS
 
-// @TODO This is scalar only. Eventually reuse cell_iterator.
+// @TODO This is rank 0 only. Maybe reuse cell_iterator?
     template <class P>
     struct Iterator
     {
@@ -343,7 +341,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
         P p;
 
-// @TODO use cellp for cellr>0, when that's supported (or replace all this by ra::ra_iterator). But for cellr==0 we must use p, because in auto contexts (e.g. ra-operators.H) *(flat()) won't get converted to *p, and that can result in infinite looping in ply_ravel().
+// @TODO use cellp for cellr>0, when that's supported (or replace all this by ra::ra_iterator). But for cellr==0 we must use p, because in auto contexts (e.g. operators.H) *(flat()) won't get converted to *p, and that can result in infinite looping in ply_ravel().
         // auto flat() { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
         // auto flat() const { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
         auto flat() { return p; }
@@ -384,7 +382,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     };
 
     template <class Iterator>
-    struct general_stl_iterator: private Iterator
+    struct general_stl_iterator
     {
         using value_type = typename Iterator::value_type;
         using difference_type = dim_t;
@@ -393,35 +391,36 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         using const_reference = value_type const &;
         using iterator_category = std::forward_iterator_tag;
 
+        Iterator ii;
         typename Iterator::shape_type i;
-        template <class PP> general_stl_iterator(PP const & p): Iterator(p) { std::fill(i.begin(), i.end(), 0.); }
-        general_stl_iterator(): Iterator() {}
+        template <class PP> general_stl_iterator(PP const & p): ii(p) { std::fill(i.begin(), i.end(), 0.); }
+        general_stl_iterator(): ii() {}
 
-        template <class PP> bool operator==(PP const & q) const { return Iterator::p==q.p; }
-        template <class PP> bool operator!=(PP const & q) const { return Iterator::p!=q.p; }
-        decltype(auto) operator*() const { return *Iterator::p; }
-        decltype(auto) operator*() { return *Iterator::p; }
+        template <class PP> bool operator==(PP const & q) const { return ii.p==q.ii.p; }
+        template <class PP> bool operator!=(PP const & q) const { return ii.p!=q.ii.p; }
+        decltype(auto) operator*() const { return *(ii.p); }
+        decltype(auto) operator*() { return *(ii.p); }
         template <int k=rank()-1>
         std::enable_if_t<(k>=0)> next_in_cube()
         {
             ++i[k];
             if (i[k]<mp::Ref_<sizes, k>::value) {
-                Iterator::p += mp::Ref_<strides, k>::value;
+                ii.p += mp::Ref_<strides, k>::value;
             } else {
                 i[k] = 0;
-                Iterator::p -= mp::Ref_<strides, k>::value*(mp::Ref_<sizes, k>::value-1);
+                ii.p -= mp::Ref_<strides, k>::value*(mp::Ref_<sizes, k>::value-1);
                 next_in_cube<k-1>();
                 return;
             }
         }
-        template <int k> std::enable_if_t<(k<0)> next_in_cube() { Iterator::p = nullptr; }
+        template <int k> std::enable_if_t<(k<0)> next_in_cube() { ii.p = nullptr; }
         general_stl_iterator & operator++() { next_in_cube(); return *this; }
     };
 
     constexpr static bool have_default_strides = std::is_same<strides, default_strides_<sizes>>::value;
     template <class P> using stl_iterator = mp::If_<have_default_strides, P, general_stl_iterator<Iterator<P>>>;
 
-// @TODO A cell-rank>0 iterator.
+// @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
     constexpr auto iter() { return Iterator<T *>(data()); }
     constexpr auto iter() const { return Iterator<T const *>(data()); }
     constexpr auto begin() { return stl_iterator<T *>(data()); }
@@ -456,13 +455,11 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
 // templated operator= cannot take these over. As in ra::Raw.
     SmallSlice & operator=(SmallSlice && x)
     {
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x)));
-        return *this;
+        return Base::operator=(x);
     }
     SmallSlice & operator=(SmallSlice const & x)
     {
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x)));
-        return *this;
+        return Base::operator=(x);
     }
 };
 
@@ -472,7 +469,11 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
     T p[Base::size()];                                                  \
                                                                         \
     SmallArray() {}                                                     \
-    explicit SmallArray(init_not_t) {}                                  \
+    template <class X>                                                  \
+    SmallArray(X && x)                                                  \
+    {                                                                   \
+        static_cast<Base &>(*this) = x;                                 \
+    }                                                                   \
     SmallArray(std::initializer_list<T> const x)                        \
     {                                                                   \
         assert(x.size()==Base::size() && "bad initializer list"); /* static_assert */ \
@@ -483,21 +484,10 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
     {                                                                   \
         std::copy(begin, end, this->begin());                           \
     }                                                                   \
-    /* Special case and qualifier are needed because ra::start() may    \
-       not accept T as scalar (say if T is a struct) */                 \
+    /* Special case is needed if ra::start() doesn't acknowledge T as scalar */  \
     SmallArray(T const & t)                                             \
     {                                                                   \
         std::fill(this->begin(), this->end(), t);                       \
-    }                                                                   \
-    template <class R, std::enable_if_t<std::is_convertible<R, T>::value && is_scalar<R>, int> = 0> \
-    SmallArray(R const & r)                                             \
-    {                                                                   \
-        std::fill(this->begin(), this->end(), r);                       \
-    }                                                                   \
-    template <class X, std::enable_if_t<is_ra<X>, int> = 0>                        \
-    SmallArray(X && x)                                                  \
-    {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, Base::iter(), start(x))); \
     }
 
 template <class T, class sizes, class strides>
@@ -553,7 +543,7 @@ struct ra_traits_small
 
     using shape_type = Small<dim_t, V::rank()>;
     static shape_type shape(V const & v) { return mp::tuple_copy<sizes, shape_type>::f(); }
-#define MAKE_COND (mp::And<std::is_same<strides, mp::int_list<1>>, std::is_same<sizes, mp::Take_<sizes, 1>>>::value)
+#define MAKE_COND (std::is_same<strides, mp::int_list<1> >::value && std::is_same<sizes, mp::Take_<sizes, 1> >::value)
     static V make(dim_t const n)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");

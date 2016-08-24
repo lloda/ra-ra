@@ -17,10 +17,10 @@
 #include "ra/complex.H"
 #include "ra/format.H"
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-wrank.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/wrank.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 using std::tuple;
@@ -210,7 +210,7 @@ int main()
                      a.iter(), b.iter())
         std::ostringstream os;
         os << EXPR << endl;
-        ra::Unique<real, 2> cc(ra::init_not);
+        ra::Unique<real, 2> cc {};
         std::istringstream is(os.str());
         is >> cc;
         cout << "cc: " << cc << endl;

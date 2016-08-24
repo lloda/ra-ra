@@ -9,11 +9,11 @@
 #ifndef RA_IO_H
 #define RA_IO_H
 
-#include "ra/ra-type.H"
-#include "ra/ra-traits.H"
+#include "ra/type.H"
+#include "ra/traits.H"
 #include <iostream>
 
-/// @file ra-io.H
+/// @file io.H
 /// @brief Write and read arrays, expressions.
 
 namespace ra {

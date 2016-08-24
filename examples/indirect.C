@@ -10,8 +10,8 @@
 // sparse selectors should be defined as standalone functions with separate
 // names depending on the kind of indexing they do.
 
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include <vector>
 #include <iostream>
 

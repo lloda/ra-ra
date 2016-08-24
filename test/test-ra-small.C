@@ -12,11 +12,11 @@
 #include <iostream>
 #include <iterator>
 #include "ra/complex.H"
-#include "ra/ra-small.H"
-#include "ra/ra-iterator.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
-#include "ra/ra-large.H"
+#include "ra/small.H"
+#include "ra/iterator.H"
+#include "ra/operators.H"
+#include "ra/io.H"
+#include "ra/large.H"
 #include "ra/format.H"
 #include "ra/test.H"
 #include "ra/mpdebug.H"

@@ -13,9 +13,9 @@
 #include <iterator>
 #include <numeric>
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include "ra/mpdebug.H"
 
 using std::cout; using std::endl; using std::flush;
@@ -48,7 +48,7 @@ void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
     }
     {
         std::istringstream i(o.str());
-        A b(ra::init_not);
+        A b;
         tr.test(bool(i));
         i >> b;
         auto as = ra::ra_traits<A>::shape(a);
@@ -145,7 +145,7 @@ int main()
             auto pp = std::unique_ptr<real []>(new real[10]);
             pp[9] = 77;
             real * p = pp.get();
-            ra::Unique<real> a(ra::init_not);
+            ra::Unique<real> a {};
             a.store = std::move(pp);
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
@@ -158,7 +158,7 @@ int main()
             auto pp = std::shared_ptr<real>(new real[10]);
             pp.get()[9] = 88;
             real * p = pp.get();
-            ra::Shared<real> a(ra::init_not);
+            ra::Shared<real> a {};
             a.store = pp;
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
@@ -171,7 +171,7 @@ int main()
             auto pp = std::vector<real>(10);
             pp[9] = 99;
             real * p = pp.data();
-            ra::Owned<real> a(ra::init_not);
+            ra::Owned<real> a {};
             a.store = pp;
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
@@ -431,7 +431,7 @@ int main()
         ra::Unique<real> b(ra::scalar(44));
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
-// b.rank() is runtime, so b()==44. and the whole assert argument become array xprs when ra-operators.H is included.
+// b.rank() is runtime, so b()==44. and the whole assert argument become array xprs when operators.H is included.
         tr.test_eq(0, b.rank());
         tr.test_eq(1, b.size());
         tr.test_eq(44, b());
@@ -819,7 +819,7 @@ int main()
     }
     section("ra::iota");
     {
-        static_assert(ra::is_array_iterator<decltype(ra::iota(10))>::value, "bad type pred for iota");
+        static_assert(ra::is_array_iterator<decltype(ra::iota(10))>, "bad type pred for iota");
         section("straight cases");
         {
             ra::Owned<int, 1> a = ra::iota(4, 1);

@@ -14,9 +14,9 @@
 #include <numeric>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 template <int i> using TI = ra::TensorIndex<i, int>;
@@ -190,7 +190,7 @@ int main()
             test(a);
             test(a()); // also Raw.
         }
-// @TODO See Expr::DRIVER in ra-expr.H. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() & ply_index() are rank-dynamic.
+// @TODO See Expr::DRIVER in expr.H. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() & ply_index() are rank-dynamic.
         {
             auto test = [&](auto && a)
                 {

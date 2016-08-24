@@ -9,13 +9,13 @@
 #ifndef RA_TYPE_H
 #define RA_TYPE_H
 
-/// @file ra-type.H
+/// @file type.H
 /// @brief Type predicates and use-as-xpr wrapper for foreign types.
 
 // Cf https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69515 for g++ -O0 when going
 // from static member to variable template.
 
-#include "ra/ra-atom.H"
+#include "ra/atom.H"
 #include <iterator>
 
 namespace ra {
@@ -28,7 +28,6 @@ template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A> >;
 
 template <class C, class Enable=void>
 constexpr bool is_slice = false;
-
 template <class C>
 constexpr bool is_slice<C, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<C>>().iter())>
                                             && mp::exists<decltype(ra_traits<C>::size_s())>>> // do not accept public-derived from C
@@ -36,43 +35,26 @@ constexpr bool is_slice<C, std::enable_if_t<mp::exists<decltype(std::declval<std
 
 template <class C, class Enable=void>
 constexpr bool is_slice_pos_rank = false;
-
 template <class C>
 constexpr bool is_slice_pos_rank<C, std::enable_if_t<(is_slice<C> && ra_traits<C>::rank_s()!=0)>> = true;
 
-// @TODO Convert the rest of the predicates as C++17 comes in line.
-
-template <class A, class Enable=void>
-struct is_array_iterator
-{
-    constexpr static bool value = false;
-};
-
 // @TODO make things is_array_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // @TODO check the rest of the required interface of A and A::flat() right here.
+template <class A, class Enable=void>
+constexpr bool is_array_iterator = false;
 template <class A>
-struct is_array_iterator<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<A>>().flat())>>>
-{
-    constexpr static bool value = true;
-};
+constexpr bool is_array_iterator<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<A>>().flat())>>> = true;
 
 template <class A, class Enable=void>
-struct is_array_iterator_pos_rank
-{
-    constexpr static bool value = false;
-};
+constexpr bool is_array_iterator_pos_rank = false;
+template <class A>
+constexpr bool is_array_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0> > = is_array_iterator<A>;
 
 template <class A>
-struct is_array_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0> >
-{
-    constexpr static bool value = is_array_iterator<A>::value;
-};
+constexpr bool is_ra = is_array_iterator<A> || is_slice<A>;
 
 template <class A>
-constexpr bool is_ra = is_array_iterator<A>::value || is_slice<A>;
-
-template <class A>
-constexpr bool is_ra_pos_rank = is_array_iterator_pos_rank<A>::value || is_slice_pos_rank<A>;
+constexpr bool is_ra_pos_rank = is_array_iterator_pos_rank<A> || is_slice_pos_rank<A>;
 
 template <class A>
 constexpr bool is_ra_zero_rank = is_ra<A> && !is_ra_pos_rank<A>;
@@ -96,14 +78,13 @@ constexpr bool is_foreign_vector_def<std::array<T, N> > = true;
 // to provide extension of scalar functions to ra:: types
 // --------------
 
+// @TODO https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 in gcc 6.2
 template <class ... A>
-constexpr bool ra_pos_and_any = mp::Or<mp::bool_t<is_ra_pos_rank<A> > ...>::value
-    && mp::And<mp::bool_t<(is_ra<A> || is_scalar<A>)> ...>::value;
+constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...) && mp::And<mp::bool_t<(is_ra<A> || is_scalar<A>)> ...>::value;
 
 // all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).
 template <class ... A>
-constexpr bool ra_zero = !mp::And<mp::bool_t<is_scalar<A> > ...>::value
-    && mp::And<mp::bool_t<is_zero_or_scalar<A> > ...>::value;
+constexpr bool ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
 
 template <class T>
 struct ra_traits_def<T, std::enable_if_t<is_scalar<T> > >
@@ -126,14 +107,14 @@ inline auto start(T && t)
     static_assert(!mp::exists<T>, "bad type for ra:: operator");
 }
 
-template <class T, std::enable_if_t<is_array_iterator<T>::value, int> = 0>
+template <class T, std::enable_if_t<is_array_iterator<T>, int> = 0>
 inline auto start(T && t)
 {
     return std::forward<T>(t);
 }
 
-// @TODO not used yet
-template <class T, std::enable_if_t<std::is_same<dots_t<std::decay_t<T>::rank_s()>,  std::decay_t<T> >::value, int> =0>
+// @TODO not used yet, dots is beaten.
+template <class T, std::enable_if_t<std::is_same<dots_t<std::decay_t<T>::rank_s()>, std::decay_t<T> >::value, int> =0>
 inline auto start(T && t)
 {
     return std::forward<T>(t);
@@ -142,7 +123,7 @@ inline auto start(T && t)
 template <class T, std::enable_if_t<is_slice<T>, int> = 0>
 inline auto start(T && t)
 {
-    return t.iter(); // @BUG if t is rvalue, t.iter() won't retain it...
+    return t.iter(); // @BUG if t is rvalue, t.iter() won't retain it. See test-ra-7.check [opt-small].
 }
 
 template <class T, std::enable_if_t<is_scalar<T>, int> = 0>
@@ -162,6 +143,22 @@ inline auto start(T * t)
 {
     return ra::ptr(t);
 }
+
+template <class T>
+inline auto rstart(T && t)
+{
+    return start(std::forward<T>(t));
+}
+
+template <class T>
+inline auto rstart(T * t)
+{
+    static_assert(!std::is_pointer<T *>::value, "pointers must be started manually");
+}
+
+// @TODO one of these is ET-generic and the other is slice only, so make up your mind.
+template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
+template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }
 
 } // namespace ra
 

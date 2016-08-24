@@ -19,7 +19,7 @@
 #include "ra/format.H"
 #include "ra/real.H"
 // @TODO For where() unfortunately I can't declare the scalar version in an earlier header. Also ra::map()
-#include "ra/ra-operators.H"
+#include "ra/operators.H"
 
 char const * esc_bold = "\x1b[01m";
 char const * esc_unbold = "\x1b[0m";
@@ -38,6 +38,8 @@ template <class ... A> void section(A const & ... a)
 
 struct TestRecorder
 {
+    enum { IS_QUIET = true, ISNOT_QUIET = false };
+
     std::ostream & o;
     int total = 0;
     std::vector<int> failed;
@@ -45,7 +47,7 @@ struct TestRecorder
     bool isquiet_default, isquiet;
     bool willskip;
 
-    TestRecorder(std::ostream & o_=std::cout, bool isquiet_default_=false)
+    TestRecorder(std::ostream & o_=std::cout, bool isquiet_default_=ISNOT_QUIET)
         : o(o_), isquiet_default(isquiet_default_), isquiet(isquiet_default_), willskip(false) {}
 
     template <class ... A> void section(A const & ... a)
@@ -95,10 +97,10 @@ struct TestRecorder
         info_str = "";
         isquiet = isquiet_default;
         if (!willskip) {
-            ++total;
             if (!c) {
                 failed.push_back(total);
             }
+            ++total;
         }
         willskip = false;
     }

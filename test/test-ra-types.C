@@ -13,10 +13,10 @@
 #include <iterator>
 #include <numeric>
 #include "ra/test.H"
-#include "ra/ra-type.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/type.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include <typeinfo>
 #include <string>
 
@@ -28,7 +28,7 @@ using std::cout; using std::endl; using std::flush;
         /* maybe https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54483 for the need of bool() here with -O0 and -O1. */ \
         tr.info(STRINGIZE(A)).info("bool").test_eq(ra, bool(ra::is_ra<A>)); \
         tr.info(STRINGIZE(A)).info("slice").test_eq(slice, bool(ra::is_slice<A>)); \
-        tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, bool(ra::is_array_iterator<A>::value)); \
+        tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, bool(ra::is_array_iterator<A>)); \
         tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, bool(ra::is_scalar<A>)); \
         tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, bool(ra::is_foreign_vector<A>)); \
     }

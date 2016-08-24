@@ -9,10 +9,10 @@
 #ifndef RA_EXPR_H
 #define RA_EXPR_H
 
-/// @file ra-expr.H
+/// @file expr.H
 /// @brief Expression templates for arrays with frame matching: operator nodes.
 
-#include "ra/ra-ply.H"
+#include "ra/ply.H"
 
 #ifdef RA_CHECK_BOUNDS
     #define RA_CHECK_BOUNDS_RA_EXPR RA_CHECK_BOUNDS
@@ -76,7 +76,7 @@ Expr<Op, std::tuple<P ...>> expr(Op && f, P && ... p)
     return Expr<Op, std::tuple<P ...>> { std::forward<Op>(f), std::forward<P>(p) ... };
 }
 
-// forward decl in ra-atom.H
+// forward decl in atom.H
 template <class Op, class ... P, class ... I>
 struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
 {
@@ -190,7 +190,6 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
 
     constexpr static dim_t size_s() { return PA::size_s(); }
     constexpr static rank_t rank_s() { return PA::rank_s(); }
-// Note: do not require driver. This is needed by check for all leaves.
     constexpr rank_t rank() const { return std::get<A>(t).rank(); }
     decltype(auto) shape() const { return driver().shape(); }
 

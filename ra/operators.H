@@ -9,14 +9,13 @@
 #ifndef RA_OPERATORS_H
 #define RA_OPERATORS_H
 
-/// @file ra-operators.H
+/// @file operators.H
 /// @brief Sugar for ra:: expression templates.
 
-#include "ra/ra-wrank.H"
-
+#include "ra/wrank.H"
 // @TODO These (dependence on specific ra:: types) should be elsewhere.
-#include "ra/ra-small.H"
-#include "ra/ra-large.H"
+#include "ra/small.H"
+#include "ra/large.H"
 #include "ra/complex.H"
 #include "ra/wedge.H"
 
@@ -33,7 +32,7 @@
     #define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
-#include "ra/ra-optimize.H"
+#include "ra/optimize.H"
 
 #ifndef RA_OPTIMIZE
 #define RA_OPTIMIZE 1 // enabled by default
@@ -71,7 +70,7 @@ decltype(auto) transpose(A && a, mp::int_list<Iarg ...>)
 // Wrappers over expr & ply_either.
 
 template <class F, class ... A>
-inline auto map(F && f, A && ... a) -> decltype(expr(std::forward<F>(f), start(std::forward<A>(a)) ...))
+inline auto map(F && f, A && ... a)
 {
     return expr(std::forward<F>(f), start(std::forward<A>(a)) ...);
 }
@@ -96,14 +95,14 @@ inline void for_each(F && f, A && ... a)
 // conversion from zero->scalar is also needed. That is, without those
 // specializations, ra::Raw<complex, 0> * complex will fail.
 
-// These depend on OPNAME defined in ra-optimize.H and used there to match ET patterns.
+// These depend on OPNAME defined in optimize.H and used there to match ET patterns.
 #define DEFINE_NAMED_BINARY_OP(OPERATOR, OP, OPNAME)                    \
     template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return OPTIMIZE(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
-    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0>           \
+    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return START(a) OP START(b);                                    \
@@ -121,7 +120,7 @@ DEFINE_NAMED_BINARY_OP(operator/, /, slash)
         return map([](auto && a, auto && b) { return a OP b; },         \
                    std::forward<A>(a), std::forward<B>(b));             \
     }                                                                   \
-    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0>           \
+    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
     inline auto OPERATOR(A && a, B && b)                                \
     {                                                                   \
         return START(a) OP START(b);                                    \
@@ -220,17 +219,8 @@ inline auto at(A && a, I && i)
 // --------------------------------
 
 // needed when ? returns rvalue reference.
-template <class T>
-inline auto safe_rvalue(T & t) -> decltype(auto)
-{
-    return t;
-}
-
-template <class T>
-inline auto safe_rvalue(T && t) -> T
-{
-    return t;
-}
+template <class T> inline decltype(auto) safe_rvalue(T & t) { return t; }
+template <class T> inline T safe_rvalue(T && t) { return t; }
 
 // @TODO use instead
 // typename safe_rvalue<decltype(t_), decltype(f_), decltype(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_))>::type
@@ -264,13 +254,47 @@ inline auto where(W && w, T && t, F && f)
 // --------------------------------
 
 // @TODO First rank reductions? Variable rank reductions?
-// @TODO Give return type once. gcc gives trouble.
+
+using std::min;
 template <class A>
-inline auto reduce_sqrm(A && a) -> std::decay_t<decltype(sqrm(START(a)))>
+inline auto amin(A && a)
 {
-    std::decay_t<decltype(sqrm(START(a)))> c(0.);
-    for_each([&c](auto a) { c += sqrm(a); }, a);
+    using T = value_t<A>;
+    T c(std::numeric_limits<T>::max());
+    for_each([&c](auto && a) { c = min(c, a); }, a);
     return c;
+}
+
+using std::max;
+template <class A>
+inline auto amax(A && a)
+{
+    using T = value_t<A>;
+    T c(std::numeric_limits<T>::lowest());
+    for_each([&c](auto && a) { c = max(c, a); }, a);
+    return c;
+}
+
+template <class A>
+inline auto sum(A && a)
+{
+    value_t<A> c(0.);
+    for_each([&c](auto && a) { c += a; }, a);
+    return c;
+}
+
+template <class A>
+inline auto prod(A && a)
+{
+    value_t<A> c(1.);
+    for_each([&c](auto && a) { c *= a; }, a);
+    return c;
+}
+
+template <class A>
+inline auto reduce_sqrm(A && a)
+{
+    return sum(sqrm(a));
 }
 
 template <class A>
@@ -279,45 +303,8 @@ inline auto norm2(A && a)
     return sqrt(reduce_sqrm(a));
 }
 
-using std::min;
-using std::max;
-
-template <class A>
-inline auto amin(A && a) -> std::decay_t<decltype(START(a))>
-{
-    using T = std::decay_t<decltype(START(a))>;
-    T c(std::numeric_limits<T>::max());
-    for_each([&c](auto && a) { c = min(c, a); }, a);
-    return c;
-}
-
-template <class A>
-inline auto amax(A && a) -> std::decay_t<decltype(START(a))>
-{
-    using T = std::decay_t<decltype(START(a))>;
-    T c(std::numeric_limits<T>::lowest());
-    for_each([&c](auto && a) { c = max(c, a); }, a);
-    return c;
-}
-
-template <class A>
-inline auto sum(A && a) -> std::decay_t<decltype(START(a))>
-{
-    std::decay_t<decltype(START(a))> c(0.);
-    for_each([&c](auto && a) { c += a; }, a);
-    return c;
-}
-
-template <class A>
-inline auto prod(A && a) -> std::decay_t<decltype(START(a))>
-{
-    std::decay_t<decltype(START(a))> c(1.);
-    for_each([&c](auto && a) { c *= a; }, a);
-    return c;
-}
-
 template <class A, class B>
-inline auto dot(A && a, B && b) -> std::decay_t<decltype(START(a) * START(b))>
+inline auto dot(A && a, B && b)
 {
     std::decay_t<decltype(START(a) * START(b))> c(0.);
     for_each([&c](auto && a, auto && b) { c = fma(a, b, c); }, a, b);
@@ -325,7 +312,7 @@ inline auto dot(A && a, B && b) -> std::decay_t<decltype(START(a) * START(b))>
 }
 
 template <class A, class B>
-inline auto cdot(A && a, B && b) -> std::decay_t<decltype(conj(START(a)) * START(b))>
+inline auto cdot(A && a, B && b)
 {
     std::decay_t<decltype(conj(START(a)) * START(b))> c(0.);
     for_each([&c](auto && a, auto && b) { c = fma_conj(a, b, c); }, a, b);
@@ -440,22 +427,19 @@ template <class A, std::enable_if_t<is_slice<A>, int> =0>
 inline auto normv(A const & a)
 {
     static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such"); // gcc accepts a.size_s()
-    using V = Small<std::decay_t<decltype(START(a))>, A::size_s()>;
-    return V(a/norm2(a));
+    return Small<std::decay_t<decltype(START(a))>, A::size_s()>(a/norm2(a));
 }
 
 template <class A, std::enable_if_t<!is_slice<A> && is_ra<A>, int> =0>
 inline auto normv(A const & a)
 {
     static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such");  // gcc accepts a.size_s()
-    using V = Small<std::decay_t<decltype(START(a))>, A::size_s()>;
-    V b = a;
+    Small<std::decay_t<decltype(START(a))>, A::size_s()> b = a;
     b /= norm2(b);
     return b;
 }
 
 // @TODO Define within generalization...
-// @TODO Plain auto causes problems witn transform() in mat-fun.H:transform().
 template <class A, class B>
 inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0), B::size(1)>
 gemm(A const & a, B const & b)

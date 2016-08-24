@@ -12,9 +12,9 @@
 #include <iostream>
 #include <iomanip>
 #include "ra/timer.H"
-#include "ra/ra-large.H"
-#include "ra/ra-small.H"
-#include "ra/ra-operators.H"
+#include "ra/large.H"
+#include "ra/small.H"
+#include "ra/operators.H"
 #include "ra/real.H"
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;

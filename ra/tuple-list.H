@@ -381,14 +381,8 @@ struct Typer
 // Operations on int_t arguments.
 template <class ... A> struct Sum
 {
-    using type = int_t<0>;
-    constexpr static int value = type::value;
-};
-template <class A0, class ... A>
-struct Sum<A0, A ...>
-{
-    using type = int_t<A0::value + Sum<A ...>::type::value>;
-    constexpr static int value = type::value;
+    constexpr static int value = (A::value + ... + 0);
+    using type = int_t<value>;
 };
 
 template <class ... A> struct Max
@@ -417,41 +411,20 @@ struct Min<A0, A ...>
 
 template <class ... A> struct Prod
 {
-    constexpr static int value = 1;
-    using type = int_t<value>;
-};
-template <class A0, class ... A>
-struct Prod<A0, A ...>
-{
-    constexpr static int value = A0::value * Prod<A ...>::type::value;
+    constexpr static int value = (A::value * ... * 1);
     using type = int_t<value>;
 };
 
 template <class ... A> struct And
 {
-    constexpr static int value = 1;
-    using type = int_t<value>;
+    constexpr static bool value = (A::value && ...);
+    using type = bool_t<value>;
 };
-template <class A0, class ... A>
-struct And<A0, A ...>
-{
-    constexpr static int value = A0::value && And<A ...>::type::value;
-    using type = int_t<value>;
-};
-
-template <class ... A> constexpr int count = 0;
-template <class A0, class ... A> constexpr int count<A0, A ...> = bool(A0::value) + count<A ...>;
 
 template <class ... A> struct Or
 {
-    constexpr static int value = 0;
-    using type = int_t<value>;
-};
-template <class A0, class ... A>
-struct Or<A0, A ...>
-{
-    constexpr static int value = A0::value || Or<A ...>::type::value;
-    using type = int_t<value>;
+    constexpr static bool value = (A::value || ...);
+    using type = bool_t<value>;
 };
 
 // Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.

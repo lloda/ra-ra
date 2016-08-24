@@ -9,8 +9,8 @@
 /// @file agreement.C
 /// @brief Demo shape agreement rules
 
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include <iostream>
 
 using std::cout; using std::endl;

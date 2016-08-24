@@ -9,11 +9,11 @@
 #ifndef RA_OPCHECK_H
 #define RA_OPCHECK_H
 
-/// @file ra-opcheck.H
+/// @file opcheck.H
 /// @brief Check array argument agreement and select driving argument.
 
 #include "ra/tuple-list.H"
-#include "ra/ra-bootstrap.H"
+#include "ra/bootstrap.H"
 
 namespace ra {
 

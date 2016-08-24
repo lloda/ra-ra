@@ -17,9 +17,9 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 
@@ -53,6 +53,11 @@ int main()
         tr.test_eq(ra::Small<int, 3> {2, 1, 4}, a + ra::start(b));
         ra::start(b) = ra::Small<int, 3> {7, 4, 5};
         tr.test_eq(ra::Small<int, 3> {7, 4, 5}, ra::start(b));
+
+        int cp[3] = {1, 2, 3};
+        // ra::Owned<int, 1> c({3}, &cp[0]); // forbidden, confusing for higher rank c (pointer matches as rank 1).
+        ra::Owned<int, 1> c({3}, ra::start(cp)); // must start manually
+        tr.test_eq(ra::Small<int, 3> {1, 2, 3}, c);
     }
     section("restricted iterators");
     {

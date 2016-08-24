@@ -7,7 +7,7 @@
 // later version.
 
 // @TODO Check that Iota+scalar, etc. is also a Iota. Currently, it's an Expr,
-// because the ops below are overriden by the generic ops in ra-operators.H.
+// because the ops below are overriden by the generic ops in operators.H.
 
 #define RA_OPTIMIZE 0 // disable automatic use, so we can compare with (forced) and without
 #define RA_OPTIMIZE_IOTA 1 // enable all definitions
@@ -16,8 +16,8 @@
 #define RA_OPTIMIZE_SMALLVECTOR 1
 #endif
 
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include "ra/test.H"
 
 using std::cout; using std::endl;
@@ -68,13 +68,16 @@ int main()
         tr.test_eq(ra::vector({0, 2, 4, 6, 8}), k4);
     }
 #if RA_OPTIMIZE_SMALLVECTOR==1
-    section("small vector ops through vector extensions");
+    section("small vector ops through vector extensions [opt-small]");
     {
-        auto x = optimize(ra::Small<double, 4>{1, 2, 3, 4} + ra::Small<double, 4>{5, 6, 7, 8});
-        auto y = ra::Small<double, 4>{1, 2, 3, 4} + ra::Small<double, 4>{5, 6, 7, 8};
-        static_assert(std::is_same<decltype(x), ra::Small<double, 4> >::value, "bad optimization");
-        static_assert(!std::is_same<decltype(y), ra::Small<double, 4> >::value, "bad non-optimization");
-        tr.test_eq(x, y);
+        using Vec = ra::Small<double, 4>;
+        auto x = optimize(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
+// @BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter).
+        Vec a {1, 2, 3, 4}, b {5, 6, 7, 8};
+        auto y = a + b;
+        static_assert(std::is_same<decltype(x), Vec>::value, "bad optimization");
+        static_assert(!std::is_same<decltype(y), Vec>::value, "bad non-optimization");
+        tr.test_eq(y, x);
     }
 #endif
     return tr.summary();

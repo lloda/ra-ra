@@ -9,11 +9,11 @@
 #ifndef RA_ATOM_H
 #define RA_ATOM_H
 
-/// @file ra-atom.H
+/// @file atom.H
 /// @brief Expression templates for arrays with frame matching: terminal nodes.
 
-#include "ra/ra-traits.H"
-#include "ra/ra-opcheck.H"
+#include "ra/traits.H"
+#include "ra/opcheck.H"
 
 #ifdef RA_CHECK_BOUNDS
     #define RA_CHECK_BOUNDS_RA_ATOM RA_CHECK_BOUNDS
@@ -106,7 +106,7 @@ struct Scalar
     constexpr static bool done() { return false; }
     constexpr static dim_t preferred_stride(int const i) { return 0; }
 
-// impl depends on ra::Expr, see ra-expr.H
+// impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
@@ -168,7 +168,7 @@ struct Vector
     auto flat() const { return p__; }
     bool done() const { return p__==v.end(); }
 
-// impl depends on ra::Expr, see ra-expr.H
+// impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP)                               \
     template <class X> void operator OP(X && x);
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
@@ -228,7 +228,7 @@ struct Ptr
     auto flat() const { return p__; }
     constexpr static bool done() { return false; }
 
-// impl depends on ra::Expr, see ra-expr.H
+// impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP)                               \
     template <class X> void operator OP(X && x);
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
@@ -301,7 +301,7 @@ iota(dim_t size, O org=0, S stride=1)
 
 template <class I> struct is_beatable_def
 {
-    constexpr static bool value = mp::Or<std::is_integral<I> >::value;
+    constexpr static bool value = std::is_integral<I>::value;
     constexpr static int skip_src = 1;
     constexpr static int skip = 0;
     constexpr static bool static_p = value; // can the beating can be resolved statically?
@@ -343,20 +343,17 @@ constexpr bool has_tensorindex_def<TensorIndex<w_, value_type_> > = true;
 template <class Op, class T, class K=mp::index_tuple_<T>> struct Expr;
 
 template <class Op, class ... Ti, class K>
-constexpr bool has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>>
-    = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
+constexpr bool has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
 
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
 
 template <class LiveAxes, int depth, class A>
-constexpr bool has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>>
-    = has_tensorindex<A>;
+constexpr bool has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>> = has_tensorindex<A>;
 
 template <class FM, class Op, class T, class K=mp::index_tuple_<T>> struct Ryn;
 
 template <class FM, class Op, class ... Ti, class K>
-constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>>
-    = mp::Or<mp::bool_t<has_tensorindex<Ti> > ...>::value;
+constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
 
 } // namespace ra
 

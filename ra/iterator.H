@@ -9,11 +9,11 @@
 #ifndef RA_ITERATOR_H
 #define RA_ITERATOR_H
 
-/// @file ra-iterator.H
+/// @file iterator.H
 /// @brief Row-major iterator, supports both STL and ply interfaces.
 
-#include "ra/ra-traits.H"
-#include "ra/ra-opcheck.H"
+#include "ra/traits.H"
+#include "ra/opcheck.H"
 #include <iostream>
 
 #ifdef RA_CHECK_BOUNDS
@@ -99,12 +99,16 @@ struct cell_iterator
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
     template <class SS> cell_iterator(SS const & s_, atom_type * p_): dim(s_)
     {
-        c.p = p_;
         rank_t const rank = this->rank();
+        for (int k=0; ; ++k) {
+            if (k==rank) {
+                c.p = p_;
+                break;
+            }
 // so begin()==end() for un-plied iterator on empty range. For STL-like use; ra::Iterator shouldn't check loop end in this way.
-        for (int k=0; k<rank; ++k) {
             if (s_[k].size==0) {
                 c.p = nullptr;
+                break;
             }
         }
         rank_t const cellr = dependent_cell_rank(rank_t(dim.size()), cellr_spec);
@@ -187,7 +191,7 @@ struct ra_iterator<V, 0>: public cell_iterator<V, 0, ra_iterator<V, 0>>
 };
 
 template <class Iterator>
-struct stl_iterator: private Iterator
+struct stl_iterator
 {
     using value_type = typename Iterator::value_type;
     using difference_type = dim_t;
@@ -197,19 +201,20 @@ struct stl_iterator: private Iterator
     using iterator_category = std::forward_iterator_tag;
     using shape_type = typename Iterator::P::shape_type;
 
+    Iterator ii;
     shape_type i;
-    stl_iterator(): Iterator() {};
+    stl_iterator(): ii() {};
     template <class SS> stl_iterator(SS const & s_, typename Iterator::P::atom_type * p_)
-        : Iterator(s_, p_), i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), Iterator::cellr_spec), 0)) {};
+        : ii(s_, p_), i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), ii.cellr_spec), 0)) {};
 
-    template <class PP> bool operator==(PP const & j) const { return Iterator::c.p==j.c.p; }
-    template <class PP> bool operator!=(PP const & j) const { return Iterator::c.p!=j.c.p; }
+    template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
+    template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
 // taken from Iterator to handle the special case for cellr=0.
-    decltype(auto) operator*() const { return Iterator::operator_star(); }
-    decltype(auto) operator*() { return Iterator::operator_star(); }
+    decltype(auto) operator*() const { return ii.operator_star(); }
+    decltype(auto) operator*() { return ii.operator_star(); }
     stl_iterator & operator++()
     {
-        next_in_cube(Iterator::rank(), Iterator::dim, i, Iterator::c.p);
+        next_in_cube(ii.rank(), ii.dim, i, ii.c.p);
         return *this;
     }
 };

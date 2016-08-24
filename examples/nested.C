@@ -3,8 +3,8 @@
 // Adapted from blitz++/examples/cast.cpp
 // Nested heterogeneous arrays
 
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 #include <iostream>
 
 using std::cout; using std::endl;

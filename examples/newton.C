@@ -1,13 +1,13 @@
 
-// After Chaitin1986, p. 14. Attempt at traight translation from APL.
+// After Chaitin1986, p. 14. Attempt at straight translation from APL.
 // Newton -- Orbits
 // (c) Daniel Llorens - 2016
 
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include "ra/ra-io.H"
-#include "ra/ra-operators.H"
+#include "ra/io.H"
+#include "ra/operators.H"
 #include "ra/format.H"
 
 using real = double;
@@ -40,12 +40,10 @@ int main()
     auto draw = [&orbit, &c](auto && x, auto && t)
         {
             auto mapc = [](real x) { return max(0, min(49, int(round(25+x/5e5)))); };
-// @TODO there are bugs with array.at(index) to do orbit.at(mapc(x)).
-
-// 1. clang accepts, gcc rejects (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67041 ??) wait for gcc 6. Note that we still can't use iter<1> on an ET.
-            // array<int, 2> xi = map(mapc, x);
-            // at(orbit, xi(ra::all, ra::iota(2)).template iter<1>()) = c;
-// 2. for the time being, or w/o temps
+// 1. gcc ≥ 6.2 b/c of https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67041. Note @TODO we still can't use iter<1> on an ET.
+            array<int, 2> xi = map(mapc, x);
+            at(orbit, xi(ra::all, ra::iota(2)).template iter<1>()) = c;
+// 2. alternative w/o temps
             for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
                      x.template iter<1>(), c);
 

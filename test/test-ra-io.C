@@ -13,9 +13,9 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/ra-large.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
+#include "ra/large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 using real = double;
@@ -31,7 +31,7 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
     o << a;
     cout << "\nwritten: " << o.str() << endl;
     std::istringstream i(o.str());
-    std::decay_t<CC> c(ra::init_not);
+    std::decay_t<CC> c;
     i >> c;
     cout << "\nread: " << c << endl;
 // @TODO start() outside b/c where(bool, vector, vector) not handled. ra::where(bool, scalar, scalar) should work at least.

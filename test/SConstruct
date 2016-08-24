@@ -1,7 +1,7 @@
 # -*- mode: Python -*-
 # -*- coding: utf-8 -*-
 
-# (c) Daniel Llorens - 2015
+# (c) Daniel Llorens - 2015-2016
 
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -51,8 +51,9 @@ if arch.find('86-apple-darwin') >= 0:
 else:
     archflags=['-march=native']
 
-env.Append(CPPPATH=['..', 'test'], CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-           CXXFLAGS=['-std=c++14', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+env.Append(CPPPATH=['..', 'test'],
+           CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
+           CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
                      #'-Wconversion',
                      # '-funsafe-math-optimizations', # @TODO Test with this.
                  ])
@@ -88,25 +89,6 @@ def to_test_ra(env, source):
     test = env.Program(source, [source + '.C'])
     to_test(env, test, [test[0].abspath])
 
-[to_test_ra(env, test)
- for test in ['test-ra-types',
-              'test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
-              'test-ra-io', 'test-ra-from', 'test-ra-nested', 'test-ra-owned',
-              'test-ra-ownership', 'test-ra-ply', 'test-ra-small',
-              'test-ra-wrank', 'test-ra-return-expr', 'test-ra-reduction',
-              'test-ra-frame-matching', 'test-ra-compatibility',
-              'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
-              'test-ra-6', 'test-ra-where', 'test-tuplelist',
-              'test-ra-7', 'test-ra-8',
-              'test-wedge-product', 'test-ra-operators', 'test-ra-tensorindex',
-              'test-ra-explode-collapse',
-              ]]
-
-[to_test_ra(env, test)
- for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-gemm',
-          'bench-ra-pack']]
-
-
 def print_summary():
     from SCons.Script import GetBuildFailures
     test_item_tally = 0
@@ -127,6 +109,24 @@ def print_summary():
 
     print '%d targets failed to build.' % build_tally
     print '%d tests failed with %d total failures.' % (test_tally, test_item_tally)
+
+[to_test_ra(env, test)
+ for test in ['test-ra-types',
+              'test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
+              'test-ra-io', 'test-ra-from', 'test-ra-nested', 'test-ra-owned',
+              'test-ra-ownership', 'test-ra-ply', 'test-ra-small',
+              'test-ra-wrank', 'test-ra-return-expr', 'test-ra-reduction',
+              'test-ra-frame-matching', 'test-ra-compatibility',
+              'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
+              'test-ra-6', 'test-ra-where', 'test-tuplelist',
+              'test-ra-7', 'test-ra-8',
+              'test-wedge-product', 'test-ra-operators', 'test-ra-tensorindex',
+              'test-ra-explode-collapse',
+              ]]
+
+[to_test_ra(env, test)
+ for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-gemm',
+          'bench-ra-pack']]
 
 if 'skip_summary' not in top:
     atexit.register(print_summary)

@@ -14,7 +14,7 @@
 
 #include <complex>
 #include "ra/real.H"
-#include "ra/ra-type.H"
+#include "ra/type.H"
 
 namespace ra {
 

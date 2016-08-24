@@ -12,9 +12,9 @@
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/mpdebug.H"
-#include "ra/ra-operators.H"
-#include "ra/ra-io.H"
-#include "ra/ra-large.H"
+#include "ra/operators.H"
+#include "ra/io.H"
+#include "ra/large.H"
 #include "ra/wedge.H"
 
 using std::cout; using std::endl;
@@ -162,7 +162,7 @@ int main()
     section("constructors from expr"); // @TODO For all other Container types.
     {
         {
-// @TODO Systematic init-from-expr tests (every expr type vs every container type) with ra-operators.H included.
+// @TODO Systematic init-from-expr tests (every expr type vs every container type) with operators.H included.
             ra::Unique<int, 1> a({3}, { 1, 2, 3 });
             ra::Unique<int, 1> b({3}, { 10, 20, 30 });
             ra::Unique<int, 1> c(a.iter() + b.iter());
@@ -286,6 +286,5 @@ int main()
         auto d = fun::hodge<3, 1>(a);
         tr.test_eq(a, d);
     }
-
     return tr.summary();
 }

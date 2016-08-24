@@ -9,7 +9,7 @@
 #ifndef RA_BOOTSTRAP_H
 #define RA_BOOTSTRAP_H
 
-/// @file ra-bootstrap.H
+/// @file bootstrap.H
 /// @brief Multidimensional arrays. Before all other includes.
 
 #include "ra/tuple-list.H"
@@ -60,8 +60,6 @@ constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
 }
 
 // used in array constructors.
-enum class init_not_t { value };
-constexpr init_not_t init_not = init_not_t::value;
 enum class unspecified_t { value };
 constexpr unspecified_t unspecified = unspecified_t::value;
 

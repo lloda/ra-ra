@@ -8,8 +8,8 @@
 #include <thread>
 #include <string>
 #include "ra/test.H"
-#include "ra/ra-io.H"
-#include "ra/ra-operators.H"
+#include "ra/io.H"
+#include "ra/operators.H"
 #include "ra/format.H"
 
 using real = double;
