@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-nested.C
+/// @file test-nested.C
 /// @brief Using nested arrays as if they were arrays if higher rank.
 
 // @TODO Make more things work and work efficiently.

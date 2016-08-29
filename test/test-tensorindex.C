@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-tensorindex.C
+/// @file test-tensorindex.C
 /// @brief Limitations of ra::TensorIndex.
 
 #include "ra/operators.H"

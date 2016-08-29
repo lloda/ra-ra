@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-types.C
+/// @file test-types.C
 /// @brief Show what types conform to what type predicates.
 
 #include <iostream>

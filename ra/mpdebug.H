@@ -26,49 +26,35 @@ struct show_number
 template <class type_, bool condition=false>
 struct show_type
 {
-    typedef type_ type;
+    using type = type_;
     static bool const value = condition;
     static_assert(condition, "bad type");
 };
 
-// Also prints lists of lists.
-template <class A>
-struct print_int_list
+// Prints recursively, i.e. int_t trees.
+
+template <class A> struct print_int_list {};
+
+template <class A> std::ostream &
+operator<<(std::ostream & o, print_int_list<A> const & a)
+{
+    return print_int_list<A>::f(o);
+}
+
+template <class ... A>
+struct print_int_list<std::tuple<A ...> >
 {
     static std::ostream & f(std::ostream & o)
     {
-        o << ".";
-        return o;
+        return ((o << "[") << ... << print_int_list<A> {}) << "]";
     }
 };
-template <class A0, class ... A>
-struct print_int_list<std::tuple<A0, A ...>>
+template <int i0>
+struct print_int_list<mp::int_t<i0> >
 {
     static std::ostream & f(std::ostream & o)
     {
-        o << "[";
-        print_int_list<A0>::f(o);
-        print_int_list<std::tuple<A ...>>::f(o);
-        return o;
-    }
-};
-template <int i0, class ... A>
-struct print_int_list<std::tuple<mp::int_t<i0>, A ...>>
-{
-    static std::ostream & f(std::ostream & o)
-    {
-        o << i0 << " ";
-        print_int_list<std::tuple<A ...>>::f(o);
-        return o;
-    }
-};
-template <>
-struct print_int_list<std::tuple<>>
-{
-    static std::ostream & f(std::ostream & o)
-    {
-        o << ";";
-        return o;
+        return (o << i0 << " ");
     }
 };
 

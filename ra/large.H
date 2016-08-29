@@ -342,7 +342,7 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
         return *this;
     }
 
-// Provided b/c want {} to call initializer_list constructor below. @TODO Why do I need to init p; warning on test-ra-io.C.
+// Provided b/c want {} to call initializer_list constructor below. @TODO Why do I need to init p; warning on test-io.C.
     WithStorage()
     {
         for (Dim & dimi: Raw::dim) { dimi = {0, 1}; } // 1 so we can push_back()
@@ -547,7 +547,6 @@ struct ra_traits_def<Raw<T, RANK_ANY>>
 {
     using V = Raw<T, RANK_ANY>;
     using value_type = T;
-
     using shape_type = std::vector<dim_t>;
     static shape_type shape(V const & v)
     {
@@ -558,7 +557,6 @@ struct ra_traits_def<Raw<T, RANK_ANY>>
         }
         return s;
     }
-
     static dim_t size(V const & v) { return v.size(); }
     static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK_ANY; };

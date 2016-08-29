@@ -111,22 +111,18 @@ def print_summary():
     print '%d tests failed with %d total failures.' % (test_tally, test_item_tally)
 
 [to_test_ra(env, test)
- for test in ['test-ra-types',
-              'test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
-              'test-ra-io', 'test-ra-from', 'test-ra-nested', 'test-ra-owned',
-              'test-ra-ownership', 'test-ra-ply', 'test-ra-small',
-              'test-ra-wrank', 'test-ra-return-expr', 'test-ra-reduction',
-              'test-ra-frame-matching', 'test-ra-compatibility',
-              'test-dual', 'test-ra-dual', 'test-ra-5', 'test-ra-stl-compat',
-              'test-ra-6', 'test-ra-where', 'test-tuplelist',
-              'test-ra-7', 'test-ra-8',
-              'test-wedge-product', 'test-ra-operators', 'test-ra-tensorindex',
-              'test-ra-explode-collapse',
+ for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
+              'test-ra-6', 'test-ra-7', 'test-ra-8',
+              'test-types', 'test-io', 'test-from', 'test-nested', 'test-owned',
+              'test-ownership', 'test-ply', 'test-small', 'test-wrank',
+              'test-return-expr', 'test-reduction', 'test-frame-match',
+              'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
+              'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
+              'test-tensorindex', 'test-explode-collapse',
               ]]
 
 [to_test_ra(env, test)
- for test in ['bench-ra-dot', 'bench-ra-reduce-sqrm', 'bench-ra-from', 'bench-ra-gemm',
-          'bench-ra-pack']]
+ for test in ['bench-dot', 'bench-reduce-sqrm', 'bench-from', 'bench-gemm', 'bench-pack']]
 
 if 'skip_summary' not in top:
     atexit.register(print_summary)

@@ -6,6 +6,9 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+/// @file test-where.C
+/// @brief Using ra:: array & iterator types with the STL algos & types.
+
 // Regression test for a bug in where() when both T/F arms are Expr.
 
 #include "ra/operators.H"
@@ -99,6 +102,12 @@ int main()
 // Both must be lvalues; @TODO check that either of these is an error.
         // where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
         // where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
+    }
+    section("where with rvalue TensorIndex, fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
+    {
+        tr.test_eq(ra::Small<int, 2> {0, 1},
+                   where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>()));
+        tr.test_eq(ra::Unique<int, 1> { 0, 2 }, where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
     }
     return tr.summary();
 }

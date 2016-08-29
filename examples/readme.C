@@ -96,8 +96,7 @@ int main()
     section("rank conjuction");
     {
 // This is a translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
-// @TODO ra::map doesn't support verbs-with-rank yet. When it does, map will replace ryn here.
-        ra::Owned<float, 2> A = ryn(ra::wrank<0, 1>::make(std::minus<float>()), ra::iota(3), ra::iota(4));
+        ra::Owned<float, 2> A = map(ra::wrank<0, 1>(std::minus<float>()), ra::iota(3), ra::iota(4));
         cout << "A: " << A << "\n\n";
     }
 // A proper selection operator with 'beating' of range or scalar subscripts.

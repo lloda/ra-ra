@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-frame-matching.C
+/// @file test-frame-matching.C
 /// @brief Specific frame-matching tests, previously in test-ra-0.C.
 
 #include <iostream>

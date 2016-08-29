@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-ra-gemm.H
+/// @file bench-gemm.H
 /// @brief Benchmark for BLAS-3 type ops
 
 // These operations aren't really part of the ET framework, just
@@ -49,7 +49,7 @@ gemm_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
     return c;
 }
 
-// See test-ra-wrank "outer product variants" for the rationale.
+// See test-wrank.C "outer product variants" for the rationale.
 // @TODO based on this, allow a Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k) without actually using TensorIndex (e.g. no ply_index).
 template <class S, class T>
 inline auto
@@ -58,12 +58,12 @@ gemm_reduce_k(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
     int const M = a.size(0);
     int const N = b.size(1);
     ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::unspecified);
-    ra::ply_either(ra::ryn(ra::wrank<1, 1, 2>::make(ra::wrank<1, 0, 1>::make([](auto & c, auto && a, auto && b) { c += a*b; })),
-                           start(c), start(a), start(b)));
+    for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })),
+             c, a, b);
     return c;
 }
 
-#define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT)               \
+#define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT)                 \
     template <class S, class T>                                         \
     inline auto                                                         \
     NAME_K(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)            \

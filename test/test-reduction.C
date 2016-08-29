@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-reduction.C
+/// @file test-reduction.C
 /// @brief Test array reductions.
 
 #include <iostream>
@@ -157,21 +157,22 @@ int main()
         {
             ra::Unique<real, 1> C({100}, 0.);
             for_each([](auto & c, auto a) { c += a; }, C, A);
-            tr.quiet().test_eq(B, C);
+            tr.test_eq(B, C);
         }
-// This depends on matching frames for += just as for any other op, which is at odds with
-// e.g. amend.
+// This depends on matching frames for += just as for any other op, which is at odds with e.g. amend.
         {
             ra::Unique<real, 1> C({100}, 0.);
             C += A;
-            tr.quiet().test_eq(B, C);
+            tr.test_eq(B, C);
         }
-// It cannot work with a lhs scalar value since += must be a class member, but it will work
-// with a rank 0 array.
+// It cannot work with a lhs scalar value since += must be a class member, but it will work with a rank 0 array or with ra::Scalar.
         {
             ra::Unique<real, 0> C({}, 0.);
             C += A(0);
-            tr.quiet().test_eq(B(0), C);
+            tr.test_eq(B(0), C);
+            real c(0.);
+            ra::scalar(c) += A(0);
+            tr.test_eq(B(0), c);
         }
 // This will fail because the assumed driver (RANK_ANY) has lower actual rank than the other argument. @TODO check that it fails.
         // {
@@ -180,9 +181,6 @@ int main()
         //     C += A(0);
         // }
     }
-    return tr.summary();
-
-// @TODO as above, but also missing sugar. for_each(verb, C, A) should work.
     section("to sum rows in crude ways");
     {
         ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
@@ -195,18 +193,24 @@ int main()
         {
             ra::Unique<real, 1> C({111}, 0.);
             for_each([&C](auto && a) { C += a; }, A.iter<1>());
-            tr.quiet().test_eq(B, C);
+            tr.test_eq(B, C);
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
-            ply_either(ra::ryn(ra::verb<1, 1>::make([](auto & c, auto && a) { c += a; }), C.iter(), A.iter()));
-            tr.quiet().test_eq(B, C);
+            for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), C, A);
+            tr.test_eq(B, C);
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
-            ply_either(ra::ryn(ra::wrank<1, 1>::make(ra::verb<0, 0>::make([](auto & c, auto a) { c += a; })), C.iter(), A.iter()));
-            tr.quiet().test_eq(B, C);
+            for_each(ra::wrank<1, 1>(ra::wrank<0, 0>([](auto & c, auto a) { c += a; })), C, A);
+            tr.test_eq(B, C);
         }
+        // @TODO make this work.
+        // {
+        //     ra::Unique<real, 1> C({111}, 0.);
+        //     C.iter<-1>() += A.iter<-1>();
+        //     tr.test_eq(B, C);
+        // }
     }
 
     return tr.summary();

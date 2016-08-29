@@ -453,14 +453,8 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
 
     using Base::operator=;
 // templated operator= cannot take these over. As in ra::Raw.
-    SmallSlice & operator=(SmallSlice && x)
-    {
-        return Base::operator=(x);
-    }
-    SmallSlice & operator=(SmallSlice const & x)
-    {
-        return Base::operator=(x);
-    }
+    SmallSlice & operator=(SmallSlice && x) { return Base::operator=(x); }
+    SmallSlice & operator=(SmallSlice const & x) { return Base::operator=(x); }
 };
 
 #define SMALLARRAY_DEFINITIONS                                          \
@@ -540,7 +534,6 @@ struct ra_traits_small
 {
     using V = Type_<T, sizes, strides>;
     using value_type = T;
-
     using shape_type = Small<dim_t, V::rank()>;
     static shape_type shape(V const & v) { return mp::tuple_copy<sizes, shape_type>::f(); }
 #define MAKE_COND (std::is_same<strides, mp::int_list<1> >::value && std::is_same<sizes, mp::Take_<sizes, 1> >::value)
@@ -557,7 +550,6 @@ struct ra_traits_small
         return V(t);
     }
 #undef MAKE_COND
-
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return V::rank(); }
     constexpr static dim_t size_s() { return V::size(); }

@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-ra-dot.H
+/// @file bench-dot.H
 /// @brief Benchmark for dot with various array types.
 
 #include <iostream>
@@ -166,25 +166,25 @@ by_raw(A const & a, B const & b)
 #define BY_PLY_TAGGED(TAG, DESC, PLYER)                                 \
     /* plain */                                                         \
     BY_PLY(JOIN(by_ply1, TAG), DESC " (1-level, no \")",                \
-           PLYER(ra::expr([&y](real const a, real const b) { y += a*b; }, \
-                             a, b)))                                    \
+           PLYER(map([&y](real const a, real const b) { y += a*b; },    \
+                     a, b)))                                            \
                                                                         \
     /* separate reduction: compare abstraction penalty with by_ply. */  \
     BY_PLY(JOIN(by_ply2, TAG), DESC " (2-level, no \")",                \
-           PLYER(ra::expr([&y](real const a) { y += a; },            \
-                             ra::expr([](real const a, real const b) { return a*b; }, \
-                                         a, b))))                       \
+           PLYER(map([&y](real const a) { y += a; },                    \
+                     map([](real const a, real const b) { return a*b; }, \
+                         a, b))))                                       \
                                                                         \
     /* using trivial rank conjunction */                                \
     BY_PLY(JOIN(by_ply3, TAG), DESC " (1-level, trivial \")",           \
-           PLYER(ra::ryn(ra::verb<0, 0>::make([&y](real const a, real const b) { y += a*b; }), \
-                         a, b)))                                        \
+           PLYER(map(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), \
+                     a, b)))                                            \
                                                                         \
     /* separate reduction: using trivial rank conjunction */            \
     BY_PLY(JOIN(by_ply4, TAG), DESC " (2-level, trivial \")",           \
-           PLYER(ra::ryn(ra::verb<0>::make([&y](real const a) { y += a; }), \
-                         ra::ryn(ra::verb<0, 0>::make([](real const a, real const b) { return a*b; }), \
-                                 a, b))));
+           PLYER(map(ra::wrank<0>([&y](real const a) { y += a; }),      \
+                     map(ra::wrank<0, 0>([](real const a, real const b) { return a*b; }), \
+                         a, b))));
 
 BY_PLY_TAGGED(a, "ply_ravel", ra::ply_ravel);
 BY_PLY_TAGGED(b, "ply_index", ra::ply_index);

@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-ra-from.C
+/// @file bench-from.C
 /// @brief Benchmark for ra:: selection ops.
 
 #include <iostream>

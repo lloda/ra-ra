@@ -41,7 +41,6 @@ struct Verb
     Op op;
 };
 
-// @TODO would prefer verb<r ...>(f), but can't deduce pack not at end.
 template <rank_t ... crank>
 struct verb
 {
@@ -53,7 +52,10 @@ struct verb
         return Verb<cranks, Op> { std::forward<Op>(op) };
     }
 };
-template <rank_t ... crank> using wrank = verb<crank ...>;
+template <rank_t ... crank, class Op> auto wrank(Op && op)
+{
+    return verb<crank ...>::make(std::forward<Op>(op));
+}
 
 template <class A>
 struct ValidRank
@@ -399,7 +401,7 @@ template <class ... Ki>
 struct number_ryn<std::tuple<Ki ...>>
 {
     template <class V, class ... Ti>
-    static decltype(auto) f(V && v, Ti && ... t)
+    static auto f(V && v, Ti && ... t)
     {
         using FM = Framematch<V, std::tuple<Ti ...>>;
 // (note 1) ryn_ doesn't forward because v is already wrapped as ref or not by FM::op.
@@ -408,10 +410,18 @@ struct number_ryn<std::tuple<Ki ...>>
 };
 
 template <class V, class ... Ti>
-decltype(auto) ryn(V && v, Ti && ... t)
+constexpr auto ryn(V && v, Ti && ... t)
 {
     return number_ryn<mp::index_tuple_<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
 }
+
+template <class cranks, class Op, class ... Ti>
+constexpr auto expr(Verb<cranks, Op> && v, Ti && ... t) // @TODO not universal ref anymore
+{
+    using V = decltype(v);
+    return number_ryn<mp::index_tuple_<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
+}
+
 
 // ---------------------------
 // from, after APL, like (from) in guile-ploy
@@ -429,7 +439,7 @@ struct index_rank
 template <class II, int take>
 struct from_partial_wrank
 {
-    template <class ... I> struct wrank_int_t { using type = wrank<I::value ...>; };
+    template <class ... I> struct wrank_int_t { using type = verb<I::value ...>; };
     constexpr static int drop = mp::len<II>-take;
     using type = mp::Apply_<wrank_int_t,
                             mp::Append_<mp::MakeList_<drop, mp::int_t<0>>,
@@ -456,14 +466,14 @@ struct from_partial<II, 0>
     }
 };
 
-// @TODO should provide support for dynamic rank (see test in test-ra-from.C).
+// @TODO should provide support for dynamic rank (see test in test-from.C).
 template <class A, class I0>
 auto from(A && a, I0 && i0)
 {
     return expr([&a](auto && i0) -> decltype(auto) { return a(i0); }, start(std::forward<I0>(i0)));
 }
 
-// @TODO we should be able to do better by slicing at each dimension, etc. But wrank<> only supports rank-0 for the innermost op.
+// @TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
 template <class A, class ... I>
 auto from(A && a, I && ... i)
 {

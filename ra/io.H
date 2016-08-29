@@ -111,7 +111,7 @@ operator>>(std::istream & i, C & c)
     typename ra_traits<C>::shape_type s;
     if (i >> s) {
         c = std::decay_t<C>(s, ra::unspecified);
-        if (c.size()>0) { // I'd say a bug in copy_n; see failing case in test-ra-nested.C.
+        if (c.size()>0) { // I'd say a bug in copy_n; see failing case in test-nested.C.
             std::copy_n(std::istream_iterator<T>(i), c.size(), c.begin());
         }
     }

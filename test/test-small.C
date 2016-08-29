@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-small.C
+/// @file test-small.C
 /// @brief Making ra::Small and its iterator work with expressions/traversal.
 
 #include <iostream>
@@ -31,16 +31,22 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr;
-    section("pieces of transpose(ra::Small)"); // @TODO actually check
+    section("pieces of transpose(ra::Small)");
     {
         using sizes = mp::int_list<1, 2, 3, 4, 5>;
         using strides = mp::int_list<1, 10, 100, 1000, 10000>;
-        using case0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0> >;
-        cout << "0...type " << mp::len<case0::type> << ": " ; mp::print_int_list<case0::type>::f(cout) << endl;
-        using case1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1> >;
-        cout << "1...type " << mp::len<case1::type> << ": " ; mp::print_int_list<case1::type>::f(cout) << endl;
-        using caseall = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>;
-        cout << "caseall...type " << mp::len<caseall::type> << ": " ; mp::print_int_list<caseall::type>::f(cout) << endl;
+
+        using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0> >::type;
+        using e0 = mp::int_list<0, 4>;
+        tr.info(mp::print_int_list<e0> {}, " vs ", mp::print_int_list<c0> {}).test(std::is_same<e0, c0>::value);
+
+        using c1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1> >::type;
+        using e1 = mp::int_list<1>;
+        tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same<e1, c1>::value);
+
+        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>::type;
+        using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2> >;
+        tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same<eall, call>::value);
     }
     section("transpose(ra::Small)");
     {
@@ -59,6 +65,12 @@ int main()
         auto xt = transpose<>(x);
         tr.info("<> rank").test_eq(0, xt.rank());
         tr.info("<>").test_eq(99, xt);
+
+        ra::Small<real, 3, 3> x3 = ra::_0 - ra::_1;
+        ra::Small<real, 3, 3> y3 = transpose<1, 0>(x3);
+        tr.info("transpose copy").test_eq(y3, ra::_1 - ra::_0);
+        x3() = transpose<1, 0>(y3());
+        tr.info("transpose copy").test_eq(x3, ra::_0 - ra::_1);
     }
     section("constructors");
     {
@@ -163,19 +175,14 @@ int main()
             cout << s << endl;
             tr.test_eq(ra::Small<real, 3, 2> { 3, 2, 5, 4, 7, 6 }, s);
 
-            cout << "S00" << endl;
             ra::Small<real, 3, 2> z = s;
-            cout << "S01" << endl;
             z *= -1;
-            cout << "S02" << endl;
 
 // check that SmallSlice = SmallSlice copies contents, just as Raw = Raw.
             s(0) = z(2);
             s(1) = z(1);
             s(2) = z(0);
-            cout << "z: " << z << endl;
             tr.test_eq(ra::Small<real, 3, 2> { -3, -2, -5, -4, -7, -6 }, z);
-            cout << "s: " << s << endl;
             tr.test_eq(ra::Small<real, 3, 2> { -7, -6, -5, -4, -3, -2 }, s);
         }
         section("with tuples");
@@ -184,9 +191,6 @@ int main()
             ra::Small<int, 2> i2 { 1, 1 };
             ra::Small<int, 1> i1 { 1 };
             ra::Small<int, 0> i0 { };
-            cout << "s(i2): " << s.at(i2) << endl;
-            cout << "s(i1): " << s.at(i1) << endl;
-            cout << "s(i0): " << s.at(i0) << endl;
             real check2[1] = { 5 };
             real check1[2] = { 2, 5 };
             real check0[6] = { 1, 4, 2, 5, 3, 6 };
@@ -197,9 +201,9 @@ int main()
         section("with rank 1 subscripts");
         {
             ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
-            cout << "s(1, :): " << s(0) << endl;
-            cout << "s(2, :): " << s(1) << endl;
-            cout << "s(3, :): " << s(2) << endl;
+            tr.test_eq(ra::Small<int, 2> { 1, 4 }, s(0));
+            tr.test_eq(ra::Small<int, 2> { 2, 5 }, s(1));
+            tr.test_eq(ra::Small<int, 2> { 3, 6 }, s(2));
             tr.test_eq(ra::Small<int, 3> { 1, 2, 3 }, s(ra::all, 0));
             tr.test_eq(ra::Small<int, 3> { 4, 5, 6 }, s(ra::all, 1));
             tr.test_eq(1, s(ra::all, 1).rank());
@@ -250,12 +254,6 @@ int main()
                 tr.test(std::equal(check, check+6, t.begin()));
             }
         }
-        // section("with unbeatable rank 1 subscripts"); // @TODO
-        // {
-        //     ra::Small<complex, 4> a = { 1, 2, 3, 4 };
-        //     ra::Small<int, 4> i = { 3, 2, 1, 0 };
-        //     cout << a(i) << endl;
-        // }
     }
     section("custom strides. List init is always row-major.");
     {
@@ -299,25 +297,25 @@ int main()
     {
         ra::Small<real, 3> a { 1, 4, 2 };
         tr.test_eq(3, a.iter().size(0));
-#define TEST(plier)                                                     \
-        {                                                               \
-            real s = 0;                                                 \
-            plier(ra::expr([&s](real & a) { s += a; }, a.iter()));   \
+#define TEST(plier)                                                 \
+        {                                                           \
+            real s = 0;                                             \
+            plier(ra::expr([&s](real & a) { s += a; }, a.iter()));  \
             tr.test_eq(7, s);                                       \
         }
         TEST(ply_ravel)
-        TEST(ply_index)
+            TEST(ply_index)
 #undef TEST
-    }
+            }
     section("expr with Small, rank 2");
     {
         ra::Small<real, 3, 2> a { 1, 4, 2, 5, 3, 6 };
         tr.test_eq(3, a.iter().size(0));
         tr.test_eq(2, a.iter().size(1));
-#define TEST(plier)                                                     \
-        {                                                               \
-            real s = 0;                                                 \
-            plier(ra::expr([&s](real & a) { s += a; }, a.iter()));   \
+#define TEST(plier)                                                 \
+        {                                                           \
+            real s = 0;                                             \
+            plier(ra::expr([&s](real & a) { s += a; }, a.iter()));  \
             tr.test_eq(21, s);                                      \
         }
         TEST(ply_ravel);
@@ -327,12 +325,12 @@ int main()
         {                                                               \
             ra::Small<real, 3, 2> b;                                    \
             plier(ra::expr([](real & a, real & b) { b = -a; }, a.iter(), b.iter())); \
-            tr.test_eq(-1, b(0, 0));                                \
-            tr.test_eq(-4, b(0, 1));                                \
-            tr.test_eq(-2, b(1, 0));                                \
-            tr.test_eq(-5, b(1, 1));                                \
-            tr.test_eq(-3, b(2, 0));                                \
-            tr.test_eq(-6, b(2, 1));                                \
+            tr.test_eq(-1, b(0, 0));                                    \
+            tr.test_eq(-4, b(0, 1));                                    \
+            tr.test_eq(-2, b(1, 0));                                    \
+            tr.test_eq(-5, b(1, 1));                                    \
+            tr.test_eq(-3, b(2, 0));                                    \
+            tr.test_eq(-6, b(2, 1));                                    \
         }
         TEST(ply_ravel);
         TEST(ply_index);
@@ -425,15 +423,15 @@ int main()
     section("compile time subscripting of ra::Small (as)");
     {
         auto test_as = [&tr](auto && a, auto && b)
-        {
-            tr.test_eq(2, b.size());
-            tr.test_eq(1, b[0]);
-            tr.test_eq(2, b[1]);
-            b = { 7, 8 };
-            tr.test_eq(7, a[0]);
-            tr.test_eq(8, a[1]);
-            tr.test_eq(3, a[2]);
-        };
+            {
+                tr.test_eq(2, b.size());
+                tr.test_eq(1, b[0]);
+                tr.test_eq(2, b[1]);
+                b = { 7, 8 };
+                tr.test_eq(7, a[0]);
+                tr.test_eq(8, a[1]);
+                tr.test_eq(3, a[2]);
+            };
         {
             ra::Small<real, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
@@ -442,15 +440,15 @@ int main()
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
-        {
-            tr.test_eq(2, b.size());
-            tr.test_eq(2, b[0]);
-            tr.test_eq(3, b[1]);
-            b = { 7, 8 };
-            tr.test_eq(1, a[0]);
-            tr.test_eq(7, a[1]);
-            tr.test_eq(8, a[2]);
-        };
+            {
+                tr.test_eq(2, b.size());
+                tr.test_eq(2, b[0]);
+                tr.test_eq(3, b[1]);
+                b = { 7, 8 };
+                tr.test_eq(1, a[0]);
+                tr.test_eq(7, a[1]);
+                tr.test_eq(8, a[2]);
+            };
         {
             ra::Small<real, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
@@ -459,13 +457,13 @@ int main()
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
-        {
-            tr.test_eq(2, b.size(0));
-            tr.test_eq(2, b.size(1));
-            tr.test_eq(ra::Small<real, 2, 2> { 3, 4, 5, 6 }, b);
-            b = ra::Small<real, 2, 2> { 13, 14, 15, 16 };
-            tr.test_eq(ra::Small<real, 3, 2> { 1, 2, 13, 14, 15, 16 }, a);
-        };
+            {
+                tr.test_eq(2, b.size(0));
+                tr.test_eq(2, b.size(1));
+                tr.test_eq(ra::Small<real, 2, 2> { 3, 4, 5, 6 }, b);
+                b = ra::Small<real, 2, 2> { 13, 14, 15, 16 };
+                tr.test_eq(ra::Small<real, 3, 2> { 1, 2, 13, 14, 15, 16 }, a);
+            };
         {
             ra::Small<real, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
@@ -483,8 +481,7 @@ int main()
     section("a demo on rank1of1 vs rank2 [ref01]");
     {
 // by prefix matching, first dim is 2 for both so they get matched. Then {1 2}
-// (a 'scalar') gets matched to 10 & 20 in succesion. This is forbidden
-// expressly in Small::Small(X && x).
+// (a 'scalar') gets matched to 10 & 20 in succesion. This used to be forbidden in Small::Small(X && x), but now I value consistency more.
         ra::Small<ra::Small<real, 2>, 2> a = { {1, 2}, {3, 4} };
         ra::Small<real, 2, 2> b = { 10, 20, 30, 40 };
         cout << "a: " << a << endl;

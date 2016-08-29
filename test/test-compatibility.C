@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-compatibility.C
+/// @file test-compatibility.C
 /// @brief Using std:: and ra:: together.
 
 #include <iostream>
@@ -65,15 +65,13 @@ int main()
             {
                 ra::Owned<int, 1> const a = { 10, 20, 30 };
                 ra::Owned<int, 1> const b = { 1, 2 };
-                ra::Owned<int, 2> c = ra::ryn(ra::verb<0, 1>::make([](int a, int b) { return a + b; }),
-                                              a.iter(), b.iter());
+                ra::Owned<int, 2> c = map(ra::wrank<0, 1>([](int a, int b) { return a + b; }), a, b);
                 tr.test_eq(ra::Owned<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
             {
                 std::vector<int> const a = { 10, 20, 30 };
                 std::vector<int> const b = { 1, 2 };
-                ra::Owned<int, 2> c = ra::ryn(ra::verb<0, 1>::make([](int a, int b) { return a + b; }),
-                                              ra::vector(a), ra::vector(b));
+                ra::Owned<int, 2> c = map(ra::wrank<0, 1>([](int a, int b) { return a + b; }), a, b);
                 tr.test_eq(ra::Owned<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
         }

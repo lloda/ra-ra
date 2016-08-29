@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-from.C
+/// @file test-from.C
 /// @brief Checks for index selectors, both immediate and delayed.
 
 #include <iostream>
@@ -197,7 +197,7 @@ int main()
     }
     section("unbeatable, 3D & higher");
     {
-// see src/test/bench-ra-from.C for examples of higher-D.
+// see src/test/bench-from.C for examples of higher-D.
     }
     section("TensorIndex / where @TODO elsewhere");
     {

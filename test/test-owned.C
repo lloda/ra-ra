@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-owned.C
+/// @file test-owned.C
 /// @brief Array operations limited to ra::Owned.
 
 #include <iostream>

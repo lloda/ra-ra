@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-operators.C
+/// @file test-operators.C
 /// @brief Tests for operators on ra:: expr templates.
 
 #include "ra/complex.H"
@@ -229,7 +229,7 @@ int main()
         tr.test_eq(ra::Small<real, 3> {0., 2., 4.}, a);
         tr.test_eq(ra::Small<int, 3> {1, 3, 5}, b);
     }
-    section("operator= for Raw, WithStorage. Also see test-ra-ownership.C");
+    section("operator= for Raw, WithStorage. Also see test-ownership.C");
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };
         real check9[6] = { 9, 9, 9, 9, 9, 9 };
@@ -285,6 +285,11 @@ int main()
         tr.test_eq(a, c);
         auto d = fun::hodge<3, 1>(a);
         tr.test_eq(a, d);
+    }
+    section("index");
+    {
+        ra::Owned<real, 1> a {1, 2, 3, -4, 9, 9, 8};
+        tr.test_eq(3, index(a<0));
     }
     return tr.summary();
 }

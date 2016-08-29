@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-wrank.C
+/// @file test-wrank.C
 /// @brief Checks for ra:: arrays, especially cell rank > 0 operations.
 
 #include <iostream>
@@ -31,11 +31,11 @@ void framematch_demo(V && v, A && a, B && b)
 {
     using FM = ra::Framematch<std::decay_t<V>, tuple<decltype(a.iter()), decltype(b.iter())>>;
     cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
-    cout << "FM::R: "; mp::print_int_list<typename FM::R>::f(cout) << endl;
-    cout << "FM::framedrivers: "; mp::print_int_list<typename FM::framedrivers>::f(cout) << endl;
-    cout << "FM::axisdrivers: "; mp::print_int_list<typename FM::axisdrivers>::f(cout) << endl;
-    cout << "FM::axisaxes: "; mp::print_int_list<typename FM::axisaxes>::f(cout) << endl;
-    cout << "FM::argindices: "; mp::print_int_list<typename FM::argindices>::f(cout) << endl;
+    cout << "FM::R: " << mp::print_int_list<typename FM::R> {} << endl;
+    cout << "FM::framedrivers: " << mp::print_int_list<typename FM::framedrivers> {} << endl;
+    cout << "FM::axisdrivers: " << mp::print_int_list<typename FM::axisdrivers> {} << endl;
+    cout << "FM::axisaxes: " << mp::print_int_list<typename FM::axisaxes> {} << endl;
+    cout << "FM::argindices: " << mp::print_int_list<typename FM::argindices> {} << endl;
     cout << endl;
 }
 
@@ -47,7 +47,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
     {
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
         cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
-        mp::print_int_list<typename FM::R>::f(cout) << endl;
+        cout << mp::print_int_list<typename FM::R> {} << endl;
         auto af0 = ra::applyframes<mp::Ref_<typename FM::R, 0>, FM::depth>::f(a.iter());
         auto af1 = ra::applyframes<mp::Ref_<typename FM::R, 1>, FM::depth>::f(b.iter());
         cout << sizeof(af0) << endl;
@@ -90,10 +90,10 @@ int main()
     auto plus2real = [](real a, real b) { return a + b; };
     section("declaring verbs");
     {
-        auto v = ra::verb<0, 1>::make(plus2real);
+        auto v = ra::wrank<0, 1>(plus2real);
         cout << mp::Ref_<decltype(v)::R, 0>::value << endl;
         cout << mp::Ref_<decltype(v)::R, 1>::value << endl;
-        auto vv = ra::wrank<1, 1>::make(v);
+        auto vv = ra::wrank<1, 1>(v);
         cout << mp::Ref_<decltype(vv)::R, 0>::value << endl;
         cout << mp::Ref_<decltype(vv)::R, 1>::value << endl;
     }
@@ -104,17 +104,17 @@ int main()
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
         {
-            framematch_demo(ra::verb<0, 0>::make(plus2real), a, b);
-            framematch_demo(ra::verb<0, 1>::make(plus2real), a, b);
-            framematch_demo(ra::verb<1, 0>::make(plus2real), a, b);
-            framematch_demo(ra::verb<1, 1>::make(plus2real), a, b);
+            framematch_demo(ra::wrank<0, 0>(plus2real), a, b);
+            framematch_demo(ra::wrank<0, 1>(plus2real), a, b);
+            framematch_demo(ra::wrank<1, 0>(plus2real), a, b);
+            framematch_demo(ra::wrank<1, 1>(plus2real), a, b);
         }
         auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         {
-            auto v = ra::verb<0, 2>::make(plus2real_print);
+            auto v = ra::wrank<0, 2>(plus2real_print);
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
             cout << "width of fm: " << mp::len<FM::R> << ", depth: " << FM::depth << endl;
-            mp::print_int_list<FM::R>::f(cout) << endl;
+            cout << mp::print_int_list<FM::R> {} << endl;
             auto af0 = ra::applyframes<mp::Ref_<FM::R, 0>, FM::depth>::f(a.iter());
             auto af1 = ra::applyframes<mp::Ref_<FM::R, 1>, FM::depth>::f(b.iter());
             cout << sizeof(af0) << endl;
@@ -131,20 +131,20 @@ int main()
     section("wrank tests 0-1");
     {
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        nested_wrank_demo(ra::verb<0, 1>::make(minus2real_print),
+        nested_wrank_demo(ra::wrank<0, 1>(minus2real_print),
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({4}, ra::unspecified));
-        nested_wrank_demo(ra::verb<0, 1>::make(ra::verb<0, 0>::make(minus2real_print)),
+        nested_wrank_demo(ra::wrank<0, 1>(ra::wrank<0, 0>(minus2real_print)),
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({3}, ra::unspecified));
     }
     section("wrank tests 1-0");
     {
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        nested_wrank_demo(ra::verb<1, 0>::make(minus2real_print),
+        nested_wrank_demo(ra::wrank<1, 0>(minus2real_print),
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({4}, ra::unspecified));
-        nested_wrank_demo(ra::verb<1, 0>::make(ra::verb<0, 0>::make(minus2real_print)),
+        nested_wrank_demo(ra::wrank<1, 0>(ra::wrank<0, 0>(minus2real_print)),
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({4}, ra::unspecified));
     }
@@ -152,7 +152,7 @@ int main()
     {
 // This uses the applyframes specialization for 'do nothing' (@TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        nested_wrank_demo(ra::verb<0, 0>::make(minus2real_print),
+        nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({3}, ra::unspecified));
     }
@@ -160,10 +160,10 @@ int main()
     {
 // This uses the applyframes specialization for 'do nothing' (@TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        nested_wrank_demo(ra::verb<0, 0>::make(minus2real_print),
+        nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
                           ra::Unique<real, 2>({3, 4}, ra::unspecified),
                           ra::Unique<real, 1>({3}, ra::unspecified));
-        nested_wrank_demo(ra::verb<0, 0>::make(minus2real_print),
+        nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 2>({3, 4}, ra::unspecified));
     }
@@ -177,20 +177,20 @@ int main()
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
         ra::Unique<real, 2> c({3, 4}, ra::unspecified);
-        ra::ply_either(ra::ryn(ra::verb<1, 0, 1>::make(minus2real), c.iter(), a.iter(), b.iter()));
+        ra::ply_either(ra::ryn(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
         cout << "c: " << c << endl;
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
                                /* 11-[1 2 3 4] */ 10, 9, 8, 7,
                                /* 12-[1 2 3 4] */ 11, 10, 9, 8 };
         tr.test(std::equal(checkc34, checkc34+3*4, c.begin()));
-        ra::Unique<real, 2> d34(ra::ryn(ra::verb<0, 1>::make(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d34(ra::ryn(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
         cout << "d34: " << d34 << endl;
         tr.test(std::equal(checkc34, checkc34+3*4, d34.begin()));
         real checkc43[3*4] = { /* [10 11 12]-1 */ 9, 10, 11,
                                /* [10 11 12]-2 */ 8, 9, 10,
                                /* [10 11 12]-3 */ 7, 8, 9,
                                /* [10 11 12]-4 */ 6, 7, 8 };
-        ra::Unique<real, 2> d43(ra::ryn(ra::verb<1, 0>::make(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d43(ra::ryn(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
         cout << "d43: " << d43 << endl;
         tr.test(d43.size(0)==4 && d43.size(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
@@ -206,7 +206,7 @@ int main()
 
         real checkd[3*4] = { 1001, 1002, 1003, 1004,  1101, 1102, 1103, 1104,  1201, 1202, 1203, 1204 };
 // default auto is value, so need to speficy.
-#define EXPR ra::ryn(ra::verb<0, 1>::make([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
+#define EXPR ra::ryn(ra::wrank<0, 1>([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
                      a.iter(), b.iter())
         std::ostringstream os;
         os << EXPR << endl;
@@ -240,9 +240,9 @@ int main()
         ra::Unique<real, 3> a({2, 2, 2}, 1.);
         ra::Unique<real, 3> b({2, 2, 2}, 2.);
         real y = 0;
-        auto e = ra::ryn(ra::verb<0, 0>::make([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
+        auto e = ra::ryn(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
         static_assert(3==e.rank(), "bad rank in static rank expr");
-        ra::ply_ravel(ra::ryn(ra::verb<0, 0>::make([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
+        ra::ply_ravel(ra::ryn(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
         tr.test_eq(16, y);
     }
     section("outer product variants");
@@ -253,7 +253,7 @@ int main()
         cout << "matrix a * b: \n" << c1 << endl;
 // matrix product as outer product + reduction (no reductions yet, so manually).
         {
-            ra::Owned<real, 3> d = ra::ryn(ra::wrank<1, 2>::make(ra::wrank<0, 1>::make(ra::times())), start(a), start(b));
+            ra::Owned<real, 3> d = ra::ryn(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
             cout << "d(i,k,j) = a(i,k)*b(k,j): \n" << d << endl;
             ra::Owned<real, 2> c2({d.size(0), d.size(2)}, 0.);
             for (int k=0; k<d.size(1); ++k) {
@@ -264,7 +264,7 @@ int main()
 // do the k-reduction by plying with wrank.
         {
             ra::Owned<real, 2> c2({a.size(0), b.size(1)}, 0.);
-            ra::ply_either(ra::ryn(ra::wrank<1, 1, 2>::make(ra::wrank<1, 0, 1>::make([](auto & c, auto && a, auto && b) { c += a*b; })),
+            ra::ply_either(ra::ryn(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
                                    start(c2), start(a), start(b)));
             cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
             tr.test_eq(c1, c2);

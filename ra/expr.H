@@ -71,7 +71,7 @@ struct Leaves<F, A, std::tuple<P ...>, std::tuple<I ...>>
 
 
 template <class Op, class ... P>
-Expr<Op, std::tuple<P ...>> expr(Op && f, P && ... p)
+constexpr Expr<Op, std::tuple<P ...>> expr(Op && f, P && ... p)
 {
     return Expr<Op, std::tuple<P ...>> { std::forward<Op>(f), std::forward<P>(p) ... };
 }
@@ -127,7 +127,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
         return check<iarg+1>(driver_rank);
     }
 
-// see test-ra-compatibility.C [a1] for forward() here.
+// see test-compatibility.C [a1] for forward() here.
     Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
 // @TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
@@ -182,7 +182,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
                && compact_stride<iarg+1>(step, z, j);
     }
 
-    auto flat() const -> leaves_t
+    auto flat() const -> leaves_t // clang complains if this is constexpr, gcc does not
     {
         return leaves_t(op, std::get<I::value>(t).flat() ...);
     }
@@ -191,7 +191,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     constexpr static dim_t size_s() { return PA::size_s(); }
     constexpr static rank_t rank_s() { return PA::rank_s(); }
     constexpr rank_t rank() const { return std::get<A>(t).rank(); }
-    decltype(auto) shape() const { return driver().shape(); }
+    constexpr decltype(auto) shape() const { return driver().shape(); }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
     using atom_type = decltype(*std::declval<leaves_t>());

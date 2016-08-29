@@ -832,7 +832,7 @@ int main()
             tr.test(every(ra::iota(4, 1, 2)==ra::Owned<int, 1> {1, 3, 5, 7}));
         }
  // @TODO actually whether unroll is avoided depends on ply_either, have a way to require it.
-// Cf [trc-01] in test-ra-compatibility.C.
+// Cf [trc-01] in test-compatibility.C.
         section("[tr0-01] frame-matching, forbidding unroll");
         {
             ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);

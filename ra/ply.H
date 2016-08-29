@@ -113,7 +113,7 @@ void ply_ravel(A && a)
 }
 
 // -------------------------
-// Compile time order. See bench-ra-dot.C for use. Index version.
+// Compile time order. See bench-dot.C for use. Index version.
 // -------------------------
 
 template <class order, class A, class S>

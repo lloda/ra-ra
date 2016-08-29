@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-explode-collapse.C
+/// @file test-explode-collapse.C
 /// @brief Tests for explode() and collapse().
 
 #include <iostream>

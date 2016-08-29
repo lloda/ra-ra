@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-io.C
+/// @file test-io.C
 /// @brief IO checks for ra::. Some ported from old test-traversal.C.
 
 #include <iostream>

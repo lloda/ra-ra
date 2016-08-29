@@ -114,7 +114,7 @@ B: 2 3
 
 ```
 // This is a direct translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
-ra::Owned<float, 2> A = ryn(ra::wrank<0, 1>::make(std::minus<float>()), ra::iota(3), ra::iota(4));
+ra::Owned<float, 2> A = map(ra::wrank<0, 1>(std::minus<float>()), ra::iota(3), ra::iota(4));
 cout << "A: " << A << "\n\n";
 ```
 ```
@@ -298,8 +298,8 @@ as demonstrations of how to use the library. There is a directory with
 ```examples/```, some ported from Blitz++.
 
 All tests pass under g++-6.2. All tests pass under clang++-3.8/9 except for
-test/test-ra-small.C which crashes clang. For clang on OS X you have to remove
-the -Wa,q option in the SConstruct which is meant for gcc by setting CCFLAGS to
+test/test-small.C which crashes clang. For clang on OS X you have to remove the
+-Wa,q option in the SConstruct which is meant for gcc by setting CCFLAGS to
 something else, for example:
 
   ```CCFLAGS="-march=native -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3

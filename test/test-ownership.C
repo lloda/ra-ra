@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-ownership.C
+/// @file test-ownership.C
 /// @brief Test ownership logic of array types.
 
 #include <iostream>
@@ -30,25 +30,25 @@ using real = double;
 // The constructors are all plain, the fields of the array record are copied/moved.
 // @TODO This table contain errors; review thoroughly.
 /*
-| to\fro cons | Raw            | Shared | Unique    | Owned     | Small          | SmallSlice | Tested in           |
-|-------------+----------------+--------+-----------+-----------+----------------+------------+---------------------|
-| R           | borrow         | borrow | borrow    | borrow    | borrow         | ...        |                     |
-| S           | share, null d. | share  | move      | share     | share, null d. |            | test-ra-ownership.C |
-| U           | copy           | copy   | move      | copy/move | copy           |            |                     |
-| O           | copy           | copy   | copy/move | copy/move | copy           |            |                     |
-| Small       |                |        |           |           | copy           |            |                     |
+| to\fro cons | Raw            | Shared | Unique    | Owned     | Small          | SmallSlice | Tested in        |
+|-------------+----------------+--------+-----------+-----------+----------------+------------+------------------|
+| R           | borrow         | borrow | borrow    | borrow    | borrow         | ...        |                  |
+| S           | share, null d. | share  | move      | share     | share, null d. |            | test-ownership.C |
+| U           | copy           | copy   | move      | copy/move | copy           |            |                  |
+| O           | copy           | copy   | copy/move | copy/move | copy           |            |                  |
+| Small       |                |        |           |           | copy           |            |                  |
 */
 
 // operator= however copies into. This is so that array ops look natural.
 // The reason for the diagonal exceptions is to allow array-types to be initialized from a ref argument, which is required in operator>>(istream &, array-type). Maybe there's a better solution.
 /*
-| to\fro op= | Raw       | Shared    | Unique    | Owned       | Small     | Tested in           |
-|------------+-----------+-----------+-----------+-------------+-----------+---------------------|
-| Raw        | copy into | copy into | copy into | copy into   | copy into | test-ra-operators.C |
-| Shared     | copy into | *share*   | copy into | copy into   | copy into |                     |
-| Unique     | copy into | copy into | *move*    | copy into   | copy into |                     |
-| Owned      | copy into | copy into | copy into | *copy/move* | copy into |                     |
-| Small      | copy into | copy into | copy into | copy into   | *copy*    |                     |
+| to\fro op= | Raw       | Shared    | Unique    | Owned       | Small     | Tested in        |
+|------------+-----------+-----------+-----------+-------------+-----------+------------------|
+| Raw        | copy into | copy into | copy into | copy into   | copy into | test-operators.C |
+| Shared     | copy into | *share*   | copy into | copy into   | copy into |                  |
+| Unique     | copy into | copy into | *move*    | copy into   | copy into |                  |
+| Owned      | copy into | copy into | copy into | *copy/move* | copy into |                  |
+| Small      | copy into | copy into | copy into | copy into   | *copy*    |                  |
 */
 
 // @TODO Maybe I want WithStorage/Raw<T> const and WithStorage/Raw<T const> to behave differently....

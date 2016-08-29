@@ -21,9 +21,7 @@
 namespace ra {
 
 // specialize this for new types for which is_scalar<> should be true.
-template <class A>
-constexpr bool is_scalar_def = !std::is_pointer<A>::value && std::is_scalar<A>::value;
-
+template <class A> constexpr bool is_scalar_def = !std::is_pointer<A>::value && std::is_scalar<A>::value;
 template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A> >;
 
 template <class C, class Enable=void>
@@ -102,56 +100,56 @@ struct ra_traits_def<T, std::enable_if_t<is_scalar<T> > >
 // --------------
 
 template <class T, int a>
-inline auto start(T && t)
+inline constexpr auto start(T && t)
 {
     static_assert(!mp::exists<T>, "bad type for ra:: operator");
 }
 
 template <class T, std::enable_if_t<is_array_iterator<T>, int> = 0>
-inline auto start(T && t)
+inline constexpr auto start(T && t)
 {
     return std::forward<T>(t);
 }
 
 // @TODO not used yet, dots is beaten.
 template <class T, std::enable_if_t<std::is_same<dots_t<std::decay_t<T>::rank_s()>, std::decay_t<T> >::value, int> =0>
-inline auto start(T && t)
+inline constexpr auto start(T && t)
 {
     return std::forward<T>(t);
 }
 
 template <class T, std::enable_if_t<is_slice<T>, int> = 0>
-inline auto start(T && t)
+inline constexpr auto start(T && t)
 {
-    return t.iter(); // @BUG if t is rvalue, t.iter() won't retain it. See test-ra-7.check [opt-small].
+    return t.iter(); // @BUG if t is rvalue, t.iter() won't retain it. See test-ra-7.C [opt-small].
 }
 
 template <class T, std::enable_if_t<is_scalar<T>, int> = 0>
-inline auto start(T && t)
+inline constexpr auto start(T && t)
 {
     return ra::scalar(std::forward<T>(t));
 }
 
 template <class T, std::enable_if_t<is_foreign_vector<T>, int> = 0>
-inline auto start(T && t)
+inline constexpr auto start(T && t)
 {
     return ra::vector(std::forward<T>(t));
 }
 
 template <class T>
-inline auto start(T * t)
+inline constexpr auto start(T * t)
 {
     return ra::ptr(t);
 }
 
 template <class T>
-inline auto rstart(T && t)
+inline constexpr auto rstart(T && t)
 {
     return start(std::forward<T>(t));
 }
 
 template <class T>
-inline auto rstart(T * t)
+inline constexpr auto rstart(T * t)
 {
     static_assert(!std::is_pointer<T *>::value, "pointers must be started manually");
 }

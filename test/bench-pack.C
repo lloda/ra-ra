@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-ra-pack.C
+/// @file bench-pack.C
 /// @brief Benchmark pack() operator vs explode/collapse.
 
 #include <iostream>

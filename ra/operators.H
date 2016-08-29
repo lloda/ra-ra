@@ -251,9 +251,22 @@ inline auto where(W && w, T && t, F && f)
 
 // --------------------------------
 // Some whole-array reductions.
+// @TODO First rank reductions? Variable rank reductions?
 // --------------------------------
 
-// @TODO First rank reductions? Variable rank reductions?
+// @TODO somehow make this work (ply_index_short_circuit is bad). Then variable rank...
+template <class A>
+inline auto index(A && a)
+{
+    struct index_exit { ra::dim_t i; };
+    try {
+        for_each([&](bool const a, auto && i) { if (a) { throw index_exit {i}; }; },
+                 a, ra::iota(start(a).size(0)));
+    } catch (index_exit & e) {
+        return e.i;
+    }
+    return ra::dim_t(-1);
+}
 
 using std::min;
 template <class A>
@@ -455,7 +468,7 @@ gemm(A const & a, B const & b)
     return c;
 }
 
-// the default for row-major x row-major. See bench-ra-gemm.C for variants.
+// the default for row-major x row-major. See bench-gemm.C for variants.
 template <class S, class T>
 inline auto
 gemm(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)

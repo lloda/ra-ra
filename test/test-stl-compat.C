@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-stl-compat.C
+/// @file test-stl-compat.C
 /// @brief Using ra:: array & iterator types with the STL algos & types.
 
 // ra:: iterators are only partially STL compatible, because of copiability,

@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-ra-ply.C
+/// @file test-ply.C
 /// @brief Checks for ra:: traversal.
 
 #include <iostream>
@@ -320,7 +320,7 @@ int main()
         ra::Unique<int, 1> a({3}, ra::unspecified);
         ra::Unique<int, 1> b({3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
-// @BUG with ra::vector(std::vector) instead of ra::vector(std::array), see test-ra-compatibility.C [1]
+// @BUG with ra::vector(std::vector) instead of ra::vector(std::array), see test-compatibility.C [1]
             // plier(expr([&a](int & b, int & i) { std::cout << "0i: " << b << ", " << i << std::endl; b = a(i); },
             //            b.iter(), ra::vector(std::vector<int> {1, 2, 0})));
 #define TEST(plier)                                                     \

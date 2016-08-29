@@ -10,7 +10,7 @@
 #define RA_ATOM_H
 
 /// @file atom.H
-/// @brief Expression templates for arrays with frame matching: terminal nodes.
+/// @brief Terminal nodes for expression templates.
 
 #include "ra/traits.H"
 #include "ra/opcheck.H"
@@ -114,7 +114,7 @@ struct Scalar
 
 // For the use of std::forward<>, see eg http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
 template <class S>
-Scalar<S> scalar(S && s)
+constexpr Scalar<S> scalar(S && s)
 {
     return Scalar<S> { std::forward<S>(s) };
 }
@@ -132,20 +132,19 @@ struct Vector
     static_assert(!std::is_reference<decltype(p__)>::value, "bad iterator type");
 
     using shape_type = std::array<dim_t, 1>;
-    auto shape() const { return shape_type { { dim_t(traits::size(v)) } }; }
-
-    dim_t size() const { return traits::size(v); }
-    dim_t size(int const i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
+    constexpr auto shape() const { return shape_type { { dim_t(traits::size(v)) } }; }
+    constexpr dim_t size() const { return traits::size(v); }
+    constexpr dim_t size(int const i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return traits::size_s(); }
 
-// see test-ra-compatibility.C [a1] for forward() here.
+// see test-compatibility.C [a1] for forward() here.
     Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
 
     void adv(rank_t const k, dim_t const d)
     {
-// k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-ra-compatibility.C.
+// k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-compatibility.C.
 // k==0 && d!=1 happens on turning back at end of ply; @TODO we need this only on outer products and such.
         CHECK_BOUNDS(d==1 || d<0);
         p__ += (k==0) * d;
@@ -164,24 +163,23 @@ struct Vector
         return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
 
-    auto flat() { return p__; }
-    auto flat() const { return p__; }
+    constexpr auto flat() { return p__; }
+    constexpr auto flat() const { return p__; }
     bool done() const { return p__==v.end(); }
 
 // impl depends on ra::Expr, see expr.H
-#define DEF_EQOPS(OP)                               \
-    template <class X> void operator OP(X && x);
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
 
 template <class V>
-Vector<V> vector(V && v)
+constexpr Vector<V> vector(V && v)
 {
     return Vector<V> { std::forward<V>(v) };
 }
 template <class T>
-Vector<std::initializer_list<T>> vector(std::initializer_list<T> && v)
+constexpr Vector<std::initializer_list<T>> vector(std::initializer_list<T> && v)
 {
     return Vector<std::initializer_list<T>> { std::move(v) };
 }
@@ -196,8 +194,7 @@ struct Ptr
     P p__;
 
     using shape_type = std::array<dim_t, 1>;
-    auto shape() const { return shape_type { { dim_t(size_s()) } }; }
-
+    constexpr static auto shape() { return shape_type { { dim_t(size_s()) } }; }
     constexpr static dim_t size() { return size_s(); }
     constexpr static dim_t size(int const i) { CHECK_BOUNDS(i==0); return size_s(); }
     constexpr static rank_t rank() { return 1; }
@@ -224,8 +221,8 @@ struct Ptr
         return (z==0) == (j==0); // cf Vector::compact_stride
     }
 
-    auto flat() { return p__; }
-    auto flat() const { return p__; }
+    constexpr auto flat() { return p__; }
+    constexpr auto flat() const { return p__; }
     constexpr static bool done() { return false; }
 
 // impl depends on ra::Expr, see expr.H
@@ -236,7 +233,7 @@ struct Ptr
 };
 
 template <class T>
-Ptr<T *> ptr(T * p)
+constexpr Ptr<T *> ptr(T * p)
 {
     return Ptr<T *> { p };
 }
@@ -258,10 +255,12 @@ struct Iota
 {
     using T = T_;
     dim_t const size_;
-    T org_, stride_, i_;
+    T const org_;
+    T const stride_;
+    T i_;
 
     using shape_type = std::array<dim_t, 1>;
-    auto shape() const { return shape_type { { size_ } }; }
+    constexpr auto shape() const { return shape_type { { size_ } }; }
 
     dim_t size() const { return size_; }
     dim_t size(int const i) const { CHECK_BOUNDS(i==0); return size_; }
@@ -289,10 +288,11 @@ struct Iota
     {
         return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
-    auto flat() const { return IotaLeaf<T> { i_ }; }
+    constexpr auto flat() const { return IotaLeaf<T> { i_ }; }
 };
 
-template <class O=dim_t, class S=dim_t> inline auto
+template <class O=dim_t, class S=dim_t> inline
+constexpr auto
 iota(dim_t size, O org=0, S stride=1)
 {
     using T = std::common_type_t<O, S>;

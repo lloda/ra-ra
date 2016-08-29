@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-ra-reduce-sqrm.H
+/// @file bench-reduce-sqrm.H
 /// @brief Benchmark for reduce_sqrm with various array types.
 
 #include <iostream>
