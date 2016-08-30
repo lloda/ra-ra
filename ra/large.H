@@ -68,7 +68,7 @@ dim_t proddim(D d, D dend)
 
 // Would do this with a base class, but I like Raw being POD.
 // @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
-#define DEFINE_ITERATORS(RANK)                                          \
+#define DEF_ITERATORS(RANK)                                          \
     template <rank_t c=0> using iterator = ra::ra_iterator<Raw<T, RANK>, c>; \
     template <rank_t c=0> using const_iterator = ra::ra_iterator<Raw<T const, RANK>, c>; \
     template <rank_t c=0> auto iter() { return iterator<c>(dim, p); }   \
@@ -79,18 +79,14 @@ dim_t proddim(D d, D dend)
     auto end() const { return stl_iterator<const_iterator<0>> {}; }
 
 // See same thing for SmallBase.
-#define DEFINE_ASSIGNMENT_OP(OPNAME, OP)                                \
-    template <class X> Raw & OPNAME(X && x)                             \
+#define DEF_EQOPS(OP)                                                   \
+    template <class X> Raw & operator OP (X && x)                       \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest OP src; }, this->iter(), rstart(x))); \
+        ply_either(expr([](T & y, T const & x) { y OP x; }, this->iter(), rstart(x))); \
         return *this;                                                   \
     }
-#define DEFINE_ASSIGNMENT_OPS                                           \
-    DEFINE_ASSIGNMENT_OP(operator=, =)                                  \
-    DEFINE_ASSIGNMENT_OP(operator+=, +=)                                \
-    DEFINE_ASSIGNMENT_OP(operator-=, -=)                                \
-    DEFINE_ASSIGNMENT_OP(operator/=, /=)                                \
-    DEFINE_ASSIGNMENT_OP(operator*=, *=)                                \
+#define DEF_ASSIGNMENT_OPS                                              \
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)                              \
     /* These three are unsafe */                                        \
     Raw(): p(nullptr) {}                                                \
     Raw(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                 \
@@ -175,8 +171,8 @@ struct Raw
     auto data() { return p; }
     auto data() const { return p; }
 
-    DEFINE_ITERATORS(RANK)
-    DEFINE_ASSIGNMENT_OPS
+    DEF_ITERATORS(RANK)
+    DEF_ASSIGNMENT_OPS
 
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.H.
 #define SUBSCRIPTS(CONST)                                               \
@@ -493,8 +489,8 @@ struct Raw<T, RANK_ANY>
     auto data() { return p; }
     auto data() const { return p; }
 
-    DEFINE_ITERATORS(RANK_ANY)
-    DEFINE_ASSIGNMENT_OPS
+    DEF_ITERATORS(RANK_ANY)
+    DEF_ASSIGNMENT_OPS
 
     template <rank_t SRANK> Raw(Raw<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 
@@ -539,8 +535,9 @@ struct Raw<T, RANK_ANY>
     operator T const & () const { assert(rank()==0); return data()[0]; };
 };
 
-#undef DEFINE_ITERATORS
-#undef DEFINE_ASSIGNMENT_OPS
+#undef DEF_ITERATORS
+#undef DEF_ASSIGNMENT_OPS
+#undef DEF_EQOPS
 
 template <class T>
 struct ra_traits_def<Raw<T, RANK_ANY>>
@@ -582,7 +579,7 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
 }
 
 // dynamic transposed axes list.
-#define DEFINE_TRANSPOSE(AXES_LIST)                                     \
+#define DEF_TRANSPOSE(AXES_LIST)                                     \
     template <class T, int RANK, class S>                               \
     Raw<T, RANK_ANY> transpose(Raw<T, RANK> const & raw, AXES_LIST)     \
     {                                                                   \
@@ -603,9 +600,9 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
         }                                                               \
         return r;                                                       \
     }
-DEFINE_TRANSPOSE(S const & s)
-DEFINE_TRANSPOSE(std::initializer_list<S> s)
-#undef DEFINE_TRANSPOSE
+DEF_TRANSPOSE(S const & s)
+DEF_TRANSPOSE(std::initializer_list<S> s)
+#undef DEF_TRANSPOSE
 
 // static transposed axes list.
 template <int ... Iarg, class T, int RANK>

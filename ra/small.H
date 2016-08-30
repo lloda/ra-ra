@@ -296,21 +296,17 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 #undef SUBSCRIPTS
 
 // See same thing for Raw.
-#define DEFINE_ASSIGNMENT_OP(OPNAME, OP)                                \
-        template <class X> Child & OPNAME(X && x)                       \
+#define DEF_EQOPS(OP)                                                   \
+        template <class X> Child & operator OP(X && x)                  \
     {                                                                   \
         /* @TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
         constexpr rank_t xrank = std::decay_t<decltype(start(x))>::rank_s(); \
         static_assert(xrank<=rank() || xrank==RANK_ANY, "bad assigment"); \
-        ply_either(expr([](T & dest, T const & src) { dest OP src; }, this->iter(), rstart(x))); \
+        ply_either(expr([](T & y, T const & x) { y OP x; }, this->iter(), rstart(x))); \
         return static_cast<Child &>(*this);                             \
     }
-    DEFINE_ASSIGNMENT_OP(operator=, =)
-    DEFINE_ASSIGNMENT_OP(operator+=, +=)
-    DEFINE_ASSIGNMENT_OP(operator-=, -=)
-    DEFINE_ASSIGNMENT_OP(operator/=, /=)
-    DEFINE_ASSIGNMENT_OP(operator*=, *=)
-#undef DEFINE_ASSIGNMENT_OP
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
     Child & operator=(std::initializer_list<T> const x)
     {
         assert(x.size()==size() && "bad initializer list"); /* static_assert */
@@ -319,7 +315,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     }
 
 // @TODO Would replace by s(ra::iota) if that could be made constexpr
-#define DEFINE_AS(CONST)                                                \
+#define DEF_AS(CONST)                                                   \
     template <int ss, int oo=0>                                         \
     auto as() CONST                                                     \
     {                                                                   \
@@ -327,9 +323,9 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
         return SmallSlice<T CONST, mp::Cons_<mp::int_t<ss>, mp::Drop1_<sizes> >, strides>(this->data()+oo*this->stride(0)); \
     }
-    DEFINE_AS(const)
-    DEFINE_AS(/* const */)
-#undef DEFINE_AS
+    DEF_AS(const)
+    DEF_AS(/* const */)
+#undef DEF_AS
 
 // @TODO This is rank 0 only. Maybe reuse cell_iterator?
     template <class P>
@@ -457,7 +453,7 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
     SmallSlice & operator=(SmallSlice const & x) { return Base::operator=(x); }
 };
 
-#define SMALLARRAY_DEFINITIONS                                          \
+#define DEF_SMALLARRAY                                                  \
     /*  @TODO qualifier needed for clang 3.8 bug */                     \
     using Base = SmallBase<ra::SmallArray, T, sizes, strides>;          \
     T p[Base::size()];                                                  \
@@ -487,7 +483,7 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
 template <class T, class sizes, class strides>
 struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
 {
-    SMALLARRAY_DEFINITIONS
+    DEF_SMALLARRAY
 
     using Base::rank;
     using Base::size;
@@ -518,7 +514,7 @@ struct SmallArray<T, mp::int_list<0>, strides>: public SmallBase<SmallArray, T, 
 {
     using sizes = mp::int_list<0>;
 
-    SMALLARRAY_DEFINITIONS
+    DEF_SMALLARRAY
 
     T & operator[](dim_t const i) { assert(0 && "internal error"); abort(); }
     T const & operator[](dim_t const i) const { assert(0 && "internal error"); abort(); }
@@ -526,7 +522,7 @@ struct SmallArray<T, mp::int_list<0>, strides>: public SmallBase<SmallArray, T, 
     operator SmallSlice<T const, sizes, strides> const () { return SmallSlice<T const, sizes, strides>(p); }
 };
 
-#undef SMALLARRAY_DEFINITIONS
+#undef DEF_SMALLARRAY
 
 template <template <class, class, class> class Type_,
           class T, class sizes, class strides>

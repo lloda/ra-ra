@@ -122,7 +122,8 @@ def print_summary():
               ]]
 
 [to_test_ra(env, test)
- for test in ['bench-dot', 'bench-reduce-sqrm', 'bench-from', 'bench-gemm', 'bench-pack']]
+ for test in ['bench-dot', 'bench-reduce-sqrm', 'bench-from', 'bench-gemm', 'bench-pack',
+              'bench-sum-rows', 'bench-sum-cols']]
 
 if 'skip_summary' not in top:
     atexit.register(print_summary)

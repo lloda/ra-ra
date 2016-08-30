@@ -169,6 +169,14 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
 
     ra_iterator(): P() {};
     template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
+
+#define DEF_EQOPS(OP)                                                   \
+    template <class X> void operator OP(X && x)                         \
+    {                                                                   \
+        ply_either(expr([](auto && y, auto && x) { y OP x; }, *this, start(x))); \
+    }
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+#undef DEF_EQOPS
 };
 
 template <class V>

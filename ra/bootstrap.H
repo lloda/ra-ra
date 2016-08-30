@@ -10,7 +10,7 @@
 #define RA_BOOTSTRAP_H
 
 /// @file bootstrap.H
-/// @brief Multidimensional arrays. Before all other includes.
+/// @brief Before all other ra:: includes.
 
 #include "ra/tuple-list.H"
 #include "ra/tuple-dynamic.H"
@@ -96,7 +96,6 @@ inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 // Order of decl issues.
 template <class T, rank_t RANK=RANK_ANY> struct Raw;
 template <class T, class sizes, class strides> struct SmallArray;
-template <class V, rank_t cellr_, class Child> struct cell_iterator;
 template <class V, class Enable=void> struct ra_traits_def;
 
 template <class S> struct default_strides {};

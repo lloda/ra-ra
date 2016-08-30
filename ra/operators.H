@@ -20,16 +20,16 @@
 #include "ra/wedge.H"
 
 #ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_OPERATORS RA_CHECK_BOUNDS
+#define RA_CHECK_BOUNDS_RA_OPERATORS RA_CHECK_BOUNDS
 #else
-    #ifndef RA_CHECK_BOUNDS_RA_OPERATORS
-        #define RA_CHECK_BOUNDS_RA_OPERATORS 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_RA_OPERATORS
+#define RA_CHECK_BOUNDS_RA_OPERATORS 1
+#endif
 #endif
 #if RA_CHECK_BOUNDS_RA_OPERATORS==0
-    #define CHECK_BOUNDS( cond )
+#define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+#define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
 #include "ra/optimize.H"
@@ -96,104 +96,79 @@ inline void for_each(F && f, A && ... a)
 // specializations, ra::Raw<complex, 0> * complex will fail.
 
 // These depend on OPNAME defined in optimize.H and used there to match ET patterns.
-#define DEFINE_NAMED_BINARY_OP(OPERATOR, OP, OPNAME)                    \
+#define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
-    inline auto OPERATOR(A && a, B && b)                                \
+    inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return OPTIMIZE(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
-    inline auto OPERATOR(A && a, B && b)                                \
+    inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return START(a) OP START(b);                                    \
     }
-DEFINE_NAMED_BINARY_OP(operator+, +, plus)
-DEFINE_NAMED_BINARY_OP(operator-, -, minus)
-DEFINE_NAMED_BINARY_OP(operator*, *, times)
-DEFINE_NAMED_BINARY_OP(operator/, /, slash)
-#undef DEFINE_NAMED_BINARY_OP
+DEF_NAMED_BINARY_OP(+, plus)
+DEF_NAMED_BINARY_OP(-, minus)
+DEF_NAMED_BINARY_OP(*, times)
+DEF_NAMED_BINARY_OP(/, slash)
+#undef DEF_NAMED_BINARY_OP
 
-#define DEFINE_BINARY_OP(OPERATOR, OP)                                  \
+#define DEF_BINARY_OP(OP)                                               \
     template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
-    inline auto OPERATOR(A && a, B && b)                                \
+    inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return map([](auto && a, auto && b) { return a OP b; },         \
                    std::forward<A>(a), std::forward<B>(b));             \
     }                                                                   \
     template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
-    inline auto OPERATOR(A && a, B && b)                                \
+    inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return START(a) OP START(b);                                    \
     }
-DEFINE_BINARY_OP(operator&&, &&)
-DEFINE_BINARY_OP(operator||, ||)
-DEFINE_BINARY_OP(operator>, >)
-DEFINE_BINARY_OP(operator<, <)
-DEFINE_BINARY_OP(operator>=, >=)
-DEFINE_BINARY_OP(operator<=, <=)
-DEFINE_BINARY_OP(operator==, ==)
-DEFINE_BINARY_OP(operator!=, !=)
-#undef DEFINE_BINARY_OP
+FOR_EACH(DEF_BINARY_OP, &&, ||, >, <, >=, <=, ==, !=)
+#undef DEF_BINARY_OP
 
-#define DEFINE_UNARY_OP(OPNAME, OP)                                     \
+#define DEF_UNARY_OP(OP)                                                \
     template <class A, std::enable_if_t<is_ra_pos_rank<A>, int> = 0>    \
-    inline auto OPNAME(A && a)                                          \
+    inline auto operator OP(A && a)                                     \
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
     }
-DEFINE_UNARY_OP(operator!, !)
-DEFINE_UNARY_OP(operator+, +) // @TODO Make into nop.
-DEFINE_UNARY_OP(operator-, -)
-#undef DEFINE_UNARY_OP
+FOR_EACH(DEF_UNARY_OP, !, +, -) // @TODO Make + into nop.
+#undef DEF_UNARY_OP
 
 // When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
 // @TODO Cf [ref:examples/useret.C:0].
-#define DEFINE_NAME_OP(OPNAME, OP)                                      \
+#define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
     template <class ... A, std::enable_if_t<ra_pos_and_any<A ...>, int> =0> \
-    inline auto OPNAME(A && ... a)                                      \
+    inline auto OP(A && ... a)                                          \
     {                                                                   \
         return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>               \
-    inline auto OPNAME(A && ... a)                                      \
+    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>    \
+    inline auto OP(A && ... a)                                          \
     {                                                                   \
         return OP(START(a) ...);                                        \
     }
-DEFINE_NAME_OP(rel_error, rel_error)
-DEFINE_NAME_OP(pow, pow)
-DEFINE_NAME_OP(xI, xI)
-DEFINE_NAME_OP(conj, conj)
-DEFINE_NAME_OP(sqr, sqr)
-DEFINE_NAME_OP(sqrm, sqrm)
-DEFINE_NAME_OP(abs, abs)
-DEFINE_NAME_OP(cos, cos)
-DEFINE_NAME_OP(sin, sin)
-DEFINE_NAME_OP(exp, exp)
-DEFINE_NAME_OP(sqrt, sqrt)
-DEFINE_NAME_OP(log, log)
-DEFINE_NAME_OP(log1p, log1p)
-DEFINE_NAME_OP(isfinite, isfinite)
-DEFINE_NAME_OP(isnan, isnan)
-DEFINE_NAME_OP(isinf, isinf)
-DEFINE_NAME_OP(max, max)
-DEFINE_NAME_OP(min, min)
-#undef DEFINE_NAME_OP
+FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, abs, cos, sin)
+FOR_EACH(DEF_NAME_OP, exp, sqrt, log, log1p, isfinite, isnan, isinf, max, min)
+#undef DEF_NAME_OP
 
-#define DEFINE_NAME_OP(OPNAME, OP)                                      \
+#define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
     template <class ... A, std::enable_if_t<ra_pos_and_any<A ...>, int> =0> \
-    inline auto OPNAME(A && ... a)                                      \
+    inline auto OP(A && ... a)                                          \
     {                                                                   \
         return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
     template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>    \
-    inline decltype(auto) OPNAME(A && ... a)                            \
+    inline decltype(auto) OP(A && ... a)                                \
     {                                                                   \
         return OP(START(a) ...);                                        \
     }
-DEFINE_NAME_OP(real_part, real_part)
-DEFINE_NAME_OP(imag_part, imag_part)
+FOR_EACH(DEF_NAME_OP, real_part, imag_part)
+#undef DEF_NAME_OP
 
 template <class T, class A>
 inline auto cast(A && a)
@@ -243,10 +218,10 @@ template <class W, class T, class F, std::enable_if_t<is_ra_pos_rank<W> || is_ra
 inline auto where(W && w, T && t, F && f)
 {
     return map([](auto && w_, auto && t_, auto && f_) -> decltype(auto)
-                {
-                    return safe_rvalue(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_));
-                },
-                std::forward<W>(w), std::forward<T>(t), std::forward<F>(f));
+    {
+        return safe_rvalue(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_));
+    },
+               std::forward<W>(w), std::forward<T>(t), std::forward<F>(f));
 }
 
 // --------------------------------
@@ -373,8 +348,8 @@ DECL_WEDGE(general_case)
 }
 #undef DECL_WEDGE
 
-#define DECL_WEDGE(condition)                                      \
-    template <int D, int Oa, int Ob, class Va, class Vb, class Vr, \
+#define DECL_WEDGE(condition)                                           \
+    template <int D, int Oa, int Ob, class Va, class Vb, class Vr,      \
               std::enable_if_t<!(is_scalar<Va> && is_scalar<Vb>), int> =0> \
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)

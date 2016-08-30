@@ -184,7 +184,6 @@ int main()
     section("to sum rows in crude ways");
     {
         ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
-
         ra::Unique<real, 1> B({111}, 0.);
         for (int j=0, jend=A.size(1); j<jend; ++j) {
             B(j) = sum(A(ra::all, j));
@@ -193,24 +192,28 @@ int main()
         {
             ra::Unique<real, 1> C({111}, 0.);
             for_each([&C](auto && a) { C += a; }, A.iter<1>());
-            tr.test_eq(B, C);
+            tr.info("rhs iterator of rank > 0").test_eq(B, C);
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
             for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), C, A);
-            tr.test_eq(B, C);
+            tr.info("rank conjuction").test_eq(B, C);
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
             for_each(ra::wrank<1, 1>(ra::wrank<0, 0>([](auto & c, auto a) { c += a; })), C, A);
-            tr.test_eq(B, C);
+            tr.info("double rank conjunction").test_eq(B, C);
         }
-        // @TODO make this work.
-        // {
-        //     ra::Unique<real, 1> C({111}, 0.);
-        //     C.iter<-1>() += A.iter<-1>();
-        //     tr.test_eq(B, C);
-        // }
+        {
+            ra::Unique<real, 1> C({111}, 0.);
+            ra::scalar(C) += A.iter<1>();
+            tr.info("scalar() and iterators of rank > 0").test_eq(B, C);
+        }
+        {
+            ra::Unique<real, 1> C({111}, 0.);
+            C.iter<1>() += A.iter<1>();
+            tr.info("assign to iterators of rank > 0").test_eq(B, C);
+        }
     }
 
     return tr.summary();
