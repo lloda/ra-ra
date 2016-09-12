@@ -90,9 +90,7 @@ struct cell_iterator
     cell_iterator() { c.p = nullptr; } // end marker only.
     cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
     cell_iterator(cell_iterator && ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-// @TODO These are needed because Raw = Raw copies contents, not the Raw itself. (@TODO Pointers? require *Raw = ... ?).
-// @TODO But check that STL algos really do use them, after vec:: is gone.
-// Used in convexhull.H:point_in_polygon_wn_3d.
+// needed because Raw = Raw copies contents, not the Raw itself ([ra11] in test-ra-0.C).
     cell_iterator & operator=(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
     cell_iterator & operator=(cell_iterator && ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
 
@@ -136,10 +134,9 @@ struct cell_iterator
         return s;
     }
 
-    dim_t size(int const j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
-    dim_t stride(int const j) const { return j<rank() ? dim[j].stride : 0; }
-    dim_t preferred_stride(int const j) const { return stride(j); }
-    bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr dim_t size(int const j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
+    constexpr dim_t stride(int const j) const { return j<rank() ? dim[j].stride : 0; }
+    constexpr bool compact_stride(dim_t const step, int const z, int const j) const
     {
         dim_t sz = z<rank() ? dim[z].stride : 0;
         dim_t sj = j<rank() ? dim[j].stride : 0;

@@ -77,7 +77,7 @@ struct ScalarLeaf: public Scalar<S>
 };
 
 // Wrap a scalar for traversal.
-// f(T) will normally be a specialization, so this doesn't drive. done() (in Expr) or preferred_stride() (in Leaves) are only needed when map(f, T) is written out explicitly.
+// f(T) will normally be a specialization, so this doesn't drive. done() (in Expr) is only needed when map(f, T) is written out explicitly.
 template <class S>
 struct Scalar
 {
@@ -104,7 +104,6 @@ struct Scalar
 
 // Scalar acts as driver in a few places where I didn't bother to specialize (e.g. ra::from). Elsewhere (e.g. in +, *, operator=, etc.) there's always another expr to be driver, or a specialization (e.g. array constructors). Use in ra::from should be removed since a scalar subscript can be beaten; this is probably true of all other uses, and @TODO then we could remove this.
     constexpr static bool done() { return false; }
-    constexpr static dim_t preferred_stride(int const i) { return 0; }
 
 // impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
@@ -156,9 +155,8 @@ struct Vector
         return p__[i[0]];
     }
 
-    dim_t stride(int const i) const { return i==0 ? 1 : 0; }
-    dim_t preferred_stride(int const i) const { return stride(i); }
-    bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
+    constexpr static bool compact_stride(dim_t const step, int const z, int const j)
     {
         return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
@@ -173,12 +171,12 @@ struct Vector
 #undef DEF_EQOPS
 };
 
-template <class V>
+template <class V> inline
 constexpr Vector<V> vector(V && v)
 {
     return Vector<V> { std::forward<V>(v) };
 }
-template <class T>
+template <class T> inline
 constexpr Vector<std::initializer_list<T>> vector(std::initializer_list<T> && v)
 {
     return Vector<std::initializer_list<T>> { std::move(v) };
@@ -214,9 +212,8 @@ struct Ptr
         return p__[i[0]]; // look ma no hands
     }
 
-    dim_t stride(int const i) const { return i==0 ? 1 : 0; }
-    dim_t preferred_stride(int const i) const { return stride(i); }
-    bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
+    constexpr static bool compact_stride(dim_t const step, int const z, int const j)
     {
         return (z==0) == (j==0); // cf Vector::compact_stride
     }
@@ -226,13 +223,12 @@ struct Ptr
     constexpr static bool done() { return false; }
 
 // impl depends on ra::Expr, see expr.H
-#define DEF_EQOPS(OP)                               \
-    template <class X> void operator OP(X && x);
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
 
-template <class T>
+template <class T> inline
 constexpr Ptr<T *> ptr(T * p)
 {
     return Ptr<T *> { p };
@@ -241,13 +237,9 @@ constexpr Ptr<T *> ptr(T * p)
 template <class T>
 struct IotaLeaf
 {
-    T i_;
+    T i_, stride_;
     T const & operator*() const { return i_; } // @TODO if not for this, I could use plain T. Maybe ra::eval_expr...
-    void operator+=(dim_t const d) { i_ += d; }
-
-    auto operator+(dim_t const s) const { return i_ + s; }
-    template <class I> bool operator!=(I const & i0) const { return i_!=i0; }
-    template <class I> bool operator==(I const & i0) const { return i_==i0; }
+    void operator+=(dim_t const d) { i_ += T(d)*stride_; }
 };
 
 template <class T_>
@@ -274,24 +266,23 @@ struct Iota
 
     void adv(rank_t const k, dim_t const d)
     {
-        i_ += (k==0) * stride_ * d; // cf Vector::adv below.
+        i_ += T((k==0) * d) * stride_; // cf Vector::adv below.
     }
     template <class I>
     decltype(auto) at(I const & i)
     {
-        return org_ + i[0]*stride_;
+        return org_ + T(i[0])*stride_;
     }
 
-    dim_t stride(rank_t const i) const { return i==0 ? stride_ : 0; }
-    dim_t preferred_stride(rank_t const i) const { return stride(i); }
-    bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr static dim_t stride(rank_t const i) { return i==0 ? 1 : 0; }
+    constexpr static bool compact_stride(dim_t const step, int const z, int const j)
     {
         return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
-    constexpr auto flat() const { return IotaLeaf<T> { i_ }; }
+    constexpr auto flat() const { return IotaLeaf<T> { i_, stride_ }; }
 };
 
-template <class O=dim_t, class S=dim_t> inline
+template <class O=dim_t, class S=O> inline
 constexpr auto
 iota(dim_t size, O org=0, S stride=1)
 {

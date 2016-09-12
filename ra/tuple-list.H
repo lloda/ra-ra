@@ -611,6 +611,19 @@ struct Inc
                              typename Drop<L, w+1>::type>::type>::type;
 };
 
+template <class A> struct InvertIndex;
+template <class ... A> struct InvertIndex<std::tuple<A ...> >
+{
+    using AT = std::tuple<A ...>;
+    template <class T> struct IndexA
+    {
+        using type = int_t<Index<AT, T>::value>;
+    };
+    constexpr static int N = Apply_<Max, AT>::value;
+    using type = Map_<IndexA, Iota_<(N>=0 ? N+1 : 0)> >;
+};
+template <class A> using InvertIndex_ = typename InvertIndex<A>::type;
+
 template <class A> struct index_tuple;
 template <class ... A>
 struct index_tuple<tuple<A ...>>

@@ -54,14 +54,14 @@ int main()
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
-        o << format_array(A, "|", "-");
+        o << format_array(A, true, "|", "-");
         tr.test_eq(o.str(), std::string("1|2-3|4"));
     }
     section("IO format parameters (II)");
     {
         ra::Owned<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << format_array(A, "|", "-", false);
+        o << format_array(A, false, "|", "-");
         tr.test_eq(o.str(), std::string("1|2-3|4"));
     }
     section("common arrays or slices");

@@ -112,18 +112,20 @@ def print_summary():
 
 [to_test_ra(env, test)
  for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
-              'test-ra-6', 'test-ra-7', 'test-ra-8',
+              'test-ra-6', 'test-ra-8',
               'test-types', 'test-io', 'test-from', 'test-nested', 'test-owned',
               'test-ownership', 'test-ply', 'test-small', 'test-wrank',
               'test-return-expr', 'test-reduction', 'test-frame-match',
               'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
               'test-tensorindex', 'test-explode-collapse',
+              'test-optimize'
               ]]
 
 [to_test_ra(env, test)
  for test in ['bench-dot', 'bench-reduce-sqrm', 'bench-from', 'bench-gemm', 'bench-pack',
-              'bench-sum-rows', 'bench-sum-cols']]
+              'bench-sum-rows', 'bench-sum-cols',
+              'bench-stencil1', 'bench-stencil2', 'bench-stencil3']]
 
 if 'skip_summary' not in top:
     atexit.register(print_summary)

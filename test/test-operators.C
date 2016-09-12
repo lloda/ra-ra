@@ -58,6 +58,8 @@ int main()
         TEST_UNARY_OP_CR(xI, 4., complex(0, 4.), complex(1., -2.), complex(2., 1.), 0.);
 #undef TEST_UNARY_OP_CR
 #undef DEF_TEST_UNARY_OP
+// @TODO merge with DEF_TEST_UNARY_OP
+        tr.info("odd").test_eq(ra::Unique<bool, 1> {true, false, true, true}, odd(ra::Unique<int, 1> {1, 2, 3, -1}));
     }
 
     section("check decay of rank 0 Containers/Slices w/ operators");

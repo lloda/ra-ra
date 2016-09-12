@@ -12,6 +12,9 @@
 /// @file test.H
 /// @brief Minimal test library.
 
+// I am entitled to know what I did. This is America. A man is guilty until proven innocent!
+//     - Mr. Blandings builds his dream house
+
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -65,7 +68,7 @@ struct TestRecorder
     template <class ... A> TestRecorder & info(A && ... a)
     {
         bool empty = (info_str=="");
-        info_str += esc_white;
+        info_str += esc_plain;
         info_str += (empty ? "" : "; ");
         info_str += format(a ...);
         info_str += esc_plain;
@@ -76,7 +79,7 @@ struct TestRecorder
     TestRecorder & skip(bool s=true) { willskip = s; return *this; }
 
     template <class A, class B>
-    void test(bool c, A && info_full, B && info_errors)
+    void test(bool c, A && info_full, B && info_min)
     {
         switch (verbose) {
         case QUIET: {
@@ -90,7 +93,7 @@ struct TestRecorder
             o << esc_cyan << "[" << (willskip ? std::string("skipped") : format(total)) << "] " << esc_plain
               << (c ? std::string(esc_green)+"ok"+esc_plain
                   : std::string(esc_bold)+esc_red+"FAILED"+esc_reset)
-              << "... " << (verbose==NOISY ? info_full() : info_errors()) << std::endl;
+              << "... " << ((verbose==NOISY || !c) ? info_full() : info_min()) << std::endl;
         }; break;
         default: assert(0);
         }
@@ -106,10 +109,11 @@ struct TestRecorder
         }
         willskip = false;
     }
-    template <class A> void test(bool c, A && info_full) { test(c, info_full, info_full); }
-    void test(bool c) { test(c, [this]() { return this->info_str; }); }
 
-#define LAZYINFO(...) [&]() { return format(info_str, (this->info_str=="" ? "" : "; "), __VA_ARGS__); }
+#define LAZYINFO(...) [&]() { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
+
+    template <class A> void test(bool c, A && info_full) { test(c, info_full, info_full); }
+    void test(bool c) { test(c, LAZYINFO("")); }
 
 // Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
 // where() is used to match shapes if either ref or a don't't have one.

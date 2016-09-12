@@ -60,9 +60,10 @@ int main()
 {
     TestRecorder tr(std::cout);
 
-    assert(Dual<real>{3}.du==0.);
-    assert(dual(3.).du==0.);
-    section("tests with real");
+    tr.test_eq(0., Dual<real>{3}.du);
+    tr.test_eq(0., dual(3.).du);
+
+    tr.section("tests with real");
     {
         std::vector<real> x(10);
         std::iota(x.begin(), x.end(), 1);
@@ -77,14 +78,14 @@ int main()
         test1<case6>(tr, "case6", x, 1e-15);
         test1<case7>(tr, "case7", x);
     }
-    section("demo with complex");
+    tr.section("demo with complex");
     {
         Dual<complex> x { complex(3, 1), 1. };
         cout << x << endl;
         cout << exp(x) << endl;
         cout << (x*x) << endl;
     }
-    section("tests with complex");
+    tr.section("tests with complex");
     {
         std::vector<complex> x(10);
         std::iota(x.begin(), x.end(), 1);

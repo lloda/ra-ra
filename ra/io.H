@@ -22,15 +22,18 @@ template <class A>
 struct FormatArray
 {
     A const & a;
+    bool const shape;
     char const * sep0;
     char const * sep1;
-    bool const shape;
+    char const * sep2;
 };
 
-template <class A>
-FormatArray<A> format_array(A const & a, char const * sep0="", char const * sep1="\n", bool const shape=true)
+template <class A, class B>
+FormatArray<A> format_array(A const & a, B const shape=true,
+                            char const * sep0="", char const * sep1="\n", char const * sep2="\n")
 {
-    return FormatArray<A> { a, sep0, sep1, shape };
+    static_assert(std::is_same<std::decay_t<B>, bool>::value, "bad call to format_array");
+    return FormatArray<A> { a, shape, sep0, sep1, sep2 };
 }
 
 // a version of ply_index(). @TODO Eventually try to merge with that.
@@ -57,10 +60,10 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
         o << a.at(ind);
         for (int k=0; k<rank; ++k) {
             if (++ind[rank-1-k]<sha[rank-1-k]) {
-                if (k==0) {
-                    o << fa.sep0;
-                } else {
-                    std::fill_n(std::ostream_iterator<char const *>(o, ""), k, fa.sep1);
+                switch (k) {
+                case 0: o << fa.sep0; break;
+                case 1: o << fa.sep1; break;
+                default: std::fill_n(std::ostream_iterator<char const *>(o, ""), k-1, fa.sep2);
                 }
                 goto next;
             } else {
@@ -75,7 +78,7 @@ template <class A> inline
 std::enable_if_t<is_ra<A> || is_foreign_vector<A>, std::ostream &>
 operator<<(std::ostream & o, A && a)
 {
-    return o << format_array(a, " ");
+    return o << format_array(a, true, " ");
 }
 
 // Static size.

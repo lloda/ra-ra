@@ -30,7 +30,7 @@
 namespace ra {
 
 // Manipulate Expr/expr through leaf (raw pointer-like) iterators P ...
-// Of these, the A-th one is used to advance (+) and end (!=) the traversal.
+// Of these, the A-th one is used to advance (+=) the traversal.
 template <class F, int A, class T, class I=mp::index_tuple_<T>>
 struct Leaves;
 
@@ -48,29 +48,18 @@ struct Leaves<F, A, std::tuple<P ...>, std::tuple<I ...>>
     template <int II, class S>
     std::enable_if_t<(II==mp::len<K>)> add(S const & s)  {}
 
-// @TODO Step over (or flag) sub xpr without stride (TensorIndex, Scalar).
     template <int II, class S>
-    std::enable_if_t<(II<mp::len<K> && std::is_integral<S>::value)> add(S const & s)
-    {
-        std::get<mp::Ref_<K, II>::value>(t) += s;
-        add<II+1>(s);
-    }
-    template <int II, class S>
-    std::enable_if_t<(II<mp::len<K> && !std::is_integral<S>::value)> add(S const & s)
+    std::enable_if_t<(II<mp::len<K>)> add(S const & s)
     {
         std::get<mp::Ref_<K, II>::value>(t) += std::get<mp::Ref_<K, II>::value>(s);
         add<II+1>(s);
     }
+// after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
     template <class S> void operator+=(S const & s) { add<0>(s); }
-
-// go down to the first concrete iterator type. These functions match each other.
-    auto operator+(dim_t const s) const { return std::get<A>(t)+s; }
-    template <class PP> bool operator!=(PP const & p0_) const { return (std::get<A>(t)+0)!=p0_; }
-    template <class PP> bool operator==(PP const & p0_) const { return (std::get<A>(t)+0)==p0_; }
 };
 
 
-template <class Op, class ... P>
+template <class Op, class ... P> inline
 constexpr Expr<Op, std::tuple<P ...>> expr(Op && f, P && ... p)
 {
     return Expr<Op, std::tuple<P ...>> { std::forward<Op>(f), std::forward<P>(p) ... };
@@ -104,25 +93,26 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     }
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::len<AK>)>
-    check(int const driver_rank) const {}
+    std::enable_if_t<(iarg==mp::len<AK>), bool>
+    check(int const driver_rank) const
+    {
+        return true;
+    }
 
     template <int iarg>
-    std::enable_if_t<(iarg<mp::len<AK>)>
+    std::enable_if_t<(iarg<mp::len<AK>), bool>
     check(int const driver_rank) const
     {
         rank_t ranki = std::get<mp::Ref_<AK, iarg>::value>(t).rank();
 // Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Disable this test when it's known statically that it isn't needed. @TODO Do dynamic driver selection if static is uncertain.
         assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
         for (int k=0; k!=ranki; ++k) {
-#ifndef NDEBUG
 // sk0==DIM_BAD might happen on subexpressions.
             dim_t sk0 = std::get<A>(t).size(k);
             if (sk0!=DIM_BAD) {
                 dim_t sk = std::get<mp::Ref_<AK, iarg>::value>(t).size(k);
                 assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
             }
-#endif // NDEBUG
         }
         return check<iarg+1>(driver_rank);
     }
@@ -132,7 +122,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     {
 // @TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
 // @TODO Should check only the driver: do this on ply.
-        check<1>(rank());
+        CHECK_BOUNDS(check<1>(rank()));
     }
 
     template <class J>
@@ -140,17 +130,9 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     {
         return op(std::get<I::value>(t).at(i) ...);
     }
-
-    template <int iarg>
-    std::enable_if_t<(iarg==mp::len<T>)>
-    adv(rank_t const k, dim_t const d) {}
-
-    template <int iarg=0>
-    std::enable_if_t<(iarg<mp::len<T>)>
-    adv(rank_t const k, dim_t const d)
+    void adv(rank_t const k, dim_t const d)
     {
-        std::get<iarg>(t).adv(k, d);
-        adv<iarg+1>(k, d);
+        (std::get<I::value>(t).adv(k, d), ...);
     }
 
 // there's one size (by A), but each arg has its own strides.
@@ -159,29 +141,14 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     {
         return std::get<A>(t).size(i);
     }
-    auto stride(int const i) const -> stride_t
+    bool compact_stride(dim_t const step, int const z, int const j) const
+    {
+        return (std::get<I::value>(t).compact_stride(step, z, j) && ...);
+    }
+    auto stride(int const i) const -> stride_t // @BUG clang 3.9 issues with constexpr/TensorIndex
     {
         return stride_t(std::get<I::value>(t).stride(i) ...);
     }
-    auto preferred_stride(int const i) const -> dim_t
-    {
-        return driver().preferred_stride(i);
-    }
-
-    template <int iarg>
-    std::enable_if_t<(iarg==mp::len<K>), bool>
-    compact_stride(dim_t const step, int const z, int const j) const
-    {
-        return true;
-    }
-    template <int iarg=0>
-    std::enable_if_t<(iarg<mp::len<K>), bool>
-    compact_stride(dim_t const step, int const z, int const j) const
-    {
-        return std::get<mp::Ref_<K, iarg>::value>(t).compact_stride(step, z, j)
-               && compact_stride<iarg+1>(step, z, j);
-    }
-
     auto flat() const -> leaves_t // clang complains if this is constexpr, gcc does not
     {
         return leaves_t(op, std::get<I::value>(t).flat() ...);

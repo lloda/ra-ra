@@ -165,6 +165,12 @@ int main()
             C += A;
             tr.test_eq(B, C);
         }
+// Same as above.
+        {
+            ra::Unique<real, 1> C({100}, 0.);
+            C =  C + A;
+            tr.test_eq(B, C);
+        }
 // It cannot work with a lhs scalar value since += must be a class member, but it will work with a rank 0 array or with ra::Scalar.
         {
             ra::Unique<real, 0> C({}, 0.);

@@ -84,6 +84,10 @@ int main()
         {
             c.template iter<1>() += a.template iter<1>();
         };
+    auto f_frametransp = [](auto & c, auto const & a)
+        {
+            c += transpose<1, 0>(a);
+        };
 
     auto bench_all = [&](int m, int n, int reps)
         {
@@ -95,6 +99,7 @@ int main()
             bench(f_wrank2, "wrank2", m, n, reps);
             bench(f_accumscalar, "accumscalar", m, n, reps);
             bench(f_accumiter, "accumiter", m, n, reps);
+            bench(f_frametransp, "frametransp", m, n, reps);
         };
 
     bench_all(1, 1000000, 20);

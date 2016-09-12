@@ -20,7 +20,8 @@ using std::cout; using std::endl;
 
 int main()
 {
-    section("dynamic/static shape");
+    TestRecorder tr(std::cout);
+    tr.section("dynamic/static shape");
 // Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).
     {
         ra::Owned<char> A({2, 3}, 'a');     // dynamic rank = 2, dynamic shape = {2, 3}
@@ -93,7 +94,7 @@ int main()
         cout << "B: " << B << "\n\n";
     }
 // A rank conjunction (only for static rank and somewhat fragile).
-    section("rank conjuction");
+    tr.section("rank conjuction");
     {
 // This is a translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
         ra::Owned<float, 2> A = map(ra::wrank<0, 1>(std::minus<float>()), ra::iota(3), ra::iota(4));
@@ -101,7 +102,7 @@ int main()
     }
 // A proper selection operator with 'beating' of range or scalar subscripts.
 // See examples/slicing.C for more examples.
-    section("selector");
+    tr.section("selector");
     {
 // @TODO do implicit reshape in constructors?? so I can accept any 1-array and not only an initializer_list.
         ra::Owned<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
@@ -131,11 +132,11 @@ int main()
         cout << "B: " << B << endl;
     }
     // A TensorIndex object as in Blitz++ (with some differences).
-    section("tensorindex");
+    tr.section("tensorindex");
     {
 // as shown above.
     }
-    section("STL compat");
+    tr.section("STL compat");
     {
         ra::Owned<char, 1> A = {'x', 'z', 'y'};
         std::sort(A.begin(), A.end());

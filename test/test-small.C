@@ -31,7 +31,7 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr;
-    section("pieces of transpose(ra::Small)");
+    tr.section("pieces of transpose(ra::Small)");
     {
         using sizes = mp::int_list<1, 2, 3, 4, 5>;
         using strides = mp::int_list<1, 10, 100, 1000, 10000>;
@@ -48,7 +48,7 @@ int main()
         using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2> >;
         tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same<eall, call>::value);
     }
-    section("transpose(ra::Small)");
+    tr.section("transpose(ra::Small)");
     {
         ra::Small<real, 2, 3> const a(ra::_0 + 10*ra::_1);
         tr.info("<0 1>").test_eq(a, ra::transpose<0, 1>(a));
@@ -72,7 +72,7 @@ int main()
         x3() = transpose<1, 0>(y3());
         tr.info("transpose copy").test_eq(x3, ra::_0 - ra::_1);
     }
-    section("constructors");
+    tr.section("constructors");
     {
         {
             ra::Small<int, 1> a(9);
@@ -87,7 +87,7 @@ int main()
             tr.test_eq(9., a[0]);
         }
     }
-    section("operator=");
+    tr.section("operator=");
     {
         ra::Small<complex, 2> a { 3, 4 };
         a = complex(99.);
@@ -100,7 +100,7 @@ int main()
         tr.test_eq(89., a[0]);
         tr.test_eq(89., a[1]);
     }
-    section("sizeof");
+    tr.section("sizeof");
     {
 // These all static, but show the numbers if there's an error.
         tr.info("sizeof(ra::Small<real>)")
@@ -112,7 +112,7 @@ int main()
         tr.info("sizeof(ra::Small<real, 2>)")
             .test_eq(2*sizeof(real), sizeof(ra::Small<real, 2>));
     }
-    section("internal fields");
+    tr.section("internal fields");
     {
         {
             using A = ra::Small<real, 10, 10>;
@@ -130,12 +130,12 @@ int main()
             tr.test_eq(1, a.data()[0]);
         }
     }
-    section("iterators' shape_type is not Small, so it can be used by Small");
+    tr.section("iterators' shape_type is not Small, so it can be used by Small");
     {
         auto z = ra::ra_traits<std::array<real, 3>>::make(3);
         cout << "z: " << rawp(z) << endl;
     }
-    section("static stride computation");
+    tr.section("static stride computation");
     {
         using d = mp::int_list<3, 4, 5>;
         using s = typename ra::default_strides<d>::type;
@@ -143,9 +143,9 @@ int main()
         tr.info("stride 1").test_eq(5, mp::Ref_<s, 1>::value);
         tr.info("stride 2").test_eq(1, mp::Ref_<s, 2>::value);
     }
-    section("subscripts");
+    tr.section("subscripts");
     {
-        section("with scalar indices");
+        tr.section("with scalar indices");
         {
             ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
 
@@ -165,7 +165,7 @@ int main()
             // tr.test(std::equal(s2.begin(), s2.end(), check2));
             tr.test_eq(5, s(1, 1));
         }
-        section("using SmallSlice as rvalue");
+        tr.section("using SmallSlice as rvalue");
         {
             ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
 // use as rvalue.
@@ -185,7 +185,7 @@ int main()
             tr.test_eq(ra::Small<real, 3, 2> { -3, -2, -5, -4, -7, -6 }, z);
             tr.test_eq(ra::Small<real, 3, 2> { -7, -6, -5, -4, -3, -2 }, s);
         }
-        section("with tuples");
+        tr.section("with tuples");
         {
             ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
             ra::Small<int, 2> i2 { 1, 1 };
@@ -198,7 +198,7 @@ int main()
             auto k1 = s.at(i1).begin(); tr.test(std::equal(check1, check1+2, k1));
             auto k0 = s.at(i0).begin(); tr.test(std::equal(check0, check0+6, k0));
         }
-        section("with rank 1 subscripts");
+        tr.section("with rank 1 subscripts");
         {
             ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
             tr.test_eq(ra::Small<int, 2> { 1, 4 }, s(0));
@@ -230,7 +230,7 @@ int main()
             tr.test_eq(5, s(ra::all, 1).at(I0 {1}));
             tr.test_eq(6, s(ra::all, 1).at(I0 {2}));
         }
-        section("with rank 1 subscripts, result rank > 1");
+        tr.section("with rank 1 subscripts, result rank > 1");
         {
             ra::Small<real, 3, 2, 2> s  = 100*ra::_0 + 10*ra::_1 + 1*ra::_2;
             cout << s << endl;
@@ -255,7 +255,16 @@ int main()
             }
         }
     }
-    section("custom strides. List init is always row-major.");
+    tr.section("Small<> can be constexpr");
+    {
+        constexpr ra::Small<int, 2, 2> a = {1, 2, 3, 4};
+        using Va = mp::int_t<int(a(1, 0))>;
+        tr.test_eq(3, Va::value);
+        constexpr ra::Small<int> b = {9};
+        using Vb = mp::int_t<int(b)>;
+        tr.test_eq(9, Vb::value);
+    }
+    tr.section("custom strides. List init is always row-major.");
     {
         ra::SmallArray<real, mp::int_list<2, 3>, mp::int_list<1, 2>> a { 1, 2, 3, 4, 5, 6 };
         tr.test_eq(1, a(0, 0));
@@ -274,7 +283,7 @@ int main()
         tr.test_eq(5, a(1)(1));
         tr.test_eq(6, a(1)(2));
     }
-    section("SmallArray converted to SmallSlice");
+    tr.section("SmallArray converted to SmallSlice");
     {
         ra::Small<real, 2, 3> a { 1, 2, 3, 4, 5, 6 };
         ra::SmallSlice<real, mp::int_list<2, 3>, mp::int_list<3, 1>> b = a();
@@ -289,11 +298,11 @@ int main()
         b = 99.;
         tr.test_eq(99., a);
     }
-    section("using ra_iterator with SmallBase");
+    tr.section("using ra_iterator with SmallBase");
     {
         cout << "@TODO" << endl;
     }
-    section("expr with Small, rank 1, ply_index");
+    tr.section("expr with Small, rank 1, ply_index");
     {
         ra::Small<real, 3> a { 1, 4, 2 };
         tr.test_eq(3, a.iter().size(0));
@@ -307,7 +316,7 @@ int main()
             TEST(ply_index)
 #undef TEST
             }
-    section("expr with Small, rank 2");
+    tr.section("expr with Small, rank 2");
     {
         ra::Small<real, 3, 2> a { 1, 4, 2, 5, 3, 6 };
         tr.test_eq(3, a.iter().size(0));
@@ -336,7 +345,7 @@ int main()
         TEST(ply_index);
 #undef TEST
     }
-    section("Small as value type in var-size array");
+    tr.section("Small as value type in var-size array");
     {
         {
 // This pain with rank 0 arrays and ra::scalar can be avoided with ply; see e.g. grid_interp_n() in src/grid.C.
@@ -387,21 +396,21 @@ int main()
             tr.test_eq(1, v[1]);
         }
     }
-    section("transpose");
+    tr.section("transpose");
     {
         ra::Small<real, 2, 3> a { 1, 2, 3, 4, 5, 6 };
         tr.test_eq(ra::Small<real, 3, 2> { 1, 4, 2, 5, 3, 6 }, transpose<1, 0>(a));
         ra::transpose<1, 0>(a) = { 1, 2, 3, 4, 5, 6 };
         tr.test_eq(ra::Small<real, 2, 3> { 1, 3, 5, 2, 4, 6 }, a);
     }
-    section("diag");
+    tr.section("diag");
     {
         ra::Small<real, 3, 3> a = ra::_0*3 + ra::_1;
         tr.test_eq(ra::Small<real, 3> { 0, 4, 8 }, diag(a));
         diag(a) = { 11, 22, 33 };
         tr.test_eq(ra::Small<real, 3, 3> { 11, 1, 2, 3, 22, 5, 6, 7, 33 }, a);
     }
-    section("renames");
+    tr.section("renames");
     {
         ra::Small<real, 2, 2> a { 13, 8, 75, 19 };
         ra::mat_uv<real> b(a);
@@ -410,7 +419,7 @@ int main()
         ra::vec_xyz<real> y(x);
         assert(y.x==13 && y.y==8 && y.z==75);
     }
-    section(".back()");
+    tr.section(".back()");
     {
         ra::Small<real, 3> a = ra::_0*3;
         tr.test_eq(0, a[0]);
@@ -420,7 +429,7 @@ int main()
     }
 
 // @TODO Replace with uniform subscripting (ra::iota).
-    section("compile time subscripting of ra::Small (as)");
+    tr.section("compile time subscripting of ra::Small (as)");
     {
         auto test_as = [&tr](auto && a, auto && b)
             {
@@ -472,13 +481,13 @@ int main()
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }
-    section("cat");
+    tr.section("cat");
     {
         tr.test_eq(ra::Small<int, 4> {1, 2, 3, 4}, cat(ra::Small<int, 3> {1, 2, 3}, 4));
         tr.test_eq(ra::Small<int, 4> {4, 1, 2, 3}, cat(4, ra::Small<int, 3> {1, 2, 3}));
         tr.test_eq(ra::Small<int, 5> {1, 2, 3, 4, 5}, cat(ra::Small<int, 2> {1, 2}, ra::Small<int, 3> {3, 4, 5}));
     }
-    section("a demo on rank1of1 vs rank2 [ref01]");
+    tr.section("a demo on rank1of1 vs rank2 [ref01]");
     {
 // by prefix matching, first dim is 2 for both so they get matched. Then {1 2}
 // (a 'scalar') gets matched to 10 & 20 in succesion. This used to be forbidden in Small::Small(X && x), but now I value consistency more.

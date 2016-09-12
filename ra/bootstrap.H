@@ -70,10 +70,6 @@ struct cellp
     C c;
     void operator+=(dim_t const s) { c.p += s; }
     C & operator*() { return c; }
-
-    constexpr auto operator+(dim_t const s) const { return c.p+s; }
-    template <class P> bool & operator!=(P const & p_) const { return c.p!=p_; }
-    template <class P> bool & operator==(P const & p_) const { return c.p==p_; }
 };
 
 // After next_in_cube() in next-in.H.

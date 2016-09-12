@@ -47,7 +47,7 @@ int main()
             for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
                      x.template iter<1>(), c);
 
-            std::cout << "TIME IN HOURS " << (t/3600.) << " " << format_array(orbit, "") << "\n";
+            std::cout << "TIME IN HOURS " << (t/3600.) << " " << format_array(orbit, true, "") << "\n";
         };
 
     real t = 0;

@@ -64,6 +64,7 @@ void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
 template <int i> using UU = decltype(std::declval<ra::Unique<real, i>>().iter());
 using SM1 = decltype(std::declval<ra::Small<real, 2>>().iter());
 using SM2 = decltype(std::declval<ra::Small<real, 2, 2>>().iter());
+using SM3 = decltype(std::declval<ra::Small<real, 2, 2, 2>>().iter());
 using SS = decltype(ra::scalar(1));
 
 template <class A>
@@ -117,7 +118,7 @@ void CheckTranspose1(TestRecorder & tr, A && a)
 int main()
 {
     TestRecorder tr(std::cout);
-    section("internal fields");
+    tr.section("internal fields");
     {
         {
             real aa[10];
@@ -181,7 +182,7 @@ int main()
             tr.test_eq(99, a.p[9]);
         }
     }
-    section("rank 0 -> scalar with Small");
+    tr.section("rank 0 -> scalar with Small");
     {
         auto rank0test0 = [](real & a) { a *= 2; };
         auto rank0test1 = [](real const & a) { return a*2; };
@@ -193,7 +194,7 @@ int main()
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
-    section("(170) rank 0 -> scalar with Raw");
+    tr.section("(170) rank 0 -> scalar with Raw");
     {
         auto rank0test0 = [](real & a) { a *= 2; };
         auto rank0test1 = [](real const & a) { return a*2; };
@@ -213,7 +214,7 @@ int main()
         tr.test_eq(198, a);
         tr.test_eq(396, b);
     }
-    section("ra traits");
+    tr.section("ra traits");
     {
         {
             using real2x3 = ra::Small<real, 2, 3>;
@@ -234,7 +235,7 @@ int main()
             tr.test_eq(6, ra::ra_traits<ra::Raw<real, 2>>::size(r));
         }
     }
-    section("iterator");
+    tr.section("iterator for Raw");
     {
         real chk[6] = { 0, 0, 0, 0, 0, 0 };
         real pool[6] = { 1, 2, 3, 4, 5, 6 };
@@ -254,6 +255,18 @@ int main()
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
+    tr.section("[ra11] check that cell_iterator operator= does NOT copy contents");
+    {
+        real a[6] = { 0, 0, 0, 0, 0, 0 };
+        real b[6] = { 1, 2, 3, 4, 5, 6 };
+        ra::Raw<real> ra { {{3, 2}, {2, 1}}, a };
+        ra::Raw<real> rb { {{3, 2}, {2, 1}}, b };
+        auto aiter = ra.iter();
+        auto biter = rb.iter();
+        aiter = biter;
+        tr.test_eq(0, ra);
+        tr.test_eq(rb, aiter);
+    }
 // STL-type iterators.
     {
         real rpool[6] = { 1, 2, 3, 4, 5, 6 };
@@ -269,7 +282,7 @@ int main()
         tr.test(std::equal(cpool, cpool+6, spool));
         cout << endl;
     }
-    section("storage types");
+    tr.section("storage types");
     {
         real pool[6] = { 1, 2, 3, 4, 5, 6 };
 
@@ -285,7 +298,7 @@ int main()
         cout << "o rank: " << o.rank() << endl;
         tr.test(std::equal(pool, pool+6, o.begin()));
     }
-    section("driver selection");
+    tr.section("driver selection");
     {
         static_assert(TI<0>::rank_s()==1, "bad TI rank");
         static_assert(ra::pick_driver<UU<0>, UU<1> >::value==1, "bad driver 1a");
@@ -324,6 +337,8 @@ int main()
         static_assert(ra::largest_rank<UU<2>, UU<ra::RANK_ANY>, TI<0>>::value==1, "bad match 6k");
         static_assert(ra::largest_rank<UU<1>, UU<2>, UU<3>>::value==2, "bad match 6l");
         static_assert(ra::largest_rank<UU<2>, TI<0>, UU<ra::RANK_ANY>>::value==2, "bad match 6m");
+// dynamic vs static size, both static rank
+        static_assert(ra::pick_driver<UU<3>, SM3>::value==1, "static rank, dynamic vs static size");
 // dynamic rank vs static size & rank
         static_assert(ra::pick_driver<UU<ra::RANK_ANY>, SM1 >::value==0, "bad match 7a");
         static_assert(ra::pick_driver<SM1, UU<ra::RANK_ANY> >::value==1, "bad match 7b");
@@ -335,7 +350,7 @@ int main()
         static_assert(ra::largest_rank<UU<1>, TI<0>, UU<3>>::value==2, "bad match 7d");
         static_assert(ra::largest_rank<UU<1>, TI<0>, UU<3>>::value==2, "bad match 7e");
     }
-    section("copy between arrays, construct from iterator pair");
+    tr.section("copy between arrays, construct from iterator pair");
     {
         // copy from Fortran order to C order.
         real rpool[6] = { 1, 2, 3, 4, 5, 6 };
@@ -360,7 +375,7 @@ int main()
         tr.test(std::equal(check, check+6, z.begin()));
     }
 // In this case, the Raw + shape provides the driver.
-    section("construct Raw from shape + driverless xpr");
+    tr.section("construct Raw from shape + driverless xpr");
     {
         static_assert(ra::has_tensorindex<decltype(ra::_0)>, "bad has_tensorindex test 0");
         static_assert(ra::has_tensorindex<TI<0>>, "bad has_tensorindex test 1");
@@ -402,7 +417,7 @@ int main()
         //     cout << b << endl;
         // }
     }
-    section("construct Raw from shape + xpr");
+    tr.section("construct Raw from shape + xpr");
     {
         real checka[6] = { 9, 9, 9, 9, 9, 9 };
         ra::Unique<real, 2> a({3, 2}, ra::scalar(9));
@@ -413,7 +428,7 @@ int main()
         cout << b << endl;
         tr.test(std::equal(checkb, checkb+6, b.begin()));
     }
-    section("construct Unique from Unique");
+    tr.section("construct Unique from Unique");
     {
         real check[6] = { 2, 3, 1, 4, 8, 9 };
         ra::Unique<real, 2> a({3, 2}, { 2, 3, 1, 4, 8, 9 });
@@ -425,7 +440,7 @@ int main()
         cout << "d: " << d << endl;
         tr.test(std::equal(check, check+6, d.begin()));
     }
-    section("construct from xpr having its own shape");
+    tr.section("construct from xpr having its own shape");
     {
         ra::Unique<real, 0> a(ra::scalar(33));
         ra::Unique<real> b(ra::scalar(44));
@@ -442,7 +457,7 @@ int main()
         tr.test_eq(1, b.size());
         tr.test_eq(55., b());
     }
-    section("rank 0 -> scalar with storage type");
+    tr.section("rank 0 -> scalar with storage type");
     {
         auto rank0test0 = [](real & a) { a *= 2; };
         auto rank0test1 = [](real const & a) { return a*2; };
@@ -458,7 +473,7 @@ int main()
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
-    section("rank 0 -> scalar with storage type, explicit size");
+    tr.section("rank 0 -> scalar with storage type, explicit size");
     {
         auto rank0test0 = [](real & a) { a *= 2; };
         auto rank0test1 = [](real const & a) { return a*2; };
@@ -473,7 +488,7 @@ int main()
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
-    section("constructors from data in initializer_list");
+    tr.section("constructors from data in initializer_list");
     {
         real checka[6] = { 2, 3, 1, 4, 8, 9 };
         {
@@ -503,7 +518,7 @@ int main()
             tr.test(std::equal(b.begin(), b.end(), checka));
         }
     }
-    section("transpose of 0 rank");
+    tr.section("transpose of 0 rank");
     {
         {
             ra::Unique<real, 0> a({}, 99);
@@ -518,7 +533,7 @@ int main()
         //     tr.test_eq(99, b());
         // }
     }
-    section("row-major assignment from initializer_list, rank 2");
+    tr.section("row-major assignment from initializer_list, rank 2");
     {
         ra::Unique<real, 2> a({3, 2}, ra::unspecified);
         a = { 2, 3, 1, 4, 8, 9 };
@@ -551,7 +566,7 @@ int main()
         tr.test_eq(a.size(1), c.size(0));
         tr.test_eq(b, c);
     }
-    section("row-major assignment from initializer_list, rank 1");
+    tr.section("row-major assignment from initializer_list, rank 1");
     {
         ra::Owned<real, 1> a({5}, ra::unspecified);
         a = { 2, 3, 1, 4, 8 };
@@ -561,9 +576,9 @@ int main()
         tr.test_eq(4, a(3));
         tr.test_eq(8, a(4));
     }
-    section("subscripts");
+    tr.section("subscripts");
     {
-        section("Raw fixed rank == 0");
+        tr.section("Raw fixed rank == 0");
         {
             real x = 99;
             ra::Raw<real, 0> y(ra::Small<int, 0>{}, &x);
@@ -577,7 +592,7 @@ int main()
             tr.test_eq(77, x);
             tr.test_eq(77, y);
         }
-        section("Raw fixed rank > 0");
+        tr.section("Raw fixed rank > 0");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::Raw<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
@@ -632,7 +647,7 @@ int main()
             }
         }
         // @TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.
-        section("Raw fixed rank, unbeatable subscripts");
+        tr.section("Raw fixed rank, unbeatable subscripts");
         {
             ra::Unique<real, 1> a = {1, 2, 3, 4};
             ra::Unique<int, 1> i = {3, 1, 2};
@@ -650,7 +665,7 @@ int main()
             tr.test_eq(a[i[1]], 8);
             tr.test_eq(a[i[2]], 9);
         }
-        section("Raw var rank");
+        tr.section("Raw var rank");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::Raw<real> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
@@ -688,7 +703,7 @@ int main()
             tr.test(std::equal(r2a.begin(), r2a.end(), rcheck2));
         }
 // @TODO Make sure that this is real & = 99, etc. and not Raw<real, 0> = 99, etc.
-        section("assign to rank-0 result of subscript");
+        tr.section("assign to rank-0 result of subscript");
         {
             real check[6] = {99, 88, 77, 66, 55, 44};
             ra::Unique<real> a({2, 3}, 11.);
@@ -698,7 +713,7 @@ int main()
             tr.test(std::equal(check, check+6, a.begin()));
         }
     }
-    section("construct from shape");
+    tr.section("construct from shape");
     {
         ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
         std::iota(a.begin(), a.end(), 0);
@@ -710,7 +725,7 @@ int main()
         std::iota(check, check+24, 0);
         tr.test(std::equal(check, check+24, a.begin()));
     }
-    section("Var rank Raw from fixed rank Raw");
+    tr.section("Var rank Raw from fixed rank Raw");
     {
         ra::Unique<real, 3> a({3, 2, 4}, ra::unspecified);
         ra::Raw<real> b(a);
@@ -721,48 +736,48 @@ int main()
         tr.test_eq(a.size(2), b.size(2));
         tr.test(every(a==b));
     }
-    section("I/O");
+    tr.section("I/O");
     {
-        section("1");
+        tr.section("1");
         {
             ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
             real check[6] = { 1, 4, 2, 5, 3, 6 };
             CheckArrayIO(tr, s, check);
         }
-        section("2");
+        tr.section("2");
         {
             ra::Small<real, 3> s { 1, 4, 2 };
             real check[3] = { 1, 4, 2 };
             CheckArrayIO(tr, s, check);
         }
-        section("3");
+        tr.section("3");
         {
             ra::Small<real> s { 77 };
             real check[1] = { 77 };
             CheckArrayIO(tr, s, check);
         }
-        section("4. Raw<> can't allocate, so have no istream >>. Check output only.");
+        tr.section("4. Raw<> can't allocate, so have no istream >>. Check output only.");
         {
             real rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
             ra::Raw<real, 3> r { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
             real check[11] = { 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, r, check);
         }
-        section("5");
+        tr.section("5");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::Raw<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             real check[8] = { 3, 2, 1, 4, 2, 5, 3, 6 };
             CheckArrayOutput(tr, r, check);
         }
-        section("6");
+        tr.section("6");
         {
             real rpool[3] = { 1, 2, 3 };
             ra::Raw<real, 1> r { {ra::Dim {3, 1}}, rpool };
             real check[4] = { 3, 1, 2, 3 };
             CheckArrayOutput(tr, r, check);
         }
-        section("7");
+        tr.section("7");
         {
             real rpool[1] = { 88 };
             ra::Raw<real, 0> r { {}, rpool };
@@ -773,7 +788,7 @@ int main()
             // static_assert(sizeof(r)==sizeof(real *), "bad assumption");
             tr.test_eq(88, r);
         }
-        section("8");
+        tr.section("8");
         {
             real rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
             ra::Raw<real> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
@@ -783,7 +798,7 @@ int main()
             ra::Raw<real> b { {2, 2, 2}, rpool };
             CheckArrayOutput(tr, b, check);
         }
-        section("9");
+        tr.section("9");
         {
             ra::Unique<real, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
@@ -791,7 +806,7 @@ int main()
             std::iota(check+3, check+3+24, 0);
             CheckArrayIO(tr, a, check);
         }
-        section("10");
+        tr.section("10");
         {
             ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
@@ -800,7 +815,7 @@ int main()
             CheckArrayIO(tr, a, check);
         }
     }
-    section("ply - xpr types - Scalar");
+    tr.section("ply - xpr types - Scalar");
     {
         {
             auto s = ra::scalar(7);
@@ -817,15 +832,15 @@ int main()
             cout << "s: " << s.s << endl;
         }
     }
-    section("ra::iota");
+    tr.section("ra::iota");
     {
         static_assert(ra::is_array_iterator<decltype(ra::iota(10))>, "bad type pred for iota");
-        section("straight cases");
+        tr.section("straight cases");
         {
             ra::Owned<int, 1> a = ra::iota(4, 1);
             assert(a[0]==1 && a[1]==2 && a[2]==3 && a[3]==4);
         }
-        section("work with operators");
+        tr.section("work with operators");
         {
             tr.test(every(ra::iota(4)==ra::Owned<int, 1> {0, 1, 2, 3}));
             tr.test(every(ra::iota(4, 1)==ra::Owned<int, 1> {1, 2, 3, 4}));
@@ -833,7 +848,7 @@ int main()
         }
  // @TODO actually whether unroll is avoided depends on ply_either, have a way to require it.
 // Cf [trc-01] in test-compatibility.C.
-        section("[tr0-01] frame-matching, forbidding unroll");
+        tr.section("[tr0-01] frame-matching, forbidding unroll");
         {
             ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
             transpose(b, {0, 2, 1}) = ra::iota(3, 1);
@@ -851,17 +866,17 @@ int main()
             tr.test(every(b(2)==3));
         }
     }
-    section("reverse array types");
+    tr.section("reverse array types");
     {
         CheckReverse(tr, ra::Unique<real>({ 3, 2, 4 }, ra::unspecified));
         CheckReverse(tr, ra::Unique<real, 3>({ 3, 2, 4 }, ra::unspecified));
     }
-    section("transpose A");
+    tr.section("transpose A");
     {
         CheckTranspose1(tr, ra::Unique<real>({ 3, 2 }, ra::unspecified));
         CheckTranspose1(tr, ra::Unique<real, 2>({ 3, 2 }, ra::unspecified));
     }
-    section("transpose B");
+    tr.section("transpose B");
     {
         auto transpose_test = [&tr](auto && b)
             {
@@ -878,7 +893,7 @@ int main()
         transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
         transpose_test(transpose<0, 0>(b));                       // static rank to static rank
     }
-    section("transpose C");
+    tr.section("transpose C");
     {
         auto transpose_test = [&tr](auto && b)
             {

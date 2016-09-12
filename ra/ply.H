@@ -28,7 +28,7 @@ static_assert(std::is_signed<rank_t>::value && std::is_signed<dim_t>::value, "ba
 // @TODO See ply_ravel() for traversal order.
 // @TODO A(i0, i1 ...) can be partial-applied as A(i0)(i1 ...) for faster indexing
 // @TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
-template <class A>
+template <class A> inline
 void ply_index(A && a)
 {
 // @TODO try and merge the singular cases.
@@ -36,20 +36,22 @@ void ply_index(A && a)
         return;
     }
     rank_t const rank = a.rank();
-    auto sha(a.shape());
-    using Shape = decltype(sha);
-    Shape ind(ra_traits<Shape>::make(rank, 0));
-
     rank_t order[rank];
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
+    using Shape = std::decay_t<decltype(a.shape())>;
+    Shape ind(ra_traits<Shape>::make(rank, 0));
+    dim_t sha[rank];
+    for (int k=0; k!=rank; ++k) {
+        sha[k] = a.size(order[k]);
+    }
     for (;;) {
-        a.at(ind);
+        a.at(ind); // ply_index core
         for (int k=0; ; ++k) {
             if (k==rank) {
                 return;
-            } else if (++ind[order[k]]<sha[order[k]]) {
+            } else if (++ind[order[k]]<sha[k]) {
                 break;
             } else {
                 ind[order[k]] = 0;
@@ -59,17 +61,17 @@ void ply_index(A && a)
 }
 
 // Traverse array expression looking to ravel the inner loop.
-// size() and preferred_stride() are only used on the driving argument (largest rank).
+// size() is only used on the driving argument (largest rank).
 // adv(), stride(), compact_stride() and flat() are used on all the leaf arguments. The strides must give 0 for k>=their own rank, to allow frame matching.
 // @TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
-template <class A>
+template <class A> inline
 void ply_ravel(A && a)
 {
-// flat()+step would not see the zero sizes above the axes used for step, so we must check for empty expr anyway.
+// flat()+s would not see the zero sizes above the axes used for s, so we must check for empty expr anyway.
     if (a.done()) {
         return;
     }
-    rank_t const rank = a.rank();
+    rank_t rank = a.rank();
     if (rank==0) {
         *(a.flat());
         return;
@@ -78,35 +80,39 @@ void ply_ravel(A && a)
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
+    // if (rank>1) { // @TODO find a decent heuristic
+    //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
+    //               { return a.size(order[i])<a.size(order[j]); });
+    // }
 // find outermost compact dim.
-    auto step = a.size(order[0]);
-    int ocd = 1;
-    for (; ocd!=rank && a.compact_stride(step, order[0], order[ocd]); ++ocd) {
-        step *= a.size(order[ocd]);
+    rank_t * ocd = order;
+    auto ss = a.size(*ocd);
+    for (--rank, ++ocd; rank>0 && a.compact_stride(ss, order[0], *ocd); --rank, ++ocd) {
+        ss *= a.size(*ocd);
     }
-    step *= a.preferred_stride(order[0]);
+    dim_t ind[rank], sha[rank];
+    for (int k=0; k!=rank; ++k) {
+        ind[k] = 0;
+        sha[k] = a.size(ocd[k]);
+    }
 // all sub xpr strides advance in compact dims, as they might be different.
-    auto const ss0(a.stride(order[0]));
-// @TODO don't the full sha or ind. But try to use them to do ply_index more efficiently.
-    auto sha(a.shape());
-    using Shape = decltype(sha);
-    Shape ind(ra_traits<Shape>::make(rank, 0));
+    auto const ss0 = a.stride(order[0]);
 // @TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit stride.
     for (;;) {
-        auto p = a.flat();
-        for (auto end=p+step; p!=end; p+=ss0) {
-            *p;
+        dim_t s = ss;
+        for (auto p=a.flat(); s>0; --s, p+=ss0) {
+            *p; // ply_ravel core
         }
-        for (int k=ocd; ; ++k) {
+        for (int k=0; ; ++k) {
             if (k>=rank) {
                 return;
-            } else if (ind[order[k]]<sha[order[k]]-1) {
-                ++ind[order[k]];
-                a.adv(order[k], 1);
+            } else if (ind[k]<sha[k]-1) {
+                ++ind[k];
+                a.adv(ocd[k], 1);
                 break;
             } else {
-                ind[order[k]] = 0;
-                a.adv(order[k], 1-sha[order[k]]);
+                ind[k] = 0;
+                a.adv(ocd[k], 1-sha[k]);
             }
         }
     }
@@ -117,14 +123,14 @@ void ply_ravel(A && a)
 // -------------------------
 
 template <class order, class A, class S>
-std::enable_if_t<mp::len<order> == 0>
+std::enable_if_t<mp::len<order> == 0> inline
 subindexf(A & a, S & s, S & i)
 {
-    a.at(i);
+    a.at(i); // plyf_index core
 }
 
 template <class order, class A, class S>
-std::enable_if_t<(mp::len<order> > 0)>
+std::enable_if_t<(mp::len<order> > 0)> inline
 subindexf(A & a, S & s_, S & i_)
 {
     dim_t & i = i_[mp::First_<order>::value];
@@ -134,7 +140,7 @@ subindexf(A & a, S & s_, S & i_)
     }
 }
 
-template <class A>
+template <class A> inline
 void plyf_index(A && a)
 {
     auto s(a.shape());
@@ -144,21 +150,20 @@ void plyf_index(A && a)
 }
 
 // -------------------------
-// Compile time order. See bench-array-dot-ra.C for use. No index version.
+// Compile time order. See bench-dot.C for use. No index version.
 // With compile-time recursion by rank, one can use adv<k>, but order must also be compile-time.
 // -------------------------
 
-template <class order, int ravel_rank, class A, class S>
+template <class order, int ravel_rank, class A, class S> inline
 std::enable_if_t<mp::len<order> == ravel_rank>
-subindex(A & a, dim_t const s, S const & ss0)
+subindex(A & a, dim_t s, S const & ss0)
 {
-    auto p = a.flat();
-    for (auto end=p+s; p!=end; p+=ss0) {
-        *p;
+    for (auto p=a.flat(); s>0; --s, p+=ss0) {
+        *p; // plyf core
     }
 }
 
-template <class order, int ravel_rank, class A, class S>
+template <class order, int ravel_rank, class A, class S> inline
 std::enable_if_t<(mp::len<order> > ravel_rank)>
 subindex(A & a, dim_t const s, S const & ss0)
 {
@@ -172,14 +177,14 @@ subindex(A & a, dim_t const s, S const & ss0)
 
 // until() converts runtime jj into compile time j. @TODO a.adv<k>().
 
-template <class order, int j, class A, class S>
+template <class order, int j, class A, class S> inline
 std::enable_if_t<(mp::len<order> < j)>
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
     assert(0 && "rank too high");
 }
 
-template <class order, int j, class A, class S>
+template <class order, int j, class A, class S> inline
 std::enable_if_t<(mp::len<order> >= j)>
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
@@ -190,56 +195,65 @@ until(int const jj, A & a, dim_t const s, S const & ss0)
     }
 }
 
-template <class A>
+template <class A> inline
 auto plyf(A && a) -> std::enable_if_t<(A::rank_s()<=0)>
 {
     static_assert(A::rank_s()==0, "plyf needs static rank");
     *(a.flat());
 }
 
-template <class A>
+template <class A> inline
 auto plyf(A && a) -> std::enable_if_t<(A::rank_s()==1)>
 {
-    subindex<mp::Iota_<1>, 1>(a, a.size(0)*a.preferred_stride(0), a.stride(0));
+    subindex<mp::Iota_<1>, 1>(a, a.size(0), a.stride(0));
 }
 
-template <class A>
+template <class A> inline
 auto plyf(A && a) -> std::enable_if_t<(A::rank_s()>1)>
 {
-    rank_t const rank = a.rank();
+    /* constexpr */ rank_t const rank = a.rank();
+#if 0
 // find the outermost compact dim.
-    auto step = a.size(rank-1);
-    int j = 1;
-    while (j!=rank && a.compact_stride(step, rank-1, rank-1-j)) {
-        step *= a.size(rank-1-j);
-        ++j;
-    }
-    step *= a.preferred_stride(rank-1);
+    {
+        /* constexpr */ auto s = a.size(rank-1);
+        int j = 1;
+        while (j!=rank && a.compact_stride(s, rank-1, rank-1-j)) {
+            s *= a.size(rank-1-j);
+            ++j;
+        }
 // all sub xpr strides advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-    until<mp::Iota_<A::rank_s()>, 0>(j, a, step, a.stride(rank-1));
+        until<mp::Iota_<A::rank_s()>, 0>(j, a, s, a.stride(rank-1));
+    }
+#else
+// according to bench-dot.C, the unrolling above isn't worth it :-/ @TODO
+    {
+        /* constexpr */ auto s = a.size(rank-1);
+        subindex<mp::Iota_<A::rank_s()>, 1>(a, s, a.stride(rank-1));
+    }
+#endif
 }
 
 // ---------------------------
 // Selectors, best performance for each type.
 // ---------------------------
 
-template <class A>
+template <class A> inline
 std::enable_if_t<has_tensorindex<A>>
 ply_either(A && a)
 {
     ply_index(std::forward<A>(a));
 }
 
-template <class A>
-std::enable_if_t<!has_tensorindex<A> && (A::size_s()==DIM_ANY || (A::rank_s()!=0 && A::rank_s()!=1))>
+template <class A> inline
+std::enable_if_t<!has_tensorindex<A> && (A::size_s()==DIM_ANY)>
 ply_either(A && a)
 {
     ply_ravel(std::forward<A>(a));
 }
 
-template <class A>
-std::enable_if_t<!has_tensorindex<A> && (A::size_s()!=DIM_ANY && (A::rank_s()==0 || A::rank_s()==1))>
+template <class A> inline
+std::enable_if_t<!has_tensorindex<A> && (A::size_s()!=DIM_ANY)>
 ply_either(A && a)
 {
     plyf(std::forward<A>(a));
@@ -285,10 +299,9 @@ bool ply_index_short_circuit(A && a)
 template <class Op, class A, std::enable_if_t<is_array_iterator<A> && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
 bool ply_index_short_circuit(A && a)
 {
-    auto s = a.size(0)*a.preferred_stride(0);
+    auto s = a.size(0);
     auto ss0 = a.stride(0);
-    auto p = a.flat();
-    for (auto end=p+s; p!=end; p+=ss0) {
+    for (auto p=a.flat(); s>0; --s, p+=ss0) {
         if (Op()(*p)) {
             return Op()(true);
         }
@@ -302,8 +315,8 @@ bool ply_index_short_circuit(A && a)
     return ply_index_short_circuit<Op>(start(std::forward<A>(a)));
 }
 
-template <class A> bool any(A && a) { return ply_index_short_circuit<mp::identity>(std::forward<A>(a)); }
-template <class A> bool every(A && a) { return ply_index_short_circuit<std::logical_not<bool> >(std::forward<A>(a)); }
+template <class A> inline bool any(A && a) { return ply_index_short_circuit<mp::identity>(std::forward<A>(a)); }
+template <class A> inline bool every(A && a) { return ply_index_short_circuit<std::logical_not<bool> >(std::forward<A>(a)); }
 
 } // namespace ra
 

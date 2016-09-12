@@ -12,8 +12,6 @@
 /// @file macros.H
 /// @brief Fundamental macros and types.
 
-#define GCC_VERSION (__GNUC__*10000+__GNUC_MINOR__*100+__GNUC_PATCHLEVEL__)
-
 #include <cstddef>
 #include <sys/types.h> // ssize_t
 #include <type_traits>

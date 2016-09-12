@@ -62,7 +62,7 @@ inline decltype(auto) where(bool const w, T && t, F && f) { return w ? START(t) 
 namespace ra {
 
 template <int ... Iarg, class A>
-decltype(auto) transpose(A && a, mp::int_list<Iarg ...>)
+inline decltype(auto) transpose(A && a, mp::int_list<Iarg ...>)
 {
     return transpose<Iarg ...>(std::forward<A>(a));
 }
@@ -152,7 +152,8 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // @TODO Make + into nop.
         return OP(START(a) ...);                                        \
     }
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, abs, cos, sin)
-FOR_EACH(DEF_NAME_OP, exp, sqrt, log, log1p, isfinite, isnan, isinf, max, min)
+FOR_EACH(DEF_NAME_OP, exp, sqrt, log, log1p, isfinite, isnan, isinf, max)
+FOR_EACH(DEF_NAME_OP, min, odd)
 #undef DEF_NAME_OP
 
 #define DEF_NAME_OP(OP)                                                 \

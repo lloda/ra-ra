@@ -46,23 +46,23 @@ void CheckPlyReverse1(TestRecorder & tr, AA && a)
 }
 
 template <class CC, class AA, class BB>
-void CheckPly(TestRecorder & tr, AA && A, BB && B)
+void CheckPly(TestRecorder & tr, char const * tag, AA && A, BB && B)
 {
 // need to slice because B may be Unique (!) and I have left own-type constructors as default on purpose. Here, I need C's contents to be a fresh copy of B's.
     CC C(B());
     auto sub = [](int & b, int const a) -> int { return b -= a; };
-    auto add = [](int & b, int const a) -> int { return b += a; };
     ra::ply_ravel(ra::expr(sub, B.iter(), A.iter()));
     for (int i=0; i!=A.size(0); ++i) {
         for (int j=0; j!=A.size(1); ++j) {
-            tr.test_eq(C(i, j)-A(i, j), B(i, j));
+            tr.info(tag, " ravel").test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
+    auto add = [](int & b, int const a) -> int { return b += a; };
     ra::ply_ravel(ra::expr(add, B.iter(), A.iter()));
     ra::ply_index(ra::expr(sub, B.iter(), A.iter()));
     for (int i=0; i!=A.size(0); ++i) {
         for (int j=0; j!=A.size(1); ++j) {
-            tr.test_eq(C(i, j)-A(i, j), B(i, j));
+            tr.info(tag, " index").test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
 }
@@ -85,7 +85,7 @@ int main()
                            C.iter(),                                    \
                            ra::expr([](int const i, int const j) { return i-j; }, \
                                     A.iter(), B.iter())));              \
-            tr.test(std::equal(check, check+3, C.begin()));            \
+            tr.test(std::equal(check, check+3, C.begin()));             \
         }
 #define TEST2(plier)                                            \
         TEST(plier)(ra::Small<int, 3> {});                      \
@@ -96,7 +96,7 @@ int main()
         TEST2(plyf_index)
 #undef TEST2
 #undef TEST
-    }
+            }
     section("[ra03] with ref terms only");
     {
 #define TEST(plier, Biter, Citer)                                       \
@@ -104,30 +104,30 @@ int main()
         {                                                               \
             plier(ra::expr([](int & k, int const i, int const j) { k = i+j; return k; }, \
                            Citer, Biter, Biter));                       \
-            tr.test_eq(2, C[0]);                                    \
-            tr.test_eq(4, C[1]);                                    \
-            tr.test_eq(6, C[2]);                                    \
+            tr.test_eq(2, C[0]);                                        \
+            tr.test_eq(4, C[1]);                                        \
+            tr.test_eq(6, C[2]);                                        \
         }
 #define TEST2(plier)                                                    \
         TEST(plier, B.iter(), C.iter())(int3 { 1, 2, 3 }, int3 { 77, 88, 99 }); \
         TEST(plier, ra::vector(B), ra::vector(C))(std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
         TEST2(ply_ravel)
-        TEST2(ply_index)
-        TEST2(plyf)
-        TEST2(plyf_index)
+            TEST2(ply_index)
+            TEST2(plyf)
+            TEST2(plyf_index)
 #undef TEST2
 #undef TEST
-    }
+            }
     section("[ra04] with ref & value terms");
     {
 #define TEST(plier, Biter, Citer, Btemp)                                \
-        [&tr](auto && B, auto && C)                                        \
+        [&tr](auto && B, auto && C)                                     \
         {                                                               \
             plier(ra::expr([](int & k, int const i, int const j) { k = i*j; return k; }, \
                            Citer, Btemp, Biter));                       \
-            tr.test_eq(1, C[0]);                                    \
-            tr.test_eq(4, C[1]);                                    \
-            tr.test_eq(9, C[2]);                                    \
+            tr.test_eq(1, C[0]);                                        \
+            tr.test_eq(4, C[1]);                                        \
+            tr.test_eq(9, C[2]);                                        \
         }
         TEST(ply_ravel, B.iter(), C.iter(), (int3 {1, 2, 3}.iter()))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
         TEST(ply_index, B.iter(), C.iter(), (int3 {1, 2, 3}.iter()))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
@@ -205,12 +205,12 @@ int main()
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
             plier(ra::expr(sum2, a.iter(), transpose<1, 0>(b).iter(), c.iter())); \
-            tr.test(std::equal(check, check+6, c.begin()));            \
+            tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }                                                               \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
             plier(ra::expr(sum2, transpose<1, 0>(a).iter(), b.iter(), transpose<1, 0>(c).iter())); \
-            tr.test(std::equal(check, check+6, c.begin()));            \
+            tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }
         TEST(ply_ravel);
         TEST(ply_index);
@@ -219,22 +219,22 @@ int main()
 #undef TEST
     }
 // @TODO Do this test with ra::expr(TensorIndex<0>(), ra::scalar(1)).
-    section("[ra09] reverse 1/1 axis, traverse");
-#define TEST(plier)                                                     \
-    {                                                                   \
-        A1 a({ 6 }, ra::unspecified);                                  \
-        std::iota(a.begin(), a.end(), 1);                               \
-        A1 b { {6}, ra::scalar(99) };                                   \
-        auto copy = [](int & b, int const a) { b = a; };                \
-        plier(ra::expr(copy, b.iter(), a.iter()));                      \
-        cout << flush;                                                  \
-        for (int i=0; i<6; ++i) {                                       \
-            tr.test_eq(i+1, b[i]);                                  \
-        }                                                               \
-        plier(ra::expr(copy, b.iter(), reverse(a, 0).iter()));          \
-        for (int i=0; i<6; ++i) {                                       \
-            tr.test_eq(6-i, b(i));                                  \
-        }                                                               \
+section("[ra09] reverse 1/1 axis, traverse");
+#define TEST(plier)                                             \
+    {                                                           \
+        A1 a({ 6 }, ra::unspecified);                           \
+        std::iota(a.begin(), a.end(), 1);                       \
+        A1 b { {6}, ra::scalar(99) };                           \
+        auto copy = [](int & b, int const a) { b = a; };        \
+        plier(ra::expr(copy, b.iter(), a.iter()));              \
+        cout << flush;                                          \
+        for (int i=0; i<6; ++i) {                               \
+            tr.test_eq(i+1, b[i]);                              \
+        }                                                       \
+        plier(ra::expr(copy, b.iter(), reverse(a, 0).iter()));  \
+        for (int i=0; i<6; ++i) {                               \
+            tr.test_eq(6-i, b(i));                              \
+        }                                                       \
     }
     TEST(ply_index)
     TEST(ply_ravel)
@@ -246,21 +246,21 @@ int main()
         A2 A({2, 3}, { 1, 2, 3, 4, 5, 6 });
         A2 B({2, 3}, { 1, 2, 3, 4, 5, 6 });
 
-        CheckPly<A2>(tr, A, B);
-        CheckPly<A2>(tr, reverse(A, 0), B);
-        CheckPly<A2>(tr, A, reverse(B, 0));
-        CheckPly<A2>(tr, reverse(A, 0), reverse(B, 0));
+        CheckPly<A2>(tr, "(a)", A, B);
+        CheckPly<A2>(tr, "(b)", reverse(A, 0), B);
+        CheckPly<A2>(tr, "(c)", A, reverse(B, 0));
+        CheckPly<A2>(tr, "(d)", reverse(A, 0), reverse(B, 0));
 
-        CheckPly<A2>(tr, reverse(A, 1), B);
-        CheckPly<A2>(tr, A, reverse(B, 1));
-        CheckPly<A2>(tr, reverse(A, 1), reverse(B, 1));
+        CheckPly<A2>(tr, "(e)", reverse(A, 1), B);
+        CheckPly<A2>(tr, "(f)", A, reverse(B, 1));
+        CheckPly<A2>(tr, "(g)", reverse(A, 1), reverse(B, 1));
 
 // When BOTH strides are negative, B is still compact and this can be reduced to a single loop.
 // @TODO Enforce that the loop is linearized over both dimensions.
 
-        CheckPly<A2>(tr, A, reverse(reverse(B, 0), 1));
-        CheckPly<A2>(tr, reverse(reverse(A, 0), 1), B);
-        CheckPly<A2>(tr, reverse(reverse(A, 0), 1), reverse(reverse(B, 0), 1));
+        CheckPly<A2>(tr, "(h)", A, reverse(reverse(B, 0), 1));
+        CheckPly<A2>(tr, "(i)", reverse(reverse(A, 0), 1), B);
+        CheckPly<A2>(tr, "(j)", reverse(reverse(A, 0), 1), reverse(reverse(B, 0), 1));
     }
     section("[ra10(e-h)] reverse & transpose (ref & non ref), traverse");
     {
@@ -268,20 +268,20 @@ int main()
         A2 A({2, 2}, { 1, 2, 3, 4 });
         A2 B({2, 2}, { 1, 2, 3, 4 });
 
-        CheckPly<A2>(tr, transpose(A, {1, 0}), B);
-        CheckPly<A2>(tr, A, transpose(B, {1, 0}));
-        CheckPly<A2>(tr, reverse(reverse(transpose(A, {1, 0}), 1), 0), B);
-        CheckPly<A2>(tr, A, reverse(reverse(transpose(B, {1, 0}), 1), 0));
+        CheckPly<A2>(tr, "(a)", transpose(A, {1, 0}), B);
+        CheckPly<A2>(tr, "(b)", A, transpose(B, {1, 0}));
+        CheckPly<A2>(tr, "(c)", reverse(reverse(transpose(A, {1, 0}), 1), 0), B);
+        CheckPly<A2>(tr, "(d)", A, reverse(reverse(transpose(B, {1, 0}), 1), 0));
 
-        CheckPly<A2>(tr, transpose<1, 0>(A), B);
-        CheckPly<A2>(tr, A, transpose<1, 0>(B));
-        CheckPly<A2>(tr, reverse(reverse(transpose<1, 0>(A), 1), 0), B);
-        CheckPly<A2>(tr, A, reverse(reverse(transpose<1, 0>(B), 1), 0));
+        CheckPly<A2>(tr, "(e)", transpose<1, 0>(A), B);
+        CheckPly<A2>(tr, "(f)", A, transpose<1, 0>(B));
+        CheckPly<A2>(tr, "(g)", reverse(reverse(transpose<1, 0>(A), 1), 0), B);
+        CheckPly<A2>(tr, "(h)", A, reverse(reverse(transpose<1, 0>(B), 1), 0));
 
-        CheckPly<A2>(tr, transpose(A, mp::int_list<1, 0>()), B);
-        CheckPly<A2>(tr, A, transpose(B, mp::int_list<1, 0>()));
-        CheckPly<A2>(tr, reverse(reverse(transpose(A, mp::int_list<1, 0>()), 1), 0), B);
-        CheckPly<A2>(tr, A, reverse(reverse(transpose(B, mp::int_list<1, 0>()), 1), 0));
+        CheckPly<A2>(tr, "(i)", transpose(A, mp::int_list<1, 0>()), B);
+        CheckPly<A2>(tr, "(j)", A, transpose(B, mp::int_list<1, 0>()));
+        CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(A, mp::int_list<1, 0>()), 1), 0), B);
+        CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(B, mp::int_list<1, 0>()), 1), 0));
     }
     return tr.summary();
 }

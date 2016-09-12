@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -69,8 +69,7 @@ struct AddFrameAxes
     using type = mp::Append_<R, mp::Iota_<frank::value, skip::value>>;
 };
 
-template <class V, class T, class R=mp::MakeList_<mp::len<T>, mp::nil>,
-          rank_t skip=0>
+template <class V, class T, class R=mp::MakeList_<mp::len<T>, mp::nil>, rank_t skip=0>
 struct Framematch;
 
 // Get a list (per argument) of lists of live axes.
@@ -87,7 +86,7 @@ struct Framematch<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple
 // @TODO functions of arg rank, negative, inf.
 // live = number of live axes on this frame, for each argument.
     using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>-crank::value) ...>;
-    static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "no dynamic ranks allowed");
+    static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "bad ranks");
 
 // select driver for this stage.
     static int const driver = largest_i_tuple<live>::value;
@@ -177,11 +176,9 @@ struct ApplyFrames
     constexpr static int live(int k) { return mp::on_tuple<LiveAxes>::index(k); }
 
     template <class I>
-    decltype(auto) at(I const & i)
+    constexpr decltype(auto) at(I const & i)
     {
-        std::array<dim_t, mp::len<LiveAxes>> j;
-        mp::on_tuple<LiveAxes>::map_indices(i, j);
-        return a.at(j);
+        return a.at(mp::map_indices<LiveAxes, std::array<dim_t, mp::len<LiveAxes> > >::f(i));
     }
     constexpr dim_t size(int const k) const
     {
@@ -200,16 +197,11 @@ struct ApplyFrames
         int l = live(k);
         return l>=0 ? a.stride(l) : zerostride<decltype(a.stride(l))>::f();
     }
-    dim_t preferred_stride(int const k) const
+    constexpr bool compact_stride(dim_t const step, int const z, int const j) const
     {
-        int l = live(k);
-        return l>=0 ? a.preferred_stride(l) : 0;
-    }
-    bool compact_stride(dim_t const step, int const z, int const j) const
-    {
-        int wz = mp::on_tuple<LiveAxes>::index(z);
-        int wj = mp::on_tuple<LiveAxes>::index(j);
-        return (wz>=0 && wj>=0) ? a.compact_stride(step, wz, wj) : false; // @BUG may not be false.
+        int wz = live(z);
+        int wj = live(j);
+        return wz>=0 && wj>=0 && a.compact_stride(step, wz, wj); // @BUG may not be false.
     }
 };
 
@@ -268,31 +260,37 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
         }
         return check<iarg+1>(s0, k);
     }
+    bool check()
+    {
+        for (int k=0; k!=rank(); ++k) { // @TODO with static rank or sizes, can peval.
+            if (!check<0>(size(k), k)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     Ryn(Op op_, Ti ... t_): op(op_), t(t_ ...)
     {
-// @TODO with static rank or sizes, can peval.
-        for (int k=0; k!=rank(); ++k) {
-            CHECK_BOUNDS(check<0>(size(k), k) && "mismatched shapes");
-        }
+        CHECK_BOUNDS(check() && "mismatched shapes");
     }
     template <class J>
-    decltype(auto) at(J const & i)
+    constexpr decltype(auto) at(J const & i)
     {
         return op(std::get<Ki::value>(t).at(i) ...);
     }
 
-// DEBUGGING --find the driver for given axis. This pattern is used below.
+// Find the driver for given axis. This pattern is used below.
     template <int iarg=0>
     std::enable_if_t<(iarg<mp::len<K>), int>
-    driver(int const k)
+    constexpr driver(int const k)
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? iarg : driver<iarg+1>(k);
     }
     template <int iarg>
     std::enable_if_t<(iarg==mp::len<K>), int>
-    driver(int const k)
+    constexpr driver(int const k)
     {
         assert(0 && "there was no driver"); abort();
     }
@@ -300,34 +298,19 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
     template <int iarg=0>
     std::enable_if_t<(iarg<mp::len<K>), dim_t>
-    size(int const k) const
+    constexpr size(int const k) const
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? s : size<iarg+1>(k);
     }
     template <int iarg>
     std::enable_if_t<(iarg==mp::len<K>), dim_t>
-    size(int const k) const
+    constexpr size(int const k) const
     {
         assert(0 && "internal error"); abort();
     }
 
-// Use the first arg that gives size(k)>=0; valid by ApplyFrame.
-    template <int iarg=0>
-    std::enable_if_t<(iarg<mp::len<K>), dim_t>
-    preferred_stride(int const k) const
-    {
-        return std::get<iarg>(t).live(k)>=0 ? std::get<iarg>(t).preferred_stride(k)
-                                            : preferred_stride<iarg+1>(k);
-    }
-    template <int iarg>
-    std::enable_if_t<(iarg==mp::len<K>), dim_t>
-    preferred_stride(int const k) const
-    {
-        assert(0 && "internal error"); abort();
-    }
-
-    auto shape() const
+    constexpr auto shape() const
     {
         std::array<dim_t, FM::depth> s;
         for (int k=0; k!=FM::depth; ++k) {
@@ -340,38 +323,21 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     constexpr static rank_t rank() { return FM::depth; } // @TODO Invalid for RANK_ANY
 
 // @TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
-    template <int iarg=0>
-    std::enable_if_t<(iarg<mp::len<K>), void>
-    adv(rank_t const k, dim_t const d)
+    void adv(rank_t const k, dim_t const d)
     {
-        std::get<iarg>(t).adv(k, d);
-        adv<iarg+1>(k, d);
+        (std::get<Ki::value>(t).adv(k, d), ...);
     }
-    template <int iarg>
-    std::enable_if_t<(iarg==mp::len<K>), void>
-    adv(rank_t const k, dim_t const d)
-    {
-    }
-
     template <int iarg=0>
     std::enable_if_t<(iarg<mp::len<K>), bool>
-    compact_stride(dim_t const step, int const z, int const j) const
+    constexpr compact_stride(dim_t const step, int const z, int const j) const
     {
-        return std::get<mp::Ref_<K, iarg>::value>(t).compact_stride(step, z, j)
-               && compact_stride<iarg+1>(step, z, j);
+        return (std::get<Ki::value>(t).compact_stride(step, z, j) && ...);
     }
-    template <int iarg>
-    std::enable_if_t<(iarg==mp::len<K>), bool>
-    compact_stride(dim_t const step, int const z, int const j) const
-    {
-        return true;
-    }
-
     auto stride(int const i) const
     {
         return std::make_tuple(std::get<Ki::value>(t).stride(i) ...);
     }
-    auto flat() const -> leaves_t
+    constexpr auto flat() const -> leaves_t
     {
         return leaves_t(op, std::get<Ki::value>(t).flat() ...);
     }
@@ -387,7 +353,7 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 #undef DEF_RYN_EQOPS
 };
 
-template <class FM, class Op, class ... Ti>
+template <class FM, class Op, class ... Ti> inline
 Ryn<FM, Op, std::tuple<Ti ...>>
 ryn_(Op op, Ti && ... t)
 {
@@ -409,19 +375,18 @@ struct number_ryn<std::tuple<Ki ...>>
     }
 };
 
-template <class V, class ... Ti>
+template <class V, class ... Ti> inline
 constexpr auto ryn(V && v, Ti && ... t)
 {
     return number_ryn<mp::index_tuple_<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
 }
 
-template <class cranks, class Op, class ... Ti>
+template <class cranks, class Op, class ... Ti> inline
 constexpr auto expr(Verb<cranks, Op> && v, Ti && ... t) // @TODO not universal ref anymore
 {
     using V = decltype(v);
     return number_ryn<mp::index_tuple_<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
 }
-
 
 // ---------------------------
 // from, after APL, like (from) in guile-ploy
@@ -467,14 +432,14 @@ struct from_partial<II, 0>
 };
 
 // @TODO should provide support for dynamic rank (see test in test-from.C).
-template <class A, class I0>
+template <class A, class I0> inline
 auto from(A && a, I0 && i0)
 {
     return expr([&a](auto && i0) -> decltype(auto) { return a(i0); }, start(std::forward<I0>(i0)));
 }
 
 // @TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
-template <class A, class ... I>
+template <class A, class ... I> inline
 auto from(A && a, I && ... i)
 {
     using II = mp::Map_<index_rank, mp::tuple<decltype(start(i)) ...> >;

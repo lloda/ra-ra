@@ -12,6 +12,7 @@
 #include <iostream>
 #include "ra/tuple-dynamic.H"
 #include "ra/tuple-list.H"
+#include "ra/mpdebug.H"
 #include "ra/test.H"
 
 using std::tuple;
@@ -202,6 +203,22 @@ int main()
     static_assert(Index<A, int_t<3>>::value==2, "4c");
     static_assert(Index<A, int_t<4>>::value==-1, "4d");
     static_assert(Index<S3, S2BC>::value==1, "4e");
+// InvertIndex
+    {
+        using II0 = int_list<4, 6, 7, 1>;
+        using II1 = InvertIndex<II0>::type;
+        static_assert(std::is_same<int_list<-1, 3, -1, -1, 0, -1, 1, 2>, II1>::value);
+    }
+    {
+        using II0 = int_list<3>;
+        using II1 = InvertIndex<II0>::type;
+        static_assert(std::is_same<int_list<-1, -1, -1, 0>, II1>::value);
+    }
+    {
+        using II0 = int_list<>;
+        using II1 = InvertIndex<II0>::type;
+        static_assert(std::is_same<int_list<>, II1>::value);
+    }
 // IndexIf.
     static_assert(IndexIf<A, SamePP<int_t<0>>::type>::value==0, "5a");
     static_assert(IndexIf<A, SamePP<int_t<2>>::type>::value==1, "5b");

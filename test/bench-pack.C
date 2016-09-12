@@ -75,8 +75,7 @@ int main()
 
     auto bench_all = [&](auto A_, int size, int n)
         {
-            section("size ", size, ", n ", n);
-
+            tr.section("size ", size, ", n ", n);
             bench(f_raw, A_, "raw", size, n);
             bench(f_reim, A_, "re/im", size, n);
             bench(f_collapse, A_, "collapse", size, n);

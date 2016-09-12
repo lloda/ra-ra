@@ -275,7 +275,7 @@ template <class T> struct storage_traits<std::vector<T>>
     static T * data(std::vector<T> & v) { return v.data(); }
 };
 
-template <class T, int RANK>
+template <class T, int RANK> inline
 bool is_c_order(Raw<T, RANK> const & a)
 {
     dim_t s = 1;
@@ -566,7 +566,7 @@ struct ra_traits_def<WithStorage<Ptr, RANK>>
 {
 };
 
-template <class T, int RANK>
+template <class T, int RANK> inline
 Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
 {
     Raw<T, RANK> r = raw;
@@ -579,7 +579,7 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
 }
 
 // dynamic transposed axes list.
-#define DEF_TRANSPOSE(AXES_LIST)                                     \
+#define DEF_TRANSPOSE(AXES_LIST)                                        \
     template <class T, int RANK, class S>                               \
     Raw<T, RANK_ANY> transpose(Raw<T, RANK> const & raw, AXES_LIST)     \
     {                                                                   \
@@ -630,10 +630,33 @@ auto transpose(Raw<T, RANK> const & raw)
 #undef TRANSPOSE_BODY
 #undef TRANSPOSE_BODY_CHECK
 
-template <int ... Iarg, class T, int RANK> // typename std::remove_reference<decltype(*a.data())>
+template <int ... Iarg, class T, int RANK> inline
 auto diag(Raw<T, RANK> const & raw)
 {
     return transpose<0, 0>(raw);
+}
+
+// lo = lower bounds, hi = upper bounds.
+// The stencil indices are in [0 lo+1+hi] = [-lo +hi].
+template <class LO, class HI, class T, rank_t N>
+Raw<T, rank_sum(N, N)>
+stencil(Raw<T, N> const & a, LO && lo, HI && hi)
+{
+    Raw<T, rank_sum(N, N)> s;
+    s.p = a.data();
+    ra::resize(s.dim, 2*a.rank());
+    assert(every(lo>=0));
+    assert(every(hi>=0));
+    for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
+             {
+                 assert(dima.size>=lo+hi && "stencil is too large for array");
+                 dims = {dima.size-lo-hi, dima.stride};
+             },
+             ptr(s.dim.data()), a.dim, lo, hi);
+    for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
+             { dims = {lo+hi+1, dima.stride}; },
+             ptr(s.dim.data()+a.rank()), a.dim, lo, hi);
+    return s;
 }
 
 // Make last sizes of Raw<> be compile-time constants.
@@ -660,7 +683,7 @@ auto explode_(Raw<T, RANK> const & a)
     return b;
 }
 
-template <class super_t, class T, int RANK>
+template <class super_t, class T, int RANK> inline
 auto explode(Raw<T, RANK> const & a)
 {
     return explode_<super_t, (std::is_same<super_t, std::complex<T> >::value ? 1 : ra_traits<super_t>::rank_s())>(a);

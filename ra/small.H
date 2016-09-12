@@ -81,7 +81,7 @@ struct Indexer1
         return i0_ * dim[k].stride + index_<k+1>(dim, i_ ...);
     }
     template <class Dim, class ... Iarg>
-    static dim_t index(Dim const & dim, Iarg const ... i_)
+    constexpr static dim_t index(Dim const & dim, Iarg const ... i_)
     {
         CHECK_BOUNDS(dim.size()>=sizeof...(Iarg) && "too many indices");
         return index_<0>(dim, i_ ...);
@@ -97,7 +97,7 @@ struct Indexer1
         return c;
     }
     template <class Dim, class P>
-    static dim_t index_p(Dim const & dim, P const & p)
+    constexpr static dim_t index_p(Dim const & dim, P const & p)
     {
         CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
         return index_p_(dim, p);
@@ -105,7 +105,7 @@ struct Indexer1
 
 // used by ra_iterator::at() for rank matching on rank<driving rank, no slicing. @todo Static check.
     template <class Dim, class P>
-    static dim_t index_short(rank_t framer, Dim const & dim, P const & p)
+    constexpr static dim_t index_short(rank_t framer, Dim const & dim, P const & p)
     {
         dim_t c = 0;
         for (rank_t k=0; k<framer; ++k) {
@@ -136,21 +136,24 @@ struct FilterDims<sizes_, strides_, I0, I ...>
     using strides = mp::Append_<mp::Take_<strides_, s>, typename next::strides>;
 };
 
-template <dim_t size0, dim_t stride0> constexpr dim_t select(dim_t i0)
+template <dim_t size0, dim_t stride0> inline
+constexpr dim_t select(dim_t i0)
 {
-    return ([i0](){ CHECK_BOUNDS(inside(i0, size0)); })(), i0*stride0;
+    CHECK_BOUNDS(inside(i0, size0));
+    return i0*stride0;
 };
-template <dim_t size0, dim_t stride0, int n> constexpr dim_t select(dots_t<n> i0)
+template <dim_t size0, dim_t stride0, int n> inline
+constexpr dim_t select(dots_t<n> i0)
 {
     return 0;
 }
 
-template <class sizes, class strides>
+template <class sizes, class strides> inline
 constexpr dim_t select_loop()
 {
     return 0;
 }
-template <class sizes, class strides, class I0, class ... I>
+template <class sizes, class strides, class I0, class ... I> inline
 constexpr dim_t select_loop(I0 i0, I ... i)
 {
     constexpr int s_src = is_beatable<I0>::skip_src;
@@ -238,6 +241,9 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     using sizes = sizes_;
     using strides = strides_;
 
+    constexpr static std::array<dim_t, mp::len<sizes_> > ssizes = mp::tuple_copy<sizes, std::array<dim_t, mp::len<sizes> > >::f();
+    constexpr static std::array<dim_t, mp::len<strides_> > sstrides = mp::tuple_copy<strides, std::array<dim_t, mp::len<strides> > >::f();
+
 // @TODO complete static check on strides.
     template <class TTT> struct BadDimension
     {
@@ -253,8 +259,9 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr static rank_t rank()  { return mp::len<sizes>; }
 // @TODO Remove; used by ra::cross() to treat is_slice & is_array_iterator uniformly, which can't be done in general.
     constexpr static dim_t size_s() { return size(); }
-    constexpr static dim_t size(int const j) { return mp::on_tuple<sizes>::ref(j); }
-    constexpr static dim_t stride(int const j) { return mp::on_tuple<strides>::ref(j); }
+// @TODO Should have support in xpr and traversal for static bounds
+    constexpr static dim_t size(int const j) { return ssizes[j]; }
+    constexpr static dim_t stride(int const j) { return sstrides[j]; }
 
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
@@ -270,23 +277,23 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
             (data()+select_loop<sizes, strides>(i ...));                \
     }                                                                   \
     template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==rank(), int> = 0> \
-    decltype(auto) operator()(I ... i) CONST                            \
+    constexpr decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
     } /* @TODO More than one selector... */                             \
     template <class ... I, std::enable_if_t<(!is_beatable<I>::static_p || ...), int> = 0> \
-    auto operator()(I && ... i) CONST                                   \
+    constexpr auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
  /* @BUG I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
-    constexpr auto at(I const & i) CONST                          \
+    constexpr auto at(I const & i) CONST                                \
     {                                                                   \
         return SmallSlice<T CONST, mp::Drop_<sizes, I::size()>, mp::Drop_<strides, I::size()>> \
             (data()+Indexer0<sizes, strides>::index_p(i));              \
     }                                                                   \
-    decltype(auto) operator[](dim_t const i) CONST                      \
+    constexpr decltype(auto) operator[](dim_t const i) CONST                      \
     {                                                                   \
         static_assert(rank()==1, "bad rank");                           \
         return data()[i*mp::Ref_<strides, 0>::value];                   \
@@ -331,7 +338,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     template <class P>
     struct Iterator
     {
-// @TODO See ra_traits<Small>. Why do these twice?
+// @TODO See ra_traits<Small>. Why do these twice? Also just reuse ssizes.
         using shape_type = Small<dim_t, mp::len<sizes> >;
         static auto shape() { return mp::tuple_copy<sizes, shape_type>::f(); }
 
@@ -340,22 +347,24 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 // @TODO use cellp for cellr>0, when that's supported (or replace all this by ra::ra_iterator). But for cellr==0 we must use p, because in auto contexts (e.g. operators.H) *(flat()) won't get converted to *p, and that can result in infinite looping in ply_ravel().
         // auto flat() { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
         // auto flat() const { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
-        auto flat() { return p; }
-        auto flat() const { return p; }
+        constexpr auto flat() { return p; }
+        constexpr auto flat() const { return p; }
 
         using value_type = typename std::iterator_traits<P>::value_type;
 
         bool done() const { return p==nullptr; }
 
-        Iterator(P p_): p(size()==0 ? nullptr: p_) {}
-        template <class PP> Iterator(PP const & q): p(size()==0 ? nullptr : q.p) {}
-        Iterator(): p(nullptr) {}
+        constexpr Iterator(P p_): p(size()==0 ? nullptr: p_) {}
+        template <class PP> constexpr Iterator(PP const & q): p(size()==0 ? nullptr : q.p) {}
+        constexpr Iterator(): p(nullptr) {}
 
 // For xpr use; cf this stride() against SmallBase::stride().
-// @TODO Should have support in xpr and traversal for static bounds; so on_tuple is not needed.
-        constexpr static dim_t size(int const j) { return mp::on_tuple<sizes>::ref(j); }
-        constexpr static dim_t stride(int const j) { return j<rank() ? mp::on_tuple<strides>::ref(j) : 0; }
-        constexpr static dim_t preferred_stride(int const j) { return stride(j); }
+        constexpr static dim_t size(int const j) { return SmallBase::size(j); }
+        constexpr static dim_t stride(int const j) { return j<rank() ? SmallBase::stride(j) : 0; }
+        constexpr bool compact_stride(dim_t const step, int const z, int const j) const
+        {
+            return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
+        }
 
 // @TODO We really shouldn't need this redundant stuff :-(
         constexpr static dim_t size() { return SmallBase::size(); }
@@ -363,17 +372,13 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         constexpr static dim_t size_s() { return size(); }
         constexpr static rank_t rank_s() { return rank(); }
 
-        template <class I> decltype(auto) at(I const & i_)
+        template <class I> constexpr decltype(auto) at(I const & i_)
         {
             return p[Indexer0<sizes, strides>::index_short(i_)];
         }
         void adv(rank_t const k, dim_t const d)
         {
             p += (k<rank()) * stride(k)*d;
-        }
-        bool constexpr compact_stride(dim_t const step, int const z, int const j) const
-        {
-            return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
         }
     };
 
@@ -423,8 +428,13 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr auto begin() const { return stl_iterator<T const *>(data()); }
     constexpr auto end() { return have_default_strides ? stl_iterator<T *>(data()+size()) : stl_iterator<T *>(); }
     constexpr auto end() const { return have_default_strides ? stl_iterator<T const *>(data()+size()) : stl_iterator<T const *>(); }
-
 };
+
+// @TODO apparently this won't be needed anymore in C++17 (http://en.cppreference.com/w/cpp/language/static).
+template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
+constexpr std::array<dim_t, mp::len<sizes_> > SmallBase<Child_, T, sizes_, strides_>::ssizes;
+template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
+constexpr std::array<dim_t, mp::len<strides_> > SmallBase<Child_, T, sizes_, strides_>::sstrides;
 
 template <class T, class sizes, class strides>
 struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
@@ -436,12 +446,12 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
     constexpr SmallSlice(SmallSlice && s): p(std::move(s.p)) {}
     constexpr SmallSlice(SmallSlice const & s): p(s.p) {}
 
-    operator T & ()
+    constexpr operator T & ()
     {
         static_assert(Base::rank()==0 || (Base::rank()==1 && Base::size()==1), "bad rank"); // rank 1 for coord types
         return p[0];
     }
-    operator T const & () const
+    constexpr operator T const & () const
     {
         static_assert(Base::rank()==0 || (Base::rank()==1 && Base::size()==1), "bad rank"); // rank 1 for coord types
         return p[0];
@@ -458,24 +468,25 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
     using Base = SmallBase<ra::SmallArray, T, sizes, strides>;          \
     T p[Base::size()];                                                  \
                                                                         \
-    SmallArray() {}                                                     \
+    constexpr SmallArray() {}                                           \
     template <class X>                                                  \
-    SmallArray(X && x)                                                  \
+    constexpr SmallArray(X && x)                                        \
     {                                                                   \
         static_cast<Base &>(*this) = x;                                 \
     }                                                                   \
-    SmallArray(std::initializer_list<T> const x)                        \
+    constexpr SmallArray(std::initializer_list<T> const x): p() /* init for constexpr */ \
     {                                                                   \
         assert(x.size()==Base::size() && "bad initializer list"); /* static_assert */ \
-        std::copy(x.begin(), x.end(), this->begin());                   \
+        auto b = this->begin();                                         \
+        for (auto const & xx: x) { *b = xx; ++b; } /* std::copy not constexpr */ \
     }                                                                   \
     template <class P> /* @TODO remove; only here because std::vector has it */ \
-    SmallArray(P begin, P end)                                          \
+    constexpr SmallArray(P begin, P end)                                \
     {                                                                   \
         std::copy(begin, end, this->begin());                           \
     }                                                                   \
-    /* Special case is needed if ra::start() doesn't acknowledge T as scalar */  \
-    SmallArray(T const & t)                                             \
+    /* Special case is needed if ra::start() doesn't acknowledge T as scalar */ \
+    constexpr SmallArray(T const & t)                                   \
     {                                                                   \
         std::fill(this->begin(), this->end(), t);                       \
     }
@@ -488,16 +499,16 @@ struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
     using Base::rank;
     using Base::size;
 
-    operator SmallSlice<T, sizes, strides> () { return SmallSlice<T, sizes, strides>(p); }
-    operator SmallSlice<T const, sizes, strides> const () { return SmallSlice<T const, sizes, strides>(p); }
+    constexpr operator SmallSlice<T, sizes, strides> () { return SmallSlice<T, sizes, strides>(p); }
+    constexpr operator SmallSlice<T const, sizes, strides> const () { return SmallSlice<T const, sizes, strides>(p); }
 
 // @BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
-    operator T & ()
+    constexpr operator T & ()
     {
         static_assert(rank()==0 || (rank()==1 && size()==1), "bad rank"); // rank 1 for coord types
         return p[0];
     };
-    operator T const & () const
+    constexpr operator T const & () const
     {
         static_assert(rank()==0 || (rank()==1 && size()==1), "bad rank"); // rank 1 for coord types
         return p[0];

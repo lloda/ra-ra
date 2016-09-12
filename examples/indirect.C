@@ -122,7 +122,7 @@ void example4()
         int jdist = int(sqrt(jdist2));
         int begin = int(centre_j - jdist);
         int end = int(centre_j + jdist);
-        circle.push_back(std::make_tuple(i, ra::Iota<int>(end-begin+1, begin)));
+        circle.push_back(std::make_tuple(i, ra::iota<int>(end-begin+1, begin)));
     }
 
     // Set only those points in the circle subdomain to 1
@@ -154,7 +154,7 @@ void example5()
     // suppose you have the x coordinates in one array and the y coordinates in another array.
     ra::Owned<int, 2> x({4, 4}, {0, 1, 2, 0, /* */ 0, 1, 2, 0, /*  */ 0, 1, 2, 0, /* */ 0, 1, 2, 0});
     ra::Owned<int, 2> y({4, 4}, {1, 2, 0, 1, /* */ 1, 2, 0, 1, /*  */ 1, 2, 0, 1, /* */ 1, 2, 0, 1});
-    cout << "coordinates: " << format_array(ra::pack<ra::Small<int, 2> >(x, y), "|") << endl;
+    cout << "coordinates: " << format_array(ra::pack<ra::Small<int, 2> >(x, y), true, "|") << endl;
 
     // you can use these for indirect access without creating temporaries.
     ra::Owned<int, 2> a({3, 3}, {0, 1, 2, 3, 4, 5, 6, 7, 8});

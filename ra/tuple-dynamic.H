@@ -20,21 +20,24 @@
 
 namespace mp {
 
-template <class T, class C>
-struct tuple_copy;
+template <class T, class C> struct tuple_copy;
 
 template <class C, class ... t>
 struct tuple_copy<std::tuple<t ...>, C>
 {
-    constexpr static C f()
-    {
-        return C { {t::value} ... };
-    }
+    constexpr static C f() { return { t::value ... }; } // clang bug with -Wmissing-braces @TODO
+};
+
+template <class T, class C> struct map_indices;
+
+template <class C, class ... t>
+struct map_indices<std::tuple<t ...>, C>
+{
+    template <class I> constexpr static C f(I const & i) { return { i[t::value] ... }; };
 };
 
 // Do things along a tuple.
-template <class T, int k=0>
-struct on_tuple;
+template <class T, int k=0> struct on_tuple;
 
 template <class t0, class ... ti, int k>
 struct on_tuple<std::tuple<t0, ti ...>, k>
@@ -42,17 +45,10 @@ struct on_tuple<std::tuple<t0, ti ...>, k>
     using T = std::tuple<t0, ti ...>;
     using next = on_tuple<std::tuple<ti ...>, k+1>;
 
-    template <class I, class J> static void map_indices(I const & i, J & j)
-    {
-        j[k] = i[t0::value];
-        next::map_indices(i, j);
-    }
-// @TODO merge with mp::Index?
     constexpr static int index(int const q)
     {
         return (q==t0::value) ? k : next::index(q);
     }
-// @TODO merge with mp::Ref?
     constexpr static int ref(int const i)
     {
         return k==i ? t0::value : next::ref(i);
@@ -64,10 +60,6 @@ struct on_tuple<std::tuple<>, k>
 {
     using T = std::tuple<>;
 
-    template <class I, class J> static void map_indices(I const & i, J & j)
-    {
-        static_assert(j.size()==k, "bad indices in map_indices");
-    }
     template <class I, class T, std::size_t N> static void map_indices(I const & i, std::array<T, N> & j)
     {
         static_assert(N==k, "bad indices in map_indices");
