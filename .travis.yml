@@ -19,7 +19,7 @@ matrix:
         - sudo pip install colorama
         - if [ "$CXX" = "g++" ]; then export CXX="g++-6" CC="gcc-6"; fi
     - compiler: clang-3.8
-      env: CXX=clang++-3.8 CXXFLAGS="-O3 -DRA_OPTIMIZE_SMALLVECTOR=0"
+      env: CXX=clang++-3.8 CXXFLAGS="-O3 -DRA_OPTIMIZE_SMALLVECTOR=0 -Wno-missing-braces"
       addons:
         apt:
           sources:
