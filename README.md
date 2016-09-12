@@ -6,8 +6,6 @@ ra-ra is a C++ header-only, expression template / multidimensional array
 library with an APL/J bent. Some C++17 features are used, see below for
 compiler support.
 
-The primary public repo is at: https://notabug.org/lloda/ra-ra
-
 
 Features
 -----------
