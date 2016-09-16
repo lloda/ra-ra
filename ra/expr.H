@@ -31,33 +31,23 @@ namespace ra {
 
 // Manipulate Expr/expr through leaf (raw pointer-like) iterators P ...
 // Of these, the A-th one is used to advance (+=) the traversal.
-template <class F, int A, class T, class I=mp::index_tuple_<T>>
+template <class F, int A, class T, class I=mp::index_tuple<T>>
 struct Leaves;
 
 template <class F, int A, class ... P, class ... I>
 struct Leaves<F, A, std::tuple<P ...>, std::tuple<I ...>>
 {
     using T = std::tuple<P ...>;
-    using K = std::tuple<I ...>;
 
     F f;
     T t;
     Leaves(F f_, P ... p_): f(f_), t(p_ ...) {}
-    decltype(auto) operator*() { return f(*std::get<I::value>(t) ...); }
 
-    template <int II, class S>
-    std::enable_if_t<(II==mp::len<K>)> add(S const & s)  {}
-
-    template <int II, class S>
-    std::enable_if_t<(II<mp::len<K>)> add(S const & s)
-    {
-        std::get<mp::Ref_<K, II>::value>(t) += std::get<mp::Ref_<K, II>::value>(s);
-        add<II+1>(s);
-    }
-// after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
-    template <class S> void operator+=(S const & s) { add<0>(s); }
+// @TODO after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
+    template <int II, class S> void add(S const & s) { std::get<II>(t) += std::get<II>(s); }
+    template <class S> void operator+=(S const & s) { (this->add<I::value>(s), ...); }
+    decltype(auto) operator*() { return f(*std::get<I::value>(t) ...); } // @TODO std::apply(f, t)
 };
-
 
 template <class Op, class ... P> inline
 constexpr Expr<Op, std::tuple<P ...>> expr(Op && f, P && ... p)
@@ -94,10 +84,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
 
     template <int iarg>
     std::enable_if_t<(iarg==mp::len<AK>), bool>
-    check(int const driver_rank) const
-    {
-        return true;
-    }
+    check(int const driver_rank) const { return true; }
 
     template <int iarg>
     std::enable_if_t<(iarg<mp::len<AK>), bool>
@@ -118,7 +105,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     }
 
 // see test-compatibility.C [a1] for forward() here.
-    Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
+    constexpr Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
 // @TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
 // @TODO Should check only the driver: do this on ply.
@@ -153,7 +140,6 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     {
         return leaves_t(op, std::get<I::value>(t).flat() ...);
     }
-    bool done() const { return driver().done(); }
 
     constexpr static dim_t size_s() { return PA::size_s(); }
     constexpr static rank_t rank_s() { return PA::rank_s(); }

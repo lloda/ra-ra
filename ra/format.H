@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2010
+// (c) Daniel Llorens - 2010, 2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -10,53 +10,20 @@
 #define RA_FORMAT_H
 
 /// @file format.H
-/// @brief Utilities to format output.
+/// @brief Sugar for in-place ostringstream use.
 
 #include <iterator>
 #include <iosfwd>
 #include <sstream>
 
-// Print vectors as a raw sequence, w/o size information.
-template <class V>
-struct Rawp
+template <class ... A> inline std::string
+format(A && ... a)
 {
-    V const & v;
-    char const * sep;
-};
-
-template <class V> Rawp<V> rawp(V const & v_, char const * sep_=" ")
-{
-    return Rawp<V> { v_, sep_ };
+    std::ostringstream o; (o << ... << a); return o.str();
 }
 
-template <class V>
-std::ostream & operator<<(std::ostream & o, Rawp<V> const & r)
-{
-    std::copy(r.v.begin(), r.v.end(), std::ostream_iterator<decltype(*(r.v.begin()))>(o, r.sep));
-    return o;
-}
-
-// Sugar for in-place ostringstream use.
-inline void format(std::ostringstream & o) {}
-
-template <class A0, class ... A>
-inline void format(std::ostringstream & o, A0 && a0, A && ... a)
-{
-    o << a0;
-    format(o, a ...);
-}
-
-template <class A0, class ... A>
-inline std::string format(A0 && a0, A && ... a)
-{
-    std::ostringstream o;
-    o << a0;
-    format(o, a ...);
-    return o.str();
-}
-
-template <class A0, class ... A>
-inline decltype(auto) format(std::string && s)
+inline decltype(auto)
+format(std::string && s)
 {
     return std::forward<decltype(s)>(s);
 }

@@ -257,9 +257,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
     constexpr static dim_t size() { return mp::Apply_<mp::Prod, sizes>::value; }
     constexpr static rank_t rank()  { return mp::len<sizes>; }
-// @TODO Remove; used by ra::cross() to treat is_slice & is_array_iterator uniformly, which can't be done in general.
     constexpr static dim_t size_s() { return size(); }
-// @TODO Should have support in xpr and traversal for static bounds
     constexpr static dim_t size(int const j) { return ssizes[j]; }
     constexpr static dim_t stride(int const j) { return sstrides[j]; }
 
@@ -340,19 +338,11 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     {
 // @TODO See ra_traits<Small>. Why do these twice? Also just reuse ssizes.
         using shape_type = Small<dim_t, mp::len<sizes> >;
-        static auto shape() { return mp::tuple_copy<sizes, shape_type>::f(); }
+        constexpr static auto shape() { return mp::tuple_copy<sizes, shape_type>::f(); }
 
         P p;
 
-// @TODO use cellp for cellr>0, when that's supported (or replace all this by ra::ra_iterator). But for cellr==0 we must use p, because in auto contexts (e.g. operators.H) *(flat()) won't get converted to *p, and that can result in infinite looping in ply_ravel().
-        // auto flat() { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
-        // auto flat() const { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
-        constexpr auto flat() { return p; }
-        constexpr auto flat() const { return p; }
-
         using value_type = typename std::iterator_traits<P>::value_type;
-
-        bool done() const { return p==nullptr; }
 
         constexpr Iterator(P p_): p(size()==0 ? nullptr: p_) {}
         template <class PP> constexpr Iterator(PP const & q): p(size()==0 ? nullptr : q.p) {}
@@ -380,6 +370,11 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         {
             p += (k<rank()) * stride(k)*d;
         }
+// @TODO use cellp for cellr>0, when that's supported (or replace all this by ra::ra_iterator). But for cellr==0 we must use p, because in auto contexts (e.g. operators.H) *(flat()) won't get converted to *p, and that can result in infinite looping in ply_ravel().
+        // auto flat() { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
+        // auto flat() const { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
+        constexpr auto flat() { return p; }
+        constexpr auto flat() const { return p; }
     };
 
     template <class Iterator>
@@ -542,9 +537,9 @@ struct ra_traits_small
     using V = Type_<T, sizes, strides>;
     using value_type = T;
     using shape_type = Small<dim_t, V::rank()>;
-    static shape_type shape(V const & v) { return mp::tuple_copy<sizes, shape_type>::f(); }
+    constexpr static shape_type shape(V const & v) { return mp::tuple_copy<sizes, shape_type>::f(); }
 #define MAKE_COND (std::is_same<strides, mp::int_list<1> >::value && std::is_same<sizes, mp::Take_<sizes, 1> >::value)
-    static V make(dim_t const n)
+    constexpr static V make(dim_t const n)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");
         assert(n==V::size(0));

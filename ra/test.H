@@ -20,9 +20,8 @@
 #include <iomanip>
 #include <limits>
 #include "ra/format.H"
-#include "ra/real.H"
-// @TODO For where() unfortunately I can't declare the scalar version in an earlier header. Also ra::map()
 #include "ra/operators.H"
+#include "ra/io.H"
 
 char const * esc_bold = "\x1b[01m";
 char const * esc_unbold = "\x1b[0m";
@@ -168,7 +167,8 @@ struct TestRecorder
             o << esc_reset << ", " <<  esc_bold << esc_yellow << "skipped " << skipped;
         }
         if (!failed.empty()) {
-            o << esc_reset << ", " <<  esc_bold << esc_red << " failed " << failed.size() << " (" << rawp(failed) << ")";
+            o << esc_reset << ", " <<  esc_bold << esc_red << " failed " << failed.size()
+              << " (" << ra::format_array(failed, false) << ")";
         }
         o << esc_plain << esc_unbold << std::endl;
         return failed.size();

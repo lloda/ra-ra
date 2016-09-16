@@ -31,23 +31,20 @@ static_assert(std::is_signed<rank_t>::value && std::is_signed<dim_t>::value, "ba
 template <class A> inline
 void ply_index(A && a)
 {
-// @TODO try and merge the singular cases.
-    if (a.done()) {
-        return;
-    }
     rank_t const rank = a.rank();
-    rank_t order[rank];
-    for (rank_t i=0; i<rank; ++i) {
-        order[i] = rank-1-i;
-    }
     using Shape = std::decay_t<decltype(a.shape())>;
     Shape ind(ra_traits<Shape>::make(rank, 0));
     dim_t sha[rank];
-    for (int k=0; k!=rank; ++k) {
+    rank_t order[rank];
+    for (rank_t k=0; k<rank; ++k) {
+        order[k] = rank-1-k;
         sha[k] = a.size(order[k]);
+        if (sha[k]==0) {
+            return;
+        }
     }
     for (;;) {
-        a.at(ind); // ply_index core
+        a.at(ind);
         for (int k=0; ; ++k) {
             if (k==rank) {
                 return;
@@ -67,23 +64,21 @@ void ply_index(A && a)
 template <class A> inline
 void ply_ravel(A && a)
 {
-// flat()+s would not see the zero sizes above the axes used for s, so we must check for empty expr anyway.
-    if (a.done()) {
-        return;
-    }
     rank_t rank = a.rank();
-    if (rank==0) {
-        *(a.flat());
-        return;
-    }
     rank_t order[rank];
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
-    // if (rank>1) { // @TODO find a decent heuristic
-    //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-    //               { return a.size(order[i])<a.size(order[j]); });
-    // }
+    switch (rank) {
+    case 0: *(a.flat()); return;
+    case 1: break;
+    default: // @TODO find a decent heuristic
+        // if (rank>1) {
+        //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
+        //               { return a.size(order[i])<a.size(order[j]); });
+        // }
+        ;
+    }
 // find outermost compact dim.
     rank_t * ocd = order;
     auto ss = a.size(*ocd);
@@ -94,6 +89,9 @@ void ply_ravel(A && a)
     for (int k=0; k!=rank; ++k) {
         ind[k] = 0;
         sha[k] = a.size(ocd[k]);
+        if (sha[k]==0) { // for the ravelled dimensions ss takes care.
+            return;
+        }
     }
 // all sub xpr strides advance in compact dims, as they might be different.
     auto const ss0 = a.stride(order[0]);
@@ -101,7 +99,7 @@ void ply_ravel(A && a)
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
-            *p; // ply_ravel core
+            *p;
         }
         for (int k=0; ; ++k) {
             if (k>=rank) {
@@ -124,29 +122,29 @@ void ply_ravel(A && a)
 
 template <class order, class A, class S>
 std::enable_if_t<mp::len<order> == 0> inline
-subindexf(A & a, S & s, S & i)
+subindexf(A & a, S & i)
 {
-    a.at(i); // plyf_index core
+    a.at(i);
 }
 
 template <class order, class A, class S>
 std::enable_if_t<(mp::len<order> > 0)> inline
-subindexf(A & a, S & s_, S & i_)
+subindexf(A & a, S & i_)
 {
     dim_t & i = i_[mp::First_<order>::value];
-    dim_t const s = s_[mp::First_<order>::value];
+// on every subloop, but not worth caching
+    dim_t const /* constexpr */ s = a.size(mp::First_<order>::value);
     for (i=0; i!=s; ++i) {
-        subindexf<mp::Drop1_<order>>(a, s_, i_);
+        subindexf<mp::Drop1_<order>>(a, i_);
     }
 }
 
 template <class A> inline
 void plyf_index(A && a)
 {
-    auto s(a.shape());
-    using Shape = decltype(s);
-    Shape i(ra_traits<Shape>::make(s.size(), 0));
-    subindexf<mp::Iota_<A::rank_s()>>(a, s, i); // cf with ply_index() for C order.
+    using Shape = std::decay_t<decltype(a.shape())>;
+    Shape i(ra_traits<Shape>::make(a.rank(), 0));
+    subindexf<mp::Iota_<A::rank_s()>>(a, i); // cf with ply_index() for C order.
 }
 
 // -------------------------
@@ -159,7 +157,7 @@ std::enable_if_t<mp::len<order> == ravel_rank>
 subindex(A & a, dim_t s, S const & ss0)
 {
     for (auto p=a.flat(); s>0; --s, p+=ss0) {
-        *p; // plyf core
+        *p;
     }
 }
 
@@ -263,60 +261,64 @@ ply_either(A && a)
 // Short-circuiting pliers. @TODO These are reductions. How to do higher rank?
 // ---------------------------
 
-// @BUG Slow. Options for ply should be the same as for non-short circuit.
-template <class Op, class A, std::enable_if_t<is_array_iterator<A> && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
-bool ply_index_short_circuit(A && a)
+// @BUG options for ply should be the same as for non-short circuit.
+template <class A, class Op>
+auto ply_index_exit(A && a, Op && op)
 {
-    /* @TODO try and merge the singular cases. */
-    if (a.done()) {
-        return Op()(false);
-    }
     rank_t const rank = a.rank();
-    auto s(a.shape());
-    using Shape = decltype(s);
-    Shape i(ra_traits<Shape>::make(rank, 0));
-
+    using Shape = std::decay_t<decltype(a.shape())>;
+    Shape ind(ra_traits<Shape>::make(rank, 0));
+    dim_t sha[rank];
     rank_t order[rank];
-    for (rank_t i=0; i<rank; ++i) {
-        order[i] = rank-1-i;
+    for (rank_t k=0; k<rank; ++k) {
+        order[k] = rank-1-k;
+        sha[k] = a.size(order[k]);
+        if (sha[k]==0) {
+            return op(false);
+        }
     }
     for (;;) {
-        if (Op()(a.at(i))) {
-            return Op()(true);
+        if (op(a.at(ind))) {
+            return op(true);
         }
         for (int k=0; ; ++k) {
             if (k==rank) {
-                return Op()(false);
-            } else if (++i[order[k]]<s[order[k]]) {
+                return op(false);
+            } else if (++ind[order[k]]<sha[k]) {
                 break;
             } else {
-                i[order[k]] = 0;
+                ind[order[k]] = 0;
             }
         }
     }
 }
 
-template <class Op, class A, std::enable_if_t<is_array_iterator<A> && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
-bool ply_index_short_circuit(A && a)
+template <class A, class Op>
+bool ply_index_exit_1(A && a, Op && op)
 {
     auto s = a.size(0);
     auto ss0 = a.stride(0);
     for (auto p=a.flat(); s>0; --s, p+=ss0) {
-        if (Op()(*p)) {
-            return Op()(true);
+        if (op(*p)) {
+            return op(true);
         }
     }
-    return Op()(false);
+    return op(false);
 }
 
-template <class Op, class A, std::enable_if_t<!is_array_iterator<A>, int> = 0>
-bool ply_index_short_circuit(A && a)
+template <class A, class Op, std::enable_if_t<is_array_iterator<A> && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
+bool ply_either_exit(A && a, Op && op)
 {
-    return ply_index_short_circuit<Op>(start(std::forward<A>(a)));
+    return ply_index_exit(a, op);
+}
+template <class A, class Op, std::enable_if_t<is_array_iterator<A> && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
+bool ply_either_exit(A && a, Op && op)
+{
+    return ply_index_exit_1(a, op);
 }
 
-template <class A> inline bool any(A && a) { return ply_index_short_circuit<mp::identity>(std::forward<A>(a)); }
-template <class A> inline bool every(A && a) { return ply_index_short_circuit<std::logical_not<bool> >(std::forward<A>(a)); }
+template <class A> inline bool any(A && a) { return ply_either_exit(start(std::forward<A>(a)), mp::identity()); }
+template <class A> inline bool every(A && a) { return ply_either_exit(start(std::forward<A>(a)), std::logical_not<bool>()); }
 
 } // namespace ra
 

@@ -70,7 +70,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
         {
             // cout << mp::show_type<decltype(ra::ryn(v, a.iter(), b.iter()))>::value << endl;
             auto ryn = ra::ryn(v, a.iter(), b.iter());
-            cout << "ryn.shape(): " << rawp(ryn.shape()) << endl;
+            cout << "ryn.shape(): " << ra::format_array(ryn.shape(), false) << endl;
 #define TEST(plier)                                                     \
             cout << "\n\nusing " STRINGIZE(plier) " (ryn &):\n";        \
             ra::plier(ryn);                                             \

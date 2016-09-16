@@ -133,7 +133,7 @@ int main()
     tr.section("iterators' shape_type is not Small, so it can be used by Small");
     {
         auto z = ra::ra_traits<std::array<real, 3>>::make(3);
-        cout << "z: " << rawp(z) << endl;
+        tr.test_eq(3u, z.size());
     }
     tr.section("static stride computation");
     {
@@ -263,6 +263,8 @@ int main()
         constexpr ra::Small<int> b = {9};
         using Vb = mp::int_t<int(b)>;
         tr.test_eq(9, Vb::value);
+        // using Vc = mp::int_t<sum(a)>; // @TODO waiting for N4487 / P0170R1 in gcc 7
+        // tr.test_eq(10, Vb::value);
     }
     tr.section("custom strides. List init is always row-major.");
     {
@@ -272,16 +274,20 @@ int main()
         tr.test_eq(3, a(0, 2));
         tr.test_eq(4, a(1, 0));
         tr.test_eq(5, a(1, 1));
+
         tr.test_eq(6, a(1, 2));
-        using dim1 = std::array<ra::dim_t, 1>;
-        cout << "sizes of a(0): " << rawp(mp::tuple_copy<decltype(a(0))::sizes, dim1>::f()) << endl;
-        cout << "strides of a(0): " << rawp(mp::tuple_copy<decltype(a(0))::strides, dim1>::f()) << endl;
         tr.test_eq(1, a(0)(0));
         tr.test_eq(2, a(0)(1));
         tr.test_eq(3, a(0)(2));
         tr.test_eq(4, a(1)(0));
         tr.test_eq(5, a(1)(1));
         tr.test_eq(6, a(1)(2));
+
+        using dim1 = std::array<ra::dim_t, 1>;
+        auto sizes = mp::tuple_copy<decltype(a(0))::sizes, dim1>::f();
+        auto strides = mp::tuple_copy<decltype(a(0))::strides, dim1>::f();
+        tr.test_eq(dim1 {3}, ra::start(sizes));
+        tr.test_eq(dim1 {2}, ra::start(strides));
     }
     tr.section("SmallArray converted to SmallSlice");
     {

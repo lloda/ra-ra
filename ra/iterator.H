@@ -103,7 +103,7 @@ struct cell_iterator
                 c.p = p_;
                 break;
             }
-// so begin()==end() for un-plied iterator on empty range. For STL-like use; ra::Iterator shouldn't check loop end in this way.
+// so begin()==end() for un-plied iterator on empty range. For STL-like use; ra::Iterator doesn't check loop end in this way.
             if (s_[k].size==0) {
                 c.p = nullptr;
                 break;
@@ -115,8 +115,6 @@ struct cell_iterator
             c.dim[k] = s_[k+rank];
         }
     }
-
-    bool done() const { return c.p==nullptr; }
 
     constexpr static dim_t fullsize_s() { return ra_traits<V>::size_s(); }
     constexpr static dim_t size_s()

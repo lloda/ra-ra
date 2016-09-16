@@ -72,7 +72,6 @@ struct cellp
     C & operator*() { return c; }
 };
 
-// After next_in_cube() in next-in.H.
 template <class S, class I, class P>
 inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 {

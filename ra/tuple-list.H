@@ -96,18 +96,10 @@ struct Ref<A, I0, I ...>
 };
 template <class A, int ... I> using Ref_ = typename Ref<A, I ...>::type;
 
-template <class A>
-struct First
-{
-    using type = Ref_<A, 0>;
-};
+template <class A> struct First { using type = Ref_<A, 0>; };
 template <class A> using First_ = typename First<A>::type;
 
-template <class A>
-struct Last
-{
-    using type = Ref_<A, len<A>-1>;
-};
+template <class A> struct Last { using type = Ref_<A, len<A>-1>; };
 template <class A> using Last_ = typename Last<A>::type;
 
 template <bool c, class A, class B> using If = std::conditional<c, A, B>;
@@ -624,15 +616,7 @@ template <class ... A> struct InvertIndex<std::tuple<A ...> >
 };
 template <class A> using InvertIndex_ = typename InvertIndex<A>::type;
 
-template <class A> struct index_tuple;
-template <class ... A>
-struct index_tuple<tuple<A ...>>
-{
-    using type = typename Iota<sizeof...(A)>::type;
-};
-template <class A>
-using index_tuple_ = typename index_tuple<A>::type;
-
+template <class A> using index_tuple = Iota_<len<A> >;
 
 // Used in tests.
 template <class A, int ... I>

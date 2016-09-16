@@ -160,18 +160,14 @@ struct zerostride<std::tuple<Ti ...>>
 
 // no shape() -> this is above.
 // no size_s(), rank_s(), rank() -> this is above.
-// flat(), done() -> forwarded to a.
+// flat() -> forwarded to a.
 template <class LiveAxes, int depth, class A>
 struct ApplyFrames
 {
     using RestAxes = mp::Complement_<LiveAxes, depth>;
 
     A a;
-    explicit ApplyFrames(A a_): a(a_) { /* CHECK_BOUNDS(!a.done()); */ }
-
-    auto flat() { return a.flat(); }
-    auto flat() const { return a.flat(); }
-    bool done() const { return a.done(); }
+    explicit ApplyFrames(A a_): a(a_) {}
 
     constexpr static int live(int k) { return mp::on_tuple<LiveAxes>::index(k); }
 
@@ -203,6 +199,8 @@ struct ApplyFrames
         int wj = live(j);
         return wz>=0 && wj>=0 && a.compact_stride(step, wz, wj); // @BUG may not be false.
     }
+    auto flat() { return a.flat(); }
+    auto flat() const { return a.flat(); }
 };
 
 template <class LiveAxes, int depth, class Enable=void>
@@ -341,7 +339,6 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     {
         return leaves_t(op, std::get<Ki::value>(t).flat() ...);
     }
-    bool done() const { return std::get<OuterA>(t).done(); }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
 #define DEF_RYN_EQOPS(OP)                                               \
@@ -370,7 +367,7 @@ struct number_ryn<std::tuple<Ki ...>>
     static auto f(V && v, Ti && ... t)
     {
         using FM = Framematch<V, std::tuple<Ti ...>>;
-// (note 1) ryn_ doesn't forward because v is already wrapped as ref or not by FM::op.
+// ryn_ doesn't forward because v is already wrapped as ref or not by FM::op.
         return ryn_<FM>(FM::op(std::forward<V>(v)), applyframes<mp::Ref_<typename FM::R, Ki::value>, FM::depth>::template f(std::forward<Ti>(t)) ...);
     }
 };
@@ -378,14 +375,14 @@ struct number_ryn<std::tuple<Ki ...>>
 template <class V, class ... Ti> inline
 constexpr auto ryn(V && v, Ti && ... t)
 {
-    return number_ryn<mp::index_tuple_<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
+    return number_ryn<mp::index_tuple<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
 }
 
 template <class cranks, class Op, class ... Ti> inline
 constexpr auto expr(Verb<cranks, Op> && v, Ti && ... t) // @TODO not universal ref anymore
 {
     using V = decltype(v);
-    return number_ryn<mp::index_tuple_<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
+    return number_ryn<mp::index_tuple<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
 }
 
 // ---------------------------
@@ -443,8 +440,8 @@ template <class A, class ... I> inline
 auto from(A && a, I && ... i)
 {
     using II = mp::Map_<index_rank, mp::tuple<decltype(start(i)) ...> >;
-    return ryn(from_partial<II, mp::len<II>-1>::make([&a](auto && ... i) -> decltype(auto) { return a(i ...); } ),
-               start(std::forward<I>(i)) ...);
+    return expr(from_partial<II, mp::len<II>-1>::make([&a](auto && ... i) -> decltype(auto) { return a(i ...); } ),
+                start(std::forward<I>(i)) ...);
 }
 
 } // namespace ra

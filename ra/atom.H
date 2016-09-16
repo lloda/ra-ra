@@ -77,7 +77,7 @@ struct ScalarLeaf: public Scalar<S>
 };
 
 // Wrap a scalar for traversal.
-// f(T) will normally be a specialization, so this doesn't drive. done() (in Expr) is only needed when map(f, T) is written out explicitly.
+// f(T) will normally be a specialization, so this doesn't drive.
 template <class S>
 struct Scalar
 {
@@ -89,8 +89,9 @@ struct Scalar
     constexpr static shape_type shape() { return shape_type {}; }
 
     S s;
-    Scalar(S && s_): s(std::forward<S>(s_)) {}
+    constexpr Scalar(S && s_): s(std::forward<S>(s_)) {}
 
+// Scalar acts as driver in a few places where I didn't bother to specialize (e.g. ra::from). Elsewhere (e.g. in +, *, operator=, etc.) there's always another expr to be driver, or a specialization (e.g. array constructors). Use in ra::from should be removed since a scalar subscript can be beaten; this is probably true of all other uses, and @TODO then we could remove this.
     constexpr static void adv(rank_t const k, dim_t const d) {}
     template <class I> constexpr S const & at(I const & i) const { return s; }
 
@@ -102,8 +103,6 @@ struct Scalar
     constexpr static bool compact_stride(dim_t const step, int const z, int const j) { return true; }
     constexpr ScalarLeaf<S> const & flat() const { return static_cast<ScalarLeaf<S> const &>(*this); }
 
-// Scalar acts as driver in a few places where I didn't bother to specialize (e.g. ra::from). Elsewhere (e.g. in +, *, operator=, etc.) there's always another expr to be driver, or a specialization (e.g. array constructors). Use in ra::from should be removed since a scalar subscript can be beaten; this is probably true of all other uses, and @TODO then we could remove this.
-    constexpr static bool done() { return false; }
 
 // impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
@@ -118,25 +117,25 @@ constexpr Scalar<S> scalar(S && s)
     return Scalar<S> { std::forward<S>(s) };
 }
 
-// Wrap an external compact 1-D vector type for traversal. Sort of reduced ra_iterator.
+// Wrap something with {size, begin} as 1-D vector. Sort of reduced ra_iterator.
+// ra::ra_traits_def<V> must be defined with ::size, ::size_s.
 // @TODO This can handle temporaries and make_a().begin() can't, look out for that.
 template <class V>
 struct Vector
 {
     using traits = ra_traits<V>;
-    static_assert(traits::rank_s()==1, "unsupported arg for Vector");
 
     V v;
     decltype(v.begin()) p__;
     static_assert(!std::is_reference<decltype(p__)>::value, "bad iterator type");
 
-    using shape_type = std::array<dim_t, 1>;
-    constexpr auto shape() const { return shape_type { { dim_t(traits::size(v)) } }; }
     constexpr dim_t size() const { return traits::size(v); }
     constexpr dim_t size(int const i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
+    constexpr static dim_t size_s() { return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr static dim_t size_s() { return traits::size_s(); }
+    using shape_type = std::array<dim_t, 1>;
+    constexpr auto shape() const { return shape_type { { dim_t(traits::size(v)) } }; }
 
 // see test-compatibility.C [a1] for forward() here.
     Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
@@ -154,16 +153,13 @@ struct Vector
         CHECK_BOUNDS(inside(i[0], this->size()));
         return p__[i[0]];
     }
-
     constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
     constexpr static bool compact_stride(dim_t const step, int const z, int const j)
     {
         return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
-
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
-    bool done() const { return p__==v.end(); }
 
 // impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
@@ -176,28 +172,27 @@ constexpr Vector<V> vector(V && v)
 {
     return Vector<V> { std::forward<V>(v) };
 }
+
 template <class T> inline
 constexpr Vector<std::initializer_list<T>> vector(std::initializer_list<T> && v)
 {
     return Vector<std::initializer_list<T>> { std::move(v) };
 }
 
-// @TODO Maybe try to merge with Vector...
+// Like Vector, but on the iterator itself, so no size, P only needs to have +=, *, [].
+// ra::ra_traits_def<P> doesn't need to be defined.
 template <class P>
 struct Ptr
 {
-    using traits = ra_traits<P>;
-    static_assert(traits::rank_s()==1, "unsupported arg for Ptr");
-
     P p__;
 
-    using shape_type = std::array<dim_t, 1>;
-    constexpr static auto shape() { return shape_type { { dim_t(size_s()) } }; }
-    constexpr static dim_t size() { return size_s(); }
-    constexpr static dim_t size(int const i) { CHECK_BOUNDS(i==0); return size_s(); }
+    constexpr static dim_t size() { return DIM_BAD; }
+    constexpr static dim_t size(int const i) { CHECK_BOUNDS(i==0); return DIM_BAD; }
+    constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr static dim_t size_s() { return traits::size_s(); }
+    using shape_type = std::array<dim_t, 1>;
+    constexpr static auto shape() { return shape_type { { dim_t(DIM_BAD) } }; }
 
     Ptr(P const & p_): p__(p_) {}
 
@@ -209,18 +204,15 @@ struct Ptr
     template <class I>
     decltype(auto) at(I const & i)
     {
-        return p__[i[0]]; // look ma no hands
+        return p__[i[0]];
     }
-
     constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
     constexpr static bool compact_stride(dim_t const step, int const z, int const j)
     {
         return (z==0) == (j==0); // cf Vector::compact_stride
     }
-
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
-    constexpr static bool done() { return false; }
 
 // impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
@@ -261,8 +253,10 @@ struct Iota
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return DIM_ANY; }
 
-    Iota(dim_t size, T org=0, T stride=1): size_(size), org_(org), stride_(stride), i_(org) { CHECK_BOUNDS(size>=0); }
-    bool done() const { return i_==org_+stride_*size_; }
+    constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), org_(org), stride_(stride), i_(org)
+    {
+        CHECK_BOUNDS(size>=0);
+    }
 
     void adv(rank_t const k, dim_t const d)
     {
@@ -331,7 +325,7 @@ template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::dec
 template <int w_, class value_type_>
 constexpr bool has_tensorindex_def<TensorIndex<w_, value_type_> > = true;
 
-template <class Op, class T, class K=mp::index_tuple_<T>> struct Expr;
+template <class Op, class T, class K=mp::index_tuple<T>> struct Expr;
 
 template <class Op, class ... Ti, class K>
 constexpr bool has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
@@ -341,7 +335,7 @@ template <class LiveAxes, int depth, class A> struct ApplyFrames;
 template <class LiveAxes, int depth, class A>
 constexpr bool has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>> = has_tensorindex<A>;
 
-template <class FM, class Op, class T, class K=mp::index_tuple_<T>> struct Ryn;
+template <class FM, class Op, class T, class K=mp::index_tuple<T>> struct Ryn;
 
 template <class FM, class Op, class ... Ti, class K>
 constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);

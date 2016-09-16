@@ -28,15 +28,20 @@ struct FormatArray
     char const * sep2;
 };
 
-template <class A, class B>
-FormatArray<A> format_array(A const & a, B const shape=true,
-                            char const * sep0="", char const * sep1="\n", char const * sep2="\n")
+// written this way to avoid conversions too bool shape.
+
+template <class A, class B> inline
+FormatArray<A>
+format_array(A const & a, B const shape, char const * sep0=" ", char const * sep1="\n", char const * sep2="\n")
 {
     static_assert(std::is_same<std::decay_t<B>, bool>::value, "bad call to format_array");
     return FormatArray<A> { a, shape, sep0, sep1, sep2 };
 }
 
-// a version of ply_index(). @TODO Eventually try to merge with that.
+template <class A> inline
+FormatArray<A> format_array(A const & a) { return format_array(a, true); }
+
+// After ply_index(). @TODO merge with that.
 // @TODO custom spacers at turn of dimension.
 // is_foreign_vector is included b/c std::vector or std::array may be used as shape_type.
 template <class A> inline
@@ -47,13 +52,15 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
     static_assert(decltype(a)::size_s()!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
     auto sha(a.shape());
+    auto ind = ra_traits<decltype(sha)>::make(rank, 0);
     if (fa.shape && a.size_s()==DIM_ANY) {
         o << start(sha) << '\n';
     }
-    if (a.done()) {
-        return o;
+    for (rank_t k=0; k<rank; ++k) {
+        if (sha[k]==0) {
+            return o;
+        }
     }
-    auto ind = ra_traits<decltype(sha)>::make(rank, 0);
 // unlike in ply_index(), order here is row-major on purpose.
     for (;;) {
     next: ;
@@ -78,7 +85,7 @@ template <class A> inline
 std::enable_if_t<is_ra<A> || is_foreign_vector<A>, std::ostream &>
 operator<<(std::ostream & o, A && a)
 {
-    return o << format_array(a, true, " ");
+    return o << format_array(a);
 }
 
 // Static size.
