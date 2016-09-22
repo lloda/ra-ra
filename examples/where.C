@@ -24,15 +24,19 @@ int main()
     //     y[i] = (abs(x[i]) > 2) ? (x[i]+10) : (x[i]-10);
     //
 
-
-
     // The first expression (abs(x) > 2) can involve the usual
     // comparison and logical operators: < > <= >= == != && ||
 
-    cout << x << endl
-         << y << endl;
+    cout << x << endl << y << endl;
 
-    TestRecorder tr;
+    // In ra:: we also have pick() to select among more than two values. You can
+    // put anything in the selector expression (the first argument) that will
+    // evaluate to an argument index.
+
+    ra::Owned<int, 1> z = pick(where(x<0, 0, where(x==0, 1, 2)), x*3, 77, x*2);
+
+    TestRecorder tr(std::cout, TestRecorder::NOISY);
     tr.test_eq(ra::vector({7, -12, -11, -10, -9, -8, 13}), y);
+    tr.test_eq(ra::vector({-9, -6, -3, 77, 2, 4, 6}), z);
     return tr.summary();
 }

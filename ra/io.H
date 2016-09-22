@@ -11,7 +11,7 @@
 
 #include "ra/type.H"
 #include "ra/traits.H"
-#include <iostream>
+#include <iosfwd>
 
 /// @file io.H
 /// @brief Write and read arrays, expressions.

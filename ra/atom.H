@@ -30,33 +30,25 @@
 
 namespace ra {
 
-#define BAD_INTERFACE(X) static_assert(X, "bad use of FlatIterator interface"); return 0;
+#define BAD_INTERFACE(X) static_assert(X, "bad use of Driver interface"); return 0;
 
 // value_type may be needed to avoid conversion issues.
-template <int w_, class value_type_=ra::dim_t>
+template <int w_, class value_type=ra::dim_t>
 struct TensorIndex
 {
-    using value_type = value_type_;
+    static_assert(w_>=0, "bad TensorIndex");
 
     constexpr static int w = w_;
-    static_assert(w>=0, "bad TensorIndex");
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t size_s() { return DIM_BAD; }
 
-    void adv(rank_t const k, dim_t const d) {}
-    template <class I> value_type at(I const & i) const
-    {
-        return value_type(i[w]);
-    }
+    constexpr void adv(rank_t const k, dim_t const d) {}
+    template <class I> constexpr value_type at(I const & i) const { return value_type(i[w]); }
 
-// Used in shape checks with dynamic rank. Needs special marker...
-    constexpr static dim_t size(int const k) { return DIM_BAD; }
-
-// Used by ply_ravel(), which doesn't support TensorIndex.
-    dim_t stride(int const i) const { BAD_INTERFACE(w<0) }
-    bool compact_stride(dim_t const step, int const z, int const j) const { BAD_INTERFACE(w<0) }
-    value_type * flat() const { BAD_INTERFACE(w<0) } // type signature used by Expr::atom_type
+    constexpr static dim_t size(int const k) { return DIM_BAD; } // used in shape checks with dyn. rank.
+    dim_t stride(int const i) const { BAD_INTERFACE(w<0) } // used by Expr::stride_t.
+    value_type * flat() const { BAD_INTERFACE(w<0) } // used by Expr::atom_type type signature.
 };
 
 #undef BAD_INTERFACE
@@ -70,7 +62,7 @@ template <class S> struct Scalar;
 
 // Leaf type for Scalar. This is separate from Scalar itself so that operator+=, etc. can have the default use.
 template <class S>
-struct ScalarLeaf: public Scalar<S>
+struct ScalarFlat: public Scalar<S>
 {
     constexpr void operator+=(dim_t const d) const {}
     constexpr S const & operator*() const { return this->s; }
@@ -101,8 +93,7 @@ struct Scalar
 // @TODO The result is never used, so maybe there's a way to remove this. @TODO All constexpr.
     constexpr static dim_t stride(int const i) { return 0; }
     constexpr static bool compact_stride(dim_t const step, int const z, int const j) { return true; }
-    constexpr ScalarLeaf<S> const & flat() const { return static_cast<ScalarLeaf<S> const &>(*this); }
-
+    constexpr ScalarFlat<S> const & flat() const { return static_cast<ScalarFlat<S> const &>(*this); }
 
 // impl depends on ra::Expr, see expr.H
 #define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
@@ -194,15 +185,15 @@ struct Ptr
     using shape_type = std::array<dim_t, 1>;
     constexpr static auto shape() { return shape_type { { dim_t(DIM_BAD) } }; }
 
-    Ptr(P const & p_): p__(p_) {}
+    constexpr Ptr(P const & p_): p__(p_) {}
 
-    void adv(rank_t const k, dim_t const d)
+    constexpr void adv(rank_t const k, dim_t const d)
     {
         CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
         p__ += (k==0) * d;
     }
     template <class I>
-    decltype(auto) at(I const & i)
+    constexpr decltype(auto) at(I const & i)
     {
         return p__[i[0]];
     }
@@ -246,9 +237,8 @@ struct Iota
     using shape_type = std::array<dim_t, 1>;
     constexpr auto shape() const { return shape_type { { size_ } }; }
 
-    dim_t size() const { return size_; }
-    dim_t size(int const i) const { CHECK_BOUNDS(i==0); return size_; }
-
+    constexpr dim_t size() const { return size_; } // this is a Slice function...
+    constexpr dim_t size(int const i) const { CHECK_BOUNDS(i==0); return size_; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr static dim_t size_s() { return DIM_ANY; }
@@ -258,16 +248,15 @@ struct Iota
         CHECK_BOUNDS(size>=0);
     }
 
-    void adv(rank_t const k, dim_t const d)
+    constexpr void adv(rank_t const k, dim_t const d)
     {
         i_ += T((k==0) * d) * stride_; // cf Vector::adv below.
     }
     template <class I>
-    decltype(auto) at(I const & i)
+    constexpr decltype(auto) at(I const & i)
     {
         return org_ + T(i[0])*stride_;
     }
-
     constexpr static dim_t stride(rank_t const i) { return i==0 ? 1 : 0; }
     constexpr static bool compact_stride(dim_t const step, int const z, int const j)
     {
@@ -312,30 +301,23 @@ template <int n> struct is_beatable_def<dots_t<n> >
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I> >;
 template <class I> struct beatable_skip { struct type { constexpr static int value = is_beatable<I>::skip; }; };
 
-// others:
-// * 'static': Like expr, but the operator is compile time (e.g. ::apply()).
-// * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
-// * ...
-
-template <class X>
-constexpr bool has_tensorindex_def = false;
-
+template <class X> constexpr bool has_tensorindex_def = false;
 template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T> >;
+template <int w, class value_type> constexpr bool has_tensorindex_def<TensorIndex<w, value_type> > = true;
 
-template <int w_, class value_type_>
-constexpr bool has_tensorindex_def<TensorIndex<w_, value_type_> > = true;
-
-template <class Op, class T, class K=mp::index_tuple<T>> struct Expr;
+template <class Op, class T, class K=std::make_integer_sequence<int, mp::len<T> > > struct Expr;
+template <class T, class K=std::make_integer_sequence<int, mp::len<T> > > struct Pick;
+template <class FM, class Op, class T, class K=std::make_integer_sequence<int, mp::len<T> > > struct Ryn;
+template <class LiveAxes, int depth, class A> struct ApplyFrames;
 
 template <class Op, class ... Ti, class K>
 constexpr bool has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
 
-template <class LiveAxes, int depth, class A> struct ApplyFrames;
+template <class ... Ti, class K>
+constexpr bool has_tensorindex_def<Pick<std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
 
 template <class LiveAxes, int depth, class A>
 constexpr bool has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>> = has_tensorindex<A>;
-
-template <class FM, class Op, class T, class K=mp::index_tuple<T>> struct Ryn;
 
 template <class FM, class Op, class ... Ti, class K>
 constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);

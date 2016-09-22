@@ -13,6 +13,7 @@
 /// @brief Sugar for ra:: expression templates.
 
 #include "ra/wrank.H"
+#include "ra/pick.H"
 // @TODO These (dependence on specific ra:: types) should be elsewhere.
 #include "ra/small.H"
 #include "ra/large.H"
@@ -67,23 +68,9 @@ inline decltype(auto) transpose(A && a, mp::int_list<Iarg ...>)
     return transpose<Iarg ...>(std::forward<A>(a));
 }
 
-// Wrappers over expr & ply_either.
-
-template <class F, class ... A>
-inline auto map(F && f, A && ... a)
-{
-    return expr(std::forward<F>(f), start(std::forward<A>(a)) ...);
-}
-
-template <class F, class ... A>
-inline void for_each(F && f, A && ... a)
-{
-    ply_either(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));
-}
-
 // I considered three options for lookup.
 // 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.H). It results in the narrowest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
-// 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. FlatIterator). Possible solution: don't ever use + != == for FlatIterator.
+// 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.
 // 3. enable_if'd ADL is what you see here.
 
 // --------------------------------
@@ -190,39 +177,10 @@ inline auto at(A && a, I && i)
     return map([&a](auto && i) -> decltype(auto) { return a.at(i); }, i);
 }
 
-// --------------------------------
-// Ternary op
-// --------------------------------
-
-// needed when ? returns rvalue reference.
-template <class T> inline decltype(auto) safe_rvalue(T & t) { return t; }
-template <class T> inline T safe_rvalue(T && t) { return t; }
-
-// @TODO use instead
-// typename safe_rvalue<decltype(t_), decltype(f_), decltype(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_))>::type
-
-// template <class T, class F, class R, class Enable=void>
-// struct safe_rvalue
-// {
-//     using type = R;
-// };
-
-// template <class T, class F, class R>
-// struct safe_rvalue<T, F, R, std::enable_if_t<std::is_rvalue_reference<T>::value && std::is_rvalue_reference<F>::value> >
-// {
-//     using type = std::decay_t<R>;
-// };
-
-// http://scottmeyers.blogspot.ch/2013/05/c14-lambdas-and-perfect-forwarding.html
-// @TODO only one of t or f should be evaluated. But that probably requires where() to be a different type from Expr.
 template <class W, class T, class F, std::enable_if_t<is_ra_pos_rank<W> || is_ra_pos_rank<T> || is_ra_pos_rank<F>, int> = 0>
 inline auto where(W && w, T && t, F && f)
 {
-    return map([](auto && w_, auto && t_, auto && f_) -> decltype(auto)
-    {
-        return safe_rvalue(w_ ? std::forward<decltype(t_)>(t_) : std::forward<decltype(f_)>(f_));
-    },
-               std::forward<W>(w), std::forward<T>(t), std::forward<F>(f));
+    return pick(cast<bool>(start(std::forward<W>(w))), start(std::forward<F>(f)), start(std::forward<T>(t)));
 }
 
 // --------------------------------

@@ -233,7 +233,7 @@ auto plyf(A && a) -> std::enable_if_t<(A::rank_s()>1)>
 }
 
 // ---------------------------
-// Selectors, best performance for each type.
+// Select best performance (or requirements) for each type.
 // ---------------------------
 
 template <class A> inline
@@ -306,12 +306,12 @@ bool ply_index_exit_1(A && a, Op && op)
     return op(false);
 }
 
-template <class A, class Op, std::enable_if_t<is_array_iterator<A> && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
+template <class A, class Op, std::enable_if_t<is_ra_iterator<A> && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
 bool ply_either_exit(A && a, Op && op)
 {
     return ply_index_exit(a, op);
 }
-template <class A, class Op, std::enable_if_t<is_array_iterator<A> && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
+template <class A, class Op, std::enable_if_t<is_ra_iterator<A> && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
 bool ply_either_exit(A && a, Op && op)
 {
     return ply_index_exit_1(a, op);

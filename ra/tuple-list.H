@@ -143,13 +143,13 @@ struct IndexIf
     using type = nil;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<Pred<A0>::value> >
+struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<Pred<A0>::value>>
 {
     using type = A0;
     constexpr static int value = i;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<!(Pred<A0>::value)> >
+struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<!(Pred<A0>::value)>>
 {
     using next = IndexIf<tuple<A ...>, Pred, i+1>;
     using type = typename next::type;
@@ -294,7 +294,7 @@ using Map_ = typename Map<F, L ...>::type;
 template <class A, class B> struct Filter
 {
     using type = mp::Append_<mp::If_<mp::First_<A>::value, mp::Take_<B, 1>, mp::nil>,
-                             typename Filter<mp::Drop1_<A>, mp::Drop1_<B> >::type>;
+                             typename Filter<mp::Drop1_<A>, mp::Drop1_<B>>::type>;
 };
 template <class B> struct Filter<mp::nil, B>
 {
@@ -604,7 +604,7 @@ struct Inc
 };
 
 template <class A> struct InvertIndex;
-template <class ... A> struct InvertIndex<std::tuple<A ...> >
+template <class ... A> struct InvertIndex<std::tuple<A ...>>
 {
     using AT = std::tuple<A ...>;
     template <class T> struct IndexA
@@ -612,11 +612,9 @@ template <class ... A> struct InvertIndex<std::tuple<A ...> >
         using type = int_t<Index<AT, T>::value>;
     };
     constexpr static int N = Apply_<Max, AT>::value;
-    using type = Map_<IndexA, Iota_<(N>=0 ? N+1 : 0)> >;
+    using type = Map_<IndexA, Iota_<(N>=0 ? N+1 : 0)>>;
 };
 template <class A> using InvertIndex_ = typename InvertIndex<A>::type;
-
-template <class A> using index_tuple = Iota_<len<A> >;
 
 // Used in tests.
 template <class A, int ... I>

@@ -261,12 +261,8 @@ Bugs & wishes
 
 * Better reduction mechanisms.
 
-* The where() operator isn't short-circuiting.
-
 * Concatenation, search, reshape, and other infinite rank or rank>0 operations
   are missing.
-
-* Stencils, like in Blitz++.
 
 * More clever/faster traversal of arrays, like in Blitz++.
 

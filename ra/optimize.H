@@ -47,7 +47,7 @@ DEFINE_NAMED_BINARY_OP(/, slash)
 
 #if RA_OPTIMIZE_IOTA==1
 #define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T> >::value
-// @TODO iota(int)*real is not opt to iota(real) b/c traversal is done by accumulating on org, so IotaLeaf::operator!= is not robust.
+// @TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
 template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X> >::is_integer;
 
 // --------------

@@ -29,7 +29,7 @@
 
 // In order of urgency.
 // @TODO Make it work with fixed size types.
-// @TODO Make InnerA/OuterA choice robust wrt ply order.
+// @TODO Make OuterA choice robust wrt ply order.
 // @TODO Make it work with var rank types.
 
 namespace ra {
@@ -226,42 +226,28 @@ struct applyframes
 
 // like Expr, except don't do driver selection here, but leave it to the args, as with Expr::adv(k, d). The args may need to be ApplyFrames... don't know yet.
 // forward decl in atom.H.
-template <class FM, class Op, class ... Ti, class ... Ki>
-struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
+template <class FM, class Op, class ... Ti, int ... Ki>
+struct Ryn<FM, Op, std::tuple<Ti ...>, std::integer_sequence<int, Ki ...> >
 {
     using T = std::tuple<Ti ...>;
-    using K = std::tuple<Ki ...>;
+    using K = std::tuple<mp::int_t<Ki> ...>;
 
 // @BUG Use of these depends on traversal order.
     static int const OuterA = mp::First_<typename FM::axisdrivers>::value;
-    static int const InnerA = mp::Last_<typename FM::axisdrivers>::value;
 
 // @TODO Prove that the last frame covers all the raveled last axes.
-    using leaves_t = Leaves<Op, InnerA, std::tuple<decltype(std::declval<Ti>().flat()) ...>>;
+    using flat_t = Flat<Op, std::tuple<decltype(std::declval<Ti>().flat()) ...>>;
 
     Op op;
     T t;
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::len<K>), bool>
-    check(dim_t const s0, int const k)
-    {
-        return true;
-    }
-    template <int iarg>
-    std::enable_if_t<(iarg<mp::len<K>), bool>
-    check(dim_t const s0, int const k)
-    {
-        dim_t sk = std::get<mp::Ref_<K, iarg>::value>(t).size(k);
-        if (sk!=s0 && sk!=DIM_BAD) { // @TODO See Expr::check(); maybe just sk>=0.
-            return false;
-        }
-        return check<iarg+1>(s0, k);
-    }
     bool check()
     {
         for (int k=0; k!=rank(); ++k) { // @TODO with static rank or sizes, can peval.
-            if (!check<0>(size(k), k)) {
+            dim_t s0 = size(k);
+            dim_t sk = std::get<iarg>(t).size(k);
+            if (sk!=s0 && sk!=DIM_BAD) { // @TODO See Expr::check(); maybe just sk>=0.
                 return false;
             }
         }
@@ -270,12 +256,12 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 
     Ryn(Op op_, Ti ... t_): op(op_), t(t_ ...)
     {
-        CHECK_BOUNDS(check() && "mismatched shapes");
+        CHECK_BOUNDS(check<Ki>() && ... && "mismatched shapes");
     }
     template <class J>
     constexpr decltype(auto) at(J const & i)
     {
-        return op(std::get<Ki::value>(t).at(i) ...);
+        return op(std::get<Ki>(t).at(i) ...);
     }
 
 // Find the driver for given axis. This pattern is used below.
@@ -307,7 +293,6 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
     {
         assert(0 && "internal error"); abort();
     }
-
     constexpr auto shape() const
     {
         std::array<dim_t, FM::depth> s;
@@ -323,36 +308,37 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::tuple<Ki ...>>
 // @TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
     void adv(rank_t const k, dim_t const d)
     {
-        (std::get<Ki::value>(t).adv(k, d), ...);
+        (std::get<Ki>(t).adv(k, d), ...);
     }
     template <int iarg=0>
     std::enable_if_t<(iarg<mp::len<K>), bool>
     constexpr compact_stride(dim_t const step, int const z, int const j) const
     {
-        return (std::get<Ki::value>(t).compact_stride(step, z, j) && ...);
+        return (std::get<Ki>(t).compact_stride(step, z, j) && ...);
     }
     auto stride(int const i) const
     {
-        return std::make_tuple(std::get<Ki::value>(t).stride(i) ...);
+        return std::make_tuple(std::get<Ki>(t).stride(i) ...);
     }
-    constexpr auto flat() const -> leaves_t
+    constexpr auto flat() -> flat_t
     {
-        return leaves_t(op, std::get<Ki::value>(t).flat() ...);
+        return flat_t(op, std::get<Ki>(t).flat() ...);
+    }
+    constexpr auto flat() const -> flat_t
+    {
+        return flat_t(op, std::get<Ki>(t).flat() ...);
     }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
 #define DEF_RYN_EQOPS(OP)                                               \
     template <class X> void operator OP(X && x)                         \
-    {                                                                   \
-        ply_either(expr([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, start(x))); \
-    }
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, start(x)); }
     FOR_EACH(DEF_RYN_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_RYN_EQOPS
 };
 
 template <class FM, class Op, class ... Ti> inline
-Ryn<FM, Op, std::tuple<Ti ...>>
-ryn_(Op op, Ti && ... t)
+auto ryn_(Op op, Ti && ... t)
 {
     return Ryn<FM, Op, std::tuple<Ti ...>> { op, std::forward<Ti>(t) ... }; // (note 1)
 }
@@ -360,29 +346,29 @@ ryn_(Op op, Ti && ... t)
 template <class K>
 struct number_ryn;
 
-template <class ... Ki>
-struct number_ryn<std::tuple<Ki ...>>
+template <int ... Ki>
+struct number_ryn<std::integer_sequence<int, Ki ...> >
 {
     template <class V, class ... Ti>
     static auto f(V && v, Ti && ... t)
     {
         using FM = Framematch<V, std::tuple<Ti ...>>;
 // ryn_ doesn't forward because v is already wrapped as ref or not by FM::op.
-        return ryn_<FM>(FM::op(std::forward<V>(v)), applyframes<mp::Ref_<typename FM::R, Ki::value>, FM::depth>::template f(std::forward<Ti>(t)) ...);
+        return ryn_<FM>(FM::op(std::forward<V>(v)), applyframes<mp::Ref_<typename FM::R, Ki>, FM::depth>::template f(std::forward<Ti>(t)) ...);
     }
 };
 
-template <class V, class ... Ti> inline
-constexpr auto ryn(V && v, Ti && ... t)
+template <class V, class ... Ti> inline constexpr
+auto ryn(V && v, Ti && ... t)
 {
-    return number_ryn<mp::index_tuple<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
+    return number_ryn<std::make_integer_sequence<int, sizeof...(Ti)> >::f(std::forward<V>(v), std::forward<Ti>(t) ...);
 }
 
-template <class cranks, class Op, class ... Ti> inline
-constexpr auto expr(Verb<cranks, Op> && v, Ti && ... t) // @TODO not universal ref anymore
+template <class cranks, class Op, class ... Ti> inline constexpr
+auto expr(Verb<cranks, Op> && v, Ti && ... t) // @TODO not universal ref anymore
 {
     using V = decltype(v);
-    return number_ryn<mp::index_tuple<std::tuple<Ti ...>>>::f(std::forward<V>(v), std::forward<Ti>(t) ...);
+    return number_ryn<std::make_integer_sequence<int, sizeof...(Ti)> >::f(std::forward<V>(v), std::forward<Ti>(t) ...);
 }
 
 // ---------------------------

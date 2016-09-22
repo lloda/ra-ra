@@ -845,7 +845,7 @@ int main()
     }
     tr.section("ra::iota");
     {
-        static_assert(ra::is_array_iterator<decltype(ra::iota(10))>, "bad type pred for iota");
+        static_assert(ra::is_ra_iterator<decltype(ra::iota(10))>, "bad type pred for iota");
         tr.section("straight cases");
         {
             ra::Owned<int, 1> a = ra::iota(4, 1);

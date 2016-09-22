@@ -168,7 +168,7 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
 #define DEF_EQOPS(OP)                                                   \
     template <class X> void operator OP(X && x)                         \
     {                                                                   \
-        ply_either(expr([](auto && y, auto && x) { y OP x; }, *this, start(x))); \
+        for_each([](auto && y, auto && x) { y OP x; }, *this, start(x)); \
     }
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS

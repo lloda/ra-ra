@@ -16,7 +16,6 @@
 #include "ra/test.H"
 
 using std::tuple;
-using std::tuple_size;
 using std::tuple_element;
 using std::is_same;
 using namespace mp;
@@ -179,7 +178,7 @@ int main()
     static_assert(First<B>::type::value==5 && First<C>::type::value==9, "3i");
     static_assert(Last<B>::type::value==7 && Last<C>::type::value==8, "3j");
 // Useful default.
-    static_assert(tuple_size<Ref<nil>::type>::value==0, "3i");
+    static_assert(mp::len<Ref<nil>::type> ==0, "3i");
 // 3-indices.
     using S2AB = tuple<A, B>;
     using S2BC = tuple<B, C>;

@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2014-2015
+// (c) Daniel Llorens - 2014-2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -7,10 +7,9 @@
 // later version.
 
 /// @file test-where.C
-/// @brief Using ra:: array & iterator types with the STL algos & types.
+/// @brief Tests for where() and pick().
 
-// Regression test for a bug in where() when both T/F arms are Expr.
-
+#include <atomic>
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/test.H"
@@ -21,7 +20,56 @@ using real = double;
 int main()
 {
     TestRecorder tr(std::cout);
-    section("where, scalar W, array arguments in T/F");
+
+    std::atomic<int> counter { 0 };
+    auto count = [&counter](auto && x) -> decltype(auto) { ++counter; return x; };
+
+    tr.section("pick");
+    {
+        ra::Small<real, 3> a0 = { 1, 2, 3 };
+        ra::Small<real, 3> a1 = { 10, 20, 30 };
+        ra::Small<int, 3> p = { 0, 1, 0 };
+        ra::Small<real, 3> a(0.);
+
+        counter = 0;
+        a = pick(p, map(count, a0), map(count, a1));
+        tr.test_eq(ra::Small<real, 3> { 1, 20, 3 }, a);
+        tr.info("pick ETs execute only one branch per iteration").test_eq(3, int(counter));
+
+        counter = 0;
+        a = where(p, map(count, a0), map(count, a1));
+        tr.test_eq(ra::Small<real, 3> { 10, 2, 30 }, a);
+        tr.info("where() is implemented using pick ET").test_eq(3, int(counter));
+    }
+    tr.section("write to pick");
+    {
+        ra::Small<real, 2> a0 = { 1, 2 };
+        ra::Small<real, 2> a1 = { 10, 20 };
+        ra::Small<int, 2> const p = { 0, 1 };
+        ra::Small<real, 2> const a = { 7, 9 };
+
+        counter = 0;
+        pick(p, map(count, a0), map(count, a1)) = a;
+        tr.test_eq(2, int(counter));
+        tr.test_eq(ra::Small<real, 2> { 7, 2 }, a0);
+        tr.test_eq(ra::Small<real, 2> { 10, 9 }, a1);
+        tr.test_eq(ra::Small<real, 2> { 7, 9 }, a);
+        tr.test_eq(ra::Small<int, 2> { 0, 1 }, p);
+    }
+    tr.section("pick with TensorIndex");
+    {
+        ra::Small<real, 2> a0 = { 1, 2 };
+        ra::Small<real, 2> a1 = { 10, 20 };
+        ra::Small<int, 2> const p = { 0, 1 };
+
+        counter = 0;
+        pick(p, map(count, a0), map(count, a1)) += ra::_0+5;
+        tr.test_eq(2, int(counter));
+        tr.test_eq(ra::Small<real, 2> { 6, 2 }, a0);
+        tr.test_eq(ra::Small<real, 2> { 10, 26 }, a1);
+        tr.test_eq(ra::Small<int, 2> { 0, 1 }, p);
+    }
+    tr.section("where, scalar W, array arguments in T/F");
     {
         std::array<real, 2> bb {{1, 2}};
         std::array<real, 2> cc {{99, 99}};
@@ -39,7 +87,7 @@ int main()
         tr.test_eq(-2, cc[0]);
         tr.test_eq(-1, cc[1]);
     }
-    section("where as rvalue");
+    tr.section("where as rvalue");
     {
         tr.test_eq(ra::Unique<int, 1> { 1, 2, 2, 1 }, where(ra::Unique<bool, 1> { true, false, false, true }, 1, 2));
         tr.test_eq(ra::Unique<int, 1> { 17, 2, 3, 17 }
@@ -51,11 +99,11 @@ int main()
         ra::Unique<int, 2> b = where(ra::Unique<bool, 1> { true, false, false, true }, 99, a);
         tr.test_eq(ra::Unique<int, 2> ({4, 3}, { 99, 99, 99, 1, 0, -1, 2, 1, 0, 99, 99, 99 }), b);
     }
-    section("where nested");
+    tr.section("where nested");
     {
         {
             ra::Small<int, 3> a {-1, 0, 1};
-            ra::Small<int, 3> b = where(a>=0, where(a>=1, 99, 77), 44);
+            ra::Small<int, 3> b = where(a>=0, where(a<1, 77, 99), 44);
             tr.test_eq(ra::Small<int, 3> {44, 77, 99}, b);
         }
         {
@@ -64,14 +112,14 @@ int main()
             tr.test_eq(ra::Small<int, 2, 2> {77, 77, 77, 77}, b);
         }
     }
-    section("where, scalar W, array arguments in T/F");
+    tr.section("where, scalar W, array arguments in T/F");
     {
         real a = 1./7;
         ra::Small<real, 2> b {1, 2};
         ra::Small<real, 2> c = where(a>0, b, 3.);
         tr.test_eq(ra::Small<real, 2> {1, 2}, c);
     }
-    section("where as lvalue, scalar");
+    tr.section("where as lvalue, scalar");
     {
         real a=0, b=0;
         bool w = true;
@@ -82,14 +130,14 @@ int main()
         tr.test_eq(99, a);
         tr.test_eq(77, b);
     }
-    section("where, scalar + rank 0 array");
+    tr.section("where, scalar + rank 0 array");
     {
         ra::Small<real> a { 33. };
         real b = 22.;
         tr.test_eq(33, real(where(true, a, b)));
         tr.test_eq(22, real(where(true, b, a)));
     }
-    section("where as lvalue, xpr [raop01]");
+    tr.section("where as lvalue, xpr [raop01]");
     {
         ra::Unique<int, 1> a { 0, 0, 0, 0 };
         ra::Unique<int, 1> b { 0, 0, 0, 0 };
@@ -103,7 +151,7 @@ int main()
         // where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
         // where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
     }
-    section("where with rvalue TensorIndex, fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
+    tr.section("where with rvalue TensorIndex, fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
     {
         tr.test_eq(ra::Small<int, 2> {0, 1},
                    where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>()));

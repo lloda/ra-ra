@@ -29,51 +29,48 @@
 
 namespace ra {
 
-// Manipulate Expr/expr through leaf (raw pointer-like) iterators P ...
-// Of these, the A-th one is used to advance (+=) the traversal.
-template <class F, int A, class T, class I=mp::index_tuple<T>>
-struct Leaves;
+// Manipulate ET through flat (raw pointer-like) iterators P ...
+template <class Op, class T, class I=std::make_integer_sequence<int, mp::len<T> > >
+struct Flat;
 
-template <class F, int A, class ... P, class ... I>
-struct Leaves<F, A, std::tuple<P ...>, std::tuple<I ...>>
+template <class Op, class ... P, int ... I>
+struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...> >
 {
     using T = std::tuple<P ...>;
 
-    F f;
+    Op & op;
     T t;
-    Leaves(F f_, P ... p_): f(f_), t(p_ ...) {}
+    Flat(Op & op_, P ... p_): op(op_), t(p_ ...) {}
 
 // @TODO after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
     template <int II, class S> void add(S const & s) { std::get<II>(t) += std::get<II>(s); }
-    template <class S> void operator+=(S const & s) { (this->add<I::value>(s), ...); }
-    decltype(auto) operator*() { return f(*std::get<I::value>(t) ...); } // @TODO std::apply(f, t)
+    template <class S> void operator+=(S const & s) { (add<I>(s), ...); }
+    decltype(auto) operator*() { return op(*std::get<I>(t) ...); } // @TODO std::apply(op, t)
 };
 
-template <class Op, class ... P> inline
-constexpr Expr<Op, std::tuple<P ...>> expr(Op && f, P && ... p)
+template <class Op, class ... P> inline constexpr
+auto expr(Op && op, P && ... p)
 {
-    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(f), std::forward<P>(p) ... };
+    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
 }
 
 // forward decl in atom.H
-template <class Op, class ... P, class ... I>
-struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
+template <class Op, class ... P, int ... I>
+struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 {
     using T = std::tuple<P ...>;
-    using K = std::tuple<I ...>;
 
 // A-th argument decides rank and shape.
     constexpr static int A = largest_rank<P ...>::value;
     using PA = std::decay_t<mp::Ref_<T, A>>;
-
-    using AK = mp::Cons_<mp::int_t<A>, mp::ComplementList_<mp::int_list<A>, K>>;
-    using leaves_t = Leaves<Op, A, std::tuple<decltype(std::declval<P>().flat()) ...>>;
+    using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...> >;
+    using flat_t = Flat<Op, std::tuple<decltype(std::declval<P>().flat()) ...>>;
     using stride_t = std::tuple<decltype(std::declval<P>().stride(0)) ...>;
 
     Op op;
     T t;
 
-// If driver is RANK_ANY, driver selection should be delayed to run time, except when we can tell statically that RANK_ANY would be selected anyway.
+// If driver is RANK_ANY, driver selection should wait til run time, unless we can tell statically that RANK_ANY would be selected anyway.
     constexpr static bool HAS_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
     template <bool depend=true> constexpr auto & driver() const
@@ -83,21 +80,21 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     }
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::len<AK>), bool>
+    std::enable_if_t<(iarg==mp::len<NotA>), bool>
     check(int const driver_rank) const { return true; }
 
     template <int iarg>
-    std::enable_if_t<(iarg<mp::len<AK>), bool>
+    std::enable_if_t<(iarg<mp::len<NotA>), bool>
     check(int const driver_rank) const
     {
-        rank_t ranki = std::get<mp::Ref_<AK, iarg>::value>(t).rank();
+        rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
 // Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Disable this test when it's known statically that it isn't needed. @TODO Do dynamic driver selection if static is uncertain.
         assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
         for (int k=0; k!=ranki; ++k) {
 // sk0==DIM_BAD might happen on subexpressions.
             dim_t sk0 = std::get<A>(t).size(k);
             if (sk0!=DIM_BAD) {
-                dim_t sk = std::get<mp::Ref_<AK, iarg>::value>(t).size(k);
+                dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
                 assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
             }
         }
@@ -109,17 +106,16 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     {
 // @TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
 // @TODO Should check only the driver: do this on ply.
-        CHECK_BOUNDS(check<1>(rank()));
+        CHECK_BOUNDS(check<0>(rank()));
     }
 
-    template <class J>
-    decltype(auto) at(J const & i)
+    template <class J> constexpr decltype(auto) at(J const & i)
     {
-        return op(std::get<I::value>(t).at(i) ...);
+        return op(std::get<I>(t).at(i) ...);
     }
-    void adv(rank_t const k, dim_t const d)
+    constexpr void adv(rank_t const k, dim_t const d)
     {
-        (std::get<I::value>(t).adv(k, d), ...);
+        (std::get<I>(t).adv(k, d), ...);
     }
 
 // there's one size (by A), but each arg has its own strides.
@@ -128,17 +124,21 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     {
         return std::get<A>(t).size(i);
     }
-    bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr bool compact_stride(dim_t const step, int const z, int const j) const
     {
-        return (std::get<I::value>(t).compact_stride(step, z, j) && ...);
+        return (std::get<I>(t).compact_stride(step, z, j) && ...);
     }
     auto stride(int const i) const -> stride_t // @BUG clang 3.9 issues with constexpr/TensorIndex
     {
-        return stride_t(std::get<I::value>(t).stride(i) ...);
+        return stride_t(std::get<I>(t).stride(i) ...);
     }
-    auto flat() const -> leaves_t // clang complains if this is constexpr, gcc does not
+    auto flat() const -> flat_t // clang complains if this is constexpr, gcc does not
     {
-        return leaves_t(op, std::get<I::value>(t).flat() ...);
+        return flat_t(op, std::get<I>(t).flat() ...);
+    }
+    auto flat() -> flat_t // clang complains if this is constexpr, gcc does not
+    {
+        return flat_t(op, std::get<I>(t).flat() ...);
     }
 
     constexpr static dim_t size_s() { return PA::size_s(); }
@@ -147,8 +147,7 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
     constexpr decltype(auto) shape() const { return driver().shape(); }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    using atom_type = decltype(*std::declval<leaves_t>());
-    operator atom_type()
+    operator decltype(*std::declval<flat_t>())()
     {
         static_assert(rank_s()==0 || rank_s()==RANK_ANY || (rank_s()==1 && size_s()==1), // for coord types
                       "bad rank in conversion to scalar");
@@ -156,11 +155,10 @@ struct Expr<Op, std::tuple<P ...>, std::tuple<I ...>>
         return *flat();
     }
 
-#define DEF_EQOPS_(OP)                                                  \
-    OP(X && x)                                                          \
-    {  /* forward to make sure value y is not misused as ref. Cf. test-ra-8.C */ \
-        ply_either(expr([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, start(x))); \
-    }
+// forward to make sure value y is not misused as ref. Cf. test-ra-8.C
+#define DEF_EQOPS_(OP) OP(X && x) \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
+
 #define DEF_EQOPS(OP) template <class X> void operator DEF_EQOPS_(OP)
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
@@ -177,6 +175,25 @@ FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 
 #undef DEF_EQOPS_
+
+// others:
+// * 'static': Like expr, but the operator is compile time (e.g. ::apply()).
+// * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
+// * ...
+
+// Wrappers over expr & ply_either.
+
+template <class F, class ... A> inline
+auto map(F && f, A && ... a)
+{
+    return expr(std::forward<F>(f), start(std::forward<A>(a)) ...);
+}
+
+template <class F, class ... A> inline
+void for_each(F && f, A && ... a)
+{
+    ply_either(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));
+}
 
 } // namespace ra
 
