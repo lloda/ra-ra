@@ -45,10 +45,10 @@ int main()
 
         // view types
         char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-        ra::Raw<char, 2> D1({2, 3}, cs);            // dynamic sizes and strides, C order
-        ra::Raw<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and strides, Fortran order.
-        ra::SmallSlice<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & strides, C order.
-        ra::SmallSlice<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & strides, Fortran order.
+        ra::View<char, 2> D1({2, 3}, cs);            // dynamic sizes and strides, C order
+        ra::View<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and strides, Fortran order.
+        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & strides, C order.
+        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & strides, Fortran order.
 
         cout << "D1: " << D1 << "\n\n";
         cout << "D2: " << D2 << "\n\n";
@@ -126,7 +126,7 @@ int main()
         ra::Owned<int, 2> J({2, 2}, {1, 0, 0, 1});
         cout << "A(J, 1, J): " << A(J, 1, J) << "\n\n";
 
-// explicit indices do not result in a Raw view (= pointer + strides), but the
+// explicit indices do not result in a View view (= pointer + strides), but the
 // resulting expression can still be written on.
         B(I) = ra::Owned<char, 2>({2, 2}, {'x', 'y', 'z', 'w'});
         cout << "B: " << B << endl;
@@ -145,6 +145,12 @@ int main()
         ra::Owned<float, 2> B({2, 2}, {1, 2, 3, 4});
         B += std::vector<float>({10, 20});
         cout << "B: " << B << "\n\n";
+    }
+// example from the manual [100].
+    {
+        ra::Small<int, 3> s {2, 1, 0};
+        ra::Small<double, 3> z = pick(s, s*s, s+s, sqrt(s));
+        cout << "z: " << z << endl;
     }
     return 0;
 }

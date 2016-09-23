@@ -80,7 +80,7 @@ inline decltype(auto) transpose(A && a, mp::int_list<Iarg ...>)
 // We need the zero/scalar specializations because the scalar/scalar operators
 // maybe be templated (e.g. complex<>), so they won't be found when an implicit
 // conversion from zero->scalar is also needed. That is, without those
-// specializations, ra::Raw<complex, 0> * complex will fail.
+// specializations, ra::View<complex, 0> * complex will fail.
 
 // These depend on OPNAME defined in optimize.H and used there to match ET patterns.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
@@ -139,8 +139,9 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // @TODO Make + into nop.
         return OP(START(a) ...);                                        \
     }
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, abs, cos, sin)
-FOR_EACH(DEF_NAME_OP, exp, sqrt, log, log1p, isfinite, isnan, isinf, max)
-FOR_EACH(DEF_NAME_OP, min, odd)
+FOR_EACH(DEF_NAME_OP, exp, sqrt, log, log1p, log10, isfinite, isnan, isinf)
+FOR_EACH(DEF_NAME_OP, max, min, odd, asin, acos, atan, atan2)
+FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh)
 #undef DEF_NAME_OP
 
 #define DEF_NAME_OP(OP)                                                 \
@@ -405,7 +406,7 @@ gemm(A const & a, B const & b)
 // the default for row-major x row-major. See bench-gemm.C for variants.
 template <class S, class T>
 inline auto
-gemm(ra::Raw<S, 2> const & a, ra::Raw<T, 2> const & b)
+gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 {
     int const M = a.size(0);
     int const N = b.size(1);
@@ -431,7 +432,7 @@ gevm(A const & a, B const & b)
 
 template <class S, class T>
 inline auto
-gevm(ra::Raw<S, 1> const & a, ra::Raw<T, 2> const & b)
+gevm(ra::View<S, 1> const & a, ra::View<T, 2> const & b)
 {
     int const N = b.size(1);
     ra::Owned<decltype(a(0)*b(0, 0))> c({N}, ra::unspecified);
@@ -455,7 +456,7 @@ gemv(A const & a, B const & b)
 
 template <class S, class T>
 inline auto
-gemv(ra::Raw<S, 2> const & a, ra::Raw<T, 1> const & b)
+gemv(ra::View<S, 2> const & a, ra::View<T, 1> const & b)
 {
     int const M = a.size(0);
     ra::Owned<std::decay_t<decltype(START(a)*START(b))>, 1> c({M}, ra::unspecified);

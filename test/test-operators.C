@@ -124,7 +124,7 @@ int main()
 #undef TESTEQ
     }
 
-    section("operators with Raw");
+    section("operators with View");
     {
         {
             ra::Unique<complex, 2> const a({2, 3}, {1, 2, 3, 4, 5, 6});
@@ -231,14 +231,14 @@ int main()
         tr.test_eq(ra::Small<real, 3> {0., 2., 4.}, a);
         tr.test_eq(ra::Small<int, 3> {1, 3, 5}, b);
     }
-    section("operator= for Raw, WithStorage. Also see test-ownership.C");
+    section("operator= for View, WithStorage. Also see test-ownership.C");
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };
         real check9[6] = { 9, 9, 9, 9, 9, 9 };
         ra::Unique<int, 2> a({3, 2}, 7);
         ra::Unique<int, 2> b({3, 2}, 5);
-        ra::Raw<int, 2> c = a();
-        ra::Raw<int, 2> d = b();
+        ra::View<int, 2> c = a();
+        ra::View<int, 2> d = b();
         c = d;
         tr.test(std::equal(a.begin(), a.end(), check5));
         ra::Unique<int, 2> t({2, 3}, 9);

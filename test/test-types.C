@@ -69,15 +69,15 @@ int main()
     {
 // rank 0 containers/slices are not is_slice (and therefore not is_ra) so that their conversions to scalar are used instead.
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallSlice<int, mp::nil, mp::nil>>, "bad is_ra SmallSlice");
+        static_assert(ra::is_ra<ra::SmallView<int, mp::nil, mp::nil>>, "bad is_ra SmallView");
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::Raw<int, 0>>, "bad is_ra Raw");
+        static_assert(ra::is_ra<ra::View<int, 0>>, "bad is_ra View");
 
         static_assert(ra::is_ra<ra::Small<int, 1>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallSlice<int, mp::int_list<1>, mp::int_list<1>>>, "bad is_ra SmallSlice");
+        static_assert(ra::is_ra<ra::SmallView<int, mp::int_list<1>, mp::int_list<1>>>, "bad is_ra SmallView");
         static_assert(ra::is_ra<ra::Unique<int, 1>>, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::Raw<int, 1>>, "bad is_ra Raw");
-        static_assert(ra::is_ra<ra::Raw<int>>, "bad is_ra Raw");
+        static_assert(ra::is_ra<ra::View<int, 1>>, "bad is_ra View");
+        static_assert(ra::is_ra<ra::View<int>>, "bad is_ra View");
 
         using Vector = decltype(ra::vector({1, 2, 3}));
         static_assert(ra::is_ra<decltype(ra::scalar(3))>, "bad is_ra Scalar");

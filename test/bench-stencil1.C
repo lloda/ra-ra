@@ -31,8 +31,8 @@ auto I = ra::iota(nx-2, 1);
 
 constexpr ra::Small<real, 3> mask = { 1, -2, 1 };
 
-using TA = ra::Raw<real, 1>;
-using TStencil = ra::Raw<real, 2>;
+using TA = ra::View<real, 1>;
+using TStencil = ra::View<real, 2>;
 
 /* #define THEOP template <class A_, class Anext_, class Astencil_> __attribute__((noinline)) \
    auto operator()(A_ & A, Anext_ & Anext, Astencil_ & Astencil) */

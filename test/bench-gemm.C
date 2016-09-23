@@ -25,7 +25,7 @@
 #include "ra/io.H"
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;
-using ra::Small; using ra::Raw; using ra::Unique; using ra::ra_traits; using ra::dim_t;
+using ra::Small; using ra::View; using ra::Unique; using ra::ra_traits; using ra::dim_t;
 
 auto now() { return std::chrono::high_resolution_clock::now(); }
 using time_unit = std::chrono::nanoseconds;
@@ -38,7 +38,7 @@ using real = double;
 
 template <class A, class B, class C>
 inline void
-gemm_block_3(ra::Raw<A, 2> const & a, ra::Raw<B, 2> const & b, ra::Raw<C, 2> c)
+gemm_block_3(ra::View<A, 2> const & a, ra::View<B, 2> const & b, ra::View<C, 2> c)
 {
     dim_t const m = a.size(0);
     dim_t const p = a.size(1);

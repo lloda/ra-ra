@@ -134,20 +134,20 @@ int main()
         {
             real aa[10];
             aa[0] = 99;
-            ra::Raw<real, 1> a { {{10, 1}}, aa };
-            cout << "a1.p[0]: " << a.p[0] << endl;
+            ra::View<real, 1> a { {{10, 1}}, aa };
+            tr.test_eq(99., a.p[0]);
         }
         {
             real aa[6] = { 1, 2, 3, 4, 5, 6 };
             aa[0] = 99;
-// @BUG strange that {{3,2},{2,1}} doesn't work...
-            ra::Raw<real, 2> a { { ra::Dim {3, 2}, ra::Dim {2, 1} }, aa };
-            cout << "a2.p[0]: " << a.p[0] << endl;
+            ra::View<real, 2> a { {{3, 2}, {2, 1}}, aa };
+            tr.test_eq(4., a(1, 1));
+            tr.test_eq(99., a.p[0]);
         }
         {
             real aa[20];
             aa[19] = 77;
-            ra::Raw<real> a = { {{10, 2}, {2, 1}}, aa };
+            ra::View<real> a = { {{10, 2}, {2, 1}}, aa };
             tr.test_eq(10, a.dim[0].size);
             tr.test_eq(2, a.dim[1].size);
             cout << "a.p(3, 4): " << a.p[19] << endl;
@@ -205,15 +205,15 @@ int main()
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
-    tr.section("(170) rank 0 -> scalar with Raw");
+    tr.section("(170) rank 0 -> scalar with View");
     {
         auto rank0test0 = [](real & a) { a *= 2; };
         auto rank0test1 = [](real const & a) { return a*2; };
         real x { 99 };
-        ra::Raw<real, 0> a { {}, &x };
+        ra::View<real, 0> a { {}, &x };
         tr.test_eq(1, a.size());
 
-// ra::Raw<T, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0. That was specific of gcc, so better not to depend on it anyway...
+// ra::View<T, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0. That was specific of gcc, so better not to depend on it anyway...
         cout << "a()" << a() << endl;
         cout << "sizeof(a())" << sizeof(a()) << endl;
         cout << "sizeof(real *)" << sizeof(real *) << endl;
@@ -235,34 +235,34 @@ int main()
         }
         {
             real pool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::Raw<real> r { {{3, 2}, {2, 1}}, pool };
-            cout << "r rank: " << ra::ra_traits<ra::Raw<real>>::rank(r) << endl;
-            tr.test_eq(6, ra::ra_traits<ra::Raw<real>>::size(r));
+            ra::View<real> r { {{3, 2}, {2, 1}}, pool };
+            cout << "r rank: " << ra::ra_traits<ra::View<real>>::rank(r) << endl;
+            tr.test_eq(6, ra::ra_traits<ra::View<real>>::size(r));
         }
         {
             real pool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::Raw<real, 2> r { { ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
-            cout << "r rank: " << ra::ra_traits<ra::Raw<real, 2>>::rank(r) << endl;
-            tr.test_eq(6, ra::ra_traits<ra::Raw<real, 2>>::size(r));
+            ra::View<real, 2> r { { ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
+            cout << "r rank: " << ra::ra_traits<ra::View<real, 2>>::rank(r) << endl;
+            tr.test_eq(6, ra::ra_traits<ra::View<real, 2>>::size(r));
         }
     }
-    tr.section("iterator for Raw");
+    tr.section("iterator for View");
     {
         real chk[6] = { 0, 0, 0, 0, 0, 0 };
         real pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::Raw<real> r { {{3, 2}, {2, 1}}, pool };
-        ra::ra_iterator<ra::Raw<real>> it(r.dim, r.p);
+        ra::View<real> r { {{3, 2}, {2, 1}}, pool };
+        ra::ra_iterator<ra::View<real>> it(r.dim, r.p);
         cout << "as iterator: " << ra::print_iterator(it) << endl;
-        cout << "Raw<real> it.c.p: " << it.c.p << endl;
+        cout << "View<real> it.c.p: " << it.c.p << endl;
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
     {
         real chk[6] = { 0, 0, 0, 0, 0, 0 };
         real pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::Raw<real, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::ra_iterator<ra::Raw<real, 1>> it(r.dim, r.p);
-        cout << "Raw<real, 1> it.c.p: " << it.c.p << endl;
+        ra::View<real, 1> r { { ra::Dim {6, 1}}, pool };
+        ra::ra_iterator<ra::View<real, 1>> it(r.dim, r.p);
+        cout << "View<real, 1> it.c.p: " << it.c.p << endl;
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
@@ -270,8 +270,8 @@ int main()
     {
         real a[6] = { 0, 0, 0, 0, 0, 0 };
         real b[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::Raw<real> ra { {{3, 2}, {2, 1}}, a };
-        ra::Raw<real> rb { {{3, 2}, {2, 1}}, b };
+        ra::View<real> ra { {{3, 2}, {2, 1}}, a };
+        ra::View<real> rb { {{3, 2}, {2, 1}}, b };
         auto aiter = ra.iter();
         auto biter = rb.iter();
         aiter = biter;
@@ -281,10 +281,10 @@ int main()
 // STL-type iterators.
     {
         real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::Raw<real, 1> r { {ra::Dim {6, 1}}, rpool };
+        ra::View<real, 1> r { {ra::Dim {6, 1}}, rpool };
 
         real spool[6] = { 0, 0, 0, 0, 0, 0 };
-        ra::Raw<real> s { {{3, 1}, {2, 3}}, spool };
+        ra::View<real> s { {{3, 1}, {2, 3}}, spool };
 
         std::copy(r.begin(), r.end(), s.begin());
         std::copy(spool, spool+6, std::ostream_iterator<real>(cout, " "));
@@ -367,7 +367,7 @@ int main()
         real rpool[6] = { 1, 2, 3, 4, 5, 6 };
         real check[6] = { 1, 4, 2, 5, 3, 6 };
 
-        ra::Raw<real> r { {{3, 1}, {2, 3}}, rpool };
+        ra::View<real> r { {{3, 1}, {2, 3}}, rpool };
         std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, r.begin()));
 
@@ -385,8 +385,8 @@ int main()
         std::copy(z.begin(), z.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, z.begin()));
     }
-// In this case, the Raw + shape provides the driver.
-    tr.section("construct Raw from shape + driverless xpr");
+// In this case, the View + shape provides the driver.
+    tr.section("construct View from shape + driverless xpr");
     {
         static_assert(ra::has_tensorindex<decltype(ra::_0)>, "bad has_tensorindex test 0");
         static_assert(ra::has_tensorindex<TI<0>>, "bad has_tensorindex test 1");
@@ -428,7 +428,7 @@ int main()
         //     cout << b << endl;
         // }
     }
-    tr.section("construct Raw from shape + xpr");
+    tr.section("construct View from shape + xpr");
     {
         real checka[6] = { 9, 9, 9, 9, 9, 9 };
         ra::Unique<real, 2> a({3, 2}, ra::scalar(9));
@@ -589,24 +589,24 @@ int main()
     }
     tr.section("subscripts");
     {
-        tr.section("Raw fixed rank == 0");
+        tr.section("View fixed rank == 0");
         {
             real x = 99;
-            ra::Raw<real, 0> y(ra::Small<int, 0>{}, &x);
+            ra::View<real, 0> y(ra::Small<int, 0>{}, &x);
             tr.test_eq(99, y());
             tr.test_eq(99, y);
             real u = 77.;
-            ra::Raw<real, 0> v(ra::Small<int, 0>{}, &u);
+            ra::View<real, 0> v(ra::Small<int, 0>{}, &u);
             y = v;
             tr.test_eq(77, u);
             tr.test_eq(77, v);
             tr.test_eq(77, x);
             tr.test_eq(77, y);
         }
-        tr.section("Raw fixed rank > 0");
+        tr.section("View fixed rank > 0");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::Raw<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            ra::View<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             cout << "org" << endl;
             std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
             {
@@ -658,7 +658,7 @@ int main()
             }
         }
         // @TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.
-        tr.section("Raw fixed rank, unbeatable subscripts");
+        tr.section("View fixed rank, unbeatable subscripts");
         {
             ra::Unique<real, 1> a = {1, 2, 3, 4};
             ra::Unique<int, 1> i = {3, 1, 2};
@@ -676,10 +676,10 @@ int main()
             tr.test_eq(a[i[1]], 8);
             tr.test_eq(a[i[2]], 9);
         }
-        tr.section("Raw var rank");
+        tr.section("View var rank");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::Raw<real> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            ra::View<real> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             tr.test_eq(2, r.rank());
             cout << "org" << endl;
             std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
@@ -713,7 +713,7 @@ int main()
             tr.test(std::equal(r2.begin(), r2.end(), rcheck2));
             tr.test(std::equal(r2a.begin(), r2a.end(), rcheck2));
         }
-// @TODO Make sure that this is real & = 99, etc. and not Raw<real, 0> = 99, etc.
+// @TODO Make sure that this is real & = 99, etc. and not View<real, 0> = 99, etc.
         tr.section("assign to rank-0 result of subscript");
         {
             real check[6] = {99, 88, 77, 66, 55, 44};
@@ -736,10 +736,10 @@ int main()
         std::iota(check, check+24, 0);
         tr.test(std::equal(check, check+24, a.begin()));
     }
-    tr.section("Var rank Raw from fixed rank Raw");
+    tr.section("Var rank View from fixed rank View");
     {
         ra::Unique<real, 3> a({3, 2, 4}, ra::unspecified);
-        ra::Raw<real> b(a);
+        ra::View<real> b(a);
         tr.test(a.data()==b.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
         tr.test_eq(a.rank(), b.rank());
         tr.test_eq(a.size(0), b.size(0));
@@ -767,31 +767,31 @@ int main()
             real check[1] = { 77 };
             CheckArrayIO(tr, s, check);
         }
-        tr.section("4. Raw<> can't allocate, so have no istream >>. Check output only.");
+        tr.section("4. View<> can't allocate, so have no istream >>. Check output only.");
         {
             real rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-            ra::Raw<real, 3> r { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
+            ra::View<real, 3> r { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
             real check[11] = { 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("5");
         {
             real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::Raw<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            ra::View<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             real check[8] = { 3, 2, 1, 4, 2, 5, 3, 6 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("6");
         {
             real rpool[3] = { 1, 2, 3 };
-            ra::Raw<real, 1> r { {ra::Dim {3, 1}}, rpool };
+            ra::View<real, 1> r { {ra::Dim {3, 1}}, rpool };
             real check[4] = { 3, 1, 2, 3 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("7");
         {
             real rpool[1] = { 88 };
-            ra::Raw<real, 0> r { {}, rpool };
+            ra::View<real, 0> r { {}, rpool };
             real check[1] = { 88 };
             CheckArrayOutput(tr, r, check);
             tr.test_eq(1, r.size());
@@ -802,11 +802,11 @@ int main()
         tr.section("8");
         {
             real rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-            ra::Raw<real> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
+            ra::View<real> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
             real check[12] = { 3, 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, a, check);
 // default strides.
-            ra::Raw<real> b { {2, 2, 2}, rpool };
+            ra::View<real> b { {2, 2, 2}, rpool };
             CheckArrayOutput(tr, b, check);
         }
         tr.section("9");

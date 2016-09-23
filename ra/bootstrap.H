@@ -89,7 +89,7 @@ inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 }
 
 // Order of decl issues.
-template <class T, rank_t RANK=RANK_ANY> struct Raw;
+template <class T, rank_t RANK=RANK_ANY> struct View;
 template <class T, class sizes, class strides> struct SmallArray;
 template <class V, class Enable=void> struct ra_traits_def;
 

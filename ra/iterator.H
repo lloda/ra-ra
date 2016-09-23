@@ -62,7 +62,7 @@ constexpr rank_t dependent_frame_rank(rank_t rank, rank_t crank)
         : -crank;
 }
 
-template <class V, rank_t cellr_, class Child> // Raw or Small.
+template <class V, rank_t cellr_, class Child> // View or Small.
 struct cell_iterator
 {
     constexpr static rank_t cellr_spec = cellr_;
@@ -79,7 +79,7 @@ struct cell_iterator
     using shape_type = mp::If_<rank_s()==DIM_ANY, typename ra_traits<V>::shape_type, Small<dim_t, rank_s()>>;
     using dims_p = decltype(std::declval<V const>().dim); // @TODO can this be & ?
     using atom_type = typename ra_traits<V>::value_type;
-    using cell_type = Raw<atom_type, cellr>;
+    using cell_type = View<atom_type, cellr>;
     using value_type = mp::If_<cellr==0, atom_type, cell_type>;
 
     dims_p dim; // @TODO Either have an equivalent object for Small, or take V & and ask through that.
@@ -90,7 +90,7 @@ struct cell_iterator
     cell_iterator() { c.p = nullptr; } // end marker only.
     cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
     cell_iterator(cell_iterator && ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-// needed because Raw = Raw copies contents, not the Raw itself ([ra11] in test-ra-0.C).
+// needed because View = View copies contents, not the View itself ([ra11] in test-ra-0.C).
     cell_iterator & operator=(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
     cell_iterator & operator=(cell_iterator && ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
 
@@ -121,7 +121,7 @@ struct cell_iterator
     {
         return fullsize_s()==DIM_ANY ? DIM_ANY : fullsize_s() / ra_traits<cell_type>::size_s();
     }
-    // @TODO Refactor w/ ra_traits<Raw>::shape.
+    // @TODO Refactor w/ ra_traits<View>::shape.
     shape_type shape() const
     {
         rank_t const iend = rank();
@@ -152,7 +152,7 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
     using P = cell_iterator<V, cellr, ra_iterator<V, cellr>>;
 
     auto flat() const { return cellp<typename P::cell_type> { P::c }; }
-// Return type to allow either Raw & or Raw const & verb. Can't set self b/c original p isn't kept. @TODO Think this over.
+// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. @TODO Think this over.
     template <class I>
     typename P::value_type at(I const & i_)
     {

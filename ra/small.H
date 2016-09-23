@@ -116,9 +116,9 @@ struct Indexer1
     }
 };
 
-// Static dimensions, stack storage. See Raw, Unique, Shared.
+// Static dimensions, stack storage. See View, Unique, Shared.
 template <class T, class sizes, class strides> struct SmallArray; // Used as type of Small::iterator::shape().
-template <class T, class sizes, class strides> struct SmallSlice; // Used as types of Small::iterator::at().
+template <class T, class sizes, class strides> struct SmallView; // Used as types of Small::iterator::at().
 
 template <class sizes_, class strides_, class ... I>
 struct FilterDims
@@ -264,14 +264,14 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
 
-// Specialize for rank() integer-args -> scalar, same in ra::Raw in large.H.
+// Specialize for rank() integer-args -> scalar, same in ra::View in large.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I, std::enable_if_t<((0 + ... + std::is_integral<I>::value)<rank() \
                                              && (is_beatable<I>::static_p && ...)), int> = 0> \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
         using FD = FilterDims<sizes, strides, I ...>;                   \
-        return SmallSlice<T CONST, typename FD::sizes, typename FD::strides> \
+        return SmallView<T CONST, typename FD::sizes, typename FD::strides> \
             (data()+select_loop<sizes, strides>(i ...));                \
     }                                                                   \
     template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==rank(), int> = 0> \
@@ -288,7 +288,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     template <class I>                                                  \
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \
-        return SmallSlice<T CONST, mp::Drop_<sizes, I::size()>, mp::Drop_<strides, I::size()>> \
+        return SmallView<T CONST, mp::Drop_<sizes, I::size()>, mp::Drop_<strides, I::size()>> \
             (data()+Indexer0<sizes, strides>::index_p(i));              \
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST                      \
@@ -300,7 +300,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     SUBSCRIPTS(/*const*/)
 #undef SUBSCRIPTS
 
-// See same thing for Raw.
+// See same thing for View.
 #define DEF_EQOPS(OP)                                                   \
         template <class X> Child & operator OP(X && x)                  \
     {                                                                   \
@@ -326,7 +326,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     {                                                                   \
         static_assert(rank()>=1, "bad rank for as<>");                  \
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
-        return SmallSlice<T CONST, mp::Cons_<mp::int_t<ss>, mp::Drop1_<sizes> >, strides>(this->data()+oo*this->stride(0)); \
+        return SmallView<T CONST, mp::Cons_<mp::int_t<ss>, mp::Drop1_<sizes> >, strides>(this->data()+oo*this->stride(0)); \
     }
     DEF_AS(const)
     DEF_AS(/* const */)
@@ -371,8 +371,8 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
             p += (k<rank()) * stride(k)*d;
         }
 // @TODO use cellp for cellr>0, when that's supported (or replace all this by ra::ra_iterator). But for cellr==0 we must use p, because in auto contexts (e.g. operators.H) *(flat()) won't get converted to *p, and that can result in infinite looping in ply_ravel().
-        // auto flat() { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
-        // auto flat() const { return cellp<SmallSlice<T, mp::nil, mp::nil>> { p }; }
+        // auto flat() { return cellp<SmallView<T, mp::nil, mp::nil>> { p }; }
+        // auto flat() const { return cellp<SmallView<T, mp::nil, mp::nil>> { p }; }
         constexpr auto flat() { return p; }
         constexpr auto flat() const { return p; }
     };
@@ -432,14 +432,14 @@ template <template <class, class, class> class Child_, class T, class sizes_, cl
 constexpr std::array<dim_t, mp::len<strides_> > SmallBase<Child_, T, sizes_, strides_>::sstrides;
 
 template <class T, class sizes, class strides>
-struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
+struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 {
-    using Base = SmallBase<ra::SmallSlice, T, sizes, strides>; // @TODO qualifier needed for clang 3.8 bug
+    using Base = SmallBase<ra::SmallView, T, sizes, strides>; // @TODO qualifier needed for clang 3.8 bug
 
     T * p;
-    constexpr SmallSlice(T * p_): p(p_) {}
-    constexpr SmallSlice(SmallSlice && s): p(std::move(s.p)) {}
-    constexpr SmallSlice(SmallSlice const & s): p(s.p) {}
+    constexpr SmallView(T * p_): p(p_) {}
+    constexpr SmallView(SmallView && s): p(std::move(s.p)) {}
+    constexpr SmallView(SmallView const & s): p(s.p) {}
 
     constexpr operator T & ()
     {
@@ -453,9 +453,9 @@ struct SmallSlice: public SmallBase<SmallSlice, T, sizes, strides>
     };
 
     using Base::operator=;
-// templated operator= cannot take these over. As in ra::Raw.
-    SmallSlice & operator=(SmallSlice && x) { return Base::operator=(x); }
-    SmallSlice & operator=(SmallSlice const & x) { return Base::operator=(x); }
+// templated operator= cannot take these over. As in ra::View.
+    SmallView & operator=(SmallView && x) { return Base::operator=(x); }
+    SmallView & operator=(SmallView const & x) { return Base::operator=(x); }
 };
 
 #define DEF_SMALLARRAY                                                  \
@@ -494,8 +494,8 @@ struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
     using Base::rank;
     using Base::size;
 
-    constexpr operator SmallSlice<T, sizes, strides> () { return SmallSlice<T, sizes, strides>(p); }
-    constexpr operator SmallSlice<T const, sizes, strides> const () { return SmallSlice<T const, sizes, strides>(p); }
+    constexpr operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
+    constexpr operator SmallView<T const, sizes, strides> const () { return SmallView<T const, sizes, strides>(p); }
 
 // @BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
     constexpr operator T & ()
@@ -524,8 +524,8 @@ struct SmallArray<T, mp::int_list<0>, strides>: public SmallBase<SmallArray, T, 
 
     T & operator[](dim_t const i) { assert(0 && "internal error"); abort(); }
     T const & operator[](dim_t const i) const { assert(0 && "internal error"); abort(); }
-    operator SmallSlice<T, sizes, strides> () { return SmallSlice<T, sizes, strides>(p); }
-    operator SmallSlice<T const, sizes, strides> const () { return SmallSlice<T const, sizes, strides>(p); }
+    operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
+    operator SmallView<T const, sizes, strides> const () { return SmallView<T const, sizes, strides>(p); }
 };
 
 #undef DEF_SMALLARRAY
@@ -562,7 +562,7 @@ template <class T, class sizes, class strides>
 struct ra_traits_def<SmallArray<T, sizes, strides>>: public ra_traits_small<SmallArray, T, sizes, strides> {};
 
 template <class T, class sizes, class strides>
-struct ra_traits_def<SmallSlice<T, sizes, strides>>: public ra_traits_small<SmallSlice, T, sizes, strides> {};
+struct ra_traits_def<SmallView<T, sizes, strides>>: public ra_traits_small<SmallView, T, sizes, strides> {};
 
 template <class A, class i>
 struct axis_indices
@@ -609,7 +609,7 @@ struct axes_list_indices
     inline auto transpose(SmallBase<Child, T, sizes, strides> CONST & a) \
     {                                                                   \
         using ti = axes_list_indices<mp::int_list<Iarg ...>, sizes, strides>; \
-        return SmallSlice<T CONST, typename ti::sizes, typename ti::strides>(a.data()); \
+        return SmallView<T CONST, typename ti::sizes, typename ti::strides>(a.data()); \
     };                                                                  \
                                                                         \
     template <template <class, class, class> class Child, class T, class sizes, class strides> \

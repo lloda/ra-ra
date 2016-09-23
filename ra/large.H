@@ -66,11 +66,11 @@ dim_t proddim(D d, D dend)
 // [rank] [size...] p -> [data...] (var rank)
 // @TODO size is immutable so that it can be kept with rank.
 
-// Would do this with a base class, but I like Raw being POD.
+// Would do this with a base class, but I like View being POD.
 // @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
 #define DEF_ITERATORS(RANK)                                          \
-    template <rank_t c=0> using iterator = ra::ra_iterator<Raw<T, RANK>, c>; \
-    template <rank_t c=0> using const_iterator = ra::ra_iterator<Raw<T const, RANK>, c>; \
+    template <rank_t c=0> using iterator = ra::ra_iterator<View<T, RANK>, c>; \
+    template <rank_t c=0> using const_iterator = ra::ra_iterator<View<T const, RANK>, c>; \
     template <rank_t c=0> auto iter() { return iterator<c>(dim, p); }   \
     template <rank_t c=0> auto iter() const { return const_iterator<c>(dim, p); } \
     auto begin() { return stl_iterator<iterator<0>>(dim, p); }          \
@@ -80,7 +80,7 @@ dim_t proddim(D d, D dend)
 
 // See same thing for SmallBase.
 #define DEF_EQOPS(OP)                                                   \
-    template <class X> Raw & operator OP (X && x)                       \
+    template <class X> View & operator OP (X && x)                       \
     {                                                                   \
         ply_either(expr([](T & y, T const & x) { y OP x; }, this->iter(), rstart(x))); \
         return *this;                                                   \
@@ -88,32 +88,32 @@ dim_t proddim(D d, D dend)
 #define DEF_ASSIGNMENT_OPS                                              \
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)                              \
     /* These three are unsafe */                                        \
-    Raw(): p(nullptr) {}                                                \
-    Raw(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                 \
-    Raw(std::initializer_list<dim_t> const s, T * p_): p(p_)            \
+    View(): p(nullptr) {}                                                \
+    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                 \
+    View(std::initializer_list<dim_t> const s, T * p_): p(p_)            \
     {                                                                   \
-        ra::resize(Raw::dim, s.size());                                 \
-        filldim(s.begin(), s.end(), Raw::dim.begin(), Raw::dim.end());  \
+        ra::resize(View::dim, s.size());                                 \
+        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end());  \
     }                                                                   \
-    template <class SS> Raw(SS const & s, T * p_): p(p_)                \
+    template <class SS> View(SS const & s, T * p_): p(p_)                \
     {                                                                   \
-        ra::resize(Raw::dim, s.size());                                 \
-        filldim(s.begin(), s.end(), Raw::dim.begin(), Raw::dim.end());  \
+        ra::resize(View::dim, s.size());                                 \
+        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end());  \
     }                                                                   \
-    Raw(Raw && x): dim(std::move(x.dim)), p(x.p) {}                     \
-    Raw(Raw const & x): dim(x.dim), p(x.p) {}                           \
-    Raw & operator=(Raw && x)                                           \
+    View(View && x): dim(std::move(x.dim)), p(x.p) {}                     \
+    View(View const & x): dim(x.dim), p(x.p) {}                           \
+    View & operator=(View && x)                                           \
     {                                                                   \
         ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), rstart(x))); \
         return *this;                                                   \
     }                                                                   \
-    Raw & operator=(Raw const & x)                                      \
+    View & operator=(View const & x)                                      \
     {                                                                   \
         ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), rstart(x))); \
         return *this;                                                   \
     }                                                                   \
     /* Ignore rank, row-major fill. @TODO Use xpr traversal */          \
-    Raw & operator=(std::initializer_list<T> const x)                   \
+    View & operator=(std::initializer_list<T> const x)                   \
     {                                                                   \
         assert(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
         std::copy(x.begin(), x.end(), this->begin());                   \
@@ -156,7 +156,7 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src)
 
 // @TODO Parameterize on Child having .data() so that there's only one pointer.
 template <class T, rank_t RANK>
-struct Raw
+struct View
 {
     using Dimv = Small<Dim, RANK>;
 
@@ -184,7 +184,7 @@ struct Raw
         constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
         constexpr rank_t subrank = rank_diff(RANK, reduced);            \
         static_assert(subrank>=0, "bad subrank");                       \
-        Raw<T CONST, subrank> sub;                                      \
+        View<T CONST, subrank> sub;                                      \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
         /* fill the rest of dim, skipping over beatable subscripts */   \
         for (int i=mp::Apply_<mp::Sum, mp::Map_<beatable_skip, mp::tuple<I ...> > >::value; i<subrank; ++i) { \
@@ -209,7 +209,7 @@ struct Raw
     template <class  I>                                                 \
     auto at(I const & i) CONST                                          \
     {                                                                   \
-        using Sub = Raw<T CONST, rank_diff(RANK, I::size_s())>; /* gcc accepts i.size() */ \
+        using Sub = View<T CONST, rank_diff(RANK, I::size_s())>; /* gcc accepts i.size() */ \
         return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
@@ -230,14 +230,14 @@ struct Raw
 // @TODO To be placed as specialization of operator() above.
 template <class T, rank_t RANK>
 template <class ... I>
-auto Raw<T, RANK>::wipparens(I && ... i) /* const */
+auto View<T, RANK>::wipparens(I && ... i) /* const */
 {
 }
 
 template <class T, rank_t RANK>
-struct ra_traits_def<Raw<T, RANK>>
+struct ra_traits_def<View<T, RANK>>
 {
-    using V = Raw<T, RANK>;
+    using V = View<T, RANK>;
     using value_type = T;
 
     using shape_type = Small<dim_t, RANK>;
@@ -276,7 +276,7 @@ template <class T> struct storage_traits<std::vector<T>>
 };
 
 template <class T, int RANK> inline
-bool is_c_order(Raw<T, RANK> const & a)
+bool is_c_order(View<T, RANK> const & a)
 {
     dim_t s = 1;
     for (int i=a.rank()-1; i>=0; --i) {
@@ -291,82 +291,82 @@ bool is_c_order(Raw<T, RANK> const & a)
     return true;
 }
 
-// @TODO be convertible to Raw only, so that Raw::p is not duplicated
+// @TODO be convertible to View only, so that View::p is not duplicated
 template <class Ptr, rank_t RANK>
-struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(std::declval<Ptr>()))>, RANK>
+struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Ptr>::data(std::declval<Ptr>()))>, RANK>
 {
     Ptr store;
     using T = std::decay_t<decltype(*storage_traits<Ptr>::data(store))>;
-    using Raw = ra::Raw<T, RANK>;
+    using View = ra::View<T, RANK>;
 
-// @TODO Explicit definitions are needed only to have Raw::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
+// @TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
     WithStorage(WithStorage && w): store(std::move(w.store))
     {
-        Raw::dim = std::move(w.dim);
-        Raw::p = storage_traits<Ptr>::data(store);
+        View::dim = std::move(w.dim);
+        View::p = storage_traits<Ptr>::data(store);
     }
     WithStorage(WithStorage const & w): store(w.store)
     {
-        Raw::dim = w.dim;
-        Raw::p = storage_traits<Ptr>::data(store);
+        View::dim = w.dim;
+        View::p = storage_traits<Ptr>::data(store);
     }
     WithStorage(WithStorage & w): store(w.store)
     {
-        Raw::dim = w.dim;
-        Raw::p = storage_traits<Ptr>::data(store);
+        View::dim = w.dim;
+        View::p = storage_traits<Ptr>::data(store);
     }
-// Override Raw::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use Raw::operator= and frame match. @TODO Document this in the tests.
+// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. @TODO Document this in the tests.
     WithStorage & operator=(WithStorage && w)
     {
         store = std::move(w.store);
-        Raw::dim = std::move(w.dim);
-        Raw::p = storage_traits<Ptr>::data(store);
+        View::dim = std::move(w.dim);
+        View::p = storage_traits<Ptr>::data(store);
         return *this;
     }
     WithStorage & operator=(WithStorage const & w)
     {
         store = w.store;
-        Raw::dim = w.dim;
-        Raw::p = storage_traits<Ptr>::data(store);
+        View::dim = w.dim;
+        View::p = storage_traits<Ptr>::data(store);
         return *this;
     }
     WithStorage & operator=(WithStorage & w)
     {
         store = w.store;
-        Raw::dim = w.dim;
-        Raw::p = storage_traits<Ptr>::data(store);
+        View::dim = w.dim;
+        View::p = storage_traits<Ptr>::data(store);
         return *this;
     }
 
 // Provided b/c want {} to call initializer_list constructor below. @TODO Why do I need to init p; warning on test-io.C.
     WithStorage()
     {
-        for (Dim & dimi: Raw::dim) { dimi = {0, 1}; } // 1 so we can push_back()
+        for (Dim & dimi: View::dim) { dimi = {0, 1}; } // 1 so we can push_back()
     }
 
     template <class SS> void init(SS const & s)
     {
         constexpr dim_t sr = ra_traits<decltype(s)>::size_s();
         static_assert(sr==RANK || sr==DIM_ANY || RANK==RANK_ANY, "rank mismatch for init shape");
-        ra::resize(Raw::dim, s.size());
-        dim_t t = filldim(s.begin(), s.end(), Raw::dim.begin(), Raw::dim.end());
+        ra::resize(View::dim, s.size());
+        dim_t t = filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end());
         store = storage_traits<Ptr>::create(t);
-        Raw::p = storage_traits<Ptr>::data(store);
+        View::p = storage_traits<Ptr>::data(store);
     }
 
     template <class SS> WithStorage(SS const & s, unspecified_t) { init(s); }
     WithStorage(std::initializer_list<dim_t> const s, unspecified_t) { init(s); }
     template <class SS, class XX> WithStorage(SS const & s, XX && x): WithStorage(s, unspecified)
     {
-        static_cast<Raw &>(*this) = x;
+        static_cast<View &>(*this) = x;
     }
     template <class XX> WithStorage(std::initializer_list<dim_t> const s, XX && x): WithStorage(s, unspecified)
     {
-        static_cast<Raw &>(*this) = x;
+        static_cast<View &>(*this) = x;
     }
     template <class XX> WithStorage(XX && x): WithStorage(start(x).shape(), unspecified)
     {
-        static_cast<Raw &>(*this) = x;
+        static_cast<View &>(*this) = x;
     }
  // @TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
@@ -388,51 +388,51 @@ struct WithStorage: public Raw<std::decay_t<decltype(*storage_traits<Ptr>::data(
     {
         std::copy(pbegin, pend, this->begin());
     }
-    using Raw::operator=;
+    using View::operator=;
 
 // only for some kinds of store.
     void resize(dim_t const s)
     {
         assert(this->rank()>0);
-        store.resize(proddim(Raw::dim.begin()+1, Raw::dim.end())*s /* std::unspecified_t someday... */);
-        Raw::dim[0].size = s;
-        Raw::p = store.data();
+        store.resize(proddim(View::dim.begin()+1, View::dim.end())*s /* std::unspecified_t someday... */);
+        View::dim[0].size = s;
+        View::p = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
         assert(this->rank()>0);
-        store.resize(proddim(Raw::dim.begin()+1, Raw::dim.end())*s, t);
-        Raw::dim[0].size = s;
-        Raw::p = store.data();
+        store.resize(proddim(View::dim.begin()+1, View::dim.end())*s, t);
+        View::dim[0].size = s;
+        View::p = store.data();
     }
     void push_back(T const & t)
     {
         assert(this->rank()==1);
         store.push_back(t);
-        ++Raw::dim[0].size;
-        Raw::p = store.data();
+        ++View::dim[0].size;
+        View::p = store.data();
     }
 // lets us move. A template + std::forward would not work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
         assert(this->rank()==1);
         store.push_back(std::move(t));
-        ++Raw::dim[0].size;
-        Raw::p = store.data();
+        ++View::dim[0].size;
+        View::p = store.data();
     }
     void pop_back()
     {
-        assert(this->rank()==1 && Raw::dim[0].size>0);
+        assert(this->rank()==1 && View::dim[0].size>0);
         store.pop_back();
-        --Raw::dim[0].size;
+        --View::dim[0].size;
     }
     template <class ... A>
     void emplace_back(A && ... a)
     {
         assert(this->rank()==1);
         store.emplace_back(std::forward<A>(a) ...);
-        ++Raw::dim[0].size;
-        Raw::p = store.data();
+        ++View::dim[0].size;
+        View::p = store.data();
     }
     bool empty() const
     {
@@ -465,7 +465,7 @@ struct NullDeleter { template <class T> void operator()(T * p) {} };
 struct Deleter { template <class T> void operator()(T * p) { delete[] p; } };
 
 template <rank_t RANK, class T>
-Shared<T, RANK> shared_borrowing(Raw<T, RANK> & raw)
+Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
 {
     Shared<T, RANK> a;
     a.dim = raw.dim;
@@ -475,7 +475,7 @@ Shared<T, RANK> shared_borrowing(Raw<T, RANK> & raw)
 }
 
 template <class T>
-struct Raw<T, RANK_ANY>
+struct View<T, RANK_ANY>
 {
     using Dimv = std::vector<Dim>; // maybe use Unique<Dim, 1> here.
 
@@ -492,7 +492,7 @@ struct Raw<T, RANK_ANY>
     DEF_ITERATORS(RANK_ANY)
     DEF_ASSIGNMENT_OPS
 
-    template <rank_t SRANK> Raw(Raw<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+    template <rank_t SRANK> View(View<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 
 // Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case.
 #define SUBSCRIPTS(CONST)                                               \
@@ -501,7 +501,7 @@ struct Raw<T, RANK_ANY>
     {                                                                   \
         constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
         assert(this->rank()>=reduced);                                  \
-        Raw<T CONST, RANK_ANY> sub;                                     \
+        View<T CONST, RANK_ANY> sub;                                     \
         sub.dim.resize(this->rank()-reduced);                           \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
         for (int i=sizeof...(I)-reduced; i<sub.rank(); ++i) {           \
@@ -518,7 +518,7 @@ struct Raw<T, RANK_ANY>
     template <class I>                                                  \
     auto at(I const & i) CONST                                          \
     {                                                                   \
-        return Raw<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), \
+        return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
     T CONST & operator[](dim_t const i) CONST                           \
@@ -540,9 +540,9 @@ struct Raw<T, RANK_ANY>
 #undef DEF_EQOPS
 
 template <class T>
-struct ra_traits_def<Raw<T, RANK_ANY>>
+struct ra_traits_def<View<T, RANK_ANY>>
 {
-    using V = Raw<T, RANK_ANY>;
+    using V = View<T, RANK_ANY>;
     using value_type = T;
     using shape_type = std::vector<dim_t>;
     static shape_type shape(V const & v)
@@ -562,14 +562,14 @@ struct ra_traits_def<Raw<T, RANK_ANY>>
 
 template <class Ptr, rank_t RANK>
 struct ra_traits_def<WithStorage<Ptr, RANK>>
-    : public ra_traits_def<Raw<typename WithStorage<Ptr, RANK>::T, RANK>>
+    : public ra_traits_def<View<typename WithStorage<Ptr, RANK>::T, RANK>>
 {
 };
 
 template <class T, int RANK> inline
-Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
+View<T, RANK> reverse(View<T, RANK> const & raw, int k)
 {
-    Raw<T, RANK> r = raw;
+    View<T, RANK> r = raw;
     auto & dim = r.dim[k];
     if (dim.size!=0) {
         r.p += dim.stride*(dim.size-1);
@@ -581,13 +581,13 @@ Raw<T, RANK> reverse(Raw<T, RANK> const & raw, int k)
 // dynamic transposed axes list.
 #define DEF_TRANSPOSE(AXES_LIST)                                        \
     template <class T, int RANK, class S>                               \
-    Raw<T, RANK_ANY> transpose(Raw<T, RANK> const & raw, AXES_LIST)     \
+    View<T, RANK_ANY> transpose(View<T, RANK> const & raw, AXES_LIST)     \
     {                                                                   \
         assert(raw.rank()==s.size());                                   \
         auto rp = std::max_element(s.begin(), s.end());                 \
         rank_t dstrank = (rp==s.end() ? 0 : *rp+1);                     \
                                                                         \
-        Raw<T, RANK_ANY> r { ra_traits<decltype(r.dim)>::make(dstrank, Dim { DIM_BAD, 0 }), raw.data() }; \
+        View<T, RANK_ANY> r { ra_traits<decltype(r.dim)>::make(dstrank, Dim { DIM_BAD, 0 }), raw.data() }; \
         int k = 0;                                                      \
         for (int sk: s) {                                               \
             Dim & dest = r.dim[sk];                                     \
@@ -606,7 +606,7 @@ DEF_TRANSPOSE(std::initializer_list<S> s)
 
 // static transposed axes list.
 template <int ... Iarg, class T, int RANK>
-auto transpose(Raw<T, RANK> const & raw)
+auto transpose(View<T, RANK> const & raw)
 {
     static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "bad output rank");
     assert((raw.rank()==sizeof...(Iarg)) && "bad output rank");
@@ -615,7 +615,7 @@ auto transpose(Raw<T, RANK> const & raw)
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
     constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
 
-    Raw<T, DSTRANK> r { ra_traits<decltype(r.dim)>::make(DSTRANK, Dim { DIM_BAD, 0 }), raw.data() };
+    View<T, DSTRANK> r { ra_traits<decltype(r.dim)>::make(DSTRANK, Dim { DIM_BAD, 0 }), raw.data() };
     int k = 0;
     std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
     for (int sk: s) {
@@ -631,7 +631,7 @@ auto transpose(Raw<T, RANK> const & raw)
 #undef TRANSPOSE_BODY_CHECK
 
 template <int ... Iarg, class T, int RANK> inline
-auto diag(Raw<T, RANK> const & raw)
+auto diag(View<T, RANK> const & raw)
 {
     return transpose<0, 0>(raw);
 }
@@ -639,10 +639,10 @@ auto diag(Raw<T, RANK> const & raw)
 // lo = lower bounds, hi = upper bounds.
 // The stencil indices are in [0 lo+1+hi] = [-lo +hi].
 template <class LO, class HI, class T, rank_t N>
-Raw<T, rank_sum(N, N)>
-stencil(Raw<T, N> const & a, LO && lo, HI && hi)
+View<T, rank_sum(N, N)>
+stencil(View<T, N> const & a, LO && lo, HI && hi)
 {
-    Raw<T, rank_sum(N, N)> s;
+    View<T, rank_sum(N, N)> s;
     s.p = a.data();
     ra::resize(s.dim, 2*a.rank());
     assert(every(lo>=0));
@@ -659,14 +659,14 @@ stencil(Raw<T, N> const & a, LO && lo, HI && hi)
     return s;
 }
 
-// Make last sizes of Raw<> be compile-time constants.
+// Make last sizes of View<> be compile-time constants.
 template <class super_t, rank_t SUPERR, class T, int RANK>
-auto explode_(Raw<T, RANK> const & a)
+auto explode_(View<T, RANK> const & a)
 {
 // @TODO Reduce to single check, either the first or the second.
     static_assert(RANK>=SUPERR || RANK==RANK_ANY, "rank of a is too low");
     assert(a.rank()>=SUPERR && "rank of a is too low");
-    Raw<super_t, rank_sum(RANK, -SUPERR)> b;
+    View<super_t, rank_sum(RANK, -SUPERR)> b;
     ra::resize(b.dim, a.rank()-SUPERR);
     dim_t r = 1;
     for (int i=0; i<SUPERR; ++i) {
@@ -684,7 +684,7 @@ auto explode_(Raw<T, RANK> const & a)
 }
 
 template <class super_t, class T, int RANK> inline
-auto explode(Raw<T, RANK> const & a)
+auto explode(View<T, RANK> const & a)
 {
     return explode_<super_t, (std::is_same<super_t, std::complex<T> >::value ? 1 : ra_traits<super_t>::rank_s())>(a);
 }
@@ -697,14 +697,14 @@ template <class T, std::enable_if_t<!is_scalar<T>, int> =0> int gsize(int i) { r
 
 // @TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
 template <class sub_t, class super_t, int RANK>
-auto collapse(Raw<super_t, RANK> const & a)
+auto collapse(View<super_t, RANK> const & a)
 {
     using super_v = typename ra_traits<super_t>::value_type;
     using sub_v = typename ra_traits<sub_t>::value_type;
     constexpr int subtype = sizeof(super_v)/sizeof(sub_t);
     constexpr int SUBR = ra_traits<super_t>::rank_s()-ra_traits<sub_t>::rank_s();
 
-    Raw<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
+    View<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
     resize(b.dim, a.rank()+SUBR+int(subtype>1));
 
     constexpr dim_t r = sizeof(super_t)/sizeof(sub_t);

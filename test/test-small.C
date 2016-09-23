@@ -24,7 +24,7 @@
 using std::cout; using std::endl; using std::flush;
 
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-using small_iterator = ra::ra_iterator<ra::SmallBase<ra::SmallSlice, T, sizes_, strides_>, 0>;
+using small_iterator = ra::ra_iterator<ra::SmallBase<ra::SmallView, T, sizes_, strides_>, 0>;
 using real = double;
 using complex = std::complex<double>;
 
@@ -165,7 +165,7 @@ int main()
             // tr.test(std::equal(s2.begin(), s2.end(), check2));
             tr.test_eq(5, s(1, 1));
         }
-        tr.section("using SmallSlice as rvalue");
+        tr.section("using SmallView as rvalue");
         {
             ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
 // use as rvalue.
@@ -178,7 +178,7 @@ int main()
             ra::Small<real, 3, 2> z = s;
             z *= -1;
 
-// check that SmallSlice = SmallSlice copies contents, just as Raw = Raw.
+// check that SmallView = SmallView copies contents, just as View = View.
             s(0) = z(2);
             s(1) = z(1);
             s(2) = z(0);
@@ -289,14 +289,14 @@ int main()
         tr.test_eq(dim1 {3}, ra::start(sizes));
         tr.test_eq(dim1 {2}, ra::start(strides));
     }
-    tr.section("SmallArray converted to SmallSlice");
+    tr.section("SmallArray converted to SmallView");
     {
         ra::Small<real, 2, 3> a { 1, 2, 3, 4, 5, 6 };
-        ra::SmallSlice<real, mp::int_list<2, 3>, mp::int_list<3, 1>> b = a();
+        ra::SmallView<real, mp::int_list<2, 3>, mp::int_list<3, 1>> b = a();
         tr.test_eq(a, b);
 // non-default strides
         ra::SmallArray<real, mp::int_list<2, 3>, mp::int_list<1, 2>> ax { 1, 2, 3, 4, 5, 6 };
-        ra::SmallSlice<real, mp::int_list<2, 3>, mp::int_list<1, 2>> bx = ax();
+        ra::SmallView<real, mp::int_list<2, 3>, mp::int_list<1, 2>> bx = ax();
         tr.test_eq(a, ax);
         tr.test_eq(a, bx);
         bx = 77.;
@@ -451,7 +451,7 @@ int main()
             ra::Small<real, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
             ra::Small<real, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallSlice<real, mp::int_list<3>, mp::int_list<2> > c(b.data()); // @TODO no syntax yet.
+            ra::SmallView<real, mp::int_list<3>, mp::int_list<2> > c(b.data()); // @TODO no syntax yet.
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
@@ -468,7 +468,7 @@ int main()
             ra::Small<real, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
             ra::Small<real, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallSlice<real, mp::int_list<3>, mp::int_list<2> > c(b.data()); // @TODO no syntax yet.
+            ra::SmallView<real, mp::int_list<3>, mp::int_list<2> > c(b.data()); // @TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
@@ -483,7 +483,7 @@ int main()
             ra::Small<real, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
             ra::Small<real, 6, 2> b = { 1, 2, 99, 99, 3, 4, 99, 99, 5, 6, 99, 99 };
-            ra::SmallSlice<real, mp::int_list<3, 2>, mp::int_list<4, 1> > c(b.data()); // @TODO no syntax yet.
+            ra::SmallView<real, mp::int_list<3, 2>, mp::int_list<4, 1> > c(b.data()); // @TODO no syntax yet.
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }

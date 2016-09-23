@@ -1,0 +1,426 @@
+\input texinfo   @c -*-texinfo-*-
+@documentencoding UTF-8
+@c %**start of header
+@setfilename ra-ra.info
+@settitle ra-ra: An array library for C++1z
+@c %**end of header
+
+@set VERSION 0.1
+@set UPDATED 2016 September 23
+
+@copying
+ra-ra (version @value{VERSION}, updated @value{UPDATED})
+
+(c) Daniel Llorens 2016
+
+@smalldisplay
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+@end smalldisplay
+@end copying
+
+@dircategory C++ libraries
+@direntry
+* ra-ra: (ra-ra.info).  Expression template and multidimensional array library for C++.
+@end direntry
+
+@titlepage
+@title ra-ra
+@subtitle version @value{VERSION}, updated @value{UPDATED}
+@author Daniel Llorens
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@ifnottex
+@node Top
+@top ra-ra
+
+@insertcopying
+
+This manual is a work in progress. There are errors and whole sections yet to be written.
+
+@menu
+* Introduction::          Array programming and C++.
+* Usage::                 Everything you can do with ra-ra.
+* Reference::             Systematic list of types and functions.
+* Hazards::               User beware.
+* The future::            Could be even better.
+@end menu
+
+@end ifnottex
+
+@iftex
+@shortcontents
+@end iftex
+
+@node Introduction
+@chapter Introduction
+
+A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a fixed range [0, n₀), [0, n₁), ... so the array is `rectangular'. The number of indices in the multi-index is the @dfn{rank} of the array.
+
+Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an `array' is just a function of integers with a rectangular domain.
+
+Arrays (also called @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are everywhere in math and many other fields, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
+
+@verbatim
+A = B+C;
+@end verbatim
+
+much more compact and easier to read than
+
+@verbatim
+for (int i=0; i!=m; ++i)
+    for (int j=0; j!=n; ++j)
+        for (int k=0; k!=p; ++k)
+            A(i, j, k) = B(i, j, k)+C(i, j, k);
+@end verbatim
+
+but it's also safer and less redundant. For example, the order of the loops may be something you don't really care about.
+
+However, if array operations are implemented naively, a piece of code such as @code{A = B+C} may result in the creation of a temporary to hold @code{B+C} which is then assigned to @code{A}. Needless to say this is very wasteful if the arrays involved are large.
+
+Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as `loop fusion' REF, `drag along' REF, or `deforestation' REF. In the C++ context the technique of `expression templates' was pioneered in the late 90s by libraries such as Blitz++ REF. It works by making @code{B+C} into an `expression object' which holds references to its arguments and executes the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated nested loop above.
+
+@menu
+* Features::              And old problem with many solutions.
+* Design::                APL and J are the right model.
+* Other libraries::       Inspiration and desperation.
+@end menu
+
+@node Features
+@section What you can do with array programming
+
+Definitions are like this: @dfn{ra-iterator}.
+
+Another definition like this: @dfn{processes}
+
+@node Design
+@section Design of ra-ra
+
+A different paragraph. This design doesn't really belong as an
+introduction.
+
+@node Other libraries
+@section Other array libraries
+
+C++ offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These decay to pointers when you do nearly anything with them, don't know their own sizes or rank, and are generally too limited. However, they do have one important property, called @dfn{rank polymorphism}, which we'll have more to say about later REF.
+
+The C++ standard library also offers a number of containers that can be used as rank-1 arrays, of which the most important are @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports rank>1 out of the box, but @code{<valarray>} offers some of the features of ra-ra for rank-1 arrays. ra-ra makes use of @code{<array>} and @code{<vector>} for storage and bootstrapping so we'll mention these containers from time to time.
+
+
+@node Usage
+@chapter Usage
+
+Shows how to use.
+
+@menu
+* Using ra-ra::                ra-ra is a header-only library.
+* Containers and views::       Data objects.
+* Array operations::           Building and executing expressions.
+* Rank extension::             How array operands are matched.
+* Advanced operations::        Useful but not essential.
+* Special objects::            Not arrays, yet arrays.
+* Internals::                  Slicing the sausage.
+@end menu
+
+@node Using ra-ra
+@section Using ra-ra
+
+ra-ra is a header only library with no dependencies, so you just need to place the ra/ folder somewhere in your include path and add
+
+@example
+@verbatim
+#include <ra/operators.H>
+#include <ra/io.H>
+@end verbatim
+@end example
+
+to the top of your sources. A C++14 compiler with partial C++17 support is required. At time of writing this means gcc 6.2 with @code{-std=c++1z}. Most tests pass under clang 3.9 with a couple of extra flags (@code{-Wno-missing-braces}, @code{-DRA_OPTIMIZE_SMALLVECTOR=0}).
+
+
+@node Containers and views
+@section Containers and views
+
+ra-ra offers two kinds of data objects. The first is the @dfn{container}, whose defining characteristic is that it owns its data. Creating a container uses memory and destroying it causes that memory to be freed.
+
+There are three kinds of containers: fixed size, fixed rank/variable size, and variable rank. Here fixed means `compile time constant' while variable is normally a run time constant. (Some variable size arrays can be resized but variable rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.)
+
+For example:
+
+@example
+@verbatim
+{
+    ra::Small<double, 2, 3> a(0.);       // a fixed size 2x3 array
+    ra::Owned<double, 2> b({2, 3}, 0.);  // a variable size 2x3 array
+    ra::Owned<double> c({2, 3}, 0.);     // a variable rank 2x3 array
+    // a, b, c destroyed at end of scope
+}
+@end verbatim
+@end example
+
+The main reason to have all these different types is performance; the compiler can do a much better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory so if you have thousands of small arrays it certainly pays off to use the fixed size types for them. Fixed size or fixed rank arrays are also safer to use; sometimes ra-ra will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+
+Container constructors come in two forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.
+
+@example
+@verbatim
+ra::Small<double, 2, 3> a = 0.;  // 0. is copied into a
+ra::Small<double, 2, 3> b = a;   // the contents of a are copied into b
+ra::Owned<double> c = a;         // c takes the size of a and a is copied into c
+ra::Owned<double> d = 0.;        // d is a rank-0 array with one element d()==0.
+@end verbatim
+@end example
+
+The second form takes two arguments, one giving the shape, the second the contents.
+
+@example
+@verbatim
+ra::Owned<double, 2> a({2, 3}, 1.);  // a has size 2x3 and be filled with 1.
+ra::Owned<double> b({2, 3}, a);      // b has size 2x3 and a is copied into b
+@end verbatim
+@end example
+
+The last example may result in an error if the shape of @code{a} and @{2,@w{ }3@} don't match. Here the shape of @code{1.} (which is @{@}) matches @{2,@w{ }3@} by a mechanism of rank extension (@pxref{Rank extension}).
+
+A @dfn{view} is similar to a container in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
+
+@example
+@verbatim
+ra::Owned<double> c({2, 3}, 0.);     // a variable rank 2x3 array
+{
+    auto c1 = c(1);                  // the first row of array c
+    // c1 is destroyed here
+}
+// can still use c here
+@end verbatim
+@end example
+
+The data accessed through a view is the data of the `root' container, so modifying the first will be reflected in the latter.
+
+@example
+@verbatim
+ra::Owned<double> c({2, 3}, 0.);
+auto c1 = c(1);
+c1(2) = 9.;                      // c(1, 2) = 9.
+@end verbatim
+@end example
+
+Just as for containers, there are separate types of views depending on whether the size is known at compile time, the rank is known at compile time but the size is not, or neither the size nor the rank are known at compile time. ra-ra has functions to create the most common kinds of views:
+
+@example
+@verbatim
+ra::Owned<double> c({2, 3}, 0.);
+auto ct = transpose<1, 0>(c);
+auto cr = reverse(c, 0);
+@end verbatim
+@end example
+
+However, views can point to anywhere in memory and that memory doesn't have to belong to a ra-ra container. For example:
+
+@example
+@verbatim
+int raw[6] = {1, 2, 3, 4, 5, 6};
+ra::View<int> v1({{2, 3}, {3, 1}}, raw); // view with sizes {2, 3} strides {3, 1}
+ra::View<int> v2({2, 3}, raw);           // same, default C (row-major) strides
+@end verbatim
+@end example
+
+@node Array operations
+@section Array operations
+
+To apply an operation to each element of an array, use the function @code{for_each}. The array is traversed in an order that is decided by the library.
+
+@example
+@verbatim
+ra::Small<double, 2, 3> a = {1, 2, 3, 4, 5, 6};
+real s = 0.;
+for_each([&s](auto && a) { s+=a; }, a);
+@end verbatim
+  @result{} s = 21.
+@end example
+
+To construct an array expression but stop short of executing it, use the function @code{map}. The expression will be executed implicitly when it is assigned to a view, printed out, etc.
+
+@example
+@verbatim
+using T = ra::Small<double, 2, 2>;
+T a = {1, 2, 3, 4};
+T b = {10, 20, 30, 40};
+T c = map([](auto && a, auto && b) { return a+b; }, a, b); // (1)
+@end verbatim
+  @result{} c = @{ 11, 22, 33, 44 @}
+@end example
+
+Expressions may take any number of arguments and be nested arbitrarily.
+
+@example
+@verbatim
+T d = 0;
+for_each([](auto && a, auto && b, auto && d) { d = a+b; }, a, b, d); // same as (1)
+for_each([](auto && ab, auto && d) { d = ab; },
+            map([](auto && a, auto && b) { return a+b; }, a, b), d); // same as (1)
+@end verbatim
+@end example
+
+The operator of an expression may return a reference and you may assign to an expression in that case. ra-ra will complain if the expression is somehow not assignable.
+
+@example
+@verbatim
+T d = 0;
+map([](auto & d) -> decltype(auto) { return d; }, d) // just pass d along
+  = map([](auto && a, auto && b) { return a+b; }, a, b); // same as (1)
+@end verbatim
+@end example
+
+ra-ra defines many shortcuts for common array operations. You can of course just do:
+
+@example
+@verbatim
+T d = a+b; // same as (1)
+@end verbatim
+@end example
+
+@node Rank extension
+@section Rank extension
+
+@node Advanced operations
+@section Advanced operations
+
+@menu
+* The rank conjunction::       J comes to C++.
+@end menu
+
+@node The rank conjunction
+@subsection The rank conjunction
+
+@node Special objects
+@section Special objects
+
+@node Internals
+@section Internals
+
+@node Reference
+@chapter Reference
+
+@defun map op args ...
+Create array expression that applies @var{op} to @var{args} ...
+@end defun
+
+For example:
+@example
+@verbatim
+    ra::Owned<double, 1> x = map(cos, ra::Small<double, 1> {0.});
+@end verbatim
+  @result{} x = @{ 1. @}
+@end example
+
+@defun for_each op args ...
+Create array expression that applies @var{op} to @var{args} ..., and traverse it.
+@end defun
+
+@var{op} should normally return @code{void}. For example:
+@example
+@verbatim
+    double s = 0.;
+    for_each([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})
+@end verbatim
+  @result{} s = 6.
+@end example
+
+@defun pick select args ...
+Create array expression that selects the first of @var{args} if @var{select} is 0, the second if @var{select} is 1, and so on. The arguments that are not selected are not looked up.
+@end defun
+
+This function cannot be defined using @var{map}, because @var{map} looks up each one of its arguments before calling @var{op}.
+
+For example:
+@example @c cf examples/readme.C [100].
+@verbatim
+    ra::Small<int, 3> s {2, 1, 0};
+    ra::Small<char const *, 3> z = pick(s, s*s, s+s, sqrt(s));
+@end verbatim
+  @result{} z = @{1.41421, 2, 0@}
+@end example
+
+@defun where pred true false
+Create array expression that selects @var{true} if @var{pred} is @code{true}, and @code{false} if @var{pred} is @var{false}. The argument that is not selected is not looked up.
+@end defun
+
+For example:
+@example
+@verbatim
+    ra::Owned<double, 1> s {1, -1, 3, 2};
+    s = where(s>=2, 2, s); // saturate s
+@end verbatim
+  @result{} s = @{1, -1, 2, 2@}
+@end example
+
+@defun from op ... args
+Create outer product expression. This is defined as @math{E(i00, i01 ..., i10, i11, ..., ...) = op(arg0(i01, i01 ...), arg1(i10, i11, ...) ...)}.
+@end defun
+
+For example:
+@example
+@verbatim
+    ra::Owned<double, 1> a {1, 2, 3};
+    ra::Owned<double, 1> b {10, 20, 30};
+    ra::Owned<double, 2> axb = from([](auto && a, auto && b) { return a*b; }, a, b)
+@end verbatim
+  @result{} axb = @{@{10, 20, 30@}, @{20, 40, 60@}, @{30, 60, 90@}@}
+@end example
+
+@example
+@verbatim
+    ra::Owned<int, 1> i {2, 1};
+    ra::Owned<int, 1> j {0, 1};
+    ra::Owned<double, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
+    ra::Owned<double, 2> Aij = from(A, i, j)
+@end verbatim
+  @result{} Aij = @{@{6, 5@}, @{4, 3@}@}
+@end example
+
+The last example is more or less how @code{A(i, j)} is actually implemented.
+
+@defun wrank <input_rank ...> op ... args
+Wrap op using a rank conjunction (@pxref{The rank conjunction}).
+@end defun
+
+For example:
+@example
+@verbatim
+@end verbatim
+  @result{} x = 0
+@end example
+
+@node Hazards
+@chapter Hazards
+
+ra-ra applies its principles systematically and that can result in
+surprises.
+
+@enumerate
+@item
+Item 0
+@item
+Item 1
+@item
+Item 2
+@end enumerate
+
+@node The future
+@chapter The future
+
+Wishlist and acknowledged bugs.
+
+@c @node Concept Index
+@c @unnumbered Concept Index
+@c @printindex cp
+@c @node Function Index
+@c @unnumbered Function Index
+@c @printindex fn
+
+@bye

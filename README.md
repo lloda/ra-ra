@@ -49,10 +49,10 @@ ra::Small<char, 2, 3> C('c');        // storage is owned by C itself, on the sta
 
 // view types
 char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-ra::Raw<char, 2> D1({2, 3}, cs);            // dynamic sizes and strides, C order
-ra::Raw<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and strides, Fortran order.
-ra::SmallSlice<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & strides, C order.
-ra::SmallSlice<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & strides, Fortran order.
+ra::View<char, 2> D1({2, 3}, cs);            // dynamic sizes and strides, C order
+ra::View<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and strides, Fortran order.
+ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & strides, C order.
+ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & strides, Fortran order.
 ```
 
 * Shape agreement rules and rank extension (broadcasting) for rank-0 operations
@@ -199,7 +199,7 @@ g h
 ```
 
 ```
-// explicit indices do not result in a Raw view (= pointer + strides), but the resulting
+// explicit indices do not result in a View (= pointer + strides), but the resulting
 // expression can still be written on.
 B(I) = ra::Owned<char, 2>({2, 2}, {'x', 'y', 'z', 'w'});
 cout << "B: " << B << endl;

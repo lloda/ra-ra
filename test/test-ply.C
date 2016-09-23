@@ -188,7 +188,7 @@ int main()
             ra::Unique<real, 3> a(std::vector<ra::dim_t> {1, 2, 3}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             test(a);
-            test(a()); // also Raw.
+            test(a()); // also View.
         }
 // @TODO See Expr::DRIVER in expr.H. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() & ply_index() are rank-dynamic.
         {
@@ -200,7 +200,7 @@ int main()
             ra::Unique<real> a(std::vector<ra::dim_t> {1, 2, 3}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             test(a);
-            test(a()); // also Raw.
+            test(a()); // also View.
         }
     }
     section("[sec10] constructor cases with scalar or RANK_ANY arguments");
@@ -349,8 +349,8 @@ int main()
     section("the loop cannot be unrolled entirely and one of the outside dims is zero");
     {
         real aa = 100;
-        ra::Raw<real, 3> a { {{0, 22}, {11, 2}, {2, 1}}, &aa };
-        ra::Raw<real, 3> b { {{0, 1}, {11, 2}, {2, 1}}, &aa };
+        ra::View<real, 3> a { {{0, 22}, {11, 2}, {2, 1}}, &aa };
+        ra::View<real, 3> b { {{0, 1}, {11, 2}, {2, 1}}, &aa };
 #define TEST(plier)                                             \
         {                                                       \
             real c = 99;                                        \

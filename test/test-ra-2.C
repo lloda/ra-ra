@@ -35,7 +35,7 @@ int main()
         {
             ra::ra_iterator<decltype(a), 1> i(a.dim, a.p);
             tr.test_eq(1, i.rank());
-            ply_ravel(expr([](ra::Raw<real, 1> const & x) { cout << x << endl; }, i));
+            ply_ravel(expr([](ra::View<real, 1> const & x) { cout << x << endl; }, i));
         }
     }
 #define ARGa ra::ra_iterator<decltype(a), 1>(a.dim, a.p)
@@ -48,7 +48,7 @@ int main()
         real check[4] = {6, 15, 24, 33};
         section("not driving");
         {
-            auto f = [](int i, ra::Raw<real, 1> const & a, real & d)
+            auto f = [](int i, ra::View<real, 1> const & a, real & d)
                 {
                     cout << i << ": " << a << endl;
                     d = a[0] + a[1] + a[2];
@@ -77,7 +77,7 @@ int main()
 // @TODO Use explicit DRIVER arg to ra::expr; the fixed size ARGi should always drive.
         section("driving");
         {
-            auto f = [](ra::Raw<real, 1> const & a, int i, real & d)
+            auto f = [](ra::View<real, 1> const & a, int i, real & d)
                 {
                     cout << i << ": " << a << endl;
                     d = a[0] + a[1] + a[2];
@@ -107,7 +107,7 @@ int main()
         real check[12] = {1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6};
         section("not driving");
         {
-            auto f = [](int i, ra::Raw<real, 1> a, real & d) { std::iota(a.begin(), a.end(), d); };
+            auto f = [](int i, ra::View<real, 1> a, real & d) { std::iota(a.begin(), a.end(), d); };
             std::fill(a.begin(), a.end(), 0);
             ply_index(ra::expr(f, ARGi, ARGa, ARGd));
             tr.test(std::equal(check, check+12, a.begin()));
@@ -118,7 +118,7 @@ int main()
         }
         section("driving");
         {
-            auto f = [](ra::Raw<real, 1> a, int i, real & d) { std::iota(a.begin(), a.end(), d); };
+            auto f = [](ra::View<real, 1> a, int i, real & d) { std::iota(a.begin(), a.end(), d); };
             std::fill(a.begin(), a.end(), 0);
             ply_index(ra::expr(f, ARGa, ARGi, ARGd));
             tr.test(std::equal(check, check+12, a.begin()));
@@ -157,8 +157,8 @@ int main()
     }
     section("FYI");
     {
-        cout << "..." << sizeof(ra::Raw<real, 0>) << endl;
-        cout << "..." << sizeof(ra::Raw<real, 1>) << endl;
+        cout << "..." << sizeof(ra::View<real, 0>) << endl;
+        cout << "..." << sizeof(ra::View<real, 1>) << endl;
     }
     return tr.summary();
 }

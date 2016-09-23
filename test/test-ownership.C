@@ -30,7 +30,7 @@ using real = double;
 // The constructors are all plain, the fields of the array record are copied/moved.
 // @TODO This table contain errors; review thoroughly.
 /*
-| to\fro cons | Raw            | Shared | Unique    | Owned     | Small          | SmallSlice | Tested in        |
+| to\fro cons | View            | Shared | Unique    | Owned     | Small          | SmallView | Tested in        |
 |-------------+----------------+--------+-----------+-----------+----------------+------------+------------------|
 | R           | borrow         | borrow | borrow    | borrow    | borrow         | ...        |                  |
 | S           | share, null d. | share  | move      | share     | share, null d. |            | test-ownership.C |
@@ -42,16 +42,16 @@ using real = double;
 // operator= however copies into. This is so that array ops look natural.
 // The reason for the diagonal exceptions is to allow array-types to be initialized from a ref argument, which is required in operator>>(istream &, array-type). Maybe there's a better solution.
 /*
-| to\fro op= | Raw       | Shared    | Unique    | Owned       | Small     | Tested in        |
+| to\fro op= | View       | Shared    | Unique    | Owned       | Small     | Tested in        |
 |------------+-----------+-----------+-----------+-------------+-----------+------------------|
-| Raw        | copy into | copy into | copy into | copy into   | copy into | test-operators.C |
+| View        | copy into | copy into | copy into | copy into   | copy into | test-operators.C |
 | Shared     | copy into | *share*   | copy into | copy into   | copy into |                  |
 | Unique     | copy into | copy into | *move*    | copy into   | copy into |                  |
 | Owned      | copy into | copy into | copy into | *copy/move* | copy into |                  |
 | Small      | copy into | copy into | copy into | copy into   | *copy*    |                  |
 */
 
-// @TODO Maybe I want WithStorage/Raw<T> const and WithStorage/Raw<T const> to behave differently....
+// @TODO Maybe I want WithStorage/View<T> const and WithStorage/View<T const> to behave differently....
 int main()
 {
     real const check99[5] = {99, 99, 99, 99, 99};
@@ -132,7 +132,7 @@ int main()
         ra::Shared<real, 1> p(c); // May be a @BUG here; shared_ptr doesn't prevent this copy.
         tr.test(p.data()==c.data());
     }
-    // The use of deleters allows Shared to work like Raw storage wise.
+    // The use of deleters allows Shared to work like View storage wise.
     section("Shared with borrowed data");
     {
         ra::Shared<real, 1> o({5}, 11.);

@@ -122,7 +122,7 @@ int main()
                     A = map([](int i, int j) { return super(i-j+ra::_0-ra::_1); }, ra::_0, ra::_1);
                     using sub = ra::Small<int, 3>;
                     auto B = ra::collapse<sub>(A);
-// @TODO sub() is used to cover a problem with where() and SmallSlice/SmallArray, since they convert to each other
+// @TODO sub() is used to cover a problem with where() and SmallView/SmallArray, since they convert to each other
                     tr.test_eq(B(ra::all, ra::all, 0), map([](auto && a) { return sub(a(0)); }, A));
                     tr.test_eq(B(ra::all, ra::all, 1), map([](auto && a) { return sub(a(1)); }, A));
                 };
