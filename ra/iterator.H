@@ -82,33 +82,22 @@ struct cell_iterator
     using cell_type = View<atom_type, cellr>;
     using value_type = mp::If_<cellr==0, atom_type, cell_type>;
 
-    dims_p dim; // @TODO Either have an equivalent object for Small, or take V & and ask through that.
+    dims_p dim; // @TODO either have an equivalent object for Small, or take V & and ask through that.
     cell_type c;
 
     constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
 
     cell_iterator() { c.p = nullptr; } // end marker only.
     cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-    cell_iterator(cell_iterator && ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
+    cell_iterator & operator=(cell_iterator const & ci) = delete;
 // needed because View = View copies contents, not the View itself ([ra11] in test-ra-0.C).
-    cell_iterator & operator=(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
-    cell_iterator & operator=(cell_iterator && ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
+    cell_iterator & assign(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
 
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
     template <class SS> cell_iterator(SS const & s_, atom_type * p_): dim(s_)
     {
         rank_t const rank = this->rank();
-        for (int k=0; ; ++k) {
-            if (k==rank) {
-                c.p = p_;
-                break;
-            }
-// so begin()==end() for un-plied iterator on empty range. For STL-like use; ra::Iterator doesn't check loop end in this way.
-            if (s_[k].size==0) {
-                c.p = nullptr;
-                break;
-            }
-        }
+        c.p = p_; // see stl_iterator for the case of s_[0]=0, etc. [ra12].
         rank_t const cellr = dependent_cell_rank(rank_t(dim.size()), cellr_spec);
         resize(c.dim, cellr);
         for (int k=0; k<cellr; ++k) {
@@ -146,6 +135,16 @@ struct cell_iterator
     }
 };
 
+#define DEF_EQOPS(OP)                                                   \
+    template <class X> void operator OP(X && x)                         \
+    {                                                                   \
+        for_each([](auto && y, auto && x) { y OP x; }, *this, start(x)); \
+    }                                                                   \
+    template <class X> void operator OP(ra_iterator const & x)          \
+    {                                                                   \
+        for_each([](auto && y, auto && x) { y OP x; }, *this, start(x)); \
+    }
+
 template <class V, rank_t cellr=0>
 struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
 {
@@ -165,13 +164,7 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
     ra_iterator(): P() {};
     template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
-#define DEF_EQOPS(OP)                                                   \
-    template <class X> void operator OP(X && x)                         \
-    {                                                                   \
-        for_each([](auto && y, auto && x) { y OP x; }, *this, start(x)); \
-    }
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
 };
 
 template <class V>
@@ -191,7 +184,10 @@ struct ra_iterator<V, 0>: public cell_iterator<V, 0, ra_iterator<V, 0>>
 
     ra_iterator(): P() {};
     template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
+
+    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 };
+#undef DEF_EQOPS
 
 template <class Iterator>
 struct stl_iterator
@@ -207,8 +203,20 @@ struct stl_iterator
     Iterator ii;
     shape_type i;
     stl_iterator(): ii() {};
+// be careful to avoid ii = it.ii, see [ra11] above.
+    stl_iterator(stl_iterator const & it) = default;
+    stl_iterator & operator=(stl_iterator const & it) { i=it.i; ii.assign(it.ii); return *this; }
     template <class SS> stl_iterator(SS const & s_, typename Iterator::P::atom_type * p_)
-        : ii(s_, p_), i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), ii.cellr_spec), 0)) {};
+        : ii(s_, p_), i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), ii.cellr_spec), 0))
+    {
+// [ra12] so begin()==end() for un-plied iterator on empty range. For plying sizes are used instead, so we don't care.
+        for (auto dim: s_) {
+            if (dim.size==0) {
+                ii.c.p = nullptr;
+                break;
+            }
+        }
+    };
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }

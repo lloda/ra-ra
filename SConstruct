@@ -11,17 +11,14 @@
 # Top SConstruct for ra-ra
 # @todo Shared pieces with examples/SConstruct and test/SConstruct
 
-import atexit
+import os, atexit
 from colorama import Fore, Back, Style
+from os.path import join, abspath
 
 top = {'skip_summary': True}; Export('top');
 SConscript('test/SConstruct', 'top')
 SConscript('examples/SConstruct', 'top')
-
-env = Environment(BUILDERS = {'INFOBuilder' : Builder(action = 'makeinfo < $SOURCES > $TARGET',
-                                                     suffix = '.info',
-                                                     src_suffix = '.texi')})
-env.INFOBuilder(target = 'ra-ra.info', source = 'ra-ra.texi')
+# SConscript('doc/SConstruct', 'top') # TODO run from doc, otherwise makeinfo writes empty files (??)
 
 def print_summary():
     from SCons.Script import GetBuildFailures
@@ -29,7 +26,7 @@ def print_summary():
     test_tally = 0
     build_tally = 0
 
-    print '\n' + Style.BRIGHT + 'Summary for ek' + Style.RESET_ALL + '\n--------'
+    print '\n' + Style.BRIGHT + 'Summary for ra-ra' + Style.RESET_ALL + '\n--------'
     for bf in GetBuildFailures():
         if str(bf.node).endswith('.check') and (bf.status > 0):
             print (Style.BRIGHT + Fore.RED + '%s ' + Style.RESET_ALL + Fore.RESET + ' failed (%d)') \

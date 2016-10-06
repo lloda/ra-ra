@@ -119,11 +119,11 @@ struct Dim { dim_t size, stride; };
 
 template <int n> struct dots_t
 {
+    static_assert(n>=0);
     constexpr static rank_t rank_s() { return n; }
 };
 template <int n> constexpr dots_t<n> dots = dots_t<n>();
-using all_t = dots_t<1>;
-constexpr all_t all = all_t();
+constexpr auto all = dots<1>;
 
 } // namespace ra
 

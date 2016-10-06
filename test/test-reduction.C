@@ -221,6 +221,5 @@ int main()
             tr.info("assign to iterators of rank > 0").test_eq(B, C);
         }
     }
-
     return tr.summary();
 }

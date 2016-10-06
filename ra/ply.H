@@ -64,6 +64,8 @@ void ply_index(A && a)
 template <class A> inline
 void ply_ravel(A && a)
 {
+    static_assert(!has_tensorindex<A>, "bad plier for expr");
+
     rank_t rank = a.rank();
     rank_t order[rank];
     for (rank_t i=0; i<rank; ++i) {
@@ -196,6 +198,7 @@ until(int const jj, A & a, dim_t const s, S const & ss0)
 template <class A> inline
 auto plyf(A && a) -> std::enable_if_t<(A::rank_s()<=0)>
 {
+    static_assert(!has_tensorindex<A>, "bad plier for expr");
     static_assert(A::rank_s()==0, "plyf needs static rank");
     *(a.flat());
 }
@@ -203,12 +206,14 @@ auto plyf(A && a) -> std::enable_if_t<(A::rank_s()<=0)>
 template <class A> inline
 auto plyf(A && a) -> std::enable_if_t<(A::rank_s()==1)>
 {
+    static_assert(!has_tensorindex<A>, "bad plier for expr");
     subindex<mp::Iota_<1>, 1>(a, a.size(0), a.stride(0));
 }
 
 template <class A> inline
 auto plyf(A && a) -> std::enable_if_t<(A::rank_s()>1)>
 {
+    static_assert(!has_tensorindex<A>, "bad plier for expr");
     /* constexpr */ rank_t const rank = a.rank();
 #if 0
 // find the outermost compact dim.

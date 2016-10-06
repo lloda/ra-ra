@@ -15,7 +15,6 @@
 #include "ra/test.H"
 
 using std::cout; using std::endl;
-using real = double;
 
 int main()
 {
@@ -26,53 +25,62 @@ int main()
 
     tr.section("pick");
     {
-        ra::Small<real, 3> a0 = { 1, 2, 3 };
-        ra::Small<real, 3> a1 = { 10, 20, 30 };
+        ra::Small<double, 3> a0 = { 1, 2, 3 };
+        ra::Small<double, 3> a1 = { 10, 20, 30 };
         ra::Small<int, 3> p = { 0, 1, 0 };
-        ra::Small<real, 3> a(0.);
+        ra::Small<double, 3> a(0.);
 
         counter = 0;
         a = pick(p, map(count, a0), map(count, a1));
-        tr.test_eq(ra::Small<real, 3> { 1, 20, 3 }, a);
+        tr.test_eq(ra::Small<double, 3> { 1, 20, 3 }, a);
         tr.info("pick ETs execute only one branch per iteration").test_eq(3, int(counter));
 
         counter = 0;
         a = where(p, map(count, a0), map(count, a1));
-        tr.test_eq(ra::Small<real, 3> { 10, 2, 30 }, a);
+        tr.test_eq(ra::Small<double, 3> { 10, 2, 30 }, a);
         tr.info("where() is implemented using pick ET").test_eq(3, int(counter));
     }
     tr.section("write to pick");
     {
-        ra::Small<real, 2> a0 = { 1, 2 };
-        ra::Small<real, 2> a1 = { 10, 20 };
+        ra::Small<double, 2> a0 = { 1, 2 };
+        ra::Small<double, 2> a1 = { 10, 20 };
         ra::Small<int, 2> const p = { 0, 1 };
-        ra::Small<real, 2> const a = { 7, 9 };
+        ra::Small<double, 2> const a = { 7, 9 };
 
         counter = 0;
         pick(p, map(count, a0), map(count, a1)) = a;
         tr.test_eq(2, int(counter));
-        tr.test_eq(ra::Small<real, 2> { 7, 2 }, a0);
-        tr.test_eq(ra::Small<real, 2> { 10, 9 }, a1);
-        tr.test_eq(ra::Small<real, 2> { 7, 9 }, a);
+        tr.test_eq(ra::Small<double, 2> { 7, 2 }, a0);
+        tr.test_eq(ra::Small<double, 2> { 10, 9 }, a1);
+        tr.test_eq(ra::Small<double, 2> { 7, 9 }, a);
         tr.test_eq(ra::Small<int, 2> { 0, 1 }, p);
+    }
+    tr.section("pick works as any other array expression");
+    {
+        ra::Small<double, 2> a0 = { 1, 2 };
+        ra::Small<double, 2> a1 = { 10, 20 };
+        ra::Small<int, 2> const p = { 0, 1 };
+
+        ra::Small<double, 2> q = 3 + pick(p, a0, a1);
+        tr.test_eq(ra::Small<int, 2> { 4, 23 }, q);
     }
     tr.section("pick with TensorIndex");
     {
-        ra::Small<real, 2> a0 = { 1, 2 };
-        ra::Small<real, 2> a1 = { 10, 20 };
+        ra::Small<double, 2> a0 = { 1, 2 };
+        ra::Small<double, 2> a1 = { 10, 20 };
         ra::Small<int, 2> const p = { 0, 1 };
 
         counter = 0;
         pick(p, map(count, a0), map(count, a1)) += ra::_0+5;
         tr.test_eq(2, int(counter));
-        tr.test_eq(ra::Small<real, 2> { 6, 2 }, a0);
-        tr.test_eq(ra::Small<real, 2> { 10, 26 }, a1);
+        tr.test_eq(ra::Small<double, 2> { 6, 2 }, a0);
+        tr.test_eq(ra::Small<double, 2> { 10, 26 }, a1);
         tr.test_eq(ra::Small<int, 2> { 0, 1 }, p);
     }
     tr.section("where, scalar W, array arguments in T/F");
     {
-        std::array<real, 2> bb {{1, 2}};
-        std::array<real, 2> cc {{99, 99}};
+        std::array<double, 2> bb {{1, 2}};
+        std::array<double, 2> cc {{99, 99}};
         auto b = ra::vector(bb);
         auto c = ra::vector(cc);
 
@@ -114,14 +122,14 @@ int main()
     }
     tr.section("where, scalar W, array arguments in T/F");
     {
-        real a = 1./7;
-        ra::Small<real, 2> b {1, 2};
-        ra::Small<real, 2> c = where(a>0, b, 3.);
-        tr.test_eq(ra::Small<real, 2> {1, 2}, c);
+        double a = 1./7;
+        ra::Small<double, 2> b {1, 2};
+        ra::Small<double, 2> c = where(a>0, b, 3.);
+        tr.test_eq(ra::Small<double, 2> {1, 2}, c);
     }
     tr.section("where as lvalue, scalar");
     {
-        real a=0, b=0;
+        double a=0, b=0;
         bool w = true;
         where(w, a, b) = 99;
         tr.test_eq(a, 99);
@@ -132,10 +140,10 @@ int main()
     }
     tr.section("where, scalar + rank 0 array");
     {
-        ra::Small<real> a { 33. };
-        real b = 22.;
-        tr.test_eq(33, real(where(true, a, b)));
-        tr.test_eq(22, real(where(true, b, a)));
+        ra::Small<double> a { 33. };
+        double b = 22.;
+        tr.test_eq(33, double(where(true, a, b)));
+        tr.test_eq(22, double(where(true, b, a)));
     }
     tr.section("where as lvalue, xpr [raop01]");
     {

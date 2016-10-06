@@ -20,10 +20,11 @@
 
 namespace ra {
 
-// specialize this for new types for which is_scalar<> should be true.
+// specialize this for new types for which is_scalar<> should be true. These are foreign types.
 template <class A> constexpr bool is_scalar_def = !std::is_pointer<A>::value && std::is_scalar<A>::value;
 template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A> >;
 
+// the other class of foreign types we care about.
 template <class A> constexpr bool is_foreign_vector_def = false;
 template <class A, class Enable=void> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A> >;
 template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A> > = true;
@@ -118,23 +119,11 @@ inline constexpr auto start(T && t)
     return ra::vector(std::forward<T>(t));
 }
 
-template <class T>
-inline constexpr auto start(T * t)
-{
-    return ra::ptr(t);
-}
-
-template <class T>
-inline constexpr auto rstart(T && t)
-{
-    return start(std::forward<T>(t));
-}
-
-template <class T>
-inline constexpr auto rstart(T * t)
-{
-    static_assert(!std::is_pointer<T *>::value, "pointers must be started manually");
-}
+// template <class T>
+// inline constexpr auto start(T * t)
+// {
+//     static_assert(!std::is_pointer<T *>::value, "pointers must be started with ptr");
+// }
 
 // @TODO one of these is ET-generic and the other is slice only, so make up your mind.
 template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;

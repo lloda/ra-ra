@@ -30,17 +30,14 @@
 namespace ra {
 
 // Manipulate ET through flat (raw pointer-like) iterators P ...
-template <class Op, class T, class I=std::make_integer_sequence<int, mp::len<T> > >
+template <class Op, class T, class I=std::make_integer_sequence<int, mp::len<T>>>
 struct Flat;
 
 template <class Op, class ... P, int ... I>
-struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...> >
+struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 {
-    using T = std::tuple<P ...>;
-
     Op & op;
-    T t;
-    Flat(Op & op_, P ... p_): op(op_), t(p_ ...) {}
+    std::tuple<P ...> t;
 
 // @TODO after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
     template <int II, class S> void add(S const & s) { std::get<II>(t) += std::get<II>(s); }
@@ -49,28 +46,27 @@ struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...> >
 };
 
 template <class Op, class ... P> inline constexpr
-auto expr(Op && op, P && ... p)
+auto flat(Op & op, P && ... p)
 {
-    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
+    return Flat<Op, std::tuple<P ...>> { op, std::tuple<P ...> { std::forward<P>(p) ... } };
 }
 
 // forward decl in atom.H
+// TODO others:
+// * 'static': Like expr, but the operator is compile time (e.g. ::apply()).
+// * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 {
-    using T = std::tuple<P ...>;
-
 // A-th argument decides rank and shape.
     constexpr static int A = largest_rank<P ...>::value;
-    using PA = std::decay_t<mp::Ref_<T, A>>;
-    using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...> >;
-    using flat_t = Flat<Op, std::tuple<decltype(std::declval<P>().flat()) ...>>;
-    using stride_t = std::tuple<decltype(std::declval<P>().stride(0)) ...>;
+    using PA = std::decay_t<mp::Ref_<std::tuple<P ...>, A>>;
+    using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
 
     Op op;
-    T t;
+    std::tuple<P ...> t;
 
-// If driver is RANK_ANY, driver selection should wait til run time, unless we can tell statically that RANK_ANY would be selected anyway.
+// If driver is RANK_ANY, driver selection should wait to run time, unless we can tell that RANK_ANY would be selected anyway.
     constexpr static bool HAS_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
     template <bool depend=true> constexpr auto & driver() const
@@ -88,12 +84,11 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     check(int const driver_rank) const
     {
         rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
-// Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Disable this test when it's known statically that it isn't needed. @TODO Do dynamic driver selection if static is uncertain.
+// Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Dynamic driver selection.
         assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
         for (int k=0; k!=ranki; ++k) {
-// sk0==DIM_BAD might happen on subexpressions.
             dim_t sk0 = std::get<A>(t).size(k);
-            if (sk0!=DIM_BAD) {
+            if (sk0!=DIM_BAD) { // may be == in subexpressions
                 dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
                 assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
             }
@@ -128,17 +123,17 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         return (std::get<I>(t).compact_stride(step, z, j) && ...);
     }
-    auto stride(int const i) const -> stride_t // @BUG clang 3.9 issues with constexpr/TensorIndex
+    constexpr auto stride(int const i) const
     {
-        return stride_t(std::get<I>(t).stride(i) ...);
+        return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
-    auto flat() const -> flat_t // clang complains if this is constexpr, gcc does not
+    constexpr auto flat() const
     {
-        return flat_t(op, std::get<I>(t).flat() ...);
+        return ra::flat(op, std::get<I>(t).flat() ...);
     }
-    auto flat() -> flat_t // clang complains if this is constexpr, gcc does not
+    constexpr auto flat()
     {
-        return flat_t(op, std::get<I>(t).flat() ...);
+        return ra::flat(op, std::get<I>(t).flat() ...);
     }
 
     constexpr static dim_t size_s() { return PA::size_s(); }
@@ -147,7 +142,7 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     constexpr decltype(auto) shape() const { return driver().shape(); }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    operator decltype(*std::declval<flat_t>())()
+    operator decltype(*(std::declval<Expr>().flat()))()
     {
         static_assert(rank_s()==0 || rank_s()==RANK_ANY || (rank_s()==1 && size_s()==1), // for coord types
                       "bad rank in conversion to scalar");
@@ -176,10 +171,11 @@ FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 
 #undef DEF_EQOPS_
 
-// others:
-// * 'static': Like expr, but the operator is compile time (e.g. ::apply()).
-// * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
-// * ...
+template <class Op, class ... P> inline constexpr
+auto expr(Op && op, P && ... p)
+{
+    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
+}
 
 // Wrappers over expr & ply_either.
 

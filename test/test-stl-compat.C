@@ -50,18 +50,20 @@ int main()
     {
         ra::Owned<int, 1> a = {1, 2, 3};
         int b[] = { +1, -1, +1 };
-        tr.test_eq(ra::Small<int, 3> {2, 1, 4}, a + ra::start(b));
-        ra::start(b) = ra::Small<int, 3> {7, 4, 5};
-        tr.test_eq(ra::Small<int, 3> {7, 4, 5}, ra::start(b));
+        tr.test_eq(ra::Small<int, 3> {2, 1, 4}, a + ra::ptr(b));
+        ra::ptr(b) = ra::Small<int, 3> {7, 4, 5};
+        tr.test_eq(ra::Small<int, 3> {7, 4, 5}, ra::ptr(b));
 
         int cp[3] = {1, 2, 3};
         // ra::Owned<int, 1> c({3}, &cp[0]); // forbidden, confusing for higher rank c (pointer matches as rank 1).
-        ra::Owned<int, 1> c({3}, ra::start(cp)); // must start manually
+        ra::Owned<int, 1> c({3}, ra::ptr(cp));
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, c);
     }
-    section("restricted iterators");
+    section("[ra12] check that begin() and end() match for empty views");
     {
-
+        ra::Owned<int, 3> aa({0, 2, 3}, 0.);
+        auto a = aa(ra::all, 1);
+        tr.info("begin ", a.begin().ii.c.p, " end ", a.end().ii.c.p).test(a.begin()==a.end());
     }
     return tr.summary();
 }

@@ -9,7 +9,7 @@
 # later version.
 
 # SConstruct for ra/test
-# @todo Shared pieces with examples/SConstruct
+# @todo Shared pieces with examples/SConstruct and doc/SConstruct
 
 import os, string, atexit
 from colorama import Fore, Back, Style
@@ -21,11 +21,9 @@ try:
 except:
     top = {}
 
-arch = os.popen('./config.guess').read()
-
-# from top level ek.py
+# put into library...
 def take_from_environ(env, var, wrapper=(lambda x: x), default=None):
-    if var in os.environ:
+    if var in os.environ and os.environ[var]!='':
         env[var] = wrapper(os.environ[var])
     elif default is not None:
         env[var] = default
@@ -34,9 +32,9 @@ vars = Variables()
 vars.AddVariables(PathVariable('variant_dir', 'build directory', '.', PathVariable.PathIsDirCreate))
 
 env = Environment(options=vars,
-                    ENV=dict([(k, os.environ[k] if k in os.environ else '')
-                              for k in ['PATH', 'HOME', 'TERM', 'LD_RUN_PATH', 'DYLD_LIBRARY_PATH',
-                                        'RPATH', 'LIBRARY_PATH', 'TEXINPUTS', 'GCC_COLORS', 'BOOST_ROOT']]))
+                  ENV=dict([(k, os.environ[k] if k in os.environ else '')
+                            for k in ['PATH', 'HOME', 'TERM', 'LD_RUN_PATH', 'DYLD_LIBRARY_PATH',
+                                      'RPATH', 'LIBRARY_PATH', 'TEXINPUTS', 'GCC_COLORS', 'BOOST_ROOT']]))
 variant_dir = env['variant_dir']
 
 for var, default in [('CC', 'gcc'), ('CXX', 'g++'), ('FORTRAN', 'gfortran')]:
@@ -45,6 +43,8 @@ for var in ['FORTRANFLAGS', 'LINKFLAGS', 'CCFLAGS', 'CXXFLAGS']:
     take_from_environ(env, var, wrapper=string.split)
 for var in ['RPATH', 'LIBPATH']:
     take_from_environ(env, var, wrapper=lambda x: [x])
+
+arch = os.popen('./config.guess').read()
 
 if arch.find('86-apple-darwin') >= 0:
     archflags=['-march=native', '-Wa,-q']
@@ -110,6 +110,9 @@ def print_summary():
     print '%d targets failed to build.' % build_tally
     print '%d tests failed with %d total failures.' % (test_tally, test_item_tally)
 
+if 'skip_summary' not in top:
+    atexit.register(print_summary)
+
 [to_test_ra(env, test)
  for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
               'test-ra-6', 'test-ra-8',
@@ -119,13 +122,10 @@ def print_summary():
               'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
               'test-tensorindex', 'test-explode-collapse',
-              'test-optimize'
+              'test-optimize'# , 'test-end'
               ]]
 
 [to_test_ra(env, test)
  for test in ['bench-dot', 'bench-reduce-sqrm', 'bench-from', 'bench-gemm', 'bench-pack',
               'bench-sum-rows', 'bench-sum-cols',
               'bench-stencil1', 'bench-stencil2', 'bench-stencil3']]
-
-if 'skip_summary' not in top:
-    atexit.register(print_summary)

@@ -68,7 +68,7 @@ dim_t proddim(D d, D dend)
 
 // Would do this with a base class, but I like View being POD.
 // @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
-#define DEF_ITERATORS(RANK)                                          \
+#define DEF_ITERATORS(RANK)                                             \
     template <rank_t c=0> using iterator = ra::ra_iterator<View<T, RANK>, c>; \
     template <rank_t c=0> using const_iterator = ra::ra_iterator<View<T const, RANK>, c>; \
     template <rank_t c=0> auto iter() { return iterator<c>(dim, p); }   \
@@ -80,40 +80,40 @@ dim_t proddim(D d, D dend)
 
 // See same thing for SmallBase.
 #define DEF_EQOPS(OP)                                                   \
-    template <class X> View & operator OP (X && x)                       \
+    template <class X> View & operator OP (X && x)                      \
     {                                                                   \
-        ply_either(expr([](T & y, T const & x) { y OP x; }, this->iter(), rstart(x))); \
+        ply_either(expr([](T & y, T const & x) { y OP x; }, this->iter(), start(x))); \
         return *this;                                                   \
     }
 #define DEF_ASSIGNMENT_OPS                                              \
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)                              \
     /* These three are unsafe */                                        \
-    View(): p(nullptr) {}                                                \
-    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                 \
-    View(std::initializer_list<dim_t> const s, T * p_): p(p_)            \
+    View(): p(nullptr) {}                                               \
+    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                \
+    View(std::initializer_list<dim_t> const s, T * p_): p(p_)           \
     {                                                                   \
-        ra::resize(View::dim, s.size());                                 \
-        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end());  \
+        ra::resize(View::dim, s.size());                                \
+        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end()); \
     }                                                                   \
-    template <class SS> View(SS const & s, T * p_): p(p_)                \
+    template <class SS> View(SS const & s, T * p_): p(p_)               \
     {                                                                   \
-        ra::resize(View::dim, s.size());                                 \
-        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end());  \
+        ra::resize(View::dim, s.size());                                \
+        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end()); \
     }                                                                   \
-    View(View && x): dim(std::move(x.dim)), p(x.p) {}                     \
-    View(View const & x): dim(x.dim), p(x.p) {}                           \
-    View & operator=(View && x)                                           \
+    View(View && x): dim(std::move(x.dim)), p(x.p) {}                   \
+    View(View const & x): dim(x.dim), p(x.p) {}                         \
+    View & operator=(View && x)                                         \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), rstart(x))); \
+        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x))); \
         return *this;                                                   \
     }                                                                   \
-    View & operator=(View const & x)                                      \
+    View & operator=(View const & x)                                    \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), rstart(x))); \
+        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x))); \
         return *this;                                                   \
     }                                                                   \
     /* Ignore rank, row-major fill. @TODO Use xpr traversal */          \
-    View & operator=(std::initializer_list<T> const x)                   \
+    View & operator=(std::initializer_list<T> const x)                  \
     {                                                                   \
         assert(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
         std::copy(x.begin(), x.end(), this->begin());                   \
@@ -121,11 +121,11 @@ dim_t proddim(D d, D dend)
     }                                                                   \
     bool const empty() { return size()==0; } /* @TODO Optimize */
 
-inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
-{
-    CHECK_BOUNDS(inside(i, dim_src->size));
-    return dim_src->stride*i;
-}
+    inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
+    {
+        CHECK_BOUNDS(inside(i, dim_src->size));
+        return dim_src->stride*i;
+    }
 template <class II>
 inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
@@ -174,7 +174,7 @@ struct View
     DEF_ITERATORS(RANK)
     DEF_ASSIGNMENT_OPS
 
-// Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.H.
+    // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I,                                              \
               std::enable_if_t<((0 + ... + std::is_integral<I>::value)<RANK \
@@ -184,7 +184,7 @@ struct View
         constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
         constexpr rank_t subrank = rank_diff(RANK, reduced);            \
         static_assert(subrank>=0, "bad subrank");                       \
-        View<T CONST, subrank> sub;                                      \
+        View<T CONST, subrank> sub;                                     \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
         /* fill the rest of dim, skipping over beatable subscripts */   \
         for (int i=mp::Apply_<mp::Sum, mp::Map_<beatable_skip, mp::tuple<I ...> > >::value; i<subrank; ++i) { \
@@ -194,7 +194,7 @@ struct View
     }                                                                   \
     /* @BUG doesn't handle generic zero-rank indices */                 \
     template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==RANK, int> = 0> \
-    decltype(auto) operator()(I const & ... i) CONST                            \
+    decltype(auto) operator()(I const & ... i) CONST                    \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     }                                                                   \
@@ -223,7 +223,7 @@ struct View
     SUBSCRIPTS(/*const*/)
 #undef SUBSCRIPTS
 
-    operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
+        operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
 };
 
@@ -292,49 +292,49 @@ bool is_c_order(View<T, RANK> const & a)
 }
 
 // @TODO be convertible to View only, so that View::p is not duplicated
-template <class Ptr, rank_t RANK>
-struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Ptr>::data(std::declval<Ptr>()))>, RANK>
+template <class Store, rank_t RANK>
+struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::data(std::declval<Store>()))>, RANK>
 {
-    Ptr store;
-    using T = std::decay_t<decltype(*storage_traits<Ptr>::data(store))>;
+    Store store;
+    using T = std::decay_t<decltype(*storage_traits<Store>::data(store))>;
     using View = ra::View<T, RANK>;
 
 // @TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
     WithStorage(WithStorage && w): store(std::move(w.store))
     {
         View::dim = std::move(w.dim);
-        View::p = storage_traits<Ptr>::data(store);
+        View::p = storage_traits<Store>::data(store);
     }
     WithStorage(WithStorage const & w): store(w.store)
     {
         View::dim = w.dim;
-        View::p = storage_traits<Ptr>::data(store);
+        View::p = storage_traits<Store>::data(store);
     }
     WithStorage(WithStorage & w): store(w.store)
     {
         View::dim = w.dim;
-        View::p = storage_traits<Ptr>::data(store);
+        View::p = storage_traits<Store>::data(store);
     }
 // Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. @TODO Document this in the tests.
     WithStorage & operator=(WithStorage && w)
     {
         store = std::move(w.store);
         View::dim = std::move(w.dim);
-        View::p = storage_traits<Ptr>::data(store);
+        View::p = storage_traits<Store>::data(store);
         return *this;
     }
     WithStorage & operator=(WithStorage const & w)
     {
         store = w.store;
         View::dim = w.dim;
-        View::p = storage_traits<Ptr>::data(store);
+        View::p = storage_traits<Store>::data(store);
         return *this;
     }
     WithStorage & operator=(WithStorage & w)
     {
         store = w.store;
         View::dim = w.dim;
-        View::p = storage_traits<Ptr>::data(store);
+        View::p = storage_traits<Store>::data(store);
         return *this;
     }
 
@@ -350,8 +350,8 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Ptr>::data
         static_assert(sr==RANK || sr==DIM_ANY || RANK==RANK_ANY, "rank mismatch for init shape");
         ra::resize(View::dim, s.size());
         dim_t t = filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end());
-        store = storage_traits<Ptr>::create(t);
-        View::p = storage_traits<Ptr>::data(store);
+        store = storage_traits<Store>::create(t);
+        View::p = storage_traits<Store>::data(store);
     }
 
     template <class SS> WithStorage(SS const & s, unspecified_t) { init(s); }
@@ -368,7 +368,13 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Ptr>::data
     {
         static_cast<View &>(*this) = x;
     }
- // @TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
+    WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
+    {
+        static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
+        std::copy(x.begin(), x.end(), this->begin());
+    }
+
+// @TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
         CHECK_BOUNDS(this->size()==dim_t(x.size()) && "mismatched sizes");
@@ -376,12 +382,13 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Ptr>::data
     }
     template <class SS> WithStorage(SS const & s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
-        std::copy(x.begin(), x.end(), this->begin());
+        CHECK_BOUNDS(this->size()==dim_t(x.size()) && "mismatched sizes");
+        std::copy(x.begin(), x.end(), this->begin()); // @TODO Use xpr traversal.
     }
-    WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
+    template <class TT>
+    WithStorage(std::initializer_list<dim_t> const s, TT * p): WithStorage(s, unspecified)
     {
-        static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
-        std::copy(x.begin(), x.end(), this->begin());
+        std::copy_n(p, this->size(), this->begin());
     }
     template <class P>
     WithStorage(std::initializer_list<dim_t> const s, P pbegin, P pend): WithStorage(s, unspecified)
@@ -501,7 +508,7 @@ struct View<T, RANK_ANY>
     {                                                                   \
         constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
         assert(this->rank()>=reduced);                                  \
-        View<T CONST, RANK_ANY> sub;                                     \
+        View<T CONST, RANK_ANY> sub;                                    \
         sub.dim.resize(this->rank()-reduced);                           \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
         for (int i=sizeof...(I)-reduced; i<sub.rank(); ++i) {           \
@@ -531,7 +538,7 @@ struct View<T, RANK_ANY>
     SUBSCRIPTS(/*const*/)
 #undef SUBSCRIPTS
 
-    operator T & () { assert(rank()==0); return data()[0]; };
+        operator T & () { assert(rank()==0); return data()[0]; };
     operator T const & () const { assert(rank()==0); return data()[0]; };
 };
 
@@ -560,9 +567,9 @@ struct ra_traits_def<View<T, RANK_ANY>>
     constexpr static rank_t size_s() { return DIM_ANY; }
 };
 
-template <class Ptr, rank_t RANK>
-struct ra_traits_def<WithStorage<Ptr, RANK>>
-    : public ra_traits_def<View<typename WithStorage<Ptr, RANK>::T, RANK>>
+template <class Store, rank_t RANK>
+struct ra_traits_def<WithStorage<Store, RANK>>
+    : public ra_traits_def<View<typename WithStorage<Store, RANK>::T, RANK>>
 {
 };
 
@@ -581,7 +588,7 @@ View<T, RANK> reverse(View<T, RANK> const & raw, int k)
 // dynamic transposed axes list.
 #define DEF_TRANSPOSE(AXES_LIST)                                        \
     template <class T, int RANK, class S>                               \
-    View<T, RANK_ANY> transpose(View<T, RANK> const & raw, AXES_LIST)     \
+    View<T, RANK_ANY> transpose(View<T, RANK> const & raw, AXES_LIST)   \
     {                                                                   \
         assert(raw.rank()==s.size());                                   \
         auto rp = std::max_element(s.begin(), s.end());                 \

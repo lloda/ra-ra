@@ -146,11 +146,38 @@ int main()
         B += std::vector<float>({10, 20});
         cout << "B: " << B << "\n\n";
     }
-// example from the manual [100].
+// example from the manual [ma100].
     {
         ra::Small<int, 3> s {2, 1, 0};
         ra::Small<double, 3> z = pick(s, s*s, s+s, sqrt(s));
         cout << "z: " << z << endl;
+    }
+// example from the manual [ma101].
+    {
+        ra::Owned<char, 2> A({2, 5}, "helloworld");
+        std::cout << format_array(transpose<1, 0>(A), false, "|") << std::endl;
+    }
+    {
+        ra::Owned<char const *, 1> A = {"hello", "array", "world"};
+        std::cout << format_array(A, false, "|") << std::endl;
+    }
+// example from the manual [ma102].
+    {
+        // ra::Owned<char const *, 1> A({3}, "hello"); // ERROR b/c of pointer constructor
+        ra::Owned<char const *, 1> A({3}, ra::scalar("hello"));
+        std::cout << format_array(A, false, "|") << std::endl;
+    }
+// example from the manual [ma103].
+    {
+        ra::Owned<int, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
+        ra::Owned<int, 2> B({2, 3}, {7, 8, 9, 10, 11, 12});
+        ra::Owned<int, 2> C({3, 3}, 0.);
+        for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), C, A, B);
+/* 3 3
+   27 30 33
+   61 68 75
+   95 106 117 */
+        cout << C << endl;
     }
     return 0;
 }

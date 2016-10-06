@@ -246,7 +246,7 @@ int main()
             tr.test_eq(6, ra::ra_traits<ra::View<real, 2>>::size(r));
         }
     }
-    tr.section("iterator for View");
+    tr.section("iterator for View (I)");
     {
         real chk[6] = { 0, 0, 0, 0, 0, 0 };
         real pool[6] = { 1, 2, 3, 4, 5, 6 };
@@ -257,6 +257,7 @@ int main()
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
+    tr.section("iterator for View (II)");
     {
         real chk[6] = { 0, 0, 0, 0, 0, 0 };
         real pool[6] = { 1, 2, 3, 4, 5, 6 };
@@ -266,19 +267,53 @@ int main()
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
-    tr.section("[ra11] check that cell_iterator operator= does NOT copy contents");
+    // some of these tests are disabled depending on cell_iterator::operator=.
+    tr.section("[ra11a] (skipped) ra_iterator operator= (from cell_iterator) does NOT copy contents");
     {
         real a[6] = { 0, 0, 0, 0, 0, 0 };
         real b[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<real> ra { {{3, 2}, {2, 1}}, a };
         ra::View<real> rb { {{3, 2}, {2, 1}}, b };
         auto aiter = ra.iter();
-        auto biter = rb.iter();
-        aiter = biter;
-        tr.test_eq(0, ra);
-        tr.test_eq(rb, aiter);
+        {
+            auto biter = rb.iter();
+            aiter = biter;
+            tr.skip().test_eq(0, ra);
+            tr.skip().test_eq(rb, aiter);
+        }
+        {
+            aiter = rb.iter();
+            tr.skip().test_eq(0, ra);
+            tr.skip().test_eq(rb, aiter);
+        }
     }
-// STL-type iterators.
+    tr.section("[ra11b] ra_iterator operator= (from cell_iterator) DOES copy contents");
+    {
+        ra::Unique<real, 2> A({6, 7}, ra::_0 - ra::_1);
+        ra::Unique<real, 2> AA({6, 7}, 0.);
+        AA.iter<1>() = A.iter<1>();
+        tr.test_eq(A, AA);
+    }
+    tr.section("[ra11c] STL-type iterators never copy contents");
+    {
+        real a[6] = { 0, 0, 0, 0, 0, 0 };
+        real b[6] = { 1, 2, 3, 4, 5, 6 };
+        ra::View<real> ra { {{3, 2}, {2, 1}}, a };
+        ra::View<real> rb { {{3, 2}, {2, 1}}, b };
+        auto aiter = ra.begin();
+        {
+            auto biter = rb.begin();
+            aiter = biter;
+            tr.test_eq(0, ra); // ra unchanged
+            tr.test(std::equal(rb.begin(), rb.end(), aiter)); // aiter changed
+        }
+        {
+            aiter = rb.begin();
+            tr.test_eq(0, ra); // ra unchanged
+            tr.test(std::equal(rb.begin(), rb.end(), aiter)); // aiter changed
+        }
+    }
+    tr.section("STL-type iterators");
     {
         real rpool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<real, 1> r { {ra::Dim {6, 1}}, rpool };
@@ -628,15 +663,15 @@ int main()
             {
                 real rcheck[2] = { 2, 5 };
                 auto r1 = r(1);
-                tr.test_eq(ra::start(rcheck), r1);
+                tr.test_eq(ra::ptr(rcheck), r1);
                 auto r1a = r.at(ra::Small<int, 1> {1});
-                tr.test_eq(ra::start(rcheck), r1a);
+                tr.test_eq(ra::ptr(rcheck), r1a);
                 auto r1b = r.at(ra::Owned<int, 1> {1});
-                tr.test_eq(ra::start(rcheck), r1b);
+                tr.test_eq(ra::ptr(rcheck), r1b);
                 auto r1c = r.at(0+ra::Owned<int, 1> {1});
-                tr.test_eq(ra::start(rcheck), r1c);
+                tr.test_eq(ra::ptr(rcheck), r1c);
                 auto r1d = r.at(0+ra::Owned<int> {1});
-                tr.test_eq(ra::start(rcheck), r1d);
+                tr.test_eq(ra::ptr(rcheck), r1d);
             }
             {
                 real rcheck[2] = { 5 };
@@ -842,6 +877,12 @@ int main()
             auto s = ra::scalar(a);
             cout << "s: " << s.s << endl;
         }
+    }
+    tr.section("scalar as reference");
+    {
+        int a = 3;
+        ra::scalar(a) += ra::Small<int, 3> {4, 5, 6};
+        tr.test_eq(18, a);
     }
     tr.section("ra::iota");
     {

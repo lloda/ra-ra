@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011-2015
+// (c) Daniel Llorens - 2011-2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -30,8 +30,6 @@
 
 namespace ra {
 
-#define BAD_INTERFACE(X) static_assert(X, "bad use of Driver interface"); return 0;
-
 // value_type may be needed to avoid conversion issues.
 template <int w_, class value_type=ra::dim_t>
 struct TensorIndex
@@ -47,50 +45,41 @@ struct TensorIndex
     template <class I> constexpr value_type at(I const & i) const { return value_type(i[w]); }
 
     constexpr static dim_t size(int const k) { return DIM_BAD; } // used in shape checks with dyn. rank.
-    dim_t stride(int const i) const { BAD_INTERFACE(w<0) } // used by Expr::stride_t.
-    value_type * flat() const { BAD_INTERFACE(w<0) } // used by Expr::atom_type type signature.
+    constexpr dim_t stride(int const i) const { assert(w<0); } // used by Expr::stride_t.
+    constexpr value_type * flat() const { assert(w<0); } // used by Expr::atom_type type signature.
 };
 
-#undef BAD_INTERFACE
-
-constexpr TensorIndex<0, int> _0 {};
-constexpr TensorIndex<1, int> _1 {};
-constexpr TensorIndex<2, int> _2 {};
-constexpr TensorIndex<3, int> _3 {};
+#define DEF_TENSORINDEX(i) constexpr TensorIndex<i, int> JOIN(_, i) {};
+FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3);
+#undef DEF_TENSORINDEX
 
 template <class S> struct Scalar;
 
-// Leaf type for Scalar. This is separate from Scalar itself so that operator+=, etc. can have the default use.
+// Separate from Scalar so that operator+=, etc. can be used as usual.
 template <class S>
 struct ScalarFlat: public Scalar<S>
 {
     constexpr void operator+=(dim_t const d) const {}
-    constexpr S const & operator*() const { return this->s; }
+    constexpr decltype(auto) operator*() const { return this->s; } // wary of reference collapsing
 };
 
-// Wrap a scalar for traversal.
-// f(T) will normally be a specialization, so this doesn't drive.
+// Wrap constant for traversal. We still want f(S) to be a specialization in most cases.
 template <class S>
 struct Scalar
 {
+    S s;
+
+    using shape_type = std::array<dim_t, 0>;
     constexpr static rank_t rank_s() { return 0; }
     constexpr static rank_t rank() { return 0; }
     constexpr static dim_t size_s() { return 1; }
-
-    using shape_type = std::array<dim_t, 0>;
     constexpr static shape_type shape() { return shape_type {}; }
 
-    S s;
-    constexpr Scalar(S && s_): s(std::forward<S>(s_)) {}
-
-// Scalar acts as driver in a few places where I didn't bother to specialize (e.g. ra::from). Elsewhere (e.g. in +, *, operator=, etc.) there's always another expr to be driver, or a specialization (e.g. array constructors). Use in ra::from should be removed since a scalar subscript can be beaten; this is probably true of all other uses, and @TODO then we could remove this.
     constexpr static void adv(rank_t const k, dim_t const d) {}
-    template <class I> constexpr S const & at(I const & i) const { return s; }
+    template <class I> constexpr decltype(auto) at(I const & i) const { return s; }
 
 // Used in shape checks with dynamic rank. (Never called because rank is 0).
     constexpr static dim_t size(int const k) { assert(0); return 0; }
-
-// @TODO The result is never used, so maybe there's a way to remove this. @TODO All constexpr.
     constexpr static dim_t stride(int const i) { return 0; }
     constexpr static bool compact_stride(dim_t const step, int const z, int const j) { return true; }
     constexpr ScalarFlat<S> const & flat() const { return static_cast<ScalarFlat<S> const &>(*this); }
@@ -185,8 +174,6 @@ struct Ptr
     using shape_type = std::array<dim_t, 1>;
     constexpr static auto shape() { return shape_type { { dim_t(DIM_BAD) } }; }
 
-    constexpr Ptr(P const & p_): p__(p_) {}
-
     constexpr void adv(rank_t const k, dim_t const d)
     {
         CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
@@ -212,13 +199,13 @@ struct Ptr
 };
 
 template <class T> inline
-constexpr Ptr<T *> ptr(T * p)
+constexpr auto ptr(T * p)
 {
     return Ptr<T *> { p };
 }
 
 template <class T>
-struct IotaLeaf
+struct IotaFlat
 {
     T i_, stride_;
     T const & operator*() const { return i_; } // @TODO if not for this, I could use plain T. Maybe ra::eval_expr...
@@ -262,7 +249,7 @@ struct Iota
     {
         return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
     }
-    constexpr auto flat() const { return IotaLeaf<T> { i_, stride_ }; }
+    constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
 };
 
 template <class O=dim_t, class S=O> inline

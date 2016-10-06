@@ -164,10 +164,7 @@ struct zerostride<std::tuple<Ti ...>>
 template <class LiveAxes, int depth, class A>
 struct ApplyFrames
 {
-    using RestAxes = mp::Complement_<LiveAxes, depth>;
-
     A a;
-    explicit ApplyFrames(A a_): a(a_) {}
 
     constexpr static int live(int k) { return mp::on_tuple<LiveAxes>::index(k); }
 
@@ -181,14 +178,14 @@ struct ApplyFrames
         int l = live(k);
         return l>=0 ? a.size(l) : DIM_BAD;
     }
-    void adv(rank_t const k, dim_t const d)
+    constexpr void adv(rank_t const k, dim_t const d)
     {
         int l = live(k);
         if (l>=0) {
             a.adv(l, d);
         }
     }
-    auto stride(int const k) const
+    constexpr auto stride(int const k) const
     {
         int l = live(k);
         return l>=0 ? a.stride(l) : zerostride<decltype(a.stride(l))>::f();
@@ -199,15 +196,15 @@ struct ApplyFrames
         int wj = live(j);
         return wz>=0 && wj>=0 && a.compact_stride(step, wz, wj); // @BUG may not be false.
     }
-    auto flat() { return a.flat(); }
-    auto flat() const { return a.flat(); }
+    constexpr auto flat() { return a.flat(); }
+    constexpr auto flat() const { return a.flat(); }
 };
 
 template <class LiveAxes, int depth, class Enable=void>
 struct applyframes
 {
     template <class A>
-    static ApplyFrames<LiveAxes, depth, A> f(A && a)
+    constexpr static ApplyFrames<LiveAxes, depth, A> f(A && a)
     {
         return ApplyFrames<LiveAxes, depth, A> { std::forward<A>(a) };
     }
@@ -230,13 +227,9 @@ template <class FM, class Op, class ... Ti, int ... Ki>
 struct Ryn<FM, Op, std::tuple<Ti ...>, std::integer_sequence<int, Ki ...> >
 {
     using T = std::tuple<Ti ...>;
-    using K = std::tuple<mp::int_t<Ki> ...>;
 
 // @BUG Use of these depends on traversal order.
     static int const OuterA = mp::First_<typename FM::axisdrivers>::value;
-
-// @TODO Prove that the last frame covers all the raveled last axes.
-    using flat_t = Flat<Op, std::tuple<decltype(std::declval<Ti>().flat()) ...>>;
 
     Op op;
     T t;
@@ -266,14 +259,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::integer_sequence<int, Ki ...> >
 
 // Find the driver for given axis. This pattern is used below.
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::len<K>), int>
+    std::enable_if_t<(iarg<mp::len<T>), int>
     constexpr driver(int const k)
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? iarg : driver<iarg+1>(k);
     }
     template <int iarg>
-    std::enable_if_t<(iarg==mp::len<K>), int>
+    std::enable_if_t<(iarg==mp::len<T>), int>
     constexpr driver(int const k)
     {
         assert(0 && "there was no driver"); abort();
@@ -281,14 +274,14 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::integer_sequence<int, Ki ...> >
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
     template <int iarg=0>
-    std::enable_if_t<(iarg<mp::len<K>), dim_t>
+    std::enable_if_t<(iarg<mp::len<T>), dim_t>
     constexpr size(int const k) const
     {
         dim_t s = std::get<iarg>(t).size(k);
         return s>=0 ? s : size<iarg+1>(k);
     }
     template <int iarg>
-    std::enable_if_t<(iarg==mp::len<K>), dim_t>
+    std::enable_if_t<(iarg==mp::len<T>), dim_t>
     constexpr size(int const k) const
     {
         assert(0 && "internal error"); abort();
@@ -310,23 +303,21 @@ struct Ryn<FM, Op, std::tuple<Ti ...>, std::integer_sequence<int, Ki ...> >
     {
         (std::get<Ki>(t).adv(k, d), ...);
     }
-    template <int iarg=0>
-    std::enable_if_t<(iarg<mp::len<K>), bool>
-    constexpr compact_stride(dim_t const step, int const z, int const j) const
+    constexpr bool compact_stride(dim_t const step, int const z, int const j) const
     {
         return (std::get<Ki>(t).compact_stride(step, z, j) && ...);
     }
-    auto stride(int const i) const
+    constexpr auto stride(int const i) const
     {
         return std::make_tuple(std::get<Ki>(t).stride(i) ...);
     }
-    constexpr auto flat() -> flat_t
+    constexpr auto flat()
     {
-        return flat_t(op, std::get<Ki>(t).flat() ...);
+        return ra::flat(op, std::get<Ki>(t).flat() ...);
     }
-    constexpr auto flat() const -> flat_t
+    constexpr auto flat() const
     {
-        return flat_t(op, std::get<Ki>(t).flat() ...);
+        return ra::flat(op, std::get<Ki>(t).flat() ...);
     }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
