@@ -82,7 +82,7 @@ dim_t proddim(D d, D dend)
 #define DEF_EQOPS(OP)                                                   \
     template <class X> View & operator OP (X && x)                      \
     {                                                                   \
-        ply_either(expr([](T & y, T const & x) { y OP x; }, this->iter(), start(x))); \
+        for_each([](T & y, T const & x) { y OP x; }, *this, x);         \
         return *this;                                                   \
     }
 #define DEF_ASSIGNMENT_OPS                                              \
@@ -104,12 +104,12 @@ dim_t proddim(D d, D dend)
     View(View const & x): dim(x.dim), p(x.p) {}                         \
     View & operator=(View && x)                                         \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x))); \
+        for_each([](T & dest, T const & src) { dest = src; }, *this, x); \
         return *this;                                                   \
     }                                                                   \
     View & operator=(View const & x)                                    \
     {                                                                   \
-        ply_either(expr([](T & dest, T const & src) { dest = src; }, this->iter(), start(x))); \
+        for_each([](T & dest, T const & src) { dest = src; }, *this, x); \
         return *this;                                                   \
     }                                                                   \
     /* Ignore rank, row-major fill. @TODO Use xpr traversal */          \
@@ -223,7 +223,7 @@ struct View
     SUBSCRIPTS(/*const*/)
 #undef SUBSCRIPTS
 
-        operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
+    operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
 };
 
@@ -291,6 +291,29 @@ bool is_c_order(View<T, RANK> const & a)
     return true;
 }
 
+// template <class X>
+// std::vector<dim_t> qshape(std::vector<dim_t> && s, X && x)
+// {
+//     return s;
+// }
+
+// template <class X>
+// std::vector<dim_t> qshape(std::vector<dim_t> && s, std::initializer_list<X> x)
+// {
+//     s.push_back(x.size());
+//     if (x.size()==0) {
+//         return std::move(s);
+//     } else {
+//         return qshape(std::move(s), *(x.begin()));
+//     }
+// }
+
+// template <class X>
+// std::vector<dim_t> qshape(std::initializer_list<X> x)
+// {
+//     return qshape(std::vector<dim_t>{}, x);
+// }
+
 // @TODO be convertible to View only, so that View::p is not duplicated
 template <class Store, rank_t RANK>
 struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::data(std::declval<Store>()))>, RANK>
@@ -353,6 +376,11 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         store = storage_traits<Store>::create(t);
         View::p = storage_traits<Store>::data(store);
     }
+    template <class Pbegin> void fill1(dim_t xsize, Pbegin xbegin)
+    {
+        CHECK_BOUNDS(this->size()==xsize && "mismatched sizes");
+        std::copy_n(xbegin, xsize, this->begin()); // @TODO Use xpr traversal.
+    }
 
     template <class SS> WithStorage(SS const & s, unspecified_t) { init(s); }
     WithStorage(std::initializer_list<dim_t> const s, unspecified_t) { init(s); }
@@ -371,29 +399,36 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
     {
         static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
-        std::copy(x.begin(), x.end(), this->begin());
+        fill1(x.size(), x.begin());
     }
+    // template <class Q>
+    // WithStorage(std::initializer_list<std::initializer_list<Q> > const x): WithStorage(qshape(x), unspecified)
+    // {
+    //     int i=0;
+    //     for (auto const & xi: x) {
+    //         (*this)(i) = xi;
+    //         ++i;
+    //     }
+    // }
 
 // @TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
-        CHECK_BOUNDS(this->size()==dim_t(x.size()) && "mismatched sizes");
-        std::copy(x.begin(), x.end(), this->begin()); // @TODO Use xpr traversal.
+        fill1(x.size(), x.begin());
     }
     template <class SS> WithStorage(SS const & s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
-        CHECK_BOUNDS(this->size()==dim_t(x.size()) && "mismatched sizes");
-        std::copy(x.begin(), x.end(), this->begin()); // @TODO Use xpr traversal.
+        fill1(x.size(), x.begin());
     }
     template <class TT>
     WithStorage(std::initializer_list<dim_t> const s, TT * p): WithStorage(s, unspecified)
     {
-        std::copy_n(p, this->size(), this->begin());
+        fill1(this->size(), p);
     }
     template <class P>
     WithStorage(std::initializer_list<dim_t> const s, P pbegin, P pend): WithStorage(s, unspecified)
     {
-        std::copy(pbegin, pend, this->begin());
+        fill1(this->size(), pbegin);
     }
     using View::operator=;
 

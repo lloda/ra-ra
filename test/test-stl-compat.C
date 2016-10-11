@@ -45,6 +45,12 @@ int main()
             std::transform(a.begin(), a.end(), b.begin(), [](int a) { return -a; });
             tr.test_eq(a, -b);
         }
+        {
+            ra::Small<int, 2, 3> a(ra::_0 - 2*ra::_1);
+            ra::Small<int, 2, 3> b(99);
+            std::transform(a.begin(), a.end(), b.begin(), [](int a) { return -a; });
+            tr.test_eq(a, -b);
+        }
     }
     section("raw, slippery pointers");
     {

@@ -23,19 +23,64 @@
 #include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
-using std::tuple;
-using real = double;
+using std::tuple; using real = double;
+using ra::dim_t;
+
+// Find the driver for given axis. This pattern is used in Ryn to find the size-giving argument for each axis.
+template <int iarg, class T>
+std::enable_if_t<(iarg==mp::len<std::decay_t<T>>), int>
+constexpr driver(T && t, int k)
+{
+    assert(0 && "there was no driver"); abort();
+}
+
+template <int iarg, class T>
+std::enable_if_t<(iarg<mp::len<std::decay_t<T>>), int>
+constexpr driver(T && t, int k)
+{
+    dim_t s = std::get<iarg>(t).size(k);
+    return s>=0 ? iarg : driver<iarg+1>(t, k);
+}
+
+template <class FM, class Enable=void> struct DebugFrameMatch
+{
+    constexpr static bool terminal = true;
+    using R = typename FM::R;
+    constexpr static int depth = FM::depth;
+    using framedrivers = mp::int_list<FM::driver>;
+    using axisdrivers = mp::MakeList_<mp::Ref_<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>;
+    using axisaxes = mp::Iota_<mp::Ref_<typename FM::live, FM::driver>::value, mp::len<mp::Ref_<typename FM::R_, FM::driver>>>;
+    using argindices = mp::Zip_<axisdrivers, axisaxes>;
+};
+
+template <class FM> struct DebugFrameMatch<FM, std::enable_if_t<mp::exists<typename FM::FM> > >
+{
+    using FMC = typename FM::FM;
+    using DFMC = DebugFrameMatch<FMC>;
+
+    constexpr static bool terminal = false;
+    using R = typename FM::R;
+    constexpr static int depth = FM::depth;
+    using framedrivers = mp::Cons_<mp::int_t<FM::driver>, typename DFMC::framedrivers>;
+    using axisdrivers = mp::Append_<mp::MakeList_<mp::Ref_<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>,
+                                    typename DFMC::axisdrivers>;
+    using axisaxes = mp::Append_<mp::Iota_<mp::Ref_<typename FM::live, FM::driver>::value, mp::len<mp::Ref_<typename FM::R_, FM::driver>>>,
+                                 typename DFMC::axisaxes>;
+    using argindices = mp::Zip_<axisdrivers, axisaxes>;
+};
 
 template <class V, class A, class B>
 void framematch_demo(V && v, A && a, B && b)
 {
     using FM = ra::Framematch<std::decay_t<V>, tuple<decltype(a.iter()), decltype(b.iter())>>;
-    cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
-    cout << "FM::R: " << mp::print_int_list<typename FM::R> {} << endl;
-    cout << "FM::framedrivers: " << mp::print_int_list<typename FM::framedrivers> {} << endl;
-    cout << "FM::axisdrivers: " << mp::print_int_list<typename FM::axisdrivers> {} << endl;
-    cout << "FM::axisaxes: " << mp::print_int_list<typename FM::axisaxes> {} << endl;
-    cout << "FM::argindices: " << mp::print_int_list<typename FM::argindices> {} << endl;
+    using DFM = DebugFrameMatch<FM>;
+    cout << "FM is terminal: " << DFM::terminal << endl;
+    cout << "width of fm: " << mp::len<typename DFM::R> << ", depth: " << DFM::depth << endl;
+    cout << "FM::R: " << mp::print_int_list<typename DFM::R> {} << endl;
+    cout << "FM::framedrivers: " << mp::print_int_list<typename DFM::framedrivers> {} << endl;
+    cout << "FM::axisdrivers: " << mp::print_int_list<typename DFM::axisdrivers> {} << endl;
+    cout << "FM::axisaxes: " << mp::print_int_list<typename DFM::axisaxes> {} << endl;
+    cout << "FM::argindices: " << mp::print_int_list<typename DFM::argindices> {} << endl;
     cout << endl;
 }
 
@@ -48,8 +93,8 @@ void nested_wrank_demo(V && v, A && a, B && b)
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
         cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
         cout << mp::print_int_list<typename FM::R> {} << endl;
-        auto af0 = ra::applyframes<mp::Ref_<typename FM::R, 0>, FM::depth>::f(a.iter());
-        auto af1 = ra::applyframes<mp::Ref_<typename FM::R, 1>, FM::depth>::f(b.iter());
+        auto af0 = ra::applyframes<mp::Ref_<typename FM::R, 0>, FM::depth>(a.iter());
+        auto af1 = ra::applyframes<mp::Ref_<typename FM::R, 1>, FM::depth>(b.iter());
         cout << sizeof(af0) << endl;
         cout << sizeof(af1) << endl;
         {
@@ -57,7 +102,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
             cout << sizeof(ryn) << endl;
             cout << "ryn rank: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {
-                cout << ryn.size(k) << ": " << ryn.driver(k) << ", " << endl;
+                cout << ryn.size(k) << ": " << driver<0>(ryn.t, k) << endl;
             }
 
             // cout << mp::show_type<decltype(ra::ryn_<FM>(FM::op(v), af0, af1))>::value << endl;
@@ -78,6 +123,8 @@ void nested_wrank_demo(V && v, A && a, B && b)
             ra::plier(ra::ryn(v, a.iter(), b.iter()));
             TEST(ply_ravel);
             TEST(ply_index);
+            TEST(plyf);
+            TEST(plyf_index);
         }
         cout << "\n\n" << endl;
     }
@@ -104,6 +151,7 @@ int main()
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
         {
+            framematch_demo(plus2real, a, b);
             framematch_demo(ra::wrank<0, 0>(plus2real), a, b);
             framematch_demo(ra::wrank<0, 1>(plus2real), a, b);
             framematch_demo(ra::wrank<1, 0>(plus2real), a, b);
@@ -115,15 +163,15 @@ int main()
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
             cout << "width of fm: " << mp::len<FM::R> << ", depth: " << FM::depth << endl;
             cout << mp::print_int_list<FM::R> {} << endl;
-            auto af0 = ra::applyframes<mp::Ref_<FM::R, 0>, FM::depth>::f(a.iter());
-            auto af1 = ra::applyframes<mp::Ref_<FM::R, 1>, FM::depth>::f(b.iter());
+            auto af0 = ra::applyframes<mp::Ref_<FM::R, 0>, FM::depth>(a.iter());
+            auto af1 = ra::applyframes<mp::Ref_<FM::R, 1>, FM::depth>(b.iter());
             cout << sizeof(af0) << endl;
             cout << sizeof(af1) << endl;
             auto ryn = ra::ryn_<FM>(FM::op(v), af0, af1);
             cout << sizeof(ryn) << "\n" << endl;
             cout << "ryn rank: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {
-                cout << ryn.size(k) << ": " << ryn.driver(k) << ", " << endl;
+                cout << ryn.size(k) << ": " << driver<0>(ryn.t, k) << endl;
             }
             ra::ply_ravel(ryn);
         }
@@ -269,6 +317,63 @@ int main()
             cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
             tr.test_eq(c1, c2);
         }
+    }
+    section("stencil test for ApplyFrames::keep_stride. Reduced from test/bench-stencil2.C");
+    {
+        int nx = 4;
+        int ny = 4;
+        int ts = 4; // must be even b/c of swap
+
+        auto I = ra::iota(nx-2, 1);
+        auto J = ra::iota(ny-2, 1);
+
+        constexpr ra::Small<real, 3, 3> mask = { 0, 1, 0,
+                                                 1, -4, 1,
+                                                 0, 1, 0 };
+
+        real value = 1;
+
+        auto f_raw = [&](ra::View<real, 2> & A, ra::View<real, 2> & Anext, ra::View<real, 4> & Astencil)
+            {
+                for (int t=0; t<ts; ++t) {
+                    for (int i=1; i+1<nx; ++i) {
+                        for (int j=1; j+1<ny; ++j) {
+                            Anext(i, j) = -4*A(i, j)
+                            + A(i+1, j) + A(i, j+1)
+                            + A(i-1, j) + A(i, j-1);
+                        }
+                    }
+                    std::swap(A.p, Anext.p);
+                }
+            };
+        auto f_sumprod = [&](ra::View<real, 2> & A, ra::View<real, 2> & Anext, ra::View<real, 4> & Astencil)
+            {
+                for (int t=0; t!=ts; ++t) {
+                    Astencil.p = A.data();
+                    Anext(I, J) = 0; // @TODO miss notation for sum-of-axes without preparing destination...
+                    Anext(I, J) += map(ra::wrank<2, 2>(ra::times()), Astencil, mask);
+                    std::swap(A.p, Anext.p);
+                }
+            };
+        auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f)
+            {
+                A = value;
+                Anext = 0.;
+
+                f(A, Anext, Astencil);
+
+                tr.info(tag).test_rel_error(ref, A, 1e-11);
+            };
+
+        ra::Owned<real, 2> Aref;
+        ra::Owned<real, 2> A({nx, ny}, 1.);
+        ra::Owned<real, 2> Anext({nx, ny}, 0.);
+        auto Astencil = stencil(A, 1, 1);
+        cout << "Astencil " << format_array(Astencil(0, 0, ra::dots<2>), true, "|", " ") << endl;
+#define BENCH(ref, op) bench(A, Anext, Astencil, ref, STRINGIZE(op), op);
+        BENCH(A, f_raw);
+        Aref = ra::Owned<real, 2>(A);
+        BENCH(Aref, f_sumprod);
     }
     return tr.summary();
 }

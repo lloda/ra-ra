@@ -221,9 +221,9 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     {
         return std::get<A>(t).size(i);
     }
-    constexpr bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr bool keep_stride(dim_t const step, int const z, int const j) const
     {
-        return (std::get<I>(t).compact_stride(step, z, j) && ...);
+        return (std::get<I>(t).keep_stride(step, z, j) && ...);
     }
     auto stride(int const i) const -> stride_t // @BUG clang 3.9 issues with constexpr/TensorIndex
     {

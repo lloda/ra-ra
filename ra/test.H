@@ -12,9 +12,6 @@
 /// @file test.H
 /// @brief Minimal test library.
 
-// I am entitled to know what I did. This is America. A man is guilty until proven innocent!
-//     - Mr. Blandings builds his dream house
-
 #include <string>
 #include <iostream>
 #include <iomanip>

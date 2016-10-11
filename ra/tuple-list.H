@@ -590,8 +590,7 @@ struct PermutationSign
                                  C, Org>::value;
 };
 
-template <int ... I>
-using int_list = tuple<int_t<I> ...>;
+template <int ... I> using int_list = tuple<int_t<I> ...>;
 
 // increment the w-th element of an int_t<> list.
 template <class L, int w>

@@ -40,12 +40,11 @@ void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
 {
     std::ostringstream o;
     o << a;
-    cout << "a: " << o.str() << endl;
     {
         std::istringstream i(o.str());
         std::istream_iterator<real> iend;
         std::istream_iterator<real> ibegin(i);
-        tr.test(std::equal(ibegin, iend, begin));
+        tr.info("reading back from '", o.str(), "'").test(std::equal(ibegin, iend, begin));
     }
     {
         std::istringstream i(o.str());
@@ -54,11 +53,8 @@ void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
         i >> b;
         auto as = ra::ra_traits<A>::shape(a);
         auto bs = ra::ra_traits<A>::shape(b);
-        cout << "o: " << o.str() << endl;
-        cout << "as: " << ra::vector(as) << ", bs: " << ra::vector(bs) << endl;
-        cout << "a: " << a << ", b: " << b << endl;
-        tr.test(std::equal(as.begin(), as.end(), bs.begin()));
-        tr.test(std::equal(a.begin(), a.begin(), b.begin()));
+        tr.info("shape from '", o.str(), "'").test(std::equal(as.begin(), as.end(), bs.begin()));
+        tr.info("content").test(std::equal(a.begin(), a.begin(), b.begin()));
     }
 }
 
@@ -230,19 +226,19 @@ int main()
         {
             using real2x3 = ra::Small<real, 2, 3>;
             real2x3 r { 1, 2, 3, 4, 5, 6 };
-            cout << "r rank: " << ra::ra_traits<real2x3>::rank(r) << endl;
+            tr.test_eq(2, ra::ra_traits<real2x3>::rank(r));
             tr.test_eq(6, ra::ra_traits<real2x3>::size(r));
         }
         {
             real pool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::View<real> r { {{3, 2}, {2, 1}}, pool };
-            cout << "r rank: " << ra::ra_traits<ra::View<real>>::rank(r) << endl;
+            tr.test_eq(2, ra::ra_traits<ra::View<real>>::rank(r));
             tr.test_eq(6, ra::ra_traits<ra::View<real>>::size(r));
         }
         {
             real pool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::View<real, 2> r { { ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
-            cout << "r rank: " << ra::ra_traits<ra::View<real, 2>>::rank(r) << endl;
+            ra::View<real, 2> r {{ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
+            tr.test_eq(2, ra::ra_traits<ra::View<real, 2>>::rank(r));
             tr.test_eq(6, ra::ra_traits<ra::View<real, 2>>::size(r));
         }
     }
@@ -253,7 +249,7 @@ int main()
         ra::View<real> r { {{3, 2}, {2, 1}}, pool };
         ra::ra_iterator<ra::View<real>> it(r.dim, r.p);
         cout << "as iterator: " << ra::print_iterator(it) << endl;
-        cout << "View<real> it.c.p: " << it.c.p << endl;
+        tr.test(r.data()==it.c.p);
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
@@ -333,15 +329,15 @@ int main()
         real pool[6] = { 1, 2, 3, 4, 5, 6 };
 
         ra::Shared<real> s({3, 2}, pool, pool+6);
-        cout << "s rank: " << s.rank() << endl;
+        tr.test_eq(2, s.rank());
         tr.test(std::equal(pool, pool+6, s.begin()));
 
         ra::Unique<real> u({3, 2}, pool, pool+6);
-        cout << "u rank: " << u.rank() << endl;
+        tr.test_eq(2, u.rank());
         tr.test(std::equal(pool, pool+6, u.begin()));
 
         ra::Owned<real> o({3, 2}, pool, pool+6);
-        cout << "o rank: " << o.rank() << endl;
+        tr.test_eq(2, o.rank());
         tr.test(std::equal(pool, pool+6, o.begin()));
     }
     tr.section("driver selection");
@@ -436,20 +432,17 @@ int main()
         {
             int checkb[6] = { 0, 0, 1, 1, 2, 2 };
             ra::Unique<int, 2> b({3, 2}, ra::_0);
-            cout << b << endl;
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
 // This requires the driverless xpr dyn(scalar, tensorindex) to be constructible.
         {
             int checkb[6] = { 3, 3, 4, 4, 5, 5 };
             ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a+b; }, ra::scalar(3), ra::_0));
-            cout << b << "\n" << endl;
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
         {
             int checkb[6] = { 0, -1, 1, 0, 2, 1 };
             ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_0, ra::_1));
-            cout << b << "\n" << endl;
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
 // @TODO Check this is an error (chosen driver is TensorIndex<2>, that can't drive).
@@ -457,7 +450,7 @@ int main()
         //     ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_2, ra::_1));
         //     cout << b << endl;
         // }
-// @TODO Could this be made to work?
+// @TODO Could this be made to bomb at compile time?
         // {
         //     ra::Unique<int> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_2, ra::_1));
         //     cout << b << endl;
@@ -467,11 +460,9 @@ int main()
     {
         real checka[6] = { 9, 9, 9, 9, 9, 9 };
         ra::Unique<real, 2> a({3, 2}, ra::scalar(9));
-        cout << a << endl;
         tr.test(std::equal(checka, checka+6, a.begin()));
         real checkb[6] = { 11, 11, 22, 22, 33, 33 };
         ra::Unique<real, 2> b({3, 2}, ra::Small<real, 3> { 11, 22, 33 });
-        cout << b << endl;
         tr.test(std::equal(checkb, checkb+6, b.begin()));
     }
     tr.section("construct Unique from Unique");
@@ -480,10 +471,8 @@ int main()
         ra::Unique<real, 2> a({3, 2}, { 2, 3, 1, 4, 8, 9 });
         // ra::Unique<real, 2> b(a); // error; need temp
         ra::Unique<real, 2> c(ra::Unique<real, 2>({3, 2}, { 2, 3, 1, 4, 8, 9 })); // ok; from actual temp
-        cout << "c: " << c << endl;
         tr.test(std::equal(check, check+6, c.begin()));
         ra::Unique<real, 2> d(std::move(a)); // ok; from fake temp
-        cout << "d: " << d << endl;
         tr.test(std::equal(check, check+6, d.begin()));
     }
     tr.section("construct from xpr having its own shape");
@@ -572,12 +561,12 @@ int main()
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
         }
-        // {
-        //     ra::Unique<real, 0> a({}, 99);
-        //     auto b = transpose<>(a);
-        //     tr.test_eq(0, b.rank());
-        //     tr.test_eq(99, b());
-        // }
+        {
+            ra::Unique<real, 0> a({}, 99);
+            auto b = transpose<>(a);
+            tr.test_eq(0, b.rank());
+            tr.test_eq(99, b());
+        }
     }
     tr.section("row-major assignment from initializer_list, rank 2");
     {

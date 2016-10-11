@@ -81,7 +81,7 @@ struct Scalar
 // Used in shape checks with dynamic rank. (Never called because rank is 0).
     constexpr static dim_t size(int const k) { assert(0); return 0; }
     constexpr static dim_t stride(int const i) { return 0; }
-    constexpr static bool compact_stride(dim_t const step, int const z, int const j) { return true; }
+    constexpr static bool keep_stride(dim_t const step, int const z, int const j) { return true; }
     constexpr ScalarFlat<S> const & flat() const { return static_cast<ScalarFlat<S> const &>(*this); }
 
 // impl depends on ra::Expr, see expr.H
@@ -91,8 +91,8 @@ struct Scalar
 };
 
 // For the use of std::forward<>, see eg http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
-template <class S>
-constexpr Scalar<S> scalar(S && s)
+template <class S> inline constexpr
+auto scalar(S && s)
 {
     return Scalar<S> { std::forward<S>(s) };
 }
@@ -134,9 +134,9 @@ struct Vector
         return p__[i[0]];
     }
     constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
-    constexpr static bool compact_stride(dim_t const step, int const z, int const j)
+    constexpr static bool keep_stride(dim_t const step, int const z, int const j)
     {
-        return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
+        return (z==0) == (j==0); // reduced from cell_iterator::keep_stride()
     }
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
@@ -147,8 +147,8 @@ struct Vector
 #undef DEF_EQOPS
 };
 
-template <class V> inline
-constexpr Vector<V> vector(V && v)
+template <class V> inline constexpr
+auto vector(V && v)
 {
     return Vector<V> { std::forward<V>(v) };
 }
@@ -185,9 +185,9 @@ struct Ptr
         return p__[i[0]];
     }
     constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
-    constexpr static bool compact_stride(dim_t const step, int const z, int const j)
+    constexpr static bool keep_stride(dim_t const step, int const z, int const j)
     {
-        return (z==0) == (j==0); // cf Vector::compact_stride
+        return (z==0) == (j==0); // cf Vector::keep_stride
     }
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
@@ -198,8 +198,8 @@ struct Ptr
 #undef DEF_EQOPS
 };
 
-template <class T> inline
-constexpr auto ptr(T * p)
+template <class T> inline constexpr
+auto ptr(T * p)
 {
     return Ptr<T *> { p };
 }
@@ -245,9 +245,9 @@ struct Iota
         return org_ + T(i[0])*stride_;
     }
     constexpr static dim_t stride(rank_t const i) { return i==0 ? 1 : 0; }
-    constexpr static bool compact_stride(dim_t const step, int const z, int const j)
+    constexpr static bool keep_stride(dim_t const step, int const z, int const j)
     {
-        return (z==0) == (j==0); // reduced from cell_iterator::compact_stride()
+        return (z==0) == (j==0); // reduced from cell_iterator::keep_stride()
     }
     constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
 };
@@ -276,7 +276,7 @@ template <class II> struct is_beatable_def<Iota<II>>
     constexpr static bool static_p = false; // it cannot for Iota
 };
 
-template <int n> struct is_beatable_def<dots_t<n> >
+template <int n> struct is_beatable_def<dots_t<n>>
 {
     static_assert(n>=0, "bad count for dots_n");
     constexpr static bool value = (n>=0);
@@ -285,27 +285,24 @@ template <int n> struct is_beatable_def<dots_t<n> >
     constexpr static bool static_p = true;
 };
 
-template <class I> using is_beatable = is_beatable_def<std::decay_t<I> >;
+template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 template <class I> struct beatable_skip { struct type { constexpr static int value = is_beatable<I>::skip; }; };
 
 template <class X> constexpr bool has_tensorindex_def = false;
-template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T> >;
-template <int w, class value_type> constexpr bool has_tensorindex_def<TensorIndex<w, value_type> > = true;
+template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T>>;
+template <int w, class value_type> constexpr bool has_tensorindex_def<TensorIndex<w, value_type>> = true;
 
-template <class Op, class T, class K=std::make_integer_sequence<int, mp::len<T> > > struct Expr;
-template <class T, class K=std::make_integer_sequence<int, mp::len<T> > > struct Pick;
-template <class FM, class Op, class T, class K=std::make_integer_sequence<int, mp::len<T> > > struct Ryn;
+template <class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>> > struct Expr;
+template <class T, class K=std::make_integer_sequence<int, mp::len<T>> > struct Pick;
+template <class FM, class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Ryn;
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
 
 template <class Op, class ... Ti, class K>
 constexpr bool has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
-
 template <class ... Ti, class K>
 constexpr bool has_tensorindex_def<Pick<std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
-
 template <class LiveAxes, int depth, class A>
 constexpr bool has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>> = has_tensorindex<A>;
-
 template <class FM, class Op, class ... Ti, class K>
 constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
 

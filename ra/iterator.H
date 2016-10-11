@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2014
+// (c) Daniel Llorens - 2013-2014, 2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -10,7 +10,7 @@
 #define RA_ITERATOR_H
 
 /// @file iterator.H
-/// @brief Row-major iterator, supports both STL and ply interfaces.
+/// @brief Array iterator for Raw, plus row-major STL iterator.
 
 #include "ra/traits.H"
 #include "ra/opcheck.H"
@@ -32,9 +32,7 @@
 namespace ra {
 
 template <class I> struct Print_iterator { I i; };
-
-template <class I>
-Print_iterator<I> print_iterator(I && i) { return Print_iterator<I> { std::forward<I>(i) }; }
+template <class I> auto print_iterator(I && i) { return Print_iterator<I> { std::forward<I>(i) }; }
 
 template <class I>
 std::ostream & operator<<(std::ostream & o, Print_iterator<I> && p)
@@ -51,8 +49,8 @@ std::ostream & operator<<(std::ostream & o, Print_iterator<I> && p)
 constexpr rank_t dependent_cell_rank(rank_t rank, rank_t crank)
 {
     return crank>=0 ? crank // not dependent
-         : rank==RANK_ANY ? RANK_ANY // defer
-         : rank+crank;
+        : rank==RANK_ANY ? RANK_ANY // defer
+        : rank+crank;
 }
 
 constexpr rank_t dependent_frame_rank(rank_t rank, rank_t crank)
@@ -75,6 +73,7 @@ struct cell_iterator
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
 
     constexpr static rank_t rank_s() { return framer; }
+    constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
 
     using shape_type = mp::If_<rank_s()==DIM_ANY, typename ra_traits<V>::shape_type, Small<dim_t, rank_s()>>;
     using dims_p = decltype(std::declval<V const>().dim); // @TODO can this be & ?
@@ -84,8 +83,6 @@ struct cell_iterator
 
     dims_p dim; // @TODO either have an equivalent object for Small, or take V & and ask through that.
     cell_type c;
-
-    constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
 
     cell_iterator() { c.p = nullptr; } // end marker only.
     cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
@@ -104,13 +101,12 @@ struct cell_iterator
             c.dim[k] = s_[k+rank];
         }
     }
-
-    constexpr static dim_t fullsize_s() { return ra_traits<V>::size_s(); }
     constexpr static dim_t size_s()
     {
-        return fullsize_s()==DIM_ANY ? DIM_ANY : fullsize_s() / ra_traits<cell_type>::size_s();
+        constexpr dim_t fullsize_s = ra_traits<V>::size_s();
+        return fullsize_s==DIM_ANY ? DIM_ANY : fullsize_s / ra_traits<cell_type>::size_s();
     }
-    // @TODO Refactor w/ ra_traits<View>::shape.
+// @TODO Refactor w/ ra_traits<View>::shape.
     shape_type shape() const
     {
         rank_t const iend = rank();
@@ -123,7 +119,7 @@ struct cell_iterator
 
     constexpr dim_t size(int const j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
     constexpr dim_t stride(int const j) const { return j<rank() ? dim[j].stride : 0; }
-    constexpr bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr bool keep_stride(dim_t const step, int const z, int const j) const
     {
         dim_t sz = z<rank() ? dim[z].stride : 0;
         dim_t sj = j<rank() ? dim[j].stride : 0;
@@ -135,20 +131,18 @@ struct cell_iterator
     }
 };
 
-#define DEF_EQOPS(OP)                                                   \
-    template <class X> void operator OP(X && x)                         \
-    {                                                                   \
-        for_each([](auto && y, auto && x) { y OP x; }, *this, start(x)); \
-    }                                                                   \
-    template <class X> void operator OP(ra_iterator const & x)          \
-    {                                                                   \
-        for_each([](auto && y, auto && x) { y OP x; }, *this, start(x)); \
-    }
+#define DEF_EQOPS(OP)                                               \
+    template <class X> void operator OP(X && x)                     \
+    { for_each([](auto && y, auto && x) { y OP x; }, *this, x); }   \
+    template <class X> void operator OP(ra_iterator const & x)      \
+    { for_each([](auto && y, auto && x) { y OP x; }, *this, x); }
 
 template <class V, rank_t cellr=0>
 struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
 {
     using P = cell_iterator<V, cellr, ra_iterator<V, cellr>>;
+    ra_iterator(): P() {};
+    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
     auto flat() const { return cellp<typename P::cell_type> { P::c }; }
 // Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. @TODO Think this over.
@@ -160,10 +154,6 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
     }
     decltype(auto) operator_star() const { return P::c; }
     decltype(auto) operator_star() { return P::c; }
-
-    ra_iterator(): P() {};
-    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
-
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 };
 
@@ -171,6 +161,8 @@ template <class V>
 struct ra_iterator<V, 0>: public cell_iterator<V, 0, ra_iterator<V, 0>>
 {
     using P = cell_iterator<V, 0, ra_iterator<V, 0>>;
+    ra_iterator(): P() {};
+    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
     auto flat() const { return P::c.p; }
     template <class I>
@@ -181,10 +173,6 @@ struct ra_iterator<V, 0>: public cell_iterator<V, 0, ra_iterator<V, 0>>
     }
     decltype(auto) operator_star() const { return *P::c.p; }
     decltype(auto) operator_star() { return *P::c.p; }
-
-    ra_iterator(): P() {};
-    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
-
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 };
 #undef DEF_EQOPS

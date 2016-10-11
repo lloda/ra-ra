@@ -108,22 +108,22 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         return op(std::get<I>(t).at(i) ...);
     }
-    constexpr void adv(rank_t const k, dim_t const d)
+    constexpr void adv(rank_t k, dim_t d)
     {
         (std::get<I>(t).adv(k, d), ...);
     }
 
 // there's one size (by A), but each arg has its own strides.
 // Note: do not require driver. This is needed by check for all leaves.
-    constexpr auto size(int const i) const -> dim_t
+    constexpr dim_t size(int i) const
     {
         return std::get<A>(t).size(i);
     }
-    constexpr bool compact_stride(dim_t const step, int const z, int const j) const
+    constexpr bool keep_stride(dim_t step, int z, int j) const
     {
-        return (std::get<I>(t).compact_stride(step, z, j) && ...);
+        return (std::get<I>(t).keep_stride(step, z, j) && ...);
     }
-    constexpr auto stride(int const i) const
+    constexpr auto stride(int i) const
     {
         return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
@@ -179,13 +179,13 @@ auto expr(Op && op, P && ... p)
 
 // Wrappers over expr & ply_either.
 
-template <class F, class ... A> inline
+template <class F, class ... A> inline constexpr
 auto map(F && f, A && ... a)
 {
     return expr(std::forward<F>(f), start(std::forward<A>(a)) ...);
 }
 
-template <class F, class ... A> inline
+template <class F, class ... A> inline constexpr
 void for_each(F && f, A && ... a)
 {
     ply_either(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));

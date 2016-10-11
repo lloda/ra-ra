@@ -135,6 +135,11 @@ int main()
         auto z = ra::ra_traits<std::array<real, 3>>::make(3);
         tr.test_eq(3u, z.size());
     }
+    tr.section("traits");
+    {
+        ra::Small<real, 2, 3> a {1, 2, 3, 4, 5, 6};
+        tr.test_eq(ra::Small<ra::dim_t, 2> {2, 3}, ra::ra_traits<decltype(a)>::shape(a));
+    }
     tr.section("static stride computation");
     {
         using d = mp::int_list<3, 4, 5>;

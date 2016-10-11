@@ -88,11 +88,11 @@ However, if array operations are implemented naively, a piece of code such as @c
 Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as `loop fusion' REF, `drag along' REF, or `deforestation' REF. In the C++ context the technique of `expression templates' was pioneered in the late 90s by libraries such as Blitz++ REF. It works by making @code{B+C} into an `expression object' which holds references to its arguments and executes the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated loop nest above.
 
 @menu
-* Rank polymorphism::      What makes arrays special.
-* Features of ra-ra::      APL and J are the right model.
-* Why C++::                High level, low level.
-* Guidelines::             How ra-ra tries to do things.
-* Other libraries::        Inspiration and desperation.
+* Rank polymorphism::       What makes arrays special.
+* Drag along and beating::  The basic array optimizations.
+* Why C++::                 High level, low level.
+* Guidelines::              How ra-ra tries to do things.
+* Other libraries::         Inspiration and desperation.
 @end menu
 
 @c ------------------------------------------------
@@ -104,7 +104,7 @@ Fortunately the problem is almost as old as aggregate data types, and other prog
 
 For example, think of a matrix A, a 2-array with sizes (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}.
 
-The obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
+An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
 
 @quotation
 A: [A(0), A(1), ...]
@@ -145,9 +145,11 @@ A(i₀) ≡ ((storage-of-A), o+s₀i₀, (s₁, ...))
 Note that we can iterate over these items by simply bumping the pointer o+s₀i₀. This means that iterating over (k>0)-cells doesn't cost any  more than iterating over 0-cells.
 
 @c ------------------------------------------------
-@node Features of ra-ra
-@section Features of ra-ra
+@node Drag along and beating
+@section Drag along and beating
 @c ------------------------------------------------
+
+
 
 
 @c ------------------------------------------------

@@ -49,13 +49,13 @@ struct Indexer0
     template <class P>
     constexpr static dim_t index_p(P const & p) // for Container::at().
     {
-        static_assert(mp::len<sizes> >= P::size(), "too many indices"); // gcc accepts p.size()
-        return Indexer0<sizes, strides>::template index_p_<P::size(), 0>(0, p);
+// gcc accepts p.size(), but I also need P = std::array to work. See also below.
+        static_assert(mp::len<sizes> >= ra_traits<P>::size_s(), "too many indices");
+        return Indexer0<sizes, strides>::template index_p_<ra_traits<P>::size_s(), 0>(0, p);
     }
     template <class P, std::enable_if_t<ra_traits<P>::size_s()!=RANK_ANY, int> =0>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
-// gcc accepts p.size(), but I also need P = std::array to work.
         static_assert(mp::len<sizes> <= ra_traits<P>::size_s(), "too few indices");
         return Indexer0<sizes, strides>::template index_p_<mp::len<sizes>, 0>(0, p);
     }
@@ -92,8 +92,8 @@ struct Indexer1
     {
 // use dim.data() to skip the size check.
         dim_t c = 0;
-        ply_either(expr([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
-                        ptr(dim.data()), start(p)));
+        for_each([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
+                 ptr(dim.data()), p);
         return c;
     }
     template <class Dim, class P>
@@ -241,8 +241,8 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     using sizes = sizes_;
     using strides = strides_;
 
-    constexpr static std::array<dim_t, mp::len<sizes_>> ssizes = mp::tuple_copy<sizes, std::array<dim_t, mp::len<sizes>> >::f();
-    constexpr static std::array<dim_t, mp::len<strides_>> sstrides = mp::tuple_copy<strides, std::array<dim_t, mp::len<strides>> >::f();
+    constexpr static Small<dim_t, mp::len<sizes_>> ssizes = mp::tuple_copy<sizes, Small<dim_t, mp::len<sizes>> >::f();
+    constexpr static Small<dim_t, mp::len<strides_>> sstrides = mp::tuple_copy<strides, Small<dim_t, mp::len<strides>> >::f();
 
 // @TODO complete static check on strides.
     template <class TTT> struct BadDimension
@@ -288,10 +288,10 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     template <class I>                                                  \
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \
-        return SmallView<T CONST, mp::Drop_<sizes, I::size()>, mp::Drop_<strides, I::size()>> \
+        return SmallView<T CONST, mp::Drop_<sizes, ra_traits<I>::size_s()>, mp::Drop_<strides, ra_traits<I>::size_s()>> \
             (data()+Indexer0<sizes, strides>::index_p(i));              \
     }                                                                   \
-    constexpr decltype(auto) operator[](dim_t const i) CONST                      \
+    constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
         static_assert(rank()==1, "bad rank");                           \
         return data()[i*mp::Ref_<strides, 0>::value];                   \
@@ -302,17 +302,17 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
 // See same thing for View.
 #define DEF_EQOPS(OP)                                                   \
-        template <class X> Child & operator OP(X && x)                  \
+    template <class X> constexpr Child & operator OP(X && x)            \
     {                                                                   \
         /* @TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
         constexpr rank_t xrank = std::decay_t<decltype(start(x))>::rank_s(); \
         static_assert(xrank<=rank() || xrank==RANK_ANY, "bad assigment"); \
-        ply_either(expr([](T & y, T const & x) { y OP x; }, this->iter(), start(x))); \
+        for_each([](T & y, T const & x) { y OP x; }, static_cast<Child &>(*this), x); \
         return static_cast<Child &>(*this);                             \
     }
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
-    Child & operator=(std::initializer_list<T> const x)
+    constexpr Child & operator=(std::initializer_list<T> const x)
     {
         assert(x.size()==size() && "bad initializer list"); /* static_assert */
         std::copy(x.begin(), x.end(), this->begin());
@@ -338,20 +338,18 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     {
         P p;
 
-// @TODO See ra_traits<Small>. Why do these twice? Also just reuse ssizes.
-        using shape_type = Small<dim_t, mp::len<sizes>>;
-        constexpr static auto shape() { return mp::tuple_copy<sizes, shape_type>::f(); }
-
         using value_type = typename std::iterator_traits<P>::value_type;
 
-        constexpr Iterator(P p_): p(size()==0 ? nullptr: p_) {}
-        template <class PP> constexpr Iterator(PP const & q): p(size()==0 ? nullptr : q.p) {}
-        constexpr Iterator(): p(nullptr) {}
+        constexpr Iterator(P p_): p(p_) {}
+        constexpr Iterator(Iterator const & q): p(q.p) {}
+        constexpr Iterator() = delete;
 
-// For xpr use; cf this stride() against SmallBase::stride().
+// @TODO See ra_traits<Small>. Why do these twice?
+        constexpr static auto const & shape() { return ssizes; }
         constexpr static dim_t size(int const j) { return SmallBase::size(j); }
+// For xpr use; cf this stride() against SmallBase::stride().
         constexpr static dim_t stride(int const j) { return j<rank() ? SmallBase::stride(j) : 0; }
-        constexpr bool compact_stride(dim_t const step, int const z, int const j) const
+        constexpr bool keep_stride(dim_t const step, int const z, int const j) const
         {
             return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
         }
@@ -386,9 +384,9 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         using iterator_category = std::forward_iterator_tag;
 
         Iterator ii;
-        typename Iterator::shape_type i;
-        template <class PP> general_stl_iterator(PP const & p): ii(p) { std::fill(i.begin(), i.end(), 0.); }
-        general_stl_iterator(): ii() {}
+        std::decay_t<decltype(ssizes)> i;
+        general_stl_iterator(pointer const & p): ii(i.size()==0 ? nullptr : p) { std::fill(i.begin(), i.end(), 0.); }
+        general_stl_iterator(): ii(pointer(nullptr)) {}
 
         template <class PP> bool operator==(PP const & q) const { return ii.p==q.ii.p; }
         template <class PP> bool operator!=(PP const & q) const { return ii.p!=q.ii.p; }
@@ -422,9 +420,9 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
 // @TODO apparently this won't be needed anymore in C++17 (http://en.cppreference.com/w/cpp/language/static).
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-constexpr std::array<dim_t, mp::len<sizes_>> SmallBase<Child_, T, sizes_, strides_>::ssizes;
+constexpr Small<dim_t, mp::len<sizes_>> SmallBase<Child_, T, sizes_, strides_>::ssizes;
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-constexpr std::array<dim_t, mp::len<strides_>> SmallBase<Child_, T, sizes_, strides_>::sstrides;
+constexpr Small<dim_t, mp::len<strides_>> SmallBase<Child_, T, sizes_, strides_>::sstrides;
 
 template <class T, class sizes, class strides>
 struct SmallView: public SmallBase<SmallView, T, sizes, strides>
@@ -457,9 +455,9 @@ struct SmallView: public SmallBase<SmallView, T, sizes, strides>
     using Base = SmallBase<ra::SmallArray, T, sizes, strides>;          \
     T p[Base::size()];                                                  \
                                                                         \
-    constexpr SmallArray() {}                                           \
+    constexpr SmallArray(): p() {}                                      \
     template <class X>                                                  \
-    constexpr SmallArray(X && x)                                        \
+    constexpr SmallArray(X && x): p()                                   \
     {                                                                   \
         static_cast<Base &>(*this) = x;                                 \
     }                                                                   \
@@ -529,8 +527,8 @@ struct ra_traits_small
 {
     using V = Type_<T, sizes, strides>;
     using value_type = T;
-    using shape_type = Small<dim_t, V::rank()>;
-    constexpr static shape_type shape(V const & v) { return mp::tuple_copy<sizes, shape_type>::f(); }
+    using shape_type = std::decay_t<decltype(V::ssizes)>;
+    constexpr static auto const & shape(V const & v) { return V::ssizes; }
 #define MAKE_COND (std::is_same<strides, mp::int_list<1>>::value && std::is_same<sizes, mp::Take_<sizes, 1>>::value)
     constexpr static V make(dim_t const n)
     {
@@ -560,10 +558,7 @@ struct ra_traits_def<SmallView<T, sizes, strides>>: public ra_traits_small<Small
 template <class A, class i>
 struct axis_indices
 {
-    template <class T> struct MatchIndex
-    {
-        using type = mp::int_t<(T::value==i::value)>;
-    };
+    template <class T> struct MatchIndex { using type = mp::int_t<(T::value==i::value)>; };
     using I = mp::Iota_<mp::len<A>>;
     using W = mp::Map_<MatchIndex, A>;
     using type = mp::Filter_<W, I>;

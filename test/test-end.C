@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2014-2016
+// (c) Daniel Llorens - 2016
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -28,9 +28,9 @@ struct End
     constexpr void adv(rank_t const k, dim_t const d) {}
     template <class I> constexpr value_type at(I const & i) const { assert(0); return 0; }
 
-    constexpr static dim_t size(int const k) { return DIM_BAD; } // used in shape checks with dyn. rank.
-    dim_t stride(int const i) const { assert(0); return 0; } // used by Expr::stride_t.
-    value_type * flat() const { assert(0); return nullptr; } // used by Expr::atom_type type signature. Also used as a duck-type marker for is_ra_iterator (ouch).
+    constexpr static dim_t size(int const k) { return DIM_BAD; }
+    constexpr dim_t stride(int const i) const { assert(0); }
+    constexpr value_type * flat() const { assert(0); }
 };
 
 constexpr End end {};

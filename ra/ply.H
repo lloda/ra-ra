@@ -59,7 +59,7 @@ void ply_index(A && a)
 
 // Traverse array expression looking to ravel the inner loop.
 // size() is only used on the driving argument (largest rank).
-// adv(), stride(), compact_stride() and flat() are used on all the leaf arguments. The strides must give 0 for k>=their own rank, to allow frame matching.
+// adv(), stride(), keep_stride() and flat() are used on all the leaf arguments. The strides must give 0 for k>=their own rank, to allow frame matching.
 // @TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <class A> inline
 void ply_ravel(A && a)
@@ -84,7 +84,7 @@ void ply_ravel(A && a)
 // find outermost compact dim.
     rank_t * ocd = order;
     auto ss = a.size(*ocd);
-    for (--rank, ++ocd; rank>0 && a.compact_stride(ss, order[0], *ocd); --rank, ++ocd) {
+    for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.size(*ocd);
     }
     dim_t ind[rank], sha[rank];
@@ -146,7 +146,7 @@ void plyf_index(A && a)
 {
     using Shape = std::decay_t<decltype(a.shape())>;
     Shape i(ra_traits<Shape>::make(a.rank(), 0));
-    subindexf<mp::Iota_<A::rank_s()>>(a, i); // cf with ply_index() for C order.
+    subindexf<mp::Iota_<std::decay_t<A>::rank_s()>>(a, i); // cf with ply_index() for C order.
 }
 
 // -------------------------
@@ -196,44 +196,40 @@ until(int const jj, A & a, dim_t const s, S const & ss0)
 }
 
 template <class A> inline
-auto plyf(A && a) -> std::enable_if_t<(A::rank_s()<=0)>
+auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
-    static_assert(A::rank_s()==0, "plyf needs static rank");
+    static_assert(std::decay_t<A>::rank_s()==0, "plyf needs static rank");
     *(a.flat());
 }
 
 template <class A> inline
-auto plyf(A && a) -> std::enable_if_t<(A::rank_s()==1)>
+auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()==1)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
     subindex<mp::Iota_<1>, 1>(a, a.size(0), a.stride(0));
 }
 
 template <class A> inline
-auto plyf(A && a) -> std::enable_if_t<(A::rank_s()>1)>
+auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
     /* constexpr */ rank_t const rank = a.rank();
 #if 0
 // find the outermost compact dim.
-    {
-        /* constexpr */ auto s = a.size(rank-1);
-        int j = 1;
-        while (j!=rank && a.compact_stride(s, rank-1, rank-1-j)) {
-            s *= a.size(rank-1-j);
-            ++j;
-        }
+    /* constexpr */ auto s = a.size(rank-1);
+    int j = 1;
+    while (j!=rank && a.keep_stride(s, rank-1, rank-1-j)) {
+        s *= a.size(rank-1-j);
+        ++j;
+    }
 // all sub xpr strides advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-        until<mp::Iota_<A::rank_s()>, 0>(j, a, s, a.stride(rank-1));
-    }
+    until<mp::Iota_<std::decay_t<A>::rank_s()>, 0>(j, a, s, a.stride(rank-1));
 #else
 // according to bench-dot.C, the unrolling above isn't worth it :-/ @TODO
-    {
-        /* constexpr */ auto s = a.size(rank-1);
-        subindex<mp::Iota_<A::rank_s()>, 1>(a, s, a.stride(rank-1));
-    }
+    /* constexpr */ auto s = a.size(rank-1);
+    subindex<mp::Iota_<std::decay_t<A>::rank_s()>, 1>(a, s, a.stride(rank-1));
 #endif
 }
 
@@ -311,12 +307,12 @@ bool ply_index_exit_1(A && a, Op && op)
     return op(false);
 }
 
-template <class A, class Op, std::enable_if_t<is_ra_iterator<A> && (A::rank_s()!=1 || has_tensorindex<A>), int> = 0>
+template <class A, class Op, std::enable_if_t<is_ra_iterator<A> && (std::decay_t<A>::rank_s()!=1 || has_tensorindex<A>), int> = 0>
 bool ply_either_exit(A && a, Op && op)
 {
     return ply_index_exit(a, op);
 }
-template <class A, class Op, std::enable_if_t<is_ra_iterator<A> && (A::rank_s()==1 && !has_tensorindex<A>), int> = 0>
+template <class A, class Op, std::enable_if_t<is_ra_iterator<A> && (std::decay_t<A>::rank_s()==1 && !has_tensorindex<A>), int> = 0>
 bool ply_either_exit(A && a, Op && op)
 {
     return ply_index_exit_1(a, op);

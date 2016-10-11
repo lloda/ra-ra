@@ -94,7 +94,7 @@ struct f_stencil_explicit
     };
 };
 
-// sum() inside uses run time sizes and 3-dim ply_ravel loop which is much (20x w/gcc) slower. @TODO
+// sum() inside uses run time sizes and 3-dim ply_ravel loop which is much (10x w/gcc) slower. @TODO
 struct f_stencil_arrayop
 {
     THEOP
