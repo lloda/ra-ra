@@ -55,7 +55,7 @@ int main()
         {
             std::vector<int> const a = { 1, 2, 3 };
             ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
-            transpose(b, {0, 2, 1}) = ra::vector(a);
+            transpose({0, 2, 1}, b) = ra::vector(a);
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));

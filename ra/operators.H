@@ -19,6 +19,7 @@
 #include "ra/large.H"
 #include "ra/complex.H"
 #include "ra/wedge.H"
+#include "ra/global.H"
 
 #ifdef RA_CHECK_BOUNDS
 #define RA_CHECK_BOUNDS_RA_OPERATORS RA_CHECK_BOUNDS
@@ -46,24 +47,10 @@
 
 #define START(a) *(ra::start(a).flat())
 
-// This global version must be available so that ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 . See also wedge() in ra/wedge.H.
-template <class ... Iarg, class A, std::enable_if_t<ra::is_scalar<A>, int> =0>
-decltype(auto) transpose(A && a)
-{
-    static_assert(sizeof...(Iarg)==0, "bad transpose axes list for scalar");
-    return START(a);
-}
-
-// See ::wedge() in ra/wedge.H, need ra::is_scalar<> to define.
-// These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
-template <class T, class F,
-          std::enable_if_t<ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>, int> =0>
-inline decltype(auto) where(bool const w, T && t, F && f) { return w ? START(t) : START(f); }
-
 namespace ra {
 
 template <int ... Iarg, class A>
-inline decltype(auto) transpose(A && a, mp::int_list<Iarg ...>)
+inline decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
 {
     return transpose<Iarg ...>(std::forward<A>(a));
 }
@@ -467,6 +454,9 @@ gemv(ra::View<S, 2> const & a, ra::View<T, 1> const & b)
 }
 
 #undef START
+
+// @TODO adjust type for var rank/var size/fixed size. Check temporary.H.
+template <class X> auto make_array(X && x) { return ra::Owned<ra::value_t<X>, decltype(start(x))::rank_s()>(x); }
 
 } // namespace ra
 

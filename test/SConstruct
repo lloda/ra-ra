@@ -54,6 +54,7 @@ else:
 env.Append(CPPPATH=['..', 'test'],
            CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
            CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+                     '-finput-charset=UTF-8', '-fextended-identifiers',
                      #'-Wconversion',
                      # '-funsafe-math-optimizations', # @TODO Test with this.
                  ])
@@ -122,7 +123,9 @@ if 'skip_summary' not in top:
               'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
               'test-tensorindex', 'test-explode-collapse',
-              'test-optimize'# , 'test-end'
+              'test-optimize'
+              # , 'test-small-iterator'
+              # , 'test-end'
               ]]
 
 [to_test_ra(env, test)

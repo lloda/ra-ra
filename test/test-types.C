@@ -36,7 +36,7 @@ using std::cout; using std::endl; using std::flush;
 
 int main()
 {
-    TestRecorder tr(std::cout);
+    TestRecorder tr(std::cout, TestRecorder::NOISY);
     {
 // SmallBase is excluded in is_slice by ra_traits @TODO
         TEST_PREDICATES(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, mp::int_list<3>, mp::int_list<1>>>()))
@@ -46,6 +46,8 @@ int main()
         TEST_PREDICATES(std::complex<double>)
             (false, false, false, true, false);
         TEST_PREDICATES(decltype(ra::Unique<int, 2>()))
+            (true, true, false, false, false);
+        TEST_PREDICATES(decltype(ra::View<int, 2>()))
             (true, true, false, false, false);
         TEST_PREDICATES(decltype(ra::Unique<int, 2>().iter()))
             (true, false, true, false, false);
@@ -70,7 +72,10 @@ int main()
     }
     section("establish meaning of selectors (@TODO / convert to TestRecorder)");
     {
-// rank 0 containers/slices are not is_slice (and therefore not is_ra) so that their conversions to scalar are used instead.
+        static_assert(ra::is_slice<ra::View<int, 0>>);
+        static_assert(ra::is_slice<ra::View<int, 2>>);
+        static_assert(ra::is_slice<ra::SmallView<int, mp::int_list<>, mp::int_list<>>>);
+
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
         static_assert(ra::is_ra<ra::SmallView<int, mp::nil, mp::nil>>, "bad is_ra SmallView");
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");

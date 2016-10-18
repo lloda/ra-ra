@@ -35,17 +35,15 @@ template <int w_, class value_type=ra::dim_t>
 struct TensorIndex
 {
     static_assert(w_>=0, "bad TensorIndex");
-
     constexpr static int w = w_;
+    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn. rank.
+    constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t size_s() { return DIM_BAD; }
 
-    constexpr void adv(rank_t const k, dim_t const d) {}
     template <class I> constexpr value_type at(I const & i) const { return value_type(i[w]); }
-
-    constexpr static dim_t size(int const k) { return DIM_BAD; } // used in shape checks with dyn. rank.
-    constexpr dim_t stride(int const i) const { assert(w<0); } // used by Expr::stride_t.
+    constexpr void adv(rank_t k, dim_t d) {}
+    constexpr dim_t stride(int i) const { assert(w<0); } // used by Expr::stride_t.
     constexpr value_type * flat() const { assert(w<0); } // used by Expr::atom_type type signature.
 };
 
@@ -53,49 +51,46 @@ struct TensorIndex
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3);
 #undef DEF_TENSORINDEX
 
-template <class S> struct Scalar;
+template <class C> struct Scalar;
 
-// Separate from Scalar so that operator+=, etc. can be used as usual.
-template <class S>
-struct ScalarFlat: public Scalar<S>
+// Separate from Scalar so that operator+=, etc. has the array meaning there.
+// We can reuse the Scalar object b/c operator+= is a no-op.
+template <class C>
+struct ScalarFlat: public Scalar<C>
 {
-    constexpr void operator+=(dim_t const d) const {}
-    constexpr decltype(auto) operator*() const { return this->s; } // wary of reference collapsing
+    constexpr void operator+=(dim_t d) const {}
+    constexpr decltype(auto) operator*() const { return this->c; } // wary of reference collapsing
 };
 
-// Wrap constant for traversal. We still want f(S) to be a specialization in most cases.
-template <class S>
+// Wrap constant for traversal. We still want f(C) to be a specialization in most cases.
+template <class C>
 struct Scalar
 {
-    S s;
-
-    using shape_type = std::array<dim_t, 0>;
-    constexpr static rank_t rank_s() { return 0; }
-    constexpr static rank_t rank() { return 0; }
-    constexpr static dim_t size_s() { return 1; }
-    constexpr static shape_type shape() { return shape_type {}; }
-
-    constexpr static void adv(rank_t const k, dim_t const d) {}
-    template <class I> constexpr decltype(auto) at(I const & i) const { return s; }
+    C c;
 
 // Used in shape checks with dynamic rank. (Never called because rank is 0).
-    constexpr static dim_t size(int const k) { assert(0); return 0; }
-    constexpr static dim_t stride(int const i) { return 0; }
-    constexpr static bool keep_stride(dim_t const step, int const z, int const j) { return true; }
-    constexpr ScalarFlat<S> const & flat() const { return static_cast<ScalarFlat<S> const &>(*this); }
+    constexpr static dim_t size(int k) { assert(0); return 0; }
+    constexpr static dim_t size_s() { return 1; }
+    constexpr static rank_t rank() { return 0; }
+    constexpr static rank_t rank_s() { return 0; }
+    using shape_type = std::array<dim_t, 0>;
+    constexpr static shape_type shape() { return shape_type {}; }
 
-// impl depends on ra::Expr, see expr.H
-#define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
+    template <class I> constexpr decltype(auto) at(I const & i) const { return c; }
+    constexpr static void adv(rank_t k, dim_t d) {}
+    constexpr static dim_t stride(int i) { return 0; }
+    constexpr static bool keep_stride(dim_t step, int z, int j) { return true; }
+    constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); }
+
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
 
 // For the use of std::forward<>, see eg http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
-template <class S> inline constexpr
-auto scalar(S && s)
-{
-    return Scalar<S> { std::forward<S>(s) };
-}
+template <class C> inline constexpr auto
+scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Wrap something with {size, begin} as 1-D vector. Sort of reduced ra_iterator.
 // ra::ra_traits_def<V> must be defined with ::size, ::size_s.
@@ -110,7 +105,7 @@ struct Vector
     static_assert(!std::is_reference<decltype(p__)>::value, "bad iterator type");
 
     constexpr dim_t size() const { return traits::size(v); }
-    constexpr dim_t size(int const i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
+    constexpr dim_t size(int i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
     constexpr static dim_t size_s() { return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
@@ -120,44 +115,36 @@ struct Vector
 // see test-compatibility.C [a1] for forward() here.
     Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
 
-    void adv(rank_t const k, dim_t const d)
-    {
-// k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-compatibility.C.
-// k==0 && d!=1 happens on turning back at end of ply; @TODO we need this only on outer products and such.
-        CHECK_BOUNDS(d==1 || d<0);
-        p__ += (k==0) * d;
-    }
     template <class I>
     decltype(auto) at(I const & i)
     {
         CHECK_BOUNDS(inside(i[0], this->size()));
         return p__[i[0]];
     }
-    constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t const step, int const z, int const j)
+    constexpr void adv(rank_t k, dim_t d)
     {
-        return (z==0) == (j==0); // reduced from cell_iterator::keep_stride()
+// k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-compatibility.C.
+// k==0 && d!=1 happens on turning back at end of ply; @TODO we need this only on outer products and such.
+        CHECK_BOUNDS(d==1 || d<0);
+        p__ += (k==0) * d;
     }
+    constexpr static dim_t stride(int i) { return i==0 ? 1 : 0; }
+// reduced from cell_iterator::keep_stride()
+    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
 
-// impl depends on ra::Expr, see expr.H
-#define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
 
-template <class V> inline constexpr
-auto vector(V && v)
-{
-    return Vector<V> { std::forward<V>(v) };
-}
+template <class V> inline constexpr auto
+vector(V && v) { return Vector<V> { std::forward<V>(v) }; }
 
-template <class T> inline
-constexpr Vector<std::initializer_list<T>> vector(std::initializer_list<T> && v)
-{
-    return Vector<std::initializer_list<T>> { std::move(v) };
-}
+template <class T> inline constexpr Vector<std::initializer_list<T>>
+vector(std::initializer_list<T> && v) { return Vector<std::initializer_list<T>> { std::move(v) }; }
 
 // Like Vector, but on the iterator itself, so no size, P only needs to have +=, *, [].
 // ra::ra_traits_def<P> doesn't need to be defined.
@@ -167,49 +154,45 @@ struct Ptr
     P p__;
 
     constexpr static dim_t size() { return DIM_BAD; }
-    constexpr static dim_t size(int const i) { CHECK_BOUNDS(i==0); return DIM_BAD; }
+    constexpr static dim_t size(int i) { CHECK_BOUNDS(i==0); return DIM_BAD; }
     constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     using shape_type = std::array<dim_t, 1>;
     constexpr static auto shape() { return shape_type { { dim_t(DIM_BAD) } }; }
 
-    constexpr void adv(rank_t const k, dim_t const d)
-    {
-        CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
-        p__ += (k==0) * d;
-    }
     template <class I>
     constexpr decltype(auto) at(I const & i)
     {
         return p__[i[0]];
     }
-    constexpr static dim_t stride(int const i) { return i==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t const step, int const z, int const j)
+    constexpr void adv(rank_t k, dim_t d)
     {
-        return (z==0) == (j==0); // cf Vector::keep_stride
+        CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
+        p__ += (k==0) * d;
     }
+    constexpr static dim_t stride(int i) { return i==0 ? 1 : 0; }
+// reduced from cell_iterator::keep_stride()
+    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
 
-// impl depends on ra::Expr, see expr.H
-#define DEF_EQOPS(OP) template <class X> void operator OP(X && x);
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
 
-template <class T> inline constexpr
-auto ptr(T * p)
-{
-    return Ptr<T *> { p };
-}
+template <class T> inline constexpr auto
+ptr(T * p) { return Ptr<T *> { p }; }
 
 template <class T>
 struct IotaFlat
 {
-    T i_, stride_;
+    T i_;
+    T const stride_;
     T const & operator*() const { return i_; } // @TODO if not for this, I could use plain T. Maybe ra::eval_expr...
-    void operator+=(dim_t const d) { i_ += T(d)*stride_; }
+    void operator+=(dim_t d) { i_ += T(d)*stride_; }
 };
 
 template <class T_>
@@ -221,39 +204,35 @@ struct Iota
     T const stride_;
     T i_;
 
-    using shape_type = std::array<dim_t, 1>;
-    constexpr auto shape() const { return shape_type { { size_ } }; }
-
-    constexpr dim_t size() const { return size_; } // this is a Slice function...
-    constexpr dim_t size(int const i) const { CHECK_BOUNDS(i==0); return size_; }
-    constexpr rank_t rank() const { return 1; }
-    constexpr static rank_t rank_s() { return 1; };
-    constexpr static dim_t size_s() { return DIM_ANY; }
-
     constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), org_(org), stride_(stride), i_(org)
     {
         CHECK_BOUNDS(size>=0);
     }
 
-    constexpr void adv(rank_t const k, dim_t const d)
-    {
-        i_ += T((k==0) * d) * stride_; // cf Vector::adv below.
-    }
+    constexpr dim_t size() const { return size_; } // this is a Slice function...
+    constexpr dim_t size(int i) const { CHECK_BOUNDS(i==0); return size_; }
+    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr rank_t rank() const { return 1; }
+    constexpr static rank_t rank_s() { return 1; };
+    using shape_type = std::array<dim_t, 1>;
+    constexpr auto shape() const { return shape_type { { size_ } }; }
+
     template <class I>
     constexpr decltype(auto) at(I const & i)
     {
         return org_ + T(i[0])*stride_;
     }
-    constexpr static dim_t stride(rank_t const i) { return i==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t const step, int const z, int const j)
+    constexpr void adv(rank_t k, dim_t d)
     {
-        return (z==0) == (j==0); // reduced from cell_iterator::keep_stride()
+        i_ += T((k==0) * d) * stride_; // cf Vector::adv
     }
+    constexpr static dim_t stride(rank_t i) { return i==0 ? 1 : 0; }
+// reduced from cell_iterator::keep_stride()
+    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
 };
 
-template <class O=dim_t, class S=O> inline
-constexpr auto
+template <class O=dim_t, class S=O> inline constexpr auto
 iota(dim_t size, O org=0, S stride=1)
 {
     using T = std::common_type_t<O, S>;

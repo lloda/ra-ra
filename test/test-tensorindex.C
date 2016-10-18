@@ -47,12 +47,12 @@ int main()
 
         B = 0.;
         B = map(A, j, i);
-        tr.info("transpose 1").test_eq(transpose(A, {1, 0}), B);
+        tr.info("transpose 1").test_eq(transpose({1, 0}, A), B);
 
 // the map will work on either side of =. Note however that map(B, i, j) = map(A, j, i) won't work b/c the extent of the overall expr is undelimited.
         B = 0.;
         map(B, j, i) = A;
-        tr.info("transpose 2").test_eq(transpose(A, {1, 0}), B);
+        tr.info("transpose 2").test_eq(transpose({1, 0}, A), B);
 
 // normal rank agreement can be abused to do some kinds of reductions.
         z = 0.;

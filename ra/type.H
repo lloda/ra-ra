@@ -22,13 +22,13 @@ namespace ra {
 
 // specialize this for new types for which is_scalar<> should be true. These are foreign types.
 template <class A> constexpr bool is_scalar_def = !std::is_pointer<A>::value && std::is_scalar<A>::value;
-template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A> >;
+template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A>>;
 
 // the other class of foreign types we care about.
 template <class A> constexpr bool is_foreign_vector_def = false;
-template <class A, class Enable=void> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A> >;
-template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A> > = true;
-template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N> > = true;
+template <class A, class Enable=void> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A>>;
+template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A>> = true;
+template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
 
 template <class A, class Enable=void> constexpr bool is_slice = false;
 template <class A> constexpr bool
@@ -48,7 +48,7 @@ is_ra_iterator<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t
 
 template <class A, class Enable=void> constexpr bool is_ra_iterator_pos_rank = false;
 template <class A> constexpr bool
-is_ra_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0> > = is_ra_iterator<A>;
+is_ra_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0>> = is_ra_iterator<A>;
 
 template <class A> constexpr bool is_ra = is_ra_iterator<A> || is_slice<A>;
 template <class A> constexpr bool is_ra_pos_rank = is_ra_iterator_pos_rank<A> || is_slice_pos_rank<A>;
@@ -68,7 +68,7 @@ template <class ... A> constexpr bool
 ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
 
 template <class T>
-struct ra_traits_def<T, std::enable_if_t<is_scalar<T> > >
+struct ra_traits_def<T, std::enable_if_t<is_scalar<T>>>
 {
     using V = T;
     using value_type = T;
@@ -95,7 +95,7 @@ inline constexpr auto start(T && t)
 }
 
 // @TODO not used yet, dots is beaten.
-template <class T, std::enable_if_t<std::is_same<dots_t<std::decay_t<T>::rank_s()>, std::decay_t<T> >::value, int> =0>
+template <class T, std::enable_if_t<std::is_same<dots_t<std::decay_t<T>::rank_s()>, std::decay_t<T>>::value, int> =0>
 inline constexpr auto start(T && t)
 {
     return std::forward<T>(t);

@@ -93,34 +93,34 @@ void nested_wrank_demo(V && v, A && a, B && b)
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
         cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
         cout << mp::print_int_list<typename FM::R> {} << endl;
-        auto af0 = ra::applyframes<mp::Ref_<typename FM::R, 0>, FM::depth>(a.iter());
-        auto af1 = ra::applyframes<mp::Ref_<typename FM::R, 1>, FM::depth>(b.iter());
+        auto af0 = ra::applyframes<mp::Ref_<typename FM::R, 0>, FM::depth>::f(a.iter());
+        auto af1 = ra::applyframes<mp::Ref_<typename FM::R, 1>, FM::depth>::f(b.iter());
         cout << sizeof(af0) << endl;
         cout << sizeof(af1) << endl;
         {
-            auto ryn = ra::ryn_<FM>(FM::op(v), af0, af1);
+            auto ryn = ra::ryn<FM>(FM::op(v), af0, af1);
             cout << sizeof(ryn) << endl;
             cout << "ryn rank: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {
                 cout << ryn.size(k) << ": " << driver<0>(ryn.t, k) << endl;
             }
 
-            // cout << mp::show_type<decltype(ra::ryn_<FM>(FM::op(v), af0, af1))>::value << endl;
-            cout << "\nusing (ryn_ &):\n";
+            // cout << mp::show_type<decltype(ra::ryn<FM>(FM::op(v), af0, af1))>::value << endl;
+            cout << "\nusing (ryn &):\n";
             ra::ply_ravel(ryn);
             cout << endl;
-            cout << "\nusing (ryn_ &&):\n";
-            ra::ply_ravel(ra::ryn_<FM>(FM::op(v), af0, af1));
+            cout << "\nusing (ryn &&):\n";
+            ra::ply_ravel(ra::ryn<FM>(FM::op(v), af0, af1));
         }
         {
-            // cout << mp::show_type<decltype(ra::ryn(v, a.iter(), b.iter()))>::value << endl;
-            auto ryn = ra::ryn(v, a.iter(), b.iter());
+            // cout << mp::show_type<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
+            auto ryn = ra::expr(v, a.iter(), b.iter());
             cout << "ryn.shape(): " << ra::format_array(ryn.shape(), false) << endl;
 #define TEST(plier)                                                     \
             cout << "\n\nusing " STRINGIZE(plier) " (ryn &):\n";        \
             ra::plier(ryn);                                             \
             cout << "\n\nusing " STRINGIZE(plier) " ply (ryn &&):\n";   \
-            ra::plier(ra::ryn(v, a.iter(), b.iter()));
+            ra::plier(ra::expr(v, a.iter(), b.iter()));
             TEST(ply_ravel);
             TEST(ply_index);
             TEST(plyf);
@@ -163,11 +163,11 @@ int main()
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
             cout << "width of fm: " << mp::len<FM::R> << ", depth: " << FM::depth << endl;
             cout << mp::print_int_list<FM::R> {} << endl;
-            auto af0 = ra::applyframes<mp::Ref_<FM::R, 0>, FM::depth>(a.iter());
-            auto af1 = ra::applyframes<mp::Ref_<FM::R, 1>, FM::depth>(b.iter());
+            auto af0 = ra::applyframes<mp::Ref_<FM::R, 0>, FM::depth>::f(a.iter());
+            auto af1 = ra::applyframes<mp::Ref_<FM::R, 1>, FM::depth>::f(b.iter());
             cout << sizeof(af0) << endl;
             cout << sizeof(af1) << endl;
-            auto ryn = ra::ryn_<FM>(FM::op(v), af0, af1);
+            auto ryn = ra::ryn<FM>(FM::op(v), af0, af1);
             cout << sizeof(ryn) << "\n" << endl;
             cout << "ryn rank: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {
@@ -225,20 +225,20 @@ int main()
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
         ra::Unique<real, 2> c({3, 4}, ra::unspecified);
-        ra::ply_either(ra::ryn(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
+        ra::ply_either(ra::expr(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
         cout << "c: " << c << endl;
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
                                /* 11-[1 2 3 4] */ 10, 9, 8, 7,
                                /* 12-[1 2 3 4] */ 11, 10, 9, 8 };
         tr.test(std::equal(checkc34, checkc34+3*4, c.begin()));
-        ra::Unique<real, 2> d34(ra::ryn(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d34(ra::expr(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
         cout << "d34: " << d34 << endl;
         tr.test(std::equal(checkc34, checkc34+3*4, d34.begin()));
         real checkc43[3*4] = { /* [10 11 12]-1 */ 9, 10, 11,
                                /* [10 11 12]-2 */ 8, 9, 10,
                                /* [10 11 12]-3 */ 7, 8, 9,
                                /* [10 11 12]-4 */ 6, 7, 8 };
-        ra::Unique<real, 2> d43(ra::ryn(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d43(ra::expr(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
         cout << "d43: " << d43 << endl;
         tr.test(d43.size(0)==4 && d43.size(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
@@ -254,8 +254,8 @@ int main()
 
         real checkd[3*4] = { 1001, 1002, 1003, 1004,  1101, 1102, 1103, 1104,  1201, 1202, 1203, 1204 };
 // default auto is value, so need to speficy.
-#define EXPR ra::ryn(ra::wrank<0, 1>([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
-                     a.iter(), b.iter())
+#define EXPR ra::expr(ra::wrank<0, 1>([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
+                      a.iter(), b.iter())
         std::ostringstream os;
         os << EXPR << endl;
         ra::Unique<real, 2> cc {};
@@ -288,9 +288,9 @@ int main()
         ra::Unique<real, 3> a({2, 2, 2}, 1.);
         ra::Unique<real, 3> b({2, 2, 2}, 2.);
         real y = 0;
-        auto e = ra::ryn(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
+        auto e = ra::expr(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
         static_assert(3==e.rank(), "bad rank in static rank expr");
-        ra::ply_ravel(ra::ryn(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
+        ra::ply_ravel(ra::expr(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
         tr.test_eq(16, y);
     }
     section("outer product variants");
@@ -301,7 +301,7 @@ int main()
         cout << "matrix a * b: \n" << c1 << endl;
 // matrix product as outer product + reduction (no reductions yet, so manually).
         {
-            ra::Owned<real, 3> d = ra::ryn(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
+            ra::Owned<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
             cout << "d(i,k,j) = a(i,k)*b(k,j): \n" << d << endl;
             ra::Owned<real, 2> c2({d.size(0), d.size(2)}, 0.);
             for (int k=0; k<d.size(1); ++k) {
@@ -312,8 +312,8 @@ int main()
 // do the k-reduction by plying with wrank.
         {
             ra::Owned<real, 2> c2({a.size(0), b.size(1)}, 0.);
-            ra::ply_either(ra::ryn(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
-                                   start(c2), start(a), start(b)));
+            ra::ply_either(ra::expr(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
+                                    start(c2), start(a), start(b)));
             cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
             tr.test_eq(c1, c2);
         }
@@ -374,6 +374,17 @@ int main()
         BENCH(A, f_raw);
         Aref = ra::Owned<real, 2>(A);
         BENCH(Aref, f_sumprod);
+    }
+    tr.section("Iota with dead axes");
+    {
+        ra::Owned<int, 2> a = from([](auto && i, auto && j) { return i-j; }, ra::iota(3), ra::iota(3));
+        tr.test_eq(ra::Owned<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
+    }
+    tr.section("Vector with dead axes");
+    {
+        std::vector<int> i = {0, 1, 2};
+        ra::Owned<int, 2> a = ra::from([](auto && i, auto && j) { return i-j; }, i, i);
+        tr.test_eq(ra::Owned<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
     }
     return tr.summary();
 }

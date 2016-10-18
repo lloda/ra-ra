@@ -97,7 +97,7 @@ void CheckTranspose1(TestRecorder & tr, A && a)
     {
         std::iota(a.begin(), a.end(), 1);
         cout << "a: " << a << endl;
-        auto b = transpose(a, ra::Small<int, 2>{1, 0});
+        auto b = transpose(ra::Small<int, 2>{1, 0}, a);
         cout << "b: " << b << endl;
         real check[6] = {1, 3, 5, 2, 4, 6};
         tr.test(std::equal(b.begin(), b.end(), check));
@@ -308,6 +308,21 @@ int main()
             tr.test_eq(0, ra); // ra unchanged
             tr.test(std::equal(rb.begin(), rb.end(), aiter)); // aiter changed
         }
+    }
+    tr.section("shape of .iter()");
+    {
+        auto test = [&tr](auto && A)
+            {
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, ra::ra_traits<decltype(A)>::shape(A));
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, A.iter().shape());
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, iter<0>(A).shape());
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, iter<-2>(A).shape());
+                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, iter<1>(A).shape());
+                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, iter<-1>(A).shape());
+                tr.test_eq(ra::Small<ra::dim_t, 0> {}, iter<2>(A).shape());
+            };
+        test(ra::Unique<real, 2>({6, 7}, ra::_0 - ra::_1));
+        test(ra::Unique<real>({6, 7}, ra::_0 - ra::_1));
     }
     tr.section("STL-type iterators");
     {
@@ -557,7 +572,7 @@ int main()
     {
         {
             ra::Unique<real, 0> a({}, 99);
-            auto b = transpose(a, ra::Small<int, 0> {});
+            auto b = transpose(ra::Small<int, 0> {}, a);
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
         }
@@ -579,7 +594,7 @@ int main()
         tr.test_eq(8, a(2, 0));
         tr.test_eq(9, a(2, 1));
 
-        auto b = transpose(a, {1, 0});
+        auto b = transpose({1, 0}, a);
         b = { 2, 3, 1, 4, 8, 9 };
         tr.test_eq(2, b(0, 0));
         tr.test_eq(3, b(0, 1));
@@ -595,7 +610,7 @@ int main()
         tr.test_eq(1, a(2, 0));
         tr.test_eq(9, a(2, 1));
 
-        auto c = transpose(a, {1, 0});
+        auto c = transpose({1, 0}, a);
         tr.test(a.data()==c.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
         tr.test_eq(a.size(0), c.size(1));
         tr.test_eq(a.size(1), c.size(0));
@@ -854,17 +869,17 @@ int main()
     {
         {
             auto s = ra::scalar(7);
-            cout << "s: " << s.s << endl;
+            cout << "s: " << s.c << endl;
         }
         {
             auto s = ra::scalar(ra::Small<int, 2> {11, 12});
-            cout << "s: " << s.s << endl;
+            cout << "s: " << s.c << endl;
         }
         {
             ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             auto s = ra::scalar(a);
-            cout << "s: " << s.s << endl;
+            cout << "s: " << s.c << endl;
         }
     }
     tr.section("scalar as reference");
@@ -892,7 +907,7 @@ int main()
         tr.section("[tr0-01] frame-matching, forbidding unroll");
         {
             ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
-            transpose(b, {0, 2, 1}) = ra::iota(3, 1);
+            transpose({0, 2, 1}, b) = ra::iota(3, 1);
             cout << b << endl;
             tr.test(every(b(0)==1));
             tr.test(every(b(1)==2));
@@ -928,10 +943,10 @@ int main()
             };
         ra::Unique<real> a({3, 2}, ra::_0*2 + ra::_1 + 1);
         cout << "A: " << a << endl;
-        transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
+        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, a)); // dyn rank to dyn rank
         transpose_test(transpose<0, 0>(a));                       // dyn rank to static rank
         ra::Unique<real, 2> b({3, 2}, ra::_0*2 + ra::_1*1 + 1);
-        transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
+        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
         transpose_test(transpose<0, 0>(b));                       // static rank to static rank
     }
     tr.section("transpose C");
@@ -944,10 +959,10 @@ int main()
                 tr.test_eq(5, b[1]);
             };
         ra::Unique<real> a({2, 3}, ra::_0*3 + ra::_1 + 1);
-        transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
+        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, a)); // dyn rank to dyn rank
         transpose_test(transpose<0, 0>(a));                       // dyn rank to static rank
         ra::Unique<real, 2> b({2, 3}, ra::_0*3 + ra::_1 + 1);
-        transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
+        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
         transpose_test(transpose<0, 0>(b));                       // static rank to static rank
     }
     return tr.summary();

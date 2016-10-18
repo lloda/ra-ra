@@ -102,11 +102,6 @@ dim_t proddim(D d, D dend)
     }                                                                   \
     View(View && x): dim(std::move(x.dim)), p(x.p) {}                   \
     View(View const & x): dim(x.dim), p(x.p) {}                         \
-    View & operator=(View && x)                                         \
-    {                                                                   \
-        for_each([](T & dest, T const & src) { dest = src; }, *this, x); \
-        return *this;                                                   \
-    }                                                                   \
     View & operator=(View const & x)                                    \
     {                                                                   \
         for_each([](T & dest, T const & src) { dest = src; }, *this, x); \
@@ -155,6 +150,7 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src)
 }
 
 // @TODO Parameterize on Child having .data() so that there's only one pointer.
+// @TODO A constructor, if only for CHECK_BOUNDS (positive sizes, strides inside, etc.)
 template <class T, rank_t RANK>
 struct View
 {
@@ -164,12 +160,12 @@ struct View
     T * p;
     constexpr static rank_t rank() { return RANK; }
     constexpr static rank_t rank_s() { return RANK; };
+    constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
     constexpr static dim_t size_s() { return DIM_ANY; }
-    dim_t size() const { return proddim(dim.begin(), dim.end()); }
-    constexpr dim_t size(rank_t const j) const { return dim[j].size; }
-    constexpr dim_t stride(rank_t const j) const { return dim[j].stride; }
-    auto data() { return p; }
-    auto data() const { return p; }
+    constexpr dim_t size(int j) const { return dim[j].size; }
+    constexpr dim_t stride(int j) const { return dim[j].stride; }
+    constexpr auto data() { return p; }
+    constexpr auto data() const { return p; }
 
     DEF_ITERATORS(RANK)
     DEF_ASSIGNMENT_OPS
@@ -239,18 +235,9 @@ struct ra_traits_def<View<T, RANK>>
 {
     using V = View<T, RANK>;
     using value_type = T;
+    using shape_type = Small<dim_t, RANK>; // @TODO should be taken from v.iter().shape()
 
-    using shape_type = Small<dim_t, RANK>;
-    static shape_type shape(V const & v)
-    {
-        rank_t const iend = v.rank();
-        shape_type s(ra_traits<shape_type>::make(iend));
-        for (rank_t i=0; i!=iend; ++i) {
-            s[i] = v.dim[i].size;
-        }
-        return s;
-    }
-
+    static auto shape(V const & v) { return v.iter().shape(); }
     static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK; };
@@ -321,6 +308,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     Store store;
     using T = std::decay_t<decltype(*storage_traits<Store>::data(store))>;
     using View = ra::View<T, RANK>;
+    using View::rank_s;
 
 // @TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
     WithStorage(WithStorage && w): store(std::move(w.store))
@@ -338,7 +326,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         View::dim = w.dim;
         View::p = storage_traits<Store>::data(store);
     }
-// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. @TODO Document this in the tests.
+// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test-ownership.C [ra20]. @TODO do this through .replace() op.
     WithStorage & operator=(WithStorage && w)
     {
         store = std::move(w.store);
@@ -523,13 +511,16 @@ struct View<T, RANK_ANY>
 
     Dimv dim;
     T * p;
-    rank_t rank() const { return rank_t(dim.size()); } // @CONVERSION
-    dim_t size() const { return proddim(dim.begin(), dim.end()); }
+
+    constexpr rank_t rank() const { return rank_t(dim.size()); }
+    constexpr static rank_t rank_s() { return RANK_ANY; }
+    constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr dim_t size(rank_t const j) const { return dim[j].size; }
     constexpr dim_t stride(rank_t const j) const { return dim[j].stride; }
-    auto data() { return p; }
-    auto data() const { return p; }
+
+    constexpr auto data() { return p; }
+    constexpr auto data() const { return p; }
 
     DEF_ITERATORS(RANK_ANY)
     DEF_ASSIGNMENT_OPS
@@ -586,16 +577,9 @@ struct ra_traits_def<View<T, RANK_ANY>>
 {
     using V = View<T, RANK_ANY>;
     using value_type = T;
-    using shape_type = std::vector<dim_t>;
-    static shape_type shape(V const & v)
-    {
-        rank_t const iend = v.rank();
-        shape_type s(ra_traits<shape_type>::make(iend));
-        for (rank_t i=0; i!=iend; ++i) {
-            s[i] = v.dim[i].size;
-        }
-        return s;
-    }
+    using shape_type = std::vector<dim_t>; // @TODO should be taken from v.iter().shape()
+
+    static auto shape(V const & v) { return v.iter().shape(); }
     static dim_t size(V const & v) { return v.size(); }
     static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK_ANY; };
@@ -604,9 +588,7 @@ struct ra_traits_def<View<T, RANK_ANY>>
 
 template <class Store, rank_t RANK>
 struct ra_traits_def<WithStorage<Store, RANK>>
-    : public ra_traits_def<View<typename WithStorage<Store, RANK>::T, RANK>>
-{
-};
+    : public ra_traits_def<View<typename WithStorage<Store, RANK>::T, RANK>> {};
 
 template <class T, int RANK> inline
 View<T, RANK> reverse(View<T, RANK> const & raw, int k)
@@ -623,7 +605,7 @@ View<T, RANK> reverse(View<T, RANK> const & raw, int k)
 // dynamic transposed axes list.
 #define DEF_TRANSPOSE(AXES_LIST)                                        \
     template <class T, int RANK, class S>                               \
-    View<T, RANK_ANY> transpose(View<T, RANK> const & raw, AXES_LIST)   \
+    View<T, RANK_ANY> transpose(AXES_LIST, View<T, RANK> const & raw)   \
     {                                                                   \
         assert(raw.rank()==s.size());                                   \
         auto rp = std::max_element(s.begin(), s.end());                 \
@@ -687,11 +669,11 @@ stencil(View<T, N> const & a, LO && lo, HI && hi)
     View<T, rank_sum(N, N)> s;
     s.p = a.data();
     ra::resize(s.dim, 2*a.rank());
-    assert(every(lo>=0));
-    assert(every(hi>=0));
+    CHECK_BOUNDS(every(lo>=0));
+    CHECK_BOUNDS(every(hi>=0));
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
              {
-                 assert(dima.size>=lo+hi && "stencil is too large for array");
+                 CHECK_BOUNDS(dima.size>=lo+hi && "stencil is too large for array");
                  dims = {dima.size-lo-hi, dima.stride};
              },
              ptr(s.dim.data()), a.dim, lo, hi);

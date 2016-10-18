@@ -42,10 +42,10 @@ int main()
             auto mapc = [](real x) { return max(0, min(49, int(round(25+x/5e5)))); };
 // 1. gcc ≥ 6.2 b/c of https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67041. Note @TODO we still can't use iter<1> on an ET.
             array<int, 2> xi = map(mapc, x);
-            at(orbit, xi(ra::all, ra::iota(2)).template iter<1>()) = c;
+            at(orbit, iter<1>(xi(ra::all, ra::iota(2)))) = c;
 // 2. alternative w/o temps
             for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
-                     x.template iter<1>(), c);
+                     iter<1>(x), c);
 
             std::cout << "TIME IN HOURS " << (t/3600.) << " " << format_array(orbit, true, "") << "\n";
         };
@@ -56,7 +56,7 @@ int main()
     for (int step=1; step<(12*15); ++step, t+=delta) {
 // RHS is rank 2 so we need to match on LHS. Either of these works, but the second needs a compact last axis.
 // @TODO ideally [F = from(force, ra::iota(2), ra::iota(2));] would work #nestedarrays
-        // for_each([](auto && x, auto && y) { x = y; }, F.iter<1>(), from(force, ra::iota(2), ra::iota(2)));
+        // for_each([](auto && x, auto && y) { x = y; }, iter<1>(F), from(force, ra::iota(2), ra::iota(2)));
         ra::explode<real3>(F) = from(force, ra::iota(bodies), ra::iota(bodies));
 // match axes a[0, 1] with F[0, 2]; accumulate on F[1]. @TODO proper reductions.
         a = 0.;

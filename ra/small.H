@@ -255,11 +255,12 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 // @TODO look at Dim below; useable in the same way?
     using Child = Child_<T, sizes, strides>;
 
-    constexpr static dim_t size() { return mp::Apply_<mp::Prod, sizes>::value; }
     constexpr static rank_t rank()  { return mp::len<sizes>; }
+    constexpr static rank_t rank_s()  { return mp::len<sizes>; }
+    constexpr static dim_t size() { return mp::Apply_<mp::Prod, sizes>::value; }
     constexpr static dim_t size_s() { return size(); }
-    constexpr static dim_t size(int const j) { return ssizes[j]; }
-    constexpr static dim_t stride(int const j) { return sstrides[j]; }
+    constexpr static dim_t size(int j) { return ssizes[j]; }
+    constexpr static dim_t stride(int j) { return sstrides[j]; }
 
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
@@ -346,10 +347,10 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
 // @TODO See ra_traits<Small>. Why do these twice?
         constexpr static auto const & shape() { return ssizes; }
-        constexpr static dim_t size(int const j) { return SmallBase::size(j); }
+        constexpr static dim_t size(int j) { return SmallBase::size(j); }
 // For xpr use; cf this stride() against SmallBase::stride().
-        constexpr static dim_t stride(int const j) { return j<rank() ? SmallBase::stride(j) : 0; }
-        constexpr bool keep_stride(dim_t const step, int const z, int const j) const
+        constexpr static dim_t stride(int j) { return j<rank() ? SmallBase::stride(j) : 0; }
+        constexpr bool keep_stride(dim_t step, int z, int j) const
         {
             return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
         }

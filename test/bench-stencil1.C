@@ -72,7 +72,7 @@ struct f_stencil_explicit
         for (int t=0; t!=ts; ++t) {
             Astencil.p = A.data();
             Anext(I) = map([](auto && A) { return -2*A(1) + A(2) + A(0); },
-                           Astencil.template iter<1>());
+                           iter<1>(Astencil));
             std::swap(A.p, Anext.p);
         }
     };
@@ -85,7 +85,7 @@ struct f_stencil_arrayop
     {
         for (int t=0; t!=ts; ++t) {
             Astencil.p = A.data();
-            Anext(I) = map([](auto && s) { return sum(s*mask); }, Astencil.template iter<1>());
+            Anext(I) = map([](auto && s) { return sum(s*mask); }, iter<1>(Astencil));
             std::swap(A.p, Anext.p);
         }
     };
@@ -134,7 +134,7 @@ int main()
             time_unit dt(0);
             auto t0 = now();
             f(A, Anext, Astencil);
-            dt += now()-t0;
+            dt += std::chrono::duration_cast<time_unit>(now()-t0);
 
             tr.info(std::setw(10), std::fixed, dt.count()/(double(A.size())*ts), " ", tunit, " ", tag)
               .test_rel_error(ref, A, 1e-11);

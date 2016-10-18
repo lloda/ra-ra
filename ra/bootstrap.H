@@ -63,15 +63,6 @@ constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
 enum class unspecified_t { value };
 constexpr unspecified_t unspecified = unspecified_t::value;
 
-// This is returned by ra_iterator::flat() when cellr > 0, or SmallBase::iterator::flat (@TODO When?)
-template <class C>
-struct cellp
-{
-    C c;
-    void operator+=(dim_t const s) { c.p += s; }
-    C & operator*() { return c; }
-};
-
 template <class S, class I, class P>
 inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 {

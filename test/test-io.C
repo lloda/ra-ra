@@ -90,9 +90,9 @@ int main()
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 4, 5, 6 });
         iocheck(tr.info("output of array through its iterator"), a.iter(), a);
-// note that transpose(... {1, 0}) will have dynamic rank, so the type expected from read must also.
+// note that transpose({1, 0}, ...) will have dynamic rank, so the type expected from read must also.
         iocheck(tr.info("output of transposed array through its iterator"),
-                transpose(a, {1, 0}).iter(),
+                transpose({1, 0}, a).iter(),
                 ra::Unique<int>({2, 3}, { 1, 3, 5, 2, 4, 6 }));
     }
     section("[ra02c] printing array iterators");

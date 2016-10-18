@@ -15,11 +15,6 @@
 #include "ra/tuple-list.H"
 #include "ra/type.H" // only for is_scalar<>
 
-// This global version must be available so that ra::wedge<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
-template <int D, int Oa, int Ob, class A, class B,
-          std::enable_if_t<ra::is_scalar<A> && ra::is_scalar<B>, int> =0>
-auto wedge(A const & a, B const & b) { return a*b; }
-
 namespace mp {
 
 template <class P>

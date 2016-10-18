@@ -54,6 +54,7 @@ else:
 env.Append(CPPPATH=['..', 'examples'],
            CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
            CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+                     '-finput-charset=UTF-8', '-fextended-identifiers',
                      #'-Wconversion',
                      # '-funsafe-math-optimizations', # @TODO Test with this.
                  ])

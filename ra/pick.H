@@ -10,7 +10,7 @@
 #define RA_PICK_H
 
 /// @file expr.H
-/// @brief Select one of several array arguments.
+/// @brief Expression template that picks one of several arguments.
 
 // This class is needed because Expr evaluates its arguments before calling its
 // operator. Note that pick() is a normal function, so its arguments will always
@@ -129,11 +129,7 @@ struct PickFlat;
 template <class P0, class ... P, int ... I>
 struct PickFlat<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
 {
-    using T = std::tuple<P0, P ...>;
-
-    T t;
-    PickFlat(P0 p0_, P ... p_): t(p0_, p_ ...) {}
-
+    std::tuple<P0, P ...> t;
 // @TODO after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
     template <int II, class S> void add(S const & s) { std::get<II>(t) += std::get<II>(s); }
     template <class S> void operator+=(S const & s) { (this->add<I>(s), ...); }
@@ -141,40 +137,24 @@ struct PickFlat<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
 };
 
 template <class P0, class ... P> inline constexpr
-auto pick_in(P0 && p0, P && ... p)
+auto pick_flat(P0 && p0, P && ... p)
 {
-    return Pick<std::tuple<P0, P ...>> { std::forward<P0>(p0), std::forward<P>(p) ... };
-}
-
-template <class P0, class ... P> inline constexpr
-auto pick(P0 && p0, P && ... p)
-{
-    return pick_in(start(std::forward<P0>(p0)), start(std::forward<P>(p)) ...);
+    return PickFlat<std::tuple<P0, P ...>> { std::tuple<P0, P ...> { std::forward<P0>(p0), std::forward<P>(p) ... } };
 }
 
 // forward decl in atom.H
 template <class P0, class ... P, int ... I>
 struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
 {
-    using T = std::tuple<P0, P ...>;
-
 // A-th argument decides rank and shape.
     constexpr static int A = largest_rank<P0, P ...>::value;
-    using PA = std::decay_t<mp::Ref_<T, A>>;
+    using PA = std::decay_t<mp::Ref_<std::tuple<P0, P ...>, A>>;
     using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
-    using flat_t = PickFlat<std::tuple<decltype(std::declval<P0>().flat()), decltype(std::declval<P>().flat()) ...>>;
-    using stride_t = std::tuple<decltype(std::declval<P0>().stride(0)), decltype(std::declval<P>().stride(0)) ...>;
 
-    T t;
+    std::tuple<P0, P ...> t;
 
-// If driver is RANK_ANY, driver selection should wait til run time, unless we can tell statically that RANK_ANY would be selected anyway.
-    constexpr static bool HAS_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
-
-    template <bool depend=true> constexpr auto & driver() const
-    {
-        static_assert(HAS_DRIVER, "can't drive this xpr");
-        return std::get<A>(t);
-    }
+// If driver is RANK_ANY, driver selection should wait til run time, unless we can tell that RANK_ANY would be selected anyway.
+    constexpr static bool VALID_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
     template <int iarg>
     std::enable_if_t<(iarg==mp::len<NotA>), bool>
@@ -185,12 +165,11 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     check(int const driver_rank) const
     {
         rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
-// Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Disable this test when it's known statically that it isn't needed. @TODO Do dynamic driver selection if static is uncertain.
+// Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Dynamic driver selection.
         assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
         for (int k=0; k!=ranki; ++k) {
-// sk0==DIM_BAD might happen on subexpressions.
             dim_t sk0 = std::get<A>(t).size(k);
-            if (sk0!=DIM_BAD) {
+            if (sk0!=DIM_BAD) { // may be == in subexpressions
                 dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
                 assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
             }
@@ -206,45 +185,47 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
         CHECK_BOUNDS(check<0>(rank()));
     }
 
-    template <class J> constexpr decltype(auto) at(J const & j)
+    template <class J>
+    constexpr decltype(auto) at(J const & j)
     {
         return pick_at<0>(std::get<0>(t).at(j), t, j);
     }
-    constexpr void adv(rank_t const k, dim_t const d)
+    constexpr void adv(rank_t k, dim_t d)
     {
         (std::get<I>(t).adv(k, d), ...);
     }
 
-// there's one size (by A), but each arg has its own strides.
-// Note: do not require driver. This is needed by check for all leaves.
-    constexpr auto size(int const i) const -> dim_t
-    {
-        return std::get<A>(t).size(i);
-    }
-    constexpr bool keep_stride(dim_t const step, int const z, int const j) const
+    constexpr bool keep_stride(dim_t step, int z, int j) const
     {
         return (std::get<I>(t).keep_stride(step, z, j) && ...);
     }
-    auto stride(int const i) const -> stride_t // @BUG clang 3.9 issues with constexpr/TensorIndex
+    constexpr auto stride(int i) const
     {
-        return stride_t(std::get<I>(t).stride(i) ...);
+        return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
-    auto flat() const -> flat_t // clang complains if this is constexpr, gcc does not
+    constexpr auto flat()
     {
-        return flat_t(std::get<I>(t).flat() ...);
+        return pick_flat(std::get<I>(t).flat() ...);
     }
-    auto flat() -> flat_t // clang complains if this is constexpr, gcc does not
-    {
-        return flat_t(std::get<I>(t).flat() ...);
-    }
+    constexpr auto flat() const { return flat(); }
 
+// there's one size (by A), but each arg has its own strides.
+// Note: do not require driver. This is needed by check for all leaves.
+    constexpr dim_t size(int i) const
+    {
+        return std::get<A>(t).size(i);
+    }
     constexpr static dim_t size_s() { return PA::size_s(); }
-    constexpr static rank_t rank_s() { return PA::rank_s(); }
     constexpr rank_t rank() const { return std::get<A>(t).rank(); }
-    constexpr decltype(auto) shape() const { return driver().shape(); }
+    constexpr static rank_t rank_s() { return PA::rank_s(); }
+    constexpr decltype(auto) shape() const
+    {
+        static_assert(VALID_DRIVER, "can't drive this xpr");
+        return std::get<A>(t).shape();
+    }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    operator decltype(*std::declval<flat_t>())()
+    operator decltype(*(std::declval<Pick>().flat()))()
     {
         static_assert(rank_s()==0 || rank_s()==RANK_ANY || (rank_s()==1 && size_s()==1), // for coord types
                       "bad rank in conversion to scalar");
@@ -253,15 +234,24 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C
-#define DEF_EQOPS_(OP) OP(X && x) \
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-
-#define DEF_EQOPS(OP) template <class X> void operator DEF_EQOPS_(OP)
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
-
 #undef DEF_EQOPS_
+
+template <class P0, class ... P> inline constexpr auto
+pick_in(P0 && p0, P && ... p)
+{
+    return Pick<std::tuple<P0, P ...>> { std::forward<P0>(p0), std::forward<P>(p) ... };
+}
+
+template <class P0, class ... P> inline constexpr auto
+pick(P0 && p0, P && ... p)
+{
+    return pick_in(start(std::forward<P0>(p0)), start(std::forward<P>(p)) ...);
+}
 
 } // namespace ra
 

@@ -10,7 +10,7 @@
 #define RA_EXPR_H
 
 /// @file expr.H
-/// @brief Expression templates for arrays with frame matching: operator nodes.
+/// @brief Operator nodes for expression templates.
 
 #include "ra/ply.H"
 
@@ -38,7 +38,6 @@ struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 {
     Op & op;
     std::tuple<P ...> t;
-
 // @TODO after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
     template <int II, class S> void add(S const & s) { std::get<II>(t) += std::get<II>(s); }
     template <class S> void operator+=(S const & s) { (add<I>(s), ...); }
@@ -67,13 +66,7 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     std::tuple<P ...> t;
 
 // If driver is RANK_ANY, driver selection should wait to run time, unless we can tell that RANK_ANY would be selected anyway.
-    constexpr static bool HAS_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
-
-    template <bool depend=true> constexpr auto & driver() const
-    {
-        static_assert(HAS_DRIVER, "can't drive this xpr");
-        return std::get<A>(t);
-    }
+    constexpr static bool VALID_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
     template <int iarg>
     std::enable_if_t<(iarg==mp::len<NotA>), bool>
@@ -95,7 +88,6 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
         }
         return check<iarg+1>(driver_rank);
     }
-
 // see test-compatibility.C [a1] for forward() here.
     constexpr Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
@@ -104,20 +96,14 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
         CHECK_BOUNDS(check<0>(rank()));
     }
 
-    template <class J> constexpr decltype(auto) at(J const & i)
+    template <class J>
+    constexpr decltype(auto) at(J const & i)
     {
         return op(std::get<I>(t).at(i) ...);
     }
     constexpr void adv(rank_t k, dim_t d)
     {
         (std::get<I>(t).adv(k, d), ...);
-    }
-
-// there's one size (by A), but each arg has its own strides.
-// Note: do not require driver. This is needed by check for all leaves.
-    constexpr dim_t size(int i) const
-    {
-        return std::get<A>(t).size(i);
     }
     constexpr bool keep_stride(dim_t step, int z, int j) const
     {
@@ -127,19 +113,23 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
-    constexpr auto flat() const
-    {
-        return ra::flat(op, std::get<I>(t).flat() ...);
-    }
     constexpr auto flat()
     {
         return ra::flat(op, std::get<I>(t).flat() ...);
     }
+    constexpr auto flat() const { return flat(); }
 
+// there's one size (by A), but each arg has its own strides.
+// Note: do not require driver. This is needed by check for all leaves.
+    constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
     constexpr static dim_t size_s() { return PA::size_s(); }
-    constexpr static rank_t rank_s() { return PA::rank_s(); }
     constexpr rank_t rank() const { return std::get<A>(t).rank(); }
-    constexpr decltype(auto) shape() const { return driver().shape(); }
+    constexpr static rank_t rank_s() { return PA::rank_s(); }
+    constexpr decltype(auto) shape() const
+    {
+        static_assert(VALID_DRIVER, "can't drive this xpr");
+        return std::get<A>(t).shape();
+    }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
     operator decltype(*(std::declval<Expr>().flat()))()
@@ -151,42 +141,28 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C
-#define DEF_EQOPS_(OP) OP(X && x) \
+#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-
-#define DEF_EQOPS(OP) template <class X> void operator DEF_EQOPS_(OP)
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
 
-#define DEF_EQOPS(OP) template <class V> template <class X> void Vector<V>::operator DEF_EQOPS_(OP)
-FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
-#define DEF_EQOPS(OP) template <class V> template <class X> void Ptr<V>::operator DEF_EQOPS_(OP)
-FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
-#define DEF_EQOPS(OP) template <class V> template <class X> void Scalar<V>::operator DEF_EQOPS_(OP)
-FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
-
-#undef DEF_EQOPS_
-
-template <class Op, class ... P> inline constexpr
-auto expr(Op && op, P && ... p)
+template <class Op, class ... P> inline constexpr auto
+expr(Op && op, P && ... p)
 {
     return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
 }
 
 // Wrappers over expr & ply_either.
 
-template <class F, class ... A> inline constexpr
-auto map(F && f, A && ... a)
+template <class F, class ... A> inline constexpr auto
+map(F && f, A && ... a)
 {
     return expr(std::forward<F>(f), start(std::forward<A>(a)) ...);
 }
 
-template <class F, class ... A> inline constexpr
-void for_each(F && f, A && ... a)
+template <class F, class ... A> inline constexpr void
+for_each(F && f, A && ... a)
 {
     ply_either(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));
 }

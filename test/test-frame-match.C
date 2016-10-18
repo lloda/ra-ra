@@ -29,7 +29,7 @@ int main()
         auto e = ra::_0+1;
         static_assert(e.rank_s()==1, "bad driver"); // @TODO CWG1684 should allow .rank() (gcc bug #66297)
 // but TensorIndex cannot be a driver.
-        static_assert(decltype(e)::HAS_DRIVER==0, "bad driver check");
+        static_assert(!(decltype(e)::VALID_DRIVER), "bad driver check");
     }
     section("frame matching - Unique/TensorIndex");
     {

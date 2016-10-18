@@ -35,7 +35,7 @@ int main()
             time_unit dt(0);
             ra::Owned<real, 2> a({m, n}, ra::_0 - ra::_1);
             ra::Owned<real, 1> ref({n}, 0);
-            ref.iter<1>() += a.iter<1>();
+            iter<1>(ref) += iter<1>(a);
             ra::Owned<real, 1> c({n}, ra::unspecified);
             for (int i=0; i<reps; ++i) {
                 c = 0.;
@@ -66,7 +66,7 @@ int main()
         };
     auto f_accumrows = [](auto & c, auto const & a)
         {
-            for_each([&c](auto && a) { c += a; }, a.template iter<1>());
+            for_each([&c](auto && a) { c += a; }, iter<1>(a));
         };
     auto f_wrank1 = [](auto & c, auto const & a)
         {
@@ -78,11 +78,11 @@ int main()
         };
     auto f_accumscalar = [](auto & c, auto const & a)
         {
-            ra::scalar(c) += a.template iter<1>();
+            ra::scalar(c) += iter<1>(a);
         };
     auto f_accumiter = [](auto & c, auto const & a)
         {
-            c.template iter<1>() += a.template iter<1>();
+            c.template iter<1>() += iter<1>(a);
         };
     auto f_frametransp = [](auto & c, auto const & a)
         {

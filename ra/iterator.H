@@ -46,14 +46,14 @@ std::ostream & operator<<(std::ostream & o, Print_iterator<I> && p)
 }
 
 // @TODO Allow infinite rank; need a special value of crank for that.
-constexpr rank_t dependent_cell_rank(rank_t rank, rank_t crank)
+inline constexpr rank_t dependent_cell_rank(rank_t rank, rank_t crank)
 {
     return crank>=0 ? crank // not dependent
         : rank==RANK_ANY ? RANK_ANY // defer
         : rank+crank;
 }
 
-constexpr rank_t dependent_frame_rank(rank_t rank, rank_t crank)
+inline constexpr rank_t dependent_frame_rank(rank_t rank, rank_t crank)
 {
     return rank==RANK_ANY ? RANK_ANY // defer
         : crank>=0 ? rank-crank // not dependent
@@ -65,7 +65,7 @@ struct cell_iterator
 {
     constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
-    constexpr static rank_t fullr = ra_traits<V>::rank_s();
+    constexpr static rank_t fullr = V::rank_s();
     constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
     static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
@@ -75,7 +75,7 @@ struct cell_iterator
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
 
-    using shape_type = mp::If_<rank_s()==DIM_ANY, typename ra_traits<V>::shape_type, Small<dim_t, rank_s()>>;
+    using shape_type = mp::If_<rank_s()==DIM_ANY, std::vector<dim_t>, Small<dim_t, rank_s()>>;
     using dims_p = decltype(std::declval<V const>().dim); // @TODO can this be & ?
     using atom_type = typename ra_traits<V>::value_type;
     using cell_type = View<atom_type, cellr>;
@@ -84,14 +84,15 @@ struct cell_iterator
     dims_p dim; // @TODO either have an equivalent object for Small, or take V & and ask through that.
     cell_type c;
 
-    cell_iterator() { c.p = nullptr; } // end marker only.
-    cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-    cell_iterator & operator=(cell_iterator const & ci) = delete;
+    constexpr cell_iterator() { c.p = nullptr; } // end marker only.
+    constexpr cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
+    constexpr cell_iterator & operator=(cell_iterator const & ci) = delete;
 // needed because View = View copies contents, not the View itself ([ra11] in test-ra-0.C).
-    cell_iterator & assign(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
+    constexpr cell_iterator & assign(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
 
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
-    template <class SS> cell_iterator(SS const & s_, atom_type * p_): dim(s_)
+    template <class SS> constexpr
+    cell_iterator(SS const & s_, atom_type * p_): dim(s_)
     {
         rank_t const rank = this->rank();
         c.p = p_; // see stl_iterator for the case of s_[0]=0, etc. [ra12].
@@ -106,8 +107,7 @@ struct cell_iterator
         constexpr dim_t fullsize_s = ra_traits<V>::size_s();
         return fullsize_s==DIM_ANY ? DIM_ANY : fullsize_s / ra_traits<cell_type>::size_s();
     }
-// @TODO Refactor w/ ra_traits<View>::shape.
-    shape_type shape() const
+    constexpr shape_type shape() const
     {
         rank_t const iend = rank();
         shape_type s(ra_traits<shape_type>::make(iend));
@@ -116,19 +116,10 @@ struct cell_iterator
         }
         return s;
     }
-
-    constexpr dim_t size(int const j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
-    constexpr dim_t stride(int const j) const { return j<rank() ? dim[j].stride : 0; }
-    constexpr bool keep_stride(dim_t const step, int const z, int const j) const
-    {
-        dim_t sz = z<rank() ? dim[z].stride : 0;
-        dim_t sj = j<rank() ? dim[j].stride : 0;
-        return step*sz==sj;
-    }
-    void adv(rank_t const k, dim_t const d)
-    {
-        c.p += (k<rank()) * dim[k].stride*d;
-    }
+    constexpr dim_t size(int j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
+    constexpr dim_t stride(int j) const { return j<rank() ? dim[j].stride : 0; }
+    constexpr bool keep_stride(dim_t step, int z, int j) const { return step*stride(z)==stride(j); }
+    constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
 };
 
 #define DEF_EQOPS(OP)                                               \
@@ -137,6 +128,14 @@ struct cell_iterator
     template <class X> void operator OP(ra_iterator const & x)      \
     { for_each([](auto && y, auto && x) { y OP x; }, *this, x); }
 
+template <class C>
+struct CellFlat
+{
+    C c;
+    constexpr void operator+=(dim_t const s) { c.p += s; }
+    constexpr C & operator*() { return c; }
+};
+
 template <class V, rank_t cellr=0>
 struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
 {
@@ -144,10 +143,10 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
     ra_iterator(): P() {};
     template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
-    auto flat() const { return cellp<typename P::cell_type> { P::c }; }
+    auto flat() const { return CellFlat<typename P::cell_type> { P::c }; }
 // Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. @TODO Think this over.
     template <class I>
-    typename P::value_type at(I const & i_)
+    decltype(auto) at(I const & i_)
     {
         CHECK_BOUNDS(P::rank()<=dim_t(i_.size()) && "too few indices");
         return typename P::cell_type { P::c.dim, P::c.p+Indexer1::index_short(P::rank(), P::dim, i_) };
@@ -217,6 +216,9 @@ struct stl_iterator
         return *this;
     }
 };
+
+template <int cell_rank, class A> inline constexpr
+auto iter(A && a) { return a.template iter<cell_rank>(); }
 
 } // namespace ra
 

@@ -85,7 +85,7 @@ int main()
         o = 99.;
         tr.test(std::equal(check11, check11+5, z.begin()));
         tr.test(std::equal(check99, check99+5, o.begin()));
-// Copy.
+        tr.section("copy");
         {
             ra::Owned<real, 1> const c(o);
             tr.test(std::equal(check99, check99+5, c.begin()));
@@ -97,20 +97,29 @@ int main()
             tr.test(p.data()!=c.data());
             tr.test(std::equal(check99, check99+5, p.begin()));
         }
+        tr.section("WithStorage operator=(WithStorage) replaces, unlike View [ra20]");
         {
             ra::Owned<real, 1> o({5}, 11.);
             ra::Owned<real, 1> const p({5}, 99.);
-            ra::Owned<real, 1> q({7}, 4.);
-            real check4[7] = {4, 4, 4, 4, 4, 4, 4};
-            tr.test(std::equal(check4, check4+7, q.begin()));
-            q = o;
-            tr.test(std::equal(check11, check11+5, q.begin()));
-            q = p;
-            tr.test(std::equal(check99, check99+5, q.begin()));
+            {
+                ra::Owned<real, 1> q({7}, 4.);
+                q = o;
+                tr.test(std::equal(check11, check11+5, q.begin()));
+            }
+            {
+                ra::Owned<real, 1> q({7}, 4.);
+                q = p;
+                tr.test(std::equal(check99, check99+5, q.begin()));
+            }
+            {
+                ra::Owned<real, 1> q({7}, 4.);
+                q = ra::Owned<real, 1>({5}, 11.);
+                tr.test(std::equal(check11, check11+5, q.begin()));
+            }
             tr.test(std::equal(check99, check99+5, p.begin()));
             tr.test(std::equal(check11, check11+5, o.begin()));
         }
-// Move.
+        tr.section("move");
         {
             ra::Owned<real, 1> c(std::move(z));
             tr.test(z.store.size()==0); // std::vector does this on move...

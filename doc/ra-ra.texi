@@ -968,12 +968,13 @@ TODO
 @chapter Hazards
 @c ------------------------------------------------
 
-ra-ra applies its principles systematically and that can result in
-surprises.
+ra-ra applies its principles systematically and that can result in some surprises.
 
-behavior of operator= between views, construction of views.
+When @code{a=b=c} works, it operates as @code{b=c; a=b;} and not as an array expression.
 
-a = b = c doesn't work (expr = expr returns void).
+@code{View<T, N> x; x = T()} fails if @code{T} isn't registered as @code{is_scalar}.
+
+With large containers (e.g. @code{Owned}), @code{operator=} replaces the lhs instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
 
 rank extension in assignment of low rank = high rank.
 

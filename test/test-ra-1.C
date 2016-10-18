@@ -268,20 +268,20 @@ section("[ra09] reverse 1/1 axis, traverse");
         A2 A({2, 2}, { 1, 2, 3, 4 });
         A2 B({2, 2}, { 1, 2, 3, 4 });
 
-        CheckPly<A2>(tr, "(a)", transpose(A, {1, 0}), B);
-        CheckPly<A2>(tr, "(b)", A, transpose(B, {1, 0}));
-        CheckPly<A2>(tr, "(c)", reverse(reverse(transpose(A, {1, 0}), 1), 0), B);
-        CheckPly<A2>(tr, "(d)", A, reverse(reverse(transpose(B, {1, 0}), 1), 0));
+        CheckPly<A2>(tr, "(a)", transpose({1, 0}, A), B);
+        CheckPly<A2>(tr, "(b)", A, transpose({1, 0}, B));
+        CheckPly<A2>(tr, "(c)", reverse(reverse(transpose({1, 0}, A), 1), 0), B);
+        CheckPly<A2>(tr, "(d)", A, reverse(reverse(transpose({1, 0}, B), 1), 0));
 
         CheckPly<A2>(tr, "(e)", transpose<1, 0>(A), B);
         CheckPly<A2>(tr, "(f)", A, transpose<1, 0>(B));
         CheckPly<A2>(tr, "(g)", reverse(reverse(transpose<1, 0>(A), 1), 0), B);
         CheckPly<A2>(tr, "(h)", A, reverse(reverse(transpose<1, 0>(B), 1), 0));
 
-        CheckPly<A2>(tr, "(i)", transpose(A, mp::int_list<1, 0>()), B);
-        CheckPly<A2>(tr, "(j)", A, transpose(B, mp::int_list<1, 0>()));
-        CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(A, mp::int_list<1, 0>()), 1), 0), B);
-        CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(B, mp::int_list<1, 0>()), 1), 0));
+        CheckPly<A2>(tr, "(i)", transpose(mp::int_list<1, 0>(), A), B);
+        CheckPly<A2>(tr, "(j)", A, transpose(mp::int_list<1, 0>(), B));
+        CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(mp::int_list<1, 0>(), A), 1), 0), B);
+        CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(mp::int_list<1, 0>(), B), 1), 0));
     }
     return tr.summary();
 }

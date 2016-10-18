@@ -66,7 +66,7 @@ int main()
         };
     auto f_accumcols = [](auto & c, auto const & a)
         {
-            for_each([](auto & c, auto && a) { c = sum(a); }, c, a.template iter<1>());
+            for_each([](auto & c, auto && a) { c = sum(a); }, c, iter<1>(a));
         };
     auto f_wrank1 = [](auto & c, auto const & a)
         {
