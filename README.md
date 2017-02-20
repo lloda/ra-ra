@@ -6,6 +6,10 @@ ra-ra is a C++ header-only, expression template / multidimensional array
 library with an APL/J bent. Some C++17 features are used, see below for
 compiler support.
 
+ra-ra has a manual (work in progress) maintained at doc/ra-ra.texi. If
+you are reading this on the web, there should be a version of that
+manual in the 'Wiki'.
+
 
 Features
 -----------
@@ -291,7 +295,7 @@ a test suite in ```test/```. These tests test internal details and are not meant
 as demonstrations of how to use the library. There is a directory with
 ```examples/```, some ported from Blitz++.
 
-All tests pass under g++-6.2. All tests pass under clang++-3.8/9 except for
+All tests pass under g++-6.3. All tests pass under clang++-3.8/9 except for
 test/test-small.C which crashes clang. For clang on OS X you have to remove the
 -Wa,q option in the SConstruct which is meant for gcc by setting CCFLAGS to
 something else, for example:

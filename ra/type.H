@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2016
+// (c) Daniel Llorens - 2013-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -40,18 +40,18 @@ template <class A, class Enable=void> constexpr bool is_slice_pos_rank = false;
 template <class A> constexpr bool
 is_slice_pos_rank<A, std::enable_if_t<(is_slice<A> && ra_traits<A>::rank_s()!=0)>> = true;
 
-// @TODO make things is_ra_iterator explicitly, as with is_scalar, and not by poking in the insides.
+// @TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // @TODO check the rest of the required interface of A and A::flat() right here.
-template <class A, class Enable=void> constexpr bool is_ra_iterator = false;
+template <class A, class Enable=void> constexpr bool is_iterator = false;
 template <class A> constexpr bool
-is_ra_iterator<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<A>>().flat())>>> = true;
+is_iterator<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<A>>().flat())>>> = true;
 
-template <class A, class Enable=void> constexpr bool is_ra_iterator_pos_rank = false;
+template <class A, class Enable=void> constexpr bool is_iterator_pos_rank = false;
 template <class A> constexpr bool
-is_ra_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0>> = is_ra_iterator<A>;
+is_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0>> = is_iterator<A>;
 
-template <class A> constexpr bool is_ra = is_ra_iterator<A> || is_slice<A>;
-template <class A> constexpr bool is_ra_pos_rank = is_ra_iterator_pos_rank<A> || is_slice_pos_rank<A>;
+template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
+template <class A> constexpr bool is_ra_pos_rank = is_iterator_pos_rank<A> || is_slice_pos_rank<A>;
 template <class A> constexpr bool is_ra_zero_rank = is_ra<A> && !is_ra_pos_rank<A>;
 template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_scalar<A>;
 
@@ -59,13 +59,9 @@ template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_s
 // to provide extension of scalar functions to ra:: types
 // --------------
 
-// @TODO https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 in gcc 6.2
-template <class ... A> constexpr bool
-ra_pos_and_any = (is_ra_pos_rank<A> || ...) && mp::And<mp::bool_t<(is_ra<A> || is_scalar<A>)> ...>::value;
-
+template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...) && ((is_ra<A> || is_scalar<A>) && ...);
 // all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).
-template <class ... A> constexpr bool
-ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
+template <class ... A> constexpr bool ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
 
 template <class T>
 struct ra_traits_def<T, std::enable_if_t<is_scalar<T>>>
@@ -88,7 +84,7 @@ inline constexpr auto start(T && t)
     static_assert(!mp::exists<T>, "bad type for ra:: operator");
 }
 
-template <class T, std::enable_if_t<is_ra_iterator<T>, int> = 0>
+template <class T, std::enable_if_t<is_iterator<T>, int> = 0>
 inline constexpr auto start(T && t)
 {
     return std::forward<T>(t);

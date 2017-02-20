@@ -133,14 +133,20 @@ struct TestRecorder
         return c;
     }
     template <class R, class A>
-    double test_rel_error(R && ref, A && a, double req_err=0)
+    double test_rel_error(R && ref, A && a, double req_err, double level=0)
     {
-        double e = amax(where(isnan(ref),
-                              where(isnan(a), 0., std::numeric_limits<double>::infinity()),
-                              rel_error(ref, a)));
+        double e = (level<=0)
+            ? amax(where(isnan(ref),
+                         where(isnan(a), 0., std::numeric_limits<double>::infinity()),
+                         rel_error(ref, a)))
+            : amax(where(isnan(ref),
+                         where(isnan(a), 0., std::numeric_limits<double>::infinity()),
+                         abs(ref-a)/level));
         test(e<=req_err,
-             LAZYINFO("rel_error(ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req_err),
-             LAZYINFO("rel_error: ", format_error(e), ", req. ", req_err));
+             LAZYINFO("rel_error(", esc_yellow, "ref", esc_plain, ": ", ref, esc_yellow, ", got", esc_plain, ": ", a,
+                      ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req_err),
+             LAZYINFO("rel_error: ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
+                      ", req. ", req_err));
         return e;
     }
     template <class R, class A>
@@ -167,7 +173,7 @@ struct TestRecorder
             o << esc_reset << ", " <<  esc_bold << esc_red << " failed " << failed.size()
               << " (" << ra::format_array(failed, false) << ")";
         }
-        o << esc_plain << esc_unbold << std::endl;
+        o << esc_reset << std::endl;
         return failed.size();
     }
 };

@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011-2014, 2016
+// (c) Daniel Llorens - 2011-2014, 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -38,9 +38,7 @@ struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 {
     Op & op;
     std::tuple<P ...> t;
-// @TODO after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
-    template <int II, class S> void add(S const & s) { std::get<II>(t) += std::get<II>(s); }
-    template <class S> void operator+=(S const & s) { (add<I>(s), ...); }
+    template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
     decltype(auto) operator*() { return op(*std::get<I>(t) ...); } // @TODO std::apply(op, t)
 };
 

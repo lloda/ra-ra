@@ -116,11 +116,11 @@ dim_t proddim(D d, D dend)
     }                                                                   \
     bool const empty() { return size()==0; } /* @TODO Optimize */
 
-    inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
-    {
-        CHECK_BOUNDS(inside(i, dim_src->size));
-        return dim_src->stride*i;
-    }
+inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
+{
+    CHECK_BOUNDS(inside(i, dim_src->size));
+    return dim_src->stride*i;
+}
 template <class II>
 inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
@@ -141,6 +141,15 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ..
 {
     for (Dim * end = dim+n; dim!=end; ++dim, ++dim_src) {
         *dim = *dim_src;
+    }
+    return select_loop(dim, dim_src, std::forward<I>(i) ...);
+}
+template <int n, class ... I>
+inline dim_t select_loop(Dim * dim, Dim const * dim_src, newaxis_t<n> dots, I && ... i)
+{
+    for (Dim * end = dim+n; dim!=end; ++dim) {
+        dim->size = 1;
+        dim->stride = 0;
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
@@ -177,14 +186,14 @@ struct View
                                 && (0 + ... + is_beatable<I>::value)==sizeof...(I)), int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
-        constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
-        constexpr rank_t subrank = rank_diff(RANK, reduced);            \
+        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
+        constexpr rank_t subrank = rank_sum(RANK, extended);            \
         static_assert(subrank>=0, "bad subrank");                       \
         View<T CONST, subrank> sub;                                     \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
         /* fill the rest of dim, skipping over beatable subscripts */   \
-        for (int i=mp::Apply_<mp::Sum, mp::Map_<beatable_skip, mp::tuple<I ...> > >::value; i<subrank; ++i) { \
-            sub.dim[i] = this->dim[i+reduced];                          \
+        for (int i=(0 + ... + is_beatable<I>::skip); i<subrank; ++i) {  \
+            sub.dim[i] = this->dim[i-extended];                         \
         }                                                               \
         return sub;                                                     \
     }                                                                   \
@@ -384,11 +393,6 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     {
         static_cast<View &>(*this) = x;
     }
-    WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
-    {
-        static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
-        fill1(x.size(), x.begin());
-    }
     // template <class Q>
     // WithStorage(std::initializer_list<std::initializer_list<Q> > const x): WithStorage(qshape(x), unspecified)
     // {
@@ -398,7 +402,11 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     //         ++i;
     //     }
     // }
-
+    WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
+    {
+        static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
+        fill1(x.size(), x.begin());
+    }
 // @TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
@@ -442,7 +450,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         ++View::dim[0].size;
         View::p = store.data();
     }
-// lets us move. A template + std::forward would not work for push_back(brace-enclosed-list).
+// lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
         assert(this->rank()==1);
@@ -532,13 +540,13 @@ struct View<T, RANK_ANY>
     template <class ... I, std::enable_if_t<(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
-        constexpr int reduced = (0 + ... + std::is_integral<I>::value); \
-        assert(this->rank()>=reduced);                                  \
+        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
+        assert(this->rank()+extended>=0);                               \
         View<T CONST, RANK_ANY> sub;                                    \
-        sub.dim.resize(this->rank()-reduced);                           \
+        sub.dim.resize(this->rank()+extended);                          \
         sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
-        for (int i=sizeof...(I)-reduced; i<sub.rank(); ++i) {           \
-            sub.dim[i] = this->dim[i+reduced];                          \
+        for (int i=(0 + ... + is_beatable<I>::skip); i<sub.rank(); ++i) { \
+            sub.dim[i] = this->dim[i-extended];                         \
         }                                                               \
         return sub;                                                     \
     }                                                                   \

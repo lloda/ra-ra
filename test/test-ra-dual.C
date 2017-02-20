@@ -41,7 +41,7 @@ template <class T> constexpr bool is_scalar_def<Dual<T> > = true;
 DEFINE_CASE(0, x*cos(x)/sqrt(x),
             cos(x)/(2.*sqrt(x))-sqrt(x)*sin(x))
 DEFINE_CASE(1, x,
-            1)
+            1.)
 DEFINE_CASE(2, 3.*exp(x*x)/x+8.*exp(2.*x)/x,
             -3.*exp(x*x)/(x*x)+6.*exp(x*x)+16.*exp(2.*x)/x-8.*exp(2.*x)/(x*x))
 DEFINE_CASE(3, cos(pow(exp(x), 4.5)),

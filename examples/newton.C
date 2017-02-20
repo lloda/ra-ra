@@ -40,7 +40,7 @@ int main()
     auto draw = [&orbit, &c](auto && x, auto && t)
         {
             auto mapc = [](real x) { return max(0, min(49, int(round(25+x/5e5)))); };
-// 1. gcc ≥ 6.2 b/c of https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67041. Note @TODO we still can't use iter<1> on an ET.
+// 1. @TODO we still can't use iter<1> on an ET.
             array<int, 2> xi = map(mapc, x);
             at(orbit, iter<1>(xi(ra::all, ra::iota(2)))) = c;
 // 2. alternative w/o temps

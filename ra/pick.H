@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2016
+// (c) Daniel Llorens - 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -130,9 +130,7 @@ template <class P0, class ... P, int ... I>
 struct PickFlat<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
 {
     std::tuple<P0, P ...> t;
-// @TODO after https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68377 try std::get<I>(t) += std::get<I>(s), ...;
-    template <int II, class S> void add(S const & s) { std::get<II>(t) += std::get<II>(s); }
-    template <class S> void operator+=(S const & s) { (this->add<I>(s), ...); }
+    template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
     decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
 };
 
@@ -194,7 +192,6 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     {
         (std::get<I>(t).adv(k, d), ...);
     }
-
     constexpr bool keep_stride(dim_t step, int z, int j) const
     {
         return (std::get<I>(t).keep_stride(step, z, j) && ...);

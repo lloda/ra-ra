@@ -2,8 +2,7 @@
 language: cpp
 
 script:
- - (cd test && scons -k)
- - (cd examples && scons -k)
+ - (scons -k)
 
 matrix:
   include:

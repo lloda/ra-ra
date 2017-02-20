@@ -48,7 +48,7 @@ struct TensorIndex
 };
 
 #define DEF_TENSORINDEX(i) constexpr TensorIndex<i, int> JOIN(_, i) {};
-FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3);
+FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
 template <class C> struct Scalar;
@@ -264,8 +264,16 @@ template <int n> struct is_beatable_def<dots_t<n>>
     constexpr static bool static_p = true;
 };
 
+template <int n> struct is_beatable_def<newaxis_t<n>>
+{
+    static_assert(n>=0, "bad count for dots_n");
+    constexpr static bool value = (n>=0);
+    constexpr static int skip_src = 0;
+    constexpr static int skip = n;
+    constexpr static bool static_p = true;
+};
+
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
-template <class I> struct beatable_skip { struct type { constexpr static int value = is_beatable<I>::skip; }; };
 
 template <class X> constexpr bool has_tensorindex_def = false;
 template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T>>;

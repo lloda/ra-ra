@@ -116,6 +116,13 @@ template <int n> struct dots_t
 template <int n> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
+template <int n> struct newaxis_t
+{
+    static_assert(n>=0);
+    constexpr static rank_t rank_s() { return n; }
+};
+template <int n=1> constexpr newaxis_t<n> newaxis = newaxis_t<n>();
+
 } // namespace ra
 
 #undef CHECK_BOUNDS

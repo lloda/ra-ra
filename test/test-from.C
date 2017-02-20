@@ -73,7 +73,7 @@ int main()
     }
     section("beatable multi-axis selectors, var size");
     {
-        static_assert(ra::is_beatable<ra::dots_t<0> >::value, "dots_t<0> is beatable");
+        static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
         ra::Owned<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::dots<0> ...)").test_eq(a(0), a(ra::dots<0>, 0));
         tr.info("a(ra::dots<0> ...)").test_eq(a(1), a(ra::dots<0>, 1));
@@ -88,7 +88,7 @@ int main()
     }
     section("beatable multi-axis selectors, fixed size");
     {
-        static_assert(ra::is_beatable<ra::dots_t<0> >::value, "dots_t<0> is beatable");
+        static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
         ra::Small<int, 2, 3, 4> a = ra::_0*100 + ra::_1*10 + ra::_2;
         tr.info("a(ra::dots<0> ...)").test_eq(a(0), a(ra::dots<0>, 0));
         tr.info("a(ra::dots<0> ...)").test_eq(a(1), a(ra::dots<0>, 1));
@@ -100,6 +100,34 @@ int main()
         tr.info("a(1)").test_eq(a(1, ra::all, ra::all), a(1));
         tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
         tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
+    }
+    section("newaxis, var size");
+    {
+        static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
+        ra::Owned<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
+        tr.info("a(ra::newaxis<0> ...)").test_eq(a(0), a(ra::newaxis<0>, 0));
+        ra::Owned<int, 4> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
+        tr.info("a(ra::newaxis<1> ...)").test_eq(a1, a(ra::newaxis<1>));
+        ra::Owned<int, 4> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
+        tr.info("a(ra::all, ra::newaxis<1>, ...)").test_eq(a2, a(ra::all, ra::newaxis<1>));
+        ra::Owned<int, 5> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
+        tr.info("a(ra::all, ra::newaxis<2>, ...)").test_eq(a3, a(ra::all, ra::newaxis<2>));
+        tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
+        tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
+    }
+    section("newaxis, var rank");
+    {
+        static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
+        ra::Owned<int> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
+        tr.info("a(ra::newaxis<0> ...)").test_eq(a(0), a(ra::newaxis<0>, 0));
+        ra::Owned<int> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
+        tr.info("a(ra::newaxis<1> ...)").test_eq(a1, a(ra::newaxis<1>));
+        ra::Owned<int> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
+        tr.info("a(ra::all, ra::newaxis<1>, ...)").test_eq(a2, a(ra::all, ra::newaxis<1>));
+        ra::Owned<int> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
+        tr.info("a(ra::all, ra::newaxis<2>, ...)").test_eq(a3, a(ra::all, ra::newaxis<2>));
+        tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
+        tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
     }
     section("unbeatable, 1D");
     {

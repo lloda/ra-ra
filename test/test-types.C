@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2016
+// (c) Daniel Llorens - 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -26,12 +26,11 @@ using std::cout; using std::endl; using std::flush;
 #define TEST_PREDICATES(A)                                              \
     [&tr](bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector) \
     {                                                                   \
-        /* maybe https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54483 for the need of bool() here with -O0 and -O1. */ \
-        tr.info(STRINGIZE(A)).info("bool").test_eq(ra, bool(ra::is_ra<A>)); \
-        tr.info(STRINGIZE(A)).info("slice").test_eq(slice, bool(ra::is_slice<A>)); \
-        tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, bool(ra::is_ra_iterator<A>)); \
-        tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, bool(ra::is_scalar<A>)); \
-        tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, bool(ra::is_foreign_vector<A>)); \
+        tr.info(STRINGIZE(A)).info("bool").test_eq(ra, ra::is_ra<A>);   \
+        tr.info(STRINGIZE(A)).info("slice").test_eq(slice, ra::is_slice<A>); \
+        tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, ra::is_iterator<A>); \
+        tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, ra::is_scalar<A>); \
+        tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, ra::is_foreign_vector<A>); \
     }
 
 int main()
