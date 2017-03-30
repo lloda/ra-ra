@@ -180,14 +180,15 @@ inline auto where(W && w, T && t, F && f)
 template <class A>
 inline auto index(A && a)
 {
-    struct index_exit { ra::dim_t i; };
-    try {
-        for_each([&](bool const a, auto && i) { if (a) { throw index_exit {i}; }; },
-                 a, ra::iota(start(a).size(0)));
-    } catch (index_exit & e) {
-        return e.i;
-    }
-    return ra::dim_t(-1);
+    return ra::early(map([](auto && a, auto && i) { return std::make_tuple(bool(a), i); },
+                         std::forward<A>(a), ra::iota(start(a).size(0))),
+                     ra::dim_t(-1));
+}
+
+template <class A, class B>
+inline bool lexicographical_compare(A && a, B && b)
+{
+    return ra::early(map([](auto a, auto b) { return a==b ? std::make_tuple(false, true) : std::make_tuple(true, a<b); }, a, b), false);
 }
 
 using std::min;

@@ -263,8 +263,8 @@ ply_either(A && a)
 // ---------------------------
 
 // @BUG options for ply should be the same as for non-short circuit.
-template <class A, class Op>
-auto ply_index_exit(A && a, Op && op)
+template <class A, class DEF>
+auto ply_index_exit(A && a, DEF && def)
 {
     rank_t const rank = a.rank();
     using Shape = std::decay_t<decltype(a.shape())>;
@@ -275,16 +275,17 @@ auto ply_index_exit(A && a, Op && op)
         order[k] = rank-1-k;
         sha[k] = a.size(order[k]);
         if (sha[k]==0) {
-            return op(false);
+            return def;
         }
     }
     for (;;) {
-        if (op(a.at(ind))) {
-            return op(true);
+        auto what = a.at(ind);
+        if (std::get<0>(what)) {
+            return std::get<1>(what);
         }
         for (int k=0; ; ++k) {
             if (k==rank) {
-                return op(false);
+                return def;
             } else if (++ind[order[k]]<sha[k]) {
                 break;
             } else {
@@ -294,32 +295,48 @@ auto ply_index_exit(A && a, Op && op)
     }
 }
 
-template <class A, class Op>
-bool ply_index_exit_1(A && a, Op && op)
+template <class A, class DEF>
+auto ply_index_exit_1(A && a, DEF && def)
 {
     auto s = a.size(0);
     auto ss0 = a.stride(0);
     for (auto p=a.flat(); s>0; --s, p+=ss0) {
-        if (op(*p)) {
-            return op(true);
+        auto what = *p;
+        if (std::get<0>(what)) {
+            return std::get<1>(what);
         }
     }
-    return op(false);
+    return def;
 }
 
-template <class A, class Op, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()!=1 || has_tensorindex<A>), int> = 0>
-bool ply_either_exit(A && a, Op && op)
+template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()!=1 || has_tensorindex<A>), int> = 0>
+inline decltype(auto)
+ply_either_exit(A && a, DEF && def)
 {
-    return ply_index_exit(a, op);
+    return ply_index_exit(std::forward<A>(a), std::forward<DEF>(def));
 }
-template <class A, class Op, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()==1 && !has_tensorindex<A>), int> = 0>
-bool ply_either_exit(A && a, Op && op)
+template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()==1 && !has_tensorindex<A>), int> = 0>
+inline decltype(auto)
+ply_either_exit(A && a, DEF && def)
 {
-    return ply_index_exit_1(a, op);
+    return ply_index_exit_1(std::forward<A>(a), std::forward<DEF>(def));
 }
 
-template <class A> inline bool any(A && a) { return ply_either_exit(start(std::forward<A>(a)), mp::identity()); }
-template <class A> inline bool every(A && a) { return ply_either_exit(start(std::forward<A>(a)), std::logical_not<bool>()); }
+template <class A, class DEF> inline decltype(auto)
+early(A && a, DEF && def)
+{
+    return ply_either_exit(std::forward<A>(a), std::forward<DEF>(def));
+}
+template <class A> inline bool
+any(A && a)
+{
+    return early(map([](bool x) -> auto { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
+}
+template <class A> inline bool
+every(A && a)
+{
+    return early(map([](bool x) -> auto { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
+}
 
 } // namespace ra
 

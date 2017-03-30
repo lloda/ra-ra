@@ -290,8 +290,26 @@ int main()
     }
     section("index");
     {
-        ra::Owned<real, 1> a {1, 2, 3, -4, 9, 9, 8};
-        tr.test_eq(3, index(a<0));
+        {
+            ra::Owned<real, 1> a {1, 2, 3, -4, 9, 9, 8};
+            tr.test_eq(3, index(a<0));
+            tr.test_eq(-1, index(a>100));
+        }
+        {
+            ra::Owned<real> a {1, 2, 3, -4, 9, 9, 8};
+            tr.test_eq(4, index(abs(a)>4));
+        }
+    }
+    section("lexicographical_compare");
+    {
+        ra::Owned<int, 3> a({10, 2, 2}, {0, 0, 1, 3, 0, 1, 3, 3, 0, 2, 3, 0, 3, 1, 2, 1, 1, 1, 3, 1, 0, 3, 2, 2, 2, 3, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 3, 0, 2, 1});
+        ra::Owned<int, 1> i = ra::iota(a.size(0));
+        std::sort(i.data(), i.data()+i.size(),
+                  [&a](int i, int j)
+                  {
+                      return lexicographical_compare(a(i), a(j));
+                  });
+        tr.test_eq(ra::vector({0, 8, 1, 2, 5, 4, 7, 6, 9, 3}), i);
     }
     return tr.summary();
 }
