@@ -1025,9 +1025,13 @@ Item 2
 
 Wishlist and acknowledged bugs.
 
+@c ------------------------------------------------
+@c Indices
+@c ------------------------------------------------
+
 @c @node Concept Index
 @c @unnumbered Concept Index
-@c @printindex cp
+@printindex cp
 @c @node Function Index
 @c @unnumbered Function Index
 @c @printindex fn
@@ -1041,7 +1045,5 @@ Wishlist and acknowledged bugs.
 @c \nocite{ArraysCowan}
 @c \nocite{KonaTheLanguage}
 @c \nocite{blitz++2001}
-
-@printindex cp
 
 @bye

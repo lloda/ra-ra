@@ -50,6 +50,13 @@ int main()
             (true, true, false, false, false);
         TEST_PREDICATES(decltype(ra::Unique<int, 2>().iter()))
             (true, false, true, false, false);
+        {
+            ra::Unique<int, 1> A= {1, 2, 3};
+            auto i = A.iter();
+            auto & ii = i;
+            TEST_PREDICATES(decltype(ii))
+                (true, false, true, false, false);
+        }
         TEST_PREDICATES(ra::Iota<int>)
             (true, false, true, false, false);
         TEST_PREDICATES(ra::TensorIndex<0>)
@@ -86,7 +93,9 @@ int main()
         static_assert(ra::is_ra<ra::View<int, 1>>, "bad is_ra View");
         static_assert(ra::is_ra<ra::View<int>>, "bad is_ra View");
 
+        using Scalar = decltype(ra::scalar(3));
         using Vector = decltype(ra::vector({1, 2, 3}));
+        static_assert(ra::is_ra_scalar<Scalar>, "bad is_ra_scalar Scalar");
         static_assert(ra::is_ra<decltype(ra::scalar(3))>, "bad is_ra Scalar");
         static_assert(ra::is_ra<Vector>, "bad is_ra Vector");
         static_assert(!ra::is_ra<int *>, "bad is_ra int *");

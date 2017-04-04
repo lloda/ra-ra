@@ -59,13 +59,15 @@ template <class C>
 struct ScalarFlat: public Scalar<C>
 {
     constexpr void operator+=(dim_t d) const {}
-    constexpr decltype(auto) operator*() const { return this->c; } // wary of reference collapsing
+    constexpr C const & operator*() const { return this->c; }
+    constexpr C & operator*() { return this->c; }
 };
 
 // Wrap constant for traversal. We still want f(C) to be a specialization in most cases.
-template <class C>
+template <class C_>
 struct Scalar
 {
+    using C = C_;
     C c;
 
 // Used in shape checks with dynamic rank. (Never called because rank is 0).
@@ -76,11 +78,14 @@ struct Scalar
     using shape_type = std::array<dim_t, 0>;
     constexpr static shape_type shape() { return shape_type {}; }
 
-    template <class I> constexpr decltype(auto) at(I const & i) const { return c; }
+// cf ScalarFlat::operator*
+    template <class I> constexpr C const & at(I const & i) const { return c; }
+    template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t stride(int i) { return 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return true; }
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); }
+    constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
 
 #define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }

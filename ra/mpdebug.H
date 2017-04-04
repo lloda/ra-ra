@@ -11,6 +11,7 @@
 
 #include <sys/types.h>
 #include "ra/tuple-list.H"
+#include <typeinfo>
 
 /// @file mpdebug.H
 /// @brief Metaprogramming debugging utilities.
@@ -57,6 +58,23 @@ struct print_int_list<mp::int_t<i0> >
         return (o << i0 << " ");
     }
 };
+
+template <class T>
+std::string
+type_name()
+{
+    using TR = typename std::remove_reference<T>::type;
+    std::string r = typeid(TR).name();
+    if (std::is_const<TR>::value)
+        r += " const";
+    if (std::is_volatile<TR>::value)
+        r += " volatile";
+    if (std::is_lvalue_reference<T>::value)
+        r += " &";
+    else if (std::is_rvalue_reference<T>::value)
+        r += " &&";
+    return r;
+}
 
 } // namespace MP
 

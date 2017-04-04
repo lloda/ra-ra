@@ -111,11 +111,11 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
-    constexpr auto flat()
+    constexpr decltype(auto) flat()
     {
         return ra::flat(op, std::get<I>(t).flat() ...);
     }
-    constexpr auto flat() const { return flat(); }
+    constexpr decltype(auto) flat() const { return flat(); }
 
 // there's one size (by A), but each arg has its own strides.
 // Note: do not require driver. This is needed by check for all leaves.

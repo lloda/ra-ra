@@ -12,17 +12,18 @@
 /// @file type.H
 /// @brief Type predicates and use-as-xpr wrapper for foreign types.
 
-// Cf https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69515 for g++ -O0 when going
-// from static member to variable template.
-
 #include "ra/atom.H"
 #include <iterator>
 
 namespace ra {
 
+#define RA_IS_DEF(NAME, PRED)                                           \
+    template <class A, class Enable=void> constexpr bool JOIN(NAME, _def) = false; \
+    template <class A> constexpr bool JOIN(NAME, _def) < A, std::enable_if_t< PRED >> = true; \
+    template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
+
 // specialize this for new types for which is_scalar<> should be true. These are foreign types.
-template <class A> constexpr bool is_scalar_def = !std::is_pointer<A>::value && std::is_scalar<A>::value;
-template <class A> constexpr bool is_scalar = is_scalar_def<std::decay_t<A>>;
+RA_IS_DEF(is_scalar, (!std::is_pointer<A>::value && std::is_scalar<A>::value))
 
 // the other class of foreign types we care about.
 template <class A> constexpr bool is_foreign_vector_def = false;
@@ -30,30 +31,20 @@ template <class A, class Enable=void> constexpr bool is_foreign_vector = is_fore
 template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A>> = true;
 template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
 
-template <class A, class Enable=void> constexpr bool is_slice = false;
-template <class A> constexpr bool
-is_slice<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<A>>().iter())>
-                             && mp::exists<decltype(ra_traits<A>::size_s())>>> // reject public-derived from A
-    = true;
-
-template <class A, class Enable=void> constexpr bool is_slice_pos_rank = false;
-template <class A> constexpr bool
-is_slice_pos_rank<A, std::enable_if_t<(is_slice<A> && ra_traits<A>::rank_s()!=0)>> = true;
-
 // @TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // @TODO check the rest of the required interface of A and A::flat() right here.
-template <class A, class Enable=void> constexpr bool is_iterator = false;
-template <class A> constexpr bool
-is_iterator<A, std::enable_if_t<mp::exists<decltype(std::declval<std::decay_t<A>>().flat())>>> = true;
-
-template <class A, class Enable=void> constexpr bool is_iterator_pos_rank = false;
-template <class A> constexpr bool
-is_iterator_pos_rank<A, std::enable_if_t<std::decay_t<A>::rank_s()!=0>> = is_iterator<A>;
+RA_IS_DEF(is_iterator, (mp::exists<decltype(std::declval<A>().flat())>))
+RA_IS_DEF(is_ra_scalar, (std::is_same<A, Scalar<typename A::C> >::value))
+RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
+RA_IS_DEF(is_slice, (mp::exists<decltype(std::declval<A>().iter())> && mp::exists<decltype(ra_traits<A>::size_s())>)) // reject public-derived from A
+RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
 template <class A> constexpr bool is_ra_pos_rank = is_iterator_pos_rank<A> || is_slice_pos_rank<A>;
 template <class A> constexpr bool is_ra_zero_rank = is_ra<A> && !is_ra_pos_rank<A>;
 template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_scalar<A>;
+
+#undef RA_IS_DEF
 
 // --------------
 // to provide extension of scalar functions to ra:: types
@@ -84,15 +75,14 @@ inline constexpr auto start(T && t)
     static_assert(!mp::exists<T>, "bad type for ra:: operator");
 }
 
-template <class T, std::enable_if_t<is_iterator<T>, int> = 0>
+template <class T, std::enable_if_t<is_iterator<T> && !is_ra_scalar<T>, int> = 0>
 inline constexpr auto start(T && t)
 {
     return std::forward<T>(t);
 }
 
-// @TODO not used yet, dots is beaten.
-template <class T, std::enable_if_t<std::is_same<dots_t<std::decay_t<T>::rank_s()>, std::decay_t<T>>::value, int> =0>
-inline constexpr auto start(T && t)
+template <class T, std::enable_if_t<is_ra_scalar<T>, int> =0>
+inline constexpr decltype(auto) start(T && t)
 {
     return std::forward<T>(t);
 }

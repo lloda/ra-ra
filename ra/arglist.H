@@ -23,7 +23,7 @@ struct nth_arg_impl;
 template <int i, class P0, class ... P>
 struct nth_arg_impl<i, std::tuple<P0, P ...>, std::enable_if_t<i==0>>
 {
-    static P0 && f(P0 && p0, P && ... p)
+    static decltype(auto) f(P0 && p0, P && ... p)
     {
         return std::forward<P0>(p0);
     }

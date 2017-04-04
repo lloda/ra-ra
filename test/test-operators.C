@@ -205,7 +205,7 @@ int main()
         test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
         test(ra::Small<int, 3, 2>(ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
     }
-    section("assignment ops with ra::scalar");
+    section("assignment ops with ra::scalar [ra21]");
     {
         ra::Small<real, 2> a { 0, 0 };
         ra::Owned<ra::Small<real, 2>, 1> b { {1, 10}, {2, 20}, {3, 30} };
