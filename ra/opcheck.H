@@ -65,7 +65,7 @@ struct pick_driver
                     ? 1
                     : ra<rb
                       ? 0
-  // check by size
+// check by size
                       : sb==DIM_BAD
                         ? 1
                         : sa==DIM_BAD
@@ -99,6 +99,21 @@ struct max_i
 template <class ... P> using largest_rank = mp::IndexOf<pick_driver, std::tuple<P ...>>;
 template <class ... P> using largest_i = mp::IndexOf<max_i, std::tuple<P ...>>;
 template <class T> using largest_i_tuple = mp::IndexOf<max_i, T>;
+
+// @TODO Allow infinite rank; need a special value of crank for that.
+inline constexpr rank_t dependent_cell_rank(rank_t rank, rank_t crank)
+{
+    return crank>=0 ? crank // not dependent
+        : rank==RANK_ANY ? RANK_ANY // defer
+        : rank+crank;
+}
+
+inline constexpr rank_t dependent_frame_rank(rank_t rank, rank_t crank)
+{
+    return rank==RANK_ANY ? RANK_ANY // defer
+        : crank>=0 ? rank-crank // not dependent
+        : -crank;
+}
 
 } // namespace ra
 

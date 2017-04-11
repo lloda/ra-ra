@@ -14,6 +14,7 @@
 #include "ra/large.H"
 #include "ra/operators.H"
 #include "ra/io.H"
+#include "ra/mpdebug.H"
 
 using std::cout; using std::endl; using std::flush;
 
@@ -81,6 +82,19 @@ int main()
             ra::vector(a) *= 3;
             tr.test_eq(ra::vector(std::vector<int> { 3, 6, 9 }), ra::vector(a));
         }
+        section("automatic conversion of foreign vectors in mixed ops");
+        {
+            std::vector<int> a { 1, 2, 3 };
+            ra::Owned<int, 1> b { 10, 20, 30 };
+            tr.test_eq(ra::vector({11, 22, 33}), a+b);
+        }
+    }
+    section("builtin arrays as foreign arrays");
+    {
+        int const a[] = {1, 2, 3};
+        tr.info("builtin array is enough to drive").test_eq(ra::vector({1, 3, 5}), (ra::_0 + a));
+        int const b[][3] = {{1, 2, 3}, {4, 5, 6}};
+        tr.info("builtin array handles 2 dimensions").test_eq(ra::Small<int, 2, 3>{1, 1, 1, /**/ 5, 5, 5}, (ra::_0 + b - ra::_1));
     }
     return tr.summary();
 }

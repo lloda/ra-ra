@@ -241,8 +241,8 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     using sizes = sizes_;
     using strides = strides_;
 
-    constexpr static Small<dim_t, mp::len<sizes_>> ssizes = mp::tuple_copy<sizes, Small<dim_t, mp::len<sizes>> >::f();
-    constexpr static Small<dim_t, mp::len<strides_>> sstrides = mp::tuple_copy<strides, Small<dim_t, mp::len<strides>> >::f();
+    constexpr static std::array<dim_t, mp::len<sizes_>> ssizes = mp::tuple_copy<sizes, std::array<dim_t, mp::len<sizes>> >::f();
+    constexpr static std::array<dim_t, mp::len<strides_>> sstrides = mp::tuple_copy<strides, std::array<dim_t, mp::len<strides>> >::f();
 
 // @TODO complete static check on strides.
     template <class TTT> struct BadDimension
@@ -386,7 +386,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
         Iterator ii;
         std::decay_t<decltype(ssizes)> i;
-        general_stl_iterator(pointer const & p): ii(i.size()==0 ? nullptr : p) { std::fill(i.begin(), i.end(), 0.); }
+        general_stl_iterator(pointer const & p): ii(std::tuple_size<decltype(i)>::value==0 ? nullptr : p) { std::fill(i.begin(), i.end(), 0.); }
         general_stl_iterator(): ii(pointer(nullptr)) {}
 
         template <class PP> bool operator==(PP const & q) const { return ii.p==q.ii.p; }
@@ -421,9 +421,9 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
 // @TODO apparently this won't be needed anymore in C++17 (http://en.cppreference.com/w/cpp/language/static).
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-constexpr Small<dim_t, mp::len<sizes_>> SmallBase<Child_, T, sizes_, strides_>::ssizes;
+constexpr std::array<dim_t, mp::len<sizes_>> SmallBase<Child_, T, sizes_, strides_>::ssizes;
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-constexpr Small<dim_t, mp::len<strides_>> SmallBase<Child_, T, sizes_, strides_>::sstrides;
+constexpr std::array<dim_t, mp::len<strides_>> SmallBase<Child_, T, sizes_, strides_>::sstrides;
 
 template <class T, class sizes, class strides>
 struct SmallView: public SmallBase<SmallView, T, sizes, strides>
@@ -529,7 +529,8 @@ struct ra_traits_small
     using V = Type_<T, sizes, strides>;
     using value_type = T;
     using shape_type = std::decay_t<decltype(V::ssizes)>;
-    constexpr static auto const & shape(V const & v) { return V::ssizes; }
+    // constexpr static auto const & shape(V const & v) { return V::ssizes; }
+    constexpr static auto shape(V const & v) { return SmallView<ra::dim_t const, mp::int_list<V::rank_s()>, mp::int_list<1>>(V::ssizes.data()); }
 #define MAKE_COND (std::is_same<strides, mp::int_list<1>>::value && std::is_same<sizes, mp::Take_<sizes, 1>>::value)
     constexpr static V make(dim_t const n)
     {
@@ -651,6 +652,26 @@ auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
     val[0] = a1;
     std::copy(a2.begin(), a2.end(), val.begin()+1);
     return val;
+}
+
+// Forward declared at type.H for the sake of expr.H. FIXME General rank.
+
+template <class T, std::size_t N0>
+inline constexpr auto start(T (&t)[N0])
+{
+    return ra::SmallView<T, mp::int_list<N0>, default_strides_<mp::int_list<N0>>>(t).iter();
+}
+
+template <class T, std::size_t N0, std::size_t N1>
+inline constexpr auto start(T (&t)[N0][N1])
+{
+    return ra::SmallView<T, mp::int_list<N0, N1>, default_strides_<mp::int_list<N0, N1>>>((T *)(t)).iter();
+}
+
+template <class T, std::size_t N0, std::size_t N1, std::size_t N2>
+inline constexpr auto start(T (&t)[N0][N1][N2])
+{
+    return ra::SmallView<T, mp::int_list<N0, N1, N2>, default_strides_<mp::int_list<N0, N1, N2>>>((T *)(t)).iter();
 }
 
 } // namespace ra

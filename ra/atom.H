@@ -43,8 +43,8 @@ struct TensorIndex
 
     template <class I> constexpr value_type at(I const & i) const { return value_type(i[w]); }
     constexpr void adv(rank_t k, dim_t d) {}
-    constexpr dim_t stride(int i) const { assert(w<0); } // used by Expr::stride_t.
-    constexpr value_type * flat() const { assert(w<0); } // used by Expr::atom_type type signature.
+    constexpr dim_t stride(int i) const { assert(w<0); return 0; } // used by Expr::stride_t.
+    constexpr value_type * flat() const { assert(w<0); return nullptr; } // used by Expr::atom_type type signature.
 };
 
 #define DEF_TENSORINDEX(i) constexpr TensorIndex<i, int> JOIN(_, i) {};
@@ -99,7 +99,8 @@ scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Wrap something with {size, begin} as 1-D vector. Sort of reduced ra_iterator.
 // ra::ra_traits_def<V> must be defined with ::size, ::size_s.
-// @TODO This can handle temporaries and make_a().begin() can't, look out for that.
+// FIXME This can handle temporaries and make_a().begin() can't, look out for that.
+// FIXME Do we need this class? holding rvalue is the only thing it does over View, and it doesn't handle rank!=1.
 template <class V>
 struct Vector
 {
@@ -144,6 +145,8 @@ struct Vector
     FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
 #undef DEF_EQOPS
 };
+
+// FIXME built in arrays, etc.
 
 template <class V> inline constexpr auto
 vector(V && v) { return Vector<V> { std::forward<V>(v) }; }

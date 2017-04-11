@@ -25,11 +25,12 @@ namespace ra {
 // specialize this for new types for which is_scalar<> should be true. These are foreign types.
 RA_IS_DEF(is_scalar, (!std::is_pointer<A>::value && std::is_scalar<A>::value))
 
-// the other class of foreign types we care about.
+// other foreign types we care about.
 template <class A> constexpr bool is_foreign_vector_def = false;
 template <class A, class Enable=void> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A>>;
 template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A>> = true;
 template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
+template <class A> constexpr bool is_builtin_array = std::is_array<std::remove_cv_t<std::remove_reference_t<A>>>::value;
 
 // @TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // @TODO check the rest of the required interface of A and A::flat() right here.
@@ -50,7 +51,7 @@ template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_s
 // to provide extension of scalar functions to ra:: types
 // --------------
 
-template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...) && ((is_ra<A> || is_scalar<A>) && ...);
+template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...) && ((is_ra<A> || is_scalar<A> || is_foreign_vector<A> || is_builtin_array<A>) && ...);
 // all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).
 template <class ... A> constexpr bool ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
 
@@ -105,11 +106,10 @@ inline constexpr auto start(T && t)
     return ra::vector(std::forward<T>(t));
 }
 
-// template <class T>
-// inline constexpr auto start(T * t)
-// {
-//     static_assert(!std::is_pointer<T *>::value, "pointers must be started with ptr");
-// }
+// Forward declared for expr.H. Defined at small.H. FIXME General rank.
+template <class T, std::size_t N0> inline constexpr auto start(T (&t)[N0]);
+template <class T, std::size_t N0, std::size_t N1> inline constexpr auto start(T (&t)[N0][N1]);
+template <class T, std::size_t N0, std::size_t N1, std::size_t N2> inline constexpr auto start(T (&t)[N0][N1][N2]);
 
 // @TODO one of these is ET-generic and the other is slice only, so make up your mind.
 template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;

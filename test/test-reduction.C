@@ -221,5 +221,19 @@ int main()
             tr.info("assign to iterators of rank > 0").test_eq(B, C);
         }
     }
+    section("reductions with amax");
+    {
+        ra::Owned<int, 2> c({2, 3}, {1, 3, 2, 7, 1, 3});
+        tr.info("max of rows").test_eq(ra::Owned<int, 1> {3, 7}, map([](auto && a) { return amax(a); }, iter<1>(c)));
+        ra::Owned<int, 1> m({3}, 0);
+        scalar(m) = max(scalar(m), iter<1>(c));
+        tr.info("max of columns I").test_eq(ra::Owned<int, 1> {7, 3, 3}, m);
+        m = 0;
+        iter<1>(m) = max(iter<1>(m), iter<1>(c));
+        tr.info("max of columns III").test_eq(ra::Owned<int, 1> {7, 3, 3}, m);
+        m = 0;
+        for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
+        tr.info("max of columns II").test_eq(ra::Owned<int, 1> {7, 3, 3}, m);
+    }
     return tr.summary();
 }

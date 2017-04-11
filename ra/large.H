@@ -64,7 +64,7 @@ dim_t proddim(D d, D dend)
 // [data] (fixed shape)
 // [size] p -> [data...] (fixed rank)
 // [rank] [size...] p -> [data...] (var rank)
-// @TODO size is immutable so that it can be kept with rank.
+// @TODO size is immutable so that it can be kept together with rank.
 
 // Would do this with a base class, but I like View being POD.
 // @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
@@ -77,6 +77,20 @@ dim_t proddim(D d, D dend)
     auto begin() const { return stl_iterator<const_iterator<0>>(dim, p); } \
     auto end() { return stl_iterator<iterator<0>> {}; }                 \
     auto end() const { return stl_iterator<const_iterator<0>> {}; }
+
+template <class I> constexpr bool is_initializer_list = false;
+template <class T> constexpr bool is_initializer_list<std::initializer_list<T> > = true;
+
+template <rank_t k, class T> struct ranked_ilist_def;
+template <rank_t k, class T> using ranked_ilist = typename ranked_ilist_def<k, T>::type;
+
+template <rank_t k, class T> struct ranked_ilist_def
+{
+    static_assert(k>=0);
+    using type = std::initializer_list<ranked_ilist<k-1, T>>;
+};
+template <class T> struct ranked_ilist_def<0, T> { using type = T; };
+template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_ilist<1, T>; };
 
 // See same thing for SmallBase.
 #define DEF_EQOPS(OP)                                                   \
@@ -176,9 +190,6 @@ struct View
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; }
 
-    DEF_ITERATORS(RANK)
-    DEF_ASSIGNMENT_OPS
-
     // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I,                                              \
@@ -227,6 +238,9 @@ struct View
     SUBSCRIPTS(const)
     SUBSCRIPTS(/*const*/)
 #undef SUBSCRIPTS
+
+    DEF_ITERATORS(RANK)
+    DEF_ASSIGNMENT_OPS
 
     operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
@@ -286,29 +300,6 @@ bool is_c_order(View<T, RANK> const & a)
     }
     return true;
 }
-
-// template <class X>
-// std::vector<dim_t> qshape(std::vector<dim_t> && s, X && x)
-// {
-//     return s;
-// }
-
-// template <class X>
-// std::vector<dim_t> qshape(std::vector<dim_t> && s, std::initializer_list<X> x)
-// {
-//     s.push_back(x.size());
-//     if (x.size()==0) {
-//         return std::move(s);
-//     } else {
-//         return qshape(std::move(s), *(x.begin()));
-//     }
-// }
-
-// template <class X>
-// std::vector<dim_t> qshape(std::initializer_list<X> x)
-// {
-//     return qshape(std::vector<dim_t>{}, x);
-// }
 
 // @TODO be convertible to View only, so that View::p is not duplicated
 template <class Store, rank_t RANK>
@@ -393,15 +384,6 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     {
         static_cast<View &>(*this) = x;
     }
-    // template <class Q>
-    // WithStorage(std::initializer_list<std::initializer_list<Q> > const x): WithStorage(qshape(x), unspecified)
-    // {
-    //     int i=0;
-    //     for (auto const & xi: x) {
-    //         (*this)(i) = xi;
-    //         ++i;
-    //     }
-    // }
     WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
     {
         static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
@@ -530,11 +512,6 @@ struct View<T, RANK_ANY>
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; }
 
-    DEF_ITERATORS(RANK_ANY)
-    DEF_ASSIGNMENT_OPS
-
-    template <rank_t SRANK> View(View<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
-
 // Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I, std::enable_if_t<(is_beatable<I>::value && ...), int> = 0> \
@@ -572,7 +549,11 @@ struct View<T, RANK_ANY>
     SUBSCRIPTS(/*const*/)
 #undef SUBSCRIPTS
 
-        operator T & () { assert(rank()==0); return data()[0]; };
+    DEF_ITERATORS(RANK_ANY)
+    DEF_ASSIGNMENT_OPS
+    template <rank_t SRANK> View(View<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+
+    operator T & () { assert(rank()==0); return data()[0]; };
     operator T const & () const { assert(rank()==0); return data()[0]; };
 };
 

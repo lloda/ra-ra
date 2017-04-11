@@ -1,17 +1,17 @@
 @c -*-texinfo-*-
-@documentencoding UTF-8
 @c %**start of header
 @setfilename ra-ra.info
 @settitle ra-ra: An array library for C++1z
+@documentencoding UTF-8
 @c %**end of header
 
-@set VERSION 0.1
-@set UPDATED 2016 September 29
+@set VERSION 0.2
+@set UPDATED 2017 April 5
 
 @copying
 ra-ra (version @value{VERSION}, updated @value{UPDATED})
 
-(c) Daniel Llorens 2016
+(c) Daniel Llorens 2016--2017
 
 @smalldisplay
 Permission is granted to copy, distribute and/or modify this document
@@ -41,12 +41,13 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-ra-ra is a general purpose multidimensional array and expression template library for C++14/C++17. Please remember that this manual is a work in progress. There are many errors and whole sections yet to be written.
+ra-ra is a general purpose multidimensional array and expression template library for C++14/C++17. Please remember that this manual is a work in progress. There are many errors and whole sections unwritten.
 
 @menu
 * Overview::          Array programming and C++.
 * Usage::             Everything you can do with ra-ra.
 * Reference::         Systematic list of types and functions.
+* Internals::         For all the world to see.
 * Hazards::           User beware.
 * The future::        Could be even better.
 @end menu
@@ -85,14 +86,14 @@ but it's also safer and less redundant. For example, the order of the loops may 
 
 However, if array operations are implemented naively, a piece of code such as @code{A=B+C} may result in the creation of a temporary to hold @code{B+C} which is then assigned to @code{A}. Needless to say this is very wasteful if the arrays involved are large.
 
-Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as `loop fusion' REF, `drag along' REF, or `deforestation' REF. In the C++ context the technique of `expression templates' was pioneered in the late 90s by libraries such as Blitz++ REF. It works by making @code{B+C} into an `expression object' which holds references to its arguments and executes the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated loop nest above.
+Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as `loop fusion' REF, `drag along' REF, or `deforestation' REF. In the C++ context the technique of `expression templates' was pioneered in the late 90s by libraries such as Blitz++ REF. It works by making @code{B+C} into an `expression object' which holds references to its arguments and performs the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated loop nest above.
 
 @menu
-* Rank polymorphism::       What makes arrays special.
-* Drag along and beating::  The basic array optimizations.
-* Why C++::                 High level, low level.
-* Guidelines::              How ra-ra tries to do things.
-* Other libraries::         Inspiration and desperation.
+* Rank polymorphism::         What makes arrays special.
+* Drag along and beating::    The basic array optimizations.
+* Why C++::                   High level, low level.
+* Guidelines::                How ra-ra tries to do things.
+* Other libraries::           Inspiration and desperation.
 @end menu
 
 @c ------------------------------------------------
@@ -125,7 +126,7 @@ A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...
 @end quotation
 
 @cindex order, row-major
-This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for arrays in C (@pxref{Other libraries}). A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C (@pxref{Other libraries}). A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 
 @quotation
 A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
@@ -137,9 +138,9 @@ where the numbers (s₀, s₁, ...) are called the @dfn{strides} or the @dfn{dop
 A ≡ ((storage-of-A), o, (s₀, s₁, ...))
 @end quotation
 
-then any affine transformation of the indices can be achieved simply by modifying the numbers (o, (s₀, s₁, ...)), with no need to touch the storage. This includes very common operations such as: transposing axes, reversing the order along an axis, most cases of slicing, and some important cases of reshaping or tiling the array.
+then any affine transformation of the indices can be achieved simply by modifying the numbers (o, (s₀, s₁, ...)), with no need to touch the storage. This includes very common operations such as: transposing axes, reversing the order along an axis, most cases of slicing, and sometimes even reshaping or tiling the array.
 
-A trivial example is the i₀-th item of A:
+A basic example is obtaining the i₀-th item of A:
 
 @quotation
 A(i₀) ≡ ((storage-of-A), o+s₀i₀, (s₁, ...))
@@ -180,7 +181,7 @@ In C++, a library is enough.
 ra-ra attempts to be general, consistent, and transparent.
 
 @c @cindex J # @TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
-Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. ra-ra supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can freely use your own types as array elements.
+Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. ra-ra supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
 Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. ra-ra offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, you can currently create a higher rank iterator on a @code{View} but not a @code{SmallView}; this is a bug.
 
@@ -188,7 +189,7 @@ Sometimes consistency requires a choice. For example, given array views A and B,
 
 Transparency is achieved by avoiding opaque types. An array view consists of a pointer and a list of strides and I see no point in hiding that. Manipulating the strides directly is often useful. A container consists of storage and a view and that isn't hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
 
-That isn't to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably sweet syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you'll be able to guarantee that your array is stored by compact columns or that the real parts are interleaved with the imaginary parts.
+That isn't to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably sweet syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you'll be able to guarantee that an array is stored by compact columns or that the real parts are interleaved with the imaginary parts.
 
 @c ------------------------------------------------
 @node Other libraries
@@ -203,7 +204,7 @@ C++ offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[
 
 The C++ standard library also offers a number of containers that can be used as 1-arrays, of which the most important are @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. ra-ra makes use of @code{<array>} and @code{<vector>} for storage and bootstrapping so we'll mention these containers from time to time.
 
-Blitz++ (REF) pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++ at the time, but not dynamic rank. It also supported small arrays with compile time sizes, and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which ra-ra doesn't support on purpose). Storage for large arrays was reference-counted, while in ra-ra that is optional but not the default. It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc. To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98 and it offered no general rank extension mechanism.
+Blitz++ (REF) pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time sizes, and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which ra-ra chooses not to support). Storage for large arrays was reference-counted, while in ra-ra that is optional but not the default. It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc. To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 
 TODO More libraries.
 
@@ -219,7 +220,7 @@ This is an extended exposition of the features of ra-ra and is probably best rea
 @menu
 * Using ra-ra::                ra-ra is a header-only library.
 * Containers and views::       Data objects.
-* Array operations::           Building and executing expressions.
+* Array operations::           Building and traversing expressions.
 * Rank extension::             How array operands are matched.
 * Cell iteration::             At any rank.
 * Slicing::                    Subscripting is a special operation.
@@ -227,7 +228,6 @@ This is an extended exposition of the features of ra-ra and is probably best rea
 * The rank conjunction::       J comes to C++.
 * Compatibility::              With the STL and others.
 * Extension::                  Using your own types and more.
-* Internals::                  For all the world to see.
 @end menu
 
 @c ------------------------------------------------
@@ -284,7 +284,7 @@ For example:
 @end verbatim
 @end example
 
-The main reason to have all these different types is performance; the compiler can do a much better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory so if you have thousands of small arrays it certainly pays off to use the fixed size types for them. Fixed size or fixed rank arrays are also safer to use; sometimes ra-ra will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+The main reason to have all these different types is performance; the compiler can do a much better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory, so when you have thousands of small arrays it does pays off to use the fixed size types for them. Fixed size or fixed rank arrays are also safer to use; sometimes ra-ra will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
 Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.
 
@@ -327,7 +327,7 @@ ra::SmallArray<real, sizes, strides> a { 1, 2, 3, 4, 5, 6 }; // {{1, 2, 3}, {4, 
 @end verbatim
 @end example
 
-Sometimes the pointer constructor gets in the way (TODO): @c [ma102]
+Sometimes the pointer constructor gets in the way (see @ref{x-ra-scalar,@code{scalar}}): @c [ma102]
 
 @example
 @verbatim
@@ -409,7 +409,7 @@ for_each([&s](auto && a) { s+=a; }, a);
 @result{} s = 21.
 @end example
 
-To construct an array expression but stop short of executing it, use the function @code{map}. The expression will be executed implicitly when it is assigned to a view, printed out, etc.
+To construct an array expression but stop short of traversing it, use the function @code{map}. The expression will be traversed when it is assigned to a view, printed out, etc.
 
 @example
 @verbatim
@@ -532,6 +532,57 @@ Singleton broadcasting still isn't entirely general, since it doesn't handle tra
 @section Cell iteration
 @c ------------------------------------------------
 
+@code{map} and @code{for_each} apply their operators to each element of their arguments; in other words, to the 0-cells of the arguments. But it is possible to specify directly the rank of the cells that one iterates over:
+
+@example
+@verbatim
+ra::Owned<double, 3> a({5, 4, 3}, ra::_0);
+for_each([](auto && b) { /* b has shape (5 4 3) */ }, iter<3>(a));
+for_each([](auto && b) { /* b has shape (4 3) */ }, iter<2>(a));
+for_each([](auto && b) { /* b has shape (3) */ }, iter<1>(a));
+for_each([](auto && b) { /* b has shape () */ }, iter<0>(a)); // elements
+for_each([](auto && b) { /* b has shape () */ }, a); // same as iter<0>(a); default
+@end verbatim
+@end example
+
+One may specify the @emph{frame} rank instead:
+
+@example
+@verbatim
+for_each([](auto && b) { /* b has shape () */ }, iter<-3>(a)); // same as iter<0>(a)
+for_each([](auto && b) { /* b has shape (3) */ }, iter<-2>(a)); // same as iter<1>(a)
+for_each([](auto && b) { /* b has shape (4 3) */ }, iter<-1>(a)); // same as iter<2>(a)
+@end verbatim
+@end example
+
+In this way it is possible to match shapes in various ways. Compare
+
+@example
+@verbatim
+ra::Owned<double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
+ra::Owned<double, 2> b({2}, {10, 20});
+ra::Owned<double, 2> c = a * b; // multiply (each item of a) by (each item of b)
+@end verbatim
+@result{} a = @{@{10, 20, 30@}, @{80, 100, 120@}@}
+@end example
+
+with
+
+@example @c [ma105]
+@verbatim
+ra::Owned<double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
+ra::Owned<double, 2> b({3}, {10, 20, 30});
+ra::Owned<double, 2> c({2, 3}, 0.);
+iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply (each item of a) by (b)
+@end verbatim
+@result{} a = @{@{10, 40, 90@}, @{40, 100, 180@}@}
+@end example
+
+Note that in this case we cannot construct @code{c} directly from @code{iter<1>(a) * iter<1>(b)}, since the constructor for @code{ra::Owned} matches its argument against @code{iter<0>(*this)}.
+
+Cell iteration is best used when the operations take naturally operands of rank > 0; for instance, the operation `determinant of a matrix' is naturally of rank 2. When the operation is of rank 0, such as @code{*} above, there may be faster ways to rearrange shapes for matching (@pxref{The rank conjunction}).
+
+FIXME More examples.
 
 @c ------------------------------------------------
 @node Slicing
@@ -588,7 +639,9 @@ ra::Owned<double, 2> b = A(i, j);
 
 @code{A(i, j, ...)} is the @emph{outer product} of the indices @code{(i, j, ...)} with operator @code{A}.
 
-This operation sees much more use in practice than @code{map(A, i, j ...)}. Besides, when the subscripts @code{i, j, ...} are scalars or @dfn{linear ranges} (integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}, the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called @dfn{beating} REF. ra-ra is not smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
+This operation sees much more use in practice than @code{map(A, i, j ...)}. Besides, when the subscripts @code{i, j, ...} are scalars or @dfn{linear ranges} (integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}, the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called @dfn{beating} REF.
+
+ra-ra is not smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
 
 @deffn @w{Special object} iota count [start:0 [step:1]]
 Create a linear range @code{start, start+step, ... start+step*(count-1)}.
@@ -687,6 +740,27 @@ This supports the notion (@pxref{Rank polymorphism}) that a 3-array is also an 2
 @section Special objects
 @c ------------------------------------------------
 
+@deffn @w{Special object} TensorIndex<n, integer_type=ra::dim_t>
+@code{TensorIndex<n>} represents the @code{n}-th index of an array expression. @code{TensorIndex<n>} is itself an array expression of rank @code{n}-1 and size undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
+
+ra:: offers the shortcut @code{ra::_0} for @code{ra::TensorIndex<0>@{@}}, etc.
+@end deffn
+
+@example
+@verbatim
+ra::Owned<int, 1> v = {1, 2, 3};
+cout << (v - ra::_0) << endl; // { 1-0, 2-1, 3-2 }
+// cout << (ra::_0) << endl; // error: TensorIndex cannot drive array expression
+// cout << (v - ra::_1) << endl; // error: TensorIndex cannot drive array expression
+ra::Owned<int, 2> a({3, 2}, 0);
+cout << (a + ra::_0 - ra::_1) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
+@end verbatim
+@end example
+
+Note that array expressions using @code{TensorIndex} will generally be slower than array expressions not using @code{TensorIndex}, especially if they have rank > 1, because the presence of @code{TensorIndex} prevents nested loops from being flattened (@pxref{Internals}). @c FIXME Have an implementation section to discuss these issues
+
+@c FIXME the rest
+
 @c ------------------------------------------------
 @node The rank conjunction
 @section The rank conjunction
@@ -755,7 +829,7 @@ b: 3 | 2
 @end verbatim
 @end example
 
-This use of the rank conjunction is packaged in ra-ra as the @ref{x-from,,@code{from}} operator. It supports any number of arguments, not only two.
+This use of the rank conjunction is packaged in ra-ra as the @ref{x-from,@code{from}} operator. It supports any number of arguments, not only two.
 
 @example
 @verbatim
@@ -823,17 +897,12 @@ I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, wher
 @c ------------------------------------------------
 
 @c ------------------------------------------------
-@node Internals
-@section Internals
-@c ------------------------------------------------
-
-@c ------------------------------------------------
 @node Reference
 @chapter Reference
 @c ------------------------------------------------
 
 @defun map op expr ...
-Create array expression that applies @var{op} to @var{expr} ...
+Create an array expression that applies @var{op} to @var{expr} ...
 @end defun
 
 For example:
@@ -859,7 +928,7 @@ map([](auto && i, auto && j) -> int & { return x(i, j); },
 Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to (value) @code{auto}, so either a explicit type or @code{decltype(auto)} should be used to return a reference.
 
 @defun for_each op expr ...
-Create array expression that applies @var{op} to @var{expr} ..., and traverse it.
+Create an array expression that applies @var{op} to @var{expr} ..., and traverse it.
 @end defun
 
 @var{op} should normally return @code{void}. For example:
@@ -872,15 +941,15 @@ for_each([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})
 @end example
 
 @defun pack <type> expr ...
-Create array expression that brace-constructs @var{type} from @var{expr}.
+Create an array expression that brace-constructs @var{type} from @var{expr} ...
 @end defun
 
 @defun cast <type> expr
-Create array expression that casts @var{expr} into @var{type}.
+Create an array expression that casts @var{expr} into @var{type}.
 @end defun
 
 @defun pick select_expr expr ...
-Create array expression that selects the first of @var{expr} ... if @var{select_expr} is 0, the second if @var{select_expr} is 1, and so on. The expressions that are not selected are not looked up.
+Create an array expression that selects the first of @var{expr} ... if @var{select_expr} is 0, the second if @var{select_expr} is 1, and so on. The expressions that are not selected are not looked up.
 @end defun
 
 This function cannot be defined using @var{map}, because @var{map} looks up each one of its argument expressions before calling @var{op}.
@@ -895,7 +964,7 @@ For example:
 @end example
 
 @defun where pred_expr true_expr false_expr
-Create array expression that selects @var{true_expr} if @var{pred_expr} is @code{true}, and @var{false_expr} if @var{pred_expr} is @code{false}. The expression that is not selected is not looked up.
+Create an array expression that selects @var{true_expr} if @var{pred_expr} is @code{true}, and @var{false_expr} if @var{pred_expr} is @code{false}. The expression that is not selected is not looked up.
 @end defun
 
 For example:
@@ -933,6 +1002,20 @@ For example:
 
 The last example is more or less how @code{A(i, j)} is actually implemented (@pxref{The rank conjunction}).
 
+@defun at expr indices
+Look up @var{expr} at each element of @var{indices}, which shall be an multi-index into @var{expr}.
+@end defun
+
+This can be used for sparse subscripting. For example:
+@example @c [ra30]
+@verbatim
+    ra::Owned<int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
+    ra::Owned<ra::Small<int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
+    ra::Owned<int, 2> B = at(A, i);
+@end verbatim
+  @result{} B = @{@{101, 120@}, @{110, 121@}@}
+@end example
+
 @anchor{x-wrank}@defun wrank <input_rank ...> op
 Wrap op using a rank conjunction (@pxref{The rank conjunction}).
 @end defun
@@ -966,7 +1049,7 @@ This operation does not work on arbitrary array expressions yet. TODO FILL
 Create a stencil on @var{view} with lower bounds @var{lo} and higher bounds @var{hi}.
 @end defun
 
-@var{lo} and @var{hi} are rank-1 expressions indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their sizes reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
+@var{lo} and @var{hi} are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their sizes reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
@@ -982,17 +1065,161 @@ TODO
 TODO
 @end defun
 
-@defun ptr pointer
-TODO
-@end defun
-
 @defun vector foreign_vector
+Create a vector expression from @var{foreign_vector}.
+@end defun
+
+@var{foreign_vector} can be @code{std::vector}, @code{std::array}, or an initializer list. The resulting expresion has rank 1 and the size of the argument.
+
+Generally one can mix these types with ra:: expressions without needing @code{ra::vector}, but sometimes this isn't possible, for example for operators that must be class members.
+
+@example
+@verbatim
+std::vector<int> x = {1, 2, 3};
+ra::Owned<int, 1> y = {10, 20, 30};
+cout << (x+y) << endl; // same as ra::vector(x)+y
+// x += y; // error: no mach for operator+=
+ra::vector(x) += y; // ok
+@end verbatim
+  @print{}
+  3
+  11 22 33
+  @result{} x = @{ 11, 22, 33 @}
+@end example
+
+@defun ptr pointer
+Create a vector expression from the raw @var{pointer}.
+@end defun
+
+The resulting expression has rank 1 and undefined size. To traverse it, it must be matched with other expressions whose size is defined. ra-ra cannot check accesses made through this object, so be careful. For instance:
+
+@example
+@verbatim
+int p[] = {1, 2, 3};
+ra::Owned<int, 1> v3 {1, 2, 3};
+ra::Owned<int, 1> v4 {1, 2, 3, 4};
+v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
+v4 += ra::ptr(p); // error, shape (4): bad access to p[3]
+// cout << (ra::ptr(p)+ra::TensorIndex<0>{}) << endl; // ct error, expression has undefined shape
+@end verbatim
+@end example
+
+@anchor{x-ra-scalar}@defun scalar expr
+Create a scalar expression from @var{expr}.
+
+This is mostly useful with nested arrays. Consider:
+@example
+@verbatim
+using Vec2 = ra::Small<double, 2>;
+Vec2 x {-1, 1};
+ra::Owned<Vec2, 1> c { {1, 2}, {2, 3}, {3, 4} };
+// c += x // x has shape (2) and c has shape (3), match error
+c += ra::scalar(x); // ok: scalar(x) has shape () and matches c.
+@end verbatim
+  @result{} c = @{ @{0, 3@}, @{1, 4@}, @{2, 5@} @}
+@end example
+The result is @{c(0)+x, c(1)+x, c(2)+x@}. Compare this with
+@example
+@verbatim
+c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
+@end verbatim
+  @result{} c = @{ @{-1, 2@}, @{2, 5@} @}
+@end example
+where the result is @{c(0)+x(0), c(1)+x(1)@}.
+@end defun
+
+@defun iter <k> (view)
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version, @var{view} must be a variable size @code{View}. This is a defect.
+@end defun
+
+@example
+@verbatim
+ra::Owned<int, 2> c {{1, 3, 2}, {7, 1, 3}};
+cout << "max of each row: " << map([](auto && a) { return amax(a); }, iter<1>(c)) << endl;
+ra::Owned<int, 1> m({3}, 0);
+scalar(m) = max(scalar(m), iter<1>(c));
+cout << "max of each column: " << m << endl;
+m = 0;
+for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
+cout << "max of each column again: " << m << endl;
+@end verbatim
+  @print{}
+  max of each row: 2
+  3 7
+  max of each column: 3
+  7 3 3
+  max of each column again: 3
+  7 3 3
+@end example
+
+In the following example, @code{iter} emulates @code{scalar}. Note that the shape () of @code{iter<1>(m)} matches the shape (3) of @code{iter<1>(c)}. Thus, each of the 1-cells of @code{c} matches against the single 1-cell of @code{m}.
+
+@example
+@verbatim
+m = 0;
+iter<1>(m) = max(iter<1>(m), iter<1>(c));
+cout << "max of each yet again: " << m << endl;
+@end verbatim
+  @print{}
+  max of each column again: 3
+  7 3 3
+@end example
+
+The following example computes the trace of each of the items [(-1)-cells] of @code{c}. @c [ma104]
+
+@example
+@verbatim
+ra::Owned<int, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
+cout << "c: " << c << endl;
+cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
+@end verbatim
+  @print{}
+  c: 3 2 2
+  0 -2
+  -1 -3
+  1 -1
+  0 -2
+  2 0
+  1 -1
+  s: 3
+  -3 -1 -1
+@end example
+
+
+The following operations perform full rank reductions.
+
+@defun sum expr
+Return the sum (+) of the elements of @var{expr}, or 0 if expr is empty. This sum is performed in unspecified order.
+@end defun
+
+@defun prod expr
+Return the product (*) of the elements of @var{expr}, or 1 if expr is empty. This product is performed in unspecified order.
+@end defun
+
+@defun amax expr
+Return the maximum of the elements of @var{expr} is true, or @code{std::numeric_limits<T>::lowest()}, if expr is empty, where @code{T} is the value type of the elements of @var{expr}. FIXME should prolly be -inf for floating point.
+@end defun
+
+@defun amin expr
+Return the minimum of the elements of @var{expr} is true, or @code{std::numeric_limits<T>::max()}, if expr is empty, where @code{T} is the value type of the elements of @var{expr}. FIXME should prolly be +inf for floating point.
+@end defun
+
+@defun early expr
 TODO
 @end defun
 
-@defun scalar expr
-TODO
+@defun any expr
+Return @code{true} if any element of @var{expr} is true, @code{false} otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified.
 @end defun
+
+@defun every expr
+Return @code{true} if every element of @var{expr} is true, @code{false} otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified.
+@end defun
+
+@c ------------------------------------------------
+@node Internals
+@chapter Internals
+@c ------------------------------------------------
 
 @c ------------------------------------------------
 @node Hazards

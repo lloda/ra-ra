@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2014
+// (c) Daniel Llorens - 2013-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -32,8 +32,7 @@ template <class A> inline
 void ply_index(A && a)
 {
     rank_t const rank = a.rank();
-    using Shape = std::decay_t<decltype(a.shape())>;
-    Shape ind(ra_traits<Shape>::make(rank, 0));
+    auto ind(ra_traits<decltype(a.shape())>::make(rank, 0));
     dim_t sha[rank];
     rank_t order[rank];
     for (rank_t k=0; k<rank; ++k) {
@@ -267,8 +266,7 @@ template <class A, class DEF>
 auto ply_index_exit(A && a, DEF && def)
 {
     rank_t const rank = a.rank();
-    using Shape = std::decay_t<decltype(a.shape())>;
-    Shape ind(ra_traits<Shape>::make(rank, 0));
+    auto ind(ra_traits<decltype(a.shape())>::make(rank, 0));
     dim_t sha[rank];
     rank_t order[rank];
     for (rank_t k=0; k<rank; ++k) {
@@ -326,16 +324,6 @@ template <class A, class DEF> inline decltype(auto)
 early(A && a, DEF && def)
 {
     return ply_either_exit(std::forward<A>(a), std::forward<DEF>(def));
-}
-template <class A> inline bool
-any(A && a)
-{
-    return early(map([](bool x) -> auto { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
-}
-template <class A> inline bool
-every(A && a)
-{
-    return early(map([](bool x) -> auto { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
 }
 
 } // namespace ra

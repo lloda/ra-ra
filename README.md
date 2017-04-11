@@ -295,10 +295,17 @@ a test suite in ```test/```. These tests test internal details and are not meant
 as demonstrations of how to use the library. There is a directory with
 ```examples/```, some ported from Blitz++.
 
-All tests pass under g++-6.3. All tests pass under clang++-3.8/9 except for
-test/test-small.C which crashes clang. For clang on OS X you have to remove the
--Wa,q option in the SConstruct which is meant for gcc by setting CCFLAGS to
-something else, for example:
+All tests pass under g++-6.3.
+
+All tests pass under clang++-4.0 except for:
+
+* test/bench-pack.C, crashes clang.
+
+* test/test-optimize.C, fails to compile to a defect in the implementation of
+  the vector_size attribute.
+
+For clang on OS X you have to remove the -Wa,q option in the SConstruct which is
+meant for gcc by setting CCFLAGS to something else:
 
   ```CCFLAGS="-march=native -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3
   CXX=clang++-3.9 scons -j4```

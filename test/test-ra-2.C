@@ -128,6 +128,23 @@ int main()
             tr.test(std::equal(check, check+12, a.begin()));
         }
     }
+    section("ply on cell rank = 0 using iter<-1>, ref argument");
+    {
+        ra::Small<real, 3> dump { 1, 2, 3 };
+        ra::Unique<real, 1> a({3}, ra::unspecified);
+        real check[3] = {1, 2, 3};
+        section("driving");
+        {
+            auto f = [](real & a, real d) { a = d; };
+            std::fill(a.begin(), a.end(), 0);
+            ply_index(map(f, a.iter<-1>(), dump.iter<0>()));
+            tr.test(std::equal(check, check+3, a.begin()));
+
+            std::fill(a.begin(), a.end(), 0);
+            ply_ravel(map(f, a.iter<-1>(), dump.iter<0>()));
+            tr.test(std::equal(check, check+3, a.begin()));
+        }
+    }
     section("ply on cell rank > 0, dynamic rank");
     {
         ra::Owned<int> ad({5, 2}, ra::_0 - ra::_1);

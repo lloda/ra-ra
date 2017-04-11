@@ -12,6 +12,7 @@
 #include "ra/type.H"
 #include "ra/traits.H"
 #include <iosfwd>
+#include <sstream>
 
 /// @file io.H
 /// @brief Write and read arrays, expressions.
@@ -104,7 +105,7 @@ std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
     dim_t n;
-    if (i >> n) {
+    if (!((i >> n).fail())) {
         assert(n>=0);
         c.resize(n);
         std::copy_n(std::istream_iterator<T>(i), c.size(), c.begin());

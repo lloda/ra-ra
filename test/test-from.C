@@ -301,5 +301,12 @@ int main()
         at(A, ra::scalar(coord{3, 2})) = 99.;
         tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 99, 0}), A);
     }
+// From the manual [ra30]
+    {
+        ra::Owned<int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
+        ra::Owned<ra::Small<int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
+        ra::Owned<int, 2> B = at(A, i);
+        tr.test_eq(ra::Owned<int, 2>({2, 2}, {101, 120, 110, 121}), at(A, i));
+    }
     return tr.summary();
 }

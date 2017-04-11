@@ -118,5 +118,18 @@ int main()
         static_assert(ra::is_ra_pos_rank<ra::Expr<ra::plus, std::tuple<ra::TensorIndex<0, int>, ra::Scalar<int> > > >, "bad");
         static_assert(ra::is_ra_pos_rank<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
+// builtin arrays
+    section("builtin arrays");
+    {
+        int const a[] = {1, 2, 3};
+        int b[] = {1, 2, 3};
+        int c[][2] = {{1, 2}, {4, 5}};
+        static_assert(ra::is_builtin_array<decltype(a) &>);
+        static_assert(ra::is_builtin_array<decltype(a)>);
+        static_assert(ra::is_builtin_array<decltype(b) &>);
+        static_assert(ra::is_builtin_array<decltype(b)>);
+        static_assert(ra::is_builtin_array<decltype(c) &>);
+        static_assert(ra::is_builtin_array<decltype(c)>);
+    }
     return tr.summary();
 }

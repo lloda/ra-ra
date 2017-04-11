@@ -159,6 +159,7 @@ inline auto pack(A && ... a)
     return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
 }
 
+// FIXME Inelegant story wrt plain array / nested array :-/
 template <class A, class I>
 inline auto at(A && a, I && i)
 {
@@ -175,6 +176,17 @@ inline auto where(W && w, T && t, F && f)
 // Some whole-array reductions.
 // @TODO First rank reductions? Variable rank reductions?
 // --------------------------------
+
+template <class A> inline bool
+any(A && a)
+{
+    return early(map([](bool x) -> auto { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
+}
+template <class A> inline bool
+every(A && a)
+{
+    return early(map([](bool x) -> auto { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
+}
 
 // @TODO somehow make this work (ply_index_short_circuit is bad). Then variable rank...
 template <class A>

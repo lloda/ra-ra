@@ -1,29 +1,29 @@
 
-// (c) Daniel Llorens - 2013-2014, 2016
+// (c) Daniel Llorens - 2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_ITERATOR_H
-#define RA_ITERATOR_H
+#ifndef RA_ITERATOR_SMALL_H
+#define RA_ITERATOR_SMALL_H
 
 /// @file iterator.H
-/// @brief Array iterator for View, plus row-major STL iterator.
+/// @brief Array iterator for SmallView, plus row-major STL iterator.
 
 #include "ra/traits.H"
 #include "ra/opcheck.H"
 #include <iostream>
 
 #ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_ITERATOR RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_RA_ITERATOR_SMALL RA_CHECK_BOUNDS
 #else
-    #ifndef RA_CHECK_BOUNDS_RA_ITERATOR
-        #define RA_CHECK_BOUNDS_RA_ITERATOR 1
+    #ifndef RA_CHECK_BOUNDS_RA_ITERATOR_SMALL
+        #define RA_CHECK_BOUNDS_RA_ITERATOR_SMALL 1
     #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_ITERATOR==0
+#if RA_CHECK_BOUNDS_RA_ITERATOR_SMALL==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -31,24 +31,20 @@
 
 namespace ra {
 
-template <class I> struct Print_iterator { I i; };
-template <class I> auto print_iterator(I && i) { return Print_iterator<I> { std::forward<I>(i) }; }
+template <class I> struct Print_iterator_small { I i; };
+template <class I> auto print_iterator_small(I && i) { return Print_iterator_small<I> { std::forward<I>(i) }; }
 
 template <class I>
-std::ostream & operator<<(std::ostream & o, Print_iterator<I> && p)
+std::ostream & operator<<(std::ostream & o, Print_iterator_small<I> && p)
 {
-    o << "<cellr " << p.i.cellr << "[";
-    for (int k=0; k<p.i.rank(); ++k) {
-        o << k << ": " << p.i.dim[k].size << ", " << p.i.dim[k].stride << (k+1!=p.i.rank() ? "; " : "");
-    }
-    o << "]>";
+    o << "we'll see";
     return o;
 }
 
-// V is View (FIXME so why parameterize? apparently only for order-of-decl.)
-// Child is ra_iterator
+// V is SmallBase (FIXME so why parameterize? apparently only for order-of-decl.)
+// Child is ra_iterator_small
 template <class V, rank_t cellr_, class Child>
-struct cell_iterator
+struct cell_iterator_small
 {
     constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
@@ -71,15 +67,15 @@ struct cell_iterator
     dims_p dim; // FIXME take V & and ask through that. Should be const.
     cell_type c;
 
-    constexpr cell_iterator() { c.p = nullptr; } // end marker only.
-    constexpr cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-    constexpr cell_iterator & operator=(cell_iterator const & ci) = delete;
+    constexpr cell_iterator_small() { c.p = nullptr; } // end marker only.
+    constexpr cell_iterator_small(cell_iterator_small const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
+    constexpr cell_iterator_small & operator=(cell_iterator_small const & ci) = delete;
 // needed because View = View copies contents, not the View itself [ra11]
-    constexpr cell_iterator & assign(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
+    constexpr cell_iterator_small & assign(cell_iterator_small const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
 
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
     template <class SS> constexpr
-    cell_iterator(SS const & s_, atom_type * p_): dim(s_)
+    cell_iterator_small(SS const & s_, atom_type * p_): dim(s_)
     {
         rank_t const rank = this->rank();
         c.p = p_; // see stl_iterator for the case of s_[0]=0, etc. [ra12].
@@ -112,7 +108,7 @@ struct cell_iterator
 #define DEF_EQOPS(OP)                                                   \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
-    template <class X> void operator OP(ra_iterator const & x)          \
+    template <class X> void operator OP(ra_iterator_small const & x)          \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
 
 template <class C>
@@ -124,11 +120,11 @@ struct CellFlat
 };
 
 template <class V, rank_t cellr=0>
-struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
+struct ra_iterator_small: public cell_iterator_small<V, cellr, ra_iterator_small<V, cellr>>
 {
-    using P = cell_iterator<V, cellr, ra_iterator<V, cellr>>;
-    ra_iterator(): P() {};
-    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
+    using P = cell_iterator_small<V, cellr, ra_iterator_small<V, cellr>>;
+    ra_iterator_small(): P() {};
+    template <class SS> ra_iterator_small(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
     auto flat() const { return CellFlat<typename P::cell_type> { P::c }; }
 // Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. @TODO Think this over.
@@ -144,11 +140,11 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
 };
 
 template <class V>
-struct ra_iterator<V, 0>: public cell_iterator<V, 0, ra_iterator<V, 0>>
+struct ra_iterator_small<V, 0>: public cell_iterator_small<V, 0, ra_iterator_small<V, 0>>
 {
-    using P = cell_iterator<V, 0, ra_iterator<V, 0>>;
-    ra_iterator(): P() {};
-    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
+    using P = cell_iterator_small<V, 0, ra_iterator_small<V, 0>>;
+    ra_iterator_small(): P() {};
+    template <class SS> ra_iterator_small(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
     auto flat() const { return P::c.p; }
     template <class I>
@@ -210,6 +206,6 @@ auto iter(A && a) { return a.template iter<cell_rank>(); }
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_ITERATOR
+#undef RA_CHECK_BOUNDS_RA_ITERATOR_SMALL
 
-#endif // RA_ITERATOR_H
+#endif // RA_ITERATOR_SMALL_H

@@ -222,7 +222,7 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    operator decltype(*(std::declval<Pick>().flat()))()
+    operator decltype(*(pick_flat(std::get<I>(t).flat() ...)))()
     {
         static_assert(rank_s()==0 || rank_s()==RANK_ANY || (rank_s()==1 && size_s()==1), // for coord types
                       "bad rank in conversion to scalar");
