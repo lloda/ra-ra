@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2014
+// (c) Daniel Llorens - 2014, 2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -94,7 +94,63 @@ int main()
         int const a[] = {1, 2, 3};
         tr.info("builtin array is enough to drive").test_eq(ra::vector({1, 3, 5}), (ra::_0 + a));
         int const b[][3] = {{1, 2, 3}, {4, 5, 6}};
-        tr.info("builtin array handles 2 dimensions").test_eq(ra::Small<int, 2, 3>{1, 1, 1, /**/ 5, 5, 5}, (ra::_0 + b - ra::_1));
+        tr.info("builtin array handles 2 dimensions").test_eq(ra::Small<int, 2, 3>{1, 1, 1,  5, 5, 5}, (ra::_0 + b - ra::_1));
+        int const c[2][2][2][2] = {{{{0, 1}, {2, 3}}, {{4, 5}, {6, 7}}}, {{{8, 9}, {10, 11}}, {{12, 13}, {14, 15}}}};
+        tr.info("builtin array handles 4 dimensions").test_eq(ra::Small<int, 2, 2, 2, 2>(ra::_0*8 + ra::_1*4 + ra::_2*2 + ra::_3), c);
+        // ra::start(c) = 99; // FIXME test that this fails at ct.
+    }
+    section("operators take foreign types");
+    {
+        std::vector<int> x = {1, 2, 3};
+        tr.test_eq(6, sum(ra::start(x)));
+        tr.test_eq(6, ra::sum(x));
+    }
+    section("spot use of scalar");
+    {
+        struct W { int x; };
+        ra::Owned<W, 1> w = { {1}, {2} };
+        tr.test_eq(ra::vector({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
+    }
+    {
+        int o[4];
+        using O = decltype(o);
+        O p[2];
+        int q[2][4];
+
+        cout << mp::type_name<decltype(o)>() << endl;
+        cout << mp::type_name<decltype(p)>() << endl;
+        cout << mp::type_name<decltype(q)>() << endl;
+        cout << mp::type_name<decltype(ra::start(q))>() << endl;
+        cout << mp::type_name<std::remove_all_extents_t<decltype(q)>>() << endl;
+    }
+    {
+        int o[2];
+        int p[3][2];
+        int q[4][3][2];
+        int r[][2] = {{1, 2}, {3, 4}};
+        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(o)>,
+                      mp::int_list<2>>::value);
+        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(p)>,
+                      mp::int_list<3, 2>>::value);
+        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(q)>,
+                      mp::int_list<4, 3, 2>>::value);
+        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(r)>,
+                      mp::int_list<2, 2>>::value);
+        static_assert(std::rank<decltype(r)>::value==2);
+    }
+    section("example from the manual [ma106]");
+    {
+        int p[] = {1, 2, 3};
+        int * z = p;
+        ra::Owned<int, 1> q {1, 2, 3};
+        q += p; // ok, q is ra::, p is foreign object with size info
+        tr.test_eq(ra::vector({2, 4, 6}), q);
+        ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()
+        tr.test_eq(ra::vector({3, 6, 9}), p);
+        // z += q; // error: raw pointer needs ra::ptr()
+        ra::ptr(z) += p; // ok, size is determined by foreign object p
+        tr.test_eq(ra::vector({6, 12, 18}), p);
     }
     return tr.summary();
 }
+

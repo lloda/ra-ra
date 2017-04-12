@@ -18,7 +18,7 @@
 
 namespace ra {
 
-template <class T> constexpr bool is_scalar_def<std::complex<T> > = true;
+template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 
 } // namespace ra
 

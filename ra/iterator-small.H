@@ -105,7 +105,7 @@ struct cell_iterator_small
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
 };
 
-#define DEF_EQOPS(OP)                                                   \
+#define DEF_ASSIGNOPS(OP)                                                   \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
     template <class X> void operator OP(ra_iterator_small const & x)          \
@@ -136,7 +136,7 @@ struct ra_iterator_small: public cell_iterator_small<V, cellr, ra_iterator_small
     }
     decltype(auto) operator_star() const { return P::c; }
     decltype(auto) operator_star() { return P::c; }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class V>
@@ -155,12 +155,12 @@ struct ra_iterator_small<V, 0>: public cell_iterator_small<V, 0, ra_iterator_sma
     }
     decltype(auto) operator_star() const { return *P::c.p; }
     decltype(auto) operator_star() { return *P::c.p; }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
-#undef DEF_EQOPS
+#undef DEF_ASSIGNOPS
 
 template <class Iterator>
-struct stl_iterator
+struct stl_iterator_small
 {
     using value_type = typename Iterator::value_type;
     using difference_type = dim_t;
@@ -172,11 +172,11 @@ struct stl_iterator
 
     Iterator ii;
     shape_type i;
-    stl_iterator(): ii() {};
+    stl_iterator_small(): ii() {};
 // be careful to avoid ii = it.ii, see [ra11] above.
-    stl_iterator(stl_iterator const & it) = default;
-    stl_iterator & operator=(stl_iterator const & it) { i=it.i; ii.assign(it.ii); return *this; }
-    template <class SS> stl_iterator(SS const & s_, typename Iterator::P::atom_type * p_)
+    stl_iterator_small(stl_iterator_small const & it) = default;
+    stl_iterator_small & operator=(stl_iterator_small const & it) { i=it.i; ii.assign(it.ii); return *this; }
+    template <class SS> stl_iterator_small(SS const & s_, typename Iterator::P::atom_type * p_)
         : ii(s_, p_), i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), ii.cellr_spec), 0))
     {
 // [ra12] so begin()==end() for un-plied iterator on empty range. For plying sizes are used instead, so we don't care.
@@ -193,7 +193,7 @@ struct stl_iterator
 // taken from Iterator to handle the special case for cellr=0.
     decltype(auto) operator*() const { return ii.operator_star(); }
     decltype(auto) operator*() { return ii.operator_star(); }
-    stl_iterator & operator++()
+    stl_iterator_small & operator++()
     {
         next_in_cube(ii.rank(), ii.dim, i, ii.c.p);
         return *this;

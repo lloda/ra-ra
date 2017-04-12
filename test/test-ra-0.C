@@ -887,6 +887,9 @@ int main()
         int a = 3;
         ra::scalar(a) += ra::Small<int, 3> {4, 5, 6};
         tr.test_eq(18, a);
+        // beware: throws away 3+4,3+5, only 3+6 is left. [ma107]
+        ra::scalar(a) = 3 + ra::Small<int, 3> {4, 5, 6};
+        tr.test_eq(9, a);
     }
     tr.section("ra::iota");
     {

@@ -93,14 +93,14 @@ template <class T> struct ranked_ilist_def<0, T> { using type = T; };
 template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_ilist<1, T>; };
 
 // See same thing for SmallBase.
-#define DEF_EQOPS(OP)                                                   \
+#define DEF_ASSIGNOPS(OP)                                                   \
     template <class X> View & operator OP (X && x)                      \
     {                                                                   \
         for_each([](T & y, T const & x) { y OP x; }, *this, x);         \
         return *this;                                                   \
     }
 #define DEF_ASSIGNMENT_OPS                                              \
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)                              \
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                              \
     /* These three are unsafe */                                        \
     View(): p(nullptr) {}                                               \
     View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                \
@@ -559,7 +559,7 @@ struct View<T, RANK_ANY>
 
 #undef DEF_ITERATORS
 #undef DEF_ASSIGNMENT_OPS
-#undef DEF_EQOPS
+#undef DEF_ASSIGNOPS
 
 template <class T>
 struct ra_traits_def<View<T, RANK_ANY>>

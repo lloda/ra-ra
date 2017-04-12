@@ -109,7 +109,7 @@ struct cell_iterator
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
 };
 
-#define DEF_EQOPS(OP)                                                   \
+#define DEF_ASSIGNOPS(OP)                                                   \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
     template <class X> void operator OP(ra_iterator const & x)          \
@@ -140,7 +140,7 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
     }
     decltype(auto) operator_star() const { return P::c; }
     decltype(auto) operator_star() { return P::c; }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class V>
@@ -159,9 +159,9 @@ struct ra_iterator<V, 0>: public cell_iterator<V, 0, ra_iterator<V, 0>>
     }
     decltype(auto) operator_star() const { return *P::c.p; }
     decltype(auto) operator_star() { return *P::c.p; }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
-#undef DEF_EQOPS
+#undef DEF_ASSIGNOPS
 
 template <class Iterator>
 struct stl_iterator

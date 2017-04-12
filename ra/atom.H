@@ -87,10 +87,10 @@ struct Scalar
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); }
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
 
-#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
 };
 
 // For the use of std::forward<>, see eg http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
@@ -140,10 +140,10 @@ struct Vector
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
 
-#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
 };
 
 // FIXME built in arrays, etc.
@@ -185,10 +185,10 @@ struct Ptr
     constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
 
-#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
 };
 
 template <class T> inline constexpr auto

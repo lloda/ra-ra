@@ -106,11 +106,10 @@ inline constexpr auto start(T && t)
     return ra::vector(std::forward<T>(t));
 }
 
-// Forward declared for expr.H. Defined at small.H. FIXME General rank.
-template <class T, std::size_t N0> inline constexpr auto start(T (&t)[N0]);
-template <class T, std::size_t N0, std::size_t N1> inline constexpr auto start(T (&t)[N0][N1]);
-template <class T, std::size_t N0, std::size_t N1, std::size_t N2> inline constexpr auto start(T (&t)[N0][N1][N2]);
-
+// forward declare for expr.H; implemented in small.H.
+template <class T, std::enable_if_t<is_builtin_array<T>, int> = 0>
+inline constexpr auto start(T && t);
+    
 // @TODO one of these is ET-generic and the other is slice only, so make up your mind.
 template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
 template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }

@@ -269,11 +269,11 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
-#define DEF_RYN_EQOPS(OP)                                               \
+#define DEF_RYN_ASSIGNOPS(OP)                                               \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_RYN_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_RYN_EQOPS
+    FOR_EACH(DEF_RYN_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_RYN_ASSIGNOPS
 };
 
 template <class FM, class Op, class ... P> inline

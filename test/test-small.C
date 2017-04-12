@@ -505,5 +505,11 @@ int main()
         // a = b; // @TODO Check that this static fails
         cout << "a = b, a: " << a << endl;
     }
+// ASSIGNOPS for SmallBase.iter()
+    {
+        ra::Small<int, 3> s {1, 2, 3};
+        s.iter() += 9;
+        tr.test_eq(ra::vector({10, 11, 12}), s);
+    }
     return tr.summary();
 }

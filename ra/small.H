@@ -302,7 +302,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 #undef SUBSCRIPTS
 
 // See same thing for View.
-#define DEF_EQOPS(OP)                                                   \
+#define DEF_ASSIGNOPS(OP)                                                   \
     template <class X> constexpr Child & operator OP(X && x)            \
     {                                                                   \
         /* @TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
@@ -311,8 +311,8 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         for_each([](T & y, T const & x) { y OP x; }, static_cast<Child &>(*this), x); \
         return static_cast<Child &>(*this);                             \
     }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
     constexpr Child & operator=(std::initializer_list<T> const x)
     {
         assert(x.size()==size() && "bad initializer list"); /* static_assert */
@@ -369,7 +369,15 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         }
         constexpr auto flat() { return p; }
         constexpr auto flat() const { return p; }
+
+#define DEF_ASSIGNOPS(OP)                                               \
+        template <class X> void operator OP(X && x)                     \
+        { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
+        template <class X> void operator OP(Iterator const & x)         \
+        { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
+        FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
     };
+#undef DEF_ASSIGNOPS
 
     template <rank_t c=0> constexpr auto iter() { static_assert(c==0, "not yet"); return Iterator<T *>(data()); }
     template <rank_t c=0> constexpr auto iter() const { static_assert(c==0, "not yet"); return Iterator<T const *>(data()); }
@@ -654,24 +662,26 @@ auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
     return val;
 }
 
-// Forward declared at type.H for the sake of expr.H. FIXME General rank.
+template <class T, class I=std::make_integer_sequence<int, std::rank<T>::value>>
+struct builtin_array_sizes;
 
-template <class T, std::size_t N0>
-inline constexpr auto start(T (&t)[N0])
+template <class T, int ... I>
+struct builtin_array_sizes<T, std::integer_sequence<int, I ...> >
 {
-    return ra::SmallView<T, mp::int_list<N0>, default_strides_<mp::int_list<N0>>>(t).iter();
-}
+    using type = mp::int_list<std::extent<T, I>::value ...>;
+};
 
-template <class T, std::size_t N0, std::size_t N1>
-inline constexpr auto start(T (&t)[N0][N1])
-{
-    return ra::SmallView<T, mp::int_list<N0, N1>, default_strides_<mp::int_list<N0, N1>>>((T *)(t)).iter();
-}
+template <class T> using builtin_array_sizes_t = typename builtin_array_sizes<T>::type;
 
-template <class T, std::size_t N0, std::size_t N1, std::size_t N2>
-inline constexpr auto start(T (&t)[N0][N1][N2])
+// forward declared in type.H.
+template <class T, std::enable_if_t<is_builtin_array<T>, int>>
+inline constexpr auto start(T && t)
 {
-    return ra::SmallView<T, mp::int_list<N0, N1, N2>, default_strides_<mp::int_list<N0, N1, N2>>>((T *)(t)).iter();
+// preserve const.
+    using A = std::remove_volatile_t<std::remove_reference_t<T>>;
+    using E = std::remove_all_extents_t<A>;
+    using sizes = ra::builtin_array_sizes_t<A>;
+    return ra::SmallView<E, sizes, default_strides_<sizes>>((E *)(t)).iter();
 }
 
 } // namespace ra

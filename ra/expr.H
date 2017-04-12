@@ -139,10 +139,10 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C
-#define DEF_EQOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_EQOPS, =, *=, +=, -=, /=)
-#undef DEF_EQOPS
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
 };
 
 template <class Op, class ... P> inline constexpr auto
