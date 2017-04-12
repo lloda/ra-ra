@@ -135,7 +135,7 @@ int main()
             (std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
         TEST(ply_index, ra::vector(B), ra::vector(C), ra::vector(std_int3 {{1, 2, 3}}))
             (std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
-        TEST(ply_index, ra::vector(B), ra::vector(C), ra::vector({1, 2, 3}))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
+        TEST(ply_index, ra::vector(B), ra::vector(C), ra::start({1, 2, 3}))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
 #undef TEST
     }
 // Missing operators with int2; so not the same as in test-traversal.C. @TODO Revise when those are available.

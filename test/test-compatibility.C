@@ -23,45 +23,46 @@ int main()
     TestRecorder tr;
     section("Tests for std:: types");
     {
-        section("plain ra::vector()");
+        section("ra::start() on vector types");
         {
             auto ref = std::array<int, 4> {{12, 77, 44, 1}};
             tr.test_eq(2, expr([](int i) { return i; },
-                               ra::vector(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
-            tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(std::array<int, 4> {{12, 77, 44, 1}})));
-// [a1] these require ra::Vector and ra::Expr to forward in the constructor (only on linux gcc-5.2,
+                               ra::start(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
+            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array<int, 4> {{12, 77, 44, 1}})));
+// [a1] these require ra::start and ra::Expr to forward in the constructor (only on linux gcc-5.2,
 // weirdly). Clue of why is in the ra::Unique case below.
-            tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Owned<int, 1> {12, 77, 44, 1})));
-            tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(std::vector<int> {12, 77, 44, 1})));
-// these require ra::Vector and ra::Expr constructors to forward (otherwise CTE), but this makes
+            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Owned<int, 1> {12, 77, 44, 1})));
+            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector<int> {12, 77, 44, 1})));
+// these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes
 // sense, as argname is otherwise always an lref.
             ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
-                           ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
+                           ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
 // @BUG This still gives a CTE (ra::start for ra::vector does work --that uses Unique<>.iter())
 // because info(A && a) { start(a) <- makes a copy of a: Expr, which copies its internal tuple,
 // which has a value (not ref) Unique. }.
+// Fix could be to make start(is_iterator) true forward, but that doesn't work for Iota, etc. (see test-optimize.C).
             // tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
         }
-        section("frame match ra::vector on 1st axis");
+        section("frame match ra::start on 1st axis");
         {
             std::vector<int> const a = { 1, 2, 3 };
-            ra::Owned<int, 2> b ({3, 2}, ra::vector(a));
+            ra::Owned<int, 2> b ({3, 2}, ra::start(a));
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
          }
 // @TODO actually whether unroll is avoided depends on ply_either, have a way to require it.
 // Cf [tr0-01] in test-ra-0.C.
-        section("[trc01] frame match ra::vector on 1st axis, forbid unroll");
+        section("[trc01] frame match ra::start on 1st axis, forbid unroll");
         {
             std::vector<int> const a = { 1, 2, 3 };
             ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
-            transpose({0, 2, 1}, b) = ra::vector(a);
+            transpose({0, 2, 1}, b) = ra::start(a);
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
         }
-        section("frame match ra::vector on some axis other than 1st");
+        section("frame match ra::start on some axis other than 1st");
         {
             {
                 ra::Owned<int, 1> const a = { 10, 20, 30 };
@@ -76,23 +77,23 @@ int main()
                 tr.test_eq(ra::Owned<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
         }
-        section("= operators on ra::vector");
+        section("= operators on ra::start");
         {
             std::vector<int> a { 1, 2, 3 };
-            ra::vector(a) *= 3;
-            tr.test_eq(ra::vector(std::vector<int> { 3, 6, 9 }), ra::vector(a));
+            ra::start(a) *= 3;
+            tr.test_eq(ra::start(std::vector<int> { 3, 6, 9 }), ra::start(a));
         }
         section("automatic conversion of foreign vectors in mixed ops");
         {
             std::vector<int> a { 1, 2, 3 };
             ra::Owned<int, 1> b { 10, 20, 30 };
-            tr.test_eq(ra::vector({11, 22, 33}), a+b);
+            tr.test_eq(ra::start({11, 22, 33}), a+b);
         }
     }
     section("builtin arrays as foreign arrays");
     {
         int const a[] = {1, 2, 3};
-        tr.info("builtin array is enough to drive").test_eq(ra::vector({1, 3, 5}), (ra::_0 + a));
+        tr.info("builtin array is enough to drive").test_eq(ra::start({1, 3, 5}), (ra::_0 + a));
         int const b[][3] = {{1, 2, 3}, {4, 5, 6}};
         tr.info("builtin array handles 2 dimensions").test_eq(ra::Small<int, 2, 3>{1, 1, 1,  5, 5, 5}, (ra::_0 + b - ra::_1));
         int const c[2][2][2][2] = {{{{0, 1}, {2, 3}}, {{4, 5}, {6, 7}}}, {{{8, 9}, {10, 11}}, {{12, 13}, {14, 15}}}};
@@ -109,7 +110,7 @@ int main()
     {
         struct W { int x; };
         ra::Owned<W, 1> w = { {1}, {2} };
-        tr.test_eq(ra::vector({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
+        tr.test_eq(ra::start({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
     }
     {
         int o[4];
@@ -144,13 +145,12 @@ int main()
         int * z = p;
         ra::Owned<int, 1> q {1, 2, 3};
         q += p; // ok, q is ra::, p is foreign object with size info
-        tr.test_eq(ra::vector({2, 4, 6}), q);
+        tr.test_eq(ra::start({2, 4, 6}), q);
         ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()
-        tr.test_eq(ra::vector({3, 6, 9}), p);
+        tr.test_eq(ra::start({3, 6, 9}), p);
         // z += q; // error: raw pointer needs ra::ptr()
         ra::ptr(z) += p; // ok, size is determined by foreign object p
-        tr.test_eq(ra::vector({6, 12, 18}), p);
+        tr.test_eq(ra::start({6, 12, 18}), p);
     }
     return tr.summary();
 }
-

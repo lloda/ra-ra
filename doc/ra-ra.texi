@@ -133,7 +133,7 @@ This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C
 A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
 @end quotation
 
-where the numbers (s₀, s₁, ...) are called the @dfn{strides} or the @dfn{dope vector} REF. Note that the `linear' or `raveled' address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). Therefore if we represent an array as a tuple
+where the numbers (s₀, s₁, ...) are called the @dfn{strides} or the @dfn{dope vector} REF. Note that the `linear' or `raveled' address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 
 @quotation
 A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -263,7 +263,7 @@ l|l
 d|d
 @end example
 
-You may want to @code{#include "ra/real.H"} and @code{"ra/complex.H"}. These put some functions in the global namespace so that it's easier to work on scalars or array expressions indistinctly. They are not required for the rest of the library to function.
+You may want to @code{#include "ra/real.H"} and @code{"ra/complex.H"}. These put some functions in the global namespace that make it easier to work on scalars or array expressions indistinctly. They are not required for the rest of the library to function.
 
 @c ------------------------------------------------
 @node Containers and views
@@ -309,7 +309,7 @@ ra::Owned<double> b({2, 3}, a);      // b has size 2x3 and a is copied into b
 @end verbatim
 @end example
 
-The last example may result in an error if the shape of @code{a} and @{2,@w{ }3@} don't match. Here the shape of @code{1.} (which is ()) matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}).
+The last example may result in an error if the shape of @code{a} and @{2,@w{ }3@} don't match. Here the shape () of @code{1.} matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}).
 
 Finally, there are special constructors where the content argument is either a pointer or an @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointer or @code{std::initializer_list} for shape by using the functions @code{ptr} or @code{vector}.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested @code{std::initializer_list} isn't supported yet, but may be supported in the future.
 
@@ -386,7 +386,7 @@ ra::View<int> v2({2, 3}, raw);           // same, default C (row-major) strides
 @end verbatim
 @end example
 
-Containers can be treated as views and the container types convert implicitly to view types of the same `fixedness'. Therefore if you declare a function
+Containers can be treated as views and the container types convert implicitly to view types of the same `fixedness'. If you declare a function
 
 @example
 @verbatim
@@ -496,7 +496,7 @@ That is, after we run out of indices in @code{S}, we simply repeat the elements.
 @cindex Numpy
 This rank extension rule is used by J REF and is known as @dfn{prefix agreement}. (The opposite rule of @dfn{suffix agreement} is used, for example, in Numpy REF.)
 
-As you can verify, that the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout ra-ra, even in assignment expressions. For example,
+As you can verify, that the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout ra-ra, even in assignments. For example,
 
 @example
 @verbatim
@@ -595,7 +595,7 @@ FIXME More examples.
 
 Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that ra-ra supports.
 
-The form of the scripting operator @code{A(i₀, i₁, ...)} makes it plain that @code{A} is a function of @code{rank(A)} integer arguments. Therefore an array extension is immediately available through @code{map}. For example:
+The form of the scripting operator @code{A(i₀, i₁, ...)} makes it plain that @code{A} is a function of @code{rank(A)} integer arguments. An array extension is immediately available through @code{map}. For example:
 
 @example
 @verbatim
@@ -770,7 +770,7 @@ Note that array expressions using @code{TensorIndex} will generally be slower th
 @section The rank conjunction
 @c ------------------------------------------------
 
-We have seen in @ref{Cell iteration} that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. In the @code{.iter<cell rank>()} construction, this `exploding' is performed (notionally) on the argument; the operation of the array expression is applied blindly to these cells, whatever they turn out to be.
+We have seen in @ref{Cell iteration} that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. With the @ref{x-iter,@code{iter<cell rank>}} construction, this `exploding' is performed (notionally) on the argument; the operation of the array expression is applied blindly to these cells, whatever they turn out to be.
 
 @example
 @verbatim
@@ -780,7 +780,7 @@ for_each(sort, A.iter<0>()); // (in ra-ra) error, bad cell rank
 @end example
 
 @c @cindex J
-The array language J has instead the concept of @dfn{verb rank}. Every function (or @dfn{verb}) has an associated cell rank for each of its arguments. Therefore @code{.iter<cell rank>()} is not needed.
+The array language J has instead the concept of @dfn{verb rank}. Every function (or @dfn{verb}) has an associated cell rank for each of its arguments. Therefore @code{iter<cell rank>} is not needed.
 
 @example
 @verbatim
@@ -789,7 +789,7 @@ for_each(sort_rows, A); // (not in ra-ra) will iterate over 1-cells of A, sort_r
 @end example
 
 @c @cindex J
-ra-ra doesn't have `verb ranks' yet. In practice one can think of ra-ra's operations as having a rank of 0. However, ra-ra supports a limited form of J's @dfn{rank conjunction}.
+ra-ra doesn't have `verb ranks' yet. In practice one can think of ra-ra's operations as having a verb rank of 0. However, ra-ra supports a limited form of J's @dfn{rank conjunction} with the function @ref{x-wrank,@code{wrank}}.
 
 @c @cindex J
 This is an operator that takes one verb (such operators are known as @dfn{adverbs} in J) and produces another verb with different ranks. These ranks are used for rank extension through prefix agreement, but then the original verb is used on the cells that result. The rank conjunction can be nested, and this allows repeated rank extension before the innermost operation is applied.
@@ -888,7 +888,7 @@ for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && 
 
 Note that @code{wrank} cannot be used to transpose axes in general.
 
-I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, where @code{i, j, k} are special objects, can be automatically translated to the requisite combination of @code{wrank} and perhaps also @code{transpose}. For the time being, you have to align or transpose the axes yourself.
+I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, where @code{i, j, k} are special objects, can be automatically translated to the requisite combination of @code{wrank} and perhaps also @ref{x-transpose,@code{transpose}}. For the time being, you have to align or transpose the axes yourself.
 
 @c ------------------------------------------------
 @node Compatibility
@@ -908,7 +908,7 @@ cout << (x-y) << endl;
 @end example
 
 @cindex @code{start}
-Foreign types can be brought into @code{ra::} explicitly with the function @code{start}.
+Foreign types can be brought into @code{ra::} explicitly with the function @ref{x-start,@code{start}}.
 
 @example
 @verbatim
@@ -947,7 +947,7 @@ ra::ptr(z) += p; // ok, size is determined by foreign object p
 @end verbatim
 @end example
 
-
+@anchor{x-is-scalar}
 Some types are accepted automatically as scalars. These include:
 @itemize
 @item
@@ -1000,7 +1000,7 @@ map([](auto && i, auto && j) -> int & { return x(i, j); },
 @result{} x = @{@{0, 1, 0@}, @{1, 0, 1@}, @{0, 1, 0@}@}
 @end example
 
-Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to (value) @code{auto}, so either a explicit type or @code{decltype(auto)} should be used to return a reference.
+Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to (value) @code{auto}, so either a explicit type or @code{decltype(auto)} should be used if you want to return a reference.
 
 @defun for_each op expr ...
 Create an array expression that applies @var{op} to @var{expr} ..., and traverse it.
@@ -1140,21 +1140,22 @@ TODO
 TODO
 @end defun
 
-@defun vector foreign_vector
-Create a vector expression from @var{foreign_vector}.
+@anchor{x-start}
+@defun start foreign_object
+Create a array expression from @var{foreign_object}.
 @end defun
 
-@var{foreign_vector} can be @code{std::vector}, @code{std::array}, or an initializer list. The resulting expresion has rank 1 and the size of the argument.
+@var{foreign_object} can be of type @code{std::vector} or @code{std::array}, a built-in array (int[3], etc.) or an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has rank and size according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
 
-Generally one can mix these types with @code{ra::} expressions without needing @code{ra::vector}, but sometimes this isn't possible, for example for operators that must be class members.
+Generally one can mix these types with @code{ra::} expressions without needing @code{ra::start}, but sometimes this isn't possible, for example for operators that must be class members.
 
 @example
 @verbatim
 std::vector<int> x = {1, 2, 3};
 ra::Owned<int, 1> y = {10, 20, 30};
-cout << (x+y) << endl; // same as ra::vector(x)+y
+cout << (x+y) << endl; // same as ra::start(x)+y
 // x += y; // error: no mach for operator+=
-ra::vector(x) += y; // ok
+ra::start(x) += y; // ok
 @end verbatim
   @print{}
   3
@@ -1163,7 +1164,7 @@ ra::vector(x) += y; // ok
 @end example
 
 @anchor{x-ptr}@defun ptr pointer
-Create a vector expression from the raw @var{pointer}.
+Create vector expression from raw @var{pointer}.
 @end defun
 
 The resulting expression has rank 1 and undefined size. To traverse it, it must be matched with other expressions whose size is defined. ra-ra cannot check accesses made through this object, so be careful. For instance:
@@ -1180,7 +1181,8 @@ v4 += ra::ptr(p); // error, shape (4): bad access to p[3]
 @end example
 
 @anchor{x-scalar}@defun scalar expr
-Create a scalar expression from @var{expr}.
+Create scalar expression from @var{expr}.
+@end defun
 
 The primary use of this function is to bring a scalar object into the @code{ra::} namespace. A somewhat artificial example:
 
@@ -1188,8 +1190,10 @@ The primary use of this function is to bring a scalar object into the @code{ra::
 @verbatim
 struct W { int x; }
 ra::Owned<W, 1> w { {1}, {2}, {3} };
+
 // error: no matching function for call to start(W)
 // for_each([](auto && a, auto && b) { cout << (a.x + b.x) << endl; }, w, W {7});
+
 // bring W into ra:: with ra::scalar
 for_each([](auto && a, auto && b) { cout << (a.x + b.x) << endl; }, w, ra::scalar(W {7}));
 @end verbatim
@@ -1201,13 +1205,13 @@ for_each([](auto && a, auto && b) { cout << (a.x + b.x) << endl; }, w, ra::scala
 
 See also @ref{x-scalar-char-star,@code{this example}}.
 
-Since @code{scalar} produces an object with rank 0, it's also useful when dealing with nested arrays. Consider:
+Since @code{scalar} produces an object with rank 0, it's also useful when dealing with nested arrays, even for objects that are already in @code{ra::}. Consider:
 @example
 @verbatim
 using Vec2 = ra::Small<double, 2>;
 Vec2 x {-1, 1};
 ra::Owned<Vec2, 1> c { {1, 2}, {2, 3}, {3, 4} };
-// c += x // x has shape (2) and c has shape (3), match error
+// c += x // error: x has shape (2) and c has shape (3)
 c += ra::scalar(x); // ok: scalar(x) has shape () and matches c.
 @end verbatim
   @result{} c = @{ @{0, 3@}, @{1, 4@}, @{2, 5@} @}
@@ -1220,10 +1224,9 @@ c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
   @result{} c = @{ @{-1, 2@}, @{2, 5@} @}
 @end example
 where the result is @{c(0)+x(0), c(1)+x(1)@}.
-@end defun
 
 @anchor{x-iter}@defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version, @var{view} must be a variable size @code{View}. This is a defect.
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version, @var{view} must be a variable size @code{View}. (This is a defect.)
 @end defun
 
 @example
@@ -1280,6 +1283,7 @@ cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << end
 @end example
 
 
+@cindex reductions
 The following operations perform full rank reductions.
 
 @defun sum expr
@@ -1298,9 +1302,24 @@ Return the maximum of the elements of @var{expr} is true, or @code{std::numeric_
 Return the minimum of the elements of @var{expr} is true, or @code{std::numeric_limits<T>::max()}, if expr is empty, where @code{T} is the value type of the elements of @var{expr}. FIXME should prolly be +inf for floating point.
 @end defun
 
-@defun early expr
-TODO
+@defun early expr default
+@var{expr} shall be an array expression that returns @code{std::tuple<bool, T>}. @var{expr} is traversed as by @code{for_each}; if the expression ever returns @code{true} in the first element of the tuple, traversal stops and the second element is returned. If this never happens, @var{default} is returned instead.
 @end defun
+
+The following definition of elementwise @code{lexicographical_compare} relies on @code{early}.
+
+@example @c [ma108]
+@verbatim
+template <class A, class B>
+inline bool lexicographical_compare(A && a, B && b)
+{
+    return early(map([](auto && a, auto && b)
+                     { return a==b ? std::make_tuple(false, true) : std::make_tuple(true, a<b); },
+                     a, b),
+                 false);
+}
+@end verbatim
+@end example
 
 @defun any expr
 Return @code{true} if any element of @var{expr} is true, @code{false} otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified.

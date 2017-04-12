@@ -32,17 +32,17 @@ int main()
         {
             auto z = ra::iota(5, 1.5);
             tr.info("iota with real org I").test_eq(1.5, z.org_);
-            tr.info("iota wiht complex org I").test_eq(1.5+ra::vector({0, 1, 2, 3, 4}), z);
+            tr.info("iota wiht complex org I").test_eq(1.5+ra::start({0, 1, 2, 3, 4}), z);
         }
         {
             auto z = optimize(ra::iota(5, complex(1., 1.)));
             tr.info("iota with complex org I").test_eq(complex(1., 1.), z.org_);
-            tr.info("iota with complex org II").test_eq(complex(1., 1.)+ra::vector({0., 1., 2., 3., 4.}), z);
+            tr.info("iota with complex org II").test_eq(complex(1., 1.)+ra::start({0., 1., 2., 3., 4.}), z);
         }
         {
             auto i = ra::iota(5);
             auto l = optimize(i*i);
-            tr.info("optimize is nop by default").test_eq(ra::vector({0, 1, 4, 9, 16}), l);
+            tr.info("optimize is nop by default").test_eq(ra::start({0, 1, 4, 9, 16}), l);
         }
         {
             auto i = ra::iota(5);
@@ -67,11 +67,11 @@ int main()
                 tr.test_eq(org+1, k2.org_);
                 tr.test_eq(org+1, k3.org_);
                 tr.test_eq(org+1, k4.org_);
-                tr.test_eq(1+ra::vector({0, 1, 2, 3, 4}), j);
-                tr.test_eq(1+ra::vector({0, 1, 2, 3, 4}), k1);
-                tr.test_eq(1+ra::vector({0, 1, 2, 3, 4}), k2);
-                tr.test_eq(1+ra::vector({0, 1, 2, 3, 4}), k3);
-                tr.test_eq(1+ra::vector({0, 1, 2, 3, 4}), k4);
+                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), j);
+                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k1);
+                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k2);
+                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k3);
+                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k4);
             };
         test(int(0));
         test(double(0));
@@ -93,11 +93,11 @@ int main()
             tr.test_eq(0, k2.org_);
             tr.test_eq(0, k3.org_);
             tr.test_eq(0, k4.org_);
-            tr.test_eq(2*ra::vector({0, 1, 2, 3, 4}), j);
-            tr.test_eq(2*ra::vector({0, 1, 2, 3, 4}), k1);
-            tr.test_eq(2*ra::vector({0, 1, 2, 3, 4}), k2);
-            tr.test_eq(2*ra::vector({0, 1, 2, 3, 4}), k3);
-            tr.test_eq(2*ra::vector({0, 1, 2, 3, 4}), k4);
+            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), j);
+            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k1);
+            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k2);
+            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k3);
+            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k4);
         };
         test(int(0));
         test(double(0));

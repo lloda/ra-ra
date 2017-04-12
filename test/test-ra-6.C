@@ -32,7 +32,7 @@ int main()
     auto j = ra::map([](int i) { return i; }, i);
 // naturally unbeatable.
     ra::Small<int, 2> k { 1, 2 };
-    auto l = std::array<int, 2> {{ 1, 2 }};
+    auto l = std::array<int, 2> { 1, 2 };
     auto ll = ra::vector(l);
 
     cout << "X0: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, i, i, i) << endl;

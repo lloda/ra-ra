@@ -103,13 +103,19 @@ inline constexpr auto start(T && t)
 template <class T, std::enable_if_t<is_foreign_vector<T>, int> = 0>
 inline constexpr auto start(T && t)
 {
-    return ra::vector(std::forward<T>(t));
+    return Vector<T> { std::forward<T>(t) };
+}
+
+template <class T>
+inline constexpr auto start(std::initializer_list<T> && v)
+{
+    return Vector<std::initializer_list<T>> { std::move(v) };
 }
 
 // forward declare for expr.H; implemented in small.H.
 template <class T, std::enable_if_t<is_builtin_array<T>, int> = 0>
 inline constexpr auto start(T && t);
-    
+
 // @TODO one of these is ET-generic and the other is slice only, so make up your mind.
 template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
 template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }

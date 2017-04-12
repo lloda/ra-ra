@@ -320,16 +320,15 @@ int main()
         ra::Unique<int, 1> a({3}, ra::unspecified);
         ra::Unique<int, 1> b({3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
-// @BUG with ra::vector(std::vector) instead of ra::vector(std::array), see test-compatibility.C [1]
-            // plier(expr([&a](int & b, int & i) { std::cout << "0i: " << b << ", " << i << std::endl; b = a(i); },
-            //            b.iter(), ra::vector(std::vector<int> {1, 2, 0})));
 #define TEST(plier)                                                     \
         section(STRINGIZE(plier));                                      \
         {                                                               \
             std::fill(b.begin(), b.end(), 0);                           \
-            plier(expr([&a](int & b, int i) { b = a(i); }, b.iter(), ra::vector(std::array<int, 3> {{1, 2, 0}}))); \
             real check[3] = { 2, 3, 1 };                                \
-            tr.info(STRINGIZE(plier)).test(std::equal(check, check+3, b.begin())); \
+            plier(expr([&a](int & b, int i) { b = a(i); }, b.iter(), ra::vector(std::array<int, 3> {1, 2, 0}))); \
+            tr.info(STRINGIZE(plier) " std::array").test(std::equal(check, check+3, b.begin())); \
+            plier(expr([&a](int & b, int & i) { b = a(i); }, b.iter(), ra::vector(std::vector<int> {1, 2, 0}))); \
+            tr.info(STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
         }
         TEST(ply_ravel);
         TEST(ply_index);

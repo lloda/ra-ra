@@ -94,7 +94,7 @@ int main()
         static_assert(ra::is_ra<ra::View<int>>, "bad is_ra View");
 
         using Scalar = decltype(ra::scalar(3));
-        using Vector = decltype(ra::vector({1, 2, 3}));
+        using Vector = decltype(ra::start({1, 2, 3}));
         static_assert(ra::is_ra_scalar<Scalar>, "bad is_ra_scalar Scalar");
         static_assert(ra::is_ra<decltype(ra::scalar(3))>, "bad is_ra Scalar");
         static_assert(ra::is_ra<Vector>, "bad is_ra Vector");

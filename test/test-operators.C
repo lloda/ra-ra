@@ -309,7 +309,7 @@ int main()
                   {
                       return lexicographical_compare(a(i), a(j));
                   });
-        tr.test_eq(ra::vector({0, 8, 1, 2, 5, 4, 7, 6, 9, 3}), i);
+        tr.test_eq(ra::start({0, 8, 1, 2, 5, 4, 7, 6, 9, 3}), i);
     }
     return tr.summary();
 }

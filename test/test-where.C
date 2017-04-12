@@ -79,10 +79,10 @@ int main()
     }
     tr.section("where, scalar W, array arguments in T/F");
     {
-        std::array<double, 2> bb {{1, 2}};
-        std::array<double, 2> cc {{99, 99}};
-        auto b = ra::vector(bb);
-        auto c = ra::vector(cc);
+        std::array<double, 2> bb {1, 2};
+        std::array<double, 2> cc {99, 99};
+        auto b = ra::start(bb);
+        auto c = ra::start(cc);
 
         cc[0] = cc[1] = 99;
         c = where(true, b, -b);

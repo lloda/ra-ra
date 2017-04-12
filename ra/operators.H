@@ -180,27 +180,32 @@ inline auto where(W && w, T && t, F && f)
 template <class A> inline bool
 any(A && a)
 {
-    return early(map([](bool x) -> auto { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
+    return early(map([](bool x) { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
 }
+
 template <class A> inline bool
 every(A && a)
 {
-    return early(map([](bool x) -> auto { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
+    return early(map([](bool x) { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
 }
 
 // @TODO somehow make this work (ply_index_short_circuit is bad). Then variable rank...
 template <class A>
 inline auto index(A && a)
 {
-    return ra::early(map([](auto && a, auto && i) { return std::make_tuple(bool(a), i); },
-                         std::forward<A>(a), ra::iota(start(a).size(0))),
-                     ra::dim_t(-1));
+    return early(map([](auto && a, auto && i) { return std::make_tuple(bool(a), i); },
+                     std::forward<A>(a), ra::iota(start(a).size(0))),
+                 ra::dim_t(-1));
 }
 
+// [ma108]
 template <class A, class B>
 inline bool lexicographical_compare(A && a, B && b)
 {
-    return ra::early(map([](auto a, auto b) { return a==b ? std::make_tuple(false, true) : std::make_tuple(true, a<b); }, a, b), false);
+    return early(map([](auto && a, auto && b)
+                     { return a==b ? std::make_tuple(false, true) : std::make_tuple(true, a<b); },
+                     a, b),
+                 false);
 }
 
 using std::min;

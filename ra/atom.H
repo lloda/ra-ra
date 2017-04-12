@@ -146,13 +146,8 @@ struct Vector
 #undef DEF_ASSIGNOPS
 };
 
-// FIXME built in arrays, etc.
-
 template <class V> inline constexpr auto
 vector(V && v) { return Vector<V> { std::forward<V>(v) }; }
-
-template <class T> inline constexpr Vector<std::initializer_list<T>>
-vector(std::initializer_list<T> && v) { return Vector<std::initializer_list<T>> { std::move(v) }; }
 
 // Like Vector, but on the iterator itself, so no size, P only needs to have +=, *, [].
 // ra::ra_traits_def<P> doesn't need to be defined.
