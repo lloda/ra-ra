@@ -179,5 +179,19 @@ int main()
    95 106 117 */
         cout << C << endl;
     }
+// example from the manual [ma104]
+    {
+        ra::Owned<int, 3> c({3, 2, 2}, ra::_0 - ra::_1 - 2*ra::_2);
+        cout << c << endl;
+        cout << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
+    }
+// example from the manual [ma105]
+    {
+        ra::Owned<double, 2> a({2, 3}, {1, 2, 3, 4, 5, 6});
+        ra::Owned<double, 1> b({3}, {10, 20, 30});
+        ra::Owned<double, 2> c({2, 3}, 0);
+        iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply each item of a by b
+        cout << c << endl;
+    }
     return 0;
 }

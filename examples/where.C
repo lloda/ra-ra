@@ -29,7 +29,7 @@ int main()
 
     cout << x << endl << y << endl;
 
-    // In ra:: we also have pick() to select among more than two values. You can
+    // In ra:: we can also pick() among more than two values. You can
     // put anything in the selector expression (the first argument) that will
     // evaluate to an argument index.
 

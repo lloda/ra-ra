@@ -15,7 +15,7 @@ int main()
     A(ra::iota(3), ra::iota(3)) = 5;
 
 // Set the upper right quadrant of A to an identity matrix
-    A(ra::iota(3), ra::iota(3, 3)) = { 1, 0, 0, 0, 1, 0,  0, 0, 1 };
+    A(ra::iota(3), ra::iota(3, 3)) = { 1, 0, 0,  0, 1, 0,  0, 0, 1 };
 
 // Set the fourth row to 1 (any of these ---trailing ra::all can be omitted).
     A(3, ra::all) = 1;

@@ -1,7 +1,13 @@
 
+// (c) Daniel Llorens - 2016
+
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
 // After Chaitin1986, p. 14. Attempt at straight translation from APL.
 // Maxwell -- 4-vector potential vacuum field equations
-// (c) Daniel Llorens - 2016
 
 #include <iostream>
 #include <chrono>
@@ -40,7 +46,7 @@ int main()
     A(1, H, H, H, 2) = -cos((iota(n)-delta)*(2*PI/n))/(2*PI/n);
 
     auto t0 = now();
-// @TODO this is painful without a roll operator, but a roll operator that creates a temp is unacceptable.
+// FIXME this is painful without a roll operator, but a roll operator that creates a temp is unacceptable.
     for (int t=1; t+1<o; ++t) {
 // X←(1⌽[0]A[T;;;;])+(1⌽[1]A[T;;;;])+(1⌽[2]A[T;;;;])
         X(iota(n-1)) = A(t, iota(n-1, 1));
@@ -61,7 +67,7 @@ int main()
     }
     time_unit time_A = now()-t0;
 
-// @TODO should try to traverse the array once, e.g. explode() = pack(...). The need to wrap around boundaries complicates this greatly.
+// FIXME should try to traverse the array once, e.g. explode() = pack(...). The need to wrap around boundaries complicates this greatly.
     auto diff = [&DA, &A, &delta](auto k_)
         {
             constexpr int k = decltype(k_)::value;
