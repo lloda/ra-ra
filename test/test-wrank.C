@@ -225,7 +225,7 @@ int main()
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
         ra::Unique<real, 2> c({3, 4}, ra::unspecified);
-        ra::ply_either(ra::expr(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
+        ra::ply(ra::expr(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
         cout << "c: " << c << endl;
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
                                /* 11-[1 2 3 4] */ 10, 9, 8, 7,
@@ -312,8 +312,8 @@ int main()
 // do the k-reduction by plying with wrank.
         {
             ra::Owned<real, 2> c2({a.size(0), b.size(1)}, 0.);
-            ra::ply_either(ra::expr(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
-                                    start(c2), start(a), start(b)));
+            ra::ply(ra::expr(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
+                             start(c2), start(a), start(b)));
             cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
             tr.test_eq(c1, c2);
         }

@@ -209,7 +209,7 @@ int main()
         DEFINE_SMALL_PLY(ply_index, ply_index);
         DEFINE_SMALL_PLY(plyf, plyf);
         DEFINE_SMALL_PLY(plyf_index, plyf_index);
-        DEFINE_SMALL_PLY(ply_either, ply_either);
+        DEFINE_SMALL_PLY(ply, ply);
 
         auto bench_all = [&](auto s, auto && f_small_indexed)
             {
@@ -224,7 +224,7 @@ int main()
                 bench(f_small_ply_index, "ply_index", s, ref, reps+extra());
                 bench(f_small_plyf, "plyf", s, ref, reps+extra());
                 bench(f_small_plyf_index, "plyf_index", s, ref, reps+extra());
-                bench(f_small_ply_either, "ply_either", s, ref, reps+extra());
+                bench(f_small_ply, "ply", s, ref, reps+extra());
             };
         bench_all(ra::Small<real, 2>(), f_small_indexed_1);
         bench_all(ra::Small<real, 3>(), f_small_indexed_1);

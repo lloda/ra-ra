@@ -151,7 +151,7 @@ expr(Op && op, P && ... p)
     return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
 }
 
-// Wrappers over expr & ply_either.
+// Wrappers over expr & ply.
 
 template <class F, class ... A> inline constexpr auto
 map(F && f, A && ... a)
@@ -162,7 +162,7 @@ map(F && f, A && ... a)
 template <class F, class ... A> inline constexpr void
 for_each(F && f, A && ... a)
 {
-    ply_either(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));
+    ply(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));
 }
 
 } // namespace ra

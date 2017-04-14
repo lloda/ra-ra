@@ -61,7 +61,7 @@ struct cell_iterator_small
     using shape_type = mp::If_<rank_s()==DIM_ANY, std::vector<dim_t>, Small<dim_t, rank_s()>>;
     using dims_p = decltype(std::declval<V const>().dim); // FIXME can this be & ?
     using atom_type = typename ra_traits<V>::value_type;
-    using cell_type = View<atom_type, cellr>;
+    using cell_type = SmallView<atom_type, mp::Drop_<typename V::sizes, typename V::strides> >;
     using value_type = mp::If_<cellr==0, atom_type, cell_type>;
 
     dims_p dim; // FIXME take V & and ask through that. Should be const.

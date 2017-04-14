@@ -186,8 +186,7 @@ struct Ptr
 #undef DEF_ASSIGNOPS
 };
 
-template <class T> inline constexpr auto
-ptr(T * p) { return Ptr<T *> { p }; }
+template <class T> inline constexpr auto ptr(T * p) { return Ptr<T *> { p }; }
 
 template <class T>
 struct IotaFlat

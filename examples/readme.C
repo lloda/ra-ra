@@ -193,5 +193,13 @@ int main()
         iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply each item of a by b
         cout << c << endl;
     }
+// example from the manual [ma109]. This is a rare case where I need explicit ply.
+    {
+        ra::Owned<int, 1> o = {};
+        ra::Owned<int, 1> e = {};
+        ra::Owned<int, 1> n = {1, 2, 7, 9, 12};
+        ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
+        cout << "o: " << format_array(o, false) << ", e: " << format_array(e, false) << endl;
+    }
     return 0;
 }

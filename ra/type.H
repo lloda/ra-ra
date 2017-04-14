@@ -76,6 +76,7 @@ inline constexpr auto start(T && t)
     static_assert(!mp::exists<T>, "bad type for ra:: operator");
 }
 
+// it matters that this copies when T is lvalue. But FIXME shouldn't be necessary.
 template <class T, std::enable_if_t<is_iterator<T> && !is_ra_scalar<T>, int> = 0>
 inline constexpr auto start(T && t)
 {

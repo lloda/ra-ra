@@ -1,15 +1,15 @@
 @c -*-texinfo-*-
 @c %**start of header
 @setfilename ra-ra.info
-@settitle ra-ra: An array library for C++1z
 @documentencoding UTF-8
+@settitle @code{ra::} —An array library for C++1z
 @c %**end of header
 
 @set VERSION 0.3
 @set UPDATED 2017 April 11
 
 @copying
-ra-ra (version @value{VERSION}, updated @value{UPDATED})
+@code{ra::} (version @value{VERSION}, updated @value{UPDATED})
 
 (c) Daniel Llorens 2016--2017
 
@@ -27,7 +27,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 @end direntry
 
 @titlepage
-@title ra-ra
+@title ra::
 @subtitle version @value{VERSION}, updated @value{UPDATED}
 @author Daniel Llorens
 @page
@@ -37,20 +37,20 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @ifnottex
 @node Top
-@top ra-ra
+@top @code{ra::}
 
 @insertcopying
 
-ra-ra is a general purpose multidimensional array and expression template library for C++14/C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+@code{ra::} is a general purpose multidimensional array and expression template library for C++14/C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 
 @menu
 * Overview::          Array programming and C++.
-* Usage::             Everything you can do with ra-ra.
-* Reference::         Systematic list of types and functions.
-* Internals::         For all the world to see.
+* Usage::             Everything you can do with @code{ra::}.
 * Hazards::           User beware.
+* Internals::         For all the world to see.
 * The future::        Could be even better.
-* References::        It's been done before.
+* Reference::         Systematic list of types and functions.
+* Sources::           It's been done before.
 @end menu
 
 @end ifnottex
@@ -87,13 +87,14 @@ but it's also safer and less redundant. For example, the order of the loops may 
 
 However, if array operations are implemented naively, a piece of code such as @code{A=B+C} may result in the creation of a temporary to hold @code{B+C} which is then assigned to @code{A}. Needless to say this is very wasteful if the arrays involved are large.
 
+@cindex Blitz++
 Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as `loop fusion' REF, `drag along' REF, or `deforestation' REF. In the C++ context the technique of `expression templates' was pioneered in the late 90s by libraries such as Blitz++ REF. It works by making @code{B+C} into an `expression object' which holds references to its arguments and performs the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated loop nest above.
 
 @menu
 * Rank polymorphism::         What makes arrays special.
 * Drag along and beating::    The basic array optimizations.
 * Why C++::                   High level, low level.
-* Guidelines::                How ra-ra tries to do things.
+* Guidelines::                How @code{ra::} tries to do things.
 * Other libraries::           Inspiration and desperation.
 @end menu
 
@@ -180,12 +181,12 @@ In C++, a library is enough.
 @section Guidelines
 @c ------------------------------------------------
 
-ra-ra attempts to be general, consistent, and transparent.
+@code{ra::} attempts to be general, consistent, and transparent.
 
 @c @cindex J # @TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
-Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. ra-ra supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
+Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. ra-ra offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, you can currently create a higher rank iterator on a @code{View} but not a @code{SmallView}; this is a bug.
+Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, you can currently create a higher rank iterator on a @code{View} but not a @code{SmallView}; this is a bug.
 
 Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which `are' their contents in a sense that views aren't) is more important.
 
@@ -204,9 +205,10 @@ Since the C++ standard library doesn't offer a standard multidimensional array t
 
 C++ offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These decay to pointers when you do nearly anything with them, don't know their own sizes or rank, and are generally too limited.
 
-The C++ standard library also offers a number of containers that can be used as 1-arrays, of which the most important are @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. ra-ra makes use of @code{<array>} and @code{<vector>} for storage and bootstrapping so we'll mention these containers from time to time.
+The C++ standard library also offers a number of containers that can be used as 1-arrays, of which the most important are @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. @code{ra::} makes use of @code{<array>} and @code{<vector>} for storage and bootstrapping so we'll mention these containers from time to time.
 
-Blitz++ (REF) pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time sizes, and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which ra-ra chooses not to support). Storage for large arrays was reference-counted, while in ra-ra that is optional but not the default. It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc. To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
+@cindex Blitz++
+Blitz++ (REF) pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time sizes, and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which @code{ra::} chooses not to support). Storage for large arrays was reference-counted, while in @code{ra::} that is optional but not the default. It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc. To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 
 TODO More libraries.
 
@@ -217,10 +219,10 @@ TODO Maybe review other languages, at least the important ones (Fortran/APL/J/Ma
 @chapter Usage
 @c ------------------------------------------------
 
-This is an extended exposition of the features of ra-ra and is probably best read in order. For details on specific functions or types, please @pxref{Reference}.
+This is an extended exposition of the features of @code{ra::} and is probably best read in order. For details on specific functions or types, please @pxref{Reference}.
 
 @menu
-* Using ra-ra::                ra-ra is a header-only library.
+* Using @code{ra@asis{::}}::            @code{ra::} is a header-only library.
 * Containers and views::       Data objects.
 * Array operations::           Building and traversing expressions.
 * Rank extension::             How array operands are matched.
@@ -230,14 +232,15 @@ This is an extended exposition of the features of ra-ra and is probably best rea
 * The rank conjunction::       J comes to C++.
 * Compatibility::              With the STL and others.
 * Extension::                  Using your own types and more.
+* Functions::                  Ready to go.
 @end menu
 
 @c ------------------------------------------------
-@node Using ra-ra
-@section Using ra-ra
+@node Using @code{ra@asis{::}}
+@section Using @code{ra::}
 @c ------------------------------------------------
 
-ra-ra is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/operators.H"} and @code{"ra/io.H"} at the top of your sources.
+@code{ra::} is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/operators.H"} and @code{"ra/io.H"} at the top of your sources.
 
 A C++14 compiler with partial C++17 support is required. At the time of writing this means gcc 6.3 with @option{-std=c++1z}. Most tests pass under clang 4.0 with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
 
@@ -255,12 +258,11 @@ int main()
     std::cout << format_array(transpose<1, 0>(A), false, "|") << std::endl;
 }
 @end verbatim
-  @print{}
-h|w
-e|o
-l|r
-l|l
-d|d
+@print{} h|w
+   e|o
+   l|r
+   l|l
+   d|d
 @end example
 
 You may want to @code{#include "ra/real.H"} and @code{"ra/complex.H"}. These put some functions in the global namespace that make it easier to work on scalars or array expressions indistinctly. They are not required for the rest of the library to function.
@@ -270,7 +272,7 @@ You may want to @code{#include "ra/real.H"} and @code{"ra/complex.H"}. These put
 @section Containers and views
 @c ------------------------------------------------
 
-ra-ra offers two kinds of data objects. The first is the @dfn{container}, whose defining characteristic is that it owns its data. Creating a container uses memory and destroying it causes that memory to be freed.
+@code{ra::} offers two kinds of data objects. The first is the @dfn{container}, whose defining characteristic is that it owns its data. Creating a container uses memory and destroying it causes that memory to be freed.
 
 There are three kinds of containers: fixed size, fixed rank/variable size, and variable rank. Here fixed means `compile time constant' while variable is normally a run time constant. (Some variable size arrays can be resized but variable rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.)
 
@@ -287,7 +289,7 @@ For example:
 @end verbatim
 @end example
 
-The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory, so when you have thousands of small arrays it does pays off to use the fixed size types for them. Fixed size or fixed rank arrays are also safer to use; sometimes ra-ra will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory, so when you have thousands of small arrays it does pays off to use the fixed size types for them. Fixed size or fixed rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
 Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.
 
@@ -339,7 +341,7 @@ ra::Owned<char const *, 1> A({3}, "hello"); // error: try to convert char to cha
 ra::Owned<char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
 std::cout << format_array(A, false, "|") << std::endl;
 @end verbatim
-  @print{} hello|hello|hello
+@print{} hello|hello|hello
 @end example
 
 
@@ -366,7 +368,7 @@ c1(2) = 9.;                      // c(1, 2) = 9.
 @end verbatim
 @end example
 
-Just as for containers, there are separate types of views depending on whether the size is known at compile time, the rank is known at compile time but the size is not, or neither the size nor the rank are known at compile time. ra-ra has functions to create the most common kinds of views:
+Just as for containers, there are separate types of views depending on whether the size is known at compile time, the rank is known at compile time but the size is not, or neither the size nor the rank are known at compile time. @code{ra::} has functions to create the most common kinds of views:
 
 @example
 @verbatim
@@ -376,7 +378,7 @@ auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 @end verbatim
 @end example
 
-However, views can point to anywhere in memory and that memory doesn't have to belong to a ra-ra container. For example:
+However, views can point to anywhere in memory and that memory doesn't have to belong to a @code{ra::} container. For example:
 
 @example
 @verbatim
@@ -436,7 +438,7 @@ map([](auto && a, auto && b) { return a+b; }, a, b), d); // same as (1)
 @end verbatim
 @end example
 
-The operator of an expression may return a reference and you may assign to an expression in that case. ra-ra will complain if the expression is somehow not assignable.
+The operator of an expression may return a reference and you may assign to an expression in that case. @code{ra::} will complain if the expression is somehow not assignable.
 
 @example
 @verbatim
@@ -446,7 +448,7 @@ map([](auto & d) -> decltype(auto) { return d; }, d) // just pass d along
 @end verbatim
 @end example
 
-ra-ra defines many shortcuts for common array operations. You can of course just do:
+@code{ra::} defines many shortcuts for common array operations. You can of course just do:
 
 @example
 @verbatim
@@ -496,7 +498,7 @@ That is, after we run out of indices in @code{S}, we simply repeat the elements.
 @cindex Numpy
 This rank extension rule is used by J REF and is known as @dfn{prefix agreement}. (The opposite rule of @dfn{suffix agreement} is used, for example, in Numpy REF.)
 
-As you can verify, that the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout ra-ra, even in assignments. For example,
+As you can verify, that the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout @code{ra::}, even in assignments. For example,
 
 @example
 @verbatim
@@ -526,6 +528,7 @@ b += transpose<0, 1, 1>(a); // b(i) = ∑ⱼ a(i, j, j)
 
 An obvious weakness of prefix agreement is that sometimes the axes you want to match are not the prefix axes. Obviously @ref{x-transpose,transposing} the axes before extension is a workaround. For a more general form of rank extension, @pxref{The rank conjunction}.
 
+@cindex Numpy
 @cindex broadcasting, singleton
 Other languages have a feature similar to rank extension called `broadcasting'. For example, in the way it's implemented in Numpy, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called `singleton dimensions' (axes with size one) to align the axes that one wishes to match. This is more general than prefix agreement, because any axes can be matched. You can think of prefix agreement as the case where all the singleton dimensions are added to the end of the shape.
 
@@ -593,7 +596,7 @@ FIXME More examples.
 @section Slicing
 @c ------------------------------------------------
 
-Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that ra-ra supports.
+Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that @code{ra::} supports.
 
 The form of the scripting operator @code{A(i₀, i₁, ...)} makes it plain that @code{A} is a function of @code{rank(A)} integer arguments. An array extension is immediately available through @code{map}. For example:
 
@@ -645,7 +648,7 @@ ra::Owned<double, 2> b = A(i, j);
 
 This operation sees much more use in practice than @code{map(A, i, j ...)}. Besides, when the subscripts @code{i, j, ...} are scalars or @dfn{linear ranges} (integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}, the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called @ref{Drag along and beating,@dfn{beating}}.
 
-ra-ra isn't smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
+@code{ra::} isn't smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
 
 @deffn @w{Special object} iota count [start:0 [step:1]]
 Create a linear range @code{start, start+step, ... start+step*(count-1)}.
@@ -723,7 +726,8 @@ auto i = a(newaxis<1>); // same contents as ra::Owned<int, 2> a({1, 3, 2}, {1, 2
 @end verbatim
 @end example
 
-@code{newaxis<n>} main use is to prepare arguments for broadcasting. However, since argument agreement in ra-ra requires exact size match on all dimensions, this isn't currently as useful as in e.g. Numpy where dimensions of size 1 match dimensions of any other size. A more flexible syntax @code{newaxis(n0, n1...)} to insert axes of arbitrary sizes may be implemented in the future.
+@cindex broadcasting, singleton
+@code{newaxis<n>} main use is to prepare arguments for broadcasting. However, since argument agreement in @code{ra::} requires exact size match on all dimensions, this isn't currently as useful as in e.g. Numpy where dimensions of size 1 match dimensions of any other size. A more flexible syntax @code{newaxis(n0, n1...)} to insert axes of arbitrary sizes may be implemented in the future.
 
 In addition to the special objects listed above, you can also omit any trailing @code{ra::all} subscripts. For example:
 
@@ -747,7 +751,7 @@ This supports the notion (@pxref{Rank polymorphism}) that a 3-array is also an 2
 @deffn @w{Special object} TensorIndex<n, integer_type=ra::dim_t>
 @code{TensorIndex<n>} represents the @code{n}-th index of an array expression. @code{TensorIndex<n>} is itself an array expression of rank @code{n}-1 and size undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
 
-ra-ra offers the shortcut @code{ra::_0} for @code{ra::TensorIndex<0>@{@}}, etc.
+@code{ra::} offers the shortcut @code{ra::_0} for @code{ra::TensorIndex<0>@{@}}, etc.
 @end deffn
 
 @example
@@ -774,8 +778,8 @@ We have seen in @ref{Cell iteration} that it is possible to treat an r-array as 
 
 @example
 @verbatim
-for_each(sort, A.iter<1>()); // (in ra-ra) sort is a regular function, cell rank must be given
-for_each(sort, A.iter<0>()); // (in ra-ra) error, bad cell rank
+for_each(sort, A.iter<1>()); // (in ra::) sort is a regular function, cell rank must be given
+for_each(sort, A.iter<0>()); // (in ra::) error, bad cell rank
 @end verbatim
 @end example
 
@@ -784,12 +788,12 @@ The array language J has instead the concept of @dfn{verb rank}. Every function 
 
 @example
 @verbatim
-for_each(sort_rows, A); // (not in ra-ra) will iterate over 1-cells of A, sort_rows knows
+for_each(sort_rows, A); // (not in ra::) will iterate over 1-cells of A, sort_rows knows
 @end verbatim
 @end example
 
 @c @cindex J
-ra-ra doesn't have `verb ranks' yet. In practice one can think of ra-ra's operations as having a verb rank of 0. However, ra-ra supports a limited form of J's @dfn{rank conjunction} with the function @ref{x-wrank,@code{wrank}}.
+@code{ra::} doesn't have `verb ranks' yet. In practice one can think of @code{ra::}'s operations as having a verb rank of 0. However, @code{ra::} supports a limited form of J's @dfn{rank conjunction} with the function @ref{x-wrank,@code{wrank}}.
 
 @c @cindex J
 This is an operator that takes one verb (such operators are known as @dfn{adverbs} in J) and produces another verb with different ranks. These ranks are used for rank extension through prefix agreement, but then the original verb is used on the cells that result. The rank conjunction can be nested, and this allows repeated rank extension before the innermost operation is applied.
@@ -833,7 +837,7 @@ b: 3 | 2
 @end verbatim
 @end example
 
-This use of the rank conjunction is packaged in ra-ra as the @ref{x-from,@code{from}} operator. It supports any number of arguments, not only two.
+This use of the rank conjunction is packaged in @code{ra::} as the @ref{x-from,@code{from}} operator. It supports any number of arguments, not only two.
 
 @example
 @verbatim
@@ -874,7 +878,7 @@ B:   | p | n
 @end verbatim
 @end example
 
-The final operation is a standard operation on arrays of scalars. In actual ra-ra syntax:
+The final operation is a standard operation on arrays of scalars. In actual @code{ra::} syntax:
 
 @example @c [ma103]
 @verbatim
@@ -895,8 +899,10 @@ I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, wher
 @section Compatibility
 @c ------------------------------------------------
 
+@subsection Using other C and C++ types with @code{ra::}
+
 @cindex foreign type
-ra-ra is able to accept certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Generally it is enough to mix the foreign type with a type from @code{ra::} and let deduction work its magic.
+@code{ra::} is able to accept certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Generally it is enough to mix the foreign type with a type from @code{ra::} and let deduction work its magic.
 
 @example
 @verbatim
@@ -904,7 +910,7 @@ std::vector<int> x = {1, 2, 3};
 ra::Small<int, 3> y = {6, 5, 4};
 cout << (x-y) << endl;
 @end verbatim
-  @print{} -5 -3 -1
+@print{} -5 -3 -1
 @end example
 
 @cindex @code{start}
@@ -916,8 +922,8 @@ std::vector<int> x = {1, 2, 3};
 cout << sum(ra::start(x)) << endl;
 cout << ra::sum(x) << endl;
 @end verbatim
-  @print{} 6
-  6
+@print{} 6
+   6
 @end example
 
 The following types are accepted as foreign types:
@@ -964,19 +970,289 @@ You can add your own types as scalar types with the following declaration (see @
 
 Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the function @ref{x-scalar,@code{scalar}}.
 
+@subsection Using @code{ra::} types with the STL
+
+General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s with the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order.
+
+For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient in general for ranks above 1 and I haven't implemented them ---those @code{RandomAccessIterator} are in fact raw pointers.
+
+@example @c [ma106]
+@verbatim
+ra::Owned<int> x {3, 2, 1}; // x is a Container
+auto y = x(); // y is a View on x
+// std::sort(y.begin(), y.end()); // error: y.begin() is not RandomAccessIterator
+std::sort(x.begin(), x.end());
+@result{} x = @{1, 2, 3@}
+@end verbatim
+@end example
+
+@subsection Using @code{ra::} types with other libraries
+
+When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on a memory layout. @code{ra::} gives you access to its own memory layout and allows you to obtain a @code{ra::} view on any type of memory.
+
+FIXME lapack example
+FIXME fftw example
+FIXME Guile example
+
 @c ------------------------------------------------
 @node Extension
 @section Extension
 @c ------------------------------------------------
 
+@subsection New scalar types
+
+@code{ra::} will let you construct arrays of arbitrary types out of the box. This is the same functionality you get with e.g. @code{std::vector}.
+
+@example
+@verbatim
+struct W { int x; }
+ra::Owned<W, 2> w({2, 2}, { {4}, {2}, {1}, {3} });
+cout << W(1, 1).x << endl;
+cout << amin(map([](auto && x) { return w.x; }, w)) << endl;
+@end verbatim
+@print{} 3
+   1
+@end example
+
+However, if you want to mix arbitrary types in array operations, you'll need to tell @code{ra::} that that is actually what you want ---this is to avoid conflicts with other libraries.
+
+@example
+@verbatim
+namespace ra { template <> constexpr bool is_scalar_def<W> = true; }
+...
+W ww {11};
+for_each([](auto && x, auto && y) { cout << x.x + y.y << " "; }, w, ww); // ok
+@end verbatim
+@print{} 15 13 12 14
+@end example
+
+but
+
+@example
+@verbatim
+struct U { int x; }
+U uu {11};
+for_each([](auto && x, auto && y) { cout << x.x + y.y << " "; }, w, uu); // error: can't find ra::start(U)
+@end verbatim
+@end example
+
+@node New array operations
+@subsection New array operations
+
+@code{ra::} provides array extensions for standard operations such as @code{+}, @code{*}, @code{cos} @ref{x-scalar-ops,and so on}. You can add array extensions for your own operations in the obvious way, with @ref{x-map,@code{map}} (but note the namespace qualifiers):
+
+@example
+@verbatim
+return_type my_fun(...) { };
+...
+namespace ra {
+template <class ... A> inline auto
+my_fun(A && ... a)
+{
+    return map(::my_fun, std::forward<A>(a) ...);
+}
+} // namespace ra
+@end verbatim
+@end example
+
+@cindex Blitz++
+If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
+
+If @code{my_fun} is an overload set, you can use
+
+@example
+@verbatim
+namespace ra {
+template <class ... A> inline auto
+my_fun(A && ... a)
+{
+    return map([](auto && ... a) { return ::my_fun(a ...); }, std::forward<A>(a) ...);
+}
+} // namespace ra
+@end verbatim
+@end example
+
+@c ------------------------------------------------
+@node Functions
+@section Functions
+@c ------------------------------------------------
+
+You don't need to use @ref{Array operations,@code{map}} every time you want to do something with arrays in @code{ra::}. A number of array functions are already defined.
+
+@anchor{x-scalar-ops}
+@subsection Standard scalar operations
+
+@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} do not short-circuit; this is a bug.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{sqrm}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}. Extending other scalar operations is straightforward; @pxref{New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+
+@subsection Conditional operations
+
+@ref{x-map,@code{map}} evaluates all of its arguments before passing them along to its operator. This isn't always what you want. The simplest example is @code{where(condition, iftrue, iffalse)}, which returns an expression that will evaluate @code{iftrue} when @code{condition} is true and @code{iffalse} otherwise.
+
+@example
+@verbatim
+ra::Owned<double> x ...
+ra::Owned<double> y = where(x>0, expensive_expr_1(x), expensive_expr_2(x));
+@end verbatim
+@end example
+
+Here @code{expensive_expr_1} and @code{expensive_expr_2} are array expressions. So the computation of the other arm would be wasted if one where to do instead
+
+@example
+@verbatim
+ra::Owned<double> y = map([](auto && w, auto && t, auto && f) -> decltype(auto) { return w ? t : f; }
+                          x>0, expensive_expr_1(x), expensive_function_2(x));
+@end verbatim
+@end example
+
+If the expressions have side effects, then @code{map} won't even give the right result.
+
+@c [ma109]
+@example
+@verbatim
+ra::Owned<int, 1> o = {};
+ra::Owned<int, 1> e = {};
+ra::Owned<int, 1> n = {1, 2, 7, 9, 12};
+ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
+cout << "o: " << format_array(o, false) << ", e: " << format_array(e, false) << endl;
+@end verbatim
+@print{} o: 1 7 9, e: 2 12
+@end example
+
+FIXME Very artificial example.
+FIXME Do we want to expose ply(); this is the only example in the manual that uses it.
+
+When the choice is between more than two expressions, there's @ref{x-pick,@code{pick}}, which operates similarly.
+
+@subsection Special operations
+
+Some operations are essentially scalar operations, but require special syntax and would need a lambda wrapper to be used with @code{map}. @code{ra::} comes with a few of these already defined.
+
 FIXME
+
+@subsection Elementwise reductions
+
+@code{ra::} defines the following common reductions.
+
+FIXME
+
+Note that @code{max} and @code{min} are two-argument scalar operations with array extensions, while @code{amax} and @code{amin} are reductions.
+
+You can define similar reductions in the same way that @code{ra::} does it:
+
+FIXME
+
+Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the @ref{Rank extension,rank extension} mechanism, or using the @ref{The rank conjunction,rank conjunction}.
+
+FIXME example with assignment op
+
+A few common operations of this type are already packaged in @code{ra::}.
+
+@subsection Special reductions
+
+@code{ra::} defines the following special reductions.
+
+FIXME
+
+@subsection Shortcut reductions
+
+Some reductions do not need to traverse the whole array if a certain condition is encountered early. The most obvious ones are the reductions of @code{&&} and @code{||}, which @code{ra::} defines as @code{every} and @code{any}.
+
+FIXME
+
+These operations are defined on top of another function @code{early}.
+
+FIXME early
+
+The following is often useful.
+
+FIXME lexicographical compare etc.
+
+@c ------------------------------------------------
+@node Hazards
+@chapter Hazards
+@c ------------------------------------------------
+
+@code{ra::} applies its principles systematically and that can result in some surprises.
+
+@section Understand rank extension
+
+Assignment of high rank expressions onto low rank expressions may not do what you expect. This example matches @code{a} and 3 [both of shape ()] with a vector of shape (3). This is equivalent to @code{@{a=3+4; a=3+5; a=3+6;@}}. You may get a different result depending on the order of traversal.
+
+@example @c [ma107]
+@verbatim
+int a = 0;
+ra::scalar(a) = 3 + ra::Small<int, 3> {4, 5, 6};
+@end verbatim
+  @result{} a = 9
+@end example
+
+@section Chained assignment
+
+FIXME
+When @code{a=b=c} works, it operates as @code{b=c; a=b;} and not as an array expression.
+
+@section Unregistered scalar types
+
+FIXME
+@code{View<T, N> x; x = T()} fails if @code{T} isn't registered as @code{is_scalar}.
+
+@section Assignment to views
+
+FIXME
+With large containers (e.g. @code{Owned}), @code{operator=} replaces the lhs instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
+
+@section Array iterators and temporaries
+
+FIXME
+
+@enumerate
+@item
+Item 0
+@item
+Item 1
+@item
+Item 2
+@end enumerate
+
+@c ------------------------------------------------
+@node Internals
+@chapter Internals
+@c ------------------------------------------------
+
+@menu
+* Type hierarchy::       From Containers to FlatIterators.
+* Driving expressions::  The term in charge.
+* Loop types::           Chosen for performance.
+@end menu
+
+@c ------------------------------------------------
+@node Type hierarchy
+@section Type hierarchy
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Driving expressions
+@section Driving expressions
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Loop types
+@section Loop types
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node The future
+@chapter The future
+@c ------------------------------------------------
+
+Wishlist and acknowledged bugs.
 
 @c ------------------------------------------------
 @node Reference
 @chapter Reference
 @c ------------------------------------------------
 
-@defun map op expr ...
+@anchor{x-map} @defun map op expr ...
 Create an array expression that applies @var{op} to @var{expr} ...
 @end defun
 
@@ -1023,11 +1299,12 @@ Create an array expression that brace-constructs @var{type} from @var{expr} ...
 Create an array expression that casts @var{expr} into @var{type}.
 @end defun
 
+@anchor{x-pick}
 @defun pick select_expr expr ...
 Create an array expression that selects the first of @var{expr} ... if @var{select_expr} is 0, the second if @var{select_expr} is 1, and so on. The expressions that are not selected are not looked up.
 @end defun
 
-This function cannot be defined using @var{map}, because @var{map} looks up each one of its argument expressions before calling @var{op}.
+This function cannot be defined using @ref{x-map,@code{map}}, because @code{map} looks up each one of its argument expressions before calling @var{op}.
 
 For example:
 @example @c cf examples/readme.C [ma100].
@@ -1051,7 +1328,8 @@ For example:
   @result{} s = @{1, -1, 2, 2@}
 @end example
 
-@anchor{x-from}@defun from op ... expr
+@anchor{x-from}
+@defun from op ... expr
 Create outer product expression. This is defined as @math{E(i00, i01 ..., i10, i11, ..., ...) = op(expr0(i01, i01 ...), expr1(i10, i11, ...) ...)}.
 @end defun
 
@@ -1091,7 +1369,8 @@ This can be used for sparse subscripting. For example:
   @result{} B = @{@{101, 120@}, @{110, 121@}@}
 @end example
 
-@anchor{x-wrank}@defun wrank <input_rank ...> op
+@anchor{x-wrank}
+@defun wrank <input_rank ...> op
 Wrap op using a rank conjunction (@pxref{The rank conjunction}).
 @end defun
 
@@ -1102,7 +1381,8 @@ For example: TODO
   @result{} x = 0
 @end example
 
-@anchor{x-transpose}@defun transpose <axes ...> view
+@anchor{x-transpose}
+@defun transpose <axes ...> view
 Create a new view by transposing the axes of @var{view}.
 @end defun
 
@@ -1112,7 +1392,8 @@ This operation does not work on arbitrary array expressions yet. TODO FILL
 Equivalent to @code{transpose<0, 0>(view)}.
 @end defun
 
-@anchor{x-reverse}@defun reverse view axis
+@anchor{x-reverse}
+@defun reverse view axis
 Create a new view by reversing axis @var{k} of @var{view}.
 @end defun
 
@@ -1157,17 +1438,17 @@ cout << (x+y) << endl; // same as ra::start(x)+y
 // x += y; // error: no mach for operator+=
 ra::start(x) += y; // ok
 @end verbatim
-  @print{}
-  3
+@print{} 3
   11 22 33
   @result{} x = @{ 11, 22, 33 @}
 @end example
 
-@anchor{x-ptr}@defun ptr pointer
+@anchor{x-ptr}
+@defun ptr pointer
 Create vector expression from raw @var{pointer}.
 @end defun
 
-The resulting expression has rank 1 and undefined size. To traverse it, it must be matched with other expressions whose size is defined. ra-ra cannot check accesses made through this object, so be careful. For instance:
+The resulting expression has rank 1 and undefined size. To traverse it, it must be matched with other expressions whose size is defined. @code{ra::} cannot check accesses made through this object, so be careful. For instance:
 
 @example
 @verbatim
@@ -1180,7 +1461,8 @@ v4 += ra::ptr(p); // error, shape (4): bad access to p[3]
 @end verbatim
 @end example
 
-@anchor{x-scalar}@defun scalar expr
+@anchor{x-scalar}
+@defun scalar expr
 Create scalar expression from @var{expr}.
 @end defun
 
@@ -1197,10 +1479,9 @@ ra::Owned<W, 1> w { {1}, {2}, {3} };
 // bring W into ra:: with ra::scalar
 for_each([](auto && a, auto && b) { cout << (a.x + b.x) << endl; }, w, ra::scalar(W {7}));
 @end verbatim
-     @print{}
-     8
-     9
-     10
+@print{} 8
+   9
+   10
 @end example
 
 See also @ref{x-scalar-char-star,@code{this example}}.
@@ -1225,7 +1506,8 @@ c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
 @end example
 where the result is @{c(0)+x(0), c(1)+x(1)@}.
 
-@anchor{x-iter}@defun iter <k> (view)
+@anchor{x-iter}
+@defun iter <k> (view)
 Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version, @var{view} must be a variable size @code{View}. (This is a defect.)
 @end defun
 
@@ -1240,13 +1522,12 @@ m = 0;
 for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
 cout << "max of each column again: " << m << endl;
 @end verbatim
-  @print{}
-  max of each row: 2
-  3 7
-  max of each column: 3
-  7 3 3
-  max of each column again: 3
-  7 3 3
+@print{} max of each row: 2
+   3 7
+   max of each column: 3
+   7 3 3
+   max of each column again: 3
+   7 3 3
 @end example
 
 In the following example, @code{iter} emulates @code{scalar}. Note that the shape () of @code{iter<1>(m)} matches the shape (3) of @code{iter<1>(c)}. Thus, each of the 1-cells of @code{c} matches against the single 1-cell of @code{m}.
@@ -1257,9 +1538,8 @@ m = 0;
 iter<1>(m) = max(iter<1>(m), iter<1>(c));
 cout << "max of each yet again: " << m << endl;
 @end verbatim
-  @print{}
-  max of each column again: 3
-  7 3 3
+@print{} max of each column again: 3
+   7 3 3
 @end example
 
 The following example computes the trace of each of the items [(-1)-cells] of @code{c}. @c [ma104]
@@ -1270,21 +1550,16 @@ ra::Owned<int, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
 cout << "c: " << c << endl;
 cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
 @end verbatim
-  @print{}
-  c: 3 2 2
-  0 -2
-  -1 -3
-  1 -1
-  0 -2
-  2 0
-  1 -1
-  s: 3
-  -3 -1 -1
-@end example
-
-
-@cindex reductions
-The following operations perform full rank reductions.
+@print{} c: 3 2 2
+   0 -2
+   -1 -3
+   1 -1
+   0 -2
+   2 0
+   1 -1
+   s: 3
+   -3 -1 -1
+@end  example
 
 @defun sum expr
 Return the sum (+) of the elements of @var{expr}, or 0 if expr is empty. This sum is performed in unspecified order.
@@ -1329,82 +1604,27 @@ Return @code{true} if any element of @var{expr} is true, @code{false} otherwise.
 Return @code{true} if every element of @var{expr} is true, @code{false} otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified.
 @end defun
 
-@c ------------------------------------------------
-@node Internals
-@chapter Internals
-@c ------------------------------------------------
+@anchor{x-conj}
+@defun conj expr
+Compute the complex conjugate of @var{expr}.
+@end defun
 
-@menu
-* Type hierarchy::       From Containers to FlatIterators.
-* Driving expressions::  The term in charge.
-* Loop types::           Chosen for performance.
-@end menu
+@anchor{x-xI}
+@defun xI expr
+Compute @code{(0+1j)} times @var{expr}.
+@end defun
 
-@c ------------------------------------------------
-@node Type hierarchy
-@section Type hierarchy
-@c ------------------------------------------------
+@anchor{x-rel-error}
+@defun rel_error a b
+@var{a} and @var{b} are arbitrary array expressions. Compute the error of @var{a} relative to @var{b} as
 
-@c ------------------------------------------------
-@node Driving expressions
-@section Driving expressions
-@c ------------------------------------------------
+@code{(a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b))}
+
+@end defun
 
 @c ------------------------------------------------
-@node Loop types
-@section Loop types
-@c ------------------------------------------------
-
-@c ------------------------------------------------
-@node Hazards
-@chapter Hazards
-@c ------------------------------------------------
-
-ra-ra applies its principles systematically and that can result in some surprises.
-
-Assignment of high rank expressions onto low rank expressions may not do what you expect. This example matches @code{a} and 3 [both of shape ()] with a vector of shape (3). This is equivalent to @code{@{a=3+4; a=3+5; a=3+6;@}}. You may get a different result depending on the order of traversal.
-
-@example @c [ma107]
-@verbatim
-int a = 0;
-ra::scalar(a) = 3 + ra::Small<int, 3> {4, 5, 6};
-@end verbatim
-  @result{} a = 9
-@end example
-
-FIXME
-
-When @code{a=b=c} works, it operates as @code{b=c; a=b;} and not as an array expression.
-
-FIXME
-
-@code{View<T, N> x; x = T()} fails if @code{T} isn't registered as @code{is_scalar}.
-
-FIXME
-
-With large containers (e.g. @code{Owned}), @code{operator=} replaces the lhs instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
-
-FIXME
-
-@enumerate
-@item
-Item 0
-@item
-Item 1
-@item
-Item 2
-@end enumerate
-
-@c ------------------------------------------------
-@node The future
-@chapter The future
-@c ------------------------------------------------
-
-Wishlist and acknowledged bugs.
-
-@c ------------------------------------------------
-@node References
-@chapter References
+@node Sources
+@chapter Sources
 @c ------------------------------------------------
 
 @c ------------------------------------------------

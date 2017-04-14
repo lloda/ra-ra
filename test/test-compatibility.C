@@ -51,7 +51,7 @@ int main()
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
          }
-// @TODO actually whether unroll is avoided depends on ply_either, have a way to require it.
+// @TODO actually whether unroll is avoided depends on ply, have a way to require it.
 // Cf [tr0-01] in test-ra-0.C.
         section("[trc01] frame match ra::start on 1st axis, forbid unroll");
         {

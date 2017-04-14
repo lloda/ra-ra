@@ -56,8 +56,8 @@ void by_traversal(std::string const & s, Timer & t, A const & a, B const & b)
     real x(0.);
     for (int i=0; i<N; ++i) {
         real y(0.);
-        ra::ply_either(ra::expr([&y](real const a, real const b) { y += sqrm(a, b); },
-                                   ra::start(a), ra::start(b)));
+        ra::ply(ra::expr([&y](real const a, real const b) { y += sqrm(a, b); },
+                         ra::start(a), ra::start(b)));
         x += y;
     }
     t.stop();
@@ -72,9 +72,9 @@ void by_traversal2(std::string const & s, Timer & t, A const & a, B const & b)
     real x(0.);
     for (int i=0; i<N; ++i) {
         real y(0.);
-        ra::ply_either(ra::expr([&y](real const a) { y += a; },
-                                   ra::expr([](real const a, real const b) { return sqrm(a, b); },
-                                               ra::start(a), ra::start(b))));
+        ra::ply(ra::expr([&y](real const a) { y += a; },
+                         ra::expr([](real const a, real const b) { return sqrm(a, b); },
+                                  ra::start(a), ra::start(b))));
         x += y;
     }
     t.stop();

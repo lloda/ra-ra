@@ -238,21 +238,21 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 
 template <class A> inline
 std::enable_if_t<has_tensorindex<A>>
-ply_either(A && a)
+ply(A && a)
 {
     ply_index(std::forward<A>(a));
 }
 
 template <class A> inline
 std::enable_if_t<!has_tensorindex<A> && (A::size_s()==DIM_ANY)>
-ply_either(A && a)
+ply(A && a)
 {
     ply_ravel(std::forward<A>(a));
 }
 
 template <class A> inline
 std::enable_if_t<!has_tensorindex<A> && (A::size_s()!=DIM_ANY)>
-ply_either(A && a)
+ply(A && a)
 {
     plyf(std::forward<A>(a));
 }
@@ -309,13 +309,13 @@ auto ply_index_exit_1(A && a, DEF && def)
 
 template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()!=1 || has_tensorindex<A>), int> = 0>
 inline decltype(auto)
-ply_either_exit(A && a, DEF && def)
+ply_exit(A && a, DEF && def)
 {
     return ply_index_exit(std::forward<A>(a), std::forward<DEF>(def));
 }
 template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()==1 && !has_tensorindex<A>), int> = 0>
 inline decltype(auto)
-ply_either_exit(A && a, DEF && def)
+ply_exit(A && a, DEF && def)
 {
     return ply_index_exit_1(std::forward<A>(a), std::forward<DEF>(def));
 }
@@ -323,7 +323,7 @@ ply_either_exit(A && a, DEF && def)
 template <class A, class DEF> inline decltype(auto)
 early(A && a, DEF && def)
 {
-    return ply_either_exit(std::forward<A>(a), std::forward<DEF>(def));
+    return ply_exit(std::forward<A>(a), std::forward<DEF>(def));
 }
 
 } // namespace ra

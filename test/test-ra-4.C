@@ -23,7 +23,7 @@ template <class AA>
 double sqrm_ai(AA && a)
 {
     double c(0.);
-    ply_either(ra::expr([&c](complex const a) { c += sqrm(a); }, a));
+    ply(ra::expr([&c](complex const a) { c += sqrm(a); }, a));
     return c;
 }
 
