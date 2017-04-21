@@ -244,14 +244,14 @@ ply(A && a)
 }
 
 template <class A> inline
-std::enable_if_t<!has_tensorindex<A> && (A::size_s()==DIM_ANY)>
+std::enable_if_t<!has_tensorindex<A> && (std::decay_t<A>::size_s()==DIM_ANY)>
 ply(A && a)
 {
     ply_ravel(std::forward<A>(a));
 }
 
 template <class A> inline
-std::enable_if_t<!has_tensorindex<A> && (A::size_s()!=DIM_ANY)>
+std::enable_if_t<!has_tensorindex<A> && (std::decay_t<A>::size_s()!=DIM_ANY)>
 ply(A && a)
 {
     plyf(std::forward<A>(a));

@@ -33,7 +33,8 @@ std::string tunit = "ns";
 using real = double;
 
 // -------------------
-// variants of the defaults, mostly slower. @TODO compare with external GEMM
+// variants of the defaults, should be slower if the default is well picked.
+// @TODO compare with external GEMM
 // -------------------
 
 template <class A, class B, class C>

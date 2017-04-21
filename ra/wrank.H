@@ -269,7 +269,7 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     }
 
 // forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
-#define DEF_RYN_ASSIGNOPS(OP)                                               \
+#define DEF_RYN_ASSIGNOPS(OP)                                           \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_RYN_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -336,7 +336,7 @@ struct from_partial<II, drop, std::enable_if_t<drop==mp::len<II>>>
     template <class Op>
     static decltype(auto) make(Op && op)
     {
-        return std::forward<Op>(op);
+        return op; // FIXME needed by [ra31] or broken lambda move, not happy.
     }
 };
 

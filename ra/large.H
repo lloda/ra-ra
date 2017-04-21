@@ -128,7 +128,7 @@ template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_il
         std::copy(x.begin(), x.end(), this->begin());                   \
         return *this;                                                   \
     }                                                                   \
-    bool const empty() { return size()==0; } /* @TODO Optimize */
+    bool const empty() const { return size()==0; } /* @TODO Optimize */
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {

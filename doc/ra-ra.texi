@@ -432,9 +432,12 @@ Expressions may take any number of arguments and be nested arbitrarily.
 @example
 @verbatim
 T d = 0;
-for_each([](auto && a, auto && b, auto && d) { d = a+b; }, a, b, d); // same as (1)
+for_each([](auto && a, auto && b, auto && d) { d = a+b; },
+         a, b, d); // same as (1)
 for_each([](auto && ab, auto && d) { d = ab; },
-map([](auto && a, auto && b) { return a+b; }, a, b), d); // same as (1)
+         map([](auto && a, auto && b) { return a+b; },
+             a, b),
+         d); // same as (1)
 @end verbatim
 @end example
 
@@ -498,7 +501,7 @@ That is, after we run out of indices in @code{S}, we simply repeat the elements.
 @cindex Numpy
 This rank extension rule is used by J REF and is known as @dfn{prefix agreement}. (The opposite rule of @dfn{suffix agreement} is used, for example, in Numpy REF.)
 
-As you can verify, that the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout @code{ra::}, even in assignments. For example,
+As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout @code{ra::}, even in assignments. For example,
 
 @example
 @verbatim
@@ -1036,7 +1039,7 @@ for_each([](auto && x, auto && y) { cout << x.x + y.y << " "; }, w, uu); // erro
 @end verbatim
 @end example
 
-@node New array operations
+@anchor{x-new-array-operations}
 @subsection New array operations
 
 @code{ra::} provides array extensions for standard operations such as @code{+}, @code{*}, @code{cos} @ref{x-scalar-ops,and so on}. You can add array extensions for your own operations in the obvious way, with @ref{x-map,@code{map}} (but note the namespace qualifiers):
@@ -1082,7 +1085,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 @anchor{x-scalar-ops}
 @subsection Standard scalar operations
 
-@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} do not short-circuit; this is a bug.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{sqrm}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}. Extending other scalar operations is straightforward; @pxref{New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} do not short-circuit; this is a bug.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{sqrm}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
 
 @subsection Conditional operations
 
@@ -1330,7 +1333,7 @@ For example:
 
 @anchor{x-from}
 @defun from op ... expr
-Create outer product expression. This is defined as @math{E(i00, i01 ..., i10, i11, ..., ...) = op(expr0(i01, i01 ...), expr1(i10, i11, ...) ...)}.
+Create outer product expression. This is defined as @math{E(i00, i01 ..., i10, i11, ..., ...) = op(expr0(i01, i01, ...), expr1(i10, i11, ...), ...)}.
 @end defun
 
 For example:
@@ -1356,7 +1359,7 @@ For example:
 The last example is more or less how @code{A(i, j)} is actually implemented (@pxref{The rank conjunction}).
 
 @defun at expr indices
-Look up @var{expr} at each element of @var{indices}, which shall be an multi-index into @var{expr}.
+Look up @var{expr} at each element of @var{indices}, which shall be a multi-index into @var{expr}.
 @end defun
 
 This can be used for sparse subscripting. For example:
@@ -1508,7 +1511,7 @@ where the result is @{c(0)+x(0), c(1)+x(1)@}.
 
 @anchor{x-iter}
 @defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version, @var{view} must be a variable size @code{View}. (This is a defect.)
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} must be a variable size @code{View}. (This is a defect.)
 @end defun
 
 @example
@@ -1570,11 +1573,11 @@ Return the product (*) of the elements of @var{expr}, or 1 if expr is empty. Thi
 @end defun
 
 @defun amax expr
-Return the maximum of the elements of @var{expr} is true, or @code{std::numeric_limits<T>::lowest()}, if expr is empty, where @code{T} is the value type of the elements of @var{expr}. FIXME should prolly be -inf for floating point.
+Return the maximum of the elements of @var{expr}. If @var{expr} is empty, return @code{-std::numeric_limits<T>::infinity()} if the type supports it, otherwise @code{std::numeric_limits<T>::lowest()}, where @code{T} is the value type of the elements of @var{expr}.
 @end defun
 
 @defun amin expr
-Return the minimum of the elements of @var{expr} is true, or @code{std::numeric_limits<T>::max()}, if expr is empty, where @code{T} is the value type of the elements of @var{expr}. FIXME should prolly be +inf for floating point.
+Return the minimum of the elements of @var{expr}. If @var{expr} is empty,  If @var{expr} is empty, return @code{+std::numeric_limits<T>::infinity()} if the type supports it, otherwise @code{std::numeric_limits<T>::max()}, where @code{T} is the value type of the elements of @var{expr}.
 @end defun
 
 @defun early expr default

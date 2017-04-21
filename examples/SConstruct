@@ -118,4 +118,4 @@ if 'skip_summary' not in top:
  for example in ['array', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv',
                  'indirect', 'cast', 'nested', 'agreement', 'small',
                  'readme', 'explode-collapse',
-                 'newton', 'maxwell']]
+                 'newton', 'maxwell', 'laplace2d', 'laplace3d']]

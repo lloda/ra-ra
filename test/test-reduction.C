@@ -140,8 +140,8 @@ int main()
     section("amax/amin ignore NaN");
     {
         tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN));
-        tr.test_eq(std::numeric_limits<real>::lowest(), amax(ra::Small<real, 3>(QNAN)));
-        tr.test_eq(std::numeric_limits<real>::max(), amin(ra::Small<real, 3>(QNAN)));
+        tr.test_eq(-std::numeric_limits<real>::infinity(), amax(ra::Small<real, 3>(QNAN)));
+        tr.test_eq(std::numeric_limits<real>::infinity(), amin(ra::Small<real, 3>(QNAN)));
     }
 
 // @TODO these reductions require a destination argument; there are no exprs really.
@@ -234,6 +234,17 @@ int main()
         m = 0;
         for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
         tr.info("max of columns II").test_eq(ra::Owned<int, 1> {7, 3, 3}, m);
+        ra::Owned<double, 1> q({0}, {});
+        tr.info("amax default").test_eq(std::numeric_limits<double>::infinity(), amin(q));
+        tr.info("amin default").test_eq(-std::numeric_limits<double>::infinity(), amax(q));
+    }
+    section("higher rank reductions");
+    {
+        double x[4] = {1, 2, 3, 4};
+        ra::Small<double, 4, 4> a = ra::_0 - ra::_1;
+        double y[4] = {0, 0, 0, 0};
+        ra::start(y) = ra::gemv(a, x);
+        cout << y << endl;
     }
     return tr.summary();
 }

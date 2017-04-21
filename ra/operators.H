@@ -213,7 +213,7 @@ template <class A>
 inline auto amin(A && a)
 {
     using T = value_t<A>;
-    T c(std::numeric_limits<T>::max());
+    T c = std::numeric_limits<T>::has_infinity ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::max();
     for_each([&c](auto && a) { c = min(c, a); }, a);
     return c;
 }
@@ -223,7 +223,7 @@ template <class A>
 inline auto amax(A && a)
 {
     using T = value_t<A>;
-    T c(std::numeric_limits<T>::lowest());
+    T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
     for_each([&c](auto && a) { c = max(c, a); }, a);
     return c;
 }
@@ -427,10 +427,11 @@ template <class A, class B>
 inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, B::size(1)>
 gevm(A const & a, B const & b)
 {
+    constexpr int M = b.size(0);
     constexpr int N = b.size(1);
-    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, B::size(1)> c;
-    for (int j=0; j<N; ++j) {
-        c(j) = dot(a, b(ra::all, j));
+    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, N> c;
+    for (int i=0; i<M; ++i) {
+        c += a(i)*b(i);
     }
     return c;
 }
@@ -439,22 +440,24 @@ template <class S, class T>
 inline auto
 gevm(ra::View<S, 1> const & a, ra::View<T, 2> const & b)
 {
+    int const M = b.size(0);
     int const N = b.size(1);
-    ra::Owned<decltype(a(0)*b(0, 0))> c({N}, ra::unspecified);
-    for (int j=0; j<N; ++j) {
-        c(j) = dot(a, b(ra::all, j));
+    ra::Owned<decltype(a(0)*b(0, 0)), 1> c({N}, ra::unspecified);
+    for (int i=0; i<M; ++i) {
+        c += a(i)*b(i);
     }
     return c;
 }
 
 template <class A, class B>
-inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0)>
+inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, decltype(start(std::declval<A>()))::size(0)>
 gemv(A const & a, B const & b)
 {
-    constexpr int M = a.size(0);
-    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0)> c;
-    for (int i=0; i<M; ++i) {
-        c(i) = dot(a(i), b);
+    constexpr int M = decltype(start(std::declval<A>()))::size(0);
+    constexpr int N = decltype(start(std::declval<A>()))::size(1);
+    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, M> c;
+    for (int j=0; j<N; ++j) {
+        c += a(ra::all, j) * b[j];
     }
     return c;
 }
@@ -464,9 +467,10 @@ inline auto
 gemv(ra::View<S, 2> const & a, ra::View<T, 1> const & b)
 {
     int const M = a.size(0);
+    int const N = a.size(1);
     ra::Owned<std::decay_t<decltype(START(a)*START(b))>, 1> c({M}, ra::unspecified);
-    for (int i=0; i<M; ++i) {
-        c(i) = dot(a(i), b);
+    for (int j=0; j<N; ++j) {
+        c += a(ra::all, j) * b[j];
     }
     return c;
 }

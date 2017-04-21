@@ -86,8 +86,16 @@ def to_test(env, source, args):
     stamp = File(join(variant_dir, str(source[0])) + string.join(args[1:]) + '.check')
     return env.Command(stamp, source, tester(args))
 
-def to_test_ra(env, source):
-    test = env.Program(source, [source + '.C'])
+def to_test_ra(env_, source, target='', cxxflags=[], cppdefines=[]):
+    if len(cxxflags)==0 or len(cppdefines)==0:
+        env = env_
+    else:
+        env = env_.Clone()
+        env.Append(CXXFLAGS=cxxflags + ['-U' + k for k in cppdefines.keys()], CPPDEFINES=cppdefines)
+    if len(target)==0:
+        target = source
+    obj = env.Object(target, [source + '.C'])
+    test = env.Program(target, obj)
     to_test(env, test, [test[0].abspath])
 
 def print_summary():
@@ -127,9 +135,16 @@ if 'skip_summary' not in top:
               # , 'test-concrete',
               # , 'test-small-iterator'
               # , 'test-end'
-              ]]
+          ]]
 
-[to_test_ra(env, test)
- for test in ['bench-dot', 'bench-reduce-sqrm', 'bench-from', 'bench-gemm', 'bench-pack',
-              'bench-sum-rows', 'bench-sum-cols',
-              'bench-stencil1', 'bench-stencil2', 'bench-stencil3']]
+to_test_ra(env, 'test-ra-10', target='test-ra-10a', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '0'})
+to_test_ra(env, 'test-ra-10', target='test-ra-10b', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '0'})
+to_test_ra(env, 'test-ra-10', target='test-ra-10c', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '1'})
+to_test_ra(env, 'test-ra-10', target='test-ra-10d', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '1'})
+
+[to_test_ra(env, bench)
+ for bench in ['bench-dot', 'bench-reduce-sqrm',
+               'bench-gemv', 'bench-gemm',
+               'bench-sum-rows', 'bench-sum-cols',
+               'bench-pack', 'bench-from',
+               'bench-stencil1', 'bench-stencil2', 'bench-stencil3']]

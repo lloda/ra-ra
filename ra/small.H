@@ -11,6 +11,7 @@
 
 #include "ra/ply.H"
 #include <iterator>
+#include <iostream> // DEBUG
 
 /// @file small.H
 /// @brief Fixed-size multidimensional arrays.
