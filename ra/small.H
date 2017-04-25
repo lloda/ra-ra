@@ -11,10 +11,9 @@
 
 #include "ra/ply.H"
 #include <iterator>
-#include <iostream> // DEBUG
 
 /// @file small.H
-/// @brief Fixed-size multidimensional arrays.
+/// @brief Arrays with fixed size.
 
 #ifdef RA_CHECK_BOUNDS
     #define RA_CHECK_BOUNDS_RA_SMALL RA_CHECK_BOUNDS
@@ -349,6 +348,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 // @TODO See ra_traits<Small>. Why do these twice?
         constexpr static auto const & shape() { return ssizes; }
         constexpr static dim_t size(int j) { return SmallBase::size(j); }
+        constexpr static dim_t size_s(int j) { return SmallBase::size(j); }
 // For xpr use; cf this stride() against SmallBase::stride().
         constexpr static dim_t stride(int j) { return j<rank() ? SmallBase::stride(j) : 0; }
         constexpr bool keep_stride(dim_t step, int z, int j) const

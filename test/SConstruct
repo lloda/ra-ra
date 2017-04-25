@@ -132,9 +132,10 @@ if 'skip_summary' not in top:
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
               'test-tensorindex', 'test-explode-collapse',
               'test-optimize',
-              # , 'test-concrete',
-              # , 'test-small-iterator'
-              # , 'test-end'
+              'test-reshape',
+              'test-concrete',
+              # 'test-small-iterator',
+              # 'test-end'
           ]]
 
 to_test_ra(env, 'test-ra-10', target='test-ra-10a', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '0'})

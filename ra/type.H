@@ -118,7 +118,7 @@ template <class T, std::enable_if_t<is_builtin_array<T>, int> = 0>
 inline constexpr auto start(T && t);
 
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
-// FIXME do we really want to drop const?
+// FIXME do we really want to drop const? See use in concrete_type.
 template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
 template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }
 

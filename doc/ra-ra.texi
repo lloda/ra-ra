@@ -1175,11 +1175,11 @@ FIXME lexicographical compare etc.
 @chapter Hazards
 @c ------------------------------------------------
 
-@code{ra::} applies its principles systematically and that can result in some surprises.
+Some of these issues arise because @code{ra::} applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 
 @section Understand rank extension
 
-Assignment of high rank expressions onto low rank expressions may not do what you expect. This example matches @code{a} and 3 [both of shape ()] with a vector of shape (3). This is equivalent to @code{@{a=3+4; a=3+5; a=3+6;@}}. You may get a different result depending on the order of traversal.
+Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches @code{a} and 3 [both of shape ()] with a vector of shape (3). This is equivalent to @code{@{a=3+4; a=3+5; a=3+6;@}}. You may get a different result depending on the order of traversal.
 
 @example @c [ma107]
 @verbatim
@@ -1205,6 +1205,10 @@ FIXME
 With large containers (e.g. @code{Owned}), @code{operator=} replaces the lhs instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
 
 @section Array iterators and temporaries
+
+FIXME
+
+@section Size of brace initializers isn't checked until run time
 
 FIXME
 

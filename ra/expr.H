@@ -121,6 +121,7 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 // Note: do not require driver. This is needed by check for all leaves.
     constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
     constexpr static dim_t size_s() { return PA::size_s(); }
+    constexpr static dim_t size_s(int i) { return PA::size_s(i); }
     constexpr rank_t rank() const { return std::get<A>(t).rank(); }
     constexpr static rank_t rank_s() { return PA::rank_s(); }
     constexpr decltype(auto) shape() const

@@ -30,27 +30,29 @@
 namespace ra {
 
 template <class E, class Enable=void> struct concrete_type_def;
-template <class E> using concrete_type = typename concrete_type_def<std::decay<E>>::type;
-template <class E> struct concrete_type_def<E, std::enable_if_t<E::rank_s()==RANK_ANY> >
+template <class E> struct concrete_type_def<E, std::enable_if_t<E::rank_s()==RANK_ANY>>
 {
-    using type = Owned<decltype(*(start(std::declval<E>()).flat()))>;
+    using type = Owned<value_t<E>>;
 };
-template <class E> struct concrete_type_def<E, std::enable_if_t<E::size_s()==DIM_ANY && E::rank_s()!=RANK_ANY> >
+template <class E> struct concrete_type_def<E, std::enable_if_t<E::size_s()==DIM_ANY && E::rank_s()!=RANK_ANY>>
 {
-    using type = Owned<decltype(*(start(std::declval<E>()).flat())), E::rank_s()>;
+    using type = Owned<value_t<E>, E::rank_s()>;
 };
-template <class E> struct concrete_type_def<E, std::enable_if_t<E::size_s()!=DIM_ANY> >
+template <class E> struct concrete_type_def<E, std::enable_if_t<E::size_s()!=DIM_ANY>>
 {
     template <int N, class I=std::make_integer_sequence<int, N>> struct T;
-    template <int N, int ... I> struct T<N, std::integer_sequence<int, I ...> >
+    template <int N, int ... I> struct T<N, std::integer_sequence<int, I ...>>
     {
-        using type = Small<decltype(*(start(std::declval<E>()).flat())), E::size(I) ...>;
+        using type = Small<value_t<E>, E::size_s(I) ...>;
     };
     using type = typename T<E::rank_s()>::type;
 };
 
-template <class E>
-struct ra_traits_def<E, std::enable_if_t<is_ra<E>>>: public ra_traits_def<concrete_type<E> > {};
+template <class E> using concrete_type = typename concrete_type_def<decltype(start(std::declval<E>()))>::type;
+template <class E> auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
+
+// template <class E>
+// struct ra_traits_def<E, std::enable_if_t<is_ra<E>>>: public ra_traits_def<concrete_type<E>> {};
 
 } // namespace ra
 

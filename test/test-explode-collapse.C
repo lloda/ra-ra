@@ -14,7 +14,7 @@
 #include <numeric>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/view-ops.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 

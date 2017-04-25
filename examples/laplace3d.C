@@ -149,7 +149,8 @@ int main()
          i, i, i, ra::iota(8)));
 
 // set boundaries (points on edges and corners multiple times --doesn't matter).
-    int k=0;
+// FIXME need reshape.
+    int k = 0;
     for (int i=0; i<=n; ++i) {
         for (int j=0; j<=n; ++j) {
             B[k++] = pos(n+1, 0, i, j);
@@ -161,8 +162,8 @@ int main()
         }
     }
 
-    ra::Owned<double, 1> b({(n+1)*(n+1)*(n+1)}, 0.); // rechte Seite
-    ra::Owned<double, 1> x({(n+1)*(n+1)*(n+1)}, 0.); // L"osungsvektor
+    ra::Owned<double, 1> b({(n+1)*(n+1)*(n+1)}, 0.); // right hand side
+    ra::Owned<double, 1> x({(n+1)*(n+1)*(n+1)}, 0.); // solution vector
 
 // set right side.
     ra::Owned<double, 1> aux = map([](auto && Vi) { return f(Vi[0], Vi[1], Vi[2]); }, V);

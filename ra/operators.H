@@ -16,7 +16,9 @@
 #include "ra/pick.H"
 // @TODO These (dependence on specific ra:: types) should be elsewhere.
 #include "ra/small.H"
-#include "ra/large.H"
+#include "ra/view-ops.H"
+#include "ra/concrete.H"
+
 #include "ra/complex.H"
 #include "ra/wedge.H"
 #include "ra/global.H"
@@ -372,22 +374,19 @@ inline auto perp(V const & v, U const & n)
 }
 
 // --------------------
-// Other whole-array ops. @TODO Cleaner way to get concrete types from maybe-exprs. (expr:: had resolve()).
+// Other whole-array ops.
 // --------------------
 
-// @TODO Would like to be able to return just a/norm2(a) without temp-ref errors.
 template <class A, std::enable_if_t<is_slice<A>, int> =0>
 inline auto normv(A const & a)
 {
-    static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such"); // gcc accepts a.size_s()
-    return Small<std::decay_t<decltype(START(a))>, A::size_s()>(a/norm2(a));
+    return concrete(a/norm2(a));
 }
 
 template <class A, std::enable_if_t<!is_slice<A> && is_ra<A>, int> =0>
 inline auto normv(A const & a)
 {
-    static_assert(A::size_s()!=DIM_ANY, "waiting for ra::resolve or some such");  // gcc accepts a.size_s()
-    Small<std::decay_t<decltype(START(a))>, A::size_s()> b = a;
+    auto b = concrete(a);
     b /= norm2(b);
     return b;
 }
