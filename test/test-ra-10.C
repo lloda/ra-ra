@@ -12,6 +12,9 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/test.H"
+#include "ra/mpdebug.H"
+
+using std::cout; using std::endl;
 
 void * VP;
 
@@ -28,7 +31,7 @@ int main()
 // goes through Ryn.
         auto f = [&](auto i, auto j) { tr.info("fwd lambda 2 ref").test(&V==VP); };
         ply(from(f, i, i));
-// goes through Ryn, for trouble. cf [ra31] in wrank.H
+// goes through Ryn. This requires the forward in [ra31].
         ply(from([&](auto i, auto j) { tr.info("fwd lambda 2 rvalue").test(&V==VP); }, i, i));
     }
     return tr.summary();

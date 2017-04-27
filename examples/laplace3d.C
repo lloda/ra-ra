@@ -136,13 +136,13 @@ int main()
     ra::Owned<int, 1> B({6*(n+1)*(n+1)}, ra::unspecified);                      // indices of boundary vertices.
     ra::Owned<Element, 1> E({n*n*n}, ra::unspecified);                          // the elements.
 
-// set vertex coordinates (but cf [ra31])
+// set vertex coordinates.
     auto ip = ra::iota(n+1);
     ply(from([&](auto i, auto j, auto k)
              { V[pos(n+1, i, j, k)] = { -1.+2.*i*h, -1.+2.*j*h, -1.+2.*k*h }; },
              ip, ip, ip));
 
-// set elements (but cf [ra31])
+// set elements.
     auto i = ra::iota(n);
     ply(from([&](auto i, auto j, auto k, auto v)
          {  E(pos(n, i, j, k)).v[v] = pos(n+1, i+ISF[v][0], j+ISF[v][1], k+ISF[v][2]); },

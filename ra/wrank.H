@@ -95,8 +95,8 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
     using R = typename FM::R;
     constexpr static int depth = mp::Ref_<live, driver>::value + FM::depth;
 
-// drill down in V to get innermost Op.
-    template <class VV> static decltype(auto) op(VV && v) { return FM::op(v.op); }
+// drill down in V to get innermost Op (cf [ra31]).
+    template <class VV> static decltype(auto) op(VV && v) { return FM::op(std::forward<VV>(v).op); }
 };
 
 // Terminal case where V doesn't have rank (is a raw op()).
@@ -325,9 +325,8 @@ struct from_partial
     template <class Op>
     static decltype(auto) make(Op && op)
     {
-// FIXME cannot forward by [ra31] or broken lambda move, not happy. But clang doesn't let me skip the forward in the terminal case below while gcc does.
         return wrank(mp::Append_<mp::MakeList_<drop, mp::int_t<0>>, mp::Drop_<II, drop>> {},
-                     from_partial<II, drop+1>::make(op));
+                     from_partial<II, drop+1>::make(std::forward<Op>(op)));
     }
 };
 
