@@ -22,9 +22,14 @@ int main()
     {
         ra::Owned<ra::Small<double, 2>, 1> V({2*2}, ra::unspecified);
         VP = &V;
-        auto i = ra::iota(2);
-// cf [ra31] in wrank.H
-        ply(from([&](auto i, auto j) { assert(&V==VP); }, i, i));
+        auto i = ra::iota(1);
+// goes through Expr, ref or rvalue works just the same.
+        ply(from([&](auto i) { tr.info("fwd lambda 1").test(&V==VP); }, i));
+// goes through Ryn.
+        auto f = [&](auto i, auto j) { tr.info("fwd lambda 2 ref").test(&V==VP); };
+        ply(from(f, i, i));
+// goes through Ryn, for trouble. cf [ra31] in wrank.H
+        ply(from([&](auto i, auto j) { tr.info("fwd lambda 2 rvalue").test(&V==VP); }, i, i));
     }
     return tr.summary();
 }

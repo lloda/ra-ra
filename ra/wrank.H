@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2016
+// (c) Daniel Llorens - 2013-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -212,7 +212,7 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
         }
         return true;
     }
-    constexpr Ryn(Op op_, P ... t_): op(op_), t(t_ ...)
+    constexpr Ryn(Op op_, P ... t_): op(std::forward<Op>(op_)), t(std::forward<P>(t_) ...)
     {
         CHECK_BOUNDS(check<I>() && ... && "mismatched shapes");
     }
@@ -325,8 +325,9 @@ struct from_partial
     template <class Op>
     static decltype(auto) make(Op && op)
     {
+// FIXME cannot forward by [ra31] or broken lambda move, not happy. But clang doesn't let me skip the forward in the terminal case below while gcc does.
         return wrank(mp::Append_<mp::MakeList_<drop, mp::int_t<0>>, mp::Drop_<II, drop>> {},
-                     from_partial<II, drop+1>::make(std::forward<Op>(op)));
+                     from_partial<II, drop+1>::make(op));
     }
 };
 
@@ -336,7 +337,7 @@ struct from_partial<II, drop, std::enable_if_t<drop==mp::len<II>>>
     template <class Op>
     static decltype(auto) make(Op && op)
     {
-        return op; // FIXME needed by [ra31] or broken lambda move, not happy.
+        return std::forward<Op>(op);
     }
 };
 
