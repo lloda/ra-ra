@@ -14,11 +14,10 @@
 
 #include "ra/wrank.H"
 #include "ra/pick.H"
-// @TODO These (dependence on specific ra:: types) should be elsewhere.
+// FIXME Dependence on specific ra:: types should maybe be elsewhere.
 #include "ra/small.H"
 #include "ra/view-ops.H"
 #include "ra/concrete.H"
-
 #include "ra/complex.H"
 #include "ra/wedge.H"
 #include "ra/global.H"

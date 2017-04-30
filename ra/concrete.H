@@ -29,16 +29,18 @@
 
 namespace ra {
 
-template <class E, class Enable=void> struct concrete_type_def;
-template <class E> struct concrete_type_def<E, std::enable_if_t<E::rank_s()==RANK_ANY>>
+// for expressions.
+
+template <class E, class Enable=void> struct concrete_type_def_1;
+template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::rank_s()==RANK_ANY>>
 {
     using type = Owned<value_t<E>>;
 };
-template <class E> struct concrete_type_def<E, std::enable_if_t<E::size_s()==DIM_ANY && E::rank_s()!=RANK_ANY>>
+template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()==DIM_ANY && E::rank_s()!=RANK_ANY>>
 {
     using type = Owned<value_t<E>, E::rank_s()>;
 };
-template <class E> struct concrete_type_def<E, std::enable_if_t<E::size_s()!=DIM_ANY>>
+template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()!=DIM_ANY>>
 {
     template <int N, class I=std::make_integer_sequence<int, N>> struct T;
     template <int N, int ... I> struct T<N, std::integer_sequence<int, I ...>>
@@ -48,7 +50,21 @@ template <class E> struct concrete_type_def<E, std::enable_if_t<E::size_s()!=DIM
     using type = typename T<E::rank_s()>::type;
 };
 
-template <class E> using concrete_type = typename concrete_type_def<decltype(start(std::declval<E>()))>::type;
+// scalars are their own concrete_type.
+
+template <class E, class Enable=void> struct concrete_type_def;
+template <class E> struct concrete_type_def<E, std::enable_if_t<!is_scalar<E>>>
+{
+    using type = typename concrete_type_def_1<decltype(start(std::declval<E>()))>::type;
+};
+template <class E> struct concrete_type_def<E, std::enable_if_t<is_scalar<E>>>
+{
+    using type = std::decay_t<E>;
+};
+
+template <class E> using concrete_type = typename concrete_type_def<E>::type;
+
+// FIXME have optional constructor args to get E without e, to replace with_size, ra_traits::make, etc.
 template <class E> auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
 
 // template <class E>

@@ -17,12 +17,14 @@
 
 #define START(a) *(ra::start(a).flat())
 
-// These global versions must be available so that ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
-// For transpose/wedge/where we also define the scalar specializations that couldn't be found through ADL in any case. See complex.H, real.H.
+// This global versions must be available so that ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
 
 template <class A,
           std::enable_if_t<ra::is_scalar<A>, int> =0>
 inline constexpr decltype(auto) transpose(A && a) { return std::forward<A>(a); }
+
+// We also define the scalar specializations that couldn't be found through ADL in any case. See complex.H, real.H.
+// In all honesty these seem unnecessary, just as I do ra::concrete() I could do ra::where(). FIXME
 
 template <int cell_rank>
 inline constexpr void iter() { abort(); }

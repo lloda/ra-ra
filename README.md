@@ -60,8 +60,8 @@ ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static si
 ```
 
 * Shape agreement rules and rank extension (broadcasting) for rank-0 operations
-  of any arity and operands of any rank, any of which can a reference (so you
-  can write on them). These rules are based on the array language, J.
+  of any arity and operands of any rank, any of which can be a reference (so you
+  can write on them). These rules are based on those of the array language, J.
 
 ```
 ra::Owned<float, 2> A({2, 3}, { 1, 2, 3, 1, 2, 3 });

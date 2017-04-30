@@ -166,13 +166,13 @@ Note that we can iterate over these items by simply bumping the pointer o+sâ‚€iâ
 
 Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following applies.
 
-However, C++ is unique in that it supports the low level control that is necessary for interoperation with external libraries and languages, but still has the abstraction power to create the features we want even though the language has no native support for most of them.
+C++ supports the low level control that is necessary for interoperation with external libraries and languages, but still has the abstraction power to create the features we want even though the language has no native support for most of them.
 
 @cindex APL
 @cindex J
-The classic array languages, APL and J, have their support for arrays baked in. The same is true for other languages with array facilities such as Fortran or Octave/Matlab. Array libraries for general purpose languages usually depend heavily on C extensions. In Numpy's case this is both for reasons of flexibility (e.g. to obtain predictable memory layout and machine types) and of performance.
+The classic array languages, APL and J, have array support baked in. The same is true for other languages with array facilities such as Fortran or Octave/Matlab. Array libraries for general purpose languages usually depend heavily on C extensions. In Numpy's case this is both for reasons of flexibility (e.g. to obtain predictable memory layout and machine types) and of performance.
 
-On the other extreme, an array library for C would be hampered by the limited means of abstraction in the language (no polymorphism, no metaprogramming, etc.) so that the natural choice of C programmers is to resort to code generators, which eventually turn into new languages.
+On the other extreme, an array library for C would be hampered by the limited means of abstraction in the language (no polymorphism, no metaprogramming, etc.) so the natural choice of C programmers is to resort to code generators, which eventually turn into new languages.
 
 In C++, a library is enough.
 
@@ -265,16 +265,16 @@ int main()
    d|d
 @end example
 
-You may want to @code{#include "ra/real.H"} and @code{"ra/complex.H"}. These put some functions in the global namespace that make it easier to work on scalars or array expressions indistinctly. They are not required for the rest of the library to function.
+You may want to @code{#include "ra/real.H"} and @code{"ra/complex.H"}. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function.
 
 @c ------------------------------------------------
 @node Containers and views
 @section Containers and views
 @c ------------------------------------------------
 
-@code{ra::} offers two kinds of data objects. The first is the @dfn{container}, whose defining characteristic is that it owns its data. Creating a container uses memory and destroying it causes that memory to be freed.
+@code{ra::} offers two kinds of data objects. The first kind, the @dfn{container}, owns its data. Creating a container requires memory and destroying it causes that memory to be freed.
 
-There are three kinds of containers: fixed size, fixed rank/variable size, and variable rank. Here fixed means `compile time constant' while variable is normally a run time constant. (Some variable size arrays can be resized but variable rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.)
+There are three kinds of containers: fixed size, fixed rank/dynamic size, and dynamic rank. Here fixed means `compile time constant' while dynamic is normally a run time constant. (Some dynamic size arrays can be resized but dynamic rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.)
 
 For example:
 
@@ -282,14 +282,14 @@ For example:
 @verbatim
 {
     ra::Small<double, 2, 3> a(0.);       // a fixed size 2x3 array
-    ra::Owned<double, 2> b({2, 3}, 0.);  // a variable size 2x3 array
-    ra::Owned<double> c({2, 3}, 0.);     // a variable rank 2x3 array
+    ra::Owned<double, 2> b({2, 3}, 0.);  // a dynamic size 2x3 array
+    ra::Owned<double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
     // a, b, c destroyed at end of scope
 }
 @end verbatim
 @end example
 
-The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory, so when you have thousands of small arrays it does pays off to use the fixed size types for them. Fixed size or fixed rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the fixed size types. Fixed size or fixed rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
 Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.
 
@@ -349,7 +349,7 @@ A @dfn{view} is similar to a container in that it points to actual data in memor
 
 @example
 @verbatim
-ra::Owned<double> c({2, 3}, 0.);     // a variable rank 2x3 array
+ra::Owned<double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
 {
     auto c1 = c(1);                  // the first row of array c
     // c1 is destroyed here
@@ -933,7 +933,7 @@ The following types are accepted as foreign types:
 
 @itemize
 @item @code{std::vector}
-produces an expression of rank 1 and variable size.
+produces an expression of rank 1 and dynamic size.
 @item @code{std::array}
 produces an expression of rank 1 and fixed size.
 @item Builtin arrays
@@ -1285,7 +1285,7 @@ map([](auto && i, auto && j) -> int & { return x(i, j); },
 
 Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to (value) @code{auto}, so either a explicit type or @code{decltype(auto)} should be used if you want to return a reference.
 
-@defun for_each op expr ...
+@anchor{x-for_each} @defun for_each op expr ...
 Create an array expression that applies @var{op} to @var{expr} ..., and traverse it.
 @end defun
 
@@ -1294,6 +1294,20 @@ Create an array expression that applies @var{op} to @var{expr} ..., and traverse
 @verbatim
 double s = 0.;
 for_each([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})
+@end verbatim
+@result{} s = 6.
+@end example
+
+@defun ply expr
+Traverse @var{expr}. @code{ply} returns @code{void} so @var{expr} should be run for effect.
+@end defun
+
+It is rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)} (which is actually @code{ply(map(...))} should cover most other uses.
+
+@example
+@verbatim
+double s = 0.;
+ply(map([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})) // same as for_each
 @end verbatim
 @result{} s = 6.
 @end example
@@ -1408,6 +1422,20 @@ This is equivalent to @code{view(ra::dots<k>, ra::iota(view.size(k), view.size(k
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
+@c @anchor{x-reshape}
+@c @defun reshape view shape
+@c Create a new view with shape @var{shape} from the row-major ravel of @var{view}.
+@c @end defun
+
+@c FIXME fill when the implementation is more mature...
+
+@c @anchor{x-ravel}
+@c @defun ravel view
+@c Return the ravel of @var{view} as a view on @var{view}.
+@c @end defun
+
+@c FIXME fill when the implementation is more mature...
+
 @defun stencil view lo hi
 Create a stencil on @var{view} with lower bounds @var{lo} and higher bounds @var{hi}.
 @end defun
@@ -1515,7 +1543,7 @@ where the result is @{c(0)+x(0), c(1)+x(1)@}.
 
 @anchor{x-iter}
 @defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} must be a variable size @code{View}. (This is a defect.)
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} must be a dynamic size @code{View}. (This is a defect.)
 @end defun
 
 @example
