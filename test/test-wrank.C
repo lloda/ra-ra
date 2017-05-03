@@ -275,7 +275,7 @@ int main()
         bool valid = true;
         for (int i=0; i<c.size(0); ++i) {
             for (int j=0; j<c.size(1); ++j) {
-                valid = valid && (i>=10 && i<=12 && j>=1 && j<=4 ? 7 : i*100+j == c(i, j));
+                valid = valid && ((i>=10 && i<=12 && j>=1 && j<=4 ? 7 : i*100+j) == c(i, j));
             }
         }
         tr.test(valid);

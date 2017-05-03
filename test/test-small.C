@@ -27,6 +27,10 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr;
+    tr.section("basic");
+    {
+        tr.test(std::is_standard_layout<ra::Small<float, 2>>::value);
+    }
     tr.section("pieces of transpose(ra::Small)");
     {
         using sizes = mp::int_list<1, 2, 3, 4, 5>;

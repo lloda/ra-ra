@@ -190,7 +190,7 @@ every(A && a)
     return early(map([](bool x) { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
 }
 
-// @TODO somehow make this work (ply_index_short_circuit is bad). Then variable rank...
+// FIXME variable rank? see J 'index of' (x i. y), etc.
 template <class A>
 inline auto index(A && a)
 {

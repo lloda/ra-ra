@@ -129,10 +129,10 @@ auto reshape(View<T, RANK> const & a, S && sb_)
 // FIXME when we need to copy, accept/return Shared
     ra::dim_t la = a.size();
     ra::dim_t lb = 1;
-    for (int i=0; i!=sb.size(); ++i) {
+    for (int i=0; i<sb.size(); ++i) {
         if (sb[i]==-1) {
             ra::dim_t quot = lb;
-            for (int j=i+1; j!=sb.size(); ++j) {
+            for (int j=i+1; j<sb.size(); ++j) {
                 quot *= sb[j];
                 if (quot<=0) {
                     assert("cannot deduce dimensions");
@@ -152,14 +152,13 @@ auto reshape(View<T, RANK> const & a, S && sb_)
     auto sa = ra_traits<View<T, RANK>>::shape(a);
 // FIXME see if concrete_type can help with this ::make().
     View<T, sb.size_s()> b { ra_traits<decltype(b.dim)>::make(sb.size(), Dim { DIM_BAD, 0 }), a.data() };
-// FIXME using foreign (std::array) for internal types, so sa.size() and sb.size() may differ in type.
-    size_t i = 0;
-    for (; i!=size_t(sa.size()) && i!=size_t(sb.size()); ++i) {
-        if (sa[sa.size()-i-1]!=sb[sb.size()-i-1]) {
+    rank_t i = 0;
+    for (; i<a.rank() && i<b.rank(); ++i) {
+        if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
             assert(is_ravel_free(a) && "reshape w/copy not implemented");
             if (la>=lb) {
                 filldim(sb.begin(), sb.end(), b.dim.begin(), b.dim.end()); // FIXME View(SS const & s, T * p)
-                for (int j=0; j!=sb.size(); ++j) {
+                for (int j=0; j!=b.rank(); ++j) {
                     b.dim[j].stride *= a.stride(a.rank()-1);
                 }
                 return b;
@@ -168,13 +167,13 @@ auto reshape(View<T, RANK> const & a, S && sb_)
             }
         } else {
 // select
-            b.dim[sb.size()-i-1] = a.dim[sa.size()-i-1];
+            b.dim[b.rank()-i-1] = a.dim[a.rank()-i-1];
         }
     }
-    if (i==size_t(sa.size())) {
+    if (i==a.rank()) {
 // tile & return
-        for (size_t j=i; j!=size_t(sb.size()); ++j) {
-            b.dim[sb.size()-j-1] = { sb[sb.size()-j-1], 0 };
+        for (rank_t j=i; j<b.rank(); ++j) {
+            b.dim[b.rank()-j-1] = { sb[b.rank()-j-1], 0 };
         }
     }
     return b;
