@@ -6,9 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_MPDEBUG_H
-#define RA_MPDEBUG_H
-
+#pragma once
 #include <sys/types.h>
 #include "ra/tuple-list.H"
 #include <typeinfo>
@@ -77,5 +75,3 @@ type_name()
 }
 
 } // namespace MP
-
-#endif // RA_MPDEBUG_H

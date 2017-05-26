@@ -183,7 +183,7 @@ In C++, a library is enough.
 
 @code{ra::} attempts to be general, consistent, and transparent.
 
-@c @cindex J # @TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
+@c @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
 Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
 Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, you can currently create a higher rank iterator on a @code{View} but not a @code{SmallView}; this is a bug.

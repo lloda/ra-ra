@@ -37,7 +37,7 @@ int main()
 {
     TestRecorder tr(std::cout, TestRecorder::NOISY);
     {
-// SmallBase is excluded in is_slice by ra_traits @TODO
+// SmallBase is excluded in is_slice by ra_traits TODO
         TEST_PREDICATES(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, mp::int_list<3>, mp::int_list<1>>>()))
             (false, false, false, false, false);
         TEST_PREDICATES(int)
@@ -76,7 +76,7 @@ int main()
         TEST_PREDICATES(int *)
             (false, false, false, false, false);
     }
-    section("establish meaning of selectors (@TODO / convert to TestRecorder)");
+    section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {
         static_assert(ra::is_slice<ra::View<int, 0>>);
         static_assert(ra::is_slice<ra::View<int, 2>>);

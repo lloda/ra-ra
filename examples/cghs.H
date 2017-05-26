@@ -10,9 +10,7 @@
 /// @brief Conjugate gradient after Hestenes und Stiefel
 // Adapted from lsolver/cghs.C by Christian Badura, 1998/05.
 
-#ifndef RA_EXAMPLES_CGHS
-#define RA_EXAMPLES_CGHS
-
+#pragma once
 #include "ra/operators.H"
 
 template <class A, class B, class X, class W>
@@ -44,5 +42,3 @@ cghs(A & a, B const & b, X & x, W & work, double eps)
     }
     return i;
 }
-
-#endif // RA_EXAMPLES_CGHS

@@ -122,7 +122,7 @@ int main()
         test3(tr, "Dual<real>",
               ra::Owned<Dual<real> >({10}, map([](auto x) { return dual(x, 1.); }, (ra::_0 + 1) * .1)));
     }
-    section("@TODO define ra:: operators for .re and .du, as real_part(), imag_part() do");
+    section("TODO define ra:: operators for .re and .du, as real_part(), imag_part() do");
     {
 
     }

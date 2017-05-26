@@ -34,8 +34,8 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
     std::decay_t<CC> c;
     i >> c;
     cout << "\nread: " << c << endl;
-// @TODO start() outside b/c where(bool, vector, vector) not handled. ra::where(bool, scalar, scalar) should work at least.
-// @TODO specific check in TestRecorder
+// TODO start() outside b/c where(bool, vector, vector) not handled. ra::where(bool, scalar, scalar) should work at least.
+// TODO specific check in TestRecorder
     tr.test_eq(ra::start(start(check).shape()), ra::start(start(c).shape()));
     tr.test_eq(check, c);
 }
@@ -67,7 +67,7 @@ int main()
     section("common arrays or slices");
     {
         ra::Unique<int, 2> a({5, 3}, ra::_0 - ra::_1);
-        ra::Unique<int, 2> ref({5, 3}, a); // @TODO how about an explicit copy() function?
+        ra::Unique<int, 2> ref({5, 3}, a); // TODO how about an explicit copy() function?
         iocheck(tr.info("output of Unique (1)"), a, ref);
         iocheck(tr.info("output of Unique (1)"), a, ref);
     }

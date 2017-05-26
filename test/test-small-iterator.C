@@ -49,7 +49,7 @@ int main()
 
         cout << small_iterator<0, A>::i << endl;
 
-        AI ai {}; // @TODO start fixing cell_iterator here
+        AI ai {}; // TODO start fixing cell_iterator here
         cout << ai.p << endl;
     }
     return tr.summary();

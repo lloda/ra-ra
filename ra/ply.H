@@ -6,14 +6,12 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_PLY_H
-#define RA_PLY_H
-
 /// @file ply.H
 /// @brief Traverse (ply) array or array expression or array statement.
 
-// @TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
+// TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
 
+#pragma once
 #include "ra/type.H"
 #include <functional>
 
@@ -25,9 +23,9 @@ static_assert(std::is_signed<rank_t>::value && std::is_signed<dim_t>::value, "ba
 // Run time order, two versions.
 // --------------
 
-// @TODO See ply_ravel() for traversal order.
-// @TODO A(i0, i1 ...) can be partial-applied as A(i0)(i1 ...) for faster indexing
-// @TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
+// TODO See ply_ravel() for traversal order.
+// TODO A(i0, i1 ...) can be partial-applied as A(i0)(i1 ...) for faster indexing
+// TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <class A> inline
 void ply_index(A && a)
 {
@@ -59,7 +57,7 @@ void ply_index(A && a)
 // Traverse array expression looking to ravel the inner loop.
 // size() is only used on the driving argument (largest rank).
 // adv(), stride(), keep_stride() and flat() are used on all the leaf arguments. The strides must give 0 for k>=their own rank, to allow frame matching.
-// @TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
+// TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <class A> inline
 void ply_ravel(A && a)
 {
@@ -73,7 +71,7 @@ void ply_ravel(A && a)
     switch (rank) {
     case 0: *(a.flat()); return;
     case 1: break;
-    default: // @TODO find a decent heuristic
+    default: // TODO find a decent heuristic
         // if (rank>1) {
         //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
         //               { return a.size(order[i])<a.size(order[j]); });
@@ -87,7 +85,7 @@ void ply_ravel(A && a)
         ss *= a.size(*ocd);
     }
     dim_t ind[rank], sha[rank];
-    for (int k=0; k!=rank; ++k) {
+    for (int k=0; k<rank; ++k) {
         ind[k] = 0;
         sha[k] = a.size(ocd[k]);
         if (sha[k]==0) { // for the ravelled dimensions ss takes care.
@@ -96,7 +94,7 @@ void ply_ravel(A && a)
     }
 // all sub xpr strides advance in compact dims, as they might be different.
     auto const ss0 = a.stride(order[0]);
-// @TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit stride.
+// TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit stride.
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
@@ -135,7 +133,7 @@ subindexf(A & a, S & i_)
     dim_t & i = i_[mp::First_<order>::value];
 // on every subloop, but not worth caching
     dim_t const /* constexpr */ s = a.size(mp::First_<order>::value);
-    for (i=0; i!=s; ++i) {
+    for (i=0; i<s; ++i) {
         subindexf<mp::Drop1_<order>>(a, i_);
     }
 }
@@ -166,7 +164,7 @@ template <class order, int ravel_rank, class A, class S> inline
 std::enable_if_t<(mp::len<order> > ravel_rank)>
 subindex(A & a, dim_t const s, S const & ss0)
 {
-    dim_t size = a.size(mp::First_<order>::value); // @TODO Precompute these at the top
+    dim_t size = a.size(mp::First_<order>::value); // TODO Precompute these at the top
     for (dim_t i=0, iend=size; i<iend; ++i) {
         subindex<mp::Drop1_<order>, ravel_rank>(a, s, ss0);
         a.adv(mp::First_<order>::value, 1);
@@ -174,7 +172,7 @@ subindex(A & a, dim_t const s, S const & ss0)
     a.adv(mp::First_<order>::value, -size);
 }
 
-// until() converts runtime jj into compile time j. @TODO a.adv<k>().
+// until() converts runtime jj into compile time j. TODO a.adv<k>().
 
 template <class order, int j, class A, class S> inline
 std::enable_if_t<(mp::len<order> < j)>
@@ -218,7 +216,7 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 // find the outermost compact dim.
     /* constexpr */ auto s = a.size(rank-1);
     int j = 1;
-    while (j!=rank && a.keep_stride(s, rank-1, rank-1-j)) {
+    while (j<rank && a.keep_stride(s, rank-1, rank-1-j)) {
         s *= a.size(rank-1-j);
         ++j;
     }
@@ -226,7 +224,7 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 // send with static j. Note that order here is inverse of order.
     until<mp::Iota_<std::decay_t<A>::rank_s()>, 0>(j, a, s, a.stride(rank-1));
 #else
-// according to bench-dot.C, the unrolling above isn't worth it :-/ @TODO
+// according to bench-dot.C, the unrolling above isn't worth it :-/ TODO
     /* constexpr */ auto s = a.size(rank-1);
     subindex<mp::Iota_<std::decay_t<A>::rank_s()>, 1>(a, s, a.stride(rank-1));
 #endif
@@ -258,10 +256,10 @@ ply(A && a)
 }
 
 // ---------------------------
-// Short-circuiting pliers. @TODO These are reductions. How to do higher rank?
+// Short-circuiting pliers. TODO These are reductions. How to do higher rank?
 // ---------------------------
 
-// @BUG options for ply should be the same as for non-short circuit.
+// BUG options for ply should be the same as for non-short circuit.
 template <class A, class DEF>
 auto ply_index_exit(A && a, DEF && def)
 {
@@ -327,5 +325,3 @@ early(A && a, DEF && def)
 }
 
 } // namespace ra
-
-#endif // RA_PLY_H

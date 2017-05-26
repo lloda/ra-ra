@@ -6,15 +6,13 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_TUPLE_DYNAMIC_H
-#define RA_TUPLE_DYNAMIC_H
-
 /// @file tuple-dynamic.H
 /// @brief Use tuples with dynamic parameters.
 
-// @TODO Think about struct <int k> { int const value = k; constexpr static int static_value = k; }
+// TODO Think about struct <int k> { int const value = k; constexpr static int static_value = k; }
 // where the tuple can be cast to an array ref.
 
+#pragma once
 #include <tuple>
 #include <cassert>
 
@@ -25,7 +23,7 @@ template <class T, class C> struct tuple_copy;
 template <class C, class ... t>
 struct tuple_copy<std::tuple<t ...>, C>
 {
-    constexpr static C f() { return { t::value ... }; } // clang bug with -Wmissing-braces @TODO
+    constexpr static C f() { return { t::value ... }; } // clang bug with -Wmissing-braces TODO
 };
 
 template <class T, class C> struct map_indices;
@@ -76,5 +74,3 @@ struct on_tuple<std::tuple<>, k>
 };
 
 } // namespace mp
-
-#endif // RA_TUPLE_DYNAMIC_H

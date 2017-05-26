@@ -268,7 +268,7 @@ int main()
         constexpr ra::Small<int> b = {9};
         using Vb = mp::int_t<int(b)>;
         tr.test_eq(9, Vb::value);
-        // using Vc = mp::int_t<sum(a)>; // @TODO waiting for N4487 / P0170R1 in gcc 7
+        // using Vc = mp::int_t<sum(a)>; // TODO waiting for N4487 / P0170R1 in gcc 7
         // tr.test_eq(10, Vb::value);
     }
     tr.section("custom strides. List init is always row-major.");
@@ -311,7 +311,7 @@ int main()
     }
     tr.section("using ra_iterator with SmallBase");
     {
-        cout << "@TODO" << endl;
+        cout << "TODO" << endl;
     }
     tr.section("expr with Small, rank 1, ply_index");
     {
@@ -439,7 +439,7 @@ int main()
         tr.test_eq(6, a.back());
     }
 
-// @TODO Replace with uniform subscripting (ra::iota).
+// TODO Replace with uniform subscripting (ra::iota).
     tr.section("compile time subscripting of ra::Small (as)");
     {
         auto test_as = [&tr](auto && a, auto && b)
@@ -456,7 +456,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, mp::int_list<3>, mp::int_list<2> > c(b.data()); // @TODO no syntax yet.
+            ra::SmallView<double, mp::int_list<3>, mp::int_list<2> > c(b.data()); // TODO no syntax yet.
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
@@ -473,7 +473,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, mp::int_list<3>, mp::int_list<2> > c(b.data()); // @TODO no syntax yet.
+            ra::SmallView<double, mp::int_list<3>, mp::int_list<2> > c(b.data()); // TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
@@ -488,7 +488,7 @@ int main()
             ra::Small<double, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
             ra::Small<double, 6, 2> b = { 1, 2, 99, 99, 3, 4, 99, 99, 5, 6, 99, 99 };
-            ra::SmallView<double, mp::int_list<3, 2>, mp::int_list<4, 1> > c(b.data()); // @TODO no syntax yet.
+            ra::SmallView<double, mp::int_list<3, 2>, mp::int_list<4, 1> > c(b.data()); // TODO no syntax yet.
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }
@@ -506,7 +506,7 @@ int main()
         ra::Small<double, 2, 2> b = { 10, 20, 30, 40 };
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
-        // a = b; // @TODO Check that this static fails
+        // a = b; // TODO Check that this static fails
         cout << "a = b, a: " << a << endl;
     }
 // ASSIGNOPS for SmallBase.iter()

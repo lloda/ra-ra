@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_MACROS_H
-#define RA_MACROS_H
-
 /// @file macros.H
 /// @brief Fundamental macros and types.
 
+#pragma once
 #include <cstddef>
 #include <sys/types.h> // ssize_t
 #include <type_traits>
@@ -55,5 +53,3 @@ struct identity
 };
 
 } // namespace mp
-
-#endif // RA_MACROS_H

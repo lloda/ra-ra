@@ -9,7 +9,7 @@
 /// @file test-nested.C
 /// @brief Using nested arrays as if they were arrays if higher rank.
 
-// @TODO Make more things work and work efficiently.
+// TODO Make more things work and work efficiently.
 
 #include <iostream>
 #include <sstream>
@@ -46,7 +46,7 @@ int main()
             tr.test_eq(d[0], Vec<int>{});
             tr.test_eq(d[1], Vec<int>{1});
             tr.test_eq(d[2], Vec<int>{1, 2});
-// @TODO Actually nested 'as if higher rank' should allow just (every(c==d)). This is explicit nesting.
+// TODO Actually nested 'as if higher rank' should allow just (every(c==d)). This is explicit nesting.
             tr.test(every(ra::expr([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
         }
     }
@@ -79,7 +79,7 @@ int main()
         tr.test_eq(ra::Small<int, 2> {3, 4}, a(1));
         tr.test_eq(ra::Small<int, 2> {1, 6}, a(2));
     }
-    section("@TODO copying btw arrays nested in different ways");
+    section("TODO copying btw arrays nested in different ways");
     {
         Vec<ra::Small<int, 2> > a {{1, 2}, {3, 4}, {5, 6}};
         Array<int, 2> b({3, 2}, {1, 2, 3, 4, 5, 6});

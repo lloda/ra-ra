@@ -8,7 +8,7 @@
 
 /// @file bench-stencil1.C
 /// @brief Stencil-as-view.
-// @TODO Bad performance, see also bench-stencil[23].C.
+// TODO Bad performance, see also bench-stencil[23].C.
 
 #include <iostream>
 #include <iomanip>
@@ -78,7 +78,7 @@ struct f_stencil_explicit
     };
 };
 
-// sum() inside uses run time sizes and 1-dim ply_ravel loop which is a bit slower. @TODO
+// sum() inside uses run time sizes and 1-dim ply_ravel loop which is a bit slower. TODO
 struct f_stencil_arrayop
 {
     THEOP
@@ -91,21 +91,21 @@ struct f_stencil_arrayop
     };
 };
 
-// allows traversal order to be chosen between all 6 axes in ply_ravel. 30x slower. @TODO
+// allows traversal order to be chosen between all 6 axes in ply_ravel. 30x slower. TODO
 struct f_sumprod
 {
     THEOP
     {
         for (int t=0; t!=ts; ++t) {
             Astencil.p = A.data();
-            Anext(I) = 0; // @TODO miss notation for sum-of-axes without preparing destination...
+            Anext(I) = 0; // TODO miss notation for sum-of-axes without preparing destination...
             Anext(I) += map(ra::wrank<1, 1>(ra::times()), Astencil, mask);
             std::swap(A.p, Anext.p);
         }
     };
 };
 
-// variant of the above, much faster (@TODO).
+// variant of the above, much faster (TODO).
 struct f_sumprod2
 {
     THEOP
@@ -158,7 +158,7 @@ int main()
         BENCH(Aref, f_sumprod2);
 #undef BENCH
     }
-// // @BUG The mere presence of this section slows down massively (10x) some of the benches above with RA_CHECK_BOUNDS=1 (!?)
+// // BUG The mere presence of this section slows down massively (10x) some of the benches above with RA_CHECK_BOUNDS=1 (!?)
 //     tr.section("dynamic rank");
 //     {
 //         ra::Owned<real> B({nx}, 1.);
@@ -166,7 +166,7 @@ int main()
 //         auto Bstencil = stencil(B, 1, 1);
 //         cout << "Bstencil " << format_array(Bstencil(0, ra::dots<1>), true, "|", " ") << endl;
 // #define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, STRINGIZE(op), op {});
-//         // BENCH(Aref, f_raw); // @TODO very slow
+//         // BENCH(Aref, f_raw); // TODO very slow
 //         BENCH(Aref, f_slices);
 //         BENCH(Aref, f_stencil_explicit);
 //         BENCH(Aref, f_stencil_arrayop);

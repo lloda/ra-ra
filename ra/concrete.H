@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_CONCRETE_H
-#define RA_CONCRETE_H
-
 /// @file concrete.H
 /// @brief Obtain concrete type from array expression.
 
+#pragma once
 #include "ra/large.H"
 
 #ifdef RA_CHECK_BOUNDS
@@ -28,8 +26,6 @@
 #endif
 
 namespace ra {
-
-// for expressions.
 
 template <class E, class Enable=void> struct concrete_type_def_1;
 template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::rank_s()==RANK_ANY>>
@@ -63,9 +59,51 @@ template <class E> struct concrete_type_def<E, std::enable_if_t<is_scalar<E>>>
 };
 
 template <class E> using concrete_type = typename concrete_type_def<E>::type;
+template <class E> inline auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
 
-// FIXME have optional constructor args to get E without e, to replace with_size, ra_traits::make, etc.
-template <class E> auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
+// FIXME replace ra_traits::make
+
+template <class E, class X> inline auto
+with_same_shape(E && e, X && x) -> std::enable_if_t<is_scalar<concrete_type<E>>, concrete_type<E>>
+{ return concrete_type<E>(std::forward<X>(x)); }
+
+template <class E, class X> inline auto
+with_same_shape(E && e, X && x) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(std::forward<X>(x)); }
+
+template <class E, class X> inline auto
+with_same_shape(E && e, X && x) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(ra::start(e).shape(), std::forward<X>(x)); }
+
+
+template <class E> inline auto
+with_same_shape(E && e) -> std::enable_if_t<is_scalar<concrete_type<E>>, concrete_type<E>>
+{ return concrete_type<E>(); }
+
+template <class E> inline auto
+with_same_shape(E && e) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(); }
+
+template <class E> inline auto
+with_same_shape(E && e) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(ra::start(e).shape(), ra::unspecified); }
+
+
+template <class E, class S, class X> inline auto
+with_shape(S && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(std::forward<X>(x)); }
+
+template <class E, class S, class X> inline auto
+with_shape(S && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(std::forward<S>(s), std::forward<X>(x)); }
+
+template <class E, class S, class X> inline auto
+with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(std::forward<X>(x)); }
+
+template <class E, class S, class X> inline auto
+with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+{ return concrete_type<E>(s, std::forward<X>(x)); }
 
 // template <class E>
 // struct ra_traits_def<E, std::enable_if_t<is_ra<E>>>: public ra_traits_def<concrete_type<E>> {};
@@ -74,5 +112,3 @@ template <class E> auto concrete(E && e) { return concrete_type<E>(std::forward<
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_CONCRETE
-
-#endif // RA_CONCRETE_H

@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_BOOTSTRAP_H
-#define RA_BOOTSTRAP_H
-
 /// @file bootstrap.H
 /// @brief Before all other ra:: includes.
 
+#pragma once
 #include "ra/tuple-list.H"
 #include "ra/tuple-dynamic.H"
 
@@ -127,5 +125,3 @@ template <int n=1> constexpr newaxis_t<n> newaxis = newaxis_t<n>();
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_BOOTSTRAP
-
-#endif // RA_BOOTSTRAP_H

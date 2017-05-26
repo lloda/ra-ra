@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_REAL_H
-#define RA_REAL_H
-
 /// @file real.H
 /// @brief Define real number type and related global definitions.
 
+#pragma once
 #include "ra/int_t.H"
 #include <limits>
 #include <cstdlib>
@@ -34,7 +32,7 @@ template <class T> inline std::enable_if_t<IS_REAL(T), T> amin(T const x) { retu
 
 #undef IS_REAL
 
-// @TODO see is_scalar in wedge.H>
+// TODO see is_scalar in wedge.H>
 template <class T, std::enable_if_t<std::is_integral<T>::value, int> =0> T sqr(T const x) { return x*x; }
 
 inline constexpr double sqr(double const x)                         { return x*x; }
@@ -92,5 +90,3 @@ inline double frand() { return double(random())/RAND_MAX; }
 inline int irand(int const p) { return int(frand()*p); }
 inline double rad2deg(double const r) { return r*(180./PI); }
 inline double deg2rad(double const d) { return d*(PI/180.); }
-
-#endif // RA_REAL_H

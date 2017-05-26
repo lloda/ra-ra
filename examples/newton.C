@@ -46,7 +46,7 @@ int main()
     auto draw = [&orbit, &c](auto && x, auto && t)
         {
             auto mapc = [](real x) { return max(0, min(49, int(round(25+x/5e5)))); };
-// 1. @TODO we still can't use iter<1> on an ET.
+// 1. TODO we still can't use iter<1> on an ET.
             array<int, 2> xi = map(mapc, x);
             at(orbit, iter<1>(xi(ra::all, ra::iota(2)))) = c;
 // 2. alternative w/o temps
@@ -61,10 +61,10 @@ int main()
     array<real, 2> a({bodies, 3}, 0.);
     for (int step=1; step<(12*15); ++step, t+=delta) {
 // RHS is rank 2 so we need to match on LHS. Either of these works, but the second needs a compact last axis.
-// @TODO ideally [F = from(force, ra::iota(2), ra::iota(2));] would work #nestedarrays
+// TODO ideally [F = from(force, ra::iota(2), ra::iota(2));] would work #nestedarrays
         // for_each([](auto && x, auto && y) { x = y; }, iter<1>(F), from(force, ra::iota(2), ra::iota(2)));
         ra::explode<real3>(F) = from(force, ra::iota(bodies), ra::iota(bodies));
-// match axes a[0, 1] with F[0, 2]; accumulate on F[1]. @TODO proper reductions.
+// match axes a[0, 1] with F[0, 2]; accumulate on F[1]. TODO proper reductions.
         a = 0.;
         a += transpose<0, 2, 1>(F) / m;
         v += a*delta;

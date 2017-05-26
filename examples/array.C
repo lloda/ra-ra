@@ -2,7 +2,7 @@
 // Daniel Llorens - 2015
 // Adapted from blitz++/examples/array.cpp
 
-// @TODO Better traversal...
+// TODO Better traversal...
 
 #include "ra/operators.H"
 #include "ra/io.H"

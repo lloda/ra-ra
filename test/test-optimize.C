@@ -108,7 +108,7 @@ int main()
     {
         using Vec = ra::Small<double, 4>;
         auto x = optimize(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
-// @BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter).
+// BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter).
         Vec a {1, 2, 3, 4}, b {5, 6, 7, 8};
         auto y = a + b;
         static_assert(std::is_same<decltype(x), Vec>::value, "bad optimization");

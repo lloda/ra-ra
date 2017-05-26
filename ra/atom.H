@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_ATOM_H
-#define RA_ATOM_H
-
 /// @file atom.H
 /// @brief Terminal nodes for expression templates.
 
+#pragma once
 #include "ra/traits.H"
 #include "ra/opcheck.H"
 
@@ -130,7 +128,7 @@ struct Vector
     constexpr void adv(rank_t k, dim_t d)
     {
 // k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-compatibility.C.
-// k==0 && d!=1 happens on turning back at end of ply; @TODO we need this only on outer products and such.
+// k==0 && d!=1 happens on turning back at end of ply; TODO we need this only on outer products and such.
         CHECK_BOUNDS(d==1 || d<0);
         p__ += (k==0) * d;
     }
@@ -193,7 +191,7 @@ struct IotaFlat
 {
     T i_;
     T const stride_;
-    T const & operator*() const { return i_; } // @TODO if not for this, I could use plain T. Maybe ra::eval_expr...
+    T const & operator*() const { return i_; } // TODO if not for this, I could use plain T. Maybe ra::eval_expr...
     void operator+=(dim_t d) { i_ += T(d)*stride_; }
 };
 
@@ -299,5 +297,3 @@ constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (has_te
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_ATOM
-
-#endif // RA_ATOM_H

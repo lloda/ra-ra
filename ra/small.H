@@ -6,9 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_SMALL_H
-#define RA_SMALL_H
-
+#pragma once
 #include "ra/ply.H"
 #include <iterator>
 
@@ -103,7 +101,7 @@ struct Indexer1
         return index_p_(dim, p);
     }
 
-// used by ra_iterator::at() for rank matching on rank<driving rank, no slicing. @todo Static check.
+// used by ra_iterator::at() for rank matching on rank<driving rank, no slicing. todo Static check.
     template <class Dim, class P>
     constexpr static dim_t index_short(rank_t framer, Dim const & dim, P const & p)
     {
@@ -161,13 +159,11 @@ constexpr dim_t select_loop(I0 i0, I ... i)
         + select_loop<mp::Drop_<sizes, s_src>, mp::Drop_<strides, s_src>>(i ...);
 }
 
-// Component renames. // @TODO Tests.
 template <class T> struct mat_uv   { T uu, uv, vu, vv; };
 template <class T> struct mat_xy   { T xx, xy, yx, yy; };
 template <class T> struct mat_uvz  { T uu, uv, uz, vu, vv, vz, zu, zv, zz; };
 template <class T> struct mat_xyz  { T xx, xy, xz, yx, yy, yz, zx, zy, zz; };
-template <class T> struct mat_xyzw { T xx, xy, xz, xw, yx, yy, yz, yw,
-                                       zx, zy, zz, zw, wx, wy, wz, ww; };
+template <class T> struct mat_xyzw { T xx, xy, xz, xw, yx, yy, yz, yw, zx, zy, zz, zw, wx, wy, wz, ww; };
 
 template <class T> struct vec_uv   { T u, v; };
 template <class T> struct vec_xy   { T x, y; };
@@ -177,66 +173,9 @@ template <class T> struct vec_xyz  { T x, y, z; };
 template <class T> struct vec_rtp  { T r, t, p; };
 template <class T> struct vec_xyzw { T u, v, z, w; };
 
-template <class T, class sizes, class strides>
-struct SmallRenames {};
-
-template <class T, class strides, int M, int N>
-struct SmallRenames<T, mp::int_list<M, N>, strides>
-{
-    constexpr static bool have_default_strides = std::is_same<strides, default_strides_<mp::int_list<M, N>>>::value;
-
-#define COMPONENT_RENAME(name__, req_dim0__, req_dim1__)                \
-    operator name__<T> &()                                              \
-    {                                                                   \
-        static_assert(have_default_strides, "renames only on default strides"); \
-        static_assert(M==req_dim0__ && N==req_dim1__, "dimension error"); \
-        return reinterpret_cast<name__<T> &>(*this);                    \
-    }                                                                   \
-    operator name__<T> const &() const                                  \
-    {                                                                   \
-        static_assert(have_default_strides, "renames only on default strides"); \
-        static_assert(M==req_dim0__ && N==req_dim1__, "dimension_error"); \
-        return reinterpret_cast<name__<T> const &>(*this);              \
-    }
-    COMPONENT_RENAME(mat_xy,   2, 2)
-    COMPONENT_RENAME(mat_uv,   2, 2)
-    COMPONENT_RENAME(mat_xyz,  3, 3)
-    COMPONENT_RENAME(mat_uvz,  3, 3)
-    COMPONENT_RENAME(mat_xyzw, 4, 4)
-#undef COMPONENT_RENAME
-};
-
-template <class T, class strides, int M>
-struct SmallRenames<T, mp::int_list<M>, strides>
-{
-    constexpr static bool have_default_strides = std::is_same<strides, default_strides_<mp::int_list<M>>>::value;
-
-#define COMPONENT_RENAME(name__, req_dim0__)                            \
-    operator name__<T> &()                                              \
-    {                                                                   \
-        static_assert(have_default_strides, "renames only on default strides"); \
-        static_assert(M==req_dim0__, "dimension error");                \
-        return reinterpret_cast<name__<T> &>(*this);                    \
-    }                                                                   \
-    operator name__<T> const &() const                                  \
-    {                                                                   \
-        static_assert(have_default_strides, "renames only on default strides"); \
-        static_assert(M==req_dim0__, "dimension_error");                \
-        return reinterpret_cast<name__<T> const &>(*this);              \
-    }
-    COMPONENT_RENAME(vec_xy,   2)
-    COMPONENT_RENAME(vec_uv,   2)
-    COMPONENT_RENAME(vec_tp,   2)
-    COMPONENT_RENAME(vec_xyz,  3)
-    COMPONENT_RENAME(vec_uvz,  3)
-    COMPONENT_RENAME(vec_rtp,  3)
-    COMPONENT_RENAME(vec_xyzw, 4)
-#undef COMPONENT_RENAME
-};
-
-// @TODO Should this be itself an xpr type, or do I need a ra_iterator-like obj?
+// TODO Should this be itself an xpr type, or do I need a ra_iterator-like obj?
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-struct SmallBase: public SmallRenames<T, sizes_, strides_>
+struct SmallBase
 {
     using sizes = sizes_;
     using strides = strides_;
@@ -244,7 +183,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr static std::array<dim_t, mp::len<sizes_>> ssizes = mp::tuple_copy<sizes, std::array<dim_t, mp::len<sizes>> >::f();
     constexpr static std::array<dim_t, mp::len<strides_>> sstrides = mp::tuple_copy<strides, std::array<dim_t, mp::len<strides>> >::f();
 
-// @TODO complete static check on strides.
+// TODO complete static check on strides.
     template <class TTT> struct BadDimension
     {
         using type = mp::int_t<(TTT::value<0 || TTT::value==DIM_ANY || TTT::value==DIM_BAD)>;
@@ -252,7 +191,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     static_assert(mp::len<sizes> == mp::len<strides>, "bad strides");
     static_assert(!mp::Apply_<mp::Or, mp::Map_<BadDimension, sizes>>::value, "negative dimensions");
 
-// @TODO look at Dim below; useable in the same way?
+// TODO look at Dim below; useable in the same way?
     using Child = Child_<T, sizes, strides>;
 
     constexpr static rank_t rank()  { return mp::len<sizes>; }
@@ -279,13 +218,13 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     constexpr decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
-    } /* @TODO More than one selector... */                             \
+    } /* TODO More than one selector... */                             \
     template <class ... I, std::enable_if_t<(!is_beatable<I>::static_p || ...), int> = 0> \
     constexpr auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
- /* @BUG I must be fixed size, otherwise we can't make out the output type. */ \
+ /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \
@@ -305,7 +244,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 #define DEF_ASSIGNOPS(OP)                                                   \
     template <class X> constexpr Child & operator OP(X && x)            \
     {                                                                   \
-        /* @TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
+        /* TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
         constexpr rank_t xrank = std::decay_t<decltype(start(x))>::rank_s(); \
         static_assert(xrank<=rank() || xrank==RANK_ANY, "bad assigment"); \
         for_each([](T & y, T const & x) { y OP x; }, static_cast<Child &>(*this), x); \
@@ -320,7 +259,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         return static_cast<Child &>(*this);
     }
 
-// @TODO Would replace by s(ra::iota) if that could be made constexpr
+// TODO Would replace by s(ra::iota) if that could be made constexpr
 #define DEF_AS(CONST)                                                   \
     template <int ss, int oo=0>                                         \
     auto as() CONST                                                     \
@@ -333,7 +272,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
     DEF_AS(/* const */)
 #undef DEF_AS
 
-// @TODO This is rank 0 only. Maybe reuse cell_iterator?
+// TODO This is rank 0 only. Maybe reuse cell_iterator?
     template <class P>
     struct Iterator
     {
@@ -345,7 +284,7 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
         constexpr Iterator(Iterator const & q): p(q.p) {}
         constexpr Iterator() = delete;
 
-// @TODO See ra_traits<Small>. Why do these twice?
+// TODO See ra_traits<Small>. Why do these twice?
         constexpr static auto const & shape() { return ssizes; }
         constexpr static dim_t size(int j) { return SmallBase::size(j); }
         constexpr static dim_t size_s(int j) { return SmallBase::size(j); }
@@ -421,14 +360,52 @@ struct SmallBase: public SmallRenames<T, sizes_, strides_>
 
     constexpr static bool have_default_strides = std::is_same<strides, default_strides_<sizes>>::value;
     template <class P> using stl_iterator = mp::If_<have_default_strides, P, general_stl_iterator<Iterator<P>>>;
-// @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
+// TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
     constexpr auto begin() { return stl_iterator<T *>(data()); }
     constexpr auto begin() const { return stl_iterator<T const *>(data()); }
     constexpr auto end() { return have_default_strides ? stl_iterator<T *>(data()+size()) : stl_iterator<T *>(); }
     constexpr auto end() const { return have_default_strides ? stl_iterator<T const *>(data()+size()) : stl_iterator<T const *>(); }
+
+// Renames.
+#define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \
+    operator name__<T> CONST &() CONST                                  \
+    {                                                                   \
+        static_assert(std::is_same<strides, default_strides_<mp::int_list<req_dim0__, req_dim1__>>>::value, "renames only on default strides"); \
+        static_assert(size(0)==req_dim0__ && size(1)==req_dim1__, "dimension error"); \
+        return reinterpret_cast<name__<T> CONST &>(*this);              \
+    }
+#define COMP_RENAME(name__, dim0__, dim1__)             \
+    COMP_RENAME_C(name__, dim0__, dim1__, /* const */)  \
+    COMP_RENAME_C(name__, dim0__, dim1__, const)
+    COMP_RENAME(mat_xy,   2, 2)
+    COMP_RENAME(mat_uv,   2, 2)
+    COMP_RENAME(mat_xyz,  3, 3)
+    COMP_RENAME(mat_uvz,  3, 3)
+    COMP_RENAME(mat_xyzw, 4, 4)
+#undef COMP_RENAME
+#undef COMP_RENAME_C
+#define COMP_RENAME_C(name__, dim0__, CONST)                            \
+    operator name__<T> CONST &() CONST                                  \
+    {                                                                   \
+        static_assert(std::is_same<strides, default_strides_<mp::int_list<dim0__>>>::value, "renames only on default strides"); \
+        static_assert(size(0)==dim0__, "dimension error");              \
+        return reinterpret_cast<name__<T> CONST &>(*this);              \
+    }
+#define COMP_RENAME(name__, dim0__)             \
+    COMP_RENAME_C(name__, dim0__, /* const */)  \
+    COMP_RENAME_C(name__, dim0__, const)
+    COMP_RENAME(vec_xy,   2)
+    COMP_RENAME(vec_uv,   2)
+    COMP_RENAME(vec_tp,   2)
+    COMP_RENAME(vec_xyz,  3)
+    COMP_RENAME(vec_uvz,  3)
+    COMP_RENAME(vec_rtp,  3)
+    COMP_RENAME(vec_xyzw, 4)
+#undef COMP_RENAME
+#undef COMP_RENAME_C
 };
 
-// @TODO apparently this won't be needed anymore in C++17 (http://en.cppreference.com/w/cpp/language/static).
+// TODO apparently this won't be needed anymore in C++17 (http://en.cppreference.com/w/cpp/language/static).
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
 constexpr std::array<dim_t, mp::len<sizes_>> SmallBase<Child_, T, sizes_, strides_>::ssizes;
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
@@ -437,7 +414,7 @@ constexpr std::array<dim_t, mp::len<strides_>> SmallBase<Child_, T, sizes_, stri
 template <class T, class sizes, class strides>
 struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 {
-    using Base = SmallBase<ra::SmallView, T, sizes, strides>; // @TODO qualifier needed for clang 3.8 bug
+    using Base = SmallBase<ra::SmallView, T, sizes, strides>; // TODO qualifier needed for clang 3.8 bug
 
     T * p;
     constexpr SmallView(T * p_): p(p_) {}
@@ -461,7 +438,7 @@ struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 };
 
 #define DEF_SMALLARRAY                                                  \
-    /*  @TODO qualifier needed for clang 3.8 bug */                     \
+    /*  TODO qualifier needed for clang 3.8 bug */                     \
     using Base = SmallBase<ra::SmallArray, T, sizes, strides>;          \
     T p[Base::size()];                                                  \
                                                                         \
@@ -477,7 +454,7 @@ struct SmallView: public SmallBase<SmallView, T, sizes, strides>
         auto b = this->begin();                                         \
         for (auto const & xx: x) { *b = xx; ++b; } /* std::copy not constexpr */ \
     }                                                                   \
-    template <class P> /* @TODO remove; only here because std::vector has it */ \
+    template <class P> /* TODO remove; only here because std::vector has it */ \
     constexpr SmallArray(P begin, P end)                                \
     {                                                                   \
         std::copy(begin, end, this->begin());                           \
@@ -499,7 +476,7 @@ struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
     constexpr operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
     constexpr operator SmallView<T const, sizes, strides> const () { return SmallView<T const, sizes, strides>(p); }
 
-// @BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
+// BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
     constexpr operator T & ()
     {
         static_assert(rank()==0 || (rank()==1 && size()==1), "bad rank"); // rank 1 for coord types
@@ -620,7 +597,7 @@ DEF_TRANSPOSE(const)
 DEF_TRANSPOSE(/* */)
 #undef DEF_TRANSPOSE
 
-// @TODO Used by ProductRule; waiting for proper generalization.
+// TODO Used by ProductRule; waiting for proper generalization.
 template <template <class, class, class> class Child1, class T1, class sizes1, class strides1,
           template <class, class, class> class Child2, class T2, class sizes2, class strides2>
 auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
@@ -689,5 +666,3 @@ inline constexpr auto start(T && t)
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_SMALL
-
-#endif // RA_SMALL_H

@@ -198,7 +198,7 @@ int main()
     }
     section("wrank tests 0-0 (nop), case 1 - exact match");
     {
-// This uses the applyframes specialization for 'do nothing' (@TODO if there's one).
+// This uses the applyframes specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
                           ra::Unique<real, 1>({3}, ra::unspecified),
@@ -206,7 +206,7 @@ int main()
     }
     section("wrank tests 0-0 (nop), case 2 - non-exact frame match");
     {
-// This uses the applyframes specialization for 'do nothing' (@TODO if there's one).
+// This uses the applyframes specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
                           ra::Unique<real, 2>({3, 4}, ra::unspecified),
@@ -269,7 +269,7 @@ int main()
 // Using expr as lvalue.
         EXPR = 7.;
         cout << EXPR << endl;
-// expr-way @BUG use of test_eq fails (??)
+// expr-way BUG use of test_eq fails (??)
         assert(every(c==where(ra::_0>=10 && ra::_0<=12 && ra::_1>=1 && ra::_1<=4, 7, ra::_0*100+ra::_1)));
 // looping...
         bool valid = true;
@@ -350,7 +350,7 @@ int main()
             {
                 for (int t=0; t!=ts; ++t) {
                     Astencil.p = A.data();
-                    Anext(I, J) = 0; // @TODO miss notation for sum-of-axes without preparing destination...
+                    Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
                     Anext(I, J) += map(ra::wrank<2, 2>(ra::times()), Astencil, mask);
                     std::swap(A.p, Anext.p);
                 }

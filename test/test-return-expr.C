@@ -9,7 +9,7 @@
 /// @file test-return-expr.C
 /// @brief Show how careful you have to be when you return an expr object from a function.
 
-// For a real life example, see fun::project_on_plane or ra::normv. (@TODO Those need tests).
+// For a real life example, see fun::project_on_plane or ra::normv. (TODO Those need tests).
 
 #include <iostream>
 #include "ra/complex.H"

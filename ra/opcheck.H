@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_OPCHECK_H
-#define RA_OPCHECK_H
-
 /// @file opcheck.H
 /// @brief Check array argument agreement and select driving argument.
 
+#pragma once
 #include "ra/tuple-list.H"
 #include "ra/bootstrap.H"
 
@@ -21,7 +19,7 @@ namespace ra {
 // be larger. (This might be wrong; proper pick should be done at run time.) For
 // equal rank, prefer static size, because sizes must match. When I can pick
 // either, pick always the first.
-// @TODO Should check dimensions down to smallest rank, as old opcheck() (??)
+// TODO Should check dimensions down to smallest rank, as old opcheck() (??)
 
 // |-------------+----------+----------+--------------------|
 // | ranks B \ A | RANK_BAD | RANK_ANY | fixed              |
@@ -100,7 +98,7 @@ template <class ... P> using largest_rank = mp::IndexOf<pick_driver, std::tuple<
 template <class ... P> using largest_i = mp::IndexOf<max_i, std::tuple<P ...>>;
 template <class T> using largest_i_tuple = mp::IndexOf<max_i, T>;
 
-// @TODO Allow infinite rank; need a special value of crank for that.
+// TODO Allow infinite rank; need a special value of crank for that.
 inline constexpr rank_t dependent_cell_rank(rank_t rank, rank_t crank)
 {
     return crank>=0 ? crank // not dependent
@@ -116,5 +114,3 @@ inline constexpr rank_t dependent_frame_rank(rank_t rank, rank_t crank)
 }
 
 } // namespace ra
-
-#endif // RA_OPCHECK_H

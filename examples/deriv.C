@@ -59,7 +59,7 @@ int main()
     //     y2[i] = (y[i-1] - 2 * y[i] + y[i+1]) / _t2;
 
     // Now calculate the root mean square approximation error:
-    // [ra] @TODO don't have mean() yet
+    // [ra] TODO don't have mean() yet
     double error = sqrt(sum(sqr(y2(I) - y2exact(I)))/I.size());
 
     // Display a few elements from the vectors.

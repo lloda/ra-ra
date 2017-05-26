@@ -134,7 +134,7 @@ int main()
 {
     TestRecorder tr(std::cout);
 // gcc let a bug pass by https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57891. Cf http://stackoverflow.com/a/24346350.
-// @TODO We weren't getting the proper diagnostic from clang, probably due to disable_if doing !(integer).
+// TODO We weren't getting the proper diagnostic from clang, probably due to disable_if doing !(integer).
     section("MatchPermutationP");
     {
         using thematch = MatchPermutationP< int_list<1, 0> >::type<int_list<0, 1> >;

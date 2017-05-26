@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_OPTIMIZE_H
-#define RA_OPTIMIZE_H
-
 /// @file optimize.H
 /// @brief Naive optimization pass over ETs.
 
+#pragma once
 #include "ra/expr.H"
 #include "ra/small.H"
 
@@ -42,12 +40,12 @@ DEFINE_NAMED_BINARY_OP(*, times)
 DEFINE_NAMED_BINARY_OP(/, slash)
 #undef DEFINE_NAMED_BINARY_OP
 
-// @TODO need something to handle the & variants...
+// TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
 
 #if RA_OPTIMIZE_IOTA==1
 #define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T> >::value
-// @TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
+// TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
 template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X> >::is_integer;
 
 // --------------
@@ -137,5 +135,3 @@ OPTIMIZE_SMALLVECTOR_OP(*, ra::times)
 #undef ITEM
 
 } // namespace ra
-
-#endif // RA_OPTIMIZE_H

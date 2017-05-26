@@ -9,7 +9,7 @@
 # later version.
 
 # SConstruct for ra/examples
-# @todo Shared pieces with test/SConstruct doc/SConstruct
+# todo Shared pieces with test/SConstruct doc/SConstruct
 
 import os, string, atexit
 from colorama import Fore, Back, Style
@@ -57,7 +57,7 @@ env.Append(CPPPATH=['..', 'examples'],
                      '-finput-charset=UTF-8', '-fextended-identifiers',
                      '-Wno-error=strict-overflow',
                      #'-Wconversion',
-                     # '-funsafe-math-optimizations', # @TODO Test with this.
+                     # '-funsafe-math-optimizations', # TODO Test with this.
                  ])
 
 

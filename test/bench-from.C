@@ -256,7 +256,7 @@ int main()
                 cout << std::setw(10) << std::fixed << int(dt.count()/double(N)) << " " << tunit << " array selection" << endl;
                 tr.quiet().test_eq(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             }
-// 2. slice one axis at a time, @TODO one way A(i, i, i, i) could work
+// 2. slice one axis at a time, TODO one way A(i, i, i, i) could work
             {
                 Array4 B(ra::Small<int, 4>(Isize), 0);
                 time_unit dt(0);

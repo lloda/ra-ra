@@ -1,13 +1,12 @@
 
 // (c) Daniel Llorens - 2013-2014, 2016
 
+#pragma once
+
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-#ifndef RA_ITERATOR_H
-#define RA_ITERATOR_H
 
 /// @file iterator.H
 /// @brief Array iterator for View, plus row-major STL iterator.
@@ -109,7 +108,7 @@ struct cell_iterator
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
 };
 
-#define DEF_ASSIGNOPS(OP)                                                   \
+#define DEF_ASSIGNOPS(OP)                                               \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
     template <class X> void operator OP(ra_iterator const & x)          \
@@ -131,7 +130,7 @@ struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
     template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
     auto flat() const { return CellFlat<typename P::cell_type> { P::c }; }
-// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. @TODO Think this over.
+// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
     template <class I>
     decltype(auto) at(I const & i_)
     {
@@ -211,5 +210,3 @@ auto iter(A && a) { return a.template iter<cell_rank>(); }
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_ITERATOR
-
-#endif // RA_ITERATOR_H

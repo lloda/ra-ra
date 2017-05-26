@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_TUPLELIST_H
-#define RA_TUPLELIST_H
-
 /// @file tuple-list.H
 /// @brief Using tuples as compile time lists.
 
+#pragma once
 #include "ra/int_t.H"
 #include <tuple>
 #include <limits>
@@ -325,11 +323,11 @@ struct Fold<F, Def>
 template <template <class ... A> class F, class Def, class ... L>
 using Fold_ = typename Fold<F, Def, L ...>::type;
 
-// Pass F(A) to templates expecting F(A ...). @todo Wait for C++ to be fixed.
+// Pass F(A) to templates expecting F(A ...). todo Wait for C++ to be fixed.
 template <template <class A> class F>
 struct Coerce1
 {
-    template <class ... B> struct type_; // @bug ---breaks composability
+    template <class ... B> struct type_; // bug ---breaks composability
     template <class B0, class ... B>
     struct type_<B0, B ...>
     {
@@ -337,11 +335,11 @@ struct Coerce1
     };
 };
 
-// Pass F(A, B) to templates expecting F(A ...). @todo Wait for C++ to be fixed.
+// Pass F(A, B) to templates expecting F(A ...). todo Wait for C++ to be fixed.
 template <template <class A, class B> class F>
 struct Coerce2
 {
-    template <class ... B> struct type_; // @bug ---breaks composability
+    template <class ... B> struct type_; // bug ---breaks composability
     template <class B0, class B1, class ... B>
     struct type_<B0, B1, B ...>
     {
@@ -364,7 +362,7 @@ template <template <class ... A> class F>
 struct Typer
 {
     template <class ... B>
-    struct type_ // @bug ---breaks composability
+    struct type_ // bug ---breaks composability
     {
         using type = int_t<F<B ...>::value>;
     };
@@ -636,5 +634,3 @@ struct check_idx<std::tuple<A0, A ...>, I0, I ...>
 };
 
 } // namespace mp
-
-#endif // RA_TUPLELIST_H 561

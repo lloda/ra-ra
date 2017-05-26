@@ -60,7 +60,7 @@ int main()
         tr.test_eq(ref3, A(ra::vector(l), ra::vector(l), ra::vector(l)));
         tr.test_eq(ref3, A(ll, ll, ll));
 
-// @TODO have a proper rank / shape match error when comparing these with ref3
+// TODO have a proper rank / shape match error when comparing these with ref3
         ra::Small<int, 2, 2> ref2 {5, 6, 9, 10};
         tr.test_eq(ref2, B(i, i));
         tr.test_eq(ref2, B(j, j));
@@ -68,7 +68,7 @@ int main()
         tr.test_eq(ref2, B(ra::vector(l), ra::vector(l)));
         tr.test_eq(ref2, B(ll, ll));
 
-// @TODO have a proper rank / shape match error when comparing these with ref3
+// TODO have a proper rank / shape match error when comparing these with ref3
         ra::Small<int, 2> ref1 {1, 2};
         tr.test_eq(ref1, C(i));
         tr.test_eq(ref1, C(j));

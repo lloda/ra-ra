@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_LARGE_H
-#define RA_LARGE_H
-
 /// @file large.H
 /// @brief Arrays with dynamic size.
 
+#pragma once
 #include "ra/small.H"
 #include "ra/iterator.H"
 #include "ra/wrank.H"
@@ -64,10 +62,10 @@ dim_t proddim(D d, D dend)
 // [data] (fixed shape)
 // [size] p -> [data...] (fixed rank)
 // [rank] [size...] p -> [data...] (var rank)
-// @TODO size is immutable so that it can be kept together with rank.
+// TODO size is immutable so that it can be kept together with rank.
 
 // Would do this with a base class, but I like View being POD.
-// @TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
+// TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
 #define DEF_ITERATORS(RANK)                                             \
     template <rank_t c=0> using iterator = ra::ra_iterator<View<T, RANK>, c>; \
     template <rank_t c=0> using const_iterator = ra::ra_iterator<View<T const, RANK>, c>; \
@@ -121,14 +119,14 @@ template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_il
         for_each([](T & dest, T const & src) { dest = src; }, *this, x); \
         return *this;                                                   \
     }                                                                   \
-    /* Ignore rank, row-major fill. @TODO Use xpr traversal */          \
+    /* Ignore rank, row-major fill. TODO Use xpr traversal */          \
     View & operator=(std::initializer_list<T> const x)                  \
     {                                                                   \
         assert(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
         std::copy(x.begin(), x.end(), this->begin());                   \
         return *this;                                                   \
     }                                                                   \
-    bool const empty() const { return size()==0; } /* @TODO Optimize */
+    bool const empty() const { return size()==0; } /* TODO Optimize */
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
@@ -172,8 +170,8 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src)
     return 0;
 }
 
-// @TODO Parameterize on Child having .data() so that there's only one pointer.
-// @TODO A constructor, if only for CHECK_BOUNDS (positive sizes, strides inside, etc.)
+// TODO Parameterize on Child having .data() so that there's only one pointer.
+// TODO A constructor, if only for CHECK_BOUNDS (positive sizes, strides inside, etc.)
 template <class T, rank_t RANK>
 struct View
 {
@@ -208,13 +206,13 @@ struct View
         }                                                               \
         return sub;                                                     \
     }                                                                   \
-    /* @BUG doesn't handle generic zero-rank indices */                 \
+    /* BUG doesn't handle generic zero-rank indices */                 \
     template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==RANK, int> = 0> \
     decltype(auto) operator()(I const & ... i) CONST                    \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     }                                                                   \
-    /* @TODO More than one selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
+    /* TODO More than one selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
     template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
@@ -246,7 +244,7 @@ struct View
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
 };
 
-// @TODO To be placed as specialization of operator() above.
+// TODO To be placed as specialization of operator() above.
 template <class T, rank_t RANK>
 template <class ... I>
 auto View<T, RANK>::wipparens(I && ... i) /* const */
@@ -258,7 +256,7 @@ struct ra_traits_def<View<T, RANK>>
 {
     using V = View<T, RANK>;
     using value_type = T;
-    using shape_type = Small<dim_t, RANK>; // @TODO should be taken from v.iter().shape()
+    using shape_type = Small<dim_t, RANK>; // TODO should be taken from v.iter().shape()
 
     static auto shape(V const & v) { return v.iter().shape(); }
     static dim_t size(V const & v) { return v.size(); }
@@ -278,9 +276,9 @@ template <class V> struct storage_traits
 };
 template <class T> struct storage_traits<std::vector<T>>
 {
-// @BUG This uses T(), so would need a create(, T) ...
+// BUG This uses T(), so would need a create(, T) ...
     static std::vector<T> create(dim_t n) { return std::vector<T>(n); }
-// @BUG No such for std::vector<bool>
+// BUG No such for std::vector<bool>
     static T const * data(std::vector<T> const & v) { return v.data(); }
     static T * data(std::vector<T> & v) { return v.data(); }
 };
@@ -301,7 +299,7 @@ bool is_c_order(View<T, RANK> const & a)
     return true;
 }
 
-// @TODO be convertible to View only, so that View::p is not duplicated
+// TODO be convertible to View only, so that View::p is not duplicated
 template <class Store, rank_t RANK>
 struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::data(std::declval<Store>()))>, RANK>
 {
@@ -310,7 +308,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     using View = ra::View<T, RANK>;
     using View::rank_s;
 
-// @TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
+// TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
     WithStorage(WithStorage && w): store(std::move(w.store))
     {
         View::dim = std::move(w.dim);
@@ -326,7 +324,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         View::dim = w.dim;
         View::p = storage_traits<Store>::data(store);
     }
-// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test-ownership.C [ra20]. @TODO do this through .replace() op.
+// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test-ownership.C [ra20]. TODO do this through .replace() op.
     WithStorage & operator=(WithStorage && w)
     {
         store = std::move(w.store);
@@ -349,7 +347,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         return *this;
     }
 
-// Provided b/c want {} to call initializer_list constructor below. @TODO Why do I need to init p; warning on test-io.C.
+// Provided b/c want {} to call initializer_list constructor below. TODO Why do I need to init p; warning on test-io.C.
     WithStorage()
     {
         for (Dim & dimi: View::dim) { dimi = {0, 1}; } // 1 so we can push_back()
@@ -367,7 +365,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     template <class Pbegin> void fill1(dim_t xsize, Pbegin xbegin)
     {
         CHECK_BOUNDS(this->size()==xsize && "mismatched sizes");
-        std::copy_n(xbegin, xsize, this->begin()); // @TODO Use xpr traversal.
+        std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
     }
 
     template <class SS> WithStorage(SS const & s, unspecified_t) { init(s); }
@@ -389,7 +387,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
         fill1(x.size(), x.begin());
     }
-// @TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
+// TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
     {
         fill1(x.size(), x.begin());
@@ -425,13 +423,6 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         View::dim[0].size = s;
         View::p = store.data();
     }
-    void push_back(T const & t)
-    {
-        assert(this->rank()==1);
-        store.push_back(t);
-        ++View::dim[0].size;
-        View::p = store.data();
-    }
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
@@ -440,11 +431,12 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         ++View::dim[0].size;
         View::p = store.data();
     }
-    void pop_back()
+    void push_back(T const & t)
     {
-        assert(this->rank()==1 && View::dim[0].size>0);
-        store.pop_back();
-        --View::dim[0].size;
+        assert(this->rank()==1);
+        store.push_back(t);
+        ++View::dim[0].size;
+        View::p = store.data();
     }
     template <class ... A>
     void emplace_back(A && ... a)
@@ -454,6 +446,12 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         ++View::dim[0].size;
         View::p = store.data();
     }
+    void pop_back()
+    {
+        assert(this->rank()==1 && View::dim[0].size>0);
+        store.pop_back();
+        --View::dim[0].size;
+    }
     bool empty() const
     {
         return this->size()==0;
@@ -461,7 +459,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     T const & back() const { assert(this->rank()==1 && "bad rank for back"); return store[this->size()-1]; }
     T & back() { assert(this->rank()==1 && "bad rank for back"); return store[this->size()-1]; }
 
-// WithStorage is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. @TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or elidable.
+// WithStorage is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or elidable.
 
     auto begin() { assert(is_c_order(*this)); return this->data(); }
     auto begin() const { assert(is_c_order(*this)); return this->data(); }
@@ -477,8 +475,8 @@ template <class T, rank_t RANK=RANK_ANY> using Shared = WithStorage<std::shared_
 // -------------
 // Used in the Guile wrappers to allow an array parameter to either borrow from Guile
 // storage or convert into a new array (e.g. passing 'f32 into 'f64).
-// @TODO Can use unique_ptr's deleter for this?
-// @TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
+// TODO Can use unique_ptr's deleter for this?
+// TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
 // -------------
 
 struct NullDeleter { template <class T> void operator()(T * p) {} };
@@ -527,7 +525,7 @@ struct View<T, RANK_ANY>
         }                                                               \
         return sub;                                                     \
     }                                                                   \
-    /* @TODO More than one selector... */                               \
+    /* TODO More than one selector... */                               \
     template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
@@ -566,7 +564,7 @@ struct ra_traits_def<View<T, RANK_ANY>>
 {
     using V = View<T, RANK_ANY>;
     using value_type = T;
-    using shape_type = std::vector<dim_t>; // @TODO should be taken from v.iter().shape()
+    using shape_type = std::vector<dim_t>; // TODO should be taken from v.iter().shape()
 
     static auto shape(V const & v) { return v.iter().shape(); }
     static dim_t size(V const & v) { return v.size(); }
@@ -583,5 +581,3 @@ struct ra_traits_def<WithStorage<Store, RANK>>
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_LARGE
-
-#endif // RA_LARGE_H

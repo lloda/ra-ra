@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_VIEW_OPS_H
-#define RA_VIEW_OPS_H
-
 /// @file view-ops.H
 /// @brief Operations specific to Views
 
+#pragma once
 #include "ra/large.H"
 
 #ifdef RA_CHECK_BOUNDS
@@ -206,7 +204,7 @@ stencil(View<T, N> const & a, LO && lo, HI && hi)
 template <class super_t, rank_t SUPERR, class T, rank_t RANK>
 auto explode_(View<T, RANK> const & a)
 {
-// @TODO Reduce to single check, either the first or the second.
+// TODO Reduce to single check, either the first or the second.
     static_assert(RANK>=SUPERR || RANK==RANK_ANY, "rank of a is too low");
     assert(a.rank()>=SUPERR && "rank of a is too low");
     View<super_t, rank_sum(RANK, -SUPERR)> b;
@@ -232,13 +230,13 @@ auto explode(View<T, RANK> const & a)
     return explode_<super_t, (std::is_same<super_t, std::complex<T> >::value ? 1 : ra_traits<super_t>::rank_s())>(a);
 }
 
-// @TODO Consider these in ra_traits<>.
+// TODO Consider these in ra_traits<>.
 template <class T, std::enable_if_t<is_scalar<T>, int> =0> int gstride(int i) { return 1; }
 template <class T, std::enable_if_t<!is_scalar<T>, int> =0> int gstride(int i) { return T::stride(i); }
 template <class T, std::enable_if_t<is_scalar<T>, int> =0> int gsize(int i) { return 1; }
 template <class T, std::enable_if_t<!is_scalar<T>, int> =0> int gsize(int i) { return T::size(i); }
 
-// @TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
+// TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
 template <class sub_t, class super_t, rank_t RANK>
 auto collapse(View<super_t, RANK> const & a)
 {
@@ -260,7 +258,7 @@ auto collapse(View<super_t, RANK> const & a)
     constexpr int s = sizeof(sub_t)/sizeof(sub_v);
     static_assert(t*sizeof(sub_v)>=1, "bad subtype");
     for (int i=0; i<SUBR; ++i) {
-        assert(((gstride<super_t>(i)/s)*s==gstride<super_t>(i)) && "bad strides"); // @TODO is actually static
+        assert(((gstride<super_t>(i)/s)*s==gstride<super_t>(i)) && "bad strides"); // TODO is actually static
         b.dim[a.rank()+i].stride = gstride<super_t>(i) / s * t;
         b.dim[a.rank()+i].size = gsize<super_t>(i);
     }
@@ -272,7 +270,7 @@ auto collapse(View<super_t, RANK> const & a)
     return b;
 }
 
-// Checks for functions that require compact arrays (@todo they really shouldn't).
+// Checks for functions that require compact arrays (todo they really shouldn't).
 template <class A>
 inline bool const crm(A const & a)
 {
@@ -297,5 +295,3 @@ inline bool const crm(A const & a, Int const nrow, Jnt const ncol)
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_VIEW_OPS
-
-#endif // RA_VIEW_OPS_H

@@ -102,7 +102,7 @@ int main()
 , where(ra::_0>0 && ra::_0<3, ra::Unique<int, 1> { 1, 2, 3, 4 }, 17));
 // [raop00] TensorIndex returs value; so where()'s lambda must also return value.
         tr.test_eq(ra::Unique<int, 1> { 1, 2, 4, 7 }, where(ra::Unique<bool, 1> { true, false, false, true }, 2*ra::_0+1, 2*ra::_0));
-// Using frame matching... @TODO directly with ==expr?
+// Using frame matching... TODO directly with ==expr?
         ra::Unique<int, 2> a({4, 3}, ra::_0-ra::_1);
         ra::Unique<int, 2> b = where(ra::Unique<bool, 1> { true, false, false, true }, 99, a);
         tr.test_eq(ra::Unique<int, 2> ({4, 3}, { 99, 99, 99, 1, 0, -1, 2, 1, 0, 99, 99, 99 }), b);
@@ -155,7 +155,7 @@ int main()
         where(ra::_0<=0 || ra::_0>=3, a, b) += 2;
         tr.test_eq(ra::Unique<int, 1> {2, 7, 7, 2}, a);
         tr.test_eq(ra::Unique<int, 1> {7, 2, 2, 7}, b);
-// Both must be lvalues; @TODO check that either of these is an error.
+// Both must be lvalues; TODO check that either of these is an error.
         // where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
         // where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
     }

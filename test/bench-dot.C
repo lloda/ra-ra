@@ -76,7 +76,7 @@ struct by_raw
         return y;
     }
 };
-constexpr char const * by_raw::name; // @TODO C++17...
+constexpr char const * by_raw::name; // TODO C++17...
 
 #define BY_PLY(NAME, INSIDE)                                        \
     struct NAME {                                                   \
@@ -88,7 +88,7 @@ constexpr char const * by_raw::name; // @TODO C++17...
             return y;                                               \
         }                                                           \
     };                                                              \
-    constexpr char const * NAME::name;  // @TODO C++17...
+    constexpr char const * NAME::name;  // TODO C++17...
 
 #define BY_PLY_TAGGED(PLYER)                                            \
     /* plain */                                                         \
@@ -195,7 +195,7 @@ int main()
 // optimize() plugs into the definition of operator*, etc.
         auto f_small_op = [](auto && A, auto && B)
             {
-                return sum(A*B); // @TODO really slow with rank>2 or even rank>1 depending on the sizes
+                return sum(A*B); // TODO really slow with rank>2 or even rank>1 depending on the sizes
             };
 
 #define DEFINE_SMALL_PLY(name, plier)                                   \

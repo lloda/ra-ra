@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_GLOBAL_H
-#define RA_GLOBAL_H
-
 /// @file global.H
 /// @brief Had to break namespace hygiene.
 
+#pragma once
 #include "ra/iterator.H"
 #include "ra/wedge.H"
 
@@ -39,5 +37,3 @@ template <int D, int Oa, int Ob, class A, class B,
 inline constexpr auto wedge(A const & a, B const & b) { return a*b; }
 
 #undef START
-
-#endif // RA_GLOBAL_H

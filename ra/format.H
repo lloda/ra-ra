@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_FORMAT_H
-#define RA_FORMAT_H
-
 /// @file format.H
 /// @brief Sugar for in-place ostringstream use.
 
+#pragma once
 #include <iterator>
 #include <iosfwd>
 #include <sstream>
@@ -27,5 +25,3 @@ format(std::string && s)
 {
     return std::forward<decltype(s)>(s);
 }
-
-#endif // RA_FORMAT_H

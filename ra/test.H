@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_TEST_H
-#define RA_TEST_H
-
 /// @file test.H
 /// @brief Minimal test library.
 
+#pragma once
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -177,5 +175,3 @@ struct TestRecorder
         return failed.size();
     }
 };
-
-#endif // RA_TEST_H

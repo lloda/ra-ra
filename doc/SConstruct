@@ -9,7 +9,7 @@
 # later version.
 
 # SConstruct for ra-ra/doc
-# @todo Shared pieces with examples/SConstruct and test/SConstruct
+# todo Shared pieces with examples/SConstruct and test/SConstruct
 
 import os, atexit
 from colorama import Fore, Back, Style

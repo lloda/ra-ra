@@ -9,7 +9,7 @@
 // @file readme.C
 // @brief Examples used in top-level README.md
 
-// @TODO Generate README.md and/or these examples.
+// TODO Generate README.md and/or these examples.
 
 #include "ra/operators.H"
 #include "ra/io.H"
@@ -104,7 +104,7 @@ int main()
 // See examples/slicing.C for more examples.
     tr.section("selector");
     {
-// @TODO do implicit reshape in constructors?? so I can accept any 1-array and not only an initializer_list.
+// TODO do implicit reshape in constructors?? so I can accept any 1-array and not only an initializer_list.
         ra::Owned<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
         cout << "A: " << A << "\n\n";
 

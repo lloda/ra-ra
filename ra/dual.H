@@ -6,9 +6,6 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_DUAL_H
-#define RA_DUAL_H
-
 /// @file dual.H
 /// @brief Dual numbers.
 
@@ -18,6 +15,7 @@
 // f(a+εa') = f(a)+εa'f_a(a)
 // f(a+εa', b+εb') = f(a, b)+ε[a'f_a(a, b) b'f_b(a, b)]
 
+#pragma once
 #include <iosfwd>
 #include "ra/macros.H"
 #include <complex>
@@ -33,6 +31,8 @@ struct Dual
     Dual() {}
 
     Dual & operator*=(T const & r) { *this = *this * r; return *this; }
+    Dual & operator+=(T const & r) { *this = *this + r; return *this; }
+    Dual & operator+=(Dual const & r) { *this = *this + r; return *this; }
 };
 
 template <class T>
@@ -42,10 +42,12 @@ struct Dual<std::complex<T>>
     C re, du;
     Dual(C const & r, C const & d): re(r), du(d) {}
     Dual(C const & r): re(r), du(0.) {} // conversions are by default constants.
-    Dual(T const & r): re(r), du(0.) {} // @TODO repeat the class for this only?
+    Dual(T const & r): re(r), du(0.) {} // TODO repeat the class just for this?
     Dual() {}
 
     Dual & operator*=(C const & r) { *this = *this * r; return *this; }
+    Dual & operator+=(C const & r) { *this = *this + r; return *this; }
+    Dual & operator+=(Dual const & r) { *this = *this + r; return *this; }
 };
 
 // conversions are by default constants.
@@ -255,5 +257,3 @@ std::istream & operator>>(std::istream & i, Dual<A> & a)
         return i;
     }
 }
-
-#endif // RA_DUAL_H

@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_ITERATOR_SMALL_H
-#define RA_ITERATOR_SMALL_H
-
 /// @file iterator.H
 /// @brief Array iterator for SmallView, plus row-major STL iterator.
 
+#pragma once
 #include "ra/traits.H"
 #include "ra/opcheck.H"
 #include <iostream>
@@ -127,7 +125,7 @@ struct ra_iterator_small: public cell_iterator_small<V, cellr, ra_iterator_small
     template <class SS> ra_iterator_small(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
 
     auto flat() const { return CellFlat<typename P::cell_type> { P::c }; }
-// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. @TODO Think this over.
+// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
     template <class I>
     decltype(auto) at(I const & i_)
     {
@@ -207,5 +205,3 @@ auto iter(A && a) { return a.template iter<cell_rank>(); }
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_ITERATOR_SMALL
-
-#endif // RA_ITERATOR_SMALL_H

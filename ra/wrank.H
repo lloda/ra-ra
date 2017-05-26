@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_WRANK_H
-#define RA_WRANK_H
-
 /// @file wrank.H
 /// @brief Rank conjunction for expression templates.
 
+#pragma once
 #include "ra/expr.H"
 
 #ifdef RA_CHECK_BOUNDS
@@ -27,8 +25,8 @@
     #define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
-// @TODO Make it work with fixed size types.
-// @TODO Make it work with var rank types.
+// TODO Make it work with fixed size types.
+// TODO Make it work with var rank types.
 
 namespace ra {
 
@@ -70,7 +68,7 @@ template <class V, class T, class R=mp::MakeList_<mp::len<T>, mp::nil>, rank_t s
 using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 
 // Get a list (per argument) of lists of live axes.
-// The last frame match is not done; that relies on rest axis handling of each argument (ignoring axis spec beyond their own rank). @TODO Reexamine that.
+// The last frame match is not done; that relies on rest axis handling of each argument (ignoring axis spec beyond their own rank). TODO Reexamine that.
 // Case where V has rank.
 template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
@@ -80,7 +78,7 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
     using T = std::tuple<Ti ...>;
     using R_ = std::tuple<Ri ...>;
 
-// @TODO functions of arg rank, negative, inf.
+// TODO functions of arg rank, negative, inf.
 // live = number of live axes on this frame, for each argument.
     using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>-crank::value) ...>;
     static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "bad ranks");
@@ -105,7 +103,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
     using R_ = std::tuple<Ri ...>;
 
-// @TODO -crank::value when the actual verb rank is used (e.g. to use ra_iterator<A, that_rank> instead of just begin()).
+// TODO -crank::value when the actual verb rank is used (e.g. to use ra_iterator<A, that_rank> instead of just begin()).
     using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>) ...>;
     static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "bad ranks");
     constexpr static int driver = largest_i_tuple<live>::value;
@@ -180,8 +178,8 @@ struct applyframes
     }
 };
 
-// No-op case. @TODO Maybe apply to any Iota<n> where n<=depth.
-// @TODO If A is ra_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
+// No-op case. TODO Maybe apply to any Iota<n> where n<=depth.
+// TODO If A is ra_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
 template <class LiveAxes, int depth>
 struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same<LiveAxes, mp::Iota_<depth>>::value>>
 {
@@ -203,10 +201,10 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     template <int iarg>
     bool check()
     {
-        for (int k=0; k!=rank(); ++k) { // @TODO with static rank or sizes, can peval.
+        for (int k=0; k!=rank(); ++k) { // TODO with static rank or sizes, can peval.
             dim_t s0 = size(k);
             dim_t sk = std::get<iarg>(t).size(k);
-            if (sk!=s0 && sk!=DIM_BAD) { // @TODO See Expr::check(); maybe just sk>=0.
+            if (sk!=s0 && sk!=DIM_BAD) { // TODO See Expr::check(); maybe just sk>=0.
                 return false;
             }
         }
@@ -241,7 +239,7 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     constexpr auto flat() const { return flat(); }
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
-// @TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
+// TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
     template <int iarg=0>
     std::enable_if_t<(iarg<sizeof...(P)), dim_t>
     constexpr size(int k) const
@@ -255,9 +253,9 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         abort(); return DIM_BAD;
     }
-    constexpr static dim_t size_s() { return DIM_ANY; } // @BUG
-    constexpr static rank_t rank() { return FM::depth; } // @TODO Invalid for RANK_ANY
-    constexpr static rank_t rank_s() { return FM::depth; } // @TODO Invalid for RANK_ANY
+    constexpr static dim_t size_s() { return DIM_ANY; } // BUG
+    constexpr static rank_t rank() { return FM::depth; } // TODO Invalid for RANK_ANY
+    constexpr static rank_t rank_s() { return FM::depth; } // TODO Invalid for RANK_ANY
     constexpr auto shape() const
     {
         std::array<dim_t, FM::depth> s {};
@@ -296,7 +294,7 @@ struct number_ryn<std::integer_sequence<int, I ...>>
     }
 };
 
-// @TODO partial specialization means no universal ref :-/
+// TODO partial specialization means no universal ref :-/
 #define DEF_EXPR_VERB(MOD)                                              \
     template <class cranks, class Op, class ... P> inline constexpr     \
     auto expr(Verb<cranks, Op> MOD v, P && ... t)                       \
@@ -308,7 +306,7 @@ FOR_EACH(DEF_EXPR_VERB, &&, &, const &)
 
 // ---------------------------
 // from, after APL, like (from) in guile-ploy
-// @TODO integrate with is_beatable shortcuts, operator() in the various array types.
+// TODO integrate with is_beatable shortcuts, operator() in the various array types.
 // ---------------------------
 
 template <class I>
@@ -347,7 +345,7 @@ auto from(A && a, I0 && i0)
     return expr(std::forward<A>(a), start(std::forward<I0>(i0)));
 }
 
-// @TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
+// TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
 template <class A, class ... I> inline constexpr
 auto from(A && a, I && ... i)
 {
@@ -359,5 +357,3 @@ auto from(A && a, I && ... i)
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_WRANK
-
-#endif // RA_WRANK_H

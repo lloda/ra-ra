@@ -86,7 +86,7 @@ int main()
 
     section("reductions");
     {
-        auto test_dot = [&tr](auto && test) // @TODO Use this for other real reductions.
+        auto test_dot = [&tr](auto && test) // TODO Use this for other real reductions.
             {
                 test(ra::Small<complex, 2>{1, 2}, ra::Small<real, 2>{3, 4});
                 test(ra::Small<real, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
@@ -144,7 +144,7 @@ int main()
         tr.test_eq(std::numeric_limits<real>::infinity(), amin(ra::Small<real, 3>(QNAN)));
     }
 
-// @TODO these reductions require a destination argument; there are no exprs really.
+// TODO these reductions require a destination argument; there are no exprs really.
     section("to sum columns in crude ways");
     {
         ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
@@ -180,7 +180,7 @@ int main()
             ra::scalar(c) += A(0);
             tr.test_eq(B(0), c);
         }
-// This will fail because the assumed driver (RANK_ANY) has lower actual rank than the other argument. @TODO check that it fails.
+// This will fail because the assumed driver (RANK_ANY) has lower actual rank than the other argument. TODO check that it fails.
         // {
         //     ra::Unique<real, 2> A({2, 3}, {1, 2, 3, 4 ,5, 6});
         //     ra::Unique<real> C({}, 0.);
@@ -238,13 +238,54 @@ int main()
         tr.info("amax default").test_eq(std::numeric_limits<double>::infinity(), amin(q));
         tr.info("amin default").test_eq(-std::numeric_limits<double>::infinity(), amax(q));
     }
-    section("higher rank reductions");
+    section("vector-matrix reductions");
     {
-        double x[4] = {1, 2, 3, 4};
-        ra::Small<double, 4, 4> a = ra::_0 - ra::_1;
-        double y[4] = {0, 0, 0, 0};
-        ra::start(y) = ra::gemv(a, x);
-        cout << y << endl;
+        auto test = [&tr](auto t, auto s, auto r)
+            {
+                using T = decltype(t);
+                using S = decltype(s);
+                using R = decltype(r);
+                S x[4] = {1, 2, 3, 4};
+                ra::Small<T, 3, 4> a = ra::_0 - ra::_1;
+                R y[3] = {99, 99, 99};
+                ra::start(y) = ra::gemv(a, x);
+                auto z = ra::gemv(a, x);
+                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
+                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
+            };
+        test(double(0), double(0), double(0));
+        test(std::complex<double>(0), std::complex<double>(0), std::complex<double>(0));
+        test(int(0), int(0), int(0));
+        test(int(0), double(0), double(0));
+        test(double(0), int(0), double(0));
+    }
+    {
+        auto test = [&tr](auto t, auto s, auto r)
+            {
+                using T = decltype(t);
+                using S = decltype(s);
+                using R = decltype(r);
+                S x[4] = {1, 2, 3, 4};
+                ra::Small<T, 4, 3> a = ra::_1 - ra::_0;
+                R y[3] = {99, 99, 99};
+                ra::start(y) = ra::gevm(x, a);
+                auto z = ra::gevm(x, a);
+                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
+                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
+            };
+        test(double(0), double(0), double(0));
+        test(std::complex<double>(0), std::complex<double>(0), std::complex<double>(0));
+        test(int(0), int(0), int(0));
+        test(int(0), double(0), double(0));
+        test(double(0), int(0), double(0));
+    }
+    section("matrix-matrix reductions");
+    {
+        ra::Owned<double, 2> A({0, 0}, 0.);
+        ra::Owned<double, 2> B({0, 0}, 0.);
+        auto C = gemm(A, B);
+        tr.test_eq(0, C.size(0));
+        tr.test_eq(0, C.size(1));
     }
     return tr.summary();
 }

@@ -20,15 +20,15 @@
 using std::cout; using std::endl;
 using real = double;
 
-// @TODO Test construction both by-value and by-ref, and between types.
+// TODO Test construction both by-value and by-ref, and between types.
 
-// @TODO Correct and complete this table, both for
+// TODO Correct and complete this table, both for
 // array-type-A::operator=(array-type-B) and for
 // array-type-A::array-type::A(array-type-B).
 
-// @TODO Do/organize the tests for these tables.
+// TODO Do/organize the tests for these tables.
 // The constructors are all plain, the fields of the array record are copied/moved.
-// @TODO This table contain errors; review thoroughly.
+// TODO This table contain errors; review thoroughly.
 /*
 | to\fro cons | View            | Shared | Unique    | Owned     | Small          | SmallView | Tested in        |
 |-------------+----------------+--------+-----------+-----------+----------------+------------+------------------|
@@ -51,7 +51,7 @@ using real = double;
 | Small      | copy into | copy into | copy into | copy into   | *copy*    |                  |
 */
 
-// @TODO Maybe I want WithStorage/View<T> const and WithStorage/View<T const> to behave differently....
+// TODO Maybe I want WithStorage/View<T> const and WithStorage/View<T const> to behave differently....
 int main()
 {
     real const check99[5] = {99, 99, 99, 99, 99};
@@ -63,7 +63,7 @@ int main()
     {
         ra::Unique<real, 1> o({5}, 11.);
         tr.test(o.store!=nullptr);
-        // ra::Unique<real, 1> z(o); // @TODO Check that it fails to compile
+        // ra::Unique<real, 1> z(o); // TODO Check that it fails to compile
         ra::Unique<real, 1> z(std::move(o));
         tr.test(o.store==nullptr);
         tr.test(std::equal(check11, check11+5, z.begin())); // was moved
@@ -138,7 +138,7 @@ int main()
         tr.test(c.data()==o.data());
         ra::Shared<real, 1> const q(c);
         tr.test(q.data()==c.data());
-        ra::Shared<real, 1> p(c); // May be a @BUG here; shared_ptr doesn't prevent this copy.
+        ra::Shared<real, 1> p(c); // May be a BUG here; shared_ptr doesn't prevent this copy.
         tr.test(p.data()==c.data());
     }
     // The use of deleters allows Shared to work like View storage wise.

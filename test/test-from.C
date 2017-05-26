@@ -171,7 +171,7 @@ int main()
                 tr.info("a([1 0], [1 0])").test_eq(CT22 {a(1, 1), a(1, 0), a(0, 1), a(0, 0)},
                                                    from(a, Vint {1, 0}, Vint {1, 0}));
 
-                // @TODO This is a nested array, which is a problem, we would use it just as from(a, [0 1], [0 1]).
+                // TODO This is a nested array, which is a problem, we would use it just as from(a, [0 1], [0 1]).
                 std::cout << "TODO [" << from(a, Vint {0, 1}) << "]" << std::endl;
 
                 a = 0.;
@@ -182,7 +182,7 @@ int main()
 // Note the difference with J amend, which requires x in (x m} y) ~ (y[m] = x) to be a suffix of y[m]; but we apply the general mechanism which is prefix matching.
                 from(a, Vint {1, 0}, Vint {1, 0}) = CT2 {9, 7};
                 tr.info("a([1 0], [1 0]) as lvalue, rank extend of right hand").test_eq(CT22 {7, 7, 9, 9}, a);
-// @TODO Test cases with rank!=1, starting with this couple which should work the same.
+// TODO Test cases with rank!=1, starting with this couple which should work the same.
                 std::cout << "-> " << from(a, Vint{1, 0}, 0) << std::endl;
                 a = CT22 {4, 1, 7, 9};
                 tr.info("a(rank1, rank0)").test_eq(ra::Small<real, 2>{9, 1}, from(a, Vint{1, 0}, ra::Small<int>(1).iter()));
@@ -209,7 +209,7 @@ int main()
         check_selection_unbeatable_mixed(Ureal<2>({2, 2}, {1, 2, 3, 4}));
         check_selection_unbeatable_mixed(ra::Small<real, 2, 2>({1, 2, 3, 4}));
     }
-    section("mixed unbeatable/dots, 2D -> 2D (@TODO)");
+    section("mixed unbeatable/dots, 2D -> 2D (TODO)");
     {
         // auto check_selection_unbeatable_dots = [&tr](auto && a)
         //     {
@@ -219,7 +219,7 @@ int main()
         //         tr.info("a({1, 0}, ra::all)").test_eq(a(CT2 {1, 0}, ra::all), a(CT2 {1, 0}, CT2 {0, 1}));
         //         tr.info("a({1, 1}, ra::all)").test_eq(a(CT2 {1, 1}, ra::all), a(CT2 {1, 1}, CT2 {0, 1}));
         //     };
-// @TODO doesn't work because dots_t<> can only be beaten on, not iterated on, and the beating cases are missing.
+// TODO doesn't work because dots_t<> can only be beaten on, not iterated on, and the beating cases are missing.
         // check_selection_unbeatable_dots(Ureal<2>({2, 2}, {1, 2, 3, 4}));
         // check_selection_unbeatable_dots(ra::Small<real, 2, 2>({1, 2, 3, 4}));
     }
@@ -227,7 +227,7 @@ int main()
     {
 // see src/test/bench-from.C for examples of higher-D.
     }
-    section("TensorIndex / where @TODO elsewhere");
+    section("TensorIndex / where TODO elsewhere");
     {
         Ureal<2> a({4, 4}, 1.);
         a(3, 3) = 7.;
@@ -245,7 +245,7 @@ int main()
         tr.test_eq(i-j, a);
         tr.test_eq(j-i, b);
     }
-    section("TensorIndex<i> as subscripts, 1 subscript @TODO elsewhere");
+    section("TensorIndex<i> as subscripts, 1 subscript TODO elsewhere");
     {
         Ureal<1> a {1, 4, 2, 3};
         Ureal<1> b({4}, 0.);
@@ -255,7 +255,7 @@ int main()
         b(3-ra::_0) = a;
         tr.test_eq(Ureal<1> {3, 2, 4, 1}, b);
     }
-    section("@TODO TensorIndex<i> as subscripts, 2 subscript (case I)");
+    section("TODO TensorIndex<i> as subscripts, 2 subscript (case I)");
     {
         Ureal<2> a({4, 4}, ra::_0-ra::_1);
         Ureal<2> b({4, 4}, -99.);
@@ -263,7 +263,7 @@ int main()
         cout << b << endl;
         // b = a(ra::_0, ra::_0);
     }
-    section("@TODO TensorIndex<i> as subscripts, 2 subscript (case II)");
+    section("TODO TensorIndex<i> as subscripts, 2 subscript (case II)");
     {
         Ureal<2> a({4, 4}, ra::_0-ra::_1);
         Ureal<2> b({4, 4}, 0.);
@@ -271,7 +271,7 @@ int main()
         cout << b << endl;
         tr.info("has_tensorindex(TensorIndex)").test(ra::has_tensorindex<decltype(ra::_1)>);
         tr.info("has_tensorindex(Expr)").test(ra::has_tensorindex<decltype(ra::_1+ra::_0)>);
-// @TODO these instantiate flat() when they should not
+// TODO these instantiate flat() when they should not
         // tr.info("has_tensorindex(Ryn)").test(ra::has_tensorindex<decltype(a(ra::_1, ra::_0))>);
         // cout << mp::Ref_<decltype(a(ra::_1, ra::_0))>::rank_s() << endl;
 // these don't work because a(j, i) has rank 3 = [(w=1)+1 + (w=0)+1] and so it drives, but tensorindex exprs shouldn't ever drive.
@@ -297,7 +297,7 @@ int main()
         at(A, I) = at(B, I);
         tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 0, 0}), A);
 
-// @TODO this is why we need ops to have explicit rank.
+// TODO this is why we need ops to have explicit rank.
         at(A, ra::scalar(coord{3, 2})) = 99.;
         tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 99, 0}), A);
     }

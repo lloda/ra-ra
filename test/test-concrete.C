@@ -113,5 +113,15 @@ int main()
         tr.test_eq(99, ra::start(a));
         tr.info("concrete() makes copies").test_eq(K {1, 2, 3}, c);
     }
+    tr.section("concrete on scalar");
+    {
+        int a = 9;
+        auto b = ra::with_same_shape(a, 8);
+        tr.test_eq(8, b);
+        tr.test_eq(9, a);
+        b = 7;
+        tr.test_eq(7, b);
+        tr.test_eq(9, a);
+    }
     return tr.summary();
 }

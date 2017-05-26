@@ -6,9 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_IO_H
-#define RA_IO_H
-
+#pragma once
 #include "ra/type.H"
 #include "ra/traits.H"
 #include <iosfwd>
@@ -42,8 +40,8 @@ format_array(A const & a, B const shape, char const * sep0=" ", char const * sep
 template <class A> inline
 FormatArray<A> format_array(A const & a) { return format_array(a, true); }
 
-// After ply_index(). @TODO merge with that.
-// @TODO custom spacers at turn of dimension.
+// After ply_index(). TODO merge with that.
+// TODO custom spacers at turn of dimension.
 // is_foreign_vector is included b/c std::vector or std::array may be used as shape_type.
 template <class A> inline
 std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
@@ -113,7 +111,7 @@ operator>>(std::istream & i, std::vector<T, A> & c)
     return i;
 }
 
-// Expr size, so read shape and possibly allocate (@TODO try to avoid).
+// Expr size, so read shape and possibly allocate (TODO try to avoid).
 template <class C> inline
 std::enable_if_t<ra_traits<C>::size_s()==DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
@@ -130,5 +128,3 @@ operator>>(std::istream & i, C & c)
 }
 
 } // namespace ra
-
-#endif // RA_IO_H

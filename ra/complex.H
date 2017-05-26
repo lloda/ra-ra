@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_COMPLEX_H
-#define RA_COMPLEX_H
-
 /// @file complex.H
 /// @brief Defines the complex type and standard operations on it.
 
+#pragma once
 #include <complex>
 #include "ra/real.H"
 #include "ra/type.H"
@@ -88,5 +86,3 @@ inline RA_REAL rel_error(RA_CPLX const a, RA_CPLX const b)
 
 #undef RA_CPLX
 #undef RA_REAL
-
-#endif // RA_COMPLEX_H

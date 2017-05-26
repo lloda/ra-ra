@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_OPERATORS_H
-#define RA_OPERATORS_H
-
 /// @file operators.H
 /// @brief Sugar for ra:: expression templates.
 
+#pragma once
 #include "ra/wrank.H"
 #include "ra/pick.H"
 // FIXME Dependence on specific ra:: types should maybe be elsewhere.
@@ -109,11 +107,11 @@ FOR_EACH(DEF_BINARY_OP, &&, ||, >, <, >=, <=, ==, !=)
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
     }
-FOR_EACH(DEF_UNARY_OP, !, +, -) // @TODO Make + into nop.
+FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
 #undef DEF_UNARY_OP
 
 // When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
-// @TODO Cf [ref:examples/useret.C:0].
+// TODO Cf [ref:examples/useret.C:0].
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
     template <class ... A, std::enable_if_t<ra_pos_and_any<A ...>, int> =0> \
@@ -153,7 +151,7 @@ inline auto cast(A && a)
     return map([](auto && a) { return T(a); }, std::forward<A>(a));
 }
 
-// @TODO could be useful to deduce T as tuple of value_types (&).
+// TODO could be useful to deduce T as tuple of value_types (&).
 template <class T, class ... A>
 inline auto pack(A && ... a)
 {
@@ -175,7 +173,7 @@ inline auto where(W && w, T && t, F && f)
 
 // --------------------------------
 // Some whole-array reductions.
-// @TODO First rank reductions? Variable rank reductions?
+// TODO First rank reductions? Variable rank reductions?
 // --------------------------------
 
 template <class A> inline bool
@@ -245,17 +243,9 @@ inline auto prod(A && a)
     return c;
 }
 
-template <class A>
-inline auto reduce_sqrm(A && a)
-{
-    return sum(sqrm(a));
-}
+template <class A> inline auto reduce_sqrm(A && a) { return sum(sqrm(a)); }
 
-template <class A>
-inline auto norm2(A && a)
-{
-    return sqrt(reduce_sqrm(a));
-}
+template <class A> inline auto norm2(A && a) { return sqrt(reduce_sqrm(a)); }
 
 template <class A, class B>
 inline auto dot(A && a, B && b)
@@ -275,7 +265,7 @@ inline auto cdot(A && a, B && b)
 
 // --------------------
 // Wedge product
-// @TODO Handle the simplifications dot_plus, yields_scalar, etc. just as vec::wedge does.
+// TODO Handle the simplifications dot_plus, yields_scalar, etc. just as vec::wedge does.
 // --------------------
 
 template <class A>
@@ -390,14 +380,34 @@ inline auto normv(A const & a)
     return b;
 }
 
-// @TODO Define within generalization...
+// FIXME branch gemm on Ryn::size_s(), but that's bugged.
+#define MMTYPE decltype(from(times(), a(ra::all, 0), b(0, ra::all)))
+
+// default for row-major x row-major. See bench-gemm.C for variants.
+template <class S, class T>
+inline auto
+gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
+{
+    int const M = a.size(0);
+    int const N = b.size(1);
+    int const K = a.size(1);
+// no with_same_shape b/c cannot index 0 for type if A/B are empty
+    auto c = with_shape<MMTYPE>({M, N}, ra::unspecified);
+    for (int k=0; k<K; ++k) {
+        c += from(times(), a(ra::all, k), b(k, ra::all));
+    }
+    return c;
+}
+
+// we still want the Small version to be different.
 template <class A, class B>
 inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0), B::size(1)>
 gemm(A const & a, B const & b)
 {
     constexpr int M = a.size(0);
     constexpr int N = b.size(1);
-    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0), B::size(1)> c;
+// no with_same_shape b/c cannot index 0 for type if A/B are empty
+    auto c = with_shape<MMTYPE>({M, N}, ra::unspecified);
     for (int i=0; i<M; ++i) {
         for (int j=0; j<N; ++j) {
             c(i, j) = dot(a(i), b(ra::all, j));
@@ -406,67 +416,30 @@ gemm(A const & a, B const & b)
     return c;
 }
 
-// the default for row-major x row-major. See bench-gemm.C for variants.
-template <class S, class T>
-inline auto
-gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
-{
-    int const M = a.size(0);
-    int const N = b.size(1);
-    int const K = a.size(1);
-    ra::Owned<std::decay_t<decltype(START(a)*START(b))>, 2> c({M, N}, 0.);
-    for (int k=0; k<K; ++k) {
-        c += from(times(), a(ra::all, k), b(k, ra::all));
-    }
-    return c;
-}
+#undef MMTYPE
 
 template <class A, class B>
-inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, B::size(1)>
-gevm(A const & a, B const & b)
-{
-    constexpr int M = b.size(0);
-    constexpr int N = b.size(1);
-    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, N> c;
-    for (int i=0; i<M; ++i) {
-        c += a(i)*b(i);
-    }
-    return c;
-}
-
-template <class S, class T>
 inline auto
-gevm(ra::View<S, 1> const & a, ra::View<T, 2> const & b)
+gevm(A const & a, B const & b)
 {
     int const M = b.size(0);
     int const N = b.size(1);
-    ra::Owned<decltype(a(0)*b(0, 0)), 1> c({N}, ra::unspecified);
+// no with_same_shape b/c cannot index 0 for type if A/B are empty
+    auto c = with_shape<decltype(a[0]*b(0, ra::all))>({N}, 0);
     for (int i=0; i<M; ++i) {
-        c += a(i)*b(i);
+        c += a[i]*b(i);
     }
     return c;
 }
 
 template <class A, class B>
-inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, decltype(start(std::declval<A>()))::size(0)>
-gemv(A const & a, B const & b)
-{
-    constexpr int M = decltype(start(std::declval<A>()))::size(0);
-    constexpr int N = decltype(start(std::declval<A>()))::size(1);
-    ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, M> c;
-    for (int j=0; j<N; ++j) {
-        c += a(ra::all, j) * b[j];
-    }
-    return c;
-}
-
-template <class S, class T>
 inline auto
-gemv(ra::View<S, 2> const & a, ra::View<T, 1> const & b)
+gemv(A const & a, B const & b)
 {
     int const M = a.size(0);
     int const N = a.size(1);
-    ra::Owned<std::decay_t<decltype(START(a)*START(b))>, 1> c({M}, ra::unspecified);
+// no with_same_shape b/c cannot index 0 for type if A/B are empty
+    auto c = with_shape<decltype(a(ra::all, 0)*b[0])>({M}, 0);
     for (int j=0; j<N; ++j) {
         c += a(ra::all, j) * b[j];
     }
@@ -475,12 +448,10 @@ gemv(ra::View<S, 2> const & a, ra::View<T, 1> const & b)
 
 #undef START
 
-// @TODO adjust type for var rank/var size/fixed size. Check temporary.H.
+// TODO adjust type for var rank/var size/fixed size. Check temporary.H.
 template <class X> auto make_array(X && x) { return ra::Owned<ra::value_t<X>, decltype(start(x))::rank_s()>(x); }
 
 } // namespace ra
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_OPERATORS
-
-#endif // RA_OPERATORS_H

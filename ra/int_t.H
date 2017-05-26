@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_INT_T_H
-#define RA_INT_T_H
-
 /// @file int_t.H
 /// @brief Treat integers as types, and global functions for integers.
 
+#pragma once
 #include "ra/macros.H"
 
 namespace mp {
@@ -51,9 +49,7 @@ constexpr size_t n_over_p(size_t const n, size_t p)
 
 } // namespace mp
 
-// @TODO All users be int, then this take int.
+// TODO All users be int, then this take int.
 constexpr bool odd(unsigned int N) { return N & 1; }
 constexpr bool any(bool const x) { return x; }
 constexpr bool every(bool const x) { return x; }
-
-#endif // RA_INT_T_H

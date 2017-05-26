@@ -74,7 +74,7 @@ int main()
             TEST(plyf);
 #undef TEST
         }
-// @TODO Use explicit DRIVER arg to ra::expr; the fixed size ARGi should always drive.
+// TODO Use explicit DRIVER arg to ra::expr; the fixed size ARGi should always drive.
         section("driving");
         {
             auto f = [](ra::View<real, 1> const & a, int i, real & d)
@@ -164,7 +164,7 @@ int main()
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                               ad.iter<-1>(), b.iter<-1>()));
     }
-    section("ply on cell rank > 0, static sizes (@TODO)");
+    section("ply on cell rank > 0, static sizes (TODO)");
     {
         ra::Small<int, 2, 3, 4> a(ra::_0 - ra::_1 + ra::_2);
         cout << a << endl;

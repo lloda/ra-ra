@@ -1,13 +1,12 @@
 
 // (c) Daniel Llorens - 2011
 
+#pragma once
+
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-#ifndef RA_ARGLIST_H
-#define RA_ARGLIST_H
 
 /// @file arglist.H
 /// @brief Manipulate argument list.
@@ -81,5 +80,3 @@ static auto shuffle_args_types(T && ... t)
 {
     return shuffle_args_impl<II, std::tuple<T ...>>::template ff<G>(std::forward<T>(t) ...);
 }
-
-#endif // RA_ARGLIST_H

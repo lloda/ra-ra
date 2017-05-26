@@ -175,7 +175,7 @@ int main()
     }
     section("traversal - does it compile?");
     {
-// @TODO Check.
+// TODO Check.
         auto print = [](real a) { cout << a << " "; };
         {
             auto test = [&](auto && a)
@@ -190,7 +190,7 @@ int main()
             test(a);
             test(a()); // also View.
         }
-// @TODO See Expr::DRIVER in expr.H. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() & ply_index() are rank-dynamic.
+// TODO See Expr::DRIVER in expr.H. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() & ply_index() are rank-dynamic.
         {
             auto test = [&](auto && a)
                 {
@@ -205,7 +205,7 @@ int main()
     }
     section("[sec10] constructor cases with scalar or RANK_ANY arguments");
     {
-// @TODO Move these to the constructor tests, and put assignment versions here.
+// TODO Move these to the constructor tests, and put assignment versions here.
         section("construction of 0 rank <- scalar expr");
         {
             ra::Unique<real, 0> a ({}, ra::scalar(77));
@@ -246,7 +246,7 @@ int main()
                 }
             }
         }
-        // this succeeds because of the two var ranks, the top rank comes first (and so it's selected as driver). @TODO Have run time driver selection so this is safe.
+        // this succeeds because of the two var ranks, the top rank comes first (and so it's selected as driver). TODO Have run time driver selection so this is safe.
         section("construction of var rank <- lower rank expr III (var rank)");
         {
             ra::Unique<real> b ({3}, {1, 2, 3});
@@ -258,7 +258,7 @@ int main()
             tr.test_eq(3, a(2, 0));
             tr.test_eq(3, a(2, 1));
         }
-// driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. @TODO Do run time driver selection to avoid this error.
+// driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. TODO Do run time driver selection to avoid this error.
         // section("construction of var rank <- higher rank expr");
         // {
         //     ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});
@@ -279,7 +279,7 @@ int main()
         tr.test_eq(0, a[0]);
         tr.test_eq(1, a[1]);
         tr.test_eq(2, a[2]);
-// @TODO Check that these give ct error. Not clear that the second one should...
+// TODO Check that these give ct error. Not clear that the second one should...
         // ply_index(expr([](int b) { cout << b << endl; }, TI<0>()));
         // ply_index(expr([](int b) { cout << b << endl; }, ra::scalar(3)));
     }
@@ -338,7 +338,7 @@ int main()
     }
     section("helpers for ply - map, for_each");
     {
-// @TODO Test need for map() -> decltype(...) in the declaration of map, eg in ModelGenome::eval() in src/asof.H.
+// TODO Test need for map() -> decltype(...) in the declaration of map, eg in ModelGenome::eval() in src/asof.H.
         ra::Unique<real, 1> b = map([](auto x) { return exp(x); }, ra::Unique<int, 1>({1, 2}));
         tr.test_eq(b, ra::Unique<real, 1>({exp(1), exp(2)}));
         real x = 0.;

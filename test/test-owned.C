@@ -53,7 +53,7 @@ int main()
             tr.test_eq(9, a[3]);
         }
         {
-            ra::Owned<int, 3> a({0, 3, 2}, ra::_0 - ra::_1 + ra::_2); // @BUG If <int, 2>, I get [can't drive] instead of [rank error].
+            ra::Owned<int, 3> a({0, 3, 2}, ra::_0 - ra::_1 + ra::_2); // BUG If <int, 2>, I get [can't drive] instead of [rank error].
             ra::Owned<int, 3> ref0 = a;
             test(ref0, a, 3, 0);
             a = 77.;

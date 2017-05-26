@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_EXPR_H
-#define RA_EXPR_H
-
 /// @file expr.H
 /// @brief Operator nodes for expression templates.
 
+#pragma once
 #include "ra/ply.H"
 
 #ifdef RA_CHECK_BOUNDS
@@ -39,7 +37,7 @@ struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     Op & op;
     std::tuple<P ...> t;
     template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-    decltype(auto) operator*() { return op(*std::get<I>(t) ...); } // @TODO std::apply(op, t)
+    decltype(auto) operator*() { return op(*std::get<I>(t) ...); } // TODO std::apply(op, t)
 };
 
 template <class Op, class ... P> inline constexpr
@@ -75,7 +73,7 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     check(int const driver_rank) const
     {
         rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
-// Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Dynamic driver selection.
+// Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
         assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
         for (int k=0; k!=ranki; ++k) {
             dim_t sk0 = std::get<A>(t).size(k);
@@ -89,8 +87,8 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 // see test-compatibility.C [a1] for forward() here.
     constexpr Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
-// @TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
-// @TODO Should check only the driver: do this on ply.
+// TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
+// TODO Should check only the driver: do this on ply.
         CHECK_BOUNDS(check<0>(rank()));
     }
 
@@ -170,5 +168,3 @@ for_each(F && f, A && ... a)
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_EXPR
-
-#endif // RA_EXPR_H

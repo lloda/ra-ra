@@ -421,7 +421,7 @@ int main()
         std::copy(u.begin(), u.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 
-        // @TODO Have strides in Small.
+        // TODO Have strides in Small.
         ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
         std::copy(s.begin(), s.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, s.begin()));
@@ -460,12 +460,12 @@ int main()
             ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_0, ra::_1));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
-// @TODO Check this is an error (chosen driver is TensorIndex<2>, that can't drive).
+// TODO Check this is an error (chosen driver is TensorIndex<2>, that can't drive).
         // {
         //     ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_2, ra::_1));
         //     cout << b << endl;
         // }
-// @TODO Could this be made to bomb at compile time?
+// TODO Could this be made to bomb at compile time?
         // {
         //     ra::Unique<int> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_2, ra::_1));
         //     cout << b << endl;
@@ -660,7 +660,7 @@ int main()
                 tr.info("fix rank").test(std::equal(r0b.begin(), r0b.end(), rcheck));
                 auto r0c = r.at(0+ra::Owned<int, 1> {});
                 tr.info("fix rank expr").test(std::equal(r0c.begin(), r0c.end(), rcheck));
-                // @TODO check out why ra::Owned<int> {} is rank 0.
+                // TODO check out why ra::Owned<int> {} is rank 0.
                 auto r0d = r.at(0+ra::Owned<int>({0}, {}));
                 tr.info("r0d: [", r0d, "]").test(std::equal(r0d.begin(), r0d.end(), rcheck));
             }
@@ -696,7 +696,7 @@ int main()
                 tr.test(std::equal(r2d.begin(), r2d.end(), rcheck));
             }
         }
-        // @TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.
+        // TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.
         tr.section("View fixed rank, unbeatable subscripts");
         {
             ra::Unique<real, 1> a = {1, 2, 3, 4};
@@ -752,7 +752,7 @@ int main()
             tr.test(std::equal(r2.begin(), r2.end(), rcheck2));
             tr.test(std::equal(r2a.begin(), r2a.end(), rcheck2));
         }
-// @TODO Make sure that this is real & = 99, etc. and not View<real, 0> = 99, etc.
+// TODO Make sure that this is real & = 99, etc. and not View<real, 0> = 99, etc.
         tr.section("assign to rank-0 result of subscript");
         {
             real check[6] = {99, 88, 77, 66, 55, 44};
@@ -905,7 +905,7 @@ int main()
             tr.test(every(ra::iota(4, 1)==ra::Owned<int, 1> {1, 2, 3, 4}));
             tr.test(every(ra::iota(4, 1, 2)==ra::Owned<int, 1> {1, 3, 5, 7}));
         }
- // @TODO actually whether unroll is avoided depends on ply(), have a way to require it.
+ // TODO actually whether unroll is avoided depends on ply(), have a way to require it.
 // Cf [trc-01] in test-compatibility.C.
         tr.section("[tr0-01] frame-matching, forbidding unroll");
         {

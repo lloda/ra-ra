@@ -33,7 +33,7 @@ using real = double;
 
 // -------------------
 // variants of the defaults, should be slower if the default is well picked.
-// @TODO compare with external GEMV/GEVM
+// TODO compare with external GEMV/GEVM
 // -------------------
 
 int main()

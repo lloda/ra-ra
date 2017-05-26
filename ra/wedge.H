@@ -1,13 +1,12 @@
 
 // (c) Daniel Llorens - 2008-2011, 2014-2015
 
+#pragma once
+
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-#ifndef RA_WEDGE_H
-#define RA_WEDGE_H
 
 /// @file wedge.H
 /// @brief Wedge product and cross product.
@@ -230,5 +229,3 @@ std::enable_if_t<!TRIVIAL(D, O), Va &> hodge(Va & a)
 #undef TRIVIAL
 
 } // namespace fun
-
-#endif // RA_WEDGE

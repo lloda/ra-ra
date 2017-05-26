@@ -11,48 +11,50 @@
 
 #include <iostream>
 #include <iomanip>
-#include "ra/timer.H"
+#include <chrono>
 #include "ra/large.H"
 #include "ra/small.H"
 #include "ra/operators.H"
 #include "ra/real.H"
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;
+auto now() { return std::chrono::high_resolution_clock::now(); }
+using time_unit = std::chrono::nanoseconds;
+std::string tunit = "ns";
+using real = double;
+using real4 = ra::Small<real, 4>;
 
 int const N = 2000000;
 ra::Small<ra::dim_t, 1> S1 { 24*24 };
 ra::Small<ra::dim_t, 2> S2 { 24, 24 };
 ra::Small<ra::dim_t, 3> S3 { 8, 8, 9 };
-using real = double;
-using real4 = ra::Small<real, 4>;
 
 template <class T>
 void report(std::ostream & o, std::string const & type,
-            std::string const & method, Timer const & t, T const & val)
+            std::string const & method, time_unit dt, T const & val)
 {
     o << setw(20) << type << setw(20) << method
-      << " usr " << setprecision(4) << setw(6) << t.usr()/N*1e6
-      << " wall " << setprecision(4) << setw(6) << t.wall()/N*1e6
+      << " time " << setprecision(4) << setw(6) << double(dt.count())/N
       << " val " << val << endl;
 }
 
 template <class A, class B>
-void by_expr(std::string const & s, Timer & t, A const & a, B const & b)
+void by_expr(std::string const & s, A const & a, B const & b)
 {
-    t.start();
+    auto t0 = now();
     real x(0.);
     for (int i=0; i<N; ++i) {
         x += reduce_sqrm(a-b);
     }
-    t.stop();
-    report(cout, s, "expr", t, x);
+    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+    report(cout, s, "expr", dt, x);
 }
 
 // sqrm+reduction in one op.
 template <class A, class B>
-void by_traversal(std::string const & s, Timer & t, A const & a, B const & b)
+void by_traversal(std::string const & s, A const & a, B const & b)
 {
-    t.start();
+    auto t0 = now();
     real x(0.);
     for (int i=0; i<N; ++i) {
         real y(0.);
@@ -60,15 +62,15 @@ void by_traversal(std::string const & s, Timer & t, A const & a, B const & b)
                          ra::start(a), ra::start(b)));
         x += y;
     }
-    t.stop();
-    report(cout, s, "ply nested 1", t, x);
+    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+    report(cout, s, "ply nested 1", dt, x);
 }
 
 // separate reduction: compare abstraction penalty with by_traversal.
 template <class A, class B>
-void by_traversal2(std::string const & s, Timer & t, A const & a, B const & b)
+void by_traversal2(std::string const & s, A const & a, B const & b)
 {
-    t.start();
+    auto t0 = now();
     real x(0.);
     for (int i=0; i<N; ++i) {
         real y(0.);
@@ -77,15 +79,15 @@ void by_traversal2(std::string const & s, Timer & t, A const & a, B const & b)
                                   ra::start(a), ra::start(b))));
         x += y;
     }
-    t.stop();
-    report(cout, s, "ply nested 2", t, x);
+    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+    report(cout, s, "ply nested 2", dt, x);
 }
 
 template <class A, class B>
 std::enable_if_t<A::rank()==1, void>
-by_raw(std::string const & s, Timer & t, A const & a, B const & b)
+by_raw(std::string const & s, A const & a, B const & b)
 {
-    t.start();
+    auto t0 = now();
     real x(0.);
     for (int i=0; i<N; ++i) {
         real y(0.);
@@ -94,15 +96,15 @@ by_raw(std::string const & s, Timer & t, A const & a, B const & b)
         }
         x += y;
     }
-    t.stop();
-    report(cout, s, "raw", t, x);
+    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+    report(cout, s, "raw", dt, x);
 }
 
 template <class A, class B>
 std::enable_if_t<A::rank()==2, void>
-by_raw(std::string const & s, Timer & t, A const & a, B const & b)
+by_raw(std::string const & s, A const & a, B const & b)
 {
-    t.start();
+    auto t0 = now();
     real x(0.);
     for (int i=0; i<N; ++i) {
         real y(0.);
@@ -113,15 +115,15 @@ by_raw(std::string const & s, Timer & t, A const & a, B const & b)
         }
         x += y;
     }
-    t.stop();
-    report(cout, s, "raw", t, x);
+    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+    report(cout, s, "raw", dt, x);
 }
 
 template <class A, class B>
 std::enable_if_t<A::rank()==3, void>
-by_raw(std::string const & s, Timer & t, A const & a, B const & b)
+by_raw(std::string const & s, A const & a, B const & b)
 {
-    t.start();
+    auto t0 = now();
     real x(0.);
     for (int i=0; i<N; ++i) {
         real y(0.);
@@ -134,17 +136,16 @@ by_raw(std::string const & s, Timer & t, A const & a, B const & b)
         }
         x += y;
     }
-    t.stop();
-    report(cout, s, "raw", t, x);
+    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+    report(cout, s, "raw", dt, x);
 }
 
 int main()
 {
-    Timer t;
     {
         real4 A(7.);
         real4 B(3.);
-        t.start();
+        auto t0 = now();
         real x(0.);
         for (int i=0; i<N*S1[0]/4; ++i) {
             real y(0.);
@@ -153,24 +154,24 @@ int main()
             }
             x += y;
         }
-        t.stop();
-        report(cout, "real4", "raw", t, x);
+        time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+        report(cout, "real4", "raw", dt, x);
     }
     {
         real4 A(7.);
         real4 B(3.);
-        t.start();
+        auto t0 = now();
         real x(0.);
         for (int i=0; i<N*S1[0]/4; ++i) {
             x += reduce_sqrm(A-B);
         }
-        t.stop();
-        report(cout, "real4", "expr", t, x);
+        time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+        report(cout, "real4", "expr", dt, x);
     }
     {
         ra::Unique<real, 1> A(S1, 7.);
         ra::Unique<real, 1> B(S1, 3.);
-        t.start();
+        auto t0 = now();
         real x(0.);
         for (int i=0; i<N; ++i) {
             real y(0.);
@@ -181,26 +182,26 @@ int main()
             }
             x += y;
         }
-        t.stop();
-        report(cout, "C array", "raw", t, x);
+        time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
+        report(cout, "C array", "raw", dt, x);
     }
     {
         ra::Unique<real, 1> A(S1, 7.);
         ra::Unique<real, 1> B(S1, 3.);
-        by_traversal("ra::Unique<1>", t, A, B);
-        by_traversal2("ra::Unique<1>", t, A, B);
+        by_traversal("ra::Unique<1>", A, B);
+        by_traversal2("ra::Unique<1>", A, B);
     }
     {
         ra::Unique<real, 2> A(S2, 7.);
         ra::Unique<real, 2> B(S2, 3.);
-        by_traversal("ra::Unique<2>", t, A, B);
-        by_traversal2("ra::Unique<2>", t, A, B);
+        by_traversal("ra::Unique<2>", A, B);
+        by_traversal2("ra::Unique<2>", A, B);
     }
     {
         ra::Unique<real, 3> A(S3, 7.);
         ra::Unique<real, 3> B(S3, 3.);
-        by_traversal("ra::Unique<3>", t, A, B);
-        by_traversal2("ra::Unique<3>", t, A, B);
+        by_traversal("ra::Unique<3>", A, B);
+        by_traversal2("ra::Unique<3>", A, B);
     }
     cout << "ok\n" << endl;
     return 0;

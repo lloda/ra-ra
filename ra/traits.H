@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_TRAITS_H
-#define RA_TRAITS_H
-
 /// @file traits.H
 /// @brief Array traits: dimension, rank, extent, etc.
 
+#pragma once
 #include <cstdint>
 #include <vector>
 #include <array>
@@ -20,7 +18,7 @@
 
 namespace ra {
 
-template <class A> using ra_traits = ra_traits_def<std::decay_t<A> >;
+template <class A> using ra_traits = ra_traits_def<std::decay_t<A>>;
 
 template <class T, class A>
 struct ra_traits_def<std::vector<T, A>>
@@ -106,5 +104,3 @@ void resize(Dim & dim, dim_t k)
 }
 
 } // namespace ra
-
-#endif // RA_TRAITS_H

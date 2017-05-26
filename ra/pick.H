@@ -6,9 +6,6 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_PICK_H
-#define RA_PICK_H
-
 /// @file expr.H
 /// @brief Expression template that picks one of several arguments.
 
@@ -16,6 +13,7 @@
 // operator. Note that pick() is a normal function, so its arguments will always
 // be evaluated; it is the individual array elements that will not.
 
+#pragma once
 #include "ra/ply.H"
 
 #ifdef RA_CHECK_BOUNDS
@@ -35,7 +33,7 @@ namespace ra {
 
 // -----------------
 // return type of pick expression, otherwise compiler complains of ambiguity.
-// @TODO & is crude, maybe is_assignable?
+// TODO & is crude, maybe is_assignable?
 // -----------------
 
 template <class T, class Enable=void>
@@ -163,7 +161,7 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     check(int const driver_rank) const
     {
         rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
-// Provide safety where RANK_ANY was selected as driver in a leap of faith. @TODO Dynamic driver selection.
+// Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
         assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
         for (int k=0; k!=ranki; ++k) {
             dim_t sk0 = std::get<A>(t).size(k);
@@ -178,8 +176,8 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
 // see test-compatibility.C [a1] for forward() here.
     constexpr Pick(P0 p0_, P ... p_): t(std::forward<P0>(p0_), std::forward<P>(p_) ...)
     {
-// @TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
-// @TODO Should check only the driver: do this on ply.
+// TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
+// TODO Should check only the driver: do this on ply.
         CHECK_BOUNDS(check<0>(rank()));
     }
 
@@ -252,5 +250,3 @@ pick(P0 && p0, P && ... p)
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_RA_PICK
-
-#endif // RA_PICK_H

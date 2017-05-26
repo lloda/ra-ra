@@ -58,7 +58,7 @@ int main()
         TEST_UNARY_OP_CR(xI, 4., complex(0, 4.), complex(1., -2.), complex(2., 1.), 0.);
 #undef TEST_UNARY_OP_CR
 #undef DEF_TEST_UNARY_OP
-// @TODO merge with DEF_TEST_UNARY_OP
+// TODO merge with DEF_TEST_UNARY_OP
         tr.info("odd").test_eq(ra::Unique<bool, 1> {true, false, true, true}, odd(ra::Unique<int, 1> {1, 2, 3, -1}));
     }
 
@@ -102,7 +102,7 @@ int main()
     section("lvalue-rvalue operators");
     {
         ra::Unique<complex, 1> a({3}, 0.);
-        imag_part(a) = ra::Unique<real, 1> { 7., 2., 3. }; // @TODO operator=(initializer_list) ?
+        imag_part(a) = ra::Unique<real, 1> { 7., 2., 3. }; // TODO operator=(initializer_list) ?
         real_part(a) = -imag_part(ra::Unique<complex, 1> { xI(7.), xI(2.), xI(3.) })+1;
         tr.test_eq(ra::Unique<complex, 1> {{-6., 7.}, {-1., 2.}, {-2., 3.}}, a);
     }
@@ -133,7 +133,7 @@ int main()
                 tr.test_eq(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
             }
             {
-                auto a0 = a.at(ra::Small<int, 1> { 0 }); // @BUG Not sure this is what I want
+                auto a0 = a.at(ra::Small<int, 1> { 0 }); // BUG Not sure this is what I want
                 tr.test_eq(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
             }
         }
@@ -144,7 +144,7 @@ int main()
                 tr.test_eq(0.5, 0.5*a0);
             }
             {
-                auto a0 = a.at(ra::Small<int, 1> { 0 }); // @BUG Not sure this is what I want, see above
+                auto a0 = a.at(ra::Small<int, 1> { 0 }); // BUG Not sure this is what I want, see above
                 tr.test_eq(2.1, 2.1*a0);
                 tr.test_eq(0.5, 0.5*a0);
                 tr.test_eq(0.5, complex(0.5)*a0);
@@ -161,10 +161,10 @@ int main()
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, a+b);
     }
 
-    section("constructors from expr"); // @TODO For all other Container types.
+    section("constructors from expr"); // TODO For all other Container types.
     {
         {
-// @TODO Systematic init-from-expr tests (every expr type vs every container type) with operators.H included.
+// TODO Systematic init-from-expr tests (every expr type vs every container type) with operators.H included.
             ra::Unique<int, 1> a({3}, { 1, 2, 3 });
             ra::Unique<int, 1> b({3}, { 10, 20, 30 });
             ra::Unique<int, 1> c(a.iter() + b.iter());
@@ -189,7 +189,7 @@ int main()
         tr.test_eq(ref, a+3);
     }
 // These are rather different because they have to be defined in-class.
-    section("constructors & assignment operators with expr rhs"); // @TODO use TestRecorder::test_eq().
+    section("constructors & assignment operators with expr rhs"); // TODO use TestRecorder::test_eq().
     {
         real check0[6] = { 0, -1, 1, 0, 2, 1 };
         real check1[6] = { 4, 3, 5, 4, 6, 5 };
@@ -217,7 +217,7 @@ int main()
     {
         ra::Small<real, 6> a = { 0, -1, 1, 0, 2, 1 };
         ra::Small<int, 6> b = { 4, 3, 5, 4, 6, 5 };
-        ra::Owned<std::tuple<real, int>, 1> x = ra::pack<std::tuple<real, int> >(a, b); // @TODO kinda redundant...
+        ra::Owned<std::tuple<real, int>, 1> x = ra::pack<std::tuple<real, int> >(a, b); // TODO kinda redundant...
         tr.test_eq(a, map([](auto && x) -> decltype(auto) { return std::get<0>(x); }, x));
         tr.test_eq(b, map([](auto && x) -> decltype(auto) { return std::get<1>(x); }, x));
     }

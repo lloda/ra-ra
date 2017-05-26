@@ -58,7 +58,7 @@ constexpr auto replace_end(dim_t end, Expr<Op, std::tuple<P ...> > && e)
 
 int main()
 {
-    // End is usable in exprs by virtue of having flat() (@TODO will fix this).
+    // End is usable in exprs by virtue of having flat() (TODO will fix this).
 
     ra::Small<int, 3> a {1, 2, 3};
     cout << replace_end(10, a + ra::end) << endl;

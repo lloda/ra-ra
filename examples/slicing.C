@@ -23,7 +23,7 @@ int main()
     A(3) = 1;
 
 // Set the last two rows to 0 (any of these)
-// @TODO we don't have toEnd yet (would be ra::iota(2, toEnd-2))
+// TODO we don't have toEnd yet (would be ra::iota(2, toEnd-2))
     A(ra::iota(2, 4), ra::all) = 0;
     A(ra::iota(2, 4)) = 0;
 

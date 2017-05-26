@@ -21,7 +21,7 @@ using std::cout; using std::endl; using std::flush;
 using std::tuple;
 using real = double;
 
-// @TODO Use noweb (??) to label & ref the sections
+// TODO Use noweb (??) to label & ref the sections
 int main()
 {
     TestRecorder tr;
@@ -77,7 +77,7 @@ int main()
                 }
             }
         }
-// this succeeds because of the two var ranks, the top rank comes first (and so it's selected as driver). @TODO Have run time driver selection so this is safe.
+// this succeeds because of the two var ranks, the top rank comes first (and so it's selected as driver). TODO Have run time driver selection so this is safe.
         section("construction of var rank <- lower rank expr III (var rank)");
         {
             ra::Unique<real> b ({3}, {1, 2, 3});
@@ -90,7 +90,7 @@ int main()
             tr.test_eq(3, a(2, 0));
             tr.test_eq(3, a(2, 1));
         }
-// driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. @TODO Do run time driver selection to avoid this error.
+// driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. TODO Do run time driver selection to avoid this error.
         // section("construction of var rank <- higher rank expr");
         // {
         //     ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});

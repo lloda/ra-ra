@@ -28,8 +28,8 @@ int main()
     TestRecorder tr;
     section("random access iterators");
     {
-        // @TODO rank-0 begin()/end() in ra::Small
-        // @TODO others?
+        // TODO rank-0 begin()/end() in ra::Small
+        // TODO others?
     }
     section("copyable iterators, but not random access");
     {

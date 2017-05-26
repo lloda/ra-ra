@@ -122,7 +122,7 @@ int main()
                     A = map([](int i, int j) { return super(i-j+ra::_0-ra::_1); }, ra::_0, ra::_1);
                     using sub = ra::Small<int, 3>;
                     auto B = ra::collapse<sub>(A);
-// @TODO sub() is used to cover a problem with where() and SmallView/SmallArray, since they convert to each other
+// TODO sub() is used to cover a problem with where() and SmallView/SmallArray, since they convert to each other
                     tr.test_eq(B(ra::all, ra::all, 0), map([](auto && a) { return sub(a(0)); }, A));
                     tr.test_eq(B(ra::all, ra::all, 1), map([](auto && a) { return sub(a(1)); }, A));
                 };
@@ -148,7 +148,7 @@ int main()
             test_sub_real(ra::Unique<super>({4, 4}, ra::unspecified));
         }
     }
-    section("old tests from test-ra-1.C (@TODO remove if redundant)");
+    section("old tests from test-ra-1.C (TODO remove if redundant)");
     {
         section("super rank 1");
         {
@@ -171,7 +171,7 @@ int main()
                 auto B = ra::explode_<complex, 1>(A);                   \
                 static_assert(ra::ra_traits<decltype(B)>::rank_s()==CHECK_RANK_S, "bad static rank"); \
                 cout << B << endl;                                      \
-                /* @TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should. */ \
+                /* TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should. */ \
                 for (int i=0; i<3; ++i) {                               \
                     tr.test_eq(i*2, B[i].real());                       \
                     tr.test_eq(i*2+1, B[i].imag());                     \
@@ -187,7 +187,7 @@ int main()
             {
                 auto B = ra::explode<r2x2>(A);
                 tr.test_eq(1, B.rank());
-// @TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should.
+// TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should.
                 tr.test_eq(r2x2 { 0, 1, 2, 3 }, B[0]);
                 tr.test_eq(r2x2 { 4, 5, 6, 7 }, B[1]);
                 tr.test_eq(r2x2 { 8, 9, 10, 11 }, B[2]);

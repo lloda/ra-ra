@@ -37,7 +37,7 @@ int main()
 // sense, as argname is otherwise always an lref.
             ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
                            ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
-// @BUG This still gives a CTE (ra::start for ra::vector does work --that uses Unique<>.iter())
+// BUG This still gives a CTE (ra::start for ra::vector does work --that uses Unique<>.iter())
 // because info(A && a) { start(a) <- makes a copy of a: Expr, which copies its internal tuple,
 // which has a value (not ref) Unique. }.
 // Fix could be to make start(is_iterator) true forward, but that doesn't work for Iota, etc. (see test-optimize.C).
@@ -51,7 +51,7 @@ int main()
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
          }
-// @TODO actually whether unroll is avoided depends on ply, have a way to require it.
+// TODO actually whether unroll is avoided depends on ply, have a way to require it.
 // Cf [tr0-01] in test-ra-0.C.
         section("[trc01] frame match ra::start on 1st axis, forbid unroll");
         {

@@ -6,12 +6,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifndef RA_TYPE_H
-#define RA_TYPE_H
-
 /// @file type.H
 /// @brief Type predicates and use-as-xpr wrapper for foreign types.
 
+#pragma once
 #include "ra/atom.H"
 #include <iterator>
 
@@ -32,8 +30,8 @@ template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, 
 template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
 template <class A> constexpr bool is_builtin_array = std::is_array<std::remove_cv_t<std::remove_reference_t<A>>>::value;
 
-// @TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
-// @TODO check the rest of the required interface of A and A::flat() right here.
+// TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
+// TODO check the rest of the required interface of A and A::flat() right here.
 RA_IS_DEF(is_iterator, (mp::exists<decltype(std::declval<A>().flat())>))
 RA_IS_DEF(is_ra_scalar, (std::is_same<A, Scalar<typename A::C> >::value))
 RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
@@ -92,7 +90,7 @@ inline constexpr decltype(auto) start(T && t)
 template <class T, std::enable_if_t<is_slice<T>, int> = 0>
 inline constexpr auto start(T && t)
 {
-    return t.iter(); // @BUG if t is rvalue, t.iter() won't retain it. See test-ra-7.C [opt-small].
+    return t.iter(); // BUG if t is rvalue, t.iter() won't retain it. See test-ra-7.C [opt-small].
 }
 
 template <class T, std::enable_if_t<is_scalar<T>, int> = 0>
@@ -123,5 +121,3 @@ template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declva
 template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }
 
 } // namespace ra
-
-#endif // RA_TYPE_H
