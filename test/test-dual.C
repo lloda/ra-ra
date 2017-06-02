@@ -47,6 +47,28 @@ DEFINE_CASE(7, fma(x, x, 3.*x),
             2.*x+3.)
 #undef DEFINE_CASE
 
+// repeat case2 using assignment ops.
+struct case8
+{
+    template <class X> static auto f(X x)
+    {
+        auto y = 3.*exp(x*x);
+        y /= x;
+        y += 8.*exp(2.*x)/x;
+        return y;
+    }
+    template <class X> static auto df(X x)
+    {
+        auto lo = x;
+        lo *= lo;
+        auto dy = -3.*exp(x*x)/lo;
+        dy += +6.*exp(x*x);
+        dy += +16.*exp(2.*x)/x;
+        dy -= 8.*exp(2.*x)/lo;
+        return dy;
+    }
+};
+
 template <class Case, class X>
 void test1(TestRecorder & tr, std::string info, X && x, real const rspec=2e-15)
 {
@@ -77,6 +99,7 @@ int main()
         test1<case5>(tr, "case5", x, 1e-15);
         test1<case6>(tr, "case6", x, 1e-15);
         test1<case7>(tr, "case7", x);
+        test1<case8>(tr, "case8", x);
     }
     tr.section("demo with complex");
     {
@@ -99,6 +122,7 @@ int main()
         test1<case5>(tr, "case5", x, 1e-15);
         test1<case6>(tr, "case6", x, 1.1e-15);
         test1<case7>(tr, "case7", x);
+        test1<case8>(tr, "case8", x);
     }
     return tr.summary();
 }

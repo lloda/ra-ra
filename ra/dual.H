@@ -29,10 +29,11 @@ struct Dual
     Dual(T const & r, T const & d): re(r), du(d) {}
     Dual(T const & r): re(r), du(0.) {} // conversions are by default constants.
     Dual() {}
-
-    Dual & operator*=(T const & r) { *this = *this * r; return *this; }
-    Dual & operator+=(T const & r) { *this = *this + r; return *this; }
-    Dual & operator+=(Dual const & r) { *this = *this + r; return *this; }
+#define DEF_ASSIGN_OPS(OP)                                                  \
+    Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
+    Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; }
+    FOR_EACH(DEF_ASSIGN_OPS, +, -, /, *)
+#undef DEF_ASSIGN_OPS
 };
 
 template <class T>
@@ -44,10 +45,12 @@ struct Dual<std::complex<T>>
     Dual(C const & r): re(r), du(0.) {} // conversions are by default constants.
     Dual(T const & r): re(r), du(0.) {} // TODO repeat the class just for this?
     Dual() {}
-
-    Dual & operator*=(C const & r) { *this = *this * r; return *this; }
-    Dual & operator+=(C const & r) { *this = *this + r; return *this; }
-    Dual & operator+=(Dual const & r) { *this = *this + r; return *this; }
+#define DEF_ASSIGN_OPS(OP)                                              \
+    Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
+    Dual & operator JOIN(OP, =)(C const & r) { *this = *this OP r; return *this; } \
+    Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; }
+    FOR_EACH(DEF_ASSIGN_OPS, +, -, /, *)
+#undef DEF_ASSIGN_OPS
 };
 
 // conversions are by default constants.
