@@ -553,6 +553,14 @@ struct View<T, RANK_ANY>
 
     operator T & () { assert(rank()==0); return data()[0]; };
     operator T const & () const { assert(rank()==0); return data()[0]; };
+    template <rank_t R> operator View<T, R> ()
+    {
+        return View<T, R>(typename View<T, R>::Dimv(dim), data());
+    }
+    template <rank_t R> operator View<T const, R> () const
+    {
+        return View<T const, R>(typename View<T const, R>::Dimv(dim), data());
+    }
 };
 
 #undef DEF_ITERATORS

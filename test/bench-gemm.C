@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2016
+// (c) Daniel Llorens - 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -16,20 +16,16 @@
 
 #include <iostream>
 #include <iomanip>
-#include <chrono>
 #include "ra/test.H"
 #include "ra/complex.H"
 #include "ra/format.H"
 #include "ra/large.H"
 #include "ra/operators.H"
 #include "ra/io.H"
+#include "ra/bench.H"
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;
 using ra::Small; using ra::View; using ra::Unique; using ra::ra_traits; using ra::dim_t;
-
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 using real = double;
 
 // -------------------
@@ -142,24 +138,21 @@ DEFINE_GEMM_RESTRICT(gemm_k_raw, gemm_ij_raw, /* */)
 DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
 #undef DEFINE_GEMM_RESTRICT
 
-    auto bench_all = [&](int k, dim_t m, dim_t p, dim_t n, dim_t reps)
+    auto bench_all = [&](int k, int m, int p, int n, int reps)
         {
-            auto bench = [&tr, &m, &p, &n, &reps](auto && f, char const * tag)
+            auto bench = [&](auto && f, char const * tag)
             {
-                time_unit dt(0);
                 ra::Owned<real, 2> a({m, p}, ra::_0-ra::_1);
                 ra::Owned<real, 2> b({p, n}, ra::_1-2*ra::_0);
                 ra::Owned<real, 2> ref = gemm(a, b);
                 ra::Owned<real, 2> c;
-                for (dim_t i=0; i<reps; ++i) {
-                    auto t0 = now();
-                    c = f(a, b);
-                    dt += now()-t0;
-                }
-                tr.info(std::setw(10), std::fixed, dt.count()/(double(reps)*m*n*p), " ", tunit, " ", tag).test_eq(ref, c);
+
+                auto bv = Benchmark().repeats(reps).runs(3).run([&]() { c = f(a, b); });
+                tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n*p)/1e-9, " ns [",
+                        Benchmark::stddev(bv)/(m*n*p)/1e-9 ,"] ", tag).test_eq(ref, c);
             };
 
-            tr.section(m, " (", p, ") ", n, " times ", reps, " = ", (double(reps)*m*n*p));
+            tr.section(m, " (", p, ") ", n, " times ", reps);
 // some variants are way too slow to check with larger arrays.
             if (k>2) {
                 bench(gemm_k, "k");
@@ -177,7 +170,7 @@ DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
             bench([&](auto const & a, auto const & b) { return gemm(a, b); }, "default");
         };
 
-    bench_all(3, 10, 10, 10, 100000);
+    bench_all(3, 10, 10, 10, 10000);
     bench_all(2, 100, 100, 100, 100);
     bench_all(2, 500, 400, 500, 1);
     bench_all(1, 10000, 10, 1000, 1);

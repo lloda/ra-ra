@@ -13,6 +13,7 @@
 #include <sstream>
 #include <iterator>
 #include <numeric>
+#include <atomic>
 #include "ra/mpdebug.H"
 #include "ra/complex.H"
 #include "ra/format.H"
@@ -135,7 +136,7 @@ int main()
     TestRecorder tr;
 
     auto plus2real = [](real a, real b) { return a + b; };
-    section("declaring verbs");
+    tr.section("declaring verbs");
     {
         auto v = ra::wrank<0, 1>(plus2real);
         cout << mp::Ref_<decltype(v)::R, 0>::value << endl;
@@ -144,7 +145,7 @@ int main()
         cout << mp::Ref_<decltype(vv)::R, 0>::value << endl;
         cout << mp::Ref_<decltype(vv)::R, 1>::value << endl;
     }
-    section("using Framematch");
+    tr.section("using Framematch");
     {
         ra::Unique<real, 2> a({3, 2}, ra::unspecified);
         ra::Unique<real, 2> b({3, 2}, ra::unspecified);
@@ -176,7 +177,7 @@ int main()
             ra::ply_ravel(ryn);
         }
     }
-    section("wrank tests 0-1");
+    tr.section("wrank tests 0-1");
     {
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 1>(minus2real_print),
@@ -186,7 +187,7 @@ int main()
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({3}, ra::unspecified));
     }
-    section("wrank tests 1-0");
+    tr.section("wrank tests 1-0");
     {
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<1, 0>(minus2real_print),
@@ -196,7 +197,7 @@ int main()
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({4}, ra::unspecified));
     }
-    section("wrank tests 0-0 (nop), case 1 - exact match");
+    tr.section("wrank tests 0-0 (nop), case 1 - exact match");
     {
 // This uses the applyframes specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
@@ -204,7 +205,7 @@ int main()
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 1>({3}, ra::unspecified));
     }
-    section("wrank tests 0-0 (nop), case 2 - non-exact frame match");
+    tr.section("wrank tests 0-0 (nop), case 2 - non-exact frame match");
     {
 // This uses the applyframes specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
@@ -215,7 +216,7 @@ int main()
                           ra::Unique<real, 1>({3}, ra::unspecified),
                           ra::Unique<real, 2>({3, 4}, ra::unspecified));
     }
-    section("wrank tests 1-1-0, init array with outer product");
+    tr.section("wrank tests 1-1-0, init array with outer product");
     {
         auto minus2real = [](real & c, real a, real b) { c = a-b; };
         ra::Unique<real, 1> a({3}, ra::unspecified);
@@ -243,7 +244,7 @@ int main()
         tr.test(d43.size(0)==4 && d43.size(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
     }
-    section("recipe for unbeatable subscripts in _from_ operator");
+    tr.section("recipe for unbeatable subscripts in _from_ operator");
     {
         ra::Unique<int, 1> a({3}, ra::unspecified);
         ra::Unique<int, 1> b({4}, ra::unspecified);
@@ -280,10 +281,10 @@ int main()
         }
         tr.test(valid);
     }
-    section("rank conjunction / empty");
+    tr.section("rank conjunction / empty");
     {
     }
-    section("static rank() in ra::Ryn");
+    tr.section("static rank() in ra::Ryn");
     {
         ra::Unique<real, 3> a({2, 2, 2}, 1.);
         ra::Unique<real, 3> b({2, 2, 2}, 2.);
@@ -293,7 +294,7 @@ int main()
         ra::ply_ravel(ra::expr(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
         tr.test_eq(16, y);
     }
-    section("outer product variants");
+    tr.section("outer product variants");
     {
         ra::Owned<real, 2> a({2, 3}, ra::_0 - ra::_1);
         ra::Owned<real, 2> b({3, 2}, ra::_1 - 2*ra::_0);
@@ -318,7 +319,7 @@ int main()
             tr.test_eq(c1, c2);
         }
     }
-    section("stencil test for ApplyFrames::keep_stride. Reduced from test/bench-stencil2.C");
+    tr.section("stencil test for ApplyFrames::keep_stride. Reduced from test/bench-stencil2.C");
     {
         int nx = 4;
         int ny = 4;
@@ -385,6 +386,22 @@ int main()
         std::vector<int> i = {0, 1, 2};
         ra::Owned<int, 2> a = ra::from([](auto && i, auto && j) { return i-j; }, i, i);
         tr.test_eq(ra::Owned<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
+    }
+    tr.section("no arguments -> zero rank");
+    {
+        int x = ra::from([]() { return 3; });
+        tr.test_eq(3, x);
+    }
+    tr.section("counting ops");
+    {
+        std::atomic<int> i { 0 };
+        auto fi = [&i](auto && x) { ++i; return x; };
+        std::atomic<int> j { 0 };
+        auto fj = [&j](auto && x) { ++j; return x; };
+        ra::Owned<int, 2> a = from(ra::minus(), map(fi, ra::iota(7)), map(fj, ra::iota(9)));
+        tr.test_eq(ra::_0-ra::_1, a);
+        tr.info("FIXME").skip().test_eq(7, int(i));
+        tr.info("FIXME").skip().test_eq(9, int(j));
     }
     return tr.summary();
 }

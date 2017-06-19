@@ -50,7 +50,7 @@ int main()
             tr.info("ops with non-integers don't reduce iota by default").test(!std::is_same<decltype(i), decltype(j)>::value);
         }
     }
-    section("operations with Iota, plus");
+    tr.section("operations with Iota, plus");
     {
         auto test = [&tr](auto && org)
             {
@@ -77,7 +77,7 @@ int main()
         test(double(0));
         test(float(0));
     }
-    section("operations with Iota, times");
+    tr.section("operations with Iota, times");
     {
         auto test = [&tr](auto && org)
         {
@@ -104,7 +104,7 @@ int main()
         test(float(0));
     }
 #if RA_OPTIMIZE_SMALLVECTOR==1
-    section("small vector ops through vector extensions [opt-small]");
+    tr.section("small vector ops through vector extensions [opt-small]");
     {
         using Vec = ra::Small<double, 4>;
         auto x = optimize(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});

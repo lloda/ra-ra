@@ -8,7 +8,6 @@
 
 /// @file ply.H
 /// @brief Traverse (ply) array or array expression or array statement.
-
 // TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
 
 #pragma once
@@ -19,6 +18,7 @@ namespace ra {
 
 static_assert(std::is_signed<rank_t>::value && std::is_signed<dim_t>::value, "bad rank_t");
 
+
 // --------------
 // Run time order, two versions.
 // --------------
@@ -115,6 +115,7 @@ void ply_ravel(A && a)
     }
 }
 
+
 // -------------------------
 // Compile time order. See bench-dot.C for use. Index version.
 // -------------------------
@@ -146,12 +147,18 @@ void plyf_index(A && a)
     subindexf<mp::Iota_<std::decay_t<A>::rank_s()>>(a, i); // cf with ply_index() for C order.
 }
 
+
 // -------------------------
 // Compile time order. See bench-dot.C for use. No index version.
 // With compile-time recursion by rank, one can use adv<k>, but order must also be compile-time.
 // -------------------------
 
-template <class order, int ravel_rank, class A, class S> inline
+#ifdef RA_INLINE
+#error bad definition
+#endif
+#define RA_INLINE inline /* __attribute__((always_inline)) inline */
+
+template <class order, int ravel_rank, class A, class S> RA_INLINE
 std::enable_if_t<mp::len<order> == ravel_rank>
 subindex(A & a, dim_t s, S const & ss0)
 {
@@ -160,7 +167,7 @@ subindex(A & a, dim_t s, S const & ss0)
     }
 }
 
-template <class order, int ravel_rank, class A, class S> inline
+template <class order, int ravel_rank, class A, class S> RA_INLINE
 std::enable_if_t<(mp::len<order> > ravel_rank)>
 subindex(A & a, dim_t const s, S const & ss0)
 {
@@ -174,14 +181,14 @@ subindex(A & a, dim_t const s, S const & ss0)
 
 // until() converts runtime jj into compile time j. TODO a.adv<k>().
 
-template <class order, int j, class A, class S> inline
+template <class order, int j, class A, class S> RA_INLINE
 std::enable_if_t<(mp::len<order> < j)>
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
     assert(0 && "rank too high");
 }
 
-template <class order, int j, class A, class S> inline
+template <class order, int j, class A, class S> RA_INLINE
 std::enable_if_t<(mp::len<order> >= j)>
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
@@ -192,7 +199,7 @@ until(int const jj, A & a, dim_t const s, S const & ss0)
     }
 }
 
-template <class A> inline
+template <class A> RA_INLINE
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
@@ -200,19 +207,19 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
     *(a.flat());
 }
 
-template <class A> inline
+template <class A> RA_INLINE
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()==1)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
     subindex<mp::Iota_<1>, 1>(a, a.size(0), a.stride(0));
 }
 
-template <class A> inline
+template <class A> RA_INLINE
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
     /* constexpr */ rank_t const rank = a.rank();
-#if 0
+#if 0 // FIXME both s & j can be constexpr. Try again after gcc 7 (constexpr lambda, for j).
 // find the outermost compact dim.
     /* constexpr */ auto s = a.size(rank-1);
     int j = 1;
@@ -230,6 +237,9 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 #endif
 }
 
+#undef RA_INLINE
+
+
 // ---------------------------
 // Select best performance (or requirements) for each type.
 // ---------------------------
@@ -255,6 +265,7 @@ ply(A && a)
     plyf(std::forward<A>(a));
 }
 
+
 // ---------------------------
 // Short-circuiting pliers. TODO These are reductions. How to do higher rank?
 // ---------------------------

@@ -27,7 +27,7 @@ template <class T> using Vec = Array<T, 1>;
 int main()
 {
     TestRecorder tr;
-    section("operators on nested arrays");
+    tr.section("operators on nested arrays");
     {
 // default init is required to make vector-of-vector, but I still want Vec {} to mean 'an empty vector' and not a default-init vector.
         {
@@ -50,7 +50,7 @@ int main()
             tr.test(every(ra::expr([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
         }
     }
-    section("selector experiments");
+    tr.section("selector experiments");
     {
 // These is an investigation of how to make a(ra::all, i) or a(i, ra::all) work.
 // The problem with a(ra::all, i) here is that we probably want to leave the iteration on ra::all for last. Otherwise the indexing is redone for each rank-1 cell.
@@ -64,7 +64,7 @@ int main()
 // The problem with a(i) = a(i, ra::all) is that a(i) returns a nested expression, so it isn't equivalent to a(i, [0 1 ...]), and if we want to write it as a rank 2 expression, we can't use from() as above because the iterator we want is a(i).iter(), it depends on i.
 // So ...
     }
-    section("copying btw arrays nested in the same way");
+    tr.section("copying btw arrays nested in the same way");
     {
         Vec<ra::Small<int, 2> > a {{1, 2}, {3, 4}, {5, 6}};
         ra::Small<ra::Small<int, 2>, 3> b = a;
@@ -79,7 +79,7 @@ int main()
         tr.test_eq(ra::Small<int, 2> {3, 4}, a(1));
         tr.test_eq(ra::Small<int, 2> {1, 6}, a(2));
     }
-    section("TODO copying btw arrays nested in different ways");
+    tr.section("TODO copying btw arrays nested in different ways");
     {
         Vec<ra::Small<int, 2> > a {{1, 2}, {3, 4}, {5, 6}};
         Array<int, 2> b({3, 2}, {1, 2, 3, 4, 5, 6});

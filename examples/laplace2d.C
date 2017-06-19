@@ -17,26 +17,23 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/test.H"
-#include <chrono>
 #include "examples/cghs.H"
+#include "ra/bench.H"
 
 using std::cout; using std::endl;
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 
-time_unit tmul = time_unit(0);
+Benchmark::clock::duration tmul(0);
 
 struct StiffMat { double h; };
 
 template <class V, class W>
 void mult(StiffMat const & A, V const & v, W & w)
 {
-    auto t0 = now();
+    auto t0 = Benchmark::clock::now();
     auto i = ra::iota(v.size(0)-2, 1);
     auto j = ra::iota(v.size(1)-2, 1);
     w(i, j) = 4*v(i, j) -v(i-1, j) -v(i, j-1) -v(i+1, j) -v(i, j+1);
-    tmul += std::chrono::duration_cast<time_unit>(now()-t0);
+    tmul += (Benchmark::clock::now()-t0);
 }
 
 struct MassMat { double h; };
@@ -44,11 +41,11 @@ struct MassMat { double h; };
 template <class V, class W>
 void mult(MassMat const & M, V const & v, W & w)
 {
-    auto t0 = now();
+    auto t0 = Benchmark::clock::now();
     auto i = ra::iota(v.size(0)-2, 1);
     auto j = ra::iota(v.size(1)-2, 1);
     w(i, j) = sqrm(M.h) * (v(i, j)/2. + (v(i-1, j) + v(i, j-1) + v(i+1, j) + v(i, j+1) + v(i+1, j+1) + v(i-1, j-1))/12.);
-    tmul += std::chrono::duration_cast<time_unit>(now()-t0);
+    tmul += Benchmark::clock::now()-t0;
 }
 
 // problem: -laplace u=f, with solution g
@@ -64,7 +61,7 @@ inline double g(double x, double y)
 int main(int argc, char *argv[])
 {
     TestRecorder tr(std::cout);
-    auto t0 = now();
+    auto t0 = Benchmark::clock::now();
 
     int N = 50;
     double EPS = 1e-5;
@@ -86,9 +83,9 @@ int main(int argc, char *argv[])
     int its = cghs(sm, b, u, work, EPS);
     double max = amax(abs(u-v));
 
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    cout << "total time " << dt.count()/1e6 << " " << "ms" << endl;
-    cout << "mul time " << tmul.count()/1e6 << " " << "ms" << endl;
+    auto ttot = Benchmark::clock::now()-t0;
+    cout << "total time " << Benchmark::toseconds(ttot)/1e-3 << " " << "ms" << endl;
+    cout << "mul time " << Benchmark::toseconds(ttot)/1e-3 << " " << "ms" << endl;
 
     tr.info("max ", max).test_le(max, 0.00463);
     tr.info("its ", its).test_le(its, 67);

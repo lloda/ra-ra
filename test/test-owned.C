@@ -24,7 +24,7 @@ using real = double;
 int main()
 {
     TestRecorder tr;
-    section("resize first dimension");
+    tr.section("resize first dimension");
     {
         auto test = [&tr](auto const & ref, auto & a, int newsize, int testsize)
             {
@@ -61,7 +61,7 @@ int main()
             test(ref1, a, 5, 3);
         }
     }
-    section("push back");
+    tr.section("push back");
     {
         real check[] = { 2, 3, 4, 7 };
         auto test = [&tr, &check](auto && z)

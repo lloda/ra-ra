@@ -18,11 +18,13 @@
 #include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
-using real = double;
 
 template <int i> using TI = ra::TensorIndex<i>;
 using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
+
+// TestRecorder wants its args to be array elements.
+namespace ra { template <> constexpr bool is_scalar_def<std::string> = true; }
 
 template <class AA, class CC>
 void iocheck(TestRecorder & tr, AA && a, CC && check)
@@ -40,45 +42,38 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
     tr.test_eq(check, c);
 }
 
-namespace ra {
-
-// TestRecorder wants its args to be array elements.
-template <> constexpr bool is_scalar_def<std::string> = true;
-
-} // namespace ra
-
 int main()
 {
     TestRecorder tr;
-    section("IO format parameters (I)");
+    tr.section("IO format parameters (I)");
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
         o << format_array(A, true, "|", "-");
         tr.test_eq(o.str(), std::string("1|2-3|4"));
     }
-    section("IO format parameters (II)");
+    tr.section("IO format parameters (II)");
     {
         ra::Owned<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
         o << format_array(A, false, "|", "-");
         tr.test_eq(o.str(), std::string("1|2-3|4"));
     }
-    section("common arrays or slices");
+    tr.section("common arrays or slices");
     {
         ra::Unique<int, 2> a({5, 3}, ra::_0 - ra::_1);
         ra::Unique<int, 2> ref({5, 3}, a); // TODO how about an explicit copy() function?
         iocheck(tr.info("output of Unique (1)"), a, ref);
         iocheck(tr.info("output of Unique (1)"), a, ref);
     }
-    section("[ra02a] printing Expr");
+    tr.section("[ra02a] printing Expr");
     {
         iocheck(tr.info("output of expr (1)"),
-                ra::expr([](real i) { return -i; }, start(ra::Small<real, 3>{0, 1, 2})),
-                ra::Small<real, 3>{0, -1, -2});
+                ra::expr([](double i) { return -i; }, start(ra::Small<double, 3>{0, 1, 2})),
+                ra::Small<double, 3>{0, -1, -2});
         iocheck(tr.info("output of expr (1)"),
-                ra::expr([](real i) { return -i; }, start(ra::Small<real, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
-                (ra::Small<real, 3, 2, 3> (-(ra::_0 - ra::_1 + ra::_2))));
+                ra::expr([](double i) { return -i; }, start(ra::Small<double, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
+                (ra::Small<double, 3, 2, 3> (-(ra::_0 - ra::_1 + ra::_2))));
     }
     {
         ra::Unique<int, 2> a({2, 3}, { 1, 2, 3, 4, 5, 6 });
@@ -86,7 +81,7 @@ int main()
                 ra::expr([](int i) { return -i; }, a.iter()),
                 ra::Unique<int, 2>({2, 3}, { -1, -2, -3, -4, -5, -6 }));
     }
-    section("[ra02b] printing array iterators");
+    tr.section("[ra02b] printing array iterators");
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 4, 5, 6 });
         iocheck(tr.info("output of array through its iterator"), a.iter(), a);
@@ -95,7 +90,7 @@ int main()
                 transpose({1, 0}, a).iter(),
                 ra::Unique<int>({2, 3}, { 1, 3, 5, 2, 4, 6 }));
     }
-    section("[ra02c] printing array iterators");
+    tr.section("[ra02c] printing array iterators");
     {
         ra::Small<int, 3, 2> a { 1, 2, 3, 4, 5, 6 };
         iocheck(tr.info("output of array through its iterator"), a.iter(), a);
@@ -103,13 +98,13 @@ int main()
                 transpose<1, 0>(a).iter(),
                 ra::Small<int, 2, 3> { 1, 3, 5, 2, 4, 6 });
     }
-    section("IO can handle tensorindex, too");
+    tr.section("IO can handle tensorindex, too");
     {
         iocheck(tr.info("output of expr (1)"),
-                ra::expr([](real i, auto j) { return -i*real(j); }, ra::Small<real, 3>{0, 1, 2}.iter(), TI<0>()),
-                ra::Small<real, 3>{0, -1, -4});
+                ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), TI<0>()),
+                ra::Small<double, 3>{0, -1, -4});
     }
-    section("IO of var rank expression");
+    tr.section("IO of var rank expression");
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         ra::Unique<int> B({2, 2}, {1, 2, 3, 4});

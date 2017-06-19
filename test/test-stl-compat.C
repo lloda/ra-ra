@@ -26,12 +26,12 @@ using std::cout; using std::endl; using std::flush;
 int main()
 {
     TestRecorder tr;
-    section("random access iterators");
+    tr.section("random access iterators");
     {
         // TODO rank-0 begin()/end() in ra::Small
         // TODO others?
     }
-    section("copyable iterators, but not random access");
+    tr.section("copyable iterators, but not random access");
     {
         {
             ra::Owned<int, 1> a = { 1, 2, 3 };
@@ -52,7 +52,7 @@ int main()
             tr.test_eq(a, -b);
         }
     }
-    section("raw, slippery pointers");
+    tr.section("raw, slippery pointers");
     {
         ra::Owned<int, 1> a = {1, 2, 3};
         int b[] = { +1, -1, +1 };
@@ -65,7 +65,7 @@ int main()
         ra::Owned<int, 1> c({3}, ra::ptr(cp));
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, c);
     }
-    section("[ra12] check that begin() and end() match for empty views");
+    tr.section("[ra12] check that begin() and end() match for empty views");
     {
         ra::Owned<int, 3> aa({0, 2, 3}, 0.);
         auto a = aa(ra::all, 1);

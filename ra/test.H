@@ -29,11 +29,6 @@ char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
 char const * esc_plain = "\x1b[39m";
 char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
 
-template <class ... A> void section(A const & ... a)
-{
-    std::cout << "\n" << esc_bold << format(a ...) << esc_unbold << std::endl;
-}
-
 struct TestRecorder
 {
     enum verbose_t { QUIET, // as NOISY if failed, else no output

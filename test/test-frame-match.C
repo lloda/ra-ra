@@ -23,7 +23,7 @@ int main()
 {
     TestRecorder tr;
 
-    section("frame matching - TensorIndex/Scalar");
+    tr.section("frame matching - TensorIndex/Scalar");
     {
 // driver is highest rank, which is ra::_0 (1).
         auto e = ra::_0+1;
@@ -31,7 +31,7 @@ int main()
 // but TensorIndex cannot be a driver.
         static_assert(!(decltype(e)::VALID_DRIVER), "bad driver check");
     }
-    section("frame matching - Unique/TensorIndex");
+    tr.section("frame matching - Unique/TensorIndex");
     {
         ra::Unique<real, 2> c({3, 2}, ra::unspecified);
         ra::Unique<real, 2> a({3, 2}, ra::unspecified);
@@ -48,7 +48,7 @@ int main()
                           c.iter(), ra::_0, a.iter()));
         tr.test_eq(check, c);
     }
-    section("frame matching - Unique/TensorIndex - TensorIndex can't be driving arg");
+    tr.section("frame matching - Unique/TensorIndex - TensorIndex can't be driving arg");
     {
         ra::Unique<real, 2> c({3, 2}, ra::unspecified);
         ra::Unique<real, 2> a({3, 2}, ra::unspecified);
@@ -76,7 +76,7 @@ int main()
                c.iter(), b.iter(), a.iter()));              \
     tr.test_eq(check, c);
 
-    section("frame matching - Unique/Unique");
+    tr.section("frame matching - Unique/Unique");
     {
         ra::Unique<real, 2> c({3, 2}, ra::unspecified);
         ra::Unique<real, 2> a({3, 2}, ra::unspecified);
@@ -88,7 +88,7 @@ int main()
         TEST(ply_ravel);
         TEST(ply_index);
     }
-    section("frame matching - Unique/Small");
+    tr.section("frame matching - Unique/Small");
     {
         ra::Unique<real, 2> c({3, 2}, ra::unspecified);
         ra::Unique<real, 2> a({3, 2}, ra::unspecified);
@@ -100,7 +100,7 @@ int main()
         TEST(ply_ravel);
         TEST(ply_index);
     }
-    section("frame matching - Small/Small");
+    tr.section("frame matching - Small/Small");
     {
         ra::Small<real, 3, 2> c;
         ra::Small<real, 3, 2> a;
@@ -113,7 +113,7 @@ int main()
         TEST(ply_index);
     }
 #undef TEST
-    section("frame match is good only for full expr, so test on ply, not construction");
+    tr.section("frame match is good only for full expr, so test on ply, not construction");
     {
         ra::Unique<real, 2> a({2, 2}, 0.);
         ra::Unique<real, 1> b {1., 2.};
@@ -127,7 +127,7 @@ int main()
         tr.test_eq(2, a(1, 0));
         tr.test_eq(1, a(1, 1));
     }
-    section("frame matching should-be-error cases [untested]");
+    tr.section("frame matching should-be-error cases [untested]");
 // TODO Check that this is an error.
     // {
     //     ra::Unique<real, 1> a {3};
@@ -151,6 +151,13 @@ int main()
     //     auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
     //     ply_ravel(ra::expr(plus2real_print, a.iter(), b.iter()));
     // }
-
+    tr.section("unintiuitive behavior [ra33]");
+    {
+        ra::Owned<int, 1> i = {0, 1, 2};
+        ra::Owned<double, 2> A({3, 2}, ra::_0 - ra::_1);
+        ra::Owned<double, 2> F({3, 2}, 0.);
+        iter<-1>(F) = A(i); // A(i) returns a nested expression. FIXME Should it?
+        tr.test_eq(A, F);
+    }
     return tr.summary();
 }

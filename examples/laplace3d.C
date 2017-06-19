@@ -18,14 +18,11 @@
 #include "ra/io.H"
 #include "ra/test.H"
 #include "examples/cghs.H"
-#include <chrono>
+#include "ra/bench.H"
 
 using std::cout; using std::endl; using std::flush;
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 
-time_unit tmul = time_unit(0);
+Benchmark::clock::duration tmul(0);
 
 double const d23=2./3., d16=-1./6., d00=0.;
 double const d827=8./27., d427=4./27., d227=2./27., d127=1./27.;
@@ -80,7 +77,7 @@ void gemv(A const & a, V const & v, W & w)
 template <class V, class W>
 void mult(Matrix0bnd & A, V const & v, W & w)
 {
-    auto t0 = now();
+    auto t0 = Benchmark::clock::now();
     w = 0.;
     for_each([&](auto && E)
              {
@@ -92,7 +89,7 @@ void mult(Matrix0bnd & A, V const & v, W & w)
              A.E);
     w(A.B) = 0; // set boundary
     w *= A.h;   // scale factor
-    tmul += std::chrono::duration_cast<time_unit>(now()-t0);
+    tmul += Benchmark::clock::now()-t0;
 }
 
 struct StiffMatrix: Matrix0bnd
@@ -126,7 +123,7 @@ int main()
 {
     TestRecorder tr(std::cout);
 
-    auto t0 = now();
+    auto t0 = Benchmark::clock::now();
 
     int n = 50;
     double EPS = 1e-5;
@@ -175,18 +172,18 @@ int main()
 // solve.
     StiffMatrix SM(h, E, B);
     ra::Owned<double, 2> work({3, (n+1)*(n+1)*(n+1)}, ra::unspecified);
-    auto t1 = now();
+    auto t1 = Benchmark::clock::now();
     int its = cghs(SM, b, x, work, EPS);
-    time_unit tsolve = std::chrono::duration_cast<time_unit>(now()-t1);
+    auto tsolve = Benchmark::clock::now()-t1;
 
 // compare with exact solution.
     ra::Owned<double, 1> c = map([](auto && Vi) { return g(Vi[0], Vi[1], Vi[2]); }, V);
     double err = amax(abs(c-x));
 
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    cout << "total time " << dt.count()/1e6 << " " << "ms" << endl;
-    cout << "solve time " << tsolve.count()/1e6 << " " << "ms" << endl;
-    cout << "mul time " << tmul.count()/1e6 << " " << "ms" << endl;
+    auto ttot = Benchmark::clock::now()-t0;
+    cout << "total time " << Benchmark::toseconds(ttot)/1e-3 << " " << "ms" << endl;
+    cout << "solve time " << Benchmark::toseconds(tsolve)/1e-3 << " " << "ms" << endl;
+    cout << "mul time " << Benchmark::toseconds(tmul)/1e-3 << " " << "ms" << endl;
 
     tr.info("err ", err).test_le(err, 0.00033);
     tr.info("its ", its).test_le(its, 1);

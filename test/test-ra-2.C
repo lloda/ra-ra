@@ -24,7 +24,7 @@ using real = double;
 int main()
 {
     TestRecorder tr;
-    section("iterators on cell rank > 0");
+    tr.section("iterators on cell rank > 0");
     {
         ra::Unique<real, 2> a({4, 3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
@@ -41,12 +41,12 @@ int main()
 #define ARGa ra::ra_iterator<decltype(a), 1>(a.dim, a.p)
 #define ARGi ra::Small<int, 4> {1, 2, 3, 4}.iter()
 #define ARGd dump.iter()
-    section("ply on cell rank > 0");
+    tr.section("ply on cell rank > 0");
     {
         ra::Unique<real, 2> a({4, 3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
         real check[4] = {6, 15, 24, 33};
-        section("not driving");
+        tr.section("not driving");
         {
             auto f = [](int i, ra::View<real, 1> const & a, real & d)
                 {
@@ -75,7 +75,7 @@ int main()
 #undef TEST
         }
 // TODO Use explicit DRIVER arg to ra::expr; the fixed size ARGi should always drive.
-        section("driving");
+        tr.section("driving");
         {
             auto f = [](ra::View<real, 1> const & a, int i, real & d)
                 {
@@ -100,12 +100,12 @@ int main()
 #undef TEST
         }
     }
-    section("ply on cell rank > 0, ref argument");
+    tr.section("ply on cell rank > 0, ref argument");
     {
         ra::Small<real, 4> dump { 1, 2, 3, 4 };
         ra::Unique<real, 2> a({4, 3}, ra::unspecified);
         real check[12] = {1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6};
-        section("not driving");
+        tr.section("not driving");
         {
             auto f = [](int i, ra::View<real, 1> a, real & d) { std::iota(a.begin(), a.end(), d); };
             std::fill(a.begin(), a.end(), 0);
@@ -116,7 +116,7 @@ int main()
             ply_ravel(ra::expr(f, ARGi, ARGa, ARGd));
             tr.test(std::equal(check, check+12, a.begin()));
         }
-        section("driving");
+        tr.section("driving");
         {
             auto f = [](ra::View<real, 1> a, int i, real & d) { std::iota(a.begin(), a.end(), d); };
             std::fill(a.begin(), a.end(), 0);
@@ -128,12 +128,12 @@ int main()
             tr.test(std::equal(check, check+12, a.begin()));
         }
     }
-    section("ply on cell rank = 0 using iter<-1>, ref argument");
+    tr.section("ply on cell rank = 0 using iter<-1>, ref argument");
     {
         ra::Small<real, 3> dump { 1, 2, 3 };
         ra::Unique<real, 1> a({3}, ra::unspecified);
         real check[3] = {1, 2, 3};
-        section("driving");
+        tr.section("driving");
         {
             auto f = [](real & a, real d) { a = d; };
             std::fill(a.begin(), a.end(), 0);
@@ -145,7 +145,7 @@ int main()
             tr.test(std::equal(check, check+3, a.begin()));
         }
     }
-    section("ply on cell rank > 0, dynamic rank");
+    tr.section("ply on cell rank > 0, dynamic rank");
     {
         ra::Owned<int> ad({5, 2}, ra::_0 - ra::_1);
         ra::Owned<int, 2> as({5, 2}, ra::_0 - ra::_1);
@@ -164,7 +164,7 @@ int main()
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                               ad.iter<-1>(), b.iter<-1>()));
     }
-    section("ply on cell rank > 0, static sizes (TODO)");
+    tr.section("ply on cell rank > 0, static sizes (TODO)");
     {
         ra::Small<int, 2, 3, 4> a(ra::_0 - ra::_1 + ra::_2);
         cout << a << endl;
@@ -172,7 +172,7 @@ int main()
         // auto ai = a.iter<1>();
         // cout << "iter<1> " << sizeof(a) << endl;
     }
-    section("FYI");
+    tr.section("FYI");
     {
         cout << "..." << sizeof(ra::View<real, 0>) << endl;
         cout << "..." << sizeof(ra::View<real, 1>) << endl;

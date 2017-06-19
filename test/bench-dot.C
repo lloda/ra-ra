@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011, 2014-2015
+// (c) Daniel Llorens - 2011, 2014-2015, 2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <chrono>
 #include <random>
 #include "ra/test.H"
 #include "ra/complex.H"
@@ -20,12 +19,10 @@
 #include "ra/wrank.H"
 #include "ra/operators.H"
 #include "ra/io.H"
+#include "ra/bench.H"
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;
 using ra::Small; using ra::View; using ra::Unique; using ra::ra_traits; using ra::dim_t;
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 using real = double;
 
 int const N = 200000;
@@ -130,22 +127,16 @@ int main()
 
     TestRecorder tr;
     {
-        auto bench = [&tr](auto && f, char const * tag, auto s, auto && ref, int reps)
+        auto bench = [&tr](char const * tag, auto s, auto && ref, int reps, auto && f)
             {
                 rspec = 1e-2;
                 constexpr int M = ra::ra_traits<decltype(s)>::size(s);
                 decltype(s) A(a);
                 decltype(s) B(b);
                 real y(0.);
-                auto t0 = now();
-                for (int j=0; j<reps/1000; ++j) {
-                    for (int i=0; i<1000; ++i) {
-                        y += f(A, B);
-                    }
-                }
-                time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-                tr.info(std::setw(7), std::fixed, 10*double(dt.count())/(reps*M), " ", tunit, " x10 ", tag)
-                  .test_rel_error(a*b*M*reps, y, rspec);
+                auto bv = Benchmark().repeats(reps).runs(3).run([&]() { y += f(A, B); });
+                tr.info(std::setw(6), std::fixed, Benchmark::avg(bv)/M/1e-9, " ns [", Benchmark::stddev(bv)/M/1e-9, "] ", tag)
+                    .test_rel_error(a*b*M*reps*3, y, rspec);
             };
 
         auto f_small_indexed_1 = [](auto && A, auto && B)
@@ -217,14 +208,14 @@ int main()
                 tr.section("small <", ra::ra_traits<decltype(s)>::shape(s), ">");
                 auto extra = [&]() { return int(double(std::rand())*100/RAND_MAX); };
                 int reps = (1000*1000*100)/M;
-                bench(f_small_indexed, "indexed", s, ref, reps+extra());
-                bench(f_small_indexed_raw, "indexed_raw", s, ref, reps+extra());
-                bench(f_small_op, "op", s, ref, reps+extra());
-                bench(f_small_ply_ravel, "ply_ravel", s, ref, reps+extra());
-                bench(f_small_ply_index, "ply_index", s, ref, reps+extra());
-                bench(f_small_plyf, "plyf", s, ref, reps+extra());
-                bench(f_small_plyf_index, "plyf_index", s, ref, reps+extra());
-                bench(f_small_ply, "ply", s, ref, reps+extra());
+                bench("indexed", s, ref, reps+extra(), f_small_indexed);
+                bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
+                bench("op", s, ref, reps+extra(), f_small_op);
+                bench("ply_ravel", s, ref, reps+extra(), f_small_ply_ravel);
+                bench("ply_index", s, ref, reps+extra(), f_small_ply_index);
+                bench("plyf", s, ref, reps+extra(), f_small_plyf);
+                bench("plyf_index", s, ref, reps+extra(), f_small_plyf_index);
+                bench("ply", s, ref, reps+extra(), f_small_ply);
             };
         bench_all(ra::Small<real, 2>(), f_small_indexed_1);
         bench_all(ra::Small<real, 3>(), f_small_indexed_1);
@@ -236,19 +227,15 @@ int main()
         bench_all(ra::Small<real, 3, 3, 3>(), f_small_indexed_3);
     }
 
-    rspec = 1e-11;
-    auto bench = [&tr](auto && f, auto && a, auto && b, auto && ref, real rspec, int reps)
-        {
-            real x = 0.;
-            auto t0 = now();
-            for (int i=0; i!=reps; ++i) {
-                x += f(a, b);
-            }
-            time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-            tr.info(std::setw(7), std::fixed, double(dt.count())/reps, " ", tunit, " x1 ", f.name)
-            .test_rel_error(ref, x, rspec);
-        };
-#define BENCH(f) bench(f {}, A, B, ref, rspec, N);
+    rspec = 2e-11;
+    auto bench = [&tr](auto && a, auto && b, auto && ref, real rspec, int reps, auto && f)
+                 {
+                     real x = 0.;
+                     auto bv = Benchmark().repeats(reps).runs(3).run([&]() { x += f(a, b); });
+                     tr.info(std::setw(6), std::fixed, Benchmark::avg(bv)/1e-9, " ns [", Benchmark::stddev(bv)/1e-9, "] ", f.name)
+                         .test_rel_error(ref*3, x, rspec);
+                 };
+#define BENCH(f) bench(A, B, ref, rspec, N, f {});
     tr.section("std::vector<>");
     {
         std::vector<real> A(S1[0], a);

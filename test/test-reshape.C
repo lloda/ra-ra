@@ -30,7 +30,6 @@ std::ostream & operator<<(std::ostream & o, ra::Dim const d)
 int main()
 {
     TestRecorder tr(std::cout);
-
     tr.section("reshape");
     {
         ra::Owned<int, 3> aa({2, 3, 3}, ra::_0*3+ra::_1);
@@ -79,6 +78,13 @@ int main()
         tr.info("reshape select").test_eq(ra::Owned<int, 1> {0, 1, 2}, b);
         tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
         tr.info("reshape can return var rank").test_eq(ra::RANK_ANY, ra::ra_traits<decltype(b)>::rank_s());
+    }
+    tr.section("conversion from var rank to fixed rank");
+    {
+        ra::Owned<int> a({2, 3}, ra::_0*3+ra::_1);
+        ra::View<int, 2> b = a;
+        tr.info("fixing rank").test_eq(ra::_0*3+ra::_1, b);
+        tr.info("fixing rank is view").test(a.data()==b.data());
     }
     return tr.summary();
 }

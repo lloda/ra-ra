@@ -21,7 +21,7 @@ void * VP;
 int main()
 {
     TestRecorder tr(std::cout);
-    section("temp lambda");
+    tr.section("temp lambda");
     {
         ra::Owned<ra::Small<double, 2>, 1> V({2*2}, ra::unspecified);
         VP = &V;

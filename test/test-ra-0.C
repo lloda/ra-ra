@@ -21,29 +21,28 @@
 
 using std::cout; using std::endl; using std::flush;
 template <int i> using TI = ra::TensorIndex<i, int>;
-using real = double;
 
 template <class A>
-void CheckArrayOutput(TestRecorder & tr, A const & a, real * begin)
+void CheckArrayOutput(TestRecorder & tr, A const & a, double * begin)
 {
     std::ostringstream o;
     o << a;
     cout << "a: " << o.str() << endl;
     std::istringstream i(o.str());
-    std::istream_iterator<real> iend;
-    std::istream_iterator<real> ibegin(i);
+    std::istream_iterator<double> iend;
+    std::istream_iterator<double> ibegin(i);
     tr.test(std::equal(ibegin, iend, begin));
 }
 
 template <class A>
-void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
+void CheckArrayIO(TestRecorder & tr, A const & a, double * begin)
 {
     std::ostringstream o;
     o << a;
     {
         std::istringstream i(o.str());
-        std::istream_iterator<real> iend;
-        std::istream_iterator<real> ibegin(i);
+        std::istream_iterator<double> iend;
+        std::istream_iterator<double> ibegin(i);
         tr.info("reading back from '", o.str(), "'").test(std::equal(ibegin, iend, begin));
     }
     {
@@ -58,10 +57,10 @@ void CheckArrayIO(TestRecorder & tr, A const & a, real * begin)
     }
 }
 
-template <int i> using UU = decltype(std::declval<ra::Unique<real, i>>().iter());
-using SM1 = decltype(std::declval<ra::Small<real, 2>>().iter());
-using SM2 = decltype(std::declval<ra::Small<real, 2, 2>>().iter());
-using SM3 = decltype(std::declval<ra::Small<real, 2, 2, 2>>().iter());
+template <int i> using UU = decltype(std::declval<ra::Unique<double, i>>().iter());
+using SM1 = decltype(std::declval<ra::Small<double, 2>>().iter());
+using SM2 = decltype(std::declval<ra::Small<double, 2, 2>>().iter());
+using SM3 = decltype(std::declval<ra::Small<double, 2, 2, 2>>().iter());
 using SS = decltype(ra::scalar(1));
 
 template <class A>
@@ -71,23 +70,23 @@ void CheckReverse(TestRecorder & tr, A && a)
     cout << "a: " << a << endl;
     auto b0 = reverse(a, 0);
     cout << "b: " << b0 << endl;
-    real check0[24] = { 17, 18, 19, 20,   21, 22, 23, 24,
-                        9, 10, 11, 12,  13, 14, 15, 16,
-                        1, 2, 3, 4,     5, 6, 7, 8 };
+    double check0[24] = { 17, 18, 19, 20,   21, 22, 23, 24,
+                          9, 10, 11, 12,  13, 14, 15, 16,
+                          1, 2, 3, 4,     5, 6, 7, 8 };
     tr.test(std::equal(check0, check0+24, b0.begin()));
 
     auto b1 = reverse(a, 1);
     cout << "b: " << b1 << endl;
-    real check1[24] = { 5, 6, 7, 8,      1, 2, 3, 4,
-                        13, 14, 15, 16,  9, 10, 11, 12,
-                        21, 22, 23, 24,  17, 18, 19, 20 };
+    double check1[24] = { 5, 6, 7, 8,      1, 2, 3, 4,
+                          13, 14, 15, 16,  9, 10, 11, 12,
+                          21, 22, 23, 24,  17, 18, 19, 20 };
     tr.test(std::equal(check1, check1+24, b1.begin()));
 
     auto b2 = reverse(a, 2);
     cout << "b: " << b2 << endl;
-    real check2[24] = { 4, 3, 2, 1,      8, 7, 6, 5,
-                        12, 11, 10, 9,   16, 15, 14, 13,
-                        20, 19, 18, 17,  24, 23, 22, 21 };
+    double check2[24] = { 4, 3, 2, 1,      8, 7, 6, 5,
+                          12, 11, 10, 9,   16, 15, 14, 13,
+                          20, 19, 18, 17,  24, 23, 22, 21 };
     tr.test(std::equal(check2, check2+24, b2.begin()));
 }
 
@@ -99,7 +98,7 @@ void CheckTranspose1(TestRecorder & tr, A && a)
         cout << "a: " << a << endl;
         auto b = transpose(ra::Small<int, 2>{1, 0}, a);
         cout << "b: " << b << endl;
-        real check[6] = {1, 3, 5, 2, 4, 6};
+        double check[6] = {1, 3, 5, 2, 4, 6};
         tr.test(std::equal(b.begin(), b.end(), check));
     }
     {
@@ -107,7 +106,7 @@ void CheckTranspose1(TestRecorder & tr, A && a)
         cout << "a: " << a << endl;
         auto b = transpose<1, 0>(a);
         cout << "b: " << b << endl;
-        real check[6] = {1, 3, 5, 2, 4, 6};
+        double check[6] = {1, 3, 5, 2, 4, 6};
         tr.test(std::equal(b.begin(), b.end(), check));
     }
 }
@@ -128,32 +127,32 @@ int main()
     tr.section("internal fields");
     {
         {
-            real aa[10];
+            double aa[10];
             aa[0] = 99;
-            ra::View<real, 1> a { {{10, 1}}, aa };
+            ra::View<double, 1> a { {{10, 1}}, aa };
             tr.test_eq(99., a.p[0]);
         }
         {
-            real aa[6] = { 1, 2, 3, 4, 5, 6 };
+            double aa[6] = { 1, 2, 3, 4, 5, 6 };
             aa[0] = 99;
-            ra::View<real, 2> a { {{3, 2}, {2, 1}}, aa };
+            ra::View<double, 2> a { {{3, 2}, {2, 1}}, aa };
             tr.test_eq(4., a(1, 1));
             tr.test_eq(99., a.p[0]);
         }
         {
-            real aa[20];
+            double aa[20];
             aa[19] = 77;
-            ra::View<real> a = { {{10, 2}, {2, 1}}, aa };
+            ra::View<double> a = { {{10, 2}, {2, 1}}, aa };
             tr.test_eq(10, a.dim[0].size);
             tr.test_eq(2, a.dim[1].size);
             cout << "a.p(3, 4): " << a.p[19] << endl;
             tr.test_eq(77, a.p[19]);
         }
         {
-            auto pp = std::unique_ptr<real []>(new real[10]);
+            auto pp = std::unique_ptr<double []>(new double[10]);
             pp[9] = 77;
-            real * p = pp.get();
-            ra::Unique<real> a {};
+            double * p = pp.get();
+            ra::Unique<double> a {};
             a.store = std::move(pp);
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
@@ -163,10 +162,10 @@ int main()
             tr.test_eq(77, a.p[9]);
         }
         {
-            auto pp = std::shared_ptr<real>(new real[10]);
+            auto pp = std::shared_ptr<double>(new double[10]);
             pp.get()[9] = 88;
-            real * p = pp.get();
-            ra::Shared<real> a {};
+            double * p = pp.get();
+            ra::Shared<double> a {};
             a.store = pp;
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
@@ -176,10 +175,10 @@ int main()
             tr.test_eq(88, a.p[9]);
         }
         {
-            auto pp = std::vector<real>(10);
+            auto pp = std::vector<double>(10);
             pp[9] = 99;
-            real * p = pp.data();
-            ra::Owned<real> a {};
+            double * p = pp.data();
+            ra::Owned<double> a {};
             a.store = pp;
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
@@ -191,63 +190,63 @@ int main()
     }
     tr.section("rank 0 -> scalar with Small");
     {
-        auto rank0test0 = [](real & a) { a *= 2; };
-        auto rank0test1 = [](real const & a) { return a*2; };
-        ra::Small<real> a { 33 };
-        static_assert(sizeof(a)==sizeof(real), "bad assumption");
+        auto rank0test0 = [](double & a) { a *= 2; };
+        auto rank0test1 = [](double const & a) { return a*2; };
+        ra::Small<double> a { 33 };
+        static_assert(sizeof(a)==sizeof(double), "bad assumption");
         rank0test0(a);
         tr.test_eq(66, a);
-        real b = rank0test1(a);
+        double b = rank0test1(a);
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
     tr.section("(170) rank 0 -> scalar with View");
     {
-        auto rank0test0 = [](real & a) { a *= 2; };
-        auto rank0test1 = [](real const & a) { return a*2; };
-        real x { 99 };
-        ra::View<real, 0> a { {}, &x };
+        auto rank0test0 = [](double & a) { a *= 2; };
+        auto rank0test1 = [](double const & a) { return a*2; };
+        double x { 99 };
+        ra::View<double, 0> a { {}, &x };
         tr.test_eq(1, a.size());
 
 // ra::View<T, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0. That was specific of gcc, so better not to depend on it anyway...
         cout << "a()" << a() << endl;
         cout << "sizeof(a())" << sizeof(a()) << endl;
-        cout << "sizeof(real *)" << sizeof(real *) << endl;
-        // static_assert(sizeof(a())==sizeof(real *), "bad assumption");
+        cout << "sizeof(double *)" << sizeof(double *) << endl;
+        // static_assert(sizeof(a())==sizeof(double *), "bad assumption");
 
         rank0test0(a);
         tr.test_eq(198, a);
-        real b = rank0test1(a);
+        double b = rank0test1(a);
         tr.test_eq(198, a);
         tr.test_eq(396, b);
     }
     tr.section("ra traits");
     {
         {
-            using real2x3 = ra::Small<real, 2, 3>;
-            real2x3 r { 1, 2, 3, 4, 5, 6 };
-            tr.test_eq(2, ra::ra_traits<real2x3>::rank(r));
-            tr.test_eq(6, ra::ra_traits<real2x3>::size(r));
+            using double2x3 = ra::Small<double, 2, 3>;
+            double2x3 r { 1, 2, 3, 4, 5, 6 };
+            tr.test_eq(2, ra::ra_traits<double2x3>::rank(r));
+            tr.test_eq(6, ra::ra_traits<double2x3>::size(r));
         }
         {
-            real pool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::View<real> r { {{3, 2}, {2, 1}}, pool };
-            tr.test_eq(2, ra::ra_traits<ra::View<real>>::rank(r));
-            tr.test_eq(6, ra::ra_traits<ra::View<real>>::size(r));
+            double pool[6] = { 1, 2, 3, 4, 5, 6 };
+            ra::View<double> r { {{3, 2}, {2, 1}}, pool };
+            tr.test_eq(2, ra::ra_traits<ra::View<double>>::rank(r));
+            tr.test_eq(6, ra::ra_traits<ra::View<double>>::size(r));
         }
         {
-            real pool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::View<real, 2> r {{ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
-            tr.test_eq(2, ra::ra_traits<ra::View<real, 2>>::rank(r));
-            tr.test_eq(6, ra::ra_traits<ra::View<real, 2>>::size(r));
+            double pool[6] = { 1, 2, 3, 4, 5, 6 };
+            ra::View<double, 2> r {{ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
+            tr.test_eq(2, ra::ra_traits<ra::View<double, 2>>::rank(r));
+            tr.test_eq(6, ra::ra_traits<ra::View<double, 2>>::size(r));
         }
     }
     tr.section("iterator for View (I)");
     {
-        real chk[6] = { 0, 0, 0, 0, 0, 0 };
-        real pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::View<real> r { {{3, 2}, {2, 1}}, pool };
-        ra::ra_iterator<ra::View<real>> it(r.dim, r.p);
+        double chk[6] = { 0, 0, 0, 0, 0, 0 };
+        double pool[6] = { 1, 2, 3, 4, 5, 6 };
+        ra::View<double> r { {{3, 2}, {2, 1}}, pool };
+        ra::ra_iterator<ra::View<double>> it(r.dim, r.p);
         cout << "as iterator: " << ra::print_iterator(it) << endl;
         tr.test(r.data()==it.c.p);
         std::copy(r.begin(), r.end(), chk);
@@ -255,21 +254,21 @@ int main()
     }
     tr.section("iterator for View (II)");
     {
-        real chk[6] = { 0, 0, 0, 0, 0, 0 };
-        real pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::View<real, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::ra_iterator<ra::View<real, 1>> it(r.dim, r.p);
-        cout << "View<real, 1> it.c.p: " << it.c.p << endl;
+        double chk[6] = { 0, 0, 0, 0, 0, 0 };
+        double pool[6] = { 1, 2, 3, 4, 5, 6 };
+        ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
+        ra::ra_iterator<ra::View<double, 1>> it(r.dim, r.p);
+        cout << "View<double, 1> it.c.p: " << it.c.p << endl;
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
     // some of these tests are disabled depending on cell_iterator::operator=.
     tr.section("[ra11a] (skipped) ra_iterator operator= (from cell_iterator) does NOT copy contents");
     {
-        real a[6] = { 0, 0, 0, 0, 0, 0 };
-        real b[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::View<real> ra { {{3, 2}, {2, 1}}, a };
-        ra::View<real> rb { {{3, 2}, {2, 1}}, b };
+        double a[6] = { 0, 0, 0, 0, 0, 0 };
+        double b[6] = { 1, 2, 3, 4, 5, 6 };
+        ra::View<double> ra { {{3, 2}, {2, 1}}, a };
+        ra::View<double> rb { {{3, 2}, {2, 1}}, b };
         auto aiter = ra.iter();
         {
             auto biter = rb.iter();
@@ -285,17 +284,17 @@ int main()
     }
     tr.section("[ra11b] ra_iterator operator= (from cell_iterator) DOES copy contents");
     {
-        ra::Unique<real, 2> A({6, 7}, ra::_0 - ra::_1);
-        ra::Unique<real, 2> AA({6, 7}, 0.);
+        ra::Unique<double, 2> A({6, 7}, ra::_0 - ra::_1);
+        ra::Unique<double, 2> AA({6, 7}, 0.);
         AA.iter<1>() = A.iter<1>();
         tr.test_eq(A, AA);
     }
     tr.section("[ra11c] STL-type iterators never copy contents");
     {
-        real a[6] = { 0, 0, 0, 0, 0, 0 };
-        real b[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::View<real> ra { {{3, 2}, {2, 1}}, a };
-        ra::View<real> rb { {{3, 2}, {2, 1}}, b };
+        double a[6] = { 0, 0, 0, 0, 0, 0 };
+        double b[6] = { 1, 2, 3, 4, 5, 6 };
+        ra::View<double> ra { {{3, 2}, {2, 1}}, a };
+        ra::View<double> rb { {{3, 2}, {2, 1}}, b };
         auto aiter = ra.begin();
         {
             auto biter = rb.begin();
@@ -321,37 +320,37 @@ int main()
                 tr.test_eq(ra::Small<ra::dim_t, 1> {6}, iter<-1>(A).shape());
                 tr.test_eq(ra::Small<ra::dim_t, 0> {}, iter<2>(A).shape());
             };
-        test(ra::Unique<real, 2>({6, 7}, ra::_0 - ra::_1));
-        test(ra::Unique<real>({6, 7}, ra::_0 - ra::_1));
+        test(ra::Unique<double, 2>({6, 7}, ra::_0 - ra::_1));
+        test(ra::Unique<double>({6, 7}, ra::_0 - ra::_1));
     }
     tr.section("STL-type iterators");
     {
-        real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::View<real, 1> r { {ra::Dim {6, 1}}, rpool };
+        double rpool[6] = { 1, 2, 3, 4, 5, 6 };
+        ra::View<double, 1> r { {ra::Dim {6, 1}}, rpool };
 
-        real spool[6] = { 0, 0, 0, 0, 0, 0 };
-        ra::View<real> s { {{3, 1}, {2, 3}}, spool };
+        double spool[6] = { 0, 0, 0, 0, 0, 0 };
+        ra::View<double> s { {{3, 1}, {2, 3}}, spool };
 
         std::copy(r.begin(), r.end(), s.begin());
-        std::copy(spool, spool+6, std::ostream_iterator<real>(cout, " "));
+        std::copy(spool, spool+6, std::ostream_iterator<double>(cout, " "));
 
-        real cpool[6] = { 1, 3, 5, 2, 4, 6 };
+        double cpool[6] = { 1, 3, 5, 2, 4, 6 };
         tr.test(std::equal(cpool, cpool+6, spool));
         cout << endl;
     }
     tr.section("storage types");
     {
-        real pool[6] = { 1, 2, 3, 4, 5, 6 };
+        double pool[6] = { 1, 2, 3, 4, 5, 6 };
 
-        ra::Shared<real> s({3, 2}, pool, pool+6);
+        ra::Shared<double> s({3, 2}, pool, pool+6);
         tr.test_eq(2, s.rank());
         tr.test(std::equal(pool, pool+6, s.begin()));
 
-        ra::Unique<real> u({3, 2}, pool, pool+6);
+        ra::Unique<double> u({3, 2}, pool, pool+6);
         tr.test_eq(2, u.rank());
         tr.test(std::equal(pool, pool+6, u.begin()));
 
-        ra::Owned<real> o({3, 2}, pool, pool+6);
+        ra::Owned<double> o({3, 2}, pool, pool+6);
         tr.test_eq(2, o.rank());
         tr.test(std::equal(pool, pool+6, o.begin()));
     }
@@ -410,25 +409,25 @@ int main()
     tr.section("copy between arrays, construct from iterator pair");
     {
         // copy from Fortran order to C order.
-        real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-        real check[6] = { 1, 4, 2, 5, 3, 6 };
+        double rpool[6] = { 1, 2, 3, 4, 5, 6 };
+        double check[6] = { 1, 4, 2, 5, 3, 6 };
 
-        ra::View<real> r { {{3, 1}, {2, 3}}, rpool };
-        std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+        ra::View<double> r { {{3, 1}, {2, 3}}, rpool };
+        std::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, r.begin()));
 
-        ra::Unique<real> u({3, 2}, r.begin(), r.end());
-        std::copy(u.begin(), u.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+        ra::Unique<double> u({3, 2}, r.begin(), r.end());
+        std::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 
         // TODO Have strides in Small.
-        ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
-        std::copy(s.begin(), s.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+        ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
+        std::copy(s.begin(), s.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, s.begin()));
 
         // construct Small from iterators.
-        ra::Small<real, 3, 2> z(r.begin(), r.end());
-        std::copy(z.begin(), z.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+        ra::Small<double, 3, 2> z(r.begin(), r.end());
+        std::copy(z.begin(), z.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, z.begin()));
     }
 // In this case, the View + shape provides the driver.
@@ -473,27 +472,27 @@ int main()
     }
     tr.section("construct View from shape + xpr");
     {
-        real checka[6] = { 9, 9, 9, 9, 9, 9 };
-        ra::Unique<real, 2> a({3, 2}, ra::scalar(9));
+        double checka[6] = { 9, 9, 9, 9, 9, 9 };
+        ra::Unique<double, 2> a({3, 2}, ra::scalar(9));
         tr.test(std::equal(checka, checka+6, a.begin()));
-        real checkb[6] = { 11, 11, 22, 22, 33, 33 };
-        ra::Unique<real, 2> b({3, 2}, ra::Small<real, 3> { 11, 22, 33 });
+        double checkb[6] = { 11, 11, 22, 22, 33, 33 };
+        ra::Unique<double, 2> b({3, 2}, ra::Small<double, 3> { 11, 22, 33 });
         tr.test(std::equal(checkb, checkb+6, b.begin()));
     }
     tr.section("construct Unique from Unique");
     {
-        real check[6] = { 2, 3, 1, 4, 8, 9 };
-        ra::Unique<real, 2> a({3, 2}, { 2, 3, 1, 4, 8, 9 });
-        // ra::Unique<real, 2> b(a); // error; need temp
-        ra::Unique<real, 2> c(ra::Unique<real, 2>({3, 2}, { 2, 3, 1, 4, 8, 9 })); // ok; from actual temp
+        double check[6] = { 2, 3, 1, 4, 8, 9 };
+        ra::Unique<double, 2> a({3, 2}, { 2, 3, 1, 4, 8, 9 });
+        // ra::Unique<double, 2> b(a); // error; need temp
+        ra::Unique<double, 2> c(ra::Unique<double, 2>({3, 2}, { 2, 3, 1, 4, 8, 9 })); // ok; from actual temp
         tr.test(std::equal(check, check+6, c.begin()));
-        ra::Unique<real, 2> d(std::move(a)); // ok; from fake temp
+        ra::Unique<double, 2> d(std::move(a)); // ok; from fake temp
         tr.test(std::equal(check, check+6, d.begin()));
     }
     tr.section("construct from xpr having its own shape");
     {
-        ra::Unique<real, 0> a(ra::scalar(33));
-        ra::Unique<real> b(ra::scalar(44));
+        ra::Unique<double, 0> a(ra::scalar(33));
+        ra::Unique<double> b(ra::scalar(44));
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
 // b.rank() is runtime, so b()==44. and the whole assert argument become array xprs when operators.H is included.
@@ -509,60 +508,60 @@ int main()
     }
     tr.section("rank 0 -> scalar with storage type");
     {
-        auto rank0test0 = [](real & a) { a *= 2; };
-        auto rank0test1 = [](real const & a) { return a*2; };
-        ra::Unique<real, 0> a(ra::scalar(33));
+        auto rank0test0 = [](double & a) { a *= 2; };
+        auto rank0test1 = [](double const & a) { return a*2; };
+        ra::Unique<double, 0> a(ra::scalar(33));
         tr.test_eq(1, a.size());
 
 // See note in (170).
-        // static_assert(sizeof(a())==sizeof(real *), "bad assumption");
+        // static_assert(sizeof(a())==sizeof(double *), "bad assumption");
 
         rank0test0(a);
         tr.test_eq(66, a);
-        real b = rank0test1(a);
+        double b = rank0test1(a);
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
     tr.section("rank 0 -> scalar with storage type, explicit size");
     {
-        auto rank0test0 = [](real & a) { a *= 2; };
-        auto rank0test1 = [](real const & a) { return a*2; };
-        ra::Unique<real, 0> a({}, ra::scalar(33));
+        auto rank0test0 = [](double & a) { a *= 2; };
+        auto rank0test1 = [](double const & a) { return a*2; };
+        ra::Unique<double, 0> a({}, ra::scalar(33));
         tr.test_eq(1, a.size());
 
 // See note in (170).
-        // static_assert(sizeof(a())==sizeof(real *), "bad assumption");
+        // static_assert(sizeof(a())==sizeof(double *), "bad assumption");
         rank0test0(a);
         tr.test_eq(66, a);
-        real b = rank0test1(a);
+        double b = rank0test1(a);
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
     tr.section("constructors from data in initializer_list");
     {
-        real checka[6] = { 2, 3, 1, 4, 8, 9 };
+        double checka[6] = { 2, 3, 1, 4, 8, 9 };
         {
-            ra::Unique<real, 2> a({2, 3}, { 2, 3, 1, 4, 8, 9 });
+            ra::Unique<double, 2> a({2, 3}, { 2, 3, 1, 4, 8, 9 });
             tr.test_eq(2, a.dim[0].size);
             tr.test_eq(3, a.dim[1].size);
             tr.test(std::equal(a.begin(), a.end(), checka));
         }
         {
-            ra::Unique<real> a { 2, 3, 1, 4, 8, 9 };
+            ra::Unique<double> a { 2, 3, 1, 4, 8, 9 };
             tr.test_eq(6, a.size());
             tr.test_eq(1, a.rank());
             tr.test(std::equal(a.begin(), a.end(), checka));
-            ra::Unique<real> b ({ 2, 3, 1, 4, 8, 9 });
+            ra::Unique<double> b ({ 2, 3, 1, 4, 8, 9 });
             tr.test_eq(6, b.size());
             tr.test_eq(1, b.rank());
             tr.test(std::equal(b.begin(), b.end(), checka));
         }
         {
-            ra::Unique<real, 1> a { 2, 3, 1, 4, 8, 9 };
+            ra::Unique<double, 1> a { 2, 3, 1, 4, 8, 9 };
             tr.test_eq(6, a.size());
             tr.test_eq(1, a.rank());
             tr.test(std::equal(a.begin(), a.end(), checka));
-            ra::Unique<real, 1> b ({ 2, 3, 1, 4, 8, 9 });
+            ra::Unique<double, 1> b ({ 2, 3, 1, 4, 8, 9 });
             tr.test_eq(6, b.size());
             tr.test_eq(1, b.rank());
             tr.test(std::equal(b.begin(), b.end(), checka));
@@ -571,13 +570,13 @@ int main()
     tr.section("transpose of 0 rank");
     {
         {
-            ra::Unique<real, 0> a({}, 99);
+            ra::Unique<double, 0> a({}, 99);
             auto b = transpose(ra::Small<int, 0> {}, a);
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
         }
         {
-            ra::Unique<real, 0> a({}, 99);
+            ra::Unique<double, 0> a({}, 99);
             auto b = transpose<>(a);
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
@@ -585,7 +584,7 @@ int main()
     }
     tr.section("row-major assignment from initializer_list, rank 2");
     {
-        ra::Unique<real, 2> a({3, 2}, ra::unspecified);
+        ra::Unique<double, 2> a({3, 2}, ra::unspecified);
         a = { 2, 3, 1, 4, 8, 9 };
         tr.test_eq(2, a(0, 0));
         tr.test_eq(3, a(0, 1));
@@ -618,7 +617,7 @@ int main()
     }
     tr.section("row-major assignment from initializer_list, rank 1");
     {
-        ra::Owned<real, 1> a({5}, ra::unspecified);
+        ra::Owned<double, 1> a({5}, ra::unspecified);
         a = { 2, 3, 1, 4, 8 };
         tr.test_eq(2, a(0));
         tr.test_eq(3, a(1));
@@ -630,12 +629,12 @@ int main()
     {
         tr.section("View fixed rank == 0");
         {
-            real x = 99;
-            ra::View<real, 0> y(ra::Small<int, 0>{}, &x);
+            double x = 99;
+            ra::View<double, 0> y(ra::Small<int, 0>{}, &x);
             tr.test_eq(99, y());
             tr.test_eq(99, y);
-            real u = 77.;
-            ra::View<real, 0> v(ra::Small<int, 0>{}, &u);
+            double u = 77.;
+            ra::View<double, 0> v(ra::Small<int, 0>{}, &u);
             y = v;
             tr.test_eq(77, u);
             tr.test_eq(77, v);
@@ -644,12 +643,12 @@ int main()
         }
         tr.section("View fixed rank > 0");
         {
-            real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::View<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            double rpool[6] = { 1, 2, 3, 4, 5, 6 };
+            ra::View<double, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             cout << "org" << endl;
-            std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+            std::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             {
-                real rcheck[6] = { 1, 4, 2, 5, 3, 6 };
+                double rcheck[6] = { 1, 4, 2, 5, 3, 6 };
                 auto r0 = r();
                 tr.test(std::equal(r0.begin(), r0.end(), rcheck));
                 ra::Small<int, 0> i0 {};
@@ -665,7 +664,7 @@ int main()
                 tr.info("r0d: [", r0d, "]").test(std::equal(r0d.begin(), r0d.end(), rcheck));
             }
             {
-                real rcheck[2] = { 2, 5 };
+                double rcheck[2] = { 2, 5 };
                 auto r1 = r(1);
                 tr.test_eq(ra::ptr(rcheck), r1);
                 auto r1a = r.at(ra::Small<int, 1> {1});
@@ -678,10 +677,10 @@ int main()
                 tr.test_eq(ra::ptr(rcheck), r1d);
             }
             {
-                real rcheck[2] = { 5 };
+                double rcheck[2] = { 5 };
 
                 // Does r(1, 1) return rank 0, or a scalar directly?
-                // std::copy(r2.begin(), r2.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+                // std::copy(r2.begin(), r2.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
                 // tr.test(std::equal(r2.begin(), r2.end(), rcheck));
                 auto r2 = r(1, 1);
                 tr.test_eq(5, r2);
@@ -699,15 +698,15 @@ int main()
         // TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.
         tr.section("View fixed rank, unbeatable subscripts");
         {
-            ra::Unique<real, 1> a = {1, 2, 3, 4};
+            ra::Unique<double, 1> a = {1, 2, 3, 4};
             ra::Unique<int, 1> i = {3, 1, 2};
             cout << a(i) << endl;
-            ra::Unique<real, 1> ai = a(i);
+            ra::Unique<double, 1> ai = a(i);
             tr.test_eq(i.size(), ai.size());
             tr.test_eq(a[i[0]], ai[0]);
             tr.test_eq(a[i[1]], ai[1]);
             tr.test_eq(a[i[2]], ai[2]);
-            a(i) = ra::Unique<real, 1> {7, 8, 9};
+            a(i) = ra::Unique<double, 1> {7, 8, 9};
             cout << a << endl;
             tr.test_eq(4, a.size());
             tr.test_eq(1, a[0]);
@@ -717,68 +716,68 @@ int main()
         }
         tr.section("View var rank");
         {
-            real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::View<real> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            double rpool[6] = { 1, 2, 3, 4, 5, 6 };
+            ra::View<double> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             tr.test_eq(2, r.rank());
             cout << "org" << endl;
-            std::copy(r.begin(), r.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+            std::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
 
-            real rcheck0[6] = { 1, 4, 2, 5, 3, 6 };
+            double rcheck0[6] = { 1, 4, 2, 5, 3, 6 };
             auto r0 = r();
             auto r0a = r.at(ra::Small<int, 0> {});
             tr.test_eq(2, r0a.rank());
             tr.test_eq(2, r0.rank());
             cout << "r0" << endl;
-            std::copy(r0.begin(), r0.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+            std::copy(r0.begin(), r0.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             tr.test(std::equal(r0.begin(), r0.end(), rcheck0));
             tr.test(std::equal(r0a.begin(), r0a.end(), rcheck0));
 
-            real rcheck1[2] = { 2, 5 };
+            double rcheck1[2] = { 2, 5 };
             auto r1 = r(1);
             auto r1a = r.at(ra::Small<int, 1> {1});
             tr.test_eq(1, r1a.rank());
             tr.test_eq(1, r1.rank());
             cout << "r1" << endl;
-            std::copy(r1.begin(), r1.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+            std::copy(r1.begin(), r1.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             tr.test(std::equal(r1.begin(), r1.end(), rcheck1));
             tr.test(std::equal(r1a.begin(), r1a.end(), rcheck1));
 
-            real rcheck2[2] = { 5 };
+            double rcheck2[2] = { 5 };
             auto r2 = r(1, 1);
             auto r2a = r.at(ra::Small<int, 2> {1, 1});
             tr.test_eq(0, r2a.rank());
             cout << "r2" << endl;
-            std::copy(r2.begin(), r2.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+            std::copy(r2.begin(), r2.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             tr.test(std::equal(r2.begin(), r2.end(), rcheck2));
             tr.test(std::equal(r2a.begin(), r2a.end(), rcheck2));
         }
-// TODO Make sure that this is real & = 99, etc. and not View<real, 0> = 99, etc.
+// TODO Make sure that this is double & = 99, etc. and not View<double, 0> = 99, etc.
         tr.section("assign to rank-0 result of subscript");
         {
-            real check[6] = {99, 88, 77, 66, 55, 44};
-            ra::Unique<real> a({2, 3}, 11.);
+            double check[6] = {99, 88, 77, 66, 55, 44};
+            ra::Unique<double> a({2, 3}, 11.);
             a(0, 0) = 99; a(0, 1) = 88; a(0, 2) = 77;
             a(1, 0) = 66; a(1, 1) = 55; a(1, 2) = 44;
-            std::copy(a.begin(), a.end(), std::ostream_iterator<real>(cout, " ")); cout << endl;
+            std::copy(a.begin(), a.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             tr.test(std::equal(check, check+6, a.begin()));
         }
     }
     tr.section("construct from shape");
     {
-        ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+        ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
         std::iota(a.begin(), a.end(), 0);
-        auto sa = ra::ra_traits<ra::Unique<real>>::shape(a);
+        auto sa = ra::ra_traits<ra::Unique<double>>::shape(a);
         tr.test_eq(3, sa[0]);
         tr.test_eq(2, sa[1]);
         tr.test_eq(4, sa[2]);
-        real check[24];
+        double check[24];
         std::iota(check, check+24, 0);
         tr.test(std::equal(check, check+24, a.begin()));
     }
     tr.section("Var rank View from fixed rank View");
     {
-        ra::Unique<real, 3> a({3, 2, 4}, ra::unspecified);
-        ra::View<real> b(a);
+        ra::Unique<double, 3> a({3, 2, 4}, ra::unspecified);
+        ra::View<double> b(a);
         tr.test(a.data()==b.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
         tr.test_eq(a.rank(), b.rank());
         tr.test_eq(a.size(0), b.size(0));
@@ -790,77 +789,77 @@ int main()
     {
         tr.section("1");
         {
-            ra::Small<real, 3, 2> s { 1, 4, 2, 5, 3, 6 };
-            real check[6] = { 1, 4, 2, 5, 3, 6 };
+            ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
+            double check[6] = { 1, 4, 2, 5, 3, 6 };
             CheckArrayIO(tr, s, check);
         }
         tr.section("2");
         {
-            ra::Small<real, 3> s { 1, 4, 2 };
-            real check[3] = { 1, 4, 2 };
+            ra::Small<double, 3> s { 1, 4, 2 };
+            double check[3] = { 1, 4, 2 };
             CheckArrayIO(tr, s, check);
         }
         tr.section("3");
         {
-            ra::Small<real> s { 77 };
-            real check[1] = { 77 };
+            ra::Small<double> s { 77 };
+            double check[1] = { 77 };
             CheckArrayIO(tr, s, check);
         }
         tr.section("4. View<> can't allocate, so have no istream >>. Check output only.");
         {
-            real rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-            ra::View<real, 3> r { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
-            real check[11] = { 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
+            double rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+            ra::View<double, 3> r { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
+            double check[11] = { 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("5");
         {
-            real rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::View<real, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
-            real check[8] = { 3, 2, 1, 4, 2, 5, 3, 6 };
+            double rpool[6] = { 1, 2, 3, 4, 5, 6 };
+            ra::View<double, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            double check[8] = { 3, 2, 1, 4, 2, 5, 3, 6 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("6");
         {
-            real rpool[3] = { 1, 2, 3 };
-            ra::View<real, 1> r { {ra::Dim {3, 1}}, rpool };
-            real check[4] = { 3, 1, 2, 3 };
+            double rpool[3] = { 1, 2, 3 };
+            ra::View<double, 1> r { {ra::Dim {3, 1}}, rpool };
+            double check[4] = { 3, 1, 2, 3 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("7");
         {
-            real rpool[1] = { 88 };
-            ra::View<real, 0> r { {}, rpool };
-            real check[1] = { 88 };
+            double rpool[1] = { 88 };
+            ra::View<double, 0> r { {}, rpool };
+            double check[1] = { 88 };
             CheckArrayOutput(tr, r, check);
             tr.test_eq(1, r.size());
 // See note in (170).
-            // static_assert(sizeof(r)==sizeof(real *), "bad assumption");
+            // static_assert(sizeof(r)==sizeof(double *), "bad assumption");
             tr.test_eq(88, r);
         }
         tr.section("8");
         {
-            real rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-            ra::View<real> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
-            real check[12] = { 3, 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
+            double rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+            ra::View<double> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
+            double check[12] = { 3, 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, a, check);
 // default strides.
-            ra::View<real> b { {2, 2, 2}, rpool };
+            ra::View<double> b { {2, 2, 2}, rpool };
             CheckArrayOutput(tr, b, check);
         }
         tr.section("9");
         {
-            ra::Unique<real, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<double, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
-            real check[3+24] = { 3, 2, 4 };
+            double check[3+24] = { 3, 2, 4 };
             std::iota(check+3, check+3+24, 0);
             CheckArrayIO(tr, a, check);
         }
         tr.section("10");
         {
-            ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
-            real check[4+24] = { 3, 3, 2, 4 };
+            double check[4+24] = { 3, 3, 2, 4 };
             std::iota(check+4, check+4+24, 0);
             CheckArrayIO(tr, a, check);
         }
@@ -876,7 +875,7 @@ int main()
             cout << "s: " << s.c << endl;
         }
         {
-            ra::Unique<real> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
             std::iota(a.begin(), a.end(), 0);
             auto s = ra::scalar(a);
             cout << "s: " << s.c << endl;
@@ -927,13 +926,13 @@ int main()
     }
     tr.section("reverse array types");
     {
-        CheckReverse(tr, ra::Unique<real>({ 3, 2, 4 }, ra::unspecified));
-        CheckReverse(tr, ra::Unique<real, 3>({ 3, 2, 4 }, ra::unspecified));
+        CheckReverse(tr, ra::Unique<double>({ 3, 2, 4 }, ra::unspecified));
+        CheckReverse(tr, ra::Unique<double, 3>({ 3, 2, 4 }, ra::unspecified));
     }
     tr.section("transpose A");
     {
-        CheckTranspose1(tr, ra::Unique<real>({ 3, 2 }, ra::unspecified));
-        CheckTranspose1(tr, ra::Unique<real, 2>({ 3, 2 }, ra::unspecified));
+        CheckTranspose1(tr, ra::Unique<double>({ 3, 2 }, ra::unspecified));
+        CheckTranspose1(tr, ra::Unique<double, 2>({ 3, 2 }, ra::unspecified));
     }
     tr.section("transpose B");
     {
@@ -944,11 +943,11 @@ int main()
                 tr.test_eq(1, b[0]);
                 tr.test_eq(4, b[1]);
             };
-        ra::Unique<real> a({3, 2}, ra::_0*2 + ra::_1 + 1);
+        ra::Unique<double> a({3, 2}, ra::_0*2 + ra::_1 + 1);
         cout << "A: " << a << endl;
         transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, a)); // dyn rank to dyn rank
         transpose_test(transpose<0, 0>(a));                       // dyn rank to static rank
-        ra::Unique<real, 2> b({3, 2}, ra::_0*2 + ra::_1*1 + 1);
+        ra::Unique<double, 2> b({3, 2}, ra::_0*2 + ra::_1*1 + 1);
         transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
         transpose_test(transpose<0, 0>(b));                       // static rank to static rank
     }
@@ -961,10 +960,10 @@ int main()
                 tr.test_eq(1, b[0]);
                 tr.test_eq(5, b[1]);
             };
-        ra::Unique<real> a({2, 3}, ra::_0*3 + ra::_1 + 1);
+        ra::Unique<double> a({2, 3}, ra::_0*3 + ra::_1 + 1);
         transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, a)); // dyn rank to dyn rank
         transpose_test(transpose<0, 0>(a));                       // dyn rank to static rank
-        ra::Unique<real, 2> b({2, 3}, ra::_0*3 + ra::_1 + 1);
+        ra::Unique<double, 2> b({2, 3}, ra::_0*3 + ra::_1 + 1);
         transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
         transpose_test(transpose<0, 0>(b));                       // static rank to static rank
     }

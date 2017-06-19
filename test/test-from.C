@@ -28,7 +28,7 @@ using Vint = ra::Unique<int, 1>;
 int main()
 {
     TestRecorder tr(std::cout);
-    section("shortcuts");
+    tr.section("shortcuts");
     {
         auto check_selection_shortcuts = [&tr](auto && a)
             {
@@ -51,7 +51,7 @@ int main()
         check_selection_shortcuts(Ureal<2>({4, 4}, ra::_0-ra::_1));
         check_selection_shortcuts(Ureal<>({4, 4}, ra::_0-ra::_1));
     }
-    section("ra::Iota<int> or ra::Iota<ra::dim_t> are both beatable");
+    tr.section("ra::Iota<int> or ra::Iota<ra::dim_t> are both beatable");
     {
         Ureal<2> a({4, 4}, 0.);
         {
@@ -71,7 +71,7 @@ int main()
             tr.test_eq(1, b.dim[1].stride);
         }
     }
-    section("beatable multi-axis selectors, var size");
+    tr.section("beatable multi-axis selectors, var size");
     {
         static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
         ra::Owned<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
@@ -86,7 +86,7 @@ int main()
         tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
         tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
     }
-    section("beatable multi-axis selectors, fixed size");
+    tr.section("beatable multi-axis selectors, fixed size");
     {
         static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
         ra::Small<int, 2, 3, 4> a = ra::_0*100 + ra::_1*10 + ra::_2;
@@ -101,7 +101,7 @@ int main()
         tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
         tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
     }
-    section("newaxis, var size");
+    tr.section("newaxis, var size");
     {
         static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
         ra::Owned<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
@@ -115,7 +115,7 @@ int main()
         tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
         tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
     }
-    section("newaxis, var rank");
+    tr.section("newaxis, var rank");
     {
         static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
         ra::Owned<int> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
@@ -129,7 +129,7 @@ int main()
         tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
         tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
     }
-    section("unbeatable, 1D");
+    tr.section("unbeatable, 1D");
     {
         auto check_selection_unbeatable_1 = [&tr](auto && a)
             {
@@ -155,7 +155,7 @@ int main()
         check_selection_unbeatable_1(ra::Small<real, 4> {7, 9, 3, 4});
         check_selection_unbeatable_1(Ureal<>({4}, {7, 9, 3, 4}));
     }
-    section("unbeatable, 2D");
+    tr.section("unbeatable, 2D");
     {
         auto check_selection_unbeatable_2 = [&tr](auto && a)
             {
@@ -192,7 +192,7 @@ int main()
         check_selection_unbeatable_2(ra::Small<real, 2, 2>({1, 2, 3, 4}));
         check_selection_unbeatable_2(Ureal<>({2, 2}, {1, 2, 3, 4}));
     }
-    section("mixed scalar/unbeatable, 2D -> 1D");
+    tr.section("mixed scalar/unbeatable, 2D -> 1D");
     {
         auto check_selection_unbeatable_mixed = [&tr](auto && a)
             {
@@ -209,7 +209,7 @@ int main()
         check_selection_unbeatable_mixed(Ureal<2>({2, 2}, {1, 2, 3, 4}));
         check_selection_unbeatable_mixed(ra::Small<real, 2, 2>({1, 2, 3, 4}));
     }
-    section("mixed unbeatable/dots, 2D -> 2D (TODO)");
+    tr.section("mixed unbeatable/dots, 2D -> 2D (TODO)");
     {
         // auto check_selection_unbeatable_dots = [&tr](auto && a)
         //     {
@@ -223,11 +223,11 @@ int main()
         // check_selection_unbeatable_dots(Ureal<2>({2, 2}, {1, 2, 3, 4}));
         // check_selection_unbeatable_dots(ra::Small<real, 2, 2>({1, 2, 3, 4}));
     }
-    section("unbeatable, 3D & higher");
+    tr.section("unbeatable, 3D & higher");
     {
 // see src/test/bench-from.C for examples of higher-D.
     }
-    section("TensorIndex / where TODO elsewhere");
+    tr.section("TensorIndex / where TODO elsewhere");
     {
         Ureal<2> a({4, 4}, 1.);
         a(3, 3) = 7.;
@@ -235,7 +235,7 @@ int main()
         tr.test_eq(where(ra::_0==3 && ra::_1==3, 7., 1.), a);
     }
 // The implementation of from() uses FrameMatch / ApplyFrames and can't handle this yet.
-    section("TensorIndex<i> as subscript, using ra::Expr directly.");
+    tr.section("TensorIndex<i> as subscript, using ra::Expr directly.");
     {
         auto i = ra::_0;
         auto j = ra::_1;
@@ -245,7 +245,7 @@ int main()
         tr.test_eq(i-j, a);
         tr.test_eq(j-i, b);
     }
-    section("TensorIndex<i> as subscripts, 1 subscript TODO elsewhere");
+    tr.section("TensorIndex<i> as subscripts, 1 subscript TODO elsewhere");
     {
         Ureal<1> a {1, 4, 2, 3};
         Ureal<1> b({4}, 0.);
@@ -255,7 +255,7 @@ int main()
         b(3-ra::_0) = a;
         tr.test_eq(Ureal<1> {3, 2, 4, 1}, b);
     }
-    section("TODO TensorIndex<i> as subscripts, 2 subscript (case I)");
+    tr.section("TODO TensorIndex<i> as subscripts, 2 subscript (case I)");
     {
         Ureal<2> a({4, 4}, ra::_0-ra::_1);
         Ureal<2> b({4, 4}, -99.);
@@ -263,7 +263,7 @@ int main()
         cout << b << endl;
         // b = a(ra::_0, ra::_0);
     }
-    section("TODO TensorIndex<i> as subscripts, 2 subscript (case II)");
+    tr.section("TODO TensorIndex<i> as subscripts, 2 subscript (case II)");
     {
         Ureal<2> a({4, 4}, ra::_0-ra::_1);
         Ureal<2> b({4, 4}, 0.);
@@ -282,13 +282,13 @@ int main()
         // b = a(ra::_1, ra::_0);
     }
 // Small(Iota) isn't beaten because the the output type cannot depend on argument values. So we treat it as a common expr.
-    section("ra::Small(Iota)");
+    tr.section("ra::Small(Iota)");
     {
         ra::Small<real, 4> a = ra::_0;
         tr.test_eq(a(ra::iota(2, 1)), Ureal<1> { 1, 2 });
     }
 // Indirection operator using list of coordinates.
-    section("at() indirection");
+    tr.section("at() indirection");
     {
         ra::Owned<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
         using coord = ra::Small<int, 2>;

@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2016
+// (c) Daniel Llorens - 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -13,20 +13,17 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include <chrono>
-#include "ra/test.H"
 #include "ra/operators.H"
 #include "ra/io.H"
+#include "ra/test.H"
+#include "ra/bench.H"
 
 using std::cout; using std::endl; using std::flush;
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 using real = double;
 
 int nx = 1000;
 int ny = 1000;
-int ts = 20;
+int ts = 10;
 
 auto I = ra::iota(nx-2, 1);
 auto J = ra::iota(ny-2, 1);
@@ -47,16 +44,14 @@ struct f_raw
 {
     THEOP
     {
-        for (int t=0; t<ts; ++t) {
-            for (int i=1; i+1<nx; ++i) {
-                for (int j=1; j+1<ny; ++j) {
-                    Anext(i, j) = -4*A(i, j)
-                        + A(i+1, j) + A(i, j+1)
-                        + A(i-1, j) + A(i, j-1);
-                }
+        for (int i=1; i+1<nx; ++i) {
+            for (int j=1; j+1<ny; ++j) {
+                Anext(i, j) = -4*A(i, j)
+                    + A(i+1, j) + A(i, j+1)
+                    + A(i-1, j) + A(i, j-1);
             }
-            std::swap(A.p, Anext.p);
         }
+        std::swap(A.p, Anext.p);
     };
 };
 
@@ -65,12 +60,10 @@ struct f_slices
 {
     THEOP
     {
-        for (int t=0; t!=ts; ++t) {
-            Anext(I, J) = -4*A(I, J)
-                + A(I+1, J) + A(I, J+1)
-                + A(I-1, J) + A(I, J-1);
-            std::swap(A.p, Anext.p);
-        }
+        Anext(I, J) = -4*A(I, J)
+            + A(I+1, J) + A(I, J+1)
+            + A(I-1, J) + A(I, J-1);
+        std::swap(A.p, Anext.p);
     };
 };
 
@@ -79,14 +72,12 @@ struct f_stencil_explicit
 {
     THEOP
     {
-        for (int t=0; t!=ts; ++t) {
-            Astencil.p = A.data();
-            Anext(I, J) = map([](auto && A) { return -4*A(1, 1)
-                                              + A(2, 1) + A(1, 2)
-                                              + A(0, 1) + A(1, 0); },
-                iter<2>(Astencil));
-            std::swap(A.p, Anext.p);
-        }
+        Astencil.p = A.data();
+        Anext(I, J) = map([](auto && A) { return -4*A(1, 1)
+                    + A(2, 1) + A(1, 2)
+                    + A(0, 1) + A(1, 0); },
+            iter<2>(Astencil));
+        std::swap(A.p, Anext.p);
     };
 };
 
@@ -95,11 +86,9 @@ struct f_stencil_arrayop
 {
     THEOP
     {
-        for (int t=0; t!=ts; ++t) {
-            Astencil.p = A.data();
-            Anext(I, J) = map([](auto && s) { return sum(s*mask); }, iter<2>(Astencil));
-            std::swap(A.p, Anext.p);
-        }
+        Astencil.p = A.data();
+        Anext(I, J) = map([](auto && s) { return sum(s*mask); }, iter<2>(Astencil));
+        std::swap(A.p, Anext.p);
     };
 };
 
@@ -108,12 +97,10 @@ struct f_sumprod
 {
     THEOP
     {
-        for (int t=0; t!=ts; ++t) {
-            Astencil.p = A.data();
-            Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
-            Anext(I, J) += map(ra::wrank<2, 2>(ra::times()), Astencil, mask);
-            std::swap(A.p, Anext.p);
-        }
+        Astencil.p = A.data();
+        Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
+        Anext(I, J) += map(ra::wrank<2, 2>(ra::times()), Astencil, mask);
+        std::swap(A.p, Anext.p);
     };
 };
 
@@ -122,12 +109,10 @@ struct f_sumprod2
 {
     THEOP
     {
-        for (int t=0; t!=ts; ++t) {
-            Astencil.p = A.data();
-            Anext(I, J) = 0;
-            plyf(map(ra::wrank<0, 2, 2>([](auto && A, auto && B, auto && C) { A += B*C; }), Anext(I, J), Astencil, mask));
-            std::swap(A.p, Anext.p);
-        }
+        Astencil.p = A.data();
+        Anext(I, J) = 0;
+        plyf(map(ra::wrank<0, 2, 2>([](auto && A, auto && B, auto && C) { A += B*C; }), Anext(I, J), Astencil, mask));
+        std::swap(A.p, Anext.p);
     };
 };
 
@@ -140,16 +125,16 @@ int main()
 
     auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f)
         {
-            A = value;
-            Anext = 0.;
-
-            time_unit dt(0);
-            auto t0 = now();
-            f(A, Anext, Astencil);
-            dt += std::chrono::duration_cast<time_unit>(now()-t0);
-
-            tr.info(std::setw(10), std::fixed, dt.count()/(double(A.size())*ts), " ", tunit, " ", tag)
-              .test_rel_error(ref, A, 1e-11);
+            auto bv = Benchmark().repeats(ts).runs(3)
+                .once_f([&](auto && repeat)
+                        {
+                            Anext = 0.;
+                            A = value;
+                            repeat([&]() { f(A, Anext, Astencil); });
+                        });
+            tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/A.size()/1e-9, " ns [",
+                    Benchmark::stddev(bv)/A.size()/1e-9 ,"] ", tag)
+                .skip().test_rel_error(ref, A, 1e-10);
         };
 
     ra::Owned<real, 2> Aref;

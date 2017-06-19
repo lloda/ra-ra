@@ -31,7 +31,7 @@ template <int rank=ra::RANK_ANY> using Uint = ra::Unique<int, rank>;
 int main()
 {
     TestRecorder tr(std::cout);
-//     section("gcc 6.1 A");
+//     tr.section("gcc 6.1 A");
 //     {
 // // Both must be lvalues; TODO test that these fail.
 //         ra::Unique<int, 1> a { 0, 0, 0, 0 };
@@ -39,21 +39,21 @@ int main()
 //         where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
 //         where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
 //     }
-    section("gcc 6.1 B");
+    tr.section("gcc 6.1 B");
     {
         Ureal<1> a {1, 4, 2, 3};
         Ureal<1> b({4}, 0.);
         b(3-ra::_0) = a;
         tr.test_eq(Ureal<1> {3, 2, 4, 1}, b);
     }
-    section("gcc 6.1 C");
+    tr.section("gcc 6.1 C");
     {
         Ureal<1> a = {1, 2, 3, 4};
         Uint<1> i = {3, 1, 2};
         a(i) = ra::Unique<real, 1> {7, 8, 9};
         tr.test_eq(a, Ureal<1> {1, 8, 9, 7});
     }
-    section("gcc 6.1 D");
+    tr.section("gcc 6.1 D");
     {
         ra::Owned<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
         using coord = ra::Small<int, 2>;

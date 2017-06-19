@@ -31,7 +31,7 @@ int main()
         cout << "B: " << B << "\n\n";
         cout << "C: " << C << "\n\n";
     }
-    section("storage");
+    tr.section("storage");
 // Memory-owning types and views. You can make array views over any piece of memory.
     {
         // memory-owning types
@@ -55,7 +55,7 @@ int main()
         cout << "D3: " << D3 << "\n\n";
         cout << "D4: " << D4 << "\n\n";
     }
-    section("shape agreement");
+    tr.section("shape agreement");
 // Shape agreement rules and rank extension (broadcasting) for rank-0 operations of any arity
 // and operands of any rank, any of which can a reference (so you can write on them). These
 // rules are taken from the array language, J.
@@ -72,7 +72,7 @@ int main()
         D += A * B;  // D(i) += A(i, j) * C(i)
         cout << "D: " << D << "\n\n";
     }
-    section("rank iterators");
+    tr.section("rank iterators");
 // Iterators over cells of arbitrary rank.
     {
         ra::TensorIndex<0> i;

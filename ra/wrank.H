@@ -338,6 +338,13 @@ struct from_partial<II, drop, std::enable_if_t<drop==mp::len<II>>>
     }
 };
 
+// FIXME the general case fails in from_partial.
+template <class A> inline constexpr
+auto from(A && a)
+{
+    return a();
+}
+
 // Support dynamic rank for 1 arg only (see test in test-from.C).
 template <class A, class I0> inline constexpr
 auto from(A && a, I0 && i0)

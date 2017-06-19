@@ -82,14 +82,14 @@ int main()
                 tr.test_eq(-x, p[2]);
             }
         };
-    section("vs, small");
+    tr.section("vs, small");
     {
         test(ra::Small<real, 3>(), 2);
         test(ra::Small<real, 3>(), 3);
         test(ra::Small<real, 3>(), 4);
     }
+    tr.section("vs, large");
     {
-        section("vs, large");
         test(ra::Owned<real, 1>(), 2);
         test(ra::Owned<real, 1>(), 3);
         test(ra::Owned<real, 1>(), 4);

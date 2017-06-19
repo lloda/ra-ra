@@ -76,7 +76,7 @@ int main()
         TEST_PREDICATES(int *)
             (false, false, false, false, false);
     }
-    section("establish meaning of selectors (TODO / convert to TestRecorder)");
+    tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {
         static_assert(ra::is_slice<ra::View<int, 0>>);
         static_assert(ra::is_slice<ra::View<int, 2>>);
@@ -118,8 +118,7 @@ int main()
         static_assert(ra::is_ra_pos_rank<ra::Expr<ra::plus, std::tuple<ra::TensorIndex<0, int>, ra::Scalar<int> > > >, "bad");
         static_assert(ra::is_ra_pos_rank<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
-// builtin arrays
-    section("builtin arrays");
+    tr.section("builtin arrays");
     {
         int const a[] = {1, 2, 3};
         int b[] = {1, 2, 3};

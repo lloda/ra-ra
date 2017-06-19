@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011
+// (c) Daniel Llorens - 2011, 2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -11,198 +11,151 @@
 
 #include <iostream>
 #include <iomanip>
-#include <chrono>
 #include "ra/large.H"
 #include "ra/small.H"
 #include "ra/operators.H"
 #include "ra/real.H"
+#include "ra/test.H"
+#include "ra/bench.H"
 
 using std::cout; using std::endl; using std::setw; using std::setprecision;
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 using real = double;
 using real4 = ra::Small<real, 4>;
 
-int const N = 2000000;
+int const N = 500000;
 ra::Small<ra::dim_t, 1> S1 { 24*24 };
 ra::Small<ra::dim_t, 2> S2 { 24, 24 };
 ra::Small<ra::dim_t, 3> S3 { 8, 8, 9 };
 
-template <class T>
-void report(std::ostream & o, std::string const & type,
-            std::string const & method, time_unit dt, T const & val)
-{
-    o << setw(20) << type << setw(20) << method
-      << " time " << setprecision(4) << setw(6) << double(dt.count())/N
-      << " val " << val << endl;
-}
+TestRecorder tr(std::cout);
+real y;
 
-template <class A, class B>
-void by_expr(std::string const & s, A const & a, B const & b)
+template <class BV>
+void report(int size, BV const & bv)
 {
-    auto t0 = now();
-    real x(0.);
-    for (int i=0; i<N; ++i) {
-        x += reduce_sqrm(a-b);
-    }
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    report(cout, s, "expr", dt, x);
-}
-
-// sqrm+reduction in one op.
-template <class A, class B>
-void by_traversal(std::string const & s, A const & a, B const & b)
-{
-    auto t0 = now();
-    real x(0.);
-    for (int i=0; i<N; ++i) {
-        real y(0.);
-        ra::ply(ra::expr([&y](real const a, real const b) { y += sqrm(a, b); },
-                         ra::start(a), ra::start(b)));
-        x += y;
-    }
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    report(cout, s, "ply nested 1", dt, x);
-}
-
-// separate reduction: compare abstraction penalty with by_traversal.
-template <class A, class B>
-void by_traversal2(std::string const & s, A const & a, B const & b)
-{
-    auto t0 = now();
-    real x(0.);
-    for (int i=0; i<N; ++i) {
-        real y(0.);
-        ra::ply(ra::expr([&y](real const a) { y += a; },
-                         ra::expr([](real const a, real const b) { return sqrm(a, b); },
-                                  ra::start(a), ra::start(b))));
-        x += y;
-    }
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    report(cout, s, "ply nested 2", dt, x);
-}
-
-template <class A, class B>
-std::enable_if_t<A::rank()==1, void>
-by_raw(std::string const & s, A const & a, B const & b)
-{
-    auto t0 = now();
-    real x(0.);
-    for (int i=0; i<N; ++i) {
-        real y(0.);
-        for (int j=0; j<S1[0]; ++j) {
-            y += sqrm(a(j)-b(j));
-        }
-        x += y;
-    }
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    report(cout, s, "raw", dt, x);
-}
-
-template <class A, class B>
-std::enable_if_t<A::rank()==2, void>
-by_raw(std::string const & s, A const & a, B const & b)
-{
-    auto t0 = now();
-    real x(0.);
-    for (int i=0; i<N; ++i) {
-        real y(0.);
-        for (int j=0; j<S2[0]; ++j) {
-            for (int k=0; k<S2[1]; ++k) {
-                y += sqrm(a(j, k)-b(j, k));
-            }
-        }
-        x += y;
-    }
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    report(cout, s, "raw", dt, x);
-}
-
-template <class A, class B>
-std::enable_if_t<A::rank()==3, void>
-by_raw(std::string const & s, A const & a, B const & b)
-{
-    auto t0 = now();
-    real x(0.);
-    for (int i=0; i<N; ++i) {
-        real y(0.);
-        for (int j=0; j<S3[0]; ++j) {
-            for (int k=0; k<S3[1]; ++k) {
-                for (int l=0; l<S3[2]; ++l) {
-                    y += sqrm(a(j, k, l)-b(j, k, l));
-                }
-            }
-        }
-        x += y;
-    }
-    time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-    report(cout, s, "raw", dt, x);
+    tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/size/1e-9, " ns [", Benchmark::stddev(bv)/size/1e-9 ,"] ", bv.name)
+        .test_eq(prod(S1)*N*4*4, y);
 }
 
 int main()
 {
-    {
-        real4 A(7.);
-        real4 B(3.);
-        auto t0 = now();
-        real x(0.);
-        for (int i=0; i<N*S1[0]/4; ++i) {
-            real y(0.);
-            for (int j=0; j!=4; ++j) {
-                y += sqrm(A(j)-B(j));
-            }
-            x += y;
-        }
-        time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-        report(cout, "real4", "raw", dt, x);
-    }
-    {
-        real4 A(7.);
-        real4 B(3.);
-        auto t0 = now();
-        real x(0.);
-        for (int i=0; i<N*S1[0]/4; ++i) {
-            x += reduce_sqrm(A-B);
-        }
-        time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-        report(cout, "real4", "expr", dt, x);
-    }
+    Benchmark bm = Benchmark().runs(3);
+    report(4,
+           bm.name("real4 raw").repeats(N*prod(S1)/4)
+           .run_f([&](auto && repeat)
+                  {
+                      real4 A(7.), B(3.);
+                      y = 0.;
+                      repeat([&]()
+                             {
+                                 for (int j=0; j!=4; ++j) {
+                                     y += sqrm(A(j)-B(j));
+                                 }
+                             });
+                  }));
+    report(4,
+           bm.name("real4 expr").repeats(N*prod(S1)/4)
+           .run_f([&](auto && repeat)
+                  {
+                      real4 A(7.), B(3.);
+                      y = 0.;
+                      repeat([&]()
+                             {
+                                 y += reduce_sqrm(A-B);
+                             });
+                  }));
+    report(prod(S1),
+           bm.name("C array raw").repeats(N)
+           .run_f([&](auto && repeat)
+                  {
+                      ra::Unique<real, 1> A(S1, 7.);
+                      ra::Unique<real, 1> B(S1, 3.);
+                      y = 0.;
+                      repeat([&]()
+                             {
+                                 real const * a = A.data();
+                                 real const * b = B.data();
+                                 for (int j=0; j<S1[0]; ++j) {
+                                     y += sqrm(a[j]-b[j]);
+                                 }
+                             });
+                  }));
+// sqrm+reduction in one op.
+    auto traversal = [&](auto && repeat, auto const & a, auto const & b)
+                     {
+                         y = 0.;
+                         repeat([&]()
+                                {
+                                    for_each([&](real const a, real const b) { y += sqrm(a, b); }, a, b);
+                                });
+                     };
+// separate reduction: compare abstraction penalty with by_traversal.
+    auto traversal2 = [&](auto && repeat, auto const & a, auto const & b)
+                      {
+                          y = 0.;
+                          repeat([&]()
+                                 {
+                                     for_each([&](real const a) { y += a; },
+                                              map([](real const a, real const b) { return sqrm(a, b); },
+                                                  a, b));
+                                 });
+                      };
     {
         ra::Unique<real, 1> A(S1, 7.);
         ra::Unique<real, 1> B(S1, 3.);
-        auto t0 = now();
-        real x(0.);
-        for (int i=0; i<N; ++i) {
-            real y(0.);
-            real const * a = &A[0];
-            real const * b = &B[0];
-            for (int j=0; j<S1[0]; ++j) {
-                y += sqrm(a[j]-b[j]);
-            }
-            x += y;
-        }
-        time_unit dt = std::chrono::duration_cast<time_unit>(now()-t0);
-        report(cout, "C array", "raw", dt, x);
-    }
-    {
-        ra::Unique<real, 1> A(S1, 7.);
-        ra::Unique<real, 1> B(S1, 3.);
-        by_traversal("ra::Unique<1>", A, B);
-        by_traversal2("ra::Unique<1>", A, B);
+        report(prod(S1), bm.name("ra::Unique<1> ply nested 1").repeats(N).once_f(traversal, A, B));
+        report(prod(S1), bm.name("ra::Unique<1> ply nested 2").repeats(N).once_f(traversal2, A, B));
+        report(prod(S1), bm.name("ra::Unique<1> raw").repeats(N)
+               .once_f([&](auto && repeat)
+                       {
+                           y = 0.;
+                           repeat([&]()
+                                  {
+                                      for (int j=0; j<S1[0]; ++j) {
+                                          y += sqrm(A(j)-B(j));
+                                      }
+                                  });
+                       }));
     }
     {
         ra::Unique<real, 2> A(S2, 7.);
         ra::Unique<real, 2> B(S2, 3.);
-        by_traversal("ra::Unique<2>", A, B);
-        by_traversal2("ra::Unique<2>", A, B);
+        report(prod(S2), bm.name("ra::Unique<2> ply nested 1").repeats(N).once_f(traversal, A, B));
+        report(prod(S2), bm.name("ra::Unique<2> ply nested 2").repeats(N).once_f(traversal2, A, B));
+        report(prod(S2), bm.name("ra::Unique<2> raw").repeats(N)
+               .once_f([&](auto && repeat)
+                       {
+                         y = 0.;
+                         repeat([&]()
+                                {
+                                    for (int j=0; j<S2[0]; ++j) {
+                                        for (int k=0; k<S2[1]; ++k) {
+                                            y += sqrm(A(j, k)-B(j, k));
+                                        }
+                                    }
+                                });
+                     }));
     }
     {
         ra::Unique<real, 3> A(S3, 7.);
         ra::Unique<real, 3> B(S3, 3.);
-        by_traversal("ra::Unique<3>", A, B);
-        by_traversal2("ra::Unique<3>", A, B);
+        report(prod(S3), bm.name("ra::Unique<3> ply nested 1").repeats(N).once_f(traversal, A, B));
+        report(prod(S3), bm.name("ra::Unique<3> ply nested 2").repeats(N).once_f(traversal2, A, B));
+        report(prod(S3), bm.name("ra::Unique<3> raw").repeats(N)
+               .once_f([&](auto && repeat)
+                       {
+                           y = 0.;
+                           repeat([&]()
+                                  {
+                                      for (int j=0; j<S3[0]; ++j) {
+                                          for (int k=0; k<S3[1]; ++k) {
+                                              for (int l=0; l<S3[2]; ++l) {
+                                                  y += sqrm(A(j, k, l)-B(j, k, l));
+                                              }
+                                          }
+                                      }
+                                  });
+                       }));
     }
-    cout << "ok\n" << endl;
-    return 0;
+    return tr.summary();
 }

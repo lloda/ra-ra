@@ -230,7 +230,7 @@ inline auto amax(A && a)
 template <class A>
 inline auto sum(A && a)
 {
-    value_t<A> c(0.);
+    value_t<A> c {};
     for_each([&c](auto && a) { c += a; }, a);
     return c;
 }

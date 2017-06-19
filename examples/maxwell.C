@@ -10,23 +10,19 @@
 // Maxwell -- 4-vector potential vacuum field equations
 
 #include <iostream>
-#include <chrono>
 #include <thread>
 #include <string>
 #include "ra/test.H"
 #include "ra/io.H"
 #include "ra/operators.H"
 #include "ra/format.H"
+#include "ra/bench.H"
 
 using real = double;
 template <class T, int rank> using array = ra::Owned<T, rank>;
 using ra::iota;
 auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
-
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 
 using std::cout; using std::endl;
 
@@ -45,7 +41,7 @@ int main()
     A(0, H, H, H, 2) = -cos(iota(n)*(2*PI/n))/(2*PI/n);
     A(1, H, H, H, 2) = -cos((iota(n)-delta)*(2*PI/n))/(2*PI/n);
 
-    auto t0 = now();
+    auto t0 = Benchmark::clock::now();
 // FIXME this is painful without a roll operator, but a roll operator that creates a temp is unacceptable.
     for (int t=1; t+1<o; ++t) {
 // X←(1⌽[0]A[T;;;;])+(1⌽[1]A[T;;;;])+(1⌽[2]A[T;;;;])
@@ -65,7 +61,7 @@ int main()
 
         A(t+1) = X + Y - A(t-1) - 4*A(t);
     }
-    time_unit time_A = now()-t0;
+    auto time_A = Benchmark::clock::now()-t0;
 
 // FIXME should try to traverse the array once, e.g. explode() = pack(...). The need to wrap around boundaries complicates this greatly.
     auto diff = [&DA, &A, &delta](auto k_)
@@ -79,12 +75,12 @@ int main()
             }
         };
 
-    t0 = now();
+    t0 = Benchmark::clock::now();
     diff(mp::int_t<0>());
     diff(mp::int_t<1>());
     diff(mp::int_t<2>());
     diff(mp::int_t<3>());
-    time_unit time_DA = now()-t0;
+    auto time_DA = Benchmark::clock::now()-t0;
 
     F = ra::transpose<0, 1, 2, 3, 5, 4>(DA) - DA;
 
@@ -111,8 +107,8 @@ int main()
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         cout << endl;
     }
-    cout << int(time_A.count()/double(divA.size())) << " " << tunit << " time_A" << endl;
-    cout << int(time_DA.count()/double(divA.size())) << " " << tunit << " time_DA" << endl;
+    cout << Benchmark::toseconds(time_A)/1e-6 << " μs time_A" << endl;
+    cout << Benchmark::toseconds(time_DA)/1e-6 << " μs time_DA" << endl;
 
     return tr.summary();
 }

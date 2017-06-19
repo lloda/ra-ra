@@ -27,7 +27,7 @@ namespace ra {
 
 // Register our type as a scalar with ra:: . This isn't needed to have
 // containers of Dual<>, only to use Dual<>s by themselves as expr terms.
-template <class T> constexpr bool is_scalar_def<Dual<T> > = true;
+template <class T> constexpr bool is_scalar_def<Dual<T>> = true;
 
 } // namespace ra
 
@@ -97,16 +97,16 @@ int main()
         testn<case5>(tr, "case5", x);           \
         testn<case6>(tr, "case6", x);           \
     }
-    section("args are arrays of real");
+    tr.section("args are arrays of real");
     TESTER(test1, ra::Owned<real>({10}, (ra::_0 + 1) * .1));
-    section("args are arrays of complex");
+    tr.section("args are arrays of complex");
     TESTER(test1, ra::Owned<complex>({10}, (ra::_0 + 1) * .1 + complex(0, 1)));
-    section("args are arrays of Dual<real>");
+    tr.section("args are arrays of Dual<real>");
     TESTER(test2, ra::Owned<Dual<real> >({10}, map([](auto x) { return dual(x, 1.); }, (ra::_0 + 1) * .1)));
-    section("requires is_scalar registration");
+    tr.section("requires is_scalar registration");
     TESTER(test2, Dual<real>(1., 1.));
 #undef TESTER
-    section("using ra:: operators on arrays of Dual<real>");
+    tr.section("using ra:: operators on arrays of Dual<real>");
     {
         auto test3 = [](TestRecorder & tr, std::string const & info, auto && d, real const rspec=2e-15)
             {
@@ -122,7 +122,7 @@ int main()
         test3(tr, "Dual<real>",
               ra::Owned<Dual<real> >({10}, map([](auto x) { return dual(x, 1.); }, (ra::_0 + 1) * .1)));
     }
-    section("TODO define ra:: operators for .re and .du, as real_part(), imag_part() do");
+    tr.section("TODO define ra:: operators for .re and .du, as real_part(), imag_part() do");
     {
 
     }

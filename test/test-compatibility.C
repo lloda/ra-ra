@@ -21,9 +21,9 @@ using std::cout; using std::endl; using std::flush;
 int main()
 {
     TestRecorder tr;
-    section("Tests for std:: types");
+    tr.section("Tests for std:: types");
     {
-        section("ra::start() on vector types");
+        tr.section("ra::start() on vector types");
         {
             auto ref = std::array<int, 4> {{12, 77, 44, 1}};
             tr.test_eq(2, expr([](int i) { return i; },
@@ -43,7 +43,7 @@ int main()
 // Fix could be to make start(is_iterator) true forward, but that doesn't work for Iota, etc. (see test-optimize.C).
             // tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
         }
-        section("frame match ra::start on 1st axis");
+        tr.section("frame match ra::start on 1st axis");
         {
             std::vector<int> const a = { 1, 2, 3 };
             ra::Owned<int, 2> b ({3, 2}, ra::start(a));
@@ -53,7 +53,7 @@ int main()
          }
 // TODO actually whether unroll is avoided depends on ply, have a way to require it.
 // Cf [tr0-01] in test-ra-0.C.
-        section("[trc01] frame match ra::start on 1st axis, forbid unroll");
+        tr.section("[trc01] frame match ra::start on 1st axis, forbid unroll");
         {
             std::vector<int> const a = { 1, 2, 3 };
             ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
@@ -62,7 +62,7 @@ int main()
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
         }
-        section("frame match ra::start on some axis other than 1st");
+        tr.section("frame match ra::start on some axis other than 1st");
         {
             {
                 ra::Owned<int, 1> const a = { 10, 20, 30 };
@@ -77,20 +77,20 @@ int main()
                 tr.test_eq(ra::Owned<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
         }
-        section("= operators on ra::start");
+        tr.section("= operators on ra::start");
         {
             std::vector<int> a { 1, 2, 3 };
             ra::start(a) *= 3;
             tr.test_eq(ra::start(std::vector<int> { 3, 6, 9 }), ra::start(a));
         }
-        section("automatic conversion of foreign vectors in mixed ops");
+        tr.section("automatic conversion of foreign vectors in mixed ops");
         {
             std::vector<int> a { 1, 2, 3 };
             ra::Owned<int, 1> b { 10, 20, 30 };
             tr.test_eq(ra::start({11, 22, 33}), a+b);
         }
     }
-    section("builtin arrays as foreign arrays");
+    tr.section("builtin arrays as foreign arrays");
     {
         int const a[] = {1, 2, 3};
         tr.info("builtin array is enough to drive").test_eq(ra::start({1, 3, 5}), (ra::_0 + a));
@@ -100,13 +100,13 @@ int main()
         tr.info("builtin array handles 4 dimensions").test_eq(ra::Small<int, 2, 2, 2, 2>(ra::_0*8 + ra::_1*4 + ra::_2*2 + ra::_3), c);
         // ra::start(c) = 99; // FIXME test that this fails at ct.
     }
-    section("operators take foreign types");
+    tr.section("operators take foreign types");
     {
         std::vector<int> x = {1, 2, 3};
         tr.test_eq(6, sum(ra::start(x)));
         tr.test_eq(6, ra::sum(x));
     }
-    section("spot use of scalar");
+    tr.section("spot use of scalar");
     {
         struct W { int x; };
         ra::Owned<W, 1> w = { {1}, {2} };
@@ -139,7 +139,7 @@ int main()
                       mp::int_list<2, 2>>::value);
         static_assert(std::rank<decltype(r)>::value==2);
     }
-    section("example from the manual [ma106]");
+    tr.section("example from the manual [ma106]");
     {
         int p[] = {1, 2, 3};
         int * z = p;

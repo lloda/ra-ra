@@ -59,7 +59,7 @@ int main()
 
     TestRecorder tr;
 
-    section("Unique");
+    tr.section("Unique");
     {
         ra::Unique<real, 1> o({5}, 11.);
         tr.test(o.store!=nullptr);
@@ -78,7 +78,7 @@ int main()
             tr.test(std::equal(check11, check11+5, q.begin())); // was moved
         }
     }
-    section("Owned");
+    tr.section("Owned");
     {
         ra::Owned<real, 1> o({5}, 11.);
         ra::Owned<real, 1> z(o);
@@ -126,7 +126,7 @@ int main()
             tr.test(std::equal(check11, check11+5, c.begin())); // was moved
         }
     }
-    section("Shared");
+    tr.section("Shared");
     {
         ra::Shared<real, 1> o({5}, 11.);
         ra::Shared<real, 1> z(o);
@@ -142,7 +142,7 @@ int main()
         tr.test(p.data()==c.data());
     }
     // The use of deleters allows Shared to work like View storage wise.
-    section("Shared with borrowed data");
+    tr.section("Shared with borrowed data");
     {
         ra::Shared<real, 1> o({5}, 11.);
         {

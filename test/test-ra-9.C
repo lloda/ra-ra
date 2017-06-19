@@ -26,14 +26,14 @@ using int1 = ra::Small<int, 1>;
 int main()
 {
     TestRecorder tr(std::cout);
-    section("regression [ra21]");
+    tr.section("regression [ra21]");
     {
         ra::Owned<int2, 1> b { {1, 10}, {2, 20}, {3, 30} };
         b += ra::scalar(int2 { 1, 0 });
         tr.test_eq(ra::Owned<int2, 1> { {2, 10}, {3, 20}, {4, 30} }, b);
         ra::Owned<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };
     }
-    section("regression [ra22]");
+    tr.section("regression [ra22]");
     {
         ra::Owned<int2, 1> b { {0, 10}, {0, 20}, {0, 30} };
         ra::Owned<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };
@@ -41,7 +41,7 @@ int main()
         b = c + ra::scalar(int2 { 1, 0 });
         tr.test_eq(ra::Owned<int2, 1> { {2, 0}, {3, 0}, {4, 0} }, b);
     }
-    section("regression [ra24]");
+    tr.section("regression [ra24]");
     {
         {
             tr.test_eq(int1{91}, ra::scalar(int1{88}) + ra::scalar(int1{3}));
@@ -62,17 +62,17 @@ int main()
             tr.test_eq(int1{91}, ra::scalar(a)+ra::scalar(b));
         }
     }
-    section("regression [ra25]");
+    tr.section("regression [ra25]");
     {
         ra::Owned<int1, 1> c { {7}, {8} };
         tr.test_eq(ra::scalar("2\n8 9"), ra::scalar(format(c+1)));
     }
-    section("regression [ra26]"); // This uses Scalar.at().
+    tr.section("regression [ra26]"); // This uses Scalar.at().
     {
         ra::Owned<int1, 1> c { {7}, {8} };
         tr.test_eq(ra::scalar("2\n8 9"), ra::scalar(format(c+ra::scalar(int1{1}))));
     }
-    section("regression [ra23]");
+    tr.section("regression [ra23]");
     {
 // This is just to show that it works the same way with 'scalar' = int as with 'scalar' = int2.
         int x = 2;

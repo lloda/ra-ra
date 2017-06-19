@@ -14,6 +14,7 @@
 #include "ra/io.H"
 #include "ra/test.H"
 
+// TODO using w/list after gcc 7.2 (P0028R4)
 using std::cout; using std::endl; using std::flush;
 using fun::Wedge; using fun::hodge; using fun::hodgex;
 using namespace mp;
@@ -46,7 +47,7 @@ std::enable_if_t<(O>N)> test_optimized_hodge_aux(TestRecorder & tr) {}
 template <int N, int O>
 std::enable_if_t<(O<=N)> test_optimized_hodge_aux(TestRecorder & tr)
 {
-    section(format("hodge() vs hodgex() with N=", N, " O=", O));
+    tr.section(format("hodge() vs hodgex() with N=", N, " O=", O));
     static_assert(N>=O, "bad_N_or_bad_O");
     using Va = vec<real, fun::Wedge<N, O, N-O>::Na>;
     using Vb = vec<real, fun::Wedge<N, O, N-O>::Nb>;
@@ -135,7 +136,7 @@ int main()
     TestRecorder tr(std::cout);
 // gcc let a bug pass by https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57891. Cf http://stackoverflow.com/a/24346350.
 // TODO We weren't getting the proper diagnostic from clang, probably due to disable_if doing !(integer).
-    section("MatchPermutationP");
+    tr.section("MatchPermutationP");
     {
         using thematch = MatchPermutationP< int_list<1, 0> >::type<int_list<0, 1> >;
         cout << "A... " << (thematch::value) << endl;
@@ -143,7 +144,7 @@ int main()
         cout << "B... " << index_if::value << endl;
         static_assert(index_if::value==0, "bad MatchPermutationP");
     }
-    section("Testing FindCombination");
+    tr.section("Testing FindCombination");
     {
         using la = Iota<3>::type;
         using ca = Combinations<la, 2>::type;
@@ -159,7 +160,7 @@ int main()
         FindCombinationTester<int_list<3, 0>, ca, -1,  0>::check();
     }
 
-    section("Testing AntiCombination");
+    tr.section("Testing AntiCombination");
     {
         using la = Iota<3>::type;
         using ca = Combinations<la, 1>::type;
@@ -171,7 +172,7 @@ int main()
         static_assert(check_idx<cc2, 0, 1>::value, "bad");
     }
 
-    section("Testing ChooseComponents");
+    tr.section("Testing ChooseComponents");
     {
         using c1 = ChooseComponents<3, 1>::type;
         static_assert(len<c1> == 3, "bad");
@@ -196,7 +197,7 @@ int main()
         static_assert(check_idx<Ref<c1, 0>::type, 0>::value, "bad");
     }
 
-    section("Testing Wedge<>::product()");
+    tr.section("Testing Wedge<>::product()");
     {
         real1 a(1);
         real1 b(3);
@@ -207,7 +208,7 @@ int main()
         hodgex<1, 0>(r, h);
         tr.info("thodge-star: ", h).test_eq(3, h[0]);
     }
-    section("change order changes sign");
+    tr.section("change order changes sign");
     {
         real3 a{1, 0, 0};
         real3 b{0, 1, 0};
@@ -228,7 +229,7 @@ int main()
         hodgex<3, 2>(r, h);
         tr.info("hodge-star: ", h).test_eq(real3{0, 0, -1}, h);
     }
-    section("check type promotion");
+    tr.section("check type promotion");
     {
         complex3 a{complex(0, 1), 0, 0};
         real3 b{0, 1, 0};
@@ -239,7 +240,7 @@ int main()
         hodgex<3, 2>(r, h);
         tr.info("hodge-star: ", h).test_eq(complex3{0, 0, complex(0, 1)}, h);
     }
-    section("sign change in going from lexicographic -> our peculiar order");
+    tr.section("sign change in going from lexicographic -> our peculiar order");
     {
         real3 a{1, 0, 0};
         real3 b{0, 0, 2};
@@ -302,7 +303,7 @@ int main()
         hodgex<4, 2>(r, h);
         tr.info("r: ", r, " -> hodge-star: ", h).test_eq(real6{0, 0, 0, 0, 0, 1}, h);
     }
-    section("important as a case where a^b==b^a");
+    tr.section("important as a case where a^b==b^a");
     {
         real6 a{1, 0, 0, 0, 0, 0};
         real6 b{0, 0, 0, 0, 0, 1};
@@ -312,7 +313,7 @@ int main()
         Wedge<4, 2, 2>::product(b, a, r);
         tr.info("[4/2/2] ", a, " ^ ", b, " -> ", r).test_eq(1, r[0]);
     }
-    section("important as a case where a^a!=0, see DoCarmo1994, Ch. 1 after Prop. 2.");
+    tr.section("important as a case where a^a!=0, see DoCarmo1994, Ch. 1 after Prop. 2.");
     {
         real6 a{1, 0, 0, 0, 0, 1};
         real6 b{1, 0, 0, 0, 0, 1};
@@ -320,7 +321,7 @@ int main()
         Wedge<4, 2, 2>::product(a, b, r);
         tr.info("[4/2/2] ", a, " ^ ", b, " -> ", r).test_eq(2, r[0]);
     }
-    section("important as a case where a^b is not dot(a, b) even though O(a)=D-O(b). This happens when O(a)==O(b), i.e. they have the same components");
+    tr.section("important as a case where a^b is not dot(a, b) even though O(a)=D-O(b). This happens when O(a)==O(b), i.e. they have the same components");
     {
         real2 a{1, 0};
         real2 b{0, 1};
@@ -332,7 +333,7 @@ int main()
         hodgex<2, 1>(p, q);
         tr.info("p: ", p, " -> hodge-star: ", q).test_eq(real2{-2, 1}, q);
     }
-    section("test the specializations in cross(), wedge<>()");
+    tr.section("test the specializations in cross(), wedge<>()");
     {
         real2 a{1, 0};
         real2 b{0, 1};
@@ -344,7 +345,7 @@ int main()
         c = cross(a, b+1.);
         tr.test_eq(2, c);
     }
-    section("test the cross product some more. This was moved from test_small_vec.C");
+    tr.section("test the cross product some more. This was moved from test_small_vec.C");
     {
         real3 x3{1., 0. ,0.};
         real3 y3{0., 1., 0.};
@@ -362,7 +363,7 @@ int main()
         complex2 cy2{0., 1.};
         tr.test_eq(complex(1., 0.), cross(x2, cy2));
     }
-    section("verify that wedge<>() returns an expression where appropriate. This was moved from test_small_vec.C");
+    tr.section("verify that wedge<>() returns an expression where appropriate. This was moved from test_small_vec.C");
     {
         real3 u{1., 2., 3.};
         real3 v{3., 2., 1.};
@@ -378,7 +379,7 @@ int main()
 // #else
 // #endif
     }
-    section("verify that we are allowed to choose our return type to wedge<>(a, b, r)");
+    tr.section("verify that we are allowed to choose our return type to wedge<>(a, b, r)");
     {
         real a(GARBAGE);
         real1 b(GARBAGE);
@@ -387,11 +388,11 @@ int main()
         tr.test_eq(1, a);
         tr.test_eq(1, b[0]);
     }
-    section("check the optimization of hodgex() that relies on a complementary order of bases in the 2*O>D forms");
+    tr.section("check the optimization of hodgex() that relies on a complementary order of bases in the 2*O>D forms");
     {
         test_optimized_hodge<6>(tr);
     }
-    section("Test scalar arg cases");
+    tr.section("Test scalar arg cases");
     {
         tr.test_eq(6, test_scalar_case<0, real>(real1(2), real(3)));
         tr.test_eq(6, test_scalar_case<1, real>(real1(2), real(3)));
@@ -410,7 +411,7 @@ int main()
         tr.test_eq(6, test_scalar_case<0, real1>(real1(2), real1(3)));
         tr.test_eq(6, test_scalar_case<1, real1>(real1(2), real1(3)));
     }
-    section("Test scalar x nonscalar arg cases.");
+    tr.section("Test scalar x nonscalar arg cases.");
     {
         tr.test_eq(real2{6, 10}, test_one_one_case<2, 0, 1, real2>(tr, real1(2), real2{3, 5}));
         tr.test_eq(real2{6, 10}, test_one_one_case<2, 1, 0, real2>(tr, real2{3, 5}, real1(2)));
@@ -423,7 +424,7 @@ int main()
         tr.test_eq(real3{2, 6, 10}, test_one_scalar_case<3, 0, 1, real3>(real1(2), real3{1, 3, 5}));
         tr.test_eq(real3{2, 6, 10}, test_one_scalar_case<3, 1, 0, real3>(real3{1, 3, 5}, real1(2)));
     }
-    section("Test scalar x ~scalar arg cases.");
+    tr.section("Test scalar x ~scalar arg cases.");
     {
         tr.test_eq(6., wedge<1, 0, 1>(3., complex1(2.)));
     }

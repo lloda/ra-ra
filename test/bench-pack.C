@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2016
+// (c) Daniel Llorens - 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,9 @@
 #include "ra/wrank.H"
 #include "ra/operators.H"
 #include "ra/io.H"
-#include <chrono>
+#include "ra/bench.H"
 
 using std::cout; using std::endl; using std::flush;
-auto now() { return std::chrono::high_resolution_clock::now(); }
-using time_unit = std::chrono::nanoseconds;
-std::string tunit = "ns";
 using real = double;
 using complex = std::complex<double>;
 
@@ -31,18 +28,15 @@ int main()
     TestRecorder tr(cout);
     cout.precision(4);
 
-    auto bench = [&tr](auto && f, auto A_, char const * tag, int size, int n)
+    auto bench = [&tr](auto && f, auto A_, char const * tag, int size, int reps)
         {
             using A = decltype(A_);
-            time_unit dt(0);
             A a({size}, ra::unspecified);
-            auto t0 = now();
-            for (int i=0; i<n; ++i) {
-                f(a, size);
-            }
-            dt += now()-t0;
-            cout << std::setw(10) << std::fixed << (dt.count()/double(n*size)) << " " << tunit << " " << tag << endl;
-            tr.quiet().test_eq(ra::pack<complex>(ra::iota<real>(size), size-ra::iota<real>(size)), a);
+
+            Benchmark bm { reps, 3 };
+            auto bv = bm.run([&]() { f(a, size); });
+            tr.info(std::setw(5), std::fixed, bm.avg(bv)/size/1e-9, " ns [", bm.stddev(bv)/size/1e-9 ,"] ", tag)
+                .test_eq(ra::pack<complex>(ra::iota<real>(size), size-ra::iota<real>(size)), a);
         };
 
     auto f_raw = [](auto & a, int size)

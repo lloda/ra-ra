@@ -27,7 +27,7 @@ int main()
 {
     TestRecorder tr(std::cout);
 
-    section("explode");
+    tr.section("explode");
     {
         ra::Owned<int, 2> A({2, 3}, ra::_0 - ra::_1);
         auto B = ra::explode<ra::Small<int, 3> >(A);
@@ -50,7 +50,7 @@ int main()
         tr.test_eq(ra::scalar(ra::Small<int, 3> {0, -1, -2}), B(0));
         tr.test_eq(ra::scalar(ra::Small<int, 3> {9, 9, 9}), B(1));
     }
-    section("explode<complex>");
+    tr.section("explode<complex>");
     {
         ra::Owned<real, 3> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
         auto B = ra::explode<complex>(A);
@@ -71,9 +71,9 @@ int main()
         tr.test_eq(ra::Small<real, 2, 3> {0, -1, -2,  1, 0, -1}, A(ra::all, ra::all, 0));
         tr.test_eq(ra::Small<real, 2, 3> {1, 0, -1,  9, 9, 9}, A(ra::all, ra::all, 1));
     }
-    section("collapse");
+    tr.section("collapse");
     {
-        section("sub is real to super complex");
+        tr.section("sub is real to super complex");
         {
             auto test_sub_real = [&tr](auto && A)
                 {
@@ -85,7 +85,7 @@ int main()
             test_sub_real(ra::Unique<complex, 2>({4, 4}, ra::unspecified));
             test_sub_real(ra::Unique<complex>({4, 4}, ra::unspecified));
         }
-        section("sub is int to super Small of rank 1");
+        tr.section("sub is int to super Small of rank 1");
         {
             using r2 = ra::Small<int, 2>;
             auto test_sub_small2 = [&tr](auto && A)
@@ -98,7 +98,7 @@ int main()
             test_sub_small2(ra::Unique<r2, 2>({4, 4}, ra::unspecified));
             test_sub_small2(ra::Unique<r2>({4, 4}, ra::unspecified));
         }
-        section("sub is int to super Small of rank 2");
+        tr.section("sub is int to super Small of rank 2");
         {
             using super = ra::Small<int, 2, 3>;
             auto test_sub_small23 = [&tr](auto && A)
@@ -114,7 +114,7 @@ int main()
             test_sub_small23(ra::Unique<super, 2>({2, 2}, ra::unspecified));
             test_sub_small23(ra::Unique<super>({2, 2}, ra::unspecified));
         }
-        section("sub is Small of rank 1 to super Small of rank 2");
+        tr.section("sub is Small of rank 1 to super Small of rank 2");
         {
             using super = ra::Small<int, 2, 3>;
             auto test_sub_small23 = [&tr](auto && A)
@@ -129,7 +129,7 @@ int main()
             test_sub_small23(ra::Unique<super, 2>({2, 2}, ra::unspecified));
             test_sub_small23(ra::Unique<super>({2, 2}, ra::unspecified));
         }
-        section("sub is real to super complex Small of rank 2");
+        tr.section("sub is real to super complex Small of rank 2");
         {
             using super = ra::Small<complex, 2, 2>;
             auto test_sub_real = [&tr](auto && A)
@@ -148,9 +148,9 @@ int main()
             test_sub_real(ra::Unique<super>({4, 4}, ra::unspecified));
         }
     }
-    section("old tests from test-ra-1.C (TODO remove if redundant)");
+    tr.section("old tests from test-ra-1.C (TODO remove if redundant)");
     {
-        section("super rank 1");
+        tr.section("super rank 1");
         {
             auto test = [&tr](auto && A)
             {
@@ -163,7 +163,7 @@ int main()
             test(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
             test(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
         }
-        section("super rank 0");
+        tr.section("super rank 0");
         {
 #define TEST(CHECK_RANK_S)                                              \
             [&tr](auto && A)                                            \
@@ -180,7 +180,7 @@ int main()
             TEST(ra::RANK_ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
             TEST(1)(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
         }
-        section("super rank 2");
+        tr.section("super rank 2");
         {
             using r2x2 = ra::Small<double, 2, 2>;
             auto test = [&tr](auto && A)

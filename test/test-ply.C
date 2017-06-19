@@ -33,7 +33,7 @@ struct Never
 int main()
 {
     TestRecorder tr;
-    section("traversal - xpr types - Expr");
+    tr.section("traversal - xpr types - Expr");
     {
         {
             real check[6] = {0-3, 1-3, 2-3, 3-3, 4-3, 5-3};
@@ -91,7 +91,7 @@ int main()
 #undef TEST
         }
     }
-    section("traversal - xpr types - Expr - rank 0");
+    tr.section("traversal - xpr types - Expr - rank 0");
     {
         {
             real check[1] = {4};
@@ -116,7 +116,7 @@ int main()
 #undef TEST
         }
     }
-    section("traversal - xpr types - Expr - empty");
+    tr.section("traversal - xpr types - Expr - empty");
     {
         {
 #define TEST(plier, id)                                                 \
@@ -173,7 +173,7 @@ int main()
 #undef TEST2
 #undef TEST
     }
-    section("traversal - does it compile?");
+    tr.section("traversal - does it compile?");
     {
 // TODO Check.
         auto print = [](real a) { cout << a << " "; };
@@ -203,15 +203,15 @@ int main()
             test(a()); // also View.
         }
     }
-    section("[sec10] constructor cases with scalar or RANK_ANY arguments");
+    tr.section("[sec10] constructor cases with scalar or RANK_ANY arguments");
     {
 // TODO Move these to the constructor tests, and put assignment versions here.
-        section("construction of 0 rank <- scalar expr");
+        tr.section("construction of 0 rank <- scalar expr");
         {
             ra::Unique<real, 0> a ({}, ra::scalar(77));
             tr.test_eq(77, a());
         }
-        section("construction of var rank <- scalar expr");
+        tr.section("construction of var rank <- scalar expr");
         {
             ra::Unique<real> a ({3, 2}, ra::scalar(77));
             tr.test_eq(77, a(0, 0));
@@ -221,7 +221,7 @@ int main()
             tr.test_eq(77, a(2, 0));
             tr.test_eq(77, a(2, 1));
         }
-        section("construction of var rank <- lower rank expr I");
+        tr.section("construction of var rank <- lower rank expr I");
         {
             ra::Unique<real, 1> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, b.iter());
@@ -232,7 +232,7 @@ int main()
             tr.test_eq(3, a(2, 0));
             tr.test_eq(3, a(2, 1));
         }
-        section("construction of var rank <- lower rank expr II");
+        tr.section("construction of var rank <- lower rank expr II");
         {
             ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});
             cout << "b: " << b << endl;
@@ -247,7 +247,7 @@ int main()
             }
         }
         // this succeeds because of the two var ranks, the top rank comes first (and so it's selected as driver). TODO Have run time driver selection so this is safe.
-        section("construction of var rank <- lower rank expr III (var rank)");
+        tr.section("construction of var rank <- lower rank expr III (var rank)");
         {
             ra::Unique<real> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, b.iter());
@@ -259,7 +259,7 @@ int main()
             tr.test_eq(3, a(2, 1));
         }
 // driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. TODO Do run time driver selection to avoid this error.
-        // section("construction of var rank <- higher rank expr");
+        // tr.section("construction of var rank <- higher rank expr");
         // {
         //     ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});
         //     cout << "b: " << b << endl;
@@ -268,7 +268,7 @@ int main()
         // }
     }
 
-    section("cf plying with and without driver (error)");
+    tr.section("cf plying with and without driver (error)");
     {
         ra::Unique<real, 1> a({3}, ra::unspecified);
         ply_ravel(expr([](real & a, int b) { a = b; }, a.iter(), ra::scalar(7)));
@@ -283,7 +283,7 @@ int main()
         // ply_index(expr([](int b) { cout << b << endl; }, TI<0>()));
         // ply_index(expr([](int b) { cout << b << endl; }, ra::scalar(3)));
     }
-    section("traversal - rank matching - Unique/Unique 1");
+    tr.section("traversal - rank matching - Unique/Unique 1");
     {
         ra::Unique<real, 3> a({ 3, 2, 4 }, ra::unspecified);
         ra::Unique<real, 2> b({ 3, 2 }, ra::unspecified);
@@ -315,13 +315,13 @@ int main()
 #undef TEST
         }
     }
-    section("traversal - op uses from");
+    tr.section("traversal - op uses from");
     {
         ra::Unique<int, 1> a({3}, ra::unspecified);
         ra::Unique<int, 1> b({3}, ra::unspecified);
         std::iota(a.begin(), a.end(), 1);
 #define TEST(plier)                                                     \
-        section(STRINGIZE(plier));                                      \
+        tr.section(STRINGIZE(plier));                                      \
         {                                                               \
             std::fill(b.begin(), b.end(), 0);                           \
             real check[3] = { 2, 3, 1 };                                \
@@ -336,7 +336,7 @@ int main()
         TEST(plyf_index);
 #undef TEST
     }
-    section("helpers for ply - map, for_each");
+    tr.section("helpers for ply - map, for_each");
     {
 // TODO Test need for map() -> decltype(...) in the declaration of map, eg in ModelGenome::eval() in src/asof.H.
         ra::Unique<real, 1> b = map([](auto x) { return exp(x); }, ra::Unique<int, 1>({1, 2}));
@@ -345,7 +345,7 @@ int main()
         for_each([&x](auto y) { x += y; }, ra::Unique<int, 1>({13, 21}));
         tr.test_eq(34, x);
     }
-    section("the loop cannot be unrolled entirely and one of the outside dims is zero");
+    tr.section("the loop cannot be unrolled entirely and one of the outside dims is zero");
     {
         real aa = 100;
         ra::View<real, 3> a { {{0, 22}, {11, 2}, {2, 1}}, &aa };
@@ -363,7 +363,7 @@ int main()
         TEST(plyf_index);
 #undef TEST
     }
-    section("more pliers on scalar");
+    tr.section("more pliers on scalar");
     {
         tr.test_eq(-99, ra::map([](auto && x) { return -x; }, ra::scalar(99)));
         tr.test_eq(true, every(ra::expr([](auto && x) { return x>0; }, ra::start(99))));

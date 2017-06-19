@@ -132,9 +132,7 @@ if 'skip_summary' not in top:
               'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
               'test-tensorindex', 'test-explode-collapse', 'test-wrank',
-              'test-optimize',
-              'test-reshape',
-              'test-concrete',
+              'test-optimize', 'test-reshape', 'test-concrete', 'test-bench',
               # 'test-small-iterator',
               # 'test-end'
           ]]

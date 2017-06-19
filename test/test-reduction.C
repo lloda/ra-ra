@@ -27,7 +27,7 @@ int main()
 {
     TestRecorder tr(std::cout);
 
-    section("amax with different expr types");
+    tr.section("amax with different expr types");
     {
         auto test_amax_expr = [&tr](auto && a, auto && b)
             {
@@ -42,7 +42,7 @@ int main()
         test_amax_expr(ra::Unique<real, 2>({2, 2}, 0.), ra::Small<real, 2, 2>());
     }
 
-    section("every / any");
+    tr.section("every / any");
     {
         tr.test(every(ra::Unique<real, 2>({4, 4}, 10+ra::_0-ra::_1)));
         tr.test(any(ra::Unique<real, 2>({4, 4}, ra::_0-ra::_1)));
@@ -62,13 +62,13 @@ int main()
         tr.test(!any(ra::Unique<int, 1> {2, 3}==5));
     }
 
-    section("norm2");
+    tr.section("norm2");
     {
         ra::Small<real, 2> a {1, 2};
         tr.test_abs_error(std::sqrt(5.), norm2(a), 1e-15);
     }
 
-    section("normv");
+    tr.section("normv");
     {
         ra::Small<real, 2> a {1, 2};
         ra::Small<real, 2> b;
@@ -84,7 +84,7 @@ int main()
         tr.test_eq(b[1], 1./sqrt(5));
     }
 
-    section("reductions");
+    tr.section("reductions");
     {
         auto test_dot = [&tr](auto && test) // TODO Use this for other real reductions.
             {
@@ -137,7 +137,7 @@ int main()
         test_sum([&tr](auto && a) { tr.test_eq(6., amin(abs(a))); });
     }
 
-    section("amax/amin ignore NaN");
+    tr.section("amax/amin ignore NaN");
     {
         tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN));
         tr.test_eq(-std::numeric_limits<real>::infinity(), amax(ra::Small<real, 3>(QNAN)));
@@ -145,7 +145,7 @@ int main()
     }
 
 // TODO these reductions require a destination argument; there are no exprs really.
-    section("to sum columns in crude ways");
+    tr.section("to sum columns in crude ways");
     {
         ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
 
@@ -187,7 +187,7 @@ int main()
         //     C += A(0);
         // }
     }
-    section("to sum rows in crude ways");
+    tr.section("to sum rows in crude ways");
     {
         ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
         ra::Unique<real, 1> B({111}, 0.);
@@ -221,7 +221,7 @@ int main()
             tr.info("assign to iterators of rank > 0").test_eq(B, C);
         }
     }
-    section("reductions with amax");
+    tr.section("reductions with amax");
     {
         ra::Owned<int, 2> c({2, 3}, {1, 3, 2, 7, 1, 3});
         tr.info("max of rows").test_eq(ra::Owned<int, 1> {3, 7}, map([](auto && a) { return amax(a); }, iter<1>(c)));
@@ -238,7 +238,7 @@ int main()
         tr.info("amax default").test_eq(std::numeric_limits<double>::infinity(), amin(q));
         tr.info("amin default").test_eq(-std::numeric_limits<double>::infinity(), amax(q));
     }
-    section("vector-matrix reductions");
+    tr.section("vector-matrix reductions");
     {
         auto test = [&tr](auto t, auto s, auto r)
             {
@@ -279,7 +279,7 @@ int main()
         test(int(0), double(0), double(0));
         test(double(0), int(0), double(0));
     }
-    section("matrix-matrix reductions");
+    tr.section("matrix-matrix reductions");
     {
         ra::Owned<double, 2> A({0, 0}, 0.);
         ra::Owned<double, 2> B({0, 0}, 0.);

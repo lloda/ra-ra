@@ -24,8 +24,7 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr;
-
-    section("unary ops");
+    tr.section("unary ops");
     {
 #define DEF_TEST_UNARY_OP(OP)                                           \
         auto test = [&tr](auto token, auto x, auto y, auto && vx, auto && vy, real err) \
@@ -62,7 +61,7 @@ int main()
         tr.info("odd").test_eq(ra::Unique<bool, 1> {true, false, true, true}, odd(ra::Unique<int, 1> {1, 2, 3, -1}));
     }
 
-    section("check decay of rank 0 Containers/Slices w/ operators");
+    tr.section("check decay of rank 0 Containers/Slices w/ operators");
     {
         {
             auto test = [&tr](auto && a)
@@ -99,7 +98,7 @@ int main()
         }
     }
 
-    section("lvalue-rvalue operators");
+    tr.section("lvalue-rvalue operators");
     {
         ra::Unique<complex, 1> a({3}, 0.);
         imag_part(a) = ra::Unique<real, 1> { 7., 2., 3. }; // TODO operator=(initializer_list) ?
@@ -107,7 +106,7 @@ int main()
         tr.test_eq(ra::Unique<complex, 1> {{-6., 7.}, {-1., 2.}, {-2., 3.}}, a);
     }
 
-    section("operators with Unique");
+    tr.section("operators with Unique");
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Unique<int, 1> b({3}, { 10, 20, 30 });
@@ -124,7 +123,7 @@ int main()
 #undef TESTEQ
     }
 
-    section("operators with View");
+    tr.section("operators with View");
     {
         {
             ra::Unique<complex, 2> const a({2, 3}, {1, 2, 3, 4, 5, 6});
@@ -152,7 +151,7 @@ int main()
         }
     }
 
-    section("operators with Small");
+    tr.section("operators with Small");
     {
         ra::Small<int, 3> a { 1, 2, 3 };
         ra::Small<int, 3> b { 1, 2, 4 };
@@ -161,7 +160,7 @@ int main()
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, a+b);
     }
 
-    section("constructors from expr"); // TODO For all other Container types.
+    tr.section("constructors from expr"); // TODO For all other Container types.
     {
         {
 // TODO Systematic init-from-expr tests (every expr type vs every container type) with operators.H included.
@@ -180,7 +179,7 @@ int main()
         }
     }
 
-    section("mixed ra-type / foreign-scalar operations");
+    tr.section("mixed ra-type / foreign-scalar operations");
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Small<int, 3, 2> ref {4, 5, 6, 23, 8, 9};
@@ -189,7 +188,7 @@ int main()
         tr.test_eq(ref, a+3);
     }
 // These are rather different because they have to be defined in-class.
-    section("constructors & assignment operators with expr rhs"); // TODO use TestRecorder::test_eq().
+    tr.section("constructors & assignment operators with expr rhs"); // TODO use TestRecorder::test_eq().
     {
         real check0[6] = { 0, -1, 1, 0, 2, 1 };
         real check1[6] = { 4, 3, 5, 4, 6, 5 };
@@ -205,7 +204,7 @@ int main()
         test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
         test(ra::Small<int, 3, 2>(ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
     }
-    section("assignment ops with ra::scalar [ra21]");
+    tr.section("assignment ops with ra::scalar [ra21]");
     {
         ra::Small<real, 2> a { 0, 0 };
         ra::Owned<ra::Small<real, 2>, 1> b { {1, 10}, {2, 20}, {3, 30} };
@@ -213,7 +212,7 @@ int main()
         ra::scalar(a) += b;
         tr.test_eq(ra::Small<real, 2> { 6, 60 }, a);
     }
-    section("pack operator");
+    tr.section("pack operator");
     {
         ra::Small<real, 6> a = { 0, -1, 1, 0, 2, 1 };
         ra::Small<int, 6> b = { 4, 3, 5, 4, 6, 5 };
@@ -221,7 +220,7 @@ int main()
         tr.test_eq(a, map([](auto && x) -> decltype(auto) { return std::get<0>(x); }, x));
         tr.test_eq(b, map([](auto && x) -> decltype(auto) { return std::get<1>(x); }, x));
     }
-    section("pack operator as ref");
+    tr.section("pack operator as ref");
     {
         using T = std::tuple<real, int>;
         ra::Owned<T> x { T(0., 1), T(2., 3), T(4., 5) };
@@ -231,7 +230,7 @@ int main()
         tr.test_eq(ra::Small<real, 3> {0., 2., 4.}, a);
         tr.test_eq(ra::Small<int, 3> {1, 3, 5}, b);
     }
-    section("operator= for View, WithStorage. Also see test-ownership.C");
+    tr.section("operator= for View, WithStorage. Also see test-ownership.C");
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };
         real check9[6] = { 9, 9, 9, 9, 9, 9 };
@@ -249,7 +248,7 @@ int main()
         ra::Unique<int, 2> e = d;
         tr.test(std::equal(e.begin(), e.end(), check5));
     }
-    section("operator= for Dynamic");
+    tr.section("operator= for Dynamic");
     {
         ra::Unique<int, 1> a({7}, 7);
         ra::Small<ra::dim_t, 3> i { 2, 3, 5 };
@@ -258,7 +257,7 @@ int main()
         int checka[] = { 7, 7, 22, 33, 7, 55, 7 };
         tr.test(std::equal(checka, checka+7, a.begin()));
     }
-    section("wedge");
+    tr.section("wedge");
     {
         {
             ra::Small<real, 3> a {1, 2, 3};
@@ -279,7 +278,7 @@ int main()
             tr.test_eq(6, wedge<1, 0, 0>(2., 3));
         }
     }
-    section("hodge / hodgex");
+    tr.section("hodge / hodgex");
     {
         ra::Small<real, 3> a {1, 2, 3};
         ra::Small<real, 3> c;
@@ -288,7 +287,7 @@ int main()
         auto d = fun::hodge<3, 1>(a);
         tr.test_eq(a, d);
     }
-    section("index");
+    tr.section("index");
     {
         {
             ra::Owned<real, 1> a {1, 2, 3, -4, 9, 9, 8};
@@ -300,7 +299,7 @@ int main()
             tr.test_eq(4, index(abs(a)>4));
         }
     }
-    section("lexicographical_compare");
+    tr.section("lexicographical_compare");
     {
         ra::Owned<int, 3> a({10, 2, 2}, {0, 0, 1, 3, 0, 1, 3, 3, 0, 2, 3, 0, 3, 1, 2, 1, 1, 1, 3, 1, 0, 3, 2, 2, 2, 3, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 3, 0, 2, 1});
         ra::Owned<int, 1> i = ra::iota(a.size(0));
