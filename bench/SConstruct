@@ -8,8 +8,8 @@
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
 
-# SConstruct for ra/test
-# FIXME Shared pieces with {examples,bench,doc}/SConstruct
+# SConstruct for ra/bench
+# FIXME Shared pieces with {examples,test,doc}/SConstruct
 
 import os, string, atexit
 from colorama import Fore, Back, Style
@@ -55,7 +55,7 @@ else:
     archflags=['-march=native']
     ld_blas = {'LINKFLAGS': '', 'LIBS': ['blas']}
 
-env.Append(CPPPATH=['..', 'test'],
+env.Append(CPPPATH=['..', 'bench'],
            CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
            CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
                      '-finput-charset=UTF-8', '-fextended-identifiers',
@@ -117,7 +117,7 @@ def print_summary():
     test_tally = 0
     build_tally = 0
 
-    print '\n' + Style.BRIGHT + 'Summary for ra/test' + Style.RESET_ALL + '\n--------'
+    print '\n' + Style.BRIGHT + 'Summary for ra/bench' + Style.RESET_ALL + '\n--------'
     for bf in GetBuildFailures():
         if str(bf.node).endswith('.check') and (bf.status > 0):
             print (Style.BRIGHT + Fore.RED + '%s ' + Style.RESET_ALL + Fore.RESET + ' failed (%d)') \
@@ -135,21 +135,11 @@ def print_summary():
 if 'skip_summary' not in top:
     atexit.register(print_summary)
 
-[to_test_ra(env, test)
- for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
-              'test-ra-6', 'test-ra-8', 'test-ra-9',
-              'test-types', 'test-io', 'test-from', 'test-nested', 'test-owned',
-              'test-ownership', 'test-ply', 'test-small', 'test-large',
-              'test-return-expr', 'test-reduction', 'test-frame-match',
-              'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
-              'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
-              'test-tensorindex', 'test-explode-collapse', 'test-wrank',
-              'test-optimize', 'test-reshape', 'test-concrete', 'test-bench',
-              # 'test-small-iterator',
-              # 'test-end'
-          ]]
+[to_test_ra(env, bench)
+ for bench in ['bench-dot', 'bench-reduce-sqrm',
+               'bench-gemv', 'bench-sum-rows', 'bench-sum-cols',
+               'bench-pack', 'bench-from',
+               'bench-stencil1', 'bench-stencil2', 'bench-stencil3']]
 
-to_test_ra(env, 'test-ra-10', target='test-ra-10a', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '0'})
-to_test_ra(env, 'test-ra-10', target='test-ra-10b', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '0'})
-to_test_ra(env, 'test-ra-10', target='test-ra-10c', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '1'})
-to_test_ra(env, 'test-ra-10', target='test-ra-10d', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '1'})
+[to_test_ra(env_blas, bench)
+ for bench in ['bench-gemm']]

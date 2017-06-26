@@ -10,9 +10,7 @@
 /// @brief Benchmark for BLAS-3 type ops
 
 // These operations aren't really part of the ET framework, just standalone
-// functions. Benchmarking out of curiosity; they are all massively slower than
-// dgemm in CBLAS (about 20 times slower for the 1000x1000 case, maybe 4-5
-// single threaded).
+// functions.
 
 #include <iostream>
 #include <iomanip>
@@ -30,11 +28,9 @@ using real = double;
 
 // -------------------
 // variants of the defaults, should be slower if the default is well picked.
-// TODO compare with external GEMM
 // -------------------
 
-template <class A, class B, class C>
-inline void
+template <class A, class B, class C> inline void
 gemm_block_3(ra::View<A, 2> const & a, ra::View<B, 2> const & b, ra::View<C, 2> c)
 {
     dim_t const m = a.size(0);
@@ -57,6 +53,77 @@ gemm_block_3(ra::View<A, 2> const & a, ra::View<B, 2> const & b, ra::View<C, 2> 
         gemm_block_3(a(ra::all, ra::iota(p-p/2, p/2)), b(ra::iota(p-p/2, p/2)), c);
     }
 }
+
+#if RA_USE_BLAS==1
+
+#ifdef __cplusplus
+extern "C" {
+#include <cblas.h>
+}
+#endif
+
+constexpr inline CBLAS_TRANSPOSE fliptr(CBLAS_TRANSPOSE t)
+{
+    if (t==CblasTrans) {
+        return CblasNoTrans;
+    } else if (t==CblasNoTrans) {
+        return CblasTrans;
+    } else {
+        assert(0 && "BLAS doesn't support this transpose");
+    }
+}
+
+constexpr inline bool istr(CBLAS_TRANSPOSE t)
+{
+    return (t==CblasTrans) || (t==CblasConjTrans);
+}
+
+template <class A> inline void
+lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
+{
+    if (a.stride(1)==1) {
+        order = CblasRowMajor;
+        ld = a.stride(0);
+    } else if (a.stride(0)==1) {
+        order = CblasColMajor;
+        ld = a.stride(1);
+    } else {
+        assert(0 && "not a BLAS-supported array");
+    }
+}
+
+inline void
+gemm_blas_3(ra::View<double, 2> const & A, ra::View<double, 2> const & B, ra::View<double, 2> C)
+{
+    CBLAS_TRANSPOSE ta = CblasNoTrans;
+    CBLAS_TRANSPOSE tb = CblasNoTrans;
+    int ldc, lda, ldb;
+    CBLAS_ORDER orderc, ordera, orderb;
+    lead_and_order(C, ldc, orderc);
+    lead_and_order(A, lda, ordera);
+    lead_and_order(B, ldb, orderb);
+    int K = A.size(1-istr(ta));
+    assert(K==B.size(istr(tb)) && "mismatched A/B");
+    assert(C.size(0)==A.size(istr(ta)) && "mismatched C/A");
+    assert(C.size(1)==B.size(1-istr(tb)) && "mismatched C/B");
+    if (ordera!=orderc) {
+        ta = fliptr(ta);
+    }
+    if (orderb!=orderc) {
+        tb = fliptr(tb);
+    }
+    if (C.size()>0) {
+        cblas_dgemm(orderc, ta, tb, C.size(0), C.size(1), K, 1., A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
+    }
+}
+inline auto
+gemm_blas(ra::View<double, 2> const & a, ra::View<double, 2> const & b)
+{
+    ra::Owned<decltype(a(0, 0)*b(0, 0)), 2> c({a.size(0), b.size(1)}, 0.);
+    gemm_blas_3(a, b, c);
+    return c;
+}
+#endif // RA_USE_BLAS
 
 int main()
 {
@@ -167,6 +234,9 @@ DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
                 bench(gemm_ij_raw_restrict, "ij_raw_restrict");
             }
             bench(gemm_block, "block");
+#if RA_USE_BLAS==1
+            bench(gemm_blas, "blas");
+#endif
             bench([&](auto const & a, auto const & b) { return gemm(a, b); }, "default");
         };
 

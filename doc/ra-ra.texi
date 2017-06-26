@@ -1227,9 +1227,10 @@ Item 2
 @c ------------------------------------------------
 
 @menu
-* Type hierarchy::       From Containers to FlatIterators.
-* Driving expressions::  The term in charge.
-* Loop types::           Chosen for performance.
+* Type hierarchy::        From Containers to FlatIterators.
+* Driving expressions::   The term in charge.
+* Loop types::            Chosen for performance.
+* Compiling and running:: Practical matters.
 @end menu
 
 @c ------------------------------------------------
@@ -1246,6 +1247,25 @@ Item 2
 @node Loop types
 @section Loop types
 @c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Compiling and running
+@section Compiling and running
+@c ------------------------------------------------
+
+The following boolean @code{#define}s affect the behavior of @code{ra::}.
+
+@itemize
+@item @code{RA_CHECK_BOUNDS} (default 1) Check bounds on random array accesses (e.g. @code{int i = 10; a[i] = 0;}). Bounds are never checked on regular array traversal, since in that case the library can guarantee that out of bounds accesses don't happen.
+@item @code{RA_USE_BLAS} (default 0) Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
+@item @code{RA_OPTIMIZE} (default 1) Replace certain expressions by others that are expected to perform better. This acts as a global mask on other @code{RA_OPTIMIZE_xxx} flags.
+@item @code{RA_OPTIMIZE_IOTA} (default 1) Perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::Iota(3, 0) + 1} becomes @code{ra::Iota(3, 1)} instead of a two-operand expression template.
+@item @code{RA_OPTIMIZE_SMALLVECTOR} (default 0) Perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on gcc and doesn't necessarily result in improved performance.
+@end itemize
+
+
+@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. Simply run @code{scons} from the top directory of the distribution to run them all. @code{ra::} uses its own crude test and benchmark suites.
+
 
 @c ------------------------------------------------
 @node The future

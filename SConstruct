@@ -9,7 +9,7 @@
 # later version.
 
 # Top SConstruct for ra-ra
-# @todo Shared pieces with examples/SConstruct and test/SConstruct
+# todo Shared pieces with examples/SConstruct and test/SConstruct
 
 import os, atexit
 from colorama import Fore, Back, Style
@@ -17,6 +17,7 @@ from os.path import join, abspath
 
 top = {'skip_summary': True}; Export('top');
 SConscript('test/SConstruct', 'top')
+SConscript('bench/SConstruct', 'top')
 SConscript('examples/SConstruct', 'top')
 # SConscript('doc/SConstruct', 'top') # TODO run from doc, otherwise makeinfo writes empty files (??)
 
