@@ -32,7 +32,7 @@ int main()
         {
             auto z = ra::iota(5, 1.5);
             tr.info("iota with real org I").test_eq(1.5, z.org_);
-            tr.info("iota wiht complex org I").test_eq(1.5+ra::start({0, 1, 2, 3, 4}), z);
+            tr.info("iota with complex org I").test_eq(1.5+ra::start({0, 1, 2, 3, 4}), z);
         }
         {
             auto z = optimize(ra::iota(5, complex(1., 1.)));
@@ -111,8 +111,8 @@ int main()
 // BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter).
         Vec a {1, 2, 3, 4}, b {5, 6, 7, 8};
         auto y = a + b;
-        static_assert(std::is_same<decltype(x), Vec>::value, "bad optimization");
-        static_assert(!std::is_same<decltype(y), Vec>::value, "bad non-optimization");
+        tr.info("bad optimization").test(std::is_same<decltype(x), Vec>::value);
+        tr.info("bad non-optimization").test(!std::is_same<decltype(y), Vec>::value);
         tr.test_eq(y, x);
     }
 #endif

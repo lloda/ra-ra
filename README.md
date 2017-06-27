@@ -94,8 +94,8 @@ ra::Owned<float, 3> A({2, 3, 4}, i+j+k);
 ra::Owned<float, 2> B({2, 3}, 0);
 
 // store the sum of A(i, j, ...) in B(i, j). These are equivalent.
-for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<1>());  // give cell rank
-for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<-2>()); // give frame rank
+for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, iter<1>(A));  // give cell rank
+for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, iter<-2>(A)); // give frame rank
 ```
 ```
 A: 2 3 4

@@ -14,6 +14,9 @@
 import os, atexit
 from colorama import Fore, Back, Style
 from os.path import join, abspath
+from SCons.Script import GetBuildFailures
+import imp
+ra = imp.load_source('ra', './ra.py')
 
 top = {'skip_summary': True}; Export('top');
 SConscript('test/SConstruct', 'top')
@@ -21,25 +24,4 @@ SConscript('bench/SConstruct', 'top')
 SConscript('examples/SConstruct', 'top')
 # SConscript('doc/SConstruct', 'top') # TODO run from doc, otherwise makeinfo writes empty files (??)
 
-def print_summary():
-    from SCons.Script import GetBuildFailures
-    test_item_tally = 0
-    test_tally = 0
-    build_tally = 0
-
-    print '\n' + Style.BRIGHT + 'Summary for ra-ra' + Style.RESET_ALL + '\n--------'
-    for bf in GetBuildFailures():
-        if str(bf.node).endswith('.check') and (bf.status > 0):
-            print (Style.BRIGHT + Fore.RED + '%s ' + Style.RESET_ALL + Fore.RESET + ' failed (%d)') \
-                % (bf.node, bf.status)
-            test_item_tally += bf.status
-            test_tally += 1
-        else:
-            print (Style.BRIGHT + Fore.YELLOW + '%s ' + Style.RESET_ALL + Fore.RESET + ' failed (%s)') \
-                % (bf.node, bf.errstr)
-            build_tally += 1
-
-    print '%d targets failed to build.' % build_tally
-    print '%d tests failed with %d total failures.' % (test_tally, test_item_tally)
-
-atexit.register(print_summary)
+atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra-ra'))

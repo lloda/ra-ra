@@ -44,28 +44,28 @@ DEFINE_NAMED_BINARY_OP(/, slash)
 #define ITEM(i) std::get<(i)>(e.t)
 
 #if RA_OPTIMIZE_IOTA==1
-#define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T> >::value
+#define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T>>::value
 // TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
-template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X> >::is_integer;
+template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X>>::is_integer;
 
 // --------------
 // plus
 // --------------
 
 template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_op<J>, int> =0>
-inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).size_, ITEM(0).org_+ITEM(1), ITEM(0).stride_);
 }
 
 template <class I, class J, std::enable_if_t<iota_op<I> && IS_IOTA(J), int> =0>
-inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).size_, ITEM(0)+ITEM(1).org_, ITEM(1).stride_);
 }
 
 template <class I, class J, std::enable_if_t<IS_IOTA(I) && IS_IOTA(J), int> =0>
-inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return iota(ITEM(0).size_, ITEM(0).org_+ITEM(1).org_, ITEM(0).stride_+ITEM(1).stride_);
@@ -76,19 +76,19 @@ inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J> > && e)
 // --------------
 
 template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_op<J>, int> =0>
-inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).size_, ITEM(0).org_-ITEM(1), ITEM(0).stride_);
 }
 
 template <class I, class J, std::enable_if_t<iota_op<I> && IS_IOTA(J), int> =0>
-inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).size_, ITEM(0)-ITEM(1).org_, -ITEM(1).stride_);
 }
 
 template <class I, class J, std::enable_if_t<IS_IOTA(I) && IS_IOTA(J), int> =0>
-inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return iota(ITEM(0).size_, ITEM(0).org_-ITEM(1).org_, ITEM(0).stride_-ITEM(1).stride_);
@@ -99,13 +99,13 @@ inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J> > && e)
 // --------------
 
 template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_op<J>, int> =0>
-inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).size_, ITEM(0).org_*ITEM(1), ITEM(0).stride_*ITEM(1));
 }
 
 template <class I, class J, std::enable_if_t<iota_op<I> && IS_IOTA(J), int> =0>
-inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
+inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).size_, ITEM(0)*ITEM(1).org_, ITEM(0)*ITEM(1).stride_);
 }
@@ -117,10 +117,10 @@ inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J> > && e)
 template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 
 #define OPTIMIZE_SMALLVECTOR_OP(OP, NAME)                               \
-inline auto                                                             \
+inline auto                                            \
 optimize(ra::Expr<NAME,                                                 \
-                  std::tuple<decltype(start(std::declval<ra::Small<double, 4> >())), \
-                             decltype(start(std::declval<ra::Small<double, 4> >()))> > && e) \
+                  std::tuple<decltype(start(std::declval<ra::Small<double, 4>>())), \
+                             decltype(start(std::declval<ra::Small<double, 4>>()))>> && e) \
 {                                                                       \
     ra::Small<double, 4> val;                                           \
     (extvector<double, 4> &)(val) = (extvector<double, 4> &)(*(ITEM(0).p)) OP (extvector<double, 4> &)(*(ITEM(1).p)); \
