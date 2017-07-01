@@ -11,7 +11,6 @@
 
 #pragma once
 #include <cstddef>
-#include <sys/types.h> // ssize_t
 #include <type_traits>
 #include <utility>
 
@@ -23,6 +22,7 @@
 #define DO_JOIN( X, Y ) X##Y
 
 // by G. Pakosz @ http://stackoverflow.com/a/1872506
+// FIXME broken for 1 arg
 #define FOR_EACH_1(what, x, ...) what(x)
 #define FOR_EACH_2(what, x, ...) what(x) FOR_EACH_1(what, __VA_ARGS__)
 #define FOR_EACH_3(what, x, ...) what(x) FOR_EACH_2(what, __VA_ARGS__)

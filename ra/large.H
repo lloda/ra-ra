@@ -324,7 +324,9 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         View::dim = w.dim;
         View::p = storage_traits<Store>::data(store);
     }
-// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test-ownership.C [ra20]. TODO do this through .replace() op.
+// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test-ownership.C [ra20].
+// TODO do this through .replace() op.
+// TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     WithStorage & operator=(WithStorage && w)
     {
         store = std::move(w.store);
@@ -382,6 +384,8 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     {
         static_cast<View &>(*this) = x;
     }
+// FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of View::operator=.
+// store(x) avoids it for Owned, but doesn't work for Unique. Should construct in place as std::vector does.
     WithStorage(std::initializer_list<T> const x): WithStorage({dim_t(x.size())}, unspecified)
     {
         static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
@@ -466,6 +470,14 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     auto end() { return this->data()+this->size(); }
     auto end() const { return this->data()+this->size(); }
 };
+
+template <class Store, rank_t RANK>
+void swap(WithStorage<Store, RANK> & a, WithStorage<Store, RANK> & b)
+{
+    std::swap(a.dim, b.dim);
+    std::swap(a.store, b.store);
+    std::swap(a.p, b.p);
+}
 
 // Beyond this, we probably should have fixed-size (~std::dynarray), resizeable (~std::vector).
 template <class T, rank_t RANK=RANK_ANY> using Unique = WithStorage<std::unique_ptr<T []>, RANK>;

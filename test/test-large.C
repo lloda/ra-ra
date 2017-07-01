@@ -11,18 +11,13 @@
 
 #include <iostream>
 #include <iterator>
-#include "ra/complex.H"
-#include "ra/small.H"
-#include "ra/iterator.H"
 #include "ra/operators.H"
 #include "ra/io.H"
-#include "ra/large.H"
+#include "ra/view-ops.H"
 #include "ra/format.H"
 #include "ra/test.H"
-#include "ra/mpdebug.H"
 
 using std::cout; using std::endl; using std::flush;
-using complex = std::complex<double>;
 
 int main()
 {
@@ -38,6 +33,39 @@ int main()
         int2 check[1] = {{1, 2}};
         tr.test_eq(check, ra::start(a));
         tr.test_eq(check, b);
+    }
+    tr.section("behavior of forced Fortran array");
+    {
+        ra::Owned<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5});
+        ra::Owned<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5});
+        auto c = transpose({1, 0}, ra::View<int, 2>({3, 2}, a.data()));
+        a.dim = c.dim;
+        for (int k=0; k!=c.rank(); ++k) {
+            std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;
+            std::cout << "CSIZE " << k << " " << c.size(k) << std::endl;
+        }
+        cout << endl;
+        for (int k=0; k!=a.rank(); ++k) {
+            std::cout << "ASTRIDE " << k << " " << a.stride(k) << std::endl;
+            std::cout << "ASIZE " << k << " " << a.size(k) << std::endl;
+        }
+        cout << endl;
+        c = b;
+// FIXME this clobber the strides in a, which is surprising -> WithStorage should behave as View.
+        a = b;
+        for (int k=0; k!=c.rank(); ++k) {
+            std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;
+            std::cout << "CSIZE " << k << " " << c.size(k) << std::endl;
+        }
+        cout << endl;
+        for (int k=0; k!=a.rank(); ++k) {
+            std::cout << "ASTRIDE " << k << " " << a.stride(k) << std::endl;
+            std::cout << "ASIZE " << k << " " << a.size(k) << std::endl;
+        }
+        cout << endl;
+        std::cout << "a: " << a << std::endl;
+        std::cout << "b: " << b << std::endl;
+        std::cout << "c: " << c << std::endl;
     }
     return tr.summary();
 }

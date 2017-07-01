@@ -20,7 +20,7 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout; using std::endl; using std::flush; using std::cerr;
 template <class T, int N> using Array = ra::Owned<T, N>;
 template <class T> using Vec = Array<T, 1>;
 

@@ -116,12 +116,14 @@ template <class C> inline
 std::enable_if_t<ra_traits<C>::size_s()==DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
 {
-    using T = typename ra_traits<C>::value_type;
     typename ra_traits<C>::shape_type s;
     if (i >> s) {
-        c = std::decay_t<C>(s, ra::unspecified);
-        if (c.size()>0) { // I'd say a bug in copy_n; see failing case in test-nested.C.
-            std::copy_n(std::istream_iterator<T>(i), c.size(), c.begin());
+        std::decay_t<C> cc(s, ra::unspecified);
+// avoid copying in case WithStorage's elements don't support it.
+        swap(c, cc);
+// need row-major, serial iteration here. FIXME use ra:: traversal.
+        for (auto & ci: c) {
+            i >> ci;
         }
     }
     return i;

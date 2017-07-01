@@ -1,8 +1,6 @@
 
 // (c) Daniel Llorens - 2013-2014, 2016
 
-#pragma once
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -11,6 +9,7 @@
 /// @file iterator.H
 /// @brief Array iterator for View, plus row-major STL iterator.
 
+#pragma once
 #include "ra/traits.H"
 #include "ra/opcheck.H"
 #include <iostream>

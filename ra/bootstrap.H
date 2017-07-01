@@ -10,6 +10,7 @@
 /// @brief Before all other ra:: includes.
 
 #pragma once
+#include <sys/types.h> // ssize_t
 #include "ra/tuple-list.H"
 #include "ra/tuple-dynamic.H"
 
@@ -31,8 +32,8 @@ namespace ra {
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
 using dim_t = ssize_t;
-dim_t const DIM_ANY = -1073741823;
-dim_t const DIM_BAD = -1073741824;
+dim_t const DIM_ANY = -1099999999;
+dim_t const DIM_BAD = -1088888888;
 rank_t const RANK_ANY = DIM_ANY;
 rank_t const RANK_BAD = DIM_BAD;
 
