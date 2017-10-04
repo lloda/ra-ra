@@ -4,18 +4,34 @@ sudo: required
 language: cpp
 
 script:
- - (scons -k)
+ - (CXXFLAGS=-O3 scons -k)
 
 matrix:
   include:
-    - compiler: gcc
-      env: CXX=g++-6 CXXFLAGS="-O3"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
-      install:
-        - sudo pip install colorama
-        - if [ "$CXX" = "g++" ]; then export CXX="g++-6" CC="gcc-6"; fi
+   - os: linux
+     addons:
+       apt:
+         sources:
+           - ubuntu-toolchain-r-test
+         packages:
+           - g++-6
+     install:
+       - sudo pip install colorama
+     env:
+       - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+
+      # works on Precise and Trusty
+   - os: linux
+     addons:
+       apt:
+         sources:
+           - ubuntu-toolchain-r-test
+         packages:
+           - g++-7
+     install:
+       - sudo pip install colorama
+     env:
+       - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+
+before_install:
+    - eval "${MATRIX_EVAL}"
