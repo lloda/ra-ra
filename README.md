@@ -244,8 +244,8 @@ Sui generis
   can make array views using other orders by transposing or manipulating the
   strides yourself, but all newly created arrays use C-order.
 
-* The selection operator is (). [] is supported for rank-1 arrays only, where it
-  means the same as ().
+* The selection operator is (). [] means the same as () but only accepts one
+  subscript.
 
 * Array constructors follow a regular format. Single argument constructors
   always take an 'init-expression' which must provide enough shape information
@@ -270,7 +270,7 @@ Bugs & wishes
 
 * More clever/faster traversal of arrays, like in Blitz++.
 
-* Handling of nested arrays.
+* Systematic handling of nested arrays.
 
 
 Out of scope
@@ -289,22 +289,21 @@ Out of scope
 Building
 -----------
 
-The library is header-only and has no dependencies other than a C++14/C++17
-compiler (-std=c++1z, partial C++17 support) and the standard library. There is
-a test suite in ```test/```. These tests test internal details and are not meant
-as demonstrations of how to use the library. There is a directory with
-```examples/```, some ported from Blitz++.
+The library is header-only and has no dependencies other than a C++17 compiler
+and the standard library. There is a test suite in ```test/```. These tests test
+internal details and are not meant as demonstrations of how to use the
+library. There is a directory with ```examples/```, some ported from Blitz++.
 
-All tests pass under g++-6.3.
+All tests pass under g++-7.2.
 
-All tests pass under clang++-4.0 except for:
+(OUTDATED) All tests pass under clang++-4.0 except for:
 
 * test/bench-pack.C, crashes clang.
 
 * test/test-optimize.C, fails to compile to a defect in the implementation of
   the vector_size attribute.
 
-For clang on OS X you have to remove the -Wa,q option in the SConstruct which is
+For clang on OS X you have to remove the -Wa,-q option in SConstruct which is
 meant for gcc by setting CCFLAGS to something else:
 
   ```CCFLAGS="-march=native -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3

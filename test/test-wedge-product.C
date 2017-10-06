@@ -14,9 +14,7 @@
 #include "ra/io.H"
 #include "ra/test.H"
 
-// TODO using w/list after gcc 7.2 (P0028R4)
-using std::cout; using std::endl; using std::flush;
-using fun::Wedge; using fun::hodge; using fun::hodgex;
+using std::cout, std::endl, std::flush, fun::Wedge, fun::hodge, fun::hodgex;
 using namespace mp;
 
 using real = double;

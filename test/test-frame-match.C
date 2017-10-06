@@ -26,8 +26,8 @@ int main()
     tr.section("frame matching - TensorIndex/Scalar");
     {
 // driver is highest rank, which is ra::_0 (1).
-        auto e = ra::_0+1;
-        static_assert(e.rank_s()==1, "bad driver"); // TODO CWG1684 should allow .rank() (gcc bug #66297)
+        constexpr auto e = ra::_0+1;
+        static_assert(e.rank()==1, "bad driver");
 // but TensorIndex cannot be a driver.
         static_assert(!(decltype(e)::VALID_DRIVER), "bad driver check");
     }

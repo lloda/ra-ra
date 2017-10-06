@@ -49,56 +49,33 @@ struct Indexer0
     {
 // gcc accepts p.size(), but I also need P = std::array to work. See also below.
         static_assert(mp::len<sizes> >= ra_traits<P>::size_s(), "too many indices");
-        return Indexer0<sizes, strides>::template index_p_<ra_traits<P>::size_s(), 0>(0, p);
+        return index_p_<ra_traits<P>::size_s(), 0>(0, p);
     }
     template <class P, std::enable_if_t<ra_traits<P>::size_s()!=RANK_ANY, int> =0>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
         static_assert(mp::len<sizes> <= ra_traits<P>::size_s(), "too few indices");
-        return Indexer0<sizes, strides>::template index_p_<mp::len<sizes>, 0>(0, p);
+        return index_p_<mp::len<sizes>, 0>(0, p);
     }
     template <class P, std::enable_if_t<ra_traits<P>::size_s()==RANK_ANY, int> =0>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
         CHECK_BOUNDS(mp::len<sizes> <= p.size());
-        return Indexer0<sizes, strides>::template index_p_<mp::len<sizes>, 0>(0, p);
+        return index_p_<mp::len<sizes>, 0>(0, p);
     }
 };
 
 struct Indexer1
 {
-    template <rank_t k, class Dim>
-    constexpr static dim_t index_(Dim const & dim)
-    {
-        return 0;
-    }
-    template <rank_t k, class Dim, class Iarg0, class ... Iarg>
-    constexpr static dim_t index_(Dim const & dim, Iarg0 const i0_, Iarg const ... i_)
-    {
-        CHECK_BOUNDS(inside(i0_, dim[k].size));
-        return i0_ * dim[k].stride + index_<k+1>(dim, i_ ...);
-    }
-    template <class Dim, class ... Iarg>
-    constexpr static dim_t index(Dim const & dim, Iarg const ... i_)
-    {
-        CHECK_BOUNDS(dim.size()>=sizeof...(Iarg) && "too many indices");
-        return index_<0>(dim, i_ ...);
-    }
-
     template <class Dim, class P>
-    constexpr static dim_t index_p_(Dim const & dim, P const & p)
+    constexpr static dim_t index_p(Dim const & dim, P const & p)
     {
+        CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
 // use dim.data() to skip the size check.
         dim_t c = 0;
         for_each([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
                  ptr(dim.data()), p);
         return c;
-    }
-    template <class Dim, class P>
-    constexpr static dim_t index_p(Dim const & dim, P const & p)
-    {
-        CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
-        return index_p_(dim, p);
     }
 
 // used by ra_iterator::at() for rank matching on rank<driving rank, no slicing. todo Static check.
@@ -233,8 +210,7 @@ struct SmallBase
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
-        static_assert(rank()==1, "bad rank");                           \
-        return data()[i*mp::Ref_<strides, 0>::value];                   \
+        return (*this)(i);                                              \
     }
     SUBSCRIPTS(const)
     SUBSCRIPTS(/*const*/)
@@ -262,7 +238,7 @@ struct SmallBase
 // TODO Would replace by s(ra::iota) if that could be made constexpr
 #define DEF_AS(CONST)                                                   \
     template <int ss, int oo=0>                                         \
-    auto as() CONST                                                     \
+    constexpr auto as() CONST                                           \
     {                                                                   \
         static_assert(rank()>=1, "bad rank for as<>");                  \
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
@@ -405,12 +381,6 @@ struct SmallBase
 #undef COMP_RENAME_C
 };
 
-// TODO apparently this won't be needed anymore in C++17 (http://en.cppreference.com/w/cpp/language/static).
-template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-constexpr std::array<dim_t, mp::len<sizes_>> SmallBase<Child_, T, sizes_, strides_>::ssizes;
-template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
-constexpr std::array<dim_t, mp::len<strides_>> SmallBase<Child_, T, sizes_, strides_>::sstrides;
-
 template <class T, class sizes, class strides>
 struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 {
@@ -438,7 +408,7 @@ struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 };
 
 #define DEF_SMALLARRAY                                                  \
-    /*  TODO qualifier needed for clang 3.8 bug */                     \
+    /*  TODO qualifier needed for clang 3.8 bug */                      \
     using Base = SmallBase<ra::SmallArray, T, sizes, strides>;          \
     T p[Base::size()];                                                  \
                                                                         \
@@ -640,6 +610,32 @@ auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
     return val;
 }
 
+// FIXME should be local (constexpr lambda + mp::apply?)
+template <int s> struct explode_divop
+{
+    template <class T> struct op
+    {
+        static_assert((T::value/s)*s==T::value);
+        using type = mp::int_t<T::value / s>;
+    };
+};
+
+// See view-ops.H:explode, collapse. FIXME support real->complex, etc.
+template <class super_t,
+          template <class, class, class> class Child, class T, class sizes, class strides>
+auto explode(SmallBase<Child, T, sizes, strides> & a)
+{
+    using ta = SmallBase<Child, T, sizes, strides>;
+// the returned type has strides in super_t, but to support general strides we'd need strides in T. Maybe FIXME?
+    static_assert(super_t::have_default_strides);
+    constexpr rank_t ra = ta::rank_s();
+    constexpr rank_t rb = super_t::rank_s();
+    static_assert(std::is_same<mp::Drop_<sizes, ra-rb>, typename super_t::sizes>::value);
+    static_assert(std::is_same<mp::Drop_<strides, ra-rb>, typename super_t::strides>::value);
+    using cstrides = mp::Map_<explode_divop<super_t::size_s()>::template op, mp::Take_<strides, ra-rb>>;
+    return SmallView<super_t, mp::Take_<sizes, ra-rb>, cstrides>((super_t *) a.data());
+}
+
 template <class T, class I=std::make_integer_sequence<int, std::rank<T>::value>>
 struct builtin_array_sizes;
 
@@ -658,8 +654,8 @@ inline constexpr auto start(T && t)
 // preserve const.
     using A = std::remove_volatile_t<std::remove_reference_t<T>>;
     using E = std::remove_all_extents_t<A>;
-    using sizes = ra::builtin_array_sizes_t<A>;
-    return ra::SmallView<E, sizes, default_strides_<sizes>>((E *)(t)).iter();
+    using sizes = builtin_array_sizes_t<A>;
+    return SmallView<E, sizes, default_strides_<sizes>>((E *)(t)).iter();
 }
 
 } // namespace ra

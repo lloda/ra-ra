@@ -41,7 +41,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{ra::} is a general purpose multidimensional array and expression template library for C++14/C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+@code{ra::} is a general purpose multidimensional array and expression template library for C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 
 @menu
 * Overview::          Array programming and C++.
@@ -242,7 +242,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/operators.H"} and @code{"ra/io.H"} at the top of your sources.
 
-A C++14 compiler with partial C++17 support is required. At the time of writing this means gcc 6.3 with @option{-std=c++1z}. Most tests pass under clang 4.0 with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
+A C++14 compiler with partial C++17 support is required. At the time of writing this means gcc 7.2 with @option{-std=c++1z}. Most tests pass under clang 4.0 with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
 
 Here is a minimal program:
 
@@ -388,7 +388,7 @@ ra::View<int> v2({2, 3}, raw);           // same, default C (row-major) strides
 @end verbatim
 @end example
 
-Containers can be treated as views and the container types convert implicitly to view types of the same `fixedness'. If you declare a function
+Containers can be treated as views of the same `fixedness'. If you declare a function
 
 @example
 @verbatim

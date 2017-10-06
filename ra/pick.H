@@ -72,21 +72,18 @@ template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
 template <class T, class J> using pick_at_t = typename pick_at_type<mp::Drop1_<std::decay_t<T>>, J>::type;
 
 template <size_t I, class T, class J> inline constexpr
-auto pick_at(size_t p0, T && t, J const & j)
-    -> std::enable_if_t<(I+2==std::tuple_size<std::decay_t<T>>::value), pick_at_t<T, J>>
+pick_at_t<T, J>
+pick_at(size_t p0, T && t, J const & j)
 {
-    CHECK_BOUNDS(p0==I);
-    return std::get<I+1>(t).at(j);
-}
-
-template <size_t I, class T, class J> inline constexpr
-auto pick_at(size_t p0, T && t, J const & j)
-    -> std::enable_if_t<(I+2<std::tuple_size<std::decay_t<T>>::value), pick_at_t<T, J>>
-{
-    if (p0==I) {
-        return std::get<I+1>(t).at(j);
+    if constexpr (I+2<std::tuple_size<std::decay_t<T>>::value) {
+        if (p0==I) {
+            return std::get<I+1>(t).at(j);
+        } else {
+            return pick_at<I+1>(p0, t, j);
+        }
     } else {
-        return pick_at<I+1>(p0, t, j);
+        CHECK_BOUNDS(p0==I);
+        return std::get<I+1>(t).at(j);
     }
 }
 
@@ -98,21 +95,18 @@ template <class ... P> struct pick_star_type<std::tuple<P ...>>
 template <class T> using pick_star_t = typename pick_star_type<mp::Drop1_<std::decay_t<T>>>::type;
 
 template <size_t I, class T> inline constexpr
-auto pick_star(size_t p0, T && t)
-    -> std::enable_if_t<(I+2==std::tuple_size<std::decay_t<T>>::value), pick_star_t<T>>
+pick_star_t<T>
+pick_star(size_t p0, T && t)
 {
-    CHECK_BOUNDS(p0==I);
-    return *(std::get<I+1>(t));
-}
-
-template <size_t I, class T> inline constexpr
-auto pick_star(size_t p0, T && t)
-    -> std::enable_if_t<(I+2<std::tuple_size<std::decay_t<T>>::value), pick_star_t<T>>
-{
-    if (p0==I) {
-        return *(std::get<I+1>(t));
+    if constexpr (I+2<std::tuple_size<std::decay_t<T>>::value) {
+        if (p0==I) {
+            return *(std::get<I+1>(t));
+        } else {
+            return pick_star<I+1>(p0, t);
+        }
     } else {
-        return pick_star<I+1>(p0, t);
+        CHECK_BOUNDS(p0==I);
+        return *(std::get<I+1>(t));
     }
 }
 
@@ -153,24 +147,23 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     constexpr static bool VALID_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
     template <int iarg>
-    std::enable_if_t<(iarg==mp::len<NotA>), bool>
-    check(int const driver_rank) const { return true; }
-
-    template <int iarg>
-    std::enable_if_t<(iarg<mp::len<NotA>), bool>
-    check(int const driver_rank) const
+    constexpr bool check(int const driver_rank) const
     {
-        rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
+        if constexpr (iarg<mp::len<NotA>) {
+            rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
 // Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
-        assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
-        for (int k=0; k!=ranki; ++k) {
-            dim_t sk0 = std::get<A>(t).size(k);
-            if (sk0!=DIM_BAD) { // may be == in subexpressions
-                dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
-                assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
+            assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
+            for (int k=0; k!=ranki; ++k) {
+                dim_t sk0 = std::get<A>(t).size(k);
+                if (sk0!=DIM_BAD) { // may be == in subexpressions
+                    dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
+                    assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
+                }
             }
+            return check<iarg+1>(driver_rank);
+        } else {
+            return true;
         }
-        return check<iarg+1>(driver_rank);
     }
 
 // see test-compatibility.C [a1] for forward() here.

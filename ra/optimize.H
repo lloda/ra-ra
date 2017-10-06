@@ -25,7 +25,7 @@
 
 namespace ra {
 
-template <class E, int a=0> inline decltype(auto) optimize(E && e) { return std::forward<E>(e); }
+template <class E, int a=0> inline decltype(auto) constexpr optimize(E && e) { return std::forward<E>(e); }
 
 // These are named to match & transform Expr<OPNAME, ...> later on, and used by operator+ etc.
 #define DEFINE_NAMED_BINARY_OP(OP, OPNAME)                              \

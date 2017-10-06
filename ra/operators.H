@@ -71,12 +71,12 @@ inline decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
 // These depend on OPNAME defined in optimize.H and used there to match ET patterns.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
-    inline auto operator OP(A && a, B && b)                             \
+    inline constexpr auto operator OP(A && a, B && b)                   \
     {                                                                   \
         return OPTIMIZE(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
-    inline auto operator OP(A && a, B && b)                             \
+    inline constexpr auto operator OP(A && a, B && b)                   \
     {                                                                   \
         return START(a) OP START(b);                                    \
     }
@@ -126,7 +126,7 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
     }
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, cos, sin)
 FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf)
-FOR_EACH(DEF_NAME_OP, max, min, abs, odd, asin, acos, atan, atan2)
+FOR_EACH(DEF_NAME_OP, max, min, abs, odd, asin, acos, atan, atan2, clamp)
 FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh)
 #undef DEF_NAME_OP
 
@@ -207,13 +207,14 @@ inline bool lexicographical_compare(A && a, B && b)
                  false);
 }
 
+// FIXME only works with numeric types.
 using std::min;
 template <class A>
 inline auto amin(A && a)
 {
     using T = value_t<A>;
     T c = std::numeric_limits<T>::has_infinity ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::max();
-    for_each([&c](auto && a) { c = min(c, a); }, a);
+    for_each([&c](auto && a) { if (a<c) { c = a; } }, a);
     return c;
 }
 
@@ -223,12 +224,34 @@ inline auto amax(A && a)
 {
     using T = value_t<A>;
     T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
-    for_each([&c](auto && a) { c = max(c, a); }, a);
+    for_each([&c](auto && a) { if (c<a) { c = a; } }, a);
     return c;
 }
 
+// FIXME encapsulate this kind of reference-reduction.
+// FIXME expr/ply mechanism doesn't allow partial iteration (adv then continue).
+template <class A, class Less = std::less<value_t<A>>>
+inline decltype(auto) refmin(A && a, Less && less = std::less<value_t<A>>())
+{
+    assert(a.size()>0);
+    decltype(auto) s = ra::start(a);
+    auto p = &(*s.flat());
+    for_each([&less, &p](auto & a) { if (less(a, *p)) { p = &a; } }, s);
+    return *p;
+}
+
+template <class A, class Less = std::less<value_t<A>>>
+inline decltype(auto) refmax(A && a, Less && less = std::less<value_t<A>>())
+{
+    assert(a.size()>0);
+    decltype(auto) s = ra::start(a);
+    auto p = &(*s.flat());
+    for_each([&less, &p](auto & a) { if (less(*p, a)) { p = &a; } }, s);
+    return *p;
+}
+
 template <class A>
-inline auto sum(A && a)
+constexpr inline auto sum(A && a)
 {
     value_t<A> c {};
     for_each([&c](auto && a) { c += a; }, a);
@@ -236,7 +259,7 @@ inline auto sum(A && a)
 }
 
 template <class A>
-inline auto prod(A && a)
+constexpr inline auto prod(A && a)
 {
     value_t<A> c(1.);
     for_each([&c](auto && a) { c *= a; }, a);
@@ -447,9 +470,6 @@ gemv(A const & a, B const & b)
 }
 
 #undef START
-
-// TODO adjust type for var rank/var size/fixed size. Check temporary.H.
-template <class X> auto make_array(X && x) { return ra::Owned<ra::value_t<X>, decltype(start(x))::rank_s()>(x); }
 
 } // namespace ra
 

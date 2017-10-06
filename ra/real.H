@@ -22,6 +22,7 @@ using std::max;
 using std::min;
 using std::isfinite;
 using std::fma;
+using std::clamp;
 // using std::isinf;  // there's apparently an ::isinf already
 
 #define IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)

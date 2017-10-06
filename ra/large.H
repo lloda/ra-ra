@@ -227,11 +227,9 @@ struct View
         return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
-    T CONST & operator[](dim_t const i) CONST                           \
+    decltype(auto) operator[](dim_t const i) CONST                      \
     {                                                                   \
-        static_assert(rank()==1, "bad rank");                           \
-        CHECK_BOUNDS(inside(i, dim[0].size));                           \
-        return data()[i*dim[0].stride];                                 \
+        return (*this)(i);                                              \
     }
     SUBSCRIPTS(const)
     SUBSCRIPTS(/*const*/)
@@ -307,6 +305,9 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     using T = std::decay_t<decltype(*storage_traits<Store>::data(store))>;
     using View = ra::View<T, RANK>;
     using View::rank_s;
+
+    View & view() { return *this; }
+    View const & view() const { return *this; }
 
 // TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
     WithStorage(WithStorage && w): store(std::move(w.store))

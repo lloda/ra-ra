@@ -287,5 +287,26 @@ int main()
         tr.test_eq(0, C.size(0));
         tr.test_eq(0, C.size(1));
     }
+    tr.section("reference reductions");
+    {
+        ra::Owned<double, 2> A({2, 3}, ra::_1 - ra::_0);
+        double & mn = refmin(A);
+        tr.test_eq(-1, mn);
+        mn = -99;
+        ra::Owned<double, 2> B({2, 3}, ra::_1 - ra::_0);
+        B(1, 0) = -99;
+        tr.test_eq(B, A);
+        double & mx = refmin(A, std::greater<double>());
+        tr.test_eq(2, mx);
+        mx = 0;
+        B(0, 2) = 0;
+        tr.test_eq(B, A);
+        double & my = refmax(A);
+        tr.test_eq(1, my);
+        my = 77;
+        B(0, 1) = 77;
+        tr.test_eq(B, A);
+        // cout << refmin(A+B) << endl; // compile error
+    }
     return tr.summary();
 }

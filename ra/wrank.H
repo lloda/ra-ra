@@ -199,7 +199,7 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     std::tuple<P ...> t;
 
     template <int iarg>
-    bool check()
+    constexpr bool check()
     {
         for (int k=0; k!=rank(); ++k) { // TODO with static rank or sizes, can peval.
             dim_t s0 = size(k);
@@ -241,17 +241,14 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
 // TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
     template <int iarg=0>
-    std::enable_if_t<(iarg<sizeof...(P)), dim_t>
-    constexpr size(int k) const
+    constexpr dim_t size(int k) const
     {
-        dim_t s = std::get<iarg>(t).size(k);
-        return s>=0 ? s : size<iarg+1>(k);
-    }
-    template <int iarg>
-    std::enable_if_t<(iarg==sizeof...(P)), dim_t>
-    constexpr size(int k) const
-    {
-        abort(); return DIM_BAD;
+        if constexpr (iarg<sizeof...(P)) {
+            dim_t s = std::get<iarg>(t).size(k);
+            return s>=0 ? s : size<iarg+1>(k);
+        } else {
+            abort(); return DIM_BAD;
+        }
     }
     constexpr static dim_t size_s() { return DIM_ANY; } // BUG
     constexpr static rank_t rank() { return FM::depth; } // TODO Invalid for RANK_ANY

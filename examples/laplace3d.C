@@ -43,13 +43,13 @@ double const MM[8][8] = { {d827, d427, d227, d427, d427, d227, d127, d227},
                           {d127, d227, d427, d227, d227, d427, d827, d427},
                           {d227, d127, d227, d427, d427, d227, d427, d827} };
 
-const int ISF[8][3] = { {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+int const ISF[8][3] = { {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
                         {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1} };
 
 struct Element
 {
-    int v[8];                     // indices of 8 vertices.
-    double reg1[8], reg2[8];      // temporary storage.
+    int v[8];                  // indices of 8 vertices.
+    double reg1[8], reg2[8];   // temporary storage.
 };
 
 struct Matrix0bnd

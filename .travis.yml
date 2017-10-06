@@ -8,19 +8,19 @@ script:
 
 matrix:
   include:
-   - os: linux
-     addons:
-       apt:
-         sources:
-           - ubuntu-toolchain-r-test
-         packages:
-           - g++-6
-     install:
-       - sudo pip install colorama
-     env:
-       - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+   # - os: linux
+   #   addons:
+   #     apt:
+   #       sources:
+   #         - ubuntu-toolchain-r-test
+   #       packages:
+   #         - g++-6
+   #   install:
+   #     - sudo pip install colorama
+   #   env:
+   #     - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
-      # works on Precise and Trusty
+   #    # works on Precise and Trusty
    - os: linux
      addons:
        apt:

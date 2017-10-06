@@ -123,5 +123,13 @@ int main()
         tr.test_eq(7, b);
         tr.test_eq(9, a);
     }
+    tr.section("concrete on nested array");
+    {
+        ra::Owned<ra::Small<int, 3>, 1> x({2}, 1);
+        cout << x << endl;
+        cout << concrete(x) << endl;
+        cout << x*double(2.) << endl;
+        // cout << concrete(x*double(2.)) << endl; // FIXME fails
+    }
     return tr.summary();
 }

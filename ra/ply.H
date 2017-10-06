@@ -121,21 +121,20 @@ void ply_ravel(A && a)
 // -------------------------
 
 template <class order, class A, class S>
-std::enable_if_t<mp::len<order> == 0> inline
-subindexf(A & a, S & i)
-{
-    a.at(i);
-}
-
-template <class order, class A, class S>
-std::enable_if_t<(mp::len<order> > 0)> inline
+inline void
 subindexf(A & a, S & i_)
 {
-    dim_t & i = i_[mp::First_<order>::value];
+    if constexpr (mp::len<order> == 0) {
+        a.at(i_);
+    } else if constexpr (mp::len<order> > 0) {
+        dim_t & i = i_[mp::First_<order>::value];
 // on every subloop, but not worth caching
-    dim_t const /* constexpr */ s = a.size(mp::First_<order>::value);
-    for (i=0; i<s; ++i) {
-        subindexf<mp::Drop1_<order>>(a, i_);
+        dim_t const /* constexpr */ s = a.size(mp::First_<order>::value);
+        for (i=0; i<s; ++i) {
+            subindexf<mp::Drop1_<order>>(a, i_);
+        }
+    } else {
+        abort();
     }
 }
 
@@ -159,43 +158,39 @@ void plyf_index(A && a)
 #define RA_INLINE inline /* __attribute__((always_inline)) inline */
 
 template <class order, int ravel_rank, class A, class S> RA_INLINE
-std::enable_if_t<mp::len<order> == ravel_rank>
-subindex(A & a, dim_t s, S const & ss0)
+void subindex(A & a, dim_t s, S const & ss0)
 {
-    for (auto p=a.flat(); s>0; --s, p+=ss0) {
-        *p;
+    if constexpr (mp::len<order> == ravel_rank) {
+        for (auto p=a.flat(); s>0; --s, p+=ss0) {
+            *p;
+        }
+    } else if constexpr (mp::len<order> > ravel_rank) {
+        dim_t size = a.size(mp::First_<order>::value); // TODO Precompute these at the top
+        for (dim_t i=0, iend=size; i<iend; ++i) {
+            subindex<mp::Drop1_<order>, ravel_rank>(a, s, ss0);
+            a.adv(mp::First_<order>::value, 1);
+        }
+        a.adv(mp::First_<order>::value, -size);
+    } else {
+        abort();
     }
-}
-
-template <class order, int ravel_rank, class A, class S> RA_INLINE
-std::enable_if_t<(mp::len<order> > ravel_rank)>
-subindex(A & a, dim_t const s, S const & ss0)
-{
-    dim_t size = a.size(mp::First_<order>::value); // TODO Precompute these at the top
-    for (dim_t i=0, iend=size; i<iend; ++i) {
-        subindex<mp::Drop1_<order>, ravel_rank>(a, s, ss0);
-        a.adv(mp::First_<order>::value, 1);
-    }
-    a.adv(mp::First_<order>::value, -size);
 }
 
 // until() converts runtime jj into compile time j. TODO a.adv<k>().
 
 template <class order, int j, class A, class S> RA_INLINE
-std::enable_if_t<(mp::len<order> < j)>
-until(int const jj, A & a, dim_t const s, S const & ss0)
+void until(int const jj, A & a, dim_t const s, S const & ss0)
 {
-    assert(0 && "rank too high");
-}
-
-template <class order, int j, class A, class S> RA_INLINE
-std::enable_if_t<(mp::len<order> >= j)>
-until(int const jj, A & a, dim_t const s, S const & ss0)
-{
-    if (jj==j) {
-        subindex<order, j>(a, s, ss0);
+    if constexpr (mp::len<order> < j) {
+        assert(0 && "rank too high");
+    } else if constexpr (mp::len<order> >= j) {
+        if (jj==j) {
+            subindex<order, j>(a, s, ss0);
+        } else {
+            until<order, j+1>(jj, a, s, ss0);
+        }
     } else {
-        until<order, j+1>(jj, a, s, ss0);
+        abort();
     }
 }
 

@@ -17,6 +17,7 @@
 #include "ra/view-ops.H"
 #include "ra/operators.H"
 #include "ra/io.H"
+#include "ra/mpdebug.H"
 
 using std::cout; using std::endl; using std::flush;
 
@@ -196,6 +197,21 @@ int main()
             test(ra::Unique<double, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
             test(ra::Unique<double>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
         }
+    }
+    tr.section("explode for Small");
+    {
+        ra::Small<double, 2, 3> a(ra::_0 + 10*ra::_1);
+        auto c = ra::explode<ra::Small<double, 3>>(a);
+        using sizes = std::decay_t<decltype(c)>::sizes;
+        using strides = std::decay_t<decltype(c)>::strides;
+        tr.info(mp::print_int_list<sizes> {}).test(std::is_same<mp::int_list<2>, sizes>::value);
+        tr.info(mp::print_int_list<strides> {}).test(std::is_same<mp::int_list<1>, strides>::value);
+        tr.test_eq(ra::scalar(a[0].data()), ra::scalar(c[0].data()));
+        tr.test_eq(ra::scalar(a[1].data()), ra::scalar(c[1].data()));
+        c[1] = { 3, 2, 1 };
+        tr.test_eq(ra::Small<double, 3> { 0, 10, 20 }, c[0]);
+        tr.test_eq(ra::Small<double, 3> { 0, 10, 20 }, a[0]);
+        tr.test_eq(ra::Small<double, 3> { 3, 2, 1 }, a[1]);
     }
     return tr.summary();
 }

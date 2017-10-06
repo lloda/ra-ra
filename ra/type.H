@@ -33,7 +33,7 @@ template <class A> constexpr bool is_builtin_array = std::is_array<std::remove_c
 // TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // TODO check the rest of the required interface of A and A::flat() right here.
 RA_IS_DEF(is_iterator, (mp::exists<decltype(std::declval<A>().flat())>))
-RA_IS_DEF(is_ra_scalar, (std::is_same<A, Scalar<typename A::C> >::value))
+RA_IS_DEF(is_ra_scalar, (std::is_same<A, Scalar<typename A::C>>::value))
 RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
 RA_IS_DEF(is_slice, (mp::exists<decltype(std::declval<A>().iter())> && mp::exists<decltype(ra_traits<A>::size_s())>)) // reject public-derived from A
 RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
@@ -117,7 +117,8 @@ inline constexpr auto start(T && t);
 
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
+template <class A> using start_t = decltype(*(ra::start(std::declval<A>()).flat()));
+template <class A> using value_t = std::decay_t<start_t<A>>;
 template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }
 
 } // namespace ra

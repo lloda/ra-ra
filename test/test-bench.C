@@ -20,7 +20,7 @@
 #include "ra/test.H"
 #include "ra/bench.H"
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 
 int main()
 {
