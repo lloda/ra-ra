@@ -19,8 +19,8 @@ namespace mp {
 using std::tuple;
 using nil = tuple<>;
 
-template <class T> constexpr bool nilp = std::is_same<nil, T>::value;
-template <class A> constexpr int len = std::tuple_size<A>::value;
+template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
+template <class A> constexpr int len = std::tuple_size_v<A>;
 
 template <class A, class B> struct Cons;
 template <class A0, class ... A>
@@ -305,7 +305,7 @@ using Filter_ = typename Filter<A, B>::type;
 template <template <class ... A> class F, class Def, class ... L>
 struct Fold
 {
-    using def = If_<std::is_same<void, Def>::value, F<>, Def>;
+    using def = If_<std::is_same_v<void, Def>, F<>, Def>;
     using type = typename Fold<F,
                                typename F<def, First_<L> ...>::type,
                                typename Drop1<L>::type ...>::type;
@@ -313,12 +313,12 @@ struct Fold
 template <template <class ... A> class F, class Def, class ... L>
 struct Fold<F, Def, nil, L ...>
 {
-    using type = If_<std::is_same<void, Def>::value, F<>, Def>;
+    using type = If_<std::is_same_v<void, Def>, F<>, Def>;
 };
 template <template <class ... A> class F, class Def>
 struct Fold<F, Def>
 {
-    using type = If_<std::is_same<void, Def>::value, F<>, Def>;
+    using type = If_<std::is_same_v<void, Def>, F<>, Def>;
 };
 template <template <class ... A> class F, class Def, class ... L>
 using Fold_ = typename Fold<F, Def, L ...>::type;

@@ -18,7 +18,7 @@
 #include "ra/test.H"
 #include "ra/bench.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using real = double;
 
 int nx = 100;
@@ -34,12 +34,8 @@ constexpr ra::Small<real, 3, 3, 3> mask = { 0, 0, 0,  0, 1, 0,  0, 0, 0,
                                             0, 1, 0,  1, -6, 1,  0, 1, 0,
                                             0, 0, 0,  0, 1, 0,  0, 0, 0 };
 
-using TA = ra::View<real, 3>;
-using TStencil = ra::View<real, 6>;
-
-/* #define THEOP template <class A_, class Anext_, class Astencil_> __attribute__((noinline)) \
-   auto operator()(A_ & A, Anext_ & Anext, Astencil_ & Astencil) */
-#define THEOP auto operator()(TA & A, TA & Anext, TStencil & Astencil)
+#define THEOP template <class A_, class Anext_, class Astencil_> __attribute__((noinline)) \
+   auto operator()(A_ & A, Anext_ & Anext, Astencil_ & Astencil)
 
 // sensitive to RA_CHECK_BOUNDS.
 struct f_raw
@@ -159,19 +155,18 @@ int main()
         BENCH(Aref, f_sumprod2);
 #undef BENCH
     }
-// // BUG The mere presence of this section slows down massively (10x) some of the benches above with RA_CHECK_BOUNDS=1 (!?)
-//     tr.section("dynamic rank");
-//     {
-//         ra::Owned<real> B({nx, ny, nz}, 1.);
-//         ra::Owned<real> Bnext({nx, ny, nz}, 0.);
-//         auto Bstencil = stencil(B, 1, 1);
-//         cout << "Bstencil " << format_array(Bstencil(0, 0, 0, ra::dots<3>), true, "|", " ") << endl;
-// #define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, STRINGIZE(op), op {});
-//         // BENCH(Aref, f_raw); // TODO very slow
-//         BENCH(Aref, f_slices);
-//         BENCH(Aref, f_stencil_explicit);
-//         BENCH(Aref, f_stencil_arrayop);
-// #undef BENCH
-//     }
+    tr.section("dynamic rank");
+    {
+        ra::Owned<real> B({nx, ny, nz}, 1.);
+        ra::Owned<real> Bnext({nx, ny, nz}, 0.);
+        auto Bstencil = stencil(B, 1, 1);
+        cout << "Bstencil " << format_array(Bstencil(0, 0, 0, ra::dots<3>), true, "|", " ") << endl;
+#define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, STRINGIZE(op), op {});
+        // BENCH(Aref, f_raw); // TODO very slow
+        BENCH(Aref, f_slices);
+        BENCH(Aref, f_stencil_explicit);
+        BENCH(Aref, f_stencil_arrayop);
+#undef BENCH
+    }
     return tr.summary();
 }

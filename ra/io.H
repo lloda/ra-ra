@@ -33,7 +33,7 @@ template <class A, class B> inline
 FormatArray<A>
 format_array(A const & a, B const shape, char const * sep0=" ", char const * sep1="\n", char const * sep2="\n")
 {
-    static_assert(std::is_same<std::decay_t<B>, bool>::value, "bad call to format_array");
+    static_assert(std::is_same_v<std::decay_t<B>, bool>, "bad call to format_array");
     return FormatArray<A> { a, shape, sep0, sep1, sep2 };
 }
 

@@ -49,14 +49,14 @@ else:
     archflags=['-march=native']
     ld_blas = {'LINKFLAGS': '', 'LIBS': ['blas']}
 
-env.Append(CPPPATH=['..', '.'],
-           CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-           CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
-                     '-finput-charset=UTF-8', '-fextended-identifiers',
-                     '-Wno-error=strict-overflow',
-                     #'-Wconversion',
-                     # '-funsafe-math-optimizations', # TODO Test with this.
-                 ])
+env.Prepend(CPPPATH=['..', '.'],
+            CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
+            CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+                      '-finput-charset=UTF-8', '-fextended-identifiers',
+                      '-Wno-error=strict-overflow',
+                      #'-Wconversion',
+                      # '-funsafe-math-optimizations', # TODO Test with this.
+                  ])
 
 env_blas = env.Clone()
 if 'RA_USE_BLAS' in env['ENV'] and env['ENV']['RA_USE_BLAS']=='1':

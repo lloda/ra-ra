@@ -16,7 +16,7 @@
 
 namespace ra {
 
-static_assert(std::is_signed<rank_t>::value && std::is_signed<dim_t>::value, "bad rank_t");
+static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>, "bad rank_t");
 
 
 // --------------

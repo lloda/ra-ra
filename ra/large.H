@@ -191,7 +191,7 @@ struct View
     // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I,                                              \
-              std::enable_if_t<((0 + ... + std::is_integral<I>::value)<RANK \
+              std::enable_if_t<((0 + ... + std::is_integral_v<I>)<RANK \
                                 && (0 + ... + is_beatable<I>::value)==sizeof...(I)), int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
@@ -207,7 +207,7 @@ struct View
         return sub;                                                     \
     }                                                                   \
     /* BUG doesn't handle generic zero-rank indices */                 \
-    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==RANK, int> = 0> \
+    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral_v<I>)==RANK, int> = 0> \
     decltype(auto) operator()(I const & ... i) CONST                    \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \

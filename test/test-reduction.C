@@ -86,7 +86,7 @@ int main()
 
     tr.section("reductions");
     {
-        auto test_dot = [&tr](auto && test) // TODO Use this for other real reductions.
+        auto test_dot = [](auto && test) // TODO Use this for other real reductions.
             {
                 test(ra::Small<complex, 2>{1, 2}, ra::Small<real, 2>{3, 4});
                 test(ra::Small<real, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
@@ -113,7 +113,7 @@ int main()
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(sqrt(8.), norm2(a-b)); });
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(8., reduce_sqrm(a-b)); });
 
-        auto test_cdot = [&tr](auto && test)
+        auto test_cdot = [](auto && test)
             {
                 test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
                 test(ra::Owned<complex, 1>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
@@ -126,7 +126,7 @@ int main()
         test_cdot([&tr](auto && a, auto && b) { tr.test_eq(sqrt(59.), norm2(a-b)); });
         test_cdot([&tr](auto && a, auto && b) { tr.test_eq(59., reduce_sqrm(a-b)); });
 
-        auto test_sum = [&tr](auto && test)
+        auto test_sum = [](auto && test)
             {
                 test(ra::Small<complex, 2>{complex(4, 5), 6});
                 test(ra::Owned<complex, 1>{complex(4, 5), 6});

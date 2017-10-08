@@ -52,11 +52,14 @@ int main()
     }
     tr.section("operations with Iota, plus");
     {
+        static_assert(ra::iota_op<ra::Scalar<int>>);
+        static_assert(ra::is_iota<ra::Iota<long>>);
         auto test = [&tr](auto && org)
             {
                 auto i = ra::iota(5, org);
                 auto j = i+1;
                 auto k1 = optimize(i+1);
+                static_assert(ra::is_iota<decltype(k1)>);
                 auto k2 = optimize(1+i);
                 auto k3 = optimize(ra::iota(5)+1);
                 auto k4 = optimize(1+ra::iota(5));

@@ -73,7 +73,6 @@ struct by_raw
         return y;
     }
 };
-constexpr char const * by_raw::name; // TODO C++17...
 
 #define BY_PLY(NAME, INSIDE)                                        \
     struct NAME {                                                   \

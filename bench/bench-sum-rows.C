@@ -16,7 +16,7 @@
 #include "ra/test.H"
 #include "ra/bench.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using real = double;
 
 int main()

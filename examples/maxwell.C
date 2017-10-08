@@ -93,7 +93,7 @@ int main()
         .test_eq(0., amax(map([](auto && a) { return sum(a); },
                               iter<1>(ra::transpose<0, 1, 2, 3, 4, 4>(DA)))));
 
-    auto show = [&tr, &delta, &o](char const * name, int t, auto && F)
+    auto show = [&tr, &delta](char const * name, int t, auto && F)
         {
             tr.quiet().test(amin(F)>=-1);
             tr.quiet().test(amax(F)<=+1);

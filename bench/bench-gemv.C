@@ -23,8 +23,8 @@
 #include "ra/io.H"
 #include "ra/bench.H"
 
-using std::cout; using std::endl; using std::setw; using std::setprecision;
-using ra::Small; using ra::View; using ra::Unique; using ra::ra_traits;
+using std::cout, std::endl, std::setw, std::setprecision;
+using ra::Small, ra::View, ra::Unique, ra::ra_traits;
 
 using real = double;
 

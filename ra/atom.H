@@ -106,7 +106,7 @@ struct Vector
 
     V v;
     decltype(v.begin()) p__;
-    static_assert(!std::is_reference<decltype(p__)>::value, "bad iterator type");
+    static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
     constexpr dim_t size() const { return traits::size(v); }
     constexpr dim_t size(int i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
@@ -241,7 +241,7 @@ iota(dim_t size, O org=0, S stride=1)
 
 template <class I> struct is_beatable_def
 {
-    constexpr static bool value = std::is_integral<I>::value;
+    constexpr static bool value = std::is_integral_v<I>;
     constexpr static int skip_src = 1;
     constexpr static int skip = 0;
     constexpr static bool static_p = value; // can the beating can be resolved statically?
@@ -279,8 +279,8 @@ template <class X> constexpr bool has_tensorindex_def = false;
 template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T>>;
 template <int w, class value_type> constexpr bool has_tensorindex_def<TensorIndex<w, value_type>> = true;
 
-template <class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>> > struct Expr;
-template <class T, class K=std::make_integer_sequence<int, mp::len<T>> > struct Pick;
+template <class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Expr;
+template <class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Pick;
 template <class FM, class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Ryn;
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
 

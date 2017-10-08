@@ -18,7 +18,7 @@
 #include "ra/test.H"
 #include "ra/bench.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using real = double;
 
 int nx = 1000000;
@@ -28,12 +28,8 @@ auto I = ra::iota(nx-2, 1);
 
 constexpr ra::Small<real, 3> mask = { 1, -2, 1 };
 
-using TA = ra::View<real, 1>;
-using TStencil = ra::View<real, 2>;
-
-/* #define THEOP template <class A_, class Anext_, class Astencil_> __attribute__((noinline)) \
-   auto operator()(A_ & A, Anext_ & Anext, Astencil_ & Astencil) */
-#define THEOP auto operator()(TA & A, TA & Anext, TStencil & Astencil)
+#define THEOP template <class A_, class Anext_, class Astencil_> __attribute__((noinline)) \
+   auto operator()(A_ & A, Anext_ & Anext, Astencil_ & Astencil)
 
 // sensitive to RA_CHECK_BOUNDS.
 struct f_raw
@@ -143,19 +139,18 @@ int main()
         BENCH(Aref, f_sumprod2);
 #undef BENCH
     }
-// // BUG The mere presence of this section slows down massively (10x) some of the benches above with RA_CHECK_BOUNDS=1 (!?)
-//     tr.section("dynamic rank");
-//     {
-//         ra::Owned<real> B({nx}, 1.);
-//         ra::Owned<real> Bnext({nx}, 0.);
-//         auto Bstencil = stencil(B, 1, 1);
-//         cout << "Bstencil " << format_array(Bstencil(0, ra::dots<1>), true, "|", " ") << endl;
-// #define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, STRINGIZE(op), op {});
-//         // BENCH(Aref, f_raw); // TODO very slow
-//         BENCH(Aref, f_slices);
-//         BENCH(Aref, f_stencil_explicit);
-//         BENCH(Aref, f_stencil_arrayop);
-// #undef BENCH
-//     }
+    tr.section("dynamic rank");
+    {
+        ra::Owned<real> B({nx}, 1.);
+        ra::Owned<real> Bnext({nx}, 0.);
+        auto Bstencil = stencil(B, 1, 1);
+        cout << "Bstencil " << format_array(Bstencil(0, ra::dots<1>), true, "|", " ") << endl;
+#define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, STRINGIZE(op), op {});
+        // BENCH(Aref, f_raw); // TODO very slow
+        BENCH(Aref, f_slices);
+        BENCH(Aref, f_stencil_explicit);
+        BENCH(Aref, f_stencil_arrayop);
+#undef BENCH
+    }
     return tr.summary();
 }

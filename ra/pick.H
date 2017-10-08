@@ -45,8 +45,7 @@ struct pick_type
 // lvalue
 template <class P0, class ... P>
 struct pick_type<std::tuple<P0 &, P ...>,
-                 std::enable_if_t<!std::is_const<P0>::value
-                                  && (std::is_same<P0 &, P>::value && ...)>>
+                 std::enable_if_t<!std::is_const_v<P0> && (std::is_same_v<P0 &, P> && ...)>>
 {
     using type = P0 &;
 };
@@ -54,8 +53,8 @@ struct pick_type<std::tuple<P0 &, P ...>,
 // const lvalue
 template <class P0, class ... P>
 struct pick_type<std::tuple<P0 &, P & ...>,
-                 std::enable_if_t<(std::is_same<std::decay_t<P0>, std::decay_t<P>>::value && ...)
-                                  && (std::is_const<P0>::value || (std::is_const<P>::value || ...))>>
+                 std::enable_if_t<(std::is_same_v<std::decay_t<P0>, std::decay_t<P>> && ...)
+                                  && (std::is_const_v<P0> || (std::is_const_v<P> || ...))>>
 {
     using type = P0 const &;
 };
@@ -75,7 +74,7 @@ template <size_t I, class T, class J> inline constexpr
 pick_at_t<T, J>
 pick_at(size_t p0, T && t, J const & j)
 {
-    if constexpr (I+2<std::tuple_size<std::decay_t<T>>::value) {
+    if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
         if (p0==I) {
             return std::get<I+1>(t).at(j);
         } else {
@@ -98,7 +97,7 @@ template <size_t I, class T> inline constexpr
 pick_star_t<T>
 pick_star(size_t p0, T && t)
 {
-    if constexpr (I+2<std::tuple_size<std::decay_t<T>>::value) {
+    if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
         if (p0==I) {
             return *(std::get<I+1>(t));
         } else {

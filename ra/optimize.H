@@ -25,7 +25,7 @@
 
 namespace ra {
 
-template <class E, int a=0> inline decltype(auto) constexpr optimize(E && e) { return std::forward<E>(e); }
+template <class E> inline decltype(auto) constexpr optimize(E && e) { return std::forward<E>(e); }
 
 // These are named to match & transform Expr<OPNAME, ...> later on, and used by operator+ etc.
 #define DEFINE_NAMED_BINARY_OP(OP, OPNAME)                              \
@@ -44,7 +44,8 @@ DEFINE_NAMED_BINARY_OP(/, slash)
 #define ITEM(i) std::get<(i)>(e.t)
 
 #if RA_OPTIMIZE_IOTA==1
-#define IS_IOTA(I) std::is_same<std::decay_t<I>, Iota<typename I::T>>::value
+template <class I, class Enable=void> constexpr bool is_iota = false;
+template <class I> constexpr bool is_iota<I, std::enable_if_t<std::is_same_v<std::decay_t<I>, Iota<typename std::decay_t<I>::T>>>> = true;
 // TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
 template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X>>::is_integer;
 
@@ -52,19 +53,19 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::num
 // plus
 // --------------
 
-template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_op<J>, int> =0>
+template <class I, class J, std::enable_if_t<is_iota<I> && iota_op<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).size_, ITEM(0).org_+ITEM(1), ITEM(0).stride_);
 }
 
-template <class I, class J, std::enable_if_t<iota_op<I> && IS_IOTA(J), int> =0>
+template <class I, class J, std::enable_if_t<iota_op<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).size_, ITEM(0)+ITEM(1).org_, ITEM(1).stride_);
 }
 
-template <class I, class J, std::enable_if_t<IS_IOTA(I) && IS_IOTA(J), int> =0>
+template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
@@ -75,19 +76,19 @@ inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 // minus
 // --------------
 
-template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_op<J>, int> =0>
+template <class I, class J, std::enable_if_t<is_iota<I> && iota_op<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).size_, ITEM(0).org_-ITEM(1), ITEM(0).stride_);
 }
 
-template <class I, class J, std::enable_if_t<iota_op<I> && IS_IOTA(J), int> =0>
+template <class I, class J, std::enable_if_t<iota_op<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).size_, ITEM(0)-ITEM(1).org_, -ITEM(1).stride_);
 }
 
-template <class I, class J, std::enable_if_t<IS_IOTA(I) && IS_IOTA(J), int> =0>
+template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
@@ -98,19 +99,18 @@ inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 // times
 // --------------
 
-template <class I, class J, std::enable_if_t<IS_IOTA(I) && iota_op<J>, int> =0>
+template <class I, class J, std::enable_if_t<is_iota<I> && iota_op<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).size_, ITEM(0).org_*ITEM(1), ITEM(0).stride_*ITEM(1));
 }
 
-template <class I, class J, std::enable_if_t<iota_op<I> && IS_IOTA(J), int> =0>
+template <class I, class J, std::enable_if_t<iota_op<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).size_, ITEM(0)*ITEM(1).org_, ITEM(0)*ITEM(1).stride_);
 }
 
-#undef IS_IOTA
 #endif // RA_OPTIMIZE_IOTA
 
 #if RA_OPTIMIZE_SMALLVECTOR==1

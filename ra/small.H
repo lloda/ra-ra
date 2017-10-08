@@ -183,7 +183,7 @@ struct SmallBase
 
 // Specialize for rank() integer-args -> scalar, same in ra::View in large.H.
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I, std::enable_if_t<((0 + ... + std::is_integral<I>::value)<rank() \
+    template <class ... I, std::enable_if_t<((0 + ... + std::is_integral_v<I>)<rank() \
                                              && (is_beatable<I>::static_p && ...)), int> = 0> \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
@@ -191,7 +191,7 @@ struct SmallBase
         return SmallView<T CONST, typename FD::sizes, typename FD::strides> \
             (data()+select_loop<sizes, strides>(i ...));                \
     }                                                                   \
-    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral<I>::value)==rank(), int> = 0> \
+    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral_v<I>)==rank(), int> = 0> \
     constexpr decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
@@ -310,7 +310,7 @@ struct SmallBase
 
         Iterator ii;
         std::decay_t<decltype(ssizes)> i;
-        general_stl_iterator(pointer const & p): ii(std::tuple_size<decltype(i)>::value==0 ? nullptr : p) { std::fill(i.begin(), i.end(), 0.); }
+        general_stl_iterator(pointer const & p): ii(std::tuple_size_v<decltype(i)> ==0 ? nullptr : p) { std::fill(i.begin(), i.end(), 0.); }
         general_stl_iterator(): ii(pointer(nullptr)) {}
 
         template <class PP> bool operator==(PP const & q) const { return ii.p==q.ii.p; }
@@ -334,7 +334,7 @@ struct SmallBase
         general_stl_iterator & operator++() { next_in_cube(); return *this; }
     };
 
-    constexpr static bool have_default_strides = std::is_same<strides, default_strides_<sizes>>::value;
+    constexpr static bool have_default_strides = std::is_same_v<strides, default_strides_<sizes>>;
     template <class P> using stl_iterator = mp::If_<have_default_strides, P, general_stl_iterator<Iterator<P>>>;
 // TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
     constexpr auto begin() { return stl_iterator<T *>(data()); }
@@ -346,7 +346,7 @@ struct SmallBase
 #define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same<strides, default_strides_<mp::int_list<req_dim0__, req_dim1__>>>::value, "renames only on default strides"); \
+        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<req_dim0__, req_dim1__>>>, "renames only on default strides"); \
         static_assert(size(0)==req_dim0__ && size(1)==req_dim1__, "dimension error"); \
         return reinterpret_cast<name__<T> CONST &>(*this);              \
     }
@@ -363,7 +363,7 @@ struct SmallBase
 #define COMP_RENAME_C(name__, dim0__, CONST)                            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same<strides, default_strides_<mp::int_list<dim0__>>>::value, "renames only on default strides"); \
+        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<dim0__>>>, "renames only on default strides"); \
         static_assert(size(0)==dim0__, "dimension error");              \
         return reinterpret_cast<name__<T> CONST &>(*this);              \
     }
@@ -487,7 +487,7 @@ struct ra_traits_small
     using shape_type = std::decay_t<decltype(V::ssizes)>;
     // constexpr static auto const & shape(V const & v) { return V::ssizes; }
     constexpr static auto shape(V const & v) { return SmallView<ra::dim_t const, mp::int_list<V::rank_s()>, mp::int_list<1>>(V::ssizes.data()); }
-#define MAKE_COND (std::is_same<strides, mp::int_list<1>>::value && std::is_same<sizes, mp::Take_<sizes, 1>>::value)
+#define MAKE_COND (std::is_same_v<strides, mp::int_list<1>> && std::is_same_v<sizes, mp::Take_<sizes, 1>>)
     constexpr static V make(dim_t const n)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");
@@ -636,13 +636,13 @@ auto explode(SmallBase<Child, T, sizes, strides> & a)
     return SmallView<super_t, mp::Take_<sizes, ra-rb>, cstrides>((super_t *) a.data());
 }
 
-template <class T, class I=std::make_integer_sequence<int, std::rank<T>::value>>
+template <class T, class I=std::make_integer_sequence<int, std::rank_v<T>>>
 struct builtin_array_sizes;
 
 template <class T, int ... I>
 struct builtin_array_sizes<T, std::integer_sequence<int, I ...> >
 {
-    using type = mp::int_list<std::extent<T, I>::value ...>;
+    using type = mp::int_list<std::extent_v<T, I> ...>;
 };
 
 template <class T> using builtin_array_sizes_t = typename builtin_array_sizes<T>::type;

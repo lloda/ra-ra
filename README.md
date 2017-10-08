@@ -236,21 +236,19 @@ B: 2 2
 Sui generis
 -----------
 
-* Index and size types are all signed.
-
-* Index base is always 0.
+* Index and size types are all signed. Index base is always 0.
 
 * Default array order is C or row-major (last dimension changes fastest). You
   can make array views using other orders by transposing or manipulating the
-  strides yourself, but all newly created arrays use C-order.
+  strides yourself, but newly created arrays use C-order.
 
 * The selection operator is (). [] means the same as () but only accepts one
   subscript.
 
-* Array constructors follow a regular format. Single argument constructors
-  always take an 'init-expression' which must provide enough shape information
-  to construct the new array (unless the array type has static shape), and is
-  otherwise subject to the regular argument shape agreement rules. Two-argument
+* Array constructors follow a regular format. Single argument constructors take
+  a content argument which must provide enough shape information to construct
+  the new array (unless the array type has static shape), and is otherwise
+  subject to the regular argument shape agreement rules. Two-argument
   constructors always take a shape argument and a content argument.
 
 * Indices are checked by default. This can be disabled with a compilation flag.
@@ -263,10 +261,14 @@ Bugs & wishes
 
 * Beatable subscripts are not beaten if mixed with non-beatable subscripts.
 
+* Some inconsistencies with subscripting; for example, if ```A``` is rank>1 and
+  ```i``` is rank 1, then ```A(i)``` will return a nested expression instead of
+  preserving ```A```'s rank.
+
 * Better reduction mechanisms.
 
-* Concatenation, search, reshape, and other infinite rank or rank>0 operations
-  are missing.
+* Better concatenation, search, reshape, and other infinite rank or rank>0
+  operations.
 
 * More clever/faster traversal of arrays, like in Blitz++.
 
@@ -282,8 +284,8 @@ Out of scope
   library includes a dual number implementation but it's more of a demo of how
   to adapt user types to the library.
 
-* Sparse arrays. You'd still want to mix & match with dense arrays, so
-  maybe at some point.
+* Sparse arrays. You'd still want to mix & match with dense arrays, so maybe at
+  some point.
 
 
 Building
@@ -292,22 +294,24 @@ Building
 The library is header-only and has no dependencies other than a C++17 compiler
 and the standard library. There is a test suite in ```test/```. These tests test
 internal details and are not meant as demonstrations of how to use the
-library. There is a directory with ```examples/```, some ported from Blitz++.
+library. There is a directory with ```examples/```, some ported from Blitz++,
+some ported from APL. Finally there are some benchmarks in ```bench/```. Some of
+those try to use BLAS if you have ```USE_BLAS=1``` in the environment.
 
 All tests pass under g++-7.2.
 
-(OUTDATED) All tests pass under clang++-4.0 except for:
+All tests pass under clang++-5.0 (with -Wno-missing-braces) except for:
 
 * test/bench-pack.C, crashes clang.
 
-* test/test-optimize.C, fails to compile to a defect in the implementation of
-  the vector_size attribute.
+* test/test-optimize.C, a required specialization is missed and I haven't
+  figured out why.
 
 For clang on OS X you have to remove the -Wa,-q option in SConstruct which is
 meant for gcc by setting CCFLAGS to something else:
 
-  ```CCFLAGS="-march=native -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3
-  CXX=clang++-3.9 scons -j4```
+  ```CCFLAGS="-march=native -Wno-missing-braces -DRA_OPTIMIZE_SMALLVECTOR=0"
+  CXXFLAGS=-O3 CXX=clang++-5.0 scons -j4```
 
 I haven't tested on Windows.
 

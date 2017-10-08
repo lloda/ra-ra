@@ -88,7 +88,7 @@ struct ra_traits_def<std::initializer_list<T>>
     constexpr static rank_t size_s() { return DIM_ANY; }
 };
 
-// To handle rank-1 arrays of static/dynamic size. TODO: clean up, see temporary.H.
+// To handle rank-1 arrays of static/dynamic size.
 template <class Dim, std::enable_if_t<ra_traits<Dim>::size_s()!=DIM_ANY, int> =0>
 void resize(Dim & dim, dim_t k)
 {

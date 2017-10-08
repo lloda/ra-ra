@@ -21,19 +21,19 @@ namespace ra {
     template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
 
 // specialize this for new types for which is_scalar<> should be true. These are foreign types.
-RA_IS_DEF(is_scalar, (!std::is_pointer<A>::value && std::is_scalar<A>::value))
+RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
 
 // other foreign types we care about.
 template <class A> constexpr bool is_foreign_vector_def = false;
 template <class A, class Enable=void> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A>>;
 template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A>> = true;
 template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
-template <class A> constexpr bool is_builtin_array = std::is_array<std::remove_cv_t<std::remove_reference_t<A>>>::value;
+template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
 
 // TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // TODO check the rest of the required interface of A and A::flat() right here.
 RA_IS_DEF(is_iterator, (mp::exists<decltype(std::declval<A>().flat())>))
-RA_IS_DEF(is_ra_scalar, (std::is_same<A, Scalar<typename A::C>>::value))
+RA_IS_DEF(is_ra_scalar, (std::is_same_v<A, Scalar<typename A::C>>))
 RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
 RA_IS_DEF(is_slice, (mp::exists<decltype(std::declval<A>().iter())> && mp::exists<decltype(ra_traits<A>::size_s())>)) // reject public-derived from A
 RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
