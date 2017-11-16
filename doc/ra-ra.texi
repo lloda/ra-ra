@@ -352,7 +352,7 @@ A @dfn{view} is similar to a container in that it points to actual data in memor
 @verbatim
 ra::Owned<double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
 {
-    auto c1 = c(1);                  // the first row of array c
+    auto c1 = c(1);                  // the second row of array c
     // c1 is destroyed here
 }
 // can still use c here
@@ -530,7 +530,7 @@ b += transpose<0, 1, 1>(a); // b(i) = ∑ⱼ a(i, j, j)
 @result{} b = @{0, 3, 6, 9, 12@}
 @end example
 
-An obvious weakness of prefix agreement is that sometimes the axes you want to match are not the prefix axes. Obviously @ref{x-transpose,transposing} the axes before extension is a workaround. For a more general form of rank extension, @pxref{The rank conjunction}.
+An obvious weakness of prefix agreement is that sometimes the axes you want to match are not the prefix axes. @ref{x-transpose,Transposing} the axes before extension is a possible workaround. For a more general form of rank extension, @pxref{The rank conjunction}.
 
 @cindex Numpy
 @cindex broadcasting, singleton

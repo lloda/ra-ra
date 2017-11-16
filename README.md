@@ -64,10 +64,9 @@ A: 2 2
 * Many predefined array operations. Adding yours is trivial.
 * etc.
 
-**ra-ra** has a manual (work in progress) maintained at `doc/ra-ra.texi`. If you
-are reading this on the web, there should be a version of that manual in the
-‘wiki’. Please check it out for details, or have a look at the `examples/`
-folder.
+**ra-ra** has a manual (work in progress) maintained at `doc/ra-ra.texi`. You
+can view the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra). Please check it
+out for details, or have a look at the `examples/` folder.
 
 Performance is competitive with hand written scalar (element by
 element) loops, but not with cache-tuned code such as your platform BLAS, or
