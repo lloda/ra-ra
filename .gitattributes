@@ -1,3 +1,4 @@
 *.C linguist-language=C++
 *.H linguist-language=C++
+*.apl linguist-language=APL
 

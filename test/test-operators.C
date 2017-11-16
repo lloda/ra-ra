@@ -68,13 +68,13 @@ int main()
                 {
                     tr.test_eq(12, a*4.);
                     auto b = a();
-                    static_assert(std::is_same<int, decltype(b)>::value, "unexpected b non-decay to real");
-                    static_assert(std::is_same<decltype(b*4.), real>::value, "expected b decay to real");
-                    static_assert(std::is_same<decltype(4.*b), real>::value, "expected b decay to real");
+                    static_assert(std::is_same_v<int, decltype(b)>, "unexpected b non-decay to real");
+                    static_assert(std::is_same_v<real, decltype(b*4.)>, "expected b decay to real");
+                    static_assert(std::is_same_v<real, decltype(4.*b)>, "expected b decay to real");
                     tr.test_eq(12., b*4.);
                     tr.test_eq(12., 4.*b);
-                    static_assert(std::is_same<decltype(a*4.), real>::value, "expected a decay to real");
-                    static_assert(std::is_same<decltype(4.*a), real>::value, "expected a decay to real");
+                    static_assert(std::is_same_v<real, decltype(a*4.)>, "expected a decay to real");
+                    static_assert(std::is_same_v<real, decltype(4.*a)>, "expected a decay to real");
                     tr.test_eq(12., a*4.);
                     tr.test_eq(12., 4.*a);
                 };
@@ -93,7 +93,7 @@ int main()
             ra::Small<int> a { 3 };
             ra::Small<int> b { 2 };
             auto c = a*b;
-            static_assert(std::is_same<decltype(a*b), int>::value, "expected a, b decay to real"); \
+            static_assert(std::is_same_v<int, decltype(a*b)>, "expected a, b decay to real"); \
             tr.test_eq(c, 6);
         }
     }

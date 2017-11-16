@@ -2,334 +2,169 @@
 
 # ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
 
-ra-ra is a C++ header-only, expression template / multidimensional array
-library with an APL/J bent. Some C++17 features are used, see below for
-compiler support.
+**ra-ra** is a C++ header-only multidimensional array and expression template
+library in the spirit of [Blitz++](blitz.sourceforge.net). Most of the code is
+C++14, but some C++17 features are used.
 
-ra-ra has a manual (work in progress) maintained at doc/ra-ra.texi. If
-you are reading this on the web, there should be a version of that
-manual in the 'Wiki'.
+Multidimensional arrays are a type of container that is indexable in zero or
+more dimensions. For example, vectors are arrays of rank 1 and matrices are
+arrays of rank 2. Even though C has had multidimensional array types since
+early on, standard support for arrays of rank greater than 1 is still near
+non-existent in C++17, and a library is required for any practical endeavor.
 
+[Expression templates](https://en.wikipedia.org/wiki/Expression_templates) are a
+C++ technique to delay the execution of expressions involving (large) array
+operands, and in this way avoid the unnecessary creation of large temporary
+array objects. It was pioneered by Blitz++, although the essential idea is at
+least as old as Abrams' 1970 thesis, *An APL machine*.
 
-Features
------------
+**ra-ra** tries to distinguish itself from established C++ libraries in this
+space (such as [Eigen](eigen.tuxfamily.org) or
+[Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html))
+by being more APLish, more general, smaller, and more hackable.
 
-These examples are necessarily terse. Please check the ```examples/``` folder.
+This is a standalone example from `examples/readme.C`:
 
-* Dynamic or static array rank. Dynamic or static array shape.
+```c++
+#include "ra/operators.H"
+#include "ra/io.H"
+#include <iostream>
 
+int main()
+{
+  ra::Owned<float, 2> A({2, 2}, {1, 2, 3, 4});   // A = [1, 2; 3 4], dynamic dimensions, compile-time rank
+  A += std::vector<float>({10, 20});             // broadcast op with STL object
+  std::cout << "A: " << A << "\n\n";             // dimensions are dynamic, so they'll be printed
+  return 0;
+}
 ```
-ra::Owned<char> A({2, 3}, 'a');     // dynamic rank = 2, dynamic shape = {2, 3}
-ra::Owned<char, 2> B({2, 3}, 'b');  // static rank = 2, dynamic shape = {2, 3}
-ra::Small<char, 2, 3> C('c');       // static rank = 2, static shape = {2, 3}
-cout << "A: " << A << "\n\n";
-cout << "B: " << B << "\n\n";
-cout << "C: " << C << "\n\n";
-
+⇒
 ```
-
-```
-A: 2
-2 3
-a a a
-a a a
-
-B: 2 3
-b b b
-b b b
-
-C: c c c
-c c c
-```
-
-* Memory-owning types and views. You can make array views over any piece of
-  memory.
-
-```
-// memory-owning types
-ra::Owned<char, 2> A({2, 3}, 'a');   // storage is std::vector inside A
-ra::Unique<char, 2> B({2, 3}, 'b');  // storage is owned by std::unique_ptr inside B
-ra::Small<char, 2, 3> C('c');        // storage is owned by C itself, on the stack
-
-// view types
-char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-ra::View<char, 2> D1({2, 3}, cs);            // dynamic sizes and strides, C order
-ra::View<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and strides, Fortran order.
-ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & strides, C order.
-ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & strides, Fortran order.
-```
-
-* Shape agreement rules and rank extension (broadcasting) for rank-0 operations
-  of any arity and operands of any rank, any of which can be a reference (so you
-  can write on them). These rules are based on those of the array language, J.
-
-```
-ra::Owned<float, 2> A({2, 3}, { 1, 2, 3, 1, 2, 3 });
-ra::Owned<float, 1> B({-1, +1});
-
-ra::Owned<float, 2> C({2, 3}, 99.);
-C = A * B;   // C(i, j) = A(i, j) * B(i)
-
-ra::Owned<float, 1> D({2}, 0.);
-D += A * B;  // D(i) += A(i, j) * B(i)
-```
-```
-C: 2 3
--1 -2 -3
-1 2 3
-
-D: 2
--6 6
-```
-
-* A TensorIndex object as in Blitz++ (with some differences).
-
-* Iterators over cells of arbitrary rank.
-
-```
-ra::TensorIndex<0> i;
-ra::TensorIndex<1> j;
-ra::TensorIndex<2> k;
-ra::Owned<float, 3> A({2, 3, 4}, i+j+k);
-ra::Owned<float, 2> B({2, 3}, 0);
-
-// store the sum of A(i, j, ...) in B(i, j). These are equivalent.
-for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, iter<1>(A));  // give cell rank
-for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, iter<-2>(A)); // give frame rank
-```
-```
-A: 2 3 4
-0 1 2 3
-1 2 3 4
-2 3 4 5
-
-1 2 3 4
-2 3 4 5
-3 4 5 6
-
-B: 2 3
-6 10 14
-10 14 18
-```
-
-* A rank conjunction (only for static rank and somewhat fragile).
-
-```
-// This is a direct translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
-ra::Owned<float, 2> A = map(ra::wrank<0, 1>(std::minus<float>()), ra::iota(3), ra::iota(4));
-cout << "A: " << A << "\n\n";
-```
-```
-A: 3 4
-0 -1 -2 -3
-1 0 -1 -2
-2 1 0 -1
-```
-
-* A proper selection operator with 'beating' of range or scalar subscripts. This
-  means that when the operands of the selection are scalars or linear ranges,
-  the selection is performed immediately by adjusting strides, instead of being
-  delayed until the execution of the expression template.
-
-```
-ra::Owned<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
-```
-```
-A: 2 2 2
-a b
-c d
-
-e f
-g h
-```
-
-```
-// these are all equivalent to e.g. A(:, 0, :) in Octave.
-cout << "A1: " << A(ra::all, 0) << "\n\n";
-cout << "A2: " << A(ra::all, 0, ra::all) << "\n\n";
-cout << "A3: " << A(ra::all, 0, ra::dots<1>) << "\n\n";
-```
-```
-A3: 2 2
-a b
-e f
-```
-
-```
-// an inverted range.
-cout << "A4: " << A(ra::iota(2, 1, -1)) << "\n\n";
-```
-```
-A4: 2 2 2
-e f
-g h
-
-a b
-c d
-```
-
-```
-// indices can be arrays of any rank.
-ra::Owned<int, 2> I({2, 2}, {0, 3, 1, 2});
-ra::Owned<char, 1> B({4}, {'a', 'b', 'c', 'd'});
-cout << "B(I): " << B(I) << "\n\n";
-```
-```
-B(I): 2 2
-a d
-b c
-```
-
-```
-// multiple indexing performs an implicit outer product, as in APL.
-// this results in a rank 4 array X = A(J, 1, J) -> X(i, j, k, l) = A(J(i, j), 1, J(k, l))
-ra::Owned<int, 2> J({2, 2}, {1, 0, 0, 1});
-cout << "A(J, 1, J): " << A(J, 1, J) << "\n\n";
-```
-```
-A(J, 1, J): 2 2 2 2
-h g
-g h
-
-d c
-c d
-
-
-d c
-c d
-
-h g
-g h
-```
-
-```
-// explicit indices do not result in a View (= pointer + strides), but the resulting
-// expression can still be written on.
-B(I) = ra::Owned<char, 2>({2, 2}, {'x', 'y', 'z', 'w'});
-cout << "B: " << B << endl;
-```
-```
-B: 4
-x z w y
-```
-
-* Some compatibility with the STL.
-
-```
-ra::Owned<char, 1> A = {'x', 'z', 'y'};
-std::sort(A.begin(), A.end());
-
-ra::Owned<float, 2> B({2, 2}, {1, 2, 3, 4});
-B += std::vector<float>({10, 20});
-```
-
-```
-A: 3
-x y z
-
-B: 2 2
+A: 2 2
 11 12
 23 24
 ```
 
+**ra-ra** supports:
 
-Sui generis
------------
+* Array types with compile time or runtime rank. Either can be arbitrarily large.
+* Array types with compile time or runtime dimensions.
+* Memory owning types as well as views, with all the rank and dimension options above. You can make array views over any piece of memory.
+* Transparent memory layout, for interoperability with other libraries and/or languages.
+* Rank extension (broadcasting) for functions with any number of arguments of any rank.
+* Slicing with indices of arbitrary rank, beating of linear range indices, index skipping and elision, and more.
+* An outer product operation.
+* A rank conjunction as in J, with some limitations.
+* Iterators over slices (subarrays) of any rank.
+* A tensor index object, with some limitations.
+* Stencil operations.
+* Arbitrary types as array elements, or as scalar operands.
+* Lazy selection operators (e.g. pick from argument list according to index). Short-circuiting logical operators.
+* Partial compatibility with the STL.
+* Many predefined array operations. Adding yours is trivial.
+* etc.
+
+**ra-ra** has a manual (work in progress) maintained at `doc/ra-ra.texi`. If you
+are reading this on the web, there should be a version of that manual in the
+‘wiki’. Please check it out for details, or have a look at the `examples/`
+folder.
+
+Performance is competitive with hand written scalar (element by
+element) loops, but not with cache-tuned code such as your platform BLAS, or
+with code using SIMD. Please have a look at the `benchmarks/`.
+
+#### Building the tests and the benchmarks
+
+The library itself is header-only and has no dependencies other than a C++17 compiler
+and the standard library.
+
+To run the test suite (```test/```) you need Scons. There is a `Makefile`, but
+it will just try to run SCons. Running the test suite will also build and run
+the examples (```examples/```) and the benchmarks (```bench/```), although you
+can easily build each of these separately. None of them has any dependencies,
+but some of the benchmarks will try to use BLAS if you have ```RA_USE_BLAS=1```
+in the environment.
+
+All the tests pass under g++-7.2. Remember to pass `-O2` or `-O3` to the compiler,
+otherwise some of the tests will take a very long time to run.
+
+All the tests pass under clang++-5.0 (with `-Wno-missing-braces`) except for:
+
+* test/bench-pack.C, crashes clang.
+* test/test-optimize.C, a required specialization is missed and I haven't
+  figured out why.
+
+For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is
+meant for gcc by setting CCFLAGS to something else:
+
+  ```
+  CCFLAGS="-march=native -Wno-missing-braces -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3 CXX=clang++-5.0 scons -j4
+  ```
+
+I haven't tested on Windows. If you can do that, I'd appreciate a report!
+
+#### Notes
 
 * Index and size types are all signed. Index base is always 0.
-
 * Default array order is C or row-major (last dimension changes fastest). You
   can make array views using other orders by transposing or manipulating the
   strides yourself, but newly created arrays use C-order.
-
-* The selection operator is (). [] means the same as () but only accepts one
-  subscript.
-
-* Array constructors follow a regular format. Single argument constructors take
-  a content argument which must provide enough shape information to construct
-  the new array (unless the array type has static shape), and is otherwise
-  subject to the regular argument shape agreement rules. Two-argument
-  constructors always take a shape argument and a content argument.
-
+* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`, except that it accepts one
+  subscript only.
+* Array constructors follow a regular format:
+  - Single argument constructors take a ‘content’ argument which must provide
+    enough shape information to construct the new array. If the array type
+    has static shape, then the argument is subjected to the regular
+    argument shape agreement rules (rank extension rules).
+  - Two-argument constructors always take a shape argument and a content argument.
 * Indices are checked by default. This can be disabled with a compilation flag.
 
 
-Bugs & wishes
------------
+#### Bugs & wishes
 
 * Should be namespace-clean.
-
 * Beatable subscripts are not beaten if mixed with non-beatable subscripts.
-
 * Some inconsistencies with subscripting; for example, if ```A``` is rank>1 and
   ```i``` is rank 1, then ```A(i)``` will return a nested expression instead of
   preserving ```A```'s rank.
-
 * Better reduction mechanisms.
-
-* Better concatenation, search, reshape, and other infinite rank or rank>0
+* Better concatenation, search, and other infinite rank or rank>0
   operations.
-
 * More clever/faster traversal of arrays, like in Blitz++.
-
 * Systematic handling of nested arrays.
+* SIMD?
 
 
-Out of scope
------------
+#### Out of scope
 
-* GPU / parallelization / calls to external libraries.
-
+* Parallelization (closer to wish...).
+* GPU /  / calls to external libraries.
 * Linear algebra, quaternions, etc. Those things belong in other libraries. The
   library includes a dual number implementation but it's more of a demo of how
   to adapt user types to the library.
-
 * Sparse arrays. You'd still want to mix & match with dense arrays, so maybe at
   some point.
 
 
-Building
------------
+#### Motivation
 
-The library is header-only and has no dependencies other than a C++17 compiler
-and the standard library. There is a test suite in ```test/```. These tests test
-internal details and are not meant as demonstrations of how to use the
-library. There is a directory with ```examples/```, some ported from Blitz++,
-some ported from APL. Finally there are some benchmarks in ```bench/```. Some of
-those try to use BLAS if you have ```USE_BLAS=1``` in the environment.
-
-All tests pass under g++-7.2.
-
-All tests pass under clang++-5.0 (with -Wno-missing-braces) except for:
-
-* test/bench-pack.C, crashes clang.
-
-* test/test-optimize.C, a required specialization is missed and I haven't
-  figured out why.
-
-For clang on OS X you have to remove the -Wa,-q option in SConstruct which is
-meant for gcc by setting CCFLAGS to something else:
-
-  ```CCFLAGS="-march=native -Wno-missing-braces -DRA_OPTIMIZE_SMALLVECTOR=0"
-  CXXFLAGS=-O3 CXX=clang++-5.0 scons -j4```
-
-I haven't tested on Windows.
-
-
-Motivation
------------
-
-I do numerical work in C++ so I need a library of this kind. Most C++ array
+I do numerical work in C++, so I need a library of this kind. Most C++ array
 libraries seem to support only vectors and matrices, or small objects for
-low-dimensional vector algebra. Blitz++ was a great early array library and it
-hasn't really been replaced as far as I can tell.
+low-dimensional vector algebra. Blitz++ was a great early *generic* array
+library (even though the focus was numerical) and it hasn't really been replaced
+as far as I can tell.
 
-I've also been inspired by APL and J, which have led the way in exploring how
-array operations could be generalized.
+It was a heroic feat to write a library such as Blitz++ in C++ in the late 90s,
+even discounting the fragmented compiler landscape and the patchy support for
+the standard at that time. Variadic templates, lambdas, rvalue arguments,
+etc. make things *much* simpler, for the library writer as well as for the user.
 
-This is a simple library. I don't want to second-guess the compiler and I don't
-stress performance as much as Blitz++ did. However, I am wary of adding features
-that could become an obstacle if I ever tried to make things fast(er). I believe
-that improvements such as new traversal methods or the optimization of specific
-expression patterns should be easy to implement without turning the library
-inside out.
+From APL and J I've taken the rank extension mechanism, and perhaps an
+inclination for carrying each feature to its logical end.
+
+**ra-ra** wants to remain a simple library. I try not to second-guess the compiler and I
+don't stress performance as much as Blitz++ did. However, I'm wary of adding
+features that could become an obstacle if I ever tried to make things
+fast(er). I believe that the implementation of new traversal methods, or perhaps
+the optimization of specific expression patterns, should be possible without
+having to turn the library inside out.

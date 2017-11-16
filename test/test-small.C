@@ -38,15 +38,15 @@ int main()
 
         using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0> >::type;
         using e0 = mp::int_list<0, 4>;
-        tr.info(mp::print_int_list<e0> {}, " vs ", mp::print_int_list<c0> {}).test(std::is_same<e0, c0>::value);
+        tr.info(mp::print_int_list<e0> {}, " vs ", mp::print_int_list<c0> {}).test(std::is_same_v<e0, c0>);
 
         using c1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1> >::type;
         using e1 = mp::int_list<1>;
-        tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same<e1, c1>::value);
+        tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
 
         using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>::type;
         using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2> >;
-        tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same<eall, call>::value);
+        tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same_v<eall, call>);
     }
     tr.section("transpose(ra::Small)");
     {

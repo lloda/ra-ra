@@ -12,8 +12,28 @@
 
 import os, string
 from colorama import Fore, Back, Style
-from os.path import join, abspath
+from os.path import join, abspath, split
 from subprocess import call
+
+
+def ensure_ext(s, ext):
+    "if s doesn't end with ext, append it."
+    p = s.rfind(ext)
+    return s if p+len(ext) == len(s) else s + ext
+
+
+def remove_ext(s):
+    "clip string from the last dot until the end."
+    p = s.rfind('.')
+    assert p>=0, 'source must have an extension'
+    return s[0:p]
+
+
+def path_parts(path):
+    path, tail = split(path)
+    return ([path] if path == os.sep else path_parts(path) if path else []) \
+           + ([tail] if tail else [])
+
 
 def take_from_environ(env, var, wrapper=(lambda x: x), default=None):
     if var in os.environ and os.environ[var]!='':

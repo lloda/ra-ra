@@ -98,11 +98,11 @@ DEF_NAMED_BINARY_OP(/, slash)
     {                                                                   \
         return START(a) OP START(b);                                    \
     }
-FOR_EACH(DEF_BINARY_OP, &&, ||, >, <, >=, <=, ==, !=)
+FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, ==, !=)
 #undef DEF_BINARY_OP
 
 #define DEF_UNARY_OP(OP)                                                \
-    template <class A, std::enable_if_t<is_ra_pos_rank<A>, int> = 0>    \
+    template <class A, std::enable_if_t<is_ra_pos_rank<A>, int> =0>     \
     inline auto operator OP(A && a)                                     \
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
@@ -165,11 +165,31 @@ inline auto at(A && a, I && i)
     return map([&a](auto && i) -> decltype(auto) { return a.at(i); }, i);
 }
 
-template <class W, class T, class F, std::enable_if_t<is_ra_pos_rank<W> || is_ra_pos_rank<T> || is_ra_pos_rank<F>, int> = 0>
+template <class W, class T, class F,
+          std::enable_if_t<is_ra_pos_rank<W> || is_ra_pos_rank<T> || is_ra_pos_rank<F>, int> =0>
 inline auto where(W && w, T && t, F && f)
 {
     return pick(cast<bool>(start(std::forward<W>(w))), start(std::forward<F>(f)), start(std::forward<T>(t)));
 }
+
+template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0>
+inline auto operator &&(A && a, B && b)
+{
+    return where(std::forward<A>(a), cast<bool>(std::forward<B>(b)), false);
+}
+template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0>
+inline auto operator ||(A && a, B && b)
+{
+    return where(std::forward<A>(a), true, cast<bool>(std::forward<B>(b)));
+}
+#define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
+    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
+    inline auto operator OP(A && a, B && b)                             \
+    {                                                                   \
+        return START(a) OP START(b);                                    \
+    }
+FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
+#undef DEF_SHORTCIRCUIT_BINARY_OP
 
 // --------------------------------
 // Some whole-array reductions.

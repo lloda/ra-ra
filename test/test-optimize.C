@@ -47,7 +47,7 @@ int main()
         {
             auto i = ra::iota(5);
             auto j = i*3.;
-            tr.info("ops with non-integers don't reduce iota by default").test(!std::is_same<decltype(i), decltype(j)>::value);
+            tr.info("ops with non-integers don't reduce iota by default").test(!std::is_same_v<decltype(i), decltype(j)>);
         }
     }
     tr.section("operations with Iota, plus");
@@ -63,7 +63,7 @@ int main()
                 auto k2 = optimize(1+i);
                 auto k3 = optimize(ra::iota(5)+1);
                 auto k4 = optimize(1+ra::iota(5));
-                tr.info("not optimized w/ RA_OPTIMIZE=0").test(!std::is_same<decltype(i), decltype(j)>::value);
+                tr.info("not optimized w/ RA_OPTIMIZE=0").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
                 tr.test_eq(org+1, k1.org_);
                 tr.test_eq(org+1, k1.org_);
@@ -90,7 +90,7 @@ int main()
             auto k2 = optimize(2*i);
             auto k3 = optimize(ra::iota(5)*2);
             auto k4 = optimize(2*ra::iota(5));
-            tr.info("not optimized w/ RA_OPTIMIZE=0").test(!std::is_same<decltype(i), decltype(j)>::value);
+            tr.info("not optimized w/ RA_OPTIMIZE=0").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
             tr.test_eq(0, k1.org_);
             tr.test_eq(0, k2.org_);
@@ -114,8 +114,8 @@ int main()
 // BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter).
         Vec a {1, 2, 3, 4}, b {5, 6, 7, 8};
         auto y = a + b;
-        tr.info("bad optimization").test(std::is_same<decltype(x), Vec>::value);
-        tr.info("bad non-optimization").test(!std::is_same<decltype(y), Vec>::value);
+        tr.info("bad optimization").test(std::is_same_v<decltype(x), Vec>);
+        tr.info("bad non-optimization").test(!std::is_same_v<decltype(y), Vec>);
         tr.test_eq(y, x);
     }
 #endif

@@ -98,7 +98,7 @@ int main()
             tr.quiet().test(amin(F)>=-1);
             tr.quiet().test(amax(F)<=+1);
             cout << name << " t= " << (t*delta) << ":\n";
-            for_each([](auto && F) { cout << std::string(int(round((max(min(F, 1.), -1.)+1)*20)), ' ') << "*\n"; }, F);
+            for_each([](auto && F) { cout << std::string(int(round(20*(clamp(F, -1., 1.)+1))), ' ') << "*\n"; }, F);
         };
 
     for (int t=0; t<o; ++t) {

@@ -17,7 +17,7 @@
 
 using std::tuple;
 using std::tuple_element;
-using std::is_same;
+using std::is_same_v;
 using namespace mp;
 using std::cout; using std::endl;
 
@@ -51,7 +51,7 @@ struct SamePP
     template <class B>
     struct type
     {
-        constexpr static bool value = std::is_same<A, B>::value;
+        constexpr static bool value = is_same_v<A, B>;
     };
 };
 
@@ -145,8 +145,8 @@ int main()
     using A = int_list<0, 2, 3>;
     using B = int_list<5, 6, 7>;
     using C = int_list<9, 8>;
-    static_assert(is_same<int_list<>, nil>::value, "");
-    static_assert(is_same<C, tuple<int_t<9>, int_t<8>>>::value, "");
+    static_assert(is_same_v<int_list<>, nil>, "");
+    static_assert(is_same_v<C, tuple<int_t<9>, int_t<8>>>, "");
     using O = nil;
     using A_B = Append<A, B>::type;
     using A_C = Append<A, C>::type;
@@ -154,8 +154,8 @@ int main()
     static_assert(check_idx<A_B, 0, 2, 3, 5, 6, 7>::value, "bad AB");
     static_assert(check_idx<A_C, 0, 2, 3, 9, 8>::value, "bad AB");
     static_assert(check_idx<C_B, 9, 8, 5, 6, 7>::value, "bad AB");
-    static_assert(is_same<A, Append<A, O>::type>::value, "bad A+empty");
-    static_assert(is_same<A, Append<O, A>::type>::value, "bad empty+A");
+    static_assert(is_same_v<A, Append<A, O>::type>, "bad A+empty");
+    static_assert(is_same_v<A, Append<O, A>::type>, "bad empty+A");
 // Iota.
     static_assert(check_idx<Iota<4, 0>::type, 0, 1, 2, 3>::value, "0a");
     static_assert(check_idx<Iota<4, 3>::type, 3, 4, 5, 6>::value, "0b");
@@ -206,17 +206,17 @@ int main()
     {
         using II0 = int_list<4, 6, 7, 1>;
         using II1 = InvertIndex<II0>::type;
-        static_assert(std::is_same<int_list<-1, 3, -1, -1, 0, -1, 1, 2>, II1>::value);
+        static_assert(is_same_v<int_list<-1, 3, -1, -1, 0, -1, 1, 2>, II1>);
     }
     {
         using II0 = int_list<3>;
         using II1 = InvertIndex<II0>::type;
-        static_assert(std::is_same<int_list<-1, -1, -1, 0>, II1>::value);
+        static_assert(is_same_v<int_list<-1, -1, -1, 0>, II1>);
     }
     {
         using II0 = int_list<>;
         using II1 = InvertIndex<II0>::type;
-        static_assert(std::is_same<int_list<>, II1>::value);
+        static_assert(is_same_v<int_list<>, II1>);
     }
 // IndexIf.
     static_assert(IndexIf<A, SamePP<int_t<0>>::type>::value==0, "5a");
@@ -224,15 +224,15 @@ int main()
     static_assert(IndexIf<A, SamePP<int_t<3>>::type>::value==2, "5c");
     static_assert(IndexIf<A, SamePP<int_t<9>>::type>::value==-1, "5d");
 // Find.
-    static_assert(is_same<FindTail<A, int_t<0>>::type, A>::value, "4a");
+    static_assert(is_same_v<FindTail<A, int_t<0>>::type, A>, "4a");
     static_assert(check_idx<FindTail<A, int_t<2>>::type, 2, 3>::value, "4b");
     static_assert(check_idx<FindTail<A, int_t<3>>::type, 3>::value, "4c");
     static_assert(nilp<FindTail<A, int_t<4>>::type>, "4d");
-    static_assert(is_same<FindTail<S3, S2BC>::type, tuple<S2BC>>::value, "4e");
+    static_assert(is_same_v<FindTail<S3, S2BC>::type, tuple<S2BC>>, "4e");
 // Reverse.
     static_assert(check_idx<Reverse<A_B>::type, 7, 6, 5, 3, 2, 0>::value, "5a");
     static_assert(check_idx<Reverse<O>::type>::value, "5b");
-    static_assert(is_same<Reverse<mp::nil>::type, mp::nil>::value, "bad Reverse");
+    static_assert(is_same_v<Reverse<mp::nil>::type, mp::nil>, "bad Reverse");
 // Drop & Take.
     static_assert(check_idx<Drop<A, 0>::type, 0, 2, 3>::value, "bad 6a");
     static_assert(check_idx<Drop<A, 1>::type, 2, 3>::value, "bad 6b");
@@ -370,7 +370,7 @@ static_assert(check_idx<ComplementList<int_list A , B >::type \
         using lb = Iota<3>::type;
         using cb = Combinations<lb, 1>::type;
         using test0 = MapPrepend<nil, cb>::type;
-        static_assert(std::is_same<test0, cb>::value, "");
+        static_assert(is_same_v<test0, cb>, "");
         using test1 = MapPrepend<la, cb>::type;
         static_assert(len<test1> == int(len<cb>), "");
         static_assert(check_idx<Ref<test1, 0>::type, 0, 1, 2, 0>::value, "");

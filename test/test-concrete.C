@@ -28,9 +28,9 @@ int main()
         int b = 4;
         using K = ra::concrete_type<decltype(a+b)>;
         cout << mp::type_name<K>() << endl;
-        tr.info("scalars are their own concrete_types").test(std::is_same<K, int>::value);
+        tr.info("scalars are their own concrete_types").test(std::is_same_v<K, int>);
         auto c = ra::concrete(a+b);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
         auto d = ra::concrete(a);
         d = 99;
@@ -41,9 +41,9 @@ int main()
         ra::Small<int, 3> a = {1, 2, 3};
         ra::Small<int, 3> b = {4, 5, 6};
         using K = ra::concrete_type<decltype(a+b)>;
-        tr.test(std::is_same<K, ra::Small<int, 3>>::value);
+        tr.test(std::is_same_v<K, ra::Small<int, 3>>);
         auto c = concrete(a+b);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
     }
     tr.section("var size");
@@ -51,9 +51,9 @@ int main()
         ra::Owned<int, 1> a = {1, 2, 3};
         ra::Owned<int, 1> b = {4, 5, 6};
         using K = ra::concrete_type<decltype(a+b)>;
-        tr.test(std::is_same<K, ra::Owned<int, 1>>::value);
+        tr.test(std::is_same_v<K, ra::Owned<int, 1>>);
         auto c = concrete(a+b);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
     }
     tr.section("var size + fixed size");
@@ -61,9 +61,9 @@ int main()
         ra::Small<int, 3, 2> a = {1, 2, 3, 4, 5, 6};
         ra::Owned<int, 1> b = {4, 5, 6};
         using K = ra::concrete_type<decltype(a+b)>;
-        tr.test(std::is_same<K, ra::Small<int, 3, 2>>::value);
+        tr.test(std::is_same_v<K, ra::Small<int, 3, 2>>);
         auto c = concrete(a+b);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
     }
     tr.section("var size + var rank");
@@ -72,9 +72,9 @@ int main()
         ra::Owned<int> b = {4, 5, 6};
         using K = ra::concrete_type<decltype(a+b)>;
 // ra:: b could be higher rank and that decides the type.
-        tr.test(std::is_same<K, ra::Owned<int>>::value);
+        tr.test(std::is_same_v<K, ra::Owned<int>>);
         auto c = concrete(a+b);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
     }
     tr.section("concrete on is_slice fixed size");
@@ -82,8 +82,8 @@ int main()
         ra::Small<int, 3> a = {1, 2, 3};
         auto c = concrete(a);
         using K = decltype(c);
-        tr.test(std::is_same<K, ra::Small<int, 3>>::value);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<K, ra::Small<int, 3>>);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a, c);
         a = 99;
         tr.test_eq(99, a);
@@ -94,8 +94,8 @@ int main()
         ra::Owned<int, 1> a = {1, 2, 3};
         auto c = concrete(a);
         using K = decltype(c);
-        tr.test(std::is_same<K, ra::Owned<int, 1>>::value);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<K, ra::Owned<int, 1>>);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a, c);
         a = 99;
         tr.test_eq(99, a);
@@ -106,8 +106,8 @@ int main()
         std::vector<int> a = {1, 2, 3};
         auto c = ra::concrete(a);
         using K = decltype(c);
-        tr.test(std::is_same<K, ra::Owned<int, 1>>::value);
-        tr.test(std::is_same<decltype(c), K>::value);
+        tr.test(std::is_same_v<K, ra::Owned<int, 1>>);
+        tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a, c);
         ra::start(a) = 99;
         tr.test_eq(99, ra::start(a));

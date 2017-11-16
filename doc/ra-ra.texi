@@ -2,11 +2,11 @@
 @c %**start of header
 @setfilename ra-ra.info
 @documentencoding UTF-8
-@settitle @code{ra::} —An array library for C++1z
+@settitle ra:: —An array library for C++1z
 @c %**end of header
 
-@set VERSION 0.3
-@set UPDATED 2017 April 11
+@set VERSION 0.4
+@set UPDATED 2017 November 16
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -51,6 +51,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 * The future::        Could be even better.
 * Reference::         Systematic list of types and functions.
 * Sources::           It's been done before.
+* Indices::           Or try the search function.
 @end menu
 
 @end ifnottex
@@ -222,7 +223,7 @@ TODO Maybe review other languages, at least the important ones (Fortran/APL/J/Ma
 This is an extended exposition of the features of @code{ra::} and is probably best read in order. For details on specific functions or types, please @pxref{Reference}.
 
 @menu
-* Using @code{ra@asis{::}}::            @code{ra::} is a header-only library.
+* Using the library::          @code{ra::} is a header-only library.
 * Containers and views::       Data objects.
 * Array operations::           Building and traversing expressions.
 * Rank extension::             How array operands are matched.
@@ -236,13 +237,13 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 @end menu
 
 @c ------------------------------------------------
-@node Using @code{ra@asis{::}}
+@node Using the library
 @section Using @code{ra::}
 @c ------------------------------------------------
 
 @code{ra::} is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/operators.H"} and @code{"ra/io.H"} at the top of your sources.
 
-A C++14 compiler with partial C++17 support is required. At the time of writing this means gcc 7.2 with @option{-std=c++1z}. Most tests pass under clang 4.0 with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
+A C++14 compiler with partial C++17 support is required. At the time of writing this means gcc 7.2 with @option{-std=c++1z}. Most tests pass under clang 5.0 with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
 
 Here is a minimal program:
 
@@ -1085,7 +1086,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 @anchor{x-scalar-ops}
 @subsection Standard scalar operations
 
-@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} do not short-circuit; this is a bug.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{sqrm}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting; the second operand won't be evaluated if the first one evaluates to @code{false} or @code{true}, respectively.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{sqrm}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
 
 @subsection Conditional operations
 
@@ -1683,7 +1684,8 @@ Compute @code{(0+1j)} times @var{expr}.
 @c ------------------------------------------------
 
 @c ------------------------------------------------
-@c Indices
+@node Indices
+@unnumbered Indices
 @c ------------------------------------------------
 
 @c @node Concept Index

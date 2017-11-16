@@ -165,5 +165,16 @@ int main()
                    where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>()));
         tr.test_eq(ra::Unique<int, 1> { 0, 2 }, where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
     }
+    tr.section("&& and || are short-circuiting");
+    {
+        using bool4 = ra::Small<bool, 4>;
+        bool4 a {true, true, false, false}, b {true, false, true, false};
+        int i = 0;
+        tr.test_eq(bool4 {true, false, false, false}, a && map([&](auto && b) { ++i; return b; }, b));
+        tr.info("short circuit test for &&").test_eq(2, i);
+        i = 0;
+        tr.test_eq(bool4 {true, true, true, false}, a || map([&](auto && b) { ++i; return b; }, b));
+        tr.info("short circuit test for &&").test_eq(2, i);
+    }
     return tr.summary();
 }

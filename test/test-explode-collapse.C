@@ -204,8 +204,8 @@ int main()
         auto c = ra::explode<ra::Small<double, 3>>(a);
         using sizes = std::decay_t<decltype(c)>::sizes;
         using strides = std::decay_t<decltype(c)>::strides;
-        tr.info(mp::print_int_list<sizes> {}).test(std::is_same<mp::int_list<2>, sizes>::value);
-        tr.info(mp::print_int_list<strides> {}).test(std::is_same<mp::int_list<1>, strides>::value);
+        tr.info(mp::print_int_list<sizes> {}).test(std::is_same_v<mp::int_list<2>, sizes>);
+        tr.info(mp::print_int_list<strides> {}).test(std::is_same_v<mp::int_list<1>, strides>);
         tr.test_eq(ra::scalar(a[0].data()), ra::scalar(c[0].data()));
         tr.test_eq(ra::scalar(a[1].data()), ra::scalar(c[1].data()));
         c[1] = { 3, 2, 1 };

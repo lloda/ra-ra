@@ -46,9 +46,9 @@ inline constexpr double fma_conj(double const a, double const b, double const c)
 inline constexpr float sqrm(float const x)                          { return x*x; }
 inline constexpr double sqrm(double const x)                        { return x*x; }
 inline constexpr double sqrm(double const x, double const y)        { return sqrm(x-y); }
-inline /* constexpr */ double norm2(double const x)                 { return std::abs(x); }
-inline /* constexpr */ double norm2(double const x, double const y) { return std::abs(x-y); }
-inline /* constexpr */ double abs(double const x, double const y)   { return std::abs(x-y); }
+inline constexpr double norm2(double const x)                       { return std::abs(x); }
+inline constexpr double norm2(double const x, double const y)       { return std::abs(x-y); }
+inline constexpr double abs(double const x, double const y)         { return std::abs(x-y); }
 inline constexpr double dot(double const x, double const y)         { return x*y; }
 inline void swap(double & a, double & b)                            { std::swap(a, b); }
 
@@ -57,35 +57,32 @@ inline double rel_error(double const a, double const b)
     return (a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b));
 }
 
-double const    EPS = std::numeric_limits<double>::epsilon();
-double const  ALINF = std::numeric_limits<double>::max();
-double const   PINF = std::numeric_limits<double>::infinity();
-double const   QNAN = std::numeric_limits<double>::quiet_NaN();
+constexpr double    EPS = std::numeric_limits<double>::epsilon();
+constexpr double  ALINF = std::numeric_limits<double>::max();
+constexpr double   PINF = std::numeric_limits<double>::infinity();
+constexpr double   QNAN = std::numeric_limits<double>::quiet_NaN();
 
-double const     PI = 3.14159265358979323846264338327950288419716939937510582;
-double const    PI2 = PI/2.;
-double const   EXP1 = 2.71828182845904523536028747135266249775724709369995957;
-double const    TAU = 2*PI;
-double const   TTAU = TAU*2;
-double const   TAU6 = TAU/6;
-double const  TAU12 = TAU/12;
-// 1/(4*pi).
-double const   I4PI = 1./TTAU;
-double const  SQRT2 = sqrt(2.);
-double const ISQRT2 = 1/sqrt(2.);
-double const SQRTPI = sqrt(PI);
-double const   LNPI = log(PI);
-double const     C0 = 2.99792458e8;
-double const     M0 = (4e-7)*PI;
-double const     E0 = 1./(sqrt(M0)*C0*C0);
-double const  ECHAR = 1.602176487e-19;
-double const  EMASS = 9.10938215e-31;
-// Impedance of vacuum.
-double const     Z0 = 376.730313461;
-double const  LOG2E = 1.44269504088896340735992468100189213742664595415299;
-double const  LOGE2 = .693147180559945309417232121458176568075500134360255;
-// (1+sqrt(5))/2.
-double const GOLDEN = 1.61803398874989484820458683436563811772030917980576;
+constexpr double     PI = 3.14159265358979323846264338327950288419716939937510582;
+constexpr double    PI2 = PI/2.;
+constexpr double   EXP1 = 2.71828182845904523536028747135266249775724709369995957;
+constexpr double    TAU = 2*PI;
+constexpr double   TTAU = TAU*2;
+constexpr double   TAU6 = TAU/6;
+constexpr double  TAU12 = TAU/12;
+constexpr double   I4PI = 1./TTAU;
+constexpr double  SQRT2 = sqrt(2.);
+constexpr double ISQRT2 = 1/sqrt(2.);
+constexpr double SQRTPI = sqrt(PI);
+constexpr double   LNPI = log(PI);
+constexpr double     C0 = 2.99792458e8;
+constexpr double     M0 = (4e-7)*PI;
+constexpr double     E0 = 1./(sqrt(M0)*C0*C0);
+constexpr double  ECHAR = 1.602176487e-19;
+constexpr double  EMASS = 9.10938215e-31;
+constexpr double     Z0 = 376.730313461;
+constexpr double  LOG2E = 1.44269504088896340735992468100189213742664595415299;
+constexpr double  LOGE2 = .693147180559945309417232121458176568075500134360255;
+constexpr double GOLDEN = 1.61803398874989484820458683436563811772030917980576; // (1+sqrt(5))/2.
 
 inline double frand() { return double(random())/RAND_MAX; }
 inline int irand(int const p) { return int(frand()*p); }

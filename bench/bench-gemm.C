@@ -56,11 +56,9 @@ gemm_block_3(ra::View<A, 2> const & a, ra::View<B, 2> const & b, ra::View<C, 2> 
 
 #if RA_USE_BLAS==1
 
-#ifdef __cplusplus
 extern "C" {
 #include <cblas.h>
 }
-#endif
 
 constexpr inline CBLAS_TRANSPOSE fliptr(CBLAS_TRANSPOSE t)
 {
