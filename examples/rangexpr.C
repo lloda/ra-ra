@@ -5,7 +5,7 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-using std::cout; using std::endl;
+using std::cout, std::endl, ra::PI;
 
 int main()
 {

@@ -119,6 +119,13 @@ struct TestRecorder
         return test_comp(std::forward<R>(ref), std::forward<A>(a), [](auto && a, auto && b) { return every(a==b); });
     }
     template <class A, class B>
+    bool test_lt(A && a, B && b)
+    {
+        bool c = every(a<b);
+        test(c, LAZYINFO("comp(", where(true, a, b), " should be < ", where(false, a, b), ")"), LAZYINFO(""));
+        return c;
+    }
+    template <class A, class B>
     bool test_le(A && a, B && b)
     {
         bool c = every(a<=b);

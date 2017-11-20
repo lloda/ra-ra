@@ -24,7 +24,7 @@ using ra::iota;
 auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::PI;
 
 int main()
 {

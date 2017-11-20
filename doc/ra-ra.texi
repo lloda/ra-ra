@@ -2,7 +2,7 @@
 @c %**start of header
 @setfilename ra-ra.info
 @documentencoding UTF-8
-@settitle ra:: —An array library for C++1z
+@settitle ra:: —An array library for C++17
 @c %**end of header
 
 @set VERSION 0.4
@@ -25,6 +25,9 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 @direntry
 * ra-ra: (ra-ra.info).  Expression template and multidimensional array library for C++.
 @end direntry
+
+@include my-bib-macros.texi
+@mybibuselist{Sources}
 
 @titlepage
 @title ra::
@@ -50,7 +53,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 * Internals::         For all the world to see.
 * The future::        Could be even better.
 * Reference::         Systematic list of types and functions.
-* Sources::           It's been done before.
+* @mybibnode{}::           It's been done before.
 * Indices::           Or try the search function.
 @end menu
 
@@ -69,7 +72,7 @@ A multidimensional array is a container whose elements can be looked up using a 
 
 Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an `array' is just a function of integers with a rectangular domain.
 
-Arrays (also called @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are everywhere in math and many other fields, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
+Arrays (also called @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
 
 @verbatim
 A = B+C;
@@ -165,13 +168,13 @@ Note that we can iterate over these items by simply bumping the pointer o+s₀i�
 @section Why C++
 @c ------------------------------------------------
 
-Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following applies.
+Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following may apply.
 
 C++ supports the low level control that is necessary for interoperation with external libraries and languages, but still has the abstraction power to create the features we want even though the language has no native support for most of them.
 
 @cindex APL
 @cindex J
-The classic array languages, APL and J, have array support baked in. The same is true for other languages with array facilities such as Fortran or Octave/Matlab. Array libraries for general purpose languages usually depend heavily on C extensions. In Numpy's case this is both for reasons of flexibility (e.g. to obtain predictable memory layout and machine types) and of performance.
+The classic array languages, APL @mybibcite{FI73} and J @mybibcite{Ric08}, have array support baked in. The same is true for other languages with array facilities such as Fortran or Octave/Matlab. Array libraries for general purpose languages usually depend heavily on C extensions. In Numpy's case @mybibcite{num17} this is both for reasons of flexibility (e.g. to obtain predictable memory layout and machine types) and of performance.
 
 On the other extreme, an array library for C would be hampered by the limited means of abstraction in the language (no polymorphism, no metaprogramming, etc.) so the natural choice of C programmers is to resort to code generators, which eventually turn into new languages.
 
@@ -986,8 +989,8 @@ ra::Owned<int> x {3, 2, 1}; // x is a Container
 auto y = x(); // y is a View on x
 // std::sort(y.begin(), y.end()); // error: y.begin() is not RandomAccessIterator
 std::sort(x.begin(), x.end());
-@result{} x = @{1, 2, 3@}
 @end verbatim
+@result{} x = @{1, 2, 3@}
 @end example
 
 @subsection Using @code{ra::} types with other libraries
@@ -1025,7 +1028,7 @@ However, if you want to mix arbitrary types in array operations, you'll need to 
 namespace ra { template <> constexpr bool is_scalar_def<W> = true; }
 ...
 W ww {11};
-for_each([](auto && x, auto && y) { cout << x.x + y.y << " "; }, w, ww); // ok
+for_each([](auto && x, auto && y) { cout << (x.x + y.y) << " "; }, w, ww); // ok
 @end verbatim
 @print{} 15 13 12 14
 @end example
@@ -1036,7 +1039,7 @@ but
 @verbatim
 struct U { int x; }
 U uu {11};
-for_each([](auto && x, auto && y) { cout << x.x + y.y << " "; }, w, uu); // error: can't find ra::start(U)
+for_each([](auto && x, auto && y) { cout << (x.x + y.y) << " "; }, w, uu); // error: can't find ra::start(U)
 @end verbatim
 @end example
 
@@ -1086,7 +1089,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 @anchor{x-scalar-ops}
 @subsection Standard scalar operations
 
-@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting; the second operand won't be evaluated if the first one evaluates to @code{false} or @code{true}, respectively.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{sqrm}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting @emph{as array operations}; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively. Note that if both operands are of rank 0 and at least one of them is a @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, and @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
 
 @subsection Conditional operations
 
@@ -1099,7 +1102,7 @@ ra::Owned<double> y = where(x>0, expensive_expr_1(x), expensive_expr_2(x));
 @end verbatim
 @end example
 
-Here @code{expensive_expr_1} and @code{expensive_expr_2} are array expressions. So the computation of the other arm would be wasted if one where to do instead
+Here @code{expensive_expr_1} and @code{expensive_expr_2} are array expressions. So the computation of the other arm would be wasted if one were to do instead
 
 @example
 @verbatim
@@ -1273,7 +1276,7 @@ The following boolean @code{#define}s affect the behavior of @code{ra::}.
 @chapter The future
 @c ------------------------------------------------
 
-Wishlist and acknowledged bugs.
+FIXME Wishlist.
 
 @c ------------------------------------------------
 @node Reference
@@ -1660,6 +1663,16 @@ Return @code{true} if any element of @var{expr} is true, @code{false} otherwise.
 Return @code{true} if every element of @var{expr} is true, @code{false} otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified.
 @end defun
 
+@anchor{x-sqr}
+@defun sqr expr
+Compute the square of @var{expr}.
+@end defun
+
+@anchor{x-sqrm}
+@defun sqrm expr
+Compute the square of the norm-2 of @var{expr}, that is, @code{conj(expr)*expr}.
+@end defun
+
 @anchor{x-conj}
 @defun conj expr
 Compute the complex conjugate of @var{expr}.
@@ -1679,9 +1692,26 @@ Compute @code{(0+1j)} times @var{expr}.
 @end defun
 
 @c ------------------------------------------------
-@node Sources
+@node @mybibnode{}
 @chapter Sources
 @c ------------------------------------------------
+
+@multitable @columnfractions .1 .9
+
+@item @mybibitem{Abr70} @tab Philip S. Abrams. An APL machine. Technical report SLAC-114 UC-32 (MISC), Stanford Linear Accelerator Center, Stanford University, Stanford, CA, USA, February 1970.
+@item @mybibitem{Ber87} @tab Robert Bernecky. An introduction to function rank. ACM SIGAPL APL Quote Quad, 18(2):39–43, December 1987.
+@item @mybibitem{bli17} @tab The Blitz++ meta-template library. @url{http://blitz.sourceforge.net}, November 2017.
+@item @mybibitem{Cha86} @tab G.J. Chaitin. Physics in APL2, June 1986.
+@item @mybibitem{FI68}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.
+@item @mybibitem{FI73}  @tab A.D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973.
+@item @mybibitem{FI78}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978.
+@item @mybibitem{J S}   @tab J Software. J Primer, @url{http://www.jsoftware.com/help/primer/contents.htm}.
+@item @mybibitem{num17} @tab NumPy. @url{http://www.numpy.org}, November 2017.
+@item @mybibitem{Ric08} @tab Henry Rich. J for C programmers, February 2008.
+@item @mybibitem{SSM14} @tab Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.
+@item @mybibitem{Vel01} @tab Todd Veldhuizen. Blitz++ user’s guide, February 2001.
+
+@end multitable
 
 @c ------------------------------------------------
 @node Indices
@@ -1695,14 +1725,6 @@ Compute @code{(0+1j)} times @var{expr}.
 @c @unnumbered Function Index
 @c @printindex fn
 
-@c \nocite{JLangReference}
-@c \nocite{FalkoffIverson1968}
-@c \nocite{Abrams1970}
-@c \nocite{FalkoffIverson1973}
-@c \nocite{FalkoffIverson1978}
-@c \nocite{APLexamples1}
-@c \nocite{ArraysCowan}
-@c \nocite{KonaTheLanguage}
-@c \nocite{blitz++2001}
+@c \nocite{JLangReference,FalkoffIverson1968,Abrams1970,FalkoffIverson1973,FalkoffIverson1978,APLexamples1,ArraysCowan,KonaTheLanguage,blitz++2001}
 
 @bye

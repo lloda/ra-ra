@@ -1,29 +1,28 @@
 
-
 # ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
 
 **ra-ra** is a C++ header-only multidimensional array and expression template
 library in the spirit of [Blitz++](blitz.sourceforge.net). Most of the code is
 C++14, but some C++17 features are used.
 
-Multidimensional arrays are a type of container that is indexable in zero or
-more dimensions. For example, vectors are arrays of rank 1 and matrices are
-arrays of rank 2. Even though C has had multidimensional array types since
-early on, standard support for arrays of rank greater than 1 is still near
-non-existent in C++17, and a library is required for any practical endeavor.
+Multidimensional arrays are containers that are indexable in zero or more
+dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of
+rank 2. C has had built-in multidimensional array types since forever, but even
+in C++17 there's very little you can do with those, and a separate library is
+required for any practical endeavor.
 
 [Expression templates](https://en.wikipedia.org/wiki/Expression_templates) are a
-C++ technique to delay the execution of expressions involving (large) array
-operands, and in this way avoid the unnecessary creation of large temporary
-array objects. It was pioneered by Blitz++, although the essential idea is at
-least as old as Abrams' 1970 thesis, *An APL machine*.
+C++ technique (pioneered by Blitz++) to delay the execution of expressions
+involving large array operands, and in this way avoid the unnecessary creation
+of large temporary array objects.
 
 **ra-ra** tries to distinguish itself from established C++ libraries in this
 space (such as [Eigen](eigen.tuxfamily.org) or
 [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html))
 by being more APLish, more general, smaller, and more hackable.
 
-This is a standalone example from `examples/readme.C`:
+In this example from `examples/readme.C`, we add each element of a vector to
+each row of a matrix, and then print the result.
 
 ```c++
 #include "ra/operators.H"
@@ -32,9 +31,9 @@ This is a standalone example from `examples/readme.C`:
 
 int main()
 {
-  ra::Owned<float, 2> A({2, 2}, {1, 2, 3, 4});   // A = [1, 2; 3 4], dynamic dimensions, compile-time rank
-  A += std::vector<float>({10, 20});             // broadcast op with STL object
-  std::cout << "A: " << A << "\n\n";             // dimensions are dynamic, so they'll be printed
+  ra::Owned<float, 2> A({2, 2}, {1, 2, 3, 4});  // A = [1 2; 3 4], dynamic shape, compile-time rank
+  A += std::vector<float>({10, 20});            // broadcast op with STL object
+  std::cout << "A: " << A << "\n\n";            // shape is dynamic, so it will be printed
   return 0;
 }
 ```
@@ -47,9 +46,9 @@ A: 2 2
 
 **ra-ra** supports:
 
-* Array types with compile time or runtime rank. Either can be arbitrarily large.
-* Array types with compile time or runtime dimensions.
-* Memory owning types as well as views, with all the rank and dimension options above. You can make array views over any piece of memory.
+* Array types with arbitrarily large compile time or runtime rank.
+* Array types with compile time or runtime shape.
+* Memory owning types as well as views, with all the rank and shape options above. You can make array views over any piece of memory.
 * Transparent memory layout, for interoperability with other libraries and/or languages.
 * Rank extension (broadcasting) for functions with any number of arguments of any rank.
 * Slicing with indices of arbitrary rank, beating of linear range indices, index skipping and elision, and more.
@@ -57,12 +56,11 @@ A: 2 2
 * A rank conjunction as in J, with some limitations.
 * Iterators over slices (subarrays) of any rank.
 * A tensor index object, with some limitations.
-* Stencil operations.
 * Arbitrary types as array elements, or as scalar operands.
-* Lazy selection operators (e.g. pick from argument list according to index). Short-circuiting logical operators.
-* Partial compatibility with the STL.
 * Many predefined array operations. Adding yours is trivial.
-* etc.
+* Lazy selection operators (e.g. pick from argument list according to index). Short-circuiting logical operators.
+* Stencil operations.
+* Partial compatibility with the STL.
 
 **ra-ra** has a manual (work in progress) maintained at `doc/ra-ra.texi`. You
 can view the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra). Please check it
@@ -70,14 +68,14 @@ out for details, or have a look at the `examples/` folder.
 
 Performance is competitive with hand written scalar (element by
 element) loops, but not with cache-tuned code such as your platform BLAS, or
-with code using SIMD. Please have a look at the `benchmarks/`.
+with code using SIMD. Please have a look at the benchmarks in `bench/`.
 
 #### Building the tests and the benchmarks
 
 The library itself is header-only and has no dependencies other than a C++17 compiler
 and the standard library.
 
-To run the test suite (```test/```) you need Scons. There is a `Makefile`, but
+The test suite (```test/```) runs under SCons. There is a `Makefile`, but
 it will just try to run SCons. Running the test suite will also build and run
 the examples (```examples/```) and the benchmarks (```bench/```), although you
 can easily build each of these separately. None of them has any dependencies,
@@ -89,12 +87,12 @@ otherwise some of the tests will take a very long time to run.
 
 All the tests pass under clang++-5.0 (with `-Wno-missing-braces`) except for:
 
-* test/bench-pack.C, crashes clang.
-* test/test-optimize.C, a required specialization is missed and I haven't
+* `test/bench-pack.C`, crashes clang.
+* `test/test-optimize.C`, a required specialization is missed and I haven't
   figured out why.
 
 For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is
-meant for gcc by setting CCFLAGS to something else:
+meant for gcc by setting CCFLAGS to something else, say:
 
   ```
   CCFLAGS="-march=native -Wno-missing-braces -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3 CXX=clang++-5.0 scons -j4
@@ -119,19 +117,18 @@ I haven't tested on Windows. If you can do that, I'd appreciate a report!
 * Indices are checked by default. This can be disabled with a compilation flag.
 
 
-#### Bugs & wishes
+#### Bugs & defects
 
-* Should be namespace-clean.
+* Not completely namespace-clean.
 * Beatable subscripts are not beaten if mixed with non-beatable subscripts.
-* Some inconsistencies with subscripting; for example, if ```A``` is rank>1 and
+* Inconsistencies with subscripting; for example, if ```A``` is rank>1 and
   ```i``` is rank 1, then ```A(i)``` will return a nested expression instead of
   preserving ```A```'s rank.
-* Better reduction mechanisms.
-* Better concatenation, search, and other infinite rank or rank>0
-  operations.
-* More clever/faster traversal of arrays, like in Blitz++.
-* Systematic handling of nested arrays.
-* SIMD?
+* Poor reduction mechanisms.
+* Missing concatenation, search, and other infinite rank or rank > 0 operations.
+* Traversal of arrays is naive.
+* Poor handling of nested arrays.
+* No SIMD.
 
 
 #### Out of scope

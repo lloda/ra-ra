@@ -16,14 +16,15 @@
 #include <cmath>
 #include <algorithm>
 
-// abs(int) is in ::, so why should I qualify abs(double)? also need max() and min() to be found for the POD types, as they are defined for others, and also found (through ADL).
+// abs(int) is in ::, so why should I qualify abs(double)?
+// besides just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
 using std::abs;
 using std::max;
 using std::min;
 using std::isfinite;
 using std::fma;
 using std::clamp;
-// using std::isinf;  // there's apparently an ::isinf already
+using std::isinf;  // there's apparently an ::isinf already
 
 #define IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)
 
@@ -57,6 +58,8 @@ inline double rel_error(double const a, double const b)
     return (a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b));
 }
 
+namespace ra {
+
 constexpr double    EPS = std::numeric_limits<double>::epsilon();
 constexpr double  ALINF = std::numeric_limits<double>::max();
 constexpr double   PINF = std::numeric_limits<double>::infinity();
@@ -84,7 +87,7 @@ constexpr double  LOG2E = 1.44269504088896340735992468100189213742664595415299;
 constexpr double  LOGE2 = .693147180559945309417232121458176568075500134360255;
 constexpr double GOLDEN = 1.61803398874989484820458683436563811772030917980576; // (1+sqrt(5))/2.
 
-inline double frand() { return double(random())/RAND_MAX; }
-inline int irand(int const p) { return int(frand()*p); }
 inline double rad2deg(double const r) { return r*(180./PI); }
 inline double deg2rad(double const d) { return d*(PI/180.); }
+
+}
