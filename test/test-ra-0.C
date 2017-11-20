@@ -14,7 +14,7 @@
 #include <numeric>
 #include <type_traits>
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/mpdebug.H"
@@ -178,7 +178,7 @@ int main()
             auto pp = std::vector<double>(10);
             pp[9] = 99;
             double * p = pp.data();
-            ra::Owned<double> a {};
+            ra::Big<double> a {};
             a.store = pp;
             a.p = p;
             a.dim = {{5, 2}, {2, 1}};
@@ -350,7 +350,7 @@ int main()
         tr.test_eq(2, u.rank());
         tr.test(std::equal(pool, pool+6, u.begin()));
 
-        ra::Owned<double> o({3, 2}, pool, pool+6);
+        ra::Big<double> o({3, 2}, pool, pool+6);
         tr.test_eq(2, o.rank());
         tr.test(std::equal(pool, pool+6, o.begin()));
     }
@@ -617,7 +617,7 @@ int main()
     }
     tr.section("row-major assignment from initializer_list, rank 1");
     {
-        ra::Owned<double, 1> a({5}, ra::unspecified);
+        ra::Big<double, 1> a({5}, ra::unspecified);
         a = { 2, 3, 1, 4, 8 };
         tr.test_eq(2, a(0));
         tr.test_eq(3, a(1));
@@ -655,12 +655,12 @@ int main()
                 tr.info("ra::Small<int, 0> rank").test_eq(1, i0.rank());
                 auto r0a = r.at(ra::Small<int, 0> {});
                 tr.info("fix size").test(std::equal(r0a.begin(), r0a.end(), rcheck));
-                auto r0b = r.at(ra::Owned<int, 1> {});
+                auto r0b = r.at(ra::Big<int, 1> {});
                 tr.info("fix rank").test(std::equal(r0b.begin(), r0b.end(), rcheck));
-                auto r0c = r.at(0+ra::Owned<int, 1> {});
+                auto r0c = r.at(0+ra::Big<int, 1> {});
                 tr.info("fix rank expr").test(std::equal(r0c.begin(), r0c.end(), rcheck));
-                // TODO check out why ra::Owned<int> {} is rank 0.
-                auto r0d = r.at(0+ra::Owned<int>({0}, {}));
+                // TODO check out why ra::Big<int> {} is rank 0.
+                auto r0d = r.at(0+ra::Big<int>({0}, {}));
                 tr.info("r0d: [", r0d, "]").test(std::equal(r0d.begin(), r0d.end(), rcheck));
             }
             {
@@ -669,11 +669,11 @@ int main()
                 tr.test_eq(ra::ptr(rcheck), r1);
                 auto r1a = r.at(ra::Small<int, 1> {1});
                 tr.test_eq(ra::ptr(rcheck), r1a);
-                auto r1b = r.at(ra::Owned<int, 1> {1});
+                auto r1b = r.at(ra::Big<int, 1> {1});
                 tr.test_eq(ra::ptr(rcheck), r1b);
-                auto r1c = r.at(0+ra::Owned<int, 1> {1});
+                auto r1c = r.at(0+ra::Big<int, 1> {1});
                 tr.test_eq(ra::ptr(rcheck), r1c);
-                auto r1d = r.at(0+ra::Owned<int> {1});
+                auto r1d = r.at(0+ra::Big<int> {1});
                 tr.test_eq(ra::ptr(rcheck), r1d);
             }
             {
@@ -687,11 +687,11 @@ int main()
 
                 auto r2a = r.at(ra::Small<int, 2> {1, 1});
                 tr.test(std::equal(r2a.begin(), r2a.end(), rcheck));
-                auto r2b = r.at(ra::Owned<int, 1> {1, 1});
+                auto r2b = r.at(ra::Big<int, 1> {1, 1});
                 tr.test(std::equal(r2a.begin(), r2a.end(), rcheck));
-                auto r2c = r.at(0+ra::Owned<int, 1> {1, 1});
+                auto r2c = r.at(0+ra::Big<int, 1> {1, 1});
                 tr.test(std::equal(r2c.begin(), r2c.end(), rcheck));
-                auto r2d = r.at(0+ra::Owned<int> {1, 1});
+                auto r2d = r.at(0+ra::Big<int> {1, 1});
                 tr.test(std::equal(r2d.begin(), r2d.end(), rcheck));
             }
         }
@@ -895,20 +895,20 @@ int main()
         static_assert(ra::is_iterator<decltype(ra::iota(10))>, "bad type pred for iota");
         tr.section("straight cases");
         {
-            ra::Owned<int, 1> a = ra::iota(4, 1);
+            ra::Big<int, 1> a = ra::iota(4, 1);
             assert(a[0]==1 && a[1]==2 && a[2]==3 && a[3]==4);
         }
         tr.section("work with operators");
         {
-            tr.test(every(ra::iota(4)==ra::Owned<int, 1> {0, 1, 2, 3}));
-            tr.test(every(ra::iota(4, 1)==ra::Owned<int, 1> {1, 2, 3, 4}));
-            tr.test(every(ra::iota(4, 1, 2)==ra::Owned<int, 1> {1, 3, 5, 7}));
+            tr.test(every(ra::iota(4)==ra::Big<int, 1> {0, 1, 2, 3}));
+            tr.test(every(ra::iota(4, 1)==ra::Big<int, 1> {1, 2, 3, 4}));
+            tr.test(every(ra::iota(4, 1, 2)==ra::Big<int, 1> {1, 3, 5, 7}));
         }
  // TODO actually whether unroll is avoided depends on ply(), have a way to require it.
 // Cf [trc-01] in test-compatibility.C.
         tr.section("[tr0-01] frame-matching, forbidding unroll");
         {
-            ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
+            ra::Big<int, 3> b ({3, 4, 2}, ra::unspecified);
             transpose({0, 2, 1}, b) = ra::iota(3, 1);
             cout << b << endl;
             tr.test(every(b(0)==1));
@@ -916,7 +916,7 @@ int main()
             tr.test(every(b(2)==3));
         }
         {
-            ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
+            ra::Big<int, 3> b ({3, 4, 2}, ra::unspecified);
             transpose<0, 2, 1>(b) = ra::iota(3, 1);
             cout << b << endl;
             tr.test(every(b(0)==1));

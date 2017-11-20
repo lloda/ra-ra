@@ -19,7 +19,7 @@
 #include "ra/bench.H"
 
 using real = double;
-template <class T, int rank> using array = ra::Owned<T, rank>;
+template <class T, int rank> using array = ra::Big<T, rank>;
 using ra::iota;
 auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;

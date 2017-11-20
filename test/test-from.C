@@ -15,7 +15,7 @@
 #include "ra/complex.H"
 #include "ra/format.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
@@ -74,7 +74,7 @@ int main()
     tr.section("beatable multi-axis selectors, var size");
     {
         static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
-        ra::Owned<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
+        ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::dots<0> ...)").test_eq(a(0), a(ra::dots<0>, 0));
         tr.info("a(ra::dots<0> ...)").test_eq(a(1), a(ra::dots<0>, 1));
         tr.info("a(ra::dots<1> ...)").test_eq(a(ra::all, 0), a(ra::dots<1>, 0));
@@ -104,13 +104,13 @@ int main()
     tr.section("newaxis, var size");
     {
         static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
-        ra::Owned<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
+        ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::newaxis<0> ...)").test_eq(a(0), a(ra::newaxis<0>, 0));
-        ra::Owned<int, 4> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
+        ra::Big<int, 4> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
         tr.info("a(ra::newaxis<1> ...)").test_eq(a1, a(ra::newaxis<1>));
-        ra::Owned<int, 4> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
+        ra::Big<int, 4> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
         tr.info("a(ra::all, ra::newaxis<1>, ...)").test_eq(a2, a(ra::all, ra::newaxis<1>));
-        ra::Owned<int, 5> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
+        ra::Big<int, 5> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
         tr.info("a(ra::all, ra::newaxis<2>, ...)").test_eq(a3, a(ra::all, ra::newaxis<2>));
         tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
         tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
@@ -118,13 +118,13 @@ int main()
     tr.section("newaxis, var rank");
     {
         static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
-        ra::Owned<int> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
+        ra::Big<int> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::newaxis<0> ...)").test_eq(a(0), a(ra::newaxis<0>, 0));
-        ra::Owned<int> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
+        ra::Big<int> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
         tr.info("a(ra::newaxis<1> ...)").test_eq(a1, a(ra::newaxis<1>));
-        ra::Owned<int> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
+        ra::Big<int> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
         tr.info("a(ra::all, ra::newaxis<1>, ...)").test_eq(a2, a(ra::all, ra::newaxis<1>));
-        ra::Owned<int> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
+        ra::Big<int> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
         tr.info("a(ra::all, ra::newaxis<2>, ...)").test_eq(a3, a(ra::all, ra::newaxis<2>));
         tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
         tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
@@ -290,23 +290,23 @@ int main()
 // Indirection operator using list of coordinates.
     tr.section("at() indirection");
     {
-        ra::Owned<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
+        ra::Big<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
         using coord = ra::Small<int, 2>;
-        ra::Owned<coord, 1> I = { {1, 1}, {2, 2} };
+        ra::Big<coord, 1> I = { {1, 1}, {2, 2} };
 
         at(A, I) = at(B, I);
-        tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 0, 0}), A);
+        tr.test_eq(ra::Big<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 0, 0}), A);
 
 // TODO this is why we need ops to have explicit rank.
         at(A, ra::scalar(coord{3, 2})) = 99.;
-        tr.test_eq(ra::Owned<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 99, 0}), A);
+        tr.test_eq(ra::Big<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 99, 0}), A);
     }
 // From the manual [ra30]
     {
-        ra::Owned<int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
-        ra::Owned<ra::Small<int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
-        ra::Owned<int, 2> B = at(A, i);
-        tr.test_eq(ra::Owned<int, 2>({2, 2}, {101, 120, 110, 121}), at(A, i));
+        ra::Big<int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
+        ra::Big<ra::Small<int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
+        ra::Big<int, 2> B = at(A, i);
+        tr.test_eq(ra::Big<int, 2>({2, 2}, {101, 120, 110, 121}), at(A, i));
     }
     return tr.summary();
 }

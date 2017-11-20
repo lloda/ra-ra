@@ -14,7 +14,7 @@
 #include "ra/mpdebug.H"
 #include "ra/operators.H"
 #include "ra/io.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/wedge.H"
 
 using std::cout; using std::endl;
@@ -207,7 +207,7 @@ int main()
     tr.section("assignment ops with ra::scalar [ra21]");
     {
         ra::Small<real, 2> a { 0, 0 };
-        ra::Owned<ra::Small<real, 2>, 1> b { {1, 10}, {2, 20}, {3, 30} };
+        ra::Big<ra::Small<real, 2>, 1> b { {1, 10}, {2, 20}, {3, 30} };
 // use scalar to match 1 (a) vs 3 (b) instead of 2 vs 3.
         ra::scalar(a) += b;
         tr.test_eq(ra::Small<real, 2> { 6, 60 }, a);
@@ -216,14 +216,14 @@ int main()
     {
         ra::Small<real, 6> a = { 0, -1, 1, 0, 2, 1 };
         ra::Small<int, 6> b = { 4, 3, 5, 4, 6, 5 };
-        ra::Owned<std::tuple<real, int>, 1> x = ra::pack<std::tuple<real, int> >(a, b); // TODO kinda redundant...
+        ra::Big<std::tuple<real, int>, 1> x = ra::pack<std::tuple<real, int> >(a, b); // TODO kinda redundant...
         tr.test_eq(a, map([](auto && x) -> decltype(auto) { return std::get<0>(x); }, x));
         tr.test_eq(b, map([](auto && x) -> decltype(auto) { return std::get<1>(x); }, x));
     }
     tr.section("pack operator as ref");
     {
         using T = std::tuple<real, int>;
-        ra::Owned<T> x { T(0., 1), T(2., 3), T(4., 5) };
+        ra::Big<T> x { T(0., 1), T(2., 3), T(4., 5) };
         ra::Small<real, 3> a = -99.;
         ra::Small<int, 3> b = -77;
         ra::pack<std::tuple<real &, int &> >(a, b) = x;
@@ -290,19 +290,19 @@ int main()
     tr.section("index");
     {
         {
-            ra::Owned<real, 1> a {1, 2, 3, -4, 9, 9, 8};
+            ra::Big<real, 1> a {1, 2, 3, -4, 9, 9, 8};
             tr.test_eq(3, index(a<0));
             tr.test_eq(-1, index(a>100));
         }
         {
-            ra::Owned<real> a {1, 2, 3, -4, 9, 9, 8};
+            ra::Big<real> a {1, 2, 3, -4, 9, 9, 8};
             tr.test_eq(4, index(abs(a)>4));
         }
     }
     tr.section("lexicographical_compare");
     {
-        ra::Owned<int, 3> a({10, 2, 2}, {0, 0, 1, 3, 0, 1, 3, 3, 0, 2, 3, 0, 3, 1, 2, 1, 1, 1, 3, 1, 0, 3, 2, 2, 2, 3, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 3, 0, 2, 1});
-        ra::Owned<int, 1> i = ra::iota(a.size(0));
+        ra::Big<int, 3> a({10, 2, 2}, {0, 0, 1, 3, 0, 1, 3, 3, 0, 2, 3, 0, 3, 1, 2, 1, 1, 1, 3, 1, 0, 3, 2, 2, 2, 3, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 3, 0, 2, 1});
+        ra::Big<int, 1> i = ra::iota(a.size(0));
         std::sort(i.data(), i.data()+i.size(),
                   [&a](int i, int j)
                   {

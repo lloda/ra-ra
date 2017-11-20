@@ -10,13 +10,13 @@ using std::cout; using std::endl; using std::flush;
 
 int main()
 {
-    ra::Owned<int, 1> x = ra::iota(7, -3);   // [ -3 -2 -1  0  1  2  3 ]
+    ra::Big<int, 1> x = ra::iota(7, -3);   // [ -3 -2 -1  0  1  2  3 ]
 
     // The where(X,Y,Z) function is similar to the X ? Y : Z operator.
     // If X is logical true, then Y is returned; otherwise, Z is
     // returned.
 
-    ra::Owned<int, 1> y = where(abs(x) > 2, x+10, x-10);
+    ra::Big<int, 1> y = where(abs(x) > 2, x+10, x-10);
 
     // The above statement is transformed into something resembling:
     //
@@ -33,7 +33,7 @@ int main()
     // put anything in the selector expression (the first argument) that will
     // evaluate to an argument index.
 
-    ra::Owned<int, 1> z = pick(where(x<0, 0, where(x==0, 1, 2)), x*3, 77, x*2);
+    ra::Big<int, 1> z = pick(where(x<0, 0, where(x==0, 1, 2)), x*3, 77, x*2);
 
     TestRecorder tr(std::cout, TestRecorder::NOISY);
     tr.test_eq(ra::start({7, -12, -11, -10, -9, -8, 13}), y);

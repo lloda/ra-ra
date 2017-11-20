@@ -14,7 +14,7 @@
 #include <numeric>
 #include "ra/test.H"
 #include "ra/type.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/pick.H"
@@ -67,7 +67,7 @@ int main()
             (true, true, false, false, false);
         TEST_PREDICATES(decltype(ra::Small<int, 2>()+3))
             (true, false, true, false, false);
-        TEST_PREDICATES(decltype(3+ra::Owned<int>()))
+        TEST_PREDICATES(decltype(3+ra::Big<int>()))
             (true, false, true, false, false);
         TEST_PREDICATES(std::vector<int>)
             (false, false, false, false, true);

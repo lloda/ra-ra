@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     double EPS = 1e-5;
     double h = 1./N;
 
-    ra::Owned<double, 2> v({N+1, N+1}, 0.), u({N+1, N+1}, 0.), w({N+1, N+1}, 0.), b({N+1, N+1}, 0.);
+    ra::Big<double, 2> v({N+1, N+1}, 0.), u({N+1, N+1}, 0.), w({N+1, N+1}, 0.), b({N+1, N+1}, 0.);
     auto i = ra::iota(N-1, 1);
     auto j = ra::iota(N-1, 1);
     auto ih = ra::iota(N-1, h, h);
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     MassMat mm { h };
 
     mult(mm, w, b);
-    ra::Owned<double, 3> work({3, N+1, N+1}, ra::unspecified);
+    ra::Big<double, 3> work({3, N+1, N+1}, ra::unspecified);
     int its = cghs(sm, b, u, work, EPS);
     double max = amax(abs(u-v));
 

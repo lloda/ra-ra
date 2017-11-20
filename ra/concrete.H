@@ -10,7 +10,7 @@
 /// @brief Obtain concrete type from array expression.
 
 #pragma once
-#include "ra/large.H"
+#include "ra/big.H"
 
 #ifdef RA_CHECK_BOUNDS
     #define RA_CHECK_BOUNDS_RA_CONCRETE RA_CHECK_BOUNDS
@@ -30,11 +30,11 @@ namespace ra {
 template <class E, class Enable=void> struct concrete_type_def_1;
 template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::rank_s()==RANK_ANY>>
 {
-    using type = Owned<value_t<E>>;
+    using type = Big<value_t<E>>;
 };
 template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()==DIM_ANY && E::rank_s()!=RANK_ANY>>
 {
-    using type = Owned<value_t<E>, E::rank_s()>;
+    using type = Big<value_t<E>, E::rank_s()>;
 };
 template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()!=DIM_ANY>>
 {

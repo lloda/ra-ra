@@ -48,10 +48,10 @@ int main()
     }
     tr.section("var size");
     {
-        ra::Owned<int, 1> a = {1, 2, 3};
-        ra::Owned<int, 1> b = {4, 5, 6};
+        ra::Big<int, 1> a = {1, 2, 3};
+        ra::Big<int, 1> b = {4, 5, 6};
         using K = ra::concrete_type<decltype(a+b)>;
-        tr.test(std::is_same_v<K, ra::Owned<int, 1>>);
+        tr.test(std::is_same_v<K, ra::Big<int, 1>>);
         auto c = concrete(a+b);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
@@ -59,7 +59,7 @@ int main()
     tr.section("var size + fixed size");
     {
         ra::Small<int, 3, 2> a = {1, 2, 3, 4, 5, 6};
-        ra::Owned<int, 1> b = {4, 5, 6};
+        ra::Big<int, 1> b = {4, 5, 6};
         using K = ra::concrete_type<decltype(a+b)>;
         tr.test(std::is_same_v<K, ra::Small<int, 3, 2>>);
         auto c = concrete(a+b);
@@ -68,11 +68,11 @@ int main()
     }
     tr.section("var size + var rank");
     {
-        ra::Owned<int, 1> a = {1, 2, 3};
-        ra::Owned<int> b = {4, 5, 6};
+        ra::Big<int, 1> a = {1, 2, 3};
+        ra::Big<int> b = {4, 5, 6};
         using K = ra::concrete_type<decltype(a+b)>;
 // ra:: b could be higher rank and that decides the type.
-        tr.test(std::is_same_v<K, ra::Owned<int>>);
+        tr.test(std::is_same_v<K, ra::Big<int>>);
         auto c = concrete(a+b);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
@@ -91,10 +91,10 @@ int main()
     }
     tr.section("concrete on is_slice var size");
     {
-        ra::Owned<int, 1> a = {1, 2, 3};
+        ra::Big<int, 1> a = {1, 2, 3};
         auto c = concrete(a);
         using K = decltype(c);
-        tr.test(std::is_same_v<K, ra::Owned<int, 1>>);
+        tr.test(std::is_same_v<K, ra::Big<int, 1>>);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a, c);
         a = 99;
@@ -106,7 +106,7 @@ int main()
         std::vector<int> a = {1, 2, 3};
         auto c = ra::concrete(a);
         using K = decltype(c);
-        tr.test(std::is_same_v<K, ra::Owned<int, 1>>);
+        tr.test(std::is_same_v<K, ra::Big<int, 1>>);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a, c);
         ra::start(a) = 99;
@@ -125,7 +125,7 @@ int main()
     }
     tr.section("concrete on nested array");
     {
-        ra::Owned<ra::Small<int, 3>, 1> x({2}, 1);
+        ra::Big<ra::Small<int, 3>, 1> x({2}, 1);
         cout << x << endl;
         cout << concrete(x) << endl;
         cout << x*double(2.) << endl;

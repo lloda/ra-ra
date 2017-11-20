@@ -18,9 +18,9 @@ using std::cout; using std::endl;
 int main()
 {
     int N = 4;
-    ra::Owned<float, 3> A({N, N, N}, ra::_2 + ra::_1*4 + ra::_0*16);
-    ra::Owned<float, 2> B({N, N}, ra::_1 + ra::_0*4);
-    ra::Owned<float, 1> C({N}, ra::_0);
+    ra::Big<float, 3> A({N, N, N}, ra::_2 + ra::_1*4 + ra::_0*16);
+    ra::Big<float, 2> B({N, N}, ra::_1 + ra::_0*4);
+    ra::Big<float, 1> C({N}, ra::_0);
 
     cout << "A: " << N << endl;
     cout << "B: " << N << endl;

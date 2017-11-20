@@ -56,8 +56,8 @@ struct Matrix0bnd
 {
     ra::Small<double, 8, 8> M; // element matrix.
     double h;                  // scale factor.
-    ra::Owned<Element, 1> & E; // elements.
-    ra::Owned<int, 1> & B;     // indices of boundary elements.
+    ra::Big<Element, 1> & E; // elements.
+    ra::Big<int, 1> & B;     // indices of boundary elements.
 };
 
 template <class A, class V, class W>
@@ -94,13 +94,13 @@ void mult(Matrix0bnd & A, V const & v, W & w)
 
 struct StiffMatrix: Matrix0bnd
 {
-    StiffMatrix(double h, ra::Owned<Element, 1> & E, ra::Owned<int, 1> & B)
+    StiffMatrix(double h, ra::Big<Element, 1> & E, ra::Big<int, 1> & B)
         : Matrix0bnd { SM, h, E, B } {};
 };
 
 struct MassMatrix: Matrix0bnd
 {
-    MassMatrix(double h, ra::Owned<Element, 1> & E, ra::Owned<int, 1> & B)
+    MassMatrix(double h, ra::Big<Element, 1> & E, ra::Big<int, 1> & B)
         : Matrix0bnd { MM, h*h*h, E, B } {};
 };
 
@@ -129,9 +129,9 @@ int main()
     double EPS = 1e-5;
     double h = 1./n; // space = ±1, so grid step = 2h
 
-    ra::Owned<ra::Small<double, 3>, 1> V({(n+1)*(n+1)*(n+1)}, ra::unspecified); // vertex coordinates.
-    ra::Owned<int, 1> B({6*(n+1)*(n+1)}, ra::unspecified);                      // indices of boundary vertices.
-    ra::Owned<Element, 1> E({n*n*n}, ra::unspecified);                          // the elements.
+    ra::Big<ra::Small<double, 3>, 1> V({(n+1)*(n+1)*(n+1)}, ra::unspecified); // vertex coordinates.
+    ra::Big<int, 1> B({6*(n+1)*(n+1)}, ra::unspecified);                      // indices of boundary vertices.
+    ra::Big<Element, 1> E({n*n*n}, ra::unspecified);                          // the elements.
 
 // set vertex coordinates.
     auto ip = ra::iota(n+1);
@@ -159,11 +159,11 @@ int main()
         }
     }
 
-    ra::Owned<double, 1> b({(n+1)*(n+1)*(n+1)}, 0.); // right hand side
-    ra::Owned<double, 1> x({(n+1)*(n+1)*(n+1)}, 0.); // solution vector
+    ra::Big<double, 1> b({(n+1)*(n+1)*(n+1)}, 0.); // right hand side
+    ra::Big<double, 1> x({(n+1)*(n+1)*(n+1)}, 0.); // solution vector
 
 // set right side.
-    ra::Owned<double, 1> aux = map([](auto && Vi) { return f(Vi[0], Vi[1], Vi[2]); }, V);
+    ra::Big<double, 1> aux = map([](auto && Vi) { return f(Vi[0], Vi[1], Vi[2]); }, V);
 
 // integral ~ product with mass matrix.
     MassMatrix MM(h, E, B);
@@ -171,13 +171,13 @@ int main()
 
 // solve.
     StiffMatrix SM(h, E, B);
-    ra::Owned<double, 2> work({3, (n+1)*(n+1)*(n+1)}, ra::unspecified);
+    ra::Big<double, 2> work({3, (n+1)*(n+1)*(n+1)}, ra::unspecified);
     auto t1 = Benchmark::clock::now();
     int its = cghs(SM, b, x, work, EPS);
     auto tsolve = Benchmark::clock::now()-t1;
 
 // compare with exact solution.
-    ra::Owned<double, 1> c = map([](auto && Vi) { return g(Vi[0], Vi[1], Vi[2]); }, V);
+    ra::Big<double, 1> c = map([](auto && Vi) { return g(Vi[0], Vi[1], Vi[2]); }, V);
     double err = amax(abs(c-x));
 
     auto ttot = Benchmark::clock::now()-t0;

@@ -13,7 +13,7 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
@@ -30,24 +30,24 @@ using real = double;
 // The constructors are all plain, the fields of the array record are copied/moved.
 // TODO This table contain errors; review thoroughly.
 /*
-| to\fro cons | View            | Shared | Unique    | Owned     | Small          | SmallView | Tested in        |
+| to\fro cons | View           | Shared | Unique    | Big       | Small          | SmallView  | Tested in        |
 |-------------+----------------+--------+-----------+-----------+----------------+------------+------------------|
 | R           | borrow         | borrow | borrow    | borrow    | borrow         | ...        |                  |
-| S           | share, null d. | share  | move      | share     | share, null d. |            | test-ownership.C |
-| U           | copy           | copy   | move      | copy/move | copy           |            |                  |
-| O           | copy           | copy   | copy/move | copy/move | copy           |            |                  |
+| Shared      | share, null d. | share  | move      | share     | share, null d. |            | test-ownership.C |
+| Unique      | copy           | copy   | move      | copy/move | copy           |            |                  |
+| Big         | copy           | copy   | copy/move | copy/move | copy           |            |                  |
 | Small       |                |        |           |           | copy           |            |                  |
 */
 
 // operator= however copies into. This is so that array ops look natural.
 // The reason for the diagonal exceptions is to allow array-types to be initialized from a ref argument, which is required in operator>>(istream &, array-type). Maybe there's a better solution.
 /*
-| to\fro op= | View       | Shared    | Unique    | Owned       | Small     | Tested in        |
+| to\fro op= | View      | Shared    | Unique    | Big         | Small     | Tested in        |
 |------------+-----------+-----------+-----------+-------------+-----------+------------------|
-| View        | copy into | copy into | copy into | copy into   | copy into | test-operators.C |
+| View       | copy into | copy into | copy into | copy into   | copy into | test-operators.C |
 | Shared     | copy into | *share*   | copy into | copy into   | copy into |                  |
 | Unique     | copy into | copy into | *move*    | copy into   | copy into |                  |
-| Owned      | copy into | copy into | copy into | *copy/move* | copy into |                  |
+| Big        | copy into | copy into | copy into | *copy/move* | copy into |                  |
 | Small      | copy into | copy into | copy into | copy into   | *copy*    |                  |
 */
 
@@ -78,42 +78,42 @@ int main()
             tr.test(std::equal(check11, check11+5, q.begin())); // was moved
         }
     }
-    tr.section("Owned");
+    tr.section("Big");
     {
-        ra::Owned<real, 1> o({5}, 11.);
-        ra::Owned<real, 1> z(o);
+        ra::Big<real, 1> o({5}, 11.);
+        ra::Big<real, 1> z(o);
         o = 99.;
         tr.test(std::equal(check11, check11+5, z.begin()));
         tr.test(std::equal(check99, check99+5, o.begin()));
         tr.section("copy");
         {
-            ra::Owned<real, 1> const c(o);
+            ra::Big<real, 1> const c(o);
             tr.test(std::equal(check99, check99+5, c.begin()));
             tr.test(c.data()!=o.data());
-            ra::Owned<real, 1> const q(c);
+            ra::Big<real, 1> const q(c);
             tr.test(q.data()!=c.data());
             tr.test(std::equal(check99, check99+5, q.begin()));
-            ra::Owned<real, 1> p(c);
+            ra::Big<real, 1> p(c);
             tr.test(p.data()!=c.data());
             tr.test(std::equal(check99, check99+5, p.begin()));
         }
         tr.section("WithStorage operator=(WithStorage) replaces, unlike View [ra20]");
         {
-            ra::Owned<real, 1> o({5}, 11.);
-            ra::Owned<real, 1> const p({5}, 99.);
+            ra::Big<real, 1> o({5}, 11.);
+            ra::Big<real, 1> const p({5}, 99.);
             {
-                ra::Owned<real, 1> q({7}, 4.);
+                ra::Big<real, 1> q({7}, 4.);
                 q = o;
                 tr.test(std::equal(check11, check11+5, q.begin()));
             }
             {
-                ra::Owned<real, 1> q({7}, 4.);
+                ra::Big<real, 1> q({7}, 4.);
                 q = p;
                 tr.test(std::equal(check99, check99+5, q.begin()));
             }
             {
-                ra::Owned<real, 1> q({7}, 4.);
-                q = ra::Owned<real, 1>({5}, 11.);
+                ra::Big<real, 1> q({7}, 4.);
+                q = ra::Big<real, 1>({5}, 11.);
                 tr.test(std::equal(check11, check11+5, q.begin()));
             }
             tr.test(std::equal(check99, check99+5, p.begin()));
@@ -121,7 +121,7 @@ int main()
         }
         tr.section("move");
         {
-            ra::Owned<real, 1> c(std::move(z));
+            ra::Big<real, 1> c(std::move(z));
             tr.test(z.store.size()==0); // std::vector does this on move...
             tr.test(std::equal(check11, check11+5, c.begin())); // was moved
         }

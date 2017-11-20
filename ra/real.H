@@ -24,7 +24,7 @@ using std::min;
 using std::isfinite;
 using std::fma;
 using std::clamp;
-using std::isinf;  // there's apparently an ::isinf already
+using std::isinf;
 
 #define IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)
 
@@ -51,12 +51,9 @@ inline constexpr double norm2(double const x)                       { return std
 inline constexpr double norm2(double const x, double const y)       { return std::abs(x-y); }
 inline constexpr double abs(double const x, double const y)         { return std::abs(x-y); }
 inline constexpr double dot(double const x, double const y)         { return x*y; }
-inline void swap(double & a, double & b)                            { std::swap(a, b); }
+inline constexpr double rel_error(double const a, double const b)   { return (a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b)); }
 
-inline double rel_error(double const a, double const b)
-{
-    return (a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b));
-}
+inline void swap(double & a, double & b)                            { std::swap(a, b); }
 
 namespace ra {
 

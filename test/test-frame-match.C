@@ -14,7 +14,7 @@
 #include <numeric>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 
 using std::cout; using std::endl; using std::flush;
 using real = double;
@@ -153,9 +153,9 @@ int main()
     // }
     tr.section("unintiuitive behavior [ra33]");
     {
-        ra::Owned<int, 1> i = {0, 1, 2};
-        ra::Owned<double, 2> A({3, 2}, ra::_0 - ra::_1);
-        ra::Owned<double, 2> F({3, 2}, 0.);
+        ra::Big<int, 1> i = {0, 1, 2};
+        ra::Big<double, 2> A({3, 2}, ra::_0 - ra::_1);
+        ra::Big<double, 2> F({3, 2}, 0.);
         iter<-1>(F) = A(i); // A(i) returns a nested expression. FIXME Should it?
         tr.test_eq(A, F);
     }

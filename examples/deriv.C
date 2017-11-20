@@ -7,7 +7,7 @@
 
 using std::cout; using std::endl; using std::flush;
 
-using Array1D = ra::Owned<double, 1>;
+using Array1D = ra::Big<double, 1>;
 
 // "index placeholder" which represents the array index for the first axis in a multidimensional expression.
 constexpr auto i = ra::_0;

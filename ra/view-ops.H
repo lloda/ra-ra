@@ -10,7 +10,7 @@
 /// @brief Operations specific to Views
 
 #pragma once
-#include "ra/large.H"
+#include "ra/big.H"
 
 #ifdef RA_CHECK_BOUNDS
     #define RA_CHECK_BOUNDS_RA_VIEW_OPS RA_CHECK_BOUNDS

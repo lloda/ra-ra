@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-large.C
+/// @file test-big.C
 /// @brief Tests specific to WithStorage.
 
 #include <iostream>
@@ -27,7 +27,7 @@ int main()
         using int2 = ra::Small<int, 2>;
         std::vector<int2> a;
         a.push_back({1, 2});
-        ra::Owned<int2, 1> b;
+        ra::Big<int2, 1> b;
         b.push_back({1, 2});
 
         int2 check[1] = {{1, 2}};
@@ -36,8 +36,8 @@ int main()
     }
     tr.section("behavior of forced Fortran array");
     {
-        ra::Owned<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5});
-        ra::Owned<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5});
+        ra::Big<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5});
+        ra::Big<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5});
         auto c = transpose({1, 0}, ra::View<int, 2>({3, 2}, a.data()));
         a.dim = c.dim;
         for (int k=0; k!=c.rank(); ++k) {

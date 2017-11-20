@@ -21,9 +21,9 @@ void example1()
 {
     // Indirection using a list of coordinates
 
-    ra::Owned<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
+    ra::Big<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
     using coord = ra::Small<int, 2>;
-    ra::Owned<coord, 1> I = { {1, 1}, {2, 2} };
+    ra::Big<coord, 1> I = { {1, 1}, {2, 2} };
 
     // Blitz++ had A[I] = B.
     // In ra::, both sides of = must agree in shape.
@@ -57,8 +57,8 @@ void example2()
 {
     // Cartesian-product indirection
 
-    ra::Owned<int, 2> A({6, 6}, 0), B({6, 6}, 10*ra::_0 + ra::_1);
-    ra::Owned<int, 1> I { 1, 2, 4 }, J { 2, 0, 5 };
+    ra::Big<int, 2> A({6, 6}, 0), B({6, 6}, 10*ra::_0 + ra::_1);
+    ra::Big<int, 1> I { 1, 2, 4 }, J { 2, 0, 5 };
 
     // The normal selector () already has Cartesian-product behavior. As before, both sides must agree in shape.
     A(I, J) = B(I, J);
@@ -87,8 +87,8 @@ void example3()
 {
     // Simple 1-D indirection, using a STL container of int
 
-    ra::Owned<int, 1> A({5}, 0), B({ 1, 2, 3, 4, 5 });
-    ra::Owned<int, 1> I {2, 4, 1};
+    ra::Big<int, 1> A({5}, 0), B({ 1, 2, 3, 4, 5 });
+    ra::Big<int, 1> I {2, 4, 1};
 
     // As before, both sides must agree in shape.
     A(I) = B(I);
@@ -105,14 +105,14 @@ void example4()
     // ra:: doesn't have those, so we fake it.
 
     const int N = 7;
-    ra::Owned<int, 2> A({N, N}, 0.), B({N, N}, 1.);
+    ra::Big<int, 2> A({N, N}, 0.), B({N, N}, 1.);
 
     double centre_i = (N-1)/2.0;
     double centre_j = (N-1)/2.0;
     double radius = 0.8 * N/2.0;
 
     // circle will contain a list of strips which represent a circular subdomain.
-    ra::Owned<std::tuple<int, ra::Iota<int> >, 1> circle; // [y x0 x1; ...]
+    ra::Big<std::tuple<int, ra::Iota<int> >, 1> circle; // [y x0 x1; ...]
     for (int i=0; i < N; ++i)
     {
         double jdist2 = sqr(radius) - sqr(i-centre_i);
@@ -152,13 +152,13 @@ void example4()
 void example5()
 {
     // suppose you have the x coordinates in one array and the y coordinates in another array.
-    ra::Owned<int, 2> x({4, 4}, {0, 1, 2, 0, /* */ 0, 1, 2, 0, /*  */ 0, 1, 2, 0, /* */ 0, 1, 2, 0});
-    ra::Owned<int, 2> y({4, 4}, {1, 2, 0, 1, /* */ 1, 2, 0, 1, /*  */ 1, 2, 0, 1, /* */ 1, 2, 0, 1});
+    ra::Big<int, 2> x({4, 4}, {0, 1, 2, 0, /* */ 0, 1, 2, 0, /*  */ 0, 1, 2, 0, /* */ 0, 1, 2, 0});
+    ra::Big<int, 2> y({4, 4}, {1, 2, 0, 1, /* */ 1, 2, 0, 1, /*  */ 1, 2, 0, 1, /* */ 1, 2, 0, 1});
     cout << "coordinates: " << format_array(ra::pack<ra::Small<int, 2> >(x, y), true, "|") << endl;
 
     // you can use these for indirect access without creating temporaries.
-    ra::Owned<int, 2> a({3, 3}, {0, 1, 2, 3, 4, 5, 6, 7, 8});
-    ra::Owned<int, 2> b = at(a, ra::pack<ra::Small<int, 2> >(x, y));
+    ra::Big<int, 2> a({3, 3}, {0, 1, 2, 3, 4, 5, 6, 7, 8});
+    ra::Big<int, 2> b = at(a, ra::pack<ra::Small<int, 2> >(x, y));
     cout << "sampling of a using coordinates: " << b << endl;
 
     // cf the default selection operator, which creates an outer product a(x(i, j), y(k, l)) (a 4x4x4x4 array).

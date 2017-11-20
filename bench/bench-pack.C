@@ -13,7 +13,7 @@
 #include <iomanip>
 #include "ra/test.H"
 #include "ra/complex.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/wrank.H"
 #include "ra/operators.H"
 #include "ra/io.H"
@@ -77,12 +77,12 @@ int main()
             bench(f_xI, A_, "xI", size, n);
         };
 
-    bench_all(ra::Owned<complex, 1>(), 10, 1000000);
-    bench_all(ra::Owned<complex, 1>(), 100, 100000);
-    bench_all(ra::Owned<complex, 1>(), 1000, 10000);
-    bench_all(ra::Owned<complex, 1>(), 10000, 1000);
-    bench_all(ra::Owned<complex, 1>(), 100000, 100);
-    bench_all(ra::Owned<complex, 1>(), 1000000, 10);
+    bench_all(ra::Big<complex, 1>(), 10, 1000000);
+    bench_all(ra::Big<complex, 1>(), 100, 100000);
+    bench_all(ra::Big<complex, 1>(), 1000, 10000);
+    bench_all(ra::Big<complex, 1>(), 10000, 1000);
+    bench_all(ra::Big<complex, 1>(), 100000, 100);
+    bench_all(ra::Big<complex, 1>(), 1000000, 10);
 
     return tr.summary();
 }

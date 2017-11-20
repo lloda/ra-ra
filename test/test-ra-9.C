@@ -15,7 +15,7 @@
 #include "ra/complex.H"
 #include "ra/format.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
@@ -28,18 +28,18 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("regression [ra21]");
     {
-        ra::Owned<int2, 1> b { {1, 10}, {2, 20}, {3, 30} };
+        ra::Big<int2, 1> b { {1, 10}, {2, 20}, {3, 30} };
         b += ra::scalar(int2 { 1, 0 });
-        tr.test_eq(ra::Owned<int2, 1> { {2, 10}, {3, 20}, {4, 30} }, b);
-        ra::Owned<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };
+        tr.test_eq(ra::Big<int2, 1> { {2, 10}, {3, 20}, {4, 30} }, b);
+        ra::Big<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };
     }
     tr.section("regression [ra22]");
     {
-        ra::Owned<int2, 1> b { {0, 10}, {0, 20}, {0, 30} };
-        ra::Owned<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };
+        ra::Big<int2, 1> b { {0, 10}, {0, 20}, {0, 30} };
+        ra::Big<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };
         tr.test_eq(ra::scalar("3\n2 0 3 0 4 0"), ra::scalar(format(c + ra::scalar(int2 { 1, 0 })))); // FIXME try both -O3 -O0
         b = c + ra::scalar(int2 { 1, 0 });
-        tr.test_eq(ra::Owned<int2, 1> { {2, 0}, {3, 0}, {4, 0} }, b);
+        tr.test_eq(ra::Big<int2, 1> { {2, 0}, {3, 0}, {4, 0} }, b);
     }
     tr.section("regression [ra24]");
     {
@@ -64,25 +64,25 @@ int main()
     }
     tr.section("regression [ra25]");
     {
-        ra::Owned<int1, 1> c { {7}, {8} };
+        ra::Big<int1, 1> c { {7}, {8} };
         tr.test_eq(ra::scalar("2\n8 9"), ra::scalar(format(c+1)));
     }
     tr.section("regression [ra26]"); // This uses Scalar.at().
     {
-        ra::Owned<int1, 1> c { {7}, {8} };
+        ra::Big<int1, 1> c { {7}, {8} };
         tr.test_eq(ra::scalar("2\n8 9"), ra::scalar(format(c+ra::scalar(int1{1}))));
     }
     tr.section("regression [ra23]");
     {
 // This is just to show that it works the same way with 'scalar' = int as with 'scalar' = int2.
         int x = 2;
-        ra::Owned<int, 1> c { 3, 4 };
+        ra::Big<int, 1> c { 3, 4 };
         ra::scalar(x) += c + ra::scalar(99);
         tr.test_eq(2+3+99+4+99, x); // FIXME
     }
     {
         int2 x {2, 0};
-        ra::Owned<int2, 1> c { {1, 3}, {2, 4} };
+        ra::Big<int2, 1> c { {1, 3}, {2, 4} };
         ra::scalar(x) += c + ra::scalar(int2 { 1, 99 });
         tr.test_eq(int2{2, 0}+int2{1, 3}+int2{1, 99}+int2{2, 4}+int2{1, 99}, x);
     }

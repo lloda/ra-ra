@@ -181,7 +181,7 @@ struct SmallBase
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
 
-// Specialize for rank() integer-args -> scalar, same in ra::View in large.H.
+// Specialize for rank() integer-args -> scalar, same in ra::View in big.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I, std::enable_if_t<((0 + ... + std::is_integral_v<I>)<rank() \
                                              && (is_beatable<I>::static_p && ...)), int> = 0> \

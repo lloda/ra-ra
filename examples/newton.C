@@ -19,7 +19,7 @@
 using real = double;
 using real3 = ra::Small<real, 3>;
 using int3 = ra::Small<int, 3>;
-template <class T, int rank> using array = ra::Owned<T, rank>;
+template <class T, int rank> using array = ra::Big<T, rank>;
 
 int main()
 {

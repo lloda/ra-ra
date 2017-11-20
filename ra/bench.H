@@ -42,7 +42,7 @@ struct Benchmark
         std::string name;
         int repeats;
         clock::duration empty;
-        ra::Owned<clock::duration, 1> times;
+        ra::Big<clock::duration, 1> times;
     };
 
     static double avg(Value const & bv)
@@ -76,7 +76,7 @@ struct Benchmark
         auto t0 = clock::now();
         clock::duration empty = clock::now()-t0;
 
-        ra::Owned<clock::duration, 1> times;
+        ra::Big<clock::duration, 1> times;
         for (int k=0; k<runs_; ++k) {
             auto t0 = clock::now();
             for (int i=0; i<repeats_; ++i) {
@@ -98,7 +98,7 @@ struct Benchmark
               empty = clock::now()-t0;
           }, std::forward<A>(a) ...);
 
-        ra::Owned<clock::duration, 1> times;
+        ra::Big<clock::duration, 1> times;
         for (int k=0; k<runs_; ++k) {
             g([&](auto && f)
               {

@@ -30,7 +30,7 @@ int main()
 
     tr.section("explode");
     {
-        ra::Owned<int, 2> A({2, 3}, ra::_0 - ra::_1);
+        ra::Big<int, 2> A({2, 3}, ra::_0 - ra::_1);
         auto B = ra::explode<ra::Small<int, 3> >(A);
         tr.test_eq(3, B(0).size_s());
         tr.test_eq(ra::Small<int, 3> {0, -1, -2}, B(0));
@@ -42,7 +42,7 @@ int main()
 // note that dynamic-rank operator() returns a rank 0 array (since the rank
 // cannot be known at compile time). So we have to peel that back.
     {
-        ra::Owned<int> A({2, 3}, ra::_0 - ra::_1);
+        ra::Big<int> A({2, 3}, ra::_0 - ra::_1);
         auto B = ra::explode<ra::Small<int, 3> >(A);
         tr.test_eq(3, (B(0).data())->size_s());
         tr.test_eq(ra::scalar(ra::Small<int, 3> {0, -1, -2}), B(0));
@@ -53,7 +53,7 @@ int main()
     }
     tr.section("explode<complex>");
     {
-        ra::Owned<real, 3> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
+        ra::Big<real, 3> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
         auto B = ra::explode<complex>(A);
         tr.test_eq(2, B.rank());
         tr.test_eq(ra::Small<real, 2, 3> {0, -1, -2,  1, 0, -1}, real_part(B));
@@ -63,7 +63,7 @@ int main()
         tr.test_eq(ra::Small<real, 2, 3> {1, 0, -1,  9, 9, 9}, A(ra::all, ra::all, 1));
     }
     {
-        ra::Owned<real> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
+        ra::Big<real> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
         auto B = ra::explode<complex>(A);
         tr.test_eq(2, B.rank());
         tr.test_eq(ra::Small<real, 2, 3> {0, -1, -2,  1, 0, -1}, real_part(B));

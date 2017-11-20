@@ -76,7 +76,7 @@ tester = ra.to_test_ra(env, variant_dir)
  for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
               'test-ra-6', 'test-ra-8', 'test-ra-9',
               'test-types', 'test-io', 'test-from', 'test-nested', 'test-owned',
-              'test-ownership', 'test-ply', 'test-small', 'test-large',
+              'test-ownership', 'test-ply', 'test-small', 'test-big',
               'test-return-expr', 'test-reduction', 'test-frame-match',
               'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',

@@ -14,7 +14,7 @@
 #include <iostream>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 #include <sstream>
@@ -90,9 +90,9 @@ int main()
     }
     tr.section("vs, large");
     {
-        test(ra::Owned<real, 1>(), 2);
-        test(ra::Owned<real, 1>(), 3);
-        test(ra::Owned<real, 1>(), 4);
+        test(ra::Big<real, 1>(), 2);
+        test(ra::Big<real, 1>(), 3);
+        test(ra::Big<real, 1>(), 4);
     }
     return tr.summary();
 }

@@ -18,7 +18,7 @@
 #include "ra/complex.H"
 #include "ra/format.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/wrank.H"
 #include "ra/operators.H"
 #include "ra/io.H"
@@ -296,15 +296,15 @@ int main()
     }
     tr.section("outer product variants");
     {
-        ra::Owned<real, 2> a({2, 3}, ra::_0 - ra::_1);
-        ra::Owned<real, 2> b({3, 2}, ra::_1 - 2*ra::_0);
-        ra::Owned<real, 2> c1 = gemm(a, b);
+        ra::Big<real, 2> a({2, 3}, ra::_0 - ra::_1);
+        ra::Big<real, 2> b({3, 2}, ra::_1 - 2*ra::_0);
+        ra::Big<real, 2> c1 = gemm(a, b);
         cout << "matrix a * b: \n" << c1 << endl;
 // matrix product as outer product + reduction (no reductions yet, so manually).
         {
-            ra::Owned<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
+            ra::Big<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
             cout << "d(i,k,j) = a(i,k)*b(k,j): \n" << d << endl;
-            ra::Owned<real, 2> c2({d.size(0), d.size(2)}, 0.);
+            ra::Big<real, 2> c2({d.size(0), d.size(2)}, 0.);
             for (int k=0; k<d.size(1); ++k) {
                 c2 += d(ra::all, k, ra::all);
             }
@@ -312,7 +312,7 @@ int main()
         }
 // do the k-reduction by plying with wrank.
         {
-            ra::Owned<real, 2> c2({a.size(0), b.size(1)}, 0.);
+            ra::Big<real, 2> c2({a.size(0), b.size(1)}, 0.);
             ra::ply(ra::expr(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
                              start(c2), start(a), start(b)));
             cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
@@ -366,26 +366,26 @@ int main()
                 tr.info(tag).test_rel_error(ref, A, 1e-11);
             };
 
-        ra::Owned<real, 2> Aref;
-        ra::Owned<real, 2> A({nx, ny}, 1.);
-        ra::Owned<real, 2> Anext({nx, ny}, 0.);
+        ra::Big<real, 2> Aref;
+        ra::Big<real, 2> A({nx, ny}, 1.);
+        ra::Big<real, 2> Anext({nx, ny}, 0.);
         auto Astencil = stencil(A, 1, 1);
         cout << "Astencil " << format_array(Astencil(0, 0, ra::dots<2>), true, "|", " ") << endl;
 #define BENCH(ref, op) bench(A, Anext, Astencil, ref, STRINGIZE(op), op);
         BENCH(A, f_raw);
-        Aref = ra::Owned<real, 2>(A);
+        Aref = ra::Big<real, 2>(A);
         BENCH(Aref, f_sumprod);
     }
     tr.section("Iota with dead axes");
     {
-        ra::Owned<int, 2> a = from([](auto && i, auto && j) { return i-j; }, ra::iota(3), ra::iota(3));
-        tr.test_eq(ra::Owned<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
+        ra::Big<int, 2> a = from([](auto && i, auto && j) { return i-j; }, ra::iota(3), ra::iota(3));
+        tr.test_eq(ra::Big<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
     }
     tr.section("Vector with dead axes");
     {
         std::vector<int> i = {0, 1, 2};
-        ra::Owned<int, 2> a = ra::from([](auto && i, auto && j) { return i-j; }, i, i);
-        tr.test_eq(ra::Owned<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
+        ra::Big<int, 2> a = ra::from([](auto && i, auto && j) { return i-j; }, i, i);
+        tr.test_eq(ra::Big<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
     }
     tr.section("no arguments -> zero rank");
     {
@@ -398,7 +398,7 @@ int main()
         auto fi = [&i](auto && x) { ++i; return x; };
         std::atomic<int> j { 0 };
         auto fj = [&j](auto && x) { ++j; return x; };
-        ra::Owned<int, 2> a = from(ra::minus(), map(fi, ra::iota(7)), map(fj, ra::iota(9)));
+        ra::Big<int, 2> a = from(ra::minus(), map(fi, ra::iota(7)), map(fj, ra::iota(9)));
         tr.test_eq(ra::_0-ra::_1, a);
         tr.info("FIXME").skip().test_eq(7, int(i));
         tr.info("FIXME").skip().test_eq(9, int(j));

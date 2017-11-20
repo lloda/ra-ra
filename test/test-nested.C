@@ -16,12 +16,12 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush; using std::cerr;
-template <class T, int N> using Array = ra::Owned<T, N>;
+template <class T, int N> using Array = ra::Big<T, N>;
 template <class T> using Vec = Array<T, 1>;
 
 int main()

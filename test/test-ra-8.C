@@ -18,7 +18,7 @@
 #include "ra/complex.H"
 #include "ra/format.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
@@ -55,9 +55,9 @@ int main()
     }
     tr.section("gcc 6.1 D");
     {
-        ra::Owned<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
+        ra::Big<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
         using coord = ra::Small<int, 2>;
-        ra::Owned<coord, 1> I = { coord{1, 1}, coord{2, 2} };
+        ra::Big<coord, 1> I = { coord{1, 1}, coord{2, 2} };
 
         map([&A](auto && c) -> decltype(auto) { return A.at(c); }, I)
             = map([&B](auto && c) { return B.at(c); }, I);

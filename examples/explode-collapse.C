@@ -13,7 +13,7 @@
 #include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
-template <class T, int rank> using Array = ra::Owned<T, rank>;
+template <class T, int rank> using Array = ra::Big<T, rank>;
 template <class T, int ... sizes> using Small = ra::Small<T, sizes ...>;
 
 int main()

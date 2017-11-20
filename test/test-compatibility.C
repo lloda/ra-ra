@@ -11,7 +11,7 @@
 
 #include <iostream>
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/mpdebug.H"
@@ -31,7 +31,7 @@ int main()
             tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array<int, 4> {{12, 77, 44, 1}})));
 // [a1] these require ra::start and ra::Expr to forward in the constructor (only on linux gcc-5.2,
 // weirdly). Clue of why is in the ra::Unique case below.
-            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Owned<int, 1> {12, 77, 44, 1})));
+            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
             tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector<int> {12, 77, 44, 1})));
 // these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes
 // sense, as argname is otherwise always an lref.
@@ -46,7 +46,7 @@ int main()
         tr.section("frame match ra::start on 1st axis");
         {
             std::vector<int> const a = { 1, 2, 3 };
-            ra::Owned<int, 2> b ({3, 2}, ra::start(a));
+            ra::Big<int, 2> b ({3, 2}, ra::start(a));
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
@@ -56,7 +56,7 @@ int main()
         tr.section("[trc01] frame match ra::start on 1st axis, forbid unroll");
         {
             std::vector<int> const a = { 1, 2, 3 };
-            ra::Owned<int, 3> b ({3, 4, 2}, ra::unspecified);
+            ra::Big<int, 3> b ({3, 4, 2}, ra::unspecified);
             transpose({0, 2, 1}, b) = ra::start(a);
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
@@ -65,16 +65,16 @@ int main()
         tr.section("frame match ra::start on some axis other than 1st");
         {
             {
-                ra::Owned<int, 1> const a = { 10, 20, 30 };
-                ra::Owned<int, 1> const b = { 1, 2 };
-                ra::Owned<int, 2> c = map(ra::wrank<0, 1>([](int a, int b) { return a + b; }), a, b);
-                tr.test_eq(ra::Owned<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
+                ra::Big<int, 1> const a = { 10, 20, 30 };
+                ra::Big<int, 1> const b = { 1, 2 };
+                ra::Big<int, 2> c = map(ra::wrank<0, 1>([](int a, int b) { return a + b; }), a, b);
+                tr.test_eq(ra::Big<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
             {
                 std::vector<int> const a = { 10, 20, 30 };
                 std::vector<int> const b = { 1, 2 };
-                ra::Owned<int, 2> c = map(ra::wrank<0, 1>([](int a, int b) { return a + b; }), a, b);
-                tr.test_eq(ra::Owned<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
+                ra::Big<int, 2> c = map(ra::wrank<0, 1>([](int a, int b) { return a + b; }), a, b);
+                tr.test_eq(ra::Big<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
         }
         tr.section("= operators on ra::start");
@@ -86,7 +86,7 @@ int main()
         tr.section("automatic conversion of foreign vectors in mixed ops");
         {
             std::vector<int> a { 1, 2, 3 };
-            ra::Owned<int, 1> b { 10, 20, 30 };
+            ra::Big<int, 1> b { 10, 20, 30 };
             tr.test_eq(ra::start({11, 22, 33}), a+b);
         }
     }
@@ -109,7 +109,7 @@ int main()
     tr.section("spot use of scalar");
     {
         struct W { int x; };
-        ra::Owned<W, 1> w = { {1}, {2} };
+        ra::Big<W, 1> w = { {1}, {2} };
         tr.test_eq(ra::start({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
     }
     {
@@ -143,7 +143,7 @@ int main()
     {
         int p[] = {1, 2, 3};
         int * z = p;
-        ra::Owned<int, 1> q {1, 2, 3};
+        ra::Big<int, 1> q {1, 2, 3};
         q += p; // ok, q is ra::, p is foreign object with size info
         tr.test_eq(ra::start({2, 4, 6}), q);
         ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()

@@ -18,7 +18,7 @@
 #include "ra/test.H"
 #include "ra/complex.H"
 #include "ra/format.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/bench.H"
@@ -42,7 +42,7 @@ int main()
     auto gemv_i = [&](auto const & a, auto const & b)
         {
             int const M = a.size(0);
-            ra::Owned<decltype(a(0, 0)*b(0)), 1> c({M}, ra::unspecified);
+            ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, ra::unspecified);
             for (int i=0; i<M; ++i) {
                 c(i) = dot(a(i), b);
             }
@@ -53,7 +53,7 @@ int main()
         {
             int const M = a.size(0);
             int const N = a.size(1);
-            ra::Owned<decltype(a(0, 0)*b(0)), 1> c({M}, 0.);
+            ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, 0.);
             for (int j=0; j<N; ++j) {
                 c += a(ra::all, j)*b(j);
             }
@@ -63,7 +63,7 @@ int main()
     auto gevm_j = [&](auto const & b, auto const & a)
         {
             int const N = a.size(1);
-            ra::Owned<decltype(b(0)*a(0, 0)), 1> c({N}, ra::unspecified);
+            ra::Big<decltype(b(0)*a(0, 0)), 1> c({N}, ra::unspecified);
             for (int j=0; j<N; ++j) {
                 c(j) = dot(b, a(ra::all, j));
             }
@@ -74,7 +74,7 @@ int main()
         {
             int const M = a.size(0);
             int const N = a.size(1);
-            ra::Owned<decltype(b(0)*a(0, 0)), 1> c({N}, 0.);
+            ra::Big<decltype(b(0)*a(0, 0)), 1> c({N}, 0.);
             for (int i=0; i<M; ++i) {
                 c += b(i)*a(i);
             }
@@ -85,11 +85,11 @@ int main()
         {
             auto bench_mv = [&tr, &m, &n, &reps](auto && f, char const * tag, trans_t t)
             {
-                ra::Owned<real, 2> aa({m, n}, ra::_0-ra::_1);
+                ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
                 auto a = t==TRANS ? transpose<1, 0>(aa) : aa();
-                ra::Owned<real, 1> b({a.size(1)}, 1-2*ra::_0);
-                ra::Owned<real, 1> ref = gemv(a, b);
-                ra::Owned<real, 1> c;
+                ra::Big<real, 1> b({a.size(1)}, 1-2*ra::_0);
+                ra::Big<real, 1> ref = gemv(a, b);
+                ra::Big<real, 1> c;
 
                 auto bv = Benchmark().repeats(reps).runs(3).run([&]() { c = f(a, b); });
                 tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n)/1e-9, " ns [",
@@ -98,11 +98,11 @@ int main()
 
             auto bench_vm = [&tr, &m, &n, &reps](auto && f, char const * tag, trans_t t)
             {
-                ra::Owned<real, 2> aa({m, n}, ra::_0-ra::_1);
+                ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
                 auto a = t==TRANS ? transpose<1, 0>(aa) : aa();
-                ra::Owned<real, 1> b({a.size(0)}, 1-2*ra::_0);
-                ra::Owned<real, 1> ref = gevm(b, a);
-                ra::Owned<real, 1> c;
+                ra::Big<real, 1> b({a.size(0)}, 1-2*ra::_0);
+                ra::Big<real, 1> ref = gevm(b, a);
+                ra::Big<real, 1> c;
 
                 auto bv = Benchmark().repeats(reps).runs(4).run([&]() { c = f(b, a); });
                 tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n)/1e-9, " ns [",

@@ -23,7 +23,7 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("temp lambda");
     {
-        ra::Owned<ra::Small<double, 2>, 1> V({2*2}, ra::unspecified);
+        ra::Big<ra::Small<double, 2>, 1> V({2*2}, ra::unspecified);
         VP = &V;
         auto i = ra::iota(1);
 // goes through Expr, ref or rvalue works just the same.

@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>ra:: —An array library for C++1z</title>
+<title>ra:: —An array library for C++17</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="description" content="ra:: —An array library for C++1z">
+<meta name="description" content="ra:: —An array library for C++17">
 <meta name="generator" content="makeinfo 4.8">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
@@ -29,7 +29,7 @@
 --></style>
 </head>
 <body>
-<h1 class="settitle">ra:: —An array library for C++1z</h1>
+<h1 class="settitle">ra:: —An array library for C++17</h1>
 <div class="node">
 <p><hr>
 <a name="Top"></a>
@@ -75,11 +75,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">1 Overview</h2>
 
 <!--  -->
-<p>A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a fixed range [0, n₀), [0, n₁), ... so the array is `rectangular'. The number of indices in the multi-index is the <dfn>rank</dfn> of the array, and the list (n₀, n₁, ... nᵣ₋₁) is the <dfn>shape</dfn> of the array. We speak of a rank-r array or of an r-array.
+<p>A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is `rectangular'. The number of indices in the multi-index is the <dfn>rank</dfn> of the array, and the list (n₀, n₁, ... nᵣ₋₁) is the <dfn>shape</dfn> of the array. We speak of a rank-r array or of an r-array.
 
    <p>Often we deal with multidimensional <em>expressions</em> where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an `array' is just a function of integers with a rectangular domain.
 
-   <p>Arrays (also called <dfn>matrices</dfn>, <dfn>vectors</dfn>, or <dfn>tensors</dfn>) are everywhere in math and many other fields, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
+   <p>Arrays (also called <dfn>matrices</dfn>, <dfn>vectors</dfn>, or <dfn>tensors</dfn>) are very common objects in math and programming, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
 
 <pre class="verbatim">
 A = B+C;
@@ -191,11 +191,17 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Overview">Overview</a>
 <h3 class="section">1.3 Why C++</h3>
 
 <!--  -->
-<p>Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following applies.
+<p>Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following may apply.
 
    <p>C++ supports the low level control that is necessary for interoperation with external libraries and languages, but still has the abstraction power to create the features we want even though the language has no native support for most of them.
 
-   <p><a name="index-APL-5"></a><a name="index-J-6"></a>The classic array languages, APL and J, have array support baked in. The same is true for other languages with array facilities such as Fortran or Octave/Matlab. Array libraries for general purpose languages usually depend heavily on C extensions. In Numpy's case this is both for reasons of flexibility (e.g. to obtain predictable memory layout and machine types) and of performance.
+   <p><a name="index-APL-5"></a><a name="index-J-6"></a>The classic array languages, APL <!-- %**else if -->
+[<a href="#Sources">FI73</a>]
+ and J <!-- %**else if -->
+[<a href="#Sources">Ric08</a>]
+, have array support baked in. The same is true for other languages with array facilities such as Fortran or Octave/Matlab. Array libraries for general purpose languages usually depend heavily on C extensions. In Numpy's case <!-- %**else if -->
+[<a href="#Sources">num17</a>]
+ this is both for reasons of flexibility (e.g. to obtain predictable memory layout and machine types) and of performance.
 
    <p>On the other extreme, an array library for C would be hampered by the limited means of abstraction in the language (no polymorphism, no metaprogramming, etc.) so the natural choice of C programmers is to resort to code generators, which eventually turn into new languages.
 
@@ -247,11 +253,23 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Overview">Overview</a>
 
    <p>The C++ standard library also offers a number of containers that can be used as 1-arrays, of which the most important are <code>&lt;array&gt;</code>, <code>&lt;vector&gt;</code> and <code>&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code>&lt;valarray&gt;</code> offers array operations for 1-arrays. <code>ra::</code> makes use of <code>&lt;array&gt;</code> and <code>&lt;vector&gt;</code> for storage and bootstrapping so we'll mention these containers from time to time.
 
-   <p><a name="index-Blitz_002b_002b-7"></a>Blitz++ (REF) pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time sizes, and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). Storage for large arrays was reference-counted, while in <code>ra::</code> that is optional but not the default. It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc. To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
+<h4 class="subsection">1.5.1 Blitz++</h4>
 
-   <p>TODO More libraries.
+<p><a name="index-Blitz_002b_002b-7"></a>Blitz++ <!-- %**else if -->
+[<a href="#Sources">bli17</a>]
+ pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time sizes (<code>Tiny</code>), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 
-   <p>TODO Maybe review other languages, at least the important ones (Fortran/APL/J/Matlab/Numpy).
+   <p>To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
+
+   <p>One important difference between Blitz++ and <code>ra::</code> is that Blitz++'s arrays were reference counted. <code>ra::</code> doesn't do any memory management on its own: the default container types are explicitly values (data-owning) or views. You can select your own storage for the data-owning objects, including reference-counted storage (<code>ra::</code> declares a type using <code>std::shared_ptr</code>), but this is not the default.
+
+<h4 class="subsection">1.5.2 Other C++ libraries</h4>
+
+<p>I guess this is important enough!
+
+<h4 class="subsection">1.5.3 Other languages</h4>
+
+<p>TODO Maybe review other languages, at least the important ones (Fortran/APL/J/Matlab/Numpy).
 
 <!--  -->
 <div class="node">
@@ -307,7 +325,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
      
      int main()
      {
-         ra::Owned&lt;char, 2> A({2, 5}, "helloworld");
+         ra::Big&lt;char, 2> A({2, 5}, "helloworld");
          std::cout &lt;&lt; format_array(transpose&lt;1, 0>(A), false, "|") &lt;&lt; std::endl;
      }
 </pre>
@@ -334,35 +352,35 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <!--  -->
 <p><code>ra::</code> offers two kinds of data objects. The first kind, the <dfn>container</dfn>, owns its data. Creating a container requires memory and destroying it causes that memory to be freed.
 
-   <p>There are three kinds of containers: fixed size, fixed rank/dynamic size, and dynamic rank. Here fixed means `compile time constant' while dynamic is normally a run time constant. (Some dynamic size arrays can be resized but dynamic rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.)
+   <p>There are three kinds of containers: static size, static rank/dynamic size, and dynamic rank. Here static means ‘compile time constant’ while dynamic means ‘run time constant’. Some dynamic size arrays can be resized but dynamic rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.
 
    <p>For example:
 
 <pre class="example"><pre class="verbatim">     
      {
-         ra::Small&lt;double, 2, 3> a(0.);       // a fixed size 2x3 array
-         ra::Owned&lt;double, 2> b({2, 3}, 0.);  // a dynamic size 2x3 array
-         ra::Owned&lt;double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
+         ra::Small&lt;double, 2, 3> a(0.);     // a static size 2x3 array
+         ra::Big&lt;double, 2> b({2, 3}, 0.);  // a dynamic size 2x3 array
+         ra::Big&lt;double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
          // a, b, c destroyed at end of scope
      }
 </pre>
 </pre>
-   <p>The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a fixed size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the fixed size types. Fixed size or fixed rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+   <p>The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a static size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the static size types. Static size or static rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
    <p>Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.
 
 <pre class="example"><pre class="verbatim">     
      ra::Small&lt;double, 2, 3> a = 0.;  // 0. is copied into a
      ra::Small&lt;double, 2, 3> b = a;   // the contents of a are copied into b
-     ra::Owned&lt;double> c = a;         // c takes the size of a and a is copied into c
-     ra::Owned&lt;double> d = 0.;        // d is a 0-array with one element d()==0.
+     ra::Big&lt;double> c = a;           // c takes the size of a and a is copied into c
+     ra::Big&lt;double> d = 0.;          // d is a 0-array with one element d()==0.
 </pre>
 </pre>
    <p>The second form takes two arguments, one giving the shape, the second the contents.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 2> a({2, 3}, 1.);  // a has size 2x3 and be filled with 1.
-     ra::Owned&lt;double> b({2, 3}, a);      // b has size 2x3 and a is copied into b
+     ra::Big&lt;double, 2> a({2, 3}, 1.);  // a has size 2x3 and be filled with 1.
+     ra::Big&lt;double> b({2, 3}, a);      // b has size 2x3 and a is copied into b
 </pre>
 </pre>
    <p>The last example may result in an error if the shape of <code>a</code> and {2,&nbsp;<!-- /@w -->3} don't match. Here the shape () of <code>1.</code> matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>).
@@ -371,13 +389,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
    <p><a name="index-order_002c-column_002dmajor-8"></a>
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 2> a({2, 3}, {1, 2, 3, 4, 5, 6}); // {{1, 2, 3}, {4, 5, 6}}
+     ra::Big&lt;double, 2> a({2, 3}, {1, 2, 3, 4, 5, 6}); // {{1, 2, 3}, {4, 5, 6}}
      
      double bx[6] = {1, 2, 3, 4, 5, 6}
-     ra::Owned&lt;double, 2> b({3, 2}, bx); // {{1, 2}, {3, 4}, {5, 6}}
+     ra::Big&lt;double, 2> b({3, 2}, bx); // {{1, 2}, {3, 4}, {5, 6}}
      
      double cx[4] = {1, 2, 3, 4}
-     ra::Owned&lt;double, 2> c({3, 2}, cx); // *** WHO NOSE ***
+     ra::Big&lt;double, 2> c({3, 2}, cx); // *** WHO NOSE ***
      
      using sizes = mp::int_list&lt;2, 3>;
      using strides = mp::int_list&lt;1, 2>;
@@ -388,8 +406,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><code>scalar</code></a>): <!-- [ma102] -->
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
-     ra::Owned&lt;char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
+     ra::Big&lt;char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
+     ra::Big&lt;char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
      std::cout &lt;&lt; format_array(A, false, "|") &lt;&lt; std::endl;
 </pre>
      -| hello|hello|hello
@@ -397,7 +415,7 @@ Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><
    <p>A <dfn>view</dfn> is similar to a container in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
+     ra::Big&lt;double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
      {
          auto c1 = c(1);                  // the second row of array c
          // c1 is destroyed here
@@ -408,7 +426,7 @@ Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><
    <p>The data accessed through a view is the data of the `root' container, so modifying the first will be reflected in the latter.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double> c({2, 3}, 0.);
+     ra::Big&lt;double> c({2, 3}, 0.);
      auto c1 = c(1);
      c1(2) = 9.;                      // c(1, 2) = 9.
 </pre>
@@ -416,7 +434,7 @@ Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><
    <p>Just as for containers, there are separate types of views depending on whether the size is known at compile time, the rank is known at compile time but the size is not, or neither the size nor the rank are known at compile time. <code>ra::</code> has functions to create the most common kinds of views:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double> c({2, 3}, {1, 2, 3, 4, 5, 6});
+     ra::Big&lt;double> c({2, 3}, {1, 2, 3, 4, 5, 6});
      auto ct = transpose&lt;1, 0>(c); // {{1, 4}, {2, 5}, {3, 6}}
      auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 </pre>
@@ -429,13 +447,13 @@ Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><
      ra::View&lt;int> v2({2, 3}, raw);           // same, default C (row-major) strides
 </pre>
 </pre>
-   <p>Containers can be treated as views of the same `fixedness'. If you declare a function
+   <p>Containers can be treated as views of the same `dynamicness'. If you declare a function
 
 <pre class="example"><pre class="verbatim">     
      void f(ra::View&lt;int, 3> &amp; v);
 </pre>
 </pre>
-   <p>you may pass it an object of type <code>ra::Owned&lt;int, 3&gt;</code>.
+   <p>you may pass it an object of type <code>ra::Big&lt;int, 3&gt;</code>.
 
 <!--  -->
 <div class="node">
@@ -558,8 +576,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
      =&gt; x = {3, 7, 11}
 </pre>
    <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 3> a({5, 3, 3}, ra::_0);
-     ra::Owned&lt;double, 2> b({5}, 0.);
+     ra::Big&lt;double, 3> a({5, 3, 3}, ra::_0);
+     ra::Big&lt;double, 2> b({5}, 0.);
      b += transpose&lt;0, 1, 1>(a); // b(i) = ∑ⱼ a(i, j, j)
 </pre>
      =&gt; b = {0, 3, 6, 9, 12}
@@ -586,7 +604,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <p><code>map</code> and <code>for_each</code> apply their operators to each element of their arguments; in other words, to the 0-cells of the arguments. But it is possible to specify directly the rank of the cells that one iterates over:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 3> a({5, 4, 3}, ra::_0);
+     ra::Big&lt;double, 3> a({5, 4, 3}, ra::_0);
      for_each([](auto &amp;&amp; b) { /* b has shape (5 4 3) */ }, iter&lt;3>(a));
      for_each([](auto &amp;&amp; b) { /* b has shape (4 3) */ }, iter&lt;2>(a));
      for_each([](auto &amp;&amp; b) { /* b has shape (3) */ }, iter&lt;1>(a));
@@ -605,23 +623,23 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>In this way it is possible to match shapes in various ways. Compare
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
-     ra::Owned&lt;double, 2> b({2}, {10, 20});
-     ra::Owned&lt;double, 2> c = a * b; // multiply (each item of a) by (each item of b)
+     ra::Big&lt;double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
+     ra::Big&lt;double, 2> b({2}, {10, 20});
+     ra::Big&lt;double, 2> c = a * b; // multiply (each item of a) by (each item of b)
 </pre>
      =&gt; a = {{10, 20, 30}, {80, 100, 120}}
 </pre>
    <p>with
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
-     ra::Owned&lt;double, 2> b({3}, {10, 20, 30});
-     ra::Owned&lt;double, 2> c({2, 3}, 0.);
+     ra::Big&lt;double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
+     ra::Big&lt;double, 2> b({3}, {10, 20, 30});
+     ra::Big&lt;double, 2> c({2, 3}, 0.);
      iter&lt;1>(c) = iter&lt;1>(a) * iter&lt;1>(b); // multiply (each item of a) by (b)
 </pre>
      =&gt; a = {{10, 40, 90}, {40, 100, 180}}
 </pre>
-   <p>Note that in this case we cannot construct <code>c</code> directly from <code>iter&lt;1&gt;(a) * iter&lt;1&gt;(b)</code>, since the constructor for <code>ra::Owned</code> matches its argument using (the equivalent of) <code>iter&lt;0&gt;(*this)</code>. See <a href="#x_002diter"><code>iter</code></a> for more examples.
+   <p>Note that in this case we cannot construct <code>c</code> directly from <code>iter&lt;1&gt;(a) * iter&lt;1&gt;(b)</code>, since the constructor for <code>ra::Big</code> matches its argument using (the equivalent of) <code>iter&lt;0&gt;(*this)</code>. See <a href="#x_002diter"><code>iter</code></a> for more examples.
 
    <p>Cell iteration is best used when the operations take naturally operands of rank &gt; 0; for instance, the operation `determinant of a matrix' is naturally of rank 2. When the operation is of rank 0, such as <code>*</code> above, there may be faster ways to rearrange shapes for matching (see <a href="#The-rank-conjunction">The rank conjunction</a>).
 
@@ -645,8 +663,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>The form of the scripting operator <code>A(i₀, i₁, ...)</code> makes it plain that <code>A</code> is a function of <code>rank(A)</code> integer arguments. An array extension is immediately available through <code>map</code>. For example:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 1> a = {1., 2., 3., 4.};
-     ra::Owned&lt;int, 1> i = {1, 3};
+     ra::Big&lt;double, 1> a = {1., 2., 3., 4.};
+     ra::Big&lt;int, 1> i = {1, 3};
      map(a, i) = 77.;
 </pre>
      =&gt; a = {1., 77., 3, 77.}
@@ -654,14 +672,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>Just as with any use of <code>map</code>, array arguments are subject to the prefix agreement rule.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 2> a({2, 2}, {1., 2., 3., 4.});
-     ra::Owned&lt;int, 1> i = {1, 0};
-     ra::Owned&lt;double, 1> b = map(a, i, 0);
+     ra::Big&lt;double, 2> a({2, 2}, {1., 2., 3., 4.});
+     ra::Big&lt;int, 1> i = {1, 0};
+     ra::Big&lt;double, 1> b = map(a, i, 0);
 </pre>
      =&gt; b = {3., 1.} // {a(1, 0), a(0, 0)}
 </pre>
    <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 1> j = {0, 1};
+     ra::Big&lt;int, 1> j = {0, 1};
      b = map(a, i, j);
 </pre>
      =&gt; b = {3., 2.} // {a(1, 0), a(0, 1)}
@@ -671,11 +689,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>Most array operations (e.g. <code>+</code>) are defined through <code>map</code> in this way. For example, <code>A+B+C</code> is defined as <code>map(+, A, B, C)</code> (or the equivalent <code>map(+, map(+, A, B), C)</code>). Not so for the subscripting operation:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 2> A({2, 2}, {1., 2., 3., 4.});
-     ra::Owned&lt;int, 1> i = {1, 0};
-     ra::Owned&lt;int, 1> j = {0, 1};
+     ra::Big&lt;double, 2> A({2, 2}, {1., 2., 3., 4.});
+     ra::Big&lt;int, 1> i = {1, 0};
+     ra::Big&lt;int, 1> j = {0, 1};
      // {{A(i₀, j₀), A(i₀, j₁)}, {A(i₁, j₀), A(i₁, j₁)}}
-     ra::Owned&lt;double, 2> b = A(i, j);
+     ra::Big&lt;double, 2> b = A(i, j);
 </pre>
      =&gt; b = {{3., 4.}, {1., 2.}}
 </pre>
@@ -693,13 +711,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>This can used anywhere an array expression is expected.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 1> a = ra::iota(4, 3 -2);
+     ra::Big&lt;int, 1> a = ra::iota(4, 3 -2);
 </pre>
      =&gt; a = {3, 1, -1, -3}
 </pre>
    <p>Here, <code>b</code> and <code>c</code> are <code>View</code>s (see <a href="#Containers-and-views">Containers and views</a>).
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 1> a = {1, 2, 3, 4, 5, 6};
+     ra::Big&lt;int, 1> a = {1, 2, 3, 4, 5, 6};
      auto b = a(iota(3));
      auto c = a(iota(3, 3));
 </pre>
@@ -714,7 +732,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>This object cannot stand alone as an array expression. All the examples below result in <code>View</code> objects:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
+     ra::Big&lt;int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
      auto b = a(ra::all, ra::all); // (1) a view of the whole of a
      auto c = a(iota(3), iota(2)); // same as (1)
      auto d = a(iota(3), ra::all); // same as (1)
@@ -752,7 +770,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
 <pre class="example"><pre class="verbatim">     
      auto h = a(newaxis&lt;0>); // same as (1)
-     auto i = a(newaxis&lt;1>); // same contents as ra::Owned&lt;int, 2> a({1, 3, 2}, {1, 2, 3, 4, 5, 6})
+     auto i = a(newaxis&lt;1>); // same contents as ra::Big&lt;int, 2> a({1, 3, 2}, {1, 2, 3, 4, 5, 6})
 </pre>
 </pre>
    <p><a name="index-broadcasting_002c-singleton-18"></a><code>newaxis&lt;n&gt;</code> main use is to prepare arguments for broadcasting. However, since argument agreement in <code>ra::</code> requires exact size match on all dimensions, this isn't currently as useful as in e.g. Numpy where dimensions of size 1 match dimensions of any other size. A more flexible syntax <code>newaxis(n0, n1...)</code> to insert axes of arbitrary sizes may be implemented in the future.
@@ -760,7 +778,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>In addition to the special objects listed above, you can also omit any trailing <code>ra::all</code> subscripts. For example:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 3> a({2, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8});
+     ra::Big&lt;int, 3> a({2, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8});
      auto a0 = a(0); // same as a(0, ra::all, ra::all)
      auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 </pre>
@@ -790,11 +808,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </p></blockquote></div>
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 1> v = {1, 2, 3};
+     ra::Big&lt;int, 1> v = {1, 2, 3};
      cout &lt;&lt; (v - ra::_0) &lt;&lt; endl; // { 1-0, 2-1, 3-2 }
      // cout &lt;&lt; (ra::_0) &lt;&lt; endl; // error: TensorIndex cannot drive array expression
      // cout &lt;&lt; (v - ra::_1) &lt;&lt; endl; // error: TensorIndex cannot drive array expression
-     ra::Owned&lt;int, 2> a({3, 2}, 0);
+     ra::Big&lt;int, 2> a({3, 2}, 0);
      cout &lt;&lt; (a + ra::_0 - ra::_1) &lt;&lt; endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
 </pre>
 </pre>
@@ -837,9 +855,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>A standard example is `outer product'.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 1> a = {1, 2, 3};
-     ra::Owned&lt;int, 1> b = {40, 50};
-     ra::Owned&lt;int, 2> axb = map(ra::wrank&lt;0, 1>([](auto &amp;&amp; a, auto &amp;&amp; b) { return a*b; }),
+     ra::Big&lt;int, 1> a = {1, 2, 3};
+     ra::Big&lt;int, 1> b = {40, 50};
+     ra::Big&lt;int, 2> axb = map(ra::wrank&lt;0, 1>([](auto &amp;&amp; a, auto &amp;&amp; b) { return a*b; }),
                                  a, b)
 </pre>
      =&gt; axb = {{40, 80, 120}, {50, 100, 150}}
@@ -868,9 +886,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>This use of the rank conjunction is packaged in <code>ra::</code> as the <a href="#x_002dfrom"><code>from</code></a> operator. It supports any number of arguments, not only two.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 1> a = {1, 2, 3};
-     ra::Owned&lt;int, 1> b = {40, 50};
-     ra::Owned&lt;int, 2> axb = from([](auto &amp;&amp; a, auto &amp;&amp; b) { return a*b; }), a, b)
+     ra::Big&lt;int, 1> a = {1, 2, 3};
+     ra::Big&lt;int, 1> b = {40, 50};
+     ra::Big&lt;int, 2> axb = from([](auto &amp;&amp; a, auto &amp;&amp; b) { return a*b; }), a, b)
 </pre>
      =&gt; axb = {{40, 80, 120}, {50, 100, 150}}
 </pre>
@@ -901,9 +919,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>The final operation is a standard operation on arrays of scalars. In actual <code>ra::</code> syntax:
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned A({3, 2}, {1, 2, 3, 4, 5, 6});
-     ra::Owned B({2, 3}, {7, 8, 9, 10, 11, 12});
-     ra::Owned C({3, 3}, 0.);
+     ra::Big A({3, 2}, {1, 2, 3, 4, 5, 6});
+     ra::Big B({2, 3}, {7, 8, 9, 10, 11, 12});
+     ra::Big C({3, 3}, 0.);
      for_each(ra::wrank&lt;1, 1, 2>(ra::wrank&lt;1, 0, 1>([](auto &amp;&amp; c, auto &amp;&amp; a, auto &amp;&amp; b) { c += a*b; })), C, A, B);
 </pre>
      =&gt; C = {{27, 30, 33}, {61, 68, 75}, {95, 106, 117}}
@@ -952,9 +970,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <li><code>std::vector</code>
 produces an expression of rank 1 and dynamic size. 
 <li><code>std::array</code>
-produces an expression of rank 1 and fixed size. 
+produces an expression of rank 1 and static size. 
 <li>Builtin arrays
-produce an expression of positive rank and fixed size. 
+produce an expression of positive rank and static size. 
 <li>Raw pointers
 produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must always be brought into <code>ra::</code> explicitly with the function <a href="#x_002dptr"><code>ptr</code></a>. 
 </ul>
@@ -964,7 +982,7 @@ produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must a
 <pre class="example"><pre class="verbatim">     
      int p[] = {1, 2, 3};
      int * z = p;
-     ra::Owned&lt;int, 1> q {1, 2, 3};
+     ra::Big&lt;int, 1> q {1, 2, 3};
      q += p; // ok, q is ra::, p is foreign object with size info
      ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()
      // z += q; // error: raw pointer needs ra::ptr()
@@ -993,12 +1011,12 @@ Some types are accepted automatically as scalars. These include:
    <p>For <a href="#Containers-and-views">containers</a> <code>begin()</code> provides <code>RandomAccessIterator</code>s, which is handy for certain functions such as <code>sort</code>. There's no reason why all views couldn't provide <code>RandomAccessIterator</code>, but these wouldn't be efficient in general for ranks above 1 and I haven't implemented them &mdash;those <code>RandomAccessIterator</code> are in fact raw pointers.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int> x {3, 2, 1}; // x is a Container
+     ra::Big&lt;int> x {3, 2, 1}; // x is a Container
      auto y = x(); // y is a View on x
      // std::sort(y.begin(), y.end()); // error: y.begin() is not RandomAccessIterator
      std::sort(x.begin(), x.end());
-     @result{} x = @{1, 2, 3@}
 </pre>
+     =&gt; x = {1, 2, 3}
 </pre>
    <h4 class="subsection">2.9.3 Using <code>ra::</code> types with other libraries</h4>
 
@@ -1027,7 +1045,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
 <pre class="example"><pre class="verbatim">     
      struct W { int x; }
-     ra::Owned&lt;W, 2> w({2, 2}, { {4}, {2}, {1}, {3} });
+     ra::Big&lt;W, 2> w({2, 2}, { {4}, {2}, {1}, {3} });
      cout &lt;&lt; W(1, 1).x &lt;&lt; endl;
      cout &lt;&lt; amin(map([](auto &amp;&amp; x) { return w.x; }, w)) &lt;&lt; endl;
 </pre>
@@ -1040,7 +1058,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
      namespace ra { template &lt;> constexpr bool is_scalar_def&lt;W> = true; }
      ...
      W ww {11};
-     for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; x.x + y.y &lt;&lt; " "; }, w, ww); // ok
+     for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; (x.x + y.y) &lt;&lt; " "; }, w, ww); // ok
 </pre>
      -| 15 13 12 14
 </pre>
@@ -1049,7 +1067,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <pre class="example"><pre class="verbatim">     
      struct U { int x; }
      U uu {11};
-     for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; x.x + y.y &lt;&lt; " "; }, w, uu); // error: can't find ra::start(U)
+     for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; (x.x + y.y) &lt;&lt; " "; }, w, uu); // error: can't find ra::start(U)
 </pre>
 </pre>
    <p><a name="x_002dnew_002darray_002doperations"></a>
@@ -1102,21 +1120,21 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>sqrm</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>. Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, and <code>tanh</code>. Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 
 <h4 class="subsection">2.11.2 Conditional operations</h4>
 
 <p><a href="#x_002dmap"><code>map</code></a> evaluates all of its arguments before passing them along to its operator. This isn't always what you want. The simplest example is <code>where(condition, iftrue, iffalse)</code>, which returns an expression that will evaluate <code>iftrue</code> when <code>condition</code> is true and <code>iffalse</code> otherwise.
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double> x ...
-     ra::Owned&lt;double> y = where(x>0, expensive_expr_1(x), expensive_expr_2(x));
+     ra::Big&lt;double> x ...
+     ra::Big&lt;double> y = where(x>0, expensive_expr_1(x), expensive_expr_2(x));
 </pre>
 </pre>
-   <p>Here <code>expensive_expr_1</code> and <code>expensive_expr_2</code> are array expressions. So the computation of the other arm would be wasted if one where to do instead
+   <p>Here <code>expensive_expr_1</code> and <code>expensive_expr_2</code> are array expressions. So the computation of the other arm would be wasted if one were to do instead
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double> y = map([](auto &amp;&amp; w, auto &amp;&amp; t, auto &amp;&amp; f) -> decltype(auto) { return w ? t : f; }
+     ra::Big&lt;double> y = map([](auto &amp;&amp; w, auto &amp;&amp; t, auto &amp;&amp; f) -> decltype(auto) { return w ? t : f; }
                                x>0, expensive_expr_1(x), expensive_function_2(x));
 </pre>
 </pre>
@@ -1124,9 +1142,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
 <!-- [ma109] -->
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 1> o = {};
-     ra::Owned&lt;int, 1> e = {};
-     ra::Owned&lt;int, 1> n = {1, 2, 7, 9, 12};
+     ra::Big&lt;int, 1> o = {};
+     ra::Big&lt;int, 1> e = {};
+     ra::Big&lt;int, 1> n = {1, 2, 7, 9, 12};
      ply(where(odd(n), map([&amp;o](auto &amp;&amp; x) { o.push_back(x); }, n), map([&amp;e](auto &amp;&amp; x) { e.push_back(x); }, n)));
      cout &lt;&lt; "o: " &lt;&lt; format_array(o, false) &lt;&lt; ", e: " &lt;&lt; format_array(e, false) &lt;&lt; endl;
 </pre>
@@ -1219,7 +1237,7 @@ When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as 
 <h3 class="section">3.4 Assignment to views</h3>
 
 <p>FIXME
-With large containers (e.g. <code>Owned</code>), <code>operator=</code> replaces the lhs instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
+With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the lhs instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
 
 <h3 class="section">3.5 Array iterators and temporaries</h3>
 
@@ -1330,7 +1348,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">5 The future</h2>
 
 <!--  -->
-<p>Wishlist and acknowledged bugs.
+<p>FIXME Wishlist.
 
 <!--  -->
 <div class="node">
@@ -1354,16 +1372,16 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p>For example:
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;double, 1> x = map(cos, ra::Small&lt;double, 1> {0.});
+     ra::Big&lt;double, 1> x = map(cos, ra::Small&lt;double, 1> {0.});
 </pre>
      =&gt; x = { 1. }
 </pre>
    <p><var>op</var> can return a reference. A typical use is subscripting. For example (TODO better example, e.g. using STL types):
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 2> x = {{3, 3}, 0.};
+     ra::Big&lt;int, 2> x = {{3, 3}, 0.};
      map([](auto &amp;&amp; i, auto &amp;&amp; j) -> int &amp; { return x(i, j); },
-         ra::Owned&lt;int, 1> {0, 1, 1, 2}, ra::Owned&lt;int, 1> {1, 0, 2, 1})
+         ra::Big&lt;int, 1> {0, 1, 1, 2}, ra::Big&lt;int, 1> {1, 0, 2, 1})
        = 1;
 </pre>
      =&gt; x = {{0, 1, 0}, {1, 0, 1}, {0, 1, 0}}
@@ -1430,7 +1448,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p>For example:
 <pre class="example"><pre class="verbatim">     
-         ra::Owned&lt;double, 1> s {1, -1, 3, 2};
+         ra::Big&lt;double, 1> s {1, -1, 3, 2};
          s = where(s>=2, 2, s); // saturate s
 </pre>
        =&gt; s = {1, -1, 2, 2}
@@ -1444,17 +1462,17 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p>For example:
 <pre class="example"><pre class="verbatim">     
-         ra::Owned&lt;double, 1> a {1, 2, 3};
-         ra::Owned&lt;double, 1> b {10, 20, 30};
-         ra::Owned&lt;double, 2> axb = from([](auto &amp;&amp; a, auto &amp;&amp; b) { return a*b; }, a, b)
+         ra::Big&lt;double, 1> a {1, 2, 3};
+         ra::Big&lt;double, 1> b {10, 20, 30};
+         ra::Big&lt;double, 2> axb = from([](auto &amp;&amp; a, auto &amp;&amp; b) { return a*b; }, a, b)
 </pre>
        =&gt; axb = {{10, 20, 30}, {20, 40, 60}, {30, 60, 90}}
 </pre>
    <pre class="example"><pre class="verbatim">     
-         ra::Owned&lt;int, 1> i {2, 1};
-         ra::Owned&lt;int, 1> j {0, 1};
-         ra::Owned&lt;double, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
-         ra::Owned&lt;double, 2> Aij = from(A, i, j)
+         ra::Big&lt;int, 1> i {2, 1};
+         ra::Big&lt;int, 1> j {0, 1};
+         ra::Big&lt;double, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
+         ra::Big&lt;double, 2> Aij = from(A, i, j)
 </pre>
        =&gt; Aij = {{6, 5}, {4, 3}}
 </pre>
@@ -1467,9 +1485,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p>This can be used for sparse subscripting. For example:
 <pre class="example"><pre class="verbatim">     
-         ra::Owned&lt;int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
-         ra::Owned&lt;ra::Small&lt;int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
-         ra::Owned&lt;int, 2> B = at(A, i);
+         ra::Big&lt;int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
+         ra::Big&lt;ra::Small&lt;int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
+         ra::Big&lt;int, 2> B = at(A, i);
 </pre>
        =&gt; B = {{101, 120}, {110, 121}}
 </pre>
@@ -1557,7 +1575,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <pre class="example"><pre class="verbatim">     
      std::vector&lt;int> x = {1, 2, 3};
-     ra::Owned&lt;int, 1> y = {10, 20, 30};
+     ra::Big&lt;int, 1> y = {10, 20, 30};
      cout &lt;&lt; (x+y) &lt;&lt; endl; // same as ra::start(x)+y
      // x += y; // error: no mach for operator+=
      ra::start(x) += y; // ok
@@ -1577,8 +1595,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <pre class="example"><pre class="verbatim">     
      int p[] = {1, 2, 3};
-     ra::Owned&lt;int, 1> v3 {1, 2, 3};
-     ra::Owned&lt;int, 1> v4 {1, 2, 3, 4};
+     ra::Big&lt;int, 1> v3 {1, 2, 3};
+     ra::Big&lt;int, 1> v4 {1, 2, 3, 4};
      v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
      v4 += ra::ptr(p); // error, shape (4): bad access to p[3]
      // cout &lt;&lt; (ra::ptr(p)+ra::TensorIndex&lt;0>{}) &lt;&lt; endl; // ct error, expression has undefined shape
@@ -1595,7 +1613,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <pre class="example"><pre class="verbatim">     
      struct W { int x; }
-     ra::Owned&lt;W, 1> w { {1}, {2}, {3} };
+     ra::Big&lt;W, 1> w { {1}, {2}, {3} };
      
      // error: no matching function for call to start(W)
      // for_each([](auto &amp;&amp; a, auto &amp;&amp; b) { cout &lt;&lt; (a.x + b.x) &lt;&lt; endl; }, w, W {7});
@@ -1613,7 +1631,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <pre class="example"><pre class="verbatim">     
      using Vec2 = ra::Small&lt;double, 2>;
      Vec2 x {-1, 1};
-     ra::Owned&lt;Vec2, 1> c { {1, 2}, {2, 3}, {3, 4} };
+     ra::Big&lt;Vec2, 1> c { {1, 2}, {2, 3}, {3, 4} };
      // c += x // error: x has shape (2) and c has shape (3)
      c += ra::scalar(x); // ok: scalar(x) has shape () and matches c.
 </pre>
@@ -1635,9 +1653,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </p></blockquote></div>
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 2> c {{1, 3, 2}, {7, 1, 3}};
+     ra::Big&lt;int, 2> c {{1, 3, 2}, {7, 1, 3}};
      cout &lt;&lt; "max of each row: " &lt;&lt; map([](auto &amp;&amp; a) { return amax(a); }, iter&lt;1>(c)) &lt;&lt; endl;
-     ra::Owned&lt;int, 1> m({3}, 0);
+     ra::Big&lt;int, 1> m({3}, 0);
      scalar(m) = max(scalar(m), iter&lt;1>(c));
      cout &lt;&lt; "max of each column: " &lt;&lt; m &lt;&lt; endl;
      m = 0;
@@ -1664,7 +1682,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
    <p>The following example computes the trace of each of the items [(-1)-cells] of <code>c</code>. <!-- [ma104] -->
 
 <pre class="example"><pre class="verbatim">     
-     ra::Owned&lt;int, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
+     ra::Big&lt;int, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
      cout &lt;&lt; "c: " &lt;&lt; c &lt;&lt; endl;
      cout &lt;&lt; "s: " &lt;&lt; map([](auto &amp;&amp; a) { return sum(diag(a)); }, iter&lt;-1>(c)) &lt;&lt; endl;
 </pre>
@@ -1726,24 +1744,38 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <blockquote><p>Return <code>true</code> if every element of <var>expr</var> is true, <code>false</code> otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified. 
 </p></blockquote></div>
 
+   <p><a name="x_002dsqr"></a>
+
+<div class="defun">
+&mdash; Function: <b>sqr</b><var> expr<a name="index-sqr-51"></a></var><br>
+<blockquote><p>Compute the square of <var>expr</var>. 
+</p></blockquote></div>
+
+   <p><a name="x_002dsqrm"></a>
+
+<div class="defun">
+&mdash; Function: <b>sqrm</b><var> expr<a name="index-sqrm-52"></a></var><br>
+<blockquote><p>Compute the square of the norm-2 of <var>expr</var>, that is, <code>conj(expr)*expr</code>. 
+</p></blockquote></div>
+
    <p><a name="x_002dconj"></a>
 
 <div class="defun">
-&mdash; Function: <b>conj</b><var> expr<a name="index-conj-51"></a></var><br>
+&mdash; Function: <b>conj</b><var> expr<a name="index-conj-53"></a></var><br>
 <blockquote><p>Compute the complex conjugate of <var>expr</var>. 
 </p></blockquote></div>
 
    <p><a name="x_002dxI"></a>
 
 <div class="defun">
-&mdash; Function: <b>xI</b><var> expr<a name="index-xI-52"></a></var><br>
+&mdash; Function: <b>xI</b><var> expr<a name="index-xI-54"></a></var><br>
 <blockquote><p>Compute <code>(0+1j)</code> times <var>expr</var>. 
 </p></blockquote></div>
 
    <p><a name="x_002drel_002derror"></a>
 
 <div class="defun">
-&mdash; Function: <b>rel_error</b><var> a b<a name="index-rel_005ferror-53"></a></var><br>
+&mdash; Function: <b>rel_error</b><var> a b<a name="index-rel_005ferror-55"></a></var><br>
 <blockquote><p><var>a</var> and <var>b</var> are arbitrary array expressions. Compute the error of <var>a</var> relative to <var>b</var> as
 
         <p><code>(a==0. &amp;&amp; b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b))</code>
@@ -1763,6 +1795,46 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">7 Sources</h2>
 
 <!--  -->
+<p><table summary="">
+<tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="Abr70"></a>[Abr70]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">Philip S. Abrams. An APL machine. Technical report SLAC-114 UC-32 (MISC), Stanford Linear Accelerator Center, Stanford University, Stanford, CA, USA, February 1970. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="Ber87"></a>[Ber87]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">Robert Bernecky. An introduction to function rank. ACM SIGAPL APL Quote Quad, 18(2):39–43, December 1987. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="bli17"></a>[bli17]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">The Blitz++ meta-template library. <a href="http://blitz.sourceforge.net">http://blitz.sourceforge.net</a>, November 2017. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="Cha86"></a>[Cha86]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">Gregory J. Chaitin. Physics in APL2, June 1986. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="FI68"></a>[FI68]
+<!-- %**else if -->
+  </td><td valign="top" width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="FI73"></a>[FI73]
+<!-- %**else if -->
+  </td><td valign="top" width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="FI78"></a>[FI78]
+<!-- %**else if -->
+  </td><td valign="top" width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="J-S"></a>[J S]
+<!-- %**else if -->
+   </td><td valign="top" width="90%">J Primer. J Software, <a href="http://www.jsoftware.com/help/primer/contents.htm">http://www.jsoftware.com/help/primer/contents.htm</a>, November 2017. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="num17"></a>[num17]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">NumPy. <a href="http://www.numpy.org">http://www.numpy.org</a>, November 2017. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="Ric08"></a>[Ric08]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">Henry Rich. J for C programmers, February 2008. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="SSM14"></a>[SSM14]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="Vel01"></a>[Vel01]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">Todd Veldhuizen. Blitz++ user’s guide, February 2001.
+
+<br></td></tr></table>
+
 <!--  -->
 <div class="node">
 <p><hr>
@@ -1797,20 +1869,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
    </ul><!-- @node Function Index -->
 <!-- @unnumbered Function Index -->
 <!-- @printindex fn -->
-<!-- \nocite{JLangReference} -->
-<!-- \nocite{FalkoffIverson1968} -->
-<!-- \nocite{Abrams1970} -->
-<!-- \nocite{FalkoffIverson1973} -->
-<!-- \nocite{FalkoffIverson1978} -->
-<!-- \nocite{APLexamples1} -->
-<!-- \nocite{ArraysCowan} -->
-<!-- \nocite{KonaTheLanguage} -->
-<!-- \nocite{blitz++2001} -->
+<!-- \nocite{JLangReference,FalkoffIverson1968,Abrams1970,FalkoffIverson1973,FalkoffIverson1978,APLexamples1,ArraysCowan,KonaTheLanguage,blitz++2001} -->
 <div class="footnote">
 <hr>
 <a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> You can still use pointer or <code>std::initializer_list</code> for shape by using the functions <code>ptr</code> or <code>vector</code>.</p>
 
-   <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> <code>&amp;&amp;</code>, <code>||</code> are short-circuiting; the second operand won't be evaluated if the first one evaluates to <code>false</code> or <code>true</code>, respectively.</p>
+   <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> <code>&amp;&amp;</code>, <code>||</code> are short-circuiting <em>as array operations</em>; the elements of the second operand won't be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively. Note that if both operands are of rank 0 and at least one of them is a <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 
    <p><hr></div>
 

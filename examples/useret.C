@@ -36,7 +36,7 @@ auto foobar_ra(A && a, B && b)
 
 int main()
 {
-    ra::Owned<double,2> A({4, 4}, 0.), B({4, 4}, 0.), C({4, 4}, 0.);
+    ra::Big<double,2> A({4, 4}, 0.), B({4, 4}, 0.), C({4, 4}, 0.);
 
     A = { 0,  1,  2,  3,
           4,  5,  6,  7,

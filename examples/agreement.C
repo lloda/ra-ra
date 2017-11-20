@@ -22,10 +22,10 @@ int main()
     // have lower rank than others, then the missing dimensions are ignored.
 
     // For example:
-    ra::Owned<float, 3> A({3, 4, 5}, 1.);
-    ra::Owned<float, 2> B({3, 4}, 2.);
-    ra::Owned<float, 1> C({3}, 3.);
-    ra::Owned<float, 3> X({3, 4, 5}, 99.);
+    ra::Big<float, 3> A({3, 4, 5}, 1.);
+    ra::Big<float, 2> B({3, 4}, 2.);
+    ra::Big<float, 1> C({3}, 3.);
+    ra::Big<float, 3> X({3, 4, 5}, 99.);
 
     // In the following expression, the shapes of the arguments are:
     // A: [3 4 5]
@@ -44,17 +44,17 @@ int main()
     {
         // multiply any array by a scalar. The shape of a scalar is [];
         // therefore, a scalar agrees with anything.
-        ra::Owned<float, 2> X = B*7.;
+        ra::Big<float, 2> X = B*7.;
         cout << "\nB*7: " << X << endl;
     }
     {
         // multiply each row of B by a different element of C, X(i, j) = B(i, j)*C(i)
-        ra::Owned<float, 2> X = B*C;
+        ra::Big<float, 2> X = B*C;
         cout << "\nB*C: " << X << endl;
     }
     {
         // multiply arrays componentwise (identical shapes agree).
-        ra::Owned<float, 2> X = B*B;
+        ra::Big<float, 2> X = B*B;
         cout << "\nB*B: " << X << endl;
     }
 
@@ -65,14 +65,14 @@ int main()
     {
         ra::TensorIndex<0> i;
         ra::TensorIndex<1> j;
-        ra::Owned<float, 2> X({3, 4}, i-j);
+        ra::Big<float, 2> X({3, 4}, i-j);
         cout << "\ni-j: " << X << endl;
     }
     // but the following would be invalid:
     {
         // ra::TensorIndex<0> i;
         // ra::TensorIndex<1> j;
-        // ra::Owned<float, 2> X = i-j; // no shape to construct X with
+        // ra::Big<float, 2> X = i-j; // no shape to construct X with
     }
 
     return 0;

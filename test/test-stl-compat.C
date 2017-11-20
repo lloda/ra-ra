@@ -17,7 +17,7 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
@@ -34,14 +34,14 @@ int main()
     tr.section("copyable iterators, but not random access");
     {
         {
-            ra::Owned<int, 1> a = { 1, 2, 3 };
-            ra::Owned<int, 1> b = { 0, 0, 0 };
+            ra::Big<int, 1> a = { 1, 2, 3 };
+            ra::Big<int, 1> b = { 0, 0, 0 };
             std::transform(a.begin(), a.end(), b.begin(), [](int a) { return -a; });
             tr.test_eq(a, -b);
         }
         {
-            ra::Owned<int, 2> a({2, 3}, ra::_0 - 2*ra::_1);
-            ra::Owned<int, 2> b({2, 3}, 99);
+            ra::Big<int, 2> a({2, 3}, ra::_0 - 2*ra::_1);
+            ra::Big<int, 2> b({2, 3}, 99);
             std::transform(a.begin(), a.end(), b.begin(), [](int a) { return -a; });
             tr.test_eq(a, -b);
         }
@@ -54,20 +54,20 @@ int main()
     }
     tr.section("raw, slippery pointers");
     {
-        ra::Owned<int, 1> a = {1, 2, 3};
+        ra::Big<int, 1> a = {1, 2, 3};
         int b[] = { +1, -1, +1 };
         tr.test_eq(ra::Small<int, 3> {2, 1, 4}, a + ra::ptr(b));
         ra::ptr(b) = ra::Small<int, 3> {7, 4, 5};
         tr.test_eq(ra::Small<int, 3> {7, 4, 5}, ra::ptr(b));
 
         int cp[3] = {1, 2, 3};
-        // ra::Owned<int, 1> c({3}, &cp[0]); // forbidden, confusing for higher rank c (pointer matches as rank 1).
-        ra::Owned<int, 1> c({3}, ra::ptr(cp));
+        // ra::Big<int, 1> c({3}, &cp[0]); // forbidden, confusing for higher rank c (pointer matches as rank 1).
+        ra::Big<int, 1> c({3}, ra::ptr(cp));
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, c);
     }
     tr.section("[ra12] check that begin() and end() match for empty views");
     {
-        ra::Owned<int, 3> aa({0, 2, 3}, 0.);
+        ra::Big<int, 3> aa({0, 2, 3}, 0.);
         auto a = aa(ra::all, 1);
         tr.info("begin ", a.begin().ii.c.p, " end ", a.end().ii.c.p).test(a.begin()==a.end());
     }

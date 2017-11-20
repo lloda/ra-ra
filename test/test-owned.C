@@ -7,12 +7,12 @@
 // later version.
 
 /// @file test-owned.C
-/// @brief Array operations limited to ra::Owned.
+/// @brief Array operations limited to ra::Big.
 
 #include <iostream>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/mpdebug.H"
@@ -37,15 +37,15 @@ int main()
                 tr.test_eq(ref(ra::iota(testsize)), a(ra::iota(testsize)));
             };
         {
-            ra::Owned<int, 2> a({5, 3}, ra::_0 - ra::_1);
-            ra::Owned<int, 2> ref = a;
+            ra::Big<int, 2> a({5, 3}, ra::_0 - ra::_1);
+            ra::Big<int, 2> ref = a;
             test(ref, a, 5, 5);
             test(ref, a, 8, 5);
             test(ref, a, 3, 3);
             test(ref, a, 5, 3);
         }
         {
-            ra::Owned<int, 1> a({2}, 3);
+            ra::Big<int, 1> a({2}, 3);
             a.resize(4, 9);
             tr.test_eq(3, a[0]);
             tr.test_eq(3, a[1]);
@@ -53,11 +53,11 @@ int main()
             tr.test_eq(9, a[3]);
         }
         {
-            ra::Owned<int, 3> a({0, 3, 2}, ra::_0 - ra::_1 + ra::_2); // BUG If <int, 2>, I get [can't drive] instead of [rank error].
-            ra::Owned<int, 3> ref0 = a;
+            ra::Big<int, 3> a({0, 3, 2}, ra::_0 - ra::_1 + ra::_2); // BUG If <int, 2>, I get [can't drive] instead of [rank error].
+            ra::Big<int, 3> ref0 = a;
             test(ref0, a, 3, 0);
             a = 77.;
-            ra::Owned<int, 3> ref1 = a;
+            ra::Big<int, 3> ref1 = a;
             test(ref1, a, 5, 3);
         }
     }
@@ -76,8 +76,8 @@ int main()
                     }
                 }
             };
-        test(ra::Owned<real, 1>());
-        ra::Owned<real> z = ra::Owned<real, 1>();
+        test(ra::Big<real, 1>());
+        ra::Big<real> z = ra::Big<real, 1>();
         test(z);
     }
     return tr.summary();

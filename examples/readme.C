@@ -24,8 +24,8 @@ int main()
     tr.section("dynamic/static shape");
 // Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).
     {
-        ra::Owned<char> A({2, 3}, 'a');     // dynamic rank = 2, dynamic shape = {2, 3}
-        ra::Owned<char, 2> B({2, 3}, 'b');  // static rank = 2, dynamic shape = {2, 3}
+        ra::Big<char> A({2, 3}, 'a');     // dynamic rank = 2, dynamic shape = {2, 3}
+        ra::Big<char, 2> B({2, 3}, 'b');  // static rank = 2, dynamic shape = {2, 3}
         ra::Small<char, 2, 3> C('c');       // static rank = 2, static shape = {2, 3}
         cout << "A: " << A << "\n\n";
         cout << "B: " << B << "\n\n";
@@ -35,7 +35,7 @@ int main()
 // Memory-owning types and views. You can make array views over any piece of memory.
     {
         // memory-owning types
-        ra::Owned<char, 2> A({2, 3}, 'a');   // storage is std::vector inside A
+        ra::Big<char, 2> A({2, 3}, 'a');   // storage is std::vector inside A
         ra::Unique<char, 2> B({2, 3}, 'b');  // storage is owned by std::unique_ptr inside B
         ra::Small<char, 2, 3> C('c');        // storage is owned by C itself, on the stack
 
@@ -61,14 +61,14 @@ int main()
 // rules are taken from the array language, J.
 // (See examples/agreement.C for more examples.)
     {
-        ra::Owned<float, 2> A({2, 3}, { 1, 2, 3, 1, 2, 3 });
-        ra::Owned<float, 1> B({-1, +1});
+        ra::Big<float, 2> A({2, 3}, { 1, 2, 3, 1, 2, 3 });
+        ra::Big<float, 1> B({-1, +1});
 
-        ra::Owned<float, 2> C({2, 3}, 99.);
+        ra::Big<float, 2> C({2, 3}, 99.);
         C = A * B;   // C(i, j) = A(i, j) * C(i)
         cout << "C: " << C << "\n\n";
 
-        ra::Owned<float, 1> D({2}, 0.);
+        ra::Big<float, 1> D({2}, 0.);
         D += A * B;  // D(i) += A(i, j) * C(i)
         cout << "D: " << D << "\n\n";
     }
@@ -78,8 +78,8 @@ int main()
         ra::TensorIndex<0> i;
         ra::TensorIndex<1> j;
         ra::TensorIndex<2> k;
-        ra::Owned<float, 3> A({2, 3, 4}, i+j+k);
-        ra::Owned<float, 2> B({2, 3}, 0);
+        ra::Big<float, 3> A({2, 3, 4}, i+j+k);
+        ra::Big<float, 2> B({2, 3}, 0);
         cout << "A: " << A << "\n\n";
 
 // store the sum of A(i, j, ...) in B(i, j). All these are equivalent.
@@ -97,7 +97,7 @@ int main()
     tr.section("rank conjuction");
     {
 // This is a translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
-        ra::Owned<float, 2> A = map(ra::wrank<0, 1>(std::minus<float>()), ra::iota(3), ra::iota(4));
+        ra::Big<float, 2> A = map(ra::wrank<0, 1>(std::minus<float>()), ra::iota(3), ra::iota(4));
         cout << "A: " << A << "\n\n";
     }
 // A proper selection operator with 'beating' of range or scalar subscripts.
@@ -105,7 +105,7 @@ int main()
     tr.section("selector");
     {
 // TODO do implicit reshape in constructors?? so I can accept any 1-array and not only an initializer_list.
-        ra::Owned<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
+        ra::Big<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
         cout << "A: " << A << "\n\n";
 
 // these are all equivalent to e.g. A(:, 0, :) in Octave.
@@ -117,18 +117,18 @@ int main()
         cout << "A4: " << A(ra::iota(2, 1, -1)) << "\n\n";
 
 // indices can be arrays of any rank.
-        ra::Owned<int, 2> I({2, 2}, {0, 3, 1, 2});
-        ra::Owned<char, 1> B({4}, {'a', 'b', 'c', 'd'});
+        ra::Big<int, 2> I({2, 2}, {0, 3, 1, 2});
+        ra::Big<char, 1> B({4}, {'a', 'b', 'c', 'd'});
         cout << "B(I): " << B(I) << "\n\n";
 
 // multiple indexing performs an implicit outer product.  this results in a rank
 // 4 array X = A(J, 1, J) -> X(i, j, k, l) = A(J(i, j), 1, J(k, l))
-        ra::Owned<int, 2> J({2, 2}, {1, 0, 0, 1});
+        ra::Big<int, 2> J({2, 2}, {1, 0, 0, 1});
         cout << "A(J, 1, J): " << A(J, 1, J) << "\n\n";
 
 // explicit indices do not result in a View view (= pointer + strides), but the
 // resulting expression can still be written on.
-        B(I) = ra::Owned<char, 2>({2, 2}, {'x', 'y', 'z', 'w'});
+        B(I) = ra::Big<char, 2>({2, 2}, {'x', 'y', 'z', 'w'});
         cout << "B: " << B << endl;
     }
     // A TensorIndex object as in Blitz++ (with some differences).
@@ -138,11 +138,11 @@ int main()
     }
     tr.section("STL compat");
     {
-        ra::Owned<char, 1> A = {'x', 'z', 'y'};
+        ra::Big<char, 1> A = {'x', 'z', 'y'};
         std::sort(A.begin(), A.end());
         cout << "A: " << A << "\n\n";
 
-        ra::Owned<float, 2> B({2, 2}, {1, 2, 3, 4});
+        ra::Big<float, 2> B({2, 2}, {1, 2, 3, 4});
         B += std::vector<float>({10, 20});
         cout << "B: " << B << "\n\n";
     }
@@ -154,24 +154,24 @@ int main()
     }
 // example from the manual [ma101].
     {
-        ra::Owned<char, 2> A({2, 5}, "helloworld");
+        ra::Big<char, 2> A({2, 5}, "helloworld");
         std::cout << format_array(transpose<1, 0>(A), false, "|") << std::endl;
     }
     {
-        ra::Owned<char const *, 1> A = {"hello", "array", "world"};
+        ra::Big<char const *, 1> A = {"hello", "array", "world"};
         std::cout << format_array(A, false, "|") << std::endl;
     }
 // example from the manual [ma102].
     {
-        // ra::Owned<char const *, 1> A({3}, "hello"); // ERROR b/c of pointer constructor
-        ra::Owned<char const *, 1> A({3}, ra::scalar("hello"));
+        // ra::Big<char const *, 1> A({3}, "hello"); // ERROR b/c of pointer constructor
+        ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
         std::cout << format_array(A, false, "|") << std::endl;
     }
 // example from the manual [ma103].
     {
-        ra::Owned<int, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
-        ra::Owned<int, 2> B({2, 3}, {7, 8, 9, 10, 11, 12});
-        ra::Owned<int, 2> C({3, 3}, 0.);
+        ra::Big<int, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
+        ra::Big<int, 2> B({2, 3}, {7, 8, 9, 10, 11, 12});
+        ra::Big<int, 2> C({3, 3}, 0.);
         for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), C, A, B);
 /* 3 3
    27 30 33
@@ -181,23 +181,23 @@ int main()
     }
 // example from the manual [ma104]
     {
-        ra::Owned<int, 3> c({3, 2, 2}, ra::_0 - ra::_1 - 2*ra::_2);
+        ra::Big<int, 3> c({3, 2, 2}, ra::_0 - ra::_1 - 2*ra::_2);
         cout << c << endl;
         cout << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
     }
 // example from the manual [ma105]
     {
-        ra::Owned<double, 2> a({2, 3}, {1, 2, 3, 4, 5, 6});
-        ra::Owned<double, 1> b({3}, {10, 20, 30});
-        ra::Owned<double, 2> c({2, 3}, 0);
+        ra::Big<double, 2> a({2, 3}, {1, 2, 3, 4, 5, 6});
+        ra::Big<double, 1> b({3}, {10, 20, 30});
+        ra::Big<double, 2> c({2, 3}, 0);
         iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply each item of a by b
         cout << c << endl;
     }
 // example from the manual [ma109]. This is a rare case where I need explicit ply.
     {
-        ra::Owned<int, 1> o = {};
-        ra::Owned<int, 1> e = {};
-        ra::Owned<int, 1> n = {1, 2, 7, 9, 12};
+        ra::Big<int, 1> o = {};
+        ra::Big<int, 1> e = {};
+        ra::Big<int, 1> n = {1, 2, 7, 9, 12};
         ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
         cout << "o: " << format_array(o, false) << ", e: " << format_array(e, false) << endl;
     }

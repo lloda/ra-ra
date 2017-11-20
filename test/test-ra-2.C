@@ -14,7 +14,7 @@
 #include <numeric>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
@@ -147,9 +147,9 @@ int main()
     }
     tr.section("ply on cell rank > 0, dynamic rank");
     {
-        ra::Owned<int> ad({5, 2}, ra::_0 - ra::_1);
-        ra::Owned<int, 2> as({5, 2}, ra::_0 - ra::_1);
-        ra::Owned<int, 2> b({5, 2}, (ra::_0 - ra::_1)*2);
+        ra::Big<int> ad({5, 2}, ra::_0 - ra::_1);
+        ra::Big<int, 2> as({5, 2}, ra::_0 - ra::_1);
+        ra::Big<int, 2> b({5, 2}, (ra::_0 - ra::_1)*2);
 
         tr.test_eq(1, as.iter<-1>().rank());
         auto cellr = as.iter<-1>().cellr; tr.test_eq(1, cellr);

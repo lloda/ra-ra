@@ -15,7 +15,7 @@
 #include "ra/complex.H"
 #include "ra/format.H"
 #include "ra/test.H"
-#include "ra/large.H"
+#include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 
@@ -93,20 +93,20 @@ int main()
                 test(ra::Small<real, 2>{1, 2}, ra::Small<real, 2>{3, 4});
                 test(ra::Small<complex, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
 
-                test(ra::Owned<complex, 1>{1, 2}, ra::Owned<real, 1>{3, 4});
-                test(ra::Owned<real, 1>{1, 2}, ra::Owned<complex, 1>{3, 4});
-                test(ra::Owned<real, 1>{1, 2}, ra::Owned<real, 1>{3, 4});
-                test(ra::Owned<complex, 1>{1, 2}, ra::Owned<complex, 1>{3, 4});
+                test(ra::Big<complex, 1>{1, 2}, ra::Big<real, 1>{3, 4});
+                test(ra::Big<real, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
+                test(ra::Big<real, 1>{1, 2}, ra::Big<real, 1>{3, 4});
+                test(ra::Big<complex, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
 
-                test(ra::Small<complex, 2>{1, 2}, ra::Owned<real, 1>{3, 4});
-                test(ra::Small<real, 2>{1, 2}, ra::Owned<complex, 1>{3, 4});
-                test(ra::Small<real, 2>{1, 2}, ra::Owned<real, 1>{3, 4});
-                test(ra::Small<complex, 2>{1, 2}, ra::Owned<complex, 1>{3, 4});
+                test(ra::Small<complex, 2>{1, 2}, ra::Big<real, 1>{3, 4});
+                test(ra::Small<real, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
+                test(ra::Small<real, 2>{1, 2}, ra::Big<real, 1>{3, 4});
+                test(ra::Small<complex, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
 
-                test(ra::Owned<complex, 1>{1, 2}, ra::Small<real, 2>{3, 4});
-                test(ra::Owned<real, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
-                test(ra::Owned<real, 1>{1, 2}, ra::Small<real, 2>{3, 4});
-                test(ra::Owned<complex, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
+                test(ra::Big<complex, 1>{1, 2}, ra::Small<real, 2>{3, 4});
+                test(ra::Big<real, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
+                test(ra::Big<real, 1>{1, 2}, ra::Small<real, 2>{3, 4});
+                test(ra::Big<complex, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
             };
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(11., dot(a, b)); });
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(11., cdot(a, b)); });
@@ -116,9 +116,9 @@ int main()
         auto test_cdot = [](auto && test)
             {
                 test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
-                test(ra::Owned<complex, 1>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
-                test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Owned<complex, 1>{complex(4, 5), 6});
-                test(ra::Owned<complex, 1>{1, complex(2, 3)}, ra::Owned<complex, 1>{complex(4, 5), 6});
+                test(ra::Big<complex, 1>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
+                test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Big<complex, 1>{complex(4, 5), 6});
+                test(ra::Big<complex, 1>{1, complex(2, 3)}, ra::Big<complex, 1>{complex(4, 5), 6});
             };
         complex value = conj(1.)*complex(4., 5.) + conj(complex(2., 3.))*6.;
         tr.test_eq(value, complex(16, -13));
@@ -129,7 +129,7 @@ int main()
         auto test_sum = [](auto && test)
             {
                 test(ra::Small<complex, 2>{complex(4, 5), 6});
-                test(ra::Owned<complex, 1>{complex(4, 5), 6});
+                test(ra::Big<complex, 1>{complex(4, 5), 6});
             };
         test_sum([&tr](auto && a) { tr.test_eq(complex(10, 5), sum(a)); });
         test_sum([&tr](auto && a) { tr.test_eq(complex(24, 30), prod(a)); });
@@ -223,18 +223,18 @@ int main()
     }
     tr.section("reductions with amax");
     {
-        ra::Owned<int, 2> c({2, 3}, {1, 3, 2, 7, 1, 3});
-        tr.info("max of rows").test_eq(ra::Owned<int, 1> {3, 7}, map([](auto && a) { return amax(a); }, iter<1>(c)));
-        ra::Owned<int, 1> m({3}, 0);
+        ra::Big<int, 2> c({2, 3}, {1, 3, 2, 7, 1, 3});
+        tr.info("max of rows").test_eq(ra::Big<int, 1> {3, 7}, map([](auto && a) { return amax(a); }, iter<1>(c)));
+        ra::Big<int, 1> m({3}, 0);
         scalar(m) = max(scalar(m), iter<1>(c));
-        tr.info("max of columns I").test_eq(ra::Owned<int, 1> {7, 3, 3}, m);
+        tr.info("max of columns I").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
         iter<1>(m) = max(iter<1>(m), iter<1>(c));
-        tr.info("max of columns III").test_eq(ra::Owned<int, 1> {7, 3, 3}, m);
+        tr.info("max of columns III").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
         for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
-        tr.info("max of columns II").test_eq(ra::Owned<int, 1> {7, 3, 3}, m);
-        ra::Owned<double, 1> q({0}, {});
+        tr.info("max of columns II").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
+        ra::Big<double, 1> q({0}, {});
         tr.info("amax default").test_eq(std::numeric_limits<double>::infinity(), amin(q));
         tr.info("amin default").test_eq(-std::numeric_limits<double>::infinity(), amax(q));
     }
@@ -281,19 +281,19 @@ int main()
     }
     tr.section("matrix-matrix reductions");
     {
-        ra::Owned<double, 2> A({0, 0}, 0.);
-        ra::Owned<double, 2> B({0, 0}, 0.);
+        ra::Big<double, 2> A({0, 0}, 0.);
+        ra::Big<double, 2> B({0, 0}, 0.);
         auto C = gemm(A, B);
         tr.test_eq(0, C.size(0));
         tr.test_eq(0, C.size(1));
     }
     tr.section("reference reductions");
     {
-        ra::Owned<double, 2> A({2, 3}, ra::_1 - ra::_0);
+        ra::Big<double, 2> A({2, 3}, ra::_1 - ra::_0);
         double & mn = refmin(A);
         tr.test_eq(-1, mn);
         mn = -99;
-        ra::Owned<double, 2> B({2, 3}, ra::_1 - ra::_0);
+        ra::Big<double, 2> B({2, 3}, ra::_1 - ra::_0);
         B(1, 0) = -99;
         tr.test_eq(B, A);
         double & mx = refmin(A, std::greater<double>());

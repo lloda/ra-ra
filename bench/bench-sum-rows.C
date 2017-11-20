@@ -27,10 +27,10 @@ int main()
     auto bench =
         [&tr](char const * tag, int m, int n, int reps, auto && f)
         {
-            ra::Owned<real, 2> a({m, n}, ra::_0 - ra::_1);
-            ra::Owned<real, 1> ref({n}, 0);
+            ra::Big<real, 2> a({m, n}, ra::_0 - ra::_1);
+            ra::Big<real, 1> ref({n}, 0);
             iter<1>(ref) += iter<1>(a)*reps;
-            ra::Owned<real, 1> c({n}, ra::unspecified);
+            ra::Big<real, 1> c({n}, ra::unspecified);
 
             auto bv = Benchmark().repeats(reps).runs(3)
                 .once_f([&](auto && repeat) { c=0.; repeat([&]() { f(c, a); }); });

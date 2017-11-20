@@ -133,17 +133,17 @@ int main()
                 .skip().test_rel_error(ref, A, 1e-10);
         };
 
-    ra::Owned<real, 2> Aref;
+    ra::Big<real, 2> Aref;
 
     tr.section("static rank");
     {
-        ra::Owned<real, 2> A({nx, ny}, 1.);
-        ra::Owned<real, 2> Anext({nx, ny}, 0.);
+        ra::Big<real, 2> A({nx, ny}, 1.);
+        ra::Big<real, 2> Anext({nx, ny}, 0.);
         auto Astencil = stencil(A, 1, 1);
         cout << "Astencil " << format_array(Astencil(0, 0, ra::dots<2>), true, "|", " ") << endl;
 #define BENCH(ref, op) bench(A, Anext, Astencil, ref, STRINGIZE(op), op {});
         BENCH(A, f_raw);
-        Aref = ra::Owned<real, 2>(A);
+        Aref = ra::Big<real, 2>(A);
         BENCH(Aref, f_slices);
         BENCH(Aref, f_stencil_explicit);
         BENCH(Aref, f_stencil_arrayop);
@@ -153,8 +153,8 @@ int main()
     }
     tr.section("dynamic rank");
     {
-        ra::Owned<real> B({nx, ny}, 1.);
-        ra::Owned<real> Bnext({nx, ny}, 0.);
+        ra::Big<real> B({nx, ny}, 1.);
+        ra::Big<real> Bnext({nx, ny}, 0.);
         auto Bstencil = stencil(B, 1, 1);
         cout << "Bstencil " << format_array(Bstencil(0, 0, ra::dots<2>), true, "|", " ") << endl;
 #define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, STRINGIZE(op), op {});

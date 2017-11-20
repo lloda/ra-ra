@@ -28,7 +28,7 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("misc/sanity");
     {
-        tr.test_eq(ra::iota(4, 1, 2), ra::Owned<int, 1> {1, 3, 5, 7});
+        tr.test_eq(ra::iota(4, 1, 2), ra::Big<int, 1> {1, 3, 5, 7});
         {
             auto z = ra::iota(5, 1.5);
             tr.info("iota with real org I").test_eq(1.5, z.org_);

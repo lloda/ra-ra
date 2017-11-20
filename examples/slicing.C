@@ -9,7 +9,7 @@ using std::cout; using std::endl; using std::flush;
 
 int main()
 {
-    ra::Owned<int, 2> A({6, 6}, 99);
+    ra::Big<int, 2> A({6, 6}, 99);
 
 // Set the upper left quadrant of A to 5
     A(ra::iota(3), ra::iota(3)) = 5;
@@ -35,7 +35,7 @@ int main()
 // Demonstrating multi-axis selectors. Use these to skip over any number of
 // axes, just as ra::all skips over one axis.
 
-    ra::Owned<int, 3> B({3, 5, 5}, 99);
+    ra::Big<int, 3> B({3, 5, 5}, 99);
 
 // These are equivalent.
     B(ra::all, ra::all, 2) = 3.;
