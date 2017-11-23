@@ -201,5 +201,9 @@ int main()
         ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
         cout << "o: " << format_array(o, false) << ", e: " << format_array(e, false) << endl;
     }
+// example from manual [ma110].
+    {
+        std::cout << exp(ra::Small<double, 3> {4, 5, 6}) << std::endl;
+    }
     return 0;
 }

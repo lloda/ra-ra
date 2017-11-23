@@ -60,7 +60,7 @@ extern "C" {
 #include <cblas.h>
 }
 
-constexpr inline CBLAS_TRANSPOSE fliptr(CBLAS_TRANSPOSE t)
+inline constexpr CBLAS_TRANSPOSE fliptr(CBLAS_TRANSPOSE t)
 {
     if (t==CblasTrans) {
         return CblasNoTrans;
@@ -71,7 +71,7 @@ constexpr inline CBLAS_TRANSPOSE fliptr(CBLAS_TRANSPOSE t)
     }
 }
 
-constexpr inline bool istr(CBLAS_TRANSPOSE t)
+inline constexpr bool istr(CBLAS_TRANSPOSE t)
 {
     return (t==CblasTrans) || (t==CblasConjTrans);
 }

@@ -37,13 +37,15 @@ struct Verb
     Op op;
 };
 
-template <class cranks, class Op> constexpr inline auto
+template <class cranks, class Op>
+inline constexpr auto
 wrank(cranks cranks_, Op && op)
 {
     return Verb<cranks, Op> { std::forward<Op>(op) };
 }
 
-template <rank_t ... crank, class Op> constexpr inline auto
+template <rank_t ... crank, class Op>
+inline constexpr auto
 wrank(Op && op)
 {
     return Verb<mp::int_list<crank ...>, Op> { std::forward<Op>(op) };

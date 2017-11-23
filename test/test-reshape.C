@@ -40,8 +40,10 @@ int main()
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, reshape(a, ra::Small<int, 1> {3}));
         tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 1> {3}).p));
 // tile.
-        tr.info("reshape select").test_eq(ra::Big<int, 3>({2, 2, 3}, {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5}), reshape(a, ra::Small<int, 3> {2, 2, 3}));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 3> {2, 2, 3}).p));
+        auto tilea = reshape(a, ra::Small<int, 3> {2, 2, 3});
+        tr.info("reshape select").test_eq(ra::Big<int, 3>({2, 2, 3}, {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5}), tilea);
+        tr.info("some tile-reshapes are free (I)").test_eq(0, tilea.stride(0));
+        tr.info("some tile-reshapes are free (II)").test_eq(ra::scalar(a.data()), ra::scalar(tilea.data()));
 // reshape with free ravel
         tr.info("reshape w/free ravel I").test_eq(ra::Big<int, 2>({3, 2}, {0, 1, 2, 3, 4, 5}), reshape(a, ra::Small<int, 2> {3, 2}));
         tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 2> {3, 2}).p));

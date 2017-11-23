@@ -23,21 +23,24 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 #define RA_REAL double
 #define RA_CPLX std::complex<RA_REAL>
 
-inline constexpr RA_REAL real_part(RA_CPLX && z)       { return z.real(); }
-inline constexpr RA_REAL imag_part(RA_CPLX && z)       { return z.imag(); }
-inline constexpr RA_REAL real_part(RA_CPLX const & z)  { return z.real(); }
-inline constexpr RA_REAL imag_part(RA_CPLX const & z)  { return z.imag(); }
-inline RA_REAL & real_part(RA_CPLX & z)                { return reinterpret_cast<RA_REAL *>(&z)[0]; }
-inline RA_REAL & imag_part(RA_CPLX & z)                { return reinterpret_cast<RA_REAL *>(&z)[1]; }
-inline RA_REAL sqrm(RA_CPLX const x)                   { return sqrm(x.real())+sqrm(x.imag()); }
-inline RA_REAL sqrm(RA_CPLX const x, RA_CPLX const y)  { return sqrm(x.real()-y.real())+sqrm(x.imag()-y.imag()); }
-inline RA_REAL norm2(RA_CPLX const x)                  { return hypot(x.real(), x.imag()); }
-inline RA_REAL norm2(RA_CPLX const x, RA_CPLX const y) { return sqrt(sqrm(x, y)); }
-inline RA_REAL abs(RA_CPLX const x, RA_CPLX const y)   { return sqrt(sqrm(x, y)); }
-inline RA_CPLX sqr(RA_CPLX const x)                    { return x*x; }
-inline RA_CPLX dot(RA_CPLX const x, RA_CPLX const y)   { return x*y; }
-inline constexpr RA_CPLX xI(RA_REAL const x)           { return RA_CPLX(0, x); }
-inline constexpr RA_CPLX xI(RA_CPLX const z)           { return RA_CPLX(-z.imag(), z.real()); }
+#define FOR_FLOAT(R, C)                                                 \
+    inline constexpr C xI(R const x)               { return C(0, x); }  \
+    inline constexpr C xI(C const z)               { return C(-z.imag(), z.real()); } \
+    inline constexpr R real_part(C const & z)      { return z.real(); } \
+    inline constexpr R imag_part(C const & z)      { return z.imag(); } \
+    inline constexpr R & real_part(C & z)          { return reinterpret_cast<R *>(&z)[0]; } \
+    inline constexpr R & imag_part(C & z)          { return reinterpret_cast<R *>(&z)[1]; } \
+    inline constexpr R sqrm(C const x)             { return sqrm(x.real())+sqrm(x.imag()); } \
+    inline constexpr R sqrm(C const x, C const y)  { return sqrm(x.real()-y.real())+sqrm(x.imag()-y.imag()); } \
+    inline constexpr R norm2(C const x)            { return hypot(x.real(), x.imag()); } \
+    inline constexpr R norm2(C const x, C const y) { return sqrt(sqrm(x, y)); } \
+    inline constexpr R abs(C const x, C const y)   { return sqrt(sqrm(x, y)); } \
+    inline C sqr(C const x)                        { return x*x; }      \
+    inline C dot(C const x, C const y)             { return x*y; }
+FOR_FLOAT(double, std::complex<double>);
+FOR_FLOAT(float, std::complex<float>);
+#undef FOR_FLOAT
+
 inline RA_CPLX fma(RA_CPLX const & a, RA_CPLX const & b, RA_CPLX const & c)
 {
     return RA_CPLX(fma(a.real(), b.real(), fma(-a.imag(), b.imag(), c.real())),
