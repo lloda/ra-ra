@@ -2,7 +2,7 @@
 # ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
 
 **ra-ra** is a C++ header-only multidimensional array and expression template
-library in the spirit of [Blitz++](blitz.sourceforge.net). Most of the code is
+library in the spirit of [Blitz++](http://blitz.sourceforge.net). Most of the code is
 C++14, but some C++17 features are used.
 
 Multidimensional arrays are containers that are indexable in zero or more
@@ -17,12 +17,12 @@ involving large array operands, and in this way avoid the unnecessary creation
 of large temporary array objects.
 
 **ra-ra** tries to distinguish itself from established C++ libraries in this
-space (such as [Eigen](eigen.tuxfamily.org) or
+space (such as [Eigen](https://eigen.tuxfamily.org) or
 [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html))
 by being more APLish, more general, smaller, and more hackable.
 
-In this example from `examples/readme.C`, we add each element of a vector to
-each row of a matrix, and then print the result.
+In this example from [examples/readme.C](examples/readme.C), we add each element
+of a vector to each row of a matrix, and then print the result.
 
 ```c++
 #include "ra/operators.H"
@@ -46,49 +46,50 @@ A: 2 2
 
 **ra-ra** supports:
 
-* Array types with arbitrarily large compile time or runtime rank.
+* Array types with arbitrary compile time or runtime rank.
 * Array types with compile time or runtime shape.
 * Memory owning types as well as views, with all the rank and shape options above. You can make array views over any piece of memory.
 * Transparent memory layout, for interoperability with other libraries and/or languages.
 * Rank extension (broadcasting) for functions with any number of arguments of any rank.
 * Slicing with indices of arbitrary rank, beating of linear range indices, index skipping and elision, and more.
-* An outer product operation.
 * A rank conjunction as in J, with some limitations.
+* An outer product operation.
 * Iterators over slices (subarrays) of any rank.
 * A tensor index object, with some limitations.
 * Arbitrary types as array elements, or as scalar operands.
 * Many predefined array operations. Adding yours is trivial.
-* Lazy selection operators (e.g. pick from argument list according to index). Short-circuiting logical operators.
-* Stencil operations.
+* Lazy selection operators (e.g. pick from argument list according to index).
+* Short-circuiting logical operators.
+* Reshape, transpose, reverse, collapse/explode, stencils…
 * Partial compatibility with the STL.
 
-**ra-ra** has a manual (work in progress) maintained at `doc/ra-ra.texi`. You
-can view the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra). Please check it
-out for details, or have a look at the `examples/` folder.
+**ra-ra** has a manual (work in progress) maintained at
+[doc/ra-ra.texi](doc/ra-ra.texi). You can view the manual online at
+[lloda.github.io/ra-ra](https://lloda.github.io/ra-ra). Please check it out for
+details, or have a look at the [examples/](examples/) folder.
 
-Performance is competitive with hand written scalar (element by
-element) loops, but not with cache-tuned code such as your platform BLAS, or
-with code using SIMD. Please have a look at the benchmarks in `bench/`.
+Performance is competitive with hand written scalar (element by element) loops,
+but probably not with cache-tuned code such as your platform BLAS, or with code
+using SIMD. Please have a look at the benchmarks in [bench/](bench/).
 
 #### Building the tests and the benchmarks
 
 The library itself is header-only and has no dependencies other than a C++17 compiler
 and the standard library.
 
-The test suite (```test/```) runs under SCons. There is a `Makefile`, but
-it will just try to run SCons. Running the test suite will also build and run
-the examples (```examples/```) and the benchmarks (```bench/```), although you
-can easily build each of these separately. None of them has any dependencies,
-but some of the benchmarks will try to use BLAS if you have ```RA_USE_BLAS=1```
-in the environment.
+The test suite ([test/](test/)) runs under SCons. Running the test suite will
+also build and run the examples ([examples/](examples/)) and the benchmarks
+([bench/](bench/)), although you can easily build each of these separately. None
+of them has any dependencies, but some of the benchmarks will try to use BLAS if
+you have `RA_USE_BLAS=1` in the environment.
 
 All the tests pass under g++-7.2. Remember to pass `-O2` or `-O3` to the compiler,
 otherwise some of the tests will take a very long time to run.
 
 All the tests pass under clang++-5.0 (with `-Wno-missing-braces`) except for:
 
-* `test/bench-pack.C`, crashes clang.
-* `test/test-optimize.C`, a required specialization is missed and I haven't
+* [test/bench-pack.C](test/bench-pack.C), crashes clang.
+* [test/test-optimize.C](test/test-optimize.C), a required specialization is missed and I haven't
   figured out why.
 
 For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is
@@ -121,9 +122,9 @@ I haven't tested on Windows. If you can do that, I'd appreciate a report!
 
 * Not completely namespace-clean.
 * Beatable subscripts are not beaten if mixed with non-beatable subscripts.
-* Inconsistencies with subscripting; for example, if ```A``` is rank>1 and
-  ```i``` is rank 1, then ```A(i)``` will return a nested expression instead of
-  preserving ```A```'s rank.
+* Inconsistencies with subscripting; for example, if `A` is rank>1 and
+  `i` is rank 1, then `A(i)` will return a nested expression instead of
+  preserving `A`'s rank.
 * Poor reduction mechanisms.
 * Missing concatenation, search, and other infinite rank or rank > 0 operations.
 * Traversal of arrays is naive.
@@ -134,7 +135,7 @@ I haven't tested on Windows. If you can do that, I'd appreciate a report!
 #### Out of scope
 
 * Parallelization (closer to wish...).
-* GPU /  / calls to external libraries.
+* GPU / calls to external libraries.
 * Linear algebra, quaternions, etc. Those things belong in other libraries. The
   library includes a dual number implementation but it's more of a demo of how
   to adapt user types to the library.
