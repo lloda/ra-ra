@@ -13,14 +13,14 @@
 #include "ra/traits.H"
 #include "ra/opcheck.H"
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_ATOM RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_ATOM
-        #define RA_CHECK_BOUNDS_RA_ATOM 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_ATOM
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_ATOM 1
+  #else
+    #define RA_CHECK_BOUNDS_ATOM RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_ATOM==0
+#if RA_CHECK_BOUNDS_ATOM==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -296,4 +296,4 @@ constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (has_te
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_ATOM
+#undef RA_CHECK_BOUNDS_ATOM

@@ -46,28 +46,29 @@ constexpr double GOLDEN = 1.61803398874989484820458683436563811772030917980576; 
 
 }
 
-// abs(int) is in ::, so why should I qualify abs(double)?
-// besides just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
-using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt;
+// just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
+// besides, gcc still leaks cmath functions into the global namespace, so by default e.g. sqrt will be C double sqrt(double) and not the overload set.
+using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow;
 using std::swap, std::isfinite, std::isinf;
 
-#define IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)
+#define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)
+#define RA_REAL_OVERLOAD(T) template <class T> inline constexpr std::enable_if_t<RA_IS_REAL(T), T>
 // As an array op; special definitions for rank 0.
-template <class T> inline constexpr std::enable_if_t<IS_REAL(T), T> amax(T const x) { return x; }
-template <class T> inline constexpr std::enable_if_t<IS_REAL(T), T> amin(T const x) { return x; }
-// TODO see is_scalar in wedge.H>
-template <class T> inline constexpr std::enable_if_t<IS_REAL(T), T> sqr(T const x) { return x*x; }
-#undef IS_REAL
+RA_REAL_OVERLOAD(T) arg(T const x) { return 0; }
+RA_REAL_OVERLOAD(T) amax(T const x) { return x; }
+RA_REAL_OVERLOAD(T) amin(T const x) { return x; }
+RA_REAL_OVERLOAD(T) sqr(T const x) { return x*x; }
+RA_REAL_OVERLOAD(T) real_part(T const x) { return x; }
+RA_REAL_OVERLOAD(T) imag_part(T const x) { return 0.; }
+RA_REAL_OVERLOAD(T) conj(T const x) { return x; }
+RA_REAL_OVERLOAD(T) sqrm(T const x) { return x*x; }
+RA_REAL_OVERLOAD(T) norm2(T const x) { return std::abs(x); }
+#undef RA_IS_REAL
 
 #define FOR_FLOAT(T)                                                    \
-    inline constexpr T real_part(T const x)                      { return x; } \
-    inline constexpr T imag_part(T const x)                      { return 0.; } \
-    inline constexpr T conj(T const x)                           { return x; } \
     inline constexpr T mul_conj(T const x, T const y)            { return x*y; } \
     inline constexpr T fma_conj(T const a, T const b, T const c) { return a*b + c; } \
-    inline constexpr T sqrm(T const x)                           { return x*x; } \
     inline constexpr T sqrm(T const x, T const y)                { return sqrm(x-y); } \
-    inline constexpr T norm2(T const x)                          { return std::abs(x); } \
     inline constexpr T norm2(T const x, T const y)               { return std::abs(x-y); } \
     inline constexpr T abs(T const x, T const y)                 { return std::abs(x-y); } \
     inline constexpr T dot(T const x, T const y)                 { return x*y; } \
@@ -76,6 +77,6 @@ FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
 
 namespace ra {
-    inline constexpr double rad2deg(double const r)              { return r*(180./ra::PI); }
-    inline constexpr double deg2rad(double const d)              { return d*(ra::PI/180.); }
+    inline constexpr double rad2deg(double const r)              { return r*(360./ra::TAU); }
+    inline constexpr double deg2rad(double const d)              { return d*(ra::TAU/360.); }
 } // namespace ra

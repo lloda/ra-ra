@@ -12,14 +12,14 @@
 #pragma once
 #include "ra/big.H"
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_CONCRETE RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_CONCRETE
-        #define RA_CHECK_BOUNDS_RA_CONCRETE 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_CONCRETE
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_CONCRETE 1
+  #else
+    #define RA_CHECK_BOUNDS_CONCRETE RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_CONCRETE==0
+#if RA_CHECK_BOUNDS_CONCRETE==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -111,4 +111,4 @@ with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<concrete_t
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_CONCRETE
+#undef RA_CHECK_BOUNDS_CONCRETE

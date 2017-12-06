@@ -16,14 +16,14 @@
 #pragma once
 #include "ra/ply.H"
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_PICK RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_PICK
-        #define RA_CHECK_BOUNDS_RA_PICK 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_PICK
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_PICK 1
+  #else
+    #define RA_CHECK_BOUNDS_PICK RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_PICK==0
+#if RA_CHECK_BOUNDS_PICK==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -241,4 +241,4 @@ pick(P0 && p0, P && ... p)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_PICK
+#undef RA_CHECK_BOUNDS_PICK

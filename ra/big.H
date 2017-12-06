@@ -16,14 +16,14 @@
 #include <complex>
 #include <memory>
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_BIG RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_BIG
-        #define RA_CHECK_BOUNDS_RA_BIG 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_BIG
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_BIG 1
+  #else
+    #define RA_CHECK_BOUNDS_BIG RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_BIG==0
+#if RA_CHECK_BOUNDS_BIG==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -33,10 +33,10 @@ namespace ra {
 
 // Always C order. If you need another, transpose this.
 template <class S, class D>
-dim_t filldim(S sbegin, S send, D dbegin, D dend)
+dim_t filldim(int n, S send, D dend)
 {
     dim_t next = 1;
-    while (send>sbegin) {
+    for (; n>0; --n) {
         --send;
         --dend;
         assert(*send>=0);
@@ -105,12 +105,12 @@ template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_il
     View(std::initializer_list<dim_t> const s, T * p_): p(p_)           \
     {                                                                   \
         ra::resize(View::dim, s.size());                                \
-        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end()); \
+        filldim(s.size(), s.end(), View::dim.end());                    \
     }                                                                   \
     template <class SS> View(SS const & s, T * p_): p(p_)               \
     {                                                                   \
         ra::resize(View::dim, s.size());                                \
-        filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end()); \
+        filldim(s.size(), s.end(), View::dim.end());                    \
     }                                                                   \
     View(View && x): dim(std::move(x.dim)), p(x.p) {}                   \
     View(View const & x): dim(x.dim), p(x.p) {}                         \
@@ -268,7 +268,7 @@ struct ra_traits_def<View<T, RANK>>
 template <class V> struct storage_traits
 {
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    static V create(dim_t n) { return V(new T[n]); }
+    static V create(dim_t n) { assert(n>=0); return V(new T[n]); }
     static T const * data(V const & v) { return v.get(); }
     static T * data(V & v) { return v.get(); }
 };
@@ -361,7 +361,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         constexpr dim_t sr = ra_traits<decltype(s)>::size_s();
         static_assert(sr==RANK || sr==DIM_ANY || RANK==RANK_ANY, "rank mismatch for init shape");
         ra::resize(View::dim, s.size());
-        dim_t t = filldim(s.begin(), s.end(), View::dim.begin(), View::dim.end());
+        dim_t t = filldim(s.size(), s.end(), View::dim.end());
         store = storage_traits<Store>::create(t);
         View::p = storage_traits<Store>::data(store);
     }
@@ -601,4 +601,4 @@ struct ra_traits_def<WithStorage<Store, RANK>>
 } // namespace ra::
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_BIG
+#undef RA_CHECK_BOUNDS_BIG

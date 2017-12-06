@@ -101,8 +101,7 @@ template <class T, class A> inline
 std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
-    dim_t n;
-    if (!((i >> n).fail())) {
+    if (dim_t n; !((i >> n).fail())) {
         assert(n>=0 && "negative sizes in input");
         c.resize(n);
         for (auto & ci: c) { i >> ci; }
@@ -115,8 +114,7 @@ template <class C> inline
 std::enable_if_t<ra_traits<C>::size_s()==DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
 {
-    typename ra_traits<C>::shape_type s;
-    if (i >> s) {
+    if (typename ra_traits<C>::shape_type s; i >> s) {
         std::decay_t<C> cc(s, ra::unspecified);
         assert(every(start(s)>=0) && "negative sizes in input");
 // avoid copying in case WithStorage's elements don't support it.

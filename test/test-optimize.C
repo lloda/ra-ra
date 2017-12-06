@@ -110,13 +110,18 @@ int main()
     tr.section("small vector ops through vector extensions [opt-small]");
     {
         using Vec = ra::Small<double, 4>;
+        Vec const r {6, 8, 10, 12};
         auto x = optimize(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
 // BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter).
         Vec a {1, 2, 3, 4}, b {5, 6, 7, 8};
         auto y = a + b;
+        auto z = optimize(a + b);
         tr.info("bad optimization").test(std::is_same_v<decltype(x), Vec>);
+        tr.info("bad optimization").skip().test(std::is_same_v<decltype(z), Vec>);
         tr.info("bad non-optimization").test(!std::is_same_v<decltype(y), Vec>);
-        tr.test_eq(y, x);
+        tr.test_eq(r, x);
+        tr.test_eq(r, y);
+        tr.test_eq(r, z);
     }
 #endif
     return tr.summary();

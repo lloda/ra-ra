@@ -20,17 +20,17 @@
 #include "ra/wedge.H"
 #include "ra/global.H"
 
-#ifdef RA_CHECK_BOUNDS
-#define RA_CHECK_BOUNDS_RA_OPERATORS RA_CHECK_BOUNDS
-#else
-#ifndef RA_CHECK_BOUNDS_RA_OPERATORS
-#define RA_CHECK_BOUNDS_RA_OPERATORS 1
+#ifndef RA_CHECK_BOUNDS_OPERATORS
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_OPERATORS 1
+  #else
+    #define RA_CHECK_BOUNDS_OPERATORS RA_CHECK_BOUNDS
+  #endif
 #endif
-#endif
-#if RA_CHECK_BOUNDS_RA_OPERATORS==0
-#define CHECK_BOUNDS( cond )
+#if RA_CHECK_BOUNDS_OPERATORS==0
+    #define CHECK_BOUNDS( cond )
 #else
-#define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
 #include "ra/optimize.H"
@@ -127,7 +127,7 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, cos, sin)
 FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf)
 FOR_EACH(DEF_NAME_OP, max, min, abs, odd, asin, acos, atan, atan2, clamp)
-FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh)
+FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg)
 #undef DEF_NAME_OP
 
 #define DEF_NAME_OP(OP)                                                 \
@@ -494,4 +494,4 @@ gemv(A const & a, B const & b)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_OPERATORS
+#undef RA_CHECK_BOUNDS_OPERATORS

@@ -12,14 +12,14 @@
 #pragma once
 #include "ra/ply.H"
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_EXPR RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_EXPR
-        #define RA_CHECK_BOUNDS_RA_EXPR 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_EXPR
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_EXPR 1
+  #else
+    #define RA_CHECK_BOUNDS_EXPR RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_EXPR==0
+#if RA_CHECK_BOUNDS_EXPR==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -36,8 +36,8 @@ struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 {
     Op & op;
     std::tuple<P ...> t;
-    template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-    decltype(auto) operator*() { return op(*std::get<I>(t) ...); } // TODO std::apply(op, t)
+    template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
+    constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); } // TODO std::apply(op, t)
 };
 
 template <class Op, class ... P> inline constexpr
@@ -72,8 +72,7 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 // Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
             assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
             for (int k=0; k!=ranki; ++k) {
-                dim_t sk0 = std::get<A>(t).size(k);
-                if (sk0!=DIM_BAD) { // may be == in subexpressions
+                if (dim_t sk0 = std::get<A>(t).size(k); sk0!=DIM_BAD) { // may be == in subexpressions
                     dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
                     assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
                 }
@@ -166,4 +165,4 @@ for_each(F && f, A && ... a)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_EXPR
+#undef RA_CHECK_BOUNDS_EXPR

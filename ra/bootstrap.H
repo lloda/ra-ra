@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2015, 2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -14,20 +14,22 @@
 #include "ra/tuple-list.H"
 #include "ra/tuple-dynamic.H"
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_BOOTSTRAP RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_BOOTSTRAP
-        #define RA_CHECK_BOUNDS_RA_BOOTSTRAP 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_BOOTSTRAP
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_BOOTSTRAP 1
+  #else
+    #define RA_CHECK_BOUNDS_BOOTSTRAP RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_BOOTSTRAP==0
+#if RA_CHECK_BOUNDS_BOOTSTRAP==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
 namespace ra {
+
+constexpr int VERSION = 4;
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
@@ -125,4 +127,4 @@ template <int n=1> constexpr newaxis_t<n> newaxis = newaxis_t<n>();
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_BOOTSTRAP
+#undef RA_CHECK_BOUNDS_BOOTSTRAP

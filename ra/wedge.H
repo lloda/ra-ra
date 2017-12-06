@@ -11,7 +11,6 @@
 
 #pragma once
 #include "ra/tuple-list.H"
-#include "ra/type.H" // only for is_scalar<>
 
 namespace mp {
 

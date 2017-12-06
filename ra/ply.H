@@ -157,7 +157,7 @@ void plyf_index(A && a)
 #endif
 #define RA_INLINE inline /* __attribute__((always_inline)) inline */
 
-template <class order, int ravel_rank, class A, class S> RA_INLINE
+template <class order, int ravel_rank, class A, class S> RA_INLINE constexpr
 void subindex(A & a, dim_t s, S const & ss0)
 {
     if constexpr (mp::len<order> == ravel_rank) {
@@ -178,7 +178,7 @@ void subindex(A & a, dim_t s, S const & ss0)
 
 // until() converts runtime jj into compile time j. TODO a.adv<k>().
 
-template <class order, int j, class A, class S> RA_INLINE
+template <class order, int j, class A, class S> RA_INLINE constexpr
 void until(int const jj, A & a, dim_t const s, S const & ss0)
 {
     if constexpr (mp::len<order> < j) {
@@ -194,7 +194,7 @@ void until(int const jj, A & a, dim_t const s, S const & ss0)
     }
 }
 
-template <class A> RA_INLINE
+template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
@@ -202,18 +202,18 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
     *(a.flat());
 }
 
-template <class A> RA_INLINE
+template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()==1)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
     subindex<mp::Iota_<1>, 1>(a, a.size(0), a.stride(0));
 }
 
-template <class A> RA_INLINE
+template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 {
     static_assert(!has_tensorindex<A>, "bad plier for expr");
-    /* constexpr */ rank_t const rank = a.rank();
+    rank_t const rank = a.rank();
 #if 0 // FIXME both s & j can be constexpr. Try again after gcc 7 (constexpr lambda, for j).
 // find the outermost compact dim.
     /* constexpr */ auto s = a.size(rank-1);
@@ -239,21 +239,21 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 // Select best performance (or requirements) for each type.
 // ---------------------------
 
-template <class A> inline
+template <class A> inline constexpr
 std::enable_if_t<has_tensorindex<A>>
 ply(A && a)
 {
     ply_index(std::forward<A>(a));
 }
 
-template <class A> inline
+template <class A> inline constexpr
 std::enable_if_t<!has_tensorindex<A> && (std::decay_t<A>::size_s()==DIM_ANY)>
 ply(A && a)
 {
     ply_ravel(std::forward<A>(a));
 }
 
-template <class A> inline
+template <class A> inline constexpr
 std::enable_if_t<!has_tensorindex<A> && (std::decay_t<A>::size_s()!=DIM_ANY)>
 ply(A && a)
 {

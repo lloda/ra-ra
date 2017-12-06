@@ -5,7 +5,7 @@
 @settitle ra:: —An array library for C++17
 @c %**end of header
 
-@set VERSION 0.4
+@set VERSION 4
 @set UPDATED 2017 November 16
 
 @copying
@@ -53,7 +53,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 * Internals::         For all the world to see.
 * The future::        Could be even better.
 * Reference::         Systematic list of types and functions.
-* @mybibnode{}::           It's been done before.
+* @mybibnode{}::      It's been done before.
 * Indices::           Or try the search function.
 @end menu
 
@@ -328,7 +328,7 @@ ra::Big<double> b({2, 3}, a);      // b has size 2x3 and a is copied into b
 
 The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape () of @code{1.} matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}).
 
-Finally, there are special constructors where the content argument is either a pointer or an @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointer or @code{std::initializer_list} for shape by using the functions @code{ptr} or @code{vector}.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested @code{std::initializer_list} isn't supported yet, but may be supported in the future.
+Finally, there are special constructors where the content argument is either a pointer or an @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested @code{std::initializer_list} isn't supported yet, but may be supported in the future.
 
 @cindex order, column-major
 @example
@@ -495,7 +495,7 @@ Now suppose that @code{S} has rank 0. The shape of @code{R+S} is the same as the
 @code{(R+S)(i₀ i₁ ... i₍ᵣ₋₁₎) = R(i₀ i₁ ... i₍ᵣ₋₁₎) + S()}.
 @end quotation
 
-The two rules above are supported by all primitive array languages, e.g. Matlab REF. But suppose that @code{S} has rank @code{s}, where @code{0<s<r}. Looking at the expressions above, it seems natural to define @code{R+S} by
+The two rules above are supported by all primitive array languages, e.g. Matlab @mybibcite{Mat}. But suppose that @code{S} has rank @code{s}, where @code{0<s<r}. Looking at the expressions above, it seems natural to define @code{R+S} by
 
 @quotation
 @code{(R+S)(i₀ i₁ ... i₍ₛ₋₁₎ ... i₍ᵣ₋₁₎) = R(i₀ i₁ ... i₍ₛ₋₁₎ ... i₍ᵣ₋₁₎) + S(i₀ i₁ ... i₍ₛ₋₁₎)}.
@@ -1100,7 +1100,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 @anchor{x-scalar-ops}
 @subsection Standard scalar operations
 
-@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting @emph{as array operations}; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively. Note that if both operands are of rank 0 and at least one of them is a @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, and @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively. Note that if both operands are of rank 0 and at least one of them is a @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, and @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
 
 For example:
 @example @c [ma110]
@@ -1200,6 +1200,23 @@ FIXME lexicographical compare etc.
 
 Some of these issues arise because @code{ra::} applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 
+@section Assignment to views
+
+FIXME
+With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the lhs instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
+
+@section Size of brace initializers isn't checked until run time
+
+FIXME
+
+@section Passing view arguments by reference
+
+FIXME
+
+@section Array iterators and temporaries
+
+FIXME
+
 @section Understand rank extension
 
 Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches @code{a} and 3 [both of shape ()] with a vector of shape (3). This is equivalent to @code{@{a=3+4; a=3+5; a=3+6;@}}. You may get a different result depending on the order of traversal.
@@ -1221,19 +1238,6 @@ When @code{a=b=c} works, it operates as @code{b=c; a=b;} and not as an array exp
 
 FIXME
 @code{View<T, N> x; x = T()} fails if @code{T} isn't registered as @code{is_scalar}.
-
-@section Assignment to views
-
-FIXME
-With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the lhs instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
-
-@section Array iterators and temporaries
-
-FIXME
-
-@section Size of brace initializers isn't checked until run time
-
-FIXME
 
 @enumerate
 @item
@@ -1295,7 +1299,17 @@ The following boolean @code{#define}s affect the behavior of @code{ra::}.
 @chapter The future
 @c ------------------------------------------------
 
-FIXME Wishlist.
+@section Error messages
+
+FIXME
+
+@section Reductions
+
+FIXME
+
+@section Etc
+
+FIXME
 
 @c ------------------------------------------------
 @node Reference
@@ -1343,7 +1357,7 @@ for_each([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})
 @end example
 
 @cindex @code{ply}
-@anchor {x-ply} @defun ply expr
+@anchor{x-ply} @defun ply expr
 Traverse @var{expr}. @code{ply} returns @code{void} so @var{expr} should be run for effect.
 @end defun
 
@@ -1399,7 +1413,7 @@ For example:
 
 @cindex @code{from}
 @anchor{x-from} @defun from op ... expr
-Create outer product expression. This is defined as @math{E(i00, i01 ..., i10, i11, ..., ...) = op(expr0(i01, i01, ...), expr1(i10, i11, ...), ...)}.
+Create outer product expression. This is defined as @math{E = from(op, e₀, e₁ ...)} ⇒ @math{E(i₀₀, i₀₁ ..., i₁₀, i₁₁, ..., ...) = op[e₀(i₀₀, i₀₁, ...), e₁(i₁₀, i₁₁, ...), ...]}.
 @end defun
 
 For example:
@@ -1742,7 +1756,8 @@ Compute @code{(0+1j)} times @var{expr}.
 @item @mybibitem{FI68}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.
 @item @mybibitem{FI73}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973.
 @item @mybibitem{FI78}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978.
-@item @mybibitem{J S}   @tab J Primer. J Software, @url{http://www.jsoftware.com/help/primer/contents.htm}, November 2017.
+@item @mybibitem{J S}   @tab J Primer. J Software, @url{https://www.jsoftware.com/help/primer/contents.htm}, November 2017.
+@item @mybibitem{Mat}   @tab MathWorks. MATLAB documentation, @url{https://www.mathworks.com/help/matlab/}, November 2017.
 @item @mybibitem{num17} @tab NumPy. @url{http://www.numpy.org}, November 2017.
 @item @mybibitem{Ric08} @tab Henry Rich. J for C programmers, February 2008.
 @item @mybibitem{SSM14} @tab Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.

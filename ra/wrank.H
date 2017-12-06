@@ -12,14 +12,14 @@
 #pragma once
 #include "ra/expr.H"
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_WRANK RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_WRANK
-        #define RA_CHECK_BOUNDS_RA_WRANK 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_WRANK
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_WRANK 1
+  #else
+    #define RA_CHECK_BOUNDS_WRANK RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_WRANK==0
+#if RA_CHECK_BOUNDS_WRANK==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -150,8 +150,7 @@ struct ApplyFrames
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        int l = live(k);
-        if (l>=0) {
+        if (int l = live(k); l>=0) {
             a.adv(l, d);
         }
     }
@@ -362,4 +361,4 @@ auto from(A && a, I && ... i)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_WRANK
+#undef RA_CHECK_BOUNDS_WRANK

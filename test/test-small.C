@@ -268,8 +268,8 @@ int main()
         constexpr ra::Small<int> b = {9};
         using Vb = mp::int_t<int(b)>;
         tr.test_eq(9, Vb::value);
-        // using Vc = mp::int_t<sum(a)>; // TODO waiting for N4487 / P0170R1 in gcc 7
-        // tr.test_eq(10, Vb::value);
+        using Vc = mp::int_t<sum(a)>; // constexpr reduction!
+        tr.test_eq(10, Vc::value);
     }
     tr.section("custom strides. List init is always row-major.");
     {

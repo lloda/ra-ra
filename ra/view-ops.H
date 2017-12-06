@@ -12,14 +12,14 @@
 #pragma once
 #include "ra/big.H"
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_VIEW_OPS RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_VIEW_OPS
-        #define RA_CHECK_BOUNDS_RA_VIEW_OPS 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_VIEW_OPS
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_VIEW_OPS 1
+  #else
+    #define RA_CHECK_BOUNDS_VIEW_OPS RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_VIEW_OPS==0
+#if RA_CHECK_BOUNDS_VIEW_OPS==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -125,11 +125,11 @@ auto reshape(View<T, RANK> const & a, S && sb_)
 {
     auto sb = concrete(sb_);
 // FIXME when we need to copy, accept/return Shared
-    ra::dim_t la = a.size();
-    ra::dim_t lb = 1;
+    dim_t la = a.size();
+    dim_t lb = 1;
     for (int i=0; i<sb.size(); ++i) {
         if (sb[i]==-1) {
-            ra::dim_t quot = lb;
+            dim_t quot = lb;
             for (int j=i+1; j<sb.size(); ++j) {
                 quot *= sb[j];
                 if (quot<=0) {
@@ -155,7 +155,7 @@ auto reshape(View<T, RANK> const & a, S && sb_)
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
             assert(is_ravel_free(a) && "reshape w/copy not implemented");
             if (la>=lb) {
-                filldim(sb.begin(), sb.end(), b.dim.begin(), b.dim.end()); // FIXME View(SS const & s, T * p)
+                filldim(sb.size(), sb.end(), b.dim.end()); // FIXME View(SS const & s, T * p)
                 for (int j=0; j!=b.rank(); ++j) {
                     b.dim[j].stride *= a.stride(a.rank()-1);
                 }
@@ -294,4 +294,4 @@ inline bool const crm(A const & a, Int const nrow, Jnt const ncol)
 } // namespace ra::
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_VIEW_OPS
+#undef RA_CHECK_BOUNDS_VIEW_OPS

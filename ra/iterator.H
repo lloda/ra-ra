@@ -14,14 +14,14 @@
 #include "ra/opcheck.H"
 #include <iostream>
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_ITERATOR RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_ITERATOR
-        #define RA_CHECK_BOUNDS_RA_ITERATOR 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_ITERATOR
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_ITERATOR 1
+  #else
+    #define RA_CHECK_BOUNDS_ITERATOR RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_ITERATOR==0
+#if RA_CHECK_BOUNDS_ITERATOR==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -208,4 +208,4 @@ auto iter(A && a) { return a.template iter<cell_rank>(); }
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_ITERATOR
+#undef RA_CHECK_BOUNDS_ITERATOR

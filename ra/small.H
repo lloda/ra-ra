@@ -13,14 +13,14 @@
 /// @file small.H
 /// @brief Arrays with fixed size.
 
-#ifdef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_RA_SMALL RA_CHECK_BOUNDS
-#else
-    #ifndef RA_CHECK_BOUNDS_RA_SMALL
-        #define RA_CHECK_BOUNDS_RA_SMALL 1
-    #endif
+#ifndef RA_CHECK_BOUNDS_SMALL
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_SMALL 1
+  #else
+    #define RA_CHECK_BOUNDS_SMALL RA_CHECK_BOUNDS
+  #endif
 #endif
-#if RA_CHECK_BOUNDS_RA_SMALL==0
+#if RA_CHECK_BOUNDS_SMALL==0
     #define CHECK_BOUNDS( cond )
 #else
     #define CHECK_BOUNDS( cond ) assert( cond )
@@ -279,7 +279,7 @@ struct SmallBase
         {
             return p[Indexer0<sizes, strides>::index_short(i_)];
         }
-        void adv(rank_t const k, dim_t const d)
+        constexpr void adv(rank_t const k, dim_t const d)
         {
             p += (k<rank()) * stride(k)*d;
         }
@@ -661,4 +661,4 @@ inline constexpr auto start(T && t)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_RA_SMALL
+#undef RA_CHECK_BOUNDS_SMALL

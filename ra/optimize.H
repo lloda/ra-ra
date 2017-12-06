@@ -13,6 +13,19 @@
 #include "ra/expr.H"
 #include "ra/small.H"
 
+#ifndef RA_CHECK_BOUNDS_OPTIMIZE
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_OPTIMIZE 1
+  #else
+    #define RA_CHECK_BOUNDS_OPTIMIZE RA_CHECK_BOUNDS
+  #endif
+#endif
+#if RA_CHECK_BOUNDS_OPTIMIZE==0
+    #define CHECK_BOUNDS( cond )
+#else
+    #define CHECK_BOUNDS( cond ) assert( cond )
+#endif
+
 // no real downside to this.
 #ifndef RA_OPTIMIZE_IOTA
 #define RA_OPTIMIZE_IOTA 1
@@ -117,15 +130,15 @@ inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 
 #define OPTIMIZE_SMALLVECTOR_OP(OP, NAME)                               \
-inline auto                                            \
-optimize(ra::Expr<NAME,                                                 \
-                  std::tuple<decltype(start(std::declval<ra::Small<double, 4>>())), \
-                             decltype(start(std::declval<ra::Small<double, 4>>()))>> && e) \
-{                                                                       \
-    ra::Small<double, 4> val;                                           \
-    (extvector<double, 4> &)(val) = (extvector<double, 4> &)(*(ITEM(0).p)) OP (extvector<double, 4> &)(*(ITEM(1).p)); \
-    return val;                                                         \
-}
+    inline auto                                                         \
+    optimize(ra::Expr<NAME,                                             \
+             std::tuple<decltype(start(std::declval<ra::Small<double, 4>>())), \
+                        decltype(start(std::declval<ra::Small<double, 4>>()))>> && e) \
+    {                                                                   \
+        ra::Small<double, 4> val;                                       \
+        (extvector<double, 4> &)(val) = (extvector<double, 4> &)(*(ITEM(0).p)) OP (extvector<double, 4> &)(*(ITEM(1).p)); \
+        return val;                                                     \
+    }
 OPTIMIZE_SMALLVECTOR_OP(+, ra::plus)
 OPTIMIZE_SMALLVECTOR_OP(*, ra::times)
 #undef OPTIMIZE_SMALLVECTOR_OP

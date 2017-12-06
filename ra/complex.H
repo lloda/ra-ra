@@ -24,6 +24,7 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 #define RA_CPLX std::complex<RA_REAL>
 
 #define FOR_FLOAT(R, C)                                                 \
+    inline R arg(C const x)                        { return std::arg(x); } \
     inline constexpr C xI(R const x)               { return C(0, x); }  \
     inline constexpr C xI(C const z)               { return C(-z.imag(), z.real()); } \
     inline constexpr R real_part(C const & z)      { return z.real(); } \
