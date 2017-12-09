@@ -76,20 +76,6 @@ dim_t proddim(D d, D dend)
     auto end() { return stl_iterator<iterator<0>> {}; }                 \
     auto end() const { return stl_iterator<const_iterator<0>> {}; }
 
-template <class I> constexpr bool is_initializer_list = false;
-template <class T> constexpr bool is_initializer_list<std::initializer_list<T> > = true;
-
-template <rank_t k, class T> struct ranked_ilist_def;
-template <rank_t k, class T> using ranked_ilist = typename ranked_ilist_def<k, T>::type;
-
-template <rank_t k, class T> struct ranked_ilist_def
-{
-    static_assert(k>=0);
-    using type = std::initializer_list<ranked_ilist<k-1, T>>;
-};
-template <class T> struct ranked_ilist_def<0, T> { using type = T; };
-template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_ilist<1, T>; };
-
 // See same thing for SmallBase.
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x)                      \
@@ -97,7 +83,7 @@ template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_il
         for_each([](T & y, T const & x) { y OP x; }, *this, x);         \
         return *this;                                                   \
     }
-#define DEF_ASSIGNMENT_OPS                                              \
+#define DEF_ASSIGNMENT_OPS(RANK)                                        \
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
     /* These three are unsafe */                                        \
     View(): p(nullptr) {}                                               \
@@ -114,12 +100,21 @@ template <class T> struct ranked_ilist_def<RANK_ANY, T> { using type = ranked_il
     }                                                                   \
     View(View && x): dim(std::move(x.dim)), p(x.p) {}                   \
     View(View const & x): dim(x.dim), p(x.p) {}                         \
+    /* (X && ) cannot stand in for default constructor [ra34] */        \
     View & operator=(View const & x)                                    \
     {                                                                   \
-        for_each([](T & dest, T const & src) { dest = src; }, *this, x); \
+        for_each([](T & y, T const & x) { y = x; }, *this, x);          \
         return *this;                                                   \
     }                                                                   \
-    /* Ignore rank, row-major fill. TODO Use xpr traversal */          \
+    /* Array type is not deduced by (X &&). FIXME ra:: loop, need iter<1>(Small). */ \
+    View & operator=(typename nested_braces<T, RANK>::list x)           \
+    {                                                                   \
+        assert(size(0)==dim_t(x.size()));                               \
+        int i = 0;                                                      \
+        for (auto const & xx: x) { (*this)(i) = xx; ++i; } /* std::copy not constexpr */ \
+        return *this;                                                   \
+    }                                                                   \
+    /* Fill row-major ravel for any rank. TODO Use ra:: traversal */    \
     View & operator=(std::initializer_list<T> const x)                  \
     {                                                                   \
         assert(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
@@ -236,7 +231,7 @@ struct View
 #undef SUBSCRIPTS
 
     DEF_ITERATORS(RANK)
-    DEF_ASSIGNMENT_OPS
+    DEF_ASSIGNMENT_OPS(RANK)
 
     operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
@@ -391,6 +386,14 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
     {
         static_assert(RANK==RANK_ANY || RANK==1, "rank mismatch with init list (of rank 1)");
         fill1(x.size(), x.begin());
+    }
+    WithStorage(typename nested_braces<T, RANK>::list x)
+    {
+        static_assert(RANK!=RANK_ANY);
+        std::array<dim_t, RANK> s;
+        nested_braces<T, RANK>::template shape(x, s);
+        init(s);
+        static_cast<View &>(*this) = x;
     }
 // TODO Replace these rank 1 -> rank N constructors by explicit reshape. See also small.H.
     WithStorage(std::initializer_list<dim_t> const s, std::initializer_list<T> const x): WithStorage(s, unspecified)
@@ -561,7 +564,7 @@ struct View<T, RANK_ANY>
 #undef SUBSCRIPTS
 
     DEF_ITERATORS(RANK_ANY)
-    DEF_ASSIGNMENT_OPS
+    DEF_ASSIGNMENT_OPS(RANK_ANY)
     template <rank_t SRANK> View(View<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 
     operator T & () { assert(rank()==0); return data()[0]; };

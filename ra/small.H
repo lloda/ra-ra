@@ -217,8 +217,8 @@ struct SmallBase
 #undef SUBSCRIPTS
 
 // See same thing for View.
-#define DEF_ASSIGNOPS(OP)                                                   \
-    template <class X> constexpr Child & operator OP(X && x)            \
+#define DEF_ASSIGNOPS(OP)                                               \
+        template <class X> constexpr Child & operator OP(X && x)        \
     {                                                                   \
         /* TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
         constexpr rank_t xrank = std::decay_t<decltype(start(x))>::rank_s(); \
@@ -228,12 +228,23 @@ struct SmallBase
     }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
-    constexpr Child & operator=(std::initializer_list<T> const x)
+    /* Array type is not deduced by (X &&). FIXME ra:: loop, need iter<1>(Small). */
+    constexpr Child & operator=(typename nested_braces<T, rank()>::list const x)
     {
-        assert(x.size()==size() && "bad initializer list"); /* static_assert */
-        std::copy(x.begin(), x.end(), this->begin());
+        assert(size(0)==dim_t(x.size()));
+        int i = 0;
+        for (auto const & xx: x) { static_cast<Child &>(*this)(i) = xx; ++i; } /* std::copy not constexpr */
         return static_cast<Child &>(*this);
     }
+    /* Fill row-major ravel for any rank. FIXME Use ra:: traversal need start(iterator). */
+    constexpr Child & operator=(std::initializer_list<T> const x)
+    {
+        assert(size()==dim_t(x.size()));
+        auto b = this->begin();
+        for (auto const & xx: x) { *b = xx; ++b; } /* std::copy not constexpr */
+        return static_cast<Child &>(*this);
+    }
+
 
 // TODO Would replace by s(ra::iota) if that could be made constexpr
 #define DEF_AS(CONST)                                                   \
@@ -381,6 +392,10 @@ struct SmallBase
 #undef COMP_RENAME_C
 };
 
+// ---------------------
+// Strides are compile time known, so we can put most members in the view type.
+// ---------------------
+
 template <class T, class sizes, class strides>
 struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 {
@@ -414,22 +429,28 @@ struct SmallView: public SmallBase<SmallView, T, sizes, strides>
                                                                         \
     constexpr SmallArray(): p() {}                                      \
     template <class X>                                                  \
-    constexpr SmallArray(X && x): p()                                   \
+    constexpr SmallArray(X && x): p()  /* init for constexpr */         \
     {                                                                   \
         static_cast<Base &>(*this) = x;                                 \
     }                                                                   \
-    constexpr SmallArray(std::initializer_list<T> const x): p() /* init for constexpr */ \
+    /* List type is not deduced by (X &&) */                            \
+    constexpr SmallArray(typename nested_braces<T, Base::rank()>::list x): p() \
     {                                                                   \
-        assert(x.size()==Base::size() && "bad initializer list"); /* static_assert */ \
-        auto b = this->begin();                                         \
-        for (auto const & xx: x) { *b = xx; ++b; } /* std::copy not constexpr */ \
+        static_cast<Base &>(*this) = x;                                 \
     }                                                                   \
-    template <class P> /* TODO remove; only here because std::vector has it */ \
+    /* List type is not deduced by (X &&) */                            \
+    constexpr SmallArray(std::initializer_list<T> x): p()               \
+    {                                                                   \
+        static_cast<Base &>(*this) = x;                                 \
+    }                                                                   \
+    /* test-small-0 and test-small-1 pass without these two; make sure they're needed. */ \
+    /* 1. Remove for start(begin) or start(begin, end); only here because std::vector has it */ \
+    template <class P>                                                  \
     constexpr SmallArray(P begin, P end)                                \
     {                                                                   \
         std::copy(begin, end, this->begin());                           \
     }                                                                   \
-    /* Special case is needed if ra::start() doesn't acknowledge T as scalar */ \
+    /* 2. Special case is needed if ra::start() doesn't acknowledge T as scalar */ \
     constexpr SmallArray(T const & t)                                   \
     {                                                                   \
         std::fill(this->begin(), this->end(), t);                       \

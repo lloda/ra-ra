@@ -160,7 +160,7 @@ struct Ptr
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     using shape_type = std::array<dim_t, 1>;
-    constexpr static auto shape() { return shape_type { { dim_t(DIM_BAD) } }; }
+    constexpr static auto shape() { return shape_type { dim_t(DIM_BAD) }; }
 
     template <class I>
     constexpr decltype(auto) at(I const & i)
@@ -184,7 +184,10 @@ struct Ptr
 #undef DEF_ASSIGNOPS
 };
 
-template <class T> inline constexpr auto ptr(T * p) { return Ptr<T *> { p }; }
+template <class I,
+          std::enable_if_t<std::is_same_v<typename std::iterator_traits<std::decay_t<I>>::iterator_category,
+                                          std::random_access_iterator_tag>, int> =0>
+inline auto ptr(I i) { return Ptr<I> { i }; } // FIXME forwarder that moves if value, copies if ref ?
 
 template <class T>
 struct IotaFlat

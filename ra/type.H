@@ -106,7 +106,7 @@ inline constexpr auto start(T && t)
 }
 
 template <class T>
-inline constexpr auto start(std::initializer_list<T> && v)
+inline constexpr auto start(std::initializer_list<T> v)
 {
     return Vector<std::initializer_list<T>> { std::move(v) };
 }

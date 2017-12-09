@@ -31,9 +31,9 @@ of a vector to each row of a matrix, and then print the result.
 
 int main()
 {
-  ra::Big<float, 2> A({2, 2}, {1, 2, 3, 4});  // A = [1 2; 3 4], dynamic shape, compile-time rank
-  A += std::vector<float>({10, 20});          // rank-extending op with STL object
-  std::cout << "A: " << A << "\n\n";          // shape is dynamic, so it will be printed
+  ra::Big<float, 2> A {{1, 2}, {3, 4}};  // compile-time rank, dynamic shape
+  A += std::vector<float> {10, 20};      // rank-extending op with STL object
+  std::cout << "A: " << A << "\n\n";     // shape is dynamic, so it will be printed
   return 0;
 }
 ```

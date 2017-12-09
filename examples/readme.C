@@ -35,7 +35,7 @@ int main()
 // Memory-owning types and views. You can make array views over any piece of memory.
     {
         // memory-owning types
-        ra::Big<char, 2> A({2, 3}, 'a');   // storage is std::vector inside A
+        ra::Big<char, 2> A({2, 3}, 'a');     // storage is std::vector inside A
         ra::Unique<char, 2> B({2, 3}, 'b');  // storage is owned by std::unique_ptr inside B
         ra::Small<char, 2, 3> C('c');        // storage is owned by C itself, on the stack
 
@@ -61,8 +61,8 @@ int main()
 // rules are taken from the array language, J.
 // (See examples/agreement.C for more examples.)
     {
-        ra::Big<float, 2> A({2, 3}, { 1, 2, 3, 1, 2, 3 });
-        ra::Big<float, 1> B({-1, +1});
+        ra::Big<float, 2> A {{1, 2, 3}, {1, 2, 3}};
+        ra::Big<float, 1> B {-1, +1};
 
         ra::Big<float, 2> C({2, 3}, 99.);
         C = A * B;   // C(i, j) = A(i, j) * C(i)
@@ -117,18 +117,18 @@ int main()
         cout << "A4: " << A(ra::iota(2, 1, -1)) << "\n\n";
 
 // indices can be arrays of any rank.
-        ra::Big<int, 2> I({2, 2}, {0, 3, 1, 2});
-        ra::Big<char, 1> B({4}, {'a', 'b', 'c', 'd'});
+        ra::Big<int, 2> I {{0, 3}, {1, 2}};
+        ra::Big<char, 1> B {'a', 'b', 'c', 'd'};
         cout << "B(I): " << B(I) << "\n\n";
 
 // multiple indexing performs an implicit outer product.  this results in a rank
 // 4 array X = A(J, 1, J) -> X(i, j, k, l) = A(J(i, j), 1, J(k, l))
-        ra::Big<int, 2> J({2, 2}, {1, 0, 0, 1});
+        ra::Big<int, 2> J {{1, 0}, {0, 1}};
         cout << "A(J, 1, J): " << A(J, 1, J) << "\n\n";
 
 // explicit indices do not result in a View view (= pointer + strides), but the
 // resulting expression can still be written on.
-        B(I) = ra::Big<char, 2>({2, 2}, {'x', 'y', 'z', 'w'});
+        B(I) = ra::Big<char, 2> {{'x', 'y'}, {'z', 'w'}};
         cout << "B: " << B << endl;
     }
     // A TensorIndex object as in Blitz++ (with some differences).
@@ -142,8 +142,8 @@ int main()
         std::sort(A.begin(), A.end());
         cout << "A: " << A << "\n\n";
 
-        ra::Big<float, 2> B({2, 2}, {1, 2, 3, 4});
-        B += std::vector<float>({10, 20});
+        ra::Big<float, 2> B {{1, 2}, {3, 4}};
+        B += std::vector<float> {10, 20};
         cout << "B: " << B << "\n\n";
     }
 // example from the manual [ma100].
@@ -169,8 +169,8 @@ int main()
     }
 // example from the manual [ma103].
     {
-        ra::Big<int, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
-        ra::Big<int, 2> B({2, 3}, {7, 8, 9, 10, 11, 12});
+        ra::Big<int, 2> A {{1, 2}, {3, 4}, {5, 6}};
+        ra::Big<int, 2> B {{7, 8, 9}, {10, 11, 12}};
         ra::Big<int, 2> C({3, 3}, 0.);
         for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), C, A, B);
 /* 3 3
@@ -187,8 +187,8 @@ int main()
     }
 // example from the manual [ma105]
     {
-        ra::Big<double, 2> a({2, 3}, {1, 2, 3, 4, 5, 6});
-        ra::Big<double, 1> b({3}, {10, 20, 30});
+        ra::Big<double, 2> a {{1, 2, 3}, {4, 5, 6}};
+        ra::Big<double, 1> b {10, 20, 30};
         ra::Big<double, 2> c({2, 3}, 0);
         iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply each item of a by b
         cout << c << endl;
@@ -204,6 +204,20 @@ int main()
 // example from manual [ma110].
     {
         std::cout << exp(ra::Small<double, 3> {4, 5, 6}) << std::endl;
+    }
+// example from manual [ma111].
+    {
+        ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
+        ra::Small<int, 2, 2> b = {1, 2, 3, 4};  // ravel of content
+        cout << "a: " << a << ", b: " << b << endl;
+    }
+// example from manual [ma112].
+    {
+        using sizes = mp::int_list<2, 3>;
+        using strides = mp::int_list<1, 2>;
+        ra::SmallArray<int, sizes, strides> a {{1, 2, 3}, {4, 5, 6}}; //  stored column-major
+        cout << "a: " << a << endl;
+        cout << ra::Small<int, 6>(ra::ptr(a.data())) << endl;
     }
     return 0;
 }

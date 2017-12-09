@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-big.C
+/// @file test-big-1.C
 /// @brief Tests specific to WithStorage.
 
 #include <iostream>
@@ -33,6 +33,18 @@ int main()
         int2 check[1] = {{1, 2}};
         tr.test_eq(check, ra::start(a));
         tr.test_eq(check, b);
+    }
+    tr.section("operator="); // FIXME add nested braces constructors to keep going.
+    {
+        ra::Big<int, 2> a({2, 3}, {0, 1, 2, 3, 4, 5});
+        cout << "A0" << endl;
+        a = {{4, 5, 6}, {7, 8, 9}};
+        tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
+        cout << "A1" << endl;
+        a = {{{4, 5, 6}, {7, 8, 9}}}; // would work if supported
+        cout << "A2" << endl;
+        tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
+        cout << "A3" << endl;
     }
     tr.section("behavior of forced Fortran array");
     {

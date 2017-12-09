@@ -58,14 +58,14 @@ int main()
             ra::Small<int, 3> C {0, 0, 0};                              \
             ra::Small<int, 3> A {1, 2, 3};                              \
             plier(ra::expr([](int a, int & c) { c = -a; }, A.iter(), C.iter())); \
-            tr.test_eq(-1, C[0]);                                   \
-            tr.test_eq(-2, C[1]);                                   \
-            tr.test_eq(-3, C[2]);                                   \
+            tr.test_eq(-1, C[0]);                                       \
+            tr.test_eq(-2, C[1]);                                       \
+            tr.test_eq(-3, C[2]);                                       \
             ra::Small<int, 3> B {+1, -2, +3};                           \
             plier(ra::expr([](int a, int b, int & c) { c = a*b; }, A.iter(), B.iter(), C.iter())); \
-            tr.test_eq(+1, C[0]);                                   \
-            tr.test_eq(-4, C[1]);                                   \
-            tr.test_eq(+9, C[2]);                                   \
+            tr.test_eq(+1, C[0]);                                       \
+            tr.test_eq(-4, C[1]);                                       \
+            tr.test_eq(+9, C[2]);                                       \
         }
         TEST(ply_ravel);
         TEST(ply_index);
@@ -82,7 +82,7 @@ int main()
             {                                                           \
                 std::iota(c.begin(), c.end(), 99);                      \
                 plier(ra::expr([](int a, int b, int & c) { c = a-b; }, a.iter(), b.iter(), c.iter())); \
-                for (int ci: c) { tr.test_eq(0, ci); }              \
+                for (int ci: c) { tr.test_eq(0, ci); }                  \
             }
             TEST(ply_ravel);
             TEST(ply_index);

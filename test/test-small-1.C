@@ -1,13 +1,14 @@
 
-// (c) Daniel Llorens - 2014, 2016
+// (c) Daniel Llorens - 2014, 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file test-small.C
+/// @file test-small-1.C
 /// @brief Making ra::Small and its iterator work with expressions/traversal.
+// See test-small-0.C.
 
 #include <iostream>
 #include <iterator>
@@ -27,10 +28,6 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr;
-    tr.section("basic");
-    {
-        tr.test(std::is_standard_layout<ra::Small<float, 2>>::value);
-    }
     tr.section("pieces of transpose(ra::Small)");
     {
         using sizes = mp::int_list<1, 2, 3, 4, 5>;
@@ -71,34 +68,6 @@ int main()
         tr.info("transpose copy").test_eq(y3, ra::_1 - ra::_0);
         x3() = transpose<1, 0>(y3());
         tr.info("transpose copy").test_eq(x3, ra::_0 - ra::_1);
-    }
-    tr.section("constructors");
-    {
-        {
-            ra::Small<int, 1> a(9);
-            tr.test_eq(1, a.rank());
-            tr.test_eq(1, a.size());
-            tr.test_eq(9, a[0]);
-        }
-        {
-            ra::Small<complex, 1> a = 9.;
-            tr.test_eq(1, a.rank());
-            tr.test_eq(1, a.size());
-            tr.test_eq(9., a[0]);
-        }
-    }
-    tr.section("operator=");
-    {
-        ra::Small<complex, 2> a { 3, 4 };
-        a = complex(99.);
-        tr.test_eq(99., a[0]);
-        tr.test_eq(99., a[1]);
-        a = 88.;
-        tr.test_eq(88., a[0]);
-        tr.test_eq(88., a[1]);
-        a += 1.;
-        tr.test_eq(89., a[0]);
-        tr.test_eq(89., a[1]);
     }
     tr.section("sizeof");
     {

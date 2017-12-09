@@ -65,6 +65,12 @@ int main()
         ra::Big<int, 1> c({3}, ra::ptr(cp));
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, c);
     }
+    tr.section("ptr with other iterators");
+    {
+        std::vector<int> a = {1, 2, 3};
+        ra::Small<int, 3> b = ra::ptr(a.begin());
+        tr.test_eq(ra::Small<int, 3> {1, 2, 3}, b);
+    }
     tr.section("[ra12] check that begin() and end() match for empty views");
     {
         ra::Big<int, 3> aa({0, 2, 3}, 0.);

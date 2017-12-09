@@ -103,4 +103,45 @@ void resize(Dim & dim, dim_t k)
     dim.resize(k);
 }
 
+// ---------------------
+// nested_braces
+// ---------------------
+
+// Avoid clash of T with scalar constructors (for rank 0) and raveling init list constructor (for rank 1).
+template <class T, rank_t rank, class Enable=void>
+struct nested_braces
+{
+    struct not_used_as_argument {};
+    using list = not_used_as_argument;
+};
+
+template <class T, rank_t rank>
+struct nested_braces<T, rank, std::enable_if_t<(rank==2)>>
+{
+    using list = std::initializer_list<std::initializer_list<T>>;
+    template <size_t N> constexpr static
+    void shape(list l, std::array<dim_t, N> & s)
+    {
+        s[N-2] = l.size();
+        s[N-1] = l.size()>0 ? l.begin()->size() : 0;
+    }
+};
+
+template <class T, rank_t rank>
+struct nested_braces<T, rank, std::enable_if_t<(rank>2)>>
+{
+    using sub = nested_braces<T, rank-1>;
+    using list = std::initializer_list<typename sub::list>;
+    template <size_t N> constexpr static
+    void shape(list l, std::array<dim_t, N> & s)
+    {
+        s[N-rank] = l.size();
+        if (l.size()>0) {
+            sub::template shape(*(l.begin()), s);
+        } else {
+            std::fill(s.begin()+N-rank+1, s.end(), 0);
+        }
+    }
+};
+
 } // namespace ra
