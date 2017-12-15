@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2014
+// (c) Daniel Llorens - 2013-2014, 2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -13,7 +13,6 @@
 #include "ra/small.H"
 #include "ra/iterator.H"
 #include "ra/wrank.H"
-#include <complex>
 #include <memory>
 
 #ifndef RA_CHECK_BOUNDS_BIG
@@ -213,8 +212,6 @@ struct View
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
-    template <class ... I>                                              \
-    auto wipparens(I && ... i) CONST;                                   \
     template <class  I>                                                 \
     auto at(I const & i) CONST                                          \
     {                                                                   \
@@ -236,13 +233,6 @@ struct View
     operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
 };
-
-// TODO To be placed as specialization of operator() above.
-template <class T, rank_t RANK>
-template <class ... I>
-auto View<T, RANK>::wipparens(I && ... i) /* const */
-{
-}
 
 template <class T, rank_t RANK>
 struct ra_traits_def<View<T, RANK>>
@@ -269,10 +259,8 @@ template <class V> struct storage_traits
 };
 template <class T> struct storage_traits<std::vector<T>>
 {
-// BUG This uses T(), so would need a create(, T) ...
-    static std::vector<T> create(dim_t n) { return std::vector<T>(n); }
-// BUG No such for std::vector<bool>
-    static T const * data(std::vector<T> const & v) { return v.data(); }
+    static std::vector<T> create(dim_t n) { return std::vector<T>(n); } // BUG uses T(), so would need a create(, T) ...
+    static T const * data(std::vector<T> const & v) { return v.data(); } // BUG not for std::vector<bool>
     static T * data(std::vector<T> & v) { return v.data(); }
 };
 

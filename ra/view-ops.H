@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2014
+// (c) Daniel Llorens - 2013-2014, 2017
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -11,6 +11,7 @@
 
 #pragma once
 #include "ra/big.H"
+#include <complex>
 
 #ifndef RA_CHECK_BOUNDS_VIEW_OPS
   #ifndef RA_CHECK_BOUNDS
@@ -227,7 +228,7 @@ auto explode_(View<T, RANK> const & a)
 template <class super_t, class T, rank_t RANK> inline
 auto explode(View<T, RANK> const & a)
 {
-    return explode_<super_t, (std::is_same<super_t, std::complex<T> >::value ? 1 : ra_traits<super_t>::rank_s())>(a);
+    return explode_<super_t, (std::is_same<super_t, std::complex<T>>::value ? 1 : ra_traits<super_t>::rank_s())>(a);
 }
 
 // TODO Consider these in ra_traits<>.

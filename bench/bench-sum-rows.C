@@ -85,7 +85,7 @@ int main()
             bench("accumiter", m, n, reps,
                   [](auto & c, auto const & a)
                   {
-                      c.template iter<1>() += iter<1>(a);
+                      iter<1>(c) += iter<1>(a);
                   });
             bench("frametransp", m, n, reps,
                   [](auto & c, auto const & a)

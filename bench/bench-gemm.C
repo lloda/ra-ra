@@ -9,8 +9,8 @@
 /// @file bench-gemm.H
 /// @brief Benchmark for BLAS-3 type ops
 
-// These operations aren't really part of the ET framework, just standalone
-// functions.
+// These operations aren't really part of the ET framework, just standalone functions.
+// FIXME Benchmark w/o allocation.
 
 #include <iostream>
 #include <iomanip>
@@ -38,7 +38,8 @@ gemm_block_3(ra::View<A, 2> const & a, ra::View<B, 2> const & b, ra::View<C, 2> 
     dim_t const n = b.size(1);
 // terminal, using reduce_k, see below
     if (max(m, max(p, n))<=64) {
-        for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
+        for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })),
+                 c, a, b);
 // split a's rows
     } else if (m>=max(p, n)) {
         gemm_block_3(a(ra::iota(m/2)), b, c(ra::iota(m/2)));

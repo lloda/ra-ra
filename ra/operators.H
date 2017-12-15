@@ -423,6 +423,14 @@ inline auto normv(A const & a)
     return b;
 }
 
+// FIXME benchmark w/o allocation and do Small/Big versions if it's worth it.
+template <class A, class B, class C>
+inline void
+gemm(A const & a, B const & b, C & c)
+{
+    for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
+}
+
 // FIXME branch gemm on Ryn::size_s(), but that's bugged.
 #define MMTYPE decltype(from(times(), a(ra::all, 0), b(0, ra::all)))
 

@@ -67,7 +67,7 @@ RA_REAL_OVERLOAD(T) norm2(T const x) { return std::abs(x); }
 
 #define FOR_FLOAT(T)                                                    \
     inline constexpr T mul_conj(T const x, T const y)            { return x*y; } \
-    inline constexpr T fma_conj(T const a, T const b, T const c) { return a*b + c; } \
+    inline constexpr T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } \
     inline constexpr T sqrm(T const x, T const y)                { return sqrm(x-y); } \
     inline constexpr T norm2(T const x, T const y)               { return std::abs(x-y); } \
     inline constexpr T abs(T const x, T const y)                 { return std::abs(x-y); } \

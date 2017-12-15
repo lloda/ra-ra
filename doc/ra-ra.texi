@@ -6,8 +6,13 @@
 @c %**end of header
 @c last [ma112]
 
+@c Keep track of
+@c http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html
+@c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0573r2.html
+@c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
+
 @set VERSION 4
-@set UPDATED 2017 November 16
+@set UPDATED 2017 December 11
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -307,7 +312,7 @@ For example:
 
 The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a static size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the static size types. Static size or static rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
-Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher are only supported for @code{Small} and aren't rank-extending; these are defects.}
+Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank and aren't rank-extending.}
 
 @c [ma111]
 @example
@@ -544,17 +549,17 @@ x += a; // sum the rows of a
 @example
 @verbatim
 ra::Big<double, 3> a({5, 3, 3}, ra::_0);
-ra::Big<double, 2> b({5}, 0.);
+ra::Big<double, 1> b({5}, 0.);
 b += transpose<0, 1, 1>(a); // b(i) = ∑ⱼ a(i, j, j)
 @end verbatim
 @result{} b = @{0, 3, 6, 9, 12@}
 @end example
 
-An obvious weakness of prefix agreement is that sometimes the axes you want to match are not the prefix axes. @ref{x-transpose,Transposing} the axes before extension is a possible workaround. For a more general form of rank extension, @pxref{The rank conjunction}.
+An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. @ref{x-transpose,Transposing} the axes before extension is a possible workaround. For a more general form of rank extension, @pxref{The rank conjunction}.
 
 @cindex Numpy
 @cindex broadcasting, singleton
-Other languages have a feature similar to rank extension called ‘broadcasting’. For example, in the way it's implemented in Numpy, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. This is more general than prefix agreement, because any axes can be matched. You can think of prefix agreement as the case where all the singleton dimensions are added to the end of the shape.
+Other languages have a feature similar to rank extension called ‘broadcasting’. For example, in the way it's implemented in Numpy @mybibcite{num17}, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. This is more general than prefix agreement, because any axes can be matched. You can think of prefix agreement as the case where all the singleton dimensions are added to the end of the shape.
 
 Singleton broadcasting still isn't entirely general, since it doesn't handle transposition. Another drawback is that it muddles the distinction between a scalar and a vector of size 1. Sometimes, an axis of size 1 is no more than that, and if 2!=3 is a size error, it isn't obvious why 1!=2 shouldn't be.
 
@@ -926,7 +931,7 @@ I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, wher
 @subsection Using other C and C++ types with @code{ra::}
 
 @cindex foreign type
-@code{ra::} is able to accept certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Generally it is enough to mix the foreign type with a type from @code{ra::} and let deduction work its magic.
+@code{ra::} accepts certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Generally it is enough to mix the foreign type with a type from @code{ra::} and let deduction work.
 
 @example
 @verbatim
@@ -943,6 +948,7 @@ Foreign types can be brought into @code{ra::} explicitly with the function @ref{
 @example
 @verbatim
 std::vector<int> x = {1, 2, 3};
+// cout << sum(x) << endl; // error, sum not found
 cout << sum(ra::start(x)) << endl;
 cout << ra::sum(x) << endl;
 @end verbatim
@@ -957,7 +963,7 @@ The following types are accepted as foreign types:
 produces an expression of rank 1 and dynamic size.
 @item @code{std::array}
 produces an expression of rank 1 and static size.
-@item Builtin arrays
+@item Built-in arrays @cindex built-in array
 produce an expression of positive rank and static size.
 @item Raw pointers
 produce an expression of rank 1 and @emph{undefined} size. Raw pointers must always be brought into @code{ra::} explicitly with the function @ref{x-ptr,@code{ptr}}.
@@ -996,16 +1002,16 @@ Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the 
 
 @subsection Using @code{ra::} types with the STL
 
-General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s with the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order.
+General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order.
 
-For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient in general for ranks above 1 and I haven't implemented them ---those @code{RandomAccessIterator} are in fact raw pointers.
+For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient in general for ranks above 1, and I haven't implemented them. The @code{RandomAccessIterator}s that are provided are in fact raw pointers.
 
 @example @c [ma106]
 @verbatim
 ra::Big<int> x {3, 2, 1}; // x is a Container
 auto y = x(); // y is a View on x
 // std::sort(y.begin(), y.end()); // error: y.begin() is not RandomAccessIterator
-std::sort(x.begin(), x.end());
+std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 @end verbatim
 @result{} x = @{1, 2, 3@}
 @end example
@@ -1030,7 +1036,7 @@ FIXME Guile example
 @example
 @verbatim
 struct W { int x; }
-ra::Big<W, 2> w({2, 2}, { {4}, {2}, {1}, {3} });
+ra::Big<W, 2> w = {{ {4}, {2} }, { {1}, {3} }};
 cout << W(1, 1).x << endl;
 cout << amin(map([](auto && x) { return w.x; }, w)) << endl;
 @end verbatim
@@ -1038,7 +1044,7 @@ cout << amin(map([](auto && x) { return w.x; }, w)) << endl;
    1
 @end example
 
-However, if you want to mix arbitrary types in array operations, you'll need to tell @code{ra::} that that is actually what you want ---this is to avoid conflicts with other libraries.
+However, if you want to mix arbitrary types in array operations, you'll need to tell @code{ra::} that that is actually what you want. This is to avoid conflicts with other libraries.
 
 @example
 @verbatim
@@ -1132,7 +1138,7 @@ Here @code{expensive_expr_1} and @code{expensive_expr_2} are array expressions. 
 @example
 @verbatim
 ra::Big<double> y = map([](auto && w, auto && t, auto && f) -> decltype(auto) { return w ? t : f; }
-                          x>0, expensive_expr_1(x), expensive_function_2(x));
+                        x>0, expensive_expr_1(x), expensive_function_2(x));
 @end verbatim
 @end example
 
@@ -1163,17 +1169,38 @@ FIXME
 
 @subsection Elementwise reductions
 
-@code{ra::} defines the following common reductions.
-
-FIXME
-
-Note that @code{max} and @code{min} are two-argument scalar operations with array extensions, while @code{amax} and @code{amin} are reductions.
+@code{ra::} defines the whole-array one-argument reductions @code{any}, @code{every}, @code{amax}, @code{amin}, @code{sum}, @code{prod} and the two-argument reductions @code{dot} and @code{cdot}. Note that @code{max} and @code{min} are two-argument scalar operations with array extensions, while @code{amax} and @code{amin} are reductions. @code{any} and @code{every} are short-circuiting.
 
 You can define similar reductions in the same way that @code{ra::} does it:
 
-FIXME
+@example
+@verbatim
+template <class A>
+inline auto op_reduce(A && a)
+{
+    T c = op_default;
+    for_each([&c](auto && a) { c = op(c, a); }, a);
+    return c;
+}
+@end verbatim
+@end example
 
-Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the @ref{Rank extension,rank extension} mechanism, or using the @ref{The rank conjunction,rank conjunction}.
+Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the @ref{Rank extension,rank extension} mechanism, or using the @ref{The rank conjunction,rank conjunction}, or iterating over @ref{Cell iteration, cells of higher rank}. For example:
+
+@example
+@verbatim
+    ra::Big<double, 2> a({m, n}, ...);
+
+    ra::Big<double, 1> sum_rows({n}, 0.);
+    iter<1>(sum_rows) += iter<1>(a);
+    // for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), sum_rows, a) // alternative
+    // sum_rows += transpose<1, 0>(a); // another
+
+    ra::Big<double, 1> sum_cols({m}, 0.);
+    sum_cols += a;
+@end verbatim
+@end example
+
 
 FIXME example with assignment op
 
@@ -1215,7 +1242,7 @@ With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the l
 
 FIXME
 
-@section Passing view arguments by reference
+@section Passing view arguments by reference, or view of const vs const view
 
 FIXME
 
