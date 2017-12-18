@@ -175,8 +175,8 @@ struct View
     T * p;
     constexpr static rank_t rank() { return RANK; }
     constexpr static rank_t rank_s() { return RANK; };
-    constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
     constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
     constexpr dim_t size(int j) const { return dim[j].size; }
     constexpr dim_t stride(int j) const { return dim[j].stride; }
     constexpr auto data() { return p; }
@@ -185,7 +185,7 @@ struct View
     // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.H.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I,                                              \
-              std::enable_if_t<((0 + ... + std::is_integral_v<I>)<RANK \
+              std::enable_if_t<((0 + ... + std::is_integral_v<I>)<RANK  \
                                 && (0 + ... + is_beatable<I>::value)==sizeof...(I)), int> = 0> \
     auto operator()(I const & ... i) CONST                              \
     {                                                                   \
@@ -257,11 +257,11 @@ template <class V> struct storage_traits
     static T const * data(V const & v) { return v.get(); }
     static T * data(V & v) { return v.get(); }
 };
-template <class T> struct storage_traits<std::vector<T>>
+template <class T, class A> struct storage_traits<std::vector<T, A>>
 {
-    static std::vector<T> create(dim_t n) { return std::vector<T>(n); } // BUG uses T(), so would need a create(, T) ...
-    static T const * data(std::vector<T> const & v) { return v.data(); } // BUG not for std::vector<bool>
-    static T * data(std::vector<T> & v) { return v.data(); }
+    static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); } // BUG uses T(), so would need a create(, T) ...
+    static T const * data(std::vector<T, A> const & v) { return v.data(); } // BUG not for std::vector<bool>
+    static T * data(std::vector<T, A> & v) { return v.data(); }
 };
 
 template <class T, rank_t RANK> inline
@@ -309,7 +309,7 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         View::p = storage_traits<Store>::data(store);
     }
 // Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, WithStorage &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test-ownership.C [ra20].
-// TODO do this through .replace() op.
+// TODO do this through .set() op.
 // TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     WithStorage & operator=(WithStorage && w)
     {
@@ -471,8 +471,34 @@ void swap(WithStorage<Store, RANK> & a, WithStorage<Store, RANK> & b)
     std::swap(a.p, b.p);
 }
 
+// Default storage for Big - see https://stackoverflow.com/a/21028912
+// Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
+template <typename T, typename A=std::allocator<T>>
+struct default_init_allocator: public A
+{
+    using a_t = std::allocator_traits<A>;
+    using A::A;
+
+    template <typename U>
+    struct rebind
+    {
+        using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
+    };
+
+    template <typename U>
+    void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
+    {
+        ::new(static_cast<void *>(ptr)) U;
+    }
+    template <typename U, typename... Args>
+    void construct(U * ptr, Args &&... args)
+    {
+        a_t::construct(static_cast<A &>(*this), ptr, std::forward<Args>(args)...);
+    }
+};
+
 // Beyond this, we probably should have fixed-size (~std::dynarray), resizeable (~std::vector).
-template <class T, rank_t RANK=RANK_ANY> using Big = WithStorage<std::vector<T>, RANK>;
+template <class T, rank_t RANK=RANK_ANY> using Big = WithStorage<std::vector<T, default_init_allocator<T>>, RANK>;
 template <class T, rank_t RANK=RANK_ANY> using Unique = WithStorage<std::unique_ptr<T []>, RANK>;
 template <class T, rank_t RANK=RANK_ANY> using Shared = WithStorage<std::shared_ptr<T>, RANK>;
 

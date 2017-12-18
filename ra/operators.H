@@ -443,7 +443,7 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
     int const N = b.size(1);
     int const K = a.size(1);
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
-    auto c = with_shape<MMTYPE>({M, N}, ra::unspecified);
+    auto c = with_shape<MMTYPE>({M, N}, decltype(a(0, 0)*b(0, 0))());
     for (int k=0; k<K; ++k) {
         c += from(times(), a(ra::all, k), b(k, ra::all));
     }

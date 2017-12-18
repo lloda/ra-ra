@@ -29,7 +29,7 @@ struct ra_traits_def<std::vector<T, A>>
     constexpr static shape_type shape(V const & v) { return shape_type { { dim_t(v.size()) } }; }
     static V make(dim_t const n)
     {
-        return std::vector<T>(n);
+        return std::vector<T, A>(n);
     }
     template <class TT> static V make(dim_t n, TT const & t)
     {

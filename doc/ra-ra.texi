@@ -312,7 +312,7 @@ For example:
 
 The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a static size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the static size types. Static size or static rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
-Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank and aren't rank-extending.}
+Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank and aren't rank-extending, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.}
 
 @c [ma111]
 @example
@@ -329,14 +329,16 @@ Big<int> f = 0;                         // f is a 0-array with one element f()==
 
 The second form takes two arguments, one giving the shape, the second the contents.
 
+@cindex @code{ra::unspecified}
 @example
 @verbatim
-ra::Big<double, 2> a({2, 3}, 1.);  // a has size 2x3 and be filled with 1.
-ra::Big<double> b({2, 3}, a);      // b has size 2x3 and a is copied into b
+ra::Big<double, 2> a({2, 3}, 1.);            // a has size 2x3 and be filled with 1.
+ra::Big<double> b({2, 3}, ra::unspecified);  // b has size 2x3 and contents don't matter
+ra::Big<double> c({2, 3}, a);                // b has size 2x3 and a is copied into b
 @end verbatim
 @end example
 
-The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape () of @code{1.} matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}).
+The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}).
 
 Finally, there are special constructors where the content argument is either a pointer or an @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested @code{std::initializer_list} isn't supported yet, but may be supported in the future.
 
@@ -1286,6 +1288,8 @@ Item 2
 @chapter Internals
 @c ------------------------------------------------
 
+TODO
+
 @menu
 * Type hierarchy::        From Containers to FlatIterators.
 * Driving expressions::   The term in charge.
@@ -1298,15 +1302,29 @@ Item 2
 @section Type hierarchy
 @c ------------------------------------------------
 
+TODO
+
+@b{Container} Big Small
+
+@b{View} View SmallView
+
+@b{ArrayIterator} Expr Ryn Pick Iterator SmallBase::Iterator Iota TensorIndex Vector Scalar
+
+@b{FlatIterator} Flat PickFlat CellFlat IotaFlat ScalarFlat
+
 @c ------------------------------------------------
 @node Driving expressions
 @section Driving expressions
 @c ------------------------------------------------
 
+TODO
+
 @c ------------------------------------------------
 @node Loop types
 @section Loop types
 @c ------------------------------------------------
+
+TODO
 
 @c ------------------------------------------------
 @node Compiling and running
@@ -1326,6 +1344,7 @@ The following boolean @code{#define}s affect the behavior of @code{ra::}.
 
 @code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. Simply run @code{scons} from the top directory of the distribution to run them all. @code{ra::} uses its own crude test and benchmark suites.
 
+TODO Flags and notes about different compilers
 
 @c ------------------------------------------------
 @node The future

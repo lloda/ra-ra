@@ -175,7 +175,7 @@ int main()
             tr.test_eq(88, a.p[9]);
         }
         {
-            auto pp = std::vector<double>(10);
+            decltype(std::declval<ra::Big<double>>().store) pp(10);
             pp[9] = 99;
             double * p = pp.data();
             ra::Big<double> a {};

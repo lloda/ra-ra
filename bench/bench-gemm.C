@@ -118,7 +118,7 @@ gemm_blas_3(ra::View<double, 2> const & A, ra::View<double, 2> const & B, ra::Vi
 inline auto
 gemm_blas(ra::View<double, 2> const & a, ra::View<double, 2> const & b)
 {
-    ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.size(0), b.size(1)}, 0.);
+    ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.size(0), b.size(1)}, 0);
     gemm_blas_3(a, b, c);
     return c;
 }
@@ -130,7 +130,7 @@ int main()
 
     auto gemm_block = [&](auto const & a, auto const & b)
         {
-            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.size(0), b.size(1)}, 0.);
+            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.size(0), b.size(1)}, 0);
             gemm_block_3(a, b, c);
             return c;
         };
@@ -154,7 +154,8 @@ int main()
         {
             dim_t const M = a.size(0);
             dim_t const N = b.size(1);
-            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::unspecified);
+            using T = decltype(a(0, 0)*b(0, 0));
+            ra::Big<T, 2> c({M, N}, T());
             for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })),
                      c, a, b);
             return c;
@@ -167,7 +168,7 @@ int main()
             dim_t const N = b.size(1);                      \
             dim_t const K = a.size(1);                      \
             using T = decltype(a(0, 0)*b(0, 0));            \
-            ra::Big<T, 2> c({M, N}, ra::unspecified);     \
+            ra::Big<T, 2> c({M, N}, T());                   \
             T * RESTRICT cc = c.data();                     \
             T const * RESTRICT aa = a.data();               \
             T const * RESTRICT bb = b.data();               \
@@ -187,7 +188,7 @@ int main()
             dim_t const N = b.size(1);                      \
             dim_t const K = a.size(1);                      \
             using T = decltype(a(0, 0)*b(0, 0));            \
-            ra::Big<T, 2> c({M, N}, ra::unspecified);     \
+            ra::Big<T, 2> c({M, N}, T());                   \
             T * RESTRICT cc = c.data();                     \
             T const * RESTRICT aa = a.data();               \
             T const * RESTRICT bb = b.data();               \

@@ -18,6 +18,7 @@
 #include "ra/test.H"
 
 using std::cout; using std::endl; using std::flush;
+template <class T, ra::rank_t RANK=ra::RANK_ANY> using BigValueInit = ra::WithStorage<std::vector<T>, RANK>;
 
 int main()
 {
@@ -33,6 +34,21 @@ int main()
         int2 check[1] = {{1, 2}};
         tr.test_eq(check, ra::start(a));
         tr.test_eq(check, b);
+    }
+    tr.section("behavior of resize with default WithStorage");
+    {
+        {
+            ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
+            a.resize(3);
+            a.resize(6);
+            tr.test_eq(ra::iota(6, 1), a);
+        }
+        {
+            BigValueInit<int, 1> a = {1, 2, 3, 4, 5, 6};
+            a.resize(3);
+            a.resize(6);
+            tr.test_eq(ra::start({1, 2, 3, 0, 0, 0}), a);
+        }
     }
     tr.section("operator="); // FIXME add nested braces constructors to keep going.
     {
