@@ -66,8 +66,8 @@ dim_t proddim(D d, D dend)
 // Would do this with a base class, but I like View being POD.
 // TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
 #define DEF_ITERATORS(RANK)                                             \
-    template <rank_t c=0> using iterator = ra::ra_iterator<View<T, RANK>, c>; \
-    template <rank_t c=0> using const_iterator = ra::ra_iterator<View<T const, RANK>, c>; \
+    template <rank_t c=0> using iterator = ra::cell_iterator<View<T, RANK>, c>; \
+    template <rank_t c=0> using const_iterator = ra::cell_iterator<View<T const, RANK>, c>; \
     template <rank_t c=0> auto iter() { return iterator<c>(dim, p); }   \
     template <rank_t c=0> auto iter() const { return const_iterator<c>(dim, p); } \
     auto begin() { return stl_iterator<iterator<0>>(dim, p); }          \
@@ -173,6 +173,7 @@ struct View
 
     Dimv dim;
     T * p;
+
     constexpr static rank_t rank() { return RANK; }
     constexpr static rank_t rank_s() { return RANK; };
     constexpr static dim_t size_s() { return DIM_ANY; }
@@ -200,13 +201,13 @@ struct View
         }                                                               \
         return sub;                                                     \
     }                                                                   \
-    /* BUG doesn't handle generic zero-rank indices */                 \
+    /* BUG doesn't handle generic zero-rank indices */                  \
     template <class ... I, std::enable_if_t<(0 + ... + std::is_integral_v<I>)==RANK, int> = 0> \
     decltype(auto) operator()(I const & ... i) CONST                    \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     }                                                                   \
-    /* TODO More than one selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
+    /* TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
     template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
@@ -223,8 +224,7 @@ struct View
     {                                                                   \
         return (*this)(i);                                              \
     }
-    SUBSCRIPTS(const)
-    SUBSCRIPTS(/*const*/)
+    FOR_EACH(SUBSCRIPTS, /*const*/, const)
 #undef SUBSCRIPTS
 
     DEF_ITERATORS(RANK)
@@ -536,7 +536,6 @@ struct View<T, RANK_ANY>
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr dim_t size(rank_t const j) const { return dim[j].size; }
     constexpr dim_t stride(rank_t const j) const { return dim[j].stride; }
-
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; }
 
@@ -555,7 +554,7 @@ struct View<T, RANK_ANY>
         }                                                               \
         return sub;                                                     \
     }                                                                   \
-    /* TODO More than one selector... */                               \
+    /* TODO More than one selector... */                                \
     template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
@@ -573,8 +572,7 @@ struct View<T, RANK_ANY>
         CHECK_BOUNDS(inside(i, dim[0].size));                           \
         return data()[i*dim[0].stride];                                 \
     }
-    SUBSCRIPTS(const)
-    SUBSCRIPTS(/*const*/)
+    FOR_EACH(SUBSCRIPTS, /*const*/, const)
 #undef SUBSCRIPTS
 
     DEF_ITERATORS(RANK_ANY)

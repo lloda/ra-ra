@@ -44,8 +44,7 @@ std::ostream & operator<<(std::ostream & o, Print_iterator<I> && p)
 }
 
 // V is View (FIXME so why parameterize? apparently only for order-of-decl.)
-// Child is ra_iterator
-template <class V, rank_t cellr_, class Child>
+template <class V, rank_t cellr_=0>
 struct cell_iterator
 {
     constexpr static rank_t cellr_spec = cellr_;
@@ -60,27 +59,31 @@ struct cell_iterator
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
 
-    using shape_type = mp::If_<rank_s()==DIM_ANY, std::vector<dim_t>, Small<dim_t, rank_s()>>;
     using dims_p = decltype(std::declval<V const>().dim); // FIXME can this be & ?
+    dims_p dim; // FIXME take V & and ask through that. Should be const.
+
+    using shape_type = mp::If_<rank_s()==DIM_ANY, std::vector<dim_t>, Small<dim_t, rank_s()>>;
     using atom_type = typename ra_traits<V>::value_type;
     using cell_type = View<atom_type, cellr>;
-    using value_type = mp::If_<cellr==0, atom_type, cell_type>;
+    using value_type = mp::If_<0==cellr, atom_type, cell_type>;
 
-    dims_p dim; // FIXME take V & and ask through that. Should be const.
     cell_type c;
 
     constexpr cell_iterator() { c.p = nullptr; } // end marker only.
     constexpr cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-    constexpr cell_iterator & operator=(cell_iterator const & ci) = delete;
 // needed because View = View copies contents, not the View itself [ra11]
-    constexpr cell_iterator & assign(cell_iterator const & ci) { dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this; }
+    constexpr cell_iterator & assign(cell_iterator const & ci)
+    {
+        dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this;
+    }
 
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
     template <class SS> constexpr
     cell_iterator(SS const & s_, atom_type * p_): dim(s_)
     {
         rank_t const rank = this->rank();
-        c.p = p_; // see stl_iterator for the case of s_[0]=0, etc. [ra12].
+// see stl_iterator for the case of s_[0]=0, etc. [ra12].
+        c.p = p_;
         rank_t const cellr = dependent_cell_rank(rank_t(dim.size()), cellr_spec);
         resize(c.dim, cellr);
         for (int k=0; k<cellr; ++k) {
@@ -103,63 +106,40 @@ struct cell_iterator
     }
     constexpr dim_t size(int j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
     constexpr dim_t stride(int j) const { return j<rank() ? dim[j].stride : 0; }
+// FIXME k<rank() ?? check cell_iterator_small versions.
     constexpr bool keep_stride(dim_t step, int z, int j) const { return step*stride(z)==stride(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
-};
 
-#define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> void operator OP(X && x)                         \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
-    template <class X> void operator OP(ra_iterator const & x)          \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-
-template <class C>
-struct CellFlat
-{
-    C c;
-    constexpr void operator+=(dim_t const s) { c.p += s; }
-    constexpr C & operator*() { return c; }
-};
-
-template <class V, rank_t cellr=0>
-struct ra_iterator: public cell_iterator<V, cellr, ra_iterator<V, cellr>>
-{
-    using P = cell_iterator<V, cellr, ra_iterator<V, cellr>>;
-    ra_iterator(): P() {};
-    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
-
-    auto flat() const { return CellFlat<typename P::cell_type> { P::c }; }
+    auto flat() const
+    {
+        if constexpr (0==cellr) {
+            return c.p;
+        } else {
+            return CellFlat<cell_type> { c };
+        }
+    }
 // Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
     template <class I>
     decltype(auto) at(I const & i_)
     {
-        CHECK_BOUNDS(P::rank()<=dim_t(i_.size()) && "too few indices");
-        return typename P::cell_type { P::c.dim, P::c.p+Indexer1::index_short(P::rank(), P::dim, i_) };
+        CHECK_BOUNDS(rank()<=dim_t(i_.size()) && "too few indices");
+        if constexpr (0==cellr) {
+            return c.p[Indexer1::index_short(rank(), dim, i_)];
+        } else {
+            return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) };
+        }
     }
-    decltype(auto) operator_star() const { return P::c; }
-    decltype(auto) operator_star() { return P::c; }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-};
+    decltype(auto) star() const { if constexpr (0==cellr) return *c.p; else return c; }
+    decltype(auto) star() { if constexpr (0==cellr) return *c.p; else return c; }
 
-template <class V>
-struct ra_iterator<V, 0>: public cell_iterator<V, 0, ra_iterator<V, 0>>
-{
-    using P = cell_iterator<V, 0, ra_iterator<V, 0>>;
-    ra_iterator(): P() {};
-    template <class SS> ra_iterator(SS const & s_, typename P::atom_type * p_): P(s_, p_) {};
-
-    auto flat() const { return P::c.p; }
-    template <class I>
-    decltype(auto) at(I const & i_)
-    {
-        CHECK_BOUNDS(P::rank()<=rank_t(i_.size()) && "too few indices");
-        return P::c.p[Indexer1::index_short(P::rank(), P::dim, i_)];
-    }
-    decltype(auto) operator_star() const { return *P::c.p; }
-    decltype(auto) operator_star() { return *P::c.p; }
+#define DEF_ASSIGNOPS(OP)                                               \
+    template <class X> void operator OP(X && x)                         \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
+    void operator OP(cell_iterator const & x)                           \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-};
 #undef DEF_ASSIGNOPS
+};
 
 template <class Iterator>
 struct stl_iterator
@@ -170,19 +150,20 @@ struct stl_iterator
     using reference = value_type &;
     using const_reference = value_type const &;
     using iterator_category = std::forward_iterator_tag;
-    using shape_type = typename Iterator::P::shape_type;
+    using shape_type = typename Iterator::shape_type;
 
     Iterator ii;
     shape_type i;
     stl_iterator(): ii() {};
-// be careful to avoid ii = it.ii, see [ra11] above.
+// avoid ii = it.ii, see [ra11] above.
     stl_iterator(stl_iterator const & it) = default;
     stl_iterator & operator=(stl_iterator const & it) { i=it.i; ii.assign(it.ii); return *this; }
-    template <class SS> stl_iterator(SS const & s_, typename Iterator::P::atom_type * p_)
-        : ii(s_, p_), i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), ii.cellr_spec), 0))
+    template <class SS> stl_iterator(SS const & s_, typename Iterator::atom_type * p_)
+        : ii(s_, p_),
+          i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), ii.cellr_spec), 0))
     {
-// [ra12] so begin()==end() for un-plied iterator on empty range. For plying sizes are used instead, so we don't care.
-        for (auto dim: s_) {
+// [ra12] Null p_ so begin()==end() for iterator on empty range. Plying uses sizes so this doesn't matter.
+        for (auto && dim: s_) {
             if (dim.size==0) {
                 ii.c.p = nullptr;
                 break;
@@ -193,17 +174,10 @@ struct stl_iterator
     template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
 // taken from Iterator to handle the special case for cellr=0.
-    decltype(auto) operator*() const { return ii.operator_star(); }
-    decltype(auto) operator*() { return ii.operator_star(); }
-    stl_iterator & operator++()
-    {
-        next_in_cube(ii.rank(), ii.dim, i, ii.c.p);
-        return *this;
-    }
+    decltype(auto) operator*() const { return ii.star(); }
+    decltype(auto) operator*() { return ii.star(); }
+    stl_iterator & operator++() { next_in_cube(ii.rank(), ii.dim, i, ii.c.p); return *this; }
 };
-
-template <int cell_rank, class A> inline constexpr
-auto iter(A && a) { return a.template iter<cell_rank>(); }
 
 } // namespace ra
 

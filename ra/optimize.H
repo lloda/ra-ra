@@ -31,7 +31,7 @@
 #define RA_OPTIMIZE_IOTA 1
 #endif
 
-// benchmark shows it's not good by default; probably requires optimizing also +=, etc.
+// benchmark shows it's bad by default; probably requires optimizing also +=, etc.
 #ifndef RA_OPTIMIZE_SMALLVECTOR
 #define RA_OPTIMIZE_SMALLVECTOR 0
 #endif
@@ -136,7 +136,7 @@ template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)
                         decltype(start(std::declval<ra::Small<double, 4>>()))>> && e) \
     {                                                                   \
         ra::Small<double, 4> val;                                       \
-        (extvector<double, 4> &)(val) = (extvector<double, 4> &)(*(ITEM(0).p)) OP (extvector<double, 4> &)(*(ITEM(1).p)); \
+        (extvector<double, 4> &)(val) = (extvector<double, 4> &)(*(ITEM(0).c.p)) OP (extvector<double, 4> &)(*(ITEM(1).c.p)); \
         return val;                                                     \
     }
 OPTIMIZE_SMALLVECTOR_OP(+, ra::plus)

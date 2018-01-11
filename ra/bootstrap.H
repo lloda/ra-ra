@@ -81,7 +81,8 @@ inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 }
 
 // Order of decl issues.
-template <class T, rank_t RANK=RANK_ANY> struct View;
+template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator
+template <class T, class sizes, class strides> struct SmallView; // for cell_iterator_small
 template <class T, class sizes, class strides> struct SmallArray;
 template <class V, class Enable=void> struct ra_traits_def;
 
@@ -123,6 +124,19 @@ template <int n> struct newaxis_t
     constexpr static rank_t rank_s() { return n; }
 };
 template <int n=1> constexpr newaxis_t<n> newaxis = newaxis_t<n>();
+
+// Used by cell_iterator / cell_iterator_small.
+template <class C>
+struct CellFlat
+{
+    C c;
+    constexpr void operator+=(dim_t const s) { c.p += s; }
+    constexpr C & operator*() { return c; }
+};
+
+// Common to View / SmallBase.
+template <int cell_rank, class A> inline constexpr
+auto iter(A && a) { return a.template iter<cell_rank>(); }
 
 } // namespace ra
 

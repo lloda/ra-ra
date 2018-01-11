@@ -278,7 +278,7 @@ int main()
         b = 99.;
         tr.test_eq(99., a);
     }
-    tr.section("using ra_iterator with SmallBase");
+    tr.section("using cell_iterator with SmallBase");
     {
         cout << "TODO" << endl;
     }

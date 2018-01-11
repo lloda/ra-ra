@@ -105,7 +105,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
     using R_ = std::tuple<Ri ...>;
 
-// TODO -crank::value when the actual verb rank is used (e.g. to use ra_iterator<A, that_rank> instead of just begin()).
+// TODO -crank::value when the actual verb rank is used (e.g. to use cell_iterator<A, that_rank> instead of just begin()).
     using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>) ...>;
     static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "bad ranks");
     constexpr static int driver = largest_i_tuple<live>::value;
@@ -180,7 +180,7 @@ struct applyframes
 };
 
 // No-op case. TODO Maybe apply to any Iota<n> where n<=depth.
-// TODO If A is ra_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
+// TODO If A is cell_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
 template <class LiveAxes, int depth>
 struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same<LiveAxes, mp::Iota_<depth>>::value>>
 {

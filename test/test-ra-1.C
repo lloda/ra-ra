@@ -138,7 +138,7 @@ int main()
         TEST(ply_index, ra::vector(B), ra::vector(C), ra::start({1, 2, 3}))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
 #undef TEST
     }
-// Missing operators with int2; so not the same as in test-traversal.C. TODO Revise when those are available.
+// Missing operators with int2; so not the same as in test-traversal.C.
     tr.section("[ra05] complex or nested types");
     {
         int i;
@@ -175,7 +175,6 @@ int main()
     }
     tr.section("[ra06] reversed arrays, ply_index");
     {
-// TODO Use ra::TensorIndex<I>+1 when I have a generic ply/ply_index chooser.
         ra::Unique<int, 1> A({ 6 }, ra::unspecified);
         std::iota(A.begin(), A.end(), 1);
         ra::Unique<int, 1> B { {6}, ra::scalar(99) };
@@ -218,7 +217,6 @@ int main()
         TEST(plyf_index);
 #undef TEST
     }
-// TODO Do this test with ra::expr(TensorIndex<0>(), ra::scalar(1)).
     tr.section("[ra09] reverse 1/1 axis, traverse");
 #define TEST(plier)                                             \
     {                                                           \

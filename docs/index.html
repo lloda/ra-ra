@@ -54,12 +54,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 <ul class="menu">
 <li><a accesskey="1" href="#Overview">Overview</a>:           Array programming and C++. 
 <li><a accesskey="2" href="#Usage">Usage</a>:              Everything you can do with <code>ra::</code>. 
-<li><a accesskey="3" href="#Hazards">Hazards</a>:            User beware. 
-<li><a accesskey="4" href="#Internals">Internals</a>:          For all the world to see. 
-<li><a accesskey="5" href="#The-future">The future</a>:         Could be even better. 
-<li><a accesskey="6" href="#Reference">Reference</a>:          Systematic list of types and functions. 
-<li><a accesskey="7" href="#Sources">Sources</a>:       It's been done before. 
-<li><a accesskey="8" href="#Indices">Indices</a>:            Or try the search function. 
+<li><a accesskey="3" href="#Extras">Extras</a>:             Additional libraries provided with <code>ra::</code>. 
+<li><a accesskey="4" href="#Hazards">Hazards</a>:            User beware. 
+<li><a accesskey="5" href="#Internals">Internals</a>:          For all the world to see. 
+<li><a accesskey="6" href="#The-future">The future</a>:         Could be even better. 
+<li><a accesskey="7" href="#Reference">Reference</a>:          Systematic list of types and functions. 
+<li><a accesskey="8" href="#Sources">Sources</a>:       It's been done before. 
+<li><a accesskey="9" href="#Indices">Indices</a>:            Or try the search function. 
 </ul>
 
 <!--  -->
@@ -79,7 +80,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p>Often we deal with multidimensional <em>expressions</em> where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.
 
-   <p>Arrays (also called <dfn>matrices</dfn>, <dfn>vectors</dfn>, or <dfn>tensors</dfn>) are very common objects in math and programming, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
+   <p>Arrays (in the form of <dfn>matrices</dfn>, <dfn>vectors</dfn>, or <dfn>tensors</dfn>) are very common objects in math and programming, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
 
 <pre class="verbatim">
 A = B+C;
@@ -229,7 +230,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Overview">Overview</a>
 <!-- @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index). -->
 <p>Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. <code>ra::</code> supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-   <p>Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. <code>ra::</code> offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, you can currently create a higher rank iterator on a <code>View</code> but not a <code>SmallView</code>; this is a bug.
+   <p>Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. <code>ra::</code> offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, it used to be the case that you couldn't create a higher rank iterator on a <code>SmallView</code>, even though you could do it on a <code>View</code>; this was a bug.
 
    <p>Sometimes consistency requires a choice. For example, given array views A and B, <code>A=B</code> copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
 
@@ -281,7 +282,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Overview">Overview</a>
 <div class="node">
 <p><hr>
 <a name="Usage"></a>
-Next:&nbsp;<a rel="next" accesskey="n" href="#Hazards">Hazards</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#Extras">Extras</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#Overview">Overview</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
@@ -320,7 +321,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <!--  -->
 <p><code>ra::</code> is a header only library with no dependencies, so you just need to place the `<samp><span class="samp">ra/</span></samp>' folder somewhere in your include path and add <code>#include "ra/operators.H"</code> and <code>"ra/io.H"</code> at the top of your sources.
 
-   <p>A C++14 compiler with partial C++17 support is required. At the time of writing this means gcc 7.2 with <samp><span class="option">-std=c++1z</span></samp>. Most tests pass under clang 5.0 with a couple of extra flags (<code>-Wno-missing-braces</code>, <samp><span class="option">-DRA_OPTIMIZE_SMALLVECTOR=0</span></samp>).
+   <p>A C++14 compiler with partial C++17 support is required. At the time of writing this means <b>gcc 7.2</b> with <samp><span class="option">-std=c++1z</span></samp>. Most tests pass under <b>clang 5.0</b> with a couple of extra flags (<code>-Wno-missing-braces</code>, <samp><span class="option">-DRA_OPTIMIZE_SMALLVECTOR=0</span></samp>).
 
    <p>Here is a minimal program:
 
@@ -856,8 +857,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <p>We have seen in <a href="#Cell-iteration">Cell iteration</a> that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. With the <a href="#x_002diter"><code>iter&lt;cell rank&gt;</code></a> construction, this ‘exploding’ is performed (notionally) on the argument; the operation of the array expression is applied blindly to these cells, whatever they turn out to be.
 
 <pre class="example"><pre class="verbatim">     
-     for_each(sort, A.iter&lt;1>()); // (in ra::) sort is a regular function, cell rank must be given
-     for_each(sort, A.iter&lt;0>()); // (in ra::) error, bad cell rank
+     for_each(sort, iter&lt;1>(A)); // (in ra::) sort is a regular function, cell rank must be given
+     for_each(sort, iter&lt;0>(A)); // (in ra::) error, bad cell rank
 </pre>
 </pre>
    <!-- @cindex J -->
@@ -1245,36 +1246,49 @@ FIXME Do we want to expose ply(); this is the only example in the manual that us
 <!--  -->
 <div class="node">
 <p><hr>
-<a name="Hazards"></a>
-Next:&nbsp;<a rel="next" accesskey="n" href="#Internals">Internals</a>,
+<a name="Extras"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Hazards">Hazards</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#Usage">Usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 </div>
 
-<h2 class="chapter">3 Hazards</h2>
+<h2 class="chapter">3 Extras</h2>
+
+<!--  -->
+<!--  -->
+<div class="node">
+<p><hr>
+<a name="Hazards"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Internals">Internals</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Extras">Extras</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="chapter">4 Hazards</h2>
 
 <!--  -->
 <p>Some of these issues arise because <code>ra::</code> applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 
-<h3 class="section">3.1 Assignment to views</h3>
+<h3 class="section">4.1 Assignment to views</h3>
 
 <p>FIXME
 With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the lhs instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
 
-<h3 class="section">3.2 Size of brace initializers isn't checked until run time</h3>
+<h3 class="section">4.2 Size of brace initializers isn't checked until run time</h3>
 
 <p>FIXME
 
-<h3 class="section">3.3 Passing view arguments by reference, or view of const vs const view</h3>
+<h3 class="section">4.3 Passing view arguments by reference, or view of const vs const view</h3>
 
 <p>FIXME
 
-<h3 class="section">3.4 Array iterators and temporaries</h3>
+<h3 class="section">4.4 Array iterators and temporaries</h3>
 
 <p>FIXME
 
-<h3 class="section">3.5 Understand rank extension</h3>
+<h3 class="section">4.5 Understand rank extension</h3>
 
 <p>Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches <code>a</code> and 3 [both of shape ()] with a vector of shape (3). This is equivalent to <code>{a=3+4; a=3+5; a=3+6;}</code>. You may get a different result depending on the order of traversal.
 
@@ -1284,12 +1298,12 @@ With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> re
 </pre>
        =&gt; a = 9
 </pre>
-   <h3 class="section">3.6 Chained assignment</h3>
+   <h3 class="section">4.6 Chained assignment</h3>
 
 <p>FIXME
 When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as an array expression.
 
-<h3 class="section">3.7 Unregistered scalar types</h3>
+<h3 class="section">4.7 Unregistered scalar types</h3>
 
 <p>FIXME
 <code>View&lt;T, N&gt; x; x = T()</code> fails if <code>T</code> isn't registered as <code>is_scalar</code>.
@@ -1310,7 +1324,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 </div>
 
-<h2 class="chapter">4 Internals</h2>
+<h2 class="chapter">5 Internals</h2>
 
 <!--  -->
 <p>TODO
@@ -1331,7 +1345,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
 </div>
 
-<h3 class="section">4.1 Type hierarchy</h3>
+<h3 class="section">5.1 Type hierarchy</h3>
 
 <!--  -->
 <p>TODO
@@ -1340,9 +1354,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
    <p><b>View</b> View SmallView
 
-   <p><b>ArrayIterator</b> Expr Ryn Pick Iterator SmallBase::Iterator Iota TensorIndex Vector Scalar
+   <p><b>Ravelable</b> Iterator SmallBase::Iterator Iota Vector Scalar
 
-   <p><b>FlatIterator</b> Flat PickFlat CellFlat IotaFlat ScalarFlat
+   <p><b>Indexable</b> Iterator SmallBase::Iterator Iota Vector Scalar TensorIndex
+
+   <p><b>Indirect</b> Expr Ryn Pick
+
+   <p><b>Flat</b> Flat PickFlat CellFlat IotaFlat ScalarFlat
 
 <!--  -->
 <div class="node">
@@ -1354,7 +1372,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
 </div>
 
-<h3 class="section">4.2 Driving expressions</h3>
+<h3 class="section">5.2 Driving expressions</h3>
 
 <!--  -->
 <p>TODO
@@ -1369,7 +1387,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
 </div>
 
-<h3 class="section">4.3 Loop types</h3>
+<h3 class="section">5.3 Loop types</h3>
 
 <!--  -->
 <p>TODO
@@ -1383,17 +1401,17 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
 </div>
 
-<h3 class="section">4.4 Compiling and running</h3>
+<h3 class="section">5.4 Compiling and running</h3>
 
 <!--  -->
 <p>The following boolean <code>#define</code>s affect the behavior of <code>ra::</code>.
 
      <ul>
-<li><code>RA_CHECK_BOUNDS</code> (default 1) Check bounds on random array accesses (e.g. <code>int i = 10; a[i] = 0;</code>). Bounds are never checked on regular array traversal, since in that case the library can guarantee that out of bounds accesses don't happen. 
-<li><code>RA_USE_BLAS</code> (default 0) Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself. 
-<li><code>RA_OPTIMIZE</code> (default 1) Replace certain expressions by others that are expected to perform better. This acts as a global mask on other <code>RA_OPTIMIZE_xxx</code> flags. 
-<li><code>RA_OPTIMIZE_IOTA</code> (default 1) Perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::Iota(3, 0) + 1</code> becomes <code>ra::Iota(3, 1)</code> instead of a two-operand expression template. 
-<li><code>RA_OPTIMIZE_SMALLVECTOR</code> (default 0) Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on gcc and doesn't necessarily result in improved performance. 
+<li><code>RA_CHECK_BOUNDS</code> (default 1):  Check bounds on random array accesses (e.g. <code>int i = 10; a[i] = 0;</code>). Bounds are never checked on regular array traversal, since in that case the library can guarantee that out of bounds accesses don't happen. 
+<li><code>RA_USE_BLAS</code> (default 0): Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself. 
+<li><code>RA_OPTIMIZE</code> (default 1): Replace certain expressions by others that are expected to perform better. This acts as a global mask on other <code>RA_OPTIMIZE_xxx</code> flags. 
+<li><code>RA_OPTIMIZE_IOTA</code> (default 1): Perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::Iota(3, 0) + 1</code> becomes <code>ra::Iota(3, 1)</code> instead of a two-operand expression template. 
+<li><code>RA_OPTIMIZE_SMALLVECTOR</code> (default 0): Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn't necessarily result in improved performance. 
 </ul>
 
    <p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. Simply run <code>scons</code> from the top directory of the distribution to run them all. <code>ra::</code> uses its own crude test and benchmark suites.
@@ -1410,18 +1428,18 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 </div>
 
-<h2 class="chapter">5 The future</h2>
+<h2 class="chapter">6 The future</h2>
 
 <!--  -->
-<h3 class="section">5.1 Error messages</h3>
+<h3 class="section">6.1 Error messages</h3>
 
 <p>FIXME
 
-<h3 class="section">5.2 Reductions</h3>
+<h3 class="section">6.2 Reductions</h3>
 
 <p>FIXME
 
-<h3 class="section">5.3 Etc</h3>
+<h3 class="section">6.3 Etc</h3>
 
 <p>FIXME
 
@@ -1435,7 +1453,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 </div>
 
-<h2 class="chapter">6 Reference</h2>
+<h2 class="chapter">7 Reference</h2>
 
 <!--  -->
 <p><a name="x_002dmap"></a>
@@ -1744,7 +1762,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <div class="defun">
 &mdash; Function: <b>iter</b><var> &lt;k&gt; </var>(<var>view</var>)<var><a name="index-iter-65"></a></var><br>
-<blockquote><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it is interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> must be a dynamic size <code>View</code>. (This is a defect.) 
+<blockquote><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it is interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have dynamic or static shape. 
 </p></blockquote></div>
 
 <pre class="example"><pre class="verbatim">     
@@ -1777,19 +1795,17 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
    <p>The following example computes the trace of each of the items [(-1)-cells] of <code>c</code>. <!-- [ma104] -->
 
 <pre class="example"><pre class="verbatim">     
-     ra::Big&lt;int, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
+     ra::Small&lt;int, 3, 2, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
      cout &lt;&lt; "c: " &lt;&lt; c &lt;&lt; endl;
      cout &lt;&lt; "s: " &lt;&lt; map([](auto &amp;&amp; a) { return sum(diag(a)); }, iter&lt;-1>(c)) &lt;&lt; endl;
 </pre>
-     -| c: 3 2 2
-        0 -2
+     -| c: 0 -2
         -1 -3
         1 -1
         0 -2
         2 0
         1 -1
-        s: 3
-        -3 -1 -1
+        s: -3 -1 -1
 </pre>
    <p><a name="index-g_t_0040code_007bsum_007d-66"></a><a name="x_002dsum"></a>
 
@@ -1901,7 +1917,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 </div>
 
-<h2 class="chapter">7 Sources</h2>
+<h2 class="chapter">8 Sources</h2>
 
 <!--  -->
 <p><table summary="">

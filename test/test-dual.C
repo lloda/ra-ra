@@ -108,6 +108,13 @@ int main()
         cout << exp(x) << endl;
         cout << (x*x) << endl;
     }
+    tr.section("real -> dual<complex> conversion");
+    {
+        Dual<complex> x { 1., 1. };
+        x = 0.;
+        tr.test_eq(0., x.re);
+        tr.test_eq(0., x.du);
+    }
     tr.section("tests with complex");
     {
         std::vector<complex> x(10);

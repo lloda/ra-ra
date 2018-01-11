@@ -83,7 +83,7 @@ tester = ra.to_test_ra(env, variant_dir)
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
               'test-tensorindex', 'test-explode-collapse', 'test-wrank',
               'test-optimize', 'test-reshape', 'test-concrete', 'test-bench',
-              # 'test-small-iterator',
+              'test-iterator-small',
               # 'test-end'
           ]]
 

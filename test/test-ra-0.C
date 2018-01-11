@@ -220,6 +220,22 @@ int main()
         tr.test_eq(198, a);
         tr.test_eq(396, b);
     }
+    tr.section("rank 0 and rank 1 constructors with RANK_ANY");
+    {
+        ra::Big<int> x {9};
+        tr.test_eq(9, x(0));
+        tr.test_eq(1, x.size());
+        tr.test_eq(1, x.size(0));
+        tr.test_eq(1, x.rank());
+        ra::Big<int> y = 9;
+        tr.test_eq(9, y());
+        tr.test_eq(1, y.size());
+        tr.test_eq(0, y.rank());
+// // FIXME ra::Big<int> x {} is WHO NOSE territory, but should probably be rank 1, size 0
+//         ra::Big<int> z {};
+//         tr.test_eq(0, z.size());
+//         tr.test_eq(1, z.rank());
+    }
     tr.section("ra traits");
     {
         {
@@ -246,7 +262,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
-        ra::ra_iterator<ra::View<double>> it(r.dim, r.p);
+        ra::cell_iterator<ra::View<double>> it(r.dim, r.p);
         cout << "as iterator: " << ra::print_iterator(it) << endl;
         tr.test(r.data()==it.c.p);
         std::copy(r.begin(), r.end(), chk);
@@ -257,13 +273,13 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::ra_iterator<ra::View<double, 1>> it(r.dim, r.p);
+        ra::cell_iterator<ra::View<double, 1>> it(r.dim, r.p);
         cout << "View<double, 1> it.c.p: " << it.c.p << endl;
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
     // some of these tests are disabled depending on cell_iterator::operator=.
-    tr.section("[ra11a] (skipped) ra_iterator operator= (from cell_iterator) does NOT copy contents");
+    tr.section("[ra11a] (skipped) cell_iterator operator= (from cell_iterator) does NOT copy contents");
     {
         double a[6] = { 0, 0, 0, 0, 0, 0 };
         double b[6] = { 1, 2, 3, 4, 5, 6 };
@@ -282,11 +298,20 @@ int main()
             tr.skip().test_eq(rb, aiter);
         }
     }
-    tr.section("[ra11b] ra_iterator operator= (from cell_iterator) DOES copy contents");
+    tr.section("[ra11b] cell_iterator operator= (from cell_iterator) DOES copy contents");
     {
         ra::Unique<double, 2> A({6, 7}, ra::_0 - ra::_1);
         ra::Unique<double, 2> AA({6, 7}, 0.);
         AA.iter<1>() = A.iter<1>();
+        tr.test_eq(ra::_0 - ra::_1, AA);
+        tr.test_eq(A, AA);
+    }
+    tr.section("[ra11b] cell_iterator operator= (from cell_iterator) DOES copy contents");
+    {
+        ra::Small<double, 6, 7> A = ra::_0 - ra::_1;
+        ra::Small<double, 6, 7> AA = 0.;
+        AA.iter<1>() = A.iter<1>();
+        tr.test_eq(ra::_0 - ra::_1, AA);
         tr.test_eq(A, AA);
     }
     tr.section("[ra11c] STL-type iterators never copy contents");
@@ -420,7 +445,7 @@ int main()
         std::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 
-        // TODO Have strides in Small.
+        // Small strides are tested in test-small-0.C, test-small-1.C.
         ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
         std::copy(s.begin(), s.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, s.begin()));
@@ -659,7 +684,6 @@ int main()
                 tr.info("fix rank").test(std::equal(r0b.begin(), r0b.end(), rcheck));
                 auto r0c = r.at(0+ra::Big<int, 1> {});
                 tr.info("fix rank expr").test(std::equal(r0c.begin(), r0c.end(), rcheck));
-                // TODO check out why ra::Big<int> {} is rank 0.
                 auto r0d = r.at(0+ra::Big<int>({0}, {}));
                 tr.info("r0d: [", r0d, "]").test(std::equal(r0d.begin(), r0d.end(), rcheck));
             }

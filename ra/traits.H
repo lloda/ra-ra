@@ -16,6 +16,19 @@
 #include <algorithm>
 #include "ra/bootstrap.H"
 
+#ifndef RA_CHECK_BOUNDS_TRAITS
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_TRAITS 1
+  #else
+    #define RA_CHECK_BOUNDS_TRAITS RA_CHECK_BOUNDS
+  #endif
+#endif
+#if RA_CHECK_BOUNDS_TRAITS==0
+    #define CHECK_BOUNDS( cond )
+#else
+    #define CHECK_BOUNDS( cond ) assert( cond )
+#endif
+
 namespace ra {
 
 template <class A> using ra_traits = ra_traits_def<std::decay_t<A>>;
@@ -109,11 +122,7 @@ void resize(Dim & dim, dim_t k)
 
 // Avoid clash of T with scalar constructors (for rank 0) and raveling init list constructor (for rank 1).
 template <class T, rank_t rank, class Enable=void>
-struct nested_braces
-{
-    struct not_used_as_argument {};
-    using list = not_used_as_argument;
-};
+struct nested_braces { struct list {}; /* not used as argument */ };
 
 template <class T, rank_t rank>
 struct nested_braces<T, rank, std::enable_if_t<(rank==2)>>
@@ -144,4 +153,74 @@ struct nested_braces<T, rank, std::enable_if_t<(rank>2)>>
     }
 };
 
+// ---------------------------
+// Indexers TODO traits.H doesn't seem like the logical file.
+// ---------------------------
+
+template <class sizes, class strides>
+struct Indexer0
+{
+    static_assert(mp::len<sizes> == mp::len<strides>, "mismatched sizes & strides");
+
+    template <rank_t end, rank_t k, class P>
+    constexpr static std::enable_if_t<k==end, dim_t> index_p_(dim_t const c, P const & p)
+    {
+        return c;
+    }
+    template <rank_t end, rank_t k, class P>
+    constexpr static std::enable_if_t<(k<end), dim_t> index_p_(dim_t const c, P const & p)
+    {
+        CHECK_BOUNDS(inside(p[k], mp::First_<sizes>::value));
+        return Indexer0<mp::Drop1_<sizes>, mp::Drop1_<strides>>::template index_p_<end, k+1>(c + p[k] * mp::First_<strides>::value, p);
+    }
+    template <class P>
+    constexpr static dim_t index_p(P const & p) // for Container::at().
+    {
+// gcc accepts p.size(), but I also need P = std::array to work. See also below.
+        static_assert(mp::len<sizes> >= ra_traits<P>::size_s(), "too many indices");
+        return index_p_<ra_traits<P>::size_s(), 0>(0, p);
+    }
+    template <class P, std::enable_if_t<ra_traits<P>::size_s()!=RANK_ANY, int> =0>
+    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
+    {
+        static_assert(mp::len<sizes> <= ra_traits<P>::size_s(), "too few indices");
+        return index_p_<mp::len<sizes>, 0>(0, p);
+    }
+    template <class P, std::enable_if_t<ra_traits<P>::size_s()==RANK_ANY, int> =0>
+    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
+    {
+        CHECK_BOUNDS(mp::len<sizes> <= p.size());
+        return index_p_<mp::len<sizes>, 0>(0, p);
+    }
+};
+
+struct Indexer1
+{
+    template <class Dim, class P>
+    constexpr static dim_t index_p(Dim const & dim, P const & p)
+    {
+        CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
+// use dim.data() to skip the size check.
+        dim_t c = 0;
+        for_each([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
+                 ptr(dim.data()), p);
+        return c;
+    }
+
+// used by cell_iterator::at() for rank matching on rank<driving rank, no slicing. TODO Static check.
+    template <class Dim, class P>
+    constexpr static dim_t index_short(rank_t framer, Dim const & dim, P const & p)
+    {
+        dim_t c = 0;
+        for (rank_t k=0; k<framer; ++k) {
+            CHECK_BOUNDS(inside(p[k], dim[k].size));
+            c += dim[k].stride * p[k];
+        }
+        return c;
+    }
+};
+
 } // namespace ra
+
+#undef CHECK_BOUNDS
+#undef RA_CHECK_BOUNDS_TRAITS

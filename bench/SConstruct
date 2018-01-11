@@ -74,7 +74,9 @@ if 'skip_summary' not in top:
  for bench in ['bench-dot', 'bench-reduce-sqrm',
                'bench-gemv', 'bench-sum-rows', 'bench-sum-cols',
                'bench-pack', 'bench-from',
-               'bench-stencil1', 'bench-stencil2', 'bench-stencil3']]
+               'bench-stencil1', 'bench-stencil2', 'bench-stencil3',
+               # 'bench-optimize'
+           ]]
 
 [ra.to_test_ra(env_blas, variant_dir)(bench)
  for bench in ['bench-gemm']]

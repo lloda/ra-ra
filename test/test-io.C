@@ -71,13 +71,13 @@ int main()
         iocheck(tr.info("output of expr (1)"),
                 ra::expr([](double i) { return -i; }, start(ra::Small<double, 3>{0, 1, 2})),
                 ra::Small<double, 3>{0, -1, -2});
-        iocheck(tr.info("output of expr (1)"),
+        iocheck(tr.info("output of expr (2)"),
                 ra::expr([](double i) { return -i; }, start(ra::Small<double, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
                 (ra::Small<double, 3, 2, 3> (-(ra::_0 - ra::_1 + ra::_2))));
     }
     {
         ra::Unique<int, 2> a({2, 3}, { 1, 2, 3, 4, 5, 6 });
-        iocheck(tr.info("output of expr (2)"),
+        iocheck(tr.info("output of expr (3)"),
                 ra::expr([](int i) { return -i; }, a.iter()),
                 ra::Unique<int, 2>({2, 3}, { -1, -2, -3, -4, -5, -6 }));
     }

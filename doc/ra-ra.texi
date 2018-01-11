@@ -55,6 +55,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 @menu
 * Overview::          Array programming and C++.
 * Usage::             Everything you can do with @code{ra::}.
+* Extras::            Additional libraries provided with @code{ra::}.
 * Hazards::           User beware.
 * Internals::         For all the world to see.
 * The future::        Could be even better.
@@ -78,7 +79,7 @@ A multidimensional array is a container whose elements can be looked up using a 
 
 Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.
 
-Arrays (also called @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
+Arrays (in the form of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
 
 @verbatim
 A = B+C;
@@ -196,7 +197,7 @@ In C++, a library is enough.
 @c @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
 Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, you can currently create a higher rank iterator on a @code{View} but not a @code{SmallView}; this is a bug.
+Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{SmallView}, even though you could do it on a @code{View}; this was a bug.
 
 Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
 
@@ -263,7 +264,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/operators.H"} and @code{"ra/io.H"} at the top of your sources.
 
-A C++14 compiler with partial C++17 support is required. At the time of writing this means gcc 7.2 with @option{-std=c++1z}. Most tests pass under clang 5.0 with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
+A C++14 compiler with partial C++17 support is required. At the time of writing this means @b{gcc 7.2} with @option{-std=c++1z}. Most tests pass under @b{clang 5.0} with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
 
 Here is a minimal program:
 
@@ -809,8 +810,8 @@ We have seen in @ref{Cell iteration} that it is possible to treat an r-array as 
 
 @example
 @verbatim
-for_each(sort, A.iter<1>()); // (in ra::) sort is a regular function, cell rank must be given
-for_each(sort, A.iter<0>()); // (in ra::) error, bad cell rank
+for_each(sort, iter<1>(A)); // (in ra::) sort is a regular function, cell rank must be given
+for_each(sort, iter<0>(A)); // (in ra::) error, bad cell rank
 @end verbatim
 @end example
 
@@ -1229,6 +1230,12 @@ The following is often useful.
 FIXME lexicographical compare etc.
 
 @c ------------------------------------------------
+@node Extras
+@chapter Extras
+@c ------------------------------------------------
+
+
+@c ------------------------------------------------
 @node Hazards
 @chapter Hazards
 @c ------------------------------------------------
@@ -1308,9 +1315,13 @@ TODO
 
 @b{View} View SmallView
 
-@b{ArrayIterator} Expr Ryn Pick Iterator SmallBase::Iterator Iota TensorIndex Vector Scalar
+@b{Ravelable} Iterator SmallBase::Iterator Iota Vector Scalar
 
-@b{FlatIterator} Flat PickFlat CellFlat IotaFlat ScalarFlat
+@b{Indexable} Iterator SmallBase::Iterator Iota Vector Scalar TensorIndex
+
+@b{Indirect} Expr Ryn Pick
+
+@b{Flat} Flat PickFlat CellFlat IotaFlat ScalarFlat
 
 @c ------------------------------------------------
 @node Driving expressions
@@ -1334,11 +1345,11 @@ TODO
 The following boolean @code{#define}s affect the behavior of @code{ra::}.
 
 @itemize
-@item @code{RA_CHECK_BOUNDS} (default 1) Check bounds on random array accesses (e.g. @code{int i = 10; a[i] = 0;}). Bounds are never checked on regular array traversal, since in that case the library can guarantee that out of bounds accesses don't happen.
-@item @code{RA_USE_BLAS} (default 0) Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
-@item @code{RA_OPTIMIZE} (default 1) Replace certain expressions by others that are expected to perform better. This acts as a global mask on other @code{RA_OPTIMIZE_xxx} flags.
-@item @code{RA_OPTIMIZE_IOTA} (default 1) Perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::Iota(3, 0) + 1} becomes @code{ra::Iota(3, 1)} instead of a two-operand expression template.
-@item @code{RA_OPTIMIZE_SMALLVECTOR} (default 0) Perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on gcc and doesn't necessarily result in improved performance.
+@item @code{RA_CHECK_BOUNDS} (default 1):  Check bounds on random array accesses (e.g. @code{int i = 10; a[i] = 0;}). Bounds are never checked on regular array traversal, since in that case the library can guarantee that out of bounds accesses don't happen.
+@item @code{RA_USE_BLAS} (default 0): Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
+@item @code{RA_OPTIMIZE} (default 1): Replace certain expressions by others that are expected to perform better. This acts as a global mask on other @code{RA_OPTIMIZE_xxx} flags.
+@item @code{RA_OPTIMIZE_IOTA} (default 1): Perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::Iota(3, 0) + 1} becomes @code{ra::Iota(3, 1)} instead of a two-operand expression template.
+@item @code{RA_OPTIMIZE_SMALLVECTOR} (default 0): Perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
 @end itemize
 
 
@@ -1663,7 +1674,7 @@ where the result is @{c(0)+x(0), c(1)+x(1)@}.
 
 @cindex @code{iter}
 @anchor{x-iter} @defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} must be a dynamic size @code{View}. (This is a defect.)
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have dynamic or static shape.
 @end defun
 
 @example
@@ -1701,19 +1712,17 @@ The following example computes the trace of each of the items [(-1)-cells] of @c
 
 @example
 @verbatim
-ra::Big<int, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
+ra::Small<int, 3, 2, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
 cout << "c: " << c << endl;
 cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
 @end verbatim
-@print{} c: 3 2 2
-   0 -2
+@print{} c: 0 -2
    -1 -3
    1 -1
    0 -2
    2 0
    1 -1
-   s: 3
-   -3 -1 -1
+   s: -3 -1 -1
 @end  example
 
 @cindex @code{sum}

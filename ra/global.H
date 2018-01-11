@@ -13,9 +13,7 @@
 #include "ra/iterator.H"
 #include "ra/wedge.H"
 
-#define START(a) *(ra::start(a).flat())
-
-// This global versions must be available so that ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
+// These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
 
 template <class A,
           std::enable_if_t<ra::is_scalar<A>, int> =0>
@@ -30,10 +28,11 @@ inline constexpr void iter() { abort(); }
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F,
           std::enable_if_t<ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>, int> =0>
-inline constexpr decltype(auto) where(bool const w, T && t, F && f) { return w ? START(t) : START(f); }
+inline constexpr decltype(auto) where(bool const w, T && t, F && f)
+{
+    return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
+}
 
 template <int D, int Oa, int Ob, class A, class B,
           std::enable_if_t<ra::is_scalar<A> && ra::is_scalar<B>, int> =0>
 inline constexpr auto wedge(A const & a, B const & b) { return a*b; }
-
-#undef START

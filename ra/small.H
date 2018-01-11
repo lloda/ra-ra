@@ -8,10 +8,11 @@
 
 #pragma once
 #include "ra/ply.H"
+#include "ra/iterator-small.H"
 #include <iterator>
 
 /// @file small.H
-/// @brief Arrays with fixed size.
+/// @brief Arrays with static dimensions. Compare with View, WithStorage.
 
 #ifndef RA_CHECK_BOUNDS_SMALL
   #ifndef RA_CHECK_BOUNDS
@@ -27,73 +28,6 @@
 #endif
 
 namespace ra {
-
-template <class sizes, class strides>
-struct Indexer0
-{
-    static_assert(mp::len<sizes> == mp::len<strides>, "mismatched sizes & strides");
-
-    template <rank_t end, rank_t k, class P>
-    constexpr static std::enable_if_t<k==end, dim_t> index_p_(dim_t const c, P const & p)
-    {
-        return c;
-    }
-    template <rank_t end, rank_t k, class P>
-    constexpr static std::enable_if_t<(k<end), dim_t> index_p_(dim_t const c, P const & p)
-    {
-        CHECK_BOUNDS(inside(p[k], mp::First_<sizes>::value));
-        return Indexer0<mp::Drop1_<sizes>, mp::Drop1_<strides>>::template index_p_<end, k+1>(c + p[k] * mp::First_<strides>::value, p);
-    }
-    template <class P>
-    constexpr static dim_t index_p(P const & p) // for Container::at().
-    {
-// gcc accepts p.size(), but I also need P = std::array to work. See also below.
-        static_assert(mp::len<sizes> >= ra_traits<P>::size_s(), "too many indices");
-        return index_p_<ra_traits<P>::size_s(), 0>(0, p);
-    }
-    template <class P, std::enable_if_t<ra_traits<P>::size_s()!=RANK_ANY, int> =0>
-    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
-    {
-        static_assert(mp::len<sizes> <= ra_traits<P>::size_s(), "too few indices");
-        return index_p_<mp::len<sizes>, 0>(0, p);
-    }
-    template <class P, std::enable_if_t<ra_traits<P>::size_s()==RANK_ANY, int> =0>
-    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
-    {
-        CHECK_BOUNDS(mp::len<sizes> <= p.size());
-        return index_p_<mp::len<sizes>, 0>(0, p);
-    }
-};
-
-struct Indexer1
-{
-    template <class Dim, class P>
-    constexpr static dim_t index_p(Dim const & dim, P const & p)
-    {
-        CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
-// use dim.data() to skip the size check.
-        dim_t c = 0;
-        for_each([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
-                 ptr(dim.data()), p);
-        return c;
-    }
-
-// used by ra_iterator::at() for rank matching on rank<driving rank, no slicing. todo Static check.
-    template <class Dim, class P>
-    constexpr static dim_t index_short(rank_t framer, Dim const & dim, P const & p)
-    {
-        dim_t c = 0;
-        for (rank_t k=0; k<framer; ++k) {
-            CHECK_BOUNDS(inside(p[k], dim[k].size));
-            c += dim[k].stride * p[k];
-        }
-        return c;
-    }
-};
-
-// Static dimensions, stack storage. See View, Unique, Shared.
-template <class T, class sizes, class strides> struct SmallArray; // Used as type of Small::iterator::shape().
-template <class T, class sizes, class strides> struct SmallView; // Used as types of Small::iterator::at().
 
 template <class sizes_, class strides_, class ... I>
 struct FilterDims
@@ -150,12 +84,13 @@ template <class T> struct vec_xyz  { T x, y, z; };
 template <class T> struct vec_rtp  { T r, t, p; };
 template <class T> struct vec_xyzw { T u, v, z, w; };
 
-// TODO Should this be itself an xpr type, or do I need a ra_iterator-like obj?
+// TODO Should this be itself an xpr type, or do I need a cell_iterator-like obj?
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
 struct SmallBase
 {
     using sizes = sizes_;
     using strides = strides_;
+    using value_type = T;
 
     constexpr static std::array<dim_t, mp::len<sizes_>> ssizes = mp::tuple_copy<sizes, std::array<dim_t, mp::len<sizes>> >::f();
     constexpr static std::array<dim_t, mp::len<strides_>> sstrides = mp::tuple_copy<strides, std::array<dim_t, mp::len<strides>> >::f();
@@ -195,7 +130,7 @@ struct SmallBase
     constexpr decltype(auto) operator()(I ... i) CONST                            \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
-    } /* TODO More than one selector... */                             \
+    } /* TODO More than one selector... */                              \
     template <class ... I, std::enable_if_t<(!is_beatable<I>::static_p || ...), int> = 0> \
     constexpr auto operator()(I && ... i) CONST                                   \
     {                                                                   \
@@ -212,8 +147,7 @@ struct SmallBase
     {                                                                   \
         return (*this)(i);                                              \
     }
-    SUBSCRIPTS(const)
-    SUBSCRIPTS(/*const*/)
+    FOR_EACH(SUBSCRIPTS, /*const*/, const)
 #undef SUBSCRIPTS
 
 // See same thing for View.
@@ -255,103 +189,26 @@ struct SmallBase
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
         return SmallView<T CONST, mp::Cons_<mp::int_t<ss>, mp::Drop1_<sizes>>, strides>(this->data()+oo*this->stride(0)); \
     }
-    DEF_AS(const)
-    DEF_AS(/* const */)
+    FOR_EACH(DEF_AS, /* const */, const)
 #undef DEF_AS
 
-// TODO This is rank 0 only. Maybe reuse cell_iterator?
-    template <class P>
-    struct Iterator
-    {
-        P p;
+    template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase, c>;
+    template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<Child_, T const, sizes, strides>, c>;
+    template <rank_t c=0> constexpr auto iter() { return iterator<c>(data()); }
+    template <rank_t c=0> constexpr auto iter() const { return const_iterator<c>(data()); }
 
-        using value_type = typename std::iterator_traits<P>::value_type;
-
-        constexpr Iterator(P p_): p(p_) {}
-        constexpr Iterator(Iterator const & q): p(q.p) {}
-        constexpr Iterator() = delete;
-
-// TODO See ra_traits<Small>. Why do these twice?
-        constexpr static auto const & shape() { return ssizes; }
-        constexpr static dim_t size(int j) { return SmallBase::size(j); }
-        constexpr static dim_t size_s(int j) { return SmallBase::size(j); }
-// For xpr use; cf this stride() against SmallBase::stride().
-        constexpr static dim_t stride(int j) { return j<rank() ? SmallBase::stride(j) : 0; }
-        constexpr bool keep_stride(dim_t step, int z, int j) const
-        {
-            return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
-        }
-        constexpr static auto size() { return SmallBase::size(); }
-        constexpr static auto rank() { return SmallBase::rank(); }
-        constexpr static auto size_s() { return size(); }
-        constexpr static auto rank_s() { return rank(); }
-
-        template <class I> constexpr decltype(auto) at(I const & i_)
-        {
-            return p[Indexer0<sizes, strides>::index_short(i_)];
-        }
-        constexpr void adv(rank_t const k, dim_t const d)
-        {
-            p += (k<rank()) * stride(k)*d;
-        }
-        constexpr auto flat() { return p; }
-        constexpr auto flat() const { return p; }
-
-#define DEF_ASSIGNOPS(OP)                                               \
-        template <class X> void operator OP(X && x)                     \
-        { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
-        template <class X> void operator OP(Iterator const & x)         \
-        { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-        FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-    };
-#undef DEF_ASSIGNOPS
-
-    template <rank_t c=0> constexpr auto iter() { static_assert(c==0, "not yet"); return Iterator<T *>(data()); }
-    template <rank_t c=0> constexpr auto iter() const { static_assert(c==0, "not yet"); return Iterator<T const *>(data()); }
-
-    template <class Iterator>
-    struct general_stl_iterator
-    {
-        using value_type = typename Iterator::value_type;
-        using difference_type = dim_t;
-        using pointer = value_type *;
-        using reference = value_type &;
-        using const_reference = value_type const &;
-        using iterator_category = std::forward_iterator_tag;
-
-        Iterator ii;
-        std::decay_t<decltype(ssizes)> i;
-        general_stl_iterator(pointer const & p): ii(std::tuple_size_v<decltype(i)> ==0 ? nullptr : p) { std::fill(i.begin(), i.end(), 0.); }
-        general_stl_iterator(): ii(pointer(nullptr)) {}
-
-        template <class PP> bool operator==(PP const & q) const { return ii.p==q.ii.p; }
-        template <class PP> bool operator!=(PP const & q) const { return ii.p!=q.ii.p; }
-        decltype(auto) operator*() const { return *(ii.p); }
-        decltype(auto) operator*() { return *(ii.p); }
-        template <int k=rank()-1>
-        std::enable_if_t<(k>=0)> next_in_cube()
-        {
-            ++i[k];
-            if (i[k]<mp::Ref_<sizes, k>::value) {
-                ii.p += mp::Ref_<strides, k>::value;
-            } else {
-                i[k] = 0;
-                ii.p -= mp::Ref_<strides, k>::value*(mp::Ref_<sizes, k>::value-1);
-                next_in_cube<k-1>();
-                return;
-            }
-        }
-        template <int k> std::enable_if_t<(k<0)> next_in_cube() { ii.p = nullptr; }
-        general_stl_iterator & operator++() { next_in_cube(); return *this; }
-    };
-
+// FIXME see if we need to extend this for cellr!=0.
+// template <class P> using stl_iterator = mp::If_<have_default_strides, P, stl_iterator<Iterator<P>>>;
     constexpr static bool have_default_strides = std::is_same_v<strides, default_strides_<sizes>>;
-    template <class P> using stl_iterator = mp::If_<have_default_strides, P, general_stl_iterator<Iterator<P>>>;
+    template <class I, class P> using pick_stl_iterator = mp::If_<have_default_strides, P, ra::stl_iterator_small<I>>;
+    using stl_iterator = pick_stl_iterator<iterator<0>, T *>;
+    using stl_const_iterator = pick_stl_iterator<const_iterator<0>, T const *>;
+
 // TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
-    constexpr auto begin() { return stl_iterator<T *>(data()); }
-    constexpr auto begin() const { return stl_iterator<T const *>(data()); }
-    constexpr auto end() { return have_default_strides ? stl_iterator<T *>(data()+size()) : stl_iterator<T *>(); }
-    constexpr auto end() const { return have_default_strides ? stl_iterator<T const *>(data()+size()) : stl_iterator<T const *>(); }
+    constexpr auto begin() { return stl_iterator(data()); }
+    constexpr auto begin() const { return stl_const_iterator(data()); }
+    constexpr auto end() { return have_default_strides ? stl_iterator(data()+size()) : stl_iterator(); }
+    constexpr auto end() const { return have_default_strides ? stl_const_iterator(data()+size()) : stl_const_iterator(); }
 
 // Renames.
 #define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \
@@ -467,21 +324,18 @@ struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
     constexpr operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
     constexpr operator SmallView<T const, sizes, strides> const () { return SmallView<T const, sizes, strides>(p); }
 
-// BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
-    constexpr operator T & ()
-    {
-        static_assert(rank()==0 || (rank()==1 && size()==1), "bad rank"); // rank 1 for coord types
-        return p[0];
-    };
-    constexpr operator T const & () const
-    {
-        static_assert(rank()==0 || (rank()==1 && size()==1), "bad rank"); // rank 1 for coord types
-        return p[0];
-    };
     using Base::operator=;
 
-    T const & back() const { static_assert(Base::rank()==1, "bad rank for back"); return (*this)[Base::size()-1]; }
-    T & back() { static_assert(Base::rank()==1, "bad rank for back"); return (*this)[Base::size()-1]; }
+// BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
+#define DEF_SCALARS(CONST)                                              \
+    constexpr operator T CONST & () CONST                               \
+    {                                                                   \
+        static_assert(rank()==0 || (rank()==1 && size()==1), "bad rank"); /* rank 1 for coord types */ \
+        return p[0];                                                    \
+    };                                                                  \
+    T CONST & back() CONST { static_assert(Base::rank()==1, "bad rank for back"); return (*this)[Base::size()-1]; }
+    FOR_EACH(DEF_SCALARS, /* const */, const)
+#undef DEF_SCALARS
 };
 
 // This specialization exists only to avoid -Warray-bounds on operator[] when sizes is [0].
@@ -499,6 +353,7 @@ struct SmallArray<T, mp::int_list<0>, strides>: public SmallBase<SmallArray, T, 
 };
 #undef DEF_SMALLARRAY
 
+// FIXME Type_ seems superfluous
 template <template <class, class, class> class Type_,
           class T, class sizes, class strides>
 struct ra_traits_small
@@ -584,8 +439,7 @@ struct axes_list_indices
     {                                                                   \
         return transpose<0, 0>(a);                                      \
     }
-DEF_TRANSPOSE(const)
-DEF_TRANSPOSE(/* */)
+FOR_EACH(DEF_TRANSPOSE, /* const */, const)
 #undef DEF_TRANSPOSE
 
 // TODO Used by ProductRule; waiting for proper generalization.

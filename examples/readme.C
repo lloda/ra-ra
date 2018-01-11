@@ -179,13 +179,19 @@ int main()
    95 106 117 */
         cout << C << endl;
     }
-// example from the manual [ma104]
+    tr.section("example from the manual [ma104] - dynamic size");
     {
         ra::Big<int, 3> c({3, 2, 2}, ra::_0 - ra::_1 - 2*ra::_2);
-        cout << c << endl;
-        cout << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
+        cout << "c: " << c << endl;
+        cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
     }
-// example from the manual [ma105]
+    tr.section("example from the manual [ma104] - static size");
+    {
+        ra::Small<int, 3, 2, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
+        cout << "c: " << c << endl;
+        cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
+    }
+    tr.section("example from the manual [ma105]");
     {
         ra::Big<double, 2> a {{1, 2, 3}, {4, 5, 6}};
         ra::Big<double, 1> b {10, 20, 30};

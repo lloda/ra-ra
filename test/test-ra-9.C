@@ -86,5 +86,11 @@ int main()
         ra::scalar(x) += c + ra::scalar(int2 { 1, 99 });
         tr.test_eq(int2{2, 0}+int2{1, 3}+int2{1, 99}+int2{2, 4}+int2{1, 99}, x);
     }
+// FIXME BUG I discovered it when I replaced SmallBase::Iterator by cell_iterator_small. Creating shape() instead of returning ref to ssizes broke ra::start(start(c).shape()) in test-io.C when c is Small. This bug happened already before the replacement.
+    {
+        auto fun = []() { return std::array<int, 2> {1, 2}; };
+        // cout << ra::vector(fun()) << endl;
+        tr.skip().test_eq(ra::vector(fun()), ra::iota(2, 1));
+    }
     return tr.summary();
 }

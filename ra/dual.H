@@ -18,58 +18,51 @@
 #pragma once
 #include <iosfwd>
 #include "ra/macros.H"
-#include <complex>
+#include <cmath>
 
-using std::abs;
+using std::abs; using std::sqrt; using std::fma;
 
 template <class T>
 struct Dual
 {
     T re, du;
+
+    template <class S, class Enable=void>
+    struct real_part { struct type {}; };
+
+    template <class S>
+    struct real_part<S, std::enable_if_t<!(std::is_same_v<S, std::decay_t<decltype(std::declval<S>().real())>>)>>
+    {
+        using type = typename S::value_type;
+    };
+
     Dual(T const & r, T const & d): re(r), du(d) {}
     Dual(T const & r): re(r), du(0.) {} // conversions are by default constants.
+    Dual(typename real_part<T>::type const & r): re(r), du(0.) {}
     Dual() {}
-#define DEF_ASSIGN_OPS(OP)                                                  \
-    Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
-    Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; }
-    FOR_EACH(DEF_ASSIGN_OPS, +, -, /, *)
-#undef DEF_ASSIGN_OPS
-};
 
-template <class T>
-struct Dual<std::complex<T>>
-{
-    using C = std::complex<T>;
-    C re, du;
-    Dual(C const & r, C const & d): re(r), du(d) {}
-    Dual(C const & r): re(r), du(0.) {} // conversions are by default constants.
-    Dual(T const & r): re(r), du(0.) {} // TODO repeat the class just for this?
-    Dual() {}
 #define DEF_ASSIGN_OPS(OP)                                              \
     Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
-    Dual & operator JOIN(OP, =)(C const & r) { *this = *this OP r; return *this; } \
-    Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; }
+    Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; } \
+    Dual & operator JOIN(OP, =)(typename real_part<T>::type const & r) { *this = *this OP r; return *this; }
     FOR_EACH(DEF_ASSIGN_OPS, +, -, /, *)
 #undef DEF_ASSIGN_OPS
 };
 
 // conversions are by default constants.
-template <class R>
-Dual<R> dual(R const & r)
-{
-    return Dual<R> { r, 0. };
-}
+template <class R> auto dual(Dual<R> const & r) { return r; }
+template <class R> auto dual(R const & r) { return Dual<R> { r, 0. }; }
 
 template <class R, class D>
 auto dual(R const & r, D const & d)
 {
-    return Dual<decltype(r+d)> { r, d };
+    return Dual<std::common_type_t<R, D>> { r, d };
 }
 
 template <class A, class B>
 auto operator*(Dual<A> const & a, Dual<B> const & b)
 {
-    return Dual<decltype(a.re*b.re)> { a.re*b.re, a.re*b.du + a.du*b.re };
+    return dual(a.re*b.re, a.re*b.du + a.du*b.re);
 }
 template <class A, class B>
 auto operator*(A const & a, Dual<B> const & b)
@@ -85,8 +78,7 @@ auto operator*(Dual<A> const & a, B const & b)
 template <class A, class B, class C>
 auto fma(Dual<A> const & a, Dual<B> const & b, Dual<C> const & c)
 {
-    return dual(fma(a.re, b.re, c.re),
-                fma(a.re, b.du, fma(a.du, b.re, c.du)));
+    return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du)));
 }
 
 template <class A, class B>
