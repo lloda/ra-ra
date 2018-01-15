@@ -23,26 +23,6 @@ int main()
     TestRecorder tr;
     tr.section("Tests for std:: types");
     {
-        tr.section("ra::start() on vector types");
-        {
-            auto ref = std::array<int, 4> {{12, 77, 44, 1}};
-            tr.test_eq(2, expr([](int i) { return i; },
-                               ra::start(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
-            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array<int, 4> {{12, 77, 44, 1}})));
-// [a1] these require ra::start and ra::Expr to forward in the constructor (only on linux gcc-5.2,
-// weirdly). Clue of why is in the ra::Unique case below.
-            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
-            tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector<int> {12, 77, 44, 1})));
-// these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes
-// sense, as argname is otherwise always an lref.
-            ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
-                           ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
-// BUG This still gives a CTE (ra::start for ra::vector does work --that uses Unique<>.iter())
-// because info(A && a) { start(a) <- makes a copy of a: Expr, which copies its internal tuple,
-// which has a value (not ref) Unique. }.
-// Fix could be to make start(is_iterator) true forward, but that doesn't work for Iota, etc. (see test-optimize.C).
-            // tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
-        }
         tr.section("frame match ra::start on 1st axis");
         {
             std::vector<int> const a = { 1, 2, 3 };

@@ -41,10 +41,6 @@ int main()
             cout << "AI1 " << std::is_same<int, AI1>::value << endl;
             cout << AI1::rank() << endl;
 
-            cout << "\n---\n" << endl;
-            AI0 ai {};
-            cout << ai.c.p << endl;
-
             AI0 bi(a.data());
             cout << bi.c.p << endl;
         }

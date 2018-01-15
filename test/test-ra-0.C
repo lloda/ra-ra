@@ -263,7 +263,6 @@ int main()
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
         ra::cell_iterator<ra::View<double>> it(r.dim, r.p);
-        cout << "as iterator: " << ra::print_iterator(it) << endl;
         tr.test(r.data()==it.c.p);
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));

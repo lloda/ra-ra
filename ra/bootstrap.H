@@ -29,7 +29,8 @@
 
 namespace ra {
 
-constexpr int VERSION = 4;
+constexpr int VERSION = 5;     // to force upgrades on dependents
+constexpr int LAST_ISSUE = 35; // numbered as [ra··] throughout the code
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
@@ -81,11 +82,11 @@ inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 }
 
 // Order of decl issues.
+template <class C> struct Scalar; // for type predicates
 template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator
 template <class T, class sizes, class strides> struct SmallView; // for cell_iterator_small
 template <class T, class sizes, class strides> struct SmallArray;
 template <class V, class Enable=void> struct ra_traits_def;
-
 template <class S> struct default_strides {};
 
 template <class t0, class t1, class ... ti>
@@ -106,9 +107,6 @@ template <class S> using default_strides_ = typename default_strides<S>::type;
 
 template <class T, dim_t ... sizes>
 using Small = SmallArray<T, mp::int_list<sizes ...>, default_strides_<mp::int_list<sizes ...> >>;
-
-// Dope vector element
-struct Dim { dim_t size, stride; };
 
 template <int n> struct dots_t
 {

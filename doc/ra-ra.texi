@@ -289,6 +289,7 @@ int main()
 
 You may want to @code{#include "ra/real.H"} and @code{"ra/complex.H"}. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function.
 
+@cindex container
 @c ------------------------------------------------
 @node Containers and views
 @section Containers and views
@@ -373,7 +374,7 @@ std::cout << format_array(A, false, "|") << std::endl;
 @print{} hello|hello|hello
 @end example
 
-
+@cindex view
 A @dfn{view} is similar to a container in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
 
 @example
@@ -1301,6 +1302,7 @@ TODO
 * Type hierarchy::        From Containers to FlatIterators.
 * Driving expressions::   The term in charge.
 * Loop types::            Chosen for performance.
+* Introspection::         Speaking to myself.
 * Compiling and running:: Practical matters.
 @end menu
 
@@ -1311,17 +1313,25 @@ TODO
 
 TODO
 
-@b{Container} Big Small
+@b{Container} Big Shared Unique Small
 
 @b{View} View SmallView
 
 @b{Ravelable} Iterator SmallBase::Iterator Iota Vector Scalar
 
+These have a @code{flat()} method that is used to obtain a linearized view of a section of the array. They do not necessarily provide an @code{at()} method.
+
 @b{Indexable} Iterator SmallBase::Iterator Iota Vector Scalar TensorIndex
 
-@b{Indirect} Expr Ryn Pick
+These have an @code{at(index type)} method so they can be indexed by running over the index set manually in any order. They do not necessarily provide a @code{flat()} method.
+
+@b{ArrayIterator} Expr Ryn Pick Iterator SmallBase::Iterator Iota Vector Scalar
+
+This is a generalization of Ravelable and Indexable. E.g. Expr can be either or both depending on the component types. ArrayIterators are accepted by all the array functions such as @code{map}, @code{for_each}, etc.
 
 @b{Flat} Flat PickFlat CellFlat IotaFlat ScalarFlat
+
+These are pointerlike types that are meant to be traversed linearly. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference).
 
 @c ------------------------------------------------
 @node Driving expressions
@@ -1336,6 +1346,13 @@ TODO
 @c ------------------------------------------------
 
 TODO
+
+@c ------------------------------------------------
+@node Introspection
+@section Introspection
+@c ------------------------------------------------
+
+@code{ra::ra-traits} is a template defined for Containers and Views, incuding foreign ones. It's not defined for expression types
 
 @c ------------------------------------------------
 @node Compiling and running

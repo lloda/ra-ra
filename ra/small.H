@@ -207,8 +207,8 @@ struct SmallBase
 // TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
     constexpr auto begin() { return stl_iterator(data()); }
     constexpr auto begin() const { return stl_const_iterator(data()); }
-    constexpr auto end() { return have_default_strides ? stl_iterator(data()+size()) : stl_iterator(); }
-    constexpr auto end() const { return have_default_strides ? stl_const_iterator(data()+size()) : stl_const_iterator(); }
+    constexpr auto end() { return stl_iterator(have_default_strides ? data()+size() : nullptr); }
+    constexpr auto end() const { return stl_const_iterator(have_default_strides ? data()+size() : nullptr); }
 
 // Renames.
 #define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \

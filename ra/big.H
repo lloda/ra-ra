@@ -30,6 +30,9 @@
 
 namespace ra {
 
+// Dope vector element
+struct Dim { dim_t size, stride; };
+
 // Always C order. If you need another, transpose this.
 template <class S, class D>
 dim_t filldim(int n, S send, D dend)
@@ -214,9 +217,9 @@ struct View
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
     template <class  I>                                                 \
-    auto at(I const & i) CONST                                          \
+    auto at(I && i) CONST                                               \
     {                                                                   \
-        using Sub = View<T CONST, rank_diff(RANK, I::size_s())>; /* gcc accepts i.size() */ \
+        using Sub = View<T CONST, rank_diff(RANK, std::decay_t<I>::size_s())>; /* gcc accepts i.size() */ \
         return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
@@ -561,7 +564,7 @@ struct View<T, RANK_ANY>
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
     template <class I>                                                  \
-    auto at(I const & i) CONST                                          \
+    auto at(I && i) CONST                                               \
     {                                                                   \
         return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \

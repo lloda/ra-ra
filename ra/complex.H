@@ -29,15 +29,15 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
     inline constexpr C xI(C const z)               { return C(-z.imag(), z.real()); } \
     inline constexpr R real_part(C const & z)      { return z.real(); } \
     inline constexpr R imag_part(C const & z)      { return z.imag(); } \
-    inline constexpr R & real_part(C & z)          { return reinterpret_cast<R *>(&z)[0]; } \
-    inline constexpr R & imag_part(C & z)          { return reinterpret_cast<R *>(&z)[1]; } \
     inline constexpr R sqrm(C const x)             { return sqrm(x.real())+sqrm(x.imag()); } \
     inline constexpr R sqrm(C const x, C const y)  { return sqrm(x.real()-y.real())+sqrm(x.imag()-y.imag()); } \
-    inline constexpr R norm2(C const x)            { return hypot(x.real(), x.imag()); } \
-    inline constexpr R norm2(C const x, C const y) { return sqrt(sqrm(x, y)); } \
-    inline constexpr R abs(C const x, C const y)   { return sqrt(sqrm(x, y)); } \
     inline C sqr(C const x)                        { return x*x; }      \
-    inline C dot(C const x, C const y)             { return x*y; }
+    inline C dot(C const x, C const y)             { return x*y; }      \
+    inline /* constexpr clang */ R & real_part(C & z)          { return reinterpret_cast<R *>(&z)[0]; } \
+    inline /* constexpr clang */ R & imag_part(C & z)          { return reinterpret_cast<R *>(&z)[1]; } \
+    inline /* constexpr clang */ R norm2(C const x)            { return hypot(x.real(), x.imag()); } \
+    inline /* constexpr clang */ R norm2(C const x, C const y) { return sqrt(sqrm(x, y)); } \
+    inline /* constexpr clang */ R abs(C const x, C const y)   { return sqrt(sqrm(x, y)); }
 FOR_FLOAT(double, std::complex<double>);
 FOR_FLOAT(float, std::complex<float>);
 #undef FOR_FLOAT

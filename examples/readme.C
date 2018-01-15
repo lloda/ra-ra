@@ -26,7 +26,7 @@ int main()
     {
         ra::Big<char> A({2, 3}, 'a');     // dynamic rank = 2, dynamic shape = {2, 3}
         ra::Big<char, 2> B({2, 3}, 'b');  // static rank = 2, dynamic shape = {2, 3}
-        ra::Small<char, 2, 3> C('c');       // static rank = 2, static shape = {2, 3}
+        ra::Small<char, 2, 3> C('c');     // static rank = 2, static shape = {2, 3}
         cout << "A: " << A << "\n\n";
         cout << "B: " << B << "\n\n";
         cout << "C: " << C << "\n\n";
@@ -146,13 +146,13 @@ int main()
         B += std::vector<float> {10, 20};
         cout << "B: " << B << "\n\n";
     }
-// example from the manual [ma100].
+    tr.section("example from the manual [ma100]");
     {
         ra::Small<int, 3> s {2, 1, 0};
         ra::Small<double, 3> z = pick(s, s*s, s+s, sqrt(s));
         cout << "z: " << z << endl;
     }
-// example from the manual [ma101].
+    tr.section("example from the manual [ma101]");
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
         std::cout << format_array(transpose<1, 0>(A), false, "|") << std::endl;
@@ -161,13 +161,13 @@ int main()
         ra::Big<char const *, 1> A = {"hello", "array", "world"};
         std::cout << format_array(A, false, "|") << std::endl;
     }
-// example from the manual [ma102].
+    tr.section("example from the manual [ma102]");
     {
         // ra::Big<char const *, 1> A({3}, "hello"); // ERROR b/c of pointer constructor
         ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
         std::cout << format_array(A, false, "|") << std::endl;
     }
-// example from the manual [ma103].
+    tr.section("example from the manual [ma103]");
     {
         ra::Big<int, 2> A {{1, 2}, {3, 4}, {5, 6}};
         ra::Big<int, 2> B {{7, 8, 9}, {10, 11, 12}};

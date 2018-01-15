@@ -344,7 +344,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
    <p>You may want to <code>#include "ra/real.H"</code> and <code>"ra/complex.H"</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function.
 
-<!--  -->
+   <p><a name="index-container-8"></a><!--  -->
 <div class="node">
 <p><hr>
 <a name="Containers-and-views"></a>
@@ -389,7 +389,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
    <p>The second form takes two arguments, one giving the shape, the second the contents.
 
-   <p><a name="index-g_t_0040code_007bra_003a_003aunspecified_007d-8"></a>
+   <p><a name="index-g_t_0040code_007bra_003a_003aunspecified_007d-9"></a>
 <pre class="example"><pre class="verbatim">     
      ra::Big&lt;double, 2> a({2, 3}, 1.);            // a has size 2x3 and be filled with 1.
      ra::Big&lt;double> b({2, 3}, ra::unspecified);  // b has size 2x3 and contents don't matter
@@ -401,7 +401,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>Finally, there are special constructors where the content argument is either a pointer or an <code>std::initializer_list</code>. This argument isn't used for shape <a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested <code>std::initializer_list</code> isn't supported yet, but may be supported in the future.
 
 <!-- [ma112] -->
-<p><a name="index-order_002c-column_002dmajor-9"></a>
+<p><a name="index-order_002c-column_002dmajor-10"></a>
 <pre class="example"><pre class="verbatim">     
      ra::Big&lt;double, 2> a {{1, 2, 3}, {4, 5, 6}};
      
@@ -426,7 +426,7 @@ Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><
 </pre>
      -| hello|hello|hello
 </pre>
-   <p>A <dfn>view</dfn> is similar to a container in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
+   <p><a name="index-view-11"></a>A <dfn>view</dfn> is similar to a container in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
 
 <pre class="example"><pre class="verbatim">     
      ra::Big&lt;double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
@@ -573,8 +573,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
 </blockquote>
 
-   <p><a name="index-shape-agreement_002c-prefix-10"></a><a name="index-shape-agreement_002c-suffix-11"></a><!-- @cindex J -->
-<a name="index-Numpy-12"></a>This rank extension rule is used by the J language <!-- %**else if -->
+   <p><a name="index-shape-agreement_002c-prefix-12"></a><a name="index-shape-agreement_002c-suffix-13"></a><!-- @cindex J -->
+<a name="index-Numpy-14"></a>This rank extension rule is used by the J language <!-- %**else if -->
 [<a href="#Sources">J S</a>]
  and is known as <dfn>prefix agreement</dfn>. The opposite rule of <dfn>suffix agreement</dfn> is used, for example, in Numpy <!-- %**else if -->
 [<a href="#Sources">num17</a>]
@@ -604,7 +604,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
    <p>An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. <a href="#x_002dtranspose">Transposing</a> the axes before extension is a possible workaround. For a more general form of rank extension, see <a href="#The-rank-conjunction">The rank conjunction</a>.
 
-   <p><a name="index-Numpy-13"></a><a name="index-broadcasting_002c-singleton-14"></a>Other languages have a feature similar to rank extension called ‘broadcasting’. For example, in the way it's implemented in Numpy <!-- %**else if -->
+   <p><a name="index-Numpy-15"></a><a name="index-broadcasting_002c-singleton-16"></a>Other languages have a feature similar to rank extension called ‘broadcasting’. For example, in the way it's implemented in Numpy <!-- %**else if -->
 [<a href="#Sources">num17</a>]
 , an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. This is more general than prefix agreement, because any axes can be matched. You can think of prefix agreement as the case where all the singleton dimensions are added to the end of the shape.
 
@@ -726,7 +726,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p><code>ra::</code> isn't smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
 
 <div class="defun">
-&mdash; Special&nbsp;object<!-- /@w -->: <b>iota</b><var> count </var>[<var>start:0 </var>[<var>step:1</var>]]<var><a name="index-iota-15"></a></var><br>
+&mdash; Special&nbsp;object<!-- /@w -->: <b>iota</b><var> count </var>[<var>start:0 </var>[<var>step:1</var>]]<var><a name="index-iota-17"></a></var><br>
 <blockquote><p>Create a linear range <code>start, start+step, ... start+step*(count-1)</code>. 
 </p></blockquote></div>
 
@@ -747,7 +747,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
      =&gt; a = {4, 5, 6}
 </pre>
    <div class="defun">
-&mdash; Special&nbsp;object<!-- /@w -->: <b>all</b><var><a name="index-all-16"></a></var><br>
+&mdash; Special&nbsp;object<!-- /@w -->: <b>all</b><var><a name="index-all-18"></a></var><br>
 <blockquote><p>Create a linear range <code>0, 1, ... (nᵢ-1)</code> when used as a subscript for the <code>i</code>-th argument of a subscripting expression. 
 </p></blockquote></div>
 
@@ -766,7 +766,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p><code>all</code> is a special case (<code>dots&lt;1&gt;</code>) of the more general object <code>dots</code>.
 
 <div class="defun">
-&mdash; Special&nbsp;object<!-- /@w -->: <b>dots&lt;n&gt;</b><var><a name="index-dots_003cn_003e-17"></a></var><br>
+&mdash; Special&nbsp;object<!-- /@w -->: <b>dots&lt;n&gt;</b><var><a name="index-dots_003cn_003e-19"></a></var><br>
 <blockquote><p>Equivalent to as many instances of <code>ra::all</code> as indicated by <code>n</code>, which must not be negative. Each instance takes the place of one argument to the subscripting operation. 
 </p></blockquote></div>
 
@@ -784,7 +784,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>This is useful when writing rank-generic code, see <code>examples/maxwell.C</code> in the distribution for an example.
 
 <div class="defun">
-&mdash; Special&nbsp;object<!-- /@w -->: <b>newaxis&lt;n&gt;</b><var><a name="index-newaxis_003cn_003e-18"></a></var><br>
+&mdash; Special&nbsp;object<!-- /@w -->: <b>newaxis&lt;n&gt;</b><var><a name="index-newaxis_003cn_003e-20"></a></var><br>
 <blockquote><p>Inserts <code>n</code> new axes at the subscript position. <code>n</code> must not be negative. The new axes have size 1 and stride 0. 
 </p></blockquote></div>
 
@@ -795,7 +795,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
      auto i = a(newaxis&lt;1>); // same contents as ra::Big&lt;int, 2> a({1, 3, 2}, {1, 2, 3, 4, 5, 6})
 </pre>
 </pre>
-   <p><a name="index-broadcasting_002c-singleton-19"></a><code>newaxis&lt;n&gt;</code> main use is to prepare arguments for broadcasting. However, since argument agreement in <code>ra::</code> requires exact size match on all dimensions, this isn't currently as useful as in e.g. Numpy where dimensions of size 1 match dimensions of any other size. A more flexible syntax <code>newaxis(n0, n1...)</code> to insert axes of arbitrary sizes may be implemented in the future.
+   <p><a name="index-broadcasting_002c-singleton-21"></a><code>newaxis&lt;n&gt;</code> main use is to prepare arguments for broadcasting. However, since argument agreement in <code>ra::</code> requires exact size match on all dimensions, this isn't currently as useful as in e.g. Numpy where dimensions of size 1 match dimensions of any other size. A more flexible syntax <code>newaxis(n0, n1...)</code> to insert axes of arbitrary sizes may be implemented in the future.
 
    <p>In addition to the special objects listed above, you can also omit any trailing <code>ra::all</code> subscripts. For example:
 
@@ -823,7 +823,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
 <!--  -->
 <div class="defun">
-&mdash; Special&nbsp;object<!-- /@w -->: <b>TensorIndex&lt;n</b><var>, integer_type=ra::dim_t&gt;<a name="index-TensorIndex_003cn-20"></a></var><br>
+&mdash; Special&nbsp;object<!-- /@w -->: <b>TensorIndex&lt;n</b><var>, integer_type=ra::dim_t&gt;<a name="index-TensorIndex_003cn-22"></a></var><br>
 <blockquote><p><code>TensorIndex&lt;n&gt;</code> represents the <code>n</code>-th index of an array expression. <code>TensorIndex&lt;n&gt;</code> is itself an array expression of rank <code>n</code>-1 and size undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
 
         <p><code>ra::</code> offers the shortcut <code>ra::_0</code> for <code>ra::TensorIndex&lt;0&gt;{}</code>, etc. 
@@ -967,7 +967,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <!--  -->
 <h4 class="subsection">2.9.1 Using other C and C++ types with <code>ra::</code></h4>
 
-<p><a name="index-foreign-type-21"></a><code>ra::</code> accepts certain types from outside <code>ra::</code> (<dfn>foreign types</dfn>) as array expressions. Generally it is enough to mix the foreign type with a type from <code>ra::</code> and let deduction work.
+<p><a name="index-foreign-type-23"></a><code>ra::</code> accepts certain types from outside <code>ra::</code> (<dfn>foreign types</dfn>) as array expressions. Generally it is enough to mix the foreign type with a type from <code>ra::</code> and let deduction work.
 
 <pre class="example"><pre class="verbatim">     
      std::vector&lt;int> x = {1, 2, 3};
@@ -976,7 +976,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
      -| -5 -3 -1
 </pre>
-   <p><a name="index-g_t_0040code_007bstart_007d-22"></a>Foreign types can be brought into <code>ra::</code> explicitly with the function <a href="#x_002dstart"><code>start</code></a>.
+   <p><a name="index-g_t_0040code_007bstart_007d-24"></a>Foreign types can be brought into <code>ra::</code> explicitly with the function <a href="#x_002dstart"><code>start</code></a>.
 
 <pre class="example"><pre class="verbatim">     
      std::vector&lt;int> x = {1, 2, 3};
@@ -994,7 +994,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 produces an expression of rank 1 and dynamic size. 
 <li><code>std::array</code>
 produces an expression of rank 1 and static size. 
-<li>Built-in arrays <a name="index-built_002din-array-23"></a>produce an expression of positive rank and static size. 
+<li>Built-in arrays <a name="index-built_002din-array-25"></a>produce an expression of positive rank and static size. 
 <li>Raw pointers
 produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must always be brought into <code>ra::</code> explicitly with the function <a href="#x_002dptr"><code>ptr</code></a>. 
 </ul>
@@ -1110,7 +1110,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
      } // namespace ra
 </pre>
 </pre>
-   <p><a name="index-Blitz_002b_002b-24"></a>If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
+   <p><a name="index-Blitz_002b_002b-26"></a>If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
 
    <p>If <code>my_fun</code> is an overload set, you can use
 
@@ -1333,7 +1333,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a accesskey="1" href="#Type-hierarchy">Type hierarchy</a>:         From Containers to FlatIterators. 
 <li><a accesskey="2" href="#Driving-expressions">Driving expressions</a>:    The term in charge. 
 <li><a accesskey="3" href="#Loop-types">Loop types</a>:             Chosen for performance. 
-<li><a accesskey="4" href="#Compiling-and-running">Compiling and running</a>:  Practical matters. 
+<li><a accesskey="4" href="#Introspection">Introspection</a>:          Speaking to myself. 
+<li><a accesskey="5" href="#Compiling-and-running">Compiling and running</a>:  Practical matters. 
 </ul>
 
 <!--  -->
@@ -1350,17 +1351,25 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 <!--  -->
 <p>TODO
 
-   <p><b>Container</b> Big Small
+   <p><b>Container</b> Big Shared Unique Small
 
    <p><b>View</b> View SmallView
 
    <p><b>Ravelable</b> Iterator SmallBase::Iterator Iota Vector Scalar
 
+   <p>These have a <code>flat()</code> method that is used to obtain a linearized view of a section of the array. They do not necessarily provide an <code>at()</code> method.
+
    <p><b>Indexable</b> Iterator SmallBase::Iterator Iota Vector Scalar TensorIndex
 
-   <p><b>Indirect</b> Expr Ryn Pick
+   <p>These have an <code>at(index type)</code> method so they can be indexed by running over the index set manually in any order. They do not necessarily provide a <code>flat()</code> method.
+
+   <p><b>ArrayIterator</b> Expr Ryn Pick Iterator SmallBase::Iterator Iota Vector Scalar
+
+   <p>This is a generalization of Ravelable and Indexable. E.g. Expr can be either or both depending on the component types. ArrayIterators are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc.
 
    <p><b>Flat</b> Flat PickFlat CellFlat IotaFlat ScalarFlat
+
+   <p>These are pointerlike types that are meant to be traversed linearly. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference).
 
 <!--  -->
 <div class="node">
@@ -1381,7 +1390,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 <div class="node">
 <p><hr>
 <a name="Loop-types"></a>
-Next:&nbsp;<a rel="next" accesskey="n" href="#Compiling-and-running">Compiling and running</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#Introspection">Introspection</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#Driving-expressions">Driving expressions</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
@@ -1395,13 +1404,28 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 <!--  -->
 <div class="node">
 <p><hr>
-<a name="Compiling-and-running"></a>
+<a name="Introspection"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Compiling-and-running">Compiling and running</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#Loop-types">Loop types</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
 </div>
 
-<h3 class="section">5.4 Compiling and running</h3>
+<h3 class="section">5.4 Introspection</h3>
+
+<!--  -->
+<p><code>ra::ra-traits</code> is a template defined for Containers and Views, incuding foreign ones. It's not defined for expression types
+
+<!--  -->
+<div class="node">
+<p><hr>
+<a name="Compiling-and-running"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Introspection">Introspection</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
+
+</div>
+
+<h3 class="section">5.5 Compiling and running</h3>
 
 <!--  -->
 <p>The following boolean <code>#define</code>s affect the behavior of <code>ra::</code>.
@@ -1459,7 +1483,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <p><a name="x_002dmap"></a>
 
 <div class="defun">
-&mdash; Function: <b>map</b><var> op expr ...<a name="index-map-25"></a></var><br>
+&mdash; Function: <b>map</b><var> op expr ...<a name="index-map-27"></a></var><br>
 <blockquote><p>Create an array expression that applies <var>op</var> to <var>expr</var> ... 
 </p></blockquote></div>
 
@@ -1481,10 +1505,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
    <p>Here the anonymous function can be replaced by simply <code>x</code>. Remember that unspecified return type defaults to (value) <code>auto</code>, so either a explicit type or <code>decltype(auto)</code> should be used if you want to return a reference.
 
-   <p><a name="index-g_t_0040code_007bfor_005feach_007d-26"></a><a name="x_002dfor_005feach"></a>
+   <p><a name="index-g_t_0040code_007bfor_005feach_007d-28"></a><a name="x_002dfor_005feach"></a>
 
 <div class="defun">
-&mdash; Function: <b>for_each</b><var> op expr ...<a name="index-for_005feach-27"></a></var><br>
+&mdash; Function: <b>for_each</b><var> op expr ...<a name="index-for_005feach-29"></a></var><br>
 <blockquote><p>Create an array expression that applies <var>op</var> to <var>expr</var> ..., and traverse it. 
 </p></blockquote></div>
 
@@ -1495,10 +1519,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
      =&gt; s = 6.
 </pre>
-   <p><a name="index-g_t_0040code_007bply_007d-28"></a><a name="x_002dply"></a>
+   <p><a name="index-g_t_0040code_007bply_007d-30"></a><a name="x_002dply"></a>
 
 <div class="defun">
-&mdash; Function: <b>ply</b><var> expr<a name="index-ply-29"></a></var><br>
+&mdash; Function: <b>ply</b><var> expr<a name="index-ply-31"></a></var><br>
 <blockquote><p>Traverse <var>expr</var>. <code>ply</code> returns <code>void</code> so <var>expr</var> should be run for effect. 
 </p></blockquote></div>
 
@@ -1510,24 +1534,24 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
      =&gt; s = 6.
 </pre>
-   <p><a name="index-g_t_0040code_007bpack_007d-30"></a><a name="x_002dpack"></a>
+   <p><a name="index-g_t_0040code_007bpack_007d-32"></a><a name="x_002dpack"></a>
 
 <div class="defun">
-&mdash; Function: <b>pack</b><var> &lt;type&gt; expr ...<a name="index-pack-31"></a></var><br>
+&mdash; Function: <b>pack</b><var> &lt;type&gt; expr ...<a name="index-pack-33"></a></var><br>
 <blockquote><p>Create an array expression that brace-constructs <var>type</var> from <var>expr</var> ... 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bcast_007d-32"></a><a name="x_002dcast"></a>
+   <p><a name="index-g_t_0040code_007bcast_007d-34"></a><a name="x_002dcast"></a>
 
 <div class="defun">
-&mdash; Function: <b>cast</b><var> &lt;type&gt; expr<a name="index-cast-33"></a></var><br>
+&mdash; Function: <b>cast</b><var> &lt;type&gt; expr<a name="index-cast-35"></a></var><br>
 <blockquote><p>Create an array expression that casts <var>expr</var> into <var>type</var>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bpick_007d-34"></a><a name="x_002dpick"></a>
+   <p><a name="index-g_t_0040code_007bpick_007d-36"></a><a name="x_002dpick"></a>
 
 <div class="defun">
-&mdash; Function: <b>pick</b><var> select_expr expr ...<a name="index-pick-35"></a></var><br>
+&mdash; Function: <b>pick</b><var> select_expr expr ...<a name="index-pick-37"></a></var><br>
 <blockquote><p>Create an array expression that selects the first of <var>expr</var> ... if <var>select_expr</var> is 0, the second if <var>select_expr</var> is 1, and so on. The expressions that are not selected are not looked up. 
 </p></blockquote></div>
 
@@ -1540,10 +1564,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
        =&gt; z = {1.41421, 2, 0}
 </pre>
-   <p><a name="index-g_t_0040code_007bwhere_007d-36"></a><a name="x_002dwhere"></a>
+   <p><a name="index-g_t_0040code_007bwhere_007d-38"></a><a name="x_002dwhere"></a>
 
 <div class="defun">
-&mdash; Function: <b>where</b><var> pred_expr true_expr false_expr<a name="index-where-37"></a></var><br>
+&mdash; Function: <b>where</b><var> pred_expr true_expr false_expr<a name="index-where-39"></a></var><br>
 <blockquote><p>Create an array expression that selects <var>true_expr</var> if <var>pred_expr</var> is <code>true</code>, and <var>false_expr</var> if <var>pred_expr</var> is <code>false</code>. The expression that is not selected is not looked up. 
 </p></blockquote></div>
 
@@ -1554,10 +1578,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
        =&gt; s = {1, -1, 2, 2}
 </pre>
-   <p><a name="index-g_t_0040code_007bfrom_007d-38"></a><a name="x_002dfrom"></a>
+   <p><a name="index-g_t_0040code_007bfrom_007d-40"></a><a name="x_002dfrom"></a>
 
 <div class="defun">
-&mdash; Function: <b>from</b><var> op ... expr<a name="index-from-39"></a></var><br>
+&mdash; Function: <b>from</b><var> op ... expr<a name="index-from-41"></a></var><br>
 <blockquote><p>Create outer product expression. This is defined as E = from(op, e₀, e₁ ...) ⇒ E(i₀₀, i₀₁ ..., i₁₀, i₁₁, ..., ...) = op[e₀(i₀₀, i₀₁, ...), e₁(i₁₀, i₁₁, ...), ...]. 
 </p></blockquote></div>
 
@@ -1579,10 +1603,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
    <p>The last example is more or less how <code>A(i, j)</code> is actually implemented (see <a href="#The-rank-conjunction">The rank conjunction</a>).
 
-   <p><a name="index-g_t_0040code_007bat_007d-40"></a><a name="x_002dat"></a>
+   <p><a name="index-g_t_0040code_007bat_007d-42"></a><a name="x_002dat"></a>
 
 <div class="defun">
-&mdash; Function: <b>at</b><var> expr indices<a name="index-at-41"></a></var><br>
+&mdash; Function: <b>at</b><var> expr indices<a name="index-at-43"></a></var><br>
 <blockquote><p>Look up <var>expr</var> at each element of <var>indices</var>, which shall be a multi-index into <var>expr</var>. 
 </p></blockquote></div>
 
@@ -1594,10 +1618,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
        =&gt; B = {{101, 120}, {110, 121}}
 </pre>
-   <p><a name="index-g_t_0040code_007bwrank_007d-42"></a><a name="x_002dwrank"></a>
+   <p><a name="index-g_t_0040code_007bwrank_007d-44"></a><a name="x_002dwrank"></a>
 
 <div class="defun">
-&mdash; Function: <b>wrank</b><var> &lt;input_rank ...&gt; op<a name="index-wrank-43"></a></var><br>
+&mdash; Function: <b>wrank</b><var> &lt;input_rank ...&gt; op<a name="index-wrank-45"></a></var><br>
 <blockquote><p>Wrap op using a rank conjunction (see <a href="#The-rank-conjunction">The rank conjunction</a>). 
 </p></blockquote></div>
 
@@ -1606,26 +1630,26 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
        =&gt; x = 0
 </pre>
-   <p><a name="index-g_t_0040code_007btranspose_007d-44"></a><a name="x_002dtranspose"></a>
+   <p><a name="index-g_t_0040code_007btranspose_007d-46"></a><a name="x_002dtranspose"></a>
 
 <div class="defun">
-&mdash; Function: <b>transpose</b><var> &lt;axes ...&gt; view<a name="index-transpose-45"></a></var><br>
+&mdash; Function: <b>transpose</b><var> &lt;axes ...&gt; view<a name="index-transpose-47"></a></var><br>
 <blockquote><p>Create a new view by transposing the axes of <var>view</var>. 
 </p></blockquote></div>
 
    <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 
-   <p><a name="index-g_t_0040code_007bdiag_007d-46"></a><a name="x_002ddiag"></a>
+   <p><a name="index-g_t_0040code_007bdiag_007d-48"></a><a name="x_002ddiag"></a>
 
 <div class="defun">
-&mdash; Function: <b>diag</b><var> view<a name="index-diag-47"></a></var><br>
+&mdash; Function: <b>diag</b><var> view<a name="index-diag-49"></a></var><br>
 <blockquote><p>Equivalent to <code>transpose&lt;0, 0&gt;(view)</code>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007breverse_007d-48"></a><a name="x_002dreverse"></a>
+   <p><a name="index-g_t_0040code_007breverse_007d-50"></a><a name="x_002dreverse"></a>
 
 <div class="defun">
-&mdash; Function: <b>reverse</b><var> view axis<a name="index-reverse-49"></a></var><br>
+&mdash; Function: <b>reverse</b><var> view axis<a name="index-reverse-51"></a></var><br>
 <blockquote><p>Create a new view by reversing axis <var>k</var> of <var>view</var>. 
 </p></blockquote></div>
 
@@ -1643,10 +1667,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <!-- Return the ravel of @var{view} as a view on @var{view}. -->
 <!-- @end defun -->
 <!-- FIXME fill when the implementation is more mature... -->
-<p><a name="index-g_t_0040code_007bstencil_007d-50"></a><a name="x_002dstencil"></a>
+<p><a name="index-g_t_0040code_007bstencil_007d-52"></a><a name="x_002dstencil"></a>
 
 <div class="defun">
-&mdash; Function: <b>stencil</b><var> view lo hi<a name="index-stencil-51"></a></var><br>
+&mdash; Function: <b>stencil</b><var> view lo hi<a name="index-stencil-53"></a></var><br>
 <blockquote><p>Create a stencil on <var>view</var> with lower bounds <var>lo</var> and higher bounds <var>hi</var>. 
 </p></blockquote></div>
 
@@ -1654,31 +1678,31 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 
-   <p><a name="index-g_t_0040code_007bcollapse_007d-52"></a><a name="x_002dcollapse"></a>
+   <p><a name="index-g_t_0040code_007bcollapse_007d-54"></a><a name="x_002dcollapse"></a>
 
 <div class="defun">
-&mdash; Function: <b>collapse</b><var><a name="index-collapse-53"></a></var><br>
+&mdash; Function: <b>collapse</b><var><a name="index-collapse-55"></a></var><br>
 <blockquote><p>TODO
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bexplode_007d-54"></a><a name="x_002dexplode"></a>
+   <p><a name="index-g_t_0040code_007bexplode_007d-56"></a><a name="x_002dexplode"></a>
 
 <div class="defun">
-&mdash; Function: <b>explode</b><var><a name="index-explode-55"></a></var><br>
+&mdash; Function: <b>explode</b><var><a name="index-explode-57"></a></var><br>
 <blockquote><p>TODO
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bformat_005farray_007d-56"></a><a name="x_002dformat_005farray"></a>
+   <p><a name="index-g_t_0040code_007bformat_005farray_007d-58"></a><a name="x_002dformat_005farray"></a>
 
 <div class="defun">
-&mdash; Function: <b>format_array</b><var> expr </var>[<var>print_shape? </var>[<var>first_axis_separator </var>[<var>second_axis_separator ...</var>]]]<var><a name="index-format_005farray-57"></a></var><br>
+&mdash; Function: <b>format_array</b><var> expr </var>[<var>print_shape? </var>[<var>first_axis_separator </var>[<var>second_axis_separator ...</var>]]]<var><a name="index-format_005farray-59"></a></var><br>
 <blockquote><p>TODO
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bstart_007d-58"></a><a name="x_002dstart"></a>
+   <p><a name="index-g_t_0040code_007bstart_007d-60"></a><a name="x_002dstart"></a>
 
 <div class="defun">
-&mdash; Function: <b>start</b><var> foreign_object<a name="index-start-59"></a></var><br>
+&mdash; Function: <b>start</b><var> foreign_object<a name="index-start-61"></a></var><br>
 <blockquote><p>Create a array expression from <var>foreign_object</var>. 
 </p></blockquote></div>
 
@@ -1697,10 +1721,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
        11 22 33
        =&gt; x = { 11, 22, 33 }
 </pre>
-   <p><a name="index-g_t_0040code_007bptr_007d-60"></a><a name="x_002dptr"></a>
+   <p><a name="index-g_t_0040code_007bptr_007d-62"></a><a name="x_002dptr"></a>
 
 <div class="defun">
-&mdash; Function: <b>ptr</b><var> pointer<a name="index-ptr-61"></a></var><br>
+&mdash; Function: <b>ptr</b><var> pointer<a name="index-ptr-63"></a></var><br>
 <blockquote><p>Create vector expression from raw <var>pointer</var>. 
 </p></blockquote></div>
 
@@ -1715,10 +1739,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
      // cout &lt;&lt; (ra::ptr(p)+ra::TensorIndex&lt;0>{}) &lt;&lt; endl; // ct error, expression has undefined shape
 </pre>
 </pre>
-   <p><a name="index-g_t_0040code_007bscalar_007d-62"></a><a name="x_002dscalar"></a>
+   <p><a name="index-g_t_0040code_007bscalar_007d-64"></a><a name="x_002dscalar"></a>
 
 <div class="defun">
-&mdash; Function: <b>scalar</b><var> expr<a name="index-scalar-63"></a></var><br>
+&mdash; Function: <b>scalar</b><var> expr<a name="index-scalar-65"></a></var><br>
 <blockquote><p>Create scalar expression from <var>expr</var>. 
 </p></blockquote></div>
 
@@ -1758,10 +1782,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 </pre>
    <p>where the result is {c(0)+x(0), c(1)+x(1)}.
 
-   <p><a name="index-g_t_0040code_007biter_007d-64"></a><a name="x_002diter"></a>
+   <p><a name="index-g_t_0040code_007biter_007d-66"></a><a name="x_002diter"></a>
 
 <div class="defun">
-&mdash; Function: <b>iter</b><var> &lt;k&gt; </var>(<var>view</var>)<var><a name="index-iter-65"></a></var><br>
+&mdash; Function: <b>iter</b><var> &lt;k&gt; </var>(<var>view</var>)<var><a name="index-iter-67"></a></var><br>
 <blockquote><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it is interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have dynamic or static shape. 
 </p></blockquote></div>
 
@@ -1807,38 +1831,38 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
         1 -1
         s: -3 -1 -1
 </pre>
-   <p><a name="index-g_t_0040code_007bsum_007d-66"></a><a name="x_002dsum"></a>
+   <p><a name="index-g_t_0040code_007bsum_007d-68"></a><a name="x_002dsum"></a>
 
 <div class="defun">
-&mdash; Function: <b>sum</b><var> expr<a name="index-sum-67"></a></var><br>
+&mdash; Function: <b>sum</b><var> expr<a name="index-sum-69"></a></var><br>
 <blockquote><p>Return the sum (+) of the elements of <var>expr</var>, or 0 if expr is empty. This sum is performed in unspecified order. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bprod_007d-68"></a><a name="x_002dprod"></a>
+   <p><a name="index-g_t_0040code_007bprod_007d-70"></a><a name="x_002dprod"></a>
 
 <div class="defun">
-&mdash; Function: <b>prod</b><var> expr<a name="index-prod-69"></a></var><br>
+&mdash; Function: <b>prod</b><var> expr<a name="index-prod-71"></a></var><br>
 <blockquote><p>Return the product (*) of the elements of <var>expr</var>, or 1 if expr is empty. This product is performed in unspecified order. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bamax_007d-70"></a><a name="x_002damax"></a>
+   <p><a name="index-g_t_0040code_007bamax_007d-72"></a><a name="x_002damax"></a>
 
 <div class="defun">
-&mdash; Function: <b>amax</b><var> expr<a name="index-amax-71"></a></var><br>
+&mdash; Function: <b>amax</b><var> expr<a name="index-amax-73"></a></var><br>
 <blockquote><p>Return the maximum of the elements of <var>expr</var>. If <var>expr</var> is empty, return <code>-std::numeric_limits&lt;T&gt;::infinity()</code> if the type supports it, otherwise <code>std::numeric_limits&lt;T&gt;::lowest()</code>, where <code>T</code> is the value type of the elements of <var>expr</var>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bamin_007d-72"></a><a name="x_002damin"></a>
+   <p><a name="index-g_t_0040code_007bamin_007d-74"></a><a name="x_002damin"></a>
 
 <div class="defun">
-&mdash; Function: <b>amin</b><var> expr<a name="index-amin-73"></a></var><br>
+&mdash; Function: <b>amin</b><var> expr<a name="index-amin-75"></a></var><br>
 <blockquote><p>Return the minimum of the elements of <var>expr</var>. If <var>expr</var> is empty, return <code>+std::numeric_limits&lt;T&gt;::infinity()</code> if the type supports it, otherwise <code>std::numeric_limits&lt;T&gt;::max()</code>, where <code>T</code> is the value type of the elements of <var>expr</var>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bearly_007d-74"></a><a name="x_002dearly"></a>
+   <p><a name="index-g_t_0040code_007bearly_007d-76"></a><a name="x_002dearly"></a>
 
 <div class="defun">
-&mdash; Function: <b>early</b><var> expr default<a name="index-early-75"></a></var><br>
+&mdash; Function: <b>early</b><var> expr default<a name="index-early-77"></a></var><br>
 <blockquote><p><var>expr</var> shall be an array expression that returns <code>std::tuple&lt;bool, T&gt;</code>. <var>expr</var> is traversed as by <code>for_each</code>; if the expression ever returns <code>true</code> in the first element of the tuple, traversal stops and the second element is returned. If this never happens, <var>default</var> is returned instead. 
 </p></blockquote></div>
 
@@ -1855,52 +1879,52 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
      }
 </pre>
 </pre>
-   <p><a name="index-g_t_0040code_007bany_007d-76"></a><a name="x_002dany"></a>
+   <p><a name="index-g_t_0040code_007bany_007d-78"></a><a name="x_002dany"></a>
 
 <div class="defun">
-&mdash; Function: <b>any</b><var> expr<a name="index-any-77"></a></var><br>
+&mdash; Function: <b>any</b><var> expr<a name="index-any-79"></a></var><br>
 <blockquote><p>Return <code>true</code> if any element of <var>expr</var> is true, <code>false</code> otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bevery_007d-78"></a><a name="x_002devery"></a>
+   <p><a name="index-g_t_0040code_007bevery_007d-80"></a><a name="x_002devery"></a>
 
 <div class="defun">
-&mdash; Function: <b>every</b><var> expr<a name="index-every-79"></a></var><br>
+&mdash; Function: <b>every</b><var> expr<a name="index-every-81"></a></var><br>
 <blockquote><p>Return <code>true</code> if every element of <var>expr</var> is true, <code>false</code> otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bsqr_007d-80"></a><a name="x_002dsqr"></a>
+   <p><a name="index-g_t_0040code_007bsqr_007d-82"></a><a name="x_002dsqr"></a>
 
 <div class="defun">
-&mdash; Function: <b>sqr</b><var> expr<a name="index-sqr-81"></a></var><br>
+&mdash; Function: <b>sqr</b><var> expr<a name="index-sqr-83"></a></var><br>
 <blockquote><p>Compute the square of <var>expr</var>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bsqrm_007d-82"></a><a name="x_002dsqrm"></a>
+   <p><a name="index-g_t_0040code_007bsqrm_007d-84"></a><a name="x_002dsqrm"></a>
 
 <div class="defun">
-&mdash; Function: <b>sqrm</b><var> expr<a name="index-sqrm-83"></a></var><br>
+&mdash; Function: <b>sqrm</b><var> expr<a name="index-sqrm-85"></a></var><br>
 <blockquote><p>Compute the square of the norm-2 of <var>expr</var>, that is, <code>conj(expr)*expr</code>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bconj_007d-84"></a><a name="x_002dconj"></a>
+   <p><a name="index-g_t_0040code_007bconj_007d-86"></a><a name="x_002dconj"></a>
 
 <div class="defun">
-&mdash; Function: <b>conj</b><var> expr<a name="index-conj-85"></a></var><br>
+&mdash; Function: <b>conj</b><var> expr<a name="index-conj-87"></a></var><br>
 <blockquote><p>Compute the complex conjugate of <var>expr</var>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007bxI_007d-86"></a><a name="x_002dxI"></a>
+   <p><a name="index-g_t_0040code_007bxI_007d-88"></a><a name="x_002dxI"></a>
 
 <div class="defun">
-&mdash; Function: <b>xI</b><var> expr<a name="index-xI-87"></a></var><br>
+&mdash; Function: <b>xI</b><var> expr<a name="index-xI-89"></a></var><br>
 <blockquote><p>Compute <code>(0+1j)</code> times <var>expr</var>. 
 </p></blockquote></div>
 
-   <p><a name="index-g_t_0040code_007brel_005ferror_007d-88"></a><a name="x_002drel_002derror"></a>
+   <p><a name="index-g_t_0040code_007brel_005ferror_007d-90"></a><a name="x_002drel_002derror"></a>
 
 <div class="defun">
-&mdash; Function: <b>rel_error</b><var> a b<a name="index-rel_005ferror-89"></a></var><br>
+&mdash; Function: <b>rel_error</b><var> a b<a name="index-rel_005ferror-91"></a></var><br>
 <blockquote><p><var>a</var> and <var>b</var> are arbitrary array expressions. Compute the error of <var>a</var> relative to <var>b</var> as
 
         <p><code>(a==0. &amp;&amp; b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b))</code>
@@ -1978,56 +2002,58 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <!-- @node Concept Index -->
 <!-- @unnumbered Concept Index -->
 <ul class="index-cp" compact>
-<li><a href="#index-g_t_0040code_007bamax_007d-70"><code>amax</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bamin_007d-72"><code>amin</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bany_007d-76"><code>any</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bamax_007d-72"><code>amax</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bamin_007d-74"><code>amin</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bany_007d-78"><code>any</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-APL-5">APL</a>: <a href="#Why-C_002b_002b">Why C++</a></li>
-<li><a href="#index-g_t_0040code_007bat_007d-40"><code>at</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bat_007d-42"><code>at</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-Blitz_002b_002b-7">Blitz++</a>: <a href="#Other-libraries">Other libraries</a></li>
 <li><a href="#index-Blitz_002b_002b-1">Blitz++</a>: <a href="#Overview">Overview</a></li>
-<li><a href="#index-Blitz_002b_002b-24">Blitz++</a>: <a href="#Extension">Extension</a></li>
-<li><a href="#index-broadcasting_002c-singleton-14">broadcasting, singleton</a>: <a href="#Rank-extension">Rank extension</a></li>
-<li><a href="#index-broadcasting_002c-singleton-19">broadcasting, singleton</a>: <a href="#Slicing">Slicing</a></li>
-<li><a href="#index-built_002din-array-23">built-in array</a>: <a href="#Compatibility">Compatibility</a></li>
-<li><a href="#index-g_t_0040code_007bcast_007d-32"><code>cast</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-Blitz_002b_002b-26">Blitz++</a>: <a href="#Extension">Extension</a></li>
+<li><a href="#index-broadcasting_002c-singleton-21">broadcasting, singleton</a>: <a href="#Slicing">Slicing</a></li>
+<li><a href="#index-broadcasting_002c-singleton-16">broadcasting, singleton</a>: <a href="#Rank-extension">Rank extension</a></li>
+<li><a href="#index-built_002din-array-25">built-in array</a>: <a href="#Compatibility">Compatibility</a></li>
+<li><a href="#index-g_t_0040code_007bcast_007d-34"><code>cast</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-cell-2">cell</a>: <a href="#Rank-polymorphism">Rank polymorphism</a></li>
-<li><a href="#index-g_t_0040code_007bcollapse_007d-52"><code>collapse</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bconj_007d-84"><code>conj</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bdiag_007d-46"><code>diag</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bearly_007d-74"><code>early</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bevery_007d-78"><code>every</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bexplode_007d-54"><code>explode</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bfor_005feach_007d-26"><code>for_each</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-foreign-type-21">foreign type</a>: <a href="#Compatibility">Compatibility</a></li>
-<li><a href="#index-g_t_0040code_007bformat_005farray_007d-56"><code>format_array</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bcollapse_007d-54"><code>collapse</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bconj_007d-86"><code>conj</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-container-8">container</a>: <a href="#Using-the-library">Using the library</a></li>
+<li><a href="#index-g_t_0040code_007bdiag_007d-48"><code>diag</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bearly_007d-76"><code>early</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bevery_007d-80"><code>every</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bexplode_007d-56"><code>explode</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bfor_005feach_007d-28"><code>for_each</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-foreign-type-23">foreign type</a>: <a href="#Compatibility">Compatibility</a></li>
+<li><a href="#index-g_t_0040code_007bformat_005farray_007d-58"><code>format_array</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-frame-3">frame</a>: <a href="#Rank-polymorphism">Rank polymorphism</a></li>
-<li><a href="#index-g_t_0040code_007bfrom_007d-38"><code>from</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007biter_007d-64"><code>iter</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bfrom_007d-40"><code>from</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007biter_007d-66"><code>iter</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-J-6">J</a>: <a href="#Why-C_002b_002b">Why C++</a></li>
-<li><a href="#index-Numpy-12">Numpy</a>: <a href="#Rank-extension">Rank extension</a></li>
-<li><a href="#index-order_002c-column_002dmajor-9">order, column-major</a>: <a href="#Containers-and-views">Containers and views</a></li>
+<li><a href="#index-Numpy-14">Numpy</a>: <a href="#Rank-extension">Rank extension</a></li>
+<li><a href="#index-order_002c-column_002dmajor-10">order, column-major</a>: <a href="#Containers-and-views">Containers and views</a></li>
 <li><a href="#index-order_002c-row_002dmajor-4">order, row-major</a>: <a href="#Rank-polymorphism">Rank polymorphism</a></li>
-<li><a href="#index-g_t_0040code_007bpack_007d-30"><code>pack</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bpick_007d-34"><code>pick</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bply_007d-28"><code>ply</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bprod_007d-68"><code>prod</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bptr_007d-60"><code>ptr</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bra_003a_003aunspecified_007d-8"><code>ra::unspecified</code></a>: <a href="#Containers-and-views">Containers and views</a></li>
-<li><a href="#index-g_t_0040code_007brel_005ferror_007d-88"><code>rel_error</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007breverse_007d-48"><code>reverse</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bscalar_007d-62"><code>scalar</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-shape-agreement_002c-prefix-10">shape agreement, prefix</a>: <a href="#Rank-extension">Rank extension</a></li>
-<li><a href="#index-shape-agreement_002c-suffix-11">shape agreement, suffix</a>: <a href="#Rank-extension">Rank extension</a></li>
-<li><a href="#index-g_t_0040code_007bsqr_007d-80"><code>sqr</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bsqrm_007d-82"><code>sqrm</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bstart_007d-22"><code>start</code></a>: <a href="#Compatibility">Compatibility</a></li>
-<li><a href="#index-g_t_0040code_007bstart_007d-58"><code>start</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bstencil_007d-50"><code>stencil</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bsum_007d-66"><code>sum</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007btranspose_007d-44"><code>transpose</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bwhere_007d-36"><code>where</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bwrank_007d-42"><code>wrank</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bxI_007d-86"><code>xI</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bpack_007d-32"><code>pack</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bpick_007d-36"><code>pick</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bply_007d-30"><code>ply</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bprod_007d-70"><code>prod</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bptr_007d-62"><code>ptr</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bra_003a_003aunspecified_007d-9"><code>ra::unspecified</code></a>: <a href="#Containers-and-views">Containers and views</a></li>
+<li><a href="#index-g_t_0040code_007brel_005ferror_007d-90"><code>rel_error</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007breverse_007d-50"><code>reverse</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bscalar_007d-64"><code>scalar</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-shape-agreement_002c-prefix-12">shape agreement, prefix</a>: <a href="#Rank-extension">Rank extension</a></li>
+<li><a href="#index-shape-agreement_002c-suffix-13">shape agreement, suffix</a>: <a href="#Rank-extension">Rank extension</a></li>
+<li><a href="#index-g_t_0040code_007bsqr_007d-82"><code>sqr</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bsqrm_007d-84"><code>sqrm</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bstart_007d-24"><code>start</code></a>: <a href="#Compatibility">Compatibility</a></li>
+<li><a href="#index-g_t_0040code_007bstart_007d-60"><code>start</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bstencil_007d-52"><code>stencil</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bsum_007d-68"><code>sum</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007btranspose_007d-46"><code>transpose</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-view-11">view</a>: <a href="#Containers-and-views">Containers and views</a></li>
+<li><a href="#index-g_t_0040code_007bwhere_007d-38"><code>where</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bwrank_007d-44"><code>wrank</code></a>: <a href="#Reference">Reference</a></li>
+<li><a href="#index-g_t_0040code_007bxI_007d-88"><code>xI</code></a>: <a href="#Reference">Reference</a></li>
    </ul><!-- @node Function Index -->
 <!-- @unnumbered Function Index -->
 <!-- @printindex fn -->

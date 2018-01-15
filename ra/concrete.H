@@ -51,7 +51,7 @@ template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()!=D
 template <class E, class Enable=void> struct concrete_type_def;
 template <class E> struct concrete_type_def<E, std::enable_if_t<!is_scalar<E>>>
 {
-    using type = typename concrete_type_def_1<decltype(start(std::declval<E>()))>::type;
+    using type = typename concrete_type_def_1<std::decay_t<decltype(start(std::declval<E>()))>>::type;
 };
 template <class E> struct concrete_type_def<E, std::enable_if_t<is_scalar<E>>>
 {

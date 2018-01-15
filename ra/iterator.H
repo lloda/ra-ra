@@ -29,20 +29,6 @@
 
 namespace ra {
 
-template <class I> struct Print_iterator { I i; };
-template <class I> auto print_iterator(I && i) { return Print_iterator<I> { std::forward<I>(i) }; }
-
-template <class I>
-std::ostream & operator<<(std::ostream & o, Print_iterator<I> && p)
-{
-    o << "<cellr " << p.i.cellr << "[";
-    for (int k=0; k<p.i.rank(); ++k) {
-        o << k << ": " << p.i.dim[k].size << ", " << p.i.dim[k].stride << (k+1!=p.i.rank() ? "; " : "");
-    }
-    o << "]>";
-    return o;
-}
-
 // V is View (FIXME so why parameterize? apparently only for order-of-decl.)
 template <class V, rank_t cellr_=0>
 struct cell_iterator
@@ -56,11 +42,11 @@ struct cell_iterator
     static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
 
+// FIXME take V/V & as in ra::Vector, and ask through that. Otherwise should be ref/pointer.
+    decltype(std::declval<V>().dim) dim;
+
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
-
-    using dims_p = decltype(std::declval<V const>().dim); // FIXME can this be & ?
-    dims_p dim; // FIXME take V & and ask through that. Should be const.
 
     using shape_type = mp::If_<rank_s()==DIM_ANY, std::vector<dim_t>, Small<dim_t, rank_s()>>;
     using atom_type = typename ra_traits<V>::value_type;
@@ -71,7 +57,7 @@ struct cell_iterator
 
     constexpr cell_iterator() { c.p = nullptr; } // end marker only.
     constexpr cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-// needed because View = View copies contents, not the View itself [ra11]
+// needed b/c View = View copies contents, not the View itself [ra11]
     constexpr cell_iterator & assign(cell_iterator const & ci)
     {
         dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this;
@@ -129,8 +115,6 @@ struct cell_iterator
             return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) };
         }
     }
-    decltype(auto) star() const { if constexpr (0==cellr) return *c.p; else return c; }
-    decltype(auto) star() { if constexpr (0==cellr) return *c.p; else return c; }
 
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> void operator OP(X && x)                         \
@@ -148,7 +132,6 @@ struct stl_iterator
     using difference_type = dim_t;
     using pointer = value_type *;
     using reference = value_type &;
-    using const_reference = value_type const &;
     using iterator_category = std::forward_iterator_tag;
     using shape_type = typename Iterator::shape_type;
 
@@ -173,9 +156,8 @@ struct stl_iterator
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
-// taken from Iterator to handle the special case for cellr=0.
-    decltype(auto) operator*() const { return ii.star(); }
-    decltype(auto) operator*() { return ii.star(); }
+    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
     stl_iterator & operator++() { next_in_cube(ii.rank(), ii.dim, i, ii.c.p); return *this; }
 };
 

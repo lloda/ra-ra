@@ -154,7 +154,7 @@ struct nested_braces<T, rank, std::enable_if_t<(rank>2)>>
 };
 
 // ---------------------------
-// Indexers TODO traits.H doesn't seem like the logical file.
+// Indexers TODO traits.H doesn't seem quite the logical place.
 // ---------------------------
 
 template <class sizes, class strides>
@@ -197,7 +197,7 @@ struct Indexer0
 struct Indexer1
 {
     template <class Dim, class P>
-    constexpr static dim_t index_p(Dim const & dim, P const & p)
+    constexpr static dim_t index_p(Dim const & dim, P && p)
     {
         CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
 // use dim.data() to skip the size check.

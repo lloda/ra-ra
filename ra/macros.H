@@ -52,4 +52,9 @@ struct identity
     }
 };
 
+#define RA_IS_DEF(NAME, PRED)                                           \
+    template <class A, class Enable=void> constexpr bool JOIN(NAME, _def) = false; \
+    template <class A> constexpr bool JOIN(NAME, _def) < A, std::enable_if_t< PRED >> = true; \
+    template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
+
 } // namespace mp

@@ -86,11 +86,75 @@ int main()
         ra::scalar(x) += c + ra::scalar(int2 { 1, 99 });
         tr.test_eq(int2{2, 0}+int2{1, 3}+int2{1, 99}+int2{2, 4}+int2{1, 99}, x);
     }
-// FIXME BUG I discovered it when I replaced SmallBase::Iterator by cell_iterator_small. Creating shape() instead of returning ref to ssizes broke ra::start(start(c).shape()) in test-io.C when c is Small. This bug happened already before the replacement.
+// TODO see related [ra35] below.
+    tr.section("ra::start() on foreign types");
     {
-        auto fun = []() { return std::array<int, 2> {1, 2}; };
-        // cout << ra::vector(fun()) << endl;
-        tr.skip().test_eq(ra::vector(fun()), ra::iota(2, 1));
+        auto ref = std::array<int, 4> {12, 77, 44, 1};
+        tr.test_eq(2, expr([](int i) { return i; },
+                           ra::start(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
+        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array<int, 4> {12, 77, 44, 1})));
+// [a1] these require ra::start and ra::Expr to forward in the constructor. Clue of why is in the ra::Unique case below.
+        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
+        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector<int> {12, 77, 44, 1})));
+// these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes
+// sense, as argname is otherwise always an lref.
+        ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
+                       ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
+// This depends on ra::Vector constructors moving the Unique through Expr's copying.
+        tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
     }
+// TODO Find out why the ra::Vector() constructors are needed for V=std::array but not for V=std::vector.
+    tr.section("ra35");
+    {
+        std::array<int, 2> a1 = {1, 2};
+        std::vector<int> a2 = {1, 2};
+        auto va1 = ra::vector(a1);
+        auto va2 = ra::vector(a2);
+
+        tr.test(std::is_reference_v<decltype(va1.v)>);
+        tr.test(std::is_reference_v<decltype(va2.v)>);
+
+        cout << "&(va1.v[0])   " << &(va1.v[0]) << endl;
+        cout << "&(va1.p__[0]) " << &(va1.p__[0]) << endl;
+        cout << "&va1          " << &va1 << endl;
+        tr.test_eq(ra::scalar(&(va1.v[0])), ra::scalar(&(va1.p__[0])));
+        tr.test_eq(ra::scalar(&(va1.v[0])), ra::scalar(&(a1[0])));
+
+        cout << "&(va2.v[0])   " << &(va2.v[0]) << endl;
+        cout << "&(va2.p__[0]) " << &(va2.p__[0]) << endl;
+        cout << "&va2          " << &va2 << endl;
+        tr.test_eq(ra::scalar(&(va2.v[0])), ra::scalar(&(va2.p__[0])));
+        tr.test_eq(ra::scalar(&(va2.v[0])), ra::scalar(&(a2[0])));
+
+        cout << "---------" << endl;
+
+        for_each([](auto && a, auto && b) { a = b; }, ra::vector(a1), 99);
+        tr.test_eq(99, ra::start(a1));
+
+        cout << "---------" << endl;
+
+        auto fun1 = []() { return std::array<int, 2> {1, 2}; };
+        auto fun2 = []() { return std::vector<int> {1, 2}; };
+        auto v1 = ra::vector(fun1());
+        auto v2 = ra::vector(fun2());
+
+        tr.test(!std::is_reference_v<decltype(v1.v)>);
+        tr.test(!std::is_reference_v<decltype(v2.v)>);
+
+        cout << "&(v1.v[0])   " << &(v1.v[0]) << endl;
+        cout << "&(v1.p__[0]) " << &(v1.p__[0]) << endl;
+        cout << "&v1          " << &v1 << endl;
+        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p__[0])));
+
+        cout << "&(v2.v[0])   " << &(v2.v[0]) << endl;
+        cout << "&(v2.p__[0]) " << &(v2.p__[0]) << endl;
+        cout << "&v2          " << &v2 << endl;
+        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p__[0])));
+
+        tr.test_eq(ra::vector(fun1()), ra::iota(2, 1));
+        tr.test_eq(ra::vector(fun2()), ra::iota(2, 1));
+    }
+
+
     return tr.summary();
 }

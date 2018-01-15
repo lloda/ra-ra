@@ -7,8 +7,7 @@
 // later version.
 
 #pragma once
-#include "ra/type.H"
-#include "ra/traits.H"
+#include "ra/atom.H"
 #include <iosfwd>
 #include <sstream>
 
@@ -46,7 +45,7 @@ FormatArray<A> format_array(A const & a) { return format_array(a, true); }
 template <class A> inline
 std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-// work with ArrayIterator
+// work with ArrayIterator. FIXME note that this copies / resets the ArrayIterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
     static_assert(decltype(a)::size_s()!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();

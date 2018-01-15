@@ -30,15 +30,6 @@
 
 namespace ra {
 
-template <class I> struct Print_iterator_small { I i; };
-template <class I> auto print_iterator_small(I && i) { return Print_iterator_small<I> { std::forward<I>(i) }; }
-
-template <class I>
-std::ostream & operator<<(std::ostream & o, Print_iterator_small<I> && p)
-{
-    return (o << "we'll see");
-}
-
 // V is SmallBase (FIXME so why parameterize? apparently only for order-of-decl.)
 template <class V, rank_t cellr_=0>
 struct cell_iterator_small
@@ -64,10 +55,10 @@ struct cell_iterator_small
     using atom_type = typename V::value_type; // FIXME fix ra_traits<SmallBase>
     using cell_type = SmallView<atom_type, cell_sizes, cell_strides>;
     using value_type = mp::If_<0==cellr, atom_type, cell_type>;
+    using frame_type = SmallView<int, sizes, strides>; // only to compute ssizes
 
     cell_type c;
 
-    constexpr cell_iterator_small(): c { nullptr } {} // end marker only.
     constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
 // needed because View = View copies contents, not the View itself [ra11]
     constexpr cell_iterator_small & assign(cell_iterator_small const & ci)
@@ -78,16 +69,8 @@ struct cell_iterator_small
 // see stl_iterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 
-    constexpr static dim_t size_s()
-    {
-        using frame_type = SmallView<int, sizes, strides>; // only to compute ssizes
-        return ra_traits<frame_type>::size_s();
-    }
-    constexpr static auto const & shape()
-    {
-        using frame_type = SmallView<int, sizes, strides>; // only to compute ssizes
-        return frame_type::Base::ssizes;
-    }
+    constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
+    constexpr static auto const & shape() { return frame_type::Base::ssizes; }
     constexpr static dim_t size(int j) { CHECK_BOUNDS(inside(j, rank())); return V::size(j); }
     constexpr static dim_t size_s(int j) { CHECK_BOUNDS(inside(j, rank())); return V::size(j); }
     constexpr static dim_t stride(int j) { return j<rank() ? V::stride(j) : 0; }
@@ -116,13 +99,11 @@ struct cell_iterator_small
             return cell_type(c.p + Indexer0<sizes, strides>::index_short(i_));
         }
     }
-    decltype(auto) star() const { if constexpr (0==cellr) return *c.p; else return c; }
-    decltype(auto) star() { if constexpr (0==cellr) return *c.p; else return c; }
 
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); } \
-    void operator OP(cell_iterator_small const & x)                       \
+    void operator OP(cell_iterator_small const & x)                     \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
@@ -135,13 +116,12 @@ struct stl_iterator_small
     using difference_type = dim_t;
     using pointer = value_type *;
     using reference = value_type &;
-    using const_reference = value_type const &;
     using iterator_category = std::forward_iterator_tag;
     using shape_type = typename Iterator::shape_type;
 
     Iterator ii;
     shape_type i;
-    stl_iterator_small(): ii() {};
+
 // avoid ii = it.ii, see [ra11] above.
     stl_iterator_small(stl_iterator_small const & it) = default;
     stl_iterator_small & operator=(stl_iterator_small const & it) { i=it.i; ii.assign(it.ii); return *this; }
@@ -152,9 +132,9 @@ struct stl_iterator_small
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
-// taken from Iterator to handle the special case for cellr=0.
-    decltype(auto) operator*() const { return ii.star(); }
-    decltype(auto) operator*() { return ii.star(); }
+    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    stl_iterator_small & operator++() { next_in_cube(); return *this; }
 
     template <int k=Iterator::rank()-1>
     std::enable_if_t<(k>=0)> next_in_cube()
@@ -170,7 +150,6 @@ struct stl_iterator_small
         }
     }
     template <int k> std::enable_if_t<(k<0)> next_in_cube() { ii.c.p = nullptr; }
-    stl_iterator_small & operator++() { next_in_cube(); return *this; }
 };
 
 } // namespace ra
