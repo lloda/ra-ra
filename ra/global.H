@@ -10,7 +10,6 @@
 /// @brief Had to break namespace hygiene.
 
 #pragma once
-#include "ra/iterator.H"
 #include "ra/wedge.H"
 
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .

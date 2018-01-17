@@ -801,13 +801,25 @@ int main()
     {
         ra::Unique<double, 3> a({3, 2, 4}, ra::unspecified);
         ra::View<double> b(a);
-        tr.test(a.data()==b.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());
         tr.test_eq(a.size(0), b.size(0));
         tr.test_eq(a.size(1), b.size(1));
         tr.test_eq(a.size(2), b.size(2));
         tr.test(every(a==b));
     }
+    tr.section("Fixed rank View from var rank View");
+    {
+        ra::Unique<double> a({3, 2, 4}, ra::unspecified);
+        ra::View<double, 3> b(a);
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
+        tr.test_eq(a.rank(), b.rank());
+        tr.test_eq(a.size(0), b.size(0));
+        tr.test_eq(a.size(1), b.size(1));
+        tr.test_eq(a.size(2), b.size(2));
+        tr.test(every(a==b));
+    }
+
     tr.section("I/O");
     {
         tr.section("1");

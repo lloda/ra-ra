@@ -8,7 +8,6 @@
 
 #pragma once
 #include "ra/ply.H"
-#include "ra/iterator-small.H"
 #include <iterator>
 
 /// @file small.H
@@ -28,6 +27,139 @@
 #endif
 
 namespace ra {
+
+
+// --------------------
+// Small iterator
+// --------------------
+// TODO Refactor with cell_iterator / stl_iterator for View?
+
+// V is SmallBase (FIXME so why parameterize? apparently only for order-of-decl.)
+template <class V, rank_t cellr_=0>
+struct cell_iterator_small
+{
+    constexpr static rank_t cellr_spec = cellr_;
+    static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
+    constexpr static rank_t fullr = V::rank_s();
+    constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
+    constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
+    static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
+    static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
+    static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
+
+    constexpr static rank_t rank_s() { return framer; }
+    constexpr static rank_t rank() { return framer; }
+
+    using cell_sizes = mp::Drop_<typename V::sizes, framer>;
+    using cell_strides = mp::Drop_<typename V::strides, framer>;
+    using sizes = mp::Take_<typename V::sizes, framer>; /* this are strides on atom_type * p !! */
+    using strides = mp::Take_<typename V::strides, framer>;
+
+    using shape_type = std::array<dim_t, framer>;
+    using atom_type = typename V::value_type; // FIXME fix ra_traits<SmallBase>
+    using cell_type = SmallView<atom_type, cell_sizes, cell_strides>;
+    using value_type = mp::If_<0==cellr, atom_type, cell_type>;
+    using frame_type = SmallView<int, sizes, strides>; // only to compute ssizes
+
+    cell_type c;
+
+    constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
+// needed because View = View copies contents, not the View itself [ra11]
+    constexpr cell_iterator_small & assign(cell_iterator_small const & ci)
+    {
+        c.p = ci.c.p; return *this;
+    }
+
+// see stl_iterator for the case of s_[0]=0, etc. [ra12].
+    constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
+
+    constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
+    constexpr static auto const & shape() { return frame_type::Base::ssizes; }
+    constexpr static dim_t size(int j) { CHECK_BOUNDS(inside(j, rank())); return V::size(j); }
+    constexpr static dim_t size_s(int j) { CHECK_BOUNDS(inside(j, rank())); return V::size(j); }
+    constexpr static dim_t stride(int j) { return j<rank() ? V::stride(j) : 0; }
+    constexpr static bool keep_stride(dim_t step, int z, int j)
+    {
+        return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
+    }
+    constexpr void adv(rank_t k, dim_t d) { c.p += (k<rank()) * stride(k)*d; }
+
+    constexpr auto flat() const
+    {
+        if constexpr (0==cellr) {
+            return c.p;
+        } else {
+            return CellFlat<cell_type> { c };
+        }
+    }
+// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
+    template <class I>
+    constexpr decltype(auto) at(I const & i_)
+    {
+        CHECK_BOUNDS(rank()<=dim_t(i_.size()) && "too few indices");
+        if constexpr (0==cellr) {
+            return c.p[Indexer0<sizes, strides>::index_short(i_)];
+        } else {
+            return cell_type(c.p + Indexer0<sizes, strides>::index_short(i_));
+        }
+    }
+
+#define DEF_ASSIGNOPS(OP)                                               \
+    template <class X> decltype(auto) operator OP(X && x)               \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; } \
+    decltype(auto) operator OP(cell_iterator_small const & x)                     \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; }
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
+};
+
+template <class Iterator>
+struct stl_iterator_small
+{
+    using value_type = typename Iterator::value_type;
+    using difference_type = dim_t;
+    using pointer = value_type *;
+    using reference = value_type &;
+    using iterator_category = std::forward_iterator_tag;
+    using shape_type = typename Iterator::shape_type;
+
+    Iterator ii;
+    shape_type i;
+
+// avoid ii = it.ii, see [ra11] above.
+    stl_iterator_small(stl_iterator_small const & it) = default;
+    stl_iterator_small & operator=(stl_iterator_small const & it) { i=it.i; ii.assign(it.ii); return *this; }
+// [ra12] Null p_ so begin()==end() for iterator on empty range. Plying uses sizes so this doesn't matter.
+    stl_iterator_small(typename Iterator::atom_type * p_)
+        : ii(i.size()==0 ? nullptr : p_),
+          i(ra::ra_traits<shape_type>::make(Iterator::framer, 0)) {}
+
+    template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
+    template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
+    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    stl_iterator_small & operator++() { next_in_cube(); return *this; }
+
+    template <int k=Iterator::rank()-1>
+    std::enable_if_t<(k>=0)> next_in_cube()
+    {
+        ++i[k];
+        if (i[k]<mp::Ref_<typename Iterator::sizes, k>::value) {
+            ii.c.p += mp::Ref_<typename Iterator::strides, k>::value;
+        } else {
+            i[k] = 0;
+            ii.c.p -= mp::Ref_<typename Iterator::strides, k>::value*(mp::Ref_<typename Iterator::sizes, k>::value-1);
+            next_in_cube<k-1>();
+            return;
+        }
+    }
+    template <int k> std::enable_if_t<(k<0)> next_in_cube() { ii.c.p = nullptr; }
+};
+
+
+// --------------------
+// Small view & container
+// --------------------
 
 template <class sizes_, class strides_, class ... I>
 struct FilterDims
@@ -92,24 +224,22 @@ struct SmallBase
     using strides = strides_;
     using value_type = T;
 
-    constexpr static std::array<dim_t, mp::len<sizes_>> ssizes = mp::tuple_copy<sizes, std::array<dim_t, mp::len<sizes>> >::f();
-    constexpr static std::array<dim_t, mp::len<strides_>> sstrides = mp::tuple_copy<strides, std::array<dim_t, mp::len<strides>> >::f();
-
-// TODO complete static check on strides.
     template <class TTT> struct BadDimension
     {
         using type = mp::int_t<(TTT::value<0 || TTT::value==DIM_ANY || TTT::value==DIM_BAD)>;
     };
-    static_assert(mp::len<sizes> == mp::len<strides>, "bad strides");
     static_assert(!mp::Apply_<mp::Or, mp::Map_<BadDimension, sizes>>::value, "negative dimensions");
+// TODO complete static check on strides.
+    static_assert(mp::len<sizes> == mp::len<strides>, "bad strides");
 
-// TODO look at Dim below; useable in the same way?
     using Child = Child_<T, sizes, strides>;
 
     constexpr static rank_t rank()  { return mp::len<sizes>; }
     constexpr static rank_t rank_s()  { return mp::len<sizes>; }
     constexpr static dim_t size() { return mp::Apply_<mp::Prod, sizes>::value; }
     constexpr static dim_t size_s() { return size(); }
+    constexpr static std::array<dim_t, rank()> ssizes = mp::tuple_copy<sizes, std::array<dim_t, rank()> >::f();
+    constexpr static std::array<dim_t, rank()> sstrides = mp::tuple_copy<strides, std::array<dim_t, rank()> >::f();
     constexpr static dim_t size(int j) { return ssizes[j]; }
     constexpr static dim_t stride(int j) { return sstrides[j]; }
 
@@ -132,7 +262,7 @@ struct SmallBase
         return data()[select_loop<sizes, strides>(i ...)];              \
     } /* TODO More than one selector... */                              \
     template <class ... I, std::enable_if_t<(!is_beatable<I>::static_p || ...), int> = 0> \
-    constexpr auto operator()(I && ... i) CONST                                   \
+    constexpr auto operator()(I && ... i) CONST                         \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
@@ -152,7 +282,7 @@ struct SmallBase
 
 // See same thing for View.
 #define DEF_ASSIGNOPS(OP)                                               \
-        template <class X> constexpr Child & operator OP(X && x)        \
+    template <class X> constexpr Child & operator OP(X && x)            \
     {                                                                   \
         /* TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
         constexpr rank_t xrank = std::decay_t<decltype(start(x))>::rank_s(); \
@@ -162,12 +292,10 @@ struct SmallBase
     }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
-    /* Array type is not deduced by (X &&). FIXME ra:: loop, need iter<1>(Small). */
+    /* Array type is not deduced by (X &&) */
     constexpr Child & operator=(typename nested_braces<T, rank()>::list const x)
     {
-        assert(size(0)==dim_t(x.size()));
-        int i = 0;
-        for (auto const & xx: x) { static_cast<Child &>(*this)(i) = xx; ++i; } /* std::copy not constexpr */
+        ra::iter<-1>(static_cast<Child &>(*this)) = x;
         return static_cast<Child &>(*this);
     }
     /* Fill row-major ravel for any rank. FIXME Use ra:: traversal need start(iterator). */
@@ -178,7 +306,6 @@ struct SmallBase
         for (auto const & xx: x) { *b = xx; ++b; } /* std::copy not constexpr */
         return static_cast<Child &>(*this);
     }
-
 
 // TODO Would replace by s(ra::iota) if that could be made constexpr
 #define DEF_AS(CONST)                                                   \
@@ -214,7 +341,8 @@ struct SmallBase
 #define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<req_dim0__, req_dim1__>>>, "renames only on default strides"); \
+        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<req_dim0__, req_dim1__>>>, \
+                      "renames only on default strides");               \
         static_assert(size(0)==req_dim0__ && size(1)==req_dim1__, "dimension error"); \
         return reinterpret_cast<name__<T> CONST &>(*this);              \
     }
@@ -231,7 +359,8 @@ struct SmallBase
 #define COMP_RENAME_C(name__, dim0__, CONST)                            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<dim0__>>>, "renames only on default strides"); \
+        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<dim0__>>>, \
+                      "renames only on default strides");               \
         static_assert(size(0)==dim0__, "dimension error");              \
         return reinterpret_cast<name__<T> CONST &>(*this);              \
     }
@@ -388,6 +517,11 @@ struct ra_traits_def<SmallArray<T, sizes, strides>>: public ra_traits_small<Smal
 
 template <class T, class sizes, class strides>
 struct ra_traits_def<SmallView<T, sizes, strides>>: public ra_traits_small<SmallView, T, sizes, strides> {};
+
+
+// --------------------
+// Small ops; cf view-ops.H. FIXME maybe there, or separate file.
+// --------------------
 
 template <class A, class i>
 struct axis_indices

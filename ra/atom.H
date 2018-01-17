@@ -172,7 +172,7 @@ struct Ptr
     constexpr static auto shape() { return shape_type { dim_t(DIM_BAD) }; }
 
     template <class I>
-    constexpr decltype(auto) at(I const & i)
+    constexpr decltype(auto) at(I && i)
     {
         return p__[i[0]];
     }
@@ -337,7 +337,7 @@ inline constexpr decltype(auto) start(T && t)
 template <class T, std::enable_if_t<is_slice<T>, int> =0>
 inline constexpr auto start(T && t)
 {
-    return iter<0>(t); // BUG neither cell_iterator nor cell_iterator_small will retain an rvalue. See test-ra-7.C [opt-small].
+    return iter<0>(t); // BUG neither cell_iterator nor cell_iterator_small will retain rvalues. See test-ra-7.C [opt-small].
 }
 
 template <class T, std::enable_if_t<is_scalar<T>, int> =0>

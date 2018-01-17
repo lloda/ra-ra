@@ -14,7 +14,6 @@
 #include <iterator>
 #include "ra/complex.H"
 #include "ra/small.H"
-#include "ra/iterator.H"
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/big.H"

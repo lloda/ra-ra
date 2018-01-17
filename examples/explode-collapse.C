@@ -11,6 +11,7 @@
 
 #include "ra/operators.H"
 #include "ra/io.H"
+#include <iostream>
 
 using std::cout; using std::endl; using std::flush;
 template <class T, int rank> using Array = ra::Big<T, rank>;
