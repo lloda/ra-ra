@@ -32,6 +32,29 @@ int main()
             tr.test_eq(x, ra::iota(6));
         }
     }
+    tr.section("any rank 1 expression for the shape argument");
+    {
+        ra::Big<int, 2> a (2+ra::iota(2), {0, 1, 2, 3, 4, 5});
+        tr.test_eq(ra::Small<int, 2, 3> {{0, 1, 2}, {3, 4, 5}}, a);
+    }
+    tr.section("also on raw views");
+    {
+        int ap[6] = {0, 1, 2, 3, 4, 5};
+        ra::View<int, 2> a(2+ra::iota(2), ap);
+        tr.test_eq(2, a.size(0));
+        tr.test_eq(3, a.size(1));
+        tr.test_eq(ra::Small<int, 2, 3> {{0, 1, 2}, {3, 4, 5}}, a);
+        tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
+    }
+    tr.section("also on raw views with var rank");
+    {
+        int ap[6] = {0, 1, 2, 3, 4, 5};
+        ra::View<int> a(2+ra::iota(2), ap);
+        tr.test_eq(2, a.size(0));
+        tr.test_eq(3, a.size(1));
+        tr.test_eq(ra::Small<int, 2, 3> {{0, 1, 2}, {3, 4, 5}}, a);
+        tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
+    }
     tr.section("nested braces operator=");
     {
         ra::Big<int, 2> a({2, 3}, {0, 1, 2, 3, 4, 5});
@@ -40,7 +63,7 @@ int main()
         tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
         a = {{{4, 5, 6}, {7, 8, 9}}}; // this uses the nested_braces_r constructor (!!)
-        tr.skip().test_eq(ra::scalar(ap), ra::scalar(a.data())); // FIXME fairly dangerous
+        tr.skip().test_eq(ra::scalar(ap), ra::scalar(a.data())); // FIXME fairly dangerous!
         tr.test_eq(2, a.size(0));
         tr.test_eq(3, a.size(1));
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));

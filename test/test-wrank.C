@@ -116,7 +116,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
         {
             // cout << mp::show_type<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
             auto ryn = ra::expr(v, a.iter(), b.iter());
-            cout << "ryn.shape(): " << ra::format_array(ryn.shape(), false) << endl;
+            cout << "ryn.shape(): " << ra::noshape << ryn.shape() << endl;
 #define TEST(plier)                                                     \
             cout << "\n\nusing " STRINGIZE(plier) " (ryn &):\n";        \
             ra::plier(ryn);                                             \
@@ -370,7 +370,7 @@ int main()
         ra::Big<real, 2> A({nx, ny}, 1.);
         ra::Big<real, 2> Anext({nx, ny}, 0.);
         auto Astencil = stencil(A, 1, 1);
-        cout << "Astencil " << format_array(Astencil(0, 0, ra::dots<2>), true, "|", " ") << endl;
+        cout << "Astencil " << format_array(Astencil(0, 0, ra::dots<2>), "|", " ") << endl;
 #define BENCH(ref, op) bench(A, Anext, Astencil, ref, STRINGIZE(op), op);
         BENCH(A, f_raw);
         Aref = ra::Big<real, 2>(A);

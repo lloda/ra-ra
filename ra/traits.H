@@ -39,7 +39,7 @@ struct ra_traits_def<std::vector<T, A>>
     using V = std::vector<T, A>;
     using value_type = T;
     using shape_type = std::array<dim_t, 1>;
-    constexpr static shape_type shape(V const & v) { return shape_type { { dim_t(v.size()) } }; }
+    constexpr static shape_type shape(V const & v) { return shape_type { dim_t(v.size()) }; }
     static V make(dim_t const n)
     {
         return std::vector<T, A>(n);
@@ -60,7 +60,7 @@ struct ra_traits_def<std::array<T, N>>
     using V = std::array<T, N>;
     using value_type = T;
     using shape_type = std::array<dim_t, 1>;
-    constexpr static shape_type shape(V const & v) { return shape_type { { N } }; }
+    constexpr static shape_type shape(V const & v) { return shape_type { N }; }
     constexpr static V make(dim_t const n)
     {
         assert(n==N);

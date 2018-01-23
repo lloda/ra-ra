@@ -29,8 +29,8 @@
 
 namespace ra {
 
-constexpr int VERSION = 5;     // to force upgrades on dependents
-constexpr int LAST_ISSUE = 35; // numbered as [ra··] throughout the code
+constexpr int VERSION = 6;     // to force upgrades on dependents
+constexpr int LAST_ISSUE = 37; // numbered as [ra··] throughout the code
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
@@ -135,6 +135,9 @@ struct CellFlat
 // Common to View / SmallBase.
 template <int cell_rank, class A> inline constexpr
 auto iter(A && a) { return a.template iter<cell_rank>(); }
+
+// Defined in wrank.H but used in big.H (selectors, etc).
+template <class A, class ... I> inline constexpr auto from(A && a, I && ... i);
 
 } // namespace ra
 

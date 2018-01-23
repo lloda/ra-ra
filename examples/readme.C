@@ -155,17 +155,17 @@ int main()
     tr.section("example from the manual [ma101]");
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
-        std::cout << format_array(transpose<1, 0>(A), false, "|") << std::endl;
+        std::cout << ra::noshape << format_array(transpose<1, 0>(A), "|") << std::endl;
     }
     {
         ra::Big<char const *, 1> A = {"hello", "array", "world"};
-        std::cout << format_array(A, false, "|") << std::endl;
+        std::cout << ra::noshape << format_array(A, "|") << std::endl;
     }
     tr.section("example from the manual [ma102]");
     {
         // ra::Big<char const *, 1> A({3}, "hello"); // ERROR b/c of pointer constructor
         ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
-        std::cout << format_array(A, false, "|") << std::endl;
+        std::cout << ra::noshape << format_array(A, "|") << std::endl;
     }
     tr.section("example from the manual [ma103]");
     {
@@ -205,7 +205,7 @@ int main()
         ra::Big<int, 1> e = {};
         ra::Big<int, 1> n = {1, 2, 7, 9, 12};
         ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
-        cout << "o: " << format_array(o, false) << ", e: " << format_array(e, false) << endl;
+        cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
     }
 // example from manual [ma110].
     {

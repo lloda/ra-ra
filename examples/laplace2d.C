@@ -14,6 +14,8 @@
 // the computation and we do much worse against BLAS.  Clearly I need to
 // benchmark the basic stuff against BLAS.
 
+// FIXME plot like the APL examples do.
+
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/test.H"

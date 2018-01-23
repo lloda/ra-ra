@@ -7,12 +7,14 @@
 // later version.
 
 /// @file format.H
-/// @brief Sugar for in-place ostringstream use.
+/// @brief Array output formatting, with some generic ostream sugar.
 
 #pragma once
 #include <iterator>
 #include <iosfwd>
 #include <sstream>
+
+namespace ra {
 
 template <class ... A> inline std::string
 format(A && ... a)
@@ -25,3 +27,50 @@ format(std::string && s)
 {
     return std::forward<decltype(s)>(s);
 }
+
+enum print_shape_t { defaultshape, withshape, noshape };
+
+template <class A>
+struct FormatArray
+{
+    A const & a;
+    print_shape_t shape;
+    char const * sep0;
+    char const * sep1;
+    char const * sep2;
+};
+
+template <class A> inline
+FormatArray<A>
+format_array(A const & a, char const * sep0=" ", char const * sep1="\n", char const * sep2="\n")
+{
+    return FormatArray<A> { a,  defaultshape, sep0, sep1, sep2 };
+}
+
+struct shape_manip_t
+{
+    std::ostream & o;
+    print_shape_t shape;
+};
+
+inline shape_manip_t operator<<(std::ostream & o, print_shape_t shape)
+{
+    return shape_manip_t { o, shape };
+}
+
+template <class A>
+inline std::ostream & operator<<(shape_manip_t const & sm, A const & a)
+{
+    FormatArray<A> fa = format_array(a);
+    fa.shape = sm.shape;
+    return sm.o << fa;
+}
+
+template <class A>
+inline std::ostream & operator<<(shape_manip_t const & sm, FormatArray<A> fa)
+{
+    fa.shape = sm.shape;
+    return sm.o << fa;
+}
+
+} // namespace ra

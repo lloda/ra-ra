@@ -11,7 +11,6 @@
 
 #pragma once
 #include "ra/small.H"
-#include "ra/wrank.H"
 #include <memory>
 
 #ifndef RA_CHECK_BOUNDS_BIG
@@ -176,17 +175,16 @@ struct stl_iterator
 struct Dim { dim_t size, stride; };
 
 // Always C order. If you need another, transpose this.
-template <class S, class D>
-dim_t filldim(int n, S send, D dend)
+// Works on dim vector with sizes already assigned, so that I can work from an expr. Not pretty though.
+template <class D>
+dim_t filldim(int n, D dend)
 {
     dim_t next = 1;
     for (; n>0; --n) {
-        --send;
         --dend;
-        assert(*send>=0);
-        (*dend).size = *send;
+        assert((*dend).size>=0);
         (*dend).stride = next;
-        next *= *send;
+        next *= (*dend).size;
     }
     return next;
 }
@@ -229,18 +227,23 @@ dim_t proddim(D d, D dend)
     }
 #define DEF_ASSIGNMENT_OPS(RANK)                                        \
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
-    /* These three are unsafe */                                        \
+    /* Constructors using pointers need extra care */                   \
     View(): p(nullptr) {}                                               \
-    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {}                \
-    View(std::initializer_list<dim_t> const s, T * p_): p(p_)           \
+    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */     \
+    template <class SS, std::enable_if_t<!std::is_same_v<Dimv, std::decay_t<SS>>, int> =0> \
+    View(SS && s, T * p_): p(p_) /* enable_if to avoid overriding [ra36] */ \
     {                                                                   \
-        ra::resize(View::dim, s.size());                                \
-        filldim(s.size(), s.end(), View::dim.end());                    \
+        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
+        ra::resize(View::dim, w.size(0)); /* [ra37] */ \
+        ra::vector(View::dim) = w;                                      \
+        filldim(View::dim.size(), View::dim.end());                     \
     }                                                                   \
-    template <class SS> View(SS const & s, T * p_): p(p_)               \
-    {                                                                   \
-        ra::resize(View::dim, s.size());                                \
-        filldim(s.size(), s.end(), View::dim.end());                    \
+    View(std::initializer_list<dim_t> s, T * p_): p(p_)                 \
+    { /* FIXME now that we've deduced, reuse the templated version */   \
+        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
+        ra::resize(View::dim, w.size(0));  /* [ra37] */                 \
+        ra::vector(View::dim) = w;                                      \
+        filldim(View::dim.size(), View::dim.end());                     \
     }                                                                   \
     View(View && x): dim(std::move(x.dim)), p(x.p) {}                   \
     View(View const & x): dim(x.dim), p(x.p) {}                         \
@@ -484,10 +487,15 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
 
     template <class SS> void init(SS const & s)
     {
-        constexpr dim_t sr = ra_traits<decltype(s)>::size_s();
-        static_assert(sr==RANK || sr==DIM_ANY || RANK==RANK_ANY, "rank mismatch for init shape");
-        ra::resize(View::dim, s.size());
-        dim_t t = filldim(s.size(), s.end(), View::dim.end());
+        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s);
+        static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape");
+        constexpr dim_t sr = decltype(w)::size_s();
+        static_assert(sr==RANK || sr==DIM_ANY || RANK==RANK_ANY, "size mismatch for init shape");
+// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)). Not being able to traverse backwards hurts here. See other uses of ra::vector here.
+// BUG if View::dim already has size, we shouldn't require it from w :-/ although this is an unusual case.
+        ra::resize(View::dim, w.size(0));
+        ra::vector(View::dim) = w;
+        dim_t t = filldim(View::dim.size(), View::dim.end());
         store = storage_traits<Store>::create(t);
         View::p = storage_traits<Store>::data(store);
     }
@@ -497,9 +505,18 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
         std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
     }
 
-    template <class SS> WithStorage(SS const & s, unspecified_t) { init(s); }
-    WithStorage(std::initializer_list<dim_t> const s, unspecified_t) { init(s); }
-    template <class SS, class XX> WithStorage(SS const & s, XX && x): WithStorage(s, unspecified)
+    template <class SS> WithStorage(SS && s, unspecified_t) { init(std::forward<SS>(s)); }
+    WithStorage(std::initializer_list<dim_t> s, unspecified_t) { init(s); }
+
+    // FIXME replace S = initializer_list, but init() must work with generic expr, those .size() and .end() are a problem.
+    // template <class dimtype, int RANK_>
+    // WithStorage(dimtype const (&s)[RANK_], unspecified_t)
+    // {
+    //     static_assert(RANK==RANK_, "bad shape");
+    //     init(start(s));
+    // }
+
+    template <class SS, class XX> WithStorage(SS && s, XX && x): WithStorage(s, unspecified)
     {
         static_cast<View &>(*this) = x;
     }

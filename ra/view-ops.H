@@ -10,7 +10,7 @@
 /// @brief Operations specific to Views
 
 #pragma once
-#include "ra/big.H"
+#include "ra/concrete.H"
 #include <complex>
 
 #ifndef RA_CHECK_BOUNDS_VIEW_OPS
@@ -41,33 +41,42 @@ View<T, RANK> reverse(View<T, RANK> const & view, int k)
 }
 
 // dynamic transposed axes list.
-#define DEF_TRANSPOSE(AXES_LIST)                                        \
-    template <class T, rank_t RANK, class S>                            \
-    View<T, RANK_ANY> transpose(AXES_LIST, View<T, RANK> const & view)  \
-    {                                                                   \
-        assert(view.rank()==s.size());                                  \
-        auto rp = std::max_element(s.begin(), s.end());                 \
-        rank_t dstrank = (rp==s.end() ? 0 : *rp+1);                     \
-                                                                        \
-        View<T, RANK_ANY> r { ra_traits<decltype(r.dim)>::make(dstrank, Dim { DIM_BAD, 0 }), view.data() }; \
-        int k = 0;                                                      \
-        for (int sk: s) {                                               \
-            Dim & dest = r.dim[sk];                                     \
-            dest.stride += view.dim[k].stride;                          \
-            dest.size = dest.size>=0 ? std::min(dest.size, view.dim[k].size) : view.dim[k].size; \
-            ++k;                                                        \
-        }                                                               \
-        for (Dim const & dest: r.dim) {                                 \
-            assert(dest.size!=DIM_BAD && "axes left unset");            \
-        }                                                               \
-        return r;                                                       \
+template <class T, rank_t RANK, class S> inline
+View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
+{
+    assert(view.rank()==s.size());
+    auto rp = std::max_element(s.begin(), s.end());
+    rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
+
+    View<T, RANK_ANY> r { ra_traits<decltype(r.dim)>::make(dstrank, Dim { DIM_BAD, 0 }), view.data() };
+    int k = 0;
+    for (int sk: s) {
+        Dim & dest = r.dim[sk];
+        dest.stride += view.dim[k].stride;
+        dest.size = dest.size>=0 ? std::min(dest.size, view.dim[k].size) : view.dim[k].size;
+        ++k;
     }
-DEF_TRANSPOSE(S const & s)
-DEF_TRANSPOSE(std::initializer_list<S> s)
-#undef DEF_TRANSPOSE
+    for (Dim const & dest: r.dim) {
+        assert(dest.size!=DIM_BAD && "axes left unset");
+    }
+    return r;
+}
+
+template <class T, rank_t RANK, class S> inline
+View<T, RANK_ANY> transpose(S && s, View<T, RANK> const & view)
+{
+    return transpose_(std::forward<S>(s), view);
+}
+
+// Note that we need the compile time values and not the sizes to deduce the rank of the output, so it would be useless to provide a builtin array shim as we do with reshape().
+template <class T, rank_t RANK> inline
+View<T, RANK_ANY> transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> const & view)
+{
+    return transpose_(s, view);
+}
 
 // static transposed axes list.
-template <int ... Iarg, class T, rank_t RANK>
+template <int ... Iarg, class T, rank_t RANK> inline
 auto transpose(View<T, RANK> const & view)
 {
     static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "bad output rank");
@@ -89,16 +98,13 @@ auto transpose(View<T, RANK> const & view)
     return r;
 }
 
-#undef TRANSPOSE_BODY
-#undef TRANSPOSE_BODY_CHECK
-
 template <class T, rank_t RANK> inline
 auto diag(View<T, RANK> const & view)
 {
     return transpose<0, 0>(view);
 }
 
-template <class T, rank_t RANK>
+template <class T, rank_t RANK> inline
 bool is_ravel_free(View<T, RANK> const & a)
 {
     if (a.rank()>1) {
@@ -114,16 +120,17 @@ bool is_ravel_free(View<T, RANK> const & a)
     return true;
 }
 
-template <class T, rank_t RANK>
+template <class T, rank_t RANK> inline
 View<T, 1> ravel_free(View<T, RANK> const & a)
 {
     assert(is_ravel_free(a));
     return ra::View<T, 1>({{a.size(), a.stride(a.rank()-1)}}, a.p);
 }
 
-template <class T, rank_t RANK, class S>
-auto reshape(View<T, RANK> const & a, S && sb_)
+template <class T, rank_t RANK, class S> inline
+auto reshape_(View<T, RANK> const & a, S && sb_)
 {
+// FIXME need variant of concrete to reduce expr without copying what is already concrete.
     auto sb = concrete(sb_);
 // FIXME when we need to copy, accept/return Shared
     dim_t la = a.size();
@@ -156,7 +163,9 @@ auto reshape(View<T, RANK> const & a, S && sb_)
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
             assert(is_ravel_free(a) && "reshape w/copy not implemented");
             if (la>=lb) {
-                filldim(sb.size(), sb.end(), b.dim.end()); // FIXME View(SS const & s, T * p)
+// FIXME View(SS const & s, T * p). Cf [ra37].
+                for_each([](auto & dim, auto && s) { dim.size = s; }, b.dim, sb);
+                filldim(b.dim.size(), b.dim.end());
                 for (int j=0; j!=b.rank(); ++j) {
                     b.dim[j].stride *= a.stride(a.rank()-1);
                 }
@@ -178,9 +187,23 @@ auto reshape(View<T, RANK> const & a, S && sb_)
     return b;
 }
 
+template <class T, rank_t RANK, class S> inline
+auto reshape(View<T, RANK> const & a, S && sb_)
+{
+    return reshape_(a, std::forward<S>(sb_));
+}
+
+// We need dimtype b/c {1, ...} deduces to int and that fails to match ra::dim_t.
+// We could use initializer_list to handle the general case, but that would produce a var rank result because its size cannot be deduced at compile time :-/. Unfortunately an initializer_list specialization would override this one, so we cannot provide it as a fallback.
+template <class T, rank_t RANK, class dimtype, int N> inline
+auto reshape(View<T, RANK> const & a, dimtype const (&sb_)[N])
+{
+    return reshape_(a, sb_);
+}
+
 // lo = lower bounds, hi = upper bounds.
 // The stencil indices are in [0 lo+1+hi] = [-lo +hi].
-template <class LO, class HI, class T, rank_t N>
+template <class LO, class HI, class T, rank_t N> inline
 View<T, rank_sum(N, N)>
 stencil(View<T, N> const & a, LO && lo, HI && hi)
 {
@@ -202,7 +225,7 @@ stencil(View<T, N> const & a, LO && lo, HI && hi)
 }
 
 // Make last sizes of View<> be compile-time constants.
-template <class super_t, rank_t SUPERR, class T, rank_t RANK>
+template <class super_t, rank_t SUPERR, class T, rank_t RANK> inline
 auto explode_(View<T, RANK> const & a)
 {
 // TODO Reduce to single check, either the first or the second.
@@ -232,13 +255,13 @@ auto explode(View<T, RANK> const & a)
 }
 
 // TODO Consider these in ra_traits<>.
-template <class T, std::enable_if_t<is_scalar<T>, int> =0> int gstride(int i) { return 1; }
-template <class T, std::enable_if_t<!is_scalar<T>, int> =0> int gstride(int i) { return T::stride(i); }
-template <class T, std::enable_if_t<is_scalar<T>, int> =0> int gsize(int i) { return 1; }
-template <class T, std::enable_if_t<!is_scalar<T>, int> =0> int gsize(int i) { return T::size(i); }
+template <class T, std::enable_if_t<is_scalar<T>, int> =0> inline int gstride(int i) { return 1; }
+template <class T, std::enable_if_t<!is_scalar<T>, int> =0> inline int gstride(int i) { return T::stride(i); }
+template <class T, std::enable_if_t<is_scalar<T>, int> =0> inline int gsize(int i) { return 1; }
+template <class T, std::enable_if_t<!is_scalar<T>, int> =0> inline int gsize(int i) { return T::size(i); }
 
 // TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
-template <class sub_t, class super_t, rank_t RANK>
+template <class sub_t, class super_t, rank_t RANK> inline
 auto collapse(View<super_t, RANK> const & a)
 {
     using super_v = typename ra_traits<super_t>::value_type;
@@ -271,25 +294,11 @@ auto collapse(View<super_t, RANK> const & a)
     return b;
 }
 
-// Checks for functions that require compact arrays (todo they really shouldn't).
-template <class A>
-inline bool const crm(A const & a)
+// For functions that require compact arrays (todo they really shouldn't).
+template <class A> inline
+bool const crm(A const & a)
 {
     return a.size()==0 || is_c_order(a);
-}
-template <class A, class Int>
-inline bool const crm(A const & a, Int const n)
-{
-    switch (a.rank()) {
-    case 1: return a.size(0)==n && a.stride(0)==1;
-    case 2: return a.size(1)==n && a.stride(1)==1 && a.stride(0)==n;
-    default: return false;
-    }
-}
-template <class A, class Int, class Jnt>
-inline bool const crm(A const & a, Int const nrow, Jnt const ncol)
-{
-    return a.size(0)==nrow && a.size(1)==ncol && a.stride(1)==1 && a.stride(0)==ncol;
 }
 
 } // namespace ra::

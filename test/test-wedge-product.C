@@ -45,7 +45,7 @@ std::enable_if_t<(O>N)> test_optimized_hodge_aux(TestRecorder & tr) {}
 template <int N, int O>
 std::enable_if_t<(O<=N)> test_optimized_hodge_aux(TestRecorder & tr)
 {
-    tr.section(format("hodge() vs hodgex() with N=", N, " O=", O));
+    tr.section(ra::format("hodge() vs hodgex() with N=", N, " O=", O));
     static_assert(N>=O, "bad_N_or_bad_O");
     using Va = vec<real, fun::Wedge<N, O, N-O>::Na>;
     using Vb = vec<real, fun::Wedge<N, O, N-O>::Nb>;

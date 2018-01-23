@@ -237,7 +237,10 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         return ra::flat(op, std::get<I>(t).flat() ...);
     }
-    constexpr auto flat() const { return flat(); }
+    constexpr auto flat() const
+    {
+        return ra::flat(op, std::get<I>(t).flat() ...);
+    }
 
 // Use the first arg that gives size(k)>=0; valid by ApplyFrame.
 // TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.

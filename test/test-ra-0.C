@@ -601,6 +601,19 @@ int main()
         }
         {
             ra::Unique<double, 0> a({}, 99);
+            auto b = transpose(a);
+            tr.test_eq(0, b.rank());
+            tr.test_eq(99, b());
+        }
+// FIXME this doesn't work because init_list {} competes stupidly with mp::int_list<>.
+        // {
+        //     ra::Unique<double, 0> a({}, 99);
+        //     auto b = transpose({}, a);
+        //     tr.test_eq(0, b.rank());
+        //     tr.test_eq(99, b());
+        // }
+        {
+            ra::Unique<double, 0> a({}, 99);
             auto b = transpose<>(a);
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());

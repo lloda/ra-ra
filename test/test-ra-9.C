@@ -104,7 +104,7 @@ int main()
         tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
     }
 // TODO Find out why the ra::Vector() constructors are needed for V=std::array but not for V=std::vector.
-    tr.section("ra35");
+    tr.section("[ra35]");
     {
         std::array<int, 2> a1 = {1, 2};
         std::vector<int> a2 = {1, 2};

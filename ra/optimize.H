@@ -10,7 +10,6 @@
 /// @brief Naive optimization pass over ETs.
 
 #pragma once
-#include "ra/expr.H"
 #include "ra/small.H"
 
 #ifndef RA_CHECK_BOUNDS_OPTIMIZE

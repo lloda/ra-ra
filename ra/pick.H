@@ -6,7 +6,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file expr.H
+/// @file pick.H
 /// @brief Expression template that picks one of several arguments.
 
 // This class is needed because Expr evaluates its arguments before calling its

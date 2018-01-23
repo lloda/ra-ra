@@ -111,7 +111,10 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         return ra::flat(op, std::get<I>(t).flat() ...);
     }
-    constexpr decltype(std::declval<Expr>().flat()) flat() const { return flat(); }
+    constexpr decltype(auto) flat() const
+    {
+        return ra::flat(op, std::get<I>(t).flat() ...);
+    }
 
 // there's one size (by A), but each arg has its own strides.
 // Note: do not require driver. This is needed by check for all leaves.

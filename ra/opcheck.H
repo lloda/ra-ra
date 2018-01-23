@@ -10,7 +10,6 @@
 /// @brief Check array argument agreement and select driving argument.
 
 #pragma once
-#include "ra/tuple-list.H"
 #include "ra/bootstrap.H"
 
 namespace ra {

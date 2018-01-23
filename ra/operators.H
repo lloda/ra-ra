@@ -10,15 +10,12 @@
 /// @brief Sugar for ra:: expression templates.
 
 #pragma once
+// FIXME Dependence on specific ra:: types should maybe be elsewhere.
+#include "ra/view-ops.H"
+#include "ra/complex.H"
+#include "ra/global.H"
 #include "ra/wrank.H"
 #include "ra/pick.H"
-// FIXME Dependence on specific ra:: types should maybe be elsewhere.
-#include "ra/small.H"
-#include "ra/view-ops.H"
-#include "ra/concrete.H"
-#include "ra/complex.H"
-#include "ra/wedge.H"
-#include "ra/global.H"
 
 #ifndef RA_CHECK_BOUNDS_OPERATORS
   #ifndef RA_CHECK_BOUNDS

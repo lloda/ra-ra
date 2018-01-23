@@ -56,8 +56,8 @@ struct Matrix0bnd
 {
     ra::Small<double, 8, 8> M; // element matrix.
     double h;                  // scale factor.
-    ra::Big<Element, 1> & E; // elements.
-    ra::Big<int, 1> & B;     // indices of boundary elements.
+    ra::Big<Element, 1> & E;   // elements.
+    ra::Big<int, 1> & B;       // indices of boundary elements.
 };
 
 template <class A, class V, class W>
@@ -146,7 +146,6 @@ int main()
          i, i, i, ra::iota(8)));
 
 // set boundaries (points on edges and corners multiple times --doesn't matter).
-// FIXME need reshape.
     int k = 0;
     for (int i=0; i<=n; ++i) {
         for (int j=0; j<=n; ++j) {

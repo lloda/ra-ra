@@ -264,9 +264,9 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/operators.H"} and @code{"ra/io.H"} at the top of your sources.
 
-A C++14 compiler with partial C++17 support is required. At the time of writing this means @b{gcc 7.2} with @option{-std=c++1z}. Most tests pass under @b{clang 5.0} with a couple of extra flags (@code{-Wno-missing-braces}, @option{-DRA_OPTIMIZE_SMALLVECTOR=0}).
+A C++14 compiler with partial C++17 support is required. At the time of writing this means @b{gcc 7.2} or @b{clang-5.0} with @option{-std=c++1z}. Check the top README for more up-to-date information.
 
-Here is a minimal program:
+Here is a minimal program@footnote{Examples given without context will typically assume that one has declared @code{using std::cout;}, etc.}:
 
 @example @c readme.C [ma101]
 @verbatim
@@ -277,7 +277,7 @@ Here is a minimal program:
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << format_array(transpose<1, 0>(A), false, "|") << std::endl;
+    std::cout << ra::noshape << format_array(transpose<1, 0>(A), "|") << std::endl;
 }
 @end verbatim
 @print{} h|w
@@ -340,9 +340,9 @@ ra::Big<double> c({2, 3}, a);                // b has size 2x3 and a is copied i
 @end verbatim
 @end example
 
-The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}).
+The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::unspecified} is used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
 
-Finally, there are special constructors where the content argument is either a pointer or an @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested @code{std::initializer_list} isn't supported yet, but may be supported in the future.
+Finally, there are special constructors where the content argument is either a pointer or @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested @code{std::initializer_list} isn't supported yet, but may be supported in the future.
 
 @c [ma112]
 @cindex order, column-major
@@ -369,7 +369,7 @@ Sometimes the pointer constructor gets in the way (see @ref{x-scalar,@code{scala
 @verbatim
 ra::Big<char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
 ra::Big<char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
-std::cout << format_array(A, false, "|") << std::endl;
+cout << ra::noshape << format_array(A, "|") << endl;
 @end verbatim
 @print{} hello|hello|hello
 @end example
@@ -1121,7 +1121,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 For example:
 @example @c [ma110]
 @verbatim
-std::cout << exp(ra::Small<double, 3> {4, 5, 6}) << std::endl;
+cout << exp(ra::Small<double, 3> {4, 5, 6}) << endl;
 @end verbatim
   @print{} 54.5982 148.413 403.429
 @end example
@@ -1155,7 +1155,7 @@ ra::Big<int, 1> o = {};
 ra::Big<int, 1> e = {};
 ra::Big<int, 1> n = {1, 2, 7, 9, 12};
 ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
-cout << "o: " << format_array(o, false) << ", e: " << format_array(e, false) << endl;
+cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
 @end verbatim
 @print{} o: 1 7 9, e: 2 12
 @end example
@@ -1246,7 +1246,7 @@ Some of these issues arise because @code{ra::} applies its principles systematic
 @section Assignment to views
 
 FIXME
-With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the lhs instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
+With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
 
 @section Size of brace initializers isn't checked until run time
 
@@ -1296,7 +1296,7 @@ Item 2
 @chapter Internals
 @c ------------------------------------------------
 
-TODO
+@code{ra::} has two main components: a set of container classes, and the expression template mechanism. The container classes provide leaves for the expression template trees, and the container classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
 
 @menu
 * Type hierarchy::        From Containers to FlatIterators.
@@ -1311,34 +1311,44 @@ TODO
 @section Type hierarchy
 @c ------------------------------------------------
 
-TODO
+This is a rough and possibly not very accurate summary. I'm hoping the planned feature of ‘C++ concepts’ will force me to be more systematic about it all.
 
-@b{Container} Big Shared Unique Small
+@itemize
+@item @b{Container} --- @code{Big} @code{Shared} @code{Unique} @code{Small}
 
-@b{View} View SmallView
+These are array types that own their data in one way or another. Creating or destroying these objects may allocate or deallocate memory, respectively.
 
-@b{Ravelable} Iterator SmallBase::Iterator Iota Vector Scalar
+@item @b{View} --- @code{View} @code{SmallView}
 
-These have a @code{flat()} method that is used to obtain a linearized view of a section of the array. They do not necessarily provide an @code{at()} method.
+These are array views into data in memory. Access to their contents doesn't involve computation and they may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s that aren't associated with any @b{Container}, for example into memory allocated with a different library. Creating and destroying @b{View}s doesn't allocate or deallocate memory for array elements.
 
-@b{Indexable} Iterator SmallBase::Iterator Iota Vector Scalar TensorIndex
+@item @b{ArrayIterator} --- @code{Expr} @code{Ryn} @code{Pick} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
 
-These have an @code{at(index type)} method so they can be indexed by running over the index set manually in any order. They do not necessarily provide a @code{flat()} method.
+This is a traversable object. @b{ArrayIterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @b{ArrayIterator}s can be created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. In most cases this is done automatically when those types are used in array expressions.
 
-@b{ArrayIterator} Expr Ryn Pick Iterator SmallBase::Iterator Iota Vector Scalar
+@item @b{Ravelable} --- @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
 
-This is a generalization of Ravelable and Indexable. E.g. Expr can be either or both depending on the component types. ArrayIterators are accepted by all the array functions such as @code{map}, @code{for_each}, etc.
+This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array.
 
-@b{Flat} Flat PickFlat CellFlat IotaFlat ScalarFlat
+@item @b{Indexable} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
-These are pointerlike types that are meant to be traversed linearly. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference).
+This is a kind of @b{ArrayIterator} that provides an @code{at()} method for random access to any element of the array.
+
+Currently the only type that is @b{Indexable} but not @b{Ravelable} is @code{TensorIndex}; this is by necessity given its meaning. Mixing @code{TensorIndex} with other objects in an expression forces the whole expression to be traversed without recourse to @b{Flat}, which is the main reason why all the other @b{ArrayIterator} types are also @b{Indexable}.
+
+@item @b{Flat} @code{Flat} @code{PickFlat} @code{CellFlat} @code{IotaFlat} @code{ScalarFlat}
+
+These are pointerlike types that are meant to be traversed linearly. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Ravelable} objects through a method @code{flat}.
+
+@end itemize
+
 
 @c ------------------------------------------------
 @node Driving expressions
 @section Driving expressions
 @c ------------------------------------------------
 
-TODO
+The execution of an expression template begins by the selection of a term of the expression as its driver. This is simply the term of the highest rank. If more than one term at the top level of the expression tree share the same highest rank, then the first term is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
 
 @c ------------------------------------------------
 @node Loop types
@@ -1600,9 +1610,83 @@ TODO
 @end defun
 
 @cindex @code{format_array}
-@anchor{x-format_array} @defun format_array expr [print_shape? [first_axis_separator [second_axis_separator ...]]]
-TODO
+@anchor{x-format_array} @defun format_array expr [last_axis_separator [second_last_axis_separator ...]]
+Formats an array for character output.
 @end defun
+
+For example
+
+@example
+@verbatim
+ra::Small<int, 2, 2> A = {{1, 2}, {3, 4}};
+cout << "case a:\n" << A << endl;
+cout << "case b:\n" << format_array(A) << endl;
+cout << "case c:\n" <<  format_array(A, "|", "-") << endl;
+@end verbatim
+@print{} case a:
+1 2
+3 4
+case b:
+1 2
+3 4
+case c:
+1|2-3|4
+@end example
+
+The shape that might be printed before the expression itself (depending on its type) is not subject to these separators. See @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
+
+@cindex @code{noshape}
+@cindex @code{withshape}
+@anchor{x-noshape}
+@anchor{x-withshape}
+@deffn @w{Special objects} {withshape noshape}
+If either of these objects is sent to @code{std::ostream} before an expression object, the shape of that object will or won't be printed.
+@end deffn
+
+If the object has static (compile time) shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has dynamic (runtime) shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] expect the shape to be present or not according to the default.
+
+For example:
+
+@example
+@verbatim
+ra::Small<int, 2, 2> A = {77, 99};
+cout << "case a:\n" << A << endl;
+cout << "case b:\n" << ra::noshape << A << endl;
+cout << "case c:\n" << ra::withshape << A << endl;
+@end verbatim
+@print{} case a:
+77 99
+case b:
+77 99
+case c:
+2
+77 99
+@end example
+
+but:
+
+@example
+@verbatim
+ra::Big<int> A = {77, 99};
+cout << "case a:\n" << A << endl;
+cout << "case b:\n" << ra::noshape << A << endl;
+cout << "case c:\n" << ra::withshape << A << endl;
+@end verbatim
+@print{} case a:
+1
+2
+77 99
+case b:
+77 99
+case c:
+1
+2
+77 99
+@end example
+
+Note that in the last example the very shape of @code{ra::Big<int>} has runtime size, so that size (the rank of @code{A}, that is 1) is printed as part of the shape of @code{A}.
+
+See also @ref{x-format_array,@code{format_array}}.
 
 @cindex @code{start}
 @anchor{x-start} @defun start foreign_object

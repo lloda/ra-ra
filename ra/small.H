@@ -7,8 +7,7 @@
 // later version.
 
 #pragma once
-#include "ra/ply.H"
-#include <iterator>
+#include "ra/expr.H"
 
 /// @file small.H
 /// @brief Arrays with static dimensions. Compare with View, WithStorage.
@@ -52,7 +51,7 @@ struct cell_iterator_small
 
     using cell_sizes = mp::Drop_<typename V::sizes, framer>;
     using cell_strides = mp::Drop_<typename V::strides, framer>;
-    using sizes = mp::Take_<typename V::sizes, framer>; /* this are strides on atom_type * p !! */
+    using sizes = mp::Take_<typename V::sizes, framer>; // these are strides on atom_type * p !!
     using strides = mp::Take_<typename V::strides, framer>;
 
     using shape_type = std::array<dim_t, framer>;
@@ -125,13 +124,12 @@ struct stl_iterator_small
 
     Iterator ii;
     shape_type i;
-
 // avoid ii = it.ii, see [ra11] above.
     stl_iterator_small(stl_iterator_small const & it) = default;
     stl_iterator_small & operator=(stl_iterator_small const & it) { i=it.i; ii.assign(it.ii); return *this; }
 // [ra12] Null p_ so begin()==end() for iterator on empty range. Plying uses sizes so this doesn't matter.
     stl_iterator_small(typename Iterator::atom_type * p_)
-        : ii(i.size()==0 ? nullptr : p_),
+        : ii(Iterator::framer==0 ? nullptr : p_),
           i(ra::ra_traits<shape_type>::make(Iterator::framer, 0)) {}
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
@@ -266,7 +264,7 @@ struct SmallBase
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
- /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
+    /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \

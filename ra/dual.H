@@ -7,7 +7,7 @@
 // later version.
 
 /// @file dual.H
-/// @brief Dual numbers.
+/// @brief Dual numbers for automatic differentiation.
 
 // I used VanderBergen2012, Berland2006. Generally about automatic differentiation:
 // http://en.wikipedia.org/wiki/Automatic_differentiation

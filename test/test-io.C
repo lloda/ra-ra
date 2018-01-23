@@ -45,19 +45,33 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
 int main()
 {
     TestRecorder tr;
-    tr.section("IO format parameters (I)");
+    tr.section("IO format parameters against default (I)");
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
-        o << format_array(A, true, "|", "-");
-        tr.test_eq(o.str(), std::string("1|2-3|4"));
+        o << ra::withshape << format_array(A, "|", "-");
+        tr.test_eq(std::string("2 2\n1|2-3|4"), o.str());
     }
-    tr.section("IO format parameters (II)");
+    tr.section("IO format parameters against default (II)");
     {
         ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << format_array(A, false, "|", "-");
-        tr.test_eq(o.str(), std::string("1|2-3|4"));
+        o << ra::noshape << format_array(A, "|", "-");
+        tr.test_eq(std::string("1|2-3|4"), o.str());
+    }
+    tr.section("IO manip without FormatArray");
+    {
+        ra::Small<int, 2, 2> A {1, 2, 3, 4};
+        std::ostringstream o;
+        o << ra::withshape << A;
+        tr.test_eq(std::string("2 2\n1 2\n3 4"), o.str());
+    }
+    tr.section("IO manip without FormatArray");
+    {
+        ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
+        std::ostringstream o;
+        o << ra::noshape << A;
+        tr.test_eq(std::string("1 2\n3 4"), o.str());
     }
     tr.section("common arrays or slices");
     {

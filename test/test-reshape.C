@@ -64,13 +64,25 @@ int main()
         tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
         tr.info("reshape can fix rank").test_eq(1, ra::ra_traits<decltype(b)>::rank_s());
     }
+    tr.section("reshape from var rank to fixed rank using the initializer_list shim");
+    {
+        ra::Big<int> a({2, 3}, ra::_0*3+ra::_1);
+        auto b = reshape(a, {3, 2});
+        tr.info("reshape").test_eq(ra::Big<int, 2> {{0, 1}, {2, 3}, {4, 5}}, b);
+        tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
+        tr.info("reshape can return fixed rank (2)").test_eq(2, ra::ra_traits<decltype(b)>::rank_s());
+        auto c = reshape(a, {3l, 2l}); // check deduction works regardless
+        tr.info("reshape").test_eq(ra::Big<int, 2> {{0, 1}, {2, 3}, {4, 5}}, c);
+        tr.test_eq(ra::scalar(a.p), ra::scalar(c.p));
+        tr.info("reshape can return fixed rank (3)").test_eq(2, ra::ra_traits<decltype(c)>::rank_s());
+    }
     tr.section("reshape from var rank to var rank");
     {
         ra::Big<int> a({2, 3}, ra::_0*3+ra::_1);
         auto b = reshape(a, ra::Big<int, 1> {3});
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, b);
         tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
-        tr.info("reshape can return var rank").test_eq(ra::RANK_ANY, ra::ra_traits<decltype(b)>::rank_s());
+        tr.info("reshape can return var rank (1)").test_eq(ra::RANK_ANY, ra::ra_traits<decltype(b)>::rank_s());
     }
     tr.section("reshape to fixed rank to var rank");
     {

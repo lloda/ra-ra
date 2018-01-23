@@ -8,6 +8,7 @@
 
 #pragma once
 #include "ra/atom.H"
+#include "ra/format.H"
 #include <iosfwd>
 #include <sstream>
 
@@ -15,29 +16,6 @@
 /// @brief Write and read arrays, expressions.
 
 namespace ra {
-
-template <class A>
-struct FormatArray
-{
-    A const & a;
-    bool const shape;
-    char const * sep0;
-    char const * sep1;
-    char const * sep2;
-};
-
-// written this way to avoid conversions too bool shape.
-
-template <class A, class B> inline
-FormatArray<A>
-format_array(A const & a, B const shape, char const * sep0=" ", char const * sep1="\n", char const * sep2="\n")
-{
-    static_assert(std::is_same_v<std::decay_t<B>, bool>, "bad call to format_array");
-    return FormatArray<A> { a, shape, sep0, sep1, sep2 };
-}
-
-template <class A> inline
-FormatArray<A> format_array(A const & a) { return format_array(a, true); }
 
 // After ply_index(). TODO merge with that.
 // TODO custom spacers at turn of dimension.
@@ -51,7 +29,8 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
     rank_t const rank = a.rank();
     auto sha(a.shape());
     auto ind = ra_traits<decltype(sha)>::make(rank, 0);
-    if (fa.shape && a.size_s()==DIM_ANY) {
+    if (withshape==fa.shape
+        || (defaultshape==fa.shape && a.size_s()==DIM_ANY)) {
         o << start(sha) << '\n';
     }
     for (rank_t k=0; k<rank; ++k) {

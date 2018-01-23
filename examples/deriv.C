@@ -22,7 +22,8 @@ int main()
 
     const int numSamples = 100;              // Number of samples
     double delta = 1. / numSamples;          // Spacing of samples
-    ra::Iota<int> R(numSamples);             // Index set of the vector
+    ra::Iota<int> R(numSamples);             // Index set 0 .. (numSamples-1)
+    cout << "R... " << R << endl;
 
     // Sample the function y = cos(x)^2 over [0,1)
     //

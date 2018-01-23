@@ -61,16 +61,17 @@ The test suite ([test/](test/)) runs under SCons. Running the test suite will al
 
 All the tests pass under g++-7.2. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run.
 
-All the tests pass under clang++-5.0 (with `-Wno-missing-braces`) except for:
+All the tests pass under clang++-7.0 [rev. 322817, tested on Linux] except for:
 
 * [test/bench-pack.C](test/bench-pack.C), crashes clang.
+* [test/test-iterator-small.C](test/test-iterator-small.C), crashes clang.
 * [test/test-optimize.C](test/test-optimize.C), a required specialization is missed and I haven't
   figured out why.
 
 For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is meant for gcc by setting CCFLAGS to something else, say:
 
   ```
-  CCFLAGS="-march=native -Wno-missing-braces -DRA_OPTIMIZE_SMALLVECTOR=0" CXXFLAGS=-O3 CXX=clang++-5.0 scons -j4
+  CCFLAGS="-march=native" CXXFLAGS=-O3 CXX=clang++ scons -j4
   ```
 
 I haven't tested on Windows. If you can do that, I'd appreciate a report!
