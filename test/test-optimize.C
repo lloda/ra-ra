@@ -10,15 +10,15 @@
 /// @brief Check that ra::optimize() does what it's supposed to do.
 
 #define RA_OPTIMIZE 0 // disable automatic use, so we can compare with (forced) and without
-#define RA_OPTIMIZE_IOTA 1 // enable all definitions
+#define RA_OPTIMIZE_IOTA 1
 
-#ifndef RA_OPTIMIZE_SMALLVECTOR // test is for 1; forcing 0 makes that part of the test moot
+#ifndef RA_OPTIMIZE_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
 #define RA_OPTIMIZE_SMALLVECTOR 1
 #endif
 
 #include "ra/operators.H"
-#include "ra/io.H"
 #include "ra/test.H"
+#include "ra/mpdebug.H"
 
 using std::cout; using std::endl;
 using complex = std::complex<double>;
@@ -111,17 +111,37 @@ int main()
     {
         using Vec = ra::Small<double, 4>;
         Vec const r {6, 8, 10, 12};
+
+// BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter). So this example only works b/c it's optimized.
         auto x = optimize(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
-// BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter).
+        tr.info("optimization rvalue terms").test(std::is_same_v<decltype(x), Vec>);
+        tr.test_eq(r, x);
+
         Vec a {1, 2, 3, 4}, b {5, 6, 7, 8};
         auto y = a + b;
         auto z = optimize(a + b);
-        tr.info("bad optimization").test(std::is_same_v<decltype(x), Vec>);
-        tr.info("bad optimization").skip().test(std::is_same_v<decltype(z), Vec>);
-        tr.info("bad non-optimization").test(!std::is_same_v<decltype(y), Vec>);
-        tr.test_eq(r, x);
+        tr.info("optimization of lvalue terms").test(std::is_same_v<decltype(z), Vec>);
+        tr.info("not optimized by default, yet").test(!std::is_same_v<decltype(y), Vec>);
         tr.test_eq(r, y);
         tr.test_eq(r, z);
+
+        auto q = optimize(a + r);
+        tr.info("optimization of const lvalue terms").test(std::is_same_v<decltype(q), Vec>);
+        tr.test_eq(ra::start({7, 10, 13, 16}), q);
+
+        ra::Small<double, 4, 4> c = 1 + ra::_1;
+
+        auto d = optimize(c(0) + b);
+        tr.info("optimization of view").test(std::is_same_v<decltype(d), Vec>);
+        tr.test_eq(r, d);
+    }
+    tr.section("small vector ops through vector extensions, other types / sizes");
+    {
+        ra::Small<double, 8> a = 1 + ra::_0;
+        ra::Small<double, 4, 8> b = 33 - ra::_1;
+        auto c = optimize(a + b(3));
+        tr.info("optimization of view").test(std::is_same_v<decltype(c), ra::Small<double, 8>>);
+        tr.test_eq(34, c);
     }
 #endif
     return tr.summary();

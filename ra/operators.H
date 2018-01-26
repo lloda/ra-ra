@@ -25,31 +25,39 @@
   #endif
 #endif
 #if RA_CHECK_BOUNDS_OPERATORS==0
-    #define CHECK_BOUNDS( cond )
+  #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+  #define CHECK_BOUNDS( cond ) assert( cond )
 #endif
 
 #include "ra/optimize.H"
 
 #ifndef RA_OPTIMIZE
-#define RA_OPTIMIZE 1 // enabled by default
+  #define RA_OPTIMIZE 1 // enabled by default
 #endif
 #if RA_OPTIMIZE==1
-#define OPTIMIZE optimize
+  #define OPTIMIZE optimize
 #else
-#define OPTIMIZE
+  #define OPTIMIZE
 #endif
-
-#define START(a) *(ra::start(a).flat())
 
 namespace ra {
 
-template <int ... Iarg, class A>
-inline decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
+template <int ... Iarg, class A> inline constexpr
+decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
 {
     return transpose<Iarg ...>(std::forward<A>(a));
 }
+
+namespace {
+
+template <class A> inline constexpr
+decltype(auto) FLAT(A && a)
+{
+    return *(ra::start(std::forward<A>(a)).flat());
+}
+
+} // namespace
 
 // I considered three options for lookup.
 // 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.H). It results in the narrowest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
@@ -75,7 +83,7 @@ inline decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
     template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
     inline constexpr auto operator OP(A && a, B && b)                   \
     {                                                                   \
-        return START(a) OP START(b);                                    \
+        return FLAT(a) OP FLAT(b);                                      \
     }
 DEF_NAMED_BINARY_OP(+, plus)
 DEF_NAMED_BINARY_OP(-, minus)
@@ -93,7 +101,7 @@ DEF_NAMED_BINARY_OP(/, slash)
     template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
     inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
-        return START(a) OP START(b);                                    \
+        return FLAT(a) OP FLAT(b);                                      \
     }
 FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, ==, !=)
 #undef DEF_BINARY_OP
@@ -119,7 +127,7 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
     template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>    \
     inline auto OP(A && ... a)                                          \
     {                                                                   \
-        return OP(START(a) ...);                                        \
+        return OP(FLAT(a) ...);                                         \
     }
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, cos, sin)
 FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf)
@@ -137,7 +145,7 @@ FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg)
     template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>    \
     inline decltype(auto) OP(A && ... a)                                \
     {                                                                   \
-        return OP(START(a) ...);                                        \
+        return OP(FLAT(a) ...);                                         \
     }
 FOR_EACH(DEF_NAME_OP, real_part, imag_part)
 #undef DEF_NAME_OP
@@ -183,7 +191,7 @@ inline auto operator ||(A && a, B && b)
     template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
     inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
-        return START(a) OP START(b);                                    \
+        return FLAT(a) OP FLAT(b);                                      \
     }
 FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
 #undef DEF_SHORTCIRCUIT_BINARY_OP
@@ -290,7 +298,7 @@ template <class A> inline auto norm2(A && a) { return std::sqrt(reduce_sqrm(a));
 template <class A, class B>
 inline auto dot(A && a, B && b)
 {
-    std::decay_t<decltype(START(a) * START(b))> c(0.);
+    std::decay_t<decltype(FLAT(a) * FLAT(b))> c(0.);
     for_each([&c](auto && a, auto && b) { c = fma(a, b, c); }, a, b);
     return c;
 }
@@ -298,7 +306,7 @@ inline auto dot(A && a, B && b)
 template <class A, class B>
 inline auto cdot(A && a, B && b)
 {
-    std::decay_t<decltype(conj(START(a)) * START(b))> c(0.);
+    std::decay_t<decltype(conj(FLAT(a)) * FLAT(b))> c(0.);
     for_each([&c](auto && a, auto && b) { c = fma_conj(a, b, c); }, a, b);
     return c;
 }
@@ -327,8 +335,8 @@ struct fromrank1
     decltype(auto) wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(START(a))>, decltype(start(a))::size_s()> aa = a;
-    Small<std::decay_t<decltype(START(b))>, decltype(start(b))::size_s()> bb = b;
+    Small<std::decay_t<decltype(FLAT(a))>, decltype(start(a))::size_s()> aa = a;
+    Small<std::decay_t<decltype(FLAT(b))>, decltype(start(b))::size_s()> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
@@ -350,8 +358,8 @@ DECL_WEDGE(general_case)
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(START(a))>, decltype(start(a))::size_s()> aa = a;
-    Small<std::decay_t<decltype(START(b))>, decltype(start(b))::size_s()> bb = b;
+    Small<std::decay_t<decltype(FLAT(a))>, decltype(start(a))::size_s()> aa = a;
+    Small<std::decay_t<decltype(FLAT(b))>, decltype(start(b))::size_s()> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
@@ -366,9 +374,9 @@ DECL_WEDGE(general_case)
 template <class A, class B, std::enable_if_t<std::decay_t<A>::size_s()==2 && std::decay_t<B>::size_s()==2, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
-    Small<std::decay_t<decltype(START(a_))>, 2> a = a_;
-    Small<std::decay_t<decltype(START(b_))>, 2> b = b_;
-    Small<std::decay_t<decltype(START(a_) * START(b_))>, 1> r;
+    Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
+    Small<std::decay_t<decltype(FLAT(b_))>, 2> b = b_;
+    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 1> r;
     fun::Wedge<2, 1, 1>::product(a, b, r);
     return r[0];
 }
@@ -376,9 +384,9 @@ inline auto cross(A const & a_, B const & b_)
 template <class A, class B, std::enable_if_t<std::decay_t<A>::size_s()==3 && std::decay_t<B>::size_s()==3, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
-    Small<std::decay_t<decltype(START(a_))>, 3> a = a_;
-    Small<std::decay_t<decltype(START(b_))>, 3> b = b_;
-    Small<std::decay_t<decltype(START(a_) * START(b_))>, 3> r;
+    Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;
+    Small<std::decay_t<decltype(FLAT(b_))>, 3> b = b_;
+    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 3> r;
     fun::Wedge<3, 1, 1>::product(a, b, r);
     return r;
 }
@@ -387,13 +395,13 @@ template <class V>
 inline auto perp(V const & v)
 {
     static_assert(v.size()==2, "dimension error");
-    return Small<std::decay_t<decltype(START(v))>, 2> {v[1], -v[0]};
+    return Small<std::decay_t<decltype(FLAT(v))>, 2> {v[1], -v[0]};
 }
 template <class V, class U, std::enable_if_t<is_scalar<U>, int> =0>
 inline auto perp(V const & v, U const & n)
 {
     static_assert(v.size()==2, "dimension error");
-    return Small<std::decay_t<decltype(START(v) * n)>, 2> {v[1]*n, -v[0]*n};
+    return Small<std::decay_t<decltype(FLAT(v) * n)>, 2> {v[1]*n, -v[0]*n};
 }
 template <class V, class U, std::enable_if_t<!is_scalar<U>, int> =0>
 inline auto perp(V const & v, U const & n)
@@ -449,7 +457,7 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 
 // we still want the Small version to be different.
 template <class A, class B>
-inline ra::Small<std::decay_t<decltype(START(std::declval<A>()) * START(std::declval<B>()))>, A::size(0), B::size(1)>
+inline ra::Small<std::decay_t<decltype(FLAT(std::declval<A>()) * FLAT(std::declval<B>()))>, A::size(0), B::size(1)>
 gemm(A const & a, B const & b)
 {
     constexpr int M = a.size(0);
@@ -494,9 +502,8 @@ gemv(A const & a, B const & b)
     return c;
 }
 
-#undef START
-
 } // namespace ra
 
+#undef OPTIMIZE
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_OPERATORS

@@ -11,13 +11,13 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0573r2.html
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
-@set VERSION 4
-@set UPDATED 2017 December 11
+@set VERSION 6
+@set UPDATED 2018 January 23
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
 
-(c) Daniel Llorens 2016--2017
+(c) Daniel Llorens 2016--2018
 
 @smalldisplay
 Permission is granted to copy, distribute and/or modify this document
@@ -234,7 +234,7 @@ I guess this is important enough!
 
 @subsection Other languages
 
-TODO Maybe review other languages, at least the important ones (Fortran/APL/J/Matlab/Numpy).
+TODO Maybe review other languages, at least the big ones (Fortran/APL/J/Matlab/Numpy).
 
 @c ------------------------------------------------
 @node Usage
@@ -321,9 +321,9 @@ Container constructors come in two main forms. The first takes a single argument
 @verbatim
 using ra::Small, ra::Big;
 Small<int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
-Small<int, 2, 3> b = {1, 2, 3, 4};      // ravel of the content; type knows shape
-Small<int, 2, 3> c = 7;                 // 7 is copied into c
-Small<int, 2, 3> d = a;                 // the contents of a are copied into d
+Small<int, 2, 2> b = {1, 2, 3, 4};      // ravel of the content; type knows shape
+Small<int, 2, 2> c = 7;                 // 7 is copied into c
+Small<int, 2, 2> d = a;                 // the contents of a are copied into d
 Big<int> e = a;                         // e takes the shape of a and a is copied into e
 Big<int> f = 0;                         // f is a 0-array with one element f()==0.
 @end verbatim
@@ -342,7 +342,7 @@ ra::Big<double> c({2, 3}, a);                // b has size 2x3 and a is copied i
 
 The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::unspecified} is used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
 
-Finally, there are special constructors where the content argument is either a pointer or @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested @code{std::initializer_list} isn't supported yet, but may be supported in the future.
+Finally, there are special constructors where the content argument is either a pointer or @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!
 
 @c [ma112]
 @cindex order, column-major
@@ -599,8 +599,8 @@ In this way it is possible to match shapes in various ways. Compare
 
 @example
 @verbatim
-ra::Big<double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
-ra::Big<double, 2> b({2}, {10, 20});
+ra::Big<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
+ra::Big<double, 2> b = {10, 20};
 ra::Big<double, 2> c = a * b; // multiply (each item of a) by (each item of b)
 @end verbatim
 @result{} a = @{@{10, 20, 30@}, @{80, 100, 120@}@}
@@ -610,8 +610,8 @@ with
 
 @example @c [ma105]
 @verbatim
-ra::Big<double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
-ra::Big<double, 2> b({3}, {10, 20, 30});
+ra::Big<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
+ra::Big<double, 2> b = {10, 20, 30};
 ra::Big<double, 2> c({2, 3}, 0.);
 iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply (each item of a) by (b)
 @end verbatim
@@ -1252,15 +1252,16 @@ With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the l
 
 FIXME
 
-@section Passing view arguments by reference, or view of const vs const view
+@section View of const vs const view
 
 FIXME
+Passing view arguments by reference
 
 @section Array iterators and temporaries
 
 FIXME
 
-@section Understand rank extension
+@section Rank extension in assignents
 
 Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches @code{a} and 3 [both of shape ()] with a vector of shape (3). This is equivalent to @code{@{a=3+4; a=3+5; a=3+6;@}}. You may get a different result depending on the order of traversal.
 
@@ -1270,6 +1271,18 @@ int a = 0;
 ra::scalar(a) = 3 + ra::Small<int, 3> {4, 5, 6};
 @end verbatim
   @result{} a = 9
+@end example
+
+@section Performance pitfalls of rank extension
+
+In the following example where @code{b} has its shape extended from (3) to (3, 4), @code{f} is called 12 times, even though only 3 calls are needed if @code{f} doesn't have side effects. In such cases it might be preferrable to write the outer loop explicitly, or to do some precomputation.
+
+@example
+@verbatim
+ra::Big<int, 2> a = {{1, 2, 3, 4}, {5, 6, 7, 8} {9, 10, 11, 12}};
+ra::Big<int, 1> b = {1, 2, 3};
+ra::Big<int, 2> c = map(f, b) + a;
+@end verbatim
 @end example
 
 @section Chained assignment
@@ -1348,7 +1361,9 @@ These are pointerlike types that are meant to be traversed linearly. They have m
 @section Driving expressions
 @c ------------------------------------------------
 
-The execution of an expression template begins by the selection of a term of the expression as its driver. This is simply the term of the highest rank. If more than one term at the top level of the expression tree share the same highest rank, then the first term is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
+The execution of an expression template begins by the selection of a term of the expression as its driver. This is simply the term of the highest rank. If two or more term share the same highest rank at the top level of the expression tree, then the first of those terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
+
+In the current version of @code{ra::}, the driver is always selected at compile time. This means that it's possible for an expression to fail at run time if that's when @code{ra::} finds out that the term it has selected as driver isn't, in fact, that of the highest rank. This can happen anytime variable rank expressions are involved. This is, of course, a bug.
 
 @c ------------------------------------------------
 @node Loop types
@@ -1769,9 +1784,9 @@ The result is @{c(0)+x, c(1)+x, c(2)+x@}. Compare this with
 @verbatim
 c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
 @end verbatim
-  @result{} c = @{ @{-1, 2@}, @{2, 5@} @}
+  @result{} c = @{ @{-1, 2@}, @{2, 5@}, @{2, 5@} @}
 @end example
-where the result is @{c(0)+x(0), c(1)+x(1)@}.
+where the result is @{c(0)+x(0), c(1)+x(1), c(2)@}.
 
 @cindex @code{iter}
 @anchor{x-iter} @defun iter <k> (view)

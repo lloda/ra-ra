@@ -7,7 +7,7 @@
 // later version.
 
 /// @file atom.H
-/// @brief Terminal nodes for expression templates.
+/// @brief Terminal nodes for expression templates, and use-as-xpr wrapper.
 
 #pragma once
 #include "ra/opcheck.H"
@@ -42,7 +42,7 @@ struct TensorIndex
     template <class I> constexpr value_type at(I const & i) const { return value_type(i[w]); }
     constexpr void adv(rank_t k, dim_t d) {}
     constexpr dim_t stride(int i) const { assert(w<0); return 0; } // used by Expr::stride_t.
-    constexpr value_type * flat() const { assert(w<0); return nullptr; } // used by Expr::atom_type type signature.
+    constexpr value_type * flat() const { assert(w<0); return nullptr; } // used by type signatures.
 };
 
 #define DEF_TENSORINDEX(i) constexpr TensorIndex<i, int> JOIN(_, i) {};
@@ -76,7 +76,6 @@ struct Scalar
     using shape_type = std::array<dim_t, 0>;
     constexpr static shape_type shape() { return shape_type {}; }
 
-// cf ScalarFlat::operator*
     template <class I> constexpr C const & at(I const & i) const { return c; }
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
@@ -227,7 +226,7 @@ struct Iota
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     using shape_type = std::array<dim_t, 1>;
-    constexpr auto shape() const { return shape_type { { size_ } }; }
+    constexpr auto shape() const { return shape_type { size_ }; }
 
     template <class I>
     constexpr decltype(auto) at(I const & i)
@@ -256,7 +255,7 @@ template <class I> struct is_beatable_def
     constexpr static bool value = std::is_integral_v<I>;
     constexpr static int skip_src = 1;
     constexpr static int skip = 0;
-    constexpr static bool static_p = value; // can the beating can be resolved statically?
+    constexpr static bool static_p = value; // can the beating be resolved statically?
 };
 
 template <class II> struct is_beatable_def<Iota<II>>
@@ -315,7 +314,7 @@ inline constexpr auto start(T && t)
     static_assert(!mp::exists<T>, "bad type for ra:: operator");
 }
 
-RA_IS_DEF(is_ra_iota, (std::is_same_v<A, Iota<typename A::T>>))
+RA_IS_DEF(is_iota, (std::is_same_v<A, Iota<typename A::T>>))
 RA_IS_DEF(is_ra_scalar, (std::is_same_v<A, Scalar<typename A::C>>))
 RA_IS_DEF(is_ra_vector, (std::is_same_v<A, Vector<typename A::V>>))
 
@@ -364,8 +363,9 @@ inline constexpr auto start(T && t);
 
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using start_t = decltype(*(ra::start(std::declval<A>()).flat()));
-template <class A> using value_t = std::decay_t<start_t<A>>;
+template <class A> using start_t = decltype(ra::start(std::declval<A>()));
+template <class A> using flat_t = decltype(*(ra::start(std::declval<A>()).flat()));
+template <class A> using value_t = std::decay_t<flat_t<A>>;
 template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }
 
 } // namespace ra

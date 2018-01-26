@@ -28,11 +28,7 @@
 namespace ra {
 
 template <class E, class Enable=void> struct concrete_type_def_1;
-template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::rank_s()==RANK_ANY>>
-{
-    using type = Big<value_t<E>>;
-};
-template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()==DIM_ANY && E::rank_s()!=RANK_ANY>>
+template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()==DIM_ANY>>
 {
     using type = Big<value_t<E>, E::rank_s()>;
 };
@@ -55,10 +51,10 @@ template <class E> struct concrete_type_def<E, std::enable_if_t<!is_scalar<E>>>
 };
 template <class E> struct concrete_type_def<E, std::enable_if_t<is_scalar<E>>>
 {
-    using type = std::decay_t<E>;
+    using type = E;
 };
 
-template <class E> using concrete_type = typename concrete_type_def<E>::type;
+template <class E> using concrete_type = std::decay_t<typename concrete_type_def<E>::type>;
 template <class E> inline auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
 
 // FIXME replace ra_traits::make

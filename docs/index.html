@@ -7,9 +7,9 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-`ra::' (version 4, updated 2017 December 11)
+`ra::' (version 6, updated 2018 January 23)
 
-(c) Daniel Llorens 2016--2017
+(c) Daniel Llorens 2016--2018
      Permission is granted to copy, distribute and/or modify this document
      under the terms of the GNU Free Documentation License, Version 1.3 or
      any later version published by the Free Software Foundation; with no
@@ -40,9 +40,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered"><code>ra::</code></h2>
 
-<p><code>ra::</code> (version 4, updated 2017 December 11)
+<p><code>ra::</code> (version 6, updated 2018 January 23)
 
-   <p>(c) Daniel Llorens 2016&ndash;2017
+   <p>(c) Daniel Llorens 2016&ndash;2018
 
 <pre class="smalldisplay">     Permission is granted to copy, distribute and/or modify this document
      under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -276,7 +276,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Overview">Overview</a>
 
 <h4 class="subsection">1.5.4 Other languages</h4>
 
-<p>TODO Maybe review other languages, at least the important ones (Fortran/APL/J/Matlab/Numpy).
+<p>TODO Maybe review other languages, at least the big ones (Fortran/APL/J/Matlab/Numpy).
 
 <!--  -->
 <div class="node">
@@ -380,9 +380,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <pre class="example"><pre class="verbatim">     
      using ra::Small, ra::Big;
      Small&lt;int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
-     Small&lt;int, 2, 3> b = {1, 2, 3, 4};      // ravel of the content; type knows shape
-     Small&lt;int, 2, 3> c = 7;                 // 7 is copied into c
-     Small&lt;int, 2, 3> d = a;                 // the contents of a are copied into d
+     Small&lt;int, 2, 2> b = {1, 2, 3, 4};      // ravel of the content; type knows shape
+     Small&lt;int, 2, 2> c = 7;                 // 7 is copied into c
+     Small&lt;int, 2, 2> d = a;                 // the contents of a are copied into d
      Big&lt;int> e = a;                         // e takes the shape of a and a is copied into e
      Big&lt;int> f = 0;                         // f is a 0-array with one element f()==0.
 </pre>
@@ -398,7 +398,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
    <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don't match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::unspecified</code> is used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container's elements.
 
-   <p>Finally, there are special constructors where the content argument is either a pointer or <code>std::initializer_list</code>. This argument isn't used for shape <a rel="footnote" href="#fn-3" name="fnd-3"><sup>3</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk! Nested <code>std::initializer_list</code> isn't supported yet, but may be supported in the future.
+   <p>Finally, there are special constructors where the content argument is either a pointer or <code>std::initializer_list</code>. This argument isn't used for shape <a rel="footnote" href="#fn-3" name="fnd-3"><sup>3</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!
 
 <!-- [ma112] -->
 <p><a name="index-order_002c-column_002dmajor-10"></a>
@@ -645,8 +645,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>In this way it is possible to match shapes in various ways. Compare
 
 <pre class="example"><pre class="verbatim">     
-     ra::Big&lt;double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
-     ra::Big&lt;double, 2> b({2}, {10, 20});
+     ra::Big&lt;double, 2> a = {{1, 2, 3}, {4, 5, 6}};
+     ra::Big&lt;double, 2> b = {10, 20};
      ra::Big&lt;double, 2> c = a * b; // multiply (each item of a) by (each item of b)
 </pre>
      =&gt; a = {{10, 20, 30}, {80, 100, 120}}
@@ -654,8 +654,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>with
 
 <pre class="example"><pre class="verbatim">     
-     ra::Big&lt;double, 2> a({2, 3}, {1, 2, 3,  4, 5, 6});
-     ra::Big&lt;double, 2> b({3}, {10, 20, 30});
+     ra::Big&lt;double, 2> a = {{1, 2, 3}, {4, 5, 6}};
+     ra::Big&lt;double, 2> b = {10, 20, 30};
      ra::Big&lt;double, 2> c({2, 3}, 0.);
      iter&lt;1>(c) = iter&lt;1>(a) * iter&lt;1>(b); // multiply (each item of a) by (b)
 </pre>
@@ -1280,15 +1280,16 @@ With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> re
 
 <p>FIXME
 
-<h3 class="section">4.3 Passing view arguments by reference, or view of const vs const view</h3>
+<h3 class="section">4.3 View of const vs const view</h3>
 
 <p>FIXME
+Passing view arguments by reference
 
 <h3 class="section">4.4 Array iterators and temporaries</h3>
 
 <p>FIXME
 
-<h3 class="section">4.5 Understand rank extension</h3>
+<h3 class="section">4.5 Rank extension in assignents</h3>
 
 <p>Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches <code>a</code> and 3 [both of shape ()] with a vector of shape (3). This is equivalent to <code>{a=3+4; a=3+5; a=3+6;}</code>. You may get a different result depending on the order of traversal.
 
@@ -1298,12 +1299,22 @@ With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> re
 </pre>
        =&gt; a = 9
 </pre>
-   <h3 class="section">4.6 Chained assignment</h3>
+   <h3 class="section">4.6 Performance pitfalls of rank extension</h3>
+
+<p>In the following example where <code>b</code> has its shape extended from (3) to (3, 4), <code>f</code> is called 12 times, even though only 3 calls are needed if <code>f</code> doesn't have side effects. In such cases it might be preferrable to write the outer loop explicitly, or to do some precomputation.
+
+<pre class="example"><pre class="verbatim">     
+     ra::Big&lt;int, 2> a = {{1, 2, 3, 4}, {5, 6, 7, 8} {9, 10, 11, 12}};
+     ra::Big&lt;int, 1> b = {1, 2, 3};
+     ra::Big&lt;int, 2> c = map(f, b) + a;
+</pre>
+</pre>
+   <h3 class="section">4.7 Chained assignment</h3>
 
 <p>FIXME
 When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as an array expression.
 
-<h3 class="section">4.7 Unregistered scalar types</h3>
+<h3 class="section">4.8 Unregistered scalar types</h3>
 
 <p>FIXME
 <code>View&lt;T, N&gt; x; x = T()</code> fails if <code>T</code> isn't registered as <code>is_scalar</code>.
@@ -1393,7 +1404,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 <h3 class="section">5.2 Driving expressions</h3>
 
 <!--  -->
-<p>The execution of an expression template begins by the selection of a term of the expression as its driver. This is simply the term of the highest rank. If more than one term at the top level of the expression tree share the same highest rank, then the first term is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
+<p>The execution of an expression template begins by the selection of a term of the expression as its driver. This is simply the term of the highest rank. If two or more term share the same highest rank at the top level of the expression tree, then the first of those terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
+
+   <p>In the current version of <code>ra::</code>, the driver is always selected at compile time. This means that it's possible for an expression to fail at run time if that's when <code>ra::</code> finds out that the term it has selected as driver isn't, in fact, that of the highest rank. This can happen anytime variable rank expressions are involved. This is, of course, a bug.
 
 <!--  -->
 <div class="node">
@@ -1855,9 +1868,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <pre class="example"><pre class="verbatim">     
      c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
 </pre>
-       =&gt; c = { {-1, 2}, {2, 5} }
+       =&gt; c = { {-1, 2}, {2, 5}, {2, 5} }
 </pre>
-   <p>where the result is {c(0)+x(0), c(1)+x(1)}.
+   <p>where the result is {c(0)+x(0), c(1)+x(1), c(2)}.
 
    <p><a name="index-g_t_0040code_007biter_007d-69"></a><a name="x_002diter"></a>
 

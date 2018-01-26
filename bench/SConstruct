@@ -75,7 +75,7 @@ if 'skip_summary' not in top:
                'bench-gemv', 'bench-sum-rows', 'bench-sum-cols',
                'bench-pack', 'bench-from',
                'bench-stencil1', 'bench-stencil2', 'bench-stencil3',
-               # 'bench-optimize'
+               'bench-optimize'
            ]]
 
 [ra.to_test_ra(env_blas, variant_dir)(bench)

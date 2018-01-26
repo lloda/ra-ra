@@ -56,8 +56,6 @@ DEFINE_NAMED_BINARY_OP(/, slash)
 #define ITEM(i) std::get<(i)>(e.t)
 
 #if RA_OPTIMIZE_IOTA==1
-template <class I, class Enable=void> constexpr bool is_iota = false;
-template <class I> constexpr bool is_iota<I, std::enable_if_t<std::is_same_v<std::decay_t<I>, Iota<typename std::decay_t<I>::T>>>> = true;
 // TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
 template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X>>::is_integer;
 
@@ -80,7 +78,7 @@ inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
+    CHECK_BOUNDS(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return iota(ITEM(0).size_, ITEM(0).org_+ITEM(1).org_, ITEM(0).stride_+ITEM(1).stride_);
 }
 
@@ -103,7 +101,7 @@ inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    assert(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
+    CHECK_BOUNDS(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return iota(ITEM(0).size_, ITEM(0).org_-ITEM(1).org_, ITEM(0).stride_-ITEM(1).stride_);
 }
 
@@ -126,21 +124,49 @@ inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 #endif // RA_OPTIMIZE_IOTA
 
 #if RA_OPTIMIZE_SMALLVECTOR==1
-template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 
-#define OPTIMIZE_SMALLVECTOR_OP(OP, NAME)                               \
+namespace {
+
+#if defined (__clang__)
+template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
+#else
+template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
+#endif
+// FIXME find a way to peel qualifiers from parameter type of start_t, to ignore SmallBase<SmallArray> vs SmallBase<SmallView> or const vs nonconst.
+template <class A, class T, dim_t N> constexpr bool match_smallvector =
+    std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template iterator<0>>
+    || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template const_iterator<0>>;
+
+static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallView, double,
+              std::tuple<std::integral_constant<int, 4> >,
+              std::tuple<std::integral_constant<int, 1> > >, 0>, double, 4>);
+}; //namespace
+
+#define OPTIMIZE_SMALLVECTOR_OP(OP, NAME, T, N)                         \
+    template <class A, class B,                                         \
+              std::enable_if_t<match_smallvector<A, T, N> && match_smallvector<B, T, N>, int> =0> \
     inline auto                                                         \
-    optimize(ra::Expr<NAME,                                             \
-             std::tuple<decltype(start(std::declval<ra::Small<double, 4>>())), \
-                        decltype(start(std::declval<ra::Small<double, 4>>()))>> && e) \
+    optimize(ra::Expr<NAME, std::tuple<A, B>> && e)                     \
     {                                                                   \
-        ra::Small<double, 4> val;                                       \
-        (extvector<double, 4> &)(val) = (extvector<double, 4> &)(*(ITEM(0).c.p)) OP (extvector<double, 4> &)(*(ITEM(1).c.p)); \
+        alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
+        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.p)) OP *(extvector<T, N> *)((ITEM(1).c.p)); \
         return val;                                                     \
     }
-OPTIMIZE_SMALLVECTOR_OP(+, ra::plus)
-OPTIMIZE_SMALLVECTOR_OP(*, ra::times)
-#undef OPTIMIZE_SMALLVECTOR_OP
+#define OPTIMIZE_SMALLVECTOR_OP_FUNS(T, N)      \
+    OPTIMIZE_SMALLVECTOR_OP(+, ra::plus, T, N)  \
+    OPTIMIZE_SMALLVECTOR_OP(-, ra::minus, T, N) \
+    OPTIMIZE_SMALLVECTOR_OP(*, ra::times, T, N)
+#define OPTIMIZE_SMALLVECTOR_OP_SIZES(T)        \
+    OPTIMIZE_SMALLVECTOR_OP_FUNS(T, 2)          \
+    OPTIMIZE_SMALLVECTOR_OP_FUNS(T, 4)          \
+    OPTIMIZE_SMALLVECTOR_OP_FUNS(T, 8)
+
+OPTIMIZE_SMALLVECTOR_OP_SIZES(double)
+OPTIMIZE_SMALLVECTOR_OP_SIZES(float)
+
+#undef OPTIMIZE_SMALLVECTOR_OP_SIZES
+#undef OPTIMIZE_SMALLVECTOR_OP_FUNS
+#undef OPTIMIZE_SMALLVECTOR_OP_OP
 
 #endif // RA_OPTIMIZE_SMALLVECTOR
 

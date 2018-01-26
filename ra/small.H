@@ -33,7 +33,7 @@ namespace ra {
 // --------------------
 // TODO Refactor with cell_iterator / stl_iterator for View?
 
-// V is SmallBase (FIXME so why parameterize? apparently only for order-of-decl.)
+// V is always SmallBase<SmallView, ...>
 template <class V, rank_t cellr_=0>
 struct cell_iterator_small
 {
@@ -156,7 +156,7 @@ struct stl_iterator_small
 
 
 // --------------------
-// Small view & container
+// Base for both small view & container
 // --------------------
 
 template <class sizes_, class strides_, class ... I>
@@ -317,8 +317,8 @@ struct SmallBase
     FOR_EACH(DEF_AS, /* const */, const)
 #undef DEF_AS
 
-    template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase, c>;
-    template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<Child_, T const, sizes, strides>, c>;
+    template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase<SmallView, T, sizes, strides>, c>;
+    template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<SmallView, T const, sizes, strides>, c>;
     template <rank_t c=0> constexpr auto iter() { return iterator<c>(data()); }
     template <rank_t c=0> constexpr auto iter() const { return const_iterator<c>(data()); }
 
@@ -376,14 +376,16 @@ struct SmallBase
 #undef COMP_RENAME_C
 };
 
+
 // ---------------------
-// Strides are compile time known, so we can put most members in the view type.
+// Small view & container
 // ---------------------
+// Strides are compile time, so we can put most members in the view type.
 
 template <class T, class sizes, class strides>
 struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 {
-    using Base = SmallBase<ra::SmallView, T, sizes, strides>; // TODO qualifier needed for clang 3.8 bug
+    using Base = SmallBase<SmallView, T, sizes, strides>;
 
     T * p;
     constexpr SmallView(T * p_): p(p_) {}
@@ -406,52 +408,45 @@ struct SmallView: public SmallBase<SmallView, T, sizes, strides>
     SmallView & operator=(SmallView const & x) { return Base::operator=(x); }
 };
 
-#define DEF_SMALLARRAY                                                  \
-    /*  TODO qualifier needed for clang 3.8 bug */                      \
-    using Base = SmallBase<ra::SmallArray, T, sizes, strides>;          \
-    T p[Base::size()];                                                  \
-                                                                        \
-    constexpr SmallArray(): p() {}                                      \
-    template <class X>                                                  \
-    constexpr SmallArray(X && x): p()  /* init for constexpr */         \
-    {                                                                   \
-        static_cast<Base &>(*this) = x;                                 \
-    }                                                                   \
-    /* List type is not deduced by (X &&) */                            \
-    constexpr SmallArray(typename nested_braces<T, Base::rank()>::list x): p() \
-    {                                                                   \
-        static_cast<Base &>(*this) = x;                                 \
-    }                                                                   \
-    /* List type is not deduced by (X &&) */                            \
-    constexpr SmallArray(std::initializer_list<T> x): p()               \
-    {                                                                   \
-        static_cast<Base &>(*this) = x;                                 \
-    }                                                                   \
-    /* test-small-0 and test-small-1 pass without these two; make sure they're needed. */ \
-    /* 1. Remove for start(begin) or start(begin, end); only here because std::vector has it */ \
-    template <class P>                                                  \
-    constexpr SmallArray(P begin, P end)                                \
-    {                                                                   \
-        std::copy(begin, end, this->begin());                           \
-    }                                                                   \
-    /* 2. Special case is needed if ra::start() doesn't acknowledge T as scalar */ \
-    constexpr SmallArray(T const & t)                                   \
-    {                                                                   \
-        std::fill(this->begin(), this->end(), t);                       \
-    }
-
 template <class T, class sizes, class strides>
 struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
 {
-    DEF_SMALLARRAY
+    using Base = SmallBase<SmallArray, T, sizes, strides>;
+    using Base::rank, Base::size, Base::operator=;
 
-    using Base::rank;
-    using Base::size;
+    T p[Base::size()];
+
+    constexpr SmallArray(): p() {}
+    template <class X>
+    constexpr SmallArray(X && x): p()  /* init for constexpr */
+    {
+        static_cast<Base &>(*this) = x;
+    }
+    // List type is not deduced by (X &&)
+    constexpr SmallArray(typename nested_braces<T, Base::rank()>::list x): p()
+    {
+        static_cast<Base &>(*this) = x;
+    }
+    // List type is not deduced by (X &&)
+    constexpr SmallArray(std::initializer_list<T> x): p()
+    {
+        static_cast<Base &>(*this) = x;
+    }
+    // test-small-0 and test-small-1 pass without these two; make sure they're needed.
+    // 1. Remove for start(begin) or start(begin, end); only here because std::vector has it
+    template <class P>
+    constexpr SmallArray(P begin, P end)
+    {
+        std::copy(begin, end, this->begin());
+    }
+    // 2. Special case is needed if ra::start() doesn't acknowledge T as scalar
+    constexpr SmallArray(T const & t)
+    {
+        std::fill(this->begin(), this->end(), t);
+    }
 
     constexpr operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
     constexpr operator SmallView<T const, sizes, strides> const () { return SmallView<T const, sizes, strides>(p); }
-
-    using Base::operator=;
 
 // BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
 #define DEF_SCALARS(CONST)                                              \
@@ -464,21 +459,6 @@ struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
     FOR_EACH(DEF_SCALARS, /* const */, const)
 #undef DEF_SCALARS
 };
-
-// This specialization exists only to avoid -Warray-bounds on operator[] when sizes is [0].
-template <class T, class strides>
-struct SmallArray<T, mp::int_list<0>, strides>: public SmallBase<SmallArray, T, mp::int_list<0>, strides>
-{
-    using sizes = mp::int_list<0>;
-
-    DEF_SMALLARRAY
-
-    T & operator[](dim_t const i) { assert(0 && "internal error"); }
-    T const & operator[](dim_t const i) const { assert(0 && "internal error"); }
-    operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
-    operator SmallView<T const, sizes, strides> const () { return SmallView<T const, sizes, strides>(p); }
-};
-#undef DEF_SMALLARRAY
 
 // FIXME Type_ seems superfluous
 template <template <class, class, class> class Type_,
