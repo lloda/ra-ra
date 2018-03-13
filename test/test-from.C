@@ -303,10 +303,10 @@ int main()
     }
 // From the manual [ra30]
     {
-        ra::Big<int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
-        ra::Big<ra::Small<int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
+        ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
+        ra::Big<ra::Small<int, 2>, 2> i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
         ra::Big<int, 2> B = at(A, i);
-        tr.test_eq(ra::Big<int, 2>({2, 2}, {101, 120, 110, 121}), at(A, i));
+        tr.test_eq(ra::Big<int, 2> {{101, 120}, {110, 121}}, at(A, i));
     }
     return tr.summary();
 }

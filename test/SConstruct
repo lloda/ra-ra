@@ -74,7 +74,7 @@ tester = ra.to_test_ra(env, variant_dir)
 
 [tester(test)
  for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
-              'test-ra-6', 'test-ra-8', 'test-ra-9',
+              'test-ra-6', 'test-ra-7', 'test-ra-8', 'test-ra-9',
               'test-types', 'test-io', 'test-from', 'test-nested', 'test-owned',
               'test-ownership', 'test-ply', 'test-small-0', 'test-small-1',
               'test-big-0', 'test-big-1',
@@ -83,7 +83,7 @@ tester = ra.to_test_ra(env, variant_dir)
               'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
               'test-tensorindex', 'test-explode-collapse', 'test-wrank',
               'test-optimize', 'test-reshape', 'test-concrete', 'test-bench',
-              'test-iterator-small',
+              'test-iterator-small', 'test-mem-fn',
               # 'test-end'
           ]]
 

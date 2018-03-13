@@ -24,6 +24,13 @@ int main()
     TestRecorder tr;
     tr.section("constructors");
     {
+        tr.section("regression with implicitly declared View constuctors [ra38]. Reduced from examples/maxwell.C");
+        {
+            ra::Big<int, 1> A = {1, 2};
+            ra::Big<int, 1> X = {0, 0};
+            X(ra::all) = A();
+            tr.test_eq(ra::start({1, 2}), X);
+        }
         tr.section("need for explicit View::operator=(View const & x) [ra34]");
         {
             ra::Big<int, 1> a {0, 1, 2, 3, 4, 5};

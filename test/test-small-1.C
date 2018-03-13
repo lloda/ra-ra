@@ -466,7 +466,7 @@ int main()
         tr.test_eq(ra::Small<int, 4> {4, 1, 2, 3}, cat(4, ra::Small<int, 3> {1, 2, 3}));
         tr.test_eq(ra::Small<int, 5> {1, 2, 3, 4, 5}, cat(ra::Small<int, 2> {1, 2}, ra::Small<int, 3> {3, 4, 5}));
     }
-    tr.section("a demo on rank1of1 vs rank2 [ref01]");
+    tr.section("a demo on rank1of1 vs rank2");
     {
 // by prefix matching, first dim is 2 for both so they get matched. Then {1 2}
 // (a 'scalar') gets matched to 10 & 20 in succesion. This used to be forbidden in Small::Small(X && x), but now I value consistency more.

@@ -578,7 +578,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 [<a href="#Sources">J S</a>]
  and is known as <dfn>prefix agreement</dfn>. The opposite rule of <dfn>suffix agreement</dfn> is used, for example, in Numpy <!-- %**else if -->
 [<a href="#Sources">num17</a>]
-.
+<a rel="footnote" href="#fn-4" name="fnd-4"><sup>4</sup></a>.
 
    <p>As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout <code>ra::</code>, even in assignments. For example,
 
@@ -1142,7 +1142,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a rel="footnote" href="#fn-4" name="fnd-4"><sup>4</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, and <code>tanh</code>. Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a rel="footnote" href="#fn-5" name="fnd-5"><sup>5</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, and <code>tanh</code>. Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 
    <p>For example:
 <pre class="example"><pre class="verbatim">     
@@ -1618,7 +1618,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
    <pre class="example"><pre class="verbatim">     
          ra::Big&lt;int, 1> i {2, 1};
          ra::Big&lt;int, 1> j {0, 1};
-         ra::Big&lt;double, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
+         ra::Big&lt;double, 2> A = {{1, 2}, {3, 4}, {5, 6}};
          ra::Big&lt;double, 2> Aij = from(A, i, j)
 </pre>
        =&gt; Aij = {{6, 5}, {4, 3}}
@@ -1634,8 +1634,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p>This can be used for sparse subscripting. For example:
 <pre class="example"><pre class="verbatim">     
-         ra::Big&lt;int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
-         ra::Big&lt;ra::Small&lt;int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
+         ra::Big&lt;int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
+         ra::Big&lt;ra::Small&lt;int, 2>, 2> i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
          ra::Big&lt;int, 2> B = at(A, i);
 </pre>
        =&gt; B = {{101, 120}, {110, 121}}
@@ -1896,12 +1896,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
         max of each column again: 3
         7 3 3
 </pre>
-   <p>In the following example, <code>iter</code> emulates <code>scalar</code>. Note that the shape () of <code>iter&lt;1&gt;(m)</code> matches the shape (3) of <code>iter&lt;1&gt;(c)</code>. Thus, each of the 1-cells of <code>c</code> matches against the single 1-cell of <code>m</code>.
+   <!-- [ma113] -->
+<p>In the following example, <code>iter</code> emulates <code>scalar</code>. Note that the shape () of <code>iter&lt;1&gt;(m)</code> matches the shape (3) of <code>iter&lt;1&gt;(c)</code>. Thus, each of the 1-cells of <code>c</code> matches against the single 1-cell of <code>m</code>.
 
 <pre class="example"><pre class="verbatim">     
      m = 0;
      iter&lt;1>(m) = max(iter&lt;1>(m), iter&lt;1>(c));
-     cout &lt;&lt; "max of each yet again: " &lt;&lt; m &lt;&lt; endl;
+     cout &lt;&lt; "max of each column yet again: " &lt;&lt; m &lt;&lt; endl;
 </pre>
      -| max of each column again: 3
         7 3 3
@@ -2158,7 +2159,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
    <p class="footnote"><small>[<a name="fn-3" href="#fnd-3">3</a>]</small> You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
 
-   <p class="footnote"><small>[<a name="fn-4" href="#fnd-4">4</a>]</small> <code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively. Note that if both operands are of rank 0 and at least one of them is a <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
+   <p class="footnote"><small>[<a name="fn-4" href="#fnd-4">4</a>]</small> Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> <!-- %**else if -->
+[<a href="#Sources">Ber87</a>]
+ and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>
+
+   <p class="footnote"><small>[<a name="fn-5" href="#fnd-5">5</a>]</small> <code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively. Note that if both operands are of rank 0 and at least one of them is a <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 
    <p><hr></div>
 

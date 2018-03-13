@@ -39,7 +39,7 @@ constexpr double  LOG2E = 1.44269504088896340735992468100189213742664595415299;
 constexpr double  LOGE2 = .693147180559945309417232121458176568075500134360255;
 constexpr double GOLDEN = 1.61803398874989484820458683436563811772030917980576; // (1+√5)/2.
 // constexpr clang
-static const double     E0 = 1./(sqrt(M0)*C0*C0);
+static const double     E0 = 1./(M0*C0*C0);
 static const double  SQRT2 = sqrt(2.);
 static const double ISQRT2 = 1/sqrt(2.);
 static const double SQRTPI = sqrt(PI);
@@ -49,7 +49,7 @@ static const double   LNPI = log(PI);
 
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
 // besides, gcc still leaks cmath functions into the global namespace, so by default e.g. sqrt will be C double sqrt(double) and not the overload set.
-using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow;
+using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, std::exp;
 using std::swap, std::isfinite, std::isinf;
 
 #define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point<T>::value)

@@ -23,9 +23,8 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-using std::cout; using std::endl; using std::flush;
-using std::tuple; using real = double;
-using ra::dim_t;
+using std::cout, std::endl, std::flush, std::tuple, ra::dim_t;
+using real = double;
 
 // Find the driver for given axis. This pattern is used in Ryn to find the size-giving argument for each axis.
 template <int iarg, class T>

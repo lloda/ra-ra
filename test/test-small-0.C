@@ -215,23 +215,19 @@ int main()
     }
     tr.section("raveling constructor");
     {
-        {
-            ra::Small<int, 2, 2> a = {1, 2, 3, 4};
-            tr.test_eq(1, a(0, 0));
-            tr.test_eq(2, a(0, 1));
-            tr.test_eq(3, a(1, 0));
-            tr.test_eq(4, a(1, 1));
-        }
+        ra::Small<int, 2, 2> a = {1, 2, 3, 4};
+        tr.test_eq(1, a(0, 0));
+        tr.test_eq(2, a(0, 1));
+        tr.test_eq(3, a(1, 0));
+        tr.test_eq(4, a(1, 1));
     }
     tr.section("nested Small");
     {
-        {
-            ra::Small<ra::Small<int, 2>, 2> a = {{1, 2}, {3, 4}};
-            tr.test_eq(1, a(0)(0));
-            tr.test_eq(2, a(0)(1));
-            tr.test_eq(3, a(1)(0));
-            tr.test_eq(4, a(1)(1));
-        }
+        ra::Small<ra::Small<int, 2>, 2> a = {{1, 2}, {3, 4}};
+        tr.test_eq(1, a(0)(0));
+        tr.test_eq(2, a(0)(1));
+        tr.test_eq(3, a(1)(0));
+        tr.test_eq(4, a(1)(1));
     }
     tr.section("operator=");
     {
@@ -265,6 +261,29 @@ int main()
             tr.test_eq(2, a(0, 1));
             tr.test_eq(3, a(1, 0));
             tr.test_eq(4, a(1, 1));
+        }
+        tr.section("operator= of view into view");
+        {
+            {
+                ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
+                ra::SmallView<int, mp::int_list<2>, mp::int_list<1>> a0 = a(0);
+                ra::SmallView<int, mp::int_list<2>, mp::int_list<1>> a1 = a(1);
+                a0 = a1;
+                tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
+            }
+            {
+                ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
+                ra::SmallView<int, mp::int_list<2>, mp::int_list<1>> a0 = a(0);
+                a0 = a(1);
+                tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
+            }
+        }
+        tr.section("repeat a test from test-big-0 [ra38]");
+        {
+            ra::Small<double, 2> A = {1, 2};
+            ra::Small<double, 2> X = {0, 0};
+            X(ra::all) = A();
+            tr.test_eq(ra::start({1, 2}), X);
         }
     }
     return tr.summary();

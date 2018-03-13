@@ -166,7 +166,6 @@ struct ApplyFrames
         return wz>=0 && wj>=0 && a.keep_stride(step, wz, wj);
     }
     constexpr decltype(auto) flat() { return a.flat(); }
-    constexpr decltype(auto) flat() const { return a.flat(); }
 };
 
 template <class LiveAxes, int depth, class Enable=void>
@@ -234,10 +233,6 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
         return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
     constexpr auto flat()
-    {
-        return ra::flat(op, std::get<I>(t).flat() ...);
-    }
-    constexpr auto flat() const
     {
         return ra::flat(op, std::get<I>(t).flat() ...);
     }

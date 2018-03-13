@@ -42,7 +42,7 @@ int main()
     A(1, H, H, H, 2) = -cos((iota(n)-delta)*(2*PI/n))/(2*PI/n);
 
     auto t0 = Benchmark::clock::now();
-// FIXME this is painful without a roll operator, but a roll operator that creates a temp is unacceptable.
+// FIXME this is painful without a roll operator, but we need a roll operator without temps.
     for (int t=1; t+1<o; ++t) {
 // X←(1⌽[0]A[T;;;;])+(1⌽[1]A[T;;;;])+(1⌽[2]A[T;;;;])
         X(iota(n-1)) = A(t, iota(n-1, 1));

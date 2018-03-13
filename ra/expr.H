@@ -48,7 +48,7 @@ auto flat(Op & op, P && ... p)
 
 // forward decl in atom.H
 // TODO others:
-// * 'static': Like expr, but the operator is compile time (e.g. ::apply()).
+// * 'static': Like expr, but the operator is compile time (e.g. ::apply()). Probably no need.
 // * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
@@ -111,10 +111,6 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
     {
         return ra::flat(op, std::get<I>(t).flat() ...);
     }
-    constexpr decltype(auto) flat() const
-    {
-        return ra::flat(op, std::get<I>(t).flat() ...);
-    }
 
 // there's one size (by A), but each arg has its own strides.
 // Note: do not require driver. This is needed by check for all leaves.
@@ -151,18 +147,16 @@ expr(Op && op, P && ... p)
     return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
 }
 
-// Wrappers over expr & ply.
-
-template <class F, class ... A> inline constexpr auto
-map(F && f, A && ... a)
+template <class Op, class ... A> inline constexpr auto
+map(Op && op, A && ... a)
 {
-    return expr(std::forward<F>(f), start(std::forward<A>(a)) ...);
+    return expr(std::forward<Op>(op), start(std::forward<A>(a)) ...);
 }
 
-template <class F, class ... A> inline constexpr void
-for_each(F && f, A && ... a)
+template <class Op, class ... A> inline constexpr void
+for_each(Op && op, A && ... a)
 {
-    ply(expr(std::forward<F>(f), start(std::forward<A>(a)) ...));
+    ply(map(std::forward<Op>(op), std::forward<A>(a) ...));
 }
 
 } // namespace ra

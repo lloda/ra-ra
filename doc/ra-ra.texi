@@ -529,7 +529,7 @@ That is, after we run out of indices in @code{S}, we simply repeat the elements.
 @cindex shape agreement, suffix
 @c @cindex J
 @cindex Numpy
-This rank extension rule is used by the J language @mybibcite{J S} and is known as @dfn{prefix agreement}. The opposite rule of @dfn{suffix agreement} is used, for example, in Numpy @mybibcite{num17}.
+This rank extension rule is used by the J language @mybibcite{J S} and is known as @dfn{prefix agreement}. The opposite rule of @dfn{suffix agreement} is used, for example, in Numpy @mybibcite{num17}@footnote{Prefix agreement is chosen for @code{ra::} because of the availability of a @ref{The rank conjunction,rank conjunction} @mybibcite{Ber87} and @ref{Cell iteration, cell iterators of arbitrary rank}. This allows rank extension to be performed at multiple axes of an array expression.}.
 
 As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout @code{ra::}, even in assignments. For example,
 
@@ -1535,7 +1535,7 @@ For example:
 @verbatim
     ra::Big<int, 1> i {2, 1};
     ra::Big<int, 1> j {0, 1};
-    ra::Big<double, 2> A({3, 2}, {1, 2, 3, 4, 5, 6});
+    ra::Big<double, 2> A = {{1, 2}, {3, 4}, {5, 6}};
     ra::Big<double, 2> Aij = from(A, i, j)
 @end verbatim
   @result{} Aij = @{@{6, 5@}, @{4, 3@}@}
@@ -1551,8 +1551,8 @@ Look up @var{expr} at each element of @var{indices}, which shall be a multi-inde
 This can be used for sparse subscripting. For example:
 @example @c [ra30]
 @verbatim
-    ra::Big<int, 2> A({3, 2}, {100, 101, 110, 111, 120, 121});
-    ra::Big<ra::Small<int, 2>, 2> i({2, 2}, {{0, 1}, {2, 0}, {1, 0}, {2, 1}});
+    ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
+    ra::Big<ra::Small<int, 2>, 2> i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
     ra::Big<int, 2> B = at(A, i);
 @end verbatim
   @result{} B = @{@{101, 120@}, @{110, 121@}@}
@@ -1812,13 +1812,14 @@ cout << "max of each column again: " << m << endl;
    7 3 3
 @end example
 
+@c [ma113]
 In the following example, @code{iter} emulates @code{scalar}. Note that the shape () of @code{iter<1>(m)} matches the shape (3) of @code{iter<1>(c)}. Thus, each of the 1-cells of @code{c} matches against the single 1-cell of @code{m}.
 
 @example
 @verbatim
 m = 0;
 iter<1>(m) = max(iter<1>(m), iter<1>(c));
-cout << "max of each yet again: " << m << endl;
+cout << "max of each column yet again: " << m << endl;
 @end verbatim
 @print{} max of each column again: 3
    7 3 3

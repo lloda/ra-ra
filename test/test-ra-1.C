@@ -72,7 +72,7 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("[ra01] nested, with references, ply_index or ply_ravel");
+    tr.section("nested, with references, ply_index or ply_ravel");
     {
         int check[3] = {0, 2, 4};
         ra::Small<int, 3> A {1, 0, -1};
@@ -97,7 +97,7 @@ int main()
 #undef TEST2
 #undef TEST
             }
-    tr.section("[ra03] with ref terms only");
+    tr.section("with ref terms only");
     {
 #define TEST(plier, Biter, Citer)                                       \
         [&tr](auto && B, auto && C)                                     \
@@ -118,7 +118,7 @@ int main()
 #undef TEST2
 #undef TEST
             }
-    tr.section("[ra04] with ref & value terms");
+    tr.section("with ref & value terms");
     {
 #define TEST(plier, Biter, Citer, Btemp)                                \
         [&tr](auto && B, auto && C)                                     \
@@ -139,7 +139,7 @@ int main()
 #undef TEST
     }
 // Missing operators with int2; so not the same as in test-traversal.C.
-    tr.section("[ra05] complex or nested types");
+    tr.section("complex or nested types");
     {
         int i;
         using A2of2 = ra::Unique<int2, 2>;
@@ -173,7 +173,7 @@ int main()
         cout << B << endl;
         i=5; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
     }
-    tr.section("[ra06] reversed arrays, ply_index");
+    tr.section("reversed arrays, ply_index");
     {
         ra::Unique<int, 1> A({ 6 }, ra::unspecified);
         std::iota(A.begin(), A.end(), 1);
@@ -188,12 +188,12 @@ int main()
             tr.test_eq(6-i, B(i));
         }
     }
-    tr.section("[ra07] reversed arrays, traverse, only one");
+    tr.section("reversed arrays, traverse, only one");
     {
         CheckPlyReverse1(tr, ra::Unique<int, 1>({ 6 }, ra::unspecified));
         CheckPlyReverse1(tr, ra::Unique<int>({ 6 }, ra::unspecified));
     }
-    tr.section("[ra08] mismatched strides");
+    tr.section("mismatched strides");
     {
         auto sum2 = [](int a, int b, int & c) { return c = a-b; };
         A2 a = A2({2, 3}, ra::unspecified); std::iota(a.begin(), a.end(), 1);
@@ -217,7 +217,7 @@ int main()
         TEST(plyf_index);
 #undef TEST
     }
-    tr.section("[ra09] reverse 1/1 axis, traverse");
+    tr.section("reverse 1/1 axis, traverse");
 #define TEST(plier)                                             \
     {                                                           \
         A1 a({ 6 }, ra::unspecified);                           \
@@ -239,7 +239,7 @@ int main()
     TEST(plyf)
     TEST(plyf_index)
 #undef TEST
-    tr.section("[ra10(a-d)] reverse (ref & non ref), traverse");
+    tr.section("reverse (ref & non ref), traverse");
     {
         A2 A({2, 3}, { 1, 2, 3, 4, 5, 6 });
         A2 B({2, 3}, { 1, 2, 3, 4, 5, 6 });
@@ -260,7 +260,7 @@ int main()
         CheckPly<A2>(tr, "(i)", reverse(reverse(A, 0), 1), B);
         CheckPly<A2>(tr, "(j)", reverse(reverse(A, 0), 1), reverse(reverse(B, 0), 1));
     }
-    tr.section("[ra10(e-h)] reverse & transpose (ref & non ref), traverse");
+    tr.section("reverse & transpose (ref & non ref), traverse");
     {
         using A2 = ra::Unique<int, 2>;
         A2 A({2, 2}, { 1, 2, 3, 4 });

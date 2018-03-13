@@ -52,13 +52,12 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 template <class C> struct Scalar;
 
 // Separate from Scalar so that operator+=, etc. has the array meaning there.
-// We can reuse the Scalar object b/c operator+= is a no-op.
 template <class C>
 struct ScalarFlat: public Scalar<C>
 {
     constexpr void operator+=(dim_t d) const {}
-    constexpr C const & operator*() const { return this->c; }
     constexpr C & operator*() { return this->c; }
+    constexpr C const & operator*() const { return this->c; } // [ra39]
 };
 
 // Wrap constant for traversal. We still want f(C) to be a specialization in most cases.
@@ -68,21 +67,19 @@ struct Scalar
     using C = C_;
     C c;
 
-// Used in shape checks with dynamic rank. (Never called because rank is 0).
-    constexpr static dim_t size(int k) { assert(0); return 0; }
+    constexpr static dim_t size(int k) { assert(0); return 0; } // used in shape checks with dynamic rank.
     constexpr static dim_t size_s() { return 1; }
     constexpr static rank_t rank() { return 0; }
     constexpr static rank_t rank_s() { return 0; }
     using shape_type = std::array<dim_t, 0>;
     constexpr static shape_type shape() { return shape_type {}; }
 
-    template <class I> constexpr C const & at(I const & i) const { return c; }
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t stride(int i) { return 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return true; }
-    constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); }
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
+    constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
 
 #define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
@@ -90,9 +87,8 @@ struct Scalar
 #undef DEF_ASSIGNOPS
 };
 
-// For the use of std::forward<>, see eg http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
-template <class C> inline constexpr auto
-scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
+// See http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
+template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Wrap something with {size, begin} as 1-D vector. Sort of reduced ra_iterator.
 // ra::ra_traits_def<V> must be defined with ::size, ::size_s.
@@ -141,9 +137,7 @@ struct Vector
         p__ += (k==0) * d;
     }
     constexpr static dim_t stride(int i) { return i==0 ? 1 : 0; }
-// reduced from cell_iterator::keep_stride()
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
 
 #define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
@@ -152,8 +146,7 @@ struct Vector
 #undef DEF_ASSIGNOPS
 };
 
-template <class V> inline constexpr auto
-vector(V && v) { return Vector<V>(std::forward<V>(v)); }
+template <class V> inline constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
 
 // Like Vector, but on the iterator itself, so no size, P only needs to have +=, *, [].
 // ra::ra_traits_def<P> doesn't need to be defined.
@@ -181,9 +174,7 @@ struct Ptr
         p__ += (k==0) * d;
     }
     constexpr static dim_t stride(int i) { return i==0 ? 1 : 0; }
-// reduced from cell_iterator::keep_stride()
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() { return p__; }
     constexpr auto flat() const { return p__; }
 
 #define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
@@ -238,7 +229,6 @@ struct Iota
         i_ += T((k==0) * d) * stride_; // cf Vector::adv
     }
     constexpr static dim_t stride(rank_t i) { return i==0 ? 1 : 0; }
-// reduced from cell_iterator::keep_stride()
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
 };
@@ -326,7 +316,7 @@ inline constexpr auto start(T && t)
     return std::forward<T>(t);
 }
 
-// don't copy these, always forward.
+// don't restart these. About Scalar see [ra39]. For Vector FIXME this might not be correct.
 template <class T, std::enable_if_t<is_ra_vector<T> || is_ra_scalar<T>, int> =0>
 inline constexpr decltype(auto) start(T && t)
 {

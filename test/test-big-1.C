@@ -50,9 +50,9 @@ int main()
             tr.test_eq(ra::start({1, 2, 3, 0, 0, 0}), a);
         }
     }
-    tr.section("operator="); // FIXME add nested braces constructors to keep going.
+    tr.section("operator=");
     {
-        ra::Big<int, 2> a({2, 3}, {0, 1, 2, 3, 4, 5});
+        ra::Big<int, 2> a = {{0, 1, 2}, {3, 4, 5}};
         cout << "A0" << endl;
         a = {{4, 5, 6}, {7, 8, 9}};
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
@@ -79,7 +79,7 @@ int main()
         }
         cout << endl;
         c = b;
-// FIXME this clobber the strides in a, which is surprising -> WithStorage should behave as View.
+// FIXME this clobbers the strides of a, which is surprising -> WithStorage should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
         a = b;
         for (int k=0; k!=c.rank(); ++k) {
             std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;

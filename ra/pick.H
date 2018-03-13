@@ -194,7 +194,6 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
     {
         return pick_flat(std::get<I>(t).flat() ...);
     }
-    constexpr auto flat() const { return flat(); }
 
 // there's one size (by A), but each arg has its own strides.
 // Note: do not require driver. This is needed by check for all leaves.

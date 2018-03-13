@@ -63,14 +63,13 @@ struct cell_iterator_small
     cell_type c;
 
     constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
+// see stl_iterator for the case of s_[0]=0, etc. [ra12].
+    constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 // needed because View = View copies contents, not the View itself [ra11]
     constexpr cell_iterator_small & assign(cell_iterator_small const & ci)
     {
         c.p = ci.c.p; return *this;
     }
-
-// see stl_iterator for the case of s_[0]=0, etc. [ra12].
-    constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 
     constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
     constexpr static auto const & shape() { return frame_type::Base::ssizes; }
@@ -105,8 +104,6 @@ struct cell_iterator_small
 
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> decltype(auto) operator OP(X && x)               \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; } \
-    decltype(auto) operator OP(cell_iterator_small const & x)                     \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
@@ -136,22 +133,11 @@ struct stl_iterator_small
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
     decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    stl_iterator_small & operator++() { next_in_cube(); return *this; }
-
-    template <int k=Iterator::rank()-1>
-    std::enable_if_t<(k>=0)> next_in_cube()
+    stl_iterator_small & operator++()
     {
-        ++i[k];
-        if (i[k]<mp::Ref_<typename Iterator::sizes, k>::value) {
-            ii.c.p += mp::Ref_<typename Iterator::strides, k>::value;
-        } else {
-            i[k] = 0;
-            ii.c.p -= mp::Ref_<typename Iterator::strides, k>::value*(mp::Ref_<typename Iterator::sizes, k>::value-1);
-            next_in_cube<k-1>();
-            return;
-        }
+        next_in_cube<Iterator::rank()-1, typename Iterator::sizes, typename Iterator::strides>(i, ii.c.p);
+        return *this;
     }
-    template <int k> std::enable_if_t<(k<0)> next_in_cube() { ii.c.p = nullptr; }
 };
 
 
@@ -282,10 +268,7 @@ struct SmallBase
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> constexpr Child & operator OP(X && x)            \
     {                                                                   \
-        /* TODO generally forbid writing to smaller rank from larger rank (small.H [ref01]) */ \
-        constexpr rank_t xrank = std::decay_t<decltype(start(x))>::rank_s(); \
-        static_assert(xrank<=rank() || xrank==RANK_ANY, "bad assigment"); \
-        for_each([](T & y, T const & x) { y OP x; }, static_cast<Child &>(*this), x); \
+        ra::start(static_cast<Child &>(*this)) OP x;                    \
         return static_cast<Child &>(*this);                             \
     }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -386,26 +369,16 @@ template <class T, class sizes, class strides>
 struct SmallView: public SmallBase<SmallView, T, sizes, strides>
 {
     using Base = SmallBase<SmallView, T, sizes, strides>;
+    using Base::rank, Base::size, Base::operator=;
 
     T * p;
     constexpr SmallView(T * p_): p(p_) {}
     constexpr SmallView(SmallView const & s): p(s.p) {}
 
-    constexpr operator T & ()
-    {
-        static_assert(Base::rank()==0 || (Base::rank()==1 && Base::size()==1), "bad rank"); // rank 1 for coord types
-        return p[0];
-    }
-    constexpr operator T const & () const
-    {
-        static_assert(Base::rank()==0 || (Base::rank()==1 && Base::size()==1), "bad rank"); // rank 1 for coord types
-        return p[0];
-    };
-
-    using Base::operator=;
-// templated operator= cannot take these over. As in ra::View.
-    SmallView & operator=(SmallView && x) { return Base::operator=(x); }
-    SmallView & operator=(SmallView const & x) { return Base::operator=(x); }
+// allowing rank 1 for coord types
+    constexpr static bool convertible_to_scalar = rank()==0 || (rank()==1 && size()==1);
+    constexpr operator T & () { static_assert(convertible_to_scalar); return p[0]; }
+    constexpr operator T const & () const { static_assert(convertible_to_scalar); return p[0]; };
 };
 
 template <class T, class sizes, class strides>

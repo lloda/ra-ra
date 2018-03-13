@@ -154,7 +154,5 @@ int main()
         tr.test_eq(ra::vector(fun1()), ra::iota(2, 1));
         tr.test_eq(ra::vector(fun2()), ra::iota(2, 1));
     }
-
-
     return tr.summary();
 }

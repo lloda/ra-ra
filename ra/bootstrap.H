@@ -30,7 +30,8 @@
 namespace ra {
 
 constexpr int VERSION = 6;     // to force upgrades on dependents
-constexpr int LAST_ISSUE = 37; // numbered as [ra··] throughout the code
+constexpr int LAST_ISSUE = 39; // numbered as [ra··] t/o the code. 00-10 are free.
+constexpr int LAST_MAN = 113;  // numbered as [ma··] t/o the manual and examples/tests
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
@@ -62,23 +63,40 @@ constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
 }
 
 // used in array constructors.
-enum class unspecified_t { value };
-constexpr unspecified_t unspecified = unspecified_t::value;
+enum unspecified_t { unspecified };
 
+// used in stl_iterator / stl_iterator_small.
 template <class S, class I, class P>
 inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 {
-    for (int j=framer-1; j>=0; --j) {
-        ++i[j];
-        if (i[j]<dim[j].size) {
-            p += dim[j].stride;
+    for (int k=framer-1; k>=0; --k) {
+        ++i[k];
+        if (i[k]<dim[k].size) {
+            p += dim[k].stride;
             return;
         } else {
-            i[j] = 0;
-            p -= dim[j].stride*(dim[j].size-1);
+            i[k] = 0;
+            p -= dim[k].stride*(dim[k].size-1);
         }
     }
     p = nullptr;
+}
+
+template <int k, class sizes, class strides, class I, class P> void
+next_in_cube(I & i, P & p)
+{
+    if constexpr (k>=0) {
+        ++i[k];
+        if (i[k]<mp::Ref_<sizes, k>::value) {
+            p += mp::Ref_<strides, k>::value;
+        } else {
+            i[k] = 0;
+            p -= mp::Ref_<strides, k>::value*(mp::Ref_<sizes, k>::value-1);
+            next_in_cube<k-1, sizes, strides>(i, p);
+        }
+    } else {
+        p = nullptr;
+    }
 }
 
 // Order of decl issues.

@@ -235,7 +235,7 @@ int main()
         tr.info("max of columns I").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
         iter<1>(m) = max(iter<1>(m), iter<1>(c));
-        tr.info("max of columns III").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
+        tr.info("max of columns III [ma113]").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
         for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
         tr.info("max of columns II").test_eq(ra::Big<int, 1> {7, 3, 3}, m);

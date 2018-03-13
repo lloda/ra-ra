@@ -12,6 +12,7 @@
 #pragma once
 #include "ra/small.H"
 #include <memory>
+#include <iostream>
 
 #ifndef RA_CHECK_BOUNDS_BIG
   #ifndef RA_CHECK_BOUNDS
@@ -62,12 +63,6 @@ struct cell_iterator
 
     constexpr cell_iterator() { c.p = nullptr; } // end marker only.
     constexpr cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-// needed b/c View = View copies contents, not the View itself [ra11]
-    constexpr cell_iterator & assign(cell_iterator const & ci)
-    {
-        dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this;
-    }
-
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
     template <class SS> constexpr
     cell_iterator(SS const & s_, atom_type * p_): dim(s_)
@@ -81,9 +76,16 @@ struct cell_iterator
             c.dim[k] = s_[k+rank];
         }
     }
+// needed b/c View = View copies contents, not the View itself [ra11]
+    constexpr cell_iterator & assign(cell_iterator const & ci)
+    {
+        dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this;
+    }
+
     constexpr static dim_t size_s()
     {
         constexpr dim_t fullsize_s = ra_traits<V>::size_s();
+        static_assert(fullsize_s==DIM_ANY || ra_traits<cell_type>::size_s()>0); // eg for  rank 0, size_s is 1.
         return fullsize_s==DIM_ANY ? DIM_ANY : fullsize_s / ra_traits<cell_type>::size_s();
     }
     constexpr shape_type shape() const
@@ -97,11 +99,11 @@ struct cell_iterator
     }
     constexpr dim_t size(int j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
     constexpr dim_t stride(int j) const { return j<rank() ? dim[j].stride : 0; }
-// FIXME k<rank() ?? check cell_iterator_small versions.
+// FIXME handle z or j over rank()? check cell_iterator_small versions.
     constexpr bool keep_stride(dim_t step, int z, int j) const { return step*stride(z)==stride(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
 
-    auto flat() const
+    constexpr auto flat() const
     {
         if constexpr (0==cellr) {
             return c.p;
@@ -123,8 +125,6 @@ struct cell_iterator
 
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> decltype(auto) operator OP(X && x)               \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; } \
-    decltype(auto) operator OP(cell_iterator const & x)                           \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
@@ -152,7 +152,7 @@ struct stl_iterator
     {
 // [ra12] Null p_ so begin()==end() for iterator on empty range. Plying uses sizes so this doesn't matter.
         for (auto && dim: s_) {
-            if (dim.size==0) {
+            if (0==dim.size) {
                 ii.c.p = nullptr;
                 break;
             }
@@ -163,7 +163,11 @@ struct stl_iterator
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
     decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    stl_iterator & operator++() { next_in_cube(ii.rank(), ii.dim, i, ii.c.p); return *this; }
+    stl_iterator & operator++()
+    {
+        next_in_cube(ii.rank(), ii.dim, i, ii.c.p);
+        return *this;
+    }
 };
 
 
@@ -222,14 +226,13 @@ dim_t proddim(D d, D dend)
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x)                      \
     {                                                                   \
-        for_each([](T & y, T const & x) { y OP x; }, *this, x);         \
+        ra::start(*this) OP x;                                          \
         return *this;                                                   \
     }
 #define DEF_ASSIGNMENT_OPS(RANK)                                        \
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
     /* Constructors using pointers need extra care */                   \
     View(): p(nullptr) {}                                               \
-    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */     \
+    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */   \
     template <class SS, std::enable_if_t<!std::is_same_v<Dimv, std::decay_t<SS>>, int> =0> \
     View(SS && s, T * p_): p(p_) /* enable_if to avoid overriding [ra36] */ \
     {                                                                   \
@@ -245,9 +248,10 @@ dim_t proddim(D d, D dend)
         ra::vector(View::dim) = w;                                      \
         filldim(View::dim.size(), View::dim.end());                     \
     }                                                                   \
-    View(View && x): dim(std::move(x.dim)), p(x.p) {}                   \
-    View(View const & x): dim(x.dim), p(x.p) {}                         \
-    /* (X && ) cannot stand in for default constructor [ra34] */        \
+    /* lack of these causes runtime bug [ra38] FIXME why? */            \
+    View(View && x) = default;                                          \
+    View(View const & x) = default;                                     \
+    /* declaring View(View &&) deletes this, so we need to repeat it [ra34] */ \
     View & operator=(View const & x)                                    \
     {                                                                   \
         for_each([](T & y, T const & x) { y = x; }, *this, x);          \
@@ -266,6 +270,7 @@ dim_t proddim(D d, D dend)
         std::copy(x.begin(), x.end(), this->begin());                   \
         return *this;                                                   \
     }                                                                   \
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
     bool const empty() const { return size()==0; } /* TODO Optimize */
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
