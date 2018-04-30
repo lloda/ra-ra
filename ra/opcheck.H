@@ -102,13 +102,13 @@ inline constexpr rank_t dependent_cell_rank(rank_t rank, rank_t crank)
 {
     return crank>=0 ? crank // not dependent
         : rank==RANK_ANY ? RANK_ANY // defer
-        : rank+crank;
+        : (rank+crank);
 }
 
 inline constexpr rank_t dependent_frame_rank(rank_t rank, rank_t crank)
 {
     return rank==RANK_ANY ? RANK_ANY // defer
-        : crank>=0 ? rank-crank // not dependent
+        : crank>=0 ? (rank-crank) // not dependent
         : -crank;
 }
 

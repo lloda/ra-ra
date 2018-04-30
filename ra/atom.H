@@ -12,6 +12,7 @@
 #pragma once
 #include "ra/opcheck.H"
 #include "ra/type.H"
+#include <iostream>
 
 #ifndef RA_CHECK_BOUNDS_ATOM
   #ifndef RA_CHECK_BOUNDS
@@ -256,6 +257,7 @@ template <class II> struct is_beatable_def<Iota<II>>
     constexpr static bool static_p = false; // it cannot for Iota
 };
 
+// FIXME have a 'filler' version (e.g. with default n = -1) or maybe a distinct type.
 template <int n> struct is_beatable_def<dots_t<n>>
 {
     static_assert(n>=0, "bad count for dots_n");
@@ -357,6 +359,25 @@ template <class A> using start_t = decltype(ra::start(std::declval<A>()));
 template <class A> using flat_t = decltype(*(ra::start(std::declval<A>()).flat()));
 template <class A> using value_t = std::decay_t<flat_t<A>>;
 template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }
+
+// Rarely used (prefer implicit matching), so we don't care that much to make it optimal.
+template <class T, std::enable_if_t<is_ra<T>, int> =0>
+inline auto shape(T && t)
+{
+    return map([&t](auto && i) { return t.size(i); }, ra::iota(t.rank()));
+}
+
+// FIXME segfaults with std::vector [ra41] in test-concrete.C
+// template <class T, std::enable_if_t<!is_ra<T>, int> =0>
+// inline auto shape(T && s)
+// {
+//     std::cout << "SHAPE1... " << s << std::endl;
+//     if (ra::start(s).rank()>0) {
+//         std::cout << "SHAPE1!... " << ra::start(s).size(0) << std::endl;
+//     }
+//     decltype(auto) t = ra::start(std::forward<T>(s));
+//     return map([&t](auto && i) { std::cout << "⟨" << i << ":" << std::flush << t.size(i) << "⟩" << std::endl; return t.size(i); }, ra::iota(t.rank()));
+// }
 
 } // namespace ra
 

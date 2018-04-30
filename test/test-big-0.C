@@ -24,7 +24,7 @@ int main()
     TestRecorder tr;
     tr.section("constructors");
     {
-        tr.section("regression with implicitly declared View constuctors [ra38]. Reduced from examples/maxwell.C");
+        tr.section("regression with implicitly declared View constructors [ra38]. Reduced from examples/maxwell.C");
         {
             ra::Big<int, 1> A = {1, 2};
             ra::Big<int, 1> X = {0, 0};

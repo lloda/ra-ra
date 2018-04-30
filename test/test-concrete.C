@@ -35,6 +35,7 @@ int main()
         auto d = ra::concrete(a);
         d = 99;
         tr.info("concrete() makes copies (", d, ")").test_eq(a, 3);
+        // tr.test_eq(ra::Small<int, 0> {}, ra::shape(d)); // FIXME unavailable until [ra41] is fixed.
     }
     tr.section("fixed size");
     {
@@ -45,6 +46,8 @@ int main()
         auto c = concrete(a+b);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a+b));
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     tr.section("var size");
     {
@@ -55,6 +58,9 @@ int main()
         auto c = concrete(a+b);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a+b));
+        cout << ra::start(c) << endl;
+        tr.info(c.size(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     tr.section("var size + fixed size");
     {
@@ -65,6 +71,8 @@ int main()
         auto c = concrete(a+b);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
+        tr.test_eq(ra::Small<int, 2> {3, 2}, ra::shape(a+b));
+        tr.test_eq(ra::Small<int, 2> {3, 2}, ra::shape(c));
     }
     tr.section("var size + var rank");
     {
@@ -76,6 +84,8 @@ int main()
         auto c = concrete(a+b);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a+b));
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     tr.section("concrete on is_slice fixed size");
     {
@@ -88,6 +98,8 @@ int main()
         a = 99;
         tr.test_eq(99, a);
         tr.info("concrete() makes copies").test_eq(K {1, 2, 3}, c);
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a));
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     tr.section("concrete on is_slice var size");
     {
@@ -100,6 +112,8 @@ int main()
         a = 99;
         tr.test_eq(99, a);
         tr.info("concrete() makes copies").test_eq(K {1, 2, 3}, c);
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a));
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     tr.section("concrete on foreign vector");
     {
@@ -112,6 +126,8 @@ int main()
         ra::start(a) = 99;
         tr.test_eq(99, ra::start(a));
         tr.info("concrete() makes copies").test_eq(K {1, 2, 3}, c);
+        // tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a)); // FIXME [ra41]
+        tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     tr.section("concrete on scalar");
     {
@@ -130,6 +146,7 @@ int main()
         cout << concrete(x) << endl;
         cout << x*double(2.) << endl;
         // cout << concrete(x*double(2.)) << endl; // FIXME fails
+        tr.test_eq(ra::Small<int, 1> {2}, ra::shape(x));
     }
     return tr.summary();
 }

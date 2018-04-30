@@ -64,6 +64,7 @@ void ply_ravel(A && a)
     static_assert(!has_tensorindex<A>, "bad plier for expr");
 
     rank_t rank = a.rank();
+    assert(rank>=0); // FIXME see test in [ra40].
     rank_t order[rank];
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;

@@ -302,7 +302,7 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ..
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
 template <int n, class ... I>
-inline dim_t select_loop(Dim * dim, Dim const * dim_src, newaxis_t<n> dots, I && ... i)
+inline dim_t select_loop(Dim * dim, Dim const * dim_src, newaxis_t<n> newaxis, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim) {
         dim->size = 1;
@@ -314,6 +314,14 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src)
 {
     return 0;
 }
+
+// allow conversion only from T to T const with null type.
+template <class T>
+struct const_atom
+{
+    struct null {};
+    using type = mp::If_<std::is_const_v<T>, null, T const>;
+};
 
 // TODO Parameterize on Child having .data() so that there's only one pointer.
 // TODO A constructor, if only for CHECK_BOUNDS (positive sizes, strides inside, etc.)
@@ -381,8 +389,15 @@ struct View
     DEF_ITERATORS(RANK)
     DEF_ASSIGNMENT_OPS(RANK)
 
+// conversions to scalar.
     operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
+
+// conversion to const from non const.
+    operator View<typename const_atom<T>::type, RANK> const & ()
+    {
+        return *reinterpret_cast<View<typename const_atom<T>::type, RANK> const *>(this);
+    }
 };
 
 template <class T, rank_t RANK>
@@ -742,17 +757,35 @@ struct View<T, RANK_ANY>
 
     DEF_ITERATORS(RANK_ANY)
     DEF_ASSIGNMENT_OPS(RANK_ANY)
-    template <rank_t SRANK> View(View<T, SRANK> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 
-    operator T & () { assert(rank()==0); return data()[0]; };
-    operator T const & () const { assert(rank()==0); return data()[0]; };
-    template <rank_t R> operator View<T, R> ()
+// conversions from fixed rank
+    template <rank_t R, std::enable_if_t<R!=RANK_ANY, int> =0>
+    View(View<T const, R> const & x)
+        : dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+    template <rank_t R, std::enable_if_t<R!=RANK_ANY, int> =0>
+    View(View<std::remove_const_t<T>, R> const & x)
+        : dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+
+// conversions to fixed rank.
+    template <rank_t R, std::enable_if_t<R!=RANK_ANY, int> =0>
+    operator View<T, R> ()
     {
         return View<T, R>(typename View<T, R>::Dimv(dim), data());
     }
-    template <rank_t R> operator View<T const, R> () const
+    template <rank_t R, std::enable_if_t<R!=RANK_ANY, int> =0>
+    operator View<T const, R> () const
     {
         return View<T const, R>(typename View<T const, R>::Dimv(dim), data());
+    }
+
+// conversions to scalar
+    operator T & () { assert(rank()==0); return data()[0]; };
+    operator T const & () const { assert(rank()==0); return data()[0]; };
+
+// conversion to const from non const
+    operator View<typename const_atom<T>::type> const & ()
+    {
+        return *reinterpret_cast<View<typename const_atom<T>::type> const *>(this);
     }
 };
 

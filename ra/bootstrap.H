@@ -30,7 +30,7 @@
 namespace ra {
 
 constexpr int VERSION = 6;     // to force upgrades on dependents
-constexpr int LAST_ISSUE = 39; // numbered as [ra··] t/o the code. 00-10 are free.
+constexpr int LAST_ISSUE = 41; // numbered as [ra··] t/o the code. 00-10 are free.
 constexpr int LAST_MAN = 113;  // numbered as [ma··] t/o the manual and examples/tests
 
 static_assert(sizeof(int)>=4, "bad assumption on int");

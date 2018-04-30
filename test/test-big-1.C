@@ -95,5 +95,65 @@ int main()
         std::cout << "b: " << b << std::endl;
         std::cout << "c: " << c << std::endl;
     }
+    tr.section("casts from fixed rank View");
+    {
+        ra::Unique<double, 3> a({3, 2, 4}, ra::unspecified);
+        ra::View<double> b(a);
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
+        tr.test_eq(a.rank(), b.rank());
+        tr.test_eq(a.size(0), b.size(0));
+        tr.test_eq(a.size(1), b.size(1));
+        tr.test_eq(a.size(2), b.size(2));
+        tr.test(every(a==b));
+
+        auto test = [&tr](ra::View<double, 3> a, double * p)
+                    {
+                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+                        tr.test(p==a.data());
+                    };
+        auto test_const = [&tr](ra::View<double const, 3> a, double * p)
+                    {
+                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+                        tr.test(p==a.data());
+                    };
+        auto test_const_ref = [&tr](ra::View<double const, 3> const & a, double * p)
+                    {
+                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+                        tr.test(p==a.data());
+                    };
+        test(b, b.data()); // var rank to fixed rank
+        test_const(b, b.data()); // non-const to const, var rank to fixed rank
+        test_const_ref(a(), a.data()); // non-const to const, keeping fixed rank
+    }
+    tr.section("casts from var rank View");
+    {
+        ra::Unique<double> a({3, 2, 4}, ra::unspecified);
+        ra::View<double, 3> b(a);
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
+        tr.test_eq(a.rank(), b.rank());
+        tr.test_eq(a.size(0), b.size(0));
+        tr.test_eq(a.size(1), b.size(1));
+        tr.test_eq(a.size(2), b.size(2));
+        tr.test(every(a==b));
+
+        auto test = [&tr](ra::View<double> a, double * p)
+                    {
+                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+                        tr.test(p==a.data());
+                    };
+        auto test_const = [&tr](ra::View<double const> a, double * p)
+                    {
+                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+                        tr.test(p==a.data());
+                    };
+        auto test_const_ref = [&tr](ra::View<double const> const & a, double * p)
+                    {
+                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+                        tr.test(p==a.data());
+                    };
+        test(b, b.data()); // fixed rank to var rank
+        test_const(b, b.data()); // non-const to const, fixed rank to var rank
+        test_const_ref(a, a.data()); // non-const to const, keeping var rank
+    }
     return tr.summary();
 }

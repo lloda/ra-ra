@@ -3,7 +3,7 @@
 
 **ra-ra** is a header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net). It is written in C++17.
 
-Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has had built-in multidimensional array types since forever, but even in C++17 there's very little you can do with those, and a separate library is required for any practical endeavor.
+Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in C++17 there's very little you can do with those, and a separate library is required for any practical endeavor.
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by Blitz++) to delay the execution of expressions involving large array operands, and in this way avoid the unnecessary creation of large temporary array objects.
 

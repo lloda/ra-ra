@@ -145,6 +145,19 @@ int main()
             tr.test(std::equal(check, check+3, a.begin()));
         }
     }
+    tr.section("ply on cell rank > 0, static sizes (TODO)");
+    {
+        ra::Small<int, 2, 3, 4> a(ra::_0 - ra::_1 + ra::_2);
+        cout << a << endl;
+        cout << "iter " << a.iter() << endl;
+        // auto ai = a.iter<1>();
+        // cout << "iter<1> " << sizeof(a) << endl;
+    }
+    tr.section("FYI");
+    {
+        cout << "..." << sizeof(ra::View<real, 0>) << endl;
+        cout << "..." << sizeof(ra::View<real, 1>) << endl;
+    }
     tr.section("ply on cell rank > 0, dynamic rank");
     {
         ra::Big<int> ad({5, 2}, ra::_0 - ra::_1);
@@ -162,20 +175,14 @@ int main()
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                               as.iter<-1>(), b.iter<-1>()));
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
-                              ad.iter<-1>(), b.iter<-1>()));
+                           ad.iter<-1>(), b.iter<-1>()));
     }
-    tr.section("ply on cell rank > 0, static sizes (TODO)");
+    tr.section("FIXME strange need for assert in ply_ravel with cell_iterator on VAR_RANK array [ra40], gcc 7.3 & 8.1.");
     {
-        ra::Small<int, 2, 3, 4> a(ra::_0 - ra::_1 + ra::_2);
-        cout << a << endl;
-        cout << "iter " << a.iter() << endl;
-        // auto ai = a.iter<1>();
-        // cout << "iter<1> " << sizeof(a) << endl;
-    }
-    tr.section("FYI");
-    {
-        cout << "..." << sizeof(ra::View<real, 0>) << endl;
-        cout << "..." << sizeof(ra::View<real, 1>) << endl;
+        ra::Big<int> ad({5, 2}, ra::_0 - ra::_1);
+        auto ii = iter<1>(ad);
+        auto ee = map([&](auto && a) { tr.test_eq(1, a.rank()); }, ii);
+        ply(ee);
     }
     return tr.summary();
 }

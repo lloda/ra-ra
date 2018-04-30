@@ -76,7 +76,7 @@ RA_REAL_OVERLOAD(T) norm2(T const x) { return std::abs(x); } // constexpr clang
     inline /* constexpr clang */ T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } /* constexpr clang */ \
     inline /* constexpr clang */ T norm2(T const x, T const y)               { return std::abs(x-y); } \
     inline /* constexpr clang */ T abs(T const x, T const y)                 { return std::abs(x-y); } \
-    inline /* constexpr clang */ T rel_error(T const a, T const b)           { return (a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b)); }
+    inline /* constexpr clang */ T rel_error(T const a, T const b)           { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
 
