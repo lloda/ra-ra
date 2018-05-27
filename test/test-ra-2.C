@@ -38,7 +38,7 @@ int main()
             ply_ravel(expr([](ra::View<real, 1> const & x) { cout << x << endl; }, i));
         }
     }
-#define ARGa ra::cell_iterator<decltype(a), 1>(a.dim, a.p)
+#define ARGa iter<1>(a)
 #define ARGi ra::Small<int, 4> {1, 2, 3, 4}.iter()
 #define ARGd dump.iter()
     tr.section("ply on cell rank > 0");
@@ -100,33 +100,39 @@ int main()
 #undef TEST
         }
     }
+    // Higher level tests are in test-iterator-small.C (FIXME how about we square them).
     tr.section("ply on cell rank > 0, ref argument");
     {
-        ra::Small<real, 4> dump { 1, 2, 3, 4 };
-        ra::Unique<real, 2> a({4, 3}, ra::unspecified);
-        real check[12] = {1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6};
-        tr.section("not driving");
-        {
-            auto f = [](int i, ra::View<real, 1> a, real & d) { std::iota(a.begin(), a.end(), d); };
-            std::fill(a.begin(), a.end(), 0);
-            ply_index(ra::expr(f, ARGi, ARGa, ARGd));
-            tr.test(std::equal(check, check+12, a.begin()));
+        auto test_cell_rank_positive =
+            [&](auto && a)
+            {
+                ra::Small<real, 4> dump { 1, 2, 3, 4 };
+                real check[12] = {1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6};
+                tr.section("not driving");
+                {
+                    auto f = [](int i, auto && a, real & d) { std::iota(a.begin(), a.end(), d); };
+                    std::fill(a.begin(), a.end(), 0);
+                    ply_index(ra::expr(f, ARGi, ARGa, ARGd));
+                    tr.test(std::equal(check, check+12, a.begin()));
 
-            std::fill(a.begin(), a.end(), 0);
-            ply_ravel(ra::expr(f, ARGi, ARGa, ARGd));
-            tr.test(std::equal(check, check+12, a.begin()));
-        }
-        tr.section("driving");
-        {
-            auto f = [](ra::View<real, 1> a, int i, real & d) { std::iota(a.begin(), a.end(), d); };
-            std::fill(a.begin(), a.end(), 0);
-            ply_index(ra::expr(f, ARGa, ARGi, ARGd));
-            tr.test(std::equal(check, check+12, a.begin()));
+                    std::fill(a.begin(), a.end(), 0);
+                    ply_ravel(ra::expr(f, ARGi, ARGa, ARGd));
+                    tr.test(std::equal(check, check+12, a.begin()));
+                }
+                tr.section("driving");
+                {
+                    auto f = [](auto && a, int i, real & d) { std::iota(a.begin(), a.end(), d); };
+                    std::fill(a.begin(), a.end(), 0);
+                    ply_index(ra::expr(f, ARGa, ARGi, ARGd));
+                    tr.test(std::equal(check, check+12, a.begin()));
 
-            std::fill(a.begin(), a.end(), 0);
-            ply_ravel(ra::expr(f, ARGa, ARGi, ARGd));
-            tr.test(std::equal(check, check+12, a.begin()));
-        }
+                    std::fill(a.begin(), a.end(), 0);
+                    ply_ravel(ra::expr(f, ARGa, ARGi, ARGd));
+                    tr.test(std::equal(check, check+12, a.begin()));
+                }
+            };
+        test_cell_rank_positive(ra::Unique<real, 2>({4, 3}, ra::unspecified));
+        test_cell_rank_positive(ra::Small<real, 4, 3> {}); // FIXME maybe ra::unspecified should also work for Small
     }
     tr.section("ply on cell rank = 0 using iter<-1>, ref argument");
     {
@@ -144,14 +150,6 @@ int main()
             ply_ravel(map(f, a.iter<-1>(), dump.iter<0>()));
             tr.test(std::equal(check, check+3, a.begin()));
         }
-    }
-    tr.section("ply on cell rank > 0, static sizes (TODO)");
-    {
-        ra::Small<int, 2, 3, 4> a(ra::_0 - ra::_1 + ra::_2);
-        cout << a << endl;
-        cout << "iter " << a.iter() << endl;
-        // auto ai = a.iter<1>();
-        // cout << "iter<1> " << sizeof(a) << endl;
     }
     tr.section("FYI");
     {
