@@ -44,7 +44,7 @@ arch = os.popen('../config.guess').read()
 
 if arch.find('86-apple-darwin') >= 0:
     archflags=['-march=native', '-Wa,-q']
-    ld_blas = {'LINKFLAGS': ' -framework vecLib ', 'LIBS': []}
+    ld_blas = {'LINKFLAGS': ' -framework Accelerate ', 'LIBS': []}
 else:
     archflags=['-march=native']
     ld_blas = {'LINKFLAGS': '', 'LIBS': ['blas']}
