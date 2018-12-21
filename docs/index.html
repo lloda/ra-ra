@@ -7,7 +7,7 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-`ra::' (version 6, updated 2018 January 23)
+`ra::' (version 6, updated 2018 December 21)
 
 (c) Daniel Llorens 2016--2018
      Permission is granted to copy, distribute and/or modify this document
@@ -40,7 +40,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered"><code>ra::</code></h2>
 
-<p><code>ra::</code> (version 6, updated 2018 January 23)
+<p><code>ra::</code> (version 6, updated 2018 December 21)
 
    <p>(c) Daniel Llorens 2016&ndash;2018
 
@@ -99,9 +99,11 @@ for (int i=0; i!=m; ++i)
 
    <p>However, if array operations are implemented naively, a piece of code such as <code>A=B+C</code> may result in the creation of a temporary to hold <code>B+C</code> which is then assigned to <code>A</code>. Needless to say this is very wasteful if the arrays involved are large.
 
-   <p><a name="index-Blitz_002b_002b-1"></a>Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as ‘loop fusion’ REF, ‘drag along’ <!-- %**else if -->
+   <p><a name="index-Blitz_002b_002b-1"></a>Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as <a href="https://en.wikipedia.org/wiki/Loop_fission_and_fusion">‘loop fusion’</a>, ‘drag along’ <!-- %**else if -->
 [<a href="#Sources">Abr70</a>]
-, or ‘deforestation’ REF. In the C++ context the technique of ‘expression templates’ was pioneered in the late 90s by libraries such as Blitz++ <!-- %**else if -->
+, or ‘deforestation’ <!-- %**else if -->
+[<a href="#Sources">Wad90</a>]
+. In the C++ context the technique of ‘expression templates’ was pioneered in the late 90s by libraries such as Blitz++ <!-- %**else if -->
 [<a href="#Sources">bli17</a>]
 . It works by making <code>B+C</code> into an ‘expression object’ which holds references to its arguments and performs the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that <code>A=B+C</code> results (in principle) in the same generated code as the complicated loop nest above.
 
@@ -149,11 +151,12 @@ A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...
 
    <p><a name="index-order_002c-row_002dmajor-4"></a>This way to lay out an array in memory is called <dfn>row-major order</dfn> or <dfn>C-order</dfn>, since it's the default order for built-in arrays in C (see <a href="#Other-libraries">Other libraries</a>). A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 
-   <blockquote>
+   <p><a name="x_002dstrides"></a>
+<blockquote>
 A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...] 
 </blockquote>
 
-   <p>where the numbers (s₀, s₁, ...) are called the <dfn>strides</dfn> or the <dfn>dope vector</dfn> REF. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+   <p>where the numbers (s₀, s₁, ...) are called the <dfn>strides</dfn><a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 
    <blockquote>
 A ≡ ((storage-of-A), o, (s₀, s₁, ...)) 
@@ -182,6 +185,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Overview">Overview</a>
 <h3 class="section">1.2 Drag along and beating</h3>
 
 <!--  -->
+<p>These two fundamental array optimizations are described in <!-- %**else if -->
+[<a href="#Sources">Abr70</a>]
+.
+
+   <p><dfn>Drag-along</dfn> is the process that delays evaluation of array operations. Expression templates can be seen as an implementation of drag-along. Drag-along isn't an optimization in and of itself; it simply preserves the necessary information up to the point where the expression can be executed efficiently.
+
+   <p><dfn>Beating</dfn> is the implementation of certain array operations on the array <a href="#Containers-and-views">view</a> descriptor instead of on the array contents. For example, if <code>A</code> is a 1-array, one can implement <a href="#x_002dreverse"><code>reverse(A, 0)</code></a> by negating the <a href="#x_002dstrides">stride</a> and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as <a href="#x_002diota"><code>1+iota(3, 0)</code></a> can be beaten into <code>iota(3, 1)</code>, and this can enable further optimizations.
+
 <!--  -->
 <div class="node">
 <p><hr>
@@ -196,7 +207,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Overview">Overview</a>
 <h3 class="section">1.3 Why C++</h3>
 
 <!--  -->
-<p>Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following may apply.
+<p>Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following might apply.
 
    <p>C++ supports the low level control that is necessary for interoperation with external libraries and languages, but still has the abstraction power to create the features we want even though the language has no native support for most of them.
 
@@ -321,9 +332,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 <!--  -->
 <p><code>ra::</code> is a header only library with no dependencies, so you just need to place the `<samp><span class="samp">ra/</span></samp>' folder somewhere in your include path and add <code>#include "ra/operators.H"</code> and <code>"ra/io.H"</code> at the top of your sources.
 
-   <p>A C++14 compiler with partial C++17 support is required. At the time of writing this means <b>gcc 7.2</b> or <b>clang-5.0</b> with <samp><span class="option">-std=c++1z</span></samp>. Check the top README for more up-to-date information.
+   <p>A compiler with C++17 support is required. At the time of writing this means <b>gcc 8.0</b> or <b>clang-5.0</b> with <samp><span class="option">-std=c++17</span></samp>. Check the top README.md for more up-to-date information.
 
-   <p>Here is a minimal program<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>:
+   <p>Here is a minimal program<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>:
 
 <pre class="example"><pre class="verbatim">     
      #include "ra/operators.H"
@@ -374,7 +385,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
    <p>The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a static size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the static size types. Static size or static rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
-   <p>Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>
+   <p>Container constructors come in two main forms. The first takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a rel="footnote" href="#fn-3" name="fnd-3"><sup>3</sup></a>
 
 <!-- [ma111] -->
 <pre class="example"><pre class="verbatim">     
@@ -398,7 +409,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
    <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don't match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::unspecified</code> is used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container's elements.
 
-   <p>Finally, there are special constructors where the content argument is either a pointer or <code>std::initializer_list</code>. This argument isn't used for shape <a rel="footnote" href="#fn-3" name="fnd-3"><sup>3</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!
+   <p>Finally, there are special constructors where the content argument is either a pointer or <code>std::initializer_list</code>. This argument isn't used for shape <a rel="footnote" href="#fn-4" name="fnd-4"><sup>4</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!
 
 <!-- [ma112] -->
 <p><a name="index-order_002c-column_002dmajor-10"></a>
@@ -578,7 +589,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 [<a href="#Sources">J S</a>]
  and is known as <dfn>prefix agreement</dfn>. The opposite rule of <dfn>suffix agreement</dfn> is used, for example, in Numpy <!-- %**else if -->
 [<a href="#Sources">num17</a>]
-<a rel="footnote" href="#fn-4" name="fnd-4"><sup>4</sup></a>.
+<a rel="footnote" href="#fn-5" name="fnd-5"><sup>5</sup></a>.
 
    <p>As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout <code>ra::</code>, even in assignments. For example,
 
@@ -724,6 +735,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
    <p>This operation sees much more use in practice than <code>map(A, i, j ...)</code>. Besides, when the subscripts <code>i, j, ...</code> are scalars or <dfn>linear ranges</dfn> (integer sequences of the form <code>(o, o+s, ..., o+s*(n-1))</code>, the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called <a href="#Drag-along-and-beating"><dfn>beating</dfn></a>.
 
    <p><code>ra::</code> isn't smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
+
+   <p><a name="x_002diota"></a>
 
 <div class="defun">
 &mdash; Special&nbsp;object<!-- /@w -->: <b>iota</b><var> count </var>[<var>start:0 </var>[<var>step:1</var>]]<var><a name="index-iota-17"></a></var><br>
@@ -1142,7 +1155,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a rel="footnote" href="#fn-5" name="fnd-5"><sup>5</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, and <code>tanh</code>. Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a rel="footnote" href="#fn-6" name="fnd-6"><sup>6</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, and <code>tanh</code>. Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 
    <p>For example:
 <pre class="example"><pre class="verbatim">     
@@ -1282,6 +1295,9 @@ With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> re
 
 <h3 class="section">4.3 View of const vs const view</h3>
 
+<!-- I attempted what's below but container != pointer, so container != view. But then it's a problem to derive container from view. -->
+<!-- It used to be the case that @code{ra::} containers (or views) handled constness like STL containers do, in that a const @code{std::vector} returns @code{const_iterator}s, for example. This leads to duplicate code and occasional (but still annoying) type troubles, which I endured for a while. It's also contrary to the behavior of pointers, where constness of the pointer is separate from constness of the pointee. -->
+<!-- In the end I gave up. I was probably doing it wrong anyway. After @code{ra::} version 7, constness of containers or views does not progagate to the contents. So if you want @code{const} contents, you have to make the contained type @code{const}. -->
 <p>FIXME
 Passing view arguments by reference
 
@@ -1289,7 +1305,7 @@ Passing view arguments by reference
 
 <p>FIXME
 
-<h3 class="section">4.5 Rank extension in assignents</h3>
+<h3 class="section">4.5 Rank extension in assignments</h3>
 
 <p>Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches <code>a</code> and 3 [both of shape ()] with a vector of shape (3). This is equivalent to <code>{a=3+4; a=3+5; a=3+6;}</code>. You may get a different result depending on the order of traversal.
 
@@ -1341,7 +1357,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <p><code>ra::</code> has two main components: a set of container classes, and the expression template mechanism. The container classes provide leaves for the expression template trees, and the container classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
 
 <ul class="menu">
-<li><a accesskey="1" href="#Type-hierarchy">Type hierarchy</a>:         From Containers to FlatIterators. 
+<li><a accesskey="1" href="#Type-hierarchy">Type hierarchy</a>:         From <code>Containers</code> to <code>Flat</code>. 
 <li><a accesskey="2" href="#Driving-expressions">Driving expressions</a>:    The term in charge. 
 <li><a accesskey="3" href="#Loop-types">Loop types</a>:             Chosen for performance. 
 <li><a accesskey="4" href="#Introspection">Introspection</a>:          Speaking to myself. 
@@ -1377,13 +1393,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
      <li><b>Ravelable</b> &mdash; <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
 
-     <p>This is a kind of <b>ArrayIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array.
+     <p>This is a kind of <b>ArrayIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>size()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner extents of the loop are small.
 
      <li><b>Indexable</b> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
-     <p>This is a kind of <b>ArrayIterator</b> that provides an <code>at()</code> method for random access to any element of the array.
+     <p>This is a kind of <b>ArrayIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array.
 
-     <p>Currently the only type that is <b>Indexable</b> but not <b>Ravelable</b> is <code>TensorIndex</code>; this is by necessity given its meaning. Mixing <code>TensorIndex</code> with other objects in an expression forces the whole expression to be traversed without recourse to <b>Flat</b>, which is the main reason why all the other <b>ArrayIterator</b> types are also <b>Indexable</b>.
+     <p>Currently the only type that is <b>Indexable</b> but not <b>Ravelable</b> is <code>TensorIndex</code>. Mixing <code>TensorIndex</code> with other objects in an expression forces the whole expression to be traversed without recourse to <b>Flat</b>, which is the main reason why all the other <b>ArrayIterator</b> types are also <b>Indexable</b> &mdash;for compatibility with <code>TensorIndex</code>.
 
      <li><b>Flat</b> <code>Flat</code> <code>PickFlat</code> <code>CellFlat</code> <code>IotaFlat</code> <code>ScalarFlat</code>
 
@@ -1404,7 +1420,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 <h3 class="section">5.2 Driving expressions</h3>
 
 <!--  -->
-<p>The execution of an expression template begins by the selection of a term of the expression as its driver. This is simply the term of the highest rank. If two or more term share the same highest rank at the top level of the expression tree, then the first of those terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
+<p>The execution of an expression template begins with the selection of a term of the expression as its `driver'. This is simply the term of highest rank. If two or more terms share the same highest rank at the top level of the expression tree, then the first of those terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
 
    <p>In the current version of <code>ra::</code>, the driver is always selected at compile time. This means that it's possible for an expression to fail at run time if that's when <code>ra::</code> finds out that the term it has selected as driver isn't, in fact, that of the highest rank. This can happen anytime variable rank expressions are involved. This is, of course, a bug.
 
@@ -1460,7 +1476,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 <li><code>RA_OPTIMIZE_SMALLVECTOR</code> (default 0): Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn't necessarily result in improved performance. 
 </ul>
 
-   <p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. Simply run <code>scons</code> from the top directory of the distribution to run them all. <code>ra::</code> uses its own crude test and benchmark suites.
+   <p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own crude test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>.
 
    <p>TODO Flags and notes about different compilers
 
@@ -2074,7 +2090,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
  </td><td valign="top" width="90%">Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014. 
 <br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="Vel01"></a>[Vel01]
 <!-- %**else if -->
- </td><td valign="top" width="90%">Todd Veldhuizen. Blitz++ user’s guide, February 2001.
+ </td><td valign="top" width="90%">Todd Veldhuizen. Blitz++ user’s guide, February 2001. 
+<br></td></tr><tr align="left"><td valign="top" width="10%"><br></td></tr><tr align="left"><td valign="top" width="10%"><a name="Wad90"></a>[Wad90]
+<!-- %**else if -->
+ </td><td valign="top" width="90%">Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231&ndash;248, June 1990. <a href="https://doi.org/10.1016/0304-3975%2890%2990147-A">https://doi.org/10.1016/0304-3975%2890%2990147-A</a>
 
 <br></td></tr></table>
 
@@ -2153,17 +2172,19 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <!-- \nocite{JLangReference,FalkoffIverson1968,Abrams1970,FalkoffIverson1973,FalkoffIverson1978,APLexamples1,ArraysCowan,KonaTheLanguage,blitz++2001} -->
 <div class="footnote">
 <hr>
-<a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> Examples given without context will typically assume that one has declared <code>using std::cout;</code>, etc.</p>
+<a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><dfn>dope vector</dfn></a></p>
 
-   <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank and aren't rank-extending, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.</p>
+   <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> Examples given without context will typically assume that one has declared <code>using std::cout;</code>, etc.</p>
 
-   <p class="footnote"><small>[<a name="fn-3" href="#fnd-3">3</a>]</small> You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
+   <p class="footnote"><small>[<a name="fn-3" href="#fnd-3">3</a>]</small> The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank and aren't rank-extending, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.</p>
 
-   <p class="footnote"><small>[<a name="fn-4" href="#fnd-4">4</a>]</small> Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> <!-- %**else if -->
+   <p class="footnote"><small>[<a name="fn-4" href="#fnd-4">4</a>]</small> You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
+
+   <p class="footnote"><small>[<a name="fn-5" href="#fnd-5">5</a>]</small> Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> <!-- %**else if -->
 [<a href="#Sources">Ber87</a>]
  and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>
 
-   <p class="footnote"><small>[<a name="fn-5" href="#fnd-5">5</a>]</small> <code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively. Note that if both operands are of rank 0 and at least one of them is a <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
+   <p class="footnote"><small>[<a name="fn-6" href="#fnd-6">6</a>]</small> <code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively. Note that if both operands are of rank 0 and at least one of them is a <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 
    <p><hr></div>
 

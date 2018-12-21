@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2010, 2016
+// (c) Daniel Llorens - 2010, 2016-2018
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free

@@ -13,7 +13,6 @@
 #include <iterator>
 #include <numeric>
 #include "ra/test.H"
-#include "ra/type.H"
 #include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"

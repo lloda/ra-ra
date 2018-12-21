@@ -1,3 +1,5 @@
+
+
 @c -*-texinfo-*-
 @c %**start of header
 @setfilename ra-ra.info
@@ -12,7 +14,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
 @set VERSION 6
-@set UPDATED 2018 May 18
+@set UPDATED 2018 December 21
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -99,7 +101,7 @@ but it's also safer and less redundant. For example, the order of the loops may 
 However, if array operations are implemented naively, a piece of code such as @code{A=B+C} may result in the creation of a temporary to hold @code{B+C} which is then assigned to @code{A}. Needless to say this is very wasteful if the arrays involved are large.
 
 @cindex Blitz++
-Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as ‘loop fusion’ REF, ‘drag along’ @mybibcite{Abr70}, or ‘deforestation’ REF. In the C++ context the technique of ‘expression templates’ was pioneered in the late 90s by libraries such as Blitz++ @mybibcite{bli17}. It works by making @code{B+C} into an ‘expression object’ which holds references to its arguments and performs the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated loop nest above.
+Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as @url{https://en.wikipedia.org/wiki/Loop_fission_and_fusion, ‘loop fusion’}, ‘drag along’ @mybibcite{Abr70}, or ‘deforestation’ @mybibcite{Wad90}. In the C++ context the technique of ‘expression templates’ was pioneered in the late 90s by libraries such as Blitz++ @mybibcite{bli17}. It works by making @code{B+C} into an ‘expression object’ which holds references to its arguments and performs the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated loop nest above.
 
 @menu
 * Rank polymorphism::         What makes arrays special.
@@ -141,11 +143,12 @@ A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...
 @cindex order, row-major
 This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C (@pxref{Other libraries}). A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 
+@anchor{x-strides}
 @quotation
 A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
 @end quotation
 
-where the numbers (s₀, s₁, ...) are called the @dfn{strides} or the @dfn{dope vector} REF. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+where the numbers (s₀, s₁, ...) are called the @dfn{strides}@footnote{Cf. @url{https://en.wikipedia.org/wiki/Dope_vector, @dfn{dope vector}}}. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 
 @quotation
 A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -166,16 +169,18 @@ Note that we can iterate over these items by simply bumping the pointer o+s₀i�
 @section Drag along and beating
 @c ------------------------------------------------
 
+These two fundamental array optimizations are described in @mybibcite{Abr70}.
 
+@dfn{Drag-along} is the process that delays evaluation of array operations. Expression templates can be seen as an implementation of drag-along. Drag-along isn't an optimization in and of itself; it simply preserves the necessary information up to the point where the expression can be executed efficiently.
 
-
+@dfn{Beating} is the implementation of certain array operations on the array @ref{Containers and views,view} descriptor instead of on the array contents. For example, if @code{A} is a 1-array, one can implement @ref{x-reverse,@code{reverse(A, 0)}} by negating the @ref{x-strides,stride} and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as @ref{x-iota,@code{1+iota(3, 0)}} can be beaten into @code{iota(3, 1)}, and this can enable further optimizations.
 
 @c ------------------------------------------------
 @node Why C++
 @section Why C++
 @c ------------------------------------------------
 
-Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following may apply.
+Of course the main reason is that (this being a personal project) I'm more familiar with C++ than with other languages to which the following might apply.
 
 C++ supports the low level control that is necessary for interoperation with external libraries and languages, but still has the abstraction power to create the features we want even though the language has no native support for most of them.
 
@@ -264,7 +269,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/operators.H"} and @code{"ra/io.H"} at the top of your sources.
 
-A C++14 compiler with partial C++17 support is required. At the time of writing this means @b{gcc 7.2} or @b{clang-5.0} with @option{-std=c++1z}. Check the top README for more up-to-date information.
+A compiler with C++17 support is required. At the time of writing this means @b{gcc 8.0} or @b{clang-5.0} with @option{-std=c++17}. Check the top README.md for more up-to-date information.
 
 Here is a minimal program@footnote{Examples given without context will typically assume that one has declared @code{using std::cout;}, etc.}:
 
@@ -683,6 +688,7 @@ This operation sees much more use in practice than @code{map(A, i, j ...)}. Besi
 
 @code{ra::} isn't smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
 
+@anchor{x-iota}
 @deffn @w{Special object} iota count [start:0 [step:1]]
 Create a linear range @code{start, start+step, ... start+step*(count-1)}.
 @end deffn
@@ -1254,6 +1260,12 @@ FIXME
 
 @section View of const vs const view
 
+@c I attempted what's below but container != pointer, so container != view. But then it's a problem to derive container from view.
+
+@c It used to be the case that @code{ra::} containers (or views) handled constness like STL containers do, in that a const @code{std::vector} returns @code{const_iterator}s, for example. This leads to duplicate code and occasional (but still annoying) type troubles, which I endured for a while. It's also contrary to the behavior of pointers, where constness of the pointer is separate from constness of the pointee.
+
+@c In the end I gave up. I was probably doing it wrong anyway. After @code{ra::} version 7, constness of containers or views does not progagate to the contents. So if you want @code{const} contents, you have to make the contained type @code{const}.
+
 FIXME
 Passing view arguments by reference
 
@@ -1261,7 +1273,7 @@ Passing view arguments by reference
 
 FIXME
 
-@section Rank extension in assignents
+@section Rank extension in assignments
 
 Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches @code{a} and 3 [both of shape ()] with a vector of shape (3). This is equivalent to @code{@{a=3+4; a=3+5; a=3+6;@}}. You may get a different result depending on the order of traversal.
 
@@ -1312,7 +1324,7 @@ Item 2
 @code{ra::} has two main components: a set of container classes, and the expression template mechanism. The container classes provide leaves for the expression template trees, and the container classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
 
 @menu
-* Type hierarchy::        From Containers to FlatIterators.
+* Type hierarchy::        From @code{Containers} to @code{Flat}.
 * Driving expressions::   The term in charge.
 * Loop types::            Chosen for performance.
 * Introspection::         Speaking to myself.
@@ -1341,13 +1353,13 @@ This is a traversable object. @b{ArrayIterator}s are accepted by all the array f
 
 @item @b{Ravelable} --- @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
 
-This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array.
+This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{size()}, @code{stride()}, @code{keep_stride()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner extents of the loop are small.
 
 @item @b{Indexable} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
-This is a kind of @b{ArrayIterator} that provides an @code{at()} method for random access to any element of the array.
+This is a kind of @b{ArrayIterator} that provides an @code{at(i ...)} method for random access to any element of the array.
 
-Currently the only type that is @b{Indexable} but not @b{Ravelable} is @code{TensorIndex}; this is by necessity given its meaning. Mixing @code{TensorIndex} with other objects in an expression forces the whole expression to be traversed without recourse to @b{Flat}, which is the main reason why all the other @b{ArrayIterator} types are also @b{Indexable}.
+Currently the only type that is @b{Indexable} but not @b{Ravelable} is @code{TensorIndex}. Mixing @code{TensorIndex} with other objects in an expression forces the whole expression to be traversed without recourse to @b{Flat}, which is the main reason why all the other @b{ArrayIterator} types are also @b{Indexable} ---for compatibility with @code{TensorIndex}.
 
 @item @b{Flat} @code{Flat} @code{PickFlat} @code{CellFlat} @code{IotaFlat} @code{ScalarFlat}
 
@@ -1361,7 +1373,7 @@ These are pointerlike types that are meant to be traversed linearly. They have m
 @section Driving expressions
 @c ------------------------------------------------
 
-The execution of an expression template begins by the selection of a term of the expression as its driver. This is simply the term of the highest rank. If two or more term share the same highest rank at the top level of the expression tree, then the first of those terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
+The execution of an expression template begins with the selection of a term of the expression as its `driver'. This is simply the term of highest rank. If two or more terms share the same highest rank at the top level of the expression tree, then the first of those terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
 
 In the current version of @code{ra::}, the driver is always selected at compile time. This means that it's possible for an expression to fail at run time if that's when @code{ra::} finds out that the term it has selected as driver isn't, in fact, that of the highest rank. This can happen anytime variable rank expressions are involved. This is, of course, a bug.
 
@@ -1395,7 +1407,7 @@ The following boolean @code{#define}s affect the behavior of @code{ra::}.
 @end itemize
 
 
-@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. Simply run @code{scons} from the top directory of the distribution to run them all. @code{ra::} uses its own crude test and benchmark suites.
+@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own crude test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}.
 
 TODO Flags and notes about different compilers
 
@@ -1940,6 +1952,7 @@ Compute @code{(0+1j)} times @var{expr}.
 @item @mybibitem{Ric08} @tab Henry Rich. J for C programmers, February 2008.
 @item @mybibitem{SSM14} @tab Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.
 @item @mybibitem{Vel01} @tab Todd Veldhuizen. Blitz++ user’s guide, February 2001.
+@item @mybibitem{Wad90} @tab Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231--248, June 1990. @url{https://doi.org/10.1016/0304-3975%2890%2990147-A}
 
 @end multitable
 

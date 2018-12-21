@@ -1,0 +1,28 @@
+RA    -*- mode: org; -*-
+
+help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO
+
+#+STARTUP: logdone
+
+* TODO Everything [0/4]
+  - [ ] Features [0/2]
+    - [ ] Should be able to reshape iota (??) or show examples with TensorIndex, maybe. One idea is
+      to generalize View (so View<Iota>, etc.) which is something that newra does.
+    - [0/5] Fix relationship between WithStorage and View
+      - [ ] forward const/nonconst overloads to View or ViewConst from here.
+      - [ ] remove inheritance relationship of WithStorage on View
+      - [ ] add const/nonconst casts of WithStorage to View or ViewConst
+      - [ ] remove const overloads from View::operator()
+      - [ ] make View be View<pointer> and not View<value_type>
+    - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
+  - [ ] Debug, error report [0/2]
+    - [ ] Runtime error check facility, cf. test/test-check-runtime.C
+    - [ ] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.H:513 init<SS>(SS const & s).
+  - [-] Building [3/4]
+    - [X] Build doc with cmake
+    - [X] Support RA_USE_BLAS with cmake (linux)
+    - [X] Support RA_USE_BLAS with cmake (mac) <2018-12-07 Fri 16:33>
+    - [ ] Make cmake tests respect dependences and able to be run independently.
+  - [ ] Documentation [0/2]
+    - [ ] Complete section on internals
+    - [ ] Complete section on other languages, libraries

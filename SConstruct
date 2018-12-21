@@ -9,19 +9,21 @@
 # later version.
 
 # Top SConstruct for ra-ra
-# todo Shared pieces with examples/SConstruct and test/SConstruct
 
 import os, atexit
-from colorama import Fore, Back, Style
 from os.path import join, abspath
 from SCons.Script import GetBuildFailures
 import imp
-ra = imp.load_source('ra', './ra.py')
+ra = imp.load_source('ra', 'config/ra.py')
 
 top = {'skip_summary': True}; Export('top');
+
 SConscript('test/SConstruct', 'top')
 SConscript('bench/SConstruct', 'top')
 SConscript('examples/SConstruct', 'top')
+SConscript('box/SConstruct', 'top')
 # SConscript('doc/SConstruct', 'top') # TODO run from doc, otherwise makeinfo writes empty files (??)
+
+Default(['test', 'bench', 'examples']) # exclude box
 
 atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra-ra'))

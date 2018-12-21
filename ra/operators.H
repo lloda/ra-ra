@@ -103,7 +103,7 @@ DEF_NAMED_BINARY_OP(/, slash)
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
     }
-FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, ==, !=)
+FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, ==, !=, |, &, ^)
 #undef DEF_BINARY_OP
 
 #define DEF_UNARY_OP(OP)                                                \
@@ -488,6 +488,7 @@ gevm(A const & a, B const & b)
     return c;
 }
 
+// FIXME a must be a view, so it doesn't work with e.g. gemv(conj(a), b).
 template <class A, class B>
 inline auto
 gemv(A const & a, B const & b)

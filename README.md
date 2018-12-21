@@ -57,14 +57,17 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 The library itself is header-only and has no dependencies other than a C++17 compiler and the standard library.
 
-The test suite ([test/](test/)) runs under SCons. Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can easily build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
+The test suite ([test/](test/)) runs under SCons. Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can easily build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment. You can also use CMake (e.g. `CXXFLAGS=-O3 cmake . && make && make test`) instead of SCons. That should autodetect BLAS.
 
-All the tests pass under g++-7.2. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run.
+All tests pass under g++-8. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. g++-7 should work if you replace the `-std=c++-17` flag with `-std=c++1z`.
 
-All the tests pass under clang++-7.0 [rev. 322817, tested on Linux] except for:
+All tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for:
 
-* [test/bench-pack.C](test/bench-pack.C), crashes clang.
+* [bench/bench-pack.C](bench/bench-pack.C), crashes clang.
 * [test/test-iterator-small.C](test/test-iterator-small.C), crashes clang.
+* [test/test-optimize.C](test/test-optimize.C), gives compilation errors.
+
+Be aware that clang can be several times slower than gcc when compiling at `-O3`.
 
 For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is meant for gcc by setting CCFLAGS to something else, say:
 

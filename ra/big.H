@@ -323,6 +323,11 @@ struct const_atom
     using type = mp::If_<std::is_const_v<T>, null, T const>;
 };
 
+
+// --------------------
+// View for compile time rank
+// --------------------
+
 // TODO Parameterize on Child having .data() so that there's only one pointer.
 // TODO A constructor, if only for CHECK_BOUNDS (positive sizes, strides inside, etc.)
 template <class T, rank_t RANK>
@@ -394,7 +399,7 @@ struct View
     operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
 
 // conversion to const from non const.
-    operator View<typename const_atom<T>::type, RANK> const & ()
+    operator View<typename const_atom<T>::type, RANK> const & () const
     {
         return *reinterpret_cast<View<typename const_atom<T>::type, RANK> const *>(this);
     }
@@ -457,6 +462,17 @@ struct WithStorage: public View<std::decay_t<decltype(*storage_traits<Store>::da
 
     View & view() { return *this; }
     View const & view() const { return *this; }
+
+/*
+  TODO [0/5]
+  * [ ] forward const/nonconst overloads to View or ViewConst from here.
+  * [ ] remove inheritance relationship of WithStorage on View
+  * [ ] add const/nonconst casts of WithStorage to View or ViewConst
+  * [ ] remove const overloads from View::operator()
+  * [ ] make View be View<pointer> and not View<value_type>
+*/
+    template <class ... A> decltype(auto) operator()(A && ... a) { return View::operator()(std::forward<A>(a) ...); }
+    template <class ... A> decltype(auto) operator()(A && ... a) const { return View::operator()(std::forward<A>(a) ...); }
 
 // TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
     WithStorage(WithStorage && w): store(std::move(w.store))
@@ -702,6 +718,11 @@ Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
     return a;
 }
 
+
+// --------------------
+// View for runtime rank
+// --------------------
+
 template <class T>
 struct View<T, RANK_ANY>
 {
@@ -746,7 +767,7 @@ struct View<T, RANK_ANY>
         return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
-    T CONST & operator[](dim_t const i) CONST                           \
+    constexpr T CONST & operator[](dim_t const i) CONST                 \
     {                                                                   \
         CHECK_BOUNDS(rank()==1 && "bad rank");                          \
         CHECK_BOUNDS(inside(i, dim[0].size));                           \

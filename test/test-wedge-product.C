@@ -343,7 +343,7 @@ int main()
         c = cross(a, b+1.);
         tr.test_eq(2, c);
     }
-    tr.section("test the cross product some more. This was moved from test_small_vec.C");
+    tr.section("test the cross product some more");
     {
         real3 x3{1., 0. ,0.};
         real3 y3{0., 1., 0.};
@@ -361,21 +361,13 @@ int main()
         complex2 cy2{0., 1.};
         tr.test_eq(complex(1., 0.), cross(x2, cy2));
     }
-    tr.section("verify that wedge<>() returns an expression where appropriate. This was moved from test_small_vec.C");
+    tr.section("verify that wedge<>() returns an expression where appropriate");
     {
         real3 u{1., 2., 3.};
         real3 v{3., 2., 1.};
         tr.test_eq(10., wedge<3, 1, 2>(u, v));
         tr.test_eq(cross(u, v), wedge<3, 1, 1>(u, v));
         tr.test_eq(10., wedge<3, 1, 2>(u, v));
-
-// #if VEC2RA==0
-//         cout << "this should be an expression: " << flush;
-//         assert(is_it_expr(wedge<3, 0, 1>(9., u)));
-//         cout << resolve(wedge<3, 0, 1>(9., u)) << endl;
-//         assert(every(wedge<3, 0, 1>(9., u)==real3{9., 18., 27.}));
-// #else
-// #endif
     }
     tr.section("verify that we are allowed to choose our return type to wedge<>(a, b, r)");
     {

@@ -1,7 +1,7 @@
 # -*- mode: Python -*-
 # -*- coding: utf-8 -*-
 
-# (c) Daniel Llorens - 2016, 2017
+# (c) Daniel Llorens - 2016, 2017-2018
 
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -11,16 +11,18 @@
 # Utilities for SConstructs
 
 import os, string
-from colorama import Fore, Back, Style
+
+# These are colorama names, but the dependence is a bother.
+class Fore: RED = '\x1b[31m'; YELLOW ='\x1b[33m'; RESET = '\x1b[39m'
+class Style: BRIGHT = '\x1b[1m'; RESET_ALL = '\x1b[0m';
+
 from os.path import join, abspath, split
 from subprocess import call
-
 
 def ensure_ext(s, ext):
     "if s doesn't end with ext, append it."
     p = s.rfind(ext)
     return s if p+len(ext) == len(s) else s + ext
-
 
 def remove_ext(s):
     "clip string from the last dot until the end."
@@ -28,18 +30,26 @@ def remove_ext(s):
     assert p>=0, 'source must have an extension'
     return s[0:p]
 
-
 def path_parts(path):
     path, tail = split(path)
     return ([path] if path == os.sep else path_parts(path) if path else []) \
            + ([tail] if tail else [])
-
 
 def take_from_environ(env, var, wrapper=(lambda x: x), default=None):
     if var in os.environ and os.environ[var]!='':
         env[var] = wrapper(os.environ[var])
     elif default is not None:
         env[var] = default
+
+def get_value_wo_error(dictionary, key, default = ''):
+    if key in dictionary:
+        return dictionary[key]
+    else:
+        return default
+
+def dict_index_list(dictionary, list_of_keys):
+    return dict([ (k, get_value_wo_error(dictionary, k))
+                  for k in list_of_keys ])
 
 def to_test(env, variant_dir, source, args):
     """
@@ -65,6 +75,18 @@ def to_test(env, variant_dir, source, args):
 
     stamp = env.File(join(variant_dir, str(source[0])) + string.join(args[1:]) + '.check')
     return env.Command(stamp, source, tester(args))
+
+# def to_source(env, targets, source):
+#     main = source[0]
+#     for target in targets: env.Notangle(target, remove_ext(main)+'.nw')
+#     env.Noweave(remove_ext(main)+'.tex', remove_ext(main)+'.nw')
+#     env.PDF(remove_ext(main), remove_ext(main)+'.tex')
+
+def to_source_from_noweb(env, targets, source):
+    main = source[0]
+    env.Noweave(remove_ext(main) + '.tex', remove_ext(main) + '.nw')
+    env.PDF(remove_ext(main), remove_ext(main) + '.tex')
+    return [env.Notangle(target, remove_ext(main) + '.nw') for target in targets]
 
 def to_test_ra(env_, variant_dir):
     def f(source, target='', cxxflags=[], cppdefines=[]):
