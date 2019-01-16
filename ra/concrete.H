@@ -69,7 +69,7 @@ with_same_shape(E && e, X && x) -> std::enable_if_t<concrete_type<E>::size_s()!=
 
 template <class E, class X> inline auto
 with_same_shape(E && e, X && x) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(ra::start(e).shape(), std::forward<X>(x)); }
+{ return concrete_type<E>(ra::shape(e), std::forward<X>(x)); }
 
 
 template <class E> inline auto
@@ -82,7 +82,7 @@ with_same_shape(E && e) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY,
 
 template <class E> inline auto
 with_same_shape(E && e) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(ra::start(e).shape(), ra::unspecified); }
+{ return concrete_type<E>(ra::shape(e), ra::none); }
 
 
 template <class E, class S, class X> inline auto

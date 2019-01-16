@@ -230,7 +230,7 @@ int main()
         tr.test_eq(ra::Small<real, 3> {0., 2., 4.}, a);
         tr.test_eq(ra::Small<int, 3> {1, 3, 5}, b);
     }
-    tr.section("operator= for View, WithStorage. Also see test-ownership.C");
+    tr.section("operator= for View, Container. Also see test-ownership.C");
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };
         real check9[6] = { 9, 9, 9, 9, 9, 9 };

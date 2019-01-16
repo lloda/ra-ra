@@ -18,6 +18,20 @@
 
 namespace mp {
 
+// like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
+template <class C, class T, std::size_t ... i>
+constexpr C from_tuple_(T && t, std::index_sequence<i ...>)
+{
+    return { std::get<i>(std::forward<T>(t)) ... };
+}
+
+template <class C, class T>
+constexpr C from_tuple(T && t)
+{
+    return from_tuple_<C>(std::forward<T>(t), std::make_index_sequence<std::tuple_size_v<std::decay_t<T>>> {});
+}
+
+// copy ::value inside int_t, for mp::int_list.
 template <class T, class C> struct tuple_copy;
 
 template <class C, class ... t>

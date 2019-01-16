@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     MassMat mm { h };
 
     mult(mm, w, b);
-    ra::Big<double, 3> work({3, N+1, N+1}, ra::unspecified);
+    ra::Big<double, 3> work({3, N+1, N+1}, ra::none);
     int its = cghs(sm, b, u, work, EPS);
     double max = amax(abs(u-v));
 

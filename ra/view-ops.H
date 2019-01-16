@@ -251,7 +251,7 @@ auto explode_(View<T, RANK> const & a)
 template <class super_t, class T, rank_t RANK> inline
 auto explode(View<T, RANK> const & a)
 {
-    return explode_<super_t, (std::is_same<super_t, std::complex<T>>::value ? 1 : ra_traits<super_t>::rank_s())>(a);
+    return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : ra_traits<super_t>::rank_s())>(a);
 }
 
 // TODO Consider these in ra_traits<>.
@@ -294,7 +294,7 @@ auto collapse(View<super_t, RANK> const & a)
     return b;
 }
 
-// For functions that require compact arrays (todo they really shouldn't).
+// For functions that require compact arrays (TODO they really shouldn't).
 template <class A> inline
 bool const crm(A const & a)
 {

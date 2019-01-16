@@ -19,7 +19,7 @@ namespace ra {
 
 // After ply_index(). TODO merge with that.
 // TODO custom spacers at turn of dimension.
-// is_foreign_vector is included b/c std::vector or std::array may be used as shape_type.
+// is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
 template <class A> inline
 std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
@@ -92,10 +92,10 @@ template <class C> inline
 std::enable_if_t<ra_traits<C>::size_s()==DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
 {
-    if (typename ra_traits<C>::shape_type s; i >> s) {
-        std::decay_t<C> cc(s, ra::unspecified);
+    if (decltype(shape(c)) s; i >> s) {
+        std::decay_t<C> cc(s, ra::none);
         assert(every(start(s)>=0) && "negative sizes in input");
-// avoid copying in case WithStorage's elements don't support it.
+// avoid copying in case Container's elements don't support it.
         swap(c, cc);
 // need row-major, serial iteration here. FIXME use ra:: traversal.
         for (auto & ci: c) { i >> ci; }

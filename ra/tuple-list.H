@@ -22,6 +22,18 @@ using nil = tuple<>;
 template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
 
+template <class T>
+struct is_tuple
+{
+    constexpr static bool value = false;
+};
+template <class ... A>
+struct is_tuple<std::tuple<A ...>>
+{
+    constexpr static bool value = true;
+};
+template <class T> constexpr bool is_tuple_v = is_tuple<T>::value;
+
 template <class A, class B> struct Cons;
 template <class A0, class ... A>
 struct Cons<A0, tuple<A ...>>
@@ -47,7 +59,8 @@ struct Zip<tuple<A ...>, tuple<B ...>>
 {
     using type = tuple<tuple<A, B> ...>;
 };
-template <class A, class B> using Zip_ = typename Zip<A, B>::type;
+template <class A, class B>
+using Zip_ = typename Zip<A, B>::type;
 
 // The list is [a .. a+n).
 template <int n, int a=0, int step=1>
@@ -92,16 +105,14 @@ struct Ref<A, I0, I ...>
     static_assert(I0>=0, "bad index for Ref");
     using type = typename Ref<typename std::tuple_element<I0, A>::type, I ...>::type;
 };
-template <class A, int ... I> using Ref_ = typename Ref<A, I ...>::type;
+template <class A, int ... I>
+using Ref_ = typename Ref<A, I ...>::type;
 
 template <class A> struct First { using type = Ref_<A, 0>; };
 template <class A> using First_ = typename First<A>::type;
 
 template <class A> struct Last { using type = Ref_<A, len<A>-1>; };
 template <class A> using Last_ = typename Last<A>::type;
-
-template <bool c, class A, class B> using If = std::conditional<c, A, B>;
-template <bool c, class A, class B> using If_ = typename If<c, A, B>::type;
 
 template <bool a>
 struct When
@@ -167,7 +178,7 @@ template <template <class A, class B> class pick_i, class T0, class T1, class ..
 struct IndexOf<pick_i, tuple<T0, T1, Ti ...>, k, sel>
 {
     constexpr static int i = pick_i<std::decay_t<T0>, std::decay_t<T1>>::value;
-    using next = IndexOf<pick_i, tuple<mp::If_<i==0, T0, T1>, Ti ...>, k+1, i==0 ? sel : k>;
+    using next = IndexOf<pick_i, tuple<std::conditional_t<i==0, T0, T1>, Ti ...>, k+1, i==0 ? sel : k>;
     using type = typename next::type;
     constexpr static int value = next::value;
 };
@@ -291,13 +302,14 @@ using Map_ = typename Map<F, L ...>::type;
 
 template <class A, class B> struct Filter
 {
-    using type = mp::Append_<mp::If_<mp::First_<A>::value, mp::Take_<B, 1>, mp::nil>,
+    using type = mp::Append_<std::conditional_t<mp::First_<A>::value, mp::Take_<B, 1>, mp::nil>,
                              typename Filter<mp::Drop1_<A>, mp::Drop1_<B>>::type>;
 };
 template <class B> struct Filter<mp::nil, B>
 {
     using type = B;
 };
+
 template <class A, class B>
 using Filter_ = typename Filter<A, B>::type;
 
@@ -305,7 +317,7 @@ using Filter_ = typename Filter<A, B>::type;
 template <template <class ... A> class F, class Def, class ... L>
 struct Fold
 {
-    using def = If_<std::is_same_v<void, Def>, F<>, Def>;
+    using def = std::conditional_t<std::is_same_v<void, Def>, F<>, Def>;
     using type = typename Fold<F,
                                typename F<def, First_<L> ...>::type,
                                typename Drop1<L>::type ...>::type;
@@ -313,12 +325,12 @@ struct Fold
 template <template <class ... A> class F, class Def, class ... L>
 struct Fold<F, Def, nil, L ...>
 {
-    using type = If_<std::is_same_v<void, Def>, F<>, Def>;
+    using type = std::conditional_t<std::is_same_v<void, Def>, F<>, Def>;
 };
 template <template <class ... A> class F, class Def>
 struct Fold<F, Def>
 {
-    using type = If_<std::is_same_v<void, Def>, F<>, Def>;
+    using type = std::conditional_t<std::is_same_v<void, Def>, F<>, Def>;
 };
 template <template <class ... A> class F, class Def, class ... L>
 using Fold_ = typename Fold<F, Def, L ...>::type;

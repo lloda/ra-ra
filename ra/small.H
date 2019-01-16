@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2016
+// (c) Daniel Llorens - 2013-2016, 2018
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -10,7 +10,7 @@
 #include "ra/expr.H"
 
 /// @file small.H
-/// @brief Arrays with static dimensions. Compare with View, WithStorage.
+/// @brief Arrays with static dimensions. Compare with View, Container.
 
 #ifndef RA_CHECK_BOUNDS_SMALL
   #ifndef RA_CHECK_BOUNDS
@@ -57,7 +57,7 @@ struct cell_iterator_small
     using shape_type = std::array<dim_t, framer>;
     using atom_type = typename V::value_type; // FIXME fix ra_traits<SmallBase>
     using cell_type = SmallView<atom_type, cell_sizes, cell_strides>;
-    using value_type = mp::If_<0==cellr, atom_type, cell_type>;
+    using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
     using frame_type = SmallView<int, sizes, strides>; // only to compute ssizes
 
     cell_type c;
@@ -273,18 +273,18 @@ struct SmallBase
     }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
-    /* Array type is not deduced by (X &&) */
+    // Array type is not deduced by (X &&)
     constexpr Child & operator=(typename nested_braces<T, rank()>::list const x)
     {
         ra::iter<-1>(static_cast<Child &>(*this)) = x;
         return static_cast<Child &>(*this);
     }
-    /* Fill row-major ravel for any rank. FIXME Use ra:: traversal need start(iterator). */
+    // Fill row-major ravel for any rank. FIXME Use ra:: traversal need start(iterator).
     constexpr Child & operator=(std::initializer_list<T> const x)
     {
         assert(size()==dim_t(x.size()));
         auto b = this->begin();
-        for (auto const & xx: x) { *b = xx; ++b; } /* std::copy not constexpr */
+        for (auto const & xx: x) { *b = xx; ++b; } // std::copy not constexpr
         return static_cast<Child &>(*this);
     }
 
@@ -306,9 +306,9 @@ struct SmallBase
     template <rank_t c=0> constexpr auto iter() const { return const_iterator<c>(data()); }
 
 // FIXME see if we need to extend this for cellr!=0.
-// template <class P> using stl_iterator = mp::If_<have_default_strides, P, stl_iterator<Iterator<P>>>;
+// template <class P> using stl_iterator = std::conditional_t<have_default_strides, P, stl_iterator<Iterator<P>>>;
     constexpr static bool have_default_strides = std::is_same_v<strides, default_strides_<sizes>>;
-    template <class I, class P> using pick_stl_iterator = mp::If_<have_default_strides, P, ra::stl_iterator_small<I>>;
+    template <class I, class P> using pick_stl_iterator = std::conditional_t<have_default_strides, P, ra::stl_iterator_small<I>>;
     using stl_iterator = pick_stl_iterator<iterator<0>, T *>;
     using stl_const_iterator = pick_stl_iterator<const_iterator<0>, T const *>;
 
@@ -440,7 +440,6 @@ struct ra_traits_small
 {
     using V = Type_<T, sizes, strides>;
     using value_type = T;
-    using shape_type = std::decay_t<decltype(V::ssizes)>;
     // constexpr static auto const & shape(V const & v) { return V::ssizes; }
     constexpr static auto shape(V const & v) { return SmallView<ra::dim_t const, mp::int_list<V::rank_s()>, mp::int_list<1>>(V::ssizes.data()); }
 #define MAKE_COND (std::is_same_v<strides, mp::int_list<1>> && std::is_same_v<sizes, mp::Take_<sizes, 1>>)
@@ -590,8 +589,8 @@ auto explode(SmallBase<Child, T, sizes, strides> & a)
     static_assert(super_t::have_default_strides);
     constexpr rank_t ra = ta::rank_s();
     constexpr rank_t rb = super_t::rank_s();
-    static_assert(std::is_same<mp::Drop_<sizes, ra-rb>, typename super_t::sizes>::value);
-    static_assert(std::is_same<mp::Drop_<strides, ra-rb>, typename super_t::strides>::value);
+    static_assert(std::is_same_v<mp::Drop_<sizes, ra-rb>, typename super_t::sizes>);
+    static_assert(std::is_same_v<mp::Drop_<strides, ra-rb>, typename super_t::strides>);
     using cstrides = mp::Map_<explode_divop<super_t::size_s()>::template op, mp::Take_<strides, ra-rb>>;
     return SmallView<super_t, mp::Take_<sizes, ra-rb>, cstrides>((super_t *) a.data());
 }

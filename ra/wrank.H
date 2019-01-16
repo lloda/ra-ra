@@ -181,7 +181,7 @@ struct applyframes
 // No-op case. TODO Maybe apply to any Iota<n> where n<=depth.
 // TODO If A is cell_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
 template <class LiveAxes, int depth>
-struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same<LiveAxes, mp::Iota_<depth>>::value>>
+struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same_v<LiveAxes, mp::Iota_<depth>>>>
 {
     template <class A>
     static decltype(auto) f(A && a)

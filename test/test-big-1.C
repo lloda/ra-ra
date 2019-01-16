@@ -7,7 +7,7 @@
 // later version.
 
 /// @file test-big-1.C
-/// @brief Tests specific to WithStorage.
+/// @brief Tests specific to Container.
 
 #include <iostream>
 #include <iterator>
@@ -18,7 +18,7 @@
 #include "ra/test.H"
 
 using std::cout; using std::endl; using std::flush;
-template <class T, ra::rank_t RANK=ra::RANK_ANY> using BigValueInit = ra::WithStorage<std::vector<T>, RANK>;
+template <class T, ra::rank_t RANK=ra::RANK_ANY> using BigValueInit = ra::Container<std::vector<T>, RANK>;
 
 int main()
 {
@@ -35,7 +35,7 @@ int main()
         tr.test_eq(check, ra::start(a));
         tr.test_eq(check, b);
     }
-    tr.section("behavior of resize with default WithStorage");
+    tr.section("behavior of resize with default Container");
     {
         {
             ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
@@ -79,7 +79,7 @@ int main()
         }
         cout << endl;
         c = b;
-// FIXME this clobbers the strides of a, which is surprising -> WithStorage should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
+// FIXME this clobbers the strides of a, which is surprising -> Container should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
         a = b;
         for (int k=0; k!=c.rank(); ++k) {
             std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;
@@ -97,7 +97,7 @@ int main()
     }
     tr.section("casts from fixed rank View");
     {
-        ra::Unique<double, 3> a({3, 2, 4}, ra::unspecified);
+        ra::Unique<double, 3> a({3, 2, 4}, ra::none);
         ra::View<double> b(a);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());
@@ -127,7 +127,7 @@ int main()
     }
     tr.section("casts from var rank View");
     {
-        ra::Unique<double> a({3, 2, 4}, ra::unspecified);
+        ra::Unique<double> a({3, 2, 4}, ra::none);
         ra::View<double, 3> b(a);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());

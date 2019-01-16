@@ -83,8 +83,8 @@ int main()
                     tr.test_eq(real_part(A), B(ra::all, ra::all, 0));
                     tr.test_eq(imag_part(A), B(ra::all, ra::all, 1));
                 };
-            test_sub_real(ra::Unique<complex, 2>({4, 4}, ra::unspecified));
-            test_sub_real(ra::Unique<complex>({4, 4}, ra::unspecified));
+            test_sub_real(ra::Unique<complex, 2>({4, 4}, ra::none));
+            test_sub_real(ra::Unique<complex>({4, 4}, ra::none));
         }
         tr.section("sub is int to super Small of rank 1");
         {
@@ -96,8 +96,8 @@ int main()
                     tr.test_eq(B(ra::all, ra::all, 0), map([](auto && a) { return a(0); }, A));
                     tr.test_eq(B(ra::all, ra::all, 1), map([](auto && a) { return a(1); }, A));
                 };
-            test_sub_small2(ra::Unique<r2, 2>({4, 4}, ra::unspecified));
-            test_sub_small2(ra::Unique<r2>({4, 4}, ra::unspecified));
+            test_sub_small2(ra::Unique<r2, 2>({4, 4}, ra::none));
+            test_sub_small2(ra::Unique<r2>({4, 4}, ra::none));
         }
         tr.section("sub is int to super Small of rank 2");
         {
@@ -112,8 +112,8 @@ int main()
                         }
                     }
                 };
-            test_sub_small23(ra::Unique<super, 2>({2, 2}, ra::unspecified));
-            test_sub_small23(ra::Unique<super>({2, 2}, ra::unspecified));
+            test_sub_small23(ra::Unique<super, 2>({2, 2}, ra::none));
+            test_sub_small23(ra::Unique<super>({2, 2}, ra::none));
         }
         tr.section("sub is Small of rank 1 to super Small of rank 2");
         {
@@ -127,8 +127,8 @@ int main()
                     tr.test_eq(B(ra::all, ra::all, 0), map([](auto && a) { return sub(a(0)); }, A));
                     tr.test_eq(B(ra::all, ra::all, 1), map([](auto && a) { return sub(a(1)); }, A));
                 };
-            test_sub_small23(ra::Unique<super, 2>({2, 2}, ra::unspecified));
-            test_sub_small23(ra::Unique<super>({2, 2}, ra::unspecified));
+            test_sub_small23(ra::Unique<super, 2>({2, 2}, ra::none));
+            test_sub_small23(ra::Unique<super>({2, 2}, ra::none));
         }
         tr.section("sub is real to super complex Small of rank 2");
         {
@@ -145,8 +145,8 @@ int main()
                         }
                     }
                 };
-            test_sub_real(ra::Unique<super, 2>({4, 4}, ra::unspecified));
-            test_sub_real(ra::Unique<super>({4, 4}, ra::unspecified));
+            test_sub_real(ra::Unique<super, 2>({4, 4}, ra::none));
+            test_sub_real(ra::Unique<super>({4, 4}, ra::none));
         }
     }
     tr.section("old tests from test-ra-1.C (TODO remove if redundant)");

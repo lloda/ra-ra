@@ -66,20 +66,20 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::num
 template <class I, class J, std::enable_if_t<is_iota<I> && iota_op<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(0).size_, ITEM(0).org_+ITEM(1), ITEM(0).stride_);
+    return iota(ITEM(0).size_, ITEM(0).i_+ITEM(1), ITEM(0).stride_);
 }
 
 template <class I, class J, std::enable_if_t<iota_op<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(1).size_, ITEM(0)+ITEM(1).org_, ITEM(1).stride_);
+    return iota(ITEM(1).size_, ITEM(0)+ITEM(1).i_, ITEM(1).stride_);
 }
 
 template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     CHECK_BOUNDS(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
-    return iota(ITEM(0).size_, ITEM(0).org_+ITEM(1).org_, ITEM(0).stride_+ITEM(1).stride_);
+    return iota(ITEM(0).size_, ITEM(0).i_+ITEM(1).i_, ITEM(0).stride_+ITEM(1).stride_);
 }
 
 // --------------
@@ -89,20 +89,20 @@ inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 template <class I, class J, std::enable_if_t<is_iota<I> && iota_op<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(0).size_, ITEM(0).org_-ITEM(1), ITEM(0).stride_);
+    return iota(ITEM(0).size_, ITEM(0).i_-ITEM(1), ITEM(0).stride_);
 }
 
 template <class I, class J, std::enable_if_t<iota_op<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(1).size_, ITEM(0)-ITEM(1).org_, -ITEM(1).stride_);
+    return iota(ITEM(1).size_, ITEM(0)-ITEM(1).i_, -ITEM(1).stride_);
 }
 
 template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     CHECK_BOUNDS(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
-    return iota(ITEM(0).size_, ITEM(0).org_-ITEM(1).org_, ITEM(0).stride_-ITEM(1).stride_);
+    return iota(ITEM(0).size_, ITEM(0).i_-ITEM(1).i_, ITEM(0).stride_-ITEM(1).stride_);
 }
 
 // --------------
@@ -112,13 +112,13 @@ inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 template <class I, class J, std::enable_if_t<is_iota<I> && iota_op<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(0).size_, ITEM(0).org_*ITEM(1), ITEM(0).stride_*ITEM(1));
+    return iota(ITEM(0).size_, ITEM(0).i_*ITEM(1), ITEM(0).stride_*ITEM(1));
 }
 
 template <class I, class J, std::enable_if_t<iota_op<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(1).size_, ITEM(0)*ITEM(1).org_, ITEM(0)*ITEM(1).stride_);
+    return iota(ITEM(1).size_, ITEM(0)*ITEM(1).i_, ITEM(0)*ITEM(1).stride_);
 }
 
 #endif // RA_OPTIMIZE_IOTA

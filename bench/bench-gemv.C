@@ -42,7 +42,7 @@ int main()
     auto gemv_i = [&](auto const & a, auto const & b)
         {
             int const M = a.size(0);
-            ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, ra::unspecified);
+            ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, ra::none);
             for (int i=0; i<M; ++i) {
                 c(i) = dot(a(i), b);
             }
@@ -63,7 +63,7 @@ int main()
     auto gevm_j = [&](auto const & b, auto const & a)
         {
             int const N = a.size(1);
-            ra::Big<decltype(b(0)*a(0, 0)), 1> c({N}, ra::unspecified);
+            ra::Big<decltype(b(0)*a(0, 0)), 1> c({N}, ra::none);
             for (int j=0; j<N; ++j) {
                 c(j) = dot(b, a(ra::all, j));
             }

@@ -7,7 +7,7 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-`ra::' (version 6, updated 2018 December 21)
+`ra::' (version 6, updated 2019 January 16)
 
 (c) Daniel Llorens 2016--2018
      Permission is granted to copy, distribute and/or modify this document
@@ -40,7 +40,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered"><code>ra::</code></h2>
 
-<p><code>ra::</code> (version 6, updated 2018 December 21)
+<p><code>ra::</code> (version 6, updated 2019 January 16)
 
    <p>(c) Daniel Llorens 2016&ndash;2018
 
@@ -400,14 +400,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Usage">Usage</a>
 </pre>
    <p>The second form takes two arguments, one giving the shape, the second the contents.
 
-   <p><a name="index-g_t_0040code_007bra_003a_003aunspecified_007d-9"></a>
+   <p><a name="index-g_t_0040code_007bnone_007d-9"></a>
 <pre class="example"><pre class="verbatim">     
-     ra::Big&lt;double, 2> a({2, 3}, 1.);            // a has size 2x3 and be filled with 1.
-     ra::Big&lt;double> b({2, 3}, ra::unspecified);  // b has size 2x3 and contents don't matter
-     ra::Big&lt;double> c({2, 3}, a);                // b has size 2x3 and a is copied into b
+     ra::Big&lt;double, 2> a({2, 3}, 1.);     // a has size 2x3 and be filled with 1.
+     ra::Big&lt;double> b({2, 3}, ra::none);  // b has size 2x3 and contents don't matter
+     ra::Big&lt;double> c({2, 3}, a);         // b has size 2x3 and a is copied into b
 </pre>
 </pre>
-   <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don't match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::unspecified</code> is used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container's elements.
+   <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don't match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::none</code> is used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container's elements.
 
    <p>Finally, there are special constructors where the content argument is either a pointer or <code>std::initializer_list</code>. This argument isn't used for shape <a rel="footnote" href="#fn-4" name="fnd-4"><sup>4</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!
 
@@ -1027,7 +1027,7 @@ produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must a
    <p><a name="x_002dis_002dscalar"></a>
 Some types are accepted automatically as scalars. These include:
      <ul>
-<li>Any type <code>T</code> for which <code>std::is_scalar&lt;T&gt;::value</code> is true, <em>except</em> pointers. These include <code>char</code>, <code>int</code>, <code>double</code>, etc. 
+<li>Any type <code>T</code> for which <code>std::is_scalar_v&lt;T&gt;</code> is true, <em>except</em> pointers. These include <code>char</code>, <code>int</code>, <code>double</code>, etc. 
 <li><code>std::complex&lt;T&gt;</code>, if you import <code>ra/complex.H</code>. 
 </ul>
 
@@ -1291,13 +1291,11 @@ With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> re
 
 <h3 class="section">4.2 Size of brace initializers isn't checked until run time</h3>
 
-<p>FIXME
+<p>FIXME [ra44]
 
 <h3 class="section">4.3 View of const vs const view</h3>
 
-<!-- I attempted what's below but container != pointer, so container != view. But then it's a problem to derive container from view. -->
-<!-- It used to be the case that @code{ra::} containers (or views) handled constness like STL containers do, in that a const @code{std::vector} returns @code{const_iterator}s, for example. This leads to duplicate code and occasional (but still annoying) type troubles, which I endured for a while. It's also contrary to the behavior of pointers, where constness of the pointer is separate from constness of the pointee. -->
-<!-- In the end I gave up. I was probably doing it wrong anyway. After @code{ra::} version 7, constness of containers or views does not progagate to the contents. So if you want @code{const} contents, you have to make the contained type @code{const}. -->
+<!-- See branch ra-viewconst and places in big.H for a description of the problem. -->
 <p>FIXME
 Passing view arguments by reference
 
@@ -1393,7 +1391,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Internals">Internals</a>
 
      <li><b>Ravelable</b> &mdash; <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
 
-     <p>This is a kind of <b>ArrayIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>size()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner extents of the loop are small.
+     <p>This is a kind of <b>ArrayIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>size()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
      <li><b>Indexable</b> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
@@ -2038,6 +2036,20 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
         </blockquote></div>
 
+   <p><a name="index-g_t_0040code_007bnone_007d-95"></a><a name="x_002dnone"></a>
+
+<div class="defun">
+&mdash; Special&nbsp;objects<!-- /@w -->: <b>none</b><var><a name="index-none-96"></a></var><br>
+<blockquote><p>Pass <code>none</code> to container constructors to indicate that the contents shouldn't be initialized. This is appropriate when the initialization you have in mind wouldn't fit in a constructor argument. For example:
+
+     <pre class="example">     <pre class="verbatim">          
+          void old_style_initializer(int m, int n, double *);
+          ra::Big&lt;double> b({2, 3}, ra::none);
+          old_style_initializer(2, 3, b.data());
+     </pre>
+     </pre>
+        </blockquote></div>
+
 <!--  -->
 <div class="node">
 <p><hr>
@@ -2139,8 +2151,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-g_t_0040code_007bfrom_007d-40"><code>from</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007biter_007d-69"><code>iter</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-J-6">J</a>: <a href="#Why-C_002b_002b">Why C++</a></li>
+<li><a href="#index-g_t_0040code_007bnone_007d-9"><code>none</code></a>: <a href="#Containers-and-views">Containers and views</a></li>
+<li><a href="#index-g_t_0040code_007bnone_007d-95"><code>none</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bnoshape_007d-60"><code>noshape</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-Numpy-15">Numpy</a>: <a href="#Rank-extension">Rank extension</a></li>
+<li><a href="#index-Numpy-14">Numpy</a>: <a href="#Rank-extension">Rank extension</a></li>
 <li><a href="#index-order_002c-column_002dmajor-10">order, column-major</a>: <a href="#Containers-and-views">Containers and views</a></li>
 <li><a href="#index-order_002c-row_002dmajor-4">order, row-major</a>: <a href="#Rank-polymorphism">Rank polymorphism</a></li>
 <li><a href="#index-g_t_0040code_007bpack_007d-32"><code>pack</code></a>: <a href="#Reference">Reference</a></li>
@@ -2148,7 +2162,6 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-g_t_0040code_007bply_007d-30"><code>ply</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bprod_007d-73"><code>prod</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bptr_007d-65"><code>ptr</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bra_003a_003aunspecified_007d-9"><code>ra::unspecified</code></a>: <a href="#Containers-and-views">Containers and views</a></li>
 <li><a href="#index-g_t_0040code_007brel_005ferror_007d-93"><code>rel_error</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007breverse_007d-50"><code>reverse</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bscalar_007d-67"><code>scalar</code></a>: <a href="#Reference">Reference</a></li>
@@ -2156,8 +2169,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-shape-agreement_002c-suffix-13">shape agreement, suffix</a>: <a href="#Rank-extension">Rank extension</a></li>
 <li><a href="#index-g_t_0040code_007bsqr_007d-85"><code>sqr</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bsqrm_007d-87"><code>sqrm</code></a>: <a href="#Reference">Reference</a></li>
-<li><a href="#index-g_t_0040code_007bstart_007d-63"><code>start</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bstart_007d-24"><code>start</code></a>: <a href="#Compatibility">Compatibility</a></li>
+<li><a href="#index-g_t_0040code_007bstart_007d-63"><code>start</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bstencil_007d-52"><code>stencil</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007bsum_007d-71"><code>sum</code></a>: <a href="#Reference">Reference</a></li>
 <li><a href="#index-g_t_0040code_007btranspose_007d-46"><code>transpose</code></a>: <a href="#Reference">Reference</a></li>

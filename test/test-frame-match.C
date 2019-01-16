@@ -33,8 +33,8 @@ int main()
     }
     tr.section("frame matching - Unique/TensorIndex");
     {
-        ra::Unique<real, 2> c({3, 2}, ra::unspecified);
-        ra::Unique<real, 2> a({3, 2}, ra::unspecified);
+        ra::Unique<real, 2> c({3, 2}, ra::none);
+        ra::Unique<real, 2> a({3, 2}, ra::none);
         real check[3][2] = { {0, 1}, {1, 2}, {2, 3} };
 
         std::iota(a.begin(), a.end(), 1);
@@ -50,8 +50,8 @@ int main()
     }
     tr.section("frame matching - Unique/TensorIndex - TensorIndex can't be driving arg");
     {
-        ra::Unique<real, 2> c({3, 2}, ra::unspecified);
-        ra::Unique<real, 2> a({3, 2}, ra::unspecified);
+        ra::Unique<real, 2> c({3, 2}, ra::none);
+        ra::Unique<real, 2> a({3, 2}, ra::none);
         real check[3][2] = { {0, 0}, {2, 2}, {4, 4} };
 
         std::iota(a.begin(), a.end(), 1);
@@ -78,9 +78,9 @@ int main()
 
     tr.section("frame matching - Unique/Unique");
     {
-        ra::Unique<real, 2> c({3, 2}, ra::unspecified);
-        ra::Unique<real, 2> a({3, 2}, ra::unspecified);
-        ra::Unique<real, 1> b({3}, ra::unspecified);
+        ra::Unique<real, 2> c({3, 2}, ra::none);
+        ra::Unique<real, 2> a({3, 2}, ra::none);
+        ra::Unique<real, 1> b({3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
         std::iota(b.begin(), b.end(), 1);
         real check[3][2] = { {0, 1}, {1, 2}, {2, 3} };
@@ -90,8 +90,8 @@ int main()
     }
     tr.section("frame matching - Unique/Small");
     {
-        ra::Unique<real, 2> c({3, 2}, ra::unspecified);
-        ra::Unique<real, 2> a({3, 2}, ra::unspecified);
+        ra::Unique<real, 2> c({3, 2}, ra::none);
+        ra::Unique<real, 2> a({3, 2}, ra::none);
         ra::Small<real, 3> b;
         std::iota(a.begin(), a.end(), 1);
         std::iota(b.begin(), b.end(), 1);

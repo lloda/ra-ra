@@ -118,11 +118,11 @@ int main()
     {
         ra::Small<int, 2> a(0.), b(0.);
         auto e0 = ra::expr([](int a, int b) { return a+b; }, start(a), start(b));
-        static_assert(std::is_literal_type<decltype(e0)>::value);
+        static_assert(std::is_literal_type_v<decltype(e0)>);
         auto e1 = ra::expr([](int a, int b) { return a+b; }, start(a), ra::scalar(0.));
-        static_assert(std::is_literal_type<decltype(e1)>::value);
+        static_assert(std::is_literal_type_v<decltype(e1)>);
         auto e2 = ra::expr([](int a, int b) { return a+b; }, start(a), ra::iota(2));
-        static_assert(std::is_literal_type<decltype(e2)>::value);
+        static_assert(std::is_literal_type_v<decltype(e2)>);
     }
     tr.section("internal fields");
     {
@@ -460,7 +460,7 @@ int main()
         static_assert(ra::has_tensorindex<decltype(ra::_0)>, "bad has_tensorindex test 0");
         static_assert(ra::has_tensorindex<TI<0>>, "bad has_tensorindex test 1");
 
-        ra::Unique<int, 2> a({3, 2}, ra::unspecified);
+        ra::Unique<int, 2> a({3, 2}, ra::none);
         auto dyn = ra::expr([](int & a, int b) { a = b; }, a.iter(), ra::_0);
         static_assert(ra::has_tensorindex<decltype(dyn)>, "bad has_tensorindex test 2");
 
@@ -621,7 +621,7 @@ int main()
     }
     tr.section("row-major assignment from initializer_list, rank 2");
     {
-        ra::Unique<double, 2> a({3, 2}, ra::unspecified);
+        ra::Unique<double, 2> a({3, 2}, ra::none);
         a = { 2, 3, 1, 4, 8, 9 };
         tr.test_eq(2, a(0, 0));
         tr.test_eq(3, a(0, 1));
@@ -654,7 +654,7 @@ int main()
     }
     tr.section("row-major assignment from initializer_list, rank 1");
     {
-        ra::Big<double, 1> a({5}, ra::unspecified);
+        ra::Big<double, 1> a({5}, ra::none);
         a = { 2, 3, 1, 4, 8 };
         tr.test_eq(2, a(0));
         tr.test_eq(3, a(1));
@@ -800,7 +800,7 @@ int main()
     }
     tr.section("construct from shape");
     {
-        ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+        ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
         std::iota(a.begin(), a.end(), 0);
         auto sa = ra::ra_traits<ra::Unique<double>>::shape(a);
         tr.test_eq(3, sa[0]);
@@ -875,7 +875,7 @@ int main()
         }
         tr.section("9");
         {
-            ra::Unique<double, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<double, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
             std::iota(a.begin(), a.end(), 0);
             double check[3+24] = { 3, 2, 4 };
             std::iota(check+3, check+3+24, 0);
@@ -883,7 +883,7 @@ int main()
         }
         tr.section("10");
         {
-            ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
             std::iota(a.begin(), a.end(), 0);
             double check[4+24] = { 3, 3, 2, 4 };
             std::iota(check+4, check+4+24, 0);
@@ -901,7 +901,7 @@ int main()
             cout << "s: " << s.c << endl;
         }
         {
-            ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::unspecified);
+            ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
             std::iota(a.begin(), a.end(), 0);
             auto s = ra::scalar(a);
             cout << "s: " << s.c << endl;
@@ -934,7 +934,7 @@ int main()
 // Cf [trc-01] in test-compatibility.C.
         tr.section("[tr0-01] frame-matching, forbidding unroll");
         {
-            ra::Big<int, 3> b ({3, 4, 2}, ra::unspecified);
+            ra::Big<int, 3> b ({3, 4, 2}, ra::none);
             transpose({0, 2, 1}, b) = ra::iota(3, 1);
             cout << b << endl;
             tr.test(every(b(0)==1));
@@ -942,7 +942,7 @@ int main()
             tr.test(every(b(2)==3));
         }
         {
-            ra::Big<int, 3> b ({3, 4, 2}, ra::unspecified);
+            ra::Big<int, 3> b ({3, 4, 2}, ra::none);
             transpose<0, 2, 1>(b) = ra::iota(3, 1);
             cout << b << endl;
             tr.test(every(b(0)==1));
@@ -952,13 +952,13 @@ int main()
     }
     tr.section("reverse array types");
     {
-        CheckReverse(tr, ra::Unique<double>({ 3, 2, 4 }, ra::unspecified));
-        CheckReverse(tr, ra::Unique<double, 3>({ 3, 2, 4 }, ra::unspecified));
+        CheckReverse(tr, ra::Unique<double>({ 3, 2, 4 }, ra::none));
+        CheckReverse(tr, ra::Unique<double, 3>({ 3, 2, 4 }, ra::none));
     }
     tr.section("transpose A");
     {
-        CheckTranspose1(tr, ra::Unique<double>({ 3, 2 }, ra::unspecified));
-        CheckTranspose1(tr, ra::Unique<double, 2>({ 3, 2 }, ra::unspecified));
+        CheckTranspose1(tr, ra::Unique<double>({ 3, 2 }, ra::none));
+        CheckTranspose1(tr, ra::Unique<double, 2>({ 3, 2 }, ra::none));
     }
     tr.section("transpose B");
     {

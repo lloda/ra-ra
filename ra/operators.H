@@ -319,14 +319,14 @@ inline auto cdot(A && a, B && b)
 template <class A>
 struct torank1
 {
-    using type = mp::If_<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
+    using type = std::conditional_t<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
 };
 
 template <class Wedge, class Va, class Vb, class Enable=void>
 struct fromrank1
 {
     using valtype = typename Wedge::template valtype<Va, Vb>;
-    using type = mp::If_<Wedge::Nr==1, valtype, Small<valtype, Wedge::Nr> >;
+    using type = std::conditional_t<Wedge::Nr==1, valtype, Small<valtype, Wedge::Nr>>;
 };
 
 #define DECL_WEDGE(condition)                                           \
@@ -463,7 +463,7 @@ gemm(A const & a, B const & b)
     constexpr int M = a.size(0);
     constexpr int N = b.size(1);
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
-    auto c = with_shape<MMTYPE>({M, N}, ra::unspecified);
+    auto c = with_shape<MMTYPE>({M, N}, ra::none);
     for (int i=0; i<M; ++i) {
         for (int j=0; j<N; ++j) {
             c(i, j) = dot(a(i), b(ra::all, j));

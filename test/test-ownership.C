@@ -51,7 +51,7 @@ using real = double;
 | Small      | copy into | copy into | copy into | copy into   | *copy*    |                  |
 */
 
-// TODO Maybe I want WithStorage/View<T> const and WithStorage/View<T const> to behave differently....
+// TODO Maybe I want Container/View<T> const and Container/View<T const> to behave differently....
 int main()
 {
     real const check99[5] = {99, 99, 99, 99, 99};
@@ -97,7 +97,7 @@ int main()
             tr.test(p.data()!=c.data());
             tr.test(std::equal(check99, check99+5, p.begin()));
         }
-        tr.section("WithStorage operator=(WithStorage) replaces, unlike View [ra20]");
+        tr.section("Container operator=(Container) replaces, unlike View [ra20]");
         {
             ra::Big<real, 1> o({5}, 11.);
             ra::Big<real, 1> const p({5}, 99.);

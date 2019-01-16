@@ -146,8 +146,8 @@ int main()
     }
     tr.section("using Framematch");
     {
-        ra::Unique<real, 2> a({3, 2}, ra::unspecified);
-        ra::Unique<real, 2> b({3, 2}, ra::unspecified);
+        ra::Unique<real, 2> a({3, 2}, ra::none);
+        ra::Unique<real, 2> b({3, 2}, ra::none);
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
         {
@@ -180,51 +180,51 @@ int main()
     {
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 1>(minus2real_print),
-                          ra::Unique<real, 1>({3}, ra::unspecified),
-                          ra::Unique<real, 1>({4}, ra::unspecified));
+                          ra::Unique<real, 1>({3}, ra::none),
+                          ra::Unique<real, 1>({4}, ra::none));
         nested_wrank_demo(ra::wrank<0, 1>(ra::wrank<0, 0>(minus2real_print)),
-                          ra::Unique<real, 1>({3}, ra::unspecified),
-                          ra::Unique<real, 1>({3}, ra::unspecified));
+                          ra::Unique<real, 1>({3}, ra::none),
+                          ra::Unique<real, 1>({3}, ra::none));
     }
     tr.section("wrank tests 1-0");
     {
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<1, 0>(minus2real_print),
-                          ra::Unique<real, 1>({3}, ra::unspecified),
-                          ra::Unique<real, 1>({4}, ra::unspecified));
+                          ra::Unique<real, 1>({3}, ra::none),
+                          ra::Unique<real, 1>({4}, ra::none));
         nested_wrank_demo(ra::wrank<1, 0>(ra::wrank<0, 0>(minus2real_print)),
-                          ra::Unique<real, 1>({3}, ra::unspecified),
-                          ra::Unique<real, 1>({4}, ra::unspecified));
+                          ra::Unique<real, 1>({3}, ra::none),
+                          ra::Unique<real, 1>({4}, ra::none));
     }
     tr.section("wrank tests 0-0 (nop), case 1 - exact match");
     {
 // This uses the applyframes specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
-                          ra::Unique<real, 1>({3}, ra::unspecified),
-                          ra::Unique<real, 1>({3}, ra::unspecified));
+                          ra::Unique<real, 1>({3}, ra::none),
+                          ra::Unique<real, 1>({3}, ra::none));
     }
     tr.section("wrank tests 0-0 (nop), case 2 - non-exact frame match");
     {
 // This uses the applyframes specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
-                          ra::Unique<real, 2>({3, 4}, ra::unspecified),
-                          ra::Unique<real, 1>({3}, ra::unspecified));
+                          ra::Unique<real, 2>({3, 4}, ra::none),
+                          ra::Unique<real, 1>({3}, ra::none));
         nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
-                          ra::Unique<real, 1>({3}, ra::unspecified),
-                          ra::Unique<real, 2>({3, 4}, ra::unspecified));
+                          ra::Unique<real, 1>({3}, ra::none),
+                          ra::Unique<real, 2>({3, 4}, ra::none));
     }
     tr.section("wrank tests 1-1-0, init array with outer product");
     {
         auto minus2real = [](real & c, real a, real b) { c = a-b; };
-        ra::Unique<real, 1> a({3}, ra::unspecified);
-        ra::Unique<real, 1> b({4}, ra::unspecified);
+        ra::Unique<real, 1> a({3}, ra::none);
+        ra::Unique<real, 1> b({4}, ra::none);
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
         cout << "a: " << a << endl;
         cout << "b: " << b << endl;
-        ra::Unique<real, 2> c({3, 4}, ra::unspecified);
+        ra::Unique<real, 2> c({3, 4}, ra::none);
         ra::ply(ra::expr(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
         cout << "c: " << c << endl;
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
@@ -245,11 +245,11 @@ int main()
     }
     tr.section("recipe for unbeatable subscripts in _from_ operator");
     {
-        ra::Unique<int, 1> a({3}, ra::unspecified);
-        ra::Unique<int, 1> b({4}, ra::unspecified);
+        ra::Unique<int, 1> a({3}, ra::none);
+        ra::Unique<int, 1> b({4}, ra::none);
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
-        ra::Unique<real, 2> c({100, 100}, ra::unspecified);
+        ra::Unique<real, 2> c({100, 100}, ra::none);
         std::iota(c.begin(), c.end(), 0);
 
         real checkd[3*4] = { 1001, 1002, 1003, 1004,  1101, 1102, 1103, 1104,  1201, 1202, 1203, 1204 };

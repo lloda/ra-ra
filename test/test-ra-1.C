@@ -89,7 +89,7 @@ int main()
         }
 #define TEST2(plier)                                            \
         TEST(plier)(ra::Small<int, 3> {});                      \
-        TEST(plier)(ra::Unique<int, 1>({3}, ra::unspecified));
+        TEST(plier)(ra::Unique<int, 1>({3}, ra::none));
         TEST2(ply_ravel)
         TEST2(ply_index)
         TEST2(plyf)
@@ -175,7 +175,7 @@ int main()
     }
     tr.section("reversed arrays, ply_index");
     {
-        ra::Unique<int, 1> A({ 6 }, ra::unspecified);
+        ra::Unique<int, 1> A({ 6 }, ra::none);
         std::iota(A.begin(), A.end(), 1);
         ra::Unique<int, 1> B { {6}, ra::scalar(99) };
         auto copy = [](int & b, int const a) { b = a; return b; };
@@ -190,15 +190,15 @@ int main()
     }
     tr.section("reversed arrays, traverse, only one");
     {
-        CheckPlyReverse1(tr, ra::Unique<int, 1>({ 6 }, ra::unspecified));
-        CheckPlyReverse1(tr, ra::Unique<int>({ 6 }, ra::unspecified));
+        CheckPlyReverse1(tr, ra::Unique<int, 1>({ 6 }, ra::none));
+        CheckPlyReverse1(tr, ra::Unique<int>({ 6 }, ra::none));
     }
     tr.section("mismatched strides");
     {
         auto sum2 = [](int a, int b, int & c) { return c = a-b; };
-        A2 a = A2({2, 3}, ra::unspecified); std::iota(a.begin(), a.end(), 1);
-        A2 b = A2({3, 2}, ra::unspecified); std::iota(b.begin(), b.end(), 1);
-        A2 c = A2({2, 3}, ra::unspecified);
+        A2 a = A2({2, 3}, ra::none); std::iota(a.begin(), a.end(), 1);
+        A2 b = A2({3, 2}, ra::none); std::iota(b.begin(), b.end(), 1);
+        A2 c = A2({2, 3}, ra::none);
         int check[6] = {0, -1, -2, 2, 1, 0};
 #define TEST(plier)                                                     \
         {                                                               \
@@ -220,7 +220,7 @@ int main()
     tr.section("reverse 1/1 axis, traverse");
 #define TEST(plier)                                             \
     {                                                           \
-        A1 a({ 6 }, ra::unspecified);                           \
+        A1 a({ 6 }, ra::none);                           \
         std::iota(a.begin(), a.end(), 1);                       \
         A1 b { {6}, ra::scalar(99) };                           \
         auto copy = [](int & b, int const a) { b = a; };        \

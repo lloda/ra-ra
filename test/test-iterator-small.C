@@ -34,11 +34,11 @@ int main()
             cout << a << endl;
 
             using AI0 = typename A::iterator<0>;
-            cout << "AI0 " << std::is_same<int, AI0>::value << endl;
+            cout << "AI0 " << std::is_same_v<int, AI0> << endl;
             cout << AI0::rank() << endl;
 
             using AI1 = typename A::iterator<1>;
-            cout << "AI1 " << std::is_same<int, AI1>::value << endl;
+            cout << "AI1 " << std::is_same_v<int, AI1> << endl;
             cout << AI1::rank() << endl;
 
             AI0 bi(a.data());

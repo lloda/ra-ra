@@ -61,15 +61,15 @@ template <class T>
 std::string
 type_name()
 {
-    using TR = typename std::remove_reference<T>::type;
+    using TR = std::remove_reference_t<T>;
     std::string r = typeid(TR).name();
-    if (std::is_const<TR>::value)
+    if (std::is_const_v<TR>)
         r += " const";
-    if (std::is_volatile<TR>::value)
+    if (std::is_volatile_v<TR>)
         r += " volatile";
-    if (std::is_lvalue_reference<T>::value)
+    if (std::is_lvalue_reference_v<T>)
         r += " &";
-    else if (std::is_rvalue_reference<T>::value)
+    else if (std::is_rvalue_reference_v<T>)
         r += " &&";
     return r;
 }

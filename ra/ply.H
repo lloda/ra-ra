@@ -30,7 +30,7 @@ template <class A> inline
 void ply_index(A && a)
 {
     rank_t const rank = a.rank();
-    auto ind(ra_traits<decltype(a.shape())>::make(rank, 0));
+    auto ind(ra_traits<decltype(shape(a))>::make(rank, 0));
     dim_t sha[rank];
     rank_t order[rank];
     for (rank_t k=0; k<rank; ++k) {
@@ -55,7 +55,7 @@ void ply_index(A && a)
 }
 
 // Traverse array expression looking to ravel the inner loop.
-// size() is only used on the driving argument (largest rank).
+// size() is only used on the driver (argument with largest rank).
 // adv(), stride(), keep_stride() and flat() are used on all the leaf arguments. The strides must give 0 for k>=their own rank, to allow frame matching.
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <class A> inline

@@ -29,7 +29,7 @@ int main()
     TestRecorder tr;
     tr.section("basic");
     {
-        tr.test(std::is_standard_layout<ra::Small<float, 2>>::value);
+        tr.test(std::is_standard_layout_v<ra::Small<float, 2>>);
     }
 /*
   Small nested constructors rely on initialized_list so that we can size-check

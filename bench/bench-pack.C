@@ -31,7 +31,7 @@ int main()
     auto bench = [&tr](auto && f, auto A_, char const * tag, int size, int reps)
         {
             using A = decltype(A_);
-            A a({size}, ra::unspecified);
+            A a({size}, ra::none);
 
             Benchmark bm { reps, 3 };
             auto bv = bm.run([&]() { f(a, size); });

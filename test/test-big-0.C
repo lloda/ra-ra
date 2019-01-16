@@ -7,7 +7,7 @@
 // later version.
 
 /// @file test-big-0.C
-/// @brief Tests specific to WithStorage. Constructors.
+/// @brief Tests specific to Container. Constructors.
 
 #include <iostream>
 #include <iterator>
@@ -16,14 +16,22 @@
 #include "ra/view-ops.H"
 #include "ra/format.H"
 #include "ra/test.H"
+#include "ra/mpdebug.H"
 
 using std::cout; using std::endl; using std::flush;
 
-int main()
+int main(int argc, char * * argv)
 {
     TestRecorder tr;
     tr.section("constructors");
     {
+        tr.section("regression with some shape arguments (fixed rank) [ra43]");
+        {
+            ra::Big<int, 1> sizes = {5};
+            ra::Big<double, 1> a(sizes, ra::none);
+            a = 33.;
+            cout << a << endl;
+        }
         tr.section("regression with implicitly declared View constructors [ra38]. Reduced from examples/maxwell.C");
         {
             ra::Big<int, 1> A = {1, 2};
@@ -36,7 +44,24 @@ int main()
             ra::Big<int, 1> a {0, 1, 2, 3, 4, 5};
             ra::View<int, 1> const va = a();
             ra::Big<int, 1> x(va); // replacing default operator= by copy-to-view.
-            tr.test_eq(x, ra::iota(6));
+            tr.test_eq(ra::iota(6), x);
+        }
+        tr.section("init list constructors handle implicit conversions");
+        {
+            ra::Big<int, 2> a({int(3), ssize_t(2)}, {0, 1, 2, 3, 4, 5});
+            tr.test_eq(ra::_0 * 2 + ra::_1, a);
+            tr.test_eq(3, a.size(0));
+            tr.test_eq(2, a.size(1));
+        }
+        tr.section("shape errors detected at ct FIXME cannot test ct errors yet [ra42]");
+        {
+            // ra::Big<int, 2> a({2, 3, 1}, 99); // does not compile
+            // ra::Big<int, 2> b({2, 3, 1}, {1, 2, 3, 4, 5, 6}); // does not compile
+            // ra::Big<int, 2> c({2, 3, 1}, ra::none); // does not compile
+        }
+        tr.section("shape errors detected at ct FIXME cannot test ct errors yet [ra42]");
+        {
+            // ra::Big<double, 0> a({3, 4}, 3.); cout << a << endl; // does not compile
         }
     }
     tr.section("any rank 1 expression for the shape argument");

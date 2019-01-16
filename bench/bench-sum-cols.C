@@ -30,7 +30,7 @@ int main()
             ra::Big<real, 2> a({m, n}, ra::_0 - ra::_1);
             ra::Big<real, 1> ref({m}, 0);
             ref += a*reps;
-            ra::Big<real, 1> c({m}, ra::unspecified);
+            ra::Big<real, 1> c({m}, ra::none);
 
             auto bv = Benchmark().repeats(reps).runs(3)
                 .once_f([&](auto && repeat) { c = 0.; repeat([&]() { f(c, a); }); });

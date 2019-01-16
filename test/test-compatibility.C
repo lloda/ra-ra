@@ -36,7 +36,7 @@ int main()
         tr.section("[trc01] frame match ra::start on 1st axis, forbid unroll");
         {
             std::vector<int> const a = { 1, 2, 3 };
-            ra::Big<int, 3> b ({3, 4, 2}, ra::unspecified);
+            ra::Big<int, 3> b ({3, 4, 2}, ra::none);
             transpose({0, 2, 1}, b) = ra::start(a);
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));

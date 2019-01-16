@@ -139,7 +139,7 @@ int main()
         {
             dim_t const M = a.size(0);
             dim_t const N = b.size(1);
-            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::unspecified);
+            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::none);
             for (dim_t i=0; i<M; ++i) {
                 for (dim_t j=0; j<N; ++j) {
                     c(i, j) = dot(a(i), b(ra::all, j));

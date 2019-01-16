@@ -51,6 +51,7 @@ struct ra_traits_def<T, std::enable_if_t<is_scalar<T>>>
 {
     using V = T;
     using value_type = T;
+    constexpr static std::array<dim_t, 0> shape(V const & v) { return std::array<dim_t, 0> {}; }
     constexpr static dim_t size(V const & v) { return 1; }
     constexpr static dim_t size_s() { return 1; }
     constexpr static rank_t rank(V const & v) { return 0; }

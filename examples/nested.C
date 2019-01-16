@@ -11,7 +11,7 @@ using std::cout; using std::endl;
 
 int main()
 {
-    ra::Big<ra::Big<int, 1>, 1> A({3}, ra::unspecified);
+    ra::Big<ra::Big<int, 1>, 1> A({3}, ra::none);
 
     A(0).resize(3);
     A(0) = { 0, 1, 2 };

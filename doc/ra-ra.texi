@@ -1,5 +1,3 @@
-
-
 @c -*-texinfo-*-
 @c %**start of header
 @setfilename ra-ra.info
@@ -14,7 +12,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
 @set VERSION 6
-@set UPDATED 2018 December 21
+@set UPDATED 2019 January 16
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -336,16 +334,16 @@ Big<int> f = 0;                         // f is a 0-array with one element f()==
 
 The second form takes two arguments, one giving the shape, the second the contents.
 
-@cindex @code{ra::unspecified}
+@cindex @code{none}
 @example
 @verbatim
-ra::Big<double, 2> a({2, 3}, 1.);            // a has size 2x3 and be filled with 1.
-ra::Big<double> b({2, 3}, ra::unspecified);  // b has size 2x3 and contents don't matter
-ra::Big<double> c({2, 3}, a);                // b has size 2x3 and a is copied into b
+ra::Big<double, 2> a({2, 3}, 1.);     // a has size 2x3 and be filled with 1.
+ra::Big<double> b({2, 3}, ra::none);  // b has size 2x3 and contents don't matter
+ra::Big<double> c({2, 3}, a);         // b has size 2x3 and a is copied into b
 @end verbatim
 @end example
 
-The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::unspecified} is used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
+The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} is used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
 
 Finally, there are special constructors where the content argument is either a pointer or @code{std::initializer_list}. This argument isn't used for shape @footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!
 
@@ -997,7 +995,7 @@ ra::ptr(z) += p; // ok, size is determined by foreign object p
 Some types are accepted automatically as scalars. These include:
 @itemize
 @item
-Any type @code{T} for which @code{std::is_scalar<T>::value} is true, @emph{except} pointers. These include @code{char}, @code{int}, @code{double}, etc.
+Any type @code{T} for which @code{std::is_scalar_v<T>} is true, @emph{except} pointers. These include @code{char}, @code{int}, @code{double}, etc.
 @item
 @code{std::complex<T>}, if you import @code{ra/complex.H}.
 @end itemize
@@ -1256,15 +1254,11 @@ With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the l
 
 @section Size of brace initializers isn't checked until run time
 
-FIXME
+FIXME [ra44]
 
 @section View of const vs const view
 
-@c I attempted what's below but container != pointer, so container != view. But then it's a problem to derive container from view.
-
-@c It used to be the case that @code{ra::} containers (or views) handled constness like STL containers do, in that a const @code{std::vector} returns @code{const_iterator}s, for example. This leads to duplicate code and occasional (but still annoying) type troubles, which I endured for a while. It's also contrary to the behavior of pointers, where constness of the pointer is separate from constness of the pointee.
-
-@c In the end I gave up. I was probably doing it wrong anyway. After @code{ra::} version 7, constness of containers or views does not progagate to the contents. So if you want @code{const} contents, you have to make the contained type @code{const}.
+@c See branch ra-viewconst and places in big.H for a description of the problem.
 
 FIXME
 Passing view arguments by reference
@@ -1353,7 +1347,7 @@ This is a traversable object. @b{ArrayIterator}s are accepted by all the array f
 
 @item @b{Ravelable} --- @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
 
-This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{size()}, @code{stride()}, @code{keep_stride()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner extents of the loop are small.
+This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{size()}, @code{stride()}, @code{keep_stride()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
 @item @b{Indexable} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
@@ -1931,6 +1925,21 @@ Compute @code{(0+1j)} times @var{expr}.
 @code{(a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b))}
 
 @end defun
+
+@cindex @code{none}
+@anchor{x-none}
+@deffn @w{Special objects} {none}
+Pass @code{none} to container constructors to indicate that the contents shouldn't be initialized. This is appropriate when the initialization you have in mind wouldn't fit in a constructor argument. For example:
+
+@example
+@verbatim
+void old_style_initializer(int m, int n, double *);
+ra::Big<double> b({2, 3}, ra::none);
+old_style_initializer(2, 3, b.data());
+@end verbatim
+@end example
+
+@end deffn
 
 @c ------------------------------------------------
 @node @mybibnode{}

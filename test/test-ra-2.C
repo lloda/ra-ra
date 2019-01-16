@@ -26,7 +26,7 @@ int main()
     TestRecorder tr;
     tr.section("iterators on cell rank > 0");
     {
-        ra::Unique<real, 2> a({4, 3}, ra::unspecified);
+        ra::Unique<real, 2> a({4, 3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
         {
             ra::cell_iterator<decltype(a), 1> i;
@@ -43,7 +43,7 @@ int main()
 #define ARGd dump.iter()
     tr.section("ply on cell rank > 0");
     {
-        ra::Unique<real, 2> a({4, 3}, ra::unspecified);
+        ra::Unique<real, 2> a({4, 3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
         real check[4] = {6, 15, 24, 33};
         tr.section("not driving");
@@ -131,13 +131,13 @@ int main()
                     tr.test(std::equal(check, check+12, a.begin()));
                 }
             };
-        test_cell_rank_positive(ra::Unique<real, 2>({4, 3}, ra::unspecified));
-        test_cell_rank_positive(ra::Small<real, 4, 3> {}); // FIXME maybe ra::unspecified should also work for Small
+        test_cell_rank_positive(ra::Unique<real, 2>({4, 3}, ra::none));
+        test_cell_rank_positive(ra::Small<real, 4, 3> {}); // FIXME maybe ra::none should also work for Small
     }
     tr.section("ply on cell rank = 0 using iter<-1>, ref argument");
     {
         ra::Small<real, 3> dump { 1, 2, 3 };
-        ra::Unique<real, 1> a({3}, ra::unspecified);
+        ra::Unique<real, 1> a({3}, ra::none);
         real check[3] = {1, 2, 3};
         tr.section("driving");
         {

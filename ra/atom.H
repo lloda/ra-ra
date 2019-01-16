@@ -72,8 +72,7 @@ struct Scalar
     constexpr static dim_t size_s() { return 1; }
     constexpr static rank_t rank() { return 0; }
     constexpr static rank_t rank_s() { return 0; }
-    using shape_type = std::array<dim_t, 0>;
-    constexpr static shape_type shape() { return shape_type {}; }
+    constexpr static auto shape() { return std::array<dim_t, 0> {}; }
 
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
@@ -111,8 +110,7 @@ struct Vector
     constexpr static dim_t size_s() { return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    using shape_type = std::array<dim_t, 1>;
-    constexpr auto shape() const { return shape_type { dim_t(traits::size(v)) }; }
+    constexpr auto shape() const { return std::array<dim_t, 1> { dim_t(traits::size(v)) }; }
 
 // start() doesn't do this, but FIXME? Expr, etc. still does. See [ra35] in test-ra-9.C.
 // FIXME these should never be called to convert Vector<V> to Vector<V&> etc.
@@ -161,8 +159,7 @@ struct Ptr
     constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    using shape_type = std::array<dim_t, 1>;
-    constexpr static auto shape() { return shape_type { dim_t(DIM_BAD) }; }
+    constexpr static auto shape() { return std::array<dim_t, 1> { dim_t(DIM_BAD) }; }
 
     template <class I>
     constexpr decltype(auto) at(I && i)
@@ -203,11 +200,10 @@ struct Iota
 {
     using T = T_;
     dim_t const size_;
-    T const org_;
-    T const stride_;
     T i_;
+    T const stride_;
 
-    constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), org_(org), stride_(stride), i_(org)
+    constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), i_(org), stride_(stride)
     {
         CHECK_BOUNDS(size>=0);
     }
@@ -217,13 +213,12 @@ struct Iota
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    using shape_type = std::array<dim_t, 1>;
-    constexpr auto shape() const { return shape_type { size_ }; }
+    constexpr auto shape() const { return std::array<dim_t, 1> { size_ }; }
 
     template <class I>
     constexpr decltype(auto) at(I const & i)
     {
-        return org_ + T(i[0])*stride_;
+        return i_ + T(i[0])*stride_;
     }
     constexpr void adv(rank_t k, dim_t d)
     {
@@ -232,6 +227,8 @@ struct Iota
     constexpr static dim_t stride(rank_t i) { return i==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
+    decltype(auto) operator+=(T const & b) { i_ += b; return *this; };
+    decltype(auto) operator-=(T const & b) { i_ -= b; return *this; };
 };
 
 template <class O=dim_t, class S=O> inline constexpr auto
@@ -353,31 +350,23 @@ inline constexpr auto start(std::initializer_list<T> v)
 template <class T, std::enable_if_t<is_builtin_array<T>, int> =0>
 inline constexpr auto start(T && t);
 
+// FIXME there should be default traits for all is_ra classes. E.g. Expr doesn't have it. Check ra::rank(), ra::shape() in atom.H.
+
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.
 template <class A> using start_t = decltype(ra::start(std::declval<A>()));
 template <class A> using flat_t = decltype(*(ra::start(std::declval<A>()).flat()));
 template <class A> using value_t = std::decay_t<flat_t<A>>;
-template <class V> inline auto size(V const & v) { return ra_traits<V>::size(v); }
 
-// Rarely used (prefer implicit matching), so we don't care that much to make it optimal.
-template <class T, std::enable_if_t<is_ra<T>, int> =0>
-inline auto shape(T && t)
-{
-    return map([&t](auto && i) { return t.size(i); }, ra::iota(t.rank()));
-}
+// FIXME there should be default traits for all is_ra classes.
+template <class V, std::enable_if_t<is_ra<V>, int> =0> inline constexpr auto rank(V const & v) { return v.rank(); }
+template <class V, std::enable_if_t<!is_ra<V>, int> =0> inline constexpr auto rank(V const & v) { return ra_traits<V>::rank(v); }
+template <class V, std::enable_if_t<is_ra<V>, int> =0> inline constexpr auto size(V const & v) { return v.size(); }
+template <class V, std::enable_if_t<!is_ra<V>, int> =0> inline constexpr auto size(V const & v) { return ra_traits<V>::size(v); }
 
-// FIXME segfaults with std::vector [ra41] in test-concrete.C
-// template <class T, std::enable_if_t<!is_ra<T>, int> =0>
-// inline auto shape(T && s)
-// {
-//     std::cout << "SHAPE1... " << s << std::endl;
-//     if (ra::start(s).rank()>0) {
-//         std::cout << "SHAPE1!... " << ra::start(s).size(0) << std::endl;
-//     }
-//     decltype(auto) t = ra::start(std::forward<T>(s));
-//     return map([&t](auto && i) { std::cout << "⟨" << i << ":" << std::flush << t.size(i) << "⟩" << std::endl; return t.size(i); }, ra::iota(t.rank()));
-// }
+// This should be used sparingly; prefer implicit matching.
+template <class V, std::enable_if_t<!has_traits<V>, int> =0> inline constexpr auto shape(V const & v) { return v.shape(); }
+template <class V, std::enable_if_t<has_traits<V>, int> =0> inline constexpr auto shape(V const & v) { return ra_traits<V>::shape(v); }
 
 } // namespace ra
 

@@ -20,8 +20,8 @@ int main()
     int numIters = 301;
 
     int N = 64;
-    ra::Big<float, 3> A({N, N, N}, ra::unspecified);
-    ra::Big<float, 3> B({N, N, N}, ra::unspecified);
+    ra::Big<float, 3> A({N, N, N}, ra::none);
+    ra::Big<float, 3> B({N, N, N}, ra::none);
 
     ra::Iota<int> interior(N/2, N/4);
 // Set up initial conditions: +30 C over an interior block, and +22 C elsewhere

@@ -129,9 +129,9 @@ int main()
     double EPS = 1e-5;
     double h = 1./n; // space = ±1, so grid step = 2h
 
-    ra::Big<ra::Small<double, 3>, 1> V({(n+1)*(n+1)*(n+1)}, ra::unspecified); // vertex coordinates.
-    ra::Big<int, 1> B({6*(n+1)*(n+1)}, ra::unspecified);                      // indices of boundary vertices.
-    ra::Big<Element, 1> E({n*n*n}, ra::unspecified);                          // the elements.
+    ra::Big<ra::Small<double, 3>, 1> V({(n+1)*(n+1)*(n+1)}, ra::none); // vertex coordinates.
+    ra::Big<int, 1> B({6*(n+1)*(n+1)}, ra::none);                      // indices of boundary vertices.
+    ra::Big<Element, 1> E({n*n*n}, ra::none);                          // the elements.
 
 // set vertex coordinates.
     auto ip = ra::iota(n+1);
@@ -170,7 +170,7 @@ int main()
 
 // solve.
     StiffMatrix SM(h, E, B);
-    ra::Big<double, 2> work({3, (n+1)*(n+1)*(n+1)}, ra::unspecified);
+    ra::Big<double, 2> work({3, (n+1)*(n+1)*(n+1)}, ra::none);
     auto t1 = Benchmark::clock::now();
     int its = cghs(SM, b, x, work, EPS);
     auto tsolve = Benchmark::clock::now()-t1;
