@@ -93,7 +93,7 @@ struct max_i
     constexpr static int value = gt_rank(A::value, B::value) ? 0 : 1; // 0 if ra wins, else 1
 };
 
-template <class ... P> using largest_rank = mp::IndexOf<pick_driver, std::tuple<P ...>>;
+template <class ... P> using driver_index = mp::IndexOf<pick_driver, std::tuple<P ...>>;
 template <class ... P> using largest_i = mp::IndexOf<max_i, std::tuple<P ...>>;
 template <class T> using largest_i_tuple = mp::IndexOf<max_i, T>;
 

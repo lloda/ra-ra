@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011-2014, 2016-2017
+// (c) Daniel Llorens - 2011-2014, 2016-2017, 2019
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -46,6 +46,59 @@ auto flat(Op & op, P && ... p)
     return Flat<Op, std::tuple<P ...>> { op, std::tuple<P ...> { std::forward<P>(p) ... } };
 }
 
+template <class P> struct var_rank { using type = mp::bool_t<(std::decay_t<P>::size_s()==DIM_ANY)>; };
+
+// E is Expr or Pick.
+template <int iarg, class E>
+constexpr bool check_expr(int ranka, E const & e)
+{
+    using NotA = typename E::NotA;
+    using PA = typename E::PA;
+    using T = typename E::T;
+    if constexpr (iarg<mp::len<NotA>) {
+        constexpr int B = mp::Ref_<NotA, iarg>::value;
+// Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
+// ct checks require ct rank. This will only do rank checks for fixed rank / var size.
+        using PB = std::decay_t<mp::Ref_<T, B>>;
+        if constexpr (E::rank_s()>=0) {
+            constexpr int rankb = PB::rank_s();
+            constexpr auto f
+                          = [](auto && f, auto k_)
+                            {
+                                constexpr int k = decltype(k_)::value;
+                                static_assert(rankb<=E::rank_s() && "wrong driver selection");
+                                if constexpr (k<rankb) {
+                                    constexpr dim_t sa = PA::size_s(k);
+                                    if constexpr (sa!=DIM_BAD) {
+                                        constexpr dim_t sb = PB::size_s(k);
+                                        if constexpr (sb!=DIM_BAD) {
+                                            static_assert(sa==DIM_ANY || sb==DIM_ANY || sa==sb);
+                                        }
+                                    }
+                                    f(f, mp::int_t<k+1> {});
+                                }
+                            };
+            f(f, mp::int_t<0> {});
+        }
+// rt checks are needed if any sub is rt size, even if E's own size is ct.
+        if constexpr (mp::Apply_<mp::Or, mp::Map_<var_rank, T>>::value) {
+            rank_t rankb = std::get<B>(e.t).rank();
+            assert(rankb<=ranka && "driver not max rank (could be RANK_ANY)");
+            for (int k=0; k!=rankb; ++k) {
+                if (dim_t sa=std::get<E::A>(e.t).size(k); sa!=DIM_BAD) { // maybe == in subexpressions
+                    if (dim_t sb=std::get<B>(e.t).size(k); (sb!=sa) && (sb!=DIM_BAD)) {
+                        std::cerr << "sa " << sa << ", sb " << sb << ": mismatched dimensions" << std::endl;
+                        abort();
+                    }
+                }
+            }
+        }
+        return check_expr<iarg+1>(ranka, e);
+    } else {
+        return true;
+    }
+}
+
 // forward decl in atom.H
 // TODO others:
 // * 'static': Like expr, but the operator is compile time (e.g. ::apply()). Probably no need.
@@ -54,40 +107,31 @@ template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 {
 // A-th argument decides rank and shape.
-    constexpr static int A = largest_rank<P ...>::value;
-    using PA = std::decay_t<mp::Ref_<std::tuple<P ...>, A>>;
+    constexpr static int A = driver_index<P ...>::value;
+    using T = std::tuple<P ...>;
+    using PA = std::decay_t<mp::Ref_<T, A>>;
     using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
 
     Op op;
-    std::tuple<P ...> t;
+    T t;
 
 // If driver is RANK_ANY, driver selection should wait to run time, unless we can tell that RANK_ANY would be selected anyway.
-    constexpr static bool VALID_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
+    constexpr static bool CAN_DRIVE = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
-    template <int iarg>
-    constexpr bool check(int const driver_rank) const
-    {
-        if constexpr (iarg<mp::len<NotA>) {
-            rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
-// Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
-            assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
-            for (int k=0; k!=ranki; ++k) {
-                if (dim_t sk0 = std::get<A>(t).size(k); sk0!=DIM_BAD) { // may be == in subexpressions
-                    dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
-                    assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
-                }
-            }
-            return check<iarg+1>(driver_rank);
-        } else {
-            return true;
-        }
-    }
-// see test-compatibility.C [a1] for forward() here.
+// there's one size (by A), but each arg has its own strides.
+// note: do not require driver. This is needed by check for all leaves.
+    constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
+    constexpr static dim_t size_s() { return PA::size_s(); }
+    constexpr static dim_t size_s(int i) { return PA::size_s(i); }
+    constexpr rank_t rank() const { return std::get<A>(t).rank(); }
+    constexpr static rank_t rank_s() { return PA::rank_s(); }
+    constexpr decltype(auto) shape() const { static_assert(CAN_DRIVE); return std::get<A>(t).shape(); }
+
+// see test/ra-9.C [ra01] for forward() here.
     constexpr Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
-// TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
 // TODO Should check only the driver: do this on ply.
-        CHECK_BOUNDS(check<0>(rank()));
+        CHECK_BOUNDS(check_expr<0>(rank(), *this));
     }
 
     template <class J>
@@ -112,18 +156,6 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
         return ra::flat(op, std::get<I>(t).flat() ...);
     }
 
-// there's one size (by A), but each arg has its own strides. Do not require driver. This is needed by check for all leaves.
-    constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
-    constexpr static dim_t size_s() { return PA::size_s(); }
-    constexpr static dim_t size_s(int i) { return PA::size_s(i); }
-    constexpr rank_t rank() const { return std::get<A>(t).rank(); }
-    constexpr static rank_t rank_s() { return PA::rank_s(); }
-    constexpr decltype(auto) shape() const
-    {
-        static_assert(VALID_DRIVER, "can't drive this xpr");
-        return std::get<A>(t).shape();
-    }
-
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
     operator decltype(*(ra::flat(op, std::get<I>(t).flat() ...)))()
     {
@@ -133,8 +165,8 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
         return *flat();
     }
 
-// forward to make sure value y is not misused as ref. Cf. test-ra-8.C
-#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
+// forward to make sure value y is not misused as ref [ra05].
+#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS

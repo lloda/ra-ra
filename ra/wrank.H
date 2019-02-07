@@ -249,9 +249,10 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
             abort(); return DIM_BAD;
         }
     }
-    constexpr static dim_t size_s() { return DIM_ANY; } // BUG
-    constexpr static rank_t rank() { return FM::depth; } // TODO Invalid for RANK_ANY
-    constexpr static rank_t rank_s() { return FM::depth; } // TODO Invalid for RANK_ANY
+    constexpr static dim_t size_s() { return DIM_ANY; } // BUG [ra07]
+    constexpr static dim_t size_s(int i) { return DIM_ANY; } // BUG [ra07]
+    constexpr static rank_t rank() { return FM::depth; } // TODO Invalid for RANK_ANY [ra07]
+    constexpr static rank_t rank_s() { return FM::depth; } // TODO Invalid for RANK_ANY [ra07]
     constexpr auto shape() const
     {
         std::array<dim_t, FM::depth> s {};
@@ -262,7 +263,7 @@ struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
         return s;
     }
 
-// forward to make sure value y is not misused as ref. Cf. test-ra-8.C.
+// forward to make sure value y is not misused as ref [ra05]
 #define DEF_RYN_ASSIGNOPS(OP)                                           \
     template <class X> void operator OP(X && x)                         \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
@@ -341,7 +342,7 @@ auto from(A && a)
     return a();
 }
 
-// Support dynamic rank for 1 arg only (see test in test-from.C).
+// Support dynamic rank for 1 arg only (see test in test/from.C).
 template <class A, class I0> inline constexpr
 auto from(A && a, I0 && i0)
 {

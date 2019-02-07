@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2015, 2019
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -7,7 +7,7 @@
 // later version.
 
 /// @file tuple-dynamic.H
-/// @brief Use tuples with dynamic parameters.
+/// @brief Using tuples in a dynamic context.
 
 // TODO Think about struct <int k> { int const value = k; constexpr static int static_value = k; }
 // where the tuple can be cast to an array ref.

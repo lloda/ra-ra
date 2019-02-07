@@ -31,7 +31,7 @@
 
 namespace ra {
 
-template <class A> using ra_traits = ra_traits_def<std::decay_t<A>>;
+template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;
 
 template <class T, class A>
 struct ra_traits_def<std::vector<T, A>>
@@ -113,43 +113,6 @@ void resize(Dim & dim, dim_t k)
     static_assert(ra_traits<Dim>::rank_s()==1 || ra_traits<Dim>::rank_s()==RANK_ANY, "bad rank");
     dim.resize(k);
 }
-
-// ---------------------
-// nested_braces
-// ---------------------
-
-// Avoid clash of T with scalar constructors (for rank 0) and raveling init list constructor (for rank 1).
-template <class T, rank_t rank, class Enable=void>
-struct nested_braces { struct list {}; /* not used as argument */ };
-
-template <class T, rank_t rank>
-struct nested_braces<T, rank, std::enable_if_t<(rank==2)>>
-{
-    using list = std::initializer_list<std::initializer_list<T>>;
-    template <size_t N> constexpr static
-    void shape(list l, std::array<dim_t, N> & s)
-    {
-        s[N-2] = l.size();
-        s[N-1] = l.size()>0 ? l.begin()->size() : 0;
-    }
-};
-
-template <class T, rank_t rank>
-struct nested_braces<T, rank, std::enable_if_t<(rank>2)>>
-{
-    using sub = nested_braces<T, rank-1>;
-    using list = std::initializer_list<typename sub::list>;
-    template <size_t N> constexpr static
-    void shape(list l, std::array<dim_t, N> & s)
-    {
-        s[N-rank] = l.size();
-        if (l.size()>0) {
-            sub::template shape(*(l.begin()), s);
-        } else {
-            std::fill(s.begin()+N-rank+1, s.end(), 0);
-        }
-    }
-};
 
 // ---------------------------
 // Indexers TODO traits.H doesn't seem quite the logical place.

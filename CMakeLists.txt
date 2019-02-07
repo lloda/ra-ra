@@ -10,7 +10,7 @@
 cmake_minimum_required (VERSION 3.0)
 project (ra-ra)
 
-foreach (dir test bench examples doc)
+foreach (dir test bench examples docs)
   add_subdirectory (${dir})
 endforeach ()
 

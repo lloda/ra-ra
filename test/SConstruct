@@ -9,7 +9,7 @@
 # later version.
 
 # SConstruct for ra/test
-# FIXME Shared pieces with {examples,bench,doc}/SConstruct
+# FIXME Shared pieces with {examples,bench,docs}/SConstruct
 
 import os, string, atexit
 from os.path import join, abspath
@@ -69,24 +69,18 @@ else:
 tester = ra.to_test_ra(env, variant_dir)
 
 [tester(test)
- for test in ['test-ra-0', 'test-ra-1', 'test-ra-2', 'test-ra-3', 'test-ra-4',
-              'test-ra-6', 'test-ra-7', 'test-ra-8', 'test-ra-9',
-              'test-types', 'test-io', 'test-from', 'test-nested', 'test-owned',
-              'test-ownership', 'test-ply', 'test-small-0', 'test-small-1',
-              'test-big-0', 'test-big-1',
-              'test-return-expr', 'test-reduction', 'test-frame-match',
-              'test-compatibility', 'test-dual', 'test-ra-dual', 'test-stl-compat',
-              'test-where', 'test-tuplelist', 'test-wedge-product', 'test-operators',
-              'test-tensorindex', 'test-explode-collapse', 'test-wrank',
-              'test-optimize', 'test-reshape', 'test-concrete', 'test-bench',
-              'test-iterator-small', 'test-mem-fn',
-              # 'test-end'
-          ]]
+ for test in ['ra-0', 'ra-1', 'ra-2', 'ra-3', 'ra-4', 'ra-6', 'ra-7', 'ra-8', 'ra-9', 'types', 'io',
+              'from', 'nested-0', 'owned', 'ownership', 'ply', 'small-0', 'small-1', 'big-0', 'big-1',
+              'return-expr', 'reduction', 'frame-match', 'compatibility', 'dual', 'ra-dual', 'mem-fn',
+              'stl-compat', 'where', 'tuplelist', 'wedge-product', 'operators', 'tensorindex',
+              'explode-0', 'wrank', 'optimize', 'reshape', 'concrete', 'bench', 'iterator-small',
+              # 'end'
+              ]]
 
-tester('test-ra-10', target='test-ra-10a', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '0'})
-tester('test-ra-10', target='test-ra-10b', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '0'})
-tester('test-ra-10', target='test-ra-10c', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '1'})
-tester('test-ra-10', target='test-ra-10d', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '1'})
+tester('ra-10', target='ra-10a', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '0'})
+tester('ra-10', target='ra-10b', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '0'})
+tester('ra-10', target='ra-10c', cxxflags=['-O3'], cppdefines={'RA_CHECK_BOUNDS': '1'})
+tester('ra-10', target='ra-10d', cxxflags=['-O1'], cppdefines={'RA_CHECK_BOUNDS': '1'})
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/test'))

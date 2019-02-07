@@ -6,15 +6,11 @@ cmake_minimum_required (VERSION 3.0)
 project (ra-test)
 include_directories ("..")
 
-# FIXME add... test-end
+# FIXME add... end
 
-SET (TARGETS test-bench test-big-0 test-big-1 test-check-runtime test-compatibility
-  test-concrete test-dual test-explode-collapse test-frame-match test-from test-io
-  test-iterator-small test-mem-fn test-nested test-operators test-optimize
-  test-owned test-ownership test-ply test-ra-0 test-ra-10 test-ra-1 test-ra-2
-  test-ra-3 test-ra-4 test-ra-6 test-ra-7 test-ra-8 test-ra-9 test-ra-dual
-  test-reduction test-reshape test-return-expr test-small-0 test-small-1
-  test-stl-compat test-tensorindex test-tuplelist test-types test-wedge-product
-  test-where test-wrank)
+SET (TARGETS bench big-0 big-1 check-runtime compatibility concrete dual explode-0 frame-match from
+  io iterator-small mem-fn nested-0 operators optimize owned ownership ply ra-0 ra-10 ra-1 ra-2 ra-3
+  ra-4 ra-6 ra-7 ra-8 ra-9 ra-dual reduction reshape return-expr small-0 small-1 stl-compat
+  tensorindex tuplelist types wedge-product where wrank)
 
 include ("../config/cc.cmake")

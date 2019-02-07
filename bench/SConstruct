@@ -9,7 +9,7 @@
 # later version.
 
 # SConstruct for ra/bench
-# FIXME Shared pieces with {examples,test,doc}/SConstruct
+# FIXME Shared pieces with {examples,test,docs}/SConstruct
 
 import os, string, atexit
 from os.path import join, abspath

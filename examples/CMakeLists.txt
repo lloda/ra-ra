@@ -6,9 +6,7 @@ cmake_minimum_required (VERSION 3.0)
 project (ra-examples)
 include_directories ("..")
 
-# FIXME add... test-end
-
 SET (TARGETS agreement cast deriv explode-collapse indirect laplace2d laplace3d
-  maxwell nested newton outer rangexpr readme slicing small useret view where)
+  maxwell nested newton outer rangexpr readme slicing small useret view where-pick)
 
 include ("../config/cc.cmake")

@@ -4,7 +4,10 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 #+STARTUP: logdone
 
-* TODO Everything [0/4]
+* TODO Everything [0/6]
+  - [ ] Bugs [0/1]
+    - [ ] size_s, rank_s in Ryn:: are broken [ra07]
+    - [ ] ambiguity / bad init in nested constructors [ra45]
   - [ ] Features [0/2]
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
       maybe. One idea is to generalize View (so View<Iota>, etc.) which is
@@ -19,13 +22,14 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
         - [ ] remove const overloads from View::operator()
         - [ ] make View be View<pointer> and not View<value_type>
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
-  - [-] Debug, error report [0/2]
-    - [ ] Runtime error check facility, cf. test/test-check-runtime.C
-    - [-] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.H:513 init<SS>(SS const & s).
+  - [-] Error report, debugging [2/3]
+    - [ ] Optionally throw instead of abort on bounds checks, etc. cf. test/check-runtime.C
+    - [X] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.H:513 init<SS>(SS const & s).
       - [X] for Container constructors
-      - [ ] for Small constructors [ra44]
-  - [-] Building [3/5]
-    - [X] Build doc with cmake
+      - [X] for Small constructors
+    - [X] General static check on prefix matching <2019-02-06 Wed 12:06>
+  - [-] Building, tests [3/5]
+    - [X] Build docs with cmake
     - [X] Support RA_USE_BLAS with cmake (linux)
     - [X] Support RA_USE_BLAS with cmake (mac) <2018-12-07 Fri 16:33>
     - [ ] Make cmake tests respect dependences and able to be run independently.
@@ -33,3 +37,8 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   - [ ] Documentation [0/2]
     - [ ] Complete section on internals
     - [ ] Complete section on other languages, libraries
+    - [ ] Describe xreferenced issues in doc ([raxx], etc.)
+  - [ ] Other [0/1]
+    - [ ] Support tuple as a kind of foreign vector
+      - [ ] Iterator type for tuple (like Vector for std::vector).
+      - [ ] Appropriate ply. Possibly restrict it to rank 1.

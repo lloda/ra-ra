@@ -65,6 +65,13 @@ operator<<(std::ostream & o, A && a)
     return o << format_array(a);
 }
 
+// initializer_list cannot match A && above.
+template <class T> inline
+std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a)
+{
+    return o << format_array(a);
+}
+
 // Static size.
 template <class C> inline
 std::enable_if_t<!is_scalar<C> && ra_traits<C>::size_s()!=DIM_ANY, std::istream &>

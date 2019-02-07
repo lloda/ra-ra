@@ -61,7 +61,7 @@ void ply_index(A && a)
 template <class A> inline
 void ply_ravel(A && a)
 {
-    static_assert(!has_tensorindex<A>, "bad plier for expr");
+    static_assert(!by_index<A>, "bad plier for expr");
 
     rank_t rank = a.rank();
     assert(rank>=0); // FIXME see test in [ra40].
@@ -198,7 +198,7 @@ void until(int const jj, A & a, dim_t const s, S const & ss0)
 template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
 {
-    static_assert(!has_tensorindex<A>, "bad plier for expr");
+    static_assert(!by_index<A>, "bad plier for expr");
     static_assert(std::decay_t<A>::rank_s()==0, "plyf needs static rank");
     *(a.flat());
 }
@@ -206,14 +206,14 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
 template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()==1)>
 {
-    static_assert(!has_tensorindex<A>, "bad plier for expr");
+    static_assert(!by_index<A>, "bad plier for expr");
     subindex<mp::Iota_<1>, 1>(a, a.size(0), a.stride(0));
 }
 
 template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 {
-    static_assert(!has_tensorindex<A>, "bad plier for expr");
+    static_assert(!by_index<A>, "bad plier for expr");
     rank_t const rank = a.rank();
 #if 0 // FIXME both s & j can be constexpr. Try again after gcc 7 (constexpr lambda, for j).
 // find the outermost compact dim.
@@ -241,21 +241,21 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 // ---------------------------
 
 template <class A> inline constexpr
-std::enable_if_t<has_tensorindex<A>>
+std::enable_if_t<by_index<A>>
 ply(A && a)
 {
     ply_index(std::forward<A>(a));
 }
 
 template <class A> inline constexpr
-std::enable_if_t<!has_tensorindex<A> && (std::decay_t<A>::size_s()==DIM_ANY)>
+std::enable_if_t<!by_index<A> && (std::decay_t<A>::size_s()==DIM_ANY)>
 ply(A && a)
 {
     ply_ravel(std::forward<A>(a));
 }
 
 template <class A> inline constexpr
-std::enable_if_t<!has_tensorindex<A> && (std::decay_t<A>::size_s()!=DIM_ANY)>
+std::enable_if_t<!by_index<A> && (std::decay_t<A>::size_s()!=DIM_ANY)>
 ply(A && a)
 {
     plyf(std::forward<A>(a));
@@ -312,13 +312,13 @@ auto ply_index_exit_1(A && a, DEF && def)
     return def;
 }
 
-template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()!=1 || has_tensorindex<A>), int> = 0>
+template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()!=1 || by_index<A>), int> = 0>
 inline decltype(auto)
 ply_exit(A && a, DEF && def)
 {
     return ply_index_exit(std::forward<A>(a), std::forward<DEF>(def));
 }
-template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()==1 && !has_tensorindex<A>), int> = 0>
+template <class A, class DEF, std::enable_if_t<is_iterator<A> && (std::decay_t<A>::rank_s()==1 && !by_index<A>), int> = 0>
 inline decltype(auto)
 ply_exit(A && a, DEF && def)
 {

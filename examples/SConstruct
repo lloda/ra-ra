@@ -9,7 +9,7 @@
 # later version.
 
 # SConstruct for ra/examples
-# FIXME Shared pieces with {test,bench,doc}/SConstruct
+# FIXME Shared pieces with {test,bench,docs}/SConstruct
 
 import os, string, atexit
 from os.path import join, abspath
@@ -67,10 +67,9 @@ else:
     print("[%s] BLAS won't be used." % Dir('.').path)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['view', 'outer', 'slicing', 'where', 'rangexpr', 'useret', 'deriv',
-                 'indirect', 'cast', 'nested', 'agreement', 'small',
-                 'readme', 'explode-collapse',
-                 'newton', 'maxwell', 'laplace2d', 'laplace3d']]
+ for example in ['view', 'outer', 'slicing', 'where-pick', 'rangexpr', 'useret', 'deriv',
+                 'indirect', 'cast', 'nested', 'agreement', 'small', 'readme',
+                 'explode-collapse', 'newton', 'maxwell', 'laplace2d', 'laplace3d']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/examples'))

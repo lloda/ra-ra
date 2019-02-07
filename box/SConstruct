@@ -9,7 +9,7 @@
 # later version.
 
 # SConstruct for ra/examples
-# FIXME Shared pieces with {test,bench,doc}/SConstruct
+# FIXME Shared pieces with {test,bench,docs}/SConstruct
 
 import os, string, atexit
 from os.path import join, abspath
@@ -50,7 +50,7 @@ else:
 
 env.Prepend(CPPPATH=['..', '.'],
             CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-            CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+            CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-Wno-unknown-pragmas', # '-fdiagnostics-color=always',
                       '-finput-charset=UTF-8', '-fextended-identifiers',
                       '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
                       #'-Wconversion',
@@ -67,7 +67,7 @@ else:
     print("[%s] BLAS won't be used." % Dir('.').path)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['view-flat']]
+ for example in ['view-flat', 'tuple-construct']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/box'))

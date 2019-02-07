@@ -1,16 +1,16 @@
 
-// (c) Daniel Llorens - 2013-2016, 2018
+// (c) Daniel Llorens - 2013-2016, 2018-2019
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#pragma once
-#include "ra/expr.H"
-
 /// @file small.H
 /// @brief Arrays with static dimensions. Compare with View, Container.
+
+#pragma once
+#include "ra/expr.H"
 
 #ifndef RA_CHECK_BOUNDS_SMALL
   #ifndef RA_CHECK_BOUNDS
@@ -26,6 +26,66 @@
 #endif
 
 namespace ra {
+
+
+// ---------------------
+// nested braces for Small initializers
+// ---------------------
+
+// The general SmallArray has 4 constructors,
+// 1. The empty constructor.
+// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which I don't think should be required purely for container use.
+// 3. The ravel constructor.
+// 4. The nested constructor.
+// When SmallArray has rank 1, or the first dimension is empty, or the shape is [1] or [], several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of no_arg.
+
+template <class T, class sizes, class Enable=void>
+struct nested_tuple;
+
+// ambiguity with empty constructor and scalar constructor.
+// if size(0) is 0, then prefer the empty constructor.
+// if size(0) is 1...
+template <class sizes> constexpr bool no_nested = (mp::First_<sizes>::value<1);
+template <> constexpr bool no_nested<mp::nil> = true;
+template <> constexpr bool no_nested<mp::int_list<1>> = true;
+template <class T, class sizes>
+using nested_arg = std::conditional_t<no_nested<sizes>,
+                                      std::tuple<no_arg>, // match the template for SmallArray.
+                                      typename nested_tuple<T, sizes>::list>;
+
+// ambiguity with scalar constructors (for rank 0) and nested_tuple (for rank 1).
+template <class sizes> constexpr bool no_ravel = ((mp::len<sizes> <=1) || (mp::Apply_<mp::Prod, sizes>::value <= 1));
+template <class T, class sizes>
+using ravel_arg = std::conditional_t<no_ravel<sizes>,
+                                     std::tuple<no_arg, no_arg>, // match the template for SmallArray.
+                                     mp::MakeList_<mp::Apply_<mp::Prod, sizes>::value, T>>;
+
+template <class T, class sizes, class strides = default_strides<sizes>> struct SmallView; // for cell_iterator_small
+template <class T, class sizes, class strides = default_strides<sizes>,
+          class nested_arg_ = nested_arg<T, sizes>, class ravel_arg_ = ravel_arg<T, sizes>>
+struct SmallArray;
+template <class T, dim_t ... sizes> using Small = SmallArray<T, mp::int_list<sizes ...>>;
+
+template <class T>
+struct nested_tuple<T, mp::nil>
+{
+    using sub = no_arg;
+    using list = std::tuple<no_arg>; // match the template for SmallArray.
+};
+
+template <class T, int S0>
+struct nested_tuple<T, mp::int_list<S0>>
+{
+    using sub = T;
+    using list = mp::MakeList_<S0, T>;
+};
+
+template <class T, int S0, int S1, int ... S>
+struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
+{
+    using sub = Small<T, S1, S ...>;
+    using list = mp::MakeList_<S0, sub>;
+};
 
 
 // --------------------
@@ -66,7 +126,7 @@ struct cell_iterator_small
 // see stl_iterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 // needed because View = View copies contents, not the View itself [ra11]
-    constexpr cell_iterator_small & assign(cell_iterator_small const & ci)
+    constexpr cell_iterator_small & set(cell_iterator_small const & ci)
     {
         c.p = ci.c.p; return *this;
     }
@@ -103,7 +163,7 @@ struct cell_iterator_small
     }
 
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> decltype(auto) operator OP(X && x)               \
+    template <class X> decltype(auto) constexpr operator OP(X && x)     \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
@@ -123,7 +183,10 @@ struct stl_iterator_small
     shape_type i;
 // avoid ii = it.ii, see [ra11] above.
     stl_iterator_small(stl_iterator_small const & it) = default;
-    stl_iterator_small & operator=(stl_iterator_small const & it) { i=it.i; ii.assign(it.ii); return *this; }
+    constexpr stl_iterator_small & operator=(stl_iterator_small const & it)
+    {
+        i=it.i; ii.set(it.ii); return *this;
+    }
 // [ra12] Null p_ so begin()==end() for iterator on empty range. Plying uses sizes so this doesn't matter.
     stl_iterator_small(typename Iterator::atom_type * p_)
         : ii(Iterator::framer==0 ? nullptr : p_),
@@ -208,13 +271,12 @@ struct SmallBase
     using strides = strides_;
     using value_type = T;
 
-    template <class TTT> struct BadDimension
+    template <class TT> struct BadDimension
     {
-        using type = mp::int_t<(TTT::value<0 || TTT::value==DIM_ANY || TTT::value==DIM_BAD)>;
+        using type = mp::int_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     };
     static_assert(!mp::Apply_<mp::Or, mp::Map_<BadDimension, sizes>>::value, "negative dimensions");
-// TODO complete static check on strides.
-    static_assert(mp::len<sizes> == mp::len<strides>, "bad strides");
+    static_assert(mp::len<sizes> == mp::len<strides>, "bad strides"); // TODO full static check on strides.
 
     using Child = Child_<T, sizes, strides>;
 
@@ -222,8 +284,8 @@ struct SmallBase
     constexpr static rank_t rank_s()  { return mp::len<sizes>; }
     constexpr static dim_t size() { return mp::Apply_<mp::Prod, sizes>::value; }
     constexpr static dim_t size_s() { return size(); }
-    constexpr static std::array<dim_t, rank()> ssizes = mp::tuple_copy<sizes, std::array<dim_t, rank()> >::f();
-    constexpr static std::array<dim_t, rank()> sstrides = mp::tuple_copy<strides, std::array<dim_t, rank()> >::f();
+    constexpr static auto ssizes = mp::tuple_copy<sizes, std::array<dim_t, rank()> >::f();
+    constexpr static auto sstrides = mp::tuple_copy<strides, std::array<dim_t, rank()> >::f();
     constexpr static dim_t size(int j) { return ssizes[j]; }
     constexpr static dim_t stride(int j) { return sstrides[j]; }
 
@@ -264,31 +326,33 @@ struct SmallBase
     FOR_EACH(SUBSCRIPTS, /*const*/, const)
 #undef SUBSCRIPTS
 
-// See same thing for View.
+// see same thing for View.
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> constexpr Child & operator OP(X && x)            \
+    template <class X, std::enable_if_t<!mp::is_tuple_v<std::decay_t<X>>, int> =0> \
+    constexpr Child & operator OP(X && x)                               \
     {                                                                   \
         ra::start(static_cast<Child &>(*this)) OP x;                    \
         return static_cast<Child &>(*this);                             \
     }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
-    // Array type is not deduced by (X &&)
-    constexpr Child & operator=(typename nested_braces<T, rank()>::list const x)
+
+    // braces don't match X &&
+    constexpr Child & operator=(nested_arg<T, sizes> const & x)
     {
-        ra::iter<-1>(static_cast<Child &>(*this)) = x;
+        ra::iter<-1>(static_cast<Child &>(*this)) = mp::from_tuple<std::array<typename nested_tuple<T, sizes>::sub, size(0)>>(x);
         return static_cast<Child &>(*this);
     }
-    // Fill row-major ravel for any rank. FIXME Use ra:: traversal need start(iterator).
-    constexpr Child & operator=(std::initializer_list<T> const x)
+    // braces row-major ravel for rank!=1
+    constexpr Child & operator=(ravel_arg<T, sizes> const & x_)
     {
-        assert(size()==dim_t(x.size()));
+        auto x = mp::from_tuple<std::array<T, size()>>(x_);
         auto b = this->begin();
-        for (auto const & xx: x) { *b = xx; ++b; } // std::copy not constexpr
+        for (auto const & xx: x) { *b = xx; ++b; } // std::copy will be constexpr in c++20
         return static_cast<Child &>(*this);
     }
 
-// TODO Would replace by s(ra::iota) if that could be made constexpr
+// TODO would replace by s(ra::iota) if that could be made constexpr
 #define DEF_AS(CONST)                                                   \
     template <int ss, int oo=0>                                         \
     constexpr auto as() CONST                                           \
@@ -302,27 +366,31 @@ struct SmallBase
 
     template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase<SmallView, T, sizes, strides>, c>;
     template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<SmallView, T const, sizes, strides>, c>;
-    template <rank_t c=0> constexpr auto iter() { return iterator<c>(data()); }
-    template <rank_t c=0> constexpr auto iter() const { return const_iterator<c>(data()); }
+    template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
+    template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
 // FIXME see if we need to extend this for cellr!=0.
 // template <class P> using stl_iterator = std::conditional_t<have_default_strides, P, stl_iterator<Iterator<P>>>;
-    constexpr static bool have_default_strides = std::is_same_v<strides, default_strides_<sizes>>;
+    constexpr static bool have_default_strides = std::is_same_v<strides, default_strides<sizes>>;
     template <class I, class P> using pick_stl_iterator = std::conditional_t<have_default_strides, P, ra::stl_iterator_small<I>>;
     using stl_iterator = pick_stl_iterator<iterator<0>, T *>;
     using stl_const_iterator = pick_stl_iterator<const_iterator<0>, T const *>;
 
 // TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
-    constexpr auto begin() { return stl_iterator(data()); }
-    constexpr auto begin() const { return stl_const_iterator(data()); }
-    constexpr auto end() { return stl_iterator(have_default_strides ? data()+size() : nullptr); }
-    constexpr auto end() const { return stl_const_iterator(have_default_strides ? data()+size() : nullptr); }
+// TODO With default strides I can just return p. Make sure to test before changing this.
+    constexpr stl_iterator begin() { return data(); }
+    constexpr stl_const_iterator begin() const { return data(); }
+    constexpr stl_iterator end() { return (have_default_strides ? data()+size() : nullptr); }
+    constexpr stl_const_iterator end() const { return (have_default_strides ? data()+size() : nullptr); }
+
+// allowing rank 1 for coord types
+    constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
 
 // Renames.
 #define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<req_dim0__, req_dim1__>>>, \
+        static_assert(std::is_same_v<strides, default_strides<mp::int_list<req_dim0__, req_dim1__>>>, \
                       "renames only on default strides");               \
         static_assert(size(0)==req_dim0__ && size(1)==req_dim1__, "dimension error"); \
         return reinterpret_cast<name__<T> CONST &>(*this);              \
@@ -340,7 +408,7 @@ struct SmallBase
 #define COMP_RENAME_C(name__, dim0__, CONST)                            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same_v<strides, default_strides_<mp::int_list<dim0__>>>, \
+        static_assert(std::is_same_v<strides, default_strides<mp::int_list<dim0__>>>, \
                       "renames only on default strides");               \
         static_assert(size(0)==dim0__, "dimension error");              \
         return reinterpret_cast<name__<T> CONST &>(*this);              \
@@ -375,47 +443,40 @@ struct SmallView: public SmallBase<SmallView, T, sizes, strides>
     constexpr SmallView(T * p_): p(p_) {}
     constexpr SmallView(SmallView const & s): p(s.p) {}
 
-// allowing rank 1 for coord types
-    constexpr static bool convertible_to_scalar = rank()==0 || (rank()==1 && size()==1);
-    constexpr operator T & () { static_assert(convertible_to_scalar); return p[0]; }
-    constexpr operator T const & () const { static_assert(convertible_to_scalar); return p[0]; };
+    constexpr operator T & () { static_assert(Base::convertible_to_scalar); return p[0]; }
+    constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return p[0]; };
 };
 
-template <class T, class sizes, class strides>
-struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
+template <class T, class sizes, class strides, class ... nested_args, class ... ravel_args>
+struct SmallArray<T, sizes, strides, std::tuple<nested_args ...>, std::tuple<ravel_args ...>>
+    : public SmallBase<SmallArray, T, sizes, strides>
 {
     using Base = SmallBase<SmallArray, T, sizes, strides>;
-    using Base::rank, Base::size, Base::operator=;
+    using Base::rank, Base::size;
 
     T p[Base::size()];
 
     constexpr SmallArray(): p() {}
-    template <class X>
-    constexpr SmallArray(X && x): p()  /* init for constexpr */
+    // braces don't match (X &&)
+    constexpr SmallArray(nested_args const & ... x): p()
+    {
+        static_cast<Base &>(*this) = nested_arg<T, sizes> { x ... };
+    }
+    // braces row-major ravel for rank!=1
+    constexpr SmallArray(ravel_args const & ... x): p()
+    {
+        static_cast<Base &>(*this) = ravel_arg<T, sizes> { x ... };
+    }
+    constexpr SmallArray(T const & t): p() // needed if T isn't registered as scalar [ra44]
+    {
+        for (auto & x: p) { x = t; } // std::fill will be constexpr in c++20
+    }
+    // X && x makes this a better match than nested_args ... for 1 argument.
+    template <class X, std::enable_if_t<!std::is_same_v<T, std::decay_t<X>>
+                                        && !mp::is_tuple_v<std::decay_t<X>>, int> =0>
+    constexpr SmallArray(X && x): p()
     {
         static_cast<Base &>(*this) = x;
-    }
-    // List type is not deduced by (X &&)
-    constexpr SmallArray(typename nested_braces<T, Base::rank()>::list x): p()
-    {
-        static_cast<Base &>(*this) = x;
-    }
-    // List type is not deduced by (X &&)
-    constexpr SmallArray(std::initializer_list<T> x): p()
-    {
-        static_cast<Base &>(*this) = x;
-    }
-    // test-small-0 and test-small-1 pass without these two; make sure they're needed.
-    // 1. Remove for start(begin) or start(begin, end); only here because std::vector has it
-    template <class P>
-    constexpr SmallArray(P begin, P end)
-    {
-        std::copy(begin, end, this->begin());
-    }
-    // 2. Special case is needed if ra::start() doesn't acknowledge T as scalar
-    constexpr SmallArray(T const & t)
-    {
-        std::fill(this->begin(), this->end(), t);
     }
 
     constexpr operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
@@ -423,15 +484,25 @@ struct SmallArray: public SmallBase<SmallArray, T, sizes, strides>
 
 // BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
 #define DEF_SCALARS(CONST)                                              \
-    constexpr operator T CONST & () CONST                               \
+    constexpr operator T CONST & () CONST { static_assert(Base::convertible_to_scalar); return p[0]; } \
+    T CONST & back() CONST                                              \
     {                                                                   \
-        static_assert(rank()==0 || (rank()==1 && size()==1), "bad rank"); /* rank 1 for coord types */ \
-        return p[0];                                                    \
-    };                                                                  \
-    T CONST & back() CONST { static_assert(Base::rank()==1, "bad rank for back"); return (*this)[Base::size()-1]; }
+        static_assert(Base::rank()==1, "bad rank for back");            \
+        static_assert(Base::size()>0, "bad size for back");             \
+        return (*this)[Base::size()-1];                                 \
+    }
     FOR_EACH(DEF_SCALARS, /* const */, const)
 #undef DEF_SCALARS
 };
+
+// FIXME unfortunately necessary. Try to remove the need, also of (S, begin, end) in Container, once the nested_tuple constructors work.
+template <class A, class I, class J>
+A ravel_from_iterators(I && begin, J && end)
+{
+    A a;
+    std::copy(std::forward<I>(begin), std::forward<J>(end), a.begin());
+    return a;
+}
 
 // FIXME Type_ seems superfluous
 template <template <class, class, class> class Type_,
@@ -467,6 +538,52 @@ struct ra_traits_def<SmallArray<T, sizes, strides>>: public ra_traits_small<Smal
 
 template <class T, class sizes, class strides>
 struct ra_traits_def<SmallView<T, sizes, strides>>: public ra_traits_small<SmallView, T, sizes, strides> {};
+
+
+// ---------------------
+// Support for builtin arrays
+// ---------------------
+
+template <class T, class I=std::make_integer_sequence<int, std::rank_v<T>>>
+struct builtin_array_sizes;
+
+template <class T, int ... I>
+struct builtin_array_sizes<T, std::integer_sequence<int, I ...> >
+{
+    using type = mp::int_list<std::extent_v<T, I> ...>;
+};
+
+template <class T> using builtin_array_sizes_t = typename builtin_array_sizes<T>::type;
+
+template <class T>
+struct builtin_array_types
+{
+// do preserve const.
+    using A = std::remove_volatile_t<std::remove_reference_t<T>>;
+    using E = std::remove_all_extents_t<A>;
+    using sizes = builtin_array_sizes_t<A>;
+    using view = SmallView<E, sizes>;
+};
+
+// forward declared in type.H.
+template <class T, std::enable_if_t<is_builtin_array<T>, int>>
+inline constexpr auto start(T && t)
+{
+    using Z = builtin_array_types<T>;
+    return typename Z::view((typename Z::E *)(t)).iter();
+}
+
+template <class T>
+struct ra_traits_def<T, std::enable_if_t<is_builtin_array<T>>>
+{
+    using S = typename builtin_array_types<T>::view;
+// FIXME messy start()
+    constexpr static decltype(auto) shape(T const & t) { return start(t).shape(); }
+    constexpr static dim_t size(T const & t) { return S::size(); }
+    constexpr static dim_t size_s() { return S::size_s(); }
+    constexpr static rank_t rank(T const & t) { return S::rank(); }
+    constexpr static rank_t rank_s() { return S::rank_s(); }
+};
 
 
 // --------------------
@@ -593,28 +710,6 @@ auto explode(SmallBase<Child, T, sizes, strides> & a)
     static_assert(std::is_same_v<mp::Drop_<strides, ra-rb>, typename super_t::strides>);
     using cstrides = mp::Map_<explode_divop<super_t::size_s()>::template op, mp::Take_<strides, ra-rb>>;
     return SmallView<super_t, mp::Take_<sizes, ra-rb>, cstrides>((super_t *) a.data());
-}
-
-template <class T, class I=std::make_integer_sequence<int, std::rank_v<T>>>
-struct builtin_array_sizes;
-
-template <class T, int ... I>
-struct builtin_array_sizes<T, std::integer_sequence<int, I ...> >
-{
-    using type = mp::int_list<std::extent_v<T, I> ...>;
-};
-
-template <class T> using builtin_array_sizes_t = typename builtin_array_sizes<T>::type;
-
-// forward declared in type.H.
-template <class T, std::enable_if_t<is_builtin_array<T>, int>>
-inline constexpr auto start(T && t)
-{
-// preserve const.
-    using A = std::remove_volatile_t<std::remove_reference_t<T>>;
-    using E = std::remove_all_extents_t<A>;
-    using sizes = builtin_array_sizes_t<A>;
-    return SmallView<E, sizes, default_strides_<sizes>>((E *)(t)).iter();
 }
 
 } // namespace ra

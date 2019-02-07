@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2013-2014, 2017-2018
+// (c) Daniel Llorens - 2013-2014, 2017-2019
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -31,11 +31,49 @@ namespace ra {
 
 
 // --------------------
+// nested braces for Container initializers
+// --------------------
+
+// Avoid clash of T with scalar constructors (for rank 0).
+template <class T, rank_t rank, class Enable=void>
+struct nested_braces { using list = no_arg; };
+
+template <class T, rank_t rank>
+struct nested_braces<T, rank, std::enable_if_t<(rank==1)>>
+{
+    using list = std::initializer_list<T>;
+    template <size_t N> constexpr static
+    void shape(list l, std::array<dim_t, N> & s)
+    {
+        static_assert(N>0);
+        s[N-1] = l.size();
+    }
+};
+
+template <class T, rank_t rank>
+struct nested_braces<T, rank, std::enable_if_t<(rank>1)>>
+{
+    using sub = nested_braces<T, rank-1>;
+    using list = std::initializer_list<typename sub::list>;
+    template <size_t N> constexpr static
+    void shape(list l, std::array<dim_t, N> & s)
+    {
+        s[N-rank] = l.size();
+        if (l.size()>0) {
+            sub::template shape(*(l.begin()), s);
+        } else {
+            std::fill(s.begin()+N-rank+1, s.end(), 0);
+        }
+    }
+};
+
+
+// --------------------
 // Big iterator
 // --------------------
 // TODO Refactor with cell_iterator_small / stl_iterator_small for SmallView?
 
-// V is View, FIXME Parameterize? apparently only for order-of-decl.
+// V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_=0>
 struct cell_iterator
 {
@@ -54,7 +92,8 @@ struct cell_iterator
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
 
-    using shape_type = std::conditional_t<rank_s()==DIM_ANY, std::vector<dim_t>, Small<dim_t, rank_s()>>;
+    using shape_type = std::conditional_t<rank_s()==DIM_ANY, std::vector<dim_t>,
+                                          Small<dim_t, rank_s()==DIM_ANY ? 0 : rank_s()>>; // still needs protection :-/
     using atom_type = typename ra_traits<V>::value_type;
     using cell_type = View<atom_type, cellr>;
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
@@ -82,12 +121,9 @@ struct cell_iterator
         dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this;
     }
 
-    constexpr static dim_t size_s()
-    {
-        constexpr dim_t fullsize_s = ra_traits<V>::size_s();
-        static_assert(fullsize_s==DIM_ANY || ra_traits<cell_type>::size_s()>0); // eg for  rank 0, size_s is 1.
-        return fullsize_s==DIM_ANY ? DIM_ANY : fullsize_s / ra_traits<cell_type>::size_s();
-    }
+    constexpr static dim_t size_s() { return 0==rank_s() ? 1 : DIM_ANY; }
+    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i<rank_s()); return DIM_ANY; }
+
     constexpr shape_type shape() const
     {
         rank_t const iend = rank();
@@ -174,6 +210,10 @@ struct stl_iterator
 // Dope vector element
 struct Dim { dim_t size, stride; };
 
+// For debugging
+inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
+{ o << "[Dim " << dim.size << " " << dim.stride << "]"; return o; }
+
 // Always C order. If you need another, transpose this.
 // Works on dim vector with sizes already assigned, so that I can work from an expr. Not pretty though.
 template <class D>
@@ -250,14 +290,15 @@ dim_t proddim(D d, D dend)
         ra::start(*this) = x;                                           \
         return *this;                                                   \
     }                                                                   \
-    /* Array type is not deduced by (X &&) */                           \
+    /* array type is not deduced by (X &&) */                           \
     View & operator=(typename nested_braces<T, RANK>::list x)           \
     {                                                                   \
         ra::iter<-1>(*this) = x;                                        \
         return *this;                                                   \
     }                                                                   \
-    /* Fill row-major ravel for any rank. TODO Use ra:: traversal */    \
-    View & operator=(std::initializer_list<T> const x)                  \
+    /* braces row-major ravel for rank!=1 */                            \
+    using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>; \
+    View & operator=(ravel_arg const x)                                 \
     {                                                                   \
         assert(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
         std::copy(x.begin(), x.end(), this->begin());                   \
@@ -311,8 +352,7 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src)
 template <class T>
 struct const_atom
 {
-    struct null {};
-    using type = std::conditional_t<std::is_const_v<T>, null, T const>;
+    using type = std::conditional_t<std::is_const_v<T>, no_arg, T const>;
 };
 
 
@@ -372,9 +412,15 @@ struct View
     template <class  I>                                                 \
     auto at(I && i) CONST                                               \
     {                                                                   \
-        using Sub = View<T CONST, rank_diff(RANK, std::decay_t<I>::size_s())>; /* gcc accepts i.size() */ \
-        return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()), \
-                data() + Indexer1::index_p(dim, i) };                   \
+        constexpr rank_t subrank = rank_diff(RANK, std::decay_t<I>::size_s());  /* gcc accepts i.size() */  \
+        using Sub = View<T CONST, subrank>;                             \
+        if constexpr (subrank==RANK_ANY) {                              \
+            return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()),  /* Dimv is std::vector */ \
+                    data() + Indexer1::index_p(dim, i) };               \
+        } else {                                                        \
+            return Sub { typename Sub::Dimv(ptr(dim.begin()+i.size(0))),  /* Dimv is ra::Small */ \
+                    data() + Indexer1::index_p(dim, i) };               \
+        }                                                               \
     }                                                                   \
     decltype(auto) operator[](dim_t const i) CONST                      \
     {                                                                   \
@@ -398,9 +444,7 @@ struct View
         return *reinterpret_cast<View<typename const_atom<T>::type, RANK> const *>(this);
     }
 
-// conversions to scalar.
-// static_assert fails on gcc 8.2 due to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87093, I think.
-// FIXME Recheck on gcc 9 [ra43].
+// conversions to scalar. The static asserts fail due to a bug in gcc 8.2 [ra43]. Recheck on gcc 9.
     operator T & () { /* static_assert(RANK==0, "bad rank"); */ assert(RANK==0); return data()[0]; }
     operator T const & () const { /* static_assert(RANK==0, "bad rank"); */ assert(RANK==0); return data()[0]; }
 };
@@ -440,7 +484,7 @@ struct View<T, RANK_ANY>
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; }
 
-// Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case.
+// Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar).
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I, std::enable_if_t<(is_beatable<I>::value && ...), int> = 0> \
     auto operator()(I && ... i) CONST                                   \
@@ -464,7 +508,7 @@ struct View<T, RANK_ANY>
     template <class I>                                                  \
     auto at(I && i) CONST                                               \
     {                                                                   \
-        return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), \
+        return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), /* Dimv is std::vector */ \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
     constexpr T CONST & operator[](dim_t const i) CONST                 \
@@ -528,8 +572,8 @@ template <class V> struct storage_traits
 template <class T_, class A> struct storage_traits<std::vector<T_, A>>
 {
     using T = T_;
-    static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); } // BUG uses T(), so would need a create(, T) ...
-    static T const * data(std::vector<T, A> const & v) { return v.data(); } // BUG not for std::vector<bool>
+    static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); }
+    static T const * data(std::vector<T, A> const & v) { return v.data(); } // BUG not if T = bool
     static T * data(std::vector<T, A> & v) { return v.data(); }
 };
 
@@ -557,10 +601,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     using T = typename storage_traits<Store>::T;
     using View = ra::View<T, RANK>;
     using View::rank_s;
-
-    struct null {};
-    using shape_arg = std::conditional_t<RANK==RANK_ANY, std::initializer_list<dim_t>,
-                                         mp::MakeList_<RANK==RANK_ANY ? 0 : RANK, dim_t>>; // still need to avoid instantiation
+    using shape_arg = typename View::template iterator<0>::shape_type;
 
     View & view() { return *this; }
     View const & view() const { return *this; }
@@ -584,7 +625,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         View::dim = w.dim;
         View::p = storage_traits<Store>::data(store);
     }
-// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test-ownership.C [ra20].
+
+// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.C [ra20].
 // TODO do this through .set() op.
 // TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     Container & operator=(Container && w)
@@ -609,7 +651,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         return *this;
     }
 
-// Provided b/c want {} to call initializer_list constructor below. TODO Why do I need to init p; warning on test-io.C.
+// Provided so that {} calls shape_arg constructor below.
     Container()
     {
         for (Dim & dimi: View::dim) { dimi = {0, 1}; } // 1 so we can push_back()
@@ -618,62 +660,48 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class S> void init(S && s)
     {
         auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s);
-        static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape");
-        constexpr dim_t sr = decltype(w)::size_s();
-        static_assert(sr==RANK || sr==DIM_ANY || RANK==RANK_ANY, "size mismatch for init shape");
+        static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape"); // I decided not to accept rank extension here.
 // [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)). Not being able to traverse backwards hurts here. See other uses of ra::vector here.
-// BUG if View::dim already has size, we shouldn't require it from w :-/ although this is an unusual case.
-        ra::resize(View::dim, w.size(0));
+        if constexpr (RANK==RANK_ANY) {
+            ra::resize(View::dim, w.size(0));
+        }
         ra::vector(View::dim) = w;
         dim_t t = filldim(View::dim.size(), View::dim.end());
         store = storage_traits<Store>::create(t);
         View::p = storage_traits<Store>::data(store);
     }
 
+// FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of view_.operator=.
+// store(x) avoids it for Big, but doesn't work for Unique. Should construct in place as std::vector does.
     template <class Pbegin> void fill1(dim_t xsize, Pbegin xbegin)
     {
         CHECK_BOUNDS(this->size()==xsize && "mismatched sizes");
         std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
     }
 
-// shape_arg overloads handle {...} arguments. Using a tuple with positive RANK let us handle the empty case (wouldn't work with array arg) and check the size at compile time (wouldn't work with std::initializer_list).
+// shape_arg overloads handle {...} arguments. Size check is courtesy of conversion (if shape_arg is Small) or init().
 
 // explicit shape.
-    Container(shape_arg const & s, none_t)
-    {
-        if constexpr (RANK==RANK_ANY) {
-            init(s);
-        } else {
-            init(mp::from_tuple<std::array<dim_t, RANK>>(s));
-        }
-    }
-    template <class SS> Container(SS && s, none_t) { init(s); }
-    template <class XX> Container(shape_arg const & s, XX && x): Container(s, none) { static_cast<View &>(*this) = x; }
-    template <class SS, class XX> Container(SS && s, XX && x): Container(s, none) { static_cast<View &>(*this) = x; }
+    Container(shape_arg const & s, none_t) { init(s); }
+    template <class XX> Container(shape_arg const & s, XX && x): Container(s, none) { view() = x; }
 
 // shape from data.
-    template <class XX> Container(XX && x): Container(start(x).shape(), none) { static_cast<View &>(*this) = x; }
+    template <class XX> Container(XX && x): Container(ra::shape(x), none) { view() = x; }
     Container(typename nested_braces<T, RANK>::list x)
     {
         static_assert(RANK!=RANK_ANY);
         std::array<dim_t, RANK> s;
         nested_braces<T, RANK>::template shape(x, s);
         init(s);
-        static_cast<View &>(*this) = x;
-    }
-// FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of view_.operator=.
-// store(x) avoids it for Big, but doesn't work for Unique. Should construct in place as std::vector does.
-    Container(std::initializer_list<T> x): Container({dim_t(x.size())}, none)
-    {
-        static_assert(RANK==RANK_ANY || RANK==1, "Plain initializer list can only initialize rank 1 array");
-        fill1(x.size(), x.begin());
+        view() = x;
     }
 
-// shape + ravel. // TODO Maybe remove these? See also small.H.
+// braces row-major ravel for rank!=1
+    Container(typename View::ravel_arg x)
+        : Container({dim_t(x.size())}, none) { fill1(x.size(), x.begin()); }
+
+// shape + row-major ravel. // TODO Maybe remove these? See also small.H.
     Container(shape_arg const & s, std::initializer_list<T> x)
-        : Container(s, none) { fill1(x.size(), x.begin()); }
-    template <class SS>
-    Container(SS const & s, std::initializer_list<T> x)
         : Container(s, none) { fill1(x.size(), x.begin()); }
     template <class TT>
     Container(shape_arg const & s, TT * p)
@@ -682,19 +710,25 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container(shape_arg const & s, P pbegin, P pend)
         : Container(s, none) { fill1(this->size(), pbegin); }
 
+// these are needed when shape_arg is std::vector, since that doesn't handle conversions like Small does.
+    template <class SS> Container(SS && s, none_t) { init(s); }
+    template <class SS, class XX> Container(SS && s, XX && x): Container(s, none) { view() = x; }
+    template <class SS> Container(SS const & s, std::initializer_list<T> x)
+        : Container(s, none) { fill1(x.size(), x.begin()); }
+
     using View::operator=;
 
 // only for some kinds of store.
     void resize(dim_t const s)
     {
-        assert(this->rank()>0);
-        store.resize(proddim(View::dim.begin()+1, View::dim.end())*s /* std::unspecified_t someday... */);
+        static_assert(RANK==RANK_ANY || RANK>0); assert(this->rank()>0);
+        store.resize(proddim(View::dim.begin()+1, View::dim.end())*s);
         View::dim[0].size = s;
         View::p = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
-        assert(this->rank()>0);
+        static_assert(RANK==RANK_ANY || RANK>0); assert(this->rank()>0);
         store.resize(proddim(View::dim.begin()+1, View::dim.end())*s, t);
         View::dim[0].size = s;
         View::p = store.data();
@@ -702,14 +736,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
-        assert(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
         store.push_back(std::move(t));
         ++View::dim[0].size;
         View::p = store.data();
     }
     void push_back(T const & t)
     {
-        assert(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
         store.push_back(t);
         ++View::dim[0].size;
         View::p = store.data();
@@ -717,14 +751,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A>
     void emplace_back(A && ... a)
     {
-        assert(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
         store.emplace_back(std::forward<A>(a) ...);
         ++View::dim[0].size;
         View::p = store.data();
     }
     void pop_back()
     {
-        assert(this->rank()==1 && View::dim[0].size>0);
+        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
+        assert(View::dim[0].size>0);
         store.pop_back();
         --View::dim[0].size;
     }
@@ -732,10 +767,10 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         return this->size()==0;
     }
-    T const & back() const { assert(this->rank()==1 && "bad rank for back"); return store[this->size()-1]; }
-    T & back() { assert(this->rank()==1 && "bad rank for back"); return store[this->size()-1]; }
+    T const & back() const { CHECK_BOUNDS(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
+    T & back() { CHECK_BOUNDS(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
 
-// Container is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or elidable.
+// Container is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or ellidable.
 
     auto begin() { assert(is_c_order(*this)); return this->data(); }
     auto begin() const { assert(is_c_order(*this)); return this->data(); }

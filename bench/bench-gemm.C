@@ -148,7 +148,7 @@ int main()
             return c;
         };
 
-// See test-wrank.C "outer product variants" for the logic.
+// See test/wrank.C "outer product variants" for the logic.
 // TODO based on this, allow a Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k) without using TensorIndex (no ply_index).
     auto gemm_reduce_k = [&](auto const & a, auto const & b)
         {

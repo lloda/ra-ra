@@ -539,7 +539,7 @@ struct Combinations
          typename Combinations<Rest, K, N-1>::type
         >::type;
 };
-// In this case, return a list with one element: the null list.
+// In this case, return a list with one element: the empty list.
 template <class A, int N>
 struct Combinations<A, 0, N>
 {

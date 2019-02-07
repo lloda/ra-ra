@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2016-2017
+// (c) Daniel Llorens - 2016-2017, 2019
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -136,41 +136,30 @@ template <class P0, class ... P, int ... I>
 struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
 {
 // A-th argument decides rank and shape.
-    constexpr static int A = largest_rank<P0, P ...>::value;
-    using PA = std::decay_t<mp::Ref_<std::tuple<P0, P ...>, A>>;
+    constexpr static int A = driver_index<P0, P ...>::value;
+    using T = std::tuple<P0, P ...>;
+    using PA = std::decay_t<mp::Ref_<T, A>>;
     using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
 
-    std::tuple<P0, P ...> t;
+    T t;
 
 // If driver is RANK_ANY, driver selection should wait til run time, unless we can tell that RANK_ANY would be selected anyway.
-    constexpr static bool VALID_DRIVER = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
+    constexpr static bool CAN_DRIVE = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
-    template <int iarg>
-    constexpr bool check(int const driver_rank) const
-    {
-        if constexpr (iarg<mp::len<NotA>) {
-            rank_t ranki = std::get<mp::Ref_<NotA, iarg>::value>(t).rank();
-// Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
-            assert(ranki<=driver_rank && "driver not max rank (could be RANK_ANY)");
-            for (int k=0; k!=ranki; ++k) {
-                dim_t sk0 = std::get<A>(t).size(k);
-                if (sk0!=DIM_BAD) { // may be == in subexpressions
-                    dim_t sk = std::get<mp::Ref_<NotA, iarg>::value>(t).size(k);
-                    assert((sk==sk0 || sk==DIM_BAD) && "mismatched dimensions");
-                }
-            }
-            return check<iarg+1>(driver_rank);
-        } else {
-            return true;
-        }
-    }
+// there's one size (by A), but each arg has its own strides.
+// note: do not require driver. This is needed by check for all leaves.
+    constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
+    constexpr static dim_t size_s(int i) { return PA::size_s(i); }
+    constexpr static dim_t size_s() { return PA::size_s(); }
+    constexpr rank_t rank() const { return std::get<A>(t).rank(); }
+    constexpr static rank_t rank_s() { return PA::rank_s(); }
+    constexpr decltype(auto) shape() const { static_assert(CAN_DRIVE); return std::get<A>(t).shape(); }
 
-// see test-compatibility.C [a1] for forward() here.
+// see test/ra-9.C [ra01] for forward() here.
     constexpr Pick(P0 p0_, P ... p_): t(std::forward<P0>(p0_), std::forward<P>(p_) ...)
     {
-// TODO Try to static_assert. E.g., size_s() vs size_s() can static_assert if we try real3==real2.
 // TODO Should check only the driver: do this on ply.
-        CHECK_BOUNDS(check<0>(rank()));
+        CHECK_BOUNDS(check_expr<0>(rank(), *this));
     }
 
     template <class J>
@@ -195,19 +184,6 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
         return pick_flat(std::get<I>(t).flat() ...);
     }
 
-// there's one size (by A), but each arg has its own strides.
-// Note: do not require driver. This is needed by check for all leaves.
-    constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
-    constexpr static dim_t size_s(int i) { return PA::size_s(i); }
-    constexpr static dim_t size_s() { return PA::size_s(); }
-    constexpr rank_t rank() const { return std::get<A>(t).rank(); }
-    constexpr static rank_t rank_s() { return PA::rank_s(); }
-    constexpr decltype(auto) shape() const
-    {
-        static_assert(VALID_DRIVER, "can't drive this xpr");
-        return std::get<A>(t).shape();
-    }
-
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
     operator decltype(*(pick_flat(std::get<I>(t).flat() ...)))()
     {
@@ -217,7 +193,7 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
         return *flat();
     }
 
-// forward to make sure value y is not misused as ref. Cf. test-ra-8.C
+// forward to make sure value y is not misused as ref [ra05]
 #define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)

@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011-2016
+// (c) Daniel Llorens - 2011-2016, 2019
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -39,11 +39,11 @@ struct TensorIndex
     constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
+    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k<=w); return DIM_BAD; }
 
     template <class I> constexpr value_type at(I const & i) const { return value_type(i[w]); }
-    constexpr void adv(rank_t k, dim_t d) {}
-    constexpr dim_t stride(int i) const { assert(w<0); return 0; } // used by Expr::stride_t.
-    constexpr value_type * flat() const { assert(w<0); return nullptr; } // used by type signatures.
+    constexpr dim_t stride(int i) const { assert(0); return 0; } // used by Expr::stride_t.
+    constexpr value_type * flat() const { assert(0); return nullptr; } // used by type signatures.
 };
 
 #define DEF_TENSORINDEX(i) constexpr TensorIndex<i, int> JOIN(_, i) {};
@@ -68,8 +68,9 @@ struct Scalar
     using C = C_;
     C c;
 
-    constexpr static dim_t size(int k) { assert(0); return 0; } // used in shape checks with dynamic rank.
+    constexpr static dim_t size(int k) { assert(0); return DIM_BAD; } // used in shape checks with dynamic rank.
     constexpr static dim_t size_s() { return 1; }
+    constexpr static dim_t size_s(int k) { assert(0); return DIM_BAD; }
     constexpr static rank_t rank() { return 0; }
     constexpr static rank_t rank_s() { return 0; }
     constexpr static auto shape() { return std::array<dim_t, 0> {}; }
@@ -81,7 +82,7 @@ struct Scalar
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
 
-#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
@@ -108,19 +109,20 @@ struct Vector
     constexpr dim_t size() const { return traits::size(v); }
     constexpr dim_t size(int i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
     constexpr static dim_t size_s() { return traits::size_s(); }
+    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i==0); return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr auto shape() const { return std::array<dim_t, 1> { dim_t(traits::size(v)) }; }
+    constexpr auto shape() const { return std::array<dim_t, 1> { traits::size(v) }; }
 
-// start() doesn't do this, but FIXME? Expr, etc. still does. See [ra35] in test-ra-9.C.
+// start() doesn't do this, but FIXME? Expr, etc. still does. See [ra35] in test/ra-9.C.
 // FIXME these should never be called to convert Vector<V> to Vector<V&> etc.
-    Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p__(v.begin()) {}; // looks like shouldn't happen
-    Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p__(v.begin()) {};
-    Vector(Vector<std::remove_reference_t<V> &> const & a): v(a.v), p__(v.begin()) {};
-    Vector(Vector<std::remove_reference_t<V> &> && a): v(a.v), p__(v.begin()) {};
+    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p__(v.begin()) {}; // looks like shouldn't happen
+    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p__(v.begin()) {};
+    constexpr Vector(Vector<std::remove_reference_t<V> &> const & a): v(a.v), p__(v.begin()) {};
+    constexpr Vector(Vector<std::remove_reference_t<V> &> && a): v(a.v), p__(v.begin()) {};
 
-// see test-compatibility.C [a1] for forward() here.
-    Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
+// see test/ra-9.C [ra01] for forward() here.
+    constexpr Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
 
     template <class I>
     decltype(auto) at(I const & i)
@@ -130,7 +132,7 @@ struct Vector
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-// k>0 happens on frame-matching when the axes k>0 can't be unrolled; see [trc-01] in test-compatibility.C.
+// k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra03]
 // k==0 && d!=1 happens on turning back at end of ply; TODO we need this only on outer products and such.
         CHECK_BOUNDS(d==1 || d<0);
         p__ += (k==0) * d;
@@ -147,8 +149,9 @@ struct Vector
 
 template <class V> inline constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
 
-// Like Vector, but on the iterator itself, so no size, P only needs to have +=, *, [].
+// For STL iterators, no size. P needs to have advance(), *, and [] if used with by_index/ply_index.
 // ra::ra_traits_def<P> doesn't need to be defined.
+// FIXME a type that accepts (begin, end).
 template <class P>
 struct Ptr
 {
@@ -157,9 +160,10 @@ struct Ptr
     constexpr static dim_t size() { return DIM_BAD; }
     constexpr static dim_t size(int i) { CHECK_BOUNDS(i==0); return DIM_BAD; }
     constexpr static dim_t size_s() { return DIM_BAD; }
+    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i==0); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr static auto shape() { return std::array<dim_t, 1> { dim_t(DIM_BAD) }; }
+    constexpr static auto shape() { return std::array<dim_t, 1> { DIM_BAD }; }
 
     template <class I>
     constexpr decltype(auto) at(I && i)
@@ -169,7 +173,7 @@ struct Ptr
     constexpr void adv(rank_t k, dim_t d)
     {
         CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
-        p__ += (k==0) * d;
+        std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int i) { return i==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
@@ -181,9 +185,7 @@ struct Ptr
 #undef DEF_ASSIGNOPS
 };
 
-template <class I,
-          std::enable_if_t<std::is_same_v<typename std::iterator_traits<std::decay_t<I>>::iterator_category,
-                                          std::random_access_iterator_tag>, int> =0>
+template <class I>
 inline auto ptr(I i) { return Ptr<I> { i }; } // FIXME forwarder that moves if value, copies if ref ?
 
 template <class T>
@@ -211,6 +213,7 @@ struct Iota
     constexpr dim_t size() const { return size_; } // this is a Slice function...
     constexpr dim_t size(int i) const { CHECK_BOUNDS(i==0); return size_; }
     constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i==0); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr auto shape() const { return std::array<dim_t, 1> { size_ }; }
@@ -275,9 +278,11 @@ template <int n> struct is_beatable_def<newaxis_t<n>>
 
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 
-template <class X> constexpr bool has_tensorindex_def = false;
-template <class T> constexpr bool has_tensorindex = has_tensorindex_def<std::decay_t<T>>;
-template <int w, class value_type> constexpr bool has_tensorindex_def<TensorIndex<w, value_type>> = true;
+// if by_index<T> is true, then T must be traversed by at() (as in ply_index) and not by flat() (as in ply_ravel).
+// TensorIndex is the prototype of such a T.
+template <class X> constexpr bool by_index_def = false;
+template <class T> constexpr bool by_index = by_index_def<std::decay_t<T>>;
+template <int w, class value_type> constexpr bool by_index_def<TensorIndex<w, value_type>> = true;
 
 template <class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Expr;
 template <class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Pick;
@@ -285,13 +290,13 @@ template <class FM, class Op, class T, class K=std::make_integer_sequence<int, m
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
 
 template <class Op, class ... Ti, class K>
-constexpr bool has_tensorindex_def<Expr<Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
+constexpr bool by_index_def<Expr<Op, std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
 template <class ... Ti, class K>
-constexpr bool has_tensorindex_def<Pick<std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
+constexpr bool by_index_def<Pick<std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
 template <class LiveAxes, int depth, class A>
-constexpr bool has_tensorindex_def<ApplyFrames<LiveAxes, depth, A>> = has_tensorindex<A>;
+constexpr bool by_index_def<ApplyFrames<LiveAxes, depth, A>> = by_index<A>;
 template <class FM, class Op, class ... Ti, class K>
-constexpr bool has_tensorindex_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (has_tensorindex<Ti> || ...);
+constexpr bool by_index_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
 
 // --------------
 // Coerce potential ArrayIterators
@@ -325,7 +330,7 @@ inline constexpr decltype(auto) start(T && t)
 template <class T, std::enable_if_t<is_slice<T>, int> =0>
 inline constexpr auto start(T && t)
 {
-    return iter<0>(t); // BUG neither cell_iterator nor cell_iterator_small will retain rvalues. See test-ra-7.C [opt-small].
+    return iter<0>(t); // BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra04]
 }
 
 template <class T, std::enable_if_t<is_scalar<T>, int> =0>

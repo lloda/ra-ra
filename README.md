@@ -64,8 +64,8 @@ All the tests pass under g++-8.0. Remember to pass `-O2` or `-O3` to the compile
 All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for:
 
 * [bench/bench-pack.C](bench/bench-pack.C), crashes clang.
-* [test/test-iterator-small.C](test/test-iterator-small.C), crashes clang.
-* [test/test-optimize.C](test/test-optimize.C), gives compilation errors.
+* [test/iterator-small.C](test/iterator-small.C), crashes clang.
+* [test/optimize.C](test/optimize.C), gives compilation errors.
 
 Be aware that clang can be several times slower than gcc when compiling at `-O3`.
 

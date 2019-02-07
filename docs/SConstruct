@@ -1,0 +1,43 @@
+# -*- mode: Python -*-
+# -*- coding: utf-8 -*-
+
+# (c) Daniel Llorens - 2016
+
+# This library is free software; you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+
+# SConstruct for ra/docs
+# todo Shared pieces with {examples,test,bench}/SConstruct
+
+import os, string, atexit
+from os.path import join, abspath
+import imp
+ra = imp.load_source('ra', '../config/ra.py')
+
+try:
+    Import('top')
+except:
+    top = {}
+
+vars = Variables()
+vars.AddVariables(PathVariable('variant_dir', 'build directory', '.', PathVariable.PathIsDirCreate))
+
+env = Environment(options=vars,
+                  BUILDERS={'INFOBuilder' : Builder(action = '$MAKEINFO < $SOURCES > $TARGET',
+                                                    suffix = '.info',
+                                                    src_suffix = '.texi'),
+                            'HTMLBuilder' : Builder(action = '$MAKEINFO --html --no-split < $SOURCES > $TARGET',
+                                                    suffix = '.html',
+                                                    src_suffix = '.texi')})
+variant_dir = env['variant_dir']
+
+for var, default in [('MAKEINFO', 'makeinfo')]:
+    ra.take_from_environ(env, var, default=default)
+
+if 'skip_summary' not in top:
+    atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/docs'))
+
+env.INFOBuilder(target = 'ra-ra.info', source = 'ra-ra.texi')
+env.HTMLBuilder(target = 'index.html', source = 'ra-ra.texi')

@@ -22,7 +22,7 @@ SConscript('test/SConstruct', 'top')
 SConscript('bench/SConstruct', 'top')
 SConscript('examples/SConstruct', 'top')
 SConscript('box/SConstruct', 'top')
-# SConscript('doc/SConstruct', 'top') # TODO run from doc, otherwise makeinfo writes empty files (??)
+# SConscript('docs/SConstruct', 'top') # TODO run from docs, otherwise makeinfo writes empty files (??)
 
 Default(['test', 'bench', 'examples']) # exclude box
 
