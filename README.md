@@ -59,7 +59,7 @@ The library itself is header-only and has no dependencies other than a C++17 com
 
 The test suite ([test/](test/)) runs under SCons. Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can easily build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment. You can also use CMake (e.g. `CXXFLAGS=-O3 cmake . && make && make test`) instead of SCons.
 
-All the tests pass under g++-8.0. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. g++-7.x might work if you replace the `-std=c++-17` flag with `-std=c++1z`.
+All the tests pass under g++-8.0. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run.
 
 All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for:
 

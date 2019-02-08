@@ -128,11 +128,11 @@ subindexf(A & a, S & i_)
     if constexpr (mp::len<order> == 0) {
         a.at(i_);
     } else if constexpr (mp::len<order> > 0) {
-        dim_t & i = i_[mp::First_<order>::value];
+        dim_t & i = i_[mp::first<order>::value];
 // on every subloop, but not worth caching
-        dim_t const /* constexpr */ s = a.size(mp::First_<order>::value);
+        dim_t const /* constexpr */ s = a.size(mp::first<order>::value);
         for (i=0; i<s; ++i) {
-            subindexf<mp::Drop1_<order>>(a, i_);
+            subindexf<mp::drop1<order>>(a, i_);
         }
     } else {
         abort();
@@ -144,7 +144,7 @@ void plyf_index(A && a)
 {
     using Shape = std::decay_t<decltype(a.shape())>;
     Shape i(ra_traits<Shape>::make(a.rank(), 0));
-    subindexf<mp::Iota_<std::decay_t<A>::rank_s()>>(a, i); // cf with ply_index() for C order.
+    subindexf<mp::iota<std::decay_t<A>::rank_s()>>(a, i); // cf with ply_index() for C order.
 }
 
 
@@ -166,12 +166,12 @@ void subindex(A & a, dim_t s, S const & ss0)
             *p;
         }
     } else if constexpr (mp::len<order> > ravel_rank) {
-        dim_t size = a.size(mp::First_<order>::value); // TODO Precompute these at the top
+        dim_t size = a.size(mp::first<order>::value); // TODO Precompute these at the top
         for (dim_t i=0, iend=size; i<iend; ++i) {
-            subindex<mp::Drop1_<order>, ravel_rank>(a, s, ss0);
-            a.adv(mp::First_<order>::value, 1);
+            subindex<mp::drop1<order>, ravel_rank>(a, s, ss0);
+            a.adv(mp::first<order>::value, 1);
         }
-        a.adv(mp::First_<order>::value, -size);
+        a.adv(mp::first<order>::value, -size);
     } else {
         abort();
     }
@@ -207,7 +207,7 @@ template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()==1)>
 {
     static_assert(!by_index<A>, "bad plier for expr");
-    subindex<mp::Iota_<1>, 1>(a, a.size(0), a.stride(0));
+    subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
 }
 
 template <class A> RA_INLINE constexpr
@@ -225,11 +225,11 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
     }
 // all sub xpr strides advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-    until<mp::Iota_<std::decay_t<A>::rank_s()>, 0>(j, a, s, a.stride(rank-1));
+    until<mp::iota<std::decay_t<A>::rank_s()>, 0>(j, a, s, a.stride(rank-1));
 #else
 // according to bench-dot.C, the unrolling above isn't worth it :-/ TODO
     /* constexpr */ auto s = a.size(rank-1);
-    subindex<mp::Iota_<std::decay_t<A>::rank_s()>, 1>(a, s, a.stride(rank-1));
+    subindex<mp::iota<std::decay_t<A>::rank_s()>, 1>(a, s, a.stride(rank-1));
 #endif
 }
 

@@ -44,11 +44,9 @@ struct PermutationFlipSign<+1, std::tuple<C0, C1, C ...>>
 template <class C, int D>
 struct AntiCombination
 {
-    using EC = typename Complement<C, D>::type;
+    using EC = complement<C, D>;
     static_assert((len<EC>)>=2, "can't correct this complement");
-    using type = typename PermutationFlipSign
-        <PermutationSign<Append_<C, EC>, Iota_<D>>::value,
-         EC>::type;
+    using type = typename PermutationFlipSign<PermutationSign<append<C, EC>, iota<D>>::value, EC>::type;
 };
 
 template <class C, int D> struct MapAntiCombination;
@@ -62,7 +60,7 @@ template <int D, int O, class Enable=void>
 struct ChooseComponents
 {
     static_assert(D>=O, "bad dimension or form order");
-    using type = Combinations_<Iota_<D>, O>;
+    using type = mp::combinations<iota<D>, O>;
 };
 template <int D, int O>
 struct ChooseComponents<D, O, std::enable_if_t<(D>1) && (2*O>D)>>
@@ -87,7 +85,7 @@ struct Wedge
     constexpr static int Nb = mp::n_over_p(D, Ob);
     constexpr static int Nr = mp::n_over_p(D, Or);
 // in lexicographic order. Can be used to sort Ca below with FindPermutation.
-    using LexOrCa = mp::Combinations_<mp::Iota_<D>, Oa>;
+    using LexOrCa = mp::combinations<mp::iota<D>, Oa>;
 // the actual components used, which are in lex. order only in some cases.
     using Ca = mp::ChooseComponents_<D, Oa>;
     using Cb = mp::ChooseComponents_<D, Ob>;
@@ -114,20 +112,20 @@ struct Wedge
     static std::enable_if_t<!mp::nilp<Fa>, valtype<Va, Vb>>
     term(Va const & a, Vb const & b)
     {
-        using Fa0 = mp::First_<Fa>;
-        using Fb = mp::ComplementList_<Fa0, Xr>;
+        using Fa0 = mp::first<Fa>;
+        using Fb = mp::complement_list<Fa0, Xr>;
         using Sa = mp::FindCombination<Fa0, Ca>;
         using Sb = mp::FindCombination<Fb, Cb>;
-        constexpr int sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::Append_<Fa0, Fb>, Xr>::value;
+        constexpr int sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::append<Fa0, Fb>, Xr>::value;
         static_assert(sign==+1 || sign==-1, "bad sign in wedge term");
-        return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::Drop1_<Fa>>(a, b);
+        return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::drop1<Fa>>(a, b);
     }
     template <class Va, class Vb, class Vr, int wr>
     static std::enable_if_t<(wr<Nr)>
     coeff(Va const & a, Vb const & b, Vr & r)
     {
-        using Xr = mp::Ref_<Cr, wr>;
-        using Fa = mp::Combinations_<Xr, Oa>;
+        using Xr = mp::ref<Cr, wr>;
+        using Fa = mp::combinations<Xr, Oa>;
         r[wr] = term<Xr, Fa>(a, b);
         coeff<Va, Vb, Vr, wr+1>(a, b, r);
     }
@@ -167,16 +165,16 @@ struct Hodge
     static std::enable_if_t<(i<W::Na)>
     hodge_aux(Va const & a, Vb & b)
     {
-        using Cai = mp::Ref_<Ca, i>;
+        using Cai = mp::ref<Ca, i>;
         static_assert(mp::len<Cai> == O, "bad");
-// sort Cai, because Complement only accepts sorted combinations.
-// Ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
-        using SCai = mp::Ref_<LexOrCa, mp::FindCombination<Cai, LexOrCa>::where>;
-        using CompCai = typename mp::Complement<SCai, D>::type;
+// sort Cai, because mp::complement only accepts sorted combinations.
+// ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
+        using SCai = mp::ref<LexOrCa, mp::FindCombination<Cai, LexOrCa>::where>;
+        using CompCai = mp::complement<SCai, D>;
         static_assert(mp::len<CompCai> == D-O, "bad");
         using fpw = mp::FindCombination<CompCai, Cb>;
 // for the sign see e.g. DoCarmo1991 I.Ex 10.
-        using fps = mp::FindCombination<mp::Append_<Cai, mp::Ref_<Cb, fpw::where>>, Cr>;
+        using fps = mp::FindCombination<mp::append<Cai, mp::ref<Cb, fpw::where>>, Cr>;
         static_assert(fps::sign!=0, "bad");
         b[fpw::where] = decltype(a[i])(fps::sign)*a[i];
         hodge_aux<i+1>(a, b);

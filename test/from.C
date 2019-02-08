@@ -273,12 +273,12 @@ int main()
         tr.info("by_index(Expr)").test(ra::by_index<decltype(ra::_1+ra::_0)>);
 // TODO these instantiate flat() when they should not
         // tr.info("by_index(Ryn)").test(ra::by_index<decltype(a(ra::_1, ra::_0))>);
-        // cout << mp::Ref_<decltype(a(ra::_1, ra::_0))>::rank_s() << endl;
+        // cout << mp::ref<decltype(a(ra::_1, ra::_0))>::rank_s() << endl;
 // these don't work because a(j, i) has rank 3 = [(w=1)+1 + (w=0)+1] and so it drives, but tensorindex exprs shouldn't ever drive.
         // tr.info("by_index(Ryn)").test(ra::by_index<decltype(b+a(ra::_1, ra::_0))>);
-        // cout << mp::Ref_<decltype(b+a(ra::_1, ra::_0))::T, 0>::rank_s() << endl;
-        // cout << mp::Ref_<decltype(b+a(ra::_1, ra::_0))::T, 1>::rank_s() << endl;
-        cout << mp::Ref_<decltype(ra::_1)>::rank_s() << endl;
+        // cout << mp::ref<decltype(b+a(ra::_1, ra::_0))::T, 0>::rank_s() << endl;
+        // cout << mp::ref<decltype(b+a(ra::_1, ra::_0))::T, 1>::rank_s() << endl;
+        cout << mp::ref<decltype(ra::_1)>::rank_s() << endl;
         // b = a(ra::_1, ra::_0);
     }
 // Small(Iota) isn't beaten because the the output type cannot depend on argument values. So we treat it as a common expr.

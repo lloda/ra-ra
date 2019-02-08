@@ -330,9 +330,11 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 <a name="Standard-C_002b_002b"></a>
 <h4 class="subsection">1.5.1 Standard C++</h4>
 
-<p>C++ offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These decay to pointers when you do nearly anything with them, don&rsquo;t know their own sizes or rank, and are generally too limited.
+<p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These decay to pointers when you do nearly anything with them, don&rsquo;t know their own sizes or rank at runtime, and are generally too limited.
 </p>
 <p>The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: <code>&lt;array&gt;</code>, <code>&lt;vector&gt;</code> and <code>&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code>&lt;valarray&gt;</code> offers array operations for 1-arrays. <code>ra::</code> makes use of <code>&lt;array&gt;</code> and <code>&lt;vector&gt;</code> for storage and bootstrapping.
+</p>
+<p><code>ra::</code> accepts built-in arrays and standard library types as array objects (see <a href="#Compatibility">Compatibility</a>).
 </p>
 <a name="Blitz_002b_002b"></a>
 <h4 class="subsection">1.5.2 Blitz++</h4>
@@ -918,8 +920,8 @@ Next: <a href="#Compatibility" accesskey="n" rel="next">Compatibility</a>, Previ
 <p>We have seen in <a href="#Cell-iteration">Cell iteration</a> that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. With the <a href="#x_002diter"><code>iter&lt;cell rank&gt;</code></a> construction, this ‘exploding’ is performed (notionally) on the argument; the operation of the array expression is applied blindly to these cells, whatever they turn out to be.
 </p>
 <div class="example">
-<pre class="verbatim">for_each(sort, iter&lt;1&gt;(A)); // (in ra::) sort is a regular function, cell rank must be given
-for_each(sort, iter&lt;0&gt;(A)); // (in ra::) error, bad cell rank
+<pre class="verbatim">for_each(my_sort, iter&lt;1&gt;(A)); // (in ra::) my_sort is a regular function, cell rank must be given
+for_each(my_sort, iter&lt;0&gt;(A)); // (in ra::) error, bad cell rank
 </pre></div>
 
 <p>The array language J has instead the concept of <em>verb rank</em>. Every function (or <em>verb</em>) has an associated cell rank for each of its arguments. Therefore <code>iter&lt;cell rank&gt;</code> is not needed.

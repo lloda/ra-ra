@@ -45,7 +45,7 @@ struct nested_tuple;
 // ambiguity with empty constructor and scalar constructor.
 // if size(0) is 0, then prefer the empty constructor.
 // if size(0) is 1...
-template <class sizes> constexpr bool no_nested = (mp::First_<sizes>::value<1);
+template <class sizes> constexpr bool no_nested = (mp::first<sizes>::value<1);
 template <> constexpr bool no_nested<mp::nil> = true;
 template <> constexpr bool no_nested<mp::int_list<1>> = true;
 template <class T, class sizes>
@@ -54,11 +54,11 @@ using nested_arg = std::conditional_t<no_nested<sizes>,
                                       typename nested_tuple<T, sizes>::list>;
 
 // ambiguity with scalar constructors (for rank 0) and nested_tuple (for rank 1).
-template <class sizes> constexpr bool no_ravel = ((mp::len<sizes> <=1) || (mp::Apply_<mp::Prod, sizes>::value <= 1));
+template <class sizes> constexpr bool no_ravel = ((mp::len<sizes> <=1) || (mp::apply<mp::prod, sizes>::value <= 1));
 template <class T, class sizes>
 using ravel_arg = std::conditional_t<no_ravel<sizes>,
                                      std::tuple<no_arg, no_arg>, // match the template for SmallArray.
-                                     mp::MakeList_<mp::Apply_<mp::Prod, sizes>::value, T>>;
+                                     mp::makelist<mp::apply<mp::prod, sizes>::value, T>>;
 
 template <class T, class sizes, class strides = default_strides<sizes>> struct SmallView; // for cell_iterator_small
 template <class T, class sizes, class strides = default_strides<sizes>,
@@ -77,14 +77,14 @@ template <class T, int S0>
 struct nested_tuple<T, mp::int_list<S0>>
 {
     using sub = T;
-    using list = mp::MakeList_<S0, T>;
+    using list = mp::makelist<S0, T>;
 };
 
 template <class T, int S0, int S1, int ... S>
 struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
 {
     using sub = Small<T, S1, S ...>;
-    using list = mp::MakeList_<S0, sub>;
+    using list = mp::makelist<S0, sub>;
 };
 
 
@@ -109,10 +109,10 @@ struct cell_iterator_small
     constexpr static rank_t rank_s() { return framer; }
     constexpr static rank_t rank() { return framer; }
 
-    using cell_sizes = mp::Drop_<typename V::sizes, framer>;
-    using cell_strides = mp::Drop_<typename V::strides, framer>;
-    using sizes = mp::Take_<typename V::sizes, framer>; // these are strides on atom_type * p !!
-    using strides = mp::Take_<typename V::strides, framer>;
+    using cell_sizes = mp::drop<typename V::sizes, framer>;
+    using cell_strides = mp::drop<typename V::strides, framer>;
+    using sizes = mp::take<typename V::sizes, framer>; // these are strides on atom_type * p !!
+    using strides = mp::take<typename V::strides, framer>;
 
     using shape_type = std::array<dim_t, framer>;
     using atom_type = typename V::value_type; // FIXME fix ra_traits<SmallBase>
@@ -219,9 +219,9 @@ struct FilterDims<sizes_, strides_, I0, I ...>
 {
     constexpr static int s = is_beatable<I0>::skip;
     constexpr static int s_src = is_beatable<I0>::skip_src;
-    using next = FilterDims<mp::Drop_<sizes_, s_src>, mp::Drop_<strides_, s_src>, I ...>;
-    using sizes = mp::Append_<mp::Take_<sizes_, s>, typename next::sizes>;
-    using strides = mp::Append_<mp::Take_<strides_, s>, typename next::strides>;
+    using next = FilterDims<mp::drop<sizes_, s_src>, mp::drop<strides_, s_src>, I ...>;
+    using sizes = mp::append<mp::take<sizes_, s>, typename next::sizes>;
+    using strides = mp::append<mp::take<strides_, s>, typename next::strides>;
 };
 
 template <dim_t size0, dim_t stride0> inline
@@ -245,8 +245,8 @@ template <class sizes, class strides, class I0, class ... I> inline
 constexpr dim_t select_loop(I0 i0, I ... i)
 {
     constexpr int s_src = is_beatable<I0>::skip_src;
-    return select<mp::First_<sizes>::value, mp::First_<strides>::value>(i0)
-        + select_loop<mp::Drop_<sizes, s_src>, mp::Drop_<strides, s_src>>(i ...);
+    return select<mp::first<sizes>::value, mp::first<strides>::value>(i0)
+        + select_loop<mp::drop<sizes, s_src>, mp::drop<strides, s_src>>(i ...);
 }
 
 template <class T> struct mat_uv   { T uu, uv, vu, vv; };
@@ -263,7 +263,6 @@ template <class T> struct vec_xyz  { T x, y, z; };
 template <class T> struct vec_rtp  { T r, t, p; };
 template <class T> struct vec_xyzw { T u, v, z, w; };
 
-// TODO Should this be itself an xpr type, or do I need a cell_iterator-like obj?
 template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
 struct SmallBase
 {
@@ -271,18 +270,15 @@ struct SmallBase
     using strides = strides_;
     using value_type = T;
 
-    template <class TT> struct BadDimension
-    {
-        using type = mp::int_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
-    };
-    static_assert(!mp::Apply_<mp::Or, mp::Map_<BadDimension, sizes>>::value, "negative dimensions");
+    template <class TT> using BadDimension = mp::int_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
+    static_assert(!mp::apply<mp::orb, mp::map<BadDimension, sizes>>::value, "negative dimensions");
     static_assert(mp::len<sizes> == mp::len<strides>, "bad strides"); // TODO full static check on strides.
 
     using Child = Child_<T, sizes, strides>;
 
     constexpr static rank_t rank()  { return mp::len<sizes>; }
     constexpr static rank_t rank_s()  { return mp::len<sizes>; }
-    constexpr static dim_t size() { return mp::Apply_<mp::Prod, sizes>::value; }
+    constexpr static dim_t size() { return mp::apply<mp::prod, sizes>::value; }
     constexpr static dim_t size_s() { return size(); }
     constexpr static auto ssizes = mp::tuple_copy<sizes, std::array<dim_t, rank()> >::f();
     constexpr static auto sstrides = mp::tuple_copy<strides, std::array<dim_t, rank()> >::f();
@@ -316,7 +312,7 @@ struct SmallBase
     template <class I>                                                  \
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \
-        return SmallView<T CONST, mp::Drop_<sizes, ra_traits<I>::size_s()>, mp::Drop_<strides, ra_traits<I>::size_s()>> \
+        return SmallView<T CONST, mp::drop<sizes, ra_traits<I>::size_s()>, mp::drop<strides, ra_traits<I>::size_s()>> \
             (data()+Indexer0<sizes, strides>::index_p(i));              \
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
@@ -359,7 +355,7 @@ struct SmallBase
     {                                                                   \
         static_assert(rank()>=1, "bad rank for as<>");                  \
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
-        return SmallView<T CONST, mp::Cons_<mp::int_t<ss>, mp::Drop1_<sizes>>, strides>(this->data()+oo*this->stride(0)); \
+        return SmallView<T CONST, mp::cons<mp::int_t<ss>, mp::drop1<sizes>>, strides>(this->data()+oo*this->stride(0)); \
     }
     FOR_EACH(DEF_AS, /* const */, const)
 #undef DEF_AS
@@ -513,7 +509,7 @@ struct ra_traits_small
     using value_type = T;
     // constexpr static auto const & shape(V const & v) { return V::ssizes; }
     constexpr static auto shape(V const & v) { return SmallView<ra::dim_t const, mp::int_list<V::rank_s()>, mp::int_list<1>>(V::ssizes.data()); }
-#define MAKE_COND (std::is_same_v<strides, mp::int_list<1>> && std::is_same_v<sizes, mp::Take_<sizes, 1>>)
+#define MAKE_COND (std::is_same_v<strides, mp::int_list<1>> && std::is_same_v<sizes, mp::take<sizes, 1>>)
     constexpr static V make(dim_t const n)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");
@@ -593,10 +589,9 @@ struct ra_traits_def<T, std::enable_if_t<is_builtin_array<T>>>
 template <class A, class i>
 struct axis_indices
 {
-    template <class T> struct MatchIndex { using type = mp::int_t<(T::value==i::value)>; };
-    using I = mp::Iota_<mp::len<A>>;
-    using W = mp::Map_<MatchIndex, A>;
-    using type = mp::Filter_<W, I>;
+    template <class T> using match_index = mp::int_t<(T::value==i::value)>;
+    using I = mp::iota<mp::len<A>>;
+    using type = mp::filter<mp::map<match_index, A>, I>;
     static_assert(mp::len<type>> 0, "dst axis doesn't appear in transposed axes list");
 };
 
@@ -604,27 +599,28 @@ template <class axes_list, class src_sizes, class src_strides>
 struct axes_list_indices
 {
     static_assert(mp::len<axes_list> == mp::len<src_sizes>, "bad size for transposed axes list");
-    constexpr static int talmax = mp::Fold_<mp::Max, void, axes_list>::value;
-    constexpr static int talmin = mp::Fold_<mp::Min, void, axes_list>::value;
+    constexpr static int talmax = mp::fold<mp::max, void, axes_list>::value;
+    constexpr static int talmin = mp::fold<mp::min, void, axes_list>::value;
     static_assert(talmax < mp::len<src_sizes>, "bad index in transposed axes list");
     static_assert(talmin >= 0, "bad index in transposed axes list");
 
-    template <class dst_i> struct dst_indices
+    template <class dst_i> struct dst_indices_
     {
         using type = typename axis_indices<axes_list, dst_i>::type;
-        template <class i> using sizesi = mp::Ref<src_sizes, i::value>;
-        template <class i> using stridesi = mp::Ref<src_strides, i::value>;
-        using stride = mp::Fold_<mp::Sum, void, mp::Map_<stridesi, type>>;
-        using size = mp::Fold_<mp::Min, void, mp::Map_<sizesi, type>>;
+        template <class i> using sizesi = mp::ref<src_sizes, i::value>;
+        template <class i> using stridesi = mp::ref<src_strides, i::value>;
+        using stride = mp::fold<mp::sum, void, mp::map<stridesi, type>>;
+        using size = mp::fold<mp::min, void, mp::map<sizesi, type>>;
     };
 
-    template <class dst_i> struct dst_size { using type = typename dst_indices<dst_i>::size; };
-    template <class dst_i> struct dst_stride { using type = typename dst_indices<dst_i>::stride; };
+    template <class dst_i> using dst_indices = typename dst_indices_<dst_i>::type;
+    template <class dst_i> using dst_size = typename dst_indices_<dst_i>::size;
+    template <class dst_i> using dst_stride = typename dst_indices_<dst_i>::stride;
 
-    using dst = mp::Iota_<(talmax>=0 ? (1+talmax) : 0)>;
-    using type = mp::Map_<dst_indices, dst>;
-    using sizes =  mp::Map_<dst_size, dst>;
-    using strides =  mp::Map_<dst_stride, dst>;
+    using dst = mp::iota<(talmax>=0 ? (1+talmax) : 0)>;
+    using type = mp::map<dst_indices, dst>;
+    using sizes =  mp::map<dst_size, dst>;
+    using strides =  mp::map<dst_stride, dst>;
 };
 
 #define DEF_TRANSPOSE(CONST)                                            \
@@ -689,11 +685,12 @@ auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 // FIXME should be local (constexpr lambda + mp::apply?)
 template <int s> struct explode_divop
 {
-    template <class T> struct op
+    template <class T> struct op_
     {
         static_assert((T::value/s)*s==T::value);
         using type = mp::int_t<T::value / s>;
     };
+    template <class T> using op = typename op_<T>::type;
 };
 
 // See view-ops.H:explode, collapse. FIXME support real->complex, etc.
@@ -706,10 +703,10 @@ auto explode(SmallBase<Child, T, sizes, strides> & a)
     static_assert(super_t::have_default_strides);
     constexpr rank_t ra = ta::rank_s();
     constexpr rank_t rb = super_t::rank_s();
-    static_assert(std::is_same_v<mp::Drop_<sizes, ra-rb>, typename super_t::sizes>);
-    static_assert(std::is_same_v<mp::Drop_<strides, ra-rb>, typename super_t::strides>);
-    using cstrides = mp::Map_<explode_divop<super_t::size_s()>::template op, mp::Take_<strides, ra-rb>>;
-    return SmallView<super_t, mp::Take_<sizes, ra-rb>, cstrides>((super_t *) a.data());
+    static_assert(std::is_same_v<mp::drop<sizes, ra-rb>, typename super_t::sizes>);
+    static_assert(std::is_same_v<mp::drop<strides, ra-rb>, typename super_t::strides>);
+    using cstrides = mp::map<explode_divop<super_t::size_s()>::template op, mp::take<strides, ra-rb>>;
+    return SmallView<super_t, mp::take<sizes, ra-rb>, cstrides>((super_t *) a.data());
 }
 
 } // namespace ra

@@ -51,22 +51,15 @@ wrank(Op && op)
     return Verb<mp::int_list<crank ...>, Op> { std::forward<Op>(op) };
 }
 
-template <class A>
-struct ValidRank
-{
-    using type = mp::int_t<(A::value>=0)>;
-};
+template <class A> using ValidRank = mp::int_t<(A::value>=0)>;
 
 template <class R, class skip, class frank>
-struct AddFrameAxes
-{
-    using type = mp::Append_<R, mp::Iota_<frank::value, skip::value>>;
-};
+using AddFrameAxes = mp::append<R, mp::iota<frank::value, skip::value>>;
 
-template <class V, class T, class R=mp::MakeList_<mp::len<T>, mp::nil>, rank_t skip=0>
+template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 struct Framematch_def;
 
-template <class V, class T, class R=mp::MakeList_<mp::len<T>, mp::nil>, rank_t skip=0>
+template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 
 // Get a list (per argument) of lists of live axes.
@@ -83,17 +76,17 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 // TODO functions of arg rank, negative, inf.
 // live = number of live axes on this frame, for each argument.
     using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>-crank::value) ...>;
-    static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "bad ranks");
+    static_assert(mp::apply<mp::andb, mp::map<ValidRank, live>>::value, "bad ranks");
 
 // select driver for this stage.
     constexpr static int driver = largest_i_tuple<live>::value;
 
 // add actual axes to result.
-    using skips = mp::MakeList_<sizeof...(Ti), mp::int_t<skip>>;
-    using FM = Framematch<W, T, mp::Map_<AddFrameAxes, R_, skips, live>,
-                          skip + mp::Ref_<live, driver>::value>;
+    using skips = mp::makelist<sizeof...(Ti), mp::int_t<skip>>;
+    using FM = Framematch<W, T, mp::map<AddFrameAxes, R_, skips, live>,
+                          skip + mp::ref<live, driver>::value>;
     using R = typename FM::R;
-    constexpr static int depth = mp::Ref_<live, driver>::value + FM::depth;
+    constexpr static int depth = mp::ref<live, driver>::value + FM::depth;
 
 // drill down in V to get innermost Op (cf [ra31]).
     template <class VV> static decltype(auto) op(VV && v) { return FM::op(std::forward<VV>(v).op); }
@@ -107,12 +100,12 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 
 // TODO -crank::value when the actual verb rank is used (e.g. to use cell_iterator<A, that_rank> instead of just begin()).
     using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>) ...>;
-    static_assert(mp::Apply_<mp::And, mp::Map_<ValidRank, live>>::value, "bad ranks");
+    static_assert(mp::apply<mp::andb, mp::map<ValidRank, live>>::value, "bad ranks");
     constexpr static int driver = largest_i_tuple<live>::value;
 
-    using skips = mp::MakeList_<sizeof...(Ti), mp::int_t<skip>>;
-    using R = mp::Map_<AddFrameAxes, R_, skips, live>;
-    constexpr static int depth = mp::Ref_<live, driver>::value;
+    using skips = mp::makelist<sizeof...(Ti), mp::int_t<skip>>;
+    using R = mp::map<AddFrameAxes, R_, skips, live>;
+    constexpr static int depth = mp::ref<live, driver>::value;
 
     template <class VV> static decltype(auto) op(VV && v) { return std::forward<VV>(v); }
 };
@@ -181,7 +174,7 @@ struct applyframes
 // No-op case. TODO Maybe apply to any Iota<n> where n<=depth.
 // TODO If A is cell_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
 template <class LiveAxes, int depth>
-struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same_v<LiveAxes, mp::Iota_<depth>>>>
+struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same_v<LiveAxes, mp::iota<depth>>>>
 {
     template <class A>
     static decltype(auto) f(A && a)
@@ -287,7 +280,7 @@ struct number_ryn<std::integer_sequence<int, I ...>>
     auto f(V && v, P && ... t)
     {
         using FM = Framematch<V, std::tuple<P ...>>;
-        return ryn<FM>(FM::op(std::forward<V>(v)), applyframes<mp::Ref_<typename FM::R, I>, FM::depth>::f(std::forward<P>(t)) ...);
+        return ryn<FM>(FM::op(std::forward<V>(v)), applyframes<mp::ref<typename FM::R, I>, FM::depth>::f(std::forward<P>(t)) ...);
     }
 };
 
@@ -307,12 +300,14 @@ FOR_EACH(DEF_EXPR_VERB, &&, &, const &)
 // ---------------------------
 
 template <class I>
-struct index_rank
+struct index_rank_
 {
     using type = mp::int_t<std::decay_t<I>::rank_s()>; // see ra_traits for ra::types (?)
     static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
     static_assert(std::decay_t<I>::size_s()!=DIM_BAD, "undelimited extent subscript unsupported");
 };
+
+template <class I> using index_rank = typename index_rank_<I>::type;
 
 template <class II, int drop, class Enable=void>
 struct from_partial
@@ -320,7 +315,7 @@ struct from_partial
     template <class Op>
     static decltype(auto) make(Op && op)
     {
-        return wrank(mp::Append_<mp::MakeList_<drop, mp::int_t<0>>, mp::Drop_<II, drop>> {},
+        return wrank(mp::append<mp::makelist<drop, mp::int_t<0>>, mp::drop<II, drop>> {},
                      from_partial<II, drop+1>::make(std::forward<Op>(op)));
     }
 };
@@ -353,7 +348,7 @@ auto from(A && a, I0 && i0)
 template <class A, class ... I> inline constexpr
 auto from(A && a, I && ... i)
 {
-    using II = mp::Map_<index_rank, mp::tuple<decltype(start(std::forward<I>(i))) ...>>;
+    using II = mp::map<index_rank, mp::tuple<decltype(start(std::forward<I>(i))) ...>>;
     return expr(from_partial<II, 1>::make(std::forward<A>(a)), start(std::forward<I>(i)) ...);
 }
 

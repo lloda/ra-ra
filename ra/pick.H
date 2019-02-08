@@ -39,7 +39,7 @@ namespace ra {
 template <class T, class Enable=void>
 struct pick_type
 {
-    using type = mp::Apply_<std::common_type, T>;
+    using type = mp::apply<std::common_type_t, T>;
 };
 
 // lvalue
@@ -68,7 +68,7 @@ template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
 {
     using type = typename pick_type<std::tuple<decltype(std::declval<P>().at(std::declval<J>())) ...>>::type;
 };
-template <class T, class J> using pick_at_t = typename pick_at_type<mp::Drop1_<std::decay_t<T>>, J>::type;
+template <class T, class J> using pick_at_t = typename pick_at_type<mp::drop1<std::decay_t<T>>, J>::type;
 
 template <size_t I, class T, class J> inline constexpr
 pick_at_t<T, J>
@@ -91,7 +91,7 @@ template <class ... P> struct pick_star_type<std::tuple<P ...>>
 {
     using type = typename pick_type<std::tuple<decltype(*std::declval<P>()) ...>>::type;
 };
-template <class T> using pick_star_t = typename pick_star_type<mp::Drop1_<std::decay_t<T>>>::type;
+template <class T> using pick_star_t = typename pick_star_type<mp::drop1<std::decay_t<T>>>::type;
 
 template <size_t I, class T> inline constexpr
 pick_star_t<T>
@@ -138,8 +138,8 @@ struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
 // A-th argument decides rank and shape.
     constexpr static int A = driver_index<P0, P ...>::value;
     using T = std::tuple<P0, P ...>;
-    using PA = std::decay_t<mp::Ref_<T, A>>;
-    using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
+    using PA = std::decay_t<mp::ref<T, A>>;
+    using NotA = mp::complement_list<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
 
     T t;
 

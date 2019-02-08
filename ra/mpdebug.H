@@ -32,7 +32,10 @@ struct show_type
 
 // Prints recursively, i.e. int_t trees.
 
-template <class A> struct print_int_list {};
+template <class A> struct print_int_list
+{
+    static_assert(is_tuple_v<A>);
+};
 
 template <class A> std::ostream &
 operator<<(std::ostream & o, print_int_list<A> const & a)
@@ -41,7 +44,7 @@ operator<<(std::ostream & o, print_int_list<A> const & a)
 }
 
 template <class ... A>
-struct print_int_list<std::tuple<A ...> >
+struct print_int_list<std::tuple<A ...>>
 {
     static std::ostream & f(std::ostream & o)
     {
@@ -49,7 +52,7 @@ struct print_int_list<std::tuple<A ...> >
     }
 };
 template <int i0>
-struct print_int_list<mp::int_t<i0> >
+struct print_int_list<mp::int_t<i0>>
 {
     static std::ostream & f(std::ostream & o)
     {

@@ -90,11 +90,11 @@ next_in_cube(I & i, P & p)
 {
     if constexpr (k>=0) {
         ++i[k];
-        if (i[k]<mp::Ref_<sizes, k>::value) {
-            p += mp::Ref_<strides, k>::value;
+        if (i[k]<mp::ref<sizes, k>::value) {
+            p += mp::ref<strides, k>::value;
         } else {
             i[k] = 0;
-            p -= mp::Ref_<strides, k>::value*(mp::Ref_<sizes, k>::value-1);
+            p -= mp::ref<strides, k>::value*(mp::ref<sizes, k>::value-1);
             next_in_cube<k-1, sizes, strides>(i, p);
         }
     } else {
@@ -115,8 +115,8 @@ template <class t0, class t1, class ... ti>
 struct default_strides_<std::tuple<t0, t1, ti ...>>
 {
     using rest = typename default_strides_<std::tuple<t1, ti ...>>::type;
-    static int const stride0 = t1::value * mp::First_<rest>::value;
-    using type = mp::Cons_<mp::int_t<stride0>, rest>;
+    static int const stride0 = t1::value * mp::first<rest>::value;
+    using type = mp::cons<mp::int_t<stride0>, rest>;
 };
 
 template <class S> using default_strides = typename default_strides_<S>::type;

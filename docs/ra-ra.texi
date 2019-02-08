@@ -219,9 +219,11 @@ Since the C++ standard library doesn't offer a standard multidimensional array t
 
 @subsection Standard C++
 
-C++ offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These decay to pointers when you do nearly anything with them, don't know their own sizes or rank, and are generally too limited.
+The C++ language offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These decay to pointers when you do nearly anything with them, don't know their own sizes or rank at runtime, and are generally too limited.
 
 The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. @code{ra::} makes use of @code{<array>} and @code{<vector>} for storage and bootstrapping.
+
+@code{ra::} accepts built-in arrays and standard library types as array objects (@pxref{Compatibility}).
 
 @subsection Blitz++
 @cindex Blitz++
@@ -828,8 +830,8 @@ We have seen in @ref{Cell iteration} that it is possible to treat an r-array as 
 
 @example
 @verbatim
-for_each(sort, iter<1>(A)); // (in ra::) sort is a regular function, cell rank must be given
-for_each(sort, iter<0>(A)); // (in ra::) error, bad cell rank
+for_each(my_sort, iter<1>(A)); // (in ra::) my_sort is a regular function, cell rank must be given
+for_each(my_sort, iter<0>(A)); // (in ra::) error, bad cell rank
 @end verbatim
 @end example
 

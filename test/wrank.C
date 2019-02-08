@@ -48,9 +48,9 @@ template <class FM, class Enable=void> struct DebugFrameMatch
     using R = typename FM::R;
     constexpr static int depth = FM::depth;
     using framedrivers = mp::int_list<FM::driver>;
-    using axisdrivers = mp::MakeList_<mp::Ref_<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>;
-    using axisaxes = mp::Iota_<mp::Ref_<typename FM::live, FM::driver>::value, mp::len<mp::Ref_<typename FM::R_, FM::driver>>>;
-    using argindices = mp::Zip_<axisdrivers, axisaxes>;
+    using axisdrivers = mp::makelist<mp::ref<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>;
+    using axisaxes = mp::iota<mp::ref<typename FM::live, FM::driver>::value, mp::len<mp::ref<typename FM::R_, FM::driver>>>;
+    using argindices = mp::zip<axisdrivers, axisaxes>;
 };
 
 template <class FM> struct DebugFrameMatch<FM, std::enable_if_t<mp::exists<typename FM::FM> > >
@@ -61,12 +61,12 @@ template <class FM> struct DebugFrameMatch<FM, std::enable_if_t<mp::exists<typen
     constexpr static bool terminal = false;
     using R = typename FM::R;
     constexpr static int depth = FM::depth;
-    using framedrivers = mp::Cons_<mp::int_t<FM::driver>, typename DFMC::framedrivers>;
-    using axisdrivers = mp::Append_<mp::MakeList_<mp::Ref_<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>,
-                                    typename DFMC::axisdrivers>;
-    using axisaxes = mp::Append_<mp::Iota_<mp::Ref_<typename FM::live, FM::driver>::value, mp::len<mp::Ref_<typename FM::R_, FM::driver>>>,
+    using framedrivers = mp::cons<mp::int_t<FM::driver>, typename DFMC::framedrivers>;
+    using axisdrivers = mp::append<mp::makelist<mp::ref<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>,
+                                   typename DFMC::axisdrivers>;
+    using axisaxes = mp::append<mp::iota<mp::ref<typename FM::live, FM::driver>::value, mp::len<mp::ref<typename FM::R_, FM::driver>>>,
                                  typename DFMC::axisaxes>;
-    using argindices = mp::Zip_<axisdrivers, axisaxes>;
+    using argindices = mp::zip<axisdrivers, axisaxes>;
 };
 
 template <class V, class A, class B>
@@ -93,8 +93,8 @@ void nested_wrank_demo(V && v, A && a, B && b)
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
         cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
         cout << mp::print_int_list<typename FM::R> {} << endl;
-        auto af0 = ra::applyframes<mp::Ref_<typename FM::R, 0>, FM::depth>::f(a.iter());
-        auto af1 = ra::applyframes<mp::Ref_<typename FM::R, 1>, FM::depth>::f(b.iter());
+        auto af0 = ra::applyframes<mp::ref<typename FM::R, 0>, FM::depth>::f(a.iter());
+        auto af1 = ra::applyframes<mp::ref<typename FM::R, 1>, FM::depth>::f(b.iter());
         cout << sizeof(af0) << endl;
         cout << sizeof(af1) << endl;
         {
@@ -138,11 +138,11 @@ int main()
     tr.section("declaring verbs");
     {
         auto v = ra::wrank<0, 1>(plus2real);
-        cout << mp::Ref_<decltype(v)::R, 0>::value << endl;
-        cout << mp::Ref_<decltype(v)::R, 1>::value << endl;
+        cout << mp::ref<decltype(v)::R, 0>::value << endl;
+        cout << mp::ref<decltype(v)::R, 1>::value << endl;
         auto vv = ra::wrank<1, 1>(v);
-        cout << mp::Ref_<decltype(vv)::R, 0>::value << endl;
-        cout << mp::Ref_<decltype(vv)::R, 1>::value << endl;
+        cout << mp::ref<decltype(vv)::R, 0>::value << endl;
+        cout << mp::ref<decltype(vv)::R, 1>::value << endl;
     }
     tr.section("using Framematch");
     {
@@ -163,8 +163,8 @@ int main()
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
             cout << "width of fm: " << mp::len<FM::R> << ", depth: " << FM::depth << endl;
             cout << mp::print_int_list<FM::R> {} << endl;
-            auto af0 = ra::applyframes<mp::Ref_<FM::R, 0>, FM::depth>::f(a.iter());
-            auto af1 = ra::applyframes<mp::Ref_<FM::R, 1>, FM::depth>::f(b.iter());
+            auto af0 = ra::applyframes<mp::ref<FM::R, 0>, FM::depth>::f(a.iter());
+            auto af1 = ra::applyframes<mp::ref<FM::R, 1>, FM::depth>::f(b.iter());
             cout << sizeof(af0) << endl;
             cout << sizeof(af1) << endl;
             auto ryn = ra::ryn<FM>(FM::op(v), af0, af1);

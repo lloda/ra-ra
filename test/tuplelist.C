@@ -15,11 +15,9 @@
 #include "ra/mpdebug.H"
 #include "ra/test.H"
 
-using std::tuple;
-using std::tuple_element;
-using std::is_same_v;
-using namespace mp;
-using std::cout; using std::endl;
+using std::tuple, std::tuple_element, std::is_same_v;
+using std::cout, std::endl;
+using mp::int_t, mp::ref, mp::int_list;
 
 template <class A>
 struct Inc1
@@ -74,45 +72,26 @@ int main()
     {
         static_assert(True::value, "bad True");
     }
-// Apply, Typer, Valuer.
-    {
-        using B = int_list<5, 6, 7, 1>;
-        static_assert(Apply<Typer<SumV>::type_, B>::type::value==19, "bad");
-        static_assert(ApplyV<SumV, B>::value==19, "bad");
-        static_assert(ApplyV<Valuer<Sum>::type, B>::value==19, "bad");
-    }
-// Map & Coerce.
+// Map
     {
         using A = int_list<5, 6, 3>;
         using B = int_list<2, 3, -1>;
-        static_assert(check_idx<Map<Sum, A>::type, 5, 6, 3>::value, "");
-        static_assert(check_idx<Map<Sum, A, B>::type, 7, 9, 2>::value, "");
-        static_assert(check_idx<Map<Coerce1<Inc1>::type_, A>::type,
-                                6, 7, 4>::value, "");
-        static_assert(check_idx<Map<Coerce2<Sum2>::type_, A, B>::type,
-                                7, 9, 2>::value, "");
+        static_assert(mp::check_idx<mp::map<mp::sum, A>, 5, 6, 3>::value, "");
+        static_assert(mp::check_idx<mp::map<mp::sum, A, B>, 7, 9, 2>::value, "");
     }
-// Fold.
+// fold.
     {
         using A = int_list<5, 6, 3>;
         using B = int_list<2, 3, -1>;
-        static_assert(Fold<Sum, int_t<1>, A>::type::value==15, "");
-        static_assert(Fold<Sum, int_t<3>, B>::type::value==7, "");
-        static_assert(Fold<Max, int_t<4>, A>::type::value==6, "");
-        static_assert(Fold<Max, void, A>::type::value==6, "");
-        static_assert(Fold<Max, int_t<9>, A>::type::value==9, "");
-        static_assert(Fold<Min, int_t<4>, A>::type::value==3, "");
-        static_assert(Fold<Min, void, A>::type::value==3, "");
-        static_assert(Fold<Min, int_t<1>, A>::type::value==1, "");
-        static_assert(Fold<Coerce2<Sum2>::type_, int_t<3>, B>::type::value==7, "");
+        static_assert(mp::fold<mp::sum, int_t<1>, A>::value==15, "");
+        static_assert(mp::fold<mp::sum, int_t<3>, B>::value==7, "");
+        static_assert(mp::fold<mp::max, int_t<4>, A>::value==6, "");
+        static_assert(mp::fold<mp::max, void, A>::value==6, "");
+        static_assert(mp::fold<mp::max, int_t<9>, A>::value==9, "");
+        static_assert(mp::fold<mp::min, int_t<4>, A>::value==3, "");
+        static_assert(mp::fold<mp::min, void, A>::value==3, "");
+        static_assert(mp::fold<mp::min, int_t<1>, A>::value==1, "");
     }
-// product_test, product_testn
-//     {
-//         using A = int_list<1, 3, 3, 2>;
-//         using B = int_list<5, 6, 7, 1>;
-//         cout << prod_testn<Sum, A, B>::value << endl;
-//         static_assert(prod_testn<Sum, A, B>::value==1620, "");
-//     }
 // Reductions.
     {
         using list_ = int_list<>;
@@ -122,158 +101,157 @@ int main()
         using list_01 = int_list<0, 1>;
         using list_11 = int_list<1, 1>;
         using list_00 = int_list<0, 0>;
-        static_assert(Apply<And, list_>::type::value, "bad And");
-        static_assert(Apply<And, list_1>::type::value, "bad And");
-        static_assert(!Apply<And, list_0>::type::value, "bad And");
-        static_assert(!Apply<And, list_10>::type::value, "bad And");
-        static_assert(!Apply<And, list_01>::type::value, "bad And");
-        static_assert(Apply<And, list_11>::type::value, "bad And");
-        static_assert(!Apply<And, list_00>::type::value, "bad And");
-        static_assert(!Apply<Or, list_>::type::value, "bad Or");
-        static_assert(Apply<Or, list_1>::type::value, "bad Or");
-        static_assert(!Apply<Or, list_0>::type::value, "bad Or");
-        static_assert(Apply<Or, list_10>::type::value, "bad Or");
-        static_assert(Apply<Or, list_01>::type::value, "bad Or");
-        static_assert(Apply<Or, list_11>::type::value, "bad Or");
-        static_assert(!Apply<Or, list_00>::type::value, "bad Or");
-        static_assert(Apply<Sum, list_>::type::value==0, "bad Sum");
-        static_assert(Apply<Sum, int_list<2, 4>>::type::value==6, "bad Sum");
-        static_assert(Apply<Prod, list_>::type::value==1, "bad Prod");
-        static_assert(Apply<Prod, int_list<2, 3>>::type::value==6, "bad Prod");
+        static_assert(mp::apply<mp::andb, list_>::value, "bad And");
+        static_assert(mp::apply<mp::andb, list_1>::value, "bad And");
+        static_assert(!mp::apply<mp::andb, list_0>::value, "bad And");
+        static_assert(!mp::apply<mp::andb, list_10>::value, "bad And");
+        static_assert(!mp::apply<mp::andb, list_01>::value, "bad And");
+        static_assert(mp::apply<mp::andb, list_11>::value, "bad And");
+        static_assert(!mp::apply<mp::andb, list_00>::value, "bad And");
+        static_assert(!mp::apply<mp::orb, list_>::value, "bad Or");
+        static_assert(mp::apply<mp::orb, list_1>::value, "bad Or");
+        static_assert(!mp::apply<mp::orb, list_0>::value, "bad Or");
+        static_assert(mp::apply<mp::orb, list_10>::value, "bad Or");
+        static_assert(mp::apply<mp::orb, list_01>::value, "bad Or");
+        static_assert(mp::apply<mp::orb, list_11>::value, "bad Or");
+        static_assert(!mp::apply<mp::orb, list_00>::value, "bad Or");
+        static_assert(mp::apply<mp::sum, list_>::value==0, "bad Sum");
+        static_assert(mp::apply<mp::sum, int_list<2, 4>>::value==6, "bad Sum");
+        static_assert(mp::apply<mp::prod, list_>::value==1, "bad Prod");
+        static_assert(mp::apply<mp::prod, int_list<2, 3>>::value==6, "bad Prod");
     }
-// Append.
+// append.
     using A = int_list<0, 2, 3>;
     using B = int_list<5, 6, 7>;
     using C = int_list<9, 8>;
-    static_assert(is_same_v<int_list<>, nil>, "");
+    static_assert(is_same_v<int_list<>, mp::nil>, "");
     static_assert(is_same_v<C, tuple<int_t<9>, int_t<8>>>, "");
-    using O = nil;
-    using A_B = Append<A, B>::type;
-    using A_C = Append<A, C>::type;
-    using C_B = Append<C, B>::type;
-    static_assert(check_idx<A_B, 0, 2, 3, 5, 6, 7>::value, "bad AB");
-    static_assert(check_idx<A_C, 0, 2, 3, 9, 8>::value, "bad AB");
-    static_assert(check_idx<C_B, 9, 8, 5, 6, 7>::value, "bad AB");
-    static_assert(is_same_v<A, Append<A, O>::type>, "bad A+empty");
-    static_assert(is_same_v<A, Append<O, A>::type>, "bad empty+A");
+    using O = mp::nil;
+    using A_B = mp::append<A, B>;
+    using A_C = mp::append<A, C>;
+    using C_B = mp::append<C, B>;
+    static_assert(mp::check_idx<A_B, 0, 2, 3, 5, 6, 7>::value, "bad AB");
+    static_assert(mp::check_idx<A_C, 0, 2, 3, 9, 8>::value, "bad AB");
+    static_assert(mp::check_idx<C_B, 9, 8, 5, 6, 7>::value, "bad AB");
+    static_assert(is_same_v<A, mp::append<A, O>>, "bad A+empty");
+    static_assert(is_same_v<A, mp::append<O, A>>, "bad empty+A");
 // Iota.
-    static_assert(check_idx<Iota<4, 0>::type, 0, 1, 2, 3>::value, "0a");
-    static_assert(check_idx<Iota<4, 3>::type, 3, 4, 5, 6>::value, "0b");
-    static_assert(check_idx<Iota<0, 3>::type>::value, "0c");
-    static_assert(check_idx<Iota<1, 3>::type, 3>::value, "0d");
-    static_assert(check_idx<Iota<3, -2>::type, -2, -1, 0>::value, "0e");
-    static_assert(check_idx<Iota<4, 3, -1>::type, 3, 2, 1, 0>::value, "0a");
-// MakeList.
-    static_assert(check_idx<MakeList<2, int_t<9>>::type, 9, 9>::value, "1a");
-    static_assert(check_idx<MakeList<0, int_t<9>>::type>::value, "1b");
-// Ref.
-    static_assert(Ref<tuple<A, B, C>, 0, 0>::type::value==0, "3a");
-    static_assert(Ref<tuple<A, B, C>, 0, 1>::type::value==2, "3b");
-    static_assert(Ref<tuple<A, B, C>, 0, 2>::type::value==3, "3c");
-    static_assert(Ref<tuple<A, B, C>, 1, 0>::type::value==5, "3d");
-    static_assert(Ref<tuple<A, B, C>, 1, 1>::type::value==6, "3e");
-    static_assert(Ref<tuple<A, B, C>, 1, 2>::type::value==7, "3f");
-    static_assert(Ref<tuple<A, B, C>, 2, 0>::type::value==9, "3g");
-    static_assert(Ref<tuple<A, B, C>, 2, 1>::type::value==8, "3h");
-    static_assert(First<B>::type::value==5 && First<C>::type::value==9, "3i");
-    static_assert(Last<B>::type::value==7 && Last<C>::type::value==8, "3j");
+    static_assert(mp::check_idx<mp::iota<4, 0>, 0, 1, 2, 3>::value, "0a");
+    static_assert(mp::check_idx<mp::iota<4, 3>, 3, 4, 5, 6>::value, "0b");
+    static_assert(mp::check_idx<mp::iota<0, 3>>::value, "0c");
+    static_assert(mp::check_idx<mp::iota<1, 3>, 3>::value, "0d");
+    static_assert(mp::check_idx<mp::iota<3, -2>, -2, -1, 0>::value, "0e");
+    static_assert(mp::check_idx<mp::iota<4, 3, -1>, 3, 2, 1, 0>::value, "0a");
+// makelist
+    static_assert(mp::check_idx<mp::makelist<2, int_t<9>>, 9, 9>::value, "1a");
+    static_assert(mp::check_idx<mp::makelist<0, int_t<9>>>::value, "1b");
+// ref
+    static_assert(ref<tuple<A, B, C>, 0, 0>::value==0, "3a");
+    static_assert(ref<tuple<A, B, C>, 0, 1>::value==2, "3b");
+    static_assert(ref<tuple<A, B, C>, 0, 2>::value==3, "3c");
+    static_assert(ref<tuple<A, B, C>, 1, 0>::value==5, "3d");
+    static_assert(ref<tuple<A, B, C>, 1, 1>::value==6, "3e");
+    static_assert(ref<tuple<A, B, C>, 1, 2>::value==7, "3f");
+    static_assert(ref<tuple<A, B, C>, 2, 0>::value==9, "3g");
+    static_assert(ref<tuple<A, B, C>, 2, 1>::value==8, "3h");
+    static_assert(mp::first<B>::value==5 && mp::first<C>::value==9, "3i");
+    static_assert(mp::last<B>::value==7 && mp::last<C>::value==8, "3j");
 // Useful default.
-    static_assert(mp::len<Ref<nil>::type> ==0, "3i");
+    static_assert(mp::len<ref<mp::nil>> ==0, "3i");
 // 3-indices.
     using S2AB = tuple<A, B>;
     using S2BC = tuple<B, C>;
     using S3 = tuple<S2AB, S2BC>;
 // in S2AB.
-    static_assert(Ref<S3, 0, 0, 0>::type::value==0, "3j");
-    static_assert(Ref<S3, 0, 0, 1>::type::value==2, "3k");
-    static_assert(Ref<S3, 0, 0, 2>::type::value==3, "3l");
-    static_assert(Ref<S3, 0, 1, 0>::type::value==5, "3m");
-    static_assert(Ref<S3, 0, 1, 1>::type::value==6, "3n");
-    static_assert(Ref<S3, 0, 1, 2>::type::value==7, "3o");
+    static_assert(ref<S3, 0, 0, 0>::value==0, "3j");
+    static_assert(ref<S3, 0, 0, 1>::value==2, "3k");
+    static_assert(ref<S3, 0, 0, 2>::value==3, "3l");
+    static_assert(ref<S3, 0, 1, 0>::value==5, "3m");
+    static_assert(ref<S3, 0, 1, 1>::value==6, "3n");
+    static_assert(ref<S3, 0, 1, 2>::value==7, "3o");
 // in S2BC.
-    static_assert(Ref<S3, 1, 0, 0>::type::value==5, "3p");
-    static_assert(Ref<S3, 1, 0, 1>::type::value==6, "3q");
-    static_assert(Ref<S3, 1, 0, 2>::type::value==7, "3r");
-    static_assert(Ref<S3, 1, 1, 0>::type::value==9, "3s");
-    static_assert(Ref<S3, 1, 1, 1>::type::value==8, "3t");
+    static_assert(ref<S3, 1, 0, 0>::value==5, "3p");
+    static_assert(ref<S3, 1, 0, 1>::value==6, "3q");
+    static_assert(ref<S3, 1, 0, 2>::value==7, "3r");
+    static_assert(ref<S3, 1, 1, 0>::value==9, "3s");
+    static_assert(ref<S3, 1, 1, 1>::value==8, "3t");
 // Index.
-    static_assert(Index<A, int_t<0>>::value==0, "4a");
-    static_assert(Index<A, int_t<2>>::value==1, "4b");
-    static_assert(Index<A, int_t<3>>::value==2, "4c");
-    static_assert(Index<A, int_t<4>>::value==-1, "4d");
-    static_assert(Index<S3, S2BC>::value==1, "4e");
+    static_assert(mp::index<A, int_t<0>>::value==0, "4a");
+    static_assert(mp::index<A, int_t<2>>::value==1, "4b");
+    static_assert(mp::index<A, int_t<3>>::value==2, "4c");
+    static_assert(mp::index<A, int_t<4>>::value==-1, "4d");
+    static_assert(mp::index<S3, S2BC>::value==1, "4e");
 // InvertIndex
     {
         using II0 = int_list<4, 6, 7, 1>;
-        using II1 = InvertIndex<II0>::type;
+        using II1 = mp::InvertIndex_<II0>;
         static_assert(is_same_v<int_list<-1, 3, -1, -1, 0, -1, 1, 2>, II1>);
     }
     {
         using II0 = int_list<3>;
-        using II1 = InvertIndex<II0>::type;
+        using II1 = mp::InvertIndex_<II0>;
         static_assert(is_same_v<int_list<-1, -1, -1, 0>, II1>);
     }
     {
         using II0 = int_list<>;
-        using II1 = InvertIndex<II0>::type;
+        using II1 = mp::InvertIndex_<II0>;
         static_assert(is_same_v<int_list<>, II1>);
     }
 // IndexIf.
-    static_assert(IndexIf<A, SamePP<int_t<0>>::type>::value==0, "5a");
-    static_assert(IndexIf<A, SamePP<int_t<2>>::type>::value==1, "5b");
-    static_assert(IndexIf<A, SamePP<int_t<3>>::type>::value==2, "5c");
-    static_assert(IndexIf<A, SamePP<int_t<9>>::type>::value==-1, "5d");
-// Find.
-    static_assert(is_same_v<FindTail<A, int_t<0>>::type, A>, "4a");
-    static_assert(check_idx<FindTail<A, int_t<2>>::type, 2, 3>::value, "4b");
-    static_assert(check_idx<FindTail<A, int_t<3>>::type, 3>::value, "4c");
-    static_assert(nilp<FindTail<A, int_t<4>>::type>, "4d");
-    static_assert(is_same_v<FindTail<S3, S2BC>::type, tuple<S2BC>>, "4e");
-// Reverse.
-    static_assert(check_idx<Reverse<A_B>::type, 7, 6, 5, 3, 2, 0>::value, "5a");
-    static_assert(check_idx<Reverse<O>::type>::value, "5b");
-    static_assert(is_same_v<Reverse<mp::nil>::type, mp::nil>, "bad Reverse");
-// Drop & Take.
-    static_assert(check_idx<Drop<A, 0>::type, 0, 2, 3>::value, "bad 6a");
-    static_assert(check_idx<Drop<A, 1>::type, 2, 3>::value, "bad 6b");
-    static_assert(check_idx<Drop<A, 2>::type, 3>::value, "bad 6c");
-    static_assert(check_idx<Drop<A, 3>::type>::value, "bad 6d");
-    static_assert(check_idx<Take<A, 0>::type>::value, "bad 6e");
-    static_assert(check_idx<Take<A, 1>::type, 0>::value, "bad 6f");
-    static_assert(check_idx<Take<A, 2>::type, 0, 2>::value, "bad 6g");
-    static_assert(check_idx<Take<A, 3>::type, 0, 2, 3>::value, "bad 6h");
-// Complement.
+    static_assert(mp::IndexIf<A, SamePP<int_t<0>>::type>::value==0, "5a");
+    static_assert(mp::IndexIf<A, SamePP<int_t<2>>::type>::value==1, "5b");
+    static_assert(mp::IndexIf<A, SamePP<int_t<3>>::type>::value==2, "5c");
+    static_assert(mp::IndexIf<A, SamePP<int_t<9>>::type>::value==-1, "5d");
+// find
+    static_assert(is_same_v<mp::findtail<A, int_t<0>>, A>, "4a");
+    static_assert(mp::check_idx<mp::findtail<A, int_t<2>>, 2, 3>::value, "4b");
+    static_assert(mp::check_idx<mp::findtail<A, int_t<3>>, 3>::value, "4c");
+    static_assert(mp::nilp<mp::findtail<A, int_t<4>>>, "4d");
+    static_assert(is_same_v<mp::findtail<S3, S2BC>, tuple<S2BC>>, "4e");
+// reverse
+    static_assert(mp::check_idx<mp::reverse<A_B>, 7, 6, 5, 3, 2, 0>::value, "5a");
+    static_assert(mp::check_idx<mp::reverse<O>>::value, "5b");
+    static_assert(is_same_v<mp::reverse<mp::nil>, mp::nil>, "bad mp::reverse");
+// drop & take
+    static_assert(mp::check_idx<mp::drop<A, 0>, 0, 2, 3>::value, "bad 6a");
+    static_assert(mp::check_idx<mp::drop<A, 1>, 2, 3>::value, "bad 6b");
+    static_assert(mp::check_idx<mp::drop<A, 2>, 3>::value, "bad 6c");
+    static_assert(mp::check_idx<mp::drop<A, 3>>::value, "bad 6d");
+    static_assert(mp::check_idx<mp::take<A, 0>>::value, "bad 6e");
+    static_assert(mp::check_idx<mp::take<A, 1>, 0>::value, "bad 6f");
+    static_assert(mp::check_idx<mp::take<A, 2>, 0, 2>::value, "bad 6g");
+    static_assert(mp::check_idx<mp::take<A, 3>, 0, 2, 3>::value, "bad 6h");
+// complement
     {
         using case1 = int_list<1>;
-        static_assert(check_idx<Complement<case1, 0>::type>::value, "");
-        static_assert(check_idx<Complement<case1, 1>::type, 0>::value, "");
-        static_assert(check_idx<Complement<case1, 2>::type, 0>::value, "");
-        static_assert(check_idx<Complement<case1, 3>::type, 0, 2>::value, "");
-        using list3 = Iota<3>::type;
-        static_assert(check_idx<Complement<list3, 3>::type>::value, "");
-        using c36 = Complement<list3, 6>::type;
-        static_assert(check_idx<c36, 3, 4, 5>::value, "");
-        static_assert(check_idx<Complement<c36, 6>::type, 0, 1, 2>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 0>>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 1>, 0>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 2>, 0>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 3>, 0, 2>::value, "");
+        using list3 = mp::iota<3>;
+        static_assert(mp::check_idx<mp::complement<list3, 3>>::value, "");
+        using c36 = mp::complement<list3, 6>;
+        static_assert(mp::check_idx<c36, 3, 4, 5>::value, "");
+        static_assert(mp::check_idx<mp::complement<c36, 6>, 0, 1, 2>::value, "");
         using case0 = tuple<int_t<0>>;
-        static_assert(check_idx<Complement<case0, 0>::type>::value, "");
-        static_assert(check_idx<Complement<case0, 1>::type>::value, "");
-        static_assert(check_idx<Complement<case0, 2>::type, 1>::value, "");
+        static_assert(mp::check_idx<mp::complement<case0, 0>>::value, "");
+        static_assert(mp::check_idx<mp::complement<case0, 1>>::value, "");
+        static_assert(mp::check_idx<mp::complement<case0, 2>, 1>::value, "");
     }
-// ComplementSList && ComplementList.
+// complement_slist && complement_list.
     {
 #define _ ,
 #define CHECK_COMPLEMENT_SLIST( A, B, C ) \
-static_assert(check_idx<ComplementSList<int_list A , B >::type \
-                        C >::value, "a");
+static_assert(mp::check_idx<mp::complement_slist<int_list A , B > C >::value, "a");
         CHECK_COMPLEMENT_SLIST( <1>, int_list<>, )
         CHECK_COMPLEMENT_SLIST( <1>, int_list<0>, _ 0)
         CHECK_COMPLEMENT_SLIST( <1>, int_list<0 _ 1>, _ 0)
         CHECK_COMPLEMENT_SLIST( <1>, int_list<0 _ 1 _ 2>, _ 0 _ 2)
-        using l2 = Iota<2>::type;
+        using l2 = mp::iota<2>;
         CHECK_COMPLEMENT_SLIST( <0>,     l2,  _ 1 )
         CHECK_COMPLEMENT_SLIST( <1>,     l2,  _ 0 )
         CHECK_COMPLEMENT_SLIST( <>,      l2,  _ 0 _ 1 )
-        using l3 = Iota<3>::type;
+        using l3 = mp::iota<3>;
         CHECK_COMPLEMENT_SLIST( <0 _ 1>, l3,  _ 2 )
         CHECK_COMPLEMENT_SLIST( <0 _ 2>, l3,  _ 1 )
         CHECK_COMPLEMENT_SLIST( <1 _ 2>, l3,  _ 0 )
@@ -281,18 +259,17 @@ static_assert(check_idx<ComplementSList<int_list A , B >::type \
         CHECK_COMPLEMENT_SLIST( <1>,     l3,  _ 0 _ 2 )
         CHECK_COMPLEMENT_SLIST( <2>,     l3,  _ 0 _ 1 )
         CHECK_COMPLEMENT_SLIST( <>,      l3,  _ 0 _ 1 _ 2 )
-        CHECK_COMPLEMENT_SLIST( <>,      nil, )
+        CHECK_COMPLEMENT_SLIST( <>,      mp::nil, )
 #undef CHECK_COMPLEMENT_SLIST
 #undef _
 #define _ ,
 #define CHECK_COMPLEMENT_LIST( A, B, C ) \
-static_assert(check_idx<ComplementList<int_list A , B >::type \
-                        C >::value, "a");
-        using l2 = Iota<2>::type;
+static_assert(mp::check_idx<mp::complement_list<int_list A , B > C >::value, "a");
+        using l2 = mp::iota<2>;
         CHECK_COMPLEMENT_LIST( <0>,     l2,  _ 1 )
         CHECK_COMPLEMENT_LIST( <1>,     l2,  _ 0 )
         CHECK_COMPLEMENT_LIST( <>,      l2,  _ 0 _ 1 )
-        using l3 = Iota<3>::type;
+        using l3 = mp::iota<3>;
         CHECK_COMPLEMENT_LIST( <0 _ 1>, l3,  _ 2 )
         CHECK_COMPLEMENT_LIST( <0 _ 2>, l3,  _ 1 )
         CHECK_COMPLEMENT_LIST( <1 _ 2>, l3,  _ 0 )
@@ -300,7 +277,7 @@ static_assert(check_idx<ComplementList<int_list A , B >::type \
         CHECK_COMPLEMENT_LIST( <1>,     l3,  _ 0 _ 2 )
         CHECK_COMPLEMENT_LIST( <2>,     l3,  _ 0 _ 1 )
         CHECK_COMPLEMENT_LIST( <>,      l3,  _ 0 _ 1 _ 2 )
-        CHECK_COMPLEMENT_LIST( <>,      nil, )
+        CHECK_COMPLEMENT_LIST( <>,      mp::nil, )
 // this must also work on unserted lists.
         CHECK_COMPLEMENT_LIST( <1 _ 0>, l3,  _ 2 )
         CHECK_COMPLEMENT_LIST( <2 _ 1>, l3,  _ 0 )
@@ -312,89 +289,88 @@ static_assert(check_idx<ComplementList<int_list A , B >::type \
 #undef CHECK_COMPLEMENT_LIST
 #undef _
     }
-// MapCons.
+// map_cons
     {
-        using a = Iota<2>::type;
-        using b = Iota<2, 1>::type;
-        using mc = MapCons<int_t<9>, tuple<a, b>>::type;
-        static_assert(check_idx<Ref<mc, 0>::type, 9, 0, 1>::value, "a");
-        static_assert(check_idx<Ref<mc, 1>::type, 9, 1, 2>::value, "b");
+        using a = mp::iota<2>;
+        using b = mp::iota<2, 1>;
+        using mc = mp::map_cons<int_t<9>, tuple<a, b>>;
+        static_assert(mp::check_idx<ref<mc, 0>, 9, 0, 1>::value, "a");
+        static_assert(mp::check_idx<ref<mc, 1>, 9, 1, 2>::value, "b");
     }
 // Combinations.
     {
-        static_assert(n_over_p(0, 0)==1, "");
-        static_assert(len<Combinations<nil, 0>::type> == 1, "");
-        using l3 = Iota<3>::type;
-        using c31 = Combinations<l3, 1>::type;
-        using c32 = Combinations<l3, 2>::type;
-        static_assert(len<c31> == 3, "a");
-        static_assert(check_idx<Ref<c31, 0>::type, 0>::value, "a");
-        static_assert(check_idx<Ref<c31, 1>::type, 1>::value, "b");
-        static_assert(check_idx<Ref<c31, 2>::type, 2>::value, "c");
-        static_assert(len<c32> == 3, "b");
-        static_assert(check_idx<Ref<c32, 0>::type, 0, 1>::value, "d");
-        static_assert(check_idx<Ref<c32, 1>::type, 0, 2>::value, "e");
-        static_assert(check_idx<Ref<c32, 2>::type, 1, 2>::value, "f");
-        using l4 = Iota<4>::type;
-        using c40 = Combinations<l4, 0>::type;
-        using c41 = Combinations<l4, 1>::type;
-        using c42 = Combinations<l4, 2>::type;
-        using c43 = Combinations<l4, 3>::type;
-        using c44 = Combinations<l4, 4>::type;
-        static_assert(len<c40> == 1, "a");
-        static_assert(check_idx<Ref<c40, 0>::type>::value, "a");
-        static_assert(len<c41> == 4, "b");
-        static_assert(check_idx<Ref<c41, 0>::type, 0>::value, "b");
-        static_assert(check_idx<Ref<c41, 1>::type, 1>::value, "b");
-        static_assert(check_idx<Ref<c41, 2>::type, 2>::value, "b");
-        static_assert(check_idx<Ref<c41, 3>::type, 3>::value, "b");
-        static_assert(len<c42> == 6, "c");
-        static_assert(check_idx<Ref<c42, 0>::type, 0, 1>::value, "c");
-        static_assert(check_idx<Ref<c42, 1>::type, 0, 2>::value, "c");
-        static_assert(check_idx<Ref<c42, 2>::type, 0, 3>::value, "c");
-        static_assert(check_idx<Ref<c42, 3>::type, 1, 2>::value, "c");
-        static_assert(check_idx<Ref<c42, 4>::type, 1, 3>::value, "c");
-        static_assert(check_idx<Ref<c42, 5>::type, 2, 3>::value, "c");
-        static_assert(len<c43> == 4, "d");
-        static_assert(check_idx<Ref<c43, 0>::type, 0, 1, 2>::value, "d");
-        static_assert(check_idx<Ref<c43, 1>::type, 0, 1, 3>::value, "d");
-        static_assert(check_idx<Ref<c43, 2>::type, 0, 2, 3>::value, "d");
-        static_assert(check_idx<Ref<c43, 3>::type, 1, 2, 3>::value, "d");
-        static_assert(len<c44> == 1, "e");
-        static_assert(check_idx<Ref<c44, 0>::type, 0, 1, 2, 3>::value, "e");
+        static_assert(mp::n_over_p(0, 0)==1, "");
+        static_assert(mp::len<mp::combinations<mp::nil, 0>> == 1, "");
+        using l3 = mp::iota<3>;
+        using c31 = mp::combinations<l3, 1>;
+        using c32 = mp::combinations<l3, 2>;
+        static_assert(mp::len<c31> == 3, "a");
+        static_assert(mp::check_idx<ref<c31, 0>, 0>::value, "a");
+        static_assert(mp::check_idx<ref<c31, 1>, 1>::value, "b");
+        static_assert(mp::check_idx<ref<c31, 2>, 2>::value, "c");
+        static_assert(mp::len<c32> == 3, "b");
+        static_assert(mp::check_idx<ref<c32, 0>, 0, 1>::value, "d");
+        static_assert(mp::check_idx<ref<c32, 1>, 0, 2>::value, "e");
+        static_assert(mp::check_idx<ref<c32, 2>, 1, 2>::value, "f");
+        using l4 = mp::iota<4>;
+        using c40 = mp::combinations<l4, 0>;
+        using c41 = mp::combinations<l4, 1>;
+        using c42 = mp::combinations<l4, 2>;
+        using c43 = mp::combinations<l4, 3>;
+        using c44 = mp::combinations<l4, 4>;
+        static_assert(mp::len<c40> == 1, "a");
+        static_assert(mp::check_idx<ref<c40, 0>>::value, "a");
+        static_assert(mp::len<c41> == 4, "b");
+        static_assert(mp::check_idx<ref<c41, 0>, 0>::value, "b");
+        static_assert(mp::check_idx<ref<c41, 1>, 1>::value, "b");
+        static_assert(mp::check_idx<ref<c41, 2>, 2>::value, "b");
+        static_assert(mp::check_idx<ref<c41, 3>, 3>::value, "b");
+        static_assert(mp::len<c42> == 6, "c");
+        static_assert(mp::check_idx<ref<c42, 0>, 0, 1>::value, "c");
+        static_assert(mp::check_idx<ref<c42, 1>, 0, 2>::value, "c");
+        static_assert(mp::check_idx<ref<c42, 2>, 0, 3>::value, "c");
+        static_assert(mp::check_idx<ref<c42, 3>, 1, 2>::value, "c");
+        static_assert(mp::check_idx<ref<c42, 4>, 1, 3>::value, "c");
+        static_assert(mp::check_idx<ref<c42, 5>, 2, 3>::value, "c");
+        static_assert(mp::len<c43> == 4, "d");
+        static_assert(mp::check_idx<ref<c43, 0>, 0, 1, 2>::value, "d");
+        static_assert(mp::check_idx<ref<c43, 1>, 0, 1, 3>::value, "d");
+        static_assert(mp::check_idx<ref<c43, 2>, 0, 2, 3>::value, "d");
+        static_assert(mp::check_idx<ref<c43, 3>, 1, 2, 3>::value, "d");
+        static_assert(mp::len<c44> == 1, "e");
+        static_assert(mp::check_idx<ref<c44, 0>, 0, 1, 2, 3>::value, "e");
     }
-// MapPrepend & ProductAppend.
+// map_prepend & product_append
     {
-        using la = Iota<3>::type;
-        using ca = Combinations<la, 1>::type;
-        using lb = Iota<3>::type;
-        using cb = Combinations<lb, 1>::type;
-        using test0 = MapPrepend<nil, cb>::type;
+        using la = mp::iota<3>;
+        using ca = mp::combinations<la, 1>;
+        using lb = mp::iota<3>;
+        using cb = mp::combinations<lb, 1>;
+        using test0 = mp::map_prepend<mp::nil, cb>;
         static_assert(is_same_v<test0, cb>, "");
-        using test1 = MapPrepend<la, cb>::type;
-        static_assert(len<test1> == int(len<cb>), "");
-        static_assert(check_idx<Ref<test1, 0>::type, 0, 1, 2, 0>::value, "");
-        static_assert(check_idx<Ref<test1, 1>::type, 0, 1, 2, 1>::value, "");
-        static_assert(check_idx<Ref<test1, 2>::type, 0, 1, 2, 2>::value, "");
+        using test1 = mp::map_prepend<la, cb>;
+        static_assert(mp::len<test1> == int(mp::len<cb>), "");
+        static_assert(mp::check_idx<ref<test1, 0>, 0, 1, 2, 0>::value, "");
+        static_assert(mp::check_idx<ref<test1, 1>, 0, 1, 2, 1>::value, "");
+        static_assert(mp::check_idx<ref<test1, 2>, 0, 1, 2, 2>::value, "");
 
-        using test2 = ProductAppend<ca, cb>::type;
-        static_assert(len<test2> == 9, "");
-        static_assert(check_idx<Ref<test2, 0>::type, 0, 0>::value, "");
-        static_assert(check_idx<Ref<test2, 1>::type, 0, 1>::value, "");
-        static_assert(check_idx<Ref<test2, 2>::type, 0, 2>::value, "");
-        static_assert(check_idx<Ref<test2, 3>::type, 1, 0>::value, "");
-        static_assert(check_idx<Ref<test2, 4>::type, 1, 1>::value, "");
-        static_assert(check_idx<Ref<test2, 5>::type, 1, 2>::value, "");
-        static_assert(check_idx<Ref<test2, 6>::type, 2, 0>::value, "");
-        static_assert(check_idx<Ref<test2, 7>::type, 2, 1>::value, "");
-        static_assert(check_idx<Ref<test2, 8>::type, 2, 2>::value, "");
+        using test2 = mp::product_append<ca, cb>;
+        static_assert(mp::len<test2> == 9, "");
+        static_assert(mp::check_idx<ref<test2, 0>, 0, 0>::value, "");
+        static_assert(mp::check_idx<ref<test2, 1>, 0, 1>::value, "");
+        static_assert(mp::check_idx<ref<test2, 2>, 0, 2>::value, "");
+        static_assert(mp::check_idx<ref<test2, 3>, 1, 0>::value, "");
+        static_assert(mp::check_idx<ref<test2, 4>, 1, 1>::value, "");
+        static_assert(mp::check_idx<ref<test2, 5>, 1, 2>::value, "");
+        static_assert(mp::check_idx<ref<test2, 6>, 2, 0>::value, "");
+        static_assert(mp::check_idx<ref<test2, 7>, 2, 1>::value, "");
+        static_assert(mp::check_idx<ref<test2, 8>, 2, 2>::value, "");
     }
 // PermutationSign.
     {
 #define _ ,
 #define CHECK_PERM_SIGN( A, B, C ) \
-static_assert(PermutationSign<int_list A , \
-                              int_list B >::value == C, "");
+static_assert(mp::PermutationSign<int_list A , int_list B >::value == C, "");
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <0 _ 1 _ 2>, +1 );
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <0 _ 2 _ 1>, -1 );
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <1 _ 2 _ 0>, +1 );
@@ -417,21 +393,21 @@ static_assert(PermutationSign<int_list A , \
 #undef CHECK_PERM_SIGN
 #undef _
     }
-// Inc.
+// inc
     {
         using l = int_list<7, 8, 2>;
-        static_assert(check_idx<l, 7, 8, 2>::value, "bad");
-        static_assert(check_idx<Inc<l, 0>::type, 8, 8, 2>::value, "bad");
-        static_assert(check_idx<Inc<l, 1>::type, 7, 9, 2>::value, "bad");
-        static_assert(check_idx<Inc<l, 2>::type, 7, 8, 3>::value, "bad");
+        static_assert(mp::check_idx<l, 7, 8, 2>::value, "bad");
+        static_assert(mp::check_idx<mp::inc<l, 0>, 8, 8, 2>::value, "bad");
+        static_assert(mp::check_idx<mp::inc<l, 1>, 7, 9, 2>::value, "bad");
+        static_assert(mp::check_idx<mp::inc<l, 2>, 7, 8, 3>::value, "bad");
     }
 // Prod & Sum
     {
         using l = int_list<3, 5, 7>;
-        static_assert(Apply<Prod, l>::type::value==105, "bad");
-        static_assert(Apply<Sum, l>::type::value==15, "bad");
+        static_assert(mp::apply<mp::prod, l>::value==105, "bad");
+        static_assert(mp::apply<mp::sum, l>::value==15, "bad");
     }
-// tuple-dynamic.
+// tuple-dynamic
     {
         using l = int_list<3, 4, 5>;
         tr.test_eq(3, mp::on_tuple<l>::ref(0));

@@ -32,16 +32,16 @@ int main()
         using sizes = mp::int_list<1, 2, 3, 4, 5>;
         using strides = mp::int_list<1, 10, 100, 1000, 10000>;
 
-        using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0> >::type;
+        using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0>>::type;
         using e0 = mp::int_list<0, 4>;
         tr.info(mp::print_int_list<e0> {}, " vs ", mp::print_int_list<c0> {}).test(std::is_same_v<e0, c0>);
 
-        using c1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1> >::type;
+        using c1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1>>::type;
         using e1 = mp::int_list<1>;
         tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
 
         using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>::type;
-        using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2> >;
+        using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2>>;
         tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same_v<eall, call>);
     }
     tr.section("transpose(ra::Small)");
@@ -112,9 +112,9 @@ int main()
     {
         using d = mp::int_list<3, 4, 5>;
         using s = ra::default_strides<d>;
-        tr.info("stride 0").test_eq(20, mp::Ref_<s, 0>::value);
-        tr.info("stride 1").test_eq(5, mp::Ref_<s, 1>::value);
-        tr.info("stride 2").test_eq(1, mp::Ref_<s, 2>::value);
+        tr.info("stride 0").test_eq(20, mp::ref<s, 0>::value);
+        tr.info("stride 1").test_eq(5, mp::ref<s, 1>::value);
+        tr.info("stride 2").test_eq(1, mp::ref<s, 2>::value);
     }
     tr.section("subscripts");
     {
@@ -441,7 +441,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, mp::int_list<3>, mp::int_list<2> > c(b.data()); // TODO no syntax yet.
+            ra::SmallView<double, mp::int_list<3>, mp::int_list<2>> c(b.data()); // TODO no syntax yet.
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
@@ -458,7 +458,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, mp::int_list<3>, mp::int_list<2> > c(b.data()); // TODO no syntax yet.
+            ra::SmallView<double, mp::int_list<3>, mp::int_list<2>> c(b.data()); // TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
@@ -473,7 +473,7 @@ int main()
             ra::Small<double, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
             ra::Small<double, 6, 2> b = { 1, 2, 99, 99, 3, 4, 99, 99, 5, 6, 99, 99 };
-            ra::SmallView<double, mp::int_list<3, 2>, mp::int_list<4, 1> > c(b.data()); // TODO no syntax yet.
+            ra::SmallView<double, mp::int_list<3, 2>, mp::int_list<4, 1>> c(b.data()); // TODO no syntax yet.
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }

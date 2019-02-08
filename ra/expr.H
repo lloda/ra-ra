@@ -46,7 +46,7 @@ auto flat(Op & op, P && ... p)
     return Flat<Op, std::tuple<P ...>> { op, std::tuple<P ...> { std::forward<P>(p) ... } };
 }
 
-template <class P> struct var_rank { using type = mp::bool_t<(std::decay_t<P>::size_s()==DIM_ANY)>; };
+template <class P> using var_rank = mp::bool_t<(std::decay_t<P>::size_s()==DIM_ANY)>;
 
 // E is Expr or Pick.
 template <int iarg, class E>
@@ -56,10 +56,10 @@ constexpr bool check_expr(int ranka, E const & e)
     using PA = typename E::PA;
     using T = typename E::T;
     if constexpr (iarg<mp::len<NotA>) {
-        constexpr int B = mp::Ref_<NotA, iarg>::value;
-// Provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
-// ct checks require ct rank. This will only do rank checks for fixed rank / var size.
-        using PB = std::decay_t<mp::Ref_<T, B>>;
+        constexpr int B = mp::ref<NotA, iarg>::value;
+// provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
+// ct checks require ct rank. But for fixed rank / var size, size checks cannot be done at ct, so this will only do rank checks.
+        using PB = std::decay_t<mp::ref<T, B>>;
         if constexpr (E::rank_s()>=0) {
             constexpr int rankb = PB::rank_s();
             constexpr auto f
@@ -81,7 +81,7 @@ constexpr bool check_expr(int ranka, E const & e)
             f(f, mp::int_t<0> {});
         }
 // rt checks are needed if any sub is rt size, even if E's own size is ct.
-        if constexpr (mp::Apply_<mp::Or, mp::Map_<var_rank, T>>::value) {
+        if constexpr (mp::apply<mp::orb, mp::map<var_rank, T>>::value) {
             rank_t rankb = std::get<B>(e.t).rank();
             assert(rankb<=ranka && "driver not max rank (could be RANK_ANY)");
             for (int k=0; k!=rankb; ++k) {
@@ -109,8 +109,8 @@ struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
 // A-th argument decides rank and shape.
     constexpr static int A = driver_index<P ...>::value;
     using T = std::tuple<P ...>;
-    using PA = std::decay_t<mp::Ref_<T, A>>;
-    using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
+    using PA = std::decay_t<mp::ref<T, A>>;
+    using NotA = mp::complement_list<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
 
     Op op;
     T t;

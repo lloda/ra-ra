@@ -50,7 +50,7 @@ else:
 
 env.Prepend(CPPPATH=['..', '.'],
             CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-            CXXFLAGS=['-std=c++1z', '-Wall', '-Werror', '-Wno-unknown-pragmas', # '-fdiagnostics-color=always',
+            CXXFLAGS=['-std=c++17', '-Wall', '-Werror', '-Wno-unknown-pragmas', # '-fdiagnostics-color=always',
                       '-finput-charset=UTF-8', '-fextended-identifiers',
                       '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
                       #'-Wconversion',

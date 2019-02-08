@@ -131,8 +131,8 @@ struct Indexer0
     template <rank_t end, rank_t k, class P>
     constexpr static std::enable_if_t<(k<end), dim_t> index_p_(dim_t const c, P const & p)
     {
-        CHECK_BOUNDS(inside(p[k], mp::First_<sizes>::value));
-        return Indexer0<mp::Drop1_<sizes>, mp::Drop1_<strides>>::template index_p_<end, k+1>(c + p[k] * mp::First_<strides>::value, p);
+        CHECK_BOUNDS(inside(p[k], mp::first<sizes>::value));
+        return Indexer0<mp::drop1<sizes>, mp::drop1<strides>>::template index_p_<end, k+1>(c + p[k] * mp::first<strides>::value, p);
     }
     template <class P>
     constexpr static dim_t index_p(P const & p) // for Container::at().

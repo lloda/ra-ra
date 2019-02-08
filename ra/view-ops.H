@@ -82,7 +82,7 @@ auto transpose(View<T, RANK> const & view)
     static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "bad output rank");
     assert((view.rank()==sizeof...(Iarg)) && "bad output rank");
 
-    using dummy_s = mp::MakeList_<sizeof...(Iarg), mp::int_t<0>>;
+    using dummy_s = mp::makelist<sizeof...(Iarg), mp::int_t<0>>;
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
     constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
 

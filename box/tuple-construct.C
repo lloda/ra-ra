@@ -29,8 +29,8 @@ template <class T, class sizes>
 struct nested_tuple
 {
     constexpr static int rank = mp::len<sizes>;
-    using sub = typename nested_tuple<T, mp::Drop1_<sizes>>::type;
-    using type = mp::MakeList_<mp::Ref_<sizes, 0>::value, sub>;
+    using sub = typename nested_tuple<T, mp::drop1<sizes>>::type;
+    using type = mp::makelist<mp::ref<sizes, 0>::value, sub>;
 };
 
 struct foo
