@@ -175,7 +175,7 @@ int main()
     static_assert(ref<S3, 1, 0, 2>::value==7, "3r");
     static_assert(ref<S3, 1, 1, 0>::value==9, "3s");
     static_assert(ref<S3, 1, 1, 1>::value==8, "3t");
-// Index.
+// index.
     static_assert(mp::index<A, int_t<0>>::value==0, "4a");
     static_assert(mp::index<A, int_t<2>>::value==1, "4b");
     static_assert(mp::index<A, int_t<3>>::value==2, "4c");
@@ -202,16 +202,16 @@ int main()
     static_assert(mp::IndexIf<A, SamePP<int_t<2>>::type>::value==1, "5b");
     static_assert(mp::IndexIf<A, SamePP<int_t<3>>::type>::value==2, "5c");
     static_assert(mp::IndexIf<A, SamePP<int_t<9>>::type>::value==-1, "5d");
-// find
+// findtail.
     static_assert(is_same_v<mp::findtail<A, int_t<0>>, A>, "4a");
     static_assert(mp::check_idx<mp::findtail<A, int_t<2>>, 2, 3>::value, "4b");
     static_assert(mp::check_idx<mp::findtail<A, int_t<3>>, 3>::value, "4c");
     static_assert(mp::nilp<mp::findtail<A, int_t<4>>>, "4d");
     static_assert(is_same_v<mp::findtail<S3, S2BC>, tuple<S2BC>>, "4e");
-// reverse
+// reverse.
     static_assert(mp::check_idx<mp::reverse<A_B>, 7, 6, 5, 3, 2, 0>::value, "5a");
     static_assert(mp::check_idx<mp::reverse<O>>::value, "5b");
-    static_assert(is_same_v<mp::reverse<mp::nil>, mp::nil>, "bad mp::reverse");
+    static_assert(is_same_v<mp::reverse<mp::nil>, mp::nil>, "bad reverse");
 // drop & take
     static_assert(mp::check_idx<mp::drop<A, 0>, 0, 2, 3>::value, "bad 6a");
     static_assert(mp::check_idx<mp::drop<A, 1>, 2, 3>::value, "bad 6b");
@@ -221,28 +221,28 @@ int main()
     static_assert(mp::check_idx<mp::take<A, 1>, 0>::value, "bad 6f");
     static_assert(mp::check_idx<mp::take<A, 2>, 0, 2>::value, "bad 6g");
     static_assert(mp::check_idx<mp::take<A, 3>, 0, 2, 3>::value, "bad 6h");
-// complement
+// complement.
     {
         using case1 = int_list<1>;
-        static_assert(mp::check_idx<mp::complement<case1, 0>>::value, "");
-        static_assert(mp::check_idx<mp::complement<case1, 1>, 0>::value, "");
-        static_assert(mp::check_idx<mp::complement<case1, 2>, 0>::value, "");
-        static_assert(mp::check_idx<mp::complement<case1, 3>, 0, 2>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<case1, 0>>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<case1, 1>, 0>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<case1, 2>, 0>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<case1, 3>, 0, 2>::value, "");
         using list3 = mp::iota<3>;
-        static_assert(mp::check_idx<mp::complement<list3, 3>>::value, "");
-        using c36 = mp::complement<list3, 6>;
+        static_assert(mp::check_idx<mp::Complement_<list3, 3>>::value, "");
+        using c36 = mp::Complement_<list3, 6>;
         static_assert(mp::check_idx<c36, 3, 4, 5>::value, "");
-        static_assert(mp::check_idx<mp::complement<c36, 6>, 0, 1, 2>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<c36, 6>, 0, 1, 2>::value, "");
         using case0 = tuple<int_t<0>>;
-        static_assert(mp::check_idx<mp::complement<case0, 0>>::value, "");
-        static_assert(mp::check_idx<mp::complement<case0, 1>>::value, "");
-        static_assert(mp::check_idx<mp::complement<case0, 2>, 1>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<case0, 0>>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<case0, 1>>::value, "");
+        static_assert(mp::check_idx<mp::Complement_<case0, 2>, 1>::value, "");
     }
-// complement_slist && complement_list.
+// ComplementSList && ComplementList.
     {
 #define _ ,
 #define CHECK_COMPLEMENT_SLIST( A, B, C ) \
-static_assert(mp::check_idx<mp::complement_slist<int_list A , B > C >::value, "a");
+static_assert(mp::check_idx<mp::ComplementSList_<int_list A , B > C >::value, "a");
         CHECK_COMPLEMENT_SLIST( <1>, int_list<>, )
         CHECK_COMPLEMENT_SLIST( <1>, int_list<0>, _ 0)
         CHECK_COMPLEMENT_SLIST( <1>, int_list<0 _ 1>, _ 0)
@@ -264,7 +264,7 @@ static_assert(mp::check_idx<mp::complement_slist<int_list A , B > C >::value, "a
 #undef _
 #define _ ,
 #define CHECK_COMPLEMENT_LIST( A, B, C ) \
-static_assert(mp::check_idx<mp::complement_list<int_list A , B > C >::value, "a");
+static_assert(mp::check_idx<mp::ComplementList_<int_list A , B > C >::value, "a");
         using l2 = mp::iota<2>;
         CHECK_COMPLEMENT_LIST( <0>,     l2,  _ 1 )
         CHECK_COMPLEMENT_LIST( <1>,     l2,  _ 0 )
@@ -289,11 +289,11 @@ static_assert(mp::check_idx<mp::complement_list<int_list A , B > C >::value, "a"
 #undef CHECK_COMPLEMENT_LIST
 #undef _
     }
-// map_cons
+// MapCons.
     {
         using a = mp::iota<2>;
         using b = mp::iota<2, 1>;
-        using mc = mp::map_cons<int_t<9>, tuple<a, b>>;
+        using mc = mp::MapCons<int_t<9>, tuple<a, b>>::type;
         static_assert(mp::check_idx<ref<mc, 0>, 9, 0, 1>::value, "a");
         static_assert(mp::check_idx<ref<mc, 1>, 9, 1, 2>::value, "b");
     }
@@ -340,21 +340,21 @@ static_assert(mp::check_idx<mp::complement_list<int_list A , B > C >::value, "a"
         static_assert(mp::len<c44> == 1, "e");
         static_assert(mp::check_idx<ref<c44, 0>, 0, 1, 2, 3>::value, "e");
     }
-// map_prepend & product_append
+// MapPrepend & ProductAppend.
     {
         using la = mp::iota<3>;
         using ca = mp::combinations<la, 1>;
         using lb = mp::iota<3>;
         using cb = mp::combinations<lb, 1>;
-        using test0 = mp::map_prepend<mp::nil, cb>;
+        using test0 = mp::MapPrepend<mp::nil, cb>::type;
         static_assert(is_same_v<test0, cb>, "");
-        using test1 = mp::map_prepend<la, cb>;
+        using test1 = mp::MapPrepend<la, cb>::type;
         static_assert(mp::len<test1> == int(mp::len<cb>), "");
         static_assert(mp::check_idx<ref<test1, 0>, 0, 1, 2, 0>::value, "");
         static_assert(mp::check_idx<ref<test1, 1>, 0, 1, 2, 1>::value, "");
         static_assert(mp::check_idx<ref<test1, 2>, 0, 1, 2, 2>::value, "");
 
-        using test2 = mp::product_append<ca, cb>;
+        using test2 = mp::ProductAppend<ca, cb>::type;
         static_assert(mp::len<test2> == 9, "");
         static_assert(mp::check_idx<ref<test2, 0>, 0, 0>::value, "");
         static_assert(mp::check_idx<ref<test2, 1>, 0, 1>::value, "");

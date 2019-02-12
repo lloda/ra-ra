@@ -44,7 +44,7 @@ struct PermutationFlipSign<+1, std::tuple<C0, C1, C ...>>
 template <class C, int D>
 struct AntiCombination
 {
-    using EC = complement<C, D>;
+    using EC = Complement_<C, D>;
     static_assert((len<EC>)>=2, "can't correct this complement");
     using type = typename PermutationFlipSign<PermutationSign<append<C, EC>, iota<D>>::value, EC>::type;
 };
@@ -113,7 +113,7 @@ struct Wedge
     term(Va const & a, Vb const & b)
     {
         using Fa0 = mp::first<Fa>;
-        using Fb = mp::complement_list<Fa0, Xr>;
+        using Fb = mp::ComplementList_<Fa0, Xr>;
         using Sa = mp::FindCombination<Fa0, Ca>;
         using Sb = mp::FindCombination<Fb, Cb>;
         constexpr int sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::append<Fa0, Fb>, Xr>::value;
@@ -167,10 +167,10 @@ struct Hodge
     {
         using Cai = mp::ref<Ca, i>;
         static_assert(mp::len<Cai> == O, "bad");
-// sort Cai, because mp::complement only accepts sorted combinations.
+// sort Cai, because Complement only accepts sorted combinations.
 // ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
         using SCai = mp::ref<LexOrCa, mp::FindCombination<Cai, LexOrCa>::where>;
-        using CompCai = mp::complement<SCai, D>;
+        using CompCai = mp::Complement_<SCai, D>;
         static_assert(mp::len<CompCai> == D-O, "bad");
         using fpw = mp::FindCombination<CompCai, Cb>;
 // for the sign see e.g. DoCarmo1991 I.Ex 10.

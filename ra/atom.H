@@ -284,9 +284,9 @@ template <class X> constexpr bool by_index_def = false;
 template <class T> constexpr bool by_index = by_index_def<std::decay_t<T>>;
 template <int w, class value_type> constexpr bool by_index_def<TensorIndex<w, value_type>> = true;
 
-template <class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Expr;
-template <class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Pick;
-template <class FM, class Op, class T, class K=std::make_integer_sequence<int, mp::len<T>>> struct Ryn;
+template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
+template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
+template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
 
 template <class Op, class ... Ti, class K>

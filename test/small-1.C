@@ -259,8 +259,8 @@ int main()
 
                         using A = std::decay_t<decltype(a(0))>;
                         using dim1 = std::array<ra::dim_t, 1>;
-                        auto sizes = mp::tuple_copy<typename A::sizes, dim1>::f();
-                        auto strides = mp::tuple_copy<typename A::strides, dim1>::f();
+                        auto sizes = mp::tuple_values<dim1, typename A::sizes>();
+                        auto strides = mp::tuple_values<dim1, typename A::strides>();
                         tr.test_eq(dim1 {3}, ra::start(sizes));
                         tr.test_eq(dim1 {2}, ra::start(strides));
                     };

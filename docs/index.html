@@ -484,14 +484,18 @@ ra::Big&lt;double&gt; c({2, 3}, a);         // c has size 2x3 and a is copied in
 <pre class="verbatim">Small&lt;int, 2, 2&gt; aa = {1, 2, 3, 4}; // ravel of the content
 
 ra::Big&lt;double, 2&gt; a({2, 3}, {1, 2, 3, 4, 5, 6}); // same as a = {{1, 2, 3}, {4, 5, 6}}
+</pre></div>
 
-double bx[6] = {1, 2, 3, 4, 5, 6}
+<div class="example">
+<pre class="verbatim">double bx[6] = {1, 2, 3, 4, 5, 6}
 ra::Big&lt;double, 2&gt; b({3, 2}, bx); // {{1, 2}, {3, 4}, {5, 6}}
 
 double cx[4] = {1, 2, 3, 4}
 ra::Big&lt;double, 2&gt; c({3, 2}, cx); // *** WHO NOSE ***
+</pre></div>
 
-using sizes = mp::int_list&lt;2, 3&gt;;
+<div class="example">
+<pre class="verbatim">using sizes = mp::int_list&lt;2, 3&gt;;
 using strides = mp::int_list&lt;1, 2&gt;;
 ra::SmallArray&lt;double, sizes, strides&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 </pre></div>

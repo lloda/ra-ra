@@ -1,5 +1,5 @@
 
-// (c) Daniel Llorens - 2011
+// (c) Daniel Llorens - 2011, 2019
 
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
@@ -32,33 +32,18 @@ struct show_type
 
 // Prints recursively, i.e. int_t trees.
 
-template <class A> struct print_int_list
-{
-    static_assert(is_tuple_v<A>);
-};
+template <class A> struct print_int_list {};
 
 template <class A> std::ostream &
 operator<<(std::ostream & o, print_int_list<A> const & a)
 {
-    return print_int_list<A>::f(o);
+    if constexpr (is_tuple_v<A>) {
+        std::apply([&o](auto ... a) { ((o << "[") << ... << print_int_list<decltype(a)> {}) << "]"; }, A {});
+        return o;
+    } else {
+        return (o << A::value << " ");
+    }
 }
-
-template <class ... A>
-struct print_int_list<std::tuple<A ...>>
-{
-    static std::ostream & f(std::ostream & o)
-    {
-        return ((o << "[") << ... << print_int_list<A> {}) << "]";
-    }
-};
-template <int i0>
-struct print_int_list<mp::int_t<i0>>
-{
-    static std::ostream & f(std::ostream & o)
-    {
-        return (o << i0 << " ");
-    }
-};
 
 template <class T>
 std::string

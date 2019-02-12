@@ -9,7 +9,7 @@ Multidimensional arrays are containers that can be indexed in multiple dimension
 
 **ra-ra** tries to distinguish itself from established C++ libraries in this space (such as [Eigen](https://eigen.tuxfamily.org) or [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html)) by being more APLish, more general, smaller, and more hackable.
 
-In this example from [examples/readme.C](examples/readme.C), we add each element of a vector to each row of a matrix, and then print the result.
+In this example ([examples/readme.C](examples/readme.C)), we add each element of a vector to each row of a matrix, and then print the result.
 
 ```c++
 #include "ra/operators.H"
@@ -30,26 +30,33 @@ A: 2 2
 23 24
 ```
 
-You can view the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra). It is a work in progress. Please check it out for details, or have a look at the [examples/](examples/) folder.
+Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or have a look at the [examples/](examples/) folder.
 
 **ra-ra** supports:
 
 * Array types with arbitrary compile time or runtime rank, and compile time or runtime shape.
-* Memory owning types as well as views, with all the rank and shape options above.
-* You can make array views over any piece of memory.
+* Memory owning types as well as views over any piece of memory.
+* Rank extension by prefix matching, as in APL/J, for functions of any number of arguments.
+* Compatibility with builtin arrays and with the STL.
 * Transparent memory layout, for interoperability with other libraries and/or languages.
-* Rank extension (broadcasting) for functions with any number of arguments of any rank.
+* Iterators over cells (slices/subarrays) of any rank.
+* Rank conjunction as in J, with some limitations.
 * Slicing with indices of arbitrary rank, beating of linear range indices, index skipping and elision.
-* A rank conjunction as in J, with some limitations.
-* An outer product operation.
-* Iterators over slices (subarrays) of any rank.
-* A tensor index object.
+* Outer product operation.
+* Tensor index object.
+* Short-circuiting logical operators.
+* Argument list selection operators (`where` with bool selector, or `pick` with integer selector).
+* Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
 * Many predefined array operations. Adding yours is trivial.
-* Lazy selection operators (e.g. pick from argument list according to index).
-* Short-circuiting logical operators.
-* Reshape, transpose, reverse, collapse/explode, stencils.
-* Partial compatibility with the STL.
+
+There is some constexpr support for the compile time size types. For example, this works:
+
+```
+constexpr ra::Small<int, 3> a = { 1, 2, 3 };
+using T = std::integral_constant<int, ra::sum(a)>;
+static_assert(T::value==6);
+```
 
 Performance is competitive with hand written scalar (element by element) loops, but probably not with cache-tuned code such as your platform BLAS, or with code using SIMD. Please have a look at the benchmarks in [bench/](bench/).
 
@@ -57,17 +64,15 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 The library itself is header-only and has no dependencies other than a C++17 compiler and the standard library.
 
-The test suite ([test/](test/)) runs under SCons. Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can easily build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment. You can also use CMake (e.g. `CXXFLAGS=-O3 cmake . && make && make test`) instead of SCons.
+The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can also build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
 
-All the tests pass under g++-8.0. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run.
+All the tests pass under g++-8.0. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Be aware that clang can be several times slower than gcc when compiling at `-O3`.
 
 All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for:
 
 * [bench/bench-pack.C](bench/bench-pack.C), crashes clang.
 * [test/iterator-small.C](test/iterator-small.C), crashes clang.
 * [test/optimize.C](test/optimize.C), gives compilation errors.
-
-Be aware that clang can be several times slower than gcc when compiling at `-O3`.
 
 For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is meant for gcc by setting CCFLAGS to something else, say:
 
@@ -83,23 +88,18 @@ I haven't tested on Windows. If you can do that, I'd appreciate a report!
 * Default array order is C or row-major (last dimension changes fastest). You can make array views using other orders by transposing or manipulating the strides yourself, but newly created arrays use C-order.
 * The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`, except that it accepts one
   subscript only.
-* Array constructors follow a regular format:
-  - Single argument constructors take a ‘content’ argument which must provide  enough shape information to construct the new array. If the array type has static shape, then the argument is subjected to the regular argument shape agreement rules (rank extension rules).
-  - Two-argument constructors always take a shape argument and a content argument.
 * Indices are checked by default. This can be disabled with a compilation flag.
 
 
 #### Bugs & defects
 
-* Not completely namespace-clean.
-* Beatable subscripts are not beaten if mixed with non-beatable subscripts.
-* Inconsistencies with subscripting; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)` will return a nested expression instead of preserving `A`'s rank.
-* Poor reduction mechanisms.
-* Missing concatenation, search, and other infinite rank or rank > 0 operations.
-* Traversal of arrays is naive.
-* Poor handling of nested arrays.
-* No SIMD.
+* Lack of good reduction mechanisms.
+* Operations that require allocation, such as concatenation or search, are mostly absent.
+* Traversal of arrays is naive (just unrolling of inner dimensions).
+* Handling of nested (‘ragged’) arrays is inconsistent.
+* Not much support for SIMD.
 
+Please have a look at TODO for a concrete list of known bugs.
 
 #### Out of scope
 

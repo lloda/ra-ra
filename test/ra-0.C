@@ -740,13 +740,13 @@ int main()
                 tr.test_eq(5, r2);
 
                 auto r2a = r.at(ra::Small<int, 2> {1, 1});
-                tr.test(std::equal(r2a.begin(), r2a.end(), rcheck));
+                tr.info("r2a 1)").test(std::equal(r2a.begin(), r2a.end(), rcheck));
                 auto r2b = r.at(ra::Big<int, 1> {1, 1});
-                tr.test(std::equal(r2a.begin(), r2a.end(), rcheck));
+                tr.info("r2a 2)").test(std::equal(r2a.begin(), r2a.end(), rcheck));
                 auto r2c = r.at(0+ra::Big<int, 1> {1, 1});
-                tr.test(std::equal(r2c.begin(), r2c.end(), rcheck));
+                tr.info("r2a 3)").test(std::equal(r2c.begin(), r2c.end(), rcheck));
                 auto r2d = r.at(0+ra::Big<int> {1, 1});
-                tr.test(std::equal(r2d.begin(), r2d.end(), rcheck));
+                tr.info("r2a 4)").test(std::equal(r2d.begin(), r2d.end(), rcheck));
             }
         }
         // TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.

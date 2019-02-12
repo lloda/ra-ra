@@ -7,7 +7,7 @@
 // later version.
 
 /// @file iterator-small.C
-/// @brief WIP: creating a higher-rank iterator for SmallArray/SmallView.
+/// @brief Higher-rank iterator for SmallArray/SmallView.
 
 #include <iostream>
 #include <iterator>

@@ -28,16 +28,16 @@
 namespace ra {
 
 // Manipulate ET through flat (raw pointer-like) iterators P ...
-template <class Op, class T, class I=std::make_integer_sequence<int, mp::len<T>>>
+template <class Op, class T, class I=mp::iota<mp::len<T>>>
 struct Flat;
 
 template <class Op, class ... P, int ... I>
-struct Flat<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
+struct Flat<Op, std::tuple<P ...>, mp::int_list<I ...>>
 {
     Op & op;
     std::tuple<P ...> t;
     template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-    constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); } // TODO std::apply(op, t)
+    constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
 };
 
 template <class Op, class ... P> inline constexpr
@@ -104,13 +104,13 @@ constexpr bool check_expr(int ranka, E const & e)
 // * 'static': Like expr, but the operator is compile time (e.g. ::apply()). Probably no need.
 // * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
 template <class Op, class ... P, int ... I>
-struct Expr<Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
+struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
 {
 // A-th argument decides rank and shape.
     constexpr static int A = driver_index<P ...>::value;
     using T = std::tuple<P ...>;
     using PA = std::decay_t<mp::ref<T, A>>;
-    using NotA = mp::complement_list<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
+    using NotA = mp::ComplementList_<mp::int_list<A>, mp::int_list<I ...>>;
 
     Op op;
     T t;

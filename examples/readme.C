@@ -207,17 +207,23 @@ int main()
         ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
         cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
     }
-// example from manual [ma110].
+    tr.section("example from manual [ma110]");
     {
         std::cout << exp(ra::Small<double, 3> {4, 5, 6}) << std::endl;
     }
-// example from manual [ma111].
+    tr.section("example from manual [ma111]");
     {
         ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
         ra::Small<int, 2, 2> b = {1, 2, 3, 4};  // ravel of content
         cout << "a: " << a << ", b: " << b << endl;
     }
-// example from manual [ma112].
+    tr.section("example from manual [ma112]");
+    {
+        double bx[6] = {1, 2, 3, 4, 5, 6};
+        ra::Big<double, 2> b({3, 2}, bx); // {{1, 2}, {3, 4}, {5, 6}}
+        cout << "b: " << b << endl;
+    }
+    tr.section("example from manual [ma114]");
     {
         using sizes = mp::int_list<2, 3>;
         using strides = mp::int_list<1, 2>;

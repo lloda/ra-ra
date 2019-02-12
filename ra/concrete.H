@@ -34,8 +34,8 @@ template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()==D
 };
 template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()!=DIM_ANY>>
 {
-    template <int N, class I=std::make_integer_sequence<int, N>> struct T;
-    template <int N, int ... I> struct T<N, std::integer_sequence<int, I ...>>
+    template <int N, class I=mp::iota<N>> struct T;
+    template <int N, int ... I> struct T<N, mp::int_list<I ...>>
     {
         using type = Small<value_t<E>, E::size_s(I) ...>;
     };

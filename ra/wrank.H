@@ -186,7 +186,7 @@ struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same_v<LiveAxes, mp
 // like Expr, except don't do driver selection here, but leave it to the args, as with Expr::adv(k, d). The args may need to be ApplyFrames... don't know yet.
 // forward decl in atom.H.
 template <class FM, class Op, class ... P, int ... I>
-struct Ryn<FM, Op, std::tuple<P ...>, std::integer_sequence<int, I ...>>
+struct Ryn<FM, Op, std::tuple<P ...>, mp::int_list<I ...>>
 {
     Op op;
     std::tuple<P ...> t;
@@ -274,7 +274,7 @@ template <class K>
 struct number_ryn;
 
 template <int ... I>
-struct number_ryn<std::integer_sequence<int, I ...>>
+struct number_ryn<mp::int_list<I ...>>
 {
     template <class V, class ... P> constexpr static
     auto f(V && v, P && ... t)
@@ -289,7 +289,7 @@ struct number_ryn<std::integer_sequence<int, I ...>>
     template <class cranks, class Op, class ... P> inline constexpr     \
     auto expr(Verb<cranks, Op> MOD v, P && ... t)                       \
     {                                                                   \
-        return number_ryn<std::make_integer_sequence<int, sizeof...(P)>>::f(std::forward<decltype(v)>(v), std::forward<P>(t) ...); \
+        return number_ryn<mp::iota<sizeof...(P)>>::f(std::forward<decltype(v)>(v), std::forward<P>(t) ...); \
     }
 FOR_EACH(DEF_EXPR_VERB, &&, &, const &)
 #undef DEF_EXPR_VERB

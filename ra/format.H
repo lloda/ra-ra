@@ -22,11 +22,7 @@ format(A && ... a)
     std::ostringstream o; (o << ... << a); return o.str();
 }
 
-inline decltype(auto)
-format(std::string && s)
-{
-    return std::forward<decltype(s)>(s);
-}
+inline std::string const & format(std::string const & s) { return s; }
 
 enum print_shape_t { defaultshape, withshape, noshape };
 

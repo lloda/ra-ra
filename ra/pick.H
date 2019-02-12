@@ -114,11 +114,11 @@ pick_star(size_t p0, T && t)
 // -----------------
 
 // Manipulate ET through flat (raw pointer-like) iterators P ...
-template <class T, class I=std::make_integer_sequence<int, mp::len<T>>>
+template <class T, class I=mp::iota<mp::len<T>>>
 struct PickFlat;
 
 template <class P0, class ... P, int ... I>
-struct PickFlat<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
+struct PickFlat<std::tuple<P0, P ...>, mp::int_list<I ...>>
 {
     std::tuple<P0, P ...> t;
     template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
@@ -133,13 +133,13 @@ auto pick_flat(P0 && p0, P && ... p)
 
 // forward decl in atom.H
 template <class P0, class ... P, int ... I>
-struct Pick<std::tuple<P0, P ...>, std::integer_sequence<int, I ...>>
+struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>
 {
 // A-th argument decides rank and shape.
     constexpr static int A = driver_index<P0, P ...>::value;
     using T = std::tuple<P0, P ...>;
     using PA = std::decay_t<mp::ref<T, A>>;
-    using NotA = mp::complement_list<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
+    using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
 
     T t;
 

@@ -29,6 +29,13 @@
 
 namespace ra {
 
+// Dope vector element
+struct Dim { dim_t size, stride; };
+
+// For debugging
+inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
+{ o << "[Dim " << dim.size << " " << dim.stride << "]"; return o; }
+
 
 // --------------------
 // nested braces for Container initializers
@@ -71,7 +78,7 @@ struct nested_braces<T, rank, std::enable_if_t<(rank>1)>>
 // --------------------
 // Big iterator
 // --------------------
-// TODO Refactor with cell_iterator_small / stl_iterator_small for SmallView?
+// TODO Refactor with cell_iterator_small for SmallView?
 
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_=0>
@@ -87,7 +94,8 @@ struct cell_iterator
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
 
 // FIXME take V/V & as in ra::Vector, and ask through that. Otherwise should be ref/pointer.
-    decltype(std::declval<V>().dim) dim;
+    using Dimv = decltype(std::declval<V>().dim);
+    Dimv const & dim;
 
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
@@ -100,25 +108,18 @@ struct cell_iterator
 
     cell_type c;
 
-    constexpr cell_iterator() { c.p = nullptr; } // end marker only.
     constexpr cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
-    template <class SS> constexpr
-    cell_iterator(SS const & s_, atom_type * p_): dim(s_)
+    constexpr cell_iterator(Dimv const & dim_, atom_type * p_): dim(dim_)
     {
         rank_t const rank = this->rank();
-// see stl_iterator for the case of s_[0]=0, etc. [ra12].
+// see stl_iterator for the case of dim_[0]=0, etc. [ra12].
         c.p = p_;
         rank_t const cellr = dependent_cell_rank(rank_t(dim.size()), cellr_spec);
         resize(c.dim, cellr);
         for (int k=0; k<cellr; ++k) {
-            c.dim[k] = s_[k+rank];
+            c.dim[k] = dim_[k+rank];
         }
-    }
-// needed b/c View = View copies contents, not the View itself [ra11]
-    constexpr cell_iterator & assign(cell_iterator const & ci)
-    {
-        dim = ci.dim; c.dim = ci.c.dim; c.p = ci.c.p; return *this;
     }
 
     constexpr static dim_t size_s() { return 0==rank_s() ? 1 : DIM_ANY; }
@@ -133,6 +134,7 @@ struct cell_iterator
         }
         return s;
     }
+    constexpr dim_t size() const { return prod(map(std::mem_fn(&Dim::size), dim)); }
     constexpr dim_t size(int j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
     constexpr dim_t stride(int j) const { return j<rank() ? dim[j].stride : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
@@ -166,53 +168,10 @@ struct cell_iterator
 #undef DEF_ASSIGNOPS
 };
 
-template <class Iterator>
-struct stl_iterator
-{
-    using value_type = typename Iterator::value_type;
-    using difference_type = dim_t;
-    using pointer = value_type *;
-    using reference = value_type &;
-    using iterator_category = std::forward_iterator_tag;
-    using shape_type = typename Iterator::shape_type;
-
-    Iterator ii;
-    shape_type i;
-    stl_iterator(): ii() {};
-// avoid ii = it.ii, see [ra11] above.
-    stl_iterator(stl_iterator const & it) = default;
-    stl_iterator & operator=(stl_iterator const & it) { i=it.i; ii.assign(it.ii); return *this; }
-    template <class SS> stl_iterator(SS const & s_, typename Iterator::atom_type * p_)
-        : ii(s_, p_),
-          i(ra::ra_traits<shape_type>::make(dependent_frame_rank(s_.size(), ii.cellr_spec), 0))
-    {
-// [ra12] Null p_ so begin()==end() for empty range. ply() uses sizes so this doesn't matter on cell_iterator.
-        for (auto && dim: s_) {
-            if (0==dim.size) {
-                ii.c.p = nullptr;
-                break;
-            }
-        }
-    };
-
-    template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
-    template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
-    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    stl_iterator & operator++() { next_in_cube(ii.rank(), ii.dim, i, ii.c.p); return *this; }
-};
-
 
 // --------------------
 // Indexing views
 // --------------------
-
-// Dope vector element
-struct Dim { dim_t size, stride; };
-
-// For debugging
-inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
-{ o << "[Dim " << dim.size << " " << dim.stride << "]"; return o; }
 
 // Always C order. If you need another, transpose this.
 // Works on dim vector with sizes already assigned, so that I can work from an expr. Not pretty though.
@@ -253,10 +212,10 @@ dim_t proddim(D d, D dend)
     template <rank_t c=0> using const_iterator = ra::cell_iterator<View<T const, RANK>, c>; \
     template <rank_t c=0> auto iter() { return iterator<c>(dim, p); }   \
     template <rank_t c=0> auto iter() const { return const_iterator<c>(dim, p); } \
-    auto begin() { return stl_iterator<iterator<0>>(dim, p); }          \
-    auto begin() const { return stl_iterator<const_iterator<0>>(dim, p); } \
-    auto end() { return stl_iterator<iterator<0>> {}; }                 \
-    auto end() const { return stl_iterator<const_iterator<0>> {}; }
+    stl_iterator<iterator<0>> begin() { return iter(); }                \
+    stl_iterator<const_iterator<0>> begin() const { return iter(); }    \
+    stl_iterator<iterator<0>> end() { return iterator<0>(dim, nullptr); } \
+    stl_iterator<const_iterator<0>> end() const { return const_iterator<0>(dim, nullptr); }
 
 // See same thing for SmallBase.
 #define DEF_ASSIGNOPS(OP)                           \

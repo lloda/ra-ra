@@ -125,12 +125,8 @@ struct cell_iterator_small
     constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
 // see stl_iterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
-// needed because View = View copies contents, not the View itself [ra11]
-    constexpr cell_iterator_small & set(cell_iterator_small const & ci)
-    {
-        c.p = ci.c.p; return *this;
-    }
 
+    constexpr static dim_t size() { return ra_traits<frame_type>::size_s(); }
     constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
     constexpr static auto const & shape() { return frame_type::Base::ssizes; }
     constexpr static dim_t size(int j) { CHECK_BOUNDS(inside(j, rank())); return V::size(j); }
@@ -169,8 +165,47 @@ struct cell_iterator_small
 #undef DEF_ASSIGNOPS
 };
 
+
+// --------------------
+// stl_iterator for both cell_iterator_small & cell_iterator
+// FIXME make it work for any array iterator, as in ply_ravel, ply_index.
+// --------------------
+
+template <class S, class I, class P>
+inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
+{
+    for (int k=framer-1; k>=0; --k) {
+        ++i[k];
+        if (i[k]<dim[k].size) {
+            p += dim[k].stride;
+            return;
+        } else {
+            i[k] = 0;
+            p -= dim[k].stride*(dim[k].size-1);
+        }
+    }
+    p = nullptr;
+}
+
+template <int k, class sizes, class strides, class I, class P> void
+next_in_cube(I & i, P & p)
+{
+    if constexpr (k>=0) {
+        ++i[k];
+        if (i[k]<mp::ref<sizes, k>::value) {
+            p += mp::ref<strides, k>::value;
+        } else {
+            i[k] = 0;
+            p -= mp::ref<strides, k>::value*(mp::ref<sizes, k>::value-1);
+            next_in_cube<k-1, sizes, strides>(i, p);
+        }
+    } else {
+        p = nullptr;
+    }
+}
+
 template <class Iterator>
-struct stl_iterator_small
+struct stl_iterator
 {
     using value_type = typename Iterator::value_type;
     using difference_type = dim_t;
@@ -181,24 +216,34 @@ struct stl_iterator_small
 
     Iterator ii;
     shape_type i;
-// avoid ii = it.ii, see [ra11] above.
-    stl_iterator_small(stl_iterator_small const & it) = default;
-    constexpr stl_iterator_small & operator=(stl_iterator_small const & it)
+    stl_iterator(stl_iterator const & it) = default;
+    constexpr stl_iterator & operator=(stl_iterator const & it)
     {
-        i=it.i; ii.set(it.ii); return *this;
+        i=it.i; new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
+        return *this;
     }
-// [ra12] Null p_ so begin()==end() for iterator on empty range. Plying uses sizes so this doesn't matter.
-    stl_iterator_small(typename Iterator::atom_type * p_)
-        : ii(Iterator::framer==0 ? nullptr : p_),
-          i(ra::ra_traits<shape_type>::make(Iterator::framer, 0)) {}
+    stl_iterator(Iterator const & ii_): ii(ii_), i(ra::ra_traits<shape_type>::make(ii.rank(), 0))
+    {
+// [ra12] Null p_ so begin()==end() for empty range. ply() uses sizes so this doesn't matter.
+        if (ii.c.p!=nullptr && 0==ii.size()) {
+            ii.c.p = nullptr;
+        }
+    };
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
     decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    stl_iterator_small & operator++()
+    stl_iterator & operator++()
     {
-        next_in_cube<Iterator::rank()-1, typename Iterator::sizes, typename Iterator::strides>(i, ii.c.p);
+// when rank==0 DIM_ANY check isn't enough to tell which next_in_cube we need :-/
+        if constexpr (0==Iterator::rank_s()) {
+            ii.c.p = nullptr;
+        } else if constexpr (DIM_ANY != Iterator::size_s()) {
+            next_in_cube<Iterator::rank()-1, typename Iterator::sizes, typename Iterator::strides>(i, ii.c.p);
+        } else {
+            next_in_cube(ii.rank(), ii.dim, i, ii.c.p);
+        }
         return *this;
     }
 };
@@ -280,8 +325,8 @@ struct SmallBase
     constexpr static rank_t rank_s()  { return mp::len<sizes>; }
     constexpr static dim_t size() { return mp::apply<mp::prod, sizes>::value; }
     constexpr static dim_t size_s() { return size(); }
-    constexpr static auto ssizes = mp::tuple_copy<sizes, std::array<dim_t, rank()> >::f();
-    constexpr static auto sstrides = mp::tuple_copy<strides, std::array<dim_t, rank()> >::f();
+    constexpr static auto ssizes = mp::tuple_values<std::array<dim_t, rank()>, sizes>();
+    constexpr static auto sstrides = mp::tuple_values<std::array<dim_t, rank()>, strides>();
     constexpr static dim_t size(int j) { return ssizes[j]; }
     constexpr static dim_t stride(int j) { return sstrides[j]; }
 
@@ -368,16 +413,16 @@ struct SmallBase
 // FIXME see if we need to extend this for cellr!=0.
 // template <class P> using stl_iterator = std::conditional_t<have_default_strides, P, stl_iterator<Iterator<P>>>;
     constexpr static bool have_default_strides = std::is_same_v<strides, default_strides<sizes>>;
-    template <class I, class P> using pick_stl_iterator = std::conditional_t<have_default_strides, P, ra::stl_iterator_small<I>>;
+    template <class I, class P> using pick_stl_iterator = std::conditional_t<have_default_strides, P, ra::stl_iterator<I>>;
     using stl_iterator = pick_stl_iterator<iterator<0>, T *>;
     using stl_const_iterator = pick_stl_iterator<const_iterator<0>, T const *>;
 
 // TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
 // TODO With default strides I can just return p. Make sure to test before changing this.
-    constexpr stl_iterator begin() { return data(); }
-    constexpr stl_const_iterator begin() const { return data(); }
-    constexpr stl_iterator end() { return (have_default_strides ? data()+size() : nullptr); }
-    constexpr stl_const_iterator end() const { return (have_default_strides ? data()+size() : nullptr); }
+    constexpr stl_iterator begin() { if constexpr (have_default_strides) return data(); else return iter(); }
+    constexpr stl_const_iterator begin() const { if constexpr (have_default_strides) return data(); else return iter(); }
+    constexpr stl_iterator end() { if constexpr (have_default_strides) return data()+size(); else return iterator<0>(nullptr); }
+    constexpr stl_const_iterator end() const { if constexpr (have_default_strides) return data()+size(); else return const_iterator<0>(nullptr); }
 
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
@@ -540,11 +585,11 @@ struct ra_traits_def<SmallView<T, sizes, strides>>: public ra_traits_small<Small
 // Support for builtin arrays
 // ---------------------
 
-template <class T, class I=std::make_integer_sequence<int, std::rank_v<T>>>
+template <class T, class I=mp::iota<std::rank_v<T>>>
 struct builtin_array_sizes;
 
 template <class T, int ... I>
-struct builtin_array_sizes<T, std::integer_sequence<int, I ...> >
+struct builtin_array_sizes<T, mp::int_list<I ...>>
 {
     using type = mp::int_list<std::extent_v<T, I> ...>;
 };
@@ -591,7 +636,7 @@ struct axis_indices
 {
     template <class T> using match_index = mp::int_t<(T::value==i::value)>;
     using I = mp::iota<mp::len<A>>;
-    using type = mp::filter<mp::map<match_index, A>, I>;
+    using type = mp::Filter_<mp::map<match_index, A>, I>;
     static_assert(mp::len<type>> 0, "dst axis doesn't appear in transposed axes list");
 };
 

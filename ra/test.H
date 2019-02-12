@@ -18,16 +18,16 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-char const * esc_bold = "\x1b[01m";
-char const * esc_unbold = "\x1b[0m";
-char const * esc_red = "\x1b[31m";
-char const * esc_green = "\x1b[32m";
-char const * esc_cyan = "\x1b[36m";
-char const * esc_yellow = "\x1b[33m";
-char const * esc_blue = "\x1b[34m";
-char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
-char const * esc_plain = "\x1b[39m";
-char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
+constexpr char const * esc_bold = "\x1b[01m";
+constexpr char const * esc_unbold = "\x1b[0m";
+constexpr char const * esc_red = "\x1b[31m";
+constexpr char const * esc_green = "\x1b[32m";
+constexpr char const * esc_cyan = "\x1b[36m";
+constexpr char const * esc_yellow = "\x1b[33m";
+constexpr char const * esc_blue = "\x1b[34m";
+constexpr char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
+constexpr char const * esc_plain = "\x1b[39m";
+constexpr char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
 
 struct TestRecorder
 {

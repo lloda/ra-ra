@@ -154,6 +154,7 @@ static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallV
 #define OPTIMIZE_SMALLVECTOR_OP_FUNS(T, N)      \
     OPTIMIZE_SMALLVECTOR_OP(+, ra::plus, T, N)  \
     OPTIMIZE_SMALLVECTOR_OP(-, ra::minus, T, N) \
+    OPTIMIZE_SMALLVECTOR_OP(/, ra::slash, T, N) \
     OPTIMIZE_SMALLVECTOR_OP(*, ra::times, T, N)
 #define OPTIMIZE_SMALLVECTOR_OP_SIZES(T)        \
     OPTIMIZE_SMALLVECTOR_OP_FUNS(T, 2)          \

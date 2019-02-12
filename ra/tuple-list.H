@@ -9,9 +9,8 @@
 /// @file tuple-list.H
 /// @brief Using tuples as compile time lists.
 
-// The rule convention here is that x_<...>::type is implementation and x<...>
-// is user facing. If we can, just have the alias. The residues of the no-alias
-// era will be cleaned in due time.
+/// The convention here is that the alias xxx<...> is user facing and xxx_<...>::type is
+/// implementation. Ideally we have only the alias.
 
 #pragma once
 #include "ra/int_t.H"
@@ -25,7 +24,7 @@ using nil = tuple<>;
 
 template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
-template <int ... I> using int_list = tuple<int_t<I> ...>;
+template <int ... I> using int_list = tuple<int_t<I> ...>; // shortcut for std::integer_sequence<int, I ...>
 
 template <class T> struct is_tuple { constexpr static bool value = false; };
 template <class ... A> struct is_tuple<tuple<A ...>> { constexpr static bool value = true; };
@@ -63,10 +62,10 @@ template <bool a> using when = bool_t<a>;
 template <bool a> using unless = bool_t<(!a)>;
 
 // Return the index of a type in a type list, or -1 if not found.
-template <class A, class T, int i> struct index_ { using type = int_t<-1>; };
+template <class A, class T, int i=0> struct index_ { using type = int_t<-1>; };
 template <class A, class T, int i=0> using index = typename index_<A, T, i>::type;
 template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { using type = int_t<i>; };
-template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>, T, i> { using type = int_t<index<tuple<A ...>, T, i+1>::value>; };
+template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>, T, i> { using type = index<tuple<A ...>, T, i+1>; };
 
 // Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
 template <class A, template <class> class Pred, int i=0, class Enable=void>
@@ -115,7 +114,7 @@ template <class ... A, class Val> struct findtail_<tuple<Val, A ...>, Val> { usi
 template <class A0, class ... A, class Val> struct findtail_<tuple<A0, A ...>, Val> { using type = findtail<tuple<A ...>, Val>; };
 
 // Reverse list. See TSPL^3, p. 137.
-template <class A, class B> struct reverse_ { using type = B; };
+template <class A, class B=nil> struct reverse_ { using type = B; };
 template <class A, class B=nil> using reverse = typename reverse_<A, B>::type;
 template <class A0, class ... A, class B> struct reverse_<tuple<A0, A ...>, B> { using type = reverse<tuple<A ...>, cons<A0, B>>; };
 
@@ -145,13 +144,13 @@ template <template <class ... A> class F>
 struct map_<F> { using type = nil; };
 template <template <class ... A> class F, class ... L> using map = typename map_<F, L ...>::type;
 
-template <class A, class B> struct filter_
+template <class A, class B> struct Filter
 {
     using type = mp::append<std::conditional_t<mp::first<A>::value, mp::take<B, 1>, mp::nil>,
-                            typename filter_<mp::drop1<A>, mp::drop1<B>>::type>;
+                            typename Filter<mp::drop1<A>, mp::drop1<B>>::type>;
 };
-template <class B> struct filter_<mp::nil, B> { using type = B; };
-template <class A, class B> using filter = typename filter_<A, B>::type;
+template <class B> struct Filter<mp::nil, B> { using type = B; };
+template <class A, class B> using Filter_ = typename Filter<A, B>::type;
 
 // As SRFI-1 fold (= fold-left).
 template <template <class ... A> class F, class Def, class ... L>
@@ -188,90 +187,90 @@ template <class ... A> using andb = bool_t<(A::value && ... && true)>;
 template <class ... A> using orb = bool_t<(A::value || ... || false)>;
 
 // Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
-template <class S, class T, class SS=S> struct complement_list_;
-template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
+template <class S, class T, class SS=S> struct ComplementList;
+template <class S, class T, class SS=S> using ComplementList_ = typename ComplementList<S, T, SS>::type;
 
 // end of T.
 template <class S, class SS>
-struct complement_list_<S, nil, SS>
+struct ComplementList<S, nil, SS>
 {
     using type = nil;
 };
 // end search on S, did not find.
 template <class T0, class ... T, class SS>
-struct complement_list_<nil, tuple<T0, T ...>, SS>
+struct ComplementList<nil, tuple<T0, T ...>, SS>
 {
-    using type = cons<T0, complement_list<SS, tuple<T ...>>>;
+    using type = cons<T0, ComplementList_<SS, tuple<T ...>>>;
 };
 // end search on S, found.
 template <class F, class ... S, class ... T, class SS>
-struct complement_list_<tuple<F, S ...>, tuple<F, T ...>, SS>
+struct ComplementList<tuple<F, S ...>, tuple<F, T ...>, SS>
 {
-    using type = complement_list<SS, tuple<T ...>>;
+    using type = ComplementList_<SS, tuple<T ...>>;
 };
 // keep searching on S.
 template <class S0, class ... S, class T0, class ... T, class SS>
-struct complement_list_<tuple<S0, S ...>, tuple<T0, T ...>, SS>
+struct ComplementList<tuple<S0, S ...>, tuple<T0, T ...>, SS>
 {
-    using type = complement_list<tuple<S ...>, tuple<T0, T ...>, SS>;
+    using type = ComplementList_<tuple<S ...>, tuple<T0, T ...>, SS>;
 };
 
-// Like complement_list, but assume that both lists are sorted.
-template <class S, class T> struct complement_slist_ { using type = nil; };
-template <class S, class T> using complement_slist = typename complement_slist_<S, T>::type;
+// Like ComplementList, but assume that both lists are sorted.
+template <class S, class T> struct ComplementSList { using type = nil; };
+template <class S, class T> using ComplementSList_ = typename ComplementSList<S, T>::type;
 
 template <class T>
-struct complement_slist_<nil, T>
+struct ComplementSList<nil, T>
 {
     using type = T;
 };
 template <class F, class ... S, class ... T>
-struct complement_slist_<tuple<F, S ...>, tuple<F, T ...>>
+struct ComplementSList<tuple<F, S ...>, tuple<F, T ...>>
 {
-    using type = complement_slist<tuple<S ...>, tuple<T ...>>;
+    using type = ComplementSList_<tuple<S ...>, tuple<T ...>>;
 };
 template <class S0, class ... S, class T0, class ... T>
-struct complement_slist_<tuple<S0, S ...>, tuple<T0, T ...>>
+struct ComplementSList<tuple<S0, S ...>, tuple<T0, T ...>>
 {
-    static_assert(T0::value<=S0::value, "bad lists for complement_slist<>");
-    using type = cons<T0, complement_slist<tuple<S0, S ...>, tuple<T ...>>>;
+    static_assert(T0::value<=S0::value, "bad lists for ComplementSList<>");
+    using type = cons<T0, ComplementSList_<tuple<S0, S ...>, tuple<T ...>>>;
 };
 
-// Variant of complement_list where the second argument is [0 .. end-1].
-template <class S, int end> using complement = complement_slist<S, iota<end>>;
+// Variant of ComplementList where the second argument is [0 .. end-1].
+template <class S, int end> using Complement_ = ComplementSList_<S, iota<end>>;
 
 // Prepend an element to each of a list of lists.
-template <class c, class A> struct map_cons_;
-template <class c, class A> using map_cons = typename map_cons_<c, A>::type;
-template <class c, class ... A> struct map_cons_<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
+template <class c, class A> struct MapCons;
+template <class c, class A> using MapCons_ = typename MapCons<c, A>::type;
+template <class c, class ... A> struct MapCons<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
 
 // Prepend a list to each list in a list of lists.
-template <class c, class A> struct map_prepend_;
-template <class c, class A> using map_prepend = typename map_prepend_<c, A>::type;
-template <class c, class ... A> struct map_prepend_<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
+template <class c, class A> struct MapPrepend;
+template <class c, class A> using MapPrepend_ = typename MapPrepend<c, A>::type;
+template <class c, class ... A> struct MapPrepend<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
 
 // Form all possible lists by prepending an element of A to an element of B.
-template <class A, class B> struct product_append_ { using type = nil; };
-template <class A, class B> using product_append = typename product_append_<A, B>::type;
-template <class A0, class ... A, class B> struct product_append_<tuple<A0, A ...>, B> { using type = append<map_prepend<A0, B>, product_append<tuple<A ...>, B>>; };
+template <class A, class B> struct ProductAppend { using type = nil; };
+template <class A, class B> using ProductAppend_ = typename ProductAppend<A, B>::type;
+template <class A0, class ... A, class B> struct ProductAppend<tuple<A0, A ...>, B> { using type = append<MapPrepend_<A0, B>, ProductAppend_<tuple<A ...>, B>>; };
 
 // Compute the K-combinations of the N elements of list A.
-template <class A, int K, int N> struct combinations_;
+template <class A, int K, int N=len<A>> struct combinations_;
 template <class A, int k, int N=len<A>> using combinations = typename combinations_<A, k, N>::type;
 // In this case, return a list with one element: the empty list.
 template <class A, int N> struct combinations_<A, 0, N> { using type = tuple<nil>; };
 // In this case, return a list with one element: the whole list.
 template <class A, int N> struct combinations_<A, N, N> { using type = tuple<A>; };
 // Special case for 0 over 0, to resolve ambiguity of 0/N and N/N when N=0.
-template <> struct combinations_<nil, 0, 0> { using type = tuple<nil>; };
+template <> struct combinations_<nil, 0> { using type = tuple<nil>; };
 template <class A, int K, int N>
 struct combinations_
 {
     static_assert(is_tuple_v<A>);
     static_assert(N>=0 && K>=0);
     static_assert(K<=N);
-    using rest = drop1<A>;
-    using type = append<map_cons<first<A>, combinations<rest, K-1, N-1>>, combinations<rest, K, N-1>>;
+    using Rest = drop1<A>;
+    using type = append<MapCons_<first<A>, combinations<Rest, K-1, N-1>>, combinations<Rest, K, N-1>>;
 };
 
 // Sign of permutations.
@@ -280,8 +279,8 @@ template <class C, class R> struct PermutationSign;
 template <int w, class C, class R>
 struct PermutationSignIfFound
 {
-    constexpr static int value = PermutationSign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value
-        * ((w & 1) ? -1 : +1);
+    constexpr static int value = ((w & 1) ? -1 : +1) * PermutationSign<append<take<C, w>, drop<C, w+1>>,
+                                                                       drop1<R>>::value;
 };
 
 template <class C, class R> struct PermutationSignIfFound<-1, C, R> { constexpr static int value = 0; };

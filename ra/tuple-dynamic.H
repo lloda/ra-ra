@@ -13,14 +13,25 @@
 // where the tuple can be cast to an array ref.
 
 #pragma once
-#include <tuple>
+#include "ra/tuple-list.H"
 #include <cassert>
 
 namespace mp {
 
 // like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
-template <class C, class T, std::size_t ... i>
-constexpr C from_tuple_(T && t, std::index_sequence<i ...>)
+// FIXME forward t, e.g. https://vittorioromeo.info/index/blog/capturing_perfectly_forwarded_objects_in_lambdas.html
+// until that's fixed, avoid using this for non trivial stuff.
+// template <class C, class T>
+// constexpr C from_tuple(T const & t)
+// {
+//     return std::apply([&t](auto ... i)
+//                       { return C { std::get<decltype(i)::value>(t) ... }; },
+//                       iota<len<std::decay_t<T>>> {});
+// }
+
+// like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
+template <class C, class T, int ... i>
+constexpr C from_tuple_(T && t, int_list<i ...>)
 {
     return { std::get<i>(std::forward<T>(t)) ... };
 }
@@ -28,17 +39,14 @@ constexpr C from_tuple_(T && t, std::index_sequence<i ...>)
 template <class C, class T>
 constexpr C from_tuple(T && t)
 {
-    return from_tuple_<C>(std::forward<T>(t), std::make_index_sequence<std::tuple_size_v<std::decay_t<T>>> {});
+    return from_tuple_<C>(std::forward<T>(t), iota<len<std::decay_t<T>>> {});
 }
 
-// copy ::value inside int_t, for mp::int_list.
-template <class T, class C> struct tuple_copy;
-
-template <class C, class ... t>
-struct tuple_copy<std::tuple<t ...>, C>
+template <class C, class T>
+constexpr C tuple_values()
 {
-    constexpr static C f() { return { t::value ... }; } // clang bug with -Wmissing-braces TODO
-};
+    return std::apply([](auto ... t) { return C { decltype(t)::value ... }; }, T {});
+}
 
 template <class T, class C> struct map_indices;
 
@@ -72,10 +80,6 @@ struct on_tuple<std::tuple<>, k>
 {
     using T = std::tuple<>;
 
-    template <class I, class T, std::size_t N> static void map_indices(I const & i, std::array<T, N> & j)
-    {
-        static_assert(N==k, "bad indices in map_indices");
-    }
     constexpr static int index(int const q)
     {
         return -1;

@@ -68,40 +68,6 @@ enum none_t { none };
 // used in array constructors to mean ‘don't instantiate’
 struct no_arg {};
 
-// used in stl_iterator / stl_iterator_small.
-template <class S, class I, class P>
-inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
-{
-    for (int k=framer-1; k>=0; --k) {
-        ++i[k];
-        if (i[k]<dim[k].size) {
-            p += dim[k].stride;
-            return;
-        } else {
-            i[k] = 0;
-            p -= dim[k].stride*(dim[k].size-1);
-        }
-    }
-    p = nullptr;
-}
-
-template <int k, class sizes, class strides, class I, class P> void
-next_in_cube(I & i, P & p)
-{
-    if constexpr (k>=0) {
-        ++i[k];
-        if (i[k]<mp::ref<sizes, k>::value) {
-            p += mp::ref<strides, k>::value;
-        } else {
-            i[k] = 0;
-            p -= mp::ref<strides, k>::value*(mp::ref<sizes, k>::value-1);
-            next_in_cube<k-1, sizes, strides>(i, p);
-        }
-    } else {
-        p = nullptr;
-    }
-}
-
 // Order of decl issues.
 template <class C> struct Scalar; // for type predicates
 template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator

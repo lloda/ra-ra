@@ -350,20 +350,29 @@ The last example may result in an error if the shape of @code{a} and (2,@w{ }3) 
 
 When the content argument is a pointer or a 1D brace list, it's handled especially, not for shape@footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!@footnote{The brace-list constructors aren't rank extending, because giving the ravel is incompatible with rank extension. They are size-strict —you must give every element.}
 
-@c [ma112]
 @cindex order, column-major
 @example
 @verbatim
 Small<int, 2, 2> aa = {1, 2, 3, 4}; // ravel of the content
 
 ra::Big<double, 2> a({2, 3}, {1, 2, 3, 4, 5, 6}); // same as a = {{1, 2, 3}, {4, 5, 6}}
+@end verbatim
+@end example
 
+@c [ma112]
+@example
+@verbatim
 double bx[6] = {1, 2, 3, 4, 5, 6}
 ra::Big<double, 2> b({3, 2}, bx); // {{1, 2}, {3, 4}, {5, 6}}
 
 double cx[4] = {1, 2, 3, 4}
 ra::Big<double, 2> c({3, 2}, cx); // *** WHO NOSE ***
+@end verbatim
+@end example
 
+@c [ma114]
+@example
+@verbatim
 using sizes = mp::int_list<2, 3>;
 using strides = mp::int_list<1, 2>;
 ra::SmallArray<double, sizes, strides> a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6

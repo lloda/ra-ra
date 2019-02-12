@@ -43,51 +43,66 @@ int main()
         tr.test_eq(34, c);
     }
 
-    auto sum_opt = [&](auto & a, auto & b, auto & c)
+    auto bench_type =
+        [&](auto v)
         {
-            for (int i=0; i<a.size(0); ++i) {
-                c(i) = ra::optimize(a(i)+b(i));
-                static_assert(std::is_same_v<decltype(optimize(a(i)+b(i))), Vec>); // making sure opt is on
-            }
-        };
+            using Vec = decltype(v);
+            auto sum_opt =
+                [&](auto & a, auto & b, auto & c)
+                {
+                    for (int i=0; i<a.size(0); ++i) {
+                        c(i) = ra::optimize(a(i)+b(i));
+                        static_assert(std::is_same_v<decltype(optimize(a(i)+b(i))), Vec>); // making sure opt is on
+                    }
+                };
 
-    auto sum_unopt = [&](auto & a, auto & b, auto & c)
-        {
-            for (int i=0; i<a.size(0); ++i) {
-                c(i) = a(i)+b(i);
-            }
-        };
+            auto sum_unopt =
+                [&](auto & a, auto & b, auto & c)
+                {
+                    for (int i=0; i<a.size(0); ++i) {
+                        c(i) = a(i)+b(i);
+                    }
+                };
 
-    auto bench_all = [&](int reps, int m)
-        {
-            auto bench = [&tr, &m, &reps](auto && f, char const * tag)
-            {
+            auto bench_all =
+                [&](int reps, int m)
+                {
+                    auto bench =
+                        [&tr, &m, &reps](auto && f, char const * tag)
+                        {
 // FIXME need alignment knobs for Big
-                alignas (alignof(Vec)) Vec astore[m];
-                alignas (alignof(Vec)) Vec bstore[m];
-                alignas (alignof(Vec)) Vec cstore[m];
+                            alignas (alignof(Vec)) Vec astore[m];
+                            alignas (alignof(Vec)) Vec bstore[m];
+                            alignas (alignof(Vec)) Vec cstore[m];
 
-                ra::View<Vec, 1> a({m}, astore);
-                ra::View<Vec, 1> b({m}, bstore);
-                ra::View<Vec, 1> c({m}, cstore);
+                            ra::View<Vec, 1> a({m}, astore);
+                            ra::View<Vec, 1> b({m}, bstore);
+                            ra::View<Vec, 1> c({m}, cstore);
 
-                a = +ra::_0 +1;
-                b = -ra::_0 -1;
-                c = 99;
+                            a = +ra::_0 +1;
+                            b = -ra::_0 -1;
+                            c = 99;
 
-                auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
-                tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m)/1e-9, " ns [",
-                        Benchmark::stddev(bv)/(m)/1e-9 ,"] ", tag).test(true);
-            };
+                            auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
+                            tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m)/1e-9, " ns [",
+                                    Benchmark::stddev(bv)/(m)/1e-9 ,"] ", tag).test(true);
+                        };
 
-            tr.section(" block of ", m, " times ", reps);
-            bench(sum_opt, "opt");
-            bench(sum_unopt, "unopt");
+                    tr.section("[", (std::is_same_v<float, typename Vec::value_type> ? "float" : "double"),
+                               " x ", Vec::size(), "] block of ", m, " times ", reps);
+                    bench(sum_opt, "opt");
+                    bench(sum_unopt, "unopt");
+                };
+
+            bench_all(50000, 10);
+            bench_all(50000, 100);
+            bench_all(50000, 1000);
         };
-
-    bench_all(50000, 10);
-    bench_all(50000, 100);
-    bench_all(50000, 1000);
-
+    bench_type(ra::Small<float, 2> {});
+    bench_type(ra::Small<double, 2> {});
+    bench_type(ra::Small<float, 4> {});
+    bench_type(ra::Small<double, 4> {});
+    bench_type(ra::Small<float, 8> {});
+    bench_type(ra::Small<double, 8> {});
     return tr.summary();
 }
