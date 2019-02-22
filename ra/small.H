@@ -91,7 +91,7 @@ struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
 // --------------------
 // Small iterator
 // --------------------
-// TODO Refactor with cell_iterator / stl_iterator for View?
+// TODO Refactor with cell_iterator / STLIterator for View?
 
 // V is always SmallBase<SmallView, ...>
 template <class V, rank_t cellr_=0>
@@ -123,7 +123,7 @@ struct cell_iterator_small
     cell_type c;
 
     constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
-// see stl_iterator for the case of s_[0]=0, etc. [ra12].
+// see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 
     constexpr static dim_t size() { return ra_traits<frame_type>::size_s(); }
@@ -167,7 +167,7 @@ struct cell_iterator_small
 
 
 // --------------------
-// stl_iterator for both cell_iterator_small & cell_iterator
+// STLIterator for both cell_iterator_small & cell_iterator
 // FIXME make it work for any array iterator, as in ply_ravel, ply_index.
 // --------------------
 
@@ -205,7 +205,7 @@ next_in_cube(I & i, P & p)
 }
 
 template <class Iterator>
-struct stl_iterator
+struct STLIterator
 {
     using value_type = typename Iterator::value_type;
     using difference_type = dim_t;
@@ -216,13 +216,13 @@ struct stl_iterator
 
     Iterator ii;
     shape_type i;
-    stl_iterator(stl_iterator const & it) = default;
-    constexpr stl_iterator & operator=(stl_iterator const & it)
+    STLIterator(STLIterator const & it) = default;
+    constexpr STLIterator & operator=(STLIterator const & it)
     {
         i=it.i; new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
         return *this;
     }
-    stl_iterator(Iterator const & ii_): ii(ii_), i(ra::ra_traits<shape_type>::make(ii.rank(), 0))
+    STLIterator(Iterator const & ii_): ii(ii_), i(ra::ra_traits<shape_type>::make(ii.rank(), 0))
     {
 // [ra12] Null p_ so begin()==end() for empty range. ply() uses sizes so this doesn't matter.
         if (ii.c.p!=nullptr && 0==ii.size()) {
@@ -232,12 +232,12 @@ struct stl_iterator
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
     template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
+
     decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    stl_iterator & operator++()
+    STLIterator & operator++()
     {
-// when rank==0 DIM_ANY check isn't enough to tell which next_in_cube we need :-/
-        if constexpr (0==Iterator::rank_s()) {
+        if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough :-/
             ii.c.p = nullptr;
         } else if constexpr (DIM_ANY != Iterator::size_s()) {
             next_in_cube<Iterator::rank()-1, typename Iterator::sizes, typename Iterator::strides>(i, ii.c.p);
@@ -247,6 +247,8 @@ struct stl_iterator
         return *this;
     }
 };
+
+template <class T> STLIterator<T> stl_iterator(T && t) { return STLIterator<T>(std::forward<T>(t)); }
 
 
 // --------------------
@@ -411,18 +413,18 @@ struct SmallBase
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
 // FIXME see if we need to extend this for cellr!=0.
-// template <class P> using stl_iterator = std::conditional_t<have_default_strides, P, stl_iterator<Iterator<P>>>;
+// template <class P> using STLIterator = std::conditional_t<have_default_strides, P, STLIterator<Iterator<P>>>;
     constexpr static bool have_default_strides = std::is_same_v<strides, default_strides<sizes>>;
-    template <class I, class P> using pick_stl_iterator = std::conditional_t<have_default_strides, P, ra::stl_iterator<I>>;
-    using stl_iterator = pick_stl_iterator<iterator<0>, T *>;
-    using stl_const_iterator = pick_stl_iterator<const_iterator<0>, T const *>;
+    template <class I, class P> using pick_STLIterator = std::conditional_t<have_default_strides, P, ra::STLIterator<I>>;
+    using STLIterator = pick_STLIterator<iterator<0>, T *>;
+    using STLConstIterator = pick_STLIterator<const_iterator<0>, T const *>;
 
 // TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
 // TODO With default strides I can just return p. Make sure to test before changing this.
-    constexpr stl_iterator begin() { if constexpr (have_default_strides) return data(); else return iter(); }
-    constexpr stl_const_iterator begin() const { if constexpr (have_default_strides) return data(); else return iter(); }
-    constexpr stl_iterator end() { if constexpr (have_default_strides) return data()+size(); else return iterator<0>(nullptr); }
-    constexpr stl_const_iterator end() const { if constexpr (have_default_strides) return data()+size(); else return const_iterator<0>(nullptr); }
+    constexpr STLIterator begin() { if constexpr (have_default_strides) return data(); else return iter(); }
+    constexpr STLConstIterator begin() const { if constexpr (have_default_strides) return data(); else return iter(); }
+    constexpr STLIterator end() { if constexpr (have_default_strides) return data()+size(); else return iterator<0>(nullptr); }
+    constexpr STLConstIterator end() const { if constexpr (have_default_strides) return data()+size(); else return const_iterator<0>(nullptr); }
 
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);

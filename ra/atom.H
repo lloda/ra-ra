@@ -330,7 +330,8 @@ inline constexpr decltype(auto) start(T && t)
 template <class T, std::enable_if_t<is_slice<T>, int> =0>
 inline constexpr auto start(T && t)
 {
-    return iter<0>(t); // BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra04]
+// BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra04]
+    return iter<0>(std::forward<T>(t));
 }
 
 template <class T, std::enable_if_t<is_scalar<T>, int> =0>

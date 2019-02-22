@@ -84,18 +84,19 @@ struct nested_braces<T, rank, std::enable_if_t<(rank>1)>>
 template <class V, rank_t cellr_=0>
 struct cell_iterator
 {
+
     constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
-    constexpr static rank_t fullr = V::rank_s();
+    constexpr static rank_t fullr = std::decay_t<V>::rank_s();
     constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
     static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
     static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
 
-// FIXME take V/V & as in ra::Vector, and ask through that. Otherwise should be ref/pointer.
-    using Dimv = decltype(std::declval<V>().dim);
-    Dimv const & dim;
+    using Dimv_ = decltype(std::declval<std::decay_t<V>>().dim);
+    using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
+    Dimv dim;
 
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
@@ -205,20 +206,18 @@ dim_t proddim(D d, D dend)
 // [rank] [size...] p -> [data...] (var rank)
 // TODO size is immutable so that it can be kept together with rank.
 
-// Would do this with a base class, but I like View being POD.
-// TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
 #define DEF_ITERATORS(RANK)                                             \
-    template <rank_t c=0> using iterator = ra::cell_iterator<View<T, RANK>, c>; \
-    template <rank_t c=0> using const_iterator = ra::cell_iterator<View<T const, RANK>, c>; \
-    template <rank_t c=0> auto iter() { return iterator<c>(dim, p); }   \
-    template <rank_t c=0> auto iter() const { return const_iterator<c>(dim, p); } \
-    stl_iterator<iterator<0>> begin() { return iter(); }                \
-    stl_iterator<const_iterator<0>> begin() const { return iter(); }    \
-    stl_iterator<iterator<0>> end() { return iterator<0>(dim, nullptr); } \
-    stl_iterator<const_iterator<0>> end() const { return const_iterator<0>(dim, nullptr); }
+    template <rank_t c=0> auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dim), p); } \
+    template <rank_t c=0> auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dim, p); } \
+    template <rank_t c=0> auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dim, p); } \
+    auto begin() const { return stl_iterator(iter()); }                 \
+    auto begin() { return stl_iterator(iter()); }                       \
+    /* here dim doesn't matter, but we have to give it if it's a ref. */ \
+    auto end() const { return stl_iterator(decltype(iter())(dim, nullptr)); } \
+    auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
 
 // See same thing for SmallBase.
-#define DEF_ASSIGNOPS(OP)                           \
+#define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
 #define DEF_ASSIGNMENT_OPS(RANK)                                        \
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
@@ -560,7 +559,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     using T = typename storage_traits<Store>::T;
     using View = ra::View<T, RANK>;
     using View::rank_s;
-    using shape_arg = typename View::template iterator<0>::shape_type;
+
+    using shape_arg = typename decltype(std::declval<View>().iter())::shape_type;
 
     View & view() { return *this; }
     View const & view() const { return *this; }

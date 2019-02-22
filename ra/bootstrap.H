@@ -112,7 +112,8 @@ struct CellFlat
 };
 
 // Common to View / SmallBase.
-template <int cell_rank, class A> inline constexpr auto iter(A && a) { return a.template iter<cell_rank>(); }
+template <int cell_rank, class A> inline constexpr auto
+iter(A && a) { return std::forward<A>(a).template iter<cell_rank>(); }
 
 // Defined in wrank.H but used in big.H (selectors, etc).
 template <class A, class ... I> inline constexpr auto from(A && a, I && ... i);

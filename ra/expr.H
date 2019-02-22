@@ -28,14 +28,13 @@
 namespace ra {
 
 // Manipulate ET through flat (raw pointer-like) iterators P ...
-template <class Op, class T, class I=mp::iota<mp::len<T>>>
-struct Flat;
+template <class Op, class T, class I=mp::iota<mp::len<T>>> struct Flat;
 
-template <class Op, class ... P, int ... I>
-struct Flat<Op, std::tuple<P ...>, mp::int_list<I ...>>
+template <class Op, class T, int ... I>
+struct Flat<Op, T, mp::int_list<I ...>>
 {
     Op & op;
-    std::tuple<P ...> t;
+    T t;
     template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
     constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
 };
@@ -62,22 +61,21 @@ constexpr bool check_expr(int ranka, E const & e)
         using PB = std::decay_t<mp::ref<T, B>>;
         if constexpr (E::rank_s()>=0) {
             constexpr int rankb = PB::rank_s();
-            constexpr auto f
-                          = [](auto && f, auto k_)
-                            {
-                                constexpr int k = decltype(k_)::value;
-                                static_assert(rankb<=E::rank_s() && "wrong driver selection");
-                                if constexpr (k<rankb) {
-                                    constexpr dim_t sa = PA::size_s(k);
-                                    if constexpr (sa!=DIM_BAD) {
-                                        constexpr dim_t sb = PB::size_s(k);
-                                        if constexpr (sb!=DIM_BAD) {
-                                            static_assert(sa==DIM_ANY || sb==DIM_ANY || sa==sb);
-                                        }
-                                    }
-                                    f(f, mp::int_t<k+1> {});
-                                }
-                            };
+            constexpr auto f = [](auto && f, auto k_)
+                               {
+                                   constexpr int k = decltype(k_)::value;
+                                   static_assert(rankb<=E::rank_s() && "wrong driver selection");
+                                   if constexpr (k<rankb) {
+                                       constexpr dim_t sa = PA::size_s(k);
+                                       if constexpr (sa!=DIM_BAD) {
+                                           constexpr dim_t sb = PB::size_s(k);
+                                           if constexpr (sb!=DIM_BAD) {
+                                               static_assert(sa==DIM_ANY || sb==DIM_ANY || sa==sb);
+                                           }
+                                       }
+                                       f(f, mp::int_t<k+1> {});
+                                   }
+                               };
             f(f, mp::int_t<0> {});
         }
 // rt checks are needed if any sub is rt size, even if E's own size is ct.
@@ -100,9 +98,7 @@ constexpr bool check_expr(int ranka, E const & e)
 }
 
 // forward decl in atom.H
-// TODO others:
-// * 'static': Like expr, but the operator is compile time (e.g. ::apply()). Probably no need.
-// * 'dynamic': Like expr, but driver is selected at run time (e.g. if args are RANK_ANY).
+// TODO 'dynamic' version where the driver is selected at run time (e.g. if args are RANK_ANY).
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
 {

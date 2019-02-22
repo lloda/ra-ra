@@ -6,6 +6,7 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO Everything [0/6]
   - [ ] Bugs [0/3]
+    - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.C has op 10x worse than indexed.
     - [ ] size_s, rank_s in Ryn:: are broken [ra07]
     - [ ] ambiguity / bad init in nested constructors [ra45]
     - [ ] inconsistencies with subscripting; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)` will return a nested expression instead of preserving `A`'s rank.
@@ -25,8 +26,8 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
         - [ ] remove const overloads from View::operator()
         - [ ] make View be View<pointer> and not View<value_type>
     - [ ] Should be able to turn ravel iterators (e.g. View::begin()) into array iterators. Ptr()
-      doesn't work for that. Or to obtain stl_iterators from any array iterator. That may come of
-      merging stl_iterator with ply_index/ply_ravel.
+      doesn't work for that. Or to obtain STLIterator from any array iterator. That may come of
+      merging STLIterator with ply_index/ply_ravel.
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
   - [-] Error report, debugging [2/3]
     - [ ] Optionally throw instead of abort on bounds checks, etc. cf. test/check-runtime.C

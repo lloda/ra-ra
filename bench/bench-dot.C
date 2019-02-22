@@ -84,7 +84,6 @@ struct by_raw
             return y;                                               \
         }                                                           \
     };                                                              \
-    constexpr char const * NAME::name;  // TODO C++17...
 
 #define BY_PLY_TAGGED(PLYER)                                            \
     /* plain */                                                         \
