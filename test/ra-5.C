@@ -55,7 +55,7 @@ int main()
 
 // const/nonconst begin :p
     {
-        ra::Big<int, 2> A({2, 3}, 3);
+        ra::Big<int> A({2, 3}, 3);
         auto const b = A();
         int x[6] = { 0, 0, 0, 0, 0, 0 };
         std::copy(b.begin(), b.end(), x);

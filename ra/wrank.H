@@ -37,16 +37,14 @@ struct Verb
     Op op;
 };
 
-template <class cranks, class Op>
-inline constexpr auto
-wrank(cranks cranks_, Op && op)
+template <class cranks, class Op> inline constexpr
+auto wrank(cranks cranks_, Op && op)
 {
     return Verb<cranks, Op> { std::forward<Op>(op) };
 }
 
-template <rank_t ... crank, class Op>
-inline constexpr auto
-wrank(Op && op)
+template <rank_t ... crank, class Op> inline constexpr
+auto wrank(Op && op)
 {
     return Verb<mp::int_list<crank ...>, Op> { std::forward<Op>(op) };
 }
@@ -116,10 +114,10 @@ struct zerostride
     constexpr static T f() { return T(0); }
 };
 
-template <class ... Ti>
-struct zerostride<std::tuple<Ti ...>>
+template <class ... T>
+struct zerostride<std::tuple<T ...>>
 {
-    constexpr static std::tuple<Ti ...> f() { return std::make_tuple(zerostride<Ti>::f() ...); }
+    constexpr static std::tuple<T ...> f() { return std::make_tuple(zerostride<T>::f() ...); }
 };
 
 // Wraps each argument of an expression using wrank.
@@ -129,12 +127,12 @@ struct ApplyFrames
 {
     A a;
 
-    constexpr static int live(int k) { return mp::on_tuple<LiveAxes>::index(k); }
+    constexpr static int live(int k) { return mp::int_list_index<LiveAxes>(k); }
 
     template <class I>
     constexpr decltype(auto) at(I const & i)
     {
-        return a.at(mp::map_indices<LiveAxes, std::array<dim_t, mp::len<LiveAxes>>>::f(i));
+        return a.at(mp::map_indices<std::array<dim_t, mp::len<LiveAxes>>, LiveAxes>(i));
     }
     constexpr dim_t size(int k) const
     {
@@ -161,27 +159,17 @@ struct ApplyFrames
     constexpr decltype(auto) flat() { return a.flat(); }
 };
 
-template <class LiveAxes, int depth, class Enable=void>
-struct applyframes
+template <class LiveAxes, int depth, class A>
+decltype(auto) applyframes(A && a)
 {
-    template <class A>
-    static decltype(auto) f(A && a)
-    {
-        return ApplyFrames<LiveAxes, depth, A> { std::forward<A>(a) };
-    }
-};
-
 // No-op case. TODO Maybe apply to any Iota<n> where n<=depth.
 // TODO If A is cell_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
-template <class LiveAxes, int depth>
-struct applyframes<LiveAxes, depth, std::enable_if_t<std::is_same_v<LiveAxes, mp::iota<depth>>>>
-{
-    template <class A>
-    static decltype(auto) f(A && a)
-    {
+    if constexpr (std::is_same_v<LiveAxes, mp::iota<depth>>) {
         return std::forward<A>(a);
+    } else {
+        return ApplyFrames<LiveAxes, depth, A> { std::forward<A>(a) };
     }
-};
+}
 
 // like Expr, except don't do driver selection here, but leave it to the args, as with Expr::adv(k, d). The args may need to be ApplyFrames... don't know yet.
 // forward decl in atom.H.
@@ -264,32 +252,25 @@ struct Ryn<FM, Op, std::tuple<P ...>, mp::int_list<I ...>>
 #undef DEF_RYN_ASSIGNOPS
 };
 
-template <class FM, class Op, class ... P> inline
-constexpr auto ryn(Op && op, P && ... t)
+template <class FM, class Op, class ... T> inline constexpr
+auto ryn(Op && op, T && ... t)
 {
-    return Ryn<FM, Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(t) ... }; // (note 1)
+    return Ryn<FM, Op, std::tuple<T ...>> { std::forward<Op>(op), std::forward<T>(t) ... }; // (note 1)
 }
 
-template <class K>
-struct number_ryn;
-
-template <int ... I>
-struct number_ryn<mp::int_list<I ...>>
+template <class V, class ... T, int ... i> inline constexpr
+auto number_ryn(mp::int_list<i ...>, V && v, T && ... t)
 {
-    template <class V, class ... P> constexpr static
-    auto f(V && v, P && ... t)
-    {
-        using FM = Framematch<V, std::tuple<P ...>>;
-        return ryn<FM>(FM::op(std::forward<V>(v)), applyframes<mp::ref<typename FM::R, I>, FM::depth>::f(std::forward<P>(t)) ...);
-    }
-};
+    using FM = Framematch<V, std::tuple<T ...>>;
+    return ryn<FM>(FM::op(std::forward<V>(v)), applyframes<mp::ref<typename FM::R, i>, FM::depth>(std::forward<T>(t)) ...);
+}
 
 // TODO partial specialization means no universal ref :-/
 #define DEF_EXPR_VERB(MOD)                                              \
     template <class cranks, class Op, class ... P> inline constexpr     \
     auto expr(Verb<cranks, Op> MOD v, P && ... t)                       \
     {                                                                   \
-        return number_ryn<mp::iota<sizeof...(P)>>::f(std::forward<decltype(v)>(v), std::forward<P>(t) ...); \
+        return number_ryn(mp::iota<sizeof...(P)> {}, std::forward<decltype(v)>(v), std::forward<P>(t) ...); \
     }
 FOR_EACH(DEF_EXPR_VERB, &&, &, const &)
 #undef DEF_EXPR_VERB
@@ -309,47 +290,30 @@ struct index_rank_
 
 template <class I> using index_rank = typename index_rank_<I>::type;
 
-template <class II, int drop, class Enable=void>
-struct from_partial
+template <class II, int drop, class Op> inline constexpr
+decltype(auto) from_partial(Op && op)
 {
-    template <class Op>
-    static decltype(auto) make(Op && op)
-    {
-        return wrank(mp::append<mp::makelist<drop, mp::int_t<0>>, mp::drop<II, drop>> {},
-                     from_partial<II, drop+1>::make(std::forward<Op>(op)));
-    }
-};
-
-template <class II, int drop>
-struct from_partial<II, drop, std::enable_if_t<drop==mp::len<II>>>
-{
-    template <class Op>
-    static decltype(auto) make(Op && op)
-    {
+    if constexpr (drop==mp::len<II>) {
         return std::forward<Op>(op);
+    } else {
+        return wrank(mp::append<mp::makelist<drop, mp::int_t<0>>, mp::drop<II, drop>> {},
+                     from_partial<II, drop+1>(std::forward<Op>(op)));
     }
-};
-
-// FIXME the general case fails in from_partial.
-template <class A> inline constexpr
-auto from(A && a)
-{
-    return a();
-}
-
-// Support dynamic rank for 1 arg only (see test in test/from.C).
-template <class A, class I0> inline constexpr
-auto from(A && a, I0 && i0)
-{
-    return expr(std::forward<A>(a), start(std::forward<I0>(i0)));
 }
 
 // TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
 template <class A, class ... I> inline constexpr
 auto from(A && a, I && ... i)
 {
-    using II = mp::map<index_rank, mp::tuple<decltype(start(std::forward<I>(i))) ...>>;
-    return expr(from_partial<II, 1>::make(std::forward<A>(a)), start(std::forward<I>(i)) ...);
+    if constexpr (0==sizeof...(i)) {
+        return a();
+    } else if constexpr (1==sizeof...(i)) {
+// support dynamic rank for 1 arg only (see test in test/from.C).
+        return expr(std::forward<A>(a), start(std::forward<I>(i) ...));
+    } else {
+        using II = mp::map<index_rank, mp::tuple<decltype(start(std::forward<I>(i))) ...>>;
+        return expr(from_partial<II, 1>(std::forward<A>(a)), start(std::forward<I>(i)) ...);
+    }
 }
 
 } // namespace ra

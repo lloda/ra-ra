@@ -71,6 +71,11 @@ int main()
             tr.test_eq(1, b.dim[1].stride);
         }
     }
+    tr.section("trivial case");
+    {
+        ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
+        tr.test_eq(ra::_0*100 + ra::_1*10 + ra::_2, from(a));
+    }
     tr.section("beatable multi-axis selectors, var size");
     {
         static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");

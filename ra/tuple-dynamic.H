@@ -30,65 +30,38 @@ namespace mp {
 // }
 
 // like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
-template <class C, class T, int ... i>
-constexpr C from_tuple_(T && t, int_list<i ...>)
+template <class C, class T, int ... i> inline constexpr
+C from_tuple_(T && t, int_list<i ...>)
 {
     return { std::get<i>(std::forward<T>(t)) ... };
 }
 
-template <class C, class T>
-constexpr C from_tuple(T && t)
+template <class C, class T> inline constexpr
+C from_tuple(T && t)
 {
     return from_tuple_<C>(std::forward<T>(t), iota<len<std::decay_t<T>>> {});
 }
 
-template <class C, class T>
-constexpr C tuple_values()
+template <class C, class T> inline constexpr
+C tuple_values()
 {
     return std::apply([](auto ... t) { return C { decltype(t)::value ... }; }, T {});
 }
 
-template <class T, class C> struct map_indices;
-
-template <class C, class ... t>
-struct map_indices<std::tuple<t ...>, C>
+template <class C, class T, class I> inline constexpr
+C map_indices(I const & i)
 {
-    template <class I> constexpr static C f(I const & i) { return { i[t::value] ... }; };
+    return std::apply([&i](auto ... t) { return C { i[decltype(t)::value] ... }; }, T {});
 };
 
-// Do things along a tuple.
-template <class T, int k=0> struct on_tuple;
-
-template <class t0, class ... ti, int k>
-struct on_tuple<std::tuple<t0, ti ...>, k>
+template <class T, int k=0> inline constexpr
+int int_list_index(int i)
 {
-    using T = std::tuple<t0, ti ...>;
-    using next = on_tuple<std::tuple<ti ...>, k+1>;
-
-    constexpr static int index(int const q)
-    {
-        return (q==t0::value) ? k : next::index(q);
-    }
-    constexpr static int ref(int const i)
-    {
-        return k==i ? t0::value : next::ref(i);
-    }
-};
-
-template <int k>
-struct on_tuple<std::tuple<>, k>
-{
-    using T = std::tuple<>;
-
-    constexpr static int index(int const q)
-    {
+    if constexpr (k>=mp::len<T>) {
         return -1;
+    } else {
+        return (i==mp::ref<T, k>::value) ? k : int_list_index<T, k+1>(i);
     }
-    constexpr static int ref(int const i)
-    {
-        static_assert(true, "bad ref");
-        return -1;
-    }
-};
+}
 
 } // namespace mp

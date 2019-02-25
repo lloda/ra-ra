@@ -219,7 +219,9 @@ struct STLIterator
     STLIterator(STLIterator const & it) = default;
     constexpr STLIterator & operator=(STLIterator const & it)
     {
-        i=it.i; new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
+        i=it.i;
+        ii.Iterator::~Iterator(); // no-op except for View<RANK_ANY>. Still...
+        new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
         return *this;
     }
     STLIterator(Iterator const & ii_): ii(ii_), i(ra::ra_traits<shape_type>::make(ii.rank(), 0))

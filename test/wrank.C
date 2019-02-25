@@ -93,8 +93,8 @@ void nested_wrank_demo(V && v, A && a, B && b)
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
         cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
         cout << mp::print_int_list<typename FM::R> {} << endl;
-        auto af0 = ra::applyframes<mp::ref<typename FM::R, 0>, FM::depth>::f(a.iter());
-        auto af1 = ra::applyframes<mp::ref<typename FM::R, 1>, FM::depth>::f(b.iter());
+        auto af0 = ra::applyframes<mp::ref<typename FM::R, 0>, FM::depth>(a.iter());
+        auto af1 = ra::applyframes<mp::ref<typename FM::R, 1>, FM::depth>(b.iter());
         cout << sizeof(af0) << endl;
         cout << sizeof(af1) << endl;
         {
@@ -163,8 +163,8 @@ int main()
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
             cout << "width of fm: " << mp::len<FM::R> << ", depth: " << FM::depth << endl;
             cout << mp::print_int_list<FM::R> {} << endl;
-            auto af0 = ra::applyframes<mp::ref<FM::R, 0>, FM::depth>::f(a.iter());
-            auto af1 = ra::applyframes<mp::ref<FM::R, 1>, FM::depth>::f(b.iter());
+            auto af0 = ra::applyframes<mp::ref<FM::R, 0>, FM::depth>(a.iter());
+            auto af1 = ra::applyframes<mp::ref<FM::R, 1>, FM::depth>(b.iter());
             cout << sizeof(af0) << endl;
             cout << sizeof(af1) << endl;
             auto ryn = ra::ryn<FM>(FM::op(v), af0, af1);

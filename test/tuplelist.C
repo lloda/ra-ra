@@ -410,10 +410,10 @@ static_assert(mp::PermutationSign<int_list A , int_list B >::value == C, "");
 // tuple-dynamic
     {
         using l = int_list<3, 4, 5>;
-        tr.test_eq(3, mp::on_tuple<l>::ref(0));
-        tr.test_eq(4, mp::on_tuple<l>::ref(1));
-        tr.test_eq(5, mp::on_tuple<l>::ref(2));
-        // assert(mp::on_tuple<l>::ref(3)==-1); // TODO Check that this fails at runtime.
+        tr.test_eq(0, mp::int_list_index<l>(3));
+        tr.test_eq(1, mp::int_list_index<l>(4));
+        tr.test_eq(2, mp::int_list_index<l>(5));
+        tr.test_eq(-1, mp::int_list_index<l>(7));
     }
     return tr.summary();
 };
