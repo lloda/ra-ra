@@ -98,14 +98,20 @@ int main()
         }
     }
 
-    tr.section("lvalue-rvalue operators");
+    tr.section("lvalue-rvalue operators I");
     {
         ra::Unique<complex, 1> a({3}, 0.);
         imag_part(a) = ra::Unique<real, 1> { 7., 2., 3. }; // TODO operator=(initializer_list) ?
         real_part(a) = -imag_part(ra::Unique<complex, 1> { xI(7.), xI(2.), xI(3.) })+1;
         tr.test_eq(ra::Unique<complex, 1> {{-6., 7.}, {-1., 2.}, {-2., 3.}}, a);
     }
-
+    tr.section("lvalue-rvalue operators II [ma115]");
+    {
+        ra::Small<std::complex<double>, 2, 2> A = {{1., 2.}, {3., 4.}};
+        imag_part(A) = -2*real_part(A);
+        cout << A << endl;
+        tr.test_eq(ra::Small<std::complex<double>, 2, 2> {{{1., -2.}, {2., -4.}}, {{3., -6.}, {4, -8.}}}, A);
+    }
     tr.section("operators with Unique");
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });

@@ -9,7 +9,7 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.C has op 10x worse than indexed.
     - [ ] size_s, rank_s in Ryn:: are broken [ra07]
     - [ ] ambiguity / bad init in nested constructors [ra45]
-    - [ ] inconsistencies with subscripting; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)` will return a nested expression instead of preserving `A`'s rank.
+    - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)` will return a nested expression instead of preserving `A`'s rank.
     - [ ] beatable subscripts are not beaten if mixed with non-beatable subscripts. E.g. in A(vector, iota, vector) the iota isn't beaten.
     - [ ] be namespace clean except for possibly real.H, complex.H.
   - [ ] Features [0/2]
@@ -29,6 +29,10 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
       doesn't work for that. Or to obtain STLIterator from any array iterator. That may come of
       merging STLIterator with ply_index/ply_ravel.
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
+    - [ ] port some of the View ops to generic ArrayIterator. reverse, transpose, etc. seem easy
+      enough. Only it kind of bothers me that they need their own Expr-like types while on Views
+      it's just a one time op. Propagating ops down Expr into leaf Views (a kind of beating) would
+      be better.
   - [-] Error report, debugging [2/3]
     - [ ] Optionally throw instead of abort on bounds checks, etc. cf. test/check-runtime.C
     - [X] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.H:513 init<SS>(SS const & s).

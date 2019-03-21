@@ -12,7 +12,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
 @set VERSION 7
-@set UPDATED 2019 February 07
+@set UPDATED 2019 March 22
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -50,7 +50,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{ra::} is a general purpose multidimensional array and expression template library for C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+@code{ra::}@footnote{/ə'ɹ-eɪ/, I guess.} is a general purpose multidimensional array and expression template library for C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 
 @menu
 * Overview::          Array programming and C++.
@@ -257,7 +257,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 * Slicing::                    Subscripting is a special operation.
 * Special objects::            Not arrays, yet arrays.
 * The rank conjunction::       J comes to C++.
-* Compatibility::              With the STL and others.
+* Compatibility::              With the STL and other libraries.
 * Extension::                  Using your own types and more.
 * Functions::                  Ready to go.
 @end menu
@@ -271,7 +271,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 A compiler with C++17 support is required. At the time of writing this means @b{gcc 8.0} or @b{clang-5.0} with @option{-std=c++17}. Check the top README.md for more up-to-date information.
 
-Here is a minimal program@footnote{Examples given without context will typically assume that one has declared @code{using std::cout;}, etc.}:
+Here is a minimal program@footnote{Examples given without context assume that one has declared @code{using std::cout;}, etc.}:
 
 @example @c readme.C [ma101]
 @verbatim
@@ -435,7 +435,7 @@ auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 @end verbatim
 @end example
 
-However, views can point to anywhere in memory and that memory doesn't have to belong to a @code{ra::} container. For example:
+However, views can point to anywhere in memory and that memory doesn't have to belong to an @code{ra::} container. For example:
 
 @example
 @verbatim
@@ -1034,9 +1034,9 @@ Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the 
 
 @subsection Using @code{ra::} types with the STL
 
-General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order.
+General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the internal order of the view.
 
-For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient in general for ranks above 1, and I haven't implemented them. The @code{RandomAccessIterator}s that are provided are in fact raw pointers.
+For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient in general for ranks above 1, and I haven't implemented them. The container @code{RandomAccessIterator}s that are provided are in fact raw pointers.
 
 @example @c [ma106]
 @verbatim
@@ -1048,13 +1048,148 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 @result{} x = @{1, 2, 3@}
 @end example
 
+@cindex other libraries, interfacing with
 @subsection Using @code{ra::} types with other libraries
 
-When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on a memory layout. @code{ra::} gives you access to its own memory layout and allows you to obtain a @code{ra::} view on any type of memory.
+When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on a memory layout. @code{ra::} gives you access to its own memory layout and allows you to obtain an @code{ra::} view on any type of memory.
 
-FIXME lapack example
-FIXME fftw example
-FIXME Guile example
+@subsubsection The good array citizen
+
+FIXME Put these in examples/ and reference them here.
+
+@cindex BLIS
+The good array citizen describes its arrays with the same parameters as @code{ra::}, that is: a pointer, plus a size and a stride per dimension. You pass those and you're done; you don't have to worry about special cases. Say @url{https://github.com/flame/blis, BLIS}:
+
+@quotation
+@verbatim
+#include <blis.h>
+
+ra::Big<double, 2> A({M, K}, ...);
+ra::Big<double, 2> B({K, N}, ...);
+ra::Big<double, 2> C({M, N}, ...);
+double alpha = ...;
+double beta = ...;
+
+// C := βC + αAB
+bli_dgemm(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, M, N, K, &alpha,
+          A.data(), A.stride(0), A.stride(1),
+          B.data(), B.stride(0), B.stride(1),
+          &beta, C.data(), C.stride(0), C.stride(1));
+@end verbatim
+@end quotation
+
+@cindex FFTW
+Another good array citizen, @url{http://fftw.org, FFTW} handles arbitrary rank:
+
+@quotation
+@verbatim
+#include <fftw3.h>
+
+...
+
+using complex = std::complex<double>;
+static_assert(sizeof(complex)==sizeof(fftw_complex));
+
+// forward DFT over the last r axes of a -> b
+void fftw(int r, ra::View<complex> const a, ra::View<complex> b)
+{
+    int const rank = a.rank();
+    assert(r>0 && r<=rank);
+    assert(every(shape(a)==shape(b)));
+    fftw_iodim dims[r];
+    fftw_iodim howmany_dims[rank-r];
+    for (int i=0; i!=rank; ++i) {
+        if (i>=rank-r) {
+            dims[i-rank+r].n = a.size(i);
+            dims[i-rank+r].is = a.stride(i);
+            dims[i-rank+r].os = b.stride(i);
+        } else {
+            howmany_dims[i].n = a.size(i);
+            howmany_dims[i].is = a.stride(i);
+            howmany_dims[i].os = b.stride(i);
+        }
+    }
+    fftw_plan p;
+    p = fftw_plan_guru_dft(r, dims, rank-r, howmany_dims,
+                           (fftw_complex *)(a.data()), (fftw_complex *)(b.data()),
+                           FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_execute(p);
+    fftw_destroy_plan(p);
+}
+@end verbatim
+@end quotation
+
+@cindex Guile
+Translating array descriptors from a foreign language should be fairly simple. For example, this is how to convert a @url{https://www.gnu.org/software/guile/manual/html_node/Accessing-Arrays-from-C.html#Accessing-Arrays-from-C,Guile} array view into an @code{ra::} view:
+
+@quotation
+@verbatim
+    SCM a; // say a is #nf64(...)
+
+    ...
+
+    scm_t_array_handle h;
+    scm_array_get_handle(a, &h);
+    scm_t_array_dim const * dims = scm_array_handle_dims(&h);
+    View<double> v(map([&](int i) { return ra::Dimv {dim[i].ubnd-dim[i].lbnd+1, dim[i].inc}; },
+                       ra::iota(scm_array_handle_rank(&h))),
+                   scm_array_handle_f64_writable_elements(&h));
+
+    ...
+
+    scm_array_handle_release(&h);
+@end verbatim
+@end quotation
+
+@cindex Numpy
+@cindex Python
+Numpy's C API has the type @url{https://docs.scipy.org/doc/numpy/reference/c-api.array.html,@code{PyArrayObject}} which can be used in the same way as Guile's @code{scm_t_array_handle} in the example above.
+
+Generally it is simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has @url{https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector,@code{scm_take_xxx}}).
+
+@subsubsection The bad array citizen
+
+Unfortunately there are many libraries that don't accept general array parameters, or that do strange things with particular values of sizes and/or strides.
+
+The most common case is that a library doesn't handle strides at all, and it only accepts unit stride for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
+
+FIXME using is_c_order, etc.
+
+Other libraries do accept strides, but not general ones. For example @url{https://www.netlib.org/blas,CBLAS}' @code{cblas_dgemm} has this prototype:
+
+@quotation
+@verbatim
+cblas_dgemm(order, transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+@end verbatim
+@end quotation
+
+@code{A}, @code{B}, @code{C} are (pointers to) 2-arrays, but the routine accepts only one stride argument for each (@code{lda}, etc.). CBLAS also doesn't understand @code{lda} as a general stride, but rather as the dimension of a larger array that you're slicing @code{A} from, and some implementations will handle negative or zero @code{lda} in bizarre ways.
+
+Sometimes you can work around this by fiddling with @code{transA} and @code{transB}, but in general you need to check your array parameters and you may need to make copies.
+
+@cindex OpenGL
+OpenGL is another library that requires @url{https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml,contortions:}
+
+@quotation
+@verbatim
+void glVertexAttribPointer(GLuint index,
+                           GLint size,
+                           GLenum type,
+                           GLboolean normalized,
+                           GLsizei stride,
+                           const GLvoid * pointer);
+@end verbatim
+
+[...]
+
+@emph{stride}
+
+    @quotation
+    Specifies the byte offset between consecutive generic vertex attributes. If stride is 0, the generic vertex attributes are understood to be tightly packed in the array. The initial value is 0.
+    @end quotation
+@end quotation
+
+It isn't clear whether negative strides are legal, either. So just as with CBLAS, passing general array views will require copies.
 
 @c ------------------------------------------------
 @node Extension
@@ -1144,7 +1279,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 @anchor{x-scalar-ops}
 @subsection Standard scalar operations
 
-@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively. Note that if both operands are of rank 0 and at least one of them is a @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, and @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively. Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, and @code{tanh}. Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
 
 For example:
 @example @c [ma110]
@@ -1655,12 +1790,38 @@ TODO
 TODO
 @end defun
 
+@cindex @code{real_part}
+@anchor{x-real_part} @defun real_part
+Take real part of a complex number. This can be used as reference.
+
+See also @ref{x-imag_part,@code{imag_part}}.
+@end defun
+
+@cindex @code{imag_part}
+@anchor{x-imag_part} @defun imag_part
+Take imaginary part of a complex number. This can be used as reference.
+
+For example: @c [ma115]
+
+@example
+@verbatim
+ra::Small<std::complex<double>, 2, 2> A = {{1., 2.}, {3., 4.}};
+imag_part(A) = -2*real_part(A);
+cout << A << endl;
+@end verbatim
+@print{}
+(1, -2) (2, -4)
+(3, -6) (4, -8)
+@end example
+
+See also @ref{x-real_part,@code{real_part}}.
+@end defun
+
 @cindex @code{format_array}
 @anchor{x-format_array} @defun format_array expr [last_axis_separator [second_last_axis_separator ...]]
 Formats an array for character output.
-@end defun
 
-For example
+For example:
 
 @example
 @verbatim
@@ -1678,6 +1839,7 @@ case b:
 case c:
 1|2-3|4
 @end example
+@end defun
 
 The shape that might be printed before the expression itself (depending on its type) is not subject to these separators. See @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
 

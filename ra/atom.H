@@ -331,6 +331,7 @@ template <class T, std::enable_if_t<is_slice<T>, int> =0>
 inline constexpr auto start(T && t)
 {
 // BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra04]
+// BUG iter() won't retain the View it's built from, either, which is why it needs to copy Dimv.
     return iter<0>(std::forward<T>(t));
 }
 

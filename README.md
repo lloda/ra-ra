@@ -32,7 +32,7 @@ A: 2 2
 
 Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or have a look at the [examples/](examples/) folder.
 
-**ra-ra** supports:
+**ra-ra** offers:
 
 * Array types with arbitrary compile time or runtime rank, and compile time or runtime shape.
 * Memory owning types as well as views over any piece of memory.
@@ -84,12 +84,11 @@ I haven't tested on Windows. If you can do that, I'd appreciate a report!
 
 #### Notes
 
-* Index and size types are all signed. Index base is always 0.
-* Default array order is C or row-major (last dimension changes fastest). You can make array views using other orders by transposing or manipulating the strides yourself, but newly created arrays use C-order.
-* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`, except that it accepts one
-  subscript only.
+* Both index and size types are signed. Index base is 0.
+* Default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
+* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`.
 * Indices are checked by default. This can be disabled with a compilation flag.
-
+* **ra-ra** doesn't use exceptions.
 
 #### Bugs & defects
 
@@ -105,9 +104,8 @@ Please have a look at TODO for a concrete list of known bugs.
 
 * Parallelization (closer to wish...).
 * GPU / calls to external libraries.
-* Linear algebra, quaternions, etc. Those things belong in other libraries. The library includes a dual number implementation but it's more of a demo of how to adapt user types to the library.
+* Linear algebra, quaternions, etc. Those things belong in other libraries, and calling them with **ra-ra** objects is trivial.
 * Sparse arrays. You'd still want to mix & match with dense arrays, so maybe at some point.
-
 
 #### Motivation
 

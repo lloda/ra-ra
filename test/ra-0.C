@@ -129,7 +129,7 @@ int main()
         {
             double aa[10];
             aa[0] = 99;
-            ra::View<double, 1> a { {{10, 1}}, aa };
+            ra::View<double, 1> a { {{10, 1}}, aa }; // [ra36]
             tr.test_eq(99., a.p[0]);
         }
         {
@@ -828,7 +828,27 @@ int main()
         std::iota(check, check+24, 0);
         tr.test(std::equal(check, check+24, a.begin()));
     }
+    tr.section("construct View<> from sizes AND strides");
+    {
+        int p[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        int * pp = &p[0]; // force pointer decay in case we ever enforce p's shape
 
+        // default giving sizes only
+        ra::View<int> a(ra::Small<int, 2>({5, 2}), pp);
+        tr.test_eq(ra::_0*2 + ra::_1*1 + 1, a);
+
+        // same as default
+        ra::View<int> b(ra::Small<ra::Dim, 2>({ra::Dim{5, 2}, ra::Dim{2, 1}}), pp);
+        tr.test_eq(ra::_0*2 + ra::_1*1 + 1, b);
+
+        // col major
+        ra::View<int> c(ra::Small<ra::Dim, 2>({ra::Dim{5, 1}, ra::Dim{2, 5}}), pp);
+        tr.test_eq(ra::_0*1 + ra::_1*5 + 1, c);
+
+        // taking expr - generic col major
+        ra::View<int> d(ra::pack<ra::Dim>(ra::Small<int, 3> {5, 1, 2}, ra::Small<int, 3> {1, 0, 5}), pp);
+        tr.test_eq(ra::_0*1 + ra::_1*0 + ra::_2*5 + 1, d);
+    }
     tr.section("I/O");
     {
         tr.section("1");

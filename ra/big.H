@@ -84,7 +84,6 @@ struct nested_braces<T, rank, std::enable_if_t<(rank>1)>>
 template <class V, rank_t cellr_=0>
 struct cell_iterator
 {
-
     constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
     constexpr static rank_t fullr = std::decay_t<V>::rank_s();
@@ -94,7 +93,7 @@ struct cell_iterator
     static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
 
-    using Dimv_ = decltype(std::declval<std::decay_t<V>>().dim);
+    using Dimv_ = typename std::decay_t<V>::Dimv;
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
     Dimv dim;
 
@@ -113,10 +112,10 @@ struct cell_iterator
 // s_ is array's full shape; split it into dim/i (frame) and c (cell).
     constexpr cell_iterator(Dimv const & dim_, atom_type * p_): dim(dim_)
     {
-        rank_t const rank = this->rank();
+        rank_t rank = this->rank();
 // see stl_iterator for the case of dim_[0]=0, etc. [ra12].
         c.p = p_;
-        rank_t const cellr = dependent_cell_rank(rank_t(dim.size()), cellr_spec);
+        rank_t cellr = dependent_cell_rank(rank_t(dim.size()), cellr_spec);
         resize(c.dim, cellr);
         for (int k=0; k<cellr; ++k) {
             c.dim[k] = dim_[k+rank];
@@ -128,7 +127,7 @@ struct cell_iterator
 
     constexpr shape_type shape() const
     {
-        rank_t const iend = rank();
+        rank_t iend = rank();
         shape_type s(ra_traits<shape_type>::make(iend));
         for (rank_t i=0; i!=iend; ++i) {
             s[i] = dim[i].size;
@@ -219,26 +218,25 @@ dim_t proddim(D d, D dend)
 // See same thing for SmallBase.
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
-#define DEF_ASSIGNMENT_OPS(RANK)                                        \
+#define DEF_VIEW_COMMON(RANK)                                        \
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
     /* Constructors using pointers need extra care */                   \
     View(): p(nullptr) {}                                               \
     View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */   \
-    template <class SS, std::enable_if_t<!std::is_same_v<Dimv, std::decay_t<SS>>, int> =0> \
-    View(SS && s, T * p_): p(p_) /* enable_if to avoid overriding [ra36] */ \
+    template <class SS>                                                 \
+    View(SS && s, T * p_): p(p_)                                        \
     {                                                                   \
-        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
-        ra::resize(View::dim, w.size(0)); /* [ra37] */                  \
-        ra::vector(View::dim) = w;                                      \
-        filldim(View::dim.size(), View::dim.end());                     \
+        if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {        \
+            ra::resize(View::dim, start(s).size(0)); /* [ra37] */       \
+            ra::vector(View::dim) = s;                                  \
+        } else {                                                        \
+            auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
+            ra::resize(View::dim, w.size(0)); /* [ra37] */              \
+            ra::vector(View::dim) = w;                                  \
+            filldim(View::dim.size(), View::dim.end());                 \
+        }                                                               \
     }                                                                   \
-    View(std::initializer_list<dim_t> s, T * p_): p(p_)                 \
-    { /* FIXME now that we've deduced, reuse the templated version */   \
-        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
-        ra::resize(View::dim, w.size(0));  /* [ra37] */                 \
-        ra::vector(View::dim) = w;                                      \
-        filldim(View::dim.size(), View::dim.end());                     \
-    }                                                                   \
+    View(std::initializer_list<dim_t> s, T * p_): View(ra::vector(s), p_) {} \
     /* lack of these causes runtime bug [ra38] FIXME why? */            \
     View(View && x) = default;                                          \
     View(View const & x) = default;                                     \
@@ -307,11 +305,7 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src)
 }
 
 // allow conversion only from T to T const with null type.
-template <class T>
-struct const_atom
-{
-    using type = std::conditional_t<std::is_const_v<T>, no_arg, T const>;
-};
+template <class T> using const_atom = std::conditional_t<std::is_const_v<T>, no_arg, T const>;
 
 
 // --------------------
@@ -388,7 +382,7 @@ struct View
 #undef SUBSCRIPTS
 
     DEF_ITERATORS(RANK)
-    DEF_ASSIGNMENT_OPS(RANK)
+    DEF_VIEW_COMMON(RANK)
 
 // implicit conversions from var rank. The guards are needed against ambiguity in ra-viewconst branch.
     template <rank_t R, std::enable_if_t<R==RANK_ANY && R!=RANK, int> =0>
@@ -397,9 +391,9 @@ struct View
     View(View<std::remove_const_t<T>, R> const & x): dim(x.dim), p(x.p) {}
 
 // conversion to const from non const
-    operator View<typename const_atom<T>::type, RANK> const & () const
+    operator View<const_atom<T>, RANK> const & () const
     {
-        return *reinterpret_cast<View<typename const_atom<T>::type, RANK> const *>(this);
+        return *reinterpret_cast<View<const_atom<T>, RANK> const *>(this);
     }
 
 // conversions to scalar. The static asserts fail due to a bug in gcc 8.2 [ra43]. Recheck on gcc 9.
@@ -479,7 +473,7 @@ struct View<T, RANK_ANY>
 #undef SUBSCRIPTS
 
     DEF_ITERATORS(RANK_ANY)
-    DEF_ASSIGNMENT_OPS(RANK_ANY)
+    DEF_VIEW_COMMON(RANK_ANY)
 
     // conversions from fixed rank
     template <rank_t R, std::enable_if_t<R!=RANK_ANY, int> =0>
@@ -488,9 +482,9 @@ struct View<T, RANK_ANY>
     View(View<std::remove_const_t<T>, R> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 
 // conversion to const from non const
-    operator View<typename const_atom<T>::type> const & ()
+    operator View<const_atom<T>> const & ()
     {
-        return *reinterpret_cast<View<typename const_atom<T>::type> const *>(this);
+        return *reinterpret_cast<View<const_atom<T>> const *>(this);
     }
 
 // conversions to scalar
@@ -499,7 +493,7 @@ struct View<T, RANK_ANY>
 };
 
 #undef DEF_ITERATORS
-#undef DEF_ASSIGNMENT_OPS
+#undef DEF_VIEW_COMMON
 #undef DEF_ASSIGNOPS
 
 template <class T>
