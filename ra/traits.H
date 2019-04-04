@@ -26,7 +26,7 @@
 #if RA_CHECK_BOUNDS_TRAITS==0
     #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
 #endif
 
 namespace ra {
@@ -99,19 +99,15 @@ struct ra_traits_def<std::initializer_list<T>>
     constexpr static rank_t size_s() { return DIM_ANY; }
 };
 
-// To handle rank-1 arrays of static/dynamic size.
-template <class Dim, std::enable_if_t<ra_traits<Dim>::size_s()!=DIM_ANY, int> =0>
-void resize(Dim & dim, dim_t k)
+// To handle arrays of static/dynamic size.
+template <class A> void
+resize(A & a, dim_t k)
 {
-    static_assert(ra_traits<Dim>::rank_s()==1, "bad rank");
-    assert(k==dim_t(dim.size()));
-}
-
-template <class Dim, std::enable_if_t<ra_traits<Dim>::size_s()==DIM_ANY, int> =0>
-void resize(Dim & dim, dim_t k)
-{
-    static_assert(ra_traits<Dim>::rank_s()==1 || ra_traits<Dim>::rank_s()==RANK_ANY, "bad rank");
-    dim.resize(k);
+    if constexpr (ra_traits<A>::size_s()==DIM_ANY) {
+        a.resize(k);
+    } else {
+        assert(k==dim_t(a.size_s(0)));
+    }
 }
 
 // ---------------------------

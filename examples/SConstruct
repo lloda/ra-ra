@@ -69,7 +69,8 @@ else:
 [ra.to_test_ra(env, variant_dir)(example)
  for example in ['view', 'outer', 'slicing', 'where-pick', 'rangexpr', 'useret', 'deriv',
                  'indirect', 'cast', 'nested', 'agreement', 'small', 'readme',
-                 'explode-collapse', 'newton', 'maxwell', 'laplace2d', 'laplace3d']]
+                 'explode-collapse', 'newton', 'maxwell', 'laplace2d', 'laplace3d',
+                 'throw']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/examples'))

@@ -26,7 +26,7 @@
 #if RA_CHECK_BOUNDS_PICK==0
     #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
 #endif
 
 namespace ra {
@@ -139,7 +139,7 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>
     constexpr static int A = driver_index<P0, P ...>::value;
     using T = std::tuple<P0, P ...>;
     using PA = std::decay_t<mp::ref<T, A>>;
-    using NotA = mp::ComplementList_<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
+    using NotA = mp::complement_list<mp::int_list<A>, std::tuple<mp::int_t<I> ...>>;
 
     T t;
 

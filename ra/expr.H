@@ -22,7 +22,7 @@
 #if RA_CHECK_BOUNDS_EXPR==0
     #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
 #endif
 
 namespace ra {
@@ -54,7 +54,9 @@ constexpr bool check_expr(int ranka, E const & e)
     using NotA = typename E::NotA;
     using PA = typename E::PA;
     using T = typename E::T;
-    if constexpr (iarg<mp::len<NotA>) {
+    if constexpr (iarg>=mp::len<NotA>) {
+        return true;
+    } else {
         constexpr int B = mp::ref<NotA, iarg>::value;
 // provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
 // ct checks require ct rank. But for fixed rank / var size, size checks cannot be done at ct, so this will only do rank checks.
@@ -92,8 +94,6 @@ constexpr bool check_expr(int ranka, E const & e)
             }
         }
         return check_expr<iarg+1>(ranka, e);
-    } else {
-        return true;
     }
 }
 
@@ -106,7 +106,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr static int A = driver_index<P ...>::value;
     using T = std::tuple<P ...>;
     using PA = std::decay_t<mp::ref<T, A>>;
-    using NotA = mp::ComplementList_<mp::int_list<A>, mp::int_list<I ...>>;
+    using NotA = mp::complement_list<mp::int_list<A>, mp::int_list<I ...>>;
 
     Op op;
     T t;
@@ -114,8 +114,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
 // If driver is RANK_ANY, driver selection should wait to run time, unless we can tell that RANK_ANY would be selected anyway.
     constexpr static bool CAN_DRIVE = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
 
-// there's one size (by A), but each arg has its own strides.
-// note: do not require driver. This is needed by check for all leaves.
+// Unlike for strides, there's one size (by A). Still leaves' sizes must be checked, so don't require driver.
     constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
     constexpr static dim_t size_s() { return PA::size_s(); }
     constexpr static dim_t size_s(int i) { return PA::size_s(i); }
@@ -126,8 +125,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
 // see test/ra-9.C [ra01] for forward() here.
     constexpr Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
-// TODO Should check only the driver: do this on ply.
-        CHECK_BOUNDS(check_expr<0>(rank(), *this));
+        CHECK_BOUNDS(check_expr<0>(rank(), *this)); // TODO Should check only the driver: do this on ply.
     }
 
     template <class J>

@@ -22,7 +22,7 @@
 #if RA_CHECK_BOUNDS_SMALL==0
     #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
 #endif
 
 namespace ra {
@@ -332,6 +332,7 @@ struct SmallBase
     constexpr static auto ssizes = mp::tuple_values<std::array<dim_t, rank()>, sizes>();
     constexpr static auto sstrides = mp::tuple_values<std::array<dim_t, rank()>, strides>();
     constexpr static dim_t size(int j) { return ssizes[j]; }
+    constexpr static dim_t size_s(int j) { return ssizes[j]; }
     constexpr static dim_t stride(int j) { return sstrides[j]; }
 
     constexpr T * data() { return static_cast<Child &>(*this).p; }

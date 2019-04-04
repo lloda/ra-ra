@@ -24,7 +24,7 @@
 #if RA_CHECK_BOUNDS_BIG==0
     #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
 #endif
 
 namespace ra {
@@ -325,6 +325,7 @@ struct View
     constexpr static rank_t rank_s() { return RANK; };
     constexpr static rank_t rank() { return RANK; }
     constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size_s(int j) { return DIM_ANY; }
     constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
     constexpr dim_t size(int j) const { return dim[j].size; }
     constexpr dim_t stride(int j) const { return dim[j].stride; }

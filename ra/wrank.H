@@ -22,7 +22,7 @@
 #if RA_CHECK_BOUNDS_WRANK==0
     #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
 #endif
 
 // TODO Make it work with fixed size types.

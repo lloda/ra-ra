@@ -6,7 +6,8 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// Regression test for a bug caused by ref holding of Dimv in cell_iterator.
+// Regression test for a bug ... caught first in fold_mat @ array.C.
+// Caused by d139794396a0d51dc0c25b0b03b2a2ef0e2760b5 : Remove set() from cell_iterator, cell_iterator_small.
 
 #include "ra/operators.H"
 #include "ra/io.H"

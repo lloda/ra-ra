@@ -24,7 +24,7 @@
 #if RA_CHECK_BOUNDS_BOOTSTRAP==0
     #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) assert( cond )
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
 #endif
 
 namespace ra {

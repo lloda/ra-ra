@@ -12,7 +12,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
 @set VERSION 7
-@set UPDATED 2019 March 22
+@set UPDATED 2019 April 4
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -260,6 +260,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 * Compatibility::              With the STL and other libraries.
 * Extension::                  Using your own types and more.
 * Functions::                  Ready to go.
+* Error handling::             What to check and what to do.
 @end menu
 
 @c ------------------------------------------------
@@ -1131,7 +1132,7 @@ Translating array descriptors from a foreign language should be fairly simple. F
     scm_t_array_handle h;
     scm_array_get_handle(a, &h);
     scm_t_array_dim const * dims = scm_array_handle_dims(&h);
-    View<double> v(map([&](int i) { return ra::Dimv {dim[i].ubnd-dim[i].lbnd+1, dim[i].inc}; },
+    View<double> v(map([](int i) { return ra::Dimv {dim[i].ubnd-dim[i].lbnd+1, dim[i].inc}; },
                        ra::iota(scm_array_handle_rank(&h))),
                    scm_array_handle_f64_writable_elements(&h));
 
@@ -1155,7 +1156,7 @@ The most common case is that a library doesn't handle strides at all, and it onl
 
 FIXME using is_c_order, etc.
 
-Other libraries do accept strides, but not general ones. For example @url{https://www.netlib.org/blas,CBLAS}' @code{cblas_dgemm} has this prototype:
+Other libraries do accept strides, but not general ones. For example @url{https://www.netlib.org/blas}' @code{cblas_dgemm} has this prototype:
 
 @quotation
 @verbatim
@@ -1392,6 +1393,24 @@ FIXME early
 The following is often useful.
 
 FIXME lexicographical compare etc.
+
+@c ------------------------------------------------
+@node Error handling
+@section Error handling
+@c ------------------------------------------------
+
+Error handling in @code{ra::} is barebones. It is controlled by two macros:
+
+@itemize
+@item @code{RA_CHECK_BOUNDS}
+is a binary flag. If it is 0, runtime checks are disabled. The default is 1. @code{RA_CHECK_BOUND} controls all runtime checks on input arguments, not only bounds checks. If the checks are enabled,
+@item @code{RA_ASSERT}
+is called with a single argument, an expression that evaluates true if the check passes. The default value of @code{RA_ASSERT} is @code{assert} (from @code{<cassert>}) which will abort the program otherwise.
+@end itemize
+
+@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @code{-DNDEBUG}. The use of @code{-DNDEBUG} is untested.
+
+@code{RA_ASSERT} is provided so that you can replace the default @code{assert} with something more appropriate for your program. @code{examples/throw.C} in the distribution shows how to throw an user-defined exception instead.
 
 @c ------------------------------------------------
 @node Extras

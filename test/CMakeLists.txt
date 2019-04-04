@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # (c) Daniel Llorens - 2018, 2019
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.5)
 project (ra-test)
 include_directories ("..")
 

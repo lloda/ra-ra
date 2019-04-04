@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 7, updated 2019 March 22)
+<!-- ra:: (version 7, updated 2019 April 4)
 
 (c) Daniel Llorens 2005-2019
 
@@ -102,7 +102,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="di
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 7, updated 2019 March 22)
+<p><code>ra::</code> (version 7, updated 2019 April 4)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2019
 </p>
@@ -359,6 +359,8 @@ Next: <a href="#Extras" accesskey="n" rel="next">Extras</a>, Previous: <a href="
 <tr><td align="left" valign="top">&bull; <a href="#Extension">Extension</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using your own types and more.
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#Functions">Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Ready to go.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Error-handling">Error handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">What to check and what to do.
 </td></tr>
 </table>
 
@@ -1130,7 +1132,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
     scm_t_array_handle h;
     scm_array_get_handle(a, &amp;h);
     scm_t_array_dim const * dims = scm_array_handle_dims(&amp;h);
-    View&lt;double&gt; v(map([&amp;](int i) { return ra::Dimv {dim[i].ubnd-dim[i].lbnd+1, dim[i].inc}; },
+    View&lt;double&gt; v(map([](int i) { return ra::Dimv {dim[i].ubnd-dim[i].lbnd+1, dim[i].inc}; },
                        ra::iota(scm_array_handle_rank(&amp;h))),
                    scm_array_handle_f64_writable_elements(&amp;h));
 
@@ -1153,7 +1155,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 </p>
 <p>FIXME using is_c_order, etc.
 </p>
-<p>Other libraries do accept strides, but not general ones. For example <a href="https://www.netlib.org/blas">CBLAS</a>&rsquo; <code>cblas_dgemm</code> has this prototype:
+<p>Other libraries do accept strides, but not general ones. For example <a href="https://www.netlib.org/blas">https://www.netlib.org/blas</a>&rsquo; <code>cblas_dgemm</code> has this prototype:
 </p>
 <blockquote>
 <pre class="verbatim">cblas_dgemm(order, transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
@@ -1257,7 +1259,7 @@ my_fun(A &amp;&amp; ... a)
 <hr>
 <span id="Functions"></span><div class="header">
 <p>
-Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Functions-1"></span><h3 class="section">2.11 Functions</h3>
 
@@ -1365,6 +1367,26 @@ inline auto op_reduce(A &amp;&amp; a)
 <p>The following is often useful.
 </p>
 <p>FIXME lexicographical compare etc.
+</p>
+<hr>
+<span id="Error-handling"></span><div class="header">
+<p>
+Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<span id="Error-handling-1"></span><h3 class="section">2.12 Error handling</h3>
+
+<p>Error handling in <code>ra::</code> is barebones. It is controlled by two macros:
+</p>
+<ul>
+<li> <code>RA_CHECK_BOUNDS</code>
+is a binary flag. If it is 0, runtime checks are disabled. The default is 1. <code>RA_CHECK_BOUND</code> controls all runtime checks on input arguments, not only bounds checks. If the checks are enabled,
+</li><li> <code>RA_ASSERT</code>
+is called with a single argument, an expression that evaluates true if the check passes. The default value of <code>RA_ASSERT</code> is <code>assert</code> (from <code>&lt;cassert&gt;</code>) which will abort the program otherwise.
+</li></ul>
+
+<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <code>-DNDEBUG</code>. The use of <code>-DNDEBUG</code> is untested.
+</p>
+<p><code>RA_ASSERT</code> is provided so that you can replace the default <code>assert</code> with something more appropriate for your program. <code>examples/throw.C</code> in the distribution shows how to throw an user-defined exception instead.
 </p>
 <hr>
 <span id="Extras"></span><div class="header">

@@ -224,25 +224,25 @@ int main()
 // complement.
     {
         using case1 = int_list<1>;
-        static_assert(mp::check_idx<mp::Complement_<case1, 0>>::value, "");
-        static_assert(mp::check_idx<mp::Complement_<case1, 1>, 0>::value, "");
-        static_assert(mp::check_idx<mp::Complement_<case1, 2>, 0>::value, "");
-        static_assert(mp::check_idx<mp::Complement_<case1, 3>, 0, 2>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 0>>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 1>, 0>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 2>, 0>::value, "");
+        static_assert(mp::check_idx<mp::complement<case1, 3>, 0, 2>::value, "");
         using list3 = mp::iota<3>;
-        static_assert(mp::check_idx<mp::Complement_<list3, 3>>::value, "");
-        using c36 = mp::Complement_<list3, 6>;
+        static_assert(mp::check_idx<mp::complement<list3, 3>>::value, "");
+        using c36 = mp::complement<list3, 6>;
         static_assert(mp::check_idx<c36, 3, 4, 5>::value, "");
-        static_assert(mp::check_idx<mp::Complement_<c36, 6>, 0, 1, 2>::value, "");
+        static_assert(mp::check_idx<mp::complement<c36, 6>, 0, 1, 2>::value, "");
         using case0 = tuple<int_t<0>>;
-        static_assert(mp::check_idx<mp::Complement_<case0, 0>>::value, "");
-        static_assert(mp::check_idx<mp::Complement_<case0, 1>>::value, "");
-        static_assert(mp::check_idx<mp::Complement_<case0, 2>, 1>::value, "");
+        static_assert(mp::check_idx<mp::complement<case0, 0>>::value, "");
+        static_assert(mp::check_idx<mp::complement<case0, 1>>::value, "");
+        static_assert(mp::check_idx<mp::complement<case0, 2>, 1>::value, "");
     }
-// ComplementSList && ComplementList.
+// complement_sorted_list && complement_list.
     {
 #define _ ,
 #define CHECK_COMPLEMENT_SLIST( A, B, C ) \
-static_assert(mp::check_idx<mp::ComplementSList_<int_list A , B > C >::value, "a");
+static_assert(mp::check_idx<mp::complement_sorted_list<int_list A , B > C >::value, "a");
         CHECK_COMPLEMENT_SLIST( <1>, int_list<>, )
         CHECK_COMPLEMENT_SLIST( <1>, int_list<0>, _ 0)
         CHECK_COMPLEMENT_SLIST( <1>, int_list<0 _ 1>, _ 0)
@@ -264,7 +264,7 @@ static_assert(mp::check_idx<mp::ComplementSList_<int_list A , B > C >::value, "a
 #undef _
 #define _ ,
 #define CHECK_COMPLEMENT_LIST( A, B, C ) \
-static_assert(mp::check_idx<mp::ComplementList_<int_list A , B > C >::value, "a");
+static_assert(mp::check_idx<mp::complement_list<int_list A , B > C >::value, "a");
         using l2 = mp::iota<2>;
         CHECK_COMPLEMENT_LIST( <0>,     l2,  _ 1 )
         CHECK_COMPLEMENT_LIST( <1>,     l2,  _ 0 )

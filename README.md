@@ -88,7 +88,7 @@ I haven't tested on Windows. If you can do that, I'd appreciate a report!
 * Default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
 * The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`.
 * Indices are checked by default. This can be disabled with a compilation flag.
-* **ra-ra** doesn't use exceptions.
+* **ra-ra** doesn't use exceptions by itself, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
 
 #### Bugs & defects
 

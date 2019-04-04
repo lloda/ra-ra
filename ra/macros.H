@@ -11,6 +11,7 @@
 
 #pragma once
 #include <cstddef>
+#include <cassert>
 #include <type_traits>
 #include <utility>
 
@@ -38,6 +39,10 @@
 #define FOR_EACH_RSEQ_N() 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 #define FOR_EACH_(N, what, x, ...) JOIN(FOR_EACH_, N)(what, x, __VA_ARGS__)
 #define FOR_EACH(what, x, ...) FOR_EACH_(FOR_EACH_NARG(x, __VA_ARGS__), what, x, __VA_ARGS__)
+
+#ifndef RA_ASSERT
+  #define RA_ASSERT(cond) assert(cond)
+#endif
 
 namespace mp {
 

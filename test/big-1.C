@@ -50,6 +50,19 @@ int main()
             tr.test_eq(ra::start({1, 2, 3, 0, 0, 0}), a);
         }
     }
+    tr.section("resize works on first dimension");
+    {
+        {
+            ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
+            a.resize(2);
+            tr.test_eq(1+ra::_1 + 2*ra::_0, a);
+        }
+        {
+            ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
+            resize(a, 2);
+            tr.test_eq(1+ra::_1 + 2*ra::_0, a);
+        }
+    }
     tr.section("operator=");
     {
         ra::Big<int, 2> a = {{0, 1, 2}, {3, 4, 5}};

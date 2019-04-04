@@ -187,57 +187,57 @@ template <class ... A> using andb = bool_t<(A::value && ... && true)>;
 template <class ... A> using orb = bool_t<(A::value || ... || false)>;
 
 // Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
-template <class S, class T, class SS=S> struct ComplementList;
-template <class S, class T, class SS=S> using ComplementList_ = typename ComplementList<S, T, SS>::type;
+template <class S, class T, class SS=S> struct complement_list_;
+template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
 
 // end of T.
 template <class S, class SS>
-struct ComplementList<S, nil, SS>
+struct complement_list_<S, nil, SS>
 {
     using type = nil;
 };
 // end search on S, did not find.
 template <class T0, class ... T, class SS>
-struct ComplementList<nil, tuple<T0, T ...>, SS>
+struct complement_list_<nil, tuple<T0, T ...>, SS>
 {
-    using type = cons<T0, ComplementList_<SS, tuple<T ...>>>;
+    using type = cons<T0, complement_list<SS, tuple<T ...>>>;
 };
 // end search on S, found.
 template <class F, class ... S, class ... T, class SS>
-struct ComplementList<tuple<F, S ...>, tuple<F, T ...>, SS>
+struct complement_list_<tuple<F, S ...>, tuple<F, T ...>, SS>
 {
-    using type = ComplementList_<SS, tuple<T ...>>;
+    using type = complement_list<SS, tuple<T ...>>;
 };
 // keep searching on S.
 template <class S0, class ... S, class T0, class ... T, class SS>
-struct ComplementList<tuple<S0, S ...>, tuple<T0, T ...>, SS>
+struct complement_list_<tuple<S0, S ...>, tuple<T0, T ...>, SS>
 {
-    using type = ComplementList_<tuple<S ...>, tuple<T0, T ...>, SS>;
+    using type = complement_list<tuple<S ...>, tuple<T0, T ...>, SS>;
 };
 
-// Like ComplementList, but assume that both lists are sorted.
-template <class S, class T> struct ComplementSList { using type = nil; };
-template <class S, class T> using ComplementSList_ = typename ComplementSList<S, T>::type;
+// Like complement_list, but assume that both lists are sorted.
+template <class S, class T> struct complement_sorted_list_ { using type = nil; };
+template <class S, class T> using complement_sorted_list = typename complement_sorted_list_<S, T>::type;
 
 template <class T>
-struct ComplementSList<nil, T>
+struct complement_sorted_list_<nil, T>
 {
     using type = T;
 };
 template <class F, class ... S, class ... T>
-struct ComplementSList<tuple<F, S ...>, tuple<F, T ...>>
+struct complement_sorted_list_<tuple<F, S ...>, tuple<F, T ...>>
 {
-    using type = ComplementSList_<tuple<S ...>, tuple<T ...>>;
+    using type = complement_sorted_list<tuple<S ...>, tuple<T ...>>;
 };
 template <class S0, class ... S, class T0, class ... T>
-struct ComplementSList<tuple<S0, S ...>, tuple<T0, T ...>>
+struct complement_sorted_list_<tuple<S0, S ...>, tuple<T0, T ...>>
 {
-    static_assert(T0::value<=S0::value, "bad lists for ComplementSList<>");
-    using type = cons<T0, ComplementSList_<tuple<S0, S ...>, tuple<T ...>>>;
+    static_assert(T0::value<=S0::value, "bad lists for complement_sorted_list<>");
+    using type = cons<T0, complement_sorted_list<tuple<S0, S ...>, tuple<T ...>>>;
 };
 
-// Variant of ComplementList where the second argument is [0 .. end-1].
-template <class S, int end> using Complement_ = ComplementSList_<S, iota<end>>;
+// Variant of complement_list where the second argument is [0 .. end-1].
+template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
 
 // Prepend an element to each of a list of lists.
 template <class c, class A> struct MapCons;
