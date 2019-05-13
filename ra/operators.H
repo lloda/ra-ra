@@ -258,7 +258,7 @@ inline auto amax(A && a)
 template <class A, class Less = std::less<value_t<A>>>
 inline decltype(auto) refmin(A && a, Less && less = std::less<value_t<A>>())
 {
-    assert(a.size()>0);
+    CHECK_BOUNDS(a.size()>0);
     decltype(auto) s = ra::start(a);
     auto p = &(*s.flat());
     for_each([&less, &p](auto & a) { if (less(a, *p)) { p = &a; } }, s);
@@ -268,7 +268,7 @@ inline decltype(auto) refmin(A && a, Less && less = std::less<value_t<A>>())
 template <class A, class Less = std::less<value_t<A>>>
 inline decltype(auto) refmax(A && a, Less && less = std::less<value_t<A>>())
 {
-    assert(a.size()>0);
+    CHECK_BOUNDS(a.size()>0);
     decltype(auto) s = ra::start(a);
     auto p = &(*s.flat());
     for_each([&less, &p](auto & a) { if (less(*p, a)) { p = &a; } }, s);

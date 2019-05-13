@@ -1,5 +1,4 @@
-# -*- mode: cmake -*-
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; mode: cmake -*-
 # (c) Daniel Llorens - 2018, 2019
 
 cmake_minimum_required (VERSION 3.5)

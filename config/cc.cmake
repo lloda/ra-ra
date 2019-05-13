@@ -1,6 +1,5 @@
-# -*- mode: cmake -*-
-# -*- coding: utf-8 -*-
-# (c) Daniel Llorens - 2018
+# -*- coding: utf-8; mode: cmake -*-
+# (c) Daniel Llorens - 2018-2019
 # Common include section for subdirs
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/config/")

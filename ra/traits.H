@@ -61,12 +61,12 @@ struct ra_traits_def<std::array<T, N>>
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { N }; }
     constexpr static V make(dim_t const n)
     {
-        assert(n==N);
+        CHECK_BOUNDS(n==N);
         return V {};
     }
     template <class TT> constexpr static V make(dim_t n, TT const & t)
     {
-        assert(n==N);
+        CHECK_BOUNDS(n==N);
         V r {};
         std::fill(r.data(), r.data()+n, t);
         return r;
@@ -106,7 +106,7 @@ resize(A & a, dim_t k)
     if constexpr (ra_traits<A>::size_s()==DIM_ANY) {
         a.resize(k);
     } else {
-        assert(k==dim_t(a.size_s(0)));
+        CHECK_BOUNDS(k==dim_t(a.size_s(0)));
     }
 }
 

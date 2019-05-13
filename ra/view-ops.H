@@ -44,7 +44,7 @@ View<T, RANK> reverse(View<T, RANK> const & view, int k)
 template <class T, rank_t RANK, class S> inline
 View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
 {
-    assert(view.rank()==s.size());
+    CHECK_BOUNDS(view.rank()==dim_t(s.size()));
     auto rp = std::max_element(s.begin(), s.end());
     rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
 
@@ -57,7 +57,7 @@ View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
         ++k;
     }
     for (Dim const & dest: r.dim) {
-        assert(dest.size!=DIM_BAD && "axes left unset");
+        CHECK_BOUNDS(dest.size!=DIM_BAD && "axes left unset");
     }
     return r;
 }
@@ -80,7 +80,7 @@ template <int ... Iarg, class T, rank_t RANK> inline
 auto transpose(View<T, RANK> const & view)
 {
     static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "bad output rank");
-    assert((view.rank()==sizeof...(Iarg)) && "bad output rank");
+    CHECK_BOUNDS((view.rank()==sizeof...(Iarg)) && "bad output rank");
 
     using dummy_s = mp::makelist<sizeof...(Iarg), mp::int_t<0>>;
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
@@ -123,7 +123,7 @@ bool is_ravel_free(View<T, RANK> const & a)
 template <class T, rank_t RANK> inline
 View<T, 1> ravel_free(View<T, RANK> const & a)
 {
-    assert(is_ravel_free(a));
+    CHECK_BOUNDS(is_ravel_free(a));
     return ra::View<T, 1>({{a.size(), a.stride(a.rank()-1)}}, a.p);
 }
 
@@ -140,14 +140,10 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
             dim_t quot = lb;
             for (int j=i+1; j<sb.size(); ++j) {
                 quot *= sb[j];
-                if (quot<=0) {
-                    assert("cannot deduce dimensions");
-                }
+                CHECK_BOUNDS(quot>0 && "cannot deduce dimensions");
             }
             auto pv = la/quot;
-            if (la%quot!=0 || pv<0) {
-                assert("bad placeholder");
-            }
+            CHECK_BOUNDS((la%quot==0 && pv>=0) && "bad placeholder");
             sb[i] = pv;
             lb = la;
             break;
@@ -230,20 +226,20 @@ auto explode_(View<T, RANK> const & a)
 {
 // TODO Reduce to single check, either the first or the second.
     static_assert(RANK>=SUPERR || RANK==RANK_ANY, "rank of a is too low");
-    assert(a.rank()>=SUPERR && "rank of a is too low");
+    CHECK_BOUNDS(a.rank()>=SUPERR && "rank of a is too low");
     View<super_t, rank_sum(RANK, -SUPERR)> b;
     ra::resize(b.dim, a.rank()-SUPERR);
     dim_t r = 1;
     for (int i=0; i<SUPERR; ++i) {
         r *= a.size(i+b.rank());
     }
-    assert(r*sizeof(T)==sizeof(super_t) && "size of SUPERR axes doesn't match super type");
+    CHECK_BOUNDS(r*sizeof(T)==sizeof(super_t) && "size of SUPERR axes doesn't match super type");
     for (int i=0; i<b.rank(); ++i) {
-        assert(a.stride(i) % r==0 && "stride of SUPERR axes doesn't match super type");
+        CHECK_BOUNDS(a.stride(i) % r==0 && "stride of SUPERR axes doesn't match super type");
         b.dim[i].stride = a.stride(i) / r;
         b.dim[i].size = a.size(i);
     }
-    assert((b.rank()==0 || a.stride(b.rank()-1)==r) && "super type is not compact in array");
+    CHECK_BOUNDS((b.rank()==0 || a.stride(b.rank()-1)==r) && "super type is not compact in array");
     b.p = reinterpret_cast<super_t *>(a.data());
     return b;
 }
@@ -282,7 +278,7 @@ auto collapse(View<super_t, RANK> const & a)
     constexpr int s = sizeof(sub_t)/sizeof(sub_v);
     static_assert(t*sizeof(sub_v)>=1, "bad subtype");
     for (int i=0; i<SUBR; ++i) {
-        assert(((gstride<super_t>(i)/s)*s==gstride<super_t>(i)) && "bad strides"); // TODO is actually static
+        CHECK_BOUNDS(((gstride<super_t>(i)/s)*s==gstride<super_t>(i)) && "bad strides"); // TODO is actually static
         b.dim[a.rank()+i].stride = gstride<super_t>(i) / s * t;
         b.dim[a.rank()+i].size = gsize<super_t>(i);
     }
@@ -301,7 +297,7 @@ bool const crm(A const & a)
     return a.size()==0 || is_c_order(a);
 }
 
-} // namespace ra::
+} // namespace ra
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_VIEW_OPS

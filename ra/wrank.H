@@ -193,7 +193,7 @@ struct Ryn<FM, Op, std::tuple<P ...>, mp::int_list<I ...>>
     }
     constexpr Ryn(Op op_, P ... t_): op(std::forward<Op>(op_)), t(std::forward<P>(t_) ...)
     {
-        CHECK_BOUNDS(check<I>() && ... && "mismatched shapes");
+        CHECK_BOUNDS((check<I>() && ... ) && "mismatched shapes");
     }
 
     template <class J>

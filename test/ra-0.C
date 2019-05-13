@@ -1030,5 +1030,17 @@ int main()
         transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
         transpose_test(transpose<0, 0>(b));                       // static rank to static rank
     }
+    tr.section("transpose D");
+    {
+        auto transpose_test = [&tr](auto && b)
+            {
+                tr.test_eq(1, b.rank());
+                tr.test_eq(2, b.size());
+                tr.test_eq(1, b[0]);
+                tr.test_eq(5, b[1]);
+            };
+        ra::Unique<double> a({2, 3}, ra::_0*3 + ra::_1 + 1);
+        transpose_test(transpose({ 0, 0 }, a)); // dyn rank to dyn rank
+    }
     return tr.summary();
 }

@@ -83,7 +83,7 @@ constexpr bool check_expr(int ranka, E const & e)
 // rt checks are needed if any sub is rt size, even if E's own size is ct.
         if constexpr (mp::apply<mp::orb, mp::map<var_rank, T>>::value) {
             rank_t rankb = std::get<B>(e.t).rank();
-            assert(rankb<=ranka && "driver not max rank (could be RANK_ANY)");
+            CHECK_BOUNDS(rankb<=ranka && "driver not max rank (could be RANK_ANY)");
             for (int k=0; k!=rankb; ++k) {
                 if (dim_t sa=std::get<E::A>(e.t).size(k); sa!=DIM_BAD) { // maybe == in subexpressions
                     if (dim_t sb=std::get<B>(e.t).size(k); (sb!=sa) && (sb!=DIM_BAD)) {

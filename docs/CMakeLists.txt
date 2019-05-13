@@ -1,6 +1,5 @@
-# -*- mode: cmake -*-
-# -*- coding: utf-8 -*-
-# (c) Daniel Llorens - 2018
+# -*- coding: utf-8; mode: cmake -*-
+# (c) Daniel Llorens - 2018-2019
 
 cmake_minimum_required (VERSION 3.5)
 project (ra-docs)

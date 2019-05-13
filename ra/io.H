@@ -6,14 +6,27 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+/// @file io.H
+/// @brief Write and read arrays, expressions.
+
 #pragma once
 #include "ra/atom.H"
 #include "ra/format.H"
 #include <iosfwd>
 #include <sstream>
 
-/// @file io.H
-/// @brief Write and read arrays, expressions.
+#ifndef RA_CHECK_BOUNDS_IO
+  #ifndef RA_CHECK_BOUNDS
+    #define RA_CHECK_BOUNDS_IO 1
+  #else
+    #define RA_CHECK_BOUNDS_IO RA_CHECK_BOUNDS
+  #endif
+#endif
+#if RA_CHECK_BOUNDS_IO==0
+    #define CHECK_BOUNDS( cond )
+#else
+    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
+#endif
 
 namespace ra {
 
@@ -87,7 +100,7 @@ std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
     if (dim_t n; !((i >> n).fail())) {
-        assert(n>=0 && "negative sizes in input");
+        CHECK_BOUNDS(n>=0 && "negative sizes in input");
         c.resize(n);
         for (auto & ci: c) { i >> ci; }
     }
@@ -101,7 +114,7 @@ operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
         std::decay_t<C> cc(s, ra::none);
-        assert(every(start(s)>=0) && "negative sizes in input");
+        CHECK_BOUNDS(every(start(s)>=0) && "negative sizes in input");
 // avoid copying in case Container's elements don't support it.
         swap(c, cc);
 // need row-major, serial iteration here. FIXME use ra:: traversal.
@@ -111,3 +124,6 @@ operator>>(std::istream & i, C & c)
 }
 
 } // namespace ra
+
+#undef CHECK_BOUNDS
+#undef RA_CHECK_BOUNDS_IO

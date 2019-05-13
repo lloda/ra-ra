@@ -563,13 +563,13 @@ struct ra_traits_small
     constexpr static V make(dim_t const n)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");
-        assert(n==V::size(0));
+        CHECK_BOUNDS(n==V::size(0));
         return V {};
     }
     template <class TT> static V make(dim_t n, TT const & t)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");
-        assert(n==V::size(0));
+        CHECK_BOUNDS(n==V::size(0));
         return V(t);
     }
 #undef MAKE_COND

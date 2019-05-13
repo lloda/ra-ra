@@ -11,11 +11,11 @@
 
 #include <iostream>
 #include <iterator>
+#include "ra/io.H"
+#include "ra/operators.H"
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/view-ops.H"
-#include "ra/operators.H"
-#include "ra/io.H"
 
 using std::cout; using std::endl; using std::flush;
 

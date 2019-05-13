@@ -181,7 +181,7 @@ dim_t filldim(int n, D dend)
     dim_t next = 1;
     for (; n>0; --n) {
         --dend;
-        assert((*dend).size>=0);
+        CHECK_BOUNDS((*dend).size>=0);
         (*dend).stride = next;
         next *= (*dend).size;
     }
@@ -256,7 +256,7 @@ dim_t proddim(D d, D dend)
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>; \
     View & operator=(ravel_arg const x)                                 \
     {                                                                   \
-        assert(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
+        CHECK_BOUNDS(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
         std::copy(x.begin(), x.end(), this->begin());                   \
         return *this;                                                   \
     }                                                                   \
@@ -518,7 +518,7 @@ struct ra_traits_def<View<T, RANK_ANY>>
 template <class V> struct storage_traits
 {
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    static V create(dim_t n) { assert(n>=0); return V(new T[n]); }
+    static V create(dim_t n) { CHECK_BOUNDS(n>=0); return V(new T[n]); }
     static T const * data(V const & v) { return v.get(); }
     static T * data(V & v) { return v.get(); }
 };
@@ -675,14 +675,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // only for some kinds of store.
     void resize(dim_t const s)
     {
-        static_assert(RANK==RANK_ANY || RANK>0); assert(this->rank()>0);
+        static_assert(RANK==RANK_ANY || RANK>0); CHECK_BOUNDS(this->rank()>0);
         store.resize(proddim(View::dim.begin()+1, View::dim.end())*s);
         View::dim[0].size = s;
         View::p = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
-        static_assert(RANK==RANK_ANY || RANK>0); assert(this->rank()>0);
+        static_assert(RANK==RANK_ANY || RANK>0); CHECK_BOUNDS(this->rank()>0);
         store.resize(proddim(View::dim.begin()+1, View::dim.end())*s, t);
         View::dim[0].size = s;
         View::p = store.data();
@@ -690,14 +690,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
         store.push_back(std::move(t));
         ++View::dim[0].size;
         View::p = store.data();
     }
     void push_back(T const & t)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
         store.push_back(t);
         ++View::dim[0].size;
         View::p = store.data();
@@ -705,15 +705,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A>
     void emplace_back(A && ... a)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
         store.emplace_back(std::forward<A>(a) ...);
         ++View::dim[0].size;
         View::p = store.data();
     }
     void pop_back()
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); assert(this->rank()==1);
-        assert(View::dim[0].size>0);
+        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
+        CHECK_BOUNDS(View::dim[0].size>0);
         store.pop_back();
         --View::dim[0].size;
     }
@@ -795,7 +795,7 @@ Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
     return a;
 }
 
-} // namespace ra::
+} // namespace ra
 
 #undef CHECK_BOUNDS
 #undef RA_CHECK_BOUNDS_BIG

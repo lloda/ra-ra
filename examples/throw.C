@@ -9,6 +9,7 @@
 // Replace ra:: asserts with customs ones.
 
 #include <exception>
+#include <string>
 #include "ra/format.H"
 
 struct ra_error: public std::exception
@@ -23,16 +24,16 @@ struct ra_error: public std::exception
 
 // RA_ASSERT has to be defined before any "ra/" header to override the default definition of RA_ASSERT ("ra/format.H" is an independent header and doesn't count).
 
+#ifdef RA_ASSERT
+#error RA_ASSERT is already defined!
+#endif
 #define RA_ASSERT( cond ) \
     { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]"); }
 
-#include <iostream>
-#include <thread>
-#include <string>
 #include "ra/test.H"
 #include "ra/io.H"
 #include "ra/operators.H"
-#include "ra/format.H"
+#include <iostream>
 
 using std::cout, std::endl;
 

@@ -1381,7 +1381,7 @@ Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a hr
 <li> <code>RA_CHECK_BOUNDS</code>
 is a binary flag. If it is 0, runtime checks are disabled. The default is 1. <code>RA_CHECK_BOUND</code> controls all runtime checks on input arguments, not only bounds checks. If the checks are enabled,
 </li><li> <code>RA_ASSERT</code>
-is called with a single argument, an expression that evaluates true if the check passes. The default value of <code>RA_ASSERT</code> is <code>assert</code> (from <code>&lt;cassert&gt;</code>) which will abort the program otherwise.
+is called with a single argument, an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The default value of <code>RA_ASSERT</code> is <code>assert</code> (from <code>&lt;cassert&gt;</code>) which will abort the program otherwise.
 </li></ul>
 
 <p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <code>-DNDEBUG</code>. The use of <code>-DNDEBUG</code> is untested.
