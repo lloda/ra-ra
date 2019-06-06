@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file frame-matching.C
+/// @brief Specific frame-matching tests, previously in test/ra-0.C.
 
 // (c) Daniel Llorens - 2013-2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file frame-matching.C
-/// @brief Specific frame-matching tests, previously in test/ra-0.C.
 
 #include <iostream>
 #include <iterator>
@@ -15,6 +14,7 @@
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/big.H"
+#include "ra/old.H"
 
 using std::cout; using std::endl; using std::flush;
 using real = double;

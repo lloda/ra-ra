@@ -1,6 +1,6 @@
-
-// Daniel Llorens - 2015
+// -*- mode: c++; coding: utf-8 -*-
 // Adapted from blitz++/examples/deriv.cpp
+// Daniel Llorens - 2015
 
 #include "ra/operators.H"
 #include "ra/io.H"
@@ -11,7 +11,7 @@ using std::cout; using std::endl; using std::flush;
 using Array1D = ra::Big<double, 1>;
 
 // "index placeholder" which represents the array index for the first axis in a multidimensional expression.
-constexpr auto i = ra::_0;
+ra::TensorIndex<0> i;
 
 int main()
 {

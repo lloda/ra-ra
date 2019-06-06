@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file bench.H
+/// @brief Minimal benchmarking library.
 
 // (c) Daniel Llorens - 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file bench.H
-/// @brief Minimal benchmarking library.
 
 #pragma once
 #include <string>
@@ -26,6 +25,17 @@
 
 struct Benchmark
 {
+    constexpr static char const * esc_bold = "\x1b[01m";
+    constexpr static char const * esc_unbold = "\x1b[0m";
+    constexpr static char const * esc_red = "\x1b[31m";
+    constexpr static char const * esc_green = "\x1b[32m";
+    constexpr static char const * esc_cyan = "\x1b[36m";
+    constexpr static char const * esc_yellow = "\x1b[33m";
+    constexpr static char const * esc_blue = "\x1b[34m";
+    constexpr static char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
+    constexpr static char const * esc_plain = "\x1b[39m";
+    constexpr static char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
+
     using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
                                      std::chrono::high_resolution_clock,
                                      std::chrono::steady_clock>;
@@ -51,23 +61,35 @@ struct Benchmark
     static double stddev(Value const & bv)
     {
         double m = avg(bv);
-        return sqrt(sum(sqr(map(toseconds, bv.times)/bv.repeats-m))/bv.times.size());
+        return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.repeats-m))/bv.times.size());
     }
 
     template <class B>
-    static void report(std::ostream & o, B const & b, double frac)
+    void report(std::ostream & o, B const & b, double frac)
     {
-        o << map([](auto && bv) { return avg(bv); }, b)/frac << std::endl;
-        o << map([](auto && bv) { return stddev(bv); }, b)/frac << std::endl;
+        o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return avg(bv); }, b)/frac << std::endl;
+        o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return stddev(bv); }, b)/frac << std::endl;
+        info_str = "";
     }
 
     int const repeats_ = 1;
     int const runs_ = 1;
     std::string const name_ = "";
+    std::string info_str = "";
 
-    Benchmark name(std::string name_) { return Benchmark { repeats_, runs_, name_ }; }
-    Benchmark repeats(int repeats_) { return Benchmark { repeats_, runs_, name_ }; }
-    Benchmark runs(int runs_) { return Benchmark { repeats_, runs_, name_ }; }
+    template <class ... A> Benchmark & info(A && ... a)
+    {
+        bool empty = (info_str=="");
+        info_str += esc_plain;
+        info_str += (empty ? "" : "; ");
+        info_str += ra::format(a ...);
+        info_str += esc_plain;
+        return *this;
+    }
+
+    Benchmark name(std::string name_) { return Benchmark { repeats_, runs_, name_, "" }; }
+    Benchmark repeats(int repeats_) { return Benchmark { repeats_, runs_, name_, "" }; }
+    Benchmark runs(int runs_) { return Benchmark { repeats_, runs_, name_, "" }; }
 
     template <class F, class ... A> auto
     once(F && f, A && ... a)

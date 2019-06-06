@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file tuple-dynamic.H
+/// @brief Using tuples in a dynamic context.
 
 // (c) Daniel Llorens - 2013-2015, 2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file tuple-dynamic.H
-/// @brief Using tuples in a dynamic context.
 
 // TODO Think about struct <int k> { int const value = k; constexpr static int static_value = k; }
 // where the tuple can be cast to an array ref.

@@ -1,16 +1,14 @@
-
-// (c) Daniel Llorens - 2011-2016, 2019
-
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation; either version 3 of the License, or (at your option) any
-// later version.
-
+// -*- mode: c++; coding: utf-8 -*-
 /// @file atom.H
 /// @brief Terminal nodes for expression templates, and use-as-xpr wrapper.
 
+// (c) Daniel Llorens - 2011-2016, 2019
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
 #pragma once
-#include "ra/opcheck.H"
 #include "ra/type.H"
 #include <iostream>
 
@@ -29,10 +27,19 @@
 
 namespace ra {
 
-// value_type may be needed to avoid conversion issues.
+template <int w_, class value_type=ra::dim_t>
+struct TensorIndexFlat
+{
+    dim_t i;
+    constexpr void operator+=(dim_t const s) { i += s; }
+    constexpr value_type operator*() { return i; }
+};
+
+// ra may be needed to avoid conversion issues.
 template <int w_, class value_type=ra::dim_t>
 struct TensorIndex
 {
+    dim_t i = 0;
     static_assert(w_>=0, "bad TensorIndex");
     constexpr static int w = w_;
     constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn. rank.
@@ -41,12 +48,15 @@ struct TensorIndex
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k<=w); return DIM_BAD; }
 
-    template <class I> constexpr value_type at(I const & i) const { return value_type(i[w]); }
-    constexpr dim_t stride(int i) const { assert(0); return 0; } // used by Expr::stride_t.
-    constexpr value_type * flat() const { assert(0); return nullptr; } // used by type signatures.
+    template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
+
+    constexpr void adv(rank_t k, dim_t d) { CHECK_BOUNDS(d<=1); i += (k==w) * d; }
+    constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
+    constexpr static dim_t const stride(int k) { return (k==w); }
+    constexpr static bool keep_stride(dim_t step, int z, int j) { return step*stride(z)==stride(j); }
 };
 
-#define DEF_TENSORINDEX(i) constexpr TensorIndex<i, int> JOIN(_, i) {};
+#define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
@@ -77,7 +87,7 @@ struct Scalar
 
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
-    constexpr static dim_t stride(int i) { return 0; }
+    constexpr static dim_t stride(int k) { return 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return true; }
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
@@ -107,9 +117,9 @@ struct Vector
     static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
     constexpr dim_t size() const { return traits::size(v); }
-    constexpr dim_t size(int i) const { CHECK_BOUNDS(i==0); return traits::size(v); }
+    constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return traits::size(v); }
     constexpr static dim_t size_s() { return traits::size_s(); }
-    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i==0); return traits::size_s(); }
+    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr auto shape() const { return std::array<dim_t, 1> { traits::size(v) }; }
@@ -137,7 +147,7 @@ struct Vector
         CHECK_BOUNDS(d==1 || d<0);
         p__ += (k==0) * d;
     }
-    constexpr static dim_t stride(int i) { return i==0 ? 1 : 0; }
+    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
@@ -158,9 +168,9 @@ struct Ptr
     P p__;
 
     constexpr static dim_t size() { return DIM_BAD; }
-    constexpr static dim_t size(int i) { CHECK_BOUNDS(i==0); return DIM_BAD; }
+    constexpr static dim_t size(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
     constexpr static dim_t size_s() { return DIM_BAD; }
-    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i==0); return DIM_BAD; }
+    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr static auto shape() { return std::array<dim_t, 1> { DIM_BAD }; }
@@ -175,7 +185,7 @@ struct Ptr
         CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
         std::advance(p__, (k==0) * d);
     }
-    constexpr static dim_t stride(int i) { return i==0 ? 1 : 0; }
+    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
@@ -211,9 +221,9 @@ struct Iota
     }
 
     constexpr dim_t size() const { return size_; } // this is a Slice function...
-    constexpr dim_t size(int i) const { CHECK_BOUNDS(i==0); return size_; }
+    constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return size_; }
     constexpr static dim_t size_s() { return DIM_ANY; }
-    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i==0); return DIM_ANY; }
+    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
     constexpr auto shape() const { return std::array<dim_t, 1> { size_ }; }
@@ -278,25 +288,10 @@ template <int n> struct is_beatable_def<newaxis_t<n>>
 
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 
-// if by_index<T> is true, then T must be traversed by at() (as in ply_index) and not by flat() (as in ply_ravel).
-// TensorIndex is the prototype of such a T.
-template <class X> constexpr bool by_index_def = false;
-template <class T> constexpr bool by_index = by_index_def<std::decay_t<T>>;
-template <int w, class value_type> constexpr bool by_index_def<TensorIndex<w, value_type>> = true;
-
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;
 template <class LiveAxes, int depth, class A> struct ApplyFrames;
-
-template <class Op, class ... Ti, class K>
-constexpr bool by_index_def<Expr<Op, std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
-template <class ... Ti, class K>
-constexpr bool by_index_def<Pick<std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
-template <class LiveAxes, int depth, class A>
-constexpr bool by_index_def<ApplyFrames<LiveAxes, depth, A>> = by_index<A>;
-template <class FM, class Op, class ... Ti, class K>
-constexpr bool by_index_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
 
 // --------------
 // Coerce potential ArrayIterators

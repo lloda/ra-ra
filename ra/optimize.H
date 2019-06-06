@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file optimize.H
+/// @brief Naive optimization pass over ETs.
 
 // (c) Daniel Llorens - 2015-2018
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file optimize.H
-/// @brief Naive optimization pass over ETs.
 
 #pragma once
 #include "ra/small.H"

@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 7, updated 2019 April 4)
+<!-- ra:: (version 8, updated 2019 June 6)
 
 (c) Daniel Llorens 2005-2019
 
@@ -102,7 +102,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="di
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 7, updated 2019 April 4)
+<p><code>ra::</code> (version 8, updated 2019 June 6)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2019
 </p>
@@ -868,7 +868,6 @@ ra::Big&lt;int, 2&gt; a({3, 2}, 0);
 cout &lt;&lt; (a + ra::_0 - ra::_1) &lt;&lt; endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
 </pre></div>
 
-<p>Note that array expressions using <code>TensorIndex</code> will generally be slower than array expressions not using <code>TensorIndex</code>, especially if they have rank &gt; 1, because the presence of <code>TensorIndex</code> prevents nested loops from being flattened (see <a href="#Internals">Internals</a>). </p>
 
 <hr>
 <span id="The-rank-conjunction"></span><div class="header">
@@ -1508,8 +1507,6 @@ Next: <a href="#Driving-expressions" accesskey="n" rel="next">Driving expression
 
 <p>This is a kind of <b>ArrayIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array.
 </p>
-<p>Currently the only type that is <b>Indexable</b> but not <b>Ravelable</b> is <code>TensorIndex</code>. Mixing <code>TensorIndex</code> with other objects in an expression forces the whole expression to be traversed without recourse to <b>Flat</b>, which is the main reason why all the other <b>ArrayIterator</b> types are also <b>Indexable</b> &mdash;for compatibility with <code>TensorIndex</code>.
-</p>
 </li><li> <b>Flat</b> <code>Flat</code> <code>PickFlat</code> <code>CellFlat</code> <code>IotaFlat</code> <code>ScalarFlat</code>
 
 <p>These are pointerlike types that are meant to be traversed linearly. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Ravelable</b> objects through a method <code>flat</code>.
@@ -1528,11 +1525,10 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 </p>
 <p>In the current version of <code>ra::</code>, the driver is always selected at compile time<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>. This means that it&rsquo;s possible for an expression to fail at run time if that&rsquo;s when <code>ra::</code> finds out that the term it has selected as driver isn&rsquo;t, in fact, that of the highest rank. This bug can happen anytime variable rank expressions are involved.
 </p>
-<p>Once we have a driver, we select a traversal method. ra:: has two traversal methods, one based on pointer-like iterators (<code>ply_ravel</code>) and another based on indices (<code>ply_index</code>). The indices-based iterator is used when the expression contains terms that depend on the indices (e.g. <code>TensorIndex</code>).
+<p>Once we have a driver, we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for dynamic-size expressions and <code>plyf</code> for static-size expressions.
 </p>
-<p>Then we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full axis is traversed before one advances on the dimension outside. However, currently (v6) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed in a single 1D loop. <code>ply_index</code> isn&rsquo;t able to unroll dimensions (since it must carry the indices along), and this is another reason why it&rsquo;s generally slower.
+<p>Then we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full axis is traversed before one advances on the dimension outside. However, currently (v6) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed in a single 1D loop.
 </p>
-
 <hr>
 <span id="Loop-types"></span><div class="header">
 <p>

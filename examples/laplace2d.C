@@ -1,14 +1,13 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file laplace2d.C
+/// @brief Solve Poisson equation in a rectangle, with linear elements.
 
+// Adapted from lsolver/laplace2d.C by Christian Badura, 1998/05.
 // (c) Daniel Llorens - 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file laplace2d.C
-/// @brief Solve Poisson equation in a rectangle, with linear elements.
-// Adapted from lsolver/laplace2d.C by Christian Badura, 1998/05.
 
 // FIXME mult() benchmarks well against the Cish original, but cghs dominates
 // the computation and we do much worse against BLAS.  Clearly I need to

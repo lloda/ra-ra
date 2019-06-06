@@ -1,6 +1,7 @@
-
-// Daniel Llorens - 2015
+// -*- mode: c++; coding: utf-8 -*-
 // Adapted from blitz++/examples/cast.cpp
+// Daniel Llorens - 2015
+
 // Nested heterogeneous arrays
 
 #include "ra/operators.H"

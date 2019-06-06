@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file int_t.H
+/// @brief Treat integers as types, and global functions for integers.
 
 // (c) Daniel Llorens - 2005-2012, 2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file int_t.H
-/// @brief Treat integers as types, and global functions for integers.
 
 #pragma once
 #include "ra/macros.H"

@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file ra-9.C
+/// @brief Regressions in array-in-ra::scalar
 
 // (c) Daniel Llorens - 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file ra-9.C
-/// @brief Regressions in array-in-ra::scalar
 
 #include <iostream>
 #include <iterator>

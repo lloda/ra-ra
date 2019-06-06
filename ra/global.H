@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file global.H
+/// @brief Had to break namespace hygiene.
 
 // (c) Daniel Llorens - 2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file global.H
-/// @brief Had to break namespace hygiene.
 
 #pragma once
 #include "ra/wedge.H"

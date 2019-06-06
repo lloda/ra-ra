@@ -1,16 +1,16 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file small.H
+/// @brief Arrays with static dimensions. Compare with View, Container.
 
 // (c) Daniel Llorens - 2013-2016, 2018-2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file small.H
-/// @brief Arrays with static dimensions. Compare with View, Container.
-
 #pragma once
 #include "ra/expr.H"
+#include "ra/mpdebug.H"
 
 #ifndef RA_CHECK_BOUNDS_SMALL
   #ifndef RA_CHECK_BOUNDS
@@ -129,9 +129,9 @@ struct cell_iterator_small
     constexpr static dim_t size() { return ra_traits<frame_type>::size_s(); }
     constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
     constexpr static auto const & shape() { return frame_type::Base::ssizes; }
-    constexpr static dim_t size(int j) { CHECK_BOUNDS(inside(j, rank())); return V::size(j); }
-    constexpr static dim_t size_s(int j) { CHECK_BOUNDS(inside(j, rank())); return V::size(j); }
-    constexpr static dim_t stride(int j) { return j<rank() ? V::stride(j) : 0; }
+    constexpr static dim_t size(int k) { CHECK_BOUNDS(inside(k, rank())); return V::size(k); }
+    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(inside(k, rank())); return V::size(k); }
+    constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j)
     {
         return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
@@ -331,9 +331,9 @@ struct SmallBase
     constexpr static dim_t size_s() { return size(); }
     constexpr static auto ssizes = mp::tuple_values<std::array<dim_t, rank()>, sizes>();
     constexpr static auto sstrides = mp::tuple_values<std::array<dim_t, rank()>, strides>();
-    constexpr static dim_t size(int j) { return ssizes[j]; }
-    constexpr static dim_t size_s(int j) { return ssizes[j]; }
-    constexpr static dim_t stride(int j) { return sstrides[j]; }
+    constexpr static dim_t size(int k) { return ssizes[k]; }
+    constexpr static dim_t size_s(int k) { return ssizes[k]; }
+    constexpr static dim_t stride(int k) { return sstrides[k]; }
 
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }

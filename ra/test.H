@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file test.H
+/// @brief Minimal test library.
 
 // (c) Daniel Llorens - 2012, 2014-2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file test.H
-/// @brief Minimal test library.
 
 #pragma once
 #include <string>

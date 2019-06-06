@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file io.C
+/// @brief IO checks for ra::.
 
 // (c) Daniel Llorens - 2013-2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file io.C
-/// @brief IO checks for ra::.
 
 #include <iostream>
 #include <iterator>
@@ -16,6 +15,7 @@
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/view-ops.H"
+#include "ra/old.H"
 
 using std::cout; using std::endl; using std::flush;
 
@@ -116,6 +116,12 @@ int main()
     {
         iocheck(tr.info("output of expr (1)"),
                 ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), TI<0>()),
+                ra::Small<double, 3>{0, -1, -4});
+    }
+    tr.section("IO works with old OldTensorIndex (uses ply_index-like traversal)");
+    {
+        iocheck(tr.info("output of expr (1)"),
+                ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), ra::OldTensorIndex<0>()),
                 ra::Small<double, 3>{0, -1, -4});
     }
     tr.section("IO of var rank expression");

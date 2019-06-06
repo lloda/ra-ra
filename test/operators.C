@@ -180,7 +180,7 @@ int main()
             tr.test_eq(a, ra::Small<int, 3, 2> {77, 77, 77, 77, 77, 77});
         }
         {
-            ra::Unique<int, 2> a({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>()));
+            ra::Unique<int, 2> a({3, 2}, ra::cast<int>(ra::_0-ra::_1));
             tr.test_eq(ra::Small<int, 3, 2> {0, -1, 1, 0, 2, 1}, a);
         }
     }
@@ -207,8 +207,8 @@ int main()
                 a += a;
                 tr.test(std::equal(a.begin(), a.end(), check2));
             };
-        test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
-        test(ra::Small<int, 3, 2>(ra::cast<int>(ra::TensorIndex<0>()-ra::TensorIndex<1>())));
+        test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::_0-ra::_1)));
+        test(ra::Small<int, 3, 2>(ra::cast<int>(ra::_0-ra::_1)));
     }
     tr.section("assignment ops with ra::scalar [ra21]");
     {

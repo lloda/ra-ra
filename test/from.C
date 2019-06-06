@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file from.C
+/// @brief Checks for index selectors, both immediate and delayed.
 
 // (c) Daniel Llorens - 2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file from.C
-/// @brief Checks for index selectors, both immediate and delayed.
 
 #include <iostream>
 #include <iterator>
@@ -274,9 +273,7 @@ int main()
         Ureal<2> b({4, 4}, 0.);
         cout << a << endl;
         cout << b << endl;
-        tr.info("by_index(TensorIndex)").test(ra::by_index<decltype(ra::_1)>);
-        tr.info("by_index(Expr)").test(ra::by_index<decltype(ra::_1+ra::_0)>);
-// TODO these instantiate flat() when they should not
+// TODO these instantiate flat() when they should not (FIXME was for old OldTensorIndex; recheck)
         // tr.info("by_index(Ryn)").test(ra::by_index<decltype(a(ra::_1, ra::_0))>);
         // cout << mp::ref<decltype(a(ra::_1, ra::_0))>::rank_s() << endl;
 // these don't work because a(j, i) has rank 3 = [(w=1)+1 + (w=0)+1] and so it drives, but tensorindex exprs shouldn't ever drive.

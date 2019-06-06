@@ -1,6 +1,6 @@
-
-// Daniel Llorens - 2015
+// -*- mode: c++; coding: utf-8 -*-
 // Adapted from blitz++/examples/array.cpp
+// Daniel Llorens - 2015
 
 // TODO Better traversal...
 

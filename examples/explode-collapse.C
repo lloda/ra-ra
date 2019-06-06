@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file explode-collapse.C
+/// @brief Demo collapse and explode operations.
 
 // (c) Daniel Llorens - 2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file explode-collapse.C
-/// @brief Demo collapse and explode operations.
 
 #include "ra/operators.H"
 #include "ra/io.H"

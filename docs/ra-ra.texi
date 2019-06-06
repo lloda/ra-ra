@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0573r2.html
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
-@set VERSION 7
-@set UPDATED 2019 April 4
+@set VERSION 8
+@set UPDATED 2019 June 6
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -827,8 +827,6 @@ cout << (a + ra::_0 - ra::_1) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
 @end verbatim
 @end example
 
-Note that array expressions using @code{TensorIndex} will generally be slower than array expressions not using @code{TensorIndex}, especially if they have rank > 1, because the presence of @code{TensorIndex} prevents nested loops from being flattened (@pxref{Internals}). @c FIXME Have an implementation section to discuss these issues
-
 @c FIXME the rest
 
 @c ------------------------------------------------
@@ -1527,8 +1525,6 @@ This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obta
 
 This is a kind of @b{ArrayIterator} that provides an @code{at(i ...)} method for random access to any element of the array.
 
-Currently the only type that is @b{Indexable} but not @b{Ravelable} is @code{TensorIndex}. Mixing @code{TensorIndex} with other objects in an expression forces the whole expression to be traversed without recourse to @b{Flat}, which is the main reason why all the other @b{ArrayIterator} types are also @b{Indexable} ---for compatibility with @code{TensorIndex}.
-
 @item @b{Flat} @code{Flat} @code{PickFlat} @code{CellFlat} @code{IotaFlat} @code{ScalarFlat}
 
 These are pointerlike types that are meant to be traversed linearly. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Ravelable} objects through a method @code{flat}.
@@ -1545,10 +1541,9 @@ The execution of an expression template begins with the selection of a term of t
 
 In the current version of @code{ra::}, the driver is always selected at compile time@footnote{The full driver selection logic is in @samp{ra/opcheck.H}}. This means that it's possible for an expression to fail at run time if that's when @code{ra::} finds out that the term it has selected as driver isn't, in fact, that of the highest rank. This bug can happen anytime variable rank expressions are involved.
 
-Once we have a driver, we select a traversal method. ra:: has two traversal methods, one based on pointer-like iterators (@code{ply_ravel}) and another based on indices (@code{ply_index}). The indices-based iterator is used when the expression contains terms that depend on the indices (e.g. @code{TensorIndex}).
+Once we have a driver, we select a traversal method depending on the types of the arguments. @code{ra::} has two traversal methods, both based on pointer-like iterators. @code{ply_ravel} is used for dynamic-size expressions and @code{plyf} for static-size expressions.
 
-Then we select an order of traversal. @code{ra::} supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full axis is traversed before one advances on the dimension outside. However, currently (v6) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn't be relied upon). @code{ply_ravel} will unroll as many innermost dimensions as it can, and in some cases traversal will be executed in a single 1D loop. @code{ply_index} isn't able to unroll dimensions (since it must carry the indices along), and this is another reason why it's generally slower.
-
+Then we select an order of traversal. @code{ra::} supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full axis is traversed before one advances on the dimension outside. However, currently (v6) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn't be relied upon). @code{ply_ravel} will unroll as many innermost dimensions as it can, and in some cases traversal will be executed in a single 1D loop.
 
 @c ------------------------------------------------
 @node Loop types

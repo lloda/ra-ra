@@ -1,16 +1,16 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file expr.H
+/// @brief Operator nodes for expression templates.
 
 // (c) Daniel Llorens - 2011-2014, 2016-2017, 2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file expr.H
-/// @brief Operator nodes for expression templates.
-
 #pragma once
 #include "ra/ply.H"
+#include "ra/opcheck.H"
 
 #ifndef RA_CHECK_BOUNDS_EXPR
   #ifndef RA_CHECK_BOUNDS
@@ -48,6 +48,7 @@ auto flat(Op & op, P && ... p)
 template <class P> using var_rank = mp::bool_t<(std::decay_t<P>::size_s()==DIM_ANY)>;
 
 // E is Expr or Pick.
+// TODO separate the static and the dynamic checks so the static check is done regardless of CHECK_BOUNDS.
 template <int iarg, class E>
 constexpr bool check_expr(int ranka, E const & e)
 {

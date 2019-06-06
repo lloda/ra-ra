@@ -1,6 +1,6 @@
-
-// Daniel Llorens - 2015
+// -*- mode: c++; coding: utf-8 -*-
 // Adapted from blitz++/examples/tiny.cpp
+// Daniel Llorens - 2015
 
 // The point of this example is to show the assembly; I will when it's not awful :-/
 // $CXX -o small.s -S -O3 -DRA_CHECK_BOUNDS=0 -std=c++14 -Wall -Werror -Wno-unknown-pragmas -Wno-parentheses -Wno-error=strict-overflow -march=native -I.. small.C -funroll-loops -ffast-math -fno-exceptions

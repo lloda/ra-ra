@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file io.H
+/// @brief Write and read arrays, expressions.
 
 // (c) Daniel Llorens - 2014-2018
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file io.H
-/// @brief Write and read arrays, expressions.
 
 #pragma once
 #include "ra/atom.H"
@@ -30,7 +29,7 @@
 
 namespace ra {
 
-// After ply_index(). TODO merge with that.
+// After old.H/ply_index(). TODO merge with that (?) or use ply_ravel, but should control order.
 // TODO custom spacers at turn of dimension.
 // is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
 template <class A> inline

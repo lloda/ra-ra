@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file ra-8.C
+/// @brief Regression test for lvalue exprs in gcc 6.1
 
 // (c) Daniel Llorens - 2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file ra-8.C
-/// @brief Regression test for lvalue exprs in gcc 6.1
 
 // Failed for Expr:: Ryn:: Vector:: =, += ... on gcc 6.1 due to bug 70942. This
 // is kept to show why that forward<decltype(y)>(y) is there.

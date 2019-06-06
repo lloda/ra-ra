@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+// @file readme.C
+// @brief Examples used in top-level README.md
 
 // (c) Daniel Llorens - 2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-// @file readme.C
-// @brief Examples used in top-level README.md
 
 // TODO Generate README.md and/or these examples.
 
@@ -131,7 +130,7 @@ int main()
         B(I) = ra::Big<char, 2> {{'x', 'y'}, {'z', 'w'}};
         cout << "B: " << B << endl;
     }
-    // A TensorIndex object as in Blitz++ (with some differences).
+    // A tensor-index object as in Blitz++ (with some differences).
     tr.section("tensorindex");
     {
 // as shown above.

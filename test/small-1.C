@@ -1,13 +1,13 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file small-1.C
+/// @brief Making ra::Small and its iterator work with expressions/traversal.
 
 // (c) Daniel Llorens - 2014, 2016-2017, 2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file small-1.C
-/// @brief Making ra::Small and its iterator work with expressions/traversal.
 // See also small-0.C.
 
 #include <iostream>
@@ -20,6 +20,7 @@
 #include "ra/format.H"
 #include "ra/test.H"
 #include "ra/mpdebug.H"
+#include "ra/old.H"
 
 using std::cout; using std::endl; using std::flush;
 using complex = std::complex<double>;
@@ -302,14 +303,14 @@ int main()
     {
         ra::Small<double, 3> a { 1, 4, 2 };
         tr.test_eq(3, a.iter().size(0));
-#define TEST(plier)                                                 \
-        {                                                           \
-            double s = 0;                                             \
-            plier(ra::expr([&s](double & a) { s += a; }, a.iter()));  \
-            tr.test_eq(7, s);                                       \
+#define TEST(plier)                                                     \
+        {                                                               \
+            double s = 0;                                               \
+            plier(ra::expr([&s](double & a) { s += a; }, a.iter()));    \
+            tr.test_eq(7, s);                                           \
         }
-        TEST(ply_ravel)
-            TEST(ply_index)
+        TEST(ply_ravel);
+        TEST(ply_index);
 #undef TEST
             }
     tr.section("expr with Small, rank 2");
@@ -317,18 +318,18 @@ int main()
         ra::Small<double, 3, 2> a { 1, 4, 2, 5, 3, 6 };
         tr.test_eq(3, a.iter().size(0));
         tr.test_eq(2, a.iter().size(1));
-#define TEST(plier)                                                 \
-        {                                                           \
-            double s = 0;                                             \
-            plier(ra::expr([&s](double & a) { s += a; }, a.iter()));  \
-            tr.test_eq(21, s);                                      \
+#define TEST(plier)                                                     \
+        {                                                               \
+            double s = 0;                                               \
+            plier(ra::expr([&s](double & a) { s += a; }, a.iter()));    \
+            tr.test_eq(21, s);                                          \
         }
         TEST(ply_ravel);
         TEST(ply_index);
 #undef TEST
 #define TEST(plier)                                                     \
         {                                                               \
-            ra::Small<double, 3, 2> b;                                    \
+            ra::Small<double, 3, 2> b;                                  \
             plier(ra::expr([](double & a, double & b) { b = -a; }, a.iter(), b.iter())); \
             tr.test_eq(-1, b(0, 0));                                    \
             tr.test_eq(-4, b(0, 1));                                    \

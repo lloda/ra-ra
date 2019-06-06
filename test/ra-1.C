@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file ra-1.C
+/// @brief Fundamental tests for ra::.
 
 // (c) Daniel Llorens - 2013-2015
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file ra-1.C
-/// @brief Fundamental tests for ra::.
 
 #include <iostream>
 #include <iterator>
@@ -17,6 +16,7 @@
 #include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
+#include "ra/old.H"
 
 using std::cout; using std::endl; using std::flush;
 

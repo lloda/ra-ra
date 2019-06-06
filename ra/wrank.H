@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file wrank.H
+/// @brief Rank conjunction for expression templates.
 
 // (c) Daniel Llorens - 2013-2017, 2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file wrank.H
-/// @brief Rank conjunction for expression templates.
 
 #pragma once
 #include "ra/expr.H"

@@ -1,6 +1,6 @@
-
-// Daniel Llorens - 2015
+// -*- mode: c++; coding: utf-8 -*-
 // Adapted from blitz++/examples/indirect.cpp
+// Daniel Llorens - 2015
 
 // ra:: doesn't support ad hoc sparse selectors, so here I show
 // alternatives. The whole point of this example in Blitz++ seems to be the

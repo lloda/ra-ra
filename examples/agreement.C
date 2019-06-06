@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file agreement.C
+/// @brief Demo shape agreement rules
 
 // (c) Daniel Llorens - 2015-2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file agreement.C
-/// @brief Demo shape agreement rules
 
 #include "ra/operators.H"
 #include "ra/io.H"
@@ -70,8 +69,8 @@ int main()
     }
     // but the following would be invalid:
     {
-        // ra::TensorIndex<0> i;
-        // ra::TensorIndex<1> j;
+        // ra::_0 i;
+        // ra::_1 j;
         // ra::Big<float, 2> X = i-j; // no shape to construct X with
     }
 

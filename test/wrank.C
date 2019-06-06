@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file wrank.C
+/// @brief Checks for ra:: arrays, especially cell rank > 0 operations.
 
 // (c) Daniel Llorens - 2013-2015
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file wrank.C
-/// @brief Checks for ra:: arrays, especially cell rank > 0 operations.
 
 #include <iostream>
 #include <sstream>
@@ -22,6 +21,7 @@
 #include "ra/wrank.H"
 #include "ra/operators.H"
 #include "ra/io.H"
+#include "ra/old.H"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::dim_t;
 using real = double;

@@ -1,13 +1,12 @@
-
-// (c) Daniel Llorens - 2013-2015, 2017, 2019
-
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation; either version 3 of the License, or (at your option) any
-// later version.
-
+// -*- mode: c++; coding: utf-8 -*-
 /// @file bootstrap.H
 /// @brief Before all other ra:: includes.
+
+// (c) Daniel Llorens - 2013-2015, 2017, 2019
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
 
 #pragma once
 #include <sys/types.h> // ssize_t
@@ -29,7 +28,7 @@
 
 namespace ra {
 
-constexpr int VERSION = 7;     // to force or prevent upgrades on dependents
+constexpr int VERSION = 8;     // to force or prevent upgrades on dependents
 constexpr int LAST_ISSUE = 46; // numbered as [ra··] t/o the code. 08-10 are free.
 constexpr int LAST_MAN = 113;  // numbered as [ma··] t/o the manual and examples/tests
 

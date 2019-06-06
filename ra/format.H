@@ -1,13 +1,12 @@
-
-// (c) Daniel Llorens - 2010, 2016-2018
-
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation; either version 3 of the License, or (at your option) any
-// later version.
-
+// -*- mode: c++; coding: utf-8 -*-
 /// @file format.H
 /// @brief Array output formatting, with some generic ostream sugar.
+
+// (c) Daniel Llorens - 2010, 2016-2018
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
 
 #pragma once
 #include <iterator>

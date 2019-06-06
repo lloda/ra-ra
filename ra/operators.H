@@ -1,13 +1,12 @@
-
-// (c) Daniel Llorens - 2014-2017
-
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation; either version 3 of the License, or (at your option) any
-// later version.
-
+// -*- mode: c++; coding: utf-8 -*-
 /// @file operators.H
 /// @brief Sugar for ra:: expression templates.
+
+// (c) Daniel Llorens - 2014-2017
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
 
 #pragma once
 // FIXME Dependence on specific ra:: types should maybe be elsewhere.

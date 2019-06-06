@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file big.H
+/// @brief Arrays with dynamic size.
 
 // (c) Daniel Llorens - 2013-2014, 2017-2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file big.H
-/// @brief Arrays with dynamic size.
 
 #pragma once
 #include "ra/small.H"
@@ -135,8 +134,8 @@ struct cell_iterator
         return s;
     }
     constexpr dim_t size() const { return prod(map(std::mem_fn(&Dim::size), dim)); }
-    constexpr dim_t size(int j) const { CHECK_BOUNDS(inside(j, rank())); return dim[j].size; }
-    constexpr dim_t stride(int j) const { return j<rank() ? dim[j].stride : 0; }
+    constexpr dim_t size(int k) const { CHECK_BOUNDS(inside(k, rank())); return dim[k].size; }
+    constexpr dim_t stride(int k) const { return k<rank() ? dim[k].stride : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
     constexpr bool keep_stride(dim_t step, int z, int j) const { return step*stride(z)==stride(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }

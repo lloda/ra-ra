@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file tuple-list.H
+/// @brief Using tuples as compile time lists.
 
 // (c) Daniel Llorens - 2005-2013, 2016, 2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file tuple-list.H
-/// @brief Using tuples as compile time lists.
 
 /// The convention here is that the alias xxx<...> is user facing and xxx_<...>::type is
 /// implementation. Ideally we have only the alias.

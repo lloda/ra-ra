@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file tensorindex.C
+/// @brief Limitations of ra::TensorIndex.
 
 // (c) Daniel Llorens - 2015
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file tensorindex.C
-/// @brief Limitations of ra::TensorIndex.
 
 #include "ra/operators.H"
 #include "ra/io.H"
@@ -17,9 +16,8 @@ using std::cout; using std::endl; using std::flush;
 
 int main()
 {
-    constexpr auto i = ra::_0;
-    constexpr auto j = ra::_1;
-    // constexpr auto k = ra::_2;
+    auto i = ra::_0;
+    auto j = ra::_1;
 
     TestRecorder tr(std::cout);
     {

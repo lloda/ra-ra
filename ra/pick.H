@@ -1,20 +1,20 @@
-
-// (c) Daniel Llorens - 2016-2017, 2019
-
-// This library is free software; you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation; either version 3 of the License, or (at your option) any
-// later version.
-
+// -*- mode: c++; coding: utf-8 -*-
 /// @file pick.H
 /// @brief Expression template that picks one of several arguments.
 
+// (c) Daniel Llorens - 2016-2017, 2019
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
+
 // This class is needed because Expr evaluates its arguments before calling its
-// operator. Note that pick() is a normal function, so its arguments will always
-// be evaluated; it is the individual array elements that will not.
+// operator. Note that pick() is a normal function, so its *arguments* will always
+// be evaluated; it is the individual array elements that will not be.
 
 #pragma once
 #include "ra/ply.H"
+#include "ra/opcheck.H"
 
 #ifndef RA_CHECK_BOUNDS_PICK
   #ifndef RA_CHECK_BOUNDS

@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file ra-0.C
+/// @brief Checks for ra:: arrays, iterators.
 
 // (c) Daniel Llorens - 2013-2015
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file ra-0.C
-/// @brief Checks for ra:: arrays, iterators.
 
 #include <iostream>
 #include <iterator>
@@ -397,7 +396,7 @@ int main()
 // prefer the larger rank.
         static_assert(ra::driver_index<SS, UU<1>>::value==1, "bad match 2a");
         static_assert(ra::driver_index<UU<1>, SS>::value==0, "bad match 2b");
-// never choose TensorIndex.
+// never choose TensorIndex as driver.
         static_assert(ra::pick_driver<UU<2>, TI<0>>::value==0, "bad match 3a");
         static_assert(ra::pick_driver<TI<0>, UU<2>>::value==1, "bad match 3b");
 // static size/rank identical; prefer the first.
@@ -475,16 +474,6 @@ int main()
 // In this case, the View + shape provides the driver.
     tr.section("construct View from shape + driverless xpr");
     {
-        static_assert(ra::by_index<decltype(ra::_0)>, "bad by_index test 0");
-        static_assert(ra::by_index<TI<0>>, "bad by_index test 1");
-
-        ra::Unique<int, 2> a({3, 2}, ra::none);
-        auto dyn = ra::expr([](int & a, int b) { a = b; }, a.iter(), ra::_0);
-        static_assert(ra::by_index<decltype(dyn)>, "bad by_index test 2");
-
-        auto dyn2 = ra::expr([](int & dest, int const & src) { dest = src; }, a.iter(), ra::_0);
-        static_assert(ra::by_index<decltype(dyn2)>, "bad by_index test 3");
-
         {
             int checkb[6] = { 0, 0, 1, 1, 2, 2 };
             ra::Unique<int, 2> b({3, 2}, ra::_0);
@@ -493,22 +482,22 @@ int main()
 // This requires the driverless xpr dyn(scalar, tensorindex) to be constructible.
         {
             int checkb[6] = { 3, 3, 4, 4, 5, 5 };
-            ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a+b; }, ra::scalar(3), ra::_0));
+            ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a+b; }, ra::scalar(3), start(ra::_0)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
         {
             int checkb[6] = { 0, -1, 1, 0, 2, 1 };
-            ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_0, ra::_1));
+            ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, start(ra::_0), start(ra::_1)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
-// TODO Check this is an error (chosen driver is TensorIndex<2>, that can't drive) [ra42]
+// TODO Check this is an error (chosen driver is TI<2>, that can't drive) [ra42]
         // {
-        //     ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_2, ra::_1));
+        //     ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::TI<2>, ra::TI<1>));
         //     cout << b << endl;
         // }
 // TODO Could this be made to bomb at compile time? [ra42]
         // {
-        //     ra::Unique<int> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::_2, ra::_1));
+        //     ra::Unique<int> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::TI<2>, ra::TI<1>));
         //     cout << b << endl;
         // }
     }

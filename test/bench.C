@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file bench.H
+/// @brief Test the benchmarking microlibrary.
 
 // (c) Daniel Llorens - 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file bench.H
-/// @brief Test the benchmarking microlibrary.
 
 #include <string>
 #include <iostream>
