@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file iterator-small.C
+/// @brief Higher-rank iterator for SmallArray/SmallView.
 
 // (c) Daniel Llorens - 2014, 2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file iterator-small.C
-/// @brief Higher-rank iterator for SmallArray/SmallView.
 
 #include <iostream>
 #include <iterator>
@@ -21,7 +20,7 @@
 #include "ra/test.H"
 #include "ra/mpdebug.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 int main()
 {

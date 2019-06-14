@@ -1,10 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+// User expression templates
 
-// Daniel Llorens - 2015
 // Adapted from blitz++/examples/useret.cpp
+// Daniel Llorens - 2015
 
 // Blitz++'s ETs have a static applicator, so declaring new operations requires
-// a new class. Thanks to C++14, declaring new ET operations is much easier in
-// ra::. Just declare a function.
+// a new class. Thanks to C++14, declaring new ET operations is trivial in
+// ra:: — just declare a function.
 
 #include "ra/io.H"
 #include "ra/operators.H"

@@ -1,4 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
+// Small arrays
+
 // Adapted from blitz++/examples/tiny.cpp
 // Daniel Llorens - 2015
 
@@ -9,7 +11,7 @@
 #include "ra/io.H"
 #include <iostream>
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 void
 add_vectors(ra::Small<double, 4> & c, ra::Small<double, 4> const & a, ra::Small<double, 4> const & b)

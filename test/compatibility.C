@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file compatibility.C
+/// @brief Using std:: and ra:: together.
 
 // (c) Daniel Llorens - 2014, 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file compatibility.C
-/// @brief Using std:: and ra:: together.
 
 #include <iostream>
 #include "ra/test.H"
@@ -16,7 +15,7 @@
 #include "ra/io.H"
 #include "ra/mpdebug.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 int main()
 {

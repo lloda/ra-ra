@@ -12,7 +12,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
 @set VERSION 8
-@set UPDATED 2019 June 6
+@set UPDATED 2019 June 11
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -997,7 +997,7 @@ produces an expression of rank 1 and static size.
 @item Built-in arrays @cindex built-in array
 produce an expression of positive rank and static size.
 @item Raw pointers
-produce an expression of rank 1 and @emph{undefined} size. Raw pointers must always be brought into @code{ra::} explicitly with the function @ref{x-ptr,@code{ptr}}.
+produce an expression of rank 1 and @emph{undefined} size. Raw pointers must be brought into @code{ra::} explicitly with the function @ref{x-ptr,@code{ptr}}.
 @end itemize
 
 Compare:
@@ -1523,7 +1523,7 @@ This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obta
 
 @item @b{Indexable} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
-This is a kind of @b{ArrayIterator} that provides an @code{at(i ...)} method for random access to any element of the array.
+This is a kind of @b{ArrayIterator} that provides an @code{at(i ...)} method for random access to any element of the array.@footnote{It used to be the case that @code{TensorIndex} was @b{Indexable} but not @b{Ravelable}, which forced all the other @b{Ravelable} types to provide @code{at(i...)} so that they could be mixed with @code{TensorIndex} in expressions. Now that @code{TensorIndex} is also @b{Ravelable}, this distinction may disappear in the future with @code{at(i...)} being provided at a higher level.}
 
 @item @b{Flat} @code{Flat} @code{PickFlat} @code{CellFlat} @code{IotaFlat} @code{ScalarFlat}
 
@@ -1933,11 +1933,13 @@ ra::start(x) += y; // ok
 @end example
 
 @cindex @code{ptr}
-@anchor{x-ptr} @defun ptr pointer
+@anchor{x-ptr} @defun ptr pointer [size]
 Create vector expression from raw @var{pointer}.
 @end defun
 
-The resulting expression has rank 1 and undefined size. To traverse it, it must be matched with other expressions whose size is defined. @code{ra::} cannot check accesses made through this object, so be careful. For instance:
+The resulting expression has rank 1 and the size given. If @code{size} is not given, the expression has undefined size, and it will need to be matched with other expressions whose size @emph{is} defined.
+
+@code{ra::} doesn't know what is actually accessible through the pointer, so be careful. For instance:
 
 @example
 @verbatim
@@ -1945,8 +1947,20 @@ int p[] = {1, 2, 3};
 ra::Big<int, 1> v3 {1, 2, 3};
 ra::Big<int, 1> v4 {1, 2, 3, 4};
 v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
-v4 += ra::ptr(p); // error, shape (4): bad access to p[3]
+v4 += ra::ptr(p); // undefined, shape (4): bad access to p[3]
 // cout << (ra::ptr(p)+ra::TensorIndex<0>{}) << endl; // ct error, expression has undefined shape
+cout << (ra::ptr(p, 3)+ra::TensorIndex<0>{}) << endl; // ok, prints { 1, 3, 5 }
+cout << (ra::ptr(p, 4)+ra::TensorIndex<0>{}) << endl; // undefined, bad access at p[4]
+@end verbatim
+@end example
+
+Of course in this example one could simply have used @code{p} instead of @code{ra::ptr(p)}, since the array type retains size information.
+
+@example
+@verbatim
+v3 += p; // ok
+v4 += p; // error checked by ra::, shape clash (4) += (3)
+cout << (p + ra::TensorIndex<0>{}) << endl; // ok
 @end verbatim
 @end example
 

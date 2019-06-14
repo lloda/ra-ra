@@ -1,4 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
+// Numerical differentiation
+
 // Adapted from blitz++/examples/deriv.cpp
 // Daniel Llorens - 2015
 
@@ -6,7 +8,7 @@
 #include "ra/io.H"
 #include <iostream>
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 using Array1D = ra::Big<double, 1>;
 

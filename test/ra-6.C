@@ -15,7 +15,7 @@
 #include "ra/io.H"
 #include "ra/test.H"
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 
 int main()
 {

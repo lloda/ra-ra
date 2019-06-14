@@ -18,7 +18,7 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-using std::cout; using std::endl; using std::flush; using std::tuple;
+using std::cout, std::endl, std::flush, std::tuple;
 using real = double;
 
 int main()

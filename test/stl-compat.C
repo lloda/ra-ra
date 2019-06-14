@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file stl-compat.C
+/// @brief Using ra:: array & iterator types with the STL algos & types.
 
 // (c) Daniel Llorens - 2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file stl-compat.C
-/// @brief Using ra:: array & iterator types with the STL algos & types.
 
 // ra:: iterators are only partially STL compatible, because of copiability,
 // lack of random access (which for the STL also means linear, but at least for
@@ -21,7 +20,7 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 int main()
 {

@@ -19,7 +19,7 @@
 #include "ra/macros.H"
 #include <cmath>
 
-using std::abs; using std::sqrt; using std::fma;
+using std::abs, std::sqrt, std::fma;
 
 template <class T>
 struct Dual

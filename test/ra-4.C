@@ -15,7 +15,7 @@
 #include "ra/big.H"
 #include "ra/expr.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using complex = std::complex<double>;
 
 template <class AA>

@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file big-1.C
+/// @brief Tests specific to Container.
 
 // (c) Daniel Llorens - 2017, 2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file big-1.C
-/// @brief Tests specific to Container.
 
 #include <iostream>
 #include <iterator>
@@ -17,7 +16,7 @@
 #include "ra/format.H"
 #include "ra/test.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 template <class T, ra::rank_t RANK=ra::RANK_ANY> using BigValueInit = ra::Container<std::vector<T>, RANK>;
 
 int main()

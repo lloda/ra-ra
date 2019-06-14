@@ -16,7 +16,7 @@
 #include "ra/mpdebug.H"
 #include <memory>
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 
 int main()
 {

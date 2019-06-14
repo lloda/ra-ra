@@ -16,17 +16,17 @@
 #include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
-#include "ra/old.H"
+#include "test/old.H"
 
-using std::cout; using std::endl; using std::flush;
-
-template <int i> using TI = ra::TensorIndex<i, int>;
+using std::cout, std::endl, std::flush;
 using A2 = ra::Unique<int, 2>;
 using A1 = ra::Unique<int, 1>;
 using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
 using std_int3 = std::array<int, 3>;
 using std_int2 = std::array<int, 2>;
+
+template <int i> using TI = ra::TensorIndex<i, int>;
 
 template <class AA>
 void CheckPlyReverse1(TestRecorder & tr, AA && a)

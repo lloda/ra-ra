@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file ownership.C
+/// @brief Test ownership logic of array types.
 
 // (c) Daniel Llorens - 2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file ownership.C
-/// @brief Test ownership logic of array types.
 
 #include <iostream>
 #include <iterator>
@@ -17,7 +16,7 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 using real = double;
 
 // TODO Test construction both by-value and by-ref, and between types.

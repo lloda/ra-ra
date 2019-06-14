@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 8, updated 2019 June 6)
+<!-- ra:: (version 8, updated 2019 June 11)
 
 (c) Daniel Llorens 2005-2019
 
@@ -102,7 +102,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="di
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 8, updated 2019 June 6)
+<p><code>ra::</code> (version 8, updated 2019 June 11)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2019
 </p>
@@ -1012,7 +1012,7 @@ produces an expression of rank 1 and static size.
 </li><li> Built-in arrays <span id="index-built_002din-array"></span>
 produce an expression of positive rank and static size.
 </li><li> Raw pointers
-produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must always be brought into <code>ra::</code> explicitly with the function <a href="#x_002dptr"><code>ptr</code></a>.
+produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must be brought into <code>ra::</code> explicitly with the function <a href="#x_002dptr"><code>ptr</code></a>.
 </li></ul>
 
 <p>Compare:
@@ -1505,7 +1505,7 @@ Next: <a href="#Driving-expressions" accesskey="n" rel="next">Driving expression
 </p>
 </li><li> <b>Indexable</b> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
-<p>This is a kind of <b>ArrayIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array.
+<p>This is a kind of <b>ArrayIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array.<a id="DOCF9" href="#FOOT9"><sup>9</sup></a>
 </p>
 </li><li> <b>Flat</b> <code>Flat</code> <code>PickFlat</code> <code>CellFlat</code> <code>IotaFlat</code> <code>ScalarFlat</code>
 
@@ -1521,9 +1521,9 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 </div>
 <span id="Driving-expressions-1"></span><h3 class="section">5.2 Driving expressions</h3>
 
-<p>The execution of an expression template begins with the selection of a term of the expression as its &lsquo;driver&rsquo;. This is simply the term of highest rank. If two or more terms share the same highest rank at the top level of the expression tree, then if one of the terms has static size and the others have dynamic size, then the term with static size is selected as driver<a id="DOCF9" href="#FOOT9"><sup>9</sup></a>. Otherwise the first of all the terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
+<p>The execution of an expression template begins with the selection of a term of the expression as its &lsquo;driver&rsquo;. This is simply the term of highest rank. If two or more terms share the same highest rank at the top level of the expression tree, then if one of the terms has static size and the others have dynamic size, then the term with static size is selected as driver<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>. Otherwise the first of all the terms is selected as driver. The driver defines the bounds of the traversal and the dimensions that the other terms must agree with.
 </p>
-<p>In the current version of <code>ra::</code>, the driver is always selected at compile time<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>. This means that it&rsquo;s possible for an expression to fail at run time if that&rsquo;s when <code>ra::</code> finds out that the term it has selected as driver isn&rsquo;t, in fact, that of the highest rank. This bug can happen anytime variable rank expressions are involved.
+<p>In the current version of <code>ra::</code>, the driver is always selected at compile time<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>. This means that it&rsquo;s possible for an expression to fail at run time if that&rsquo;s when <code>ra::</code> finds out that the term it has selected as driver isn&rsquo;t, in fact, that of the highest rank. This bug can happen anytime variable rank expressions are involved.
 </p>
 <p>Once we have a driver, we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for dynamic-size expressions and <code>plyf</code> for static-size expressions.
 </p>
@@ -1906,19 +1906,31 @@ ra::start(x) += y; // ok
 
 <span id="index-ptr"></span>
 <span id="x_002dptr"></span><dl>
-<dt id="index-ptr-1">Function: <strong>ptr</strong> <em>pointer</em></dt>
+<dt id="index-ptr-1">Function: <strong>ptr</strong> <em>pointer [size]</em></dt>
 <dd><p>Create vector expression from raw <var>pointer</var>.
 </p></dd></dl>
 
-<p>The resulting expression has rank 1 and undefined size. To traverse it, it must be matched with other expressions whose size is defined. <code>ra::</code> cannot check accesses made through this object, so be careful. For instance:
+<p>The resulting expression has rank 1 and the size given. If <code>size</code> is not given, the expression has undefined size, and it will need to be matched with other expressions whose size <em>is</em> defined.
+</p>
+<p><code>ra::</code> doesn&rsquo;t know what is actually accessible through the pointer, so be careful. For instance:
 </p>
 <div class="example">
 <pre class="verbatim">int p[] = {1, 2, 3};
 ra::Big&lt;int, 1&gt; v3 {1, 2, 3};
 ra::Big&lt;int, 1&gt; v4 {1, 2, 3, 4};
 v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
-v4 += ra::ptr(p); // error, shape (4): bad access to p[3]
+v4 += ra::ptr(p); // undefined, shape (4): bad access to p[3]
 // cout &lt;&lt; (ra::ptr(p)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ct error, expression has undefined shape
+cout &lt;&lt; (ra::ptr(p, 3)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok, prints { 1, 3, 5 }
+cout &lt;&lt; (ra::ptr(p, 4)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // undefined, bad access at p[4]
+</pre></div>
+
+<p>Of course in this example one could simply have used <code>p</code> instead of <code>ra::ptr(p)</code>, since the array type retains size information.
+</p>
+<div class="example">
+<pre class="verbatim">v3 += p; // ok
+v4 += p; // error checked by ra::, shape clash (4) += (3)
+cout &lt;&lt; (p + ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok
 </pre></div>
 
 <span id="index-scalar"></span>
@@ -2357,8 +2369,10 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h3><a id="FOOT8" href="#DOCF8">(8)</a></h3>
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively. Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 <h3><a id="FOOT9" href="#DOCF9">(9)</a></h3>
-<p>For example, in <code>Big&lt;int, 1&gt; { 1, 2 } + Small&lt;int 2&gt; { 3, 4 }</code>, the driver is the second term.</p>
+<p>It used to be the case that <code>TensorIndex</code> was <b>Indexable</b> but not <b>Ravelable</b>, which forced all the other <b>Ravelable</b> types to provide <code>at(i...)</code> so that they could be mixed with <code>TensorIndex</code> in expressions. Now that <code>TensorIndex</code> is also <b>Ravelable</b>, this distinction may disappear in the future with <code>at(i...)</code> being provided at a higher level.</p>
 <h3><a id="FOOT10" href="#DOCF10">(10)</a></h3>
+<p>For example, in <code>Big&lt;int, 1&gt; { 1, 2 } + Small&lt;int 2&gt; { 3, 4 }</code>, the driver is the second term.</p>
+<h3><a id="FOOT11" href="#DOCF11">(11)</a></h3>
 <p>The full driver selection logic is in &lsquo;<samp>ra/opcheck.H</samp>&rsquo;</p>
 </div>
 <hr>

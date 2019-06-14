@@ -1,12 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file tuple-construct.C
+/// @brief If I were to construct Small from tuples
 
 // (c) Daniel Llorens - 2018
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-// If I were to construct Small from tuples
 
 #include <cassert>
 #include <iostream>
@@ -14,7 +14,7 @@
 #include "ra/tuple-list.H"
 #include "ra/mpdebug.H"
 
-using std::tuple; using std::cout; using std::endl;
+using std::tuple, std::cout, std::endl;
 
 template <class T, class sizes> struct nested_tuple;
 

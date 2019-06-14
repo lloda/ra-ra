@@ -98,7 +98,6 @@ struct Scalar
 #undef DEF_ASSIGNOPS
 };
 
-// See http://www.justsoftwaresolutions.co.uk/cplusplus/rvalue_references_and_perfect_forwarding.html
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Wrap something with {size, begin} as 1-D vector. Sort of reduced ra_iterator.
@@ -195,8 +194,47 @@ struct Ptr
 #undef DEF_ASSIGNOPS
 };
 
-template <class I>
-inline auto ptr(I i) { return Ptr<I> { i }; } // FIXME forwarder that moves if value, copies if ref ?
+template <class I> inline auto ptr(I i) { return Ptr<I> { i }; }
+
+// Same as Ptr, just with a size. For stuff like initializer_list that has size but no storage.
+template <class P>
+struct Span
+{
+    P p__;
+    dim_t n__;
+
+    constexpr dim_t size() const { return n__; }
+    constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return n__; }
+    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
+    constexpr static rank_t rank() { return 1; }
+    constexpr static rank_t rank_s() { return 1; };
+    constexpr auto shape() const { return std::array<dim_t, 1> { n__ }; }
+
+    constexpr Span(P p, dim_t n): p__(p), n__(n) {};
+
+    template <class I>
+    decltype(auto) at(I const & i)
+    {
+        CHECK_BOUNDS(inside(i[0], this->size()));
+        return p__[i[0]];
+    }
+    constexpr void adv(rank_t k, dim_t d)
+    {
+        CHECK_BOUNDS(d==1 || d<0);
+        p__ += (k==0) * d;
+    }
+    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
+    constexpr auto flat() const { return p__; }
+
+#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
+};
+
+template <class I> inline auto ptr(I i, dim_t n) { return Span<I> { i, n }; }
 
 template <class T>
 struct IotaFlat
@@ -345,7 +383,7 @@ inline constexpr auto start(T && t)
 template <class T>
 inline constexpr auto start(std::initializer_list<T> v)
 {
-    return Vector<std::initializer_list<T>> { std::move(v) };
+    return ptr(v.begin(), v.size());
 }
 
 // forward declare for expr.H; implemented in small.H.

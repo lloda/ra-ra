@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file optimize.C
+/// @brief Check that ra::optimize() does what it's supposed to do.
 
 // (c) Daniel Llorens - 2014-2016
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file optimize.C
-/// @brief Check that ra::optimize() does what it's supposed to do.
 
 #define RA_OPTIMIZE 0 // disable automatic use, so we can compare with (forced) and without
 #define RA_OPTIMIZE_IOTA 1
@@ -20,7 +19,7 @@
 #include "ra/test.H"
 #include "ra/mpdebug.H"
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 using complex = std::complex<double>;
 
 int main()

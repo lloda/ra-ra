@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file operators.C
+/// @brief Tests for operators on ra:: expr templates.
 
 // (c) Daniel Llorens - 2014-2015
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file operators.C
-/// @brief Tests for operators on ra:: expr templates.
 
 #include "ra/complex.H"
 #include "ra/test.H"
@@ -17,7 +16,7 @@
 #include "ra/big.H"
 #include "ra/wedge.H"
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 using real = double;
 using complex = std::complex<double>;
 

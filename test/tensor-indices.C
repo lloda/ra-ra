@@ -1,6 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
 /// @file tensor-indices.C
-/// @brief Compare TensorIndex with ra/old.H:OldTensorIndex that required ply_index.
+/// @brief Compare TensorIndex with test/old.H:OldTensorIndex that required ply_index.
 
 // (c) Daniel Llorens - 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -13,7 +13,7 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/test.H"
-#include "ra/old.H"
+#include "test/old.H"
 
 using std::cout, std::endl, std::flush;
 

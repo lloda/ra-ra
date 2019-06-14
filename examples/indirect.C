@@ -2,13 +2,13 @@
 // Adapted from blitz++/examples/indirect.cpp
 // Daniel Llorens - 2015
 
-// ra:: doesn't support ad hoc sparse selectors, so here I show
-// alternatives. The whole point of this example in Blitz++ seems to be the
-// compact notation, so the alternatives look more verbose, but I don't know if
-// it's worthwhile to clog every expr type with additional variants of
-// operator() or operator[] (which on C++14 still need to be members). The
-// sparse selectors should be defined as standalone functions with separate
-// names depending on the kind of indexing they do.
+// The point of this example in Blitz++ seems to be to show off the compact
+// notation. ra:: doesn't support special sparse selectors like Blitz++ does,
+// and the alternatves look more verbose, but I don't want to clog every expr
+// type with additional variants of operator() or operator[] (which on C++17
+// still need to be members). The sparse selectors should be better defined as
+// standalone functions with separate names depending on the kind of indexing
+// they do.
 
 #include "ra/operators.H"
 #include "ra/io.H"

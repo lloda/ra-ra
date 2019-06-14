@@ -1,4 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
+// Select an argument across an array expression.
+
 // Adapted from blitz++/examples/where.cpp
 // Daniel Llorens - 2015
 
@@ -6,7 +8,7 @@
 #include "ra/io.H"
 #include "ra/test.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 int main()
 {

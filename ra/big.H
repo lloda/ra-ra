@@ -75,6 +75,37 @@ struct nested_braces<T, rank, std::enable_if_t<(rank>1)>>
 
 
 // --------------------
+// Develop indices for Big
+// --------------------
+
+struct Indexer1
+{
+    template <class Dim, class P>
+    constexpr static dim_t index_p(Dim const & dim, P && p)
+    {
+        CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
+// use dim.data() to skip the size check.
+        dim_t c = 0;
+        for_each([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
+                 ptr(dim.data()), p);
+        return c;
+    }
+
+// used by cell_iterator::at() for rank matching on rank<driving rank, no slicing. TODO Static check.
+    template <class Dim, class P>
+    constexpr static dim_t index_short(rank_t framer, Dim const & dim, P const & p)
+    {
+        dim_t c = 0;
+        for (rank_t k=0; k<framer; ++k) {
+            CHECK_BOUNDS(inside(p[k], dim[k].size) || (dim[k].size==DIM_BAD && dim[k].stride==0));
+            c += dim[k].stride * p[k];
+        }
+        return c;
+    }
+};
+
+
+// --------------------
 // Big iterator
 // --------------------
 // TODO Refactor with cell_iterator_small for SmallView?
@@ -227,15 +258,15 @@ dim_t proddim(D d, D dend)
     {                                                                   \
         if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {        \
             ra::resize(View::dim, start(s).size(0)); /* [ra37] */       \
-            ra::vector(View::dim) = s;                                  \
+            start(View::dim) = s;                                       \
         } else {                                                        \
             auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
             ra::resize(View::dim, w.size(0)); /* [ra37] */              \
-            ra::vector(View::dim) = w;                                  \
+            start(View::dim) = w;                                       \
             filldim(View::dim.size(), View::dim.end());                 \
         }                                                               \
     }                                                                   \
-    View(std::initializer_list<dim_t> s, T * p_): View(ra::vector(s), p_) {} \
+    View(std::initializer_list<dim_t> s, T * p_): View(start(s), p_) {} \
     /* lack of these causes runtime bug [ra38] FIXME why? */            \
     View(View && x) = default;                                          \
     View(View const & x) = default;                                     \
@@ -614,11 +645,11 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s);
         static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape"); // I decided not to accept rank extension here.
-// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)). Not being able to traverse backwards hurts here. See other uses of ra::vector here.
+// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)). Not being able to traverse backwards hurts here. See other uses of ra::vector (or start) here.
         if constexpr (RANK==RANK_ANY) {
             ra::resize(View::dim, w.size(0));
         }
-        ra::vector(View::dim) = w;
+        start(View::dim) = w;
         dim_t t = filldim(View::dim.size(), View::dim.end());
         store = storage_traits<Store>::create(t);
         View::p = storage_traits<Store>::data(store);

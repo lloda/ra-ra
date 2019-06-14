@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file owned.C
+/// @brief Array operations limited to ra::Big.
 
 // (c) Daniel Llorens - 2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file owned.C
-/// @brief Array operations limited to ra::Big.
 
 #include <iostream>
 #include "ra/complex.H"
@@ -18,7 +17,7 @@
 #include "ra/mpdebug.H"
 #include "ra/format.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using real = double;
 
 int main()

@@ -17,7 +17,7 @@
 #include "ra/mpdebug.H"
 #include <iostream>
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 
 // template <class T, class Enable=void> struct THECHECK { constexpr static bool value = false; };
 // template <class T> struct THECHECK<T, std::enable_if_t<mp::exists<decltype(T::dim)>>> { constexpr static bool value = true; };

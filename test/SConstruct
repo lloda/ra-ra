@@ -1,12 +1,12 @@
 # -*- coding: utf-8; mode: Python -*-
-# (c) Daniel Llorens - 2015-2016, 2018
+# SConstruct for ra/test
 
+# (c) Daniel Llorens - 2015-2016, 2018
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
 
-# SConstruct for ra/test
 # FIXME Shared pieces with {examples,bench,docs}/SConstruct
 
 import os, string, atexit
@@ -72,7 +72,7 @@ tester = ra.to_test_ra(env, variant_dir)
               'big-0', 'big-1', 'return-expr', 'reduction', 'frame-match', 'compatibility',
               'dual', 'ra-dual', 'mem-fn', 'stl-compat', 'where', 'tuplelist', 'wedge-product',
               'operators', 'tensorindex', 'explode-0', 'wrank', 'optimize', 'reshape', 'concrete',
-              'bench', 'iterator-small', 'iterator-as-ravel', 'const', 'tensor-indices'
+              'bench', 'iterator-small', 'const', 'tensor-indices', 'list9',
               # 'end'
               ]]
 

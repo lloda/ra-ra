@@ -21,7 +21,7 @@
 #include "ra/wrank.H"
 #include "ra/operators.H"
 #include "ra/io.H"
-#include "ra/old.H"
+#include "test/old.H"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::dim_t;
 using real = double;

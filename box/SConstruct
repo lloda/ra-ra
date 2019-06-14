@@ -65,7 +65,7 @@ else:
     print("[%s] BLAS won't be used." % Dir('.').path)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['view-flat', 'tuple-construct']]
+ for example in ['end', 'view-flat', 'tuple-construct', 'iterator-as-ravel', 'newaxis']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/box'))

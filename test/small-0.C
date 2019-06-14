@@ -1,13 +1,13 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file small-0.C
+/// @brief Small constructors and assignment.
 
 // (c) Daniel Llorens - 2014, 2016-2017, 2019
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file small-0.C
-/// @brief Small constructors and assignment.
 // See also small-1.C.
 
 #include <iostream>
@@ -21,7 +21,7 @@
 #include "ra/test.H"
 #include "ra/mpdebug.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using complex = std::complex<double>;
 
 struct test_type { int a; };

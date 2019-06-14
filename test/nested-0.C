@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file nested-0.C
+/// @brief Using nested arrays as if they were arrays if higher rank.
 
 // (c) Daniel Llorens - 2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file nested-0.C
-/// @brief Using nested arrays as if they were arrays if higher rank.
 
 // TODO Make more things work and work efficiently.
 
@@ -20,7 +19,7 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-using std::cout; using std::endl; using std::flush; using std::cerr;
+using std::cout, std::endl, std::flush, std::cerr;
 template <class T, int N> using Array = ra::Big<T, N>;
 template <class T> using Vec = Array<T, 1>;
 

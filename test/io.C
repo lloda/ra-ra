@@ -15,9 +15,9 @@
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/view-ops.H"
-#include "ra/old.H"
+#include "test/old.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 template <int i> using TI = ra::TensorIndex<i>;
 using int3 = ra::Small<int, 3>;

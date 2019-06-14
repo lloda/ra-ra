@@ -14,9 +14,9 @@
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/big.H"
-#include "ra/old.H"
+#include "test/old.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using real = double;
 
 int main()

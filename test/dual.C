@@ -1,6 +1,8 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file dual.C
+/// @brief Tests for dual numbers.
 
 // (c) Daniel Llorens - 2013, 2015
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -15,10 +17,7 @@
 #include "ra/dual.H"
 #include "ra/test.H"
 
-// @file dual.C
-// @brief Tests for dual numbers.
-
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using real = double;
 using complex = std::complex<double>;
 

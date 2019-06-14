@@ -1,4 +1,4 @@
-⍝ -*- mode: apl; coding: utf-8 -*-
+
 ⍝ See Chaitin 1986, Physics in APL2, p. 20
 ⍝ Maxwell -- 4-vector potential vacuum field equations
 ⍝ Transcribed by Daniel Llorens - 2013

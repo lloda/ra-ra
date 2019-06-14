@@ -19,10 +19,10 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 #include "ra/bench.H"
-#include "ra/old.H"
+#include "test/old.H"
 
-using std::cout; using std::endl; using std::setw; using std::setprecision;
-using ra::Small; using ra::View; using ra::Unique; using ra::ra_traits; using ra::dim_t;
+using std::cout, std::endl, std::setw, std::setprecision;
+using ra::Small, ra::View, ra::Unique, ra::ra_traits, ra::dim_t;
 using real = double;
 
 int const N = 200000;

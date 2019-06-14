@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-// After Chaitin1986, p. 14. Attempt at straight translation from APL.
-// Newton -- Orbits
+// Newton — Orbits
 
+// After Chaitin1986, p. 14. Attempt at straight translation from APL.
 // (c) Daniel Llorens - 2016
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free

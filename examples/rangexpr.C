@@ -1,5 +1,4 @@
 // -*- mode: c++; coding: utf-8 -*-
-// -*- mode: c++; coding: utf-8 -*-
 // Adapted from blitz++/examples/rangexpr.cpp
 // Daniel Llorens - 2015
 

@@ -89,6 +89,48 @@ struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
 
 
 // --------------------
+// Develop indices for Small
+// --------------------
+
+template <class sizes, class strides>
+struct Indexer0
+{
+    static_assert(mp::len<sizes> == mp::len<strides>, "mismatched sizes & strides");
+
+    template <rank_t end, rank_t k, class P>
+    constexpr static std::enable_if_t<k==end, dim_t> index_p_(dim_t const c, P const & p)
+    {
+        return c;
+    }
+    template <rank_t end, rank_t k, class P>
+    constexpr static std::enable_if_t<(k<end), dim_t> index_p_(dim_t const c, P const & p)
+    {
+        CHECK_BOUNDS(inside(p[k], mp::first<sizes>::value));
+        return Indexer0<mp::drop1<sizes>, mp::drop1<strides>>::template index_p_<end, k+1>(c + p[k] * mp::first<strides>::value, p);
+    }
+    template <class P>
+    constexpr static dim_t index_p(P const & p) // for Container::at().
+    {
+// gcc accepts p.size(), but I also need P = std::array to work. See also below.
+        static_assert(mp::len<sizes> >= ra_traits<P>::size_s(), "too many indices");
+        return index_p_<ra_traits<P>::size_s(), 0>(0, p);
+    }
+    template <class P, std::enable_if_t<ra_traits<P>::size_s()!=RANK_ANY, int> =0>
+    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
+    {
+        static_assert(mp::len<sizes> <= ra_traits<P>::size_s(), "too few indices");
+        return index_p_<mp::len<sizes>, 0>(0, p);
+    }
+    template <class P, std::enable_if_t<ra_traits<P>::size_s()==RANK_ANY, int> =0>
+    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
+    {
+        CHECK_BOUNDS(mp::len<sizes> <= p.size());
+        return index_p_<mp::len<sizes>, 0>(0, p);
+    }
+};
+
+
+// --------------------
 // Small iterator
 // --------------------
 // TODO Refactor with cell_iterator / STLIterator for View?

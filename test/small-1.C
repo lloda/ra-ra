@@ -20,9 +20,9 @@
 #include "ra/format.H"
 #include "ra/test.H"
 #include "ra/mpdebug.H"
-#include "ra/old.H"
+#include "test/old.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using complex = std::complex<double>;
 
 int main()

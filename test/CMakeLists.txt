@@ -5,11 +5,9 @@ cmake_minimum_required (VERSION 3.5)
 project (ra-test)
 include_directories ("..")
 
-# FIXME add... end
-
 SET (TARGETS bench big-0 big-1 check-runtime compatibility concrete dual explode-0 frame-match from
-  io iterator-small mem-fn nested-0 operators optimize owned ownership ply ra-0 ra-10 ra-1 ra-2 ra-3
-  ra-4 ra-5 ra-6 ra-7 ra-8 ra-9 ra-dual reduction reshape return-expr small-0 small-1 stl-compat
-  tensorindex tuplelist types wedge-product where wrank iterator-as-ravel)
+  io iterator-small mem-fn const nested-0 operators optimize owned ownership ply ra-0 ra-10 ra-1 ra-2
+  ra-3 ra-4 ra-5 ra-6 ra-7 ra-8 ra-9 ra-dual reduction reshape return-expr small-0 small-1 stl-compat
+  tensorindex tuplelist types wedge-product where wrank list9)
 
 include ("../config/cc.cmake")

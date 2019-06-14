@@ -16,9 +16,9 @@
 #include "ra/big.H"
 #include "ra/operators.H"
 #include "ra/io.H"
-#include "ra/old.H"
+#include "test/old.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 template <int i> using TI = ra::TensorIndex<i, int>;
 using real = double;
 

@@ -18,7 +18,7 @@
 #include "ra/io.H"
 #include "ra/mpdebug.H"
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 template <int i> using TI = ra::TensorIndex<i, int>;
 
 template <class A>

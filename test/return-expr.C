@@ -1,15 +1,14 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file return-expr.C
+/// @brief Show how careful you have to be when you return an expr object from a function.
 
 // (c) Daniel Llorens - 2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file return-expr.C
-/// @brief Show how careful you have to be when you return an expr object from a function.
-
-// For a real life example, see fun::project_on_plane or ra::normv. (TODO Those need tests).
+// For other examples see fun::project_on_plane or ra::normv. (TODO Those need tests).
 
 #include <iostream>
 #include "ra/complex.H"
@@ -19,7 +18,7 @@
 #include "ra/io.H"
 #include <sstream>
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 using real = double;
 
 template <class A>
