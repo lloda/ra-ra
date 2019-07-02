@@ -21,9 +21,9 @@
   #endif
 #endif
 #if RA_CHECK_BOUNDS_BIG==0
-    #define CHECK_BOUNDS( cond )
+  #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
+  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
 namespace ra {
@@ -153,7 +153,7 @@ struct cell_iterator
     }
 
     constexpr static dim_t size_s() { return 0==rank_s() ? 1 : DIM_ANY; }
-    constexpr static dim_t size_s(int i) { CHECK_BOUNDS(i<rank_s()); return DIM_ANY; }
+    constexpr static dim_t size_s(int i) { /* CHECK_BOUNDS(inside(k, rank())); */return DIM_ANY; }
 
     constexpr shape_type shape() const
     {
@@ -236,22 +236,22 @@ dim_t proddim(D d, D dend)
 // TODO size is immutable so that it can be kept together with rank.
 
 #define DEF_ITERATORS(RANK)                                             \
-    template <rank_t c=0> auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dim), p); } \
-    template <rank_t c=0> auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dim, p); } \
-    template <rank_t c=0> auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dim, p); } \
-    auto begin() const { return stl_iterator(iter()); }                 \
-    auto begin() { return stl_iterator(iter()); }                       \
+    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dim), p); } \
+    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dim, p); } \
+    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dim, p); } \
+    constexpr auto begin() const { return stl_iterator(iter()); }                 \
+    constexpr auto begin() { return stl_iterator(iter()); }                       \
     /* here dim doesn't matter, but we have to give it if it's a ref. */ \
-    auto end() const { return stl_iterator(decltype(iter())(dim, nullptr)); } \
-    auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
+    constexpr auto end() const { return stl_iterator(decltype(iter())(dim, nullptr)); } \
+    constexpr auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
 
 // See same thing for SmallBase.
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
-#define DEF_VIEW_COMMON(RANK)                                        \
+#define DEF_VIEW_COMMON(RANK)                                           \
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
     /* Constructors using pointers need extra care */                   \
-    View(): p(nullptr) {}                                               \
+    constexpr View(): p(nullptr) {}                                     \
     View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */   \
     template <class SS>                                                 \
     View(SS && s, T * p_): p(p_)                                        \

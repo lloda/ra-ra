@@ -26,7 +26,7 @@
 #if RA_CHECK_BOUNDS_OPERATORS==0
   #define CHECK_BOUNDS( cond )
 #else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
+  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
 #include "ra/optimize.H"

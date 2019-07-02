@@ -48,7 +48,7 @@ else:
 
 env.Prepend(CPPPATH=['..', '.'],
             CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-            CXXFLAGS=['-std=c++17', '-Wall', '-Werror', '-Wno-unknown-pragmas', # '-fdiagnostics-color=always',
+            CXXFLAGS=['-std=c++17', '-Wall', '-Werror', '-Wno-unknown-pragmas', '-fdiagnostics-color=always',
                       '-finput-charset=UTF-8', '-fextended-identifiers',
                       '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
                       #'-Wconversion',
@@ -65,7 +65,7 @@ else:
     print("[%s] BLAS won't be used." % Dir('.').path)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['end', 'view-flat', 'tuple-construct', 'iterator-as-ravel', 'newaxis']]
+ for example in ['end', 'view-flat', 'tuple-construct', 'iterator-as-ravel', 'axpr']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/box'))

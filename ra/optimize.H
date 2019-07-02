@@ -19,9 +19,9 @@
   #endif
 #endif
 #if RA_CHECK_BOUNDS_OPTIMIZE==0
-    #define CHECK_BOUNDS( cond )
+  #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
+  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
 // no real downside to this.

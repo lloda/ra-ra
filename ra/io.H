@@ -22,9 +22,9 @@
   #endif
 #endif
 #if RA_CHECK_BOUNDS_IO==0
-    #define CHECK_BOUNDS( cond )
+  #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
+  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
 namespace ra {
@@ -39,8 +39,9 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
     auto a = ra::start(fa.a);
     static_assert(decltype(a)::size_s()!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
-    auto sha(a.shape());
+    auto sha = ra_traits<decltype(a.shape())>::make(rank, 0);
     auto ind = ra_traits<decltype(sha)>::make(rank, 0);
+    sha = a.shape();
     if (withshape==fa.shape
         || (defaultshape==fa.shape && a.size_s()==DIM_ANY)) {
         o << start(sha) << '\n';

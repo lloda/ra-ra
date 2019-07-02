@@ -20,9 +20,9 @@
   #endif
 #endif
 #if RA_CHECK_BOUNDS_SMALL==0
-    #define CHECK_BOUNDS( cond )
+  #define CHECK_BOUNDS( cond )
 #else
-    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
+  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
 namespace ra {
@@ -172,7 +172,7 @@ struct cell_iterator_small
     constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
     constexpr static auto const & shape() { return frame_type::Base::ssizes; }
     constexpr static dim_t size(int k) { CHECK_BOUNDS(inside(k, rank())); return V::size(k); }
-    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(inside(k, rank())); return V::size(k); }
+    constexpr static dim_t size_s(int k) { /* CHECK_BOUNDS(inside(k, rank_s())); */ return V::size(k); }
     constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j)
     {

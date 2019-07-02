@@ -39,13 +39,35 @@ namespace ra {
 // | fixed       | B       | B       | A>=B  |
 // |-------------+---------+---------+-------|
 
+constexpr bool gt_rank(rank_t ra, rank_t rb)
+{
+    return rb==RANK_BAD
+             ? 1
+             : rb==RANK_ANY
+               ? ra==RANK_ANY
+               : ra==RANK_BAD
+                   ? 0
+                   : ra==RANK_ANY
+                     ? 1
+                     : ra>=rb;
+}
+
+constexpr bool gt_size(dim_t sa, dim_t sb)
+{
+    return sb==DIM_BAD
+             ? 1
+             : sa==DIM_BAD
+               ? 0
+               : sb==DIM_ANY
+                 ? 1
+                 : (sa!=DIM_ANY && sa>=sb);
+}
+
 template <class A, class B>
 struct pick_driver
 {
     constexpr static int ra = A::rank_s();
     constexpr static int rb = B::rank_s();
-    constexpr static int sa = A::size_s();
-    constexpr static int sb = B::size_s();
 
     constexpr static bool value_ =
 // check by rank
@@ -62,29 +84,10 @@ struct pick_driver
                     : ra<rb
                       ? 0
 // check by size
-                      : sb==DIM_BAD
-                        ? 1
-                        : sa==DIM_BAD
-                          ? 0
-                          : sb==DIM_ANY
-                              ? 1
-                              : (sa!=DIM_ANY && sa>=sb);
+                      : gt_size(A::size_s(), B::size_s());
 
-    constexpr static int value = value_ ? 0 : 1; // 0 if ra wins, else 1
+    constexpr static int value = value_ ? 0 : 1; // 0 if A wins over B, else 1
 };
-
-constexpr bool gt_rank(rank_t ra, rank_t rb)
-{
-    return rb==RANK_BAD
-             ? 1
-             : rb==RANK_ANY
-               ? ra==RANK_ANY
-               : ra==RANK_BAD
-                   ? 0
-                   : ra==RANK_ANY
-                     ? 1
-                     : ra>=rb;
-}
 
 template <class A, class B>
 struct max_i

@@ -5,6 +5,6 @@ cmake_minimum_required (VERSION 3.5)
 project (ra-box)
 include_directories ("..")
 
-SET (TARGETS view-flat tuple-construct end iterator-as-ravel newaxis)
+SET (TARGETS view-flat tuple-construct end iterator-as-ravel axpr)
 
 include ("../config/cc.cmake")

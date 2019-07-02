@@ -28,15 +28,15 @@
 
 namespace ra {
 
-constexpr int VERSION = 8;     // to force or prevent upgrades on dependents
+constexpr int VERSION = 9;     // to force or prevent upgrades on dependents
 constexpr int LAST_ISSUE = 46; // numbered as [ra··] t/o the code. 08-10 are free.
 constexpr int LAST_MAN = 113;  // numbered as [ma··] t/o the manual and examples/tests
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
 using dim_t = ssize_t;
-dim_t const DIM_ANY = -1099999999;
-dim_t const DIM_BAD = -1088888888;
+dim_t const DIM_ANY = -1099999444;
+dim_t const DIM_BAD = -1099999888;
 rank_t const RANK_ANY = DIM_ANY;
 rank_t const RANK_BAD = DIM_BAD;
 

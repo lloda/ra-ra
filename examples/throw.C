@@ -1,6 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
 /// @file throw.C
-/// @brief Show how to replace ra:: asserts with customs ones.
+/// @brief Show how to replace ra:: asserts with custom ones.
 
 // (c) Daniel Llorens - 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -15,7 +15,7 @@
 struct ra_error: public std::exception
 {
     std::string s;
-    ra_error(std::string const & s_=""): s(s_) {}
+    template <class ... A> ra_error(A && ... a): s(ra::format(std::forward<A>(a) ...)) {}
     virtual char const * what() const throw ()
     {
         return s.c_str();
@@ -27,8 +27,8 @@ struct ra_error: public std::exception
 #ifdef RA_ASSERT
 #error RA_ASSERT is already defined!
 #endif
-#define RA_ASSERT( cond ) \
-    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]"); }
+#define RA_ASSERT( cond, ... )                                          \
+    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", __VA_ARGS__); }
 
 #include "ra/test.H"
 #include "ra/io.H"

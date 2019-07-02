@@ -39,8 +39,9 @@
 #define FOR_EACH_(N, what, x, ...) JOIN(FOR_EACH_, N)(what, x, __VA_ARGS__)
 #define FOR_EACH(what, x, ...) FOR_EACH_(FOR_EACH_NARG(x, __VA_ARGS__), what, x, __VA_ARGS__)
 
+// FIXME use __VA_OPT__(,) or __VA_OPT__(&&) in c++20
 #ifndef RA_ASSERT
-  #define RA_ASSERT(cond) assert(cond)
+  #define RA_ASSERT(cond, ...) assert(cond)
 #endif
 
 namespace mp {
