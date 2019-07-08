@@ -1,4 +1,5 @@
 # -*- coding: utf-8; mode: Python -*-
+# SConstruct for ra/box
 # (c) Daniel Llorens - 2015-2016, 2019
 
 # This library is free software; you can redistribute it and/or modify it under
@@ -6,7 +7,6 @@
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
 
-# SConstruct for ra/examples
 # FIXME Shared pieces with {test,bench,docs}/SConstruct
 
 import os, string, atexit
@@ -65,7 +65,7 @@ else:
     print("[%s] BLAS won't be used." % Dir('.').path)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['end', 'view-flat', 'tuple-construct', 'iterator-as-ravel', 'axpr']]
+ for example in ['end', 'view-flat', 'tuple-construct', 'iterator-as-ravel']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/box'))

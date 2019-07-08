@@ -118,6 +118,9 @@ int main()
         tr.info("a(ra::all, ra::newaxis<2>, ...)").test_eq(a3, a(ra::all, ra::newaxis<2>));
         tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
         tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
+        ra::Big<int, 4> aa1({2, 2, 3, 4}, a(ra::newaxis<1>));
+        tr.info("newaxis with undefined size 0").test_eq(a, aa1(0));
+        tr.info("newaxis with undefined size 1").test_eq(a, aa1(1));
     }
     tr.section("newaxis, var rank");
     {

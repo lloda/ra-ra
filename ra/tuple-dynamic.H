@@ -63,4 +63,15 @@ int int_list_index(int i)
     }
 }
 
+template <class K, class T, class F, class I = int_t<0>>
+constexpr auto
+fold_tuple(K && k, T && t, F && f, I && i = int_t<0> {})
+{
+    if constexpr (I::value==std::tuple_size_v<std::decay_t<T>>) {
+        return k;
+    } else {
+        return fold_tuple(f(k, std::get<i>(t)), t, f, int_t<I::value+1> {});
+    }
+}
+
 } // namespace mp

@@ -60,7 +60,7 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
                 switch (k) {
                 case 0: o << fa.sep0; break;
                 case 1: o << fa.sep1; break;
-                default: std::fill_n(std::ostream_iterator<char const *>(o, ""), k-1, fa.sep2);
+                default: std::fill_n(std::ostream_iterator<char const *>(o, ""), k, fa.sep2);
                 }
                 goto next;
             } else {

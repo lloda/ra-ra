@@ -27,5 +27,9 @@ int main()
 
     cout << from(std::multiplies<float>(), x, y) << endl;
 
+// another alternative (broadcasting)
+
+    cout << x * y(ra::newaxis<1>) << endl;
+
     return 0;
 }

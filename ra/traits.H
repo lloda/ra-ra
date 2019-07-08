@@ -92,10 +92,10 @@ struct ra_traits_def<std::initializer_list<T>>
 {
     using V = std::initializer_list<T>;
     using value_type = T;
-    constexpr static rank_t size(V const & v) { return v.size(); }
+    constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; }
-    constexpr static rank_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size_s() { return DIM_ANY; }
 };
 
 // To handle arrays of static/dynamic size.

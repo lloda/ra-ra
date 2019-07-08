@@ -45,88 +45,142 @@ auto flat(Op & op, P && ... p)
     return Flat<Op, std::tuple<P ...>> { op, std::tuple<P ...> { std::forward<P>(p) ... } };
 }
 
-template <class P> using var_rank = mp::bool_t<(std::decay_t<P>::size_s()==DIM_ANY)>;
-
-// E is Expr or Pick.
-// TODO separate the static and the dynamic checks so the static check is done regardless of CHECK_BOUNDS.
-template <int iarg, class E>
-constexpr bool check_expr(int ranka, E const & e)
+template <class Op, class ... P> inline constexpr auto
+expr(Op && op, P && ... p)
 {
-    using NotA = typename E::NotA;
-    using PA = typename E::PA;
-    using T = typename E::T;
-    if constexpr (iarg>=mp::len<NotA>) {
-        return true;
-    } else {
-        constexpr int B = mp::ref<NotA, iarg>::value;
-// provide safety where RANK_ANY was selected as driver in a leap of faith. TODO Dynamic driver selection.
-// ct checks require ct rank. But for fixed rank / var size, size checks cannot be done at ct, so this will only do rank checks.
-        using PB = std::decay_t<mp::ref<T, B>>;
-        if constexpr (E::rank_s()>=0) {
-            constexpr int rankb = PB::rank_s();
-            constexpr auto f = [](auto && f, auto k_)
-                               {
-                                   constexpr int k = decltype(k_)::value;
-                                   static_assert(rankb<=E::rank_s() && "wrong driver selection");
-                                   if constexpr (k<rankb) {
-                                       constexpr dim_t sa = PA::size_s(k);
-                                       if constexpr (sa!=DIM_BAD) {
-                                           constexpr dim_t sb = PB::size_s(k);
-                                           if constexpr (sb!=DIM_BAD) {
-                                               static_assert(sa==DIM_ANY || sb==DIM_ANY || sa==sb);
-                                           }
-                                       }
-                                       f(f, mp::int_t<k+1> {});
-                                   }
-                               };
-            f(f, mp::int_t<0> {});
-        }
-// rt checks are needed if any sub is rt size, even if E's own size is ct.
-        if constexpr (mp::apply<mp::orb, mp::map<var_rank, T>>::value) {
-            rank_t rankb = std::get<B>(e.t).rank();
-            CHECK_BOUNDS(rankb<=ranka && "driver not max rank (could be RANK_ANY)");
-            for (int k=0; k!=rankb; ++k) {
-                if (dim_t sa=std::get<E::A>(e.t).size(k); sa!=DIM_BAD) { // maybe == in subexpressions
-                    if (dim_t sb=std::get<B>(e.t).size(k); (sb!=sa) && (sb!=DIM_BAD)) {
-                        std::cerr << "sa " << sa << ", sb " << sb << ": mismatched dimensions" << std::endl;
-                        abort();
-                    }
-                }
-            }
-        }
-        return check_expr<iarg+1>(ranka, e);
-    }
+    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
 }
 
 // forward decl in atom.H
-// TODO 'dynamic' version where the driver is selected at run time (e.g. if args are RANK_ANY).
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
 {
-// A-th argument decides rank and shape.
-    constexpr static int A = driver_index<P ...>::value;
     using T = std::tuple<P ...>;
-    using PA = std::decay_t<mp::ref<T, A>>;
-    using NotA = mp::complement_list<mp::int_list<A>, mp::int_list<I ...>>;
-
     Op op;
     T t;
 
-// If driver is RANK_ANY, driver selection should wait to run time, unless we can tell that RANK_ANY would be selected anyway.
-    constexpr static bool CAN_DRIVE = PA::size_s()!=DIM_BAD ; //&& (PA::rank_s()!=RANK_ANY || sizeof...(P)==1);
+    template <class T> struct box { using type = T; };
 
-// Unlike for strides, there's one size (by A). Still leaves' sizes must be checked, so don't require driver.
-    constexpr dim_t size(int i) const { return std::get<A>(t).size(i); }
-    constexpr static dim_t size_s() { return PA::size_s(); }
-    constexpr static dim_t size_s(int i) { return PA::size_s(i); }
-    constexpr rank_t rank() const { return std::get<A>(t).rank(); }
-    constexpr static rank_t rank_s() { return PA::rank_s(); }
-    constexpr decltype(auto) shape() const { static_assert(CAN_DRIVE); return std::get<A>(t).shape(); }
+// rank of largest subexpr. This is true for either prefix or suffix match.
+    constexpr static rank_t rank_s()
+    {
+        return mp::fold_tuple(RANK_BAD, mp::map<box, T> {},
+                              [](rank_t r, auto a)
+                              {
+                                  constexpr rank_t ar = std::decay_t<typename decltype(a)::type>::rank_s();
+                                  return gt_rank(r, ar) ?  r : ar;
+                              });
+    }
+    constexpr rank_t rank() const
+    {
+        if constexpr (constexpr rank_t rs=rank_s(); rs==RANK_ANY) {
+            return mp::fold_tuple(RANK_BAD, t,
+                                  [](rank_t r, auto && a)
+                                  {
+                                      rank_t ar = a.rank();
+                                      assert(ar!=RANK_ANY); // cannot happen at runtime
+                                      return gt_rank(r, ar) ?  r : ar;
+                                  });
+        } else {
+            return rs;
+        }
+    }
+
+// any size which is not DIM_BAD.
+    constexpr static dim_t size_s(int k)
+    {
+        dim_t s = mp::fold_tuple(DIM_BAD, mp::map<box, T> {},
+                                 [&k](dim_t s, auto a)
+                                 {
+                                     using A = std::decay_t<typename decltype(a)::type>;
+                                     constexpr rank_t ar = A::rank_s();
+                                     if (s!=DIM_BAD) {
+                                         return s;
+                                     } else if (ar>=0 && k>=ar) {
+                                         return s;
+                                     } else {
+                                         dim_t zz = A::size_s(k);
+                                         return zz;
+                                     }
+                                 });
+        return s;
+    }
+
+// do early exit with fold_tuple (and with size_s(k)).
+    constexpr dim_t size(int k) const
+    {
+        if (dim_t ss=size_s(k); ss==DIM_ANY) {
+            auto f = [this, &k](auto && f, auto ii)
+                     {
+                         constexpr int i = decltype(ii)::value;
+                         if constexpr (i<std::tuple_size_v<T>) {
+                             auto const & a = std::get<i>(this->t);
+                             if (k<a.rank()) {
+                                 dim_t as = a.size(k);
+                                 if (as!=DIM_BAD) {
+                                     assert(as!=DIM_ANY); // cannot happen at runtime
+                                     return as;
+                                 } else {
+                                     return f(f, mp::int_t<i+1> {});
+                                 }
+                             } else {
+                                 return f(f, mp::int_t<i+1> {});
+                             }
+                         } else {
+                             assert(0);
+                             return DIM_BAD;
+                         }
+                     };
+            return f(f, mp::int_t<0> {});
+        } else {
+            return ss;
+        }
+    }
+
+// FIXME seems shape() and size() should be taken out.
+
+    constexpr decltype(auto) shape() const
+    {
+        if constexpr (rank_s()==RANK_ANY) {
+            std::vector<dim_t> s(rank());
+            for_each([this, &s](int k) { s[k] = this->size(k); }, ra::iota(rank()));
+            return s;
+            // return map([this](int k) { return this->size(k); }, ra::iota(rank()));
+        } else {
+            std::array<dim_t, rank_s()> s {};
+            for_each([this, &s](int k) { s[k] = this->size(k); }, ra::iota(rank_s()));
+            return s;
+        }
+    }
+
+    constexpr dim_t size()
+    {
+        dim_t c = 1;
+        for_each([&c](auto && a) { c *= a; }, this->shape());
+        return c;
+    }
+
+    constexpr static dim_t size_s()
+    {
+        if constexpr (rank_s()==RANK_ANY) {
+            return DIM_ANY;
+        } else {
+            ra::dim_t s = 1;
+            for (int i=0; i!=rank_s(); ++i) {
+                if (dim_t ss=size_s(i); ss>=0) {
+                    s *= ss;
+                } else {
+                    return ss; // either DIM_ANY or DIM_BAD
+                }
+            }
+            return s;
+        }
+    }
 
 // see test/ra-9.C [ra01] for forward() here.
     constexpr Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
-        CHECK_BOUNDS(check_expr<0>(rank(), *this)); // TODO Should check only the driver: do this on ply.
+        CHECK_BOUNDS(check_expr(*this)); // TODO Maybe do this on ply?
     }
 
     template <class J>
@@ -134,18 +188,22 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
     {
         return op(std::get<I>(t).at(i) ...);
     }
+
     constexpr void adv(rank_t k, dim_t d)
     {
         (std::get<I>(t).adv(k, d), ...);
     }
+
     constexpr bool keep_stride(dim_t step, int z, int j) const
     {
         return (std::get<I>(t).keep_stride(step, z, j) && ...);
     }
+
     constexpr auto stride(int i) const
     {
         return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
+
     constexpr decltype(auto) flat()
     {
         return ra::flat(op, std::get<I>(t).flat() ...);
@@ -167,11 +225,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
 #undef DEF_ASSIGNOPS
 };
 
-template <class Op, class ... P> inline constexpr auto
-expr(Op && op, P && ... p)
-{
-    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
-}
+// -------------------
 
 template <class Op, class ... A> inline constexpr auto
 map(Op && op, A && ... a)

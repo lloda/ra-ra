@@ -13,7 +13,7 @@
 #pragma once
 #include "ra/ply.H"
 
-#define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
+#define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 
 namespace ra {
 

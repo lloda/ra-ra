@@ -211,7 +211,7 @@ dim_t filldim(int n, D dend)
     dim_t next = 1;
     for (; n>0; --n) {
         --dend;
-        CHECK_BOUNDS((*dend).size>=0);
+        CHECK_BOUNDS((*dend).size>=0 && "filldim");
         (*dend).stride = next;
         next *= (*dend).size;
     }
@@ -324,7 +324,7 @@ template <int n, class ... I>
 inline dim_t select_loop(Dim * dim, Dim const * dim_src, newaxis_t<n> newaxis, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim) {
-        dim->size = 1;
+        dim->size = DIM_BAD;
         dim->stride = 0;
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
@@ -537,7 +537,7 @@ struct ra_traits_def<View<T, RANK_ANY>>
     static dim_t size(V const & v) { return v.size(); }
     static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK_ANY; };
-    constexpr static rank_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size_s() { return DIM_ANY; }
 };
 
 

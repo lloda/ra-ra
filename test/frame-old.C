@@ -1,8 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file frame-matching.C
-/// @brief Specific frame-matching tests, previously in test/ra-0.C.
+/// @file frame-old.C
+/// @brief Frame-matching tests for pre v10 Expr, previously in test/ra-0.C.
 
-// (c) Daniel Llorens - 2013-2014
+// (c) Daniel Llorens - 2013-2014, 2019
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -11,6 +11,29 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include "ra/format.H"
+
+
+// -------------------------------------
+// bit from example/throw.C which FIXME should be easier. Maybe an option in ra/macros.H.
+
+struct ra_error: public std::exception
+{
+    std::string s;
+    template <class ... A> ra_error(A && ... a): s(ra::format(std::forward<A>(a) ...)) {}
+    virtual char const * what() const throw ()
+    {
+        return s.c_str();
+    }
+};
+
+#ifdef RA_ASSERT
+#error RA_ASSERT is already defined!
+#endif
+#define RA_ASSERT( cond, ... )                                          \
+    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", __VA_ARGS__); }
+// -------------------------------------
+
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/big.H"
@@ -27,9 +50,9 @@ int main()
     {
 // driver is highest rank, which is ra::_0 (1).
         constexpr auto e = ra::_0+1;
-        static_assert(e.rank()==1, "bad driver");
-// but TensorIndex cannot be a driver.
-        static_assert(!(decltype(e)::CAN_DRIVE), "bad driver check");
+        static_assert(e.rank_s()==1, "bad rank_s");
+        static_assert(e.rank()==1, "bad rank");
+        static_assert(e.size_s(0)==ra::DIM_BAD, "bad size");
     }
     tr.section("frame matching - Unique/TensorIndex");
     {
@@ -120,37 +143,38 @@ int main()
 // note that b-c has no driver, but all that matters is that the full expression does.
         auto e = expr([](real & a, real bc) { a = bc; },
                       a.iter(), expr([](real b, real c) { return b-c; },  b.iter(), ra::_1));
-        static_assert(e.A==0, "bad driver selection");
         ply_index(e);
         tr.test_eq(1, a(0, 0));
         tr.test_eq(0, a(0, 1));
         tr.test_eq(2, a(1, 0));
         tr.test_eq(1, a(1, 1));
     }
-    tr.section("frame matching should-be-error cases [untested]");
-// TODO Check that this is an error.
-    // {
-    //     ra::Unique<real, 1> a {3};
-    //     ra::Unique<real, 1> b {4};
-    //     std::iota(a.begin(), a.end(), 10);
-    //     std::iota(b.begin(), b.end(), 1);
-    //     cout << "a: " << a << endl;
-    //     cout << "b: " << b << endl;
-    //     auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-    //     ply_ravel(ra::expr(plus2real_print, a.iter(), b.iter()));
-    // }
-// TODO Check that this is an error.
-// TODO This also requires that ra::expr handles dynamic rank.
-    // {
-    //     ra::Unique<real> a {3};
-    //     ra::Unique<real> b {4};
-    //     std::iota(a.begin(), a.end(), 10);
-    //     std::iota(b.begin(), b.end(), 1);
-    //     cout << "a: " << a << endl;
-    //     cout << "b: " << b << endl;
-    //     auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-    //     ply_ravel(ra::expr(plus2real_print, a.iter(), b.iter()));
-    // }
+    tr.section("frame matching should-be-error cases");
+    {
+        ra::Unique<real, 1> a({3}, 10);
+        ra::Unique<real, 1> b({4}, 1);
+        auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
+        int x = 0;
+        try {
+            ply_ravel(ra::expr(plus2real_print, a.iter(), b.iter()));
+            x = 1;
+        } catch (ra_error & e) {
+        }
+        tr.info("caught error").test_eq(0, x);
+    }
+    tr.section("frame matching should-be-error cases - dynamic rank");
+    {
+        ra::Unique<real> a({3}, 10);
+        ra::Unique<real> b({4}, 1);
+        auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
+        int x = 0;
+        try {
+            ply_ravel(ra::expr(plus2real_print, a.iter(), b.iter()));
+            x = 1;
+        } catch (ra_error & e) {
+        }
+        tr.info("caught error").test_eq(0, x);
+    }
     tr.section("unintiuitive behavior [ra33]");
     {
         ra::Big<int, 1> i = {0, 1, 2};

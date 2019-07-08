@@ -18,6 +18,40 @@
 #include "ra/io.H"
 #include "ra/mpdebug.H"
 
+// FIXME see usage below; this is deprecated. The frame matching mechanism is now in ra::Expr / ra::Pick.
+
+namespace ra {
+
+template <class A, class B>
+struct pick_driver
+{
+    constexpr static int ra = A::rank_s();
+    constexpr static int rb = B::rank_s();
+
+    constexpr static bool value_ =
+// check by rank
+        rb==RANK_BAD
+          ? 1
+          : rb==RANK_ANY
+            ? ra==RANK_ANY
+            : ra==RANK_BAD
+                ? 0
+                : ra==RANK_ANY
+                  ? 1
+                  : ra>rb
+                    ? 1
+                    : ra<rb
+                      ? 0
+// check by size
+                      : gt_size(A::size_s(), B::size_s());
+
+    constexpr static int value = value_ ? 0 : 1; // 0 if A wins over B, else 1
+};
+
+template <class ... P> using driver_index = mp::IndexOf<pick_driver, std::tuple<P ...>>;
+
+} // namespace ra
+
 using std::cout, std::endl, std::flush;
 template <int i> using TI = ra::TensorIndex<i, int>;
 
@@ -377,6 +411,7 @@ int main()
         tr.test_eq(2, o.rank());
         tr.test(std::equal(pool, pool+6, o.begin()));
     }
+// FIXME this section is deprecated, this mechanism isn't used anymore after v10. See test/frame-new.C.
     tr.section("driver selection");
     {
         static_assert(TI<0>::rank_s()==1, "bad TI rank");

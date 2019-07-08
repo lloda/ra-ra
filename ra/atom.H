@@ -46,7 +46,7 @@ struct TensorIndex
     constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k<=w); return DIM_BAD; }
+    constexpr static dim_t size_s(int k) { return DIM_BAD; }
 
     template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
 
@@ -80,7 +80,7 @@ struct Scalar
 
     constexpr static dim_t size(int k) { assert(0); return DIM_BAD; } // used in shape checks with dynamic rank.
     constexpr static dim_t size_s() { return 1; }
-    constexpr static dim_t size_s(int k) { assert(0); return DIM_BAD; }
+    constexpr static dim_t size_s(int k) { return DIM_BAD; }
     constexpr static rank_t rank() { return 0; }
     constexpr static rank_t rank_s() { return 0; }
     constexpr static auto shape() { return std::array<dim_t, 0> {}; }
@@ -255,7 +255,7 @@ struct Iota
 
     constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), i_(org), stride_(stride)
     {
-        CHECK_BOUNDS(size>=0);
+        CHECK_BOUNDS(size>=0 && "Iota");
     }
 
     constexpr dim_t size() const { return size_; } // this is a Slice function...
@@ -326,6 +326,7 @@ template <int n> struct is_beatable_def<newaxis_t<n>>
 
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 
+template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Axpr;
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;

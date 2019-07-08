@@ -46,6 +46,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Tensor index object.
 * Short-circuiting logical operators.
 * Argument list selection operators (`where` with bool selector, or `pick` with integer selector).
+* Broadcasting with `newaxis`.
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
 * Many predefined array operations. Adding yours is trivial.

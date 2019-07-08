@@ -24,8 +24,7 @@
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
-// TODO Make it work with fixed size types.
-// TODO Make it work with var rank types.
+// TODO Adopt frame matching as in Expr, Pick (no driver).
 
 namespace ra {
 
@@ -58,6 +57,16 @@ struct Framematch_def;
 
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
+
+// FIXME Replace the frame matching mechanism by driverless, per-axis Expr/Pick.
+
+template <class A, class B>
+struct max_i
+{
+    constexpr static int value = gt_rank(A::value, B::value) ? 0 : 1; // 0 if ra wins, else 1
+};
+
+template <class T> using largest_i_tuple = mp::IndexOf<max_i, T>;
 
 // Get a list (per argument) of lists of live axes.
 // The last frame match is not done; that relies on rest axis handling of each argument (ignoring axis spec beyond their own rank). TODO Reexamine that.
