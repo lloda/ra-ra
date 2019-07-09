@@ -180,7 +180,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>
 // see test/ra-9.C [ra01] for forward() here.
     constexpr Expr(Op op_, P ... p_): op(std::forward<Op>(op_)), t(std::forward<P>(p_) ...)
     {
-        CHECK_BOUNDS(check_expr(*this)); // TODO Maybe do this on ply?
+        CHECK_BOUNDS(check_expr(*this)); // TODO Maybe do this on ply? also do static part inconditionally.
     }
 
     template <class J>

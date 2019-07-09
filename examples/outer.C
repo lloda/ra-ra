@@ -29,7 +29,7 @@ int main()
 
 // another alternative (broadcasting)
 
-    cout << x * y(ra::newaxis<1>) << endl;
+    cout << (x * y(ra::newaxis<1>)) << endl;
 
     return 0;
 }

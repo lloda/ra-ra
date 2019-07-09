@@ -1,13 +1,13 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file bench-stencil2.C
+/// @brief Stencil-as-view.
 
 // (c) Daniel Llorens - 2016-2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-stencil2.C
-/// @brief Stencil-as-view.
 // TODO Bad performance, see also bench-stencil[13].C.
 
 #include <iostream>

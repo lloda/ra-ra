@@ -756,7 +756,7 @@ ra::Big&lt;double, 2&gt; b = A(i, j);
 
 <p><code>A(i, j, ...)</code> is defined as the <em>outer product</em> of the indices <code>(i, j, ...)</code> with operator <code>A</code>, because this operation sees much more use in practice than <code>map(A, i, j ...)</code>.
 </p>
-<p>Besides, when the subscripts <code>i, j, ...</code> are scalars or <em>linear ranges</em> (integer sequences of the form <code>(o, o+s, ..., o+s*(n-1))</code>, the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called <a href="#Drag-along-and-beating"><em>beating</em></a>.
+<p>Besides, when the subscripts <code>i, j, ...</code> are scalars or <em>linear ranges</em> (integer sequences of the form <code>(o, o+s, ..., o+s*(n-1))</code>), the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called <a href="#Drag-along-and-beating"><em>beating</em></a>.
 </p>
 <p><code>ra::</code> isn&rsquo;t smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
 </p>
@@ -827,11 +827,11 @@ auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
 </p>
 <div class="example">
 <pre class="verbatim">auto h = a(newaxis&lt;0&gt;); // same as (1)
-auto k = a(newaxis&lt;1&gt;); // size (undefined, 3, 2)
+auto k = a(newaxis&lt;1&gt;); // shape [undefined, 3, 2]
 </pre></div>
 
 <span id="index-broadcasting_002c-singleton_002c-Numpy"></span>
-<p><code>newaxis&lt;n&gt;</code> main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In <code>ra::</code>, there&rsquo;s nothing special about singleton dimensions, so broadcasting requires the use of <code>newaxis</code>. For example: </p>
+<p><code>newaxis&lt;n&gt;</code> main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In <code>ra::</code> singleton dimensions aren&rsquo;t special, so broadcasting requires the use of <code>newaxis</code>. For example: </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 1&gt; x = {1, 10};
 // match shapes [2, U, U] with [U, 3, 2] to produce [2, 3, 2]
@@ -848,7 +848,7 @@ cout &lt;&lt; x(ra::all, ra::newaxis&lt;2&gt;) * a(newaxis&lt;1&gt;) &lt;&lt; en
 
 <p>Here&rsquo;s a way to perform the outer product of two <code>Views</code> of static rank (but see <a href="#x_002dfrom"><code>from</code></a> for a more general way):
 </p><div class="example">
-<pre class="verbatim">cout &lt;&lt; (a(ra::dots&lt;a.rank()&gt;, ra::newaxis&lt;b.rank()) * b(ra::newaxis&lt;a.rank()&gt;, ra::dots&lt;b.rank()&gt;)) &lt;&lt; endl;
+<pre class="verbatim">cout &lt;&lt; (a(ra::dots&lt;a.rank()&gt;, ra::newaxis&lt;b.rank()&gt;) * b(ra::newaxis&lt;a.rank()&gt;, ra::dots&lt;b.rank()&gt;)) &lt;&lt; endl;
 
 // same thing by prefix matching
 cout &lt;&lt; (a * b(ra::newaxis&lt;a.rank()&gt;)) &lt;&lt; endl;

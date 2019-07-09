@@ -707,7 +707,7 @@ ra::Big<double, 2> b = A(i, j);
 
 @code{A(i, j, ...)} is defined as the @emph{outer product} of the indices @code{(i, j, ...)} with operator @code{A}, because this operation sees much more use in practice than @code{map(A, i, j ...)}.
 
-Besides, when the subscripts @code{i, j, ...} are scalars or @dfn{linear ranges} (integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}, the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called @ref{Drag along and beating,@dfn{beating}}.
+Besides, when the subscripts @code{i, j, ...} are scalars or @dfn{linear ranges} (integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}), the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called @ref{Drag along and beating,@dfn{beating}}.
 
 @code{ra::} isn't smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
 
@@ -785,12 +785,12 @@ The new axes have stride 0 and undefined size, so they will match any size on th
 @example
 @verbatim
 auto h = a(newaxis<0>); // same as (1)
-auto k = a(newaxis<1>); // size (undefined, 3, 2)
+auto k = a(newaxis<1>); // shape [undefined, 3, 2]
 @end verbatim
 @end example
 
 @cindex broadcasting, singleton, Numpy
-@code{newaxis<n>} main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In @code{ra::}, there's nothing special about singleton dimensions, so broadcasting requires the use of @code{newaxis}. For example: @c [ma115]
+@code{newaxis<n>} main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In @code{ra::} singleton dimensions aren't special, so broadcasting requires the use of @code{newaxis}. For example: @c [ma115]
 
 @example
 @verbatim
@@ -811,7 +811,7 @@ cout << x(ra::all, ra::newaxis<2>) * a(newaxis<1>) << endl;
 Here's a way to perform the outer product of two @code{Views} of static rank (but see @ref{x-from,@code{from}} for a more general way):
 @example
 @verbatim
-cout << (a(ra::dots<a.rank()>, ra::newaxis<b.rank()) * b(ra::newaxis<a.rank()>, ra::dots<b.rank()>)) << endl;
+cout << (a(ra::dots<a.rank()>, ra::newaxis<b.rank()>) * b(ra::newaxis<a.rank()>, ra::dots<b.rank()>)) << endl;
 
 // same thing by prefix matching
 cout << (a * b(ra::newaxis<a.rank()>)) << endl;
