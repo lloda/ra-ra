@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file tuplelist.C
+/// @brief test type list library based on tuples.
 
 // (c) Daniel Llorens - 2010
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file tuplelist.C
-/// @brief test type list library based on tuples.
 
 #include <iostream>
 #include "ra/tuple-dynamic.H"
@@ -61,13 +60,6 @@ struct True
 int main()
 {
     TestRecorder tr(std::cout);
-// Basic constexpr stuff.
-    {
-        static_assert(mp::fact(0)==1, "bad fact(0)");
-        static_assert(mp::fact(1)==1, "bad fact(1)");
-        static_assert(mp::fact(2)==2, "bad fact(2)");
-        static_assert(mp::fact(3)==6, "bad fact(3)");
-    }
 // Booleans.
     {
         static_assert(True::value, "bad True");
@@ -299,7 +291,6 @@ static_assert(mp::check_idx<mp::complement_list<int_list A , B > C >::value, "a"
     }
 // Combinations.
     {
-        static_assert(mp::n_over_p(0, 0)==1, "");
         static_assert(mp::len<mp::combinations<mp::nil, 0>> == 1, "");
         using l3 = mp::iota<3>;
         using c31 = mp::combinations<l3, 1>;

@@ -74,5 +74,22 @@ int main()
         // ra::Big<float, 2> X = i-j; // no shape to construct X with
     }
 
+    // Axis insertion lets you match arguments more flexibly than simple prefix matching.
+    {
+        ra::Big<float, 2> A({3, 4}, 0);
+        ra::Big<float, 1> b({3}, ra::_0);
+        ra::Big<float, 1> c({4}, ra::_0);
+
+        // Compare:
+
+        // [3 4] matches [3] - normal prefix matching. Assign b(i) to A(i, ...)
+        A = b;
+        cout << "\nA: " << A << endl;
+
+        // [3 4] matches [X 4] - skip 1 dimension when matching. Assign c(i) to A(..., i)
+        A = c(ra::insert<1>);
+        cout << "\nA: " << A << endl;
+    }
+
     return 0;
 }

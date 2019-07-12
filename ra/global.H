@@ -11,6 +11,10 @@
 #pragma once
 #include "ra/wedge.H"
 
+// TODO All users be int, then this take int.
+// See also using std::abs, etc. in real.H.
+using ra::odd, ra::every, ra::any;
+
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
 
 template <class A,

@@ -647,14 +647,28 @@ b += transpose&lt;0, 1, 1&gt;(a); // b(i) = ∑ⱼ a(i, j, j)
 </pre><pre class="example">&rArr; b = {0, 3, 6, 9, 12}
 </pre></div>
 
-<p>An weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. <a href="#x_002dtranspose">Transposing</a> the axes before extension is a possible workaround. For a more general form of rank extension, see <a href="#The-rank-conjunction">The rank conjunction</a>.
-</p>
 <span id="index-Numpy-1"></span>
-<span id="index-broadcasting_002c-singleton"></span>
-<p>Other languages have a feature similar to rank extension called ‘broadcasting’. For example, in the way it&rsquo;s implemented in Numpy [<a href="#Sources">num17</a>]
-, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. This is more general than prefix agreement, because any axes can be matched. You can think of prefix agreement as the case where all the singleton dimensions are added to the end of the shorter shapes.
+<span id="index-broadcasting_002c-singleton_002c-newaxis"></span>
+<p>An weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it&rsquo;s implemented in Numpy [<a href="#Sources">num17</a>]
+, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 </p>
-<p>Even singleton broadcasting still isn&rsquo;t entirely general, since it doesn&rsquo;t handle transposition. Another drawback is that it muddles the distinction between a scalar and a vector of size 1. Sometimes, an axis of size 1 is no more than that, and if 2!=3 is a size error, it isn&rsquo;t obvious why 1!=2 shouldn&rsquo;t be. To avoid this problem, <code>ra::</code> supports broadcasting with undefined size axes (see <a href="#x_002dnewaxis"><code>newaxis</code></a>).
+<p>A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of size 1. Sometimes, an axis of size 1 is no more than that, and if 2≠3 is a size error, it isn&rsquo;t obvious why 1≠2 shouldn&rsquo;t be. To avoid this problem, <code>ra::</code> supports broadcasting with undefined size axes (see <a href="#x_002dinsert"><code>insert</code></a>).
+</p>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;double, 3&gt; a({5, 3}, ra::_0);
+ra::Big&lt;double, 1&gt; b({3}, 0.);
+ra::Big&lt;double, 3&gt; c({1, 3}, ra::_0);
+
+// b(?, i) += a(j, i) → b(i) = ∑ⱼ a(j, i) (sum columns)
+b(ra::insert&lt;1&gt;) += a;
+
+c = a; // 1 ≠ 5, still an agreement error
+</pre></div>
+
+<p>Still another way to align array axes is provided by the <a href="#The-rank-conjunction">rank conjunction</a>.
+</p>
+<p>Even with axis insertion, it is still necessary that the axes one wishes to match are in the same order in all the arguments.
+<a href="#x_002dtranspose">Transposing</a> the axes before extension is a possible workaround.
 </p>
 <hr>
 <span id="Cell-iteration"></span><div class="header">
@@ -818,24 +832,24 @@ auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
 
 <p>This is useful when writing rank-generic code, see <code>examples/maxwell.C</code> in the distribution for an example.
 </p>
-<span id="x_002dnewaxis"></span><dl>
-<dt id="index-newaxis_003cn_003e">Special&nbsp;object<!-- /@w -->: <strong>newaxis&lt;n&gt;</strong></dt>
+<span id="x_002dinsert"></span><dl>
+<dt id="index-insert_003cn_003e">Special&nbsp;object<!-- /@w -->: <strong>insert&lt;n&gt;</strong></dt>
 <dd><p>Inserts <code>n</code> new axes at the subscript position. <code>n</code> must not be negative.
 </p></dd></dl>
 
-<p>The new axes have stride 0 and undefined size, so they will match any size on those axes by repeating items. <code>newaxis</code> objects cannot stand alone as an array expression. The examples below result in <code>View</code> objects:
+<p>The new axes have stride 0 and undefined size, so they will match any size on those axes by repeating items. <code>insert</code> objects cannot stand alone as an array expression. The examples below result in <code>View</code> objects:
 </p>
 <div class="example">
-<pre class="verbatim">auto h = a(newaxis&lt;0&gt;); // same as (1)
-auto k = a(newaxis&lt;1&gt;); // shape [undefined, 3, 2]
+<pre class="verbatim">auto h = a(insert&lt;0&gt;); // same as (1)
+auto k = a(insert&lt;1&gt;); // shape [undefined, 3, 2]
 </pre></div>
 
 <span id="index-broadcasting_002c-singleton_002c-Numpy"></span>
-<p><code>newaxis&lt;n&gt;</code> main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In <code>ra::</code> singleton dimensions aren&rsquo;t special, so broadcasting requires the use of <code>newaxis</code>. For example: </p>
+<p><code>insert&lt;n&gt;</code> main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In <code>ra::</code> singleton dimensions aren&rsquo;t special, so broadcasting requires the use of <code>insert</code>. For example: </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 1&gt; x = {1, 10};
 // match shapes [2, U, U] with [U, 3, 2] to produce [2, 3, 2]
-cout &lt;&lt; x(ra::all, ra::newaxis&lt;2&gt;) * a(newaxis&lt;1&gt;) &lt;&lt; endl;
+cout &lt;&lt; x(ra::all, ra::insert&lt;2&gt;) * a(insert&lt;1&gt;) &lt;&lt; endl;
 </pre><pre class="example">-| 2 3 2
 1 2
 3 4
@@ -848,10 +862,10 @@ cout &lt;&lt; x(ra::all, ra::newaxis&lt;2&gt;) * a(newaxis&lt;1&gt;) &lt;&lt; en
 
 <p>Here&rsquo;s a way to perform the outer product of two <code>Views</code> of static rank (but see <a href="#x_002dfrom"><code>from</code></a> for a more general way):
 </p><div class="example">
-<pre class="verbatim">cout &lt;&lt; (a(ra::dots&lt;a.rank()&gt;, ra::newaxis&lt;b.rank()&gt;) * b(ra::newaxis&lt;a.rank()&gt;, ra::dots&lt;b.rank()&gt;)) &lt;&lt; endl;
+<pre class="verbatim">cout &lt;&lt; (a(ra::dots&lt;a.rank()&gt;, ra::insert&lt;b.rank()&gt;) * b(ra::insert&lt;a.rank()&gt;, ra::dots&lt;b.rank()&gt;)) &lt;&lt; endl;
 
 // same thing by prefix matching
-cout &lt;&lt; (a * b(ra::newaxis&lt;a.rank()&gt;)) &lt;&lt; endl;
+cout &lt;&lt; (a * b(ra::insert&lt;a.rank()&gt;)) &lt;&lt; endl;
 </pre></div>
 
 <p>In addition to the special objects listed above, you can also omit any trailing <code>ra::all</code> subscripts. For example:
@@ -1542,7 +1556,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 </div>
 <span id="Term-agreement-1"></span><h3 class="section">5.2 Term agreement</h3>
 
-<p>The execution of an expression template begins with the determination of its shape — the size of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined size (such as <code>TensorIndex</code> or view axes created with <code>newaxis</code>) are ignored. All the other terms must match.
+<p>The execution of an expression template begins with the determination of its shape — the size of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined size (such as <code>TensorIndex</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
 <p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for dynamic-size expressions and <code>plyf</code> for static-size expressions.
 </p>
@@ -2237,7 +2251,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b-1">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-libraries">Other libraries</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b-2">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Extension">Extension</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton">broadcasting, singleton</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton_002c-newaxis">broadcasting, singleton, newaxis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton_002c-Numpy">broadcasting, singleton, Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-built_002din-array">built-in array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>

@@ -161,7 +161,7 @@ int main()
     tr.section("cases with periodic axes - dynamic (broken with Expr)");
     {
         ra::Big<int, 3> a({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));
-        auto b = a(ra::all, ra::newaxis<1>, ra::iota(4, 0, 0));
+        auto b = a(ra::all, ra::insert<1>, ra::iota(4, 0, 0));
 #define EXPR(a, b) expr([](auto && a, auto && b) { return a+b; }, start(a), start(b))
         tr.test_eq(4, EXPR(a, b).rank());
         tr.test_eq(b.size(0), EXPR(a, b).size(0));
@@ -195,7 +195,7 @@ int main()
         ra::Big<int, 2> a({4, 3}, 10*ra::_1+100*ra::_0);
         ra::Big<int, 1> b({5}, ra::_0);
         cout << ra::start(ra::shape(from([](auto && a, auto && b) { return a-b; }, a, b))) << endl;
-#define EXPR(a, b) expr([](auto && a, auto && b) { return a-b; }, start(a(ra::dots<2>, ra::newaxis<1>)), start(b(ra::newaxis<2>, ra::dots<1>)))
+#define EXPR(a, b) expr([](auto && a, auto && b) { return a-b; }, start(a(ra::dots<2>, ra::insert<1>)), start(b(ra::insert<2>, ra::dots<1>)))
         tr.test_eq(3, EXPR(a, b).rank_s());
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(0));
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(1));

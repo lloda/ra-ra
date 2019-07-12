@@ -94,13 +94,13 @@ template <int n> struct dots_t
 template <int n> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
-template <int n> struct newaxis_t
+template <int n> struct insert_t
 {
     static_assert(n>=0);
     constexpr static rank_t rank_s() { return n; }
 };
 
-template <int n=1> constexpr newaxis_t<n> newaxis = newaxis_t<n>();
+template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
 // Used by cell_iterator / cell_iterator_small.
 template <class C>
@@ -117,6 +117,12 @@ iter(A && a) { return std::forward<A>(a).template iter<cell_rank>(); }
 
 // Defined in wrank.H but used in big.H (selectors, etc).
 template <class A, class ... I> inline constexpr auto from(A && a, I && ... i);
+
+// Extended by operators.H and repeated in global.H.
+// TODO All users be int, then this take int.
+constexpr inline bool any(bool const x) { return x; }
+constexpr inline bool every(bool const x) { return x; }
+constexpr inline bool odd(unsigned int N) { return N & 1; }
 
 } // namespace ra
 

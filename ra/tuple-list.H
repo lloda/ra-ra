@@ -12,11 +12,14 @@
 /// implementation. Ideally we have only the alias.
 
 #pragma once
-#include "ra/int_t.H"
+#include "ra/macros.H"
 #include <tuple>
 #include <limits>
 
 namespace mp {
+
+template <int V> using int_t = std::integral_constant<int, V>;
+template <bool V> using bool_t = std::integral_constant<bool, V>;
 
 using std::tuple;
 using nil = tuple<>;

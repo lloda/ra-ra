@@ -12,11 +12,9 @@
 // operator. Note that pick() is a normal function, so its *arguments* will always
 // be evaluated; it is the individual array elements that will not be.
 
-// FIXME Expr and Pick are mostly identical, so a refactor is in order...
-
 #pragma once
 #include "ra/ply.H"
-#include "ra/opcheck.H"
+#include "ra/match.H"
 
 #ifndef RA_CHECK_BOUNDS_PICK
   #ifndef RA_CHECK_BOUNDS
@@ -147,165 +145,34 @@ pick(P0 && p0, P && ... p)
 
 // forward decl in atom.H
 template <class P0, class ... P, int ... I>
-struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>
+struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple<P0, P ...>>
 {
-    using T = std::tuple<P0, P ...>;
-    T t;
-
-    template <class T> struct box { using type = T; };
-
-// rank of largest subexpr. This is true for either prefix or suffix match.
-    constexpr static rank_t rank_s()
-    {
-        return mp::fold_tuple(RANK_BAD, mp::map<box, T> {},
-                              [](rank_t r, auto a)
-                              {
-                                  constexpr rank_t ar = std::decay_t<typename decltype(a)::type>::rank_s();
-                                  return gt_rank(r, ar) ?  r : ar;
-                              });
-    }
-    constexpr rank_t rank() const
-    {
-        if constexpr (constexpr rank_t rs=rank_s(); rs==RANK_ANY) {
-            return mp::fold_tuple(RANK_BAD, t,
-                                  [](rank_t r, auto && a)
-                                  {
-                                      rank_t ar = a.rank();
-                                      assert(ar!=RANK_ANY); // cannot happen at runtime
-                                      return gt_rank(r, ar) ?  r : ar;
-                                  });
-        } else {
-            return rs;
-        }
-    }
-
-// any size which is not DIM_BAD.
-    constexpr static dim_t size_s(int k)
-    {
-        dim_t s = mp::fold_tuple(DIM_BAD, mp::map<box, T> {},
-                                 [&k](dim_t s, auto a)
-                                 {
-                                     using A = std::decay_t<typename decltype(a)::type>;
-                                     constexpr rank_t ar = A::rank_s();
-                                     if (s!=DIM_BAD) {
-                                         return s;
-                                     } else if (ar>=0 && k>=ar) {
-                                         return s;
-                                     } else {
-                                         dim_t zz = A::size_s(k);
-                                         return zz;
-                                     }
-                                 });
-        return s;
-    }
-
-// do early exit with fold_tuple (and with size_s(k)).
-    constexpr dim_t size(int k) const
-    {
-        if (dim_t ss=size_s(k); ss==DIM_ANY) {
-            auto f = [this, &k](auto && f, auto ii)
-                     {
-                         constexpr int i = decltype(ii)::value;
-                         if constexpr (i<std::tuple_size_v<T>) {
-                             auto const & a = std::get<i>(this->t);
-                             if (k<a.rank()) {
-                                 dim_t as = a.size(k);
-                                 if (as!=DIM_BAD) {
-                                     assert(as!=DIM_ANY); // cannot happen at runtime
-                                     return as;
-                                 } else {
-                                     return f(f, mp::int_t<i+1> {});
-                                 }
-                             } else {
-                                 return f(f, mp::int_t<i+1> {});
-                             }
-                         } else {
-                             assert(0);
-                             return DIM_BAD;
-                         }
-                     };
-            return f(f, mp::int_t<0> {});
-        } else {
-            return ss;
-        }
-    }
-
-    constexpr decltype(auto) shape() const
-    {
-        if constexpr (rank_s()==RANK_ANY) {
-            std::vector<dim_t> s(rank());
-            for_each([this, &s](int k) { s[k] = this->size(k); }, ra::iota(rank()));
-            return s;
-            // return map([this](int k) { return this->size(k); }, ra::iota(rank()));
-        } else {
-            std::array<dim_t, rank_s()> s {};
-            for_each([this, &s](int k) { s[k] = this->size(k); }, ra::iota(rank_s()));
-            return s;
-        }
-    }
-
-    constexpr dim_t size()
-    {
-        dim_t c = 1;
-        for_each([&c](auto && a) { c *= a; }, this->shape());
-        return c;
-    }
-
-    constexpr static dim_t size_s()
-    {
-        if constexpr (rank_s()==RANK_ANY) {
-            return DIM_ANY;
-        } else {
-            ra::dim_t s = 1;
-            for (int i=0; i!=rank_s(); ++i) {
-                if (dim_t ss=size_s(i); ss>=0) {
-                    s *= ss;
-                } else {
-                    return ss; // either DIM_ANY or DIM_BAD
-                }
-            }
-            return s;
-        }
-    }
+    using Match_ = Match<std::tuple<P0, P ...>>;
 
 // see test/ra-9.C [ra01] for forward() here.
-    constexpr Pick(P0 p0_, P ... p_): t(std::forward<P0>(p0_), std::forward<P>(p_) ...)
-    {
-        CHECK_BOUNDS(check_expr(*this)); // TODO Maybe do this on ply?
-    }
+    constexpr Pick(P0 p0_, P ... p_): Match_(std::forward<P0>(p0_), std::forward<P>(p_) ...) {}
 
     template <class J>
     constexpr decltype(auto) at(J const & j)
     {
-        return pick_at<0>(std::get<0>(t).at(j), t, j);
-    }
-
-    constexpr void adv(rank_t k, dim_t d)
-    {
-        (std::get<I>(t).adv(k, d), ...);
-    }
-
-    constexpr bool keep_stride(dim_t step, int z, int j) const
-    {
-        return (std::get<I>(t).keep_stride(step, z, j) && ...);
-    }
-
-    constexpr auto stride(int i) const
-    {
-        return std::make_tuple(std::get<I>(t).stride(i) ...);
+        return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
     }
 
     constexpr auto flat()
     {
-        return pick_flat(std::get<I>(t).flat() ...);
+        return pick_flat(std::get<I>(this->t).flat() ...);
     }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    operator decltype(*(pick_flat(std::get<I>(t).flat() ...)))()
+    using scalar = decltype(*(pick_flat(std::get<I>(Match_::t).flat() ...)));
+    operator scalar()
     {
-        static_assert(rank_s()==0 || rank_s()==RANK_ANY || (rank_s()==1 && size_s()==1), // for coord types
-                      "bad rank in conversion to scalar");
-        assert(rank()==0 || (rank_s()==1 && size_s()==1)); // for coord types; so fixed only
+        if constexpr (this->rank_s()!=1 || this->size_s()!=1) { // for coord types; so fixed only
+            if constexpr (this->rank_s()!=0) {
+                static_assert(this->rank_s()==RANK_ANY);
+                assert(this->rank()==0);
+            }
+        }
         return *flat();
     }
 

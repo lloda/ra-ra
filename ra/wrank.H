@@ -24,7 +24,7 @@
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
-// TODO Adopt frame matching as in Expr, Pick (no driver).
+// TODO Adopt frame matching as in Match (no driver).
 
 namespace ra {
 
@@ -58,7 +58,7 @@ struct Framematch_def;
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 
-// FIXME Replace the frame matching mechanism by driverless, per-axis Expr/Pick.
+// FIXME Replace the frame matching mechanism by driverless, per-axis Match
 
 template <class A, class B>
 struct max_i
@@ -179,7 +179,7 @@ decltype(auto) applyframes(A && a)
     }
 }
 
-// like Expr, except don't do driver selection here, but leave it to the args, as with Expr::adv(k, d). The args may need to be ApplyFrames... don't know yet.
+// like Expr, except don't do driver selection here, but leave it to the args. The args may need to be ApplyFrames... don't know yet.
 // forward decl in atom.H.
 template <class FM, class Op, class ... P, int ... I>
 struct Ryn<FM, Op, std::tuple<P ...>, mp::int_list<I ...>>
@@ -193,7 +193,7 @@ struct Ryn<FM, Op, std::tuple<P ...>, mp::int_list<I ...>>
         for (int k=0; k!=rank(); ++k) { // TODO with static rank or sizes, can peval.
             dim_t s0 = size(k);
             dim_t sk = std::get<iarg>(t).size(k);
-            if (sk!=s0 && sk!=DIM_BAD) { // TODO See Expr::check(); maybe just sk>=0.
+            if (sk!=s0 && sk!=DIM_BAD) { // TODO See Match::check(); maybe just sk>=0.
                 return false;
             }
         }

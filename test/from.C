@@ -105,36 +105,36 @@ int main()
         tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
         tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
     }
-    tr.section("newaxis, var size");
+    tr.section("insert, var size");
     {
-        static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
+        static_assert(ra::is_beatable<ra::insert_t<1>>::value, "insert_t<1> is beatable");
         ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
-        tr.info("a(ra::newaxis<0> ...)").test_eq(a(0), a(ra::newaxis<0>, 0));
+        tr.info("a(ra::insert<0> ...)").test_eq(a(0), a(ra::insert<0>, 0));
         ra::Big<int, 4> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
-        tr.info("a(ra::newaxis<1> ...)").test_eq(a1, a(ra::newaxis<1>));
+        tr.info("a(ra::insert<1> ...)").test_eq(a1, a(ra::insert<1>));
         ra::Big<int, 4> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
-        tr.info("a(ra::all, ra::newaxis<1>, ...)").test_eq(a2, a(ra::all, ra::newaxis<1>));
+        tr.info("a(ra::all, ra::insert<1>, ...)").test_eq(a2, a(ra::all, ra::insert<1>));
         ra::Big<int, 5> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
-        tr.info("a(ra::all, ra::newaxis<2>, ...)").test_eq(a3, a(ra::all, ra::newaxis<2>));
-        tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
-        tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
-        ra::Big<int, 4> aa1({2, 2, 3, 4}, a(ra::newaxis<1>));
-        tr.info("newaxis with undefined size 0").test_eq(a, aa1(0));
-        tr.info("newaxis with undefined size 1").test_eq(a, aa1(1));
+        tr.info("a(ra::all, ra::insert<2>, ...)").test_eq(a3, a(ra::all, ra::insert<2>));
+        tr.info("a(0, ra::insert<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::insert<1>));
+        tr.info("a(ra::insert<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::insert<1>, 0));
+        ra::Big<int, 4> aa1({2, 2, 3, 4}, a(ra::insert<1>));
+        tr.info("insert with undefined size 0").test_eq(a, aa1(0));
+        tr.info("insert with undefined size 1").test_eq(a, aa1(1));
     }
-    tr.section("newaxis, var rank");
+    tr.section("insert, var rank");
     {
-        static_assert(ra::is_beatable<ra::newaxis_t<1>>::value, "newaxis_t<1> is beatable");
+        static_assert(ra::is_beatable<ra::insert_t<1>>::value, "insert_t<1> is beatable");
         ra::Big<int> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
-        tr.info("a(ra::newaxis<0> ...)").test_eq(a(0), a(ra::newaxis<0>, 0));
+        tr.info("a(ra::insert<0> ...)").test_eq(a(0), a(ra::insert<0>, 0));
         ra::Big<int> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
-        tr.info("a(ra::newaxis<1> ...)").test_eq(a1, a(ra::newaxis<1>));
+        tr.info("a(ra::insert<1> ...)").test_eq(a1, a(ra::insert<1>));
         ra::Big<int> a2({2, 1, 3, 4}, ra::_0*100 + ra::_2*10 + ra::_3);
-        tr.info("a(ra::all, ra::newaxis<1>, ...)").test_eq(a2, a(ra::all, ra::newaxis<1>));
+        tr.info("a(ra::all, ra::insert<1>, ...)").test_eq(a2, a(ra::all, ra::insert<1>));
         ra::Big<int> a3({2, 1, 1, 3, 4}, ra::_0*100 + ra::_3*10 + ra::_4);
-        tr.info("a(ra::all, ra::newaxis<2>, ...)").test_eq(a3, a(ra::all, ra::newaxis<2>));
-        tr.info("a(0, ra::newaxis<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::newaxis<1>));
-        tr.info("a(ra::newaxis<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::newaxis<1>, 0));
+        tr.info("a(ra::all, ra::insert<2>, ...)").test_eq(a3, a(ra::all, ra::insert<2>));
+        tr.info("a(0, ra::insert<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::insert<1>));
+        tr.info("a(ra::insert<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::insert<1>, 0));
     }
     tr.section("unbeatable, 1D");
     {

@@ -321,7 +321,7 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ..
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
 template <int n, class ... I>
-inline dim_t select_loop(Dim * dim, Dim const * dim_src, newaxis_t<n> newaxis, I && ... i)
+inline dim_t select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim) {
         dim->size = DIM_BAD;

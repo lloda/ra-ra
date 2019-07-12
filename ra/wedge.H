@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/tuple-list.H"
+#include "ra/bootstrap.H"
 
 namespace mp {
 
@@ -74,15 +74,30 @@ template <int D, int O> using ChooseComponents_ = typename ChooseComponents<D, O
 
 namespace fun {
 
+// Works *almost* to the range of size_t.
+constexpr size_t n_over_p(size_t const n, size_t p)
+{
+    if (p>n) {
+        return 0;
+    } else if (p>(n-p)) {
+        p = n-p;
+    }
+    size_t v = 1;
+    for (size_t i=0; i!=p; ++i) {
+        v = v*(n-i)/(i+1);
+    }
+    return v;
+}
+
 // We form the basis for the result (Cr) and split it in pieces for Oa and Ob; there are (D over Oa) ways. Then we see where and with which signs these pieces are in the bases for Oa (Ca) and Ob (Cb), and form the product.
 template <int D, int Oa, int Ob>
 struct Wedge
 {
     constexpr static int Or = Oa+Ob;
     static_assert(Oa<=D && Ob<=D && Or<=D, "bad orders");
-    constexpr static int Na = mp::n_over_p(D, Oa);
-    constexpr static int Nb = mp::n_over_p(D, Ob);
-    constexpr static int Nr = mp::n_over_p(D, Or);
+    constexpr static int Na = n_over_p(D, Oa);
+    constexpr static int Nb = n_over_p(D, Ob);
+    constexpr static int Nr = n_over_p(D, Or);
 // in lexicographic order. Can be used to sort Ca below with FindPermutation.
     using LexOrCa = mp::combinations<mp::iota<D>, Oa>;
 // the actual components used, which are in lex. order only in some cases.
@@ -94,8 +109,8 @@ struct Wedge
     constexpr static bool yields_expr_a1 = yields_expr && Na==1;
     constexpr static bool yields_expr_b1 = yields_expr && Nb==1;
     constexpr static bool both_scalars = (Na==1 && Nb==1);
-    constexpr static bool dot_plus = Na>1 && Nb>1 && Or==D && (Oa<Ob || (Oa>Ob && !odd(Oa*Ob)));
-    constexpr static bool dot_minus = Na>1 && Nb>1 && Or==D && (Oa>Ob && odd(Oa*Ob));
+    constexpr static bool dot_plus = Na>1 && Nb>1 && Or==D && (Oa<Ob || (Oa>Ob && !ra::odd(Oa*Ob)));
+    constexpr static bool dot_minus = Na>1 && Nb>1 && Or==D && (Oa>Ob && ra::odd(Oa*Ob));
     constexpr static bool general_case = (Na>1 && Nb>1) && ((Oa+Ob!=D) || (Oa==Ob));
 
     template <class Va, class Vb>
@@ -195,7 +210,7 @@ void hodgex(Va const & a, Vb & b)
 // This depends on Wedge<>::Ca, Cb, Cr coming from ChooseCombinations, as enforced in the tests in test_wedge_product. hodgex() should always work, but this is cheaper.
 // However if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
 // Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w in that case, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
-#define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !odd(O*(D-O))))
+#define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))))
 template <int D, int O, class Va, class Vb>
 std::enable_if_t<TRIVIAL(D, O)> hodge(Va const & a, Vb & b)
 {

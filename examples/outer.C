@@ -27,9 +27,9 @@ int main()
 
     cout << from(std::multiplies<float>(), x, y) << endl;
 
-// another alternative (broadcasting)
+// [ra] another alternative by axis insertion
 
-    cout << (x * y(ra::newaxis<1>)) << endl;
+    cout << (x * y(ra::insert<1>)) << endl;
 
     return 0;
 }

@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file wedge-product.C
+/// @brief Test generic wedge product with compile-time dimensions.
 
 // (c) Daniel Llorens - 2008-2010, 2015
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file wedge-product.C
-/// @brief Test generic wedge product with compile-time dimensions.
 
 #include <iostream>
 #include "ra/operators.H"
@@ -131,6 +130,7 @@ R test_one_scalar_case(A const & a, B const & b)
 int main()
 {
     TestRecorder tr(std::cout);
+    static_assert(fun::n_over_p(0, 0)==1, "");
 // gcc let a bug pass by https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57891. Cf http://stackoverflow.com/a/24346350.
 // TODO We weren't getting the proper diagnostic from clang, probably due to disable_if doing !(integer).
     tr.section("MatchPermutationP");

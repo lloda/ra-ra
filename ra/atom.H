@@ -315,7 +315,7 @@ template <int n> struct is_beatable_def<dots_t<n>>
     constexpr static bool static_p = true;
 };
 
-template <int n> struct is_beatable_def<newaxis_t<n>>
+template <int n> struct is_beatable_def<insert_t<n>>
 {
     static_assert(n>=0, "bad count for dots_n");
     constexpr static bool value = (n>=0);
@@ -326,7 +326,6 @@ template <int n> struct is_beatable_def<newaxis_t<n>>
 
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 
-template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Axpr;
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;

@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/int_t.H"
+#include "ra/macros.H"
 #include <limits>
 #include <cstdlib>
 #include <cmath>

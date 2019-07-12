@@ -144,26 +144,39 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()==1)>
     subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
 }
 
-template <class A> RA_INLINE constexpr
-auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
+// find the outermost compact dim.
+template <class A>
+constexpr auto ocd(A && a)
 {
     rank_t const rank = a.rank();
-#if 0 // FIXME both s & j can be constexpr. Try again after gcc 7 (constexpr lambda, for j).
-// find the outermost compact dim.
-    /* constexpr */ auto s = a.size(rank-1);
+    auto s = a.size(rank-1);
     int j = 1;
     while (j<rank && a.keep_stride(s, rank-1, rank-1-j)) {
         s *= a.size(rank-1-j);
         ++j;
     }
+    return std::make_tuple(s, j);
+};
+
+template <class A> RA_INLINE constexpr
+auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
+{
+    constexpr rank_t rank = std::decay_t<A>::rank_s();
+// this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_stride.
+// test/concrete.C has a case that shows this.
+// cf https://stackoverflow.com/questions/55288555
+    if constexpr(0 && std::decay_t<A>::size_s()>=0) {
+        constexpr auto sj = ocd(a);
+        constexpr auto s = std::get<0>(sj);
+        constexpr auto j = std::get<1>(sj);
 // all sub xpr strides advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-    until<mp::iota<std::decay_t<A>::rank_s()>, 0>(j, a, s, a.stride(rank-1));
-#else
-// according to bench-dot.C, the unrolling above isn't worth it :-/ TODO
-    /* constexpr */ auto s = a.size(rank-1);
-    subindex<mp::iota<std::decay_t<A>::rank_s()>, 1>(a, s, a.stride(rank-1));
-#endif
+        until<mp::iota<std::decay_t<A>::rank_s()>, 0>(j, a, s, a.stride(rank-1));
+    } else {
+// the unrolling above isn't worth it when s, j cannot be constexpr.
+        auto s = a.size(rank-1);
+        subindex<mp::iota<std::decay_t<A>::rank_s()>, 1>(a, s, a.stride(rank-1));
+    }
 }
 
 #undef RA_INLINE

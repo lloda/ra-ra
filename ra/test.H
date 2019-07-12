@@ -142,9 +142,9 @@ struct TestRecorder
                          where(isnan(a), 0., std::numeric_limits<double>::infinity()),
                          abs(ref-a)/level));
         test(e<=req_err,
-             LAZYINFO("rel_error(", esc_yellow, "ref", esc_plain, ": ", ref, esc_yellow, ", got", esc_plain, ": ", a,
+             LAZYINFO("rerr(", esc_yellow, "ref", esc_plain, ": ", ref, esc_yellow, ", got", esc_plain, ": ", a,
                       ") = ", format_error(e), (level<=0 ? "" : ra::format(" (level ", level, ")")), ", req. ", req_err),
-             LAZYINFO("rel_error: ", format_error(e), (level<=0 ? "" : ra::format(" (level ", level, ")")),
+             LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : ra::format(" (level ", level, ")")),
                       ", req. ", req_err));
         return e;
     }
@@ -155,8 +155,8 @@ struct TestRecorder
                               where(isnan(a), 0., std::numeric_limits<double>::infinity()),
                               abs(ref-a)));
         test(e<=req_err,
-             LAZYINFO((verbose!=QUIET), "abs_error(ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req_err),
-             LAZYINFO("abs_error: ", format_error(e), ", req. ", req_err));
+             LAZYINFO((verbose!=QUIET), "aerr(ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req_err),
+             LAZYINFO("aerr: ", format_error(e), ", req. ", req_err));
         return e;
     }
 

@@ -234,8 +234,8 @@ int main()
     {
         ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
         ra::Big<int, 1> x = {1, 10};
-        cout << (x(ra::all, ra::newaxis<2>) * a(ra::newaxis<1>)) << endl;
-        cout << (x * a(ra::newaxis<1>)) << endl; // same thing
+        cout << (x(ra::all, ra::insert<2>) * a(ra::insert<1>)) << endl;
+        cout << (x * a(ra::insert<1>)) << endl; // same thing
     }
     return 0;
 }

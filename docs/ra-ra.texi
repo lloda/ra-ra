@@ -587,13 +587,29 @@ b += transpose<0, 1, 1>(a); // b(i) = ∑ⱼ a(i, j, j)
 @result{} b = @{0, 3, 6, 9, 12@}
 @end example
 
-An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. @ref{x-transpose,Transposing} the axes before extension is a possible workaround. For a more general form of rank extension, @pxref{The rank conjunction}.
-
 @cindex Numpy
-@cindex broadcasting, singleton
-Other languages have a feature similar to rank extension called ‘broadcasting’. For example, in the way it's implemented in Numpy @mybibcite{num17}, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. This is more general than prefix agreement, because any axes can be matched. You can think of prefix agreement as the case where all the singleton dimensions are added to the end of the shorter shapes.
+@cindex broadcasting, singleton, newaxis
+An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it's implemented in Numpy @mybibcite{num17}, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 
-Even singleton broadcasting still isn't entirely general, since it doesn't handle transposition. Another drawback is that it muddles the distinction between a scalar and a vector of size 1. Sometimes, an axis of size 1 is no more than that, and if 2!=3 is a size error, it isn't obvious why 1!=2 shouldn't be. To avoid this problem, @code{ra::} supports broadcasting with undefined size axes (see @ref{x-newaxis,@code{newaxis}}).
+A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of size 1. Sometimes, an axis of size 1 is no more than that, and if 2≠3 is a size error, it isn't obvious why 1≠2 shouldn't be. To avoid this problem, @code{ra::} supports broadcasting with undefined size axes (see @ref{x-insert,@code{insert}}).
+
+@example
+@verbatim
+ra::Big<double, 3> a({5, 3}, ra::_0);
+ra::Big<double, 1> b({3}, 0.);
+ra::Big<double, 3> c({1, 3}, ra::_0);
+
+// b(?, i) += a(j, i) → b(i) = ∑ⱼ a(j, i) (sum columns)
+b(ra::insert<1>) += a;
+
+c = a; // 1 ≠ 5, still an agreement error
+@end verbatim
+@end example
+
+Still another way to align array axes is provided by the @ref{The rank conjunction,rank conjunction}.
+
+Even with axis insertion, it is still necessary that the axes one wishes to match are in the same order in all the arguments.
+@ref{x-transpose,Transposing} the axes before extension is a possible workaround.
 
 @c ------------------------------------------------
 @node Cell iteration
@@ -775,28 +791,28 @@ auto m = a(ra::dots<1>, 1); // second column of a
 
 This is useful when writing rank-generic code, see @code{examples/maxwell.C} in the distribution for an example.
 
-@anchor{x-newaxis}
-@deffn @w{Special object} newaxis<n>
+@anchor{x-insert}
+@deffn @w{Special object} insert<n>
 Inserts @code{n} new axes at the subscript position. @code{n} must not be negative.
 @end deffn
 
-The new axes have stride 0 and undefined size, so they will match any size on those axes by repeating items. @code{newaxis} objects cannot stand alone as an array expression. The examples below result in @code{View} objects:
+The new axes have stride 0 and undefined size, so they will match any size on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in @code{View} objects:
 
 @example
 @verbatim
-auto h = a(newaxis<0>); // same as (1)
-auto k = a(newaxis<1>); // shape [undefined, 3, 2]
+auto h = a(insert<0>); // same as (1)
+auto k = a(insert<1>); // shape [undefined, 3, 2]
 @end verbatim
 @end example
 
 @cindex broadcasting, singleton, Numpy
-@code{newaxis<n>} main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In @code{ra::} singleton dimensions aren't special, so broadcasting requires the use of @code{newaxis}. For example: @c [ma115]
+@code{insert<n>} main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In @code{ra::} singleton dimensions aren't special, so broadcasting requires the use of @code{insert}. For example: @c [ma115]
 
 @example
 @verbatim
 ra::Big<int, 1> x = {1, 10};
 // match shapes [2, U, U] with [U, 3, 2] to produce [2, 3, 2]
-cout << x(ra::all, ra::newaxis<2>) * a(newaxis<1>) << endl;
+cout << x(ra::all, ra::insert<2>) * a(insert<1>) << endl;
 @end verbatim
 @print{} 2 3 2
 1 2
@@ -811,10 +827,10 @@ cout << x(ra::all, ra::newaxis<2>) * a(newaxis<1>) << endl;
 Here's a way to perform the outer product of two @code{Views} of static rank (but see @ref{x-from,@code{from}} for a more general way):
 @example
 @verbatim
-cout << (a(ra::dots<a.rank()>, ra::newaxis<b.rank()>) * b(ra::newaxis<a.rank()>, ra::dots<b.rank()>)) << endl;
+cout << (a(ra::dots<a.rank()>, ra::insert<b.rank()>) * b(ra::insert<a.rank()>, ra::dots<b.rank()>)) << endl;
 
 // same thing by prefix matching
-cout << (a * b(ra::newaxis<a.rank()>)) << endl;
+cout << (a * b(ra::insert<a.rank()>)) << endl;
 @end verbatim
 @end example
 
@@ -1564,7 +1580,7 @@ These are pointerlike types that are meant to be traversed linearly. They have m
 @section Term agreement
 @c ------------------------------------------------
 
-The execution of an expression template begins with the determination of its shape — the size of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined size (such as @code{TensorIndex} or view axes created with @code{newaxis}) are ignored. All the other terms must match.
+The execution of an expression template begins with the determination of its shape — the size of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined size (such as @code{TensorIndex} or view axes created with @code{insert}) are ignored. All the other terms must match.
 
 Then we select a traversal method depending on the types of the arguments. @code{ra::} has two traversal methods, both based on pointer-like iterators. @code{ply_ravel} is used for dynamic-size expressions and @code{plyf} for static-size expressions.
 
