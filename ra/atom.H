@@ -12,20 +12,16 @@
 #include "ra/type.H"
 #include <iostream>
 
-#ifndef RA_CHECK_BOUNDS_ATOM
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_ATOM 1
-  #else
-    #define RA_CHECK_BOUNDS_ATOM RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_ATOM==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
 namespace ra {
+
+template <class V> inline constexpr auto size(V const & v);
+template <class V> inline constexpr decltype(auto) shape(V const & v);
 
 template <int w_, class value_type=ra::dim_t>
 struct TensorIndexFlat
@@ -83,7 +79,6 @@ struct Scalar
     constexpr static dim_t size_s(int k) { return DIM_BAD; }
     constexpr static rank_t rank() { return 0; }
     constexpr static rank_t rank_s() { return 0; }
-    constexpr static auto shape() { return std::array<dim_t, 0> {}; }
 
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
@@ -115,13 +110,11 @@ struct Vector
     decltype(v.begin()) p__;
     static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
-    constexpr dim_t size() const { return traits::size(v); }
     constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return traits::size(v); }
     constexpr static dim_t size_s() { return traits::size_s(); }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr auto shape() const { return std::array<dim_t, 1> { traits::size(v) }; }
 
 // start() doesn't do this, but FIXME? Expr, etc. still does. See [ra35] in test/ra-9.C.
 // FIXME these should never be called to convert Vector<V> to Vector<V&> etc.
@@ -136,7 +129,7 @@ struct Vector
     template <class I>
     decltype(auto) at(I const & i)
     {
-        CHECK_BOUNDS(inside(i[0], this->size()));
+        CHECK_BOUNDS(inside(i[0], ra::size(v)));
         return p__[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
@@ -166,13 +159,11 @@ struct Ptr
 {
     P p__;
 
-    constexpr static dim_t size() { return DIM_BAD; }
     constexpr static dim_t size(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
     constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr static auto shape() { return std::array<dim_t, 1> { DIM_BAD }; }
 
     template <class I>
     constexpr decltype(auto) at(I && i)
@@ -203,20 +194,18 @@ struct Span
     P p__;
     dim_t n__;
 
-    constexpr dim_t size() const { return n__; }
     constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return n__; }
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr auto shape() const { return std::array<dim_t, 1> { n__ }; }
 
     constexpr Span(P p, dim_t n): p__(p), n__(n) {};
 
     template <class I>
     decltype(auto) at(I const & i)
     {
-        CHECK_BOUNDS(inside(i[0], this->size()));
+        CHECK_BOUNDS(inside(i[0], n__));
         return p__[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
@@ -258,13 +247,11 @@ struct Iota
         CHECK_BOUNDS(size>=0 && "Iota");
     }
 
-    constexpr dim_t size() const { return size_; } // this is a Slice function...
     constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return size_; }
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
-    constexpr auto shape() const { return std::array<dim_t, 1> { size_ }; }
 
     template <class I>
     constexpr decltype(auto) at(I const & i)
@@ -386,7 +373,7 @@ inline constexpr auto start(std::initializer_list<T> v)
     return ptr(v.begin(), v.size());
 }
 
-// forward declare for expr.H; implemented in small.H.
+// forward declare for match.H; implemented in small.H.
 template <class T, std::enable_if_t<is_builtin_array<T>, int> =0>
 inline constexpr auto start(T && t);
 
@@ -398,17 +385,47 @@ template <class A> using start_t = decltype(ra::start(std::declval<A>()));
 template <class A> using flat_t = decltype(*(ra::start(std::declval<A>()).flat()));
 template <class A> using value_t = std::decay_t<flat_t<A>>;
 
-// FIXME there should be default traits for all is_ra classes.
-template <class V, std::enable_if_t<is_ra<V>, int> =0> inline constexpr auto rank(V const & v) { return v.rank(); }
-template <class V, std::enable_if_t<!is_ra<V>, int> =0> inline constexpr auto rank(V const & v) { return ra_traits<V>::rank(v); }
-template <class V, std::enable_if_t<is_ra<V>, int> =0> inline constexpr auto size(V const & v) { return v.size(); }
-template <class V, std::enable_if_t<!is_ra<V>, int> =0> inline constexpr auto size(V const & v) { return ra_traits<V>::size(v); }
+// FIXME also have size_s() here
+template <class V>
+inline constexpr auto rank(V const & v)
+{
+    if constexpr (is_ra<V>) {
+        return v.rank();
+    } else {
+        return ra_traits<V>::rank(v);
+    }
+}
 
-// This should be used sparingly; prefer implicit matching.
-template <class V, std::enable_if_t<!has_traits<V>, int> =0> inline constexpr auto shape(V const & v) { return v.shape(); }
-template <class V, std::enable_if_t<has_traits<V>, int> =0> inline constexpr auto shape(V const & v) { return ra_traits<V>::shape(v); }
+template <class V>
+inline constexpr auto size(V const & v)
+{
+    if constexpr (is_ra<V>) {
+        return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
+    } else {
+        return ra_traits<V>::size(v);
+    }
+}
+
+// To be used sparingly; prefer implicit matching.
+template <class V>
+inline constexpr decltype(auto) shape(V const & v)
+{
+    if constexpr (has_traits<V>) {
+        return ra_traits<V>::shape(v);
+// FIXME version for static shape
+// FIXME would prefer to return the map directly (except maybe for static shapes)
+    } else if constexpr (constexpr rank_t rs=v.rank_s(); rs>=0) {
+        return ra::Small<dim_t, rs>(map([&v](int k) { return v.size(k); }, ra::iota(rs)));
+    } else {
+        static_assert(RANK_ANY==rs);
+        rank_t r = v.rank();
+        std::vector<dim_t> s(r);
+        for_each([&v, &s](int k) { s[k] = v.size(k); }, ra::iota(r));
+        return s;
+        // return map([this](int k) { return this->size(k); }, ra::iota(rank()));
+    }
+}
 
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_ATOM

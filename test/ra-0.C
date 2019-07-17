@@ -12,10 +12,8 @@
 #include <iterator>
 #include <numeric>
 #include <type_traits>
+#include "ra/ra.H"
 #include "ra/test.H"
-#include "ra/big.H"
-#include "ra/operators.H"
-#include "ra/io.H"
 #include "ra/mpdebug.H"
 
 // FIXME see usage below; this is deprecated. The frame matching mechanism is now in ra::Expr / ra::Pick.
@@ -83,8 +81,8 @@ void CheckArrayIO(TestRecorder & tr, A const & a, double * begin)
         A b;
         tr.test(bool(i));
         i >> b;
-        auto as = ra::ra_traits<A>::shape(a);
-        auto bs = ra::ra_traits<A>::shape(b);
+        auto as = ra::shape(a);
+        auto bs = ra::shape(b);
         tr.info("shape from '", o.str(), "'").test(std::equal(as.begin(), as.end(), bs.begin()));
         tr.info("content").test(std::equal(a.begin(), a.begin(), b.begin()));
     }
@@ -369,13 +367,13 @@ int main()
     {
         auto test = [&tr](auto && A)
             {
-                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, ra::ra_traits<decltype(A)>::shape(A));
-                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, A.iter().shape());
-                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, iter<0>(A).shape());
-                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, iter<-2>(A).shape());
-                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, iter<1>(A).shape());
-                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, iter<-1>(A).shape());
-                tr.test_eq(ra::Small<ra::dim_t, 0> {}, iter<2>(A).shape());
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, ra::shape(A));
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(A.iter()));
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(iter<0>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(iter<-2>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, shape(iter<1>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, shape(iter<-1>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 0> {}, shape(iter<2>(A)));
             };
         test(ra::Unique<double, 2>({6, 7}, ra::_0 - ra::_1));
         test(ra::Unique<double>({6, 7}, ra::_0 - ra::_1));

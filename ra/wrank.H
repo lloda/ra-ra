@@ -11,14 +11,7 @@
 #pragma once
 #include "ra/expr.H"
 
-#ifndef RA_CHECK_BOUNDS_WRANK
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_WRANK 1
-  #else
-    #define RA_CHECK_BOUNDS_WRANK RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_WRANK==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -327,4 +320,3 @@ auto from(A && a, I && ... i)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_WRANK

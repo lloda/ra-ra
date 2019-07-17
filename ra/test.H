@@ -27,6 +27,7 @@ constexpr char const * esc_blue = "\x1b[34m";
 constexpr char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
 constexpr char const * esc_plain = "\x1b[39m";
 constexpr char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
+constexpr char const * esc_pink = "\x1b[38;5;225m";
 
 struct TestRecorder
 {
@@ -56,7 +57,7 @@ struct TestRecorder
     template <class ... A> TestRecorder & info(A && ... a)
     {
         bool empty = (info_str=="");
-        info_str += esc_plain;
+        info_str += esc_pink;
         info_str += (empty ? "" : "; ");
         info_str += ra::format(a ...);
         info_str += esc_plain;

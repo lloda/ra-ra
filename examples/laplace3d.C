@@ -1,21 +1,19 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file laplace3d.C
+/// @brief Solve Poisson equation in a parallelepiped, with linear elements.
 
 // (c) Daniel Llorens - 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file laplace3d.C
-/// @brief Solve Poisson equation in a parallelepiped, with linear elements.
 // Adapted from lsolver/laplace3d.C by Christian Badura, 1998/05.
-
 // This benchmarks fairly close to the Cish original. We spend comparatively
 // less time in cghs than in laplace2d.C, so not using BLAS doesn't stand out as
 // much as it does there.
 
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 #include "examples/cghs.H"
 #include "ra/bench.H"

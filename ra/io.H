@@ -14,14 +14,7 @@
 #include <iosfwd>
 #include <sstream>
 
-#ifndef RA_CHECK_BOUNDS_IO
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_IO 1
-  #else
-    #define RA_CHECK_BOUNDS_IO RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_IO==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -39,9 +32,9 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
     auto a = ra::start(fa.a);
     static_assert(decltype(a)::size_s()!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
-    auto sha = ra_traits<decltype(a.shape())>::make(rank, 0);
+    auto sha = ra_traits<decltype(shape(a))>::make(rank, 0);
     auto ind = ra_traits<decltype(sha)>::make(rank, 0);
-    sha = a.shape();
+    sha = shape(a);
     if (withshape==fa.shape
         || (defaultshape==fa.shape && a.size_s()==DIM_ANY)) {
         o << start(sha) << '\n';
@@ -126,4 +119,3 @@ operator>>(std::istream & i, C & c)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_IO

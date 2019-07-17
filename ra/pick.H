@@ -16,14 +16,7 @@
 #include "ra/ply.H"
 #include "ra/match.H"
 
-#ifndef RA_CHECK_BOUNDS_PICK
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_PICK 1
-  #else
-    #define RA_CHECK_BOUNDS_PICK RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_PICK==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -186,4 +179,3 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_PICK

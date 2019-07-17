@@ -13,14 +13,7 @@
 #include <memory>
 #include <iostream>
 
-#ifndef RA_CHECK_BOUNDS_BIG
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_BIG 1
-  #else
-    #define RA_CHECK_BOUNDS_BIG RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_BIG==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -154,17 +147,6 @@ struct cell_iterator
 
     constexpr static dim_t size_s() { return 0==rank_s() ? 1 : DIM_ANY; }
     constexpr static dim_t size_s(int i) { /* CHECK_BOUNDS(inside(k, rank())); */return DIM_ANY; }
-
-    constexpr shape_type shape() const
-    {
-        rank_t iend = rank();
-        shape_type s(ra_traits<shape_type>::make(iend));
-        for (rank_t i=0; i!=iend; ++i) {
-            s[i] = dim[i].size;
-        }
-        return s;
-    }
-    constexpr dim_t size() const { return prod(map(std::mem_fn(&Dim::size), dim)); }
     constexpr dim_t size(int k) const { CHECK_BOUNDS(inside(k, rank())); return dim[k].size; }
     constexpr dim_t stride(int k) const { return k<rank() ? dim[k].stride : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
@@ -211,7 +193,7 @@ dim_t filldim(int n, D dend)
     dim_t next = 1;
     for (; n>0; --n) {
         --dend;
-        CHECK_BOUNDS((*dend).size>=0 && "filldim");
+        CHECK_BOUNDS((*dend).size>=0 && "bad dim");
         (*dend).stride = next;
         next *= (*dend).size;
     }
@@ -392,6 +374,7 @@ struct View
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
+    /* FIXME should this also take foreign vector? See big-0.C */       \
     template <class  I>                                                 \
     auto at(I && i) CONST                                               \
     {                                                                   \
@@ -401,7 +384,7 @@ struct View
             return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()),  /* Dimv is std::vector */ \
                     data() + Indexer1::index_p(dim, i) };               \
         } else {                                                        \
-            return Sub { typename Sub::Dimv(ptr(dim.begin()+i.size(0))),  /* Dimv is ra::Small */ \
+            return Sub { typename Sub::Dimv(ptr(dim.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
                     data() + Indexer1::index_p(dim, i) };               \
         }                                                               \
     }                                                                   \
@@ -438,8 +421,8 @@ struct ra_traits_def<View<T, RANK>>
     using V = View<T, RANK>;
     using value_type = T;
 
-    static auto shape(V const & v) { return v.iter().shape(); }
-    static dim_t size(V const & v) { return v.size(); }
+    static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
+    static dim_t size(V const & v) { return ra::size(v); }
     constexpr static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK; };
     constexpr static dim_t size_s() { return RANK==0 ? 1 : DIM_ANY; }
@@ -533,8 +516,8 @@ struct ra_traits_def<View<T, RANK_ANY>>
     using V = View<T, RANK_ANY>;
     using value_type = T;
 
-    static auto shape(V const & v) { return v.iter().shape(); }
-    static dim_t size(V const & v) { return v.size(); }
+    static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
+    static dim_t size(V const & v) { return ra::size(v); }
     static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK_ANY; };
     constexpr static dim_t size_s() { return DIM_ANY; }
@@ -828,4 +811,3 @@ Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_BIG

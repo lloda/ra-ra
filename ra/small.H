@@ -12,80 +12,13 @@
 #include "ra/expr.H"
 #include "ra/mpdebug.H"
 
-#ifndef RA_CHECK_BOUNDS_SMALL
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_SMALL 1
-  #else
-    #define RA_CHECK_BOUNDS_SMALL RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_SMALL==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 #endif
 
 namespace ra {
-
-
-// ---------------------
-// nested braces for Small initializers
-// ---------------------
-
-// The general SmallArray has 4 constructors,
-// 1. The empty constructor.
-// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which I don't think should be required purely for container use.
-// 3. The ravel constructor.
-// 4. The nested constructor.
-// When SmallArray has rank 1, or the first dimension is empty, or the shape is [1] or [], several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of no_arg.
-
-template <class T, class sizes, class Enable=void>
-struct nested_tuple;
-
-// ambiguity with empty constructor and scalar constructor.
-// if size(0) is 0, then prefer the empty constructor.
-// if size(0) is 1...
-template <class sizes> constexpr bool no_nested = (mp::first<sizes>::value<1);
-template <> constexpr bool no_nested<mp::nil> = true;
-template <> constexpr bool no_nested<mp::int_list<1>> = true;
-template <class T, class sizes>
-using nested_arg = std::conditional_t<no_nested<sizes>,
-                                      std::tuple<no_arg>, // match the template for SmallArray.
-                                      typename nested_tuple<T, sizes>::list>;
-
-// ambiguity with scalar constructors (for rank 0) and nested_tuple (for rank 1).
-template <class sizes> constexpr bool no_ravel = ((mp::len<sizes> <=1) || (mp::apply<mp::prod, sizes>::value <= 1));
-template <class T, class sizes>
-using ravel_arg = std::conditional_t<no_ravel<sizes>,
-                                     std::tuple<no_arg, no_arg>, // match the template for SmallArray.
-                                     mp::makelist<mp::apply<mp::prod, sizes>::value, T>>;
-
-template <class T, class sizes, class strides = default_strides<sizes>> struct SmallView; // for cell_iterator_small
-template <class T, class sizes, class strides = default_strides<sizes>,
-          class nested_arg_ = nested_arg<T, sizes>, class ravel_arg_ = ravel_arg<T, sizes>>
-struct SmallArray;
-template <class T, dim_t ... sizes> using Small = SmallArray<T, mp::int_list<sizes ...>>;
-
-template <class T>
-struct nested_tuple<T, mp::nil>
-{
-    using sub = no_arg;
-    using list = std::tuple<no_arg>; // match the template for SmallArray.
-};
-
-template <class T, int S0>
-struct nested_tuple<T, mp::int_list<S0>>
-{
-    using sub = T;
-    using list = mp::makelist<S0, T>;
-};
-
-template <class T, int S0, int S1, int ... S>
-struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
-{
-    using sub = Small<T, S1, S ...>;
-    using list = mp::makelist<S0, sub>;
-};
 
 
 // --------------------
@@ -168,9 +101,11 @@ struct cell_iterator_small
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 
+// FIXME these are in atom.H as free ra:: functions, but would like to take advantage of the specializations.
     constexpr static dim_t size() { return ra_traits<frame_type>::size_s(); }
     constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
     constexpr static auto const & shape() { return frame_type::Base::ssizes; }
+
     constexpr static dim_t size(int k) { CHECK_BOUNDS(inside(k, rank())); return V::size(k); }
     constexpr static dim_t size_s(int k) { /* CHECK_BOUNDS(inside(k, rank_s())); */ return V::size(k); }
     constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
@@ -269,7 +204,7 @@ struct STLIterator
     STLIterator(Iterator const & ii_): ii(ii_), i(ra::ra_traits<shape_type>::make(ii.rank(), 0))
     {
 // [ra12] Null p_ so begin()==end() for empty range. ply() uses sizes so this doesn't matter.
-        if (ii.c.p!=nullptr && 0==ii.size()) {
+        if (ii.c.p!=nullptr && 0==ra::size(ii)) {
             ii.c.p = nullptr;
         }
     };
@@ -804,4 +739,3 @@ auto explode(SmallBase<Child, T, sizes, strides> & a)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_SMALL

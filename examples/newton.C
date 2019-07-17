@@ -11,9 +11,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include "ra/io.H"
-#include "ra/operators.H"
-#include "ra/format.H"
+#include "ra/ra.H"
 
 using real = double;
 using real3 = ra::Small<real, 3>;

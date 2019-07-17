@@ -238,7 +238,11 @@ int main()
     {
         Ureal<2> a({4, 4}, 1.);
         a(3, 3) = 7.;
-        tr.test(every(ra::expr([](auto a, int i, int j) { return a==(i==3 && j==3 ? 7. : 1.); }, ra::start(a), ra::_0, ra::_1)));
+        tr.test(every(ra::map([](auto a, int i, int j)
+                              {
+                                  return a==(i==3 && j==3 ? 7. : 1.);
+                              },
+                    a, ra::_0, ra::_1)));
         tr.test_eq(where(ra::_0==3 && ra::_1==3, 7., 1.), a);
     }
 // The implementation of from() uses FrameMatch / ApplyFrames and can't handle this yet.

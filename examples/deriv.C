@@ -4,8 +4,7 @@
 // Adapted from blitz++/examples/deriv.cpp
 // Daniel Llorens - 2015
 
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include <iostream>
 
 using std::cout, std::endl, std::flush;
@@ -64,7 +63,7 @@ int main()
 
     // Now calculate the root mean square approximation error:
     // [ra] TODO don't have mean() yet
-    double error = sqrt(sum(sqr(y2(I) - y2exact(I)))/I.size());
+    double error = sqrt(sum(sqr(y2(I) - y2exact(I)))/size(I));
 
     // Display a few elements from the vectors.
     // This range constructor means elements 1 to 91 in increments

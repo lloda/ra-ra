@@ -15,14 +15,7 @@
 #include <algorithm>
 #include "ra/bootstrap.H"
 
-#ifndef RA_CHECK_BOUNDS_TRAITS
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_TRAITS 1
-  #else
-    #define RA_CHECK_BOUNDS_TRAITS RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_TRAITS==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -112,4 +105,3 @@ resize(A & a, dim_t k)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_TRAITS

@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 10, updated 2019 July 8)
+<!-- ra:: (version 10, updated 2019 July 17)
 
 (c) Daniel Llorens 2005-2019
 
@@ -102,7 +102,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="di
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 10, updated 2019 July 8)
+<p><code>ra::</code> (version 10, updated 2019 July 17)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2019
 </p>
@@ -371,15 +371,14 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 </div>
 <span id="Using-ra_003a_003a"></span><h3 class="section">2.1 Using <code>ra::</code></h3>
 
-<p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/operators.H&quot;</code> and <code>&quot;ra/io.H&quot;</code> at the top of your sources.
+<p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.H&quot;</code> at the top of your sources.
 </p>
 <p>A compiler with C++17 support is required. At the time of writing this means <b>gcc 8.0</b> or <b>clang-5.0</b> with <samp>-std=c++17</samp>. Check the top README.md for more up-to-date information.
 </p>
 <p>Here is a minimal program<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>:
 </p>
 <div class="example">
-<pre class="verbatim">#include &quot;ra/operators.H&quot;
-#include &quot;ra/io.H&quot;
+<pre class="verbatim">#include &quot;ra/ra.H&quot;
 #include &lt;iostream&gt;
 
 int main()
@@ -1439,29 +1438,45 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 
 <p>Some of these issues arise because <code>ra::</code> applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 </p>
-<span id="Assignment-to-views"></span><h3 class="section">4.1 Assignment to views</h3>
+<span id="Reuse-of-expression-objects"></span><h3 class="section">4.1 Reuse of expression objects</h3>
+
+<p>Expression objects are meant to be used once. This applies to anything produced with <code>ra::map</code>, <code>ra::iter</code>, <code>ra::start</code>, <code>ra::vector</code>, or <code>ra::ptr</code>. Reuse errors are <em>not</em> checked. For example:
+</p>
+<div class="example">
+<pre class="verbatim">    ra::Big&lt;int, 2&gt; B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
+    std::array&lt;int, 2&gt; l = { 1, 2 };
+    cout &lt;&lt; B(ra::vector(l), ra::vector(l)) &lt;&lt; endl; // ok =&gt; {{4 5} {7 8}}
+    auto ll = ra::vector(l);
+    cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ??
+</pre></div>
+
+<span id="Assignment-to-views"></span><h3 class="section">4.2 Assignment to views</h3>
 
 <p>FIXME
 With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
 </p>
-<span id="View-of-const-vs-const-view"></span><h3 class="section">4.2 View of const vs const view</h3>
+<span id="View-of-const-vs-const-view"></span><h3 class="section">4.3 View of const vs const view</h3>
 
 
 <p>FIXME
 Passing view arguments by reference
 </p>
-<span id="Array-iterators-and-temporaries"></span><h3 class="section">4.3 Array iterators and temporaries</h3>
-
-<p>FIXME
-</p>
 <span id="Rank-extension-in-assignments"></span><h3 class="section">4.4 Rank extension in assignments</h3>
 
-<p>Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches <code>a</code> and 3 [both of shape ()] with a vector of shape (3). This is equivalent to <code>{a=3+4; a=3+5; a=3+6;}</code>. You may get a different result depending on the order of traversal.
+<p>Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches <code>a</code> and 3 [both of shape ()] with a vector of shape (3). This is equivalent to <code>{a=3+4; a=3+5; a=3+6;}</code>. You may get a different result depending on traversal order.
 </p>
 <div class="example">
 <pre class="verbatim">int a = 0;
-ra::scalar(a) = 3 + ra::Small&lt;int, 3&gt; {4, 5, 6};
+ra::scalar(a) = 3 + ra::Small&lt;int, 3&gt; {4, 5, 6}; // ?
 </pre><pre class="example">  &rArr; a = 9
+</pre></div>
+
+<p>Compare with
+</p>
+<div class="example">
+<pre class="verbatim">int a = 0;
+ra::scalar(a) += 3 + ra::Small&lt;int, 3&gt; {4, 5, 6}; // 0 + 3 + 4 + 5 + 6
+</pre><pre class="example">  &rArr; a = 18
 </pre></div>
 
 <span id="Performance-pitfalls-of-rank-extension"></span><h3 class="section">4.5 Performance pitfalls of rank extension</h3>
@@ -1755,6 +1770,33 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
     ra::Big&lt;int, 2&gt; B = at(A, i);
 </pre><pre class="example">  &rArr; B = {{101, 120}, {110, 121}}
 </pre></div>
+
+<span id="index-shape"></span>
+<span id="x_002dshape"></span><dl>
+<dt id="index-shape-1">Function: <strong>shape</strong> <em>a</em></dt>
+<dd><p>Get the shape of an <code>ra::</code> object.
+</p></dd></dl>
+
+<p>The shape of a dynamic rank array is a rank-1 object with dynamic size, and the shape of a static rank array is a rank-1 object with static size.
+</p>
+<p>This function may return an expression object or an array object. If you need to operate on the result, it might be necessary to use <code>concrete</code>.
+</p>
+
+<span id="index-size"></span>
+<span id="x_002dsize"></span><dl>
+<dt id="index-size-1">Function: <strong>size</strong> <em>a</em></dt>
+<dd><p>Get the total size of an <code>ra::</code> object: the product of all its sizes.
+</p></dd></dl>
+
+
+<span id="index-concrete"></span>
+<span id="x_002dconcrete"></span><dl>
+<dt id="index-concrete-1">Function: <strong>concrete</strong> <em>a</em></dt>
+<dd><p>Convert the argument to a container of the same rank and size as <code>a</code>.
+</p></dd></dl>
+
+<p>If the argument has dynamic or static shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+</p>
 
 <span id="index-wrank"></span>
 <span id="x_002dwrank"></span><dl>
@@ -2259,6 +2301,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-cast"><code>cast</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cell">cell</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-collapse"><code>collapse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-concrete"><code>concrete</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-conj"><code>conj</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-container">container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-the-library">Using the library</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
@@ -2317,8 +2360,10 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-S">S</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-scalar"><code>scalar</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-shape"><code>shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-prefix">shape agreement, prefix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-suffix">shape agreement, suffix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-size"><code>size</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-sqr"><code>sqr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-sqrm"><code>sqrm</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-start"><code>start</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>

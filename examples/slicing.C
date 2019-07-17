@@ -2,8 +2,7 @@
 // Adapted from blitz++/examples/slicing.cpp
 // Daniel Llorens - 2015
 
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include <iostream>
 
 using std::cout; using std::endl; using std::flush;

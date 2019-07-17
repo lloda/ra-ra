@@ -10,8 +10,7 @@
 // standalone functions with separate names depending on the kind of indexing
 // they do.
 
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include <vector>
 #include <iostream>
 

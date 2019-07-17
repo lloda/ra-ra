@@ -4,8 +4,7 @@
 // Adapted from blitz++/examples/where.cpp
 // Daniel Llorens - 2015
 
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 
 using std::cout, std::endl, std::flush;

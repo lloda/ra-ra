@@ -12,8 +12,7 @@ Multidimensional arrays are containers that can be indexed in multiple dimension
 In this example ([examples/readme.C](examples/readme.C)), we add each element of a vector to each row of a matrix, and then print the result.
 
 ```c++
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include <iostream>
 
 int main()

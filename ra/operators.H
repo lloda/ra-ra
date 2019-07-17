@@ -10,20 +10,13 @@
 
 #pragma once
 // FIXME Dependence on specific ra:: types should maybe be elsewhere.
-#include "ra/view-ops.H"
-#include "ra/complex.H"
 #include "ra/global.H"
+#include "ra/complex.H"
 #include "ra/wrank.H"
 #include "ra/pick.H"
+#include "ra/view-ops.H"
 
-#ifndef RA_CHECK_BOUNDS_OPERATORS
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_OPERATORS 1
-  #else
-    #define RA_CHECK_BOUNDS_OPERATORS RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_OPERATORS==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -506,4 +499,3 @@ gemv(A const & a, B const & b)
 
 #undef OPTIMIZE
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_OPERATORS

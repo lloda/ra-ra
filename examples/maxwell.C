@@ -12,8 +12,7 @@
 #include <thread>
 #include <string>
 #include "ra/test.H"
-#include "ra/io.H"
-#include "ra/operators.H"
+#include "ra/ra.H"
 #include "ra/format.H"
 #include "ra/bench.H"
 

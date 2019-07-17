@@ -10,6 +10,7 @@
 
 #pragma once
 #include "ra/wedge.H"
+#include "ra/atom.H"
 
 // TODO All users be int, then this take int.
 // See also using std::abs, etc. in real.H.
@@ -22,7 +23,7 @@ template <class A,
 inline constexpr decltype(auto) transpose(A && a) { return std::forward<A>(a); }
 
 // We also define the scalar specializations that couldn't be found through ADL in any case. See complex.H, real.H.
-// In all honesty these seem unnecessary, just as I do ra::concrete() I could do ra::where(). FIXME
+// These seem unnecessary, just as I do ra::concrete() I could do ra::where(). FIXME
 
 template <int cell_rank>
 inline constexpr void iter() { abort(); }

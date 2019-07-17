@@ -72,7 +72,7 @@ int main()
         tr.test_eq(b.size(1), EXPR.size(1));
         tr.test_eq(b.size(2), EXPR.size(2));
         tr.test_eq(b.size(3), EXPR.size(3));
-        tr.test_eq(2*3*4*5, EXPR.size());
+        tr.test_eq(2*3*4*5, size(EXPR));
         static_assert(4==EXPR.rank_s());
         static_assert(b.size_s(0)==EXPR.size_s(0));
         static_assert(b.size_s(1)==EXPR.size_s(1));
@@ -101,7 +101,7 @@ int main()
         tr.test_eq(b.size(1), EXPR.size(1));
         tr.test_eq(b.size(2), EXPR.size(2));
         tr.test_eq(b.size(3), EXPR.size(3));
-        tr.test_eq(2*3*4*5, EXPR.size());
+        tr.test_eq(2*3*4*5, size(EXPR));
 // these _s are all static, but cannot Big cannot be constexpr yet.
 // also decltype(EXPR) fails until p0315r3 (c++20).
 // so check at runtime instead.
@@ -144,7 +144,7 @@ int main()
                         tr.test_eq(b.size(1), EXPR(a, b).size(1));
                         tr.test_eq(b.size(2), EXPR(a, b).size(2));
                         tr.test_eq(b.size(3), EXPR(a, b).size(3));
-                        tr.info("0-size()").test_eq(2*3*4*5, EXPR(a, b).size());
+                        tr.info("0-size()").test_eq(2*3*4*5, size(EXPR(a, b)));
                         tr.test_eq(ra::RANK_ANY, EXPR(a, b).rank_s());
                         tr.info("0s").test_eq(ra::DIM_ANY, EXPR(a, b).size_s());
                         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(0));
@@ -168,7 +168,7 @@ int main()
         tr.test_eq(a.size(1), EXPR(a, b).size(1));
         tr.test_eq(b.size(2), EXPR(a, b).size(2));
         tr.test_eq(b.size(3), EXPR(a, b).size(3));
-        tr.test_eq(2*3*4*4, EXPR(a, b).size());
+        tr.test_eq(2*3*4*4, size(EXPR(a, b)));
 // these _s are all static, but cannot Big cannot be constexpr yet.
 // also decltype(EXPR(a, b)) fails until p0315r3 (c++20).
 // so check at runtime instead.
@@ -222,7 +222,7 @@ int main()
         tr.test(every(EXPR));
         auto x = EXPR;
         static_assert(ra::DIM_ANY==decltype(x)::size_s());
-        tr.test_eq(10, (EXPR).size());
+        tr.test_eq(10, size(EXPR));
     }
     tr.section("DIM_BAD on any size_s(k) means size_s() is DIM_BAD");
     {

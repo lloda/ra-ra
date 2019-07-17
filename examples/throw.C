@@ -30,9 +30,8 @@ struct ra_error: public std::exception
 #define RA_ASSERT( cond, ... )                                          \
     { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", __VA_ARGS__); }
 
+#include "ra/ra.H"
 #include "ra/test.H"
-#include "ra/io.H"
-#include "ra/operators.H"
 #include <iostream>
 
 using std::cout, std::endl;

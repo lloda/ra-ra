@@ -11,14 +11,7 @@
 #pragma once
 #include "ra/bootstrap.H"
 
-#ifndef RA_CHECK_BOUNDS_MATCH
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_MATCH 1
-  #else
-    #define RA_CHECK_BOUNDS_MATCH RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_MATCH==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -243,28 +236,7 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
         }
     }
 
-// FIXME seems shape() and size() should be taken out.
-
-    constexpr decltype(auto) shape() const
-    {
-        if constexpr (rank_s()==RANK_ANY) {
-            std::vector<dim_t> s(rank());
-            for_each([this, &s](int k) { s[k] = this->size(k); }, ra::iota(rank()));
-            return s;
-            // return map([this](int k) { return this->size(k); }, ra::iota(rank()));
-        } else {
-            std::array<dim_t, rank_s()> s {};
-            for_each([this, &s](int k) { s[k] = this->size(k); }, ra::iota(rank_s()));
-            return s;
-        }
-    }
-
-    constexpr dim_t size()
-    {
-        dim_t c = 1;
-        for_each([&c](auto && a) { c *= a; }, this->shape());
-        return c;
-    }
+// FIXME seems size_s() should be taken out just like shape() and size().
 
     constexpr static dim_t size_s()
     {

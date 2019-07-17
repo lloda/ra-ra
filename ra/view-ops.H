@@ -12,14 +12,7 @@
 #include "ra/concrete.H"
 #include <complex>
 
-#ifndef RA_CHECK_BOUNDS_VIEW_OPS
-  #ifndef RA_CHECK_BOUNDS
-    #define RA_CHECK_BOUNDS_VIEW_OPS 1
-  #else
-    #define RA_CHECK_BOUNDS_VIEW_OPS RA_CHECK_BOUNDS
-  #endif
-#endif
-#if RA_CHECK_BOUNDS_VIEW_OPS==0
+#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
   #define CHECK_BOUNDS( cond )
 #else
   #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
@@ -55,9 +48,7 @@ View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
         dest.size = dest.size>=0 ? std::min(dest.size, view.dim[k].size) : view.dim[k].size;
         ++k;
     }
-    for (Dim const & dest: r.dim) {
-        CHECK_BOUNDS(dest.size!=DIM_BAD && "axes left unset");
-    }
+    CHECK_BOUNDS(every(map([](auto && dest) { return dest.size!=DIM_BAD; }, r.dim)) && "bad transpose axes");
     return r;
 }
 
@@ -299,4 +290,3 @@ bool const crm(A const & a)
 } // namespace ra
 
 #undef CHECK_BOUNDS
-#undef RA_CHECK_BOUNDS_VIEW_OPS

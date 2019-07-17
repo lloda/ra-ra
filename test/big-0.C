@@ -199,5 +199,12 @@ int main(int argc, char * * argv)
     //     tr.test_eq(33, a(1, 0));
     //     tr.test_eq(34, a(1, 1));
     // }
+// FIXME
+    // tr.section("at()");
+    // {
+    //     ra::Big<double, 2> a({3, 3}, ra::_0 + 10*ra::_1);
+    //     std::array<int, 2> b = {2, 2};
+    //     cout << a.at(b) << endl;
+    // }
     return tr.summary();
 }

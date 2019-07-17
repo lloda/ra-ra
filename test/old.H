@@ -114,7 +114,7 @@ subindexf(A & a, S & i_)
 template <class A> inline
 void plyf_index(A && a)
 {
-    using Shape = std::decay_t<decltype(a.shape())>;
+    using Shape = std::decay_t<decltype(shape(a))>;
     Shape i(ra_traits<Shape>::make(a.rank(), 0));
     subindexf<mp::iota<std::decay_t<A>::rank_s()>>(a, i); // cf with ply_index() for C order.
 }
