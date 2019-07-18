@@ -45,16 +45,16 @@ struct Indexer0
     constexpr static dim_t index_p(P const & p) // for Container::at().
     {
 // gcc accepts p.size(), but I also need P = std::array to work. See also below.
-        static_assert(mp::len<sizes> >= ra_traits<P>::size_s(), "too many indices");
-        return index_p_<ra_traits<P>::size_s(), 0>(0, p);
+        static_assert(mp::len<sizes> >= size_s<P>(), "too many indices");
+        return index_p_<size_s<P>(), 0>(0, p);
     }
-    template <class P, std::enable_if_t<ra_traits<P>::size_s()!=RANK_ANY, int> =0>
+    template <class P, std::enable_if_t<size_s<P>()!=RANK_ANY, int> =0>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
-        static_assert(mp::len<sizes> <= ra_traits<P>::size_s(), "too few indices");
+        static_assert(mp::len<sizes> <= size_s<P>(), "too few indices");
         return index_p_<mp::len<sizes>, 0>(0, p);
     }
-    template <class P, std::enable_if_t<ra_traits<P>::size_s()==RANK_ANY, int> =0>
+    template <class P, std::enable_if_t<size_s<P>()==RANK_ANY, int> =0>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
         CHECK_BOUNDS(mp::len<sizes> <= p.size());
@@ -100,11 +100,6 @@ struct cell_iterator_small
     constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
-
-// FIXME these are in atom.H as free ra:: functions, but would like to take advantage of the specializations.
-    constexpr static dim_t size() { return ra_traits<frame_type>::size_s(); }
-    constexpr static dim_t size_s() { return ra_traits<frame_type>::size_s(); }
-    constexpr static auto const & shape() { return frame_type::Base::ssizes; }
 
     constexpr static dim_t size(int k) { CHECK_BOUNDS(inside(k, rank())); return V::size(k); }
     constexpr static dim_t size_s(int k) { /* CHECK_BOUNDS(inside(k, rank_s())); */ return V::size(k); }
@@ -218,7 +213,7 @@ struct STLIterator
     {
         if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough :-/
             ii.c.p = nullptr;
-        } else if constexpr (DIM_ANY != Iterator::size_s()) {
+        } else if constexpr (DIM_ANY != ra::size_s<Iterator>()) {
             next_in_cube<Iterator::rank()-1, typename Iterator::sizes, typename Iterator::strides>(i, ii.c.p);
         } else {
             next_in_cube(ii.rank(), ii.dim, i, ii.c.p);
@@ -339,7 +334,7 @@ struct SmallBase
     template <class I>                                                  \
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \
-        return SmallView<T CONST, mp::drop<sizes, ra_traits<I>::size_s()>, mp::drop<strides, ra_traits<I>::size_s()>> \
+        return SmallView<T CONST, mp::drop<sizes, ra::size_s<I>()>, mp::drop<strides, ra::size_s<I>()>> \
             (data()+Indexer0<sizes, strides>::index_p(i));              \
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
@@ -601,9 +596,9 @@ struct ra_traits_def<T, std::enable_if_t<is_builtin_array<T>>>
 {
     using S = typename builtin_array_types<T>::view;
 // FIXME messy start()
-    constexpr static decltype(auto) shape(T const & t) { return start(t).shape(); }
-    constexpr static dim_t size(T const & t) { return S::size(); }
-    constexpr static dim_t size_s() { return S::size_s(); }
+    constexpr static decltype(auto) shape(T const & t) { return ra::shape(start(t)); }
+    constexpr static dim_t size(T const & t) { return ra::size_s<S>(); }
+    constexpr static dim_t size_s() { return ra::size_s<S>(); }
     constexpr static rank_t rank(T const & t) { return S::rank(); }
     constexpr static rank_t rank_s() { return S::rank_s(); }
 };
@@ -732,7 +727,7 @@ auto explode(SmallBase<Child, T, sizes, strides> & a)
     constexpr rank_t rb = super_t::rank_s();
     static_assert(std::is_same_v<mp::drop<sizes, ra-rb>, typename super_t::sizes>);
     static_assert(std::is_same_v<mp::drop<strides, ra-rb>, typename super_t::strides>);
-    using cstrides = mp::map<explode_divop<super_t::size_s()>::template op, mp::take<strides, ra-rb>>;
+    using cstrides = mp::map<explode_divop<ra::size_s<super_t>()>::template op, mp::take<strides, ra-rb>>;
     return SmallView<super_t, mp::take<sizes, ra-rb>, cstrides>((super_t *) a.data());
 }
 

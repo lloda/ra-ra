@@ -81,7 +81,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
     using scalar = decltype(*(ra::flat(op, std::get<I>(Match_::t).flat() ...)));
     operator scalar()
     {
-        if constexpr (this->rank_s()!=1 || this->size_s()!=1) { // for coord types; so fixed only
+        if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only
             if constexpr (this->rank_s()!=0) {
                 static_assert(this->rank_s()==RANK_ANY);
                 assert(this->rank()==0);

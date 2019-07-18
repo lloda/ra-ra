@@ -30,13 +30,13 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
 // work with ArrayIterator. FIXME note that this copies / resets the ArrayIterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
-    static_assert(decltype(a)::size_s()!=DIM_BAD, "cannot print type");
+    static_assert(size_s(a)!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
     auto sha = ra_traits<decltype(shape(a))>::make(rank, 0);
     auto ind = ra_traits<decltype(sha)>::make(rank, 0);
     sha = shape(a);
     if (withshape==fa.shape
-        || (defaultshape==fa.shape && a.size_s()==DIM_ANY)) {
+        || (defaultshape==fa.shape && size_s(a)==DIM_ANY)) {
         o << start(sha) << '\n';
     }
     for (rank_t k=0; k<rank; ++k) {
@@ -80,7 +80,7 @@ std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a)
 
 // Static size.
 template <class C> inline
-std::enable_if_t<!is_scalar<C> && ra_traits<C>::size_s()!=DIM_ANY, std::istream &>
+std::enable_if_t<!is_scalar<C> && size_s<C>()!=DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
 {
     for (auto & ci: c) { i >> ci; }
@@ -102,7 +102,7 @@ operator>>(std::istream & i, std::vector<T, A> & c)
 
 // Expr size, so read shape and possibly allocate (TODO try to avoid).
 template <class C> inline
-std::enable_if_t<ra_traits<C>::size_s()==DIM_ANY, std::istream &>
+std::enable_if_t<size_s<C>()==DIM_ANY, std::istream &>
 operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {

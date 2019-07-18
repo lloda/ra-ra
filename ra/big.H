@@ -145,7 +145,6 @@ struct cell_iterator
         }
     }
 
-    constexpr static dim_t size_s() { return 0==rank_s() ? 1 : DIM_ANY; }
     constexpr static dim_t size_s(int i) { /* CHECK_BOUNDS(inside(k, rank())); */return DIM_ANY; }
     constexpr dim_t size(int k) const { CHECK_BOUNDS(inside(k, rank())); return dim[k].size; }
     constexpr dim_t stride(int k) const { return k<rank() ? dim[k].stride : 0; }
@@ -272,7 +271,7 @@ dim_t proddim(D d, D dend)
         std::copy(x.begin(), x.end(), this->begin());                   \
         return *this;                                                   \
     }                                                                   \
-    bool const empty() const { return size()==0; } /* TODO Optimize */
+    bool const empty() const { return 0==size(); } /* TODO Optimize */
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
@@ -336,7 +335,6 @@ struct View
 
     constexpr static rank_t rank_s() { return RANK; };
     constexpr static rank_t rank() { return RANK; }
-    constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr static dim_t size_s(int j) { return DIM_ANY; }
     constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
     constexpr dim_t size(int j) const { return dim[j].size; }
@@ -378,7 +376,7 @@ struct View
     template <class  I>                                                 \
     auto at(I && i) CONST                                               \
     {                                                                   \
-        constexpr rank_t subrank = rank_diff(RANK, std::decay_t<I>::size_s());  /* gcc accepts i.size() */  \
+        constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>());  /* gcc accepts i.size() */ \
         using Sub = View<T CONST, subrank>;                             \
         if constexpr (subrank==RANK_ANY) {                              \
             return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()),  /* Dimv is std::vector */ \

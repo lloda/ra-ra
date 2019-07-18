@@ -20,11 +20,11 @@
 namespace ra {
 
 template <class E, class Enable=void> struct concrete_type_def_1;
-template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()==DIM_ANY>>
+template <class E> struct concrete_type_def_1<E, std::enable_if_t<size_s<E>()==DIM_ANY>>
 {
     using type = Big<value_t<E>, E::rank_s()>;
 };
-template <class E> struct concrete_type_def_1<E, std::enable_if_t<E::size_s()!=DIM_ANY>>
+template <class E> struct concrete_type_def_1<E, std::enable_if_t<size_s<E>()!=DIM_ANY>>
 {
     template <int N, class I=mp::iota<N>> struct T;
     template <int N, int ... I> struct T<N, mp::int_list<I ...>>
@@ -52,15 +52,11 @@ template <class E> inline auto concrete(E && e) { return concrete_type<E>(std::f
 // FIXME replace ra_traits::make
 
 template <class E, class X> inline auto
-with_same_shape(E && e, X && x) -> std::enable_if_t<is_scalar<concrete_type<E>>, concrete_type<E>>
+with_same_shape(E && e, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(std::forward<X>(x)); }
 
 template <class E, class X> inline auto
-with_same_shape(E && e, X && x) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(std::forward<X>(x)); }
-
-template <class E, class X> inline auto
-with_same_shape(E && e, X && x) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+with_same_shape(E && e, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(ra::shape(e), std::forward<X>(x)); }
 
 
@@ -69,28 +65,28 @@ with_same_shape(E && e) -> std::enable_if_t<is_scalar<concrete_type<E>>, concret
 { return concrete_type<E>(); }
 
 template <class E> inline auto
-with_same_shape(E && e) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
+with_same_shape(E && e) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(); }
 
 template <class E> inline auto
-with_same_shape(E && e) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+with_same_shape(E && e) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(ra::shape(e), ra::none); }
 
 
 template <class E, class S, class X> inline auto
-with_shape(S && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
+with_shape(S && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(std::forward<X>(x)); }
 
 template <class E, class S, class X> inline auto
-with_shape(S && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+with_shape(S && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(std::forward<S>(s), std::forward<X>(x)); }
 
 template <class E, class S, class X> inline auto
-with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()!=DIM_ANY, concrete_type<E>>
+with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(std::forward<X>(x)); }
 
 template <class E, class S, class X> inline auto
-with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<concrete_type<E>::size_s()==DIM_ANY, concrete_type<E>>
+with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
 { return concrete_type<E>(s, std::forward<X>(x)); }
 
 // template <class E>

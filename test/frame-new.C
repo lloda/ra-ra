@@ -78,7 +78,7 @@ int main()
         static_assert(b.size_s(1)==EXPR.size_s(1));
         static_assert(b.size_s(2)==EXPR.size_s(2));
         static_assert(b.size_s(3)==EXPR.size_s(3));
-        static_assert(2*3*4*5 == EXPR.size_s());
+        static_assert(2*3*4*5 == size_s(EXPR));
 #undef EXPR
     }
     // properly fails to compile, which we cannot check at present [ra42]
@@ -87,7 +87,7 @@ int main()
 //         ra::Small<int, 2, 3, 4> a = (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1);
 //         ra::Small<int, 2, 4, 4, 5> b = (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1);
 // #define EXPR expr([](auto && a, auto && b) { return a+b; }, start(a), start(b))
-//         tr.test_eq(2*3*4*5, EXPR.size_s());
+//         tr.test_eq(2*3*4*5, size_s(EXPR));
 //         tr.test_eq(3, EXPR.size_s(1));
 // #undef EXPR
 //     }
@@ -106,12 +106,11 @@ int main()
 // also decltype(EXPR) fails until p0315r3 (c++20).
 // so check at runtime instead.
         tr.test_eq(4, EXPR.rank_s());
-        tr.test_eq(ra::DIM_ANY, EXPR.size_s());
         tr.test_eq(ra::DIM_ANY, EXPR.size_s(0));
         tr.test_eq(ra::DIM_ANY, EXPR.size_s(1));
         tr.test_eq(ra::DIM_ANY, EXPR.size_s(2));
         tr.test_eq(ra::DIM_ANY, EXPR.size_s(3));
-        tr.test_eq(ra::DIM_ANY, EXPR.size_s());
+        tr.test_eq(ra::DIM_ANY, size_s(EXPR));
         cout << EXPR << endl;
 #undef EXPR
     }
@@ -146,12 +145,12 @@ int main()
                         tr.test_eq(b.size(3), EXPR(a, b).size(3));
                         tr.info("0-size()").test_eq(2*3*4*5, size(EXPR(a, b)));
                         tr.test_eq(ra::RANK_ANY, EXPR(a, b).rank_s());
-                        tr.info("0s").test_eq(ra::DIM_ANY, EXPR(a, b).size_s());
+                        tr.test_eq(ra::DIM_ANY, size_s(EXPR(a, b)));
                         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(0));
                         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(1));
                         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(2));
                         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(3));
-                        tr.info("0-size_s()").test_eq(ra::DIM_ANY, EXPR(a, b).size_s());
+                        tr.info("0-size_s()").test_eq(ra::DIM_ANY, size_s(EXPR(a, b)));
                     };
         test("sta-dyn", as, bd);
         test("dyn-sta", ad, bs);
@@ -173,12 +172,11 @@ int main()
 // also decltype(EXPR(a, b)) fails until p0315r3 (c++20).
 // so check at runtime instead.
         tr.test_eq(4, EXPR(a, b).rank_s());
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s());
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(0));
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(1));
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(2));
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(3));
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s());
+        tr.test_eq(ra::DIM_ANY, size_s(EXPR(a, b)));
         cout << EXPR(a, b) << endl;
 // value test.
         ra::Big<int, 4> c({2, 3, 4, 4}, 0);
@@ -221,18 +219,19 @@ int main()
 #define EXPR expr([](auto && a, auto && b) { return a==b; }, ra::_0*1 + ra::_1*0 + ra::_2*5 + 1, start(d))
         tr.test(every(EXPR));
         auto x = EXPR;
-        static_assert(ra::DIM_ANY==decltype(x)::size_s());
+        static_assert(ra::DIM_ANY==size_s(x));
+        static_assert(ra::DIM_ANY==ra::size_s(x));
         tr.test_eq(10, size(EXPR));
     }
     tr.section("DIM_BAD on any size_s(k) means size_s() is DIM_BAD");
     {
         using order = std::tuple<mp::int_t<0>, mp::int_t<1> >;
         using T0 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>, order>;
-        ra::dim_t s0 = T0::size_s();
+        ra::dim_t s0 = ra::size_s<T0>();
         using T1 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<1>, ra::Scalar<int>>, order>;
-        ra::dim_t s1 = T1::size_s();
+        ra::dim_t s1 = ra::size_s<T1>();
         using T2 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<2>, ra::Scalar<int>>, order>;
-        ra::dim_t s2 = T2::size_s();
+        ra::dim_t s2 = ra::size_s<T2>();
         tr.test_eq(ra::DIM_BAD, s0);
         tr.test_eq(ra::DIM_BAD, s1);
         tr.test_eq(ra::DIM_BAD, s2);

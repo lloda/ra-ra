@@ -231,7 +231,6 @@ struct Ryn<FM, Op, std::tuple<P ...>, mp::int_list<I ...>>
             abort(); return DIM_BAD;
         }
     }
-    constexpr static dim_t size_s() { return DIM_ANY; } // BUG [ra07]
     constexpr static dim_t size_s(int i) { return DIM_ANY; } // BUG [ra07]
     constexpr static rank_t rank() { return FM::depth; } // TODO Invalid for RANK_ANY [ra07]
     constexpr static rank_t rank_s() { return FM::depth; } // TODO Invalid for RANK_ANY [ra07]
@@ -286,7 +285,7 @@ struct index_rank_
 {
     using type = mp::int_t<std::decay_t<I>::rank_s()>; // see ra_traits for ra::types (?)
     static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
-    static_assert(std::decay_t<I>::size_s()!=DIM_BAD, "undelimited extent subscript unsupported");
+    static_assert(size_s<I>()!=DIM_BAD, "undelimited extent subscript unsupported");
 };
 
 template <class I> using index_rank = typename index_rank_<I>::type;

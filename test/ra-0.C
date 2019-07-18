@@ -12,8 +12,9 @@
 #include <iterator>
 #include <numeric>
 #include <type_traits>
-#include "ra/ra.H"
 #include "ra/test.H"
+#include "ra/big.H"
+#include "ra/ra.H"
 #include "ra/mpdebug.H"
 
 // FIXME see usage below; this is deprecated. The frame matching mechanism is now in ra::Expr / ra::Pick.
@@ -41,7 +42,7 @@ struct pick_driver
                     : ra<rb
                       ? 0
 // check by size
-                      : gt_size(A::size_s(), B::size_s());
+                      : gt_size(size_s<A>(), size_s<B>());
 
     constexpr static int value = value_ ? 0 : 1; // 0 if A wins over B, else 1
 };
@@ -420,8 +421,8 @@ int main()
         static_assert(TI<1>::rank_s()==2, "bad TI rank");
         static_assert(ra::pick_driver<TI<0>, TI<1> >::value==1, "bad driver 1c");
 
-        static_assert(UU<0>::size_s()==1, "bad size_s 0");
-        static_assert(SS::size_s()==1, "bad size_s 1");
+        static_assert(ra::size_s<UU<0>>()==1, "bad size_s 0");
+        static_assert(ra::size_s<SS>()==1, "bad size_s 1");
         static_assert(ra::pick_driver<UU<0>, SS>::value==0, "bad size_s 2");
 // static size/rank identical; prefer the first.
         static_assert(ra::driver_index<UU<0>, SS>::value==0, "bad match 1a");

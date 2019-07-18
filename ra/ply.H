@@ -167,7 +167,7 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 // this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_stride.
 // test/concrete.C has a case that shows this.
 // cf https://stackoverflow.com/questions/55288555
-    if constexpr(0 && std::decay_t<A>::size_s()>=0) {
+    if constexpr(0 && size_s<A>()>=0) {
         constexpr auto sj = ocd(a);
         constexpr auto s = std::get<0>(sj);
         constexpr auto j = std::get<1>(sj);
@@ -189,14 +189,14 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
 // ---------------------------
 
 template <class A> inline constexpr
-std::enable_if_t<(std::decay_t<A>::size_s()==DIM_ANY)>
+std::enable_if_t<(size_s<A>()==DIM_ANY)>
 ply(A && a)
 {
     ply_ravel(std::forward<A>(a));
 }
 
 template <class A> inline constexpr
-std::enable_if_t<(std::decay_t<A>::size_s()!=DIM_ANY)>
+std::enable_if_t<(size_s<A>()!=DIM_ANY)>
 ply(A && a)
 {
     plyf(std::forward<A>(a));

@@ -133,8 +133,10 @@ int main()
     }
     tr.section("adaptors");
     {
-        tr.test_eq(2, ra::start(std::array<int, 2> { 1, 2 }).size_s());
-        tr.test_eq(ra::DIM_ANY, ra::start(std::vector<int> { 1, 2, 3}).size_s());
+        tr.test_eq(2, size_s(ra::start(std::array<int, 2> { 1, 2 })));
+        tr.test_eq(2, ra::size_s(std::array<int, 2> { 1, 2 }));
+        tr.test_eq(ra::DIM_ANY, size_s(ra::start(std::vector<int> { 1, 2, 3})));
+        tr.test_eq(ra::DIM_ANY, ra::size_s(std::vector<int> { 1, 2, 3}));
         tr.test_eq(2, ra::start(std::array<int, 2> { 1, 2 }).size_s(0));
         tr.test_eq(ra::DIM_ANY, ra::start(std::vector<int> { 1, 2, 3 }).size_s(0));
         tr.test_eq(1, ra::start(std::array<int, 2> { 1, 2 }).rank_s());

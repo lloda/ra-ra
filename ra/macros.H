@@ -2,7 +2,7 @@
 /// @file macros.H
 /// @brief Fundamental macros and types.
 
-// (c) Daniel Llorens - 2005, 2012
+// (c) Daniel Llorens - 2005, 2012, 2019
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -14,15 +14,12 @@
 #include <type_traits>
 #include <utility>
 
-#define X_STRINGIZE(s) STRINGIZE_1(s)
-#define STRINGIZE_1(x) #x
-#define STRINGIZE(x) STRINGIZE_1(x)
-
-#define JOIN( X, Y ) DO_JOIN( X, Y )
-#define DO_JOIN( X, Y ) X##Y
+#define STRINGIZE1( x ) #x
+#define STRINGIZE( x ) STRINGIZE1( x )
+#define JOIN1( x, y ) x##y
+#define JOIN( x, y ) JOIN1( x, y )
 
 // by G. Pakosz @ http://stackoverflow.com/a/1872506
-// FIXME broken for 1 arg
 #define FOR_EACH_1(what, x, ...) what(x)
 #define FOR_EACH_2(what, x, ...) what(x) FOR_EACH_1(what, __VA_ARGS__)
 #define FOR_EACH_3(what, x, ...) what(x) FOR_EACH_2(what, __VA_ARGS__)
@@ -36,8 +33,8 @@
 #define FOR_EACH_NARG_(...) FOR_EACH_ARG_N(__VA_ARGS__)
 #define FOR_EACH_ARG_N(_1, _2, _3, _4, _5, _6, _7, _8, _9, N, ...) N
 #define FOR_EACH_RSEQ_N() 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
-#define FOR_EACH_(N, what, x, ...) JOIN(FOR_EACH_, N)(what, x, __VA_ARGS__)
-#define FOR_EACH(what, x, ...) FOR_EACH_(FOR_EACH_NARG(x, __VA_ARGS__), what, x, __VA_ARGS__)
+#define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
+#define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
 
 // FIXME use __VA_OPT__(,) or __VA_OPT__(&&) in c++20
 #ifndef RA_ASSERT

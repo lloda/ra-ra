@@ -39,7 +39,6 @@ struct TensorIndex
     static_assert(w_>=0, "bad TensorIndex");
     constexpr static int w = w_;
     constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn. rank.
-    constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t size_s(int k) { return DIM_BAD; }
@@ -75,7 +74,6 @@ struct Scalar
     C c;
 
     constexpr static dim_t size(int k) { assert(0); return DIM_BAD; } // used in shape checks with dynamic rank.
-    constexpr static dim_t size_s() { return 1; }
     constexpr static dim_t size_s(int k) { return DIM_BAD; }
     constexpr static rank_t rank() { return 0; }
     constexpr static rank_t rank_s() { return 0; }
@@ -111,7 +109,6 @@ struct Vector
     static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
     constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return traits::size(v); }
-    constexpr static dim_t size_s() { return traits::size_s(); }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
@@ -160,7 +157,6 @@ struct Ptr
     P p__;
 
     constexpr static dim_t size(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
-    constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
@@ -195,7 +191,6 @@ struct Span
     dim_t n__;
 
     constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return n__; }
-    constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
@@ -248,7 +243,6 @@ struct Iota
     }
 
     constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return size_; }
-    constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
@@ -385,20 +379,50 @@ template <class A> using start_t = decltype(ra::start(std::declval<A>()));
 template <class A> using flat_t = decltype(*(ra::start(std::declval<A>()).flat()));
 template <class A> using value_t = std::decay_t<flat_t<A>>;
 
-// FIXME also have size_s() here
+// FIXME there should be default traits for all is_ra classes.
 template <class V>
-inline constexpr auto rank(V const & v)
+constexpr rank_t rank(V const & v)
 {
-    if constexpr (is_ra<V>) {
-        return v.rank();
-    } else {
+    if constexpr (has_traits<V>) {
         return ra_traits<V>::rank(v);
+    } else {
+        return v.rank();
     }
+}
+
+template <class V_>
+constexpr dim_t size_s()
+{
+    using V = std::decay_t<V_>;
+    if constexpr (has_traits<V>) {
+        return ra_traits<V>::size_s();
+    } else {
+        if constexpr (V::rank_s()==RANK_ANY) {
+            return DIM_ANY;
+        } else {
+            ra::dim_t s = 1;
+            for (int i=0; i!=V::rank_s(); ++i) {
+                if (dim_t ss=V::size_s(i); ss>=0) {
+                    s *= ss;
+                } else {
+                    return ss; // either DIM_ANY or DIM_BAD
+                }
+            }
+            return s;
+        }
+    }
+}
+
+template <class V>
+constexpr dim_t size_s(V const & v)
+{
+    return size_s<V>();
 }
 
 template <class V>
 inline constexpr auto size(V const & v)
 {
+// FIXME should be has_traits but ra-0.C hangs (circular call most likely).
     if constexpr (is_ra<V>) {
         return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
     } else {

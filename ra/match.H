@@ -119,7 +119,7 @@ inline constexpr
 bool check_expr(E const & e)
 {
     using T = typename E::T;
-    if constexpr (E::size_s()==DIM_ANY) {
+    if constexpr (size_s(e)==DIM_ANY) {
         rank_t rs = e.rank();
         for (int k=0; k!=rs; ++k) {
             auto fi =
@@ -233,25 +233,6 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
             return f(f, mp::int_t<0> {});
         } else {
             return ss;
-        }
-    }
-
-// FIXME seems size_s() should be taken out just like shape() and size().
-
-    constexpr static dim_t size_s()
-    {
-        if constexpr (rank_s()==RANK_ANY) {
-            return DIM_ANY;
-        } else {
-            ra::dim_t s = 1;
-            for (int i=0; i!=rank_s(); ++i) {
-                if (dim_t ss=size_s(i); ss>=0) {
-                    s *= ss;
-                } else {
-                    return ss; // either DIM_ANY or DIM_BAD
-                }
-            }
-            return s;
         }
     }
 

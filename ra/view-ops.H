@@ -36,7 +36,7 @@ View<T, RANK> reverse(View<T, RANK> const & view, int k)
 template <class T, rank_t RANK, class S> inline
 View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
 {
-    CHECK_BOUNDS(view.rank()==dim_t(s.size()));
+    CHECK_BOUNDS(view.rank()==dim_t(ra::size(s)));
     auto rp = std::max_element(s.begin(), s.end());
     rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
 
@@ -114,7 +114,7 @@ template <class T, rank_t RANK> inline
 View<T, 1> ravel_free(View<T, RANK> const & a)
 {
     CHECK_BOUNDS(is_ravel_free(a));
-    return ra::View<T, 1>({{a.size(), a.stride(a.rank()-1)}}, a.p);
+    return ra::View<T, 1>({{size(a), a.stride(a.rank()-1)}}, a.p);
 }
 
 template <class T, rank_t RANK, class S> inline
@@ -123,12 +123,12 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
 // FIXME need variant of concrete to reduce expr without copying what is already concrete.
     auto sb = concrete(sb_);
 // FIXME when we need to copy, accept/return Shared
-    dim_t la = a.size();
+    dim_t la = size(a);
     dim_t lb = 1;
-    for (int i=0; i<sb.size(); ++i) {
+    for (int i=0; i<ra::size(sb); ++i) {
         if (sb[i]==-1) {
             dim_t quot = lb;
-            for (int j=i+1; j<sb.size(); ++j) {
+            for (int j=i+1; j<ra::size(sb); ++j) {
                 quot *= sb[j];
                 CHECK_BOUNDS(quot>0 && "cannot deduce dimensions");
             }
@@ -141,9 +141,9 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
             lb *= sb[i];
         }
     }
-    auto sa = ra_traits<View<T, RANK>>::shape(a);
+    auto sa = shape(a);
 // FIXME see if concrete_type can help with this ::make().
-    View<T, sb.size_s()> b { ra_traits<decltype(b.dim)>::make(sb.size(), Dim { DIM_BAD, 0 }), a.data() };
+    View<T, ra::size_s(sb)> b { ra_traits<decltype(b.dim)>::make(ra::size(sb), Dim { DIM_BAD, 0 }), a.data() };
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
@@ -284,7 +284,7 @@ auto collapse(View<super_t, RANK> const & a)
 template <class A> inline
 bool const crm(A const & a)
 {
-    return a.size()==0 || is_c_order(a);
+    return size(a)==0 || is_c_order(a);
 }
 
 } // namespace ra

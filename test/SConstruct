@@ -72,7 +72,7 @@ tester = ra.to_test_ra(env, variant_dir)
               'big-0', 'big-1', 'return-expr', 'reduction', 'frame-old', 'frame-new', 'compatibility',
               'dual', 'ra-dual', 'mem-fn', 'stl-compat', 'where', 'tuplelist', 'wedge',
               'operators', 'tensorindex', 'explode-0', 'wrank', 'optimize', 'reshape', 'concrete',
-              'bench', 'iterator-small', 'const', 'tensor-indices', 'list9', 'early',
+              'bench', 'iterator-small', 'const', 'tensor-indices', 'list9', 'early', 'macros',
               # 'end'
               ]]
 

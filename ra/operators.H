@@ -327,8 +327,8 @@ struct fromrank1
     decltype(auto) wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(FLAT(a))>, decltype(start(a))::size_s()> aa = a;
-    Small<std::decay_t<decltype(FLAT(b))>, decltype(start(b))::size_s()> bb = b;
+    Small<std::decay_t<decltype(FLAT(a))>, size_s(a)> aa = a;
+    Small<std::decay_t<decltype(FLAT(b))>, size_s(b)> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
@@ -350,8 +350,8 @@ DECL_WEDGE(general_case)
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(FLAT(a))>, decltype(start(a))::size_s()> aa = a;
-    Small<std::decay_t<decltype(FLAT(b))>, decltype(start(b))::size_s()> bb = b;
+    Small<std::decay_t<decltype(FLAT(a))>, size_s(a)> aa = a;
+    Small<std::decay_t<decltype(FLAT(b))>, size_s(b)> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
@@ -363,7 +363,7 @@ DECL_WEDGE(general_case)
 }
 #undef DECL_WEDGE
 
-template <class A, class B, std::enable_if_t<std::decay_t<A>::size_s()==2 && std::decay_t<B>::size_s()==2, int> =0>
+template <class A, class B, std::enable_if_t<size_s<A>()==2 && size_s<B>()==2, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
@@ -373,7 +373,7 @@ inline auto cross(A const & a_, B const & b_)
     return r[0];
 }
 
-template <class A, class B, std::enable_if_t<std::decay_t<A>::size_s()==3 && std::decay_t<B>::size_s()==3, int> =0>
+template <class A, class B, std::enable_if_t<size_s<A>()==3 && size_s<B>()==3, int> =0>
 inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;

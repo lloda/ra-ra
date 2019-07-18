@@ -34,7 +34,7 @@ int main()
         auto b = Benchmark {/* repeats */ 100, /* runs */ 10};
 
         auto vala = b.run(f, 1, 2);
-        cout << "empty: " << vala.empty() << endl;
+        cout << "empty: " << (ra::size(vala)==0) << endl;
         b.report(std::cout, vala, 1e-9);
 
         auto valb = b.run(f, ra::iota(3), ra::iota(10, 3));
@@ -52,7 +52,7 @@ int main()
         auto b = Benchmark {/* repeats */ 100, /* runs */ 10};
 
         auto vala = b.run_f(g, 1, 2);
-        cout << "empty: " << vala.empty() << endl;
+        cout << "empty: " << (ra::size(vala)==0) << endl;
         b.report(std::cout, vala, 1e-9);
 
         auto valb = b.run_f(g, ra::iota(3), ra::iota(10, 3));
