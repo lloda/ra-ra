@@ -11,6 +11,7 @@
 #pragma once
 #include "ra/atom.H"
 #include "ra/format.H"
+#include "ra/concrete.H"
 #include <iosfwd>
 #include <sstream>
 
@@ -28,15 +29,15 @@ namespace ra {
 template <class A> inline
 std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-// work with ArrayIterator. FIXME note that this copies / resets the ArrayIterator if fa.a already is one; see [ra35].
+// FIXME refactor with ply.H.
+// FIXME note that this copies / resets the ArrayIterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
     static_assert(size_s(a)!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
-    auto sha = ra_traits<decltype(shape(a))>::make(rank, 0);
-    auto ind = ra_traits<decltype(sha)>::make(rank, 0);
+    auto sha = concrete(shape(a));
+    auto ind = with_same_shape(sha, 0);
     sha = shape(a);
-    if (withshape==fa.shape
-        || (defaultshape==fa.shape && size_s(a)==DIM_ANY)) {
+    if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==DIM_ANY)) {
         o << start(sha) << '\n';
     }
     for (rank_t k=0; k<rank; ++k) {

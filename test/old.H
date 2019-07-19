@@ -64,7 +64,7 @@ template <class A> inline
 void ply_index(A && a)
 {
     rank_t const rank = a.rank();
-    auto ind(ra_traits<decltype(shape(a))>::make(rank, 0));
+    auto ind = with_same_shape(ra::shape(a), 0);
     dim_t sha[rank];
     rank_t order[rank];
     for (rank_t k=0; k<rank; ++k) {
@@ -114,8 +114,7 @@ subindexf(A & a, S & i_)
 template <class A> inline
 void plyf_index(A && a)
 {
-    using Shape = std::decay_t<decltype(shape(a))>;
-    Shape i(ra_traits<Shape>::make(a.rank(), 0));
+    auto i = with_same_shape(ra::shape(a), 0);
     subindexf<mp::iota<std::decay_t<A>::rank_s()>>(a, i); // cf with ply_index() for C order.
 }
 

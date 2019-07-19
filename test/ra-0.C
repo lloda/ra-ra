@@ -13,7 +13,6 @@
 #include <numeric>
 #include <type_traits>
 #include "ra/test.H"
-#include "ra/big.H"
 #include "ra/ra.H"
 #include "ra/mpdebug.H"
 
@@ -843,7 +842,7 @@ int main()
     {
         ra::Unique<double> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
         std::iota(a.begin(), a.end(), 0);
-        auto sa = ra::ra_traits<ra::Unique<double>>::shape(a);
+        auto sa = ra::shape(a);
         tr.test_eq(3, sa[0]);
         tr.test_eq(2, sa[1]);
         tr.test_eq(4, sa[2]);

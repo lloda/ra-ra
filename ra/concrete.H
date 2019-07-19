@@ -52,45 +52,44 @@ template <class E> inline auto concrete(E && e) { return concrete_type<E>(std::f
 // FIXME replace ra_traits::make
 
 template <class E, class X> inline auto
-with_same_shape(E && e, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(std::forward<X>(x)); }
-
-template <class E, class X> inline auto
-with_same_shape(E && e, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(ra::shape(e), std::forward<X>(x)); }
-
-
-template <class E> inline auto
-with_same_shape(E && e) -> std::enable_if_t<is_scalar<concrete_type<E>>, concrete_type<E>>
-{ return concrete_type<E>(); }
+with_same_shape(E && e, X && x)
+{
+    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+        return concrete_type<E>(std::forward<X>(x));
+    } else {
+        return concrete_type<E>(ra::shape(e), std::forward<X>(x));
+    }
+}
 
 template <class E> inline auto
-with_same_shape(E && e) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(); }
-
-template <class E> inline auto
-with_same_shape(E && e) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(ra::shape(e), ra::none); }
-
-
-template <class E, class S, class X> inline auto
-with_shape(S && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(std::forward<X>(x)); }
+with_same_shape(E && e)
+{
+    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+        return concrete_type<E>();
+    } else {
+        return concrete_type<E>(ra::shape(e), ra::none);
+    }
+}
 
 template <class E, class S, class X> inline auto
-with_shape(S && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(std::forward<S>(s), std::forward<X>(x)); }
+with_shape(S && s, X && x)
+{
+    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+        return concrete_type<E>(std::forward<X>(x));
+    } else {
+        return concrete_type<E>(std::forward<S>(s), std::forward<X>(x));
+    }
+}
 
 template <class E, class S, class X> inline auto
-with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()!=DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(std::forward<X>(x)); }
-
-template <class E, class S, class X> inline auto
-with_shape(std::initializer_list<S> && s, X && x) -> std::enable_if_t<size_s<concrete_type<E>>()==DIM_ANY, concrete_type<E>>
-{ return concrete_type<E>(s, std::forward<X>(x)); }
-
-// template <class E>
-// struct ra_traits_def<E, std::enable_if_t<is_ra<E>>>: public ra_traits_def<concrete_type<E>> {};
+with_shape(std::initializer_list<S> && s, X && x)
+{
+    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+        return concrete_type<E>(std::forward<X>(x));
+    } else {
+        return concrete_type<E>(s, std::forward<X>(x));
+    }
+}
 
 } // namespace ra
 

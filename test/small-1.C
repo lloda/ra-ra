@@ -13,11 +13,7 @@
 #include <iostream>
 #include <iterator>
 #include "ra/complex.H"
-#include "ra/small.H"
-#include "ra/operators.H"
-#include "ra/io.H"
-#include "ra/big.H"
-#include "ra/format.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 #include "ra/mpdebug.H"
 #include "test/old.H"

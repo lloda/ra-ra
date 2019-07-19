@@ -422,11 +422,10 @@ constexpr dim_t size_s(V const & v)
 template <class V>
 inline constexpr auto size(V const & v)
 {
-// FIXME should be has_traits but ra-0.C hangs (circular call most likely).
-    if constexpr (is_ra<V>) {
-        return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
-    } else {
+    if constexpr (has_traits<V>) {
         return ra_traits<V>::size(v);
+    } else {
+        return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
     }
 }
 

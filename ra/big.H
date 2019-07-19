@@ -420,7 +420,7 @@ struct ra_traits_def<View<T, RANK>>
     using value_type = T;
 
     static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
-    static dim_t size(V const & v) { return ra::size(v); }
+    static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK; };
     constexpr static dim_t size_s() { return RANK==0 ? 1 : DIM_ANY; }
@@ -515,7 +515,7 @@ struct ra_traits_def<View<T, RANK_ANY>>
     using value_type = T;
 
     static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
-    static dim_t size(V const & v) { return ra::size(v); }
+    static dim_t size(V const & v) { return v.size(); }
     static rank_t rank(V const & v) { return v.rank(); }
     constexpr static rank_t rank_s() { return RANK_ANY; };
     constexpr static dim_t size_s() { return DIM_ANY; }

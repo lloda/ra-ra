@@ -40,7 +40,7 @@ View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
     auto rp = std::max_element(s.begin(), s.end());
     rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
 
-    View<T, RANK_ANY> r { ra_traits<decltype(r.dim)>::make(dstrank, Dim { DIM_BAD, 0 }), view.data() };
+    View<T, RANK_ANY> r { decltype(r.dim)(dstrank, Dim { DIM_BAD, 0 }), view.data() };
     int k = 0;
     for (int sk: s) {
         Dim & dest = r.dim[sk];
@@ -76,7 +76,7 @@ auto transpose(View<T, RANK> const & view)
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
     constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
 
-    View<T, DSTRANK> r { ra_traits<decltype(r.dim)>::make(DSTRANK, Dim { DIM_BAD, 0 }), view.data() };
+    View<T, DSTRANK> r { decltype(r.dim)(Dim { DIM_BAD, 0 }), view.data() };
     int k = 0;
     std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
     for (int sk: s) {
@@ -123,7 +123,7 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
 // FIXME need variant of concrete to reduce expr without copying what is already concrete.
     auto sb = concrete(sb_);
 // FIXME when we need to copy, accept/return Shared
-    dim_t la = size(a);
+    dim_t la = ra::size(a);
     dim_t lb = 1;
     for (int i=0; i<ra::size(sb); ++i) {
         if (sb[i]==-1) {
@@ -284,7 +284,7 @@ auto collapse(View<super_t, RANK> const & a)
 template <class A> inline
 bool const crm(A const & a)
 {
-    return size(a)==0 || is_c_order(a);
+    return ra::size(a)==0 || is_c_order(a);
 }
 
 } // namespace ra

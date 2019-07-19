@@ -9,11 +9,8 @@
 // later version.
 
 #include <iostream>
+#include "ra/ra.H"
 #include "ra/test.H"
-#include "ra/big.H"
-#include "ra/operators.H"
-#include "ra/view-ops.H"
-#include "ra/io.H"
 #include "ra/mpdebug.H"
 
 using std::cout, std::endl, std::flush;

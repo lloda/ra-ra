@@ -10,10 +10,7 @@
 
 #include <iostream>
 #include <iterator>
-#include "ra/operators.H"
-#include "ra/io.H"
-#include "ra/view-ops.H"
-#include "ra/format.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 
 using std::cout, std::endl, std::flush;
