@@ -98,7 +98,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
         cout << sizeof(af0) << endl;
         cout << sizeof(af1) << endl;
         {
-            auto ryn = ra::ryn<FM>(FM::op(v), af0, af1);
+            auto ryn = ra::expr(FM::op(v), af0, af1);
             cout << sizeof(ryn) << endl;
             cout << "ryn rank: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {
@@ -110,12 +110,12 @@ void nested_wrank_demo(V && v, A && a, B && b)
             ra::ply_ravel(ryn);
             cout << endl;
             cout << "\nusing (ryn &&):\n";
-            ra::ply_ravel(ra::ryn<FM>(FM::op(v), af0, af1));
+            ra::ply_ravel(ra::expr(FM::op(v), af0, af1));
         }
         {
             // cout << mp::show_type<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
             auto ryn = ra::expr(v, a.iter(), b.iter());
-            cout << "ryn.shape(): " << ra::noshape << ryn.shape() << endl;
+            cout << "shape(ryn): " << ra::noshape << shape(ryn) << endl;
 #define TEST(plier)                                                     \
             cout << "\n\nusing " STRINGIZE(plier) " (ryn &):\n";        \
             ra::plier(ryn);                                             \
@@ -167,7 +167,7 @@ int main()
             auto af1 = ra::applyframes<mp::ref<FM::R, 1>, FM::depth>(b.iter());
             cout << sizeof(af0) << endl;
             cout << sizeof(af1) << endl;
-            auto ryn = ra::ryn<FM>(FM::op(v), af0, af1);
+            auto ryn = expr(FM::op(v), af0, af1);
             cout << sizeof(ryn) << "\n" << endl;
             cout << "ryn rank: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {

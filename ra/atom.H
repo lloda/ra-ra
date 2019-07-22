@@ -140,7 +140,7 @@ struct Vector
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
@@ -168,14 +168,14 @@ struct Ptr
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        CHECK_BOUNDS(d==1 || d<0); // cf Vector::adv
+        CHECK_BOUNDS(d==1 || d<0);
         std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
@@ -195,8 +195,6 @@ struct Span
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
-    constexpr Span(P p, dim_t n): p__(p), n__(n) {};
-
     template <class I>
     decltype(auto) at(I const & i)
     {
@@ -206,13 +204,13 @@ struct Span
     constexpr void adv(rank_t k, dim_t d)
     {
         CHECK_BOUNDS(d==1 || d<0);
-        p__ += (k==0) * d;
+        std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS

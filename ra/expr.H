@@ -32,8 +32,8 @@ struct Flat<Op, T, mp::int_list<I ...>>
     constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
 };
 
-template <class Op, class ... P> inline constexpr
-auto flat(Op & op, P && ... p)
+template <class Op, class ... P> inline constexpr auto
+flat(Op & op, P && ... p)
 {
     return Flat<Op, std::tuple<P ...>> { op, std::tuple<P ...> { std::forward<P>(p) ... } };
 }
@@ -66,13 +66,14 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
 // see test/ra-9.C [ra01] for forward() here.
     constexpr Expr(Op op_, P ... p_): Match_(std::forward<P>(p_) ...), op(std::forward<Op>(op_)) {}
 
-    template <class J>
-    constexpr decltype(auto) at(J const & i)
+    template <class J> constexpr decltype(auto)
+    at(J const & i)
     {
         return op(std::get<I>(this->t).at(i) ...);
     }
 
-    constexpr decltype(auto) flat()
+    constexpr decltype(auto)
+    flat()
     {
         return ra::flat(op, std::get<I>(this->t).flat() ...);
     }

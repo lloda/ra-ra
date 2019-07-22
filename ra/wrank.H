@@ -122,7 +122,6 @@ struct zerostride<std::tuple<T ...>>
 };
 
 // Wraps each argument of an expression using wrank.
-// no shape(), size_s(), rank_s(), rank() -> this is above.
 template <class LiveAxes, int depth, class A>
 struct ApplyFrames
 {
@@ -158,13 +157,22 @@ struct ApplyFrames
         return wz>=0 && wj>=0 && a.keep_stride(step, wz, wj);
     }
     constexpr decltype(auto) flat() { return a.flat(); }
+
+    constexpr static dim_t size_s(int k)
+    {
+        int l = live(k);
+        return l>=0 ? std::decay_t<A>::size_s(l) : DIM_BAD;
+    }
+
+    constexpr static rank_t rank() { return depth; } // TODO Invalid for RANK_ANY [ra07]
+    constexpr static rank_t rank_s() { return depth; } // TODO Invalid for RANK_ANY [ra07]
 };
 
+// No-op case. TODO Maybe apply to any Iota<n> where n<=depth.
+// TODO If A is cell_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
 template <class LiveAxes, int depth, class A>
 decltype(auto) applyframes(A && a)
 {
-// No-op case. TODO Maybe apply to any Iota<n> where n<=depth.
-// TODO If A is cell_iterator, etc. beat LiveAxes directly on that... same for an eventual transpose_expr<>.
     if constexpr (std::is_same_v<LiveAxes, mp::iota<depth>>) {
         return std::forward<A>(a);
     } else {
@@ -172,97 +180,12 @@ decltype(auto) applyframes(A && a)
     }
 }
 
-// like Expr, except don't do driver selection here, but leave it to the args. The args may need to be ApplyFrames... don't know yet.
-// forward decl in atom.H.
-template <class FM, class Op, class ... P, int ... I>
-struct Ryn<FM, Op, std::tuple<P ...>, mp::int_list<I ...>>
-{
-    Op op;
-    std::tuple<P ...> t;
-
-    template <int iarg>
-    constexpr bool check()
-    {
-        for (int k=0; k!=rank(); ++k) { // TODO with static rank or sizes, can peval.
-            dim_t s0 = size(k);
-            dim_t sk = std::get<iarg>(t).size(k);
-            if (sk!=s0 && sk!=DIM_BAD) { // TODO See Match::check(); maybe just sk>=0.
-                return false;
-            }
-        }
-        return true;
-    }
-    constexpr Ryn(Op op_, P ... t_): op(std::forward<Op>(op_)), t(std::forward<P>(t_) ...)
-    {
-        CHECK_BOUNDS((check<I>() && ... ) && "mismatched shapes");
-    }
-
-    template <class J>
-    constexpr decltype(auto) at(J const & i)
-    {
-        return op(std::get<I>(t).at(i) ...);
-    }
-    constexpr void adv(rank_t k, dim_t d)
-    {
-        (std::get<I>(t).adv(k, d), ...);
-    }
-    constexpr bool keep_stride(dim_t step, int z, int j) const
-    {
-        return (std::get<I>(t).keep_stride(step, z, j) && ...);
-    }
-    constexpr auto stride(int i) const
-    {
-        return std::make_tuple(std::get<I>(t).stride(i) ...);
-    }
-    constexpr auto flat()
-    {
-        return ra::flat(op, std::get<I>(t).flat() ...);
-    }
-
-// Use the first arg that gives size(k)>=0; valid by ApplyFrame.
-// TODO if k were static, we could pick the driving arg from axisdrivers. Only need bool from that.
-    template <int iarg=0>
-    constexpr dim_t size(int k) const
-    {
-        if constexpr (iarg<sizeof...(P)) {
-            dim_t s = std::get<iarg>(t).size(k);
-            return s>=0 ? s : size<iarg+1>(k);
-        } else {
-            abort(); return DIM_BAD;
-        }
-    }
-    constexpr static dim_t size_s(int i) { return DIM_ANY; } // BUG [ra07]
-    constexpr static rank_t rank() { return FM::depth; } // TODO Invalid for RANK_ANY [ra07]
-    constexpr static rank_t rank_s() { return FM::depth; } // TODO Invalid for RANK_ANY [ra07]
-    constexpr auto shape() const
-    {
-        std::array<dim_t, FM::depth> s {};
-        for (int k=0; k!=FM::depth; ++k) {
-            s[k] = size(k);
-            CHECK_BOUNDS(s[k]!=DIM_BAD);
-        }
-        return s;
-    }
-
-// forward to make sure value y is not misused as ref [ra05]
-#define DEF_RYN_ASSIGNOPS(OP)                                           \
-    template <class X> void operator OP(X && x)                         \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_RYN_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_RYN_ASSIGNOPS
-};
-
-template <class FM, class Op, class ... T> inline constexpr
-auto ryn(Op && op, T && ... t)
-{
-    return Ryn<FM, Op, std::tuple<T ...>> { std::forward<Op>(op), std::forward<T>(t) ... }; // (note 1)
-}
-
 template <class V, class ... T, int ... i> inline constexpr
-auto number_ryn(mp::int_list<i ...>, V && v, T && ... t)
+auto ryn(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return ryn<FM>(FM::op(std::forward<V>(v)), applyframes<mp::ref<typename FM::R, i>, FM::depth>(std::forward<T>(t)) ...);
+    return expr(FM::op(std::forward<V>(v)),
+                applyframes<mp::ref<typename FM::R, i>, FM::depth>(std::forward<T>(t)) ...);
 }
 
 // TODO partial specialization means no universal ref :-/
@@ -270,7 +193,7 @@ auto number_ryn(mp::int_list<i ...>, V && v, T && ... t)
     template <class cranks, class Op, class ... P> inline constexpr     \
     auto expr(Verb<cranks, Op> MOD v, P && ... t)                       \
     {                                                                   \
-        return number_ryn(mp::iota<sizeof...(P)> {}, std::forward<decltype(v)>(v), std::forward<P>(t) ...); \
+        return ryn(mp::iota<sizeof...(P)> {}, std::forward<decltype(v)>(v), std::forward<P>(t) ...); \
     }
 FOR_EACH(DEF_EXPR_VERB, &&, &, const &)
 #undef DEF_EXPR_VERB

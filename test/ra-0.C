@@ -387,11 +387,9 @@ int main()
         ra::View<double> s { {{3, 1}, {2, 3}}, spool };
 
         std::copy(r.begin(), r.end(), s.begin());
-        std::copy(spool, spool+6, std::ostream_iterator<double>(cout, " "));
 
         double cpool[6] = { 1, 3, 5, 2, 4, 6 };
         tr.test(std::equal(cpool, cpool+6, spool));
-        cout << endl;
     }
     tr.section("storage types");
     {

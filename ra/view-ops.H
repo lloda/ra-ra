@@ -120,8 +120,7 @@ View<T, 1> ravel_free(View<T, RANK> const & a)
 template <class T, rank_t RANK, class S> inline
 auto reshape_(View<T, RANK> const & a, S && sb_)
 {
-// FIXME need variant of concrete to reduce expr without copying what is already concrete.
-    auto sb = concrete(sb_);
+    auto sb = concrete(std::forward<S>(sb_));
 // FIXME when we need to copy, accept/return Shared
     dim_t la = ra::size(a);
     dim_t lb = 1;
@@ -142,8 +141,8 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
         }
     }
     auto sa = shape(a);
-// FIXME see if concrete_type can help with this ::make().
-    View<T, ra::size_s(sb)> b { ra_traits<decltype(b.dim)>::make(ra::size(sb), Dim { DIM_BAD, 0 }), a.data() };
+// FIXME should be able to reshape Scalar etc.
+    View<T, ra::size_s(sb)> b(map([](auto i) { return Dim { DIM_BAD, 0 }; }, ra::iota(ra::size(sb))), a.data());
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {

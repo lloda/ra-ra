@@ -118,8 +118,8 @@ struct PickFlat<std::tuple<P0, P ...>, mp::int_list<I ...>>
     decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
 };
 
-template <class P0, class ... P> inline constexpr
-auto pick_flat(P0 && p0, P && ... p)
+template <class P0, class ... P> inline constexpr auto
+pick_flat(P0 && p0, P && ... p)
 {
     return PickFlat<std::tuple<P0, P ...>> { std::tuple<P0, P ...> { std::forward<P0>(p0), std::forward<P>(p) ... } };
 }
@@ -145,13 +145,14 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
 // see test/ra-9.C [ra01] for forward() here.
     constexpr Pick(P0 p0_, P ... p_): Match_(std::forward<P0>(p0_), std::forward<P>(p_) ...) {}
 
-    template <class J>
-    constexpr decltype(auto) at(J const & j)
+    template <class J> constexpr decltype(auto)
+    at(J const & j)
     {
         return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
     }
 
-    constexpr auto flat()
+    constexpr auto
+    flat()
     {
         return pick_flat(std::get<I>(this->t).flat() ...);
     }
@@ -170,7 +171,7 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
     }
 
 // forward to make sure value y is not misused as ref [ra05]
-#define DEF_ASSIGNOPS(OP) template <class X> void operator OP(X && x) \
+#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
     { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
