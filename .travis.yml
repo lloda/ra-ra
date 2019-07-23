@@ -1,5 +1,5 @@
 
-dist: trusty
+dist: bionic
 sudo: required
 language: cpp
 
@@ -8,7 +8,6 @@ script:
 
 matrix:
   include:
-   # works on Precise and Trusty
    - os: linux
      addons:
        apt:
@@ -21,4 +20,6 @@ matrix:
        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
 
 before_install:
+    - sudo apt-get install scons
+    - sudo apt-get install g++-8
     - eval "${MATRIX_EVAL}"
