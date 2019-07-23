@@ -23,20 +23,18 @@
 
 namespace ra {
 
-// After old.H/ply_index(). TODO merge with that (?) or use ply_ravel, but should control order.
+// TODO merge with ply_ravel @ ply.H, but should control order.
 // TODO custom spacers at turn of dimension.
 // is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
 template <class A> inline
 std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-// FIXME refactor with ply.H.
 // FIXME note that this copies / resets the ArrayIterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
     static_assert(size_s(a)!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
     auto sha = concrete(shape(a));
     auto ind = with_same_shape(sha, 0);
-    sha = shape(a);
     if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==DIM_ANY)) {
         o << start(sha) << '\n';
     }

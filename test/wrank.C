@@ -16,11 +16,8 @@
 #include "ra/mpdebug.H"
 #include "ra/complex.H"
 #include "ra/format.H"
+#include "ra/ra.H"
 #include "ra/test.H"
-#include "ra/big.H"
-#include "ra/wrank.H"
-#include "ra/operators.H"
-#include "ra/io.H"
 #include "test/old.H"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::dim_t;

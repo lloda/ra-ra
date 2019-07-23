@@ -372,14 +372,13 @@ struct View
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
-    /* FIXME should this also take foreign vector? See big-0.C */       \
     template <class  I>                                                 \
     auto at(I && i) CONST                                               \
     {                                                                   \
         constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>());  /* gcc accepts i.size() */ \
         using Sub = View<T CONST, subrank>;                             \
         if constexpr (subrank==RANK_ANY) {                              \
-            return Sub { typename Sub::Dimv(dim.begin()+i.size(0), dim.end()),  /* Dimv is std::vector */ \
+            return Sub { typename Sub::Dimv(dim.begin()+ra::size(i), dim.end()),  /* Dimv is std::vector */ \
                     data() + Indexer1::index_p(dim, i) };               \
         } else {                                                        \
             return Sub { typename Sub::Dimv(ptr(dim.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
