@@ -7,16 +7,16 @@
 // later version.
 
 /// @file bench-optimize.H
-/// @brief Benchmark RA_OPTIMIZE_SMALLVECTOR (DNW)
+/// @brief Benchmark RA_DO_OPT_SMALLVECTOR (DNW)
 // TODO Everything...
 
-#define RA_OPTIMIZE 0 // disable automatic use, so we can compare with (forced) and without
-#define RA_OPTIMIZE_IOTA 1
+#define RA_DO_OPT 0 // disable automatic use, so we can compare with (forced) and without
+#define RA_DO_OPT_IOTA 1
 
-#ifdef RA_OPTIMIZE_SMALLVECTOR // bench requires 1 to be meaningful.
-#undef RA_OPTIMIZE_SMALLVECTOR
+#ifdef RA_DO_OPT_SMALLVECTOR // bench requires 1 to be meaningful.
+#undef RA_DO_OPT_SMALLVECTOR
 #endif
-#define RA_OPTIMIZE_SMALLVECTOR 1
+#define RA_DO_OPT_SMALLVECTOR 1
 
 #include "ra/operators.H"
 #include "ra/test.H"

@@ -12,12 +12,6 @@
 #include "ra/expr.H"
 #include "ra/mpdebug.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 
@@ -38,7 +32,7 @@ struct Indexer0
     template <rank_t end, rank_t k, class P>
     constexpr static std::enable_if_t<(k<end), dim_t> index_p_(dim_t const c, P const & p)
     {
-        CHECK_BOUNDS(inside(p[k], mp::first<sizes>::value));
+        RA_CHECK(inside(p[k], mp::first<sizes>::value));
         return Indexer0<mp::drop1<sizes>, mp::drop1<strides>>::template index_p_<end, k+1>(c + p[k] * mp::first<strides>::value, p);
     }
     template <class P>
@@ -57,7 +51,7 @@ struct Indexer0
     template <class P, std::enable_if_t<size_s<P>()==RANK_ANY, int> =0>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
-        CHECK_BOUNDS(mp::len<sizes> <= p.size());
+        RA_CHECK(mp::len<sizes> <= p.size());
         return index_p_<mp::len<sizes>, 0>(0, p);
     }
 };
@@ -101,8 +95,8 @@ struct cell_iterator_small
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 
-    constexpr static dim_t size(int k) { CHECK_BOUNDS(inside(k, rank())); return V::size(k); }
-    constexpr static dim_t size_s(int k) { /* CHECK_BOUNDS(inside(k, rank_s())); */ return V::size(k); }
+    constexpr static dim_t size(int k) { RA_CHECK(inside(k, rank())); return V::size(k); }
+    constexpr static dim_t size_s(int k) { /* RA_CHECK(inside(k, rank_s())); */ return V::size(k); }
     constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
     constexpr static bool keep_stride(dim_t step, int z, int j)
     {
@@ -122,7 +116,7 @@ struct cell_iterator_small
     template <class I>
     constexpr decltype(auto) at(I const & i_)
     {
-        CHECK_BOUNDS(rank()<=dim_t(i_.size()) && "too few indices");
+        RA_CHECK(rank()<=dim_t(i_.size()) && "too few indices");
         if constexpr (0==cellr) {
             return c.p[Indexer0<sizes, strides>::index_short(i_)];
         } else {
@@ -249,7 +243,7 @@ struct FilterDims<sizes_, strides_, I0, I ...>
 template <dim_t size0, dim_t stride0> inline
 constexpr dim_t select(dim_t i0)
 {
-    CHECK_BOUNDS(inside(i0, size0));
+    RA_CHECK(inside(i0, size0));
     return i0*stride0;
 };
 template <dim_t size0, dim_t stride0, int n> inline
@@ -536,13 +530,13 @@ struct ra_traits_small
     constexpr static V make(dim_t const n)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");
-        CHECK_BOUNDS(n==V::size(0));
+        RA_CHECK(n==V::size(0));
         return V {};
     }
     template <class TT> static V make(dim_t n, TT const & t)
     {
         static_assert(MAKE_COND, "bad type for ra_traits::make");
-        CHECK_BOUNDS(n==V::size(0));
+        RA_CHECK(n==V::size(0));
         return V(t);
     }
 #undef MAKE_COND
@@ -733,5 +727,3 @@ auto explode(SmallBase<Child, T, sizes, strides> & a)
 }
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

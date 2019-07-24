@@ -11,12 +11,6 @@
 #pragma once
 #include "ra/big.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-    #define CHECK_BOUNDS( cond )
-#else
-    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
-#endif
-
 namespace ra {
 
 template <class E, class Enable=void> struct concrete_type_def_1;
@@ -92,5 +86,3 @@ with_shape(std::initializer_list<S> && s, X && x)
 }
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

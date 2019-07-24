@@ -47,4 +47,3 @@ int main()
 
 // copy ra-0.C to dum0.C and
 // git bisect run sh -c '/opt/gcc-8.3/bin/g++ -o src/ext/ra/test/dum0 -std=c++17 -Wall -Werror -fdiagnostics-color=always -Wno-unknown-pragmas -finput-charset=UTF-8 -fextended-identifiers -Wno-error=strict-overflow -Werror=zero-as-null-pointer-constant -O3 -march=native -Isrc/ext/ra -Isrc/ext/ra/test src/ext/ra/test/dum0.C && src/ext/ra/test/dum0'
-// ffe9bff53c03289514844e957d56ac030b3114e8

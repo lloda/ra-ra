@@ -16,12 +16,6 @@
 #include "ra/ply.H"
 #include "ra/match.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 // -----------------
@@ -74,7 +68,7 @@ pick_at(size_t p0, T && t, J const & j)
             return pick_at<I+1>(p0, t, j);
         }
     } else {
-        CHECK_BOUNDS(p0==I);
+        RA_CHECK(p0==I);
         return std::get<I+1>(t).at(j);
     }
 }
@@ -97,7 +91,7 @@ pick_star(size_t p0, T && t)
             return pick_star<I+1>(p0, t);
         }
     } else {
-        CHECK_BOUNDS(p0==I);
+        RA_CHECK(p0==I);
         return *(std::get<I+1>(t));
     }
 }
@@ -178,5 +172,3 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
 };
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

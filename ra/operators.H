@@ -15,22 +15,15 @@
 #include "ra/wrank.H"
 #include "ra/pick.H"
 #include "ra/view-ops.H"
-
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 #include "ra/optimize.H"
 
-#ifndef RA_OPTIMIZE
-  #define RA_OPTIMIZE 1 // enabled by default
+#ifndef RA_DO_OPT
+  #define RA_DO_OPT 1 // enabled by default
 #endif
-#if RA_OPTIMIZE==1
-  #define OPTIMIZE optimize
+#if RA_DO_OPT==1
+  #define RA_OPT optimize
 #else
-  #define OPTIMIZE
+  #define RA_OPT
 #endif
 
 namespace ra {
@@ -70,7 +63,7 @@ decltype(auto) FLAT(A && a)
     template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
     inline constexpr auto operator OP(A && a, B && b)                   \
     {                                                                   \
-        return OPTIMIZE(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
+        return RA_OPT(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
     inline constexpr auto operator OP(A && a, B && b)                   \
@@ -250,7 +243,7 @@ inline auto amax(A && a)
 template <class A, class Less = std::less<value_t<A>>>
 inline decltype(auto) refmin(A && a, Less && less = std::less<value_t<A>>())
 {
-    CHECK_BOUNDS(a.size()>0);
+    RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
     auto p = &(*s.flat());
     for_each([&less, &p](auto & a) { if (less(a, *p)) { p = &a; } }, s);
@@ -260,7 +253,7 @@ inline decltype(auto) refmin(A && a, Less && less = std::less<value_t<A>>())
 template <class A, class Less = std::less<value_t<A>>>
 inline decltype(auto) refmax(A && a, Less && less = std::less<value_t<A>>())
 {
-    CHECK_BOUNDS(a.size()>0);
+    RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
     auto p = &(*s.flat());
     for_each([&less, &p](auto & a) { if (less(*p, a)) { p = &a; } }, s);
@@ -497,5 +490,4 @@ gemv(A const & a, B const & b)
 
 } // namespace ra
 
-#undef OPTIMIZE
-#undef CHECK_BOUNDS
+#undef RA_OPT

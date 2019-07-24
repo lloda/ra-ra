@@ -11,12 +11,6 @@
 #pragma once
 #include "ra/bootstrap.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 inline constexpr
@@ -129,8 +123,8 @@ bool check_expr(E const & e)
                     if constexpr (i<mp::len<T>) {
                         if (k<std::get<i>(e.t).rank()) {
                             dim_t si = std::get<i>(e.t).size(k);
-                            RA_ASSERT((sk==DIM_BAD || si==DIM_BAD || si==sk),
-                                      " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
+                            RA_CHECK((sk==DIM_BAD || si==DIM_BAD || si==sk),
+                                     " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
                             fi(fi, mp::int_t<i+1> {}, chosen_size(sk, si));
                         } else {
                             fi(fi, mp::int_t<i+1> {}, sk);
@@ -155,7 +149,7 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
     constexpr Match(P ... p_): t(std::forward<P>(p_) ...)
     {
         check_expr_s(*this); // always do the static check
-        CHECK_BOUNDS(check_expr(*this)); // TODO Maybe do this on ply?
+        RA_CHECK(check_expr(*this)); // TODO Maybe do this on ply?
     }
 
     template <class T> struct box { using type = T; };
@@ -166,7 +160,7 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
         return mp::fold_tuple(RANK_BAD, mp::map<box, T> {},
                               [](rank_t r, auto a)
                               {
-                                  constexpr rank_t ar = std::decay_t<typename decltype(a)::type>::rank_s();
+                                  constexpr rank_t ar = ra::rank_s<typename decltype(a)::type>();
                                   return gt_rank(r, ar) ?  r : ar;
                               });
     }

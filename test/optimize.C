@@ -8,11 +8,11 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#define RA_OPTIMIZE 0 // disable automatic use, so we can compare with (forced) and without
-#define RA_OPTIMIZE_IOTA 1
+#define RA_DO_OPT 0 // disable automatic use, so we can compare with (forced) and without
+#define RA_DO_OPT_IOTA 1
 
-#ifndef RA_OPTIMIZE_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
-#define RA_OPTIMIZE_SMALLVECTOR 1
+#ifndef RA_DO_OPT_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
+#define RA_DO_OPT_SMALLVECTOR 1
 #endif
 
 #include "ra/operators.H"
@@ -62,7 +62,7 @@ int main()
                 auto k2 = optimize(1+i);
                 auto k3 = optimize(ra::iota(5)+1);
                 auto k4 = optimize(1+ra::iota(5));
-                tr.info("not optimized w/ RA_OPTIMIZE=0").test(!std::is_same_v<decltype(i), decltype(j)>);
+                tr.info("not optimized w/ RA_DO_OPT=0").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
                 tr.test_eq(org+1, k1.i_);
                 tr.test_eq(org+1, k1.i_);
@@ -89,7 +89,7 @@ int main()
             auto k2 = optimize(2*i);
             auto k3 = optimize(ra::iota(5)*2);
             auto k4 = optimize(2*ra::iota(5));
-            tr.info("not optimized w/ RA_OPTIMIZE=0").test(!std::is_same_v<decltype(i), decltype(j)>);
+            tr.info("not optimized w/ RA_DO_OPT=0").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
             tr.test_eq(0, k1.i_);
             tr.test_eq(0, k2.i_);
@@ -105,7 +105,7 @@ int main()
         test(double(0));
         test(float(0));
     }
-#if RA_OPTIMIZE_SMALLVECTOR==1
+#if RA_DO_OPT_SMALLVECTOR==1
     tr.section("small vector ops through vector extensions [ra04]");
     {
         using Vec = ra::Small<double, 4>;

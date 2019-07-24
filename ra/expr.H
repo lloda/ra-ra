@@ -12,12 +12,6 @@
 #include "ra/ply.H"
 #include "ra/match.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 // Manipulate ET through flat (raw pointer-like) iterators P ...
@@ -99,5 +93,3 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
 };
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

@@ -11,12 +11,6 @@
 #pragma once
 #include "ra/expr.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 // TODO Adopt frame matching as in Match (no driver).
 
 namespace ra {
@@ -74,7 +68,7 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 
 // TODO functions of arg rank, negative, inf.
 // live = number of live axes on this frame, for each argument.
-    using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>-crank::value) ...>;
+    using live = mp::int_list<(rank_s<Ti>()-mp::len<Ri>-crank::value) ...>;
     static_assert(mp::apply<mp::andb, mp::map<ValidRank, live>>::value, "bad ranks");
 
 // select driver for this stage.
@@ -98,7 +92,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
     using R_ = std::tuple<Ri ...>;
 
 // TODO -crank::value when the actual verb rank is used (e.g. to use cell_iterator<A, that_rank> instead of just begin()).
-    using live = mp::int_list<(std::decay_t<Ti>::rank_s()-mp::len<Ri>) ...>;
+    using live = mp::int_list<(rank_s<Ti>()-mp::len<Ri>) ...>;
     static_assert(mp::apply<mp::andb, mp::map<ValidRank, live>>::value, "bad ranks");
     constexpr static int driver = largest_i_tuple<live>::value;
 
@@ -206,7 +200,7 @@ FOR_EACH(DEF_EXPR_VERB, &&, &, const &)
 template <class I>
 struct index_rank_
 {
-    using type = mp::int_t<std::decay_t<I>::rank_s()>; // see ra_traits for ra::types (?)
+    using type = mp::int_t<rank_s<I>()>;
     static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
     static_assert(size_s<I>()!=DIM_BAD, "undelimited extent subscript unsupported");
 };
@@ -240,5 +234,3 @@ auto from(A && a, I && ... i)
 }
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

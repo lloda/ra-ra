@@ -16,8 +16,6 @@
 
 namespace ra {
 
-static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>, "bad rank_t");
-
 
 // --------------
 // Run time order
@@ -60,7 +58,7 @@ void ply_ravel(A && a)
         if (sha[k]==0) { // for the ravelled dimensions ss takes care.
             return;
         }
-        RA_ASSERT(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
+        RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
     }
 // all sub xpr strides advance in compact dims, as they might be different.
     auto const ss0 = a.stride(order[0]);
@@ -134,14 +132,14 @@ void until(int const jj, A & a, dim_t const s, S const & ss0)
 }
 
 template <class A> RA_INLINE constexpr
-auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()<=0)>
+auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()<=0)>
 {
-    static_assert(std::decay_t<A>::rank_s()==0, "plyf needs static rank");
+    static_assert(rank_s<A>()==0, "plyf needs static rank");
     *(a.flat());
 }
 
 template <class A> RA_INLINE constexpr
-auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()==1)>
+auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()==1)>
 {
     subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
 }
@@ -161,9 +159,9 @@ constexpr auto ocd(A && a)
 };
 
 template <class A> RA_INLINE constexpr
-auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
+auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()>1)>
 {
-    constexpr rank_t rank = std::decay_t<A>::rank_s();
+    constexpr rank_t rank = rank_s<A>();
 // this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_stride.
 // test/concrete.C has a case that shows this.
 // cf https://stackoverflow.com/questions/55288555
@@ -173,11 +171,11 @@ auto plyf(A && a) -> std::enable_if_t<(std::decay_t<A>::rank_s()>1)>
         constexpr auto j = std::get<1>(sj);
 // all sub xpr strides advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-        until<mp::iota<std::decay_t<A>::rank_s()>, 0>(j, a, s, a.stride(rank-1));
+        until<mp::iota<rank_s<A>()>, 0>(j, a, s, a.stride(rank-1));
     } else {
 // the unrolling above isn't worth it when s, j cannot be constexpr.
         auto s = a.size(rank-1);
-        subindex<mp::iota<std::decay_t<A>::rank_s()>, 1>(a, s, a.stride(rank-1));
+        subindex<mp::iota<rank_s<A>()>, 1>(a, s, a.stride(rank-1));
     }
 }
 

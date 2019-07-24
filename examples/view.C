@@ -50,7 +50,7 @@ int main()
 
     A = 22.;
     A(interior, interior, interior) = 30.;
-// These are always beatable. I+1 and I-1 are also beatable if RA_OPTIMIZE is #defined to 1, which is the default.
+// These are always beatable. I+1 and I-1 are also beatable if RA_DO_OPT is #defined to 1, which is the default.
     ra::Iota<int> Im(N-2, 0), Ip(N-2, 2);
     {
         std::chrono::duration<float> dt(0);

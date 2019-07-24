@@ -13,12 +13,6 @@
 #include <memory>
 #include <iostream>
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 // Dope vector element
@@ -76,10 +70,10 @@ struct Indexer1
     template <class Dim, class P>
     constexpr static dim_t index_p(Dim const & dim, P && p)
     {
-        CHECK_BOUNDS(dim_t(dim.size())>=start(p).size(0) && "too many indices");
+        RA_CHECK(dim_t(dim.size())>=start(p).size(0) && "too many indices");
 // use dim.data() to skip the size check.
         dim_t c = 0;
-        for_each([&c](auto && d, auto && p) { CHECK_BOUNDS(inside(p, d.size)); c += d.stride*p; },
+        for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.size)); c += d.stride*p; },
                  ptr(dim.data()), p);
         return c;
     }
@@ -90,7 +84,7 @@ struct Indexer1
     {
         dim_t c = 0;
         for (rank_t k=0; k<framer; ++k) {
-            CHECK_BOUNDS(inside(p[k], dim[k].size) || (dim[k].size==DIM_BAD && dim[k].stride==0));
+            RA_CHECK(inside(p[k], dim[k].size) || (dim[k].size==DIM_BAD && dim[k].stride==0));
             c += dim[k].stride * p[k];
         }
         return c;
@@ -109,7 +103,7 @@ struct cell_iterator
 {
     constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
-    constexpr static rank_t fullr = std::decay_t<V>::rank_s();
+    constexpr static rank_t fullr = ra::rank_s<V>();
     constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
     static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
@@ -145,8 +139,8 @@ struct cell_iterator
         }
     }
 
-    constexpr static dim_t size_s(int i) { /* CHECK_BOUNDS(inside(k, rank())); */return DIM_ANY; }
-    constexpr dim_t size(int k) const { CHECK_BOUNDS(inside(k, rank())); return dim[k].size; }
+    constexpr static dim_t size_s(int i) { /* RA_CHECK(inside(k, rank())); */return DIM_ANY; }
+    constexpr dim_t size(int k) const { RA_CHECK(inside(k, rank())); return dim[k].size; }
     constexpr dim_t stride(int k) const { return k<rank() ? dim[k].stride : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
     constexpr bool keep_stride(dim_t step, int z, int j) const { return step*stride(z)==stride(j); }
@@ -164,7 +158,7 @@ struct cell_iterator
     template <class I>
     decltype(auto) at(I const & i_)
     {
-        CHECK_BOUNDS(rank()<=dim_t(i_.size()) && "too few indices");
+        RA_CHECK(rank()<=dim_t(i_.size()) && "too few indices");
         if constexpr (0==cellr) {
             return c.p[Indexer1::index_short(rank(), dim, i_)];
         } else {
@@ -192,7 +186,7 @@ dim_t filldim(int n, D dend)
     dim_t next = 1;
     for (; n>0; --n) {
         --dend;
-        CHECK_BOUNDS((*dend).size>=0 && "bad dim");
+        RA_CHECK((*dend).size>=0 && "bad dim");
         (*dend).stride = next;
         next *= (*dend).size;
     }
@@ -267,7 +261,7 @@ dim_t proddim(D d, D dend)
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>; \
     View & operator=(ravel_arg const x)                                 \
     {                                                                   \
-        CHECK_BOUNDS(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
+        RA_CHECK(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
         std::copy(x.begin(), x.end(), this->begin());                   \
         return *this;                                                   \
     }                                                                   \
@@ -275,14 +269,14 @@ dim_t proddim(D d, D dend)
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
-    CHECK_BOUNDS(inside(i, dim_src->size));
+    RA_CHECK(inside(i, dim_src->size));
     return dim_src->stride*i;
 }
 template <class II>
 inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
-    CHECK_BOUNDS((inside(i.i_, dim_src->size) && inside(i.i_+(i.size_-1)*i.stride_, dim_src->size))
-                 || (i.size_==0 && i.i_<=dim_src->size));
+    RA_CHECK((inside(i.i_, dim_src->size) && inside(i.i_+(i.size_-1)*i.stride_, dim_src->size))
+             || (i.size_==0 && i.i_<=dim_src->size));
     dim->size = i.size_;
     dim->stride = dim_src->stride * i.stride_;
     return dim_src->stride*i.i_;
@@ -324,7 +318,7 @@ template <class T> using const_atom = std::conditional_t<std::is_const_v<T>, no_
 // --------------------
 
 // TODO Parameterize on Child having .data() so that there's only one pointer.
-// TODO A constructor, if only for CHECK_BOUNDS (positive sizes, strides inside, etc.)
+// TODO A constructor, if only for RA_CHECK (positive sizes, strides inside, etc.)
 template <class T, rank_t RANK>
 struct View
 {
@@ -476,8 +470,8 @@ struct View<T, RANK_ANY>
     }                                                                   \
     constexpr T CONST & operator[](dim_t const i) CONST                 \
     {                                                                   \
-        CHECK_BOUNDS(rank()==1 && "bad rank");                          \
-        CHECK_BOUNDS(inside(i, dim[0].size));                           \
+        RA_CHECK(rank()==1 && "bad rank");                              \
+        RA_CHECK(inside(i, dim[0].size));                               \
         return data()[i*dim[0].stride];                                 \
     }
     FOR_EACH(SUBSCRIPTS, /*const*/, const)
@@ -528,7 +522,7 @@ struct ra_traits_def<View<T, RANK_ANY>>
 template <class V> struct storage_traits
 {
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    static V create(dim_t n) { CHECK_BOUNDS(n>=0); return V(new T[n]); }
+    static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
     static T const * data(V const & v) { return v.get(); }
     static T * data(V & v) { return v.get(); }
 };
@@ -624,7 +618,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class S> void init(S && s)
     {
         auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s);
-        static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape"); // I decided not to accept rank extension here.
+// I decided not to accept rank extension here, because it's error prone and not that useful.
+        static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape");
 // [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)). Not being able to traverse backwards hurts here. See other uses of ra::vector (or start) here.
         if constexpr (RANK==RANK_ANY) {
             ra::resize(View::dim, w.size(0));
@@ -639,7 +634,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // store(x) avoids it for Big, but doesn't work for Unique. Should construct in place as std::vector does.
     template <class Pbegin> void fill1(dim_t xsize, Pbegin xbegin)
     {
-        CHECK_BOUNDS(this->size()==xsize && "mismatched sizes");
+        RA_CHECK(this->size()==xsize && "mismatched sizes");
         std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
     }
 
@@ -685,14 +680,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // only for some kinds of store.
     void resize(dim_t const s)
     {
-        static_assert(RANK==RANK_ANY || RANK>0); CHECK_BOUNDS(this->rank()>0);
+        static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
         store.resize(proddim(View::dim.begin()+1, View::dim.end())*s);
         View::dim[0].size = s;
         View::p = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
-        static_assert(RANK==RANK_ANY || RANK>0); CHECK_BOUNDS(this->rank()>0);
+        static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
         store.resize(proddim(View::dim.begin()+1, View::dim.end())*s, t);
         View::dim[0].size = s;
         View::p = store.data();
@@ -700,14 +695,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
         store.push_back(std::move(t));
         ++View::dim[0].size;
         View::p = store.data();
     }
     void push_back(T const & t)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
         store.push_back(t);
         ++View::dim[0].size;
         View::p = store.data();
@@ -715,15 +710,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A>
     void emplace_back(A && ... a)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
+        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
         store.emplace_back(std::forward<A>(a) ...);
         ++View::dim[0].size;
         View::p = store.data();
     }
     void pop_back()
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); CHECK_BOUNDS(this->rank()==1);
-        CHECK_BOUNDS(View::dim[0].size>0);
+        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
+        RA_CHECK(View::dim[0].size>0);
         store.pop_back();
         --View::dim[0].size;
     }
@@ -731,8 +726,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         return this->size()==0;
     }
-    T const & back() const { CHECK_BOUNDS(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
-    T & back() { CHECK_BOUNDS(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
+    T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
+    T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
 
 // Container is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or ellidable.
 
@@ -806,5 +801,3 @@ Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
 }
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

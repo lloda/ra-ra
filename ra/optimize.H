@@ -11,20 +11,14 @@
 #pragma once
 #include "ra/small.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 // no real downside to this.
-#ifndef RA_OPTIMIZE_IOTA
-#define RA_OPTIMIZE_IOTA 1
+#ifndef RA_DO_OPT_IOTA
+#define RA_DO_OPT_IOTA 1
 #endif
 
 // benchmark shows it's bad by default; probably requires optimizing also +=, etc.
-#ifndef RA_OPTIMIZE_SMALLVECTOR
-#define RA_OPTIMIZE_SMALLVECTOR 0
+#ifndef RA_DO_OPT_SMALLVECTOR
+#define RA_DO_OPT_SMALLVECTOR 0
 #endif
 
 namespace ra {
@@ -47,7 +41,7 @@ DEFINE_NAMED_BINARY_OP(/, slash)
 // TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
 
-#if RA_OPTIMIZE_IOTA==1
+#if RA_DO_OPT_IOTA==1
 // TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
 template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X>>::is_integer;
 
@@ -70,7 +64,7 @@ inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    CHECK_BOUNDS(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
+    RA_CHECK(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return iota(ITEM(0).size_, ITEM(0).i_+ITEM(1).i_, ITEM(0).stride_+ITEM(1).stride_);
 }
 
@@ -93,7 +87,7 @@ inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 template <class I, class J, std::enable_if_t<is_iota<I> && is_iota<J>, int> =0>
 inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    CHECK_BOUNDS(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
+    RA_CHECK(ITEM(0).size_==ITEM(1).size_ && "size mismatch");
     return iota(ITEM(0).size_, ITEM(0).i_-ITEM(1).i_, ITEM(0).stride_-ITEM(1).stride_);
 }
 
@@ -113,9 +107,9 @@ inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
     return iota(ITEM(1).size_, ITEM(0)*ITEM(1).i_, ITEM(0)*ITEM(1).stride_);
 }
 
-#endif // RA_OPTIMIZE_IOTA
+#endif // RA_DO_OPT_IOTA
 
-#if RA_OPTIMIZE_SMALLVECTOR==1
+#if RA_DO_OPT_SMALLVECTOR==1
 
 namespace {
 
@@ -133,7 +127,7 @@ static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallV
                                 double, 4>);
 }; //namespace
 
-#define OPTIMIZE_SMALLVECTOR_OP(OP, NAME, T, N)                         \
+#define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                         \
     template <class A, class B,                                         \
               std::enable_if_t<match_smallvector<A, T, N> && match_smallvector<B, T, N>, int> =0> \
     inline auto                                                         \
@@ -143,24 +137,24 @@ static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallV
         *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.p)) OP *(extvector<T, N> *)((ITEM(1).c.p)); \
         return val;                                                     \
     }
-#define OPTIMIZE_SMALLVECTOR_OP_FUNS(T, N)      \
-    OPTIMIZE_SMALLVECTOR_OP(+, ra::plus, T, N)  \
-    OPTIMIZE_SMALLVECTOR_OP(-, ra::minus, T, N) \
-    OPTIMIZE_SMALLVECTOR_OP(/, ra::slash, T, N) \
-    OPTIMIZE_SMALLVECTOR_OP(*, ra::times, T, N)
-#define OPTIMIZE_SMALLVECTOR_OP_SIZES(T)        \
-    OPTIMIZE_SMALLVECTOR_OP_FUNS(T, 2)          \
-    OPTIMIZE_SMALLVECTOR_OP_FUNS(T, 4)          \
-    OPTIMIZE_SMALLVECTOR_OP_FUNS(T, 8)
+#define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)      \
+    RA_OPT_SMALLVECTOR_OP(+, ra::plus, T, N)  \
+    RA_OPT_SMALLVECTOR_OP(-, ra::minus, T, N) \
+    RA_OPT_SMALLVECTOR_OP(/, ra::slash, T, N) \
+    RA_OPT_SMALLVECTOR_OP(*, ra::times, T, N)
+#define RA_OPT_SMALLVECTOR_OP_SIZES(T)        \
+    RA_OPT_SMALLVECTOR_OP_FUNS(T, 2)          \
+    RA_OPT_SMALLVECTOR_OP_FUNS(T, 4)          \
+    RA_OPT_SMALLVECTOR_OP_FUNS(T, 8)
 
-OPTIMIZE_SMALLVECTOR_OP_SIZES(double)
-OPTIMIZE_SMALLVECTOR_OP_SIZES(float)
+RA_OPT_SMALLVECTOR_OP_SIZES(double)
+RA_OPT_SMALLVECTOR_OP_SIZES(float)
 
-#undef OPTIMIZE_SMALLVECTOR_OP_SIZES
-#undef OPTIMIZE_SMALLVECTOR_OP_FUNS
-#undef OPTIMIZE_SMALLVECTOR_OP_OP
+#undef RA_OPT_SMALLVECTOR_OP_SIZES
+#undef RA_OPT_SMALLVECTOR_OP_FUNS
+#undef RA_OPT_SMALLVECTOR_OP_OP
 
-#endif // RA_OPTIMIZE_SMALLVECTOR
+#endif // RA_DO_OPT_SMALLVECTOR
 
 #undef ITEM
 

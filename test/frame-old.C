@@ -31,7 +31,7 @@ struct ra_error: public std::exception
 #error RA_ASSERT is already defined!
 #endif
 #define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", __VA_ARGS__); }
+    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
 // -------------------------------------
 
 #include "ra/complex.H"

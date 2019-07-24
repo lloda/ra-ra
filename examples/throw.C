@@ -23,12 +23,13 @@ struct ra_error: public std::exception
 };
 
 // RA_ASSERT has to be defined before any "ra/" header to override the default definition of RA_ASSERT ("ra/format.H" is an independent header and doesn't count).
+// FIXME Use __VA_OPT__(,) in c++20 instead of the gcc ## thing
 
 #ifdef RA_ASSERT
 #error RA_ASSERT is already defined!
 #endif
 #define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", __VA_ARGS__); }
+    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
 
 #include "ra/ra.H"
 #include "ra/test.H"

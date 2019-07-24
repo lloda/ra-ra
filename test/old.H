@@ -8,12 +8,8 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// Eventually move this to test/.
-
 #pragma once
 #include "ra/ply.H"
-
-#define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
 
 namespace ra {
 
@@ -41,7 +37,7 @@ struct OldTensorIndex
     constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k<=w); return DIM_BAD; }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k<=w); return DIM_BAD; }
 
     template <class I> constexpr static value_type at(I const & i) { return value_type(i[w]); }
     constexpr static dim_t stride(int k) { assert(0); return 0; } // used by Expr::stride_t.

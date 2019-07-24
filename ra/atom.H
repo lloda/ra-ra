@@ -12,12 +12,6 @@
 #include "ra/type.H"
 #include <iostream>
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 template <class V> inline constexpr auto size(V const & v);
@@ -45,7 +39,7 @@ struct TensorIndex
 
     template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
 
-    constexpr void adv(rank_t k, dim_t d) { CHECK_BOUNDS(d<=1); i += (k==w) * d; }
+    constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1); i += (k==w) * d; }
     constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
     constexpr static dim_t const stride(int k) { return (k==w); }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return step*stride(z)==stride(j); }
@@ -108,8 +102,8 @@ struct Vector
     decltype(v.begin()) p__;
     static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
-    constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return traits::size(v); }
-    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return traits::size_s(); }
+    constexpr dim_t size(int k) const { RA_CHECK(k==0); return traits::size(v); }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -126,14 +120,14 @@ struct Vector
     template <class I>
     decltype(auto) at(I const & i)
     {
-        CHECK_BOUNDS(inside(i[0], ra::size(v)));
+        RA_CHECK(inside(i[0], ra::size(v)));
         return p__[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
 // k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra03]
 // k==0 && d!=1 happens on turning back at end of ply; TODO we need this only on outer products and such.
-        CHECK_BOUNDS(d==1 || d<0);
+        RA_CHECK(d==1 || d<0);
         p__ += (k==0) * d;
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
@@ -156,8 +150,8 @@ struct Ptr
 {
     P p__;
 
-    constexpr static dim_t size(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
-    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_BAD; }
+    constexpr static dim_t size(int k) { RA_CHECK(k==0); return DIM_BAD; }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -168,7 +162,7 @@ struct Ptr
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        CHECK_BOUNDS(d==1 || d<0);
+        RA_CHECK(d==1 || d<0);
         std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
@@ -190,20 +184,20 @@ struct Span
     P p__;
     dim_t n__;
 
-    constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return n__; }
-    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
+    constexpr dim_t size(int k) const { RA_CHECK(k==0); return n__; }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
     template <class I>
     decltype(auto) at(I const & i)
     {
-        CHECK_BOUNDS(inside(i[0], n__));
+        RA_CHECK(inside(i[0], n__));
         return p__[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        CHECK_BOUNDS(d==1 || d<0);
+        RA_CHECK(d==1 || d<0);
         std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
@@ -237,11 +231,11 @@ struct Iota
 
     constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), i_(org), stride_(stride)
     {
-        CHECK_BOUNDS(size>=0 && "Iota");
+        RA_CHECK(size>=0 && "Iota");
     }
 
-    constexpr dim_t size(int k) const { CHECK_BOUNDS(k==0); return size_; }
-    constexpr static dim_t size_s(int k) { CHECK_BOUNDS(k==0); return DIM_ANY; }
+    constexpr dim_t size(int k) const { RA_CHECK(k==0); return size_; }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -377,19 +371,24 @@ template <class A> using start_t = decltype(ra::start(std::declval<A>()));
 template <class A> using flat_t = decltype(*(ra::start(std::declval<A>()).flat()));
 template <class A> using value_t = std::decay_t<flat_t<A>>;
 
-// FIXME there should be default traits for all is_ra classes.
-template <class V>
-constexpr rank_t rank(V const & v)
+template <class V> inline constexpr dim_t
+rank_s()
 {
     if constexpr (has_traits<V>) {
-        return ra_traits<V>::rank(v);
+        return ra_traits<V>::rank_s();
     } else {
-        return v.rank();
+        return std::decay_t<V>::rank_s();
     }
 }
 
-template <class V_>
-constexpr dim_t size_s()
+template <class V> inline  constexpr rank_t
+rank_s(V const & v)
+{
+    return rank_s<V>();
+}
+
+template <class V_> inline constexpr dim_t
+size_s()
 {
     using V = std::decay_t<V_>;
     if constexpr (has_traits<V>) {
@@ -411,14 +410,24 @@ constexpr dim_t size_s()
     }
 }
 
-template <class V>
-constexpr dim_t size_s(V const & v)
+template <class V> constexpr dim_t
+size_s(V const & v)
 {
     return size_s<V>();
 }
 
-template <class V>
-inline constexpr auto size(V const & v)
+template <class V> inline constexpr rank_t
+rank(V const & v)
+{
+    if constexpr (has_traits<V>) {
+        return ra_traits<V>::rank(v);
+    } else {
+        return v.rank();
+    }
+}
+
+template <class V> inline constexpr auto
+size(V const & v)
 {
     if constexpr (has_traits<V>) {
         return ra_traits<V>::size(v);
@@ -428,8 +437,8 @@ inline constexpr auto size(V const & v)
 }
 
 // To be used sparingly; prefer implicit matching.
-template <class V>
-inline constexpr decltype(auto) shape(V const & v)
+template <class V> inline constexpr decltype(auto)
+shape(V const & v)
 {
     if constexpr (has_traits<V>) {
         return ra_traits<V>::shape(v);
@@ -448,5 +457,3 @@ inline constexpr decltype(auto) shape(V const & v)
 }
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

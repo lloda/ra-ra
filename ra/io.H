@@ -15,12 +15,6 @@
 #include <iosfwd>
 #include <sstream>
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 // TODO merge with ply_ravel @ ply.H, but should control order.
@@ -92,7 +86,7 @@ std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
     if (dim_t n; !((i >> n).fail())) {
-        CHECK_BOUNDS(n>=0 && "negative sizes in input");
+        RA_CHECK(n>=0 && "negative sizes in input");
         c.resize(n);
         for (auto & ci: c) { i >> ci; }
     }
@@ -106,7 +100,7 @@ operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
         std::decay_t<C> cc(s, ra::none);
-        CHECK_BOUNDS(every(start(s)>=0) && "negative sizes in input");
+        RA_CHECK(every(start(s)>=0) && "negative sizes in input");
 // avoid copying in case Container's elements don't support it.
         swap(c, cc);
 // need row-major, serial iteration here. FIXME use ra:: traversal.
@@ -116,5 +110,3 @@ operator>>(std::istream & i, C & c)
 }
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

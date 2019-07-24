@@ -15,12 +15,6 @@
 #include <algorithm>
 #include "ra/bootstrap.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-  #define CHECK_BOUNDS( cond )
-#else
-  #define CHECK_BOUNDS( cond ) RA_ASSERT( cond, 0 )
-#endif
-
 namespace ra {
 
 template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;
@@ -53,12 +47,12 @@ struct ra_traits_def<std::array<T, N>>
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { N }; }
     constexpr static V make(dim_t const n)
     {
-        CHECK_BOUNDS(n==N);
+        RA_CHECK(n==N);
         return V {};
     }
     template <class TT> constexpr static V make(dim_t n, TT const & t)
     {
-        CHECK_BOUNDS(n==N);
+        RA_CHECK(n==N);
         V r {};
         std::fill(r.data(), r.data()+n, t);
         return r;
@@ -98,10 +92,8 @@ resize(A & a, dim_t k)
     if constexpr (ra_traits<A>::size_s()==DIM_ANY) {
         a.resize(k);
     } else {
-        CHECK_BOUNDS(k==dim_t(a.size_s(0)));
+        RA_CHECK(k==dim_t(a.size_s(0)));
     }
 }
 
 } // namespace ra
-
-#undef CHECK_BOUNDS

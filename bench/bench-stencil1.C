@@ -31,7 +31,7 @@ constexpr ra::Small<real, 3> mask = { 1, -2, 1 };
 #define THEOP template <class A_, class Anext_, class Astencil_> __attribute__((noinline)) \
    auto operator()(A_ & A, Anext_ & Anext, Astencil_ & Astencil)
 
-// sensitive to RA_CHECK_BOUNDS.
+// sensitive to RA_DO_CHECK.
 struct f_raw
 {
     THEOP
@@ -43,7 +43,7 @@ struct f_raw
     };
 };
 
-// about as fast as f_raw, but no stencil. Insensitive to RA_CHECK_BOUNDS.
+// about as fast as f_raw, but no stencil. Insensitive to RA_DO_CHECK.
 struct f_slices
 {
     THEOP
@@ -53,7 +53,7 @@ struct f_slices
     };
 };
 
-// with stencil, about as fast as f_raw. Sensitive to RA_CHECK_BOUNDS.
+// with stencil, about as fast as f_raw. Sensitive to RA_DO_CHECK.
 struct f_stencil_explicit
 {
     THEOP

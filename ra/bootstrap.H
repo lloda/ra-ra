@@ -13,12 +13,6 @@
 #include "ra/tuple-list.H"
 #include "ra/tuple-dynamic.H"
 
-#if defined(RA_CHECK_BOUNDS) && RA_CHECK_BOUNDS==0
-    #define CHECK_BOUNDS( cond )
-#else
-    #define CHECK_BOUNDS( cond ) RA_ASSERT( cond )
-#endif
-
 namespace ra {
 
 constexpr int VERSION = 10;    // to force or prevent upgrades on dependents
@@ -32,6 +26,8 @@ constexpr dim_t DIM_ANY = -1099999444;
 constexpr dim_t DIM_BAD = -1099999888;
 constexpr rank_t RANK_ANY = -1099999444;
 constexpr rank_t RANK_BAD = -1099999888;
+
+static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>, "bad dim types");
 
 constexpr dim_t dim_prod(dim_t const a, dim_t const b)
 {
@@ -180,5 +176,3 @@ struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
 };
 
 } // namespace ra
-
-#undef CHECK_BOUNDS
