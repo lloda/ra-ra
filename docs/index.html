@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 10, updated 2019 July 18)
+<!-- ra:: (version 10, updated 2019 July 25)
 
 (c) Daniel Llorens 2005-2019
 
@@ -102,7 +102,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="di
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 10, updated 2019 July 18)
+<p><code>ra::</code> (version 10, updated 2019 July 25)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2019
 </p>
@@ -1813,9 +1813,62 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 
 <span id="index-transpose"></span>
 <span id="x_002dtranspose"></span><dl>
-<dt id="index-transpose-1">Function: <strong>transpose</strong> <em>&lt;axes ...&gt; view</em></dt>
-<dd><p>Create a new view by transposing the axes of <var>view</var>.
+<dt id="index-transpose-1">Function: <strong>transpose</strong> <em>&lt;axes ...&gt; (view) | (axes, view)</em></dt>
+<dd><p>Create a new view by transposing the axes of <var>view</var>. The number of <var>axes</var> must match the rank of <var>view</var>.
 </p></dd></dl>
+
+<p>For example:
+</p>
+<div class="example">
+<pre class="verbatim">    ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
+    cout &lt;&lt; transpose&lt;1, 0&gt;(a) &lt;&lt; endl;
+</pre><pre class="example">  -|
+  3 2
+  1 4
+  2 5
+  3 6
+</pre></div>
+
+<p>The rank of the result is <code>maxᵢ(axesᵢ)+1</code> and it may be smaller or larger than that of <var>view</var>. If an axis is repeated, the smallest of the dimensions of <var>view</var> is used. For example:
+</p>
+<div class="example">
+<pre class="verbatim">    ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
+    cout &lt;&lt; transpose&lt;0, 0&gt;(a) &lt;&lt; endl; // { a(0, 0), a(1, 1) }
+</pre><pre class="example">  -|
+  2
+  1 5
+</pre></div>
+
+<p>If one of the destination axes isn&rsquo;t mentioned in <var>axes</var>, then is a ‘dead’ axis similar to those produced by <a href="#x_002dinsert"><code>insert</code></a>. For example:
+</p>
+<div class="example">
+<pre class="verbatim">    ra::Unique&lt;double, 1&gt; a = {1, 2, 3};
+    cout &lt;&lt; ((a*10) + transpose&lt;1&gt;(a)) &lt;&lt; endl;
+</pre><pre class="example">  -|
+  3 3
+  11 21 31
+  12 22 32
+  13 23 33
+</pre></div>
+
+<p>The two argument form lets you specify the axis list dynamically. In that case the result will have dynamic rank as well. For example: </p>
+<div class="example">
+<pre class="verbatim">    ra::Small&lt;int, 2&gt; axes = {0, 1};
+    ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
+    cout &lt;&lt; &quot;A: &quot; &lt;&lt; transpose(axes, a) &lt;&lt; endl;
+    axes = {1, 0};
+    cout &lt;&lt; &quot;B: &quot; &lt;&lt; transpose(axes, a) &lt;&lt; endl;
+</pre><pre class="example">  -|
+  A: 2
+  2 3
+  1 2 3
+  4 5 6
+  B: 2
+  3 2
+  1 4
+  2 5
+  3 6
+</pre></div>
 
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>

@@ -44,6 +44,49 @@ decltype(auto) FLAT(A && a)
 
 } // namespace
 
+
+// ---------------------------
+// from, after APL, like (from) in guile-ploy
+// TODO integrate with is_beatable shortcuts, operator() in the various array types.
+// ---------------------------
+
+template <class I>
+struct index_rank_
+{
+    using type = mp::int_t<rank_s<I>()>;
+    static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
+    static_assert(size_s<I>()!=DIM_BAD, "undelimited extent subscript unsupported");
+};
+
+template <class I> using index_rank = typename index_rank_<I>::type;
+
+template <class II, int drop, class Op> inline constexpr
+decltype(auto) from_partial(Op && op)
+{
+    if constexpr (drop==mp::len<II>) {
+        return std::forward<Op>(op);
+    } else {
+        return wrank(mp::append<mp::makelist<drop, mp::int_t<0>>, mp::drop<II, drop>> {},
+                     from_partial<II, drop+1>(std::forward<Op>(op)));
+    }
+}
+
+// TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
+template <class A, class ... I> inline constexpr
+auto from(A && a, I && ... i)
+{
+    if constexpr (0==sizeof...(i)) {
+        return a();
+    } else if constexpr (1==sizeof...(i)) {
+// support dynamic rank for 1 arg only (see test in test/from.C).
+        return expr(std::forward<A>(a), start(std::forward<I>(i) ...));
+    } else {
+        using II = mp::map<index_rank, mp::tuple<decltype(start(std::forward<I>(i))) ...>>;
+        return expr(from_partial<II, 1>(std::forward<A>(a)), start(std::forward<I>(i)) ...);
+    }
+}
+
+
 // I considered three options for lookup.
 // 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.H). It results in the narrowest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.

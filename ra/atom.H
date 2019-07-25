@@ -32,17 +32,16 @@ struct TensorIndex
     dim_t i = 0;
     static_assert(w_>=0, "bad TensorIndex");
     constexpr static int w = w_;
-    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn. rank.
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t size_s(int k) { return DIM_BAD; }
+    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
 
     template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
-
-    constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1); i += (k==w) * d; }
-    constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
+    constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, "d ", d); i += (k==w) * d; }
     constexpr static dim_t const stride(int k) { return (k==w); }
     constexpr static bool keep_stride(dim_t step, int z, int j) { return step*stride(z)==stride(j); }
+    constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
 };
 
 #define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
@@ -67,10 +66,10 @@ struct Scalar
     using C = C_;
     C c;
 
-    constexpr static dim_t size(int k) { assert(0); return DIM_BAD; } // used in shape checks with dynamic rank.
-    constexpr static dim_t size_s(int k) { return DIM_BAD; }
-    constexpr static rank_t rank() { return 0; }
     constexpr static rank_t rank_s() { return 0; }
+    constexpr static rank_t rank() { return 0; }
+    constexpr static dim_t size_s(int k) { return DIM_BAD; }
+    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
 
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
@@ -79,10 +78,7 @@ struct Scalar
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
 
-#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
@@ -134,10 +130,7 @@ struct Vector
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class V> inline constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
@@ -169,10 +162,7 @@ struct Ptr
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class I> inline auto ptr(I i) { return Ptr<I> { i }; }
@@ -204,10 +194,7 @@ struct Span
     constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class I> inline auto ptr(I i, dim_t n) { return Span<I> { i, n }; }
@@ -302,7 +289,7 @@ template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;
-template <class LiveAxes, int depth, class A> struct ApplyFrames;
+template <class Live, class A> struct Reframe;
 
 // --------------
 // Coerce potential ArrayIterators
@@ -382,7 +369,7 @@ rank_s()
 }
 
 template <class V> inline  constexpr rank_t
-rank_s(V const & v)
+rank_s(V const &)
 {
     return rank_s<V>();
 }
@@ -411,7 +398,7 @@ size_s()
 }
 
 template <class V> constexpr dim_t
-size_s(V const & v)
+size_s(V const &)
 {
     return size_s<V>();
 }

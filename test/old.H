@@ -22,10 +22,8 @@ template <class Op, class ... Ti, class K>
 constexpr bool by_index_def<Expr<Op, std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
 template <class ... Ti, class K>
 constexpr bool by_index_def<Pick<std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
-template <class LiveAxes, int depth, class A>
-constexpr bool by_index_def<ApplyFrames<LiveAxes, depth, A>> = by_index<A>;
-template <class FM, class Op, class ... Ti, class K>
-constexpr bool by_index_def<Ryn<FM, Op, std::tuple<Ti ...>, K>> = (by_index<Ti> || ...);
+template <class Live, class A>
+constexpr bool by_index_def<Reframe<Live, A>> = by_index<A>;
 
 // value_type may be needed to avoid conversion issues.
 template <int w_, class value_type=ra::dim_t>

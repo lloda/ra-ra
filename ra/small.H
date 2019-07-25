@@ -124,11 +124,7 @@ struct cell_iterator_small
         }
     }
 
-#define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> decltype(auto) constexpr operator OP(X && x)     \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 
@@ -600,7 +596,9 @@ struct ra_traits_def<T, std::enable_if_t<is_builtin_array<T>>>
 
 
 // --------------------
-// Small ops; cf view-ops.H. FIXME maybe there, or separate file.
+// Small ops; cf view-ops.H.
+// FIXME maybe there, or separate file.
+// TODO See if this can be merged with Reframe (e.g. beat(reframe(a)) -> transpose(a) ?)
 // --------------------
 
 template <class A, class i>
@@ -609,7 +607,8 @@ struct axis_indices
     template <class T> using match_index = mp::int_t<(T::value==i::value)>;
     using I = mp::iota<mp::len<A>>;
     using type = mp::Filter_<mp::map<match_index, A>, I>;
-    static_assert(mp::len<type>> 0, "dst axis doesn't appear in transposed axes list");
+// don't enforce, so allow dead axes (e.g. in transpose<1>(rank 1 array)).
+    // static_assert((mp::len<type>)>0, "dst axis doesn't appear in transposed axes list");
 };
 
 template <class axes_list, class src_sizes, class src_strides>
@@ -618,8 +617,9 @@ struct axes_list_indices
     static_assert(mp::len<axes_list> == mp::len<src_sizes>, "bad size for transposed axes list");
     constexpr static int talmax = mp::fold<mp::max, void, axes_list>::value;
     constexpr static int talmin = mp::fold<mp::min, void, axes_list>::value;
-    static_assert(talmax < mp::len<src_sizes>, "bad index in transposed axes list");
     static_assert(talmin >= 0, "bad index in transposed axes list");
+// don't enforce, so allow dead axes (e.g. in transpose<1>(rank 1 array)).
+    // static_assert(talmax < mp::len<src_sizes>, "bad index in transposed axes list");
 
     template <class dst_i> struct dst_indices_
     {

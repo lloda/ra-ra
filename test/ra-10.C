@@ -25,12 +25,12 @@ int main()
         ra::Big<ra::Small<double, 2>, 1> V({2*2}, ra::none);
         VP = &V;
         auto i = ra::iota(1);
-// goes through Expr, ref or rvalue works just the same.
+// doesn't use Reframe, ref or rvalue works just the same.
         ply(from([&](auto i) { tr.info("fwd lambda 1").test(&V==VP); }, i));
-// goes through Ryn.
+// uses Reframe.
         auto f = [&](auto i, auto j) { tr.info("fwd lambda 2 ref").test(&V==VP); };
         ply(from(f, i, i));
-// goes through Ryn. This requires the forward in [ra31].
+// uses Reframe. This requires the forward in [ra31].
         ply(from([&](auto i, auto j) { tr.info("fwd lambda 2 rvalue").test(&V==VP); }, i, i));
     }
     return tr.summary();

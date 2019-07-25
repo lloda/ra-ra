@@ -17,7 +17,7 @@ namespace ra {
 
 constexpr int VERSION = 10;    // to force or prevent upgrades on dependents
 constexpr int LAST_ISSUE = 46; // numbered as [ra··] t/o the code. 08-10 are free.
-constexpr int LAST_MAN = 116;  // numbered as [ma··] t/o the manual and examples/tests
+constexpr int LAST_MAN = 117;  // numbered as [ma···] t/o the manual and examples/tests
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
@@ -109,9 +109,9 @@ template <class A, class ... I> inline constexpr auto from(A && a, I && ... i);
 
 // Extended by operators.H and repeated in global.H.
 // TODO All users be int, then this take int.
-constexpr inline bool any(bool const x) { return x; }
-constexpr inline bool every(bool const x) { return x; }
-constexpr inline bool odd(unsigned int N) { return N & 1; }
+inline constexpr bool any(bool const x) { return x; }
+inline constexpr bool every(bool const x) { return x; }
+inline constexpr bool odd(unsigned int N) { return N & 1; }
 
 // This logically belongs in ra/small.H, but it's here so that we can return ra:: types from shape().
 

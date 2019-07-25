@@ -245,7 +245,7 @@ int main()
                     a, ra::_0, ra::_1)));
         tr.test_eq(where(ra::_0==3 && ra::_1==3, 7., 1.), a);
     }
-// The implementation of from() uses FrameMatch / ApplyFrames and can't handle this yet.
+// The implementation of from() uses FrameMatch / Reframe and can't handle this yet.
     tr.section("TensorIndex<i> as subscript, using ra::Expr directly.");
     {
         auto i = ra::_0;

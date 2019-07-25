@@ -69,7 +69,7 @@ tester = ra.to_test_ra(env, variant_dir)
 [tester(test)
  for test in ['old', 'ra-0', 'ra-1', 'ra-2', 'ra-3', 'ra-4', 'ra-5', 'ra-6', 'ra-7', 'ra-8', 'ra-9',
               'ra-11', 'types', 'io', 'from', 'nested-0', 'owned', 'ownership', 'ply',
-              'small-0', 'small-1', 'big-0', 'big-1',
+              'small-0', 'small-1', 'big-0', 'big-1', 'view',
               'return-expr', 'reduction', 'frame-old', 'frame-new', 'compatibility',
               'dual', 'ra-dual', 'mem-fn', 'stl-compat', 'where', 'tuplelist', 'wedge',
               'operators', 'tensorindex', 'explode-0', 'wrank', 'optimize', 'reshape', 'concrete',

@@ -32,24 +32,6 @@ flat(Op & op, P && ... p)
     return Flat<Op, std::tuple<P ...>> { op, std::tuple<P ...> { std::forward<P>(p) ... } };
 }
 
-template <class Op, class ... P> inline constexpr auto
-expr(Op && op, P && ... p)
-{
-    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
-}
-
-template <class Op, class ... A> inline constexpr auto
-map(Op && op, A && ... a)
-{
-    return expr(std::forward<Op>(op), start(std::forward<A>(a)) ...);
-}
-
-template <class Op, class ... A> inline constexpr void
-for_each(Op && op, A && ... a)
-{
-    ply(map(std::forward<Op>(op), std::forward<A>(a) ...));
-}
-
 // forward decl in atom.H
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
@@ -85,11 +67,25 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
         return *flat();
     }
 
-// forward to make sure value y is not misused as ref [ra05].
-#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
+
+template <class Op, class ... P> inline constexpr auto
+expr(Op && op, P && ... p)
+{
+    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
+}
+
+template <class Op, class ... A> inline constexpr auto
+map(Op && op, A && ... a)
+{
+    return expr(std::forward<Op>(op), start(std::forward<A>(a)) ...);
+}
+
+template <class Op, class ... A> inline constexpr void
+for_each(Op && op, A && ... a)
+{
+    ply(map(std::forward<Op>(op), std::forward<A>(a) ...));
+}
 
 } // namespace ra

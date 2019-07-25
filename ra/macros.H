@@ -68,4 +68,11 @@ struct identity
     template <class A> constexpr bool JOIN(NAME, _def) < A, std::enable_if_t< PRED >> = true; \
     template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
 
+// Assign ops for settable array iterators; these must be members.
+// For containers & views this might be defined differently.
+// forward to make sure value y is not misused as ref [ra05].
+#define RA_DEF_ASSIGNOPS(OP)                                            \
+    template <class X> constexpr void operator OP(X && x)               \
+    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
+
 } // namespace mp

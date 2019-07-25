@@ -12,7 +12,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
 @set VERSION 10
-@set UPDATED 2019 July 18
+@set UPDATED 2019 July 25
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1840,9 +1840,72 @@ For example: TODO
 @end example
 
 @cindex @code{transpose}
-@anchor{x-transpose} @defun transpose <axes ...> view
-Create a new view by transposing the axes of @var{view}.
+@anchor{x-transpose}
+@defun transpose <axes ...> (view) | (axes, view)
+Create a new view by transposing the axes of @var{view}. The number of @var{axes} must match the rank of @var{view}.
 @end defun
+
+For example:
+
+@example
+@verbatim
+    ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
+    cout << transpose<1, 0>(a) << endl;
+@end verbatim
+  @print{}
+  3 2
+  1 4
+  2 5
+  3 6
+@end example
+
+The rank of the result is @code{maxᵢ(axesᵢ)+1} and it may be smaller or larger than that of @var{view}. If an axis is repeated, the smallest of the dimensions of @var{view} is used. For example:
+
+@example
+@verbatim
+    ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
+    cout << transpose<0, 0>(a) << endl; // { a(0, 0), a(1, 1) }
+@end verbatim
+  @print{}
+  2
+  1 5
+@end example
+
+If one of the destination axes isn't mentioned in @var{axes}, then is a ‘dead’ axis similar to those produced by @ref{x-insert,@code{insert}}. For example:
+
+@example
+@verbatim
+    ra::Unique<double, 1> a = {1, 2, 3};
+    cout << ((a*10) + transpose<1>(a)) << endl;
+@end verbatim
+  @print{}
+  3 3
+  11 21 31
+  12 22 32
+  13 23 33
+@end example
+
+The two argument form lets you specify the axis list dynamically. In that case the result will have dynamic rank as well. For example: @c [ma117]
+
+@example
+@verbatim
+    ra::Small<int, 2> axes = {0, 1};
+    ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
+    cout << "A: " << transpose(axes, a) << endl;
+    axes = {1, 0};
+    cout << "B: " << transpose(axes, a) << endl;
+@end verbatim
+  @print{}
+  A: 2
+  2 3
+  1 2 3
+  4 5 6
+  B: 2
+  3 2
+  1 4
+  2 5
+  3 6
+@end example
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 

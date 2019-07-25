@@ -35,15 +35,19 @@ template <int iarg, class T>
 std::enable_if_t<(iarg<mp::len<std::decay_t<T>>), int>
 constexpr driver(T && t, int k)
 {
-    dim_t s = std::get<iarg>(t).size(k);
-    return s>=0 ? iarg : driver<iarg+1>(t, k);
+    if (k<std::get<iarg>(t).rank()) {
+        dim_t s = std::get<iarg>(t).size(k);
+        if (s>=0) {
+            return iarg;
+        }
+    }
+    return driver<iarg+1>(t, k);
 }
 
 template <class FM, class Enable=void> struct DebugFrameMatch
 {
     constexpr static bool terminal = true;
     using R = typename FM::R;
-    constexpr static int depth = FM::depth;
     using framedrivers = mp::int_list<FM::driver>;
     using axisdrivers = mp::makelist<mp::ref<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>;
     using axisaxes = mp::iota<mp::ref<typename FM::live, FM::driver>::value, mp::len<mp::ref<typename FM::R_, FM::driver>>>;
@@ -57,7 +61,6 @@ template <class FM> struct DebugFrameMatch<FM, std::enable_if_t<mp::exists<typen
 
     constexpr static bool terminal = false;
     using R = typename FM::R;
-    constexpr static int depth = FM::depth;
     using framedrivers = mp::cons<mp::int_t<FM::driver>, typename DFMC::framedrivers>;
     using axisdrivers = mp::append<mp::makelist<mp::ref<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>,
                                    typename DFMC::axisdrivers>;
@@ -72,7 +75,7 @@ void framematch_demo(V && v, A && a, B && b)
     using FM = ra::Framematch<std::decay_t<V>, tuple<decltype(a.iter()), decltype(b.iter())>>;
     using DFM = DebugFrameMatch<FM>;
     cout << "FM is terminal: " << DFM::terminal << endl;
-    cout << "width of fm: " << mp::len<typename DFM::R> << ", depth: " << DFM::depth << endl;
+    cout << "width of fm: " << mp::len<typename DFM::R> << endl;
     cout << "FM::R: " << mp::print_int_list<typename DFM::R> {} << endl;
     cout << "FM::framedrivers: " << mp::print_int_list<typename DFM::framedrivers> {} << endl;
     cout << "FM::axisdrivers: " << mp::print_int_list<typename DFM::axisdrivers> {} << endl;
@@ -88,16 +91,16 @@ void nested_wrank_demo(V && v, A && a, B && b)
     std::iota(b.begin(), b.end(), 1);
     {
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
-        cout << "width of fm: " << mp::len<typename FM::R> << ", depth: " << FM::depth << endl;
+        cout << "width of fm: " << mp::len<typename FM::R> << endl;
         cout << mp::print_int_list<typename FM::R> {} << endl;
-        auto af0 = ra::applyframes<mp::ref<typename FM::R, 0>, FM::depth>(a.iter());
-        auto af1 = ra::applyframes<mp::ref<typename FM::R, 1>, FM::depth>(b.iter());
-        cout << sizeof(af0) << endl;
-        cout << sizeof(af1) << endl;
+        auto af0 = ra::reframe<mp::ref<typename FM::R, 0>>(a.iter());
+        auto af1 = ra::reframe<mp::ref<typename FM::R, 1>>(b.iter());
+        cout << "af0: " << sizeof(af0) << endl;
+        cout << "af1: " << sizeof(af1) << endl;
         {
             auto ryn = ra::expr(FM::op(v), af0, af1);
             cout << sizeof(ryn) << endl;
-            cout << "ryn rank: " << ryn.rank() << endl;
+            cout << "ryn rank I: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {
                 cout << ryn.size(k) << ": " << driver<0>(ryn.t, k) << endl;
             }
@@ -135,11 +138,14 @@ int main()
     tr.section("declaring verbs");
     {
         auto v = ra::wrank<0, 1>(plus2real);
-        cout << mp::ref<decltype(v)::R, 0>::value << endl;
-        cout << mp::ref<decltype(v)::R, 1>::value << endl;
+        cout << mp::ref<decltype(v)::cranks, 0>::value << endl;
+        cout << mp::ref<decltype(v)::cranks, 1>::value << endl;
         auto vv = ra::wrank<1, 1>(v);
-        cout << mp::ref<decltype(vv)::R, 0>::value << endl;
-        cout << mp::ref<decltype(vv)::R, 1>::value << endl;
+        cout << mp::ref<decltype(vv)::cranks, 0>::value << endl;
+        cout << mp::ref<decltype(vv)::cranks, 1>::value << endl;
+
+        static_assert(ra::is_verb<decltype(v)>);
+        static_assert(!ra::is_verb<decltype(plus2real)>);
     }
     tr.section("using Framematch");
     {
@@ -158,17 +164,17 @@ int main()
         {
             auto v = ra::wrank<0, 2>(plus2real_print);
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
-            cout << "width of fm: " << mp::len<FM::R> << ", depth: " << FM::depth << endl;
+            cout << "width of fm: " << mp::len<FM::R> << endl;
             cout << mp::print_int_list<FM::R> {} << endl;
-            auto af0 = ra::applyframes<mp::ref<FM::R, 0>, FM::depth>(a.iter());
-            auto af1 = ra::applyframes<mp::ref<FM::R, 1>, FM::depth>(b.iter());
-            cout << sizeof(af0) << endl;
-            cout << sizeof(af1) << endl;
+            auto af0 = ra::reframe<mp::ref<FM::R, 0>>(a.iter());
+            auto af1 = ra::reframe<mp::ref<FM::R, 1>>(b.iter());
+            cout << "af0: " << sizeof(af0) << endl;
+            cout << "af1: " << sizeof(af1) << endl;
             auto ryn = expr(FM::op(v), af0, af1);
             cout << sizeof(ryn) << "\n" << endl;
-            cout << "ryn rank: " << ryn.rank() << endl;
+            cout << "ryn rank II: " << ryn.rank() << endl;
             for (int k=0; k<ryn.rank(); ++k) {
-                cout << ryn.size(k) << ": " << driver<0>(ryn.t, k) << endl;
+                cout << ryn.size(k) << ": " << flush << driver<0>(ryn.t, k) << endl;
             }
             ra::ply_ravel(ryn);
         }
@@ -195,7 +201,7 @@ int main()
     }
     tr.section("wrank tests 0-0 (nop), case 1 - exact match");
     {
-// This uses the applyframes specialization for 'do nothing' (TODO if there's one).
+// This uses the reframe specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
                           ra::Unique<real, 1>({3}, ra::none),
@@ -203,7 +209,7 @@ int main()
     }
     tr.section("wrank tests 0-0 (nop), case 2 - non-exact frame match");
     {
-// This uses the applyframes specialization for 'do nothing' (TODO if there's one).
+// This uses the reframe specialization for 'do nothing' (TODO if there's one).
         auto minus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         nested_wrank_demo(ra::wrank<0, 0>(minus2real_print),
                           ra::Unique<real, 2>({3, 4}, ra::none),
@@ -280,7 +286,7 @@ int main()
     tr.section("rank conjunction / empty");
     {
     }
-    tr.section("static rank() in ra::Ryn");
+    tr.section("static rank() in ra::expr with reframe()d args");
     {
         ra::Unique<real, 3> a({2, 2, 2}, 1.);
         ra::Unique<real, 3> b({2, 2, 2}, 2.);
@@ -315,7 +321,7 @@ int main()
             tr.test_eq(c1, c2);
         }
     }
-    tr.section("stencil test for ApplyFrames::keep_stride. Reduced from test/bench-stencil2.C");
+    tr.section("stencil test for Reframe::keep_stride. Reduced from test/bench-stencil2.C");
     {
         int nx = 4;
         int ny = 4;

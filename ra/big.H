@@ -166,11 +166,7 @@ struct cell_iterator
         }
     }
 
-#define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> decltype(auto) operator OP(X && x)               \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); return *this; }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 

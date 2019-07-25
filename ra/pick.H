@@ -118,18 +118,6 @@ pick_flat(P0 && p0, P && ... p)
     return PickFlat<std::tuple<P0, P ...>> { std::tuple<P0, P ...> { std::forward<P0>(p0), std::forward<P>(p) ... } };
 }
 
-template <class P0, class ... P> inline constexpr auto
-pick_in(P0 && p0, P && ... p)
-{
-    return Pick<std::tuple<P0, P ...>> { std::forward<P0>(p0), std::forward<P>(p) ... };
-}
-
-template <class P0, class ... P> inline constexpr auto
-pick(P0 && p0, P && ... p)
-{
-    return pick_in(start(std::forward<P0>(p0)), start(std::forward<P>(p)) ...);
-}
-
 // forward decl in atom.H
 template <class P0, class ... P, int ... I>
 struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple<P0, P ...>>
@@ -164,11 +152,19 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
         return *flat();
     }
 
-// forward to make sure value y is not misused as ref [ra05]
-#define DEF_ASSIGNOPS(OP) template <class X> constexpr void operator OP(X && x) \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
+
+template <class P0, class ... P> inline constexpr auto
+pick_in(P0 && p0, P && ... p)
+{
+    return Pick<std::tuple<P0, P ...>> { std::forward<P0>(p0), std::forward<P>(p) ... };
+}
+
+template <class P0, class ... P> inline constexpr auto
+pick(P0 && p0, P && ... p)
+{
+    return pick_in(start(std::forward<P0>(p0)), start(std::forward<P>(p)) ...);
+}
 
 } // namespace ra

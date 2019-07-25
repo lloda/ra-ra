@@ -42,7 +42,6 @@ View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
         dest.size = dest.size>=0 ? std::min(dest.size, view.dim[k].size) : view.dim[k].size;
         ++k;
     }
-    RA_CHECK(every(map([](auto && dest) { return dest.size!=DIM_BAD; }, r.dim)) && "bad transpose axes");
     return r;
 }
 
