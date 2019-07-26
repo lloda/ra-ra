@@ -18,7 +18,6 @@
 namespace ra {
 
 // TODO merge with ply_ravel @ ply.H, but should control order.
-// TODO custom spacers at turn of dimension.
 // is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
 template <class A> inline
 std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
@@ -37,7 +36,7 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
             return o;
         }
     }
-// unlike in ply_index(), order here is row-major on purpose.
+// order here is row-major on purpose.
     for (;;) {
     next: ;
         o << a.at(ind);

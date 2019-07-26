@@ -1,15 +1,12 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file tuple-list.H
-/// @brief Using tuples as compile time lists.
+/// @file tuples.H
+/// @brief Tuple utilities
 
 // (c) Daniel Llorens - 2005-2013, 2016, 2019
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// The convention here is that the alias xxx<...> is user facing and xxx_<...>::type is
-/// implementation. Ideally we have only the alias.
 
 #pragma once
 #include "ra/macros.H"
@@ -20,6 +17,14 @@ namespace mp {
 
 template <int V> using int_t = std::integral_constant<int, V>;
 template <bool V> using bool_t = std::integral_constant<bool, V>;
+
+
+// -------------------------
+// Tuples as compile time lists
+// -------------------------
+
+// The convention here is that the alias xxx<...> is user facing and xxx_<...>::type is
+// implementation. Ideally we have only the alias.
 
 using std::tuple;
 using nil = tuple<>;
@@ -91,22 +96,23 @@ struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<!(Pred<A0>::value)>>
 };
 
 // Index (& type) of pairwise winner. A variant of fold.
-template <template <class A, class B> class pick_i, class T, int k=1, int sel=0>
-struct IndexOf;
+template <template <class A, class B> class pick_i, class T, int k=1, int sel=0> struct indexof_;
 template <template <class A, class B> class pick_i, class T0, int k, int sel>
-struct IndexOf<pick_i, tuple<T0>, k, sel>
+struct indexof_<pick_i, tuple<T0>, k, sel>
 {
     constexpr static int value = sel;
     using type = T0;
 };
 template <template <class A, class B> class pick_i, class T0, class T1, class ... Ti, int k, int sel>
-struct IndexOf<pick_i, tuple<T0, T1, Ti ...>, k, sel>
+struct indexof_<pick_i, tuple<T0, T1, Ti ...>, k, sel>
 {
     constexpr static int i = pick_i<std::decay_t<T0>, std::decay_t<T1>>::value;
-    using next = IndexOf<pick_i, tuple<std::conditional_t<i==0, T0, T1>, Ti ...>, k+1, i==0 ? sel : k>;
+    using next = indexof_<pick_i, tuple<std::conditional_t<i==0, T0, T1>, Ti ...>, k+1, i==0 ? sel : k>;
     using type = typename next::type;
     constexpr static int value = next::value;
 };
+template <template <class A, class B> class pick_i, class T>
+constexpr int indexof = indexof_<pick_i, T>::value;
 
 // Return the first tail of A headed by Val, like find-tail.
 template <class A, class Val> struct findtail_;
@@ -318,5 +324,70 @@ struct check_idx<tuple<A0, A ...>, I0, I ...>
 {
     constexpr static bool value = (A0::value==I0) && check_idx<tuple<A ...>, I ...>::value;
 };
+
+
+// -------------------------
+// Tuples in dynamic context
+// -------------------------
+
+// TODO Think about struct <int k> { int const value = k; constexpr static int static_value = k; }
+// where the tuple can be cast to an array ref.
+
+// like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
+// FIXME forward t, e.g. https://vittorioromeo.info/index/blog/capturing_perfectly_forwarded_objects_in_lambdas.html
+// until that's fixed, avoid using this for non trivial stuff.
+// template <class C, class T>
+// constexpr C from_tuple(T const & t)
+// {
+//     return std::apply([&t](auto ... i)
+//                       { return C { std::get<decltype(i)::value>(t) ... }; },
+//                       iota<len<std::decay_t<T>>> {});
+// }
+
+// like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
+template <class C, class T, int ... i> inline constexpr
+C from_tuple_(T && t, int_list<i ...>)
+{
+    return { std::get<i>(std::forward<T>(t)) ... };
+}
+
+template <class C, class T> inline constexpr
+C from_tuple(T && t)
+{
+    return from_tuple_<C>(std::forward<T>(t), iota<len<std::decay_t<T>>> {});
+}
+
+template <class C, class T> inline constexpr
+C tuple_values()
+{
+    return std::apply([](auto ... t) { return C { decltype(t)::value ... }; }, T {});
+}
+
+template <class C, class T, class I> inline constexpr
+C map_indices(I const & i)
+{
+    return std::apply([&i](auto ... t) { return C { i[decltype(t)::value] ... }; }, T {});
+};
+
+template <class T, int k=0> inline constexpr
+int int_list_index(int i)
+{
+    if constexpr (k>=mp::len<T>) {
+        return -1;
+    } else {
+        return (i==mp::ref<T, k>::value) ? k : int_list_index<T, k+1>(i);
+    }
+}
+
+template <class K, class T, class F, class I = int_t<0>>
+constexpr auto
+fold_tuple(K && k, T && t, F && f, I && i = int_t<0> {})
+{
+    if constexpr (I::value==std::tuple_size_v<std::decay_t<T>>) {
+        return k;
+    } else {
+        return fold_tuple(f(k, std::get<i>(t)), t, f, int_t<I::value+1> {});
+    }
+}
 
 } // namespace mp

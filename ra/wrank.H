@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/expr.H"
+#include "ra/match.H"
 
 // TODO Adopt frame matching as in Match (no driver).
 
@@ -35,64 +35,64 @@ struct zerostride<std::tuple<T ...>>
     constexpr static std::tuple<T ...> f() { return std::make_tuple(zerostride<T>::f() ...); }
 };
 
-// Live is a list of 'live' destination axes [l0 l1 ... li ... l(rank(A)-1)].
+// Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
 // If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
-// TODO invalid for RANK_ANY (since Live is compile tile). [ra07]
+// TODO invalid for RANK_ANY (since Dest is compile time). [ra07]
 
-template <class Live, class A>
+template <class Dest, class A>
 struct Reframe
 {
     A a;
 
-    constexpr static int live(int k) { return mp::int_list_index<Live>(k); }
-    constexpr static rank_t rank_s() { return 1+mp::fold<mp::max, mp::int_t<-1>, Live>::value; }
+    constexpr static int orig(int k) { return mp::int_list_index<Dest>(k); }
+    constexpr static rank_t rank_s() { return 1+mp::fold<mp::max, mp::int_t<-1>, Dest>::value; }
     constexpr static rank_t rank() { return rank_s(); }
     constexpr static dim_t size_s(int k)
     {
-        int l = live(k);
+        int l = orig(k);
         return l>=0 ? std::decay_t<A>::size_s(l) : DIM_BAD;
     }
     constexpr dim_t size(int k) const
     {
-        int l = live(k);
+        int l = orig(k);
         return l>=0 ? a.size(l) : DIM_BAD;
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        if (int l = live(k); l>=0) {
+        if (int l = orig(k); l>=0) {
             a.adv(l, d);
         }
     }
     constexpr auto stride(int k) const
     {
-        int l = live(k);
+        int l = orig(k);
         return l>=0 ? a.stride(l) : zerostride<decltype(a.stride(l))>::f();
     }
     constexpr bool keep_stride(dim_t step, int z, int j) const
     {
-        int wz = live(z);
-        int wj = live(j);
+        int wz = orig(z);
+        int wj = orig(j);
         return wz>=0 && wj>=0 && a.keep_stride(step, wz, wj);
     }
     template <class I> constexpr decltype(auto) at(I const & i)
     {
-        return a.at(mp::map_indices<std::array<dim_t, mp::len<Live>>, Live>(i));
+        return a.at(mp::map_indices<std::array<dim_t, mp::len<Dest>>, Dest>(i));
     }
     constexpr decltype(auto) flat() { return a.flat(); }
 };
 
-// Optimize the no-op case.
-// TODO If A is cell_iterator, etc. beat Live directly on that... same for an eventual transpose_expr<>.
+// Optimize no-op case.
+// TODO If A is cell_iterator, etc. beat Dest directly on that... same for an eventual transpose_expr<>.
 
-template <class Live, class A> decltype(auto)
+template <class Dest, class A> decltype(auto)
 reframe(A && a)
 {
-    if constexpr (std::is_same_v<Live, mp::iota<1+mp::fold<mp::max, mp::int_t<-1>, Live>::value>>) {
+    if constexpr (std::is_same_v<Dest, mp::iota<1+mp::fold<mp::max, mp::int_t<-1>, Dest>::value>>) {
         return std::forward<A>(a);
     } else {
-        return Reframe<Live, A> { std::forward<A>(a) };
+        return Reframe<Dest, A> { std::forward<A>(a) };
     }
 }
 
@@ -111,20 +111,17 @@ struct Verb
 
 RA_IS_DEF(is_verb, (std::is_same_v<A, Verb<typename A::cranks, typename A::Op>>))
 
-template <class cranks, class Op> inline constexpr
-auto wrank(cranks cranks_, Op && op)
+template <class cranks, class Op> inline constexpr auto
+wrank(cranks cranks_, Op && op)
 {
     return Verb<cranks, Op> { std::forward<Op>(op) };
 }
 
-template <rank_t ... crank, class Op> inline constexpr
-auto wrank(Op && op)
+template <rank_t ... crank, class Op> inline constexpr auto
+wrank(Op && op)
 {
     return Verb<mp::int_list<crank ...>, Op> { std::forward<Op>(op) };
 }
-
-template <class R, class skip, class frank>
-using AddFrameAxes = mp::append<R, mp::iota<frank::value, skip::value>>;
 
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 struct Framematch_def;
@@ -138,26 +135,16 @@ struct max_i
     constexpr static int value = gt_rank(A::value, B::value) ? 0 : 1; // 0 if ra wins, else 1
 };
 
-// Get a list (per argument) of lists of live axes.
-// The last frame match is handled by standard prefix matching.
+// Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
 
 template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
     static_assert(sizeof...(Ti)==sizeof...(crank) && sizeof...(Ti)==sizeof...(Ri), "bad args");
-
-    using T = std::tuple<Ti ...>;
-    using R_ = std::tuple<Ri ...>;
-
-// live = number of live axes on this frame, for each argument.
-// TODO functions of arg rank, negative, inf.
-    static_assert((((rank_s<Ti>() - mp::len<Ri> - crank::value)>=0) && ...), "bad ranks");
+// live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
     using live = mp::int_list<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
-    constexpr static int driver = mp::IndexOf<max_i, live>::value;
-
-// add actual axes to result.
-    using skips = mp::makelist<sizeof...(Ti), mp::int_t<skip>>;
-    using FM = Framematch<W, T, mp::map<AddFrameAxes, R_, skips, live>, skip + mp::ref<live, driver>::value>;
+    using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
+    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + mp::ref<live, mp::indexof<max_i, live>>::value>;
     using R = typename FM::R;
 
     template <class VV> static decltype(auto) op(VV && v) { return FM::op(std::forward<VV>(v).op); } // cf [ra31]
@@ -167,34 +154,11 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 template <class V, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
-    using R_ = std::tuple<Ri ...>;
-
+    static_assert(sizeof...(Ti)==sizeof...(Ri), "bad args");
 // TODO -crank::value when the actual verb rank is used (e.g. to use cell_iterator<A, that_rank> instead of just begin()).
-    static_assert((((rank_s<Ti>() - mp::len<Ri>)>=0) && ...), "bad ranks");
-    using live = mp::int_list<(rank_s<Ti>() - mp::len<Ri>) ...>;
-    constexpr static int driver = mp::IndexOf<max_i, live>::value;
-
-    using skips = mp::makelist<sizeof...(Ti), mp::int_t<skip>>;
-    using R = mp::map<AddFrameAxes, R_, skips, live>;
+    using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
 
     template <class VV> static decltype(auto) op(VV && v) { return std::forward<VV>(v); }
 };
-
-template <class V, class ... T, int ... i> inline constexpr auto
-ryn(mp::int_list<i ...>, V && v, T && ... t)
-{
-    using FM = Framematch<V, std::tuple<T ...>>;
-    return expr(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
-}
-
-// TODO partial specialization means no universal ref :-/
-#define DEF_EXPR_VERB(MOD)                                              \
-    template <class cranks, class Op, class ... T> inline constexpr auto \
-    expr(Verb<cranks, Op> MOD v, T && ... t)                            \
-    {                                                                   \
-        return ryn(mp::iota<sizeof...(T)> {}, std::forward<decltype(v)>(v), std::forward<T>(t) ...); \
-    }
-FOR_EACH(DEF_EXPR_VERB, &&, &, const &)
-#undef DEF_EXPR_VERB
 
 } // namespace ra

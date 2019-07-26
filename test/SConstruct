@@ -71,7 +71,7 @@ tester = ra.to_test_ra(env, variant_dir)
               'ra-11', 'types', 'io', 'from', 'nested-0', 'owned', 'ownership', 'ply',
               'small-0', 'small-1', 'big-0', 'big-1', 'view',
               'return-expr', 'reduction', 'frame-old', 'frame-new', 'compatibility',
-              'dual', 'ra-dual', 'mem-fn', 'stl-compat', 'where', 'tuplelist', 'wedge',
+              'dual', 'ra-dual', 'mem-fn', 'stl-compat', 'where', 'tuples', 'wedge',
               'operators', 'tensorindex', 'explode-0', 'wrank', 'optimize', 'reshape', 'concrete',
               'bench', 'iterator-small', 'const', 'tensor-indices', 'list9', 'early', 'macros',
               # 'end'

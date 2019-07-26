@@ -44,45 +44,7 @@ constexpr driver(T && t, int k)
     return driver<iarg+1>(t, k);
 }
 
-template <class FM, class Enable=void> struct DebugFrameMatch
-{
-    constexpr static bool terminal = true;
-    using R = typename FM::R;
-    using framedrivers = mp::int_list<FM::driver>;
-    using axisdrivers = mp::makelist<mp::ref<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>;
-    using axisaxes = mp::iota<mp::ref<typename FM::live, FM::driver>::value, mp::len<mp::ref<typename FM::R_, FM::driver>>>;
-    using argindices = mp::zip<axisdrivers, axisaxes>;
-};
-
-template <class FM> struct DebugFrameMatch<FM, std::enable_if_t<mp::exists<typename FM::FM> > >
-{
-    using FMC = typename FM::FM;
-    using DFMC = DebugFrameMatch<FMC>;
-
-    constexpr static bool terminal = false;
-    using R = typename FM::R;
-    using framedrivers = mp::cons<mp::int_t<FM::driver>, typename DFMC::framedrivers>;
-    using axisdrivers = mp::append<mp::makelist<mp::ref<typename FM::live, FM::driver>::value, mp::int_t<FM::driver>>,
-                                   typename DFMC::axisdrivers>;
-    using axisaxes = mp::append<mp::iota<mp::ref<typename FM::live, FM::driver>::value, mp::len<mp::ref<typename FM::R_, FM::driver>>>,
-                                 typename DFMC::axisaxes>;
-    using argindices = mp::zip<axisdrivers, axisaxes>;
-};
-
-template <class V, class A, class B>
-void framematch_demo(V && v, A && a, B && b)
-{
-    using FM = ra::Framematch<std::decay_t<V>, tuple<decltype(a.iter()), decltype(b.iter())>>;
-    using DFM = DebugFrameMatch<FM>;
-    cout << "FM is terminal: " << DFM::terminal << endl;
-    cout << "width of fm: " << mp::len<typename DFM::R> << endl;
-    cout << "FM::R: " << mp::print_int_list<typename DFM::R> {} << endl;
-    cout << "FM::framedrivers: " << mp::print_int_list<typename DFM::framedrivers> {} << endl;
-    cout << "FM::axisdrivers: " << mp::print_int_list<typename DFM::axisdrivers> {} << endl;
-    cout << "FM::axisaxes: " << mp::print_int_list<typename DFM::axisaxes> {} << endl;
-    cout << "FM::argindices: " << mp::print_int_list<typename DFM::argindices> {} << endl;
-    cout << endl;
-}
+// ewv = expression-with-verb
 
 template <class V, class A, class B>
 void nested_wrank_demo(V && v, A && a, B && b)
@@ -98,28 +60,28 @@ void nested_wrank_demo(V && v, A && a, B && b)
         cout << "af0: " << sizeof(af0) << endl;
         cout << "af1: " << sizeof(af1) << endl;
         {
-            auto ryn = ra::expr(FM::op(v), af0, af1);
-            cout << sizeof(ryn) << endl;
-            cout << "ryn rank I: " << ryn.rank() << endl;
-            for (int k=0; k<ryn.rank(); ++k) {
-                cout << ryn.size(k) << ": " << driver<0>(ryn.t, k) << endl;
+            auto ewv = ra::expr(FM::op(v), af0, af1);
+            cout << sizeof(ewv) << endl;
+            cout << "ewv rank I: " << ewv.rank() << endl;
+            for (int k=0; k<ewv.rank(); ++k) {
+                cout << ewv.size(k) << ": " << driver<0>(ewv.t, k) << endl;
             }
 
-            // cout << mp::show_type<decltype(ra::ryn<FM>(FM::op(v), af0, af1))>::value << endl;
-            cout << "\nusing (ryn &):\n";
-            ra::ply_ravel(ryn);
+            // cout << mp::show_type<decltype(ra::ewv<FM>(FM::op(v), af0, af1))>::value << endl;
+            cout << "\nusing (ewv &):\n";
+            ra::ply_ravel(ewv);
             cout << endl;
-            cout << "\nusing (ryn &&):\n";
+            cout << "\nusing (ewv &&):\n";
             ra::ply_ravel(ra::expr(FM::op(v), af0, af1));
         }
         {
             // cout << mp::show_type<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
-            auto ryn = ra::expr(v, a.iter(), b.iter());
-            cout << "shape(ryn): " << ra::noshape << shape(ryn) << endl;
+            auto ewv = ra::expr(v, a.iter(), b.iter());
+            cout << "shape(ewv): " << ra::noshape << shape(ewv) << endl;
 #define TEST(plier)                                                     \
-            cout << "\n\nusing " STRINGIZE(plier) " (ryn &):\n";        \
-            ra::plier(ryn);                                             \
-            cout << "\n\nusing " STRINGIZE(plier) " ply (ryn &&):\n";   \
+            cout << "\n\nusing " STRINGIZE(plier) " (ewv &):\n";        \
+            ra::plier(ewv);                                             \
+            cout << "\n\nusing " STRINGIZE(plier) " ply (ewv &&):\n";   \
             ra::plier(ra::expr(v, a.iter(), b.iter()));
             TEST(ply_ravel);
             TEST(ply_index);
@@ -153,13 +115,6 @@ int main()
         ra::Unique<real, 2> b({3, 2}, ra::none);
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
-        {
-            framematch_demo(plus2real, a, b);
-            framematch_demo(ra::wrank<0, 0>(plus2real), a, b);
-            framematch_demo(ra::wrank<0, 1>(plus2real), a, b);
-            framematch_demo(ra::wrank<1, 0>(plus2real), a, b);
-            framematch_demo(ra::wrank<1, 1>(plus2real), a, b);
-        }
         auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         {
             auto v = ra::wrank<0, 2>(plus2real_print);
@@ -170,13 +125,13 @@ int main()
             auto af1 = ra::reframe<mp::ref<FM::R, 1>>(b.iter());
             cout << "af0: " << sizeof(af0) << endl;
             cout << "af1: " << sizeof(af1) << endl;
-            auto ryn = expr(FM::op(v), af0, af1);
-            cout << sizeof(ryn) << "\n" << endl;
-            cout << "ryn rank II: " << ryn.rank() << endl;
-            for (int k=0; k<ryn.rank(); ++k) {
-                cout << ryn.size(k) << ": " << flush << driver<0>(ryn.t, k) << endl;
+            auto ewv = expr(FM::op(v), af0, af1);
+            cout << sizeof(ewv) << "\n" << endl;
+            cout << "ewv rank II: " << ewv.rank() << endl;
+            for (int k=0; k<ewv.rank(); ++k) {
+                cout << ewv.size(k) << ": " << flush << driver<0>(ewv.t, k) << endl;
             }
-            ra::ply_ravel(ryn);
+            ra::ply_ravel(ewv);
         }
     }
     tr.section("wrank tests 0-1");

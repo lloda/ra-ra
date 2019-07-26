@@ -9,8 +9,9 @@
 // later version.
 
 // This class is needed because Expr evaluates its arguments before calling its
-// operator. Note that pick() is a normal function, so its *arguments* will always
-// be evaluated; it is the individual array elements that will not be.
+// operator. The implementation itself is parallel to Expr / Flat. Note that
+// pick() is a normal function, so its *arguments* will always be evaluated; it
+// is the individual array elements that will not be.
 
 #pragma once
 #include "ra/ply.H"
@@ -68,7 +69,7 @@ pick_at(size_t p0, T && t, J const & j)
             return pick_at<I+1>(p0, t, j);
         }
     } else {
-        RA_CHECK(p0==I);
+        RA_CHECK(p0==I, " p0 ", p0, " I ", I);
         return std::get<I+1>(t).at(j);
     }
 }
@@ -91,14 +92,10 @@ pick_star(size_t p0, T && t)
             return pick_star<I+1>(p0, t);
         }
     } else {
-        RA_CHECK(p0==I);
+        RA_CHECK(p0==I, " p0 ", p0, " I ", I);
         return *(std::get<I+1>(t));
     }
 }
-
-// -----------------
-// follows closely Flat, Expr
-// -----------------
 
 // Manipulate ET through flat (raw pointer-like) iterators P ...
 template <class T, class I=mp::iota<mp::len<T>>>

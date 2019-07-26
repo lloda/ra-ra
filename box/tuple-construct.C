@@ -10,8 +10,7 @@
 
 #include <cassert>
 #include <iostream>
-#include "ra/tuple-dynamic.H"
-#include "ra/tuple-list.H"
+#include "ra/tuples.H"
 #include "ra/mpdebug.H"
 
 using std::tuple, std::cout, std::endl;

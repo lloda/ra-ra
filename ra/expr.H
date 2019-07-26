@@ -10,7 +10,7 @@
 
 #pragma once
 #include "ra/ply.H"
-#include "ra/match.H"
+#include "ra/wrank.H"
 
 namespace ra {
 
@@ -70,10 +70,21 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
+template <class V, class ... T, int ... i> inline constexpr auto
+expr_verb(mp::int_list<i ...>, V && v, T && ... t)
+{
+    using FM = Framematch<V, std::tuple<T ...>>;
+    return expr(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
+}
+
 template <class Op, class ... P> inline constexpr auto
 expr(Op && op, P && ... p)
 {
-    return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
+    if constexpr (is_verb<Op>) {
+        return expr_verb(mp::iota<sizeof...(P)> {}, std::forward<Op>(op), std::forward<P>(p) ...);
+    } else {
+        return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
+    }
 }
 
 template <class Op, class ... A> inline constexpr auto

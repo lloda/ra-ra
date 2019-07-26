@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file tuplelist.C
+/// @file tuples.C
 /// @brief Test type list library based on tuples.
 
 // (c) Daniel Llorens - 2010
@@ -9,9 +9,8 @@
 // later version.
 
 #include <iostream>
-#include "ra/tuple-dynamic.H"
-#include "ra/tuple-list.H"
 #include "ra/mpdebug.H"
+#include "ra/tuples.H"
 #include "ra/test.H"
 
 using std::tuple, std::tuple_element, std::is_same_v;
@@ -398,7 +397,7 @@ static_assert(mp::PermutationSign<int_list A , int_list B >::value == C, "");
         static_assert(mp::apply<mp::prod, l>::value==105, "bad");
         static_assert(mp::apply<mp::sum, l>::value==15, "bad");
     }
-// tuple-dynamic
+// tuples in dynamic context
     {
         using l = int_list<3, 4, 5>;
         tr.test_eq(0, mp::int_list_index<l>(3));

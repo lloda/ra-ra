@@ -45,7 +45,7 @@ void ply_ravel(A && a)
         // }
         ;
     }
-// find outermost compact dim.
+// outermost compact dim.
     rank_t * ocd = order;
     auto ss = a.size(*ocd);
     for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
@@ -186,18 +186,14 @@ auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()>1)>
 // Select best performance (or requirements) for each type.
 // ---------------------------
 
-template <class A> inline constexpr
-std::enable_if_t<(size_s<A>()==DIM_ANY)>
+template <class A> inline constexpr void
 ply(A && a)
 {
-    ply_ravel(std::forward<A>(a));
-}
-
-template <class A> inline constexpr
-std::enable_if_t<(size_s<A>()!=DIM_ANY)>
-ply(A && a)
-{
-    plyf(std::forward<A>(a));
+    if constexpr (size_s<A>()==DIM_ANY) {
+        ply_ravel(std::forward<A>(a));
+    } else {
+        plyf(std::forward<A>(a));
+    }
 }
 
 
@@ -219,8 +215,7 @@ auto ply_ravel_exit(A && a, DEF && def)
     }
     switch (rank) {
     case 0: {
-        auto what = *(a.flat());
-        if (std::get<0>(what)) {
+        if (auto what = *(a.flat()); std::get<0>(what)) {
             return std::get<1>(what);
         }
         return def;
@@ -233,7 +228,7 @@ auto ply_ravel_exit(A && a, DEF && def)
         // }
         ;
     }
-// find outermost compact dim.
+// outermost compact dim.
     rank_t * ocd = order;
     auto ss = a.size(*ocd);
     for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
@@ -246,6 +241,7 @@ auto ply_ravel_exit(A && a, DEF && def)
         if (sha[k]==0) { // for the ravelled dimensions ss takes care.
             return def;
         }
+        RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
     }
 // all sub xpr strides advance in compact dims, as they might be different.
     auto const ss0 = a.stride(order[0]);
@@ -253,8 +249,7 @@ auto ply_ravel_exit(A && a, DEF && def)
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
-            auto what = *p;
-            if (std::get<0>(what)) {
+            if (auto what = *p; std::get<0>(what)) {
                 return std::get<1>(what);
             }
         }
