@@ -1577,17 +1577,19 @@ These are array types that own their data in one way or another. Creating or des
 
 These are array views into data in memory. Access to their contents doesn't involve computation and they may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s that aren't associated with any @b{Container}, for example into memory allocated with a different library. Creating and destroying @b{View}s doesn't allocate or deallocate memory for array elements.
 
-@item @b{ArrayIterator} --- @code{Expr} @code{Ryn} @code{Pick} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
+@item @b{ArrayIterator} --- @code{Expr} @code{Pick} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
 
-This is a traversable object. @b{ArrayIterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @b{ArrayIterator}s can be created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. In most cases this is done automatically when those types are used in array expressions.
+This is a traversable object. @b{ArrayIterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{ArrayIterator} itself, so most array expressions are @b{ArrayIterator}s. @b{ArrayIterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
-@item @b{Ravelable} --- @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
+@item @b{Ravelable} --- @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
 This is a kind of @b{ArrayIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{size()}, @code{stride()}, @code{keep_stride()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
 @item @b{Indexable} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
 This is a kind of @b{ArrayIterator} that provides an @code{at(i ...)} method for random access to any element of the array.@footnote{It used to be the case that @code{TensorIndex} was @b{Indexable} but not @b{Ravelable}, which forced all the other @b{Ravelable} types to provide @code{at(i...)} so that they could be mixed with @code{TensorIndex} in expressions. Now that @code{TensorIndex} is also @b{Ravelable}, this distinction may disappear in the future with @code{at(i...)} being provided at a higher level.}
+
+In the current version of @code{ra::}, all @b{ArrayIterator}s are both @b{Ravelable} and @b{Indexable}.
 
 @item @b{Flat} @code{Flat} @code{PickFlat} @code{CellFlat} @code{IotaFlat} @code{ScalarFlat}
 

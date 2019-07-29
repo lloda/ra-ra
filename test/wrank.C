@@ -15,7 +15,6 @@
 #include <atomic>
 #include "ra/mpdebug.H"
 #include "ra/complex.H"
-#include "ra/format.H"
 #include "ra/ra.H"
 #include "ra/test.H"
 #include "test/old.H"

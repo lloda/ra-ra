@@ -1,4 +1,6 @@
-
+// -*- mode: c++; coding: utf-8 -*-
+/// @file bench-stencil3.C
+/// @brief Stencil-as-view.
 // (c) Daniel Llorens - 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
@@ -6,15 +8,12 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-stencil3.C
-/// @brief Stencil-as-view.
 // TODO Bad performance, see also bench-stencil[12].C.
 
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 #include "ra/bench.H"
 

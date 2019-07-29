@@ -34,8 +34,7 @@ struct ra_error: public std::exception
 // -------------------------------------
 
 #include "ra/test.H"
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 
 using std::cout, std::endl, std::flush;
 

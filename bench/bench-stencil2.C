@@ -13,8 +13,7 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 #include "ra/bench.H"
 

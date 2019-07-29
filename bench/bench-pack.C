@@ -13,10 +13,7 @@
 #include <iomanip>
 #include "ra/test.H"
 #include "ra/complex.H"
-#include "ra/big.H"
-#include "ra/wrank.H"
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/bench.H"
 
 using std::cout, std::endl, std::flush;

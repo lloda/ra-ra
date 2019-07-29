@@ -13,7 +13,6 @@
 #include <string>
 #include "ra/test.H"
 #include "ra/ra.H"
-#include "ra/format.H"
 #include "ra/bench.H"
 
 using real = double;

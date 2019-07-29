@@ -10,8 +10,7 @@
 
 #include <iostream>
 #include "ra/bench.H"
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 #include "test/old.H"
 

@@ -11,8 +11,7 @@
 #include "ra/complex.H"
 #include "ra/test.H"
 #include "ra/mpdebug.H"
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/big.H"
 #include "ra/wedge.H"
 

@@ -12,10 +12,7 @@
 #include <iterator>
 #include <numeric>
 #include "ra/test.H"
-#include "ra/big.H"
-#include "ra/operators.H"
-#include "ra/io.H"
-#include "ra/pick.H"
+#include "ra/ra.H"
 #include <typeinfo>
 #include <string>
 

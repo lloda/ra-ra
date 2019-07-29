@@ -9,8 +9,7 @@
 // later version.
 
 #include <iostream>
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 
 using std::cout, std::endl, std::flush, fun::Wedge, fun::hodge, fun::hodgex;

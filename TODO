@@ -1,16 +1,22 @@
-RA    -*- mode: org; -*-
+RA -*- mode: org; -*-
 
-help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO
+help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip
+checkbox [C-ct] flip TODO
 
 #+STARTUP: logdone
 
 * TODO Everything [1/6]
-  - [ ] Bugs [0/6]
-    - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.C has op 10x worse than indexed.
-    - [ ] size_s, rank_s in Ryn:: are broken [ra07]
+  - [ ] Bugs [0/1]
+    - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.C has op 10x worse
+      than indexed
+      - I have a fix for this but it depends on is_constant_eval in c++20.
+    - [X] size_s, rank_s in Ryn:: are broken [ra07]
     - [ ] ambiguity / bad init in nested constructors [ra45]
-    - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)` will return a nested expression instead of preserving `A`'s rank.
-    - [ ] beatable subscripts are not beaten if mixed with non-beatable subscripts. E.g. in A(vector, iota, vector) the iota isn't beaten.
+    - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
+      rank 1, then `A(i)` will return a nested expression instead of preserving
+      `A`'s rank.
+    - [ ] beatable subscripts are not beaten if mixed with non-beatable
+      subscripts. E.g. in A(vector, iota, vector) the iota isn't beaten.
     - [ ] be namespace clean except for possibly real.H, complex.H.
   - [ ] Features [0/4]
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
@@ -25,14 +31,16 @@ help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
         - [ ] add const/nonconst casts of Container to View or ViewConst
         - [ ] remove const overloads from View::operator()
         - [ ] make View be View<pointer> and not View<value_type>
-    - [ ] Should be able to turn ravel iterators (e.g. View::begin()) into array iterators. Ptr()
-      doesn't work for that. Or to obtain STLIterator from any array iterator. That may come of
-      merging STLIterator with ply_index/ply_ravel.
+    - [ ] Should be able to turn ravel iterators (e.g. View::begin()) into array
+      iterators. Ptr() doesn't work for that. Or to obtain STLIterator from any
+      array iterator. That may come of merging STLIterator with
+      ply_index/ply_ravel.
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
-    - [ ] port some of the View ops to generic ArrayIterator. reverse, transpose, etc. seem easy
-      enough. Only it kind of bothers me that they need their own Expr-like types while on Views
-      it's just a one time op. Propagating ops down Expr into leaf Views (a kind of beating) would
-      be better.
+    - [ ] port some of the View ops to generic ArrayIterator. reverse,
+      transpose, etc. seem easy enough. Only it kind of bothers me that they
+      need their own Expr-like types while on Views it's just a one time
+      op. Propagating ops down Expr into leaf Views (a kind of beating) would be
+      better.
   - [X] Error report, debugging [3/3]
     - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/check-runtime.C
       * This was fixed between v8 and v10, see examples/throw.C.

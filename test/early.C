@@ -8,8 +8,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 
 using std::cout, std::endl;

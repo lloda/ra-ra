@@ -1,4 +1,6 @@
-
+// -*- mode: c++; coding: utf-8 -*-
+/// @file bench-sum-rows.C
+/// @brief Benchmark various ways to sum rows.
 // (c) Daniel Llorens - 2016-2017
 
 // This library is free software; you can redistribute it and/or modify it under
@@ -6,13 +8,9 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-sum-rows.C
-/// @brief Benchmark various ways to sum rows.
-
 #include <iostream>
 #include <iomanip>
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 #include "ra/bench.H"
 

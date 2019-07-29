@@ -13,9 +13,7 @@
 #include <iostream>
 #include "ra/complex.H"
 #include "ra/test.H"
-#include "ra/big.H"
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include <sstream>
 
 using std::cout, std::endl, std::flush;

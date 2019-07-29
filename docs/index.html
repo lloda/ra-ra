@@ -1547,17 +1547,19 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 
 <p>These are array views into data in memory. Access to their contents doesn&rsquo;t involve computation and they may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated with a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>
-</li><li> <b>ArrayIterator</b> &mdash; <code>Expr</code> <code>Ryn</code> <code>Pick</code> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
+</li><li> <b>ArrayIterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
 
-<p>This is a traversable object. <b>ArrayIterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <b>ArrayIterator</b>s can be created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. In most cases this is done automatically when those types are used in array expressions.
+<p>This is a traversable object. <b>ArrayIterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>ArrayIterator</b> itself, so most array expressions are <b>ArrayIterator</b>s. <b>ArrayIterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
-</li><li> <b>Ravelable</b> &mdash; <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
+</li><li> <b>Ravelable</b> &mdash; <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
 <p>This is a kind of <b>ArrayIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>size()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
 </li><li> <b>Indexable</b> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
 <p>This is a kind of <b>ArrayIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array.<a id="DOCF9" href="#FOOT9"><sup>9</sup></a>
+</p>
+<p>In the current version of <code>ra::</code>, all <b>ArrayIterator</b>s are both <b>Ravelable</b> and <b>Indexable</b>.
 </p>
 </li><li> <b>Flat</b> <code>Flat</code> <code>PickFlat</code> <code>CellFlat</code> <code>IotaFlat</code> <code>ScalarFlat</code>
 

@@ -11,8 +11,7 @@
 // Regression test for a bug with > 2 non-beatable selectors. The bug was due to
 // bad assumptions in ra::Iota::adv() and ra::Vector::adv().
 
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 #include "ra/test.H"
 
 using std::cout, std::endl;

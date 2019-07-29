@@ -11,8 +11,6 @@
 #pragma once
 #include "ra/match.H"
 
-// TODO Adopt frame matching as in Match (no driver).
-
 namespace ra {
 
 

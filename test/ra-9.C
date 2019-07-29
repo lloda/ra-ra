@@ -12,11 +12,8 @@
 #include <iterator>
 #include "ra/mpdebug.H"
 #include "ra/complex.H"
-#include "ra/format.H"
 #include "ra/test.H"
-#include "ra/big.H"
-#include "ra/operators.H"
-#include "ra/io.H"
+#include "ra/ra.H"
 
 using std::cout, std::endl, std::flush, std::tuple;
 using int2 = ra::Small<int, 2>;

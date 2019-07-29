@@ -385,7 +385,9 @@ struct SmallBase
     using STLIterator = pick_STLIterator<iterator<0>, T *>;
     using STLConstIterator = pick_STLIterator<const_iterator<0>, T const *>;
 
-// TODO In C++17 begin() end() may be different types. See if we can use this to simplify end() and !=end() test.
+// TODO In C++17 begin() end() may be different types, at least for ranged for
+// (https://en.cppreference.com/w/cpp/language/range-for).
+// See if we can use this to simplify end() and !=end() test.
 // TODO With default strides I can just return p. Make sure to test before changing this.
     constexpr STLIterator begin() { if constexpr (have_default_strides) return data(); else return iter(); }
     constexpr STLConstIterator begin() const { if constexpr (have_default_strides) return data(); else return iter(); }
