@@ -70,41 +70,49 @@ dim_t chosen_size(dim_t sa, dim_t sb)
     }
 }
 
+// Abort if there is a static shape mismatch. Return 0 if if all the sizes are static. Return 1 if a runtime check is needed.
+
 template <class E>
 inline constexpr
-void check_expr_s(E const & e)
+int check_expr_s()
 {
     using T = typename E::T;
     constexpr rank_t rs = E::rank_s();
     if constexpr (rs>=0) {
         constexpr auto fk =
-            [](auto && fk, auto k_)
+            [](auto && fk, auto k_, auto valk)
             {
-                constexpr int k = decltype(k_)::value;
+// FIXME until something like P1045R1 = [](..., constexpr auto k_, ...)
+                constexpr int k = k_;
                 if constexpr (k<rs) {
                     constexpr auto fi =
-                        [](auto && fi, auto i_, auto sk_)
+                        [](auto && fi, auto i_, auto sk_, auto vali)
                         {
-                            constexpr dim_t sk = decltype(sk_)::value;
-                            constexpr int i = decltype(i_)::value;
+                            constexpr dim_t sk = sk_;
+                            constexpr int i = i_;
                             if constexpr (i<mp::len<T>) {
                                 using Ti = std::decay_t<mp::ref<T, i>>;
                                 if constexpr (k<Ti::rank_s()) {
                                     constexpr dim_t si = Ti::size_s(k);
                                     static_assert(sk<0 || si<0 || si==sk, "mismatched static dimensions");
-                                    fi(fi, mp::int_t<i+1> {}, mp::int_t<chosen_size(sk, si)> {});
+                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<chosen_size(sk, si)> {},
+                                              mp::int_t<(1==vali || sk==DIM_ANY || si==DIM_ANY) ? 1 : 0> {});
                                 } else {
-                                    fi(fi, mp::int_t<i+1> {}, mp::int_t<sk> {});
+                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<sk> {}, vali);
                                 }
+                            } else {
+                                return vali;
                             }
                         };
-                    fi(fi, mp::int_t<0> {}, mp::int_t<DIM_BAD> {});
-                    return fk(fk, mp::int_t<k+1> {});
+                    constexpr int vali = fi(fi, mp::int_t<0> {}, mp::int_t<DIM_BAD> {}, valk);
+                    return fk(fk, mp::int_t<k+1> {}, mp::int_t<vali> {});
                 } else {
-                    return 0;
+                    return valk;
                 }
             };
-        static_assert(0 == fk(fk, mp::int_t<0> {}));
+        return fk(fk, mp::int_t<0> {}, mp::int_t<0> {});
+    } else {
+        return 1;
     }
 }
 
@@ -113,27 +121,26 @@ inline constexpr
 bool check_expr(E const & e)
 {
     using T = typename E::T;
-    if constexpr (size_s(e)==DIM_ANY) {
-        rank_t rs = e.rank();
-        for (int k=0; k!=rs; ++k) {
-            auto fi =
-                [&k, &e](auto && fi, auto i_, int sk)
-                {
-                    constexpr int i = decltype(i_)::value;
-                    if constexpr (i<mp::len<T>) {
-                        if (k<std::get<i>(e.t).rank()) {
-                            dim_t si = std::get<i>(e.t).size(k);
-                            RA_CHECK((sk==DIM_BAD || si==DIM_BAD || si==sk),
-                                     " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
-                            fi(fi, mp::int_t<i+1> {}, chosen_size(sk, si));
-                        } else {
-                            fi(fi, mp::int_t<i+1> {}, sk);
-                        }
+    rank_t rs = e.rank();
+    for (int k=0; k!=rs; ++k) {
+        auto fi =
+            [&k, &e](auto && fi, auto i_, int sk)
+            {
+                constexpr int i = i_;
+                if constexpr (i<mp::len<T>) {
+                    if (k<std::get<i>(e.t).rank()) {
+                        dim_t si = std::get<i>(e.t).size(k);
+                        RA_CHECK((sk==DIM_BAD || si==DIM_BAD || si==sk),
+                                 " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
+                        fi(fi, mp::int_t<i+1> {}, chosen_size(sk, si));
+                    } else {
+                        fi(fi, mp::int_t<i+1> {}, sk);
                     }
-                };
-            fi(fi, mp::int_t<0> {}, DIM_BAD);
-        }
+                }
+            };
+        fi(fi, mp::int_t<0> {}, DIM_BAD);
     }
+// FIXME actually use this instead of relying on RA_CHECK throwing/aborting
     return true;
 }
 
@@ -148,8 +155,9 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
 
     constexpr Match(P ... p_): t(std::forward<P>(p_) ...)
     {
-        check_expr_s(*this); // always do the static check
-        RA_CHECK(check_expr(*this)); // TODO Maybe do this on ply?
+        if constexpr (check_expr_s<Match>()) {
+            RA_CHECK(check_expr(*this)); // TODO Maybe do this on ply?
+        }
     }
 
     template <class T> struct box { using type = T; };
@@ -203,9 +211,9 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
     constexpr dim_t size(int k) const
     {
         if (dim_t ss=size_s(k); ss==DIM_ANY) {
-            auto f = [this, &k](auto && f, auto ii)
+            auto f = [this, &k](auto && f, auto i_)
                      {
-                         constexpr int i = decltype(ii)::value;
+                         constexpr int i = i_;
                          if constexpr (i<std::tuple_size_v<T>) {
                              auto const & a = std::get<i>(this->t);
                              if (k<a.rank()) {
@@ -235,9 +243,9 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
         (std::get<I>(t).adv(k, d), ...);
     }
 
-    constexpr bool keep_stride(dim_t step, int z, int j) const
+    constexpr bool keep_stride(dim_t st, int z, int j) const
     {
-        return (std::get<I>(t).keep_stride(step, z, j) && ...);
+        return (std::get<I>(t).keep_stride(st, z, j) && ...);
     }
 
     constexpr auto stride(int i) const

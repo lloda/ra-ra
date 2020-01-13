@@ -39,7 +39,7 @@ struct ra_error: public std::exception
 #include "ra/big.H"
 #include "test/old.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, std::string;
 using real = double;
 
 int main()
@@ -149,32 +149,42 @@ int main()
         tr.test_eq(2, a(1, 0));
         tr.test_eq(1, a(1, 1));
     }
+#define EXPR ra::expr(plus2real_print, a.iter(), b.iter())
     tr.section("frame matching should-be-error cases");
     {
         ra::Unique<real, 1> a({3}, 10);
         ra::Unique<real, 1> b({4}, 1);
         auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        int x = 0;
+        int error = 0;
+        string s;
         try {
-            ply_ravel(ra::expr(plus2real_print, a.iter(), b.iter()));
-            x = 1;
+            tr.info("dynamic test is needed").test_eq(1, ra::check_expr_s<decltype(EXPR)>());
+            ply_ravel(EXPR);
         } catch (ra_error & e) {
+            error = 1;
+            s = e.s;
         }
-        tr.info("caught error").test_eq(0, x);
+        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
     tr.section("frame matching should-be-error cases - dynamic rank");
     {
         ra::Unique<real> a({3}, 10);
         ra::Unique<real> b({4}, 1);
         auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        int x = 0;
+        int error = 0;
+        string s;
         try {
-            ply_ravel(ra::expr(plus2real_print, a.iter(), b.iter()));
-            x = 1;
+            std::cout << "A: " << a.iter().size(0) << endl;
+            std::cout << "B: " << b.iter().size(0) << endl;
+            tr.info("dynamic test is needed").test_eq(1, ra::check_expr_s<decltype(EXPR)>());
+            ply_ravel(EXPR);
         } catch (ra_error & e) {
+            error = 1;
+            s = e.s;
         }
-        tr.info("caught error").test_eq(0, x);
+        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
+#undef EXPR
     tr.section("unintiuitive behavior [ra33]");
     {
         ra::Big<int, 1> i = {0, 1, 2};

@@ -143,7 +143,7 @@ struct cell_iterator
     constexpr dim_t size(int k) const { RA_CHECK(inside(k, rank())); return dim[k].size; }
     constexpr dim_t stride(int k) const { return k<rank() ? dim[k].stride : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
-    constexpr bool keep_stride(dim_t step, int z, int j) const { return step*stride(z)==stride(j); }
+    constexpr bool keep_stride(dim_t st, int z, int j) const { return st*stride(z)==stride(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
 
     constexpr auto flat() const
@@ -182,7 +182,7 @@ dim_t filldim(int n, D dend)
     dim_t next = 1;
     for (; n>0; --n) {
         --dend;
-        RA_CHECK((*dend).size>=0 && "bad dim");
+        RA_CHECK((*dend).size>=0, "bad dim", (*dend).size);
         (*dend).stride = next;
         next *= (*dend).size;
     }
@@ -265,7 +265,7 @@ dim_t proddim(D d, D dend)
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
-    RA_CHECK(inside(i, dim_src->size));
+    RA_CHECK(inside(i, dim_src->size), " i ", i, " size ", dim_src->size);
     return dim_src->stride*i;
 }
 template <class II>
@@ -613,8 +613,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     template <class S> void init(S && s)
     {
-        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s);
 // I decided not to accept rank extension here, because it's error prone and not that useful.
+        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s);
         static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape");
 // [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)). Not being able to traverse backwards hurts here. See other uses of ra::vector (or start) here.
         if constexpr (RANK==RANK_ANY) {
