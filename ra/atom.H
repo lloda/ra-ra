@@ -39,7 +39,7 @@ struct TensorIndex
     template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
     constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, "d ", d); i += (k==w) * d; }
     constexpr static dim_t const stride(int k) { return (k==w); }
-    constexpr static bool keep_stride(dim_t step, int z, int j) { return step*stride(z)==stride(j); }
+    constexpr static bool keep_stride(dim_t st, int z, int j) { return st*stride(z)==stride(j); }
     constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
 };
 
@@ -73,7 +73,7 @@ struct Scalar
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t stride(int k) { return 0; }
-    constexpr static bool keep_stride(dim_t step, int z, int j) { return true; }
+    constexpr static bool keep_stride(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
 
@@ -126,7 +126,7 @@ struct Vector
         p__ += (k==0) * d;
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
+    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -158,7 +158,7 @@ struct Ptr
         std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
+    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -190,7 +190,7 @@ struct Span
         std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
+    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -235,7 +235,7 @@ struct Iota
         i_ += T((k==0) * d) * stride_; // cf Vector::adv
     }
     constexpr static dim_t stride(rank_t i) { return i==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t step, int z, int j) { return (z==0) == (j==0); }
+    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
     decltype(auto) operator+=(T const & b) { i_ += b; return *this; };
     decltype(auto) operator-=(T const & b) { i_ -= b; return *this; };

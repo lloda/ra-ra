@@ -14,7 +14,7 @@
 #include "ra/test.H"
 #include "ra/ra.H"
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 using real = double;
 
 // TODO Test construction both by-value and by-ref, and between types.

@@ -16,7 +16,7 @@
 #include "ra/ra.H"
 #include "ra/mpdebug.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 int main()
 {

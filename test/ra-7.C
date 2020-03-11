@@ -15,7 +15,7 @@
 #include "ra/test.H"
 #include "ra/ra.H"
 
-using std::cout, std::endl, std::flush, std::tuple;
+using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 using real = double;
 
 int main()

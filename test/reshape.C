@@ -13,7 +13,7 @@
 #include "ra/mpdebug.H"
 #include <memory>
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 
 namespace ra {
 

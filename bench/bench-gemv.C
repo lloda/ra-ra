@@ -20,7 +20,7 @@
 #include "ra/ra.H"
 #include "ra/bench.H"
 
-using std::cout, std::endl, std::setw, std::setprecision;
+using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
 using ra::Small, ra::View, ra::Unique, ra::ra_traits;
 
 using real = double;

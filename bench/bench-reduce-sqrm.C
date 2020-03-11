@@ -18,7 +18,7 @@
 #include "ra/test.H"
 #include "ra/bench.H"
 
-using std::cout, std::endl, std::setw, std::setprecision;
+using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
 using real = double;
 using real4 = ra::Small<real, 4>;
 

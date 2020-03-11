@@ -16,7 +16,7 @@
 #include "ra/test.H"
 #include "ra/ra.H"
 
-using std::cout, std::endl, std::flush, std::tuple;
+using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 
 using real = double;
 template <int rank=ra::RANK_ANY> using Ureal = ra::Unique<real, rank>;

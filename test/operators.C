@@ -15,7 +15,7 @@
 #include "ra/big.H"
 #include "ra/wedge.H"
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
 
@@ -276,10 +276,10 @@ int main()
             ra::Small<real, 1> r;
             fun::Wedge<1, 0, 0>::product(a, b, r);
             tr.test_eq(6, r[0]);
-            tr.test_eq(6, wedge<1, 0, 0>(ra::Small<real, 1>{2}, ra::Small<real, 1>{3}));
-            tr.test_eq(6, wedge<1, 0, 0>(ra::Small<real, 1>{2}, 3.));
-            tr.test_eq(6, wedge<1, 0, 0>(2., ra::Small<real, 1>{3}));
-            tr.test_eq(6, wedge<1, 0, 0>(2., 3));
+            tr.test_eq(6, ra::wedge<1, 0, 0>(ra::Small<real, 1>{2}, ra::Small<real, 1>{3}));
+            tr.test_eq(6, ra::wedge<1, 0, 0>(ra::Small<real, 1>{2}, 3.));
+            tr.test_eq(6, ra::wedge<1, 0, 0>(2., ra::Small<real, 1>{3}));
+            tr.test_eq(6, ra::wedge<1, 0, 0>(2., 3));
         }
     }
     tr.section("hodge / hodgex");

@@ -2,7 +2,7 @@
 /// @file ply.H
 /// @brief Traverse (ply) array or array expression or array statement.
 
-// (c) Daniel Llorens - 2013-2017
+// (c) Daniel Llorens - 2013-2019
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -23,7 +23,7 @@ namespace ra {
 
 // Traverse array expression looking to ravel the inner loop.
 // size(k) has a single value.
-// adv(k), stride(k), keep_stride(step, k, l) and flat() are used on all the leaf arguments.
+// adv(k), stride(k), keep_stride(st, k, l) and flat() are used on all the leaf arguments.
 // The strides must give 0 for k>=their own rank, to allow frame matching.
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <class A> inline

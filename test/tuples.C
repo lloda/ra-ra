@@ -14,7 +14,7 @@
 #include "ra/test.H"
 
 using std::tuple, std::tuple_element, std::is_same_v;
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 using mp::int_t, mp::ref, mp::int_list;
 
 template <class A>

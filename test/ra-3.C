@@ -16,7 +16,7 @@
 #include "ra/big.H"
 #include "ra/operators.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 using std::tuple;
 using real = double;
 

@@ -338,6 +338,7 @@ Big<int> e = 0;                         // e is a 0-array with one element f()==
 The second form takes two arguments, one giving the shape, the second the contents.
 
 @cindex @code{none}
+@cindex uninitialized container
 @example
 @verbatim
 ra::Big<double, 2> a({2, 3}, 1.);     // a has size 2x3 and be filled with 1.
@@ -1593,7 +1594,7 @@ In the current version of @code{ra::}, all @b{ArrayIterator}s are both @b{Ravela
 
 @item @b{Flat} @code{Flat} @code{PickFlat} @code{CellFlat} @code{IotaFlat} @code{ScalarFlat}
 
-These are pointerlike types that are meant to be traversed linearly. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Ravelable} objects through a method @code{flat}.
+These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Ravelable} objects through a method @code{flat}.
 
 @end itemize
 

@@ -98,9 +98,9 @@ struct cell_iterator_small
     constexpr static dim_t size(int k) { RA_CHECK(inside(k, rank())); return V::size(k); }
     constexpr static dim_t size_s(int k) { /* RA_CHECK(inside(k, rank_s())); */ return V::size(k); }
     constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
-    constexpr static bool keep_stride(dim_t step, int z, int j)
+    constexpr static bool keep_stride(dim_t st, int z, int j)
     {
-        return step*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
+        return st*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
     }
     constexpr void adv(rank_t k, dim_t d) { c.p += (k<rank()) * stride(k)*d; }
 

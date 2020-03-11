@@ -16,7 +16,7 @@
 #include "ra/ra.H"
 #include "test/old.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 template <int i> using TI = ra::TensorIndex<i, int>;
 using real = double;
 

@@ -20,7 +20,7 @@
 #include "examples/cghs.H"
 #include "ra/bench.H"
 
-using std::cout, std::endl, ra::PI;
+using std::cout, std::endl, ra::PI, ra::TestRecorder;
 
 Benchmark::clock::duration tmul(0);
 

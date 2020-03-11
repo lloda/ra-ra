@@ -17,17 +17,9 @@
 #include "ra/operators.H"
 #include "ra/io.H"
 
-constexpr char const * esc_bold = "\x1b[01m";
-constexpr char const * esc_unbold = "\x1b[0m";
-constexpr char const * esc_red = "\x1b[31m";
-constexpr char const * esc_green = "\x1b[32m";
-constexpr char const * esc_cyan = "\x1b[36m";
-constexpr char const * esc_yellow = "\x1b[33m";
-constexpr char const * esc_blue = "\x1b[34m";
-constexpr char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
-constexpr char const * esc_plain = "\x1b[39m";
-constexpr char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
-constexpr char const * esc_pink = "\x1b[38;5;225m";
+namespace ra {
+
+template <> constexpr bool is_scalar_def<std::string> = true;
 
 struct TestRecorder
 {
@@ -46,12 +38,12 @@ struct TestRecorder
 
     template <class ... A> void section(A const & ... a)
     {
-        o << "\n" << esc_bold << ra::format(a ...) << esc_unbold << std::endl;
+        o << "\n" << esc_bold << format(a ...) << esc_unbold << std::endl;
     }
 
     static std::string format_error(double e)
     {
-        return ra::format(esc_yellow, std::setprecision(2), e, esc_plain);
+        return format(esc_yellow, std::setprecision(2), e, esc_plain);
     }
 
     template <class ... A> TestRecorder & info(A && ... a)
@@ -59,7 +51,7 @@ struct TestRecorder
         bool empty = (info_str=="");
         info_str += esc_pink;
         info_str += (empty ? "" : "; ");
-        info_str += ra::format(a ...);
+        info_str += format(a ...);
         info_str += esc_plain;
         return *this;
     }
@@ -73,13 +65,13 @@ struct TestRecorder
         switch (verbose) {
         case QUIET: {
             if (!c) {
-                o << esc_cyan << "[" << (willskip ? std::string("skipped") : ra::format(total)) << "] " << esc_plain
+                o << esc_cyan << "[" << (willskip ? std::string("skipped") : format(total)) << "] " << esc_plain
                   << esc_bold << esc_red << "FAILED" << esc_reset
                   << "... " << info_full() << std::endl;
             }
         }; break;
         case NOISY: case ERRORS: {
-            o << esc_cyan << "[" << (willskip ? std::string("skipped") : ra::format(total)) << "] " << esc_plain
+            o << esc_cyan << "[" << (willskip ? std::string("skipped") : format(total)) << "] " << esc_plain
               << (c ? std::string(esc_green)+"ok"+esc_plain
                   : std::string(esc_bold)+esc_red+"FAILED"+esc_reset)
               << "... " << ((verbose==NOISY || !c) ? info_full() : info_min()) << std::endl;
@@ -99,7 +91,7 @@ struct TestRecorder
         willskip = false;
     }
 
-#define LAZYINFO(...) [&]() { return ra::format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
+#define LAZYINFO(...) [&]() { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
 
     template <class A> void test(bool c, A && info_full) { test(c, info_full, info_full); }
     void test(bool c) { test(c, LAZYINFO("")); }
@@ -144,8 +136,8 @@ struct TestRecorder
                          abs(ref-a)/level));
         test(e<=req_err,
              LAZYINFO("rerr(", esc_yellow, "ref", esc_plain, ": ", ref, esc_yellow, ", got", esc_plain, ": ", a,
-                      ") = ", format_error(e), (level<=0 ? "" : ra::format(" (level ", level, ")")), ", req. ", req_err),
-             LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : ra::format(" (level ", level, ")")),
+                      ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req_err),
+             LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
                       ", req. ", req_err));
         return e;
     }
@@ -171,9 +163,11 @@ struct TestRecorder
         }
         if (!failed.empty()) {
             o << esc_reset << ", " <<  esc_bold << esc_red << " failed " << failed.size()
-              << " (" << ra::noshape << ra::format_array(failed) << ")";
+              << " (" << ra::noshape << format_array(failed) << ")";
         }
         o << esc_reset << std::endl;
         return failed.size();
     }
 };
+
+} // namespace ra

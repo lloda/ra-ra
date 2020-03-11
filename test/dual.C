@@ -17,7 +17,7 @@
 #include "ra/dual.H"
 #include "ra/test.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
 

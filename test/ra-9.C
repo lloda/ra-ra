@@ -15,7 +15,7 @@
 #include "ra/test.H"
 #include "ra/ra.H"
 
-using std::cout, std::endl, std::flush, std::tuple;
+using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 using int2 = ra::Small<int, 2>;
 using int1 = ra::Small<int, 1>;
 

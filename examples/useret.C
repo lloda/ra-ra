@@ -11,7 +11,7 @@
 #include "ra/ra.H"
 #include <iostream>
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush;
 
 double myFunction(double x)
 {

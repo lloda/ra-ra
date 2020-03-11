@@ -19,7 +19,7 @@
 #include "ra/test.H"
 #include "test/old.H"
 
-using std::cout, std::endl, std::flush, std::tuple, ra::dim_t;
+using std::cout, std::endl, std::flush, std::tuple, ra::dim_t, ra::TestRecorder;
 using real = double;
 
 // Find the driver for given axis. This pattern is used in Ryn to find the size-giving argument for each axis.

@@ -14,10 +14,10 @@
 #include <type_traits>
 #include <utility>
 
-#define STRINGIZE1( x ) #x
-#define STRINGIZE( x ) STRINGIZE1( x )
-#define JOIN1( x, y ) x##y
-#define JOIN( x, y ) JOIN1( x, y )
+#define STRINGIZE_( x ) #x
+#define STRINGIZE( x ) STRINGIZE_( x )
+#define JOIN_( x, y ) x##y
+#define JOIN( x, y ) JOIN_( x, y )
 
 // by G. Pakosz @ http://stackoverflow.com/a/1872506
 #define FOR_EACH_1(what, x, ...) what(x)

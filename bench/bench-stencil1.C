@@ -17,7 +17,7 @@
 #include "ra/test.H"
 #include "ra/bench.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 
 int nx = 1000000;

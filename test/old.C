@@ -50,7 +50,7 @@ template <class ... P> constexpr int driver_index = mp::indexof<pick_driver, std
 
 } // namespace ra
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 template <int i> using TI = ra::TensorIndex<i, int>;
 template <int i> using UU = decltype(std::declval<ra::Unique<double, i>>().iter());
 using SM1 = decltype(std::declval<ra::Small<double, 2>>().iter());

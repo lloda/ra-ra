@@ -18,7 +18,7 @@
 #include "ra/mpdebug.H"
 #include "test/old.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 using complex = std::complex<double>;
 
 int main()

@@ -21,7 +21,7 @@ using ra::iota;
 auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 
-using std::cout, std::endl, ra::PI;
+using std::cout, std::endl, ra::PI, ra::TestRecorder;
 
 int main()
 {
@@ -61,40 +61,41 @@ int main()
     auto time_A = Benchmark::clock::now()-t0;
 
 // FIXME should try to traverse the array once, e.g. explode() = pack(...). The need to wrap around boundaries complicates this greatly.
-    auto diff = [&DA, &A, &delta](auto k_)
+    auto diff = [&DA, &A, &delta](auto k_, real factor)
         {
             constexpr int k = decltype(k_)::value;
             const int o = DA.size(k);
             if (o>=2) {
-                DA(HH<k>, iota(o-2, 1), HH<4-k>, k) = (A(HH<k>, iota(o-2, 2)) - A(HH<k>, iota(o-2, 0)))/(2*delta);
-                DA(HH<k>, 0, HH<4-k>, k) = (A(HH<k>, 1) - A(HH<k>, o-1))/(2*delta);
-                DA(HH<k>, o-1, HH<4-k>, k) = (A(HH<k>, 0) - A(HH<k>, o-2))/(2*delta);
+                DA(HH<k>, iota(o-2, 1), HH<4-k>, k) = (A(HH<k>, iota(o-2, 2)) - A(HH<k>, iota(o-2, 0)));
+                DA(HH<k>, 0, HH<4-k>, k) = (A(HH<k>, 1) - A(HH<k>, o-1));
+                DA(HH<k>, o-1, HH<4-k>, k) = (A(HH<k>, 0) - A(HH<k>, o-2));
+                DA(HH<5>, k) *= factor;
             }
         };
 
     t0 = Benchmark::clock::now();
-    diff(mp::int_t<0>());
-    diff(mp::int_t<1>());
-    diff(mp::int_t<2>());
-    diff(mp::int_t<3>());
+    diff(mp::int_t<0>(), +1/(2*delta));
+    diff(mp::int_t<1>(), -1/(2*delta));
+    diff(mp::int_t<2>(), -1/(2*delta));
+    diff(mp::int_t<3>(), -1/(2*delta));
     auto time_DA = Benchmark::clock::now()-t0;
 
     F = ra::transpose<0, 1, 2, 3, 5, 4>(DA) - DA;
 
 // abuse shape matching to reduce last axis.
-    divA = 0;
     divA += ra::transpose<0, 1, 2, 3, 4, 4>(DA);
     tr.info("Lorentz test max div A (1)").test_eq(0., amax(divA));
 // an alternative without a temporary.
     tr.info("Lorentz test max div A (2)")
         .test_eq(0., amax(map([](auto && a) { return sum(a); },
                               iter<1>(ra::transpose<0, 1, 2, 3, 4, 4>(DA)))));
+    tr.quiet().test_eq(0.3039588939177449, F(19, 0, 0, 0, 2, 1));
 
     auto show = [&tr, &delta](char const * name, int t, auto && F)
         {
             tr.quiet().test(amin(F)>=-1);
             tr.quiet().test(amax(F)<=+1);
-            cout << name << " t= " << (t*delta) << ":\n";
+            cout << name << "(0)=" << std::setprecision(10) << std::setw(12) << F(0) << " t=" << (t*delta) << ":\n";
             for_each([](auto && F) { cout << std::string(int(round(20*(clamp(F, -1., 1.)+1))), ' ') << "*\n"; }, F);
         };
 

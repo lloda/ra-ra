@@ -14,7 +14,7 @@
 #include <vector>
 #include <iostream>
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 
 void example1()
 {

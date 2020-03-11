@@ -17,7 +17,7 @@ using std::cout, std::endl;
 
 int main()
 {
-    TestRecorder tr(std::cout);
+    ra::TestRecorder tr(std::cout);
 
     tr.section("scalars");
     {

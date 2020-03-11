@@ -17,7 +17,7 @@
 #include "ra/test.H"
 #include "ra/ra.H"
 
-using std::cout, std::endl, std::flush, std::cerr;
+using std::cout, std::endl, std::flush, std::cerr, ra::TestRecorder;
 template <class T, int N> using Array = ra::Big<T, N>;
 template <class T> using Vec = Array<T, 1>;
 

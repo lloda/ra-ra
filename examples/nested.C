@@ -7,7 +7,7 @@
 #include "ra/ra.H"
 #include <iostream>
 
-using std::cout; using std::endl;
+using std::cout, std::endl;
 
 int main()
 {

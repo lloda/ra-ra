@@ -12,7 +12,7 @@
 #include "ra/test.H"
 #include "ra/mpdebug.H"
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 
 void * VP;
 

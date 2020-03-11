@@ -18,7 +18,7 @@
 #include "examples/cghs.H"
 #include "ra/bench.H"
 
-using std::cout, std::endl, std::flush, ra::PI;
+using std::cout, std::endl, std::flush, ra::PI, ra::TestRecorder;
 
 Benchmark::clock::duration tmul(0);
 

@@ -16,7 +16,7 @@
 #include "ra/ra.H"
 #include <sstream>
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 
 template <class A>

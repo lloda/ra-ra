@@ -35,7 +35,7 @@ struct ra_error: public std::exception
 #include "ra/test.H"
 #include <iostream>
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 
 int main()
 {

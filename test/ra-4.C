@@ -14,7 +14,7 @@
 #include "ra/test.H"
 #include "ra/big.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 using complex = std::complex<double>;
 
 template <class AA>

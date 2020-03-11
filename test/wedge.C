@@ -12,7 +12,8 @@
 #include "ra/ra.H"
 #include "ra/test.H"
 
-using std::cout, std::endl, std::flush, fun::Wedge, fun::hodge, fun::hodgex;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
+using fun::Wedge, fun::hodge, fun::hodgex;
 
 using real = double;
 using complex = std::complex<double>;
@@ -54,20 +55,20 @@ std::enable_if_t<(O<=N)> test_optimized_hodge_aux(TestRecorder & tr)
     if (O==1) {
         real S = sum(sqr(u));
 // since the volume form and the 1-forms are always ordered lexicographically (0 1 2...) vs (0) (1) (2) ...
-        tr.info("with O=1, S: ", S, " vs wedge(u, w): ", wedge<N, O, N-O>(u, w))
-            .test_eq(S, wedge<N, O, N-O>(u, w));
+        tr.info("with O=1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, O, N-O>(u, w))
+            .test_eq(S, ra::wedge<N, O, N-O>(u, w));
     } else if (O+1==N) {
         real S = sum(sqr(w));
 // compare with the case above, this is the sign of the (anti)commutativity of the exterior product.
         S *= odd(O*(N-O)) ? -1 : +1;
-        tr.info("with O=N-1, S: ", S, " vs wedge(u, w): ", wedge<N, N-O, O>(u, w))
-            .test_eq(S, wedge<N, N-O, O>(u, w));
+        tr.info("with O=N-1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, N-O, O>(u, w))
+            .test_eq(S, ra::wedge<N, N-O, O>(u, w));
     }
 // test that it does the same as hodgex().
     Vb x(GARBAGE);
     hodgex<N, O>(u, x);
     if (2*O==N) {
-        tr.info("-> ", u, " hodgex ", x).test_eq(wedge<N, O, N-O>(u, w), wedge<N, O, N-O>(u, x));
+        tr.info("-> ", u, " hodgex ", x).test_eq(ra::wedge<N, O, N-O>(u, w), ra::wedge<N, O, N-O>(u, x));
     }
 // test basic duality property, **w = (-1)^{o(n-o)} w.
     {
@@ -101,7 +102,7 @@ void test_optimized_hodge<-1>(TestRecorder & tr)
 template <int D, class R, class A, class B>
 R test_scalar_case(A const & a, B const & b)
 {
-    R r = wedge<D, 0, 0>(a, b);
+    R r = ra::wedge<D, 0, 0>(a, b);
     cout << "[" << D << "/0/0] " << a << " ^ " << b << " -> " << r << endl;
     return r;
 }
@@ -112,7 +113,7 @@ R test_one_one_case(TestRecorder & tr, A const & a, B const & b)
     R r1(GARBAGE);
     Wedge<D, OA, OB>::product(a, b, r1);
     cout << "[" << D << "/" << OA << "/" << OB << "] " << a << " ^ " << b << " -> " << r1 << endl;
-    R r2(wedge<D, OA, OB>(a, b));
+    R r2(ra::wedge<D, OA, OB>(a, b));
     cout << "[" << D << "/" << OA << "/" << OB << "] " << a << " ^ " << b << " -> " << r2 << endl;
     tr.test_eq(r1, r2);
     return r1;
@@ -121,7 +122,7 @@ R test_one_one_case(TestRecorder & tr, A const & a, B const & b)
 template <int D, int OA, int OB, class R, class A, class B>
 R test_one_scalar_case(A const & a, B const & b)
 {
-    R r2(wedge<D, OA, OB>(a, b));
+    R r2(ra::wedge<D, OA, OB>(a, b));
     cout << "[" << D << "/" << OA << "/" << OB << "] " << a << " ^ " << b << " -> " << r2 << endl;
     return r2;
 }
@@ -363,16 +364,16 @@ int main()
     {
         real3 u{1., 2., 3.};
         real3 v{3., 2., 1.};
-        tr.test_eq(10., wedge<3, 1, 2>(u, v));
-        tr.test_eq(cross(u, v), wedge<3, 1, 1>(u, v));
-        tr.test_eq(10., wedge<3, 1, 2>(u, v));
+        tr.test_eq(10., ra::wedge<3, 1, 2>(u, v));
+        tr.test_eq(cross(u, v), ra::wedge<3, 1, 1>(u, v));
+        tr.test_eq(10., ra::wedge<3, 1, 2>(u, v));
     }
     tr.section("verify that we are allowed to choose our return type to wedge<>(a, b, r)");
     {
         real a(GARBAGE);
         real1 b(GARBAGE);
-        wedge<2, 1, 1>(real2{1, 0}, real2{0, 1}, a);
-        wedge<2, 1, 1>(real2{1, 0}, real2{0, 1}, b);
+        ra::wedge<2, 1, 1>(real2{1, 0}, real2{0, 1}, a);
+        ra::wedge<2, 1, 1>(real2{1, 0}, real2{0, 1}, b);
         tr.test_eq(1, a);
         tr.test_eq(1, b[0]);
     }
@@ -414,7 +415,7 @@ int main()
     }
     tr.section("Test scalar x ~scalar arg cases.");
     {
-        tr.test_eq(6., wedge<1, 0, 1>(3., complex1(2.)));
+        tr.test_eq(6., ra::wedge<1, 0, 1>(3., complex1(2.)));
     }
     return tr.summary();
 }

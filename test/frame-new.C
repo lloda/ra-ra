@@ -36,7 +36,7 @@ struct ra_error: public std::exception
 #include "ra/test.H"
 #include "ra/ra.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 template <int i> using TI = ra::TensorIndex<i, int>;
 template <int i> using UU = decltype(std::declval<ra::Unique<double, i>>().iter());

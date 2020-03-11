@@ -15,14 +15,11 @@
 #include "ra/test.H"
 #include "test/old.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 template <int i> using TI = ra::TensorIndex<i>;
 using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
-
-// TestRecorder wants its args to be array elements.
-namespace ra { template <> constexpr bool is_scalar_def<std::string> = true; }
 
 template <class AA, class CC>
 void iocheck(TestRecorder & tr, AA && a, CC && check)

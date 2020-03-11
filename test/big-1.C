@@ -13,7 +13,8 @@
 #include "ra/ra.H"
 #include "ra/test.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
+
 template <class T, ra::rank_t RANK=ra::RANK_ANY> using BigValueInit = ra::Container<std::vector<T>, RANK>;
 
 int main()

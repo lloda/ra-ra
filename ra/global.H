@@ -12,8 +12,7 @@
 #include "ra/wedge.H"
 #include "ra/atom.H"
 
-// TODO All users be int, then this take int.
-// See also using std::abs, etc. in real.H.
+// Cf using std::abs, etc. in real.H.
 using ra::odd, ra::every, ra::any;
 
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
@@ -27,15 +26,3 @@ inline constexpr decltype(auto) transpose(A && a) { return std::forward<A>(a); }
 
 template <int cell_rank>
 inline constexpr void iter() { abort(); }
-
-// These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
-template <class T, class F,
-          std::enable_if_t<ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>, int> =0>
-inline constexpr decltype(auto) where(bool const w, T && t, F && f)
-{
-    return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
-}
-
-template <int D, int Oa, int Ob, class A, class B,
-          std::enable_if_t<ra::is_scalar<A> && ra::is_scalar<B>, int> =0>
-inline constexpr auto wedge(A const & a, B const & b) { return a*b; }

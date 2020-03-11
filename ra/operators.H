@@ -28,6 +28,18 @@
 
 namespace ra {
 
+// These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
+template <class T, class F,
+          std::enable_if_t<ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>, int> =0>
+inline constexpr decltype(auto) where(bool const w, T && t, F && f)
+{
+    return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
+}
+
+template <int D, int Oa, int Ob, class A, class B,
+          std::enable_if_t<ra::is_scalar<A> && ra::is_scalar<B>, int> =0>
+inline constexpr auto wedge(A const & a, B const & b) { return a*b; }
+
 template <int ... Iarg, class A> inline constexpr
 decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
 {
@@ -88,7 +100,7 @@ auto from(A && a, I && ... i)
 
 
 // I considered three options for lookup.
-// 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.H). It results in the narrowest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
+// 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.H). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.
 // 3. enable_if'd ADL is what you see here.
 

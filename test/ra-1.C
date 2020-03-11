@@ -16,7 +16,7 @@
 #include "ra/ra.H"
 #include "test/old.H"
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 using A2 = ra::Unique<int, 2>;
 using A1 = ra::Unique<int, 1>;
 using int3 = ra::Small<int, 3>;

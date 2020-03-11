@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <chrono>
 
-using std::cout; using std::endl; using std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 auto now() { return std::chrono::high_resolution_clock::now(); }
 template <class DT> auto ms(DT && dt) { return std::chrono::duration_cast<std::chrono::milliseconds>(dt).count(); }
 

@@ -12,7 +12,7 @@
 #include "ra/ra.H"
 #include "ra/test.H"
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 
 int main()
 {
@@ -34,7 +34,7 @@ int main()
         tr.info("pick ETs execute only one branch per iteration").test_eq(3, int(counter));
 
         counter = 0;
-        a = where(p, map(count, a0), map(count, a1));
+        a = ra::where(p, map(count, a0), map(count, a1));
         tr.test_eq(ra::Small<double, 3> { 10, 2, 30 }, a);
         tr.info("where() is implemented using pick ET").test_eq(3, int(counter));
     }
@@ -83,38 +83,38 @@ int main()
         auto c = ra::start(cc);
 
         cc[0] = cc[1] = 99;
-        c = where(true, b, -b);
+        c = ra::where(true, b, -b);
         tr.test_eq(1, cc[0]);
         tr.test_eq(2, cc[1]);
 
 // test against a bug where the op in where()'s Expr returned a dangling reference when both its args are rvalue refs. This was visible only at certain -O levels.
         cc[0] = cc[1] = 99;
-        c = where(true, b-3, -b);
+        c = ra::where(true, b-3, -b);
         tr.test_eq(-2, cc[0]);
         tr.test_eq(-1, cc[1]);
     }
     tr.section("where as rvalue");
     {
-        tr.test_eq(ra::Unique<int, 1> { 1, 2, 2, 1 }, where(ra::Unique<bool, 1> { true, false, false, true }, 1, 2));
+        tr.test_eq(ra::Unique<int, 1> { 1, 2, 2, 1 }, ra::where(ra::Unique<bool, 1> { true, false, false, true }, 1, 2));
         tr.test_eq(ra::Unique<int, 1> { 17, 2, 3, 17 }
-, where(ra::_0>0 && ra::_0<3, ra::Unique<int, 1> { 1, 2, 3, 4 }, 17));
+, ra::where(ra::_0>0 && ra::_0<3, ra::Unique<int, 1> { 1, 2, 3, 4 }, 17));
 // [raop00] TensorIndex returs value; so where()'s lambda must also return value.
-        tr.test_eq(ra::Unique<int, 1> { 1, 2, 4, 7 }, where(ra::Unique<bool, 1> { true, false, false, true }, 2*ra::_0+1, 2*ra::_0));
+        tr.test_eq(ra::Unique<int, 1> { 1, 2, 4, 7 }, ra::where(ra::Unique<bool, 1> { true, false, false, true }, 2*ra::_0+1, 2*ra::_0));
 // Using frame matching... TODO directly with ==expr?
         ra::Unique<int, 2> a({4, 3}, ra::_0-ra::_1);
-        ra::Unique<int, 2> b = where(ra::Unique<bool, 1> { true, false, false, true }, 99, a);
+        ra::Unique<int, 2> b = ra::where(ra::Unique<bool, 1> { true, false, false, true }, 99, a);
         tr.test_eq(ra::Unique<int, 2> ({4, 3}, { 99, 99, 99, 1, 0, -1, 2, 1, 0, 99, 99, 99 }), b);
     }
     tr.section("where nested");
     {
         {
             ra::Small<int, 3> a {-1, 0, 1};
-            ra::Small<int, 3> b = where(a>=0, where(a<1, 77, 99), 44);
+            ra::Small<int, 3> b = ra::where(a>=0, ra::where(a<1, 77, 99), 44);
             tr.test_eq(ra::Small<int, 3> {44, 77, 99}, b);
         }
         {
             int a = 0;
-            ra::Small<int, 2, 2> b = where(a>=0, where(a>=1, 99, 77), 44);
+            ra::Small<int, 2, 2> b = ra::where(a>=0, ra::where(a>=1, 99, 77), 44);
             tr.test_eq(ra::Small<int, 2, 2> {77, 77, 77, 77}, b);
         }
     }
@@ -122,17 +122,17 @@ int main()
     {
         double a = 1./7;
         ra::Small<double, 2> b {1, 2};
-        ra::Small<double, 2> c = where(a>0, b, 3.);
+        ra::Small<double, 2> c = ra::where(a>0, b, 3.);
         tr.test_eq(ra::Small<double, 2> {1, 2}, c);
     }
     tr.section("where as lvalue, scalar");
     {
         double a=0, b=0;
         bool w = true;
-        where(w, a, b) = 99;
+        ra::where(w, a, b) = 99;
         tr.test_eq(a, 99);
         tr.test_eq(b, 0);
-        where(!w, a, b) = 77;
+        ra::where(!w, a, b) = 77;
         tr.test_eq(99, a);
         tr.test_eq(77, b);
     }
@@ -140,28 +140,28 @@ int main()
     {
         ra::Small<double> a { 33. };
         double b = 22.;
-        tr.test_eq(33, double(where(true, a, b)));
-        tr.test_eq(22, double(where(true, b, a)));
+        tr.test_eq(33, double(ra::where(true, a, b)));
+        tr.test_eq(22, double(ra::where(true, b, a)));
     }
     tr.section("where as lvalue, xpr [raop01]");
     {
         ra::Unique<int, 1> a { 0, 0, 0, 0 };
         ra::Unique<int, 1> b { 0, 0, 0, 0 };
-        where(ra::_0>0 && ra::_0<3, a, b) = 7;
+        ra::where(ra::_0>0 && ra::_0<3, a, b) = 7;
         tr.test_eq(ra::Unique<int, 1> {0, 7, 7, 0}, a);
         tr.test_eq(ra::Unique<int, 1> {7, 0, 0, 7}, b);
-        where(ra::_0<=0 || ra::_0>=3, a, b) += 2;
+        ra::where(ra::_0<=0 || ra::_0>=3, a, b) += 2;
         tr.test_eq(ra::Unique<int, 1> {2, 7, 7, 2}, a);
         tr.test_eq(ra::Unique<int, 1> {7, 2, 2, 7}, b);
 // Both must be lvalues; TODO check that either of these is an error.
-        // where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
-        // where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
+        // ra::where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
+        // ra::where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
     }
     tr.section("where with rvalue TensorIndex, fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
     {
         tr.test_eq(ra::Small<int, 2> {0, 1},
-                   where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>()));
-        tr.test_eq(ra::Unique<int, 1> { 0, 2 }, where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
+                   ra::where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>()));
+        tr.test_eq(ra::Unique<int, 1> { 0, 2 }, ra::where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
     }
     tr.section("&& and || are short-circuiting");
     {
@@ -180,7 +180,7 @@ int main()
     //     ra::Small<int, 3> a = { 1, 2, 3 };
     //     ra::Small<int, 3> b = { 4, 5, 6 };
     //     ra::Small<int, 2> c = 0; // ok if 2 -> 3; the test is for that case.
-    //     where(a>b, a, c) += b;
+    //     ra::where(a>b, a, c) += b;
     //     tr.test_eq(ra::Small<int, 3> { 1, 2, 3 }, a);
     //     tr.test_eq(ra::Small<int, 3> { 4, 5, 6 }, b);
     // }

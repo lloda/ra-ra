@@ -16,7 +16,7 @@
 #include <typeinfo>
 #include <string>
 
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 #define TEST_PREDICATES(A)                                              \
     [&tr](bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector) \

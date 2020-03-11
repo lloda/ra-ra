@@ -68,11 +68,11 @@ struct Reframe
         int l = orig(k);
         return l>=0 ? a.stride(l) : zerostride<decltype(a.stride(l))>::f();
     }
-    constexpr bool keep_stride(dim_t step, int z, int j) const
+    constexpr bool keep_stride(dim_t st, int z, int j) const
     {
         int wz = orig(z);
         int wj = orig(j);
-        return wz>=0 && wj>=0 && a.keep_stride(step, wz, wj);
+        return wz>=0 && wj>=0 && a.keep_stride(st, wz, wj);
     }
     template <class I> constexpr decltype(auto) at(I const & i)
     {

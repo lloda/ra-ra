@@ -19,7 +19,7 @@
 #include "ra/test.H"
 #include "ra/mpdebug.H"
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 using complex = std::complex<double>;
 
 int main()

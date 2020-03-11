@@ -39,7 +39,7 @@ struct ra_error: public std::exception
 #include "ra/big.H"
 #include "test/old.H"
 
-using std::cout, std::endl, std::flush, std::string;
+using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
 using real = double;
 
 int main()

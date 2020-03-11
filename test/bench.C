@@ -18,7 +18,7 @@
 #include "ra/test.H"
 #include "ra/bench.H"
 
-using std::cout, std::endl;
+using std::cout, std::endl, ra::TestRecorder;
 
 int main()
 {
