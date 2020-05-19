@@ -2,7 +2,7 @@
 /// @file big.H
 /// @brief Arrays with dynamic size.
 
-// (c) Daniel Llorens - 2013-2014, 2017-2019
+// (c) Daniel Llorens - 2013-2014, 2017-2020
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -231,9 +231,8 @@ dim_t proddim(D d, D dend)
             ra::resize(View::dim, start(s).size(0)); /* [ra37] */       \
             start(View::dim) = s;                                       \
         } else {                                                        \
-            auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
-            ra::resize(View::dim, w.size(0)); /* [ra37] */              \
-            start(View::dim) = w;                                       \
+            ra::resize(View::dim, start(s).size(0)); /* [ra37] */       \
+            for_each([](Dim & dim, auto && s) { dim.size = s; }, View::dim, s); \
             filldim(View::dim.size(), View::dim.end());                 \
         }                                                               \
     }                                                                   \
@@ -614,14 +613,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     template <class S> void init(S && s)
     {
-// I decided not to accept rank extension here, because it's error prone and not that useful.
-        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s);
-        static_assert(1==decltype(w)::rank_s(), "rank mismatch for init shape");
-// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)). Not being able to traverse backwards hurts here. See other uses of ra::vector (or start) here.
+        static_assert(!std::is_convertible_v<value_t<S>, Dim>);
+// no rank extension here, because it's error prone and not very useful.
+        static_assert(1==ra::rank_s<S>(), "rank mismatch for init shape");
+// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)).
         if constexpr (RANK==RANK_ANY) {
-            ra::resize(View::dim, w.size(0));
+            ra::resize(View::dim, ra::size(s));
         }
-        start(View::dim) = w;
+        for_each([](Dim & dim, auto const & s) { dim.size = s; }, View::dim, s);
         dim_t t = filldim(View::dim.size(), View::dim.end());
         store = storage_traits<Store>::create(t);
         View::p = storage_traits<Store>::data(store);

@@ -375,8 +375,8 @@ struct fromrank1
     decltype(auto) wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(FLAT(a))>, size_s(a)> aa = a;
-    Small<std::decay_t<decltype(FLAT(b))>, size_s(b)> bb = b;
+    Small<std::decay_t<value_t<Va>>, ra_traits<Va>::size_s()> aa = a;
+    Small<std::decay_t<value_t<Vb>>, ra_traits<Vb>::size_s()> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
@@ -398,8 +398,8 @@ DECL_WEDGE(general_case)
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
-    Small<std::decay_t<decltype(FLAT(a))>, size_s(a)> aa = a;
-    Small<std::decay_t<decltype(FLAT(b))>, size_s(b)> bb = b;
+    Small<std::decay_t<value_t<Va>>, ra_traits<Va>::size_s()> aa = a;
+    Small<std::decay_t<value_t<Vb>>, ra_traits<Vb>::size_s()> bb = b;
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);

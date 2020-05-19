@@ -66,7 +66,7 @@ The library itself is header-only and has no dependencies other than a C++17 com
 
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can also build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
 
-All the tests pass under g++-8.0. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Be aware that clang can be several times slower than gcc when compiling at `-O3`.
+All the tests pass under g++-8.4/9.3/10.1. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Be aware that clang can be several times slower than gcc when compiling at `-O3`.
 
 All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for:
 
