@@ -105,7 +105,7 @@ int main()
     }
     tr.section("casts from fixed rank View");
     {
-        ra::Unique<double, 3> a({3, 2, 4}, ra::none);
+        ra::Unique<double, 3> a({3, 2, 4}, ra::_0 + 15*ra::_1);
         ra::View<double> b(a);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());
