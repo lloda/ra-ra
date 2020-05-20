@@ -126,7 +126,7 @@ int main()
         test1<case3>(tr, "case3", x, 5e-14);
         test1<case4>(tr, "case4", x, 1e-15);
         test1<case5>(tr, "case5", x, 1e-15);
-        test1<case6>(tr, "case6", x, 1.1e-15);
+        test1<case6>(tr, "case6", x, 1.2e-15);
         test1<case7>(tr, "case7", x);
         test1<case8>(tr, "case8", x);
     }
