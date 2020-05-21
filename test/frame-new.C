@@ -106,9 +106,8 @@ int main()
         tr.test_eq(b.size(2), EXPR.size(2));
         tr.test_eq(b.size(3), EXPR.size(3));
         tr.test_eq(2*3*4*5, size(EXPR));
-// these _s are all static, but cannot Big cannot be constexpr yet.
-// also decltype(EXPR) fails until p0315r3 (c++20).
-// so check at runtime instead.
+// could check all statically through decltype, although Big cannot be constexpr yet.
+        static_assert(4==ra::rank_s<decltype(EXPR)>());
         tr.test_eq(4, EXPR.rank_s());
         tr.test_eq(ra::DIM_ANY, EXPR.size_s(0));
         tr.test_eq(ra::DIM_ANY, EXPR.size_s(1));
@@ -172,9 +171,8 @@ int main()
         tr.test_eq(b.size(2), EXPR(a, b).size(2));
         tr.test_eq(b.size(3), EXPR(a, b).size(3));
         tr.test_eq(2*3*4*4, size(EXPR(a, b)));
-// these _s are all static, but cannot Big cannot be constexpr yet.
-// also decltype(EXPR(a, b)) fails until p0315r3 (c++20).
-// so check at runtime instead.
+// could check all statically through decltype, although Big cannot be constexpr yet.
+        static_assert(4==ra::rank_s<decltype(EXPR(a, b))>());
         tr.test_eq(4, EXPR(a, b).rank_s());
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(0));
         tr.test_eq(ra::DIM_ANY, EXPR(a, b).size_s(1));
