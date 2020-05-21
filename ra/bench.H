@@ -40,6 +40,13 @@ struct Benchmark
                                      std::chrono::high_resolution_clock,
                                      std::chrono::steady_clock>;
 
+    static clock::duration
+    somehow(clock::duration empty, clock::duration full)
+    {
+        bool val = full>empty;
+        return val ? full-empty : full;
+    }
+
     static double
     toseconds(clock::duration const & t)
     {
@@ -104,7 +111,7 @@ struct Benchmark
                 f(std::forward<A>(a) ...);
             }
             clock::duration full = clock::now()-t0;
-            times.push_back(full>empty ? full-empty : full);
+            times.push_back(somehow(empty, full));
         }
         return Value { name_, repeats_, empty, std::move(times) };
     }
@@ -128,7 +135,7 @@ struct Benchmark
                       f();
                   }
                   clock::duration full = clock::now()-t0;
-                  times.push_back(full>empty ? full-empty : full);
+                  times.push_back(somehow(empty, full));
               }, std::forward<A>(a) ...);
         }
         return Value { name_, repeats_, empty, std::move(times) };

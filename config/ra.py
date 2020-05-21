@@ -17,6 +17,13 @@ class Style: BRIGHT = '\x1b[1m'; RESET_ALL = '\x1b[0m';
 from os.path import join, abspath, split
 from subprocess import call
 
+CXXFLAGS = ['-std=c++17', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+            '-finput-charset=UTF-8', '-fextended-identifiers',
+            '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
+            #'-Wconversion',
+            # '-funsafe-math-optimizations', # TODO Test with this.
+        ]
+
 def ensure_ext(s, ext):
     "if s doesn't end with ext, append it."
     p = s.rfind(ext)

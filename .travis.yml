@@ -15,11 +15,27 @@ matrix:
            - ubuntu-toolchain-r-test
          packages:
            - g++-8
-     install:
      env:
        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+   - os: linux
+     addons:
+       apt:
+         sources:
+           - ubuntu-toolchain-r-test
+         packages:
+           - g++-9
+     env:
+       - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
+   - os: linux
+     addons:
+       apt:
+         sources:
+           - ubuntu-toolchain-r-test
+         packages:
+           - g++-10
+     env:
+       - MATRIX_EVAL="CC=gcc-10 && CXX=g++-10"
 
 before_install:
     - sudo apt-get install scons
-    - sudo apt-get install g++-8
     - eval "${MATRIX_EVAL}"
