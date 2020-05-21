@@ -275,7 +275,8 @@ template <class T> struct vec_xyz  { T x, y, z; };
 template <class T> struct vec_rtp  { T r, t, p; };
 template <class T> struct vec_xyzw { T u, v, z, w; };
 
-template <template <class, class, class> class Child_, class T, class sizes_, class strides_>
+template <template <class ...> class Child_,
+          class T, class sizes_, class strides_>
 struct SmallBase
 {
     using sizes = sizes_;
@@ -516,8 +517,7 @@ A ravel_from_iterators(I && begin, J && end)
 }
 
 // FIXME Type_ seems superfluous
-template <template <class, class, class> class Type_,
-          class T, class sizes, class strides>
+template <template <class ...> class Type_, class T, class sizes, class strides>
 struct ra_traits_small
 {
     using V = Type_<T, sizes, strides>;
@@ -643,14 +643,14 @@ struct axes_list_indices
 };
 
 #define DEF_TRANSPOSE(CONST)                                            \
-    template <int ... Iarg, template <class, class, class> class Child, class T, class sizes, class strides> \
+    template <int ... Iarg, template <class ...> class Child, class T, class sizes, class strides> \
     inline auto transpose(SmallBase<Child, T, sizes, strides> CONST & a) \
     {                                                                   \
         using ti = axes_list_indices<mp::int_list<Iarg ...>, sizes, strides>; \
         return SmallView<T CONST, typename ti::sizes, typename ti::strides>(a.data()); \
     };                                                                  \
                                                                         \
-    template <template <class, class, class> class Child, class T, class sizes, class strides> \
+    template <template <class ...> class Child, class T, class sizes, class strides> \
     inline auto diag(SmallBase<Child, T, sizes, strides> CONST & a)     \
     {                                                                   \
         return transpose<0, 0>(a);                                      \
@@ -659,8 +659,8 @@ FOR_EACH(DEF_TRANSPOSE, /* const */, const)
 #undef DEF_TRANSPOSE
 
 // TODO Used by ProductRule; waiting for proper generalization.
-template <template <class, class, class> class Child1, class T1, class sizes1, class strides1,
-          template <class, class, class> class Child2, class T2, class sizes2, class strides2>
+template <template <class ...> class Child1, class T1, class sizes1, class strides1,
+          template <class ...> class Child2, class T2, class sizes2, class strides2>
 auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 {
     using A1 = SmallBase<Child1, T1, sizes1, strides1>;
@@ -673,7 +673,7 @@ auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, SmallBase<Child2, T
     return val;
 }
 
-template <template <class, class, class> class Child1, class T1, class sizes1, class strides1,
+template <template <class ...> class Child1, class T1, class sizes1, class strides1,
           class A2,
           std::enable_if_t<is_scalar<A2>, int> =0>
 auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
@@ -688,7 +688,7 @@ auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
 }
 
 template <class A1,
-          template <class, class, class> class Child2, class T2, class sizes2, class strides2,
+          template <class ...> class Child2, class T2, class sizes2, class strides2,
           std::enable_if_t<is_scalar<A1>, int> =0>
 auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 {
@@ -714,7 +714,7 @@ template <int s> struct explode_divop
 
 // See view-ops.H:explode, collapse. FIXME support real->complex, etc.
 template <class super_t,
-          template <class, class, class> class Child, class T, class sizes, class strides>
+          template <class ...> class Child, class T, class sizes, class strides>
 auto explode(SmallBase<Child, T, sizes, strides> & a)
 {
     using ta = SmallBase<Child, T, sizes, strides>;
