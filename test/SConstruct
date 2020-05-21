@@ -38,8 +38,9 @@ for var in ['RPATH', 'LIBPATH']:
     ra.take_from_environ(env, var, wrapper=lambda x: [x])
 
 arch = os.popen('../config/config.guess').read()
+cppcomp = os.popen('%s --version' % env['CXX']).read()
 
-if arch.find('apple-darwin') >= 0:
+if (arch.find('apple-darwin') >= 0) and (cppcomp.find('g++') >= 0):
     archflags=['-march=native', '-Wa,-q']
 else:
     archflags=['-march=native']
