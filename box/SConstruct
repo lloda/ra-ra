@@ -41,23 +41,12 @@ arch = os.popen('../config/config.guess').read()
 
 if arch.find('apple-darwin') >= 0:
     archflags=['-march=native', '-Wa,-q']
-    ld_blas = {'LINKFLAGS': ' -framework Accelerate ', 'LIBS': []}
 else:
     archflags=['-march=native']
-    ld_blas = {'LINKFLAGS': '', 'LIBS': ['blas']}
 
 env.Prepend(CPPPATH=['..', '.'],
             CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
             CXXFLAGS=ra.CXXFLAGS)
-
-env_blas = env.Clone()
-if 'RA_USE_BLAS' in env['ENV'] and env['ENV']['RA_USE_BLAS']=='1':
-    print("[%s] BLAS will be used." % Dir('.').path)
-    env_blas.Append(CPPDEFINES={'RA_USE_BLAS': 1})
-    env_blas.Append(LINKFLAGS=ld_blas['LINKFLAGS'])
-    env_blas.Append(LIBS=ld_blas['LIBS'])
-else:
-    print("[%s] BLAS won't be used." % Dir('.').path)
 
 [ra.to_test_ra(env, variant_dir)(example)
  for example in ['end', 'view-flat', 'tuple-construct', 'iterator-as-ravel', 'bug82']]

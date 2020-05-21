@@ -24,6 +24,36 @@ CXXFLAGS = ['-std=c++17', '-Wall', '-Werror', '-fdiagnostics-color=always', '-Wn
             # '-funsafe-math-optimizations', # TODO Test with this.
         ]
 
+def blas_flags(Configure, env, arch):
+    env_blas = env.Clone()
+    if arch.find('apple-darwin') >= 0:
+
+        # after OS X 10.14 giving -framework Accelerate isn't enough.
+        # cf https://github.com/shogun-toolbox/shogun/commit/6db834fb4ca9783b6e5adfde808d60ebfca0abc9
+        # cf https://github.com/BVLC/caffe/blob/master/cmake/Modules/FindvecLib.cmake
+
+        cblas_possible_paths = ['/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers/']
+
+        for ppath in cblas_possible_paths:
+            env0 = env.Clone()
+            env0.Append(CPPPATH = [ppath])
+            conf = Configure(env0)
+            success = conf.CheckCHeader('cblas.h')
+            conf.Finish()
+            if success:
+                print("cblas.h found at %r" % ppath)
+                env_blas.Append(LINKFLAGS=' -framework Accelerate ')
+                env_blas.Append(CPPPATH=[ppath])
+                break
+        else:
+            print("cblas.h couldn't be found. Crossing fingers.")
+            env_blas.Append(LINKFLAGS=' -framework Accelerate ')
+            env_blas.Append(CCFLAGS=' -framework Accelerate ')
+    else:
+        env_blas.Append(LIBS=['blas'])
+
+    return env_blas
+
 def ensure_ext(s, ext):
     "if s doesn't end with ext, append it."
     p = s.rfind(ext)
