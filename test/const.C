@@ -2,8 +2,7 @@
 /// @file const.C
 /// @brief Reduced regression from 8.3 to 9.1.
 
-// /opt/gcc-9.1/bin/g++ -o const -std=c++17 -Wall -Werror -ftemplate-backtrace-limit=0 const.C
-// /opt/gcc-8.3/bin/g++ -o const -std=c++17 -Wall -Werror -ftemplate-backtrace-limit=0 const.C
+// /opt/gcc-10.1/bin/g++ -o const -std=c++20 -Wall -Werror -ftemplate-backtrace-limit=0 const.C
 
 // from redi @ #gcc
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745

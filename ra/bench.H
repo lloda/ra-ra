@@ -41,10 +41,10 @@ struct Benchmark
                                      std::chrono::steady_clock>;
 
     static clock::duration
-    somehow(clock::duration empty, clock::duration full)
+    lapse(clock::duration empty, clock::duration full)
     {
-        bool val = full>empty;
-        return val ? full-empty : full;
+// [ra08] count() to work around https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95242 on gcc 10.
+        return (full.count()>empty.count()) ? full-empty : full;
     }
 
     static double
@@ -111,7 +111,7 @@ struct Benchmark
                 f(std::forward<A>(a) ...);
             }
             clock::duration full = clock::now()-t0;
-            times.push_back(somehow(empty, full));
+            times.push_back(lapse(empty, full));
         }
         return Value { name_, repeats_, empty, std::move(times) };
     }
@@ -135,7 +135,7 @@ struct Benchmark
                       f();
                   }
                   clock::duration full = clock::now()-t0;
-                  times.push_back(somehow(empty, full));
+                  times.push_back(lapse(empty, full));
               }, std::forward<A>(a) ...);
         }
         return Value { name_, repeats_, empty, std::move(times) };

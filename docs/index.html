@@ -1,26 +1,25 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 10, updated 2019 July 25)
+<!-- ra:: (version 11, updated 2020 May 21)
 
-(c) Daniel Llorens 2005-2019
+(c) Daniel Llorens 2005-2020
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
-<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>ra:: —An array library for C++17</title>
+<title>ra:: —An array library for C++17/20</title>
 
-<meta name="description" content="ra:: —An array library for C++17">
-<meta name="keywords" content="ra:: —An array library for C++17">
+<meta name="description" content="ra:: —An array library for C++17/20">
+<meta name="keywords" content="ra:: —An array library for C++17/20">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
 <link href="#Top" rel="start" title="Top">
 <link href="#Indices" rel="index" title="Indices">
-<link href="dir.html#Top" rel="up" title="(dir)">
 <style type="text/css">
 <!--
 a.summary-letter {text-decoration: none}
@@ -44,7 +43,7 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<h1 class="settitle" align="center">ra:: —An array library for C++17</h1>
+<h1 class="settitle" align="center">ra:: —An array library for C++17/20</h1>
 
 
 
@@ -98,13 +97,13 @@ ul.no-bullet {list-style: none}
 
 <span id="Top"></span><div class="header">
 <p>
-Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="dir.html#Top" accesskey="u" rel="up">(dir)</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 10, updated 2019 July 25)
+<p><code>ra::</code> (version 11, updated 2020 May 21)
 </p>
-<p>(c) Daniel Llorens 2005&ndash;2019
+<p>(c) Daniel Llorens 2005&ndash;2020
 </p>
 <div class="display">
 <pre class="display">Permission is granted to copy, distribute and/or modify this document
@@ -113,7 +112,7 @@ any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 </pre></div>
 
-<p><code>ra::</code><a id="DOCF1" href="#FOOT1"><sup>1</sup></a> is a general purpose multidimensional array and expression template library for C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+<p><code>ra::</code><a id="DOCF1" href="#FOOT1"><sup>1</sup></a> is a general purpose multidimensional array and expression template library for C++17/20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 </p>
 <table class="menu" border="0" cellspacing="0">
 <tr><td align="left" valign="top">&bull; <a href="#Overview" accesskey="1">Overview</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Array programming and C++.
@@ -132,7 +131,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#Sources" accesskey="8">Sources</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">It&rsquo;s been done before.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Indices" accesskey="9">Indices</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Or try the search function.
+<tr><td align="left" valign="top">&bull; <a href="#Indices" rel="index" accesskey="9">Indices</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Or try the search function.
 </td></tr>
 </table>
 
@@ -373,7 +372,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 
 <p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.H&quot;</code> at the top of your sources.
 </p>
-<p>A compiler with C++17 support is required. At the time of writing this means <b>gcc 8.0</b> or <b>clang-5.0</b> with <samp>-std=c++17</samp>. Check the top README.md for more up-to-date information.
+<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 10.1</b> with <samp>-std=c++20</samp>. Check the top README.md for more up-to-date information.
 </p>
 <p>Here is a minimal program<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>:
 </p>
@@ -436,6 +435,7 @@ Big&lt;int&gt; e = 0;                         // e is a 0-array with one element
 <p>The second form takes two arguments, one giving the shape, the second the contents.
 </p>
 <span id="index-none"></span>
+<span id="index-uninitialized-container"></span>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 2&gt; a({2, 3}, 1.);     // a has size 2x3 and be filled with 1.
 ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has size 2x3 and contents don't matter
@@ -1563,7 +1563,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 </p>
 </li><li> <b>Flat</b> <code>Flat</code> <code>PickFlat</code> <code>CellFlat</code> <code>IotaFlat</code> <code>ScalarFlat</code>
 
-<p>These are pointerlike types that are meant to be traversed linearly. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Ravelable</b> objects through a method <code>flat</code>.
+<p>These are types that support ‘forward iterator’ traversal. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Ravelable</b> objects through a method <code>flat</code>.
 </p>
 </li></ul>
 
@@ -2328,6 +2328,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-U"><b>U</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-V"><b>V</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-W"><b>W</b></a>
@@ -2433,6 +2435,9 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th id="Indices_cp_letter-T">T</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose"><code>transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th id="Indices_cp_letter-U">U</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-uninitialized-container">uninitialized container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-V">V</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-view">view</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
@@ -2475,6 +2480,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-U"><b>U</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-V"><b>V</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-W"><b>W</b></a>
@@ -2488,24 +2495,24 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <hr>
 <h4 class="footnotes-heading">Footnotes</h4>
 
-<h3><a id="FOOT1" href="#DOCF1">(1)</a></h3>
+<h5><a id="FOOT1" href="#DOCF1">(1)</a></h3>
 <p>/ə&rsquo;ɹ-eɪ/, I guess.</p>
-<h3><a id="FOOT2" href="#DOCF2">(2)</a></h3>
+<h5><a id="FOOT2" href="#DOCF2">(2)</a></h3>
 <p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
-<h3><a id="FOOT3" href="#DOCF3">(3)</a></h3>
+<h5><a id="FOOT3" href="#DOCF3">(3)</a></h3>
 <p>Examples given without context assume that one has declared <code>using std::cout;</code>, etc.</p>
-<h3><a id="FOOT4" href="#DOCF4">(4)</a></h3>
+<h5><a id="FOOT4" href="#DOCF4">(4)</a></h3>
 <p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of runtime rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
-<h3><a id="FOOT5" href="#DOCF5">(5)</a></h3>
+<h5><a id="FOOT5" href="#DOCF5">(5)</a></h3>
 <p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
-<h3><a id="FOOT6" href="#DOCF6">(6)</a></h3>
+<h5><a id="FOOT6" href="#DOCF6">(6)</a></h3>
 <p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. They are size-strict —you must give every element.</p>
-<h3><a id="FOOT7" href="#DOCF7">(7)</a></h3>
+<h5><a id="FOOT7" href="#DOCF7">(7)</a></h3>
 <p>Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> [<a href="#Sources">Ber87</a>]
  and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>
-<h3><a id="FOOT8" href="#DOCF8">(8)</a></h3>
+<h5><a id="FOOT8" href="#DOCF8">(8)</a></h3>
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively. Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
-<h3><a id="FOOT9" href="#DOCF9">(9)</a></h3>
+<h5><a id="FOOT9" href="#DOCF9">(9)</a></h3>
 <p>It used to be the case that <code>TensorIndex</code> was <b>Indexable</b> but not <b>Ravelable</b>, which forced all the other <b>Ravelable</b> types to provide <code>at(i...)</code> so that they could be mixed with <code>TensorIndex</code> in expressions. Now that <code>TensorIndex</code> is also <b>Ravelable</b>, this distinction may disappear in the future with <code>at(i...)</code> being provided at a higher level.</p>
 </div>
 <hr>

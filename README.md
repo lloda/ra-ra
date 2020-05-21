@@ -1,9 +1,9 @@
 
 # ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
 
-**ra-ra** is a header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net). It is written in C++17.
+**ra-ra** is a header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net). It is written mostly in C++17, but slowly moving to C++20.
 
-Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in C++17 there's very little you can do with those, and a separate library is required for any practical endeavor.
+Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in modern C++ there's very little you can do with those, and a separate library is required for any practical endeavor.
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by Blitz++) to delay the execution of expressions involving large array operands, and in this way avoid the unnecessary creation of large temporary array objects.
 
@@ -50,7 +50,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Arbitrary types as array elements, or as scalar operands.
 * Many predefined array operations. Adding yours is trivial.
 
-There is some constexpr support for the compile time size types. For example, this works:
+There is some `constexpr` support for the compile time size types. For example, this works:
 
 ```
 constexpr ra::Small<int, 3> a = { 1, 2, 3 };
@@ -62,33 +62,33 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 #### Building the tests and the benchmarks
 
-The library itself is header-only and has no dependencies other than a C++17 compiler and the standard library.
+The library itself is header-only and has no dependencies other than a C++20 compiler and the standard library.
 
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can also build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
 
-All the tests pass under g++-8.4/9.3/10.1. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Be aware that clang can be several times slower than gcc when compiling at `-O3`.
+The tests pass under gcc 10.1 (earlier versions don't support `-std=c++20`). Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
 
-All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for:
+<!-- All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for: -->
 
-* [bench/bench-pack.C](bench/bench-pack.C), crashes clang.
-* [test/iterator-small.C](test/iterator-small.C), crashes clang.
-* [test/optimize.C](test/optimize.C), gives compilation errors.
+<!-- * [bench/bench-pack.C](bench/bench-pack.C), crashes clang. -->
+<!-- * [test/iterator-small.C](test/iterator-small.C), crashes clang. -->
+<!-- * [test/optimize.C](test/optimize.C), gives compilation errors. -->
 
-For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is meant for gcc by setting CCFLAGS to something else, say:
+<!-- For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is meant for gcc by setting CCFLAGS to something else, say: -->
 
-  ```
-  CCFLAGS="-march=native" CXXFLAGS=-O3 CXX=clang++ scons -j4
-  ```
+<!--   ``` -->
+<!--   CCFLAGS="-march=native" CXXFLAGS=-O3 CXX=clang++ scons -j4 -->
+<!--   ``` -->
 
-I haven't tested on Windows. If you can do that, I'd appreciate a report!
+<!-- I haven't tested on Windows. If you can do that, I'd appreciate a report! -->
 
 #### Notes
 
 * Both index and size types are signed. Index base is 0.
 * Default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
-* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`.
+* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`. It's unfortunate that `[]` was wasted on subscripting when `()` works perfectly well for that...
 * Indices are checked by default. This can be disabled with a compilation flag.
-* **ra-ra** doesn't use exceptions by itself, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
+* **ra-ra** doesn't itself use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
 
 #### Bugs & defects
 

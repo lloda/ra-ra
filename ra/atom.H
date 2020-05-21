@@ -428,8 +428,7 @@ shape(V const & v)
 {
     if constexpr (has_traits<V>) {
         return ra_traits<V>::shape(v);
-// FIXME version for static shape
-// FIXME would prefer to return the map directly (except maybe for static shapes)
+// FIXME version for static shape. Would prefer to return the map directly (except maybe for static shapes)
     } else if constexpr (constexpr rank_t rs=v.rank_s(); rs>=0) {
         return ra::Small<dim_t, rs>(map([&v](int k) { return v.size(k); }, ra::iota(rs)));
     } else {

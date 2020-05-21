@@ -2,7 +2,7 @@
 @c %**start of header
 @setfilename ra-ra.info
 @documentencoding UTF-8
-@settitle ra:: —An array library for C++17
+@settitle ra:: —An array library for C++17/20
 @c %**end of header
 @c last [ma112]
 
@@ -11,13 +11,13 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0573r2.html
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 
-@set VERSION 10
-@set UPDATED 2019 July 25
+@set VERSION 11
+@set UPDATED 2020 May 21
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
 
-(c) Daniel Llorens 2005--2019
+(c) Daniel Llorens 2005--2020
 
 @smalldisplay
 Permission is granted to copy, distribute and/or modify this document
@@ -50,7 +50,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{ra::}@footnote{/ə'ɹ-eɪ/, I guess.} is a general purpose multidimensional array and expression template library for C++17. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+@code{ra::}@footnote{/ə'ɹ-eɪ/, I guess.} is a general purpose multidimensional array and expression template library for C++17/20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 
 @menu
 * Overview::          Array programming and C++.
@@ -270,7 +270,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/ra.H"} at the top of your sources.
 
-A compiler with C++17 support is required. At the time of writing this means @b{gcc 8.0} or @b{clang-5.0} with @option{-std=c++17}. Check the top README.md for more up-to-date information.
+A compiler with C++20 support is required. At the time of writing this means @b{gcc 10.1} with @option{-std=c++20}. Check the top README.md for more up-to-date information.
 
 Here is a minimal program@footnote{Examples given without context assume that one has declared @code{using std::cout;}, etc.}:
 
@@ -2322,7 +2322,7 @@ old_style_initializer(2, 3, b.data());
 @item @mybibitem{Ber87} @tab Robert Bernecky. An introduction to function rank. ACM SIGAPL APL Quote Quad, 18(2):39–43, December 1987.
 @item @mybibitem{bli17} @tab The Blitz++ meta-template library. @url{http://blitz.sourceforge.net}, November 2017.
 @item @mybibitem{Cha86} @tab Gregory J. Chaitin. Physics in APL2, June 1986.
-@item @mybibitem{FI68}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.
+@item @mybibitem{FI68} @tab Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.
 @item @mybibitem{FI73}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973.
 @item @mybibitem{FI78}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978.
 @item @mybibitem{J S}   @tab J Primer. J Software, @url{https://www.jsoftware.com/help/primer/contents.htm}, November 2017.
