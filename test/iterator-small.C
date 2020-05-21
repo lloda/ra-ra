@@ -45,8 +45,7 @@ int main()
             using A = ra::Small<int, 2, 3>;
             A a = {{1, 2, 3}, {4, 5, 6}};
             tr.test(std::is_same_v<int *, decltype(a.begin())>);
-            int i = 0;
-            for (auto && ai: a) {
+            for (int i=0; auto && ai: a) {
                 tr.test_eq(i+1, ai);
                 ++i;
             }
@@ -59,8 +58,7 @@ int main()
             tr.test_eq(ra::start({0, 1}), ra::start((++b.begin()).i));
             tr.test(!std::is_same_v<int *, decltype(b.begin())>);
             int bref[6] = {1, 4, 2, 5, 3, 6};
-            int i = 0;
-            for (auto && bi: b) {
+            for (int i=0; auto && bi: b) {
                 tr.test_eq(bref[i], bi);
                 ++i;
             }

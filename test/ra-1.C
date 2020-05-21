@@ -138,7 +138,6 @@ int main()
     }
     tr.section("complex or nested types");
     {
-        int i;
         using A2of2 = ra::Unique<int2, 2>;
         auto sum2 = [](int2 const i, int2 const j, int2 & x) { x = { i[0]+j[0], i[1]+j[1] }; };
         A2of2 A({2, 3}, { {1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6} });
@@ -152,23 +151,23 @@ int main()
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_index(ra::expr(sum2, A.iter(), ra::scalar(int2{2, 2}), B.iter()));
         cout << B << endl;
-        i=2; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
+        for (int i=2; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_index(ra::expr(sum2, ra::scalar(int2{3, 3}), A.iter(), B.iter()));
         cout << B << endl;
-        i=3; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
+        for (int i=3; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
         cout << "\ntraverse..." << endl;
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_ravel(ra::expr(sum2, A.iter(), ra::scalar(int2{4, 5}), B.iter()));
         cout << B << endl;
-        i=4; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i+1, b[1]); ++i; }
+        for (int i=4; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i+1, b[1]); ++i; }
 
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
         ply_ravel(ra::expr(sum2, ra::scalar(int2{5, 5}), A.iter(), B.iter()));
         cout << B << endl;
-        i=5; for (int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
+        for (int i=5; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
     }
     tr.section("reversed arrays, ply_index");
     {

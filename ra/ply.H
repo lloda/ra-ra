@@ -145,8 +145,8 @@ auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()==1)>
 }
 
 // find the outermost compact dim.
-template <class A>
-constexpr auto ocd(A && a)
+template <class A> constexpr
+auto ocd(A && a)
 {
     rank_t const rank = a.rank();
     auto s = a.size(rank-1);
@@ -165,7 +165,7 @@ auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()>1)>
 // this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_stride.
 // test/concrete.C has a case that shows this.
 // cf https://stackoverflow.com/questions/55288555
-    if constexpr(0 && size_s<A>()>=0) {
+    if constexpr (0 && size_s<A>()>=0) {
         constexpr auto sj = ocd(a);
         constexpr auto s = std::get<0>(sj);
         constexpr auto j = std::get<1>(sj);

@@ -35,8 +35,7 @@ View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
     rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
 
     View<T, RANK_ANY> r { decltype(r.dim)(dstrank, Dim { DIM_BAD, 0 }), view.data() };
-    int k = 0;
-    for (int sk: s) {
+    for (int k=0; int sk: s) {
         Dim & dest = r.dim[sk];
         dest.stride += view.dim[k].stride;
         dest.size = dest.size>=0 ? std::min(dest.size, view.dim[k].size) : view.dim[k].size;
@@ -70,9 +69,8 @@ auto transpose(View<T, RANK> const & view)
     constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
 
     View<T, DSTRANK> r { decltype(r.dim)(Dim { DIM_BAD, 0 }), view.data() };
-    int k = 0;
     std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
-    for (int sk: s) {
+    for (int k=0; int sk: s) {
         Dim & dest = r.dim[sk];
         dest.stride += view.dim[k].stride;
         dest.size = dest.size>=0 ? std::min(dest.size, view.dim[k].size) : view.dim[k].size;
