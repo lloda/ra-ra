@@ -116,7 +116,7 @@ struct cell_iterator_small
     template <class I>
     constexpr decltype(auto) at(I const & i_)
     {
-        RA_CHECK(rank()<=dim_t(i_.size()) && "too few indices");
+        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");
         if constexpr (0==cellr) {
             return c.p[Indexer0<sizes, strides>::index_short(i_)];
         } else {

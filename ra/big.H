@@ -70,7 +70,7 @@ struct Indexer1
     template <class Dim, class P>
     constexpr static dim_t index_p(Dim const & dim, P && p)
     {
-        RA_CHECK(dim_t(dim.size())>=start(p).size(0) && "too many indices");
+        RA_CHECK(dim_t(dim.size())>=start(p).size(0), "too many indices");
 // use dim.data() to skip the size check.
         dim_t c = 0;
         for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.size)); c += d.stride*p; },
@@ -158,7 +158,7 @@ struct cell_iterator
     template <class I>
     decltype(auto) at(I const & i_)
     {
-        RA_CHECK(rank()<=dim_t(i_.size()) && "too few indices");
+        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");
         if constexpr (0==cellr) {
             return c.p[Indexer1::index_short(rank(), dim, i_)];
         } else {
@@ -256,7 +256,7 @@ dim_t proddim(D d, D dend)
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>; \
     View & operator=(ravel_arg const x)                                 \
     {                                                                   \
-        RA_CHECK(p && this->size()==ra::dim_t(x.size()) && "bad assignment"); \
+        RA_CHECK(p && this->size()==ra::dim_t(x.size()), "bad assignment"); \
         std::copy(x.begin(), x.end(), this->begin());                   \
         return *this;                                                   \
     }                                                                   \
@@ -466,7 +466,7 @@ struct View<T, RANK_ANY>
     }                                                                   \
     constexpr T CONST & operator[](dim_t const i) CONST                 \
     {                                                                   \
-        RA_CHECK(rank()==1 && "bad rank");                              \
+        RA_CHECK(rank()==1, "bad rank");                                \
         RA_CHECK(inside(i, dim[0].size));                               \
         return data()[i*dim[0].stride];                                 \
     }
@@ -630,7 +630,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // store(x) avoids it for Big, but doesn't work for Unique. Should construct in place as std::vector does.
     template <class Pbegin> void fill1(dim_t xsize, Pbegin xbegin)
     {
-        RA_CHECK(this->size()==xsize && "mismatched sizes");
+        RA_CHECK(this->size()==xsize, "mismatched sizes");
         std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
     }
 

@@ -97,8 +97,8 @@ struct Vector
     decltype(v.begin()) p__;
     static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0); return traits::size(v); }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return traits::size_s(); }
+    constexpr dim_t size(int k) const { RA_CHECK(k==0, "k ", k); return traits::size(v); }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, "k ", k); return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -115,14 +115,14 @@ struct Vector
     template <class I>
     decltype(auto) at(I const & i)
     {
-        RA_CHECK(inside(i[0], ra::size(v)));
+        RA_CHECK(inside(i[0], ra::size(v)), "i ", i[0], " size ", ra::size(v));
         return p__[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
 // k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra03]
 // k==0 && d!=1 happens on turning back at end of ply; TODO we need this only on outer products and such.
-        RA_CHECK(d==1 || d<0);
+        RA_CHECK(d==1 || d<0, "d ", d);
         p__ += (k==0) * d;
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
@@ -142,8 +142,8 @@ struct Ptr
 {
     P p__;
 
-    constexpr static dim_t size(int k) { RA_CHECK(k==0); return DIM_BAD; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_BAD; }
+    constexpr static dim_t size(int k) { RA_CHECK(k==0, "k ", k); return DIM_BAD; }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, "k ", k); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -154,7 +154,7 @@ struct Ptr
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        RA_CHECK(d==1 || d<0);
+        RA_CHECK(d==1 || d<0, "d ", d);
         std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
@@ -173,20 +173,20 @@ struct Span
     P p__;
     dim_t n__;
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0); return n__; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
+    constexpr dim_t size(int k) const { RA_CHECK(k==0, "k ", k); return n__; }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, "k ", k); return DIM_ANY; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
     template <class I>
     decltype(auto) at(I const & i)
     {
-        RA_CHECK(inside(i[0], n__));
+        RA_CHECK(inside(i[0], n__), "i ", i[0], " size ", n__);
         return p__[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        RA_CHECK(d==1 || d<0);
+        RA_CHECK(d==1 || d<0, "d ", d);
         std::advance(p__, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
@@ -217,11 +217,11 @@ struct Iota
 
     constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), i_(org), stride_(stride)
     {
-        RA_CHECK(size>=0 && "Iota");
+        RA_CHECK(size>=0, "Iota size ", size);
     }
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0); return size_; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
+    constexpr dim_t size(int k) const { RA_CHECK(k==0, "k ", k); return size_; }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, "k ", k); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 

@@ -36,7 +36,6 @@
 #define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
 #define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
 
-// FIXME use __VA_OPT__(,) or __VA_OPT__(&&) in c++20
 // https://en.cppreference.com/w/cpp/preprocessor/replace
 // See examples/throw.C for the way to override this RA_ASSERT.
 
