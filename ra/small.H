@@ -96,7 +96,7 @@ struct cell_iterator_small
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 
     constexpr static dim_t size(int k) { RA_CHECK(inside(k, rank())); return V::size(k); }
-    constexpr static dim_t size_s(int k) { /* RA_CHECK(inside(k, rank_s())); */ return V::size(k); }
+    constexpr static dim_t size_s(int k) { RA_CHECK(inside(k, rank_s())); return V::size(k); }
     constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j)
     {
@@ -116,7 +116,7 @@ struct cell_iterator_small
     template <class I>
     constexpr decltype(auto) at(I const & i_)
     {
-        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");
+        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices ", dim_t(i_.size()), " for rank ", rank());
         if constexpr (0==cellr) {
             return c.p[Indexer0<sizes, strides>::index_short(i_)];
         } else {

@@ -146,7 +146,8 @@ struct cell_iterator
     constexpr bool keep_stride(dim_t st, int z, int j) const { return st*stride(z)==stride(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
 
-    constexpr auto flat() const
+    constexpr
+    auto flat() const
     {
         if constexpr (0==cellr) {
             return c.p;
@@ -155,7 +156,7 @@ struct cell_iterator
         }
     }
 // Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
-    template <class I>
+    template <class I> constexpr
     decltype(auto) at(I const & i_)
     {
         RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");
@@ -396,9 +397,9 @@ struct View
         return *reinterpret_cast<View<const_atom<T>, RANK> const *>(this);
     }
 
-// conversions to scalar. The static asserts fail due to a bug in gcc 8.2 [ra43]. Recheck on gcc 9.
-    operator T & () { /* static_assert(RANK==0, "bad rank"); */ assert(RANK==0); return data()[0]; }
-    operator T const & () const { /* static_assert(RANK==0, "bad rank"); */ assert(RANK==0); return data()[0]; }
+// conversions to scalar.
+    operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
+    operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
 };
 
 template <class T, rank_t RANK>

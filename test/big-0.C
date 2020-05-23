@@ -21,12 +21,13 @@ int main(int argc, char * * argv)
     TestRecorder tr;
     tr.section("constructors");
     {
-        tr.section("regression with some shape arguments (fixed rank) [ra43]");
+        tr.section("regression with some shape arguments (fixed rank)");
         {
             ra::Big<int, 1> sizes = {5};
             ra::Big<double, 1> a(sizes, ra::none);
             a = 33.;
-            cout << a << endl;
+            tr.test_eq(5, a.size());
+            tr.test_eq(33, a);
         }
         tr.section("regression with implicitly declared View constructors [ra38]. Reduced from examples/maxwell.C");
         {
