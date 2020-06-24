@@ -223,8 +223,8 @@ dim_t proddim(D d, D dend)
 #define DEF_VIEW_COMMON(RANK)                                           \
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
     /* Constructors using pointers need extra care */                   \
-    /* constexpr */ /* triggers box/bug83.C in gcc 8.3 */ View(): p(nullptr) {} \
-    View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */   \
+    constexpr View(): p(nullptr) {}                                     \
+    constexpr View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */ \
     template <class SS>                                                 \
     View(SS && s, T * p_): p(p_)                                        \
     {                                                                   \

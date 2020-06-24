@@ -11,6 +11,7 @@
 // reduced from bench/bench-stencil2.C.
 // Bisected to edad804087b3eb0d2c4b2b423aacc4341b7a6736.
 // Patched by removing constexpr in big.H: View(): p(nullptr) {}.
+// Removed the patch for gcc 10.1 after 76bfad74c53e799e12d540d03318c3037bf624e0.
 
 #include <iostream>
 #include <iomanip>
