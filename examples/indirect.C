@@ -111,7 +111,7 @@ void example4()
     double radius = 0.8 * N/2.0;
 
     // circle will contain a list of strips which represent a circular subdomain.
-    ra::Big<std::tuple<int, ra::Iota<int> >, 1> circle; // [y x0 x1; ...]
+    ra::Big<std::tuple<int, ra::Iota<int>>, 1> circle; // [y x0 x1; ...]
     for (int i=0; i < N; ++i)
     {
         double jdist2 = sqr(radius) - sqr(i-centre_i);
@@ -153,11 +153,11 @@ void example5()
     // suppose you have the x coordinates in one array and the y coordinates in another array.
     ra::Big<int, 2> x({4, 4}, {0, 1, 2, 0, /* */ 0, 1, 2, 0, /*  */ 0, 1, 2, 0, /* */ 0, 1, 2, 0});
     ra::Big<int, 2> y({4, 4}, {1, 2, 0, 1, /* */ 1, 2, 0, 1, /*  */ 1, 2, 0, 1, /* */ 1, 2, 0, 1});
-    cout << "coordinates: " << format_array(ra::pack<ra::Small<int, 2> >(x, y), "|") << endl;
+    cout << "coordinates: " << format_array(ra::pack<ra::Small<int, 2>>(x, y), "|") << endl;
 
     // you can use these for indirect access without creating temporaries.
     ra::Big<int, 2> a({3, 3}, {0, 1, 2, 3, 4, 5, 6, 7, 8});
-    ra::Big<int, 2> b = at(a, ra::pack<ra::Small<int, 2> >(x, y));
+    ra::Big<int, 2> b = at(a, ra::pack<ra::Small<int, 2>>(x, y));
     cout << "sampling of a using coordinates: " << b << endl;
 
     // cf the default selection operator, which creates an outer product a(x(i, j), y(k, l)) (a 4x4x4x4 array).

@@ -220,7 +220,7 @@ int main()
     {
         ra::Small<real, 6> a = { 0, -1, 1, 0, 2, 1 };
         ra::Small<int, 6> b = { 4, 3, 5, 4, 6, 5 };
-        ra::Big<std::tuple<real, int>, 1> x = ra::pack<std::tuple<real, int> >(a, b); // TODO kinda redundant...
+        ra::Big<std::tuple<real, int>, 1> x = ra::pack<std::tuple<real, int>>(a, b); // TODO kinda redundant...
         tr.test_eq(a, map([](auto && x) -> decltype(auto) { return std::get<0>(x); }, x));
         tr.test_eq(b, map([](auto && x) -> decltype(auto) { return std::get<1>(x); }, x));
     }
@@ -230,7 +230,7 @@ int main()
         ra::Big<T> x { T(0., 1), T(2., 3), T(4., 5) };
         ra::Small<real, 3> a = -99.;
         ra::Small<int, 3> b = -77;
-        ra::pack<std::tuple<real &, int &> >(a, b) = x;
+        ra::pack<std::tuple<real &, int &>>(a, b) = x;
         tr.test_eq(ra::Small<real, 3> {0., 2., 4.}, a);
         tr.test_eq(ra::Small<int, 3> {1, 3, 5}, b);
     }

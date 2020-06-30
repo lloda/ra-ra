@@ -227,7 +227,7 @@ int main()
     }
     tr.section("DIM_BAD on any size_s(k) means size_s() is DIM_BAD");
     {
-        using order = std::tuple<mp::int_t<0>, mp::int_t<1> >;
+        using order = std::tuple<mp::int_t<0>, mp::int_t<1>>;
         using T0 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>, order>;
         ra::dim_t s0 = ra::size_s<T0>();
         using T1 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<1>, ra::Scalar<int>>, order>;

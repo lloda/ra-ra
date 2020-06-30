@@ -65,12 +65,12 @@ int main()
     tr.section("driver selection");
     {
         static_assert(TI<0>::rank_s()==1, "bad TI rank");
-        static_assert(ra::pick_driver<UU<0>, UU<1> >::value==1, "bad driver 1a");
-        static_assert(ra::pick_driver<TI<1>, UU<2> >::value==1, "bad driver 1b");
+        static_assert(ra::pick_driver<UU<0>, UU<1>>::value==1, "bad driver 1a");
+        static_assert(ra::pick_driver<TI<1>, UU<2>>::value==1, "bad driver 1b");
 
 // these two depend on TI<w>::rank_s() being w+1, which I haven't settled on.
         static_assert(TI<1>::rank_s()==2, "bad TI rank");
-        static_assert(ra::pick_driver<TI<0>, TI<1> >::value==1, "bad driver 1c");
+        static_assert(ra::pick_driver<TI<0>, TI<1>>::value==1, "bad driver 1c");
 
         static_assert(ra::size_s<UU<0>>()==1, "bad size_s 0");
         static_assert(ra::size_s<SS>()==1, "bad size_s 1");
@@ -105,9 +105,9 @@ int main()
         static_assert(ra::pick_driver<UU<3>, SM3>::value==1, "static rank, dynamic vs static size");
 // dynamic rank vs static size & rank
         static_assert(ra::pick_driver<UU<ra::RANK_ANY>, SM1 >::value==0, "bad match 7a");
-        static_assert(ra::pick_driver<SM1, UU<ra::RANK_ANY> >::value==1, "bad match 7b");
+        static_assert(ra::pick_driver<SM1, UU<ra::RANK_ANY>>::value==1, "bad match 7b");
         static_assert(ra::pick_driver<UU<ra::RANK_ANY>, SM2 >::value==0, "bad match 7c");
-        static_assert(ra::pick_driver<SM2, UU<ra::RANK_ANY> >::value==1, "bad match 7d");
+        static_assert(ra::pick_driver<SM2, UU<ra::RANK_ANY>>::value==1, "bad match 7d");
 // more cases with +2 candidates.
         static_assert(ra::driver_index<UU<3>, UU<1>, TI<0>> ==0, "bad match 7b");
         static_assert(ra::driver_index<TI<0>, UU<3>, UU<1>> ==1, "bad match 7c");

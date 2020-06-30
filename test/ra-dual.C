@@ -99,7 +99,7 @@ int main()
     tr.section("args are arrays of complex");
     TESTER(test1, ra::Big<complex>({10}, (ra::_0 + 1) * .1 + complex(0, 1)));
     tr.section("args are arrays of Dual<real>");
-    TESTER(test2, ra::Big<Dual<real> >({10}, map([](auto x) { return dual(x, 1.); }, (ra::_0 + 1) * .1)));
+    TESTER(test2, ra::Big<Dual<real>>({10}, map([](auto x) { return dual(x, 1.); }, (ra::_0 + 1) * .1)));
     tr.section("requires is_scalar registration");
     TESTER(test2, Dual<real>(1., 1.));
 #undef TESTER
@@ -117,7 +117,7 @@ int main()
                                 rspec);
             };
         test3(tr, "Dual<real>",
-              ra::Big<Dual<real> >({10}, map([](auto x) { return dual(x, 1.); }, (ra::_0 + 1) * .1)));
+              ra::Big<Dual<real>>({10}, map([](auto x) { return dual(x, 1.); }, (ra::_0 + 1) * .1)));
     }
     tr.section("TODO define ra:: operators for .re and .du, as real_part(), imag_part() do");
     {

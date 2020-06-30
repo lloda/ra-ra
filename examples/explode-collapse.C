@@ -25,7 +25,7 @@ int main()
     cout << "\nexplode\n" << endl;
     {
         Array<int, 2> A({2, 3}, ra::_0 - ra::_1);
-        auto B = ra::explode<Small<int, 3> >(A);
+        auto B = ra::explode<Small<int, 3>>(A);
 
         cout << "B(0): " << B(0) << endl; // [0 -1 -2], note the static size
         cout << "B(1): " << B(1) << endl; // [1, 0, -1], note the static size

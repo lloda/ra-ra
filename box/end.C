@@ -45,7 +45,7 @@ constexpr auto replace_end(dim_t end, End && e)
 }
 
 template <class Op, class P ...>
-constexpr auto replace_end(dim_t end, Expr<Op, std::tuple<P ...> > && e)
+constexpr auto replace_end(dim_t end, Expr<Op, std::tuple<P ...>> && e)
 {
     return expr(std::forward<decltype(e.op)>(e.op),
                 replace_end(end, std::forward<P>(std::get<I>(e.t))) ...);
