@@ -433,8 +433,8 @@ struct View<T, RANK_ANY>
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
 // checking because std::vector doesn't.
-    constexpr dim_t size(int const j) const { RA_CHECK(j<rank()); return dim[j].size; }
-    constexpr dim_t stride(int const j) const { RA_CHECK(j<rank()); return dim[j].stride; }
+    constexpr dim_t size(int const j) const { RA_CHECK(j<rank(), " j : ", j, " rank ", rank()); return dim[j].size; }
+    constexpr dim_t stride(int const j) const { RA_CHECK(j<rank(), " j : ", j, " rank ", rank()); return dim[j].stride; }
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; }
 
