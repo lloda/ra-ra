@@ -143,7 +143,7 @@ DEF_NAMED_BINARY_OP(/, slash)
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
     }
-FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, ==, !=, |, &, ^)
+FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, <=>, ==, !=, |, &, ^)
 #undef DEF_BINARY_OP
 
 #define DEF_UNARY_OP(OP)                                                \

@@ -6,10 +6,10 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO Everything [1/6]
-  - [ ] Bugs [0/1]
+  - [-] Bugs [1/7]
     - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.C has op 10x worse
       than indexed
-      - I have a fix for this but it depends on is_constant_eval in c++20.
+      - Tried is_constant_eval in c++20 but didn't work out as I hoped.
     - [X] size_s, rank_s in Ryn:: are broken [ra07]
     - [ ] ambiguity / bad init in nested constructors [ra45]
     - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
@@ -18,7 +18,8 @@ checkbox [C-ct] flip TODO
     - [ ] beatable subscripts are not beaten if mixed with non-beatable
       subscripts. E.g. in A(vector, iota, vector) the iota isn't beaten.
     - [ ] be namespace clean except for possibly real.H, complex.H.
-  - [ ] Features [0/4]
+    - [ ] make iter work with w/rank.
+  - [-] Features [1/5]
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
       maybe. One idea is to generalize View (so View<Iota>, etc.) which is
       something that newra does. But as long as Container is parent of View,
@@ -41,6 +42,8 @@ checkbox [C-ct] flip TODO
       need their own Expr-like types while on Views it's just a one time
       op. Propagating ops down Expr into leaf Views (a kind of beating) would be
       better.
+    - [X] Support operator <=> <2020-09-15 Tue 13:50>
+      - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
   - [X] Error report, debugging [3/3]
     - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/check-runtime.C
       * This was fixed between v8 and v10, see examples/throw.C.

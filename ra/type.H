@@ -18,6 +18,10 @@ namespace ra {
 RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
 RA_IS_DEF(has_traits, (mp::exists<decltype(ra_traits<A>::size)>))
 
+template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
+template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
+template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
+
 // other foreign types we care about.
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
 template <class A> constexpr bool is_foreign_vector_def = false;

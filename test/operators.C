@@ -58,6 +58,17 @@ int main()
 // TODO merge with DEF_TEST_UNARY_OP
         tr.info("odd").test_eq(ra::Unique<bool, 1> {true, false, true, true}, odd(ra::Unique<int, 1> {1, 2, 3, -1}));
     }
+    tr.section("binary ops");
+    {
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
+        tr.info("<=> a").test_eq(true, (2<=>1)>0);
+        tr.info("<=> b").test_eq(ra::ptr("+0-"),
+                                 map([](auto z) { return z>0 ? '+' : z<0 ? '-' : '0'; },
+                                     ra::Small<int, 3>{3, 4, 5} <=> ra::Small<double, 3>{2., 4., 6.}));
+#pragma GCC diagnostic pop
+    }
 
     tr.section("check decay of rank 0 Containers/Slices w/ operators");
     {
