@@ -1,18 +1,18 @@
-@c -*-texinfo-*-
+@c -*- mode: texinfo; coding: utf-8 -*-
 @c %**start of header
 @setfilename ra-ra.info
 @documentencoding UTF-8
 @settitle ra:: —An array library for C++20
 @c %**end of header
-@c last [ma112]
 
 @c Keep track of
 @c http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0573r2.html
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
+@c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 11
-@set UPDATED 2020 September 15
+@set UPDATED 2020 September 18
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -50,7 +50,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{ra::}@footnote{/ə'ɹ-eɪ/, I guess.} is a general purpose multidimensional array and expression template library for C++17/20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+@code{ra::}@footnote{/ə'ɹ-eɪ/, I guess.} is a general purpose multidimensional array and expression template library for C++20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 
 @menu
 * Overview::          Array programming and C++.

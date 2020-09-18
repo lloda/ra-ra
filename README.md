@@ -1,7 +1,7 @@
 
 # ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
 
-**ra-ra** is a header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net). It is written mostly in C++17, but slowly moving to C++20.
+**ra-ra** is a C++20, header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net).
 
 Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in modern C++ there's very little you can do with those, and a separate library is required for any practical endeavor.
 

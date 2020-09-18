@@ -26,7 +26,7 @@ env = Environment(options=vars,
                   BUILDERS={'INFOBuilder' : Builder(action = '$MAKEINFO < $SOURCES > $TARGET',
                                                     suffix = '.info',
                                                     src_suffix = '.texi'),
-                            'HTMLBuilder' : Builder(action = '$MAKEINFO --html --no-split < $SOURCES > $TARGET',
+                            'HTMLBuilder' : Builder(action = '$MAKEINFO --html --no-split -o $TARGET < $SOURCES',
                                                     suffix = '.html',
                                                     src_suffix = '.texi')})
 variant_dir = env['variant_dir']

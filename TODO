@@ -1,11 +1,11 @@
 RA -*- mode: org; -*-
 
-help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip
+help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip [M-RET] continue list
 checkbox [C-ct] flip TODO
 
 #+STARTUP: logdone
 
-* TODO Everything [1/6]
+* TODO [1/6]
   - [-] Bugs [1/7]
     - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.C has op 10x worse
       than indexed
@@ -38,10 +38,10 @@ checkbox [C-ct] flip TODO
       ply_index/ply_ravel.
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
     - [ ] port some of the View ops to generic ArrayIterator. reverse,
-      transpose, etc. seem easy enough. Only it kind of bothers me that they
-      need their own Expr-like types while on Views it's just a one time
-      op. Propagating ops down Expr into leaf Views (a kind of beating) would be
-      better.
+          transpose, etc. seem easy enough. Only it kind of bothers me that they
+          need their own Expr-like types while on Views it's just a one time
+          op. Propagating ops down Expr into leaf Views (a kind of beating) would be
+          better.
     - [X] Support operator <=> <2020-09-15 Tue 13:50>
       - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
   - [X] Error report, debugging [3/3]
@@ -65,3 +65,51 @@ checkbox [C-ct] flip TODO
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).
       - [ ] Appropriate ply. Possibly restrict it to rank 1.
+
+* Numbered issues throughout the source [ra··]
+  1. [ ]
+  2. [ ]
+  3. [ ]
+  4. [ ]
+  5. [ ]
+  6. [ ]
+  7. [ ]
+  8. [ ]
+  9. [ ] Unassigned
+  10. [ ] Unassigned
+  11. [ ]
+  12. [ ]
+  13. [ ]
+  14. [ ]
+  15. [ ]
+  16. [ ]
+  17. [ ]
+  18. [ ]
+  19. [ ]
+  20. [ ]
+  21. [ ]
+  22. [ ]
+  23. [ ]
+  24. [ ]
+  25. [ ]
+  26. [ ]
+  27. [ ]
+  28. [ ]
+  29. [ ]
+  30. [ ]
+  31. [ ]
+  32. [ ]
+  33. [ ]
+  34. [ ]
+  35. [ ]
+  36. [ ]
+  37. [ ]
+  38. [ ]
+  39. [ ]
+  40. [ ]
+  41. [ ]
+  42. [ ]
+  43. [ ] Unassigned
+  44. [ ]
+  45. [ ]
+  46. [ ]
