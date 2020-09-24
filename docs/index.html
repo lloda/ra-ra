@@ -403,14 +403,14 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 <a name="Using-ra_003a_003a"></a>
 <h3 class="section">2.1 Using <code>ra::</code></h3>
 
-<p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.H&quot;</code> at the top of your sources.
+<p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
 </p>
 <p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 10.1</b> with <samp>-std=c++20</samp>. Check the top README.md for more up-to-date information.
 </p>
 <p>Here is a minimal program<a name="DOCF3" href="#FOOT3"><sup>3</sup></a>:
 </p>
 <div class="example">
-<pre class="verbatim">#include &quot;ra/ra.H&quot;
+<pre class="verbatim">#include &quot;ra/ra.hh&quot;
 #include &lt;iostream&gt;
 
 int main()
@@ -425,7 +425,7 @@ int main()
    d|d
 </pre></div>
 
-<p>You may want to <code>#include &quot;ra/real.H&quot;</code> and <code>&quot;ra/complex.H&quot;</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function.
+<p>You may want to <code>#include &quot;ra/real.hh&quot;</code> and <code>&quot;ra/complex.hh&quot;</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function.
 </p>
 <a name="index-container"></a>
 <hr>
@@ -872,7 +872,7 @@ auto l = a(0, ra::dots&lt;1&gt;); // first row of a
 auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
 </pre></div>
 
-<p>This is useful when writing rank-generic code, see <code>examples/maxwell.C</code> in the distribution for an example.
+<p>This is useful when writing rank-generic code, see <code>examples/maxwell.cc</code> in the distribution for an example.
 </p>
 <a name="x_002dinsert"></a><dl>
 <dt><a name="index-insert_003cn_003e"></a>Special&nbsp;object<!-- /@w -->: <strong>insert&lt;n&gt;</strong></dt>
@@ -1114,10 +1114,10 @@ ra::ptr(z) += p; // ok, size is determined by foreign object p
 <a name="x_002dis_002dscalar"></a><p>Some types are accepted automatically as scalars. These include:
 </p><ul>
 <li> Any type <code>T</code> for which <code>std::is_scalar_v&lt;T&gt;</code> is true, <em>except</em> pointers. These include <code>char</code>, <code>int</code>, <code>double</code>, etc.
-</li><li> <code>std::complex&lt;T&gt;</code>, if you import <code>ra/complex.H</code>.
+</li><li> <code>std::complex&lt;T&gt;</code>, if you import <code>ra/complex.hh</code>.
 </li></ul>
 
-<p>You can add your own types as scalar types with the following declaration (see <code>ra/complex.H</code>):
+<p>You can add your own types as scalar types with the following declaration (see <code>ra/complex.hh</code>):
 </p>
 <pre class="verbatim">    namespace ra { template &lt;&gt; constexpr bool is_scalar_def&lt;MYTYPE&gt; = true; }
 </pre>
@@ -1490,7 +1490,7 @@ is a function-like macro. <code>cond</code> an expression that evaluates to true
 
 <p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <code>-DNDEBUG</code>. The use of <code>-DNDEBUG</code> is untested.
 </p>
-<p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. <code>examples/throw.C</code> in the distribution shows how to throw an user-defined exception instead.
+<p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. <code>examples/throw.cc</code> in the distribution shows how to throw an user-defined exception instead.
 </p>
 <hr>
 <a name="Extras"></a>

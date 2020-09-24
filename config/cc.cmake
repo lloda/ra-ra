@@ -10,7 +10,7 @@ set (BASE_CXXFLAGS "-std=c++20 -Wall -Werror -fdiagnostics-color=always -Wno-unk
 set (CMAKE_CXX_FLAGS "${BASE_CXXFLAGS} $ENV{CXXFLAGS}")
 
 foreach (target ${TARGETS})
-  add_executable (${target} "${target}.C")
+  add_executable (${target} "${target}.cc")
   add_test (${target} ${target})
 endforeach ()
 

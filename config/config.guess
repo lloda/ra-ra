@@ -1217,7 +1217,7 @@ EOF
 	fi
 	exit ;;
     PENTIUM:*:4.0*:*)	# Unisys `ClearPath HMP IX 4000' SVR4/MP effort
-			# says <Richard.M.Bartel@ccMail.Census.GOV>
+			# says <Richard.M.Bartel@ccMail.ccensus.GOV>
 	echo i586-unisys-sysv4
 	exit ;;
     *:UNIX_System_V:4*:FTX*)

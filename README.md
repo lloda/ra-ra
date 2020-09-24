@@ -9,10 +9,10 @@ Multidimensional arrays are containers that can be indexed in multiple dimension
 
 **ra-ra** tries to distinguish itself from established C++ libraries in this space (such as [Eigen](https://eigen.tuxfamily.org) or [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html)) by being more APLish, more general, smaller, and more hackable.
 
-In this example ([examples/readme.C](examples/readme.C)), we add each element of a vector to each row of a matrix, and then print the result.
+In this example ([examples/readme.cc](examples/readme.cc)), we add each element of a vector to each row of a matrix, and then print the result.
 
 ```c++
-#include "ra/ra.H"
+#include "ra/ra.hh"
 #include <iostream>
 
 int main()
@@ -70,9 +70,9 @@ The tests pass under gcc 10.1 (earlier versions don't support `-std=c++20`). Rem
 
 <!-- All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for: -->
 
-<!-- * [bench/bench-pack.C](bench/bench-pack.C), crashes clang. -->
-<!-- * [test/iterator-small.C](test/iterator-small.C), crashes clang. -->
-<!-- * [test/optimize.C](test/optimize.C), gives compilation errors. -->
+<!-- * [bench/bench-pack.cc](bench/bench-pack.cc), crashes clang. -->
+<!-- * [test/iterator-small.cc](test/iterator-small.cc), crashes clang. -->
+<!-- * [test/optimize.cc](test/optimize.cc), gives compilation errors. -->
 
 <!-- For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is meant for gcc by setting CCFLAGS to something else, say: -->
 

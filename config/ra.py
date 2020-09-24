@@ -132,7 +132,7 @@ def to_test_ra(env_, variant_dir):
             env.Append(CXXFLAGS=cxxflags + ['-U' + k for k in cppdefines.keys()], CPPDEFINES=cppdefines)
         if len(target)==0:
             target = source
-        obj = env.Object(target, [source + '.C'])
+        obj = env.Object(target, [source + '.cc'])
         test = env.Program(target, obj)
         to_test(env, variant_dir, test, [test[0].abspath])
     return f
