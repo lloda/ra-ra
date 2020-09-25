@@ -88,14 +88,16 @@ auto diag(View<T, RANK> const & view)
 template <class T, rank_t RANK> inline
 bool is_ravel_free(View<T, RANK> const & a)
 {
-    if (a.rank()>1) {
-        auto s = a.stride(a.rank()-1);
-        for (int i=a.rank()-2; i>=0; --i) {
-            s *= a.size(i+1);
-// on size=1 we don't care about the stride.
-            if (a.stride(i)!=s || a.size(i)==1) {
+    int r = a.rank()-1;
+    for (; r>=0 && a.size(r)==1; --r) {}
+    if (r<0) { return true; }
+    ra::dim_t s = a.stride(r)*a.size(r);
+    while (--r>=0) {
+        if (1!=a.size(r)) {
+            if (a.stride(r)!=s) {
                 return false;
             }
+            s *= a.size(r);
         }
     }
     return true;
@@ -105,7 +107,10 @@ template <class T, rank_t RANK> inline
 View<T, 1> ravel_free(View<T, RANK> const & a)
 {
     RA_CHECK(is_ravel_free(a));
-    return ra::View<T, 1>({{size(a), a.stride(a.rank()-1)}}, a.p);
+    int r = a.rank()-1;
+    for (; r>=0 && a.size(r)==1; --r) {}
+    ra::dim_t s = r<0 ? 1 : a.stride(r);
+    return ra::View<T, 1>({{size(a), s}}, a.p);
 }
 
 template <class T, rank_t RANK, class S> inline
