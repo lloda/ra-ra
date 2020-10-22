@@ -26,8 +26,9 @@ namespace ra {
 // adv(k), stride(k), keep_stride(st, k, l) and flat() are used on all the leaf arguments.
 // The strides must give 0 for k>=their own rank, to allow frame matching.
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
-template <class A> inline
-void ply_ravel(A && a)
+template <class A>
+inline void
+ply_ravel(A && a)
 {
     rank_t rank = a.rank();
     assert(rank>=0); // FIXME see test in [ra40].
@@ -94,8 +95,9 @@ void ply_ravel(A && a)
 #endif
 #define RA_INLINE inline /* __attribute__((always_inline)) inline */
 
-template <class order, int ravel_rank, class A, class S> RA_INLINE constexpr
-void subindex(A & a, dim_t s, S const & ss0)
+template <class order, int ravel_rank, class A, class S>
+RA_INLINE constexpr void
+subindex(A & a, dim_t s, S const & ss0)
 {
     if constexpr (mp::len<order> == ravel_rank) {
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
@@ -114,9 +116,9 @@ void subindex(A & a, dim_t s, S const & ss0)
 }
 
 // until() converts runtime jj into compile time j. TODO a.adv<k>().
-
-template <class order, int j, class A, class S> RA_INLINE constexpr
-void until(int const jj, A & a, dim_t const s, S const & ss0)
+template <class order, int j, class A, class S>
+RA_INLINE constexpr void
+until(int const jj, A & a, dim_t const s, S const & ss0)
 {
     if constexpr (mp::len<order> < j) {
         assert(0 && "rank too high");
@@ -131,22 +133,10 @@ void until(int const jj, A & a, dim_t const s, S const & ss0)
     }
 }
 
-template <class A> RA_INLINE constexpr
-auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()<=0)>
-{
-    static_assert(rank_s<A>()==0, "plyf needs static rank");
-    *(a.flat());
-}
-
-template <class A> RA_INLINE constexpr
-auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()==1)>
-{
-    subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
-}
-
 // find the outermost compact dim.
-template <class A> constexpr
-auto ocd(A && a)
+template <class A>
+constexpr auto
+ocd(A && a)
 {
     rank_t const rank = a.rank();
     auto s = a.size(rank-1);
@@ -158,14 +148,21 @@ auto ocd(A && a)
     return std::make_tuple(s, j);
 };
 
-template <class A> RA_INLINE constexpr
-auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()>1)>
+template <class A>
+RA_INLINE constexpr void
+plyf(A && a)
 {
     constexpr rank_t rank = rank_s<A>();
+    static_assert(rank>=0, "plyf needs static rank");
+
+    if constexpr (rank_s<A>()==0) {
+        *(a.flat());
+    } else if constexpr (rank_s<A>()==1) {
+        subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
+    } else if constexpr (0 && size_s<A>()>=0) {
 // this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_stride.
 // test/concrete.cc has a case that shows this.
 // cf https://stackoverflow.com/questions/55288555
-    if constexpr (0 && size_s<A>()>=0) {
         constexpr auto sj = ocd(a);
         constexpr auto s = std::get<0>(sj);
         constexpr auto j = std::get<1>(sj);
@@ -186,7 +183,8 @@ auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()>1)>
 // Select best performance (or requirements) for each type.
 // ---------------------------
 
-template <class A> inline constexpr void
+template <class A>
+inline constexpr void
 ply(A && a)
 {
     if constexpr (size_s<A>()==DIM_ANY) {
@@ -203,9 +201,9 @@ ply(A && a)
 
 // TODO Refactor with ply_ravel. Make exit available to plyf.
 // TODO These are reductions. How to do higher rank?
-
-template <class A, class DEF> inline
-auto ply_ravel_exit(A && a, DEF && def)
+template <class A, class DEF>
+inline auto
+ply_ravel_exit(A && a, DEF && def)
 {
     rank_t rank = a.rank();
     assert(rank>=0); // FIXME see test in [ra40].
