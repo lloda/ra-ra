@@ -56,7 +56,7 @@ struct no_arg {};
 // Order of decl issues.
 template <class C> struct Scalar; // for type predicates
 template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator
-template <class V, class Enable=void> struct ra_traits_def;
+template <class V> struct ra_traits_def;
 
 template <class S> struct default_strides_ {};
 template <class tend> struct default_strides_<std::tuple<tend>> { using type = mp::int_list<1>; };
@@ -124,7 +124,7 @@ inline constexpr bool odd(unsigned int N) { return N & 1; }
 // 4. The nested constructor.
 // When SmallArray has rank 1, or the first dimension is empty, or the shape is [1] or [], several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of no_arg.
 
-template <class T, class sizes, class Enable=void>
+template <class T, class sizes>
 struct nested_tuple;
 
 // ambiguity with empty constructor and scalar constructor.

@@ -24,23 +24,20 @@ using real = double;
 
 // Find the driver for given axis. This pattern is used in Ryn to find the size-giving argument for each axis.
 template <int iarg, class T>
-std::enable_if_t<(iarg==mp::len<std::decay_t<T>>), int>
-constexpr driver(T && t, int k)
+constexpr int
+driver(T && t, int k)
 {
-    assert(0 && "there was no driver"); abort();
-}
-
-template <int iarg, class T>
-std::enable_if_t<(iarg<mp::len<std::decay_t<T>>), int>
-constexpr driver(T && t, int k)
-{
-    if (k<std::get<iarg>(t).rank()) {
-        dim_t s = std::get<iarg>(t).size(k);
-        if (s>=0) {
-            return iarg;
+    if constexpr (iarg<mp::len<std::decay_t<T>>) {
+        if (k<std::get<iarg>(t).rank()) {
+            dim_t s = std::get<iarg>(t).size(k);
+            if (s>=0) {
+                return iarg;
+            }
         }
+        return driver<iarg+1>(t, k);
+    } else {
+        assert(0 && "there was no driver"); abort();
     }
-    return driver<iarg+1>(t, k);
 }
 
 // ewv = expression-with-verb

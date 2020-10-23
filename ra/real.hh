@@ -53,7 +53,6 @@ using std::swap, std::isfinite, std::isinf;
 
 #define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>)
 #define RA_REAL_OVERLOAD_CE(T) template <class T> inline constexpr std::enable_if_t<RA_IS_REAL(T), T>
-#define RA_REAL_OVERLOAD(T) template <class T> inline std::enable_if_t<RA_IS_REAL(T), T>
 // As an array op; special definitions for rank 0.
 RA_REAL_OVERLOAD_CE(T) arg(T const x) { return 0; }
 RA_REAL_OVERLOAD_CE(T) amax(T const x) { return x; }
@@ -63,9 +62,8 @@ RA_REAL_OVERLOAD_CE(T) real_part(T const x) { return x; }
 RA_REAL_OVERLOAD_CE(T) imag_part(T const x) { return 0.; }
 RA_REAL_OVERLOAD_CE(T) conj(T const x) { return x; }
 RA_REAL_OVERLOAD_CE(T) sqrm(T const x) { return x*x; }
-RA_REAL_OVERLOAD(T) norm2(T const x) { return std::abs(x); } // constexpr clang
+RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
 #undef RA_REAL_OVERLOAD_CE
-#undef RA_REAL_OVERLOAD
 #undef RA_IS_REAL
 
 #define FOR_FLOAT(T)                                                    \

@@ -236,10 +236,8 @@ auto explode(View<T, RANK> const & a)
 }
 
 // TODO Consider these in ra_traits<>.
-template <class T, std::enable_if_t<is_scalar<T>, int> =0> inline int gstride(int i) { return 1; }
-template <class T, std::enable_if_t<!is_scalar<T>, int> =0> inline int gstride(int i) { return T::stride(i); }
-template <class T, std::enable_if_t<is_scalar<T>, int> =0> inline int gsize(int i) { return 1; }
-template <class T, std::enable_if_t<!is_scalar<T>, int> =0> inline int gsize(int i) { return T::size(i); }
+template <class T> inline int gstride(int i) { if constexpr (is_scalar<T>) return 1; else return T::stride(i); }
+template <class T> inline int gsize(int i) { if constexpr (is_scalar<T>) return 1; else return T::size(i); }
 
 // TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
 template <class sub_t, class super_t, rank_t RANK> inline

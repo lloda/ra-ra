@@ -362,7 +362,7 @@ struct torank1
     using type = std::conditional_t<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
 };
 
-template <class Wedge, class Va, class Vb, class Enable=void>
+template <class Wedge, class Va, class Vb>
 struct fromrank1
 {
     using valtype = typename Wedge::template valtype<Va, Vb>;

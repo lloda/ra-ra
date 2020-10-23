@@ -25,7 +25,7 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // other foreign types we care about.
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
 template <class A> constexpr bool is_foreign_vector_def = false;
-template <class A, class Enable=void> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A>>;
+template <class A> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A>>;
 template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A>> = true;
 template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
 
@@ -50,7 +50,8 @@ template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...
 template <class ... A> constexpr bool ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
 
 template <class T>
-struct ra_traits_def<T, std::enable_if_t<is_scalar<T>>>
+requires (is_scalar<T>)
+struct ra_traits_def<T>
 {
     using V = T;
     using value_type = T;

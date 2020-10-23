@@ -25,34 +25,36 @@ struct Indexer0
     static_assert(mp::len<sizes> == mp::len<strides>, "mismatched sizes & strides");
 
     template <rank_t end, rank_t k, class P>
-    constexpr static std::enable_if_t<k==end, dim_t> index_p_(dim_t const c, P const & p)
+    constexpr static dim_t index_p_(dim_t const c, P const & p)
     {
-        return c;
+        static_assert(k>=0 && k<=end, "Bad index");
+        if constexpr (k==end) {
+            return c;
+        } else {
+            RA_CHECK(inside(p[k], mp::first<sizes>::value));
+            return Indexer0<mp::drop1<sizes>, mp::drop1<strides>>::template
+                index_p_<end, k+1>(c + p[k] * mp::first<strides>::value, p);
+        }
     }
-    template <rank_t end, rank_t k, class P>
-    constexpr static std::enable_if_t<(k<end), dim_t> index_p_(dim_t const c, P const & p)
-    {
-        RA_CHECK(inside(p[k], mp::first<sizes>::value));
-        return Indexer0<mp::drop1<sizes>, mp::drop1<strides>>::template index_p_<end, k+1>(c + p[k] * mp::first<strides>::value, p);
-    }
+
     template <class P>
     constexpr static dim_t index_p(P const & p) // for Container::at().
     {
 // gcc accepts p.size(), but I also need P = std::array to work. See also below.
-        static_assert(mp::len<sizes> >= size_s<P>(), "too many indices");
+        static_assert(mp::len<sizes> >= size_s<P>(), "Too many indices");
         return index_p_<size_s<P>(), 0>(0, p);
     }
-    template <class P, std::enable_if_t<size_s<P>()!=RANK_ANY, int> =0>
+
+    template <class P>
     constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
     {
-        static_assert(mp::len<sizes> <= size_s<P>(), "too few indices");
-        return index_p_<mp::len<sizes>, 0>(0, p);
-    }
-    template <class P, std::enable_if_t<size_s<P>()==RANK_ANY, int> =0>
-    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
-    {
-        RA_CHECK(mp::len<sizes> <= p.size());
-        return index_p_<mp::len<sizes>, 0>(0, p);
+        if constexpr (size_s<P>()!=RANK_ANY) {
+            static_assert(mp::len<sizes> <= size_s<P>(), "Too few indices");
+            return index_p_<mp::len<sizes>, 0>(0, p);
+        } else {
+            RA_CHECK(mp::len<sizes> <= p.size());
+            return index_p_<mp::len<sizes>, 0>(0, p);
+        }
     }
 };
 
@@ -304,20 +306,22 @@ struct SmallBase
 
 // Specialize for rank() integer-args -> scalar, same in ra::View in big.hh.
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I, std::enable_if_t<((0 + ... + std::is_integral_v<I>)<rank() \
-                                             && (is_beatable<I>::static_p && ...)), int> = 0> \
+    template <class ... I>                                              \
+    requires ((0 + ... + std::is_integral_v<I>)<rank() && (is_beatable<I>::static_p && ...)) \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
         using FD = FilterDims<sizes, strides, I ...>;                   \
         return SmallView<T CONST, typename FD::sizes, typename FD::strides> \
             (data()+select_loop<sizes, strides>(i ...));                \
     }                                                                   \
-    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral_v<I>)==rank(), int> = 0> \
-    constexpr decltype(auto) operator()(I ... i) CONST                            \
+    template <class ... I>                                              \
+    requires ((0 + ... + std::is_integral_v<I>)==rank())                \
+    constexpr decltype(auto) operator()(I ... i) CONST                  \
     {                                                                   \
         return data()[select_loop<sizes, strides>(i ...)];              \
     } /* TODO More than one selector... */                              \
-    template <class ... I, std::enable_if_t<(!is_beatable<I>::static_p || ...), int> = 0> \
+    template <class ... I>                                              \
+    requires (!is_beatable<I>::static_p || ...)                         \
     constexpr auto operator()(I && ... i) CONST                         \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -338,7 +342,8 @@ struct SmallBase
 
 // see same thing for View.
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X, std::enable_if_t<!mp::is_tuple_v<std::decay_t<X>>, int> =0> \
+    template <class X>                                                  \
+    requires (!mp::is_tuple_v<std::decay_t<X>>)                         \
     constexpr Child & operator OP(X && x)                               \
     {                                                                   \
         ra::start(static_cast<Child &>(*this)) OP x;                    \
@@ -484,8 +489,8 @@ struct SmallArray<T, sizes, strides, std::tuple<nested_args ...>, std::tuple<rav
         for (auto & x: p) { x = t; } // std::fill will be constexpr in c++20
     }
     // X && x makes this a better match than nested_args ... for 1 argument.
-    template <class X, std::enable_if_t<!std::is_same_v<T, std::decay_t<X>>
-                                        && !mp::is_tuple_v<std::decay_t<X>>, int> =0>
+    template <class X>
+    requires (!std::is_same_v<T, std::decay_t<X>> && !mp::is_tuple_v<std::decay_t<X>>)
     constexpr SmallArray(X && x): p()
     {
         static_cast<Base &>(*this) = x;
@@ -586,7 +591,8 @@ start(T && t)
 }
 
 template <class T>
-struct ra_traits_def<T, std::enable_if_t<is_builtin_array<T>>>
+requires (is_builtin_array<T>)
+struct ra_traits_def<T>
 {
     using S = typename builtin_array_types<T>::view;
 // FIXME messy start()
@@ -674,9 +680,8 @@ auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, SmallBase<Child2, T
     return val;
 }
 
-template <template <class ...> class Child1, class T1, class sizes1, class strides1,
-          class A2,
-          std::enable_if_t<is_scalar<A2>, int> =0>
+template <template <class ...> class Child1, class T1, class sizes1, class strides1, class A2>
+requires (is_scalar<A2>)
 auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
 {
     using A1 = SmallBase<Child1, T1, sizes1, strides1>;
@@ -688,9 +693,8 @@ auto cat(SmallBase<Child1, T1, sizes1, strides1> const & a1, A2 const & a2)
     return val;
 }
 
-template <class A1,
-          template <class ...> class Child2, class T2, class sizes2, class strides2,
-          std::enable_if_t<is_scalar<A1>, int> =0>
+template <class A1, template <class ...> class Child2, class T2, class sizes2, class strides2>
+requires (is_scalar<A1>)
 auto cat(A1 const & a1, SmallBase<Child2, T2, sizes2, strides2> const & a2)
 {
     using A2 = SmallBase<Child2, T2, sizes2, strides2>;

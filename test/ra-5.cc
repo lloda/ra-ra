@@ -18,9 +18,6 @@
 
 using std::cout, std::endl, ra::TestRecorder;
 
-// template <class T, class Enable=void> struct THECHECK { constexpr static bool value = false; };
-// template <class T> struct THECHECK<T, std::enable_if_t<mp::exists<decltype(T::dim)>>> { constexpr static bool value = true; };
-
 int main()
 {
     TestRecorder tr(std::cout);

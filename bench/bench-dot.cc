@@ -31,42 +31,35 @@ struct by_raw
     constexpr static char const * name = "raw";
 
     template <class A, class B>
-    std::enable_if_t<ra_traits<A>::rank_s()==1, real>
-    operator()(A const & a, B const & b)
+    real operator()(A const & a, B const & b)
     {
-        real y(0.);
-        for (int j=0; j<S1[0]; ++j) {
-            y += a[j]*b[j];
-        }
-        return y;
-    }
-
-    template <class A, class B>
-    std::enable_if_t<ra_traits<A>::rank_s()==2, real>
-    operator()(A const & a, B const & b)
-    {
-        real y(0.);
-        for (int j=0; j<S2[0]; ++j) {
-            for (int k=0; k<S2[1]; ++k) {
-                y += a(j, k)*b(j, k);
+        constexpr int rank = ra_traits<A>::rank_s();
+        static_assert(rank>=1 && rank<=3, "Bad rank.");
+        if constexpr (1==rank) {
+            real y(0.);
+            for (int j=0; j<S1[0]; ++j) {
+                y += a[j]*b[j];
             }
-        }
-        return y;
-    }
-
-    template <class A, class B>
-    std::enable_if_t<ra_traits<A>::rank_s()==3, real>
-    operator()(A const & a, B const & b)
-    {
-        real y(0.);
-        for (int j=0; j<S3[0]; ++j) {
-            for (int k=0; k<S3[1]; ++k) {
-                for (int l=0; l<S3[2]; ++l) {
-                    y += a(j, k, l)*b(j, k, l);
+            return y;
+        } else if constexpr (2==rank) {
+            real y(0.);
+            for (int j=0; j<S2[0]; ++j) {
+                for (int k=0; k<S2[1]; ++k) {
+                    y += a(j, k)*b(j, k);
                 }
             }
+            return y;
+        } else if constexpr (3==rank) {
+            real y(0.);
+            for (int j=0; j<S3[0]; ++j) {
+                for (int k=0; k<S3[1]; ++k) {
+                    for (int l=0; l<S3[2]; ++l) {
+                        y += a(j, k, l)*b(j, k, l);
+                    }
+                }
+            }
+            return y;
         }
-        return y;
     }
 };
 

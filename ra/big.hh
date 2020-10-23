@@ -28,11 +28,12 @@ inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
 // --------------------
 
 // Avoid clash of T with scalar constructors (for rank 0).
-template <class T, rank_t rank, class Enable=void>
+template <class T, rank_t rank>
 struct nested_braces { using list = no_arg; };
 
 template <class T, rank_t rank>
-struct nested_braces<T, rank, std::enable_if_t<(rank==1)>>
+requires (rank==1)
+struct nested_braces<T, rank>
 {
     using list = std::initializer_list<T>;
     template <size_t N> constexpr static
@@ -44,7 +45,8 @@ struct nested_braces<T, rank, std::enable_if_t<(rank==1)>>
 };
 
 template <class T, rank_t rank>
-struct nested_braces<T, rank, std::enable_if_t<(rank>1)>>
+requires (rank>1)
+struct nested_braces<T, rank>
 {
     using sub = nested_braces<T, rank-1>;
     using list = std::initializer_list<typename sub::list>;
@@ -334,9 +336,9 @@ struct View
 
     // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I,                                              \
-              std::enable_if_t<((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK \
-                                && (0 + ... + is_beatable<I>::value)==sizeof...(I)), int> = 0> \
+    template <class ... I>                                              \
+    requires ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK      \
+              && (0 + ... + is_beatable<I>::value)==sizeof...(I))       \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
@@ -351,13 +353,15 @@ struct View
         return sub;                                                     \
     }                                                                   \
     /* BUG doesn't handle generic zero-rank indices */                  \
-    template <class ... I, std::enable_if_t<(0 + ... + std::is_integral_v<I>)==RANK, int> = 0> \
+    template <class ... I>                                              \
+    requires ((0 + ... + std::is_integral_v<I>)==RANK)                  \
     decltype(auto) operator()(I const & ... i) CONST                    \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     }                                                                   \
     /* TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
-    template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
+    template <class ... I>                                              \
+    requires (!(is_beatable<I>::value && ...))                          \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -386,9 +390,11 @@ struct View
     DEF_VIEW_COMMON(RANK)
 
 // implicit conversions from var rank. The guards are needed against ambiguity in ra-viewconst branch.
-    template <rank_t R, std::enable_if_t<R==RANK_ANY && R!=RANK, int> =0>
+    template <rank_t R>
+    requires (R==RANK_ANY && R!=RANK)
     View(View<T const, R> const & x): dim(x.dim), p(x.p) {}
-    template <rank_t R, std::enable_if_t<R==RANK_ANY && R!=RANK, int> =0>
+    template <rank_t R>
+    requires (R==RANK_ANY && R!=RANK)
     View(View<std::remove_const_t<T>, R> const & x): dim(x.dim), p(x.p) {}
 
 // conversion to const from non const
@@ -440,7 +446,8 @@ struct View<T, RANK_ANY>
 
 // Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar).
 #define SUBSCRIPTS(CONST)                                               \
-    template <class ... I, std::enable_if_t<(is_beatable<I>::value && ...), int> = 0> \
+    template <class ... I>                                              \
+    requires (is_beatable<I>::value && ...)                             \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
@@ -454,7 +461,8 @@ struct View<T, RANK_ANY>
         return sub;                                                     \
     }                                                                   \
     /* TODO More than one selector... */                                \
-    template <class ... I, std::enable_if_t<!(is_beatable<I>::value && ...), int> = 0> \
+    template <class ... I>                                              \
+    requires (!(is_beatable<I>::value && ...))                          \
     auto operator()(I && ... i) CONST                                   \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
@@ -478,9 +486,11 @@ struct View<T, RANK_ANY>
     DEF_VIEW_COMMON(RANK_ANY)
 
     // conversions from fixed rank
-    template <rank_t R, std::enable_if_t<R!=RANK_ANY, int> =0>
+    template <rank_t R>
+    requires (R!=RANK_ANY)
     View(View<T const, R> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
-    template <rank_t R, std::enable_if_t<R!=RANK_ANY, int> =0>
+    template <rank_t R>
+    requires (R!=RANK_ANY)
     View(View<std::remove_const_t<T>, R> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 
 // conversion to const from non const

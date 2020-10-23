@@ -38,52 +38,51 @@ struct FindCombinationTester
 };
 
 template <int N, int O>
-std::enable_if_t<(O>N)> test_optimized_hodge_aux(TestRecorder & tr) {}
-
-template <int N, int O>
-std::enable_if_t<(O<=N)> test_optimized_hodge_aux(TestRecorder & tr)
+void test_optimized_hodge_aux(TestRecorder & tr)
 {
-    tr.section(ra::format("hodge() vs hodgex() with N=", N, " O=", O));
-    static_assert(N>=O, "bad_N_or_bad_O");
-    using Va = vec<real, fun::Wedge<N, O, N-O>::Na>;
-    using Vb = vec<real, fun::Wedge<N, O, N-O>::Nb>;
-    Va u = ra::iota(u.size(), 1);
-    Vb w(GARBAGE);
-    hodge<N, O>(u, w);
-    cout << "-> " << u << " hodge " << w << endl;
+    if constexpr (O<=N) {
+        tr.section(ra::format("hodge() vs hodgex() with N=", N, " O=", O));
+        static_assert(N>=O, "bad_N_or_bad_O");
+        using Va = vec<real, fun::Wedge<N, O, N-O>::Na>;
+        using Vb = vec<real, fun::Wedge<N, O, N-O>::Nb>;
+        Va u = ra::iota(u.size(), 1);
+        Vb w(GARBAGE);
+        hodge<N, O>(u, w);
+        cout << "-> " << u << " hodge " << w << endl;
 // this is the property that u^(*u) = dot(u, u)*vol form.
-    if (O==1) {
-        real S = sum(sqr(u));
+        if (O==1) {
+            real S = sum(sqr(u));
 // since the volume form and the 1-forms are always ordered lexicographically (0 1 2...) vs (0) (1) (2) ...
-        tr.info("with O=1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, O, N-O>(u, w))
-            .test_eq(S, ra::wedge<N, O, N-O>(u, w));
-    } else if (O+1==N) {
-        real S = sum(sqr(w));
+            tr.info("with O=1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, O, N-O>(u, w))
+                .test_eq(S, ra::wedge<N, O, N-O>(u, w));
+        } else if (O+1==N) {
+            real S = sum(sqr(w));
 // compare with the case above, this is the sign of the (anti)commutativity of the exterior product.
-        S *= odd(O*(N-O)) ? -1 : +1;
-        tr.info("with O=N-1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, N-O, O>(u, w))
-            .test_eq(S, ra::wedge<N, N-O, O>(u, w));
-    }
+            S *= odd(O*(N-O)) ? -1 : +1;
+            tr.info("with O=N-1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, N-O, O>(u, w))
+                .test_eq(S, ra::wedge<N, N-O, O>(u, w));
+        }
 // test that it does the same as hodgex().
-    Vb x(GARBAGE);
-    hodgex<N, O>(u, x);
-    if (2*O==N) {
-        tr.info("-> ", u, " hodgex ", x).test_eq(ra::wedge<N, O, N-O>(u, w), ra::wedge<N, O, N-O>(u, x));
-    }
+        Vb x(GARBAGE);
+        hodgex<N, O>(u, x);
+        if (2*O==N) {
+            tr.info("-> ", u, " hodgex ", x).test_eq(ra::wedge<N, O, N-O>(u, w), ra::wedge<N, O, N-O>(u, x));
+        }
 // test basic duality property, **w = (-1)^{o(n-o)} w.
-    {
-        Va b(GARBAGE);
-        hodgex<N, N-O>(x, b);
-        tr.info("duality test with hodgex() (N ", N, " O ", O, ") -> ", u, " hodge ", x, " hodge(hodge) ", b)
-            .test_eq((odd(O*(N-O)) ? -1 : +1)*u, b);
+        {
+            Va b(GARBAGE);
+            hodgex<N, N-O>(x, b);
+            tr.info("duality test with hodgex() (N ", N, " O ", O, ") -> ", u, " hodge ", x, " hodge(hodge) ", b)
+                .test_eq((odd(O*(N-O)) ? -1 : +1)*u, b);
+        }
+        {
+            Va a(GARBAGE);
+            hodge<N, N-O>(w, a);
+            tr.info("duality test with hodge()  (N ", N, " O ", O, ") -> ", u, " hodge ", w, " hodge(hodge) ", a)
+                .test_eq((odd(O*(N-O)) ? -1 : +1)*u, a);
+        }
+        test_optimized_hodge_aux<N, O+1>(tr);
     }
-    {
-        Va a(GARBAGE);
-        hodge<N, N-O>(w, a);
-        tr.info("duality test with hodge()  (N ", N, " O ", O, ") -> ", u, " hodge ", w, " hodge(hodge) ", a)
-            .test_eq((odd(O*(N-O)) ? -1 : +1)*u, a);
-    }
-    test_optimized_hodge_aux<N, O+1>(tr);
 }
 
 template <int N>

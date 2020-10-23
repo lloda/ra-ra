@@ -13,31 +13,34 @@
 
 namespace ra {
 
-template <class E, class Enable=void> struct concrete_type_def_1;
-template <class E> struct concrete_type_def_1<E, std::enable_if_t<size_s<E>()==DIM_ANY>>
+template <class E> struct concrete_type_def_1;
+
+template <class E>
+requires (size_s<E>()==DIM_ANY)
+struct concrete_type_def_1<E>
 {
     using type = Big<value_t<E>, E::rank_s()>;
 };
-template <class E> struct concrete_type_def_1<E, std::enable_if_t<size_s<E>()!=DIM_ANY>>
+
+template <class E>
+requires (size_s<E>()!=DIM_ANY)
+struct concrete_type_def_1<E>
 {
-    template <int N, class I=mp::iota<N>> struct T;
-    template <int N, int ... I> struct T<N, mp::int_list<I ...>>
+    template <class I> struct T;
+    template <int ... I> struct T<mp::int_list<I ...>>
     {
         using type = Small<value_t<E>, E::size_s(I) ...>;
     };
-    using type = typename T<E::rank_s()>::type;
+    using type = typename T<mp::iota<E::rank_s()>>::type;
 };
 
-// scalars are their own concrete_type.
-
-template <class E, class Enable=void> struct concrete_type_def;
-template <class E> struct concrete_type_def<E, std::enable_if_t<!is_scalar<E>>>
+template <class E>
+struct concrete_type_def
 {
-    using type = typename concrete_type_def_1<std::decay_t<decltype(start(std::declval<E>()))>>::type;
-};
-template <class E> struct concrete_type_def<E, std::enable_if_t<is_scalar<E>>>
-{
-    using type = E;
+    using type = std::conditional_t<
+        is_scalar<E>,
+        E, // scalars are their own concrete_type.
+        typename concrete_type_def_1<std::decay_t<decltype(start(std::declval<E>()))>>::type>;
 };
 
 template <class E> using concrete_type = std::decay_t<typename concrete_type_def<E>::type>;
