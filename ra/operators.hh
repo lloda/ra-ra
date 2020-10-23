@@ -29,15 +29,15 @@
 namespace ra {
 
 // These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
-template <class T, class F,
-          std::enable_if_t<ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>, int> =0>
+template <class T, class F>
+requires (ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>)
 inline constexpr decltype(auto) where(bool const w, T && t, F && f)
 {
     return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
 }
 
-template <int D, int Oa, int Ob, class A, class B,
-          std::enable_if_t<ra::is_scalar<A> && ra::is_scalar<B>, int> =0>
+template <int D, int Oa, int Ob, class A, class B>
+requires (ra::is_scalar<A> && ra::is_scalar<B>)
 inline constexpr auto wedge(A const & a, B const & b) { return a*b; }
 
 template <int ... Iarg, class A> inline constexpr
@@ -102,7 +102,7 @@ auto from(A && a, I && ... i)
 // I considered three options for lookup.
 // 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.hh). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.
-// 3. enable_if'd ADL is what you see here.
+// 3. requires-constrained ADL is what you see here.
 
 // --------------------------------
 // Array versions of operators and functions
@@ -115,12 +115,14 @@ auto from(A && a, I && ... i)
 
 // These depend on OPNAME defined in optimize.hh and used there to match ET patterns.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
-    template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
+    template <class A, class B>                                         \
+    requires (ra_pos_and_any<A, B>)                                     \
     inline constexpr auto operator OP(A && a, B && b)                   \
     {                                                                   \
         return RA_OPT(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
-    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
+    template <class A, class B>                                         \
+    requires (ra_zero<A, B>)                                            \
     inline constexpr auto operator OP(A && a, B && b)                   \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
@@ -132,13 +134,15 @@ DEF_NAMED_BINARY_OP(/, slash)
 #undef DEF_NAMED_BINARY_OP
 
 #define DEF_BINARY_OP(OP)                                               \
-    template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0> \
+    template <class A, class B>                                         \
+    requires (ra_pos_and_any<A, B>)                                     \
     inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return map([](auto && a, auto && b) { return a OP b; },         \
                    std::forward<A>(a), std::forward<B>(b));             \
     }                                                                   \
-    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
+    template <class A, class B>                                         \
+    requires (ra_zero<A, B>)                                            \
     inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
@@ -147,7 +151,8 @@ FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, <=>, ==, !=, |, &, ^)
 #undef DEF_BINARY_OP
 
 #define DEF_UNARY_OP(OP)                                                \
-    template <class A, std::enable_if_t<is_ra_pos_rank<A>, int> =0>     \
+    template <class A>                                                  \
+    requires (is_ra_pos_rank<A>)                                        \
     inline auto operator OP(A && a)                                     \
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
@@ -159,12 +164,14 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
 // TODO Cf [ref:examples/useret.cc:0].
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
-    template <class ... A, std::enable_if_t<ra_pos_and_any<A ...>, int> =0> \
+    template <class ... A>                                              \
+    requires (ra_pos_and_any<A ...>)                                    \
     inline auto OP(A && ... a)                                          \
     {                                                                   \
         return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>    \
+    template <class ... A>                                              \
+    requires (ra_zero<A ...>)                                           \
     inline auto OP(A && ... a)                                          \
     {                                                                   \
         return OP(FLAT(a) ...);                                         \
@@ -177,12 +184,14 @@ FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg)
 
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
-    template <class ... A, std::enable_if_t<ra_pos_and_any<A ...>, int> =0> \
+    template <class ... A>                                              \
+    requires (ra_pos_and_any<A ...>)                                    \
     inline auto OP(A && ... a)                                          \
     {                                                                   \
         return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A, std::enable_if_t<ra_zero<A ...>, int> =0>    \
+    template <class ... A>                                              \
+    requires (ra_zero<A ...>)                                           \
     inline decltype(auto) OP(A && ... a)                                \
     {                                                                   \
         return OP(FLAT(a) ...);                                         \
@@ -210,25 +219,28 @@ inline auto at(A && a, I && i)
     return map([&a](auto && i) -> decltype(auto) { return a.at(i); }, i);
 }
 
-template <class W, class T, class F,
-          std::enable_if_t<is_ra_pos_rank<W> || is_ra_pos_rank<T> || is_ra_pos_rank<F>, int> =0>
+template <class W, class T, class F>
+requires (is_ra_pos_rank<W> || is_ra_pos_rank<T> || is_ra_pos_rank<F>)
 inline auto where(W && w, T && t, F && f)
 {
     return pick(cast<bool>(start(std::forward<W>(w))), start(std::forward<F>(f)), start(std::forward<T>(t)));
 }
 
-template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0>
+template <class A, class B>
+requires (ra_pos_and_any<A, B>)
 inline auto operator &&(A && a, B && b)
 {
     return where(std::forward<A>(a), cast<bool>(std::forward<B>(b)), false);
 }
-template <class A, class B, std::enable_if_t<ra_pos_and_any<A, B>, int> =0>
+template <class A, class B>
+requires (ra_pos_and_any<A, B>)
 inline auto operator ||(A && a, B && b)
 {
     return where(std::forward<A>(a), true, cast<bool>(std::forward<B>(b)));
 }
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
-    template <class A, class B, std::enable_if_t<ra_zero<A, B>, int> =0> \
+    template <class A, class B>                                         \
+    requires (ra_zero<A, B>)                                            \
     inline auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
@@ -370,8 +382,8 @@ struct fromrank1
 };
 
 #define DECL_WEDGE(condition)                                           \
-    template <int D, int Oa, int Ob, class Va, class Vb,                \
-              std::enable_if_t<!(is_scalar<Va> && is_scalar<Vb>), int> =0> \
+    template <int D, int Oa, int Ob, class Va, class Vb>                \
+    requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
     decltype(auto) wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
@@ -393,8 +405,8 @@ DECL_WEDGE(general_case)
 #undef DECL_WEDGE
 
 #define DECL_WEDGE(condition)                                           \
-    template <int D, int Oa, int Ob, class Va, class Vb, class Vr,      \
-              std::enable_if_t<!(is_scalar<Va> && is_scalar<Vb>), int> =0> \
+    template <int D, int Oa, int Ob, class Va, class Vb, class Vr>      \
+    requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
     void wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
@@ -411,7 +423,8 @@ DECL_WEDGE(general_case)
 }
 #undef DECL_WEDGE
 
-template <class A, class B, std::enable_if_t<size_s<A>()==2 && size_s<B>()==2, int> =0>
+template <class A, class B>
+requires (size_s<A>()==2 && size_s<B>()==2)
 inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
@@ -421,7 +434,8 @@ inline auto cross(A const & a_, B const & b_)
     return r[0];
 }
 
-template <class A, class B, std::enable_if_t<size_s<A>()==3 && size_s<B>()==3, int> =0>
+template <class A, class B>
+requires (size_s<A>()==3 && size_s<B>()==3)
 inline auto cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;
@@ -437,30 +451,32 @@ inline auto perp(V const & v)
     static_assert(v.size()==2, "dimension error");
     return Small<std::decay_t<decltype(FLAT(v))>, 2> {v[1], -v[0]};
 }
-template <class V, class U, std::enable_if_t<is_scalar<U>, int> =0>
+
+template <class V, class U>
 inline auto perp(V const & v, U const & n)
 {
-    static_assert(v.size()==2, "dimension error");
-    return Small<std::decay_t<decltype(FLAT(v) * n)>, 2> {v[1]*n, -v[0]*n};
-}
-template <class V, class U, std::enable_if_t<!is_scalar<U>, int> =0>
-inline auto perp(V const & v, U const & n)
-{
-    static_assert(v.size()==3, "dimension error");
-    return cross(v, n);
+    if constexpr (is_scalar<U>) {
+        static_assert(v.size()==2, "dimension error");
+        return Small<std::decay_t<decltype(FLAT(v) * n)>, 2> {v[1]*n, -v[0]*n};
+    } else {
+        static_assert(v.size()==3, "dimension error");
+        return cross(v, n);
+    }
 }
 
 // --------------------
 // Other whole-array ops.
 // --------------------
 
-template <class A, std::enable_if_t<is_slice<A>, int> =0>
+template <class A>
+requires (is_slice<A>)
 inline auto normv(A const & a)
 {
     return concrete(a/norm2(a));
 }
 
-template <class A, std::enable_if_t<!is_slice<A> && is_ra<A>, int> =0>
+template <class A>
+requires (!is_slice<A> && is_ra<A>)
 inline auto normv(A const & a)
 {
     auto b = concrete(a);
