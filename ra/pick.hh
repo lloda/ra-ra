@@ -24,7 +24,7 @@ namespace ra {
 // TODO & is crude, maybe is_assignable?
 // -----------------
 
-template <class T, class Enable=void>
+template <class T>
 struct pick_type
 {
     using type = mp::apply<std::common_type_t, T>;
@@ -32,17 +32,17 @@ struct pick_type
 
 // lvalue
 template <class P0, class ... P>
-struct pick_type<std::tuple<P0 &, P ...>,
-                 std::enable_if_t<!std::is_const_v<P0> && (std::is_same_v<P0 &, P> && ...)>>
+requires (!std::is_const_v<P0> && (std::is_same_v<P0 &, P> && ...))
+struct pick_type<std::tuple<P0 &, P ...>>
 {
     using type = P0 &;
 };
 
 // const lvalue
 template <class P0, class ... P>
-struct pick_type<std::tuple<P0 &, P & ...>,
-                 std::enable_if_t<(std::is_same_v<std::decay_t<P0>, std::decay_t<P>> && ...)
-                                  && (std::is_const_v<P0> || (std::is_const_v<P> || ...))>>
+requires ((std::is_same_v<std::decay_t<P0>, std::decay_t<P>> && ...)
+          && (std::is_const_v<P0> || (std::is_const_v<P> || ...)))
+struct pick_type<std::tuple<P0 &, P & ...>>
 {
     using type = P0 const &;
 };

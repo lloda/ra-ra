@@ -19,8 +19,9 @@ namespace ra {
 
 // TODO merge with ply_ravel @ ply.hh, but should control order.
 // is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
-template <class A> inline
-std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
+template <class A>
+inline std::ostream &
+operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
 // FIXME note that this copies / resets the ArrayIterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
@@ -56,23 +57,24 @@ std::ostream & operator<<(std::ostream & o, FormatArray<A> const & fa)
     }
 }
 
-template <class A> inline
-std::enable_if_t<is_ra<A> || is_foreign_vector<A>, std::ostream &>
+template <class A> requires (is_ra<A> || is_foreign_vector<A>)
+inline std::ostream &
 operator<<(std::ostream & o, A && a)
 {
     return o << format_array(a);
 }
 
 // initializer_list cannot match A && above.
-template <class T> inline
-std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a)
+template <class T>
+inline std::ostream &
+operator<<(std::ostream & o, std::initializer_list<T> const & a)
 {
     return o << format_array(a);
 }
 
 // Static size.
-template <class C> inline
-std::enable_if_t<!is_scalar<C> && size_s<C>()!=DIM_ANY, std::istream &>
+template <class C> requires (!is_scalar<C> && size_s<C>()!=DIM_ANY)
+inline std::istream &
 operator>>(std::istream & i, C & c)
 {
     for (auto & ci: c) { i >> ci; }
@@ -80,8 +82,8 @@ operator>>(std::istream & i, C & c)
 }
 
 // Special case for std::vector, to handle create-new / resize() difference.
-template <class T, class A> inline
-std::istream &
+template <class T, class A>
+inline std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
     if (dim_t n; !((i >> n).fail())) {
@@ -93,8 +95,8 @@ operator>>(std::istream & i, std::vector<T, A> & c)
 }
 
 // Expr size, so read shape and possibly allocate (TODO try to avoid).
-template <class C> inline
-std::enable_if_t<size_s<C>()==DIM_ANY, std::istream &>
+template <class C> requires (size_s<C>()==DIM_ANY)
+inline std::istream &
 operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {

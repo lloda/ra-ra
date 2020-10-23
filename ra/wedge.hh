@@ -16,7 +16,7 @@ namespace mp {
 template <class P>
 struct MatchPermutationP
 {
-    template <class A> using type = int_t<(PermutationSign<P, A>::value!=0)>;
+    template <class A> using type = bool_t<(PermutationSign<P, A>::value!=0)>;
 };
 
 template <class P, class Plist> struct FindCombination
@@ -55,14 +55,15 @@ struct MapAntiCombination<std::tuple<C ...>, D>
     using type = std::tuple<typename AntiCombination<C, D>::type ...>;
 };
 
-template <int D, int O, class Enable=void>
+template <int D, int O>
 struct ChooseComponents
 {
     static_assert(D>=O, "bad dimension or form order");
     using type = mp::combinations<iota<D>, O>;
 };
 template <int D, int O>
-struct ChooseComponents<D, O, std::enable_if_t<(D>1) && (2*O>D)>>
+requires ((D>1) && (2*O>D))
+struct ChooseComponents<D, O>
 {
     static_assert(D>=O, "bad dimension or form order");
     using C = typename ChooseComponents<D, D-O>::type;
@@ -117,13 +118,15 @@ struct Wedge
     using valtype = std::decay_t<decltype(std::declval<Va>()[0] * std::declval<Vb>()[0])>;
 
     template <class Xr, class Fa, class Va, class Vb>
-    static std::enable_if_t<mp::nilp<Fa>, valtype<Va, Vb>>
+    requires (mp::nilp<Fa>)
+    static valtype<Va, Vb>
     term(Va const & a, Vb const & b)
     {
         return 0.;
     }
     template <class Xr, class Fa, class Va, class Vb>
-    static std::enable_if_t<!mp::nilp<Fa>, valtype<Va, Vb>>
+    requires (!mp::nilp<Fa>)
+    static valtype<Va, Vb>
     term(Va const & a, Vb const & b)
     {
         using Fa0 = mp::first<Fa>;
@@ -135,7 +138,8 @@ struct Wedge
         return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::drop1<Fa>>(a, b);
     }
     template <class Va, class Vb, class Vr, int wr>
-    static std::enable_if_t<(wr<Nr)>
+    requires (wr<Nr)
+    static void
     coeff(Va const & a, Vb const & b, Vr & r)
     {
         using Xr = mp::ref<Cr, wr>;
@@ -144,12 +148,14 @@ struct Wedge
         coeff<Va, Vb, Vr, wr+1>(a, b, r);
     }
     template <class Va, class Vb, class Vr, int wr>
-    static std::enable_if_t<(wr==Nr)>
+    requires (wr==Nr)
+    static void
     coeff(Va const & a, Vb const & b, Vr & r)
     {
     }
     template <class Va, class Vb, class Vr>
-    static void product(Va const & a, Vb const & b, Vr & r)
+    static void
+    product(Va const & a, Vb const & b, Vr & r)
     {
         static_assert(int(Va::size())==Na, "bad Va dim");  // gcc accepts a.size(), etc.
         static_assert(int(Vb::size())==Nb, "bad Vb dim");
@@ -171,27 +177,25 @@ struct Hodge
     constexpr static int Nb = W::Nb;
 
     template <int i, class Va, class Vb>
-    static std::enable_if_t<(i==W::Na)>
+    static void
     hodge_aux(Va const & a, Vb & b)
     {
-    }
-    template <int i, class Va, class Vb>
-    static std::enable_if_t<(i<W::Na)>
-    hodge_aux(Va const & a, Vb & b)
-    {
-        using Cai = mp::ref<Ca, i>;
-        static_assert(mp::len<Cai> == O, "bad");
+        static_assert(i<=W::Na, "Bad argument to hodge_aux");
+        if constexpr (i<W::Na) {
+            using Cai = mp::ref<Ca, i>;
+            static_assert(mp::len<Cai> == O, "bad");
 // sort Cai, because mp::complement only accepts sorted combinations.
 // ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
-        using SCai = mp::ref<LexOrCa, mp::FindCombination<Cai, LexOrCa>::where>;
-        using CompCai = mp::complement<SCai, D>;
-        static_assert(mp::len<CompCai> == D-O, "bad");
-        using fpw = mp::FindCombination<CompCai, Cb>;
+            using SCai = mp::ref<LexOrCa, mp::FindCombination<Cai, LexOrCa>::where>;
+            using CompCai = mp::complement<SCai, D>;
+            static_assert(mp::len<CompCai> == D-O, "bad");
+            using fpw = mp::FindCombination<CompCai, Cb>;
 // for the sign see e.g. DoCarmo1991 I.Ex 10.
-        using fps = mp::FindCombination<mp::append<Cai, mp::ref<Cb, fpw::where>>, Cr>;
-        static_assert(fps::sign!=0, "bad");
-        b[fpw::where] = decltype(a[i])(fps::sign)*a[i];
-        hodge_aux<i+1>(a, b);
+            using fps = mp::FindCombination<mp::append<Cai, mp::ref<Cb, fpw::where>>, Cr>;
+            static_assert(fps::sign!=0, "bad");
+            b[fpw::where] = decltype(a[i])(fps::sign)*a[i];
+            hodge_aux<i+1>(a, b);
+        }
     }
 };
 
@@ -212,25 +216,36 @@ void hodgex(Va const & a, Vb & b)
 // Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w in that case, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
 #define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))))
 template <int D, int O, class Va, class Vb>
-std::enable_if_t<TRIVIAL(D, O)> hodge(Va const & a, Vb & b)
+requires (TRIVIAL(D, O))
+inline void
+hodge(Va const & a, Vb & b)
 {
     static_assert(Va::size()==fun::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc
     static_assert(Vb::size()==fun::Hodge<D, O>::Nb, "error");
     b = a;
 }
+
 template <int D, int O, class Va>
-std::enable_if_t<TRIVIAL(D, O), Va const &> hodge(Va const & a)
+requires (TRIVIAL(D, O))
+inline Va const &
+hodge(Va const & a)
 {
     static_assert(Va::size()==fun::Hodge<D, O>::Na, "error"); // gcc accepts a.size()
     return a;
 }
+
 template <int D, int O, class Va, class Vb>
-std::enable_if_t<!TRIVIAL(D, O)> hodge(Va const & a, Vb & b)
+requires (!TRIVIAL(D, O))
+inline void
+hodge(Va const & a, Vb & b)
 {
     fun::hodgex<D, O>(a, b);
 }
+
 template <int D, int O, class Va>
-std::enable_if_t<!TRIVIAL(D, O), Va &> hodge(Va & a)
+requires (!TRIVIAL(D, O))
+inline Va &
+hodge(Va & a)
 {
     Va b(a);
     fun::hodgex<D, O>(b, a);

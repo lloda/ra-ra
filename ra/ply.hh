@@ -266,7 +266,8 @@ ply_ravel_exit(A && a, DEF && def)
     }
 }
 
-template <class A, class DEF> inline decltype(auto)
+template <class A, class DEF>
+inline decltype(auto)
 early(A && a, DEF && def)
 {
     return ply_ravel_exit(std::forward<A>(a), std::forward<DEF>(def));

@@ -577,8 +577,9 @@ struct builtin_array_types
 };
 
 // forward declared in type.hh.
-template <class T, std::enable_if_t<is_builtin_array<T>, int>>
-inline constexpr auto start(T && t)
+template <class T> requires (is_builtin_array<T>)
+inline constexpr auto
+start(T && t)
 {
     using Z = builtin_array_types<T>;
     return typename Z::view((typename Z::E *)(t)).iter();

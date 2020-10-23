@@ -306,48 +306,55 @@ RA_IS_DEF(is_ra_vector, (std::is_same_v<A, Vector<typename A::V>>))
 
 // it matters that this copies when T is lvalue. But FIXME shouldn't be necessary. See [ra35] and Vector constructors above.
 // FIXME start should always copy the iterator part but never the content part for Vector or Scalar (or eventually .iter()). Copying the iterator part is necessary if e.g. ra::cross() has to work with ArrayIterator args, since the arguments are start()ed twice.
-template <class T, std::enable_if_t<is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>, int> =0>
-inline constexpr auto start(T && t)
+template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
+inline constexpr auto
+start(T && t)
 {
     return std::forward<T>(t);
 }
 
 // don't restart these. About Scalar see [ra39]. For Vector FIXME this might not be correct.
-template <class T, std::enable_if_t<is_ra_vector<T> || is_ra_scalar<T>, int> =0>
-inline constexpr decltype(auto) start(T && t)
+template <class T> requires (is_ra_vector<T> || is_ra_scalar<T>)
+inline constexpr decltype(auto)
+start(T && t)
 {
     return std::forward<T>(t);
 }
 
-template <class T, std::enable_if_t<is_slice<T>, int> =0>
-inline constexpr auto start(T && t)
+template <class T> requires (is_slice<T>)
+inline constexpr auto
+start(T && t)
 {
 // BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra04]
 // BUG iter() won't retain the View it's built from, either, which is why it needs to copy Dimv.
     return iter<0>(std::forward<T>(t));
 }
 
-template <class T, std::enable_if_t<is_scalar<T>, int> =0>
-inline constexpr auto start(T && t)
+template <class T> requires (is_scalar<T>)
+inline constexpr auto
+start(T && t)
 {
     return ra::scalar(std::forward<T>(t));
 }
 
-template <class T, std::enable_if_t<is_foreign_vector<T>, int> =0>
-inline constexpr auto start(T && t)
+template <class T> requires (is_foreign_vector<T>)
+inline constexpr auto
+start(T && t)
 {
     return ra::vector(std::forward<T>(t));
 }
 
 template <class T>
-inline constexpr auto start(std::initializer_list<T> v)
+inline constexpr auto
+start(std::initializer_list<T> v)
 {
     return ptr(v.begin(), v.size());
 }
 
 // forward declare for match.hh; implemented in small.hh.
-template <class T, std::enable_if_t<is_builtin_array<T>, int> =0>
-inline constexpr auto start(T && t);
+template <class T> requires (is_builtin_array<T>)
+inline constexpr auto
+start(T && t);
 
 // FIXME there should be default traits for all is_ra classes. E.g. Expr doesn't have it. Check ra::rank(), ra::shape() in atom.hh.
 

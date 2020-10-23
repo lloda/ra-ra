@@ -75,20 +75,22 @@ template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { us
 template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>, T, i> { using type = index<tuple<A ...>, T, i+1>; };
 
 // Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
-template <class A, template <class> class Pred, int i=0, class Enable=void>
+template <class A, template <class> class Pred, int i=0>
 struct IndexIf
 {
     constexpr static int value = -1;
     using type = nil;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<Pred<A0>::value>>
+requires (Pred<A0>::value)
+struct IndexIf<tuple<A0, A ...>, Pred, i>
 {
     using type = A0;
     constexpr static int value = i;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
-struct IndexIf<tuple<A0, A ...>, Pred, i, std::enable_if_t<!(Pred<A0>::value)>>
+requires (!(Pred<A0>::value))
+struct IndexIf<tuple<A0, A ...>, Pred, i>
 {
     using next = IndexIf<tuple<A ...>, Pred, i+1>;
     using type = typename next::type;
