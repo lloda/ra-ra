@@ -26,7 +26,7 @@ namespace ra {
 // adv(k), stride(k), keep_stride(st, k, l) and flat() are used on all the leaf arguments.
 // The strides must give 0 for k>=their own rank, to allow frame matching.
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
-template <class A>
+template <RaIterator A>
 inline void
 ply_ravel(A && a)
 {
@@ -148,7 +148,7 @@ ocd(A && a)
     return std::make_tuple(s, j);
 };
 
-template <class A>
+template <RaIterator A>
 RA_INLINE constexpr void
 plyf(A && a)
 {
@@ -183,7 +183,7 @@ plyf(A && a)
 // Select best performance (or requirements) for each type.
 // ---------------------------
 
-template <class A>
+template <RaIterator A>
 inline constexpr void
 ply(A && a)
 {
@@ -201,7 +201,7 @@ ply(A && a)
 
 // TODO Refactor with ply_ravel. Make exit available to plyf.
 // TODO These are reductions. How to do higher rank?
-template <class A, class DEF>
+template <RaIterator A, class DEF>
 inline auto
 ply_ravel_exit(A && a, DEF && def)
 {
@@ -266,7 +266,7 @@ ply_ravel_exit(A && a, DEF && def)
     }
 }
 
-template <class A, class DEF>
+template <RaIterator A, class DEF>
 inline decltype(auto)
 early(A && a, DEF && def)
 {

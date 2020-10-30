@@ -47,11 +47,36 @@ constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
     return i>=a && i<b;
 }
 
-// used in array constructors to mean ‘don't initalize’.
-enum none_t { none };
+
+// ---------------------
+// concepts (WIP)
+// ---------------------
 
-// used in array constructors to mean ‘don't instantiate’
-struct no_arg {};
+template <class P, class S>
+concept FlatIterator = requires (P p, S d)
+{
+    { *p };
+    { p += d };
+};
+
+template <class A>
+concept RaIterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
+{
+    { a.rank() } -> std::convertible_to<rank_t>;
+    { a.size(k) } -> std::same_as<dim_t>;
+    { a.adv(k, d) } -> std::same_as<void>;
+    { a.stride(k) };
+    { a.keep_stride(d, i, j) } -> std::same_as<bool>;
+    { a.flat() } -> FlatIterator<decltype(a.stride(k))>;
+};
+
+
+// ---------------------
+// other types, forward decl
+// ---------------------
+
+enum none_t { none }; // used in array constructors to mean ‘don't initalize’.
+struct no_arg {}; // used in array constructors to mean ‘don't instantiate’
 
 // Order of decl issues.
 template <class C> struct Scalar; // for type predicates
@@ -119,7 +144,7 @@ inline constexpr bool odd(unsigned int N) { return N & 1; }
 
 // The general SmallArray has 4 constructors,
 // 1. The empty constructor.
-// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which I don't think should be required purely for container use.
+// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which isn't required purely for container use.
 // 3. The ravel constructor.
 // 4. The nested constructor.
 // When SmallArray has rank 1, or the first dimension is empty, or the shape is [1] or [], several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of no_arg.

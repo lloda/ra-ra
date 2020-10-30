@@ -16,37 +16,6 @@ namespace ra {
 template <class V> inline constexpr auto size(V const & v);
 template <class V> inline constexpr decltype(auto) shape(V const & v);
 
-template <int w_, class value_type=ra::dim_t>
-struct TensorIndexFlat
-{
-    dim_t i;
-    constexpr void operator+=(dim_t const s) { i += s; }
-    constexpr value_type operator*() { return i; }
-};
-
-// ra may be needed to avoid conversion issues.
-template <int w_, class value_type=ra::dim_t>
-struct TensorIndex
-{
-    dim_t i = 0;
-    static_assert(w_>=0, "bad TensorIndex");
-    constexpr static int w = w_;
-    constexpr static rank_t rank_s() { return w+1; }
-    constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t size_s(int k) { return DIM_BAD; }
-    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
-
-    template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
-    constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, "d ", d); i += (k==w) * d; }
-    constexpr static dim_t const stride(int k) { return (k==w); }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return st*stride(z)==stride(j); }
-    constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
-};
-
-#define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
-FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
-#undef DEF_TENSORINDEX
-
 template <class C> struct Scalar;
 
 // Separate from Scalar so that operator+=, etc. has the array meaning there.
@@ -197,6 +166,37 @@ struct Span
 };
 
 template <class I> inline auto ptr(I i, dim_t n) { return Span<I> { i, n }; }
+
+template <int w_, class value_type=ra::dim_t>
+struct TensorIndexFlat
+{
+    dim_t i;
+    constexpr void operator+=(dim_t const s) { i += s; }
+    constexpr value_type operator*() { return i; }
+};
+
+// ra may be needed to avoid conversion issues.
+template <int w_, class value_type=ra::dim_t>
+struct TensorIndex
+{
+    dim_t i = 0;
+    static_assert(w_>=0, "bad TensorIndex");
+    constexpr static int w = w_;
+    constexpr static rank_t rank_s() { return w+1; }
+    constexpr static rank_t rank() { return w+1; }
+    constexpr static dim_t size_s(int k) { return DIM_BAD; }
+    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
+
+    template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
+    constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, "d ", d); i += (k==w) * d; }
+    constexpr static dim_t const stride(int k) { return (k==w); }
+    constexpr static bool keep_stride(dim_t st, int z, int j) { return st*stride(z)==stride(j); }
+    constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
+};
+
+#define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
+FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
+#undef DEF_TENSORINDEX
 
 template <class T>
 struct IotaFlat

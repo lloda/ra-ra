@@ -141,7 +141,7 @@ struct cell_iterator
         }
     }
 
-    constexpr static dim_t size_s(int i) { /* RA_CHECK(inside(k, rank())); */return DIM_ANY; }
+    constexpr static dim_t size_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
     constexpr dim_t size(int k) const { RA_CHECK(inside(k, rank())); return dim[k].size; }
     constexpr dim_t stride(int k) const { return k<rank() ? dim[k].stride : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
