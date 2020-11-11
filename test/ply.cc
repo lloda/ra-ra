@@ -14,7 +14,6 @@
 #include "ra/complex.hh"
 #include "ra/test.hh"
 #include "ra/ra.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 template <int i> using TI = ra::TensorIndex<i, int>;
@@ -46,9 +45,7 @@ int main()
                 tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin()));  \
             }
             TEST(ply_ravel);
-            TEST(ply_index);
             TEST(plyf);
-            TEST(plyf_index);
 #undef TEST
         }
 #define TEST(plier)                                                     \
@@ -66,9 +63,7 @@ int main()
             tr.test_eq(+9, C[2]);                                       \
         }
         TEST(ply_ravel);
-        TEST(ply_index);
         TEST(plyf);
-        TEST(plyf_index);
 #undef TEST
         {
             ra::Unique<int, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
@@ -83,9 +78,7 @@ int main()
                 for (int ci: c) { tr.test_eq(0, ci); }                  \
             }
             TEST(ply_ravel);
-            TEST(ply_index);
             TEST(plyf);
-            TEST(plyf_index);
 #undef TEST
         }
     }
@@ -107,9 +100,7 @@ int main()
             TEST(plier)(ra::Small<real> {}, ra::Small<real> {});        \
             TEST(plier)(ra::Small<real> {}, ra::Unique<real, 0>({}, ra::none));
             TEST2(ply_ravel);
-            TEST2(ply_index);
             TEST2(plyf);
-            TEST2(plyf_index);
 #undef TEST2
 #undef TEST
         }
@@ -137,12 +128,9 @@ int main()
             TEST(plier, "05")(ra::Unique<int, 0>({}, ra::none), true);
 
             TEST2(ply_ravel);
-            TEST2(ply_index);
             TEST2(plyf);
-            TEST2(plyf_index);
 // this one cannot be done with plyf.
             TEST(ply_ravel, "06")(ra::Unique<int>({ 0 }, ra::none), false);
-            TEST(ply_index, "07")(ra::Unique<int>({ 0 }, ra::none), false);
 #undef TEST2
 #undef TEST
 // With ra::expr, non-slices.
@@ -163,8 +151,6 @@ int main()
             TEST(plier, "14")(ra::Unique<int, 2>({ 2, 0 }, ra::none)+ra::scalar(1), false); \
             TEST(plier, "15")(ra::Unique<int, 2>({ 0, 2 }, ra::none)+ra::scalar(1), false);
 
-            TEST2(ply_index);
-            TEST2(plyf_index);
             TEST2(plyf);
             TEST2(ply_ravel);
         }
@@ -178,21 +164,18 @@ int main()
         {
             auto test = [&](auto && a)
                 {
-                    ra::ply_index(ra::expr(print, a.iter())); cout << endl;
                     ra::ply_ravel(ra::expr(print, a.iter())); cout << endl;
                     ra::plyf(ra::expr(print, a.iter())); cout << endl;
-                    ra::plyf_index(ra::expr(print, a.iter()));
                 };
             ra::Unique<real, 3> a(std::vector<ra::dim_t> {1, 2, 3}, ra::none);
             std::iota(a.begin(), a.end(), 0);
             test(a);
             test(a()); // also View.
         }
-// TODO See Expr::CAN_DRIVE in expr.hh. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() & ply_index() are rank-dynamic.
+// TODO See Expr::CAN_DRIVE in expr.hh. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() is rank-dynamic.
         {
             auto test = [&](auto && a)
                 {
-                    ra::ply_index(ra::expr(print, a.iter())); cout << endl;
                     ra::ply_ravel(ra::expr(print, a.iter())); cout << endl;
                 };
             ra::Unique<real> a(std::vector<ra::dim_t> {1, 2, 3}, ra::none);
@@ -273,13 +256,13 @@ int main()
         tr.test_eq(7, a[0]);
         tr.test_eq(7, a[1]);
         tr.test_eq(7, a[2]);
-        ply_index(expr([](real & a, int b) { a = b; }, a.iter(), TI<0>()));
+        ply(expr([](real & a, int b) { a = b; }, a.iter(), TI<0>()));
         tr.test_eq(0, a[0]);
         tr.test_eq(1, a[1]);
         tr.test_eq(2, a[2]);
 // TODO Check that these give ct error. Not clear that the second one should...
-        // ply_index(expr([](int b) { cout << b << endl; }, TI<0>()));
-        // ply_index(expr([](int b) { cout << b << endl; }, ra::scalar(3)));
+        // ply(expr([](int b) { cout << b << endl; }, TI<0>()));
+        // ply(expr([](int b) { cout << b << endl; }, ra::scalar(3)));
     }
     tr.section("traversal - rank matching - Unique/Unique 1");
     {
@@ -307,9 +290,7 @@ int main()
                           c.iter(), b.iter(), a.iter()));           \
             tr.info(STRINGIZE(plier) " b-a").test(std::equal(check, check+24, c.begin()));
             TEST(ply_ravel);
-            TEST(ply_index);
             TEST(plyf);
-            TEST(plyf_index);
 #undef TEST
         }
     }
@@ -329,9 +310,7 @@ int main()
             tr.info(STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
         }
         TEST(ply_ravel);
-        TEST(ply_index);
         TEST(plyf);
-        TEST(plyf_index);
 #undef TEST
     }
     tr.section("helpers for ply - map, for_each");
@@ -356,9 +335,7 @@ int main()
             tr.info(STRINGIZE(plier)).test(c==99);              \
         }
         TEST(ply_ravel);
-        TEST(ply_index);
         TEST(plyf);
-        TEST(plyf_index);
 #undef TEST
     }
     tr.section("more pliers on scalar");

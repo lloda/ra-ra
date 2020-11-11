@@ -14,7 +14,6 @@
 #include "ra/complex.hh"
 #include "ra/test.hh"
 #include "ra/ra.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using A2 = ra::Unique<int, 2>;
@@ -57,7 +56,7 @@ void CheckPly(TestRecorder & tr, char const * tag, AA && A, BB && B)
     }
     auto add = [](int & b, int const a) -> int { return b += a; };
     ra::ply_ravel(ra::expr(add, B.iter(), A.iter()));
-    ra::ply_index(ra::expr(sub, B.iter(), A.iter()));
+    ra::ply(ra::expr(sub, B.iter(), A.iter()));
     for (int i=0; i!=A.size(0); ++i) {
         for (int j=0; j!=A.size(1); ++j) {
             tr.info(tag, " index").test_eq(C(i, j)-A(i, j), B(i, j));
@@ -70,7 +69,7 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("nested, with references, ply_index or ply_ravel");
+    tr.section("nested, with references, ply or ply_ravel");
     {
         int check[3] = {0, 2, 4};
         ra::Small<int, 3> A {1, 0, -1};
@@ -89,9 +88,7 @@ int main()
         TEST(plier)(ra::Small<int, 3> {});                      \
         TEST(plier)(ra::Unique<int, 1>({3}, ra::none));
         TEST2(ply_ravel)
-        TEST2(ply_index)
         TEST2(plyf)
-        TEST2(plyf_index)
 #undef TEST2
 #undef TEST
             }
@@ -110,9 +107,7 @@ int main()
         TEST(plier, B.iter(), C.iter())(int3 { 1, 2, 3 }, int3 { 77, 88, 99 }); \
         TEST(plier, ra::vector(B), ra::vector(C))(std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
         TEST2(ply_ravel)
-            TEST2(ply_index)
-            TEST2(plyf)
-            TEST2(plyf_index)
+        TEST2(plyf)
 #undef TEST2
 #undef TEST
             }
@@ -128,12 +123,8 @@ int main()
             tr.test_eq(9, C[2]);                                        \
         }
         TEST(ply_ravel, B.iter(), C.iter(), (int3 {1, 2, 3}.iter()))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
-        TEST(ply_index, B.iter(), C.iter(), (int3 {1, 2, 3}.iter()))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
         TEST(ply_ravel, ra::vector(B), ra::vector(C), ra::vector(std_int3 {{1, 2, 3}}))
             (std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
-        TEST(ply_index, ra::vector(B), ra::vector(C), ra::vector(std_int3 {{1, 2, 3}}))
-            (std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
-        TEST(ply_index, ra::vector(B), ra::vector(C), ra::start({1, 2, 3}))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
 #undef TEST
     }
     tr.section("complex or nested types");
@@ -141,20 +132,20 @@ int main()
         using A2of2 = ra::Unique<int2, 2>;
         auto sum2 = [](int2 const i, int2 const j, int2 & x) { x = { i[0]+j[0], i[1]+j[1] }; };
         A2of2 A({2, 3}, { {1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6} });
-        ply_index(ra::expr([](int2 & a, int i, int j) { int k = i*3+j; a = {k, k}; },
-                           A.iter(), TI<0>(), TI<1>()));
+        ply(ra::expr([](int2 & a, int i, int j) { int k = i*3+j; a = {k, k}; },
+                     A.iter(), TI<0>(), TI<1>()));
         A2of2 B({2, 3}, ra::scalar(int2 {0, 0}));
         cout << "A: " << A << endl;
         cout << "B: " << B << endl;
 
         cout << "\ntraverse_index..." << endl;
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
-        ply_index(ra::expr(sum2, A.iter(), ra::scalar(int2{2, 2}), B.iter()));
+        ply(ra::expr(sum2, A.iter(), ra::scalar(int2{2, 2}), B.iter()));
         cout << B << endl;
         for (int i=2; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
         ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
-        ply_index(ra::expr(sum2, ra::scalar(int2{3, 3}), A.iter(), B.iter()));
+        ply(ra::expr(sum2, ra::scalar(int2{3, 3}), A.iter(), B.iter()));
         cout << B << endl;
         for (int i=3; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
@@ -169,17 +160,17 @@ int main()
         cout << B << endl;
         for (int i=5; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
     }
-    tr.section("reversed arrays, ply_index");
+    tr.section("reversed arrays");
     {
         ra::Unique<int, 1> A({ 6 }, ra::none);
         std::iota(A.begin(), A.end(), 1);
         ra::Unique<int, 1> B { {6}, ra::scalar(99) };
         auto copy = [](int & b, int const a) { b = a; return b; };
-        ply_index(ra::expr(copy, B.iter(), A.iter()));
+        ply(ra::expr(copy, B.iter(), A.iter()));
         for (int i=0; i<6; ++i) {
             tr.test_eq(i+1, B(i));
         }
-        ply_index(ra::expr(copy, B.iter(), reverse(A, 0).iter()));
+        ply(ra::expr(copy, B.iter(), reverse(A, 0).iter()));
         for (int i=0; i<6; ++i) {
             tr.test_eq(6-i, B(i));
         }
@@ -208,9 +199,7 @@ int main()
             tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }
         TEST(ply_ravel);
-        TEST(ply_index);
         TEST(plyf);
-        TEST(plyf_index);
 #undef TEST
     }
     tr.section("reverse 1/1 axis, traverse");
@@ -230,10 +219,8 @@ int main()
             tr.test_eq(6-i, b(i));                              \
         }                                                       \
     }
-    TEST(ply_index)
     TEST(ply_ravel)
     TEST(plyf)
-    TEST(plyf_index)
 #undef TEST
     tr.section("reverse (ref & non ref), traverse");
     {

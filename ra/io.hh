@@ -17,7 +17,7 @@
 
 namespace ra {
 
-// TODO merge with ply_ravel @ ply.hh, but should control order.
+// TODO merge with ply_ravel @ ply.hh. Do not require .at(). But should control order.
 // is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
 template <class A>
 inline std::ostream &

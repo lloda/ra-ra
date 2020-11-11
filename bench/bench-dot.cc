@@ -15,7 +15,6 @@
 #include "ra/complex.hh"
 #include "ra/ra.hh"
 #include "ra/bench.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
 using ra::Small, ra::View, ra::Unique, ra::ra_traits, ra::dim_t;
@@ -98,8 +97,6 @@ struct by_raw
                                      a, b))));
 
 BY_PLY_TAGGED(ply_ravel);
-BY_PLY_TAGGED(ply_index);
-BY_PLY_TAGGED(plyf_index);
 BY_PLY_TAGGED(plyf);
 
 real a, b, ref, rspec;
@@ -184,9 +181,7 @@ int main()
                 return y;                                               \
             }
         DEFINE_SMALL_PLY(ply_ravel, ply_ravel);
-        DEFINE_SMALL_PLY(ply_index, ply_index);
         DEFINE_SMALL_PLY(plyf, plyf);
-        DEFINE_SMALL_PLY(plyf_index, plyf_index);
         DEFINE_SMALL_PLY(ply, ply);
 
         auto bench_all = [&](auto s, auto && f_small_indexed)
@@ -199,9 +194,7 @@ int main()
                 bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
                 bench("op", s, ref, reps+extra(), f_small_op);
                 bench("ply_ravel", s, ref, reps+extra(), f_small_ply_ravel);
-                bench("ply_index", s, ref, reps+extra(), f_small_ply_index);
                 bench("plyf", s, ref, reps+extra(), f_small_plyf);
-                bench("plyf_index", s, ref, reps+extra(), f_small_plyf_index);
                 bench("ply", s, ref, reps+extra(), f_small_ply);
             };
         bench_all(ra::Small<real, 2>(), f_small_indexed_1);
@@ -241,9 +234,7 @@ int main()
     }
 #define BENCH_ALL                                                       \
     FOR_EACH(BENCH, by_raw, by_1l_ply_ravel, by_2l_ply_ravel, by_1w_ply_ravel, by_2w_ply_ravel); \
-    FOR_EACH(BENCH, by_1l_ply_index, by_2l_ply_index, by_1w_ply_index, by_2w_ply_index); \
     FOR_EACH(BENCH, by_1l_plyf, by_2l_plyf, by_1w_plyf, by_2w_plyf);    \
-    FOR_EACH(BENCH, by_1l_plyf_index, by_2l_plyf_index, by_1w_plyf_index, by_2w_plyf_index);
 
     tr.section("ra:: wrapped std::vector<>");
     {

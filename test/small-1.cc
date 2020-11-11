@@ -16,7 +16,6 @@
 #include "ra/ra.hh"
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using complex = std::complex<double>;
@@ -295,7 +294,7 @@ int main()
     {
         cout << "TODO" << endl;
     }
-    tr.section("expr with Small, rank 1, ply_index");
+    tr.section("expr with Small, rank 1");
     {
         ra::Small<double, 3> a { 1, 4, 2 };
         tr.test_eq(3, a.iter().size(0));
@@ -306,7 +305,7 @@ int main()
             tr.test_eq(7, s);                                           \
         }
         TEST(ply_ravel);
-        TEST(ply_index);
+        TEST(ply);
 #undef TEST
             }
     tr.section("expr with Small, rank 2");
@@ -321,7 +320,7 @@ int main()
             tr.test_eq(21, s);                                          \
         }
         TEST(ply_ravel);
-        TEST(ply_index);
+        TEST(ply);
 #undef TEST
 #define TEST(plier)                                                     \
         {                                                               \
@@ -335,7 +334,7 @@ int main()
             tr.test_eq(-6, b(2, 1));                                    \
         }
         TEST(ply_ravel);
-        TEST(ply_index);
+        TEST(ply);
 #undef TEST
     }
     tr.section("Small as value type in var-size array");

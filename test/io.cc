@@ -13,7 +13,6 @@
 #include "ra/ra.hh"
 #include "ra/complex.hh"
 #include "ra/test.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
@@ -111,12 +110,6 @@ int main()
     {
         iocheck(tr.info("output of expr (1)"),
                 ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), TI<0>()),
-                ra::Small<double, 3>{0, -1, -4});
-    }
-    tr.section("IO works with old OldTensorIndex (uses ply_index-like traversal)");
-    {
-        iocheck(tr.info("output of expr (1)"),
-                ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), ra::OldTensorIndex<0>()),
                 ra::Small<double, 3>{0, -1, -4});
     }
     tr.section("IO of var rank expression");

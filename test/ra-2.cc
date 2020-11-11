@@ -14,7 +14,6 @@
 #include "ra/complex.hh"
 #include "ra/test.hh"
 #include "ra/ra.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
@@ -62,9 +61,7 @@ int main()
             cout << "-> iter<frame rank>()" << endl;            \
             plier(ra::expr(f, ARGi, a.iter<-1>(), ARGd));       \
             tr.test(std::equal(check, check+4, dump.begin()));
-            TEST(ply_index);
             TEST(ply_ravel);
-            TEST(plyf_index);
             TEST(plyf);
 #undef TEST
         }
@@ -87,9 +84,7 @@ int main()
             dump = 0;                                           \
             plier(ra::expr(f, a.iter<-1>(), ARGi, ARGd));    \
             tr.test(std::equal(check, check+4, dump.begin()));
-            TEST(ply_index);
             TEST(ply_ravel);
-            TEST(plyf_index);
             TEST(plyf);
 #undef TEST
         }
@@ -106,7 +101,7 @@ int main()
                 {
                     auto f = [](int i, auto && a, real & d) { std::iota(a.begin(), a.end(), d); };
                     std::fill(a.begin(), a.end(), 0);
-                    ply_index(ra::expr(f, ARGi, ARGa, ARGd));
+                    ply(ra::expr(f, ARGi, ARGa, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));
 
                     std::fill(a.begin(), a.end(), 0);
@@ -117,7 +112,7 @@ int main()
                 {
                     auto f = [](auto && a, int i, real & d) { std::iota(a.begin(), a.end(), d); };
                     std::fill(a.begin(), a.end(), 0);
-                    ply_index(ra::expr(f, ARGa, ARGi, ARGd));
+                    ply(ra::expr(f, ARGa, ARGi, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));
 
                     std::fill(a.begin(), a.end(), 0);
@@ -137,7 +132,7 @@ int main()
         {
             auto f = [](real & a, real d) { a = d; };
             std::fill(a.begin(), a.end(), 0);
-            ply_index(map(f, a.iter<-1>(), dump.iter<0>()));
+            ply(map(f, a.iter<-1>(), dump.iter<0>()));
             tr.test(std::equal(check, check+3, a.begin()));
 
             std::fill(a.begin(), a.end(), 0);

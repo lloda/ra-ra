@@ -17,7 +17,6 @@
 #include "ra/complex.hh"
 #include "ra/ra.hh"
 #include "ra/test.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::dim_t, ra::TestRecorder;
 using real = double;
@@ -80,9 +79,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
             cout << "\n\nusing " STRINGIZE(plier) " ply (ewv &&):\n";   \
             ra::plier(ra::expr(v, a.iter(), b.iter()));
             TEST(ply_ravel);
-            TEST(ply_index);
             TEST(plyf);
-            TEST(plyf_index);
         }
         cout << "\n\n" << endl;
     }

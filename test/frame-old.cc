@@ -37,7 +37,6 @@ struct ra_error: public std::exception
 #include "ra/complex.hh"
 #include "ra/test.hh"
 #include "ra/big.hh"
-#include "test/old.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
 using real = double;
@@ -62,13 +61,13 @@ int main()
 
         std::iota(a.begin(), a.end(), 1);
         std::fill(c.begin(), c.end(), 0);
-        ply_index(expr([](real & c, real a, int b) { c = a-(b+1); },
-                          c.iter(), a.iter(), ra::_0));
+        ply(expr([](real & c, real a, int b) { c = a-(b+1); },
+                 c.iter(), a.iter(), ra::start(ra::_0)));
         tr.test_eq(check, c);
 
         std::fill(c.begin(), c.end(), 0);
-        ply_index(expr([](real & c, int a, real b) { c = b-(a+1); },
-                          c.iter(), ra::_0, a.iter()));
+        ply(expr([](real & c, int a, real b) { c = b-(a+1); },
+                 c.iter(), ra::start(ra::_0), a.iter()));
         tr.test_eq(check, c);
     }
     tr.section("frame matching - Unique/TensorIndex - TensorIndex can't be driving arg");
@@ -79,13 +78,13 @@ int main()
 
         std::iota(a.begin(), a.end(), 1);
         std::fill(c.begin(), c.end(), 0);
-        ply_index(expr([](real a, int b, real & c) { c = a-(b+1); },
-                          a.iter(), ra::_1, c.iter()));
+        ply(expr([](real a, int b, real & c) { c = a-(b+1); },
+                 a.iter(), ra::start(ra::_1), c.iter()));
         tr.test_eq(check, c);
 
         std::fill(c.begin(), c.end(), 0);
-        ply_index(expr([](int a, real b, real & c) { c = b-(a+1); },
-                          ra::_1, a.iter(), c.iter()));
+        ply(expr([](int a, real b, real & c) { c = b-(a+1); },
+                 ra::start(ra::_1), a.iter(), c.iter()));
         tr.test_eq(check, c);
     }
 #define TEST(plier)                                         \
@@ -109,7 +108,6 @@ int main()
         real check[3][2] = { {0, 1}, {1, 2}, {2, 3} };
 
         TEST(ply_ravel);
-        TEST(ply_index);
     }
     tr.section("frame matching - Unique/Small");
     {
@@ -121,7 +119,6 @@ int main()
         real check[3][2] = { {0, 1}, {1, 2}, {2, 3} };
 
         TEST(ply_ravel);
-        TEST(ply_index);
     }
     tr.section("frame matching - Small/Small");
     {
@@ -133,7 +130,6 @@ int main()
         real check[3][2] = { {0, 1}, {1, 2}, {2, 3} };
 
         TEST(ply_ravel);
-        TEST(ply_index);
     }
 #undef TEST
     tr.section("frame match is good only for full expr, so test on ply, not construction");
@@ -142,8 +138,8 @@ int main()
         ra::Unique<real, 1> b {1., 2.};
 // note that b-c has no driver, but all that matters is that the full expression does.
         auto e = expr([](real & a, real bc) { a = bc; },
-                      a.iter(), expr([](real b, real c) { return b-c; },  b.iter(), ra::_1));
-        ply_index(e);
+                      a.iter(), expr([](real b, real c) { return b-c; },  b.iter(), ra::start(ra::_1)));
+        ply(e);
         tr.test_eq(1, a(0, 0));
         tr.test_eq(0, a(0, 1));
         tr.test_eq(2, a(1, 0));
