@@ -106,7 +106,7 @@ int main()
         test(float(0));
     }
 #if RA_DO_OPT_SMALLVECTOR==1
-    tr.section("small vector ops through vector extensions [ra04]");
+    tr.section("small vector ops through vector extensions [ra4]");
     {
         using Vec = ra::Small<double, 4>;
         Vec const r {6, 8, 10, 12};

@@ -40,7 +40,8 @@ int main()
     cout << "X1: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, j, j, j) << endl;
     cout << "X2: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, k, k, k) << endl;
     cout << "X3: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ra::vector(l), ra::vector(l), ra::vector(l)) << endl;
-    cout << "X4: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ll, ll, ll) << endl;
+// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]
+    // cout << "X4: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ll, ll, ll) << endl;
 
     cout << endl;
 
@@ -48,7 +49,8 @@ int main()
     cout << "Y1: " << ra::from(A, j, j, j) << endl;
     cout << "Y2: " << ra::from(A, k, k, k) << endl;
     cout << "Y3: " << ra::from(A, ra::vector(l), ra::vector(l), ra::vector(l)) << endl;
-    cout << "Y4: " << ra::from(A, ll, ll, ll) << endl;
+// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]. (This one fails intermittently :-/)
+    // cout << "Y4: " << ra::from(A, ll, ll, ll) << endl;
 
     cout << B(i, i) << endl;
 
@@ -82,7 +84,7 @@ int main()
         tr.test_eq(ref2, B(j, j));
         tr.test_eq(ref2, B(k, k));
         tr.test_eq(ref2, B(ra::vector(l), ra::vector(l)));
-// FIXME thinking this should work anyway, as start() copies the ra::Vector object :-/
+// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]
         // tr.info("ll").test_eq(ref2, B(ll, ll));
     }
 // TODO have a proper rank / shape match error when comparing these with ref3
@@ -93,7 +95,7 @@ int main()
         // tr.test_eq(ref3, A(j, j, j));
         tr.test_eq(ref3, A(k, k, k));
         tr.test_eq(ref3, A(ra::vector(l), ra::vector(l), ra::vector(l)));
-// FIXME thinking this should work anyway, as start() copies the ra::Vector object :-/
+// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]
         // tr.info("ll").test_eq(ref3, A(ll, ll, ll));
     }
     return tr.summary();

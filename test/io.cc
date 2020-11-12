@@ -39,6 +39,13 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
 int main()
 {
     TestRecorder tr;
+    tr.section("common arrays or slices");
+    {
+        ra::Unique<int, 2> a({5, 3}, ra::_0 - ra::_1);
+        ra::Unique<int, 2> ref({5, 3}, a); // TODO how about an explicit copy() function?
+        iocheck(tr.info("output of Unique (1)"), a, ref);
+        iocheck(tr.info("output of Unique (1)"), a, ref);
+    }
     tr.section("IO format parameters against default (I)");
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
@@ -66,13 +73,6 @@ int main()
         std::ostringstream o;
         o << ra::noshape << A;
         tr.test_eq(std::string("1 2\n3 4"), o.str());
-    }
-    tr.section("common arrays or slices");
-    {
-        ra::Unique<int, 2> a({5, 3}, ra::_0 - ra::_1);
-        ra::Unique<int, 2> ref({5, 3}, a); // TODO how about an explicit copy() function?
-        iocheck(tr.info("output of Unique (1)"), a, ref);
-        iocheck(tr.info("output of Unique (1)"), a, ref);
     }
     tr.section("[ra02a] printing Expr");
     {

@@ -68,7 +68,9 @@ checkbox [C-ct] flip TODO
       - [ ] Iterator type for tuple (like Vector for std::vector).
       - [ ] Appropriate ply. Possibly restrict it to rank 1.
 
-* Numbered issues throughout the source [ra··]
+Will stop reusing issue numbers so I can keep the record. Some of these aren't bugs in the sense that I expect to solve them, but more like footnotes.
+
+* Numbered issues throughout the source [ra...]
   1. [ ]
   2. [ ]
   3. [ ]
@@ -77,7 +79,8 @@ checkbox [C-ct] flip TODO
   6. [ ]
   7. [ ]
   8. [ ]
-  9. [ ] Unassigned
+  9. [ ] ra-6.cc
+     Using the same lvalue ra::vector multiple times in an expression is broken, since start(ra::Vector) doesn't restart, so they clash with each other in ply. See also [ra39].
   10. [ ] Unassigned
   11. [ ]
   12. [ ]
@@ -107,7 +110,8 @@ checkbox [C-ct] flip TODO
   36. [ ]
   37. [ ]
   38. [ ]
-  39. [ ]
+  39. [ ] ra-7.cc
+      There's no reason to restart, since the RaIterator methods are all static. So start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const overload is required for ScalarFlat::operator*.
   40. [ ]
   41. [ ]
   42. [ ]

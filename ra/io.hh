@@ -17,8 +17,7 @@
 
 namespace ra {
 
-// TODO merge with ply_ravel @ ply.hh. Do not require .at(). But should control order.
-// is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
+// TODO merge with ply_ravel @ ply.hh. But should control order.
 template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
@@ -39,24 +38,28 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     }
 // order here is row-major on purpose.
     for (;;) {
-    next: ;
-        o << a.at(ind);
-        for (int k=0; k<rank; ++k) {
-            if (++ind[rank-1-k]<sha[rank-1-k]) {
+        o << *(a.flat());
+        for (int k=0; ; ++k) {
+            if (k>=rank) {
+                return o;
+            } else if (ind[rank-1-k]<sha[rank-1-k]-1) {
+                ++ind[rank-1-k];
+                a.adv(rank-1-k, 1);
                 switch (k) {
                 case 0: o << fa.sep0; break;
                 case 1: o << fa.sep1; break;
                 default: std::fill_n(std::ostream_iterator<char const *>(o, ""), k, fa.sep2);
                 }
-                goto next;
+                break;
             } else {
                 ind[rank-1-k] = 0;
+                a.adv(rank-1-k, 1-sha[rank-1-k]);
             }
         }
-        return o;
     }
 }
 
+// is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
 template <class A> requires (is_ra<A> || is_foreign_vector<A>)
 inline std::ostream &
 operator<<(std::ostream & o, A && a)

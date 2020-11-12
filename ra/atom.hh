@@ -313,7 +313,7 @@ start(T && t)
     return std::forward<T>(t);
 }
 
-// don't restart these. About Scalar see [ra39]. For Vector FIXME this might not be correct.
+// don't restart these. About Scalar see [ra39]. For Vector see [ra6] FIXME.
 template <class T> requires (is_ra_vector<T> || is_ra_scalar<T>)
 inline constexpr decltype(auto)
 start(T && t)
@@ -325,7 +325,7 @@ template <class T> requires (is_slice<T>)
 inline constexpr auto
 start(T && t)
 {
-// BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra04]
+// BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra4]
 // BUG iter() won't retain the View it's built from, either, which is why it needs to copy Dimv.
     return iter<0>(std::forward<T>(t));
 }
