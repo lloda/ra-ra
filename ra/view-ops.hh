@@ -232,10 +232,10 @@ auto explode_(View<T, RANK> const & a)
 template <class super_t, class T, rank_t RANK> inline
 auto explode(View<T, RANK> const & a)
 {
-    return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : ra_traits<super_t>::rank_s())>(a);
+    return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>())>(a);
 }
 
-// TODO Consider these in ra_traits<>.
+// FIXME Consider these in as namespace level generics in atom.hh
 template <class T> inline int gstride(int i) { if constexpr (is_scalar<T>) return 1; else return T::stride(i); }
 template <class T> inline int gsize(int i) { if constexpr (is_scalar<T>) return 1; else return T::size(i); }
 
@@ -243,10 +243,10 @@ template <class T> inline int gsize(int i) { if constexpr (is_scalar<T>) return 
 template <class sub_t, class super_t, rank_t RANK> inline
 auto collapse(View<super_t, RANK> const & a)
 {
-    using super_v = typename ra_traits<super_t>::value_type;
-    using sub_v = typename ra_traits<sub_t>::value_type;
+    using super_v = value_t<super_t>;
+    using sub_v = value_t<sub_t>;
     constexpr int subtype = sizeof(super_v)/sizeof(sub_t);
-    constexpr int SUBR = ra_traits<super_t>::rank_s()-ra_traits<sub_t>::rank_s();
+    constexpr int SUBR = rank_s<super_t>() - rank_s<sub_t>();
 
     View<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
     resize(b.dim, a.rank()+SUBR+int(subtype>1));

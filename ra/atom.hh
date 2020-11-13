@@ -449,4 +449,15 @@ shape(V const & v)
     }
 }
 
+// To handle arrays of static/dynamic size.
+template <class A> void
+resize(A & a, dim_t k)
+{
+    if constexpr (DIM_ANY==size_s<A>()) {
+        a.resize(k);
+    } else {
+        RA_CHECK(k==dim_t(a.size_s(0)));
+    }
+}
+
 } // namespace ra

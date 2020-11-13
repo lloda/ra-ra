@@ -1622,8 +1622,6 @@ TODO
 @section Introspection
 @c ------------------------------------------------
 
-@code{ra::ra-traits} is a template defined for Containers and Views, incuding foreign ones. It's not defined for expression types
-
 @c ------------------------------------------------
 @node Compiling and running
 @section Compiling and running

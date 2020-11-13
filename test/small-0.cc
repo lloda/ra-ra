@@ -79,25 +79,18 @@ int main()
 
         tr.test_eq(ra::start(x2), x1);
     }
-    tr.section("builtin arrays traits I");
+    tr.section("top level generics on builtin arrays");
     {
         int a[3] = {1, 2, 3};
-        tr.test_eq(true, ra::has_traits<decltype(a)>);
-        using traits = ra::ra_traits<decltype(a)>;
-        tr.test_eq(1, traits::rank(a));
-        tr.test_eq(3, traits::size(a));
-        tr.test_eq(3, traits::shape(a)[0]);
+        tr.test_eq(1, ra::rank(a));
+        tr.test_eq(3, ra::size(a));
         tr.test_eq(3, ra::shape(a)[0]);
     }
-    tr.section("builtin arrays traits II");
+    tr.section("top level generics on builtin arrays II");
     {
         int a[2][3] = {{1, 2, 3}, {4, 5, 6}};
-        tr.test_eq(true, ra::has_traits<decltype(a)>);
-        using traits = ra::ra_traits<decltype(a)>;
-        tr.test_eq(2, traits::rank(a));
-        tr.test_eq(6, traits::size(a));
-        tr.test_eq(2, traits::shape(a)[0]);
-        tr.test_eq(3, traits::shape(a)[1]);
+        tr.test_eq(2, ra::rank(a));
+        tr.test_eq(6, ra::size(a));
         tr.test_eq(2, ra::shape(a)[0]);
         tr.test_eq(3, ra::shape(a)[1]);
     }

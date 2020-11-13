@@ -85,15 +85,4 @@ struct ra_traits_def<std::initializer_list<T>>
     constexpr static dim_t size_s() { return DIM_ANY; }
 };
 
-// To handle arrays of static/dynamic size.
-template <class A> void
-resize(A & a, dim_t k)
-{
-    if constexpr (ra_traits<A>::size_s()==DIM_ANY) {
-        a.resize(k);
-    } else {
-        RA_CHECK(k==dim_t(a.size_s(0)));
-    }
-}
-
 } // namespace ra

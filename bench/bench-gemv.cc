@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file bench-gemv.hh
+/// @brief Benchmark for BLAS-2 type ops
 
 // (c) Daniel Llorens - 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file bench-gemv.hh
-/// @brief Benchmark for BLAS-2 type ops
 
 // These operations aren't really part of the ET framework, just standalone
 // functions.
@@ -21,7 +20,7 @@
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
-using ra::Small, ra::View, ra::Unique, ra::ra_traits;
+using ra::Small, ra::View, ra::Unique;
 
 using real = double;
 

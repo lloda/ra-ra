@@ -17,7 +17,7 @@
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
-using ra::Small, ra::View, ra::Unique, ra::ra_traits, ra::dim_t;
+using ra::Small, ra::View, ra::Unique, ra::dim_t;
 using real = double;
 
 int const N = 200000;
@@ -32,7 +32,7 @@ struct by_raw
     template <class A, class B>
     real operator()(A const & a, B const & b)
     {
-        constexpr int rank = ra_traits<A>::rank_s();
+        constexpr int rank = ra::rank_s<A>();
         static_assert(rank>=1 && rank<=3, "Bad rank.");
         if constexpr (1==rank) {
             real y(0.);
@@ -58,6 +58,8 @@ struct by_raw
                 }
             }
             return y;
+        } else {
+            abort();
         }
     }
 };
@@ -114,7 +116,7 @@ int main()
         auto bench = [&tr](char const * tag, auto s, auto && ref, int reps, auto && f)
             {
                 rspec = 1e-2;
-                constexpr int M = ra::ra_traits<decltype(s)>::size(s);
+                constexpr int M = ra::size(s);
                 decltype(s) A(a);
                 decltype(s) B(b);
                 real y(0.);
@@ -186,8 +188,8 @@ int main()
 
         auto bench_all = [&](auto s, auto && f_small_indexed)
             {
-                constexpr int M = ra::ra_traits<decltype(s)>::size(s);
-                tr.section("small <", ra::ra_traits<decltype(s)>::shape(s), ">");
+                constexpr int M = ra::size(s);
+                tr.section("small <", ra::shape(s), ">");
                 auto extra = [&]() { return int(double(std::rand())*100/RAND_MAX); };
                 int reps = (1000*1000*100)/M;
                 bench("indexed", s, ref, reps+extra(), f_small_indexed);

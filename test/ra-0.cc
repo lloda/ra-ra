@@ -11,7 +11,6 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <type_traits>
 #include "ra/test.hh"
 #include "ra/ra.hh"
 #include "ra/mpdebug.hh"
@@ -179,25 +178,26 @@ int main()
 //         tr.test_eq(0, z.size());
 //         tr.test_eq(1, z.rank());
     }
-    tr.section("ra traits");
+    tr.section("generic container functions");
     {
         {
             using double2x3 = ra::Small<double, 2, 3>;
             double2x3 r { 1, 2, 3, 4, 5, 6 };
-            tr.test_eq(2, ra::ra_traits<double2x3>::rank(r));
-            tr.test_eq(6, ra::ra_traits<double2x3>::size(r));
+            tr.test_eq(2, rank(r));
+// Not sure why Koenig doesn't work here, might be library defect [ra10].
+            tr.test_eq(6, ra::size(r));
         }
         {
             double pool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::View<double> r { {{3, 2}, {2, 1}}, pool };
-            tr.test_eq(2, ra::ra_traits<ra::View<double>>::rank(r));
-            tr.test_eq(6, ra::ra_traits<ra::View<double>>::size(r));
+            tr.test_eq(2, rank(r));
+            tr.test_eq(6, size(r));
         }
         {
             double pool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::View<double, 2> r {{ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
-            tr.test_eq(2, ra::ra_traits<ra::View<double, 2>>::rank(r));
-            tr.test_eq(6, ra::ra_traits<ra::View<double, 2>>::size(r));
+            tr.test_eq(2, rank(r));
+            tr.test_eq(6, size(r));
         }
     }
     tr.section("iterator for View (I)");

@@ -86,8 +86,7 @@ ply_ravel(A && a)
 
 
 // -------------------------
-// Compile time order. See bench-dot.cc for use. No index version.
-// With compile-time recursion by rank, one can use adv<k>, but order must also be compile-time.
+// Compile time order.
 // -------------------------
 
 #ifdef RA_INLINE

@@ -11,7 +11,6 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <type_traits>
 #include "ra/test.hh"
 #include "ra/ra.hh"
 #include "ra/mpdebug.hh"

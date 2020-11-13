@@ -166,7 +166,7 @@ int main()
             [&tr](auto && A)                                            \
             {                                                           \
                 auto B = ra::explode_<complex, 1>(A);                   \
-                static_assert(ra::ra_traits<decltype(B)>::rank_s()==CHECK_RANK_S, "bad static rank"); \
+                static_assert(rank_s(B)==CHECK_RANK_S, "bad static rank"); \
                 cout << B << endl;                                      \
                 /* TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should. */ \
                 for (int i=0; i<3; ++i) {                               \
