@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+/// @file reduction.cc
+/// @brief Test array reductions.
 
 // (c) Daniel Llorens - 2014
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-/// @file reduction.cc
-/// @brief Test array reductions.
 
 #include <iostream>
 #include <iterator>
@@ -141,9 +140,9 @@ int main()
 
     tr.section("amax/amin ignore NaN");
     {
-        tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN));
-        tr.test_eq(-std::numeric_limits<real>::infinity(), amax(ra::Small<real, 3>(QNAN)));
-        tr.test_eq(std::numeric_limits<real>::infinity(), amin(ra::Small<real, 3>(QNAN)));
+        tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN<real>));
+        tr.test_eq(-std::numeric_limits<real>::infinity(), amax(ra::Small<real, 3>(QNAN<real>)));
+        tr.test_eq(std::numeric_limits<real>::infinity(), amin(ra::Small<real, 3>(QNAN<real>)));
     }
 
 // TODO these reductions require a destination argument; there are no exprs really.
