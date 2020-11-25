@@ -536,8 +536,9 @@ template <class V> struct storage_traits
 template <class T_, class A> struct storage_traits<std::vector<T_, A>>
 {
     using T = T_;
+    static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>");
     static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); }
-    static T const * data(std::vector<T, A> const & v) { return v.data(); } // BUG not if T = bool
+    static T const * data(std::vector<T, A> const & v) { return v.data(); }
     static T * data(std::vector<T, A> & v) { return v.data(); }
 };
 
