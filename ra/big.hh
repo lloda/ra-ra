@@ -498,8 +498,8 @@ struct View<T, RANK_ANY>
     }
 
 // conversions to scalar
-    operator T & () { assert(rank()==0); return data()[0]; };
-    operator T const & () const { assert(rank()==0); return data()[0]; };
+    operator T & () { RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar"); return data()[0]; };
+    operator T const & () const { RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar"); return data()[0]; };
 };
 
 #undef DEF_ITERATORS

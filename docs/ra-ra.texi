@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 11
-@set UPDATED 2020 September 18
+@set VERSION 12
+@set UPDATED 2020 November 27
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -380,7 +380,7 @@ ra::SmallArray<double, sizes, strides> a {{1, 2, 3}, {4, 5, 6}}; // stored colum
 @end verbatim
 @end example
 
-These are compile time errors:
+These produce compile time errors:
 
 @example
 @verbatim
@@ -847,6 +847,31 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 @end example
 
 This supports the notion (@pxref{Rank polymorphism}) that a 3-array is also an 2-array where the elements are 1-arrays themselves, or a 1-array where the elements are 2-arrays. This important property is directly related to the mechanism of rank extension (@pxref{Rank extension}).
+
+@subsection Subscripting and rank-0 views
+
+@cindex view, rank 0
+@cindex rank, dynamic
+@cindex rank, static
+When the result of the subscripting operation would have rank 0, the type returned is the type of the view @emph{element} and not a rank-0 view as long as the rank of the result can be determined at compile time. When that's not possible (for instance, the subscripted view has dynamic rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
+
+@example
+@verbatim
+using T = std::complex<double>;
+int f(T &);
+Big<T, 2> a({2, 3}, 0); // static rank
+Big<T> b({2, 3}, 0); // dynamic rank
+
+cout << a(0, 0).real_part() << endl; // ok, a(0, 0) returns complex &
+// cout << b(0, 0).real_part() << endl; // error, View<T> has no member real_part
+cout << ((T &)(b(0, 0))).real_part() << endl; // ok, manual conversion to T &
+
+cout << f(b(0, 0)) << endl; // ok, automatic conversion from View<T> to T &
+// cout << f(a(0)) << endl; // compile time error, conversion failed since static rank of a(0) is not 0
+// cout << f(b(0)) << endl; // runtime error, conversion failed since dynamic rank of b(0) is not 0
+@end verbatim
+@end example
+
 
 @c ------------------------------------------------
 @node Special objects

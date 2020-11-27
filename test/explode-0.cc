@@ -154,8 +154,8 @@ int main()
                 using T = ra::Small<double, 2>;
                 auto B = ra::explode<T>(A);
                 for (int i=0; i<3; ++i) {
-                    tr.test_eq(i*2, ((T&)(B(i)))(0));
-                    tr.test_eq(i*2+1, ((T&)(B(i)))(1));
+                    tr.test_eq(i*2, ((T &)(B(i)))(0));
+                    tr.test_eq(i*2+1, ((T &)(B(i)))(1));
                 }
             };
             test(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
@@ -167,13 +167,15 @@ int main()
             [&tr](auto && A)                                            \
             {                                                           \
                 using T = complex;                                      \
+                auto convtest = [](T & x) -> T & { return x; };         \
                 auto B = ra::explode_<T, 1>(A);                         \
                 static_assert(rank_s(B)==CHECK_RANK_S, "bad static rank"); \
                 cout << B << endl;                                      \
-                /* TODO B(0) etc. doesn't get converted to r2x2 & for RANK_ANY, and it should. */ \
                 for (int i=0; i<3; ++i) {                               \
-                    tr.test_eq(i*2, real_part((T&)(B(i))));             \
-                    tr.test_eq(i*2+1, imag_part((T&)(B(i))));           \
+                    tr.test_eq(i*2, real_part((T &)(B(i))));            \
+                    tr.test_eq(i*2+1, imag_part((T &)(B(i))));          \
+                    tr.test_eq(i*2, convtest(B(i)).real());             \
+                    tr.test_eq(i*2+1, convtest(B(i)).imag());           \
                 }                                                       \
             }
             TEST(ra::RANK_ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
@@ -186,11 +188,10 @@ int main()
                 using T = ra::Small<double, 2, 2>;
                 auto B = ra::explode<T>(A);
                 tr.test_eq(1, B.rank());
-// TODO B(0) etc. doesn't get converted to T & for RANK_ANY, and it should.
-                tr.test_eq(T { 0, 1, 2, 3 }, (T&)(B[0]));
-                tr.test_eq(T { 4, 5, 6, 7 }, (T&)(B[1]));
-                tr.test_eq(T { 8, 9, 10, 11 }, (T&)(B[2]));
-                tr.test_eq(T { 12, 13, 14, 15}, (T&)(B[3]));
+                tr.test_eq(T { 0, 1, 2, 3 }, (T &)(B[0]));
+                tr.test_eq(T { 4, 5, 6, 7 }, (T &)(B[1]));
+                tr.test_eq(T { 8, 9, 10, 11 }, (T &)(B[2]));
+                tr.test_eq(T { 12, 13, 14, 15}, (T &)(B[3]));
             };
             test(ra::Unique<double, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
             test(ra::Unique<double>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));

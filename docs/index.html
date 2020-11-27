@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 11, updated 2020 September 18)
+<!-- ra:: (version 12, updated 2020 November 27)
 
 (c) Daniel Llorens 2005-2020
 
@@ -113,7 +113,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="di
 <a name="ra_003a_003a"></a>
 <h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 11, updated 2020 September 18)
+<p><code>ra::</code> (version 12, updated 2020 November 27)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2020
 </p>
@@ -502,7 +502,7 @@ using strides = mp::int_list&lt;1, 2&gt;;
 ra::SmallArray&lt;double, sizes, strides&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 </pre></div>
 
-<p>These are compile time errors:
+<p>These produce compile time errors:
 </p>
 <div class="example">
 <pre class="verbatim">Big&lt;int, 2&gt; b = {1, 2, 3, 4};           // error: shape cannot be deduced from ravel
@@ -922,6 +922,30 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 
 <p>This supports the notion (see <a href="#Rank-polymorphism">Rank polymorphism</a>) that a 3-array is also an 2-array where the elements are 1-arrays themselves, or a 1-array where the elements are 2-arrays. This important property is directly related to the mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>).
 </p>
+<a name="Subscripting-and-rank_002d0-views"></a>
+<h4 class="subsection">2.6.1 Subscripting and rank-0 views</h4>
+
+<a name="index-view_002c-rank-0"></a>
+<a name="index-rank_002c-dynamic"></a>
+<a name="index-rank_002c-static"></a>
+<p>When the result of the subscripting operation would have rank 0, the type returned is the type of the view <em>element</em> and not a rank-0 view as long as the rank of the result can be determined at compile time. When that&rsquo;s not possible (for instance, the subscripted view has dynamic rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
+</p>
+<div class="example">
+<pre class="verbatim">using T = std::complex&lt;double&gt;;
+int f(T &amp;);
+Big&lt;T, 2&gt; a({2, 3}, 0); // static rank
+Big&lt;T&gt; b({2, 3}, 0); // dynamic rank
+
+cout &lt;&lt; a(0, 0).real_part() &lt;&lt; endl; // ok, a(0, 0) returns complex &amp;
+// cout &lt;&lt; b(0, 0).real_part() &lt;&lt; endl; // error, View&lt;T&gt; has no member real_part
+cout &lt;&lt; ((T &amp;)(b(0, 0))).real_part() &lt;&lt; endl; // ok, manual conversion to T &amp;
+
+cout &lt;&lt; f(b(0, 0)) &lt;&lt; endl; // ok, automatic conversion from View&lt;T&gt; to T &amp;
+// cout &lt;&lt; f(a(0)) &lt;&lt; endl; // compile time error, conversion failed since static rank of a(0) is not 0
+// cout &lt;&lt; f(b(0)) &lt;&lt; endl; // runtime error, conversion failed since dynamic rank of b(0) is not 0
+</pre></div>
+
+
 <hr>
 <a name="Special-objects"></a>
 <div class="header">
@@ -1631,19 +1655,17 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 
 <p>These are array views into data in memory. Access to their contents doesn&rsquo;t involve computation and they may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated with a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>
-</li><li> <b>ArrayIterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
+</li><li> <b>RaIterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
 
-<p>This is a traversable object. <b>ArrayIterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>ArrayIterator</b> itself, so most array expressions are <b>ArrayIterator</b>s. <b>ArrayIterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
+<p>This is a traversable object. <b>RaIterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>RaIterator</b> itself, so most array expressions are <b>RaIterator</b>s. <b>RaIterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
 </li><li> <b>Ravelable</b> &mdash; <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
-<p>This is a kind of <b>ArrayIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>size()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+<p>This is a kind of <b>RaIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>size()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
 </li><li> <b>Indexable</b> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
-<p>This is a kind of <b>ArrayIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array.<a name="DOCF9" href="#FOOT9"><sup>9</sup></a>
-</p>
-<p>In the current version of <code>ra::</code>, all <b>ArrayIterator</b>s are both <b>Ravelable</b> and <b>Indexable</b>.
+<p>This is a kind of <b>RaIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array. In the current version of <code>ra::</code>, every <b>RaIterator</b>s are both <b>Ravelable</b> and <b>Indexable</b>.
 </p>
 </li><li> <b>Flat</b> <code>Flat</code> <code>PickFlat</code> <code>CellFlat</code> <code>IotaFlat</code> <code>ScalarFlat</code>
 
@@ -1687,8 +1709,6 @@ Next: <a href="#Compiling-and-running" accesskey="n" rel="next">Compiling and ru
 <a name="Introspection-1"></a>
 <h3 class="section">5.4 Introspection</h3>
 
-<p><code>ra::ra-traits</code> is a template defined for Containers and Views, incuding foreign ones. It&rsquo;s not defined for expression types
-</p>
 <hr>
 <a name="Compiling-and-running"></a>
 <div class="header">
@@ -2518,6 +2538,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-Python">Python</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank_002c-dynamic">rank, dynamic</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank_002c-static">rank, static</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-real_005fpart"><code>real_part</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rel_005ferror"><code>rel_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-reverse"><code>reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2543,6 +2565,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-V">V</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-view">view</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-view_002c-rank-0">view, rank 0</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-W">W</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-where"><code>where</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2616,8 +2639,6 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h3><a name="FOOT8" href="#DOCF8">(8)</a></h3>
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively.
 Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
-<h3><a name="FOOT9" href="#DOCF9">(9)</a></h3>
-<p>It used to be the case that <code>TensorIndex</code> was <b>Indexable</b> but not <b>Ravelable</b>, which forced all the other <b>Ravelable</b> types to provide <code>at(i...)</code> so that they could be mixed with <code>TensorIndex</code> in expressions. Now that <code>TensorIndex</code> is also <b>Ravelable</b>, this distinction may disappear in the future with <code>at(i...)</code> being provided at a higher level.</p>
 </div>
 <hr>
 
