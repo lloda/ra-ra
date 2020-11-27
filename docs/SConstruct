@@ -38,4 +38,4 @@ if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/docs'))
 
 env.INFOBuilder(target = 'ra-ra.info', source = 'ra-ra.texi')
-env.hhTMLBuilder(target = 'index.html', source = 'ra-ra.texi')
+env.HTMLBuilder(target = 'index.html', source = 'ra-ra.texi')
