@@ -379,7 +379,7 @@ struct View
                     data() + Indexer1::index_p(dim, i) };               \
         }                                                               \
     }                                                                   \
-    decltype(auto) operator[](dim_t const i) CONST                      \
+    constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
         return (*this)(i);                                              \
     }
@@ -473,11 +473,9 @@ struct View<T, RANK_ANY>
         return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), /* Dimv is std::vector */ \
                 data() + Indexer1::index_p(dim, i) };                   \
     }                                                                   \
-    constexpr T CONST & operator[](dim_t const i) CONST                 \
+    constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
-        RA_CHECK(rank()==1, "bad rank");                                \
-        RA_CHECK(inside(i, dim[0].size));                               \
-        return data()[i*dim[0].stride];                                 \
+        return (*this)(i);                                              \
     }
     FOR_EACH(SUBSCRIPTS, /*const*/, const)
 #undef SUBSCRIPTS
