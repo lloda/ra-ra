@@ -188,8 +188,16 @@ struct STLIterator
         new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
         return *this;
     }
-// FIXME shape_type may be std::array or std::vector, so can't get rid of ra_traits::make yet
-    STLIterator(Iterator const & ii_): ii(ii_), i(ra::ra_traits<shape_type>::make(ii.rank(), 0))
+    STLIterator(Iterator const & ii_)
+        : ii(ii_),
+// shape_type may be std::array or std::vector.
+          i([&]()
+            { if constexpr (DIM_ANY==size_s<shape_type>()) {
+                    return shape_type(ii.rank(), 0);
+                } else {
+                    return shape_type {0};
+                }
+            }())
     {
 // [ra12] Null p_ so begin()==end() for empty range. ply() uses sizes so this doesn't matter.
         if (ii.c.p!=nullptr && 0==ra::size(ii)) {
@@ -529,20 +537,6 @@ struct ra_traits_small
     using value_type = T;
     // constexpr static auto const & shape(V const & v) { return V::ssizes; }
     constexpr static auto shape(V const & v) { return SmallView<ra::dim_t const, mp::int_list<V::rank_s()>, mp::int_list<1>>(V::ssizes.data()); }
-#define MAKE_COND (std::is_same_v<strides, mp::int_list<1>> && std::is_same_v<sizes, mp::take<sizes, 1>>)
-    constexpr static V make(dim_t const n)
-    {
-        static_assert(MAKE_COND, "bad type for ra_traits::make");
-        RA_CHECK(n==V::size(0));
-        return V {};
-    }
-    template <class TT> static V make(dim_t n, TT const & t)
-    {
-        static_assert(MAKE_COND, "bad type for ra_traits::make");
-        RA_CHECK(n==V::size(0));
-        return V(t);
-    }
-#undef MAKE_COND
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return V::rank(); }
     constexpr static dim_t size_s() { return V::size(); }
