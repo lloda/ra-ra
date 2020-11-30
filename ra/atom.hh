@@ -59,7 +59,6 @@ template <class V_>
 struct Vector
 {
     using V = V_;
-    static_assert(has_traits<V>, "bad type for Vector"); // FIXME the next line should bomb by itself
     using traits = ra_traits<V>;
 
     V v;
@@ -295,10 +294,10 @@ template <class Live, class A> struct Reframe;
 // Coerce potential ArrayIterators
 // --------------
 
-template <class T, int a>
+template <class T>
 inline constexpr auto start(T && t)
 {
-    static_assert(!mp::exists<T>, "bad type for ra:: operator");
+    static_assert(!std::same_as<T, T>, "bad type for ra:: operator");
 }
 
 RA_IS_DEF(is_iota, (std::is_same_v<A, Iota<typename A::T>>))
@@ -368,7 +367,7 @@ template <class A> using value_t = std::decay_t<flat_t<A>>;
 template <class V> inline constexpr dim_t
 rank_s()
 {
-    if constexpr (has_traits<V>) {
+    if constexpr (requires { ra_traits<V>::rank_s(); }) {
         return ra_traits<V>::rank_s();
     } else {
         return std::decay_t<V>::rank_s();
@@ -385,7 +384,7 @@ template <class V_> inline constexpr dim_t
 size_s()
 {
     using V = std::decay_t<V_>;
-    if constexpr (has_traits<V>) {
+    if constexpr (requires { ra_traits<V>::size_s(); }) {
         return ra_traits<V>::size_s();
     } else {
         if constexpr (V::rank_s()==RANK_ANY) {
@@ -413,7 +412,7 @@ size_s(V const &)
 template <class V> inline constexpr rank_t
 rank(V const & v)
 {
-    if constexpr (has_traits<V>) {
+    if constexpr (requires { ra_traits<V>::rank(v); }) {
         return ra_traits<V>::rank(v);
     } else {
         return v.rank();
@@ -423,7 +422,7 @@ rank(V const & v)
 template <class V> inline constexpr auto
 size(V const & v)
 {
-    if constexpr (has_traits<V>) {
+    if constexpr (requires { ra_traits<V>::size(v); }) {
         return ra_traits<V>::size(v);
     } else {
         return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
@@ -434,7 +433,7 @@ size(V const & v)
 template <class V> inline constexpr decltype(auto)
 shape(V const & v)
 {
-    if constexpr (has_traits<V>) {
+    if constexpr (requires { ra_traits<V>::shape(v); }) {
         return ra_traits<V>::shape(v);
 // FIXME version for static shape. Would prefer to return the map directly (except maybe for static shapes)
     } else if constexpr (constexpr rank_t rs=v.rank_s(); rs>=0) {

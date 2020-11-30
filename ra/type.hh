@@ -16,7 +16,6 @@ namespace ra {
 
 // specialize this for new types for which is_scalar<> should be true. These are foreign types.
 RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
-RA_IS_DEF(has_traits, (mp::exists<decltype(ra_traits<A>::size)>))
 
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
@@ -31,9 +30,9 @@ template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::arra
 
 // TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // TODO check the rest of the required interface of A and A::flat() right here. Concepts...
-RA_IS_DEF(is_iterator, (mp::exists<decltype(std::declval<A>().flat())>))
+RA_IS_DEF(is_iterator, (requires { std::declval<A>().flat(); }))
 RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
-RA_IS_DEF(is_slice, (mp::exists<decltype(std::declval<A>().iter())> && has_traits<A>)) // require traits to reject public-derived from A
+RA_IS_DEF(is_slice, (requires { std::declval<A>().iter(); } && requires { ra_traits<A>::size; })) // require ::size to reject public-derived from A
 RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;

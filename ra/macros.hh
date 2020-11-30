@@ -52,17 +52,6 @@
 
 namespace mp {
 
-template <class B> constexpr bool exists = true;
-
-struct identity
-{
-    template<class T>
-    constexpr decltype(auto) operator()(T && t) const noexcept
-    {
-        return std::forward<T>(t);
-    }
-};
-
 #define RA_IS_DEF(NAME, PRED)                                           \
     template <class A, class Enable=void> constexpr bool JOIN(NAME, _def) = false; \
     template <class A> constexpr bool JOIN(NAME, _def) < A, std::enable_if_t< PRED >> = true; \

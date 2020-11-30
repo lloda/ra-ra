@@ -124,9 +124,9 @@ int main()
         static_assert(ra::is_builtin_array<decltype(b)>);
         static_assert(ra::is_builtin_array<decltype(c) &>);
         static_assert(ra::is_builtin_array<decltype(c)>);
-        static_assert(ra::has_traits<decltype(a)>);
-        static_assert(ra::has_traits<decltype(b)>);
-        static_assert(ra::has_traits<decltype(c)>);
+        static_assert(requires { ra::ra_traits<decltype(a)>::size(a); });
+        static_assert(requires { ra::ra_traits<decltype(b)>::size(b); });
+        static_assert(requires { ra::ra_traits<decltype(c)>::size(c); });
     }
     tr.section("adaptors");
     {
