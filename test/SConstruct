@@ -59,7 +59,7 @@ tester = ra.to_test_ra(env, variant_dir)
               'dual', 'ra-dual', 'mem-fn', 'stl-compat', 'where', 'tuples', 'wedge',
               'operators', 'tensorindex', 'explode-0', 'wrank', 'optimize', 'reshape', 'concrete',
               'bench', 'iterator-small', 'tensor-indices', 'list9', 'early', 'macros',
-              'bug83'
+              'bug83', 'foreign'
               # 'const', # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 after gcc 9
               # 'end'
               ]]

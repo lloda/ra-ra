@@ -15,6 +15,7 @@
 #include "ra/ra.hh"
 #include <typeinfo>
 #include <string>
+#include <chrono>
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
@@ -31,6 +32,11 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 int main()
 {
     TestRecorder tr(std::cout, TestRecorder::NOISY);
+    {
+        using T = std::chrono::duration<long int, std::ratio<1, 1000000000>>;
+        ra::Big<T, 1> a;
+        static_assert(std::is_same_v<ra::value_t<decltype(a)>, T>);
+    }
     {
 // SmallBase is excluded in is_slice by ra_traits TODO
         TEST_PREDICATES(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, mp::int_list<3>, mp::int_list<1>>>()))

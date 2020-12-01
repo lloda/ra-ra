@@ -295,7 +295,7 @@ template <class Live, class A> struct Reframe;
 // --------------
 
 template <class T>
-inline constexpr auto start(T && t)
+inline constexpr void start(T && t)
 {
     static_assert(!std::same_as<T, T>, "bad type for ra:: operator");
 }
@@ -305,7 +305,7 @@ RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<typename A::C>>))
 RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<typename A::V>>))
 
 // it matters that this copies when T is lvalue. But FIXME shouldn't be necessary. See [ra35] and Vector constructors above.
-// FIXME start should always copy the iterator part but never the content part for Vector or Scalar (or eventually .iter()). Copying the iterator part is necessary if e.g. ra::cross() has to work with RaIterator args, since the arguments are start()ed twice.
+// FIXME start should always copy the iterator part but never the content part for Vector or Scalar (or eventually .iter()). Copying the iterator part is necessary if e.g. ra::cross() has to work with RaIterator args, since they are start()ed twice.
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
 inline constexpr auto
 start(T && t)
@@ -369,8 +369,10 @@ rank_s()
 {
     if constexpr (requires { ra_traits<V>::rank_s(); }) {
         return ra_traits<V>::rank_s();
-    } else {
+    } else if constexpr (requires { std::decay_t<V>::rank_s(); }) {
         return std::decay_t<V>::rank_s();
+    } else {
+        return 0;
     }
 }
 
