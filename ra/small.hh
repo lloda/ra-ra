@@ -46,7 +46,7 @@ struct Indexer0
     }
 
     template <class P>
-    constexpr static dim_t index_short(P const & p) // for ArrayIterator::at().
+    constexpr static dim_t index_short(P const & p) // for RaIterator::at().
     {
         if constexpr (size_s<P>()!=RANK_ANY) {
             static_assert(mp::len<sizes> <= size_s<P>(), "Too few indices");
@@ -394,7 +394,7 @@ struct SmallBase
 
 // FIXME see if we need to extend this for cellr!=0.
 // template <class P> using STLIterator = std::conditional_t<have_default_strides, P, STLIterator<Iterator<P>>>;
-    constexpr static bool have_default_strides = std::is_same_v<strides, default_strides<sizes>>;
+    constexpr static bool have_default_strides = std::same_as<strides, default_strides<sizes>>;
     template <class I, class P> using pick_STLIterator = std::conditional_t<have_default_strides, P, ra::STLIterator<I>>;
     using STLIterator = pick_STLIterator<iterator<0>, T *>;
     using STLConstIterator = pick_STLIterator<const_iterator<0>, T const *>;
@@ -415,7 +415,7 @@ struct SmallBase
 #define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same_v<strides, default_strides<mp::int_list<req_dim0__, req_dim1__>>>, \
+        static_assert(std::same_as<strides, default_strides<mp::int_list<req_dim0__, req_dim1__>>>, \
                       "renames only on default strides");               \
         static_assert(size(0)==req_dim0__ && size(1)==req_dim1__, "dimension error"); \
         return reinterpret_cast<name__<T> CONST &>(*this);              \
@@ -433,7 +433,7 @@ struct SmallBase
 #define COMP_RENAME_C(name__, dim0__, CONST)                            \
     operator name__<T> CONST &() CONST                                  \
     {                                                                   \
-        static_assert(std::is_same_v<strides, default_strides<mp::int_list<dim0__>>>, \
+        static_assert(std::same_as<strides, default_strides<mp::int_list<dim0__>>>, \
                       "renames only on default strides");               \
         static_assert(size(0)==dim0__, "dimension error");              \
         return reinterpret_cast<name__<T> CONST &>(*this);              \

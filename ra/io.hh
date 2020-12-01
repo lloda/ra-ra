@@ -22,7 +22,7 @@ template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-// FIXME note that this copies / resets the ArrayIterator if fa.a already is one; see [ra35].
+// FIXME note that this copies / resets the RaIterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
     static_assert(size_s(a)!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();

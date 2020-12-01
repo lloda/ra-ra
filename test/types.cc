@@ -23,7 +23,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
     {                                                                   \
         tr.info(STRINGIZE(A)).info("bool").test_eq(ra, ra::is_ra<A>);   \
         tr.info(STRINGIZE(A)).info("slice").test_eq(slice, ra::is_slice<A>); \
-        tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, ra::is_iterator<A>); \
+        tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, ra::RaIterator<A>); \
         tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, ra::is_scalar<A>); \
         tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, ra::is_foreign_vector<A>); \
     }
@@ -45,6 +45,7 @@ int main()
             (true, true, false, false, false);
         TEST_PREDICATES(decltype(ra::Unique<int, 2>().iter()))
             (true, false, true, false, false);
+        static_assert(ra::RaIterator<decltype(ra::Unique<int, 2>().iter())>);
         {
             ra::Unique<int, 1> A= {1, 2, 3};
             auto i = A.iter();
@@ -56,10 +57,16 @@ int main()
             (true, false, true, false, false);
         TEST_PREDICATES(ra::TensorIndex<0>)
             (true, false, true, false, false);
+        TEST_PREDICATES(ra::TensorIndex<0> &)
+            (true, false, true, false, false);
         TEST_PREDICATES(decltype(ra::Small<int, 2>()))
             (true, true, false, false, false);
+        TEST_PREDICATES(decltype(ra::Small<int, 2>().iter()))
+            (true, false, true, false, false);
         TEST_PREDICATES(decltype(ra::Small<int, 2, 2>()()))
             (true, true, false, false, false);
+        TEST_PREDICATES(decltype(ra::Small<int, 2, 2>().iter()))
+            (true, false, true, false, false);
         TEST_PREDICATES(decltype(ra::Small<int, 2>()+3))
             (true, false, true, false, false);
         TEST_PREDICATES(decltype(3+ra::Big<int>()))

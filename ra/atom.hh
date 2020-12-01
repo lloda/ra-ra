@@ -291,7 +291,7 @@ template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;
 template <class Live, class A> struct Reframe;
 
 // --------------
-// Coerce potential ArrayIterators
+// Coerce potential RaIterator
 // --------------
 
 template <class T>
@@ -300,12 +300,12 @@ inline constexpr auto start(T && t)
     static_assert(!std::same_as<T, T>, "bad type for ra:: operator");
 }
 
-RA_IS_DEF(is_iota, (std::is_same_v<A, Iota<typename A::T>>))
-RA_IS_DEF(is_ra_scalar, (std::is_same_v<A, Scalar<typename A::C>>))
-RA_IS_DEF(is_ra_vector, (std::is_same_v<A, Vector<typename A::V>>))
+RA_IS_DEF(is_iota, (std::same_as<A, Iota<typename A::T>>))
+RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<typename A::C>>))
+RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<typename A::V>>))
 
 // it matters that this copies when T is lvalue. But FIXME shouldn't be necessary. See [ra35] and Vector constructors above.
-// FIXME start should always copy the iterator part but never the content part for Vector or Scalar (or eventually .iter()). Copying the iterator part is necessary if e.g. ra::cross() has to work with ArrayIterator args, since the arguments are start()ed twice.
+// FIXME start should always copy the iterator part but never the content part for Vector or Scalar (or eventually .iter()). Copying the iterator part is necessary if e.g. ra::cross() has to work with RaIterator args, since the arguments are start()ed twice.
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
 inline constexpr auto
 start(T && t)

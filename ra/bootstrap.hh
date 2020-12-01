@@ -56,7 +56,7 @@ template <class P, class S>
 concept FlatIterator = requires (P p, S d)
 {
     { *p };
-    { p += d } -> std::same_as<void>;
+    { p += d };
 };
 
 template <class A>

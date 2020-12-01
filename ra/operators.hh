@@ -100,7 +100,7 @@ auto from(A && a, I && ... i)
 
 
 // I considered three options for lookup.
-// 1. define these in a class that ArrayIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.hh). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an ArrayIterator), it requires lots of forwarding and traits:: .
+// 1. define these in a class that RaIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.hh). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an RaIterator), it requires lots of forwarding and traits:: .
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.
 // 3. requires-constrained ADL is what you see here.
 
