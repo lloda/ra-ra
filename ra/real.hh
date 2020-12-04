@@ -52,7 +52,7 @@ using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, s
 using std::swap, std::isfinite, std::isinf;
 
 #define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>)
-#define RA_REAL_OVERLOAD_CE(T) template <class T> inline constexpr std::enable_if_t<RA_IS_REAL(T), T>
+#define RA_REAL_OVERLOAD_CE(T) template <class T> requires (RA_IS_REAL(T)) inline constexpr T
 // As an array op; special definitions for rank 0.
 RA_REAL_OVERLOAD_CE(T) arg(T const x) { return 0; }
 RA_REAL_OVERLOAD_CE(T) amax(T const x) { return x; }

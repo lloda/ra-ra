@@ -17,8 +17,8 @@ using ra::odd, ra::every, ra::any;
 
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
 
-template <class A,
-          std::enable_if_t<ra::is_scalar<A>, int> =0>
+template <class A>
+requires (ra::is_scalar<A>)
 inline constexpr decltype(auto) transpose(A && a) { return std::forward<A>(a); }
 
 // We also define the scalar specializations that couldn't be found through ADL in any case. See complex.hh, real.hh.

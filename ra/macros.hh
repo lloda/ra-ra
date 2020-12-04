@@ -53,8 +53,8 @@
 namespace mp {
 
 #define RA_IS_DEF(NAME, PRED)                                           \
-    template <class A, class Enable=void> constexpr bool JOIN(NAME, _def) = false; \
-    template <class A> constexpr bool JOIN(NAME, _def) < A, std::enable_if_t< PRED >> = true; \
+    template <class A> constexpr bool JOIN(NAME, _def) = false;         \
+    template <class A> requires (PRED) constexpr bool JOIN(NAME, _def) < A > = true; \
     template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
 
 // Assign ops for settable array iterators; these must be members.
