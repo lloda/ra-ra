@@ -22,7 +22,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 #define TEST_PREDICATES(A)                                              \
     [&tr](bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector) \
     {                                                                   \
-        tr.info(STRINGIZE(A)).info("bool").test_eq(ra, ra::is_ra<A>);   \
+        tr.info(STRINGIZE(A)).info("ra").test_eq(ra, ra::is_ra<A>);   \
         tr.info(STRINGIZE(A)).info("slice").test_eq(slice, ra::is_slice<A>); \
         tr.info(STRINGIZE(A)).info("array_iterator").test_eq(array_iterator, ra::RaIterator<A>); \
         tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, ra::is_scalar<A>); \
@@ -63,6 +63,9 @@ int main()
             (true, false, true, false, false);
         TEST_PREDICATES(ra::TensorIndex<0>)
             (true, false, true, false, false);
+// FIXME in type.hh, prevents replacing is_iterator by RaIterator. Perhaps an additional concept is needed.
+        // TEST_PREDICATES(ra::TensorIndex<0> const)
+        //     (true, false, true, false, false);
         TEST_PREDICATES(ra::TensorIndex<0> &)
             (true, false, true, false, false);
         TEST_PREDICATES(decltype(ra::Small<int, 2>()))
