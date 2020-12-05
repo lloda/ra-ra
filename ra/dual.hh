@@ -30,7 +30,8 @@ struct Dual
     struct real_part { struct type {}; };
 
     template <class S>
-    requires (!(std::is_same_v<S, std::decay_t<decltype(std::declval<S>().real())>>))
+    requires requires { typename S::value_type; }
+             && (!(std::is_same_v<S, std::decay_t<decltype(std::declval<S>().real())>>))
     struct real_part<S>
     {
         using type = typename S::value_type;
