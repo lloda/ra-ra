@@ -34,7 +34,7 @@ int main()
         tr.info("concrete() makes copies (", d, ")").test_eq(a, 3);
         tr.test_eq(ra::Small<int, 0> {}, ra::shape(d));
     }
-    tr.section("fixed size");
+    tr.section("fixed size, rank==1");
     {
         ra::Small<int, 3> a = {1, 2, 3};
         ra::Small<int, 3> b = {4, 5, 6};
@@ -45,6 +45,18 @@ int main()
         tr.test_eq(a+b, c);
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a+b));
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
+    }
+    tr.section("fixed size, rank>1");
+    {
+        ra::Small<int, 2, 3> a = {{1, 2, 3}, {4, 5, 6}};
+        ra::Small<int, 2, 3> b = {{10, 20, 30}, {40, 50, 60}};
+        using K = ra::concrete_type<decltype(a+b)>;
+        tr.test(std::is_same_v<K, ra::Small<int, 2, 3>>);
+        auto c = concrete(a+b);
+        tr.test(std::is_same_v<decltype(c), K>);
+        tr.test_eq(a+b, c);
+        tr.test_eq(ra::Small<int, 2> {2, 3}, ra::shape(a+b));
+        tr.test_eq(ra::Small<int, 2> {2, 3}, ra::shape(c));
     }
     tr.section("var size I");
     {

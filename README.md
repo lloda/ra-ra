@@ -66,7 +66,7 @@ The library itself is header-only and has no dependencies other than a C++20 com
 
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can also build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
 
-The tests pass under gcc 10.1 (earlier versions don't support `-std=c++20`). Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
+The tests pass under gcc 10.2 (earlier versions don't support `-std=c++20` or have bugs). Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
 
 <!-- All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for: -->
 

@@ -170,9 +170,10 @@ int main()
             };
 
 // optimize() plugs into the definition of operator*, etc.
+// for rank>2 or even rank>1 depending on the sizes, the performance of this depends on [ra43].
         auto f_small_op = [](auto && A, auto && B)
             {
-                return sum(A*B); // TODO really slow with rank>2 or even rank>1 depending on the sizes
+                return sum(A*B);
             };
 
 #define DEFINE_SMALL_PLY(name, plier)                                   \

@@ -144,18 +144,17 @@ bool check_expr(E const & e)
     return true;
 }
 
-template <class T, class K=mp::iota<mp::len<T>>> struct Match;
+template <class T, class K=mp::iota<mp::len<T>>> struct MatchParent;
 
-// forward decl in atom.hh
 template <class ... P, int ... I>
-struct Match<std::tuple<P ...>, mp::int_list<I ...>>
+struct MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
 {
     using T = std::tuple<P ...>;
     T t;
 
-    constexpr Match(P ... p_): t(std::forward<P>(p_) ...)
+    constexpr MatchParent(P ... p_): t(std::forward<P>(p_) ...)
     {
-        if constexpr (check_expr_s<Match>()) {
+        if constexpr (check_expr_s<MatchParent>()) {
             RA_CHECK(check_expr(*this)); // TODO Maybe do this on ply?
         }
     }
@@ -243,14 +242,38 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
         (std::get<I>(t).adv(k, d), ...);
     }
 
+    constexpr auto stride(int i) const
+    {
+        return std::make_tuple(std::get<I>(t).stride(i) ...);
+    }
+};
+
+// forward decl in atom.hh. Split in MatchParent/Match to allow static keep_stride.
+
+template <class T, class K=mp::iota<mp::len<T>>> struct Match;
+
+template <class ... P, int ... I>
+requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...))
+struct Match<std::tuple<P ...>, mp::int_list<I ...>>: public MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
+{
+    using MatchParent<std::tuple<P ...>, mp::int_list<I ...>>::MatchParent;
+    using MatchParent<std::tuple<P ...>, mp::int_list<I ...>>::t;
+
     constexpr bool keep_stride(dim_t st, int z, int j) const
     {
         return (std::get<I>(t).keep_stride(st, z, j) && ...);
     }
+};
 
-    constexpr auto stride(int i) const
+template <class ... P, int ... I>
+requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...)
+struct Match<std::tuple<P ...>, mp::int_list<I ...>>: public MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
+{
+    using MatchParent<std::tuple<P ...>, mp::int_list<I ...>>::MatchParent;
+
+    constexpr static bool keep_stride(dim_t st, int z, int j)
     {
-        return std::make_tuple(std::get<I>(t).stride(i) ...);
+        return (std::decay_t<P>::keep_stride(st, z, j) && ...);
     }
 };
 

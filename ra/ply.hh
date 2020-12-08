@@ -13,6 +13,7 @@
 #pragma once
 #include "ra/atom.hh"
 #include <functional>
+#include <iostream>
 
 namespace ra {
 
@@ -132,16 +133,16 @@ until(int const jj, A & a, dim_t const s, S const & ss0)
     }
 }
 
-// find the outermost compact dim.
+// find outermost compact dim.
 template <class A>
 constexpr auto
-ocd(A && a)
+ocd()
 {
-    rank_t const rank = a.rank();
-    auto s = a.size(rank-1);
+    rank_t const rank = A::rank_s();
+    auto s = A::size_s(rank-1);
     int j = 1;
-    while (j<rank && a.keep_stride(s, rank-1, rank-1-j)) {
-        s *= a.size(rank-1-j);
+    while (j<rank && A::keep_stride(s, rank-1, rank-1-j)) {
+        s *= A::size_s(rank-1-j);
         ++j;
     }
     return std::make_tuple(s, j);
@@ -158,11 +159,10 @@ plyf(A && a)
         *(a.flat());
     } else if constexpr (rank_s<A>()==1) {
         subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
-    } else if constexpr (0 && size_s<A>()>=0) {
-// this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_stride.
-// test/concrete.cc has a case that shows this.
-// cf https://stackoverflow.com/questions/55288555
-        constexpr auto sj = ocd(a);
+// this can only be enabled when f() will be constexpr; static keep_stride implies all else is also static.
+// important rank>1 for with static size operands [ra43].
+    } else if constexpr (rank_s<A>()>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_stride(d, i, j); }) {
+        constexpr auto sj = ocd<std::decay_t<A>>();
         constexpr auto s = std::get<0>(sj);
         constexpr auto j = std::get<1>(sj);
 // all sub xpr strides advance in compact dims, as they might be different.

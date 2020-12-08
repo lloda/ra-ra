@@ -79,10 +79,10 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   6. [ ]
   7. [ ]
   8. [ ]
-  9. [ ] ra-6.cc
+  9. [ ] test/ra-6.cc
      Using the same lvalue ra::vector multiple times in an expression is broken, since start(ra::Vector) doesn't restart, so they clash with each other in ply. See also [ra39].
      The reason start(ra::Vector) doesn't restart is that ra::Vector may contain a copy of v instead of a reference, same as ra::Scalar. But this is problematic since plying modifies the RaIterator. So I should split ra::Vector into the Array-like owning object and the RaIterator object which is exclusively a temp and can be made to hold a ref.
-  10. [ ] ra-0.cc
+  10. [ ] test/ra-0.cc
      size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
   11. [ ]
   12. [ ]
@@ -112,12 +112,13 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   36. [ ]
   37. [ ]
   38. [ ]
-  39. [ ] ra-7.cc
+  39. [ ] test/ra-7.cc
       There's no reason to restart, since the RaIterator methods are all static. So start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const overload is required for ScalarFlat::operator*.
   40. [ ]
   41. [ ]
   42. [ ]
-  43. [ ] Unassigned
+  43. [ ] bench/bench-dot.cc
+      The performace of f_small_op depends on the optimization in plyf() through ocd<>(). Doing this required having static and non-static versions of RaIterator::keep_stride in Match/Expr. Possibly the same could be done to reduce rank/rank_s, size/size_s to just rank/size, and check for static-ness instead of RANK_ANY/DIM_ANY.
   44. [ ]
   45. [ ]
   46. [ ]
