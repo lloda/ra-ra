@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 12
-@set UPDATED 2020 November 27
+@set VERSION 13
+@set UPDATED 2020 December 11
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -62,6 +62,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 * Reference::         Systematic list of types and functions.
 * @mybibnode{}::      It's been done before.
 * Indices::           Or try the search function.
+* Notes::             Technically...
 @end menu
 
 @end ifnottex
@@ -2371,5 +2372,16 @@ old_style_initializer(2, 3, b.data());
 @c @printindex fn
 
 @c \nocite{JLangReference,FalkoffIverson1968,Abrams1970,FalkoffIverson1973,FalkoffIverson1978,APLexamples1,ArraysCowan,KonaTheLanguage,blitz++2001}
+
+@c ------------------------------------------------
+@node Notes
+@unnumbered Notes
+@c ------------------------------------------------
+
+@enumerate
+@item
+@code{ra::} uses the following C++ features which are not standard (but are supported for all major compilers): @code{#pragma once}, and @code{__COUNTER__}.
+@end enumerate
+
 
 @bye

@@ -53,7 +53,7 @@ constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
 // ---------------------
 
 template <class P, class S>
-concept FlatIterator = requires (P p, S d)
+concept RaFlat = requires (P p, S d)
 {
     { *p };
     { p += d };
@@ -67,7 +67,7 @@ concept RaIterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
     { a.adv(k, d) } -> std::same_as<void>;
     { a.stride(k) };
     { a.keep_stride(d, i, j) } -> std::same_as<bool>;
-    { a.flat() } -> FlatIterator<decltype(a.stride(k))>;
+    { a.flat() } -> RaFlat<decltype(a.stride(k))>;
 };
 
 

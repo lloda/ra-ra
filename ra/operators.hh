@@ -152,7 +152,7 @@ FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, <=>, ==, !=, |, &, ^)
 
 #define DEF_UNARY_OP(OP)                                                \
     template <class A>                                                  \
-    requires (is_ra_pos_rank<A>)                                        \
+    requires (ra_pos_and_any<A>)                                        \
     inline auto operator OP(A && a)                                     \
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
@@ -220,7 +220,7 @@ inline auto at(A && a, I && i)
 }
 
 template <class W, class T, class F>
-requires (is_ra_pos_rank<W> || is_ra_pos_rank<T> || is_ra_pos_rank<F>)
+requires (ra_pos_and_any<W, T, F>)
 inline auto where(W && w, T && t, F && f)
 {
     return pick(cast<bool>(start(std::forward<W>(w))), start(std::forward<F>(f)), start(std::forward<T>(t)));
