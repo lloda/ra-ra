@@ -94,15 +94,11 @@ int main()
             tr.test_eq(1, a.data()[0]);
         }
     }
-    tr.section("iterators' shape_type is not Small, so it can be used by Small");
-    {
-        auto z = ra::ra_traits<std::array<double, 3>>::make(3);
-        tr.test_eq(3u, z.size());
-    }
     tr.section("top level generics");
     {
         ra::Small<double, 2, 3> a {1, 2, 3, 4, 5, 6};
         tr.test_eq(ra::Small<ra::dim_t, 2> {2, 3}, shape(a));
+        tr.test_eq(3u, ra::size(std::array<double, 3>()));
     }
     tr.section("static stride computation");
     {

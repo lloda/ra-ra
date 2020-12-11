@@ -20,13 +20,19 @@ namespace ra {
 
 
 // --------------
-// specialize this for foreign types for which is_scalar<> should be true.
+// foreign types we care about. Specialize _def for more.
 // --------------
 
 RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
+
+RA_IS_DEF(is_foreign_vector, false)
+template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A>> = true;
+template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
+
+template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
 
 
 // --------------
@@ -41,14 +47,6 @@ struct ra_traits_def<std::vector<T, A>>
     using V = std::vector<T, A>;
     using value_type = T;
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { dim_t(v.size()) }; }
-    static V make(dim_t const n)
-    {
-        return std::vector<T, A>(n);
-    }
-    template <class TT> static V make(dim_t n, TT const & t)
-    {
-        return V(n, t);
-    }
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr static rank_t rank(V const & v) { return 1; }
@@ -61,18 +59,6 @@ struct ra_traits_def<std::array<T, N>>
     using V = std::array<T, N>;
     using value_type = T;
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { N }; }
-    constexpr static V make(dim_t const n)
-    {
-        RA_CHECK(n==N);
-        return V {};
-    }
-    template <class TT> constexpr static V make(dim_t n, TT const & t)
-    {
-        RA_CHECK(n==N);
-        V r {};
-        std::fill(r.data(), r.data()+n, t);
-        return r;
-    }
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static dim_t size_s() { return N; }
     constexpr static rank_t rank(V const & v) { return 1; }
@@ -118,13 +104,6 @@ struct ra_traits_def<T>
 // --------------
 // type classification
 // --------------
-
-// other foreign types we care about.
-template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
-template <class A> constexpr bool is_foreign_vector_def = false;
-template <class A> constexpr bool is_foreign_vector = is_foreign_vector_def<std::decay_t<A>>;
-template <class T, class A> constexpr bool is_foreign_vector_def<std::vector<T, A>> = true;
-template <class T, std::size_t N> constexpr bool is_foreign_vector_def<std::array<T, N>> = true;
 
 // TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 // TODO check the rest of the required interface of A and A::flat() right here. Concepts...

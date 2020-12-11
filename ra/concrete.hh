@@ -46,8 +46,6 @@ struct concrete_type_def
 template <class E> using concrete_type = std::decay_t<typename concrete_type_def<E>::type>;
 template <class E> inline auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
 
-// FIXME replace ra_traits::make
-
 template <class E, class X> inline auto
 with_same_shape(E && e, X && x)
 {
