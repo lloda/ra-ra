@@ -173,13 +173,11 @@ struct TensorIndexFlat
     constexpr value_type operator*() { return i; }
 };
 
-// ra may be needed to avoid conversion issues.
-template <int w_, class value_type=ra::dim_t>
+template <int w, class value_type=ra::dim_t>
 struct TensorIndex
 {
     dim_t i = 0;
-    static_assert(w_>=0, "bad TensorIndex");
-    constexpr static int w = w_;
+    static_assert(w>=0, "bad TensorIndex");
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t size_s(int k) { return DIM_BAD; }
@@ -189,7 +187,7 @@ struct TensorIndex
     constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, " d ", d); i += (k==w) * d; }
     constexpr static dim_t const stride(int k) { return (k==w); }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return st*stride(z)==stride(j); }
-    constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
+    constexpr auto flat() const { return TensorIndexFlat<w, value_type> {i}; }
 };
 
 #define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
