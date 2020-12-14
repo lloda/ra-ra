@@ -66,17 +66,6 @@ struct ra_traits_def<std::array<T, N>>
 };
 
 template <class T>
-struct ra_traits_def<T *>
-{
-    using V = T *;
-    using value_type = T;
-    constexpr static dim_t size(V const & v) { return DIM_BAD; }
-    constexpr static dim_t size_s() { return DIM_BAD; }
-    constexpr static rank_t rank(V const & v) { return 1; }
-    constexpr static rank_t rank_s() { return 1; }
-};
-
-template <class T>
 struct ra_traits_def<std::initializer_list<T>>
 {
     using V = std::initializer_list<T>;

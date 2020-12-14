@@ -33,8 +33,7 @@ struct by_raw
     real operator()(A const & a, B const & b)
     {
         constexpr int rank = ra::rank_s<A>();
-        static_assert(rank>=1 && rank<=3, "Bad rank.");
-        if constexpr (1==rank) {
+        if constexpr ((std::is_pointer_v<A> && std::is_pointer_v<B>) || 1==rank) {
             real y(0.);
             for (int j=0; j<S1[0]; ++j) {
                 y += a[j]*b[j];
