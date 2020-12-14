@@ -70,7 +70,7 @@ dim_t chosen_size(dim_t sa, dim_t sb)
     }
 }
 
-// Abort if there is a static shape mismatch. Return 0 if if all the sizes are static. Return 1 if a runtime check is needed.
+// Abort if there is a static mismatch. Return 0 if if all the sizes are static. Return 1 if a runtime check is needed.
 
 template <class E>
 inline constexpr
@@ -249,6 +249,7 @@ struct MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
 };
 
 // forward decl in atom.hh. Split in MatchParent/Match to allow static keep_stride.
+// FIXME keep an eye on https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96164
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 

@@ -51,17 +51,16 @@ struct Scalar
 
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
-// Wrap something with {size, begin} as rank 1 RaIterator.
-// ra::ra_traits_def<V> must be defined with ::size, ::size_s.
+// Wrap foreign vectors.
 // FIXME This can handle temporaries and make_a().begin() can't, look out for that.
 // FIXME Do we need this class? holding rvalue is the only thing it does over View, and it doesn't handle rank!=1.
 template <class V>
-requires requires { ra_traits<V>::size; }
+requires (requires { ra_traits<V>::size_s; } &&
+          requires (V v) { { v.begin() } -> std::random_access_iterator; })
 struct Vector
 {
     V v;
     decltype(v.begin()) p__;
-    static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
     constexpr dim_t size(int k) const { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size(v); }
     constexpr static dim_t size_s(int k) { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size_s(); }
@@ -430,7 +429,7 @@ shape(V const & v)
     if constexpr (requires { ra_traits<V>::shape(v); }) {
         return ra_traits<V>::shape(v);
 // FIXME version for static shape. Would prefer to return the map directly (except maybe for static shapes)
-    } else if constexpr (constexpr rank_t rs=v.rank_s(); rs>=0) {
+    } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
         return ra::Small<dim_t, rs>(map([&v](int k) { return v.size(k); }, ra::iota(rs)));
     } else {
         static_assert(RANK_ANY==rs);
@@ -438,7 +437,6 @@ shape(V const & v)
         std::vector<dim_t> s(r);
         for_each([&v, &s](int k) { s[k] = v.size(k); }, ra::iota(r));
         return s;
-        // return map([this](int k) { return this->size(k); }, ra::iota(rank()));
     }
 }
 
