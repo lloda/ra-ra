@@ -2,7 +2,7 @@
 /// @file small.hh
 /// @brief Arrays with static dimensions. Compare with View, Container.
 
-// (c) Daniel Llorens - 2013-2016, 2018-2019
+// (c) Daniel Llorens - 2013-2016, 2018-2020
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -86,7 +86,7 @@ struct cell_iterator_small
     using strides = mp::take<typename V::strides, framer>;
 
     using shape_type = std::array<dim_t, framer>;
-    using atom_type = typename V::value_type; // FIXME fix ra_traits<SmallBase>
+    using atom_type = typename V::value_type;
     using cell_type = SmallView<atom_type, cell_sizes, cell_strides>;
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
     using frame_type = SmallView<int, sizes, strides>; // only to compute ssizes
@@ -534,8 +534,6 @@ template <template <class ...> class Type_, class T, class sizes, class strides>
 struct ra_traits_small
 {
     using V = Type_<T, sizes, strides>;
-    using value_type = T;
-    // constexpr static auto const & shape(V const & v) { return V::ssizes; }
     constexpr static auto shape(V const & v) { return SmallView<ra::dim_t const, mp::int_list<V::rank_s()>, mp::int_list<1>>(V::ssizes.data()); }
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return V::rank(); }
@@ -568,8 +566,7 @@ template <class T> using builtin_array_sizes_t = typename builtin_array_sizes<T>
 template <class T>
 struct builtin_array_types
 {
-// do preserve const.
-    using A = std::remove_volatile_t<std::remove_reference_t<T>>;
+    using A = std::remove_volatile_t<std::remove_reference_t<T>>; // preserve const
     using E = std::remove_all_extents_t<A>;
     using sizes = builtin_array_sizes_t<A>;
     using view = SmallView<E, sizes>;
@@ -589,8 +586,7 @@ requires (is_builtin_array<T>)
 struct ra_traits_def<T>
 {
     using S = typename builtin_array_types<T>::view;
-// FIXME messy start()
-    constexpr static decltype(auto) shape(T const & t) { return ra::shape(start(t)); }
+    constexpr static decltype(auto) shape(T const & t) { return ra::shape(start(t)); } // FIXME messy
     constexpr static dim_t size(T const & t) { return ra::size_s<S>(); }
     constexpr static dim_t size_s() { return ra::size_s<S>(); }
     constexpr static rank_t rank(T const & t) { return S::rank(); }

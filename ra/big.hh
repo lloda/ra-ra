@@ -121,7 +121,7 @@ struct cell_iterator
 
     using shape_type = std::conditional_t<rank_s()==DIM_ANY, std::vector<dim_t>,
                                           Small<dim_t, rank_s()==DIM_ANY ? 0 : rank_s()>>; // still needs protection :-/
-    using atom_type = typename ra_traits<V>::value_type;
+    using atom_type = std::remove_reference_t<decltype(*(std::declval<V>().data()))>;
     using cell_type = View<atom_type, cellr>;
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
 
@@ -412,8 +412,6 @@ template <class T, rank_t RANK>
 struct ra_traits_def<View<T, RANK>>
 {
     using V = View<T, RANK>;
-    using value_type = T;
-
     static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
     static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return v.rank(); }
@@ -510,8 +508,6 @@ template <class T>
 struct ra_traits_def<View<T, RANK_ANY>>
 {
     using V = View<T, RANK_ANY>;
-    using value_type = T;
-
     static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
     static dim_t size(V const & v) { return v.size(); }
     static rank_t rank(V const & v) { return v.rank(); }

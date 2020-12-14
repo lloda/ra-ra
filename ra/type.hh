@@ -45,7 +45,6 @@ template <class T, class A>
 struct ra_traits_def<std::vector<T, A>>
 {
     using V = std::vector<T, A>;
-    using value_type = T;
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { dim_t(v.size()) }; }
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static dim_t size_s() { return DIM_ANY; }
@@ -57,7 +56,6 @@ template <class T, std::size_t N>
 struct ra_traits_def<std::array<T, N>>
 {
     using V = std::array<T, N>;
-    using value_type = T;
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { N }; }
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static dim_t size_s() { return N; }
@@ -69,7 +67,6 @@ template <class T>
 struct ra_traits_def<std::initializer_list<T>>
 {
     using V = std::initializer_list<T>;
-    using value_type = T;
     constexpr static dim_t size(V const & v) { return v.size(); }
     constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; }
@@ -81,7 +78,6 @@ requires (is_scalar<T>)
 struct ra_traits_def<T>
 {
     using V = T;
-    using value_type = T;
     constexpr static std::array<dim_t, 0> shape(V const & v) { return std::array<dim_t, 0> {}; }
     constexpr static dim_t size(V const & v) { return 1; }
     constexpr static dim_t size_s() { return 1; }
