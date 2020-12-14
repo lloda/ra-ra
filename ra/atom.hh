@@ -55,18 +55,16 @@ template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std
 // ra::ra_traits_def<V> must be defined with ::size, ::size_s.
 // FIXME This can handle temporaries and make_a().begin() can't, look out for that.
 // FIXME Do we need this class? holding rvalue is the only thing it does over View, and it doesn't handle rank!=1.
-template <class V_>
+template <class V>
+requires requires { ra_traits<V>::size; }
 struct Vector
 {
-    using V = V_;
-    using traits = ra_traits<V>;
-
     V v;
     decltype(v.begin()) p__;
     static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0, " k ", k); return traits::size(v); }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, " k ", k); return traits::size_s(); }
+    constexpr dim_t size(int k) const { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size(v); }
+    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -356,13 +354,9 @@ template <class T> requires (is_builtin_array<T>)
 inline constexpr auto
 start(T && t);
 
-// FIXME there should be default traits for all is_ra classes. E.g. Expr doesn't have it. Check ra::rank(), ra::shape() in atom.hh.
-
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using start_t = decltype(ra::start(std::declval<A>()));
-template <class A> using flat_t = decltype(*(ra::start(std::declval<A>()).flat()));
-template <class A> using value_t = std::decay_t<flat_t<A>>;
+template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
 
 template <class V> inline constexpr dim_t
 rank_s()

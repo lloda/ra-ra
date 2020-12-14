@@ -126,7 +126,7 @@ template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = 
 #else
 template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 #endif
-// FIXME find a way to peel qualifiers from parameter type of start_t, to ignore SmallBase<SmallArray> vs SmallBase<SmallView> or const vs nonconst.
+// FIXME find a way to peel qualifiers from parameter type of start(), to ignore SmallBase<SmallArray> vs SmallBase<SmallView> or const vs nonconst.
 template <class A, class T, dim_t N> constexpr bool match_smallvector =
     std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template iterator<0>>
     || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template const_iterator<0>>;
