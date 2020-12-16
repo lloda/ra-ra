@@ -121,7 +121,7 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
 {
     using Match_ = Match<std::tuple<P0, P ...>>;
 
-// see test/ra-9.cc [ra01] for forward() here.
+// test/ra-9.cc [ra1] for forward() here.
     constexpr Pick(P0 p0_, P ... p_): Match_(std::forward<P0>(p0_), std::forward<P>(p_) ...) {}
 
     template <class J> constexpr decltype(auto)

@@ -74,7 +74,8 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   1. [ ]
   2. [ ]
   3. [ ]
-  4. [ ]
+  4. [ ] test/optimize.cc
+     Expression objects only keep pointers to data objects. This means that it is unsafe to define expression objects unless none of the data objects are temporaries. E.g. `auto e = temp + temp;` is unsafe. Either `obj a; obj b; auto e = a + b;` or `obj o = temp + temp;` is safe. Generally there's no reason to ever define expression objects explicitly.
   5. [ ]
   6. [ ]
   7. [ ]

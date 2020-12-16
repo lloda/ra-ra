@@ -82,21 +82,20 @@ int main()
         ra::scalar(x) += c + ra::scalar(int2 { 1, 99 });
         tr.test_eq(int2{2, 0}+int2{1, 3}+int2{1, 99}+int2{2, 4}+int2{1, 99}, x);
     }
-// TODO see related [ra35] below.
     tr.section("ra::start() on foreign types");
     {
         auto ref = std::array<int, 4> {12, 77, 44, 1};
         tr.test_eq(2, expr([](int i) { return i; },
                            ra::start(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array<int, 4> {12, 77, 44, 1})));
-// [ra01] these require ra::start and ra::Expr to forward in the constructor. Clue of why is in the ra::Unique case below.
+// [ra1] these require ra::start and ra::Expr to forward in the constructor. Clue of why is in the ra::Unique case below.
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector<int> {12, 77, 44, 1})));
 // these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes
 // sense, as argname is otherwise always an lref.
         ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
                        ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
-// This depends on ra::Vector constructors moving the Unique through Expr's copying.
+// This depends on ra::Vector constructors moving the Unique through Expr's copying [ra35].
         tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
     }
 // TODO Find out why the ra::Vector() constructors are needed for V=std::array but not for V=std::vector.

@@ -106,12 +106,12 @@ int main()
         test(float(0));
     }
 #if RA_DO_OPT_SMALLVECTOR==1
-    tr.section("small vector ops through vector extensions [ra4]");
+    tr.section("small vector ops through vector extensions");
     {
         using Vec = ra::Small<double, 4>;
         Vec const r {6, 8, 10, 12};
 
-// BUG Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter). So this example only works b/c it's optimized.
+// [ra4] Expr holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter). So this example only works b/c it's optimized.
         auto x = optimize(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
         tr.info("optimization rvalue terms").test(std::is_same_v<decltype(x), Vec>);
         tr.test_eq(r, x);

@@ -67,15 +67,11 @@ struct Vector
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
-// start() doesn't do this, but FIXME? Expr, etc. still does. See [ra35] in test/ra-9.cc.
-// FIXME these should never be called to convert Vector<V> to Vector<V&> etc.
-    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p__(v.begin()) {}; // looks like shouldn't happen
-    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p__(v.begin()) {};
-    constexpr Vector(Vector<std::remove_reference_t<V> &> const & a): v(a.v), p__(v.begin()) {};
-    constexpr Vector(Vector<std::remove_reference_t<V> &> && a): v(a.v), p__(v.begin()) {};
-
-// see test/ra-9.cc [ra01] for forward() here.
+// see test/ra-9.cc [ra1] for forward() here.
     constexpr Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
+// see [ra35] in test/ra-9.cc. FIXME How about I just hold a ref for any kind of V, like container -> iter.
+    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p__(v.begin()) { static_assert(!std::is_reference_v<V>); };
+    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p__(v.begin()) { static_assert(!std::is_reference_v<V>); };
 
     template <class I>
     decltype(auto) at(I const & i)
@@ -100,10 +96,7 @@ struct Vector
 
 template <class V> inline constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
 
-// For STL iterators, no size. P needs to have advance(), *, and [] if used with by_index/ply_index.
-// ra::ra_traits_def<P> doesn't need to be defined.
-// FIXME a type that accepts (begin, end).
-template <class P>
+template <std::random_access_iterator P>
 struct Ptr
 {
     P p__;
@@ -133,7 +126,7 @@ struct Ptr
 template <class I> inline auto ptr(I i) { return Ptr<I> { i }; }
 
 // Same as Ptr, just with a size. For stuff like initializer_list that has size but no storage.
-template <class P>
+template <std::random_access_iterator P>
 struct Span
 {
     P p__;
@@ -292,37 +285,18 @@ template <class Live, class A> struct Reframe;
 template <class T>
 inline constexpr void start(T && t)
 {
-    static_assert(!std::same_as<T, T>, "bad type for ra:: operator");
+    static_assert(!std::same_as<T, T>, "Type cannot be start()ed.");
 }
 
 RA_IS_DEF(is_iota, (std::same_as<A, Iota<typename A::T>>))
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<typename A::C>>))
 RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<typename A::V>>))
 
-// it matters that this copies when T is lvalue. But FIXME shouldn't be necessary. See [ra35] and Vector constructors above.
-// FIXME start should always copy the iterator part but never the content part for Vector or Scalar (or eventually .iter()). Copying the iterator part is necessary if e.g. ra::cross() has to work with RaIterator args, since they are start()ed twice.
-template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
+template <class T> requires (is_foreign_vector<T>)
 inline constexpr auto
 start(T && t)
 {
-    return std::forward<T>(t);
-}
-
-// don't restart these. About Scalar see [ra39]. For Vector see [ra6] FIXME.
-template <class T> requires (is_ra_vector<T> || is_ra_scalar<T>)
-inline constexpr decltype(auto)
-start(T && t)
-{
-    return std::forward<T>(t);
-}
-
-template <class T> requires (is_slice<T>)
-inline constexpr auto
-start(T && t)
-{
-// BUG neither cell_iterator nor cell_iterator_small will retain rvalues [ra4]
-// BUG iter() won't retain the View it's built from, either, which is why it needs to copy Dimv.
-    return iter<0>(std::forward<T>(t));
+    return ra::vector(std::forward<T>(t));
 }
 
 template <class T> requires (is_scalar<T>)
@@ -332,11 +306,36 @@ start(T && t)
     return ra::scalar(std::forward<T>(t));
 }
 
-template <class T> requires (is_foreign_vector<T>)
+// See [ra35] and Vector constructors above. RaIterators need to be restarted in case on every use (eg ra::cross()).
+template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
 inline constexpr auto
 start(T && t)
 {
-    return ra::vector(std::forward<T>(t));
+    return std::forward<T>(t);
+}
+
+// Copy the iterator but not the data. This follows the behavior of iter(View); Vector is just an interface adaptor [ra35].
+template <class T> requires (is_ra_vector<T>)
+inline constexpr auto
+start(T && t)
+{
+    return vector(t.v);
+}
+
+// For Scalar we forward since there's no iterator part.
+template <class T> requires (is_ra_scalar<T>)
+inline constexpr decltype(auto)
+start(T && t)
+{
+    return std::forward<T>(t);
+}
+
+// Neither cell_iterator nor cell_iterator_small will retain rvalues [ra4].
+template <class T> requires (is_slice<T>)
+inline constexpr auto
+start(T && t)
+{
+    return iter<0>(std::forward<T>(t));
 }
 
 template <class T>
