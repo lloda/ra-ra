@@ -26,13 +26,12 @@ struct Dual
 {
     T re, du;
 
-    template <class S>
+    // FIXME requires bug in gcc 10.1
+    template <class S, class Enable=void>
     struct real_part { struct type {}; };
 
     template <class S>
-    requires requires { typename S::value_type; }
-             && (!(std::is_same_v<S, std::decay_t<decltype(std::declval<S>().real())>>))
-    struct real_part<S>
+    struct real_part<S, std::enable_if_t<!(std::is_same_v<S, std::decay_t<decltype(std::declval<S>().real())>>)>>
     {
         using type = typename S::value_type;
     };
