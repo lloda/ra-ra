@@ -123,3 +123,6 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   44. [ ]
   45. [ ]
   46. [ ]
+  47. [ ] ra/big.hh, test/const.cc, ra/view-ops.hh ...
+      FIXME
+      Following the behavior of View::operator(), View::data() should const_cast, but that breaks many View operations. E.g. explode() takes View & const and that means it could only return View<super_t const>. This is clearly broken and a motivation for the viewp branch.

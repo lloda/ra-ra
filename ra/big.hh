@@ -332,7 +332,7 @@ struct View
     constexpr dim_t size(int j) const { return dim[j].size; }
     constexpr dim_t stride(int j) const { return dim[j].stride; }
     constexpr auto data() { return p; }
-    constexpr auto data() const { return p; }
+    constexpr auto data() const { return p; } // [ra47]
 
     // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
 #define SUBSCRIPTS(CONST)                                               \
@@ -440,7 +440,7 @@ struct View<T, RANK_ANY>
     constexpr dim_t size(int const j) const { RA_CHECK(j<rank(), " j : ", j, " rank ", rank()); return dim[j].size; }
     constexpr dim_t stride(int const j) const { RA_CHECK(j<rank(), " j : ", j, " rank ", rank()); return dim[j].stride; }
     constexpr auto data() { return p; }
-    constexpr auto data() const { return p; }
+    constexpr auto data() const { return p; } // [ra47]
 
 // Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar).
 #define SUBSCRIPTS(CONST)                                               \

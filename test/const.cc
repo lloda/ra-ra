@@ -1,97 +1,51 @@
 // -*- mode: c++; coding: utf-8 -*-
 /// @file const.cc
-/// @brief Reduced regression from 8.3 to 9.1.
+/// @brief Const transfer from Container to View
 
-// /opt/gcc-10.1/bin/g++ -o const -std=c++20 -Wall -Werror -ftemplate-backtrace-limit=0 const.cc
+// (c) Daniel Llorens - 2021
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
 
-// from redi @ #gcc
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745
+#include <iostream>
+#include <iterator>
+#include "ra/mpdebug.hh"
+#include "ra/complex.hh"
+#include "ra/test.hh"
+#include "ra/ra.hh"
 
-/*
-<lloda> I posted on ##C++ but maybe here is better                      [16:29]
-<lloda> https://wandbox.org/permlink/WNhI31fE28NQqIzP
-<lloda> error with 9.1 but fine in 8.3
-<lloda> not using tuple (#ifdef 0) makes the error go away              [16:30]
-<lloda> I don't understand why cell<view<const int>> operator= is even
-        instantiated :-/                                                [16:31]
-<redi> lloda: I'm pretty sure it's a consequence of
-       https://gcc.gnu.org/r263625 for https://gcc.gnu.org/PR86963 but I'm not
-       sure why yet                                                     [17:09]
-<redi> I think there's a failure outside the immediate context of a SFINAE
-       check
-<lloda> redi: thanks                                                    [17:15]
-<redi> lloda: I also don't understand why cell<view<const int>> operator= is
-       even instantiated
-<lloda> clang gives a similar error, only it hides the library steps. I'll try
-        to digest the links.                                            [17:27]
-<redi> lloda: yeah I see the problem. It's as I thought                 [17:34]
-<redi> the copy assignment operator of std::tuple now uses
-       conditional<__assignable<const _T1&, const _T2&>(), const tuple&, const
-       __nonesuch_no_braces&>
-<redi> but it's not a dependent context, so SFINAE doesn't apply
-<redi> the __is_assignable check blows up                               [17:35]
-<redi> the instantiation of std::tuple<x,y> triggers the instantiations of its
-       copy assignment operator (because it's not a template) and that blows
-       up                                                               [17:36]
-<redi> drat, I need to fix this
-<zid> Agreed, burn the C++ spec                                         [17:37]
-*/
+using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 
-#include <tuple>
-
-template <class Op, class P0, class P1>
-struct Expr
-{
-    Op op;
-    std::tuple<P0, P1> t;
-
-    using R = decltype(op(*(std::get<0>(t).p), *(std::get<1>(t).p)));
-    operator R() { return op(*(std::get<0>(t).p), *(std::get<1>(t).p)); }
-};
-
-template <class Op, class P0, class P1> inline auto
-expr(Op && op, P0 && p0, P1 && p1)
-{
-    return Expr<Op, P0, P1> { op, { p0, p1 } };
-}
-
-template <class Op, class P0, class P1> inline void
-for_each(Op && op, P0 && p0, P1 && p1)
-{
-    expr(op, p0, p1);
-}
-
-template <class V>
-struct cell
-{
-    typename V::value_type * p;
-    cell(typename V::value_type * p_): p { p_ } {}
-
-    template <class X> decltype(auto) operator =(X && x)
-    {
-        for_each([](auto && y, auto && x)
-                 { y = x; },
-            *this, x);
-    }
-};
-
-template <class T>
-struct view
-{
-    T * p;
-    using value_type = T;
-    cell<view<T>> iter() { return p; }
-    cell<view<T const>> iter() const { return p; }
-    view(T * p_): p(p_) {}
-};
+template <class T> struct is_constref;
+template <class T> struct is_constref<T const &> : std::true_type {};
+template <class T> struct is_constref<T &> : std::false_type {};
+template <class T> constexpr bool is_constref_v = is_constref<T>::value;
 
 int main()
 {
+    TestRecorder tr(std::cout);
+
+    auto test =
+        [&](auto & a, auto & b)
+        {
+            tr.test(!is_constref_v<decltype(*(a.data()))>);
+            tr.skip().test(is_constref_v<decltype(*(b.data()))>); // FIXME [ra47]
+            tr.test(!is_constref_v<decltype(*(a().data()))>);
+            tr.test(is_constref_v<decltype(*(b().data()))>);
+            tr.test(!is_constref_v<decltype(*(a(ra::all).data()))>);
+            tr.test(is_constref_v<decltype(*(b(ra::all).data()))>);
+        };
+
     {
-        int cdata[2] = {44, 44};
-        int ndata[2] = {77, 77};
-        view<int> const c {cdata};
-        view<int> n {ndata};
-        for_each([](auto && n, auto && c) { n = c; }, n.iter(), c.iter());
+        ra::Big<int> a = {1, 2, 3, 4};
+        ra::Big<int> const b = {9, 8, 7, 6};
+        test(a, b);
     }
+    {
+        ra::Big<int, 1> a = {1, 2, 3, 4};
+        ra::Big<int, 1> const b = {9, 8, 7, 6};
+        test(a, b);
+    }
+    return tr.summary();
 }
