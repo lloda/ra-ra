@@ -504,17 +504,6 @@ struct View<T, RANK_ANY>
 #undef DEF_VIEW_COMMON
 #undef DEF_ASSIGNOPS
 
-template <class T>
-struct ra_traits_def<View<T, RANK_ANY>>
-{
-    using V = View<T, RANK_ANY>;
-    static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
-    static dim_t size(V const & v) { return v.size(); }
-    static rank_t rank(V const & v) { return v.rank(); }
-    constexpr static rank_t rank_s() { return RANK_ANY; };
-    constexpr static dim_t size_s() { return DIM_ANY; }
-};
-
 
 // --------------------
 // Container types
