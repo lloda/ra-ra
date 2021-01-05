@@ -389,14 +389,14 @@ struct View
     DEF_ITERATORS(RANK)
     DEF_VIEW_COMMON(RANK)
 
-// implicit conversions from var rank. The guards are needed against ambiguity in ra-viewconst branch.
+// conversions from var rank.
     template <rank_t R>
     requires (R==RANK_ANY && R!=RANK)
     View(View<T const, R> const & x): dim(x.dim), p(x.p) {}
+// conversion from var rank & non const
     template <rank_t R>
     requires (R==RANK_ANY && R!=RANK)
     View(View<std::remove_const_t<T>, R> const & x): dim(x.dim), p(x.p) {}
-
 // conversion to const from non const
     operator View<const_atom<T>, RANK> const & () const
     {
@@ -481,16 +481,16 @@ struct View<T, RANK_ANY>
     DEF_ITERATORS(RANK_ANY)
     DEF_VIEW_COMMON(RANK_ANY)
 
-    // conversions from fixed rank
+// conversion from fixed rank
     template <rank_t R>
     requires (R!=RANK_ANY)
     View(View<T const, R> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+// conversion from fixed rank & non const
     template <rank_t R>
     requires (R!=RANK_ANY)
     View(View<std::remove_const_t<T>, R> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
-
 // conversion to const from non const
-    operator View<const_atom<T>> const & ()
+    operator View<const_atom<T>> const & () const
     {
         return *reinterpret_cast<View<const_atom<T>> const *>(this);
     }
