@@ -603,7 +603,11 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // Provided so that {} calls shape_arg constructor below.
     Container()
     {
-        for (Dim & dimi: View::dim) { dimi = {0, 1}; } // 1 so we can push_back()
+        if constexpr (RANK==RANK_ANY) {
+            View::dim = { Dim {0, 1} }; // rank 1 to avoid store init
+        } else {
+            for (Dim & dimi: View::dim) { dimi = {0, 1}; } // 1 so we can push_back()
+        }
     }
 
     template <class S> void init(S && s)

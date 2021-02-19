@@ -203,5 +203,14 @@ int main(int argc, char * * argv)
         std::array<int, 2> b = {2, 2};
         tr.test_eq(22, a.at(b));
     }
+    tr.section("default constructor of var rank");
+    {
+        ra::Big<int> a {};
+        ra::Big<int, 1> b {};
+        tr.test_eq(b.rank(), a.rank());
+        tr.test_eq(b.size(0), a.size(0));
+        tr.test_eq(1, a.rank());
+        tr.test_eq(0, a.size(0));
+    }
     return tr.summary();
 }

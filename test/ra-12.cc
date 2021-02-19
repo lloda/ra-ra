@@ -45,7 +45,7 @@ int main()
     {
         int x = 0;
         try {
-            ra::Big<int> a {};
+            ra::Big<int> a = 0;
             cout << a.size(0) << endl;
             x = 1;
         } catch (ra_error & e) {
