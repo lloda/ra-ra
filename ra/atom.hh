@@ -380,8 +380,11 @@ size_s()
     if constexpr (requires { ra_traits<V>::size_s(); }) {
         return ra_traits<V>::size_s();
     } else {
-        if constexpr (V::rank_s()==RANK_ANY) {
+        if constexpr (RANK_ANY==rank_s<V>()) {
             return DIM_ANY;
+// make it work for non-registered types.
+        } else if constexpr (0==rank_s<V>()) {
+            return 1;
         } else {
             ra::dim_t s = 1;
             for (int i=0; i!=V::rank_s(); ++i) {

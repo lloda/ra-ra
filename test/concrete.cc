@@ -15,6 +15,8 @@
 
 using std::cout, std::endl;
 
+struct ZZ { int x = 0; };
+
 int main()
 {
     ra::TestRecorder tr(std::cout);
@@ -33,6 +35,11 @@ int main()
         d = 99;
         tr.info("concrete() makes copies (", d, ")").test_eq(a, 3);
         tr.test_eq(ra::Small<int, 0> {}, ra::shape(d));
+    }
+
+    tr.section("unregistered scalar types");
+    {
+        tr.test(std::is_same_v<ra::concrete_type<ZZ>, ZZ>);
     }
     tr.section("fixed size, rank==1");
     {

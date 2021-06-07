@@ -234,8 +234,9 @@ dim_t proddim(D d, D dend)
     template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
 #define DEF_VIEW_COMMON(RANK)                                           \
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
-    /* Constructors using pointers need extra care */                   \
+    /* FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>) */ \
     constexpr View(): p(nullptr) {}                                     \
+    /* Constructors using pointers need extra care */                   \
     constexpr View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */ \
     template <class SS>                                                 \
     View(SS && s, T * p_): p(p_)                                        \

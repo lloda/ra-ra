@@ -331,7 +331,7 @@ inline decltype(auto) refmax(A && a, Less && less = std::less<value_t<A>>())
 template <class A>
 inline constexpr auto sum(A && a)
 {
-    value_t<A> c {};
+    concrete_type<value_t<A>> c {};
     for_each([&c](auto && a) { c += a; }, a);
     return c;
 }
@@ -339,7 +339,7 @@ inline constexpr auto sum(A && a)
 template <class A>
 inline constexpr auto prod(A && a)
 {
-    value_t<A> c(1.);
+    concrete_type<value_t<A>> c(1.);
     for_each([&c](auto && a) { c *= a; }, a);
     return c;
 }

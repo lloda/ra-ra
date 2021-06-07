@@ -52,7 +52,7 @@ env.Prepend(CPPPATH=['..', '.'],
 tester = ra.to_test_ra(env, variant_dir)
 
 [tester(test)
- for test in ['bench', 'big-0', 'big-1', 'bug83', 'compatibility', 'concrete', 'const',
+ for test in ['at', 'bench', 'big-0', 'big-1', 'bug83', 'compatibility', 'concrete', 'const',
               'dual', 'early', 'explode-0', 'foreign', 'frame-new', 'frame-old', 'from', 'gcc11', 'io',
               'iterator-small', 'list9', 'macros', 'mem-fn', 'nested-0', 'old', 'operators', 'optimize',
               'owned', 'ownership', 'ply', 'ra-0', 'ra-1', 'ra-10', 'ra-11', 'ra-12', 'ra-13', 'ra-2',

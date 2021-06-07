@@ -2,7 +2,7 @@
 /// @file concrete.hh
 /// @brief Obtain concrete type from array expression.
 
-// (c) Daniel Llorens - 2017
+// (c) Daniel Llorens - 2017, 2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -19,7 +19,7 @@ template <class E>
 requires (size_s<E>()==DIM_ANY)
 struct concrete_type_def_1<E>
 {
-    using type = Big<value_t<E>, E::rank_s()>;
+    using type = Big<value_t<E>, rank_s<E>()>;
 };
 
 template <class E>
@@ -31,15 +31,27 @@ struct concrete_type_def_1<E>
     {
         using type = Small<value_t<E>, E::size_s(I) ...>;
     };
-    using type = typename T<mp::iota<E::rank_s()>>::type;
+    using type = typename T<mp::iota<rank_s<E>()>>::type;
+};
+
+template <class E> struct concrete_type_def;
+
+// Treat unregistered types as scalars. FIXME (in type.hh).
+
+template <class E>
+requires (0==rank_s<E>() && !(requires { std::decay_t<E>::rank_s(); }))
+struct concrete_type_def<E>
+{
+    using type = std::decay_t<E>;
 };
 
 template <class E>
-struct concrete_type_def
+requires (0!=rank_s<E>() || requires { std::decay_t<E>::rank_s(); })
+struct concrete_type_def<E>
 {
     using type = std::conditional_t<
         is_scalar<E>,
-        E, // scalars are their own concrete_type.
+        std::decay_t<E>, // scalars are their own concrete_type.
         typename concrete_type_def_1<std::decay_t<decltype(start(std::declval<E>()))>>::type>;
 };
 
