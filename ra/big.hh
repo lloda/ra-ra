@@ -168,6 +168,16 @@ struct cell_iterator
             return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) };
         }
     }
+    template <class I> constexpr
+    decltype(auto) at(I const & i_) const // ugh
+    {
+        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");
+        if constexpr (0==cellr) {
+            return c.p[Indexer1::index_short(rank(), dim, i_)];
+        } else {
+            return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) };
+        }
+    }
 
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };

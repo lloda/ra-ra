@@ -39,7 +39,8 @@ struct Scalar
     constexpr static dim_t size_s(int k) { return DIM_BAD; }
     constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
 
-    template <class I> constexpr C & at(I const & i) { return c; }
+    template <class I> constexpr decltype(auto) at(I const & i) { return c; }
+    template <class I> constexpr decltype(auto) at(I const & i) const { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t stride(int k) { return 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return true; }

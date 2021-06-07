@@ -25,7 +25,7 @@ void example1()
     ra::Big<coord, 1> I = { {1, 1}, {2, 2} };
 
     // Blitz++ had A[I] = B.
-    // In ra::, both sides of = must agree in shape.
+    // In ra::, both sides of = must agree in shape. E.g. if A has rank 1, then I and B must agree in shape (not A and B).
     // Also, the selector () is outer product (to index two axes, you need two arguments). The 'coord' selector is at().
     // So this is the most direct translation. Note the -> decltype(auto) to construct a reference expr.
     map([&A](auto && c) -> decltype(auto) { return A.at(c); }, I)

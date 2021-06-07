@@ -30,7 +30,8 @@ template <class E> inline decltype(auto) constexpr optimize(E && e) { return std
     struct OPNAME                                                       \
     {                                                                   \
         template <class A, class B>                                     \
-        decltype(auto) operator()(A && a, B && b) { return std::forward<A>(a) OP std::forward<B>(b); } \
+            constexpr decltype(auto)                                    \
+            operator()(A && a, B && b) const { return std::forward<A>(a) OP std::forward<B>(b); } \
     };
 DEFINE_NAMED_BINARY_OP(+, plus)
 DEFINE_NAMED_BINARY_OP(-, minus)

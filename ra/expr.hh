@@ -48,6 +48,12 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
         return op(std::get<I>(this->t).at(i) ...);
     }
 
+    template <class J> constexpr decltype(auto)
+    at(J const & i) const
+    {
+        return op(std::get<I>(this->t).at(i) ...);
+    }
+
     constexpr decltype(auto)
     flat()
     {

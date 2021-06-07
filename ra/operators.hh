@@ -212,11 +212,12 @@ inline auto pack(A && ... a)
     return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
 }
 
-// FIXME Inelegant story wrt plain array / nested array :-/
+// FIXME Inelegant story wrt plain array / nested array :-|
 template <class A, class I>
 inline auto at(A && a, I && i)
 {
-    return map([&a](auto && i) -> decltype(auto) { return a.at(i); }, i);
+    return map([a = std::tuple<A>(std::forward<A>(a))]
+               (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); }, i);
 }
 
 template <class W, class T, class F>
