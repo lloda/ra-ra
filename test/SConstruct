@@ -52,14 +52,13 @@ env.Prepend(CPPPATH=['..', '.'],
 tester = ra.to_test_ra(env, variant_dir)
 
 [tester(test)
- for test in ['old', 'ra-0', 'ra-1', 'ra-2', 'ra-3', 'ra-4', 'ra-5', 'ra-6', 'ra-7', 'ra-8', 'ra-9',
-              'ra-11', 'ra-12', 'ra-13', 'types', 'io', 'from', 'nested-0', 'owned', 'ownership', 'ply',
-              'small-0', 'small-1', 'big-0', 'big-1', 'view',
-              'return-expr', 'reduction', 'frame-old', 'frame-new', 'compatibility',
-              'dual', 'ra-dual', 'mem-fn', 'stl-compat', 'where', 'tuples', 'wedge',
-              'operators', 'tensorindex', 'explode-0', 'wrank', 'optimize', 'reshape', 'concrete',
-              'bench', 'iterator-small', 'tensor-indices', 'list9', 'early', 'macros',
-              'bug83', 'foreign', 'const', 'gcc11',
+ for test in ['bench', 'big-0', 'big-1', 'bug83', 'compatibility', 'concrete', 'const',
+              'dual', 'early', 'explode-0', 'foreign', 'frame-new', 'frame-old', 'from', 'gcc11', 'io',
+              'iterator-small', 'list9', 'macros', 'mem-fn', 'nested-0', 'old', 'operators', 'optimize',
+              'owned', 'ownership', 'ply', 'ra-0', 'ra-1', 'ra-10', 'ra-11', 'ra-12', 'ra-13', 'ra-2',
+              'ra-3', 'ra-4', 'ra-5', 'ra-6', 'ra-7', 'ra-8', 'ra-9', 'ra-dual', 'reduction', 'reshape',
+              'return-expr', 'small-0', 'small-1', 'stl-compat', 'tensor-indices', 'tensorindex',
+              'tuples', 'types', 'view-ops', 'wedge', 'where', 'wrank'
               # 'bug90745', # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 gcc 9-10.2 so far
               # 'end'
               ]]

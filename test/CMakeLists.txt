@@ -5,10 +5,11 @@ cmake_minimum_required (VERSION 3.5)
 project (ra-test)
 include_directories ("..")
 
-SET (TARGETS bench big-0 big-1 check-runtime compatibility concrete dual explode-0 frame-old
-  frame-new from io iterator-small mem-fn nested-0 operators optimize owned ownership ply old
-  ra-0 ra-10 ra-1 ra-2 ra-3 ra-4 ra-5 ra-6 ra-7 ra-8 ra-9 ra-11 ra-dual reduction reshape view
-  return-expr small-0 small-1 stl-compat tensorindex tuples types wedge where wrank list9 early
-  macros bug83 foreign const gcc11)
+SET (TARGETS bench big-0 big-1 bug83 compatibility concrete const dual early
+  explode-0 foreign frame-new frame-old from gcc11 io iterator-small list9
+  macros mem-fn nested-0 old operators optimize owned ownership ply ra-0 ra-1
+  ra-10 ra-11 ra-12 ra-13 ra-2 ra-3 ra-4 ra-5 ra-6 ra-7 ra-8 ra-9 ra-dual
+  reduction reshape return-expr small-0 small-1 stl-compat tensor-indices
+  tensorindex tuples types view-ops wedge where wrank)
 
 include ("../config/cc.cmake")

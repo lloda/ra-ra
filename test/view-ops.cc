@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file view.cc
+/// @file view-ops.cc
 /// @brief Checks for view operations
 
 // (c) Daniel Llorens - 2013-2015, 2019

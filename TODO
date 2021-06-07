@@ -47,7 +47,7 @@ checkbox [C-ct] flip TODO
     - [X] Support operator <=> <2020-09-15 Tue 13:50>
       - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
   - [X] Error report, debugging [3/3]
-    - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/check-runtime.cc
+    - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/ra-12.cc
       * This was fixed between v8 and v10, see examples/throw.cc.
     - [X] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.hh:513 init<SS>(SS const & s).
       - [X] for Container constructors
