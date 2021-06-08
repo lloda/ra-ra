@@ -88,7 +88,7 @@ int main()
         tr.test_eq(2, expr([](int i) { return i; },
                            ra::start(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array<int, 4> {12, 77, 44, 1})));
-// [ra1] these require ra::start and ra::Expr to forward in the constructor. Clue of why is in the ra::Unique case below.
+// [ra1] these require ra::start and ra::Expr to forward in the constructor. Clue for why is in the ra::Unique case below.
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector<int> {12, 77, 44, 1})));
 // these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes

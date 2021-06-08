@@ -121,11 +121,18 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
 {
     using Match_ = Match<std::tuple<P0, P ...>>;
 
-// test/ra-9.cc [ra1] for forward() here.
+// test/ra-9.cc [ra1]
     constexpr Pick(P0 p0_, P ... p_): Match_(std::forward<P0>(p0_), std::forward<P>(p_) ...) {}
+    RA_DEF_ASSIGNOPS_SELF(Pick)
 
     template <class J> constexpr decltype(auto)
     at(J const & j)
+    {
+        return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
+    }
+
+    template <class J> constexpr decltype(auto)
+    at(J const & j) const
     {
         return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
     }

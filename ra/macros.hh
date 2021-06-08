@@ -60,8 +60,16 @@ namespace mp {
 // Assign ops for settable array iterators; these must be members.
 // For containers & views this might be defined differently.
 // forward to make sure value y is not misused as ref [ra05].
+#define RA_DEF_ASSIGNOPS_LINE(OP)                                       \
+    for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x)
 #define RA_DEF_ASSIGNOPS(OP)                                            \
-    template <class X> constexpr void operator OP(X && x)               \
-    { for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x); }
+    template <class X> constexpr void operator OP(X && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
+
+// Restate RA_DEF_ASSIGNOPS for expression classes since the template doesn't replace the assignment ops.
+#define RA_DEF_ASSIGNOPS_SELF(TYPE)                                     \
+    TYPE & operator=(TYPE && x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
+    TYPE & operator=(TYPE const & x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
+    constexpr TYPE(TYPE && x) = default;                                \
+    constexpr TYPE(TYPE const & x) = default;
 
 } // namespace mp
