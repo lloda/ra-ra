@@ -179,7 +179,7 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, cos, sin)
 FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf)
 FOR_EACH(DEF_NAME_OP, max, min, abs, odd, asin, acos, atan, atan2, clamp)
-FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg)
+FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg, lerp)
 #undef DEF_NAME_OP
 
 #define DEF_NAME_OP(OP)                                                 \
@@ -286,20 +286,20 @@ inline bool lexicographical_compare(A && a, B && b)
 }
 
 // FIXME only works with numeric types.
-using std::min;
 template <class A>
 inline auto amin(A && a)
 {
+    using std::min;
     using T = value_t<A>;
     T c = std::numeric_limits<T>::has_infinity ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::max();
     for_each([&c](auto && a) { if (a<c) { c = a; } }, a);
     return c;
 }
 
-using std::max;
 template <class A>
 inline auto amax(A && a)
 {
+    using std::max;
     using T = value_t<A>;
     T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
     for_each([&c](auto && a) { if (c<a) { c = a; } }, a);
