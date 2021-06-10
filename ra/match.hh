@@ -144,17 +144,17 @@ bool check_expr(E const & e)
     return true;
 }
 
-template <class T, class K=mp::iota<mp::len<T>>> struct MatchParent;
+template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 
 template <class ... P, int ... I>
-struct MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
+struct Match<std::tuple<P ...>, mp::int_list<I ...>>
 {
     using T = std::tuple<P ...>;
     T t;
 
-    constexpr MatchParent(P ... p_): t(std::forward<P>(p_) ...)
+    constexpr Match(P ... p_): t(std::forward<P>(p_) ...)
     {
-        if constexpr (check_expr_s<MatchParent>()) {
+        if constexpr (check_expr_s<Match>()) {
             RA_CHECK(check_expr(*this)); // TODO Maybe do this on ply?
         }
     }
@@ -246,33 +246,14 @@ struct MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
     {
         return std::make_tuple(std::get<I>(t).stride(i) ...);
     }
-};
-
-// forward decl in atom.hh. Split in MatchParent/Match to allow static keep_stride.
-// FIXME keep an eye on https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96164
-
-template <class T, class K=mp::iota<mp::len<T>>> struct Match;
-
-template <class ... P, int ... I>
-requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...))
-struct Match<std::tuple<P ...>, mp::int_list<I ...>>: public MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
-{
-    using MatchParent<std::tuple<P ...>, mp::int_list<I ...>>::MatchParent;
-    using MatchParent<std::tuple<P ...>, mp::int_list<I ...>>::t;
 
     constexpr bool keep_stride(dim_t st, int z, int j) const
+        requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...))
     {
         return (std::get<I>(t).keep_stride(st, z, j) && ...);
     }
-};
-
-template <class ... P, int ... I>
-requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...)
-struct Match<std::tuple<P ...>, mp::int_list<I ...>>: public MatchParent<std::tuple<P ...>, mp::int_list<I ...>>
-{
-    using MatchParent<std::tuple<P ...>, mp::int_list<I ...>>::MatchParent;
-
     constexpr static bool keep_stride(dim_t st, int z, int j)
+        requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...)
     {
         return (std::decay_t<P>::keep_stride(st, z, j) && ...);
     }
