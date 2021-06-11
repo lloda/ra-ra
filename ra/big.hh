@@ -386,14 +386,6 @@ struct View
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     }                                                                   \
-    /* TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
-    template <class ... I>                                              \
-    requires (!(is_beatable<I>::value && ...))                          \
-    auto operator()(I && ... i) CONST                                   \
-        requires (RANK!=RANK_ANY)                                       \
-    {                                                                   \
-        return from(*this, std::forward<I>(i) ...);                     \
-    }                                                                   \
     /* Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar) */ \
     template <class ... I>                                              \
     requires (is_beatable<I>::value && ...)                             \
@@ -409,14 +401,6 @@ struct View
             sub.dim[i] = this->dim[i-extended];                         \
         }                                                               \
         return sub;                                                     \
-    }                                                                   \
-    /* TODO More than one selector... */                                \
-    template <class ... I>                                              \
-    requires (!(is_beatable<I>::value && ...))                          \
-    auto operator()(I && ... i) CONST                                   \
-        requires (RANK==RANK_ANY)                                       \
-    {                                                                   \
-        return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
     template <class  I>                                                 \
     auto at(I && i) CONST                                               \
@@ -436,6 +420,13 @@ struct View
             return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), /* Dimv is std::vector */ \
                     data() + Indexer1::index_p(dim, i) };               \
         }                                                               \
+    }                                                                   \
+    /* TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
+    template <class ... I>                                              \
+    requires (!(is_beatable<I>::value && ...))                          \
+    auto operator()(I && ... i) CONST                                   \
+    {                                                                   \
+        return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
