@@ -219,62 +219,9 @@ dim_t proddim(D d, D dend)
 // [rank] [size...] p -> [data...] (var rank)
 // TODO size is immutable so that it can be kept together with rank.
 
-#define DEF_ITERATORS(RANK)                                             \
-    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dim), p); } \
-    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dim, p); } \
-    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dim, p); } \
-    constexpr auto begin() const { return stl_iterator(iter()); }                 \
-    constexpr auto begin() { return stl_iterator(iter()); }                       \
-    /* here dim doesn't matter, but we have to give it if it's a ref. */ \
-    constexpr auto end() const { return stl_iterator(decltype(iter())(dim, nullptr)); } \
-    constexpr auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
-
 // See same thing for SmallBase.
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
-#define DEF_VIEW_COMMON(RANK)                                           \
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)                          \
-    /* FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>) */ \
-    constexpr View(): p(nullptr) {}                                     \
-    /* Constructors using pointers need extra care */                   \
-    constexpr View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} /* [ra36] */ \
-    template <class SS>                                                 \
-    View(SS && s, T * p_): p(p_)                                        \
-    {                                                                   \
-        if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {        \
-            ra::resize(View::dim, start(s).size(0)); /* [ra37] */       \
-            start(View::dim) = s;                                       \
-        } else {                                                        \
-            ra::resize(View::dim, start(s).size(0)); /* [ra37] */       \
-            for_each([](Dim & dim, auto && s) { dim.size = s; }, View::dim, s); \
-            filldim(View::dim.size(), View::dim.end());                 \
-        }                                                               \
-    }                                                                   \
-    View(std::initializer_list<dim_t> s, T * p_): View(start(s), p_) {} \
-    /* lack of these causes runtime bug [ra38] FIXME why? */            \
-    View(View && x) = default;                                          \
-    View(View const & x) = default;                                     \
-    /* declaring View(View &&) deletes this, so we need to repeat it [ra34] */ \
-    View & operator=(View const & x)                                    \
-    {                                                                   \
-        ra::start(*this) = x;                                           \
-        return *this;                                                   \
-    }                                                                   \
-    /* array type is not deduced by (X &&) */                           \
-    View & operator=(typename nested_braces<T, RANK>::list x)           \
-    {                                                                   \
-        ra::iter<-1>(*this) = x;                                        \
-        return *this;                                                   \
-    }                                                                   \
-    /* braces row-major ravel for rank!=1 */                            \
-    using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>; \
-    View & operator=(ravel_arg const x)                                 \
-    {                                                                   \
-        RA_CHECK(p && this->size()==ra::dim_t(x.size()), "bad assignment"); \
-        std::copy(x.begin(), x.end(), this->begin());                   \
-        return *this;                                                   \
-    }                                                                   \
-    bool const empty() const { return 0==size(); } /* TODO Optimize */
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
@@ -323,7 +270,7 @@ template <class T> using const_atom = std::conditional_t<std::is_const_v<T>, no_
 
 
 // --------------------
-// View for fixed rank
+// View
 // --------------------
 
 // TODO Parameterize on Child having .data() so that there's only one pointer.
@@ -331,19 +278,86 @@ template <class T> using const_atom = std::conditional_t<std::is_const_v<T>, no_
 template <class T, rank_t RANK>
 struct View
 {
-    using Dimv = Small<Dim, RANK>;
+    using Dimv = std::conditional_t<RANK==RANK_ANY, std::vector<Dim>, Small<Dim, RANK==RANK_ANY ? 0 : RANK>>;
 
     Dimv dim;
     T * p;
 
     constexpr static rank_t rank_s() { return RANK; };
-    constexpr static rank_t rank() { return RANK; }
+    constexpr static rank_t rank() requires (RANK!=RANK_ANY) { return RANK; }
+    constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dim.size()); }
+
     constexpr static dim_t size_s(int j) { return DIM_ANY; }
     constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
-    constexpr dim_t size(int j) const { return dim[j].size; }
-    constexpr dim_t stride(int j) const { return dim[j].stride; }
+
+    constexpr dim_t size(int j) const
+    {
+        if constexpr (RANK==RANK_ANY) {
+            RA_CHECK(j<rank(), " j : ", j, " rank ", rank());
+        }
+        return dim[j].size;
+    }
+    constexpr dim_t stride(int j) const
+    {
+        if constexpr (RANK==RANK_ANY) {
+            RA_CHECK(j<rank(), " j : ", j, " rank ", rank());
+        }
+        return dim[j].stride;
+    }
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; } // [ra47]
+
+    // FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>)
+    constexpr View(): p(nullptr) {}
+    // Constructors using pointers need extra care
+    constexpr View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} // [ra36]
+    template <class SS>
+    View(SS && s, T * p_): p(p_)
+    {
+        if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {
+            ra::resize(View::dim, start(s).size(0)); // [ra37]
+            start(View::dim) = s;
+        } else {
+            ra::resize(View::dim, start(s).size(0)); // [ra37]
+            for_each([](Dim & dim, auto && s) { dim.size = s; }, View::dim, s);
+            filldim(View::dim.size(), View::dim.end());
+        }
+    }
+    View(std::initializer_list<dim_t> s, T * p_): View(start(s), p_) {}
+    // lack of these causes runtime bug [ra38] FIXME why?
+    View(View && x) = default;
+    View(View const & x) = default;
+    // declaring View(View &&) deletes this, so we need to repeat it [ra34]
+    View & operator=(View const & x)
+    {
+        ra::start(*this) = x;
+        return *this;
+    }
+    // array type is not deduced by (X &&)
+    View & operator=(typename nested_braces<T, RANK>::list x)
+    {
+        ra::iter<-1>(*this) = x;
+        return *this;
+    }
+    // braces row-major ravel for rank!=1
+    using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>;
+    View & operator=(ravel_arg const x)
+    {
+        RA_CHECK(p && this->size()==ra::dim_t(x.size()), "bad assignment");
+        std::copy(x.begin(), x.end(), this->begin());
+        return *this;
+    }
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    bool const empty() const { return 0==size(); } // TODO Optimize
+
+    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dim), p); }
+    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dim, p); }
+    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dim, p); }
+    constexpr auto begin() const { return stl_iterator(iter()); }
+    constexpr auto begin() { return stl_iterator(iter()); }
+    // here dim doesn't matter, but we have to give it if it's a ref
+    constexpr auto end() const { return stl_iterator(decltype(iter())(dim, nullptr)); }
+    constexpr auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
 
     // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
 #define SUBSCRIPTS(CONST)                                               \
@@ -351,6 +365,7 @@ struct View
     requires ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK      \
               && (0 + ... + is_beatable<I>::value)==sizeof...(I))       \
     auto operator()(I && ... i) CONST                                   \
+        requires (RANK!=RANK_ANY)                                       \
     {                                                                   \
         constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
         constexpr rank_t subrank = rank_sum(RANK, extended);            \
@@ -367,6 +382,7 @@ struct View
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<I>)==RANK)                  \
     decltype(auto) operator()(I const & ... i) CONST                    \
+        requires (RANK!=RANK_ANY)                                       \
     {                                                                   \
         return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
     }                                                                   \
@@ -374,90 +390,15 @@ struct View
     template <class ... I>                                              \
     requires (!(is_beatable<I>::value && ...))                          \
     auto operator()(I && ... i) CONST                                   \
+        requires (RANK!=RANK_ANY)                                       \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
-    template <class  I>                                                 \
-    auto at(I && i) CONST                                               \
-    {                                                                   \
-        constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>());  /* gcc accepts i.size() */ \
-        using Sub = View<T CONST, subrank>;                             \
-        if constexpr (subrank==RANK_ANY) {                              \
-            return Sub { typename Sub::Dimv(dim.begin()+ra::size(i), dim.end()),  /* Dimv is std::vector */ \
-                    data() + Indexer1::index_p(dim, i) };               \
-        } else {                                                        \
-            return Sub { typename Sub::Dimv(ptr(dim.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
-                    data() + Indexer1::index_p(dim, i) };               \
-        }                                                               \
-    }                                                                   \
-    constexpr decltype(auto) operator[](dim_t const i) CONST            \
-    {                                                                   \
-        return (*this)(i);                                              \
-    }
-    FOR_EACH(SUBSCRIPTS, /*const*/, const)
-#undef SUBSCRIPTS
-
-    DEF_ITERATORS(RANK)
-    DEF_VIEW_COMMON(RANK)
-
-// conversions from var rank.
-    template <rank_t R>
-    requires (R==RANK_ANY && R!=RANK)
-    View(View<T const, R> const & x): dim(x.dim), p(x.p) {}
-// conversion from var rank & non const
-    template <rank_t R>
-    requires (R==RANK_ANY && R!=RANK)
-    View(View<std::remove_const_t<T>, R> const & x): dim(x.dim), p(x.p) {}
-// conversion to const from non const
-    operator View<const_atom<T>, RANK> const & () const
-    {
-        return *reinterpret_cast<View<const_atom<T>, RANK> const *>(this);
-    }
-
-// conversions to scalar.
-    operator T & () { static_assert(RANK==0, "bad rank"); return data()[0]; }
-    operator T const & () const { static_assert(RANK==0, "bad rank"); return data()[0]; }
-};
-
-template <class T, rank_t RANK>
-struct ra_traits_def<View<T, RANK>>
-{
-    using V = View<T, RANK>;
-    static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
-    static dim_t size(V const & v) { return v.size(); }
-    constexpr static rank_t rank(V const & v) { return v.rank(); }
-    constexpr static rank_t rank_s() { return RANK; };
-    constexpr static dim_t size_s() { return RANK==0 ? 1 : DIM_ANY; }
-};
-
-
-// --------------------
-// View for var rank
-// --------------------
-
-template <class T>
-struct View<T, RANK_ANY>
-{
-    using Dimv = std::vector<Dim>; // maybe use Unique<Dim, 1> here.
-
-    Dimv dim;
-    T * p;
-
-    constexpr static rank_t rank_s() { return RANK_ANY; }
-    constexpr rank_t rank() const { return rank_t(dim.size()); }
-    constexpr static dim_t size_s() { return DIM_ANY; }
-    constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
-// checking because std::vector doesn't.
-    constexpr dim_t size(int const j) const { RA_CHECK(j<rank(), " j : ", j, " rank ", rank()); return dim[j].size; }
-    constexpr dim_t stride(int const j) const { RA_CHECK(j<rank(), " j : ", j, " rank ", rank()); return dim[j].stride; }
-    constexpr auto data() { return p; }
-    constexpr auto data() const { return p; } // [ra47]
-
-// Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar).
-#define SUBSCRIPTS(CONST)                                               \
+    /* Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar) */ \
     template <class ... I>                                              \
     requires (is_beatable<I>::value && ...)                             \
     auto operator()(I && ... i) CONST                                   \
+        requires (RANK==RANK_ANY)                                       \
     {                                                                   \
         constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
         assert(this->rank()+extended>=0);                               \
@@ -473,14 +414,28 @@ struct View<T, RANK_ANY>
     template <class ... I>                                              \
     requires (!(is_beatable<I>::value && ...))                          \
     auto operator()(I && ... i) CONST                                   \
+        requires (RANK==RANK_ANY)                                       \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
-    template <class I>                                                  \
+    template <class  I>                                                 \
     auto at(I && i) CONST                                               \
     {                                                                   \
-        return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), /* Dimv is std::vector */ \
-                data() + Indexer1::index_p(dim, i) };                   \
+        if constexpr (RANK!=RANK_ANY)                                   \
+        {                                                               \
+            constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>()); \
+            using Sub = View<T CONST, subrank>;                         \
+            if constexpr (subrank==RANK_ANY) {                          \
+                return Sub { typename Sub::Dimv(dim.begin()+ra::size(i), dim.end()),  /* Dimv is std::vector */ \
+                        data() + Indexer1::index_p(dim, i) };           \
+            } else {                                                    \
+                return Sub { typename Sub::Dimv(ptr(dim.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
+                        data() + Indexer1::index_p(dim, i) };           \
+            }                                                           \
+        } else {                                                        \
+            return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), /* Dimv is std::vector */ \
+                    data() + Indexer1::index_p(dim, i) };               \
+        }                                                               \
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
@@ -489,30 +444,59 @@ struct View<T, RANK_ANY>
     FOR_EACH(SUBSCRIPTS, /*const*/, const)
 #undef SUBSCRIPTS
 
-    DEF_ITERATORS(RANK_ANY)
-    DEF_VIEW_COMMON(RANK_ANY)
-
-// conversion from fixed rank
+// conversion from var rank to fixed rank
+    template <rank_t R>
+    requires (R==RANK_ANY && R!=RANK)
+    View(View<T const, R> const & x) requires (RANK!=RANK_ANY): dim(x.dim), p(x.p) {}
+// conversion from var rank & non const to fixed rank and const
+    template <rank_t R>
+    requires (R==RANK_ANY && R!=RANK)
+    View(View<std::remove_const_t<T>, R> const & x) requires (RANK!=RANK_ANY): dim(x.dim), p(x.p) {}
+// conversion from fixed rank to var rank
     template <rank_t R>
     requires (R!=RANK_ANY)
-    View(View<T const, R> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
-// conversion from fixed rank & non const
+    View(View<T const, R> const & x) requires (RANK==RANK_ANY): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+// conversion from fixed rank & non const to var rank and const
     template <rank_t R>
     requires (R!=RANK_ANY)
-    View(View<std::remove_const_t<T>, R> const & x): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+    View(View<std::remove_const_t<T>, R> const & x) requires (RANK==RANK_ANY): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
 // conversion to const from non const
-    operator View<const_atom<T>> const & () const
+    operator View<const_atom<T>, RANK> const & () const
     {
-        return *reinterpret_cast<View<const_atom<T>> const *>(this);
+        return *reinterpret_cast<View<const_atom<T>, RANK> const *>(this);
     }
-
-// conversions to scalar
-    operator T & () { RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar"); return data()[0]; };
-    operator T const & () const { RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar"); return data()[0]; };
+// conversions to scalar.
+    operator T & ()
+    {
+        if constexpr (RANK==RANK_ANY) {
+            RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar");
+        } else {
+            static_assert(RANK==0, "bad rank");
+        }
+        return data()[0];
+    }
+    operator T const & () const
+    {
+        if constexpr (RANK==RANK_ANY) {
+            RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar");
+        } else {
+            static_assert(RANK==0, "bad rank");
+        }
+        return data()[0];
+    }
 };
 
-#undef DEF_ITERATORS
-#undef DEF_VIEW_COMMON
+template <class T, rank_t RANK>
+struct ra_traits_def<View<T, RANK>>
+{
+    using V = View<T, RANK>;
+    static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
+    static dim_t size(V const & v) { return v.size(); }
+    constexpr static rank_t rank(V const & v) { return v.rank(); }
+    constexpr static rank_t rank_s() { return RANK; };
+    constexpr static dim_t size_s() { return RANK==0 ? 1 : DIM_ANY; }
+};
+
 #undef DEF_ASSIGNOPS
 
 
