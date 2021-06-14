@@ -465,5 +465,29 @@ int main()
     //     ra::Small<int, 3> c = a+b;
     //     cout << c << endl;
     // }
+// self type assigment
+    {
+        auto typecheck = [](auto && a)
+                         {
+#if __cpp_lib_source_location >= 201907L
+                             cout << std::source_location::current().function_name() << endl;
+#endif
+                         };
+        ra::Small<int, 3> a = 0;
+        ra::Small<int, 3> b = {9, 8, 7};
+        ra::Small<int, 3> c = {9, 8, 7};
+        auto pa = a.data();
+        tr.test_eq(a, 0);
+        typecheck(a());
+        a() = b();
+        tr.test_eq(a, c);
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(pa));
+        a = 0;
+        tr.test_eq(a, 0);
+        typecheck(a);
+        a = b;
+        tr.test_eq(a, c);
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(pa));
+    }
     return tr.summary();
 }

@@ -330,6 +330,7 @@ struct View
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
 
 // array type is not deduced by (X &&)
     constexpr View &
@@ -486,8 +487,6 @@ struct ra_traits_def<View<T, RANK>>
     constexpr static dim_t size_s() { return RANK==0 ? 1 : DIM_ANY; }
 };
 
-#undef DEF_ASSIGNOPS
-
 
 // --------------------
 // Container types
@@ -542,7 +541,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A> decltype(auto) operator()(A && ... a) { return View::operator()(std::forward<A>(a) ...); }
     template <class ... A> decltype(auto) operator()(A && ... a) const { return View::operator()(std::forward<A>(a) ...); }
 
-// TODO Explicit definitions are needed only to have View::p set. Remove the duplication as in SmallBase/SmallArray, then remove these, both the constructors and the operator=s.
+// Needed to have View::p set. FIXME Remove duplication as in SmallBase/SmallArray, then remove the constructors and the assignment operators.
     Container(Container && w): store(std::move(w.store))
     {
         View::dim = std::move(w.dim);

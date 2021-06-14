@@ -93,34 +93,41 @@ int main()
             tr.test(p.data()!=c.data());
             tr.test(std::equal(check99, check99+5, p.begin()));
         }
-        tr.section("Container operator=(Container) replaces, unlike View [ra20]");
-        {
-            ra::Big<real, 1> o({5}, 11.);
-            ra::Big<real, 1> const p({5}, 99.);
+        auto test_container_assigment_op =
+            [&]<class T>(T type, char const * tag)
             {
-                ra::Big<real, 1> q({7}, 4.);
-                q = o;
-                tr.test(std::equal(check11, check11+5, q.begin()));
-            }
-            {
-                ra::Big<real, 1> q({7}, 4.);
-                q = p;
-                tr.test(std::equal(check99, check99+5, q.begin()));
-            }
-            {
-                ra::Big<real, 1> q({7}, 4.);
-                q = ra::Big<real, 1>({5}, 11.);
-                tr.test(std::equal(check11, check11+5, q.begin()));
-            }
-            tr.test(std::equal(check99, check99+5, p.begin()));
-            tr.test(std::equal(check11, check11+5, o.begin()));
-        }
-        tr.section("move");
-        {
-            ra::Big<real, 1> c(std::move(z));
-            tr.test(z.store.size()==0); // std::vector does this on move...
-            tr.test(std::equal(check11, check11+5, c.begin())); // was moved
-        }
+                tr.section("Container operator=(Container) replaces, unlike View [ra20] ", tag);
+                {
+                    T o({5}, 11.);
+                    T const p({5}, 99.);
+                    {
+                        T q({7}, 4.);
+                        q = o;
+                        tr.test(std::equal(check11, check11+5, q.begin()));
+                    }
+                    {
+                        T q({7}, 4.);
+                        q = p;
+                        tr.test(std::equal(check99, check99+5, q.begin()));
+                    }
+                    {
+                        T q({7}, 4.);
+                        q = T({5}, 11.);
+                        tr.test(std::equal(check11, check11+5, q.begin()));
+                    }
+                    tr.test(std::equal(check99, check99+5, p.begin()));
+                    tr.test(std::equal(check11, check11+5, o.begin()));
+                }
+                tr.section("move");
+                {
+                    T zz = z;
+                    T c(std::move(zz));
+                    tr.test(zz.store.size()==0); // std::vector does this on move...
+                    tr.test(std::equal(check11, check11+5, c.begin())); // was moved
+                }
+            };
+        test_container_assigment_op(ra::Big<real, 1>(), "static rank");
+        test_container_assigment_op(ra::Big<real>(), "dynamic rank");
     }
     tr.section("Shared");
     {
