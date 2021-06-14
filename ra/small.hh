@@ -357,8 +357,7 @@ struct SmallBase
     constexpr Child & operator=(ravel_arg<T, sizes> const & x_)
     {
         auto x = mp::from_tuple<std::array<T, size()>>(x_);
-        auto b = this->begin();
-        for (auto const & xx: x) { *b = xx; ++b; } // std::copy will be constexpr in c++20
+        std::copy(x.begin(), x.end(), this->begin());
         return static_cast<Child &>(*this);
     }
 
@@ -439,9 +438,10 @@ struct SmallArray<T, sizes, strides, std::tuple<nested_args ...>, std::tuple<rav
     {
         static_cast<Base &>(*this) = ravel_arg<T, sizes> { x ... };
     }
-    constexpr SmallArray(T const & t): p() // needed if T isn't registered as scalar [ra44]
+// needed if T isn't registered as scalar [ra44]
+    constexpr SmallArray(T const & t): p()
     {
-        for (auto & x: p) { x = t; } // std::fill will be constexpr in c++20
+        for (auto & x: p) { x = t; }
     }
 // X && x makes this a better match than nested_args ... for 1 argument.
     template <class X>
