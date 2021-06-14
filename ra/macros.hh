@@ -12,7 +12,6 @@
 #include <cstddef>
 #include <cassert>
 #include <type_traits>
-#include <utility>
 
 #define STRINGIZE_( x ) #x
 #define STRINGIZE( x ) STRINGIZE_( x )
@@ -50,8 +49,6 @@
   #define RA_CHECK( ... ) RA_ASSERT( __VA_ARGS__ )
 #endif
 
-namespace mp {
-
 #define RA_IS_DEF(NAME, PRED)                                           \
     template <class A> constexpr bool JOIN(NAME, _def) = false;         \
     template <class A> requires (PRED) constexpr bool JOIN(NAME, _def) < A > = true; \
@@ -66,11 +63,10 @@ namespace mp {
 // But see local DEF_ASSIGNOPS elsewhere.
 #define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+
 // Restate RA_DEF_ASSIGNOPS for expression classes since the template doesn't replace the assignment ops.
 #define RA_DEF_ASSIGNOPS_SELF(TYPE)                                     \
     TYPE & operator=(TYPE && x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
     TYPE & operator=(TYPE const & x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE(TYPE && x) = default;                                \
     constexpr TYPE(TYPE const & x) = default;
-
-} // namespace mp

@@ -9,9 +9,9 @@
 // later version.
 
 #pragma once
-#include "ra/macros.hh"
 #include <tuple>
 #include <limits>
+#include "ra/macros.hh"
 
 namespace mp {
 
