@@ -10,7 +10,6 @@
 
 #include <vector>
 #include <iostream>
-#include "ra/ra.hh"
 #include "ra/test.hh"
 
 using std::cout, std::endl;

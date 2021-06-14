@@ -2,7 +2,7 @@
 /// @file macros.hh
 /// @brief Fundamental macros and types.
 
-// (c) Daniel Llorens - 2005, 2012, 2019-2020
+// (c) Daniel Llorens - 2005, 2012, 2019-2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -57,16 +57,15 @@ namespace mp {
     template <class A> requires (PRED) constexpr bool JOIN(NAME, _def) < A > = true; \
     template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
 
-// Assign ops for settable array iterators; these must be members.
-// For containers & views this might be defined differently.
-// forward to make sure value y is not misused as ref [ra05].
+// Assign ops for settable array iterators; these must be members. For containers & views this might be defined differently.
+// Forward to make sure value y is not misused as ref [ra05].
 #define RA_DEF_ASSIGNOPS_LINE(OP)                                       \
     for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x)
 #define RA_DEF_ASSIGNOPS(OP)                                            \
     template <class X> constexpr void operator OP(X && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
+// But see local DEF_ASSIGNOPS elsewhere.
 #define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-
 // Restate RA_DEF_ASSIGNOPS for expression classes since the template doesn't replace the assignment ops.
 #define RA_DEF_ASSIGNOPS_SELF(TYPE)                                     \
     TYPE & operator=(TYPE && x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \

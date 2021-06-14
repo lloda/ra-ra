@@ -11,10 +11,9 @@
 // Regression test for a bug ... caught first in fold_mat @ array.cc.
 // Caused by d139794396a0d51dc0c25b0b03b2a2ef0e2760b5 : Remove set() from cell_iterator, cell_iterator_small.
 
-#include "ra/ra.hh"
+#include <iostream>
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
-#include <iostream>
 
 using std::cout, std::endl, ra::TestRecorder;
 

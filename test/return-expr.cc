@@ -10,11 +10,9 @@
 
 // For other examples see fun::project_on_plane or ra::normv. (TODO Those need tests).
 
-#include <iostream>
-#include "ra/complex.hh"
-#include "ra/test.hh"
-#include "ra/ra.hh"
 #include <sstream>
+#include <iostream>
+#include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;

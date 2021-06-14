@@ -10,11 +10,9 @@
 
 #include <iostream>
 #include <iterator>
+#include "ra/test.hh"
 #include "ra/mpdebug.hh"
 #include "ra/complex.hh"
-#include "ra/format.hh"
-#include "ra/test.hh"
-#include "ra/ra.hh"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 

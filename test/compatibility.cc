@@ -9,7 +9,6 @@
 // later version.
 
 #include <iostream>
-#include "ra/ra.hh"
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 

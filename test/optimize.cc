@@ -15,7 +15,6 @@
 #define RA_DO_OPT_SMALLVECTOR 1
 #endif
 
-#include "ra/operators.hh"
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 

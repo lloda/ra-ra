@@ -10,9 +10,8 @@
 
 #include <iostream>
 #include <iterator>
-#include "ra/complex.hh"
 #include "ra/test.hh"
-#include "ra/ra.hh"
+#include "ra/complex.hh"
 
 using std::cout, std::endl, ra::TestRecorder;
 using real = double;

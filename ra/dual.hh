@@ -15,9 +15,9 @@
 // f(a+εa', b+εb') = f(a, b)+ε[a'f_a(a, b) b'f_b(a, b)]
 
 #pragma once
+#include <cmath>
 #include <iosfwd>
 #include "ra/macros.hh"
-#include <cmath>
 
 using std::abs, std::sqrt, std::fma;
 
@@ -41,12 +41,12 @@ struct Dual
     Dual(typename real_part<T>::type const & r): re(r), du(0.) {}
     Dual() {}
 
-#define DEF_ASSIGN_OPS(OP)                                              \
+#define DEF_ASSIGNOPS(OP)                                              \
     Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
     Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; } \
     Dual & operator JOIN(OP, =)(typename real_part<T>::type const & r) { *this = *this OP r; return *this; }
-    FOR_EACH(DEF_ASSIGN_OPS, +, -, /, *)
-#undef DEF_ASSIGN_OPS
+    FOR_EACH(DEF_ASSIGNOPS, +, -, /, *)
+#undef DEF_ASSIGNOPS
 };
 
 // conversions are by default constants.

@@ -8,13 +8,12 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+#include <cassert>
 #include <iostream>
 #include <algorithm>
-#include <cassert>
+#include "ra/test.hh"
 #include "ra/dual.hh"
 #include "ra/complex.hh"
-#include "ra/test.hh"
-#include "ra/ra.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;

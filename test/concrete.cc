@@ -8,10 +8,9 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include "ra/ra.hh"
+#include <memory>
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
-#include <memory>
 
 using std::cout, std::endl;
 

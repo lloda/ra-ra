@@ -10,7 +10,6 @@
 
 #include <iostream>
 #include <iterator>
-#include "ra/ra.hh"
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 

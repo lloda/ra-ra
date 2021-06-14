@@ -125,7 +125,7 @@ struct cell_iterator_small
             return cell_type(c.p + Indexer0<sizes, strides>::index_short(i_));
         }
     }
-    RA_DEF_ASSIGNOPS_DEFAULT_SET;
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 
@@ -352,7 +352,8 @@ struct SmallBase
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X>                                                  \
     requires (!mp::is_tuple_v<std::decay_t<X>>)                         \
-    constexpr Child & operator OP(X && x)                               \
+    constexpr Child &                                                   \
+    operator OP(X && x)                                                 \
     {                                                                   \
         ra::start(static_cast<Child &>(*this)) OP x;                    \
         return static_cast<Child &>(*this);                             \
@@ -360,13 +361,14 @@ struct SmallBase
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
 
-    // braces don't match X &&
-    constexpr Child & operator=(nested_arg<T, sizes> const & x)
+// braces don't match X &&
+    constexpr Child &
+    operator=(nested_arg<T, sizes> const & x)
     {
         ra::iter<-1>(static_cast<Child &>(*this)) = mp::from_tuple<std::array<typename nested_tuple<T, sizes>::sub, size(0)>>(x);
         return static_cast<Child &>(*this);
     }
-    // braces row-major ravel for rank!=1
+// braces row-major ravel for rank!=1
     constexpr Child & operator=(ravel_arg<T, sizes> const & x_)
     {
         auto x = mp::from_tuple<std::array<T, size()>>(x_);
@@ -482,12 +484,12 @@ struct SmallArray<T, sizes, strides, std::tuple<nested_args ...>, std::tuple<rav
     T p[Base::size()];
 
     constexpr SmallArray(): p() {}
-    // braces don't match (X &&)
+// braces don't match (X &&)
     constexpr SmallArray(nested_args const & ... x): p()
     {
         static_cast<Base &>(*this) = nested_arg<T, sizes> { x ... };
     }
-    // braces row-major ravel for rank!=1
+// braces row-major ravel for rank!=1
     constexpr SmallArray(ravel_args const & ... x): p()
     {
         static_cast<Base &>(*this) = ravel_arg<T, sizes> { x ... };
@@ -496,7 +498,7 @@ struct SmallArray<T, sizes, strides, std::tuple<nested_args ...>, std::tuple<rav
     {
         for (auto & x: p) { x = t; } // std::fill will be constexpr in c++20
     }
-    // X && x makes this a better match than nested_args ... for 1 argument.
+// X && x makes this a better match than nested_args ... for 1 argument.
     template <class X>
     requires (!std::is_same_v<T, std::decay_t<X>> && !mp::is_tuple_v<std::decay_t<X>>)
     constexpr SmallArray(X && x): p()

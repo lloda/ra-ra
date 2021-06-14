@@ -9,12 +9,11 @@
 // later version.
 
 #include <string>
-#include <iostream>
-#include <iomanip>
 #include <limits>
 #include <chrono>
 #include <thread>
-#include "ra/ra.hh"
+#include <iomanip>
+#include <iostream>
 #include "ra/test.hh"
 #include "ra/bench.hh"
 

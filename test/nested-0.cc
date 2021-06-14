@@ -10,12 +10,11 @@
 
 // TODO Make more things work and work efficiently.
 
-#include <iostream>
 #include <sstream>
+#include <iostream>
 #include <iterator>
-#include "ra/complex.hh"
 #include "ra/test.hh"
-#include "ra/ra.hh"
+#include "ra/complex.hh"
 
 using std::cout, std::endl, std::flush, std::cerr, ra::TestRecorder;
 template <class T, int N> using Array = ra::Big<T, N>;

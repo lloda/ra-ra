@@ -9,7 +9,6 @@
 // later version.
 
 #include <atomic>
-#include "ra/ra.hh"
 #include "ra/test.hh"
 
 using std::cout, std::endl, ra::TestRecorder;

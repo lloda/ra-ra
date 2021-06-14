@@ -8,9 +8,9 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+#include <numeric>
 #include <iostream>
 #include <iterator>
-#include <numeric>
 #include "ra/format.hh"
 
 
@@ -34,9 +34,8 @@ struct ra_error: public std::exception
     { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
 // -------------------------------------
 
-#include "ra/complex.hh"
 #include "ra/test.hh"
-#include "ra/big.hh"
+#include "ra/complex.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
 using real = double;

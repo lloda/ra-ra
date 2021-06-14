@@ -8,11 +8,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+#include <numeric>
 #include <iostream>
 #include <iterator>
-#include <numeric>
 #include "ra/test.hh"
-#include "ra/ra.hh"
 #include "ra/mpdebug.hh"
 
 // FIXME Remove these tests as soon as there's an updated equivalent elsewhere.

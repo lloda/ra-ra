@@ -219,10 +219,6 @@ dim_t proddim(D d, D dend)
 // [rank] [size...] p -> [data...] (var rank)
 // TODO size is immutable so that it can be kept together with rank.
 
-// See same thing for SmallBase.
-#define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
-
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
     RA_CHECK(inside(i, dim_src->size), " i ", i, " size ", dim_src->size);
@@ -307,9 +303,9 @@ struct View
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; } // [ra47]
 
-    // FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>)
+// FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>)
     constexpr View(): p(nullptr) {}
-    // Constructors using pointers need extra care
+// Constructors using pointers need extra care
     constexpr View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} // [ra36]
     template <class SS>
     View(SS && s, T * p_): p(p_)
@@ -324,22 +320,25 @@ struct View
         }
     }
     View(std::initializer_list<dim_t> s, T * p_): View(start(s), p_) {}
-    // lack of these causes runtime bug [ra38] FIXME why?
+
+// [rna38] [ra34] and RA_DEF_ASSIGNOPS_SELF
     View(View && x) = default;
     View(View const & x) = default;
-    // declaring View(View &&) deletes this, so we need to repeat it [ra34]
-    View & operator=(View const & x)
-    {
-        ra::start(*this) = x;
-        return *this;
-    }
-    // array type is not deduced by (X &&)
-    View & operator=(typename nested_braces<T, RANK>::list x)
+    View & operator=(View && x) { ra::start(*this) = x; return *this; }
+    View & operator=(View const & x) { ra::start(*this) = x; return *this; }
+// see same thing for SmallBase.
+#define DEF_ASSIGNOPS(OP)                                               \
+    template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+
+// array type is not deduced by (X &&)
+    constexpr View &
+    operator=(typename nested_braces<T, RANK>::list x)
     {
         ra::iter<-1>(*this) = x;
         return *this;
     }
-    // braces row-major ravel for rank!=1
+// braces row-major ravel for rank!=1
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>;
     View & operator=(ravel_arg const x)
     {
@@ -347,7 +346,6 @@ struct View
         std::copy(x.begin(), x.end(), this->begin());
         return *this;
     }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
     bool const empty() const { return 0==size(); } // TODO Optimize
 
     template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dim), p); }
@@ -355,11 +353,11 @@ struct View
     template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dim, p); }
     constexpr auto begin() const { return stl_iterator(iter()); }
     constexpr auto begin() { return stl_iterator(iter()); }
-    // here dim doesn't matter, but we have to give it if it's a ref
+// here dim doesn't matter, but we have to give it if it's a ref
     constexpr auto end() const { return stl_iterator(decltype(iter())(dim, nullptr)); }
     constexpr auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
 
-    // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
+// Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
 #define SUBSCRIPTS(CONST)                                               \
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK      \

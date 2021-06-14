@@ -8,14 +8,13 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include <iostream>
-#include <iterator>
-#include <numeric>
-#include "ra/test.hh"
-#include "ra/ra.hh"
-#include <typeinfo>
 #include <string>
 #include <chrono>
+#include <numeric>
+#include <typeinfo>
+#include <iostream>
+#include <iterator>
+#include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 

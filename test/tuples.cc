@@ -9,9 +9,8 @@
 // later version.
 
 #include <iostream>
-#include "ra/mpdebug.hh"
-#include "ra/tuples.hh"
 #include "ra/test.hh"
+#include "ra/mpdebug.hh"
 
 using std::tuple, std::tuple_element, std::is_same_v;
 using std::cout, std::endl, ra::TestRecorder;

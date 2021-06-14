@@ -8,12 +8,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include "ra/complex.hh"
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
-#include "ra/ra.hh"
-#include "ra/big.hh"
 #include "ra/wedge.hh"
+#include "ra/complex.hh"
+#include "ra/mpdebug.hh"
 
 using std::cout, std::endl, ra::TestRecorder;
 using real = double;

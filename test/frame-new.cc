@@ -34,7 +34,6 @@ struct ra_error: public std::exception
 // -------------------------------------
 
 #include "ra/test.hh"
-#include "ra/ra.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 

@@ -8,15 +8,13 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include <iostream>
-#include <sstream>
-#include <iterator>
-#include <numeric>
 #include <atomic>
-#include "ra/mpdebug.hh"
-#include "ra/complex.hh"
-#include "ra/ra.hh"
+#include <numeric>
+#include <sstream>
+#include <iostream>
+#include <iterator>
 #include "ra/test.hh"
+#include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::dim_t, ra::TestRecorder;
 using real = double;

@@ -14,9 +14,7 @@
 
 #include <iostream>
 #include <iterator>
-#include "ra/complex.hh"
 #include "ra/test.hh"
-#include "ra/ra.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 

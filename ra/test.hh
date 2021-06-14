@@ -17,9 +17,7 @@
 #if __cpp_lib_source_location >= 201907L
 #include <source_location>
 #endif
-#include "ra/format.hh"
-#include "ra/operators.hh"
-#include "ra/io.hh"
+#include "ra/ra.hh"
 
 namespace ra {
 
