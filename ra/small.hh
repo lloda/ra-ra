@@ -271,22 +271,7 @@ constexpr dim_t select_loop(I0 i0, I ... i)
         + select_loop<mp::drop<sizes, s_src>, mp::drop<strides, s_src>>(i ...);
 }
 
-template <class T> struct mat_uv   { T uu, uv, vu, vv; };
-template <class T> struct mat_xy   { T xx, xy, yx, yy; };
-template <class T> struct mat_uvz  { T uu, uv, uz, vu, vv, vz, zu, zv, zz; };
-template <class T> struct mat_xyz  { T xx, xy, xz, yx, yy, yz, zx, zy, zz; };
-template <class T> struct mat_xyzw { T xx, xy, xz, xw, yx, yy, yz, yw, zx, zy, zz, zw, wx, wy, wz, ww; };
-
-template <class T> struct vec_uv   { T u, v; };
-template <class T> struct vec_xy   { T x, y; };
-template <class T> struct vec_tp   { T t, p; };
-template <class T> struct vec_uvz  { T u, v, z; };
-template <class T> struct vec_xyz  { T x, y, z; };
-template <class T> struct vec_rtp  { T r, t, p; };
-template <class T> struct vec_xyzw { T u, v, z, w; };
-
-template <template <class ...> class Child_,
-          class T, class sizes_, class strides_>
+template <template <class ...> class Child_, class T, class sizes_, class strides_>
 struct SmallBase
 {
     using sizes = sizes_;
@@ -412,46 +397,6 @@ struct SmallBase
 
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
-
-// Renames.
-#define COMP_RENAME_C(name__, req_dim0__, req_dim1__, CONST)            \
-    operator name__<T> CONST &() CONST                                  \
-    {                                                                   \
-        static_assert(std::same_as<strides, default_strides<mp::int_list<req_dim0__, req_dim1__>>>, \
-                      "renames only on default strides");               \
-        static_assert(size(0)==req_dim0__ && size(1)==req_dim1__, "dimension error"); \
-        return reinterpret_cast<name__<T> CONST &>(*this);              \
-    }
-#define COMP_RENAME(name__, dim0__, dim1__)             \
-    COMP_RENAME_C(name__, dim0__, dim1__, /* const */)  \
-    COMP_RENAME_C(name__, dim0__, dim1__, const)
-    COMP_RENAME(mat_xy,   2, 2)
-    COMP_RENAME(mat_uv,   2, 2)
-    COMP_RENAME(mat_xyz,  3, 3)
-    COMP_RENAME(mat_uvz,  3, 3)
-    COMP_RENAME(mat_xyzw, 4, 4)
-#undef COMP_RENAME
-#undef COMP_RENAME_C
-#define COMP_RENAME_C(name__, dim0__, CONST)                            \
-    operator name__<T> CONST &() CONST                                  \
-    {                                                                   \
-        static_assert(std::same_as<strides, default_strides<mp::int_list<dim0__>>>, \
-                      "renames only on default strides");               \
-        static_assert(size(0)==dim0__, "dimension error");              \
-        return reinterpret_cast<name__<T> CONST &>(*this);              \
-    }
-#define COMP_RENAME(name__, dim0__)             \
-    COMP_RENAME_C(name__, dim0__, /* const */)  \
-    COMP_RENAME_C(name__, dim0__, const)
-    COMP_RENAME(vec_xy,   2)
-    COMP_RENAME(vec_uv,   2)
-    COMP_RENAME(vec_tp,   2)
-    COMP_RENAME(vec_xyz,  3)
-    COMP_RENAME(vec_uvz,  3)
-    COMP_RENAME(vec_rtp,  3)
-    COMP_RENAME(vec_xyzw, 4)
-#undef COMP_RENAME
-#undef COMP_RENAME_C
 };
 
 

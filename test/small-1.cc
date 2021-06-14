@@ -395,15 +395,6 @@ int main()
         diag(a) = { 11, 22, 33 };
         tr.test_eq(ra::Small<double, 3, 3> { 11, 1, 2, 3, 22, 5, 6, 7, 33 }, a);
     }
-    tr.section("renames");
-    {
-        ra::Small<double, 2, 2> a { 13, 8, 75, 19 };
-        ra::mat_uv<double> b(a);
-        assert(b.uu==13 && b.uv==8 && b.vu==75 && b.vv==19);
-        ra::Small<double, 3> x { 13, 8, 75 };
-        ra::vec_xyz<double> y(x);
-        assert(y.x==13 && y.y==8 && y.z==75);
-    }
     tr.section(".back()");
     {
         ra::Small<double, 3> a = ra::_0*3;
