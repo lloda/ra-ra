@@ -64,6 +64,9 @@ namespace mp {
     for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x)
 #define RA_DEF_ASSIGNOPS(OP)                                            \
     template <class X> constexpr void operator OP(X && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
+#define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+
 // Restate RA_DEF_ASSIGNOPS for expression classes since the template doesn't replace the assignment ops.
 #define RA_DEF_ASSIGNOPS_SELF(TYPE)                                     \
     TYPE & operator=(TYPE && x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \

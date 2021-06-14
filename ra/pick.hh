@@ -124,6 +124,7 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
 // test/ra-9.cc [ra1]
     constexpr Pick(P0 p0_, P ... p_): Match_(std::forward<P0>(p0_), std::forward<P>(p_) ...) {}
     RA_DEF_ASSIGNOPS_SELF(Pick)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     template <class J> constexpr decltype(auto)
     at(J const & j)
@@ -155,8 +156,6 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
         }
         return *flat();
     }
-
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class P0, class ... P> inline constexpr auto

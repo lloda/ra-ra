@@ -42,6 +42,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
 // test/ra-9.cc [ra1]
     constexpr Expr(Op op_, P ... p_): Match_(std::forward<P>(p_) ...), op(std::forward<Op>(op_)) {}
     RA_DEF_ASSIGNOPS_SELF(Expr)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     template <class J> constexpr decltype(auto)
     at(J const & i)
@@ -73,8 +74,6 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
         }
         return *flat();
     }
-
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 };
 
 template <class V, class ... T, int ... i> inline constexpr auto

@@ -125,8 +125,7 @@ struct cell_iterator_small
             return cell_type(c.p + Indexer0<sizes, strides>::index_short(i_));
         }
     }
-
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET;
 };
 
 
@@ -136,7 +135,8 @@ struct cell_iterator_small
 // --------------------
 
 template <class S, class I, class P>
-inline void next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
+inline void
+next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
 {
     for (int k=framer-1; k>=0; --k) {
         ++i[k];

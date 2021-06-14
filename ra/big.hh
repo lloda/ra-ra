@@ -179,7 +179,7 @@ struct cell_iterator
         }
     }
 
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 

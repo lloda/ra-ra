@@ -47,7 +47,7 @@ struct Scalar
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
 
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
@@ -92,7 +92,7 @@ struct Vector
     constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 template <class V> inline constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
@@ -121,7 +121,7 @@ struct Ptr
     constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 template <class I> inline auto ptr(I i) { return Ptr<I> { i }; }
@@ -153,7 +153,7 @@ struct Span
     constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 template <class I> inline auto ptr(I i, dim_t n) { return Span<I> { i, n }; }
