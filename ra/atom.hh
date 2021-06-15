@@ -379,6 +379,8 @@ size_s()
     using V = std::decay_t<V_>;
     if constexpr (requires { ra_traits<V>::size_s(); }) {
         return ra_traits<V>::size_s();
+    } else if constexpr (requires { std::decay_t<V>::size_s(); }) {
+        return std::decay_t<V>::size_s();
     } else {
         if constexpr (RANK_ANY==rank_s<V>()) {
             return DIM_ANY;
@@ -420,6 +422,8 @@ size(V const & v)
 {
     if constexpr (requires { ra_traits<V>::size(v); }) {
         return ra_traits<V>::size(v);
+    } else if constexpr (requires { v.size(); }) {
+        return v.size();
     } else {
         return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
     }
@@ -431,8 +435,10 @@ shape(V const & v)
 {
     if constexpr (requires { ra_traits<V>::shape(v); }) {
         return ra_traits<V>::shape(v);
-// FIXME version for static shape. Would prefer to return the map directly (except maybe for static shapes)
+    } else if constexpr (requires { v.shape(); }) {
+        return v.shape();
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
+// FIXME Would prefer to return the map directly
         return ra::Small<dim_t, rs>(map([&v](int k) { return v.size(k); }, ra::iota(rs)));
     } else {
         static_assert(RANK_ANY==rs);

@@ -80,13 +80,13 @@ int check_expr_s()
     constexpr rank_t rs = E::rank_s();
     if constexpr (rs>=0) {
         constexpr auto fk =
-            [](auto && fk, auto k_, auto valk)
+            [](auto && fk, auto k_, auto valk) consteval
             {
-// FIXME until something like P1045R1 = [](..., constexpr auto k_, ...)
+// FIXME untill something like P1045R1 = [](..., constexpr auto k_, ...)
                 constexpr int k = k_;
                 if constexpr (k<rs) {
                     constexpr auto fi =
-                        [](auto && fi, auto i_, auto sk_, auto vali)
+                        [](auto && fi, auto i_, auto sk_, auto vali) consteval
                         {
                             constexpr dim_t sk = sk_;
                             constexpr int i = i_;

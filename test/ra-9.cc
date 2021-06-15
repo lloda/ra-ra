@@ -93,8 +93,6 @@ int main()
 // sense, as argname is otherwise always an lref.
         ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
                        ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
-// This depends on ra::Vector constructors moving the Unique through Expr's copying [ra35].
-        tr.test_eq(ra::vector(ref), expr([](int i) { return i; }, ra::vector(ra::Unique<int, 1> {12, 77, 44, 1})));
     }
 // TODO Find out why the ra::Vector() constructors are needed for V=std::array but not for V=std::vector.
     tr.section("[ra35]");

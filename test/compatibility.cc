@@ -75,6 +75,15 @@ int main()
         tr.info("builtin array handles 4 dimensions").test_eq(ra::Small<int, 2, 2, 2, 2>(ra::_0*8 + ra::_1*4 + ra::_2*2 + ra::_3), c);
         // ra::start(c) = 99; // FIXME test that this fails at ct.
     }
+    tr.section("builtin arrays shape/size/rank");
+    {
+// cf small-0.cc
+        int a[3][4] = {};
+        tr.test_eq(2, mp::int_t<ra::rank(a)>::value);
+        tr.test_eq(3, mp::int_t<ra::shape(a)(0)>::value);
+        tr.test_eq(4, mp::int_t<ra::shape(a)(1)>::value);
+        tr.test_eq(12, mp::int_t<ra::size(a)>::value);
+    }
     tr.section("operators take foreign types");
     {
         std::vector<int> x = {1, 2, 3};

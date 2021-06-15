@@ -64,7 +64,6 @@ ply_ravel(A && a)
     }
 // all sub xpr strides advance in compact dims, as they might be different.
     auto const ss0 = a.stride(order[0]);
-// TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit stride.
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
@@ -242,7 +241,6 @@ ply_ravel_exit(A && a, DEF && def)
     }
 // all sub xpr strides advance in compact dims, as they might be different.
     auto const ss0 = a.stride(order[0]);
-// TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit stride.
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {

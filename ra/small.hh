@@ -292,6 +292,7 @@ struct SmallBase
     constexpr static dim_t size(int k) { return ssizes[k]; }
     constexpr static dim_t size_s(int k) { return ssizes[k]; }
     constexpr static dim_t stride(int k) { return sstrides[k]; }
+    constexpr static auto shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(ssizes.data()); }
 
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
@@ -467,24 +468,6 @@ A ravel_from_iterators(I && begin, J && end)
     return a;
 }
 
-// FIXME Type_ seems superfluous
-template <template <class ...> class Type_, class T, class sizes, class strides>
-struct ra_traits_small
-{
-    using V = Type_<T, sizes, strides>;
-    constexpr static auto shape(V const & v) { return SmallView<ra::dim_t const, mp::int_list<V::rank_s()>, mp::int_list<1>>(V::ssizes.data()); }
-    constexpr static dim_t size(V const & v) { return v.size(); }
-    constexpr static rank_t rank(V const & v) { return V::rank(); }
-    constexpr static dim_t size_s() { return V::size(); }
-    constexpr static rank_t rank_s() { return V::rank(); };
-};
-
-template <class T, class sizes, class strides>
-struct ra_traits_def<SmallArray<T, sizes, strides>>: public ra_traits_small<SmallArray, T, sizes, strides> {};
-
-template <class T, class sizes, class strides>
-struct ra_traits_def<SmallView<T, sizes, strides>>: public ra_traits_small<SmallView, T, sizes, strides> {};
-
 
 // ---------------------
 // Support for builtin arrays
@@ -524,9 +507,9 @@ requires (is_builtin_array<T>)
 struct ra_traits_def<T>
 {
     using S = typename builtin_array_types<T>::view;
-    constexpr static decltype(auto) shape(T const & t) { return ra::shape(start(t)); } // FIXME messy
-    constexpr static dim_t size(T const & t) { return ra::size_s<S>(); }
-    constexpr static dim_t size_s() { return ra::size_s<S>(); }
+    constexpr static decltype(auto) shape(T const & t) { return S::shape(); }
+    constexpr static dim_t size(T const & t) { return S::size_s(); }
+    constexpr static dim_t size_s() { return S::size_s(); }
     constexpr static rank_t rank(T const & t) { return S::rank(); }
     constexpr static rank_t rank_s() { return S::rank_s(); }
 };

@@ -45,11 +45,10 @@ int main()
         iocheck(tr.info("output of Unique (1)"), a, ref);
         iocheck(tr.info("output of Unique (1)"), a, ref);
     }
-    tr.section("regression");
     {
         ra::Big<int, 1> a = {1};
         ra::Big<int, 1> ref = {1};
-        iocheck(tr.info("vector(Big)"), ra::vector(a), ref);
+        iocheck(tr.info("Big of rank 1"), a, ref);
     }
     tr.section("IO format parameters against default (I)");
     {

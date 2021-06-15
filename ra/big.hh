@@ -467,17 +467,6 @@ struct View
     }
 };
 
-template <class T, rank_t RANK>
-struct ra_traits_def<View<T, RANK>>
-{
-    using V = View<T, RANK>;
-    static decltype(auto) shape(V const & v) { return ra::shape(v.iter()); }
-    static dim_t size(V const & v) { return v.size(); }
-    constexpr static rank_t rank(V const & v) { return v.rank(); }
-    constexpr static rank_t rank_s() { return RANK; };
-    constexpr static dim_t size_s() { return RANK==0 ? 1 : DIM_ANY; }
-};
-
 
 // --------------------
 // Container types
@@ -707,10 +696,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 };
 
 template <class Store, rank_t RANK>
-struct ra_traits_def<Container<Store, RANK>>
-    : public ra_traits_def<View<typename Container<Store, RANK>::T, RANK>> {};
-
-template <class Store, rank_t RANK>
 void swap(Container<Store, RANK> & a, Container<Store, RANK> & b)
 {
     std::swap(a.dim, b.dim);
@@ -750,8 +735,7 @@ template <class T, rank_t RANK=RANK_ANY> using Unique = Container<std::unique_pt
 template <class T, rank_t RANK=RANK_ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
 // -------------
-// Used in the Guile wrappers to allow an array parameter to either borrow from Guile
-// storage or convert into a new array (e.g. passing 'f32 into 'f64).
+// Used in the Guile wrappers to allow an array parameter to either borrow from Guile storage or convert into a new array (e.g. passing 'f32 into 'f64).
 // TODO Can use unique_ptr's deleter for this?
 // TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
 // -------------

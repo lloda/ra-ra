@@ -37,9 +37,9 @@ int main()
         static_assert(std::is_same_v<ra::value_t<decltype(a)>, T>);
     }
     {
-// SmallBase is excluded in is_slice by ra_traits TODO
+// SmallBase is not excluded in is_slice.
         TEST_PREDICATES(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, mp::int_list<3>, mp::int_list<1>>>()))
-            (false, false, false, false, false);
+            (true, true, false, false, false);
         TEST_PREDICATES(int)
             (false, false, false, true, false);
         TEST_PREDICATES(std::complex<double>)

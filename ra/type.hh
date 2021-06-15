@@ -95,7 +95,7 @@ struct ra_traits_def<T>
 // TODO check the rest of the required interface of A and A::flat() right here. Concepts...
 RA_IS_DEF(is_iterator, (requires { std::declval<A>().flat(); }))
 RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
-RA_IS_DEF(is_slice, (requires { std::declval<A>().iter(); } && requires { ra_traits<A>::size; })) // require ::size to reject public-derived from A
+RA_IS_DEF(is_slice, (requires { std::declval<A>().iter(); }))
 RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;

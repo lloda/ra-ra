@@ -489,5 +489,14 @@ int main()
         tr.test_eq(a, c);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(pa));
     }
+// ra::shape / ra::size are static for Small types
+    {
+        ra::Small<int, 3, 4> a = 0;
+        tr.test_eq(2, mp::int_t<rank(a)>::value);
+        tr.test_eq(3, mp::int_t<shape(a)(0)>::value);
+        tr.test_eq(4, mp::int_t<shape(a)(1)>::value);
+// FIXME std::size makes this ambiguous without the qualifier, which looks wrong to me :-/
+        tr.test_eq(12, mp::int_t<ra::size(a)>::value);
+    }
     return tr.summary();
 }
