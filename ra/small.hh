@@ -76,7 +76,6 @@ struct cell_iterator_small
     static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
     static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
-
     constexpr static rank_t rank_s() { return framer; }
     constexpr static rank_t rank() { return framer; }
 
@@ -294,11 +293,14 @@ struct SmallBase
     constexpr static dim_t size_s(int k) { return ssizes[k]; }
     constexpr static dim_t stride(int k) { return sstrides[k]; }
 
+// allowing rank 1 for coord types
+    constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
+
     constexpr T * data() { return static_cast<Child &>(*this).p; }
     constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
 
 // Specialize for rank() integer-args -> scalar, same in ra::View in big.hh.
-#define SUBSCRIPTS(CONST)                                               \
+#define RA_CONST_OR_NOT(CONST)                                          \
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<I>)<rank() && (is_beatable<I>::static_p && ...)) \
     constexpr auto operator()(I ... i) CONST                            \
@@ -329,9 +331,24 @@ struct SmallBase
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
         return (*this)(i);                                              \
+    }                                                                   \
+    /* TODO would replace by s(ra::iota) if that could be made constexpr */ \
+    template <int ss, int oo=0>                                         \
+    constexpr auto as() CONST                                           \
+    {                                                                   \
+        static_assert(rank()>=1, "bad rank for as<>");                  \
+        static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
+        return SmallView<T CONST, mp::cons<mp::int_t<ss>, mp::drop1<sizes>>, strides>(this->data()+oo*this->stride(0)); \
+    }                                                                   \
+    /* BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert */ \
+    constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; } \
+    T CONST & back() CONST                                              \
+    {                                                                   \
+        static_assert(rank()==1 && size()>0, "back() is not available"); \
+        return (*this)[size()-1];                                       \
     }
-    FOR_EACH(SUBSCRIPTS, /*const*/, const)
-#undef SUBSCRIPTS
+    FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
+#undef RA_CONST_OR_NOT
 
 // see same thing for View.
 #define DEF_ASSIGNOPS(OP)                                               \
@@ -354,24 +371,13 @@ struct SmallBase
         return static_cast<Child &>(*this);
     }
 // braces row-major ravel for rank!=1
-    constexpr Child & operator=(ravel_arg<T, sizes> const & x_)
+    constexpr Child &
+    operator=(ravel_arg<T, sizes> const & x_)
     {
         auto x = mp::from_tuple<std::array<T, size()>>(x_);
         std::copy(x.begin(), x.end(), this->begin());
         return static_cast<Child &>(*this);
     }
-
-// TODO would replace by s(ra::iota) if that could be made constexpr
-#define DEF_AS(CONST)                                                   \
-    template <int ss, int oo=0>                                         \
-    constexpr auto as() CONST                                           \
-    {                                                                   \
-        static_assert(rank()>=1, "bad rank for as<>");                  \
-        static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
-        return SmallView<T CONST, mp::cons<mp::int_t<ss>, mp::drop1<sizes>>, strides>(this->data()+oo*this->stride(0)); \
-    }
-    FOR_EACH(DEF_AS, /* const */, const)
-#undef DEF_AS
 
     template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase<SmallView, T, sizes, strides>, c>;
     template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<SmallView, T const, sizes, strides>, c>;
@@ -393,9 +399,6 @@ struct SmallBase
     constexpr STLConstIterator begin() const { if constexpr (have_default_strides) return data(); else return iter(); }
     constexpr STLIterator end() { if constexpr (have_default_strides) return data()+size(); else return iterator<0>(nullptr); }
     constexpr STLConstIterator end() const { if constexpr (have_default_strides) return data()+size(); else return const_iterator<0>(nullptr); }
-
-// allowing rank 1 for coord types
-    constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
 };
 
 
@@ -453,18 +456,6 @@ struct SmallArray<T, sizes, strides, std::tuple<nested_args ...>, std::tuple<rav
 
     constexpr operator SmallView<T, sizes, strides> () { return SmallView<T, sizes, strides>(p); }
     constexpr operator SmallView<T const, sizes, strides> const () { return SmallView<T const, sizes, strides>(p); }
-
-// BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert.
-#define DEF_SCALARS(CONST)                                              \
-    constexpr operator T CONST & () CONST { static_assert(Base::convertible_to_scalar); return p[0]; } \
-    T CONST & back() CONST                                              \
-    {                                                                   \
-        static_assert(Base::rank()==1, "bad rank for back");            \
-        static_assert(Base::size()>0, "bad size for back");             \
-        return (*this)[Base::size()-1];                                 \
-    }
-    FOR_EACH(DEF_SCALARS, /* const */, const)
-#undef DEF_SCALARS
 };
 
 // FIXME unfortunately necessary. Try to remove the need, also of (S, begin, end) in Container, once the nested_tuple constructors work.

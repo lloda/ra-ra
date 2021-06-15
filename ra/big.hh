@@ -359,7 +359,7 @@ struct View
     constexpr auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
 
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
-#define SUBSCRIPTS(CONST)                                               \
+#define RA_CONST_OR_NOT(CONST)                                          \
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK      \
               && (0 + ... + is_beatable<I>::value)==sizeof...(I))       \
@@ -430,9 +430,19 @@ struct View
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
         return (*this)(i);                                              \
+    }                                                                   \
+    /* conversion to scalar */                                          \
+    operator T CONST & () CONST                                         \
+    {                                                                   \
+        if constexpr (RANK==RANK_ANY) {                                 \
+            RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar"); \
+        } else {                                                        \
+            static_assert(RANK==0, "bad rank");                         \
+        }                                                               \
+        return data()[0];                                               \
     }
-    FOR_EACH(SUBSCRIPTS, /*const*/, const)
-#undef SUBSCRIPTS
+    FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
+#undef RA_CONST_OR_NOT
 
 // conversion from var rank to fixed rank
     template <rank_t R>
@@ -454,25 +464,6 @@ struct View
     operator View<const_atom<T>, RANK> const & () const
     {
         return *reinterpret_cast<View<const_atom<T>, RANK> const *>(this);
-    }
-// conversions to scalar.
-    operator T & ()
-    {
-        if constexpr (RANK==RANK_ANY) {
-            RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar");
-        } else {
-            static_assert(RANK==0, "bad rank");
-        }
-        return data()[0];
-    }
-    operator T const & () const
-    {
-        if constexpr (RANK==RANK_ANY) {
-            RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar");
-        } else {
-            static_assert(RANK==0, "bad rank");
-        }
-        return data()[0];
     }
 };
 
