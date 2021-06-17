@@ -48,8 +48,8 @@ static const double   LNPI = log(PI);
 
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
 // besides, gcc still leaks cmath functions into the global namespace, so by default e.g. sqrt would be C double sqrt(double) instead of the overload set.
-using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, std::exp;
-using std::swap, std::isfinite, std::isinf, std::lerp;
+using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, std::exp,
+    std::swap, std::isfinite, std::isinf, std::lerp;
 
 #define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>)
 #define RA_REAL_OVERLOAD_CE(T) template <class T> requires (RA_IS_REAL(T)) inline constexpr T
@@ -67,9 +67,9 @@ RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
 #undef RA_IS_REAL
 
 #define FOR_FLOAT(T)                                                    \
-    inline constexpr T mul_conj(T const x, T const y)            { return x*y; } \
-    inline constexpr T sqrm(T const x, T const y)                { return sqrm(x-y); } \
-    inline constexpr T dot(T const x, T const y)                 { return x*y; } \
+    inline constexpr T mul_conj(T const x, T const y)              { return x*y; } \
+    inline constexpr T sqrm(T const x, T const y)                  { return sqrm(x-y); } \
+    inline constexpr T dot(T const x, T const y)                   { return x*y; } \
     inline /* constexpr clang */ T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } \
     inline /* constexpr clang */ T norm2(T const x, T const y)     { return std::abs(x-y); } \
     inline /* constexpr clang */ T abs(T const x, T const y)       { return std::abs(x-y); } \

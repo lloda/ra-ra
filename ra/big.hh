@@ -158,27 +158,19 @@ struct cell_iterator
         }
     }
 // Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
-    template <class I> constexpr
-    decltype(auto) at(I const & i_)
-    {
-        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");
-        if constexpr (0==cellr) {
-            return c.p[Indexer1::index_short(rank(), dim, i_)];
-        } else {
-            return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) };
-        }
+#define RA_CONST_OR_NOT(CONST)                                          \
+    template <class I> constexpr                                        \
+    decltype(auto) at(I const & i_) CONST                               \
+    {                                                                   \
+        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");          \
+        if constexpr (0==cellr) {                                       \
+            return c.p[Indexer1::index_short(rank(), dim, i_)];         \
+        } else {                                                        \
+            return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) }; \
+        }                                                               \
     }
-    template <class I> constexpr
-    decltype(auto) at(I const & i_) const // ugh
-    {
-        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");
-        if constexpr (0==cellr) {
-            return c.p[Indexer1::index_short(rank(), dim, i_)];
-        } else {
-            return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) };
-        }
-    }
-
+    FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
+#undef RA_CONST_OR_NOT
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
