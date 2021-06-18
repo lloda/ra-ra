@@ -161,7 +161,7 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
 #undef DEF_UNARY_OP
 
 // When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
-// TODO Cf [ref:examples/useret.cc:0].
+// TODO Cf examples/useret.cc, test/reexported.cc
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
     template <class ... A>                                              \
@@ -182,7 +182,7 @@ FOR_EACH(DEF_NAME_OP, max, min, abs, odd, asin, acos, atan, atan2, clamp)
 FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg, lerp)
 #undef DEF_NAME_OP
 
-#define DEF_NAME_OP(OP)                                                 \
+#define DEF_NAME_OP_REF(OP)                                             \
     using ::OP;                                                         \
     template <class ... A>                                              \
     requires (ra_pos_and_any<A ...>)                                    \
@@ -196,8 +196,8 @@ FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg, lerp)
     {                                                                   \
         return OP(FLAT(a) ...);                                         \
     }
-FOR_EACH(DEF_NAME_OP, real_part, imag_part)
-#undef DEF_NAME_OP
+FOR_EACH(DEF_NAME_OP_REF, real_part, imag_part)
+#undef DEF_NAME_OP_REF
 
 template <class T, class A>
 inline auto cast(A && a)

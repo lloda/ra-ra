@@ -44,6 +44,9 @@ static const double ISQRT2 = 1/sqrt(2.);
 static const double SQRTPI = sqrt(PI);
 static const double   LNPI = log(PI);
 
+inline constexpr double rad2deg(double const r)              { return r*(360./ra::TAU); }
+inline constexpr double deg2rad(double const d)              { return d*(ra::TAU/360.); }
+
 }
 
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
@@ -76,8 +79,3 @@ RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
     inline /* constexpr clang */ T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
-
-namespace ra {
-    inline constexpr double rad2deg(double const r)              { return r*(360./ra::TAU); }
-    inline constexpr double deg2rad(double const d)              { return d*(ra::TAU/360.); }
-} // namespace ra

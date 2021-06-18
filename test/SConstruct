@@ -58,7 +58,7 @@ tester = ra.to_test_ra(env, variant_dir)
               'owned', 'ownership', 'ply', 'ra-0', 'ra-1', 'ra-10', 'ra-11', 'ra-12', 'ra-13', 'ra-2',
               'ra-3', 'ra-4', 'ra-5', 'ra-6', 'ra-7', 'ra-8', 'ra-9', 'ra-dual', 'reduction', 'reshape',
               'return-expr', 'self-assign', 'small-0', 'small-1', 'stl-compat', 'tensor-indices',
-              'tensorindex', 'tuples', 'types', 'view-ops', 'wedge', 'where', 'wrank'
+              'tensorindex', 'tuples', 'types', 'view-ops', 'wedge', 'where', 'wrank', 'reexported'
               # 'bug90745', # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 gcc 9-10.2 so far
               # 'end'
               ]]
