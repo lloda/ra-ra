@@ -14,16 +14,6 @@
 
 using std::cout, std::endl, ra::TestRecorder;
 
-namespace ra {
-
-std::ostream & operator<<(std::ostream & o, ra::Dim const d)
-{
-    o << "{" << d.size << ", " << d.stride << "}";
-    return o;
-}
-
-} // namespace ra
-
 int main()
 {
     TestRecorder tr(std::cout);

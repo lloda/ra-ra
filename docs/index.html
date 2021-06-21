@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- ra:: (version 15, updated 2021 June 10)
+<!-- ra:: (version 16, updated 2021 June 22)
 
 (c) Daniel Llorens 2005-2021
 
@@ -113,7 +113,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="di
 <a name="ra_003a_003a"></a>
 <h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 15, updated 2021 June 10)
+<p><code>ra::</code> (version 16, updated 2021 June 22)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2021
 </p>
@@ -161,7 +161,10 @@ Next: <a href="#Usage" accesskey="n" rel="next">Usage</a>, Previous: <a href="#T
 <a name="Overview-1"></a>
 <h2 class="chapter">1 Overview</h2>
 
-<p>A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list (n₀, n₁, ... nᵣ₋₁) is the <em>shape</em> of the array. We speak of a rank-<em>r</em> array or of an <em>r</em>-array.
+<a name="index-length"></a>
+<a name="index-rank"></a>
+<a name="index-shape"></a>
+<p>A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list of all the <em>lengths</em> (n₀, n₁, ... nᵣ₋₁) is the <em>shape</em> of the array. We speak of a rank-<em>r</em> array or of an <em>r</em>-array.
 </p>
 <p>Often we deal with multidimensional <em>expressions</em> where the elements aren&rsquo;t stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.
 </p>
@@ -212,7 +215,7 @@ Next: <a href="#Drag-along-and-beating" accesskey="n" rel="next">Drag along and 
 </p>
 <a name="index-cell"></a>
 <a name="index-frame"></a>
-<p>For example, think of a matrix A, a 2-array with sizes (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em>r</em> the (<em>r</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-<em>frame</em>.
+<p>For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em>r</em> the (<em>r</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-<em>frame</em>.
 </p>
 <p>An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
 </p>
@@ -233,7 +236,7 @@ Next: <a href="#Drag-along-and-beating" accesskey="n" rel="next">Drag along and 
 </p></blockquote>
 
 <a name="index-order_002c-row_002dmajor"></a>
-<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C (see <a href="#Other-libraries">Other libraries</a>). A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C (see <a href="#Other-libraries">Other libraries</a>). A row-major array A with shape (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 </p>
 <a name="x_002dstrides"></a><blockquote>
 <p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
@@ -332,7 +335,7 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 <a name="Standard-C_002b_002b"></a>
 <h4 class="subsection">1.5.1 Standard C++</h4>
 
-<p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These decay to pointers when you do nearly anything with them, don&rsquo;t know their own sizes or rank at runtime, and are generally too limited.
+<p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These decay to pointers when you do nearly anything with them, don&rsquo;t know their own shape or rank at runtime, and are generally too limited.
 </p>
 <p>The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: <code>&lt;array&gt;</code>, <code>&lt;vector&gt;</code> and <code>&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code>&lt;valarray&gt;</code> offers array operations for 1-arrays. <code>ra::</code> makes use of <code>&lt;array&gt;</code> and <code>&lt;vector&gt;</code> for storage and bootstrapping.
 </p>
@@ -342,7 +345,7 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 <h4 class="subsection">1.5.2 Blitz++</h4>
 <a name="index-Blitz_002b_002b-1"></a>
 <p>Blitz++ [<a href="#Sources">bli17</a>]
- pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time sizes (<code>Tiny</code>), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
+ pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time shape (<code>Tiny</code>), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 </p>
 <p>To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 </p>
@@ -462,7 +465,7 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 <pre class="verbatim">using ra::Small, ra::Big;
 Small&lt;int, 2, 2&gt; a = {{1, 2}, {3, 4}};  // explicit contents
 Big&lt;int, 2&gt; a1 = {{1, 2}, {3, 4}};      // explicit contents
-Small&lt;int, 2, 2&gt; a2 = {{1, 2}};         // error: bad size
+Small&lt;int, 2, 2&gt; a2 = {{1, 2}};         // error: bad shape
 Small&lt;int, 2, 2&gt; b = 7;                 // 7 is copied into b
 Small&lt;int, 2, 2&gt; c = a;                 // the contents of a are copied into c
 Big&lt;int&gt; d = a;                         // d takes the shape of a and a is copied into d
@@ -474,9 +477,9 @@ Big&lt;int&gt; e = 0;                         // e is a 0-array with one element
 <a name="index-none"></a>
 <a name="index-uninitialized-container"></a>
 <div class="example">
-<pre class="verbatim">ra::Big&lt;double, 2&gt; a({2, 3}, 1.);     // a has size 2x3 and be filled with 1.
-ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has size 2x3 and contents don't matter
-ra::Big&lt;double&gt; c({2, 3}, a);         // c has size 2x3 and a is copied into c
+<pre class="verbatim">ra::Big&lt;double, 2&gt; a({2, 3}, 1.);     // a has shape [2 3] and be filled with 1.
+ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has shape [2 3] and contents don't matter
+ra::Big&lt;double&gt; c({2, 3}, a);         // c has shape [2 3] and a is copied into c
 </pre></div>
 
 <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::none</code> can be used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container&rsquo;s elements.
@@ -499,9 +502,9 @@ ra::Big&lt;double, 2&gt; c({3, 2}, cx); // *** WHO NOSE ***
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">using sizes = mp::int_list&lt;2, 3&gt;;
+<pre class="verbatim">using lens = mp::int_list&lt;2, 3&gt;;
 using strides = mp::int_list&lt;1, 2&gt;;
-ra::SmallArray&lt;double, sizes, strides&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
+ra::SmallArray&lt;double, lens, strides&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 </pre></div>
 
 <p>These produce compile time errors:
@@ -540,7 +543,7 @@ auto c1 = c(1);
 c1(2) = 9.;                        // c(1, 2) = 9.
 </pre></div>
 
-<p>Just as for containers, there are separate types of views depending on whether the size is known at compile time, the rank is known at compile time but the size is not, or neither the size nor the rank are known at compile time. <code>ra::</code> has functions to create the most common kinds of views:
+<p>Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. <code>ra::</code> has functions to create the most common kinds of views:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double&gt; c {{1, 2, 3}, {4, 5, 6}};
@@ -552,7 +555,7 @@ auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 </p>
 <div class="example">
 <pre class="verbatim">int raw[6] = {1, 2, 3, 4, 5, 6};
-ra::View&lt;int&gt; v1({{2, 3}, {3, 1}}, raw); // view with sizes {2, 3} strides {3, 1}
+ra::View&lt;int&gt; v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] strides [3, 1]
 ra::View&lt;int&gt; v2({2, 3}, raw);           // same, default C (row-major) strides
 </pre></div>
 
@@ -690,9 +693,9 @@ b += transpose&lt;0, 1, 1&gt;(a); // b(i) = ∑ⱼ a(i, j, j)
 <a name="index-Numpy-1"></a>
 <a name="index-broadcasting_002c-singleton_002c-newaxis"></a>
 <p>An weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it&rsquo;s implemented in Numpy [<a href="#Sources">num17</a>]
-, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
+, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 </p>
-<p>A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of size 1. Sometimes, an axis of size 1 is no more than that, and if 2≠3 is a size error, it isn&rsquo;t obvious why 1≠2 shouldn&rsquo;t be. To avoid this problem, <code>ra::</code> supports broadcasting with undefined size axes (see <a href="#x_002dinsert"><code>insert</code></a>).
+<p>A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn&rsquo;t obvious why 1≠2 shouldn&rsquo;t be. To avoid this problem, <code>ra::</code> supports broadcasting with undefined length axes (see <a href="#x_002dinsert"><code>insert</code></a>).
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 3&gt; a({5, 3}, ra::_0);
@@ -881,7 +884,7 @@ auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
 <dd><p>Inserts <code>n</code> new axes at the subscript position. <code>n</code> must not be negative.
 </p></dd></dl>
 
-<p>The new axes have stride 0 and undefined size, so they will match any size on those axes by repeating items. <code>insert</code> objects cannot stand alone as an array expression. The examples below result in <code>View</code> objects:
+<p>The new axes have stride 0 and undefined length, so they will match any length on those axes by repeating items. <code>insert</code> objects cannot stand alone as an array expression. The examples below result in <code>View</code> objects:
 </p>
 <div class="example">
 <pre class="verbatim">auto h = a(insert&lt;0&gt;); // same as (1)
@@ -889,7 +892,7 @@ auto k = a(insert&lt;1&gt;); // shape [undefined, 3, 2]
 </pre></div>
 
 <a name="index-broadcasting_002c-singleton_002c-Numpy"></a>
-<p><code>insert&lt;n&gt;</code> main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In <code>ra::</code> singleton dimensions aren&rsquo;t special, so broadcasting requires the use of <code>insert</code>. For example: </p>
+<p><code>insert&lt;n&gt;</code> main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of length one match dimensions of any length. In <code>ra::</code> singleton dimensions aren&rsquo;t special, so broadcasting requires the use of <code>insert</code>. For example: </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 1&gt; x = {1, 10};
 // match shapes [2, U, U] with [U, 3, 2] to produce [2, 3, 2]
@@ -959,7 +962,7 @@ Next: <a href="#The-rank-conjunction" accesskey="n" rel="next">The rank conjunct
 
 <dl>
 <dt><a name="index-TensorIndex_003cn_002c"></a>Special&nbsp;object<!-- /@w -->: <strong>TensorIndex&lt;n,</strong> <em>integer_type=ra::dim_t&gt;</em></dt>
-<dd><p><code>TensorIndex&lt;n&gt;</code> represents the <code>n</code>-th index of an array expression. <code>TensorIndex&lt;n&gt;</code> is itself an array expression of rank <code>n</code>-1 and size undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
+<dd><p><code>TensorIndex&lt;n&gt;</code> represents the <code>n</code>-th index of an array expression. <code>TensorIndex&lt;n&gt;</code> is itself an array expression of rank <code>n</code>-1 and length undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
 </p>
 <p><code>ra::</code> offers the shortcut <code>ra::_0</code> for <code>ra::TensorIndex&lt;0&gt;{}</code>, etc.
 </p></dd></dl>
@@ -1131,10 +1134,10 @@ produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must b
 <pre class="verbatim">int p[] = {1, 2, 3};
 int * z = p;
 ra::Big&lt;int, 1&gt; q {1, 2, 3};
-q += p; // ok, q is ra::, p is foreign object with size info
+q += p; // ok, q is ra::, p is foreign object with shape info
 ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()
 // z += q; // error: raw pointer needs ra::ptr()
-ra::ptr(z) += p; // ok, size is determined by foreign object p
+ra::ptr(z) += p; // ok, shape is determined by foreign object p
 </pre></div>
 
 <a name="x_002dis_002dscalar"></a><p>Some types are accepted automatically as scalars. These include:
@@ -1176,7 +1179,7 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 <p>FIXME Put these in examples/ and reference them here.
 </p>
 <a name="index-BLIS"></a>
-<p>The good array citizen describes its arrays with the same parameters as <code>ra::</code>, that is: a pointer, plus a size and a stride per dimension. You pass those and you&rsquo;re done; you don&rsquo;t have to worry about special cases. Say <a href="https://github.com/flame/blis">BLIS</a>:
+<p>The good array citizen describes its arrays with the same parameters as <code>ra::</code>, that is: a pointer, plus a length and a stride per dimension. You pass those and you&rsquo;re done; you don&rsquo;t have to worry about special cases. Say <a href="https://github.com/flame/blis">BLIS</a>:
 </p>
 <blockquote>
 <pre class="verbatim">#include &lt;blis.h&gt;
@@ -1215,11 +1218,11 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
     fftw_iodim howmany_dims[rank-r];
     for (int i=0; i!=rank; ++i) {
         if (i&gt;=rank-r) {
-            dims[i-rank+r].n = a.size(i);
+            dims[i-rank+r].n = a.len(i);
             dims[i-rank+r].is = a.stride(i);
             dims[i-rank+r].os = b.stride(i);
         } else {
-            howmany_dims[i].n = a.size(i);
+            howmany_dims[i].n = a.len(i);
             howmany_dims[i].is = a.stride(i);
             howmany_dims[i].os = b.stride(i);
         }
@@ -1244,7 +1247,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
     scm_t_array_handle h;
     scm_array_get_handle(a, &amp;h);
     scm_t_array_dim const * dims = scm_array_handle_dims(&amp;h);
-    View&lt;double&gt; v(map([](int i) { return ra::Dimv {dim[i].ubnd-dim[i].lbnd+1, dim[i].inc}; },
+    View&lt;double&gt; v(map([](int i) { return ra::Dim { dims[i].ubnd-dims[i].lbnd+1, dims[i].inc }; },
                        ra::iota(scm_array_handle_rank(&amp;h))),
                    scm_array_handle_f64_writable_elements(&amp;h));
 
@@ -1262,7 +1265,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <a name="The-bad-array-citizen"></a>
 <h4 class="subsubsection">2.9.3.2 The bad array citizen</h4>
 
-<p>Unfortunately there are many libraries that don&rsquo;t accept general array parameters, or that do strange things with particular values of sizes and/or strides.
+<p>Unfortunately there are many libraries that don&rsquo;t accept general array parameters, or that do strange things with particular values of lengths and/or strides.
 </p>
 <p>The most common case is that a library doesn&rsquo;t handle strides at all, and it only accepts unit stride for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
 </p>
@@ -1387,7 +1390,7 @@ Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Pre
 <a name="x_002dscalar_002dops"></a><a name="Standard-scalar-operations"></a>
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a name="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, and <code>tanh</code>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a name="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
 Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 </p>
 <p>For example:
@@ -1663,7 +1666,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 </p>
 </li><li> <b>Ravelable</b> &mdash; <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
-<p>This is a kind of <b>RaIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>size()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+<p>This is a kind of <b>RaIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>len()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
 </li><li> <b>Indexable</b> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
@@ -1685,7 +1688,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 <a name="Term-agreement-1"></a>
 <h3 class="section">5.2 Term agreement</h3>
 
-<p>The execution of an expression template begins with the determination of its shape — the size of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined size (such as <code>TensorIndex</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
+<p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>TensorIndex</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
 <p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for dynamic-size expressions and <code>plyf</code> for static-size expressions.
 </p>
@@ -1896,9 +1899,9 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </pre><pre class="example">  &rArr; B = {{101, 120}, {110, 121}}
 </pre></div>
 
-<a name="index-shape"></a>
+<a name="index-shape-1"></a>
 <a name="x_002dshape"></a><dl>
-<dt><a name="index-shape-1"></a>Function: <strong>shape</strong> <em>a</em></dt>
+<dt><a name="index-shape-2"></a>Function: <strong>shape</strong> <em>a</em></dt>
 <dd><p>Get the shape of an <code>ra::</code> object.
 </p></dd></dl>
 
@@ -1910,14 +1913,14 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <a name="index-size"></a>
 <a name="x_002dsize"></a><dl>
 <dt><a name="index-size-1"></a>Function: <strong>size</strong> <em>a</em></dt>
-<dd><p>Get the total size of an <code>ra::</code> object: the product of all its sizes.
+<dd><p>Get the total size of an <code>ra::</code> object: the product of all its lengths.
 </p></dd></dl>
 
 
 <a name="index-concrete"></a>
 <a name="x_002dconcrete"></a><dl>
 <dt><a name="index-concrete-1"></a>Function: <strong>concrete</strong> <em>a</em></dt>
-<dd><p>Convert the argument to a container of the same rank and size as <code>a</code>.
+<dd><p>Convert the argument to a container of the same shape as <code>a</code>.
 </p></dd></dl>
 
 <p>If the argument has dynamic or static shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
@@ -2007,7 +2010,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <dd><p>Create a new view by reversing axis <var>k</var> of <var>view</var>.
 </p></dd></dl>
 
-<p>This is equivalent to <code>view(ra::dots&lt;k&gt;, ra::iota(view.size(k), view.size(k)-1, -1))</code>.
+<p>This is equivalent to <code>view(ra::dots&lt;k&gt;, ra::iota(view.len(k), view.len(k)-1, -1))</code>.
 </p>
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>
@@ -2021,7 +2024,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <dd><p>Create a stencil on <var>view</var> with lower bounds <var>lo</var> and higher bounds <var>hi</var>.
 </p></dd></dl>
 
-<p><var>lo</var> and <var>hi</var> are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, <var>lo</var>=0 is equivalent to <var>lo</var>=(0, 0, ..., 0) with length equal to the rank <code>r</code> of <var>view</var>. The stencil view has twice as many axes as <var>view</var>. The first <code>r</code> dimensions are the same as those of <var>view</var> except that they have their sizes reduced by <var>lo</var>+<var>hi</var>. The last <code>r</code> dimensions correspond to the stencil around each element of <var>view</var>; the center element is at <code>s(i0, i1, ..., lo(0), lo(1), ...)</code>.
+<p><var>lo</var> and <var>hi</var> are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, <var>lo</var>=0 is equivalent to <var>lo</var>=(0, 0, ..., 0) with length equal to the rank <code>r</code> of <var>view</var>. The stencil view has twice as many axes as <var>view</var>. The first <code>r</code> dimensions are the same as those of <var>view</var> except that they have their lengths reduced by <var>lo</var>+<var>hi</var>. The last <code>r</code> dimensions correspond to the stencil around each element of <var>view</var>; the center element is at <code>s(i0, i1, ..., lo(0), lo(1), ...)</code>.
 </p>
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>
@@ -2132,7 +2135,7 @@ case c:
 77 99
 </pre></div>
 
-<p>Note that in the last example the very shape of <code>ra::Big&lt;int&gt;</code> has runtime size, so that size (the rank of <code>A</code>, that is 1) is printed as part of the shape of <code>A</code>.
+<p>Note that in the last example the very shape of <code>ra::Big&lt;int&gt;</code> has runtime length, so that length (the rank of <code>A</code>, that is 1) is printed as part of the shape of <code>A</code>.
 </p>
 <p>See also <a href="#x_002dformat_005farray"><code>format_array</code></a>.
 </p>
@@ -2142,7 +2145,7 @@ case c:
 <dd><p>Create a array expression from <var>foreign_object</var>.
 </p></dd></dl>
 
-<p><var>foreign_object</var> can be of type <code>std::vector</code> or <code>std::array</code>, a built-in array (<code>int[3]</code>, etc.) or an initializer list, or any object that <code>ra::</code> accepts as scalar (see <a href="#x_002dis_002dscalar"><code>here</code></a>). The resulting expresion has rank and size according to the original object. Compare this with <a href="#x_002dscalar"><code>scalar</code></a>, which will always produce an expression of rank 0.
+<p><var>foreign_object</var> can be of type <code>std::vector</code> or <code>std::array</code>, a built-in array (<code>int[3]</code>, etc.) or an initializer list, or any object that <code>ra::</code> accepts as scalar (see <a href="#x_002dis_002dscalar"><code>here</code></a>). The resulting expresion has shape according to the original object. Compare this with <a href="#x_002dscalar"><code>scalar</code></a>, which will always produce an expression of rank 0.
 </p>
 <p>Generally one can mix these types with <code>ra::</code> expressions without needing <code>ra::start</code>, but sometimes this isn&rsquo;t possible, for example for operators that must be class members.
 </p>
@@ -2159,11 +2162,11 @@ ra::start(x) += y; // ok
 
 <a name="index-ptr"></a>
 <a name="x_002dptr"></a><dl>
-<dt><a name="index-ptr-1"></a>Function: <strong>ptr</strong> <em>pointer [size]</em></dt>
+<dt><a name="index-ptr-1"></a>Function: <strong>ptr</strong> <em>pointer [len]</em></dt>
 <dd><p>Create vector expression from raw <var>pointer</var>.
 </p></dd></dl>
 
-<p>The resulting expression has rank 1 and the size given. If <code>size</code> is not given, the expression has undefined size, and it will need to be matched with other expressions whose size <em>is</em> defined.
+<p>The resulting expression has rank 1 and the length given. If <code>len</code> is not given, the expression has undefined length, and it will need to be matched with other expressions whose length <em>is</em> defined.
 </p>
 <p><code>ra::</code> doesn&rsquo;t know what is actually accessible through the pointer, so be careful. For instance:
 </p>
@@ -2178,7 +2181,7 @@ cout &lt;&lt; (ra::ptr(p, 3)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok, p
 cout &lt;&lt; (ra::ptr(p, 4)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // undefined, bad access at p[4]
 </pre></div>
 
-<p>Of course in this example one could simply have used <code>p</code> instead of <code>ra::ptr(p)</code>, since the array type retains size information.
+<p>Of course in this example one could simply have used <code>p</code> instead of <code>ra::ptr(p)</code>, since the array type retains shape information.
 </p>
 <div class="example">
 <pre class="verbatim">v3 += p; // ok
@@ -2441,6 +2444,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-J"><b>J</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-N"><b>N</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-O"><b>O</b></a>
@@ -2517,6 +2522,9 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th><a name="Indices_cp_letter-J">J</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-J">J</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Why-C_002b_002b">Why C++</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-L">L</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-length">length</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-N">N</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none-1"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2540,6 +2548,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-Python">Python</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank_002c-dynamic">rank, dynamic</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank_002c-static">rank, static</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-real_005fpart"><code>real_part</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2548,7 +2557,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-S">S</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-scalar"><code>scalar</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-shape"><code>shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-shape">shape</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-shape-1"><code>shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-prefix">shape agreement, prefix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-suffix">shape agreement, suffix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-size"><code>size</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2595,6 +2605,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <a class="summary-letter" href="#Indices_cp_letter-I"><b>I</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-J"><b>J</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-N"><b>N</b></a>
  &nbsp; 
@@ -2648,7 +2660,7 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h3><a name="FOOT5" href="#DOCF5">(5)</a></h3>
 <p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
 <h3><a name="FOOT6" href="#DOCF6">(6)</a></h3>
-<p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. They are size-strict —you must give every element.</p>
+<p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.</p>
 <h3><a name="FOOT7" href="#DOCF7">(7)</a></h3>
 <p>Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> [<a href="#Sources">Ber87</a>]
  and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>

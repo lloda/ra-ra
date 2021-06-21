@@ -50,7 +50,7 @@ int main()
         constexpr auto e = ra::_0+1;
         static_assert(e.rank_s()==1, "bad rank_s");
         static_assert(e.rank()==1, "bad rank");
-        static_assert(e.size_s(0)==ra::DIM_BAD, "bad size");
+        static_assert(e.len_s(0)==ra::DIM_BAD, "bad len");
     }
     tr.section("frame matching - Unique/TensorIndex");
     {
@@ -169,8 +169,8 @@ int main()
         int error = 0;
         string s;
         try {
-            std::cout << "A: " << a.iter().size(0) << endl;
-            std::cout << "B: " << b.iter().size(0) << endl;
+            std::cout << "A: " << a.iter().len(0) << endl;
+            std::cout << "B: " << b.iter().len(0) << endl;
             tr.info("dynamic test is needed").test_eq(1, ra::check_expr_s<decltype(EXPR)>());
             ply_ravel(EXPR);
         } catch (ra_error & e) {

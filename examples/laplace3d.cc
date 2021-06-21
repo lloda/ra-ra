@@ -62,10 +62,10 @@ template <class A, class V, class W>
 void gemv(A const & a, V const & v, W & w)
 {
     auto pa = a.data();
-    for (int i=0; i<a.size(0); ++i) {
+    for (int i=0; i<a.len(0); ++i) {
         double tmp=0.;
-        for (int j=0; j<a.size(1); ++j) {
-            tmp += pa[j*a.size(1)+i]*v[j];
+        for (int j=0; j<a.len(1); ++j) {
+            tmp += pa[j*a.len(1)+i]*v[j];
             // tmp += a(i, j)*v[j]; // FIXME is a 1/3 slower; maybe what makes ra::gemv slower overall
         }
         w[i] = tmp;

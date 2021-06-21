@@ -39,7 +39,7 @@ struct pick_driver
                     : ra<rb
                       ? 0
 // check by size
-                      : gt_size(size_s<A>(), size_s<B>());
+                      : gt_len(size_s<A>(), size_s<B>());
 
     constexpr static int value = value_ ? 0 : 1; // 0 if A wins over B, else 1
 };

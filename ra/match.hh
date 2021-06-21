@@ -28,7 +28,7 @@ bool gt_rank(rank_t ra, rank_t rb)
 }
 
 inline constexpr
-bool gt_size(dim_t sa, dim_t sb)
+bool gt_len(dim_t sa, dim_t sb)
 {
     return sb==DIM_BAD
              ? 1
@@ -57,7 +57,7 @@ rank_t dependent_frame_rank(rank_t rank, rank_t crank)
 }
 
 inline constexpr
-dim_t chosen_size(dim_t sa, dim_t sb)
+dim_t chosen_len(dim_t sa, dim_t sb)
 {
     if (sa==DIM_BAD) {
         return sb;
@@ -70,7 +70,7 @@ dim_t chosen_size(dim_t sa, dim_t sb)
     }
 }
 
-// Abort if there is a static mismatch. Return 0 if if all the sizes are static. Return 1 if a runtime check is needed.
+// Abort if there is a static mismatch. Return 0 if if all the lens are static. Return 1 if a runtime check is needed.
 
 template <class E>
 inline constexpr
@@ -93,9 +93,9 @@ int check_expr_s()
                             if constexpr (i<mp::len<T>) {
                                 using Ti = std::decay_t<mp::ref<T, i>>;
                                 if constexpr (k<Ti::rank_s()) {
-                                    constexpr dim_t si = Ti::size_s(k);
+                                    constexpr dim_t si = Ti::len_s(k);
                                     static_assert(sk<0 || si<0 || si==sk, "mismatched static dimensions");
-                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<chosen_size(sk, si)> {},
+                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<chosen_len(sk, si)> {},
                                               mp::int_t<(1==vali || sk==DIM_ANY || si==DIM_ANY) ? 1 : 0> {});
                                 } else {
                                     return fi(fi, mp::int_t<i+1> {}, mp::int_t<sk> {}, vali);
@@ -129,10 +129,10 @@ bool check_expr(E const & e)
                 constexpr int i = i_;
                 if constexpr (i<mp::len<T>) {
                     if (k<std::get<i>(e.t).rank()) {
-                        dim_t si = std::get<i>(e.t).size(k);
+                        dim_t si = std::get<i>(e.t).len(k);
                         RA_CHECK((sk==DIM_BAD || si==DIM_BAD || si==sk),
                                  " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
-                        fi(fi, mp::int_t<i+1> {}, chosen_size(sk, si));
+                        fi(fi, mp::int_t<i+1> {}, chosen_len(sk, si));
                     } else {
                         fi(fi, mp::int_t<i+1> {}, sk);
                     }
@@ -187,7 +187,7 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
     }
 
 // any size which is not DIM_BAD.
-    constexpr static dim_t size_s(int k)
+    constexpr static dim_t len_s(int k)
     {
         dim_t s = mp::fold_tuple(DIM_BAD, mp::map<box, T> {},
                                  [&k](dim_t s, auto a)
@@ -199,24 +199,24 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
                                      } else if (ar>=0 && k>=ar) {
                                          return s;
                                      } else {
-                                         dim_t zz = A::size_s(k);
+                                         dim_t zz = A::len_s(k);
                                          return zz;
                                      }
                                  });
         return s;
     }
 
-// do early exit with fold_tuple (and with size_s(k)).
-    constexpr dim_t size(int k) const
+// do early exit with fold_tuple (and with len_s(k)).
+    constexpr dim_t len(int k) const
     {
-        if (dim_t ss=size_s(k); ss==DIM_ANY) {
+        if (dim_t ss=len_s(k); ss==DIM_ANY) {
             auto f = [this, &k](auto && f, auto i_)
                      {
                          constexpr int i = i_;
                          if constexpr (i<std::tuple_size_v<T>) {
                              auto const & a = std::get<i>(this->t);
                              if (k<a.rank()) {
-                                 dim_t as = a.size(k);
+                                 dim_t as = a.len(k);
                                  if (as!=DIM_BAD) {
                                      assert(as!=DIM_ANY); // cannot happen at runtime
                                      return as;

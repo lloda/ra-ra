@@ -36,8 +36,8 @@ struct Scalar
 
     constexpr static rank_t rank_s() { return 0; }
     constexpr static rank_t rank() { return 0; }
-    constexpr static dim_t size_s(int k) { return DIM_BAD; }
-    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
+    constexpr static dim_t len_s(int k) { return DIM_BAD; }
+    constexpr static dim_t len(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
 
     template <class I> constexpr decltype(auto) at(I const & i) { return c; }
     template <class I> constexpr decltype(auto) at(I const & i) const { return c; }
@@ -63,8 +63,8 @@ struct Vector
     V v;
     decltype(v.begin()) p__;
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size(v); }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size_s(); }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size(v); }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -102,8 +102,8 @@ struct Ptr
 {
     P p__;
 
-    constexpr static dim_t size(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
+    constexpr static dim_t len(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -133,8 +133,8 @@ struct Span
     P p__;
     dim_t n__;
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0, " k ", k); return n__; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return n__; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -173,8 +173,8 @@ struct TensorIndex
     static_assert(w>=0, "bad TensorIndex");
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t size_s(int k) { return DIM_BAD; }
-    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
+    constexpr static dim_t len_s(int k) { return DIM_BAD; }
+    constexpr static dim_t len(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
 
     template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
     constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, " d ", d); i += (k==w) * d; }
@@ -200,17 +200,17 @@ template <class T_>
 struct Iota
 {
     using T = T_;
-    dim_t const size_;
+    dim_t const len_;
     T i_;
     T const stride_;
 
-    constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), i_(org), stride_(stride)
+    constexpr Iota(dim_t len, T org=0, T stride=1): len_(len), i_(org), stride_(stride)
     {
-        RA_CHECK(size>=0, "Iota size ", size);
+        RA_CHECK(len>=0, "Iota len ", len);
     }
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0, " k ", k); return size_; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return len_; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -231,10 +231,10 @@ struct Iota
 };
 
 template <class O=dim_t, class S=O> inline constexpr auto
-iota(dim_t size, O org=0, S stride=1)
+iota(dim_t len, O org=0, S stride=1)
 {
     using T = std::common_type_t<O, S>;
-    return Iota<T> { size, T(org), T(stride) };
+    return Iota<T> { len, T(org), T(stride) };
 }
 
 template <class I> struct is_beatable_def
@@ -390,7 +390,7 @@ size_s()
         } else {
             ra::dim_t s = 1;
             for (int i=0; i!=V::rank_s(); ++i) {
-                if (dim_t ss=V::size_s(i); ss>=0) {
+                if (dim_t ss=V::len_s(i); ss>=0) {
                     s *= ss;
                 } else {
                     return ss; // either DIM_ANY or DIM_BAD
@@ -425,7 +425,7 @@ size(V const & v)
     } else if constexpr (requires { v.size(); }) {
         return v.size();
     } else {
-        return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
+        return prod(map([&v](auto && k) { return v.len(k); }, ra::iota(rank(v))));
     }
 }
 
@@ -439,12 +439,12 @@ shape(V const & v)
         return v.shape();
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
 // FIXME Would prefer to return the map directly
-        return ra::Small<dim_t, rs>(map([&v](int k) { return v.size(k); }, ra::iota(rs)));
+        return ra::Small<dim_t, rs>(map([&v](int k) { return v.len(k); }, ra::iota(rs)));
     } else {
         static_assert(RANK_ANY==rs);
         rank_t r = v.rank();
         std::vector<dim_t> s(r);
-        for_each([&v, &s](int k) { s[k] = v.size(k); }, ra::iota(r));
+        for_each([&v, &s](int k) { s[k] = v.len(k); }, ra::iota(r));
         return s;
     }
 }
@@ -456,7 +456,7 @@ resize(A & a, dim_t k)
     if constexpr (DIM_ANY==size_s<A>()) {
         a.resize(k);
     } else {
-        RA_CHECK(k==dim_t(a.size_s(0)));
+        RA_CHECK(k==dim_t(a.len_s(0)));
     }
 }
 

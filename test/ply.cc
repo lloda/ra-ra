@@ -137,7 +137,7 @@ int main()
             [&tr](auto && a, bool used)                                 \
             {                                                           \
                 cout << STRINGIZE(plier) "/" id << endl;                \
-                tr.test((used || (a.size(0)==0 || a.size(1)==0)) && STRINGIZE(plier) id " before"); \
+                tr.test((used || (a.len(0)==0 || a.len(1)==0)) && STRINGIZE(plier) id " before"); \
                 Never check;                                            \
                 plier(ra::expr([&check](int a) { check = a; }, a));     \
                 tr.test(check.used()==used && STRINGIZE(plier) id " after"); \

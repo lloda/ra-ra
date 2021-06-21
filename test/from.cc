@@ -52,18 +52,18 @@ int main()
         {
             ra::Iota<int> i(2, 1);
             auto b = a(i);
-            tr.test_eq(2, b.dim[0].size);
-            tr.test_eq(4, b.dim[1].size);
-            tr.test_eq(4, b.dim[0].stride);
-            tr.test_eq(1, b.dim[1].stride);
+            tr.test_eq(2, b.dimv[0].len);
+            tr.test_eq(4, b.dimv[1].len);
+            tr.test_eq(4, b.dimv[0].stride);
+            tr.test_eq(1, b.dimv[1].stride);
         }
         {
             ra::Iota<ra::dim_t> i(2, 1);
             auto b = a(i);
-            tr.test_eq(2, b.dim[0].size);
-            tr.test_eq(4, b.dim[1].size);
-            tr.test_eq(4, b.dim[0].stride);
-            tr.test_eq(1, b.dim[1].stride);
+            tr.test_eq(2, b.dimv[0].len);
+            tr.test_eq(4, b.dimv[1].len);
+            tr.test_eq(4, b.dimv[0].stride);
+            tr.test_eq(1, b.dimv[1].stride);
         }
     }
     tr.section("trivial case");
@@ -115,8 +115,8 @@ int main()
         tr.info("a(0, ra::insert<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::insert<1>));
         tr.info("a(ra::insert<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::insert<1>, 0));
         ra::Big<int, 4> aa1({2, 2, 3, 4}, a(ra::insert<1>));
-        tr.info("insert with undefined size 0").test_eq(a, aa1(0));
-        tr.info("insert with undefined size 1").test_eq(a, aa1(1));
+        tr.info("insert with undefined len 0").test_eq(a, aa1(0));
+        tr.info("insert with undefined len 1").test_eq(a, aa1(1));
     }
     tr.section("insert, var rank");
     {

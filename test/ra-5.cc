@@ -43,7 +43,7 @@ int main()
 
         ra::Big<int, 2> A({3, 5}, 0);
         auto z = demo(A);
-        tr.test_eq(5, z.dim[0].size);
+        tr.test_eq(5, z.dimv[0].len);
         tr.test_eq(false, std::is_reference_v<decltype(z)::Dimv>);
 
         auto y = A(0);

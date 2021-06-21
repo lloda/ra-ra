@@ -271,7 +271,7 @@ template <class A>
 inline auto index(A && a)
 {
     return early(map([](auto && a, auto && i) { return std::make_tuple(bool(a), i); },
-                     std::forward<A>(a), ra::iota(start(a).size(0))),
+                     std::forward<A>(a), ra::iota(start(a).len(0))),
                  ra::dim_t(-1));
 }
 
@@ -501,9 +501,9 @@ template <class S, class T>
 inline auto
 gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 {
-    int const M = a.size(0);
-    int const N = b.size(1);
-    int const K = a.size(1);
+    int const M = a.len(0);
+    int const N = b.len(1);
+    int const K = a.len(1);
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, decltype(a(0, 0)*b(0, 0))());
     for (int k=0; k<K; ++k) {
@@ -514,11 +514,11 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 
 // we still want the Small version to be different.
 template <class A, class B>
-inline ra::Small<std::decay_t<decltype(FLAT(std::declval<A>()) * FLAT(std::declval<B>()))>, A::size(0), B::size(1)>
+inline ra::Small<std::decay_t<decltype(FLAT(std::declval<A>()) * FLAT(std::declval<B>()))>, A::len(0), B::len(1)>
 gemm(A const & a, B const & b)
 {
-    constexpr int M = a.size(0);
-    constexpr int N = b.size(1);
+    constexpr int M = a.len(0);
+    constexpr int N = b.len(1);
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, ra::none);
     for (int i=0; i<M; ++i) {
@@ -535,8 +535,8 @@ template <class A, class B>
 inline auto
 gevm(A const & a, B const & b)
 {
-    int const M = b.size(0);
-    int const N = b.size(1);
+    int const M = b.len(0);
+    int const N = b.len(1);
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
     auto c = with_shape<decltype(a[0]*b(0, ra::all))>({N}, 0);
     for (int i=0; i<M; ++i) {
@@ -550,8 +550,8 @@ template <class A, class B>
 inline auto
 gemv(A const & a, B const & b)
 {
-    int const M = a.size(0);
-    int const N = a.size(1);
+    int const M = a.len(0);
+    int const N = a.len(1);
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
     auto c = with_shape<decltype(a(ra::all, 0)*b[0])>({M}, 0);
     for (int j=0; j<N; ++j) {

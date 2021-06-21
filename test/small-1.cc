@@ -22,7 +22,7 @@ int main()
     TestRecorder tr;
     tr.section("pieces of transpose(ra::Small)");
     {
-        using sizes = mp::int_list<1, 2, 3, 4, 5>;
+        using lens = mp::int_list<1, 2, 3, 4, 5>;
         using strides = mp::int_list<1, 10, 100, 1000, 10000>;
 
         using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0>>::type;
@@ -33,7 +33,7 @@ int main()
         using e1 = mp::int_list<1>;
         tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
 
-        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>::type;
+        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, lens, strides>::type;
         using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2>>;
         tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same_v<eall, call>);
     }
@@ -198,8 +198,8 @@ int main()
             cout << s << endl;
             auto t = s(ra::all, 1, ra::all);
             tr.test_eq(2, t.rank());
-            tr.test_eq(3, t.size(0));
-            tr.test_eq(2, t.size(1));
+            tr.test_eq(3, t.len(0));
+            tr.test_eq(2, t.len(1));
             tr.test_eq(10, t(0, 0));
             tr.test_eq(11, t(0, 1));
             tr.test_eq(110, t(1, 0));
@@ -248,9 +248,9 @@ int main()
 
                         using A = std::decay_t<decltype(a(0))>;
                         using dim1 = std::array<ra::dim_t, 1>;
-                        auto sizes = mp::tuple_values<dim1, typename A::sizes>();
+                        auto lens = mp::tuple_values<dim1, typename A::lens>();
                         auto strides = mp::tuple_values<dim1, typename A::strides>();
-                        tr.test_eq(dim1 {3}, ra::start(sizes));
+                        tr.test_eq(dim1 {3}, ra::start(lens));
                         tr.test_eq(dim1 {2}, ra::start(strides));
                     };
         ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> a { 1, 2, 3, 4, 5, 6 };
@@ -290,7 +290,7 @@ int main()
     tr.section("expr with Small, rank 1");
     {
         ra::Small<double, 3> a { 1, 4, 2 };
-        tr.test_eq(3, a.iter().size(0));
+        tr.test_eq(3, a.iter().len(0));
 #define TEST(plier)                                                     \
         {                                                               \
             double s = 0;                                               \
@@ -304,8 +304,8 @@ int main()
     tr.section("expr with Small, rank 2");
     {
         ra::Small<double, 3, 2> a { 1, 4, 2, 5, 3, 6 };
-        tr.test_eq(3, a.iter().size(0));
-        tr.test_eq(2, a.iter().size(1));
+        tr.test_eq(3, a.iter().len(0));
+        tr.test_eq(2, a.iter().len(1));
 #define TEST(plier)                                                     \
         {                                                               \
             double s = 0;                                               \
@@ -443,8 +443,8 @@ int main()
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
             {
-                tr.test_eq(2, b.size(0));
-                tr.test_eq(2, b.size(1));
+                tr.test_eq(2, b.len(0));
+                tr.test_eq(2, b.len(1));
                 tr.test_eq(ra::Small<double, 2, 2> { 3, 4, 5, 6 }, b);
                 b = ra::Small<double, 2, 2> { 13, 14, 15, 16 };
                 tr.test_eq(ra::Small<double, 3, 2> { 1, 2, 13, 14, 15, 16 }, a);

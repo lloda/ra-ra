@@ -113,13 +113,13 @@ int main()
         int p[3][2];
         int q[4][3][2];
         int r[][2] = {{1, 2}, {3, 4}};
-        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(o)>,
+        static_assert(std::is_same<ra::builtin_array_lens_t<decltype(o)>,
                       mp::int_list<2>>::value);
-        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(p)>,
+        static_assert(std::is_same<ra::builtin_array_lens_t<decltype(p)>,
                       mp::int_list<3, 2>>::value);
-        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(q)>,
+        static_assert(std::is_same<ra::builtin_array_lens_t<decltype(q)>,
                       mp::int_list<4, 3, 2>>::value);
-        static_assert(std::is_same<ra::builtin_array_sizes_t<decltype(r)>,
+        static_assert(std::is_same<ra::builtin_array_lens_t<decltype(r)>,
                       mp::int_list<2, 2>>::value);
         static_assert(std::rank<decltype(r)>::value==2);
     }

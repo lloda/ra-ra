@@ -14,7 +14,7 @@
 
 namespace ra {
 
-constexpr int VERSION = 15;    // to force or prevent upgrades on dependents
+constexpr int VERSION = 16;    // to force or prevent upgrades on dependents
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
@@ -63,7 +63,7 @@ template <class A>
 concept RaIterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
     { a.rank() } -> std::convertible_to<rank_t>;
-    { a.size(k) } -> std::same_as<dim_t>;
+    { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
     { a.stride(k) };
     { a.keep_stride(d, i, j) } -> std::same_as<bool>;
@@ -149,32 +149,32 @@ inline constexpr bool odd(unsigned int N) { return N & 1; }
 // 4. The nested constructor.
 // When SmallArray has rank 1, or the first dimension is empty, or the shape is [1] or [], several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of no_arg.
 
-template <class T, class sizes>
+template <class T, class lens>
 struct nested_tuple;
 
 // ambiguity with empty constructor and scalar constructor.
-// if size(0) is 0, then prefer the empty constructor.
-// if size(0) is 1...
-template <class sizes> constexpr bool no_nested = (mp::first<sizes>::value<1);
+// if len(0) is 0, then prefer the empty constructor.
+// if len(0) is 1...
+template <class lens> constexpr bool no_nested = (mp::first<lens>::value<1);
 template <> constexpr bool no_nested<mp::nil> = true;
 template <> constexpr bool no_nested<mp::int_list<1>> = true;
-template <class T, class sizes>
-using nested_arg = std::conditional_t<no_nested<sizes>,
+template <class T, class lens>
+using nested_arg = std::conditional_t<no_nested<lens>,
                                       std::tuple<no_arg>, // match the template for SmallArray.
-                                      typename nested_tuple<T, sizes>::list>;
+                                      typename nested_tuple<T, lens>::list>;
 
 // ambiguity with scalar constructors (for rank 0) and nested_tuple (for rank 1).
-template <class sizes> constexpr bool no_ravel = ((mp::len<sizes> <=1) || (mp::apply<mp::prod, sizes>::value <= 1));
-template <class T, class sizes>
-using ravel_arg = std::conditional_t<no_ravel<sizes>,
+template <class lens> constexpr bool no_ravel = ((mp::len<lens> <=1) || (mp::apply<mp::prod, lens>::value <= 1));
+template <class T, class lens>
+using ravel_arg = std::conditional_t<no_ravel<lens>,
                                      std::tuple<no_arg, no_arg>, // match the template for SmallArray.
-                                     mp::makelist<mp::apply<mp::prod, sizes>::value, T>>;
+                                     mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
 
-template <class T, class sizes, class strides = default_strides<sizes>> struct SmallView; // for cell_iterator_small
-template <class T, class sizes, class strides = default_strides<sizes>,
-          class nested_arg_ = nested_arg<T, sizes>, class ravel_arg_ = ravel_arg<T, sizes>>
+template <class T, class lens, class strides = default_strides<lens>> struct SmallView; // for cell_iterator_small
+template <class T, class lens, class strides = default_strides<lens>,
+          class nested_arg_ = nested_arg<T, lens>, class ravel_arg_ = ravel_arg<T, lens>>
 struct SmallArray;
-template <class T, dim_t ... sizes> using Small = SmallArray<T, mp::int_list<sizes ...>>;
+template <class T, dim_t ... lens> using Small = SmallArray<T, mp::int_list<lens ...>>;
 
 template <class T>
 struct nested_tuple<T, mp::nil>

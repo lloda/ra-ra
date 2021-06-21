@@ -30,8 +30,8 @@ template <class V, class W>
 void mult(StiffMat const & A, V const & v, W & w)
 {
     auto t0 = Benchmark::clock::now();
-    auto i = ra::iota(v.size(0)-2, 1);
-    auto j = ra::iota(v.size(1)-2, 1);
+    auto i = ra::iota(v.len(0)-2, 1);
+    auto j = ra::iota(v.len(1)-2, 1);
     w(i, j) = 4*v(i, j) -v(i-1, j) -v(i, j-1) -v(i+1, j) -v(i, j+1);
     tmul += (Benchmark::clock::now()-t0);
 }
@@ -42,8 +42,8 @@ template <class V, class W>
 void mult(MassMat const & M, V const & v, W & w)
 {
     auto t0 = Benchmark::clock::now();
-    auto i = ra::iota(v.size(0)-2, 1);
-    auto j = ra::iota(v.size(1)-2, 1);
+    auto i = ra::iota(v.len(0)-2, 1);
+    auto j = ra::iota(v.len(1)-2, 1);
     w(i, j) = sqrm(M.h) * (v(i, j)/2. + (v(i-1, j) + v(i, j-1) + v(i+1, j) + v(i, j+1) + v(i+1, j+1) + v(i-1, j-1))/12.);
     tmul += Benchmark::clock::now()-t0;
 }

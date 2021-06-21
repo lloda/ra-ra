@@ -26,7 +26,7 @@ driver(T && t, int k)
 {
     if constexpr (iarg<mp::len<std::decay_t<T>>) {
         if (k<std::get<iarg>(t).rank()) {
-            dim_t s = std::get<iarg>(t).size(k);
+            dim_t s = std::get<iarg>(t).len(k);
             if (s>=0) {
                 return iarg;
             }
@@ -57,7 +57,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
             cout << sizeof(ewv) << endl;
             cout << "ewv rank I: " << ewv.rank() << endl;
             for (int k=0; k<ewv.rank(); ++k) {
-                cout << ewv.size(k) << ": " << driver<0>(ewv.t, k) << endl;
+                cout << ewv.len(k) << ": " << driver<0>(ewv.t, k) << endl;
             }
 
             // cout << mp::show_type<decltype(ra::ewv<FM>(FM::op(v), af0, af1))>::value << endl;
@@ -120,7 +120,7 @@ int main()
             cout << sizeof(ewv) << "\n" << endl;
             cout << "ewv rank II: " << ewv.rank() << endl;
             for (int k=0; k<ewv.rank(); ++k) {
-                cout << ewv.size(k) << ": " << flush << driver<0>(ewv.t, k) << endl;
+                cout << ewv.len(k) << ": " << flush << driver<0>(ewv.t, k) << endl;
             }
             ra::ply_ravel(ewv);
         }
@@ -189,7 +189,7 @@ int main()
                                /* [10 11 12]-4 */ 6, 7, 8 };
         ra::Unique<real, 2> d43(ra::expr(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
         cout << "d43: " << d43 << endl;
-        tr.test(d43.size(0)==4 && d43.size(1)==3);
+        tr.test(d43.len(0)==4 && d43.len(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
     }
     tr.section("recipe for unbeatable subscripts in _from_ operator");
@@ -222,8 +222,8 @@ int main()
         assert(every(c==where(ra::_0>=10 && ra::_0<=12 && ra::_1>=1 && ra::_1<=4, 7, ra::_0*100+ra::_1)));
 // looping...
         bool valid = true;
-        for (int i=0; i<c.size(0); ++i) {
-            for (int j=0; j<c.size(1); ++j) {
+        for (int i=0; i<c.len(0); ++i) {
+            for (int j=0; j<c.len(1); ++j) {
                 valid = valid && ((i>=10 && i<=12 && j>=1 && j<=4 ? 7 : i*100+j) == c(i, j));
             }
         }
@@ -252,15 +252,15 @@ int main()
         {
             ra::Big<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
             cout << "d(i,k,j) = a(i,k)*b(k,j): \n" << d << endl;
-            ra::Big<real, 2> c2({d.size(0), d.size(2)}, 0.);
-            for (int k=0; k<d.size(1); ++k) {
+            ra::Big<real, 2> c2({d.len(0), d.len(2)}, 0.);
+            for (int k=0; k<d.len(1); ++k) {
                 c2 += d(ra::all, k, ra::all);
             }
             tr.test_eq(c1, c2);
         }
 // do the k-reduction by plying with wrank.
         {
-            ra::Big<real, 2> c2({a.size(0), b.size(1)}, 0.);
+            ra::Big<real, 2> c2({a.len(0), b.len(1)}, 0.);
             ra::ply(ra::expr(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
                              start(c2), start(a), start(b)));
             cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;

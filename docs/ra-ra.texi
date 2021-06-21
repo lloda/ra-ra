@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 15
-@set UPDATED 2021 June 10
+@set VERSION 16
+@set UPDATED 2021 June 22
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -76,7 +76,10 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 @chapter Overview
 @c ------------------------------------------------
 
-A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list (n₀, n₁, ... nᵣ₋₁) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
+@cindex length
+@cindex rank
+@cindex shape
+A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list of all the @dfn{lengths} (n₀, n₁, ... nᵣ₋₁) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
 
 Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.
 
@@ -119,7 +122,7 @@ Fortunately the problem is almost as old as aggregate data types, and other prog
 
 @cindex cell
 @cindex frame
-For example, think of a matrix A, a 2-array with sizes (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-@dfn{frame}.
+For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-@dfn{frame}.
 
 An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
 
@@ -140,7 +143,7 @@ A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...
 @end quotation
 
 @cindex order, row-major
-This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C (@pxref{Other libraries}). A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C (@pxref{Other libraries}). A row-major array A with shape (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 
 @anchor{x-strides}
 @quotation
@@ -220,7 +223,7 @@ Since the C++ standard library doesn't offer a standard multidimensional array t
 
 @subsection Standard C++
 
-The C++ language offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These decay to pointers when you do nearly anything with them, don't know their own sizes or rank at runtime, and are generally too limited.
+The C++ language offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These decay to pointers when you do nearly anything with them, don't know their own shape or rank at runtime, and are generally too limited.
 
 The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. @code{ra::} makes use of @code{<array>} and @code{<vector>} for storage and bootstrapping.
 
@@ -228,7 +231,7 @@ The C++ standard library also offers a number of contiguous storage containers t
 
 @subsection Blitz++
 @cindex Blitz++
-Blitz++ @mybibcite{bli17} pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time sizes (@code{Tiny}), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which @code{ra::} chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
+Blitz++ @mybibcite{bli17} pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time shape (@code{Tiny}), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which @code{ra::} chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 
 To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 
@@ -328,7 +331,7 @@ Container constructors come in two forms. The first form takes a single argument
 using ra::Small, ra::Big;
 Small<int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
 Big<int, 2> a1 = {{1, 2}, {3, 4}};      // explicit contents
-Small<int, 2, 2> a2 = {{1, 2}};         // error: bad size
+Small<int, 2, 2> a2 = {{1, 2}};         // error: bad shape
 Small<int, 2, 2> b = 7;                 // 7 is copied into b
 Small<int, 2, 2> c = a;                 // the contents of a are copied into c
 Big<int> d = a;                         // d takes the shape of a and a is copied into d
@@ -342,15 +345,15 @@ The second form takes two arguments, one giving the shape, the second the conten
 @cindex uninitialized container
 @example
 @verbatim
-ra::Big<double, 2> a({2, 3}, 1.);     // a has size 2x3 and be filled with 1.
-ra::Big<double> b({2, 3}, ra::none);  // b has size 2x3 and contents don't matter
-ra::Big<double> c({2, 3}, a);         // c has size 2x3 and a is copied into c
+ra::Big<double, 2> a({2, 3}, 1.);     // a has shape [2 3] and be filled with 1.
+ra::Big<double> b({2, 3}, ra::none);  // b has shape [2 3] and contents don't matter
+ra::Big<double> c({2, 3}, a);         // c has shape [2 3] and a is copied into c
 @end verbatim
 @end example
 
 The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
 
-When the content argument is a pointer or a 1D brace list, it's handled especially, not for shape@footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!@footnote{The brace-list constructors aren't rank extending, because giving the ravel is incompatible with rank extension. They are size-strict —you must give every element.}
+When the content argument is a pointer or a 1D brace list, it's handled especially, not for shape@footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!@footnote{The brace-list constructors aren't rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.}
 
 @cindex order, column-major
 @example
@@ -375,9 +378,9 @@ ra::Big<double, 2> c({3, 2}, cx); // *** WHO NOSE ***
 @c [ma114]
 @example
 @verbatim
-using sizes = mp::int_list<2, 3>;
+using lens = mp::int_list<2, 3>;
 using strides = mp::int_list<1, 2>;
-ra::SmallArray<double, sizes, strides> a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
+ra::SmallArray<double, lens, strides> a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 @end verbatim
 @end example
 
@@ -427,7 +430,7 @@ c1(2) = 9.;                        // c(1, 2) = 9.
 @end verbatim
 @end example
 
-Just as for containers, there are separate types of views depending on whether the size is known at compile time, the rank is known at compile time but the size is not, or neither the size nor the rank are known at compile time. @code{ra::} has functions to create the most common kinds of views:
+Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. @code{ra::} has functions to create the most common kinds of views:
 
 @example
 @verbatim
@@ -442,7 +445,7 @@ However, views can point to anywhere in memory and that memory doesn't have to b
 @example
 @verbatim
 int raw[6] = {1, 2, 3, 4, 5, 6};
-ra::View<int> v1({{2, 3}, {3, 1}}, raw); // view with sizes {2, 3} strides {3, 1}
+ra::View<int> v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] strides [3, 1]
 ra::View<int> v2({2, 3}, raw);           // same, default C (row-major) strides
 @end verbatim
 @end example
@@ -590,9 +593,9 @@ b += transpose<0, 1, 1>(a); // b(i) = ∑ⱼ a(i, j, j)
 
 @cindex Numpy
 @cindex broadcasting, singleton, newaxis
-An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it's implemented in Numpy @mybibcite{num17}, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with size one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
+An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it's implemented in Numpy @mybibcite{num17}, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 
-A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of size 1. Sometimes, an axis of size 1 is no more than that, and if 2≠3 is a size error, it isn't obvious why 1≠2 shouldn't be. To avoid this problem, @code{ra::} supports broadcasting with undefined size axes (see @ref{x-insert,@code{insert}}).
+A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn't obvious why 1≠2 shouldn't be. To avoid this problem, @code{ra::} supports broadcasting with undefined length axes (see @ref{x-insert,@code{insert}}).
 
 @example
 @verbatim
@@ -797,7 +800,7 @@ This is useful when writing rank-generic code, see @code{examples/maxwell.cc} in
 Inserts @code{n} new axes at the subscript position. @code{n} must not be negative.
 @end deffn
 
-The new axes have stride 0 and undefined size, so they will match any size on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in @code{View} objects:
+The new axes have stride 0 and undefined length, so they will match any length on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in @code{View} objects:
 
 @example
 @verbatim
@@ -807,7 +810,7 @@ auto k = a(insert<1>); // shape [undefined, 3, 2]
 @end example
 
 @cindex broadcasting, singleton, Numpy
-@code{insert<n>} main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of size one match dimensions of any size. In @code{ra::} singleton dimensions aren't special, so broadcasting requires the use of @code{insert}. For example: @c [ma115]
+@code{insert<n>} main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of length one match dimensions of any length. In @code{ra::} singleton dimensions aren't special, so broadcasting requires the use of @code{insert}. For example: @c [ma115]
 
 @example
 @verbatim
@@ -880,7 +883,7 @@ cout << f(b(0, 0)) << endl; // ok, automatic conversion from View<T> to T &
 @c ------------------------------------------------
 
 @deffn @w{Special object} TensorIndex<n, integer_type=ra::dim_t>
-@code{TensorIndex<n>} represents the @code{n}-th index of an array expression. @code{TensorIndex<n>} is itself an array expression of rank @code{n}-1 and size undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
+@code{TensorIndex<n>} represents the @code{n}-th index of an array expression. @code{TensorIndex<n>} is itself an array expression of rank @code{n}-1 and length undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
 
 @code{ra::} offers the shortcut @code{ra::_0} for @code{ra::TensorIndex<0>@{@}}, etc.
 @end deffn
@@ -1076,10 +1079,10 @@ Compare:
 int p[] = {1, 2, 3};
 int * z = p;
 ra::Big<int, 1> q {1, 2, 3};
-q += p; // ok, q is ra::, p is foreign object with size info
+q += p; // ok, q is ra::, p is foreign object with shape info
 ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()
 // z += q; // error: raw pointer needs ra::ptr()
-ra::ptr(z) += p; // ok, size is determined by foreign object p
+ra::ptr(z) += p; // ok, shape is determined by foreign object p
 @end verbatim
 @end example
 
@@ -1126,7 +1129,7 @@ When you have to pass arrays back and forth between your program and an external
 FIXME Put these in examples/ and reference them here.
 
 @cindex BLIS
-The good array citizen describes its arrays with the same parameters as @code{ra::}, that is: a pointer, plus a size and a stride per dimension. You pass those and you're done; you don't have to worry about special cases. Say @url{https://github.com/flame/blis, BLIS}:
+The good array citizen describes its arrays with the same parameters as @code{ra::}, that is: a pointer, plus a length and a stride per dimension. You pass those and you're done; you don't have to worry about special cases. Say @url{https://github.com/flame/blis, BLIS}:
 
 @quotation
 @verbatim
@@ -1168,11 +1171,11 @@ void fftw(int r, ra::View<complex> const a, ra::View<complex> b)
     fftw_iodim howmany_dims[rank-r];
     for (int i=0; i!=rank; ++i) {
         if (i>=rank-r) {
-            dims[i-rank+r].n = a.size(i);
+            dims[i-rank+r].n = a.len(i);
             dims[i-rank+r].is = a.stride(i);
             dims[i-rank+r].os = b.stride(i);
         } else {
-            howmany_dims[i].n = a.size(i);
+            howmany_dims[i].n = a.len(i);
             howmany_dims[i].is = a.stride(i);
             howmany_dims[i].os = b.stride(i);
         }
@@ -1199,7 +1202,7 @@ Translating array descriptors from a foreign language should be fairly simple. F
     scm_t_array_handle h;
     scm_array_get_handle(a, &h);
     scm_t_array_dim const * dims = scm_array_handle_dims(&h);
-    View<double> v(map([](int i) { return ra::Dimv {dim[i].ubnd-dim[i].lbnd+1, dim[i].inc}; },
+    View<double> v(map([](int i) { return ra::Dim { dims[i].ubnd-dims[i].lbnd+1, dims[i].inc }; },
                        ra::iota(scm_array_handle_rank(&h))),
                    scm_array_handle_f64_writable_elements(&h));
 
@@ -1217,7 +1220,7 @@ Generally it is simpler to let the foreign language handle the memory, even thou
 
 @subsubsection The bad array citizen
 
-Unfortunately there are many libraries that don't accept general array parameters, or that do strange things with particular values of sizes and/or strides.
+Unfortunately there are many libraries that don't accept general array parameters, or that do strange things with particular values of lengths and/or strides.
 
 The most common case is that a library doesn't handle strides at all, and it only accepts unit stride for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
 
@@ -1612,7 +1615,7 @@ This is a traversable object. @b{RaIterator}s are accepted by all the array func
 
 @item @b{Ravelable} --- @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
-This is a kind of @b{RaIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{size()}, @code{stride()}, @code{keep_stride()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+This is a kind of @b{RaIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{len()}, @code{stride()}, @code{keep_stride()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
 @item @b{Indexable} @code{cell_iterator} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
@@ -1630,7 +1633,7 @@ These are types that support ‘forward iterator’ traversal. They have methods
 @section Term agreement
 @c ------------------------------------------------
 
-The execution of an expression template begins with the determination of its shape — the size of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined size (such as @code{TensorIndex} or view axes created with @code{insert}) are ignored. All the other terms must match.
+The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{TensorIndex} or view axes created with @code{insert}) are ignored. All the other terms must match.
 
 Then we select a traversal method depending on the types of the arguments. @code{ra::} has two traversal methods, both based on pointer-like iterators. @code{ply_ravel} is used for dynamic-size expressions and @code{plyf} for static-size expressions.
 
@@ -1840,14 +1843,14 @@ This function may return an expression object or an array object. If you need to
 
 @cindex @code{size}
 @anchor{x-size} @defun size a
-Get the total size of an @code{ra::} object: the product of all its sizes.
+Get the total size of an @code{ra::} object: the product of all its lengths.
 @end defun
 
 @c FIXME example
 
 @cindex @code{concrete}
 @anchor{x-concrete} @defun concrete a
-Convert the argument to a container of the same rank and size as @code{a}.
+Convert the argument to a container of the same shape as @code{a}.
 @end defun
 
 If the argument has dynamic or static shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
@@ -1946,7 +1949,7 @@ Equivalent to @code{transpose<0, 0>(view)}.
 Create a new view by reversing axis @var{k} of @var{view}.
 @end defun
 
-This is equivalent to @code{view(ra::dots<k>, ra::iota(view.size(k), view.size(k)-1, -1))}.
+This is equivalent to @code{view(ra::dots<k>, ra::iota(view.len(k), view.len(k)-1, -1))}.
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
@@ -1969,7 +1972,7 @@ This operation does not work on arbitrary array expressions yet. TODO FILL
 Create a stencil on @var{view} with lower bounds @var{lo} and higher bounds @var{hi}.
 @end defun
 
-@var{lo} and @var{hi} are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their sizes reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
+@var{lo} and @var{hi} are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their lengths reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
@@ -2085,7 +2088,7 @@ case c:
 77 99
 @end example
 
-Note that in the last example the very shape of @code{ra::Big<int>} has runtime size, so that size (the rank of @code{A}, that is 1) is printed as part of the shape of @code{A}.
+Note that in the last example the very shape of @code{ra::Big<int>} has runtime length, so that length (the rank of @code{A}, that is 1) is printed as part of the shape of @code{A}.
 
 See also @ref{x-format_array,@code{format_array}}.
 
@@ -2094,7 +2097,7 @@ See also @ref{x-format_array,@code{format_array}}.
 Create a array expression from @var{foreign_object}.
 @end defun
 
-@var{foreign_object} can be of type @code{std::vector} or @code{std::array}, a built-in array (@code{int[3]}, etc.) or an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has rank and size according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
+@var{foreign_object} can be of type @code{std::vector} or @code{std::array}, a built-in array (@code{int[3]}, etc.) or an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
 
 Generally one can mix these types with @code{ra::} expressions without needing @code{ra::start}, but sometimes this isn't possible, for example for operators that must be class members.
 
@@ -2112,11 +2115,11 @@ ra::start(x) += y; // ok
 @end example
 
 @cindex @code{ptr}
-@anchor{x-ptr} @defun ptr pointer [size]
+@anchor{x-ptr} @defun ptr pointer [len]
 Create vector expression from raw @var{pointer}.
 @end defun
 
-The resulting expression has rank 1 and the size given. If @code{size} is not given, the expression has undefined size, and it will need to be matched with other expressions whose size @emph{is} defined.
+The resulting expression has rank 1 and the length given. If @code{len} is not given, the expression has undefined length, and it will need to be matched with other expressions whose length @emph{is} defined.
 
 @code{ra::} doesn't know what is actually accessible through the pointer, so be careful. For instance:
 
@@ -2133,7 +2136,7 @@ cout << (ra::ptr(p, 4)+ra::TensorIndex<0>{}) << endl; // undefined, bad access a
 @end verbatim
 @end example
 
-Of course in this example one could simply have used @code{p} instead of @code{ra::ptr(p)}, since the array type retains size information.
+Of course in this example one could simply have used @code{p} instead of @code{ra::ptr(p)}, since the array type retains shape information.
 
 @example
 @verbatim

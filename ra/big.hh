@@ -16,11 +16,11 @@
 namespace ra {
 
 // Dope vector element
-struct Dim { dim_t size, stride; };
+struct Dim { dim_t len, stride; };
 
 // For debugging
 inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
-{ o << "[Dim " << dim.size << " " << dim.stride << "]"; return o; }
+{ o << "[Dim " << dim.len << " " << dim.stride << "]"; return o; }
 
 
 // --------------------
@@ -69,25 +69,25 @@ struct nested_braces<T, rank>
 
 struct Indexer1
 {
-    template <class Dim, class P>
-    constexpr static dim_t index_p(Dim const & dim, P && p)
+    template <class Dimv, class P>
+    constexpr static dim_t index_p(Dimv const & dimv, P && p)
     {
-        RA_CHECK(dim_t(dim.size())>=start(p).size(0), "too many indices");
+        RA_CHECK(dim_t(dimv.size())>=start(p).len(0), "too many indices");
 // use dim.data() to skip the size check.
         dim_t c = 0;
-        for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.size)); c += d.stride*p; },
-                 ptr(dim.data()), p);
+        for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.len)); c += d.stride*p; },
+                 ptr(dimv.data()), p);
         return c;
     }
 
 // used by cell_iterator::at() for rank matching on rank<driving rank, no slicing. TODO Static check.
-    template <class Dim, class P>
-    constexpr static dim_t index_short(rank_t framer, Dim const & dim, P const & p)
+    template <class Dimv, class P>
+    constexpr static dim_t index_short(rank_t framer, Dimv const & dimv, P const & p)
     {
         dim_t c = 0;
         for (rank_t k=0; k<framer; ++k) {
-            RA_CHECK(inside(p[k], dim[k].size) || (dim[k].size==DIM_BAD && dim[k].stride==0));
-            c += dim[k].stride * p[k];
+            RA_CHECK(inside(p[k], dimv[k].len) || (dimv[k].len==DIM_BAD && dimv[k].stride==0));
+            c += dimv[k].stride * p[k];
         }
         return c;
     }
@@ -114,10 +114,10 @@ struct cell_iterator
 
     using Dimv_ = typename std::decay_t<V>::Dimv;
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
-    Dimv dim;
+    Dimv dimv;
 
     constexpr static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dim.size()), cellr_spec); }
+    constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dimv.size()), cellr_spec); }
 
     using shape_type = std::conditional_t<rank_s()==DIM_ANY, std::vector<dim_t>,
                                           Small<dim_t, rank_s()==DIM_ANY ? 0 : rank_s()>>; // still needs protection :-/
@@ -127,23 +127,23 @@ struct cell_iterator
 
     cell_type c;
 
-    constexpr cell_iterator(cell_iterator const & ci): dim(ci.dim), c { ci.c.dim, ci.c.p } {}
-// s_ is array's full shape; split it into dim/i (frame) and c (cell).
-    constexpr cell_iterator(Dimv const & dim_, atom_type * p_): dim(dim_)
+    constexpr cell_iterator(cell_iterator const & ci): dimv(ci.dimv), c { ci.c.dimv, ci.c.p } {}
+// s_ is array's full shape; split it into dimv/i (frame) and c (cell).
+    constexpr cell_iterator(Dimv const & dimv_, atom_type * p_): dimv(dimv_)
     {
         rank_t rank = this->rank();
-// see stl_iterator for the case of dim_[0]=0, etc. [ra12].
+// see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
         c.p = p_;
-        rank_t cellr = dependent_cell_rank(rank_t(dim.size()), cellr_spec);
-        resize(c.dim, cellr);
+        rank_t cellr = dependent_cell_rank(rank_t(dimv.size()), cellr_spec);
+        resize(c.dimv, cellr);
         for (int k=0; k<cellr; ++k) {
-            c.dim[k] = dim_[k+rank];
+            c.dimv[k] = dimv_[k+rank];
         }
     }
 
-    constexpr static dim_t size_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
-    constexpr dim_t size(int k) const { RA_CHECK(inside(k, rank())); return dim[k].size; }
-    constexpr dim_t stride(int k) const { return k<rank() ? dim[k].stride : 0; }
+    constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
+    constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
+    constexpr dim_t stride(int k) const { return k<rank() ? dimv[k].stride : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
     constexpr bool keep_stride(dim_t st, int z, int j) const { return st*stride(z)==stride(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
@@ -164,9 +164,9 @@ struct cell_iterator
     {                                                                   \
         RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");          \
         if constexpr (0==cellr) {                                       \
-            return c.p[Indexer1::index_short(rank(), dim, i_)];         \
+            return c.p[Indexer1::index_short(rank(), dimv, i_)];         \
         } else {                                                        \
-            return cell_type { c.dim, c.p+Indexer1::index_short(rank(), dim, i_) }; \
+            return cell_type { c.dimv, c.p+Indexer1::index_short(rank(), dimv, i_) }; \
         }                                                               \
     }
     FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
@@ -187,9 +187,9 @@ dim_t filldim(int n, D dend)
     dim_t next = 1;
     for (; n>0; --n) {
         --dend;
-        RA_CHECK((*dend).size>=0, "bad dim", (*dend).size);
+        RA_CHECK((*dend).len>=0, "bad dim", (*dend).len);
         (*dend).stride = next;
-        next *= (*dend).size;
+        next *= (*dend).len;
     }
     return next;
 }
@@ -199,7 +199,7 @@ dim_t proddim(D d, D dend)
 {
     dim_t t = 1;
     for (; d!=dend; ++d) {
-        t *= (*d).size;
+        t *= (*d).len;
     }
     return t;
 }
@@ -213,16 +213,15 @@ dim_t proddim(D d, D dend)
 
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
-    RA_CHECK(inside(i, dim_src->size), " i ", i, " size ", dim_src->size);
+    RA_CHECK(inside(i, dim_src->len), " i ", i, " len ", dim_src->len);
     return dim_src->stride*i;
 }
 template <class II>
 inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
-    RA_CHECK((inside(i.i_, dim_src->size) && inside(i.i_+(i.size_-1)*i.stride_, dim_src->size))
-             || (i.size_==0 && i.i_<=dim_src->size));
-    dim->size = i.size_;
-    dim->stride = dim_src->stride * i.stride_;
+    RA_CHECK((inside(i.i_, dim_src->len) && inside(i.i_+(i.len_-1)*i.stride_, dim_src->len))
+             || (i.len_==0 && i.i_<=dim_src->len));
+    *dim = { .len = i.len_, .stride = dim_src->stride * i.stride_ };
     return dim_src->stride*i.i_;
 }
 template <class I0, class ... I>
@@ -243,8 +242,7 @@ template <int n, class ... I>
 inline dim_t select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim) {
-        dim->size = DIM_BAD;
-        dim->stride = 0;
+        *dim = { .len = DIM_BAD, .stride = 0 };
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
@@ -262,35 +260,35 @@ template <class T> using const_atom = std::conditional_t<std::is_const_v<T>, no_
 // --------------------
 
 // TODO Parameterize on Child having .data() so that there's only one pointer.
-// TODO A constructor, if only for RA_CHECK (positive sizes, strides inside, etc.)
+// TODO A constructor, if only for RA_CHECK (nonnegative lens, strides inside, etc.)
 template <class T, rank_t RANK>
 struct View
 {
     using Dimv = std::conditional_t<RANK==RANK_ANY, std::vector<Dim>, Small<Dim, RANK==RANK_ANY ? 0 : RANK>>;
 
-    Dimv dim;
+    Dimv dimv;
     T * p;
 
     constexpr static rank_t rank_s() { return RANK; };
     constexpr static rank_t rank() requires (RANK!=RANK_ANY) { return RANK; }
-    constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dim.size()); }
+    constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dimv.size()); }
 
-    constexpr static dim_t size_s(int j) { return DIM_ANY; }
-    constexpr dim_t size() const { return proddim(dim.begin(), dim.end()); }
+    constexpr static dim_t len_s(int j) { return DIM_ANY; }
+    constexpr dim_t size() const { return proddim(dimv.begin(), dimv.end()); }
 
-    constexpr dim_t size(int j) const
+    constexpr dim_t len(int j) const
     {
         if constexpr (RANK==RANK_ANY) {
             RA_CHECK(j<rank(), " j : ", j, " rank ", rank());
         }
-        return dim[j].size;
+        return dimv[j].len;
     }
     constexpr dim_t stride(int j) const
     {
         if constexpr (RANK==RANK_ANY) {
             RA_CHECK(j<rank(), " j : ", j, " rank ", rank());
         }
-        return dim[j].stride;
+        return dimv[j].stride;
     }
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; } // [ra47]
@@ -298,17 +296,17 @@ struct View
 // FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>)
     constexpr View(): p(nullptr) {}
 // Constructors using pointers need extra care
-    constexpr View(Dimv const & dim_, T * p_): dim(dim_), p(p_) {} // [ra36]
+    constexpr View(Dimv const & dimv_, T * p_): dimv(dimv_), p(p_) {} // [ra36]
     template <class SS>
     View(SS && s, T * p_): p(p_)
     {
         if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {
-            ra::resize(View::dim, start(s).size(0)); // [ra37]
-            start(View::dim) = s;
+            ra::resize(View::dimv, start(s).len(0)); // [ra37]
+            start(View::dimv) = s;
         } else {
-            ra::resize(View::dim, start(s).size(0)); // [ra37]
-            for_each([](Dim & dim, auto && s) { dim.size = s; }, View::dim, s);
-            filldim(View::dim.size(), View::dim.end());
+            ra::resize(View::dimv, start(s).len(0)); // [ra37]
+            for_each([](Dim & dim, auto && s) { dim.len = s; }, View::dimv, s);
+            filldim(View::dimv.size(), View::dimv.end());
         }
     }
     View(std::initializer_list<dim_t> s, T * p_): View(start(s), p_) {}
@@ -341,14 +339,14 @@ struct View
     }
     bool const empty() const { return 0==size(); } // TODO Optimize
 
-    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dim), p); }
-    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dim, p); }
-    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dim, p); }
+    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dimv), p); }
+    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dimv, p); }
+    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dimv, p); }
     constexpr auto begin() const { return stl_iterator(iter()); }
     constexpr auto begin() { return stl_iterator(iter()); }
 // here dim doesn't matter, but we have to give it if it's a ref
-    constexpr auto end() const { return stl_iterator(decltype(iter())(dim, nullptr)); }
-    constexpr auto end() { return stl_iterator(decltype(iter())(dim, nullptr)); }
+    constexpr auto end() const { return stl_iterator(decltype(iter())(dimv, nullptr)); }
+    constexpr auto end() { return stl_iterator(decltype(iter())(dimv, nullptr)); }
 
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
 #define RA_CONST_OR_NOT(CONST)                                          \
@@ -362,10 +360,10 @@ struct View
         constexpr rank_t subrank = rank_sum(RANK, extended);            \
         static_assert(subrank>=0, "bad subrank");                       \
         View<T CONST, subrank> sub;                                     \
-        sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
+        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...); \
         /* fill the rest of dim, skipping over beatable subscripts */   \
         for (int i=(0 + ... + is_beatable<I>::skip); i<subrank; ++i) {  \
-            sub.dim[i] = this->dim[i-extended];                         \
+            sub.dimv[i] = this->dimv[i-extended];                       \
         }                                                               \
         return sub;                                                     \
     }                                                                   \
@@ -375,7 +373,7 @@ struct View
     decltype(auto) operator()(I const & ... i) CONST                    \
         requires (RANK!=RANK_ANY)                                       \
     {                                                                   \
-        return data()[select_loop(nullptr, this->dim.data(), i ...)];   \
+        return data()[select_loop(nullptr, this->dimv.data(), i ...)];   \
     }                                                                   \
     /* Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar) */ \
     template <class ... I>                                              \
@@ -386,10 +384,10 @@ struct View
         constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
         assert(this->rank()+extended>=0);                               \
         View<T CONST, RANK_ANY> sub;                                    \
-        sub.dim.resize(this->rank()+extended);                          \
-        sub.p = data() + select_loop(sub.dim.data(), this->dim.data(), i ...); \
+        sub.dimv.resize(this->rank()+extended);                         \
+        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...); \
         for (int i=(0 + ... + is_beatable<I>::skip); i<sub.rank(); ++i) { \
-            sub.dim[i] = this->dim[i-extended];                         \
+            sub.dimv[i] = this->dimv[i-extended];                       \
         }                                                               \
         return sub;                                                     \
     }                                                                   \
@@ -401,15 +399,15 @@ struct View
             constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>()); \
             using Sub = View<T CONST, subrank>;                         \
             if constexpr (subrank==RANK_ANY) {                          \
-                return Sub { typename Sub::Dimv(dim.begin()+ra::size(i), dim.end()),  /* Dimv is std::vector */ \
-                        data() + Indexer1::index_p(dim, i) };           \
+                return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()),  /* Dimv is std::vector */ \
+                        data() + Indexer1::index_p(dimv, i) };           \
             } else {                                                    \
-                return Sub { typename Sub::Dimv(ptr(dim.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
-                        data() + Indexer1::index_p(dim, i) };           \
+                return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
+                        data() + Indexer1::index_p(dimv, i) };          \
             }                                                           \
         } else {                                                        \
-            return View<T CONST, RANK_ANY> { Dimv(dim.begin()+i.size(), dim.end()), /* Dimv is std::vector */ \
-                    data() + Indexer1::index_p(dim, i) };               \
+            return View<T CONST, RANK_ANY> { Dimv(dimv.begin()+i.size(), dimv.end()), /* Dimv is std::vector */ \
+                    data() + Indexer1::index_p(dimv, i) };               \
         }                                                               \
     }                                                                   \
     /* TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
@@ -439,19 +437,19 @@ struct View
 // conversion from var rank to fixed rank
     template <rank_t R>
     requires (R==RANK_ANY && R!=RANK)
-    View(View<T const, R> const & x) requires (RANK!=RANK_ANY): dim(x.dim), p(x.p) {}
+    View(View<T const, R> const & x) requires (RANK!=RANK_ANY): dimv(x.dimv), p(x.p) {}
 // conversion from var rank & non const to fixed rank and const
     template <rank_t R>
     requires (R==RANK_ANY && R!=RANK)
-    View(View<std::remove_const_t<T>, R> const & x) requires (RANK!=RANK_ANY): dim(x.dim), p(x.p) {}
+    View(View<std::remove_const_t<T>, R> const & x) requires (RANK!=RANK_ANY): dimv(x.dimv), p(x.p) {}
 // conversion from fixed rank to var rank
     template <rank_t R>
     requires (R!=RANK_ANY)
-    View(View<T const, R> const & x) requires (RANK==RANK_ANY): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+    View(View<T const, R> const & x) requires (RANK==RANK_ANY): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
 // conversion from fixed rank & non const to var rank and const
     template <rank_t R>
     requires (R!=RANK_ANY)
-    View(View<std::remove_const_t<T>, R> const & x) requires (RANK==RANK_ANY): dim(x.dim.begin(), x.dim.end()), p(x.p) {}
+    View(View<std::remove_const_t<T>, R> const & x) requires (RANK==RANK_ANY): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
 // conversion to const from non const
     operator View<const_atom<T>, RANK> const & () const
     {
@@ -488,7 +486,7 @@ bool is_c_order(View<T, RANK> const & a)
         if (s!=a.stride(i)) {
             return false;
         }
-        s *= a.size(i);
+        s *= a.len(i);
         if (s==0) {
             return true;
         }
@@ -516,17 +514,17 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // Needed to have View::p set. FIXME Remove duplication as in SmallBase/SmallArray, then remove the constructors and the assignment operators.
     Container(Container && w): store(std::move(w.store))
     {
-        View::dim = std::move(w.dim);
+        View::dimv = std::move(w.dimv);
         View::p = storage_traits<Store>::data(store);
     }
     Container(Container const & w): store(w.store)
     {
-        View::dim = w.dim;
+        View::dimv = w.dimv;
         View::p = storage_traits<Store>::data(store);
     }
     Container(Container & w): store(w.store)
     {
-        View::dim = w.dim;
+        View::dimv = w.dimv;
         View::p = storage_traits<Store>::data(store);
     }
 
@@ -536,21 +534,21 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container & operator=(Container && w)
     {
         store = std::move(w.store);
-        View::dim = std::move(w.dim);
+        View::dimv = std::move(w.dimv);
         View::p = storage_traits<Store>::data(store);
         return *this;
     }
     Container & operator=(Container const & w)
     {
         store = w.store;
-        View::dim = w.dim;
+        View::dimv = w.dimv;
         View::p = storage_traits<Store>::data(store);
         return *this;
     }
     Container & operator=(Container & w)
     {
         store = w.store;
-        View::dim = w.dim;
+        View::dimv = w.dimv;
         View::p = storage_traits<Store>::data(store);
         return *this;
     }
@@ -559,9 +557,9 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container()
     {
         if constexpr (RANK==RANK_ANY) {
-            View::dim = { Dim {0, 1} }; // rank 1 to avoid store init
+            View::dimv = { Dim {0, 1} }; // rank 1 to avoid store init
         } else {
-            for (Dim & dimi: View::dim) { dimi = {0, 1}; } // 1 so we can push_back()
+            for (Dim & dimi: View::dimv) { dimi = {0, 1}; } // 1 so we can push_back()
         }
     }
 
@@ -570,12 +568,12 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         static_assert(!std::is_convertible_v<value_t<S>, Dim>);
 // no rank extension here, because it's error prone and not very useful.
         static_assert(1==ra::rank_s<S>(), "rank mismatch for init shape");
-// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dim.set(map(...)).
+// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
         if constexpr (RANK==RANK_ANY) {
-            ra::resize(View::dim, ra::size(s));
+            ra::resize(View::dimv, ra::size(s));
         }
-        for_each([](Dim & dim, auto const & s) { dim.size = s; }, View::dim, s);
-        dim_t t = filldim(View::dim.size(), View::dim.end());
+        for_each([](Dim & dim, auto const & s) { dim.len = s; }, View::dimv, s);
+        dim_t t = filldim(View::dimv.size(), View::dimv.end());
         store = storage_traits<Store>::create(t);
         View::p = storage_traits<Store>::data(store);
     }
@@ -631,15 +629,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     void resize(dim_t const s)
     {
         static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
-        store.resize(proddim(View::dim.begin()+1, View::dim.end())*s);
-        View::dim[0].size = s;
+        store.resize(proddim(View::dimv.begin()+1, View::dimv.end())*s);
+        View::dimv[0].len = s;
         View::p = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
         static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
-        store.resize(proddim(View::dim.begin()+1, View::dim.end())*s, t);
-        View::dim[0].size = s;
+        store.resize(proddim(View::dimv.begin()+1, View::dimv.end())*s, t);
+        View::dimv[0].len = s;
         View::p = store.data();
     }
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
@@ -647,14 +645,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
         store.push_back(std::move(t));
-        ++View::dim[0].size;
+        ++View::dimv[0].len;
         View::p = store.data();
     }
     void push_back(T const & t)
     {
         static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
         store.push_back(t);
-        ++View::dim[0].size;
+        ++View::dimv[0].len;
         View::p = store.data();
     }
     template <class ... A>
@@ -662,15 +660,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
         store.emplace_back(std::forward<A>(a) ...);
-        ++View::dim[0].size;
+        ++View::dimv[0].len;
         View::p = store.data();
     }
     void pop_back()
     {
         static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
-        RA_CHECK(View::dim[0].size>0);
+        RA_CHECK(View::dimv[0].len>0);
         store.pop_back();
-        --View::dim[0].size;
+        --View::dimv[0].len;
     }
     bool empty() const
     {
@@ -690,7 +688,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 template <class Store, rank_t RANK>
 void swap(Container<Store, RANK> & a, Container<Store, RANK> & b)
 {
-    std::swap(a.dim, b.dim);
+    std::swap(a.dimv, b.dimv);
     std::swap(a.store, b.store);
     std::swap(a.p, b.p);
 }
@@ -739,7 +737,7 @@ template <rank_t RANK, class T>
 Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
 {
     Shared<T, RANK> a;
-    a.dim = raw.dim;
+    a.dimv = raw.dimv;
     a.p = raw.p;
     a.store = std::shared_ptr<T>(raw.data(), NullDeleter());
     return a;

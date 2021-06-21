@@ -29,7 +29,7 @@ struct concrete_type_def_1<E>
     template <class I> struct T;
     template <int ... I> struct T<mp::int_list<I ...>>
     {
-        using type = Small<value_t<E>, E::size_s(I) ...>;
+        using type = Small<value_t<E>, E::len_s(I) ...>;
     };
     using type = typename T<mp::iota<rank_s<E>()>>::type;
 };

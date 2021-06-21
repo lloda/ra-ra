@@ -45,8 +45,8 @@ int main()
                   {
                       real * __restrict__ ap = a.data();
                       real * __restrict__ cp = c.data();
-                      ra::dim_t const m = a.size(0);
-                      ra::dim_t const n = a.size(1);
+                      ra::dim_t const m = a.len(0);
+                      ra::dim_t const n = a.len(1);
                       for (ra::dim_t i=0; i!=m; ++i) {
                           for (ra::dim_t j=0; j!=n; ++j) {
                               cp[i] += ap[i*n+j];
@@ -56,7 +56,7 @@ int main()
             bench("sideways", m, n, reps,
                   [](auto & c, auto const & a)
                   {
-                      for (int j=0, jend=a.size(1); j<jend; ++j) {
+                      for (int j=0, jend=a.len(1); j<jend; ++j) {
                           c += a(ra::all, j);
                       }
                   });

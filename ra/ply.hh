@@ -23,7 +23,7 @@ namespace ra {
 // --------------
 
 // Traverse array expression looking to ravel the inner loop.
-// size(k) has a single value.
+// len(k) has a single value.
 // adv(k), stride(k), keep_stride(st, k, l) and flat() are used on all the leaf arguments.
 // The strides must give 0 for k>=their own rank, to allow frame matching.
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
@@ -43,20 +43,20 @@ ply_ravel(A && a)
     default: // TODO find a decent heuristic
         // if (rank>1) {
         //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-        //               { return a.size(order[i])<a.size(order[j]); });
+        //               { return a.len(order[i])<a.len(order[j]); });
         // }
         ;
     }
 // outermost compact dim.
     rank_t * ocd = order;
-    auto ss = a.size(*ocd);
+    auto ss = a.len(*ocd);
     for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
-        ss *= a.size(*ocd);
+        ss *= a.len(*ocd);
     }
     dim_t sha[rank], ind[rank];
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
-        sha[k] = a.size(ocd[k]);
+        sha[k] = a.len(ocd[k]);
         if (sha[k]==0) { // for the ravelled dimensions ss takes care.
             return;
         }
@@ -103,7 +103,7 @@ subindex(A & a, dim_t s, S const & ss0)
             *p;
         }
     } else if constexpr (mp::len<order> > ravel_rank) {
-        dim_t size = a.size(mp::first<order>::value); // TODO Precompute these at the top
+        dim_t size = a.len(mp::first<order>::value); // TODO Precompute these at the top
         for (dim_t i=0, iend=size; i<iend; ++i) {
             subindex<mp::drop1<order>, ravel_rank>(a, s, ss0);
             a.adv(mp::first<order>::value, 1);
@@ -138,10 +138,10 @@ constexpr auto
 ocd()
 {
     rank_t const rank = A::rank_s();
-    auto s = A::size_s(rank-1);
+    auto s = A::len_s(rank-1);
     int j = 1;
     while (j<rank && A::keep_stride(s, rank-1, rank-1-j)) {
-        s *= A::size_s(rank-1-j);
+        s *= A::len_s(rank-1-j);
         ++j;
     }
     return std::make_tuple(s, j);
@@ -157,7 +157,7 @@ plyf(A && a)
     if constexpr (rank_s<A>()==0) {
         *(a.flat());
     } else if constexpr (rank_s<A>()==1) {
-        subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
+        subindex<mp::iota<1>, 1>(a, a.len(0), a.stride(0));
 // this can only be enabled when f() will be constexpr; static keep_stride implies all else is also static.
 // important rank>1 for with static size operands [ra43].
     } else if constexpr (rank_s<A>()>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_stride(d, i, j); }) {
@@ -169,7 +169,7 @@ plyf(A && a)
         until<mp::iota<rank_s<A>()>, 0>(j, a, s, a.stride(rank-1));
     } else {
 // the unrolling above isn't worth it when s, j cannot be constexpr.
-        auto s = a.size(rank-1);
+        auto s = a.len(rank-1);
         subindex<mp::iota<rank_s<A>()>, 1>(a, s, a.stride(rank-1));
     }
 }
@@ -220,20 +220,20 @@ ply_ravel_exit(A && a, DEF && def)
     default: // TODO find a decent heuristic
         // if (rank>1) {
         //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-        //               { return a.size(order[i])<a.size(order[j]); });
+        //               { return a.len(order[i])<a.len(order[j]); });
         // }
         ;
     }
 // outermost compact dim.
     rank_t * ocd = order;
-    auto ss = a.size(*ocd);
+    auto ss = a.len(*ocd);
     for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
-        ss *= a.size(*ocd);
+        ss *= a.len(*ocd);
     }
     dim_t sha[rank], ind[rank];
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
-        sha[k] = a.size(ocd[k]);
+        sha[k] = a.len(ocd[k]);
         if (sha[k]==0) { // for the ravelled dimensions ss takes care.
             return def;
         }

@@ -67,8 +67,8 @@ int main()
     tr.section("var size I");
     {
         ra::Big<int> a = {1, 2, 3};
-        tr.info(a.size(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(a));
-        tr.info(a.size(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(ra::Big<int> {1, 2, 3}));
+        tr.info(a.len(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(a));
+        tr.info(a.len(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(ra::Big<int> {1, 2, 3}));
     }
     tr.section("var size II");
     {
@@ -81,7 +81,7 @@ int main()
         tr.test_eq(a+b, c);
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a+b));
         cout << ra::start(c) << endl;
-        tr.info(c.size(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(c));
+        tr.info(c.len(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     tr.section("var size + fixed size");
     {

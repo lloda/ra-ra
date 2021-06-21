@@ -48,16 +48,16 @@ void CheckPly(TestRecorder & tr, char const * tag, AA && A, BB && B)
     CC C(B());
     auto sub = [](int & b, int const a) -> int { return b -= a; };
     ra::ply_ravel(ra::expr(sub, B.iter(), A.iter()));
-    for (int i=0; i!=A.size(0); ++i) {
-        for (int j=0; j!=A.size(1); ++j) {
+    for (int i=0; i!=A.len(0); ++i) {
+        for (int j=0; j!=A.len(1); ++j) {
             tr.info(tag, " ravel").test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
     auto add = [](int & b, int const a) -> int { return b += a; };
     ra::ply_ravel(ra::expr(add, B.iter(), A.iter()));
     ra::ply(ra::expr(sub, B.iter(), A.iter()));
-    for (int i=0; i!=A.size(0); ++i) {
-        for (int j=0; j!=A.size(1); ++j) {
+    for (int i=0; i!=A.len(0); ++i) {
+        for (int j=0; j!=A.len(1); ++j) {
             tr.info(tag, " index").test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
