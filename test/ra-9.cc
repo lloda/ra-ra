@@ -94,7 +94,7 @@ int main()
         ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
                        ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
     }
-// TODO Find out why the ra::Vector() constructors are needed for V=std::array but not for V=std::vector.
+// TODO Find out why the ra::Vector() constructors are needed for V=std::array but not for V=std::vector (cf test/vector-array.cc).
     tr.section("[ra35] - reference");
     {
         std::array<int, 2> a1 = {1, 2};
