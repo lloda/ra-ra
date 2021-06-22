@@ -95,35 +95,35 @@ int main()
                        ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
     }
 // TODO Find out why the ra::Vector() constructors are needed for V=std::array but not for V=std::vector.
-    tr.section("[ra35]");
+    tr.section("[ra35] - reference");
     {
         std::array<int, 2> a1 = {1, 2};
         std::vector<int> a2 = {1, 2};
-        auto va1 = ra::vector(a1);
-        auto va2 = ra::vector(a2);
+        auto v1 = ra::vector(a1);
+        auto v2 = ra::vector(a2);
 
-        tr.test(std::is_reference_v<decltype(va1.v)>);
-        tr.test(std::is_reference_v<decltype(va2.v)>);
+        tr.test(std::is_reference_v<decltype(v1.v)>);
+        tr.test(std::is_reference_v<decltype(v2.v)>);
 
-        cout << "&(va1.v[0])   " << &(va1.v[0]) << endl;
-        cout << "&(va1.p__[0]) " << &(va1.p__[0]) << endl;
-        cout << "&va1          " << &va1 << endl;
-        tr.test_eq(ra::scalar(&(va1.v[0])), ra::scalar(&(va1.p__[0])));
-        tr.test_eq(ra::scalar(&(va1.v[0])), ra::scalar(&(a1[0])));
+        cout << "&(v1.v[0])   " << &(v1.v[0]) << endl;
+        cout << "&(v1.p__[0]) " << &(v1.p__[0]) << endl;
+        cout << "&v1          " << &v1 << endl;
+        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p__[0])));
+        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(a1[0])));
 
-        cout << "&(va2.v[0])   " << &(va2.v[0]) << endl;
-        cout << "&(va2.p__[0]) " << &(va2.p__[0]) << endl;
-        cout << "&va2          " << &va2 << endl;
-        tr.test_eq(ra::scalar(&(va2.v[0])), ra::scalar(&(va2.p__[0])));
-        tr.test_eq(ra::scalar(&(va2.v[0])), ra::scalar(&(a2[0])));
+        cout << "&(v2.v[0])   " << &(v2.v[0]) << endl;
+        cout << "&(v2.p__[0]) " << &(v2.p__[0]) << endl;
+        cout << "&v2          " << &v2 << endl;
+        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p__[0])));
+        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(a2[0])));
 
         cout << "---------" << endl;
 
         for_each([](auto && a, auto && b) { a = b; }, ra::vector(a1), 99);
         tr.test_eq(99, ra::start(a1));
-
-        cout << "---------" << endl;
-
+    }
+    tr.section("[ra35] - value");
+    {
         auto fun1 = []() { return std::array<int, 2> {7, 2}; };
         auto fun2 = []() { return std::vector<int> {5, 2}; };
         auto v1 = ra::vector(fun1());
