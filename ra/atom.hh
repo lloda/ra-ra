@@ -56,15 +56,25 @@ template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std
 // FIXME This can handle temporaries and make_a().begin() can't, look out for that.
 // FIXME Do we need this class? holding rvalue is the only thing it does over View, and it doesn't handle rank!=1.
 template <class V>
-requires (requires { ra_traits<V>::size_s; } &&
+requires ((requires (V v) { { ssize(v) } -> std::signed_integral; } ||
+           requires { std::tuple_size<std::decay_t<V>>::value; } ) &&
           requires (V v) { { v.begin() } -> std::random_access_iterator; })
 struct Vector
 {
     V v;
     decltype(v.begin()) p__;
+    constexpr static bool ct_size = requires { std::tuple_size<std::decay_t<V>>::value; };
 
-    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size(v); }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return ra_traits<V>::size_s(); }
+    constexpr dim_t len(int k) const
+    {
+        RA_CHECK(k==0, " k ", k);
+        if constexpr (ct_size) { return std::tuple_size_v<std::decay_t<V>>; } else { return ssize(v); };
+    }
+    constexpr static dim_t len_s(int k)
+    {
+        RA_CHECK(k==0, " k ", k);
+        if constexpr (ct_size) { return std::tuple_size_v<std::decay_t<V>>; } else { return DIM_ANY; };
+    }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
