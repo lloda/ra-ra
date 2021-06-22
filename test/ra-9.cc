@@ -106,15 +106,15 @@ int main()
         tr.test(std::is_reference_v<decltype(v2.v)>);
 
         cout << "&(v1.v[0])   " << &(v1.v[0]) << endl;
-        cout << "&(v1.p__[0]) " << &(v1.p__[0]) << endl;
+        cout << "&(v1.p[0]) " << &(v1.p[0]) << endl;
         cout << "&v1          " << &v1 << endl;
-        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p__[0])));
+        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p[0])));
         tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(a1[0])));
 
         cout << "&(v2.v[0])   " << &(v2.v[0]) << endl;
-        cout << "&(v2.p__[0]) " << &(v2.p__[0]) << endl;
+        cout << "&(v2.p[0]) " << &(v2.p[0]) << endl;
         cout << "&v2          " << &v2 << endl;
-        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p__[0])));
+        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p[0])));
         tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(a2[0])));
 
         cout << "---------" << endl;
@@ -133,18 +133,18 @@ int main()
         tr.test(!std::is_reference_v<decltype(v2.v)>);
 
         tr.test_eq(7, v1.v[0]);
-        tr.test_eq(7, v1.p__[0]);
+        tr.test_eq(7, v1.p[0]);
         cout << "&(v1.v[0])   " << &(v1.v[0]) << endl;
-        cout << "&(v1.p__[0]) " << &(v1.p__[0]) << endl;
+        cout << "&(v1.p[0]) " << &(v1.p[0]) << endl;
         cout << "&v1          " << &v1 << endl;
-        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p__[0])));
+        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p[0])));
 
         tr.test_eq(5, v2.v[0]);
-        tr.test_eq(5, v2.p__[0]);
+        tr.test_eq(5, v2.p[0]);
         cout << "&(v2.v[0])   " << &(v2.v[0]) << endl;
-        cout << "&(v2.p__[0]) " << &(v2.p__[0]) << endl;
+        cout << "&(v2.p[0]) " << &(v2.p[0]) << endl;
         cout << "&v2          " << &v2 << endl;
-        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p__[0])));
+        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p[0])));
 
         tr.test_eq(ra::start({7, 2}), ra::vector(fun1()));
         tr.test_eq(ra::start({5, 2}), ra::vector(fun2()));

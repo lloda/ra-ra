@@ -62,7 +62,7 @@ requires ((requires (V v) { { ssize(v) } -> std::signed_integral; } ||
 struct Vector
 {
     V v;
-    decltype(v.begin()) p__;
+    decltype(v.begin()) p;
     constexpr static bool ct_size = requires { std::tuple_size<std::decay_t<V>>::value; };
 
     constexpr dim_t len(int k) const
@@ -79,16 +79,16 @@ struct Vector
     constexpr static rank_t rank_s() { return 1; };
 
 // see test/ra-9.cc [ra1] for forward() here.
-    constexpr Vector(V && v_): v(std::forward<V>(v_)), p__(v.begin()) {}
+    constexpr Vector(V && v_): v(std::forward<V>(v_)), p(v.begin()) {}
 // see [ra35] in test/ra-9.cc. FIXME How about I just hold a ref for any kind of V, like container -> iter.
-    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p__(v.begin()) { static_assert(!std::is_reference_v<V>); };
-    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p__(v.begin()) { static_assert(!std::is_reference_v<V>); };
+    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p(v.begin()) { static_assert(!std::is_reference_v<V>); };
+    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p(v.begin()) { static_assert(!std::is_reference_v<V>); };
 
     template <class I>
     decltype(auto) at(I const & i)
     {
         RA_CHECK(inside(i[0], ra::size(v)), " i ", i[0], " size ", ra::size(v));
-        return p__[i[0]];
+        return p[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
@@ -96,11 +96,11 @@ struct Vector
 // k==0 && d!=1 happens on turning back at end of ply.
 // we need this only on outer products and such, or in FIXME operator<<; which could be fixed I think.
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d, " (Vector)");
-        p__ += (k==0) * d;
+        p += (k==0) * d;
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() const { return p__; }
+    constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
@@ -110,7 +110,7 @@ template <class V> inline constexpr auto vector(V && v) { return Vector<V>(std::
 template <std::random_access_iterator P>
 struct Ptr
 {
-    P p__;
+    P p;
 
     constexpr static dim_t len(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
     constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
@@ -120,16 +120,16 @@ struct Ptr
     template <class I>
     constexpr decltype(auto) at(I && i)
     {
-        return p__[i[0]];
+        return p[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d, " (Ptr)");
-        std::advance(p__, (k==0) * d);
+        std::advance(p, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() const { return p__; }
+    constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
@@ -140,10 +140,10 @@ template <class I> inline auto ptr(I i) { return Ptr<I> { i }; }
 template <std::random_access_iterator P>
 struct Span
 {
-    P p__;
-    dim_t n__;
+    P p;
+    dim_t n_;
 
-    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return n__; }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return n_; }
     constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
@@ -151,17 +151,17 @@ struct Span
     template <class I>
     decltype(auto) at(I const & i)
     {
-        RA_CHECK(inside(i[0], n__), " i ", i[0], " size ", n__);
-        return p__[i[0]];
+        RA_CHECK(inside(i[0], n_), " i ", i[0], " size ", n_);
+        return p[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d, " (Span)");
-        std::advance(p__, (k==0) * d);
+        std::advance(p, (k==0) * d);
     }
     constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() const { return p__; }
+    constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };

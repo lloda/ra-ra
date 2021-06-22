@@ -20,7 +20,7 @@ template <class V>
 struct Wector
 {
     V v;
-    decltype(v.begin()) p__ = v.begin();
+    decltype(v.begin()) p = v.begin();
 };
 
 template <class V> inline constexpr auto wector(V && v) { return Wector<V> { std::forward<V>(v) }; }
@@ -39,14 +39,14 @@ int main()
 
     cout << "&(v1.v[0])         " << &(v1.v[0]) << endl;
     cout << "&(*(v1.v.begin())) " << &(*(v1.v.begin())) << endl;
-    cout << "&(v1.p__[0])       " << &(v1.p__[0]) << endl; // BAD
+    cout << "&(v1.p[0])       " << &(v1.p[0]) << endl; // BAD
     cout << "&v1                " << &v1 << endl;
 
     cout << endl;
 
     cout << "&(v2.v[0])         " << &(v2.v[0]) << endl;
     cout << "&(*(v2.v.begin())) " << &(*(v2.v.begin())) << endl;
-    cout << "&(v2.p__[0])       " << &(v2.p__[0]) << endl;
+    cout << "&(v2.p[0])       " << &(v2.p[0]) << endl;
     cout << "&v2                " << &v2 << endl;
 
     return 0;
