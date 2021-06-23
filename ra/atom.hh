@@ -53,16 +53,15 @@ struct Scalar
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Wrap foreign vectors.
-// FIXME This can handle temporaries and make_a().begin() can't, look out for that.
-// FIXME Do we need this class? holding rvalue is the only thing it does over View, and it doesn't handle rank!=1.
+// FIXME Beware of some classes eg in std::ranges that have both ssize() and tuple_size() with different meanings. For those it would be better to revert to using ra_traits here and then define the requisite ra_traits specializations.
 template <class V>
-requires ((requires (V v) { { ssize(v) } -> std::signed_integral; } ||
+requires ((requires (V v) { { std::ssize(v) } -> std::signed_integral; } ||
            requires { std::tuple_size<std::decay_t<V>>::value; } ) &&
-          requires (V v) { { begin(v) } -> std::random_access_iterator; })
+          requires (V v) { { std::begin(v) } -> std::random_access_iterator; })
 struct Vector
 {
     V v;
-    decltype(begin(v)) p;
+    decltype(std::begin(v)) p;
     constexpr static bool ct_size = requires { std::tuple_size<std::decay_t<V>>::value; };
 
     constexpr static rank_t rank_s() { return 1; };
@@ -75,14 +74,14 @@ struct Vector
     constexpr dim_t len(int k) const
     {
         RA_CHECK(k==0, " k ", k);
-        if constexpr (ct_size) { return std::tuple_size_v<std::decay_t<V>>; } else { return ssize(v); };
+        if constexpr (ct_size) { return std::tuple_size_v<std::decay_t<V>>; } else { return std::ssize(v); };
     }
 
 // see test/ra-9.cc [ra1] for forward() here.
-    constexpr Vector(V && v_): v(std::forward<V>(v_)), p(begin(v)) {}
+    constexpr Vector(V && v_): v(std::forward<V>(v_)), p(std::begin(v)) {}
 // see [ra35] in test/ra-9.cc. FIXME How about I just hold a ref for any kind of V, like container -> iter.
-    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p(begin(v)) { static_assert(!std::is_reference_v<V>); };
-    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p(begin(v)) { static_assert(!std::is_reference_v<V>); };
+    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p(std::begin(v)) { static_assert(!std::is_reference_v<V>); };
+    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p(std::begin(v)) { static_assert(!std::is_reference_v<V>); };
 
     template <class I>
     decltype(auto) at(I const & i)

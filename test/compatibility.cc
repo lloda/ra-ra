@@ -9,6 +9,7 @@
 // later version.
 
 #include <iostream>
+#include <ranges>
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 
