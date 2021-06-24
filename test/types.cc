@@ -156,5 +156,9 @@ int main()
         tr.test_eq(1, ra::start(std::array<int, 2> { 1, 2 }).rank());
         tr.test_eq(1, ra::start(std::vector<int> { 1, 2, 3 }).rank());
     }
+    tr.section("adaptors");
+    {
+        static_assert(ra::is_ra_vector<decltype(ra::vector(std::array<int, 2> { 1, 2 }))>);
+    }
     return tr.summary();
 }

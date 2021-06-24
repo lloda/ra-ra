@@ -16,6 +16,11 @@ namespace ra {
 template <class V> inline constexpr auto size(V const & v);
 template <class V> inline constexpr decltype(auto) shape(V const & v);
 
+
+// --------------------
+// atom types
+// --------------------
+
 template <class C> struct Scalar;
 
 // Separate from Scalar so that operator+=, etc. has the array meaning there.
@@ -28,10 +33,9 @@ struct ScalarFlat: public Scalar<C>
 };
 
 // Wrap constant for traversal. We still want f(C) to be a specialization in most cases.
-template <class C_>
+template <class C>
 struct Scalar
 {
-    using C = C_;
     C c;
 
     constexpr static rank_t rank_s() { return 0; }
@@ -77,23 +81,29 @@ struct Vector
         if constexpr (ct_size) { return std::tuple_size_v<std::decay_t<V>>; } else { return std::ssize(v); };
     }
 
-// see test/ra-9.cc [ra1] for forward() here.
+// [ra1] test/ra-9.cc
     constexpr Vector(V && v_): v(std::forward<V>(v_)), p(std::begin(v)) {}
-// see [ra35] in test/ra-9.cc. FIXME How about I just hold a ref for any kind of V, like container -> iter.
-    constexpr Vector(Vector<std::remove_reference_t<V>> const & a): v(std::move(a.v)), p(std::begin(v)) { static_assert(!std::is_reference_v<V>); };
-    constexpr Vector(Vector<std::remove_reference_t<V>> && a): v(std::move(a.v)), p(std::begin(v)) { static_assert(!std::is_reference_v<V>); };
+// [ra35] test/ra-9.cc
+    constexpr Vector(Vector const & a) requires (!std::is_reference_v<V>): v(std::move(a.v)), p(std::begin(v)) {};
+    constexpr Vector(Vector && a) requires (!std::is_reference_v<V>): v(std::move(a.v)), p(std::begin(v)) {};
+    constexpr Vector(Vector const & a) requires (std::is_reference_v<V>) = default;
+    constexpr Vector(Vector && a) requires (std::is_reference_v<V>) = default;
+// cf RA_DEF_ASSIGNOPS_SELF
+    Vector & operator=(Vector const & a) requires (!std::is_reference_v<V>) { v = std::move(a.v); p = std::begin(v); }
+    Vector & operator=(Vector && a) requires (!std::is_reference_v<V>) { v = std::move(a.v); p = std::begin(v); }
+    Vector & operator=(Vector const & a) requires (std::is_reference_v<V>) { v = a.v; p = std::begin(v); return *this; };
+    Vector & operator=(Vector && a) requires (std::is_reference_v<V>) { v = a.v; p = std::begin(v); return *this; };
 
     template <class I>
-    decltype(auto) at(I const & i)
+    constexpr decltype(auto) at(I const & i)
     {
-        RA_CHECK(inside(i[0], ra::size(v)), " i ", i[0], " size ", ra::size(v));
+        RA_CHECK(inside(i[0], std::ssize(v)), " i ", i[0], " size ", std::ssize(v));
         return p[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
 // k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra03]
 // k==0 && d!=1 happens on turning back at end of ply.
-// we need this only on outer products and such, or in FIXME operator<<; which could be fixed I think.
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
         p += (k==0) * d;
     }
@@ -205,10 +215,9 @@ struct IotaFlat
     void operator+=(dim_t d) { i_ += T(d)*stride_; }
 };
 
-template <class T_>
+template <class T>
 struct Iota
 {
-    using T = T_;
     dim_t const len_;
     T i_;
     T const stride_;
@@ -245,6 +254,11 @@ iota(dim_t len, O org=0, S stride=1)
     using T = std::common_type_t<O, S>;
     return Iota<T> { len, T(org), T(stride) };
 }
+
+
+// --------------------
+// helpers for slicing
+// --------------------
 
 template <class I> struct is_beatable_def
 {
@@ -288,6 +302,7 @@ template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;
 template <class Live, class A> struct Reframe;
 
+
 // --------------
 // Coerce potential RaIterator
 // --------------
@@ -298,9 +313,11 @@ inline constexpr void start(T && t)
     static_assert(!std::same_as<T, T>, "Type cannot be start()ed.");
 }
 
-RA_IS_DEF(is_iota, (std::same_as<A, Iota<typename A::T>>))
-RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<typename A::C>>))
-RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<typename A::V>>))
+RA_IS_DEF(is_iota, (std::same_as<A, Iota<decltype(std::declval<A>().i_)>>))
+RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
+RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<decltype(std::declval<A>().v)>>))
+
+// foreign types
 
 template <class T> requires (is_foreign_vector<T>)
 inline constexpr auto
@@ -316,38 +333,6 @@ start(T && t)
     return ra::scalar(std::forward<T>(t));
 }
 
-// See [ra35] and Vector constructors above. RaIterators need to be restarted in case on every use (eg ra::cross()).
-template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
-inline constexpr auto
-start(T && t)
-{
-    return std::forward<T>(t);
-}
-
-// Copy the iterator but not the data. This follows the behavior of iter(View); Vector is just an interface adaptor [ra35].
-template <class T> requires (is_ra_vector<T>)
-inline constexpr auto
-start(T && t)
-{
-    return vector(t.v);
-}
-
-// For Scalar we forward since there's no iterator part.
-template <class T> requires (is_ra_scalar<T>)
-inline constexpr decltype(auto)
-start(T && t)
-{
-    return std::forward<T>(t);
-}
-
-// Neither cell_iterator nor cell_iterator_small will retain rvalues [ra4].
-template <class T> requires (is_slice<T>)
-inline constexpr auto
-start(T && t)
-{
-    return iter<0>(std::forward<T>(t));
-}
-
 template <class T>
 inline constexpr auto
 start(std::initializer_list<T> v)
@@ -359,6 +344,46 @@ start(std::initializer_list<T> v)
 template <class T> requires (is_builtin_array<T>)
 inline constexpr auto
 start(T && t);
+
+// ra:: non-iterator types
+
+// Neither cell_iterator nor cell_iterator_small will retain rvalues [ra4].
+template <class T> requires (is_slice<T>)
+inline constexpr auto
+start(T && t)
+{
+    return iter<0>(std::forward<T>(t));
+}
+
+// RaIterator (rather restart)
+
+template <class T> requires (is_ra_scalar<T>)
+inline constexpr decltype(auto)
+start(T && t)
+{
+    return std::forward<T>(t);
+}
+
+// see [ra35] and Vector constructors above. RaIterators need to be restarted in case on every use (eg ra::cross()).
+template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
+inline constexpr auto
+start(T && t)
+{
+    return std::forward<T>(t);
+}
+
+// restart iterator but do not copy data. This follows iter(View); Vector is just an interface adaptor [ra35].
+template <class T> requires (is_ra_vector<T>)
+inline constexpr auto
+start(T && t)
+{
+    return vector(t.v);
+}
+
+
+// --------------------
+// global introspection
+// --------------------
 
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.

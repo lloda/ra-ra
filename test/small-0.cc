@@ -21,6 +21,14 @@ using complex = std::complex<double>;
 
 struct test_type { int a; };
 
+std::string typecheck(auto && a)
+{
+#if __cpp_lib_source_location >= 201907L
+    return std::source_location::current().function_name();
+#endif
+    return "";
+};
+
 int main()
 {
     TestRecorder tr;
@@ -467,24 +475,18 @@ int main()
     // }
 // self type assigment
     {
-        auto typecheck = [](auto && a)
-                         {
-#if __cpp_lib_source_location >= 201907L
-                             cout << std::source_location::current().function_name() << endl;
-#endif
-                         };
         ra::Small<int, 3> a = 0;
         ra::Small<int, 3> b = {9, 8, 7};
         ra::Small<int, 3> c = {9, 8, 7};
         auto pa = a.data();
         tr.test_eq(a, 0);
-        typecheck(a());
+        cout << typecheck(a()) << endl;
         a() = b();
         tr.test_eq(a, c);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(pa));
         a = 0;
         tr.test_eq(a, 0);
-        typecheck(a);
+        cout << typecheck(a()) << endl;
         a = b;
         tr.test_eq(a, c);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(pa));

@@ -502,8 +502,7 @@ start(T && t)
     return typename Z::view((typename Z::E *)(t)).iter();
 }
 
-template <class T>
-requires (is_builtin_array<T>)
+template <class T> requires (is_builtin_array<T>)
 struct ra_traits_def<T>
 {
     using S = typename builtin_array_types<T>::view;
