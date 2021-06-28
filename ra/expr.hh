@@ -2,7 +2,7 @@
 /// @file expr.hh
 /// @brief Operator nodes for expression templates.
 
-// (c) Daniel Llorens - 2011-2014, 2016-2017, 2019
+// (c) Daniel Llorens - 2011-2014, 2016-2017, 2019, 2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -14,28 +14,25 @@
 
 namespace ra {
 
-// Manipulate ET through flat (raw pointer-like) iterators P ...
-template <class Op, class T, class I=mp::iota<mp::len<T>>> struct Flat;
-
-template <class Op, class T, int ... I>
-struct Flat<Op, T, mp::int_list<I ...>>
-{
-    Op & op;
-    T t;
-    template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-    constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
-};
-
-template <class Op, class ... P> inline constexpr auto
-flat(Op & op, P && ... p)
-{
-    return Flat<Op, std::tuple<P ...>> { op, std::tuple<P ...> { std::forward<P>(p) ... } };
-}
-
 // forward decl in atom.hh
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
 {
+    template <class Op_, class T_>
+    struct Flat
+    {
+        Op_ & op;
+        T_ t;
+        template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
+        constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
+    };
+
+    template <class Op_, class ... P_> inline constexpr static auto
+    flat(Op_ & op, P_ && ... p)
+    {
+        return Flat<Op_, std::tuple<P_ ...>> { op, std::tuple<P_ ...> { std::forward<P_>(p) ... } };
+    }
+
     using Match_ = Match<std::tuple<P ...>>;
     Op op;
 
@@ -59,11 +56,11 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
     constexpr decltype(auto)
     flat()
     {
-        return ra::flat(op, std::get<I>(this->t).flat() ...);
+        return flat(op, std::get<I>(this->t).flat() ...);
     }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    using scalar = decltype(*(ra::flat(op, std::get<I>(Match_::t).flat() ...)));
+    using scalar = decltype(*(flat(op, std::get<I>(Match_::t).flat() ...)));
     operator scalar()
     {
         if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only

@@ -76,8 +76,6 @@ struct cell_iterator_small
     static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
     static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
-    constexpr static rank_t rank_s() { return framer; }
-    constexpr static rank_t rank() { return framer; }
 
     using cell_lens = mp::drop<typename V::lens, framer>;
     using cell_strides = mp::drop<typename V::strides, framer>;
@@ -96,8 +94,10 @@ struct cell_iterator_small
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
 
-    constexpr static dim_t len(int k) { RA_CHECK(inside(k, rank())); return V::len(k); }
+    constexpr static rank_t rank_s() { return framer; }
+    constexpr static rank_t rank() { return framer; }
     constexpr static dim_t len_s(int k) { RA_CHECK(inside(k, rank_s())); return V::len(k); }
+    constexpr static dim_t len(int k) { RA_CHECK(inside(k, rank())); return V::len(k); }
     constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j)
     {
@@ -283,8 +283,8 @@ struct SmallBase
 
     using Child = Child_<T, lens, strides>;
 
-    constexpr static rank_t rank()  { return mp::len<lens>; }
-    constexpr static rank_t rank_s()  { return mp::len<lens>; }
+    constexpr static rank_t rank() { return mp::len<lens>; }
+    constexpr static rank_t rank_s() { return mp::len<lens>; }
     constexpr static dim_t size() { return mp::apply<mp::prod, lens>::value; }
     constexpr static dim_t size_s() { return size(); }
     constexpr static auto slens = mp::tuple_values<std::array<dim_t, rank()>, lens>();

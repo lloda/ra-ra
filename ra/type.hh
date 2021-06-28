@@ -36,9 +36,10 @@ template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove
 
 
 // --------------
-// ra_traits are intended mostly for foreign types. FIXME Not sure this is the interface I want.
+// ra_traits are intended for foreign types. FIXME Not sure this is the interface I want.
 // --------------
 
+// not using decay_t b/c of builtin arrays.
 template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;
 
 template <class T, class A>
@@ -74,8 +75,7 @@ struct ra_traits_def<std::initializer_list<T>>
     constexpr static rank_t rank_s() { return 1; }
 };
 
-template <class T>
-requires (is_scalar<T>)
+template <class T> requires (is_scalar<T>)
 struct ra_traits_def<T>
 {
     using V = T;

@@ -15,7 +15,7 @@
 #include "ra/complex.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-template <int i> using TI = ra::TensorIndex<i, int>;
+template <int i> using TI = ra::TensorIndex<i>;
 using real = double;
 
 struct Never

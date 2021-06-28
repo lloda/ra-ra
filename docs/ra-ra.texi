@@ -1621,7 +1621,7 @@ This is a kind of @b{RaIterator} that provides a @code{flat()} method to obtain 
 
 This is a kind of @b{RaIterator} that provides an @code{at(i ...)} method for random access to any element of the array. In the current version of @code{ra::}, every @b{RaIterator} is both @b{Ravelable} and @b{Indexable}.
 
-@item @b{Flat} @code{Flat} @code{PickFlat} @code{CellFlat} @code{IotaFlat} @code{ScalarFlat}
+@item @b{Flat} @code{Iota::Flat} @code{Scalar::Flat} @code{TensorIndex::Flat} @code{Expr::Flat} @code{Pick::Flat} @code{CellFlat}
 
 These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Ravelable} objects through a method @code{flat}.
 

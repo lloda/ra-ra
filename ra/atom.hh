@@ -21,21 +21,18 @@ template <class V> inline constexpr decltype(auto) shape(V const & v);
 // atom types
 // --------------------
 
-template <class C> struct Scalar;
-
-// Separate from Scalar so that operator+=, etc. has the array meaning there.
-template <class C>
-struct ScalarFlat: public Scalar<C>
-{
-    constexpr void operator+=(dim_t d) const {}
-    constexpr C & operator*() { return this->c; }
-    constexpr C const & operator*() const { return this->c; } // [ra39]
-};
-
 // Wrap constant for traversal. We still want f(C) to be a specialization in most cases.
 template <class C>
 struct Scalar
 {
+    template <class C_>
+    struct Flat: public Scalar<C_>
+    {
+        constexpr void operator+=(dim_t d) const {}
+        constexpr C_ & operator*() { return this->c; }
+        constexpr C_ const & operator*() const { return this->c; } // [ra39]
+    };
+
     C c;
 
     constexpr static rank_t rank_s() { return 0; }
@@ -48,8 +45,8 @@ struct Scalar
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t stride(int k) { return 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return true; }
-    constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
-    constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
+    constexpr decltype(auto) flat() { return static_cast<Flat<C> &>(*this); }
+    constexpr decltype(auto) flat() const { return static_cast<Flat<C> const &>(*this); } // [ra39]
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
@@ -177,29 +174,28 @@ struct Span
 
 template <class I> inline auto ptr(I i, dim_t n) { return Span<I> { i, n }; }
 
-template <int w_, class value_type=ra::dim_t>
-struct TensorIndexFlat
-{
-    dim_t i;
-    constexpr void operator+=(dim_t const s) { i += s; }
-    constexpr value_type operator*() { return i; }
-};
-
-template <int w, class value_type=ra::dim_t>
+template <int w>
 struct TensorIndex
 {
+    struct Flat
+    {
+        dim_t i;
+        constexpr void operator+=(dim_t const s) { i += s; }
+        constexpr dim_t operator*() { return i; }
+    };
+
     dim_t i = 0;
     static_assert(w>=0, "bad TensorIndex");
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t len_s(int k) { return DIM_BAD; }
-    constexpr static dim_t len(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
+    constexpr static dim_t len(int k) { return DIM_BAD; } // for shape checks with dyn rank.
 
-    template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
+    template <class I> constexpr dim_t at(I const & ii) const { return ii[w]; }
     constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, " d ", d); i += (k==w) * d; }
     constexpr static dim_t const stride(int k) { return (k==w); }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return st*stride(z)==stride(j); }
-    constexpr auto flat() const { return TensorIndexFlat<w, value_type> {i}; }
+    constexpr auto flat() const { return Flat {i}; }
 };
 
 #define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
@@ -207,17 +203,16 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
 template <class T>
-struct IotaFlat
-{
-    T i_;
-    T const stride_;
-    T const & operator*() const { return i_; } // TODO if not for this, I could use plain T. Maybe ra::eval_expr...
-    void operator+=(dim_t d) { i_ += T(d)*stride_; }
-};
-
-template <class T>
 struct Iota
 {
+    struct Flat
+    {
+        T i_;
+        T const stride_;
+        T const & operator*() const { return i_; }
+        void operator+=(dim_t d) { i_ += T(d)*stride_; }
+    };
+
     dim_t const len_;
     T i_;
     T const stride_;
@@ -243,7 +238,7 @@ struct Iota
     }
     constexpr static dim_t stride(rank_t i) { return i==0 ? 1 : 0; }
     constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
+    constexpr auto flat() const { return Flat { i_, stride_ }; }
     decltype(auto) operator+=(T const & b) { i_ += b; return *this; };
     decltype(auto) operator-=(T const & b) { i_ -= b; return *this; };
 };

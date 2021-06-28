@@ -2,7 +2,7 @@
 /// @file io.hh
 /// @brief Write and read arrays, expressions.
 
-// (c) Daniel Llorens - 2014-2018
+// (c) Daniel Llorens - 2014-2018, 2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -104,7 +104,7 @@ operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
         std::decay_t<C> cc(s, ra::none);
-        RA_CHECK(every(start(s)>=0) && "negative sizes in input");
+        RA_CHECK(every(start(s)>=0), "negative sizes in input ", s);
 // avoid copying in case Container's elements don't support it.
         swap(c, cc);
 // need row-major, serial iteration here. FIXME use ra:: traversal.

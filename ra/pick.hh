@@ -2,7 +2,7 @@
 /// @file pick.hh
 /// @brief Expression template that picks one of several arguments.
 
-// (c) Daniel Llorens - 2016-2017, 2019
+// (c) Daniel Llorens - 2016-2017, 2019, 2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -48,7 +48,7 @@ struct pick_type<std::tuple<P0 &, P & ...>>
 };
 
 // -----------------
-// runtime to compile time conversion for Pick::at() and PickFlat::operator*()
+// runtime to compile time conversion for Pick::at() and Pick::Flat::operator*()
 // -----------------
 
 template <class T, class J> struct pick_at_type;
@@ -97,32 +97,30 @@ pick_star(size_t p0, T && t)
     }
 }
 
-// Manipulate ET through flat (raw pointer-like) iterators P ...
-template <class T, class I=mp::iota<mp::len<T>>>
-struct PickFlat;
-
-template <class P0, class ... P, int ... I>
-struct PickFlat<std::tuple<P0, P ...>, mp::int_list<I ...>>
-{
-    std::tuple<P0, P ...> t;
-    template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-    decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
-};
-
-template <class P0, class ... P> inline constexpr auto
-pick_flat(P0 && p0, P && ... p)
-{
-    return PickFlat<std::tuple<P0, P ...>> { std::tuple<P0, P ...> { std::forward<P0>(p0), std::forward<P>(p) ... } };
-}
-
 // forward decl in atom.hh
-template <class P0, class ... P, int ... I>
-struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple<P0, P ...>>
+template <class ... P, int ... I>
+struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
 {
-    using Match_ = Match<std::tuple<P0, P ...>>;
+    static_assert(sizeof...(P)>1);
+
+    template <class T_>
+    struct Flat
+    {
+        T_ t;
+        template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
+        decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
+    };
+
+    template <class ... P_> inline constexpr static auto
+    flat(P_ && ... p)
+    {
+        return Flat<std::tuple<P_ ...>> { std::tuple<P_ ...> { std::forward<P_>(p) ... } };
+    }
+
+    using Match_ = Match<std::tuple<P ...>>;
 
 // test/ra-9.cc [ra1]
-    constexpr Pick(P0 p0_, P ... p_): Match_(std::forward<P0>(p0_), std::forward<P>(p_) ...) {}
+    constexpr Pick(P ... p_): Match_(std::forward<P>(p_) ...) {}
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
@@ -138,14 +136,14 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
         return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
     }
 
-    constexpr auto
+    constexpr decltype(auto)
     flat()
     {
-        return pick_flat(std::get<I>(this->t).flat() ...);
+        return flat(std::get<I>(this->t).flat() ...);
     }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    using scalar = decltype(*(pick_flat(std::get<I>(Match_::t).flat() ...)));
+    using scalar = decltype(*(flat(std::get<I>(Match_::t).flat() ...)));
     operator scalar()
     {
         if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only
@@ -158,16 +156,16 @@ struct Pick<std::tuple<P0, P ...>, mp::int_list<I ...>>: public Match<std::tuple
     }
 };
 
-template <class P0, class ... P> inline constexpr auto
-pick_in(P0 && p0, P && ... p)
+template <class ... P> inline constexpr auto
+pick_in(P && ... p)
 {
-    return Pick<std::tuple<P0, P ...>> { std::forward<P0>(p0), std::forward<P>(p) ... };
+    return Pick<std::tuple<P ...>> { std::forward<P>(p) ... };
 }
 
-template <class P0, class ... P> inline constexpr auto
-pick(P0 && p0, P && ... p)
+template <class ... P> inline constexpr auto
+pick(P && ... p)
 {
-    return pick_in(start(std::forward<P0>(p0)), start(std::forward<P>(p)) ...);
+    return pick_in(start(std::forward<P>(p)) ...);
 }
 
 } // namespace ra

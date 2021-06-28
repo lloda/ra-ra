@@ -22,7 +22,7 @@ using int2 = ra::Small<int, 2>;
 using std_int3 = std::array<int, 3>;
 using std_int2 = std::array<int, 2>;
 
-template <int i> using TI = ra::TensorIndex<i, int>;
+template <int i> using TI = ra::TensorIndex<i>;
 
 template <class AA>
 void CheckPlyReverse1(TestRecorder & tr, AA && a)
