@@ -347,21 +347,21 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 <h4 class="subsection">1.5.2 Blitz++</h4>
 <a name="index-Blitz_002b_002b-1"></a>
 <p>Blitz++ [<a href="#Sources">bli17</a>]
- pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time shape (<code>Tiny</code>), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
+ pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not runtime rank. It also supported small arrays with compile time shape (<code>Tiny</code>), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 </p>
 <p>To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 </p>
-<p>One important difference between Blitz++ and <code>ra::</code> is that Blitz++&rsquo;s arrays were reference counted. <code>ra::</code> doesn&rsquo;t do any memory management on its own: the default container types are explicitly values (data-owning) or views. You can select your own storage for the data-owning objects, including reference-counted storage (<code>ra::</code> declares a type using <code>std::shared_ptr</code>), but this is not the default.
+<p>One important difference between Blitz++ and <code>ra::</code> is that Blitz++&rsquo;s arrays were reference counted. <code>ra::</code> doesn&rsquo;t do any memory management on its own: the default container (data-owning) types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (<code>ra::</code> declares a type using <code>std::shared_ptr</code>), but this is not the default.
 </p>
 <a name="Other-C_002b_002b-libraries"></a>
 <h4 class="subsection">1.5.3 Other C++ libraries</h4>
 
-<p>I guess this is important enough!
+<p>TODO
 </p>
 <a name="Other-languages"></a>
 <h4 class="subsection">1.5.4 Other languages</h4>
 
-<p>TODO Maybe review other languages, at least the big ones (Fortran/APL/J/Matlab/Numpy).
+<p>TODO Maybe review other languages, at least the big ones (Fortran / APL / J / Matlab / Python-Numpy).
 </p>
 <hr>
 <a name="Usage"></a>
@@ -446,20 +446,24 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 
 <p><code>ra::</code> offers two kinds of data objects. The first kind, the <em>container</em>, owns its data. Creating a container requires memory and destroying it causes that memory to be freed.
 </p>
-<p>There are three kinds of containers: static size, static rank/dynamic size, and dynamic rank. Here static means ‘compile time constant’ while dynamic means ‘run time constant’. Some dynamic size arrays can be resized but dynamic rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.
+<a name="index-compile_002dtime"></a>
+<a name="index-ct"></a>
+<a name="index-runtime"></a>
+<a name="index-rt"></a>
+<p>There are three kinds of containers (ct: compile-time, rt: runtime): 1) ct size, 2) ct rank/rt shape, and 3) rt rank; rt rank implies rt shape. Some rt size arrays can be resized but rt rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.
 </p>
 <p>For example:
 </p>
 <div class="example">
 <pre class="verbatim">{
-    ra::Small&lt;double, 2, 3&gt; a(0.);     // a static size 2x3 array
-    ra::Big&lt;double, 2&gt; b({2, 3}, 0.);  // a dynamic size 2x3 array
-    ra::Big&lt;double&gt; c({2, 3}, 0.);     // a dynamic rank 2x3 array
+    ra::Small&lt;double, 2, 3&gt; a(0.);     // a ct size 2x3 array
+    ra::Big&lt;double, 2&gt; b({2, 3}, 0.);  // a rt size 2x3 array
+    ra::Big&lt;double&gt; c({2, 3}, 0.);     // a rt rank 2x3 array
     // a, b, c destroyed at end of scope
 }
 </pre></div>
 
-<p>The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a static size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the static size types. Static size or static rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+<p>The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a ct size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the ct size types. Ct size or ct rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 </p>
 <p>Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a name="DOCF4" href="#FOOT4"><sup>4</sup></a>
 </p>
@@ -529,7 +533,7 @@ cout &lt;&lt; ra::noshape &lt;&lt; format_array(A, &quot;|&quot;) &lt;&lt; endl;
 <p>A <em>view</em> is similar to a container in that it points to actual data in memory. However, the view doesn&rsquo;t own that data and destroying the view won&rsquo;t affect it. For example:
 </p>
 <div class="example">
-<pre class="verbatim">ra::Big&lt;double&gt; c({2, 3}, 0.);     // a dynamic rank 2x3 array
+<pre class="verbatim">ra::Big&lt;double&gt; c({2, 3}, 0.);     // a rt rank 2x3 array
 {
     auto c1 = c(1);                // the second row of array c
     // c1 is destroyed here
@@ -561,7 +565,7 @@ ra::View&lt;int&gt; v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] steps [
 ra::View&lt;int&gt; v2({2, 3}, raw);           // same, default C (row-major) steps
 </pre></div>
 
-<p>Containers can be treated as views of the same ‘dynamicness’. If you declare a function
+<p>Containers can be treated as views of the same kind (rt or ct) . If you declare a function
 </p>
 <div class="example">
 <pre class="verbatim">void f(ra::View&lt;int, 3&gt; &amp; v);
@@ -909,7 +913,7 @@ cout &lt;&lt; x(ra::all, ra::insert&lt;2&gt;) * a(insert&lt;1&gt;) &lt;&lt; endl
 50 60
 </pre></div>
 
-<p>Here&rsquo;s a way to perform the outer product of two <code>Views</code> of static rank (but see <a href="#x_002dfrom"><code>from</code></a> for a more general way):
+<p>Here&rsquo;s a way to perform the outer product of two <code>Views</code> of ct rank (but see <a href="#x_002dfrom"><code>from</code></a> for a more general way):
 </p><div class="example">
 <pre class="verbatim">cout &lt;&lt; (a(ra::dots&lt;a.rank()&gt;, ra::insert&lt;b.rank()&gt;) * b(ra::insert&lt;a.rank()&gt;, ra::dots&lt;b.rank()&gt;)) &lt;&lt; endl;
 
@@ -933,23 +937,23 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 <h4 class="subsection">2.6.1 Subscripting and rank-0 views</h4>
 
 <a name="index-view_002c-rank-0"></a>
-<a name="index-rank_002c-dynamic"></a>
-<a name="index-rank_002c-static"></a>
-<p>When the result of the subscripting operation would have rank 0, the type returned is the type of the view <em>element</em> and not a rank-0 view as long as the rank of the result can be determined at compile time. When that&rsquo;s not possible (for instance, the subscripted view has dynamic rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
+<a name="index-rank_002c-runtime"></a>
+<a name="index-rank_002c-compile_002dtime"></a>
+<p>When the result of the subscripting operation would have rank 0, the type returned is the type of the view <em>element</em> and not a rank-0 view as long as the rank of the result can be determined at compile time. When that&rsquo;s not possible (for instance, the subscripted view has rt rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
 </p>
 <div class="example">
 <pre class="verbatim">using T = std::complex&lt;double&gt;;
 int f(T &amp;);
-Big&lt;T, 2&gt; a({2, 3}, 0); // static rank
-Big&lt;T&gt; b({2, 3}, 0); // dynamic rank
+Big&lt;T, 2&gt; a({2, 3}, 0); // ct rank
+Big&lt;T&gt; b({2, 3}, 0); // rt rank
 
 cout &lt;&lt; a(0, 0).real_part() &lt;&lt; endl; // ok, a(0, 0) returns complex &amp;
 // cout &lt;&lt; b(0, 0).real_part() &lt;&lt; endl; // error, View&lt;T&gt; has no member real_part
 cout &lt;&lt; ((T &amp;)(b(0, 0))).real_part() &lt;&lt; endl; // ok, manual conversion to T &amp;
 
 cout &lt;&lt; f(b(0, 0)) &lt;&lt; endl; // ok, automatic conversion from View&lt;T&gt; to T &amp;
-// cout &lt;&lt; f(a(0)) &lt;&lt; endl; // compile time error, conversion failed since static rank of a(0) is not 0
-// cout &lt;&lt; f(b(0)) &lt;&lt; endl; // runtime error, conversion failed since dynamic rank of b(0) is not 0
+// cout &lt;&lt; f(a(0)) &lt;&lt; endl; // compile time error, conversion failed since ct rank of a(0) is not 0
+// cout &lt;&lt; f(b(0)) &lt;&lt; endl; // runtime error, conversion failed since rt rank of b(0) is not 0
 </pre></div>
 
 
@@ -1121,11 +1125,11 @@ cout &lt;&lt; ra::sum(x) &lt;&lt; endl;
 </p>
 <ul>
 <li> <code>std::vector</code>
-produces an expression of rank 1 and dynamic size.
+produces an expression of rank 1 and rt size.
 </li><li> <code>std::array</code>
-produces an expression of rank 1 and static size.
+produces an expression of rank 1 and ct size.
 </li><li> Built-in arrays <a name="index-built_002din-array"></a>
-produce an expression of positive rank and static size.
+produce an expression of positive rank and ct size.
 </li><li> Raw pointers
 produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must be brought into <code>ra::</code> explicitly with the function <a href="#x_002dptr"><code>ptr</code></a>.
 </li></ul>
@@ -1561,7 +1565,7 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <h3 class="section">4.2 Assignment to views</h3>
 
 <p>FIXME
-With dynamic-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
+With rt-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
 </p>
 <a name="View-of-const-vs-const-view"></a>
 <h3 class="section">4.3 View of const vs const view</h3>
@@ -1692,7 +1696,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 
 <p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>TensorIndex</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
-<p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for dynamic-size expressions and <code>plyf</code> for static-size expressions.
+<p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for rt-size expressions and <code>plyf</code> for ct-size expressions.
 </p>
 <p>Finally we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v14) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a single 1D loop.
 </p>
@@ -1907,7 +1911,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <dd><p>Get the shape of an <code>ra::</code> object.
 </p></dd></dl>
 
-<p>The shape of a dynamic rank array is a rank-1 object with dynamic size, and the shape of a static rank array is a rank-1 object with static size.
+<p>The shape of a rt rank array is a rank-1 object with rt size, and the shape of a ct rank array is a rank-1 object with ct size.
 </p>
 <p>This function may return an expression object or an array object. If you need to operate on the result, it might be necessary to use <code>concrete</code>.
 </p>
@@ -1925,7 +1929,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <dd><p>Convert the argument to a container of the same shape as <code>a</code>.
 </p></dd></dl>
 
-<p>If the argument has dynamic or static shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+<p>If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 </p>
 
 <a name="index-wrank"></a>
@@ -1979,7 +1983,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
   13 23 33
 </pre></div>
 
-<p>The two argument form lets you specify the axis list dynamically. In that case the result will have dynamic rank as well. For example: </p>
+<p>The two argument form lets you specify the axis list at runtime. In that case the result will have rt rank as well. For example: </p>
 <div class="example">
 <pre class="verbatim">    ra::Small&lt;int, 2&gt; axes = {0, 1};
     ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
@@ -2100,7 +2104,7 @@ case c:
 <dd><p>If either of these objects is sent to <code>std::ostream</code> before an expression object, the shape of that object will or won&rsquo;t be printed.
 </p></dd></dl>
 
-<p>If the object has static (compile time) shape, the default is not to print the shape, so <code>noshape</code> isn&rsquo;t necessary, and conversely for <code>withshape</code> if the object has dynamic (runtime) shape. Note that the array readers [<code>operator&gt;&gt;(std::istream &amp;, ...)</code>] expect the shape to be present or not according to the default.
+<p>If the object has ct shape, the default is not to print the shape, so <code>noshape</code> isn&rsquo;t necessary, and conversely for <code>withshape</code> if the object has rt shape. Note that the array readers [<code>operator&gt;&gt;(std::istream &amp;, ...)</code>] expect the shape to be present or not according to the default.
 </p>
 <p>For example:
 </p>
@@ -2137,7 +2141,7 @@ case c:
 77 99
 </pre></div>
 
-<p>Note that in the last example the very shape of <code>ra::Big&lt;int&gt;</code> has runtime length, so that length (the rank of <code>A</code>, that is 1) is printed as part of the shape of <code>A</code>.
+<p>Note that in the last example the very shape of <code>ra::Big&lt;int&gt;</code> has rt length, so that length (the rank of <code>A</code>, that is 1) is printed as part of the shape of <code>A</code>.
 </p>
 <p>See also <a href="#x_002dformat_005farray"><code>format_array</code></a>.
 </p>
@@ -2234,7 +2238,7 @@ c += ra::scalar(x); // ok: scalar(x) has shape () and matches c.
 <a name="index-iter"></a>
 <a name="x_002diter"></a><dl>
 <dt><a name="index-iter-1"></a>Function: <strong>iter</strong> <em>&lt;k&gt; (view)</em></dt>
-<dd><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it is interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have dynamic or static shape.
+<dd><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it is interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have rt or ct shape.
 </p></dd></dl>
 
 <div class="example">
@@ -2493,9 +2497,11 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-cast"><code>cast</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cell">cell</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-collapse"><code>collapse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-compile_002dtime">compile-time</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-concrete"><code>concrete</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-conj"><code>conj</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-container">container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-the-library">Using the library</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ct">ct</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-D">D</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-diag"><code>diag</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2551,11 +2557,13 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-rank_002c-dynamic">rank, dynamic</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-rank_002c-static">rank, static</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank_002c-compile_002dtime">rank, compile-time</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank_002c-runtime">rank, runtime</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-real_005fpart"><code>real_part</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rel_005ferror"><code>rel_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-reverse"><code>reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rt">rt</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-runtime">runtime</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-S">S</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-scalar"><code>scalar</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2648,7 +2656,6 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <li> <code>ra::</code> uses the non standard <code>#pragma once</code> (supported on all major compilers).
 </li></ol>
 
-
 <div class="footnote">
 <hr>
 <h4 class="footnotes-heading">Footnotes</h4>
@@ -2660,7 +2667,7 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h3><a name="FOOT3" href="#DOCF3">(3)</a></h3>
 <p>Examples given without context assume that one has declared <code>using std::cout;</code>, etc.</p>
 <h3><a name="FOOT4" href="#DOCF4">(4)</a></h3>
-<p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of runtime rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
+<p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
 <h3><a name="FOOT5" href="#DOCF5">(5)</a></h3>
 <p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
 <h3><a name="FOOT6" href="#DOCF6">(6)</a></h3>

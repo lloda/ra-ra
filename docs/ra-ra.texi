@@ -233,11 +233,11 @@ The C++ standard library also offers a number of contiguous storage containers t
 
 @subsection Blitz++
 @cindex Blitz++
-Blitz++ @mybibcite{bli17} pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not dynamic rank. It also supported small arrays with compile time shape (@code{Tiny}), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which @code{ra::} chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
+Blitz++ @mybibcite{bli17} pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not runtime rank. It also supported small arrays with compile time shape (@code{Tiny}), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which @code{ra::} chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 
 To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 
-One important difference between Blitz++ and @code{ra::} is that Blitz++'s arrays were reference counted. @code{ra::} doesn't do any memory management on its own: the default container types are explicitly values (data-owning) or views. You can select your own storage for the data-owning objects, including reference-counted storage (@code{ra::} declares a type using @code{std::shared_ptr}), but this is not the default.
+One important difference between Blitz++ and @code{ra::} is that Blitz++'s arrays were reference counted. @code{ra::} doesn't do any memory management on its own: the default container (data-owning) types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (@code{ra::} declares a type using @code{std::shared_ptr}), but this is not the default.
 
 @subsection Other C++ libraries
 
@@ -245,7 +245,7 @@ TODO
 
 @subsection Other languages
 
-TODO Maybe review other languages, at least the big ones (Fortran/APL/J/Matlab/Numpy).
+TODO Maybe review other languages, at least the big ones (Fortran / APL / J / Matlab / Python-Numpy).
 
 @c ------------------------------------------------
 @node Usage
@@ -308,24 +308,28 @@ You may want to @code{#include "ra/real.hh"} and @code{"ra/complex.hh"}. These p
 
 @code{ra::} offers two kinds of data objects. The first kind, the @dfn{container}, owns its data. Creating a container requires memory and destroying it causes that memory to be freed.
 
-There are three kinds of containers: static size, static rank/dynamic size, and dynamic rank. Here static means ‘compile time constant’ while dynamic means ‘run time constant’. Some dynamic size arrays can be resized but dynamic rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.
+@cindex compile-time
+@cindex ct
+@cindex runtime
+@cindex rt
+There are three kinds of containers (ct: compile-time, rt: runtime): 1) ct size, 2) ct rank/rt shape, and 3) rt rank; rt rank implies rt shape. Some rt size arrays can be resized but rt rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.
 
 For example:
 
 @example
 @verbatim
 {
-    ra::Small<double, 2, 3> a(0.);     // a static size 2x3 array
-    ra::Big<double, 2> b({2, 3}, 0.);  // a dynamic size 2x3 array
-    ra::Big<double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
+    ra::Small<double, 2, 3> a(0.);     // a ct size 2x3 array
+    ra::Big<double, 2> b({2, 3}, 0.);  // a rt size 2x3 array
+    ra::Big<double> c({2, 3}, 0.);     // a rt rank 2x3 array
     // a, b, c destroyed at end of scope
 }
 @end verbatim
 @end example
 
-The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a static size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the static size types. Static size or static rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a ct size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the ct size types. Ct size or ct rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
 
-Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.}
+Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.}
 
 @c [ma111]
 @example
@@ -413,7 +417,7 @@ A @dfn{view} is similar to a container in that it points to actual data in memor
 
 @example
 @verbatim
-ra::Big<double> c({2, 3}, 0.);     // a dynamic rank 2x3 array
+ra::Big<double> c({2, 3}, 0.);     // a rt rank 2x3 array
 {
     auto c1 = c(1);                // the second row of array c
     // c1 is destroyed here
@@ -452,7 +456,7 @@ ra::View<int> v2({2, 3}, raw);           // same, default C (row-major) steps
 @end verbatim
 @end example
 
-Containers can be treated as views of the same ‘dynamicness’. If you declare a function
+Containers can be treated as views of the same kind (rt or ct) . If you declare a function
 
 @example
 @verbatim
@@ -830,7 +834,7 @@ cout << x(ra::all, ra::insert<2>) * a(insert<1>) << endl;
 50 60
 @end example
 
-Here's a way to perform the outer product of two @code{Views} of static rank (but see @ref{x-from,@code{from}} for a more general way):
+Here's a way to perform the outer product of two @code{Views} of ct rank (but see @ref{x-from,@code{from}} for a more general way):
 @example
 @verbatim
 cout << (a(ra::dots<a.rank()>, ra::insert<b.rank()>) * b(ra::insert<a.rank()>, ra::dots<b.rank()>)) << endl;
@@ -857,24 +861,24 @@ This supports the notion (@pxref{Rank polymorphism}) that a 3-array is also an 2
 @subsection Subscripting and rank-0 views
 
 @cindex view, rank 0
-@cindex rank, dynamic
-@cindex rank, static
-When the result of the subscripting operation would have rank 0, the type returned is the type of the view @emph{element} and not a rank-0 view as long as the rank of the result can be determined at compile time. When that's not possible (for instance, the subscripted view has dynamic rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
+@cindex rank, runtime
+@cindex rank, compile-time
+When the result of the subscripting operation would have rank 0, the type returned is the type of the view @emph{element} and not a rank-0 view as long as the rank of the result can be determined at compile time. When that's not possible (for instance, the subscripted view has rt rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
 
 @example
 @verbatim
 using T = std::complex<double>;
 int f(T &);
-Big<T, 2> a({2, 3}, 0); // static rank
-Big<T> b({2, 3}, 0); // dynamic rank
+Big<T, 2> a({2, 3}, 0); // ct rank
+Big<T> b({2, 3}, 0); // rt rank
 
 cout << a(0, 0).real_part() << endl; // ok, a(0, 0) returns complex &
 // cout << b(0, 0).real_part() << endl; // error, View<T> has no member real_part
 cout << ((T &)(b(0, 0))).real_part() << endl; // ok, manual conversion to T &
 
 cout << f(b(0, 0)) << endl; // ok, automatic conversion from View<T> to T &
-// cout << f(a(0)) << endl; // compile time error, conversion failed since static rank of a(0) is not 0
-// cout << f(b(0)) << endl; // runtime error, conversion failed since dynamic rank of b(0) is not 0
+// cout << f(a(0)) << endl; // compile time error, conversion failed since ct rank of a(0) is not 0
+// cout << f(b(0)) << endl; // runtime error, conversion failed since rt rank of b(0) is not 0
 @end verbatim
 @end example
 
@@ -1065,11 +1069,11 @@ The following types are accepted as foreign types:
 
 @itemize
 @item @code{std::vector}
-produces an expression of rank 1 and dynamic size.
+produces an expression of rank 1 and rt size.
 @item @code{std::array}
-produces an expression of rank 1 and static size.
+produces an expression of rank 1 and ct size.
 @item Built-in arrays @cindex built-in array
-produce an expression of positive rank and static size.
+produce an expression of positive rank and ct size.
 @item Raw pointers
 produce an expression of rank 1 and @emph{undefined} size. Raw pointers must be brought into @code{ra::} explicitly with the function @ref{x-ptr,@code{ptr}}.
 @end itemize
@@ -1518,7 +1522,7 @@ Expression objects are meant to be used once. This applies to anything produced 
 @section Assignment to views
 
 FIXME
-With dynamic-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
+With rt-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
 
 @section View of const vs const view
 
@@ -1637,7 +1641,7 @@ These are types that support ‘forward iterator’ traversal. They have methods
 
 The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{TensorIndex} or view axes created with @code{insert}) are ignored. All the other terms must match.
 
-Then we select a traversal method depending on the types of the arguments. @code{ra::} has two traversal methods, both based on pointer-like iterators. @code{ply_ravel} is used for dynamic-size expressions and @code{plyf} for static-size expressions.
+Then we select a traversal method depending on the types of the arguments. @code{ra::} has two traversal methods, both based on pointer-like iterators. @code{ply_ravel} is used for rt-size expressions and @code{plyf} for ct-size expressions.
 
 Finally we select an order of traversal. @code{ra::} supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v14) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn't be relied upon). @code{ply_ravel} will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a single 1D loop.
 
@@ -1837,7 +1841,7 @@ This can be used for sparse subscripting. For example:
 Get the shape of an @code{ra::} object.
 @end defun
 
-The shape of a dynamic rank array is a rank-1 object with dynamic size, and the shape of a static rank array is a rank-1 object with static size.
+The shape of a rt rank array is a rank-1 object with rt size, and the shape of a ct rank array is a rank-1 object with ct size.
 
 This function may return an expression object or an array object. If you need to operate on the result, it might be necessary to use @code{concrete}.
 
@@ -1855,7 +1859,7 @@ Get the total size of an @code{ra::} object: the product of all its lengths.
 Convert the argument to a container of the same shape as @code{a}.
 @end defun
 
-If the argument has dynamic or static shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 
 @c FIXME example
 
@@ -1917,7 +1921,7 @@ If one of the destination axes isn't mentioned in @var{axes}, then is a ‘dead�
   13 23 33
 @end example
 
-The two argument form lets you specify the axis list dynamically. In that case the result will have dynamic rank as well. For example: @c [ma117]
+The two argument form lets you specify the axis list at runtime. In that case the result will have rt rank as well. For example: @c [ma117]
 
 @example
 @verbatim
@@ -2049,7 +2053,7 @@ The shape that might be printed before the expression itself (depending on its t
 If either of these objects is sent to @code{std::ostream} before an expression object, the shape of that object will or won't be printed.
 @end deffn
 
-If the object has static (compile time) shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has dynamic (runtime) shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] expect the shape to be present or not according to the default.
+If the object has ct shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has rt shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] expect the shape to be present or not according to the default.
 
 For example:
 
@@ -2090,7 +2094,7 @@ case c:
 77 99
 @end example
 
-Note that in the last example the very shape of @code{ra::Big<int>} has runtime length, so that length (the rank of @code{A}, that is 1) is printed as part of the shape of @code{A}.
+Note that in the last example the very shape of @code{ra::Big<int>} has rt length, so that length (the rank of @code{A}, that is 1) is printed as part of the shape of @code{A}.
 
 See also @ref{x-format_array,@code{format_array}}.
 
@@ -2195,7 +2199,7 @@ where the result is @{c(0)+x(0), c(1)+x(1), c(2)@}.
 
 @cindex @code{iter}
 @anchor{x-iter} @defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have dynamic or static shape.
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have rt or ct shape.
 @end defun
 
 @example
