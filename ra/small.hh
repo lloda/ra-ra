@@ -19,50 +19,46 @@ namespace ra {
 // Develop indices for Small
 // --------------------
 
-template <class lens, class steps>
-struct Indexer0
-{
-    static_assert(mp::len<lens> == mp::len<steps>, "mismatched lengths & steps");
+namespace indexer0 {
 
-    template <rank_t end, rank_t k, class P>
-    constexpr static dim_t index_p_(dim_t const c, P const & p)
+    template <class lens, class steps, class P, rank_t end, rank_t k=0>
+    constexpr dim_t index(P const & p)
     {
-        static_assert(k>=0 && k<=end, "Bad index");
+        static_assert(mp::len<lens> == mp::len<steps>, "mismatched lengths & steps");
         if constexpr (k==end) {
-            return c;
+            return 0;
         } else {
-            RA_CHECK(inside(p[k], mp::first<lens>::value));
-            return Indexer0<mp::drop1<lens>, mp::drop1<steps>>::template
-                index_p_<end, k+1>(c + p[k] * mp::first<steps>::value, p);
+            static_assert(k>=0 && k<end, "Bad index");
+            RA_CHECK(inside(p[k], mp::ref<lens, k>::value));
+            return (p[k] * mp::ref<steps, k>::value) + index<lens, steps, P, end, k+1>(p);
         }
     }
 
-    template <class P>
-    constexpr static dim_t index_p(P const & p) // for Container::at().
+    template <class lens, class steps, class P>
+    constexpr dim_t shorter(P const & p) // for Container::at().
     {
-// gcc accepts p.size(), but I also need P = std::array to work. See also below.
         static_assert(mp::len<lens> >= size_s<P>(), "Too many indices");
-        return index_p_<size_s<P>(), 0>(0, p);
+        return index<lens, steps, P, size_s<P>()>(p);
     }
 
-    template <class P>
-    constexpr static dim_t index_short(P const & p) // for RaIterator::at().
+    template <class lens, class steps, class P>
+    constexpr dim_t longer(P const & p) // for RaIterator::at().
     {
         if constexpr (size_s<P>()!=RANK_ANY) {
             static_assert(mp::len<lens> <= size_s<P>(), "Too few indices");
-            return index_p_<mp::len<lens>, 0>(0, p);
         } else {
-            RA_CHECK(mp::len<lens> <= p.size());
-            return index_p_<mp::len<lens>, 0>(0, p);
+            RA_CHECK(mp::len<lens> <= p.size(), "Too few indices");
         }
+        return index<lens, steps, P, mp::len<lens>>(p);
     }
-};
+
+} // namespace indexer0
 
 
 // --------------------
 // Small iterator
 // --------------------
-// TODO Refactor with cell_iterator_big / STLIterator for View?
+// TODO Refactor with cell_iterator_big / STLIterator
 
 // V is always SmallBase<SmallView, ...>
 template <class V, rank_t cellr_=0>
@@ -119,9 +115,9 @@ struct cell_iterator_small
     {
         RA_CHECK(rank()<=dim_t(i_.size()), "too few indices ", dim_t(i_.size()), " for rank ", rank());
         if constexpr (0==cellr) {
-            return c.p[Indexer0<lens, steps>::index_short(i_)];
+            return c.p[indexer0::longer<lens, steps>(i_)];
         } else {
-            return cell_type(c.p + Indexer0<lens, steps>::index_short(i_));
+            return cell_type(c.p + indexer0::longer<lens, steps>(i_));
         }
     }
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -327,7 +323,7 @@ struct SmallBase
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
-            (data()+Indexer0<lens, steps>::index_p(i));              \
+            (data()+indexer0::shorter<lens, steps>(i));                 \
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \

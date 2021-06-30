@@ -327,7 +327,7 @@ For example:
 @end verbatim
 @end example
 
-The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a ct size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the ct size types. Ct size or ct rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+Using the right kind of container can result in better performance. Ct shapes do not need to be stored in memory, which matters when you have many small arrays. Ct shape or ct rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 
 Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.}
 

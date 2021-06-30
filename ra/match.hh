@@ -82,7 +82,7 @@ int check_expr_s()
         constexpr auto fk =
             [](auto && fk, auto k_, auto valk) consteval
             {
-// FIXME untill something like P1045R1 = [](..., constexpr auto k_, ...)
+// FIXME until something like P1045R1 = [](..., constexpr auto k_, ...)
                 constexpr int k = k_;
                 if constexpr (k<rs) {
                     constexpr auto fi =

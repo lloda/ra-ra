@@ -24,55 +24,15 @@ inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
 
 
 // --------------------
-// nested braces for Container initializers
-// --------------------
-
-// Avoid clash of T with scalar constructors (for rank 0).
-template <class T, rank_t rank>
-struct nested_braces { using list = no_arg; };
-
-template <class T, rank_t rank>
-requires (rank==1)
-struct nested_braces<T, rank>
-{
-    using list = std::initializer_list<T>;
-    template <size_t N> constexpr static
-    void shape(list l, std::array<dim_t, N> & s)
-    {
-        static_assert(N>0);
-        s[N-1] = l.size();
-    }
-};
-
-template <class T, rank_t rank>
-requires (rank>1)
-struct nested_braces<T, rank>
-{
-    using sub = nested_braces<T, rank-1>;
-    using list = std::initializer_list<typename sub::list>;
-    template <size_t N> constexpr static
-    void shape(list l, std::array<dim_t, N> & s)
-    {
-        s[N-rank] = l.size();
-        if (l.size()>0) {
-            sub::template shape(*(l.begin()), s);
-        } else {
-            std::fill(s.begin()+N-rank+1, s.end(), 0);
-        }
-    }
-};
-
-
-// --------------------
 // Develop indices for Big
 // --------------------
 
-struct Indexer1
-{
+namespace indexer1 {
+
     template <class Dimv, class P>
-    constexpr static dim_t index_p(Dimv const & dimv, P && p)
+    constexpr dim_t shorter(Dimv const & dimv, P && p)
     {
-        RA_CHECK(dim_t(dimv.size())>=start(p).len(0), "too many indices");
+        RA_CHECK(ssize(dimv)>=start(p).len(0), "Too many indices");
 // use dim.data() to skip the size check.
         dim_t c = 0;
         for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.len)); c += d.step*p; },
@@ -80,10 +40,11 @@ struct Indexer1
         return c;
     }
 
-// used by cell_iterator_big::at() for rank matching on rank<driving rank, no slicing. TODO Static check.
+// for rank matching on rank<driving rank, no slicing. TODO Static check?
     template <class Dimv, class P>
-    constexpr static dim_t index_short(rank_t framer, Dimv const & dimv, P const & p)
+    constexpr dim_t longer(rank_t framer, Dimv const & dimv, P const & p)
     {
+        RA_CHECK(framer<=ssize(p), "Too few indices");
         dim_t c = 0;
         for (rank_t k=0; k<framer; ++k) {
             RA_CHECK(inside(p[k], dimv[k].len) || (dimv[k].len==DIM_BAD && dimv[k].step==0));
@@ -91,13 +52,14 @@ struct Indexer1
         }
         return c;
     }
-};
+
+} // namespace indexer1
 
 
 // --------------------
 // Big iterator
 // --------------------
-// TODO Refactor with cell_iterator_small for SmallView?
+// TODO Refactor with cell_iterator_small
 
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_=0>
@@ -162,16 +124,55 @@ struct cell_iterator_big
     template <class I> constexpr                                        \
     decltype(auto) at(I const & i_) CONST                               \
     {                                                                   \
-        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices");          \
         if constexpr (0==cellr) {                                       \
-            return c.p[Indexer1::index_short(rank(), dimv, i_)];         \
+            return c.p[indexer1::longer(rank(), dimv, i_)];             \
         } else {                                                        \
-            return cell_type { c.dimv, c.p+Indexer1::index_short(rank(), dimv, i_) }; \
+            return cell_type { c.dimv, c.p + indexer1::longer(rank(), dimv, i_) }; \
         }                                                               \
     }
     FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
 #undef RA_CONST_OR_NOT
     RA_DEF_ASSIGNOPS_DEFAULT_SET
+};
+
+
+// --------------------
+// nested braces for Container initializers
+// --------------------
+
+// Avoid clash of T with scalar constructors (for rank 0).
+template <class T, rank_t rank>
+struct nested_braces { using list = no_arg; };
+
+template <class T, rank_t rank>
+requires (rank==1)
+struct nested_braces<T, rank>
+{
+    using list = std::initializer_list<T>;
+    template <size_t N> constexpr static
+    void shape(list l, std::array<dim_t, N> & s)
+    {
+        static_assert(N>0);
+        s[N-1] = l.size();
+    }
+};
+
+template <class T, rank_t rank>
+requires (rank>1)
+struct nested_braces<T, rank>
+{
+    using sub = nested_braces<T, rank-1>;
+    using list = std::initializer_list<typename sub::list>;
+    template <size_t N> constexpr static
+    void shape(list l, std::array<dim_t, N> & s)
+    {
+        s[N-rank] = l.size();
+        if (l.size()>0) {
+            sub::template shape(*(l.begin()), s);
+        } else {
+            std::fill(s.begin()+N-rank+1, s.end(), 0);
+        }
+    }
 };
 
 
@@ -398,14 +399,14 @@ struct View
             using Sub = View<T CONST, subrank>;                         \
             if constexpr (subrank==RANK_ANY) {                          \
                 return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()),  /* Dimv is std::vector */ \
-                        data() + Indexer1::index_p(dimv, i) };           \
+                        data() + indexer1::shorter(dimv, i) };          \
             } else {                                                    \
                 return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
-                        data() + Indexer1::index_p(dimv, i) };          \
+                        data() + indexer1::shorter(dimv, i) };          \
             }                                                           \
         } else {                                                        \
             return View<T CONST, RANK_ANY> { Dimv(dimv.begin()+i.size(), dimv.end()), /* Dimv is std::vector */ \
-                    data() + Indexer1::index_p(dimv, i) };               \
+                    data() + indexer1::shorter(dimv, i) };              \
         }                                                               \
     }                                                                   \
     /* TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
