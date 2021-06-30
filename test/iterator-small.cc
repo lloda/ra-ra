@@ -37,7 +37,7 @@ int main()
             AI0 bi(a.data());
             cout << bi.c.p << endl;
         }
-        tr.section("STL style, should be a pointer for default strides");
+        tr.section("STL style, should be a pointer for default steps");
         {
             using A = ra::Small<int, 2, 3>;
             A a = {{1, 2, 3}, {4, 5, 6}};
@@ -47,7 +47,7 @@ int main()
                 ++i;
             }
         }
-        tr.section("STL style with non-default strides, which keeps indices (as internal detail)");
+        tr.section("STL style with non-default steps, which keeps indices (as internal detail)");
         {
             ra::Small<int, 2, 3> a = {{1, 2, 3}, {4, 5, 6}};
             auto b = transpose<1, 0>(a);
@@ -77,9 +77,9 @@ int main()
                       test("1 2 3|4 5 6|", mp::int_t<1>());
                       test("1 2 3\n4 5 6|", mp::int_t<2>());
                   };
-            tr.section("default strides");
+            tr.section("default steps");
             test_over(ra::Small<int, 2, 3> {{1, 2, 3}, {4, 5, 6}});
-            tr.section("non-default strides");
+            tr.section("non-default steps");
             test_over(ra::transpose<1, 0>(ra::Small<int, 3, 2> {{1, 4}, {2, 5}, {3, 6}}));
         }
     }

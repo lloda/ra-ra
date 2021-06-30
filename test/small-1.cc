@@ -23,7 +23,7 @@ int main()
     tr.section("pieces of transpose(ra::Small)");
     {
         using lens = mp::int_list<1, 2, 3, 4, 5>;
-        using strides = mp::int_list<1, 10, 100, 1000, 10000>;
+        using steps = mp::int_list<1, 10, 100, 1000, 10000>;
 
         using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0>>::type;
         using e0 = mp::int_list<0, 4>;
@@ -33,7 +33,7 @@ int main()
         using e1 = mp::int_list<1>;
         tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
 
-        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, lens, strides>::type;
+        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, lens, steps>::type;
         using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2>>;
         tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same_v<eall, call>);
     }
@@ -97,13 +97,13 @@ int main()
         tr.test_eq(ra::Small<ra::dim_t, 2> {2, 3}, shape(a));
         tr.test_eq(3u, ra::size(std::array<double, 3>()));
     }
-    tr.section("static stride computation");
+    tr.section("static step computation");
     {
         using d = mp::int_list<3, 4, 5>;
-        using s = ra::default_strides<d>;
-        tr.info("stride 0").test_eq(20, mp::ref<s, 0>::value);
-        tr.info("stride 1").test_eq(5, mp::ref<s, 1>::value);
-        tr.info("stride 2").test_eq(1, mp::ref<s, 2>::value);
+        using s = ra::default_steps<d>;
+        tr.info("step 0").test_eq(20, mp::ref<s, 0>::value);
+        tr.info("step 1").test_eq(5, mp::ref<s, 1>::value);
+        tr.info("step 2").test_eq(1, mp::ref<s, 2>::value);
     }
     tr.section("subscripts");
     {
@@ -207,8 +207,8 @@ int main()
             tr.test_eq(210, t(2, 0));
             tr.test_eq(211, t(2, 1));
             tr.test_eq(ra::Small<int, 3, 2> { 10, 11, 110, 111, 210, 211 }, t);
-            tr.test_eq(4, t.stride(0));
-            tr.test_eq(1, t.stride(1));
+            tr.test_eq(4, t.step(0));
+            tr.test_eq(1, t.step(1));
 // check STL iterator.
             {
                 int check[] = { 10, 11, 110, 111, 210, 211 };
@@ -228,7 +228,7 @@ int main()
         using Vb = mp::int_t<int(b)>;
         tr.test_eq(9, Vb::value);
     }
-    tr.section("custom strides. List init is always row-major.");
+    tr.section("custom steps. List init is always row-major.");
     {
         auto test = [&tr](auto && a)
                     {
@@ -249,9 +249,9 @@ int main()
                         using A = std::decay_t<decltype(a(0))>;
                         using dim1 = std::array<ra::dim_t, 1>;
                         auto lens = mp::tuple_values<dim1, typename A::lens>();
-                        auto strides = mp::tuple_values<dim1, typename A::strides>();
+                        auto steps = mp::tuple_values<dim1, typename A::steps>();
                         tr.test_eq(dim1 {3}, ra::start(lens));
-                        tr.test_eq(dim1 {2}, ra::start(strides));
+                        tr.test_eq(dim1 {2}, ra::start(steps));
                     };
         ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> a { 1, 2, 3, 4, 5, 6 };
         ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> b { {1, 2, 3}, {4, 5, 6} };
@@ -263,7 +263,7 @@ int main()
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
         ra::SmallView<double, mp::int_list<2, 3>, mp::int_list<3, 1>> b = a();
         tr.test_eq(a, b);
-// non-default strides (fortran / column major order).
+// non-default steps (fortran / column major order).
         ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> ax { 1, 2, 3, 4, 5, 6 };
         ra::SmallView<double, mp::int_list<2, 3>, mp::int_list<1, 2>> bx = ax();
         tr.test_eq(a, ax);
@@ -282,10 +282,6 @@ int main()
         tr.test_eq(77., ax);
         b = 99.;
         tr.test_eq(99., a);
-    }
-    tr.section("using cell_iterator with SmallBase");
-    {
-        cout << "TODO" << endl;
     }
     tr.section("expr with Small, rank 1");
     {

@@ -43,10 +43,10 @@ int main()
 
         // view types
         char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-        ra::View<char, 2> D1({2, 3}, cs);            // dynamic sizes and strides, C order
-        ra::View<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and strides, Fortran order.
-        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & strides, C order.
-        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & strides, Fortran order.
+        ra::View<char, 2> D1({2, 3}, cs);            // dynamic sizes and steps, C order
+        ra::View<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and steps, Fortran order.
+        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & steps, C order.
+        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & steps, Fortran order.
 
         cout << "D1: " << D1 << "\n\n";
         cout << "D2: " << D2 << "\n\n";
@@ -124,7 +124,7 @@ int main()
         ra::Big<int, 2> J {{1, 0}, {0, 1}};
         cout << "A(J, 1, J): " << A(J, 1, J) << "\n\n";
 
-// explicit indices do not result in a View view (= pointer + strides), but the
+// explicit indices do not result in a View view (= pointer + steps), but the
 // resulting expression can still be written on.
         B(I) = ra::Big<char, 2> {{'x', 'y'}, {'z', 'w'}};
         cout << "B: " << B << endl;
@@ -224,8 +224,8 @@ int main()
     tr.section("example from manual [ma114]");
     {
         using sizes = mp::int_list<2, 3>;
-        using strides = mp::int_list<1, 2>;
-        ra::SmallArray<int, sizes, strides> a {{1, 2, 3}, {4, 5, 6}}; //  stored column-major
+        using steps = mp::int_list<1, 2>;
+        ra::SmallArray<int, sizes, steps> a {{1, 2, 3}, {4, 5, 6}}; //  stored column-major
         cout << "a: " << a << endl;
         cout << ra::Small<int, 6>(ra::ptr(a.data())) << endl;
     }

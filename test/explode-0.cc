@@ -201,9 +201,9 @@ int main()
         ra::Small<double, 2, 3> a(ra::_0 + 10*ra::_1);
         auto c = ra::explode<ra::Small<double, 3>>(a);
         using lens = std::decay_t<decltype(c)>::lens;
-        using strides = std::decay_t<decltype(c)>::strides;
+        using steps = std::decay_t<decltype(c)>::steps;
         tr.info(mp::print_int_list<lens> {}).test(std::is_same_v<mp::int_list<2>, lens>);
-        tr.info(mp::print_int_list<strides> {}).test(std::is_same_v<mp::int_list<1>, strides>);
+        tr.info(mp::print_int_list<steps> {}).test(std::is_same_v<mp::int_list<1>, steps>);
         tr.test_eq(ra::scalar(a[0].data()), ra::scalar(c[0].data()));
         tr.test_eq(ra::scalar(a[1].data()), ra::scalar(c[1].data()));
         c[1] = { 3, 2, 1 };

@@ -43,8 +43,8 @@ struct Scalar
     template <class I> constexpr decltype(auto) at(I const & i) { return c; }
     template <class I> constexpr decltype(auto) at(I const & i) const { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
-    constexpr static dim_t stride(int k) { return 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return true; }
+    constexpr static dim_t step(int k) { return 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) flat() { return static_cast<Flat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<Flat<C> const &>(*this); } // [ra39]
 
@@ -104,8 +104,8 @@ struct Vector
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
         p += (k==0) * d;
     }
-    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -133,8 +133,8 @@ struct Ptr
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
         std::advance(p, (k==0) * d);
     }
-    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -165,8 +165,8 @@ struct Span
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
         std::advance(p, (k==0) * d);
     }
-    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -193,8 +193,8 @@ struct TensorIndex
 
     template <class I> constexpr dim_t at(I const & ii) const { return ii[w]; }
     constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, " d ", d); i += (k==w) * d; }
-    constexpr static dim_t const stride(int k) { return (k==w); }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return st*stride(z)==stride(j); }
+    constexpr static dim_t const step(int k) { return (k==w); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return Flat {i}; }
 };
 
@@ -208,16 +208,16 @@ struct Iota
     struct Flat
     {
         T i_;
-        T const stride_;
+        T const step_;
         T const & operator*() const { return i_; }
-        void operator+=(dim_t d) { i_ += T(d)*stride_; }
+        void operator+=(dim_t d) { i_ += T(d)*step_; }
     };
 
     dim_t const len_;
     T i_;
-    T const stride_;
+    T const step_;
 
-    constexpr Iota(dim_t len, T org=0, T stride=1): len_(len), i_(org), stride_(stride)
+    constexpr Iota(dim_t len, T org=0, T step=1): len_(len), i_(org), step_(step)
     {
         RA_CHECK(len>=0, "Iota len ", len);
     }
@@ -230,24 +230,24 @@ struct Iota
     template <class I>
     constexpr decltype(auto) at(I const & i)
     {
-        return i_ + T(i[0])*stride_;
+        return i_ + T(i[0])*step_;
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        i_ += T((k==0) * d) * stride_; // cf Vector::adv
+        i_ += T((k==0) * d) * step_; // cf Vector::adv
     }
-    constexpr static dim_t stride(rank_t i) { return i==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() const { return Flat { i_, stride_ }; }
+    constexpr static dim_t step(rank_t i) { return i==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr auto flat() const { return Flat { i_, step_ }; }
     decltype(auto) operator+=(T const & b) { i_ += b; return *this; };
     decltype(auto) operator-=(T const & b) { i_ -= b; return *this; };
 };
 
 template <class O=dim_t, class S=O> inline constexpr auto
-iota(dim_t len, O org=0, S stride=1)
+iota(dim_t len, O org=0, S step=1)
 {
     using T = std::common_type_t<O, S>;
-    return Iota<T> { len, T(org), T(stride) };
+    return Iota<T> { len, T(org), T(step) };
 }
 
 
@@ -342,7 +342,7 @@ start(T && t);
 
 // ra:: non-iterator types
 
-// Neither cell_iterator nor cell_iterator_small will retain rvalues [ra4].
+// Neither cell_iterator_big nor cell_iterator_small will retain rvalues [ra4].
 template <class T> requires (is_slice<T>)
 inline constexpr auto
 start(T && t)
@@ -458,7 +458,7 @@ size(V const & v)
     }
 }
 
-// To be used sparingly; prefer implicit matching.
+// Try to avoid; prefer implicit matching.
 template <class V> inline constexpr decltype(auto)
 shape(V const & v)
 {

@@ -194,7 +194,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
-        ra::cell_iterator<ra::View<double>> it(r.dimv, r.p);
+        ra::cell_iterator_big<ra::View<double>> it(r.dimv, r.p);
         tr.test(r.data()==it.c.p);
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
@@ -204,13 +204,13 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::cell_iterator<ra::View<double, 1>> it(r.dimv, r.p);
+        ra::cell_iterator_big<ra::View<double, 1>> it(r.dimv, r.p);
         cout << "View<double, 1> it.c.p: " << it.c.p << endl;
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
-    // some of these tests are disabled depending on cell_iterator::operator=.
-    tr.section("[ra11a] (skipped) cell_iterator operator= (from cell_iterator) does NOT copy contents");
+    // some of these tests are disabled depending on cell_iterator_big::operator=.
+    tr.section("[ra11a] (skipped) cell_iterator_big operator= (from cell_iterator_big) does NOT copy contents");
     {
         double a[6] = { 0, 0, 0, 0, 0, 0 };
         double b[6] = { 1, 2, 3, 4, 5, 6 };
@@ -229,7 +229,7 @@ int main()
             tr.skip().test_eq(rb, aiter);
         }
     }
-    tr.section("[ra11b] cell_iterator operator= (from cell_iterator) DOES copy contents");
+    tr.section("[ra11b] cell_iterator_big operator= (from cell_iterator_big) DOES copy contents");
     {
         ra::Unique<double, 2> A({6, 7}, ra::_0 - ra::_1);
         ra::Unique<double, 2> AA({6, 7}, 0.);
@@ -237,7 +237,7 @@ int main()
         tr.test_eq(ra::_0 - ra::_1, AA);
         tr.test_eq(A, AA);
     }
-    tr.section("[ra11b] cell_iterator operator= (from cell_iterator) DOES copy contents");
+    tr.section("[ra11b] cell_iterator_big operator= (from cell_iterator_big) DOES copy contents");
     {
         ra::Small<double, 6, 7> A = ra::_0 - ra::_1;
         ra::Small<double, 6, 7> AA = 0.;
@@ -322,7 +322,7 @@ int main()
         std::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 
-        // Small strides are tested in test/small-0.cc, test/small-1.cc.
+        // Small steps are tested in test/small-0.cc, test/small-1.cc.
         ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
         std::copy(s.begin(), s.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, s.begin()));
@@ -724,7 +724,7 @@ int main()
             ra::View<double> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
             double check[12] = { 3, 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, a, check);
-// default strides.
+// default steps.
             ra::View<double> b { {2, 2, 2}, rpool };
             CheckArrayOutput(tr, b, check);
         }

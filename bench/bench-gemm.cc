@@ -77,12 +77,12 @@ inline constexpr bool istr(CBLAS_TRANSPOSE t)
 template <class A> inline void
 lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
 {
-    if (a.stride(1)==1) {
+    if (a.step(1)==1) {
         order = CblasRowMajor;
-        ld = a.stride(0);
-    } else if (a.stride(0)==1) {
+        ld = a.step(0);
+    } else if (a.step(0)==1) {
         order = CblasColMajor;
-        ld = a.stride(1);
+        ld = a.step(1);
     } else {
         assert(0 && "not a BLAS-supported array");
     }

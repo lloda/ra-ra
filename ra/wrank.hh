@@ -22,15 +22,15 @@ namespace ra {
 // ---------------------------
 
 template <class T>
-struct zerostride
+struct zerostep
 {
     constexpr static T f() { return T(0); }
 };
 
 template <class ... T>
-struct zerostride<std::tuple<T ...>>
+struct zerostep<std::tuple<T ...>>
 {
-    constexpr static std::tuple<T ...> f() { return std::make_tuple(zerostride<T>::f() ...); }
+    constexpr static std::tuple<T ...> f() { return std::make_tuple(zerostep<T>::f() ...); }
 };
 
 // Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
@@ -63,16 +63,16 @@ struct Reframe
             a.adv(l, d);
         }
     }
-    constexpr auto stride(int k) const
+    constexpr auto step(int k) const
     {
         int l = orig(k);
-        return l>=0 ? a.stride(l) : zerostride<decltype(a.stride(l))>::f();
+        return l>=0 ? a.step(l) : zerostep<decltype(a.step(l))>::f();
     }
-    constexpr bool keep_stride(dim_t st, int z, int j) const
+    constexpr bool keep_step(dim_t st, int z, int j) const
     {
         int wz = orig(z);
         int wj = orig(j);
-        return wz>=0 && wj>=0 && a.keep_stride(st, wz, wj);
+        return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
     }
     template <class I> constexpr decltype(auto) at(I const & i)
     {
@@ -82,7 +82,7 @@ struct Reframe
 };
 
 // Optimize no-op case.
-// TODO If A is cell_iterator, etc. beat Dest directly on that... same for an eventual transpose_expr<>.
+// TODO If A is cell_iterator_big, etc. beat Dest directly on that... same for an eventual transpose_expr<>.
 
 template <class Dest, class A> decltype(auto)
 reframe(A && a)
@@ -153,7 +153,7 @@ template <class V, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
     static_assert(sizeof...(Ti)==sizeof...(Ri), "bad args");
-// TODO -crank::value when the actual verb rank is used (e.g. to use cell_iterator<A, that_rank> instead of just begin()).
+// TODO -crank::value when the actual verb rank is used (eg to use cell_iterator_big<A, that_rank> instead of just begin()).
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
 
     template <class VV> static decltype(auto) op(VV && v) { return std::forward<VV>(v); }

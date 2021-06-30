@@ -18,19 +18,19 @@ namespace ra {
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
 {
-    template <class Op_, class T_>
+    template <class T_>
     struct Flat
     {
-        Op_ & op;
+        Op & op;
         T_ t;
         template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
         constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
     };
 
-    template <class Op_, class ... P_> inline constexpr static auto
-    flat(Op_ & op, P_ && ... p)
+    template <class ... P_> inline constexpr static auto
+    flat(Op & op, P_ && ... p)
     {
-        return Flat<Op_, std::tuple<P_ ...>> { op, std::tuple<P_ ...> { std::forward<P_>(p) ... } };
+        return Flat<std::tuple<P_ ...>> { op, std::tuple<P_ ...> { std::forward<P_>(p) ... } };
     }
 
     using Match_ = Match<std::tuple<P ...>>;
@@ -60,8 +60,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
     }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    using scalar = decltype(*(flat(op, std::get<I>(Match_::t).flat() ...)));
-    operator scalar()
+    operator decltype(*(flat(op, std::get<I>(Match_::t).flat() ...))) ()
     {
         if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only
             if constexpr (this->rank_s()!=0) {

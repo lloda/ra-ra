@@ -143,8 +143,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P .
     }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    using scalar = decltype(*(flat(std::get<I>(Match_::t).flat() ...)));
-    operator scalar()
+    operator decltype(*(flat(std::get<I>(Match_::t).flat() ...))) ()
     {
         if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only
             if constexpr (this->rank_s()!=0) {

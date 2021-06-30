@@ -242,20 +242,20 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
         (std::get<I>(t).adv(k, d), ...);
     }
 
-    constexpr auto stride(int i) const
+    constexpr auto step(int i) const
     {
-        return std::make_tuple(std::get<I>(t).stride(i) ...);
+        return std::make_tuple(std::get<I>(t).step(i) ...);
     }
 
-    constexpr bool keep_stride(dim_t st, int z, int j) const
-        requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...))
+    constexpr bool keep_step(dim_t st, int z, int j) const
+        requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...))
     {
-        return (std::get<I>(t).keep_stride(st, z, j) && ...);
+        return (std::get<I>(t).keep_step(st, z, j) && ...);
     }
-    constexpr static bool keep_stride(dim_t st, int z, int j)
-        requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_stride(d, i, j); } && ...)
+    constexpr static bool keep_step(dim_t st, int z, int j)
+        requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...)
     {
-        return (std::decay_t<P>::keep_stride(st, z, j) && ...);
+        return (std::decay_t<P>::keep_step(st, z, j) && ...);
     }
 };
 

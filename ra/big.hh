@@ -16,11 +16,11 @@
 namespace ra {
 
 // Dope vector element
-struct Dim { dim_t len, stride; };
+struct Dim { dim_t len, step; };
 
 // For debugging
 inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
-{ o << "[Dim " << dim.len << " " << dim.stride << "]"; return o; }
+{ o << "[Dim " << dim.len << " " << dim.step << "]"; return o; }
 
 
 // --------------------
@@ -75,19 +75,19 @@ struct Indexer1
         RA_CHECK(dim_t(dimv.size())>=start(p).len(0), "too many indices");
 // use dim.data() to skip the size check.
         dim_t c = 0;
-        for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.len)); c += d.stride*p; },
+        for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.len)); c += d.step*p; },
                  ptr(dimv.data()), p);
         return c;
     }
 
-// used by cell_iterator::at() for rank matching on rank<driving rank, no slicing. TODO Static check.
+// used by cell_iterator_big::at() for rank matching on rank<driving rank, no slicing. TODO Static check.
     template <class Dimv, class P>
     constexpr static dim_t index_short(rank_t framer, Dimv const & dimv, P const & p)
     {
         dim_t c = 0;
         for (rank_t k=0; k<framer; ++k) {
-            RA_CHECK(inside(p[k], dimv[k].len) || (dimv[k].len==DIM_BAD && dimv[k].stride==0));
-            c += dimv[k].stride * p[k];
+            RA_CHECK(inside(p[k], dimv[k].len) || (dimv[k].len==DIM_BAD && dimv[k].step==0));
+            c += dimv[k].step * p[k];
         }
         return c;
     }
@@ -101,7 +101,7 @@ struct Indexer1
 
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_=0>
-struct cell_iterator
+struct cell_iterator_big
 {
     constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
@@ -127,9 +127,9 @@ struct cell_iterator
 
     cell_type c;
 
-    constexpr cell_iterator(cell_iterator const & ci): dimv(ci.dimv), c { ci.c.dimv, ci.c.p } {}
+    constexpr cell_iterator_big(cell_iterator_big const & ci): dimv(ci.dimv), c { ci.c.dimv, ci.c.p } {}
 // s_ is array's full shape; split it into dimv/i (frame) and c (cell).
-    constexpr cell_iterator(Dimv const & dimv_, atom_type * p_): dimv(dimv_)
+    constexpr cell_iterator_big(Dimv const & dimv_, atom_type * p_): dimv(dimv_)
     {
         rank_t rank = this->rank();
 // see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
@@ -143,10 +143,10 @@ struct cell_iterator
 
     constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
     constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
-    constexpr dim_t stride(int k) const { return k<rank() ? dimv[k].stride : 0; }
+    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
 // FIXME handle z or j over rank()? check cell_iterator_small versions.
-    constexpr bool keep_stride(dim_t st, int z, int j) const { return st*stride(z)==stride(j); }
-    constexpr void adv(rank_t k, dim_t d) { c.p += stride(k)*d; }
+    constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
+    constexpr void adv(rank_t k, dim_t d) { c.p += step(k)*d; }
 
     constexpr
     auto flat() const
@@ -188,7 +188,7 @@ dim_t filldim(int n, D dend)
     for (; n>0; --n) {
         --dend;
         RA_CHECK((*dend).len>=0, "bad dim", (*dend).len);
-        (*dend).stride = next;
+        (*dend).step = next;
         next *= (*dend).len;
     }
     return next;
@@ -214,15 +214,15 @@ dim_t proddim(D d, D dend)
 inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
 {
     RA_CHECK(inside(i, dim_src->len), " i ", i, " len ", dim_src->len);
-    return dim_src->stride*i;
+    return dim_src->step*i;
 }
 template <class II>
 inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
-    RA_CHECK((inside(i.i_, dim_src->len) && inside(i.i_+(i.len_-1)*i.stride_, dim_src->len))
+    RA_CHECK((inside(i.i_, dim_src->len) && inside(i.i_+(i.len_-1)*i.step_, dim_src->len))
              || (i.len_==0 && i.i_<=dim_src->len));
-    *dim = { .len = i.len_, .stride = dim_src->stride * i.stride_ };
-    return dim_src->stride*i.i_;
+    *dim = { .len = i.len_, .step = dim_src->step * i.step_ };
+    return dim_src->step*i.i_;
 }
 template <class I0, class ... I>
 inline dim_t select_loop(Dim * dim, Dim const * dim_src, I0 && i0, I && ... i)
@@ -242,7 +242,7 @@ template <int n, class ... I>
 inline dim_t select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim) {
-        *dim = { .len = DIM_BAD, .stride = 0 };
+        *dim = { .len = DIM_BAD, .step = 0 };
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
@@ -260,7 +260,7 @@ template <class T> using const_atom = std::conditional_t<std::is_const_v<T>, no_
 // --------------------
 
 // TODO Parameterize on Child having .data() so that there's only one pointer.
-// TODO A constructor, if only for RA_CHECK (nonnegative lens, strides inside, etc.)
+// TODO A constructor, if only for RA_CHECK (nonnegative lens, steps inside, etc.)
 template <class T, rank_t RANK>
 struct View
 {
@@ -272,10 +272,7 @@ struct View
     constexpr static rank_t rank_s() { return RANK; };
     constexpr static rank_t rank() requires (RANK!=RANK_ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dimv.size()); }
-
     constexpr static dim_t len_s(int j) { return DIM_ANY; }
-    constexpr dim_t size() const { return proddim(dimv.begin(), dimv.end()); }
-
     constexpr dim_t len(int j) const
     {
         if constexpr (RANK==RANK_ANY) {
@@ -283,15 +280,16 @@ struct View
         }
         return dimv[j].len;
     }
-    constexpr dim_t stride(int j) const
+    constexpr dim_t step(int j) const
     {
         if constexpr (RANK==RANK_ANY) {
             RA_CHECK(j<rank(), " j : ", j, " rank ", rank());
         }
-        return dimv[j].stride;
+        return dimv[j].step;
     }
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; } // [ra47]
+    constexpr dim_t size() const { return proddim(dimv.begin(), dimv.end()); }
 
 // FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>)
     constexpr View(): p(nullptr) {}
@@ -339,9 +337,9 @@ struct View
     }
     bool const empty() const { return 0==size(); } // TODO Optimize
 
-    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator<View<T, RANK>, c>(std::move(dimv), p); }
-    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator<View<T, RANK> &, c>(dimv, p); }
-    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator<View<T const, RANK> &, c>(dimv, p); }
+    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator_big<View<T, RANK>, c>(std::move(dimv), p); }
+    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator_big<View<T, RANK> &, c>(dimv, p); }
+    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator_big<View<T const, RANK> &, c>(dimv, p); }
     constexpr auto begin() const { return stl_iterator(iter()); }
     constexpr auto begin() { return stl_iterator(iter()); }
 // here dim doesn't matter, but we have to give it if it's a ref
@@ -373,7 +371,7 @@ struct View
     decltype(auto) operator()(I const & ... i) CONST                    \
         requires (RANK!=RANK_ANY)                                       \
     {                                                                   \
-        return data()[select_loop(nullptr, this->dimv.data(), i ...)];   \
+        return data()[select_loop(nullptr, this->dimv.data(), i ...)];  \
     }                                                                   \
     /* Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar) */ \
     template <class ... I>                                              \
@@ -483,7 +481,7 @@ bool is_c_order(View<T, RANK> const & a)
 {
     dim_t s = 1;
     for (int i=a.rank()-1; i>=0; --i) {
-        if (s!=a.stride(i)) {
+        if (s!=a.step(i)) {
             return false;
         }
         s *= a.len(i);

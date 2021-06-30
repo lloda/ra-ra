@@ -74,7 +74,7 @@ int main()
 // expression template mechanism instead.
 
 // Constructing an array view is useful for example when you need to pass a
-// pointer to an external library. But be aware of the strides!
+// pointer to an external library. But be aware of the steps!
         double * re_ptr = Bre.data();
         double * im_ptr = Bim.data();
         re_ptr[0] = 77;

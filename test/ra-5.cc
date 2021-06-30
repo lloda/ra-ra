@@ -9,7 +9,7 @@
 // later version.
 
 // Regression test for a bug ... caught first in fold_mat @ array.cc.
-// Caused by d139794396a0d51dc0c25b0b03b2a2ef0e2760b5 : Remove set() from cell_iterator, cell_iterator_small.
+// Caused by d139794396a0d51dc0c25b0b03b2a2ef0e2760b5 : Remove set() from cell_iterator_big, cell_iterator_small.
 
 #include <iostream>
 #include "ra/test.hh"
@@ -26,20 +26,17 @@ int main()
         ra::Big<int, 2> A({3, 5}, ra::_0 - ra::_1);
         ra::Big<int, 2> F({2, 5}, 0);
 
-// This creates View & cell_iterator on each call of A(b(0) ...) as the driver is b and A is handled as a generic object with operator().
-// This seems unnecessary; I should be able to create a single cell_iterator and just bump a pointer as I move through b. Hmm.
+// This creates View & cell_iterator_big on each call of A(b(0) ...) as the driver is b and A is handled as a generic object with operator().
+// This seems unnecessary; I should be able to create a single cell_iterator_big and just bump a pointer as I move through b. Hmm.
         iter<-1>(F) = b*A(b);
         int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
         tr.test_eq(Fcheck, F);
     }
 
-// They why: if x(0) is a temp, as in here, cell_iterator needs a copy of x(0).dim.
+// Why: if x(0) is a temp, as in here, cell_iterator_big needs a copy of x(0).dim.
 // This is achieved by forwarding in start() -> iter() -> View.iter().
     {
-        auto demo = [](auto & x)
-                    {
-                        return iter<0>(x(0));
-                    };
+        auto demo = [](auto & x) { return iter<0>(x(0)); };
 
         ra::Big<int, 2> A({3, 5}, 0);
         auto z = demo(A);

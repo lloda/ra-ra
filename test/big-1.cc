@@ -76,25 +76,25 @@ int main()
         auto c = transpose({1, 0}, ra::View<int, 2>({3, 2}, a.data()));
         a.dimv = c.dimv;
         for (int k=0; k!=c.rank(); ++k) {
-            std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;
+            std::cout << "CSTRIDE " << k << " " << c.step(k) << std::endl;
             std::cout << "CLEN " << k << " " << c.len(k) << std::endl;
         }
         cout << endl;
         for (int k=0; k!=a.rank(); ++k) {
-            std::cout << "ASTRIDE " << k << " " << a.stride(k) << std::endl;
+            std::cout << "ASTRIDE " << k << " " << a.step(k) << std::endl;
             std::cout << "ALEN " << k << " " << a.len(k) << std::endl;
         }
         cout << endl;
         c = b;
-// FIXME this clobbers the strides of a, which is surprising -> Container should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
+// FIXME this clobbers the steps of a, which is surprising -> Container should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
         a = b;
         for (int k=0; k!=c.rank(); ++k) {
-            std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;
+            std::cout << "CSTRIDE " << k << " " << c.step(k) << std::endl;
             std::cout << "CLEN " << k << " " << c.len(k) << std::endl;
         }
         cout << endl;
         for (int k=0; k!=a.rank(); ++k) {
-            std::cout << "ASTRIDE " << k << " " << a.stride(k) << std::endl;
+            std::cout << "ASTRIDE " << k << " " << a.step(k) << std::endl;
             std::cout << "ALEN " << k << " " << a.len(k) << std::endl;
         }
         cout << endl;

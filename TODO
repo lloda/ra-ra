@@ -21,7 +21,7 @@ checkbox [C-ct] flip TODO
     - [ ] make iter work with w/rank.
   - [-] Features [1/5]
     - [ ] Iota is both vector-like object and iterator. Split into two types?
-    - [ ] View::p is not const because it's used as sliding window (cell_iterator). Split into two types?
+    - [ ] View::p is not const because it's used as sliding window (cell_iterator_big). Split into two types?
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
       maybe. One idea is to generalize View (so View<Iota>, etc.) which is
       something that newra does. But as long as Container is parent of View,
@@ -119,7 +119,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   41. [ ]
   42. [ ]
   43. [ ] bench/bench-dot.cc
-      The performace of f_small_op depends on the optimization in plyf() through ocd<>(). Doing this required having static and non-static versions of RaIterator::keep_stride in Match/Expr. Possibly the same could be done to reduce rank/rank_s, size/size_s to just rank/size, and check for static-ness instead of RANK_ANY/DIM_ANY.
+      The performace of f_small_op depends on the optimization in plyf() through ocd<>(). Doing this required having static and non-static versions of RaIterator::keep_step in Match/Expr. Possibly the same could be done to reduce rank/rank_s, size/size_s to just rank/size, and check for static-ness instead of RANK_ANY/DIM_ANY.
   44. [ ]
   45. [ ]
   46. [ ]

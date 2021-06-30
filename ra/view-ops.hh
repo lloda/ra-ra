@@ -20,8 +20,8 @@ View<T, RANK> reverse(View<T, RANK> const & view, int k)
     View<T, RANK> r = view;
     auto & dim = r.dimv[k];
     if (dim.len!=0) {
-        r.p += dim.stride*(dim.len-1);
-        dim.stride *= -1;
+        r.p += dim.step*(dim.len-1);
+        dim.step *= -1;
     }
     return r;
 }
@@ -37,7 +37,7 @@ View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
     View<T, RANK_ANY> r { decltype(r.dimv)(dstrank, Dim { DIM_BAD, 0 }), view.data() };
     for (int k=0; int sk: s) {
         Dim & dest = r.dimv[sk];
-        dest.stride += view.dimv[k].stride;
+        dest.step += view.dimv[k].step;
         dest.len = dest.len>=0 ? std::min(dest.len, view.dimv[k].len) : view.dimv[k].len;
         ++k;
     }
@@ -72,7 +72,7 @@ auto transpose(View<T, RANK> const & view)
     std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
     for (int k=0; int sk: s) {
         Dim & dest = r.dimv[sk];
-        dest.stride += view.dimv[k].stride;
+        dest.step += view.dimv[k].step;
         dest.len = dest.len>=0 ? std::min(dest.len, view.dimv[k].len) : view.dimv[k].len;
         ++k;
     }
@@ -91,10 +91,10 @@ bool is_ravel_free(View<T, RANK> const & a)
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
     if (r<0) { return true; }
-    ra::dim_t s = a.stride(r)*a.len(r);
+    ra::dim_t s = a.step(r)*a.len(r);
     while (--r>=0) {
         if (1!=a.len(r)) {
-            if (a.stride(r)!=s) {
+            if (a.step(r)!=s) {
                 return false;
             }
             s *= a.len(r);
@@ -109,7 +109,7 @@ View<T, 1> ravel_free(View<T, RANK> const & a)
     RA_CHECK(is_ravel_free(a));
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
-    ra::dim_t s = r<0 ? 1 : a.stride(r);
+    ra::dim_t s = r<0 ? 1 : a.step(r);
     return ra::View<T, 1>({{size(a), s}}, a.p);
 }
 
@@ -148,7 +148,7 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
                 for_each([](auto & dim, auto && s) { dim.len = s; }, b.dimv, sb);
                 filldim(b.dimv.size(), b.dimv.end());
                 for (int j=0; j!=b.rank(); ++j) {
-                    b.dimv[j].stride *= a.stride(a.rank()-1);
+                    b.dimv[j].step *= a.step(a.rank()-1);
                 }
                 return b;
             } else {
@@ -196,11 +196,11 @@ stencil(View<T, N> const & a, LO && lo, HI && hi)
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
              {
                  RA_CHECK(dima.len>=lo+hi && "stencil is too large for array");
-                 dims = {dima.len-lo-hi, dima.stride};
+                 dims = {dima.len-lo-hi, dima.step};
              },
              ptr(s.dimv.data()), a.dimv, lo, hi);
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
-             { dims = {lo+hi+1, dima.stride}; },
+             { dims = {lo+hi+1, dima.step}; },
              ptr(s.dimv.data()+a.rank()), a.dimv, lo, hi);
     return s;
 }
@@ -220,10 +220,10 @@ auto explode_(View<T, RANK> const & a)
     }
     RA_CHECK(r*sizeof(T)==sizeof(super_t) && "len of SUPERR axes doesn't match super type");
     for (int i=0; i<b.rank(); ++i) {
-        RA_CHECK(a.stride(i) % r==0 && "stride of SUPERR axes doesn't match super type");
-        b.dimv[i] = { .len = a.len(i), .stride = a.stride(i) / r };
+        RA_CHECK(a.step(i) % r==0 && "step of SUPERR axes doesn't match super type");
+        b.dimv[i] = { .len = a.len(i), .step = a.step(i) / r };
     }
-    RA_CHECK((b.rank()==0 || a.stride(b.rank()-1)==r) && "super type is not compact in array");
+    RA_CHECK((b.rank()==0 || a.step(b.rank()-1)==r) && "super type is not compact in array");
     b.p = reinterpret_cast<super_t *>(a.data());
     return b;
 }
@@ -235,7 +235,7 @@ auto explode(View<T, RANK> const & a)
 }
 
 // FIXME Consider these in as namespace level generics in atom.hh
-template <class T> inline int gstride(int i) { if constexpr (is_scalar<T>) return 1; else return T::stride(i); }
+template <class T> inline int gstep(int i) { if constexpr (is_scalar<T>) return 1; else return T::step(i); }
 template <class T> inline int glen(int i) { if constexpr (is_scalar<T>) return 1; else return T::len(i); }
 
 // TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
@@ -253,17 +253,17 @@ auto collapse(View<super_t, RANK> const & a)
     constexpr dim_t r = sizeof(super_t)/sizeof(sub_t);
     static_assert(sizeof(super_t)==r*sizeof(sub_t), "cannot make axis of super_t from sub_t");
     for (int i=0; i<a.rank(); ++i) {
-        b.dimv[i] = { .len = a.len(i), .stride = a.stride(i) * r };
+        b.dimv[i] = { .len = a.len(i), .step = a.step(i) * r };
     }
     constexpr int t = sizeof(super_v)/sizeof(sub_v);
     constexpr int s = sizeof(sub_t)/sizeof(sub_v);
     static_assert(t*sizeof(sub_v)>=1, "bad subtype");
     for (int i=0; i<SUBR; ++i) {
-        RA_CHECK(((gstride<super_t>(i)/s)*s==gstride<super_t>(i)) && "bad strides"); // TODO is actually static
-        b.dimv[a.rank()+i] = { .len = glen<super_t>(i), .stride = gstride<super_t>(i) / s * t };
+        RA_CHECK(((gstep<super_t>(i)/s)*s==gstep<super_t>(i)) && "bad steps"); // TODO is actually static
+        b.dimv[a.rank()+i] = { .len = glen<super_t>(i), .step = gstep<super_t>(i) / s * t };
     }
     if (subtype>1) {
-        b.dimv[a.rank()+SUBR] = { .len = t, .stride = 1 };
+        b.dimv[a.rank()+SUBR] = { .len = t, .step = 1 };
     }
     b.p = reinterpret_cast<sub_t *>(a.data());
     return b;

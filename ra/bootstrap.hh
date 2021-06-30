@@ -65,9 +65,9 @@ concept RaIterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
     { a.rank() } -> std::convertible_to<rank_t>;
     { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
-    { a.stride(k) };
-    { a.keep_stride(d, i, j) } -> std::same_as<bool>;
-    { a.flat() } -> RaFlat<decltype(a.stride(k))>;
+    { a.step(k) };
+    { a.keep_step(d, i, j) } -> std::same_as<bool>;
+    { a.flat() } -> RaFlat<decltype(a.step(k))>;
 };
 
 
@@ -80,22 +80,22 @@ struct no_arg {}; // used in array constructors to mean ‘don't instantiate’
 
 // Order of decl issues.
 template <class C> struct Scalar; // for type predicates
-template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator
+template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator_big
 template <class V> struct ra_traits_def;
 
-template <class S> struct default_strides_ {};
-template <class tend> struct default_strides_<std::tuple<tend>> { using type = mp::int_list<1>; };
-template <> struct default_strides_<std::tuple<>> { using type = mp::int_list<>; };
+template <class S> struct default_steps_ {};
+template <class tend> struct default_steps_<std::tuple<tend>> { using type = mp::int_list<1>; };
+template <> struct default_steps_<std::tuple<>> { using type = mp::int_list<>; };
 
 template <class t0, class t1, class ... ti>
-struct default_strides_<std::tuple<t0, t1, ti ...>>
+struct default_steps_<std::tuple<t0, t1, ti ...>>
 {
-    using rest = typename default_strides_<std::tuple<t1, ti ...>>::type;
-    static int const stride0 = t1::value * mp::first<rest>::value;
-    using type = mp::cons<mp::int_t<stride0>, rest>;
+    using rest = typename default_steps_<std::tuple<t1, ti ...>>::type;
+    static int const step0 = t1::value * mp::first<rest>::value;
+    using type = mp::cons<mp::int_t<step0>, rest>;
 };
 
-template <class S> using default_strides = typename default_strides_<S>::type;
+template <class S> using default_steps = typename default_steps_<S>::type;
 
 template <int n> struct dots_t
 {
@@ -113,7 +113,7 @@ template <int n> struct insert_t
 
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
-// Used by cell_iterator / cell_iterator_small.
+// Used by cell_iterator_big / cell_iterator_small.
 template <class C>
 struct CellFlat
 {
@@ -170,8 +170,8 @@ using ravel_arg = std::conditional_t<no_ravel<lens>,
                                      std::tuple<no_arg, no_arg>, // match the template for SmallArray.
                                      mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
 
-template <class T, class lens, class strides = default_strides<lens>> struct SmallView; // for cell_iterator_small
-template <class T, class lens, class strides = default_strides<lens>,
+template <class T, class lens, class steps = default_steps<lens>> struct SmallView; // for cell_iterator_small
+template <class T, class lens, class steps = default_steps<lens>,
           class nested_arg_ = nested_arg<T, lens>, class ravel_arg_ = ravel_arg<T, lens>>
 struct SmallArray;
 template <class T, dim_t ... lens> using Small = SmallArray<T, mp::int_list<lens ...>>;

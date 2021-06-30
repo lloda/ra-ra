@@ -27,7 +27,7 @@ struct End
     template <class I> constexpr value_type at(I const & i) const { assert(0); return 0; }
 
     constexpr static dim_t size(int const k) { return DIM_BAD; }
-    constexpr dim_t stride(int const i) const { assert(0); }
+    constexpr dim_t step(int const i) const { assert(0); }
     constexpr value_type * flat() const { assert(0); }
 };
 

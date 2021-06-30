@@ -267,7 +267,7 @@ int main()
             tr.test_eq(c1, c2);
         }
     }
-    tr.section("stencil test for Reframe::keep_stride. Reduced from test/bench-stencil2.cc");
+    tr.section("stencil test for Reframe::keep_step. Reduced from test/bench-stencil2.cc");
     {
         int nx = 4;
         int ny = 4;

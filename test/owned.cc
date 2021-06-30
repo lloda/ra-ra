@@ -62,7 +62,7 @@ int main()
         auto test = [&tr, &check](auto && z)
             {
                 tr.test_eq(0, z.len(0));
-                tr.test_eq(1, z.stride(0));
+                tr.test_eq(1, z.step(0));
                 for (int i=0; i<4; ++i) {
                     z.push_back(check[i]);
                     tr.test_eq(i+1, z.size());

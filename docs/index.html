@@ -238,11 +238,13 @@ Next: <a href="#Drag-along-and-beating" accesskey="n" rel="next">Drag along and 
 <a name="index-order_002c-row_002dmajor"></a>
 <p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C (see <a href="#Other-libraries">Other libraries</a>). A row-major array A with shape (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 </p>
-<a name="x_002dstrides"></a><blockquote>
+<a name="x_002dsteps"></a><blockquote>
 <p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
 </p></blockquote>
 
-<p>where the numbers (s₀, s₁, ...) are called the <em>strides</em><a name="DOCF2" href="#FOOT2"><sup>2</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+<a name="index-step"></a>
+<a name="index-stride"></a>
+<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a name="DOCF2" href="#FOOT2"><sup>2</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 </p>
 <blockquote>
 <p>A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -272,7 +274,7 @@ Next: <a href="#Why-C_002b_002b" accesskey="n" rel="next">Why C++</a>, Previous:
 </p>
 <p><em>Drag-along</em> is the process that delays evaluation of array operations. Expression templates can be seen as an implementation of drag-along. Drag-along isn&rsquo;t an optimization in and of itself; it simply preserves the necessary information up to the point where the expression can be executed efficiently.
 </p>
-<p><em>Beating</em> is the implementation of certain array operations on the array <a href="#Containers-and-views">view</a> descriptor instead of on the array contents. For example, if <code>A</code> is a 1-array, one can implement <a href="#x_002dreverse"><code>reverse(A, 0)</code></a> by negating the <a href="#x_002dstrides">stride</a> and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as <a href="#x_002diota"><code>1+iota(3, 0)</code></a> can be beaten into <code>iota(3, 1)</code>, and this can enable further optimizations.
+<p><em>Beating</em> is the implementation of certain array operations on the array <a href="#Containers-and-views">view</a> descriptor instead of on the array contents. For example, if <code>A</code> is a 1-array, one can implement <a href="#x_002dreverse"><code>reverse(A, 0)</code></a> by negating the <a href="#x_002dsteps">step</a> and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as <a href="#x_002diota"><code>1+iota(3, 0)</code></a> can be beaten into <code>iota(3, 1)</code>, and this can enable further optimizations.
 </p>
 <hr>
 <a name="Why-C_002b_002b"></a>
@@ -315,7 +317,7 @@ Next: <a href="#Other-libraries" accesskey="n" rel="next">Other libraries</a>, P
 </p>
 <p>Sometimes consistency requires a choice. For example, given array views A and B, <code>A=B</code> copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren&rsquo;t) is more important.
 </p>
-<p>Transparency is achieved by avoiding opaque types. An array view consists of a pointer and a list of strides and I see no point in hiding that. Manipulating the strides directly is often useful. A container consists of storage and a view and that isn&rsquo;t hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
+<p>Transparency is achieved by avoiding opaque types. An array view consists of a pointer and a list of steps and I see no point in hiding that. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn&rsquo;t hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
 </p>
 <p>That isn&rsquo;t to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably sweet syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you&rsquo;ll be able to guarantee that an array is stored by compact columns or that the real parts are interleaved with the imaginary parts.
 </p>
@@ -503,8 +505,8 @@ ra::Big&lt;double, 2&gt; c({3, 2}, cx); // *** WHO NOSE ***
 
 <div class="example">
 <pre class="verbatim">using lens = mp::int_list&lt;2, 3&gt;;
-using strides = mp::int_list&lt;1, 2&gt;;
-ra::SmallArray&lt;double, lens, strides&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
+using steps = mp::int_list&lt;1, 2&gt;;
+ra::SmallArray&lt;double, lens, steps&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 </pre></div>
 
 <p>These produce compile time errors:
@@ -555,8 +557,8 @@ auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 </p>
 <div class="example">
 <pre class="verbatim">int raw[6] = {1, 2, 3, 4, 5, 6};
-ra::View&lt;int&gt; v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] strides [3, 1]
-ra::View&lt;int&gt; v2({2, 3}, raw);           // same, default C (row-major) strides
+ra::View&lt;int&gt; v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] steps [3, 1]
+ra::View&lt;int&gt; v2({2, 3}, raw);           // same, default C (row-major) steps
 </pre></div>
 
 <p>Containers can be treated as views of the same ‘dynamicness’. If you declare a function
@@ -884,7 +886,7 @@ auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
 <dd><p>Inserts <code>n</code> new axes at the subscript position. <code>n</code> must not be negative.
 </p></dd></dl>
 
-<p>The new axes have stride 0 and undefined length, so they will match any length on those axes by repeating items. <code>insert</code> objects cannot stand alone as an array expression. The examples below result in <code>View</code> objects:
+<p>The new axes have step 0 and undefined length, so they will match any length on those axes by repeating items. <code>insert</code> objects cannot stand alone as an array expression. The examples below result in <code>View</code> objects:
 </p>
 <div class="example">
 <pre class="verbatim">auto h = a(insert&lt;0&gt;); // same as (1)
@@ -1179,7 +1181,7 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 <p>FIXME Put these in examples/ and reference them here.
 </p>
 <a name="index-BLIS"></a>
-<p>The good array citizen describes its arrays with the same parameters as <code>ra::</code>, that is: a pointer, plus a length and a stride per dimension. You pass those and you&rsquo;re done; you don&rsquo;t have to worry about special cases. Say <a href="https://github.com/flame/blis">BLIS</a>:
+<p>The good array citizen describes its arrays with the same parameters as <code>ra::</code>, that is: a pointer, plus a length and a step per dimension. You pass those and you&rsquo;re done; you don&rsquo;t have to worry about special cases. Say <a href="https://github.com/flame/blis">BLIS</a>:
 </p>
 <blockquote>
 <pre class="verbatim">#include &lt;blis.h&gt;
@@ -1192,9 +1194,9 @@ double beta = ...;
 
 // C := βC + αAB
 bli_dgemm(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, M, N, K, &amp;alpha,
-          A.data(), A.stride(0), A.stride(1),
-          B.data(), B.stride(0), B.stride(1),
-          &amp;beta, C.data(), C.stride(0), C.stride(1));
+          A.data(), A.step(0), A.step(1),
+          B.data(), B.step(0), B.step(1),
+          &amp;beta, C.data(), C.step(0), C.step(1));
 </pre></blockquote>
 
 <a name="index-FFTW"></a>
@@ -1219,12 +1221,12 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
     for (int i=0; i!=rank; ++i) {
         if (i&gt;=rank-r) {
             dims[i-rank+r].n = a.len(i);
-            dims[i-rank+r].is = a.stride(i);
-            dims[i-rank+r].os = b.stride(i);
+            dims[i-rank+r].is = a.step(i);
+            dims[i-rank+r].os = b.step(i);
         } else {
             howmany_dims[i].n = a.len(i);
-            howmany_dims[i].is = a.stride(i);
-            howmany_dims[i].os = b.stride(i);
+            howmany_dims[i].is = a.step(i);
+            howmany_dims[i].os = b.step(i);
         }
     }
     fftw_plan p;
@@ -1265,19 +1267,19 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <a name="The-bad-array-citizen"></a>
 <h4 class="subsubsection">2.9.3.2 The bad array citizen</h4>
 
-<p>Unfortunately there are many libraries that don&rsquo;t accept general array parameters, or that do strange things with particular values of lengths and/or strides.
+<p>Unfortunately there are many libraries that don&rsquo;t accept general array parameters, or that do strange things with particular values of lengths and/or steps.
 </p>
-<p>The most common case is that a library doesn&rsquo;t handle strides at all, and it only accepts unit stride for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
+<p>The most common case is that a library doesn&rsquo;t handle steps at all, and it only accepts unit step for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
 </p>
 <p>FIXME using is_c_order, etc.
 </p>
-<p>Other libraries do accept strides, but not general ones. For example <a href="https://www.netlib.org/blas">https://www.netlib.org/blas</a>&rsquo; <code>cblas_dgemm</code> has this prototype:
+<p>Other libraries do accept steps, but not general ones. For example <a href="https://www.netlib.org/blas">https://www.netlib.org/blas</a>&rsquo; <code>cblas_dgemm</code> has this prototype:
 </p>
 <blockquote>
 <pre class="verbatim">cblas_dgemm(order, transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 </pre></blockquote>
 
-<p><code>A</code>, <code>B</code>, <code>C</code> are (pointers to) 2-arrays, but the routine accepts only one stride argument for each (<code>lda</code>, etc.). CBLAS also doesn&rsquo;t understand <code>lda</code> as a general stride, but rather as the dimension of a larger array that you&rsquo;re slicing <code>A</code> from, and some implementations will handle negative or zero <code>lda</code> in bizarre ways.
+<p><code>A</code>, <code>B</code>, <code>C</code> are (pointers to) 2-arrays, but the routine accepts only one step argument for each (<code>lda</code>, etc.). CBLAS also doesn&rsquo;t understand <code>lda</code> as a general step, but rather as the dimension of a larger array that you&rsquo;re slicing <code>A</code> from, and some implementations will handle negative or zero <code>lda</code> in bizarre ways.
 </p>
 <p>Sometimes you can work around this by fiddling with <code>transA</code> and <code>transB</code>, but in general you need to check your array parameters and you may need to make copies.
 </p>
@@ -1289,19 +1291,19 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
                            GLint size,
                            GLenum type,
                            GLboolean normalized,
-                           GLsizei stride,
+                           GLsizei step,
                            const GLvoid * pointer);
 </pre>
 <p>[...]
 </p>
-<p><em>stride</em>
+<p><em>step</em>
 </p>
 <blockquote>
-<p>Specifies the byte offset between consecutive generic vertex attributes. If stride is 0, the generic vertex attributes are understood to be tightly packed in the array. The initial value is 0.
+<p>Specifies the byte offset between consecutive generic vertex attributes. If step is 0, the generic vertex attributes are understood to be tightly packed in the array. The initial value is 0.
     </p></blockquote>
 </blockquote>
 
-<p>It isn&rsquo;t clear whether negative strides are legal, either. So just as with CBLAS, passing general array views will require copies.
+<p>It isn&rsquo;t clear whether negative steps are legal, either. So just as with CBLAS, passing general array views will require copies.
 </p>
 <hr>
 <a name="Extension"></a>
@@ -1660,15 +1662,15 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 
 <p>These are array views into data in memory. Access to their contents doesn&rsquo;t involve computation and they may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated by a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>
-</li><li> <b>RaIterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
+</li><li> <b>RaIterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
 
 <p>This is a traversable object. <b>RaIterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>RaIterator</b> itself, so most array expressions are <b>RaIterator</b>s. <b>RaIterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
-</li><li> <b>Ravelable</b> &mdash; <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
+</li><li> <b>Ravelable</b> &mdash; <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
-<p>This is a kind of <b>RaIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>len()</code>, <code>stride()</code>, <code>keep_stride()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+<p>This is a kind of <b>RaIterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
-</li><li> <b>Indexable</b> <code>cell_iterator</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
+</li><li> <b>Indexable</b> <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
 
 <p>This is a kind of <b>RaIterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array. In the current version of <code>ra::</code>, every <b>RaIterator</b> is both <b>Ravelable</b> and <b>Indexable</b>.
 </p>
@@ -2567,6 +2569,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-start"><code>start</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-start-1"><code>start</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-stencil"><code>stencil</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-step">step</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-stride">stride</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-sum"><code>sum</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-T">T</a></th><td></td><td></td></tr>
@@ -2641,7 +2645,7 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h2 class="unnumbered">Notes</h2>
 
 <ol>
-<li> <code>ra::</code> uses the following features that are not standard (but that all major compilers support): <code>#pragma once</code>, and <code>__COUNTER__</code>.
+<li> <code>ra::</code> uses the non standard <code>#pragma once</code> (supported on all major compilers).
 </li></ol>
 
 
@@ -2652,7 +2656,7 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h3><a name="FOOT1" href="#DOCF1">(1)</a></h3>
 <p>/ə&rsquo;ɹ-eɪ/, I guess.</p>
 <h3><a name="FOOT2" href="#DOCF2">(2)</a></h3>
-<p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
+<p>Sometimes &lsquo;strides&rsquo;. Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
 <h3><a name="FOOT3" href="#DOCF3">(3)</a></h3>
 <p>Examples given without context assume that one has declared <code>using std::cout;</code>, etc.</p>
 <h3><a name="FOOT4" href="#DOCF4">(4)</a></h3>

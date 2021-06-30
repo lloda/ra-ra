@@ -24,8 +24,8 @@ namespace ra {
 
 // Traverse array expression looking to ravel the inner loop.
 // len(k) has a single value.
-// adv(k), stride(k), keep_stride(st, k, l) and flat() are used on all the leaf arguments.
-// The strides must give 0 for k>=their own rank, to allow frame matching.
+// adv(k), step(k), keep_step(st, k, l) and flat() are used on all the leaf arguments.
+// The steps must give 0 for k>=their own rank, to allow frame matching.
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <RaIterator A>
 inline void
@@ -50,7 +50,7 @@ ply_ravel(A && a)
 // outermost compact dim.
     rank_t * ocd = order;
     auto ss = a.len(*ocd);
-    for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
+    for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
     dim_t sha[rank], ind[rank];
@@ -62,8 +62,8 @@ ply_ravel(A && a)
         }
         RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
     }
-// all sub xpr strides advance in compact dims, as they might be different.
-    auto const ss0 = a.stride(order[0]);
+// all sub xpr steps advance in compact dims, as they might be different.
+    auto const ss0 = a.step(order[0]);
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
@@ -140,7 +140,7 @@ ocd()
     rank_t const rank = A::rank_s();
     auto s = A::len_s(rank-1);
     int j = 1;
-    while (j<rank && A::keep_stride(s, rank-1, rank-1-j)) {
+    while (j<rank && A::keep_step(s, rank-1, rank-1-j)) {
         s *= A::len_s(rank-1-j);
         ++j;
     }
@@ -157,20 +157,20 @@ plyf(A && a)
     if constexpr (rank_s<A>()==0) {
         *(a.flat());
     } else if constexpr (rank_s<A>()==1) {
-        subindex<mp::iota<1>, 1>(a, a.len(0), a.stride(0));
-// this can only be enabled when f() will be constexpr; static keep_stride implies all else is also static.
+        subindex<mp::iota<1>, 1>(a, a.len(0), a.step(0));
+// this can only be enabled when f() will be constexpr; static keep_step implies all else is also static.
 // important rank>1 for with static size operands [ra43].
-    } else if constexpr (rank_s<A>()>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_stride(d, i, j); }) {
+    } else if constexpr (rank_s<A>()>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
         constexpr auto sj = ocd<std::decay_t<A>>();
         constexpr auto s = std::get<0>(sj);
         constexpr auto j = std::get<1>(sj);
-// all sub xpr strides advance in compact dims, as they might be different.
+// all sub xpr steps advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-        until<mp::iota<rank_s<A>()>, 0>(j, a, s, a.stride(rank-1));
+        until<mp::iota<rank_s<A>()>, 0>(j, a, s, a.step(rank-1));
     } else {
 // the unrolling above isn't worth it when s, j cannot be constexpr.
         auto s = a.len(rank-1);
-        subindex<mp::iota<rank_s<A>()>, 1>(a, s, a.stride(rank-1));
+        subindex<mp::iota<rank_s<A>()>, 1>(a, s, a.step(rank-1));
     }
 }
 
@@ -227,7 +227,7 @@ ply_ravel_exit(A && a, DEF && def)
 // outermost compact dim.
     rank_t * ocd = order;
     auto ss = a.len(*ocd);
-    for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
+    for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
     dim_t sha[rank], ind[rank];
@@ -239,8 +239,8 @@ ply_ravel_exit(A && a, DEF && def)
         }
         RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
     }
-// all sub xpr strides advance in compact dims, as they might be different.
-    auto const ss0 = a.stride(order[0]);
+// all sub xpr steps advance in compact dims, as they might be different.
+    auto const ss0 = a.step(order[0]);
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {

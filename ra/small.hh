@@ -19,10 +19,10 @@ namespace ra {
 // Develop indices for Small
 // --------------------
 
-template <class lens, class strides>
+template <class lens, class steps>
 struct Indexer0
 {
-    static_assert(mp::len<lens> == mp::len<strides>, "mismatched lengths & strides");
+    static_assert(mp::len<lens> == mp::len<steps>, "mismatched lengths & steps");
 
     template <rank_t end, rank_t k, class P>
     constexpr static dim_t index_p_(dim_t const c, P const & p)
@@ -32,8 +32,8 @@ struct Indexer0
             return c;
         } else {
             RA_CHECK(inside(p[k], mp::first<lens>::value));
-            return Indexer0<mp::drop1<lens>, mp::drop1<strides>>::template
-                index_p_<end, k+1>(c + p[k] * mp::first<strides>::value, p);
+            return Indexer0<mp::drop1<lens>, mp::drop1<steps>>::template
+                index_p_<end, k+1>(c + p[k] * mp::first<steps>::value, p);
         }
     }
 
@@ -62,7 +62,7 @@ struct Indexer0
 // --------------------
 // Small iterator
 // --------------------
-// TODO Refactor with cell_iterator / STLIterator for View?
+// TODO Refactor with cell_iterator_big / STLIterator for View?
 
 // V is always SmallBase<SmallView, ...>
 template <class V, rank_t cellr_=0>
@@ -78,15 +78,15 @@ struct cell_iterator_small
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
 
     using cell_lens = mp::drop<typename V::lens, framer>;
-    using cell_strides = mp::drop<typename V::strides, framer>;
-    using lens = mp::take<typename V::lens, framer>; // these are strides on atom_type * p !!
-    using strides = mp::take<typename V::strides, framer>;
+    using cell_steps = mp::drop<typename V::steps, framer>;
+    using lens = mp::take<typename V::lens, framer>; // these are steps on atom_type * p !!
+    using steps = mp::take<typename V::steps, framer>;
 
     using shape_type = std::array<dim_t, framer>;
     using atom_type = typename V::value_type;
-    using cell_type = SmallView<atom_type, cell_lens, cell_strides>;
+    using cell_type = SmallView<atom_type, cell_lens, cell_steps>;
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
-    using frame_type = SmallView<int, lens, strides>; // only to compute slens
+    using frame_type = SmallView<int, lens, steps>; // only to compute slens
 
     cell_type c;
 
@@ -98,12 +98,12 @@ struct cell_iterator_small
     constexpr static rank_t rank() { return framer; }
     constexpr static dim_t len_s(int k) { RA_CHECK(inside(k, rank_s())); return V::len(k); }
     constexpr static dim_t len(int k) { RA_CHECK(inside(k, rank())); return V::len(k); }
-    constexpr static dim_t stride(int k) { return k<rank() ? V::stride(k) : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j)
+    constexpr static dim_t step(int k) { return k<rank() ? V::step(k) : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j)
     {
-        return st*(z<rank() ? stride(z) : 0)==(j<rank() ? stride(j) : 0);
+        return st*(z<rank() ? step(z) : 0)==(j<rank() ? step(j) : 0);
     }
-    constexpr void adv(rank_t k, dim_t d) { c.p += (k<rank()) * stride(k)*d; }
+    constexpr void adv(rank_t k, dim_t d) { c.p += (k<rank()) * step(k)*d; }
 
     constexpr auto flat() const
     {
@@ -119,9 +119,9 @@ struct cell_iterator_small
     {
         RA_CHECK(rank()<=dim_t(i_.size()), "too few indices ", dim_t(i_.size()), " for rank ", rank());
         if constexpr (0==cellr) {
-            return c.p[Indexer0<lens, strides>::index_short(i_)];
+            return c.p[Indexer0<lens, steps>::index_short(i_)];
         } else {
-            return cell_type(c.p + Indexer0<lens, strides>::index_short(i_));
+            return cell_type(c.p + Indexer0<lens, steps>::index_short(i_));
         }
     }
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -129,7 +129,7 @@ struct cell_iterator_small
 
 
 // --------------------
-// STLIterator for both cell_iterator_small & cell_iterator
+// STLIterator for both cell_iterator_small & cell_iterator_big
 // FIXME make it work for any array iterator, as in ply_ravel, ply_index.
 // --------------------
 
@@ -140,27 +140,27 @@ next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
     for (int k=framer-1; k>=0; --k) {
         ++i[k];
         if (i[k]<dim[k].len) {
-            p += dim[k].stride;
+            p += dim[k].step;
             return;
         } else {
             i[k] = 0;
-            p -= dim[k].stride*(dim[k].len-1);
+            p -= dim[k].step*(dim[k].len-1);
         }
     }
     p = nullptr;
 }
 
-template <int k, class lens, class strides, class I, class P> void
+template <int k, class lens, class steps, class I, class P> void
 next_in_cube(I & i, P & p)
 {
     if constexpr (k>=0) {
         ++i[k];
         if (i[k]<mp::ref<lens, k>::value) {
-            p += mp::ref<strides, k>::value;
+            p += mp::ref<steps, k>::value;
         } else {
             i[k] = 0;
-            p -= mp::ref<strides, k>::value*(mp::ref<lens, k>::value-1);
-            next_in_cube<k-1, lens, strides>(i, p);
+            p -= mp::ref<steps, k>::value*(mp::ref<lens, k>::value-1);
+            next_in_cube<k-1, lens, steps>(i, p);
         }
     } else {
         p = nullptr;
@@ -214,7 +214,7 @@ struct STLIterator
         if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough :-/
             ii.c.p = nullptr;
         } else if constexpr (DIM_ANY != ra::size_s<Iterator>()) {
-            next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::strides>(i, ii.c.p);
+            next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::steps>(i, ii.c.p);
         } else {
             next_in_cube(ii.rank(), ii.dimv, i, ii.c.p);
         }
@@ -229,69 +229,69 @@ template <class T> STLIterator<T> stl_iterator(T && t) { return STLIterator<T>(s
 // Base for both small view & container
 // --------------------
 
-template <class lens_, class strides_, class ... I>
+template <class lens_, class steps_, class ... I>
 struct FilterDims
 {
     using lens = lens_;
-    using strides = strides_;
+    using steps = steps_;
 };
-template <class lens_, class strides_, class I0, class ... I>
-struct FilterDims<lens_, strides_, I0, I ...>
+template <class lens_, class steps_, class I0, class ... I>
+struct FilterDims<lens_, steps_, I0, I ...>
 {
     constexpr static int s = is_beatable<I0>::skip;
     constexpr static int s_src = is_beatable<I0>::skip_src;
-    using next = FilterDims<mp::drop<lens_, s_src>, mp::drop<strides_, s_src>, I ...>;
+    using next = FilterDims<mp::drop<lens_, s_src>, mp::drop<steps_, s_src>, I ...>;
     using lens = mp::append<mp::take<lens_, s>, typename next::lens>;
-    using strides = mp::append<mp::take<strides_, s>, typename next::strides>;
+    using steps = mp::append<mp::take<steps_, s>, typename next::steps>;
 };
 
-template <dim_t len0, dim_t stride0> inline
+template <dim_t len0, dim_t step0> inline
 constexpr dim_t select(dim_t i0)
 {
     RA_CHECK(inside(i0, len0));
-    return i0*stride0;
+    return i0*step0;
 };
-template <dim_t len0, dim_t stride0, int n> inline
+template <dim_t len0, dim_t step0, int n> inline
 constexpr dim_t select(dots_t<n> i0)
 {
     return 0;
 }
 
-template <class lens, class strides> inline
+template <class lens, class steps> inline
 constexpr dim_t select_loop()
 {
     return 0;
 }
-template <class lens, class strides, class I0, class ... I> inline
+template <class lens, class steps, class I0, class ... I> inline
 constexpr dim_t select_loop(I0 i0, I ... i)
 {
     constexpr int s_src = is_beatable<I0>::skip_src;
-    return select<mp::first<lens>::value, mp::first<strides>::value>(i0)
-        + select_loop<mp::drop<lens, s_src>, mp::drop<strides, s_src>>(i ...);
+    return select<mp::first<lens>::value, mp::first<steps>::value>(i0)
+        + select_loop<mp::drop<lens, s_src>, mp::drop<steps, s_src>>(i ...);
 }
 
-template <template <class ...> class Child_, class T, class lens_, class strides_>
+template <template <class ...> class Child_, class T, class lens_, class steps_>
 struct SmallBase
 {
     using lens = lens_;
-    using strides = strides_;
+    using steps = steps_;
     using value_type = T;
 
     template <class TT> using BadDimension = mp::int_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "negative dimensions");
-    static_assert(mp::len<lens> == mp::len<strides>, "bad strides"); // TODO full static check on strides.
+    static_assert(mp::len<lens> == mp::len<steps>, "bad steps"); // TODO full static check on steps.
 
-    using Child = Child_<T, lens, strides>;
+    using Child = Child_<T, lens, steps>;
 
     constexpr static rank_t rank() { return mp::len<lens>; }
     constexpr static rank_t rank_s() { return mp::len<lens>; }
     constexpr static dim_t size() { return mp::apply<mp::prod, lens>::value; }
     constexpr static dim_t size_s() { return size(); }
     constexpr static auto slens = mp::tuple_values<std::array<dim_t, rank()>, lens>();
-    constexpr static auto sstrides = mp::tuple_values<std::array<dim_t, rank()>, strides>();
+    constexpr static auto ssteps = mp::tuple_values<std::array<dim_t, rank()>, steps>();
     constexpr static dim_t len(int k) { return slens[k]; }
     constexpr static dim_t len_s(int k) { return slens[k]; }
-    constexpr static dim_t stride(int k) { return sstrides[k]; }
+    constexpr static dim_t step(int k) { return ssteps[k]; }
     constexpr static auto shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(slens.data()); }
 
 // allowing rank 1 for coord types
@@ -306,15 +306,15 @@ struct SmallBase
     requires ((0 + ... + std::is_integral_v<I>)<rank() && (is_beatable<I>::static_p && ...)) \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
-        using FD = FilterDims<lens, strides, I ...>;                   \
-        return SmallView<T CONST, typename FD::lens, typename FD::strides> \
-            (data()+select_loop<lens, strides>(i ...));                \
+        using FD = FilterDims<lens, steps, I ...>;                   \
+        return SmallView<T CONST, typename FD::lens, typename FD::steps> \
+            (data()+select_loop<lens, steps>(i ...));                \
     }                                                                   \
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<I>)==rank())                \
     constexpr decltype(auto) operator()(I ... i) CONST                  \
     {                                                                   \
-        return data()[select_loop<lens, strides>(i ...)];              \
+        return data()[select_loop<lens, steps>(i ...)];              \
     } /* TODO More than one selector... */                              \
     template <class ... I>                                              \
     requires (!is_beatable<I>::static_p || ...)                         \
@@ -326,8 +326,8 @@ struct SmallBase
     template <class I>                                                  \
     constexpr auto at(I const & i) CONST                                \
     {                                                                   \
-        return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<strides, ra::size_s<I>()>> \
-            (data()+Indexer0<lens, strides>::index_p(i));              \
+        return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
+            (data()+Indexer0<lens, steps>::index_p(i));              \
     }                                                                   \
     constexpr decltype(auto) operator[](dim_t const i) CONST            \
     {                                                                   \
@@ -339,7 +339,7 @@ struct SmallBase
     {                                                                   \
         static_assert(rank()>=1, "bad rank for as<>");                  \
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
-        return SmallView<T CONST, mp::cons<mp::int_t<ss>, mp::drop1<lens>>, strides>(this->data()+oo*this->stride(0)); \
+        return SmallView<T CONST, mp::cons<mp::int_t<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
     }                                                                   \
     /* BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert */ \
     constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; } \
@@ -380,26 +380,26 @@ struct SmallBase
         return static_cast<Child &>(*this);
     }
 
-    template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase<SmallView, T, lens, strides>, c>;
-    template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<SmallView, T const, lens, strides>, c>;
+    template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase<SmallView, T, lens, steps>, c>;
+    template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<SmallView, T const, lens, steps>, c>;
     template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
 // FIXME see if we need to extend this for cellr!=0.
-// template <class P> using STLIterator = std::conditional_t<have_default_strides, P, STLIterator<Iterator<P>>>;
-    constexpr static bool have_default_strides = std::same_as<strides, default_strides<lens>>;
-    template <class I, class P> using pick_STLIterator = std::conditional_t<have_default_strides, P, ra::STLIterator<I>>;
+// template <class P> using STLIterator = std::conditional_t<have_default_steps, P, STLIterator<Iterator<P>>>;
+    constexpr static bool have_default_steps = std::same_as<steps, default_steps<lens>>;
+    template <class I, class P> using pick_STLIterator = std::conditional_t<have_default_steps, P, ra::STLIterator<I>>;
     using STLIterator = pick_STLIterator<iterator<0>, T *>;
     using STLConstIterator = pick_STLIterator<const_iterator<0>, T const *>;
 
 // TODO In C++17 begin() end() may be different types, at least for ranged for
 // (https://en.cppreference.com/w/cpp/language/range-for).
 // See if we can use this to simplify end() and !=end() test.
-// TODO With default strides I can just return p. Make sure to test before changing this.
-    constexpr STLIterator begin() { if constexpr (have_default_strides) return data(); else return iter(); }
-    constexpr STLConstIterator begin() const { if constexpr (have_default_strides) return data(); else return iter(); }
-    constexpr STLIterator end() { if constexpr (have_default_strides) return data()+size(); else return iterator<0>(nullptr); }
-    constexpr STLConstIterator end() const { if constexpr (have_default_strides) return data()+size(); else return const_iterator<0>(nullptr); }
+// TODO With default steps I can just return p. Make sure to test before changing this.
+    constexpr STLIterator begin() { if constexpr (have_default_steps) return data(); else return iter(); }
+    constexpr STLConstIterator begin() const { if constexpr (have_default_steps) return data(); else return iter(); }
+    constexpr STLIterator end() { if constexpr (have_default_steps) return data()+size(); else return iterator<0>(nullptr); }
+    constexpr STLConstIterator end() const { if constexpr (have_default_steps) return data()+size(); else return const_iterator<0>(nullptr); }
 };
 
 
@@ -408,10 +408,10 @@ struct SmallBase
 // ---------------------
 // Strides are compile time, so we can put most members in the view type.
 
-template <class T, class lens, class strides>
-struct SmallView: public SmallBase<SmallView, T, lens, strides>
+template <class T, class lens, class steps>
+struct SmallView: public SmallBase<SmallView, T, lens, steps>
 {
-    using Base = SmallBase<SmallView, T, lens, strides>;
+    using Base = SmallBase<SmallView, T, lens, steps>;
     using Base::rank, Base::size, Base::operator=;
 
     T * p;
@@ -422,11 +422,11 @@ struct SmallView: public SmallBase<SmallView, T, lens, strides>
     constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return p[0]; };
 };
 
-template <class T, class lens, class strides, class ... nested_args, class ... ravel_args>
-struct SmallArray<T, lens, strides, std::tuple<nested_args ...>, std::tuple<ravel_args ...>>
-    : public SmallBase<SmallArray, T, lens, strides>
+template <class T, class lens, class steps, class ... nested_args, class ... ravel_args>
+struct SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ...>>
+    : public SmallBase<SmallArray, T, lens, steps>
 {
-    using Base = SmallBase<SmallArray, T, lens, strides>;
+    using Base = SmallBase<SmallArray, T, lens, steps>;
     using Base::rank, Base::size;
 
     T p[Base::size()];
@@ -455,8 +455,8 @@ struct SmallArray<T, lens, strides, std::tuple<nested_args ...>, std::tuple<rave
         static_cast<Base &>(*this) = x;
     }
 
-    constexpr operator SmallView<T, lens, strides> () { return SmallView<T, lens, strides>(p); }
-    constexpr operator SmallView<T const, lens, strides> const () { return SmallView<T const, lens, strides>(p); }
+    constexpr operator SmallView<T, lens, steps> () { return SmallView<T, lens, steps>(p); }
+    constexpr operator SmallView<T const, lens, steps> const () { return SmallView<T const, lens, steps>(p); }
 };
 
 // FIXME unfortunately necessary. Try to remove the need, also of (S, begin, end) in Container, once the nested_tuple constructors work.
@@ -530,7 +530,7 @@ struct axis_indices
     // static_assert((mp::len<type>)>0, "dst axis doesn't appear in transposed axes list");
 };
 
-template <class axes_list, class src_lens, class src_strides>
+template <class axes_list, class src_lens, class src_steps>
 struct axes_list_indices
 {
     static_assert(mp::len<axes_list> == mp::len<src_lens>, "bad size for transposed axes list");
@@ -544,31 +544,31 @@ struct axes_list_indices
     {
         using type = typename axis_indices<axes_list, dst_i>::type;
         template <class i> using lensi = mp::ref<src_lens, i::value>;
-        template <class i> using stridesi = mp::ref<src_strides, i::value>;
-        using stride = mp::fold<mp::sum, void, mp::map<stridesi, type>>;
+        template <class i> using stepsi = mp::ref<src_steps, i::value>;
+        using step = mp::fold<mp::sum, void, mp::map<stepsi, type>>;
         using len = mp::fold<mp::min, void, mp::map<lensi, type>>;
     };
 
     template <class dst_i> using dst_indices = typename dst_indices_<dst_i>::type;
     template <class dst_i> using dst_len = typename dst_indices_<dst_i>::len;
-    template <class dst_i> using dst_stride = typename dst_indices_<dst_i>::stride;
+    template <class dst_i> using dst_step = typename dst_indices_<dst_i>::step;
 
     using dst = mp::iota<(talmax>=0 ? (1+talmax) : 0)>;
     using type = mp::map<dst_indices, dst>;
     using lens =  mp::map<dst_len, dst>;
-    using strides =  mp::map<dst_stride, dst>;
+    using steps =  mp::map<dst_step, dst>;
 };
 
 #define DEF_TRANSPOSE(CONST)                                            \
-    template <int ... Iarg, template <class ...> class Child, class T, class lens, class strides> \
-    inline auto transpose(SmallBase<Child, T, lens, strides> CONST & a) \
+    template <int ... Iarg, template <class ...> class Child, class T, class lens, class steps> \
+    inline auto transpose(SmallBase<Child, T, lens, steps> CONST & a) \
     {                                                                   \
-        using ti = axes_list_indices<mp::int_list<Iarg ...>, lens, strides>; \
-        return SmallView<T CONST, typename ti::lens, typename ti::strides>(a.data()); \
+        using ti = axes_list_indices<mp::int_list<Iarg ...>, lens, steps>; \
+        return SmallView<T CONST, typename ti::lens, typename ti::steps>(a.data()); \
     };                                                                  \
                                                                         \
-    template <template <class ...> class Child, class T, class lens, class strides> \
-    inline auto diag(SmallBase<Child, T, lens, strides> CONST & a)     \
+    template <template <class ...> class Child, class T, class lens, class steps> \
+    inline auto diag(SmallBase<Child, T, lens, steps> CONST & a)     \
     {                                                                   \
         return transpose<0, 0>(a);                                      \
     }
@@ -576,12 +576,12 @@ FOR_EACH(DEF_TRANSPOSE, /* const */, const)
 #undef DEF_TRANSPOSE
 
 // TODO Used by ProductRule; waiting for proper generalization.
-template <template <class ...> class Child1, class T1, class lens1, class strides1,
-          template <class ...> class Child2, class T2, class lens2, class strides2>
-auto cat(SmallBase<Child1, T1, lens1, strides1> const & a1, SmallBase<Child2, T2, lens2, strides2> const & a2)
+template <template <class ...> class Child1, class T1, class lens1, class steps1,
+          template <class ...> class Child2, class T2, class lens2, class steps2>
+auto cat(SmallBase<Child1, T1, lens1, steps1> const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
 {
-    using A1 = SmallBase<Child1, T1, lens1, strides1>;
-    using A2 = SmallBase<Child2, T2, lens2, strides2>;
+    using A1 = SmallBase<Child1, T1, lens1, steps1>;
+    using A2 = SmallBase<Child2, T2, lens2, steps2>;
     static_assert(A1::rank()==1 && A2::rank()==1, "bad ranks for cat"); // gcc accepts a1.rank(), etc.
     using T = std::decay_t<decltype(a1[0])>;
     Small<T, A1::size()+A2::size()> val;
@@ -590,11 +590,11 @@ auto cat(SmallBase<Child1, T1, lens1, strides1> const & a1, SmallBase<Child2, T2
     return val;
 }
 
-template <template <class ...> class Child1, class T1, class lens1, class strides1, class A2>
+template <template <class ...> class Child1, class T1, class lens1, class steps1, class A2>
 requires (is_scalar<A2>)
-auto cat(SmallBase<Child1, T1, lens1, strides1> const & a1, A2 const & a2)
+auto cat(SmallBase<Child1, T1, lens1, steps1> const & a1, A2 const & a2)
 {
-    using A1 = SmallBase<Child1, T1, lens1, strides1>;
+    using A1 = SmallBase<Child1, T1, lens1, steps1>;
     static_assert(A1::rank()==1, "bad ranks for cat");
     using T = std::decay_t<decltype(a1[0])>;
     Small<T, A1::size()+1> val;
@@ -603,11 +603,11 @@ auto cat(SmallBase<Child1, T1, lens1, strides1> const & a1, A2 const & a2)
     return val;
 }
 
-template <class A1, template <class ...> class Child2, class T2, class lens2, class strides2>
+template <class A1, template <class ...> class Child2, class T2, class lens2, class steps2>
 requires (is_scalar<A1>)
-auto cat(A1 const & a1, SmallBase<Child2, T2, lens2, strides2> const & a2)
+auto cat(A1 const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
 {
-    using A2 = SmallBase<Child2, T2, lens2, strides2>;
+    using A2 = SmallBase<Child2, T2, lens2, steps2>;
     static_assert(A2::rank()==1, "bad ranks for cat");
     using T = std::decay_t<decltype(a2[0])>;
     Small<T, 1+A2::size()> val;
@@ -629,18 +629,18 @@ template <int s> struct explode_divop
 
 // See view-ops.hh:explode, collapse. FIXME support real->complex, etc.
 template <class super_t,
-          template <class ...> class Child, class T, class lens, class strides>
-auto explode(SmallBase<Child, T, lens, strides> & a)
+          template <class ...> class Child, class T, class lens, class steps>
+auto explode(SmallBase<Child, T, lens, steps> & a)
 {
-    using ta = SmallBase<Child, T, lens, strides>;
-// the returned type has strides in super_t, but to support general strides we'd need strides in T. Maybe FIXME?
-    static_assert(super_t::have_default_strides);
+    using ta = SmallBase<Child, T, lens, steps>;
+// the returned type has steps in super_t, but to support general steps we'd need steps in T. Maybe FIXME?
+    static_assert(super_t::have_default_steps);
     constexpr rank_t ra = ta::rank_s();
     constexpr rank_t rb = super_t::rank_s();
     static_assert(std::is_same_v<mp::drop<lens, ra-rb>, typename super_t::lens>);
-    static_assert(std::is_same_v<mp::drop<strides, ra-rb>, typename super_t::strides>);
-    using cstrides = mp::map<explode_divop<ra::size_s<super_t>()>::template op, mp::take<strides, ra-rb>>;
-    return SmallView<super_t, mp::take<lens, ra-rb>, cstrides>((super_t *) a.data());
+    static_assert(std::is_same_v<mp::drop<steps, ra-rb>, typename super_t::steps>);
+    using csteps = mp::map<explode_divop<ra::size_s<super_t>()>::template op, mp::take<steps, ra-rb>>;
+    return SmallView<super_t, mp::take<lens, ra-rb>, csteps>((super_t *) a.data());
 }
 
 } // namespace ra
