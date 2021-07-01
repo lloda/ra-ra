@@ -227,11 +227,7 @@ struct Iota
     constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
     constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return len_; }
 
-    template <class I>
-    constexpr decltype(auto) at(I const & i)
-    {
-        return i_ + T(i[0])*step_;
-    }
+    template <class I> constexpr T at(I const & i) { return i_ + T(i[0])*step_; }
     constexpr void adv(rank_t k, dim_t d)
     {
         i_ += T((k==0) * d) * step_; // cf Vector::adv
@@ -359,7 +355,7 @@ start(T && t)
     return std::forward<T>(t);
 }
 
-// see [ra35] and Vector constructors above. RaIterators need to be restarted in case on every use (eg ra::cross()).
+// see [ra35] and Vector constructors above. RaIterators need to be restarted on every use (eg ra::cross()).
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
 inline constexpr auto
 start(T && t)

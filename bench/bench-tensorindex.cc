@@ -1,6 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file tensor-indices.cc
-/// @brief Tests for TensorIndex.
+/// @file bench-tensorindex.cc
+/// @brief Benchmark for TensorIndex.
 
 // (c) Daniel Llorens - 2019-2020
 // This library is free software; you can redistribute it and/or modify it under

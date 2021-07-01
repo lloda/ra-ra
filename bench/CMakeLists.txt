@@ -6,7 +6,7 @@ project (ra-bench)
 include_directories ("..")
 
 SET (TARGETS bench-dot bench-from bench-gemm bench-gemv bench-optimize bench-pack bench-reduce-sqrm
-  bench-stencil1 bench-stencil2 bench-stencil3 bench-sum-cols bench-sum-rows)
+  bench-stencil1 bench-stencil2 bench-stencil3 bench-sum-cols bench-sum-rows bench-tensorindex)
 
 include ("../config/cc.cmake")
 

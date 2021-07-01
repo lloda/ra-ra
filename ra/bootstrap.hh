@@ -122,7 +122,7 @@ struct CellFlat
     constexpr C & operator*() { return c; }
 };
 
-// Common to View / SmallBase.
+// Common to View / SmallBase. TODO Shouldn't it work on ... foreign vectors? arbitrary exprs?
 template <int cell_rank, class A> inline constexpr auto
 iter(A && a) { return std::forward<A>(a).template iter<cell_rank>(); }
 

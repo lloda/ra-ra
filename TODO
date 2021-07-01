@@ -19,6 +19,7 @@ checkbox [C-ct] flip TODO
       subscripts. E.g. in A(vector, iota, vector) the iota isn't beaten.
     - [ ] be namespace clean except for possibly real.hh, complex.hh.
     - [ ] make iter work with w/rank.
+    - [ ] make iter work with foreign vectors.
   - [-] Features [1/5]
     - [ ] Iota is both vector-like object and iterator. Split into two types?
     - [ ] View::p is not const because it's used as sliding window (cell_iterator_big). Split into two types?
@@ -117,7 +118,8 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
       There's no reason to restart, since the RaIterator methods are all static. So start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const overload is required for ScalarFlat::operator*.
   40. [ ]
   41. [ ]
-  42. [ ]
+  42. [ ] no current test
+      A way to test that compilation assertions are triggered appropriately, esp. for things like ct array lookup et
   43. [ ] bench/bench-dot.cc
       The performace of f_small_op depends on the optimization in plyf() through ocd<>(). Doing this required having static and non-static versions of RaIterator::keep_step in Match/Expr. Possibly the same could be done to reduce rank/rank_s, size/size_s to just rank/size, and check for static-ness instead of RANK_ANY/DIM_ANY.
   44. [ ]

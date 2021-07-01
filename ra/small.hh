@@ -2,7 +2,7 @@
 /// @file small.hh
 /// @brief Arrays with static dimensions. Compare with View, Container.
 
-// (c) Daniel Llorens - 2013-2016, 2018-2020
+// (c) Daniel Llorens - 2013-2016, 2018-2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -113,7 +113,6 @@ struct cell_iterator_small
     template <class I>
     constexpr decltype(auto) at(I const & i_)
     {
-        RA_CHECK(rank()<=dim_t(i_.size()), "too few indices ", dim_t(i_.size()), " for rank ", rank());
         if constexpr (0==cellr) {
             return c.p[indexer0::longer<lens, steps>(i_)];
         } else {

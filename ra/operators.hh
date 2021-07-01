@@ -212,7 +212,7 @@ inline auto pack(A && ... a)
     return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
 }
 
-// FIXME Inelegant story wrt plain array / nested array :-|
+// FIXME needs a nested array for I, which is ugly.
 template <class A, class I>
 inline auto at(A && a, I && i)
 {

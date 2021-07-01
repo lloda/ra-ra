@@ -2,7 +2,7 @@
 /// @file big.hh
 /// @brief Arrays with dynamic size.
 
-// (c) Daniel Llorens - 2013-2014, 2017-2020
+// (c) Daniel Llorens - 2013-2014, 2017-2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -578,7 +578,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 
 // FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of view_.operator=.
-// store(x) avoids it for Big, but doesn't work for Unique. Should construct in place as std::vector does.
+// store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
     template <class Pbegin> void fill1(dim_t xsize, Pbegin xbegin)
     {
         RA_CHECK(this->size()==xsize, "mismatched sizes");
