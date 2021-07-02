@@ -288,11 +288,6 @@ template <int n> struct is_beatable_def<insert_t<n>>
 
 template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 
-template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
-template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
-template <class FM, class Op, class T, class K=mp::iota<mp::len<T>>> struct Ryn;
-template <class Live, class A> struct Reframe;
-
 
 // --------------
 // Coerce potential RaIterator

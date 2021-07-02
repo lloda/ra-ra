@@ -97,7 +97,8 @@ pick_star(size_t p0, T && t)
     }
 }
 
-// forward decl in atom.hh
+template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
+
 template <class ... P, int ... I>
 struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
 {

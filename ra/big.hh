@@ -332,7 +332,7 @@ struct View
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>;
     View & operator=(ravel_arg const x)
     {
-        RA_CHECK(p && this->size()==ra::dim_t(x.size()), "bad assignment");
+        RA_CHECK(p && this->size()==ssize(x), "bad assignment");
         std::copy(x.begin(), x.end(), this->begin());
         return *this;
     }

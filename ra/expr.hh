@@ -14,7 +14,8 @@
 
 namespace ra {
 
-// forward decl in atom.hh
+template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
+
 template <class Op, class ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
 {

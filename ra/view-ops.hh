@@ -30,7 +30,7 @@ View<T, RANK> reverse(View<T, RANK> const & view, int k)
 template <class T, rank_t RANK, class S> inline
 View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
 {
-    RA_CHECK(view.rank()==dim_t(ra::size(s)));
+    RA_CHECK(view.rank()==ra::size(s));
     auto rp = std::max_element(s.begin(), s.end());
     rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
 
