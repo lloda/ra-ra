@@ -684,10 +684,25 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     auto end() const { return this->data()+this->size(); }
 };
 
-template <class Store, rank_t RANK>
-void swap(Container<Store, RANK> & a, Container<Store, RANK> & b)
+template <class Store, rank_t RANKA, rank_t RANKB>
+requires (RANKA!=RANKB) // rely on std::swap; else ambiguous
+void
+swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
 {
-    std::swap(a.dimv, b.dimv);
+    if constexpr (RANK_ANY==RANKA) {
+        RA_CHECK(a.rank()==b.rank());
+        decltype(b.dimv) c = a.dimv;
+        start(a.dimv) = b.dimv;
+        std::swap(b.dimv, c);
+    } else if constexpr (RANK_ANY==RANKB) {
+        RA_CHECK(a.rank()==b.rank());
+        decltype(a.dimv) c = b.dimv;
+        start(b.dimv) = a.dimv;
+        std::swap(a.dimv, c);
+    } else {
+        static_assert(RANKA==RANKB);
+        std::swap(a.dimv, b.dimv);
+    }
     std::swap(a.store, b.store);
     std::swap(a.p, b.p);
 }

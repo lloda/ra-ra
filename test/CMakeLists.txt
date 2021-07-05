@@ -9,7 +9,7 @@ SET (TARGETS at bench big-0 big-1 bug83 compatibility concrete const dual early
   explode-0 foreign frame-new frame-old from io iterator-small list9 macros mem-fn
   nested-0 old operators optimize owned ownership ply ra-0 ra-1 ra-10 ra-11 ra-12
   ra-13 ra-2 ra-3 ra-4 ra-5 ra-6 ra-7 ra-8 ra-9 ra-dual reduction reexported reshape
-  return-expr self-assign small-0 small-1 stl-compat tensor-indices tensorindex
-  tuples types vector-array view-ops wedge where wrank)
+  return-expr self-assign small-0 small-1 stl-compat swap tensorindex tuples types
+  vector-array view-ops wedge where wrank)
 
 include ("../config/cc.cmake")

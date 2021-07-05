@@ -1699,31 +1699,52 @@ FIXME
 @chapter Reference
 @c ------------------------------------------------
 
-@anchor{x-map} @defun map op expr ...
-Create an array expression that applies @var{op} to @var{expr} ...
+@cindex @code{at}
+@anchor{x-at} @defun at expr indices
+Look up @var{expr} at each element of @var{indices}, which shall be a multi-index into @var{expr}.
 @end defun
 
-For example:
-@example
+This can be used for sparse subscripting. For example:
+@example @c [ra30]
 @verbatim
-ra::Big<double, 1> x = map(cos, ra::Small<double, 1> {0.});
+    ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
+    ra::Big<ra::Small<int, 2>, 2> i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
+    ra::Big<int, 2> B = at(A, i);
 @end verbatim
-@result{} x = @{ 1. @}
+  @result{} B = @{@{101, 120@}, @{110, 121@}@}
 @end example
 
-@var{op} can return a reference. A typical use is subscripting. For example (TODO better example, e.g. using STL types):
+@cindex @code{cast}
+@anchor{x-cast} @defun cast <type> expr
+Create an array expression that casts @var{expr} into @var{type}.
+@end defun
 
-@example
-@verbatim
-ra::Big<int, 2> x = {{3, 3}, 0.};
-map([](auto && i, auto && j) -> int & { return x(i, j); },
-    ra::Big<int, 1> {0, 1, 1, 2}, ra::Big<int, 1> {1, 0, 2, 1})
-  = 1;
-@end verbatim
-@result{} x = @{@{0, 1, 0@}, @{1, 0, 1@}, @{0, 1, 0@}@}
-@end example
+@cindex @code{collapse}
+@anchor{x-collapse} @defun collapse
+TODO
+See also @ref{x-explode,@code{explode}}.
+@end defun
 
-Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to (value) @code{auto}, so either a explicit type or @code{decltype(auto)} should be used if you want to return a reference.
+@cindex @code{concrete}
+@anchor{x-concrete} @defun concrete a
+Convert the argument to a container of the same shape as @var{a}.
+@end defun
+
+If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+
+@c FIXME example
+
+@cindex @code{diag}
+@anchor{x-diag} @defun diag view
+Equivalent to @code{transpose<0, 0>(view)}.
+@end defun
+
+@cindex @code{explode}
+@anchor{x-explode} @defun explode
+TODO
+
+See also @ref{x-collapse,@code{collapse}}.
+@end defun
 
 @cindex @code{for_each}
 @anchor{x-for_each} @defun for_each op expr ...
@@ -1739,60 +1760,35 @@ for_each([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})
 @result{} s = 6.
 @end example
 
-@cindex @code{ply}
-@anchor{x-ply} @defun ply expr
-Traverse @var{expr}. @code{ply} returns @code{void} so @var{expr} should be run for effect.
-@end defun
+See also @ref{x-map,@code{map}}.
 
-It is rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)} (which is actually @code{ply(map(...))} should cover most other uses.
+@cindex @code{format_array}
+@anchor{x-format_array} @defun format_array expr [last_axis_separator [second_last_axis_separator ...]]
+Formats an array for character output.
+
+For example:
 
 @example
 @verbatim
-double s = 0.;
-ply(map([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})) // same as for_each
+ra::Small<int, 2, 2> A = {{1, 2}, {3, 4}};
+cout << "case a:\n" << A << endl;
+cout << "case b:\n" << format_array(A) << endl;
+cout << "case c:\n" <<  format_array(A, "|", "-") << endl;
 @end verbatim
-@result{} s = 6.
+@print{} case a:
+1 2
+3 4
+case b:
+1 2
+3 4
+case c:
+1|2-3|4
 @end example
-
-@cindex @code{pack}
-@anchor{x-pack} @defun pack <type> expr ...
-Create an array expression that brace-constructs @var{type} from @var{expr} ...
 @end defun
 
-@cindex @code{cast}
-@anchor{x-cast} @defun cast <type> expr
-Create an array expression that casts @var{expr} into @var{type}.
-@end defun
+The shape that might be printed before the expression itself (depending on its type) is not subject to these separators.
 
-@cindex @code{pick}
-@anchor{x-pick} @defun pick select_expr expr ...
-Create an array expression that selects the first of @var{expr} ... if @var{select_expr} is 0, the second if @var{select_expr} is 1, and so on. The expressions that are not selected are not looked up.
-@end defun
-
-This function cannot be defined using @ref{x-map,@code{map}}, because @code{map} looks up each one of its argument expressions before calling @var{op}.
-
-For example:
-@example @c cf examples/readme.cc [ma100].
-@verbatim
-    ra::Small<int, 3> s {2, 1, 0};
-    ra::Small<double, 3> z = pick(s, s*s, s+s, sqrt(s));
-@end verbatim
-  @result{} z = @{1.41421, 2, 0@}
-@end example
-
-@cindex @code{where}
-@anchor{x-where} @defun where pred_expr true_expr false_expr
-Create an array expression that selects @var{true_expr} if @var{pred_expr} is @code{true}, and @var{false_expr} if @var{pred_expr} is @code{false}. The expression that is not selected is not looked up.
-@end defun
-
-For example:
-@example
-@verbatim
-    ra::Big<double, 1> s {1, -1, 3, 2};
-    s = where(s>=2, 2, s); // saturate s
-@end verbatim
-  @result{} s = @{1, -1, 2, 2@}
-@end example
+See also @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
 
 @cindex @code{from}
 @anchor{x-from} @defun from op ... expr
@@ -1821,20 +1817,106 @@ For example:
 
 The last example is more or less how @code{A(i, j)} is actually implemented (@pxref{The rank conjunction}).
 
-@cindex @code{at}
-@anchor{x-at} @defun at expr indices
-Look up @var{expr} at each element of @var{indices}, which shall be a multi-index into @var{expr}.
+@cindex @code{imag_part}
+@anchor{x-imag_part} @defun imag_part
+Take imaginary part of a complex number. This can be used as reference.
+
+For example: @c [ma115]
+
+@example
+@verbatim
+ra::Small<std::complex<double>, 2, 2> A = {{1., 2.}, {3., 4.}};
+imag_part(A) = -2*real_part(A);
+cout << A << endl;
+@end verbatim
+@print{}
+(1, -2) (2, -4)
+(3, -6) (4, -8)
+@end example
+
+See also @ref{x-real_part,@code{real_part}}.
 @end defun
 
-This can be used for sparse subscripting. For example:
-@example @c [ra30]
+@cindex @code{map}
+@anchor{x-map} @defun map op expr ...
+Create an array expression that applies @var{op} to @var{expr} ...
+@end defun
+
+For example:
+@example
 @verbatim
-    ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
-    ra::Big<ra::Small<int, 2>, 2> i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
-    ra::Big<int, 2> B = at(A, i);
+ra::Big<double, 1> x = map(cos, ra::Small<double, 1> {0.});
 @end verbatim
-  @result{} B = @{@{101, 120@}, @{110, 121@}@}
+@result{} x = @{ 1. @}
 @end example
+
+@var{op} can return a reference. A typical use is subscripting. For example (TODO better example, e.g. using STL types):
+
+@example
+@verbatim
+ra::Big<int, 2> x = {{3, 3}, 0.};
+map([](auto && i, auto && j) -> int & { return x(i, j); },
+    ra::Big<int, 1> {0, 1, 1, 2}, ra::Big<int, 1> {1, 0, 2, 1})
+  = 1;
+@end verbatim
+@result{} x = @{@{0, 1, 0@}, @{1, 0, 1@}, @{0, 1, 0@}@}
+@end example
+
+Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to (value) @code{auto}, so either a explicit type or @code{decltype(auto)} should be used if you want to return a reference.
+
+See also @ref{x-for_each,@code{for_each}}.
+
+@cindex @code{pack}
+@anchor{x-pack} @defun pack <type> expr ...
+Create an array expression that brace-constructs @var{type} from @var{expr} ...
+@end defun
+
+@cindex @code{pick}
+@anchor{x-pick} @defun pick select_expr expr ...
+Create an array expression that selects the first of @var{expr} ... if @var{select_expr} is 0, the second if @var{select_expr} is 1, and so on. The expressions that are not selected are not looked up.
+@end defun
+
+This function cannot be defined using @ref{x-map,@code{map}}, because @code{map} looks up each one of its argument expressions before calling @var{op}.
+
+For example:
+@example @c cf examples/readme.cc [ma100].
+@verbatim
+    ra::Small<int, 3> s {2, 1, 0};
+    ra::Small<double, 3> z = pick(s, s*s, s+s, sqrt(s));
+@end verbatim
+  @result{} z = @{1.41421, 2, 0@}
+@end example
+
+@cindex @code{ply}
+@anchor{x-ply} @defun ply expr
+Traverse @var{expr}. @code{ply} returns @code{void} so @var{expr} should be run for effect.
+@end defun
+
+It is rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)} (which is actually @code{ply(map(...))} should cover most other uses.
+
+@example
+@verbatim
+double s = 0.;
+ply(map([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})) // same as for_each
+@end verbatim
+@result{} s = 6.
+@end example
+
+@cindex @code{real_part}
+@anchor{x-real_part} @defun real_part
+Take real part of a complex number. This can be used as reference.
+
+See also @ref{x-imag_part,@code{imag_part}}.
+@end defun
+
+@cindex @code{reverse}
+@anchor{x-reverse} @defun reverse view axis
+Create a new view by reversing axis @var{k} of @var{view}.
+@end defun
+
+This is equivalent to @code{view(ra::dots<k>, ra::iota(view.len(k), view.len(k)-1, -1))}.
+
+This operation does not work on arbitrary array expressions yet. TODO FILL
 
 @cindex @code{shape}
 @anchor{x-shape} @defun shape a
@@ -1854,25 +1936,31 @@ Get the total size of an @code{ra::} object: the product of all its lengths.
 
 @c FIXME example
 
-@cindex @code{concrete}
-@anchor{x-concrete} @defun concrete a
-Convert the argument to a container of the same shape as @code{a}.
+@cindex @code{stencil}
+@anchor{x-stencil} @defun stencil view lo hi
+Create a stencil on @var{view} with lower bounds @var{lo} and higher bounds @var{hi}.
 @end defun
 
-If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+@var{lo} and @var{hi} are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their lengths reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
 
-@c FIXME example
+This operation does not work on arbitrary array expressions yet. TODO FILL
 
-@cindex @code{wrank}
-@anchor{x-wrank} @defun wrank <input_rank ...> op
-Wrap op using a rank conjunction (@pxref{The rank conjunction}).
+@cindex @code{swap}
+@anchor{x-swap} @defun swap a b
+Swap the contents of containers @var{a} and @var{b}.
+
+Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of ct rank, then both of them must have the same rank.
+
+This function reuses @code{std::swap} for same-rank overloads, so it must not be qualified (i.e. use @code{swap(a, b)}, not @code{ra::swap(a, b)}).
 @end defun
 
-For example: TODO
-@example
+@example @c [ra30]
 @verbatim
+    ra::Big<int> a ({2, 3}, 1 + ra::_0 - ra::_1); // (1)
+    ra::Big<int> b ({2, 3, 4}, 1 - ra::_0 + ra::_1 + ra::_2); // (2)
+    swap(a, b);
+    // as if (1) had b and (2) had a
 @end verbatim
-  @result{} x = 0
 @end example
 
 @cindex @code{transpose}
@@ -1945,19 +2033,31 @@ The two argument form lets you specify the axis list at runtime. In that case th
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
-@cindex @code{diag}
-@anchor{x-diag} @defun diag view
-Equivalent to @code{transpose<0, 0>(view)}.
+@cindex @code{where}
+@anchor{x-where} @defun where pred_expr true_expr false_expr
+Create an array expression that selects @var{true_expr} if @var{pred_expr} is @code{true}, and @var{false_expr} if @var{pred_expr} is @code{false}. The expression that is not selected is not looked up.
 @end defun
 
-@cindex @code{reverse}
-@anchor{x-reverse} @defun reverse view axis
-Create a new view by reversing axis @var{k} of @var{view}.
+For example:
+@example
+@verbatim
+    ra::Big<double, 1> s {1, -1, 3, 2};
+    s = where(s>=2, 2, s); // saturate s
+@end verbatim
+  @result{} s = @{1, -1, 2, 2@}
+@end example
+
+@cindex @code{wrank}
+@anchor{x-wrank} @defun wrank <input_rank ...> op
+Wrap op using a rank conjunction (@pxref{The rank conjunction}).
 @end defun
 
-This is equivalent to @code{view(ra::dots<k>, ra::iota(view.len(k), view.len(k)-1, -1))}.
-
-This operation does not work on arbitrary array expressions yet. TODO FILL
+For example: TODO
+@example
+@verbatim
+@end verbatim
+  @result{} x = 0
+@end example
 
 @c @anchor{x-reshape}
 @c @defun reshape view shape
@@ -1972,78 +2072,6 @@ This operation does not work on arbitrary array expressions yet. TODO FILL
 @c @end defun
 
 @c FIXME fill when the implementation is more mature...
-
-@cindex @code{stencil}
-@anchor{x-stencil} @defun stencil view lo hi
-Create a stencil on @var{view} with lower bounds @var{lo} and higher bounds @var{hi}.
-@end defun
-
-@var{lo} and @var{hi} are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their lengths reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
-
-This operation does not work on arbitrary array expressions yet. TODO FILL
-
-@cindex @code{collapse}
-@anchor{x-collapse} @defun collapse
-TODO
-@end defun
-
-@cindex @code{explode}
-@anchor{x-explode} @defun explode
-TODO
-@end defun
-
-@cindex @code{real_part}
-@anchor{x-real_part} @defun real_part
-Take real part of a complex number. This can be used as reference.
-
-See also @ref{x-imag_part,@code{imag_part}}.
-@end defun
-
-@cindex @code{imag_part}
-@anchor{x-imag_part} @defun imag_part
-Take imaginary part of a complex number. This can be used as reference.
-
-For example: @c [ma115]
-
-@example
-@verbatim
-ra::Small<std::complex<double>, 2, 2> A = {{1., 2.}, {3., 4.}};
-imag_part(A) = -2*real_part(A);
-cout << A << endl;
-@end verbatim
-@print{}
-(1, -2) (2, -4)
-(3, -6) (4, -8)
-@end example
-
-See also @ref{x-real_part,@code{real_part}}.
-@end defun
-
-@cindex @code{format_array}
-@anchor{x-format_array} @defun format_array expr [last_axis_separator [second_last_axis_separator ...]]
-Formats an array for character output.
-
-For example:
-
-@example
-@verbatim
-ra::Small<int, 2, 2> A = {{1, 2}, {3, 4}};
-cout << "case a:\n" << A << endl;
-cout << "case b:\n" << format_array(A) << endl;
-cout << "case c:\n" <<  format_array(A, "|", "-") << endl;
-@end verbatim
-@print{} case a:
-1 2
-3 4
-case b:
-1 2
-3 4
-case c:
-1|2-3|4
-@end example
-@end defun
-
-The shape that might be printed before the expression itself (depending on its type) is not subject to these separators. See @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
 
 @cindex @code{noshape}
 @cindex @code{withshape}

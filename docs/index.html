@@ -463,7 +463,7 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 }
 </pre></div>
 
-<p>The main reason to have all these different types is performance; the compiler can do a better job when it knows the size or the rank of the array. Also, the sizes of a ct size array do not need to be stored in memory, so when you have thousands of small arrays it pays off to use the ct size types. Ct size or ct rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the sizes or ranks of array operands at compile time, if the appropriate types are used.
+<p>Using the right kind of container can result in better performance. Ct shapes do not need to be stored in memory, which matters when you have many small arrays. Ct shape or ct rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 </p>
 <p>Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a name="DOCF4" href="#FOOT4"><sup>4</sup></a>
 </p>
@@ -1777,29 +1777,56 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="Reference-1"></a>
 <h2 class="chapter">7 Reference</h2>
 
-<a name="x_002dmap"></a><dl>
-<dt><a name="index-map"></a>Function: <strong>map</strong> <em>op expr ...</em></dt>
-<dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ...
+<a name="index-at"></a>
+<a name="x_002dat"></a><dl>
+<dt><a name="index-at-1"></a>Function: <strong>at</strong> <em>expr indices</em></dt>
+<dd><p>Look up <var>expr</var> at each element of <var>indices</var>, which shall be a multi-index into <var>expr</var>.
 </p></dd></dl>
 
-<p>For example:
+<p>This can be used for sparse subscripting. For example:
 </p><div class="example">
-<pre class="verbatim">ra::Big&lt;double, 1&gt; x = map(cos, ra::Small&lt;double, 1&gt; {0.});
-</pre><pre class="example">&rArr; x = { 1. }
+<pre class="verbatim">    ra::Big&lt;int, 2&gt; A = {{100, 101}, {110, 111}, {120, 121}};
+    ra::Big&lt;ra::Small&lt;int, 2&gt;, 2&gt; i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
+    ra::Big&lt;int, 2&gt; B = at(A, i);
+</pre><pre class="example">  &rArr; B = {{101, 120}, {110, 121}}
 </pre></div>
 
-<p><var>op</var> can return a reference. A typical use is subscripting. For example (TODO better example, e.g. using STL types):
-</p>
-<div class="example">
-<pre class="verbatim">ra::Big&lt;int, 2&gt; x = {{3, 3}, 0.};
-map([](auto &amp;&amp; i, auto &amp;&amp; j) -&gt; int &amp; { return x(i, j); },
-    ra::Big&lt;int, 1&gt; {0, 1, 1, 2}, ra::Big&lt;int, 1&gt; {1, 0, 2, 1})
-  = 1;
-</pre><pre class="example">&rArr; x = {{0, 1, 0}, {1, 0, 1}, {0, 1, 0}}
-</pre></div>
+<a name="index-cast"></a>
+<a name="x_002dcast"></a><dl>
+<dt><a name="index-cast-1"></a>Function: <strong>cast</strong> <em>&lt;type&gt; expr</em></dt>
+<dd><p>Create an array expression that casts <var>expr</var> into <var>type</var>.
+</p></dd></dl>
 
-<p>Here the anonymous function can be replaced by simply <code>x</code>. Remember that unspecified return type defaults to (value) <code>auto</code>, so either a explicit type or <code>decltype(auto)</code> should be used if you want to return a reference.
+<a name="index-collapse"></a>
+<a name="x_002dcollapse"></a><dl>
+<dt><a name="index-collapse-1"></a>Function: <strong>collapse</strong></dt>
+<dd><p>TODO
+See also <a href="#x_002dexplode"><code>explode</code></a>.
+</p></dd></dl>
+
+<a name="index-concrete"></a>
+<a name="x_002dconcrete"></a><dl>
+<dt><a name="index-concrete-1"></a>Function: <strong>concrete</strong> <em>a</em></dt>
+<dd><p>Convert the argument to a container of the same shape as <var>a</var>.
+</p></dd></dl>
+
+<p>If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 </p>
+
+<a name="index-diag"></a>
+<a name="x_002ddiag"></a><dl>
+<dt><a name="index-diag-1"></a>Function: <strong>diag</strong> <em>view</em></dt>
+<dd><p>Equivalent to <code>transpose&lt;0, 0&gt;(view)</code>.
+</p></dd></dl>
+
+<a name="index-explode"></a>
+<a name="x_002dexplode"></a><dl>
+<dt><a name="index-explode-1"></a>Function: <strong>explode</strong></dt>
+<dd><p>TODO
+</p>
+<p>See also <a href="#x_002dcollapse"><code>collapse</code></a>.
+</p></dd></dl>
+
 <a name="index-for_005feach"></a>
 <a name="x_002dfor_005feach"></a><dl>
 <dt><a name="index-for_005feach-1"></a>Function: <strong>for_each</strong> <em>op expr ...</em></dt>
@@ -1813,60 +1840,35 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 </pre><pre class="example">&rArr; s = 6.
 </pre></div>
 
-<a name="index-ply"></a>
-<a name="x_002dply"></a><dl>
-<dt><a name="index-ply-1"></a>Function: <strong>ply</strong> <em>expr</em></dt>
-<dd><p>Traverse <var>expr</var>. <code>ply</code> returns <code>void</code> so <var>expr</var> should be run for effect.
-</p></dd></dl>
-
-<p>It is rarely necessary to use <code>ply</code>. Expressions are traversed automatically when they are assigned to views, for example, or printed out. <a href="#x_002dfor_005feach"><code>for_each</code></a><code>(...)</code> (which is actually <code>ply(map(...))</code> should cover most other uses.
+<p>See also <a href="#x_002dmap"><code>map</code></a>.
+</p>
+<a name="index-format_005farray"></a>
+<a name="x_002dformat_005farray"></a><dl>
+<dt><a name="index-format_005farray-1"></a>Function: <strong>format_array</strong> <em>expr [last_axis_separator [second_last_axis_separator ...]]</em></dt>
+<dd><p>Formats an array for character output.
+</p>
+<p>For example:
 </p>
 <div class="example">
-<pre class="verbatim">double s = 0.;
-ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2., 3})) // same as for_each
-</pre><pre class="example">&rArr; s = 6.
+<pre class="verbatim">ra::Small&lt;int, 2, 2&gt; A = {{1, 2}, {3, 4}};
+cout &lt;&lt; &quot;case a:\n&quot; &lt;&lt; A &lt;&lt; endl;
+cout &lt;&lt; &quot;case b:\n&quot; &lt;&lt; format_array(A) &lt;&lt; endl;
+cout &lt;&lt; &quot;case c:\n&quot; &lt;&lt;  format_array(A, &quot;|&quot;, &quot;-&quot;) &lt;&lt; endl;
+</pre><pre class="example">-| case a:
+1 2
+3 4
+case b:
+1 2
+3 4
+case c:
+1|2-3|4
 </pre></div>
+</dd></dl>
 
-<a name="index-pack"></a>
-<a name="x_002dpack"></a><dl>
-<dt><a name="index-pack-1"></a>Function: <strong>pack</strong> <em>&lt;type&gt; expr ...</em></dt>
-<dd><p>Create an array expression that brace-constructs <var>type</var> from <var>expr</var> ...
-</p></dd></dl>
-
-<a name="index-cast"></a>
-<a name="x_002dcast"></a><dl>
-<dt><a name="index-cast-1"></a>Function: <strong>cast</strong> <em>&lt;type&gt; expr</em></dt>
-<dd><p>Create an array expression that casts <var>expr</var> into <var>type</var>.
-</p></dd></dl>
-
-<a name="index-pick"></a>
-<a name="x_002dpick"></a><dl>
-<dt><a name="index-pick-1"></a>Function: <strong>pick</strong> <em>select_expr expr ...</em></dt>
-<dd><p>Create an array expression that selects the first of <var>expr</var> ... if <var>select_expr</var> is 0, the second if <var>select_expr</var> is 1, and so on. The expressions that are not selected are not looked up.
-</p></dd></dl>
-
-<p>This function cannot be defined using <a href="#x_002dmap"><code>map</code></a>, because <code>map</code> looks up each one of its argument expressions before calling <var>op</var>.
+<p>The shape that might be printed before the expression itself (depending on its type) is not subject to these separators.
 </p>
-<p>For example:
-</p><div class="example">
-<pre class="verbatim">    ra::Small&lt;int, 3&gt; s {2, 1, 0};
-    ra::Small&lt;double, 3&gt; z = pick(s, s*s, s+s, sqrt(s));
-</pre><pre class="example">  &rArr; z = {1.41421, 2, 0}
-</pre></div>
-
-<a name="index-where"></a>
-<a name="x_002dwhere"></a><dl>
-<dt><a name="index-where-1"></a>Function: <strong>where</strong> <em>pred_expr true_expr false_expr</em></dt>
-<dd><p>Create an array expression that selects <var>true_expr</var> if <var>pred_expr</var> is <code>true</code>, and <var>false_expr</var> if <var>pred_expr</var> is <code>false</code>. The expression that is not selected is not looked up.
-</p></dd></dl>
-
-<p>For example:
-</p><div class="example">
-<pre class="verbatim">    ra::Big&lt;double, 1&gt; s {1, -1, 3, 2};
-    s = where(s&gt;=2, 2, s); // saturate s
-</pre><pre class="example">  &rArr; s = {1, -1, 2, 2}
-</pre></div>
-
+<p>See also <a href="#x_002dnoshape"><code>noshape</code></a>, <a href="#x_002dwithshape"><code>withshape</code></a>.
+</p>
 <a name="index-from"></a>
 <a name="x_002dfrom"></a><dl>
 <dt><a name="index-from-1"></a>Function: <strong>from</strong> <em>op ... expr</em></dt>
@@ -1891,20 +1893,103 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 
 <p>The last example is more or less how <code>A(i, j)</code> is actually implemented (see <a href="#The-rank-conjunction">The rank conjunction</a>).
 </p>
-<a name="index-at"></a>
-<a name="x_002dat"></a><dl>
-<dt><a name="index-at-1"></a>Function: <strong>at</strong> <em>expr indices</em></dt>
-<dd><p>Look up <var>expr</var> at each element of <var>indices</var>, which shall be a multi-index into <var>expr</var>.
-</p></dd></dl>
-
-<p>This can be used for sparse subscripting. For example:
-</p><div class="example">
-<pre class="verbatim">    ra::Big&lt;int, 2&gt; A = {{100, 101}, {110, 111}, {120, 121}};
-    ra::Big&lt;ra::Small&lt;int, 2&gt;, 2&gt; i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
-    ra::Big&lt;int, 2&gt; B = at(A, i);
-</pre><pre class="example">  &rArr; B = {{101, 120}, {110, 121}}
+<a name="index-imag_005fpart"></a>
+<a name="x_002dimag_005fpart"></a><dl>
+<dt><a name="index-imag_005fpart-1"></a>Function: <strong>imag_part</strong></dt>
+<dd><p>Take imaginary part of a complex number. This can be used as reference.
+</p>
+<p>For example: </p>
+<div class="example">
+<pre class="verbatim">ra::Small&lt;std::complex&lt;double&gt;, 2, 2&gt; A = {{1., 2.}, {3., 4.}};
+imag_part(A) = -2*real_part(A);
+cout &lt;&lt; A &lt;&lt; endl;
+</pre><pre class="example">-|
+(1, -2) (2, -4)
+(3, -6) (4, -8)
 </pre></div>
 
+<p>See also <a href="#x_002dreal_005fpart"><code>real_part</code></a>.
+</p></dd></dl>
+
+<a name="index-map"></a>
+<a name="x_002dmap"></a><dl>
+<dt><a name="index-map-1"></a>Function: <strong>map</strong> <em>op expr ...</em></dt>
+<dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ...
+</p></dd></dl>
+
+<p>For example:
+</p><div class="example">
+<pre class="verbatim">ra::Big&lt;double, 1&gt; x = map(cos, ra::Small&lt;double, 1&gt; {0.});
+</pre><pre class="example">&rArr; x = { 1. }
+</pre></div>
+
+<p><var>op</var> can return a reference. A typical use is subscripting. For example (TODO better example, e.g. using STL types):
+</p>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int, 2&gt; x = {{3, 3}, 0.};
+map([](auto &amp;&amp; i, auto &amp;&amp; j) -&gt; int &amp; { return x(i, j); },
+    ra::Big&lt;int, 1&gt; {0, 1, 1, 2}, ra::Big&lt;int, 1&gt; {1, 0, 2, 1})
+  = 1;
+</pre><pre class="example">&rArr; x = {{0, 1, 0}, {1, 0, 1}, {0, 1, 0}}
+</pre></div>
+
+<p>Here the anonymous function can be replaced by simply <code>x</code>. Remember that unspecified return type defaults to (value) <code>auto</code>, so either a explicit type or <code>decltype(auto)</code> should be used if you want to return a reference.
+</p>
+<p>See also <a href="#x_002dfor_005feach"><code>for_each</code></a>.
+</p>
+<a name="index-pack"></a>
+<a name="x_002dpack"></a><dl>
+<dt><a name="index-pack-1"></a>Function: <strong>pack</strong> <em>&lt;type&gt; expr ...</em></dt>
+<dd><p>Create an array expression that brace-constructs <var>type</var> from <var>expr</var> ...
+</p></dd></dl>
+
+<a name="index-pick"></a>
+<a name="x_002dpick"></a><dl>
+<dt><a name="index-pick-1"></a>Function: <strong>pick</strong> <em>select_expr expr ...</em></dt>
+<dd><p>Create an array expression that selects the first of <var>expr</var> ... if <var>select_expr</var> is 0, the second if <var>select_expr</var> is 1, and so on. The expressions that are not selected are not looked up.
+</p></dd></dl>
+
+<p>This function cannot be defined using <a href="#x_002dmap"><code>map</code></a>, because <code>map</code> looks up each one of its argument expressions before calling <var>op</var>.
+</p>
+<p>For example:
+</p><div class="example">
+<pre class="verbatim">    ra::Small&lt;int, 3&gt; s {2, 1, 0};
+    ra::Small&lt;double, 3&gt; z = pick(s, s*s, s+s, sqrt(s));
+</pre><pre class="example">  &rArr; z = {1.41421, 2, 0}
+</pre></div>
+
+<a name="index-ply"></a>
+<a name="x_002dply"></a><dl>
+<dt><a name="index-ply-1"></a>Function: <strong>ply</strong> <em>expr</em></dt>
+<dd><p>Traverse <var>expr</var>. <code>ply</code> returns <code>void</code> so <var>expr</var> should be run for effect.
+</p></dd></dl>
+
+<p>It is rarely necessary to use <code>ply</code>. Expressions are traversed automatically when they are assigned to views, for example, or printed out. <a href="#x_002dfor_005feach"><code>for_each</code></a><code>(...)</code> (which is actually <code>ply(map(...))</code> should cover most other uses.
+</p>
+<div class="example">
+<pre class="verbatim">double s = 0.;
+ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2., 3})) // same as for_each
+</pre><pre class="example">&rArr; s = 6.
+</pre></div>
+
+<a name="index-real_005fpart"></a>
+<a name="x_002dreal_005fpart"></a><dl>
+<dt><a name="index-real_005fpart-1"></a>Function: <strong>real_part</strong></dt>
+<dd><p>Take real part of a complex number. This can be used as reference.
+</p>
+<p>See also <a href="#x_002dimag_005fpart"><code>imag_part</code></a>.
+</p></dd></dl>
+
+<a name="index-reverse"></a>
+<a name="x_002dreverse"></a><dl>
+<dt><a name="index-reverse-1"></a>Function: <strong>reverse</strong> <em>view axis</em></dt>
+<dd><p>Create a new view by reversing axis <var>k</var> of <var>view</var>.
+</p></dd></dl>
+
+<p>This is equivalent to <code>view(ra::dots&lt;k&gt;, ra::iota(view.len(k), view.len(k)-1, -1))</code>.
+</p>
+<p>This operation does not work on arbitrary array expressions yet. TODO FILL
+</p>
 <a name="index-shape-1"></a>
 <a name="x_002dshape"></a><dl>
 <dt><a name="index-shape-2"></a>Function: <strong>shape</strong> <em>a</em></dt>
@@ -1923,24 +2008,31 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </p></dd></dl>
 
 
-<a name="index-concrete"></a>
-<a name="x_002dconcrete"></a><dl>
-<dt><a name="index-concrete-1"></a>Function: <strong>concrete</strong> <em>a</em></dt>
-<dd><p>Convert the argument to a container of the same shape as <code>a</code>.
+<a name="index-stencil"></a>
+<a name="x_002dstencil"></a><dl>
+<dt><a name="index-stencil-1"></a>Function: <strong>stencil</strong> <em>view lo hi</em></dt>
+<dd><p>Create a stencil on <var>view</var> with lower bounds <var>lo</var> and higher bounds <var>hi</var>.
 </p></dd></dl>
 
-<p>If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+<p><var>lo</var> and <var>hi</var> are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, <var>lo</var>=0 is equivalent to <var>lo</var>=(0, 0, ..., 0) with length equal to the rank <code>r</code> of <var>view</var>. The stencil view has twice as many axes as <var>view</var>. The first <code>r</code> dimensions are the same as those of <var>view</var> except that they have their lengths reduced by <var>lo</var>+<var>hi</var>. The last <code>r</code> dimensions correspond to the stencil around each element of <var>view</var>; the center element is at <code>s(i0, i1, ..., lo(0), lo(1), ...)</code>.
 </p>
-
-<a name="index-wrank"></a>
-<a name="x_002dwrank"></a><dl>
-<dt><a name="index-wrank-1"></a>Function: <strong>wrank</strong> <em>&lt;input_rank ...&gt; op</em></dt>
-<dd><p>Wrap op using a rank conjunction (see <a href="#The-rank-conjunction">The rank conjunction</a>).
+<p>This operation does not work on arbitrary array expressions yet. TODO FILL
+</p>
+<a name="index-swap"></a>
+<a name="x_002dswap"></a><dl>
+<dt><a name="index-swap-1"></a>Function: <strong>swap</strong> <em>a b</em></dt>
+<dd><p>Swap the contents of containers <var>a</var> and <var>b</var>.
+</p>
+<p>Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of ct rank, then both of them must have the same rank.
+</p>
+<p>This function reuses <code>std::swap</code> for same-rank overloads, so it must not be qualified (i.e. use <code>swap(a, b)</code>, not <code>ra::swap(a, b)</code>).
 </p></dd></dl>
 
-<p>For example: TODO
-</p><div class="example">
-<pre class="verbatim"></pre><pre class="example">  &rArr; x = 0
+<div class="example">
+<pre class="verbatim">    ra::Big&lt;int&gt; a ({2, 3}, 1 + ra::_0 - ra::_1); // (1)
+    ra::Big&lt;int&gt; b ({2, 3, 4}, 1 - ra::_0 + ra::_1 + ra::_2); // (2)
+    swap(a, b);
+    // as if (1) had b and (2) had a
 </pre></div>
 
 <a name="index-transpose"></a>
@@ -2004,99 +2096,34 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>
-<a name="index-diag"></a>
-<a name="x_002ddiag"></a><dl>
-<dt><a name="index-diag-1"></a>Function: <strong>diag</strong> <em>view</em></dt>
-<dd><p>Equivalent to <code>transpose&lt;0, 0&gt;(view)</code>.
+<a name="index-where"></a>
+<a name="x_002dwhere"></a><dl>
+<dt><a name="index-where-1"></a>Function: <strong>where</strong> <em>pred_expr true_expr false_expr</em></dt>
+<dd><p>Create an array expression that selects <var>true_expr</var> if <var>pred_expr</var> is <code>true</code>, and <var>false_expr</var> if <var>pred_expr</var> is <code>false</code>. The expression that is not selected is not looked up.
 </p></dd></dl>
 
-<a name="index-reverse"></a>
-<a name="x_002dreverse"></a><dl>
-<dt><a name="index-reverse-1"></a>Function: <strong>reverse</strong> <em>view axis</em></dt>
-<dd><p>Create a new view by reversing axis <var>k</var> of <var>view</var>.
-</p></dd></dl>
-
-<p>This is equivalent to <code>view(ra::dots&lt;k&gt;, ra::iota(view.len(k), view.len(k)-1, -1))</code>.
-</p>
-<p>This operation does not work on arbitrary array expressions yet. TODO FILL
-</p>
-
-
-
-
-<a name="index-stencil"></a>
-<a name="x_002dstencil"></a><dl>
-<dt><a name="index-stencil-1"></a>Function: <strong>stencil</strong> <em>view lo hi</em></dt>
-<dd><p>Create a stencil on <var>view</var> with lower bounds <var>lo</var> and higher bounds <var>hi</var>.
-</p></dd></dl>
-
-<p><var>lo</var> and <var>hi</var> are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, <var>lo</var>=0 is equivalent to <var>lo</var>=(0, 0, ..., 0) with length equal to the rank <code>r</code> of <var>view</var>. The stencil view has twice as many axes as <var>view</var>. The first <code>r</code> dimensions are the same as those of <var>view</var> except that they have their lengths reduced by <var>lo</var>+<var>hi</var>. The last <code>r</code> dimensions correspond to the stencil around each element of <var>view</var>; the center element is at <code>s(i0, i1, ..., lo(0), lo(1), ...)</code>.
-</p>
-<p>This operation does not work on arbitrary array expressions yet. TODO FILL
-</p>
-<a name="index-collapse"></a>
-<a name="x_002dcollapse"></a><dl>
-<dt><a name="index-collapse-1"></a>Function: <strong>collapse</strong></dt>
-<dd><p>TODO
-</p></dd></dl>
-
-<a name="index-explode"></a>
-<a name="x_002dexplode"></a><dl>
-<dt><a name="index-explode-1"></a>Function: <strong>explode</strong></dt>
-<dd><p>TODO
-</p></dd></dl>
-
-<a name="index-real_005fpart"></a>
-<a name="x_002dreal_005fpart"></a><dl>
-<dt><a name="index-real_005fpart-1"></a>Function: <strong>real_part</strong></dt>
-<dd><p>Take real part of a complex number. This can be used as reference.
-</p>
-<p>See also <a href="#x_002dimag_005fpart"><code>imag_part</code></a>.
-</p></dd></dl>
-
-<a name="index-imag_005fpart"></a>
-<a name="x_002dimag_005fpart"></a><dl>
-<dt><a name="index-imag_005fpart-1"></a>Function: <strong>imag_part</strong></dt>
-<dd><p>Take imaginary part of a complex number. This can be used as reference.
-</p>
-<p>For example: </p>
-<div class="example">
-<pre class="verbatim">ra::Small&lt;std::complex&lt;double&gt;, 2, 2&gt; A = {{1., 2.}, {3., 4.}};
-imag_part(A) = -2*real_part(A);
-cout &lt;&lt; A &lt;&lt; endl;
-</pre><pre class="example">-|
-(1, -2) (2, -4)
-(3, -6) (4, -8)
-</pre></div>
-
-<p>See also <a href="#x_002dreal_005fpart"><code>real_part</code></a>.
-</p></dd></dl>
-
-<a name="index-format_005farray"></a>
-<a name="x_002dformat_005farray"></a><dl>
-<dt><a name="index-format_005farray-1"></a>Function: <strong>format_array</strong> <em>expr [last_axis_separator [second_last_axis_separator ...]]</em></dt>
-<dd><p>Formats an array for character output.
-</p>
 <p>For example:
-</p>
-<div class="example">
-<pre class="verbatim">ra::Small&lt;int, 2, 2&gt; A = {{1, 2}, {3, 4}};
-cout &lt;&lt; &quot;case a:\n&quot; &lt;&lt; A &lt;&lt; endl;
-cout &lt;&lt; &quot;case b:\n&quot; &lt;&lt; format_array(A) &lt;&lt; endl;
-cout &lt;&lt; &quot;case c:\n&quot; &lt;&lt;  format_array(A, &quot;|&quot;, &quot;-&quot;) &lt;&lt; endl;
-</pre><pre class="example">-| case a:
-1 2
-3 4
-case b:
-1 2
-3 4
-case c:
-1|2-3|4
+</p><div class="example">
+<pre class="verbatim">    ra::Big&lt;double, 1&gt; s {1, -1, 3, 2};
+    s = where(s&gt;=2, 2, s); // saturate s
+</pre><pre class="example">  &rArr; s = {1, -1, 2, 2}
 </pre></div>
-</dd></dl>
 
-<p>The shape that might be printed before the expression itself (depending on its type) is not subject to these separators. See <a href="#x_002dnoshape"><code>noshape</code></a>, <a href="#x_002dwithshape"><code>withshape</code></a>.
-</p>
+<a name="index-wrank"></a>
+<a name="x_002dwrank"></a><dl>
+<dt><a name="index-wrank-1"></a>Function: <strong>wrank</strong> <em>&lt;input_rank ...&gt; op</em></dt>
+<dd><p>Wrap op using a rank conjunction (see <a href="#The-rank-conjunction">The rank conjunction</a>).
+</p></dd></dl>
+
+<p>For example: TODO
+</p><div class="example">
+<pre class="verbatim"></pre><pre class="example">  &rArr; x = 0
+</pre></div>
+
+
+
+
+
 <a name="index-noshape"></a>
 <a name="index-withshape"></a>
 <a name="x_002dnoshape"></a><a name="x_002dwithshape"></a><dl>
@@ -2452,6 +2479,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-M"><b>M</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-N"><b>N</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-O"><b>O</b></a>
@@ -2533,6 +2562,9 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th><a name="Indices_cp_letter-L">L</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-length">length</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-M">M</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-map"><code>map</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-N">N</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none-1"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2580,6 +2612,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-step">step</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-stride">stride</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-sum"><code>sum</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-swap"><code>swap</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-T">T</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose"><code>transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2619,6 +2652,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <a class="summary-letter" href="#Indices_cp_letter-J"><b>J</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-M"><b>M</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-N"><b>N</b></a>
  &nbsp; 
