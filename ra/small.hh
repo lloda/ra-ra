@@ -130,22 +130,23 @@ struct cell_iterator_small
 
 template <class S, class I, class P>
 inline void
-next_in_cube(rank_t const framer, S const & dim, I & i, P & p)
+next_in_cube(rank_t const framer, S const & dimv, I & i, P & p)
 {
     for (int k=framer-1; k>=0; --k) {
         ++i[k];
-        if (i[k]<dim[k].len) {
-            p += dim[k].step;
+        if (i[k]<dimv[k].len) {
+            p += dimv[k].step;
             return;
         } else {
             i[k] = 0;
-            p -= dim[k].step*(dim[k].len-1);
+            p -= dimv[k].step*(dimv[k].len-1);
         }
     }
     p = nullptr;
 }
 
-template <int k, class lens, class steps, class I, class P> void
+template <int k, class lens, class steps, class I, class P>
+inline void
 next_in_cube(I & i, P & p)
 {
     if constexpr (k>=0) {

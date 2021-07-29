@@ -228,10 +228,7 @@ struct Iota
     constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return len_; }
 
     template <class I> constexpr T at(I const & i) { return i_ + T(i[0])*step_; }
-    constexpr void adv(rank_t k, dim_t d)
-    {
-        i_ += T((k==0) * d) * step_; // cf Vector::adv
-    }
+    constexpr void adv(rank_t k, dim_t d) { i_ += T((k==0) * d) * step_; } // cf Vector::adv
     constexpr static dim_t step(rank_t i) { return i==0 ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return Flat { i_, step_ }; }

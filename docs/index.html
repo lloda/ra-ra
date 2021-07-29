@@ -1,5 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!-- ra:: (version 16, updated 2021 June 22)
 
 (c) Daniel Llorens 2005-2021
@@ -8,9 +11,6 @@ Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
-<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>ra:: —An array library for C++20</title>
 
 <meta name="description" content="ra:: —An array library for C++20">
@@ -18,38 +18,42 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="#Top" rel="start" title="Top">
 <link href="#Indices" rel="index" title="Indices">
-<link href="dir.html#Top" rel="up" title="(dir)">
+<link href="#Overview" rel="next" title="Overview">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
-blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
-blockquote.smallquotation {font-size: smaller}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
-div.smalldisplay {margin-left: 3.2em}
-div.smallexample {margin-left: 3.2em}
-div.smalllisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
 pre.menu-comment {font-family: serif}
 pre.menu-preformatted {font-family: serif}
-pre.smalldisplay {font-family: inherit; font-size: smaller}
-pre.smallexample {font-size: smaller}
-pre.smallformat {font-family: inherit; font-size: smaller}
-pre.smalllisp {font-size: smaller}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
 
-
+<script type='text/javascript'>
+MathJax = {
+  options: {
+    skipHtmlTags: {'[-]': ['pre']},
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+};
+</script><script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
 </head>
 
 <body lang="en">
@@ -105,66 +109,53 @@ ul.no-bullet {list-style: none}
 
 
 
-<a name="Top"></a>
+<div class="top" id="Top">
 <div class="header">
 <p>
-Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="dir.html#Top" accesskey="u" rel="up">(dir)</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="ra_003a_003a"></a>
-<h1 class="top"><code>ra::</code></h1>
+<span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
 <p><code>ra::</code> (version 16, updated 2021 June 22)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2021
 </p>
-<div class="smalldisplay">
-<pre class="smalldisplay">Permission is granted to copy, distribute and/or modify this document
+<div class="display">
+<pre class="display">Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 </pre></div>
 
-
-<p><code>ra::</code><a name="DOCF1" href="#FOOT1"><sup>1</sup></a> is a general purpose multidimensional array and expression template library for C++20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+<p><code>ra::</code><a id="DOCF1" href="#FOOT1"><sup>1</sup></a> is a general purpose multidimensional array and expression template library for C++20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 </p>
-<table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#Overview" accesskey="1">Overview</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Array programming and C++.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Usage" accesskey="2">Usage</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Everything you can do with <code>ra::</code>.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Extras" accesskey="3">Extras</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Additional libraries provided with <code>ra::</code>.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Hazards" accesskey="4">Hazards</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">User beware.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Internals" accesskey="5">Internals</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">For all the world to see.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#The-future" accesskey="6">The future</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Could be even better.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Reference" accesskey="7">Reference</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Systematic list of types and functions.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Sources" accesskey="8">Sources</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">It&rsquo;s been done before.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Indices" accesskey="9">Indices</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Or try the search function.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Notes">Notes</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Technically...
-</td></tr>
-</table>
 
 
 
+<ul class="section-toc">
+<li><a href="#Overview" accesskey="1">Overview</a></li>
+<li><a href="#Usage" accesskey="2">Usage</a></li>
+<li><a href="#Extras" accesskey="3">Extras</a></li>
+<li><a href="#Hazards" accesskey="4">Hazards</a></li>
+<li><a href="#Internals" accesskey="5">Internals</a></li>
+<li><a href="#The-future" accesskey="6">The future</a></li>
+<li><a href="#Reference" accesskey="7">Reference</a></li>
+<li><a href="#Sources" accesskey="8">Sources</a></li>
+<li><a href="#Indices" accesskey="9">Indices</a></li>
+<li><a href="#Notes">Notes</a></li>
+</ul>
 <hr>
-<a name="Overview"></a>
+<div class="chapter" id="Overview">
 <div class="header">
 <p>
-Next: <a href="#Usage" accesskey="n" rel="next">Usage</a>, Previous: <a href="#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Usage" accesskey="n" rel="next">Usage</a>, Previous: <a href="#Top" accesskey="p" rel="prev"><code>ra::</code></a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Overview-1"></a>
-<h2 class="chapter">1 Overview</h2>
+<span id="Overview-1"></span><h2 class="chapter">1 Overview</h2>
 
-<a name="index-length"></a>
-<a name="index-rank"></a>
-<a name="index-shape"></a>
-<p>A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list of all the <em>lengths</em> (n₀, n₁, ... nᵣ₋₁) is the <em>shape</em> of the array. We speak of a rank-<em>r</em> array or of an <em>r</em>-array.
+<span id="index-length"></span>
+<span id="index-rank"></span>
+<span id="index-shape"></span>
+<p>A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list of all the <em>lengths</em> (n₀, n₁, ... nᵣ₋₁) is the <em>shape</em> of the array. We speak of a rank-<em class='tex2jax_process'>\(r\)</em> array or of an <em class='tex2jax_process'>\(r\)</em>-array.
 </p>
 <p>Often we deal with multidimensional <em>expressions</em> where the elements aren&rsquo;t stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.
 </p>
@@ -183,39 +174,33 @@ Next: <a href="#Usage" accesskey="n" rel="next">Usage</a>, Previous: <a href="#T
 </p>
 <p>However, if array operations are implemented naively, a piece of code such as <code>A=B+C</code> may result in the creation of a temporary to hold <code>B+C</code> which is then assigned to <code>A</code>. Needless to say this is very wasteful if the arrays involved are large.
 </p>
-<a name="index-Blitz_002b_002b"></a>
+<span id="index-Blitz_002b_002b"></span>
 <p>Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as <a href="https://en.wikipedia.org/wiki/Loop_fission_and_fusion">‘loop fusion’</a>, ‘drag along’ [<a href="#Sources">Abr70</a>]
 , or ‘deforestation’ [<a href="#Sources">Wad90</a>]
 . In the C++ context the technique of ‘expression templates’ was pioneered in the late 90s by libraries such as Blitz++ [<a href="#Sources">bli17</a>]
 . It works by making <code>B+C</code> into an ‘expression object’ which holds references to its arguments and performs the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that <code>A=B+C</code> results (in principle) in the same generated code as the complicated loop nest above.
 </p>
-<table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#Rank-polymorphism" accesskey="1">Rank polymorphism</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">What makes arrays special.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Drag-along-and-beating" accesskey="2">Drag along and beating</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The basic array optimizations.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Why-C_002b_002b" accesskey="3">Why C++</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">High level, low level.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Guidelines" accesskey="4">Guidelines</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">How <code>ra::</code> tries to do things.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Other-libraries" accesskey="5">Other libraries</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Inspiration and desperation.
-</td></tr>
-</table>
 
+<ul class="section-toc">
+<li><a href="#Rank-polymorphism" accesskey="1">Rank polymorphism</a></li>
+<li><a href="#Drag-along-and-beating" accesskey="2">Drag along and beating</a></li>
+<li><a href="#Why-C_002b_002b" accesskey="3">Why C++</a></li>
+<li><a href="#Guidelines" accesskey="4">Guidelines</a></li>
+<li><a href="#Other-libraries" accesskey="5">Other array libraries</a></li>
+</ul>
 <hr>
-<a name="Rank-polymorphism"></a>
+<div class="section" id="Rank-polymorphism">
 <div class="header">
 <p>
 Next: <a href="#Drag-along-and-beating" accesskey="n" rel="next">Drag along and beating</a>, Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Rank-polymorphism-1"></a>
-<h3 class="section">1.1 Rank polymorphism</h3>
+<span id="Rank-polymorphism-1"></span><h3 class="section">1.1 Rank polymorphism</h3>
 
-<p><em>Rank polymorphism</em> is the ability to treat an array of rank <em>r</em> as an array of lower rank where the elements are themselves arrays.
+<p><em>Rank polymorphism</em> is the ability to treat an array of rank <em class='tex2jax_process'>\(r\)</em> as an array of lower rank where the elements are themselves arrays.
 </p>
-<a name="index-cell"></a>
-<a name="index-frame"></a>
-<p>For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em>r</em> the (<em>r</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-<em>frame</em>.
+<span id="index-cell"></span>
+<span id="index-frame"></span>
+<p>For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em class='tex2jax_process'>\(r\)</em> the (<em class='tex2jax_process'>\(r\)</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-<em>frame</em>.
 </p>
 <p>An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
 </p>
@@ -235,16 +220,16 @@ Next: <a href="#Drag-along-and-beating" accesskey="n" rel="next">Drag along and 
 <p>A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...]], ...]
 </p></blockquote>
 
-<a name="index-order_002c-row_002dmajor"></a>
-<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C (see <a href="#Other-libraries">Other libraries</a>). A row-major array A with shape (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+<span id="index-order_002c-row_002dmajor"></span>
+<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C (see <a href="#Other-libraries">Other array libraries</a>). A row-major array A with shape (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 </p>
-<a name="x_002dsteps"></a><blockquote>
+<span id="x_002dsteps"></span><blockquote>
 <p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
 </p></blockquote>
 
-<a name="index-step"></a>
-<a name="index-stride"></a>
-<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a name="DOCF2" href="#FOOT2"><sup>2</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+<span id="index-step"></span>
+<span id="index-stride"></span>
+<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a id="DOCF2" href="#FOOT2"><sup>2</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 </p>
 <blockquote>
 <p>A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -261,13 +246,13 @@ Next: <a href="#Drag-along-and-beating" accesskey="n" rel="next">Drag along and 
 <p>Note that we can iterate over these items by simply bumping the pointer o+s₀i₀. This means that iterating over (k&gt;0)-cells doesn&rsquo;t cost any  more than iterating over 0-cells (see <a href="#Cell-iteration">Cell iteration</a>).
 </p>
 <hr>
-<a name="Drag-along-and-beating"></a>
+</div>
+<div class="section" id="Drag-along-and-beating">
 <div class="header">
 <p>
 Next: <a href="#Why-C_002b_002b" accesskey="n" rel="next">Why C++</a>, Previous: <a href="#Rank-polymorphism" accesskey="p" rel="prev">Rank polymorphism</a>, Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Drag-along-and-beating-1"></a>
-<h3 class="section">1.2 Drag along and beating</h3>
+<span id="Drag-along-and-beating-1"></span><h3 class="section">1.2 Drag along and beating</h3>
 
 <p>These two fundamental array optimizations are described in [<a href="#Sources">Abr70</a>]
 .
@@ -277,20 +262,20 @@ Next: <a href="#Why-C_002b_002b" accesskey="n" rel="next">Why C++</a>, Previous:
 <p><em>Beating</em> is the implementation of certain array operations on the array <a href="#Containers-and-views">view</a> descriptor instead of on the array contents. For example, if <code>A</code> is a 1-array, one can implement <a href="#x_002dreverse"><code>reverse(A, 0)</code></a> by negating the <a href="#x_002dsteps">step</a> and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as <a href="#x_002diota"><code>1+iota(3, 0)</code></a> can be beaten into <code>iota(3, 1)</code>, and this can enable further optimizations.
 </p>
 <hr>
-<a name="Why-C_002b_002b"></a>
+</div>
+<div class="section" id="Why-C_002b_002b">
 <div class="header">
 <p>
 Next: <a href="#Guidelines" accesskey="n" rel="next">Guidelines</a>, Previous: <a href="#Drag-along-and-beating" accesskey="p" rel="prev">Drag along and beating</a>, Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Why-C_002b_002b-1"></a>
-<h3 class="section">1.3 Why C++</h3>
+<span id="Why-C_002b_002b-1"></span><h3 class="section">1.3 Why C++</h3>
 
 <p>Of course the main reason is that (this being a personal project) I&rsquo;m more familiar with C++ than with other languages to which the following might apply.
 </p>
 <p>C++ supports the low level control that is necessary for interoperation with external libraries and languages, but still has the abstraction power to create the features we want even though the language has no native support for most of them.
 </p>
-<a name="index-APL"></a>
-<a name="index-J"></a>
+<span id="index-APL"></span>
+<span id="index-J"></span>
 <p>The classic array languages, APL [<a href="#Sources">FI73</a>]
  and J [<a href="#Sources">Ric08</a>]
 , have array support baked in. The same is true for other languages with array facilities such as Fortran or Octave/Matlab. Array libraries for general purpose languages usually depend heavily on C extensions. In Numpy&rsquo;s case [<a href="#Sources">num17</a>]
@@ -301,13 +286,13 @@ Next: <a href="#Guidelines" accesskey="n" rel="next">Guidelines</a>, Previous: <
 <p>In C++, a library is enough.
 </p>
 <hr>
-<a name="Guidelines"></a>
+</div>
+<div class="section" id="Guidelines">
 <div class="header">
 <p>
-Next: <a href="#Other-libraries" accesskey="n" rel="next">Other libraries</a>, Previous: <a href="#Why-C_002b_002b" accesskey="p" rel="prev">Why C++</a>, Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Other-libraries" accesskey="n" rel="next">Other array libraries</a>, Previous: <a href="#Why-C_002b_002b" accesskey="p" rel="prev">Why C++</a>, Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Guidelines-1"></a>
-<h3 class="section">1.4 Guidelines</h3>
+<span id="Guidelines-1"></span><h3 class="section">1.4 Guidelines</h3>
 
 <p><code>ra::</code> attempts to be general, consistent, and transparent.
 </p>
@@ -322,19 +307,25 @@ Next: <a href="#Other-libraries" accesskey="n" rel="next">Other libraries</a>, P
 <p>That isn&rsquo;t to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably sweet syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you&rsquo;ll be able to guarantee that an array is stored by compact columns or that the real parts are interleaved with the imaginary parts.
 </p>
 <hr>
-<a name="Other-libraries"></a>
+</div>
+<div class="section" id="Other-libraries">
 <div class="header">
 <p>
 Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Other-array-libraries"></a>
-<h3 class="section">1.5 Other array libraries</h3>
+<span id="Other-array-libraries"></span><h3 class="section">1.5 Other array libraries</h3>
 
 <p>Here I try to list the C++ array libraries that I know of, or libraries that I think deserve a mention for the way they deal with arrays. It is not an extensive review, since I have only used a few of these libraries myself. Please follow the links if you want to be properly informed.
 </p>
 <p>Since the C++ standard library doesn&rsquo;t offer a standard multidimensional array type, some libraries for specific tasks (linear algebra operations, finite elements, optimization) offer an accessory array library, which may be more or less general. Other libraries have generic array interfaces without needing to provide an array type. FFTW is a good example, maybe because it isn&rsquo;t C++!
 </p>
-<a name="Standard-C_002b_002b"></a>
+<ul class="section-toc">
+<li><a href="#Standard-C_002b_002b" accesskey="1">Standard C++</a></li>
+<li><a href="#Blitz_002b_002b" accesskey="2">Blitz++</a></li>
+<li><a href="#Other-C_002b_002b-libraries" accesskey="3">Other C++ libraries</a></li>
+<li><a href="#Other-languages" accesskey="4">Other languages</a></li>
+</ul>
+<div class="subsection" id="Standard-C_002b_002b">
 <h4 class="subsection">1.5.1 Standard C++</h4>
 
 <p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These decay to pointers when you do nearly anything with them, don&rsquo;t know their own shape or rank at runtime, and are generally too limited.
@@ -343,9 +334,10 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 </p>
 <p><code>ra::</code> accepts built-in arrays and standard library types as array objects (see <a href="#Compatibility">Compatibility</a>).
 </p>
-<a name="Blitz_002b_002b"></a>
+</div>
+<div class="subsection" id="Blitz_002b_002b">
 <h4 class="subsection">1.5.2 Blitz++</h4>
-<a name="index-Blitz_002b_002b-1"></a>
+<span id="index-Blitz_002b_002b-1"></span>
 <p>Blitz++ [<a href="#Sources">bli17</a>]
  pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not runtime rank. It also supported small arrays with compile time shape (<code>Tiny</code>), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 </p>
@@ -353,68 +345,59 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 </p>
 <p>One important difference between Blitz++ and <code>ra::</code> is that Blitz++&rsquo;s arrays were reference counted. <code>ra::</code> doesn&rsquo;t do any memory management on its own: the default container (data-owning) types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (<code>ra::</code> declares a type using <code>std::shared_ptr</code>), but this is not the default.
 </p>
-<a name="Other-C_002b_002b-libraries"></a>
+</div>
+<div class="subsection" id="Other-C_002b_002b-libraries">
 <h4 class="subsection">1.5.3 Other C++ libraries</h4>
 
 <p>TODO
 </p>
-<a name="Other-languages"></a>
+</div>
+<div class="subsection" id="Other-languages">
 <h4 class="subsection">1.5.4 Other languages</h4>
 
 <p>TODO Maybe review other languages, at least the big ones (Fortran / APL / J / Matlab / Python-Numpy).
 </p>
 <hr>
-<a name="Usage"></a>
+</div>
+</div>
+</div>
+<div class="chapter" id="Usage">
 <div class="header">
 <p>
-Next: <a href="#Extras" accesskey="n" rel="next">Extras</a>, Previous: <a href="#Overview" accesskey="p" rel="prev">Overview</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Extras" accesskey="n" rel="next">Extras</a>, Previous: <a href="#Overview" accesskey="p" rel="prev">Overview</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Usage-1"></a>
-<h2 class="chapter">2 Usage</h2>
+<span id="Usage-1"></span><h2 class="chapter">2 Usage</h2>
 
 <p>This is an extended exposition of the features of <code>ra::</code> and is probably best read in order. For details on specific functions or types, please see <a href="#Reference">Reference</a>.
 </p>
-<table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#Using-the-library" accesskey="1">Using the library</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top"><code>ra::</code> is a header-only library.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Containers-and-views" accesskey="2">Containers and views</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Data objects.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Array-operations" accesskey="3">Array operations</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Building and traversing expressions.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Rank-extension" accesskey="4">Rank extension</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">How array operands are matched.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Cell-iteration" accesskey="5">Cell iteration</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">At any rank.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Slicing" accesskey="6">Slicing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Subscripting is a special operation.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Special-objects" accesskey="7">Special objects</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Not arrays, yet arrays.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#The-rank-conjunction" accesskey="8">The rank conjunction</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">J comes to C++.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Compatibility" accesskey="9">Compatibility</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">With the STL and other libraries.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Extension">Extension</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using your own types and more.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Functions">Functions</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Ready to go.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Error-handling">Error handling</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">What to check and what to do.
-</td></tr>
-</table>
 
+<ul class="section-toc">
+<li><a href="#Using-the-library" accesskey="1">Using <code>ra::</code></a></li>
+<li><a href="#Containers-and-views" accesskey="2">Containers and views</a></li>
+<li><a href="#Array-operations" accesskey="3">Array operations</a></li>
+<li><a href="#Rank-extension" accesskey="4">Rank extension</a></li>
+<li><a href="#Cell-iteration" accesskey="5">Cell iteration</a></li>
+<li><a href="#Slicing" accesskey="6">Slicing</a></li>
+<li><a href="#Special-objects" accesskey="7">Special objects</a></li>
+<li><a href="#The-rank-conjunction" accesskey="8">The rank conjunction</a></li>
+<li><a href="#Compatibility" accesskey="9">Compatibility</a></li>
+<li><a href="#Extension">Extension</a></li>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Error-handling">Error handling</a></li>
+</ul>
 <hr>
-<a name="Using-the-library"></a>
+<div class="section" id="Using-the-library">
 <div class="header">
 <p>
 Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and views</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Using-ra_003a_003a"></a>
-<h3 class="section">2.1 Using <code>ra::</code></h3>
+<span id="Using-ra_003a_003a"></span><h3 class="section">2.1 Using <code>ra::</code></h3>
 
 <p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
 </p>
 <p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 10.3</b> or <b>gcc 11.1</b> with <samp>-std=c++20</samp>. Check the top README.md for more up-to-date information.
 </p>
-<p>Here is a minimal program<a name="DOCF3" href="#FOOT3"><sup>3</sup></a>:
+<p>Here is a minimal program<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>:
 </p>
 <div class="example">
 <pre class="verbatim">#include &quot;ra/ra.hh&quot;
@@ -434,22 +417,22 @@ int main()
 
 <p>You may want to <code>#include &quot;ra/real.hh&quot;</code> and <code>&quot;ra/complex.hh&quot;</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function.
 </p>
-<a name="index-container"></a>
+<span id="index-container"></span>
 <hr>
-<a name="Containers-and-views"></a>
+</div>
+<div class="section" id="Containers-and-views">
 <div class="header">
 <p>
-Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>, Previous: <a href="#Using-the-library" accesskey="p" rel="prev">Using the library</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>, Previous: <a href="#Using-the-library" accesskey="p" rel="prev">Using <code>ra::</code></a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Containers-and-views-1"></a>
-<h3 class="section">2.2 Containers and views</h3>
+<span id="Containers-and-views-1"></span><h3 class="section">2.2 Containers and views</h3>
 
 <p><code>ra::</code> offers two kinds of data objects. The first kind, the <em>container</em>, owns its data. Creating a container requires memory and destroying it causes that memory to be freed.
 </p>
-<a name="index-compile_002dtime"></a>
-<a name="index-ct"></a>
-<a name="index-runtime"></a>
-<a name="index-rt"></a>
+<span id="index-compile_002dtime"></span>
+<span id="index-ct"></span>
+<span id="index-runtime"></span>
+<span id="index-rt"></span>
 <p>There are three kinds of containers (ct: compile-time, rt: runtime): 1) ct size, 2) ct rank/rt shape, and 3) rt rank; rt rank implies rt shape. Some rt size arrays can be resized but rt rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.
 </p>
 <p>For example:
@@ -465,7 +448,7 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 
 <p>Using the right kind of container can result in better performance. Ct shapes do not need to be stored in memory, which matters when you have many small arrays. Ct shape or ct rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 </p>
-<p>Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a name="DOCF4" href="#FOOT4"><sup>4</sup></a>
+<p>Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a id="DOCF4" href="#FOOT4"><sup>4</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">using ra::Small, ra::Big;
@@ -480,8 +463,8 @@ Big&lt;int&gt; e = 0;                         // e is a 0-array with one element
 
 <p>The second form takes two arguments, one giving the shape, the second the contents.
 </p>
-<a name="index-none"></a>
-<a name="index-uninitialized-container"></a>
+<span id="index-none"></span>
+<span id="index-uninitialized-container"></span>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 2&gt; a({2, 3}, 1.);     // a has shape [2 3] and be filled with 1.
 ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has shape [2 3] and contents don't matter
@@ -490,9 +473,9 @@ ra::Big&lt;double&gt; c({2, 3}, a);         // c has shape [2 3] and a is copied
 
 <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::none</code> can be used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container&rsquo;s elements.
 </p>
-<p>When the content argument is a pointer or a 1D brace list, it&rsquo;s handled especially, not for shape<a name="DOCF5" href="#FOOT5"><sup>5</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!<a name="DOCF6" href="#FOOT6"><sup>6</sup></a>
+<p>When the content argument is a pointer or a 1D brace list, it&rsquo;s handled especially, not for shape<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>
 </p>
-<a name="index-order_002c-column_002dmajor"></a>
+<span id="index-order_002c-column_002dmajor"></span>
 <div class="example">
 <pre class="verbatim">Small&lt;int, 2, 2&gt; aa = {1, 2, 3, 4}; // ravel of the content
 
@@ -521,7 +504,7 @@ Small&lt;int, 2, 2&gt; b = {1, 2, 3, 4 5};    // error: bad size
 Small&lt;int, 2, 2&gt; b = {1, 2, 3};         // error: bad size
 </pre></div>
 
-<a name="x_002dscalar_002dchar_002dstar"></a><p>Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><code>scalar</code></a>): </p>
+<span id="x_002dscalar_002dchar_002dstar"></span><p>Sometimes the pointer constructor gets in the way (see <a href="#x_002dscalar"><code>scalar</code></a>): </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;char const *, 1&gt; A({3}, &quot;hello&quot;); // error: try to convert char to char const *
 ra::Big&lt;char const *, 1&gt; A({3}, ra::scalar(&quot;hello&quot;)); // ok, &quot;hello&quot; is a single item
@@ -529,7 +512,7 @@ cout &lt;&lt; ra::noshape &lt;&lt; format_array(A, &quot;|&quot;) &lt;&lt; endl;
 </pre><pre class="example">-| hello|hello|hello
 </pre></div>
 
-<a name="index-view"></a>
+<span id="index-view"></span>
 <p>A <em>view</em> is similar to a container in that it points to actual data in memory. However, the view doesn&rsquo;t own that data and destroying the view won&rsquo;t affect it. For example:
 </p>
 <div class="example">
@@ -575,13 +558,13 @@ ra::View&lt;int&gt; v2({2, 3}, raw);           // same, default C (row-major) st
 </p>
 
 <hr>
-<a name="Array-operations"></a>
+</div>
+<div class="section" id="Array-operations">
 <div class="header">
 <p>
 Next: <a href="#Rank-extension" accesskey="n" rel="next">Rank extension</a>, Previous: <a href="#Containers-and-views" accesskey="p" rel="prev">Containers and views</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Array-operations-1"></a>
-<h3 class="section">2.3 Array operations</h3>
+<span id="Array-operations-1"></span><h3 class="section">2.3 Array operations</h3>
 
 <p>To apply an operation to each element of an array, use the function <code>for_each</code>. The array is traversed in an order that is decided by the library.
 </p>
@@ -629,13 +612,13 @@ map([](auto &amp; d) -&gt; decltype(auto) { return d; }, d) // just pass d along
 </pre></div>
 
 <hr>
-<a name="Rank-extension"></a>
+</div>
+<div class="section" id="Rank-extension">
 <div class="header">
 <p>
 Next: <a href="#Cell-iteration" accesskey="n" rel="next">Cell iteration</a>, Previous: <a href="#Array-operations" accesskey="p" rel="prev">Array operations</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Rank-extension-1"></a>
-<h3 class="section">2.4 Rank extension</h3>
+<span id="Rank-extension-1"></span><h3 class="section">2.4 Rank extension</h3>
 
 <p>Rank extension is the mechanism that allows <code>R+S</code> to be defined even when <code>R</code>, <code>S</code> may have different ranks. The idea is an interpolation of the following basic cases.
 </p>
@@ -667,12 +650,12 @@ Next: <a href="#Cell-iteration" accesskey="n" rel="next">Cell iteration</a>, Pre
 [n₀ n₁ ... n₍ₛ₋₁₎]
 </pre></blockquote>
 
-<a name="index-shape-agreement_002c-prefix"></a>
-<a name="index-shape-agreement_002c-suffix"></a>
-<a name="index-Numpy"></a>
+<span id="index-shape-agreement_002c-prefix"></span>
+<span id="index-shape-agreement_002c-suffix"></span>
+<span id="index-Numpy"></span>
 <p>This rank extension rule is used by the J language [<a href="#Sources">J S</a>]
  and is known as <em>prefix agreement</em>. The opposite rule of <em>suffix agreement</em> is used, for example, in Numpy [<a href="#Sources">num17</a>]
-<a name="DOCF7" href="#FOOT7"><sup>7</sup></a>.
+<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>.
 </p>
 <p>As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout <code>ra::</code>, even in assignments. For example,
 </p>
@@ -696,8 +679,8 @@ b += transpose&lt;0, 1, 1&gt;(a); // b(i) = ∑ⱼ a(i, j, j)
 </pre><pre class="example">&rArr; b = {0, 3, 6, 9, 12}
 </pre></div>
 
-<a name="index-Numpy-1"></a>
-<a name="index-broadcasting_002c-singleton_002c-newaxis"></a>
+<span id="index-Numpy-1"></span>
+<span id="index-broadcasting_002c-singleton_002c-newaxis"></span>
 <p>An weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it&rsquo;s implemented in Numpy [<a href="#Sources">num17</a>]
 , an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 </p>
@@ -720,13 +703,13 @@ c = a; // 1 ≠ 5, still an agreement error
 <a href="#x_002dtranspose">Transposing</a> the axes before extension is a possible workaround.
 </p>
 <hr>
-<a name="Cell-iteration"></a>
+</div>
+<div class="section" id="Cell-iteration">
 <div class="header">
 <p>
 Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href="#Rank-extension" accesskey="p" rel="prev">Rank extension</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Cell-iteration-1"></a>
-<h3 class="section">2.5 Cell iteration</h3>
+<span id="Cell-iteration-1"></span><h3 class="section">2.5 Cell iteration</h3>
 
 <p><code>map</code> and <code>for_each</code> apply their operators to each element of their arguments; in other words, to the 0-cells of the arguments. But it is possible to specify directly the rank of the cells that one iterates over:
 </p>
@@ -773,13 +756,13 @@ iter&lt;1&gt;(c) = iter&lt;1&gt;(a) * iter&lt;1&gt;(b); // multiply (each item o
 <p>FIXME More examples.
 </p>
 <hr>
-<a name="Slicing"></a>
+</div>
+<div class="section" id="Slicing">
 <div class="header">
 <p>
 Next: <a href="#Special-objects" accesskey="n" rel="next">Special objects</a>, Previous: <a href="#Cell-iteration" accesskey="p" rel="prev">Cell iteration</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Slicing-1"></a>
-<h3 class="section">2.6 Slicing</h3>
+<span id="Slicing-1"></span><h3 class="section">2.6 Slicing</h3>
 
 <p>Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that <code>ra::</code> supports.
 </p>
@@ -827,11 +810,10 @@ ra::Big&lt;double, 2&gt; b = A(i, j);
 </p>
 <p><code>ra::</code> isn&rsquo;t smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
 </p>
-<a name="x_002diota"></a><dl>
-<dt><a name="index-iota"></a>Special&nbsp;object<!-- /@w -->: <strong>iota</strong> <em>count [start:0 [step:1]]</em></dt>
+<span id="x_002diota"></span><dl class="def">
+<dt id="index-iota"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>iota</strong> <em>count [start:0 [step:1]]</em><a href='#index-iota' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create a linear range <code>start, start+step, ... start+step*(count-1)</code>.
-</p></dd></dl>
-
+</p>
 <p>This can used anywhere an array expression is expected.
 </p>
 <div class="example">
@@ -848,11 +830,12 @@ auto c = a(iota(3, 3));
 &rArr; a = {4, 5, 6}
 </pre></div>
 
-<dl>
-<dt><a name="index-all"></a>Special&nbsp;object<!-- /@w -->: <strong>all</strong></dt>
-<dd><p>Create a linear range <code>0, 1, ... (nᵢ-1)</code> when used as a subscript for the <code>i</code>-th argument of a subscripting expression.
-</p></dd></dl>
+</dd></dl>
 
+<dl class="def">
+<dt id="index-all"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>all</strong><a href='#index-all' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create a linear range <code>0, 1, ... (nᵢ-1)</code> when used as a subscript for the <code>i</code>-th argument of a subscripting expression.
+</p>
 <p>This object cannot stand alone as an array expression. All the examples below result in <code>View</code> objects:
 </p>
 <div class="example">
@@ -867,11 +850,12 @@ auto g = a(ra::all, 1); // second column of a
 
 <p><code>all</code> is a special case (<code>dots&lt;1&gt;</code>) of the more general object <code>dots</code>.
 </p>
-<dl>
-<dt><a name="index-dots_003cn_003e"></a>Special&nbsp;object<!-- /@w -->: <strong>dots&lt;n&gt;</strong></dt>
-<dd><p>Equivalent to as many instances of <code>ra::all</code> as indicated by <code>n</code>, which must not be negative. Each instance takes the place of one argument to the subscripting operation.
-</p></dd></dl>
+</dd></dl>
 
+<dl class="def">
+<dt id="index-dots_003cn_003e"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>dots&lt;n&gt;</strong><a href='#index-dots_003cn_003e' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Equivalent to as many instances of <code>ra::all</code> as indicated by <code>n</code>, which must not be negative. Each instance takes the place of one argument to the subscripting operation.
+</p>
 <p>This object cannot stand alone as an array expression. All the examples below result in <code>View</code> objects:
 </p>
 <div class="example">
@@ -885,8 +869,10 @@ auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
 
 <p>This is useful when writing rank-generic code, see <code>examples/maxwell.cc</code> in the distribution for an example.
 </p>
-<a name="x_002dinsert"></a><dl>
-<dt><a name="index-insert_003cn_003e"></a>Special&nbsp;object<!-- /@w -->: <strong>insert&lt;n&gt;</strong></dt>
+</dd></dl>
+
+<span id="x_002dinsert"></span><dl class="def">
+<dt id="index-insert_003cn_003e"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>insert&lt;n&gt;</strong><a href='#index-insert_003cn_003e' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Inserts <code>n</code> new axes at the subscript position. <code>n</code> must not be negative.
 </p></dd></dl>
 
@@ -897,7 +883,7 @@ auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
 auto k = a(insert&lt;1&gt;); // shape [undefined, 3, 2]
 </pre></div>
 
-<a name="index-broadcasting_002c-singleton_002c-Numpy"></a>
+<span id="index-broadcasting_002c-singleton_002c-Numpy"></span>
 <p><code>insert&lt;n&gt;</code> main use is to prepare arguments for broadcasting. In other array systems (e.g. Numpy) broadcasting is done with singleton dimensions, that is, dimensions of length one match dimensions of any length. In <code>ra::</code> singleton dimensions aren&rsquo;t special, so broadcasting requires the use of <code>insert</code>. For example: </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 1&gt; x = {1, 10};
@@ -933,12 +919,15 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 
 <p>This supports the notion (see <a href="#Rank-polymorphism">Rank polymorphism</a>) that a 3-array is also an 2-array where the elements are 1-arrays themselves, or a 1-array where the elements are 2-arrays. This important property is directly related to the mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>).
 </p>
-<a name="Subscripting-and-rank_002d0-views"></a>
+<ul class="section-toc">
+<li><a href="#Subscripting-and-rank_002d0-views" accesskey="1">Subscripting and rank-0 views</a></li>
+</ul>
+<div class="subsection" id="Subscripting-and-rank_002d0-views">
 <h4 class="subsection">2.6.1 Subscripting and rank-0 views</h4>
 
-<a name="index-view_002c-rank-0"></a>
-<a name="index-rank_002c-runtime"></a>
-<a name="index-rank_002c-compile_002dtime"></a>
+<span id="index-view_002c-rank-0"></span>
+<span id="index-rank_002c-runtime"></span>
+<span id="index-rank_002c-compile_002dtime"></span>
 <p>When the result of the subscripting operation would have rank 0, the type returned is the type of the view <em>element</em> and not a rank-0 view as long as the rank of the result can be determined at compile time. When that&rsquo;s not possible (for instance, the subscripted view has rt rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
 </p>
 <div class="example">
@@ -958,16 +947,17 @@ cout &lt;&lt; f(b(0, 0)) &lt;&lt; endl; // ok, automatic conversion from View&lt
 
 
 <hr>
-<a name="Special-objects"></a>
+</div>
+</div>
+<div class="section" id="Special-objects">
 <div class="header">
 <p>
 Next: <a href="#The-rank-conjunction" accesskey="n" rel="next">The rank conjunction</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Special-objects-1"></a>
-<h3 class="section">2.7 Special objects</h3>
+<span id="Special-objects-1"></span><h3 class="section">2.7 Special objects</h3>
 
-<dl>
-<dt><a name="index-TensorIndex_003cn_002c"></a>Special&nbsp;object<!-- /@w -->: <strong>TensorIndex&lt;n,</strong> <em>integer_type=ra::dim_t&gt;</em></dt>
+<dl class="def">
+<dt id="index-TensorIndex_003cn_002c"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>TensorIndex&lt;n,</strong> <em>integer_type=ra::dim_t&gt;</em><a href='#index-TensorIndex_003cn_002c' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p><code>TensorIndex&lt;n&gt;</code> represents the <code>n</code>-th index of an array expression. <code>TensorIndex&lt;n&gt;</code> is itself an array expression of rank <code>n</code>-1 and length undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
 </p>
 <p><code>ra::</code> offers the shortcut <code>ra::_0</code> for <code>ra::TensorIndex&lt;0&gt;{}</code>, etc.
@@ -984,13 +974,13 @@ cout &lt;&lt; (a + ra::_0 - ra::_1) &lt;&lt; endl; // {{0, -1, -2}, {1, 0, -1}, 
 
 
 <hr>
-<a name="The-rank-conjunction"></a>
+</div>
+<div class="section" id="The-rank-conjunction">
 <div class="header">
 <p>
 Next: <a href="#Compatibility" accesskey="n" rel="next">Compatibility</a>, Previous: <a href="#Special-objects" accesskey="p" rel="prev">Special objects</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="The-rank-conjunction-1"></a>
-<h3 class="section">2.8 The rank conjunction</h3>
+<span id="The-rank-conjunction-1"></span><h3 class="section">2.8 The rank conjunction</h3>
 
 <p>We have seen in <a href="#Cell-iteration">Cell iteration</a> that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. With the <a href="#x_002diter"><code>iter&lt;cell rank&gt;</code></a> construction, this ‘exploding’ is performed (notionally) on the argument; the operation of the array expression is applied blindly to these cells, whatever they turn out to be.
 </p>
@@ -1088,18 +1078,23 @@ for_each(ra::wrank&lt;1, 1, 2&gt;(ra::wrank&lt;1, 0, 1&gt;([](auto &amp;&amp; c,
 <p>I hope that in the future something like <code>C(i, j) += A(i, k)*B(k, j)</code>, where <code>i, j, k</code> are special objects, can be automatically translated to the requisite combination of <code>wrank</code> and perhaps also <a href="#x_002dtranspose"><code>transpose</code></a>. For the time being, you have to align or transpose the axes yourself.
 </p>
 <hr>
-<a name="Compatibility"></a>
+</div>
+<div class="section" id="Compatibility">
 <div class="header">
 <p>
 Next: <a href="#Extension" accesskey="n" rel="next">Extension</a>, Previous: <a href="#The-rank-conjunction" accesskey="p" rel="prev">The rank conjunction</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Compatibility-1"></a>
-<h3 class="section">2.9 Compatibility</h3>
+<span id="Compatibility-1"></span><h3 class="section">2.9 Compatibility</h3>
 
-<a name="Using-other-C-and-C_002b_002b-types-with-ra_003a_003a"></a>
+<ul class="section-toc">
+<li><a href="#Using-other-C-and-C_002b_002b-types-with-ra_003a_003a" accesskey="1">Using other C and C++ types with <code>ra::</code></a></li>
+<li><a href="#Using-ra_003a_003a-types-with-the-STL" accesskey="2">Using <code>ra::</code> types with the STL</a></li>
+<li><a href="#Using-ra_003a_003a-types-with-other-libraries" accesskey="3">Using <code>ra::</code> types with other libraries</a></li>
+</ul>
+<div class="subsection" id="Using-other-C-and-C_002b_002b-types-with-ra_003a_003a">
 <h4 class="subsection">2.9.1 Using other C and C++ types with <code>ra::</code></h4>
 
-<a name="index-foreign-type"></a>
+<span id="index-foreign-type"></span>
 <p><code>ra::</code> accepts certain types from outside <code>ra::</code> (<em>foreign types</em>) as array expressions. Generally it is enough to mix the foreign type with a type from <code>ra::</code> and let deduction work.
 </p>
 <div class="example">
@@ -1109,7 +1104,7 @@ cout &lt;&lt; (x-y) &lt;&lt; endl;
 </pre><pre class="example">-| -5 -3 -1
 </pre></div>
 
-<a name="index-start"></a>
+<span id="index-start"></span>
 <p>Foreign types can be brought into <code>ra::</code> explicitly with the function <a href="#x_002dstart"><code>start</code></a>.
 </p>
 <div class="example">
@@ -1128,7 +1123,7 @@ cout &lt;&lt; ra::sum(x) &lt;&lt; endl;
 produces an expression of rank 1 and rt size.
 </li><li> <code>std::array</code>
 produces an expression of rank 1 and ct size.
-</li><li> Built-in arrays <a name="index-built_002din-array"></a>
+</li><li> Built-in arrays <span id="index-built_002din-array"></span>
 produce an expression of positive rank and ct size.
 </li><li> Raw pointers
 produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must be brought into <code>ra::</code> explicitly with the function <a href="#x_002dptr"><code>ptr</code></a>.
@@ -1146,7 +1141,7 @@ ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start(
 ra::ptr(z) += p; // ok, shape is determined by foreign object p
 </pre></div>
 
-<a name="x_002dis_002dscalar"></a><p>Some types are accepted automatically as scalars. These include:
+<span id="x_002dis_002dscalar"></span><p>Some types are accepted automatically as scalars. These include:
 </p><ul>
 <li> Any type <code>T</code> for which <code>std::is_scalar_v&lt;T&gt;</code> is true, <em>except</em> pointers. These include <code>char</code>, <code>int</code>, <code>double</code>, etc.
 </li><li> <code>std::complex&lt;T&gt;</code>, if you import <code>ra/complex.hh</code>.
@@ -1158,10 +1153,11 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 </pre>
 <p>Otherwise, you can bring a scalar object into <code>ra::</code> on the spot, with the function <a href="#x_002dscalar"><code>scalar</code></a>.
 </p>
-<a name="Using-ra_003a_003a-types-with-the-STL"></a>
+</div>
+<div class="subsection" id="Using-ra_003a_003a-types-with-the-STL">
 <h4 class="subsection">2.9.2 Using <code>ra::</code> types with the STL</h4>
 
-<p>General <code>ra::</code> <a href="#Containers-and-views">views</a> provide STL compatible <code>ForwardIterator</code>s through the members <code>begin()</code> and <code>end()</code>. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the internal order of the view.
+<p>General <code>ra::</code> <a href="#Containers-and-views">views</a> provide STL compatible <code>ForwardIterator</code>s through the members <code>begin()</code> and <code>end()</code>. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
 </p>
 <p>For <a href="#Containers-and-views">containers</a> <code>begin()</code> provides <code>RandomAccessIterator</code>s, which is handy for certain functions such as <code>sort</code>. There&rsquo;s no reason why all views couldn&rsquo;t provide <code>RandomAccessIterator</code>, but these wouldn&rsquo;t be efficient in general for ranks above 1, and I haven&rsquo;t implemented them. The container <code>RandomAccessIterator</code>s that are provided are in fact raw pointers.
 </p>
@@ -1173,18 +1169,23 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 </pre><pre class="example">&rArr; x = {1, 2, 3}
 </pre></div>
 
-<a name="index-other-libraries_002c-interfacing-with"></a>
-<a name="Using-ra_003a_003a-types-with-other-libraries"></a>
+<span id="index-other-libraries_002c-interfacing-with"></span>
+</div>
+<div class="subsection" id="Using-ra_003a_003a-types-with-other-libraries">
 <h4 class="subsection">2.9.3 Using <code>ra::</code> types with other libraries</h4>
 
 <p>When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on a memory layout. <code>ra::</code> gives you access to its own memory layout and allows you to obtain an <code>ra::</code> view on any type of memory.
 </p>
-<a name="The-good-array-citizen"></a>
+<ul class="section-toc">
+<li><a href="#The-good-array-citizen" accesskey="1">The good array citizen</a></li>
+<li><a href="#The-bad-array-citizen" accesskey="2">The bad array citizen</a></li>
+</ul>
+<div class="subsubsection" id="The-good-array-citizen">
 <h4 class="subsubsection">2.9.3.1 The good array citizen</h4>
 
 <p>FIXME Put these in examples/ and reference them here.
 </p>
-<a name="index-BLIS"></a>
+<span id="index-BLIS"></span>
 <p>The good array citizen describes its arrays with the same parameters as <code>ra::</code>, that is: a pointer, plus a length and a step per dimension. You pass those and you&rsquo;re done; you don&rsquo;t have to worry about special cases. Say <a href="https://github.com/flame/blis">BLIS</a>:
 </p>
 <blockquote>
@@ -1203,7 +1204,7 @@ bli_dgemm(BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE, M, N, K, &amp;alpha,
           &amp;beta, C.data(), C.step(0), C.step(1));
 </pre></blockquote>
 
-<a name="index-FFTW"></a>
+<span id="index-FFTW"></span>
 <p>Another good array citizen, <a href="http://fftw.org">FFTW</a> handles arbitrary rank:
 </p>
 <blockquote>
@@ -1242,7 +1243,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 }
 </pre></blockquote>
 
-<a name="index-Guile"></a>
+<span id="index-Guile"></span>
 <p>Translating array descriptors from a foreign language should be fairly simple. For example, this is how to convert a <a href="https://www.gnu.org/software/guile/manual/html_node/Accessing-Arrays-from-C.html#Accessing-Arrays-from-C">Guile</a> array view into an <code>ra::</code> view:
 </p>
 <blockquote>
@@ -1262,13 +1263,14 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
     scm_array_handle_release(&amp;h);
 </pre></blockquote>
 
-<a name="index-Numpy-2"></a>
-<a name="index-Python"></a>
+<span id="index-Numpy-2"></span>
+<span id="index-Python"></span>
 <p>Numpy&rsquo;s C API has the type <a href="https://docs.scipy.org/doc/numpy/reference/c-api.array.html"><code>PyArrayObject</code></a> which can be used in the same way as Guile&rsquo;s <code>scm_t_array_handle</code> in the example above.
 </p>
 <p>Generally it is simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has <a href="https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector"><code>scm_take_xxx</code></a>).
 </p>
-<a name="The-bad-array-citizen"></a>
+</div>
+<div class="subsubsection" id="The-bad-array-citizen">
 <h4 class="subsubsection">2.9.3.2 The bad array citizen</h4>
 
 <p>Unfortunately there are many libraries that don&rsquo;t accept general array parameters, or that do strange things with particular values of lengths and/or steps.
@@ -1287,7 +1289,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 </p>
 <p>Sometimes you can work around this by fiddling with <code>transA</code> and <code>transB</code>, but in general you need to check your array parameters and you may need to make copies.
 </p>
-<a name="index-OpenGL"></a>
+<span id="index-OpenGL"></span>
 <p>OpenGL is another library that requires <a href="https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml">contortions:</a>
 </p>
 <blockquote>
@@ -1310,15 +1312,21 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <p>It isn&rsquo;t clear whether negative steps are legal, either. So just as with CBLAS, passing general array views will require copies.
 </p>
 <hr>
-<a name="Extension"></a>
+</div>
+</div>
+</div>
+<div class="section" id="Extension">
 <div class="header">
 <p>
 Next: <a href="#Functions" accesskey="n" rel="next">Functions</a>, Previous: <a href="#Compatibility" accesskey="p" rel="prev">Compatibility</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Extension-1"></a>
-<h3 class="section">2.10 Extension</h3>
+<span id="Extension-1"></span><h3 class="section">2.10 Extension</h3>
 
-<a name="New-scalar-types"></a>
+<ul class="section-toc">
+<li><a href="#New-scalar-types" accesskey="1">New scalar types</a></li>
+<li><a href="#New-array-operations" accesskey="2">New array operations</a></li>
+</ul>
+<div class="subsection" id="New-scalar-types">
 <h4 class="subsection">2.10.1 New scalar types</h4>
 
 <p><code>ra::</code> will let you construct arrays of arbitrary types out of the box. This is the same functionality you get with e.g. <code>std::vector</code>.
@@ -1350,7 +1358,8 @@ U uu {11};
 for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; (x.x + y.y) &lt;&lt; &quot; &quot;; }, w, uu); // error: can't find ra::start(U)
 </pre></div>
 
-<a name="x_002dnew_002darray_002doperations"></a><a name="New-array-operations"></a>
+<span id="x_002dnew_002darray_002doperations"></span></div>
+<div class="subsection" id="New-array-operations">
 <h4 class="subsection">2.10.2 New array operations</h4>
 
 <p><code>ra::</code> provides array extensions for standard operations such as <code>+</code>, <code>*</code>, <code>cos</code> <a href="#x_002dscalar_002dops">and so on</a>. You can add array extensions for your own operations in the obvious way, with <a href="#x_002dmap"><code>map</code></a> (but note the namespace qualifiers):
@@ -1367,10 +1376,10 @@ my_fun(A &amp;&amp; ... a)
 } // namespace ra
 </pre></div>
 
-<a name="index-Blitz_002b_002b-2"></a>
+<span id="index-Blitz_002b_002b-2"></span>
 <p>If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
 </p>
-<p>If <code>my_fun</code> is an overload set, you can use<a name="DOCF8" href="#FOOT8"><sup>8</sup></a>
+<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">namespace ra {
@@ -1383,20 +1392,29 @@ my_fun(A &amp;&amp; ... a)
 </pre></div>
 
 <hr>
-<a name="Functions"></a>
+</div>
+</div>
+<div class="section" id="Functions">
 <div class="header">
 <p>
 Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Functions-1"></a>
-<h3 class="section">2.11 Functions</h3>
+<span id="Functions-1"></span><h3 class="section">2.11 Functions</h3>
 
 <p>You don&rsquo;t need to use <a href="#Array-operations"><code>map</code></a> every time you want to do something with arrays in <code>ra::</code>. A number of array functions are already defined.
 </p>
-<a name="x_002dscalar_002dops"></a><a name="Standard-scalar-operations"></a>
+<span id="x_002dscalar_002dops"></span><ul class="section-toc">
+<li><a href="#Standard-scalar-operations" accesskey="1">Standard scalar operations</a></li>
+<li><a href="#Conditional-operations" accesskey="2">Conditional operations</a></li>
+<li><a href="#Special-operations" accesskey="3">Special operations</a></li>
+<li><a href="#Elementwise-reductions" accesskey="4">Elementwise reductions</a></li>
+<li><a href="#Special-reductions" accesskey="5">Special reductions</a></li>
+<li><a href="#Shortcut-reductions" accesskey="6">Shortcut reductions</a></li>
+</ul>
+<div class="subsection" id="Standard-scalar-operations">
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a name="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
 Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 </p>
 <p>For example:
@@ -1405,7 +1423,8 @@ Extending other scalar operations is straightforward; see <a href="#x_002dnew_00
 </pre><pre class="example">  -| 54.5982 148.413 403.429
 </pre></div>
 
-<a name="Conditional-operations"></a>
+</div>
+<div class="subsection" id="Conditional-operations">
 <h4 class="subsection">2.11.2 Conditional operations</h4>
 
 <p><a href="#x_002dmap"><code>map</code></a> evaluates all of its arguments before passing them along to its operator. This isn&rsquo;t always what you want. The simplest example is <code>where(condition, iftrue, iffalse)</code>, which returns an expression that will evaluate <code>iftrue</code> when <code>condition</code> is true and <code>iffalse</code> otherwise.
@@ -1438,14 +1457,16 @@ FIXME Do we want to expose ply(); this is the only example in the manual that us
 </p>
 <p>When the choice is between more than two expressions, there&rsquo;s <a href="#x_002dpick"><code>pick</code></a>, which operates similarly.
 </p>
-<a name="Special-operations"></a>
+</div>
+<div class="subsection" id="Special-operations">
 <h4 class="subsection">2.11.3 Special operations</h4>
 
 <p>Some operations are essentially scalar operations, but require special syntax and would need a lambda wrapper to be used with <code>map</code>. <code>ra::</code> comes with a few of these already defined.
 </p>
 <p>FIXME
 </p>
-<a name="Elementwise-reductions"></a>
+</div>
+<div class="subsection" id="Elementwise-reductions">
 <h4 class="subsection">2.11.4 Elementwise reductions</h4>
 
 <p><code>ra::</code> defines the whole-array one-argument reductions <code>any</code>, <code>every</code>, <code>amax</code>, <code>amin</code>, <code>sum</code>, <code>prod</code> and the two-argument reductions <code>dot</code> and <code>cdot</code>. Note that <code>max</code> and <code>min</code> are two-argument scalar operations with array extensions, while <code>amax</code> and <code>amin</code> are reductions. <code>any</code> and <code>every</code> are short-circuiting.
@@ -1481,14 +1502,16 @@ inline auto op_reduce(A &amp;&amp; a)
 </p>
 <p>A few common operations of this type are already packaged in <code>ra::</code>.
 </p>
-<a name="Special-reductions"></a>
+</div>
+<div class="subsection" id="Special-reductions">
 <h4 class="subsection">2.11.5 Special reductions</h4>
 
 <p><code>ra::</code> defines the following special reductions.
 </p>
 <p>FIXME
 </p>
-<a name="Shortcut-reductions"></a>
+</div>
+<div class="subsection" id="Shortcut-reductions">
 <h4 class="subsection">2.11.6 Shortcut reductions</h4>
 
 <p>Some reductions do not need to traverse the whole array if a certain condition is encountered early. The most obvious ones are the reductions of <code>&amp;&amp;</code> and <code>||</code>, which <code>ra::</code> defines as <code>every</code> and <code>any</code>.
@@ -1503,16 +1526,17 @@ inline auto op_reduce(A &amp;&amp; a)
 </p>
 <p>FIXME lexicographical compare etc.
 </p>
-<a name="index-error"></a>
-<a name="index-assert"></a>
+<span id="index-error"></span>
+<span id="index-assert"></span>
 <hr>
-<a name="Error-handling"></a>
+</div>
+</div>
+<div class="section" id="Error-handling">
 <div class="header">
 <p>
 Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Error-handling-1"></a>
-<h3 class="section">2.12 Error handling</h3>
+<span id="Error-handling-1"></span><h3 class="section">2.12 Error handling</h3>
 
 <p>Error handling in <code>ra::</code> is barebones. It is controlled by two macros:
 </p>
@@ -1528,27 +1552,37 @@ is a function-like macro. <code>cond</code> an expression that evaluates to true
 <p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. <code>examples/throw.cc</code> in the distribution shows how to throw an user-defined exception instead.
 </p>
 <hr>
-<a name="Extras"></a>
+</div>
+</div>
+<div class="chapter" id="Extras">
 <div class="header">
 <p>
-Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href="#Usage" accesskey="p" rel="prev">Usage</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href="#Usage" accesskey="p" rel="prev">Usage</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Extras-1"></a>
-<h2 class="chapter">3 Extras</h2>
+<span id="Extras-1"></span><h2 class="chapter">3 Extras</h2>
 
 
 <hr>
-<a name="Hazards"></a>
+</div>
+<div class="chapter" id="Hazards">
 <div class="header">
 <p>
-Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a href="#Extras" accesskey="p" rel="prev">Extras</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a href="#Extras" accesskey="p" rel="prev">Extras</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Hazards-1"></a>
-<h2 class="chapter">4 Hazards</h2>
+<span id="Hazards-1"></span><h2 class="chapter">4 Hazards</h2>
 
 <p>Some of these issues arise because <code>ra::</code> applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 </p>
-<a name="Reuse-of-expression-objects"></a>
+<ul class="section-toc">
+<li><a href="#Reuse-of-expression-objects" accesskey="1">Reuse of expression objects</a></li>
+<li><a href="#Assignment-to-views" accesskey="2">Assignment to views</a></li>
+<li><a href="#View-of-const-vs-const-view" accesskey="3">View of const vs const view</a></li>
+<li><a href="#Rank-extension-in-assignments" accesskey="4">Rank extension in assignments</a></li>
+<li><a href="#Performance-pitfalls-of-rank-extension" accesskey="5">Performance pitfalls of rank extension</a></li>
+<li><a href="#Chained-assignment" accesskey="6">Chained assignment</a></li>
+<li><a href="#Unregistered-scalar-types" accesskey="7">Unregistered scalar types</a></li>
+</ul>
+<div class="section" id="Reuse-of-expression-objects">
 <h3 class="section">4.1 Reuse of expression objects</h3>
 
 <p>Expression objects are meant to be used once. This applies to anything produced with <code>ra::map</code>, <code>ra::iter</code>, <code>ra::start</code>, <code>ra::vector</code>, or <code>ra::ptr</code>. Reuse errors are <em>not</em> checked. For example:
@@ -1561,20 +1595,23 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
     cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ??
 </pre></div>
 
-<a name="Assignment-to-views"></a>
+</div>
+<div class="section" id="Assignment-to-views">
 <h3 class="section">4.2 Assignment to views</h3>
 
 <p>FIXME
 With rt-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
 </p>
-<a name="View-of-const-vs-const-view"></a>
+</div>
+<div class="section" id="View-of-const-vs-const-view">
 <h3 class="section">4.3 View of const vs const view</h3>
 
 
 <p>FIXME
 Passing view arguments by reference
 </p>
-<a name="Rank-extension-in-assignments"></a>
+</div>
+<div class="section" id="Rank-extension-in-assignments">
 <h3 class="section">4.4 Rank extension in assignments</h3>
 
 <p>Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches <code>a</code> and 3 [both of shape ()] with a vector of shape (3). This is equivalent to <code>{a=3+4; a=3+5; a=3+6;}</code>. You may get a different result depending on traversal order.
@@ -1593,7 +1630,8 @@ ra::scalar(a) += 3 + ra::Small&lt;int, 3&gt; {4, 5, 6}; // 0 + 3 + 4 + 5 + 6
 </pre><pre class="example">  &rArr; a = 18
 </pre></div>
 
-<a name="Performance-pitfalls-of-rank-extension"></a>
+</div>
+<div class="section" id="Performance-pitfalls-of-rank-extension">
 <h3 class="section">4.5 Performance pitfalls of rank extension</h3>
 
 <p>In the following example where <code>b</code> has its shape extended from (3) to (3, 4), <code>f</code> is called 12 times, even though only 3 calls are needed if <code>f</code> doesn&rsquo;t have side effects. In such cases it might be preferrable to write the outer loop explicitly, or to do some precomputation.
@@ -1604,13 +1642,15 @@ ra::Big&lt;int, 1&gt; b = {1, 2, 3};
 ra::Big&lt;int, 2&gt; c = map(f, b) + a;
 </pre></div>
 
-<a name="Chained-assignment"></a>
+</div>
+<div class="section" id="Chained-assignment">
 <h3 class="section">4.6 Chained assignment</h3>
 
 <p>FIXME
 When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as an array expression.
 </p>
-<a name="Unregistered-scalar-types"></a>
+</div>
+<div class="section" id="Unregistered-scalar-types">
 <h3 class="section">4.7 Unregistered scalar types</h3>
 
 <p>FIXME
@@ -1623,37 +1663,32 @@ When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as 
 </li></ol>
 
 <hr>
-<a name="Internals"></a>
+</div>
+</div>
+<div class="chapter" id="Internals">
 <div class="header">
 <p>
-Next: <a href="#The-future" accesskey="n" rel="next">The future</a>, Previous: <a href="#Hazards" accesskey="p" rel="prev">Hazards</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#The-future" accesskey="n" rel="next">The future</a>, Previous: <a href="#Hazards" accesskey="p" rel="prev">Hazards</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Internals-1"></a>
-<h2 class="chapter">5 Internals</h2>
+<span id="Internals-1"></span><h2 class="chapter">5 Internals</h2>
 
 <p><code>ra::</code> has two main components: a set of container classes, and the expression template mechanism. The container classes provide leaves for the expression template trees, and the container classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
 </p>
-<table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#Type-hierarchy" accesskey="1">Type hierarchy</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">From <code>Containers</code> to <code>Flat</code>.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Term-agreement" accesskey="2">Term agreement</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Abstain or approve.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Loop-types" accesskey="3">Loop types</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Chosen for performance.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Introspection" accesskey="4">Introspection</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Speaking to myself.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Compiling-and-running" accesskey="5">Compiling and running</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Practical matters.
-</td></tr>
-</table>
 
+<ul class="section-toc">
+<li><a href="#Type-hierarchy" accesskey="1">Type hierarchy</a></li>
+<li><a href="#Term-agreement" accesskey="2">Term agreement</a></li>
+<li><a href="#Loop-types" accesskey="3">Loop types</a></li>
+<li><a href="#Introspection" accesskey="4">Introspection</a></li>
+<li><a href="#Compiling-and-running" accesskey="5">Compiling and running</a></li>
+</ul>
 <hr>
-<a name="Type-hierarchy"></a>
+<div class="section" id="Type-hierarchy">
 <div class="header">
 <p>
 Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Type-hierarchy-1"></a>
-<h3 class="section">5.1 Type hierarchy</h3>
+<span id="Type-hierarchy-1"></span><h3 class="section">5.1 Type hierarchy</h3>
 
 <p>This is a rough and possibly not very accurate summary. I&rsquo;m hoping the planned feature of ‘C++ concepts’ will force me to be more systematic about it all.
 </p>
@@ -1686,13 +1721,13 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 
 
 <hr>
-<a name="Term-agreement"></a>
+</div>
+<div class="section" id="Term-agreement">
 <div class="header">
 <p>
 Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <a href="#Type-hierarchy" accesskey="p" rel="prev">Type hierarchy</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Term-agreement-1"></a>
-<h3 class="section">5.2 Term agreement</h3>
+<span id="Term-agreement-1"></span><h3 class="section">5.2 Term agreement</h3>
 
 <p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>TensorIndex</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
@@ -1701,33 +1736,33 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 <p>Finally we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v14) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a single 1D loop.
 </p>
 <hr>
-<a name="Loop-types"></a>
+</div>
+<div class="section" id="Loop-types">
 <div class="header">
 <p>
 Next: <a href="#Introspection" accesskey="n" rel="next">Introspection</a>, Previous: <a href="#Term-agreement" accesskey="p" rel="prev">Term agreement</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Loop-types-1"></a>
-<h3 class="section">5.3 Loop types</h3>
+<span id="Loop-types-1"></span><h3 class="section">5.3 Loop types</h3>
 
 <p>TODO
 </p>
 <hr>
-<a name="Introspection"></a>
+</div>
+<div class="section" id="Introspection">
 <div class="header">
 <p>
 Next: <a href="#Compiling-and-running" accesskey="n" rel="next">Compiling and running</a>, Previous: <a href="#Loop-types" accesskey="p" rel="prev">Loop types</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Introspection-1"></a>
-<h3 class="section">5.4 Introspection</h3>
+<span id="Introspection-1"></span><h3 class="section">5.4 Introspection</h3>
 
 <hr>
-<a name="Compiling-and-running"></a>
+</div>
+<div class="section" id="Compiling-and-running">
 <div class="header">
 <p>
 Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Compiling-and-running-1"></a>
-<h3 class="section">5.5 Compiling and running</h3>
+<span id="Compiling-and-running-1"></span><h3 class="section">5.5 Compiling and running</h3>
 
 <p>The following boolean <code>#define</code>s affect the behavior of <code>ra::</code>.
 </p>
@@ -1745,44 +1780,52 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 <p>TODO Flags and notes about different compilers
 </p>
 <hr>
-<a name="The-future"></a>
+</div>
+</div>
+<div class="chapter" id="The-future">
 <div class="header">
 <p>
-Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a href="#Internals" accesskey="p" rel="prev">Internals</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a href="#Internals" accesskey="p" rel="prev">Internals</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="The-future-1"></a>
-<h2 class="chapter">6 The future</h2>
+<span id="The-future-1"></span><h2 class="chapter">6 The future</h2>
 
-<a name="Error-messages"></a>
+<ul class="section-toc">
+<li><a href="#Error-messages" accesskey="1">Error messages</a></li>
+<li><a href="#Reductions" accesskey="2">Reductions</a></li>
+<li><a href="#Etc" accesskey="3">Etc</a></li>
+</ul>
+<div class="section" id="Error-messages">
 <h3 class="section">6.1 Error messages</h3>
 
 <p>FIXME
 </p>
-<a name="Reductions"></a>
+</div>
+<div class="section" id="Reductions">
 <h3 class="section">6.2 Reductions</h3>
 
 <p>FIXME
 </p>
-<a name="Etc"></a>
+</div>
+<div class="section" id="Etc">
 <h3 class="section">6.3 Etc</h3>
 
 <p>FIXME
 </p>
 <hr>
-<a name="Reference"></a>
+</div>
+</div>
+<div class="chapter" id="Reference">
 <div class="header">
 <p>
-Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href="#The-future" accesskey="p" rel="prev">The future</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href="#The-future" accesskey="p" rel="prev">The future</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Reference-1"></a>
-<h2 class="chapter">7 Reference</h2>
+<span id="Reference-1"></span><h2 class="chapter">7 Reference</h2>
 
-<a name="index-at"></a>
-<a name="x_002dat"></a><dl>
-<dt><a name="index-at-1"></a>Function: <strong>at</strong> <em>expr indices</em></dt>
+<span id="index-at"></span>
+<span id="x_002dat"></span><dl class="def">
+<dt id="index-at-1"><span class="category">Function: </span><span><strong>at</strong> <em>expr indices</em><a href='#index-at-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Look up <var>expr</var> at each element of <var>indices</var>, which shall be a multi-index into <var>expr</var>.
-</p></dd></dl>
-
+</p>
 <p>This can be used for sparse subscripting. For example:
 </p><div class="example">
 <pre class="verbatim">    ra::Big&lt;int, 2&gt; A = {{100, 101}, {110, 111}, {120, 121}};
@@ -1791,48 +1834,50 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </pre><pre class="example">  &rArr; B = {{101, 120}, {110, 121}}
 </pre></div>
 
-<a name="index-cast"></a>
-<a name="x_002dcast"></a><dl>
-<dt><a name="index-cast-1"></a>Function: <strong>cast</strong> <em>&lt;type&gt; expr</em></dt>
+</dd></dl>
+
+<span id="index-cast"></span>
+<span id="x_002dcast"></span><dl class="def">
+<dt id="index-cast-1"><span class="category">Function: </span><span><strong>cast</strong> <em>&lt;type&gt; expr</em><a href='#index-cast-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create an array expression that casts <var>expr</var> into <var>type</var>.
 </p></dd></dl>
 
-<a name="index-collapse"></a>
-<a name="x_002dcollapse"></a><dl>
-<dt><a name="index-collapse-1"></a>Function: <strong>collapse</strong></dt>
+<span id="index-collapse"></span>
+<span id="x_002dcollapse"></span><dl class="def">
+<dt id="index-collapse-1"><span class="category">Function: </span><span><strong>collapse</strong><a href='#index-collapse-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>TODO
 See also <a href="#x_002dexplode"><code>explode</code></a>.
 </p></dd></dl>
 
-<a name="index-concrete"></a>
-<a name="x_002dconcrete"></a><dl>
-<dt><a name="index-concrete-1"></a>Function: <strong>concrete</strong> <em>a</em></dt>
+<span id="index-concrete"></span>
+<span id="x_002dconcrete"></span><dl class="def">
+<dt id="index-concrete-1"><span class="category">Function: </span><span><strong>concrete</strong> <em>a</em><a href='#index-concrete-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Convert the argument to a container of the same shape as <var>a</var>.
-</p></dd></dl>
-
+</p>
 <p>If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 </p>
 
-<a name="index-diag"></a>
-<a name="x_002ddiag"></a><dl>
-<dt><a name="index-diag-1"></a>Function: <strong>diag</strong> <em>view</em></dt>
+</dd></dl>
+
+<span id="index-diag"></span>
+<span id="x_002ddiag"></span><dl class="def">
+<dt id="index-diag-1"><span class="category">Function: </span><span><strong>diag</strong> <em>view</em><a href='#index-diag-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Equivalent to <code>transpose&lt;0, 0&gt;(view)</code>.
 </p></dd></dl>
 
-<a name="index-explode"></a>
-<a name="x_002dexplode"></a><dl>
-<dt><a name="index-explode-1"></a>Function: <strong>explode</strong></dt>
+<span id="index-explode"></span>
+<span id="x_002dexplode"></span><dl class="def">
+<dt id="index-explode-1"><span class="category">Function: </span><span><strong>explode</strong><a href='#index-explode-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>TODO
 </p>
 <p>See also <a href="#x_002dcollapse"><code>collapse</code></a>.
 </p></dd></dl>
 
-<a name="index-for_005feach"></a>
-<a name="x_002dfor_005feach"></a><dl>
-<dt><a name="index-for_005feach-1"></a>Function: <strong>for_each</strong> <em>op expr ...</em></dt>
+<span id="index-for_005feach"></span>
+<span id="x_002dfor_005feach"></span><dl class="def">
+<dt id="index-for_005feach-1"><span class="category">Function: </span><span><strong>for_each</strong> <em>op expr ...</em><a href='#index-for_005feach-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ..., and traverse it.
-</p></dd></dl>
-
+</p>
 <p><var>op</var> is run for effect; whatever it returns is discarded. For example:
 </p><div class="example">
 <pre class="verbatim">double s = 0.;
@@ -1842,9 +1887,11 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 
 <p>See also <a href="#x_002dmap"><code>map</code></a>.
 </p>
-<a name="index-format_005farray"></a>
-<a name="x_002dformat_005farray"></a><dl>
-<dt><a name="index-format_005farray-1"></a>Function: <strong>format_array</strong> <em>expr [last_axis_separator [second_last_axis_separator ...]]</em></dt>
+</dd></dl>
+
+<span id="index-format_005farray"></span>
+<span id="x_002dformat_005farray"></span><dl class="def">
+<dt id="index-format_005farray-1"><span class="category">Function: </span><span><strong>format_array</strong> <em>expr [last_axis_separator [second_last_axis_separator ...]]</em><a href='#index-format_005farray-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Formats an array for character output.
 </p>
 <p>For example:
@@ -1863,17 +1910,21 @@ case b:
 case c:
 1|2-3|4
 </pre></div>
-</dd></dl>
 
 <p>The shape that might be printed before the expression itself (depending on its type) is not subject to these separators.
 </p>
 <p>See also <a href="#x_002dnoshape"><code>noshape</code></a>, <a href="#x_002dwithshape"><code>withshape</code></a>.
 </p>
-<a name="index-from"></a>
-<a name="x_002dfrom"></a><dl>
-<dt><a name="index-from-1"></a>Function: <strong>from</strong> <em>op ... expr</em></dt>
-<dd><p>Create outer product expression. This is defined as <em>E = from(op, e₀, e₁ ...)</em> ⇒ <em>E(i₀₀, i₀₁ ..., i₁₀, i₁₁, ..., ...) = op[e₀(i₀₀, i₀₁, ...), e₁(i₁₀, i₁₁, ...), ...]</em>.
-</p></dd></dl>
+</dd></dl>
+
+<span id="index-from"></span>
+<span id="x_002dfrom"></span><dl class="def">
+<dt id="index-from-1"><span class="category">Function: </span><span><strong>from</strong> <em>op expr ...</em><a href='#index-from-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create outer product expression. This is defined as
+</p>
+<div class="display">
+<pre class="display">E = from(op, e₀, e₁ ...) ⇒ E(i₀₀, i₀₁ ..., i₁₀, i₁₁, ..., ...) = op[expr₀(i₀₀, i₀₁, ...), expr₁(i₁₀, i₁₁, ...), ...].
+</pre></div>
 
 <p>For example:
 </p><div class="example">
@@ -1893,9 +1944,11 @@ case c:
 
 <p>The last example is more or less how <code>A(i, j)</code> is actually implemented (see <a href="#The-rank-conjunction">The rank conjunction</a>).
 </p>
-<a name="index-imag_005fpart"></a>
-<a name="x_002dimag_005fpart"></a><dl>
-<dt><a name="index-imag_005fpart-1"></a>Function: <strong>imag_part</strong></dt>
+</dd></dl>
+
+<span id="index-imag_005fpart"></span>
+<span id="x_002dimag_005fpart"></span><dl class="def">
+<dt id="index-imag_005fpart-1"><span class="category">Function: </span><span><strong>imag_part</strong><a href='#index-imag_005fpart-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Take imaginary part of a complex number. This can be used as reference.
 </p>
 <p>For example: </p>
@@ -1911,12 +1964,11 @@ cout &lt;&lt; A &lt;&lt; endl;
 <p>See also <a href="#x_002dreal_005fpart"><code>real_part</code></a>.
 </p></dd></dl>
 
-<a name="index-map"></a>
-<a name="x_002dmap"></a><dl>
-<dt><a name="index-map-1"></a>Function: <strong>map</strong> <em>op expr ...</em></dt>
+<span id="index-map"></span>
+<span id="x_002dmap"></span><dl class="def">
+<dt id="index-map-1"><span class="category">Function: </span><span><strong>map</strong> <em>op expr ...</em><a href='#index-map-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ...
-</p></dd></dl>
-
+</p>
 <p>For example:
 </p><div class="example">
 <pre class="verbatim">ra::Big&lt;double, 1&gt; x = map(cos, ra::Small&lt;double, 1&gt; {0.});
@@ -1937,18 +1989,19 @@ map([](auto &amp;&amp; i, auto &amp;&amp; j) -&gt; int &amp; { return x(i, j); }
 </p>
 <p>See also <a href="#x_002dfor_005feach"><code>for_each</code></a>.
 </p>
-<a name="index-pack"></a>
-<a name="x_002dpack"></a><dl>
-<dt><a name="index-pack-1"></a>Function: <strong>pack</strong> <em>&lt;type&gt; expr ...</em></dt>
+</dd></dl>
+
+<span id="index-pack"></span>
+<span id="x_002dpack"></span><dl class="def">
+<dt id="index-pack-1"><span class="category">Function: </span><span><strong>pack</strong> <em>&lt;type&gt; expr ...</em><a href='#index-pack-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create an array expression that brace-constructs <var>type</var> from <var>expr</var> ...
 </p></dd></dl>
 
-<a name="index-pick"></a>
-<a name="x_002dpick"></a><dl>
-<dt><a name="index-pick-1"></a>Function: <strong>pick</strong> <em>select_expr expr ...</em></dt>
+<span id="index-pick"></span>
+<span id="x_002dpick"></span><dl class="def">
+<dt id="index-pick-1"><span class="category">Function: </span><span><strong>pick</strong> <em>select_expr expr ...</em><a href='#index-pick-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create an array expression that selects the first of <var>expr</var> ... if <var>select_expr</var> is 0, the second if <var>select_expr</var> is 1, and so on. The expressions that are not selected are not looked up.
-</p></dd></dl>
-
+</p>
 <p>This function cannot be defined using <a href="#x_002dmap"><code>map</code></a>, because <code>map</code> looks up each one of its argument expressions before calling <var>op</var>.
 </p>
 <p>For example:
@@ -1958,12 +2011,13 @@ map([](auto &amp;&amp; i, auto &amp;&amp; j) -&gt; int &amp; { return x(i, j); }
 </pre><pre class="example">  &rArr; z = {1.41421, 2, 0}
 </pre></div>
 
-<a name="index-ply"></a>
-<a name="x_002dply"></a><dl>
-<dt><a name="index-ply-1"></a>Function: <strong>ply</strong> <em>expr</em></dt>
-<dd><p>Traverse <var>expr</var>. <code>ply</code> returns <code>void</code> so <var>expr</var> should be run for effect.
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-ply"></span>
+<span id="x_002dply"></span><dl class="def">
+<dt id="index-ply-1"><span class="category">Function: </span><span><strong>ply</strong> <em>expr</em><a href='#index-ply-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Traverse <var>expr</var>. <code>ply</code> returns <code>void</code> so <var>expr</var> should be run for effect.
+</p>
 <p>It is rarely necessary to use <code>ply</code>. Expressions are traversed automatically when they are assigned to views, for example, or printed out. <a href="#x_002dfor_005feach"><code>for_each</code></a><code>(...)</code> (which is actually <code>ply(map(...))</code> should cover most other uses.
 </p>
 <div class="example">
@@ -1972,55 +2026,60 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </pre><pre class="example">&rArr; s = 6.
 </pre></div>
 
-<a name="index-real_005fpart"></a>
-<a name="x_002dreal_005fpart"></a><dl>
-<dt><a name="index-real_005fpart-1"></a>Function: <strong>real_part</strong></dt>
+</dd></dl>
+
+<span id="index-real_005fpart"></span>
+<span id="x_002dreal_005fpart"></span><dl class="def">
+<dt id="index-real_005fpart-1"><span class="category">Function: </span><span><strong>real_part</strong><a href='#index-real_005fpart-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Take real part of a complex number. This can be used as reference.
 </p>
 <p>See also <a href="#x_002dimag_005fpart"><code>imag_part</code></a>.
 </p></dd></dl>
 
-<a name="index-reverse"></a>
-<a name="x_002dreverse"></a><dl>
-<dt><a name="index-reverse-1"></a>Function: <strong>reverse</strong> <em>view axis</em></dt>
+<span id="index-reverse"></span>
+<span id="x_002dreverse"></span><dl class="def">
+<dt id="index-reverse-1"><span class="category">Function: </span><span><strong>reverse</strong> <em>view axis</em><a href='#index-reverse-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create a new view by reversing axis <var>k</var> of <var>view</var>.
-</p></dd></dl>
-
+</p>
 <p>This is equivalent to <code>view(ra::dots&lt;k&gt;, ra::iota(view.len(k), view.len(k)-1, -1))</code>.
 </p>
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>
-<a name="index-shape-1"></a>
-<a name="x_002dshape"></a><dl>
-<dt><a name="index-shape-2"></a>Function: <strong>shape</strong> <em>a</em></dt>
-<dd><p>Get the shape of an <code>ra::</code> object.
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-shape-1"></span>
+<span id="x_002dshape"></span><dl class="def">
+<dt id="index-shape-2"><span class="category">Function: </span><span><strong>shape</strong> <em>a</em><a href='#index-shape-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Get the shape of an <code>ra::</code> object.
+</p>
 <p>The shape of a rt rank array is a rank-1 object with rt size, and the shape of a ct rank array is a rank-1 object with ct size.
 </p>
 <p>This function may return an expression object or an array object. If you need to operate on the result, it might be necessary to use <code>concrete</code>.
 </p>
+</dd></dl>
 
-<a name="index-size"></a>
-<a name="x_002dsize"></a><dl>
-<dt><a name="index-size-1"></a>Function: <strong>size</strong> <em>a</em></dt>
+
+<span id="index-size"></span>
+<span id="x_002dsize"></span><dl class="def">
+<dt id="index-size-1"><span class="category">Function: </span><span><strong>size</strong> <em>a</em><a href='#index-size-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Get the total size of an <code>ra::</code> object: the product of all its lengths.
 </p></dd></dl>
 
 
-<a name="index-stencil"></a>
-<a name="x_002dstencil"></a><dl>
-<dt><a name="index-stencil-1"></a>Function: <strong>stencil</strong> <em>view lo hi</em></dt>
+<span id="index-stencil"></span>
+<span id="x_002dstencil"></span><dl class="def">
+<dt id="index-stencil-1"><span class="category">Function: </span><span><strong>stencil</strong> <em>view lo hi</em><a href='#index-stencil-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create a stencil on <var>view</var> with lower bounds <var>lo</var> and higher bounds <var>hi</var>.
-</p></dd></dl>
-
+</p>
 <p><var>lo</var> and <var>hi</var> are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, <var>lo</var>=0 is equivalent to <var>lo</var>=(0, 0, ..., 0) with length equal to the rank <code>r</code> of <var>view</var>. The stencil view has twice as many axes as <var>view</var>. The first <code>r</code> dimensions are the same as those of <var>view</var> except that they have their lengths reduced by <var>lo</var>+<var>hi</var>. The last <code>r</code> dimensions correspond to the stencil around each element of <var>view</var>; the center element is at <code>s(i0, i1, ..., lo(0), lo(1), ...)</code>.
 </p>
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>
-<a name="index-swap"></a>
-<a name="x_002dswap"></a><dl>
-<dt><a name="index-swap-1"></a>Function: <strong>swap</strong> <em>a b</em></dt>
+</dd></dl>
+
+<span id="index-swap"></span>
+<span id="x_002dswap"></span><dl class="def">
+<dt id="index-swap-1"><span class="category">Function: </span><span><strong>swap</strong> <em>a b</em><a href='#index-swap-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Swap the contents of containers <var>a</var> and <var>b</var>.
 </p>
 <p>Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of ct rank, then both of them must have the same rank.
@@ -2035,12 +2094,11 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
     // as if (1) had b and (2) had a
 </pre></div>
 
-<a name="index-transpose"></a>
-<a name="x_002dtranspose"></a><dl>
-<dt><a name="index-transpose-1"></a>Function: <strong>transpose</strong> <em>&lt;axes ...&gt; (view) | (axes, view)</em></dt>
+<span id="index-transpose"></span>
+<span id="x_002dtranspose"></span><dl class="def">
+<dt id="index-transpose-1"><span class="category">Function: </span><span><strong>transpose</strong> <em>&lt;axes ...&gt; (view) | (axes, view)</em><a href='#index-transpose-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create a new view by transposing the axes of <var>view</var>. The number of <var>axes</var> must match the rank of <var>view</var>.
-</p></dd></dl>
-
+</p>
 <p>For example:
 </p>
 <div class="example">
@@ -2096,12 +2154,13 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>
-<a name="index-where"></a>
-<a name="x_002dwhere"></a><dl>
-<dt><a name="index-where-1"></a>Function: <strong>where</strong> <em>pred_expr true_expr false_expr</em></dt>
-<dd><p>Create an array expression that selects <var>true_expr</var> if <var>pred_expr</var> is <code>true</code>, and <var>false_expr</var> if <var>pred_expr</var> is <code>false</code>. The expression that is not selected is not looked up.
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-where"></span>
+<span id="x_002dwhere"></span><dl class="def">
+<dt id="index-where-1"><span class="category">Function: </span><span><strong>where</strong> <em>pred_expr true_expr false_expr</em><a href='#index-where-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create an array expression that selects <var>true_expr</var> if <var>pred_expr</var> is <code>true</code>, and <var>false_expr</var> if <var>pred_expr</var> is <code>false</code>. The expression that is not selected is not looked up.
+</p>
 <p>For example:
 </p><div class="example">
 <pre class="verbatim">    ra::Big&lt;double, 1&gt; s {1, -1, 3, 2};
@@ -2109,28 +2168,29 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </pre><pre class="example">  &rArr; s = {1, -1, 2, 2}
 </pre></div>
 
-<a name="index-wrank"></a>
-<a name="x_002dwrank"></a><dl>
-<dt><a name="index-wrank-1"></a>Function: <strong>wrank</strong> <em>&lt;input_rank ...&gt; op</em></dt>
-<dd><p>Wrap op using a rank conjunction (see <a href="#The-rank-conjunction">The rank conjunction</a>).
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-wrank"></span>
+<span id="x_002dwrank"></span><dl class="def">
+<dt id="index-wrank-1"><span class="category">Function: </span><span><strong>wrank</strong> <em>&lt;input_rank ...&gt; op</em><a href='#index-wrank-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Wrap op using a rank conjunction (see <a href="#The-rank-conjunction">The rank conjunction</a>).
+</p>
 <p>For example: TODO
 </p><div class="example">
 <pre class="verbatim"></pre><pre class="example">  &rArr; x = 0
 </pre></div>
 
+</dd></dl>
 
 
 
 
-<a name="index-noshape"></a>
-<a name="index-withshape"></a>
-<a name="x_002dnoshape"></a><a name="x_002dwithshape"></a><dl>
-<dt><a name="index-withshape-noshape"></a>Special&nbsp;object<!-- /@w -->: <strong>withshape noshape</strong></dt>
+<span id="index-noshape"></span>
+<span id="index-withshape"></span>
+<span id="x_002dnoshape"></span><span id="x_002dwithshape"></span><dl class="def">
+<dt id="index-withshape-noshape"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>withshape noshape</strong><a href='#index-withshape-noshape' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>If either of these objects is sent to <code>std::ostream</code> before an expression object, the shape of that object will or won&rsquo;t be printed.
-</p></dd></dl>
-
+</p>
 <p>If the object has ct shape, the default is not to print the shape, so <code>noshape</code> isn&rsquo;t necessary, and conversely for <code>withshape</code> if the object has rt shape. Note that the array readers [<code>operator&gt;&gt;(std::istream &amp;, ...)</code>] expect the shape to be present or not according to the default.
 </p>
 <p>For example:
@@ -2172,12 +2232,13 @@ case c:
 </p>
 <p>See also <a href="#x_002dformat_005farray"><code>format_array</code></a>.
 </p>
-<a name="index-start-1"></a>
-<a name="x_002dstart"></a><dl>
-<dt><a name="index-start-2"></a>Function: <strong>start</strong> <em>foreign_object</em></dt>
-<dd><p>Create a array expression from <var>foreign_object</var>.
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-start-1"></span>
+<span id="x_002dstart"></span><dl class="def">
+<dt id="index-start-2"><span class="category">Function: </span><span><strong>start</strong> <em>foreign_object</em><a href='#index-start-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create a array expression from <var>foreign_object</var>.
+</p>
 <p><var>foreign_object</var> can be of type <code>std::vector</code> or <code>std::array</code>, a built-in array (<code>int[3]</code>, etc.) or an initializer list, or any object that <code>ra::</code> accepts as scalar (see <a href="#x_002dis_002dscalar"><code>here</code></a>). The resulting expresion has shape according to the original object. Compare this with <a href="#x_002dscalar"><code>scalar</code></a>, which will always produce an expression of rank 0.
 </p>
 <p>Generally one can mix these types with <code>ra::</code> expressions without needing <code>ra::start</code>, but sometimes this isn&rsquo;t possible, for example for operators that must be class members.
@@ -2193,12 +2254,13 @@ ra::start(x) += y; // ok
   &rArr; x = { 11, 22, 33 }
 </pre></div>
 
-<a name="index-ptr"></a>
-<a name="x_002dptr"></a><dl>
-<dt><a name="index-ptr-1"></a>Function: <strong>ptr</strong> <em>pointer [len]</em></dt>
-<dd><p>Create vector expression from raw <var>pointer</var>.
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-ptr"></span>
+<span id="x_002dptr"></span><dl class="def">
+<dt id="index-ptr-1"><span class="category">Function: </span><span><strong>ptr</strong> <em>pointer [len]</em><a href='#index-ptr-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create vector expression from raw <var>pointer</var>.
+</p>
 <p>The resulting expression has rank 1 and the length given. If <code>len</code> is not given, the expression has undefined length, and it will need to be matched with other expressions whose length <em>is</em> defined.
 </p>
 <p><code>ra::</code> doesn&rsquo;t know what is actually accessible through the pointer, so be careful. For instance:
@@ -2222,12 +2284,13 @@ v4 += p; // error checked by ra::, shape clash (4) += (3)
 cout &lt;&lt; (p + ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok
 </pre></div>
 
-<a name="index-scalar"></a>
-<a name="x_002dscalar"></a><dl>
-<dt><a name="index-scalar-1"></a>Function: <strong>scalar</strong> <em>expr</em></dt>
-<dd><p>Create scalar expression from <var>expr</var>.
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-scalar"></span>
+<span id="x_002dscalar"></span><dl class="def">
+<dt id="index-scalar-1"><span class="category">Function: </span><span><strong>scalar</strong> <em>expr</em><a href='#index-scalar-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create scalar expression from <var>expr</var>.
+</p>
 <p>The primary use of this function is to bring a scalar object into the <code>ra::</code> namespace. A somewhat artificial example:
 </p>
 <div class="example">
@@ -2262,12 +2325,13 @@ c += ra::scalar(x); // ok: scalar(x) has shape () and matches c.
 </pre></div>
 <p>where the result is {c(0)+x(0), c(1)+x(1), c(2)}.
 </p>
-<a name="index-iter"></a>
-<a name="x_002diter"></a><dl>
-<dt><a name="index-iter-1"></a>Function: <strong>iter</strong> <em>&lt;k&gt; (view)</em></dt>
-<dd><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it is interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have rt or ct shape.
-</p></dd></dl>
+</dd></dl>
 
+<span id="index-iter"></span>
+<span id="x_002diter"></span><dl class="def">
+<dt id="index-iter-1"><span class="category">Function: </span><span><strong>iter</strong> <em>&lt;k&gt; (view)</em><a href='#index-iter-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it is interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have rt or ct shape.
+</p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 2&gt; c {{1, 3, 2}, {7, 1, 3}};
 cout &lt;&lt; &quot;max of each row: &quot; &lt;&lt; map([](auto &amp;&amp; a) { return amax(a); }, iter&lt;1&gt;(c)) &lt;&lt; endl;
@@ -2309,36 +2373,37 @@ cout &lt;&lt; &quot;s: &quot; &lt;&lt; map([](auto &amp;&amp; a) { return sum(di
    s: -3 -1 -1
 </pre></div>
 
-<a name="index-sum"></a>
-<a name="x_002dsum"></a><dl>
-<dt><a name="index-sum-1"></a>Function: <strong>sum</strong> <em>expr</em></dt>
+</dd></dl>
+
+<span id="index-sum"></span>
+<span id="x_002dsum"></span><dl class="def">
+<dt id="index-sum-1"><span class="category">Function: </span><span><strong>sum</strong> <em>expr</em><a href='#index-sum-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Return the sum (+) of the elements of <var>expr</var>, or 0 if expr is empty. This sum is performed in unspecified order.
 </p></dd></dl>
 
-<a name="index-prod"></a>
-<a name="x_002dprod"></a><dl>
-<dt><a name="index-prod-1"></a>Function: <strong>prod</strong> <em>expr</em></dt>
+<span id="index-prod"></span>
+<span id="x_002dprod"></span><dl class="def">
+<dt id="index-prod-1"><span class="category">Function: </span><span><strong>prod</strong> <em>expr</em><a href='#index-prod-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Return the product (*) of the elements of <var>expr</var>, or 1 if expr is empty. This product is performed in unspecified order.
 </p></dd></dl>
 
-<a name="index-amax"></a>
-<a name="x_002damax"></a><dl>
-<dt><a name="index-amax-1"></a>Function: <strong>amax</strong> <em>expr</em></dt>
+<span id="index-amax"></span>
+<span id="x_002damax"></span><dl class="def">
+<dt id="index-amax-1"><span class="category">Function: </span><span><strong>amax</strong> <em>expr</em><a href='#index-amax-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Return the maximum of the elements of <var>expr</var>. If <var>expr</var> is empty, return <code>-std::numeric_limits&lt;T&gt;::infinity()</code> if the type supports it, otherwise <code>std::numeric_limits&lt;T&gt;::lowest()</code>, where <code>T</code> is the value type of the elements of <var>expr</var>.
 </p></dd></dl>
 
-<a name="index-amin"></a>
-<a name="x_002damin"></a><dl>
-<dt><a name="index-amin-1"></a>Function: <strong>amin</strong> <em>expr</em></dt>
+<span id="index-amin"></span>
+<span id="x_002damin"></span><dl class="def">
+<dt id="index-amin-1"><span class="category">Function: </span><span><strong>amin</strong> <em>expr</em><a href='#index-amin-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Return the minimum of the elements of <var>expr</var>. If <var>expr</var> is empty, return <code>+std::numeric_limits&lt;T&gt;::infinity()</code> if the type supports it, otherwise <code>std::numeric_limits&lt;T&gt;::max()</code>, where <code>T</code> is the value type of the elements of <var>expr</var>.
 </p></dd></dl>
 
-<a name="index-early"></a>
-<a name="x_002dearly"></a><dl>
-<dt><a name="index-early-1"></a>Function: <strong>early</strong> <em>expr default</em></dt>
+<span id="index-early"></span>
+<span id="x_002dearly"></span><dl class="def">
+<dt id="index-early-1"><span class="category">Function: </span><span><strong>early</strong> <em>expr default</em><a href='#index-early-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p><var>expr</var> shall be an array expression that returns <code>std::tuple&lt;bool, T&gt;</code>. <var>expr</var> is traversed as by <code>for_each</code>; if the expression ever returns <code>true</code> in the first element of the tuple, traversal stops and the second element is returned. If this never happens, <var>default</var> is returned instead.
-</p></dd></dl>
-
+</p>
 <p>The following definition of elementwise <code>lexicographical_compare</code> relies on <code>early</code>.
 </p>
 <div class="example">
@@ -2352,54 +2417,56 @@ inline bool lexicographical_compare(A &amp;&amp; a, B &amp;&amp; b)
 }
 </pre></div>
 
-<a name="index-any"></a>
-<a name="x_002dany"></a><dl>
-<dt><a name="index-any-1"></a>Function: <strong>any</strong> <em>expr</em></dt>
+</dd></dl>
+
+<span id="index-any"></span>
+<span id="x_002dany"></span><dl class="def">
+<dt id="index-any-1"><span class="category">Function: </span><span><strong>any</strong> <em>expr</em><a href='#index-any-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Return <code>true</code> if any element of <var>expr</var> is true, <code>false</code> otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified.
 </p></dd></dl>
 
-<a name="index-every"></a>
-<a name="x_002devery"></a><dl>
-<dt><a name="index-every-1"></a>Function: <strong>every</strong> <em>expr</em></dt>
+<span id="index-every"></span>
+<span id="x_002devery"></span><dl class="def">
+<dt id="index-every-1"><span class="category">Function: </span><span><strong>every</strong> <em>expr</em><a href='#index-every-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Return <code>true</code> if every element of <var>expr</var> is true, <code>false</code> otherwise. The traversal of the array expression will stop as soon as possible, but the traversal order is not specified.
 </p></dd></dl>
 
-<a name="index-sqr"></a>
-<a name="x_002dsqr"></a><dl>
-<dt><a name="index-sqr-1"></a>Function: <strong>sqr</strong> <em>expr</em></dt>
+<span id="index-sqr"></span>
+<span id="x_002dsqr"></span><dl class="def">
+<dt id="index-sqr-1"><span class="category">Function: </span><span><strong>sqr</strong> <em>expr</em><a href='#index-sqr-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Compute the square of <var>expr</var>.
 </p></dd></dl>
 
-<a name="index-sqrm"></a>
-<a name="x_002dsqrm"></a><dl>
-<dt><a name="index-sqrm-1"></a>Function: <strong>sqrm</strong> <em>expr</em></dt>
+<span id="index-sqrm"></span>
+<span id="x_002dsqrm"></span><dl class="def">
+<dt id="index-sqrm-1"><span class="category">Function: </span><span><strong>sqrm</strong> <em>expr</em><a href='#index-sqrm-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Compute the square of the norm-2 of <var>expr</var>, that is, <code>conj(expr)*expr</code>.
 </p></dd></dl>
 
-<a name="index-conj"></a>
-<a name="x_002dconj"></a><dl>
-<dt><a name="index-conj-1"></a>Function: <strong>conj</strong> <em>expr</em></dt>
+<span id="index-conj"></span>
+<span id="x_002dconj"></span><dl class="def">
+<dt id="index-conj-1"><span class="category">Function: </span><span><strong>conj</strong> <em>expr</em><a href='#index-conj-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Compute the complex conjugate of <var>expr</var>.
 </p></dd></dl>
 
-<a name="index-xI"></a>
-<a name="x_002dxI"></a><dl>
-<dt><a name="index-xI-1"></a>Function: <strong>xI</strong> <em>expr</em></dt>
+<span id="index-xI"></span>
+<span id="x_002dxI"></span><dl class="def">
+<dt id="index-xI-1"><span class="category">Function: </span><span><strong>xI</strong> <em>expr</em><a href='#index-xI-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Compute <code>(0+1j)</code> times <var>expr</var>.
 </p></dd></dl>
 
-<a name="index-rel_005ferror"></a>
-<a name="x_002drel_002derror"></a><dl>
-<dt><a name="index-rel_005ferror-1"></a>Function: <strong>rel_error</strong> <em>a b</em></dt>
+<span id="index-rel_005ferror"></span>
+<span id="x_002drel_002derror"></span><dl class="def">
+<dt id="index-rel_005ferror-1"><span class="category">Function: </span><span><strong>rel_error</strong> <em>a b</em><a href='#index-rel_005ferror-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p><var>a</var> and <var>b</var> are arbitrary array expressions. Compute the error of <var>a</var> relative to <var>b</var> as
 </p>
 <p><code>(a==0. &amp;&amp; b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b))</code>
 </p>
 </dd></dl>
 
-<a name="index-none-1"></a>
-<a name="x_002dnone"></a><dl>
-<dt><a name="index-none-2"></a>Special&nbsp;object<!-- /@w -->: <strong>none</strong></dt>
+<span id="index-none-1"></span>
+<span id="x_002dnone"></span><dl class="def">
+<dt id="index-none-2"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>none</strong><a href='#index-none-2' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Pass <code>none</code> to container constructors to indicate that the contents shouldn&rsquo;t be initialized. This is appropriate when the initialization you have in mind wouldn&rsquo;t fit in a constructor argument. For example:
 </p>
 <div class="example">
@@ -2411,53 +2478,53 @@ old_style_initializer(2, 3, b.data());
 </dd></dl>
 
 <hr>
-<a name="Sources"></a>
+</div>
+<div class="chapter" id="Sources">
 <div class="header">
 <p>
-Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href="#Reference" accesskey="p" rel="prev">Reference</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href="#Reference" accesskey="p" rel="prev">Reference</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Sources-1"></a>
-<h2 class="chapter">8 Sources</h2>
+<span id="Sources-1"></span><h2 class="chapter">8 Sources</h2>
 
 <table>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="Abr70"></a>[Abr70]</td><td width="90%">Philip S. Abrams. An APL machine. Technical report SLAC-114 UC-32 (MISC), Stanford Linear Accelerator Center, Stanford University, Stanford, CA, USA, February 1970.</td></tr>
+<tr><td width="10%"><span id="Abr70"></span>[Abr70]</td><td width="90%">Philip S. Abrams. An APL machine. Technical report SLAC-114 UC-32 (MISC), Stanford Linear Accelerator Center, Stanford University, Stanford, CA, USA, February 1970.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="Ber87"></a>[Ber87]</td><td width="90%">Robert Bernecky. An introduction to function rank. ACM SIGAPL APL Quote Quad, 18(2):39–43, December 1987.</td></tr>
+<tr><td width="10%"><span id="Ber87"></span>[Ber87]</td><td width="90%">Robert Bernecky. An introduction to function rank. ACM SIGAPL APL Quote Quad, 18(2):39–43, December 1987.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="bli17"></a>[bli17]</td><td width="90%">The Blitz++ meta-template library. <a href="http://blitz.sourceforge.net">http://blitz.sourceforge.net</a>, November 2017.</td></tr>
+<tr><td width="10%"><span id="bli17"></span>[bli17]</td><td width="90%">The Blitz++ meta-template library. <a href="http://blitz.sourceforge.net">http://blitz.sourceforge.net</a>, November 2017.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="Cha86"></a>[Cha86]</td><td width="90%">Gregory J. Chaitin. Physics in APL2, June 1986.</td></tr>
+<tr><td width="10%"><span id="Cha86"></span>[Cha86]</td><td width="90%">Gregory J. Chaitin. Physics in APL2, June 1986.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="FI68"></a>[FI68]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.</td></tr>
+<tr><td width="10%"><span id="FI68"></span>[FI68]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="FI73"></a>[FI73]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973.</td></tr>
+<tr><td width="10%"><span id="FI73"></span>[FI73]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="FI78"></a>[FI78]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978.</td></tr>
+<tr><td width="10%"><span id="FI78"></span>[FI78]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="J-S"></a>[J S]</td><td width="90%">J Primer. J Software, <a href="https://www.jsoftware.com/help/primer/contents.htm">https://www.jsoftware.com/help/primer/contents.htm</a>, November 2017.</td></tr>
+<tr><td width="10%"><span id="J-S"></span>[J S]</td><td width="90%">J Primer. J Software, <a href="https://www.jsoftware.com/help/primer/contents.htm">https://www.jsoftware.com/help/primer/contents.htm</a>, November 2017.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="Mat"></a>[Mat]</td><td width="90%">MathWorks. MATLAB documentation, <a href="https://www.mathworks.com/help/matlab/">https://www.mathworks.com/help/matlab/</a>, November 2017.</td></tr>
+<tr><td width="10%"><span id="Mat"></span>[Mat]</td><td width="90%">MathWorks. MATLAB documentation, <a href="https://www.mathworks.com/help/matlab/">https://www.mathworks.com/help/matlab/</a>, November 2017.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="num17"></a>[num17]</td><td width="90%">NumPy. <a href="http://www.numpy.org">http://www.numpy.org</a>, November 2017.</td></tr>
+<tr><td width="10%"><span id="num17"></span>[num17]</td><td width="90%">NumPy. <a href="http://www.numpy.org">http://www.numpy.org</a>, November 2017.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="Ric08"></a>[Ric08]</td><td width="90%">Henry Rich. J for C programmers, February 2008.</td></tr>
+<tr><td width="10%"><span id="Ric08"></span>[Ric08]</td><td width="90%">Henry Rich. J for C programmers, February 2008.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="SSM14"></a>[SSM14]</td><td width="90%">Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.</td></tr>
+<tr><td width="10%"><span id="SSM14"></span>[SSM14]</td><td width="90%">Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="Vel01"></a>[Vel01]</td><td width="90%">Todd Veldhuizen. Blitz++ user’s guide, February 2001.</td></tr>
+<tr><td width="10%"><span id="Vel01"></span>[Vel01]</td><td width="90%">Todd Veldhuizen. Blitz++ user’s guide, February 2001.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><a name="Wad90"></a>[Wad90]</td><td width="90%">Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231&ndash;248, June 1990. <a href="https://doi.org/10.1016/0304-3975%2890%2990147-A">https://doi.org/10.1016/0304-3975%2890%2990147-A</a></td></tr>
+<tr><td width="10%"><span id="Wad90"></span>[Wad90]</td><td width="90%">Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231&ndash;248, June 1990. <a href="https://doi.org/10.1016/0304-3975%2890%2990147-A">https://doi.org/10.1016/0304-3975%2890%2990147-A</a></td></tr>
 </table>
 
 <hr>
-<a name="Indices"></a>
+</div>
+<div class="unnumbered" id="Indices">
 <div class="header">
 <p>
-Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Indices-1"></a>
-<h2 class="unnumbered">Indices</h2>
+<span id="Indices-1"></span><h2 class="unnumbered">Indices</h2>
 
 <table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
  &nbsp; 
@@ -2505,7 +2572,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <table class="index-cp" border="0">
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-A">A</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-A">A</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-amax"><code>amax</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-amin"><code>amin</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-any"><code>any</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2513,7 +2580,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-assert">assert</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Functions">Functions</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-at"><code>at</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-B">B</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-BLIS">BLIS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b-1">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-libraries">Other libraries</a></td></tr>
@@ -2522,7 +2589,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton_002c-Numpy">broadcasting, singleton, Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-built_002din-array">built-in array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-C">C</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-C">C</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cast"><code>cast</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cell">cell</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-collapse"><code>collapse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2532,16 +2599,16 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-container">container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-the-library">Using the library</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ct">ct</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-D">D</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-D">D</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-diag"><code>diag</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-E">E</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-E">E</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-early"><code>early</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-error">error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Functions">Functions</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-every"><code>every</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-explode"><code>explode</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-F">F</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-F">F</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-FFTW">FFTW</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-foreign-type">foreign type</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-format_005farray"><code>format_array</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2549,23 +2616,23 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-from"><code>from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-G">G</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-G">G</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Guile">Guile</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-I">I</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-I">I</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-imag_005fpart"><code>imag_part</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-iter"><code>iter</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-J">J</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-J">J</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-J">J</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Why-C_002b_002b">Why C++</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-L">L</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-L">L</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-length">length</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-M">M</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-M">M</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-map"><code>map</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-N">N</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-N">N</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none-1"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-noshape"><code>noshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2573,13 +2640,13 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-Numpy-1">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy-2">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-O">O</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-O">O</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-OpenGL">OpenGL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-order_002c-column_002dmajor">order, column-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-other-libraries_002c-interfacing-with">other libraries, interfacing with</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-P">P</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-P">P</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-pack"><code>pack</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-pick"><code>pick</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ply"><code>ply</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2587,7 +2654,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-ptr"><code>ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Python">Python</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-R">R</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank_002c-compile_002dtime">rank, compile-time</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank_002c-runtime">rank, runtime</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
@@ -2597,7 +2664,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-rt">rt</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-runtime">runtime</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-S">S</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-S">S</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-scalar"><code>scalar</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape">shape</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape-1"><code>shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2614,22 +2681,22 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-sum"><code>sum</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-swap"><code>swap</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-T">T</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-T">T</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose"><code>transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-U">U</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-U">U</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-uninitialized-container">uninitialized container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-V">V</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-V">V</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-view">view</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-view_002c-rank-0">view, rank 0</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-W">W</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-W">W</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-where"><code>where</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-withshape"><code>withshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-wrank"><code>wrank</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-X">X</a></th><td></td><td></td></tr>
+<tr><th id="Indices_cp_letter-X">X</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-xI"><code>xI</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 </table>
@@ -2679,46 +2746,47 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 
 
 <hr>
-<a name="Notes"></a>
+</div>
+<div class="unnumbered" id="Notes">
 <div class="header">
 <p>
-Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>ra::</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Notes-1"></a>
-<h2 class="unnumbered">Notes</h2>
+<span id="Notes-1"></span><h2 class="unnumbered">Notes</h2>
 
 <ol>
 <li> <code>ra::</code> uses the non standard <code>#pragma once</code> (supported on all major compilers).
 </li></ol>
 
+</div>
+</div>
 <div class="footnote">
 <hr>
 <h4 class="footnotes-heading">Footnotes</h4>
 
-<h3><a name="FOOT1" href="#DOCF1">(1)</a></h3>
+<h5><a id="FOOT1" href="#DOCF1">(1)</a></h5>
 <p>/ə&rsquo;ɹ-eɪ/, I guess.</p>
-<h3><a name="FOOT2" href="#DOCF2">(2)</a></h3>
+<h5><a id="FOOT2" href="#DOCF2">(2)</a></h5>
 <p>Sometimes &lsquo;strides&rsquo;. Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
-<h3><a name="FOOT3" href="#DOCF3">(3)</a></h3>
+<h5><a id="FOOT3" href="#DOCF3">(3)</a></h5>
 <p>Examples given without context assume that one has declared <code>using std::cout;</code>, etc.</p>
-<h3><a name="FOOT4" href="#DOCF4">(4)</a></h3>
+<h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
 <p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
-<h3><a name="FOOT5" href="#DOCF5">(5)</a></h3>
+<h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
 <p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
-<h3><a name="FOOT6" href="#DOCF6">(6)</a></h3>
+<h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
 <p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.</p>
-<h3><a name="FOOT7" href="#DOCF7">(7)</a></h3>
+<h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
 <p>Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> [<a href="#Sources">Ber87</a>]
  and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>
-<h3><a name="FOOT8" href="#DOCF8">(8)</a></h3>
+<h5><a id="FOOT8" href="#DOCF8">(8)</a></h5>
 <p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
-<h3><a name="FOOT9" href="#DOCF9">(9)</a></h3>
+<h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively.
 Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 </div>
-<hr>
 
 
-
+<a href='js_licenses.html' rel='jslicense'><small>JavaScript license information</small></a>
 </body>
 </html>

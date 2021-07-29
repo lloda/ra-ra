@@ -135,12 +135,12 @@ inline constexpr bool any(bool const x) { return x; }
 inline constexpr bool every(bool const x) { return x; }
 inline constexpr bool odd(unsigned int N) { return N & 1; }
 
-// This logically belongs in ra/small.hh, but it's here so that we can return ra:: types from shape().
-
 
 // ---------------------
 // nested braces for Small initializers
 // ---------------------
+
+// This logically belongs in ra/small.hh, but it's here so that shape() can return ra:: types.
 
 // The general SmallArray has 4 constructors,
 // 1. The empty constructor.

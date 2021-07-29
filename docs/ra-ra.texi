@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 16
-@set UPDATED 2021 June 22
+@set UPDATED 2021 July 29
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -740,7 +740,6 @@ Besides, when the subscripts @code{i, j, ...} are scalars or @dfn{linear ranges}
 @anchor{x-iota}
 @deffn @w{Special object} iota count [start:0 [step:1]]
 Create a linear range @code{start, start+step, ... start+step*(count-1)}.
-@end deffn
 
 This can used anywhere an array expression is expected.
 
@@ -762,9 +761,10 @@ auto c = a(iota(3, 3));
 @result{} a = @{4, 5, 6@}
 @end example
 
+@end deffn
+
 @deffn @w{Special object} all
 Create a linear range @code{0, 1, ... (nᵢ-1)} when used as a subscript for the @code{i}-th argument of a subscripting expression.
-@end deffn
 
 This object cannot stand alone as an array expression. All the examples below result in @code{View} objects:
 
@@ -782,9 +782,10 @@ auto g = a(ra::all, 1); // second column of a
 
 @code{all} is a special case (@code{dots<1>}) of the more general object @code{dots}.
 
+@end deffn
+
 @deffn @w{Special object} dots<n>
 Equivalent to as many instances of @code{ra::all} as indicated by @code{n}, which must not be negative. Each instance takes the place of one argument to the subscripting operation.
-@end deffn
 
 This object cannot stand alone as an array expression. All the examples below result in @code{View} objects:
 
@@ -800,6 +801,8 @@ auto m = a(ra::dots<1>, 1); // second column of a
 @end example
 
 This is useful when writing rank-generic code, see @code{examples/maxwell.cc} in the distribution for an example.
+
+@end deffn
 
 @anchor{x-insert}
 @deffn @w{Special object} insert<n>
@@ -1111,7 +1114,7 @@ Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the 
 
 @subsection Using @code{ra::} types with the STL
 
-General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the internal order of the view.
+General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
 
 For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient in general for ranks above 1, and I haven't implemented them. The container @code{RandomAccessIterator}s that are provided are in fact raw pointers.
 
@@ -1702,7 +1705,6 @@ FIXME
 @cindex @code{at}
 @anchor{x-at} @defun at expr indices
 Look up @var{expr} at each element of @var{indices}, which shall be a multi-index into @var{expr}.
-@end defun
 
 This can be used for sparse subscripting. For example:
 @example @c [ra30]
@@ -1713,6 +1715,8 @@ This can be used for sparse subscripting. For example:
 @end verbatim
   @result{} B = @{@{101, 120@}, @{110, 121@}@}
 @end example
+
+@end defun
 
 @cindex @code{cast}
 @anchor{x-cast} @defun cast <type> expr
@@ -1728,11 +1732,12 @@ See also @ref{x-explode,@code{explode}}.
 @cindex @code{concrete}
 @anchor{x-concrete} @defun concrete a
 Convert the argument to a container of the same shape as @var{a}.
-@end defun
 
 If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 
 @c FIXME example
+
+@end defun
 
 @cindex @code{diag}
 @anchor{x-diag} @defun diag view
@@ -1749,7 +1754,6 @@ See also @ref{x-collapse,@code{collapse}}.
 @cindex @code{for_each}
 @anchor{x-for_each} @defun for_each op expr ...
 Create an array expression that applies @var{op} to @var{expr} ..., and traverse it.
-@end defun
 
 @var{op} is run for effect; whatever it returns is discarded. For example:
 @example
@@ -1761,6 +1765,8 @@ for_each([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})
 @end example
 
 See also @ref{x-map,@code{map}}.
+
+@end defun
 
 @cindex @code{format_array}
 @anchor{x-format_array} @defun format_array expr [last_axis_separator [second_last_axis_separator ...]]
@@ -1784,16 +1790,20 @@ case b:
 case c:
 1|2-3|4
 @end example
-@end defun
 
 The shape that might be printed before the expression itself (depending on its type) is not subject to these separators.
 
 See also @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
 
-@cindex @code{from}
-@anchor{x-from} @defun from op ... expr
-Create outer product expression. This is defined as @math{E = from(op, e₀, e₁ ...)} ⇒ @math{E(i₀₀, i₀₁ ..., i₁₀, i₁₁, ..., ...) = op[e₀(i₀₀, i₀₁, ...), e₁(i₁₀, i₁₁, ...), ...]}.
 @end defun
+
+@cindex @code{from}
+@anchor{x-from} @defun from op expr ...
+Create outer product expression. This is defined as
+
+@display
+E = from(op, e₀, e₁ ...) ⇒ E(i₀₀, i₀₁ ..., i₁₀, i₁₁, ..., ...) = op[expr₀(i₀₀, i₀₁, ...), expr₁(i₁₀, i₁₁, ...), ...].
+@end display
 
 For example:
 @example
@@ -1816,6 +1826,8 @@ For example:
 @end example
 
 The last example is more or less how @code{A(i, j)} is actually implemented (@pxref{The rank conjunction}).
+
+@end defun
 
 @cindex @code{imag_part}
 @anchor{x-imag_part} @defun imag_part
@@ -1840,7 +1852,6 @@ See also @ref{x-real_part,@code{real_part}}.
 @cindex @code{map}
 @anchor{x-map} @defun map op expr ...
 Create an array expression that applies @var{op} to @var{expr} ...
-@end defun
 
 For example:
 @example
@@ -1866,6 +1877,8 @@ Here the anonymous function can be replaced by simply @code{x}. Remember that un
 
 See also @ref{x-for_each,@code{for_each}}.
 
+@end defun
+
 @cindex @code{pack}
 @anchor{x-pack} @defun pack <type> expr ...
 Create an array expression that brace-constructs @var{type} from @var{expr} ...
@@ -1874,7 +1887,6 @@ Create an array expression that brace-constructs @var{type} from @var{expr} ...
 @cindex @code{pick}
 @anchor{x-pick} @defun pick select_expr expr ...
 Create an array expression that selects the first of @var{expr} ... if @var{select_expr} is 0, the second if @var{select_expr} is 1, and so on. The expressions that are not selected are not looked up.
-@end defun
 
 This function cannot be defined using @ref{x-map,@code{map}}, because @code{map} looks up each one of its argument expressions before calling @var{op}.
 
@@ -1887,10 +1899,11 @@ For example:
   @result{} z = @{1.41421, 2, 0@}
 @end example
 
+@end defun
+
 @cindex @code{ply}
 @anchor{x-ply} @defun ply expr
 Traverse @var{expr}. @code{ply} returns @code{void} so @var{expr} should be run for effect.
-@end defun
 
 It is rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)} (which is actually @code{ply(map(...))} should cover most other uses.
 
@@ -1902,6 +1915,8 @@ ply(map([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})) // same as
 @result{} s = 6.
 @end example
 
+@end defun
+
 @cindex @code{real_part}
 @anchor{x-real_part} @defun real_part
 Take real part of a complex number. This can be used as reference.
@@ -1912,20 +1927,22 @@ See also @ref{x-imag_part,@code{imag_part}}.
 @cindex @code{reverse}
 @anchor{x-reverse} @defun reverse view axis
 Create a new view by reversing axis @var{k} of @var{view}.
-@end defun
 
 This is equivalent to @code{view(ra::dots<k>, ra::iota(view.len(k), view.len(k)-1, -1))}.
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
+@end defun
+
 @cindex @code{shape}
 @anchor{x-shape} @defun shape a
 Get the shape of an @code{ra::} object.
-@end defun
 
 The shape of a rt rank array is a rank-1 object with rt size, and the shape of a ct rank array is a rank-1 object with ct size.
 
 This function may return an expression object or an array object. If you need to operate on the result, it might be necessary to use @code{concrete}.
+
+@end defun
 
 @c FIXME example
 
@@ -1939,11 +1956,12 @@ Get the total size of an @code{ra::} object: the product of all its lengths.
 @cindex @code{stencil}
 @anchor{x-stencil} @defun stencil view lo hi
 Create a stencil on @var{view} with lower bounds @var{lo} and higher bounds @var{hi}.
-@end defun
 
 @var{lo} and @var{hi} are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their lengths reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
+
+@end defun
 
 @cindex @code{swap}
 @anchor{x-swap} @defun swap a b
@@ -1967,7 +1985,6 @@ This function reuses @code{std::swap} for same-rank overloads, so it must not be
 @anchor{x-transpose}
 @defun transpose <axes ...> (view) | (axes, view)
 Create a new view by transposing the axes of @var{view}. The number of @var{axes} must match the rank of @var{view}.
-@end defun
 
 For example:
 
@@ -2033,10 +2050,11 @@ The two argument form lets you specify the axis list at runtime. In that case th
 
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
+@end defun
+
 @cindex @code{where}
 @anchor{x-where} @defun where pred_expr true_expr false_expr
 Create an array expression that selects @var{true_expr} if @var{pred_expr} is @code{true}, and @var{false_expr} if @var{pred_expr} is @code{false}. The expression that is not selected is not looked up.
-@end defun
 
 For example:
 @example
@@ -2047,10 +2065,11 @@ For example:
   @result{} s = @{1, -1, 2, 2@}
 @end example
 
+@end defun
+
 @cindex @code{wrank}
 @anchor{x-wrank} @defun wrank <input_rank ...> op
 Wrap op using a rank conjunction (@pxref{The rank conjunction}).
-@end defun
 
 For example: TODO
 @example
@@ -2059,19 +2078,20 @@ For example: TODO
   @result{} x = 0
 @end example
 
+@end defun
+
 @c @anchor{x-reshape}
 @c @defun reshape view shape
 @c Create a new view with shape @var{shape} from the row-major ravel of @var{view}.
+@c FIXME fill when the implementation is more mature...
 @c @end defun
 
-@c FIXME fill when the implementation is more mature...
 
 @c @anchor{x-ravel}
 @c @defun ravel view
 @c Return the ravel of @var{view} as a view on @var{view}.
-@c @end defun
-
 @c FIXME fill when the implementation is more mature...
+@c @end defun
 
 @cindex @code{noshape}
 @cindex @code{withshape}
@@ -2079,7 +2099,6 @@ For example: TODO
 @anchor{x-withshape}
 @deffn @w{Special object} {withshape noshape}
 If either of these objects is sent to @code{std::ostream} before an expression object, the shape of that object will or won't be printed.
-@end deffn
 
 If the object has ct shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has rt shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] expect the shape to be present or not according to the default.
 
@@ -2126,10 +2145,11 @@ Note that in the last example the very shape of @code{ra::Big<int>} has rt lengt
 
 See also @ref{x-format_array,@code{format_array}}.
 
+@end deffn
+
 @cindex @code{start}
 @anchor{x-start} @defun start foreign_object
 Create a array expression from @var{foreign_object}.
-@end defun
 
 @var{foreign_object} can be of type @code{std::vector} or @code{std::array}, a built-in array (@code{int[3]}, etc.) or an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
 
@@ -2148,10 +2168,11 @@ ra::start(x) += y; // ok
   @result{} x = @{ 11, 22, 33 @}
 @end example
 
+@end defun
+
 @cindex @code{ptr}
 @anchor{x-ptr} @defun ptr pointer [len]
 Create vector expression from raw @var{pointer}.
-@end defun
 
 The resulting expression has rank 1 and the length given. If @code{len} is not given, the expression has undefined length, and it will need to be matched with other expressions whose length @emph{is} defined.
 
@@ -2180,10 +2201,11 @@ cout << (p + ra::TensorIndex<0>{}) << endl; // ok
 @end verbatim
 @end example
 
+@end defun
+
 @cindex @code{scalar}
 @anchor{x-scalar} @defun scalar expr
 Create scalar expression from @var{expr}.
-@end defun
 
 The primary use of this function is to bring a scalar object into the @code{ra::} namespace. A somewhat artificial example:
 
@@ -2225,10 +2247,11 @@ c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
 @end example
 where the result is @{c(0)+x(0), c(1)+x(1), c(2)@}.
 
+@end defun
+
 @cindex @code{iter}
 @anchor{x-iter} @defun iter <k> (view)
 Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have rt or ct shape.
-@end defun
 
 @example
 @verbatim
@@ -2279,6 +2302,8 @@ cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << end
    s: -3 -1 -1
 @end  example
 
+@end defun
+
 @cindex @code{sum}
 @anchor{x-sum} @defun sum expr
 Return the sum (+) of the elements of @var{expr}, or 0 if expr is empty. This sum is performed in unspecified order.
@@ -2302,7 +2327,6 @@ Return the minimum of the elements of @var{expr}. If @var{expr} is empty, return
 @cindex @code{early}
 @anchor{x-early} @defun early expr default
 @var{expr} shall be an array expression that returns @code{std::tuple<bool, T>}. @var{expr} is traversed as by @code{for_each}; if the expression ever returns @code{true} in the first element of the tuple, traversal stops and the second element is returned. If this never happens, @var{default} is returned instead.
-@end defun
 
 The following definition of elementwise @code{lexicographical_compare} relies on @code{early}.
 
@@ -2318,6 +2342,8 @@ inline bool lexicographical_compare(A && a, B && b)
 }
 @end verbatim
 @end example
+
+@end defun
 
 @cindex @code{any}
 @anchor{x-any} @defun any expr
