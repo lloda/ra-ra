@@ -470,14 +470,6 @@ inline auto perp(V const & v, U const & n)
 // --------------------
 
 template <class A>
-requires (is_slice<A>)
-inline auto normv(A const & a)
-{
-    return concrete(a/norm2(a));
-}
-
-template <class A>
-requires (!is_slice<A> && is_ra<A>)
 inline auto normv(A const & a)
 {
     auto b = concrete(a);
@@ -493,7 +485,6 @@ gemm(A const & a, B const & b, C & c)
     for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
 }
 
-// FIXME branch gemm on Ryn::size_s(), but that's bugged.
 #define MMTYPE decltype(from(times(), a(ra::all, 0), b(0, ra::all)))
 
 // default for row-major x row-major. See bench-gemm.cc for variants.

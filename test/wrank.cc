@@ -19,7 +19,7 @@
 using std::cout, std::endl, std::flush, std::tuple, ra::dim_t, ra::TestRecorder;
 using real = double;
 
-// Find the driver for given axis. This pattern is used in Ryn to find the size-giving argument for each axis.
+// Find the driver for given axis (This isn't used anymore in ra::; see ra::Match).
 template <int iarg, class T>
 constexpr int
 driver(T && t, int k)
