@@ -2,7 +2,7 @@
 @c %**start of header
 @setfilename ra-ra.info
 @documentencoding UTF-8
-@settitle ra:: —An array library for C++20
+@settitle ra:: — An array library for C++20
 @c %**end of header
 
 @c Keep track of

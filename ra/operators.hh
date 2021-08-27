@@ -352,7 +352,14 @@ template <class A, class B>
 inline auto dot(A && a, B && b)
 {
     std::decay_t<decltype(FLAT(a) * FLAT(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { c = fma(a, b, c); }, a, b);
+    for_each([&c](auto && a, auto && b)
+             {
+#ifdef FP_FAST_FMA
+                 c = fma(a, b, c);
+#else
+                 c += a*b;
+#endif
+             }, a, b);
     return c;
 }
 
@@ -360,7 +367,14 @@ template <class A, class B>
 inline auto cdot(A && a, B && b)
 {
     std::decay_t<decltype(conj(FLAT(a)) * FLAT(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { c = fma_conj(a, b, c); }, a, b);
+    for_each([&c](auto && a, auto && b)
+             {
+#ifdef FP_FAST_FMA
+                 c = fma_conj(a, b, c);
+#else
+                 c += conj(a)*b;
+#endif
+             }, a, b);
     return c;
 }
 
@@ -485,7 +499,7 @@ gemm(A const & a, B const & b, C & c)
     for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
 }
 
-#define MMTYPE decltype(from(times(), a(ra::all, 0), b(0, ra::all)))
+#define MMTYPE decltype(from(times(), a(ra::all, 0), b(0)))
 
 // default for row-major x row-major. See bench-gemm.cc for variants.
 template <class S, class T>
@@ -498,7 +512,7 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, decltype(a(0, 0)*b(0, 0))());
     for (int k=0; k<K; ++k) {
-        c += from(times(), a(ra::all, k), b(k, ra::all));
+        c += from(times(), a(ra::all, k), b(k));
     }
     return c;
 }
@@ -529,7 +543,7 @@ gevm(A const & a, B const & b)
     int const M = b.len(0);
     int const N = b.len(1);
 // no with_same_shape b/c cannot index 0 for type if A/B are empty
-    auto c = with_shape<decltype(a[0]*b(0, ra::all))>({N}, 0);
+    auto c = with_shape<decltype(a[0]*b(0))>({N}, 0);
     for (int i=0; i<M; ++i) {
         c += a[i]*b(i);
     }
