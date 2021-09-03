@@ -108,7 +108,7 @@ def to_test(env, variant_dir, source, args):
                 print("FAILED %s" % str(self.args))
             return r
 
-    stamp = env.File(join(variant_dir, str(source[0])) + string.join(args[1:]) + '.check')
+    stamp = env.File(join(variant_dir, str(source[0])) + "".join(args[1:]) + '.check')
     return env.Command(stamp, source, tester(args))
 
 # def to_source(env, targets, source):
