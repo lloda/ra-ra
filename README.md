@@ -66,7 +66,7 @@ The library itself is header-only and has no dependencies other than a C++20 com
 
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can also build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
 
-The tests pass under gcc 10.3/11.1 (earlier versions don't support `-std=c++20` or have bugs). Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
+The tests pass under gcc 10.3/11.2 (earlier versions don't support `-std=c++20` or have bugs). Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
 
 <!-- All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for: -->
 
@@ -96,7 +96,7 @@ The tests pass under gcc 10.3/11.1 (earlier versions don't support `-std=c++20` 
 * Operations that require allocation, such as concatenation or search, are mostly absent.
 * Traversal of arrays is naive (just unrolling of inner dimensions).
 * Handling of nested (‘ragged’) arrays is inconsistent.
-* Not much support for SIMD.
+* No SIMD to speak of.
 
 Please have a look at TODO for a concrete list of known bugs.
 
@@ -116,3 +116,20 @@ It was a heroic feat to write a library such as Blitz++ in C++ in the late 90s, 
 From APL and J I've taken the rank extension mechanism, and perhaps an inclination for carrying each feature to its logical end.
 
 **ra-ra** wants to remain a simple library. I try not to second-guess the compiler and I don't stress performance as much as Blitz++ did. However, I'm wary of adding features that could become an obstacle if I ever tried to make things fast(er). I believe that the implementation of new traversal methods, or perhaps the optimization of specific expression patterns, should be possible without having to turn the library inside out.
+
+#### Other C++ array libraries
+
+* [Blitz++](http://www.oonumerics.org/blitz/manual/blitz.html)
+* [Eigen](https://eigen.tuxfamily.org)
+* [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html)
+* [xtensor](https://github.com/QuantStack/xtensor)
+* [Towards a standard for a C++ multi-dimensional array library for scientific applications](http://www.met.reading.ac.uk/clouds/cpp_arrays/) Reviews a number of C++ array libraries, including **ra-ra** (2020-08).
+
+#### Links
+
+* [libsimdpp](https://github.com/p12tic/libsimdpp) C++ SIMD library
+* [J for C programmers](http://www.jsoftware.com/help/jforc/contents.htm)
+* [GNU APL](https://www.gnu.org/software/apl/)
+* [Fortran wiki](http://fortranwiki.org/fortran/show/diff/HomePage)
+* [Numpy](https://numpy.org/)
+* [Octave](https://www.gnu.org/software/octave/)

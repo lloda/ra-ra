@@ -14,20 +14,11 @@
 #include <iomanip>
 #include <version>
 #include <iostream>
-#if __cpp_lib_source_location >= 201907L
-#include <source_location>
-#endif
 #include "ra/ra.hh"
 
 namespace ra {
 
 template <> constexpr bool is_scalar_def<std::string> = true;
-
-#if __cpp_lib_source_location >= 201907L
-using source_location = std::source_location;
-#else
-struct source_location { constexpr static source_location current() { return source_location {}; } };
-#endif
 
 struct TestRecorder
 {
@@ -54,15 +45,6 @@ struct TestRecorder
         return format(esc_yellow, std::setprecision(2), e, esc_plain);
     }
 
-    static std::string format_location(source_location const loc)
-    {
-#if __cpp_lib_source_location >= 201907L
-        return format(" ", loc.file_name(), ":", loc.line(), ",", loc.column());
-#else
-        return "";
-#endif
-    }
-
     template <class ... A> TestRecorder & info(A && ... a)
     {
         bool empty = (info_str=="");
@@ -84,14 +66,14 @@ struct TestRecorder
         case QUIET: {
             if (!c) {
                 o << esc_cyan << "[" << (willskip ? std::string("skipped") : format(total))
-                  << format_location(loc) << "]" << esc_plain << " ... "
+                  << ":" << format(loc) << "]" << esc_plain << " ... "
                   << esc_bold << esc_red << "FAILED" << esc_reset
                   << " " << info_full() << std::endl;
             }
         }; break;
         case NOISY: case ERRORS: {
             o << esc_cyan << "[" << (willskip ? std::string("skipped") : format(total))
-              << format_location(loc) << "]" << esc_plain << " ... "
+              << ":" << format(loc) << "]" << esc_plain << " ... "
               << (c ? std::string(esc_green) + "ok" + esc_plain
                   : std::string(esc_bold) + esc_red + "FAILED" + esc_reset)
               << " " << ((verbose==NOISY || !c) ? info_full() : info_min()) << std::endl;

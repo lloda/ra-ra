@@ -164,6 +164,13 @@ void example5()
     cout << "outer product selection: " << a(x, y) << endl;
 }
 
+void example6()
+{
+    ra::Big<int, 1> v = { 1, 3, 4, 9, 15, 12, 0, 1, 15, 12, 0, 3, 4, 8 };
+    constexpr char chmap[] = "0123456789ABCDEF";
+    cout << format_array(map(ra::Big<char, 1>(chmap), v), "") << endl; // FIXME make ra::start(chmap) work
+}
+
 int main()
 {
     example1();
@@ -171,4 +178,5 @@ int main()
     example3();
     example4();
     example5();
+    example6();
 }

@@ -6,10 +6,11 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/6]
-  - [-] Bugs [1/7]
-    - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
+  - [-] Bugs [2/8]
+    - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
       - Tried is_constant_eval in c++20 but didn't work out as I hoped.
+      - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
     - [X] size_s, rank_s in Ryn:: are broken [ra07]
     - [ ] ambiguity / bad init in nested constructors [ra45]
     - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
@@ -20,7 +21,7 @@ checkbox [C-ct] flip TODO
     - [ ] be namespace clean except for possibly real.hh, complex.hh.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
-  - [-] Features [1/5]
+  - [-] Features [1/7]
     - [ ] Iota is both vector-like object and iterator. Split into two types?
     - [ ] View::p is not const because it's used as sliding window (cell_iterator_big). Split into two types?
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
