@@ -22,6 +22,18 @@ template <> constexpr bool is_scalar_def<std::string> = true;
 
 struct TestRecorder
 {
+// ra::amax ignore nans in the way fmax etc. do, and we don't want that here.
+    template <class A>
+    inline static auto amax_strict(A && a)
+    {
+        using std::max;
+        using T = value_t<A>;
+        T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
+        return early(map([&c](auto && a) { if (c<a) { c = a; }; return std::make_tuple(isnan(a), ra::QNAN<double>*a); },
+                         std::forward<A>(a)), c);
+        return c;
+    }
+
     enum verbose_t { QUIET, // as NOISY if failed, else no output
                      ERRORS, // as NOISY if failed, else info and fp errors (default)
                      NOISY }; // full output of info, test arguments, fp errors
@@ -146,12 +158,12 @@ struct TestRecorder
                           source_location const loc = source_location::current())
     {
         double e = (level<=0)
-            ? amax(where(isnan(ref),
-                         where(isnan(a), 0., std::numeric_limits<double>::infinity()),
-                         rel_error(ref, a)))
-            : amax(where(isnan(ref),
-                         where(isnan(a), 0., std::numeric_limits<double>::infinity()),
-                         abs(ref-a)/level));
+            ? amax_strict(where(isnan(ref),
+                                where(isnan(a), 0., std::numeric_limits<double>::infinity()),
+                                rel_error(ref, a)))
+            : amax_strict(where(isnan(ref),
+                                where(isnan(a), 0., std::numeric_limits<double>::infinity()),
+                                abs(ref-a)/level));
         test(e<=req_err,
              LAZYINFO("rerr (", esc_yellow, "ref", esc_plain, ": ", ref, esc_yellow, ", got", esc_plain, ": ", a,
                       ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req_err),
@@ -164,9 +176,9 @@ struct TestRecorder
     double test_abs_error(R && ref, A && a, double req_err=0,
                           source_location const loc = source_location::current())
     {
-        double e = amax(where(isnan(ref),
-                              where(isnan(a), 0., std::numeric_limits<double>::infinity()),
-                              abs(ref-a)));
+        double e = amax_strict(where(isnan(ref),
+                                     where(isnan(a), 0., std::numeric_limits<double>::infinity()),
+                                     abs(ref-a)));
         test(e<=req_err,
              LAZYINFO((verbose!=QUIET), "aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req_err),
              LAZYINFO("aerr: ", format_error(e), ", req. ", req_err),
