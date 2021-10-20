@@ -50,10 +50,10 @@ env.Prepend(CPPPATH=['..', '.'],
             CXXFLAGS=ra.CXXFLAGS)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['view', 'outer', 'slicing', 'where-pick', 'rangexpr', 'useret', 'deriv',
-                 'indirect', 'cast', 'nested', 'agreement', 'small', 'readme',
-                 'explode-collapse', 'newton', 'maxwell', 'laplace2d', 'laplace3d',
-                 'throw']]
+ for example in ['agreement', 'cast', 'deriv', 'explode-collapse', 'indirect',
+                 'laplace2d', 'laplace3d', 'maxwell', 'nested', 'newton', 'outer',
+                 'pitfall', 'rangexpr', 'readme', 'slicing', 'small', 'throw',
+                 'useret', 'view', 'where-pick']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/examples'))
