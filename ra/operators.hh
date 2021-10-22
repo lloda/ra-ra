@@ -16,6 +16,7 @@
 #include "ra/pick.hh"
 #include "ra/view-ops.hh"
 #include "ra/optimize.hh"
+#include "ra/wedge.hh"
 
 #ifndef RA_DO_OPT
   #define RA_DO_OPT 1 // enabled by default

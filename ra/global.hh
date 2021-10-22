@@ -9,7 +9,6 @@
 // later version.
 
 #pragma once
-#include "ra/wedge.hh"
 #include "ra/atom.hh"
 
 // Cf using std::abs, etc. in real.hh.
