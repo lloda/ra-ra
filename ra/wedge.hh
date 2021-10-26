@@ -11,7 +11,7 @@
 #pragma once
 #include "ra/bootstrap.hh"
 
-namespace mp {
+namespace ra::mp {
 
 template <class P>
 struct MatchPermutationP
@@ -70,10 +70,6 @@ struct ChooseComponents<D, O>
     using type = typename MapAntiCombination<C, D>::type;
 };
 template <int D, int O> using ChooseComponents_ = typename ChooseComponents<D, O>::type;
-
-} // namespace mp
-
-namespace fun {
 
 // Works *almost* to the range of size_t.
 constexpr size_t n_over_p(size_t const n, size_t p)
@@ -206,10 +202,14 @@ template <int D, int O, class Va, class Vb>
 void hodgex(Va const & a, Vb & b)
 {
     static_assert(O<=D, "bad orders");
-    static_assert(Va::size()==Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc.
-    static_assert(Vb::size()==Hodge<D, O>::Nb, "error");
-    Hodge<D, O>::template hodge_aux<0>(a, b);
+    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc.
+    static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
+    mp::Hodge<D, O>::template hodge_aux<0>(a, b);
 }
+
+} // namespace ra::mp
+
+namespace ra {
 
 // This depends on Wedge<>::Ca, Cb, Cr coming from ChooseCombinations, as enforced in the tests in test_wedge_product. hodgex() should always work, but this is cheaper.
 // However if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
@@ -220,8 +220,8 @@ requires (TRIVIAL(D, O))
 inline void
 hodge(Va const & a, Vb & b)
 {
-    static_assert(Va::size()==fun::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc
-    static_assert(Vb::size()==fun::Hodge<D, O>::Nb, "error");
+    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc
+    static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
     b = a;
 }
 
@@ -230,7 +230,7 @@ requires (TRIVIAL(D, O))
 inline Va const &
 hodge(Va const & a)
 {
-    static_assert(Va::size()==fun::Hodge<D, O>::Na, "error"); // gcc accepts a.size()
+    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size()
     return a;
 }
 
@@ -239,7 +239,7 @@ requires (!TRIVIAL(D, O))
 inline void
 hodge(Va const & a, Vb & b)
 {
-    fun::hodgex<D, O>(a, b);
+    ra::mp::hodgex<D, O>(a, b);
 }
 
 template <int D, int O, class Va>
@@ -248,9 +248,9 @@ inline Va &
 hodge(Va & a)
 {
     Va b(a);
-    fun::hodgex<D, O>(b, a);
+    ra::mp::hodgex<D, O>(b, a);
     return a;
 }
 #undef TRIVIAL
 
-} // namespace fun
+} // namespace ra

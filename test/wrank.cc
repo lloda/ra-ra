@@ -24,7 +24,7 @@ template <int iarg, class T>
 constexpr int
 driver(T && t, int k)
 {
-    if constexpr (iarg<mp::len<std::decay_t<T>>) {
+    if constexpr (iarg<ra::mp::len<std::decay_t<T>>) {
         if (k<std::get<iarg>(t).rank()) {
             dim_t s = std::get<iarg>(t).len(k);
             if (s>=0) {
@@ -46,10 +46,10 @@ void nested_wrank_demo(V && v, A && a, B && b)
     std::iota(b.begin(), b.end(), 1);
     {
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
-        cout << "width of fm: " << mp::len<typename FM::R> << endl;
-        cout << mp::print_int_list<typename FM::R> {} << endl;
-        auto af0 = ra::reframe<mp::ref<typename FM::R, 0>>(a.iter());
-        auto af1 = ra::reframe<mp::ref<typename FM::R, 1>>(b.iter());
+        cout << "width of fm: " << ra::mp::len<typename FM::R> << endl;
+        cout << ra::mp::print_int_list<typename FM::R> {} << endl;
+        auto af0 = ra::reframe<ra::mp::ref<typename FM::R, 0>>(a.iter());
+        auto af1 = ra::reframe<ra::mp::ref<typename FM::R, 1>>(b.iter());
         cout << "af0: " << sizeof(af0) << endl;
         cout << "af1: " << sizeof(af1) << endl;
         {
@@ -60,7 +60,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
                 cout << ewv.len(k) << ": " << driver<0>(ewv.t, k) << endl;
             }
 
-            // cout << mp::show_type<decltype(ra::ewv<FM>(FM::op(v), af0, af1))>::value << endl;
+            // cout << ra::mp::show_type<decltype(ra::ewv<FM>(FM::op(v), af0, af1))>::value << endl;
             cout << "\nusing (ewv &):\n";
             ra::ply_ravel(ewv);
             cout << endl;
@@ -68,7 +68,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
             ra::ply_ravel(ra::expr(FM::op(v), af0, af1));
         }
         {
-            // cout << mp::show_type<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
+            // cout << ra::mp::show_type<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
             auto ewv = ra::expr(v, a.iter(), b.iter());
             cout << "shape(ewv): " << ra::noshape << shape(ewv) << endl;
 #define TEST(plier)                                                     \
@@ -91,11 +91,11 @@ int main()
     tr.section("declaring verbs");
     {
         auto v = ra::wrank<0, 1>(plus2real);
-        cout << mp::ref<decltype(v)::cranks, 0>::value << endl;
-        cout << mp::ref<decltype(v)::cranks, 1>::value << endl;
+        cout << ra::mp::ref<decltype(v)::cranks, 0>::value << endl;
+        cout << ra::mp::ref<decltype(v)::cranks, 1>::value << endl;
         auto vv = ra::wrank<1, 1>(v);
-        cout << mp::ref<decltype(vv)::cranks, 0>::value << endl;
-        cout << mp::ref<decltype(vv)::cranks, 1>::value << endl;
+        cout << ra::mp::ref<decltype(vv)::cranks, 0>::value << endl;
+        cout << ra::mp::ref<decltype(vv)::cranks, 1>::value << endl;
 
         static_assert(ra::is_verb<decltype(v)>);
         static_assert(!ra::is_verb<decltype(plus2real)>);
@@ -110,10 +110,10 @@ int main()
         {
             auto v = ra::wrank<0, 2>(plus2real_print);
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
-            cout << "width of fm: " << mp::len<FM::R> << endl;
-            cout << mp::print_int_list<FM::R> {} << endl;
-            auto af0 = ra::reframe<mp::ref<FM::R, 0>>(a.iter());
-            auto af1 = ra::reframe<mp::ref<FM::R, 1>>(b.iter());
+            cout << "width of fm: " << ra::mp::len<FM::R> << endl;
+            cout << ra::mp::print_int_list<FM::R> {} << endl;
+            auto af0 = ra::reframe<ra::mp::ref<FM::R, 0>>(a.iter());
+            auto af1 = ra::reframe<ra::mp::ref<FM::R, 1>>(b.iter());
             cout << "af0: " << sizeof(af0) << endl;
             cout << "af1: " << sizeof(af1) << endl;
             auto ewv = expr(FM::op(v), af0, af1);

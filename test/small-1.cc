@@ -16,26 +16,27 @@
 #include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
+using ra::mp::int_list, ra::mp::int_t, ra::mp::print_int_list, ra::mp::ref;
 
 int main()
 {
     TestRecorder tr;
     tr.section("pieces of transpose(ra::Small)");
     {
-        using lens = mp::int_list<1, 2, 3, 4, 5>;
-        using steps = mp::int_list<1, 10, 100, 1000, 10000>;
+        using lens = int_list<1, 2, 3, 4, 5>;
+        using steps = int_list<1, 10, 100, 1000, 10000>;
 
-        using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0>>::type;
-        using e0 = mp::int_list<0, 4>;
-        tr.info(mp::print_int_list<e0> {}, " vs ", mp::print_int_list<c0> {}).test(std::is_same_v<e0, c0>);
+        using c0 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_t<0>>::type;
+        using e0 = int_list<0, 4>;
+        tr.info(print_int_list<e0> {}, " vs ", print_int_list<c0> {}).test(std::is_same_v<e0, c0>);
 
-        using c1 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<1>>::type;
-        using e1 = mp::int_list<1>;
-        tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
+        using c1 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_t<1>>::type;
+        using e1 = int_list<1>;
+        tr.info(print_int_list<e1> {}, " vs ", print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
 
-        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, lens, steps>::type;
-        using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2>>;
-        tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same_v<eall, call>);
+        using call = ra::axes_list_indices<int_list<0, 1, 3, 2, 0>, lens, steps>::type;
+        using eall = std::tuple<int_list<0, 4>, int_list<1>, int_list<3>, int_list<2>>;
+        tr.info(print_int_list<eall> {}, " vs ", print_int_list<call> {}).test(std::is_same_v<eall, call>);
     }
     tr.section("transpose(ra::Small)");
     {
@@ -99,11 +100,11 @@ int main()
     }
     tr.section("static step computation");
     {
-        using d = mp::int_list<3, 4, 5>;
+        using d = int_list<3, 4, 5>;
         using s = ra::default_steps<d>;
-        tr.info("step 0").test_eq(20, mp::ref<s, 0>::value);
-        tr.info("step 1").test_eq(5, mp::ref<s, 1>::value);
-        tr.info("step 2").test_eq(1, mp::ref<s, 2>::value);
+        tr.info("step 0").test_eq(20, ref<s, 0>::value);
+        tr.info("step 1").test_eq(5, ref<s, 1>::value);
+        tr.info("step 2").test_eq(1, ref<s, 2>::value);
     }
     tr.section("subscripts");
     {
@@ -220,12 +221,12 @@ int main()
     tr.section("Small<> can be constexpr");
     {
         constexpr ra::Small<int, 2, 2> a = {1, 2, 3, 4};
-        using Va = mp::int_t<int(a(1, 0))>;
+        using Va = int_t<int(a(1, 0))>;
         tr.test_eq(3, Va::value);
-        using Vc = mp::int_t<sum(a)>; // constexpr reduction!
+        using Vc = int_t<sum(a)>; // constexpr reduction!
         tr.test_eq(10, Vc::value);
         constexpr ra::Small<int> b = { 9 }; // needs std::fill
-        using Vb = mp::int_t<int(b)>;
+        using Vb = int_t<int(b)>;
         tr.test_eq(9, Vb::value);
     }
     tr.section("custom steps. List init is always row-major.");
@@ -248,24 +249,24 @@ int main()
 
                         using A = std::decay_t<decltype(a(0))>;
                         using dim1 = std::array<ra::dim_t, 1>;
-                        auto lens = mp::tuple_values<dim1, typename A::lens>();
-                        auto steps = mp::tuple_values<dim1, typename A::steps>();
+                        auto lens = ra::mp::tuple_values<dim1, typename A::lens>();
+                        auto steps = ra::mp::tuple_values<dim1, typename A::steps>();
                         tr.test_eq(dim1 {3}, ra::start(lens));
                         tr.test_eq(dim1 {2}, ra::start(steps));
                     };
-        ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> a { 1, 2, 3, 4, 5, 6 };
-        ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> b { {1, 2, 3}, {4, 5, 6} };
+        ra::SmallArray<double, int_list<2, 3>, int_list<1, 2>> a { 1, 2, 3, 4, 5, 6 };
+        ra::SmallArray<double, int_list<2, 3>, int_list<1, 2>> b { {1, 2, 3}, {4, 5, 6} };
         test(a);
         test(b);
     }
     tr.section("SmallArray converted to SmallView");
     {
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
-        ra::SmallView<double, mp::int_list<2, 3>, mp::int_list<3, 1>> b = a();
+        ra::SmallView<double, int_list<2, 3>, int_list<3, 1>> b = a();
         tr.test_eq(a, b);
 // non-default steps (fortran / column major order).
-        ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> ax { 1, 2, 3, 4, 5, 6 };
-        ra::SmallView<double, mp::int_list<2, 3>, mp::int_list<1, 2>> bx = ax();
+        ra::SmallArray<double, int_list<2, 3>, int_list<1, 2>> ax { 1, 2, 3, 4, 5, 6 };
+        ra::SmallView<double, int_list<2, 3>, int_list<1, 2>> bx = ax();
         tr.test_eq(a, ax);
         tr.test_eq(a, bx);
 // check iterators.
@@ -417,7 +418,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, mp::int_list<3>, mp::int_list<2>> c(b.data()); // TODO no syntax yet.
+            ra::SmallView<double, int_list<3>, int_list<2>> c(b.data()); // TODO no syntax yet.
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
@@ -434,7 +435,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, mp::int_list<3>, mp::int_list<2>> c(b.data()); // TODO no syntax yet.
+            ra::SmallView<double, int_list<3>, int_list<2>> c(b.data()); // TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
@@ -449,7 +450,7 @@ int main()
             ra::Small<double, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
             ra::Small<double, 6, 2> b = { 1, 2, 99, 99, 3, 4, 99, 99, 5, 6, 99, 99 };
-            ra::SmallView<double, mp::int_list<3, 2>, mp::int_list<4, 1>> c(b.data()); // TODO no syntax yet.
+            ra::SmallView<double, int_list<3, 2>, int_list<4, 1>> c(b.data()); // TODO no syntax yet.
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }

@@ -14,6 +14,7 @@
 #include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
+using ra::mp::int_t, ra::mp::int_list;
 
 int main()
 {
@@ -80,10 +81,10 @@ int main()
     {
 // cf small-0.cc
         int a[3][4] = {};
-        tr.test_eq(2, mp::int_t<ra::rank(a)>::value);
-        tr.test_eq(3, mp::int_t<ra::shape(a)(0)>::value);
-        tr.test_eq(4, mp::int_t<ra::shape(a)(1)>::value);
-        tr.test_eq(12, mp::int_t<ra::size(a)>::value);
+        tr.test_eq(2, int_t<ra::rank(a)>::value);
+        tr.test_eq(3, int_t<ra::shape(a)(0)>::value);
+        tr.test_eq(4, int_t<ra::shape(a)(1)>::value);
+        tr.test_eq(12, int_t<ra::size(a)>::value);
     }
     tr.section("operators take foreign types");
     {
@@ -103,11 +104,11 @@ int main()
         O p[2];
         int q[2][4];
 
-        cout << mp::type_name<decltype(o)>() << endl;
-        cout << mp::type_name<decltype(p)>() << endl;
-        cout << mp::type_name<decltype(q)>() << endl;
-        cout << mp::type_name<decltype(ra::start(q))>() << endl;
-        cout << mp::type_name<std::remove_all_extents_t<decltype(q)>>() << endl;
+        cout << ra::mp::type_name<decltype(o)>() << endl;
+        cout << ra::mp::type_name<decltype(p)>() << endl;
+        cout << ra::mp::type_name<decltype(q)>() << endl;
+        cout << ra::mp::type_name<decltype(ra::start(q))>() << endl;
+        cout << ra::mp::type_name<std::remove_all_extents_t<decltype(q)>>() << endl;
     }
     {
         int o[2];
@@ -115,13 +116,13 @@ int main()
         int q[4][3][2];
         int r[][2] = {{1, 2}, {3, 4}};
         static_assert(std::is_same<ra::builtin_array_lens_t<decltype(o)>,
-                      mp::int_list<2>>::value);
+                      int_list<2>>::value);
         static_assert(std::is_same<ra::builtin_array_lens_t<decltype(p)>,
-                      mp::int_list<3, 2>>::value);
+                      int_list<3, 2>>::value);
         static_assert(std::is_same<ra::builtin_array_lens_t<decltype(q)>,
-                      mp::int_list<4, 3, 2>>::value);
+                      int_list<4, 3, 2>>::value);
         static_assert(std::is_same<ra::builtin_array_lens_t<decltype(r)>,
-                      mp::int_list<2, 2>>::value);
+                      int_list<2, 2>>::value);
         static_assert(std::rank<decltype(r)>::value==2);
     }
     tr.section("example from the manual [ma106]");

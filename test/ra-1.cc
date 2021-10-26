@@ -21,6 +21,7 @@ using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
 using std_int3 = std::array<int, 3>;
 using std_int2 = std::array<int, 2>;
+using ra::mp::int_list;
 
 template <int i> using TI = ra::TensorIndex<i>;
 
@@ -258,10 +259,10 @@ int main()
         CheckPly<A2>(tr, "(g)", reverse(reverse(transpose<1, 0>(A), 1), 0), B);
         CheckPly<A2>(tr, "(h)", A, reverse(reverse(transpose<1, 0>(B), 1), 0));
 
-        CheckPly<A2>(tr, "(i)", transpose(mp::int_list<1, 0>(), A), B);
-        CheckPly<A2>(tr, "(j)", A, transpose(mp::int_list<1, 0>(), B));
-        CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(mp::int_list<1, 0>(), A), 1), 0), B);
-        CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(mp::int_list<1, 0>(), B), 1), 0));
+        CheckPly<A2>(tr, "(i)", transpose(int_list<1, 0>(), A), B);
+        CheckPly<A2>(tr, "(j)", A, transpose(int_list<1, 0>(), B));
+        CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(int_list<1, 0>(), A), 1), 0), B);
+        CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(int_list<1, 0>(), B), 1), 0));
     }
     return tr.summary();
 }

@@ -409,12 +409,12 @@ DECL_WEDGE(general_case)
     using Ua = decltype(aa);
     using Ub = decltype(bb);
 
-    typename fromrank1<fun::Wedge<D, Oa, Ob>, Ua, Ub>::type r;
+    typename fromrank1<mp::Wedge<D, Oa, Ob>, Ua, Ub>::type r;
 
     auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
     auto & a1 = reinterpret_cast<typename torank1<Ua>::type const &>(aa);
     auto & b1 = reinterpret_cast<typename torank1<Ub>::type const &>(bb);
-    fun::Wedge<D, Oa, Ob>::product(a1, b1, r1);
+    mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
 
     return r;
 }
@@ -435,7 +435,7 @@ DECL_WEDGE(general_case)
     auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
     auto & a1 = reinterpret_cast<typename torank1<Ua>::type const &>(aa);
     auto & b1 = reinterpret_cast<typename torank1<Ub>::type const &>(bb);
-    fun::Wedge<D, Oa, Ob>::product(a1, b1, r1);
+    mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
 }
 #undef DECL_WEDGE
 
@@ -446,7 +446,7 @@ inline auto cross(A const & a_, B const & b_)
     Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
     Small<std::decay_t<decltype(FLAT(b_))>, 2> b = b_;
     Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 1> r;
-    fun::Wedge<2, 1, 1>::product(a, b, r);
+    mp::Wedge<2, 1, 1>::product(a, b, r);
     return r[0];
 }
 
@@ -457,7 +457,7 @@ inline auto cross(A const & a_, B const & b_)
     Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;
     Small<std::decay_t<decltype(FLAT(b_))>, 3> b = b_;
     Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 3> r;
-    fun::Wedge<3, 1, 1>::product(a, b, r);
+    mp::Wedge<3, 1, 1>::product(a, b, r);
     return r;
 }
 

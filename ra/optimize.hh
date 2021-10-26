@@ -134,7 +134,7 @@ template <class A, class T, dim_t N> constexpr bool match_smallvector =
 
 static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallView, double, mp::int_list<4>, mp::int_list<1>>, 0>,
                                 double, 4>);
-}; //namespace
+} // namespace
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B>                                         \

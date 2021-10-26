@@ -15,6 +15,7 @@
 #include <iostream>
 
 using std::cout, std::endl, ra::TestRecorder;
+using ra::mp::int_list;
 
 int main()
 {
@@ -45,8 +46,8 @@ int main()
         char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
         ra::View<char, 2> D1({2, 3}, cs);            // dynamic sizes and steps, C order
         ra::View<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and steps, Fortran order.
-        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<3, 1>> D3(cs); // static sizes & steps, C order.
-        ra::SmallView<char, mp::int_list<2, 3>, mp::int_list<1, 2>> D4(cs); // static sizes & steps, Fortran order.
+        ra::SmallView<char, int_list<2, 3>, int_list<3, 1>> D3(cs); // static sizes & steps, C order.
+        ra::SmallView<char, int_list<2, 3>, int_list<1, 2>> D4(cs); // static sizes & steps, Fortran order.
 
         cout << "D1: " << D1 << "\n\n";
         cout << "D2: " << D2 << "\n\n";
@@ -223,8 +224,8 @@ int main()
     }
     tr.section("example from manual [ma114]");
     {
-        using sizes = mp::int_list<2, 3>;
-        using steps = mp::int_list<1, 2>;
+        using sizes = int_list<2, 3>;
+        using steps = int_list<1, 2>;
         ra::SmallArray<int, sizes, steps> a {{1, 2, 3}, {4, 5, 6}}; //  stored column-major
         cout << "a: " << a << endl;
         cout << ra::Small<int, 6>(ra::ptr(a.data())) << endl;

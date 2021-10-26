@@ -13,7 +13,7 @@
 #include "ra/tuples.hh"
 #include <typeinfo>
 
-namespace mp {
+namespace ra::mp {
 
 template <ssize_t value_, bool condition=false>
 struct show_number
@@ -61,4 +61,4 @@ type_name()
     return r;
 }
 
-} // namespace MP
+} // namespace ra::mp

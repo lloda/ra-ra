@@ -13,7 +13,7 @@
 #include <limits>
 #include "ra/macros.hh"
 
-namespace mp {
+namespace ra::mp {
 
 template <int V> using int_t = std::integral_constant<int, V>;
 template <bool V> using bool_t = std::integral_constant<bool, V>;
@@ -392,4 +392,4 @@ fold_tuple(K && k, T && t, F && f, I && i = int_t<0> {})
     }
 }
 
-} // namespace mp
+} // namespace ra::mp

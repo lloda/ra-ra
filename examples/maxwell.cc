@@ -22,6 +22,7 @@ auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 
 using std::cout, std::endl, ra::PI, ra::TestRecorder;
+using ra::mp::int_t;
 
 int main()
 {
@@ -60,7 +61,7 @@ int main()
     }
     auto time_A = Benchmark::clock::now()-t0;
 
-// FIXME should try to traverse the array once, e.g. explode() = pack(...). The need to wrap around boundaries complicates this greatly.
+// FIXME should try to traverse the array once, e.g. explode() = pack(...), but we need to wrap around boundaries.
     auto diff = [&DA, &A, &delta](auto k_, real factor)
         {
             constexpr int k = decltype(k_)::value;
@@ -74,10 +75,10 @@ int main()
         };
 
     t0 = Benchmark::clock::now();
-    diff(mp::int_t<0>(), +1/(2*delta));
-    diff(mp::int_t<1>(), -1/(2*delta));
-    diff(mp::int_t<2>(), -1/(2*delta));
-    diff(mp::int_t<3>(), -1/(2*delta));
+    diff(int_t<0>(), +1/(2*delta));
+    diff(int_t<1>(), -1/(2*delta));
+    diff(int_t<2>(), -1/(2*delta));
+    diff(int_t<3>(), -1/(2*delta));
     auto time_DA = Benchmark::clock::now()-t0;
 
     F = ra::transpose<0, 1, 2, 3, 5, 4>(DA) - DA;

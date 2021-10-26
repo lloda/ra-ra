@@ -25,7 +25,7 @@ int main()
         int a = 3;
         int b = 4;
         using K = ra::concrete_type<decltype(a+b)>;
-        cout << mp::type_name<K>() << endl;
+        cout << ra::mp::type_name<K>() << endl;
         tr.info("scalars are their own concrete_types").test(std::is_same_v<K, int>);
         auto c = ra::concrete(a+b);
         tr.test(std::is_same_v<decltype(c), K>);

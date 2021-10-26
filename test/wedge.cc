@@ -12,7 +12,7 @@
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using fun::Wedge, fun::hodge, fun::hodgex;
+using ra::mp::Wedge, ra::mp::hodgex, ra::mp::int_list;
 
 using real = double;
 using complex = std::complex<double>;
@@ -31,7 +31,7 @@ using complex3 = vec<complex, 3>;
 template <class P, class Plist, int w, int s>
 struct FindCombinationTester
 {
-    using finder = mp::FindCombination<P, Plist>;
+    using finder = ra::mp::FindCombination<P, Plist>;
     static_assert(finder::where==w && finder::sign==s, "bad");
     static void check() {};
 };
@@ -42,8 +42,8 @@ void test_optimized_hodge_aux(TestRecorder & tr)
     if constexpr (O<=N) {
         tr.section(ra::format("hodge() vs hodgex() with N=", N, " O=", O));
         static_assert(N>=O, "bad_N_or_bad_O");
-        using Va = vec<real, fun::Wedge<N, O, N-O>::Na>;
-        using Vb = vec<real, fun::Wedge<N, O, N-O>::Nb>;
+        using Va = vec<real, Wedge<N, O, N-O>::Na>;
+        using Vb = vec<real, Wedge<N, O, N-O>::Nb>;
         Va u = ra::iota(u.size(), 1);
         Vb w(GARBAGE);
         hodge<N, O>(u, w);
@@ -128,68 +128,68 @@ R test_one_scalar_case(A const & a, B const & b)
 int main()
 {
     TestRecorder tr(std::cout);
-    static_assert(fun::n_over_p(0, 0)==1, "");
+    static_assert(ra::mp::n_over_p(0, 0)==1, "");
 // gcc let a bug pass by https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57891. Cf http://stackoverflow.com/a/24346350.
 // TODO We weren't getting the proper diagnostic from clang, probably due to disable_if doing !(integer).
     tr.section("MatchPermutationP");
     {
-        using thematch = mp::MatchPermutationP<mp::int_list<1, 0>>::type<mp::int_list<0, 1>>;
+        using thematch = ra::mp::MatchPermutationP<int_list<1, 0>>::type<int_list<0, 1>>;
         cout << "A... " << (thematch::value) << endl;
-        using index_if = mp::IndexIf<std::tuple<mp::int_list<1, 0>>, mp::MatchPermutationP<mp::int_list<0, 1>>::template type>;
+        using index_if = ra::mp::IndexIf<std::tuple<int_list<1, 0>>, ra::mp::MatchPermutationP<int_list<0, 1>>::template type>;
         cout << "B... " << index_if::value << endl;
         static_assert(index_if::value==0, "bad MatchPermutationP");
     }
     tr.section("Testing FindCombination");
     {
-        using la = mp::iota<3>;
-        using ca = mp::combinations<la, 2>;
-        FindCombinationTester<mp::int_list<0, 1>, ca, 0, +1>::check();
-        FindCombinationTester<mp::int_list<1, 0>, ca, 0, -1>::check();
-        FindCombinationTester<mp::int_list<0, 2>, ca, 1, +1>::check();
-        FindCombinationTester<mp::int_list<2, 0>, ca, 1, -1>::check();
-        FindCombinationTester<mp::int_list<1, 2>, ca, 2, +1>::check();
-        FindCombinationTester<mp::int_list<2, 1>, ca, 2, -1>::check();
-        FindCombinationTester<mp::int_list<0, 0>, ca, -1,  0>::check();
-        FindCombinationTester<mp::int_list<1, 1>, ca, -1,  0>::check();
-        FindCombinationTester<mp::int_list<2, 2>, ca, -1,  0>::check();
-        FindCombinationTester<mp::int_list<3, 0>, ca, -1,  0>::check();
+        using la = ra::mp::iota<3>;
+        using ca = ra::mp::combinations<la, 2>;
+        FindCombinationTester<int_list<0, 1>, ca, 0, +1>::check();
+        FindCombinationTester<int_list<1, 0>, ca, 0, -1>::check();
+        FindCombinationTester<int_list<0, 2>, ca, 1, +1>::check();
+        FindCombinationTester<int_list<2, 0>, ca, 1, -1>::check();
+        FindCombinationTester<int_list<1, 2>, ca, 2, +1>::check();
+        FindCombinationTester<int_list<2, 1>, ca, 2, -1>::check();
+        FindCombinationTester<int_list<0, 0>, ca, -1,  0>::check();
+        FindCombinationTester<int_list<1, 1>, ca, -1,  0>::check();
+        FindCombinationTester<int_list<2, 2>, ca, -1,  0>::check();
+        FindCombinationTester<int_list<3, 0>, ca, -1,  0>::check();
     }
 
     tr.section("Testing AntiCombination");
     {
-        using la = mp::iota<3>;
-        using ca = mp::combinations<la, 1>;
-        using cc0 = mp::AntiCombination<mp::ref<ca, 0>, 3>::type;
-        static_assert(mp::check_idx<cc0, 1, 2>::value, "bad");
-        using cc1 = mp::AntiCombination<mp::ref<ca, 1>, 3>::type;
-        static_assert(mp::check_idx<cc1, 2, 0>::value, "bad");
-        using cc2 = mp::AntiCombination<mp::ref<ca, 2>, 3>::type;
-        static_assert(mp::check_idx<cc2, 0, 1>::value, "bad");
+        using la = ra::mp::iota<3>;
+        using ca = ra::mp::combinations<la, 1>;
+        using cc0 = ra::mp::AntiCombination<ra::mp::ref<ca, 0>, 3>::type;
+        static_assert(ra::mp::check_idx<cc0, 1, 2>::value, "bad");
+        using cc1 = ra::mp::AntiCombination<ra::mp::ref<ca, 1>, 3>::type;
+        static_assert(ra::mp::check_idx<cc1, 2, 0>::value, "bad");
+        using cc2 = ra::mp::AntiCombination<ra::mp::ref<ca, 2>, 3>::type;
+        static_assert(ra::mp::check_idx<cc2, 0, 1>::value, "bad");
     }
 
     tr.section("Testing ChooseComponents");
     {
-        using c1 = mp::ChooseComponents<3, 1>::type;
-        static_assert(mp::len<c1> == 3, "bad");
-        static_assert(mp::check_idx<mp::ref<c1, 0>, 0>::value, "bad");
-        static_assert(mp::check_idx<mp::ref<c1, 1>, 1>::value, "bad");
-        static_assert(mp::check_idx<mp::ref<c1, 2>, 2>::value, "bad");
-        using c2 = mp::ChooseComponents<3, 2>::type;
-        static_assert(mp::len<c2> == 3, "bad");
-        static_assert(mp::check_idx<mp::ref<c2, 0>, 1, 2>::value, "bad");
-        static_assert(mp::check_idx<mp::ref<c2, 1>, 2, 0>::value, "bad");
-        static_assert(mp::check_idx<mp::ref<c2, 2>, 0, 1>::value, "bad");
-        using c3 = mp::ChooseComponents<3, 3>::type;
-        static_assert(mp::len<c3> == 1, "bad");
-        static_assert(mp::check_idx<mp::ref<c3, 0>, 0, 1, 2>::value, "bad");
+        using c1 = ra::mp::ChooseComponents<3, 1>::type;
+        static_assert(ra::mp::len<c1> == 3, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c1, 0>, 0>::value, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c1, 1>, 1>::value, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c1, 2>, 2>::value, "bad");
+        using c2 = ra::mp::ChooseComponents<3, 2>::type;
+        static_assert(ra::mp::len<c2> == 3, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c2, 0>, 1, 2>::value, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c2, 1>, 2, 0>::value, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c2, 2>, 0, 1>::value, "bad");
+        using c3 = ra::mp::ChooseComponents<3, 3>::type;
+        static_assert(ra::mp::len<c3> == 1, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c3, 0>, 0, 1, 2>::value, "bad");
     }
     {
-        using c0 = mp::ChooseComponents<1, 0>::type;
-        static_assert(mp::len<c0> == 1, "bad");
-        static_assert(mp::check_idx<mp::ref<c0, 0>>::value, "bad");
-        using c1 = mp::ChooseComponents<1, 1>::type;
-        static_assert(mp::len<c1> == 1, "bad");
-        static_assert(mp::check_idx<mp::ref<c1, 0>, 0>::value, "bad");
+        using c0 = ra::mp::ChooseComponents<1, 0>::type;
+        static_assert(ra::mp::len<c0> == 1, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c0, 0>>::value, "bad");
+        using c1 = ra::mp::ChooseComponents<1, 1>::type;
+        static_assert(ra::mp::len<c1> == 1, "bad");
+        static_assert(ra::mp::check_idx<ra::mp::ref<c1, 0>, 0>::value, "bad");
     }
 
     tr.section("Testing Wedge<>::product()");
@@ -265,7 +265,7 @@ int main()
         real1 h(GARBAGE);
         hodgex<3, 3>(r, h);
         tr.info("\thodge-star: ", h).test_eq(-1, h[0]);
-// this is not forced for hodgex (depends on vec::ChooseComponents<> as used in fun::Wedge<>) so if you change that, change this too.
+// this is not forced for hodgex (depends on vec::ChooseComponents<> as used in Wedge<>) so if you change that, change this too.
         real3 c;
         hodgex<3, 1>(b, c);
         tr.info("hodge<3, 1>(", b, "): ", c).test_eq(real3{0, -1, 0}, b);

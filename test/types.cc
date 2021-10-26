@@ -17,6 +17,7 @@
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
+using ra::mp::int_list, ra::mp::nil;
 
 #define TEST_PREDICATES(A)                                              \
     [&tr](bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector) \
@@ -38,7 +39,7 @@ int main()
     }
     {
 // SmallBase is not excluded in is_slice.
-        TEST_PREDICATES(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, mp::int_list<3>, mp::int_list<1>>>()))
+        TEST_PREDICATES(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, int_list<3>, int_list<1>>>()))
             (true, true, false, false, false);
         TEST_PREDICATES(int)
             (false, false, false, true, false);
@@ -90,15 +91,15 @@ int main()
     {
         static_assert(ra::is_slice<ra::View<int, 0>>);
         static_assert(ra::is_slice<ra::View<int, 2>>);
-        static_assert(ra::is_slice<ra::SmallView<int, mp::int_list<>, mp::int_list<>>>);
+        static_assert(ra::is_slice<ra::SmallView<int, int_list<>, int_list<>>>);
 
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallView<int, mp::nil, mp::nil>>, "bad is_ra SmallView");
+        static_assert(ra::is_ra<ra::SmallView<int, nil, nil>>, "bad is_ra SmallView");
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");
         static_assert(ra::is_ra<ra::View<int, 0>>, "bad is_ra View");
 
         static_assert(ra::is_ra<ra::Small<int, 1>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallView<int, mp::int_list<1>, mp::int_list<1>>>, "bad is_ra SmallView");
+        static_assert(ra::is_ra<ra::SmallView<int, int_list<1>, int_list<1>>>, "bad is_ra SmallView");
         static_assert(ra::is_ra<ra::Unique<int, 1>>, "bad is_ra Unique");
         static_assert(ra::is_ra<ra::View<int, 1>>, "bad is_ra View");
         static_assert(ra::is_ra<ra::View<int>>, "bad is_ra View");

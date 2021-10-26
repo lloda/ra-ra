@@ -276,14 +276,14 @@ int main()
             ra::Small<real, 3> a {1, 2, 3};
             ra::Small<real, 3> b {4, 5, 7};
             ra::Small<real, 3> c;
-            fun::Wedge<3, 1, 1>::product(a, b, c);
+            ra::mp::Wedge<3, 1, 1>::product(a, b, c);
             tr.test_eq(ra::Small<real, 3> {-1, 5, -3}, c);
         }
         {
             ra::Small<real, 1> a {2};
             ra::Small<real, 1> b {3};
             ra::Small<real, 1> r;
-            fun::Wedge<1, 0, 0>::product(a, b, r);
+            ra::mp::Wedge<1, 0, 0>::product(a, b, r);
             tr.test_eq(6, r[0]);
             tr.test_eq(6, ra::wedge<1, 0, 0>(ra::Small<real, 1>{2}, ra::Small<real, 1>{3}));
             tr.test_eq(6, ra::wedge<1, 0, 0>(ra::Small<real, 1>{2}, 3.));
@@ -295,9 +295,9 @@ int main()
     {
         ra::Small<real, 3> a {1, 2, 3};
         ra::Small<real, 3> c;
-        fun::hodgex<3, 1>(a, c);
+        ra::mp::hodgex<3, 1>(a, c);
         tr.test_eq(a, c);
-        auto d = fun::hodge<3, 1>(a);
+        auto d = ra::hodge<3, 1>(a);
         tr.test_eq(a, d);
     }
     tr.section("index");
