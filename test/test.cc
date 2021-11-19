@@ -13,15 +13,17 @@
 #include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
+constexpr auto QNAN = std::numeric_limits<double>::quiet_NaN();
 
 int main()
 {
+
     TestRecorder tr(std::cout);
     tr.section("amax_strict"); // cf amax() in reduction.cc.
     {
-        tr.test(isnan(TestRecorder::amax_strict(ra::Small<double, 2>(ra::QNAN<double>))));
-        tr.test(isnan(TestRecorder::amax_strict(ra::Small<double, 2>(1, ra::QNAN<double>))));
-        tr.test(isnan(TestRecorder::amax_strict(ra::Small<double, 2>(ra::QNAN<double>, 1))));
+        tr.test(isnan(TestRecorder::amax_strict(ra::Small<double, 2>(QNAN))));
+        tr.test(isnan(TestRecorder::amax_strict(ra::Small<double, 2>(1, QNAN))));
+        tr.test(isnan(TestRecorder::amax_strict(ra::Small<double, 2>(QNAN, 1))));
         tr.test_eq(9, TestRecorder::amax_strict(ra::Small<double, 2>{1, 9}));
         tr.test_eq(9, TestRecorder::amax_strict(ra::Small<double, 2>{9, 1}));
     }
@@ -30,9 +32,9 @@ int main()
         std::ostream devnull(nullptr);
         TestRecorder tr_ut(devnull);
         tr.test(0==tr_ut.summary());
-        tr_ut.test_rel_error(0, ra::QNAN<double>, 1e-15);
+        tr_ut.test_rel_error(0, QNAN, 1e-15);
         tr.test(1==tr_ut.summary());
-        tr_ut.test_abs_error(0, ra::QNAN<double>, 1e-15);
+        tr_ut.test_abs_error(0, QNAN, 1e-15);
         tr.test(2==tr_ut.summary());
     }
     return tr.summary();

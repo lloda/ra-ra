@@ -14,7 +14,7 @@
 #include "ra/mpdebug.hh"
 #include "ra/complex.hh"
 
-using std::cout, std::endl, std::flush, std::tuple, ra::QNAN, ra::TestRecorder;
+using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
 
@@ -139,9 +139,10 @@ int main()
 
     tr.section("amax/amin ignore NaN");
     {
-        tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN<real>));
-        tr.test_eq(-std::numeric_limits<real>::infinity(), amax(ra::Small<real, 3>(QNAN<real>)));
-        tr.test_eq(std::numeric_limits<real>::infinity(), amin(ra::Small<real, 3>(QNAN<real>)));
+        constexpr real QNAN = std::numeric_limits<real>::quiet_NaN();
+        tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN));
+        tr.test_eq(-std::numeric_limits<real>::infinity(), amax(ra::Small<real, 3>(QNAN)));
+        tr.test_eq(std::numeric_limits<real>::infinity(), amin(ra::Small<real, 3>(QNAN)));
     }
 
 // TODO these reductions require a destination argument; there are no exprs really.

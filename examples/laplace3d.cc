@@ -17,8 +17,11 @@
 #include "ra/test.hh"
 #include "examples/cghs.hh"
 #include "ra/bench.hh"
+#include <numbers>
 
-using std::cout, std::endl, std::flush, ra::PI, ra::TestRecorder;
+using std::cout, std::endl, std::flush, ra::TestRecorder;
+
+constexpr auto PI = std::numbers::pi_v<double>;
 
 Benchmark::clock::duration tmul(0);
 

@@ -28,8 +28,9 @@ struct TestRecorder
     {
         using std::max;
         using T = value_t<A>;
+        constexpr auto QNAN = std::numeric_limits<double>::quiet_NaN();
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
-        return early(map([&c](auto && a) { if (c<a) { c = a; }; return std::make_tuple(isnan(a), ra::QNAN<double>*a); },
+        return early(map([&c](auto && a) { if (c<a) { c = a; }; return std::make_tuple(isnan(a), QNAN*a); },
                          std::forward<A>(a)), c);
         return c;
     }

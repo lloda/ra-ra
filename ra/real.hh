@@ -15,40 +15,6 @@
 #include <limits>
 #include <cmath>
 
-namespace ra {
-
-template <class T=double> constexpr T EPS = std::numeric_limits<T>::epsilon();
-template <class T=double> constexpr T ALINF = std::numeric_limits<T>::max();
-template <class T=double> constexpr T PINF = std::numeric_limits<T>::infinity();
-template <class T=double> constexpr T QNAN = std::numeric_limits<T>::quiet_NaN();
-constexpr double     PI = 3.14159265358979323846264338327950288419716939937510582;
-constexpr double    PI2 = PI/2.;
-constexpr double   EXP1 = 2.71828182845904523536028747135266249775724709369995957;
-constexpr double    TAU = 2*PI;
-constexpr double   TTAU = TAU*2;
-constexpr double   TAU6 = TAU/6;
-constexpr double  TAU12 = TAU/12;
-constexpr double   I4PI = 1./TTAU;
-constexpr double     C0 = 2.99792458e8;
-constexpr double     M0 = (4e-7)*PI;
-constexpr double  ECHAR = 1.602176487e-19;
-constexpr double  EMASS = 9.10938215e-31;
-constexpr double     Z0 = 376.730313461;
-constexpr double  LOG2E = 1.44269504088896340735992468100189213742664595415299;
-constexpr double  LOGE2 = .693147180559945309417232121458176568075500134360255;
-constexpr double GOLDEN = 1.61803398874989484820458683436563811772030917980576; // (1+√5)/2.
-// constexpr clang
-static const double     E0 = 1./(M0*C0*C0);
-static const double  SQRT2 = sqrt(2.);
-static const double ISQRT2 = 1/sqrt(2.);
-static const double SQRTPI = sqrt(PI);
-static const double   LNPI = log(PI);
-
-inline constexpr double rad2deg(double const r)              { return r*(360./ra::TAU); }
-inline constexpr double deg2rad(double const d)              { return d*(ra::TAU/360.); }
-
-}
-
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
 // besides, gcc still leaks cmath functions into the global namespace, so by default e.g. sqrt would be C double sqrt(double) instead of the overload set.
 using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, std::exp,

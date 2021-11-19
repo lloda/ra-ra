@@ -260,7 +260,7 @@ int main()
     {
         ra::Unique<real, 3> A(S3, a);
         ra::Unique<real, 3> B(S3, b);
-        std::vector<real> x(17, ra::ALINF<real>);
+        std::vector<real> x(17, std::numeric_limits<real>::max());
         BENCH_ALL;
     }
     return tr.summary();

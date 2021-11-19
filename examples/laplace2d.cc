@@ -13,14 +13,17 @@
 // the computation and we do much worse against BLAS.  Clearly I need to
 // benchmark the basic stuff against BLAS.
 
-// FIXME plot like the APL examples do.
+// FIXME ASCII plot like the APL examples do.
 
 #include "ra/ra.hh"
 #include "ra/test.hh"
 #include "examples/cghs.hh"
 #include "ra/bench.hh"
+#include <numbers>
 
-using std::cout, std::endl, ra::PI, ra::TestRecorder;
+using std::cout, std::endl, ra::TestRecorder;
+
+constexpr auto PI = std::numbers::pi_v<double>;
 
 Benchmark::clock::duration tmul(0);
 
