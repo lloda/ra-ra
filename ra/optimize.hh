@@ -120,8 +120,6 @@ inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 
 #if RA_DO_OPT_SMALLVECTOR==1
 
-namespace {
-
 #if defined (__clang__)
 template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
 #else
@@ -134,7 +132,6 @@ template <class A, class T, dim_t N> constexpr bool match_smallvector =
 
 static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallView, double, mp::int_list<4>, mp::int_list<1>>, 0>,
                                 double, 4>);
-} // namespace
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B>                                         \

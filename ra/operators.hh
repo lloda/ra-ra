@@ -47,15 +47,11 @@ decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
     return transpose<Iarg ...>(std::forward<A>(a));
 }
 
-namespace {
-
 template <class A> inline constexpr
 decltype(auto) FLAT(A && a)
 {
     return *(ra::start(std::forward<A>(a)).flat());
 }
-
-} // namespace
 
 
 // ---------------------------
@@ -261,7 +257,8 @@ any(A && a)
     return early(map([](bool x) { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
 }
 
-template <class A> inline bool
+template <class A>
+inline bool
 every(A && a)
 {
     return early(map([](bool x) { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
@@ -269,7 +266,8 @@ every(A && a)
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
 template <class A>
-inline auto index(A && a)
+inline auto
+index(A && a)
 {
     return early(map([](auto && a, auto && i) { return std::make_tuple(bool(a), i); },
                      std::forward<A>(a), ra::iota(start(a).len(0))),
@@ -278,7 +276,8 @@ inline auto index(A && a)
 
 // [ma108]
 template <class A, class B>
-inline bool lexicographical_compare(A && a, B && b)
+inline bool
+lexicographical_compare(A && a, B && b)
 {
     return early(map([](auto && a, auto && b)
                      { return a==b ? std::make_tuple(false, true) : std::make_tuple(true, a<b); },
@@ -288,7 +287,8 @@ inline bool lexicographical_compare(A && a, B && b)
 
 // FIXME only works with numeric types.
 template <class A>
-inline auto amin(A && a)
+inline auto
+amin(A && a)
 {
     using std::min;
     using T = value_t<A>;
@@ -298,7 +298,8 @@ inline auto amin(A && a)
 }
 
 template <class A>
-inline auto amax(A && a)
+inline auto
+amax(A && a)
 {
     using std::max;
     using T = value_t<A>;
@@ -310,7 +311,8 @@ inline auto amax(A && a)
 // FIXME encapsulate this kind of reference-reduction.
 // FIXME expr/ply mechanism doesn't allow partial iteration (adv then continue).
 template <class A, class Less = std::less<value_t<A>>>
-inline decltype(auto) refmin(A && a, Less && less = std::less<value_t<A>>())
+inline decltype(auto)
+refmin(A && a, Less && less = std::less<value_t<A>>())
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
@@ -320,7 +322,8 @@ inline decltype(auto) refmin(A && a, Less && less = std::less<value_t<A>>())
 }
 
 template <class A, class Less = std::less<value_t<A>>>
-inline decltype(auto) refmax(A && a, Less && less = std::less<value_t<A>>())
+inline decltype(auto)
+refmax(A && a, Less && less = std::less<value_t<A>>())
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
@@ -330,7 +333,8 @@ inline decltype(auto) refmax(A && a, Less && less = std::less<value_t<A>>())
 }
 
 template <class A>
-inline constexpr auto sum(A && a)
+inline constexpr auto
+sum(A && a)
 {
     concrete_type<value_t<A>> c {};
     for_each([&c](auto && a) { c += a; }, a);
@@ -338,19 +342,23 @@ inline constexpr auto sum(A && a)
 }
 
 template <class A>
-inline constexpr auto prod(A && a)
+inline constexpr auto
+prod(A && a)
 {
     concrete_type<value_t<A>> c(1.);
     for_each([&c](auto && a) { c *= a; }, a);
     return c;
 }
 
-template <class A> inline auto reduce_sqrm(A && a) { return sum(sqrm(a)); }
+template <class A> inline auto
+reduce_sqrm(A && a) { return sum(sqrm(a)); }
 
-template <class A> inline auto norm2(A && a) { return std::sqrt(reduce_sqrm(a)); }
+template <class A> inline auto
+norm2(A && a) { return std::sqrt(reduce_sqrm(a)); }
 
 template <class A, class B>
-inline auto dot(A && a, B && b)
+inline auto
+dot(A && a, B && b)
 {
     std::decay_t<decltype(FLAT(a) * FLAT(b))> c(0.);
     for_each([&c](auto && a, auto && b)
@@ -365,7 +373,8 @@ inline auto dot(A && a, B && b)
 }
 
 template <class A, class B>
-inline auto cdot(A && a, B && b)
+inline auto
+cdot(A && a, B && b)
 {
     std::decay_t<decltype(conj(FLAT(a)) * FLAT(b))> c(0.);
     for_each([&c](auto && a, auto && b)
@@ -400,7 +409,8 @@ struct fromrank1
 #define DECL_WEDGE(condition)                                           \
     template <int D, int Oa, int Ob, class Va, class Vb>                \
     requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
-    decltype(auto) wedge(Va const & a, Vb const & b)
+    decltype(auto)                                                      \
+    wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
 {
     Small<std::decay_t<value_t<Va>>, size_s<Va>()> aa = a;
@@ -423,7 +433,8 @@ DECL_WEDGE(general_case)
 #define DECL_WEDGE(condition)                                           \
     template <int D, int Oa, int Ob, class Va, class Vb, class Vr>      \
     requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
-    void wedge(Va const & a, Vb const & b, Vr & r)
+    void                                                                \
+    wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)
 {
     Small<std::decay_t<value_t<Va>>, size_s<Va>()> aa = a;
@@ -439,9 +450,9 @@ DECL_WEDGE(general_case)
 }
 #undef DECL_WEDGE
 
-template <class A, class B>
-requires (size_s<A>()==2 && size_s<B>()==2)
-inline auto cross(A const & a_, B const & b_)
+template <class A, class B> requires (size_s<A>()==2 && size_s<B>()==2)
+inline auto
+cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
     Small<std::decay_t<decltype(FLAT(b_))>, 2> b = b_;
@@ -450,9 +461,9 @@ inline auto cross(A const & a_, B const & b_)
     return r[0];
 }
 
-template <class A, class B>
-requires (size_s<A>()==3 && size_s<B>()==3)
-inline auto cross(A const & a_, B const & b_)
+template <class A, class B> requires (size_s<A>()==3 && size_s<B>()==3)
+inline auto
+cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;
     Small<std::decay_t<decltype(FLAT(b_))>, 3> b = b_;
@@ -462,14 +473,16 @@ inline auto cross(A const & a_, B const & b_)
 }
 
 template <class V>
-inline auto perp(V const & v)
+inline auto
+perp(V const & v)
 {
     static_assert(v.size()==2, "dimension error");
     return Small<std::decay_t<decltype(FLAT(v))>, 2> {v[1], -v[0]};
 }
 
 template <class V, class U>
-inline auto perp(V const & v, U const & n)
+inline auto
+perp(V const & v, U const & n)
 {
     if constexpr (is_scalar<U>) {
         static_assert(v.size()==2, "dimension error");
@@ -485,7 +498,8 @@ inline auto perp(V const & v, U const & n)
 // --------------------
 
 template <class A>
-inline auto normv(A const & a)
+inline auto
+normv(A const & a)
 {
     auto b = concrete(a);
     b /= norm2(b);
