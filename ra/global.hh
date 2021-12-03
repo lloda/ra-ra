@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/atom.hh"
+#include "atom.hh"
 
 // Cf using std::abs, etc. in real.hh.
 using ra::odd, ra::every, ra::any;

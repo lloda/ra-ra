@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/small.hh"
+#include "small.hh"
 #include <memory>
 #include <iostream>
 

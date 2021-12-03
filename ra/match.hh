@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/bootstrap.hh"
+#include "bootstrap.hh"
 
 namespace ra {
 

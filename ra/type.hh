@@ -14,7 +14,7 @@
 #include <array>
 #include <algorithm>
 #include <iterator>
-#include "ra/bootstrap.hh"
+#include "bootstrap.hh"
 
 namespace ra {
 

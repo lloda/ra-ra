@@ -14,7 +14,7 @@
 #include <iomanip>
 #include <version>
 #include <iostream>
-#include "ra/ra.hh"
+#include "ra.hh"
 
 namespace ra {
 

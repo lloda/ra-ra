@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/concrete.hh"
+#include "concrete.hh"
 #include <complex>
 
 namespace ra {

@@ -9,8 +9,8 @@
 // later version.
 
 #pragma once
-#include "ra/ply.hh"
-#include "ra/wrank.hh"
+#include "ply.hh"
+#include "wrank.hh"
 
 namespace ra {
 

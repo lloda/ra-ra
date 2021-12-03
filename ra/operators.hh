@@ -10,13 +10,13 @@
 
 #pragma once
 // FIXME Dependence on specific ra:: types should maybe be elsewhere.
-#include "ra/global.hh"
-#include "ra/complex.hh"
-#include "ra/wrank.hh"
-#include "ra/pick.hh"
-#include "ra/view-ops.hh"
-#include "ra/optimize.hh"
-#include "ra/wedge.hh"
+#include "global.hh"
+#include "complex.hh"
+#include "wrank.hh"
+#include "pick.hh"
+#include "view-ops.hh"
+#include "optimize.hh"
+#include "wedge.hh"
 
 #ifndef RA_DO_OPT
   #define RA_DO_OPT 1 // enabled by default

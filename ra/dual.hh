@@ -17,7 +17,7 @@
 #pragma once
 #include <cmath>
 #include <iosfwd>
-#include "ra/macros.hh"
+#include "macros.hh"
 
 using std::abs, std::sqrt, std::fma;
 

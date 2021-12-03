@@ -9,8 +9,8 @@
 // later version.
 
 #pragma once
-#include "ra/expr.hh"
-#include "ra/mpdebug.hh"
+#include "expr.hh"
+#include "mpdebug.hh"
 
 namespace ra {
 

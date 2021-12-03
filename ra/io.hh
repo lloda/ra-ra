@@ -9,9 +9,9 @@
 // later version.
 
 #pragma once
-#include "ra/atom.hh"
-#include "ra/format.hh"
-#include "ra/concrete.hh"
+#include "atom.hh"
+#include "format.hh"
+#include "concrete.hh"
 #include <iosfwd>
 #include <sstream>
 

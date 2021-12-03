@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/type.hh"
+#include "type.hh"
 
 namespace ra {
 

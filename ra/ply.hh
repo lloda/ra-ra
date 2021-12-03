@@ -11,7 +11,7 @@
 // TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
 
 #pragma once
-#include "ra/atom.hh"
+#include "atom.hh"
 #include <functional>
 #include <iostream>
 

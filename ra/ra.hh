@@ -12,6 +12,6 @@
 // ra/bench.hh and ra/test.hh are also not included here.
 
 #pragma once
-#include "ra/format.hh"
-#include "ra/operators.hh"
-#include "ra/io.hh"
+#include "format.hh"
+#include "operators.hh"
+#include "io.hh"

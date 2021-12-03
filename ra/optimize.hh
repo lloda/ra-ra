@@ -9,7 +9,7 @@
 // later version.
 
 #pragma once
-#include "ra/small.hh"
+#include "small.hh"
 
 // no real downside to this.
 #ifndef RA_DO_OPT_IOTA
