@@ -2,13 +2,16 @@
 /// @file ply.hh
 /// @brief Traverse (ply) array or array expression or array statement.
 
-// (c) Daniel Llorens - 2013-2019
+// (c) Daniel Llorens - 2013-2019, 2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
 // TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
+// TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
+// TODO Better heuristic for traversal order.
+// TODO std::execution policies and validate output argument strides accordingly.
 
 #pragma once
 #include "atom.hh"
@@ -26,7 +29,6 @@ namespace ra {
 // len(k) has a single value.
 // adv(k), step(k), keep_step(st, k, l) and flat() are used on all the leaf arguments.
 // The steps must give 0 for k>=their own rank, to allow frame matching.
-// TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <RaIterator A>
 inline void
 ply_ravel(A && a)

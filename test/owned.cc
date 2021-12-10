@@ -56,6 +56,13 @@ int main()
             test(ref1, a, 5, 3);
         }
     }
+    tr.section("full resize");
+    {
+        ra::Big<int> a({3, 3, 3, 3}, ra::_0 - ra::_1 + ra::_2 - ra::_3);
+        ra::Big<int, 1> b = ra::reshape(a, {50});
+        a.resize(ra::Small<int, 2>{5, 10});
+        tr.test_eq(b, ra::reshape(a, {50}));
+    }
     tr.section("push back");
     {
         real check[] = { 2, 3, 4, 7 };

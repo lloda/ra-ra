@@ -61,6 +61,7 @@ checkbox [C-ct] flip TODO
     - [X] Support RA_USE_BLAS with cmake (mac) <2018-12-07 Fri 16:33>
     - [ ] Make cmake tests respect dependences and able to be run independently.
     - [ ] Test for expected compilation errors (static_assert, etc) [ra42].
+    - [ ] TestRecorder.test_eq with mismatched shapes aborts. Should just fail the test.
   - [ ] Documentation [0/3]
     - [ ] Complete section on internals
     - [ ] Complete section on other languages, libraries

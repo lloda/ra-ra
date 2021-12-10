@@ -624,7 +624,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     using View::operator=;
 
-// only for some kinds of store.
+// resize first axis. Only for some kinds of store.
     void resize(dim_t const s)
     {
         static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
@@ -637,6 +637,17 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
         store.resize(proddim(View::dimv.begin()+1, View::dimv.end())*s, t);
         View::dimv[0].len = s;
+        View::p = store.data();
+    }
+// resize full shape. Only for some kinds of store.
+    template <class S>
+    requires (ra::rank_s<S>() > 0)
+    void resize(S const & s)
+    {
+        ra::resize(View::dimv, start(s).len(0)); // [ra37] FIXME is View constructor
+        for_each([](Dim & dim, auto && s) { dim.len = s; }, View::dimv, s);
+        filldim(View::dimv.size(), View::dimv.end());
+        store.resize(proddim(View::dimv.begin(), View::dimv.end()));
         View::p = store.data();
     }
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
