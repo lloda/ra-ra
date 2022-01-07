@@ -48,17 +48,20 @@ struct TestRecorder
     TestRecorder(std::ostream & o_=std::cout, verbose_t verbose_default_=ERRORS)
         : o(o_), verbose_default(verbose_default_), verbose(verbose_default_), willskip(false) {}
 
-    template <class ... A> void section(A const & ... a)
+    template <class ... A> void
+    section(A const & ... a)
     {
         o << "\n" << esc_bold << format(a ...) << esc_unbold << std::endl;
     }
 
-    static std::string format_error(double e)
+    static std::string
+    format_error(double e)
     {
         return format(esc_yellow, std::setprecision(2), e, esc_plain);
     }
 
-    template <class ... A> TestRecorder & info(A && ... a)
+    template <class ... A> TestRecorder &
+    info(A && ... a)
     {
         bool empty = (info_str=="");
         info_str += esc_pink;
@@ -72,8 +75,8 @@ struct TestRecorder
     TestRecorder & skip(bool s=true) { willskip = s; return *this; }
 
     template <class A, class B>
-    void test(bool c, A && info_full, B && info_min,
-              source_location const loc = source_location::current())
+    void
+    test(bool c, A && info_full, B && info_min, source_location const loc = source_location::current())
     {
         switch (verbose) {
         case QUIET: {
@@ -109,54 +112,52 @@ struct TestRecorder
 #define LAZYINFO(...) [&]() { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
 
     template <class A>
-    void test(bool c, A && info_full,
-              source_location const loc = source_location::current())
+    void
+    test(bool c, A && info_full, source_location const loc = source_location::current())
     {
         test(c, info_full, info_full, loc);
     }
-    void test(bool c,
-              source_location const loc = source_location::current())
+    void
+    test(bool c, source_location const loc = source_location::current())
     {
         test(c, LAZYINFO(""), loc);
     }
 
 // Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
 // where() is used to match shapes if either REF or A don't't have one.
-    template <class R, class A, class Comp>
-    bool test_comp(R && ref, A && a, Comp && comp,
-                   source_location const loc = source_location::current())
+    template <class A, class B, class Comp>
+    bool
+    test_comp(A && a, B && b, Comp && comp, char const * msg, source_location const loc = source_location::current())
     {
-        bool c = every(ra::map(comp, ref, a));
-        test(c, LAZYINFO("comp (ref: ", where(true, ref, a), ", got: ", where(false, ref, a), ")"), LAZYINFO(""),
-             loc);
+        bool c = every(ra::map(comp, a, b));
+        test(c, LAZYINFO("comp (", where(true, a, b), msg, where(false, a, b), ")"),
+             LAZYINFO(""), loc);
         return c;
     }
     template <class R, class A>
-    bool test_eq(R && ref, A && a,
-                 source_location const loc = source_location::current())
+    bool
+    test_eq(R && ref, A && a, source_location const loc = source_location::current())
     {
         return test_comp(std::forward<R>(ref), std::forward<A>(a), [](auto && a, auto && b) { return every(a==b); },
-                         loc);
+                         " should be == ref ", loc);
     }
     template <class A, class B>
-    bool test_lt(A && a, B && b,
-                 source_location const loc = source_location::current())
+    bool
+    test_lt(A && a, B && b, source_location const loc = source_location::current())
     {
-        bool c = every(a<b);
-        test(c, LAZYINFO("comp (", where(true, a, b), " should be < ", where(false, a, b), ")"), LAZYINFO(""), loc);
-        return c;
+        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<b); },
+                         " should be < ", loc);
     }
     template <class A, class B>
-    bool test_le(A && a, B && b,
-                 source_location const loc = source_location::current())
+    bool
+    test_le(A && a, B && b, source_location const loc = source_location::current())
     {
-        bool c = every(a<=b);
-        test(c, LAZYINFO("comp (", where(true, a, b), " should be <= ", where(false, a, b), ")"), LAZYINFO(""), loc);
-        return c;
+        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<=b); },
+                         " should be <= ", loc);
     }
     template <class R, class A>
-    double test_rel_error(R && ref, A && a, double req_err, double level=0,
-                          source_location const loc = source_location::current())
+    double
+    test_rel_error(R && ref, A && a, double req_err, double level=0, source_location const loc = source_location::current())
     {
         double e = (level<=0)
             ? amax_strict(where(isnan(ref),
@@ -174,8 +175,8 @@ struct TestRecorder
         return e;
     }
     template <class R, class A>
-    double test_abs_error(R && ref, A && a, double req_err=0,
-                          source_location const loc = source_location::current())
+    double
+    test_abs_error(R && ref, A && a, double req_err=0, source_location const loc = source_location::current())
     {
         double e = amax_strict(where(isnan(ref),
                                      where(isnan(a), 0., std::numeric_limits<double>::infinity()),
@@ -189,7 +190,8 @@ struct TestRecorder
 
 #undef LAZYINFO
 
-    int summary() const
+    int
+    summary() const
     {
         o << "Of " << total << " tests " << esc_bold << esc_green << "passed " << (total-failed.size());
         if (skipped>0) {

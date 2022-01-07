@@ -70,7 +70,7 @@ dim_t chosen_len(dim_t sa, dim_t sb)
     }
 }
 
-// Abort if there is a static mismatch. Return 0 if if all the lens are static. Return 1 if a runtime check is needed.
+// ct mismatch, abort | ct match, return 0 | rt check needed, return 1
 
 template <class E>
 inline constexpr
@@ -82,7 +82,7 @@ int check_expr_s()
         constexpr auto fk =
             [](auto && fk, auto k_, auto valk) consteval
             {
-// FIXME until something like P1045R1 = [](..., constexpr auto k_, ...)
+// FIXME until something like P1045R1 [](..., constexpr auto k_, ...)
                 constexpr int k = k_;
                 if constexpr (k<rs) {
                     constexpr auto fi =

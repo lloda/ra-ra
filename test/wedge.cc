@@ -129,16 +129,6 @@ int main()
 {
     TestRecorder tr(std::cout);
     static_assert(ra::mp::n_over_p(0, 0)==1, "");
-// gcc let a bug pass by https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57891. Cf http://stackoverflow.com/a/24346350.
-// TODO We weren't getting the proper diagnostic from clang, probably due to disable_if doing !(integer).
-    tr.section("MatchPermutationP");
-    {
-        using thematch = ra::mp::MatchPermutationP<int_list<1, 0>>::type<int_list<0, 1>>;
-        cout << "A... " << (thematch::value) << endl;
-        using index_if = ra::mp::IndexIf<std::tuple<int_list<1, 0>>, ra::mp::MatchPermutationP<int_list<0, 1>>::template type>;
-        cout << "B... " << index_if::value << endl;
-        static_assert(index_if::value==0, "bad MatchPermutationP");
-    }
     tr.section("Testing FindCombination");
     {
         using la = ra::mp::iota<3>;

@@ -13,17 +13,13 @@
 
 namespace ra::mp {
 
-template <class P>
-struct MatchPermutationP
+template <class P, class Plist>
+struct FindCombination
 {
-    template <class A> using type = bool_t<(PermutationSign<P, A>::value!=0)>;
-};
-
-template <class P, class Plist> struct FindCombination
-{
-    using type = IndexIf<Plist, mp::MatchPermutationP<P>::template type>;
+    template <class A> using match = bool_t<0 != PermutationSign<P, A>::value>;
+    using type = IndexIf<Plist, match>;
     static int const where = type::value;
-    static int const sign = (where>=0) ? PermutationSign<P, typename type::type>::value :0;
+    static int const sign = (where>=0) ? PermutationSign<P, typename type::type>::value : 0;
 };
 
 // Produce a permutation of opposite sign if sign = -1.
