@@ -22,26 +22,17 @@ struct FindCombination
     static int const sign = (where>=0) ? PermutationSign<P, typename type::type>::value : 0;
 };
 
-// Produce a permutation of opposite sign if sign = -1.
-template <int sign, class C> struct PermutationFlipSign;
-template <class C0, class C1, class ... C>
-struct PermutationFlipSign<-1, std::tuple<C0, C1, C ...>>
-{
-    using type = std::tuple<C1, C0, C ...>;
-};
-template <class C0, class C1, class ... C>
-struct PermutationFlipSign<+1, std::tuple<C0, C1, C ...>>
-{
-    using type = std::tuple<C0, C1, C ...>;
-};
-
 // A combination antiC complementary to C wrt [0, 1, ... Dim-1], but permuted to make the permutation [C, antiC] positive with respect to [0, 1, ... Dim-1].
 template <class C, int D>
 struct AntiCombination
 {
     using EC = complement<C, D>;
     static_assert((len<EC>)>=2, "can't correct this complement");
-    using type = typename PermutationFlipSign<PermutationSign<append<C, EC>, iota<D>>::value, EC>::type;
+    constexpr static int sign = PermutationSign<append<C, EC>, iota<D>>::value;
+// Produce permutation of opposite sign if sign<0.
+    using type = mp::cons<std::tuple_element_t<(sign<0) ? 1 : 0, EC>,
+                          mp::cons<std::tuple_element_t<(sign<0) ? 0 : 1, EC>,
+                                   mp::drop<EC, 2>>>;
 };
 
 template <class C, int D> struct MapAntiCombination;
