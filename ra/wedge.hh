@@ -2,7 +2,7 @@
 /// @file wedge.hh
 /// @brief Wedge product and cross product.
 
-// (c) Daniel Llorens - 2008-2011, 2014-2015
+// (c) Daniel Llorens - 2008-2011, 2014-2015, 2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -48,15 +48,16 @@ struct ChooseComponents
     static_assert(D>=O, "bad dimension or form order");
     using type = mp::combinations<iota<D>, O>;
 };
+
+template <int D, int O> using ChooseComponents_ = typename ChooseComponents<D, O>::type;
+
 template <int D, int O>
 requires ((D>1) && (2*O>D))
 struct ChooseComponents<D, O>
 {
     static_assert(D>=O, "bad dimension or form order");
-    using C = typename ChooseComponents<D, D-O>::type;
-    using type = typename MapAntiCombination<C, D>::type;
+    using type = typename MapAntiCombination<ChooseComponents_<D, D-O>, D>::type;
 };
-template <int D, int O> using ChooseComponents_ = typename ChooseComponents<D, O>::type;
 
 // Works *almost* to the range of size_t.
 constexpr size_t n_over_p(size_t const n, size_t p)
@@ -101,40 +102,31 @@ struct Wedge
     using valtype = std::decay_t<decltype(std::declval<Va>()[0] * std::declval<Vb>()[0])>;
 
     template <class Xr, class Fa, class Va, class Vb>
-    requires (mp::nilp<Fa>)
     static valtype<Va, Vb>
     term(Va const & a, Vb const & b)
     {
-        return 0.;
-    }
-    template <class Xr, class Fa, class Va, class Vb>
-    requires (!mp::nilp<Fa>)
-    static valtype<Va, Vb>
-    term(Va const & a, Vb const & b)
-    {
-        using Fa0 = mp::first<Fa>;
-        using Fb = mp::complement_list<Fa0, Xr>;
-        using Sa = mp::FindCombination<Fa0, Ca>;
-        using Sb = mp::FindCombination<Fb, Cb>;
-        constexpr int sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::append<Fa0, Fb>, Xr>::value;
-        static_assert(sign==+1 || sign==-1, "bad sign in wedge term");
-        return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::drop1<Fa>>(a, b);
+        if constexpr (!mp::nilp<Fa>) {
+            using Fa0 = mp::first<Fa>;
+            using Fb = mp::complement_list<Fa0, Xr>;
+            using Sa = mp::FindCombination<Fa0, Ca>;
+            using Sb = mp::FindCombination<Fb, Cb>;
+            constexpr int sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::append<Fa0, Fb>, Xr>::value;
+            static_assert(sign==+1 || sign==-1, "bad sign in wedge term");
+            return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::drop1<Fa>>(a, b);
+        } else {
+            return 0.;
+        }
     }
     template <class Va, class Vb, class Vr, int wr>
-    requires (wr<Nr)
     static void
     coeff(Va const & a, Vb const & b, Vr & r)
     {
-        using Xr = mp::ref<Cr, wr>;
-        using Fa = mp::combinations<Xr, Oa>;
-        r[wr] = term<Xr, Fa>(a, b);
-        coeff<Va, Vb, Vr, wr+1>(a, b, r);
-    }
-    template <class Va, class Vb, class Vr, int wr>
-    requires (wr==Nr)
-    static void
-    coeff(Va const & a, Vb const & b, Vr & r)
-    {
+        if constexpr (wr<Nr) {
+            using Xr = mp::ref<Cr, wr>;
+            using Fa = mp::combinations<Xr, Oa>;
+            r[wr] = term<Xr, Fa>(a, b);
+            coeff<Va, Vb, Vr, wr+1>(a, b, r);
+        }
     }
     template <class Va, class Vb, class Vr>
     static void
@@ -198,18 +190,22 @@ void hodgex(Va const & a, Vb & b)
 
 namespace ra {
 
-// This depends on Wedge<>::Ca, Cb, Cr coming from ChooseCombinations, as enforced in the tests in test_wedge_product. hodgex() should always work, but this is cheaper.
+// This depends on Wedge<>::Ca, Cb, Cr coming from ChooseCombinations, as enforced in test_wedge_product. hodgex() should always work, but this is cheaper.
 // However if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
 // Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w in that case, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
 #define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))))
+
 template <int D, int O, class Va, class Vb>
-requires (TRIVIAL(D, O))
 inline void
 hodge(Va const & a, Vb & b)
 {
-    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc
-    static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
-    b = a;
+    if constexpr (TRIVIAL(D, O)) {
+        static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc
+        static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
+        b = a;
+    } else {
+        ra::mp::hodgex<D, O>(a, b);
+    }
 }
 
 template <int D, int O, class Va>
@@ -219,14 +215,6 @@ hodge(Va const & a)
 {
     static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size()
     return a;
-}
-
-template <int D, int O, class Va, class Vb>
-requires (!TRIVIAL(D, O))
-inline void
-hodge(Va const & a, Vb & b)
-{
-    ra::mp::hodgex<D, O>(a, b);
 }
 
 template <int D, int O, class Va>
