@@ -157,7 +157,7 @@ struct TestRecorder
     }
     template <class R, class A>
     double
-    test_rel_error(R && ref, A && a, double req_err, double level=0, source_location const loc = source_location::current())
+    test_rel_error(R && ref, A && a, double req, double level=0, source_location const loc = source_location::current())
     {
         double e = (level<=0)
             ? amax_strict(where(isnan(ref),
@@ -166,24 +166,24 @@ struct TestRecorder
             : amax_strict(where(isnan(ref),
                                 where(isnan(a), 0., std::numeric_limits<double>::infinity()),
                                 abs(ref-a)/level));
-        test(e<=req_err,
+        test(e<=req,
              LAZYINFO("rerr (", esc_yellow, "ref", esc_plain, ": ", ref, esc_yellow, ", got", esc_plain, ": ", a,
-                      ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req_err),
+                      ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req),
              LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
-                      ", req. ", req_err),
+                      ", req. ", req),
              loc);
         return e;
     }
     template <class R, class A>
     double
-    test_abs_error(R && ref, A && a, double req_err=0, source_location const loc = source_location::current())
+    test_abs_error(R && ref, A && a, double req=0, source_location const loc = source_location::current())
     {
         double e = amax_strict(where(isnan(ref),
                                      where(isnan(a), 0., std::numeric_limits<double>::infinity()),
                                      abs(ref-a)));
-        test(e<=req_err,
-             LAZYINFO((verbose!=QUIET), "aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req_err),
-             LAZYINFO("aerr: ", format_error(e), ", req. ", req_err),
+        test(e<=req,
+             LAZYINFO((verbose!=QUIET), "aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req),
+             LAZYINFO("aerr: ", format_error(e), ", req. ", req),
              loc);
         return e;
     }
