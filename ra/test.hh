@@ -65,9 +65,7 @@ struct TestRecorder
     {
         bool empty = (info_str=="");
         info_str += esc_pink;
-        info_str += (empty ? "" : "; ");
-        info_str += format(a ...);
-        info_str += esc_plain;
+        info_str += (empty ? "" : "; ") + format(a ...) + esc_plain;
         return *this;
     }
     TestRecorder & quiet(verbose_t v=QUIET) { verbose = v; return *this; }
@@ -182,7 +180,7 @@ struct TestRecorder
                                      where(isnan(a), 0., std::numeric_limits<double>::infinity()),
                                      abs(ref-a)));
         test(e<=req,
-             LAZYINFO((verbose!=QUIET), "aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req),
+             LAZYINFO("aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req),
              LAZYINFO("aerr: ", format_error(e), ", req. ", req),
              loc);
         return e;
