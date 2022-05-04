@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file real.hh
-/// @brief Define real number type and related global definitions.
+/// ra-ra - Global definitions related to float/double.
 
 // (c) Daniel Llorens - 2005, 2015, 2021
 // This library is free software; you can redistribute it and/or modify it under

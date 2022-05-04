@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file operators.cc
-/// @brief Tests for operators on ra:: expr templates.
+/// ra-ra/test - Tests for operators.
 
 // (c) Daniel Llorens - 2014-2015
 // This library is free software; you can redistribute it and/or modify it under

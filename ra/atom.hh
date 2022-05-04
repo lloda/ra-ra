@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file atom.hh
-/// @brief Terminal nodes for expression templates, and use-as-xpr wrapper.
+/// ra-ra - Terminal nodes for expression templates.
 
 // (c) Daniel Llorens - 2011-2016, 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -21,7 +20,8 @@ template <class V> inline constexpr decltype(auto) shape(V const & v);
 // atom types
 // --------------------
 
-// Wrap constant for traversal. We still want f(C) to be a specialization in most cases.
+// Iterator for rank 0 object. This can be used on foreign objects, or as an alternative to the rank conjunction.
+// We still want f(C) to be a specialization in most cases (ie avoid ply(f, C) when C is rank 0).
 template <class C>
 struct Scalar
 {
@@ -53,11 +53,11 @@ struct Scalar
 
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
-// Wrap foreign vectors.
-// FIXME Beware of some classes eg in std::ranges that have both ssize() and tuple_size() with different meanings. For those it would be better to revert to using ra_traits here and then define the requisite ra_traits specializations.
+// Iterator for rank-1 foreign object. ra:: objects have their own Iterators.
+// FIXME Some classes eg in std::ranges have both ssize() and tuple_size() with different meanings. For those it would be better to revert to using ra_traits here and then define the requisite ra_traits specializations.
 template <class V>
 requires ((requires (V v) { { std::ssize(v) } -> std::signed_integral; } ||
-           requires { std::tuple_size<std::decay_t<V>>::value; } ) &&
+           requires { std::tuple_size_v<std::decay_t<V>>; } ) &&
           requires (V v) { { std::begin(v) } -> std::random_access_iterator; })
 struct Vector
 {
@@ -287,7 +287,7 @@ template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 
 
 // --------------
-// Coerce potential RaIterator
+// Coerce potential Iterator
 // --------------
 
 template <class T>
@@ -328,7 +328,7 @@ template <class T> requires (is_builtin_array<T>)
 inline constexpr auto
 start(T && t);
 
-// ra:: non-iterator types
+// ra:: non-Iterator types
 
 // Neither cell_iterator_big nor cell_iterator_small will retain rvalues [ra4].
 template <class T> requires (is_slice<T>)
@@ -338,7 +338,7 @@ start(T && t)
     return iter<0>(std::forward<T>(t));
 }
 
-// RaIterator (rather restart)
+// Iterator (rather restart)
 
 template <class T> requires (is_ra_scalar<T>)
 inline constexpr decltype(auto)
@@ -347,7 +347,7 @@ start(T && t)
     return std::forward<T>(t);
 }
 
-// see [ra35] and Vector constructors above. RaIterators need to be restarted on every use (eg ra::cross()).
+// see [ra35] and Vector constructors above. Iterators need to be restarted on every use (eg ra::cross()).
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
 inline constexpr auto
 start(T && t)

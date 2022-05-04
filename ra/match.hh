@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file match.hh
-/// @brief Prefix matching of array expression templates.
+/// ra-ra - Prefix matching of array expression templates.
 
 // (c) Daniel Llorens - 2011-2013, 2015-2019
 // This library is free software; you can redistribute it and/or modify it under

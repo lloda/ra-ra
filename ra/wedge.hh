@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file wedge.hh
-/// @brief Wedge product and cross product.
+/// ra-ra - Wedge product and cross product.
 
 // (c) Daniel Llorens - 2008-2011, 2014-2015, 2022
 // This library is free software; you can redistribute it and/or modify it under

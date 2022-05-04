@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file dual.hh
-/// @brief Dual numbers for automatic differentiation.
+/// ra-ra - Dual numbers for automatic differentiation.
 
 // (c) Daniel Llorens - 2013, 2015
 // This library is free software; you can redistribute it and/or modify it under

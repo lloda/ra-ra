@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file types.cc
-/// @brief Show what types conform to what type predicates.
+/// ra-ra/test - Show what types conform to what type predicates.
 
 // (c) Daniel Llorens - 2016-2017
 // This library is free software; you can redistribute it and/or modify it under
@@ -8,6 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+#include <ranges>
 #include <string>
 #include <chrono>
 #include <numeric>
@@ -24,10 +24,14 @@ using ra::mp::int_list, ra::mp::nil;
     {                                                                   \
         tr.info(STRINGIZE(A)).info("ra").test_eq(ra, ra::is_ra<A>);     \
         tr.info(STRINGIZE(A)).info("slice").test_eq(slice, ra::is_slice<A>); \
-        tr.info(STRINGIZE(A)).info("RaIterator").test_eq(array_iterator, ra::RaIterator<A>); \
+        tr.info(STRINGIZE(A)).info("Iterator").test_eq(array_iterator, ra::IteratorConcept<A>); \
         tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, ra::is_scalar<A>); \
         tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, ra::is_foreign_vector<A>); \
+        cout << "is _range: " << std::ranges::range<A> << endl;         \
     }
+
+// Not registered with is_scalar_def.
+struct Unreg { int x; };
 
 int main()
 {
@@ -51,7 +55,7 @@ int main()
             (true, true, false, false, false);
         TEST_PREDICATES(decltype(ra::Unique<int, 2>().iter()))
             (true, false, true, false, false);
-        static_assert(ra::RaIterator<decltype(ra::Unique<int, 2>().iter())>);
+        static_assert(ra::IteratorConcept<decltype(ra::Unique<int, 2>().iter())>);
         {
             ra::Unique<int, 1> A= {1, 2, 3};
             auto i = A.iter();
@@ -63,7 +67,7 @@ int main()
             (true, false, true, false, false);
         TEST_PREDICATES(ra::TensorIndex<0>)
             (true, false, true, false, false);
-// FIXME in type.hh, prevents replacing is_iterator by RaIterator. Perhaps an additional concept is needed.
+// FIXME in type.hh, prevents replacing is_iterator by Iterator. Perhaps an additional concept is needed.
         TEST_PREDICATES(ra::TensorIndex<0> const)
             (true, false, false, false, false);
         TEST_PREDICATES(ra::TensorIndex<0> &)
@@ -85,6 +89,13 @@ int main()
         TEST_PREDICATES(decltype(ra::start(std::vector<int> {})))
             (true, false, true, false, false);
         TEST_PREDICATES(int *)
+            (false, false, false, false, false);
+        TEST_PREDICATES(decltype(std::ranges::iota_view(-5, 10)))
+            (false, false, false, false, true);
+// test.hh registers std::string with ra::is_scalar_def, but it will be a range (hence a foreign vector) otherwise.
+        TEST_PREDICATES(std::string)
+            (false, false, false, true, false);
+        TEST_PREDICATES(Unreg)
             (false, false, false, false, false);
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");

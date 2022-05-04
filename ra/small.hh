@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file small.hh
-/// @brief Arrays with static dimensions. Compare with View, Container.
+/// ra-ra - Arrays with static dimensions, cf big.hh.
 
 // (c) Daniel Llorens - 2013-2016, 2018-2021
 // This library is free software; you can redistribute it and/or modify it under
@@ -42,7 +41,7 @@ namespace indexer0 {
     }
 
     template <class lens, class steps, class P>
-    constexpr dim_t longer(P const & p) // for RaIterator::at().
+    constexpr dim_t longer(P const & p) // for IteratorConcept::at().
     {
         if constexpr (size_s<P>()!=RANK_ANY) {
             static_assert(mp::len<lens> <= size_s<P>(), "Too few indices");

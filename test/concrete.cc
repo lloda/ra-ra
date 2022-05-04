@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file concrete.cc
-/// @brief Tests for concrete_type.
+/// ra-ra/test - Tests for concrete(), concrete_type.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under

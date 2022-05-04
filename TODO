@@ -12,6 +12,7 @@ checkbox [C-ct] flip TODO
       - Tried is_constant_eval in c++20 but didn't work out as I hoped.
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
     - [X] size_s, rank_s in Ryn:: are broken [ra07]
+    - [ ] broken with -DNDEBUG
     - [ ] ambiguity / bad init in nested constructors [ra45]
     - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
       rank 1, then `A(i)` will return a nested expression instead of preserving
@@ -41,7 +42,7 @@ checkbox [C-ct] flip TODO
       array iterator. That may come of merging STLIterator with
       ply_index/ply_ravel.
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
-    - [ ] port some of the View ops to generic ArrayIterator. reverse,
+    - [ ] port some of the View ops to generic Iterator. reverse,
           transpose, etc. seem easy enough. Only it kind of bothers me that they
           need their own Expr-like types while on Views it's just a one time
           op. Propagating ops down Expr into leaf Views (a kind of beating) would be
@@ -85,7 +86,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   8. [ ]
   9. [ ] test/ra-6.cc
      Using the same lvalue ra::vector multiple times in an expression is broken, since start(ra::Vector) doesn't restart, so they clash with each other in ply. See also [ra39].
-     The reason start(ra::Vector) doesn't restart is that ra::Vector may contain a copy of v instead of a reference, same as ra::Scalar. But this is problematic since plying modifies the RaIterator. So I should split ra::Vector into the Array-like owning object and the RaIterator object which is exclusively a temp and can be made to hold a ref.
+     The reason start(ra::Vector) doesn't restart is that ra::Vector may contain a copy of v instead of a reference, same as ra::Scalar. But this is problematic since plying modifies the Iterator. So I should split ra::Vector into the Array-like owning object and the Iterator object which is exclusively a temp and can be made to hold a ref.
   10. [ ] test/ra-0.cc
      size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
   11. [ ]
@@ -117,13 +118,13 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   37. [ ]
   38. [ ]
   39. [ ] test/ra-7.cc
-      There's no reason to restart, since the RaIterator methods are all static. So start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const overload is required for ScalarFlat::operator*.
+      There's no reason to restart, since the Iterator methods are all static. So start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const overload is required for ScalarFlat::operator*.
   40. [ ]
   41. [ ]
   42. [ ] no current test
       A way to test that compilation assertions are triggered appropriately, esp. for things like ct array lookup et
   43. [ ] bench/bench-dot.cc
-      The performace of f_small_op depends on the optimization in plyf() through ocd<>(). Doing this required having static and non-static versions of RaIterator::keep_step in Match/Expr. Possibly the same could be done to reduce rank/rank_s, size/size_s to just rank/size, and check for static-ness instead of RANK_ANY/DIM_ANY.
+      The performace of f_small_op depends on the optimization in plyf() through ocd<>(). Doing this required having static and non-static versions of Iterator::keep_step in Match/Expr. Possibly the same could be done to reduce rank/rank_s, size/size_s to just rank/size, and check for static-ness instead of RANK_ANY/DIM_ANY.
   44. [ ]
   45. [ ]
   46. [ ]

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file stl-compat.cc
-/// @brief Using ra:: array & iterator types with the STL algos & types.
+/// ra-ra/test - Using array & iterator types with the STL algos & types.
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under
@@ -12,6 +11,7 @@
 // lack of random access (which for the STL also means linear, but at least for
 // 1D expressions it should be available), etc. Check some cases here.
 
+#include <ranges>
 #include <iostream>
 #include <iterator>
 #include "ra/test.hh"
@@ -47,7 +47,7 @@ int main()
             tr.test_eq(a, -b);
         }
     }
-    tr.section("raw, slippery pointers");
+    tr.section("raw pointers");
     {
         ra::Big<int, 1> a = {1, 2, 3};
         int b[] = { +1, -1, +1 };
@@ -71,6 +71,18 @@ int main()
         ra::Big<int, 3> aa({0, 2, 3}, 0.);
         auto a = aa(ra::all, 1);
         tr.info("begin ", a.begin().ii.c.p, " end ", a.end().ii.c.p).test(a.begin()==a.end());
+    }
+    tr.section("foreign vectors from std::");
+    {
+        tr.info("adapted std::array has static size").test_eq(3, size_s(ra::start(std::array<int, 3> {1, 2, 0})));
+        tr.info("adapted std::vector has dynamic size").test_eq(ra::DIM_ANY, size_s(ra::start(std::vector<int> {1, 2, 0})));
+    }
+    tr.section("other std::ranges");
+    {
+        tr.test_eq(15, size(ra::start(std::ranges::iota_view(-5, 10))));
+        tr.info("adapted std::ranges::iota_view has dynamic size")
+            .test_eq(ra::DIM_ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
+        tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
     return tr.summary();
 }

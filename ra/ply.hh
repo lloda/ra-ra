@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ply.hh
-/// @brief Traverse (ply) array or array expression or array statement.
+/// ra-ra - Traverse (ply) array or array expression or array statement.
 
 // (c) Daniel Llorens - 2013-2019, 2021
 // This library is free software; you can redistribute it and/or modify it under
@@ -11,7 +10,7 @@
 // TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 // TODO Better heuristic for traversal order.
-// TODO std::execution policies and validate output argument strides accordingly.
+// TODO std::execution::xxx-policy, validate output argument strides.
 
 #pragma once
 #include "atom.hh"
@@ -29,7 +28,7 @@ namespace ra {
 // len(k) has a single value.
 // adv(k), step(k), keep_step(st, k, l) and flat() are used on all the leaf arguments.
 // The steps must give 0 for k>=their own rank, to allow frame matching.
-template <RaIterator A>
+template <IteratorConcept A>
 inline void
 ply_ravel(A && a)
 {
@@ -149,7 +148,7 @@ ocd()
     return std::make_tuple(s, j);
 };
 
-template <RaIterator A>
+template <IteratorConcept A>
 RA_INLINE constexpr void
 plyf(A && a)
 {
@@ -183,7 +182,7 @@ plyf(A && a)
 // Select best performance (or requirements) for each type.
 // ---------------------------
 
-template <RaIterator A>
+template <IteratorConcept A>
 inline constexpr void
 ply(A && a)
 {
@@ -201,7 +200,7 @@ ply(A && a)
 
 // TODO Refactor with ply_ravel. Make exit available to plyf.
 // TODO These are reductions. How to do higher rank?
-template <RaIterator A, class DEF>
+template <IteratorConcept A, class DEF>
 inline auto
 ply_ravel_exit(A && a, DEF && def)
 {
@@ -265,7 +264,7 @@ ply_ravel_exit(A && a, DEF && def)
     }
 }
 
-template <RaIterator A, class DEF>
+template <IteratorConcept A, class DEF>
 inline decltype(auto)
 early(A && a, DEF && def)
 {

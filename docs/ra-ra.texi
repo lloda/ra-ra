@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 16
-@set UPDATED 2021 July 29
+@set UPDATED 2022 May 4
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -83,7 +83,7 @@ A multidimensional array is a container whose elements can be looked up using a 
 
 Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.
 
-Arrays (in the form of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is enormously useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
+Arrays (as a representation of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
 
 @verbatim
 A = B+C;
@@ -100,7 +100,7 @@ for (int i=0; i!=m; ++i)
 
 but it's also safer and less redundant. For example, the order of the loops may be something you don't really care about.
 
-However, if array operations are implemented naively, a piece of code such as @code{A=B+C} may result in the creation of a temporary to hold @code{B+C} which is then assigned to @code{A}. Needless to say this is very wasteful if the arrays involved are large.
+However, if array operations are implemented naively, a piece of code such as @code{A=B+C} may result in the creation of a temporary to hold @code{B+C} which is then assigned to @code{A}. This is wasteful if the arrays involved are large.
 
 @cindex Blitz++
 Fortunately the problem is almost as old as aggregate data types, and other programming languages have addressed it with optimizations such as @url{https://en.wikipedia.org/wiki/Loop_fission_and_fusion, ‘loop fusion’}, ‘drag along’ @mybibcite{Abr70}, or ‘deforestation’ @mybibcite{Wad90}. In the C++ context the technique of ‘expression templates’ was pioneered in the late 90s by libraries such as Blitz++ @mybibcite{bli17}. It works by making @code{B+C} into an ‘expression object’ which holds references to its arguments and performs the sum only when its elements are looked up. The compiler removes the temporary expression objects during optimization, so that @code{A=B+C} results (in principle) in the same generated code as the complicated loop nest above.
@@ -158,7 +158,7 @@ where the numbers (s₀, s₁, ...) are called the @dfn{steps}@footnote{Sometime
 A ≡ ((storage-of-A), o, (s₀, s₁, ...))
 @end quotation
 
-then any affine transformation of the indices can be achieved simply by modifying the numbers (o, (s₀, s₁, ...)), with no need to touch the storage. This includes very common operations such as: @ref{x-transpose,transposing} axes, @ref{x-reverse,reversing} the order along an axis, most cases of @ref{Slicing,slicing}, and sometimes even reshaping or tiling the array.
+then any affine transformation of the indices can be achieved simply by modifying the numbers (o, (s₀, s₁, ...)), with no need to touch the storage. This includes common operations such as: @ref{x-transpose,transposing} axes, @ref{x-reverse,reversing} the order along an axis, most cases of @ref{Slicing,slicing}, and sometimes even reshaping or tiling the array.
 
 A basic example is obtaining the i₀-th item of A:
 
@@ -1405,7 +1405,7 @@ cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
 @print{} o: 1 7 9, e: 2 12
 @end example
 
-FIXME Very artificial example.
+FIXME Artificial example.
 FIXME Do we want to expose ply(); this is the only example in the manual that uses it.
 
 When the choice is between more than two expressions, there's @ref{x-pick,@code{pick}}, which operates similarly.
@@ -1618,17 +1618,17 @@ These are array types that own their data in one way or another. Creating or des
 
 These are array views into data in memory. Access to their contents doesn't involve computation and they may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s that aren't associated with any @b{Container}, for example into memory allocated by a different library. Creating and destroying @b{View}s doesn't allocate or deallocate memory for array elements.
 
-@item @b{RaIterator} --- @code{Expr} @code{Pick} @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
+@item @b{Iterator} --- @code{Expr} @code{Pick} @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
 
-This is a traversable object. @b{RaIterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{RaIterator} itself, so most array expressions are @b{RaIterator}s. @b{RaIterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
+This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
 @item @b{Ravelable} --- @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
-This is a kind of @b{RaIterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{len()}, @code{step()}, @code{keep_step()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+This is a kind of @b{Iterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{len()}, @code{step()}, @code{keep_step()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
 @item @b{Indexable} @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
 
-This is a kind of @b{RaIterator} that provides an @code{at(i ...)} method for random access to any element of the array. In the current version of @code{ra::}, every @b{RaIterator} is both @b{Ravelable} and @b{Indexable}.
+This is a kind of @b{Iterator} that provides an @code{at(i ...)} method for random access to any element of the array. In the current version of @code{ra::}, every @b{Iterator} is both @b{Ravelable} and @b{Indexable}.
 
 @item @b{Flat} @code{Iota::Flat} @code{Scalar::Flat} @code{TensorIndex::Flat} @code{Expr::Flat} @code{Pick::Flat} @code{CellFlat}
 

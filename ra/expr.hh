@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file expr.hh
-/// @brief Operator nodes for expression templates.
+/// ra-ra - Nodes for expression templates.
 
 // (c) Daniel Llorens - 2011-2014, 2016-2017, 2019, 2021
 // This library is free software; you can redistribute it and/or modify it under

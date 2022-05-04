@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file operators.hh
-/// @brief Sugar for ra:: expression templates.
+/// ra-ra - Sugar for ra:: expression templates.
 
 // (c) Daniel Llorens - 2014-2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -97,7 +96,7 @@ auto from(A && a, I && ... i)
 
 
 // I considered three options for lookup.
-// 1. define these in a class that RaIterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.hh). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an RaIterator), it requires lots of forwarding and traits:: .
+// 1. define these in a class that Iterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.hh). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an Iterator), it requires lots of forwarding and traits:: .
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.
 // 3. requires-constrained ADL is what you see here.
 

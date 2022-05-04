@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file format.hh
-/// @brief Array output formatting, with some generic ostream sugar.
+/// ra-ra - Array output formatting.
 
 // (c) Daniel Llorens - 2010, 2016-2018
 // This library is free software; you can redistribute it and/or modify it under

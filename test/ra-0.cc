@@ -773,7 +773,7 @@ int main()
     }
     tr.section("ra::iota");
     {
-        static_assert(ra::RaIterator<decltype(ra::iota(10))>, "bad type pred for iota");
+        static_assert(ra::IteratorConcept<decltype(ra::iota(10))>, "bad type pred for iota");
         tr.section("straight cases");
         {
             ra::Big<int, 1> a = ra::iota(4, 1);

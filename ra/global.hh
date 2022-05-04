@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file global.hh
-/// @brief Had to break namespace hygiene.
+/// ra-ra - Declarations that break namespace hygiene.
 
 // (c) Daniel Llorens - 2016, 2022
 // This library is free software; you can redistribute it and/or modify it under

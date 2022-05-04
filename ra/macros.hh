@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file macros.hh
-/// @brief Fundamental macros and types.
+/// ra-ra - Basic macros and types.
 
 // (c) Daniel Llorens - 2005, 2012, 2019-2021
 // This library is free software; you can redistribute it and/or modify it under

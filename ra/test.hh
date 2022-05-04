@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file test.hh
-/// @brief Minimal test library.
+/// ra-ra - Test library.
 
 // (c) Daniel Llorens - 2012, 2014-2016
 // This library is free software; you can redistribute it and/or modify it under
@@ -128,7 +127,7 @@ struct TestRecorder
     test_comp(A && a, B && b, Comp && comp, char const * msg, source_location const loc = source_location::current())
     {
         bool c = every(ra::map(comp, a, b));
-        test(c, LAZYINFO("comp (", where(true, a, b), msg, where(false, a, b), ")"),
+        test(c, LAZYINFO("comp (", where(false, a, b), msg, where(true, a, b), ")"),
              LAZYINFO(""), loc);
         return c;
     }

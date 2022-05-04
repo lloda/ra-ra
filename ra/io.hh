@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file io.hh
-/// @brief Write and read arrays, expressions.
+/// ra-ra - Write and read arrays, expressions.
 
 // (c) Daniel Llorens - 2014-2018, 2021
 // This library is free software; you can redistribute it and/or modify it under
@@ -22,7 +21,7 @@ template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-// FIXME note that this copies / resets the RaIterator if fa.a already is one; see [ra35].
+// FIXME note that this copies / resets the Iterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
     static_assert(size_s(a)!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();

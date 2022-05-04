@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file concrete.hh
-/// @brief Obtain concrete type from array expression.
+/// ra-ra - Obtain concrete type from array expression.
 
 // (c) Daniel Llorens - 2017, 2021
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file complex.hh
-/// @brief Defines the complex type and standard operations on it.
+/// ra-ra - Global definitions related to complex types.
 
 // (c) Daniel Llorens - 2005, 2015
 // This library is free software; you can redistribute it and/or modify it under
