@@ -390,10 +390,9 @@ rank_s(V const &)
     return rank_s<V>();
 }
 
-template <class V_> inline constexpr dim_t
+template <class V> inline constexpr dim_t
 size_s()
 {
-    using V = std::decay_t<V_>;
     if constexpr (requires { ra_traits<V>::size_s(); }) {
         return ra_traits<V>::size_s();
     } else if constexpr (requires { std::decay_t<V>::size_s(); }) {
@@ -405,9 +404,10 @@ size_s()
         } else if constexpr (0==rank_s<V>()) {
             return 1;
         } else {
+            using V_ = std::decay_t<V>;
             ra::dim_t s = 1;
-            for (int i=0; i!=V::rank_s(); ++i) {
-                if (dim_t ss=V::len_s(i); ss>=0) {
+            for (int i=0; i!=V_::rank_s(); ++i) {
+                if (dim_t ss=V_::len_s(i); ss>=0) {
                     s *= ss;
                 } else {
                     return ss; // either DIM_ANY or DIM_BAD

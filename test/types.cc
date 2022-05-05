@@ -154,8 +154,17 @@ int main()
         static_assert(requires { ra::ra_traits<decltype(a)>::size(a); });
         static_assert(requires { ra::ra_traits<decltype(b)>::size(b); });
         static_assert(requires { ra::ra_traits<decltype(c)>::size(c); });
+        tr.test_eq(3, ra::size(a));
+        tr.test_eq(3, ra::size(b));
+        tr.test_eq(4, ra::size(c));
+        tr.test_eq(3, ra::size_s(a));
+        tr.test_eq(3, ra::size_s(b));
+        tr.test_eq(4, ra::size_s(c));
+        tr.test_eq(3, ra::ra_traits<decltype(a)>::size_s());
+        tr.test_eq(3, ra::ra_traits<decltype(b)>::size_s());
+        tr.test_eq(4, ra::ra_traits<decltype(c)>::size_s());
     }
-    tr.section("adaptors");
+    tr.section("adaptors I");
     {
         tr.test_eq(2, size_s(ra::start(std::array<int, 2> { 1, 2 })));
         tr.test_eq(2, ra::size_s(std::array<int, 2> { 1, 2 }));
@@ -168,7 +177,7 @@ int main()
         tr.test_eq(1, ra::start(std::array<int, 2> { 1, 2 }).rank());
         tr.test_eq(1, ra::start(std::vector<int> { 1, 2, 3 }).rank());
     }
-    tr.section("adaptors");
+    tr.section("adaptors II");
     {
         static_assert(ra::is_ra_vector<decltype(ra::vector(std::array<int, 2> { 1, 2 }))>);
     }
