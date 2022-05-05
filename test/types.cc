@@ -92,10 +92,14 @@ int main()
             (false, false, false, false, false);
         TEST_PREDICATES(decltype(std::ranges::iota_view(-5, 10)))
             (false, false, false, false, true);
-// test.hh registers std::string with ra::is_scalar_def, but it will be a range (hence a foreign vector) otherwise.
+// std::string is explicity registerd as scalar in types.hh. It's still possible to do ra::vector(std::string).
         TEST_PREDICATES(std::string)
             (false, false, false, true, false);
         TEST_PREDICATES(Unreg)
+            (false, false, false, false, false);
+        TEST_PREDICATES(int [4])
+            (false, false, false, false, false);
+        TEST_PREDICATES(decltype("cstring"))
             (false, false, false, false, false);
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
@@ -154,6 +158,9 @@ int main()
         static_assert(requires { ra::ra_traits<decltype(a)>::size(a); });
         static_assert(requires { ra::ra_traits<decltype(b)>::size(b); });
         static_assert(requires { ra::ra_traits<decltype(c)>::size(c); });
+        tr.test_eq(1, ra::rank_s(a));
+        tr.test_eq(1, ra::rank_s(b));
+        tr.test_eq(2, ra::rank_s(c));
         tr.test_eq(3, ra::size(a));
         tr.test_eq(3, ra::size(b));
         tr.test_eq(4, ra::size(c));

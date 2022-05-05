@@ -17,8 +17,6 @@
 
 namespace ra {
 
-template <> constexpr bool is_scalar_def<std::string> = true;
-
 struct TestRecorder
 {
 // ra::amax ignore nans in the way fmax etc. do, and we don't want that here.

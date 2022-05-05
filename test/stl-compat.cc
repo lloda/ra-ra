@@ -77,6 +77,12 @@ int main()
         tr.info("adapted std::array has static size").test_eq(3, size_s(ra::start(std::array<int, 3> {1, 2, 0})));
         tr.info("adapted std::vector has dynamic size").test_eq(ra::DIM_ANY, size_s(ra::start(std::vector<int> {1, 2, 0})));
     }
+    tr.section("std::string");
+    {
+        tr.info("std::string is registered as scalar by ra").test_eq(0, ra::rank_s(std::string("hello")));
+        tr.info("explicit adaption to rank 1 is possible").test_eq(5, size(ra::vector(std::string("hello"))));
+        tr.info("note the difference with a char array").test_eq(6, ra::size("hello"));
+    }
     tr.section("other std::ranges");
     {
         tr.test_eq(15, size(ra::start(std::ranges::iota_view(-5, 10))));
