@@ -13,7 +13,7 @@
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder;
+using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
 using ra::mp::int_t, ra::mp::int_list;
 
 int main()
@@ -137,6 +137,26 @@ int main()
         // z += q; // error: raw pointer needs ra::ptr()
         ra::ptr(z) += p; // ok, size is determined by foreign object p
         tr.test_eq(ra::start({6, 12, 18}), p);
+    }
+    tr.section("char arrays");
+    {
+        auto quote = [](auto && o) { return ra::format(o); };
+        {
+            char hello[] = "hello";
+            tr.test_eq(string("hello"), quote(hello));
+            tr.test_eq(string("hello"), quote(ra::scalar(hello)));
+            tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, ra::start(hello));
+            tr.test_eq(6, size_s(ra::start(hello)));
+            tr.test_eq(ra::DIM_ANY, size_s(ra::vector(hello))); // FIXME [ra2]
+        }
+        cout << endl;
+        {
+            char const * hello = "hello";
+            tr.test_eq(string("hello"), quote(hello));
+            tr.test_eq(string("hello"), ra::scalar(hello));
+            // cout << ra::start(hello) << endl; // cannot be start()ed
+            // cout << ra::vector(hello) << endl; // same, but FIXME improve error message
+        }
     }
     return tr.summary();
 }

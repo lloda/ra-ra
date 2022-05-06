@@ -127,13 +127,5 @@ int main()
         ra::Small<ra::Big<double, 1>, 3> g = { { 1 }, { 1, 2 }, { 1, 2, 3 } };
         iocheck(tr.info("nested type"), g, g);
     }
-    tr.section("char arrays");
-    {
-        char hello[5] = {'h', 'e', 'l', 'l', 'o'};
-        std::ostringstream os;
-        os << ra::format("hello ", std::string("hello"), " hello ", 9);
-        cout << os.str() << endl;
-        cout << ra::vector(os.str()) << endl;
-    }
     return tr.summary();
 }

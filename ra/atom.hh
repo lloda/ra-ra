@@ -54,6 +54,7 @@ struct Scalar
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Iterator for rank-1 foreign object. ra:: objects have their own Iterators.
+// FIXME clarify explicit use (not through start()) [ra2]
 template <class V>
 requires ((requires (V v) { { std::ssize(v) } -> std::signed_integral; } ||
            requires { std::tuple_size_v<std::decay_t<V>>; } ) &&

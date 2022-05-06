@@ -134,7 +134,7 @@ struct TestRecorder
     test_eq(R && ref, A && a, source_location const loc = source_location::current())
     {
         return test_comp(std::forward<R>(ref), std::forward<A>(a), [](auto && a, auto && b) { return every(a==b); },
-                         " should be == ref ", loc);
+                         " should be == ", loc);
     }
     template <class A, class B>
     bool
