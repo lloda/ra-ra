@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ply.cc
-/// @brief Checks for ra:: traversal.
+/// ra-ra/test - Traversal.
 
 // (c) Daniel Llorens - 2013-2015
 // This library is free software; you can redistribute it and/or modify it under
@@ -49,8 +48,8 @@ int main()
         }
 #define TEST(plier)                                                     \
         {                                                               \
-            ra::Small<int, 3> C {0, 0, 0};                              \
             ra::Small<int, 3> A {1, 2, 3};                              \
+            ra::Small<int, 3> C {0, 0, 0};                              \
             plier(ra::expr([](int a, int & c) { c = -a; }, A.iter(), C.iter())); \
             tr.test_eq(-1, C[0]);                                       \
             tr.test_eq(-2, C[1]);                                       \

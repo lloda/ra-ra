@@ -30,14 +30,6 @@ constexpr char const * esc_plain = "\x1b[39m";
 constexpr char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
 constexpr char const * esc_pink = "\x1b[38;5;225m";
 
-template <class ... A> inline std::string
-format(A && ... a)
-{
-    std::ostringstream o; (o << ... << a); return o.str();
-}
-
-inline std::string const & format(std::string const & s) { return s; }
-
 enum print_shape_t { defaultshape, withshape, noshape };
 
 template <class A>
@@ -101,5 +93,13 @@ operator<<(std::ostream & o, source_location const & loc)
 #endif
     return o;
 }
+
+template <class ... A> inline std::string
+format(A && ... a)
+{
+    std::ostringstream o; (o << ... << a); return o.str();
+}
+
+inline std::string const & format(std::string const & s) { return s; }
 
 } // namespace ra

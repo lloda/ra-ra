@@ -59,6 +59,7 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
 }
 
 // is_foreign_vector is included b/c std::vector or std::array may be used as the type of shape().
+// but FIXME this also catches std::string if that isn't registered as is_scalar. We probably don't want that regardless of whether std::string is registered as scalar or not. [ra13]
 template <class A> requires (is_ra<A> || is_foreign_vector<A>)
 inline std::ostream &
 operator<<(std::ostream & o, A && a)

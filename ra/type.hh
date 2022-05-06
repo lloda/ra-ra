@@ -27,7 +27,7 @@ RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
-template <> constexpr bool is_scalar_def<std::string> = true;
+template <> constexpr bool is_scalar_def<std::string> = true; // [ra13]
 
 template <class T> requires (is_scalar<T>)
 struct ra_traits_def<T>
@@ -66,7 +66,7 @@ template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_s
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
 
 // std::string is std::ranges::range, but if we have it as is_scalar, we can't have it as is_foreign_vector.
-RA_IS_DEF(is_foreign_vector, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::range<A>))
+RA_IS_DEF(is_foreign_vector, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
 
 // not using decay_t b/c of builtin arrays.
 template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;

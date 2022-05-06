@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-0.cc
-/// @brief Checks for ra:: arrays, iterators.
+/// ra-ra/test - Arrays, iterators.
 
 // (c) Daniel Llorens - 2013-2015
 // This library is free software; you can redistribute it and/or modify it under
@@ -93,7 +92,7 @@ int main()
             tr.test_eq(77, a.p[9]);
         }
         {
-            auto pp = std::shared_ptr<double>(new double[10]);
+            auto pp = std::shared_ptr<double>(new double[10], std::default_delete<double[]>());
             pp.get()[9] = 88;
             double * p = pp.get();
             ra::Shared<double> a {};
@@ -785,7 +784,7 @@ int main()
             tr.test(every(ra::iota(4, 1)==ra::Big<int, 1> {1, 2, 3, 4}));
             tr.test(every(ra::iota(4, 1, 2)==ra::Big<int, 1> {1, 3, 5, 7}));
         }
- // TODO actually whether unroll is avoided depends on ply(), have a way to require it [ra03]
+ // TODO actually whether unroll is avoided depends on ply(), have a way to require it [ra3]
         tr.section("frame-matching, forbidding unroll");
         {
             ra::Big<int, 3> b ({3, 4, 2}, ra::none);

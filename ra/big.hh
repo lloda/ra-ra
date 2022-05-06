@@ -467,6 +467,16 @@ template <class V> struct storage_traits
     static T const * data(V const & v) { return v.get(); }
     static T * data(V & v) { return v.get(); }
 };
+
+template <class P> struct storage_traits<std::shared_ptr<P>>
+{
+    using V = std::shared_ptr<P>;
+    using T = std::decay_t<decltype(*std::declval<V>().get())>;
+    static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
+    static T const * data(V const & v) { return v.get(); }
+    static T * data(V & v) { return v.get(); }
+};
+
 template <class T_, class A> struct storage_traits<std::vector<T_, A>>
 {
     using T = T_;
@@ -754,16 +764,13 @@ template <class T, rank_t RANK=RANK_ANY> using Shared = Container<std::shared_pt
 // TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
 // -------------
 
-struct NullDeleter { template <class T> void operator()(T * p) {} };
-struct Deleter { template <class T> void operator()(T * p) { delete[] p; } };
-
 template <rank_t RANK, class T>
 Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
 {
     Shared<T, RANK> a;
     a.dimv = raw.dimv;
     a.p = raw.p;
-    a.store = std::shared_ptr<T>(raw.data(), NullDeleter());
+    a.store = std::shared_ptr<T>(raw.data(), [](T *) {});
     return a;
 }
 

@@ -54,10 +54,9 @@ struct Scalar
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Iterator for rank-1 foreign object. ra:: objects have their own Iterators.
-// FIXME clarify explicit use (not through start()) [ra2]
+// FIXME clarify explicit use (not through start()). Is it useful? should it be disallowed? [ra2]
 template <class V>
-requires ((requires (V v) { { std::ssize(v) } -> std::signed_integral; } ||
-           requires { std::tuple_size_v<std::decay_t<V>>; } ) &&
+requires (requires (V v) { { std::ssize(v) } -> std::signed_integral; } &&
           requires (V v) { { std::begin(v) } -> std::random_access_iterator; })
 struct Vector
 {
@@ -99,7 +98,7 @@ struct Vector
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-// k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra03]
+// k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra3]
 // k==0 && d!=1 happens on turning back at end of ply.
         RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
         p += (k==0) * d;
@@ -300,8 +299,6 @@ RA_IS_DEF(is_iota, (std::same_as<A, Iota<decltype(std::declval<A>().i_)>>))
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
 RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<decltype(std::declval<A>().v)>>))
 
-// foreign types
-
 template <class T> requires (is_foreign_vector<T>)
 inline constexpr auto
 start(T && t)
@@ -323,12 +320,10 @@ start(std::initializer_list<T> v)
     return ptr(v.begin(), v.size());
 }
 
-// forward declare for match.hh; implemented in small.hh.
+// forward declare for Match; implemented in small.hh.
 template <class T> requires (is_builtin_array<T>)
 inline constexpr auto
 start(T && t);
-
-// ra:: non-Iterator types
 
 // Neither cell_iterator_big nor cell_iterator_small will retain rvalues [ra4].
 template <class T> requires (is_slice<T>)

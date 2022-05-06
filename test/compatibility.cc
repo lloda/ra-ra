@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file compatibility.cc
-/// @brief Using std:: and ra:: together.
+/// ra-ra/test - Using builtin types and std:: together with ra::.
 
 // (c) Daniel Llorens - 2014, 2017
 // This library is free software; you can redistribute it and/or modify it under
@@ -29,7 +28,7 @@ int main()
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
          }
-// TODO actually whether unroll is avoided depends on ply, have a way to require it [ra03]
+// TODO actually whether unroll is avoided depends on ply, have a way to require it [ra3]
         tr.section("frame match ra::start on 1st axis, forbid unroll");
         {
             std::vector<int> const a = { 1, 2, 3 };
