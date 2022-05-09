@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file reduction.cc
-/// @brief Test array reductions.
+// ra/test - Array reductions.
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under

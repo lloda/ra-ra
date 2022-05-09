@@ -118,7 +118,7 @@ struct cell_iterator_big
             return CellFlat<cell_type> { c };
         }
     }
-// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
+// Return type to allow either View & or View const & verb. Can't set self bc original p isn't kept. TODO Think this over.
 #define RA_CONST_OR_NOT(CONST)                                          \
     template <class I> constexpr                                        \
     decltype(auto) at(I const & i_) CONST                               \

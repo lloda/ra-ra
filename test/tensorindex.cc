@@ -45,7 +45,7 @@ int main()
         B = map(A, j, i);
         tr.info("transpose 1").test_eq(transpose({1, 0}, A), B);
 
-// the map will work on either side of =. Note however that map(B, i, j) = map(A, j, i) won't work b/c the extent of the overall expr is undelimited.
+// the map will work on either side of =. Note however that map(B, i, j) = map(A, j, i) won't work bc the extent of the overall expr is undelimited.
         B = 0.;
         map(B, j, i) = A;
         tr.info("transpose 2").test_eq(transpose({1, 0}, A), B);

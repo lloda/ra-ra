@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file io.cc
-/// @brief IO checks for ra::.
+// ra-ra/test - IO, formatting.
 
 // (c) Daniel Llorens - 2013-2014
 // This library is free software; you can redistribute it and/or modify it under
@@ -29,9 +28,7 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
     std::decay_t<CC> c;
     i >> c;
     cout << "\nread: " << c << endl;
-// TODO start() outside b/c where(bool, vector, vector) not handled. ra::where(bool, scalar, scalar) should work at least.
-// TODO specific check in TestRecorder
-    tr.test_eq(ra::start(shape(check)), ra::start(shape(c)));
+    tr.test_eq(shape(check), shape(c));
     tr.test_eq(check, c);
 }
 
@@ -126,6 +123,13 @@ int main()
     {
         ra::Small<ra::Big<double, 1>, 3> g = { { 1 }, { 1, 2 }, { 1, 2, 3 } };
         iocheck(tr.info("nested type"), g, g);
+    }
+// this behavior depends on [ra13] (std::string is scalar) and the specializations of ostream<< in io.hh.
+    tr.section("Non-ra types in format()");
+    {
+        std::ostringstream o;
+        o << ra::format(std::string("once"), " ", std::array {1, 2, 3});
+        tr.test_eq(o.str(), std::string("once 1 2 3"));
     }
     return tr.summary();
 }

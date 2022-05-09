@@ -108,7 +108,7 @@ struct cell_iterator_small
             return CellFlat<cell_type> { c };
         }
     }
-// Return type to allow either View & or View const & verb. Can't set self b/c original p isn't kept. TODO Think this over.
+// Return type to allow either View & or View const & verb. Can't set self bc original p isn't kept. TODO Think this over.
     template <class I>
     constexpr decltype(auto) at(I const & i_)
     {
@@ -336,7 +336,7 @@ struct SmallBase
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
         return SmallView<T CONST, mp::cons<mp::int_t<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
     }                                                                   \
-    /* BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible b/c of the assert */ \
+    /* BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible bc of the assert */ \
     constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; } \
     T CONST & back() CONST                                              \
     {                                                                   \

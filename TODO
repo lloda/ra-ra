@@ -92,8 +92,8 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
      size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
   11. [ ]
   12. [ ]
-  13. [ ] ra/io.hh, ra/atom.hh, ra/type.hh
-      Registering std::string as scalar is problematic. It clashes with how std::ranges sees it, but if we don't then format(string) will use format_array on it, which we don't want.
+  13. [ ] ra/io.hh, ra/atom.hh, ra/type.hh, test/compatibility.cc.
+      std::string used to be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want format(std::string_view) to print it as a foreign vector, so we have an exception for it there. As things stand, you can register it or not.
   14. [ ]
   15. [ ]
   16. [ ]

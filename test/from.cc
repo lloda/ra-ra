@@ -256,7 +256,7 @@ int main()
     {
         Ureal<1> a {1, 4, 2, 3};
         Ureal<1> b({4}, 0.);
-// these work b/c there's another term to drive the expr.
+// these work bc there's another term to drive the expr.
         b = a(3-ra::_0);
         tr.test_eq(Ureal<1> {3, 2, 4, 1}, b);
         b(3-ra::_0) = a;

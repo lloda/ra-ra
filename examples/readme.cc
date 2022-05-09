@@ -162,7 +162,7 @@ int main()
     }
     tr.section("example from the manual [ma102]");
     {
-        // ra::Big<char const *, 1> A({3}, "hello"); // ERROR b/c of pointer constructor
+        // ra::Big<char const *, 1> A({3}, "hello"); // ERROR bc of pointer constructor
         ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
         std::cout << ra::noshape << format_array(A, "|") << std::endl;
     }

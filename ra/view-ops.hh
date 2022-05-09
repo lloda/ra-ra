@@ -173,7 +173,7 @@ auto reshape(View<T, RANK> const & a, S && sb_)
     return reshape_(a, std::forward<S>(sb_));
 }
 
-// We need dimtype b/c {1, ...} deduces to int and that fails to match ra::dim_t.
+// We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t.
 // We could use initializer_list to handle the general case, but that would produce a var rank result because its size cannot be deduced at compile time :-/. Unfortunately an initializer_list specialization would override this one, so we cannot provide it as a fallback.
 template <class T, rank_t RANK, class dimtype, int N> inline
 auto reshape(View<T, RANK> const & a, dimtype const (&sb_)[N])

@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Type predicates.
+// ra-ra - Type predicates.
 
-// (c) Daniel Llorens - 2013-2017, 2020
+// (c) Daniel Llorens - 2013-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -27,7 +27,7 @@ RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
-template <> constexpr bool is_scalar_def<std::string> = true; // [ra13]
+// template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 template <class T> requires (is_scalar<T>)
 struct ra_traits_def<T>
@@ -46,9 +46,9 @@ struct ra_traits_def<T>
 // --------------
 
 // TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
-// TODO check the rest of the required interface of A and A::flat() right here. Concepts...
-RA_IS_DEF(is_iterator, (requires { std::declval<A>().flat(); }))
-RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
+RA_IS_DEF(is_iterator, IteratorConcept<A>)
+RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && A::rank_s()!=0)
+// TODO use concept for is_slice.
 RA_IS_DEF(is_slice, (requires { std::declval<A>().iter(); }))
 RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
 
@@ -68,7 +68,7 @@ template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove
 // std::string is std::ranges::range, but if we have it as is_scalar, we can't have it as is_foreign_vector.
 RA_IS_DEF(is_foreign_vector, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
 
-// not using decay_t b/c of builtin arrays.
+// not using decay_t bc of builtin arrays.
 template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;
 
 template <class T, class A>

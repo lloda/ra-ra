@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Nodes for expression templates.
+// ra-ra - Nodes for expression templates.
 
-// (c) Daniel Llorens - 2011-2014, 2016-2017, 2019, 2021
+// (c) Daniel Llorens - 2011-2021
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any

@@ -48,7 +48,7 @@ constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
 
 
 // ---------------------
-// concepts (WIP)
+// concepts (WIP) - not sure i want duck typing, tbr.
 // ---------------------
 
 template <class P, class S>

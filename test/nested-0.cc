@@ -81,7 +81,7 @@ int main()
         Array<int, 2> b({3, 2}, {1, 2, 3, 4, 5, 6});
 // there's one level of matching so a(0) matches to b(0, 0) and b(0, 1), a(1) to b(1, 0) and b(1, 1), etc. So this results in a(0) = 1 overwritten with a(0) = 2, etc. finally a = [[2, 2], [4, 4], [6, 6]]. Probably not what we want.
         a = b;
-        // b = a; // dnc b/c [x, y] ← z is ok but z ← [x, y] is not.
+        // b = a; // dnc bc [x, y] ← z is ok but z ← [x, y] is not.
         cout << a << endl;
     }
     return tr.summary();

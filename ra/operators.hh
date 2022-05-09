@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 /// ra-ra - Sugar for ra:: expression templates.
 
-// (c) Daniel Llorens - 2014-2019
+// (c) Daniel Llorens - 2014-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -27,14 +27,6 @@
 #endif
 
 namespace ra {
-
-// These ra::start are needed b/c rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
-template <class T, class F>
-requires (ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>)
-inline constexpr decltype(auto) where(bool const w, T && t, F && f)
-{
-    return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
-}
 
 template <int D, int Oa, int Ob, class A, class B>
 requires (ra::is_scalar<A> && ra::is_scalar<B>)
@@ -95,19 +87,16 @@ auto from(A && a, I && ... i)
 }
 
 
+// --------------------------------
+// Array versions of operators and functions
+// --------------------------------
+
 // I considered three options for lookup.
 // 1. define these in a class that Iterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.hh). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an Iterator), it requires lots of forwarding and traits:: .
 // 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.
 // 3. requires-constrained ADL is what you see here.
 
-// --------------------------------
-// Array versions of operators and functions
-// --------------------------------
-
-// We need the zero/scalar specializations because the scalar/scalar operators
-// maybe be templated (e.g. complex<>), so they won't be found when an implicit
-// conversion from zero->scalar is also needed. That is, without those
-// specializations, ra::View<complex, 0> * complex will fail.
+// We need the zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
 
 // These depend on OPNAME defined in optimize.hh and used there to match ET patterns.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
@@ -216,11 +205,32 @@ inline auto at(A && a, I && i)
                (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); }, i);
 }
 
+
+// --------------------------------
+// selection or shorcutting
+// --------------------------------
+
+// These ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
+template <class T, class F>
+requires (ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>)
+inline constexpr decltype(auto) where(bool const w, T && t, F && f)
+{
+    return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
+}
+
 template <class W, class T, class F>
 requires (ra_pos_and_any<W, T, F>)
 inline auto where(W && w, T && t, F && f)
 {
     return pick(cast<bool>(start(std::forward<W>(w))), start(std::forward<F>(f)), start(std::forward<T>(t)));
+}
+
+// catch all for non-ra types.
+template <class T, class F>
+requires (!(ra_pos_and_any<T, F>) && !(ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>))
+inline constexpr decltype(auto) where(bool const w, T && t, F && f)
+{
+    return w ? t : f;
 }
 
 template <class A, class B>
@@ -245,6 +255,7 @@ inline auto operator ||(A && a, B && b)
 FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
 #undef DEF_SHORTCIRCUIT_BINARY_OP
 
+
 // --------------------------------
 // Some whole-array reductions.
 // TODO First rank reductions? Variable rank reductions?
@@ -387,6 +398,7 @@ cdot(A && a, B && b)
     return c;
 }
 
+
 // --------------------
 // Wedge product
 // TODO Handle the simplifications dot_plus, yields_scalar, etc. just as vec::wedge does.
@@ -492,6 +504,7 @@ perp(V const & v, U const & n)
     }
 }
 
+
 // --------------------
 // Other whole-array ops.
 // --------------------
@@ -523,7 +536,7 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
     int const M = a.len(0);
     int const N = b.len(1);
     int const K = a.len(1);
-// no with_same_shape b/c cannot index 0 for type if A/B are empty
+// no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, decltype(a(0, 0)*b(0, 0))());
     for (int k=0; k<K; ++k) {
         c += from(times(), a(ra::all, k), b(k));
@@ -538,7 +551,7 @@ gemm(A const & a, B const & b)
 {
     constexpr int M = a.len(0);
     constexpr int N = b.len(1);
-// no with_same_shape b/c cannot index 0 for type if A/B are empty
+// no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, ra::none);
     for (int i=0; i<M; ++i) {
         for (int j=0; j<N; ++j) {
@@ -556,7 +569,7 @@ gevm(A const & a, B const & b)
 {
     int const M = b.len(0);
     int const N = b.len(1);
-// no with_same_shape b/c cannot index 0 for type if A/B are empty
+// no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<decltype(a[0]*b(0))>({N}, 0);
     for (int i=0; i<M; ++i) {
         c += a[i]*b(i);
@@ -571,7 +584,7 @@ gemv(A const & a, B const & b)
 {
     int const M = a.len(0);
     int const N = a.len(1);
-// no with_same_shape b/c cannot index 0 for type if A/B are empty
+// no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<decltype(a(ra::all, 0)*b[0])>({M}, 0);
     for (int j=0; j<N; ++j) {
         c += a(ra::all, j) * b[j];

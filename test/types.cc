@@ -67,7 +67,6 @@ int main()
             (true, false, true, false, false);
         TEST_PREDICATES(ra::TensorIndex<0>)
             (true, false, true, false, false);
-// FIXME in type.hh, prevents replacing is_iterator by Iterator. Perhaps an additional concept is needed.
         TEST_PREDICATES(ra::TensorIndex<0> const)
             (true, false, false, false, false);
         TEST_PREDICATES(ra::TensorIndex<0> &)
@@ -92,9 +91,14 @@ int main()
             (false, false, false, false, false);
         TEST_PREDICATES(decltype(std::ranges::iota_view(-5, 10)))
             (false, false, false, false, true);
-// std::string is explicity registerd as scalar in types.hh. It's still possible to do ra::vector(std::string).
-        TEST_PREDICATES(std::string)
-            (false, false, false, true, false);
+// std::string can be registered as is_scalar or not [ra13]. One may do ra::vector(std::string) or ra::scalar(std::string) to get the other behavior.
+        if constexpr(ra::is_scalar<std::string>) {
+            TEST_PREDICATES(std::string)
+                (false, false, false, true, false);
+        } else {
+            TEST_PREDICATES(std::string)
+                (false, false, false, false, true);
+        }
         TEST_PREDICATES(Unreg)
             (false, false, false, false, false);
         TEST_PREDICATES(int [4])

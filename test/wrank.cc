@@ -271,7 +271,7 @@ int main()
     {
         int nx = 4;
         int ny = 4;
-        int ts = 4; // must be even b/c of swap
+        int ts = 4; // must be even bc of swap
 
         auto I = ra::iota(nx-2, 1);
         auto J = ra::iota(ny-2, 1);
