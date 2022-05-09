@@ -17,6 +17,126 @@ template <class V> inline constexpr decltype(auto) shape(V const & v);
 
 
 // --------------------
+// global introspection I
+// --------------------
+
+template <class V> inline constexpr dim_t
+rank_s()
+{
+    if constexpr (requires { ra_traits<V>::rank_s(); }) {
+        return ra_traits<V>::rank_s();
+    } else if constexpr (requires { std::decay_t<V>::rank_s(); }) {
+        return std::decay_t<V>::rank_s();
+    } else {
+        return 0;
+    }
+}
+
+template <class V> inline  constexpr rank_t
+rank_s(V const &)
+{
+    return rank_s<V>();
+}
+
+template <class V> inline constexpr dim_t
+size_s()
+{
+    if constexpr (requires { ra_traits<V>::size_s(); }) {
+        return ra_traits<V>::size_s();
+    } else if constexpr (requires { std::decay_t<V>::size_s(); }) {
+        return std::decay_t<V>::size_s();
+    } else {
+        if constexpr (RANK_ANY==rank_s<V>()) {
+            return DIM_ANY;
+// make it work for non-registered types.
+        } else if constexpr (0==rank_s<V>()) {
+            return 1;
+        } else {
+            using V_ = std::decay_t<V>;
+            ra::dim_t s = 1;
+            for (int i=0; i!=V_::rank_s(); ++i) {
+                if (dim_t ss=V_::len_s(i); ss>=0) {
+                    s *= ss;
+                } else {
+                    return ss; // either DIM_ANY or DIM_BAD
+                }
+            }
+            return s;
+        }
+    }
+}
+
+template <class V> constexpr dim_t
+size_s(V const &)
+{
+    return size_s<V>();
+}
+
+template <class V> inline constexpr rank_t
+rank(V const & v)
+{
+    if constexpr (requires { ra_traits<V>::rank(v); }) {
+        return ra_traits<V>::rank(v);
+    } else {
+        return v.rank();
+    }
+}
+
+template <class V> inline constexpr auto
+size(V const & v)
+{
+    if constexpr (requires { ra_traits<V>::size(v); }) {
+        return ra_traits<V>::size(v);
+    } else if constexpr (requires { v.size(); }) {
+        return v.size();
+    } else {
+        dim_t s = 1;
+        for (rank_t k=0; k<rank(v); ++k) {
+            s *= v.len(k);
+        }
+        return s;
+    }
+}
+
+// Try to avoid; prefer implicit matching.
+template <class V> inline constexpr decltype(auto)
+shape(V const & v)
+{
+    if constexpr (requires { ra_traits<V>::shape(v); }) {
+        return ra_traits<V>::shape(v);
+    } else if constexpr (requires { v.shape(); }) {
+        return v.shape();
+    } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
+// FIXME Would prefer to return the map directly
+        ra::Small<dim_t, rs> s;
+        for (rank_t k=0; k<rs; ++k) {
+            s[k] = v.len(k);
+        }
+        return s;
+    } else {
+        static_assert(RANK_ANY==rs);
+        rank_t r = v.rank();
+        std::vector<dim_t> s(r);
+        for (rank_t k=0; k<r; ++k) {
+            s[k] = v.len(k);
+        }
+        return s;
+    }
+}
+
+// To handle arrays of static/dynamic size.
+template <class A> void
+resize(A & a, dim_t k)
+{
+    if constexpr (DIM_ANY==size_s<A>()) {
+        a.resize(k);
+    } else {
+        RA_CHECK(k==dim_t(a.len_s(0)));
+    }
+}
+
+
+// --------------------
 // atom types
 // --------------------
 
@@ -55,6 +175,7 @@ template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std
 
 // Iterator for rank-1 foreign object. ra:: objects have their own Iterators.
 // FIXME clarify explicit use (not through start()). Is it useful? should it be disallowed? [ra2]
+// FIXME static size for vector(builtin array) [ra2] Using ra_traits for ct_size requires ra_traits for any type that could be used as V (at least any foreign_vector, since those are start()ed with this).
 template <class V>
 requires (requires (V v) { { std::ssize(v) } -> std::signed_integral; } &&
           requires (V v) { { std::begin(v) } -> std::random_access_iterator; })
@@ -360,116 +481,11 @@ start(T && t)
 
 
 // --------------------
-// global introspection
+// global introspection II
 // --------------------
 
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.
 template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
-
-template <class V> inline constexpr dim_t
-rank_s()
-{
-    if constexpr (requires { ra_traits<V>::rank_s(); }) {
-        return ra_traits<V>::rank_s();
-    } else if constexpr (requires { std::decay_t<V>::rank_s(); }) {
-        return std::decay_t<V>::rank_s();
-    } else {
-        return 0;
-    }
-}
-
-template <class V> inline  constexpr rank_t
-rank_s(V const &)
-{
-    return rank_s<V>();
-}
-
-template <class V> inline constexpr dim_t
-size_s()
-{
-    if constexpr (requires { ra_traits<V>::size_s(); }) {
-        return ra_traits<V>::size_s();
-    } else if constexpr (requires { std::decay_t<V>::size_s(); }) {
-        return std::decay_t<V>::size_s();
-    } else {
-        if constexpr (RANK_ANY==rank_s<V>()) {
-            return DIM_ANY;
-// make it work for non-registered types.
-        } else if constexpr (0==rank_s<V>()) {
-            return 1;
-        } else {
-            using V_ = std::decay_t<V>;
-            ra::dim_t s = 1;
-            for (int i=0; i!=V_::rank_s(); ++i) {
-                if (dim_t ss=V_::len_s(i); ss>=0) {
-                    s *= ss;
-                } else {
-                    return ss; // either DIM_ANY or DIM_BAD
-                }
-            }
-            return s;
-        }
-    }
-}
-
-template <class V> constexpr dim_t
-size_s(V const &)
-{
-    return size_s<V>();
-}
-
-template <class V> inline constexpr rank_t
-rank(V const & v)
-{
-    if constexpr (requires { ra_traits<V>::rank(v); }) {
-        return ra_traits<V>::rank(v);
-    } else {
-        return v.rank();
-    }
-}
-
-template <class V> inline constexpr auto
-size(V const & v)
-{
-    if constexpr (requires { ra_traits<V>::size(v); }) {
-        return ra_traits<V>::size(v);
-    } else if constexpr (requires { v.size(); }) {
-        return v.size();
-    } else {
-        return prod(map([&v](auto && k) { return v.len(k); }, ra::iota(rank(v))));
-    }
-}
-
-// Try to avoid; prefer implicit matching.
-template <class V> inline constexpr decltype(auto)
-shape(V const & v)
-{
-    if constexpr (requires { ra_traits<V>::shape(v); }) {
-        return ra_traits<V>::shape(v);
-    } else if constexpr (requires { v.shape(); }) {
-        return v.shape();
-    } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
-// FIXME Would prefer to return the map directly
-        return ra::Small<dim_t, rs>(map([&v](int k) { return v.len(k); }, ra::iota(rs)));
-    } else {
-        static_assert(RANK_ANY==rs);
-        rank_t r = v.rank();
-        std::vector<dim_t> s(r);
-        for_each([&v, &s](int k) { s[k] = v.len(k); }, ra::iota(r));
-        return s;
-    }
-}
-
-// To handle arrays of static/dynamic size.
-template <class A> void
-resize(A & a, dim_t k)
-{
-    if constexpr (DIM_ANY==size_s<A>()) {
-        a.resize(k);
-    } else {
-        RA_CHECK(k==dim_t(a.len_s(0)));
-    }
-}
 
 } // namespace ra
