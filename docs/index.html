@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 16, updated 2022 May 5)
+<!-- ra:: (version 16, updated 2022 May 6)
 
 (c) Daniel Llorens 2005-2021
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 16, updated 2022 May 5)
+<p><code>ra::</code> (version 16, updated 2022 May 6)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2021
 </p>
@@ -341,7 +341,7 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 <p>Blitz++ [<a href="#Sources">bli17</a>]
  pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not runtime rank. It also supported small arrays with compile time shape (<code>Tiny</code>), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which <code>ra::</code> chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 </p>
-<p>To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
+<p>However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 </p>
 <p>One important difference between Blitz++ and <code>ra::</code> is that Blitz++&rsquo;s arrays were reference counted. <code>ra::</code> doesn&rsquo;t do any memory management on its own: the default container (data-owning) types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (<code>ra::</code> declares a type using <code>std::shared_ptr</code>), but this is not the default.
 </p>
@@ -1119,16 +1119,16 @@ cout &lt;&lt; ra::sum(x) &lt;&lt; endl;
 <p>The following types are accepted as foreign types:
 </p>
 <ul>
-<li> <code>std::vector</code>
-produces an expression of rank 1 and rt size.
+<li> Built-in arrays <span id="index-built_002din-array"></span>
+produce an expression of positive rank and ct size.
 </li><li> <code>std::array</code>
 produces an expression of rank 1 and ct size.
-</li><li> Built-in arrays <span id="index-built_002din-array"></span>
-produce an expression of positive rank and ct size.
-</li><li> Raw pointers
-produce an expression of rank 1 and <em>undefined</em> size. Raw pointers must be brought into <code>ra::</code> explicitly with the function <a href="#x_002dptr"><code>ptr</code></a>.
+</li><li> Other types conforming to <code>std::ranges::random_access_range</code>, including <code>std::vector</code>, <code>std::string</code>, etc.
+produce an expression of rank 1 and rt size.
 </li></ul>
 
+<p>Raw pointers must be brought into <code>ra::</code> explicitly using the function <a href="#x_002dptr"><code>ptr</code></a>, which produces an expression of rank 1 and <em>undefined</em> size.
+</p>
 <p>Compare:
 </p>
 <div class="example">
@@ -1159,7 +1159,7 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 
 <p>General <code>ra::</code> <a href="#Containers-and-views">views</a> provide STL compatible <code>ForwardIterator</code>s through the members <code>begin()</code> and <code>end()</code>. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
 </p>
-<p>For <a href="#Containers-and-views">containers</a> <code>begin()</code> provides <code>RandomAccessIterator</code>s, which is handy for certain functions such as <code>sort</code>. There&rsquo;s no reason why all views couldn&rsquo;t provide <code>RandomAccessIterator</code>, but these wouldn&rsquo;t be efficient in general for ranks above 1, and I haven&rsquo;t implemented them. The container <code>RandomAccessIterator</code>s that are provided are in fact raw pointers.
+<p>For <a href="#Containers-and-views">containers</a> <code>begin()</code> provides <code>RandomAccessIterator</code>s, which is handy for certain functions such as <code>sort</code>. There&rsquo;s no reason why all views couldn&rsquo;t provide <code>RandomAccessIterator</code>, but these wouldn&rsquo;t be efficient for ranks above 1, and I haven&rsquo;t implemented them. The container <code>RandomAccessIterator</code>s that are provided are in fact raw pointers.
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int&gt; x {3, 2, 1}; // x is a Container
@@ -1174,7 +1174,7 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 <div class="subsection" id="Using-ra_003a_003a-types-with-other-libraries">
 <h4 class="subsection">2.9.3 Using <code>ra::</code> types with other libraries</h4>
 
-<p>When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on a memory layout. <code>ra::</code> gives you access to its own memory layout and allows you to obtain an <code>ra::</code> view on any type of memory.
+<p>When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on memory layout. <code>ra::</code> gives you access to its own memory layout and allows you to obtain an <code>ra::</code> view on any type of memory.
 </p>
 <ul class="section-toc">
 <li><a href="#The-good-array-citizen" accesskey="1">The good array citizen</a></li>
@@ -1183,10 +1183,9 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 <div class="subsubsection" id="The-good-array-citizen">
 <h4 class="subsubsection">2.9.3.1 The good array citizen</h4>
 
-<p>FIXME Put these in examples/ and reference them here.
-</p>
+
 <span id="index-BLIS"></span>
-<p>The good array citizen describes its arrays with the same parameters as <code>ra::</code>, that is: a pointer, plus a length and a step per dimension. You pass those and you&rsquo;re done; you don&rsquo;t have to worry about special cases. Say <a href="https://github.com/flame/blis">BLIS</a>:
+<p>The good array citizen describes its arrays with the same parameters as <code>ra::</code>: a pointer, plus a length and a step per dimension. You don&rsquo;t have to worry about special cases. Say <a href="https://github.com/flame/blis">BLIS</a>:
 </p>
 <blockquote>
 <pre class="verbatim">#include &lt;blis.h&gt;
@@ -1267,25 +1266,24 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <span id="index-Python"></span>
 <p>Numpy&rsquo;s C API has the type <a href="https://docs.scipy.org/doc/numpy/reference/c-api.array.html"><code>PyArrayObject</code></a> which can be used in the same way as Guile&rsquo;s <code>scm_t_array_handle</code> in the example above.
 </p>
-<p>Generally it is simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has <a href="https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector"><code>scm_take_xxx</code></a>).
+<p>It is usually simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has <a href="https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector"><code>scm_take_xxx</code></a>).
 </p>
 </div>
 <div class="subsubsection" id="The-bad-array-citizen">
 <h4 class="subsubsection">2.9.3.2 The bad array citizen</h4>
 
-<p>Unfortunately there are many libraries that don&rsquo;t accept general array parameters, or that do strange things with particular values of lengths and/or steps.
+<p>Unfortunately there are many libraries that don&rsquo;t accept arbitrary array parameters, or that do strange things with particular values of lengths and/or steps.
 </p>
 <p>The most common case is that a library doesn&rsquo;t handle steps at all, and it only accepts unit step for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
 </p>
-<p>FIXME using is_c_order, etc.
-</p>
-<p>Other libraries do accept steps, but not general ones. For example <a href="https://www.netlib.org/blas">https://www.netlib.org/blas</a>&rsquo; <code>cblas_dgemm</code> has this prototype:
+
+<p>Other libraries do accept steps, but not arbitrary ones. For example <a href="https://www.netlib.org/blas">https://www.netlib.org/blas</a>&rsquo; <code>cblas_dgemm</code> has this prototype:
 </p>
 <blockquote>
 <pre class="verbatim">cblas_dgemm(order, transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 </pre></blockquote>
 
-<p><code>A</code>, <code>B</code>, <code>C</code> are (pointers to) 2-arrays, but the routine accepts only one step argument for each (<code>lda</code>, etc.). CBLAS also doesn&rsquo;t understand <code>lda</code> as a general step, but rather as the dimension of a larger array that you&rsquo;re slicing <code>A</code> from, and some implementations will handle negative or zero <code>lda</code> in bizarre ways.
+<p><code>A</code>, <code>B</code>, <code>C</code> are (pointers to) 2-arrays, but the routine accepts only one step argument for each (<code>lda</code>, etc.). CBLAS also doesn&rsquo;t understand <code>lda</code> as a arbitrary step, but rather as the dimension of a larger array that you&rsquo;re slicing <code>A</code> from, and some implementations will mishandle negative or zero <code>lda</code>.
 </p>
 <p>Sometimes you can work around this by fiddling with <code>transA</code> and <code>transB</code>, but in general you need to check your array parameters and you may need to make copies.
 </p>
@@ -1309,7 +1307,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
     </p></blockquote>
 </blockquote>
 
-<p>It isn&rsquo;t clear whether negative steps are legal, either. So just as with CBLAS, passing general array views will require copies.
+<p>It isn&rsquo;t clear whether negative steps are legal, either. So just as with CBLAS, passing arbitrary array views may require copies.
 </p>
 <hr>
 </div>
@@ -2239,7 +2237,7 @@ case c:
 <dt id="index-start-2"><span class="category">Function: </span><span><strong>start</strong> <em>foreign_object</em><a href='#index-start-2' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create a array expression from <var>foreign_object</var>.
 </p>
-<p><var>foreign_object</var> can be of type <code>std::vector</code> or <code>std::array</code>, a built-in array (<code>int[3]</code>, etc.) or an initializer list, or any object that <code>ra::</code> accepts as scalar (see <a href="#x_002dis_002dscalar"><code>here</code></a>). The resulting expresion has shape according to the original object. Compare this with <a href="#x_002dscalar"><code>scalar</code></a>, which will always produce an expression of rank 0.
+<p><var>foreign_object</var> can be a built-in array (<code>int[3]</code>, etc.), a <code>std::random_access_range</code> type (including <code>std::vector</code> or <code>std::array</code>, see <a href="#Compatibility">Compatibility</a>), an initializer list, or any object that <code>ra::</code> accepts as scalar (see <a href="#x_002dis_002dscalar"><code>here</code></a>). The resulting expresion has shape according to the original object. Compare this with <a href="#x_002dscalar"><code>scalar</code></a>, which will always produce an expression of rank 0.
 </p>
 <p>Generally one can mix these types with <code>ra::</code> expressions without needing <code>ra::start</code>, but sometimes this isn&rsquo;t possible, for example for operators that must be class members.
 </p>

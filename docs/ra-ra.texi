@@ -235,7 +235,7 @@ The C++ standard library also offers a number of contiguous storage containers t
 @cindex Blitz++
 Blitz++ @mybibcite{bli17} pioneered the use of expression templates in C++. It supported higher rank arrays, as high as it was practical in C++98, but not runtime rank. It also supported small arrays with compile time shape (@code{Tiny}), and convenience features such as Fortran-order constructors and arbitrary lower bounds for the array indices (both of which @code{ra::} chooses not to support). It placed a strong emphasis on performance, with array traversal methods such as blocking, space filling curves, etc.
 
-To date it remains, I believe, one of the most general array libraries for C++. However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
+However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 
 One important difference between Blitz++ and @code{ra::} is that Blitz++'s arrays were reference counted. @code{ra::} doesn't do any memory management on its own: the default container (data-owning) types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (@code{ra::} declares a type using @code{std::shared_ptr}), but this is not the default.
 
@@ -1071,15 +1071,15 @@ cout << ra::sum(x) << endl;
 The following types are accepted as foreign types:
 
 @itemize
-@item @code{std::vector}
-produces an expression of rank 1 and rt size.
-@item @code{std::array}
-produces an expression of rank 1 and ct size.
 @item Built-in arrays @cindex built-in array
 produce an expression of positive rank and ct size.
-@item Raw pointers
-produce an expression of rank 1 and @emph{undefined} size. Raw pointers must be brought into @code{ra::} explicitly with the function @ref{x-ptr,@code{ptr}}.
+@item @code{std::array}
+produces an expression of rank 1 and ct size.
+@item Other types conforming to @code{std::ranges::random_access_range}, including @code{std::vector}, @code{std::string}, etc.
+produce an expression of rank 1 and rt size.
 @end itemize
+
+Raw pointers must be brought into @code{ra::} explicitly using the function @ref{x-ptr,@code{ptr}}, which produces an expression of rank 1 and @emph{undefined} size.
 
 Compare:
 
@@ -1116,7 +1116,7 @@ Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the 
 
 General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
 
-For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient in general for ranks above 1, and I haven't implemented them. The container @code{RandomAccessIterator}s that are provided are in fact raw pointers.
+For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient for ranks above 1, and I haven't implemented them. The container @code{RandomAccessIterator}s that are provided are in fact raw pointers.
 
 @example @c [ma106]
 @verbatim
@@ -1131,14 +1131,14 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 @cindex other libraries, interfacing with
 @subsection Using @code{ra::} types with other libraries
 
-When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on a memory layout. @code{ra::} gives you access to its own memory layout and allows you to obtain an @code{ra::} view on any type of memory.
+When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on memory layout. @code{ra::} gives you access to its own memory layout and allows you to obtain an @code{ra::} view on any type of memory.
 
 @subsubsection The good array citizen
 
-FIXME Put these in examples/ and reference them here.
+@c FIXME Put these in examples/ and reference them here.
 
 @cindex BLIS
-The good array citizen describes its arrays with the same parameters as @code{ra::}, that is: a pointer, plus a length and a step per dimension. You pass those and you're done; you don't have to worry about special cases. Say @url{https://github.com/flame/blis, BLIS}:
+The good array citizen describes its arrays with the same parameters as @code{ra::}: a pointer, plus a length and a step per dimension. You don't have to worry about special cases. Say @url{https://github.com/flame/blis, BLIS}:
 
 @quotation
 @verbatim
@@ -1225,17 +1225,17 @@ Translating array descriptors from a foreign language should be fairly simple. F
 @cindex Python
 Numpy's C API has the type @url{https://docs.scipy.org/doc/numpy/reference/c-api.array.html,@code{PyArrayObject}} which can be used in the same way as Guile's @code{scm_t_array_handle} in the example above.
 
-Generally it is simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has @url{https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector,@code{scm_take_xxx}}).
+It is usually simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has @url{https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector,@code{scm_take_xxx}}).
 
 @subsubsection The bad array citizen
 
-Unfortunately there are many libraries that don't accept general array parameters, or that do strange things with particular values of lengths and/or steps.
+Unfortunately there are many libraries that don't accept arbitrary array parameters, or that do strange things with particular values of lengths and/or steps.
 
 The most common case is that a library doesn't handle steps at all, and it only accepts unit step for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
 
-FIXME using is_c_order, etc.
+@c FIXME using is_c_order, etc.
 
-Other libraries do accept steps, but not general ones. For example @url{https://www.netlib.org/blas}' @code{cblas_dgemm} has this prototype:
+Other libraries do accept steps, but not arbitrary ones. For example @url{https://www.netlib.org/blas}' @code{cblas_dgemm} has this prototype:
 
 @quotation
 @verbatim
@@ -1243,7 +1243,7 @@ cblas_dgemm(order, transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
 @end verbatim
 @end quotation
 
-@code{A}, @code{B}, @code{C} are (pointers to) 2-arrays, but the routine accepts only one step argument for each (@code{lda}, etc.). CBLAS also doesn't understand @code{lda} as a general step, but rather as the dimension of a larger array that you're slicing @code{A} from, and some implementations will handle negative or zero @code{lda} in bizarre ways.
+@code{A}, @code{B}, @code{C} are (pointers to) 2-arrays, but the routine accepts only one step argument for each (@code{lda}, etc.). CBLAS also doesn't understand @code{lda} as a arbitrary step, but rather as the dimension of a larger array that you're slicing @code{A} from, and some implementations will mishandle negative or zero @code{lda}.
 
 Sometimes you can work around this by fiddling with @code{transA} and @code{transB}, but in general you need to check your array parameters and you may need to make copies.
 
@@ -1269,7 +1269,7 @@ void glVertexAttribPointer(GLuint index,
     @end quotation
 @end quotation
 
-It isn't clear whether negative steps are legal, either. So just as with CBLAS, passing general array views will require copies.
+It isn't clear whether negative steps are legal, either. So just as with CBLAS, passing arbitrary array views may require copies.
 
 @c ------------------------------------------------
 @node Extension
@@ -2151,7 +2151,7 @@ See also @ref{x-format_array,@code{format_array}}.
 @anchor{x-start} @defun start foreign_object
 Create a array expression from @var{foreign_object}.
 
-@var{foreign_object} can be of type @code{std::vector} or @code{std::array}, a built-in array (@code{int[3]}, etc.) or an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
+@var{foreign_object} can be a built-in array (@code{int[3]}, etc.), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
 
 Generally one can mix these types with @code{ra::} expressions without needing @code{ra::start}, but sometimes this isn't possible, for example for operators that must be class members.
 

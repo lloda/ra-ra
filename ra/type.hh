@@ -9,7 +9,6 @@
 
 #pragma once
 #include <array>
-#include <vector>
 #include <ranges>
 #include <cstdint>
 #include "bootstrap.hh"
@@ -71,26 +70,28 @@ RA_IS_DEF(is_foreign_vector, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A>
 // not using decay_t bc of builtin arrays.
 template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;
 
-template <class T, class A>
-struct ra_traits_def<std::vector<T, A>>
+// FIXME should be able to use std::span(V).extent (maybe p2325r3?)
+template <class V>
+requires (is_foreign_vector<V> && requires { std::tuple_size<V>::value; })
+struct ra_traits_def<V>
 {
-    using V = std::vector<T, A>;
-    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { ssize(v) }; }
-    constexpr static dim_t size(V const & v) { return ssize(v); }
-    constexpr static dim_t size_s() { return DIM_ANY; }
-    constexpr static rank_t rank(V const & v) { return 1; }
-    constexpr static rank_t rank_s() { return 1; }
-};
-
-template <class T, std::size_t N>
-struct ra_traits_def<std::array<T, N>>
-{
-    using V = std::array<T, N>;
+    constexpr static dim_t N = std::tuple_size_v<V>;
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { N }; }
     constexpr static dim_t size(V const & v) { return N; }
     constexpr static dim_t size_s() { return N; }
     constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; };
+};
+
+template <class V>
+requires (is_foreign_vector<V> && !(requires { std::tuple_size<V>::value; }))
+struct ra_traits_def<V>
+{
+    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { ssize(v) }; }
+    constexpr static dim_t size(V const & v) { return ssize(v); }
+    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static rank_t rank(V const & v) { return 1; }
+    constexpr static rank_t rank_s() { return 1; }
 };
 
 template <class T>

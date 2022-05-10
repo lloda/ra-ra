@@ -56,7 +56,7 @@
     template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
 
 // Assign ops for settable array iterators; these must be members. For containers & views this might be defined differently.
-// Forward to make sure value y is not misused as ref [ra05].
+// Forward to make sure value y is not misused as ref [ra5].
 #define RA_DEF_ASSIGNOPS_LINE(OP)                                       \
     for_each([](auto && y, auto && x) { std::forward<decltype(y)>(y) OP x; }, *this, x)
 #define RA_DEF_ASSIGNOPS(OP)                                            \

@@ -146,7 +146,7 @@ int main()
             tr.test_eq(string("hello"), quote(ra::scalar(hello)));
             tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, ra::start(hello));
             tr.test_eq(6, size_s(ra::start(hello)));
-            tr.test_eq(ra::DIM_ANY, size_s(ra::vector(hello))); // FIXME [ra2]
+            tr.test_eq(6, size_s(ra::vector(hello))); // [ra2]
             tr.test_eq(ra::vector(string("hello\0")), ra::ptr(hello, 5)); // char by char
         }
         cout << endl;

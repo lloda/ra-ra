@@ -27,7 +27,7 @@ int main()
     TestRecorder tr(std::cout);
 //     tr.section("gcc 6.1 A");
 //     {
-// // Both must be lvalues [ra05]. FIXME check that these fail [ra42]
+// // Both must be lvalues [ra5]. FIXME check that these fail [ra42]
 //         ra::Unique<int, 1> a { 0, 0, 0, 0 };
 //         ra::Unique<int, 1> b { 0, 0, 0, 0 };
 //         where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;

@@ -9,10 +9,11 @@
 
 #pragma once
 #include "type.hh"
+#include <vector>
 
 namespace ra {
 
-template <class V> inline constexpr auto size(V const & v);
+template <class V> inline constexpr dim_t size(V const & v);
 template <class V> inline constexpr decltype(auto) shape(V const & v);
 
 
@@ -23,10 +24,10 @@ template <class V> inline constexpr decltype(auto) shape(V const & v);
 template <class V> inline constexpr dim_t
 rank_s()
 {
-    if constexpr (requires { ra_traits<V>::rank_s(); }) {
-        return ra_traits<V>::rank_s();
-    } else if constexpr (requires { std::decay_t<V>::rank_s(); }) {
+    if constexpr (requires { std::decay_t<V>::rank_s(); }) {
         return std::decay_t<V>::rank_s();
+    } else if constexpr (requires { ra_traits<V>::rank_s(); }) {
+        return ra_traits<V>::rank_s();
     } else {
         return 0;
     }
@@ -41,10 +42,10 @@ rank_s(V const &)
 template <class V> inline constexpr dim_t
 size_s()
 {
-    if constexpr (requires { ra_traits<V>::size_s(); }) {
-        return ra_traits<V>::size_s();
-    } else if constexpr (requires { std::decay_t<V>::size_s(); }) {
+    if constexpr (requires { std::decay_t<V>::size_s(); }) {
         return std::decay_t<V>::size_s();
+    } else if constexpr (requires { ra_traits<V>::size_s(); }) {
+        return ra_traits<V>::size_s();
     } else {
         if constexpr (RANK_ANY==rank_s<V>()) {
             return DIM_ANY;
@@ -82,13 +83,13 @@ rank(V const & v)
     }
 }
 
-template <class V> inline constexpr auto
+template <class V> inline constexpr dim_t
 size(V const & v)
 {
-    if constexpr (requires { ra_traits<V>::size(v); }) {
-        return ra_traits<V>::size(v);
-    } else if constexpr (requires { v.size(); }) {
+    if constexpr (requires { v.size(); }) {
         return v.size();
+    } else if constexpr (requires { ra_traits<V>::size(v); }) {
+        return ra_traits<V>::size(v);
     } else {
         dim_t s = 1;
         for (rank_t k=0; k<rank(v); ++k) {
@@ -102,10 +103,10 @@ size(V const & v)
 template <class V> inline constexpr decltype(auto)
 shape(V const & v)
 {
-    if constexpr (requires { ra_traits<V>::shape(v); }) {
-        return ra_traits<V>::shape(v);
-    } else if constexpr (requires { v.shape(); }) {
+    if constexpr (requires { v.shape(); }) {
         return v.shape();
+    } else if constexpr (requires { ra_traits<V>::shape(v); }) {
+        return ra_traits<V>::shape(v);
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
 // FIXME Would prefer to return the map directly
         ra::Small<dim_t, rs> s;
@@ -174,28 +175,27 @@ struct Scalar
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Iterator for rank-1 foreign object. ra:: objects have their own Iterators.
-// FIXME clarify explicit use (not through start()). Is it useful? should it be disallowed? [ra2]
-// FIXME static size for vector(builtin array) [ra2] Using ra_traits for ct_size requires ra_traits for any type that could be used as V (at least any foreign_vector, since those are start()ed with this).
 template <class V>
 requires (requires (V v) { { std::ssize(v) } -> std::signed_integral; } &&
           requires (V v) { { std::begin(v) } -> std::random_access_iterator; })
 struct Vector
 {
     V v;
+// Using std::begin() and size_s together is inconsistent (FIXME). Limit to rank 1 types to prevent trouble.
+    static_assert(1==rank_s<V>());
     decltype(std::begin(v)) p;
-    constexpr static bool ct_size = requires { std::tuple_size<std::decay_t<V>>::value; };
-
+    constexpr static dim_t ct_size = size_s<V>();
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k)
     {
         RA_CHECK(k==0, " k ", k);
-        if constexpr (ct_size) { return std::tuple_size_v<std::decay_t<V>>; } else { return DIM_ANY; };
+        if constexpr (DIM_ANY==ct_size) { return DIM_ANY; } else { return ct_size; };
     }
     constexpr dim_t len(int k) const
     {
         RA_CHECK(k==0, " k ", k);
-        if constexpr (ct_size) { return std::tuple_size_v<std::decay_t<V>>; } else { return std::ssize(v); };
+        if constexpr (DIM_ANY==ct_size) { return ra::size(v); } else { return ct_size; };
     }
 
 // [ra1] test/ra-9.cc
