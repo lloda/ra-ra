@@ -48,7 +48,7 @@ struct ra_traits_def<T>
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
 RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && A::rank_s()!=0)
 // TODO use concept for is_slice.
-RA_IS_DEF(is_slice, (requires { std::declval<A>().iter(); }))
+RA_IS_DEF(is_slice, SliceConcept<A>)
 RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
@@ -70,7 +70,7 @@ RA_IS_DEF(is_foreign_vector, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A>
 // not using decay_t bc of builtin arrays.
 template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;
 
-// FIXME should be able to use std::span(V).extent (maybe p2325r3?)
+// FIXME should be able to use std::span(V).extent (maybe p2325r3?) [ra2]
 template <class V>
 requires (is_foreign_vector<V> && requires { std::tuple_size<V>::value; })
 struct ra_traits_def<V>

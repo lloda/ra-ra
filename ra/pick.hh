@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Expression template that picks one of several arguments.
+// ra-ra - Expression template that picks one of several arguments.
 
 // (c) Daniel Llorens - 2016-2017, 2019, 2021
 // This library is free software; you can redistribute it and/or modify it under

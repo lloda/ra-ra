@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Benchmarking library.
+// ra-ra - Benchmarking library.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under

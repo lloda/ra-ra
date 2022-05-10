@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Operations specific to Views.
+// ra-ra - Operations specific to Views.
 
 // (c) Daniel Llorens - 2013-2014, 2017
 // This library is free software; you can redistribute it and/or modify it under

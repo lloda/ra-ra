@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Arrays with static dimensions, cf big.hh.
+// ra-ra - Arrays with static dimensions, cf big.hh.
 
 // (c) Daniel Llorens - 2013-2016, 2018-2021
 // This library is free software; you can redistribute it and/or modify it under

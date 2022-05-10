@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Metaprogramming debug utilities.
+// ra-ra - Metaprogramming debug utilities.
 
 // (c) Daniel Llorens - 2011, 2019
 // This library is free software; you can redistribute it and/or modify it under

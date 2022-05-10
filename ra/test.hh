@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Test library.
+// ra-ra - Test library.
 
 // (c) Daniel Llorens - 2012, 2014-2016
 // This library is free software; you can redistribute it and/or modify it under
@@ -125,7 +125,7 @@ struct TestRecorder
     test_comp(A && a, B && b, Comp && comp, char const * msg, source_location const loc = source_location::current())
     {
         bool c = every(ra::map(comp, a, b));
-        test(c, LAZYINFO("comp (", where(false, a, b), msg, where(true, a, b), ")"),
+        test(c, LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
              LAZYINFO(""), loc);
         return c;
     }
@@ -134,21 +134,21 @@ struct TestRecorder
     test_eq(R && ref, A && a, source_location const loc = source_location::current())
     {
         return test_comp(std::forward<R>(ref), std::forward<A>(a), [](auto && a, auto && b) { return every(a==b); },
-                         " should be == ", loc);
+                         "should be ==", loc);
     }
     template <class A, class B>
     bool
     test_lt(A && a, B && b, source_location const loc = source_location::current())
     {
         return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<b); },
-                         " should be < ", loc);
+                         "should be <", loc);
     }
     template <class A, class B>
     bool
     test_le(A && a, B && b, source_location const loc = source_location::current())
     {
         return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<=b); },
-                         " should be <= ", loc);
+                         "should be <=", loc);
     }
     template <class R, class A>
     double

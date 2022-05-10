@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Arrays with dynamic size, cf small.hh.
+// ra-ra - Arrays with dynamic size, cf small.hh.
 
 // (c) Daniel Llorens - 2013-2014, 2017-2021
 // This library is free software; you can redistribute it and/or modify it under

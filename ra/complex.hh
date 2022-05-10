@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Global definitions related to complex types.
+// ra-ra - Global definitions related to complex types.
 
 // (c) Daniel Llorens - 2005, 2015
 // This library is free software; you can redistribute it and/or modify it under

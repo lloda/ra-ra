@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Naive optimization pass over expression templates.
+// ra-ra - Naive optimization pass over expression templates.
 
 // (c) Daniel Llorens - 2015-2018
 // This library is free software; you can redistribute it and/or modify it under

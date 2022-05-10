@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra/test - Show what types conform to what type predicates.
+// ra-ra/test - Show what types conform to what type predicates.
 
 // (c) Daniel Llorens - 2016-2017
 // This library is free software; you can redistribute it and/or modify it under
@@ -22,12 +22,13 @@ using ra::mp::int_list, ra::mp::nil;
 #define TEST_PREDICATES(A)                                              \
     [&tr](bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector) \
     {                                                                   \
+        cout << endl;                                                   \
         tr.info(STRINGIZE(A)).info("ra").test_eq(ra, ra::is_ra<A>);     \
         tr.info(STRINGIZE(A)).info("slice").test_eq(slice, ra::is_slice<A>); \
         tr.info(STRINGIZE(A)).info("Iterator").test_eq(array_iterator, ra::IteratorConcept<A>); \
         tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, ra::is_scalar<A>); \
         tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, ra::is_foreign_vector<A>); \
-        cout << "is _range: " << std::ranges::range<A> << endl;         \
+        tr.info(STRINGIZE(A)).info("std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>); \
     }
 
 // Not registered with is_scalar_def.

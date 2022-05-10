@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Rank conjunction for expression templates.
+// ra-ra - Rank conjunction for expression templates.
 
 // (c) Daniel Llorens - 2013-2017, 2019
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Array output formatting.
+// ra-ra - Array output formatting.
 
 // (c) Daniel Llorens - 2010, 2016-2018
 // This library is free software; you can redistribute it and/or modify it under

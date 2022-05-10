@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Before all other ra:: includes.
+// ra-ra - Before all other ra:: includes.
 
 // (c) Daniel Llorens - 2013-2015, 2017, 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -61,12 +61,21 @@ concept FlatConcept = requires (P p, S d)
 template <class A>
 concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
+    { std::decay_t<A>::rank_s() } -> std::convertible_to<rank_t>; // FIXME
     { a.rank() } -> std::convertible_to<rank_t>;
     { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
     { a.step(k) };
     { a.keep_step(d, i, j) } -> std::same_as<bool>;
     { a.flat() } -> FlatConcept<decltype(a.step(k))>;
+};
+
+template <class A>
+concept SliceConcept = requires (A a)
+{
+    { A::rank_s() } -> std::convertible_to<rank_t>;
+    { a.rank() } -> std::convertible_to<rank_t>;
+    { a.iter() } -> IteratorConcept;
 };
 
 

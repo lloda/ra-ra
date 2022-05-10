@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Tuple utilities
+// ra-ra - Tuple utilities
 
 // (c) Daniel Llorens - 2005-2013, 2016, 2019
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Write and read arrays, expressions.
+// ra-ra - Write and read arrays, expressions.
 
 // (c) Daniel Llorens - 2014-2018, 2021
 // This library is free software; you can redistribute it and/or modify it under

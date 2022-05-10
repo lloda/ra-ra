@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra/test - Tests for early().
+// ra-ra/test - Tests for early().
 
 // (c) Daniel Llorens - 2019
 // This library is free software; you can redistribute it and/or modify it under

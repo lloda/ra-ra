@@ -76,7 +76,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
 
 * Numbered issues throughout the source [ra...]
   1. [ ]
-  2. [ ] test/compatibility.cc, ra/atom.hh
+  2. [ ] test/compatibility.cc, ra/atom.hh, ra/type.hh
      ra::vector(rank 1 builtin array) should be the same as ra::start(), that is static sizes shouldn't be lost.
   3. [ ]
   4. [ ] test/optimize.cc

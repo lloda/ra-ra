@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Sugar for ra:: expression templates.
+// ra-ra - Sugar for ra:: expression templates.
 
 // (c) Daniel Llorens - 2014-2022
 // This library is free software; you can redistribute it and/or modify it under

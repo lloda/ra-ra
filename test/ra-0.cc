@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra/test - Arrays, iterators.
+// ra-ra/test - Arrays, iterators.
 
 // (c) Daniel Llorens - 2013-2015
 // This library is free software; you can redistribute it and/or modify it under

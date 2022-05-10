@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// ra-ra - Dual numbers for automatic differentiation.
+// ra-ra - Dual numbers for automatic differentiation.
 
 // (c) Daniel Llorens - 2013, 2015
 // This library is free software; you can redistribute it and/or modify it under
