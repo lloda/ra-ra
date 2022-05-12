@@ -8,7 +8,7 @@
 // later version.
 
 // FIXME ra/operators.hh brings in ra/global.hh and ra/complex.hh, and ideally those should be separate.
-// ra/bench.hh and ra/test.hh are also not included here.
+// ra/test.hh and ra/bench.hh must be included separately.
 
 #pragma once
 #include "format.hh"

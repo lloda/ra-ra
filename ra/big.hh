@@ -148,7 +148,7 @@ requires (rank==1)
 struct nested_braces<T, rank>
 {
     using list = std::initializer_list<T>;
-    template <size_t N> constexpr static
+    template <std::size_t N> constexpr static
     void shape(list l, std::array<dim_t, N> & s)
     {
         static_assert(N>0);
@@ -162,7 +162,7 @@ struct nested_braces<T, rank>
 {
     using sub = nested_braces<T, rank-1>;
     using list = std::initializer_list<typename sub::list>;
-    template <size_t N> constexpr static
+    template <std::size_t N> constexpr static
     void shape(list l, std::array<dim_t, N> & s)
     {
         s[N-rank] = l.size();

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file small-1.cc
-/// @brief Making ra::Small and its iterator work with expressions/traversal.
+// ra/test - Making ra::Small and its iterator work with expressions/traversal.
 
 // (c) Daniel Llorens - 2014, 2016-2017, 2019
 // This library is free software; you can redistribute it and/or modify it under

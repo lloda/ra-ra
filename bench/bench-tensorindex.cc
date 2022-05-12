@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench-tensorindex.cc
-/// @brief Benchmark for TensorIndex.
+// ra-ra/bench - TensorIndex.
 
 // (c) Daniel Llorens - 2019-2020
 // This library is free software; you can redistribute it and/or modify it under

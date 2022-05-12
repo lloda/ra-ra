@@ -15,6 +15,7 @@
 #if __cpp_lib_source_location >= 201907L
 #include <source_location>
 #endif
+#include "type.hh"
 
 namespace ra {
 
@@ -55,13 +56,34 @@ struct shape_manip_t
     print_shape_t shape;
 };
 
-inline shape_manip_t operator<<(std::ostream & o, print_shape_t shape)
+inline shape_manip_t
+operator<<(std::ostream & o, print_shape_t shape)
 {
     return shape_manip_t { o, shape };
 }
 
+// is_foreign_vector is included bc std::vector or std::array may be used as the type of shape().
+// Excluding std::string_view allows it to be is_foreign_vector and still print as a string [ra13].
+
+template <class A> requires (!std::is_convertible_v<A, std::string_view>
+                             && (is_ra<A> || is_foreign_vector<A>))
+inline std::ostream &
+operator<<(std::ostream & o, A && a)
+{
+    return o << format_array(a);
+}
+
+// initializer_list cannot match A && above.
+template <class T>
+inline std::ostream &
+operator<<(std::ostream & o, std::initializer_list<T> const & a)
+{
+    return o << format_array(a);
+}
+
 template <class A>
-inline std::ostream & operator<<(shape_manip_t const & sm, A const & a)
+inline std::ostream &
+operator<<(shape_manip_t const & sm, A const & a)
 {
     FormatArray<A> fa = format_array(a);
     fa.shape = sm.shape;
@@ -69,7 +91,8 @@ inline std::ostream & operator<<(shape_manip_t const & sm, A const & a)
 }
 
 template <class A>
-inline std::ostream & operator<<(shape_manip_t const & sm, FormatArray<A> fa)
+inline std::ostream &
+operator<<(shape_manip_t const & sm, FormatArray<A> fa)
 {
     fa.shape = sm.shape;
     return sm.o << fa;
@@ -103,3 +126,7 @@ format(A && ... a)
 inline std::string const & format(std::string const & s) { return s; }
 
 } // namespace ra
+
+#ifdef RA_AFTER_CHECK
+#error Bad header include order!
+#endif

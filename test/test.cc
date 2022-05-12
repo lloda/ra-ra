@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file test.cc
-/// @brief Tests for TestRecorder
+// ra/test - Tests for TestRecorder.
 
 // (c) Daniel Llorens - 2021
 // This library is free software; you can redistribute it and/or modify it under

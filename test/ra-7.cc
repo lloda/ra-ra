@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-7.cc
-/// @brief Const / nonconst tests and regressions.
+// ra/test - Regression test relative to Const / nonconst.
 
 // (c) Daniel Llorens - 2016
 // This library is free software; you can redistribute it and/or modify it under

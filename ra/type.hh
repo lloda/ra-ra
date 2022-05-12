@@ -13,6 +13,11 @@
 #include <cstdint>
 #include "bootstrap.hh"
 
+#define RA_IS_DEF(NAME, PRED)                                           \
+    template <class A> constexpr bool JOIN(NAME, _def) = false;         \
+    template <class A> requires (PRED) constexpr bool JOIN(NAME, _def) < A > = true; \
+    template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
+
 namespace ra {
 
 // ra_traits are for foreign types only. FIXME Not sure this is the interface I want.

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-4.cc
-/// @brief Regresion tests for attempt at simplification.
+// ra/test - Regresion tests (1).
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under

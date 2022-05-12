@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench-gemm.hh
-/// @brief Benchmark for BLAS-3 type ops
+// ra-ra/bench - BLAS-3 type ops.
 
 // (c) Daniel Llorens - 2016-2017
 // This library is free software; you can redistribute it and/or modify it under

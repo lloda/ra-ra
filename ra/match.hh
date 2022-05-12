@@ -9,6 +9,7 @@
 
 #pragma once
 #include "bootstrap.hh"
+#include "check.hh"
 
 namespace ra {
 

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench-gemv.hh
-/// @brief Benchmark for BLAS-2 type ops
+// ra-ra/bench - BLAS-2 type ops.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under
@@ -8,8 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// These operations aren't really part of the ET framework, just standalone
-// functions.
+// These operations aren't really part of the ET framework, just standalone functions.
 // Cf bench-gemm.cc for BLAS-3 type ops.
 
 #include <iostream>

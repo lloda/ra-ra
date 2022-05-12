@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-11.cc
-/// @brief Reduce a bug in gcc 8.3
+// ra/test - Reduce a bug in gcc 8.3.
 
 // (c) Daniel Llorens - 2013-2015
 // This library is free software; you can redistribute it and/or modify it under

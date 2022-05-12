@@ -1,8 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file frame-new.cc
-/// @brief Test abilities of post v10 driverless frame matching Expr
+// ra-ra/test - Test abilities of post v10 driverless frame matching Expr.
 
-// (c) Daniel Llorens - 2019
+// (c) Daniel Llorens - 2019-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -26,9 +25,6 @@ struct ra_error: public std::exception
     }
 };
 
-#ifdef RA_ASSERT
-#error RA_ASSERT is already defined!
-#endif
 #define RA_ASSERT( cond, ... )                                          \
     { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
 // -------------------------------------

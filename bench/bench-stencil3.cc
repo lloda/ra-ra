@@ -1,8 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench-stencil3.cc
-/// @brief Stencil-as-view.
-// (c) Daniel Llorens - 2016-2017
+// ra-ra/bench - Stencil-as-view (rank 3).
 
+// (c) Daniel Llorens - 2016-2017
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any

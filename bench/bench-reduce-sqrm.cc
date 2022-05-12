@@ -1,20 +1,14 @@
+// -*- mode: c++; coding: utf-8 -*-
+// ra-ra/bench - reduce_sqrm() with various array types.
 
-// (c) Daniel Llorens - 2011, 2017
-
+// (c) Daniel Llorens - 2011, 2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-reduce-sqrm.hh
-/// @brief Benchmark for reduce_sqrm with various array types.
-
 #include <iostream>
 #include <iomanip>
-#include "ra/big.hh"
-#include "ra/small.hh"
-#include "ra/operators.hh"
-#include "ra/real.hh"
 #include "ra/test.hh"
 #include "ra/bench.hh"
 

@@ -11,7 +11,6 @@
 // FIXME Dependence on specific ra:: types should maybe be elsewhere.
 #include "global.hh"
 #include "complex.hh"
-#include "wrank.hh"
 #include "pick.hh"
 #include "view-ops.hh"
 #include "optimize.hh"

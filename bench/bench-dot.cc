@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench-dot.hh
-/// @brief Benchmark for dot with various array types.
+// ra-ra/bench - dot() with various array types.
 
 // (c) Daniel Llorens - 2011, 2014-2015, 2017
 // This library is free software; you can redistribute it and/or modify it under

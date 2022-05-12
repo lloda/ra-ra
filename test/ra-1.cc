@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-1.cc
-/// @brief Fundamental tests for ra::.
+// ra/test - Fundamental tests.
 
 // (c) Daniel Llorens - 2013-2015
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file big-0.cc
-/// @brief Tests specific to Container. Constructors.
+// ra/test - Tests specific to Container, constructors.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under
@@ -44,7 +43,7 @@ int main(int argc, char * * argv)
         }
         tr.section("init list constructors handle implicit conversions");
         {
-            ra::Big<int, 2> a({int(3), ssize_t(2)}, {0, 1, 2, 3, 4, 5});
+            ra::Big<int, 2> a({int(3), ra::dim_t(2)}, {0, 1, 2, 3, 4, 5});
             tr.test_eq(ra::_0 * 2 + ra::_1, a);
             tr.test_eq(3, a.len(0));
             tr.test_eq(2, a.len(1));

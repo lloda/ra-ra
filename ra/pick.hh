@@ -57,9 +57,9 @@ template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
 };
 template <class T, class J> using pick_at_t = typename pick_at_type<mp::drop1<std::decay_t<T>>, J>::type;
 
-template <size_t I, class T, class J> inline constexpr
+template <std::size_t I, class T, class J> inline constexpr
 pick_at_t<T, J>
-pick_at(size_t p0, T && t, J const & j)
+pick_at(std::size_t p0, T && t, J const & j)
 {
     if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
         if (p0==I) {
@@ -80,9 +80,9 @@ template <class ... P> struct pick_star_type<std::tuple<P ...>>
 };
 template <class T> using pick_star_t = typename pick_star_type<mp::drop1<std::decay_t<T>>>::type;
 
-template <size_t I, class T> inline constexpr
+template <std::size_t I, class T> inline constexpr
 pick_star_t<T>
-pick_star(size_t p0, T && t)
+pick_star(std::size_t p0, T && t)
 {
     if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
         if (p0==I) {

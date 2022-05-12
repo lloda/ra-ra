@@ -58,25 +58,6 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     }
 }
 
-// is_foreign_vector is included bc std::vector or std::array may be used as the type of shape().
-// but FIXME this also catches std::string if that isn't registered as is_scalar. We probably don't want that regardless of whether std::string is registered as scalar or not. [ra13]
-
-template <class A> requires (!std::is_convertible_v<A, std::string_view>
-                             && (is_ra<A> || is_foreign_vector<A>))
-inline std::ostream &
-operator<<(std::ostream & o, A && a)
-{
-    return o << format_array(a);
-}
-
-// initializer_list cannot match A && above.
-template <class T>
-inline std::ostream &
-operator<<(std::ostream & o, std::initializer_list<T> const & a)
-{
-    return o << format_array(a);
-}
-
 // Static size.
 template <class C> requires (!is_scalar<C> && size_s<C>()!=DIM_ANY)
 inline std::istream &

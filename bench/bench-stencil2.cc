@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench-stencil2.cc
-/// @brief Stencil-as-view.
+// ra-ra/bench - Stencil-as-view (rank 2).
 
 // (c) Daniel Llorens - 2016-2017
 // This library is free software; you can redistribute it and/or modify it under

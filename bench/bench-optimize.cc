@@ -1,14 +1,13 @@
+// -*- mode: c++; coding: utf-8 -*-
+// ra-ra/bench - ET optimization.
 
-// (c) Daniel Llorens - 2017
-
+// (c) Daniel Llorens - 2017-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file bench-optimize.hh
-/// @brief Benchmark RA_DO_OPT_SMALLVECTOR (DNW)
-// TODO Everything...
+// FIXME RA_DO_OPT_SMALLVECTOR (?)
 
 #define RA_DO_OPT 0 // disable automatic use, so we can compare with (forced) and without
 #define RA_DO_OPT_IOTA 1
@@ -18,10 +17,8 @@
 #endif
 #define RA_DO_OPT_SMALLVECTOR 1
 
-#include "ra/operators.hh"
 #include "ra/test.hh"
 #include "ra/bench.hh"
-#include "ra/mpdebug.hh"
 #include <iostream>
 #include <iomanip>
 

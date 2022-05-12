@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file frame-old.cc
-/// @brief Frame-matching tests for pre v10 Expr, previously in test/ra-0.cc.
+// ra-ra/test - Frame-matching tests for pre v10 Expr, previously in test/ra-0.cc.
 
 // (c) Daniel Llorens - 2013-2014, 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -27,9 +26,6 @@ struct ra_error: public std::exception
     }
 };
 
-#ifdef RA_ASSERT
-#error RA_ASSERT is already defined!
-#endif
 #define RA_ASSERT( cond, ... )                                          \
     { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
 // -------------------------------------

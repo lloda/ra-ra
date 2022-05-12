@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench-sum-cols.cc
-/// @brief Benchmark various ways to sum columns.
+// ra-ra/bench - Various ways to sum columns.
 
 // (c) Daniel Llorens - 2016-2017
 // This library is free software; you can redistribute it and/or modify it under

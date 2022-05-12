@@ -8,8 +8,9 @@
 // later version.
 
 #pragma once
-#include "type.hh"
 #include <vector>
+#include "type.hh"
+#include "check.hh"
 
 namespace ra {
 

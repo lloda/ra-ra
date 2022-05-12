@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-13.cc
-/// @brief Checks for ra:: constructing views.
+// ra/test - Constructing views.
 
 // (c) Daniel Llorens - 2013-2015
 // This library is free software; you can redistribute it and/or modify it under

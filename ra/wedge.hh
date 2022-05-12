@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Wedge product and cross product.
 
-// (c) Daniel Llorens - 2008-2011, 2014-2015, 2022
+// (c) Daniel Llorens - 2008-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -58,16 +58,17 @@ struct ChooseComponents<D, O>
     using type = typename MapAntiCombination<ChooseComponents_<D, D-O>, D>::type;
 };
 
-// Works *almost* to the range of size_t.
-constexpr size_t n_over_p(size_t const n, size_t p)
+// Works *almost* to the range of std::size_t.
+constexpr std::size_t
+n_over_p(std::size_t const n, std::size_t p)
 {
     if (p>n) {
         return 0;
     } else if (p>(n-p)) {
         p = n-p;
     }
-    size_t v = 1;
-    for (size_t i=0; i!=p; ++i) {
+    std::size_t v = 1;
+    for (std::size_t i=0; i!=p; ++i) {
         v = v*(n-i)/(i+1);
     }
     return v;

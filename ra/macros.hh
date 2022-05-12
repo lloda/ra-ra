@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Basic macros and types.
 
-// (c) Daniel Llorens - 2005, 2012, 2019-2021
+// (c) Daniel Llorens - 2005--2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -36,24 +36,6 @@
 #define FOR_EACH_RSEQ_N() 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 #define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
 #define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
-
-// https://en.cppreference.com/w/cpp/preprocessor/replace
-// See examples/throw.cc for the way to override this RA_ASSERT.
-
-#ifndef RA_ASSERT
-  #define RA_ASSERT(cond, ...) assert(cond)
-#endif
-
-#if defined(RA_DO_CHECK) && RA_DO_CHECK==0
-  #define RA_CHECK( ... )
-#else
-  #define RA_CHECK( ... ) RA_ASSERT( __VA_ARGS__ )
-#endif
-
-#define RA_IS_DEF(NAME, PRED)                                           \
-    template <class A> constexpr bool JOIN(NAME, _def) = false;         \
-    template <class A> requires (PRED) constexpr bool JOIN(NAME, _def) < A > = true; \
-    template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
 
 // Assign ops for settable array iterators; these must be members. For containers & views this might be defined differently.
 // Forward to make sure value y is not misused as ref [ra5].

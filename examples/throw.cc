@@ -1,8 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file throw.cc
-/// @brief Show how to replace ra:: asserts with custom ones.
+// ra-ra/examples - Customize ra:: reaction to errors.
 
-// (c) Daniel Llorens - 2019
+// (c) Daniel Llorens - 2019-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -10,6 +9,9 @@
 
 #include <exception>
 #include <string>
+
+// "ra/format.hh" doesn't depend on RA_ASSERT so it's possible to use ra::format in the following override.
+
 #include "ra/format.hh"
 
 struct ra_error: public std::exception
@@ -22,13 +24,10 @@ struct ra_error: public std::exception
     }
 };
 
-// RA_ASSERT has to be defined before any "ra/" header to override the default definition of RA_ASSERT ("ra/format.hh" is an independent header and doesn't count).
-
-#ifdef RA_ASSERT
-#error RA_ASSERT is already defined!
-#endif
 #define RA_ASSERT( cond, ... )                                          \
     { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]" __VA_OPT__(,) __VA_ARGS__); }
+
+// The override will be in effect for the rest of ra::.
 
 #include "ra/ra.hh"
 #include "ra/test.hh"

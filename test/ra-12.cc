@@ -1,8 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-12.cc
-/// @brief Bug or not?
+// ra/test - Bug or not?
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -25,9 +24,6 @@ struct ra_error: public std::exception
     }
 };
 
-#ifdef RA_ASSERT
-#error RA_ASSERT is already defined!
-#endif
 #define RA_ASSERT( cond, ... )                                          \
     { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
 // -------------------------------------

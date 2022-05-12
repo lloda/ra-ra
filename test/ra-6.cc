@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-6.cc
-/// @brief A regression test.
+// ra/test - Regression test (3).
 
 // (c) Daniel Llorens - 2014-2015
 // This library is free software; you can redistribute it and/or modify it under

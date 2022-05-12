@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-10.cc
-/// @brief Regressions using from() with temp lambdas
+// ra/test - Regressions using from() with temp lambdas.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under
