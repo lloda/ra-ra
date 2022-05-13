@@ -14,6 +14,52 @@ namespace ra {
 
 
 // --------------------
+// Helpers for slicing
+// --------------------
+
+template <class I>
+struct is_beatable_def
+{
+    constexpr static bool value = std::is_integral_v<I>;
+    constexpr static int skip_src = 1;
+    constexpr static int skip = 0;
+    constexpr static bool static_p = value; // can the beating be resolved statically?
+};
+
+template <class T>
+struct is_beatable_def<Iota<T>>
+{
+    constexpr static bool value = std::numeric_limits<T>::is_integer;
+    constexpr static int skip_src = 1;
+    constexpr static int skip = 1;
+    constexpr static bool static_p = false; // it cannot for Iota
+};
+
+// FIXME have a 'filler' version (e.g. with default n = -1) or maybe a distinct type.
+template <int n>
+struct is_beatable_def<dots_t<n>>
+{
+    static_assert(n>=0, "bad count for dots_n");
+    constexpr static bool value = (n>=0);
+    constexpr static int skip_src = n;
+    constexpr static int skip = n;
+    constexpr static bool static_p = true;
+};
+
+template <int n>
+struct is_beatable_def<insert_t<n>>
+{
+    static_assert(n>=0, "bad count for dots_n");
+    constexpr static bool value = (n>=0);
+    constexpr static int skip_src = 0;
+    constexpr static int skip = n;
+    constexpr static bool static_p = true;
+};
+
+template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
+
+
+// --------------------
 // Develop indices for Small
 // --------------------
 
@@ -300,15 +346,15 @@ struct SmallBase
     requires ((0 + ... + std::is_integral_v<I>)<rank() && (is_beatable<I>::static_p && ...)) \
     constexpr auto operator()(I ... i) CONST                            \
     {                                                                   \
-        using FD = FilterDims<lens, steps, I ...>;                   \
+        using FD = FilterDims<lens, steps, I ...>;                      \
         return SmallView<T CONST, typename FD::lens, typename FD::steps> \
-            (data()+select_loop<lens, steps>(i ...));                \
+            (data()+select_loop<lens, steps>(i ...));                   \
     }                                                                   \
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<I>)==rank())                \
     constexpr decltype(auto) operator()(I ... i) CONST                  \
     {                                                                   \
-        return data()[select_loop<lens, steps>(i ...)];              \
+        return data()[select_loop<lens, steps>(i ...)];                 \
     } /* TODO More than one selector... */                              \
     template <class ... I>                                              \
     requires (!is_beatable<I>::static_p || ...)                         \

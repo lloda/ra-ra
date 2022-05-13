@@ -128,5 +128,5 @@ inline std::string const & format(std::string const & s) { return s; }
 } // namespace ra
 
 #ifdef RA_AFTER_CHECK
-#error Bad header include order!
+#error Bad header include order! Do not include ra/format.hh after ra/ra.hh.
 #endif

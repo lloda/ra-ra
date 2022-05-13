@@ -8,8 +8,6 @@
 // later version.
 
 #pragma once
-// FIXME Dependence on specific ra:: types should maybe be elsewhere.
-#include "global.hh"
 #include "complex.hh"
 #include "pick.hh"
 #include "view-ops.hh"
@@ -24,6 +22,18 @@
 #else
   #define RA_OPT
 #endif
+
+
+// ---------------------------
+// globals FIXME do we really need these?
+// ---------------------------
+
+// Cf using std::abs, etc. in real.hh - functions that need to work with scalars as well as with ra objects.
+using ra::odd, ra::every, ra::any;
+
+// These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
+template <class A> inline constexpr void transpose(ra::no_arg) { abort(); }
+template <int A> inline constexpr void iter(ra::no_arg) { abort(); }
 
 namespace ra {
 

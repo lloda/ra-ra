@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Terminal nodes for expression templates.
 
-// (c) Daniel Llorens - 2011-2016, 2019
+// (c) Daniel Llorens - 2011-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -14,15 +14,13 @@
 
 namespace ra {
 
-template <class V> inline constexpr dim_t size(V const & v);
-template <class V> inline constexpr decltype(auto) shape(V const & v);
-
 
 // --------------------
 // global introspection I
 // --------------------
 
-template <class V> inline constexpr dim_t
+template <class V>
+inline constexpr dim_t
 rank_s()
 {
     if constexpr (requires { std::decay_t<V>::rank_s(); }) {
@@ -34,13 +32,15 @@ rank_s()
     }
 }
 
-template <class V> inline  constexpr rank_t
+template <class V>
+inline  constexpr rank_t
 rank_s(V const &)
 {
     return rank_s<V>();
 }
 
-template <class V> inline constexpr dim_t
+template <class V>
+inline constexpr dim_t
 size_s()
 {
     if constexpr (requires { std::decay_t<V>::size_s(); }) {
@@ -68,23 +68,28 @@ size_s()
     }
 }
 
-template <class V> constexpr dim_t
+template <class V>
+inline constexpr dim_t
 size_s(V const &)
 {
     return size_s<V>();
 }
 
-template <class V> inline constexpr rank_t
+template <class V>
+inline constexpr rank_t
 rank(V const & v)
 {
-    if constexpr (requires { ra_traits<V>::rank(v); }) {
+    if constexpr (requires { v.rank(); })  {
+        return v.rank();
+    } else if constexpr (requires { ra_traits<V>::rank(v); }) {
         return ra_traits<V>::rank(v);
     } else {
-        return v.rank();
+        static_assert(!std::is_same_v<V, V>, "No rank() for this type.");
     }
 }
 
-template <class V> inline constexpr dim_t
+template <class V>
+inline constexpr dim_t
 size(V const & v)
 {
     if constexpr (requires { v.size(); }) {
@@ -101,7 +106,8 @@ size(V const & v)
 }
 
 // Try to avoid; prefer implicit matching.
-template <class V> inline constexpr decltype(auto)
+template <class V>
+inline constexpr decltype(auto)
 shape(V const & v)
 {
     if constexpr (requires { v.shape(); }) {
@@ -127,7 +133,8 @@ shape(V const & v)
 }
 
 // To handle arrays of static/dynamic size.
-template <class A> void
+template <class A>
+inline void
 resize(A & a, dim_t k)
 {
     if constexpr (DIM_ANY==size_s<A>()) {
@@ -357,54 +364,13 @@ struct Iota
     decltype(auto) operator-=(T const & b) { i_ -= b; return *this; };
 };
 
-template <class O=dim_t, class S=O> inline constexpr auto
+template <class O=dim_t, class S=O>
+inline constexpr auto
 iota(dim_t len, O org=0, S step=1)
 {
     using T = std::common_type_t<O, S>;
     return Iota<T> { len, T(org), T(step) };
 }
-
-
-// --------------------
-// helpers for slicing
-// --------------------
-
-template <class I> struct is_beatable_def
-{
-    constexpr static bool value = std::is_integral_v<I>;
-    constexpr static int skip_src = 1;
-    constexpr static int skip = 0;
-    constexpr static bool static_p = value; // can the beating be resolved statically?
-};
-
-template <class II> struct is_beatable_def<Iota<II>>
-{
-    constexpr static bool value = std::numeric_limits<II>::is_integer;
-    constexpr static int skip_src = 1;
-    constexpr static int skip = 1;
-    constexpr static bool static_p = false; // it cannot for Iota
-};
-
-// FIXME have a 'filler' version (e.g. with default n = -1) or maybe a distinct type.
-template <int n> struct is_beatable_def<dots_t<n>>
-{
-    static_assert(n>=0, "bad count for dots_n");
-    constexpr static bool value = (n>=0);
-    constexpr static int skip_src = n;
-    constexpr static int skip = n;
-    constexpr static bool static_p = true;
-};
-
-template <int n> struct is_beatable_def<insert_t<n>>
-{
-    static_assert(n>=0, "bad count for dots_n");
-    constexpr static bool value = (n>=0);
-    constexpr static int skip_src = 0;
-    constexpr static int skip = n;
-    constexpr static bool static_p = true;
-};
-
-template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
 
 
 // --------------

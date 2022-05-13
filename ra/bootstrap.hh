@@ -137,8 +137,7 @@ iter(A && a) { return std::forward<A>(a).template iter<cell_rank>(); }
 // Defined in wrank.hh but used in big.hh (selectors, etc).
 template <class A, class ... I> inline constexpr auto from(A && a, I && ... i);
 
-// Extended by operators.hh and repeated in global.hh.
-// TODO All users be int, then this take int.
+// Extended in operators.hh. TODO All users be int, then this take int.
 inline constexpr bool any(bool const x) { return x; }
 inline constexpr bool every(bool const x) { return x; }
 inline constexpr bool odd(unsigned int N) { return N & 1; }
