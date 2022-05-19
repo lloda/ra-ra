@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file laplace3d.cc
-/// @brief Solve Poisson equation in a parallelepiped, with linear elements.
+// ra-ra/examples - Solve Poisson equation in a parallelepiped, with linear elements.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under

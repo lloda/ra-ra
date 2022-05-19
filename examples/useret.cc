@@ -1,8 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// User expression templates
+// ra-ra/examples - User defined expression templates
 
-// Adapted from blitz++/examples/useret.cpp
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/useret.cpp
 
 // Blitz++'s ETs have a static applicator, so declaring new operations requires
 // a new class. Thanks to C++14, declaring new ET operations is trivial in

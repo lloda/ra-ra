@@ -1,6 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Adapted from blitz++/examples/slicing.cpp
+// ra-ra/examples - Slicing
+
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/slicing.cpp
 
 #include "ra/ra.hh"
 #include <iostream>

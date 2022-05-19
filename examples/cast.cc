@@ -1,6 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Adapted from blitz++/examples/cast.cpp
+// ra-ra/examples - Casting operations
+
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/cast.cpp
 
 #include "ra/ra.hh"
 #include <iostream>
@@ -18,6 +20,7 @@ int main()
 // initialize with a new object:
     {
         ra::Big<float, 1> D;
+        // D = A/B; // error: mismatched shape
         D = ra::Big<float, 1>(A / B);
     }
 

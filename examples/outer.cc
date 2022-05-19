@@ -1,6 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Adapted from blitz++/examples/outer.cpp
+// ra-ra/examples - Outer product
+
 // Daniel Llorens - 2015, 2019
+// Adapted from blitz++/examples/outer.cpp
 
 #include "ra/ra.hh"
 #include <iostream>

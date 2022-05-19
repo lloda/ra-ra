@@ -1,6 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Adapted from blitz++/examples/rangexpr.cpp
+// ra-ra/examples - Range expressions
+
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/rangexpr.cpp
 
 #include "ra/ra.hh"
 #include <iostream>

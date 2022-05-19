@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file agreement.cc
-/// @brief Demo shape agreement rules
+// ra-ra/examples - Demo shape agreement rules
 
 // (c) Daniel Llorens - 2015-2016
 // This library is free software; you can redistribute it and/or modify it under

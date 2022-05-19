@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// @file readme.cc
-// @brief Examples used in top-level README.md
+// ra-ra/examples - Examples used in top-level README.md
 
 // (c) Daniel Llorens - 2016
 // This library is free software; you can redistribute it and/or modify it under

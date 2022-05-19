@@ -1,6 +1,11 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Pitfalls of assigning to lower rank
-// Daniel Llorens - 2021
+// ra-ra/examples - Pitfalls of assigning to lower rank
+
+// (c) Daniel Llorens - 2021
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option) any
+// later version.
 
 #include "ra/ra.hh"
 #include <iostream>

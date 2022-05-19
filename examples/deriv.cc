@@ -1,8 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Numerical differentiation
+// ra-ra/examples - Numerical differentiation
 
-// Adapted from blitz++/examples/deriv.cpp
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/deriv.cpp
 
 #include "ra/ra.hh"
 #include <iostream>

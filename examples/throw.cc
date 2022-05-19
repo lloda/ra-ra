@@ -10,7 +10,7 @@
 #include <exception>
 #include <string>
 
-// "ra/format.hh" doesn't depend on RA_ASSERT so it's possible to use ra::format in the following override.
+// "ra/format.hh" doesn't depend directly on RA_ASSERT, so the following override is able to use ra::format.
 
 #include "ra/format.hh"
 

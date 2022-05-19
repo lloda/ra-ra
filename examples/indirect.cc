@@ -1,6 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Adapted from blitz++/examples/indirect.cpp
+// ra-ra/examples - Indirect indexing
+
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/indirect.cpp
 
 // The point of this example in Blitz++ seems to be to show off the compact
 // notation. ra:: doesn't support special sparse selectors like Blitz++ does,

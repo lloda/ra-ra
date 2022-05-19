@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file explode-collapse.cc
-/// @brief Demo collapse and explode operations.
+// ra-ra/examples - Demo collapse and explode operations.
 
 // (c) Daniel Llorens - 2016
 // This library is free software; you can redistribute it and/or modify it under

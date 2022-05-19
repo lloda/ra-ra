@@ -1,8 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Nested heterogeneous arrays
+// ra-ra/examples - Nested heterogeneous arrays
 
-// Adapted from blitz++/examples/cast.cpp
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/cast.cpp
 
 #include "ra/ra.hh"
 #include <iostream>

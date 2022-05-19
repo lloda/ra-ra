@@ -1,8 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Select an argument across an array expression.
+// ra-ra/examples - Select an argument across an array expression.
 
-// Adapted from blitz++/examples/where.cpp
 // Daniel Llorens - 2015
+// Adapted from blitz++/examples/where.cpp
 
 #include "ra/ra.hh"
 #include "ra/test.hh"

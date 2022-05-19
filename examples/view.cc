@@ -1,7 +1,8 @@
 // -*- mode: c++; coding: utf-8 -*-
-// Adapted from blitz++/examples/array.cpp
-// Daniel Llorens - 2015
+// ra-ra/examples - Operations with views, slicing
 
+// Daniel Llorens - 2015
+// Adapted from blitz++/examples/array.cpp
 // TODO Better traversal...
 
 #include "ra/ra.hh"
