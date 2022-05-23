@@ -9,7 +9,6 @@
 
 #pragma once
 #include "tuples.hh"
-#include <sys/types.h> // ssize_t
 
 namespace ra {
 
@@ -17,7 +16,7 @@ constexpr int VERSION = 16;    // to force or prevent upgrades on dependents
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
-using dim_t = ssize_t;
+using dim_t = std::ptrdiff_t;
 constexpr dim_t DIM_ANY = -1099999444;
 constexpr dim_t DIM_BAD = -1099999888;
 constexpr rank_t RANK_ANY = -1099999444;

@@ -309,7 +309,7 @@ struct View
     }
     View(std::initializer_list<dim_t> s, T * p_): View(start(s), p_) {}
 
-// [rna38] [ra34] and RA_DEF_ASSIGNOPS_SELF
+// [ra38] [ra34] and RA_DEF_ASSIGNOPS_SELF
     View(View && x) = default;
     View(View const & x) = default;
     View & operator=(View && x) { ra::start(*this) = x; return *this; }

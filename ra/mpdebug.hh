@@ -14,10 +14,10 @@
 
 namespace ra::mp {
 
-template <ssize_t value_, bool condition=false>
+template <dim_t value_, bool condition=false>
 struct show_number
 {
-    static ssize_t const value = value_;
+    static dim_t const value = value_;
     static_assert(condition, "bad number");
 };
 template <class type_, bool condition=false>
