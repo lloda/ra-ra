@@ -51,7 +51,7 @@ struct ra_traits_def<T>
 
 // TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
-RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && A::rank_s()!=0)
+RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
 // TODO use concept for is_slice.
 RA_IS_DEF(is_slice, SliceConcept<A>)
 RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)

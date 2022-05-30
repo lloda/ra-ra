@@ -395,7 +395,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 
 <p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
 </p>
-<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 10.3</b> or <b>gcc 11.1</b> with <samp>-std=c++20</samp>. Check the top README.md for more up-to-date information.
+<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11.3</b> or <b>gcc 12.1</b> with <samp>-std=c++20</samp>. Check the top README.md for more up-to-date information.
 </p>
 <p>Here is a minimal program<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>:
 </p>
@@ -415,8 +415,9 @@ int main()
    d|d
 </pre></div>
 
-<p>You may want to <code>#include &quot;ra/real.hh&quot;</code> and <code>&quot;ra/complex.hh&quot;</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function.
+<p>You may want to <code>#include &quot;ra/real.hh&quot;</code> and <code>&quot;ra/complex.hh&quot;</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function. All other headers are meant for internal use by <code>ra::</code>.
 </p>
+
 <span id="index-container"></span>
 <hr>
 </div>
@@ -1495,7 +1496,6 @@ inline auto op_reduce(A &amp;&amp; a)
     sum_cols += a;
 </pre></div>
 
-
 <p>FIXME example with assignment op
 </p>
 <p>A few common operations of this type are already packaged in <code>ra::</code>.
@@ -1540,7 +1540,7 @@ Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a hr
 </p>
 <ul>
 <li> <code>RA_DO_CHECK</code>
-is a binary flag that controls runtime checks. The default is 1. The checks themselves are done with <code>RA_ASSERT</code>.
+is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means to ignore them. The checks themselves are done with <code>RA_ASSERT</code>.
 </li><li> <code>RA_ASSERT(cond, ...)</code>
 is a function-like macro. <code>cond</code> an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of <code>RA_ASSERT(cond, ...)</code> is <code>assert(cond)</code>, from <code>&lt;cassert&gt;</code>.
 </li></ul>

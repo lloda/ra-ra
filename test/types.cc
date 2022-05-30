@@ -19,20 +19,33 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using ra::mp::int_list, ra::mp::nil;
 
-#define TEST_PREDICATES(A)                                              \
-    [&tr](bool ra, bool slice, bool array_iterator, bool scalar, bool foreign_vector) \
-    {                                                                   \
-        cout << endl;                                                   \
-        tr.info(STRINGIZE(A)).info("ra").test_eq(ra, ra::is_ra<A>);     \
-        tr.info(STRINGIZE(A)).info("slice").test_eq(slice, ra::is_slice<A>); \
-        tr.info(STRINGIZE(A)).info("Iterator").test_eq(array_iterator, ra::IteratorConcept<A>); \
-        tr.info(STRINGIZE(A)).info("scalar").test_eq(scalar, ra::is_scalar<A>); \
-        tr.info(STRINGIZE(A)).info("foreign_vector").test_eq(foreign_vector, ra::is_foreign_vector<A>); \
-        tr.info(STRINGIZE(A)).info("std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>); \
-    }
+template <class A>
+void
+test_predicates(char const * type, TestRecorder & tr,
+                bool ra, bool slice, bool iterator, bool scalar, bool foreign_vector)
+{
+    cout << std::string(90-size(std::string(type)), ' ') << type << " : "
+         << (ra::is_ra<A> ? "ra " : "")
+         << (ra::is_slice<A> ? "slice " : "")
+         << (ra::IteratorConcept<A> ? "iterator " : "")
+         << (ra::is_scalar<A> ? "scalar " : "")
+         << (ra::is_foreign_vector<A> ? "fovector " : "")
+         << (std::ranges::range<A> ? "range " : "")
+         << (std::is_const_v<A> ? "const " : "")
+         << (std::is_lvalue_reference_v<A> ? "ref " : "") << endl;
+    tr.quiet().info(type).info("ra").test_eq(ra, ra::is_ra<A>);
+    tr.quiet().info(type).info("slice").test_eq(slice, ra::is_slice<A>);
+    tr.quiet().info(type).info("Iterator").test_eq(iterator, ra::IteratorConcept<A>);
+    tr.quiet().info(type).info("scalar").test_eq(scalar, ra::is_scalar<A>);
+    tr.quiet().info(type).info("foreign_vector").test_eq(foreign_vector, ra::is_foreign_vector<A>);
+    tr.quiet().info(type).info("std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>);
+}
 
 // Not registered with is_scalar_def.
 struct Unreg { int x; };
+
+// prefer decltype(declval(...)) to https://stackoverflow.com/a/13842784 the latter drops const
+#define TESTPRED(A, ...) test_predicates <A> (STRINGIZE(A), tr, ##__VA_ARGS__)
 
 int main()
 {
@@ -44,68 +57,63 @@ int main()
     }
     {
 // SmallBase is not excluded in is_slice.
-        TEST_PREDICATES(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, int_list<3>, int_list<1>>>()))
-            (true, true, false, false, false);
-        TEST_PREDICATES(int)
-            (false, false, false, true, false);
-        TEST_PREDICATES(std::complex<double>)
-            (false, false, false, true, false);
-        TEST_PREDICATES(decltype(ra::Unique<int, 2>()))
-            (true, true, false, false, false);
-        TEST_PREDICATES(decltype(ra::View<int, 2>()))
-            (true, true, false, false, false);
-        TEST_PREDICATES(decltype(ra::Unique<int, 2>().iter()))
-            (true, false, true, false, false);
+        TESTPRED(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, int_list<3>, int_list<1>>>()),
+                 true, true, false, false, false);
+        TESTPRED(int,
+                 false, false, false, true, false);
+        TESTPRED(std::complex<double>,
+                 false, false, false, true, false);
+        TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()),
+                 true, true, false, false, false);
+        TESTPRED(decltype(std::declval<ra::View<int, 2>>()),
+                 true, true, false, false, false);
+        TESTPRED(decltype(ra::Unique<int, 2>().iter()),
+                 true, false, true, false, false);
         static_assert(ra::IteratorConcept<decltype(ra::Unique<int, 2>().iter())>);
-        {
-            ra::Unique<int, 1> A= {1, 2, 3};
-            auto i = A.iter();
-            auto & ii = i;
-            TEST_PREDICATES(decltype(ii))
-                (true, false, true, false, false);
-        }
-        TEST_PREDICATES(ra::Iota<int>)
-            (true, false, true, false, false);
-        TEST_PREDICATES(ra::TensorIndex<0>)
-            (true, false, true, false, false);
-        TEST_PREDICATES(ra::TensorIndex<0> const)
-            (true, false, false, false, false);
-        TEST_PREDICATES(ra::TensorIndex<0> &)
-            (true, false, true, false, false);
-        TEST_PREDICATES(decltype(ra::Small<int, 2>()))
-            (true, true, false, false, false);
-        TEST_PREDICATES(decltype(ra::Small<int, 2>().iter()))
-            (true, false, true, false, false);
-        TEST_PREDICATES(decltype(ra::Small<int, 2, 2>()()))
-            (true, true, false, false, false);
-        TEST_PREDICATES(decltype(ra::Small<int, 2, 2>().iter()))
-            (true, false, true, false, false);
-        TEST_PREDICATES(decltype(ra::Small<int, 2>()+3))
-            (true, false, true, false, false);
-        TEST_PREDICATES(decltype(3+ra::Big<int>()))
-            (true, false, true, false, false);
-        TEST_PREDICATES(std::vector<int>)
-            (false, false, false, false, true);
-        TEST_PREDICATES(decltype(ra::start(std::vector<int> {})))
-            (true, false, true, false, false);
-        TEST_PREDICATES(int *)
-            (false, false, false, false, false);
-        TEST_PREDICATES(decltype(std::ranges::iota_view(-5, 10)))
-            (false, false, false, false, true);
+        TESTPRED(decltype(ra::Unique<int, 1>().iter()) &,
+                 true, false, true, false, false);
+        TESTPRED(ra::Iota<int>,
+                 true, false, true, false, false);
+        TESTPRED(ra::TensorIndex<0>,
+                 true, false, true, false, false);
+        TESTPRED(ra::TensorIndex<0> const, // is_iterator but not IteratorConcept (see RA_IS_DEF)
+                 true, false, false, false, false);
+        TESTPRED(ra::TensorIndex<0> &,
+                 true, false, true, false, false);
+        TESTPRED(decltype(std::declval<ra::Small<int, 2>>()),
+                 true, true, false, false, false);
+        TESTPRED(decltype(ra::Small<int, 2>().iter()),
+                 true, false, true, false, false);
+        TESTPRED(decltype(ra::Small<int, 2, 2>()()),
+                 true, true, false, false, false);
+        TESTPRED(decltype(ra::Small<int, 2, 2>().iter()),
+                 true, false, true, false, false);
+        TESTPRED(decltype(ra::Small<int, 2>()+3),
+                 true, false, true, false, false);
+        TESTPRED(decltype(3+ra::Big<int>()),
+                 true, false, true, false, false);
+        TESTPRED(std::vector<int>,
+                 false, false, false, false, true);
+        TESTPRED(decltype(ra::start(std::vector<int> {})),
+                 true, false, true, false, false);
+        TESTPRED(int *,
+                 false, false, false, false, false);
+        TESTPRED(decltype(std::ranges::iota_view(-5, 10)),
+                 false, false, false, false, true);
 // std::string can be registered as is_scalar or not [ra13]. One may do ra::vector(std::string) or ra::scalar(std::string) to get the other behavior.
         if constexpr(ra::is_scalar<std::string>) {
-            TEST_PREDICATES(std::string)
-                (false, false, false, true, false);
+            TESTPRED(std::string,
+                     false, false, false, true, false);
         } else {
-            TEST_PREDICATES(std::string)
-                (false, false, false, false, true);
+            TESTPRED(std::string,
+                     false, false, false, false, true);
         }
-        TEST_PREDICATES(Unreg)
-            (false, false, false, false, false);
-        TEST_PREDICATES(int [4])
-            (false, false, false, false, false);
-        TEST_PREDICATES(decltype("cstring"))
-            (false, false, false, false, false);
+        TESTPRED(Unreg,
+                 false, false, false, false, false);
+        TESTPRED(int [4],
+                 false, false, false, false, false);
+        TESTPRED(decltype("cstring"),
+                 false, false, false, false, false);
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {

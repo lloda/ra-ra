@@ -24,7 +24,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
         Op & op;
         T_ t;
         template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-// cannot figure out why gcc 12.1 flags this (-O3 only).
+// FIXME cannot figure out why gcc 12.1 flags this (-O3 only).
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
         constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }

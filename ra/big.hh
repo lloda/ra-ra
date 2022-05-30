@@ -211,13 +211,15 @@ dim_t proddim(D d, D dend)
 // [rank] [size...] p -> [data...] (var rank)
 // TODO size is immutable so that it can be kept together with rank.
 
-inline dim_t select(Dim * dim, Dim const * dim_src, dim_t i)
+inline constexpr dim_t
+select(Dim * dim, Dim const * dim_src, dim_t i)
 {
     RA_CHECK(inside(i, dim_src->len), " i ", i, " len ", dim_src->len);
     return dim_src->step*i;
 }
 template <class II>
-inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
+inline dim_t
+select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
     RA_CHECK((inside(i.i_, dim_src->len) && inside(i.i_+(i.len_-1)*i.step_, dim_src->len))
              || (i.len_==0 && i.i_<=dim_src->len));
@@ -225,13 +227,15 @@ inline dim_t select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
     return dim_src->step*i.i_;
 }
 template <class I0, class ... I>
-inline dim_t select_loop(Dim * dim, Dim const * dim_src, I0 && i0, I && ... i)
+inline dim_t
+select_loop(Dim * dim, Dim const * dim_src, I0 && i0, I && ... i)
 {
     return select(dim, dim_src, std::forward<I0>(i0))
         + select_loop(dim+is_beatable<I0>::skip, dim_src+is_beatable<I0>::skip_src, std::forward<I>(i) ...);
 }
 template <int n, class ... I>
-inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ... i)
+inline dim_t
+select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim, ++dim_src) {
         *dim = *dim_src;
@@ -239,14 +243,16 @@ inline dim_t select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ..
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
 template <int n, class ... I>
-inline dim_t select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
+inline dim_t
+select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim) {
         *dim = { .len = DIM_BAD, .step = 0 };
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
-inline dim_t select_loop(Dim * dim, Dim const * dim_src)
+inline constexpr
+dim_t select_loop(Dim * dim, Dim const * dim_src)
 {
     return 0;
 }
@@ -486,8 +492,9 @@ template <class T_, class A> struct storage_traits<std::vector<T_, A>>
     static T * data(std::vector<T, A> & v) { return v.data(); }
 };
 
-template <class T, rank_t RANK> inline
-bool is_c_order(View<T, RANK> const & a)
+template <class T, rank_t RANK>
+inline constexpr bool
+is_c_order(View<T, RANK> const & a)
 {
     dim_t s = 1;
     for (int i=a.rank()-1; i>=0; --i) {

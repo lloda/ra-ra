@@ -60,7 +60,8 @@ concept FlatConcept = requires (P p, S d)
 template <class A>
 concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
-    { std::decay_t<A>::rank_s() } -> std::convertible_to<rank_t>; // FIXME
+// FIXME we still allow ply(&) in some places. Cf also test/types.cc.
+    { std::decay_t<A>::rank_s() } -> std::convertible_to<rank_t>;
     { a.rank() } -> std::convertible_to<rank_t>;
     { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
