@@ -41,8 +41,7 @@ struct Benchmark
     static clock::duration
     lapse(clock::duration empty, clock::duration full)
     {
-// [ra08] count() to work around https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95242 on gcc 10.
-        return (full.count()>empty.count()) ? full-empty : full;
+        return (full>empty) ? full-empty : full;
     }
 
     static double
