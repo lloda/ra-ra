@@ -36,14 +36,16 @@ struct TestRecorder
                      ERRORS, // as NOISY if failed, else info and fp errors (default)
                      NOISY }; // full output of info, test arguments, fp errors
     std::ostream & o;
-    int total = 0, skipped = 0;
-    std::vector<int> failed;
+    int total=0, skipped=0, passed_good=0, passed_bad=0, failed_good=0, failed_bad=0;
+    std::vector<int> bad;
     std::string info_str;
     verbose_t verbose_default, verbose;
     bool willskip;
+    bool willexpectfail;
 
     TestRecorder(std::ostream & o_=std::cout, verbose_t verbose_default_=ERRORS)
-        : o(o_), verbose_default(verbose_default_), verbose(verbose_default_), willskip(false) {}
+        : o(o_), verbose_default(verbose_default_), verbose(verbose_default_),
+          willskip(false), willexpectfail(false) {}
 
     template <class ... A> void
     section(A const & ... a)
@@ -54,7 +56,7 @@ struct TestRecorder
     static std::string
     format_error(double e)
     {
-        return format(esc_yellow, std::setprecision(2), e, esc_plain);
+        return format(esc_yellow, std::setprecision(2), e, esc_reset);
     }
 
     template <class ... A> TestRecorder &
@@ -62,12 +64,13 @@ struct TestRecorder
     {
         bool empty = (info_str=="");
         info_str += esc_pink;
-        info_str += (empty ? "" : "; ") + format(a ...) + esc_plain;
+        info_str += (empty ? "" : "; ") + format(a ...) + esc_reset;
         return *this;
     }
     TestRecorder & quiet(verbose_t v=QUIET) { verbose = v; return *this; }
     TestRecorder & noisy(verbose_t v=NOISY) { verbose = v; return *this; }
     TestRecorder & skip(bool s=true) { willskip = s; return *this; }
+    TestRecorder & expectfail(bool s=true) { willexpectfail = s; return *this; }
 
     template <class A, class B>
     void
@@ -76,32 +79,37 @@ struct TestRecorder
         switch (verbose) {
         case QUIET: {
             if (!c) {
-                o << esc_cyan << "[" << (willskip ? std::string("skipped") : format(total))
-                  << ":" << format(loc) << "]" << esc_plain << " ... "
-                  << esc_bold << esc_red << "FAILED" << esc_reset
-                  << " " << info_full() << std::endl;
+                o << format(esc_cyan, "[", total, ":", loc, "]", esc_reset, " ...",
+                            esc_bold, esc_red, " FAILED", esc_reset,
+                            esc_yellow, (willskip ? " skipped" : ""), (willexpectfail ? " expected" : ""), esc_reset,
+                            " ", info_full())
+                  << std::endl;
             }
         }; break;
         case NOISY: case ERRORS: {
-            o << esc_cyan << "[" << (willskip ? std::string("skipped") : format(total))
-              << ":" << format(loc) << "]" << esc_plain << " ... "
-              << (c ? std::string(esc_green) + "ok" + esc_plain
-                  : std::string(esc_bold) + esc_red + "FAILED" + esc_reset)
-              << " " << ((verbose==NOISY || !c) ? info_full() : info_min()) << std::endl;
+            o << format(esc_cyan, "[", total, ":", loc, "]", esc_reset, " ...")
+              << (c ? std::string(esc_green) + " ok" + esc_reset
+                  : std::string(esc_bold) + esc_red + " FAILED" + esc_reset)
+              << esc_yellow << (willskip ? " skipped" : "")
+              << (willexpectfail ? (c ? " not expected" : " expected") : "") << esc_reset
+              << " " << ((verbose==NOISY || c==willexpectfail) ? info_full() : info_min())
+              << std::endl;
         }; break;
         default: assert(0);
         }
         info_str = "";
         verbose = verbose_default;
         if (!willskip) {
-            if (!c) {
-                failed.push_back(total);
+            ++(willexpectfail? (c ? passed_bad : failed_good) : (c ? passed_good : failed_bad));
+            if (c==willexpectfail) {
+                bad.push_back(total);
             }
-            ++total;
         } else {
             ++skipped;
         }
+        ++total;
         willskip = false;
+        willexpectfail = false;
     }
 
 #define LAZYINFO(...) [&]() { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
@@ -124,10 +132,18 @@ struct TestRecorder
     bool
     test_comp(A && a, B && b, Comp && comp, char const * msg, source_location const loc = source_location::current())
     {
-        bool c = every(ra::map(comp, a, b));
-        test(c, LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
-             LAZYINFO(""), loc);
-        return c;
+        if (agree_op(comp, a, b)) {
+            bool c = every(ra::map(comp, a, b));
+            test(c, LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
+                 LAZYINFO(""), loc);
+            return c;
+        } else {
+            test(false,
+                 LAZYINFO("Mismatched args [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]"),
+                 LAZYINFO("Shape mismatch"),
+                 loc);
+            return false;
+        }
     }
     template <class R, class A>
     bool
@@ -162,7 +178,7 @@ struct TestRecorder
                                 where(isnan(a), 0., std::numeric_limits<double>::infinity()),
                                 abs(ref-a)/level));
         test(e<=req,
-             LAZYINFO("rerr (", esc_yellow, "ref", esc_plain, ": ", ref, esc_yellow, ", got", esc_plain, ": ", a,
+             LAZYINFO("rerr (", esc_yellow, "ref", esc_reset, ": ", ref, esc_yellow, ", got", esc_reset, ": ", a,
                       ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req),
              LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
                       ", req. ", req),
@@ -188,16 +204,14 @@ struct TestRecorder
     int
     summary() const
     {
-        o << "Of " << total << " tests " << esc_bold << esc_green << "passed " << (total-failed.size());
-        if (skipped>0) {
-            o << esc_reset << ", " <<  esc_bold << esc_yellow << "skipped " << skipped;
+        o << format("Of ", total, " tests passed ", (passed_good+passed_bad),
+                    " (", passed_bad, " unexpected), failed ", (failed_good+failed_bad),
+                    " (", failed_bad, " unexpected), skipped ", skipped, ".\n");
+        if (bad.size()>0) {
+            o << format(bad.size(), " bad tests: [", esc_bold, esc_red, ra::noshape, format_array(bad),
+                        esc_reset, "].\n");
         }
-        if (!failed.empty()) {
-            o << esc_reset << ", " <<  esc_bold << esc_red << " failed " << failed.size()
-              << " (" << ra::noshape << format_array(failed) << ")";
-        }
-        o << esc_reset << std::endl;
-        return failed.size();
+        return bad.size();
     }
 };
 

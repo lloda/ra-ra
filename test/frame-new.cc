@@ -111,7 +111,24 @@ int main()
         cout << EXPR << endl;
 #undef EXPR
     }
-    tr.section("check mismatches - dynamic");
+    tr.section("check mismatches - dynamic (explicit)");
+    {
+        {
+            ra::Big<int, 3> a({2, 3, 4}, 0);
+            ra::Big<int, 4> b({2, 4, 4, 5}, 0);
+            tr.test(!ra::agree(a, b));
+// TestRecorder sees mismatches as another kind of error, it used to happen this would RA_ASSERT instead.
+// FIXME This isn't true for static mismatches, which will fail to compile.
+            tr.expectfail().test_eq(a, b);
+        }
+        {
+            ra::Big<int, 3> a({2, 3, 4}, 0);
+            ra::Big<int, 4> b({2, 3, 4, 5}, 0);
+            tr.test(ra::agree(a, b));
+            tr.test_eq(a, b);
+        }
+    }
+    tr.section("check mismatches - dynamic (implicit)");
     {
         ra::Big<int, 3> a({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));
         ra::Big<int, 4> b({2, 4, 4, 5}, (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1));

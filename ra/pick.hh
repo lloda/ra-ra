@@ -99,7 +99,7 @@ pick_star(std::size_t p0, T && t)
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 
 template <class ... P, int ... I>
-struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
+struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
     static_assert(sizeof...(P)>1);
 
@@ -117,7 +117,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P .
         return Flat<std::tuple<P_ ...>> { std::tuple<P_ ...> { std::forward<P_>(p) ... } };
     }
 
-    using Match_ = Match<std::tuple<P ...>>;
+    using Match_ = Match<true, std::tuple<P ...>>;
 
 // test/ra-9.cc [ra1]
     constexpr Pick(P ... p_): Match_(std::forward<P>(p_) ...) {}

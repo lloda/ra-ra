@@ -526,7 +526,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A> decltype(auto) operator()(A && ... a) { return View::operator()(std::forward<A>(a) ...); }
     template <class ... A> decltype(auto) operator()(A && ... a) const { return View::operator()(std::forward<A>(a) ...); }
 
-// Needed to have View::p set. FIXME Remove duplication as in SmallBase/SmallArray, then remove the constructors and the assignment operators.
+// Needed to set View::p. FIXME Remove duplication as in SmallBase/SmallArray, then remove the constructors and the assignment operators.
     Container(Container && w): store(std::move(w.store))
     {
         View::dimv = std::move(w.dimv);

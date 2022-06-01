@@ -6,7 +6,7 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/6]
-  - [-] Bugs [2/8]
+  - [-] Bugs [2/9]
     - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
       - Tried is_constant_eval in c++20 but didn't work out as I hoped.
@@ -56,7 +56,7 @@ checkbox [C-ct] flip TODO
       - [X] for Container constructors
       - [X] for Small constructors
     - [X] General static check on prefix matching <2019-02-06 Wed 12:06>
-  - [-] Building, tests [3/5]
+  - [-] Building, tests [3/6]
     - [X] Build docs with cmake
     - [X] Support RA_USE_BLAS with cmake (linux)
     - [X] Support RA_USE_BLAS with cmake (mac) <2018-12-07 Fri 16:33>
@@ -67,7 +67,8 @@ checkbox [C-ct] flip TODO
     - [ ] Complete section on internals
     - [ ] Complete section on other languages, libraries
     - [ ] Describe xreferenced issues in doc ([raxx], etc.)
-  - [ ] Other [0/1]
+  - [ ] Other [0/2]
+    - [ ] Review Container constructors. Why do we need (&) when we have (const &)?
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).
       - [ ] Appropriate ply. Possibly restrict it to rank 1.

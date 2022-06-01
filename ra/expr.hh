@@ -16,7 +16,7 @@ namespace ra {
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 
 template <class Op, class ... P, int ... I>
-struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
+struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
     template <class T_>
     struct Flat
@@ -37,7 +37,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple
         return Flat<std::tuple<P_ ...>> { op, std::tuple<P_ ...> { std::forward<P_>(p) ... } };
     }
 
-    using Match_ = Match<std::tuple<P ...>>;
+    using Match_ = Match<true, std::tuple<P ...>>;
     Op op;
 
 // test/ra-9.cc [ra1]
@@ -103,6 +103,50 @@ template <class Op, class ... A> inline constexpr void
 for_each(Op && op, A && ... a)
 {
     ply(map(std::forward<Op>(op), std::forward<A>(a) ...));
+}
+
+// ---------------
+// FIXME separate agree_s() and agree()
+// ---------------
+
+template <class ... P> inline constexpr bool
+agree(P && ... p)
+{
+    return agree_(ra::start(std::forward<P>(p)) ...);
+}
+
+template <class Op, class ... P> inline constexpr bool
+agree_op(Op && op, P && ... p)
+{
+    return agree_op_(std::forward<Op>(op), ra::start(std::forward<P>(p)) ...);
+}
+
+template <class ... P> inline constexpr bool
+agree_(P && ... p)
+{
+    using Match_ = Match<false, std::tuple<P ...>>;
+    if constexpr (check_expr_s<Match_>()) {
+        return check_expr<false>(Match_ { std::forward<P>(p) ... });
+    } else {
+        return true;
+    }
+}
+
+template <class Op, class ... P> inline constexpr bool
+agree_op_(Op && op, P && ... p)
+{
+    if constexpr (is_verb<Op>) {
+        return agree_verb(mp::iota<sizeof...(P)> {}, std::forward<Op>(op), std::forward<P>(p) ...);
+    } else {
+        return agree_(std::forward<P>(p) ...);
+    }
+}
+
+template <class V, class ... T, int ... i> inline constexpr bool
+agree_verb(mp::int_list<i ...>, V && v, T && ... t)
+{
+    using FM = Framematch<V, std::tuple<T ...>>;
+    return agree_op_(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
 }
 
 } // namespace ra

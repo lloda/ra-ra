@@ -67,11 +67,10 @@ int main()
     }
     // but the following would be invalid:
     {
-        // ra::_0 i;
-        // ra::_1 j;
+        ra::TensorIndex<0> i;
+        ra::TensorIndex<1> j;
         // ra::Big<float, 2> X = i-j; // no shape to construct X with
     }
-
     // Axis insertion lets you match arguments more flexibly than simple prefix matching.
     {
         ra::Big<float, 2> A({3, 4}, 0);

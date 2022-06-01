@@ -57,7 +57,7 @@ rank_t dependent_frame_rank(rank_t rank, rank_t crank)
 }
 
 inline constexpr
-dim_t chosen_len(dim_t sa, dim_t sb)
+dim_t choose_len(dim_t sa, dim_t sb)
 {
     if (sa==DIM_BAD) {
         return sb;
@@ -70,7 +70,7 @@ dim_t chosen_len(dim_t sa, dim_t sb)
     }
 }
 
-// ct mismatch, abort | ct match, return 0 | rt check needed, return 1
+// ct mismatch, abort (FIXME) | ct match, return 0 | rt check needed, return 1
 
 template <class E>
 inline constexpr
@@ -95,7 +95,7 @@ int check_expr_s()
                                 if constexpr (k<Ti::rank_s()) {
                                     constexpr dim_t si = Ti::len_s(k);
                                     static_assert(sk<0 || si<0 || si==sk, "mismatched static dimensions");
-                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<chosen_len(sk, si)> {},
+                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<choose_len(sk, si)> {},
                                               mp::int_t<(1==vali || sk==DIM_ANY || si==DIM_ANY) ? 1 : 0> {});
                                 } else {
                                     return fi(fi, mp::int_t<i+1> {}, mp::int_t<sk> {}, vali);
@@ -116,46 +116,54 @@ int check_expr_s()
     }
 }
 
-template <class E>
-inline constexpr
-bool check_expr(E const & e)
+template <bool fail, class E>
+inline constexpr bool
+check_expr(E const & e)
 {
-    using T = typename E::T;
-    rank_t rs = e.rank();
-    for (int k=0; k!=rs; ++k) {
-        auto fi =
-            [&k, &e](auto && fi, auto i_, int sk)
-            {
-                constexpr int i = i_;
-                if constexpr (i<mp::len<T>) {
-                    if (k<std::get<i>(e.t).rank()) {
-                        dim_t si = std::get<i>(e.t).len(k);
-                        RA_CHECK((sk==DIM_BAD || si==DIM_BAD || si==sk),
-                                 " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
-                        fi(fi, mp::int_t<i+1> {}, chosen_len(sk, si));
+    auto fi = [&e](auto && fi, int k, auto i_, int sk)
+    {
+        constexpr int i = i_;
+        if constexpr (i<mp::len<typename E::T>) {
+            if (k<std::get<i>(e.t).rank()) {
+                dim_t si = std::get<i>(e.t).len(k);
+                if (sk==DIM_BAD || si==DIM_BAD || si==sk) {
+                    return fi(fi, k, mp::int_t<i+1> {}, choose_len(sk, si));
+                } else {
+                    if (fail) {
+                        RA_CHECK(false, " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
                     } else {
-                        fi(fi, mp::int_t<i+1> {}, sk);
+                        return false;
                     }
                 }
-            };
-        fi(fi, mp::int_t<0> {}, DIM_BAD);
+            } else {
+                return fi(fi, k, mp::int_t<i+1> {}, sk);
+            }
+        } else {
+            return true;
+        }
+    };
+    rank_t rs = e.rank();
+    for (int k=0; k!=rs; ++k) {
+        if (!(fi(fi, k, mp::int_t<0> {}, DIM_BAD))) {
+            return false;
+        }
     }
-// FIXME actually use this instead of relying on RA_CHECK throwing/aborting
     return true;
 }
 
-template <class T, class K=mp::iota<mp::len<T>>> struct Match;
+template <bool check, class T, class K=mp::iota<mp::len<T>>> struct Match;
 
-template <class ... P, int ... I>
-struct Match<std::tuple<P ...>, mp::int_list<I ...>>
+template <bool check, class ... P, int ... I>
+struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
 {
     using T = std::tuple<P ...>;
     T t;
 
+// TODO Maybe on ply? That would enable ra::check(i+j) instead of ra::check(+, i, j), avoid the check flag, and avoid the agree_xxx() mess.
     constexpr Match(P ... p_): t(std::forward<P>(p_) ...)
     {
-        if constexpr (check_expr_s<Match>()) {
-            RA_CHECK(check_expr(*this)); // TODO Maybe do this on ply?
+        if constexpr (check && check_expr_s<Match>()) {
+            RA_CHECK(check_expr<true>(*this));
         }
     }
 
