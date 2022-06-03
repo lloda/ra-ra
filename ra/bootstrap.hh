@@ -12,7 +12,7 @@
 
 namespace ra {
 
-constexpr int VERSION = 16;    // to force or prevent upgrades on dependents
+constexpr int VERSION = 17;    // to force or prevent upgrades on dependents
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;

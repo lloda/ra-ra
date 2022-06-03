@@ -10,7 +10,7 @@
 #pragma once
 #include "small.hh"
 #include <memory>
-#include <iostream>
+#include <iosfwd>
 
 namespace ra {
 

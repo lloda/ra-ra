@@ -351,5 +351,17 @@ int main()
         tr.info("FIXME").skip().test_eq(7, int(i));
         tr.info("FIXME").skip().test_eq(9, int(j));
     }
+    tr.section("explicit agreement check with wrank");
+    {
+        {
+            ra::Big<real, 1> a({3}, 2+ra::_0);
+            ra::Big<real, 2> b({2, 3}, 4-ra::_0);
+            ra::Big<real, 2> c = {{8, 12, 16}, {6, 9, 12}};
+            tr.test(agree_op(ra::wrank<1, 1>(ra::times()), a, b));
+            tr.test_eq(c, map(ra::wrank<1, 1>(ra::times()), a, b));
+            ra::Big<real, 2> d({3, 2}, 4-ra::_0);
+            tr.test(!agree_op(ra::wrank<1, 1>(ra::times()), a, d));
+        }
+    }
     return tr.summary();
 }

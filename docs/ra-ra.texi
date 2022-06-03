@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 16
-@set UPDATED 2022 May 6
+@set VERSION 17
+@set UPDATED 2022 Jun 3
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1701,6 +1701,46 @@ FIXME
 @node Reference
 @chapter Reference
 @c ------------------------------------------------
+
+@cindex @code{agree}
+@anchor{x-agree} @defun agree arg ...
+Return true if the shapes of arguments @var{arg...} match (see @ref{Rank extension}), else return false.
+
+This is useful when @ref{Error handling,error checking} is enabled and one wants to avoid the failure response.
+@example
+@verbatim
+    ra::Small<int, 2, 3> A;
+    ra::Small<int, 2> B;
+    ra::Small<int, 3> C;
+
+    agree(A, B); // -> true
+    static_assert(agree(A, B)); // ok for ct shapes
+    cout << (A+B) << endl; // ok
+
+    agree(A, C); // -> false
+    cout << (A+C) << endl; // error. Maybe abort, maybe throw - cf Error Handling
+@end verbatim
+@end example
+@end defun
+
+@cindex @code{agree_op}
+@anchor{x-agree_op} @defun agree_op op arg ...
+Return true if the shapes of arguments @var{arg...} match (see @ref{Rank extension}) relative to operator @var{op}, else return false.
+
+This differs from @ref{x-agree,@code{agree}} when @var{op} has non-zero argument ranks. For example:
+@example
+@verbatim
+    ra::Big<real, 1> a({3}, 0.);
+    ra::Big<real, 2> b({2, 3}, 0.n);
+
+    agree(a, b); // -> false
+    cout << (a+b) << endl; // error
+
+    agree_op(ra::wrank<1, 1>(ra::times()), a, b); // -> true
+    cout << map(ra::wrank<1, 1>(ra::times()), a, b) << endl; // ok
+@end verbatim
+@end example
+@end defun
 
 @cindex @code{at}
 @anchor{x-at} @defun at expr indices

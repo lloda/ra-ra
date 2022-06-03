@@ -106,7 +106,7 @@ for_each(Op && op, A && ... a)
 }
 
 // ---------------
-// FIXME separate agree_s() and agree()
+// FIXME provide separate agree_s().
 // ---------------
 
 template <class ... P> inline constexpr bool
@@ -125,11 +125,7 @@ template <class ... P> inline constexpr bool
 agree_(P && ... p)
 {
     using Match_ = Match<false, std::tuple<P ...>>;
-    if constexpr (check_expr_s<Match_>()) {
-        return check_expr<false>(Match_ { std::forward<P>(p) ... });
-    } else {
-        return true;
-    }
+    return check_expr<false>(Match_ { std::forward<P>(p) ... });
 }
 
 template <class Op, class ... P> inline constexpr bool

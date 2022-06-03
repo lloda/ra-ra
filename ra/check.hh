@@ -9,12 +9,23 @@
 
 #pragma once
 #include <cassert>
+// Feel free to remove these if you define your own RA_ASSERT.
+#include "ra/format.hh"
+#include <iostream>
 
 // https://en.cppreference.com/w/cpp/preprocessor/replace
 // See examples/throw.cc for the way to override this RA_ASSERT.
 
 #ifndef RA_ASSERT
-  #define RA_ASSERT(cond, ...) assert(cond)
+#define RA_ASSERT(cond, ...)                                    \
+    {                                                           \
+        if (std::is_constant_evaluated()) {                     \
+            assert(cond /* FIXME maybe one day */);             \
+        } else if (bool c = cond; !c) {                         \
+            std::cerr << ra::format("**** ra: ", ##__VA_ARGS__, " ****") << std::endl; \
+            assert(c);                                          \
+        }                                                       \
+    }
 #endif
 
 #if defined(RA_DO_CHECK) && RA_DO_CHECK==0

@@ -15,7 +15,6 @@
 #pragma once
 #include "atom.hh"
 #include <functional>
-#include <iostream>
 
 namespace ra {
 

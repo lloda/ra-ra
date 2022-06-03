@@ -43,8 +43,8 @@ struct FormatArray
     char const * sep2;
 };
 
-template <class A> inline
-FormatArray<A>
+template <class A>
+inline constexpr FormatArray<A>
 format_array(A const & a, char const * sep0=" ", char const * sep1="\n", char const * sep2="\n")
 {
     return FormatArray<A> { a,  defaultshape, sep0, sep1, sep2 };
@@ -56,7 +56,7 @@ struct shape_manip_t
     print_shape_t shape;
 };
 
-inline shape_manip_t
+inline constexpr shape_manip_t
 operator<<(std::ostream & o, print_shape_t shape)
 {
     return shape_manip_t { o, shape };
@@ -67,7 +67,7 @@ operator<<(std::ostream & o, print_shape_t shape)
 
 template <class A> requires (!std::is_convertible_v<A, std::string_view>
                              && (is_ra<A> || is_foreign_vector<A>))
-inline std::ostream &
+inline constexpr std::ostream &
 operator<<(std::ostream & o, A && a)
 {
     return o << format_array(a);
@@ -75,14 +75,14 @@ operator<<(std::ostream & o, A && a)
 
 // initializer_list cannot match A && above.
 template <class T>
-inline std::ostream &
+inline constexpr std::ostream &
 operator<<(std::ostream & o, std::initializer_list<T> const & a)
 {
     return o << format_array(a);
 }
 
 template <class A>
-inline std::ostream &
+inline constexpr std::ostream &
 operator<<(shape_manip_t const & sm, A const & a)
 {
     FormatArray<A> fa = format_array(a);
@@ -91,7 +91,7 @@ operator<<(shape_manip_t const & sm, A const & a)
 }
 
 template <class A>
-inline std::ostream &
+inline constexpr std::ostream &
 operator<<(shape_manip_t const & sm, FormatArray<A> fa)
 {
     fa.shape = sm.shape;
@@ -117,10 +117,15 @@ operator<<(std::ostream & o, source_location const & loc)
     return o;
 }
 
-template <class ... A> inline std::string
+template <class ... A>
+inline constexpr std::string
 format(A && ... a)
 {
-    std::ostringstream o; (o << ... << a); return o.str();
+    if constexpr (sizeof ... (A)>0) {
+        std::ostringstream o; (o << ... << a); return o.str();
+    } else {
+        return "";
+    }
 }
 
 inline std::string const & format(std::string const & s) { return s; }

@@ -1819,6 +1819,44 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </div>
 <span id="Reference-1"></span><h2 class="chapter">7 Reference</h2>
 
+<span id="index-agree"></span>
+<span id="x_002dagree"></span><dl class="def">
+<dt id="index-agree-1"><span class="category">Function: </span><span><strong>agree</strong> <em>arg ...</em><a href='#index-agree-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Return true if the shapes of arguments <var>arg...</var> match (see <a href="#Rank-extension">Rank extension</a>), else return false.
+</p>
+<p>This is useful when <a href="#Error-handling">error checking</a> is enabled and one wants to avoid the failure response.
+</p><div class="example">
+<pre class="verbatim">    ra::Small&lt;int, 2, 3&gt; A;
+    ra::Small&lt;int, 2&gt; B;
+    ra::Small&lt;int, 3&gt; C;
+
+    agree(A, B); // true
+    static_assert(agree(A, B)); // ok for ct shapes
+    cout &lt;&lt; (A+B) &lt;&lt; endl; // ok
+
+    agree(A, C); // false
+    cout &lt;&lt; (A+C) &lt;&lt; endl; // error. Maybe abort, maybe throw - cf Error Handling
+</pre></div>
+</dd></dl>
+
+<span id="index-agree_005fop"></span>
+<span id="x_002dagree_005fop"></span><dl class="def">
+<dt id="index-agree_005fop-1"><span class="category">Function: </span><span><strong>agree_op</strong> <em>op arg ...</em><a href='#index-agree_005fop-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Return true if the shapes of arguments <var>arg...</var> match (see <a href="#Rank-extension">Rank extension</a>) relative to operator <var>op</var>, else return false.
+</p>
+<p>This differs from <a href="#x_002dagree"><code>agree</code></a> when <var>op</var> has non-zero argument ranks. For example:
+</p><div class="example">
+<pre class="verbatim">    ra::Big&lt;real, 1&gt; a({3}, 0.);
+    ra::Big&lt;real, 2&gt; b({2, 3}, 0.n);
+
+    agree(a, b); // false
+    cout &lt;&lt; (a+b) &lt;&lt; endl; // error
+
+    agree_op(ra::wrank&lt;1, 1&gt;(ra::times()), a, b); // true
+    cout &lt;&lt; map(ra::wrank&lt;1, 1&gt;(ra::times()), a, b) &lt;&lt; endl; // ok
+</pre></div>
+</dd></dl>
+
 <span id="index-at"></span>
 <span id="x_002dat"></span><dl class="def">
 <dt id="index-at-1"><span class="category">Function: </span><span><strong>at</strong> <em>expr indices</em><a href='#index-at-1' class='copiable-anchor'> &para;</a></span></dt>
@@ -2571,6 +2609,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-A">A</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-agree"><code>agree</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-agree_005fop"><code>agree_op</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-amax"><code>amax</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-amin"><code>amin</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-any"><code>any</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

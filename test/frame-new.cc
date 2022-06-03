@@ -79,16 +79,18 @@ int main()
         static_assert(2*3*4*5 == size_s(EXPR));
 #undef EXPR
     }
-    // properly fails to compile, which we cannot check at present [ra42]
-//     tr.section("check mismatches - static");
-//     {
-//         ra::Small<int, 2, 3, 4> a = (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1);
-//         ra::Small<int, 2, 4, 4, 5> b = (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1);
+    tr.section("check mismatches - static");
+    {
+        ra::Small<int, 2, 3, 4> a = (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1);
+        ra::Small<int, 2, 4, 4, 5> b = (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1);
+// properly fails to compile, which we cannot check at present [ra42]
 // #define EXPR expr([](auto && a, auto && b) { return a+b; }, start(a), start(b))
 //         tr.test_eq(2*3*4*5, size_s(EXPR));
 //         tr.test_eq(3, EXPR.len_s(1));
 // #undef EXPR
-//     }
+// we can use non-static check_expr() as constexpr however.
+        static_assert(!agree(a, b));
+    }
     tr.section("static rank, dynamic size - like Expr");
     {
         ra::Big<int, 3> a({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));

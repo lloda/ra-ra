@@ -131,9 +131,8 @@ check_expr(E const & e)
                 } else {
                     if (fail) {
                         RA_CHECK(false, " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
-                    } else {
-                        return false;
                     }
+                    return false;
                 }
             } else {
                 return fi(fi, k, mp::int_t<i+1> {}, sk);
@@ -159,11 +158,13 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     using T = std::tuple<P ...>;
     T t;
 
-// TODO Maybe on ply? That would enable ra::check(i+j) instead of ra::check(+, i, j), avoid the check flag, and avoid the agree_xxx() mess.
+// TODO Maybe on ply? That would avoid the check flag and the agree_xxx() mess.
     constexpr Match(P ... p_): t(std::forward<P>(p_) ...)
     {
-        if constexpr (check && check_expr_s<Match>()) {
-            RA_CHECK(check_expr<true>(*this));
+        if constexpr (check) {
+            if constexpr (check_expr_s<Match>()) { // may fail
+                RA_CHECK(check_expr<true>(*this));
+            }
         }
     }
 
