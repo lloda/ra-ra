@@ -1,5 +1,5 @@
 
-# ra-ra ![(travis build status)](https://travis-ci.org/lloda/ra-ra.svg?branch=master) #
+# ra-ra [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/c-cpp.yml)
 
 **ra-ra** is a C++20, header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net).
 

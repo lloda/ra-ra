@@ -1,0 +1,28 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: update
+      run: |
+         sudo apt update
+         sudo apt install gcc-11 g++-11
+    - name: configure
+      run: CXXFLAGS=-O3 cmake .
+      env:
+        CXXFLAGS: -O3
+        CXX: g++-11
+        CC: gcc-11
+    - name: make
+      run: make
+    - name: make test
+      run: make test
