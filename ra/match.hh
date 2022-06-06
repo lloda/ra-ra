@@ -1,15 +1,14 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Prefix matching of array expression templates.
 
-// (c) Daniel Llorens - 2011-2013, 2015-2019
+// (c) Daniel Llorens - 2011-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
 #pragma once
-#include "bootstrap.hh"
-#include "check.hh"
+#include "atom.hh"
 
 namespace ra {
 
@@ -73,8 +72,8 @@ dim_t choose_len(dim_t sa, dim_t sb)
 // ct mismatch, abort (FIXME) | ct match, return 0 | rt check needed, return 1
 
 template <class E>
-inline constexpr
-int check_expr_s()
+inline constexpr int
+check_expr_s()
 {
     using T = typename E::T;
     constexpr rank_t rs = E::rank_s();

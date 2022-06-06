@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Arrays with dynamic size, cf small.hh.
 
-// (c) Daniel Llorens - 2013-2014, 2017-2021
+// (c) Daniel Llorens - 2013-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -398,11 +398,11 @@ struct View
     template <class  I>                                                 \
     auto at(I && i) CONST                                               \
     {                                                                   \
-        if constexpr (RANK!=RANK_ANY)                                   \
+        if constexpr (RANK_ANY!=RANK)                                   \
         {                                                               \
             constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>()); \
             using Sub = View<T CONST, subrank>;                         \
-            if constexpr (subrank==RANK_ANY) {                          \
+            if constexpr (RANK_ANY==subrank) {                          \
                 return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()),  /* Dimv is std::vector */ \
                         data() + indexer1::shorter(dimv, i) };          \
             } else {                                                    \
@@ -428,10 +428,10 @@ struct View
     /* conversion to scalar */                                          \
     operator T CONST & () CONST                                         \
     {                                                                   \
-        if constexpr (RANK==RANK_ANY) {                                 \
+        if constexpr (RANK_ANY==RANK) {                                 \
             RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar"); \
         } else {                                                        \
-            static_assert(RANK==0, "bad rank");                         \
+            static_assert(0==RANK, "bad rank");                         \
         }                                                               \
         return data()[0];                                               \
     }
@@ -571,7 +571,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // Provided so that {} calls shape_arg constructor below.
     Container()
     {
-        if constexpr (RANK==RANK_ANY) {
+        if constexpr (RANK_ANY==RANK) {
             View::dimv = { Dim {0, 1} }; // rank 1 to avoid store init
         } else {
             for (Dim & dimi: View::dimv) { dimi = {0, 1}; } // 1 so we can push_back()
@@ -584,7 +584,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // no rank extension here, because it's error prone and not very useful.
         static_assert(1==ra::rank_s<S>(), "rank mismatch for init shape");
 // [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
-        if constexpr (RANK==RANK_ANY) {
+        if constexpr (RANK_ANY==RANK) {
             ra::resize(View::dimv, ra::size(s));
         }
         for_each([](Dim & dim, auto const & s) { dim.len = s; }, View::dimv, s);

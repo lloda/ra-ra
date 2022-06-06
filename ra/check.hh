@@ -10,7 +10,7 @@
 #pragma once
 #include <cassert>
 // Feel free to remove these if you define your own RA_ASSERT.
-#include "ra/format.hh"
+#include "format.hh"
 #include <iostream>
 
 // https://en.cppreference.com/w/cpp/preprocessor/replace

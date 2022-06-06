@@ -13,7 +13,7 @@
 // TODO std::execution::xxx-policy, validate output argument strides.
 
 #pragma once
-#include "atom.hh"
+#include "expr.hh"
 #include <functional>
 
 namespace ra {
@@ -40,7 +40,7 @@ ply_ravel(A && a)
     switch (rank) {
     case 0: *(a.flat()); return;
     case 1: break;
-    default: // TODO find a decent heuristic
+    default: // TODO better heuristic
         // if (rank>1) {
         //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
         //               { return a.len(order[i])<a.len(order[j]); });
@@ -217,7 +217,7 @@ ply_ravel_exit(A && a, DEF && def)
         return def;
     }
     case 1: break;
-    default: // TODO find a decent heuristic
+    default: // TODO better heuristic
         // if (rank>1) {
         //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
         //               { return a.len(order[i])<a.len(order[j]); });
@@ -272,6 +272,12 @@ inline decltype(auto)
 early(A && a, DEF && def)
 {
     return ply_ravel_exit(std::forward<A>(a), std::forward<DEF>(def));
+}
+
+template <class Op, class ... A> inline constexpr void
+for_each(Op && op, A && ... a)
+{
+    ply(map(std::forward<Op>(op), std::forward<A>(a) ...));
 }
 
 } // namespace ra

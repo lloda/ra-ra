@@ -23,7 +23,7 @@ int main()
         ra::Big<float, 2> A({4, 4}, i - 2*j);
         ra::Big<float, 2> B({4, 4}, 0.);
 
-// the shape of the expression here is determined by A. This works because of an explicit specialization of single-argument select (from()) in wrank.hh; the generic version of from() doesn't allow it. Not sure if it should be kept.
+// the shape of the expression here is determined by A. This works because of an explicit specialization of single-argument select (from()); the generic version of from() doesn't allow it. Not sure if it should be kept.
 
         A = x(i) * y(j);
         tr.test_eq(ra::Big<float, 2>({4, 4}, {1, 0, 2, -1,  2, 0, 4, -2,  3, 0, 6, -3,  4, 0, 8, -4}), A);

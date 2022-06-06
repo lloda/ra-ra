@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 17, updated 2022 Jun 3)
+<!-- ra:: (version 17, updated 2022 Jun 5)
 
 (c) Daniel Llorens 2005-2021
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 17, updated 2022 Jun 3)
+<p><code>ra::</code> (version 17, updated 2022 Jun 5)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2021
 </p>
@@ -415,7 +415,7 @@ int main()
    d|d
 </pre></div>
 
-<p>You may want to <code>#include &quot;ra/real.hh&quot;</code> and <code>&quot;ra/complex.hh&quot;</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function. All other headers are meant for internal use by <code>ra::</code>.
+<p>You may want to <code>#include &quot;ra/real.hh&quot;</code> and <code>&quot;ra/complex.hh&quot;</code>. These put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly. They are not required for the rest of the library to function. In addition, the header <code>&quot;ra/format.hh&quot;</code> may be used in configuring <a href="#Error-handling">Error handling</a>. All other headers are meant for internal use by <code>ra::</code>.
 </p>
 
 <span id="index-container"></span>
@@ -685,7 +685,7 @@ b += transpose&lt;0, 1, 1&gt;(a); // b(i) = ∑ⱼ a(i, j, j)
 <p>An weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it&rsquo;s implemented in Numpy [<a href="#Sources">num17</a>]
 , an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 </p>
-<p>A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn&rsquo;t obvious why 1≠2 shouldn&rsquo;t be. To avoid this problem, <code>ra::</code> supports broadcasting with undefined length axes (see <a href="#x_002dinsert"><code>insert</code></a>).
+<p>A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size mismatch, it isn&rsquo;t obvious why 1≠2 shouldn&rsquo;t be. To avoid this problem, <code>ra::</code> supports broadcasting with undefined length axes (see <a href="#x_002dinsert"><code>insert</code></a>).
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 3&gt; a({5, 3}, ra::_0);
@@ -1540,9 +1540,9 @@ Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a hr
 </p>
 <ul>
 <li> <code>RA_DO_CHECK</code>
-is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means to ignore them. The checks themselves are done with <code>RA_ASSERT</code>.
+is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with <code>RA_ASSERT</code>.
 </li><li> <code>RA_ASSERT(cond, ...)</code>
-is a function-like macro. <code>cond</code> an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of <code>RA_ASSERT(cond, ...)</code> is <code>assert(cond)</code>, from <code>&lt;cassert&gt;</code>.
+is a function-like macro. <code>cond</code> an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of <code>RA_ASSERT(cond, ...)</code> in <code>&quot;ra/check.hh&quot;</code> will try to print those arguments to <code>std::cerr</code> and then abort.
 </li></ul>
 
 <p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <code>-DNDEBUG</code>. The use of <code>-DNDEBUG</code> is untested.
@@ -1590,7 +1590,7 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
     std::array&lt;int, 2&gt; l = { 1, 2 };
     cout &lt;&lt; B(ra::vector(l), ra::vector(l)) &lt;&lt; endl; // ok =&gt; {{4 5} {7 8}}
     auto ll = ra::vector(l);
-    cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ??
+    cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ?? take cover
 </pre></div>
 
 </div>
@@ -1688,7 +1688,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 </div>
 <span id="Type-hierarchy-1"></span><h3 class="section">5.1 Type hierarchy</h3>
 
-<p>This is a rough and possibly not very accurate summary. I&rsquo;m hoping the planned feature of ‘C++ concepts’ will force me to be more systematic about it all.
+<p>Some of the categories below are actually C++20 ‘concepts’, some are still informal.
 </p>
 <ul>
 <li> <b>Container</b> &mdash; <code>Big</code> <code>Shared</code> <code>Unique</code> <code>Small</code>
@@ -1731,7 +1731,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 </p>
 <p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for rt-size expressions and <code>plyf</code> for ct-size expressions.
 </p>
-<p>Finally we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v14) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a single 1D loop.
+<p>Finally we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v17) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
 <hr>
 </div>
@@ -1765,18 +1765,18 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 <p>The following boolean <code>#define</code>s affect the behavior of <code>ra::</code>.
 </p>
 <ul>
-<li> <code>RA_DO_CHECK</code> (default 1):  Check bounds on dimension agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>).
+<li> <code>RA_DO_CHECK</code> (default 1):  Check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
 </li><li> <code>RA_USE_BLAS</code> (default 0): Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
 </li><li> <code>RA_DO_OPT</code> (default 1): Replace certain expressions by others that are expected to perform better. This acts as a global mask on other <code>RA_DO_OPT_xxx</code> flags.
 </li><li> <code>RA_DO_OPT_IOTA</code> (default 1): Perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::Iota(3, 0) + 1</code> becomes <code>ra::Iota(3, 1)</code> instead of a two-operand expression template.
 </li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0): Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
 </li></ul>
 
-
 <p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own crude test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>.
 </p>
-<p>TODO Flags and notes about different compilers
+<p>Like most expression template libraries, <code>ra::</code> is extremely dependent on optimization by the compiler and will be orders of magnitude slower at <code>-O0</code> compared to <code>-O2</code>. Avoid using anything below <code>-O2</code>, other than for debugging purposes.
 </p>
+
 <hr>
 </div>
 </div>
@@ -1852,8 +1852,8 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
     agree(a, b); // -&gt; false
     cout &lt;&lt; (a+b) &lt;&lt; endl; // error
 
-    agree_op(ra::wrank&lt;1, 1&gt;(ra::times()), a, b); // -&gt; true
-    cout &lt;&lt; map(ra::wrank&lt;1, 1&gt;(ra::times()), a, b) &lt;&lt; endl; // ok
+    agree_op(ra::wrank&lt;1, 1&gt;(ra::plus()), a, b); // -&gt; true
+    cout &lt;&lt; map(ra::wrank&lt;1, 1&gt;(ra::plus()), a, b) &lt;&lt; endl; // ok
 </pre></div>
 </dd></dl>
 
