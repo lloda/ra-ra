@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ownership.cc
-/// @brief Test ownership logic of array types.
+// ra-ra/test - Test ownership logic of array types.
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under
@@ -22,9 +21,8 @@ using real = double;
 // array-type-A::operator=(array-type-B) and for
 // array-type-A::array-type::A(array-type-B).
 
-// TODO Do/organize the tests for these tables.
+// TODO Do/organize the tests for these tables. Table is probably wrong also.
 // The constructors are all plain, the fields of the array record are copied/moved.
-// TODO This table contain errors; review thoroughly.
 /*
 | to\fro cons | View           | Shared | Unique    | Big       | Small          | SmallView  | Tested in        |
 |-------------+----------------+--------+-----------+-----------+----------------+------------+------------------|

@@ -24,6 +24,7 @@ checkbox [C-ct] flip TODO
     - [ ] make iter work with foreign vectors.
   - [-] Features [1/7]
     - [ ] Iota is both vector-like object and iterator. Split into two types?
+    - [ ] Deduction guides, e.g. ra::small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
     - [ ] View::p is not const because it's used as sliding window (cell_iterator_big). Split into two types?
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
       maybe. One idea is to generalize View (so View<Iota>, etc.) which is

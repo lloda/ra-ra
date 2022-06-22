@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 17
-@set UPDATED 2022 Jun 7
+@set UPDATED 2022 Jun 22
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1491,7 +1491,7 @@ is a binary flag that controls runtime checks. The default is 1 which means to c
 is a function-like macro. @code{cond} an expression that evaluates to true (in the @code{ra::} namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of @code{RA_ASSERT(cond, ...)} in @code{"ra/check.hh"} will try to print those arguments to @code{std::cerr} and then abort.
 @end itemize
 
-@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @code{-DNDEBUG}. The use of @code{-DNDEBUG} is untested.
+@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}. The use of @option{-DNDEBUG} is untested.
 
 You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. @code{examples/throw.cc} in the distribution shows how to throw an user-defined exception instead.
 
@@ -1678,7 +1678,7 @@ The following boolean @code{#define}s affect the behavior of @code{ra::}.
 
 @code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own crude test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}.
 
-Like most expression template libraries, @code{ra::} is extremely dependent on optimization by the compiler and will be orders of magnitude slower at @code{-O0} compared to @code{-O2}. Avoid using anything below @code{-O2}, other than for debugging purposes.
+Like most expression template libraries, @code{ra::} is extremely dependent on optimization by the compiler and will be orders of magnitude slower at @option{-O0} compared to @option{-O2}. Avoid using anything below @option{-O2}, other than for debugging purposes.
 
 @c TODO Flags and notes about different compilers
 

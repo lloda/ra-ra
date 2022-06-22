@@ -32,6 +32,16 @@ void iocheck(TestRecorder & tr, AA && a, CC && check)
     tr.test_eq(check, c);
 }
 
+struct Q
+{
+    int x = 1;
+};
+
+std::ostream & operator<<(std::ostream & o, Q && q)
+{
+    return (o << q.x);
+}
+
 int main()
 {
     TestRecorder tr;
@@ -129,7 +139,13 @@ int main()
     {
         std::ostringstream o;
         o << ra::format(std::string("once"), " ", std::array {1, 2, 3});
-        tr.test_eq(o.str(), std::string("once 1 2 3"));
+        tr.test_eq(std::string("once 1 2 3"), o.str());
+    }
+// regression against lack of forwarding in ra::format(...)
+    {
+        std::ostringstream o;
+        o << ra::format(Q { 33 });
+        tr.test_eq(std::string("33"), o.str());
     }
     return tr.summary();
 }

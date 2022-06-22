@@ -1,11 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 17, updated 2022 Jun 5)
+<!-- ra:: (version 17, updated 2022 Jun 7)
 
-(c) Daniel Llorens 2005-2021
+(c) Daniel Llorens 2005-2022
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -116,9 +116,9 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 17, updated 2022 Jun 5)
+<p><code>ra::</code> (version 17, updated 2022 Jun 7)
 </p>
-<p>(c) Daniel Llorens 2005&ndash;2021
+<p>(c) Daniel Llorens 2005&ndash;2022
 </p>
 <div class="display">
 <pre class="display">Permission is granted to copy, distribute and/or modify this document
@@ -1545,7 +1545,7 @@ is a binary flag that controls runtime checks. The default is 1 which means to c
 is a function-like macro. <code>cond</code> an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of <code>RA_ASSERT(cond, ...)</code> in <code>&quot;ra/check.hh&quot;</code> will try to print those arguments to <code>std::cerr</code> and then abort.
 </li></ul>
 
-<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <code>-DNDEBUG</code>. The use of <code>-DNDEBUG</code> is untested.
+<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>. The use of <samp>-DNDEBUG</samp> is untested.
 </p>
 <p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. <code>examples/throw.cc</code> in the distribution shows how to throw an user-defined exception instead.
 </p>
@@ -1774,7 +1774,7 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 
 <p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own crude test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>.
 </p>
-<p>Like most expression template libraries, <code>ra::</code> is extremely dependent on optimization by the compiler and will be orders of magnitude slower at <code>-O0</code> compared to <code>-O2</code>. Avoid using anything below <code>-O2</code>, other than for debugging purposes.
+<p>Like most expression template libraries, <code>ra::</code> is extremely dependent on optimization by the compiler and will be orders of magnitude slower at <samp>-O0</samp> compared to <samp>-O2</samp>. Avoid using anything below <samp>-O2</samp>, other than for debugging purposes.
 </p>
 
 <hr>

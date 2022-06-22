@@ -122,7 +122,7 @@ inline constexpr std::string
 format(A && ... a)
 {
     if constexpr (sizeof ... (A)>0) {
-        std::ostringstream o; (o << ... << a); return o.str();
+        std::ostringstream o; (o << ... << std::forward<A>(a)); return o.str();
     } else {
         return "";
     }

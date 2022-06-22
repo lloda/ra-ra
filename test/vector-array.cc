@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file vector-array.cc
-/// @brief Comparison of ra::vector(std::vector) vs ra::vector(std::array)
+// ra-ra/test - Comparison of ra::vector(std::vector) vs ra::vector(std::array)
 
 // (c) Daniel Llorens - 2021
 // This library is free software; you can redistribute it and/or modify it under
@@ -45,12 +44,12 @@ template <class V> inline constexpr auto vec(V && v)
 
 int main()
 {
-    auto f1 = []() { return std::array<int, 2> {7, 2}; };
-    auto f2 = []() { return std::vector<int> {5, 2}; };
+    auto f1 = []() { return std::array {7, 2}; };
+    auto f2 = []() { return std::vector {5, 2}; };
     auto v1 = vec(f1());
     auto v2 = vec(f2());
 
-    cout << (v1.v.begin()==v1.p) << endl; // bad
+    cout << (v1.v.begin()==v1.p) << endl; // unfortunate
     cout << (v2.v.begin()==v2.p) << endl;
 
     return 0;
