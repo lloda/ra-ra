@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Test library.
 
-// (c) Daniel Llorens - 2012, 2014-2016
+// (c) Daniel Llorens - 2012-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -165,6 +165,21 @@ struct TestRecorder
     {
         return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<=b); },
                          "should be <=", loc);
+    }
+// These two are included so that the first argument can remain the reference.
+    template <class A, class B>
+    bool
+    test_gt(A && a, B && b, source_location const loc = source_location::current())
+    {
+        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a>b); },
+                         "should be >", loc);
+    }
+    template <class A, class B>
+    bool
+    test_ge(A && a, B && b, source_location const loc = source_location::current())
+    {
+        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a>=b); },
+                         "should be >=", loc);
     }
     template <class R, class A>
     double
