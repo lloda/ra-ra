@@ -17,14 +17,18 @@ class Style: BRIGHT = '\x1b[1m'; RESET_ALL = '\x1b[0m';
 from os.path import join, abspath, split
 from subprocess import call
 
+# SANITIZE = []
+SANITIZE = ['-fsanitize=address']
+
 CXXFLAGS = ['-std=c++20', '-Wall', '-Werror', '-Wlogical-op',
             '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
-            # '-fsanitize=undefined',
             '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
             # '-finput-charset=UTF-8', '-fextended-identifiers',
             #'-Wconversion',
             # '-funsafe-math-optimizations', # TODO Test with this.
-        ]
+        ] + SANITIZE
+
+LINKFLAGS = SANITIZE
 
 def blas_flags(Configure, env, arch):
     env_blas = env.Clone()

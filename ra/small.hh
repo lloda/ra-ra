@@ -285,33 +285,65 @@ struct FilterDims<lens_, steps_, I0, I ...>
     using steps = mp::append<mp::take<steps_, s>, typename next::steps>;
 };
 
-template <dim_t len0, dim_t step0> inline
-constexpr dim_t select(dim_t i0)
+template <dim_t len0, dim_t step0>
+inline constexpr dim_t
+select(dim_t i0)
 {
     RA_CHECK(inside(i0, len0));
     return i0*step0;
 };
-template <dim_t len0, dim_t step0, int n> inline
-constexpr dim_t select(dots_t<n> i0)
+template <dim_t len0, dim_t step0, int n>
+inline constexpr dim_t
+select(dots_t<n> i0)
 {
     return 0;
 }
 
-template <class lens, class steps> inline
-constexpr dim_t select_loop()
+template <class lens, class steps>
+inline constexpr dim_t
+select_loop()
 {
     return 0;
 }
-template <class lens, class steps, class I0, class ... I> inline
-constexpr dim_t select_loop(I0 i0, I ... i)
+template <class lens, class steps, class I0, class ... I>
+inline constexpr dim_t
+select_loop(I0 i0, I ... i)
 {
     constexpr int s_src = is_beatable<I0>::skip_src;
     return select<mp::first<lens>::value, mp::first<steps>::value>(i0)
         + select_loop<mp::drop<lens, s_src>, mp::drop<steps, s_src>>(i ...);
 }
 
+#if defined (__clang__)
+template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
+#else
+template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
+#endif
+
+template <class Z>
+struct equal_to_t
+{
+    template <class ... T> constexpr static bool value = (std::is_same_v<Z, T> || ... || false);
+};
+
+template <class T, size_t N>
+inline consteval size_t
+align_req()
+{
+#if RA_DO_OPT_SMALLVECTOR==1
+    if constexpr (equal_to_t<T>::template value<char, short, int, long, long long, float, double>
+                  && 0<N && 0==(N & (N-1))) {
+        return alignof(extvector<T, N>);
+    } else {
+        return alignof(T[N]);
+    }
+#else
+    return alignof(T[N]);
+#endif // RA_DO_OPT_SMALLVECTOR==1q
+}
+
 template <template <class ...> class Child_, class T, class lens_, class steps_>
-struct SmallBase
+struct alignas(align_req<T, mp::apply<mp::prod, lens_>::value>()) SmallBase
 {
     using lens = lens_;
     using steps = steps_;

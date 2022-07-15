@@ -119,11 +119,6 @@ inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 
 #if RA_DO_OPT_SMALLVECTOR==1
 
-#if defined (__clang__)
-template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
-#else
-template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
-#endif
 // FIXME find a way to peel qualifiers from parameter type of start(), to ignore SmallBase<SmallArray> vs SmallBase<SmallView> or const vs nonconst.
 template <class A, class T, dim_t N> constexpr bool match_smallvector =
     std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template iterator<0>>
@@ -133,6 +128,7 @@ static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallV
                                 double, 4>);
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
+    static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
     template <class A, class B>                                         \
     requires (match_smallvector<A, T, N> && match_smallvector<B, T, N>) \
     inline auto                                                         \

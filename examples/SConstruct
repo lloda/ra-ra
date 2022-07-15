@@ -47,7 +47,8 @@ else:
 
 env.Prepend(CPPPATH=['..', '.'],
             CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-            CXXFLAGS=ra.CXXFLAGS)
+            CXXFLAGS=ra.CXXFLAGS,
+            LINKFLAGS=ra.LINKFLAGS)
 
 [ra.to_test_ra(env, variant_dir)(example)
  for example in ['agreement', 'cast', 'deriv', 'explode-collapse', 'indirect',

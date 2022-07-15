@@ -47,7 +47,8 @@ else:
 
 env.Prepend(CPPPATH=['..', '.'],
             CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-            CXXFLAGS=ra.CXXFLAGS)
+            CXXFLAGS=ra.CXXFLAGS,
+            LINKFLAGS=ra.LINKFLAGS)
 
 if 'RA_USE_BLAS' in env['ENV'] and env['ENV']['RA_USE_BLAS']=='1':
     print("[%s] BLAS will be used." % Dir('.').path)
