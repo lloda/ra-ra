@@ -330,20 +330,20 @@ template <class T, size_t N>
 inline consteval size_t
 align_req()
 {
-#if RA_DO_OPT_SMALLVECTOR==1
     if constexpr (equal_to_t<T>::template value<char, short, int, long, long long, float, double>
                   && 0<N && 0==(N & (N-1))) {
         return alignof(extvector<T, N>);
     } else {
         return alignof(T[N]);
     }
-#else
-    return alignof(T[N]);
-#endif // RA_DO_OPT_SMALLVECTOR==1q
 }
 
 template <template <class ...> class Child_, class T, class lens_, class steps_>
+#if RA_DO_OPT_SMALLVECTOR==1
 struct alignas(align_req<T, mp::apply<mp::prod, lens_>::value>()) SmallBase
+#else
+struct SmallBase
+#endif
 {
     using lens = lens_;
     using steps = steps_;
