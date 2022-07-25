@@ -21,6 +21,8 @@ namespace ra {
 
 constexpr char const * esc_bold = "\x1b[01m";
 constexpr char const * esc_unbold = "\x1b[0m";
+constexpr char const * esc_invert = "\x1b[07m";
+constexpr char const * esc_underline = "\x1b[04m";
 constexpr char const * esc_red = "\x1b[31m";
 constexpr char const * esc_green = "\x1b[32m";
 constexpr char const * esc_cyan = "\x1b[36m";
