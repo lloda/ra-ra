@@ -29,14 +29,18 @@ template <class E> inline decltype(auto) constexpr optimize(E && e) { return std
     struct OPNAME                                                       \
     {                                                                   \
         template <class A, class B>                                     \
-            constexpr decltype(auto)                                    \
-            operator()(A && a, B && b) const { return std::forward<A>(a) OP std::forward<B>(b); } \
+        constexpr decltype(auto)                                        \
+        operator()(A && a, B && b) const { return std::forward<A>(a) OP std::forward<B>(b); } \
     };
+// FIXME don't know why gcc 12.1 flags this. See also Expr::Flat
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 DEFINE_NAMED_BINARY_OP(+, plus)
 DEFINE_NAMED_BINARY_OP(-, minus)
 DEFINE_NAMED_BINARY_OP(*, times)
 DEFINE_NAMED_BINARY_OP(/, slash)
 #undef DEFINE_NAMED_BINARY_OP
+#pragma GCC diagnostic pop
 
 // TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)

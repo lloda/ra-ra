@@ -68,7 +68,7 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 
 The most recent commits tested are:
 
-* gcc 12.1: `ecc0a1ac47f22588f8aca1139b7a9ed5836b4561`
+* gcc 12.2: `ecc0a1ac47f22588f8aca1139b7a9ed5836b4561`
 * gcc 11.3: `ecc0a1ac47f22588f8aca1139b7a9ed5836b4561`
 * gcc 10.4: `ecc0a1ac47f22588f8aca1139b7a9ed5836b4561`
 

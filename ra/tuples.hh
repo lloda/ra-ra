@@ -10,6 +10,7 @@
 #pragma once
 #include <tuple>
 #include <limits>
+#include <algorithm>
 #include "macros.hh"
 
 namespace ra::mp {
