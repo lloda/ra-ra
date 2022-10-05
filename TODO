@@ -9,7 +9,6 @@ checkbox [C-ct] flip TODO
   - [-] Bugs [2/9]
     - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
-      - Tried is_constant_eval in c++20 but didn't work out as I hoped.
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
     - [X] size_s, rank_s in Ryn:: are broken [ra07]
     - [ ] broken with -DNDEBUG

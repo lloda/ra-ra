@@ -14,17 +14,19 @@
 #include <iostream>
 
 // https://en.cppreference.com/w/cpp/preprocessor/replace
-// See examples/throw.cc for the way to override this RA_ASSERT.
+// See examples/throw.cc for how to override this RA_ASSERT.
 
 #ifndef RA_ASSERT
-#define RA_ASSERT(cond, ...)                                    \
-    {                                                           \
-        if (std::is_constant_evaluated()) {                     \
-            assert(cond /* FIXME maybe one day */);             \
-        } else if (bool c = cond; !c) {                         \
-            std::cerr << ra::format("**** ra: ", ##__VA_ARGS__, " ****") << std::endl; \
-            assert(c);                                          \
-        }                                                       \
+#define RA_ASSERT(cond, ...)                                            \
+    {                                                                   \
+        if consteval {                                                  \
+            assert(cond /* FIXME maybe one day */);                     \
+        } else {                                                        \
+            if (bool c = cond; !c) {                                    \
+                std::cerr << ra::format("**** ra: ", ##__VA_ARGS__, " ****") << std::endl; \
+                assert(c);                                              \
+            }                                                           \
+        }                                                               \
     }
 #endif
 
