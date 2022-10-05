@@ -26,21 +26,21 @@ jobs:
       run: make
     - name: make test
       run: make test
-  gcc12:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: update
-      run: |
-         sudo apt update
-         sudo apt install gcc-12 g++-12
-    - name: configure
-      run: CXXFLAGS="-O3 -std=c++2b" cmake .
-      env:
-        CXXFLAGS: -O3 -std=c++2b
-        CXX: g++-12
-        CC: gcc-12
-    - name: make
-      run: make
-    - name: make test
-      run: make test
+# gcc12:
+#   runs-on: ubuntu-latest
+#   steps:
+#   - uses: actions/checkout@v3
+#   - name: update
+#     run: |
+#        sudo apt update
+#        sudo apt install gcc-12 g++-12
+#   - name: configure
+#     run: CXXFLAGS="-O3 -std=c++2b" cmake .
+#     env:
+#       CXXFLAGS: -O3 -std=c++2b
+#       CXX: g++-12
+#       CC: gcc-12
+#   - name: make
+#     run: make
+#   - name: make test
+#     run: make test
