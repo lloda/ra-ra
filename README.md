@@ -66,13 +66,12 @@ The library itself is header-only and has no dependencies other than a C++20 com
 
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
 
-The most recent commits tested are:
+**ra-ra** requires support for `-std=c++20` including `<source_location>`. The most recent versions tested are:
 
-* gcc 12.2: `ecc0a1ac47f22588f8aca1139b7a9ed5836b4561`
+* gcc 12.2: `993ff15def0b60c151c63cadcdef7e9088ea1fee`
 * gcc 11.3: `ecc0a1ac47f22588f8aca1139b7a9ed5836b4561`
-* gcc 10.4: `ecc0a1ac47f22588f8aca1139b7a9ed5836b4561`
 
-Earlier versions of gcc don't support `-std=c++20`. Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
+Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
 
 <!-- All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for: -->
 

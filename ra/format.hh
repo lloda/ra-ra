@@ -12,9 +12,7 @@
 #include <iosfwd>
 #include <sstream>
 #include <version>
-#if __cpp_lib_source_location >= 201907L
 #include <source_location>
-#endif
 #include "type.hh"
 
 namespace ra {
@@ -100,22 +98,10 @@ operator<<(shape_manip_t const & sm, FormatArray<A> fa)
     return sm.o << fa;
 }
 
-#if __cpp_lib_source_location >= 201907L
-using source_location = std::source_location;
-#else
-struct source_location
-{
-    constexpr static source_location current() { return source_location {}; }
-    constexpr static char const * function_name() { return "***"; }
-};
-#endif
-
 inline std::ostream &
-operator<<(std::ostream & o, source_location const & loc)
+operator<<(std::ostream & o, std::source_location const & loc)
 {
-#if __cpp_lib_source_location >= 201907L
     o << loc.file_name() << ":" << loc.line() << "," << loc.column();
-#endif
     return o;
 }
 

@@ -23,10 +23,7 @@ struct test_type { int a; };
 
 std::string typecheck(auto && a)
 {
-#if __cpp_lib_source_location >= 201907L
     return std::source_location::current().function_name();
-#endif
-    return "";
 };
 
 int main()

@@ -74,7 +74,8 @@ struct TestRecorder
 
     template <class A, class B>
     void
-    test(bool c, A && info_full, B && info_min, source_location const loc = source_location::current())
+    test(bool c, A && info_full, B && info_min,
+         std::source_location const loc = std::source_location::current())
     {
         switch (verbose) {
         case QUIET: {
@@ -116,12 +117,14 @@ struct TestRecorder
 
     template <class A>
     void
-    test(bool c, A && info_full, source_location const loc = source_location::current())
+    test(bool c, A && info_full,
+         std::source_location const loc = std::source_location::current())
     {
         test(c, info_full, info_full, loc);
     }
     void
-    test(bool c, source_location const loc = source_location::current())
+    test(bool c,
+         std::source_location const loc = std::source_location::current())
     {
         test(c, LAZYINFO(""), loc);
     }
@@ -130,7 +133,8 @@ struct TestRecorder
 // where() is used to match shapes if either REF or A don't't have one.
     template <class A, class B, class Comp>
     bool
-    test_comp(A && a, B && b, Comp && comp, char const * msg, source_location const loc = source_location::current())
+    test_comp(A && a, B && b, Comp && comp, char const * msg,
+              std::source_location const loc = std::source_location::current())
     {
         if (agree_op(comp, a, b)) {
             bool c = every(ra::map(comp, a, b));
@@ -147,21 +151,24 @@ struct TestRecorder
     }
     template <class R, class A>
     bool
-    test_eq(R && ref, A && a, source_location const loc = source_location::current())
+    test_eq(R && ref, A && a,
+            std::source_location const loc = std::source_location::current())
     {
         return test_comp(std::forward<R>(ref), std::forward<A>(a), [](auto && a, auto && b) { return every(a==b); },
                          "should be ==", loc);
     }
     template <class A, class B>
     bool
-    test_lt(A && a, B && b, source_location const loc = source_location::current())
+    test_lt(A && a, B && b,
+            std::source_location const loc = std::source_location::current())
     {
         return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<b); },
                          "should be <", loc);
     }
     template <class A, class B>
     bool
-    test_le(A && a, B && b, source_location const loc = source_location::current())
+    test_le(A && a, B && b,
+            std::source_location const loc = std::source_location::current())
     {
         return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<=b); },
                          "should be <=", loc);
@@ -169,21 +176,24 @@ struct TestRecorder
 // These two are included so that the first argument can remain the reference.
     template <class A, class B>
     bool
-    test_gt(A && a, B && b, source_location const loc = source_location::current())
+    test_gt(A && a, B && b,
+            std::source_location const loc = std::source_location::current())
     {
         return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a>b); },
                          "should be >", loc);
     }
     template <class A, class B>
     bool
-    test_ge(A && a, B && b, source_location const loc = source_location::current())
+    test_ge(A && a, B && b,
+            std::source_location const loc = std::source_location::current())
     {
         return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a>=b); },
                          "should be >=", loc);
     }
     template <class R, class A>
     double
-    test_rel_error(R && ref, A && a, double req, double level=0, source_location const loc = source_location::current())
+    test_rel_error(R && ref, A && a, double req, double level=0,
+                   std::source_location const loc = std::source_location::current())
     {
         double e = (level<=0)
             ? amax_strict(where(isnan(ref),
@@ -202,7 +212,8 @@ struct TestRecorder
     }
     template <class R, class A>
     double
-    test_abs_error(R && ref, A && a, double req=0, source_location const loc = source_location::current())
+    test_abs_error(R && ref, A && a, double req=0,
+                   std::source_location const loc = std::source_location::current())
     {
         double e = amax_strict(where(isnan(ref),
                                      where(isnan(a), 0., std::numeric_limits<double>::infinity()),
@@ -219,7 +230,8 @@ struct TestRecorder
     int
     summary() const
     {
-        o << format("Of ", total, " tests passed ", (passed_good+passed_bad),
+        o << "-------------------\n"
+          << format("Of ", total, " tests passed ", (passed_good+passed_bad),
                     " (", passed_bad, " unexpected), failed ", (failed_good+failed_bad),
                     " (", failed_bad, " unexpected), skipped ", skipped, ".\n");
         if (bad.size()>0) {
