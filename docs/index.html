@@ -767,7 +767,7 @@ Next: <a href="#Special-objects" accesskey="n" rel="next">Special objects</a>, P
 
 <p>Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that <code>ra::</code> supports.
 </p>
-<p>The form of the scripting operator <code>A(i₀, i₁, ...)</code> makes it plain that <code>A</code> is a function of <code>rank(A)</code> integer arguments. An array extension is immediately available through <code>map</code>. For example:
+<p>The form of the scripting operator <code>A(i₀, i₁, ...)</code> makes it plain that <code>A</code> is a function of <code>rank(A)</code> integer arguments<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>. An array extension is immediately available through <code>map</code>. For example:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 1&gt; a = {1., 2., 3., 4.};
@@ -1378,7 +1378,7 @@ my_fun(A &amp;&amp; ... a)
 <span id="index-Blitz_002b_002b-2"></span>
 <p>If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
 </p>
-<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>
+<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF9" href="#FOOT9"><sup>9</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">namespace ra {
@@ -1413,7 +1413,7 @@ Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Pre
 <div class="subsection" id="Standard-scalar-operations">
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF10" href="#FOOT10"><sup>10</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
 Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 </p>
 <p>For example:
@@ -2818,8 +2818,10 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <p>Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> [<a href="#Sources">Ber87</a>]
  and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>
 <h5><a id="FOOT8" href="#DOCF8">(8)</a></h5>
-<p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
+<p>The multi-argument square bracket form <code>A[i₀, i₁, ...]</code> is supported under C++23 compilers (e.g. gcc ≥ 12 with <code>-std=c++2b</code>), with the same meaning as <code>A(i₀, i₁, ...)</code>. Under C++20 only a single-argument square bracket form <code>A[i₀]</code> is available.</p>
 <h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
+<p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
+<h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively.
 Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 </div>

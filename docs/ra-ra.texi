@@ -686,7 +686,7 @@ FIXME More examples.
 
 Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that @code{ra::} supports.
 
-The form of the scripting operator @code{A(i₀, i₁, ...)} makes it plain that @code{A} is a function of @code{rank(A)} integer arguments. An array extension is immediately available through @code{map}. For example:
+The form of the scripting operator @code{A(i₀, i₁, ...)} makes it plain that @code{A} is a function of @code{rank(A)} integer arguments@footnote{The multi-argument square bracket form @code{A[i₀, i₁, ...]} is supported under C++23 compilers (e.g. gcc ≥ 12 with @code{-std=c++2b}), with the same meaning as @code{A(i₀, i₁, ...)}. Under C++20 only a single-argument square bracket form @code{A[i₀]} is available.}. An array extension is immediately available through @code{map}. For example:
 
 @example
 @verbatim
