@@ -421,9 +421,10 @@ struct View
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
-    constexpr decltype(auto) operator[](dim_t const i) CONST            \
+    template <class ... I>                                              \
+    constexpr decltype(auto) operator[](I && ... i) CONST               \
     {                                                                   \
-        return (*this)(i);                                              \
+        return (*this)(std::forward<I>(i) ...);                         \
     }                                                                   \
     /* conversion to scalar */                                          \
     operator T CONST & () CONST                                         \

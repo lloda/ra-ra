@@ -161,5 +161,12 @@ int main()
         test_const(b, b.data()); // non-const to const, fixed rank to var rank
         test_const_ref(a, a.data()); // non-const to const, keeping var rank
     }
+#if __cpp_multidimensional_subscript  >= 202110L
+    tr.section("multidimensional []");
+    {
+        ra::Unique<int> a({3, 2, 4}, ra::_0 + ra::_1 - ra::_2);
+        tr.test_eq(a(ra::all, 0), a[ra::all, 0]);
+    }
+#endif
     return tr.summary();
 }

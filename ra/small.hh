@@ -401,9 +401,10 @@ struct SmallBase
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
             (data()+indexer0::shorter<lens, steps>(i));                 \
     }                                                                   \
-    constexpr decltype(auto) operator[](dim_t const i) CONST            \
+    template <class ... I>                                              \
+    constexpr decltype(auto) operator[](I && ... i) CONST               \
     {                                                                   \
-        return (*this)(i);                                              \
+        return (*this)(std::forward<I>(i) ...);                         \
     }                                                                   \
     /* TODO would replace by s(ra::iota) if that could be made constexpr */ \
     template <int ss, int oo=0>                                         \

@@ -476,5 +476,12 @@ int main()
         s.iter() += 9;
         tr.test_eq(ra::start({10, 11, 12}), s);
     }
+#if __cpp_multidimensional_subscript  >= 202110L
+    tr.section("multidimensional []");
+    {
+        ra::Small<int, 3, 2, 4> a = ra::_0 + ra::_1 - ra::_2;
+        tr.test_eq(a(ra::all, 0), a[ra::all, 0]);
+    }
+#endif
     return tr.summary();
 }

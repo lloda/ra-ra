@@ -20,7 +20,7 @@ from subprocess import call
 # SANITIZE = []
 SANITIZE = ['-fsanitize=address']
 
-CXXFLAGS = ['-std=c++20', '-Wall', '-Werror', '-Wlogical-op',
+CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
             '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
             '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
             # '-finput-charset=UTF-8', '-fextended-identifiers',

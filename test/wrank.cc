@@ -171,24 +171,19 @@ int main()
         ra::Unique<real, 1> b({4}, ra::none);
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
-        cout << "a: " << a << endl;
-        cout << "b: " << b << endl;
         ra::Unique<real, 2> c({3, 4}, ra::none);
         ra::ply(ra::expr(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
-        cout << "c: " << c << endl;
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
                                /* 11-[1 2 3 4] */ 10, 9, 8, 7,
                                /* 12-[1 2 3 4] */ 11, 10, 9, 8 };
         tr.test(std::equal(checkc34, checkc34+3*4, c.begin()));
         ra::Unique<real, 2> d34(ra::expr(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
-        cout << "d34: " << d34 << endl;
         tr.test(std::equal(checkc34, checkc34+3*4, d34.begin()));
         real checkc43[3*4] = { /* [10 11 12]-1 */ 9, 10, 11,
                                /* [10 11 12]-2 */ 8, 9, 10,
                                /* [10 11 12]-3 */ 7, 8, 9,
                                /* [10 11 12]-4 */ 6, 7, 8 };
         ra::Unique<real, 2> d43(ra::expr(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
-        cout << "d43: " << d43 << endl;
         tr.test(d43.len(0)==4 && d43.len(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
     }
@@ -210,16 +205,12 @@ int main()
         ra::Unique<real, 2> cc {};
         std::istringstream is(os.str());
         is >> cc;
-        cout << "cc: " << cc << endl;
         tr.test(std::equal(checkd, checkd+3*4, cc.begin()));
         ra::Unique<real, 2> d(EXPR);
-        cout << "d: " << d << endl;
         tr.test(std::equal(checkd, checkd+3*4, d.begin()));
 // Using expr as lvalue.
         EXPR = 7.;
-        cout << EXPR << endl;
-// expr-way BUG use of test_eq fails (??)
-        assert(every(c==where(ra::_0>=10 && ra::_0<=12 && ra::_1>=1 && ra::_1<=4, 7, ra::_0*100+ra::_1)));
+        tr.test_eq(c, where(ra::_0>=10 && ra::_0<=12 && ra::_1>=1 && ra::_1<=4, 7, ra::_0*100+ra::_1));
 // looping...
         bool valid = true;
         for (int i=0; i<c.len(0); ++i) {
@@ -247,24 +238,21 @@ int main()
         ra::Big<real, 2> a({2, 3}, ra::_0 - ra::_1);
         ra::Big<real, 2> b({3, 2}, ra::_1 - 2*ra::_0);
         ra::Big<real, 2> c1 = gemm(a, b);
-        cout << "matrix a * b: \n" << c1 << endl;
 // matrix product as outer product + reduction (no reductions yet, so manually).
         {
             ra::Big<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
-            cout << "d(i,k,j) = a(i,k)*b(k,j): \n" << d << endl;
             ra::Big<real, 2> c2({d.len(0), d.len(2)}, 0.);
             for (int k=0; k<d.len(1); ++k) {
                 c2 += d(ra::all, k, ra::all);
             }
-            tr.test_eq(c1, c2);
+            tr.info("d(i,k,j) = a(i,k)*b(k,j)").test_eq(c1, c2);
         }
 // do the k-reduction by plying with wrank.
         {
             ra::Big<real, 2> c2({a.len(0), b.len(1)}, 0.);
             ra::ply(ra::expr(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
                              start(c2), start(a), start(b)));
-            cout << "sum_k a(i,k)*b(k,j): \n" << c2 << endl;
-            tr.test_eq(c1, c2);
+            tr.info("sum_k a(i,k)*b(k,j)").test_eq(c1, c2);
         }
     }
     tr.section("stencil test for Reframe::keep_step. Reduced from test/bench-stencil2.cc");
@@ -318,7 +306,6 @@ int main()
         ra::Big<real, 2> A({nx, ny}, 1.);
         ra::Big<real, 2> Anext({nx, ny}, 0.);
         auto Astencil = stencil(A, 1, 1);
-        cout << "Astencil " << format_array(Astencil(0, 0, ra::dots<2>), "|", " ") << endl;
 #define BENCH(ref, op) bench(A, Anext, Astencil, ref, STRINGIZE(op), op);
         BENCH(A, f_raw);
         Aref = ra::Big<real, 2>(A);

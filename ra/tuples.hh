@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Tuple utilities
 
-// (c) Daniel Llorens - 2005-2013, 2016, 2019
+// (c) Daniel Llorens - 2005-2022
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
