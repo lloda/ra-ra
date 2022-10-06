@@ -314,36 +314,8 @@ select_loop(I0 i0, I ... i)
         + select_loop<mp::drop<lens, s_src>, mp::drop<steps, s_src>>(i ...);
 }
 
-#if defined (__clang__)
-template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
-#else
-template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
-#endif
-
-template <class Z>
-struct equal_to_t
-{
-    template <class ... T> constexpr static bool value = (std::is_same_v<Z, T> || ... || false);
-};
-
-template <class T, size_t N>
-inline consteval size_t
-align_req()
-{
-    if constexpr (equal_to_t<T>::template value<char, short, int, long, long long, float, double>
-                  && 0<N && 0==(N & (N-1))) {
-        return alignof(extvector<T, N>);
-    } else {
-        return alignof(T[N]);
-    }
-}
-
 template <template <class ...> class Child_, class T, class lens_, class steps_>
-#if RA_DO_OPT_SMALLVECTOR==1
-struct alignas(align_req<T, mp::apply<mp::prod, lens_>::value>()) SmallBase
-#else
 struct SmallBase
-#endif
 {
     using lens = lens_;
     using steps = steps_;
@@ -495,8 +467,42 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
     constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return p[0]; };
 };
 
+#if defined (__clang__)
+template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
+#else
+template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
+#endif
+
+template <class Z>
+struct equal_to_t
+{
+    template <class ... T> constexpr static bool value = (std::is_same_v<Z, T> || ... || false);
+};
+
+template <class T, size_t N>
+inline consteval size_t
+align_req()
+{
+    if constexpr (equal_to_t<T>::template value<char, unsigned char,
+                  short, unsigned short,
+                  int, unsigned int,
+                  long, unsigned long,
+                  long long, unsigned long long,
+                  float, double>
+                  && 0<N && 0==(N & (N-1))) {
+        return alignof(extvector<T, N>);
+    } else {
+        return alignof(T[N]);
+    }
+}
+
 template <class T, class lens, class steps, class ... nested_args, class ... ravel_args>
-struct SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ...>>
+struct
+#if RA_DO_OPT_SMALLVECTOR==1
+alignas(align_req<T, mp::apply<mp::prod, lens>::value>())
+#else
+#endif
+SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ...>>
     : public SmallBase<SmallArray, T, lens, steps>
 {
     using Base = SmallBase<SmallArray, T, lens, steps>;

@@ -190,7 +190,7 @@ int main()
                 constexpr int M = ra::size(s);
                 tr.section("small <", ra::shape(s), ">");
                 auto extra = [&]() { return int(double(std::rand())*100/RAND_MAX); };
-                int reps = (1000*1000*100)/M;
+                int reps = (1000*1000*200)/M;
                 bench("indexed", s, ref, reps+extra(), f_small_indexed);
                 bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
                 bench("op", s, ref, reps+extra(), f_small_op);

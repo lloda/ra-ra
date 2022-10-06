@@ -19,7 +19,7 @@
 #ifndef RA_ASSERT
 #define RA_ASSERT(cond, ...)                                            \
     {                                                                   \
-        if consteval {                                                  \
+        if (std::is_constant_evaluated()) {                             \
             assert(cond /* FIXME maybe one day */);                     \
         } else {                                                        \
             if (bool c = cond; !c) {                                    \

@@ -12,21 +12,21 @@ Multidimensional arrays are containers that can be indexed in multiple dimension
 In this example ([examples/readme.cc](examples/readme.cc)), we add each element of a vector to each row of a matrix, and then print the result.
 
 ```c++
-#include "ra/ra.hh"
-#include <iostream>
+  #include "ra/ra.hh"
+  #include <iostream>
 
-int main()
-{
-  ra::Big<float, 2> A {{1, 2}, {3, 4}};  // compile-time rank, dynamic shape
-  A += std::vector<float> {10, 20};      // rank-extending op with STL object
-  std::cout << "A: " << A << std::endl;  // shape is dynamic, so it will be printed
-}
+  int main()
+  {
+    ra::Big<float, 2> A {{1, 2}, {3, 4}};  // compile-time rank, dynamic shape
+    A += std::vector<float> {10, 20};      // rank-extending op with STL object
+    std::cout << "A: " << A << std::endl;  // shape is dynamic, so it will be printed
+  }
 ```
 ⇒
 ```
-A: 2 2
-11 12
-23 24
+  A: 2 2
+  11 12
+  23 24
 ```
 
 Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or have a look at the [examples/](examples/) folder.
@@ -36,10 +36,10 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Array types with arbitrary compile time or runtime rank, and compile time or runtime shape.
 * Memory owning types as well as views over any piece of memory.
 * Rank extension by prefix matching, as in APL/J, for functions of any number of arguments.
-* Compatibility with builtin arrays and with the STL.
+* Compatibility with builtin arrays and with the STL, including ranges.
 * Transparent memory layout, for interoperability with other libraries and/or languages.
 * Iterators over cells (slices/subarrays) of any rank.
-* Rank conjunction as in J, with some limitations.
+* Rank conjunction as in J (compile time ranks only).
 * Slicing with indices of arbitrary rank, beating of linear range indices, index skipping and elision.
 * Outer product operation.
 * Tensor index object.
@@ -48,14 +48,14 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Axis insertion (e.g. for broadcasting).
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
+* Multidimensional `operator[]` (with C++23).
 * Many predefined array operations. Adding yours is trivial.
 
-There is some `constexpr` support for the compile time size types. For example, this works:
+`constexpr` is suported as much as possible. For example:
 
 ```
-constexpr ra::Small<int, 3> a = { 1, 2, 3 };
-using T = std::integral_constant<int, ra::sum(a)>;
-static_assert(T::value==6);
+  constexpr ra::Small<int, 3> a = { 1, 2, 3 };
+  static_assert(6==ra::sum(a));
 ```
 
 Performance is competitive with hand written scalar (element by element) loops, but probably not with cache-tuned code such as your platform BLAS, or with code using SIMD. Please have a look at the benchmarks in [bench/](bench/).
@@ -64,14 +64,19 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 The library itself is header-only and has no dependencies other than a C++20 compiler and the standard library.
 
-The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can build each of these separately. None of them has any dependencies, but some of the benchmarks will try to use BLAS if you have `RA_USE_BLAS=1` in the environment.
+The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can build each of these separately. **ra-ra** depends heavily on inlining, so although the test suite will run fine with `-O0`, that will take a long time. At least `-O2` necessary in practice.
 
-**ra-ra** requires support for `-std=c++20` including `<source_location>`. The most recent versions tested are:
+Other notes:
 
-* gcc 12.2: `188e6bb6d988fa09bbf0779942e3aaa46101b6c6` (`-std=c++2b`)
-* gcc 11.3: `188e6bb6d988fa09bbf0779942e3aaa46101b6c6` (`-std=c++20`)
+* Some of the benchmarks will try to use BLAS if you have define `RA_USE_BLAS=1` in the environment.
+* The test suite is built with `-fsanitize=address` by default, which can cause significant slowdown. Disable by passing `-fno-sanitize=address` to the compiler.
 
-Remember to pass `-O2` or `-O3` to the compiler, otherwise some of the tests will take a very long time to run. Clang 10 doesn't currently work (I'll keep trying) but the code is meant to be standard C++.
+**ra-ra** requires support for `-std=c++20`, including `<source_location>`. The most recent versions tested are:
+
+* gcc 12.2: `65076211eeeeecd8623877e3e3b5cc0a87af302c` (`-std=c++2b`)
+* gcc 11.3: `65076211eeeeecd8623877e3e3b5cc0a87af302c` (`-std=c++20`)
+
+Clang doesn't currently work (last version I've tried is Clang 10) but the code is meant to be standard C++.
 
 <!-- All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for: -->
 

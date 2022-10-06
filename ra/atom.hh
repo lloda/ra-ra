@@ -55,7 +55,7 @@ size_s()
             return 1;
         } else {
             using V_ = std::decay_t<V>;
-            ra::dim_t s = 1;
+            dim_t s = 1;
             for (int i=0; i!=V_::rank_s(); ++i) {
                 if (dim_t ss=V_::len_s(i); ss>=0) {
                     s *= ss;
@@ -116,7 +116,7 @@ shape(V const & v)
         return ra_traits<V>::shape(v);
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
 // FIXME Would prefer to return the map directly
-        ra::Small<dim_t, rs> s;
+        Small<dim_t, rs> s;
         for (rank_t k=0; k<rs; ++k) {
             s[k] = v.len(k);
         }
@@ -453,6 +453,6 @@ start(T && t)
 
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using value_t = std::decay_t<decltype(*(ra::start(std::declval<A>()).flat()))>;
+template <class A> using value_t = std::decay_t<decltype(*(start(std::declval<A>()).flat()))>;
 
 } // namespace ra

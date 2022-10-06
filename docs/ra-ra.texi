@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 17
-@set UPDATED 2022 Jun 22
+@set VERSION 18
+@set UPDATED 2022 Oct 6
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})

@@ -10,9 +10,25 @@
 #pragma once
 #include "tuples.hh"
 
+
+// ---------------------
+// Default #defines.
+// ---------------------
+// Since these are tested with #if, define them at the very top so accidental nodef isn't mistaken for 0.
+
+// benchmark shows it's bad by default; probably requires optimizing also +=, etc.
+#ifndef RA_DO_OPT_SMALLVECTOR
+#define RA_DO_OPT_SMALLVECTOR 0
+#endif
+
+// no real downside to this.
+#ifndef RA_DO_OPT_IOTA
+#define RA_DO_OPT_IOTA 1
+#endif
+
 namespace ra {
 
-constexpr int VERSION = 17;    // to force or prevent upgrades on dependents
+constexpr int VERSION = 18;
 
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;

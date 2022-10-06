@@ -10,16 +10,6 @@
 #pragma once
 #include "small.hh"
 
-// no real downside to this.
-#ifndef RA_DO_OPT_IOTA
-#define RA_DO_OPT_IOTA 1
-#endif
-
-// benchmark shows it's bad by default; probably requires optimizing also +=, etc.
-#ifndef RA_DO_OPT_SMALLVECTOR
-#define RA_DO_OPT_SMALLVECTOR 0
-#endif
-
 namespace ra {
 
 template <class E> inline decltype(auto) constexpr optimize(E && e) { return std::forward<E>(e); }
@@ -132,7 +122,6 @@ static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallV
                                 double, 4>);
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
-    static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
     template <class A, class B>                                         \
     requires (match_smallvector<A, T, N> && match_smallvector<B, T, N>) \
     inline auto                                                         \
@@ -143,6 +132,7 @@ static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallV
         return val;                                                     \
     }
 #define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)      \
+    static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
     RA_OPT_SMALLVECTOR_OP(+, ra::plus, T, N)  \
     RA_OPT_SMALLVECTOR_OP(-, ra::minus, T, N) \
     RA_OPT_SMALLVECTOR_OP(/, ra::slash, T, N) \

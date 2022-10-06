@@ -17,13 +17,13 @@ class Style: BRIGHT = '\x1b[1m'; RESET_ALL = '\x1b[0m';
 from os.path import join, abspath, split
 from subprocess import call
 
+# Make sure to disable for benchmarks.
 # SANITIZE = []
 SANITIZE = ['-fsanitize=address']
 
 CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
             '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
             '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
-            # '-finput-charset=UTF-8', '-fextended-identifiers',
             #'-Wconversion',
             # '-funsafe-math-optimizations', # TODO Test with this.
         ] + SANITIZE
