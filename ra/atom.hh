@@ -326,7 +326,7 @@ struct TensorIndex
     constexpr auto flat() const { return Flat {i}; }
 };
 
-#define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
+#define DEF_TENSORINDEX(i) constexpr TensorIndex<i> JOIN(_, i) {};
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 

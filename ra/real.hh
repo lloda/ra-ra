@@ -16,6 +16,7 @@
 
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
 // besides, gcc still leaks cmath functions into the global namespace, so by default e.g. sqrt would be C double sqrt(double) instead of the overload set.
+// cf http://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/
 using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, std::exp,
     std::swap, std::isfinite, std::isinf, std::lerp;
 
@@ -35,12 +36,12 @@ RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
 #undef RA_IS_REAL
 
 #define FOR_FLOAT(T)                                                    \
-    inline constexpr T mul_conj(T const x, T const y)              { return x*y; } \
-    inline constexpr T sqrm(T const x, T const y)                  { return sqrm(x-y); } \
-    inline constexpr T dot(T const x, T const y)                   { return x*y; } \
-    inline /* constexpr clang */ T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } \
-    inline /* constexpr clang */ T norm2(T const x, T const y)     { return std::abs(x-y); } \
-    inline /* constexpr clang */ T abs(T const x, T const y)       { return std::abs(x-y); } \
-    inline /* constexpr clang */ T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
+    inline constexpr T mul_conj(T const x, T const y)  { return x*y; }  \
+    inline constexpr T sqrm(T const x, T const y)      { return sqrm(x-y); } \
+    inline constexpr T dot(T const x, T const y)       { return x*y; }  \
+    inline constexpr T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } \
+    inline constexpr T norm2(T const x, T const y)     { return std::abs(x-y); } \
+    inline constexpr T abs(T const x, T const y)       { return std::abs(x-y); } \
+    inline constexpr T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
