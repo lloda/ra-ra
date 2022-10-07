@@ -10,7 +10,7 @@ checkbox [C-ct] flip TODO
     - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
-      - Apperars to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
+      - Appears to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
     - [X] size_s, rank_s in Ryn:: are broken [ra07]
     - [ ] broken with -DNDEBUG
     - [ ] ambiguity / bad init in nested constructors [ra45]

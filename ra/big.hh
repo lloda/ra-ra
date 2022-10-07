@@ -398,8 +398,7 @@ struct View
     template <class  I>                                                 \
     auto at(I && i) CONST                                               \
     {                                                                   \
-        if constexpr (RANK_ANY!=RANK)                                   \
-        {                                                               \
+        if constexpr (RANK_ANY!=RANK) {                                 \
             constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>()); \
             using Sub = View<T CONST, subrank>;                         \
             if constexpr (RANK_ANY==subrank) {                          \
