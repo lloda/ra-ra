@@ -337,8 +337,8 @@ struct Iota
     {
         T i_;
         T const step_;
-        T const & operator*() const { return i_; }
-        void operator+=(dim_t d) { i_ += T(d)*step_; }
+        constexpr T const & operator*() const { return i_; }
+        constexpr void operator+=(dim_t d) { i_ += T(d)*step_; }
     };
 
     dim_t const len_;
