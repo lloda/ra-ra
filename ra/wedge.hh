@@ -17,8 +17,8 @@ struct FindCombination
 {
     template <class A> using match = bool_t<0 != PermutationSign<P, A>::value>;
     using type = IndexIf<Plist, match>;
-    static int const where = type::value;
-    static int const sign = (where>=0) ? PermutationSign<P, typename type::type>::value : 0;
+    constexpr static int where = type::value;
+    constexpr static int sign = (where>=0) ? PermutationSign<P, typename type::type>::value : 0;
 };
 
 // A combination antiC complementary to C wrt [0, 1, ... Dim-1], but permuted to make the permutation [C, antiC] positive with respect to [0, 1, ... Dim-1].
