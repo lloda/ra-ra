@@ -7,7 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// I used VanderBergen2012, Berland2006. Generally about automatic differentiation:
+// See VanderBergen2012, Berland2006. Generally about automatic differentiation:
 // http://en.wikipedia.org/wiki/Automatic_differentiation
 // From the Taylor expansion of f(a) or f(a, b)...
 // f(a+εa') = f(a)+εa'f_a(a)

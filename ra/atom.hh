@@ -10,7 +10,43 @@
 #pragma once
 #include <vector>
 #include "type.hh"
-#include "check.hh"
+
+
+// --------------------
+// error function
+// --------------------
+
+#include <cassert>
+// If you define your own RA_ASSERT, you might remove this from here.
+#include "format.hh"
+#include <iostream>
+
+// https://en.cppreference.com/w/cpp/preprocessor/replace
+// See examples/throw.cc for how to override this RA_ASSERT.
+
+#ifndef RA_ASSERT
+#define RA_ASSERT(cond, ...)                                            \
+    {                                                                   \
+        if (std::is_constant_evaluated()) {                             \
+            assert(cond /* FIXME maybe one day */);                     \
+        } else {                                                        \
+            if (bool c = cond; !c) {                                    \
+                std::cerr << ra::format("**** ra: ", ##__VA_ARGS__, " ****") << std::endl; \
+                assert(c);                                              \
+            }                                                           \
+        }                                                               \
+    }
+#endif
+
+#if defined(RA_DO_CHECK) && RA_DO_CHECK==0
+  #define RA_CHECK( ... )
+#else
+  #define RA_CHECK( ... ) RA_ASSERT( __VA_ARGS__ )
+#endif
+
+// This is NOT included by format.hh to allow format() to be used in pre-defining RA_ASSERT.
+
+#define RA_AFTER_CHECK Yes
 
 namespace ra {
 

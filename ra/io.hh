@@ -8,7 +8,6 @@
 // later version.
 
 #pragma once
-#include "format.hh"
 #include "concrete.hh"
 #include <iosfwd>
 #include <sstream>

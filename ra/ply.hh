@@ -13,7 +13,7 @@
 // TODO std::execution::xxx-policy, validate output argument strides.
 
 #pragma once
-#include "expr.hh"
+#include "atom.hh"
 #include <functional>
 
 namespace ra {

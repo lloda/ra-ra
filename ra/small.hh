@@ -9,6 +9,7 @@
 
 #pragma once
 #include "ply.hh"
+#include "expr.hh"
 
 namespace ra {
 
