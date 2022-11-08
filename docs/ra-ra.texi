@@ -300,9 +300,9 @@ int main()
 
 The following headers are optional.
 @itemize
-@item @code{"ra/dual.hh"} (@emph{not} included by default): A dual number type  for simple uses automatic differentiation.
+@item @code{"ra/dual.hh"} (@emph{not} included by default): A dual number type for simple uses of automatic differentiation.
 
-@item @code{"ra/mpdebug.hh"} (@emph{not} included by default): Some functions to help in debugging template tangles.
+@item @code{"ra/mpdebug.hh"} (@emph{not} included by default): Functions to help in debugging template tangles.
 
 @item @code{"ra/test.hh"}, @code{"ra/bench.hh"} (@emph{not} included by default): Test and benchmarking libraries used by @code{ra::} itself.
 

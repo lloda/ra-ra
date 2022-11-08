@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <version>
 #include <iostream>
+#include <ctime>
 #include "ra.hh"
 
 namespace ra {
@@ -230,8 +231,12 @@ struct TestRecorder
     int
     summary() const
     {
-        o << "-------------------\n"
-          << format("Of ", total, " tests passed ", (passed_good+passed_bad),
+        std::time_t t = std::time(nullptr);
+        tm * tmp = std::localtime(&t);
+        char buf[64];
+        std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", tmp);
+        o << "--------------\nTests end " << buf << ". ";
+        o << format("Of ", total, " tests passed ", (passed_good+passed_bad),
                     " (", passed_bad, " unexpected), failed ", (failed_good+failed_bad),
                     " (", failed_bad, " unexpected), skipped ", skipped, ".\n");
         if (bad.size()>0) {
