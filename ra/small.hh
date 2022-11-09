@@ -573,7 +573,7 @@ struct builtin_array_types
     using view = SmallView<E, lens>;
 };
 
-// forward declared in type.hh.
+// forward declared in bootstrap.hh.
 template <class T> requires (is_builtin_array<T>)
 inline constexpr auto
 start(T && t)

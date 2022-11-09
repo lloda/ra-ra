@@ -8,7 +8,7 @@
 // later version.
 
 #pragma once
-#include "concrete.hh"
+#include "big.hh"
 #include <iosfwd>
 #include <sstream>
 

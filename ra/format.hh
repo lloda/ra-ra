@@ -13,7 +13,7 @@
 #include <sstream>
 #include <version>
 #include <source_location>
-#include "type.hh"
+#include "bootstrap.hh"
 
 namespace ra {
 

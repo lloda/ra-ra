@@ -10,7 +10,7 @@
 #pragma once
 #include <complex>
 #include "real.hh"
-#include "type.hh"
+#include "bootstrap.hh"
 
 namespace ra {
 

@@ -9,7 +9,7 @@
 
 #pragma once
 #include <vector>
-#include "type.hh"
+#include "bootstrap.hh"
 
 
 // --------------------
