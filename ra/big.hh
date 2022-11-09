@@ -386,7 +386,7 @@ struct View
         requires (RANK==RANK_ANY)                                       \
     {                                                                   \
         constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
-        assert(this->rank()+extended>=0);                               \
+        RA_CHECK(this->rank()+extended>=0, "bad rank");                 \
         View<T CONST, RANK_ANY> sub;                                    \
         sub.dimv.resize(this->rank()+extended);                         \
         sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...); \

@@ -1512,7 +1512,7 @@ is a binary flag that controls runtime checks. The default is 1 which means to c
 is a function-like macro. @code{cond} an expression that evaluates to true (in the @code{ra::} namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of @code{RA_ASSERT(cond, ...)} in @code{"ra/atom.hh"} will try to print those arguments to @code{std::cerr} and then abort.
 @end itemize
 
-@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}. The use of @option{-DNDEBUG} is untested.
+@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}.
 
 You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. @code{examples/throw.cc} in the distribution shows how to throw an user-defined exception instead.
 

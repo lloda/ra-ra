@@ -39,15 +39,26 @@ int main()
     }
     tr.section("inf in numeric tests");
     {
-        tr.test_abs_error(QNAN, QNAN, 0.);
-        tr.test_abs_error(PINF, PINF, 0.);
-        tr.test_abs_error(-PINF, -PINF, 0.);
-        tr.expectfail().test_abs_error(QNAN, -PINF, 0.);
-        tr.expectfail().test_abs_error(QNAN, PINF, 0.);
-        tr.expectfail().test_abs_error(-PINF, QNAN, 0.);
-        tr.expectfail().test_abs_error(PINF, QNAN, 0.);
-        tr.expectfail().test_abs_error(PINF, -PINF, 0.);
-        tr.expectfail().test_abs_error(-PINF, PINF, 0.);
+        auto test = [&tr](bool fail, auto ref, auto a, auto err)
+        {
+            tr.expectfail(fail).test_abs_error(ref, a, err);
+            tr.expectfail(fail).test_rel_error(ref, a, err);
+        };
+        test(false, QNAN, QNAN, 0.);
+        test(false, PINF, PINF, 0.);
+        test(false, -PINF, -PINF, 0.);
+        test(true, QNAN, -PINF, 0.);
+        test(true, QNAN, PINF, 0.);
+        test(true, -PINF, QNAN, 0.);
+        test(true, PINF, QNAN, 0.);
+        test(true, PINF, -PINF, 0.);
+        test(true, -PINF, PINF, 0.);
+        test(true, 3., PINF, 0.);
+        test(true, 3., -PINF, 0.);
+        test(true, 3., QNAN, 0.);
+        test(true, PINF, 3., 0.);
+        test(true, -PINF, 3., 0.);
+        test(true, QNAN, 3., 0.);
     }
     return tr.summary();
 }

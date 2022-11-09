@@ -1560,7 +1560,7 @@ is a binary flag that controls runtime checks. The default is 1 which means to c
 is a function-like macro. <code>cond</code> an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of <code>RA_ASSERT(cond, ...)</code> in <code>&quot;ra/atom.hh&quot;</code> will try to print those arguments to <code>std::cerr</code> and then abort.
 </li></ul>
 
-<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>. The use of <samp>-DNDEBUG</samp> is untested.
+<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>.
 </p>
 <p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. <code>examples/throw.cc</code> in the distribution shows how to throw an user-defined exception instead.
 </p>

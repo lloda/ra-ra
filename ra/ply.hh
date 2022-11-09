@@ -32,8 +32,16 @@ inline void
 ply_ravel(A && a)
 {
     rank_t rank = a.rank();
-    assert(rank>=0); // FIXME see test in [ra40].
+// FIXME without assert compiler thinks var rank may be negative. See test in [ra40].
+#ifdef NDEBUG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvla-larger-than="
     rank_t order[rank];
+#pragma GCC diagnostic pop
+#else
+    assert(rank>=0);
+    rank_t order[rank];
+#endif
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
@@ -204,8 +212,16 @@ inline auto
 ply_ravel_exit(A && a, DEF && def)
 {
     rank_t rank = a.rank();
-    assert(rank>=0); // FIXME see test in [ra40].
+// FIXME without assert compiler thinks var rank may be negative. See test in [ra40].
+#ifdef NDEBUG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvla-larger-than="
     rank_t order[rank];
+#pragma GCC diagnostic pop
+#else
+    assert(rank>=0);
+    rank_t order[rank];
+#endif
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
