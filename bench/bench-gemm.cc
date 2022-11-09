@@ -57,7 +57,8 @@ extern "C" {
 #include <cblas.h>
 }
 
-inline constexpr CBLAS_TRANSPOSE fliptr(CBLAS_TRANSPOSE t)
+inline constexpr CBLAS_TRANSPOSE
+fliptr(CBLAS_TRANSPOSE t)
 {
     if (t==CblasTrans) {
         return CblasNoTrans;
@@ -65,10 +66,12 @@ inline constexpr CBLAS_TRANSPOSE fliptr(CBLAS_TRANSPOSE t)
         return CblasTrans;
     } else {
         assert(0 && "BLAS doesn't support this transpose");
+        abort();
     }
 }
 
-inline constexpr bool istr(CBLAS_TRANSPOSE t)
+inline constexpr bool
+istr(CBLAS_TRANSPOSE t)
 {
     return (t==CblasTrans) || (t==CblasConjTrans);
 }
