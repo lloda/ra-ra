@@ -13,6 +13,7 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 constexpr auto QNAN = std::numeric_limits<double>::quiet_NaN();
+constexpr auto PINF = std::numeric_limits<double>::infinity();
 
 int main()
 {
@@ -29,12 +30,24 @@ int main()
     tr.section("nan in numeric tests");
     {
         std::ostream devnull(nullptr);
-        TestRecorder tr_ut(devnull);
-        tr.test(0==tr_ut.summary());
-        tr_ut.test_rel_error(0, QNAN, 1e-15);
-        tr.test(1==tr_ut.summary());
-        tr_ut.test_abs_error(0, QNAN, 1e-15);
-        tr.test(2==tr_ut.summary());
+        TestRecorder ut(devnull);
+        tr.test(0==ut.summary());
+        ut.test_rel_error(0, QNAN, 1e-15);
+        tr.test(1==ut.summary());
+        ut.test_abs_error(0, QNAN, 1e-15);
+        tr.test(2==ut.summary());
+    }
+    tr.section("inf in numeric tests");
+    {
+        tr.test_abs_error(QNAN, QNAN, 0.);
+        tr.test_abs_error(PINF, PINF, 0.);
+        tr.test_abs_error(-PINF, -PINF, 0.);
+        tr.expectfail().test_abs_error(QNAN, -PINF, 0.);
+        tr.expectfail().test_abs_error(QNAN, PINF, 0.);
+        tr.expectfail().test_abs_error(-PINF, QNAN, 0.);
+        tr.expectfail().test_abs_error(PINF, QNAN, 0.);
+        tr.expectfail().test_abs_error(PINF, -PINF, 0.);
+        tr.expectfail().test_abs_error(-PINF, PINF, 0.);
     }
     return tr.summary();
 }
