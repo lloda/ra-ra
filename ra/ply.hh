@@ -57,7 +57,11 @@ ply_ravel(A && a)
     }
 // outermost compact dim.
     rank_t * ocd = order;
+// FIXME see same thing below.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     auto ss = a.len(*ocd);
+#pragma GCC diagnostic pop
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
