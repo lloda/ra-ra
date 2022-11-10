@@ -300,11 +300,11 @@ Next: <a href="#Other-libraries" accesskey="n" rel="next">Other array libraries<
 </p>
 <p>Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. <code>ra::</code> offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn&rsquo;t possible, it&rsquo;s a bug. For example, it used to be the case that you couldn&rsquo;t create a higher rank iterator on a <code>SmallView</code>, even though you could do it on a <code>View</code>; this was a bug.
 </p>
-<p>Sometimes consistency requires a choice. For example, given array views A and B, <code>A=B</code> copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren&rsquo;t) is more important.
+<p>Sometimes consistency requires a choice. For example, given array views A and B, <code>A=B</code> copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren&rsquo;t) is more important.<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>
 </p>
-<p>Transparency is achieved by avoiding opaque types. An array view consists of a pointer and a list of steps and I see no point in hiding that. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn&rsquo;t hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
+<p>Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding that. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn&rsquo;t hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
 </p>
-<p>That isn&rsquo;t to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably sweet syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you&rsquo;ll be able to guarantee that an array is stored by compact columns or that the real parts are interleaved with the imaginary parts.
+<p>That isn&rsquo;t to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably usable syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you&rsquo;ll be able to guarantee that an array is stored in compact columns, or that the real parts are interleaved with the imaginary parts.
 </p>
 <hr>
 </div>
@@ -395,9 +395,9 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 
 <p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
 </p>
-<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11.3</b> or <b>gcc 12.2</b> with <samp>-std=c++20</samp>. Some C++23 features are available <samp>-std=c++2b</samp>. Check the top README.md for more up-to-date information.
+<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11.3</b> or <b>gcc 12.2</b> with <samp>-std=c++20</samp>. Some C++23 features are available with <samp>-std=c++2b</samp>. Check the top README.md for more up-to-date information.
 </p>
-<p>Here is a minimal program<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>:
+<p>Here is a minimal program<a id="DOCF4" href="#FOOT4"><sup>4</sup></a>:
 </p>
 <div class="example">
 <pre class="verbatim">#include &quot;ra/ra.hh&quot;
@@ -426,7 +426,7 @@ int main()
 </li><li> <code>&quot;ra/real.hh&quot;</code>, <code>&quot;ra/complex.hh&quot;</code> (<em>included</em> by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
 </li></ul>
 
-<p>The header <code>&quot;ra/format.hh&quot;</code> can be used in configuring <a href="#Error-handling">Error handling</a>. All other headers are for internal use by <code>ra::</code><a id="DOCF4" href="#FOOT4"><sup>4</sup></a>
+<p>The header <code>&quot;ra/format.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. All other headers are for internal use by <code>ra::</code><a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
 </p>
 <img src="headers.png" alt="headers">
 
@@ -464,7 +464,7 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 
 <p>Using the right kind of container can result in better performance. Ct shapes do not need to be stored in memory, which matters when you have many small arrays. Ct shape or ct rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 </p>
-<p>Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
+<p>Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">using ra::Small, ra::Big;
@@ -489,7 +489,7 @@ ra::Big&lt;double&gt; c({2, 3}, a);         // c has shape [2 3] and a is copied
 
 <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::none</code> can be used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container&rsquo;s elements.
 </p>
-<p>When the content argument is a pointer or a 1D brace list, it&rsquo;s handled especially, not for shape<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>
+<p>When the content argument is a pointer or a 1D brace list, it&rsquo;s handled especially, not for shape<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>
 </p>
 <span id="index-order_002c-column_002dmajor"></span>
 <div class="example">
@@ -671,7 +671,7 @@ Next: <a href="#Cell-iteration" accesskey="n" rel="next">Cell iteration</a>, Pre
 <span id="index-Numpy"></span>
 <p>This rank extension rule is used by the J language [<a href="#Sources">J S</a>]
  and is known as <em>prefix agreement</em>. The opposite rule of <em>suffix agreement</em> is used, for example, in Numpy [<a href="#Sources">num17</a>]
-<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>.
+<a id="DOCF9" href="#FOOT9"><sup>9</sup></a>.
 </p>
 <p>As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout <code>ra::</code>, even in assignments. For example,
 </p>
@@ -782,7 +782,7 @@ Next: <a href="#Special-objects" accesskey="n" rel="next">Special objects</a>, P
 
 <p>Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that <code>ra::</code> supports.
 </p>
-<p>The form of the scripting operator <code>A(i₀, i₁, ...)</code> makes it plain that <code>A</code> is a function of <code>rank(A)</code> integer arguments<a id="DOCF9" href="#FOOT9"><sup>9</sup></a>. An array extension is immediately available through <code>map</code>. For example:
+<p>The form of the scripting operator <code>A(i₀, i₁, ...)</code> makes it plain that <code>A</code> is a function of <code>rank(A)</code> integer arguments<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>. An array extension is immediately available through <code>map</code>. For example:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 1&gt; a = {1., 2., 3., 4.};
@@ -1129,7 +1129,6 @@ cout &lt;&lt; (x-y) &lt;&lt; endl;
 cout &lt;&lt; sum(ra::start(x)) &lt;&lt; endl;
 cout &lt;&lt; ra::sum(x) &lt;&lt; endl;
 </pre><pre class="example">-| 6
-   6
 </pre></div>
 
 <p>The following types are accepted as foreign types:
@@ -1393,7 +1392,8 @@ my_fun(A &amp;&amp; ... a)
 <span id="index-Blitz_002b_002b-2"></span>
 <p>If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
 </p>
-<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>
+<span id="index-overload-set"></span>
+<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">namespace ra {
@@ -1428,7 +1428,7 @@ Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Pre
 <div class="subsection" id="Standard-scalar-operations">
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF11" href="#FOOT11"><sup>11</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF12" href="#FOOT12"><sup>12</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
 Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 </p>
 <p>For example:
@@ -1469,7 +1469,7 @@ cout &lt;&lt; &quot;o: &quot; &lt;&lt; ra::noshape &lt;&lt; o &lt;&lt; &quot;, e
 <p>FIXME Artificial example.
 FIXME Do we want to expose ply(); this is the only example in the manual that uses it.
 </p>
-<p>When the choice is between more than two expressions, there&rsquo;s <a href="#x_002dpick"><code>pick</code></a>, which operates similarly.
+<p>When the choice is between more than two expressions, there&rsquo;s <a href="#x_002dpick"><code>pick</code></a>, which operates similarly, but accepts an integer instead of a boolean selector.
 </p>
 </div>
 <div class="subsection" id="Special-operations">
@@ -1485,7 +1485,7 @@ FIXME Do we want to expose ply(); this is the only example in the manual that us
 
 <p><code>ra::</code> defines the whole-array one-argument reductions <code>any</code>, <code>every</code>, <code>amax</code>, <code>amin</code>, <code>sum</code>, <code>prod</code> and the two-argument reductions <code>dot</code> and <code>cdot</code>. Note that <code>max</code> and <code>min</code> are two-argument scalar operations with array extensions, while <code>amax</code> and <code>amin</code> are reductions. <code>any</code> and <code>every</code> are short-circuiting.
 </p>
-<p>You can define similar reductions in the same way that <code>ra::</code> does it:
+<p>You can define reductions the same way <code>ra::</code> does:
 </p>
 <div class="example">
 <pre class="verbatim">template &lt;class A&gt;
@@ -1551,13 +1551,13 @@ Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a hr
 </div>
 <span id="Error-handling-1"></span><h3 class="section">2.12 Error handling</h3>
 
-<p>Error handling in <code>ra::</code> is barebones. It is controlled by two macros:
+<p>Error handling in <code>ra::</code> is controlled by two macros:
 </p>
 <ul>
 <li> <code>RA_DO_CHECK</code>
 is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with <code>RA_ASSERT</code>.
 </li><li> <code>RA_ASSERT(cond, ...)</code>
-is a function-like macro. <code>cond</code> an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of <code>RA_ASSERT(cond, ...)</code> in <code>&quot;ra/atom.hh&quot;</code> will try to print those arguments to <code>std::cerr</code> and then abort.
+is a function-like macro. <code>cond</code> is an expression that evaluates to true (in the <code>ra::</code> namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of <code>RA_ASSERT(cond, ...)</code> in <code>&quot;ra/atom.hh&quot;</code> will try to print those arguments to <code>std::cerr</code> and then abort.
 </li></ul>
 
 <p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>.
@@ -1601,11 +1601,11 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <p>Expression objects are meant to be used once. This applies to anything produced with <code>ra::map</code>, <code>ra::iter</code>, <code>ra::start</code>, <code>ra::vector</code>, or <code>ra::ptr</code>. Reuse errors are <em>not</em> checked. For example:
 </p>
 <div class="example">
-<pre class="verbatim">    ra::Big&lt;int, 2&gt; B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
-    std::array&lt;int, 2&gt; l = { 1, 2 };
-    cout &lt;&lt; B(ra::vector(l), ra::vector(l)) &lt;&lt; endl; // ok =&gt; {{4 5} {7 8}}
-    auto ll = ra::vector(l);
-    cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ?? take cover
+<pre class="verbatim">ra::Big&lt;int, 2&gt; B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
+std::array&lt;int, 2&gt; l = { 1, 2 };
+cout &lt;&lt; B(ra::vector(l), ra::vector(l)) &lt;&lt; endl; // ok =&gt; {{4 5} {7 8}}
+auto ll = ra::vector(l);
+cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ?? take cover
 </pre></div>
 
 </div>
@@ -1613,7 +1613,7 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <h3 class="section">4.2 Assignment to views</h3>
 
 <p>FIXME
-With rt-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream &gt;&gt; container may work; do not rely on it.
+With rt-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream <code>&gt;&gt;</code> container may work; do not rely on it.
 </p>
 </div>
 <div class="section" id="View-of-const-vs-const-view">
@@ -1718,17 +1718,13 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
-</li><li> <b>Ravelable</b> &mdash; <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
-
-<p>This is a kind of <b>Iterator</b> that provides a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> and <code>adv()</code>, a loop involving only <b>Ravelable</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+<p><b>Iterator</b>s provide a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> and <code>adv()</code>, a loop involving <b>Iterator</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
-</li><li> <b>Indexable</b> <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code> <code>TensorIndex</code>
-
-<p>This is a kind of <b>Iterator</b> that provides an <code>at(i ...)</code> method for random access to any element of the array. In the current version of <code>ra::</code>, every <b>Iterator</b> is both <b>Ravelable</b> and <b>Indexable</b>.
+<p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element of the array.
 </p>
 </li><li> <b>Flat</b> <code>Iota::Flat</code> <code>Scalar::Flat</code> <code>TensorIndex::Flat</code> <code>Expr::Flat</code> <code>Pick::Flat</code> <code>CellFlat</code>
 
-<p>These are types that support ‘forward iterator’ traversal. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Ravelable</b> objects through a method <code>flat</code>.
+<p>These are types that support ‘forward iterator’ traversal. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Iterator</b> objects through a method <code>flat</code>.
 </p>
 </li></ul>
 
@@ -2698,6 +2694,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-order_002c-column_002dmajor">order, column-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-other-libraries_002c-interfacing-with">other libraries, interfacing with</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-overload-set">overload set</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Extension">Extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-P">P</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-pack"><code>pack</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2822,27 +2819,29 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h5><a id="FOOT2" href="#DOCF2">(2)</a></h5>
 <p>Sometimes &lsquo;strides&rsquo;. Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
 <h5><a id="FOOT3" href="#DOCF3">(3)</a></h5>
-<p>Examples given without context assume that one has declared <code>using std::cout;</code>, etc.</p>
+<p>This particular decision may be revisited in the future.</p>
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
+<p>Examples given without context assume that one has declared <code>using std::cout;</code>, etc.</p>
+<h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
 <p>Diagram generated using Graphviz and <a href="https://www.flourish.org/cinclude2dot">https://www.flourish.org/cinclude2dot</a>.
 </p>
 <pre class="verbatim">cinclude2dot.pl --include . &gt; headers.dot
 dot -Tpng headers.dot &gt; headers.png
 </pre>
-<h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
-<p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
-<p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
+<p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
-<p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.</p>
+<p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
 <h5><a id="FOOT8" href="#DOCF8">(8)</a></h5>
+<p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.</p>
+<h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
 <p>Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> [<a href="#Sources">Ber87</a>]
  and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>
-<h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
-<p>The multi-argument square bracket form <code>A[i₀, i₁, ...]</code> is supported under C++23 compilers (e.g. gcc ≥ 12 with <code>-std=c++2b</code>), with the same meaning as <code>A(i₀, i₁, ...)</code>. Under C++20 only a single-argument square bracket form <code>A[i₀]</code> is available.</p>
 <h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
-<p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
+<p>The multi-argument square bracket form <code>A[i₀, i₁, ...]</code> is supported under C++23 compilers (e.g. gcc ≥ 12 with <code>-std=c++2b</code>), with the same meaning as <code>A(i₀, i₁, ...)</code>. Under C++20 only a single-argument square bracket form <code>A[i₀]</code> is available.</p>
 <h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
+<p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
+<h5><a id="FOOT12" href="#DOCF12">(12)</a></h5>
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively.
 Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 </div>

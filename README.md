@@ -64,7 +64,7 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 The library itself is header-only and has no dependencies other than a C++20 compiler and the standard library.
 
-The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)), although you can build each of these separately. **ra-ra** depends heavily on inlining, so although the test suite will run fine with `-O0`, that will take a long time. At least `-O2` necessary in practice.
+The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)). You can also build each of these separately. The performance of **ra-ra** depends heavily on the optimization level, so although the test suite should pass with `-O0`, that take a long time. I recommend at least `-O2`.
 
 Other notes:
 
@@ -73,8 +73,8 @@ Other notes:
 
 **ra-ra** requires support for `-std=c++20`, including `<source_location>`. The most recent versions tested are:
 
-* gcc 12.2: `65076211eeeeecd8623877e3e3b5cc0a87af302c` (`-std=c++2b`)
-* gcc 11.3: `65076211eeeeecd8623877e3e3b5cc0a87af302c` (`-std=c++20`)
+* gcc 12.2: `95ac2014bfd86cbc27e3d151f55abaceef628de4` (`-std=c++2b`)
+* gcc 11.3: `95ac2014bfd86cbc27e3d151f55abaceef628de4` (`-std=c++20`)
 
 Clang doesn't currently work (last version I've tried is Clang 10) but the code is meant to be standard C++.
 
@@ -96,7 +96,7 @@ Clang doesn't currently work (last version I've tried is Clang 10) but the code 
 
 * Both index and size types are signed. Index base is 0.
 * Default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
-* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`. It's unfortunate that `[]` was wasted on subscripting when `()` works perfectly well for that...
+* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`, except that it accepts exactly one argument. Multi-argument `[]` requires `-std=c++2b`.
 * Indices are checked by default. This can be disabled with a compilation flag.
 * **ra-ra** doesn't itself use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
 
@@ -115,7 +115,7 @@ Please have a look at TODO for a concrete list of known bugs.
 * Parallelization (closer to wish...).
 * GPU / calls to external libraries.
 * Linear algebra, quaternions, etc. Those things belong in other libraries, and calling them with **ra-ra** objects is trivial.
-* Sparse arrays. You'd still want to mix & match with dense arrays, so maybe at some point.
+* Sparse arrays.
 
 #### Motivation
 

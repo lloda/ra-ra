@@ -208,11 +208,11 @@ Generality is achieved by removing arbitrary restrictions and by adopting the ra
 
 Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{SmallView}, even though you could do it on a @code{View}; this was a bug.
 
-Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
+Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.@footnote{This particular decision may be revisited in the future.}
 
-Transparency is achieved by avoiding opaque types. An array view consists of a pointer and a list of steps and I see no point in hiding that. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn't hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
+Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding that. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn't hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
 
-That isn't to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably sweet syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you'll be able to guarantee that an array is stored by compact columns or that the real parts are interleaved with the imaginary parts.
+That isn't to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably usable syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you'll be able to guarantee that an array is stored in compact columns, or that the real parts are interleaved with the imaginary parts.
 
 @c ------------------------------------------------
 @node Other libraries
@@ -309,7 +309,7 @@ The following headers are optional.
 @item @code{"ra/real.hh"}, @code{"ra/complex.hh"} (@emph{included} by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
 @end itemize
 
-The header @code{"ra/format.hh"} can be used in configuring @ref{Error handling}. All other headers are for internal use by @code{ra::}@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
+The header @code{"ra/format.hh"} can be used to configure @ref{Error handling}. All other headers are for internal use by @code{ra::}@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
 
 @verbatim
 cinclude2dot.pl --include . > headers.dot
@@ -1087,7 +1087,6 @@ cout << sum(ra::start(x)) << endl;
 cout << ra::sum(x) << endl;
 @end verbatim
 @print{} 6
-   6
 @end example
 
 The following types are accepted as foreign types:
@@ -1357,6 +1356,7 @@ my_fun(A && ... a)
 @cindex Blitz++
 If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
 
+@cindex overload set
 If @code{my_fun} is an overload set, you can use@footnote{Simplified; see the references in @url{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html}.}
 
 @example
@@ -1430,7 +1430,7 @@ cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
 FIXME Artificial example.
 FIXME Do we want to expose ply(); this is the only example in the manual that uses it.
 
-When the choice is between more than two expressions, there's @ref{x-pick,@code{pick}}, which operates similarly.
+When the choice is between more than two expressions, there's @ref{x-pick,@code{pick}}, which operates similarly, but accepts an integer instead of a boolean selector.
 
 @subsection Special operations
 
@@ -1442,7 +1442,7 @@ FIXME
 
 @code{ra::} defines the whole-array one-argument reductions @code{any}, @code{every}, @code{amax}, @code{amin}, @code{sum}, @code{prod} and the two-argument reductions @code{dot} and @code{cdot}. Note that @code{max} and @code{min} are two-argument scalar operations with array extensions, while @code{amax} and @code{amin} are reductions. @code{any} and @code{every} are short-circuiting.
 
-You can define similar reductions in the same way that @code{ra::} does it:
+You can define reductions the same way @code{ra::} does:
 
 @example
 @verbatim
@@ -1503,13 +1503,13 @@ FIXME lexicographical compare etc.
 @section Error handling
 @c ------------------------------------------------
 
-Error handling in @code{ra::} is barebones. It is controlled by two macros:
+Error handling in @code{ra::} is controlled by two macros:
 
 @itemize
 @item @code{RA_DO_CHECK}
 is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with @code{RA_ASSERT}.
 @item @code{RA_ASSERT(cond, ...)}
-is a function-like macro. @code{cond} an expression that evaluates to true (in the @code{ra::} namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of @code{RA_ASSERT(cond, ...)} in @code{"ra/atom.hh"} will try to print those arguments to @code{std::cerr} and then abort.
+is a function-like macro. @code{cond} is an expression that evaluates to true (in the @code{ra::} namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of @code{RA_ASSERT(cond, ...)} in @code{"ra/atom.hh"} will try to print those arguments to @code{std::cerr} and then abort.
 @end itemize
 
 @code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}.
@@ -1535,18 +1535,18 @@ Expression objects are meant to be used once. This applies to anything produced 
 
 @example
 @verbatim
-    ra::Big<int, 2> B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
-    std::array<int, 2> l = { 1, 2 };
-    cout << B(ra::vector(l), ra::vector(l)) << endl; // ok => {{4 5} {7 8}}
-    auto ll = ra::vector(l);
-    cout << B(ll, ll) << endl; // ?? take cover
+ra::Big<int, 2> B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
+std::array<int, 2> l = { 1, 2 };
+cout << B(ra::vector(l), ra::vector(l)) << endl; // ok => {{4 5} {7 8}}
+auto ll = ra::vector(l);
+cout << B(ll, ll) << endl; // ?? take cover
 @end verbatim
 @end example
 
 @section Assignment to views
 
 FIXME
-With rt-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream >> container may work; do not rely on it.
+With rt-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream @code{>>} container may work; do not rely on it.
 
 @section View of const vs const view
 
@@ -1643,17 +1643,13 @@ These are array views into data in memory. Access to their contents doesn't invo
 
 This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
-@item @b{Ravelable} --- @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
+@b{Iterator}s provide a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{len()}, @code{step()}, @code{keep_step()} and @code{adv()}, a loop involving @b{Iterator}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
-This is a kind of @b{Iterator} that provides a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{len()}, @code{step()}, @code{keep_step()} and @code{adv()}, a loop involving only @b{Ravelable}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
-
-@item @b{Indexable} @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar} @code{TensorIndex}
-
-This is a kind of @b{Iterator} that provides an @code{at(i ...)} method for random access to any element of the array. In the current version of @code{ra::}, every @b{Iterator} is both @b{Ravelable} and @b{Indexable}.
+@b{Iterator}s also provide an @code{at(i ...)} method for random access to any element of the array.
 
 @item @b{Flat} @code{Iota::Flat} @code{Scalar::Flat} @code{TensorIndex::Flat} @code{Expr::Flat} @code{Pick::Flat} @code{CellFlat}
 
-These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Ravelable} objects through a method @code{flat}.
+These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Iterator} objects through a method @code{flat}.
 
 @end itemize
 
