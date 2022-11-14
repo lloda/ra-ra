@@ -111,7 +111,7 @@ struct Wedge
             using Sa = mp::FindCombination<Fa0, Ca>;
             using Sb = mp::FindCombination<Fb, Cb>;
             constexpr int sign = Sa::sign * Sb::sign * mp::PermutationSign<mp::append<Fa0, Fb>, Xr>::value;
-            static_assert(sign==+1 || sign==-1, "bad sign in wedge term");
+            static_assert(sign==+1 || sign==-1, "Bad sign in wedge term.");
             return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, mp::drop1<Fa>>(a, b);
         } else {
             return 0.;

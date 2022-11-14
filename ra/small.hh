@@ -69,11 +69,9 @@ namespace indexer0 {
     template <class lens, class steps, class P, rank_t end, rank_t k=0>
     constexpr dim_t index(P const & p)
     {
-        static_assert(mp::len<lens> == mp::len<steps>, "mismatched lengths & steps");
         if constexpr (k==end) {
             return 0;
         } else {
-            static_assert(k>=0 && k<end, "Bad index");
             RA_CHECK(inside(p[k], mp::ref<lens, k>::value));
             return (p[k] * mp::ref<steps, k>::value) + index<lens, steps, P, end, k+1>(p);
         }
@@ -82,7 +80,7 @@ namespace indexer0 {
     template <class lens, class steps, class P>
     constexpr dim_t shorter(P const & p) // for Container::at().
     {
-        static_assert(mp::len<lens> >= size_s<P>(), "Too many indices");
+        static_assert(mp::len<lens> >= size_s<P>(), "Too many indices.");
         return index<lens, steps, P, size_s<P>()>(p);
     }
 
@@ -90,9 +88,9 @@ namespace indexer0 {
     constexpr dim_t longer(P const & p) // for IteratorConcept::at().
     {
         if constexpr (size_s<P>()!=RANK_ANY) {
-            static_assert(mp::len<lens> <= size_s<P>(), "Too few indices");
+            static_assert(mp::len<lens> <= size_s<P>(), "Too few indices.");
         } else {
-            RA_CHECK(mp::len<lens> <= p.size(), "Too few indices");
+            RA_CHECK(mp::len<lens> <= p.size(), "Too few indices.");
         }
         return index<lens, steps, P, mp::len<lens>>(p);
     }
@@ -323,8 +321,8 @@ struct SmallBase
     using value_type = T;
 
     template <class TT> using BadDimension = mp::int_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
-    static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "negative dimensions");
-    static_assert(mp::len<lens> == mp::len<steps>, "bad steps"); // TODO full static check on steps.
+    static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
+    static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps."); // TODO static check on steps.
 
     using Child = Child_<T, lens, steps>;
 
@@ -550,7 +548,7 @@ A ravel_from_iterators(I && begin, J && end)
 
 
 // ---------------------
-// Support for builtin arrays
+// Builtin arrays
 // ---------------------
 
 template <class T, class I=mp::iota<std::rank_v<T>>>
@@ -613,10 +611,10 @@ struct axis_indices
 template <class axes_list, class src_lens, class src_steps>
 struct axes_list_indices
 {
-    static_assert(mp::len<axes_list> == mp::len<src_lens>, "bad size for transposed axes list");
+    static_assert(mp::len<axes_list> == mp::len<src_lens>, "Bad size for transposed axes list.");
     constexpr static int talmax = mp::fold<mp::max, void, axes_list>::value;
     constexpr static int talmin = mp::fold<mp::min, void, axes_list>::value;
-    static_assert(talmin >= 0, "bad index in transposed axes list");
+    static_assert(talmin >= 0, "Bad index in transposed axes list.");
 // don't enforce, so allow dead axes (e.g. in transpose<1>(rank 1 array)).
     // static_assert(talmax < mp::len<src_lens>, "bad index in transposed axes list");
 
@@ -662,7 +660,7 @@ auto cat(SmallBase<Child1, T1, lens1, steps1> const & a1, SmallBase<Child2, T2, 
 {
     using A1 = SmallBase<Child1, T1, lens1, steps1>;
     using A2 = SmallBase<Child2, T2, lens2, steps2>;
-    static_assert(A1::rank()==1 && A2::rank()==1, "bad ranks for cat"); // gcc accepts a1.rank(), etc.
+    static_assert(A1::rank()==1 && A2::rank()==1, "Bad ranks for cat."); // gcc accepts a1.rank(), etc.
     using T = std::decay_t<decltype(a1[0])>;
     Small<T, A1::size()+A2::size()> val;
     std::copy(a1.begin(), a1.end(), val.begin());

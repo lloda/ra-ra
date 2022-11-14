@@ -103,7 +103,6 @@ concept SliceConcept = requires (A a)
 enum none_t { none }; // used in array constructors to mean ‘don't initalize’.
 struct no_arg {}; // used in array constructors to mean ‘don't instantiate’
 
-// Order of decl issues.
 template <class C> struct Scalar; // for type predicates
 template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator_big
 template <class V> struct ra_traits_def;

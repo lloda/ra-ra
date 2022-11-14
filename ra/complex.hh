@@ -56,7 +56,7 @@ inline RA_CPLX fma_conj(RA_CPLX const & a, RA_CPLX const & b, RA_CPLX const & c)
 // conj(a) * b
 inline RA_CPLX mul_conj(RA_CPLX const & a, RA_CPLX const & b)
 {
-    return RA_CPLX(+a.real()*b.real()+a.imag()*b.imag(),
+    return RA_CPLX(a.real()*b.real()+a.imag()*b.imag(),
                    a.real()*b.imag()-a.imag()*b.real());
 }
 inline bool isfinite(RA_CPLX const z)

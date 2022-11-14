@@ -1649,7 +1649,7 @@ This is a traversable object. @b{Iterator}s are accepted by all the array functi
 
 @item @b{Flat} @code{Iota::Flat} @code{Scalar::Flat} @code{TensorIndex::Flat} @code{Expr::Flat} @code{Pick::Flat} @code{CellFlat}
 
-These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Iterator} objects through a method @code{flat}.
+These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Iterator} objects through a method @code{flat()}.
 
 @end itemize
 

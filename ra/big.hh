@@ -31,7 +31,7 @@ namespace indexer1 {
     template <class Dimv, class P>
     constexpr dim_t shorter(Dimv const & dimv, P && p)
     {
-        RA_CHECK(ssize(dimv)>=start(p).len(0), "Too many indices");
+        RA_CHECK(ssize(dimv)>=start(p).len(0), "Too many indices.");
 // use dim.data() to skip the size check.
         dim_t c = 0;
         for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.len)); c += d.step*p; },
@@ -43,7 +43,7 @@ namespace indexer1 {
     template <class Dimv, class P>
     constexpr dim_t longer(rank_t framer, Dimv const & dimv, P const & p)
     {
-        RA_CHECK(framer<=ssize(p), "Too few indices");
+        RA_CHECK(framer<=ssize(p), "Too few indices.");
         dim_t c = 0;
         for (rank_t k=0; k<framer; ++k) {
             RA_CHECK(inside(p[k], dimv[k].len) || (dimv[k].len==DIM_BAD && dimv[k].step==0));
@@ -65,13 +65,13 @@ template <class V, rank_t cellr_=0>
 struct cell_iterator_big
 {
     constexpr static rank_t cellr_spec = cellr_;
-    static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
+    static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "Bad cell rank.");
     constexpr static rank_t fullr = ra::rank_s<V>();
     constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
-    static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
-    static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
-    static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
+    static_assert(cellr>=0 || cellr==RANK_ANY, "Bad cell rank.");
+    static_assert(framer>=0 || framer==RANK_ANY, "Bad frame rank.");
+    static_assert(fullr==cellr || gt_rank(fullr, cellr), "Bad cell rank.");
 
     using Dimv_ = typename std::decay_t<V>::Dimv;
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
@@ -362,7 +362,7 @@ struct View
     {                                                                   \
         constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
         constexpr rank_t subrank = rank_sum(RANK, extended);            \
-        static_assert(subrank>=0, "bad subrank");                       \
+        static_assert(subrank>=0, "Bad subrank.");                      \
         View<T CONST, subrank> sub;                                     \
         sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...); \
         /* fill the rest of dim, skipping over beatable subscripts */   \
@@ -429,9 +429,9 @@ struct View
     operator T CONST & () CONST                                         \
     {                                                                   \
         if constexpr (RANK_ANY==RANK) {                                 \
-            RA_CHECK(rank()==0, "converting rank ", rank(), " to scalar"); \
+            RA_CHECK(rank()==0, "Error converting rank ", rank(), " to scalar."); \
         } else {                                                        \
-            static_assert(0==RANK, "bad rank");                         \
+            static_assert(0==RANK, "Bad rank.");                        \
         }                                                               \
         return data()[0];                                               \
     }
@@ -486,7 +486,7 @@ template <class P> struct storage_traits<std::shared_ptr<P>>
 template <class T_, class A> struct storage_traits<std::vector<T_, A>>
 {
     using T = T_;
-    static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>");
+    static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
     static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); }
     static T const * data(std::vector<T, A> const & v) { return v.data(); }
     static T * data(std::vector<T, A> & v) { return v.data(); }
@@ -582,7 +582,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         static_assert(!std::is_convertible_v<value_t<S>, Dim>);
 // no rank extension here, because it's error prone and not very useful.
-        static_assert(1==ra::rank_s<S>(), "rank mismatch for init shape");
+        static_assert(1==ra::rank_s<S>(), "Rank mismatch for init shape.");
 // [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
         if constexpr (RANK_ANY==RANK) {
             ra::resize(View::dimv, ra::size(s));
