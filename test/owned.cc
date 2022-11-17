@@ -61,6 +61,8 @@ int main()
         ra::Big<int> a({3, 3, 3, 3}, ra::_0 - ra::_1 + ra::_2 - ra::_3);
         ra::Big<int, 1> b = ra::reshape(a, {50});
         a.resize(ra::Small<int, 2>{5, 10});
+        tr.test_eq(5, a.len(0));
+        tr.test_eq(10, a.len(1));
         tr.test_eq(b, ra::reshape(a, {50}));
     }
     tr.section("push back");

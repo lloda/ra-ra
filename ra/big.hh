@@ -578,7 +578,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         }
     }
 
-    template <class S> void init(S && s)
+    template <class S> void
+    init(S && s)
     {
         static_assert(!std::is_convertible_v<value_t<S>, Dim>);
 // no rank extension here, because it's error prone and not very useful.
@@ -588,14 +589,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
             ra::resize(View::dimv, ra::size(s));
         }
         for_each([](Dim & dim, auto const & s) { dim.len = s; }, View::dimv, s);
-        dim_t t = filldim(View::dimv.size(), View::dimv.end());
-        store = storage_traits<Store>::create(t);
+        store = storage_traits<Store>::create(filldim(View::dimv.size(), View::dimv.end()));
         View::p = storage_traits<Store>::data(store);
     }
 
 // FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of view_.operator=.
 // store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
-    template <class Pbegin> void fill1(dim_t xsize, Pbegin xbegin)
+    template <class Pbegin> void
+    fill1(dim_t xsize, Pbegin xbegin)
     {
         RA_CHECK(this->size()==xsize, "mismatched sizes");
         std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
@@ -605,10 +606,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
 // explicit shape.
     Container(shape_arg const & s, none_t) { init(s); }
-    template <class XX> Container(shape_arg const & s, XX && x): Container(s, none) { view() = x; }
+
+    template <class XX>
+    Container(shape_arg const & s, XX && x): Container(s, none) { view() = x; }
 
 // shape from data.
-    template <class XX> Container(XX && x): Container(ra::shape(x), none) { view() = x; }
+    template <class XX>
+    Container(XX && x): Container(ra::shape(x), none) { view() = x; }
+
     Container(typename nested_braces<T, RANK>::list x)
     {
         static_assert(RANK!=RANK_ANY);
@@ -625,17 +630,24 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // shape + row-major ravel. // TODO Maybe remove these? See also small.hh.
     Container(shape_arg const & s, std::initializer_list<T> x)
         : Container(s, none) { fill1(x.size(), x.begin()); }
+
     template <class TT>
     Container(shape_arg const & s, TT * p)
         : Container(s, none) { fill1(this->size(), p); }
+
     template <class P>
     Container(shape_arg const & s, P pbegin, P pend)
         : Container(s, none) { fill1(this->size(), pbegin); }
 
 // these are needed when shape_arg is std::vector, since that doesn't handle conversions like Small does.
-    template <class SS> Container(SS && s, none_t) { init(s); }
-    template <class SS, class XX> Container(SS && s, XX && x): Container(s, none) { view() = x; }
-    template <class SS> Container(SS const & s, std::initializer_list<T> x)
+    template <class SS>
+    Container(SS && s, none_t) { init(s); }
+
+    template <class SS, class XX>
+    Container(SS && s, XX && x): Container(s, none) { view() = x; }
+
+    template <class SS>
+    Container(SS const & s, std::initializer_list<T> x)
         : Container(s, none) { fill1(x.size(), x.begin()); }
 
     using View::operator=;
@@ -662,8 +674,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         ra::resize(View::dimv, start(s).len(0)); // [ra37] FIXME is View constructor
         for_each([](Dim & dim, auto && s) { dim.len = s; }, View::dimv, s);
-        filldim(View::dimv.size(), View::dimv.end());
-        store.resize(proddim(View::dimv.begin(), View::dimv.end()));
+        store.resize(filldim(View::dimv.size(), View::dimv.end()));
         View::p = store.data();
     }
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
@@ -703,7 +714,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
     T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
 
-// Container is always compact/row-major. Then the 0-rank STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1) or ellidable.
+// Container is always compact/row-major, so STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1).
 
     auto begin() { assert(is_c_order(*this)); return this->data(); }
     auto begin() const { assert(is_c_order(*this)); return this->data(); }

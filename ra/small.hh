@@ -238,7 +238,7 @@ struct STLIterator
             }())
     {
 // [ra12] Null p_ so begin()==end() for empty range. ply() uses lens so this doesn't matter.
-        if (ii.c.p!=nullptr && 0==ra::size(ii)) {
+        if (0==ra::size(ii)) {
             ii.c.p = nullptr;
         }
     };
