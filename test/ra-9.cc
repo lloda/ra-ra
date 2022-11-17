@@ -83,11 +83,11 @@ int main()
     {
         auto ref = std::array<int, 4> {12, 77, 44, 1};
         tr.test_eq(2, expr([](int i) { return i; },
-                           ra::start(std::vector<int> {1, 2, 3})).at(ra::Small<int, 1>{1}));
-        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array<int, 4> {12, 77, 44, 1})));
+                           ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
+        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
 // [ra1] these require ra::start and ra::Expr to forward in the constructor. Clue for why is in the ra::Unique case below.
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
-        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector<int> {12, 77, 44, 1})));
+        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
 // these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes sense, as argname is otherwise always an lref.
         ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
                        ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
@@ -95,8 +95,8 @@ int main()
 // ra::Vector() constructors are needed for V=std::array (cf test/vector-array.cc).
     tr.section("[ra35] - reference");
     {
-        std::array<int, 2> a1 = {1, 2};
-        std::vector<int> a2 = {1, 2};
+        std::array a1 = {1, 2};
+        std::vector a2 = {1, 2};
         auto v1 = ra::vector(a1);
         auto v2 = ra::vector(a2);
 
@@ -122,8 +122,8 @@ int main()
     }
     tr.section("[ra35] - value");
     {
-        auto fun1 = []() { return std::array<int, 2> {7, 2}; };
-        auto fun2 = []() { return std::vector<int> {5, 2}; };
+        auto fun1 = []() { return std::array {7, 2}; };
+        auto fun2 = []() { return std::vector {5, 2}; };
         auto v1 = ra::vector(fun1());
         auto v2 = ra::vector(fun2());
 

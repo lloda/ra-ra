@@ -22,7 +22,7 @@ int main()
     {
         tr.section("frame match ra::start on 1st axis");
         {
-            std::vector<int> const a = { 1, 2, 3 };
+            std::vector const a = { 1, 2, 3 };
             ra::Big<int, 2> b ({3, 2}, ra::start(a));
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
@@ -31,7 +31,7 @@ int main()
 // TODO actually whether unroll is avoided depends on ply, have a way to require it [ra3]
         tr.section("frame match ra::start on 1st axis, forbid unroll");
         {
-            std::vector<int> const a = { 1, 2, 3 };
+            std::vector const a = { 1, 2, 3 };
             ra::Big<int, 3> b ({3, 4, 2}, ra::none);
             transpose({0, 2, 1}, b) = ra::start(a);
             tr.test_eq(a[0], b(0));
@@ -47,21 +47,21 @@ int main()
                 tr.test_eq(ra::Big<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
             {
-                std::vector<int> const a = { 10, 20, 30 };
-                std::vector<int> const b = { 1, 2 };
+                std::vector const a = { 10, 20, 30 };
+                std::vector const b = { 1, 2 };
                 ra::Big<int, 2> c = map(ra::wrank<0, 1>([](int a, int b) { return a + b; }), a, b);
                 tr.test_eq(ra::Big<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
         }
         tr.section("= operators on ra::start");
         {
-            std::vector<int> a { 1, 2, 3 };
+            std::vector a { 1, 2, 3 };
             ra::start(a) *= 3;
-            tr.test_eq(ra::start(std::vector<int> { 3, 6, 9 }), ra::start(a));
+            tr.test_eq(ra::start(std::vector { 3, 6, 9 }), ra::start(a));
         }
         tr.section("automatic conversion of foreign vectors in mixed ops");
         {
-            std::vector<int> a { 1, 2, 3 };
+            std::vector a { 1, 2, 3 };
             ra::Big<int, 1> b { 10, 20, 30 };
             tr.test_eq(ra::start({11, 22, 33}), a+b);
         }
@@ -87,7 +87,7 @@ int main()
     }
     tr.section("operators take foreign types");
     {
-        std::vector<int> x = {1, 2, 3};
+        std::vector x = {1, 2, 3};
         tr.test_eq(6, sum(ra::start(x)));
         tr.test_eq(6, ra::sum(x));
     }

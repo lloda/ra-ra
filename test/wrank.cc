@@ -318,7 +318,7 @@ int main()
     }
     tr.section("Vector with dead axes");
     {
-        std::vector<int> i = {0, 1, 2};
+        std::vector i = {0, 1, 2};
         ra::Big<int, 2> a = ra::from([](auto && i, auto && j) { return i-j; }, i, i);
         tr.test_eq(ra::Big<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
     }

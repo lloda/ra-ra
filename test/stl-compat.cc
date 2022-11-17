@@ -62,7 +62,7 @@ int main()
     }
     tr.section("ptr with other iterators");
     {
-        std::vector<int> a = {1, 2, 3};
+        std::vector a = {1, 2, 3};
         ra::Small<int, 3> b = ra::ptr(a.begin());
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, b);
     }
@@ -74,8 +74,8 @@ int main()
     }
     tr.section("foreign vectors from std::");
     {
-        tr.info("adapted std::array has static size").test_eq(3, size_s(ra::start(std::array<int, 3> {1, 2, 0})));
-        tr.info("adapted std::vector has dynamic size").test_eq(ra::DIM_ANY, size_s(ra::start(std::vector<int> {1, 2, 0})));
+        tr.info("adapted std::array has static size").test_eq(3, size_s(ra::start(std::array {1, 2, 0})));
+        tr.info("adapted std::vector has dynamic size").test_eq(ra::DIM_ANY, size_s(ra::start(std::vector {1, 2, 0})));
     }
     tr.section("std::string");
     {
