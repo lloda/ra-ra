@@ -250,7 +250,7 @@ struct STLIterator
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
     STLIterator & operator++()
     {
-        if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough :-/
+        if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough
             ii.c.p = nullptr;
         } else if constexpr (DIM_ANY != ra::size_s<Iterator>()) {
             next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::steps>(i, ii.c.p);
@@ -436,9 +436,7 @@ struct SmallBase
     using STLIterator = pick_STLIterator<iterator<0>, T *>;
     using STLConstIterator = pick_STLIterator<const_iterator<0>, T const *>;
 
-// TODO In C++17 begin() end() may be different types, at least for ranged for
-// (https://en.cppreference.com/w/cpp/language/range-for).
-// See if we can use this to simplify end() and !=end() test.
+// TODO begin() end() may be different types for ranged for (https://en.cppreference.com/w/cpp/language/range-for), but not for stl algos like std::copy. That's unfortunate as it would allow simplifying end().
 // TODO With default steps I can just return p. Make sure to test before changing this.
     constexpr STLIterator begin() { if constexpr (have_default_steps) return data(); else return iter(); }
     constexpr STLConstIterator begin() const { if constexpr (have_default_steps) return data(); else return iter(); }

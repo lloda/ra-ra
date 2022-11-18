@@ -114,7 +114,7 @@ def to_test(env, variant_dir, source, args):
                 print("FAILED %s" % str(self.args))
             return r
 
-    stamp = env.File(join(variant_dir, str(source[0])) + "".join(args[1:]) + '.check')
+    stamp = env.File(join(variant_dir, str(source[0])) + "".join(args[1:]) + '.test')
     return env.Command(stamp, source, tester(args))
 
 # def to_source(env, targets, source):
@@ -150,7 +150,7 @@ def print_summary(GetBuildFailures, tag):
 
     print('\n' + Style.BRIGHT + 'Summary for ' + tag + Style.RESET_ALL + '\n--------')
     for bf in GetBuildFailures():
-        if str(bf.node).endswith('.check') and (bf.status > 0):
+        if str(bf.node).endswith('.test') and (bf.status > 0):
             print((Style.BRIGHT + Fore.RED + '%s ' + Style.RESET_ALL + Fore.RESET + ' failed (%d)') \
                   % (bf.node, bf.status))
             test_item_tally += bf.status
