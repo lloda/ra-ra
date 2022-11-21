@@ -628,7 +628,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     Container(typename nested_braces<T, RANK>::list x)
     {
-        static_assert(RANK!=RANK_ANY);
         std::array<dim_t, RANK> s;
         nested_braces<T, RANK>::template shape(x, s);
         init(s);
