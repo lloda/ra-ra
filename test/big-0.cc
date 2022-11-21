@@ -27,6 +27,13 @@ int main(int argc, char * * argv)
             tr.test_eq(5, a.size());
             tr.test_eq(33, a);
         }
+        {
+            ra::Big<int> sizes = {5};
+            ra::Big<double, 1> a(sizes, ra::none);
+            a = 33.;
+            tr.test_eq(5, a.size());
+            tr.test_eq(33, a);
+        }
         tr.section("regression with implicitly declared View constructors [ra38]. Reduced from examples/maxwell.cc");
         {
             ra::Big<int, 1> A = {1, 2};
@@ -56,7 +63,7 @@ int main(int argc, char * * argv)
             // ra::Big<int, 2> a({2, 3, 1}, 99); // does not compile
             // ra::Big<int, 2> b({2, 3, 1}, {1, 2, 3, 4, 5, 6}); // does not compile
             // ra::Big<int, 2> c({2, 3, 1}, ra::none); // does not compile
-            // ra::Big<int, 2> d(2, ra::none); // does not compile (maybe it should? by rank extension)
+            // ra::Big<int, 2> d(2, ra::none); // shape must be rank 1
         }
         tr.section("shape errors detected at ct FIXME cannot test ct errors yet [ra42]");
         {
@@ -209,6 +216,14 @@ int main(int argc, char * * argv)
         tr.test_eq(b.len(0), a.len(0));
         tr.test_eq(1, a.rank());
         tr.test_eq(0, a.len(0));
+    }
+    tr.section("allow scalar for rank 1 shapes");
+    {
+        ra::Big<int> a(3, ra::_0);
+        tr.test_eq(1, rank(a));
+        tr.test_eq(ra::iota(3), a);
+        ra::Big<int, 1> b(4, ra::_0);
+        tr.test_eq(ra::iota(4), b);
     }
     return tr.summary();
 }

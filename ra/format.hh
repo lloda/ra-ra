@@ -116,7 +116,8 @@ format(A && ... a)
     }
 }
 
-inline std::string const & format(std::string const & s) { return s; }
+inline constexpr std::string const &
+format(std::string const & s) { return s; }
 
 } // namespace ra
 

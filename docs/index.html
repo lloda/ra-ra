@@ -482,13 +482,24 @@ Big&lt;int&gt; e = 0;                         // e is a 0-array with one element
 <span id="index-none"></span>
 <span id="index-uninitialized-container"></span>
 <div class="example">
-<pre class="verbatim">ra::Big&lt;double, 2&gt; a({2, 3}, 1.);     // a has shape [2 3] and be filled with 1.
-ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has shape [2 3] and contents don't matter
-ra::Big&lt;double&gt; c({2, 3}, a);         // c has shape [2 3] and a is copied into c
+<pre class="verbatim">ra::Big&lt;double, 2&gt; a({2, 3}, 1.);     // a has shape [2 3], filled with 1.
+ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has shape [2 3], default initialized
+ra::Big&lt;double&gt; c({2, 3}, a);         // c has shape [2 3], a is copied into c
 </pre></div>
 
 <p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::none</code> can be used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container&rsquo;s elements.
 </p>
+<p>The shape argument can have rank 0 only for rank 1 arrays.
+</p>
+<span id="index-none-1"></span>
+<span id="index-uninitialized-container-1"></span>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int&gt; c(3, 0);      // ok {0, 0, 0}, same as ra::Big&lt;int&gt; c({3}, 0)
+ra::Big&lt;int, 1&gt; c(3, 0);   // ok {0, 0, 0}, same as ra::Big&lt;int, 1&gt; c({3}, 0)
+ra::Big&lt;int, 2&gt; c({3}, 0); // error: bad length for shape
+ra::Big&lt;int, 2&gt; c(3, 0);   // error: bad length for shape
+</pre></div>
+
 <p>When the content argument is a pointer or a 1D brace list, it&rsquo;s handled especially, not for shape<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>
 </p>
 <span id="index-order_002c-column_002dmajor"></span>
@@ -2511,9 +2522,9 @@ inline bool lexicographical_compare(A &amp;&amp; a, B &amp;&amp; b)
 </p>
 </dd></dl>
 
-<span id="index-none-1"></span>
+<span id="index-none-2"></span>
 <span id="x_002dnone"></span><dl class="def">
-<dt id="index-none-2"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>none</strong><a href='#index-none-2' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-none-3"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>none</strong><a href='#index-none-3' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Pass <code>none</code> to container constructors to indicate that the contents shouldn&rsquo;t be initialized. This is appropriate when the initialization you have in mind wouldn&rsquo;t fit in a constructor argument. For example:
 </p>
 <div class="example">
@@ -2683,7 +2694,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-N">N</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-none-1"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-none-1"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-none-2"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-noshape"><code>noshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy-1">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
@@ -2736,6 +2748,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-U">U</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-uninitialized-container">uninitialized container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-uninitialized-container-1">uninitialized container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-V">V</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-view">view</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>

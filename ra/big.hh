@@ -431,7 +431,7 @@ struct View
         if constexpr (RANK_ANY==RANK) {                                 \
             RA_CHECK(rank()==0, "Error converting rank ", rank(), " to scalar."); \
         } else {                                                        \
-            static_assert(0==RANK, "Bad rank.");                        \
+            static_assert(0==RANK, "Bad rank for conversion to scalar.."); \
         }                                                               \
         return data()[0];                                               \
     }
@@ -466,7 +466,8 @@ struct View
 // Container types
 // --------------------
 
-template <class V> struct storage_traits
+template <class V>
+struct storage_traits
 {
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
     static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
@@ -474,7 +475,8 @@ template <class V> struct storage_traits
     static T * data(V & v) { return v.get(); }
 };
 
-template <class P> struct storage_traits<std::shared_ptr<P>>
+template <class P>
+struct storage_traits<std::shared_ptr<P>>
 {
     using V = std::shared_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
@@ -483,7 +485,8 @@ template <class P> struct storage_traits<std::shared_ptr<P>>
     static T * data(V & v) { return v.get(); }
 };
 
-template <class T_, class A> struct storage_traits<std::vector<T_, A>>
+template <class T_, class A>
+struct storage_traits<std::vector<T_, A>>
 {
     using T = T_;
     static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
@@ -543,7 +546,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         View::p = storage_traits<Store>::data(store);
     }
 
-// Override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.cc [ra20].
+// override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.cc [ra20].
 // TODO do this through .set() op.
 // TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     Container & operator=(Container && w)
@@ -568,7 +571,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         return *this;
     }
 
-// Provided so that {} calls shape_arg constructor below.
+// provided so that {} calls shape_arg constructor below.
     Container()
     {
         if constexpr (RANK_ANY==RANK) {
@@ -578,13 +581,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         }
     }
 
-    template <class S> void
+    template <class S>
+    requires (1==ra::rank_s<S>() || RANK_ANY==ra::rank_s<S>())
+    void
     init(S && s)
     {
         static_assert(!std::is_convertible_v<value_t<S>, Dim>);
-// no rank extension here, because it's error prone and not very useful.
-        static_assert(1==ra::rank_s<S>(), "Rank mismatch for init shape.");
-// [ra37] Need two parts because Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
+        RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
+// [ra37] Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
         if constexpr (RANK_ANY==RANK) {
             ra::resize(View::dimv, ra::size(s));
         }
@@ -593,16 +597,24 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         View::p = storage_traits<Store>::data(store);
     }
 
+//  allow scalar as shape if rank is 1.
+    void
+    init(ra::dim_t s)
+    {
+        static_assert(RANK_ANY==RANK || 1==RANK, "Invalid shape for rank != 1.");
+        init(std::array {s});
+    }
+
 // FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of view_.operator=.
 // store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
     template <class Pbegin> void
     fill1(dim_t xsize, Pbegin xbegin)
     {
-        RA_CHECK(this->size()==xsize, "mismatched sizes");
+        RA_CHECK(this->size()==xsize, "Mismatched sizes ", this->size(), " and ", xsize, ".");
         std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
     }
 
-// shape_arg overloads handle {...} arguments. Size check is courtesy of conversion (if shape_arg is Small) or init().
+// shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
 
 // explicit shape.
     Container(shape_arg const & s, none_t) { init(s); }

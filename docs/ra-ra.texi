@@ -373,13 +373,26 @@ The second form takes two arguments, one giving the shape, the second the conten
 @cindex uninitialized container
 @example
 @verbatim
-ra::Big<double, 2> a({2, 3}, 1.);     // a has shape [2 3] and be filled with 1.
-ra::Big<double> b({2, 3}, ra::none);  // b has shape [2 3] and contents don't matter
-ra::Big<double> c({2, 3}, a);         // c has shape [2 3] and a is copied into c
+ra::Big<double, 2> a({2, 3}, 1.);     // a has shape [2 3], filled with 1.
+ra::Big<double> b({2, 3}, ra::none);  // b has shape [2 3], default initialized
+ra::Big<double> c({2, 3}, a);         // c has shape [2 3], a is copied into c
 @end verbatim
 @end example
 
 The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
+
+The shape argument can have rank 0 only for rank 1 arrays.
+
+@cindex @code{none}
+@cindex uninitialized container
+@example
+@verbatim
+ra::Big<int> c(3, 0);      // ok {0, 0, 0}, same as ra::Big<int> c({3}, 0)
+ra::Big<int, 1> c(3, 0);   // ok {0, 0, 0}, same as ra::Big<int, 1> c({3}, 0)
+ra::Big<int, 2> c({3}, 0); // error: bad length for shape
+ra::Big<int, 2> c(3, 0);   // error: bad length for shape
+@end verbatim
+@end example
 
 When the content argument is a pointer or a 1D brace list, it's handled especially, not for shape@footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!@footnote{The brace-list constructors aren't rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.}
 
