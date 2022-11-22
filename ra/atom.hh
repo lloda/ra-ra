@@ -30,7 +30,7 @@
         if (std::is_constant_evaluated()) {                             \
             assert(cond /* FIXME maybe one day */);                     \
         } else {                                                        \
-            if (bool c = cond; !c) {                                    \
+            if (bool c = cond; !c) [[unlikely]] {                       \
                 std::cerr << ra::format("**** ra: ", ##__VA_ARGS__, " ****") << std::endl; \
                 assert(c);                                              \
             }                                                           \
@@ -373,8 +373,8 @@ struct Iota
     {
         T i_;
         T const step_;
-        constexpr T const & operator*() const { return i_; }
         constexpr void operator+=(dim_t d) { i_ += T(d)*step_; }
+        constexpr T const & operator*() const { return i_; }
     };
 
     dim_t const len_;
@@ -396,8 +396,8 @@ struct Iota
     constexpr static dim_t step(rank_t i) { return i==0 ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return Flat { i_, step_ }; }
-    decltype(auto) operator+=(T const & b) { i_ += b; return *this; };
-    decltype(auto) operator-=(T const & b) { i_ -= b; return *this; };
+    decltype(auto) constexpr operator+=(T const & b) { i_ += b; return *this; };
+    decltype(auto) constexpr operator-=(T const & b) { i_ -= b; return *this; };
 };
 
 template <class O=dim_t, class S=O>

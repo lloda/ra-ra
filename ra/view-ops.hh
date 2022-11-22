@@ -144,8 +144,7 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
             assert(is_ravel_free(a) && "reshape w/copy not implemented");
             if (la>=lb) {
 // FIXME View(SS const & s, T * p). Cf [ra37].
-                for_each([](auto & dim, auto && s) { dim.len = s; }, b.dimv, sb);
-                filldim(b.dimv.size(), b.dimv.end());
+                b.filldim(sb);
                 for (int j=0; j!=b.rank(); ++j) {
                     b.dimv[j].step *= a.step(a.rank()-1);
                 }
