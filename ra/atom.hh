@@ -171,12 +171,12 @@ shape(V const & v)
 // To handle arrays of static/dynamic size.
 template <class A>
 inline void
-resize(A & a, dim_t k)
+resize(A & a, dim_t s)
 {
     if constexpr (DIM_ANY==size_s<A>()) {
-        a.resize(k);
+        a.resize(s);
     } else {
-        RA_CHECK(k==dim_t(a.len_s(0)));
+        RA_CHECK(s==dim_t(a.len_s(0)), "Bad resize ", s, " vs ", a.len_s(0));
     }
 }
 
@@ -233,12 +233,12 @@ struct Vector
     constexpr static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k)
     {
-        RA_CHECK(k==0, " k ", k);
+        RA_CHECK(k==0, "Bad axis k ", k);
         if constexpr (DIM_ANY==ct_size) { return DIM_ANY; } else { return ct_size; };
     }
     constexpr dim_t len(int k) const
     {
-        RA_CHECK(k==0, " k ", k);
+        RA_CHECK(k==0, "Bad axis k ", k);
         if constexpr (DIM_ANY==ct_size) { return ra::size(v); } else { return ct_size; };
     }
 
@@ -258,14 +258,14 @@ struct Vector
     template <class I>
     constexpr decltype(auto) at(I const & i)
     {
-        RA_CHECK(inside(i[0], std::ssize(v)), " i ", i[0], " size ", std::ssize(v));
+        RA_CHECK(inside(i[0], std::ssize(v)), "Bad index i ", i[0], " size ", std::ssize(v));
         return p[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
     {
 // k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra3]
 // k==0 && d!=1 happens on turning back at end of ply.
-        RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
+        RA_CHECK(d==1 || d<=0, "Bad step k ", k, " d ", d);
         p += (k==0) * d;
     }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
@@ -284,8 +284,8 @@ struct Ptr
 
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
-    constexpr static dim_t len(int k) { RA_CHECK(k==0, " k ", k); return DIM_BAD; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_BAD; }
+    constexpr static dim_t len(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_BAD; }
 
     template <class I>
     constexpr decltype(auto) at(I && i)
@@ -294,7 +294,7 @@ struct Ptr
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
+        RA_CHECK(d==1 || d<=0, "Bad step k ", k, " d ", d);
         std::advance(p, (k==0) * d);
     }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
@@ -315,8 +315,8 @@ struct Span
 
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
-    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return n_; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_ANY; }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0, "Bad axis k ", k); return n_; }
 
     template <class I>
     decltype(auto) at(I const & i)
@@ -326,7 +326,7 @@ struct Span
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        RA_CHECK(d==1 || d<=0, " k ", k, " d ", d);
+        RA_CHECK(d==1 || d<=0, "Bad step k ", k, " d ", d);
         std::advance(p, (k==0) * d);
     }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
@@ -356,7 +356,7 @@ struct TensorIndex
     constexpr static dim_t len(int k) { return DIM_BAD; } // for shape checks with dyn rank.
 
     template <class I> constexpr dim_t at(I const & ii) const { return ii[w]; }
-    constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, " d ", d); i += (k==w) * d; }
+    constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, "Bad step ", d); i += (k==w) * d; }
     constexpr static dim_t const step(int k) { return (k==w); }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return Flat {i}; }
@@ -388,8 +388,8 @@ struct Iota
 
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, " k ", k); return DIM_ANY; }
-    constexpr dim_t len(int k) const { RA_CHECK(k==0, " k ", k); return len_; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_ANY; }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0, "Bad axis k ", k); return len_; }
 
     template <class I> constexpr T at(I const & i) { return i_ + T(i[0])*step_; }
     constexpr void adv(rank_t k, dim_t d) { i_ += T((k==0) * d) * step_; } // cf Vector::adv

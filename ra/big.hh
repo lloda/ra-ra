@@ -253,7 +253,7 @@ struct View
     template <class S>
     constexpr dim_t filldim(S && s)
     {
-        for_each([](Dim & dim, auto && s) { dim.len = s; RA_CHECK(dim.len>=0, "Bad dim ", dim.len); },
+        for_each([](Dim & dim, auto && s) { dim.len = s; RA_CHECK(dim.len>=0, "Bad len ", dim.len); },
                  dimv, s);
         dim_t next = 1;
         for (int i=dimv.size(); --i>=0;) {
@@ -270,14 +270,14 @@ struct View
     constexpr dim_t len(int j) const
     {
         if constexpr (RANK==RANK_ANY) {
-            RA_CHECK(j<rank(), " j ", j, " rank ", rank());
+            RA_CHECK(j<rank(), "Bad axis j ", j, " rank ", rank());
         }
         return dimv[j].len;
     }
     constexpr dim_t step(int j) const
     {
         if constexpr (RANK==RANK_ANY) {
-            RA_CHECK(j<rank(), " j ", j, " rank ", rank());
+            RA_CHECK(j<rank(), "Bad axis j ", j, " rank ", rank());
         }
         return dimv[j].step;
     }
