@@ -19,6 +19,11 @@ int main(int argc, char * * argv)
     TestRecorder tr;
     tr.section("constructors");
     {
+        tr.section("null View constructor");
+        {
+            ra::View<int, 1> a;
+            tr.test(nullptr==a.data());
+        }
         tr.section("regression with some shape arguments (fixed rank)");
         {
             ra::Big<int, 1> sizes = {5};

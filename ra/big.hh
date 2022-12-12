@@ -293,7 +293,7 @@ struct View
     }
 
 // FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>)
-    constexpr View(): p(nullptr) {}
+    constexpr View(): p() {}
     constexpr View(Dimv const & dimv_, T * p_): dimv(dimv_), p(p_) {} // [ra36]
     template <class SS>
     constexpr View(SS && s, T * p_): p(p_)

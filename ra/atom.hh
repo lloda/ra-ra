@@ -141,7 +141,7 @@ size(V const & v)
     }
 }
 
-// Try to avoid; prefer implicit matching.
+// Avoid, prefer implicit matching.
 template <class V>
 inline constexpr decltype(auto)
 shape(V const & v)
