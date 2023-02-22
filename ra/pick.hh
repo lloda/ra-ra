@@ -56,8 +56,8 @@ template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
 };
 template <class T, class J> using pick_at_t = typename pick_at_type<mp::drop1<std::decay_t<T>>, J>::type;
 
-template <std::size_t I, class T, class J> inline constexpr
-pick_at_t<T, J>
+template <std::size_t I, class T, class J>
+constexpr pick_at_t<T, J>
 pick_at(std::size_t p0, T && t, J const & j)
 {
     if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
@@ -79,8 +79,8 @@ template <class ... P> struct pick_star_type<std::tuple<P ...>>
 };
 template <class T> using pick_star_t = typename pick_star_type<mp::drop1<std::decay_t<T>>>::type;
 
-template <std::size_t I, class T> inline constexpr
-pick_star_t<T>
+template <std::size_t I, class T>
+constexpr pick_star_t<T>
 pick_star(std::size_t p0, T && t)
 {
     if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
@@ -110,7 +110,8 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
         decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
     };
 
-    template <class ... P_> inline constexpr static auto
+    template <class ... P_>
+    constexpr static auto
     flat(P_ && ... p)
     {
         return Flat<std::tuple<P_ ...>> { std::tuple<P_ ...> { std::forward<P_>(p) ... } };
@@ -123,13 +124,15 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    template <class J> constexpr decltype(auto)
+    template <class J>
+    constexpr decltype(auto)
     at(J const & j)
     {
         return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
     }
 
-    template <class J> constexpr decltype(auto)
+    template <class J>
+    constexpr decltype(auto)
     at(J const & j) const
     {
         return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
@@ -154,13 +157,15 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     }
 };
 
-template <class ... P> inline constexpr auto
+template <class ... P>
+constexpr auto
 pick_in(P && ... p)
 {
     return Pick<std::tuple<P ...>> { std::forward<P>(p) ... };
 }
 
-template <class ... P> inline constexpr auto
+template <class ... P>
+constexpr auto
 pick(P && ... p)
 {
     return pick_in(start(std::forward<P>(p)) ...);

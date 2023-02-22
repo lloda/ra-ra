@@ -56,7 +56,7 @@ namespace ra {
 // --------------------
 
 template <class V>
-inline constexpr dim_t
+constexpr dim_t
 rank_s()
 {
     if constexpr (requires { std::decay_t<V>::rank_s(); }) {
@@ -76,7 +76,7 @@ rank_s(V const &)
 }
 
 template <class V>
-inline constexpr dim_t
+constexpr dim_t
 size_s()
 {
     if constexpr (requires { std::decay_t<V>::size_s(); }) {
@@ -105,14 +105,14 @@ size_s()
 }
 
 template <class V>
-inline constexpr dim_t
+constexpr dim_t
 size_s(V const &)
 {
     return size_s<V>();
 }
 
 template <class V>
-inline constexpr rank_t
+constexpr rank_t
 rank(V const & v)
 {
     if constexpr (requires { v.rank(); })  {
@@ -125,7 +125,7 @@ rank(V const & v)
 }
 
 template <class V>
-inline constexpr dim_t
+constexpr dim_t
 size(V const & v)
 {
     if constexpr (requires { v.size(); }) {
@@ -143,7 +143,7 @@ size(V const & v)
 
 // Avoid, prefer implicit matching.
 template <class V>
-inline constexpr decltype(auto)
+constexpr decltype(auto)
 shape(V const & v)
 {
     if constexpr (requires { v.shape(); }) {
@@ -216,7 +216,7 @@ struct Scalar
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
-template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
+template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Iterator for rank-1 foreign object. ra:: objects have their own Iterators.
 template <class V>
@@ -275,7 +275,7 @@ struct Vector
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
-template <class V> inline constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
+template <class V> constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
 
 template <std::random_access_iterator P>
 struct Ptr
@@ -401,7 +401,7 @@ struct Iota
 };
 
 template <class O=dim_t, class S=O>
-inline constexpr auto
+constexpr auto
 iota(dim_t len, O org=0, S step=1)
 {
     using T = std::common_type_t<O, S>;
@@ -414,7 +414,7 @@ iota(dim_t len, O org=0, S step=1)
 // --------------
 
 template <class T>
-inline constexpr void start(T && t)
+constexpr void start(T && t)
 {
     static_assert(!std::same_as<T, T>, "Type cannot be start()ed.");
 }
@@ -424,21 +424,21 @@ RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>)
 RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<decltype(std::declval<A>().v)>>))
 
 template <class T> requires (is_foreign_vector<T>)
-inline constexpr auto
+constexpr auto
 start(T && t)
 {
     return ra::vector(std::forward<T>(t));
 }
 
 template <class T> requires (is_scalar<T>)
-inline constexpr auto
+constexpr auto
 start(T && t)
 {
     return ra::scalar(std::forward<T>(t));
 }
 
 template <class T>
-inline constexpr auto
+constexpr auto
 start(std::initializer_list<T> v)
 {
     return ptr(v.begin(), v.size());
@@ -446,12 +446,12 @@ start(std::initializer_list<T> v)
 
 // forward declare for Match; implemented in small.hh.
 template <class T> requires (is_builtin_array<T>)
-inline constexpr auto
+constexpr auto
 start(T && t);
 
 // Neither cell_iterator_big nor cell_iterator_small will retain rvalues [ra4].
 template <class T> requires (is_slice<T>)
-inline constexpr auto
+constexpr auto
 start(T && t)
 {
     return iter<0>(std::forward<T>(t));
@@ -460,7 +460,7 @@ start(T && t)
 // Iterator (rather restart)
 
 template <class T> requires (is_ra_scalar<T>)
-inline constexpr decltype(auto)
+constexpr decltype(auto)
 start(T && t)
 {
     return std::forward<T>(t);
@@ -468,7 +468,7 @@ start(T && t)
 
 // see [ra35] and Vector constructors above. Iterators need to be restarted on every use (eg ra::cross()).
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
-inline constexpr auto
+constexpr auto
 start(T && t)
 {
     return std::forward<T>(t);
@@ -476,7 +476,7 @@ start(T && t)
 
 // restart iterator but do not copy data. This follows iter(View); Vector is just an interface adaptor [ra35].
 template <class T> requires (is_ra_vector<T>)
-inline constexpr auto
+constexpr auto
 start(T && t)
 {
     return vector(t.v);

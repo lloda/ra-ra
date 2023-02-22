@@ -285,27 +285,27 @@ struct FilterDims<lens_, steps_, I0, I ...>
 };
 
 template <dim_t len0, dim_t step0>
-inline constexpr dim_t
+constexpr dim_t
 select(dim_t i0)
 {
     RA_CHECK(inside(i0, len0));
     return i0*step0;
 };
 template <dim_t len0, dim_t step0, int n>
-inline constexpr dim_t
+constexpr dim_t
 select(dots_t<n> i0)
 {
     return 0;
 }
 
 template <class lens, class steps>
-inline constexpr dim_t
+constexpr dim_t
 select_loop()
 {
     return 0;
 }
 template <class lens, class steps, class I0, class ... I>
-inline constexpr dim_t
+constexpr dim_t
 select_loop(I0 i0, I ... i)
 {
     constexpr int s_src = is_beatable<I0>::skip_src;
@@ -571,7 +571,7 @@ struct builtin_array_types
 
 // forward declared in bootstrap.hh.
 template <class T> requires (is_builtin_array<T>)
-inline constexpr auto
+constexpr auto
 start(T && t)
 {
     using Z = builtin_array_types<T>;

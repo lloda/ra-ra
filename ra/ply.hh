@@ -69,7 +69,7 @@ ply_ravel(A && a)
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
         sha[k] = a.len(ocd[k]);
-        if (sha[k]==0) { // for the ravelled dimensions ss takes care.
+        if (sha[k]==0) { // for the raveled dimensions ss takes care.
             return;
         }
         RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
@@ -101,13 +101,8 @@ ply_ravel(A && a)
 // Compile time order.
 // -------------------------
 
-#ifdef RA_INLINE
-#error bad definition
-#endif
-#define RA_INLINE inline /* __attribute__((always_inline)) inline */
-
 template <class order, int ravel_rank, class A, class S>
-RA_INLINE constexpr void
+constexpr void
 subindex(A & a, dim_t s, S const & ss0)
 {
     if constexpr (mp::len<order> == ravel_rank) {
@@ -128,7 +123,7 @@ subindex(A & a, dim_t s, S const & ss0)
 
 // until() converts runtime jj into compile time j. TODO a.adv<k>().
 template <class order, int j, class A, class S>
-RA_INLINE constexpr void
+constexpr void
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
     if constexpr (mp::len<order> < j) {
@@ -160,7 +155,7 @@ ocd()
 };
 
 template <IteratorConcept A>
-RA_INLINE constexpr void
+constexpr void
 plyf(A && a)
 {
     constexpr rank_t rank = rank_s<A>();
@@ -186,15 +181,13 @@ plyf(A && a)
     }
 }
 
-#undef RA_INLINE
-
 
 // ---------------------------
 // Select best performance (or requirements) for each type.
 // ---------------------------
 
 template <IteratorConcept A>
-inline constexpr void
+constexpr void
 ply(A && a)
 {
     if constexpr (size_s<A>()==DIM_ANY) {
@@ -258,7 +251,7 @@ ply_ravel_exit(A && a, DEF && def)
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
         sha[k] = a.len(ocd[k]);
-        if (sha[k]==0) { // for the ravelled dimensions ss takes care.
+        if (sha[k]==0) { // for the raveled dimensions ss takes care.
             return def;
         }
         RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
@@ -288,13 +281,14 @@ ply_ravel_exit(A && a, DEF && def)
 }
 
 template <IteratorConcept A, class DEF>
-inline decltype(auto)
+constexpr decltype(auto)
 early(A && a, DEF && def)
 {
     return ply_ravel_exit(std::forward<A>(a), std::forward<DEF>(def));
 }
 
-template <class Op, class ... A> inline constexpr void
+template <class Op, class ... A>
+constexpr void
 for_each(Op && op, A && ... a)
 {
     ply(map(std::forward<Op>(op), std::forward<A>(a) ...));

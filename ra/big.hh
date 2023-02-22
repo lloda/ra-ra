@@ -179,14 +179,14 @@ struct nested_braces<T, rank>
 // Indexing views
 // --------------------
 
-// raw <- shared; raw <- unique; shared <-- unique.
+// raw <- shared; raw <- unique; shared <- unique.
 // layout is
 // [data] (fixed shape)
 // [size] p -> [data...] (fixed rank)
 // [rank] [size...] p -> [data...] (var rank)
 // TODO size is immutable so that it can be kept together with rank.
 
-inline constexpr dim_t
+constexpr dim_t
 select(Dim * dim, Dim const * dim_src, dim_t i)
 {
     RA_CHECK(inside(i, dim_src->len), " i ", i, " len ", dim_src->len);
@@ -226,7 +226,7 @@ select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
-inline constexpr
+constexpr
 dim_t select_loop(Dim * dim, Dim const * dim_src)
 {
     return 0;
@@ -292,7 +292,7 @@ struct View
         return t;
     }
 
-// FIXME Remove, too dangerous. View can be a deduced type (e.g. from value_t<X>)
+// FIXME Used by Big::init(). View can be a deduced type (e.g. from value_t<X>)
     constexpr View(): p() {}
     constexpr View(Dimv const & dimv_, T * p_): dimv(dimv_), p(p_) {} // [ra36]
     template <class SS>
@@ -313,7 +313,6 @@ struct View
     View(View const & x) = default;
     View & operator=(View && x) { ra::start(*this) = x; return *this; }
     View & operator=(View const & x) { ra::start(*this) = x; return *this; }
-// see same thing for SmallBase.
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -490,7 +489,7 @@ struct storage_traits<std::vector<T_, A>>
 };
 
 template <class T, rank_t RANK>
-inline constexpr bool
+constexpr bool
 is_c_order(View<T, RANK> const & a)
 {
     dim_t s = 1;

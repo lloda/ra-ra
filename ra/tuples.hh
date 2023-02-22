@@ -347,32 +347,37 @@ struct check_idx<tuple<A0, A ...>, I0, I ...>
 // }
 
 // like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
-template <class C, class T, int ... i> inline constexpr
-C from_tuple_(T && t, int_list<i ...>)
+template <class C, class T, int ... i>
+constexpr C
+from_tuple_(T && t, int_list<i ...>)
 {
     return { std::get<i>(std::forward<T>(t)) ... };
 }
 
-template <class C, class T> inline constexpr
-C from_tuple(T && t)
+template <class C, class T>
+constexpr C
+from_tuple(T && t)
 {
     return from_tuple_<C>(std::forward<T>(t), iota<len<std::decay_t<T>>> {});
 }
 
-template <class C, class T> inline constexpr
-C tuple_values()
+template <class C, class T>
+constexpr C
+tuple_values()
 {
     return std::apply([](auto ... t) { return C { decltype(t)::value ... }; }, T {});
 }
 
-template <class C, class T, class I> inline constexpr
-C map_indices(I const & i)
+template <class C, class T, class I>
+constexpr C
+map_indices(I const & i)
 {
     return std::apply([&i](auto ... t) { return C { i[decltype(t)::value] ... }; }, T {});
 };
 
-template <class T, int k=0> inline constexpr
-int int_list_index(int i)
+template <class T, int k=0>
+constexpr int
+int_list_index(int i)
 {
     if constexpr (k>=mp::len<T>) {
         return -1;

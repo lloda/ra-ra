@@ -32,23 +32,25 @@
 using ra::odd, ra::every, ra::any;
 
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
-template <class A> inline constexpr void transpose(ra::no_arg) { abort(); }
-template <int A> inline constexpr void iter(ra::no_arg) { abort(); }
+template <class A> constexpr void transpose(ra::no_arg) { abort(); }
+template <int A> constexpr void iter(ra::no_arg) { abort(); }
 
 namespace ra {
 
 template <int D, int Oa, int Ob, class A, class B>
 requires (ra::is_scalar<A> && ra::is_scalar<B>)
-inline constexpr auto wedge(A const & a, B const & b) { return a*b; }
+constexpr auto wedge(A const & a, B const & b) { return a*b; }
 
-template <int ... Iarg, class A> inline constexpr
-decltype(auto) transpose(mp::int_list<Iarg ...>, A && a)
+template <int ... Iarg, class A>
+constexpr decltype(auto)
+transpose(mp::int_list<Iarg ...>, A && a)
 {
     return transpose<Iarg ...>(std::forward<A>(a));
 }
 
-template <class A> inline constexpr
-decltype(auto) FLAT(A && a)
+template <class A>
+constexpr decltype(auto)
+FLAT(A && a)
 {
     return *(ra::start(std::forward<A>(a)).flat());
 }
@@ -69,8 +71,9 @@ struct index_rank_
 
 template <class I> using index_rank = typename index_rank_<I>::type;
 
-template <class II, int drop, class Op> inline constexpr
-decltype(auto) from_partial(Op && op)
+template <class II, int drop, class Op>
+constexpr decltype(auto)
+from_partial(Op && op)
 {
     if constexpr (drop==mp::len<II>) {
         return std::forward<Op>(op);
@@ -81,8 +84,9 @@ decltype(auto) from_partial(Op && op)
 }
 
 // TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
-template <class A, class ... I> inline constexpr
-auto from(A && a, I && ... i)
+template <class A, class ... I>
+constexpr auto
+from(A && a, I && ... i)
 {
     if constexpr (0==sizeof...(i)) {
         return a();
@@ -111,13 +115,14 @@ auto from(A && a, I && ... i)
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B>                                         \
     requires (ra_pos_and_any<A, B>)                                     \
-    inline constexpr auto operator OP(A && a, B && b)                   \
+    constexpr auto                                                      \
+    operator OP(A && a, B && b)                                         \
     {                                                                   \
         return RA_OPT(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B>                                         \
     requires (ra_zero<A, B>)                                            \
-    inline constexpr auto operator OP(A && a, B && b)                   \
+    constexpr auto operator OP(A && a, B && b)                   \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
     }
@@ -130,7 +135,8 @@ DEF_NAMED_BINARY_OP(/, slash)
 #define DEF_BINARY_OP(OP)                                               \
     template <class A, class B>                                         \
     requires (ra_pos_and_any<A, B>)                                     \
-    inline auto operator OP(A && a, B && b)                             \
+    inline auto                                                         \
+    operator OP(A && a, B && b)                                         \
     {                                                                   \
         return map([](auto && a, auto && b) { return a OP b; },         \
                    std::forward<A>(a), std::forward<B>(b));             \
@@ -222,14 +228,16 @@ inline auto at(A && a, I && i)
 // These ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F>
 requires (ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>)
-inline constexpr decltype(auto) where(bool const w, T && t, F && f)
+constexpr decltype(auto)
+where(bool const w, T && t, F && f)
 {
     return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
 }
 
 template <class W, class T, class F>
 requires (ra_pos_and_any<W, T, F>)
-inline auto where(W && w, T && t, F && f)
+inline auto
+where(W && w, T && t, F && f)
 {
     return pick(cast<bool>(start(std::forward<W>(w))), start(std::forward<F>(f)), start(std::forward<T>(t)));
 }
@@ -237,7 +245,8 @@ inline auto where(W && w, T && t, F && f)
 // catch all for non-ra types.
 template <class T, class F>
 requires (!(ra_pos_and_any<T, F>) && !(ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>))
-inline constexpr decltype(auto) where(bool const w, T && t, F && f)
+constexpr decltype(auto)
+where(bool const w, T && t, F && f)
 {
     return w ? t : f;
 }
@@ -352,7 +361,7 @@ refmax(A && a, Less && less = std::less<value_t<A>>())
 }
 
 template <class A>
-inline constexpr auto
+constexpr auto
 sum(A && a)
 {
     concrete_type<value_t<A>> c {};
@@ -361,7 +370,7 @@ sum(A && a)
 }
 
 template <class A>
-inline constexpr auto
+constexpr auto
 prod(A && a)
 {
     concrete_type<value_t<A>> c(1.);
@@ -369,11 +378,8 @@ prod(A && a)
     return c;
 }
 
-template <class A> inline auto
-reduce_sqrm(A && a) { return sum(sqrm(a)); }
-
-template <class A> inline auto
-norm2(A && a) { return std::sqrt(reduce_sqrm(a)); }
+template <class A> inline auto reduce_sqrm(A && a) { return sum(sqrm(a)); }
+template <class A> inline auto norm2(A && a) { return std::sqrt(reduce_sqrm(a)); }
 
 template <class A, class B>
 inline auto

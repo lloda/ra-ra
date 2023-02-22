@@ -101,13 +101,13 @@ struct Verb
 
 RA_IS_DEF(is_verb, (std::is_same_v<A, Verb<typename A::cranks, typename A::Op>>))
 
-template <class cranks, class Op> inline constexpr auto
+template <class cranks, class Op> constexpr auto
 wrank(cranks cranks_, Op && op)
 {
     return Verb<cranks, Op> { std::forward<Op>(op) };
 }
 
-template <rank_t ... crank, class Op> inline constexpr auto
+template <rank_t ... crank, class Op> constexpr auto
 wrank(Op && op)
 {
     return Verb<mp::int_list<crank ...>, Op> { std::forward<Op>(op) };
@@ -172,7 +172,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
 #pragma GCC diagnostic pop
     };
 
-    template <class ... P_> inline constexpr static auto
+    template <class ... P_> constexpr static auto
     flat(Op & op, P_ && ... p)
     {
         return Flat<std::tuple<P_ ...>> { op, std::tuple<P_ ...> { std::forward<P_>(p) ... } };
@@ -217,14 +217,14 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     }
 };
 
-template <class V, class ... T, int ... i> inline constexpr auto
+template <class V, class ... T, int ... i> constexpr auto
 expr_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
     return expr(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
 }
 
-template <class Op, class ... P> inline constexpr auto
+template <class Op, class ... P> constexpr auto
 expr(Op && op, P && ... p)
 {
     if constexpr (is_verb<Op>) {
@@ -234,7 +234,7 @@ expr(Op && op, P && ... p)
     }
 }
 
-template <class Op, class ... A> inline constexpr auto
+template <class Op, class ... A> constexpr auto
 map(Op && op, A && ... a)
 {
     return expr(std::forward<Op>(op), start(std::forward<A>(a)) ...);
@@ -245,26 +245,26 @@ map(Op && op, A && ... a)
 // explicit agreement checks. FIXME provide separate agree_s().
 // ---------------
 
-template <class ... P> inline constexpr bool
+template <class ... P> constexpr bool
 agree(P && ... p)
 {
     return agree_(ra::start(std::forward<P>(p)) ...);
 }
 
-template <class Op, class ... P> inline constexpr bool
+template <class Op, class ... P> constexpr bool
 agree_op(Op && op, P && ... p)
 {
     return agree_op_(std::forward<Op>(op), ra::start(std::forward<P>(p)) ...);
 }
 
-template <class ... P> inline constexpr bool
+template <class ... P> constexpr bool
 agree_(P && ... p)
 {
     using Match_ = Match<false, std::tuple<P ...>>;
     return check_expr<false>(Match_ { std::forward<P>(p) ... });
 }
 
-template <class Op, class ... P> inline constexpr bool
+template <class Op, class ... P> constexpr bool
 agree_op_(Op && op, P && ... p)
 {
     if constexpr (is_verb<Op>) {
@@ -274,7 +274,7 @@ agree_op_(Op && op, P && ... p)
     }
 }
 
-template <class V, class ... T, int ... i> inline constexpr bool
+template <class V, class ... T, int ... i> constexpr bool
 agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;

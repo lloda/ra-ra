@@ -21,7 +21,7 @@ using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, s
     std::swap, std::isfinite, std::isinf, std::lerp;
 
 #define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>)
-#define RA_REAL_OVERLOAD_CE(T) template <class T> requires (RA_IS_REAL(T)) inline constexpr T
+#define RA_REAL_OVERLOAD_CE(T) template <class T> requires (RA_IS_REAL(T)) constexpr T
 // As an array op; special definitions for rank 0.
 RA_REAL_OVERLOAD_CE(T) arg(T const x) { return 0; }
 RA_REAL_OVERLOAD_CE(T) amax(T const x) { return x; }
@@ -36,12 +36,12 @@ RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
 #undef RA_IS_REAL
 
 #define FOR_FLOAT(T)                                                    \
-    inline constexpr T mul_conj(T const x, T const y)  { return x*y; }  \
-    inline constexpr T sqrm(T const x, T const y)      { return sqrm(x-y); } \
-    inline constexpr T dot(T const x, T const y)       { return x*y; }  \
-    inline constexpr T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } \
-    inline constexpr T norm2(T const x, T const y)     { return std::abs(x-y); } \
-    inline constexpr T abs(T const x, T const y)       { return std::abs(x-y); } \
-    inline constexpr T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
+    constexpr T mul_conj(T const x, T const y)  { return x*y; }  \
+    constexpr T sqrm(T const x, T const y)      { return sqrm(x-y); } \
+    constexpr T dot(T const x, T const y)       { return x*y; }  \
+    constexpr T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } \
+    constexpr T norm2(T const x, T const y)     { return std::abs(x-y); } \
+    constexpr T abs(T const x, T const y)       { return std::abs(x-y); } \
+    constexpr T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT

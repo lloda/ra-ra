@@ -12,8 +12,8 @@
 
 namespace ra {
 
-inline constexpr
-bool gt_rank(rank_t ra, rank_t rb)
+constexpr bool
+gt_rank(rank_t ra, rank_t rb)
 {
     return rb==RANK_BAD
              ? 1
@@ -26,8 +26,8 @@ bool gt_rank(rank_t ra, rank_t rb)
                      : ra>=rb;
 }
 
-inline constexpr
-bool gt_len(dim_t sa, dim_t sb)
+constexpr bool
+gt_len(dim_t sa, dim_t sb)
 {
     return sb==DIM_BAD
              ? 1
@@ -39,24 +39,24 @@ bool gt_len(dim_t sa, dim_t sb)
 }
 
 // TODO Allow infinite rank; need a special value of crank for that.
-inline constexpr
-rank_t dependent_cell_rank(rank_t rank, rank_t crank)
+constexpr rank_t
+dependent_cell_rank(rank_t rank, rank_t crank)
 {
     return crank>=0 ? crank // not dependent
         : rank==RANK_ANY ? RANK_ANY // defer
         : (rank+crank);
 }
 
-inline constexpr
-rank_t dependent_frame_rank(rank_t rank, rank_t crank)
+constexpr rank_t
+dependent_frame_rank(rank_t rank, rank_t crank)
 {
     return rank==RANK_ANY ? RANK_ANY // defer
         : crank>=0 ? (rank-crank) // not dependent
         : -crank;
 }
 
-inline constexpr
-dim_t choose_len(dim_t sa, dim_t sb)
+constexpr dim_t
+choose_len(dim_t sa, dim_t sb)
 {
     if (sa==DIM_BAD) {
         return sb;
@@ -72,7 +72,7 @@ dim_t choose_len(dim_t sa, dim_t sb)
 // ct mismatch, abort (FIXME) | ct match, return 0 | rt check needed, return 1
 
 template <class E>
-inline constexpr int
+constexpr int
 check_expr_s()
 {
     using T = typename E::T;
@@ -116,7 +116,7 @@ check_expr_s()
 }
 
 template <bool fail, class E>
-inline constexpr bool
+constexpr bool
 check_expr(E const & e)
 {
     auto fi = [&e](auto && fi, int k, auto i_, int sk)

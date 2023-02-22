@@ -45,21 +45,21 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::num
 
 template <class I, class J>
 requires (is_iota<I> && iota_op<J>)
-inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).len_, ITEM(0).i_+ITEM(1), ITEM(0).step_);
 }
 
 template <class I, class J>
 requires (iota_op<I> && is_iota<J>)
-inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).len_, ITEM(0)+ITEM(1).i_, ITEM(1).step_);
 }
 
 template <class I, class J>
 requires (is_iota<I> && is_iota<J>)
-inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
     RA_CHECK(ITEM(0).len_==ITEM(1).len_ && "len mismatch");
     return iota(ITEM(0).len_, ITEM(0).i_+ITEM(1).i_, ITEM(0).step_+ITEM(1).step_);
@@ -71,21 +71,21 @@ inline constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 
 template <class I, class J>
 requires (is_iota<I> && iota_op<J>)
-inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).len_, ITEM(0).i_-ITEM(1), ITEM(0).step_);
 }
 
 template <class I, class J>
 requires (iota_op<I> && is_iota<J>)
-inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).len_, ITEM(0)-ITEM(1).i_, -ITEM(1).step_);
 }
 
 template <class I, class J>
 requires (is_iota<I> && is_iota<J>)
-inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
     RA_CHECK(ITEM(0).len_==ITEM(1).len_ && "len mismatch");
     return iota(ITEM(0).len_, ITEM(0).i_-ITEM(1).i_, ITEM(0).step_-ITEM(1).step_);
@@ -97,14 +97,14 @@ inline constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 
 template <class I, class J>
 requires (is_iota<I> && iota_op<J>)
-inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
     return iota(ITEM(0).len_, ITEM(0).i_*ITEM(1), ITEM(0).step_*ITEM(1));
 }
 
 template <class I, class J>
 requires (iota_op<I> && is_iota<J>)
-inline constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
+constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
     return iota(ITEM(1).len_, ITEM(0)*ITEM(1).i_, ITEM(0)*ITEM(1).step_);
 }

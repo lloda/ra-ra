@@ -25,7 +25,8 @@ struct TestRecorder
 
 // ra::amax ignore nans in the way fmax etc. do, and we don't want that here.
     template <class A>
-    inline static auto amax_strict(A && a)
+    inline static auto
+    amax_strict(A && a)
     {
         using std::max;
         using T = value_t<A>;

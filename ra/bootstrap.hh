@@ -33,7 +33,7 @@ constexpr int VERSION = 19;
 static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
-// Negative numbers are used in some places as 'frame rank' in contratst to 'cell rank', so these numbers limit the rank that ra:: can handle besides the range of rank_t.
+// Negative numbers are used in some places as 'frame rank' in contrast to 'cell rank', so these numbers limit the rank that ra:: can handle besides the range of rank_t.
 constexpr dim_t DIM_ANY = -1099999444;
 constexpr dim_t DIM_BAD = -1099999888;
 constexpr rank_t RANK_ANY = -1099999444;
@@ -100,7 +100,7 @@ concept SliceConcept = requires (A a)
 // other types, forward decl
 // ---------------------
 
-enum none_t { none }; // used in array constructors to mean ‘don't initalize’.
+enum none_t { none }; // used in array constructors to mean ‘don't initialize’.
 struct no_arg {}; // used in array constructors to mean ‘don't instantiate’
 
 template <class C> struct Scalar; // for type predicates
@@ -147,16 +147,16 @@ struct CellFlat
 };
 
 // Common to View / SmallBase. TODO Shouldn't it work on ... foreign vectors? arbitrary exprs?
-template <int cell_rank, class A> inline constexpr auto
+template <int cell_rank, class A> constexpr auto
 iter(A && a) { return std::forward<A>(a).template iter<cell_rank>(); }
 
 // Used in big.hh (selectors, etc).
-template <class A, class ... I> inline constexpr auto from(A && a, I && ... i);
+template <class A, class ... I> constexpr auto from(A && a, I && ... i);
 
 // Extended in operators.hh. TODO All users be int, then this take int.
-inline constexpr bool any(bool const x) { return x; }
-inline constexpr bool every(bool const x) { return x; }
-inline constexpr bool odd(unsigned int N) { return N & 1; }
+constexpr bool any(bool const x) { return x; }
+constexpr bool every(bool const x) { return x; }
+constexpr bool odd(unsigned int N) { return N & 1; }
 
 
 // ---------------------
