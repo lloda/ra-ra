@@ -1,14 +1,11 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/examples - Customize ra:: reaction to errors.
+// ra-ra/test - Check bad cell ranks
 
-// (c) Daniel Llorens - 2019-2022
+// (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
-#include <exception>
-#include <string>
 
 // "ra/format.hh" doesn't depend directly on RA_ASSERT, so the following override is able to use ra::format.
 
@@ -29,24 +26,24 @@ struct ra_error: public std::exception
 
 // The override will be in effect for the rest of ra::.
 
-#include "ra/ra.hh"
 #include "ra/test.hh"
 #include <iostream>
 
-using std::cout, std::endl, ra::TestRecorder;
-
 int main()
 {
-    TestRecorder tr(cout);
-    bool yes = false;
-    ra::Big<int> a({2, 3}, 9);
-    std::string msg;
-    try {
-        cout << a(2, 3) << endl;
-    } catch (ra_error & e) {
-        msg = e.what();
-        yes = true;
+    ra::TestRecorder tr;
+    tr.section("Bad cell rank");
+    {
+        bool yes = false;
+        ra::Big<int> a0 = 0;
+        std::string msg;
+        try {
+            std::cout << ra::iter<1>(a0) << std::endl;
+        } catch (ra_error & e) {
+            msg = e.what();
+            yes = true;
+        }
+        tr.info(msg).test(yes);
     }
-    tr.info(msg).test(yes);
     return tr.summary();
 }

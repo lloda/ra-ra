@@ -71,7 +71,7 @@ inline std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
     if (dim_t n; !((i >> n).fail())) {
-        RA_CHECK(n>=0 && "negative sizes in input");
+        RA_CHECK(n>=0, "negative sizes in input: ", n);
         c.resize(n);
         for (auto & ci: c) { i >> ci; }
     }
@@ -85,7 +85,7 @@ operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
         std::decay_t<C> cc(s, ra::none);
-        RA_CHECK(every(start(s)>=0), "negative sizes in input ", s);
+        RA_CHECK(every(start(s)>=0), "negative sizes in input: ", s);
 // avoid copying in case Container's elements don't support it.
         swap(c, cc);
 // need row-major, serial iteration here. FIXME use ra:: traversal.

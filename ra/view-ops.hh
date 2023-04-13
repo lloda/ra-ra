@@ -60,8 +60,8 @@ View<T, RANK_ANY> transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> c
 template <int ... Iarg, class T, rank_t RANK> inline
 auto transpose(View<T, RANK> const & view)
 {
-    static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "bad output rank");
-    RA_CHECK((view.rank()==sizeof...(Iarg)) && "bad output rank");
+    static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "Bad output rank.");
+    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank: ", view.rank(), "should be ", (sizeof...(Iarg)), ".");
 
     using dummy_s = mp::makelist<sizeof...(Iarg), mp::int_t<0>>;
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
@@ -124,10 +124,10 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
             dim_t quot = lb;
             for (int j=i+1; j<ra::size(sb); ++j) {
                 quot *= sb[j];
-                RA_CHECK(quot>0 && "cannot deduce dimensions");
+                RA_CHECK(quot>0, "Cannot deduce dimensions.");
             }
             auto pv = la/quot;
-            RA_CHECK((la%quot==0 && pv>=0) && "bad placeholder");
+            RA_CHECK((la%quot==0 && pv>=0), "Bad placeholder.");
             sb[i] = pv;
             lb = la;
             break;
@@ -193,7 +193,7 @@ stencil(View<T, N> const & a, LO && lo, HI && hi)
     RA_CHECK(every(hi>=0));
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
              {
-                 RA_CHECK(dima.len>=lo+hi && "stencil is too large for array");
+                 RA_CHECK(dima.len>=lo+hi, "Stencil is too large for array.");
                  dims = {dima.len-lo-hi, dima.step};
              },
              ptr(s.dimv.data()), a.dimv, lo, hi);
@@ -209,19 +209,19 @@ auto explode_(View<T, RANK> const & a)
 {
 // TODO Reduce to single check, either the first or the second.
     static_assert(RANK>=SUPERR || RANK==RANK_ANY, "rank of a is too low");
-    RA_CHECK(a.rank()>=SUPERR && "rank of a is too low");
+    RA_CHECK(a.rank()>=SUPERR, "Rank of a ", a.rank(), " should be at least ", SUPERR, ".");
     View<super_t, rank_sum(RANK, -SUPERR)> b;
     ra::resize(b.dimv, a.rank()-SUPERR);
     dim_t r = 1;
     for (int i=0; i<SUPERR; ++i) {
         r *= a.len(i+b.rank());
     }
-    RA_CHECK(r*sizeof(T)==sizeof(super_t) && "len of SUPERR axes doesn't match super type");
+    RA_CHECK(r*sizeof(T)==sizeof(super_t), "Length of axes ", r*sizeof(T), " doesn't match type ", sizeof(super_t), ".");
     for (int i=0; i<b.rank(); ++i) {
-        RA_CHECK(a.step(i) % r==0 && "step of SUPERR axes doesn't match super type");
+        RA_CHECK(a.step(i) % r==0, "Step of axes ", a.step(i), " doesn't match type ", r, " on axis ", i, ".");
         b.dimv[i] = { .len = a.len(i), .step = a.step(i) / r };
     }
-    RA_CHECK((b.rank()==0 || a.step(b.rank()-1)==r) && "super type is not compact in array");
+    RA_CHECK((b.rank()==0 || a.step(b.rank()-1)==r), "Super type is not compact in array.");
     b.p = reinterpret_cast<super_t *>(a.data());
     return b;
 }
@@ -257,7 +257,7 @@ auto collapse(View<super_t, RANK> const & a)
     constexpr int s = sizeof(sub_t)/sizeof(sub_v);
     static_assert(t*sizeof(sub_v)>=1, "bad subtype");
     for (int i=0; i<SUBR; ++i) {
-        RA_CHECK(((gstep<super_t>(i)/s)*s==gstep<super_t>(i)) && "bad steps"); // TODO is actually static
+        RA_CHECK(((gstep<super_t>(i)/s)*s==gstep<super_t>(i)), "Bad steps."); // TODO is actually static
         b.dimv[a.rank()+i] = { .len = glen<super_t>(i), .step = gstep<super_t>(i) / s * t };
     }
     if (subtype>1) {

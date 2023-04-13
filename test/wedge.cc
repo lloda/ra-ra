@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file wedge-product.cc
-/// @brief Test generic wedge product with compile-time dimensions.
+// ra-ra/test - Test generic wedge product with compile-time dimensions.
 
 // (c) Daniel Llorens - 2008-2010, 2015
 // This library is free software; you can redistribute it and/or modify it under

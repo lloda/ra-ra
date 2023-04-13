@@ -96,9 +96,12 @@ struct cell_iterator_big
 // see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
         c.p = p_;
         rank_t cellr = dependent_cell_rank(rank_t(dimv.size()), cellr_spec);
+        if constexpr (RANK_ANY==rank_s()) {
+            RA_CHECK(rank>=0, "bad cell rank (array rank ", dimv.size(), ", cell rank ", cellr, ").");
+        }
         resize(c.dimv, cellr);
         for (int k=0; k<cellr; ++k) {
-            c.dimv[k] = dimv_[k+rank];
+            c.dimv[k] = dimv_[rank+k];
         }
     }
 

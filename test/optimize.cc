@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file optimize.cc
-/// @brief Check that ra::optimize() does what it's supposed to do.
+// ra-ra/test - Check that ra::optimize() does what it's supposed to do.
 
 // (c) Daniel Llorens - 2014-2016
 // This library is free software; you can redistribute it and/or modify it under

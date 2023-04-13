@@ -61,7 +61,7 @@ template <class I, class J>
 requires (is_iota<I> && is_iota<J>)
 constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    RA_CHECK(ITEM(0).len_==ITEM(1).len_ && "len mismatch");
+    RA_CHECK(ITEM(0).len_==ITEM(1).len_, "Length mismatch: ", ITEM(0).len_, " ", ITEM(1).len_, ".");
     return iota(ITEM(0).len_, ITEM(0).i_+ITEM(1).i_, ITEM(0).step_+ITEM(1).step_);
 }
 
@@ -87,7 +87,7 @@ template <class I, class J>
 requires (is_iota<I> && is_iota<J>)
 constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    RA_CHECK(ITEM(0).len_==ITEM(1).len_ && "len mismatch");
+    RA_CHECK(ITEM(0).len_==ITEM(1).len_, "Length mismatch: ", ITEM(0).len_, " ", ITEM(1).len_, ".");
     return iota(ITEM(0).len_, ITEM(0).i_-ITEM(1).i_, ITEM(0).step_-ITEM(1).step_);
 }
 
