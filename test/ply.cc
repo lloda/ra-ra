@@ -298,7 +298,7 @@ int main()
         ra::Unique<int, 1> b({3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
 #define TEST(plier)                                                     \
-        tr.section(STRINGIZE(plier));                                      \
+        tr.section(STRINGIZE(plier));                                   \
         {                                                               \
             std::fill(b.begin(), b.end(), 0);                           \
             real check[3] = { 2, 3, 1 };                                \

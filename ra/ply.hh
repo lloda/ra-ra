@@ -37,10 +37,12 @@ ply_ravel(A && a)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wvla-larger-than="
     rank_t order[rank];
+    dim_t sha[rank], ind[rank];
 #pragma GCC diagnostic pop
 #else
     assert(rank>=0);
     rank_t order[rank];
+    dim_t sha[rank], ind[rank];
 #endif
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
@@ -65,7 +67,6 @@ ply_ravel(A && a)
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
-    dim_t sha[rank], ind[rank];
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
         sha[k] = a.len(ocd[k]);
