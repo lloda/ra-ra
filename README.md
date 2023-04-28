@@ -71,24 +71,11 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 
 **ra-ra** requires support for `-std=c++20`, including `<source_location>`. The most recent versions tested are:
 
-* gcc 12.2: `95ac2014bfd86cbc27e3d151f55abaceef628de4` (`-std=c++2b`)
-* gcc 11.3: `95ac2014bfd86cbc27e3d151f55abaceef628de4` (`-std=c++20`)
+* gcc 13.1: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++2b`)
+* gcc 12.2: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++2b`)
+* gcc 11.3: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++20`)
 
-Clang doesn't currently work (last version I've tried is Clang 10) but the code is meant to be standard C++.
-
-<!-- All the tests pass under clang++-7.0 [trunk 322817, tested on Linux] except for: -->
-
-<!-- * [bench/bench-pack.cc](bench/bench-pack.cc), crashes clang. -->
-<!-- * [test/iterator-small.cc](test/iterator-small.cc), crashes clang. -->
-<!-- * [test/optimize.cc](test/optimize.cc), gives compilation errors. -->
-
-<!-- For clang on OS X you have to remove the `-Wa,-q` option in SConstruct which is meant for gcc by setting CCFLAGS to something else, say: -->
-
-<!--   ``` -->
-<!--   CCFLAGS="-march=native" CXXFLAGS=-O3 CXX=clang++ scons -j4 -->
-<!--   ``` -->
-
-<!-- I haven't tested on Windows. If you can do that, I'd appreciate a report! -->
+It's not practical for me to test Clang systematically, so some snags with that are likely, but the code is meant to be standard C++.
 
 #### Notes
 
