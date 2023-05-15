@@ -3,11 +3,11 @@
 
 **ra-ra** is a C++20, header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net).
 
-Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in modern C++ there's very little you can do with those, and a separate library is required for any practical endeavor.
+Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in modern C++ there's very little you can do with those, and anything practical requires a separate library.
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by Blitz++) to delay the execution of expressions involving large array operands, and in this way avoid the unnecessary creation of large temporary array objects.
 
-**ra-ra** tries to distinguish itself from established C++ libraries in this space (such as [Eigen](https://eigen.tuxfamily.org) or [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html)) by being more APLish, more general, smaller, and more hackable.
+**ra-ra** is small (about 6k loc), easy to extend, and generic — there are no arbitrary type restrictions or limits on rank or argument count.
 
 In this example ([examples/readme.cc](examples/readme.cc)), we add each element of a vector to each row of a matrix, and then print the result.
 
@@ -48,7 +48,6 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Axis insertion (e.g. for broadcasting).
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
-* Multidimensional `operator[]` (with C++23).
 * Many predefined array operations. Adding yours is trivial.
 
 `constexpr` is suported as much as possible. For example:
@@ -75,13 +74,13 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 * gcc 12.2: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++2b`)
 * gcc 11.3: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++20`)
 
-It's not practical for me to test Clang systematically, so some snags with that are likely, but the code is meant to be standard C++.
+It's not practical for me to test Clang systematically, so some snags with that are likely.
 
 #### Notes
 
 * Both index and size types are signed. Index base is 0.
 * Default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
-* The selection (subscripting) operator is `()`. `[]` means exactly the same as `()`, except that it accepts exactly one argument. Multi-argument `[]` requires `-std=c++2b`.
+* The selection (subscripting) operator is `()` or `[]` indistinctly. Multi-argument `[]` requires `-std=c++2b`.
 * Indices are checked by default. This can be disabled with a compilation flag.
 * **ra-ra** doesn't itself use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
 
@@ -93,7 +92,7 @@ It's not practical for me to test Clang systematically, so some snags with that 
 * Handling of nested (‘ragged’) arrays is inconsistent.
 * No SIMD to speak of.
 
-Please have a look at TODO for a concrete list of known bugs.
+Please see the TODO file for a concrete list of known bugs.
 
 #### Out of scope
 
@@ -104,13 +103,13 @@ Please have a look at TODO for a concrete list of known bugs.
 
 #### Motivation
 
-I do numerical work in C++, so I need a library of this kind. Most C++ array libraries seem to support only vectors and matrices, or small objects for low-dimensional vector algebra. Blitz++ was a great early *generic* array library (even though the focus was numerical) and it hasn't really been replaced as far as I can tell.
+I do numerical work in C++, so I need a library of this kind. At the time of C++11 when I started writing it, most C++ array libraries seemed to support only vectors and matrices, or small objects for vector algebra.
 
-It was a heroic feat to write a library such as Blitz++ in C++ in the late 90s, even discounting the fragmented compiler landscape and the patchy support for the standard at that time. Variadic templates, lambdas, rvalue arguments, etc. make things *much* simpler, for the library writer as well as for the user.
+Blitz++ was a major inspiration as a *generic* library. But it was a heroic feat to write such a library in C++ in the late 90s. Variadic templates, lambdas, perfect forwarding, etc. make things *much* easier, for the library writer as well as for the user.
 
 From APL and J I've taken the rank extension mechanism, and perhaps an inclination for carrying each feature to its logical end.
 
-**ra-ra** wants to remain a simple library. I try not to second-guess the compiler and I don't stress performance as much as Blitz++ did. However, I'm wary of adding features that could become an obstacle if I ever tried to make things fast(er). I believe that the implementation of new traversal methods, or perhaps the optimization of specific expression patterns, should be possible without having to turn the library inside out.
+**ra-ra** wants to remain simple. I try not to second-guess the compiler and I don't stress performance as much as Blitz++ did. However, I'm wary of adding features that could become an obstacle if I ever tried to make things fast(er). I believe that the implementation of new traversal methods, or perhaps the optimization of specific expression patterns, should be possible without having to turn the library inside out.
 
 #### Other C++ array libraries
 
@@ -118,6 +117,7 @@ From APL and J I've taken the rank extension mechanism, and perhaps an inclinati
 * [Eigen](https://eigen.tuxfamily.org)
 * [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html)
 * [xtensor](https://github.com/QuantStack/xtensor)
+* [Adept](http://www.met.reading.ac.uk/clouds/adept/download.html)
 * [Towards a standard for a C++ multi-dimensional array library for scientific applications](http://www.met.reading.ac.uk/clouds/cpp_arrays/) Reviews a number of C++ array libraries, including **ra-ra** (2020-08).
 
 #### Links

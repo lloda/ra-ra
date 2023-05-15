@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Bug or not?
+// ra/test - Couple regressions with dynamic rank
 
 // (c) Daniel Llorens - 2013-2022
 // This library is free software; you can redistribute it and/or modify it under
@@ -48,7 +48,18 @@ int main()
             x = 2;
         }
         tr.info("caught error").test_eq(2, x);
-#undef EXPR
+    }
+    {
+        int x = 0;
+// initialization is to rank 1, size 0.
+        try {
+            ra::Big<int> a;
+            a = ra::Big<int, 1> { 1 };
+            x = 1;
+        } catch (ra_error & e) {
+            x = 2;
+        }
+        tr.info("uninitialized dynamic rank").test_eq(2, x);
     }
     return tr.summary();
 }

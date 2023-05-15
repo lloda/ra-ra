@@ -157,18 +157,13 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     }
 };
 
-template <class ... P>
-constexpr auto
-pick_in(P && ... p)
-{
-    return Pick<std::tuple<P ...>> { std::forward<P>(p) ... };
-}
+template <class ... P> Pick(P && ... p) -> Pick<std::tuple<P ...>>;
 
 template <class ... P>
 constexpr auto
 pick(P && ... p)
 {
-    return pick_in(start(std::forward<P>(p)) ...);
+    return Pick { start(std::forward<P>(p)) ... };
 }
 
 } // namespace ra
