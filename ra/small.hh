@@ -138,10 +138,7 @@ struct cell_iterator_small
     constexpr static dim_t len_s(int k) { RA_CHECK(inside(k, rank_s())); return V::len(k); }
     constexpr static dim_t len(int k) { RA_CHECK(inside(k, rank())); return V::len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? V::step(k) : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j)
-    {
-        return st*(z<rank() ? step(z) : 0)==(j<rank() ? step(j) : 0);
-    }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += (k<rank()) * step(k)*d; }
 
     constexpr auto flat() const

@@ -108,7 +108,6 @@ struct cell_iterator_big
     constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
     constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
-// FIXME handle z or j over rank()? check cell_iterator_small versions.
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += step(k)*d; }
 
@@ -121,7 +120,7 @@ struct cell_iterator_big
             return CellFlat<cell_type> { c };
         }
     }
-// Return type to allow either View & or View const & verb. Can't set self bc original p isn't kept. TODO Think this over.
+// Return type to allow either View & or View const & verb. Can't set self bc original p isn't kept. TODO ...?
 #define RA_CONST_OR_NOT(CONST)                                          \
     template <class I> constexpr                                        \
     decltype(auto) at(I const & i_) CONST                               \
