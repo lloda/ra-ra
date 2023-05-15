@@ -158,7 +158,8 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     T t;
 
 // TODO Maybe on ply? That would avoid the check flag and the agree_xxx() mess.
-    constexpr Match(P ... p_): t(std::forward<P>(p_) ...)
+    constexpr
+    Match(P ... p_): t(std::forward<P>(p_) ...)
     {
         if constexpr (check) {
             if constexpr (check_expr_s<Match>()) { // may fail
@@ -170,7 +171,8 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     template <class T> struct box { using type = T; };
 
 // rank of largest subexpr. This is true for either prefix or suffix match.
-    constexpr static rank_t rank_s()
+    constexpr static rank_t
+    rank_s()
     {
         return mp::fold_tuple(RANK_BAD, mp::map<box, T> {},
                               [](rank_t r, auto a)
@@ -179,7 +181,8 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
                                   return gt_rank(r, ar) ?  r : ar;
                               });
     }
-    constexpr rank_t rank() const
+    constexpr rank_t
+    rank() const
     {
         if constexpr (constexpr rank_t rs=rank_s(); rs==RANK_ANY) {
             return mp::fold_tuple(RANK_BAD, t,
@@ -195,7 +198,8 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     }
 
 // any size which is not DIM_BAD.
-    constexpr static dim_t len_s(int k)
+    constexpr static dim_t
+    len_s(int k)
     {
         dim_t s = mp::fold_tuple(DIM_BAD, mp::map<box, T> {},
                                  [&k](dim_t s, auto a)
@@ -215,7 +219,8 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     }
 
 // do early exit with fold_tuple (and with len_s(k)).
-    constexpr dim_t len(int k) const
+    constexpr dim_t
+    len(int k) const
     {
         if (dim_t ss=len_s(k); ss==DIM_ANY) {
             auto f = [this, &k](auto && f, auto i_)
@@ -245,22 +250,26 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
         }
     }
 
-    constexpr void adv(rank_t k, dim_t d)
+    constexpr void
+    adv(rank_t k, dim_t d)
     {
         (std::get<I>(t).adv(k, d), ...);
     }
 
-    constexpr auto step(int i) const
+    constexpr auto
+    step(int i) const
     {
         return std::make_tuple(std::get<I>(t).step(i) ...);
     }
 
-    constexpr bool keep_step(dim_t st, int z, int j) const
+    constexpr bool
+    keep_step(dim_t st, int z, int j) const
         requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...))
     {
         return (std::get<I>(t).keep_step(st, z, j) && ...);
     }
-    constexpr static bool keep_step(dim_t st, int z, int j)
+    constexpr static bool
+    keep_step(dim_t st, int z, int j)
         requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...)
     {
         return (std::decay_t<P>::keep_step(st, z, j) && ...);

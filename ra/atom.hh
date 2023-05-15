@@ -269,7 +269,7 @@ struct Vector
         p += (k==0) * d;
     }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -298,7 +298,7 @@ struct Ptr
         std::advance(p, (k==0) * d);
     }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -330,7 +330,7 @@ struct Span
         std::advance(p, (k==0) * d);
     }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return p; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -357,7 +357,7 @@ struct TensorIndex
 
     template <class I> constexpr dim_t at(I const & ii) const { return ii[w]; }
     constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, "Bad step ", d); i += (k==w) * d; }
-    constexpr static dim_t const step(int k) { return (k==w); }
+    constexpr static dim_t const step(int k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return Flat {i}; }
 };
@@ -393,8 +393,8 @@ struct Iota
 
     template <class I> constexpr T at(I const & i) { return i_ + T(i[0])*step_; }
     constexpr void adv(rank_t k, dim_t d) { i_ += T((k==0) * d) * step_; } // cf Vector::adv
-    constexpr static dim_t step(rank_t i) { return i==0 ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static dim_t step(rank_t k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return Flat { i_, step_ }; }
     decltype(auto) constexpr operator+=(T const & b) { i_ += b; return *this; };
     decltype(auto) constexpr operator-=(T const & b) { i_ -= b; return *this; };

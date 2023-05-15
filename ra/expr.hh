@@ -43,34 +43,40 @@ struct Reframe
         int l = orig(k);
         return l>=0 ? std::decay_t<A>::len_s(l) : DIM_BAD;
     }
-    constexpr dim_t len(int k) const
+    constexpr dim_t
+    len(int k) const
     {
         int l = orig(k);
         return l>=0 ? a.len(l) : DIM_BAD;
     }
-    constexpr void adv(rank_t k, dim_t d)
+    constexpr void
+    adv(rank_t k, dim_t d)
     {
         if (int l = orig(k); l>=0) {
             a.adv(l, d);
         }
     }
-    constexpr auto step(int k) const
+    constexpr auto
+    step(int k) const
     {
         int l = orig(k);
         return l>=0 ? a.step(l) : zerostep<decltype(a.step(l))>;
     }
-    constexpr bool keep_step(dim_t st, int z, int j) const
+    constexpr bool
+    keep_step(dim_t st, int z, int j) const
     {
         int wz = orig(z);
         int wj = orig(j);
         return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
     }
     template <class I>
-    constexpr decltype(auto) at(I const & i)
+    constexpr decltype(auto)
+    at(I const & i)
     {
         return a.at(mp::map_indices<std::array<dim_t, mp::len<Dest>>, Dest>(i));
     }
-    constexpr decltype(auto) flat() { return a.flat(); }
+    constexpr decltype(auto)
+    flat() { return a.flat(); }
 };
 
 // Optimize no-op case.
@@ -122,7 +128,7 @@ using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 template <class A, class B>
 struct max_i
 {
-    constexpr static int value = gt_rank(A::value, B::value) ? 0 : 1; // 0 if ra wins, else 1
+    constexpr static int value = gt_rank(A::value, B::value) ? 0 : 1;
 };
 
 // Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
@@ -151,7 +157,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 
 
 // ---------------------------
-// general expression template
+// general expression
 // ---------------------------
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
@@ -165,7 +171,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
         Op & op;
         T_ t;
         template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-// FIXME cannot figure out why gcc 12.1 flags this (-O3 only).
+// FIXME gcc 12.1 flags this (-O3 only).
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
         constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
