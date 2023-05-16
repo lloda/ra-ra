@@ -70,9 +70,9 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 
 **ra-ra** requires support for `-std=c++20`, including `<source_location>`. The most recent versions tested are:
 
-* gcc 13.1: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++2b`)
-* gcc 12.2: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++2b`)
-* gcc 11.3: `a7eb999ce5c68e33cd5ae2943cc330a33fa48419` (`-std=c++20`)
+* gcc 13.1: `f632865f35fefe9e8cf00558cdc75e17f9fb9c2a` (`-std=c++2b`)
+* gcc 12.2: `f632865f35fefe9e8cf00558cdc75e17f9fb9c2a` (`-std=c++2b`)
+* gcc 11.3: `f632865f35fefe9e8cf00558cdc75e17f9fb9c2a` (`-std=c++20`)
 
 It's not practical for me to test Clang systematically, so some snags with that are likely.
 

@@ -800,18 +800,22 @@ Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
 // Obtain concrete type from array expression.
 // --------------------
 
-template <class E> struct concrete_type_def_1;
+template <class E>
+struct concrete_type_def
+{
+    using type = void;
+};
 
 template <class E>
 requires (size_s<E>()==DIM_ANY)
-struct concrete_type_def_1<E>
+struct concrete_type_def<E>
 {
     using type = Big<value_t<E>, rank_s<E>()>;
 };
 
 template <class E>
 requires (size_s<E>()!=DIM_ANY)
-struct concrete_type_def_1<E>
+struct concrete_type_def<E>
 {
     template <class I> struct T;
     template <int ... I> struct T<mp::int_list<I ...>>
@@ -821,39 +825,16 @@ struct concrete_type_def_1<E>
     using type = typename T<mp::iota<rank_s<E>()>>::type;
 };
 
-template <class E> struct concrete_type_def;
-
-// Treat unregistered types as scalars. FIXME (in bootstrap.hh).
-
+// Scalars are their own concrete_type. Treat unregistered types as scalars. FIXME (in bootstrap.hh).
 template <class E>
-requires (0==rank_s<E>() && !(requires { std::decay_t<E>::rank_s(); }))
-struct concrete_type_def<E>
-{
-    using type = std::decay_t<E>;
-};
+using concrete_type = std::decay_t<
+    std::conditional_t<
+        (0==rank_s<E>() && !(requires { std::decay_t<E>::rank_s(); })) || is_scalar<E>,
+        std::decay_t<E>,
+        typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>
+    >;
 
-template <class E>
-requires (0!=rank_s<E>() || requires { std::decay_t<E>::rank_s(); })
-struct concrete_type_def<E>
-{
-    using type = std::conditional_t<
-        is_scalar<E>,
-        std::decay_t<E>, // scalars are their own concrete_type.
-        typename concrete_type_def_1<std::decay_t<decltype(start(std::declval<E>()))>>::type>;
-};
-
-template <class E> using concrete_type = std::decay_t<typename concrete_type_def<E>::type>;
 template <class E> inline auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
-
-template <class E, class X> inline auto
-with_same_shape(E && e, X && x)
-{
-    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
-        return concrete_type<E>(std::forward<X>(x));
-    } else {
-        return concrete_type<E>(ra::shape(e), std::forward<X>(x));
-    }
-}
 
 template <class E> inline auto
 with_same_shape(E && e)
@@ -862,6 +843,16 @@ with_same_shape(E && e)
         return concrete_type<E>();
     } else {
         return concrete_type<E>(ra::shape(e), ra::none);
+    }
+}
+
+template <class E, class X> inline auto
+with_same_shape(E && e, X && x)
+{
+    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+        return concrete_type<E>(std::forward<X>(x));
+    } else {
+        return concrete_type<E>(ra::shape(e), std::forward<X>(x));
     }
 }
 

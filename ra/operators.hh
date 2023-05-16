@@ -37,10 +37,6 @@ template <int A> constexpr void iter(ra::no_arg) { abort(); }
 
 namespace ra {
 
-template <int D, int Oa, int Ob, class A, class B>
-requires (ra::is_scalar<A> && ra::is_scalar<B>)
-constexpr auto wedge(A const & a, B const & b) { return a*b; }
-
 template <int ... Iarg, class A>
 constexpr decltype(auto)
 transpose(mp::int_list<Iarg ...>, A && a)
@@ -122,7 +118,7 @@ from(A && a, I && ... i)
     }                                                                   \
     template <class A, class B>                                         \
     requires (ra_zero<A, B>)                                            \
-    constexpr auto operator OP(A && a, B && b)                   \
+    constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
     }
@@ -418,6 +414,10 @@ cdot(A && a, B && b)
 // Wedge product
 // TODO Handle the simplifications dot_plus, yields_scalar, etc. just as vec::wedge does.
 // --------------------
+
+template <int D, int Oa, int Ob, class A, class B>
+requires (ra::is_scalar<A> && ra::is_scalar<B>)
+constexpr auto wedge(A const & a, B const & b) { return a*b; }
 
 template <class A>
 struct torank1

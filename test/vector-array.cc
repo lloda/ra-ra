@@ -37,7 +37,9 @@ struct Vec
     decltype(v.begin()) p = v.begin();
 };
 
-template <class V> inline constexpr auto vec(V && v)
+template <class V>
+constexpr auto
+vec(V && v)
 {
     return Vec<V> { std::forward<V>(v) };
 }

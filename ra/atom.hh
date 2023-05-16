@@ -56,6 +56,7 @@ namespace ra {
 // --------------------
 
 template <class V>
+requires (!std::is_void_v<V>)
 constexpr dim_t
 rank_s()
 {
@@ -69,13 +70,14 @@ rank_s()
 }
 
 template <class V>
-inline  constexpr rank_t
+constexpr rank_t
 rank_s(V const &)
 {
     return rank_s<V>();
 }
 
 template <class V>
+requires (!std::is_void_v<V>)
 constexpr dim_t
 size_s()
 {
