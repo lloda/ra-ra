@@ -199,7 +199,8 @@ int main()
     }
     tr.section("adaptors II");
     {
-        static_assert(ra::is_ra_vector<decltype(ra::vector(std::array<int, 2> { 1, 2 }))>);
+        static_assert(ra::is_iterator<decltype(ra::vector(std::array { 1, 2 }))>);
+        static_assert(ra::is_iterator<decltype(ra::start(std::array { 1, 2 }))>);
     }
     return tr.summary();
 }

@@ -19,7 +19,8 @@ using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
 
 template <class AA, class CC>
-void iocheck(TestRecorder & tr, AA && a, CC && check)
+void
+iocheck(TestRecorder & tr, AA && a, CC && check)
 {
     std::ostringstream o;
     o << a;
@@ -139,7 +140,7 @@ int main()
     {
         std::ostringstream o;
         o << ra::format(std::string("once"), " ", std::array {1, 2, 3});
-        tr.test_eq(std::string("once 1 2 3"), o.str());
+        tr.info(o.str()).test_eq(std::string("once 1 2 3"), o.str());
     }
 // regression against lack of forwarding in ra::format(...)
     {

@@ -97,25 +97,6 @@ int main()
     {
         std::array a1 = {1, 2};
         std::vector a2 = {1, 2};
-        auto v1 = ra::vector(a1);
-        auto v2 = ra::vector(a2);
-
-        tr.test(std::is_reference_v<decltype(v1.v)>);
-        tr.test(std::is_reference_v<decltype(v2.v)>);
-
-        cout << "&(v1.v[0])   " << &(v1.v[0]) << endl;
-        cout << "&(v1.p[0]) " << &(v1.p[0]) << endl;
-        cout << "&v1          " << &v1 << endl;
-        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p[0])));
-        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(a1[0])));
-
-        cout << "&(v2.v[0])   " << &(v2.v[0]) << endl;
-        cout << "&(v2.p[0]) " << &(v2.p[0]) << endl;
-        cout << "&v2          " << &v2 << endl;
-        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p[0])));
-        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(a2[0])));
-
-        cout << "---------" << endl;
 
         for_each([](auto && a, auto && b) { a = b; }, ra::vector(a1), 99);
         tr.test_eq(99, ra::start(a1));
@@ -124,25 +105,6 @@ int main()
     {
         auto fun1 = []() { return std::array {7, 2}; };
         auto fun2 = []() { return std::vector {5, 2}; };
-        auto v1 = ra::vector(fun1());
-        auto v2 = ra::vector(fun2());
-
-        tr.test(!std::is_reference_v<decltype(v1.v)>);
-        tr.test(!std::is_reference_v<decltype(v2.v)>);
-
-        tr.test_eq(7, v1.v[0]);
-        tr.test_eq(7, v1.p[0]);
-        cout << "&(v1.v[0])   " << &(v1.v[0]) << endl;
-        cout << "&(v1.p[0]) " << &(v1.p[0]) << endl;
-        cout << "&v1          " << &v1 << endl;
-        tr.test_eq(ra::scalar(&(v1.v[0])), ra::scalar(&(v1.p[0])));
-
-        tr.test_eq(5, v2.v[0]);
-        tr.test_eq(5, v2.p[0]);
-        cout << "&(v2.v[0])   " << &(v2.v[0]) << endl;
-        cout << "&(v2.p[0]) " << &(v2.p[0]) << endl;
-        cout << "&v2          " << &v2 << endl;
-        tr.test_eq(ra::scalar(&(v2.v[0])), ra::scalar(&(v2.p[0])));
 
         tr.test_eq(ra::start({7, 2}), ra::vector(fun1()));
         tr.test_eq(ra::start({5, 2}), ra::vector(fun2()));
@@ -157,21 +119,21 @@ int main()
         tr.test_eq(1, a1[0]);
         tr.test_eq(11, a1[1]);
     }
-    {
-        auto fun1 = [](int a) { return std::array {a, a+10}; };
-// generally a bad idea so FIXME find a way to forbid this usage without breaking Expr/Pick.
-        auto v0 = ra::vector(fun1(0));
-        auto v1 = ra::vector(fun1(1));
-        v0 = v1;
-        tr.test_eq(1, v0.at(std::array { 0 }));
-        tr.test_eq(11, v0.at(std::array { 1 }));
-        tr.test_eq(1, v1.at(std::array { 0 }));
-        tr.test_eq(11, v1.at(std::array { 1 }));
-        v1 += v0;
-        tr.test_eq(1, v0.at(std::array { 0 }));
-        tr.test_eq(11, v0.at(std::array { 1 }));
-        tr.test_eq(2, v1.at(std::array { 0 }));
-        tr.test_eq(22, v1.at(std::array { 1 }));
-    }
+// This used to be supported, but it really made no sense. Now v0 is a read-only location so this will ct error [ra42]
+    // {
+    //     auto fun1 = [](int a) { return std::array {a, a+10}; };
+    //     auto v0 = ra::vector(fun1(0));
+    //     auto v1 = ra::vector(fun1(1));
+    //     v0 = v1;
+    //     tr.test_eq(1, v0.at(std::array { 0 }));
+    //     tr.test_eq(11, v0.at(std::array { 1 }));
+    //     tr.test_eq(1, v1.at(std::array { 0 }));
+    //     tr.test_eq(11, v1.at(std::array { 1 }));
+    //     v1 += v0;
+    //     tr.test_eq(1, v0.at(std::array { 0 }));
+    //     tr.test_eq(11, v0.at(std::array { 1 }));
+    //     tr.test_eq(2, v1.at(std::array { 0 }));
+    //     tr.test_eq(22, v1.at(std::array { 1 }));
+    // }
     return tr.summary();
 }

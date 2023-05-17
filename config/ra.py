@@ -18,8 +18,8 @@ from os.path import join, abspath, split
 from subprocess import call
 
 # Make sure to disable for benchmarks.
-SANITIZE = []
-# SANITIZE = ['-fsanitize=address']
+# SANITIZE = []
+SANITIZE = ['-fsanitize=address']
 
 CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
             '-fdiagnostics-color=always', '-Wno-unknown-pragmas',

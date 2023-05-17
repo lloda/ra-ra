@@ -304,7 +304,7 @@ int main()
             real check[3] = { 2, 3, 1 };                                \
             plier(expr([&a](int & b, int i) { b = a(i); }, b.iter(), ra::vector(std::array {1, 2, 0}))); \
             tr.info(STRINGIZE(plier) " std::array").test(std::equal(check, check+3, b.begin())); \
-            plier(expr([&a](int & b, int & i) { b = a(i); }, b.iter(), ra::vector(std::vector {1, 2, 0}))); \
+            plier(expr([&a](int & b, int i) { b = a(i); }, b.iter(), ra::vector(std::vector {1, 2, 0}))); \
             tr.info(STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
         }
         TEST(ply_ravel);

@@ -221,110 +221,29 @@ struct Scalar
 
 template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
-// Iterator for rank-1 foreign object. ra:: objects have their own Iterators.
-template <class V>
-requires (requires (V v) { { std::ssize(v) } -> std::signed_integral; } &&
-          requires (V v) { { std::begin(v) } -> std::random_access_iterator; })
-struct Vector
-{
-    V v;
-// Using std::begin() and size_s together is inconsistent (FIXME). Limit to rank 1 types to prevent trouble.
-    static_assert(1==rank_s<V>());
-    decltype(std::begin(v)) p;
-    constexpr static dim_t ct_size = size_s<V>();
-    constexpr static rank_t rank_s() { return 1; };
-    constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k)
-    {
-        RA_CHECK(k==0, "Bad axis k ", k);
-        if constexpr (DIM_ANY==ct_size) { return DIM_ANY; } else { return ct_size; };
-    }
-    constexpr dim_t len(int k) const
-    {
-        RA_CHECK(k==0, "Bad axis k ", k);
-        if constexpr (DIM_ANY==ct_size) { return ra::size(v); } else { return ct_size; };
-    }
-
-// [ra1] test/ra-9.cc
-    constexpr Vector(V && v_): v(std::forward<V>(v_)), p(std::begin(v)) {}
-// [ra35] test/ra-9.cc
-    constexpr Vector(Vector const & a) requires (!std::is_reference_v<V>): v(std::move(a.v)), p(std::begin(v)) {};
-    constexpr Vector(Vector && a) requires (!std::is_reference_v<V>): v(std::move(a.v)), p(std::begin(v)) {};
-    constexpr Vector(Vector const & a) requires (std::is_reference_v<V>) = default;
-    constexpr Vector(Vector && a) requires (std::is_reference_v<V>) = default;
-// cf RA_DEF_ASSIGNOPS_SELF
-    Vector & operator=(Vector const & a) requires (!std::is_reference_v<V>) { v = std::move(a.v); p = std::begin(v); }
-    Vector & operator=(Vector && a) requires (!std::is_reference_v<V>) { v = std::move(a.v); p = std::begin(v); }
-    Vector & operator=(Vector const & a) requires (std::is_reference_v<V>) { v = a.v; p = std::begin(v); return *this; };
-    Vector & operator=(Vector && a) requires (std::is_reference_v<V>) { v = a.v; p = std::begin(v); return *this; };
-
-    template <class I>
-    constexpr decltype(auto) at(I const & i)
-    {
-        RA_CHECK(inside(i[0], std::ssize(v)), "Bad index i ", i[0], " size ", std::ssize(v));
-        return p[i[0]];
-    }
-    constexpr void adv(rank_t k, dim_t d)
-    {
-// k>0 happens on frame-matching when the axes k>0 can't be unrolled [ra3]
-// k==0 && d!=1 happens on turning back at end of ply.
-        RA_CHECK(d==1 || d<=0, "Bad step k ", k, " d ", d);
-        p += (k==0) * d;
-    }
-    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr auto flat() const { return p; }
-
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
-};
-
-template <class V> constexpr auto vector(V && v) { return Vector<V>(std::forward<V>(v)); }
-
-template <std::random_access_iterator P>
+template <std::random_access_iterator P, dim_t N>
 struct Ptr
 {
     P p;
+    std::conditional_t<N==DIM_ANY, dim_t, mp::int_t<N>> n;
 
+    static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
+    constexpr Ptr(P p) requires (N!=DIM_ANY): p(p) {}
+    constexpr Ptr(P p, dim_t n) requires (N==DIM_ANY): p(p), n(n) {}
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_BAD; }
-    constexpr static dim_t len(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_BAD; }
-
-    template <class I>
-    constexpr decltype(auto) at(I && i)
-    {
-        return p[i[0]];
-    }
-    constexpr void adv(rank_t k, dim_t d)
-    {
-        RA_CHECK(d==1 || d<=0, "Bad step k ", k, " d ", d);
-        std::advance(p, (k==0) * d);
-    }
-    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr auto flat() const { return p; }
-
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
-};
-
-template <class I> inline auto ptr(I i) { return Ptr<I> { i }; }
-
-// Same as Ptr, just with a size. For stuff like initializer_list that has size but no storage.
-template <std::random_access_iterator P>
-struct Span
-{
-    P p;
-    dim_t n_;
-
-    constexpr static rank_t rank_s() { return 1; };
-    constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_ANY; }
-    constexpr dim_t len(int k) const { RA_CHECK(k==0, "Bad axis k ", k); return n_; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return N; }
+    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k==0, "Bad axis k ", k); return N; }
+    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k==0, "Bad axis k ", k); return n; }
 
     template <class I>
     decltype(auto) at(I const & i)
     {
-        RA_CHECK(inside(i[0], n_), " i ", i[0], " size ", n_);
+        if constexpr (N==DIM_ANY) {
+            RA_CHECK(inside(i[0], n), " i ", i[0], " size ", n);
+        } else if constexpr (N!=DIM_BAD) {
+            RA_CHECK(inside(i[0], N), " i ", i[0], " size ", N);
+        }
         return p[i[0]];
     }
     constexpr void adv(rank_t k, dim_t d)
@@ -336,10 +255,25 @@ struct Span
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return p; }
 
+    RA_DEF_ASSIGNOPS_SELF(Ptr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
-template <class I> inline auto ptr(I i, dim_t n) { return Span<I> { i, n }; }
+template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
+template <class I, int N> constexpr auto ptr(I i, mp::int_t<N>) { return Ptr<I, N> { i }; }
+template <class I> constexpr auto ptr(I i, dim_t n) { return Ptr<I, DIM_ANY> { i, n }; }
+
+template <class V> constexpr auto
+vector(V && v)
+{
+    constexpr dim_t ct_size = size_s<V>();
+// forward preserves rvalueness of v as constness of iterator.
+    if constexpr (DIM_ANY==ct_size) {
+        return ptr(std::begin(std::forward<V>(v)), std::ssize(v));
+    } else {
+        return ptr(std::begin(std::forward<V>(v)), mp::int_t<ct_size> {});
+    }
+}
 
 template <int w>
 struct TensorIndex
@@ -395,7 +329,7 @@ struct Iota
     constexpr dim_t len(int k) const { RA_CHECK(k==0, "Bad axis k ", k); return len_; }
 
     template <class I> constexpr T at(I const & i) { return i_ + T(i[0])*step_; }
-    constexpr void adv(rank_t k, dim_t d) { i_ += T((k==0) * d) * step_; } // cf Vector::adv
+    constexpr void adv(rank_t k, dim_t d) { i_ += T((k==0) * d) * step_; } // cf Span::adv
     constexpr static dim_t step(rank_t k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return Flat { i_, step_ }; }
@@ -413,77 +347,47 @@ iota(dim_t len, O org=0, S step=1)
 
 
 // --------------
-// Coerce potential Iterator
+// Coerce potential Iterators
 // --------------
 
 template <class T>
-constexpr void start(T && t)
-{
-    static_assert(!std::same_as<T, T>, "Type cannot be start()ed.");
-}
+constexpr void
+start(T && t) { static_assert(!std::same_as<T, T>, "Type cannot be start()ed."); }
 
 RA_IS_DEF(is_iota, (std::same_as<A, Iota<decltype(std::declval<A>().i_)>>))
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
-RA_IS_DEF(is_ra_vector, (std::same_as<A, Vector<decltype(std::declval<A>().v)>>))
 
 template <class T> requires (is_foreign_vector<T>)
 constexpr auto
-start(T && t)
-{
-    return ra::vector(std::forward<T>(t));
-}
+start(T && t) { return ra::vector(std::forward<T>(t)); }
 
 template <class T> requires (is_scalar<T>)
 constexpr auto
-start(T && t)
-{
-    return ra::scalar(std::forward<T>(t));
-}
+start(T && t) { return ra::scalar(std::forward<T>(t)); }
 
 template <class T>
 constexpr auto
-start(std::initializer_list<T> v)
-{
-    return ptr(v.begin(), v.size());
-}
+start(std::initializer_list<T> v) { return ptr(v.begin(), v.size()); }
 
 // forward declare for Match; implemented in small.hh.
 template <class T> requires (is_builtin_array<T>)
 constexpr auto
 start(T && t);
 
-// Neither cell_iterator_big nor cell_iterator_small will retain rvalues [ra4].
+// neither cell_iterator_big nor cell_iterator_small will retain rvalues [ra4].
 template <class T> requires (is_slice<T>)
 constexpr auto
-start(T && t)
-{
-    return iter<0>(std::forward<T>(t));
-}
+start(T && t) { return iter<0>(std::forward<T>(t)); }
 
-// Iterator (rather restart)
-
+// no op.
 template <class T> requires (is_ra_scalar<T>)
 constexpr decltype(auto)
-start(T && t)
-{
-    return std::forward<T>(t);
-}
+start(T && t) { return std::forward<T>(t); }
 
-// see [ra35] and Vector constructors above. Iterators need to be restarted on every use (eg ra::cross()).
-template <class T> requires (is_iterator<T> && !is_ra_scalar<T> && !is_ra_vector<T>)
+// iterators need to be restarted on every use (eg ra::cross()) [ra35].
+template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
-start(T && t)
-{
-    return std::forward<T>(t);
-}
-
-// restart iterator but do not copy data. This follows iter(View); Vector is just an interface adaptor [ra35].
-template <class T> requires (is_ra_vector<T>)
-constexpr auto
-start(T && t)
-{
-    return vector(t.v);
-}
+start(T && t) { return std::forward<T>(t); }
 
 
 // --------------------
