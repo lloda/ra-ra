@@ -44,7 +44,7 @@
 #define RA_DEF_ASSIGNOPS(OP)                                            \
     template <class X> constexpr void operator OP(X && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
 // But see local DEF_ASSIGNOPS elsewhere.
-#define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
+#define RA_DEF_ASSIGNOPS_DEFAULT_SET            \
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 
 // Restate RA_DEF_ASSIGNOPS for expression classes since the template doesn't replace the assignment ops.

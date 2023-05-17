@@ -24,9 +24,7 @@ namespace ra {
 // --------------
 
 // Traverse array expression looking to ravel the inner loop.
-// len(k) has a single value.
-// adv(k), step(k), keep_step(st, k, l) and flat() are used on all the leaf arguments.
-// The steps must give 0 for k>=their own rank, to allow frame matching.
+// step() must give 0 for k>=their own rank, to allow frame matching.
 template <IteratorConcept A>
 inline void
 ply_ravel(A && a)
@@ -107,36 +105,36 @@ constexpr void
 subindex(A & a, dim_t s, S const & ss0)
 {
     if constexpr (mp::len<order> == ravel_rank) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wstringop-overflow"
+#pragma GCC diagnostic warning "-Wstringop-overread"
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
             *p;
         }
-    } else if constexpr (mp::len<order> > ravel_rank) {
+#pragma GCC diagnostic pop
+    } else {
         dim_t size = a.len(mp::first<order>::value); // TODO Precompute these at the top
         for (dim_t i=0, iend=size; i<iend; ++i) {
             subindex<mp::drop1<order>, ravel_rank>(a, s, ss0);
             a.adv(mp::first<order>::value, 1);
         }
         a.adv(mp::first<order>::value, -size);
-    } else {
-        abort();
     }
 }
 
-// until() converts runtime jj into compile time j. TODO a.adv<k>().
+// convert runtime jj into compile time j. TODO a.adv<k>().
 template <class order, int j, class A, class S>
 constexpr void
 until(int const jj, A & a, dim_t const s, S const & ss0)
 {
-    if constexpr (mp::len<order> < j) {
-        assert(0 && "rank too high");
-    } else if constexpr (mp::len<order> >= j) {
+    if constexpr (mp::len<order> >= j) {
         if (jj==j) {
             subindex<order, j>(a, s, ss0);
         } else {
             until<order, j+1>(jj, a, s, ss0);
         }
     } else {
-        abort();
+        std::abort();
     }
 }
 

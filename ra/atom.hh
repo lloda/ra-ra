@@ -9,6 +9,7 @@
 
 #pragma once
 #include <vector>
+#include <utility>
 #include "bootstrap.hh"
 
 
@@ -204,8 +205,8 @@ struct Scalar
 
     constexpr static rank_t rank_s() { return 0; }
     constexpr static rank_t rank() { return 0; }
-    constexpr static dim_t len_s(int k) { return DIM_BAD; }
-    constexpr static dim_t len(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
+    constexpr static dim_t len_s(int k) { RA_CHECK(k<0, "Bad axis k ", k); std::abort(); }
+    constexpr static dim_t len(int k) { RA_CHECK(k<0, "Bad axis k ", k); std::abort(); }
 
     template <class I> constexpr decltype(auto) at(I const & i) { return c; }
     template <class I> constexpr decltype(auto) at(I const & i) const { return c; }
