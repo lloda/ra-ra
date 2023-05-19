@@ -181,7 +181,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     template <class ... P_> constexpr static auto
     flat(Op & op, P_ && ... p)
     {
-        return Flat<std::tuple<P_ ...>> { op, std::tuple<P_ ...> { std::forward<P_>(p) ... } };
+        return Flat<std::tuple<P_ ...>> { op, { std::forward<P_>(p) ... } };
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
@@ -193,15 +193,15 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     template <class J> constexpr decltype(auto)
-    at(J const & i)
+    at(J const & j)
     {
-        return op(std::get<I>(this->t).at(i) ...);
+        return op(std::get<I>(this->t).at(j) ...);
     }
 
     template <class J> constexpr decltype(auto)
-    at(J const & i) const
+    at(J const & j) const
     {
-        return op(std::get<I>(this->t).at(i) ...);
+        return op(std::get<I>(this->t).at(j) ...);
     }
 
     constexpr decltype(auto)
@@ -266,8 +266,7 @@ agree_op(Op && op, P && ... p)
 template <class ... P> constexpr bool
 agree_(P && ... p)
 {
-    using Match_ = Match<false, std::tuple<P ...>>;
-    return check_expr<false>(Match_ { std::forward<P>(p) ... });
+    return check_expr<false>(Match<false, std::tuple<P ...>> { std::forward<P>(p) ... });
 }
 
 template <class Op, class ... P> constexpr bool

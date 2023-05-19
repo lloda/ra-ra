@@ -14,10 +14,8 @@
 
 namespace ra {
 
-// Dope vector element
 struct Dim { dim_t len, step; };
 
-// For debugging
 inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
 { o << "[Dim " << dim.len << " " << dim.step << "]"; return o; }
 
