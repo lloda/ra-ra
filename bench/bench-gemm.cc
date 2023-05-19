@@ -86,6 +86,8 @@ lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
         order = CblasColMajor;
         ld = a.step(1);
     } else {
+        order = CblasRowMajor;
+        ld = 0;
         assert(0 && "not a BLAS-supported array");
     }
 }

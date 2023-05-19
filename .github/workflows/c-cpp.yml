@@ -8,8 +8,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  gcc11-opt00:
+  gcc11:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cxxflags: ['"-O3 -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0"',
+                   '"-O3 -std=c++20 -DRA_DO_OPT_SMALLVECTOR=1"',
+                   '"-O3 -DNDEBUG -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0"',
+                   '"-O3 -DRA_DO_CHECK=0 -DNDEBUG -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0"']
     steps:
     - uses: actions/checkout@v3
     - name: update
@@ -17,58 +23,7 @@ jobs:
          sudo apt update
          sudo apt install gcc-11 g++-11
     - name: configure
-      run: CXXFLAGS="-O3 -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0" cmake .
-      env:
-        CXX: g++-11
-        CC: gcc-11
-    - name: make
-      run: make
-    - name: make test
-      run: make test
-  gcc11-opt01:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: update
-      run: |
-         sudo apt update
-         sudo apt install gcc-11 g++-11
-    - name: configure
-      run: CXXFLAGS="-O3 -std=c++20 -DRA_DO_OPT_SMALLVECTOR=1" cmake .
-      env:
-        CXX: g++-11
-        CC: gcc-11
-    - name: make
-      run: make
-    - name: make test
-      run: make test
-  gcc11-opt02:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: update
-      run: |
-         sudo apt update
-         sudo apt install gcc-11 g++-11
-    - name: configure
-      run: CXXFLAGS="-O3 -DNDEBUG -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0" cmake .
-      env:
-        CXX: g++-11
-        CC: gcc-11
-    - name: make
-      run: make
-    - name: make test
-      run: make test
-  gcc11-opt03:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: update
-      run: |
-         sudo apt update
-         sudo apt install gcc-11 g++-11
-    - name: configure
-      run: CXXFLAGS="-O3 -DRA_DO_CHECK=0 -DNDEBUG -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0" cmake .
+      run: CXXFLAGS=${{matrix.cxxflags}} cmake .
       env:
         CXX: g++-11
         CC: gcc-11
