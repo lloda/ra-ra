@@ -10,26 +10,6 @@
 #include <numeric>
 #include <iostream>
 #include <iterator>
-#include "ra/format.hh"
-
-
-// -------------------------------------
-// bit from example/throw.cc which FIXME should be easier. Maybe an option in ra/macros.hh.
-
-struct ra_error: public std::exception
-{
-    std::string s;
-    template <class ... A> ra_error(A && ... a): s(ra::format(std::forward<A>(a) ...)) {}
-    virtual char const * what() const throw ()
-    {
-        return s.c_str();
-    }
-};
-
-#define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
-// -------------------------------------
-
 #include "ra/test.hh"
 #include "ra/complex.hh"
 
@@ -140,42 +120,6 @@ int main()
         tr.test_eq(2, a(1, 0));
         tr.test_eq(1, a(1, 1));
     }
-#define EXPR ra::expr(plus2real_print, a.iter(), b.iter())
-    tr.section("frame matching should-be-error cases");
-    {
-        ra::Unique<real, 1> a({3}, 10);
-        ra::Unique<real, 1> b({4}, 1);
-        auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        int error = 0;
-        string s;
-        try {
-            tr.info("dynamic test is needed").test_eq(1, ra::check_expr_s<decltype(EXPR)>());
-            ply_ravel(EXPR);
-        } catch (ra_error & e) {
-            error = 1;
-            s = e.s;
-        }
-        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
-    }
-    tr.section("frame matching should-be-error cases - dynamic rank");
-    {
-        ra::Unique<real> a({3}, 10);
-        ra::Unique<real> b({4}, 1);
-        auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
-        int error = 0;
-        string s;
-        try {
-            std::cout << "A: " << a.iter().len(0) << endl;
-            std::cout << "B: " << b.iter().len(0) << endl;
-            tr.info("dynamic test is needed").test_eq(1, ra::check_expr_s<decltype(EXPR)>());
-            ply_ravel(EXPR);
-        } catch (ra_error & e) {
-            error = 1;
-            s = e.s;
-        }
-        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
-    }
-#undef EXPR
     tr.section("unintiuitive behavior [ra33]");
     {
         ra::Big<int, 1> i = {0, 1, 2};
@@ -184,5 +128,8 @@ int main()
         iter<-1>(F) = A(i); // A(i) returns a nested expression. FIXME Should it?
         tr.test_eq(A, F);
     }
+
+// See also test/checks.cc.
+
     return tr.summary();
 }

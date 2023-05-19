@@ -1,11 +1,16 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/examples - Customize ra:: reaction to errors.
 
-// (c) Daniel Llorens - 2019-2022
+// (c) Daniel Llorens - 2019-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
+
+#ifdef RA_DO_CHECK
+  #undef RA_DO_CHECK
+  #define RA_DO_CHECK 1 // kind of the point here
+#endif
 
 #include <exception>
 #include <string>
