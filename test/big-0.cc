@@ -115,14 +115,24 @@ int main(int argc, char * * argv)
     {
         ra::Big<int, 2> a({2, 3}, {0, 1, 2, 3, 4, 5});
         auto ap = a.data();
-        a = {{4, 5, 6}, {7, 8, 9}}; // this uses operator=(nested_braces_r)
-        tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
-        tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
-        a = {{{4, 5, 6}, {7, 8, 9}}}; // this uses the nested_braces_r constructor (!!)
-        tr.skip().test_eq(ra::scalar(ap), ra::scalar(a.data())); // FIXME fairly dangerous!
-        tr.test_eq(2, a.len(0));
-        tr.test_eq(3, a.len(1));
-        tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
+        {
+// this uses operator=(nested_braces_r)
+            a() = {{4, 5, 6}, {7, 8, 9}};
+            tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
+            tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
+        }
+        {
+// uses operator=(nested_braces_r)
+            a = {{5, 6, 7}, {8, 9, 10}};
+            tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
+            tr.test_eq(ra::iota(6, 5), ra::ptr(a.data()));
+// uses nested_braces_r constructor, so a's storage is NOT preserved. Don't rely on this either way
+            a = {{{4, 5, 6}, {7, 8, 9}}};
+            tr.skip().test_eq(ra::scalar(ap), ra::scalar(a.data()));
+            tr.test_eq(2, a.len(0));
+            tr.test_eq(3, a.len(1));
+            tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
+        }
     }
     tr.section("nested braces constructor");
     {

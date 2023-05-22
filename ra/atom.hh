@@ -137,9 +137,7 @@ size(V const & v)
         return ra_traits<V>::size(v);
     } else {
         dim_t s = 1;
-        for (rank_t k=0; k<rank(v); ++k) {
-            s *= v.len(k);
-        }
+        for (rank_t k=0; k<rank(v); ++k) { s *= v.len(k); }
         return s;
     }
 }
@@ -156,17 +154,13 @@ shape(V const & v)
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
 // FIXME Would prefer to return the map directly
         Small<dim_t, rs> s;
-        for (rank_t k=0; k<rs; ++k) {
-            s[k] = v.len(k);
-        }
+        for (rank_t k=0; k<rs; ++k) { s[k] = v.len(k); }
         return s;
     } else {
         static_assert(RANK_ANY==rs);
         rank_t r = v.rank();
         std::vector<dim_t> s(r);
-        for (rank_t k=0; k<r; ++k) {
-            s[k] = v.len(k);
-        }
+        for (rank_t k=0; k<r; ++k) { s[k] = v.len(k); }
         return s;
     }
 }

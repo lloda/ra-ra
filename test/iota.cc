@@ -56,6 +56,11 @@ int main()
             tr.test_eq(2, a[1]);
             tr.test_eq(4, a[2]);
             tr.test_eq(6, a[3]);
+            ra::Big<int, 1> b = ra::Small<int, 4> { 3, 5, 0, -1 } + ra::iota();
+            tr.test_eq(3, b[0]);
+            tr.test_eq(6, b[1]);
+            tr.test_eq(2, b[2]);
+            tr.test_eq(2, b[3]);
         }
     }
     return tr.summary();

@@ -251,7 +251,8 @@ struct View
     T * p;
 
     template <class S>
-    constexpr dim_t filldim(S && s)
+    constexpr dim_t
+    filldim(S && s)
     {
         for_each([](Dim & dim, auto && s) { dim.len = s; RA_CHECK(dim.len>=0, "Bad len ", dim.len); },
                  dimv, s);
@@ -267,28 +268,14 @@ struct View
     constexpr static rank_t rank() requires (RANK!=RANK_ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dimv.size()); }
     constexpr static dim_t len_s(int j) { return DIM_ANY; }
-    constexpr dim_t len(int j) const
-    {
-        if constexpr (RANK==RANK_ANY) {
-            RA_CHECK(j<rank(), "Bad axis j ", j, " rank ", rank());
-        }
-        return dimv[j].len;
-    }
-    constexpr dim_t step(int j) const
-    {
-        if constexpr (RANK==RANK_ANY) {
-            RA_CHECK(j<rank(), "Bad axis j ", j, " rank ", rank());
-        }
-        return dimv[j].step;
-    }
+    constexpr dim_t len(int j) const  { RA_CHECK(inside(j, rank())); return dimv[j].len; }
+    constexpr dim_t step(int j) const { RA_CHECK(inside(j, rank())); return dimv[j].step; }
     constexpr auto data() { return p; }
     constexpr auto data() const { return p; } // [ra47]
     constexpr dim_t size() const
     {
         dim_t t = 1;
-        for (auto const & dim: dimv) {
-            t *= dim.len;
-        }
+        for (auto const & dim: dimv) { t *= dim.len; }
         return t;
     }
 
@@ -298,11 +285,10 @@ struct View
     template <class SS>
     constexpr View(SS && s, T * p_): p(p_)
     {
+        ra::resize(dimv, start(s).len(0)); // [ra37]
         if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {
-            ra::resize(dimv, start(s).len(0)); // [ra37]
             start(dimv) = s;
         } else {
-            ra::resize(dimv, start(s).len(0)); // [ra37]
             filldim(s);
         }
     }
