@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Naive optimization pass over expression templates.
 
-// (c) Daniel Llorens - 2015-2018
+// (c) Daniel Llorens - 2015-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -47,22 +47,21 @@ template <class I, class J>
 requires (is_iota<I> && iota_op<J>)
 constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(0).len_, ITEM(0).i_+ITEM(1), ITEM(0).step_);
+    return iota(e.len(0), ITEM(0).i_+ITEM(1), ITEM(0).step_);
 }
 
 template <class I, class J>
 requires (iota_op<I> && is_iota<J>)
 constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(1).len_, ITEM(0)+ITEM(1).i_, ITEM(1).step_);
+    return iota(e.len(0), ITEM(0)+ITEM(1).i_, ITEM(1).step_);
 }
 
 template <class I, class J>
 requires (is_iota<I> && is_iota<J>)
 constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    RA_CHECK(ITEM(0).len_==ITEM(1).len_, "Length mismatch: ", ITEM(0).len_, " ", ITEM(1).len_, ".");
-    return iota(ITEM(0).len_, ITEM(0).i_+ITEM(1).i_, ITEM(0).step_+ITEM(1).step_);
+    return iota(e.len(0), ITEM(0).i_+ITEM(1).i_, ITEM(0).step_+ITEM(1).step_);
 }
 
 // --------------
@@ -73,22 +72,21 @@ template <class I, class J>
 requires (is_iota<I> && iota_op<J>)
 constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(0).len_, ITEM(0).i_-ITEM(1), ITEM(0).step_);
+    return iota(e.len(0), ITEM(0).i_-ITEM(1), ITEM(0).step_);
 }
 
 template <class I, class J>
 requires (iota_op<I> && is_iota<J>)
 constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(1).len_, ITEM(0)-ITEM(1).i_, -ITEM(1).step_);
+    return iota(e.len(0), ITEM(0)-ITEM(1).i_, -ITEM(1).step_);
 }
 
 template <class I, class J>
 requires (is_iota<I> && is_iota<J>)
 constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    RA_CHECK(ITEM(0).len_==ITEM(1).len_, "Length mismatch: ", ITEM(0).len_, " ", ITEM(1).len_, ".");
-    return iota(ITEM(0).len_, ITEM(0).i_-ITEM(1).i_, ITEM(0).step_-ITEM(1).step_);
+    return iota(e.len(0), ITEM(0).i_-ITEM(1).i_, ITEM(0).step_-ITEM(1).step_);
 }
 
 // --------------
@@ -99,14 +97,14 @@ template <class I, class J>
 requires (is_iota<I> && iota_op<J>)
 constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(0).len_, ITEM(0).i_*ITEM(1), ITEM(0).step_*ITEM(1));
+    return iota(e.len(0), ITEM(0).i_*ITEM(1), ITEM(0).step_*ITEM(1));
 }
 
 template <class I, class J>
 requires (iota_op<I> && is_iota<J>)
 constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
-    return iota(ITEM(1).len_, ITEM(0)*ITEM(1).i_, ITEM(0)*ITEM(1).step_);
+    return iota(e.len(0), ITEM(0)*ITEM(1).i_, ITEM(0)*ITEM(1).step_);
 }
 
 #endif // RA_DO_OPT_IOTA

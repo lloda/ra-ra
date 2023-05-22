@@ -100,7 +100,7 @@ struct TestRecorder
               << " " << ((verbose==NOISY || c==willexpectfail) ? info_full() : info_min())
               << std::endl;
         }; break;
-        default: assert(0);
+        default: std::abort();
         }
         info_str = "";
         verbose = verbose_default;

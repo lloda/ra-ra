@@ -309,7 +309,7 @@ struct Iota
 
     constexpr Iota(dim_t len, T org=0, T step=1): len_(len), i_(org), step_(step)
     {
-        RA_CHECK(len>=0, "Iota len ", len);
+        RA_CHECK(len>=0 || DIM_BAD==len, "Iota len ", len);
     }
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
@@ -327,7 +327,7 @@ struct Iota
 
 template <class O=dim_t, class S=O>
 constexpr auto
-iota(dim_t len, O org=0, S step=1)
+iota(dim_t len=DIM_BAD, O org=0, S step=1)
 {
     using T = std::common_type_t<O, S>;
     return Iota<T> { len, T(org), T(step) };

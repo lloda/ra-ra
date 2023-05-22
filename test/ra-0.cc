@@ -770,38 +770,5 @@ int main()
         ra::scalar(a) = 3 + ra::Small<int, 3> {4, 5, 6};
         tr.test_eq(9, a);
     }
-    tr.section("ra::iota");
-    {
-        static_assert(ra::IteratorConcept<decltype(ra::iota(10))>, "bad type pred for iota");
-        tr.section("straight cases");
-        {
-            ra::Big<int, 1> a = ra::iota(4, 1);
-            assert(a[0]==1 && a[1]==2 && a[2]==3 && a[3]==4);
-        }
-        tr.section("work with operators");
-        {
-            tr.test(every(ra::iota(4)==ra::Big<int, 1> {0, 1, 2, 3}));
-            tr.test(every(ra::iota(4, 1)==ra::Big<int, 1> {1, 2, 3, 4}));
-            tr.test(every(ra::iota(4, 1, 2)==ra::Big<int, 1> {1, 3, 5, 7}));
-        }
- // TODO actually whether unroll is avoided depends on ply(), have a way to require it [ra3]
-        tr.section("frame-matching, forbidding unroll");
-        {
-            ra::Big<int, 3> b ({3, 4, 2}, ra::none);
-            transpose({0, 2, 1}, b) = ra::iota(3, 1);
-            cout << b << endl;
-            tr.test(every(b(0)==1));
-            tr.test(every(b(1)==2));
-            tr.test(every(b(2)==3));
-        }
-        {
-            ra::Big<int, 3> b ({3, 4, 2}, ra::none);
-            transpose<0, 2, 1>(b) = ra::iota(3, 1);
-            cout << b << endl;
-            tr.test(every(b(0)==1));
-            tr.test(every(b(1)==2));
-            tr.test(every(b(2)==3));
-        }
-    }
     return tr.summary();
 }

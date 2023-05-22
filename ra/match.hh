@@ -240,7 +240,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
                                  return f(f, mp::int_t<i+1> {});
                              }
                          } else {
-                             assert(0);
+                             std::abort();
                              return DIM_BAD;
                          }
                      };
