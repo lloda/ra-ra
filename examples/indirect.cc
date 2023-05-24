@@ -105,7 +105,7 @@ void example4()
     // Indirection using a list of rect domains (RectDomain<N> objects in Blitz++).
     // ra:: doesn't have those, so we fake it.
 
-    const int N = 7;
+    int const N = 7;
     ra::Big<int, 2> A({N, N}, 0.), B({N, N}, 1.);
 
     double centre_i = (N-1)/2.0;
@@ -113,25 +113,25 @@ void example4()
     double radius = 0.8 * N/2.0;
 
     // circle will contain a list of strips which represent a circular subdomain.
-    ra::Big<std::tuple<int, ra::Iota<int>>, 1> circle; // [y x0 x1; ...]
-    for (int i=0; i < N; ++i)
-    {
+    ra::Big<std::tuple<int, int, int>, 1> circle; // [y x0 x1; ...]
+    for (int i=0; i < N; ++i) {
         double jdist2 = sqr(radius) - sqr(i-centre_i);
         if (jdist2 < 0.0)
             continue;
 
         int jdist = int(sqrt(jdist2));
-        int begin = int(centre_j - jdist);
-        int end = int(centre_j + jdist);
-        circle.push_back(std::make_tuple(i, ra::iota<int>(end-begin+1, begin)));
+        int j0 = int(centre_j - jdist);
+        int j1 = int(centre_j + jdist);
+        circle.push_back(std::make_tuple(i, j0, j1));
     }
 
     // Set only those points in the circle subdomain to 1
-    map([&A](auto && c) -> decltype(auto) { return A(std::get<0>(c), std::get<1>(c)); }, circle)
-        = map([&B](auto && c) { return B(std::get<0>(c), std::get<1>(c)); }, circle);
+    map([&A](auto && c) -> decltype(auto) { auto [i, j0, j1] = c; return A(i, ra::iota(j1-j0+1, j0)); }, circle)
+        = map([&B](auto && c) { auto [i, j0, j1] = c; return B(i, ra::iota(j1-j0+1, j0)); }, circle);
 
     // or more reasonably
-    for_each([&A, &B](auto && c) { A(std::get<0>(c), std::get<1>(c)) = B(std::get<0>(c), std::get<1>(c)); }, circle);
+    for_each([&A, &B](auto && c) { auto [i, j0, j1] = c; auto j = ra::iota(j1-j0+1, j0); A(i, j) = B(i, j); },
+             circle);
 
     // but it would be easier to just do
     A  = 0.;

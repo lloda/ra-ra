@@ -1725,7 +1725,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 
 <p>These are array views into data in memory. Access to their contents doesn&rsquo;t involve computation and they may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated by a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>
-</li><li> <b>Iterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Vector</code> <code>Scalar</code>
+</li><li> <b>Iterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Ptr</code> <code>Scalar</code>
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
@@ -1733,7 +1733,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 </p>
 <p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element of the array.
 </p>
-</li><li> <b>Flat</b> <code>Iota::Flat</code> <code>Scalar::Flat</code> <code>TensorIndex::Flat</code> <code>Expr::Flat</code> <code>Pick::Flat</code> <code>CellFlat</code>
+</li><li> <b>Flat</b> <code>Iota::Flat</code> <code>Scalar::Flat</code> <code>Expr::Flat</code> <code>Pick::Flat</code> <code>CellFlat</code>
 
 <p>These are types that support ‘forward iterator’ traversal. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Iterator</b> objects through a method <code>flat()</code>.
 </p>
@@ -1749,7 +1749,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 </div>
 <span id="Term-agreement-1"></span><h3 class="section">5.2 Term agreement</h3>
 
-<p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>TensorIndex</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
+<p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>iota()</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
 <p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for rt-size expressions and <code>plyf</code> for ct-size expressions.
 </p>
@@ -1790,7 +1790,7 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 <li> <code>RA_DO_CHECK</code> (default 1):  Check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
 </li><li> <code>RA_USE_BLAS</code> (default 0): Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
 </li><li> <code>RA_DO_OPT</code> (default 1): Replace certain expressions by others that are expected to perform better. This acts as a global mask on other <code>RA_DO_OPT_xxx</code> flags.
-</li><li> <code>RA_DO_OPT_IOTA</code> (default 1): Perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::Iota(3, 0) + 1</code> becomes <code>ra::Iota(3, 1)</code> instead of a two-operand expression template.
+</li><li> <code>RA_DO_OPT_IOTA</code> (default 1): Perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::iota(3, 0) + 1</code> becomes <code>ra::iota(3, 1)</code> instead of a two-operand expression template.
 </li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0): Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
 </li></ul>
 

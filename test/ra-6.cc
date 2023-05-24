@@ -8,7 +8,7 @@
 // later version.
 
 // Regression test for a bug with > 2 non-beatable selectors. The bug was due to
-// bad assumptions in ra::Iota::adv() and ra::Vector::adv().
+// bad assumptions in ra::Iota::adv() and ra::Ptr::adv().
 
 #include "ra/test.hh"
 
@@ -26,21 +26,21 @@ int main()
     cout << "C: " << N << endl;
 
 // beatable.
-    ra::Iota<int> i(2, 1);
-// making unbeatable on purpose, but still depends on internal Iota counter.
+    auto i = ra::iota(2, 1);
+// making unbeatable on purpose, but still depends on Iota's internal counter.
     auto j = ra::map([](int i) { return i; }, i);
 // naturally unbeatable.
     ra::Small<int, 2> k { 1, 2 };
     auto l = std::array<int, 2> { 1, 2 };
     auto ll = ra::vector(l);
+    // auto ll = ra::vector(std::array<int, 2> { 1, 2 }); // FIXME find a way to forbid this [ra9]
 
     cout << "X0: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, i, i, i) << endl;
     cout << "X1: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, j, j, j) << endl;
     cout << "X2: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, k, k, k) << endl;
     cout << "X3: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ra::vector(l), ra::vector(l), ra::vector(l)) << endl;
     cout << "X4: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, l, l, l) << endl;
-// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]
-    // cout << "X5: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ll, ll, ll) << endl;
+    cout << "X5: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ll, ll, ll) << endl;
 
     cout << endl;
 
@@ -49,22 +49,21 @@ int main()
     cout << "Y2: " << ra::from(A, k, k, k) << endl;
     cout << "Y3: " << ra::from(A, ra::vector(l), ra::vector(l), ra::vector(l)) << endl;
     cout << "Y4: " << ra::from(A, l, l, l) << endl;
-// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]. (This one fails intermittently :-/)
-    // cout << "Y5: " << ra::from(A, ll, ll, ll) << endl;
+    cout << "Y5: " << ra::from(A, ll, ll, ll) << endl;
 
     cout << B(i, i) << endl;
 
     TestRecorder tr(std::cout);
     tr.section("op= with Iota");
     {
-        ra::Iota<int> i(2, 1, 3);
-        std::cout << "i.i_" << i.i_ << std::endl;
+        auto i = ra::iota(2, 1, 3);
+        std::cout << "i.i" << i.i << std::endl;
         i += 4;
-        std::cout << "i.i_" << i.i_ <<std::endl;
+        std::cout << "i.i" << i.i <<std::endl;
         tr.test_eq(5, i.at(ra::Small<int, 1>{0}));
         tr.test_eq(8, i.at(ra::Small<int, 1>{1}));
         i -= 1;
-        std::cout << "i.i_" << i.i_ <<std::endl;
+        std::cout << "i.i" << i.i <<std::endl;
         tr.test_eq(4, i.at(ra::Small<int, 1>{0}));
         tr.test_eq(7, i.at(ra::Small<int, 1>{1}));
     }
@@ -85,8 +84,7 @@ int main()
         tr.test_eq(ref2, B(k, k));
         tr.test_eq(ref2, B(ra::vector(l), ra::vector(l)));
         tr.test_eq(ref2, B(l, l));
-// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]
-        // tr.info("ll").test_eq(ref2, B(ll, ll));
+        tr.info("ll").test_eq(ref2, B(ll, ll));
     }
 // TODO have a proper rank / shape match error when comparing these with ref3
     tr.section("subs 3");
@@ -97,8 +95,7 @@ int main()
         tr.test_eq(ref3, A(k, k, k));
         tr.test_eq(ref3, A(ra::vector(l), ra::vector(l), ra::vector(l)));
         tr.test_eq(ref3, A(l, l, l));
-// FIXME start() doesn't restart the ra::Vector object, it probably should. :-/ [ra9]
-        // tr.info("ll").test_eq(ref3, A(ll, ll, ll));
+        tr.info("ll").test_eq(ref3, A(ll, ll, ll));
     }
     return tr.summary();
 }

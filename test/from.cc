@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file from.cc
-/// @brief Checks for index selectors, both immediate and delayed.
+// ra/test - Checks for index selectors, both immediate and delayed.
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under
@@ -46,11 +45,11 @@ int main()
         check_selection_shortcuts(Ureal<2>({4, 4}, ra::_0-ra::_1));
         check_selection_shortcuts(Ureal<>({4, 4}, ra::_0-ra::_1));
     }
-    tr.section("ra::Iota<int> or ra::Iota<ra::dim_t> are both beatable");
+    tr.section("Iota<int> or Iota<ra::dim_t> are both beatable");
     {
         Ureal<2> a({4, 4}, 0.);
         {
-            ra::Iota<int> i(2, 1);
+            auto i = ra::iota<int>(2, 1);
             auto b = a(i);
             tr.test_eq(2, b.dimv[0].len);
             tr.test_eq(4, b.dimv[1].len);
@@ -58,7 +57,7 @@ int main()
             tr.test_eq(1, b.dimv[1].step);
         }
         {
-            ra::Iota<ra::dim_t> i(2, 1);
+            auto i = ra::iota<ra::dim_t>(2, 1);
             auto b = a(i);
             tr.test_eq(2, b.dimv[0].len);
             tr.test_eq(4, b.dimv[1].len);

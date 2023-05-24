@@ -23,13 +23,15 @@ int main()
     ra::Big<float, 3> A({N, N, N}, ra::none);
     ra::Big<float, 3> B({N, N, N}, ra::none);
 
-    ra::Iota<int> interior(N/2, N/4);
+    auto interior = ra::iota(N/2, N/4);
 // Set up initial conditions: +30 C over an interior block, and +22 C elsewhere
     A = 22.;
     A(interior, interior, interior) = 30.;
 
 // Note that you don't really need separate I, J, K. You could just use I for every subscript.
-    ra::Iota<int> I(N-2, 1), J(N-2, 1), K(N-2, 1);
+    auto I = ra::iota(N-2, 1);
+    auto J = ra::iota(N-2, 1);
+    auto K = ra::iota(N-2, 1);
 // The views A(...) can be precomputed, but that's only useful if the subscripts are beatable.
     {
         std::chrono::duration<float> dt(0);
@@ -52,7 +54,8 @@ int main()
     A = 22.;
     A(interior, interior, interior) = 30.;
 // These are always beatable. I+1 and I-1 are also beatable if RA_DO_OPT is #defined to 1, which is the default.
-    ra::Iota<int> Im(N-2, 0), Ip(N-2, 2);
+    auto Im = ra::iota(N-2, 0);
+    auto Ip = ra::iota(N-2, 2);
     {
         std::chrono::duration<float> dt(0);
         double c = 1/6.5;

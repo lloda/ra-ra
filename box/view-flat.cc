@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file view-flat.cc
-/// @brief Can I do View<Iota>, or what does it look like?
+// ek/box - Can I do View<Iota>, what does it look like?
 
 // (c) Daniel Llorens - 2018
 // This library is free software; you can redistribute it and/or modify it under

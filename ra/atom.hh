@@ -218,10 +218,11 @@ template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forwa
 template <std::random_access_iterator I, dim_t N>
 struct Ptr
 {
+    static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
+
     I i;
     std::conditional_t<N==DIM_ANY, dim_t, mp::int_t<N>> n;
 
-    static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
     constexpr Ptr(I i) requires (N!=DIM_ANY): i(i) {}
     constexpr Ptr(I i, dim_t n) requires (N==DIM_ANY): i(i), n(n) {}
     constexpr static rank_t rank_s() { return 1; };
@@ -256,87 +257,68 @@ vector(V && v)
     }
 }
 
-template <int w>
-struct TensorIndex
-{
-    static_assert(w>=0, "bad TensorIndex");
-
-    struct Flat
-    {
-        dim_t i;
-        constexpr void operator+=(dim_t const s) { i += s; }
-        constexpr dim_t operator*() { return i; }
-    };
-
-    dim_t i = 0;
-
-    constexpr static rank_t rank_s() { return w+1; }
-    constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis k ", k); return DIM_BAD; }
-    constexpr static dim_t len(int k) { RA_CHECK(k<=w, "Bad axis k ", k); return DIM_BAD; }
-
-    template <class J> constexpr auto at(J && j) const { return j[w]; }
-    constexpr static dim_t const step(int k) { return k==w ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
-    constexpr auto flat() const { return Flat {i}; }
-};
-
-#define DEF_TENSORINDEX(i) constexpr TensorIndex<i> JOIN(_, i) {};
-FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
-#undef DEF_TENSORINDEX
-
-template <class T>
+template <class T, int w=0, dim_t LEN=DIM_ANY, dim_t STEP=DIM_ANY>
 struct Iota
 {
+    static_assert(w>=0);
+    static_assert(LEN>=0 || LEN==DIM_BAD || LEN==DIM_ANY);
+
+    using len_t = std::conditional_t<LEN==DIM_ANY, dim_t, mp::int_t<LEN>>;
+    using step_t = std::conditional_t<STEP==DIM_ANY, T, mp::int_t<STEP>>;
+
+  T i = 0;
+    len_t const len_ = {};
+    step_t const step_ = {};
+
     struct Flat
     {
         T i;
-        T const step;
+        step_t step;
         constexpr void operator+=(dim_t d) { i += T(d)*step; }
-        constexpr T const & operator*() const { return i; }
+        constexpr auto operator*() const { return i; }
     };
 
-    dim_t const len_;
-    T i_;
-    T const step_;
+    constexpr static rank_t rank_s() { return w+1; };
+    constexpr static rank_t rank() { return w+1; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis k ", k); return LEN; }
+    constexpr static dim_t len(int k) requires (LEN!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return LEN; }
+    constexpr dim_t len(int k) const requires (LEN==DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return len_; }
 
-    constexpr Iota(dim_t len, T org=0, T step=1): len_(len), i_(org), step_(step)
-    {
-        RA_CHECK(len>=0 || DIM_BAD==len, "Iota len ", len);
-    }
-    constexpr static rank_t rank_s() { return 1; };
-    constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return DIM_ANY; }
-    constexpr dim_t len(int k) const { RA_CHECK(k==0, "Bad axis k ", k); return len_; }
-
-    template <class J> constexpr auto at(J && j) { return i_ + T(j[0])*step_; }
-    constexpr static dim_t step(rank_t k) { return k==0 ? 1 : 0; }
+    template <class J> constexpr auto at(J && j) { return i + T(j[w])*step_; }
+    constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { i_ += T(step(k) * d) * step_; }
-    constexpr auto flat() const { return Flat { i_, step_ }; }
-    decltype(auto) constexpr operator+=(T const & b) { i_ += b; return *this; };
-    decltype(auto) constexpr operator-=(T const & b) { i_ -= b; return *this; };
+    constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * step_; }
+    constexpr auto flat() const { return Flat { i, step_ }; }
+    constexpr decltype(auto) operator+=(T const & b) { i += b; return *this; };
+    constexpr decltype(auto) operator-=(T const & b) { i -= b; return *this; };
 };
 
+template <int w> using TensorIndex = Iota<dim_t, w, DIM_BAD, 1>;
+
+#define DEF_TENSORINDEX(w) constexpr TensorIndex<w> JOIN(_, w) {};
+FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
+#undef DEF_TENSORINDEX
+
+// FIXME Offer ct step, but optimize() must be able to handle it.
 template <class O=dim_t, class S=O>
 constexpr auto
 iota(dim_t len=DIM_BAD, O org=0, S step=1)
 {
+    RA_CHECK(len==DIM_BAD || len>=0, "Bad iota length ", len);
     using T = std::common_type_t<O, S>;
-    return Iota<T> { len, T(org), T(step) };
+    return Iota<T> { T(org), len, T(step) };
 }
 
 
 // --------------
-// Coerce potential Iterators
+// coerce potential Iterators
 // --------------
 
 template <class T>
 constexpr void
 start(T && t) { static_assert(!std::same_as<T, T>, "Type cannot be start()ed."); }
 
-RA_IS_DEF(is_iota, (std::same_as<A, Iota<decltype(std::declval<A>().i_)>>))
+RA_IS_DEF(is_iota, (std::same_as<A, Iota<decltype(std::declval<A>().i)>>))
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
 
 template <class T> requires (is_foreign_vector<T>)

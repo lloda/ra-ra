@@ -1652,7 +1652,7 @@ These are array types that own their data in one way or another. Creating or des
 
 These are array views into data in memory. Access to their contents doesn't involve computation and they may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s that aren't associated with any @b{Container}, for example into memory allocated by a different library. Creating and destroying @b{View}s doesn't allocate or deallocate memory for array elements.
 
-@item @b{Iterator} --- @code{Expr} @code{Pick} @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Vector} @code{Scalar}
+@item @b{Iterator} --- @code{Expr} @code{Pick} @code{cell_iterator_big} @code{cell_iterator_small} @code{Iota} @code{Ptr} @code{Scalar}
 
 This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
@@ -1660,7 +1660,7 @@ This is a traversable object. @b{Iterator}s are accepted by all the array functi
 
 @b{Iterator}s also provide an @code{at(i ...)} method for random access to any element of the array.
 
-@item @b{Flat} @code{Iota::Flat} @code{Scalar::Flat} @code{TensorIndex::Flat} @code{Expr::Flat} @code{Pick::Flat} @code{CellFlat}
+@item @b{Flat} @code{Iota::Flat} @code{Scalar::Flat} @code{Expr::Flat} @code{Pick::Flat} @code{CellFlat}
 
 These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Iterator} objects through a method @code{flat()}.
 
@@ -1672,7 +1672,7 @@ These are types that support ‘forward iterator’ traversal. They have methods
 @section Term agreement
 @c ------------------------------------------------
 
-The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{TensorIndex} or view axes created with @code{insert}) are ignored. All the other terms must match.
+The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{iota()} or view axes created with @code{insert}) are ignored. All the other terms must match.
 
 Then we select a traversal method depending on the types of the arguments. @code{ra::} has two traversal methods, both based on pointer-like iterators. @code{ply_ravel} is used for rt-size expressions and @code{plyf} for ct-size expressions.
 
@@ -1702,7 +1702,7 @@ The following boolean @code{#define}s affect the behavior of @code{ra::}.
 @item @code{RA_DO_CHECK} (default 1):  Check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
 @item @code{RA_USE_BLAS} (default 0): Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
 @item @code{RA_DO_OPT} (default 1): Replace certain expressions by others that are expected to perform better. This acts as a global mask on other @code{RA_DO_OPT_xxx} flags.
-@item @code{RA_DO_OPT_IOTA} (default 1): Perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::Iota(3, 0) + 1} becomes @code{ra::Iota(3, 1)} instead of a two-operand expression template.
+@item @code{RA_DO_OPT_IOTA} (default 1): Perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::iota(3, 0) + 1} becomes @code{ra::iota(3, 1)} instead of a two-operand expression template.
 @item @code{RA_DO_OPT_SMALLVECTOR} (default 0): Perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
 @end itemize
 

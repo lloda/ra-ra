@@ -15,7 +15,7 @@
 int main()
 {
     ra::TestRecorder tr;
-    tr.section("IotaFlat constexpr");
+    tr.section("iota Flat constexpr");
     {
         constexpr ra::Small<int, 7> a = { 0, 1, 2, 3, 4, 5, 6 };
         constexpr ra::Small<int, 7> v = map([&a](int i) { return a[i]*a[i]; }, ra::iota(7));

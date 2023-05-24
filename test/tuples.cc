@@ -125,7 +125,7 @@ int main()
     static_assert(ra::mp::check_idx<C_B, 9, 8, 5, 6, 7>::value, "bad AB");
     static_assert(is_same_v<A, ra::mp::append<A, O>>, "bad A+empty");
     static_assert(is_same_v<A, ra::mp::append<O, A>>, "bad empty+A");
-// Iota.
+// mp::iota.
     static_assert(ra::mp::check_idx<ra::mp::iota<4, 0>, 0, 1, 2, 3>::value, "0a");
     static_assert(ra::mp::check_idx<ra::mp::iota<4, 3>, 3, 4, 5, 6>::value, "0b");
     static_assert(ra::mp::check_idx<ra::mp::iota<0, 3>>::value, "0c");

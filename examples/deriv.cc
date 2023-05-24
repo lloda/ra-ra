@@ -23,7 +23,7 @@ int main()
 
     const int numSamples = 100;              // Number of samples
     double delta = 1. / numSamples;          // Spacing of samples
-    ra::Iota<int> R(numSamples);             // Index set 0 .. (numSamples-1)
+    auto R = ra::iota(numSamples);           // Index set 0 .. (numSamples-1)
     cout << "R... " << R << endl;
 
     // Sample the function y = cos(x)^2 over [0,1)
@@ -50,7 +50,7 @@ int main()
     // We can only apply this mask to the elements 1 .. 98, since
     // we need one element on either side to apply the mask.
     // I-1 etc. are beatable if RA_DO_OPT is true.
-    ra::Iota<int> I(numSamples-2, 1);
+    auto I = ra::iota(numSamples-2, 1);
     Array1D y2({numSamples}, ra::none);
     y2(I) = (y(I-1) - 2 * y(I) + y(I+1)) / (delta*delta);
 
@@ -68,7 +68,7 @@ int main()
     // Display a few elements from the vectors.
     // This range constructor means elements 1 to 91 in increments
     // of 15.
-    ra::Iota<int> displayRange(7, 1, 15);
+    auto displayRange = ra::iota(7, 1, 15);
 
     cout << "Exact derivative:" << y2exact(displayRange) << endl
          << "Approximation:   " << y2(displayRange) << endl

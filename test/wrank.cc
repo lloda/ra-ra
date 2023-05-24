@@ -311,12 +311,12 @@ int main()
         Aref = ra::Big<real, 2>(A);
         BENCH(Aref, f_sumprod);
     }
-    tr.section("Iota with dead axes");
+    tr.section("iota with dead axes");
     {
         ra::Big<int, 2> a = from([](auto && i, auto && j) { return i-j; }, ra::iota(3), ra::iota(3));
         tr.test_eq(ra::Big<int, 2>({3, 3}, {0, -1, -2,  1, 0, -1,  2, 1, 0}), a);
     }
-    tr.section("Vector with dead axes");
+    tr.section("vector with dead axes");
     {
         std::vector i = {0, 1, 2};
         ra::Big<int, 2> a = ra::from([](auto && i, auto && j) { return i-j; }, i, i);

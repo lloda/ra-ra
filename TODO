@@ -88,8 +88,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   7. [ ]
   8. [ ] (free)
   9. [ ] test/ra-6.cc
-     Using the same lvalue ra::vector multiple times in an expression is broken, since start(ra::Vector) doesn't restart, so they clash with each other in ply. See also [ra39].
-     The reason start(ra::Vector) doesn't restart is that ra::Vector may contain a copy of v instead of a reference, same as ra::Scalar. But this is problematic since plying modifies the Iterator. So I should split ra::Vector into the Array-like owning object and the Iterator object which is exclusively a temp and can be made to hold a ref.
+     ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so ra::vector(temp) must only be used as temp. Really forbidding auto ll = ra::vector(lvalue) would also be ok.
   10. [ ] test/ra-0.cc
      size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
   11. [ ]

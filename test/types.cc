@@ -72,7 +72,7 @@ int main()
         static_assert(ra::IteratorConcept<decltype(ra::Unique<int, 2>().iter())>);
         TESTPRED(decltype(ra::Unique<int, 1>().iter()) &,
                  true, false, true, false, false);
-        TESTPRED(ra::Iota<int>,
+        TESTPRED(decltype(ra::iota(5)),
                  true, false, true, false, false);
         TESTPRED(ra::TensorIndex<0>,
                  true, false, true, false, false);

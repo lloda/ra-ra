@@ -121,12 +121,12 @@ struct cell_iterator_big
 // Return type to allow either View & or View const & verb. Can't set self bc original p isn't kept. TODO ...?
 #define RA_CONST_OR_NOT(CONST)                                          \
     template <class I> constexpr                                        \
-    decltype(auto) at(I const & i_) CONST                               \
+    decltype(auto) at(I const & i) CONST                                \
     {                                                                   \
         if constexpr (0==cellr) {                                       \
-            return c.p[indexer1::longer(rank(), dimv, i_)];             \
+            return c.p[indexer1::longer(rank(), dimv, i)];              \
         } else {                                                        \
-            return cell_type { c.dimv, c.p + indexer1::longer(rank(), dimv, i_) }; \
+            return cell_type { c.dimv, c.p + indexer1::longer(rank(), dimv, i) }; \
         }                                                               \
     }
     FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
@@ -196,10 +196,10 @@ template <class II>
 inline dim_t
 select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
-    RA_CHECK((inside(i.i_, dim_src->len) && inside(i.i_+(i.len_-1)*i.step_, dim_src->len))
-             || (i.len_==0 && i.i_<=dim_src->len));
+    RA_CHECK((inside(i.i, dim_src->len) && inside(i.i+(i.len_-1)*i.step_, dim_src->len))
+             || (i.len_==0 && i.i<=dim_src->len));
     *dim = { .len = i.len_, .step = dim_src->step * i.step_ };
-    return dim_src->step*i.i_;
+    return dim_src->step*i.i;
 }
 template <class I0, class ... I>
 inline dim_t
