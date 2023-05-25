@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Sugar for ra:: expression templates.
+// ra-ra - Operator overloads for expression templates.
 
-// (c) Daniel Llorens - 2014-2022
+// (c) Daniel Llorens - 2014-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -32,8 +32,8 @@
 using ra::odd, ra::every, ra::any;
 
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
-template <class A> constexpr void transpose(ra::no_arg) { abort(); }
-template <int A> constexpr void iter(ra::no_arg) { abort(); }
+template <class A> constexpr void transpose(ra::no_arg);
+template <int A> constexpr void iter(ra::no_arg);
 
 namespace ra {
 
@@ -44,12 +44,21 @@ transpose(mp::int_list<Iarg ...>, A && a)
     return transpose<Iarg ...>(std::forward<A>(a));
 }
 
+// cf value_t in atom.hh. Also used to paper over Scalar<X> vs X
 template <class A>
 constexpr decltype(auto)
 FLAT(A && a)
 {
     return *(ra::start(std::forward<A>(a)).flat());
 }
+
+// // [ra8] in ra/operators.cc
+// template <class A>
+// constexpr decltype(auto)
+// FLAT(A && a) requires (is_scalar<A> || is_ra_scalar<A>)
+// {
+//     return ra::start(std::forward<A>(a)).c;
+// }
 
 
 // ---------------------------
@@ -88,10 +97,10 @@ from(A && a, I && ... i)
         return a();
     } else if constexpr (1==sizeof...(i)) {
 // support dynamic rank for 1 arg only (see test in test/from.cc).
-        return expr(std::forward<A>(a), start(std::forward<I>(i) ...));
+        return expr(std::forward<A>(a), ra::start(std::forward<I>(i) ...));
     } else {
-        using II = mp::map<index_rank, mp::tuple<decltype(start(std::forward<I>(i))) ...>>;
-        return expr(from_partial<II, 1>(std::forward<A>(a)), start(std::forward<I>(i)) ...);
+        using II = mp::map<index_rank, mp::tuple<decltype(ra::start(std::forward<I>(i))) ...>>;
+        return expr(from_partial<II, 1>(std::forward<A>(a)), ra::start(std::forward<I>(i)) ...);
     }
 }
 
@@ -109,15 +118,13 @@ from(A && a, I && ... i)
 
 // These depend on OPNAME defined in optimize.hh and used there to match ET patterns.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
-    template <class A, class B>                                         \
-    requires (ra_pos_and_any<A, B>)                                     \
+    template <class A, class B> requires (ra_pos_and_any<A, B>)         \
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
         return RA_OPT(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
-    template <class A, class B>                                         \
-    requires (ra_zero<A, B>)                                            \
+    template <class A, class B> requires (ra_zero<A, B>)                \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
@@ -129,27 +136,26 @@ DEF_NAMED_BINARY_OP(/, slash)
 #undef DEF_NAMED_BINARY_OP
 
 #define DEF_BINARY_OP(OP)                                               \
-    template <class A, class B>                                         \
-    requires (ra_pos_and_any<A, B>)                                     \
-    inline auto                                                         \
+    template <class A, class B> requires (ra_pos_and_any<A, B>)         \
+    constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
         return map([](auto && a, auto && b) { return a OP b; },         \
                    std::forward<A>(a), std::forward<B>(b));             \
     }                                                                   \
-    template <class A, class B>                                         \
-    requires (ra_zero<A, B>)                                            \
-    inline auto operator OP(A && a, B && b)                             \
+    template <class A, class B> requires (ra_zero<A, B>)                \
+    constexpr auto                                                      \
+    operator OP(A && a, B && b)                                         \
     {                                                                   \
-        return FLAT(a) OP FLAT(b);                                      \
+        return FLAT(a) OP FLAT(b); /*  forward bug test/early.cc */     \
     }
 FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, <=>, ==, !=, |, &, ^)
 #undef DEF_BINARY_OP
 
 #define DEF_UNARY_OP(OP)                                                \
-    template <class A>                                                  \
-    requires (ra_pos_and_any<A>)                                        \
-    inline auto operator OP(A && a)                                     \
+    template <class A> requires (ra_pos_and_any<A>)                     \
+    constexpr auto                                                      \
+    operator OP(A && a)                                                 \
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
     }
@@ -160,15 +166,15 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
 // TODO Cf examples/useret.cc, test/reexported.cc
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
-    template <class ... A>                                              \
-    requires (ra_pos_and_any<A ...>)                                    \
-    inline auto OP(A && ... a)                                          \
+    template <class ... A> requires (ra_pos_and_any<A ...>)             \
+    constexpr auto                                                      \
+    OP(A && ... a)                                                      \
     {                                                                   \
         return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A>                                              \
-    requires (ra_zero<A ...>)                                           \
-    inline auto OP(A && ... a)                                          \
+    template <class ... A> requires (ra_zero<A ...>)                    \
+    constexpr auto                                                      \
+    OP(A && ... a)                                                      \
     {                                                                   \
         return OP(FLAT(a) ...);                                         \
     }
@@ -180,15 +186,13 @@ FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg, lerp)
 
 #define DEF_NAME_OP_REF(OP)                                             \
     using ::OP;                                                         \
-    template <class ... A>                                              \
-    requires (ra_pos_and_any<A ...>)                                    \
-    inline auto OP(A && ... a)                                          \
+    template <class ... A> requires (ra_pos_and_any<A ...>)             \
+    constexpr auto OP(A && ... a)                                       \
     {                                                                   \
         return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A>                                              \
-    requires (ra_zero<A ...>)                                           \
-    inline decltype(auto) OP(A && ... a)                                \
+    template <class ... A> requires (ra_zero<A ...>)                    \
+    constexpr decltype(auto) OP(A && ... a)                             \
     {                                                                   \
         return OP(FLAT(a) ...);                                         \
     }
@@ -196,21 +200,21 @@ FOR_EACH(DEF_NAME_OP_REF, real_part, imag_part)
 #undef DEF_NAME_OP_REF
 
 template <class T, class A>
-inline auto cast(A && a)
+constexpr auto cast(A && a)
 {
-    return map([](auto && a) { return T(a); }, std::forward<A>(a));
+    return map([](auto && b) { return T(b); }, std::forward<A>(a));
 }
 
 // TODO could be useful to deduce T as tuple of value_types (&).
 template <class T, class ... A>
-inline auto pack(A && ... a)
+constexpr auto pack(A && ... a)
 {
     return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
 }
 
 // FIXME needs a nested array for I, which is ugly.
 template <class A, class I>
-inline auto at(A && a, I && i)
+constexpr auto at(A && a, I && i)
 {
     return map([a = std::tuple<A>(std::forward<A>(a))]
                (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); }, i);
@@ -232,10 +236,12 @@ where(bool const w, T && t, F && f)
 
 template <class W, class T, class F>
 requires (ra_pos_and_any<W, T, F>)
-inline auto
+constexpr auto
 where(W && w, T && t, F && f)
 {
-    return pick(cast<bool>(start(std::forward<W>(w))), start(std::forward<F>(f)), start(std::forward<T>(t)));
+    return pick(cast<bool>(ra::start(std::forward<W>(w))),
+                ra::start(std::forward<F>(f)),
+                ra::start(std::forward<T>(t)));
 }
 
 // catch all for non-ra types.
@@ -249,20 +255,20 @@ where(bool const w, T && t, F && f)
 
 template <class A, class B>
 requires (ra_pos_and_any<A, B>)
-inline auto operator &&(A && a, B && b)
+constexpr auto operator &&(A && a, B && b)
 {
     return where(std::forward<A>(a), cast<bool>(std::forward<B>(b)), false);
 }
 template <class A, class B>
 requires (ra_pos_and_any<A, B>)
-inline auto operator ||(A && a, B && b)
+constexpr auto operator ||(A && a, B && b)
 {
     return where(std::forward<A>(a), true, cast<bool>(std::forward<B>(b)));
 }
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
     template <class A, class B>                                         \
     requires (ra_zero<A, B>)                                            \
-    inline auto operator OP(A && a, B && b)                             \
+    constexpr auto operator OP(A && a, B && b)                             \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
     }
@@ -275,14 +281,14 @@ FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
 // TODO First rank reductions? Variable rank reductions?
 // --------------------------------
 
-template <class A> inline bool
+template <class A> constexpr bool
 any(A && a)
 {
     return early(map([](bool x) { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
 }
 
 template <class A>
-inline bool
+constexpr bool
 every(A && a)
 {
     return early(map([](bool x) { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
@@ -290,17 +296,17 @@ every(A && a)
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
 template <class A>
-inline auto
+constexpr auto
 index(A && a)
 {
     return early(map([](auto && a, auto && i) { return std::make_tuple(bool(a), i); },
-                     std::forward<A>(a), ra::iota(start(a).len(0))),
+                     std::forward<A>(a), ra::iota(ra::start(a).len(0))),
                  ra::dim_t(-1));
 }
 
 // [ma108]
 template <class A, class B>
-inline bool
+constexpr bool
 lexicographical_compare(A && a, B && b)
 {
     return early(map([](auto && a, auto && b)
@@ -311,7 +317,7 @@ lexicographical_compare(A && a, B && b)
 
 // FIXME only works with numeric types.
 template <class A>
-inline auto
+constexpr auto
 amin(A && a)
 {
     using std::min;
@@ -322,7 +328,7 @@ amin(A && a)
 }
 
 template <class A>
-inline auto
+constexpr auto
 amax(A && a)
 {
     using std::max;
@@ -335,7 +341,7 @@ amax(A && a)
 // FIXME encapsulate this kind of reference-reduction.
 // FIXME expr/ply mechanism doesn't allow partial iteration (adv then continue).
 template <class A, class Less = std::less<value_t<A>>>
-inline decltype(auto)
+constexpr decltype(auto)
 refmin(A && a, Less && less = std::less<value_t<A>>())
 {
     RA_CHECK(a.size()>0);
@@ -346,7 +352,7 @@ refmin(A && a, Less && less = std::less<value_t<A>>())
 }
 
 template <class A, class Less = std::less<value_t<A>>>
-inline decltype(auto)
+constexpr decltype(auto)
 refmax(A && a, Less && less = std::less<value_t<A>>())
 {
     RA_CHECK(a.size()>0);
@@ -374,11 +380,11 @@ prod(A && a)
     return c;
 }
 
-template <class A> inline auto reduce_sqrm(A && a) { return sum(sqrm(a)); }
-template <class A> inline auto norm2(A && a) { return std::sqrt(reduce_sqrm(a)); }
+template <class A> constexpr auto reduce_sqrm(A && a) { return sum(sqrm(a)); }
+template <class A> constexpr auto norm2(A && a) { return std::sqrt(reduce_sqrm(a)); }
 
 template <class A, class B>
-inline auto
+constexpr auto
 dot(A && a, B && b)
 {
     std::decay_t<decltype(FLAT(a) * FLAT(b))> c(0.);
@@ -394,7 +400,7 @@ dot(A && a, B && b)
 }
 
 template <class A, class B>
-inline auto
+constexpr auto
 cdot(A && a, B && b)
 {
     std::decay_t<decltype(conj(FLAT(a)) * FLAT(b))> c(0.);
@@ -477,7 +483,7 @@ DECL_WEDGE(general_case)
 #undef DECL_WEDGE
 
 template <class A, class B> requires (size_s<A>()==2 && size_s<B>()==2)
-inline auto
+constexpr auto
 cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
@@ -488,7 +494,7 @@ cross(A const & a_, B const & b_)
 }
 
 template <class A, class B> requires (size_s<A>()==3 && size_s<B>()==3)
-inline auto
+constexpr auto
 cross(A const & a_, B const & b_)
 {
     Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;
@@ -499,7 +505,7 @@ cross(A const & a_, B const & b_)
 }
 
 template <class V>
-inline auto
+constexpr auto
 perp(V const & v)
 {
     static_assert(v.size()==2, "dimension error");
@@ -507,7 +513,7 @@ perp(V const & v)
 }
 
 template <class V, class U>
-inline auto
+constexpr auto
 perp(V const & v, U const & n)
 {
     if constexpr (is_scalar<U>) {
@@ -525,7 +531,7 @@ perp(V const & v, U const & n)
 // --------------------
 
 template <class A>
-inline auto
+constexpr auto
 normv(A const & a)
 {
     auto b = concrete(a);
@@ -535,7 +541,7 @@ normv(A const & a)
 
 // FIXME benchmark w/o allocation and do Small/Big versions if it's worth it.
 template <class A, class B, class C>
-inline void
+constexpr void
 gemm(A const & a, B const & b, C & c)
 {
     for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
@@ -545,7 +551,7 @@ gemm(A const & a, B const & b, C & c)
 
 // default for row-major x row-major. See bench-gemm.cc for variants.
 template <class S, class T>
-inline auto
+constexpr auto
 gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 {
     int const M = a.len(0);
@@ -561,7 +567,7 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 
 // we still want the Small version to be different.
 template <class A, class B>
-inline ra::Small<std::decay_t<decltype(FLAT(std::declval<A>()) * FLAT(std::declval<B>()))>, A::len(0), B::len(1)>
+constexpr ra::Small<std::decay_t<decltype(FLAT(std::declval<A>()) * FLAT(std::declval<B>()))>, A::len(0), B::len(1)>
 gemm(A const & a, B const & b)
 {
     constexpr int M = a.len(0);
@@ -579,7 +585,7 @@ gemm(A const & a, B const & b)
 #undef MMTYPE
 
 template <class A, class B>
-inline auto
+constexpr auto
 gevm(A const & a, B const & b)
 {
     int const M = b.len(0);
@@ -594,7 +600,7 @@ gevm(A const & a, B const & b)
 
 // FIXME a must be a view, so it doesn't work with e.g. gemv(conj(a), b).
 template <class A, class B>
-inline auto
+constexpr auto
 gemv(A const & a, B const & b)
 {
     int const M = a.len(0);

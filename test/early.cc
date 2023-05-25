@@ -29,7 +29,6 @@ int main()
     tr.section("any, every dyn rank");
     {
         ra::Big<int> a = ra::iota(9)*2;
-        // cout << every(!odd(a)) << endl; // FIXME fails with -DNDEBUG (!) -O>0 [ra40]
         tr.test(!any(odd(a)));
         tr.test(every(!odd(a)));
     }

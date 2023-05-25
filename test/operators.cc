@@ -19,6 +19,11 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr;
+    // tr.section("[ra8]");
+    // {
+    //     constexpr double z = 1 + ra::scalar(2.);
+    //     tr.test_eq(3, z);
+    // }
     tr.section("unary ops");
     {
 #define DEF_TEST_UNARY_OP(OP)                                           \

@@ -19,7 +19,6 @@ using real = double;
 int main()
 {
     TestRecorder tr;
-
     tr.section("frame matching - TensorIndex/Scalar");
     {
 // driver is highest rank, which is ra::_0 (1).

@@ -30,34 +30,44 @@ namespace ra {
 
 constexpr int VERSION = 19;
 
-static_assert(sizeof(int)>=4, "bad assumption on int");
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
+static_assert(sizeof(rank_t)>=4 && sizeof(dim_t)>=4);
+static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
+
 // Negative numbers are used in some places as 'frame rank' in contrast to 'cell rank', so these numbers limit the rank that ra:: can handle besides the range of rank_t.
-constexpr dim_t DIM_ANY = -1099999444;
-constexpr dim_t DIM_BAD = -1099999888;
-constexpr rank_t RANK_ANY = -1099999444;
-constexpr rank_t RANK_BAD = -1099999888;
 
-static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>, "bad dim types");
+constexpr dim_t DIM_ANY = -1944444444; // only on ct values: not known at ct, but maybe at rt
+constexpr rank_t RANK_ANY = -1944444444;
+constexpr dim_t DIM_BAD = -1988888888; // undefined
+constexpr rank_t RANK_BAD = -1988888888;
 
-constexpr dim_t dim_prod(dim_t const a, dim_t const b)
+constexpr dim_t
+dim_prod(dim_t a, dim_t b)
 {
     return (a==DIM_ANY) ? DIM_ANY : ((b==DIM_ANY) ? DIM_ANY : a*b);
 }
-constexpr rank_t rank_sum(rank_t const a, rank_t const b)
+
+constexpr rank_t
+rank_sum(rank_t a, rank_t b)
 {
     return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a+b);
 }
-constexpr rank_t rank_diff(rank_t const a, rank_t const b)
+
+constexpr rank_t
+rank_diff(rank_t a, rank_t b)
 {
     return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a-b);
 }
-constexpr bool inside(dim_t const i, dim_t const b)
+
+constexpr bool
+inside(dim_t i, dim_t b)
 {
     return i>=0 && i<b;
 }
-constexpr bool inside(dim_t const i, dim_t const a, dim_t const b)
+
+constexpr bool
+inside(dim_t i, dim_t a, dim_t b)
 {
     return i>=a && i<b;
 }

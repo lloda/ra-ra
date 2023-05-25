@@ -27,7 +27,8 @@ inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
 namespace indexer1 {
 
     template <class Dimv, class P>
-    constexpr dim_t shorter(Dimv const & dimv, P && p)
+    constexpr dim_t
+    shorter(Dimv const & dimv, P && p)
     {
         RA_CHECK(ssize(dimv)>=start(p).len(0), "Too many indices.");
 // use dim.data() to skip the size check.
@@ -39,7 +40,8 @@ namespace indexer1 {
 
 // for rank matching on rank<driving rank, no slicing. TODO Static check?
     template <class Dimv, class P>
-    constexpr dim_t longer(rank_t framer, Dimv const & dimv, P const & p)
+    constexpr dim_t
+    longer(rank_t framer, Dimv const & dimv, P const & p)
     {
         RA_CHECK(framer<=ssize(p), "Too few indices.");
         dim_t c = 0;
@@ -192,24 +194,27 @@ select(Dim * dim, Dim const * dim_src, dim_t i)
     RA_CHECK(inside(i, dim_src->len), " i ", i, " len ", dim_src->len);
     return dim_src->step*i;
 }
+
 template <class II>
-inline dim_t
+constexpr dim_t
 select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
 {
-    RA_CHECK((inside(i.i, dim_src->len) && inside(i.i+(i.len_-1)*i.step_, dim_src->len))
-             || (i.len_==0 && i.i<=dim_src->len));
-    *dim = { .len = i.len_, .step = dim_src->step * i.step_ };
+    RA_CHECK((inside(i.i, dim_src->len) && inside(i.i+(i.n-1)*i.gets(), dim_src->len))
+             || (i.n==0 && i.i<=dim_src->len));
+    *dim = { .len = i.n, .step = dim_src->step * i.gets() };
     return dim_src->step*i.i;
 }
+
 template <class I0, class ... I>
-inline dim_t
+constexpr dim_t
 select_loop(Dim * dim, Dim const * dim_src, I0 && i0, I && ... i)
 {
     return select(dim, dim_src, std::forward<I0>(i0))
         + select_loop(dim+is_beatable<I0>::skip, dim_src+is_beatable<I0>::skip_src, std::forward<I>(i) ...);
 }
+
 template <int n, class ... I>
-inline dim_t
+constexpr dim_t
 select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim, ++dim_src) {
@@ -217,8 +222,9 @@ select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ... i)
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
+
 template <int n, class ... I>
-inline dim_t
+constexpr dim_t
 select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
 {
     for (Dim * end = dim+n; dim!=end; ++dim) {
@@ -226,6 +232,7 @@ select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
     }
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
+
 constexpr
 dim_t select_loop(Dim * dim, Dim const * dim_src)
 {
@@ -818,9 +825,10 @@ using concrete_type = std::decay_t<
         typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>
     >;
 
-template <class E> inline auto concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
+template <class E> constexpr auto
+concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
 
-template <class E> inline auto
+template <class E> constexpr auto
 with_same_shape(E && e)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
@@ -830,7 +838,7 @@ with_same_shape(E && e)
     }
 }
 
-template <class E, class X> inline auto
+template <class E, class X> constexpr auto
 with_same_shape(E && e, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
@@ -840,7 +848,7 @@ with_same_shape(E && e, X && x)
     }
 }
 
-template <class E, class S, class X> inline auto
+template <class E, class S, class X> constexpr auto
 with_shape(S && s, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
@@ -850,7 +858,7 @@ with_shape(S && s, X && x)
     }
 }
 
-template <class E, class S, class X> inline auto
+template <class E, class S, class X> constexpr auto
 with_shape(std::initializer_list<S> && s, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {

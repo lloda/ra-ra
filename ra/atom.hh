@@ -257,40 +257,41 @@ vector(V && v)
     }
 }
 
-template <class T, int w=0, dim_t LEN=DIM_ANY, dim_t STEP=DIM_ANY>
+template <class T, int w=0, dim_t N=DIM_ANY, dim_t S=DIM_ANY>
 struct Iota
 {
     static_assert(w>=0);
-    static_assert(LEN>=0 || LEN==DIM_BAD || LEN==DIM_ANY);
+    static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
 
-    using len_t = std::conditional_t<LEN==DIM_ANY, dim_t, mp::int_t<LEN>>;
-    using step_t = std::conditional_t<STEP==DIM_ANY, T, mp::int_t<STEP>>;
+    using ntype = std::conditional_t<N==DIM_ANY, dim_t, mp::int_t<N>>;
+    using stype = std::conditional_t<S==DIM_ANY, T, mp::int_t<S>>;
 
-  T i = 0;
-    len_t const len_ = {};
-    step_t const step_ = {};
+    T i = 0;
+    ntype const n = {};
+    stype const s = {};
+    constexpr static T gets() requires (S!=DIM_ANY) { return S; }
+    constexpr T gets() const requires (S==DIM_ANY) { return s; }
+    constexpr decltype(auto) set(T const & ii) { i = ii; return *this; };
 
     struct Flat
     {
         T i;
-        step_t step;
-        constexpr void operator+=(dim_t d) { i += T(d)*step; }
+        stype s;
+        constexpr void operator+=(dim_t d) { i += T(d)*s; }
         constexpr auto operator*() const { return i; }
     };
 
     constexpr static rank_t rank_s() { return w+1; };
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis k ", k); return LEN; }
-    constexpr static dim_t len(int k) requires (LEN!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return LEN; }
-    constexpr dim_t len(int k) const requires (LEN==DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return len_; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis k ", k); return N; }
+    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return N; }
+    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return n; }
 
-    template <class J> constexpr auto at(J && j) { return i + T(j[w])*step_; }
+    template <class J> constexpr auto at(J && j) { return i + T(j[w])*s; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * step_; }
-    constexpr auto flat() const { return Flat { i, step_ }; }
-    constexpr decltype(auto) operator+=(T const & b) { i += b; return *this; };
-    constexpr decltype(auto) operator-=(T const & b) { i -= b; return *this; };
+    constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * s; }
+    constexpr auto flat() const { return Flat { i, s }; }
 };
 
 template <int w> using TensorIndex = Iota<dim_t, w, DIM_BAD, 1>;
@@ -318,8 +319,9 @@ template <class T>
 constexpr void
 start(T && t) { static_assert(!std::same_as<T, T>, "Type cannot be start()ed."); }
 
+// FIXME generalizing this needs fixes in beatable_def/select, tests in test/from.cc.
+// right now A(... tindex ...) is unbeaten which serves to delay match and allows e.g. B = A(... tindex ...) to be valid.
 RA_IS_DEF(is_iota, (std::same_as<A, Iota<decltype(std::declval<A>().i)>>))
-RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
 
 template <class T> requires (is_foreign_vector<T>)
 constexpr auto
@@ -343,7 +345,8 @@ template <class T> requires (is_slice<T>)
 constexpr auto
 start(T && t) { return iter<0>(std::forward<T>(t)); }
 
-// no op.
+RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
+
 template <class T> requires (is_ra_scalar<T>)
 constexpr decltype(auto)
 start(T && t) { return std::forward<T>(t); }

@@ -169,7 +169,7 @@ struct cell_iterator_small
 // --------------------
 
 template <class S, class I, class P>
-inline void
+constexpr void
 next_in_cube(rank_t const framer, S const & dimv, I & i, P & p)
 {
     for (int k=framer-1; k>=0; --k) {
@@ -186,7 +186,7 @@ next_in_cube(rank_t const framer, S const & dimv, I & i, P & p)
 }
 
 template <int k, class lens, class steps, class I, class P>
-inline void
+constexpr void
 next_in_cube(I & i, P & p)
 {
     if constexpr (k>=0) {
@@ -474,7 +474,7 @@ struct equal_to_t
 };
 
 template <class T, size_t N>
-inline consteval size_t
+consteval size_t
 align_req()
 {
     if constexpr (equal_to_t<T>::template value<char, unsigned char,
@@ -634,14 +634,16 @@ struct axes_list_indices
 
 #define DEF_TRANSPOSE(CONST)                                            \
     template <int ... Iarg, template <class ...> class Child, class T, class lens, class steps> \
-    inline auto transpose(SmallBase<Child, T, lens, steps> CONST & a) \
+    constexpr auto                                                      \
+    transpose(SmallBase<Child, T, lens, steps> CONST & a)               \
     {                                                                   \
         using ti = axes_list_indices<mp::int_list<Iarg ...>, lens, steps>; \
         return SmallView<T CONST, typename ti::lens, typename ti::steps>(a.data()); \
     };                                                                  \
                                                                         \
     template <template <class ...> class Child, class T, class lens, class steps> \
-    inline auto diag(SmallBase<Child, T, lens, steps> CONST & a)     \
+    constexpr auto                                                      \
+    diag(SmallBase<Child, T, lens, steps> CONST & a)                    \
     {                                                                   \
         return transpose<0, 0>(a);                                      \
     }
@@ -651,7 +653,8 @@ FOR_EACH(DEF_TRANSPOSE, /* const */, const)
 // TODO Used by ProductRule; waiting for proper generalization.
 template <template <class ...> class Child1, class T1, class lens1, class steps1,
           template <class ...> class Child2, class T2, class lens2, class steps2>
-auto cat(SmallBase<Child1, T1, lens1, steps1> const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
+constexpr auto
+cat(SmallBase<Child1, T1, lens1, steps1> const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
 {
     using A1 = SmallBase<Child1, T1, lens1, steps1>;
     using A2 = SmallBase<Child2, T2, lens2, steps2>;
@@ -665,7 +668,8 @@ auto cat(SmallBase<Child1, T1, lens1, steps1> const & a1, SmallBase<Child2, T2, 
 
 template <template <class ...> class Child1, class T1, class lens1, class steps1, class A2>
 requires (is_scalar<A2>)
-auto cat(SmallBase<Child1, T1, lens1, steps1> const & a1, A2 const & a2)
+constexpr auto
+cat(SmallBase<Child1, T1, lens1, steps1> const & a1, A2 const & a2)
 {
     using A1 = SmallBase<Child1, T1, lens1, steps1>;
     static_assert(A1::rank()==1, "bad ranks for cat");
@@ -678,7 +682,8 @@ auto cat(SmallBase<Child1, T1, lens1, steps1> const & a1, A2 const & a2)
 
 template <class A1, template <class ...> class Child2, class T2, class lens2, class steps2>
 requires (is_scalar<A1>)
-auto cat(A1 const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
+constexpr auto
+cat(A1 const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
 {
     using A2 = SmallBase<Child2, T2, lens2, steps2>;
     static_assert(A2::rank()==1, "bad ranks for cat");
@@ -703,7 +708,8 @@ template <int s> struct explode_divop
 // See view-ops.hh:explode, collapse. FIXME support real->complex, etc.
 template <class super_t,
           template <class ...> class Child, class T, class lens, class steps>
-auto explode(SmallBase<Child, T, lens, steps> & a)
+constexpr auto
+explode(SmallBase<Child, T, lens, steps> & a)
 {
     using ta = SmallBase<Child, T, lens, steps>;
 // the returned type has steps in super_t, but to support general steps we'd need steps in T. Maybe FIXME?

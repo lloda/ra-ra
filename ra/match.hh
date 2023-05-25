@@ -240,7 +240,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
                                  return f(f, mp::int_t<i+1> {});
                              }
                          } else {
-                             std::abort();
+                             assert(0 && "whole expr len cannot be undefined");
                              return DIM_BAD;
                          }
                      };

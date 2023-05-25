@@ -102,7 +102,7 @@ struct Wedge
     using valtype = std::decay_t<decltype(std::declval<Va>()[0] * std::declval<Vb>()[0])>;
 
     template <class Xr, class Fa, class Va, class Vb>
-    static valtype<Va, Vb>
+    constexpr static valtype<Va, Vb>
     term(Va const & a, Vb const & b)
     {
         if constexpr (!mp::nilp<Fa>) {
@@ -118,7 +118,7 @@ struct Wedge
         }
     }
     template <class Va, class Vb, class Vr, int wr>
-    static void
+    constexpr static void
     coeff(Va const & a, Vb const & b, Vr & r)
     {
         if constexpr (wr<Nr) {
@@ -129,7 +129,7 @@ struct Wedge
         }
     }
     template <class Va, class Vb, class Vr>
-    static void
+    constexpr static void
     product(Va const & a, Vb const & b, Vr & r)
     {
         static_assert(int(Va::size())==Na, "bad Va dim");  // gcc accepts a.size(), etc.
@@ -152,7 +152,7 @@ struct Hodge
     constexpr static int Nb = W::Nb;
 
     template <int i, class Va, class Vb>
-    static void
+    constexpr static void
     hodge_aux(Va const & a, Vb & b)
     {
         static_assert(i<=W::Na, "Bad argument to hodge_aux");
@@ -178,7 +178,8 @@ struct Hodge
 // With lexicographic order, component order is reversed, but signs vary.
 // With the order given by ChooseComponents<>, fpw::where==i and fps::sign==+1 in hodge_aux(), always. Then hodge() becomes a free operation, (with one exception) and the next function hodge() can be used.
 template <int D, int O, class Va, class Vb>
-void hodgex(Va const & a, Vb & b)
+constexpr void
+hodgex(Va const & a, Vb & b)
 {
     static_assert(O<=D, "bad orders");
     static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc.
@@ -196,7 +197,7 @@ namespace ra {
 #define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))))
 
 template <int D, int O, class Va, class Vb>
-inline void
+constexpr void
 hodge(Va const & a, Vb & b)
 {
     if constexpr (TRIVIAL(D, O)) {
@@ -210,7 +211,7 @@ hodge(Va const & a, Vb & b)
 
 template <int D, int O, class Va>
 requires (TRIVIAL(D, O))
-inline Va const &
+constexpr Va const &
 hodge(Va const & a)
 {
     static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size()
@@ -219,7 +220,7 @@ hodge(Va const & a)
 
 template <int D, int O, class Va>
 requires (!TRIVIAL(D, O))
-inline Va &
+constexpr Va &
 hodge(Va & a)
 {
     Va b(a);

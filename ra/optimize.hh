@@ -12,7 +12,7 @@
 
 namespace ra {
 
-template <class E> inline decltype(auto) constexpr optimize(E && e) { return std::forward<E>(e); }
+template <class E>  constexpr decltype(auto) optimize(E && e) { return std::forward<E>(e); }
 
 // These are named to match & transform Expr<OPNAME, ...> later on, and used by operator+ etc.
 #define DEFINE_NAMED_BINARY_OP(OP, OPNAME)                              \
@@ -43,68 +43,68 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::num
 // plus
 // --------------
 
-template <class I, class J>
-requires (is_iota<I> && iota_op<J>)
-constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+template <class I, class J> requires (is_iota<I> && iota_op<J>)
+constexpr auto
+optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0).i+ITEM(1), ITEM(0).step_);
+    return ITEM(0).set(ITEM(0).i + ITEM(1));
 }
 
-template <class I, class J>
-requires (iota_op<I> && is_iota<J>)
-constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+template <class I, class J> requires (iota_op<I> && is_iota<J>)
+constexpr auto
+optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0)+ITEM(1).i, ITEM(1).step_);
+    return ITEM(1).set(ITEM(1).i + ITEM(0));
 }
 
-template <class I, class J>
-requires (is_iota<I> && is_iota<J>)
-constexpr auto optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+template <class I, class J> requires (is_iota<I> && is_iota<J>)
+constexpr auto
+optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0).i+ITEM(1).i, ITEM(0).step_+ITEM(1).step_);
+    return iota(e.len(0), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
 }
 
 // --------------
 // minus
 // --------------
 
-template <class I, class J>
-requires (is_iota<I> && iota_op<J>)
-constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+template <class I, class J> requires (is_iota<I> && iota_op<J>)
+constexpr auto
+optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0).i-ITEM(1), ITEM(0).step_);
+    return ITEM(0).set(ITEM(0).i - ITEM(1));
 }
 
-template <class I, class J>
-requires (iota_op<I> && is_iota<J>)
-constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+template <class I, class J> requires (iota_op<I> && is_iota<J>)
+constexpr auto
+optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0)-ITEM(1).i, -ITEM(1).step_);
+    return iota(e.len(0), ITEM(0)-ITEM(1).i, -ITEM(1).gets());
 }
 
-template <class I, class J>
-requires (is_iota<I> && is_iota<J>)
-constexpr auto optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+template <class I, class J> requires (is_iota<I> && is_iota<J>)
+constexpr auto
+optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0).i-ITEM(1).i, ITEM(0).step_-ITEM(1).step_);
+    return iota(e.len(0), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
 }
 
 // --------------
 // times
 // --------------
 
-template <class I, class J>
-requires (is_iota<I> && iota_op<J>)
-constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
+template <class I, class J> requires (is_iota<I> && iota_op<J>)
+constexpr auto
+optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0).i*ITEM(1), ITEM(0).step_*ITEM(1));
+    return iota(e.len(0), ITEM(0).i*ITEM(1), ITEM(0).gets()*ITEM(1));
 }
 
-template <class I, class J>
-requires (iota_op<I> && is_iota<J>)
-constexpr auto optimize(Expr<ra::times, std::tuple<I, J>> && e)
+template <class I, class J> requires (iota_op<I> && is_iota<J>)
+constexpr auto
+optimize(Expr<ra::times, std::tuple<I, J>> && e)
 {
-    return iota(e.len(0), ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).step_);
+    return iota(e.len(0), ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets());
 }
 
 #endif // RA_DO_OPT_IOTA
@@ -122,7 +122,7 @@ static_assert(match_smallvector<ra::cell_iterator_small<ra::SmallBase<ra::SmallV
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B>                                         \
     requires (match_smallvector<A, T, N> && match_smallvector<B, T, N>) \
-    inline auto                                                         \
+    constexpr auto                                                      \
     optimize(ra::Expr<NAME, std::tuple<A, B>> && e)                     \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
