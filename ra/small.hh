@@ -34,7 +34,7 @@ struct is_beatable_def<I>
     constexpr static bool value = std::is_integral_v<T> && (DIM_BAD != I::len_s(0));
     constexpr static int skip_src = 1;
     constexpr static int skip = 1;
-    constexpr static bool static_p = false; // it cannot for Iota
+    constexpr static bool static_p = false; // FIXME see Iota with ct N, S
 };
 
 // FIXME have a 'filler' version (e.g. with default n = -1) or maybe a distinct type.

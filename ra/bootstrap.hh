@@ -240,20 +240,14 @@ namespace ra {
 
 
 // --------------
-// type classification / traits
+// type classification
 // --------------
 
 #define RA_IS_DEF(NAME, PRED)                                           \
-    template <class A> constexpr bool JOIN(NAME, _def) = false;         \
-    template <class A> requires (PRED) constexpr bool JOIN(NAME, _def) < A > = true; \
+    template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
     template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
 
 // ra_traits are for foreign types only. FIXME Not sure this is the interface I want.
-
-
-// --------------
-// type classification / scalar, foreign or not. Specialize _def for more.
-// --------------
 
 RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
@@ -272,27 +266,16 @@ struct ra_traits_def<T>
     constexpr static rank_t rank_s() { return 0; }
 };
 
-
-// --------------
-// type classification / ra types
-// --------------
-
 // TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
-RA_IS_DEF(is_iterator_pos_rank, is_iterator<A> && A::rank_s()!=0)
-// TODO use concept for is_slice.
+RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && A::rank_s()!=0)
 RA_IS_DEF(is_slice, SliceConcept<A>)
-RA_IS_DEF(is_slice_pos_rank, is_slice<A> && A::rank_s()!=0)
+RA_IS_DEF(is_slice_pos_rank, SliceConcept<A> && A::rank_s()!=0)
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
 template <class A> constexpr bool is_ra_pos_rank = is_iterator_pos_rank<A> || is_slice_pos_rank<A>; // internal only FIXME
 template <class A> constexpr bool is_ra_zero_rank = is_ra<A> && !is_ra_pos_rank<A>;
 template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_scalar<A>;
-
-
-// --------------
-// type classification / foreign vectors.
-// --------------
 
 // ra_traits defined in small.hh.
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
@@ -338,11 +321,6 @@ struct ra_traits_def<std::initializer_list<T>>
     constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; }
 };
-
-
-// --------------
-// type classification / extra
-// --------------
 
 template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...) && ((is_ra<A> || is_scalar<A> || is_foreign_vector<A> || is_builtin_array<A>) && ...);
 // all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).

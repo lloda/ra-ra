@@ -6,13 +6,13 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/7]
-  - [-] Bugs [1/9]
+  - [-] Bugs [2/9]
     - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
       - Appears to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
     - [X] size_s, rank_s in Ryn:: are broken [ra07]
-    - [ ] broken with -DNDEBUG
+    - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
     - [ ] ambiguity / bad init in nested constructors [ra45]
     - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
       rank 1, then `A(i)` will return a nested expression instead of preserving
