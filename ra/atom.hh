@@ -277,7 +277,7 @@ struct Iota
     {
         T i;
         stype s;
-        constexpr void operator+=(dim_t d) { i += T(d)*s; }
+        constexpr void operator+=(dim_t d) { i += T(d)*T(s); }
         constexpr auto operator*() const { return i; }
     };
 
@@ -290,7 +290,7 @@ struct Iota
     template <class J> constexpr auto at(J && j) { return i + T(j[w])*s; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * s; }
+    constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * T(s); }
     constexpr auto flat() const { return Flat { i, s }; }
 };
 
@@ -300,12 +300,21 @@ template <int w> using TensorIndex = Iota<dim_t, w, DIM_BAD, 1>;
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
-// FIXME Offer ct step, but optimize() must be able to handle it.
+constexpr auto iota() { return TensorIndex<0> {}; }
+
+template <class T=dim_t>
+constexpr auto
+iota(dim_t len, T org=0)
+{
+    RA_CHECK(len>=0, "Bad iota length ", len);
+    return Iota<T, 0, DIM_ANY, 1> { org, len };
+}
+
 template <class O=dim_t, class S=O>
 constexpr auto
-iota(dim_t len=DIM_BAD, O org=0, S step=1)
+iota(dim_t len, O org, S step)
 {
-    RA_CHECK(len==DIM_BAD || len>=0, "Bad iota length ", len);
+    RA_CHECK(len>=0, "Bad iota length ", len);
     using T = std::common_type_t<O, S>;
     return Iota<T> { T(org), len, T(step) };
 }
@@ -319,9 +328,11 @@ template <class T>
 constexpr void
 start(T && t) { static_assert(!std::same_as<T, T>, "Type cannot be start()ed."); }
 
-// FIXME generalizing this needs fixes in beatable_def/select, tests in test/from.cc.
-// right now A(... tindex ...) is unbeaten which serves to delay match and allows e.g. B = A(... tindex ...) to be valid.
-RA_IS_DEF(is_iota, (std::same_as<A, Iota<decltype(std::declval<A>().i)>>))
+// undefined len iota (ti) is excluded from optimization and beating. This allows e.g. B = A(... ti ...).
+// FIXME no need to exclude it from optimization (?)
+template <class I> constexpr bool is_iota_ = false;
+template <class T, dim_t N, dim_t S> requires (DIM_BAD!=N) constexpr bool is_iota_<Iota<T, 0, N, S>> = true;
+RA_IS_DEF(is_iota, (is_iota_<A>))
 
 template <class T> requires (is_foreign_vector<T>)
 constexpr auto

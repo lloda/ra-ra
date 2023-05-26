@@ -195,9 +195,9 @@ select(Dim * dim, Dim const * dim_src, dim_t i)
     return dim_src->step*i;
 }
 
-template <class II>
+template <class I> requires (is_iota<I>)
 constexpr dim_t
-select(Dim * dim, Dim const * dim_src, ra::Iota<II> i)
+select(Dim * dim, Dim const * dim_src, I i)
 {
     RA_CHECK((inside(i.i, dim_src->len) && inside(i.i+(i.n-1)*i.gets(), dim_src->len))
              || (i.n==0 && i.i<=dim_src->len));

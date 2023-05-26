@@ -27,10 +27,11 @@ struct is_beatable_def
     constexpr static bool static_p = value; // can the beating be resolved statically?
 };
 
-template <class T>
-struct is_beatable_def<Iota<T>>
+template <class I> requires (is_iota<I>)
+struct is_beatable_def<I>
 {
-    constexpr static bool value = std::numeric_limits<T>::is_integer;
+    using T = decltype(I::i);
+    constexpr static bool value = std::is_integral_v<T> && (DIM_BAD != I::len_s(0));
     constexpr static int skip_src = 1;
     constexpr static int skip = 1;
     constexpr static bool static_p = false; // it cannot for Iota

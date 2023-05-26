@@ -5,8 +5,8 @@ checkbox [C-ct] flip TODO
 
 #+STARTUP: logdone
 
-* TODO [1/6]
-  - [-] Bugs [2/9]
+* TODO [1/7]
+  - [-] Bugs [1/9]
     - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
@@ -22,7 +22,7 @@ checkbox [C-ct] flip TODO
     - [ ] be namespace clean except for possibly real.hh, complex.hh.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
-  - [-] Features [1/7]
+  - [-] Features [1/8]
     - [ ] Iota is both vector-like object and iterator. Split into two types?
     - [ ] Deduction guides, e.g. ra::small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
     - [ ] View::p is not const because it's used as sliding window (cell_iterator_big). Split into two types?
@@ -50,6 +50,8 @@ checkbox [C-ct] flip TODO
           better.
     - [X] Support operator <=> <2020-09-15 Tue 13:50>
       - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
+  - [ ] Performance [0/1]
+    - [ ] bench/bench-stencil* is weird.
   - [X] Error report, debugging [3/3]
     - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/ra-12.cc
       * This was fixed between v8 and v10, see examples/throw.cc.
