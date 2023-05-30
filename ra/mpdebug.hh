@@ -21,8 +21,6 @@ struct show_number
     static_assert(condition, "bad number");
 };
 
-template<class Z> constexpr Z show_type_f() = delete;
-
 template <class type_, bool condition=false>
 struct show_type
 {
@@ -31,7 +29,7 @@ struct show_type
     static_assert(condition, "bad type");
 };
 
-// Prints recursively, i.e. int_t trees.
+// Prints value recursively, e.g. for int_t trees.
 
 template <class A> struct print_int_list {};
 
@@ -50,7 +48,7 @@ template <class T>
 std::string
 type_name()
 {
-    using TR = std::remove_reference_t<T>;
+    using TR = std::remove_cvref_t<T>;
     std::string r = typeid(TR).name();
     if (std::is_const_v<TR>)
         r += " const";

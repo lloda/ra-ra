@@ -17,47 +17,14 @@
 
 namespace ra {
 
-// -----------------
-// return type of pick expression, otherwise compiler complains of ambiguity.
-// TODO & is crude, maybe is_assignable?
-// -----------------
-
-template <class T>
-struct pick_type
-{
-    using type = mp::apply<std::common_type_t, T>;
-};
-
-// lvalue
-template <class P0, class ... P>
-requires (!std::is_const_v<P0> && (std::is_same_v<P0 &, P> && ...))
-struct pick_type<std::tuple<P0 &, P ...>>
-{
-    using type = P0 &;
-};
-
-// const lvalue
-template <class P0, class ... P>
-requires ((std::is_same_v<std::decay_t<P0>, std::decay_t<P>> && ...)
-          && (std::is_const_v<P0> || (std::is_const_v<P> || ...)))
-struct pick_type<std::tuple<P0 &, P & ...>>
-{
-    using type = P0 const &;
-};
-
-// -----------------
-// runtime to compile time conversion for Pick::at() and Pick::Flat::operator*()
-// -----------------
-
 template <class T, class J> struct pick_at_type;
 template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
 {
-    using type = typename pick_type<std::tuple<decltype(std::declval<P>().at(std::declval<J>())) ...>>::type;
+    using type = mp::apply<std::common_reference_t, std::tuple<decltype(std::declval<P>().at(std::declval<J>())) ...>>;
 };
-template <class T, class J> using pick_at_t = typename pick_at_type<mp::drop1<std::decay_t<T>>, J>::type;
 
 template <std::size_t I, class T, class J>
-constexpr pick_at_t<T, J>
+constexpr pick_at_type<mp::drop1<std::decay_t<T>>, J>::type
 pick_at(std::size_t p0, T && t, J const & j)
 {
     if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
@@ -75,12 +42,11 @@ pick_at(std::size_t p0, T && t, J const & j)
 template <class T> struct pick_star_type;
 template <class ... P> struct pick_star_type<std::tuple<P ...>>
 {
-    using type = typename pick_type<std::tuple<decltype(*std::declval<P>()) ...>>::type;
+    using type = mp::apply<std::common_reference_t, std::tuple<decltype(*std::declval<P>()) ...>>;
 };
-template <class T> using pick_star_t = typename pick_star_type<mp::drop1<std::decay_t<T>>>::type;
 
 template <std::size_t I, class T>
-constexpr pick_star_t<T>
+constexpr pick_star_type<mp::drop1<std::decay_t<T>>>::type
 pick_star(std::size_t p0, T && t)
 {
     if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
@@ -106,8 +72,8 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     struct Flat
     {
         T_ t;
-        template <class S> void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-        decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
+        template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
+        constexpr decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
     };
 
     template <class ... P_>
@@ -145,6 +111,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     }
 
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
+    constexpr
     operator decltype(*(flat(std::get<I>(Match_::t).flat() ...))) ()
     {
         if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only

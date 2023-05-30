@@ -17,7 +17,7 @@ namespace ra {
 // reframe
 // ---------------------------
 
-// Reframe is a variant of transpose that works on any array iterator.  As in transpose(), one names
+// Reframe is a variant of transpose that works on any IteratorConcept.  As in transpose(), one names
 // the destination axis for each original axis.  However, unlike general transpose, axes may not be
 // repeated. The main application is the rank conjunction below.
 
@@ -30,7 +30,7 @@ template <class ... T> constexpr std::tuple<T ...> zerostep<std::tuple<T ...>> =
 // If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
 // TODO invalid for RANK_ANY (since Dest is compile time). [ra07]
 
-template <class Dest, class A>
+template <class Dest, IteratorConcept A>
 struct Reframe
 {
     A a;
@@ -76,13 +76,17 @@ struct Reframe
         return a.at(mp::map_indices<std::array<dim_t, mp::len<Dest>>, Dest>(i));
     }
     constexpr decltype(auto)
-    flat() { return a.flat(); }
+    flat()
+    {
+        return a.flat();
+    }
 };
 
 // Optimize no-op case.
 // TODO If A is cell_iterator_big, etc. beat Dest directly on it, same for eventual transpose_expr<>.
 
-template <class Dest, class A> decltype(auto)
+template <class Dest, class A>
+constexpr decltype(auto)
 reframe(A && a)
 {
     if constexpr (std::is_same_v<Dest, mp::iota<1+mp::fold<mp::max, mp::int_t<-1>, Dest>::value>>) {
@@ -107,13 +111,15 @@ struct Verb
 
 RA_IS_DEF(is_verb, (std::is_same_v<A, Verb<typename A::cranks, typename A::Op>>))
 
-template <class cranks, class Op> constexpr auto
+template <class cranks, class Op>
+constexpr auto
 wrank(cranks cranks_, Op && op)
 {
     return Verb<cranks, Op> { std::forward<Op>(op) };
 }
 
-template <rank_t ... crank, class Op> constexpr auto
+template <rank_t ... crank, class Op>
+constexpr auto
 wrank(Op && op)
 {
     return Verb<mp::int_list<crank ...>, Op> { std::forward<Op>(op) };
@@ -178,7 +184,8 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
 #pragma GCC diagnostic pop
     };
 
-    template <class ... P_> constexpr static auto
+    template <class ... P_>
+    constexpr static auto
     flat(Op & op, P_ && ... p)
     {
         return Flat<std::tuple<P_ ...>> { op, { std::forward<P_>(p) ... } };
@@ -192,13 +199,15 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     RA_DEF_ASSIGNOPS_SELF(Expr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    template <class J> constexpr decltype(auto)
+    template <class J>
+    constexpr decltype(auto)
     at(J const & j)
     {
         return op(std::get<I>(this->t).at(j) ...);
     }
 
-    template <class J> constexpr decltype(auto)
+    template <class J>
+    constexpr decltype(auto)
     at(J const & j) const
     {
         return op(std::get<I>(this->t).at(j) ...);
@@ -223,14 +232,16 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     }
 };
 
-template <class V, class ... T, int ... i> constexpr auto
+template <class V, class ... T, int ... i>
+constexpr auto
 expr_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
     return expr(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
 }
 
-template <class Op, class ... P> constexpr auto
+template <class Op, class ... P>
+constexpr auto
 expr(Op && op, P && ... p)
 {
     if constexpr (is_verb<Op>) {
@@ -240,7 +251,8 @@ expr(Op && op, P && ... p)
     }
 }
 
-template <class Op, class ... A> constexpr auto
+template <class Op, class ... A>
+constexpr auto
 map(Op && op, A && ... a)
 {
     return expr(std::forward<Op>(op), start(std::forward<A>(a)) ...);
@@ -251,25 +263,29 @@ map(Op && op, A && ... a)
 // explicit agreement checks. FIXME provide separate agree_s().
 // ---------------
 
-template <class ... P> constexpr bool
+template <class ... P>
+constexpr bool
 agree(P && ... p)
 {
     return agree_(ra::start(std::forward<P>(p)) ...);
 }
 
-template <class Op, class ... P> constexpr bool
+template <class Op, class ... P>
+constexpr bool
 agree_op(Op && op, P && ... p)
 {
     return agree_op_(std::forward<Op>(op), ra::start(std::forward<P>(p)) ...);
 }
 
-template <class ... P> constexpr bool
+template <class ... P>
+constexpr bool
 agree_(P && ... p)
 {
     return check_expr<false>(Match<false, std::tuple<P ...>> { std::forward<P>(p) ... });
 }
 
-template <class Op, class ... P> constexpr bool
+template <class Op, class ... P>
+constexpr bool
 agree_op_(Op && op, P && ... p)
 {
     if constexpr (is_verb<Op>) {
@@ -279,7 +295,8 @@ agree_op_(Op && op, P && ... p)
     }
 }
 
-template <class V, class ... T, int ... i> constexpr bool
+template <class V, class ... T, int ... i>
+constexpr bool
 agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
