@@ -1695,20 +1695,23 @@ TODO
 @section Compiling and running
 @c ------------------------------------------------
 
-The following boolean @code{#define}s affect the behavior of @code{ra::}.
+The following @code{#define}s affect the behavior of @code{ra::}.
 
 @itemize
 @c FIXME The flag should only apply to dynamic checks.
 @item @code{RA_DO_CHECK} (default 1):  Check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
-@item @code{RA_USE_BLAS} (default 0): Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
-@item @code{RA_DO_OPT} (default 1): Replace certain expressions by others that are expected to perform better. This acts as a global mask on other @code{RA_DO_OPT_xxx} flags.
+@item @code{RA_DO_OPT} (default 1): Sets the default for all @code{RA_DO_OPT_XXX} flags.
 @item @code{RA_DO_OPT_IOTA} (default 1): Perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::iota(3, 0) + 1} becomes @code{ra::iota(3, 1)} instead of a two-operand expression template.
 @item @code{RA_DO_OPT_SMALLVECTOR} (default 0): Perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
 @end itemize
 
-@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own crude test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}.
+@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}. Like most expression template libraries, @code{ra::} is highly dependent on optimization by the compiler and will be orders of magnitude slower with @option{-O0} compared to @option{-O2}.
 
-Like most expression template libraries, @code{ra::} is extremely dependent on optimization by the compiler and will be orders of magnitude slower at @option{-O0} compared to @option{-O2}. Avoid using anything below @option{-O2}, other than for debugging purposes.
+The following environment variables affect the test suite under SCons:
+
+@itemize
+@item @code{RA_USE_BLAS} (default 0): Use BLAS for @code{gemm} and @code{gemv} benchmarks.
+@end itemize
 
 @c TODO Flags and notes about different compilers
 
@@ -1945,7 +1948,7 @@ map([](auto && i, auto && j) -> int & { return x(i, j); },
 @result{} x = @{@{0, 1, 0@}, @{1, 0, 1@}, @{0, 1, 0@}@}
 @end example
 
-Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to (value) @code{auto}, so either a explicit type or @code{decltype(auto)} should be used if you want to return a reference.
+Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to @code{auto}, so either an explicit type or @code{decltype(auto)} should be used if you want to return a reference.
 
 See also @ref{x-for_each,@code{for_each}}.
 
@@ -1977,7 +1980,7 @@ For example:
 @anchor{x-ply} @defun ply expr
 Traverse @var{expr}. @code{ply} returns @code{void} so @var{expr} should be run for effect.
 
-It is rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)} (which is actually @code{ply(map(...))} should cover most other uses.
+It is rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)}, which is equivalent to @code{ply(map(...))}, should cover most other uses.
 
 @example
 @verbatim
@@ -2084,7 +2087,7 @@ The rank of the result is @code{maxᵢ(axesᵢ)+1} and it may be smaller or larg
   1 5
 @end example
 
-If one of the destination axes isn't mentioned in @var{axes}, then is a ‘dead’ axis similar to those produced by @ref{x-insert,@code{insert}}. For example:
+If one of the destination axes isn't mentioned in @var{axes}, then it becomes a ‘dead’ axis similar to those produced by @ref{x-insert,@code{insert}}. For example:
 
 @example
 @verbatim
@@ -2141,7 +2144,7 @@ For example:
 
 @cindex @code{wrank}
 @anchor{x-wrank} @defun wrank <input_rank ...> op
-Wrap op using a rank conjunction (@pxref{The rank conjunction}).
+Wrap @var{op} using a rank conjunction (@pxref{The rank conjunction}).
 
 For example: TODO
 @example
@@ -2170,7 +2173,7 @@ For example: TODO
 @anchor{x-noshape}
 @anchor{x-withshape}
 @deffn @w{Special object} {withshape noshape}
-If either of these objects is sent to @code{std::ostream} before an expression object, the shape of that object will or won't be printed.
+If either of these objects is sent to @code{std::ostream} before an expression object, the shape of that object will or will not be printed.
 
 If the object has ct shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has rt shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] expect the shape to be present or not according to the default.
 
@@ -2219,36 +2222,11 @@ See also @ref{x-format_array,@code{format_array}}.
 
 @end deffn
 
-@cindex @code{start}
-@anchor{x-start} @defun start foreign_object
-Create a array expression from @var{foreign_object}.
-
-@var{foreign_object} can be a built-in array (@code{int[3]}, etc.), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
-
-Generally one can mix these types with @code{ra::} expressions without needing @code{ra::start}, but sometimes this isn't possible, for example for operators that must be class members.
-
-@example
-@verbatim
-std::vector<int> x = {1, 2, 3};
-ra::Big<int, 1> y = {10, 20, 30};
-cout << (x+y) << endl; // same as ra::start(x)+y
-// x += y; // error: no match for operator+=
-ra::start(x) += y; // ok
-@end verbatim
-@print{} 3
-  11 22 33
-  @result{} x = @{ 11, 22, 33 @}
-@end example
-
-@end defun
-
 @cindex @code{ptr}
-@anchor{x-ptr} @defun ptr pointer [len]
-Create vector expression from raw @var{pointer}.
+@anchor{x-ptr} @defun ptr random_access_iterator [len]
+Create rank-1 expression from @var{random_access_iterator}, which can be a raw pointer.
 
-The resulting expression has rank 1 and the length given. If @code{len} is not given, the expression has undefined length, and it will need to be matched with other expressions whose length @emph{is} defined.
-
-@code{ra::} doesn't know what is actually accessible through the pointer, so be careful. For instance:
+If @code{len} is not given, the expression has undefined length, and it will need to be matched with other expressions whose length is defined. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
 
 @example
 @verbatim
@@ -2271,6 +2249,31 @@ v3 += p; // ok
 v4 += p; // error checked by ra::, shape clash (4) += (3)
 cout << (p + ra::TensorIndex<0>{}) << endl; // ok
 @end verbatim
+@end example
+
+@code{ptr} isn't meant to be used with STL containers, which are converted to rank-1 expressions automatically. See also @ref{x-start,@code{start}}.
+
+@end defun
+
+@cindex @code{start}
+@anchor{x-start} @defun start foreign_object
+Create array expression from @var{foreign_object}.
+
+@var{foreign_object} can be a built-in array (e.g. @code{int[3][2]}), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
+
+Generally one can mix these types with @code{ra::} expressions without needing @code{ra::start}, but sometimes this isn't possible, for example for operators that must be class members.
+
+@example
+@verbatim
+std::vector<int> x = {1, 2, 3};
+ra::Big<int, 1> y = {10, 20, 30};
+cout << (x+y) << endl; // same as ra::start(x)+y
+// x += y; // error: no match for operator+=
+ra::start(x) += y; // ok
+@end verbatim
+@print{} 3
+  11 22 33
+  @result{} x = @{ 11, 22, 33 @}
 @end example
 
 @end defun

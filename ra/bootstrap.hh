@@ -243,6 +243,7 @@ namespace ra {
 // type classification
 // --------------
 
+// FIXME https://wg21.link/p2841r0 ?
 #define RA_IS_DEF(NAME, PRED)                                           \
     template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
     template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
@@ -259,7 +260,7 @@ template <class T> requires (is_scalar<T>)
 struct ra_traits_def<T>
 {
     using V = T;
-    constexpr static std::array<dim_t, 0> shape(V const & v) { return std::array<dim_t, 0> {}; }
+    constexpr static auto shape(V const & v) { return std::array<dim_t, 0> {}; }
     constexpr static dim_t size(V const & v) { return 1; }
     constexpr static dim_t size_s() { return 1; }
     constexpr static rank_t rank(V const & v) { return 0; }
@@ -278,13 +279,13 @@ template <class A> constexpr bool is_ra_zero_rank = is_ra<A> && !is_ra_pos_rank<
 template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_scalar<A>;
 
 // ra_traits defined in small.hh.
-template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cv_t<std::remove_reference_t<A>>>;
+template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 
 // std::string is std::ranges::range, but if we have it as is_scalar, we can't have it as is_foreign_vector.
 RA_IS_DEF(is_foreign_vector, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
 
 // not using decay_t bc of builtin arrays.
-template <class A> using ra_traits = ra_traits_def<std::remove_cv_t<std::remove_reference_t<A>>>;
+template <class A> using ra_traits = ra_traits_def<std::remove_cvref_t<A>>;
 
 // FIXME should be able to use std::span(V).extent (maybe p2325r3?) [ra2]
 template <class V>

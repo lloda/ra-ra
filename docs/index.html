@@ -1784,20 +1784,23 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 </div>
 <span id="Compiling-and-running-1"></span><h3 class="section">5.5 Compiling and running</h3>
 
-<p>The following boolean <code>#define</code>s affect the behavior of <code>ra::</code>.
+<p>The following <code>#define</code>s affect the behavior of <code>ra::</code>.
 </p>
 <ul>
 <li> <code>RA_DO_CHECK</code> (default 1):  Check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
-</li><li> <code>RA_USE_BLAS</code> (default 0): Try to use BLAS for certain rank 1 and rank 2 operations. Currently this is only used by some of the benchmarks and not by the library itself.
-</li><li> <code>RA_DO_OPT</code> (default 1): Replace certain expressions by others that are expected to perform better. This acts as a global mask on other <code>RA_DO_OPT_xxx</code> flags.
+</li><li> <code>RA_DO_OPT</code> (default 1): Sets the default for all <code>RA_DO_OPT_XXX</code> flags.
 </li><li> <code>RA_DO_OPT_IOTA</code> (default 1): Perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::iota(3, 0) + 1</code> becomes <code>ra::iota(3, 1)</code> instead of a two-operand expression template.
 </li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0): Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
 </li></ul>
 
-<p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own crude test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>.
+<p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>. Like most expression template libraries, <code>ra::</code> is highly dependent on optimization by the compiler and will be orders of magnitude slower with <samp>-O0</samp> compared to <samp>-O2</samp>.
 </p>
-<p>Like most expression template libraries, <code>ra::</code> is extremely dependent on optimization by the compiler and will be orders of magnitude slower at <samp>-O0</samp> compared to <samp>-O2</samp>. Avoid using anything below <samp>-O2</samp>, other than for debugging purposes.
+<p>The following environment variables affect the test suite under SCons:
 </p>
+<ul>
+<li> <code>RA_USE_BLAS</code> (default 0): Use BLAS for <code>gemm</code> and <code>gemv</code> benchmarks.
+</li></ul>
+
 
 <hr>
 </div>
@@ -2043,7 +2046,7 @@ map([](auto &amp;&amp; i, auto &amp;&amp; j) -&gt; int &amp; { return x(i, j); }
 </pre><pre class="example">&rArr; x = {{0, 1, 0}, {1, 0, 1}, {0, 1, 0}}
 </pre></div>
 
-<p>Here the anonymous function can be replaced by simply <code>x</code>. Remember that unspecified return type defaults to (value) <code>auto</code>, so either a explicit type or <code>decltype(auto)</code> should be used if you want to return a reference.
+<p>Here the anonymous function can be replaced by simply <code>x</code>. Remember that unspecified return type defaults to <code>auto</code>, so either an explicit type or <code>decltype(auto)</code> should be used if you want to return a reference.
 </p>
 <p>See also <a href="#x_002dfor_005feach"><code>for_each</code></a>.
 </p>
@@ -2076,7 +2079,7 @@ map([](auto &amp;&amp; i, auto &amp;&amp; j) -&gt; int &amp; { return x(i, j); }
 <dt id="index-ply-1"><span class="category">Function: </span><span><strong>ply</strong> <em>expr</em><a href='#index-ply-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Traverse <var>expr</var>. <code>ply</code> returns <code>void</code> so <var>expr</var> should be run for effect.
 </p>
-<p>It is rarely necessary to use <code>ply</code>. Expressions are traversed automatically when they are assigned to views, for example, or printed out. <a href="#x_002dfor_005feach"><code>for_each</code></a><code>(...)</code> (which is actually <code>ply(map(...))</code> should cover most other uses.
+<p>It is rarely necessary to use <code>ply</code>. Expressions are traversed automatically when they are assigned to views, for example, or printed out. <a href="#x_002dfor_005feach"><code>for_each</code></a><code>(...)</code>, which is equivalent to <code>ply(map(...))</code>, should cover most other uses.
 </p>
 <div class="example">
 <pre class="verbatim">double s = 0.;
@@ -2179,7 +2182,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
   1 5
 </pre></div>
 
-<p>If one of the destination axes isn&rsquo;t mentioned in <var>axes</var>, then is a ‘dead’ axis similar to those produced by <a href="#x_002dinsert"><code>insert</code></a>. For example:
+<p>If one of the destination axes isn&rsquo;t mentioned in <var>axes</var>, then it becomes a ‘dead’ axis similar to those produced by <a href="#x_002dinsert"><code>insert</code></a>. For example:
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Unique&lt;double, 1&gt; a = {1, 2, 3};
@@ -2231,7 +2234,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <span id="index-wrank"></span>
 <span id="x_002dwrank"></span><dl class="def">
 <dt id="index-wrank-1"><span class="category">Function: </span><span><strong>wrank</strong> <em>&lt;input_rank ...&gt; op</em><a href='#index-wrank-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Wrap op using a rank conjunction (see <a href="#The-rank-conjunction">The rank conjunction</a>).
+<dd><p>Wrap <var>op</var> using a rank conjunction (see <a href="#The-rank-conjunction">The rank conjunction</a>).
 </p>
 <p>For example: TODO
 </p><div class="example">
@@ -2247,7 +2250,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <span id="index-withshape"></span>
 <span id="x_002dnoshape"></span><span id="x_002dwithshape"></span><dl class="def">
 <dt id="index-withshape-noshape"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>withshape noshape</strong><a href='#index-withshape-noshape' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>If either of these objects is sent to <code>std::ostream</code> before an expression object, the shape of that object will or won&rsquo;t be printed.
+<dd><p>If either of these objects is sent to <code>std::ostream</code> before an expression object, the shape of that object will or will not be printed.
 </p>
 <p>If the object has ct shape, the default is not to print the shape, so <code>noshape</code> isn&rsquo;t necessary, and conversely for <code>withshape</code> if the object has rt shape. Note that the array readers [<code>operator&gt;&gt;(std::istream &amp;, ...)</code>] expect the shape to be present or not according to the default.
 </p>
@@ -2292,36 +2295,12 @@ case c:
 </p>
 </dd></dl>
 
-<span id="index-start-1"></span>
-<span id="x_002dstart"></span><dl class="def">
-<dt id="index-start-2"><span class="category">Function: </span><span><strong>start</strong> <em>foreign_object</em><a href='#index-start-2' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create a array expression from <var>foreign_object</var>.
-</p>
-<p><var>foreign_object</var> can be a built-in array (<code>int[3]</code>, etc.), a <code>std::random_access_range</code> type (including <code>std::vector</code> or <code>std::array</code>, see <a href="#Compatibility">Compatibility</a>), an initializer list, or any object that <code>ra::</code> accepts as scalar (see <a href="#x_002dis_002dscalar"><code>here</code></a>). The resulting expresion has shape according to the original object. Compare this with <a href="#x_002dscalar"><code>scalar</code></a>, which will always produce an expression of rank 0.
-</p>
-<p>Generally one can mix these types with <code>ra::</code> expressions without needing <code>ra::start</code>, but sometimes this isn&rsquo;t possible, for example for operators that must be class members.
-</p>
-<div class="example">
-<pre class="verbatim">std::vector&lt;int&gt; x = {1, 2, 3};
-ra::Big&lt;int, 1&gt; y = {10, 20, 30};
-cout &lt;&lt; (x+y) &lt;&lt; endl; // same as ra::start(x)+y
-// x += y; // error: no match for operator+=
-ra::start(x) += y; // ok
-</pre><pre class="example">-| 3
-  11 22 33
-  &rArr; x = { 11, 22, 33 }
-</pre></div>
-
-</dd></dl>
-
 <span id="index-ptr"></span>
 <span id="x_002dptr"></span><dl class="def">
-<dt id="index-ptr-1"><span class="category">Function: </span><span><strong>ptr</strong> <em>pointer [len]</em><a href='#index-ptr-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create vector expression from raw <var>pointer</var>.
+<dt id="index-ptr-1"><span class="category">Function: </span><span><strong>ptr</strong> <em>random_access_iterator [len]</em><a href='#index-ptr-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create rank-1 expression from <var>random_access_iterator</var>, which can be a raw pointer.
 </p>
-<p>The resulting expression has rank 1 and the length given. If <code>len</code> is not given, the expression has undefined length, and it will need to be matched with other expressions whose length <em>is</em> defined.
-</p>
-<p><code>ra::</code> doesn&rsquo;t know what is actually accessible through the pointer, so be careful. For instance:
+<p>If <code>len</code> is not given, the expression has undefined length, and it will need to be matched with other expressions whose length is defined. <code>ra::</code> doesn&rsquo;t know what is actually accessible through the iterator, so be careful. For instance:
 </p>
 <div class="example">
 <pre class="verbatim">int p[] = {1, 2, 3};
@@ -2340,6 +2319,30 @@ cout &lt;&lt; (ra::ptr(p, 4)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // undef
 <pre class="verbatim">v3 += p; // ok
 v4 += p; // error checked by ra::, shape clash (4) += (3)
 cout &lt;&lt; (p + ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok
+</pre></div>
+
+<p><code>ptr</code> isn&rsquo;t meant to be used with STL containers, which are converted to rank-1 expressions automatically. See also <a href="#x_002dstart"><code>start</code></a>.
+</p>
+</dd></dl>
+
+<span id="index-start-1"></span>
+<span id="x_002dstart"></span><dl class="def">
+<dt id="index-start-2"><span class="category">Function: </span><span><strong>start</strong> <em>foreign_object</em><a href='#index-start-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create array expression from <var>foreign_object</var>.
+</p>
+<p><var>foreign_object</var> can be a built-in array (e.g. <code>int[3][2]</code>), a <code>std::random_access_range</code> type (including <code>std::vector</code> or <code>std::array</code>, see <a href="#Compatibility">Compatibility</a>), an initializer list, or any object that <code>ra::</code> accepts as scalar (see <a href="#x_002dis_002dscalar"><code>here</code></a>). The resulting expresion has shape according to the original object. Compare this with <a href="#x_002dscalar"><code>scalar</code></a>, which will always produce an expression of rank 0.
+</p>
+<p>Generally one can mix these types with <code>ra::</code> expressions without needing <code>ra::start</code>, but sometimes this isn&rsquo;t possible, for example for operators that must be class members.
+</p>
+<div class="example">
+<pre class="verbatim">std::vector&lt;int&gt; x = {1, 2, 3};
+ra::Big&lt;int, 1&gt; y = {10, 20, 30};
+cout &lt;&lt; (x+y) &lt;&lt; endl; // same as ra::start(x)+y
+// x += y; // error: no match for operator+=
+ra::start(x) += y; // ok
+</pre><pre class="example">-| 3
+  11 22 33
+  &rArr; x = { 11, 22, 33 }
 </pre></div>
 
 </dd></dl>

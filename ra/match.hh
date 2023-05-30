@@ -151,7 +151,7 @@ check_expr(E const & e)
 
 template <bool check, class T, class K=mp::iota<mp::len<T>>> struct Match;
 
-template <bool check, class ... P, int ... I>
+template <bool check, IteratorConcept ... P, int ... I>
 struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
 {
     using T = std::tuple<P ...>;

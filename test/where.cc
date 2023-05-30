@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file where.cc
-/// @brief Tests for where() and pick().
+// ra/test - Tests for where() and pick().
 
 // (c) Daniel Llorens - 2014-2016
 // This library is free software; you can redistribute it and/or modify it under
@@ -82,9 +81,13 @@ int main()
         auto c = ra::start(cc);
 
         cc[0] = cc[1] = 99;
+// pick_star
         c = ra::where(true, b, -b);
         tr.test_eq(1, cc[0]);
         tr.test_eq(2, cc[1]);
+
+// pick_at
+        tr.test_eq(1, ra::where(true, b, -b).at(std::array {0}));
 
 // test against a bug where the op in where()'s Expr returned a dangling reference when both its args are rvalue refs. This was visible only at certain -O levels.
         cc[0] = cc[1] = 99;

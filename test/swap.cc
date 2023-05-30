@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file swap.cc
-/// @brief Test for swap(containers)
+// ra/test - Test for swap(containers).
 
 // (c) Daniel Llorens - 2021
 // This library is free software; you can redistribute it and/or modify it under

@@ -8,6 +8,7 @@
 // later version.
 
 #pragma once
+#include <ranges>
 #include <vector>
 #include <utility>
 #include "bootstrap.hh"
@@ -245,7 +246,7 @@ template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
 template <class I, int N> constexpr auto ptr(I i, mp::int_t<N>) { return Ptr<I, N> { i }; }
 template <class I> constexpr auto ptr(I i, dim_t n) { return Ptr<I, DIM_ANY> { i, n }; }
 
-template <class V> constexpr auto
+template <std::ranges::random_access_range V> constexpr auto
 vector(V && v)
 {
     constexpr dim_t ct_size = size_s<V>();

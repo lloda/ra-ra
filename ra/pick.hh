@@ -97,7 +97,7 @@ pick_star(std::size_t p0, T && t)
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 
-template <class ... P, int ... I>
+template <IteratorConcept ... P, int ... I>
 struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
     static_assert(sizeof...(P)>1);

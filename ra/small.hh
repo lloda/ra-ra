@@ -88,10 +88,10 @@ namespace indexer0 {
     template <class lens, class steps, class P>
     constexpr dim_t longer(P const & p) // for IteratorConcept::at().
     {
-        if constexpr (size_s<P>()!=RANK_ANY) {
-            static_assert(mp::len<lens> <= size_s<P>(), "Too few indices.");
-        } else {
+        if constexpr (RANK_ANY==size_s<P>()) {
             RA_CHECK(mp::len<lens> <= p.size(), "Too few indices.");
+        } else {
+            static_assert(mp::len<lens> <= size_s<P>(), "Too few indices.");
         }
         return index<lens, steps, P, mp::len<lens>>(p);
     }
@@ -272,6 +272,7 @@ struct FilterDims
     using lens = lens_;
     using steps = steps_;
 };
+
 template <class lens_, class steps_, class I0, class ... I>
 struct FilterDims<lens_, steps_, I0, I ...>
 {
@@ -289,6 +290,7 @@ select(dim_t i0)
     RA_CHECK(inside(i0, len0));
     return i0*step0;
 };
+
 template <dim_t len0, dim_t step0, int n>
 constexpr dim_t
 select(dots_t<n> i0)
@@ -302,6 +304,7 @@ select_loop()
 {
     return 0;
 }
+
 template <class lens, class steps, class I0, class ... I>
 constexpr dim_t
 select_loop(I0 i0, I ... i)

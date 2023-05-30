@@ -20,6 +20,9 @@ struct show_number
     static dim_t const value = value_;
     static_assert(condition, "bad number");
 };
+
+template<class Z> constexpr Z show_type_f() = delete;
+
 template <class type_, bool condition=false>
 struct show_type
 {

@@ -162,7 +162,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 
-template <class Op, class ... P, int ... I>
+template <class Op, IteratorConcept ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
     template <class T_>

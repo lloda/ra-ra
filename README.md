@@ -63,7 +63,7 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 The library itself is header-only and has no dependencies other than a C++20 compiler and the standard library.
 
-The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)). You can also build each of these separately. The performance of **ra-ra** depends heavily on the optimization level, so although the test suite should pass with `-O0`, that take a long time. I recommend at least `-O2`.
+The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)). You can also build each of these separately. The performance of **ra-ra** depends heavily on the optimization level, so although the test suite should pass with `-O0`, that can take a long time.
 
 * Some of the benchmarks will try to use BLAS if you have define `RA_USE_BLAS=1` in the environment.
 * The test suite is built with `-fsanitize=address` by default, which can cause significant slowdown. Disable by passing `-fno-sanitize=address` to the compiler.
