@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file return-expr.cc
-/// @brief Show how careful you have to be when you return an expr object from a function.
+// ra/test - Show how careful you have to be when you return an expr object from a function.
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under

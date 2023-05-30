@@ -13,6 +13,15 @@
 
 namespace ra {
 
+// Used by cell_iterator_big / cell_iterator_small.
+template <class C>
+struct CellFlat
+{
+    C c;
+    constexpr void operator+=(dim_t const s) { c.p += s; }
+    constexpr C & operator*() { return c; }
+};
+
 
 // --------------------
 // Helpers for slicing
@@ -133,6 +142,7 @@ struct cell_iterator_small
     constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr static rank_t rank_s() { return framer; }
     constexpr static rank_t rank() { return framer; }
@@ -142,7 +152,8 @@ struct cell_iterator_small
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += (k<rank()) * step(k)*d; }
 
-    constexpr auto flat() const
+    constexpr auto
+    flat() const
     {
         if constexpr (0==cellr) {
             return c.p;
@@ -150,17 +161,17 @@ struct cell_iterator_small
             return CellFlat<cell_type> { c };
         }
     }
-// Return type to allow either View & or View const & verb. Can't set self bc original p isn't kept. TODO Think this over.
+
     template <class I>
-    constexpr decltype(auto) at(I const & i_)
+    constexpr decltype(auto)
+    at(I const & i) const
     {
         if constexpr (0==cellr) {
-            return c.p[indexer0::longer<lens, steps>(i_)];
+            return c.p[indexer0::longer<lens, steps>(i)];
         } else {
-            return cell_type(c.p + indexer0::longer<lens, steps>(i_));
+            return cell_type(c.p + indexer0::longer<lens, steps>(i));
         }
     }
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 
@@ -348,7 +359,8 @@ struct SmallBase
 #define RA_CONST_OR_NOT(CONST)                                          \
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<I>)<rank() && (is_beatable<I>::static_p && ...)) \
-    constexpr auto operator()(I ... i) CONST                            \
+    constexpr auto                                                      \
+    operator()(I ... i) CONST                                           \
     {                                                                   \
         using FD = FilterDims<lens, steps, I ...>;                      \
         return SmallView<T CONST, typename FD::lens, typename FD::steps> \
@@ -356,31 +368,36 @@ struct SmallBase
     }                                                                   \
     template <class ... I>                                              \
     requires ((0 + ... + std::is_integral_v<I>)==rank())                \
-    constexpr decltype(auto) operator()(I ... i) CONST                  \
+    constexpr decltype(auto)                                            \
+    operator()(I ... i) CONST                                           \
     {                                                                   \
         return data()[select_loop<lens, steps>(i ...)];                 \
     } /* TODO More than one selector... */                              \
     template <class ... I>                                              \
     requires (!is_beatable<I>::static_p || ...)                         \
-    constexpr auto operator()(I && ... i) CONST                         \
+    constexpr auto \
+    operator()(I && ... i) CONST                                        \
     {                                                                   \
         return from(*this, std::forward<I>(i) ...);                     \
     }                                                                   \
     /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
-    constexpr auto at(I const & i) CONST                                \
+    constexpr auto                                                      \
+    at(I const & i) CONST                                               \
     {                                                                   \
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
             (data()+indexer0::shorter<lens, steps>(i));                 \
     }                                                                   \
     template <class ... I>                                              \
-    constexpr decltype(auto) operator[](I && ... i) CONST               \
+    constexpr decltype(auto)                                            \
+    operator[](I && ... i) CONST                                        \
     {                                                                   \
         return (*this)(std::forward<I>(i) ...);                         \
     }                                                                   \
     /* TODO would replace by s(ra::iota) if that could be made constexpr */ \
     template <int ss, int oo=0>                                         \
-    constexpr auto as() CONST                                           \
+    constexpr auto                                                      \
+    as() CONST                                                          \
     {                                                                   \
         static_assert(rank()>=1, "bad rank for as<>");                  \
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \

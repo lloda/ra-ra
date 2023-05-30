@@ -69,16 +69,16 @@ struct Reframe
         int wj = orig(j);
         return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
     }
-    template <class I>
-    constexpr decltype(auto)
-    at(I const & i)
-    {
-        return a.at(mp::map_indices<std::array<dim_t, mp::len<Dest>>, Dest>(i));
-    }
     constexpr decltype(auto)
     flat()
     {
         return a.flat();
+    }
+    template <class I>
+    constexpr decltype(auto)
+    at(I const & i) const
+    {
+        return a.at(mp::map_indices<std::array<dim_t, mp::len<Dest>>, Dest>(i));
     }
 };
 
@@ -171,11 +171,11 @@ template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 template <class Op, IteratorConcept ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
-    template <class T_>
+    template <class T>
     struct Flat
     {
         Op & op;
-        T_ t;
+        T t;
         template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
 // FIXME gcc 12.1 flags this (-O3 only).
 #pragma GCC diagnostic push
@@ -201,24 +201,15 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
 
     template <class J>
     constexpr decltype(auto)
-    at(J const & j)
-    {
-        return op(std::get<I>(this->t).at(j) ...);
-    }
-
-    template <class J>
-    constexpr decltype(auto)
     at(J const & j) const
     {
         return op(std::get<I>(this->t).at(j) ...);
     }
-
     constexpr decltype(auto)
-    flat()
+    flat() // FIXME can't be const bc of Flat::op. Carries over to Pick / Reframe .flat() ...
     {
         return flat(op, std::get<I>(this->t).flat() ...);
     }
-
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
     operator decltype(*(flat(op, std::get<I>(Match_::t).flat() ...))) ()
     {

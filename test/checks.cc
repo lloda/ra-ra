@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - Runtime checks
+// ra-ra/test - Runtime checks.
 
 // (c) Daniel Llorens - 2019-2023
 // This library is free software; you can redistribute it and/or modify it under

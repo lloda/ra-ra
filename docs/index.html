@@ -1725,7 +1725,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 
 <p>These are array views into data in memory. Access to their contents doesn&rsquo;t involve computation and they may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated by a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>
-</li><li> <b>Iterator</b> &mdash; <code>Expr</code> <code>Pick</code> <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Ptr</code> <code>Scalar</code>
+</li><li> <b>Iterator</b> &mdash; <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Ptr</code> <code>Scalar</code> <code>Expr</code> <code>Pick</code>
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>

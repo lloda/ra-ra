@@ -77,11 +77,8 @@ struct cell_iterator_big
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
     Dimv dimv;
 
-    constexpr static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dimv.size()), cellr_spec); }
-
-    using shape_type = std::conditional_t<rank_s()==DIM_ANY, std::vector<dim_t>,
-                                          Small<dim_t, rank_s()==DIM_ANY ? 0 : rank_s()>>; // still needs protection :-/
+    using shape_type = std::conditional_t<framer==DIM_ANY, std::vector<dim_t>,
+                                          Small<dim_t, framer==DIM_ANY ? 0 : framer>>; // still needs protection :-/
     using atom_type = std::remove_reference_t<decltype(*(std::declval<V>().data()))>;
     using cell_type = View<atom_type, cellr>;
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
@@ -96,7 +93,7 @@ struct cell_iterator_big
 // see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
         c.p = p_;
         rank_t cellr = dependent_cell_rank(rank_t(dimv.size()), cellr_spec);
-        if constexpr (RANK_ANY==rank_s()) {
+        if constexpr (RANK_ANY==framer) {
             RA_CHECK(rank>=0, "bad cell rank (array rank ", dimv.size(), ", cell rank ", cellr, ").");
         }
         resize(c.dimv, cellr);
@@ -104,15 +101,18 @@ struct cell_iterator_big
             c.dimv[k] = dimv_[rank+k];
         }
     }
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
+    constexpr static rank_t rank_s() { return framer; }
+    constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dimv.size()), cellr_spec); }
     constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
     constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.p += step(k)*d; }
 
-    constexpr
-    auto flat() const
+    constexpr auto
+    flat() const
     {
         if constexpr (0==cellr) {
             return c.p;
@@ -120,20 +120,16 @@ struct cell_iterator_big
             return CellFlat<cell_type> { c };
         }
     }
-// Return type to allow either View & or View const & verb. Can't set self bc original p isn't kept. TODO ...?
-#define RA_CONST_OR_NOT(CONST)                                          \
-    template <class I> constexpr                                        \
-    decltype(auto) at(I const & i) CONST                                \
-    {                                                                   \
-        if constexpr (0==cellr) {                                       \
-            return c.p[indexer1::longer(rank(), dimv, i)];              \
-        } else {                                                        \
-            return cell_type { c.dimv, c.p + indexer1::longer(rank(), dimv, i) }; \
-        }                                                               \
+    template <class I>
+    constexpr decltype(auto)
+    at(I const & i) const
+    {
+        if constexpr (0==cellr) {
+            return c.p[indexer1::longer(rank(), dimv, i)];
+        } else {
+            return cell_type { c.dimv, c.p + indexer1::longer(rank(), dimv, i) };
+        }
     }
-    FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
-#undef RA_CONST_OR_NOT
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 

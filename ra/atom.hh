@@ -8,7 +8,6 @@
 // later version.
 
 #pragma once
-#include <ranges>
 #include <vector>
 #include <utility>
 #include "bootstrap.hh"
@@ -203,13 +202,11 @@ struct Scalar
     constexpr static dim_t len_s(int k) { RA_CHECK(k<0, "Bad axis k ", k); std::abort(); }
     constexpr static dim_t len(int k) { RA_CHECK(k<0, "Bad axis k ", k); std::abort(); }
 
-    template <class J> constexpr decltype(auto) at(J && j) { return c; }
-    template <class J> constexpr decltype(auto) at(J && j) const { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t step(int k) { return 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
-    constexpr decltype(auto) flat() { return static_cast<Flat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<Flat<C> const &>(*this); } // [ra39]
+    template <class J> constexpr decltype(auto) at(J && j) const { return c; }
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
@@ -226,20 +223,20 @@ struct Ptr
 
     constexpr Ptr(I i) requires (N!=DIM_ANY): i(i) {}
     constexpr Ptr(I i, dim_t n) requires (N==DIM_ANY): i(i), n(n) {}
+    RA_DEF_ASSIGNOPS_SELF(Ptr)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
+
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return N; }
     constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k==0, "Bad axis k ", k); return N; }
     constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k==0, "Bad axis k ", k); return n; }
 
-    template <class J> decltype(auto) at(J && j) { RA_CHECK(DIM_BAD==N || inside(j[0], len(0)), " j ", j[0], " size ", len(0)); return i[j[0]]; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr auto flat() const { return i; }
-
-    RA_DEF_ASSIGNOPS_SELF(Ptr)
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    template <class J> decltype(auto) at(J && j) const { RA_CHECK(DIM_BAD==N || inside(j[0], len(0)), " j ", j[0], " size ", len(0)); return i[j[0]]; }
 };
 
 template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
@@ -288,11 +285,11 @@ struct Iota
     constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return N; }
     constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return n; }
 
-    template <class J> constexpr auto at(J && j) { return i + T(j[w])*T(s); }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * T(s); }
     constexpr auto flat() const { return Flat { i, s }; }
+    template <class J> constexpr auto at(J && j) const { return i + T(j[w])*T(s); }
 };
 
 template <int w> using TensorIndex = Iota<dim_t, w, DIM_BAD, 1>;

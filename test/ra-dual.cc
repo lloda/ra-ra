@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file ra-dual.cc
-/// @brief Using Dual<> with ra:: arrays & expressions.
+// ra/test - Using Dual<> with ra:: arrays & expressions.
 
 // (c) Daniel Llorens - 2015
 // This library is free software; you can redistribute it and/or modify it under

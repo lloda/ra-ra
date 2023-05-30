@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file reexported.cc
-/// @brief Handling of scalar std:: functions that have been extended for arrays in ra::
+// ra/test - Handling of scalar std:: functions that have been extended for arrays in ra::.
 
 // (c) Daniel Llorens - 2021
 // This library is free software; you can redistribute it and/or modify it under

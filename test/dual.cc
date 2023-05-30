@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file dual.cc
-/// @brief Tests for dual numbers.
+// ra/test - Dual numbers.
 
 // (c) Daniel Llorens - 2013, 2015
 // This library is free software; you can redistribute it and/or modify it under

@@ -90,26 +90,17 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    template <class J>
     constexpr decltype(auto)
-    at(J const & j)
+    flat()
     {
-        return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
+        return flat(std::get<I>(this->t).flat() ...);
     }
-
     template <class J>
     constexpr decltype(auto)
     at(J const & j) const
     {
         return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
     }
-
-    constexpr decltype(auto)
-    flat()
-    {
-        return flat(std::get<I>(this->t).flat() ...);
-    }
-
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
     constexpr
     operator decltype(*(flat(std::get<I>(Match_::t).flat() ...))) ()

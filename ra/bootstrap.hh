@@ -8,6 +8,7 @@
 // later version.
 
 #pragma once
+#include <ranges>
 #include "tuples.hh"
 
 
@@ -146,15 +147,6 @@ template <int n> struct insert_t
 };
 
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
-
-// Used by cell_iterator_big / cell_iterator_small.
-template <class C>
-struct CellFlat
-{
-    C c;
-    constexpr void operator+=(dim_t const s) { c.p += s; }
-    constexpr C & operator*() { return c; }
-};
 
 // Common to View / SmallBase. TODO Shouldn't it work on ... foreign vectors? arbitrary exprs?
 template <int cell_rank, class A> constexpr auto

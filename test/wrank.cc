@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file wrank.cc
-/// @brief Checks for ra:: arrays, especially cell rank > 0 operations.
+// ra/test - Checks operations (verbs) with cell rank>0.
 
 // (c) Daniel Llorens - 2013-2015
 // This library is free software; you can redistribute it and/or modify it under
