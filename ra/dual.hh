@@ -25,205 +25,230 @@ struct Dual
 {
     T re, du;
 
-    template <class S>
-    struct real_part { struct type {}; };
+    constexpr static bool is_complex = requires { requires !(std::is_same_v<T, std::decay_t<decltype(std::declval<T>().real())>>); };
+    template <class S> struct real_part { struct type {}; };
+    template <class S> requires (is_complex) struct real_part<S> { using type = typename S::value_type; };
+    using real_type = typename real_part<T>::type;
 
-    template <class S>
-    requires (!(std::is_same_v<S, std::decay_t<decltype(std::declval<S>().real())>>))
-    struct real_part<S>
-    {
-        using type = typename S::value_type;
-    };
-
-    Dual(T const & r, T const & d): re(r), du(d) {}
-    Dual(T const & r): re(r), du(0.) {} // conversions are by default constants.
-    Dual(typename real_part<T>::type const & r): re(r), du(0.) {}
-    Dual() {}
+    constexpr Dual(T const & r, T const & d): re(r), du(d) {}
+    constexpr Dual(T const & r): re(r), du(0.) {} // conversions are by default constants.
+    constexpr Dual(real_type const & r) requires (is_complex): re(r), du(0.) {}
+    constexpr Dual() {}
 
 #define DEF_ASSIGNOPS(OP)                                              \
-    Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
-    Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; } \
-    Dual & operator JOIN(OP, =)(typename real_part<T>::type const & r) { *this = *this OP r; return *this; }
+    constexpr Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
+    constexpr Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; } \
+    constexpr Dual & operator JOIN(OP, =)(real_type const & r) requires (is_complex) { *this = *this OP r; return *this; }
     FOR_EACH(DEF_ASSIGNOPS, +, -, /, *)
 #undef DEF_ASSIGNOPS
 };
 
 // conversions are by default constants.
-template <class R> auto dual(Dual<R> const & r) { return r; }
-template <class R> auto dual(R const & r) { return Dual<R> { r, 0. }; }
+template <class R> constexpr auto dual(Dual<R> const & r) { return r; }
+template <class R> constexpr auto dual(R const & r) { return Dual<R> { r, 0. }; }
 
 template <class R, class D>
-auto dual(R const & r, D const & d)
+constexpr auto
+dual(R const & r, D const & d)
 {
     return Dual<std::common_type_t<R, D>> { r, d };
 }
 
 template <class A, class B>
-auto operator*(Dual<A> const & a, Dual<B> const & b)
+constexpr auto
+operator*(Dual<A> const & a, Dual<B> const & b)
 {
     return dual(a.re*b.re, a.re*b.du + a.du*b.re);
 }
 template <class A, class B>
-auto operator*(A const & a, Dual<B> const & b)
+constexpr auto
+operator*(A const & a, Dual<B> const & b)
 {
     return dual(a*b.re, a*b.du);
 }
 template <class A, class B>
-auto operator*(Dual<A> const & a, B const & b)
+constexpr auto
+operator*(Dual<A> const & a, B const & b)
 {
     return dual(a.re*b, a.du*b);
 }
 
 template <class A, class B, class C>
-auto fma(Dual<A> const & a, Dual<B> const & b, Dual<C> const & c)
+constexpr auto
+fma(Dual<A> const & a, Dual<B> const & b, Dual<C> const & c)
 {
     return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du)));
 }
 
 template <class A, class B>
-auto operator+(Dual<A> const & a, Dual<B> const & b)
+constexpr auto
+operator+(Dual<A> const & a, Dual<B> const & b)
 {
     return dual(a.re+b.re, a.du+b.du);
 }
 template <class A, class B>
-auto operator+(A const & a, Dual<B> const & b)
+constexpr auto
+operator+(A const & a, Dual<B> const & b)
 {
     return dual(a+b.re, b.du);
 }
 template <class A, class B>
-auto operator+(Dual<A> const & a, B const & b)
+constexpr auto
+operator+(Dual<A> const & a, B const & b)
 {
     return dual(a.re+b, a.du);
 }
 
 template <class A, class B>
-auto operator-(Dual<A> const & a, Dual<B> const & b)
+constexpr auto
+operator-(Dual<A> const & a, Dual<B> const & b)
 {
     return dual(a.re-b.re, a.du-b.du);
 }
 template <class A, class B>
-auto operator-(Dual<A> const & a, B const & b)
+constexpr auto
+operator-(Dual<A> const & a, B const & b)
 {
     return dual(a.re-b, a.du);
 }
 template <class A, class B>
-auto operator-(A const & a, Dual<B> const & b)
+constexpr auto
+operator-(A const & a, Dual<B> const & b)
 {
     return dual(a-b.re, -b.du);
 }
 
 template <class A>
-auto operator-(Dual<A> const & a)
+constexpr auto
+operator-(Dual<A> const & a)
 {
     return dual(-a.re, -a.du);
 }
 
 template <class A>
-decltype(auto) operator+(Dual<A> const & a)
+constexpr decltype(auto)
+operator+(Dual<A> const & a)
 {
     return a;
 }
 
 template <class A>
-auto inv(Dual<A> const & a)
+constexpr auto
+inv(Dual<A> const & a)
 {
     auto i = 1./a.re;
     return dual(i, -a.du*(i*i));
 }
 
 template <class A, class B>
-auto operator/(Dual<A> const & a, Dual<B> const & b)
+constexpr auto
+operator/(Dual<A> const & a, Dual<B> const & b)
 {
     return a*inv(b);
 }
 
 template <class A, class B>
-auto operator/(Dual<A> const & a, B const & b)
+constexpr auto
+operator/(Dual<A> const & a, B const & b)
 {
     return a*inv(dual(b));
 }
 
 template <class A, class B>
-auto operator/(A const & a, Dual<B> const & b)
+constexpr auto
+operator/(A const & a, Dual<B> const & b)
 {
     return dual(a)*inv(b);
 }
 
 template <class A>
-auto cos(Dual<A> const & a)
+constexpr auto
+cos(Dual<A> const & a)
 {
     return dual(cos(a.re), -sin(a.re)*a.du);
 }
 
 template <class A>
-auto sin(Dual<A> const & a)
+constexpr auto
+sin(Dual<A> const & a)
 {
     return dual(sin(a.re), +cos(a.re)*a.du);
 }
 
 template <class A>
-auto cosh(Dual<A> const & a)
+constexpr auto
+cosh(Dual<A> const & a)
 {
     return dual(cosh(a.re), +sinh(a.re)*a.du);
 }
 
 template <class A>
-auto sinh(Dual<A> const & a)
+constexpr auto
+sinh(Dual<A> const & a)
 {
     return dual(sinh(a.re), +cosh(a.re)*a.du);
 }
 
 template <class A>
-auto tan(Dual<A> const & a)
+constexpr auto
+tan(Dual<A> const & a)
 {
     auto c = cos(a.du);
     return dual(tan(a.re), a.du/(c*c));
 }
 
 template <class A>
-auto exp(Dual<A> const & a)
+constexpr auto
+exp(Dual<A> const & a)
 {
     return dual(exp(a.re), +exp(a.re)*a.du);
 }
 
 template <class A, class B>
-auto pow(Dual<A> const & a, B const & b)
+constexpr auto
+pow(Dual<A> const & a, B const & b)
 {
     return dual(pow(a.re, b), +b*pow(a.re, b-1)*a.du);
 }
 
 template <class A>
-auto log(Dual<A> const & a)
+constexpr auto
+log(Dual<A> const & a)
 {
     return dual(log(a.re), +a.du/a.re);
 }
 
 template <class A>
-auto sqrt(Dual<A> const & a)
+constexpr auto
+sqrt(Dual<A> const & a)
 {
     return dual(sqrt(a.re), +a.du/(2.*sqrt(a.re)));
 }
 
 template <class A>
-auto sqr(Dual<A> const & a)
+constexpr auto
+sqr(Dual<A> const & a)
 {
     return a*a;
 }
 
 template <class A>
-auto abs(Dual<A> const & a)
+constexpr auto
+abs(Dual<A> const & a)
 {
     return abs(a.re);
 }
 
 template <class A>
-bool isfinite(Dual<A> const & a)
+constexpr bool
+isfinite(Dual<A> const & a)
 {
     return isfinite(a.re) && isfinite(a.du);
 }
 
 template <class A>
-auto xI(Dual<A> const & a)
+constexpr auto
+xI(Dual<A> const & a)
 {
     return dual(xI(a.re), xI(a.du));
 }

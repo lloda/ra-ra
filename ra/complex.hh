@@ -8,8 +8,9 @@
 // later version.
 
 #pragma once
-#include "macros.hh"
+#include "bootstrap.hh"
 #include <algorithm>
+#include <complex>
 #include <limits>
 #include <cmath>
 
@@ -44,9 +45,6 @@ RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
     constexpr T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
-
-#include <complex>
-#include "bootstrap.hh"
 
 namespace ra {
 
