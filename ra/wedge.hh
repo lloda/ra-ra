@@ -8,7 +8,7 @@
 // later version.
 
 #pragma once
-#include "tuples.hh"
+#include "small.hh"
 
 namespace ra::mp {
 
@@ -228,5 +228,115 @@ hodge(Va & a)
     return a;
 }
 #undef TRIVIAL
+
+
+// --------------------
+// Wedge product
+// TODO Handle the simplifications dot_plus, yields_scalar, etc. just as vec::wedge does.
+// --------------------
+
+template <int D, int Oa, int Ob, class A, class B>
+requires (ra::is_scalar<A> && ra::is_scalar<B>)
+constexpr auto wedge(A const & a, B const & b) { return a*b; }
+
+template <class A>
+struct torank1
+{
+    using type = std::conditional_t<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
+};
+
+template <class Wedge, class Va, class Vb>
+struct fromrank1
+{
+    using valtype = typename Wedge::template valtype<Va, Vb>;
+    using type = std::conditional_t<Wedge::Nr==1, valtype, Small<valtype, Wedge::Nr>>;
+};
+
+#define DECL_WEDGE(condition)                                           \
+    template <int D, int Oa, int Ob, class Va, class Vb>                \
+    requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
+    decltype(auto)                                                      \
+    wedge(Va const & a, Vb const & b)
+DECL_WEDGE(general_case)
+{
+    Small<value_t<Va>, size_s<Va>()> aa = a;
+    Small<value_t<Vb>, size_s<Vb>()> bb = b;
+
+    using Ua = decltype(aa);
+    using Ub = decltype(bb);
+
+    typename fromrank1<mp::Wedge<D, Oa, Ob>, Ua, Ub>::type r;
+
+    auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
+    auto & a1 = reinterpret_cast<typename torank1<Ua>::type const &>(aa);
+    auto & b1 = reinterpret_cast<typename torank1<Ub>::type const &>(bb);
+    mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
+
+    return r;
+}
+#undef DECL_WEDGE
+
+#define DECL_WEDGE(condition)                                           \
+    template <int D, int Oa, int Ob, class Va, class Vb, class Vr>      \
+    requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
+    void                                                                \
+    wedge(Va const & a, Vb const & b, Vr & r)
+DECL_WEDGE(general_case)
+{
+    Small<value_t<Va>, size_s<Va>()> aa = a;
+    Small<value_t<Vb>, size_s<Vb>()> bb = b;
+
+    using Ua = decltype(aa);
+    using Ub = decltype(bb);
+
+    auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
+    auto & a1 = reinterpret_cast<typename torank1<Ua>::type const &>(aa);
+    auto & b1 = reinterpret_cast<typename torank1<Ub>::type const &>(bb);
+    mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
+}
+#undef DECL_WEDGE
+
+template <class A, class B> requires (size_s<A>()==2 && size_s<B>()==2)
+constexpr auto
+cross(A const & a_, B const & b_)
+{
+    Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
+    Small<std::decay_t<decltype(FLAT(b_))>, 2> b = b_;
+    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 1> r;
+    mp::Wedge<2, 1, 1>::product(a, b, r);
+    return r[0];
+}
+
+template <class A, class B> requires (size_s<A>()==3 && size_s<B>()==3)
+constexpr auto
+cross(A const & a_, B const & b_)
+{
+    Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;
+    Small<std::decay_t<decltype(FLAT(b_))>, 3> b = b_;
+    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 3> r;
+    mp::Wedge<3, 1, 1>::product(a, b, r);
+    return r;
+}
+
+template <class V>
+constexpr auto
+perp(V const & v)
+{
+    static_assert(v.size()==2, "dimension error");
+    return Small<std::decay_t<decltype(FLAT(v))>, 2> {v[1], -v[0]};
+}
+
+template <class V, class U>
+constexpr auto
+perp(V const & v, U const & n)
+{
+    if constexpr (is_scalar<U>) {
+        static_assert(v.size()==2, "dimension error");
+        return Small<std::decay_t<decltype(FLAT(v) * n)>, 2> {v[1]*n, -v[0]*n};
+    } else {
+        static_assert(v.size()==3, "dimension error");
+        return cross(v, n);
+    }
+}
 
 } // namespace ra

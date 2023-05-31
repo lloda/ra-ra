@@ -306,14 +306,14 @@ The following headers are optional.
 
 @item @code{"ra/test.hh"}, @code{"ra/bench.hh"} (@emph{not} included by default): Test and benchmarking libraries used by @code{ra::} itself.
 
-@item @code{"ra/real.hh"}, @code{"ra/complex.hh"} (@emph{included} by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
+@item @code{"ra/complex.hh"} (@emph{included} by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
 @end itemize
 
-The header @code{"ra/format.hh"} can be used to configure @ref{Error handling}. All other headers are for internal use by @code{ra::}@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
+The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. All other headers are for internal use by @code{ra::}@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
 
 @verbatim
-cinclude2dot.pl --include . > headers.dot
-dot -Tpng headers.dot > headers.png
+cd ra && cinclude2dot.pl --include . > headers.dot
+dot -Tpng headers.dot -Gdpi=100 > headers.png
 @end verbatim
 }
 

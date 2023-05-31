@@ -23,7 +23,7 @@ int main()
     {
         ra::Small<real, 3> a = { 1, 2, 3 };
         ra::Small<real, 3> b = { 4, 5, 6 };
-        cout << lerp(a, b, 0.5) << endl; // this is std::lerp put in :: in ra/real.hh
+        cout << lerp(a, b, 0.5) << endl; // this is std::lerp put in :: in ra/complex.hh
         cout << lerp(4., 1., 0.5) << endl; // this is ra::lerp found through ADL
     }
     return tr.summary();

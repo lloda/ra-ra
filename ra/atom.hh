@@ -10,7 +10,6 @@
 #pragma once
 #include <vector>
 #include <utility>
-#include "bootstrap.hh"
 
 
 // --------------------
@@ -18,8 +17,8 @@
 // --------------------
 
 #include <cassert>
+#include "bootstrap.hh"
 // If you define your own RA_ASSERT, you might remove this from here.
-#include "format.hh"
 #include <iostream>
 
 // https://en.cppreference.com/w/cpp/preprocessor/replace
@@ -44,8 +43,6 @@
 #else
   #define RA_CHECK( ... ) RA_ASSERT( __VA_ARGS__ )
 #endif
-
-// This is NOT included by format.hh to allow format() to be used in pre-defining RA_ASSERT.
 
 #define RA_AFTER_CHECK Yes
 

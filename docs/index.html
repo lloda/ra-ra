@@ -423,10 +423,10 @@ int main()
 
 </li><li> <code>&quot;ra/test.hh&quot;</code>, <code>&quot;ra/bench.hh&quot;</code> (<em>not</em> included by default): Test and benchmarking libraries used by <code>ra::</code> itself.
 
-</li><li> <code>&quot;ra/real.hh&quot;</code>, <code>&quot;ra/complex.hh&quot;</code> (<em>included</em> by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
+</li><li> <code>&quot;ra/complex.hh&quot;</code> (<em>included</em> by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
 </li></ul>
 
-<p>The header <code>&quot;ra/format.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. All other headers are for internal use by <code>ra::</code><a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
+<p>The header <code>&quot;ra/bootstrap.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. All other headers are for internal use by <code>ra::</code><a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
 </p>
 <img src="headers.png" alt="headers">
 
@@ -2841,8 +2841,8 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
 <p>Diagram generated using Graphviz and <a href="https://www.flourish.org/cinclude2dot">https://www.flourish.org/cinclude2dot</a>.
 </p>
-<pre class="verbatim">cinclude2dot.pl --include . &gt; headers.dot
-dot -Tpng headers.dot &gt; headers.png
+<pre class="verbatim">cd ra &amp;&amp; cinclude2dot.pl --include . &gt; headers.dot
+dot -Tpng headers.dot -Gdpi=150 &gt; headers.png
 </pre>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
 <p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>

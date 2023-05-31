@@ -5,11 +5,9 @@
 // Adapted from blitz++/examples/array.cpp
 // TODO Better traversal...
 
-#include "ra/ra.hh"
-#include "ra/test.hh"
-#include "ra/format.hh"
 #include <iomanip>
 #include <chrono>
+#include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 auto now() { return std::chrono::high_resolution_clock::now(); }

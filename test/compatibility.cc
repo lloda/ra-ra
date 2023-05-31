@@ -9,7 +9,6 @@
 
 #include <ranges>
 #include <iostream>
-#include "ra/format.hh"
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 

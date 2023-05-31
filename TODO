@@ -19,7 +19,7 @@ checkbox [C-ct] flip TODO
       `A`'s rank.
     - [ ] beatable subscripts are not beaten if mixed with non-beatable
       subscripts. E.g. in A(vector, iota, vector) the iota isn't beaten.
-    - [ ] be namespace clean except for possibly real.hh, complex.hh.
+    - [ ] be namespace clean except for possibly complex.hh.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
   - [-] Features [1/8]
