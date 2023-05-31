@@ -95,9 +95,8 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     {
         return flat(std::get<I>(this->t).flat() ...);
     }
-    template <class J>
     constexpr decltype(auto)
-    at(J const & j) const
+    at(auto const & j) const
     {
         return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
     }

@@ -197,6 +197,8 @@ struct Scalar
 
     C c;
 
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
+
     constexpr static rank_t rank_s() { return 0; }
     constexpr static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { RA_CHECK(k<0, "Bad axis k ", k); std::abort(); }
@@ -206,9 +208,7 @@ struct Scalar
     constexpr static dim_t step(int k) { return 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) flat() const { return static_cast<Flat<C> const &>(*this); } // [ra39]
-    template <class J> constexpr decltype(auto) at(J && j) const { return c; }
-
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    constexpr decltype(auto) at(auto && j) const { return c; }
 };
 
 template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
@@ -236,7 +236,7 @@ struct Ptr
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr auto flat() const { return i; }
-    template <class J> decltype(auto) at(J && j) const { RA_CHECK(DIM_BAD==N || inside(j[0], len(0)), " j ", j[0], " size ", len(0)); return i[j[0]]; }
+    constexpr decltype(auto) at(auto && j) const { RA_CHECK(DIM_BAD==N || inside(j[0], len(0)), " j ", j[0], " size ", len(0)); return i[j[0]]; }
 };
 
 template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
@@ -289,7 +289,7 @@ struct Iota
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * T(s); }
     constexpr auto flat() const { return Flat { i, s }; }
-    template <class J> constexpr auto at(J && j) const { return i + T(j[w])*T(s); }
+    constexpr auto at(auto && j) const { return i + T(j[w])*T(s); }
 };
 
 template <int w> using TensorIndex = Iota<dim_t, w, DIM_BAD, 1>;

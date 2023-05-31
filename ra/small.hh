@@ -161,10 +161,8 @@ struct cell_iterator_small
             return CellFlat<cell_type> { c };
         }
     }
-
-    template <class I>
     constexpr decltype(auto)
-    at(I const & i) const
+    at(auto const & i) const
     {
         if constexpr (0==cellr) {
             return c.p[indexer0::longer<lens, steps>(i)];

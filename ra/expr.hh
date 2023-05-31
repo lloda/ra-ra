@@ -74,9 +74,8 @@ struct Reframe
     {
         return a.flat();
     }
-    template <class I>
     constexpr decltype(auto)
-    at(I const & i) const
+    at(auto const & i) const
     {
         return a.at(mp::map_indices<std::array<dim_t, mp::len<Dest>>, Dest>(i));
     }
@@ -199,9 +198,8 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     RA_DEF_ASSIGNOPS_SELF(Expr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    template <class J>
     constexpr decltype(auto)
-    at(J const & j) const
+    at(auto const & j) const
     {
         return op(std::get<I>(this->t).at(j) ...);
     }

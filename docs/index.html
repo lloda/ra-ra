@@ -393,9 +393,9 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 </div>
 <span id="Using-ra_003a_003a"></span><h3 class="section">2.1 Using <code>ra::</code></h3>
 
-<p><code>ra::</code> is a header only library with no dependencies, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
+<p><code>ra::</code> is a header only library with no dependencies other than the standard library, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
 </p>
-<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11.3</b> or <b>gcc 12.2</b> with <samp>-std=c++20</samp>. Some C++23 features are available with <samp>-std=c++2b</samp>. Check the top README.md for more up-to-date information.
+<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11</b> or with <samp>-std=c++20</samp>. Some C++23 features are available with <samp>-std=c++2b</samp> on <b>gcc 12</b> or higher. Check the top README.md for more up-to-date information.
 </p>
 <p>Here is a minimal program<a id="DOCF4" href="#FOOT4"><sup>4</sup></a>:
 </p>
@@ -1723,7 +1723,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 </p>
 </li><li> <b>View</b> &mdash; <code>View</code> <code>SmallView</code>
 
-<p>These are array views into data in memory. Access to their contents doesn&rsquo;t involve computation and they may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated by a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
+<p>These are array views into data in memory, which may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated by a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>
 </li><li> <b>Iterator</b> &mdash; <code>cell_iterator_big</code> <code>cell_iterator_small</code> <code>Iota</code> <code>Ptr</code> <code>Scalar</code> <code>Expr</code> <code>Pick</code>
 

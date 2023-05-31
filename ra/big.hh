@@ -120,9 +120,8 @@ struct cell_iterator_big
             return CellFlat<cell_type> { c };
         }
     }
-    template <class I>
     constexpr decltype(auto)
-    at(I const & i) const
+    at(auto const & i) const
     {
         if constexpr (0==cellr) {
             return c.p[indexer1::longer(rank(), dimv, i)];
@@ -821,10 +820,15 @@ using concrete_type = std::decay_t<
         typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>
     >;
 
-template <class E> constexpr auto
-concrete(E && e) { return concrete_type<E>(std::forward<E>(e)); }
+template <class E>
+constexpr auto
+concrete(E && e)
+{
+    return concrete_type<E>(std::forward<E>(e));
+}
 
-template <class E> constexpr auto
+template <class E>
+constexpr auto
 with_same_shape(E && e)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
@@ -834,7 +838,8 @@ with_same_shape(E && e)
     }
 }
 
-template <class E, class X> constexpr auto
+template <class E, class X>
+constexpr auto
 with_same_shape(E && e, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
@@ -844,7 +849,8 @@ with_same_shape(E && e, X && x)
     }
 }
 
-template <class E, class S, class X> constexpr auto
+template <class E, class S, class X>
+constexpr auto
 with_shape(S && s, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
@@ -854,7 +860,8 @@ with_shape(S && s, X && x)
     }
 }
 
-template <class E, class S, class X> constexpr auto
+template <class E, class S, class X>
+constexpr auto
 with_shape(std::initializer_list<S> && s, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
