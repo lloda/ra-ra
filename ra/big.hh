@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Arrays with dynamic size, cf small.hh.
+// ra-ra - Arrays with dynamic lengths/strides, cf small.hh.
 
-// (c) Daniel Llorens - 2013-2022
+// (c) Daniel Llorens - 2013-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -73,6 +73,7 @@ struct CellBig
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "Bad cell rank.");
 
     using Dimv_ = typename std::decay_t<V>::Dimv;
+// FIXME necessary to support some cases of from() [ra14]
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
     Dimv dimv;
 

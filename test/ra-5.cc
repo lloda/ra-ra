@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra/test - Regression tests (2).
 
-// (c) Daniel Llorens - 2019
+// (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -19,8 +19,10 @@ using std::cout, std::endl, ra::TestRecorder;
 int main()
 {
     TestRecorder tr(std::cout);
-    {
 
+// [ra14] A(b) which is from() can require CellBig to copy its source Dimv.
+    tr.section("Big");
+    {
         ra::Big<int, 1> b = { 2, 1 };
         ra::Big<int, 2> A({3, 5}, ra::_0 - ra::_1);
         ra::Big<int, 2> F({2, 5}, 0);
@@ -32,8 +34,21 @@ int main()
         tr.test_eq(Fcheck, F);
     }
 
+// Equivalent for Small is static so no such issues.
+    tr.section("Small");
+    {
+        ra::Small<int, 2> b = { 2, 1 };
+        ra::Small<int, 3, 5> A = ra::_0 - ra::_1;
+        ra::Small<int, 2, 5> F = 0;
+
+        iter<-1>(F) = b*A(b);
+        int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
+        tr.test_eq(Fcheck, F);
+    }
+
 // Why: if x(0) is a temp, as in here, CellBig needs a copy of x(0).dim.
 // This is achieved by forwarding in start() -> iter() -> View.iter().
+    tr.section("CellBig handling of temps");
     {
         auto demo = [](auto & x) { return iter<0>(x(0)); };
 

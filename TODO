@@ -11,7 +11,7 @@ checkbox [C-ct] flip TODO
       than indexed
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
       - Appears to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
-    - [X] size_s, rank_s in Ryn:: are broken [ra07]
+    - [X] size_s, rank_s in Ryn:: are broken [ra7]
     - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
     - [ ] ambiguity / bad init in nested constructors [ra45]
     - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
@@ -98,7 +98,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   12. [ ]
   13. [ ] ra/io.hh, ra/atom.hh, ra/bootstrap.hh, test/compatibility.cc.
       std::string used to be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want format(std::string_view) to print it as a foreign vector, so we have an exception for it there. As things stand, you can register it or not.
-  14. [ ]
+  14. [ ] CellBig needs to copy its Dimv in some cases, which also complicates View::iter<>. Problem is demonstrated in ra-5.cc.
   15. [ ]
   16. [ ]
   17. [ ]

@@ -28,7 +28,7 @@ template <class ... T> constexpr std::tuple<T ...> zerostep<std::tuple<T ...>> =
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
 // If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
-// TODO invalid for RANK_ANY (since Dest is compile time). [ra07]
+// TODO invalid for RANK_ANY (since Dest is compile time). [ra7]
 
 template <class Dest, IteratorConcept A>
 struct Reframe

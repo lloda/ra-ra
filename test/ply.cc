@@ -182,7 +182,7 @@ int main()
             test(a()); // also View.
         }
     }
-    tr.section("[ra06] constructor cases with scalar or RANK_ANY arguments");
+    tr.section("[ra6] constructor cases with scalar or RANK_ANY arguments");
     {
 // TODO Move these to the constructor tests, and put assignment versions here.
         tr.section("construction of 0 rank <- scalar expr");
