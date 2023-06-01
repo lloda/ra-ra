@@ -14,7 +14,7 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 template <int i> using UU = decltype(std::declval<ra::Unique<double, i>>().iter());
-using ra::mp::int_t;
+using ra::mp::int_c;
 
 int
 main()
@@ -28,7 +28,7 @@ main()
     }
     tr.section("II");
     {
-        std::tuple<int_t<6>, int_t<3>, int_t<-4>> x;
+        std::tuple<int_c<6>, int_c<3>, int_c<-4>> x;
         constexpr int ma = ra::mp::fold_tuple(-99, x, [](auto && k, auto && a) { return max(k, std::decay_t<decltype(a)>::value); });
         constexpr int mi = ra::mp::fold_tuple(+99, x, [](auto && k, auto && a) { return min(k, std::decay_t<decltype(a)>::value); });
         constexpr int su = ra::mp::fold_tuple(0, x, [](auto && k, auto && a) { return k + std::decay_t<decltype(a)>::value; });
@@ -202,7 +202,7 @@ main()
     }
     tr.section("DIM_BAD on any len_s(k) means size_s() is DIM_BAD");
     {
-        using order = std::tuple<int_t<0>, int_t<1>>;
+        using order = std::tuple<int_c<0>, int_c<1>>;
         using T0 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>, order>;
         ra::dim_t s0 = ra::size_s<T0>();
         using T1 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<1>, ra::Scalar<int>>, order>;

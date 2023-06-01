@@ -198,8 +198,8 @@ struct Scalar
 
     constexpr static rank_t rank_s() { return 0; }
     constexpr static rank_t rank() { return 0; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k<0, "Bad axis k ", k); std::abort(); }
-    constexpr static dim_t len(int k) { RA_CHECK(k<0, "Bad axis k ", k); std::abort(); }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k<0, "Bad axis ", k); std::abort(); }
+    constexpr static dim_t len(int k) { RA_CHECK(k<0, "Bad axis ", k); std::abort(); }
 
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t step(int k) { return 0; }
@@ -216,7 +216,7 @@ struct Ptr
     static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
 
     I i;
-    [[no_unique_address]] std::conditional_t<N==DIM_ANY, dim_t, mp::int_t<N>> n;
+    [[no_unique_address]] std::conditional_t<N==DIM_ANY, dim_t, mp::int_c<N>> n;
 
     constexpr Ptr(I i) requires (N!=DIM_ANY): i(i) {}
     constexpr Ptr(I i, dim_t n) requires (N==DIM_ANY): i(i), n(n) {}
@@ -225,9 +225,9 @@ struct Ptr
 
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis k ", k); return N; }
-    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k==0, "Bad axis k ", k); return N; }
-    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k==0, "Bad axis k ", k); return n; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis ", k); return N; }
+    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k==0, "Bad axis ", k); return N; }
+    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k==0, "Bad axis ", k); return n; }
 
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
@@ -237,7 +237,7 @@ struct Ptr
 };
 
 template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
-template <class I, int N> constexpr auto ptr(I i, mp::int_t<N>) { return Ptr<I, N> { i }; }
+template <class I, int N> constexpr auto ptr(I i, mp::int_c<N>) { return Ptr<I, N> { i }; }
 template <class I> constexpr auto ptr(I i, dim_t n) { return Ptr<I, DIM_ANY> { i, n }; }
 
 template <std::ranges::random_access_range V> constexpr auto
@@ -248,7 +248,7 @@ vector(V && v)
     if constexpr (DIM_ANY==ct_size) {
         return ptr(std::begin(std::forward<V>(v)), std::ssize(v));
     } else {
-        return ptr(std::begin(std::forward<V>(v)), mp::int_t<ct_size> {});
+        return ptr(std::begin(std::forward<V>(v)), mp::int_c<ct_size> {});
     }
 }
 
@@ -258,8 +258,8 @@ struct Iota
     static_assert(w>=0);
     static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
 
-    using ntype = std::conditional_t<N==DIM_ANY, dim_t, mp::int_t<N>>;
-    using stype = std::conditional_t<S==DIM_ANY, T, mp::int_t<S>>;
+    using ntype = std::conditional_t<N==DIM_ANY, dim_t, mp::int_c<N>>;
+    using stype = std::conditional_t<S==DIM_ANY, T, mp::int_c<S>>;
 
     T i = 0;
     [[no_unique_address]] ntype const n = {};
@@ -279,9 +279,9 @@ struct Iota
 
     constexpr static rank_t rank_s() { return w+1; };
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis k ", k); return N; }
-    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return N; }
-    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k<=w, "Bad axis k ", k); return n; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis", k); return N; }
+    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return N; }
+    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return n; }
 
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
@@ -298,9 +298,7 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 
 template <dim_t N=DIM_BAD, class T=dim_t, dim_t S=1>
 constexpr auto
-iota(std::integral_constant<dim_t, N> n=std::integral_constant<dim_t, N> {},
-     T org=0,
-     std::integral_constant<dim_t, S> s=std::integral_constant<dim_t, S> {})
+iota(dim_c<N> n=dim_c<N> {}, T org=0, dim_c<S> s=dim_c<S> {})
 {
     static_assert(DIM_BAD==N || N>=0);
     return Iota<T, 0, N, S> { org };

@@ -13,7 +13,7 @@
 #include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
-using ra::mp::int_t, ra::mp::int_list;
+using ra::mp::int_c, ra::mp::int_list;
 
 int main()
 {
@@ -80,10 +80,10 @@ int main()
     {
 // cf small-0.cc
         int a[3][4] = {};
-        tr.test_eq(2, int_t<ra::rank(a)>::value);
-        tr.test_eq(3, int_t<ra::shape(a)(0)>::value);
-        tr.test_eq(4, int_t<ra::shape(a)(1)>::value);
-        tr.test_eq(12, int_t<ra::size(a)>::value);
+        tr.test_eq(2, int_c<ra::rank(a)>::value);
+        tr.test_eq(3, int_c<ra::shape(a)(0)>::value);
+        tr.test_eq(4, int_c<ra::shape(a)(1)>::value);
+        tr.test_eq(12, int_c<ra::size(a)>::value);
     }
     tr.section("operators take foreign types");
     {

@@ -15,7 +15,7 @@
 #include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::mp::int_list, ra::mp::int_t, ra::mp::print_int_list, ra::mp::ref;
+using ra::mp::int_list, ra::mp::int_c, ra::mp::print_int_list, ra::mp::ref;
 
 int main()
 {
@@ -25,11 +25,11 @@ int main()
         using lens = int_list<1, 2, 3, 4, 5>;
         using steps = int_list<1, 10, 100, 1000, 10000>;
 
-        using c0 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_t<0>>::type;
+        using c0 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_c<0>>::type;
         using e0 = int_list<0, 4>;
         tr.info(print_int_list<e0> {}, " vs ", print_int_list<c0> {}).test(std::is_same_v<e0, c0>);
 
-        using c1 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_t<1>>::type;
+        using c1 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_c<1>>::type;
         using e1 = int_list<1>;
         tr.info(print_int_list<e1> {}, " vs ", print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
 
@@ -220,12 +220,12 @@ int main()
     tr.section("Small<> can be constexpr");
     {
         constexpr ra::Small<int, 2, 2> a = {1, 2, 3, 4};
-        using Va = int_t<int(a(1, 0))>;
+        using Va = int_c<int(a(1, 0))>;
         tr.test_eq(3, Va::value);
-        using Vc = int_t<sum(a)>; // constexpr reduction!
+        using Vc = int_c<sum(a)>; // constexpr reduction!
         tr.test_eq(10, Vc::value);
         constexpr ra::Small<int> b = { 9 }; // needs std::fill
-        using Vb = int_t<int(b)>;
+        using Vb = int_c<int(b)>;
         tr.test_eq(9, Vb::value);
     }
     tr.section("custom steps. List init is always row-major.");

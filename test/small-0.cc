@@ -17,7 +17,7 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using complex = std::complex<double>;
-using ra::mp::int_list, ra::mp::int_t;
+using ra::mp::int_list, ra::mp::int_c;
 
 struct test_type { int a; };
 
@@ -491,11 +491,11 @@ int main()
 // ra::shape / ra::size are static for Small types
     {
         ra::Small<int, 3, 4> a = 0;
-        tr.test_eq(2, int_t<rank(a)>::value);
-        tr.test_eq(3, int_t<shape(a)(0)>::value);
-        tr.test_eq(4, int_t<shape(a)(1)>::value);
+        tr.test_eq(2, int_c<rank(a)>::value);
+        tr.test_eq(3, int_c<shape(a)(0)>::value);
+        tr.test_eq(4, int_c<shape(a)(1)>::value);
 // FIXME std::size makes this ambiguous without the qualifier, which looks wrong to me :-/
-        tr.test_eq(12, int_t<ra::size(a)>::value);
+        tr.test_eq(12, int_c<ra::size(a)>::value);
     }
     return tr.summary();
 }

@@ -329,7 +329,7 @@ struct SmallBase
     using steps = steps_;
     using value_type = T;
 
-    template <class TT> using BadDimension = mp::int_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
+    template <class TT> using BadDimension = mp::int_c<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps."); // TODO static check on steps.
 
@@ -398,7 +398,7 @@ struct SmallBase
     {                                                                   \
         static_assert(rank()>=1, "bad rank for as<>");                  \
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
-        return SmallView<T CONST, mp::cons<mp::int_t<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
+        return SmallView<T CONST, mp::cons<mp::int_c<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
     }                                                                   \
     /* BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible bc of the assert */ \
     constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; } \
@@ -520,7 +520,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
     using Base = SmallBase<SmallArray, T, lens, steps>;
     using Base::rank, Base::size;
 
-    T p[Base::size()];
+    T p[Base::size()]; // cf what std::array does for zero size; wish zero size just worked :-/
 
     constexpr SmallArray(): p() {}
 // braces don't match (X &&)
@@ -614,7 +614,7 @@ struct ra_traits_def<T>
 template <class A, class i>
 struct axis_indices
 {
-    template <class T> using match_index = mp::int_t<(T::value==i::value)>;
+    template <class T> using match_index = mp::int_c<(T::value==i::value)>;
     using I = mp::iota<mp::len<A>>;
     using type = mp::Filter_<mp::map<match_index, A>, I>;
 // don't enforce, so allow dead axes (e.g. in transpose<1>(rank 1 array)).
@@ -718,7 +718,7 @@ template <int s> struct explode_divop
     template <class T> struct op_
     {
         static_assert((T::value/s)*s==T::value);
-        using type = mp::int_t<T::value / s>;
+        using type = mp::int_c<T::value / s>;
     };
     template <class T> using op = typename op_<T>::type;
 };

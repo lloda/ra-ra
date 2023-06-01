@@ -15,8 +15,8 @@
 
 namespace ra::mp {
 
-template <int V> using int_t = std::integral_constant<int, V>;
-template <bool V> using bool_t = std::integral_constant<bool, V>;
+template <int V> using int_c = std::integral_constant<int, V>;
+template <bool V> using bool_c = std::integral_constant<bool, V>;
 
 
 // -------------------------
@@ -31,7 +31,7 @@ using nil = tuple<>;
 
 template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
-template <int ... I> using int_list = tuple<int_t<I> ...>; // shortcut for std::integer_sequence<int, I ...>
+template <int ... I> using int_list = tuple<int_c<I> ...>; // shortcut for std::integer_sequence<int, I ...>
 
 template <class T> struct is_tuple { constexpr static bool value = false; };
 template <class ... A> struct is_tuple<tuple<A ...>> { constexpr static bool value = true; };
@@ -49,7 +49,7 @@ template <class A, class B> struct zip_ { static_assert(is_tuple_v<A> && is_tupl
 template <class ... A, class ... B> struct zip_<tuple<A ...>, tuple<B ...>> { using type = tuple<tuple<A, B> ...>; };
 template <class A, class B> using zip = typename zip_<A, B>::type;
 
-template <int n, int o=0, int s=1> struct iota_ { static_assert(n>0); using type = cons<int_t<o>, typename iota_<n-1, o+s, s>::type>; };
+template <int n, int o=0, int s=1> struct iota_ { static_assert(n>0); using type = cons<int_c<o>, typename iota_<n-1, o+s, s>::type>; };
 template <int o, int s> struct iota_<0, o, s> { using type = nil; };
 template <int n, int o=0, int s=1> using iota = typename iota_<n, o, s>::type;
 
@@ -65,13 +65,13 @@ template <class A, int I0, int ... I> struct ref_<A, I0, I ...> { using type = r
 template <class A> using first = ref<A, 0>;
 template <class A> using last = ref<A, (len<A> - 1)>;
 
-template <bool a> using when = bool_t<a>;
-template <bool a> using unless = bool_t<(!a)>;
+template <bool a> using when = bool_c<a>;
+template <bool a> using unless = bool_c<(!a)>;
 
 // Return the index of a type in a type list, or -1 if not found.
-template <class A, class T, int i=0> struct index_ { using type = int_t<-1>; };
+template <class A, class T, int i=0> struct index_ { using type = int_c<-1>; };
 template <class A, class T, int i=0> using index = typename index_<A, T, i>::type;
-template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { using type = int_t<i>; };
+template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { using type = int_c<i>; };
 template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>, T, i> { using type = index<tuple<A ...>, T, i+1>; };
 
 // Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
@@ -182,19 +182,19 @@ struct fold_<F, Def>
 template <template <class ... A> class F, class Def, class ... L>
 using fold = typename fold_<F, Def, L ...>::type;
 
-template <class ... A> struct max_ { using type = int_t<std::numeric_limits<int>::min()>; };
+template <class ... A> struct max_ { using type = int_c<std::numeric_limits<int>::min()>; };
 template <class ... A> using max = typename max_<A ...>::type;
-template <class A0, class ... A> struct max_<A0, A ...> { using type = int_t<std::max(A0::value, max<A ...>::value)>; };
+template <class A0, class ... A> struct max_<A0, A ...> { using type = int_c<std::max(A0::value, max<A ...>::value)>; };
 
-template <class ... A> struct min_ { using type = int_t<std::numeric_limits<int>::max()>; };
+template <class ... A> struct min_ { using type = int_c<std::numeric_limits<int>::max()>; };
 template <class ... A> using min = typename min_<A ...>::type;
-template <class A0, class ... A> struct min_<A0, A ...> { using type = int_t<std::min(A0::value, min<A ...>::value)>; };
+template <class A0, class ... A> struct min_<A0, A ...> { using type = int_c<std::min(A0::value, min<A ...>::value)>; };
 
-// Operations on int_t arguments.
-template <class ... A> using sum = int_t<(A::value + ... + 0)>;
-template <class ... A> using prod = int_t<(A::value * ... * 1)>;
-template <class ... A> using andb = bool_t<(A::value && ... && true)>;
-template <class ... A> using orb = bool_t<(A::value || ... || false)>;
+// Operations on int_c arguments.
+template <class ... A> using sum = int_c<(A::value + ... + 0)>;
+template <class ... A> using prod = int_c<(A::value * ... * 1)>;
+template <class ... A> using andb = bool_c<(A::value && ... && true)>;
+template <class ... A> using orb = bool_c<(A::value || ... || false)>;
 
 // Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
 template <class S, class T, class SS=S> struct complement_list_;
@@ -305,13 +305,13 @@ struct PermutationSign
 };
 
 // increment the w-th element of an int_list
-template <class L, int w> using inc = append<take<L, w>, cons<int_t<ref<L, w>::value+1>, drop<L, w+1>>>;
+template <class L, int w> using inc = append<take<L, w>, cons<int_c<ref<L, w>::value+1>, drop<L, w+1>>>;
 
 template <class A> struct InvertIndex;
 template <class ... A> struct InvertIndex<tuple<A ...>>
 {
     using AT = tuple<A ...>;
-    template <class T> using IndexA = int_t<index<AT, T>::value>;
+    template <class T> using IndexA = int_c<index<AT, T>::value>;
     constexpr static int N = apply<max, AT>::value;
     using type = map<IndexA, iota<(N>=0 ? N+1 : 0)>>;
 };
@@ -386,14 +386,14 @@ int_list_index(int i)
     }
 }
 
-template <class K, class T, class F, class I = int_t<0>>
+template <class K, class T, class F, class I = int_c<0>>
 constexpr auto
-fold_tuple(K && k, T && t, F && f, I && i = int_t<0> {})
+fold_tuple(K && k, T && t, F && f, I && i = int_c<0> {})
 {
     if constexpr (I::value==std::tuple_size_v<std::decay_t<T>>) {
         return k;
     } else {
-        return fold_tuple(f(k, std::get<I::value>(t)), t, f, int_t<I::value+1> {});
+        return fold_tuple(f(k, std::get<I::value>(t)), t, f, int_c<I::value+1> {});
     }
 }
 

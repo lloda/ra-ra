@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Arrays, iterators.
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -66,7 +66,7 @@ int main()
     tr.section("ra::iota with static members");
     {
         tr.test_eq(sizeof(ra::iota().i), sizeof(ra::iota()));
-        tr.test_eq(sizeof(ra::iota().i), sizeof(ra::iota(std::integral_constant<ra::dim_t, 4> {})));
+        tr.test_eq(sizeof(ra::iota().i), sizeof(ra::iota(ra::dim_c<4> {})));
         tr.test_eq(2*sizeof(ra::iota().i), sizeof(ra::iota(4)));
         tr.test_eq(3*sizeof((ra::iota().i)), sizeof(ra::iota(4, 0, 2)));
     }

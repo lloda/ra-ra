@@ -52,7 +52,7 @@ transpose(mp::int_list<Iarg ...>, A && a)
 template <class I>
 struct index_rank_
 {
-    using type = mp::int_t<rank_s<I>()>;
+    using type = mp::int_c<rank_s<I>()>;
     static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
     static_assert(size_s<I>()!=DIM_BAD, "undelimited extent subscript unsupported");
 };
@@ -66,7 +66,7 @@ from_partial(Op && op)
     if constexpr (drop==mp::len<II>) {
         return std::forward<Op>(op);
     } else {
-        return wrank(mp::append<mp::makelist<drop, mp::int_t<0>>, mp::drop<II, drop>> {},
+        return wrank(mp::append<mp::makelist<drop, mp::int_c<0>>, mp::drop<II, drop>> {},
                      from_partial<II, drop+1>(std::forward<Op>(op)));
     }
 }

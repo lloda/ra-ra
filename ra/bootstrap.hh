@@ -35,6 +35,8 @@ using rank_t = int;
 using dim_t = std::ptrdiff_t;
 static_assert(sizeof(rank_t)>=4 && sizeof(dim_t)>=4);
 static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
+template <dim_t V> using dim_c = std::integral_constant<dim_t, V>;
+template <rank_t V> using rank_c = std::integral_constant<rank_t, V>;
 
 // Negative numbers are used in some places as 'frame rank' in contrast to 'cell rank', so these numbers limit the rank that ra:: can handle besides the range of rank_t.
 
@@ -127,7 +129,7 @@ struct default_steps_<std::tuple<t0, t1, ti ...>>
 {
     using rest = typename default_steps_<std::tuple<t1, ti ...>>::type;
     static int const step0 = t1::value * mp::first<rest>::value;
-    using type = mp::cons<mp::int_t<step0>, rest>;
+    using type = mp::cons<mp::int_c<step0>, rest>;
 };
 
 template <class S> using default_steps = typename default_steps_<S>::type;

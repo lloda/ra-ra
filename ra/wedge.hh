@@ -15,7 +15,7 @@ namespace ra::mp {
 template <class P, class Plist>
 struct FindCombination
 {
-    template <class A> using match = bool_t<0 != PermutationSign<P, A>::value>;
+    template <class A> using match = bool_c<0 != PermutationSign<P, A>::value>;
     using type = IndexIf<Plist, match>;
     constexpr static int where = type::value;
     constexpr static int sign = (where>=0) ? PermutationSign<P, typename type::type>::value : 0;

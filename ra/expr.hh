@@ -36,7 +36,7 @@ struct Reframe
     A a;
 
     constexpr static int orig(int k) { return mp::int_list_index<Dest>(k); }
-    constexpr static rank_t rank_s() { return 1+mp::fold<mp::max, mp::int_t<-1>, Dest>::value; }
+    constexpr static rank_t rank_s() { return 1+mp::fold<mp::max, mp::int_c<-1>, Dest>::value; }
     constexpr static rank_t rank() { return rank_s(); }
     constexpr static dim_t len_s(int k)
     {
@@ -88,7 +88,7 @@ template <class Dest, class A>
 constexpr decltype(auto)
 reframe(A && a)
 {
-    if constexpr (std::is_same_v<Dest, mp::iota<1+mp::fold<mp::max, mp::int_t<-1>, Dest>::value>>) {
+    if constexpr (std::is_same_v<Dest, mp::iota<1+mp::fold<mp::max, mp::int_c<-1>, Dest>::value>>) {
         return std::forward<A>(a);
     } else {
         return Reframe<Dest, A> { std::forward<A>(a) };

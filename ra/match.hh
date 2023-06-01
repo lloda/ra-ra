@@ -94,22 +94,22 @@ check_expr_s()
                                 if constexpr (k<Ti::rank_s()) {
                                     constexpr dim_t si = Ti::len_s(k);
                                     static_assert(sk<0 || si<0 || si==sk, "mismatched static dimensions");
-                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<choose_len(sk, si)> {},
-                                              mp::int_t<(1==vali || sk==DIM_ANY || si==DIM_ANY) ? 1 : 0> {});
+                                    return fi(fi, mp::int_c<i+1> {}, mp::int_c<choose_len(sk, si)> {},
+                                              mp::int_c<(1==vali || sk==DIM_ANY || si==DIM_ANY) ? 1 : 0> {});
                                 } else {
-                                    return fi(fi, mp::int_t<i+1> {}, mp::int_t<sk> {}, vali);
+                                    return fi(fi, mp::int_c<i+1> {}, mp::int_c<sk> {}, vali);
                                 }
                             } else {
                                 return vali;
                             }
                         };
-                    constexpr int vali = fi(fi, mp::int_t<0> {}, mp::int_t<DIM_BAD> {}, valk);
-                    return fk(fk, mp::int_t<k+1> {}, mp::int_t<vali> {});
+                    constexpr int vali = fi(fi, mp::int_c<0> {}, mp::int_c<DIM_BAD> {}, valk);
+                    return fk(fk, mp::int_c<k+1> {}, mp::int_c<vali> {});
                 } else {
                     return valk;
                 }
             };
-        return fk(fk, mp::int_t<0> {}, mp::int_t<0> {});
+        return fk(fk, mp::int_c<0> {}, mp::int_c<0> {});
     } else {
         return 1;
     }
@@ -126,7 +126,7 @@ check_expr(E const & e)
             if (k<std::get<i>(e.t).rank()) {
                 dim_t si = std::get<i>(e.t).len(k);
                 if (sk==DIM_BAD || si==DIM_BAD || si==sk) {
-                    return fi(fi, k, mp::int_t<i+1> {}, choose_len(sk, si));
+                    return fi(fi, k, mp::int_c<i+1> {}, choose_len(sk, si));
                 } else {
                     if (fail) {
                         RA_CHECK(false, " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
@@ -134,7 +134,7 @@ check_expr(E const & e)
                     return false;
                 }
             } else {
-                return fi(fi, k, mp::int_t<i+1> {}, sk);
+                return fi(fi, k, mp::int_c<i+1> {}, sk);
             }
         } else {
             return true;
@@ -142,7 +142,7 @@ check_expr(E const & e)
     };
     rank_t rs = e.rank();
     for (int k=0; k!=rs; ++k) {
-        if (!(fi(fi, k, mp::int_t<0> {}, DIM_BAD))) {
+        if (!(fi(fi, k, mp::int_c<0> {}, DIM_BAD))) {
             return false;
         }
     }
@@ -234,17 +234,17 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
                                      assert(as!=DIM_ANY); // cannot happen at runtime
                                      return as;
                                  } else {
-                                     return f(f, mp::int_t<i+1> {});
+                                     return f(f, mp::int_c<i+1> {});
                                  }
                              } else {
-                                 return f(f, mp::int_t<i+1> {});
+                                 return f(f, mp::int_c<i+1> {});
                              }
                          } else {
                              assert(0 && "whole expr len cannot be undefined");
                              return DIM_BAD;
                          }
                      };
-            return f(f, mp::int_t<0> {});
+            return f(f, mp::int_c<0> {});
         } else {
             return ss;
         }

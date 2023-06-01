@@ -14,18 +14,18 @@
 
 using std::tuple, std::tuple_element, std::is_same_v;
 using std::cout, std::endl, ra::TestRecorder;
-using ra::mp::int_t, ra::mp::ref, ra::mp::int_list;
+using ra::mp::int_c, ra::mp::ref, ra::mp::int_list;
 
 template <class A>
 struct Inc1
 {
-    using type = int_t<A::value+1>;
+    using type = int_c<A::value+1>;
 };
 
 template <class A, class B>
 struct Sum2
 {
-    using type = int_t<A::value+B::value>;
+    using type = int_c<A::value+B::value>;
 };
 
 template <class ... A> struct SumV;
@@ -73,14 +73,14 @@ int main()
     {
         using A = int_list<5, 6, 3>;
         using B = int_list<2, 3, -1>;
-        static_assert(ra::mp::fold<ra::mp::sum, int_t<1>, A>::value==15, "");
-        static_assert(ra::mp::fold<ra::mp::sum, int_t<3>, B>::value==7, "");
-        static_assert(ra::mp::fold<ra::mp::max, int_t<4>, A>::value==6, "");
+        static_assert(ra::mp::fold<ra::mp::sum, int_c<1>, A>::value==15, "");
+        static_assert(ra::mp::fold<ra::mp::sum, int_c<3>, B>::value==7, "");
+        static_assert(ra::mp::fold<ra::mp::max, int_c<4>, A>::value==6, "");
         static_assert(ra::mp::fold<ra::mp::max, void, A>::value==6, "");
-        static_assert(ra::mp::fold<ra::mp::max, int_t<9>, A>::value==9, "");
-        static_assert(ra::mp::fold<ra::mp::min, int_t<4>, A>::value==3, "");
+        static_assert(ra::mp::fold<ra::mp::max, int_c<9>, A>::value==9, "");
+        static_assert(ra::mp::fold<ra::mp::min, int_c<4>, A>::value==3, "");
         static_assert(ra::mp::fold<ra::mp::min, void, A>::value==3, "");
-        static_assert(ra::mp::fold<ra::mp::min, int_t<1>, A>::value==1, "");
+        static_assert(ra::mp::fold<ra::mp::min, int_c<1>, A>::value==1, "");
     }
 // Reductions.
     {
@@ -115,7 +115,7 @@ int main()
     using B = int_list<5, 6, 7>;
     using C = int_list<9, 8>;
     static_assert(is_same_v<int_list<>, ra::mp::nil>, "");
-    static_assert(is_same_v<C, tuple<int_t<9>, int_t<8>>>, "");
+    static_assert(is_same_v<C, tuple<int_c<9>, int_c<8>>>, "");
     using O = ra::mp::nil;
     using A_B = ra::mp::append<A, B>;
     using A_C = ra::mp::append<A, C>;
@@ -133,8 +133,8 @@ int main()
     static_assert(ra::mp::check_idx<ra::mp::iota<3, -2>, -2, -1, 0>::value, "0e");
     static_assert(ra::mp::check_idx<ra::mp::iota<4, 3, -1>, 3, 2, 1, 0>::value, "0a");
 // makelist
-    static_assert(ra::mp::check_idx<ra::mp::makelist<2, int_t<9>>, 9, 9>::value, "1a");
-    static_assert(ra::mp::check_idx<ra::mp::makelist<0, int_t<9>>>::value, "1b");
+    static_assert(ra::mp::check_idx<ra::mp::makelist<2, int_c<9>>, 9, 9>::value, "1a");
+    static_assert(ra::mp::check_idx<ra::mp::makelist<0, int_c<9>>>::value, "1b");
 // ref
     static_assert(ref<tuple<A, B, C>, 0, 0>::value==0, "3a");
     static_assert(ref<tuple<A, B, C>, 0, 1>::value==2, "3b");
@@ -166,10 +166,10 @@ int main()
     static_assert(ref<S3, 1, 1, 0>::value==9, "3s");
     static_assert(ref<S3, 1, 1, 1>::value==8, "3t");
 // index.
-    static_assert(ra::mp::index<A, int_t<0>>::value==0, "4a");
-    static_assert(ra::mp::index<A, int_t<2>>::value==1, "4b");
-    static_assert(ra::mp::index<A, int_t<3>>::value==2, "4c");
-    static_assert(ra::mp::index<A, int_t<4>>::value==-1, "4d");
+    static_assert(ra::mp::index<A, int_c<0>>::value==0, "4a");
+    static_assert(ra::mp::index<A, int_c<2>>::value==1, "4b");
+    static_assert(ra::mp::index<A, int_c<3>>::value==2, "4c");
+    static_assert(ra::mp::index<A, int_c<4>>::value==-1, "4d");
     static_assert(ra::mp::index<S3, S2BC>::value==1, "4e");
 // InvertIndex
     {
@@ -188,15 +188,15 @@ int main()
         static_assert(is_same_v<int_list<>, II1>);
     }
 // IndexIf.
-    static_assert(ra::mp::IndexIf<A, SamePP<int_t<0>>::type>::value==0, "5a");
-    static_assert(ra::mp::IndexIf<A, SamePP<int_t<2>>::type>::value==1, "5b");
-    static_assert(ra::mp::IndexIf<A, SamePP<int_t<3>>::type>::value==2, "5c");
-    static_assert(ra::mp::IndexIf<A, SamePP<int_t<9>>::type>::value==-1, "5d");
+    static_assert(ra::mp::IndexIf<A, SamePP<int_c<0>>::type>::value==0, "5a");
+    static_assert(ra::mp::IndexIf<A, SamePP<int_c<2>>::type>::value==1, "5b");
+    static_assert(ra::mp::IndexIf<A, SamePP<int_c<3>>::type>::value==2, "5c");
+    static_assert(ra::mp::IndexIf<A, SamePP<int_c<9>>::type>::value==-1, "5d");
 // findtail.
-    static_assert(is_same_v<ra::mp::findtail<A, int_t<0>>, A>, "4a");
-    static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_t<2>>, 2, 3>::value, "4b");
-    static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_t<3>>, 3>::value, "4c");
-    static_assert(ra::mp::nilp<ra::mp::findtail<A, int_t<4>>>, "4d");
+    static_assert(is_same_v<ra::mp::findtail<A, int_c<0>>, A>, "4a");
+    static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<2>>, 2, 3>::value, "4b");
+    static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<3>>, 3>::value, "4c");
+    static_assert(ra::mp::nilp<ra::mp::findtail<A, int_c<4>>>, "4d");
     static_assert(is_same_v<ra::mp::findtail<S3, S2BC>, tuple<S2BC>>, "4e");
 // reverse.
     static_assert(ra::mp::check_idx<ra::mp::reverse<A_B>, 7, 6, 5, 3, 2, 0>::value, "5a");
@@ -223,7 +223,7 @@ int main()
         using c36 = ra::mp::complement<list3, 6>;
         static_assert(ra::mp::check_idx<c36, 3, 4, 5>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<c36, 6>, 0, 1, 2>::value, "");
-        using case0 = tuple<int_t<0>>;
+        using case0 = tuple<int_c<0>>;
         static_assert(ra::mp::check_idx<ra::mp::complement<case0, 0>>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<case0, 1>>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<case0, 2>, 1>::value, "");
@@ -283,7 +283,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<int_list A , B > C >::va
     {
         using a = ra::mp::iota<2>;
         using b = ra::mp::iota<2, 1>;
-        using mc = ra::mp::MapCons<int_t<9>, tuple<a, b>>::type;
+        using mc = ra::mp::MapCons<int_c<9>, tuple<a, b>>::type;
         static_assert(ra::mp::check_idx<ref<mc, 0>, 9, 0, 1>::value, "a");
         static_assert(ra::mp::check_idx<ref<mc, 1>, 9, 1, 2>::value, "b");
     }

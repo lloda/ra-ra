@@ -25,7 +25,7 @@ template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 constexpr auto PI = std::numbers::pi_v<double>;
 
 using std::cout, std::endl, ra::TestRecorder;
-using ra::mp::int_t;
+using ra::mp::int_c;
 
 int main()
 {
@@ -78,10 +78,10 @@ int main()
         };
 
     t0 = Benchmark::clock::now();
-    diff(int_t<0>(), +1/(2*delta));
-    diff(int_t<1>(), -1/(2*delta));
-    diff(int_t<2>(), -1/(2*delta));
-    diff(int_t<3>(), -1/(2*delta));
+    diff(int_c<0>(), +1/(2*delta));
+    diff(int_c<1>(), -1/(2*delta));
+    diff(int_c<2>(), -1/(2*delta));
+    diff(int_c<3>(), -1/(2*delta));
     auto time_DA = Benchmark::clock::now()-t0;
 
     F = ra::transpose<0, 1, 2, 3, 5, 4>(DA) - DA;
