@@ -42,7 +42,7 @@ int main()
             bench("raw", m, n, reps,
                   [](auto & c, auto const & a)
                   {
-                      real * __restrict__ ap = a.data();
+                      real const * __restrict__ ap = a.data();
                       real * __restrict__ cp = c.data();
                       ra::dim_t const m = a.len(0);
                       ra::dim_t const n = a.len(1);

@@ -1,8 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file const.cc
-/// @brief Const transfer from Container to View
+// ra/test - Const transfer from Container to View
 
-// (c) Daniel Llorens - 2021
+// (c) Daniel Llorens - 2021-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -16,10 +15,7 @@
 
 using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 
-template <class T> struct is_constref;
-template <class T> struct is_constref<T const &> : std::true_type {};
-template <class T> struct is_constref<T &> : std::false_type {};
-template <class T> constexpr bool is_constref_v = is_constref<T>::value;
+template <class T> constexpr bool is_constref_v = std::is_reference_v<T> && std::is_const_v<std::remove_reference_t<T>>;
 
 int main()
 {
@@ -29,18 +25,19 @@ int main()
         [&](auto & a, auto & b)
         {
             tr.test(!is_constref_v<decltype(*(a.data()))>);
-            tr.skip().test(is_constref_v<decltype(*(b.data()))>); // FIXME [ra47]
+            tr.test(is_constref_v<decltype(*(b.data()))>);
             tr.test(!is_constref_v<decltype(*(a().data()))>);
             tr.test(is_constref_v<decltype(*(b().data()))>);
             tr.test(!is_constref_v<decltype(*(a(ra::all).data()))>);
             tr.test(is_constref_v<decltype(*(b(ra::all).data()))>);
         };
-
+    tr.section("dynamic rank");
     {
         ra::Big<int> a = {1, 2, 3, 4};
         ra::Big<int> const b = {9, 8, 7, 6};
         test(a, b);
     }
+    tr.section("static rank");
     {
         ra::Big<int, 1> a = {1, 2, 3, 4};
         ra::Big<int, 1> const b = {9, 8, 7, 6};

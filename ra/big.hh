@@ -146,7 +146,8 @@ requires (rank==1)
 struct nested_braces<T, rank>
 {
     using list = std::initializer_list<T>;
-    template <std::size_t N> constexpr static
+    template <std::size_t N>
+    constexpr static
     void shape(list l, std::array<dim_t, N> & s)
     {
         static_assert(N>0);
@@ -160,7 +161,8 @@ struct nested_braces<T, rank>
 {
     using sub = nested_braces<T, rank-1>;
     using list = std::initializer_list<typename sub::list>;
-    template <std::size_t N> constexpr static
+    template <std::size_t N>
+    constexpr static
     void shape(list l, std::array<dim_t, N> & s)
     {
         s[N-rank] = l.size();
@@ -273,8 +275,7 @@ struct View
     constexpr static dim_t len_s(int j) { return DIM_ANY; }
     constexpr dim_t len(int j) const  { RA_CHECK(inside(j, rank())); return dimv[j].len; }
     constexpr dim_t step(int j) const { RA_CHECK(inside(j, rank())); return dimv[j].step; }
-    constexpr auto data() { return p; }
-    constexpr auto data() const { return p; } // [ra47]
+    constexpr auto data() const { return p; }
     constexpr dim_t size() const
     {
         dim_t t = 1;
@@ -324,101 +325,110 @@ struct View
     }
     bool const empty() const { return 0==size(); } // TODO Optimize
 
-    template <rank_t c=0> constexpr auto iter() && { return ra::CellBig<View<T, RANK>, c>(std::move(dimv), p); }
-    template <rank_t c=0> constexpr auto iter() & { return ra::CellBig<View<T, RANK> &, c>(dimv, p); }
-    template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T const, RANK> &, c>(dimv, p); }
+    template <rank_t c=0> constexpr auto iter() const && { return ra::CellBig<View<T, RANK>, c>(std::move(dimv), p); }
+    template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T, RANK> &, c>(dimv, p); }
     constexpr auto begin() const { return stl_iterator(iter()); }
-    constexpr auto begin() { return stl_iterator(iter()); }
 // here dim doesn't matter, but we have to give it if it's a ref
     constexpr auto end() const { return stl_iterator(decltype(iter())(dimv, nullptr)); }
-    constexpr auto end() { return stl_iterator(decltype(iter())(dimv, nullptr)); }
 
-// FIXME P0847R7 https://en.cppreference.com/w/cpp/language/member_functions#Explicit_object_parameter
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
-#define RA_CONST_OR_NOT(CONST)                                          \
-    template <class ... I>                                              \
-    requires ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK      \
-              && (0 + ... + is_beatable<I>::value)==sizeof...(I))       \
-    auto operator()(I && ... i) CONST                                   \
-        requires (RANK!=RANK_ANY)                                       \
-    {                                                                   \
-        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
-        constexpr rank_t subrank = rank_sum(RANK, extended);            \
-        static_assert(subrank>=0, "Bad subrank.");                      \
-        View<T CONST, subrank> sub;                                     \
-        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...); \
-        /* fill the rest of dim, skipping over beatable subscripts */   \
-        for (int i=(0 + ... + is_beatable<I>::skip); i<subrank; ++i) {  \
-            sub.dimv[i] = this->dimv[i-extended];                       \
-        }                                                               \
-        return sub;                                                     \
-    }                                                                   \
-    /* BUG doesn't handle generic zero-rank indices */                  \
-    template <class ... I>                                              \
-    requires ((0 + ... + std::is_integral_v<I>)==RANK)                  \
-    decltype(auto) operator()(I const & ... i) CONST                    \
-        requires (RANK!=RANK_ANY)                                       \
-    {                                                                   \
-        return data()[select_loop(nullptr, this->dimv.data(), i ...)];  \
-    }                                                                   \
-    /* Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar) */ \
-    template <class ... I>                                              \
-    requires (is_beatable<I>::value && ...)                             \
-    auto operator()(I && ... i) CONST                                   \
-        requires (RANK==RANK_ANY)                                       \
-    {                                                                   \
-        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src)); \
-        RA_CHECK(this->rank()+extended>=0, "bad rank");                 \
-        View<T CONST, RANK_ANY> sub;                                    \
-        sub.dimv.resize(this->rank()+extended);                         \
-        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...); \
-        for (int i=(0 + ... + is_beatable<I>::skip); i<sub.rank(); ++i) { \
-            sub.dimv[i] = this->dimv[i-extended];                       \
-        }                                                               \
-        return sub;                                                     \
-    }                                                                   \
-    template <class  I>                                                 \
-    auto at(I && i) CONST                                               \
-    {                                                                   \
-        if constexpr (RANK_ANY!=RANK) {                                 \
-            constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>()); \
-            using Sub = View<T CONST, subrank>;                         \
-            if constexpr (RANK_ANY==subrank) {                          \
-                return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()),  /* Dimv is std::vector */ \
-                        data() + indexer1::shorter(dimv, i) };          \
-            } else {                                                    \
-                return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  /* Dimv is ra::Small */ \
-                        data() + indexer1::shorter(dimv, i) };          \
-            }                                                           \
-        } else {                                                        \
-            return View<T CONST, RANK_ANY> { Dimv(dimv.begin()+i.size(), dimv.end()), /* Dimv is std::vector */ \
-                    data() + indexer1::shorter(dimv, i) };              \
-        }                                                               \
-    }                                                                   \
-    /* TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced. */ \
-    template <class ... I>                                              \
-    requires (!(is_beatable<I>::value && ...))                          \
-    auto operator()(I && ... i) CONST                                   \
-    {                                                                   \
-        return from(*this, std::forward<I>(i) ...);                     \
-    }                                                                   \
-    template <class ... I>                                              \
-    constexpr decltype(auto) operator[](I && ... i) CONST               \
-    {                                                                   \
-        return (*this)(std::forward<I>(i) ...);                         \
-    }                                                                   \
-    /* conversion to scalar */                                          \
-    operator T CONST & () CONST                                         \
-    {                                                                   \
-        if constexpr (RANK_ANY==RANK) {                                 \
-            RA_CHECK(rank()==0, "Error converting rank ", rank(), " to scalar."); \
-        } else {                                                        \
-            static_assert(0==RANK, "Bad rank for conversion to scalar.."); \
-        }                                                               \
-        return data()[0];                                               \
+    template <class ... I>
+    requires ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK
+              && (0 + ... + is_beatable<I>::value)==sizeof...(I))
+    constexpr auto operator()(I && ... i) const
+        requires (RANK!=RANK_ANY)
+    {
+        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
+        constexpr rank_t subrank = rank_sum(RANK, extended);
+        static_assert(subrank>=0, "Bad subrank.");
+        View<T, subrank> sub;
+        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
+        // fill the rest of dim, skipping over beatable subscripts
+        for (int i=(0 + ... + is_beatable<I>::skip); i<subrank; ++i) {
+            sub.dimv[i] = this->dimv[i-extended];
+        }
+        return sub;
     }
-    FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
-#undef RA_CONST_OR_NOT
+
+    // BUG doesn't handle generic zero-rank indices
+    template <class ... I>
+    requires ((0 + ... + std::is_integral_v<I>)==RANK)
+    constexpr decltype(auto)
+    operator()(I const & ... i) const
+        requires (RANK!=RANK_ANY)
+    {
+        return data()[select_loop(nullptr, this->dimv.data(), i ...)];
+    }
+
+    // Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar)
+    template <class ... I>
+    requires (is_beatable<I>::value && ...)
+    constexpr auto
+    operator()(I && ... i) const
+        requires (RANK==RANK_ANY)
+    {
+        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
+        RA_CHECK(this->rank()+extended>=0, "bad rank");
+        View<T, RANK_ANY> sub;
+        sub.dimv.resize(this->rank()+extended);
+        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
+        for (int i=(0 + ... + is_beatable<I>::skip); i<sub.rank(); ++i) {
+            sub.dimv[i] = this->dimv[i-extended];
+        }
+        return sub;
+    }
+
+    // FIXME may return scalar?
+    template <class I>
+    constexpr auto
+    at(I && i) const
+    {
+        if constexpr (RANK_ANY!=RANK) {
+            constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>());
+            using Sub = View<T, subrank>;
+            if constexpr (RANK_ANY==subrank) {
+                return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()),  // Dimv is std::vector
+                        data() + indexer1::shorter(dimv, i) };
+            } else {
+                return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  // Dimv is ra::Small
+                        data() + indexer1::shorter(dimv, i) };
+            }
+        } else {
+            return View<T, RANK_ANY> { Dimv(dimv.begin()+i.size(), dimv.end()), // Dimv is std::vector
+                    data() + indexer1::shorter(dimv, i) };
+        }
+    }
+
+    // TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced.
+    template <class ... I>
+    requires (!(is_beatable<I>::value && ...))
+    constexpr auto
+    operator()(I && ... i) const
+    {
+        return from(*this, std::forward<I>(i) ...);
+    }
+
+    template <class ... I>
+    constexpr decltype(auto)
+    operator[](I && ... i) const
+    {
+        return (*this)(std::forward<I>(i) ...);
+    }
+
+    // conversion to scalar.
+    constexpr
+    operator T & () const
+    {
+        if constexpr (RANK_ANY==RANK) {
+            RA_CHECK(rank()==0, "Error converting rank ", rank(), " to scalar.");
+        } else {
+            static_assert(0==RANK, "Bad rank for conversion to scalar..");
+        }
+        return data()[0];
+    }
+
+    // necessary here per [ra15] (?)
+    constexpr operator T & () { return std::as_const(*this); }
 
 // conversion from var rank to fixed rank
     template <rank_t R>
@@ -437,9 +447,15 @@ struct View
     requires (R!=RANK_ANY)
     constexpr View(View<std::remove_const_t<T>, R> const & x) requires (RANK==RANK_ANY): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
 // conversion to const from non const
-    constexpr operator View<const_atom<T>, RANK> const & () const
+    constexpr
+    operator View<const_atom<T>, RANK> const & () const
     {
         return *reinterpret_cast<View<const_atom<T>, RANK> const *>(this);
+    }
+    constexpr
+    operator View<const_atom<T>, RANK> & ()
+    {
+        return *reinterpret_cast<View<const_atom<T>, RANK> *>(this);
     }
 };
 
@@ -452,9 +468,9 @@ template <class V>
 struct storage_traits
 {
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
-    static T const * data(V const & v) { return v.get(); }
-    static T * data(V & v) { return v.get(); }
+    constexpr static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
+    constexpr static T const * data(V const & v) { return v.get(); }
+    constexpr static T * data(V & v) { return v.get(); }
 };
 
 template <class P>
@@ -462,9 +478,9 @@ struct storage_traits<std::shared_ptr<P>>
 {
     using V = std::shared_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
-    static T const * data(V const & v) { return v.get(); }
-    static T * data(V & v) { return v.get(); }
+    constexpr static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
+    constexpr static T const * data(V const & v) { return v.get(); }
+    constexpr static T * data(V & v) { return v.get(); }
 };
 
 template <class T_, class A>
@@ -472,9 +488,9 @@ struct storage_traits<std::vector<T_, A>>
 {
     using T = T_;
     static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
-    static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); }
-    static T const * data(std::vector<T, A> const & v) { return v.data(); }
-    static T * data(std::vector<T, A> & v) { return v.data(); }
+    constexpr static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); }
+    constexpr static T const * data(std::vector<T, A> const & v) { return v.data(); }
+    constexpr static T * data(std::vector<T, A> & v) { return v.data(); }
 };
 
 template <class T, rank_t RANK>
@@ -501,15 +517,12 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Store store;
     using T = typename storage_traits<Store>::T;
     using View = ra::View<T, RANK>;
+    using ViewConst = ra::View<T const, RANK>;
     using View::rank_s;
-
     using shape_arg = typename decltype(std::declval<View>().iter())::shape_type;
 
-    View & view() { return *this; }
-    View const & view() const { return *this; }
-
-    template <class ... A> decltype(auto) operator()(A && ... a) { return View::operator()(std::forward<A>(a) ...); }
-    template <class ... A> decltype(auto) operator()(A && ... a) const { return View::operator()(std::forward<A>(a) ...); }
+    constexpr View & view() { return *this; }
+    constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
 
 // Needed to set View::p. FIXME Remove duplication as in SmallBase/SmallArray, then remove the constructors and the assignment operators.
     Container(Container && w): store(std::move(w.store))
@@ -586,7 +599,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
 // FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of view_.operator=.
 // store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
-    template <class Pbegin> void
+    template <class Pbegin> constexpr void
     fill1(dim_t xsize, Pbegin xbegin)
     {
         RA_CHECK(this->size()==xsize, "Mismatched sizes ", this->size(), " and ", xsize, ".");
@@ -697,19 +710,34 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         store.pop_back();
         --View::dimv[0].len;
     }
-    bool empty() const
+    constexpr bool empty() const
     {
         return this->size()==0;
     }
-    T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
-    T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
+    constexpr T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
+    constexpr T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
+
+// FIXME P0847R7 https://en.cppreference.com/w/cpp/language/member_functions#Explicit_object_parameter
+    template <class ... A> constexpr decltype(auto) operator()(A && ... a) { return view()(std::forward<A>(a) ...); }
+    template <class ... A> constexpr decltype(auto) operator()(A && ... a) const { return view()(std::forward<A>(a) ...); }
+    template <class ... A> constexpr decltype(auto) operator[](A && ... a) { return view()(std::forward<A>(a) ...); }
+    template <class ... A> constexpr decltype(auto) operator[](A && ... a) const { return view()(std::forward<A>(a) ...); }
+    template <class A> constexpr decltype(auto) operator[](A && a) { return view()[std::forward<A>(a)]; }
+    template <class A> constexpr decltype(auto) operator[](A && a) const { return view()[std::forward<A>(a)]; }
+    constexpr auto data() { return view().data(); }
+    constexpr auto data() const { return view().data(); }
+    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
+    template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
+    template <class I> constexpr auto at(I && i) { return view().at(std::forward<I>(i)); }
+    template <class I> constexpr auto at(I && i) const { return view().at(std::forward<I>(i)); }
+    constexpr operator T & () { return view(); }
+    constexpr operator T const & () const { return view(); }
 
 // Container is always compact/row-major, so STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1).
-
-    auto begin() { assert(is_c_order(*this)); return this->data(); }
-    auto begin() const { assert(is_c_order(*this)); return this->data(); }
-    auto end() { return this->data()+this->size(); }
-    auto end() const { return this->data()+this->size(); }
+    constexpr auto begin() { assert(is_c_order(*this)); return view().data(); }
+    constexpr auto begin() const { assert(is_c_order(*this)); return view().data(); }
+    constexpr auto end() { return view().data()+this->size(); }
+    constexpr auto end() const { return view().data()+this->size(); }
 };
 
 template <class Store, rank_t RANKA, rank_t RANKB>

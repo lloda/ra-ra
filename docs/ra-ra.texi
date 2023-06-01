@@ -1563,7 +1563,7 @@ With rt-shape containers (e.g. @code{Big}), @code{operator=} replaces the left h
 
 @section View of const vs const view
 
-@c See branches ra-viewconst / viewp [ra47]
+@c FIXME
 
 FIXME
 Passing view arguments by reference
