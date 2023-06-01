@@ -63,5 +63,12 @@ int main()
             tr.test_eq(2, b[3]);
         }
     }
+    tr.section("ra::iota with static members");
+    {
+        tr.test_eq(sizeof(ra::iota().i), sizeof(ra::iota()));
+        tr.test_eq(sizeof(ra::iota().i), sizeof(ra::iota(std::integral_constant<ra::dim_t, 4> {})));
+        tr.test_eq(2*sizeof(ra::iota().i), sizeof(ra::iota(4)));
+        tr.test_eq(3*sizeof((ra::iota().i)), sizeof(ra::iota(4, 0, 2)));
+    }
     return tr.summary();
 }

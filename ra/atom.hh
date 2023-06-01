@@ -216,7 +216,7 @@ struct Ptr
     static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
 
     I i;
-    std::conditional_t<N==DIM_ANY, dim_t, mp::int_t<N>> n;
+    [[no_unique_address]] std::conditional_t<N==DIM_ANY, dim_t, mp::int_t<N>> n;
 
     constexpr Ptr(I i) requires (N!=DIM_ANY): i(i) {}
     constexpr Ptr(I i, dim_t n) requires (N==DIM_ANY): i(i), n(n) {}
@@ -262,8 +262,9 @@ struct Iota
     using stype = std::conditional_t<S==DIM_ANY, T, mp::int_t<S>>;
 
     T i = 0;
-    ntype const n = {};
-    stype const s = {};
+    [[no_unique_address]] ntype const n = {};
+    [[no_unique_address]] stype const s = {};
+
     constexpr static T gets() requires (S!=DIM_ANY) { return S; }
     constexpr T gets() const requires (S==DIM_ANY) { return s; }
     constexpr decltype(auto) set(T const & ii) { i = ii; return *this; };
@@ -295,7 +296,15 @@ template <int w> using TensorIndex = Iota<dim_t, w, DIM_BAD, 1>;
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
-constexpr auto iota() { return TensorIndex<0> {}; }
+template <dim_t N=DIM_BAD, class T=dim_t, dim_t S=1>
+constexpr auto
+iota(std::integral_constant<dim_t, N> n=std::integral_constant<dim_t, N> {},
+     T org=0,
+     std::integral_constant<dim_t, S> s=std::integral_constant<dim_t, S> {})
+{
+    static_assert(DIM_BAD==N || N>=0);
+    return Iota<T, 0, N, S> { org };
+}
 
 template <class T=dim_t>
 constexpr auto

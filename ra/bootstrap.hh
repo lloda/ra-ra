@@ -111,7 +111,7 @@ concept SliceConcept = requires (A a)
 // other types, forward decl
 // ---------------------
 
-enum none_t { none }; // used in array constructors to mean ‘don't initialize’.
+enum none_t { none }; // used in array constructors to mean ‘don't initialize’
 struct no_arg {}; // used in array constructors to mean ‘don't instantiate’
 
 template <class C> struct Scalar; // for type predicates
