@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Global definitions related to complex types.
 
-// (c) Daniel Llorens - 2005, 2015
+// (c) Daniel Llorens - 2005, 2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -15,9 +15,9 @@
 #include <cmath>
 
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
-// besides, gcc still leaks cmath functions into the global namespace, so by default e.g. sqrt would be C double sqrt(double) instead of the overload set.
+// besides, gcc still leaks cmath functions into the global namespace, so e.g. sqrt is C double sqrt(double) instead of the overload set.
 // cf http://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/
-using std::abs, std::max, std::min, std::fma, std::clamp, std::sqrt, std::pow, std::exp,
+using std::max, std::min, std::abs, std::fma, std::clamp, std::sqrt, std::pow, std::exp,
     std::swap, std::isfinite, std::isinf, std::lerp;
 
 #define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>)

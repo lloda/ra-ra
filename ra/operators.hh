@@ -43,22 +43,6 @@ transpose(mp::int_list<Iarg ...>, A && a)
     return transpose<Iarg ...>(std::forward<A>(a));
 }
 
-// cf value_t in atom.hh. Also used to paper over Scalar<X> vs X
-template <class A>
-constexpr decltype(auto)
-FLAT(A && a)
-{
-    return *(ra::start(std::forward<A>(a)).flat());
-}
-
-// // [ra8] in ra/operators.cc
-// template <class A>
-// constexpr decltype(auto)
-// FLAT(A && a) requires (is_scalar<A> || is_ra_scalar<A>)
-// {
-//     return ra::start(std::forward<A>(a)).c;
-// }
-
 
 // ---------------------------
 // from, after APL, like (from) in guile-ploy

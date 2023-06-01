@@ -193,7 +193,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
-        ra::cell_iterator_big<ra::View<double>> it(r.dimv, r.p);
+        ra::CellBig<ra::View<double>> it(r.dimv, r.p);
         tr.test(r.data()==it.c.p);
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
@@ -203,13 +203,13 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::cell_iterator_big<ra::View<double, 1>> it(r.dimv, r.p);
+        ra::CellBig<ra::View<double, 1>> it(r.dimv, r.p);
         cout << "View<double, 1> it.c.p: " << it.c.p << endl;
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
-    // some of these tests are disabled depending on cell_iterator_big::operator=.
-    tr.section("[ra11a] (skipped) cell_iterator_big operator= (from cell_iterator_big) does NOT copy contents");
+    // some of these tests are disabled depending on CellBig::operator=.
+    tr.section("[ra11a] (skipped) CellBig operator= (from CellBig) does NOT copy contents");
     {
         double a[6] = { 0, 0, 0, 0, 0, 0 };
         double b[6] = { 1, 2, 3, 4, 5, 6 };
@@ -228,7 +228,7 @@ int main()
             tr.skip().test_eq(rb, aiter);
         }
     }
-    tr.section("[ra11b] cell_iterator_big operator= (from cell_iterator_big) DOES copy contents");
+    tr.section("[ra11b] CellBig operator= (from CellBig) DOES copy contents");
     {
         ra::Unique<double, 2> A({6, 7}, ra::_0 - ra::_1);
         ra::Unique<double, 2> AA({6, 7}, 0.);
@@ -236,7 +236,7 @@ int main()
         tr.test_eq(ra::_0 - ra::_1, AA);
         tr.test_eq(A, AA);
     }
-    tr.section("[ra11b] cell_iterator_big operator= (from cell_iterator_big) DOES copy contents");
+    tr.section("[ra11b] CellBig operator= (from CellBig) DOES copy contents");
     {
         ra::Small<double, 6, 7> A = ra::_0 - ra::_1;
         ra::Small<double, 6, 7> AA = 0.;

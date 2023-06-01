@@ -346,7 +346,7 @@ template <class T> requires (is_builtin_array<T>)
 constexpr auto
 start(T && t);
 
-// neither cell_iterator_big nor cell_iterator_small will retain rvalues [ra4].
+// neither CellBig nor CellSmall will retain rvalues [ra4].
 template <class T> requires (is_slice<T>)
 constexpr auto
 start(T && t) { return iter<0>(std::forward<T>(t)); }
@@ -370,5 +370,21 @@ start(T && t) { return std::forward<T>(t); }
 // FIXME one of these is ET-generic and the other is slice only, so make up your mind.
 // FIXME do we really want to drop const? See use in concrete_type.
 template <class A> using value_t = std::decay_t<decltype(*(start(std::declval<A>()).flat()))>;
+
+// also used to paper over Scalar<X> vs X
+template <class A>
+constexpr decltype(auto)
+FLAT(A && a)
+{
+    return *(ra::start(std::forward<A>(a)).flat());
+}
+
+// // [ra8] in ra/operators.cc
+// template <class A>
+// constexpr decltype(auto)
+// FLAT(A && a) requires (is_scalar<A> || is_ra_scalar<A>)
+// {
+//     return ra::start(std::forward<A>(a)).c;
+// }
 
 } // namespace ra

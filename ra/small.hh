@@ -13,7 +13,7 @@
 
 namespace ra {
 
-// Used by cell_iterator_big / cell_iterator_small.
+// Used by CellBig / CellSmall.
 template <class C>
 struct CellFlat
 {
@@ -111,15 +111,14 @@ namespace indexer0 {
 // --------------------
 // Small iterator
 // --------------------
-// TODO Refactor with cell_iterator_big / STLIterator
+// TODO Refactor with CellBig / STLIterator
 
 // V is always SmallBase<SmallView, ...>
-template <class V, rank_t cellr_=0>
-struct cell_iterator_small
+template <class V, rank_t cellr_spec=0>
+struct CellSmall
 {
-    constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
-    constexpr static rank_t fullr = V::rank_s();
+    constexpr static rank_t fullr = ra::rank_s<V>();
     constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
     static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
@@ -139,9 +138,9 @@ struct cell_iterator_small
 
     cell_type c;
 
-    constexpr cell_iterator_small(cell_iterator_small const & ci): c { ci.c.p } {}
+    constexpr CellSmall(CellSmall const & ci): c { ci.c.p } {}
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
-    constexpr cell_iterator_small(atom_type * p_): c { p_ } {}
+    constexpr CellSmall(atom_type * p_): c { p_ } {}
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr static rank_t rank_s() { return framer; }
@@ -174,7 +173,7 @@ struct cell_iterator_small
 
 
 // --------------------
-// STLIterator for both cell_iterator_small & cell_iterator_big
+// STLIterator for both CellSmall & CellBig
 // FIXME make it work for any array iterator, as in ply_ravel, ply_index.
 // --------------------
 
@@ -440,8 +439,8 @@ struct SmallBase
         return static_cast<Child &>(*this);
     }
 
-    template <rank_t c=0> using iterator = ra::cell_iterator_small<SmallBase<SmallView, T, lens, steps>, c>;
-    template <rank_t c=0> using const_iterator = ra::cell_iterator_small<SmallBase<SmallView, T const, lens, steps>, c>;
+    template <rank_t c=0> using iterator = ra::CellSmall<SmallBase<SmallView, T, lens, steps>, c>;
+    template <rank_t c=0> using const_iterator = ra::CellSmall<SmallBase<SmallView, T const, lens, steps>, c>;
     template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 

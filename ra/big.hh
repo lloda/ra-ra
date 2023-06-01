@@ -58,13 +58,12 @@ namespace indexer1 {
 // --------------------
 // Big iterator
 // --------------------
-// TODO Refactor with cell_iterator_small
+// TODO Refactor with CellSmall
 
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
-template <class V, rank_t cellr_=0>
-struct cell_iterator_big
+template <class V, rank_t cellr_spec=0>
+struct CellBig
 {
-    constexpr static rank_t cellr_spec = cellr_;
     static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "Bad cell rank.");
     constexpr static rank_t fullr = ra::rank_s<V>();
     constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
@@ -85,9 +84,9 @@ struct cell_iterator_big
 
     cell_type c;
 
-    constexpr cell_iterator_big(cell_iterator_big const & ci): dimv(ci.dimv), c { ci.c.dimv, ci.c.p } {}
+    constexpr CellBig(CellBig const & ci): dimv(ci.dimv), c { ci.c.dimv, ci.c.p } {}
 // s_ is array's full shape; split it into dimv/i (frame) and c (cell).
-    constexpr cell_iterator_big(Dimv const & dimv_, atom_type * p_): dimv(dimv_)
+    constexpr CellBig(Dimv const & dimv_, atom_type * p_): dimv(dimv_)
     {
         rank_t rank = this->rank();
 // see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
@@ -104,7 +103,8 @@ struct cell_iterator_big
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const { return dependent_frame_rank(rank_t(dimv.size()), cellr_spec); }
+    constexpr rank_t rank() const { return dependent_frame_rank(ssize(dimv), cellr_spec); }
+    constexpr static rank_t rank() requires (size_s<Dimv_>()!=DIM_ANY) { return dependent_frame_rank(size_s<Dimv_>(), cellr_spec); }
     constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
     constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
@@ -323,9 +323,9 @@ struct View
     }
     bool const empty() const { return 0==size(); } // TODO Optimize
 
-    template <rank_t c=0> constexpr auto iter() && { return ra::cell_iterator_big<View<T, RANK>, c>(std::move(dimv), p); }
-    template <rank_t c=0> constexpr auto iter() & { return ra::cell_iterator_big<View<T, RANK> &, c>(dimv, p); }
-    template <rank_t c=0> constexpr auto iter() const & { return ra::cell_iterator_big<View<T const, RANK> &, c>(dimv, p); }
+    template <rank_t c=0> constexpr auto iter() && { return ra::CellBig<View<T, RANK>, c>(std::move(dimv), p); }
+    template <rank_t c=0> constexpr auto iter() & { return ra::CellBig<View<T, RANK> &, c>(dimv, p); }
+    template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T const, RANK> &, c>(dimv, p); }
     constexpr auto begin() const { return stl_iterator(iter()); }
     constexpr auto begin() { return stl_iterator(iter()); }
 // here dim doesn't matter, but we have to give it if it's a ref

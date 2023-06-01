@@ -23,7 +23,7 @@ int main()
         ra::Unique<real, 2> a({4, 3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
         {
-            ra::cell_iterator_big<decltype(a), 1> i(a.dimv, a.p);
+            ra::CellBig<decltype(a), 1> i(a.dimv, a.p);
             tr.test_eq(1, i.rank());
             ply_ravel(expr([](ra::View<real, 1> const & x) { cout << x << endl; }, i));
         }
@@ -161,7 +161,7 @@ int main()
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                            ad.iter<-1>(), b.iter<-1>()));
     }
-    tr.section("FIXME strange need for assert in ply_ravel with cell_iterator_big on VAR_RANK array [ra40]");
+    tr.section("FIXME strange need for assert in ply_ravel with CellBig on VAR_RANK array [ra40]");
     {
         ra::Big<int> ad({5, 2}, ra::_0 - ra::_1);
         auto ii = iter<1>(ad);

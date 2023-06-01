@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Regression test relative to Const / nonconst.
+// ra/test - Regression test relative to const / nonconst.
 
 // (c) Daniel Llorens - 2016
 // This library is free software; you can redistribute it and/or modify it under

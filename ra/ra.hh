@@ -12,5 +12,5 @@
 
 #pragma once
 #include "io.hh"
-#include "operators.hh"
 #include "wedge.hh" // optional
+#include "operators.hh"

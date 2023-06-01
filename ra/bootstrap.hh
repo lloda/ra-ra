@@ -115,7 +115,7 @@ enum none_t { none }; // used in array constructors to mean ‘don't initialize�
 struct no_arg {}; // used in array constructors to mean ‘don't instantiate’
 
 template <class C> struct Scalar; // for type predicates
-template <class T, rank_t RANK=RANK_ANY> struct View; // for cell_iterator_big
+template <class T, rank_t RANK=RANK_ANY> struct View; // for CellBig
 template <class V> struct ra_traits_def;
 
 template <class S> struct default_steps_ {};
@@ -195,7 +195,7 @@ using ravel_arg = std::conditional_t<no_ravel<lens>,
                                      std::tuple<no_arg, no_arg>, // match the template for SmallArray.
                                      mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
 
-template <class T, class lens, class steps = default_steps<lens>> struct SmallView; // for cell_iterator_small
+template <class T, class lens, class steps = default_steps<lens>> struct SmallView; // for CellSmall
 template <class T, class lens, class steps = default_steps<lens>,
           class nested_arg_ = nested_arg<T, lens>, class ravel_arg_ = ravel_arg<T, lens>>
 struct SmallArray;
