@@ -127,9 +127,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
       There's no reason to restart, since the Iterator methods are all static. So start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const overload is required for ScalarFlat::operator*.
   40. [ ]
   41. [ ]
-  42. [ ] no current test
-      A way to test that compilation assertions are triggered appropriately, esp. for things like ct array lookup et.
-      Should be doable with concepts, see e.g. ra-14.cc.
+  42. [ ] Ways to test that compile time assertions or constraints are triggered appropriately, esp. for things like ct array lookup.  Some are doable with concepts, see e.g. ra-14.cc or big-0.cc.
   43. [ ] bench/bench-dot.cc
       The performace of f_small_op depends on the optimization in plyf() through ocd<>(). Doing this required having static and non-static versions of Iterator::keep_step in Match/Expr. Possibly the same could be done to reduce rank/rank_s, size/size_s to just rank/size, and check for static-ness instead of RANK_ANY/DIM_ANY.
   44. [ ]

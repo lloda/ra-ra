@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra/test - Tests specific to Container, constructors.
 
-// (c) Daniel Llorens - 2017
+// (c) Daniel Llorens - 2017-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -13,6 +13,11 @@
 #include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
+
+template <class T> constexpr bool ctest1 = requires { ra::Big<T, 2> ({2, 3, 1}, 99); }; // bad shape for rank
+template <class T> constexpr bool ctest2 = requires { ra::Big<T, 2> ({2, 3, 1}, {1, 2, 3, 4, 5, 6}); }; // bad shape for rank
+template <class T> constexpr bool ctest3 = requires { ra::Big<T, 2> ({2, 3, 1}, ra::none); }; // bad shape for rank
+template <class T> constexpr bool ctest4 = requires { ra::Big<T, 0> ({3, 4}, 3.); }; // bad shape for rank
 
 int main(int argc, char * * argv)
 {
@@ -63,25 +68,15 @@ int main(int argc, char * * argv)
     }
     tr.section("should-fail constructors");
     {
-        tr.section("shape errors detected at ct FIXME cannot test ct errors yet [ra42]");
-        {
-            // ra::Big<int, 2> a({2, 3, 1}, 99); // does not compile
-            // ra::Big<int, 2> b({2, 3, 1}, {1, 2, 3, 4, 5, 6}); // does not compile
-            // ra::Big<int, 2> c({2, 3, 1}, ra::none); // does not compile
-            // ra::Big<int, 2> d(2, ra::none); // shape must be rank 1
-        }
-        tr.section("shape errors detected at ct FIXME cannot test ct errors yet [ra42]");
-        {
-            // ra::Big<double, 0> a({3, 4}, 3.); cout << a << endl; // does not compile
-        }
-        tr.section("init from init list fails at ct if rank != 1 FIXME cannot test ct errors yet [ra42]");
-        {
-            // ra::Big<double, 2> a {1, 2, 3, 4, 5, 6}; cout << a << endl; // does not compile
-        }
-        tr.section("bad rank with ct size X && type shape argument FIXME cannot test ct errors yet [ra42]");
-        {
-            // ra::Big<double, 2> a(ra::Small<int, 3>{2, 3, 4}, 99.); cout << a << endl; // does not compile
-        }
+        static_assert(!ctest1<int>);
+        static_assert(!ctest2<int>);
+        static_assert(!ctest3<int>);
+        static_assert(!ctest4<int>);
+
+        // these errors depend on  static_assert so cannot be checked with requires.
+        // ra::Big<int, 2> (2, ra::none); // shape arg must have rank 1 for array rank>1
+        // ra::Big<T, 2> {1, 2, 3, 4, 5, 6}; // bad deduced shape from content arg
+        // ra::Big<T, 2> (ra::Small<int, 3>{2, 3, 4}, 99.); // bad shape for rank
     }
     tr.section("any rank 1 expression for the shape argument");
     {
