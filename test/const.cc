@@ -43,5 +43,11 @@ int main()
         ra::Big<int, 1> const b = {9, 8, 7, 6};
         test(a, b);
     }
+    tr.section("static dimensions");
+    {
+        ra::Small<int, 4> a = {1, 2, 3, 4};
+        ra::Small<int, 4> const b = {9, 8, 7, 6};
+        test(a, b);
+    }
     return tr.summary();
 }
