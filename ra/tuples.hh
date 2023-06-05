@@ -17,6 +17,7 @@ namespace ra::mp {
 
 template <int V> using int_c = std::integral_constant<int, V>;
 template <bool V> using bool_c = std::integral_constant<bool, V>;
+template <class ... T> constexpr bool always_false = false;
 
 
 // -------------------------

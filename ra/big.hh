@@ -333,8 +333,7 @@ struct View
     operator()(I && ... i) const
     {
         if constexpr ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK
-                      && (0 + ... + is_beatable<I>::value)==sizeof...(I)
-                      && RANK!=RANK_ANY) {
+                      && (is_beatable<I>::value && ...) && RANK!=RANK_ANY) {
             constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
             constexpr rank_t subrank = rank_sum(RANK, extended);
             static_assert(subrank>=0, "Bad subrank.");
@@ -363,7 +362,7 @@ struct View
         } else if constexpr (!(is_beatable<I>::value && ...)) {
             return from(*this, std::forward<I>(i) ...);
         } else {
-            std::abort();
+            static_assert(mp::always_false<I ...>); // p2593r0
         }
     }
 

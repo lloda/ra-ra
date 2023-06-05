@@ -355,27 +355,21 @@ struct SmallBase
 // Specialize for rank() integer-args -> scalar, same in ra::View in big.hh.
 #define RA_CONST_OR_NOT(CONST)                                          \
     template <class ... I>                                              \
-    requires ((0 + ... + std::is_integral_v<I>)<rank() && (is_beatable<I>::static_p && ...)) \
-    constexpr auto                                                      \
-    operator()(I ... i) CONST                                           \
-    {                                                                   \
-        using FD = FilterDims<lens, steps, I ...>;                      \
-        return SmallView<T CONST, typename FD::lens, typename FD::steps> \
-            (data()+select_loop<lens, steps>(i ...));                   \
-    }                                                                   \
-    template <class ... I>                                              \
-    requires ((0 + ... + std::is_integral_v<I>)==rank())                \
     constexpr decltype(auto)                                            \
-    operator()(I ... i) CONST                                           \
-    {                                                                   \
-        return data()[select_loop<lens, steps>(i ...)];                 \
-    } /* TODO More than one selector... */                              \
-    template <class ... I>                                              \
-    requires (!is_beatable<I>::static_p || ...)                         \
-    constexpr auto \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
-        return from(*this, std::forward<I>(i) ...);                     \
+        constexpr int integrals = (0 + ... + std::is_integral_v<std::decay_t<I>>); \
+        if constexpr (integrals<rank() && (is_beatable<I>::static_p && ...))  { \
+            using FD = FilterDims<lens, steps, I ...>;                  \
+            return SmallView<T CONST, typename FD::lens, typename FD::steps> \
+                (data()+select_loop<lens, steps>(i ...));               \
+        } else if constexpr (integrals==rank())  {                      \
+            return data()[select_loop<lens, steps>(i ...)];             \
+        } else if constexpr ((!is_beatable<I>::static_p || ...)) { /* TODO More than one selector... */ \
+            return from(*this, std::forward<I>(i) ...);                 \
+        } else {                                                        \
+            static_assert(mp::always_false<I ...>); /* p2593r0 */       \
+        }                                                               \
     }                                                                   \
     /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
