@@ -305,7 +305,7 @@ struct View
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
 
-// array type is not deduced by (X &&)
+// array type is not deduced by X &&.
     constexpr View &
     operator=(typename nested_braces<T, RANK>::list x)
     {
@@ -320,64 +320,56 @@ struct View
         std::copy(x.begin(), x.end(), this->begin());
         return *this;
     }
-    bool const empty() const { return 0==size(); } // TODO Optimize
+    constexpr bool const empty() const { return 0==size(); } // TODO Optimize
 
     template <rank_t c=0> constexpr auto iter() const && { return ra::CellBig<View<T, RANK>, c>(std::move(dimv), p); }
     template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T, RANK> &, c>(dimv, p); }
     constexpr auto begin() const { return stl_iterator(iter()); }
-// here dim doesn't matter, but we have to give it if it's a ref
-    constexpr auto end() const { return stl_iterator(decltype(iter())(dimv, nullptr)); }
+    constexpr auto end() const { return stl_iterator(decltype(iter())(dimv, nullptr)); } // dimv could be anything
 
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
     template <class ... I>
-    requires ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK
-              && (0 + ... + is_beatable<I>::value)==sizeof...(I))
-    constexpr auto operator()(I && ... i) const
-        requires (RANK!=RANK_ANY)
-    {
-        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
-        constexpr rank_t subrank = rank_sum(RANK, extended);
-        static_assert(subrank>=0, "Bad subrank.");
-        View<T, subrank> sub;
-        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
-        // fill the rest of dim, skipping over beatable subscripts
-        for (int i=(0 + ... + is_beatable<I>::skip); i<subrank; ++i) {
-            sub.dimv[i] = this->dimv[i-extended];
-        }
-        return sub;
-    }
-
-    // BUG doesn't handle generic zero-rank indices
-    template <class ... I>
-    requires ((0 + ... + std::is_integral_v<I>)==RANK)
     constexpr decltype(auto)
-    operator()(I const & ... i) const
-        requires (RANK!=RANK_ANY)
-    {
-        return data()[select_loop(nullptr, this->dimv.data(), i ...)];
-    }
-
-    // Contrary to RANK!=RANK_ANY, the scalar case cannot be separated at compile time. So operator() will return a rank 0 view in that case (and rely on conversion if, say, this ends up assigned to a scalar)
-    template <class ... I>
-    requires (is_beatable<I>::value && ...)
-    constexpr auto
     operator()(I && ... i) const
-        requires (RANK==RANK_ANY)
     {
-        constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
-        RA_CHECK(this->rank()+extended>=0, "bad rank");
-        View<T, RANK_ANY> sub;
-        sub.dimv.resize(this->rank()+extended);
-        sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
-        for (int i=(0 + ... + is_beatable<I>::skip); i<sub.rank(); ++i) {
-            sub.dimv[i] = this->dimv[i-extended];
+        if constexpr ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK
+                      && (0 + ... + is_beatable<I>::value)==sizeof...(I)
+                      && RANK!=RANK_ANY) {
+            constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
+            constexpr rank_t subrank = rank_sum(RANK, extended);
+            static_assert(subrank>=0, "Bad subrank.");
+            View<T, subrank> sub;
+            sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
+// fill the rest of dim, skipping over beatable subscripts
+            for (int i=(0 + ... + is_beatable<I>::skip); i<subrank; ++i) {
+                sub.dimv[i] = this->dimv[i-extended];
+            }
+            return sub;
+// BUG condition should be all I zero rank, not is_integral
+        } else if constexpr ((0 + ... + std::is_integral_v<std::decay_t<I>>)==RANK && RANK!=RANK_ANY) {
+            return data()[select_loop(nullptr, this->dimv.data(), i ...)];
+// when RANK==RANK_ANY, operator() will return a rank 0 view, and rely on conversion if it ends up assigned to a scalar.
+        } else if constexpr ((is_beatable<I>::value && ...) && RANK==RANK_ANY) {
+            constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
+            RA_CHECK(this->rank()+extended>=0, "bad rank");
+            View<T, RANK_ANY> sub;
+            sub.dimv.resize(this->rank()+extended);
+            sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
+            for (int i=(0 + ... + is_beatable<I>::skip); i<sub.rank(); ++i) {
+                sub.dimv[i] = this->dimv[i-extended];
+            }
+            return sub;
+// TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced.
+        } else if constexpr (!(is_beatable<I>::value && ...)) {
+            return from(*this, std::forward<I>(i) ...);
+        } else {
+            std::abort();
         }
-        return sub;
     }
 
-    // FIXME may return scalar?
+// FIXME may return scalar?
     template <class I>
-    constexpr auto
+    constexpr decltype(auto)
     at(I && i) const
     {
         if constexpr (RANK_ANY!=RANK) {
@@ -396,15 +388,6 @@ struct View
         }
     }
 
-    // TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced.
-    template <class ... I>
-    requires (!(is_beatable<I>::value && ...))
-    constexpr auto
-    operator()(I && ... i) const
-    {
-        return from(*this, std::forward<I>(i) ...);
-    }
-
     template <class ... I>
     constexpr decltype(auto)
     operator[](I && ... i) const
@@ -412,19 +395,19 @@ struct View
         return (*this)(std::forward<I>(i) ...);
     }
 
-    // conversion to scalar.
+// conversion to scalar.
     constexpr
     operator T & () const
     {
         if constexpr (RANK_ANY==RANK) {
             RA_CHECK(rank()==0, "Error converting rank ", rank(), " to scalar.");
         } else {
-            static_assert(0==RANK, "Bad rank for conversion to scalar..");
+            static_assert(0==RANK, "Bad rank for conversion to scalar.");
         }
         return data()[0];
     }
 
-    // necessary here per [ra15] (?)
+// necessary here per [ra15] (?)
     constexpr operator T & () { return std::as_const(*this); }
 
 // conversions from var rank to fixed rank
@@ -439,7 +422,8 @@ struct View
     template <rank_t R> requires (R!=RANK_ANY && RANK==RANK_ANY && std::is_const_v<T>)
     constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
 
-// conversion to const from non const
+// conversion to const. We rely on it for Container::view().
+// FIXME probably illegal, and doesn't work for SmallBase. Need another way.
     constexpr
     operator View<T const, RANK> const & () const requires (!std::is_const_v<T>)
     {
