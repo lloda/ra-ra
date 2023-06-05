@@ -12,7 +12,6 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include "ra/ra.hh"
 #include "ra/test.hh"
 #include "ra/bench.hh"
 

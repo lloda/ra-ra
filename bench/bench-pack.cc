@@ -10,8 +10,6 @@
 #include <iostream>
 #include <iomanip>
 #include "ra/test.hh"
-#include "ra/complex.hh"
-#include "ra/ra.hh"
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;

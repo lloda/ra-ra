@@ -7,7 +7,6 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include "ra/ra.hh"
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 

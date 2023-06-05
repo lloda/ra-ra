@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/bench - Selectio ops in ra::
+// ra-ra/bench - Selection ops in ra::
 
 // (c) Daniel Llorens - 2015, 2017
 // This library is free software; you can redistribute it and/or modify it under
@@ -11,8 +11,6 @@
 #include <iomanip>
 #include <string>
 #include "ra/test.hh"
-#include "ra/complex.hh"
-#include "ra/ra.hh"
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;

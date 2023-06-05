@@ -15,7 +15,8 @@
 
 using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 
-template <class T> constexpr bool is_constref_v = std::is_reference_v<T> && std::is_const_v<std::remove_reference_t<T>>;
+template <class T> constexpr bool is_cref_v = std::is_reference_v<T> && std::is_const_v<std::remove_reference_t<T>>;
+template <class T> constexpr bool is_ncref_v = std::is_reference_v<T> && !std::is_const_v<std::remove_reference_t<T>>;
 
 int main()
 {
@@ -24,12 +25,12 @@ int main()
     auto test =
         [&](auto & a, auto & b)
         {
-            tr.test(!is_constref_v<decltype(*(a.data()))>);
-            tr.test(is_constref_v<decltype(*(b.data()))>);
-            tr.test(!is_constref_v<decltype(*(a().data()))>);
-            tr.test(is_constref_v<decltype(*(b().data()))>);
-            tr.test(!is_constref_v<decltype(*(a(ra::all).data()))>);
-            tr.test(is_constref_v<decltype(*(b(ra::all).data()))>);
+            tr.test(is_ncref_v<decltype(*(a.data()))>);
+            tr.test(is_cref_v<decltype(*(b.data()))>);
+            tr.test(is_ncref_v<decltype(*(a().data()))>);
+            tr.test(is_cref_v<decltype(*(b().data()))>);
+            tr.test(is_ncref_v<decltype(*(a(ra::all).data()))>);
+            tr.test(is_cref_v<decltype(*(b(ra::all).data()))>);
         };
     tr.section("dynamic rank");
     {

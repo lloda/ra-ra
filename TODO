@@ -6,7 +6,12 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/7]
-  - [-] Bugs [2/9]
+  - [-] Bugs [2/10]
+    - [ ] const issues in View vs Container
+      - [ ] fix conversion to const op in View, or
+      - [ ] fix view() members in Container not to depend on conversion to const op in view (make View a member union??)
+      - [ ] fix SmallView/SmallArray after the same pattern
+      - [ ] fix RA_DEF_ASSIGNOPS return type and reuse that and RA_DEF_ASSIGNOPS_SELF in View
     - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
@@ -22,10 +27,9 @@ checkbox [C-ct] flip TODO
     - [ ] be namespace clean except for possibly complex.hh.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
-  - [-] Features [1/8]
+  - [-] Features [1/7]
     - [ ] Iota is both vector-like object and iterator. Split into two types?
     - [ ] Deduction guides, e.g. ra::small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
-    - [ ] View::p is not const because it's used as sliding window (CellBig). Split into two types?
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
       maybe. One idea is to generalize View (so View<Iota>, etc.) which is
       something that newra does. But as long as Container is parent of View,

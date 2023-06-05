@@ -7,12 +7,9 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// TODO Bad performance, see also bench-stencil[23].cc.
-
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include "ra/ra.hh"
 #include "ra/test.hh"
 #include "ra/bench.hh"
 
