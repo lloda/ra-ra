@@ -237,9 +237,6 @@ dim_t select_loop(Dim * dim, Dim const * dim_src)
     return 0;
 }
 
-// allow conversion only from T to T const with null type.
-template <class T> using const_atom = std::conditional_t<std::is_const_v<T>, no_arg, T const>;
-
 
 // --------------------
 // View
@@ -430,32 +427,23 @@ struct View
     // necessary here per [ra15] (?)
     constexpr operator T & () { return std::as_const(*this); }
 
-// conversion from var rank to fixed rank
-    template <rank_t R>
-    requires (R==RANK_ANY && R!=RANK)
-    constexpr View(View<T const, R> const & x) requires (RANK!=RANK_ANY): dimv(x.dimv), p(x.p) {}
-// conversion from var rank & non const to fixed rank and const
-    template <rank_t R>
-    requires (R==RANK_ANY && R!=RANK)
-    constexpr View(View<std::remove_const_t<T>, R> const & x) requires (RANK!=RANK_ANY): dimv(x.dimv), p(x.p) {}
+// conversions from var rank to fixed rank
+    template <rank_t R> requires (R==RANK_ANY && R!=RANK)
+    constexpr View(View<T, R> const & x): dimv(x.dimv), p(x.p) {}
+    template <rank_t R> requires (R==RANK_ANY && R!=RANK && std::is_const_v<T>)
+    constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv), p(x.p) {}
+
 // conversion from fixed rank to var rank
-    template <rank_t R>
-    requires (R!=RANK_ANY)
-    constexpr View(View<T const, R> const & x) requires (RANK==RANK_ANY): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
-// conversion from fixed rank & non const to var rank and const
-    template <rank_t R>
-    requires (R!=RANK_ANY)
-    constexpr View(View<std::remove_const_t<T>, R> const & x) requires (RANK==RANK_ANY): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
+    template <rank_t R> requires (R!=RANK_ANY && RANK==RANK_ANY)
+    constexpr View(View<T, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
+    template <rank_t R> requires (R!=RANK_ANY && RANK==RANK_ANY && std::is_const_v<T>)
+    constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), p(x.p) {}
+
 // conversion to const from non const
     constexpr
-    operator View<const_atom<T>, RANK> const & () const
+    operator View<T const, RANK> const & () const requires (!std::is_const_v<T>)
     {
-        return *reinterpret_cast<View<const_atom<T>, RANK> const *>(this);
-    }
-    constexpr
-    operator View<const_atom<T>, RANK> & ()
-    {
-        return *reinterpret_cast<View<const_atom<T>, RANK> *>(this);
+        return *reinterpret_cast<View<T const, RANK> const *>(this);
     }
 };
 
