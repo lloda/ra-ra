@@ -35,35 +35,30 @@ int main()
 
             Benchmark bm { N, 3 };
             auto report = [&](std::string const & tag, auto && bv)
-                          {
-                              tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
-                                  .test_eq(ra::iota(Isize)*Istep, B);
-                          };
-
+            {
+                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                    .test_eq(ra::iota(Isize)*Istep, B);
+            };
             report("indexing on raw pointers",
-                   bm.run([&]()
-                          {
-                              for (int i=0; i<Isize; ++i) {
-                                  BB[i] = AA[II[i]];
-                              }
-                          }));
+                   bm.run([&] {
+                       for (int i=0; i<Isize; ++i) {
+                           BB[i] = AA[II[i]];
+                       }
+                   }));
             report("vectorized selection",
-                   bm.run([&]()
-                          {
-                              B = A(I);
-                          }));
+                   bm.run([&] {
+                       B = A(I);
+                   }));
             report("write out the indexing loop",
-                   bm.run([&]()
-                          {
-                              for_each([&A](auto & b, auto i) { b = A(i); }, B, I);
-                          }));
+                   bm.run([&] {
+                       for_each([&A](auto & b, auto i) { b = A(i); }, B, I);
+                   }));
             report("loop on scalar selection",
-                   bm.run([&]()
-                          {
-                              for (int i=0; i<Isize; ++i) {
-                                  B(i) = A(I(i));
-                              }
-                          }));
+                   bm.run([&]() {
+                       for (int i=0; i<Isize; ++i) {
+                           B(i) = A(I(i));
+                       }
+                   }));
         };
 
         tr.section("fixed rank");
@@ -97,25 +92,23 @@ int main()
 
             Benchmark bm { N, 3 };
             auto report = [&](std::string const &tag, auto && bv)
-                          {
-                              tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
-                                  .test_eq(Istep*(ra::_0 + ra::_1), B);
-                          };
+            {
+                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                    .test_eq(Istep*(ra::_0 + ra::_1), B);
+            };
 
             report("2D indexing on raw pointers",
-                   bm.run([&]()
-                          {
-                              for (int i=0; i<Isize; ++i) {
-                                  for (int j=0; j<Isize; ++j) {
-                                      BB[i*Isize + j] = AA[II[i]*Asize + II[j]];
-                                  }
-                              }
-                          }));
+                   bm.run([&] {
+                       for (int i=0; i<Isize; ++i) {
+                           for (int j=0; j<Isize; ++j) {
+                               BB[i*Isize + j] = AA[II[i]*Asize + II[j]];
+                           }
+                       }
+                   }));
             report("vectorized selection",
-                   bm.run([&]()
-                          {
-                              B = A(I, I);
-                          }));
+                   bm.run([&] {
+                       B = A(I, I);
+                   }));
         };
         tr.section("fixed rank");
         rank1_11_test(ra::Unique<real, 2>(), 1000, 50, 20, 10000);
@@ -146,27 +139,25 @@ int main()
 
             Benchmark bm { N, 3 };
             auto report = [&](std::string const &tag, auto && bv)
-                          {
-                              tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
-                                  .test_eq(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
-                          };
+            {
+                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                    .test_eq(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
+            };
 
             report("3D indexing on raw pointers",
-                   bm.run([&]()
-                          {
-                              for (int i=0; i<Isize; ++i) {
-                                  for (int j=0; j<Isize; ++j) {
-                                      for (int k=0; k<Isize; ++k) {
-                                          BB[k+Isize*(j+Isize*i)] = AA[II[k]+Asize*(II[j]+Asize*II[i])];
-                                      }
-                                  }
-                              }
-                          }));
+                   bm.run([&] {
+                       for (int i=0; i<Isize; ++i) {
+                           for (int j=0; j<Isize; ++j) {
+                               for (int k=0; k<Isize; ++k) {
+                                   BB[k+Isize*(j+Isize*i)] = AA[II[k]+Asize*(II[j]+Asize*II[i])];
+                               }
+                           }
+                       }
+                   }));
             report("vectorized selection",
-                   bm.run([&]()
-                          {
-                              B = A(I, I, I);
-                          }));
+                   bm.run([&] {
+                       B = A(I, I, I);
+                   }));
         };
         tr.section("fixed rank");
         rank1_111_test(ra::Unique<real, 3>(), 40, 20, 2, 4000);
@@ -188,40 +179,37 @@ int main()
 
             Benchmark bm { N, 3 };
             auto report = [&](std::string const &tag, auto && bv)
-                          {
-                              tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
-                                  .test_eq(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
-                          };
+            {
+                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                    .test_eq(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
+            };
 
             report("3D indexing on raw pointers",
-                   bm.run([&]()
-                          {
-                              for (int i=0; i<Isize; ++i) {
-                                  for (int j=0; j<Isize; ++j) {
-                                      for (int k=0; k<Isize; ++k) {
-                                          for (int l=0; l<Isize; ++l) {
-                                              BB[l+Isize*(k+Isize*(j+Isize*i))] = AA[II[l]+Asize*(II[k]+Asize*(II[j]+Asize*II[i]))];
-                                          }
-                                      }
-                                  }
-                              }
-                          }));
+                   bm.run([&] {
+                       for (int i=0; i<Isize; ++i) {
+                           for (int j=0; j<Isize; ++j) {
+                               for (int k=0; k<Isize; ++k) {
+                                   for (int l=0; l<Isize; ++l) {
+                                       BB[l+Isize*(k+Isize*(j+Isize*i))] = AA[II[l]+Asize*(II[k]+Asize*(II[j]+Asize*II[i]))];
+                                   }
+                               }
+                           }
+                       }
+                   }));
             report("vectorized selection",
-                   bm.run([&]()
-                          {
-                              B = A(I, I, I, I);
-                          }));
+                   bm.run([&] {
+                       B = A(I, I, I, I);
+                   }));
             report("slice one axis at a time", // TODO one way A(i, i, i, i) could work
-                   bm.run([&]()
-                          {
-                              for (int i=0; i<Isize; ++i) {
-                                  for (int j=0; j<Isize; ++j) {
-                                      for (int k=0; k<Isize; ++k) {
-                                          B(i, j, k) = A(I[i], I[j], I[k])(I);
-                                      }
-                                  }
-                              }
-                          }));
+                   bm.run([&] {
+                       for (int i=0; i<Isize; ++i) {
+                           for (int j=0; j<Isize; ++j) {
+                               for (int k=0; k<Isize; ++k) {
+                                   B(i, j, k) = A(I[i], I[j], I[k])(I);
+                               }
+                           }
+                       }
+                   }));
         };
         tr.section("fixed rank");
         rank1_1111_test(ra::Unique<real, 4>(), 40, 20, 2, 200);

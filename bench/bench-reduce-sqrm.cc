@@ -40,12 +40,11 @@ int main()
                   {
                       real4 A(7.), B(3.);
                       y = 0.;
-                      repeat([&]()
-                             {
-                                 for (int j=0; j!=4; ++j) {
-                                     y += sqrm(A(j)-B(j));
-                                 }
-                             });
+                      repeat([&] {
+                          for (int j=0; j!=4; ++j) {
+                              y += sqrm(A(j)-B(j));
+                          }
+                      });
                   }));
     report(4,
            bm.name("real4 expr").repeats(N*prod(S1)/4)
@@ -53,10 +52,9 @@ int main()
                   {
                       real4 A(7.), B(3.);
                       y = 0.;
-                      repeat([&]()
-                             {
-                                 y += reduce_sqrm(A-B);
-                             });
+                      repeat([&] {
+                          y += reduce_sqrm(A-B);
+                      });
                   }));
     report(prod(S1),
            bm.name("C array raw").repeats(N)
@@ -65,34 +63,31 @@ int main()
                       ra::Unique<real, 1> A(S1, 7.);
                       ra::Unique<real, 1> B(S1, 3.);
                       y = 0.;
-                      repeat([&]()
-                             {
-                                 real const * a = A.data();
-                                 real const * b = B.data();
-                                 for (int j=0; j<S1[0]; ++j) {
-                                     y += sqrm(a[j]-b[j]);
-                                 }
-                             });
+                      repeat([&] {
+                          real const * a = A.data();
+                          real const * b = B.data();
+                          for (int j=0; j<S1[0]; ++j) {
+                              y += sqrm(a[j]-b[j]);
+                          }
+                      });
                   }));
 // sqrm+reduction in one op.
     auto traversal = [&](auto && repeat, auto const & a, auto const & b)
                      {
                          y = 0.;
-                         repeat([&]()
-                                {
-                                    for_each([&](real const a, real const b) { y += sqrm(a, b); }, a, b);
-                                });
+                         repeat([&] {
+                             for_each([&](real const a, real const b) { y += sqrm(a, b); }, a, b);
+                         });
                      };
 // separate reduction: compare abstraction penalty with by_traversal.
     auto traversal2 = [&](auto && repeat, auto const & a, auto const & b)
                       {
                           y = 0.;
-                          repeat([&]()
-                                 {
-                                     for_each([&](real const a) { y += a; },
-                                              map([](real const a, real const b) { return sqrm(a, b); },
-                                                  a, b));
-                                 });
+                          repeat([&] {
+                              for_each([&](real const a) { y += a; },
+                                       map([](real const a, real const b) { return sqrm(a, b); },
+                                           a, b));
+                          });
                       };
     {
         ra::Unique<real, 1> A(S1, 7.);
@@ -103,12 +98,11 @@ int main()
                .once_f([&](auto && repeat)
                        {
                            y = 0.;
-                           repeat([&]()
-                                  {
-                                      for (int j=0; j<S1[0]; ++j) {
-                                          y += sqrm(A(j)-B(j));
-                                      }
-                                  });
+                           repeat([&] {
+                               for (int j=0; j<S1[0]; ++j) {
+                                   y += sqrm(A(j)-B(j));
+                               }
+                           });
                        }));
     }
     {
@@ -120,14 +114,13 @@ int main()
                .once_f([&](auto && repeat)
                        {
                          y = 0.;
-                         repeat([&]()
-                                {
-                                    for (int j=0; j<S2[0]; ++j) {
-                                        for (int k=0; k<S2[1]; ++k) {
-                                            y += sqrm(A(j, k)-B(j, k));
-                                        }
-                                    }
-                                });
+                         repeat([&] {
+                             for (int j=0; j<S2[0]; ++j) {
+                                 for (int k=0; k<S2[1]; ++k) {
+                                     y += sqrm(A(j, k)-B(j, k));
+                                 }
+                             }
+                         });
                      }));
     }
     {
@@ -139,16 +132,15 @@ int main()
                .once_f([&](auto && repeat)
                        {
                            y = 0.;
-                           repeat([&]()
-                                  {
-                                      for (int j=0; j<S3[0]; ++j) {
-                                          for (int k=0; k<S3[1]; ++k) {
-                                              for (int l=0; l<S3[2]; ++l) {
-                                                  y += sqrm(A(j, k, l)-B(j, k, l));
-                                              }
-                                          }
-                                      }
-                                  });
+                           repeat([&] {
+                               for (int j=0; j<S3[0]; ++j) {
+                                   for (int k=0; k<S3[1]; ++k) {
+                                       for (int l=0; l<S3[2]; ++l) {
+                                           y += sqrm(A(j, k, l)-B(j, k, l));
+                                       }
+                                   }
+                               }
+                           });
                        }));
     }
     return tr.summary();

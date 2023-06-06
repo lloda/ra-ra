@@ -235,13 +235,13 @@ struct STLIterator
     STLIterator(Iterator const & ii_)
         : ii(ii_),
 // shape_type may be std::array or std::vector.
-          i([&]()
-            { if constexpr (DIM_ANY==size_s<shape_type>()) {
-                    return shape_type(ii.rank(), 0);
-                } else {
-                    return shape_type {0};
-                }
-            }())
+          i([&] {
+              if constexpr (DIM_ANY==size_s<shape_type>()) {
+                  return shape_type(ii.rank(), 0);
+              } else {
+                  return shape_type {0};
+              }
+          }())
     {
 // [ra12] Null p_ so begin()==end() for empty range. ply() uses lens so this doesn't matter.
         if (0==ra::size(ii)) {

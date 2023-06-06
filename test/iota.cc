@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <iterator>
+#include <ranges>
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
@@ -69,6 +70,10 @@ int main()
         tr.test_eq(sizeof(ra::iota().i), sizeof(ra::iota(ra::dim_c<4> {})));
         tr.test_eq(2*sizeof(ra::iota().i), sizeof(ra::iota(4)));
         tr.test_eq(3*sizeof((ra::iota().i)), sizeof(ra::iota(4, 0, 2)));
+    }
+    tr.section("iota simulation with ptr(iota_view)");
+    {
+        tr.strictshape().test_eq(ra::iota(10, 0, 3), ra::vector(std::ranges::iota_view(0, 10))*3);
     }
     return tr.summary();
 }

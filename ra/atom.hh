@@ -233,7 +233,11 @@ struct Ptr
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr auto flat() const { return i; }
-    constexpr decltype(auto) at(auto && j) const { RA_CHECK(DIM_BAD==N || inside(j[0], len(0)), " j ", j[0], " size ", len(0)); return i[j[0]]; }
+    constexpr decltype(auto) at(auto && j) const
+    {
+        RA_CHECK(DIM_BAD==N || inside(j[0], len(0)), " j ", j[0], " size ", len(0));
+        return i[j[0]];
+    }
 };
 
 template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
@@ -243,12 +247,10 @@ template <class I> constexpr auto ptr(I i, dim_t n) { return Ptr<I, DIM_ANY> { i
 template <std::ranges::random_access_range V> constexpr auto
 vector(V && v)
 {
-    constexpr dim_t ct_size = size_s<V>();
-// forward preserves rvalueness of v as constness of iterator.
-    if constexpr (DIM_ANY==ct_size) {
+    if constexpr (constexpr dim_t s = size_s<V>(); DIM_ANY==s) {
         return ptr(std::begin(std::forward<V>(v)), std::ssize(v));
     } else {
-        return ptr(std::begin(std::forward<V>(v)), mp::int_c<ct_size> {});
+        return ptr(std::begin(std::forward<V>(v)), mp::int_c<s> {});
     }
 }
 

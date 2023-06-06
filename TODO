@@ -28,7 +28,7 @@ checkbox [C-ct] flip TODO
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
   - [-] Features [1/7]
-    - [ ] Iota is both vector-like object and iterator. Split into two types?
+    - [ ] Merge Ptr and Iota. We should only need one rank 1 IteratorConcept adaptor.
     - [ ] Deduction guides, e.g. ra::small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
     - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
       maybe. One idea is to generalize View (so View<Iota>, etc.) which is

@@ -44,12 +44,12 @@ struct TestRecorder
     std::vector<int> bad;
     std::string info_str;
     verbose_t verbose_default, verbose;
-    bool willskip;
-    bool willexpectfail;
+    bool willskip = false;
+    bool willexpectfail = false;
+    bool willstrictshape = false;
 
     TestRecorder(std::ostream & o_=std::cout, verbose_t verbose_default_=ERRORS)
-        : o(o_), verbose_default(verbose_default_), verbose(verbose_default_),
-          willskip(false), willexpectfail(false) {}
+        : o(o_), verbose_default(verbose_default_), verbose(verbose_default_) {}
 
     template <class ... A> void
     section(A const & ... a)
@@ -74,6 +74,7 @@ struct TestRecorder
     TestRecorder & quiet(verbose_t v=QUIET) { verbose = v; return *this; }
     TestRecorder & noisy(verbose_t v=NOISY) { verbose = v; return *this; }
     TestRecorder & skip(bool s=true) { willskip = s; return *this; }
+    TestRecorder & strictshape(bool s=true) { willstrictshape = s; return *this; }
     TestRecorder & expectfail(bool s=true) { willexpectfail = s; return *this; }
 
     template <class A, class B>
@@ -113,11 +114,10 @@ struct TestRecorder
             ++skipped;
         }
         ++total;
-        willskip = false;
-        willexpectfail = false;
+        willstrictshape = willskip = willexpectfail = false;
     }
 
-#define LAZYINFO(...) [&]() { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
+#define LAZYINFO(...) [&] { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
 
     template <class A>
     void
@@ -140,15 +140,24 @@ struct TestRecorder
     test_comp(A && a, B && b, Comp && comp, char const * msg,
               std::source_location const loc = std::source_location::current())
     {
-        if (agree_op(comp, a, b)) {
+        if (willstrictshape
+            ? [&] {
+                if constexpr (ra::rank_s<decltype(a)>()==ra::rank_s<decltype(b)>()) {
+                    return ra::rank(a)==ra::rank(b) && every(ra::shape(a)==ra::shape(b));
+                } else {
+                    return false;
+                } }()
+            : agree_op(comp, a, b)) {
+
             bool c = every(ra::map(comp, a, b));
             test(c, LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
                  LAZYINFO(""), loc);
             return c;
         } else {
             test(false,
-                 LAZYINFO("Mismatched args [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]"),
-                 LAZYINFO("Shape mismatch"),
+                 LAZYINFO("Mismatched args [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]",
+                          willstrictshape ? " (strict shape)" : ""),
+                 LAZYINFO("Shape mismatch", willstrictshape ? " (strict shape)" : ""),
                  loc);
             return false;
         }
