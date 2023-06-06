@@ -1644,25 +1644,25 @@ Item 2
 Some of the categories below are actually C++20 ‘concepts’, some are still informal.
 
 @itemize
-@item @b{Container} --- @code{Big} @code{Shared} @code{Unique} @code{Small}
+@item @b{Container} --- @code{Big}, @code{Shared}, @code{Unique}, @code{Small}
 
 These are array types that own their data in one way or another. Creating or destroying these objects may allocate or deallocate memory, respectively.
 
-@item @b{View} --- @code{View} @code{SmallView}
+@item @b{View} --- @code{View}, @code{SmallView}
 
 These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s that aren't associated with any @b{Container}, for example into memory allocated by a different library. Creating and destroying @b{View}s doesn't allocate or deallocate memory for array elements.
 
-@item @b{Iterator} --- @code{CellBig} @code{CellSmall} @code{Iota} @code{Ptr} @code{Scalar} @code{Expr} @code{Pick}
+@item @b{Iterator} --- @code{CellBig}, @code{CellSmall}, @code{Iota}, @code{Ptr}, @code{Scalar}, @code{Expr}, @code{Pick}
 
 This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
 @b{Iterator}s provide a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{len()}, @code{step()}, @code{keep_step()} and @code{adv()}, a loop involving @b{Iterator}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
-@b{Iterator}s also provide an @code{at(i ...)} method for random access to any element of the array.
+@b{Iterator}s also provide an @code{at(i ...)} method for random access to any element of the expression.
 
-@item @b{Flat} @code{Iota::Flat} @code{Scalar::Flat} @code{Expr::Flat} @code{Pick::Flat} @code{CellFlat}
+@item @b{Flat} @code{Iota::Flat}, @code{Scalar}, @code{Expr::Flat}, @code{Pick::Flat}, @code{CellFlat}
 
-These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Iterator} objects through a method @code{flat()}.
+These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Iterator} objects through a method @code{flat()}. @code{Scalar} is its own @b{Flat}.
 
 @end itemize
 

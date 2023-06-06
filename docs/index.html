@@ -1717,15 +1717,15 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 <p>Some of the categories below are actually C++20 ‘concepts’, some are still informal.
 </p>
 <ul>
-<li> <b>Container</b> &mdash; <code>Big</code> <code>Shared</code> <code>Unique</code> <code>Small</code>
+<li> <b>Container</b> &mdash; <code>Big</code>, <code>Shared</code>, <code>Unique</code>, <code>Small</code>
 
 <p>These are array types that own their data in one way or another. Creating or destroying these objects may allocate or deallocate memory, respectively.
 </p>
-</li><li> <b>View</b> &mdash; <code>View</code> <code>SmallView</code>
+</li><li> <b>View</b> &mdash; <code>View</code>, <code>SmallView</code>
 
 <p>These are array views into data in memory, which may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated by a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>
-</li><li> <b>Iterator</b> &mdash; <code>CellBig</code> <code>CellSmall</code> <code>Iota</code> <code>Ptr</code> <code>Scalar</code> <code>Expr</code> <code>Pick</code>
+</li><li> <b>Iterator</b> &mdash; <code>CellBig</code>, <code>CellSmall</code>, <code>Iota</code>, <code>Ptr</code>, <code>Scalar</code>, <code>Expr</code>, <code>Pick</code>
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
@@ -1733,9 +1733,9 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 </p>
 <p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element of the array.
 </p>
-</li><li> <b>Flat</b> <code>Iota::Flat</code> <code>Scalar::Flat</code> <code>Expr::Flat</code> <code>Pick::Flat</code> <code>CellFlat</code>
+</li><li> <b>Flat</b> <code>Iota::Flat</code>, <code>Scalar</code>, <code>Expr::Flat</code>, <code>Pick::Flat</code>, <code>CellFlat</code>
 
-<p>These are types that support ‘forward iterator’ traversal. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Iterator</b> objects through a method <code>flat()</code>.
+<p>These are types that support ‘forward iterator’ traversal. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Iterator</b> objects through a method <code>flat()</code>. <code>Scalar</code> is its own <b>Flat</b>.
 </p>
 </li></ul>
 
@@ -2842,7 +2842,7 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <p>Diagram generated using Graphviz and <a href="https://www.flourish.org/cinclude2dot">https://www.flourish.org/cinclude2dot</a>.
 </p>
 <pre class="verbatim">cd ra &amp;&amp; cinclude2dot.pl --include . &gt; headers.dot
-dot -Tpng headers.dot -Gdpi=150 &gt; headers.png
+dot -Tpng headers.dot -Gdpi=100 &gt; headers.png
 </pre>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
 <p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>

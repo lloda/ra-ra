@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Constructors and assignment for Small.
+// ra-ra/test - Constructors and assignment for Small.
 
 // (c) Daniel Llorens - 2014, 2016-2017, 2019
 // This library is free software; you can redistribute it and/or modify it under

@@ -110,7 +110,7 @@ from(A && a, I && ... i)
     template <class A, class B> requires (ra_zero<A, B>)                \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
-        return FLAT(a) OP FLAT(b);                                      \
+        return FLAT(std::forward<A>(a)) OP FLAT(std::forward<B>(b));    \
     }
 DEF_NAMED_BINARY_OP(+, plus)
 DEF_NAMED_BINARY_OP(-, minus)

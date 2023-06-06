@@ -332,8 +332,9 @@ struct View
     constexpr decltype(auto)
     operator()(I && ... i) const
     {
-        if constexpr ((0 + ... + std::is_integral_v<std::decay_t<I>>)<RANK
-                      && (is_beatable<I>::value && ...) && RANK!=RANK_ANY) {
+// BUG condition should be zero rank, not is_integral
+        constexpr int integrals = (0 + ... + std::is_integral_v<std::decay_t<I>>);
+        if constexpr (integrals<RANK && (is_beatable<I>::value && ...)) {
             constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
             constexpr rank_t subrank = rank_sum(RANK, extended);
             static_assert(subrank>=0, "Bad subrank.");
@@ -344,10 +345,9 @@ struct View
                 sub.dimv[i] = this->dimv[i-extended];
             }
             return sub;
-// BUG condition should be all I zero rank, not is_integral
-        } else if constexpr ((0 + ... + std::is_integral_v<std::decay_t<I>>)==RANK && RANK!=RANK_ANY) {
+        } else if constexpr (integrals==RANK) {
             return data()[select_loop(nullptr, this->dimv.data(), i ...)];
-// when RANK==RANK_ANY, operator() will return a rank 0 view, and rely on conversion if it ends up assigned to a scalar.
+// return a rank 0 view, and rely on conversion if it ends up assigned to a scalar.
         } else if constexpr ((is_beatable<I>::value && ...) && RANK==RANK_ANY) {
             constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
             RA_CHECK(this->rank()+extended>=0, "bad rank");

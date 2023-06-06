@@ -58,8 +58,9 @@ requires (!std::is_void_v<V>)
 constexpr dim_t
 rank_s()
 {
-    if constexpr (requires { std::decay_t<V>::rank_s(); }) {
-        return std::decay_t<V>::rank_s();
+    using dV = std::decay_t<V>;
+    if constexpr (requires { dV::rank_s(); }) {
+        return dV::rank_s();
     } else if constexpr (requires { ra_traits<V>::rank_s(); }) {
         return ra_traits<V>::rank_s();
     } else {
@@ -79,8 +80,9 @@ requires (!std::is_void_v<V>)
 constexpr dim_t
 size_s()
 {
-    if constexpr (requires { std::decay_t<V>::size_s(); }) {
-        return std::decay_t<V>::size_s();
+    using dV = std::decay_t<V>;
+    if constexpr (requires { dV::size_s(); }) {
+        return dV::size_s();
     } else if constexpr (requires { ra_traits<V>::size_s(); }) {
         return ra_traits<V>::size_s();
     } else {
@@ -90,10 +92,9 @@ size_s()
         } else if constexpr (0==rank_s<V>()) {
             return 1;
         } else {
-            using V_ = std::decay_t<V>;
             dim_t s = 1;
-            for (int i=0; i!=V_::rank_s(); ++i) {
-                if (dim_t ss=V_::len_s(i); ss>=0) {
+            for (int i=0; i!=dV::rank_s(); ++i) {
+                if (dim_t ss=dV::len_s(i); ss>=0) {
                     s *= ss;
                 } else {
                     return ss; // either DIM_ANY or DIM_BAD
@@ -184,14 +185,6 @@ resize(A & a, dim_t s)
 template <class C>
 struct Scalar
 {
-    template <class C_>
-    struct Flat: public Scalar<C_>
-    {
-        constexpr void operator+=(dim_t d) const {}
-        constexpr C_ & operator*() { return this->c; }
-        constexpr C_ const & operator*() const { return this->c; } // [ra39]
-    };
-
     C c;
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -204,8 +197,13 @@ struct Scalar
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t step(int k) { return 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
-    constexpr decltype(auto) flat() const { return static_cast<Flat<C> const &>(*this); } // [ra39]
+    constexpr decltype(auto) flat() const { return *this; } // [ra39]
     constexpr decltype(auto) at(auto && j) const { return c; }
+
+// use self as Flat
+    constexpr void operator+=(dim_t d) const {}
+    constexpr C & operator*() { return this->c; }
+    constexpr C const & operator*() const { return this->c; } // [ra39]
 };
 
 template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
@@ -332,8 +330,7 @@ template <class T>
 constexpr void
 start(T && t) { static_assert(!std::same_as<T, T>, "Type cannot be start()ed."); }
 
-// undefined len iota (ti) is excluded from optimization and beating. This allows e.g. B = A(... ti ...).
-// FIXME there's no need to exclude it from optimization (?)
+// undefined len iota (ti) is excluded from optimization and beating to allow e.g. B = A(... ti ...). FIXME find a way?
 template <class I> constexpr bool is_iota_ = false;
 template <class T, dim_t N, dim_t S> requires (DIM_BAD!=N) constexpr bool is_iota_<Iota<T, 0, N, S>> = true;
 RA_IS_DEF(is_iota, (is_iota_<A>))
@@ -366,7 +363,7 @@ template <class T> requires (is_ra_scalar<T>)
 constexpr decltype(auto)
 start(T && t) { return std::forward<T>(t); }
 
-// iterators need to be restarted on every use (eg ra::cross()) [ra35].
+// iterators need to be restarted on each use (eg ra::cross()) [ra35].
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
 start(T && t) { return std::forward<T>(t); }
@@ -376,24 +373,19 @@ start(T && t) { return std::forward<T>(t); }
 // global introspection II
 // --------------------
 
-// FIXME one of these is ET-generic and the other is slice only, so make up your mind.
-// FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using value_t = std::decay_t<decltype(*(start(std::declval<A>()).flat()))>;
-
 // also used to paper over Scalar<X> vs X
 template <class A>
 constexpr decltype(auto)
 FLAT(A && a)
 {
-    return *(ra::start(std::forward<A>(a)).flat());
+    if constexpr (is_scalar<A>) {
+        return std::forward<A>(a); // avoid dangling temp in this case [ra8]
+    } else {
+        return *(ra::start(std::forward<A>(a)).flat());
+    }
 }
 
-// // [ra8] in ra/operators.cc
-// template <class A>
-// constexpr decltype(auto)
-// FLAT(A && a) requires (is_scalar<A> || is_ra_scalar<A>)
-// {
-//     return ra::start(std::forward<A>(a)).c;
-// }
+// FIXME do we really want to drop const? See use in concrete_type.
+template <class A> using value_t = std::decay_t<decltype(FLAT(std::declval<A>()))>;
 
 } // namespace ra

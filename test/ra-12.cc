@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Exercise step(k) with k>=rank().
+// ra-ra/test - Exercise step(k) with k>=rank().
 
 // (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under

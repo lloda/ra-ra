@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Tests specific to Container.
+// ra-ra/test - Tests specific to Container.
 
 // (c) Daniel Llorens - 2017, 2019
 // This library is free software; you can redistribute it and/or modify it under

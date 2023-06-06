@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Tests for where() and pick().
+// ra-ra/test - Tests for where() and pick().
 
 // (c) Daniel Llorens - 2014-2016
 // This library is free software; you can redistribute it and/or modify it under

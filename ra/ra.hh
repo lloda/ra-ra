@@ -8,7 +8,7 @@
 // later version.
 
 // FIXME ra/operators.hh includes ra/complex.hh, ideally that should be separate.
-// ra/test.hh and ra/bench.hh must be included separately.
+// ra-ra/test.hh and ra/bench.hh must be included separately.
 
 #pragma once
 #include "io.hh"

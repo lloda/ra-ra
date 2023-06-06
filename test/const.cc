@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Const transfer from Container to View
+// ra-ra/test - Const transfer from Container to View
 
 // (c) Daniel Llorens - 2021-2023
 // This library is free software; you can redistribute it and/or modify it under

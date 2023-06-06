@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Dual numbers.
+// ra-ra/test - Dual numbers.
 
 // (c) Daniel Llorens - 2013, 2015
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Regression tests (2).
+// ra-ra/test - Regression tests (2).
 
 // (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under

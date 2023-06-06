@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Tests specific to Container, constructors.
+// ra-ra/test - Tests specific to Container, constructors.
 
 // (c) Daniel Llorens - 2017-2023
 // This library is free software; you can redistribute it and/or modify it under

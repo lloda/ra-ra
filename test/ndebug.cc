@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Isolate breakage with -DNDEBUG.
+// ra-ra/test - Isolate breakage with -DNDEBUG.
 
 // (c) Daniel Llorens - 2022
 // This library is free software; you can redistribute it and/or modify it under

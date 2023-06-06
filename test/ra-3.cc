@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Assignment.
+// ra-ra/test - Assignment.
 
 // (c) Daniel Llorens - 2013, 2014
 // This library is free software; you can redistribute it and/or modify it under

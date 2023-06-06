@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Conversion to scalar from Big/View, corner cases.
+// ra-ra/test - Conversion to scalar from Big/View, corner cases.
 
 // (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Regressions in array-in-ra::scalar.
+// ra-ra/test - Regressions in array-in-ra::scalar.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under

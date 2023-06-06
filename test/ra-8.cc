@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Regression test for lvalue exprs in gcc 6.1.
+// ra-ra/test - Regression test for lvalue exprs in gcc 6.1.
 
 // (c) Daniel Llorens - 2016
 // This library is free software; you can redistribute it and/or modify it under
