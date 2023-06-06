@@ -31,6 +31,7 @@ test_predicates(char const * type, TestRecorder & tr,
          << (ra::IteratorConcept<A> ? "iterator " : "")
          << (ra::is_scalar<A> ? "scalar " : "")
          << (ra::is_foreign_vector<A> ? "fovector " : "")
+         << (ra::is_builtin_array<A> ? "builtinarray " : "")
          << (std::ranges::range<A> ? "range " : "")
          << (std::is_const_v<A> ? "const " : "")
          << (std::is_lvalue_reference_v<A> ? "ref " : "") << endl;
@@ -112,6 +113,8 @@ int main()
         TESTPRED(Unreg,
                  false, false, false, false, false);
         TESTPRED(int [4],
+                 false, false, false, false, false);
+        TESTPRED(int (&) [3],
                  false, false, false, false, false);
         TESTPRED(decltype("cstring"),
                  false, false, false, false, false);

@@ -373,7 +373,7 @@ struct SmallBase
     }                                                                   \
     /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
-    constexpr auto                                                      \
+    constexpr decltype(auto)                                            \
     at(I const & i) CONST                                               \
     {                                                                   \
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \

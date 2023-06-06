@@ -366,7 +366,6 @@ struct View
         }
     }
 
-// FIXME may return scalar?
     template <class I>
     constexpr decltype(auto)
     at(I && i) const
@@ -377,9 +376,11 @@ struct View
             if constexpr (RANK_ANY==subrank) {
                 return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()),  // Dimv is std::vector
                         data() + indexer1::shorter(dimv, i) };
-            } else {
+            } else if constexpr (subrank>0) {
                 return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  // Dimv is ra::Small
                         data() + indexer1::shorter(dimv, i) };
+            } else {
+                return data()[indexer1::shorter(dimv, i)];
             }
         } else {
             return View<T, RANK_ANY> { Dimv(dimv.begin()+i.size(), dimv.end()), // Dimv is std::vector
@@ -699,8 +700,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr auto data() const { return view().data(); }
     template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
     template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
-    template <class I> constexpr auto at(I && i) { return view().at(std::forward<I>(i)); }
-    template <class I> constexpr auto at(I && i) const { return view().at(std::forward<I>(i)); }
+    template <class I> constexpr decltype(auto) at(I && i) { return view().at(std::forward<I>(i)); }
+    template <class I> constexpr decltype(auto) at(I && i) const { return view().at(std::forward<I>(i)); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 

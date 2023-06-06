@@ -214,7 +214,7 @@ requires (ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
-    return w ? *(ra::start(t).flat()) : *(ra::start(f).flat());
+    return w ? FLAT(t) : FLAT(f);
 }
 
 template <class W, class T, class F>
@@ -222,9 +222,7 @@ requires (ra_pos_and_any<W, T, F>)
 constexpr auto
 where(W && w, T && t, F && f)
 {
-    return pick(cast<bool>(ra::start(std::forward<W>(w))),
-                ra::start(std::forward<F>(f)),
-                ra::start(std::forward<T>(t)));
+    return pick(cast<bool>(std::forward<W>(w)), std::forward<F>(f), std::forward<T>(t));
 }
 
 // catch all for non-ra types.
@@ -251,7 +249,7 @@ constexpr auto operator ||(A && a, B && b)
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
     template <class A, class B>                                         \
     requires (ra_zero<A, B>)                                            \
-    constexpr auto operator OP(A && a, B && b)                             \
+        constexpr auto operator OP(A && a, B && b)                      \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
     }

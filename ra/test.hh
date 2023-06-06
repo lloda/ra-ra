@@ -142,7 +142,8 @@ struct TestRecorder
     {
         if (willstrictshape
             ? [&] {
-                if constexpr (ra::rank_s<decltype(a)>()==ra::rank_s<decltype(b)>()) {
+                if constexpr (ra::rank_s<decltype(a)>()==ra::rank_s<decltype(b)>()
+                              || ra::rank_s<decltype(a)>()==RANK_ANY || ra::rank_s<decltype(b)>()==RANK_ANY) {
                     return ra::rank(a)==ra::rank(b) && every(ra::shape(a)==ra::shape(b));
                 } else {
                     return false;
@@ -167,7 +168,7 @@ struct TestRecorder
     test_eq(R && ref, A && a,
             std::source_location const loc = std::source_location::current())
     {
-        return test_comp(std::forward<R>(ref), std::forward<A>(a), [](auto && a, auto && b) { return every(a==b); },
+        return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b) { return every(a==b); },
                          "should be ==", loc);
     }
     template <class A, class B>
@@ -175,7 +176,7 @@ struct TestRecorder
     test_lt(A && a, B && b,
             std::source_location const loc = std::source_location::current())
     {
-        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<b); },
+        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a<b); },
                          "should be <", loc);
     }
     template <class A, class B>
@@ -183,7 +184,7 @@ struct TestRecorder
     test_le(A && a, B && b,
             std::source_location const loc = std::source_location::current())
     {
-        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a<=b); },
+        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a<=b); },
                          "should be <=", loc);
     }
 // These two are included so that the first argument can remain the reference.
@@ -192,7 +193,7 @@ struct TestRecorder
     test_gt(A && a, B && b,
             std::source_location const loc = std::source_location::current())
     {
-        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a>b); },
+        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a>b); },
                          "should be >", loc);
     }
     template <class A, class B>
@@ -200,7 +201,7 @@ struct TestRecorder
     test_ge(A && a, B && b,
             std::source_location const loc = std::source_location::current())
     {
-        return test_comp(std::forward<A>(a), std::forward<B>(b), [](auto && a, auto && b) { return every(a>=b); },
+        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a>=b); },
                          "should be >=", loc);
     }
     template <class R, class A>

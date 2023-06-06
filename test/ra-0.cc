@@ -557,33 +557,19 @@ int main()
             {
                 double rcheck[2] = { 2, 5 };
                 auto r1 = r(1);
-                tr.test_eq(ra::ptr(rcheck), r1);
-                auto r1a = r.at(ra::Small<int, 1> {1});
-                tr.test_eq(ra::ptr(rcheck), r1a);
-                auto r1b = r.at(ra::Big<int, 1> {1});
-                tr.test_eq(ra::ptr(rcheck), r1b);
-                auto r1c = r.at(0+ra::Big<int, 1> {1});
-                tr.test_eq(ra::ptr(rcheck), r1c);
-                auto r1d = r.at(0+ra::Big<int> {1});
-                tr.test_eq(ra::ptr(rcheck), r1d);
+                tr.test_eq(rcheck, r1);
+                tr.strictshape().test_eq(rcheck, r.at(ra::Small<int, 1> {1}));
+                tr.strictshape().test_eq(rcheck, r.at(ra::Big<int, 1> {1}));
+                tr.strictshape().test_eq(rcheck, r.at(0+ra::Big<int, 1> {1}));
+                tr.strictshape().test_eq(rcheck, r.at(0+ra::Big<int> {1}));
             }
             {
-                double rcheck[2] = { 5 };
-
-                // Does r(1, 1) return rank 0, or a scalar directly?
-                // std::copy(r2.begin(), r2.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
-                // tr.test(std::equal(r2.begin(), r2.end(), rcheck));
                 auto r2 = r(1, 1);
                 tr.test_eq(5, r2);
-
-                auto r2a = r.at(ra::Small<int, 2> {1, 1});
-                tr.info("r2a 1)").test(std::equal(r2a.begin(), r2a.end(), rcheck));
-                auto r2b = r.at(ra::Big<int, 1> {1, 1});
-                tr.info("r2a 2)").test(std::equal(r2a.begin(), r2a.end(), rcheck));
-                auto r2c = r.at(0+ra::Big<int, 1> {1, 1});
-                tr.info("r2a 3)").test(std::equal(r2c.begin(), r2c.end(), rcheck));
-                auto r2d = r.at(0+ra::Big<int> {1, 1});
-                tr.info("r2a 4)").test(std::equal(r2d.begin(), r2d.end(), rcheck));
+                tr.info("r2a 1)").test_eq(5, r.at(ra::Small<int, 2> {1, 1}));
+                tr.info("r2a 2)").test_eq(5, r.at(ra::Big<int, 1> {1, 1}));
+                tr.info("r2a 3)").test_eq(5, r.at(0+ra::Big<int, 1> {1, 1}));
+                tr.info("r2a 4)").test_eq(5, r.at(0+ra::Big<int> {1, 1}));
             }
         }
         // TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.
