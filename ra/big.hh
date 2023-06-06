@@ -542,7 +542,12 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container()
     {
         if constexpr (RANK_ANY==RANK) {
-            View::dimv = { Dim {0, 1} }; // rank 1 to avoid store init
+// rank 1 to avoid store init
+            View::dimv = { Dim {0, 1} };
+        } else if constexpr (0==RANK) {
+// cannot have zero size
+            store = storage_traits<Store>::create(1);
+            View::p = storage_traits<Store>::data(store);
         } else {
             for (Dim & dimi: View::dimv) { dimi = {0, 1}; } // 1 so we can push_back()
         }

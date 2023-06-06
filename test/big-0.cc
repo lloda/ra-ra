@@ -235,5 +235,11 @@ int main(int argc, char * * argv)
         ra::Big<int, 1> b(4, ra::_0);
         tr.test_eq(ra::iota(4), b);
     }
+    tr.section("default constructor for ct rank 0 Container");
+    {
+        ra::Big<int, 0> pick = {}; // uninitialized
+        pick = 3;
+        tr.test_eq(3, pick);
+    }
     return tr.summary();
 }
