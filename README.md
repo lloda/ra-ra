@@ -66,7 +66,7 @@ The library itself is header-only and has no dependencies other than a C++20 com
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the examples ([examples/](examples/)) and the benchmarks ([bench/](bench/)). You can also build each of these separately. The performance of **ra-ra** depends heavily on the optimization level, so although the test suite should pass with `-O0`, that can take a long time.
 
 * Some of the benchmarks will try to use BLAS if you have define `RA_USE_BLAS=1` in the environment.
-* The test suite is built with `-fsanitize=address` by default, which can cause significant slowdown. Disable by passing `-fno-sanitize=address` to the compiler.
+* The test suite is built with `-fsanitize=address` by default, and this can cause significant slowdown. Disable by passing `-fno-sanitize=address` to the compiler.
 
 **ra-ra** requires support for `-std=c++20`, including `<source_location>`. The most recent versions tested are:
 
@@ -79,27 +79,26 @@ It's not practical for me to test Clang systematically, so some snags with that 
 #### Notes
 
 * Both index and size types are signed. Index base is 0.
-* Default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
-* The selection (subscripting) operator is `()` or `[]` indistinctly. Multi-argument `[]` requires `-std=c++2b`.
-* Indices are checked by default. This can be disabled with a compilation flag.
-* **ra-ra** doesn't itself use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
+* The default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
+* The selection (subscripting) operator is `()` or `[]` indistinctly. Multi-argument `[]` requires `__cpp_multidimensional_subscript > 202110L` (in gcc 12 with `-std=c++2b`).
+* Indices are checked by default. This can be disabled with a compilation flag. **ra-ra** doesn't itself use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
+* **ra-ra** uses zero size arrays and VLAs internally. I know standard C++ doesn't allow them, which is irritating.
 
 #### Bugs & defects
 
-* Lack of good reduction mechanisms.
 * Operations that require allocation, such as concatenation or search, are mostly absent.
+* Lack of a good abstraction for reductions. You can write reductions abusing rank extension, but it's awkward.
 * Traversal of arrays is naive (just unrolling of inner dimensions).
 * Handling of nested (‘ragged’) arrays is inconsistent.
+* No support for parallel operations or GPU.
 * No SIMD to speak of.
 
 Please see the TODO file for a concrete list of known bugs.
 
 #### Out of scope
 
-* Parallelization (closer to wish...).
-* GPU / calls to external libraries.
-* Linear algebra, quaternions, etc. Those things belong in other libraries, and calling them with **ra-ra** objects is trivial.
 * Sparse arrays.
+* Linear algebra, quaternions, etc.
 
 #### Motivation
 

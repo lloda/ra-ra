@@ -831,7 +831,7 @@ ra::Big&lt;double, 2&gt; b = A(i, j);
 </pre><pre class="example">&rArr; b = {{3., 4.}, {1., 2.}}
 </pre></div>
 
-<p><code>A(i, j, ...)</code> is defined as the <em>outer product</em> of the indices <code>(i, j, ...)</code> with operator <code>A</code>, because this operation sees much more use in practice than <code>map(A, i, j ...)</code>.
+<span id="x_002dsubscript_002douter_002dproduct"></span><p><code>A(i, j, ...)</code> is defined as the <em>outer product</em> of the indices <code>(i, j, ...)</code> with operator <code>A</code>, because this operation sees much more use in practice than <code>map(A, i, j ...)</code>.
 </p>
 <p>Besides, when the subscripts <code>i, j, ...</code> are scalars or <em>linear ranges</em> (integer sequences of the form <code>(o, o+s, ..., o+s*(n-1))</code>), the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called <a href="#Drag-along-and-beating"><em>beating</em></a>.
 </p>
@@ -1731,7 +1731,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Up:
 </p>
 <p><b>Iterator</b>s provide a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> and <code>adv()</code>, a loop involving <b>Iterator</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
-<p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element of the array.
+<p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element of the expression.
 </p>
 </li><li> <b>Flat</b> <code>Iota::Flat</code>, <code>Scalar</code>, <code>Expr::Flat</code>, <code>Pick::Flat</code>, <code>CellFlat</code>
 
@@ -2028,26 +2028,34 @@ cout &lt;&lt; A &lt;&lt; endl;
 <span id="index-map"></span>
 <span id="x_002dmap"></span><dl class="def">
 <dt id="index-map-1"><span class="category">Function: </span><span><strong>map</strong> <em>op expr ...</em><a href='#index-map-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ...
+<dd><p>Create an array expression that applies callable <var>op</var> to <var>expr</var> ...
 </p>
 <p>For example:
 </p><div class="example">
-<pre class="verbatim">ra::Big&lt;double, 1&gt; x = map(cos, ra::Small&lt;double, 1&gt; {0.});
+<pre class="verbatim">ra::Big&lt;double, 1&gt; x = map(cos, std::array {0.});
 </pre><pre class="example">&rArr; x = { 1. }
 </pre></div>
 
-<p><var>op</var> can return a reference. A typical use is subscripting. For example (TODO better example, e.g. using STL types):
+<p><var>op</var> can return a reference. For example:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 2&gt; x = {{3, 3}, 0.};
-map([](auto &amp;&amp; i, auto &amp;&amp; j) -&gt; int &amp; { return x(i, j); },
-    ra::Big&lt;int, 1&gt; {0, 1, 1, 2}, ra::Big&lt;int, 1&gt; {1, 0, 2, 1})
-  = 1;
+ra::Big&lt;int, 2&gt; i = {0, 1, 1, 2};
+ra::Big&lt;int, 2&gt; j = {1, 0, 2, 1};
+map(x, i, j) = 1;
 </pre><pre class="example">&rArr; x = {{0, 1, 0}, {1, 0, 1}, {0, 1, 0}}
 </pre></div>
 
-<p>Here the anonymous function can be replaced by simply <code>x</code>. Remember that unspecified return type defaults to <code>auto</code>, so either an explicit type or <code>decltype(auto)</code> should be used if you want to return a reference.
+<p>Note that <code>map(x, i, j)</code> is <a href="#x_002dsubscript_002douter_002dproduct">not the same</a> as <code>x(i, j)</code>.
 </p>
+<p><var>op</var> can be any callable. For example:
+</p><div class="example">
+<pre class="verbatim">struct A { int a, b; };
+std::vector&lt;A&gt; v = {{1, 2}, {3, 4}};
+ra::map(&amp;A::a, v) = -ra::map(&amp;A::b, v); // pointer to member
+</pre><pre class="example">&rArr; v = {{-2, 2}, {-4, 4}}
+</pre></div>
+
 <p>See also <a href="#x_002dfor_005feach"><code>for_each</code></a>.
 </p>
 </dd></dl>

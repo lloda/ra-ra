@@ -27,10 +27,13 @@ struct CellFlat
 // Helpers for slicing
 // --------------------
 
+// FIXME condition should be zero rank, maybe convertibility, not is_integral
+template <class T> constexpr bool is_scalar_index = std::is_integral_v<std::decay_t<T>>;
+
 template <class I>
 struct is_beatable_def
 {
-    constexpr static bool value = std::is_integral_v<I>;
+    constexpr static bool value = is_scalar_index<I>;
     constexpr static int skip_src = 1;
     constexpr static int skip = 0;
     constexpr static bool static_p = value; // can the beating be resolved statically?
@@ -40,7 +43,7 @@ template <class I> requires (is_iota<I>)
 struct is_beatable_def<I>
 {
     using T = decltype(I::i);
-    constexpr static bool value = std::is_integral_v<T> && (DIM_BAD != I::len_s(0));
+    constexpr static bool value = is_scalar_index<T> && (DIM_BAD != I::len_s(0));
     constexpr static int skip_src = 1;
     constexpr static int skip = 1;
     constexpr static bool static_p = false; // FIXME see Iota with ct N, S
@@ -349,21 +352,18 @@ struct SmallBase
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
 
-    constexpr T * data() { return static_cast<Child &>(*this).p; }
-    constexpr T const * data() const { return static_cast<Child const &>(*this).p; }
-
-// Specialize for rank() integer-args -> scalar, same in ra::View in big.hh.
 #define RA_CONST_OR_NOT(CONST)                                          \
+    constexpr T CONST * data() CONST { return static_cast<Child CONST &>(*this).p; } \
     template <class ... I>                                              \
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
-        constexpr int integrals = (0 + ... + std::is_integral_v<std::decay_t<I>>); \
-        if constexpr (integrals<rank() && (is_beatable<I>::static_p && ...))  { \
+        constexpr int scalars = (0 + ... + is_scalar_index<I>);         \
+        if constexpr (scalars<rank() && (is_beatable<I>::static_p && ...))  { \
             using FD = FilterDims<lens, steps, I ...>;                  \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> \
                 (data()+select_loop<lens, steps>(i ...));               \
-        } else if constexpr (integrals==rank())  {                      \
+        } else if constexpr (scalars==rank())  {                        \
             return data()[select_loop<lens, steps>(i ...)];             \
         } else if constexpr ((!is_beatable<I>::static_p || ...)) { /* TODO More than one selector... */ \
             return from(*this, std::forward<I>(i) ...);                 \
@@ -385,7 +385,7 @@ struct SmallBase
     {                                                                   \
         return (*this)(std::forward<I>(i) ...);                         \
     }                                                                   \
-    /* TODO would replace by s(ra::iota) if that could be made constexpr */ \
+    /* TODO support s(static ra::iota) */                               \
     template <int ss, int oo=0>                                         \
     constexpr auto                                                      \
     as() CONST                                                          \
@@ -394,13 +394,13 @@ struct SmallBase
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
         return SmallView<T CONST, mp::cons<mp::int_c<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
     }                                                                   \
-    /* BUG these make SmallArray<T, N> std::is_convertible to T even though conversion isn't possible bc of the assert */ \
-    constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; } \
-    T CONST & back() CONST                                              \
+    T CONST &                                                           \
+    back() CONST                                                        \
     {                                                                   \
         static_assert(rank()==1 && size()>0, "back() is not available"); \
         return (*this)[size()-1];                                       \
-    }
+    }                                                                   \
+    constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; }
     FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
 #undef RA_CONST_OR_NOT
 

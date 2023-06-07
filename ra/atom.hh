@@ -140,7 +140,7 @@ size(V const & v)
     }
 }
 
-// Avoid, prefer implicit matching.
+// To avoid, prefer implicit matching.
 template <class V>
 constexpr decltype(auto)
 shape(V const & v)
@@ -150,7 +150,6 @@ shape(V const & v)
     } else if constexpr (requires { ra_traits<V>::shape(v); }) {
         return ra_traits<V>::shape(v);
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
-// FIXME Would prefer to return the map directly
         Small<dim_t, rs> s;
         for (rank_t k=0; k<rs; ++k) { s[k] = v.len(k); }
         return s;
@@ -180,7 +179,7 @@ resize(A & a, dim_t s)
 // atom types
 // --------------------
 
-// Iterator for rank 0 object. This can be used on foreign objects, or as an alternative to the rank conjunction.
+// IteratorConcept for rank 0 object. This can be used on foreign objects, or as an alternative to the rank conjunction.
 // We still want f(C) to be a specialization in most cases (ie avoid ply(f, C) when C is rank 0).
 template <class C>
 struct Scalar
@@ -208,6 +207,7 @@ struct Scalar
 
 template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
+// IteratorConcept for foreign rank 1 objects.
 template <std::random_access_iterator I, dim_t N>
 struct Ptr
 {
@@ -252,6 +252,7 @@ vector(V && v)
     }
 }
 
+// Sequence and IteratorConcept for same. FIXME The sequence type should really be separate. For example, we can't represent a ct origin atm, because i is used to implement the IteratorConcept interface.
 template <class T, int w=0, dim_t N=DIM_ANY, dim_t S=DIM_ANY>
 struct Iota
 {
@@ -328,7 +329,7 @@ iota(dim_t len, O org, S step)
 
 template <class T>
 constexpr void
-start(T && t) { static_assert(!std::same_as<T, T>, "Type cannot be start()ed."); }
+start(T && t) { static_assert(mp::always_false<T>, "Type cannot be start()ed."); }
 
 // undefined len iota (ti) is excluded from optimization and beating to allow e.g. B = A(... ti ...). FIXME find a way?
 template <class I> constexpr bool is_iota_ = false;

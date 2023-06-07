@@ -148,5 +148,11 @@ int main()
         o << ra::format(Q { 33 });
         tr.test_eq(std::string("33"), o.str());
     }
+// print rank 0
+    {
+        ra::Big<int, 0> pick = {};
+        cout << format_array(pick) << endl;
+        cout << ra::noshape << format_array(pick) << endl;
+    }
     return tr.summary();
 }

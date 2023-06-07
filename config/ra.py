@@ -19,6 +19,7 @@ from subprocess import call
 
 # Make sure to disable for benchmarks.
 # SANITIZE = []
+# SANITIZE = ['-fsanitize=address', '-fsanitize=undefined']
 SANITIZE = ['-fsanitize=address']
 
 CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',

@@ -58,7 +58,7 @@ namespace indexer1 {
 // --------------------
 // Big iterator
 // --------------------
-// TODO Refactor with CellSmall
+// TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
 
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_spec=0>
@@ -73,7 +73,7 @@ struct CellBig
     static_assert(fullr==cellr || gt_rank(fullr, cellr), "Bad cell rank.");
 
     using Dimv_ = typename std::decay_t<V>::Dimv;
-// FIXME necessary to support some cases of from() [ra14]
+// FIXME necessary to support some cases of from() [ra14]. But cf https://stackoverflow.com/a/8609226
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
     Dimv dimv;
 
@@ -89,10 +89,10 @@ struct CellBig
 // s_ is array's full shape; split it into dimv/i (frame) and c (cell).
     constexpr CellBig(Dimv const & dimv_, atom_type * p_): dimv(dimv_)
     {
-        rank_t rank = this->rank();
 // see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
         c.p = p_;
         rank_t cellr = dependent_cell_rank(rank_t(dimv.size()), cellr_spec);
+        rank_t rank = this->rank();
         if constexpr (RANK_ANY==framer) {
             RA_CHECK(rank>=0, "bad cell rank (array rank ", dimv.size(), ", cell rank ", cellr, ").");
         }
@@ -243,6 +243,7 @@ dim_t select_loop(Dim * dim, Dim const * dim_src)
 // --------------------
 
 // TODO Parameterize on Child having .data() so that there's only one pointer.
+// TODO Parameterize on iterator type not on value type.
 // TODO A constructor, if only for RA_CHECK (nonnegative lens, steps inside, etc.)
 template <class T, rank_t RANK>
 struct View
@@ -273,12 +274,7 @@ struct View
     constexpr dim_t len(int j) const  { RA_CHECK(inside(j, rank())); return dimv[j].len; }
     constexpr dim_t step(int j) const { RA_CHECK(inside(j, rank())); return dimv[j].step; }
     constexpr auto data() const { return p; }
-    constexpr dim_t size() const
-    {
-        dim_t t = 1;
-        for (auto const & dim: dimv) { t *= dim.len; }
-        return t;
-    }
+    constexpr dim_t size() const { return prod(map(&Dim::len, dimv)); }
 
 // FIXME Used by Big::init(). View can be a deduced type (e.g. from value_t<X>)
     constexpr View(): p() {}
@@ -316,8 +312,8 @@ struct View
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>;
     View & operator=(ravel_arg const x)
     {
-        RA_CHECK(p && this->size()==ssize(x), "bad assignment");
-        std::copy(x.begin(), x.end(), this->begin());
+        RA_CHECK(p && size()==ssize(x), "bad assignment");
+        std::copy(x.begin(), x.end(), begin());
         return *this;
     }
     constexpr bool const empty() const { return 0==size(); } // TODO Optimize
@@ -332,30 +328,29 @@ struct View
     constexpr decltype(auto)
     operator()(I && ... i) const
     {
-// BUG condition should be zero rank, not is_integral
-        constexpr int integrals = (0 + ... + std::is_integral_v<std::decay_t<I>>);
-        if constexpr (integrals<RANK && (is_beatable<I>::value && ...)) {
+        constexpr int scalars = (0 + ... + is_scalar_index<I>);
+        if constexpr (scalars<RANK && (is_beatable<I>::value && ...)) {
             constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
             constexpr rank_t subrank = rank_sum(RANK, extended);
             static_assert(subrank>=0, "Bad subrank.");
             View<T, subrank> sub;
-            sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
+            sub.p = data() + select_loop(sub.dimv.data(), dimv.data(), i ...);
 // fill the rest of dim, skipping over beatable subscripts
             for (int i=(0 + ... + is_beatable<I>::skip); i<subrank; ++i) {
-                sub.dimv[i] = this->dimv[i-extended];
+                sub.dimv[i] = dimv[i-extended];
             }
             return sub;
-        } else if constexpr (integrals==RANK) {
-            return data()[select_loop(nullptr, this->dimv.data(), i ...)];
+        } else if constexpr (scalars==RANK) {
+            return data()[select_loop(nullptr, dimv.data(), i ...)];
 // return a rank 0 view, and rely on conversion if it ends up assigned to a scalar.
         } else if constexpr ((is_beatable<I>::value && ...) && RANK==RANK_ANY) {
             constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
-            RA_CHECK(this->rank()+extended>=0, "bad rank");
+            RA_CHECK(rank()+extended>=0, "bad rank");
             View<T, RANK_ANY> sub;
-            sub.dimv.resize(this->rank()+extended);
-            sub.p = data() + select_loop(sub.dimv.data(), this->dimv.data(), i ...);
+            sub.dimv.resize(rank()+extended);
+            sub.p = data() + select_loop(sub.dimv.data(), dimv.data(), i ...);
             for (int i=(0 + ... + is_beatable<I>::skip); i<sub.rank(); ++i) {
-                sub.dimv[i] = this->dimv[i-extended];
+                sub.dimv[i] = dimv[i-extended];
             }
             return sub;
 // TODO > 1 selector... This still covers (unbeatable, integer) for example, which could be reduced.
@@ -580,20 +575,29 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     fill1(dim_t xsize, Pbegin xbegin)
     {
         RA_CHECK(this->size()==xsize, "Mismatched sizes ", this->size(), " and ", xsize, ".");
-        std::copy_n(xbegin, xsize, this->begin()); // TODO Use xpr traversal.
+        std::copy_n(xbegin, xsize, begin()); // TODO Use xpr traversal.
     }
 
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
 
 // explicit shape.
-    Container(shape_arg const & s, none_t) { init(s); }
+    Container(shape_arg const & s, none_t)
+    {
+        init(s);
+    }
 
     template <class XX>
-    Container(shape_arg const & s, XX && x): Container(s, none) { view() = x; }
+    Container(shape_arg const & s, XX && x): Container(s, none)
+    {
+        view() = x;
+    }
 
 // shape from data.
     template <class XX>
-    Container(XX && x): Container(ra::shape(x), none) { view() = x; }
+    Container(XX && x): Container(ra::shape(x), none)
+    {
+        view() = x;
+    }
 
     Container(typename nested_braces<T, RANK>::list x)
     {
@@ -689,7 +693,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
     constexpr bool empty() const
     {
-        return this->size()==0;
+        return 0==this->size();
     }
     constexpr T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
     constexpr T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }

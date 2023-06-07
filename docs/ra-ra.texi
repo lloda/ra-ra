@@ -766,6 +766,7 @@ ra::Big<double, 2> b = A(i, j);
 @result{} b = @{@{3., 4.@}, @{1., 2.@}@}
 @end example
 
+@anchor{x-subscript-outer-product}
 @code{A(i, j, ...)} is defined as the @emph{outer product} of the indices @code{(i, j, ...)} with operator @code{A}, because this operation sees much more use in practice than @code{map(A, i, j ...)}.
 
 Besides, when the subscripts @code{i, j, ...} are scalars or @dfn{linear ranges} (integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}), the subscripting can be performed inmediately at constant cost and without needing to construct an expression object. This optimization is called @ref{Drag along and beating,@dfn{beating}}.
@@ -1926,29 +1927,39 @@ See also @ref{x-real_part,@code{real_part}}.
 
 @cindex @code{map}
 @anchor{x-map} @defun map op expr ...
-Create an array expression that applies @var{op} to @var{expr} ...
+Create an array expression that applies callable @var{op} to @var{expr} ...
 
 For example:
 @example
 @verbatim
-ra::Big<double, 1> x = map(cos, ra::Small<double, 1> {0.});
+ra::Big<double, 1> x = map(cos, std::array {0.});
 @end verbatim
 @result{} x = @{ 1. @}
 @end example
 
-@var{op} can return a reference. A typical use is subscripting. For example (TODO better example, e.g. using STL types):
+@var{op} can return a reference. For example:
 
 @example
 @verbatim
 ra::Big<int, 2> x = {{3, 3}, 0.};
-map([](auto && i, auto && j) -> int & { return x(i, j); },
-    ra::Big<int, 1> {0, 1, 1, 2}, ra::Big<int, 1> {1, 0, 2, 1})
-  = 1;
+ra::Big<int, 2> i = {0, 1, 1, 2};
+ra::Big<int, 2> j = {1, 0, 2, 1};
+map(x, i, j) = 1;
 @end verbatim
 @result{} x = @{@{0, 1, 0@}, @{1, 0, 1@}, @{0, 1, 0@}@}
 @end example
 
-Here the anonymous function can be replaced by simply @code{x}. Remember that unspecified return type defaults to @code{auto}, so either an explicit type or @code{decltype(auto)} should be used if you want to return a reference.
+Note that @code{map(x, i, j)} is @ref{x-subscript-outer-product,not the same} as @code{x(i, j)}.
+
+@var{op} can be any callable. For example:
+@example
+@verbatim
+struct A { int a, b; };
+std::vector<A> v = {{1, 2}, {3, 4}};
+ra::map(&A::a, v) = -ra::map(&A::b, v); // pointer to member
+@end verbatim
+@result{} v = @{@{-2, 2@}, @{-4, 4@}@}
+@end example
 
 See also @ref{x-for_each,@code{for_each}}.
 

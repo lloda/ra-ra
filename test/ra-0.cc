@@ -60,6 +60,7 @@ int main()
             double aa[10];
             aa[0] = 99;
             ra::View<double, 1> a { {{10, 1}}, aa }; // [ra36]
+            std::cout << (a+1) << std::endl;
             tr.test_eq(99., a.p[0]);
         }
         {
@@ -755,6 +756,16 @@ int main()
         // beware: throws away 3+4,3+5, only 3+6 is left. [ma107]
         ra::scalar(a) = 3 + ra::Small<int, 3> {4, 5, 6};
         tr.test_eq(9, a);
+    }
+    tr.section("can use pointer-to-member in expressions");
+    {
+        struct A { int a, b; };
+        std::vector<A> v = {{1, 2}, {3, 4}};
+        tr.test_eq(4, sum(ra::map(&A::a, v)));
+        tr.test_eq(6, sum(ra::map(&A::b, v)));
+        ra::map(&A::a, v) = -ra::map(&A::b, v);
+        tr.test_eq(-2, v[0].a);
+        tr.test_eq(-4, v[1].a);
     }
     return tr.summary();
 }

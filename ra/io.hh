@@ -29,7 +29,7 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
         o << start(sha) << '\n';
     }
     for (rank_t k=0; k<rank; ++k) {
-        if (sha[k]==0) {
+        if (0==sha[k]) {
             return o;
         }
     }

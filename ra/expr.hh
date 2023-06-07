@@ -179,18 +179,19 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
 // FIXME gcc 12.1 flags this (-O3 only).
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-        constexpr decltype(auto) operator*() { return op(*std::get<I>(t) ...); }
+        constexpr decltype(auto) operator*() { return std::invoke(op, *std::get<I>(t) ...); }
 #pragma GCC diagnostic pop
     };
 
-    template <class ... P_>
+    template <class ... F>
     constexpr static auto
-    flat(Op & op, P_ && ... p)
+    flat(Op & op, F && ... f)
     {
-        return Flat<std::tuple<P_ ...>> { op, { std::forward<P_>(p) ... } };
+        return Flat<std::tuple<F ...>> { op, { std::forward<F>(f) ... } };
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
+    using Match_::t, Match_::rank_s, Match_::rank;
     Op op;
 
 // test/ra-9.cc [ra1]
@@ -201,21 +202,20 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr decltype(auto)
     at(auto const & j) const
     {
-        return op(std::get<I>(this->t).at(j) ...);
+        return std::invoke(op, std::get<I>(t).at(j) ...);
     }
     constexpr decltype(auto)
     flat() // FIXME can't be const bc of Flat::op. Carries over to Pick / Reframe .flat() ...
     {
-        return flat(op, std::get<I>(this->t).flat() ...);
+        return flat(op, std::get<I>(t).flat() ...);
     }
-// needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
-    operator decltype(*(flat(op, std::get<I>(Match_::t).flat() ...))) ()
+// needed for rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
+    operator decltype(*(flat(op, std::get<I>(t).flat() ...))) ()
     {
-        if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only
-            if constexpr (this->rank_s()!=0) {
-                static_assert(this->rank_s()==RANK_ANY);
-                assert(this->rank()==0);
-            }
+// for coord types; so ct only
+        if constexpr ((rank_s()!=1 || size_s(*this)!=1) && rank_s()!=0) {
+            static_assert(rank_s()==RANK_ANY);
+            assert(rank()==0);
         }
         return *flat();
     }
