@@ -141,7 +141,7 @@ struct max_i
 template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
-    static_assert(sizeof...(Ti)==sizeof...(crank) && sizeof...(Ti)==sizeof...(Ri), "bad args");
+    static_assert(sizeof...(Ti)==sizeof...(crank) && sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
 // live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
     using live = mp::int_list<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
@@ -154,7 +154,7 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 template <class V, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
-    static_assert(sizeof...(Ti)==sizeof...(Ri), "bad args");
+    static_assert(sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
 // TODO -crank::value when the actual verb rank is used (eg to use CellBig<A, that_rank> instead of just begin()).
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
     template <class VV> static decltype(auto) op(VV && v) { return std::forward<VV>(v); }

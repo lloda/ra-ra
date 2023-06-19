@@ -45,19 +45,8 @@ transpose(mp::int_list<Iarg ...>, A && a)
 
 
 // ---------------------------
-// from, after APL, like (from) in guile-ploy
 // TODO integrate with is_beatable shortcuts, operator() in the various array types.
 // ---------------------------
-
-template <class I>
-struct index_rank_
-{
-    using type = mp::int_c<rank_s<I>()>;
-    static_assert(type::value!=RANK_ANY, "dynamic rank unsupported");
-    static_assert(size_s<I>()!=DIM_BAD, "undelimited extent subscript unsupported");
-};
-
-template <class I> using index_rank = typename index_rank_<I>::type;
 
 template <class II, int drop, class Op>
 constexpr decltype(auto)
@@ -71,6 +60,8 @@ from_partial(Op && op)
     }
 }
 
+template <class I> using index_rank = mp::int_c<rank_s<I>()>;
+
 // TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
 template <class A, class ... I>
 constexpr auto
@@ -80,10 +71,10 @@ from(A && a, I && ... i)
         return a();
     } else if constexpr (1==sizeof...(i)) {
 // support dynamic rank for 1 arg only (see test in test/from.cc).
-        return expr(std::forward<A>(a), ra::start(std::forward<I>(i) ...));
+        return map(std::forward<A>(a), std::forward<I>(i) ...);
     } else {
-        using II = mp::map<index_rank, mp::tuple<decltype(ra::start(std::forward<I>(i))) ...>>;
-        return expr(from_partial<II, 1>(std::forward<A>(a)), ra::start(std::forward<I>(i)) ...);
+        using II = mp::map<index_rank, mp::tuple<decltype(std::forward<I>(i)) ...>>;
+        return map(from_partial<II, 1>(std::forward<A>(a)), std::forward<I>(i) ...);
     }
 }
 

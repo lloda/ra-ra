@@ -59,6 +59,7 @@ namespace indexer1 {
 // Big iterator
 // --------------------
 // TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
+// TODO Clear up Dimv's type
 
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_spec=0>
@@ -77,8 +78,6 @@ struct CellBig
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
     Dimv dimv;
 
-    using shape_type = std::conditional_t<framer==DIM_ANY, std::vector<dim_t>,
-                                          Small<dim_t, framer==DIM_ANY ? 0 : framer>>; // still needs protection :-/
     using atom_type = std::remove_reference_t<decltype(*(std::declval<V>().data()))>;
     using cell_type = View<atom_type, cellr>;
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
@@ -91,10 +90,10 @@ struct CellBig
     {
 // see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
         c.p = p_;
-        rank_t cellr = dependent_cell_rank(rank_t(dimv.size()), cellr_spec);
+        rank_t cellr = dependent_cell_rank(ssize(dimv), cellr_spec);
         rank_t rank = this->rank();
         if constexpr (RANK_ANY==framer) {
-            RA_CHECK(rank>=0, "bad cell rank (array rank ", dimv.size(), ", cell rank ", cellr, ").");
+            RA_CHECK(rank>=0, "bad cell rank (array rank ", ssize(dimv), ", cell rank ", cellr, ").");
         }
         resize(c.dimv, cellr);
         for (int k=0; k<cellr; ++k) {
@@ -105,7 +104,7 @@ struct CellBig
 
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const { return dependent_frame_rank(ssize(dimv), cellr_spec); }
-    constexpr static rank_t rank() requires (size_s<Dimv_>()!=DIM_ANY) { return dependent_frame_rank(size_s<Dimv_>(), cellr_spec); }
+    constexpr static rank_t rank() requires (framer!=DIM_ANY) { return framer; }
     constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
     constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
@@ -231,8 +230,8 @@ select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
     return select_loop(dim, dim_src, std::forward<I>(i) ...);
 }
 
-constexpr
-dim_t select_loop(Dim * dim, Dim const * dim_src)
+constexpr dim_t
+select_loop(Dim * dim, Dim const * dim_src)
 {
     return 0;
 }
@@ -486,7 +485,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     using View = ra::View<T, RANK>;
     using ViewConst = ra::View<T const, RANK>;
     using View::rank_s;
-    using shape_arg = typename decltype(std::declval<View>().iter())::shape_type;
+    using shape_arg = decltype(ra::shape(std::declval<View>().iter()));
 
     constexpr View & view() { return *this; }
     constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }

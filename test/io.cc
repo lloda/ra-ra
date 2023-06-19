@@ -150,7 +150,7 @@ int main()
     }
 // print rank 0
     {
-        ra::Big<int, 0> pick = {};
+        ra::Big<int, 0> pick = {}; // uninitialized
         cout << format_array(pick) << endl;
         cout << ra::noshape << format_array(pick) << endl;
     }

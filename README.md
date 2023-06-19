@@ -3,7 +3,7 @@
 
 **ra-ra** is a C++20, header-only multidimensional array library in the spirit of [Blitz++](http://blitz.sourceforge.net).
 
-Multidimensional arrays are containers that can be indexed in multiple dimensions. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in modern C++ there's very little you can do with those, and anything practical requires a separate library.
+Multidimensional arrays can be indexed in multiple dimensions. For example, vectors can be seen as rank 1 and matrices are arrays of rank 2. C has built-in multidimensional array types, but even in modern C++ there's very little you can do with those, and anything practical requires a separate library.
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by Blitz++) to delay the execution of expressions involving large array operands, and in this way avoid the unnecessary creation of large temporary array objects.
 
@@ -36,9 +36,9 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Array types with arbitrary compile time or runtime rank, and compile time or runtime shape.
 * Memory owning types as well as views over any piece of memory.
 * Rank extension by prefix matching, as in APL/J, for functions of any number of arguments.
-* Compatibility with builtin arrays and with the STL, including ranges.
-* Transparent memory layout, for interoperability with other libraries and/or languages.
-* Iterators over cells (slices/subarrays) of any rank.
+* Compatibility with builtin arrays and with the standard library, including `<ranges>`.
+* Interoperability with other libraries and/or languages through transparent memory layout.
+* Iterators over cells (subarrays) of any rank.
 * Rank conjunction as in J (compile time ranks only).
 * Slicing with indices of arbitrary rank, beating of linear range indices, index skipping and elision.
 * Outer product operation.
@@ -81,14 +81,15 @@ It's not practical for me to test Clang systematically, so some snags with that 
 * Both index and size types are signed. Index base is 0.
 * The default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C-order.
 * The selection (subscripting) operator is `()` or `[]` indistinctly. Multi-argument `[]` requires `__cpp_multidimensional_subscript > 202110L` (in gcc 12 with `-std=c++2b`).
-* Indices are checked by default. This can be disabled with a compilation flag. **ra-ra** doesn't itself use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
+* Indices are checked by default. This can be disabled with a compilation flag.
+* **ra-ra** doesn't itself use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
 * **ra-ra** uses zero size arrays and VLAs internally. I know standard C++ doesn't allow them, which is irritating.
 
 #### Bugs & defects
 
 * Operations that require allocation, such as concatenation or search, are mostly absent.
 * Lack of a good abstraction for reductions. You can write reductions abusing rank extension, but it's awkward.
-* Traversal of arrays is naive (just unrolling of inner dimensions).
+* Traversal of arrays is naive – just unrolling of inner dimensions.
 * Handling of nested (‘ragged’) arrays is inconsistent.
 * No support for parallel operations or GPU.
 * No SIMD to speak of.

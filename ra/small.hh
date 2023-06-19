@@ -13,15 +13,6 @@
 
 namespace ra {
 
-// Used by CellBig / CellSmall.
-template <class C>
-struct CellFlat
-{
-    C c;
-    constexpr void operator+=(dim_t const s) { c.p += s; }
-    constexpr C & operator*() { return c; }
-};
-
 
 // --------------------
 // Helpers for slicing
@@ -116,6 +107,15 @@ namespace indexer0 {
 // --------------------
 // TODO Refactor with CellBig / STLIterator
 
+// Used by CellBig / CellSmall.
+template <class C>
+struct CellFlat
+{
+    C c;
+    constexpr void operator+=(dim_t const s) { c.p += s; }
+    constexpr C & operator*() { return c; }
+};
+
 // V is always SmallBase<SmallView, ...>
 template <class V, rank_t cellr_spec=0>
 struct CellSmall
@@ -133,11 +133,9 @@ struct CellSmall
     using lens = mp::take<typename V::lens, framer>; // these are steps on atom_type * p !!
     using steps = mp::take<typename V::steps, framer>;
 
-    using shape_type = std::array<dim_t, framer>;
-    using atom_type = typename V::value_type;
+    using atom_type = std::remove_reference_t<decltype(*(std::declval<V>().data()))>;
     using cell_type = SmallView<atom_type, cell_lens, cell_steps>;
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
-    using frame_type = SmallView<int, lens, steps>; // only to compute slens
 
     cell_type c;
 
@@ -152,7 +150,7 @@ struct CellSmall
     constexpr static dim_t len(int k) { RA_CHECK(inside(k, rank())); return V::len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? V::step(k) : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { c.p += (k<rank()) * step(k)*d; }
+    constexpr void adv(rank_t k, dim_t d) { c.p += step(k)*d; }
 
     constexpr auto
     flat() const
@@ -223,7 +221,7 @@ struct STLIterator
     using pointer = value_type *;
     using reference = value_type &;
     using iterator_category = std::forward_iterator_tag;
-    using shape_type = typename Iterator::shape_type;
+    using shape_type = decltype(ra::shape(std::declval<Iterator>()));
 
     Iterator ii;
     shape_type i;

@@ -1,16 +1,14 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Expression template that picks one of several arguments.
+// ra-ra - Expression template that selects an argument.
 
-// (c) Daniel Llorens - 2016-2017, 2019, 2021
+// (c) Daniel Llorens - 2016-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// This class is needed because Expr evaluates its arguments before calling its
-// operator. The implementation itself is parallel to Expr / Flat. Note that
-// pick() is a normal function, so its *arguments* will always be evaluated; it
-// is the individual array elements that will not be.
+// In contrast to Expr, argument expressions are only evaluated where the
+// selector indicates. The implementation is parallel to Expr / Flat.
 
 #pragma once
 #include "match.hh"

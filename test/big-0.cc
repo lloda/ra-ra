@@ -237,9 +237,14 @@ int main(int argc, char * * argv)
     }
     tr.section("default constructor for ct rank 0 Container");
     {
-        ra::Big<int, 0> pick = {}; // uninitialized
-        pick = 3;
-        tr.test_eq(3, pick);
+        ra::Big<int, 0> a = {}; // uninitialized
+        a = 3;
+        tr.test_eq(3, a);
+    }
+    tr.section("scalar constructor for rt rank 0 Container");
+    {
+        ra::Big<int> a(4);
+        tr.test_eq(4, a);
     }
     return tr.summary();
 }

@@ -60,7 +60,6 @@ int main()
             double aa[10];
             aa[0] = 99;
             ra::View<double, 1> a { {{10, 1}}, aa }; // [ra36]
-            std::cout << (a+1) << std::endl;
             tr.test_eq(99., a.p[0]);
         }
         {
