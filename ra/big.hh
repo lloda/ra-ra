@@ -59,7 +59,9 @@ namespace indexer1 {
 // Big iterator
 // --------------------
 // TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
-// TODO Clear up Dimv's type
+// TODO Clear up Dimv's type. Should I use span/Ptr?
+
+template <class T, rank_t RANK=RANK_ANY> struct View;
 
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_spec=0>
@@ -690,10 +692,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         store.pop_back();
         --View::dimv[0].len;
     }
-    constexpr bool empty() const
-    {
-        return 0==this->size();
-    }
+    constexpr bool empty() const { return 0==this->size(); }
     constexpr T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
     constexpr T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
 
@@ -702,8 +701,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A> constexpr decltype(auto) operator()(A && ... a) const { return view()(std::forward<A>(a) ...); }
     template <class ... A> constexpr decltype(auto) operator[](A && ... a) { return view()(std::forward<A>(a) ...); }
     template <class ... A> constexpr decltype(auto) operator[](A && ... a) const { return view()(std::forward<A>(a) ...); }
-    template <class A> constexpr decltype(auto) operator[](A && a) { return view()[std::forward<A>(a)]; }
-    template <class A> constexpr decltype(auto) operator[](A && a) const { return view()[std::forward<A>(a)]; }
     constexpr auto data() { return view().data(); }
     constexpr auto data() const { return view().data(); }
     template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }

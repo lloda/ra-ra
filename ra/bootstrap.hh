@@ -118,7 +118,6 @@ enum none_t { none }; // used in array constructors to mean ‘don't initialize�
 struct no_arg {}; // used in array constructors to mean ‘don't instantiate’
 
 template <class C> struct Scalar; // for type predicates
-template <class T, rank_t RANK=RANK_ANY> struct View; // for CellBig
 template <class V> struct ra_traits_def;
 
 template <class S> struct default_steps_ {};

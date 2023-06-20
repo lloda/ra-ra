@@ -128,9 +128,7 @@ check_expr(E const & e)
                 if (sk==DIM_BAD || si==DIM_BAD || si==sk) {
                     return fi(fi, k, mp::int_c<i+1> {}, choose_len(sk, si));
                 } else {
-                    if (fail) {
-                        RA_CHECK(false, " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
-                    }
+                    RA_CHECK(!fail, " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
                     return false;
                 }
             } else {

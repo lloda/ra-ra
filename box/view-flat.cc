@@ -10,6 +10,7 @@
 #include "ra/test.hh"
 #include <iomanip>
 #include <chrono>
+#include <span>
 
 using std::cout, std::endl, std::flush;
 
@@ -21,7 +22,33 @@ namespace ra {
 
 int main()
 {
-    auto a = ra::iota(12);
-    cout << a << endl;
+    {
+        auto a = ra::iota(12);
+        cout << "a: " << a << endl;
+    }
+// TODO if dimv can be span/ptr, no need to allocate it in CellBig. But View can be standalone, so...
+    // {
+    //     using ptr_type = std::span<ra::Dim, 2>;
+    //     ra::Big<int, 2> a({2, 3}, 0.);
+    //     ptr_type x = a.dimv;
+    //     ra::View<int, 2, ptr_type> b { x, a.data() };
+    //     cout << "b.dimv " << b.dimv << endl;
+    //     cout << "a.data() " << a.data() << endl;
+    //     cout << "b.data() " << b.data() << endl;
+    //     cout << "a " << a << endl;
+    //     cout << "b " << b << endl;
+    // }
+    // {
+    //     using ptr_type = ra::Ptr<decltype(std::declval<default_view::Dimv>().begin()), ra::DIM_ANY>;
+    //     ra::Big<int, 2> a({2, 3}, 0.);
+    //     ptr_type x = ra::ptr(a.dimv.begin(), 2);
+    //     cout << "x: " << x << endl;
+    //     ra::View<int, 2, ptr_type> b { x, a.data() };
+    //     cout << "b.dimv " << b.dimv << endl;
+    //     cout << "a.data() " << a.data() << endl;
+    //     cout << "b.data() " << b.data() << endl;
+    //     cout << "a " << a << endl;
+    //     cout << "b " << b << endl;
+    // }
     return 0;
 }

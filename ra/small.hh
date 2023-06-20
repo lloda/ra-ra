@@ -461,7 +461,7 @@ template <class T, class lens, class steps>
 struct SmallView: public SmallBase<SmallView, T, lens, steps>
 {
     using Base = SmallBase<SmallView, T, lens, steps>;
-    using Base::rank, Base::size, Base::operator=;
+    using Base::operator=;
 
     T * p;
     constexpr SmallView(T * p_): p(p_) {}
@@ -480,7 +480,7 @@ template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)
 template <class Z>
 struct equal_to_t
 {
-    template <class ... T> constexpr static bool value = (std::is_same_v<Z, T> || ... || false);
+    template <class ... T> constexpr static bool value = (std::is_same_v<Z, T> || ...);
 };
 
 template <class T, size_t N>
@@ -538,8 +538,11 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
         static_cast<Base &>(*this) = x;
     }
 
-    constexpr operator SmallView<T, lens, steps> () { return SmallView<T, lens, steps>(p); }
-    constexpr operator SmallView<T const, lens, steps> const () { return SmallView<T const, lens, steps>(p); }
+    using View = SmallView<T, lens, steps>;
+    using ViewConst = SmallView<T const, lens, steps>;
+// conversion to const
+    constexpr operator View () { return View(p); }
+    constexpr operator ViewConst () const { return ViewConst(p); }
 };
 
 // FIXME unfortunately necessary. Try to remove the need, also of (S, begin, end) in Container, once the nested_tuple constructors work.
