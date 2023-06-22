@@ -514,26 +514,26 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
 
     T p[Base::size()]; // cf what std::array does for zero size; wish zero size just worked :-/
 
-    constexpr SmallArray(): p() {}
+    constexpr SmallArray() {}
 // braces don't match (X &&)
-    constexpr SmallArray(nested_args const & ... x): p()
+    constexpr SmallArray(nested_args const & ... x)
     {
         static_cast<Base &>(*this) = nested_arg<T, lens> { x ... };
     }
 // braces row-major ravel for rank!=1
-    constexpr SmallArray(ravel_args const & ... x): p()
+    constexpr SmallArray(ravel_args const & ... x)
     {
         static_cast<Base &>(*this) = ravel_arg<T, lens> { x ... };
     }
 // needed if T isn't registered as scalar [ra44]
-    constexpr SmallArray(T const & t): p()
+    constexpr SmallArray(T const & t)
     {
         for (auto & x: p) { x = t; }
     }
 // X && x makes this a better match than nested_args ... for 1 argument.
     template <class X>
     requires (!std::is_same_v<T, std::decay_t<X>> && !mp::is_tuple_v<std::decay_t<X>>)
-    constexpr SmallArray(X && x): p()
+    constexpr SmallArray(X && x)
     {
         static_cast<Base &>(*this) = x;
     }

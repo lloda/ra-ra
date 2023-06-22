@@ -338,7 +338,7 @@ template <class A>
 constexpr auto
 sum(A && a)
 {
-    concrete_type<value_t<A>> c {};
+    auto c = concrete_type<value_t<A>>(0);
     for_each([&c](auto && a) { c += a; }, a);
     return c;
 }
@@ -347,7 +347,7 @@ template <class A>
 constexpr auto
 prod(A && a)
 {
-    concrete_type<value_t<A>> c(1.);
+    auto c = concrete_type<value_t<A>>(1);
     for_each([&c](auto && a) { c *= a; }, a);
     return c;
 }
