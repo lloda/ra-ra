@@ -384,8 +384,7 @@ operator<<(std::ostream & o, print_shape_t shape)
 // is_foreign_vector is included bc std::vector or std::array may be used as the type of shape().
 // Excluding std::string_view allows it to be is_foreign_vector and still print as a string [ra13].
 
-template <class A> requires (!std::is_convertible_v<A, std::string_view>
-                             && (is_ra<A> || is_foreign_vector<A>))
+template <class A> requires (is_ra<A> || (is_foreign_vector<A> && !std::is_convertible_v<A, std::string_view>))
 constexpr std::ostream &
 operator<<(std::ostream & o, A && a)
 {
