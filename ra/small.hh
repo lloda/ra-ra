@@ -19,7 +19,7 @@ namespace ra {
 // --------------------
 
 // FIXME condition should be zero rank, maybe convertibility, not is_integral
-template <class T> constexpr bool is_scalar_index = std::is_integral_v<std::decay_t<T>>;
+template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
 template <class I>
 struct is_beatable_def

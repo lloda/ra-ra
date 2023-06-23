@@ -246,5 +246,12 @@ int main(int argc, char * * argv)
         ra::Big<int> a(4);
         tr.test_eq(4, a);
     }
+    tr.section("index with rank 0 exprs");
+    {
+        ra::Big<int, 0> a = 1;
+        ra::Big<int, 1> b = { 1, 2, 3 };
+        tr.test(std::is_same_v<int &, decltype(b(a))>);
+        tr.test_eq(2, b(a));
+    }
     return tr.summary();
 }
