@@ -85,7 +85,7 @@ int main()
                                     Benchmark::stddev(bv)/(m)/1e-9 ,"] ", tag).test(true);
                         };
 
-                    tr.section("[", (std::is_same_v<float, typename Vec::value_type> ? "float" : "double"),
+                    tr.section("[", (std::is_same_v<float, std::decay_t<decltype(std::declval<Vec>()[0])>> ? "float" : "double"),
                                " x ", Vec::size(), "] block of ", m, " times ", reps);
                     bench(sum_opt, "opt");
                     bench(sum_unopt, "unopt");

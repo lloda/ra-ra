@@ -323,12 +323,12 @@ select_loop(I0 i0, I ... i)
         + select_loop<mp::drop<lens, s_src>, mp::drop<steps, s_src>>(i ...);
 }
 
-template <template <class ...> class Child_, class T, class lens_, class steps_>
+template <template <class ...> class Child_, class T_, class lens_, class steps_>
 struct SmallBase
 {
     using lens = lens_;
     using steps = steps_;
-    using value_type = T;
+    using T = T_;
 
     template <class TT> using BadDimension = mp::int_c<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
@@ -544,6 +544,9 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
     constexpr operator View () { return View(p); }
     constexpr operator ViewConst () const { return ViewConst(p); }
 };
+
+template <class A0, class ... A>
+SmallArray(A0, A ...) -> SmallArray<A0, mp::int_list<1+sizeof...(A)>>;
 
 // FIXME unfortunately necessary. Try to remove the need, also of (S, begin, end) in Container, once the nested_tuple constructors work.
 template <class A, class I, class J>

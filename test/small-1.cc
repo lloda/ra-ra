@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Making ra::Small and its iterator work with expressions/traversal.
 
-// (c) Daniel Llorens - 2014, 2016-2017, 2019
+// (c) Daniel Llorens - 2014-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -20,6 +20,10 @@ using ra::mp::int_list, ra::mp::int_c, ra::mp::print_int_list, ra::mp::ref;
 int main()
 {
     TestRecorder tr;
+    {
+        ra::SmallArray a {1, 2, 3}; // FIXME the deduction guide can't work for ra::Small
+        tr.test_eq(ra::start({1, 2, 3}), a);
+    }
     tr.section("pieces of transpose(ra::Small)");
     {
         using lens = int_list<1, 2, 3, 4, 5>;

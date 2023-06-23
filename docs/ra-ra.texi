@@ -11,13 +11,13 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 19
-@set UPDATED 2022 Nov 8
+@set VERSION 20
+@set UPDATED 2023 June 23
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
 
-(c) Daniel Llorens 2005--2022
+(c) Daniel Llorens 2005--2023
 
 @smalldisplay
 Permission is granted to copy, distribute and/or modify this document
