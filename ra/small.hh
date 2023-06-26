@@ -15,6 +15,102 @@ namespace ra {
 
 
 // --------------------
+// STLIterator for both CellSmall & CellBig
+// FIXME make it work for any array iterator, as in ply_ravel, ply_index.
+// --------------------
+
+template <class S, class I, class P>
+constexpr void
+next_in_cube(rank_t const framer, S const & dimv, I & i, P & p)
+{
+    for (int k=framer-1; k>=0; --k) {
+        ++i[k];
+        if (i[k]<dimv[k].len) {
+            p += dimv[k].step;
+            return;
+        } else {
+            i[k] = 0;
+            p -= dimv[k].step*(dimv[k].len-1);
+        }
+    }
+    p = nullptr;
+}
+
+template <int k, class lens, class steps, class I, class P>
+constexpr void
+next_in_cube(I & i, P & p)
+{
+    if constexpr (k>=0) {
+        ++i[k];
+        if (i[k]<mp::ref<lens, k>::value) {
+            p += mp::ref<steps, k>::value;
+        } else {
+            i[k] = 0;
+            p -= mp::ref<steps, k>::value*(mp::ref<lens, k>::value-1);
+            next_in_cube<k-1, lens, steps>(i, p);
+        }
+    } else {
+        p = nullptr;
+    }
+}
+
+template <class Iterator>
+struct STLIterator
+{
+    using value_type = typename Iterator::value_type;
+    using difference_type = dim_t;
+    using pointer = value_type *;
+    using reference = value_type &;
+    using iterator_category = std::forward_iterator_tag;
+    using shape_type = decltype(ra::shape(std::declval<Iterator>()));
+
+    Iterator ii;
+    shape_type i;
+    STLIterator(STLIterator const & it) = default;
+    constexpr STLIterator & operator=(STLIterator const & it)
+    {
+        i = it.i;
+        ii.Iterator::~Iterator(); // no-op except for View<RANK_ANY>. Still...
+        new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
+        return *this;
+    }
+    STLIterator(Iterator const & ii_)
+        : ii(ii_),
+// shape_type may be std::array or std::vector.
+          i([&] {
+              if constexpr (DIM_ANY==size_s<shape_type>()) {
+                  return shape_type(ii.rank(), 0);
+              } else {
+                  return shape_type {0};
+              }
+          }())
+    {
+// [ra12] Null p_ so begin()==end() for empty range. ply() uses lens so this doesn't matter.
+        if (0==ra::size(ii)) {
+            ii.c.p = nullptr;
+        }
+    };
+
+    template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
+    template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
+
+    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    STLIterator & operator++()
+    {
+        if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough
+            ii.c.p = nullptr;
+        } else if constexpr (DIM_ANY != ra::size_s<Iterator>()) {
+            next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::steps>(i, ii.c.p);
+        } else {
+            next_in_cube(ii.rank(), ii.dimv, i, ii.c.p);
+        }
+        return *this;
+    }
+};
+
+
+// --------------------
 // Helpers for slicing
 // --------------------
 
@@ -174,104 +270,6 @@ struct CellSmall
 
 
 // --------------------
-// STLIterator for both CellSmall & CellBig
-// FIXME make it work for any array iterator, as in ply_ravel, ply_index.
-// --------------------
-
-template <class S, class I, class P>
-constexpr void
-next_in_cube(rank_t const framer, S const & dimv, I & i, P & p)
-{
-    for (int k=framer-1; k>=0; --k) {
-        ++i[k];
-        if (i[k]<dimv[k].len) {
-            p += dimv[k].step;
-            return;
-        } else {
-            i[k] = 0;
-            p -= dimv[k].step*(dimv[k].len-1);
-        }
-    }
-    p = nullptr;
-}
-
-template <int k, class lens, class steps, class I, class P>
-constexpr void
-next_in_cube(I & i, P & p)
-{
-    if constexpr (k>=0) {
-        ++i[k];
-        if (i[k]<mp::ref<lens, k>::value) {
-            p += mp::ref<steps, k>::value;
-        } else {
-            i[k] = 0;
-            p -= mp::ref<steps, k>::value*(mp::ref<lens, k>::value-1);
-            next_in_cube<k-1, lens, steps>(i, p);
-        }
-    } else {
-        p = nullptr;
-    }
-}
-
-template <class Iterator>
-struct STLIterator
-{
-    using value_type = typename Iterator::value_type;
-    using difference_type = dim_t;
-    using pointer = value_type *;
-    using reference = value_type &;
-    using iterator_category = std::forward_iterator_tag;
-    using shape_type = decltype(ra::shape(std::declval<Iterator>()));
-
-    Iterator ii;
-    shape_type i;
-    STLIterator(STLIterator const & it) = default;
-    constexpr STLIterator & operator=(STLIterator const & it)
-    {
-        i = it.i;
-        ii.Iterator::~Iterator(); // no-op except for View<RANK_ANY>. Still...
-        new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
-        return *this;
-    }
-    STLIterator(Iterator const & ii_)
-        : ii(ii_),
-// shape_type may be std::array or std::vector.
-          i([&] {
-              if constexpr (DIM_ANY==size_s<shape_type>()) {
-                  return shape_type(ii.rank(), 0);
-              } else {
-                  return shape_type {0};
-              }
-          }())
-    {
-// [ra12] Null p_ so begin()==end() for empty range. ply() uses lens so this doesn't matter.
-        if (0==ra::size(ii)) {
-            ii.c.p = nullptr;
-        }
-    };
-
-    template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
-    template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
-
-    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    STLIterator & operator++()
-    {
-        if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough
-            ii.c.p = nullptr;
-        } else if constexpr (DIM_ANY != ra::size_s<Iterator>()) {
-            next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::steps>(i, ii.c.p);
-        } else {
-            next_in_cube(ii.rank(), ii.dimv, i, ii.c.p);
-        }
-        return *this;
-    }
-};
-
-template <class T> STLIterator<T> stl_iterator(T && t) { return STLIterator<T>(std::forward<T>(t)); }
-
-
-// --------------------
 // Base for both small view & container
 // --------------------
 
@@ -330,25 +328,24 @@ struct SmallBase
     using steps = steps_;
     using T = T_;
 
+    using Child = Child_<T, lens, steps>;
     template <class TT> using BadDimension = mp::int_c<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps."); // TODO static check on steps.
 
-    using Child = Child_<T, lens, steps>;
-
     constexpr static rank_t rank() { return mp::len<lens>; }
     constexpr static rank_t rank_s() { return mp::len<lens>; }
-    constexpr static dim_t size() { return mp::apply<mp::prod, lens>::value; }
-    constexpr static dim_t size_s() { return size(); }
     constexpr static auto slens = mp::tuple_values<std::array<dim_t, rank()>, lens>();
     constexpr static auto ssteps = mp::tuple_values<std::array<dim_t, rank()>, steps>();
+    constexpr static dim_t size() { return mp::apply<mp::prod, lens>::value; }
+    constexpr static dim_t size_s() { return size(); }
     constexpr static dim_t len(int k) { return slens[k]; }
     constexpr static dim_t len_s(int k) { return slens[k]; }
     constexpr static dim_t step(int k) { return ssteps[k]; }
-    constexpr static auto shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(slens.data()); }
+    constexpr static decltype(auto) shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(slens.data()); }
 
 // allowing rank 1 for coord types
-    constexpr static bool convertible_to_scalar = size()==1; // rank()==0 || (rank()==1 && size()==1);
+    constexpr static bool convertible_to_scalar = (size()==1); // rank()==0 || (rank()==1 && size()==1);
 
 #define RA_CONST_OR_NOT(CONST)                                          \
     constexpr T CONST * data() CONST { return static_cast<Child CONST &>(*this).p; } \
@@ -369,6 +366,12 @@ struct SmallBase
             static_assert(mp::always_false<I ...>); /* p2593r0 */       \
         }                                                               \
     }                                                                   \
+    template <class ... I>                                              \
+    constexpr decltype(auto)                                            \
+    operator[](I && ... i) CONST                                        \
+    {                                                                   \
+        return (*this)(std::forward<I>(i) ...);                         \
+    }                                                                   \
     /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
@@ -376,12 +379,6 @@ struct SmallBase
     {                                                                   \
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
             (data()+indexer0::shorter<lens, steps>(i));                 \
-    }                                                                   \
-    template <class ... I>                                              \
-    constexpr decltype(auto)                                            \
-    operator[](I && ... i) CONST                                        \
-    {                                                                   \
-        return (*this)(std::forward<I>(i) ...);                         \
     }                                                                   \
     /* TODO support s(static ra::iota) */                               \
     template <int ss, int oo=0>                                         \
@@ -436,19 +433,12 @@ struct SmallBase
     template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
-// FIXME see if we need to extend this for cellr!=0.
-// template <class P> using STLIterator = std::conditional_t<have_default_steps, P, STLIterator<Iterator<P>>>;
-    constexpr static bool have_default_steps = std::same_as<steps, default_steps<lens>>;
-    template <class I, class P> using pick_STLIterator = std::conditional_t<have_default_steps, P, ra::STLIterator<I>>;
-    using STLIterator = pick_STLIterator<iterator<0>, T *>;
-    using STLConstIterator = pick_STLIterator<const_iterator<0>, T const *>;
-
-// TODO begin() end() may be different types for ranged for (https://en.cppreference.com/w/cpp/language/range-for), but not for stl algos like std::copy. That's unfortunate as it would allow simplifying end().
-// TODO With default steps I can just return p. Make sure to test before changing this.
-    constexpr STLIterator begin() { if constexpr (have_default_steps) return data(); else return iter(); }
-    constexpr STLConstIterator begin() const { if constexpr (have_default_steps) return data(); else return iter(); }
-    constexpr STLIterator end() { if constexpr (have_default_steps) return data()+size(); else return iterator<0>(nullptr); }
-    constexpr STLConstIterator end() const { if constexpr (have_default_steps) return data()+size(); else return const_iterator<0>(nullptr); }
+// FIXME extend for cellr!=0?
+    constexpr static bool steps_default = std::same_as<steps, default_steps<lens>>;
+    constexpr auto begin() const { if constexpr (steps_default) return data(); else return STLIterator(iter()); }
+    constexpr auto begin() { if constexpr (steps_default) return data(); else return STLIterator(iter()); }
+    constexpr auto end() const { if constexpr (steps_default) return data()+size(); else return STLIterator(const_iterator<0>(nullptr)); }
+    constexpr auto end() { if constexpr (steps_default) return data()+size(); else return STLIterator(iterator<0>(nullptr)); }
 };
 
 
@@ -465,10 +455,15 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
 
     T * p;
     constexpr SmallView(T * p_): p(p_) {}
-    constexpr SmallView(SmallView const & s): p(s.p) {}
+    constexpr SmallView(SmallView const & s) = default;
 
     constexpr operator T & () { static_assert(Base::convertible_to_scalar); return p[0]; }
     constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return p[0]; };
+
+    using ViewConst = SmallView<T const, lens, steps>;
+    constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(p); }
+    constexpr SmallView & view() { return *this; }
+    constexpr SmallView const & view() const { return *this; }
 };
 
 #if defined (__clang__)
@@ -532,7 +527,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
     }
 // X && x makes this a better match than nested_args ... for 1 argument.
     template <class X>
-    requires (!std::is_same_v<T, std::decay_t<X>> && !mp::is_tuple_v<std::decay_t<X>>)
+    requires (!std::is_same_v<std::decay_t<X>, T> && !mp::is_tuple_v<std::decay_t<X>>)
     constexpr SmallArray(X && x)
     {
         static_cast<Base &>(*this) = x;
@@ -540,6 +535,8 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
 
     using View = SmallView<T, lens, steps>;
     using ViewConst = SmallView<T const, lens, steps>;
+    constexpr View view() { return View(p); }
+    constexpr ViewConst view() const { return ViewConst(p); }
 // conversion to const
     constexpr operator View () { return View(p); }
     constexpr operator ViewConst () const { return ViewConst(p); }
@@ -548,7 +545,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
 template <class A0, class ... A>
 SmallArray(A0, A ...) -> SmallArray<A0, mp::int_list<1+sizeof...(A)>>;
 
-// FIXME unfortunately necessary. Try to remove the need, also of (S, begin, end) in Container, once the nested_tuple constructors work.
+// FIXME remove the need, also of (S, begin, end) in Container, once nested_tuple constructors work.
 template <class A, class I, class J>
 A ravel_from_iterators(I && begin, J && end)
 {
@@ -602,11 +599,12 @@ struct ra_traits_def<T>
     constexpr static rank_t rank_s() { return S::rank_s(); }
 };
 
+RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typename A::lens, typename A::steps>>));
+
 
 // --------------------
 // Small ops; cf view-ops.hh.
-// FIXME maybe there, or separate file.
-// TODO See if this can be merged with Reframe (e.g. beat(reframe(a)) -> transpose(a) ?)
+// TODO Merge with Reframe (eg beat(reframe(a)) -> transpose(a) ?)
 // --------------------
 
 template <class A, class i>
@@ -615,7 +613,7 @@ struct axis_indices
     template <class T> using match_index = mp::int_c<(T::value==i::value)>;
     using I = mp::iota<mp::len<A>>;
     using type = mp::Filter_<mp::map<match_index, A>, I>;
-// don't enforce, so allow dead axes (e.g. in transpose<1>(rank 1 array)).
+// allow dead axes (e.g. transpose<1>(rank 1 array)).
     // static_assert((mp::len<type>)>0, "dst axis doesn't appear in transposed axes list");
 };
 
@@ -626,7 +624,7 @@ struct axes_list_indices
     constexpr static int talmax = mp::fold<mp::max, void, axes_list>::value;
     constexpr static int talmin = mp::fold<mp::min, void, axes_list>::value;
     static_assert(talmin >= 0, "Bad index in transposed axes list.");
-// don't enforce, so allow dead axes (e.g. in transpose<1>(rank 1 array)).
+// allow dead axes (e.g. transpose<1>(rank 1 array)).
     // static_assert(talmax < mp::len<src_lens>, "bad index in transposed axes list");
 
     template <class dst_i> struct dst_indices_
@@ -648,70 +646,64 @@ struct axes_list_indices
     using steps =  mp::map<dst_step, dst>;
 };
 
-#define DEF_TRANSPOSE(CONST)                                            \
-    template <int ... Iarg, template <class ...> class Child, class T, class lens, class steps> \
-    constexpr auto                                                      \
-    transpose(SmallBase<Child, T, lens, steps> CONST & a)               \
-    {                                                                   \
-        using ti = axes_list_indices<mp::int_list<Iarg ...>, lens, steps>; \
-        return SmallView<T CONST, typename ti::lens, typename ti::steps>(a.data()); \
-    };                                                                  \
-                                                                        \
-    template <template <class ...> class Child, class T, class lens, class steps> \
-    constexpr auto                                                      \
-    diag(SmallBase<Child, T, lens, steps> CONST & a)                    \
-    {                                                                   \
-        return transpose<0, 0>(a);                                      \
+template <int ... Iarg, class A>
+requires (cv_smallview<A>)
+constexpr auto
+transpose(A && a_)
+{
+    decltype(auto) a = a_.view();
+    using AA = typename std::decay_t<decltype(a)>;
+    using ti = axes_list_indices<mp::int_list<Iarg ...>, typename AA::lens, typename AA::steps>;
+    return SmallView<typename AA::T, typename ti::lens, typename ti::steps>(a.data());
+};
+
+template <class A>
+requires (cv_smallview<A>)
+constexpr auto
+diag(A && a)
+{
+    return transpose<0, 0>(a);
+}
+
+// TODO generalize
+template <class A1, class A2>
+requires (cv_smallview<A1> || cv_smallview<A2>)
+constexpr auto
+cat(A1 && a1_, A2 && a2_)
+{
+    if constexpr (cv_smallview<A1> && cv_smallview<A2>) {
+        decltype(auto) a1 = a1_.view();
+        decltype(auto) a2 = a2_.view();
+        static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat."); // gcc accepts a1.rank(), etc.
+        using T = std::common_type_t<std::decay_t<decltype(a1[0])>, std::decay_t<decltype(a2[0])>>;
+        Small<T, a1.size()+a2.size()> val;
+        std::copy(a1.begin(), a1.end(), val.begin());
+        std::copy(a2.begin(), a2.end(), val.begin()+a1.size());
+        return val;
+    } else if constexpr (cv_smallview<A1> && is_scalar<A2>) {
+        decltype(auto) a1 = a1_.view();
+        static_assert(1==a1.rank(), "bad ranks for cat");
+        using T = std::common_type_t<std::decay_t<decltype(a1[0])>, A2>;
+        Small<T, a1.size()+1> val;
+        std::copy(a1.begin(), a1.end(), val.begin());
+        val[a1.size()] = a2_;
+        return val;
+    } else if constexpr (is_scalar<A1> && cv_smallview<A2>) {
+        decltype(auto) a2 = a2_.view();
+        static_assert(1==a2.rank(), "bad ranks for cat");
+        using T = std::common_type_t<A1, std::decay_t<decltype(a2[0])>>;
+        Small<T, 1+a2.size()> val;
+        val[0] = a1_;
+        std::copy(a2.begin(), a2.end(), val.begin()+1);
+        return val;
+    } else {
+        static_assert(mp::always_false<A1, A2>); /* p2593r0 */ \
     }
-FOR_EACH(DEF_TRANSPOSE, /* const */, const)
-#undef DEF_TRANSPOSE
-
-// TODO Used by ProductRule; waiting for proper generalization.
-template <template <class ...> class Child1, class T1, class lens1, class steps1,
-          template <class ...> class Child2, class T2, class lens2, class steps2>
-constexpr auto
-cat(SmallBase<Child1, T1, lens1, steps1> const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
-{
-    using A1 = SmallBase<Child1, T1, lens1, steps1>;
-    using A2 = SmallBase<Child2, T2, lens2, steps2>;
-    static_assert(A1::rank()==1 && A2::rank()==1, "Bad ranks for cat."); // gcc accepts a1.rank(), etc.
-    using T = std::decay_t<decltype(a1[0])>;
-    Small<T, A1::size()+A2::size()> val;
-    std::copy(a1.begin(), a1.end(), val.begin());
-    std::copy(a2.begin(), a2.end(), val.begin()+a1.size());
-    return val;
-}
-
-template <template <class ...> class Child1, class T1, class lens1, class steps1, class A2>
-requires (is_scalar<A2>)
-constexpr auto
-cat(SmallBase<Child1, T1, lens1, steps1> const & a1, A2 const & a2)
-{
-    using A1 = SmallBase<Child1, T1, lens1, steps1>;
-    static_assert(A1::rank()==1, "bad ranks for cat");
-    using T = std::decay_t<decltype(a1[0])>;
-    Small<T, A1::size()+1> val;
-    std::copy(a1.begin(), a1.end(), val.begin());
-    val[a1.size()] = a2;
-    return val;
-}
-
-template <class A1, template <class ...> class Child2, class T2, class lens2, class steps2>
-requires (is_scalar<A1>)
-constexpr auto
-cat(A1 const & a1, SmallBase<Child2, T2, lens2, steps2> const & a2)
-{
-    using A2 = SmallBase<Child2, T2, lens2, steps2>;
-    static_assert(A2::rank()==1, "bad ranks for cat");
-    using T = std::decay_t<decltype(a2[0])>;
-    Small<T, 1+A2::size()> val;
-    val[0] = a1;
-    std::copy(a2.begin(), a2.end(), val.begin()+1);
-    return val;
 }
 
 // FIXME should be local (constexpr lambda + mp::apply?)
-template <int s> struct explode_divop
+template <int s>
+struct explode_divop
 {
     template <class T> struct op_
     {
@@ -721,21 +713,21 @@ template <int s> struct explode_divop
     template <class T> using op = typename op_<T>::type;
 };
 
-// See view-ops.hh:explode, collapse. FIXME support real->complex, etc.
-template <class super_t,
-          template <class ...> class Child, class T, class lens, class steps>
+template <class super_t, class A>
+requires (cv_smallview<A>)
 constexpr auto
-explode(SmallBase<Child, T, lens, steps> & a)
+explode(A && a_)
 {
-    using ta = SmallBase<Child, T, lens, steps>;
 // the returned type has steps in super_t, but to support general steps we'd need steps in T. Maybe FIXME?
-    static_assert(super_t::have_default_steps);
-    constexpr rank_t ra = ta::rank_s();
+    decltype(auto) a = a_.view();
+    using AA = std::decay_t<decltype(a)>;
+    static_assert(super_t::steps_default);
+    constexpr rank_t ra = AA::rank_s();
     constexpr rank_t rb = super_t::rank_s();
-    static_assert(std::is_same_v<mp::drop<lens, ra-rb>, typename super_t::lens>);
-    static_assert(std::is_same_v<mp::drop<steps, ra-rb>, typename super_t::steps>);
-    using csteps = mp::map<explode_divop<ra::size_s<super_t>()>::template op, mp::take<steps, ra-rb>>;
-    return SmallView<super_t, mp::take<lens, ra-rb>, csteps>((super_t *) a.data());
+    static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
+    static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);
+    using csteps = mp::map<explode_divop<ra::size_s<super_t>()>::template op, mp::take<typename AA::steps, ra-rb>>;
+    return SmallView<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
 }
 
 } // namespace ra

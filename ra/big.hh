@@ -321,8 +321,8 @@ struct View
 
     template <rank_t c=0> constexpr auto iter() const && { return ra::CellBig<View<T, RANK>, c>(std::move(dimv), p); }
     template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T, RANK> &, c>(dimv, p); }
-    constexpr auto begin() const { return stl_iterator(iter()); }
-    constexpr auto end() const { return stl_iterator(decltype(iter())(dimv, nullptr)); } // dimv could be anything
+    constexpr auto begin() const { return STLIterator(iter()); }
+    constexpr auto end() const { return STLIterator(decltype(iter())(dimv, nullptr)); } // dimv could be anything
 
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
     template <class ... I>
@@ -697,16 +697,16 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
 
 // FIXME P0847R7 https://en.cppreference.com/w/cpp/language/member_functions#Explicit_object_parameter
+    constexpr auto data() { return view().data(); }
+    constexpr auto data() const { return view().data(); }
     template <class ... A> constexpr decltype(auto) operator()(A && ... a) { return view()(std::forward<A>(a) ...); }
     template <class ... A> constexpr decltype(auto) operator()(A && ... a) const { return view()(std::forward<A>(a) ...); }
     template <class ... A> constexpr decltype(auto) operator[](A && ... a) { return view()(std::forward<A>(a) ...); }
     template <class ... A> constexpr decltype(auto) operator[](A && ... a) const { return view()(std::forward<A>(a) ...); }
-    constexpr auto data() { return view().data(); }
-    constexpr auto data() const { return view().data(); }
-    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
-    template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
     template <class I> constexpr decltype(auto) at(I && i) { return view().at(std::forward<I>(i)); }
     template <class I> constexpr decltype(auto) at(I && i) const { return view().at(std::forward<I>(i)); }
+    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
+    template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 

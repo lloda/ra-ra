@@ -83,9 +83,9 @@ from(A && a, I && ... i)
 // Array versions of operators and functions
 // --------------------------------
 
-// I considered three options for lookup.
-// 1. define these in a class that Iterator or Container or Slice types derive from. This was done for an old library I had (vector-ops.hh). It results in the smallest scope, but since those types are used in the definition (ra::Expr is an Iterator), it requires lots of forwarding and traits:: .
-// 2. raw ADL doesn't work because some ra:: types use ! != etc for different things (e.g. Flat). Possible solution: don't ever use + != == for Flat.
+// I considered three options for ops lookup.
+// 1. define them in a a class that Iterator or Container or Slice types derive from. I did this in an old library. It results in the smallest scope, but since those types are used in the definition (ra::Expr is an Iterator), it requires lots of forwarding and traits:: .
+// 2. raw ADL doesn't work because Flat uses += for pointering. Possible solution: rename that.
 // 3. requires-constrained ADL is what you see here.
 
 // We need the zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
