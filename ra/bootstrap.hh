@@ -321,6 +321,11 @@ template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...
 // all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).
 template <class ... A> constexpr bool ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
 
+RA_IS_DEF(is_special, false) // these are rank-0 types that we don't want reduced.
+
+template <class ... A> constexpr bool ra_reducible = ra_zero<A ...> && (!is_special<A> && ...);
+template <class ... A> constexpr bool ra_irreducible = ((is_ra_pos_rank<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_foreign_vector<A> || is_builtin_array<A>) && ...);
+
 } // namespace ra
 
 

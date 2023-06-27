@@ -92,13 +92,13 @@ from(A && a, I && ... i)
 
 // These depend on OPNAME defined in optimize.hh and used there to match ET patterns.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
-    template <class A, class B> requires (ra_pos_and_any<A, B>)         \
+    template <class A, class B> requires (ra_irreducible<A, B>)         \
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
         return RA_OPT(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
-    template <class A, class B> requires (ra_zero<A, B>)                \
+    template <class A, class B> requires (ra_reducible<A, B>)           \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
         return FLAT(std::forward<A>(a)) OP FLAT(std::forward<B>(b));    \
@@ -110,14 +110,14 @@ DEF_NAMED_BINARY_OP(/, slash)
 #undef DEF_NAMED_BINARY_OP
 
 #define DEF_BINARY_OP(OP)                                               \
-    template <class A, class B> requires (ra_pos_and_any<A, B>)         \
+    template <class A, class B> requires (ra_irreducible<A, B>)         \
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
         return map([](auto && a, auto && b) { return a OP b; },         \
                    std::forward<A>(a), std::forward<B>(b));             \
     }                                                                   \
-    template <class A, class B> requires (ra_zero<A, B>)                \
+    template <class A, class B> requires (ra_reducible<A, B>)           \
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
@@ -127,7 +127,7 @@ FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, <=>, ==, !=, |, &, ^)
 #undef DEF_BINARY_OP
 
 #define DEF_UNARY_OP(OP)                                                \
-    template <class A> requires (ra_pos_and_any<A>)                     \
+    template <class A> requires (ra_irreducible<A>)                     \
     constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
@@ -140,13 +140,13 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
 // TODO Cf examples/useret.cc, test/reexported.cc
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
-    template <class ... A> requires (ra_pos_and_any<A ...>)             \
+    template <class ... A> requires (ra_irreducible<A ...>)             \
     constexpr auto                                                      \
     OP(A && ... a)                                                      \
     {                                                                   \
         return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A> requires (ra_zero<A ...>)                    \
+    template <class ... A> requires (ra_reducible<A ...>)               \
     constexpr auto                                                      \
     OP(A && ... a)                                                      \
     {                                                                   \
@@ -160,12 +160,12 @@ FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg, lerp)
 
 #define DEF_NAME_OP_REF(OP)                                             \
     using ::OP;                                                         \
-    template <class ... A> requires (ra_pos_and_any<A ...>)             \
+    template <class ... A> requires (ra_irreducible<A ...>)             \
     constexpr auto OP(A && ... a)                                       \
     {                                                                   \
         return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
-    template <class ... A> requires (ra_zero<A ...>)                    \
+    template <class ... A> requires (ra_reducible<A ...>)               \
     constexpr decltype(auto) OP(A && ... a)                             \
     {                                                                   \
         return OP(FLAT(a) ...);                                         \
@@ -201,7 +201,7 @@ constexpr auto at(A && a, I && i)
 
 // These ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F>
-requires (ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>)
+requires (ra_reducible<T, F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
@@ -209,7 +209,7 @@ where(bool const w, T && t, F && f)
 }
 
 template <class W, class T, class F>
-requires (ra_pos_and_any<W, T, F>)
+requires (ra_irreducible<W, T, F>)
 constexpr auto
 where(W && w, T && t, F && f)
 {
@@ -218,7 +218,7 @@ where(W && w, T && t, F && f)
 
 // catch all for non-ra types.
 template <class T, class F>
-requires (!(ra_pos_and_any<T, F>) && !(ra::is_zero_or_scalar<T> && ra::is_zero_or_scalar<F>))
+requires (!(ra_irreducible<T, F>) && !(ra_reducible<T, F>))
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
@@ -226,20 +226,20 @@ where(bool const w, T && t, F && f)
 }
 
 template <class A, class B>
-requires (ra_pos_and_any<A, B>)
+requires (ra_irreducible<A, B>)
 constexpr auto operator &&(A && a, B && b)
 {
     return where(std::forward<A>(a), cast<bool>(std::forward<B>(b)), false);
 }
 template <class A, class B>
-requires (ra_pos_and_any<A, B>)
+requires (ra_irreducible<A, B>)
 constexpr auto operator ||(A && a, B && b)
 {
     return where(std::forward<A>(a), true, cast<bool>(std::forward<B>(b)));
 }
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
     template <class A, class B>                                         \
-    requires (ra_zero<A, B>)                                            \
+    requires (ra_reducible<A, B>)                                       \
         constexpr auto operator OP(A && a, B && b)                      \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
