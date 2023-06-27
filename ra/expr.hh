@@ -213,7 +213,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     operator decltype(*(flat(op, std::get<I>(t).flat() ...))) ()
     {
 // for coord types; so ct only
-        if constexpr ((rank_s()!=1 || size_s(*this)!=1) && rank_s()!=0) {
+        if constexpr ((rank_s()!=1 || size_s<Expr>()!=1) && rank_s()!=0) {
             static_assert(rank_s()==RANK_ANY);
             assert(rank()==0);
         }
