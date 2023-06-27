@@ -83,12 +83,7 @@ from(A && a, I && ... i)
 // Array versions of operators and functions
 // --------------------------------
 
-// I considered three options for ops lookup.
-// 1. define them in a a class that Iterator or Container or Slice types derive from. I did this in an old library. It results in the smallest scope, but since those types are used in the definition (ra::Expr is an Iterator), it requires lots of forwarding and traits:: .
-// 2. raw ADL doesn't work because Flat uses += for pointering. Possible solution: rename that.
-// 3. requires-constrained ADL is what you see here.
-
-// We need the zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
+// We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
 
 // These depend on OPNAME defined in optimize.hh and used there to match ET patterns.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
@@ -99,32 +94,26 @@ from(A && a, I && ... i)
         return RA_OPT(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
     }                                                                   \
     template <class A, class B> requires (ra_reducible<A, B>)           \
-    constexpr auto operator OP(A && a, B && b)                          \
+    constexpr auto                                                      \
+    operator OP(A && a, B && b)                                         \
     {                                                                   \
         return FLAT(std::forward<A>(a)) OP FLAT(std::forward<B>(b));    \
     }
-DEF_NAMED_BINARY_OP(+, plus)
-DEF_NAMED_BINARY_OP(-, minus)
-DEF_NAMED_BINARY_OP(*, times)
-DEF_NAMED_BINARY_OP(/, slash)
+DEF_NAMED_BINARY_OP(+, std::plus<>)
+DEF_NAMED_BINARY_OP(-, std::minus<>)
+DEF_NAMED_BINARY_OP(*, std::multiplies<>)
+DEF_NAMED_BINARY_OP(/, std::divides<>)
+DEF_NAMED_BINARY_OP(==, std::equal_to<>)
+DEF_NAMED_BINARY_OP(>, std::greater<>)
+DEF_NAMED_BINARY_OP(<, std::less<>)
+DEF_NAMED_BINARY_OP(>=, std::greater_equal<>)
+DEF_NAMED_BINARY_OP(<=, std::less_equal<>)
+DEF_NAMED_BINARY_OP(!=, std::not_equal_to<>)
+DEF_NAMED_BINARY_OP(|, std::bit_or<>)
+DEF_NAMED_BINARY_OP(&, std::bit_and<>)
+DEF_NAMED_BINARY_OP(^, std::bit_xor<>)
+DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
 #undef DEF_NAMED_BINARY_OP
-
-#define DEF_BINARY_OP(OP)                                               \
-    template <class A, class B> requires (ra_irreducible<A, B>)         \
-    constexpr auto                                                      \
-    operator OP(A && a, B && b)                                         \
-    {                                                                   \
-        return map([](auto && a, auto && b) { return a OP b; },         \
-                   std::forward<A>(a), std::forward<B>(b));             \
-    }                                                                   \
-    template <class A, class B> requires (ra_reducible<A, B>)           \
-    constexpr auto                                                      \
-    operator OP(A && a, B && b)                                         \
-    {                                                                   \
-        return FLAT(a) OP FLAT(b); /*  forward bug test/early.cc */     \
-    }
-FOR_EACH(DEF_BINARY_OP, >, <, >=, <=, <=>, ==, !=, |, &, ^)
-#undef DEF_BINARY_OP
 
 #define DEF_UNARY_OP(OP)                                                \
     template <class A> requires (ra_irreducible<A>)                     \
@@ -409,7 +398,7 @@ gemm(A const & a, B const & b, C & c)
     for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
 }
 
-#define MMTYPE decltype(from(times(), a(ra::all, 0), b(0)))
+#define MMTYPE decltype(from(std::multiplies<>(), a(ra::all, 0), b(0)))
 
 // default for row-major x row-major. See bench-gemm.cc for variants.
 template <class S, class T>
@@ -422,7 +411,7 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 // no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, decltype(a(0, 0)*b(0, 0))());
     for (int k=0; k<K; ++k) {
-        c += from(times(), a(ra::all, k), b(k));
+        c += from(std::multiplies<>(), a(ra::all, k), b(k));
     }
     return c;
 }

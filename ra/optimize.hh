@@ -12,25 +12,7 @@
 
 namespace ra {
 
-template <class E>  constexpr decltype(auto) optimize(E && e) { return std::forward<E>(e); }
-
-// These are named to match & transform Expr<OPNAME, ...> later on, and used by operator+ etc.
-#define DEFINE_NAMED_BINARY_OP(OP, OPNAME)                              \
-    struct OPNAME                                                       \
-    {                                                                   \
-        template <class A, class B>                                     \
-        constexpr decltype(auto)                                        \
-        operator()(A && a, B && b) const { return std::forward<A>(a) OP std::forward<B>(b); } \
-    };
-// FIXME don't know why gcc 12.1 flags this. See also Expr::Flat
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-DEFINE_NAMED_BINARY_OP(+, plus)
-DEFINE_NAMED_BINARY_OP(-, minus)
-DEFINE_NAMED_BINARY_OP(*, times)
-DEFINE_NAMED_BINARY_OP(/, slash)
-#undef DEFINE_NAMED_BINARY_OP
-#pragma GCC diagnostic pop
+template <class E> constexpr decltype(auto) optimize(E && e) { return std::forward<E>(e); }
 
 // TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
@@ -45,21 +27,21 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::num
 
 template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
-optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return ITEM(0).set(ITEM(0).i + ITEM(1));
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
-optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return ITEM(1).set(ITEM(1).i + ITEM(0));
 }
 
 template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
-optimize(Expr<ra::plus, std::tuple<I, J>> && e)
+optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return iota(e.len(0), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
 }
@@ -70,21 +52,21 @@ optimize(Expr<ra::plus, std::tuple<I, J>> && e)
 
 template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
-optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return ITEM(0).set(ITEM(0).i - ITEM(1));
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
-optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return iota(e.len(0), ITEM(0)-ITEM(1).i, -ITEM(1).gets());
 }
 
 template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
-optimize(Expr<ra::minus, std::tuple<I, J>> && e)
+optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return iota(e.len(0), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
 }
@@ -95,14 +77,14 @@ optimize(Expr<ra::minus, std::tuple<I, J>> && e)
 
 template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
-optimize(Expr<ra::times, std::tuple<I, J>> && e)
+optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
 {
     return iota(e.len(0), ITEM(0).i*ITEM(1), ITEM(0).gets()*ITEM(1));
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
-optimize(Expr<ra::times, std::tuple<I, J>> && e)
+optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
 {
     return iota(e.len(0), ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets());
 }
@@ -131,10 +113,10 @@ static_assert(match_smallvector<ra::CellSmall<ra::SmallBase<ra::SmallView, doubl
     }
 #define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)      \
     static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
-    RA_OPT_SMALLVECTOR_OP(+, ra::plus, T, N)  \
-    RA_OPT_SMALLVECTOR_OP(-, ra::minus, T, N) \
-    RA_OPT_SMALLVECTOR_OP(/, ra::slash, T, N) \
-    RA_OPT_SMALLVECTOR_OP(*, ra::times, T, N)
+    RA_OPT_SMALLVECTOR_OP(+, std::plus<>, T, N)  \
+    RA_OPT_SMALLVECTOR_OP(-, std::minus<>, T, N) \
+    RA_OPT_SMALLVECTOR_OP(/, std::divides<>, T, N) \
+    RA_OPT_SMALLVECTOR_OP(*, std::multiplies<>, T, N)
 #define RA_OPT_SMALLVECTOR_OP_SIZES(T)        \
     RA_OPT_SMALLVECTOR_OP_FUNS(T, 2)          \
     RA_OPT_SMALLVECTOR_OP_FUNS(T, 4)          \

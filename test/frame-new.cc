@@ -203,11 +203,11 @@ main()
     tr.section("DIM_BAD on any len_s(k) means size_s() is DIM_BAD");
     {
         using order = std::tuple<int_c<0>, int_c<1>>;
-        using T0 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>, order>;
+        using T0 = ra::Expr<std::multiplies<void>, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>, order>;
         ra::dim_t s0 = ra::size_s<T0>();
-        using T1 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<1>, ra::Scalar<int>>, order>;
+        using T1 = ra::Expr<std::multiplies<void>, std::tuple<ra::TensorIndex<1>, ra::Scalar<int>>, order>;
         ra::dim_t s1 = ra::size_s<T1>();
-        using T2 = ra::Expr<ra::times, std::tuple<ra::TensorIndex<2>, ra::Scalar<int>>, order>;
+        using T2 = ra::Expr<std::multiplies<void>, std::tuple<ra::TensorIndex<2>, ra::Scalar<int>>, order>;
         ra::dim_t s2 = ra::size_s<T2>();
         tr.test_eq(ra::DIM_BAD, s0);
         tr.test_eq(ra::DIM_BAD, s1);

@@ -78,7 +78,7 @@ struct f_sumprod
     {
         Astencil.p = A.data();
         Anext(I) = 0; // TODO miss notation for sum-of-axes without preparing destination...
-        Anext(I) += map(ra::wrank<1, 1>(ra::times()), Astencil, mask);
+        Anext(I) += map(ra::wrank<1, 1>(std::multiplies<>()), Astencil, mask);
         std::swap(A.p, Anext.p);
     };
 };

@@ -158,7 +158,7 @@ int main()
         static_assert(!ra::is_ra_zero_rank<ra::TensorIndex<0>>, "bad");
         static_assert(ra::is_ra_pos_rank<ra::TensorIndex<0>>, "bad");
         static_assert(!ra::ra_zero<ra::TensorIndex<0>>, "bad");
-        static_assert(ra::is_ra_pos_rank<ra::Expr<ra::plus, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>>>, "bad");
+        static_assert(ra::is_ra_pos_rank<ra::Expr<std::multiplies<>, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>>>, "bad");
         static_assert(ra::is_ra_pos_rank<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
     tr.section("builtin arrays I");

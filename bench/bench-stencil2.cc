@@ -90,7 +90,7 @@ struct f_sumprod
     {
         Astencil.p = A.data();
         Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
-        Anext(I, J) += map(ra::wrank<2, 2>(ra::times()), Astencil, mask);
+        Anext(I, J) += map(ra::wrank<2, 2>(std::multiplies<>()), Astencil, mask);
         std::swap(A.p, Anext.p);
     };
 };
@@ -125,7 +125,7 @@ int main()
                         });
             tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/A.size()/1e-9, " ns [",
                     Benchmark::stddev(bv)/A.size()/1e-9 ,"] ", tag)
-                .skip().test_rel_error(ref, A, 1e-10);
+                .test_rel_error(ref, A, 1e-10);
         };
 
     ra::Big<real, 2> Aref;

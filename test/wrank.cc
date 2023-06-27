@@ -239,7 +239,7 @@ int main()
         ra::Big<real, 2> c1 = gemm(a, b);
 // matrix product as outer product + reduction (no reductions yet, so manually).
         {
-            ra::Big<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(ra::times())), start(a), start(b));
+            ra::Big<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(std::multiplies<>())), start(a), start(b));
             ra::Big<real, 2> c2({d.len(0), d.len(2)}, 0.);
             for (int k=0; k<d.len(1); ++k) {
                 c2 += d(ra::all, k, ra::all);
@@ -287,7 +287,7 @@ int main()
                 for (int t=0; t!=ts; ++t) {
                     Astencil.p = A.data();
                     Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
-                    Anext(I, J) += map(ra::wrank<2, 2>(ra::times()), Astencil, mask);
+                    Anext(I, J) += map(ra::wrank<2, 2>(std::multiplies<>()), Astencil, mask);
                     std::swap(A.p, Anext.p);
                 }
             };
@@ -332,7 +332,7 @@ int main()
         auto fi = [&i](auto && x) { ++i; return x; };
         std::atomic<int> j { 0 };
         auto fj = [&j](auto && x) { ++j; return x; };
-        ra::Big<int, 2> a = from(ra::minus(), map(fi, ra::iota(7)), map(fj, ra::iota(9)));
+        ra::Big<int, 2> a = from(std::minus<>(), map(fi, ra::iota(7)), map(fj, ra::iota(9)));
         tr.test_eq(ra::_0-ra::_1, a);
         tr.info("FIXME").skip().test_eq(7, int(i));
         tr.info("FIXME").skip().test_eq(9, int(j));
@@ -343,10 +343,10 @@ int main()
             ra::Big<real, 1> a({3}, 2+ra::_0);
             ra::Big<real, 2> b({2, 3}, 4-ra::_0);
             ra::Big<real, 2> c = {{8, 12, 16}, {6, 9, 12}};
-            tr.test(agree_op(ra::wrank<1, 1>(ra::times()), a, b));
-            tr.test_eq(c, map(ra::wrank<1, 1>(ra::times()), a, b));
+            tr.test(agree_op(ra::wrank<1, 1>(std::multiplies<>()), a, b));
+            tr.test_eq(c, map(ra::wrank<1, 1>(std::multiplies<>()), a, b));
             ra::Big<real, 2> d({3, 2}, 4-ra::_0);
-            tr.test(!agree_op(ra::wrank<1, 1>(ra::times()), a, d));
+            tr.test(!agree_op(ra::wrank<1, 1>(std::multiplies<>()), a, d));
         }
     }
     return tr.summary();
