@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Check that ra::optimize() does what it's supposed to do.
 
-// (c) Daniel Llorens - 2014-2016
+// (c) Daniel Llorens - 2014-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -77,7 +77,25 @@ int main()
         test(double(0));
         test(float(0));
     }
-    tr.section("operations with Iota, times");
+    tr.section("operations with Iota, negate");
+    {
+        auto test = [&tr](auto && org)
+            {
+                auto i = ra::iota(5, org);
+                auto j = -i;
+                auto k1 = optimize(-i);
+                static_assert(ra::is_iota<decltype(k1)>);
+                tr.info("not optimized w/ RA_DO_OPT=0").test(!std::is_same_v<decltype(i), decltype(j)>);
+// it's actually a Iota
+                tr.test_eq(-org, k1.i);
+                tr.test_eq(-ra::start({0, 1, 2, 3, 4}), j);
+                tr.test_eq(-ra::start({0, 1, 2, 3, 4}), k1);
+            };
+        test(int(0));
+        test(double(0));
+        test(float(0));
+    }
+    tr.section("operations with Iota, multiplies");
     {
         auto test = [&tr](auto && org)
         {

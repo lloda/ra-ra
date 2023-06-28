@@ -115,22 +115,31 @@ DEF_NAMED_BINARY_OP(^, std::bit_xor<>)
 DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
 #undef DEF_NAMED_BINARY_OP
 
-// FIXME bad address sanitizer in bench/bench-optimize.cc if we use std::identity for +, maybe false positive.
-#define DEF_UNARY_OP(OP)                                                \
+// FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive
+struct unaryplus
+{
+    template <class T> constexpr /* static P1169 in gcc13 */ auto
+    operator()(T && t) const noexcept
+    { return std::forward<T>(t); }
+};
+
+#define DEF_NAMED_UNARY_OP(OP, OPNAME)                                  \
     template <class A> requires (ra_irreducible<A>)                     \
     constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
-        return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
+        return map(OPNAME(), std::forward<A>(a));                       \
     }                                                                   \
     template <class A> requires (ra_reducible<A>)                       \
-    constexpr decltype(auto)                                            \
+    constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
-        return OP FLAT(std::forward<A>);                                \
+        return OP FLAT(std::forward<A>(a));                             \
     }
-FOR_EACH(DEF_UNARY_OP, +, -, !)
-#undef DEF_UNARY_OP
+DEF_NAMED_UNARY_OP(+, unaryplus)
+DEF_NAMED_UNARY_OP(-, std::negate<>)
+DEF_NAMED_UNARY_OP(!, std::logical_not<>)
+#undef DEF_NAMED_UNARY_OP
 
 // When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
 // TODO Cf examples/useret.cc, test/reexported.cc
@@ -235,7 +244,8 @@ FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
 // TODO First rank reductions? Variable rank reductions?
 // --------------------------------
 
-template <class A> constexpr bool
+template <class A>
+constexpr bool
 any(A && a)
 {
     return early(map([](bool x) { return std::make_tuple(x, x); }, std::forward<A>(a)), false);

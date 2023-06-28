@@ -89,6 +89,17 @@ optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
     return iota(e.len(0), ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets());
 }
 
+// --------------
+// negate
+// --------------
+
+template <class I> requires (is_iota<I>)
+constexpr auto
+optimize(Expr<std::negate<>, std::tuple<I>> && e)
+{
+    return iota(e.len(0), -ITEM(0).i, -ITEM(0).gets());
+}
+
 #endif // RA_DO_OPT_IOTA
 
 #if RA_DO_OPT_SMALLVECTOR==1
