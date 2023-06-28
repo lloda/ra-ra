@@ -115,14 +115,21 @@ DEF_NAMED_BINARY_OP(^, std::bit_xor<>)
 DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
 #undef DEF_NAMED_BINARY_OP
 
+// FIXME bad address sanitizer in bench/bench-optimize.cc if we use std::identity for +, maybe false positive.
 #define DEF_UNARY_OP(OP)                                                \
     template <class A> requires (ra_irreducible<A>)                     \
     constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
         return map([](auto && a) { return OP a; }, std::forward<A>(a)); \
+    }                                                                   \
+    template <class A> requires (ra_reducible<A>)                       \
+    constexpr decltype(auto)                                            \
+    operator OP(A && a)                                                 \
+    {                                                                   \
+        return OP FLAT(std::forward<A>);                                \
     }
-FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
+FOR_EACH(DEF_UNARY_OP, +, -, !)
 #undef DEF_UNARY_OP
 
 // When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
@@ -133,34 +140,20 @@ FOR_EACH(DEF_UNARY_OP, !, +, -) // TODO Make + into nop.
     constexpr auto                                                      \
     OP(A && ... a)                                                      \
     {                                                                   \
-        return map([](auto && ... a) { return OP(a ...); }, std::forward<A>(a) ...); \
+        return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
     }                                                                   \
     template <class ... A> requires (ra_reducible<A ...>)               \
-    constexpr auto                                                      \
+    constexpr decltype(auto)                                            \
     OP(A && ... a)                                                      \
     {                                                                   \
-        return OP(FLAT(a) ...);                                         \
+        return OP(FLAT(std::forward<A>(a)) ...);                        \
     }
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, cos, sin)
 FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf)
 FOR_EACH(DEF_NAME_OP, max, min, abs, odd, asin, acos, atan, atan2, clamp)
 FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg, lerp)
+FOR_EACH(DEF_NAME_OP, real_part, imag_part) // return ref
 #undef DEF_NAME_OP
-
-#define DEF_NAME_OP_REF(OP)                                             \
-    using ::OP;                                                         \
-    template <class ... A> requires (ra_irreducible<A ...>)             \
-    constexpr auto OP(A && ... a)                                       \
-    {                                                                   \
-        return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
-    }                                                                   \
-    template <class ... A> requires (ra_reducible<A ...>)               \
-    constexpr decltype(auto) OP(A && ... a)                             \
-    {                                                                   \
-        return OP(FLAT(a) ...);                                         \
-    }
-FOR_EACH(DEF_NAME_OP_REF, real_part, imag_part)
-#undef DEF_NAME_OP_REF
 
 template <class T, class A>
 constexpr auto cast(A && a)
@@ -229,7 +222,7 @@ constexpr auto operator ||(A && a, B && b)
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
     template <class A, class B>                                         \
     requires (ra_reducible<A, B>)                                       \
-        constexpr auto operator OP(A && a, B && b)                      \
+    constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
     }
