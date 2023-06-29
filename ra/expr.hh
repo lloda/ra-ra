@@ -221,6 +221,9 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     }
 };
 
+template <class Op, IteratorConcept ... P>
+constexpr bool is_special_def<Expr<Op, std::tuple<P ...>>> = (is_special<P> || ...);
+
 template <class V, class ... T, int ... i>
 constexpr auto
 expr_verb(mp::int_list<i ...>, V && v, T && ... t)

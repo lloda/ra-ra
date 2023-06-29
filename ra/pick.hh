@@ -112,6 +112,9 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     }
 };
 
+template <IteratorConcept ... P>
+constexpr bool is_special_def<Pick<std::tuple<P ...>>> = (is_special<P> || ...);
+
 template <class ... P> Pick(P && ... p) -> Pick<std::tuple<P ...>>;
 
 template <class ... P>
