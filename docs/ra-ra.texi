@@ -1396,8 +1396,8 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 @subsection Standard scalar operations
 
 @code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively.
-Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{<=>}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{odd}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}, and @code{lerp}.
-Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{<=>}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}, and @code{lerp}.
+Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @code{odd}, @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
 
 For example:
 @example @c [ma110]
@@ -1772,8 +1772,8 @@ This differs from @ref{x-agree,@code{agree}} when @var{op} has non-zero argument
     agree(a, b); // -> false
     cout << (a+b) << endl; // error
 
-    agree_op(ra::wrank<1, 1>(ra::plus()), a, b); // -> true
-    cout << map(ra::wrank<1, 1>(ra::plus()), a, b) << endl; // ok
+    agree_op(ra::wrank<1, 1>(std::plus()), a, b); // -> true
+    cout << map(ra::wrank<1, 1>(std::plus()), a, b) << endl; // ok
 @end verbatim
 @end example
 @end defun
@@ -2262,7 +2262,7 @@ cout << (p + ra::TensorIndex<0>{}) << endl; // ok
 @end verbatim
 @end example
 
-@code{ptr} isn't meant to be used with STL containers, which are converted to rank-1 expressions automatically. See also @ref{x-start,@code{start}}.
+@code{ptr} isn't meant to be used with STL containers, which are converted to rank-1 expressions automatically of the right size automatically. See also @ref{x-start,@code{start}}.
 
 @end defun
 

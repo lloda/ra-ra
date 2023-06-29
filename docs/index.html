@@ -1439,8 +1439,8 @@ Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Pre
 <div class="subsection" id="Standard-scalar-operations">
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF12" href="#FOOT12"><sup>12</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>odd</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
-Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF12" href="#FOOT12"><sup>12</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
+Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <code>odd</code>, <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 </p>
 <p>For example:
 </p><div class="example">
@@ -1877,8 +1877,8 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
     agree(a, b); // -&gt; false
     cout &lt;&lt; (a+b) &lt;&lt; endl; // error
 
-    agree_op(ra::wrank&lt;1, 1&gt;(ra::plus()), a, b); // -&gt; true
-    cout &lt;&lt; map(ra::wrank&lt;1, 1&gt;(ra::plus()), a, b) &lt;&lt; endl; // ok
+    agree_op(ra::wrank&lt;1, 1&gt;(std::plus()), a, b); // -&gt; true
+    cout &lt;&lt; map(ra::wrank&lt;1, 1&gt;(std::plus()), a, b) &lt;&lt; endl; // ok
 </pre></div>
 </dd></dl>
 

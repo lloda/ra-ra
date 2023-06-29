@@ -36,13 +36,12 @@ RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
 #undef RA_IS_REAL
 
 #define FOR_FLOAT(T)                                                    \
-    constexpr T mul_conj(T const x, T const y)  { return x*y; }  \
-    constexpr T sqrm(T const x, T const y)      { return sqrm(x-y); } \
-    constexpr T dot(T const x, T const y)       { return x*y; }  \
+    constexpr T mul_conj(T const x, T const y)  { return x*y; }         \
+    constexpr T sqrm(T const x, T const y)      { return sqrm(x-y); }   \
+    constexpr T dot(T const x, T const y)       { return x*y; }         \
     constexpr T fma_conj(T const a, T const b, T const c) { return fma(a, b, c); } \
     constexpr T norm2(T const x, T const y)     { return std::abs(x-y); } \
-    constexpr T abs(T const x, T const y)       { return std::abs(x-y); } \
-    constexpr T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*abs(a, b)/den; }
+    constexpr T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
 
@@ -64,7 +63,6 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
     constexpr C dot(C const x, C const y)       { return x*y; }         \
     constexpr R norm2(C const x)                { return hypot(x.real(), x.imag()); } \
     constexpr R norm2(C const x, C const y)     { return sqrt(sqrm(x, y)); } \
-    constexpr R abs(C const x, C const y)       { return sqrt(sqrm(x, y)); } \
     inline /* constexpr */ R & real_part(C & z) { return reinterpret_cast<R *>(&z)[0]; } \
     inline /* constexpr */ R & imag_part(C & z) { return reinterpret_cast<R *>(&z)[1]; }
 FOR_FLOAT(double, std::complex<double>);
@@ -126,7 +124,7 @@ swap(RA_CPLX & a, RA_CPLX & b)
 constexpr RA_REAL
 rel_error(RA_CPLX const a, RA_CPLX const b)
 {
-    return (a==0. && b==0.) ? 0. : 2.*abs(a, b)/(abs(a)+abs(b));
+    return (a==0. && b==0.) ? 0. : 2.*norm2(a, b)/(abs(a)+abs(b));
 }
 
 #undef RA_CPLX

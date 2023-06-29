@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ek/box - Can I do View<Iota>, what does it look like?
 
-// (c) Daniel Llorens - 2018
+// (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any

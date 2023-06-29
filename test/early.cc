@@ -17,20 +17,20 @@ int main()
     tr.section("any, every rank 0");
     {
         ra::Big<int, 0> a = 99;
-        tr.test(any(a==99));
-        tr.test(every(a==99));
+        tr.test(ra::any(a==99));
+        tr.test(ra::every(a==99));
     }
     tr.section("any, every static rank");
     {
         ra::Big<int, 2> a({2, 3}, ra::_0*2 + ra::_1*10);
-        tr.test(!any(odd(a)));
-        tr.test(every(!odd(a)));
+        tr.test(!ra::any(odd(a)));
+        tr.test(ra::every(!odd(a)));
     }
     tr.section("any, every dyn rank");
     {
         ra::Big<int> a = ra::iota(9)*2;
-        tr.test(!any(odd(a)));
-        tr.test(every(!odd(a)));
+        tr.test(!ra::any(odd(a)));
+        tr.test(ra::every(!odd(a)));
     }
     return tr.summary();
 }

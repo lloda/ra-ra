@@ -56,7 +56,7 @@ void test_optimized_hodge_aux(TestRecorder & tr)
         } else if (O+1==N) {
             real S = sum(sqr(w));
 // compare with the case above, this is the sign of the (anti)commutativity of the exterior product.
-            S *= odd(O*(N-O)) ? -1 : +1;
+            S *= ra::odd(O*(N-O)) ? -1 : +1;
             tr.info("with O=N-1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, N-O, O>(u, w))
                 .test_eq(S, ra::wedge<N, N-O, O>(u, w));
         }
@@ -71,13 +71,13 @@ void test_optimized_hodge_aux(TestRecorder & tr)
             Va b(GARBAGE);
             hodgex<N, N-O>(x, b);
             tr.info("duality test with hodgex() (N ", N, " O ", O, ") -> ", u, " hodge ", x, " hodge(hodge) ", b)
-                .test_eq((odd(O*(N-O)) ? -1 : +1)*u, b);
+                .test_eq((ra::odd(O*(N-O)) ? -1 : +1)*u, b);
         }
         {
             Va a(GARBAGE);
             hodge<N, N-O>(w, a);
             tr.info("duality test with hodge()  (N ", N, " O ", O, ") -> ", u, " hodge ", w, " hodge(hodge) ", a)
-                .test_eq((odd(O*(N-O)) ? -1 : +1)*u, a);
+                .test_eq((ra::odd(O*(N-O)) ? -1 : +1)*u, a);
         }
         test_optimized_hodge_aux<N, O+1>(tr);
     }

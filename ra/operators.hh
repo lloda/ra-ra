@@ -27,9 +27,6 @@
 // globals FIXME do we really need these?
 // ---------------------------
 
-// Cf using std::abs, etc. in complex.hh - functions that need to work with scalars as well as with ra objects.
-using ra::odd, ra::every, ra::any;
-
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
 template <class A> constexpr void transpose(ra::no_arg);
 template <int A> constexpr void iter(ra::no_arg);
@@ -158,9 +155,9 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
         return OP(FLAT(std::forward<A>(a)) ...);                        \
     }
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, cos, sin)
-FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf)
-FOR_EACH(DEF_NAME_OP, max, min, abs, odd, asin, acos, atan, atan2, clamp)
-FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh, arg, lerp)
+FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf, clamp)
+FOR_EACH(DEF_NAME_OP, max, min, abs, ra::odd, asin, acos, atan, atan2, lerp, arg)
+FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh)
 FOR_EACH(DEF_NAME_OP, real_part, imag_part) // return ref
 #undef DEF_NAME_OP
 
@@ -408,11 +405,11 @@ template <class S, class T>
 constexpr auto
 gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 {
-    int const M = a.len(0);
-    int const N = b.len(1);
-    int const K = a.len(1);
+    int M = a.len(0);
+    int N = b.len(1);
+    int K = a.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty
-    auto c = with_shape<MMTYPE>({M, N}, decltype(a(0, 0)*b(0, 0))());
+    auto c = with_shape<MMTYPE>({M, N}, decltype(std::declval<S>()*std::declval<T>())());
     for (int k=0; k<K; ++k) {
         c += from(std::multiplies<>(), a(ra::all, k), b(k));
     }

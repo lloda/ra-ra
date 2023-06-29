@@ -9,6 +9,8 @@
 
 #pragma once
 #include <ranges>
+#include <array>
+#include <cstdint>
 #include "tuples.hh"
 
 
@@ -157,7 +159,7 @@ iter(A && a) { return std::forward<A>(a).template iter<cell_rank>(); }
 // Used in big.hh (selectors, etc).
 template <class A, class ... I> constexpr auto from(A && a, I && ... i);
 
-// Extended in operators.hh. TODO All users be int, then this take int.
+// Extended in operators.hh.
 constexpr bool any(bool const x) { return x; }
 constexpr bool every(bool const x) { return x; }
 constexpr bool odd(unsigned int N) { return N & 1; }
@@ -223,14 +225,6 @@ struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
     using sub = Small<T, S1, S ...>;
     using list = mp::makelist<S0, sub>;
 };
-
-} // namespace ra
-
-#include <array>
-#include <ranges>
-#include <cstdint>
-
-namespace ra {
 
 
 // --------------
