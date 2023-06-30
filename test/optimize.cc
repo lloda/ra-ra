@@ -50,7 +50,7 @@ int main()
     tr.section("operations with Iota, plus");
     {
         static_assert(ra::iota_op<ra::Scalar<int>>);
-        static_assert(ra::is_iota<ra::Iota<long>>);
+        static_assert(ra::is_iota<decltype(ra::iota(10, long(10)))>);
         auto test = [&tr](auto && org)
             {
                 auto i = ra::iota(5, org);

@@ -45,25 +45,22 @@ int main()
         check_selection_shortcuts(Ureal<2>({4, 4}, ra::_0-ra::_1));
         check_selection_shortcuts(Ureal<>({4, 4}, ra::_0-ra::_1));
     }
-    tr.section("Iota<int> or Iota<ra::dim_t> are both beatable");
+    tr.section("Iota<T> is beatable for any integral T");
     {
         Ureal<2> a({4, 4}, 0.);
+        auto test = [&](auto org)
         {
-            auto i = ra::iota<int>(2, 1);
+            auto i = ra::iota(2, org);
+            static_assert(std::is_same_v<decltype(i.i), decltype(org)>);
             auto b = a(i);
             tr.test_eq(2, b.dimv[0].len);
             tr.test_eq(4, b.dimv[1].len);
             tr.test_eq(4, b.dimv[0].step);
             tr.test_eq(1, b.dimv[1].step);
-        }
-        {
-            auto i = ra::iota<ra::dim_t>(2, 1);
-            auto b = a(i);
-            tr.test_eq(2, b.dimv[0].len);
-            tr.test_eq(4, b.dimv[1].len);
-            tr.test_eq(4, b.dimv[0].step);
-            tr.test_eq(1, b.dimv[1].step);
-        }
+        };
+        test(int(1));
+        test(int16_t(1));
+        test(ra::dim_t(1));
     }
     tr.section("trivial case");
     {

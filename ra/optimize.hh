@@ -14,12 +14,13 @@ namespace ra {
 
 template <class E> constexpr decltype(auto) optimize(E && e) { return std::forward<E>(e); }
 
-// TODO need something to handle the & variants...
-#define ITEM(i) std::get<(i)>(e.t)
-
+// FIXME only reduces iota exprs as op'ed on in operators.hh, not tree that is built directly, as in WithLen.
 #if RA_DO_OPT_IOTA==1
 // TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
 template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X>>::is_integer;
+
+// TODO need something to handle the & variants...
+#define ITEM(i) std::get<(i)>(e.t)
 
 // --------------
 // plus

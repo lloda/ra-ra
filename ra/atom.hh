@@ -252,75 +252,78 @@ vector(V && v)
     }
 }
 
-// Sequence and IteratorConcept for same. FIXME The sequence type should really be separate. For example, we can't represent a ct origin atm, because i is used to implement the IteratorConcept interface.
-template <class T, int w=0, dim_t N=DIM_ANY, dim_t S=DIM_ANY>
+// Sequence and IteratorConcept for same.
+// FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
+template <int w, class O, class N, class S>
 struct Iota
 {
+    constexpr static dim_t nn = [] { if constexpr (mp::is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
+    constexpr static dim_t ss = [] { if constexpr (mp::is_constant<S>) { return S::value; } else { return DIM_ANY; } }();
+
     static_assert(w>=0);
-    static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
+    static_assert(mp::is_constant<N> || 0==rank_s<N>());
+    static_assert(mp::is_constant<S> || 0==rank_s<S>());
+    static_assert(nn>=0 || nn==DIM_BAD || (!mp::is_constant<N> && nn==DIM_ANY)); // forbid N dim_c<DIM_ANY>
 
-    using ntype = std::conditional_t<N==DIM_ANY, dim_t, mp::int_c<N>>;
-    using stype = std::conditional_t<S==DIM_ANY, T, mp::int_c<S>>;
+    O i = {};
+    [[no_unique_address]] N const n = {};
+    [[no_unique_address]] S const s = {};
 
-    T i = 0;
-    [[no_unique_address]] ntype const n = {};
-    [[no_unique_address]] stype const s = {};
-
-    constexpr static T gets() requires (S!=DIM_ANY) { return S; }
-    constexpr T gets() const requires (S==DIM_ANY) { return s; }
-    constexpr decltype(auto) set(T const & ii) { i = ii; return *this; };
+    constexpr static O gets() requires (mp::is_constant<S>) { return ss; }
+    constexpr O gets() const requires (!mp::is_constant<S>) { return s; }
+    constexpr decltype(auto) set(O const & ii) { i = ii; return *this; };
 
     struct Flat
     {
-        T i;
-        stype s;
-        constexpr void operator+=(dim_t d) { i += T(d)*T(s); }
+        O i;
+        S s;
+        constexpr void operator+=(dim_t d) { i += O(d)*O(s); }
         constexpr auto operator*() const { return i; }
     };
 
     constexpr static rank_t rank_s() { return w+1; };
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis", k); return N; }
-    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return N; }
-    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return n; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis", k); return k==w ? nn : DIM_BAD; }
+    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return k==w ? nn : DIM_BAD; }
+    constexpr dim_t len(int k) const requires (nn==DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return k==w ? n : DIM_BAD; }
 
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { i += T(step(k) * d) * T(s); }
+    constexpr void adv(rank_t k, dim_t d) { i += O(step(k) * d) * O(s); }
     constexpr auto flat() const { return Flat { i, s }; }
-    constexpr auto at(auto && j) const { return i + T(j[w])*T(s); }
+    constexpr auto at(auto && j) const { return i + O(j[w])*O(s); }
 };
 
-template <int w> using TensorIndex = Iota<dim_t, w, DIM_BAD, 1>;
+template <int w> using TensorIndex = Iota<w, dim_t, dim_c<DIM_BAD>, dim_c<1>>;
 
-#define DEF_TENSORINDEX(w) constexpr TensorIndex<w> JOIN(_, w) {};
+template <class T>
+constexpr auto
+default_one()
+{
+    if constexpr (std::is_integral_v<T>) {
+        return T(1);
+    } else if constexpr (mp::is_constant<T>) {
+        static_assert(1==T::value);
+        return T {};
+    }
+}
+
+template <int w=0, class O=dim_t, class N=dim_c<DIM_BAD>, class S=dim_c<1>>
+constexpr auto
+iota(N && n = N {}, O && org = 0, S && s = default_one<S>())
+{
+    if constexpr (std::is_integral_v<N>) {
+        RA_CHECK(n>=0, "Bad iota length ", n);
+    }
+    using OO = std::conditional_t<mp::is_constant<std::decay_t<O>> || is_scalar<std::decay_t<O>>, std::decay_t<O>, O>;
+    using NN = std::conditional_t<mp::is_constant<std::decay_t<N>> || is_scalar<std::decay_t<N>>, std::decay_t<N>, N>;
+    using SS = std::conditional_t<mp::is_constant<std::decay_t<S>> || is_scalar<std::decay_t<S>>, std::decay_t<S>, S>;
+    return Iota<w, OO, NN, SS> { std::forward<O>(org), std::forward<N>(n), std::forward<S>(s) };
+}
+
+#define DEF_TENSORINDEX(w) constexpr TensorIndex<w> JOIN(_, w);
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
-
-template <dim_t N=DIM_BAD, class T=dim_t, dim_t S=1>
-constexpr auto
-iota(dim_c<N> n=dim_c<N> {}, T org=0, dim_c<S> s=dim_c<S> {})
-{
-    static_assert(DIM_BAD==N || N>=0);
-    return Iota<T, 0, N, S> { org };
-}
-
-template <class T=dim_t>
-constexpr auto
-iota(dim_t len, T org=0)
-{
-    RA_CHECK(len>=0, "Bad iota length ", len);
-    return Iota<T, 0, DIM_ANY, 1> { org, len };
-}
-
-template <class O=dim_t, class S=O>
-constexpr auto
-iota(dim_t len, O org, S step)
-{
-    RA_CHECK(len>=0, "Bad iota length ", len);
-    using T = std::common_type_t<O, S>;
-    return Iota<T> { T(org), len, T(step) };
-}
 
 
 // --------------
@@ -331,10 +334,11 @@ template <class T>
 constexpr void
 start(T && t) { static_assert(mp::always_false<T>, "Type cannot be start()ed."); }
 
-// undefined len iota (ti) is excluded from optimization and beating to allow e.g. B = A(... ti ...). FIXME find a way?
-template <class I> constexpr bool is_iota_ = false;
-template <class T, dim_t N, dim_t S> requires (DIM_BAD!=N) constexpr bool is_iota_<Iota<T, 0, N, S>> = true;
-RA_IS_DEF(is_iota, (is_iota_<A>))
+// undefined len iota (ti) is excluded from optimization and beating to allow e.g. B = A(... ti ...).
+// FIXME find a way?
+RA_IS_DEF(is_iota, false)
+template <class O, class N, class S>
+constexpr bool is_iota_def<Iota<0, O, N, S>> = (DIM_BAD != Iota<0, O, N, S>::nn);
 
 template <class T> requires (is_foreign_vector<T>)
 constexpr auto

@@ -642,8 +642,8 @@ struct axes_list_indices
 
     using dst = mp::iota<(talmax>=0 ? (1+talmax) : 0)>;
     using type = mp::map<dst_indices, dst>;
-    using lens =  mp::map<dst_len, dst>;
-    using steps =  mp::map<dst_step, dst>;
+    using lens = mp::map<dst_len, dst>;
+    using steps = mp::map<dst_step, dst>;
 };
 
 template <int ... Iarg, class A>

@@ -9,7 +9,7 @@
 
 // [X] if constexpr (no len in three) then don't rt-walk the tree, just identity
 // [X] support Pick like Expr
-// [ ] handle iota with len (meaning also expr!) members
+// [X] handle iota with len (meaning also expr!) members
 // [ ] plug in view.operator() etc.
 
 #include "ra/test.hh"
@@ -22,7 +22,11 @@ using std::cout, std::endl, std::flush;
 
 namespace ra {
 
-// Exists solely to be rewritten, never to be ply()ed
+
+// ---------------------
+// magic scalar Len exists solely to be rewritten.
+// ---------------------
+
 struct Len
 {
     constexpr static rank_t rank_s() { return 0; }
@@ -40,24 +44,27 @@ struct Len
 static_assert(IteratorConcept<Len>);
 constexpr Len len {};
 
-// Don't attempt to reduce len+len etc.
+// don't reduce len+len etc.
 template <> constexpr bool is_special_def<Len> = true;
 
-RA_IS_DEF(has_len, false)
+// ---------------------
+// replace Len in expr tree. Only use on decayed types!
+// ---------------------
 
-template <>
-constexpr bool has_len_def<Len> = true;
+template <class T>
+constexpr bool has_len = std::is_same_v<T, Len>;
 
 template <IteratorConcept ... P>
-constexpr bool has_len_def<Pick<std::tuple<P ...>>> = (has_len<P> || ...);
+constexpr bool has_len<Pick<std::tuple<P ...>>> = (has_len<std::decay_t<P>> || ...);
 
 template <class Op, IteratorConcept ... P>
-constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
+constexpr bool has_len<Expr<Op, std::tuple<P ...>>> = (has_len<std::decay_t<P>> || ...);
 
 template <class E_>
-struct WithSize
+struct WithLen
 {
-    static_assert(IteratorConcept<E_>);
+// constant & scalar are allowed for Iota args.
+    static_assert(IteratorConcept<E_> || mp::is_constant<E_> || is_scalar<E_>);
     template <class E> constexpr static decltype(auto)
     f(dim_t len, E && e)
     {
@@ -66,7 +73,7 @@ struct WithSize
 };
 
 template <>
-struct WithSize<Len>
+struct WithLen<Len>
 {
     template <class E> constexpr static decltype(auto)
     f(dim_t len, E && e)
@@ -76,32 +83,56 @@ struct WithSize<Len>
 };
 
 template <class Op, IteratorConcept ... P, int ... I>
-requires (has_len<P> || ...)
-struct WithSize<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
+requires (has_len<std::decay_t<P>> || ...)
+struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
     template <class E> constexpr static decltype(auto)
     f(dim_t len, E && e)
     {
-        return expr(std::forward<E>(e).op, WithSize<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
+        return expr(std::forward<E>(e).op, WithLen<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
     }
 };
 
 template <IteratorConcept ... P, int ... I>
-requires (has_len<P> || ...)
-struct WithSize<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
+requires (has_len<std::decay_t<P>> || ...)
+struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
     template <class E> constexpr static decltype(auto)
     f(dim_t len, E && e)
     {
-        return pick(WithSize<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
+        return pick(WithLen<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
+    }
+};
+
+template <int w, class O, class N, class S>
+requires (has_len<std::decay_t<O>> || has_len<std::decay_t<O>> || has_len<std::decay_t<S>>)
+struct WithLen<Iota<w, O, N, S>>
+{
+// usable iota types must be either is_constant or is_scalar.
+    template <class T>
+    constexpr static decltype(auto) coerce(T && t)
+    {
+        if constexpr (IteratorConcept<T>) {
+            return FLAT(t);
+        } else {
+            return std::forward<T>(t);
+        }
+    }
+
+    template <class E> constexpr static decltype(auto)
+    f(dim_t len, E && e)
+    {
+        return iota<w>(coerce(WithLen<std::decay_t<N>>::f(len, std::forward<E>(e).n)),
+                       coerce(WithLen<std::decay_t<O>>::f(len, std::forward<E>(e).i)),
+                       coerce(WithLen<std::decay_t<S>>::f(len, std::forward<E>(e).s)));
     }
 };
 
 template <class E>
 constexpr decltype(auto)
-with_size(dim_t len, E && e)
+with_len(dim_t len, E && e)
 {
-    return WithSize<std::decay_t<E>>::f(len, std::forward<E>(e));
+    return WithLen<std::decay_t<E>>::f(len, std::forward<E>(e));
 }
 
 } // namespace ra
@@ -130,18 +161,30 @@ int main()
     {
         tr.test_eq(0, (ra::len + ra::len).rank());
         tr.test_eq(0, ra::map(std::plus(), ra::len, ra::len).rank());
-        tr.test_eq(3, with_size(5, ra::scalar(3)));
-        tr.test_eq(5, with_size(5, ra::len));
-        tr.test_eq(10, with_size(5, ra::len + ra::len));
-        tr.test_eq(20, ra::with_size(5, (ra::len + ra::len) + (ra::len + ra::len)));
-        tr.test_eq(100, ra::with_size(5, ra::map(std::plus(), 99, 1)));
-        tr.test_eq(10, ra::with_size(5, ra::map(std::plus(), ra::len, ra::len)));
-        tr.test_eq(104, with_size(5, ra::map(std::plus(), 99, ra::len)));
-        tr.test_eq(10, with_size(5, ra::map(std::plus(), ra::len, ra::len)));
-        tr.test_eq(19, with_size(8, ra::map(std::plus(), ra::len, ra::map(std::plus(), 3, ra::len))));
-        tr.test_eq(ra::iota(10, 11), with_size(8, ra::map(std::plus(), ra::iota(10), ra::map(std::plus(), 3, ra::len))));
-        tr.test_eq(ra::iota(10, 3), with_size(8, ra::map(std::plus(), ra::iota(10), 3)));
-        tr.test_eq(11, sum(with_size(4, ra::pick(std::array {0, 1, 0}, ra::len, 3))));
+        tr.test_eq(3, with_len(5, ra::scalar(3)));
+        tr.test_eq(5, with_len(5, ra::len));
+        tr.test_eq(10, with_len(5, ra::len + ra::len));
+        tr.test_eq(20, ra::with_len(5, (ra::len + ra::len) + (ra::len + ra::len)));
+        tr.test_eq(100, ra::with_len(5, ra::map(std::plus(), 99, 1)));
+        tr.test_eq(10, ra::with_len(5, ra::map(std::plus(), ra::len, ra::len)));
+        tr.test_eq(104, ra::with_len(5, ra::map(std::plus(), 99, ra::len)));
+        tr.test_eq(10, ra::with_len(5, ra::map(std::plus(), ra::len, ra::len)));
+        tr.test_eq(19, ra::with_len(8, ra::map(std::plus(), ra::len, ra::map(std::plus(), 3, ra::len))));
+        tr.test_eq(ra::iota(10, 11), with_len(8, ra::map(std::plus(), ra::iota(10), ra::map(std::plus(), 3, ra::len))));
+        tr.test_eq(ra::iota(10, 3), with_len(8, ra::map(std::plus(), ra::iota(10), 3)));
+        tr.test_eq(11, sum(with_len(4, ra::pick(std::array {0, 1, 0}, ra::len, 3))));
+    }
+    tr.section("constexpr");
+    {
+        constexpr int val = sum(with_len(4, ra::pick(std::array {0, 1, 0}, ra::len, 3)));
+        tr.test_eq(11, val);
+    }
+    tr.section("len in iota");
+    {
+        tr.test_eq(ra::iota(5, 20), with_len(10, ra::iota(5, ra::len+ra::len)));
+        tr.test_eq(ra::iota(10, 20), with_len(10, ra::iota(ra::len, ra::len+ra::len)));
+        tr.test_eq(ra::iota(11, 20), with_len(10, ra::iota(ra::len+1, ra::len+ra::len)));
+        tr.test_eq(ra::iota(10, 20, 2), with_len(10, ra::iota(ra::len, ra::len+ra::len, ra::len/5)));
     }
     return tr.summary();
 }

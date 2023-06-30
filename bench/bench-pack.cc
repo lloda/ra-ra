@@ -29,7 +29,7 @@ int main()
             Benchmark bm { reps, 3 };
             auto bv = bm.run([&]() { f(a, size); });
             tr.info(std::setw(5), std::fixed, bm.avg(bv)/size/1e-9, " ns [", bm.stddev(bv)/size/1e-9 ,"] ", tag)
-                .test_eq(ra::pack<complex>(ra::iota<real>(size), size-ra::iota<real>(size)), a);
+                .test_eq(ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.)), a);
         };
 
     auto f_raw = [](auto & a, int size)
@@ -53,11 +53,11 @@ int main()
         };
     auto f_pack = [](auto & a, int size)
         {
-            a = ra::pack<complex>(ra::iota<real>(size), size-ra::iota<real>(size));
+            a = ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.));
         };
     auto f_xI = [](auto & a, int size)
         {
-            a = ra::iota<real>(size) + xI(size-ra::iota<real>(size));
+            a = ra::iota(size, 0.) + xI(size-ra::iota(size, 0.));
         };
 
     auto bench_all = [&](auto A_, int size, int n)
