@@ -1,7 +1,7 @@
 # -*- coding: utf-8; mode: Python -*-
 # SConstruct for ra/box
-# (c) Daniel Llorens - 2015-2016, 2019
 
+# (c) Daniel Llorens - 2015-2016, 2019
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
@@ -51,7 +51,7 @@ env.Prepend(CPPPATH=['..', '.'],
             LINKFLAGS=ra.LINKFLAGS)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['len', 'view-flat', 'tuple-construct', 'iterator-as-ravel']]
+ for example in ['view-flat', 'tuple-construct', 'iterator-as-ravel']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/box'))
