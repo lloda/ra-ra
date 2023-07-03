@@ -14,7 +14,7 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 template <int i> using UU = decltype(std::declval<ra::Unique<double, i>>().iter());
-using ra::mp::int_c;
+using ra::int_c;
 
 int
 main()

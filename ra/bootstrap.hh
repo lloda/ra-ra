@@ -47,35 +47,12 @@ constexpr rank_t RANK_ANY = -1944444444;
 constexpr dim_t DIM_BAD = -1988888888; // undefined
 constexpr rank_t RANK_BAD = -1988888888;
 
-constexpr dim_t
-dim_prod(dim_t a, dim_t b)
-{
-    return (a==DIM_ANY) ? DIM_ANY : ((b==DIM_ANY) ? DIM_ANY : a*b);
-}
+constexpr dim_t dim_prod(dim_t a, dim_t b) { return (DIM_ANY==a || DIM_ANY==b) ? DIM_ANY : a*b; }
+constexpr rank_t rank_sum(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a+b; }
+constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a-b; }
 
-constexpr rank_t
-rank_sum(rank_t a, rank_t b)
-{
-    return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a+b);
-}
-
-constexpr rank_t
-rank_diff(rank_t a, rank_t b)
-{
-    return (a==RANK_ANY) ? RANK_ANY : ((b==RANK_ANY) ? RANK_ANY : a-b);
-}
-
-constexpr bool
-inside(dim_t i, dim_t b)
-{
-    return i>=0 && i<b;
-}
-
-constexpr bool
-inside(dim_t i, dim_t a, dim_t b)
-{
-    return i>=a && i<b;
-}
+constexpr bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
+constexpr bool inside(dim_t i, dim_t a, dim_t b) { return i>=a && i<b; }
 
 
 // ---------------------
@@ -131,7 +108,7 @@ struct default_steps_<std::tuple<t0, t1, ti ...>>
 {
     using rest = typename default_steps_<std::tuple<t1, ti ...>>::type;
     static int const step0 = t1::value * mp::first<rest>::value;
-    using type = mp::cons<mp::int_c<step0>, rest>;
+    using type = mp::cons<int_c<step0>, rest>;
 };
 
 template <class S> using default_steps = typename default_steps_<S>::type;

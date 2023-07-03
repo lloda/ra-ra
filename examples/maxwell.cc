@@ -25,7 +25,7 @@ template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 constexpr auto PI = std::numbers::pi_v<double>;
 
 using std::cout, std::endl, ra::TestRecorder;
-using ra::mp::int_c;
+using ra::int_c;
 
 int main()
 {

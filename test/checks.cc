@@ -38,7 +38,7 @@ struct ra_error: public std::exception
 #include "ra/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
-using ra::mp::int_c, ra::mp::int_list;
+using ra::int_c, ra::mp::int_list;
 
 int main()
 {
@@ -68,7 +68,7 @@ int main()
             int p[] = {10, 20, 30};
             tr.test_eq(p[2], ra::ptr(p).at(std::array {2}));
             x = 1;
-            tr.test_eq(p[2], ra::ptr(p, ra::mp::int_c<2>{}).at(std::array {2}));
+            tr.test_eq(p[2], ra::ptr(p, ra::int_c<2>{}).at(std::array {2}));
             x = 2;
         } catch (ra_error & e) {
             x = x+10;

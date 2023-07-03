@@ -71,11 +71,11 @@ int main()
                                       for_each([&o](auto && a) { o << a << "|"; }, iter<decltype(cr)::value>(a));
                                       tr.test_eq(ra::scalar(ref), ra::scalar(o.str()));
                                   };
-                      test("1|2|3|4|5|6|", ra::mp::int_c<-2>());
-                      test("1 2 3|4 5 6|", ra::mp::int_c<-1>());
-                      test("1|2|3|4|5|6|", ra::mp::int_c<0>());
-                      test("1 2 3|4 5 6|", ra::mp::int_c<1>());
-                      test("1 2 3\n4 5 6|", ra::mp::int_c<2>());
+                      test("1|2|3|4|5|6|", ra::int_c<-2>());
+                      test("1 2 3|4 5 6|", ra::int_c<-1>());
+                      test("1|2|3|4|5|6|", ra::int_c<0>());
+                      test("1 2 3|4 5 6|", ra::int_c<1>());
+                      test("1 2 3\n4 5 6|", ra::int_c<2>());
                   };
             tr.section("default steps");
             test_over(ra::Small<int, 2, 3> {{1, 2, 3}, {4, 5, 6}});

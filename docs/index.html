@@ -395,7 +395,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 
 <p><code>ra::</code> is a header only library with no dependencies other than the standard library, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
 </p>
-<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11</b> or with <samp>-std=c++20</samp>. Some C++23 features are available with <samp>-std=c++2b</samp> on <b>gcc 12</b> or higher. Check the top README.md for more up-to-date information.
+<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11</b> or with <samp>-std=c++20</samp>. Some C++23 features are available with <samp>-std=c++2b</samp>. Check the top README.md for more up-to-date information.
 </p>
 <p>Here is a minimal program<a id="DOCF4" href="#FOOT4"><sup>4</sup></a>:
 </p>
@@ -415,23 +415,20 @@ int main()
    d|d
 </pre></div>
 
-<p>The following headers are optional.
+<p>The following headers are <em>not</em> included by default:
 </p><ul>
-<li> <code>&quot;ra/dual.hh&quot;</code> (<em>not</em> included by default): A dual number type for simple uses of automatic differentiation.
+<li> <code>&quot;ra/dual.hh&quot;</code>: A dual number type for simple uses of automatic differentiation.
 
-</li><li> <code>&quot;ra/mpdebug.hh&quot;</code> (<em>not</em> included by default): Functions to help in debugging template tangles.
+</li><li> <code>&quot;ra/mpdebug.hh&quot;</code>: Functions to help in debugging template tangles.
 
-</li><li> <code>&quot;ra/test.hh&quot;</code>, <code>&quot;ra/bench.hh&quot;</code> (<em>not</em> included by default): Test and benchmarking libraries used by <code>ra::</code> itself.
-
-</li><li> <code>&quot;ra/complex.hh&quot;</code> (<em>included</em> by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
+</li><li> <code>&quot;ra/test.hh&quot;</code>, <code>&quot;ra/bench.hh&quot;</code>: Used by the test and benchmark suites.
 </li></ul>
 
-<p>The header <code>&quot;ra/bootstrap.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. All other headers are for internal use by <code>ra::</code><a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
+<p>The header <code>&quot;ra/bootstrap.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/bootstrap.hh&quot;</code> before the rest of <code>ra::</code>.
+</p>
+<p>All other headers are for internal use by <code>ra::</code><a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
 </p>
 <img src="headers.png" alt="headers">
-
-
-
 
 <span id="index-container"></span>
 <hr>
@@ -443,7 +440,7 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 </div>
 <span id="Containers-and-views-1"></span><h3 class="section">2.2 Containers and views</h3>
 
-<p><code>ra::</code> offers two kinds of data objects. The first kind, the <em>container</em>, owns its data. Creating a container requires memory and destroying it causes that memory to be freed.
+<p><code>ra::</code> offers two kinds of data objects. The first kind, the <em>container</em>, owns its data. Creating a container uses up memory and destroying it causes that memory to be freed.
 </p>
 <span id="index-compile_002dtime"></span>
 <span id="index-ct"></span>
@@ -2329,7 +2326,7 @@ v4 += p; // error checked by ra::, shape clash (4) += (3)
 cout &lt;&lt; (p + ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok
 </pre></div>
 
-<p><code>ptr</code> isn&rsquo;t meant to be used with STL containers, which are converted to rank-1 expressions automatically. See also <a href="#x_002dstart"><code>start</code></a>.
+<p><code>ptr</code> isn&rsquo;t meant to be used with STL containers, which are converted to rank-1 expressions automatically of the right size automatically. See also <a href="#x_002dstart"><code>start</code></a>.
 </p>
 </dd></dl>
 

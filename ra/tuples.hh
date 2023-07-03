@@ -13,7 +13,7 @@
 #include <algorithm>
 #include "macros.hh"
 
-namespace ra::mp {
+namespace ra {
 
 template <class T> constexpr bool is_constant = false;
 template <class T, T N> constexpr bool is_constant<std::integral_constant<T, N>> = true;
@@ -21,7 +21,11 @@ template <class T, T N> constexpr bool is_constant<std::integral_constant<T, N>>
 template <int V> using int_c = std::integral_constant<int, V>;
 template <bool V> using bool_c = std::integral_constant<bool, V>;
 
-template <class ... T> constexpr bool always_false = false;
+} // namespace ra
+
+namespace ra::mp {
+
+template <class ... T> constexpr bool always_false = false; // p2593r0
 
 
 // -------------------------

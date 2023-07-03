@@ -14,6 +14,8 @@
 #include <limits>
 #include <cmath>
 
+// FIXME expode() in big.hh depend on std::complex, operators.hh uses the function defs. Ideally this should be opt in.
+
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
 // besides, gcc still leaks cmath functions into the global namespace, so e.g. sqrt is C double sqrt(double) instead of the overload set.
 // cf http://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/

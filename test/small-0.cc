@@ -17,7 +17,7 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using complex = std::complex<double>;
-using ra::mp::int_list, ra::mp::int_c;
+using ra::mp::int_list, ra::int_c;
 
 struct test_type { int a; };
 

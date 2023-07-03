@@ -214,7 +214,7 @@ struct Ptr
     static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
 
     I i;
-    [[no_unique_address]] std::conditional_t<N==DIM_ANY, dim_t, mp::int_c<N>> n;
+    [[no_unique_address]] std::conditional_t<N==DIM_ANY, dim_t, int_c<N>> n;
 
     constexpr Ptr(I i) requires (N!=DIM_ANY): i(i) {}
     constexpr Ptr(I i, dim_t n) requires (N==DIM_ANY): i(i), n(n) {}
@@ -239,7 +239,7 @@ struct Ptr
 };
 
 template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
-template <class I, int N> constexpr auto ptr(I i, mp::int_c<N>) { return Ptr<I, N> { i }; }
+template <class I, int N> constexpr auto ptr(I i, int_c<N>) { return Ptr<I, N> { i }; }
 template <class I> constexpr auto ptr(I i, dim_t n) { return Ptr<I, DIM_ANY> { i, n }; }
 
 template <std::ranges::random_access_range V> constexpr auto
@@ -248,7 +248,7 @@ vector(V && v)
     if constexpr (constexpr dim_t s = size_s<V>(); DIM_ANY==s) {
         return ptr(std::begin(std::forward<V>(v)), std::ssize(v));
     } else {
-        return ptr(std::begin(std::forward<V>(v)), mp::int_c<s> {});
+        return ptr(std::begin(std::forward<V>(v)), int_c<s> {});
     }
 }
 
@@ -257,20 +257,20 @@ vector(V && v)
 template <int w, class O, class N, class S>
 struct Iota
 {
-    constexpr static dim_t nn = [] { if constexpr (mp::is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
-    constexpr static dim_t ss = [] { if constexpr (mp::is_constant<S>) { return S::value; } else { return DIM_ANY; } }();
+    constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
+    constexpr static dim_t ss = [] { if constexpr (is_constant<S>) { return S::value; } else { return DIM_ANY; } }();
 
     static_assert(w>=0);
-    static_assert(mp::is_constant<N> || 0==rank_s<N>());
-    static_assert(mp::is_constant<S> || 0==rank_s<S>());
-    static_assert(nn>=0 || nn==DIM_BAD || (!mp::is_constant<N> && nn==DIM_ANY)); // forbid N dim_c<DIM_ANY>
+    static_assert(is_constant<N> || 0==rank_s<N>());
+    static_assert(is_constant<S> || 0==rank_s<S>());
+    static_assert(nn>=0 || nn==DIM_BAD || (!is_constant<N> && nn==DIM_ANY)); // forbid N dim_c<DIM_ANY>
 
     O i = {};
     [[no_unique_address]] N const n = {};
     [[no_unique_address]] S const s = {};
 
-    constexpr static O gets() requires (mp::is_constant<S>) { return ss; }
-    constexpr O gets() const requires (!mp::is_constant<S>) { return s; }
+    constexpr static O gets() requires (is_constant<S>) { return ss; }
+    constexpr O gets() const requires (!is_constant<S>) { return s; }
     constexpr decltype(auto) set(O const & ii) { i = ii; return *this; };
 
     struct Flat
@@ -302,7 +302,7 @@ default_one()
 {
     if constexpr (std::is_integral_v<T>) {
         return T(1);
-    } else if constexpr (mp::is_constant<T>) {
+    } else if constexpr (is_constant<T>) {
         static_assert(1==T::value);
         return T {};
     }
@@ -315,9 +315,9 @@ iota(N && n = N {}, O && org = 0, S && s = default_one<S>())
     if constexpr (std::is_integral_v<N>) {
         RA_CHECK(n>=0, "Bad iota length ", n);
     }
-    using OO = std::conditional_t<mp::is_constant<std::decay_t<O>> || is_scalar<std::decay_t<O>>, std::decay_t<O>, O>;
-    using NN = std::conditional_t<mp::is_constant<std::decay_t<N>> || is_scalar<std::decay_t<N>>, std::decay_t<N>, N>;
-    using SS = std::conditional_t<mp::is_constant<std::decay_t<S>> || is_scalar<std::decay_t<S>>, std::decay_t<S>, S>;
+    using OO = std::conditional_t<is_constant<std::decay_t<O>> || is_scalar<std::decay_t<O>>, std::decay_t<O>, O>;
+    using NN = std::conditional_t<is_constant<std::decay_t<N>> || is_scalar<std::decay_t<N>>, std::decay_t<N>, N>;
+    using SS = std::conditional_t<is_constant<std::decay_t<S>> || is_scalar<std::decay_t<S>>, std::decay_t<S>, S>;
     return Iota<w, OO, NN, SS> { std::forward<O>(org), std::forward<N>(n), std::forward<S>(s) };
 }
 

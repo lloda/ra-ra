@@ -8,10 +8,9 @@
 // later version.
 
 #pragma once
-#include "pick.hh"
-#include "view-ops.hh"
+#include "big.hh"
 #include "optimize.hh"
-#include "complex.hh" // optional
+#include "complex.hh"
 
 #ifndef RA_DO_OPT
   #define RA_DO_OPT 1 // enabled by default
@@ -52,12 +51,12 @@ from_partial(Op && op)
     if constexpr (drop==mp::len<II>) {
         return std::forward<Op>(op);
     } else {
-        return wrank(mp::append<mp::makelist<drop, mp::int_c<0>>, mp::drop<II, drop>> {},
+        return wrank(mp::append<mp::makelist<drop, int_c<0>>, mp::drop<II, drop>> {},
                      from_partial<II, drop+1>(std::forward<Op>(op)));
     }
 }
 
-template <class I> using index_rank = mp::int_c<rank_s<I>()>;
+template <class I> using index_rank = int_c<rank_s<I>()>;
 
 // TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
 template <class A, class ... I>

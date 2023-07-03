@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Special object len
+// ra-ra - Special object len.
 
 // (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -15,7 +15,7 @@ namespace ra {
 
 
 // ---------------------
-// never ply(), exists solely to be rewritten.
+// never ply(), solely to be rewritten.
 // ---------------------
 
 struct Len
@@ -32,11 +32,10 @@ struct Len
     constexpr dim_t operator*() const { std::abort(); }
 };
 
-// enable operators to build expr trees.
-static_assert(IteratorConcept<Len>);
 constexpr Len len {};
 
-// don't reduce len+len etc.
+// let operators build expr trees.
+static_assert(IteratorConcept<Len>);
 template <> constexpr bool is_special_def<Len> = true;
 
 // ---------------------
@@ -56,7 +55,7 @@ template <class E_>
 struct WithLen
 {
 // constant & scalar are allowed for Iota args.
-    static_assert(IteratorConcept<E_> || mp::is_constant<E_> || is_scalar<E_>);
+    static_assert(IteratorConcept<E_> || is_constant<E_> || is_scalar<E_>);
     template <class E> constexpr static decltype(auto)
     f(dim_t len, E && e)
     {
@@ -128,5 +127,3 @@ with_len(dim_t len, E && e)
 }
 
 } // namespace ra
-
-#undef RA_OPT

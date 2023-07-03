@@ -130,7 +130,7 @@ template <class I> requires (is_iota<I>)
 struct is_beatable_def<I>
 {
     using T = decltype(I::i);
-    constexpr static bool value = is_scalar_index<T> && (DIM_BAD != I::len_s(0));
+    constexpr static bool value = std::is_integral_v<T> && (DIM_BAD != I::len_s(0));
     constexpr static int skip_src = 1;
     constexpr static int skip = 1;
     constexpr static bool static_p = false; // FIXME see Iota with ct N, S
@@ -150,7 +150,7 @@ struct is_beatable_def<dots_t<n>>
 template <int n>
 struct is_beatable_def<insert_t<n>>
 {
-    static_assert(n>=0, "bad count for dots_n");
+    static_assert(n>=0, "bad count for insert_n");
     constexpr static bool value = (n>=0);
     constexpr static int skip_src = 0;
     constexpr static int skip = n;
@@ -290,37 +290,6 @@ struct FilterDims<lens_, steps_, I0, I ...>
     using steps = mp::append<mp::take<steps_, s>, typename next::steps>;
 };
 
-template <dim_t len0, dim_t step0>
-constexpr dim_t
-select(dim_t i0)
-{
-    RA_CHECK(inside(i0, len0));
-    return i0*step0;
-};
-
-template <dim_t len0, dim_t step0, int n>
-constexpr dim_t
-select(dots_t<n> i0)
-{
-    return 0;
-}
-
-template <class lens, class steps>
-constexpr dim_t
-select_loop()
-{
-    return 0;
-}
-
-template <class lens, class steps, class I0, class ... I>
-constexpr dim_t
-select_loop(I0 i0, I ... i)
-{
-    constexpr int s_src = is_beatable<I0>::skip_src;
-    return select<mp::first<lens>::value, mp::first<steps>::value>(i0)
-        + select_loop<mp::drop<lens, s_src>, mp::drop<steps, s_src>>(i ...);
-}
-
 template <template <class ...> class Child_, class T_, class lens_, class steps_>
 struct SmallBase
 {
@@ -329,7 +298,7 @@ struct SmallBase
     using T = T_;
 
     using Child = Child_<T, lens, steps>;
-    template <class TT> using BadDimension = mp::int_c<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
+    template <class TT> using BadDimension = int_c<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps."); // TODO static check on steps.
 
@@ -347,23 +316,51 @@ struct SmallBase
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = (size()==1); // rank()==0 || (rank()==1 && size()==1);
 
+    template <dim_t len0, dim_t step0>
+    constexpr static dim_t
+    select(dim_t i0)
+    {
+        RA_CHECK(inside(i0, len0), "i0 ", i0, " len0 ", len0);
+        return i0*step0;
+    };
+
+    template <dim_t len0, dim_t step0, int n>
+    constexpr static dim_t
+    select(dots_t<n> i0)
+    {
+        return 0;
+    }
+
+    template <class lens, class steps>
+    constexpr static dim_t
+    select_loop()
+    {
+        return 0;
+    }
+
+    template <class lens, class steps, class I0, class ... I>
+    constexpr static dim_t
+    select_loop(I0 i0, I ... i)
+    {
+        constexpr int s_src = is_beatable<I0>::skip_src;
+        return select<mp::first<lens>::value, mp::first<steps>::value>(i0)
+            + select_loop<mp::drop<lens, s_src>, mp::drop<steps, s_src>>(i ...);
+    }
+
 #define RA_CONST_OR_NOT(CONST)                                          \
     constexpr T CONST * data() CONST { return static_cast<Child CONST &>(*this).p; } \
     template <class ... I>                                              \
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
-        constexpr int scalars = (0 + ... + is_scalar_index<I>);         \
-        if constexpr (scalars<rank() && (is_beatable<I>::static_p && ...))  { \
+        if constexpr ((0 + ... + is_scalar_index<I>)==rank())  {        \
+            return data()[select_loop<lens, steps>(i ...)];             \
+        } else if constexpr ((is_beatable<I>::static_p && ...))  {      \
             using FD = FilterDims<lens, steps, I ...>;                  \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> \
                 (data()+select_loop<lens, steps>(i ...));               \
-        } else if constexpr (scalars==rank())  {                        \
-            return data()[select_loop<lens, steps>(i ...)];             \
-        } else if constexpr ((!is_beatable<I>::static_p || ...)) { /* TODO More than one selector... */ \
+        } else { /* TODO partial beating */                             \
             return from(*this, std::forward<I>(i) ...);                 \
-        } else {                                                        \
-            static_assert(mp::always_false<I ...>); /* p2593r0 */       \
         }                                                               \
     }                                                                   \
     template <class ... I>                                              \
@@ -387,7 +384,7 @@ struct SmallBase
     {                                                                   \
         static_assert(rank()>=1, "bad rank for as<>");                  \
         static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
-        return SmallView<T CONST, mp::cons<mp::int_c<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
+        return SmallView<T CONST, mp::cons<int_c<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
     }                                                                   \
     T CONST &                                                           \
     back() CONST                                                        \
@@ -603,14 +600,14 @@ RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typen
 
 
 // --------------------
-// Small ops; cf view-ops.hh.
+// Small view ops; cf View ops in big.hh.
 // TODO Merge with Reframe (eg beat(reframe(a)) -> transpose(a) ?)
 // --------------------
 
 template <class A, class i>
 struct axis_indices
 {
-    template <class T> using match_index = mp::int_c<(T::value==i::value)>;
+    template <class T> using match_index = int_c<(T::value==i::value)>;
     using I = mp::iota<mp::len<A>>;
     using type = mp::Filter_<mp::map<match_index, A>, I>;
 // allow dead axes (e.g. transpose<1>(rank 1 array)).
@@ -708,7 +705,7 @@ struct explode_divop
     template <class T> struct op_
     {
         static_assert((T::value/s)*s==T::value);
-        using type = mp::int_c<T::value / s>;
+        using type = int_c<T::value / s>;
     };
     template <class T> using op = typename op_<T>::type;
 };

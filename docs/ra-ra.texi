@@ -276,7 +276,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies other than the standard library, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/ra.hh"} at the top of your sources.
 
-A compiler with C++20 support is required. At the time of writing this means @b{gcc 11} or with @option{-std=c++20}. Some C++23 features are available with @option{-std=c++2b} on @b{gcc 12} or higher. Check the top README.md for more up-to-date information.
+A compiler with C++20 support is required. At the time of writing this means @b{gcc 11} or with @option{-std=c++20}. Some C++23 features are available with @option{-std=c++2b}. Check the top README.md for more up-to-date information.
 
 Here is a minimal program@footnote{Examples given without context assume that one has declared @code{using std::cout;}, etc.}:
 
@@ -298,18 +298,18 @@ int main()
    d|d
 @end example
 
-The following headers are optional.
+The following headers are @emph{not} included by default:
 @itemize
-@item @code{"ra/dual.hh"} (@emph{not} included by default): A dual number type for simple uses of automatic differentiation.
+@item @code{"ra/dual.hh"}: A dual number type for simple uses of automatic differentiation.
 
-@item @code{"ra/mpdebug.hh"} (@emph{not} included by default): Functions to help in debugging template tangles.
+@item @code{"ra/mpdebug.hh"}: Functions to help in debugging template tangles.
 
-@item @code{"ra/test.hh"}, @code{"ra/bench.hh"} (@emph{not} included by default): Test and benchmarking libraries used by @code{ra::} itself.
-
-@item @code{"ra/complex.hh"} (@emph{included} by default): Put some functions in the global namespace that make it easier to work on built-in scalar types or array expressions indistinctly.
+@item @code{"ra/test.hh"}, @code{"ra/bench.hh"}: Used by the test and benchmark suites.
 @end itemize
 
-The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. All other headers are for internal use by @code{ra::}@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
+The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/bootstrap.hh"} before the rest of @code{ra::}.
+
+All other headers are for internal use by @code{ra::}@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
 
 @verbatim
 cd ra && cinclude2dot.pl --include . > headers.dot
@@ -319,16 +319,13 @@ dot -Tpng headers.dot -Gdpi=100 > headers.png
 
 @image{headers,4cm}
 
-
-
-
 @cindex container
 @c ------------------------------------------------
 @node Containers and views
 @section Containers and views
 @c ------------------------------------------------
 
-@code{ra::} offers two kinds of data objects. The first kind, the @dfn{container}, owns its data. Creating a container requires memory and destroying it causes that memory to be freed.
+@code{ra::} offers two kinds of data objects. The first kind, the @dfn{container}, owns its data. Creating a container uses up memory and destroying it causes that memory to be freed.
 
 @cindex compile-time
 @cindex ct
