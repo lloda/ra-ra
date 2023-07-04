@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 20
-@set UPDATED 2023 June 23
+@set UPDATED 2023 July 4
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -797,7 +797,7 @@ auto c = a(iota(3, 3));
 @end deffn
 
 @deffn @w{Special object} all
-Create a linear range @code{0, 1, ... (nᵢ-1)} when used as a subscript for the @code{i}-th argument of a subscripting expression.
+Create a linear range @code{0, 1, ... (nᵢ-1)} when used as a subscript at the @code{i}-th place of a subscripting expression. This might not be the @code{i}-th argument; see @ref{x-insert,@code{insert}}, @ref{x-dots,@code{dots}}.
 
 This object cannot stand alone as an array expression. All the examples below result in @code{View} objects:
 
@@ -810,6 +810,7 @@ auto d = a(iota(3), ra::all); // same as (1)
 auto e = a(ra:all, iota(2)); // same as (1)
 auto f = a(0, ra::all); // first row of a
 auto g = a(ra::all, 1); // second column of a
+auto g = a(ra::all, ra::dots<0>, 1); // same
 @end verbatim
 @end example
 
@@ -817,6 +818,7 @@ auto g = a(ra::all, 1); // second column of a
 
 @end deffn
 
+@anchor{x-dots}
 @deffn @w{Special object} dots<n>
 Equivalent to as many instances of @code{ra::all} as indicated by @code{n}, which must not be negative. Each instance takes the place of one argument to the subscripting operation.
 
@@ -858,7 +860,6 @@ This is useful when writing rank-generic code, see @code{examples/maxwell.cc} in
 @anchor{x-insert}
 @deffn @w{Special object} insert<n>
 Inserts @code{n} new axes at the subscript position. @code{n} must not be negative.
-@end deffn
 
 The new axes have step 0 and undefined length, so they will match any length on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in @code{View} objects:
 
@@ -888,17 +889,9 @@ cout << x(ra::all, ra::insert<2>) * a(insert<1>) << endl;
 50 60
 @end example
 
-Here's a way to perform the outer product of two @code{Views} of ct rank (but see @ref{x-from,@code{from}} for a more general way):
-@example
-@verbatim
-cout << (a(ra::dots<a.rank()>, ra::insert<b.rank()>) * b(ra::insert<a.rank()>, ra::dots<b.rank()>)) << endl;
+@end deffn
 
-// same thing by prefix matching
-cout << (a * b(ra::insert<a.rank()>)) << endl;
-@end verbatim
-@end example
-
-In addition to the special objects listed above, you can also omit any trailing @code{ra::all} subscripts. For example:
+In addition to the special objects listed above, you can also omit any trailing @code{ra::all} subscripts (‘index elision’). For example:
 
 @example
 @verbatim
@@ -911,6 +904,15 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 @end example
 
 This supports the notion (@pxref{Rank polymorphism}) that a 3-array is also an 2-array where the elements are 1-arrays themselves, or a 1-array where the elements are 2-arrays. This important property is directly related to the mechanism of rank extension (@pxref{Rank extension}).
+
+Here's a way to perform the outer product of two @code{Views} throw broadcasting. All three lines are equivalent. See @ref{x-from,@code{from}} for a more general way to compute outer products.
+@example
+@verbatim
+cout << (A(ra::dots<A.rank()>, ra::insert<B.rank()>) * B(ra::insert<A.rank()>, ra::dots<B.rank()>)) << endl;
+cout << (A(ra::dots<>, ra::insert<B.rank()>) * B(ra::insert<A.rank()>, ra::dots<>)) << endl; // default dots<>
+cout << (A * B(ra::insert<A.rank()>)) << endl; // index elision + prefix matching
+@end verbatim
+@end example
 
 @subsection Subscripting and rank-0 views
 

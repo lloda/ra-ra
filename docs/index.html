@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 20, updated 2023 June 23)
+<!-- ra:: (version 20, updated 2023 July 4)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 20, updated 2023 June 23)
+<p><code>ra::</code> (version 20, updated 2023 July 4)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -858,7 +858,7 @@ auto c = a(iota(3, 3));
 
 <dl class="def">
 <dt id="index-all"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>all</strong><a href='#index-all' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create a linear range <code>0, 1, ... (nᵢ-1)</code> when used as a subscript for the <code>i</code>-th argument of a subscripting expression.
+<dd><p>Create a linear range <code>0, 1, ... (nᵢ-1)</code> when used as a subscript at the <code>i</code>-th place of a subscripting expression. This might not be the <code>i</code>-th argument; see <a href="#x_002dinsert"><code>insert</code></a>, <a href="#x_002ddots"><code>dots</code></a>.
 </p>
 <p>This object cannot stand alone as an array expression. All the examples below result in <code>View</code> objects:
 </p>
@@ -870,13 +870,14 @@ auto d = a(iota(3), ra::all); // same as (1)
 auto e = a(ra:all, iota(2)); // same as (1)
 auto f = a(0, ra::all); // first row of a
 auto g = a(ra::all, 1); // second column of a
+auto g = a(ra::all, ra::dots&lt;0&gt;, 1); // same
 </pre></div>
 
 <p><code>all</code> is a special case (<code>dots&lt;1&gt;</code>) of the more general object <code>dots</code>.
 </p>
 </dd></dl>
 
-<dl class="def">
+<span id="x_002ddots"></span><dl class="def">
 <dt id="index-dots_003cn_003e"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>dots&lt;n&gt;</strong><a href='#index-dots_003cn_003e' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Equivalent to as many instances of <code>ra::all</code> as indicated by <code>n</code>, which must not be negative. Each instance takes the place of one argument to the subscripting operation.
 </p>
@@ -916,8 +917,7 @@ auto l2 = a(ra::dots&lt;&gt;, 0); // same
 <span id="x_002dinsert"></span><dl class="def">
 <dt id="index-insert_003cn_003e"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>insert&lt;n&gt;</strong><a href='#index-insert_003cn_003e' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Inserts <code>n</code> new axes at the subscript position. <code>n</code> must not be negative.
-</p></dd></dl>
-
+</p>
 <p>The new axes have step 0 and undefined length, so they will match any length on those axes by repeating items. <code>insert</code> objects cannot stand alone as an array expression. The examples below result in <code>View</code> objects:
 </p>
 <div class="example">
@@ -941,15 +941,9 @@ cout &lt;&lt; x(ra::all, ra::insert&lt;2&gt;) * a(insert&lt;1&gt;) &lt;&lt; endl
 50 60
 </pre></div>
 
-<p>Here&rsquo;s a way to perform the outer product of two <code>Views</code> of ct rank (but see <a href="#x_002dfrom"><code>from</code></a> for a more general way):
-</p><div class="example">
-<pre class="verbatim">cout &lt;&lt; (a(ra::dots&lt;a.rank()&gt;, ra::insert&lt;b.rank()&gt;) * b(ra::insert&lt;a.rank()&gt;, ra::dots&lt;b.rank()&gt;)) &lt;&lt; endl;
+</dd></dl>
 
-// same thing by prefix matching
-cout &lt;&lt; (a * b(ra::insert&lt;a.rank()&gt;)) &lt;&lt; endl;
-</pre></div>
-
-<p>In addition to the special objects listed above, you can also omit any trailing <code>ra::all</code> subscripts. For example:
+<p>In addition to the special objects listed above, you can also omit any trailing <code>ra::all</code> subscripts (‘index elision’). For example:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 3&gt; a({2, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8});
@@ -961,6 +955,13 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 
 <p>This supports the notion (see <a href="#Rank-polymorphism">Rank polymorphism</a>) that a 3-array is also an 2-array where the elements are 1-arrays themselves, or a 1-array where the elements are 2-arrays. This important property is directly related to the mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>).
 </p>
+<p>Here&rsquo;s a way to perform the outer product of two <code>Views</code> throw broadcasting. All three lines are equivalent. See <a href="#x_002dfrom"><code>from</code></a> for a more general way to compute outer products.
+</p><div class="example">
+<pre class="verbatim">cout &lt;&lt; (A(ra::dots&lt;A.rank()&gt;, ra::insert&lt;B.rank()&gt;) * B(ra::insert&lt;A.rank()&gt;, ra::dots&lt;B.rank()&gt;)) &lt;&lt; endl;
+cout &lt;&lt; (A(ra::dots&lt;&gt;, ra::insert&lt;B.rank()&gt;) * B(ra::insert&lt;A.rank()&gt;, ra::dots&lt;&gt;)) &lt;&lt; endl; // default dots&lt;&gt;
+cout &lt;&lt; (A * B(ra::insert&lt;A.rank()&gt;)) &lt;&lt; endl; // index elision + prefix matching
+</pre></div>
+
 <ul class="section-toc">
 <li><a href="#Subscripting-and-rank_002d0-views" accesskey="1">Subscripting and rank-0 views</a></li>
 </ul>
