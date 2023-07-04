@@ -122,7 +122,7 @@ Fortunately the problem is almost as old as aggregate data types, and other prog
 
 @cindex cell
 @cindex frame
-For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-@dfn{frame}.
+For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-@dfn{frame}.
 
 An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
 
@@ -820,16 +820,34 @@ auto g = a(ra::all, 1); // second column of a
 @deffn @w{Special object} dots<n>
 Equivalent to as many instances of @code{ra::all} as indicated by @code{n}, which must not be negative. Each instance takes the place of one argument to the subscripting operation.
 
+If @var{n} is defaulted (@code{dots<>}), all available places will be used; this can only be done once in a given subscript list.
+
 This object cannot stand alone as an array expression. All the examples below result in @code{View} objects:
 
 @example
 @verbatim
-auto h = a(ra::all, ra::all); // same as (1)
-auto i = a(ra::all, ra::dots<1>); // same as (1)
-auto j = a(ra::dots<2>); // same as (1)
-auto k = a(ra::dots<0>, ra::dots<2>); // same as (1)
-auto l = a(0, ra::dots<1>); // first row of a
-auto m = a(ra::dots<1>, 1); // second column of a
+ra::Big<int, 3> a({3, 2, 4}, ...);
+auto h = a(); // all of a
+
+auto b = a(ra::all, ra::all, ra::all); // (1) all of a
+auto c = a(ra::dots<3>); // same as (1)
+auto d = a(ra::all, ra::dots<2>); // same as (1)
+auto e = a(ra::dots<2>, ra::all); // same as (1)
+auto f = a(ra::dots<>); // same as (1)
+
+auto j0 = a(0, ra::dots<2>); // first page of a
+auto j1 = a(0); // same
+auto j2 = a(0, ra::dots<>); // same
+
+auto k0 = a(ra::all, 0); // first row of a
+auto k1 = a(ra::all, 0, ra::all); // same
+auto k2 = a(ra::all, 0, ra::dots<>); // same
+auto k3 = a(ra::dots<>, 0, ra::all); // same
+// auto k = a(ra::dots<>, 0, ra::dots<>); // error
+
+auto l0 = a(ra::all, ra::all, 0); // first column of a
+auto l1 = a(ra::dots<2>, 0); // same
+auto l2 = a(ra::dots<>, 0); // same
 @end verbatim
 @end example
 

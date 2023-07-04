@@ -113,12 +113,12 @@ struct default_steps_<std::tuple<t0, t1, ti ...>>
 
 template <class S> using default_steps = typename default_steps_<S>::type;
 
-template <int n> struct dots_t
+template <int n=DIM_BAD> struct dots_t
 {
-    static_assert(n>=0);
+    static_assert(n>=0 || DIM_BAD==n);
     constexpr static rank_t rank_s() { return n; }
 };
-template <int n> constexpr dots_t<n> dots = dots_t<n>();
+template <int n=DIM_BAD> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
 template <int n> struct insert_t

@@ -180,6 +180,7 @@ struct nested_braces<T, rank>
 // View
 // --------------------
 
+// FIXME size is immutable so that it can be kept together with rank.
 // TODO Parameterize on Child having .data() so that there's only one pointer.
 // TODO Parameterize on iterator type not on value type.
 // TODO A constructor, if only for RA_CHECK (nonnegative lens, steps inside, etc.)
@@ -261,60 +262,55 @@ struct View
     constexpr auto begin() const { return STLIterator(iter()); }
     constexpr auto end() const { return STLIterator(decltype(iter())(dimv, nullptr)); } // dimv could be anything
 
-// raw <- shared; raw <- unique; shared <- unique.
-// layout is
-// [data] (fixed shape)
-// [size] p -> [data...] (fixed rank)
-// [rank] [size...] p -> [data...] (var rank)
-// TODO size is immutable so that it can be kept together with rank.
-
-    constexpr static dim_t
-    select(Dim * dim, Dim const * dim_src, dim_t i)
+    constexpr dim_t
+    select(Dim * dim, int k, dim_t i) const
     {
-        RA_CHECK(inside(i, dim_src->len), " i ", i, " len ", dim_src->len);
-        return dim_src->step*i;
+        RA_CHECK(inside(i, dimv[k].len), " i ", i, " len ", dimv[k].len);
+        return dimv[k].step*i;
     }
 
     template <class I> requires (is_iota<I>)
-    constexpr static dim_t
-    select(Dim * dim, Dim const * dim_src, I i)
+    constexpr dim_t
+    select(Dim * dim, int k, I i) const
     {
-        RA_CHECK((inside(i.i, dim_src->len) && inside(i.i+(i.n-1)*i.gets(), dim_src->len))
-                 || (i.n==0 && i.i<=dim_src->len));
-        *dim = { .len = i.n, .step = dim_src->step * i.gets() };
-        return dim_src->step*i.i;
+        RA_CHECK((inside(i.i, dimv[k].len) && inside(i.i+(i.n-1)*i.gets(), dimv[k].len))
+                 || (i.n==0 && i.i<=dimv[k].len));
+        *dim = { .len = i.n, .step = dimv[k].step * i.gets() };
+        return dimv[k].step*i.i;
     }
 
     template <class I0, class ... I>
-    constexpr static dim_t
-    select_loop(Dim * dim, Dim const * dim_src, I0 && i0, I && ... i)
+    constexpr dim_t
+    select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
     {
-        return select(dim, dim_src, std::forward<I0>(i0))
-            + select_loop(dim+is_beatable<I0>::skip, dim_src+is_beatable<I0>::skip_src, std::forward<I>(i) ...);
+        return select(dim, k, std::forward<I0>(i0))
+            + select_loop(dim + is_beatable<I0>::skip, k + is_beatable<I0>::skip_src,
+                          std::forward<I>(i) ...);
     }
 
     template <int n, class ... I>
-    constexpr static dim_t
-    select_loop(Dim * dim, Dim const * dim_src, dots_t<n> dots, I && ... i)
+    constexpr dim_t
+    select_loop(Dim * dim, int k, dots_t<n> dots, I && ... i) const
     {
-        for (Dim * end = dim+n; dim!=end; ++dim, ++dim_src) {
-            *dim = *dim_src;
+        int nn = (DIM_BAD==n) ? (rank() - k - (0 + ... + is_beatable<I>::skip_src)) : n;
+        for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
+            *dim = dimv[k];
         }
-        return select_loop(dim, dim_src, std::forward<I>(i) ...);
+        return select_loop(dim, k, std::forward<I>(i) ...);
     }
 
     template <int n, class ... I>
-    constexpr static dim_t
-    select_loop(Dim * dim, Dim const * dim_src, insert_t<n> insert, I && ... i)
+    constexpr dim_t
+    select_loop(Dim * dim, int k, insert_t<n> insert, I && ... i) const
     {
         for (Dim * end = dim+n; dim!=end; ++dim) {
             *dim = { .len = DIM_BAD, .step = 0 };
         }
-        return select_loop(dim, dim_src, std::forward<I>(i) ...);
+        return select_loop(dim, k, std::forward<I>(i) ...);
     }
 
-    constexpr static dim_t
-    select_loop(Dim * dim, Dim const * dim_src)
+    constexpr dim_t
+    select_loop(Dim * dim, int k) const
     {
         return 0;
     }
@@ -324,19 +320,23 @@ struct View
     constexpr decltype(auto)
     operator()(I && ... i) const
     {
+        constexpr int stretch = (0 + ... + (is_beatable<I>::skip==DIM_BAD));
+        static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
-            return data()[select_loop(nullptr, dimv.data(), i ...)];
+            return data()[select_loop(nullptr, 0, i ...)];
         } else if constexpr ((is_beatable<I>::value && ...)) {
-            constexpr rank_t extended = (0 + ... + (is_beatable<I>::skip-is_beatable<I>::skip_src));
+            constexpr rank_t extended = (0 + ... + is_beatable<I>::add);
             View<T, rank_sum(RANK, extended)> sub;
             rank_t subrank = rank()+extended;
             if constexpr (RANK==RANK_ANY) {
                 RA_CHECK(subrank>=0, "bad rank");
                 sub.dimv.resize(subrank);
             }
-            sub.p = data() + select_loop(sub.dimv.data(), dimv.data(), i ...);
+            sub.p = data() + select_loop(sub.dimv.data(), 0, i ...);
 // fill the rest of dim, skipping over beatable subscripts.
-            for (int k=(0 + ... + is_beatable<I>::skip); k<subrank; ++k) {
+            for (int k = (0==stretch ? (0 + ... + is_beatable<I>::skip)
+                          : rank() + (0 + ... + is_beatable<I>::add));
+                 k<subrank; ++k) {
                 sub.dimv[k] = dimv[k-extended];
             }
 // may return rank 0 view if RANK==RANK_ANY; in that case rely on conversion to scalar.

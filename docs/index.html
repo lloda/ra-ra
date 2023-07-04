@@ -200,7 +200,7 @@ Next: <a href="#Drag-along-and-beating" accesskey="n" rel="next">Drag along and 
 </p>
 <span id="index-cell"></span>
 <span id="index-frame"></span>
-<p>For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em class='tex2jax_process'>\(r\)</em> the (<em class='tex2jax_process'>\(r\)</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-<em>frame</em>.
+<p>For example, think of a matrix A, a 2-array with shape (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em class='tex2jax_process'>\(r\)</em> the (<em class='tex2jax_process'>\(r\)</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-<em>frame</em>.
 </p>
 <p>An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
 </p>
@@ -880,15 +880,33 @@ auto g = a(ra::all, 1); // second column of a
 <dt id="index-dots_003cn_003e"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>dots&lt;n&gt;</strong><a href='#index-dots_003cn_003e' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Equivalent to as many instances of <code>ra::all</code> as indicated by <code>n</code>, which must not be negative. Each instance takes the place of one argument to the subscripting operation.
 </p>
+<p>If <var>n</var> is defaulted (<code>dots&lt;&gt;</code>), all available places will be used; this can only be done once in a given subscript list.
+</p>
 <p>This object cannot stand alone as an array expression. All the examples below result in <code>View</code> objects:
 </p>
 <div class="example">
-<pre class="verbatim">auto h = a(ra::all, ra::all); // same as (1)
-auto i = a(ra::all, ra::dots&lt;1&gt;); // same as (1)
-auto j = a(ra::dots&lt;2&gt;); // same as (1)
-auto k = a(ra::dots&lt;0&gt;, ra::dots&lt;2&gt;); // same as (1)
-auto l = a(0, ra::dots&lt;1&gt;); // first row of a
-auto m = a(ra::dots&lt;1&gt;, 1); // second column of a
+<pre class="verbatim">ra::Big&lt;int, 3&gt; a({3, 2, 4}, ...);
+auto h = a(); // all of a
+
+auto b = a(ra::all, ra::all, ra::all); // (1) all of a
+auto c = a(ra::dots&lt;3&gt;); // same as (1)
+auto d = a(ra::all, ra::dots&lt;2&gt;); // same as (1)
+auto e = a(ra::dots&lt;2&gt;, ra::all); // same as (1)
+auto f = a(ra::dots&lt;&gt;); // same as (1)
+
+auto j0 = a(0, ra::dots&lt;2&gt;); // first page of a
+auto j1 = a(0); // same
+auto j2 = a(0, ra::dots&lt;&gt;); // same
+
+auto k0 = a(ra::all, 0); // first row of a
+auto k1 = a(ra::all, 0, ra::all); // same
+auto k2 = a(ra::all, 0, ra::dots&lt;&gt;); // same
+auto k3 = a(ra::dots&lt;&gt;, 0, ra::all); // same
+// auto k = a(ra::dots&lt;&gt;, 0, ra::dots&lt;&gt;); // error
+
+auto l0 = a(ra::all, ra::all, 0); // first column of a
+auto l1 = a(ra::dots&lt;2&gt;, 0); // same
+auto l2 = a(ra::dots&lt;&gt;, 0); // same
 </pre></div>
 
 <p>This is useful when writing rank-generic code, see <code>examples/maxwell.cc</code> in the distribution for an example.

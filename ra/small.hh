@@ -121,8 +121,9 @@ template <class I>
 struct is_beatable_def
 {
     constexpr static bool value = is_scalar_index<I>;
-    constexpr static int skip_src = 1;
-    constexpr static int skip = 0;
+    constexpr static int skip_src = 1; // one position
+    constexpr static int skip = 0; // rank 0
+    constexpr static int add = -1; // relative to source rank
     constexpr static bool static_p = value; // can the beating be resolved statically?
 };
 
@@ -131,29 +132,29 @@ struct is_beatable_def<I>
 {
     using T = decltype(I::i);
     constexpr static bool value = std::is_integral_v<T> && (DIM_BAD != I::len_s(0));
-    constexpr static int skip_src = 1;
-    constexpr static int skip = 1;
+    constexpr static int skip_src = 1; // one position
+    constexpr static int skip = 1; // rank 1
+    constexpr static int add = 0; // relative to source rank
     constexpr static bool static_p = false; // FIXME see Iota with ct N, S
 };
 
-// FIXME have a 'filler' version (e.g. with default n = -1) or maybe a distinct type.
 template <int n>
 struct is_beatable_def<dots_t<n>>
 {
-    static_assert(n>=0, "bad count for dots_n");
-    constexpr static bool value = (n>=0);
+    constexpr static bool value = true;
     constexpr static int skip_src = n;
     constexpr static int skip = n;
+    constexpr static int add = 0; // relative to source rank
     constexpr static bool static_p = true;
 };
 
 template <int n>
 struct is_beatable_def<insert_t<n>>
 {
-    static_assert(n>=0, "bad count for insert_n");
-    constexpr static bool value = (n>=0);
+    constexpr static bool value = true;
     constexpr static int skip_src = 0;
     constexpr static int skip = n;
+    constexpr static int add = n; // relative to source rank
     constexpr static bool static_p = true;
 };
 
@@ -328,6 +329,7 @@ struct SmallBase
     constexpr static dim_t
     select(dots_t<n> i0)
     {
+        static_assert(n>=0, "Stretch dots not yet supported in Small.");
         return 0;
     }
 

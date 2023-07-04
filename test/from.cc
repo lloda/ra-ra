@@ -22,29 +22,6 @@ using Vint = ra::Unique<int, 1>;
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("shortcuts");
-    {
-        auto check_selection_shortcuts = [&tr](auto && a)
-            {
-                tr.info("a()").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a());
-                tr.info("a(2, :)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2, ra::all));
-                tr.info("a(2)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2));
-                tr.info("a(:, 3)").test_eq(Ureal<1>({4}, ra::_0-3), a(ra::all, 3));
-                tr.info("a(:, :)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all, ra::all));
-                tr.info("a(:)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all));
-                tr.info("a(1)").test_eq(Ureal<1>({4}, 1-ra::_0), a(1));
-                tr.info("a(2, 2)").test_eq(0, a(2, 2));
-                tr.info("a(0:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*(ra::_0-ra::_1)),
-                                                 a(ra::iota(2, 0, 2), ra::iota(2, 0, 2)));
-                tr.info("a(1:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*ra::_0+1-2*ra::_1),
-                                                 a(ra::iota(2, 1, 2), ra::iota(2, 0, 2)));
-                tr.info("a(0:2:, :)").test_eq(Ureal<2>({2, 4}, 2*ra::_0-ra::_1),
-                                              a(ra::iota(2, 0, 2), ra::all));
-                tr.info("a(0:2:)").test_eq(a(ra::iota(2, 0, 2), ra::all), a(ra::iota(2, 0, 2)));
-            };
-        check_selection_shortcuts(Ureal<2>({4, 4}, ra::_0-ra::_1));
-        check_selection_shortcuts(Ureal<>({4, 4}, ra::_0-ra::_1));
-    }
     tr.section("Iota<T> is beatable for any integral T");
     {
         Ureal<2> a({4, 4}, 0.);
@@ -70,28 +47,39 @@ int main()
     tr.section("beatable multi-axis selectors, var size");
     {
         static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
-        ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
-        tr.info("a(ra::dots<0> ...)").test_eq(a(0), a(ra::dots<0>, 0));
-        tr.info("a(ra::dots<0> ...)").test_eq(a(1), a(ra::dots<0>, 1));
-        tr.info("a(ra::dots<1> ...)").test_eq(a(ra::all, 0), a(ra::dots<1>, 0));
-        tr.info("a(ra::dots<1> ...)").test_eq(a(ra::all, 1), a(ra::dots<1>, 1));
-        tr.info("a(ra::dots<2> ...)").test_eq(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
-        tr.info("a(ra::dots<2> ...)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
-        tr.info("a(0)").test_eq(a(0, ra::all, ra::all), a(0));
-        tr.info("a(1)").test_eq(a(1, ra::all, ra::all), a(1));
-        tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
-        tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
+        auto test = [&tr](auto && a)
+        {
+            tr.info("a(ra::dots<0>, ...)").test_eq(a(0), a(ra::dots<0>, 0));
+            tr.info("a(ra::dots<0>, ...)").test_eq(a(1), a(ra::dots<0>, 1));
+            tr.info("a(ra::dots<1>, 0, ...)").test_eq(a(ra::all, 0), a(ra::dots<1>, 0));
+            tr.info("a(ra::dots<1>, 1, ...)").test_eq(a(ra::all, 1), a(ra::dots<1>, 1));
+            tr.info("a(ra::dots<2>, 0)").test_eq(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
+            tr.info("a(ra::dots<2>, 1)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
+            tr.info("a(ra::dots<>, 1)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<>, 1));
+            tr.info("a(0)").test_eq(a(0, ra::all, ra::all), a(0));
+            tr.info("a(1)").test_eq(a(1, ra::all, ra::all), a(1));
+            tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
+            tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
+            tr.info("a(1, ra::dots<>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<>));
+            tr.info("a(0, ra::dots<>, 1)").test_eq(a(0, ra::all, 1), a(0, ra::dots<>, 1));
+            tr.info("a(1, ra::dots<>, 0)").test_eq(a(1, ra::all, 0), a(1, ra::dots<>, 0));
+            // cout << a(ra::dots<>, 1, ra::dots<>) << endl; // ct error
+        };
+        tr.section("fixed rank");
+        test(ra::Big<int, 3>({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2));
+        tr.section("var rank");
+        test(ra::Big<int>({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2));
     }
     tr.section("beatable multi-axis selectors, fixed size");
     {
         static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
         ra::Small<int, 2, 3, 4> a = ra::_0*100 + ra::_1*10 + ra::_2;
-        tr.info("a(ra::dots<0> ...)").test_eq(a(0), a(ra::dots<0>, 0));
-        tr.info("a(ra::dots<0> ...)").test_eq(a(1), a(ra::dots<0>, 1));
-        tr.info("a(ra::dots<1> ...)").test_eq(a(ra::all, 0), a(ra::dots<1>, 0));
-        tr.info("a(ra::dots<1> ...)").test_eq(a(ra::all, 1), a(ra::dots<1>, 1));
-        tr.info("a(ra::dots<2> ...)").test_eq(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
-        tr.info("a(ra::dots<2> ...)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
+        tr.info("a(ra::dots<0>, ...)").test_eq(a(0), a(ra::dots<0>, 0));
+        tr.info("a(ra::dots<0>, ...)").test_eq(a(1), a(ra::dots<0>, 1));
+        tr.info("a(ra::dots<1>, ...)").test_eq(a(ra::all, 0), a(ra::dots<1>, 0));
+        tr.info("a(ra::dots<1>, ...)").test_eq(a(ra::all, 1), a(ra::dots<1>, 1));
+        tr.info("a(ra::dots<2>, ...)").test_eq(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
+        tr.info("a(ra::dots<2>, ...)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
         tr.info("a(0)").test_eq(a(0, ra::all, ra::all), a(0));
         tr.info("a(1)").test_eq(a(1, ra::all, ra::all), a(1));
         tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
@@ -127,6 +115,57 @@ int main()
         tr.info("a(ra::all, ra::insert<2>, ...)").test_eq(a3, a(ra::all, ra::insert<2>));
         tr.info("a(0, ra::insert<1>, ...)").test_eq(a1(ra::all, 0), a(0, ra::insert<1>));
         tr.info("a(ra::insert<1>, 0, ...)").test_eq(a1(ra::all, 0), a(ra::insert<1>, 0));
+    }
+    tr.section("mix insert + dots");
+    {
+        static_assert(ra::is_beatable<ra::insert_t<1>>::value, "insert_t<1> is beatable");
+        auto test = [&tr](auto && a, auto && b)
+        {
+            tr.info("a(ra::insert<0>, ra::dots<3>)").test_eq(a(ra::insert<0>, ra::dots<3>), a(ra::insert<0>, ra::dots<>));
+            tr.info("a(ra::insert<0>, ra::dots<1>, ...)").test_eq(a(ra::insert<0>, ra::all, ra::all, ra::all), a(ra::insert<0>, ra::dots<>));
+            tr.info("a(ra::insert<0>, ra::dots<>)").test_eq(a(ra::insert<0>), a(ra::insert<0>, ra::dots<>));
+// add to something else to establish the size of the inserted axis.
+            tr.info("a(ra::insert<1>, ra::dots<3>)")
+                .test_eq(a(ra::insert<1>, ra::dots<3>) + ra::iota(2), a(ra::insert<1>, ra::dots<>) + ra::iota(2));
+            tr.info("a(ra::insert<1>, ra::dots<1>, ...)")
+                .test_eq(a(ra::insert<1>, ra::all, ra::all, ra::all) + ra::iota(2), a(ra::insert<1>, ra::dots<>) + ra::iota(2));
+            tr.info("a(ra::insert<1>, ra::dots<>)").test_eq(a(ra::insert<1>) + ra::iota(2),
+                                                            a(ra::insert<1>, ra::dots<>) + ra::iota(2));
+// same on the back.
+            tr.info("a(ra::dots<3>, ra::insert<1>)")
+                .test_eq(b + a(ra::dots<3>, ra::insert<1>), b + a(ra::dots<>, ra::insert<1>));
+            tr.info("a(ra::dots<1>, ..., ra::insert<1>)")
+                .test_eq(b + a(ra::all, ra::all, ra::all, ra::insert<1>), b + a(ra::dots<>, ra::insert<1>));
+        };
+        tr.section("fixed rank");
+        test(ra::Big<int, 3>({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2),
+             ra::Big<int, 4>({2, 3, 4, 2}, ra::_0*100 + ra::_1*10 + ra::_2 + (2-ra::_3)));
+        tr.section("var rank");
+        test(ra::Big<int>({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2),
+             ra::Big<int>({2, 3, 4, 2}, ra::_0*100 + ra::_1*10 + ra::_2 + (2-ra::_3)));
+    }
+    tr.section("shortcuts");
+    {
+        auto check_selection_shortcuts = [&tr](auto && a)
+            {
+                tr.info("a()").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a());
+                tr.info("a(2, :)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2, ra::all));
+                tr.info("a(2)").test_eq(Ureal<1>({4}, 2-ra::_0), a(2));
+                tr.info("a(:, 3)").test_eq(Ureal<1>({4}, ra::_0-3), a(ra::all, 3));
+                tr.info("a(:, :)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all, ra::all));
+                tr.info("a(:)").test_eq(Ureal<2>({4, 4}, ra::_0-ra::_1), a(ra::all));
+                tr.info("a(1)").test_eq(Ureal<1>({4}, 1-ra::_0), a(1));
+                tr.info("a(2, 2)").test_eq(0, a(2, 2));
+                tr.info("a(0:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*(ra::_0-ra::_1)),
+                                                 a(ra::iota(2, 0, 2), ra::iota(2, 0, 2)));
+                tr.info("a(1:2:, 0:2:)").test_eq(Ureal<2>({2, 2}, 2*ra::_0+1-2*ra::_1),
+                                                 a(ra::iota(2, 1, 2), ra::iota(2, 0, 2)));
+                tr.info("a(0:2:, :)").test_eq(Ureal<2>({2, 4}, 2*ra::_0-ra::_1),
+                                              a(ra::iota(2, 0, 2), ra::all));
+                tr.info("a(0:2:)").test_eq(a(ra::iota(2, 0, 2), ra::all), a(ra::iota(2, 0, 2)));
+            };
+        check_selection_shortcuts(Ureal<2>({4, 4}, ra::_0-ra::_1));
+        check_selection_shortcuts(Ureal<>({4, 4}, ra::_0-ra::_1));
     }
     tr.section("unbeatable, 1D");
     {
