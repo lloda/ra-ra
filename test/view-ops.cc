@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file view-ops.cc
-/// @brief Checks for view operations
+// ra-ra/test - View operations
 
 // (c) Daniel Llorens - 2013-2015, 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -23,25 +22,34 @@ void CheckReverse(TestRecorder & tr, A && a)
     std::iota(a.begin(), a.end(), 1);
     cout << "a: " << a << endl;
     auto b0 = reverse(a, 0);
+    auto c0 = a(ra::iota(ra::len, ra::len-1, -1));
     cout << "b: " << b0 << endl;
+    cout << "c: " << b0 << endl;
     double check0[24] = { 17, 18, 19, 20,   21, 22, 23, 24,
                           9, 10, 11, 12,  13, 14, 15, 16,
                           1, 2, 3, 4,     5, 6, 7, 8 };
     tr.test(std::equal(check0, check0+24, b0.begin()));
+    tr.test_eq(b0, c0);
 
     auto b1 = reverse(a, 1);
+    auto c1 = a(ra::dots<1>, ra::iota(ra::len, ra::len-1, -1));
     cout << "b: " << b1 << endl;
+    cout << "c: " << c1 << endl;
     double check1[24] = { 5, 6, 7, 8,      1, 2, 3, 4,
                           13, 14, 15, 16,  9, 10, 11, 12,
                           21, 22, 23, 24,  17, 18, 19, 20 };
     tr.test(std::equal(check1, check1+24, b1.begin()));
+    tr.test_eq(b1, c1);
 
     auto b2 = reverse(a, 2);
+    auto c2 = a(ra::dots<2>, ra::iota(ra::len, ra::len-1, -1));
     cout << "b: " << b2 << endl;
+    cout << "c: " << c2 << endl;
     double check2[24] = { 4, 3, 2, 1,      8, 7, 6, 5,
                           12, 11, 10, 9,   16, 15, 14, 13,
                           20, 19, 18, 17,  24, 23, 22, 21 };
     tr.test(std::equal(check2, check2+24, b2.begin()));
+    tr.test_eq(b2, c2);
 }
 
 template <class A>

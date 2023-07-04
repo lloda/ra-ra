@@ -130,8 +130,7 @@ struct is_beatable_def
 template <class I> requires (is_iota<I>)
 struct is_beatable_def<I>
 {
-    using T = decltype(I::i);
-    constexpr static bool value = std::is_integral_v<T> && (DIM_BAD != I::len_s(0));
+    constexpr static bool value = !std::is_same_v<dim_c<DIM_BAD>, decltype(I::n)>; // FIXME more robust
     constexpr static int skip_src = 1; // one position
     constexpr static int skip = 1; // rank 1
     constexpr static int add = 0; // relative to source rank
@@ -355,6 +354,7 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
+        static_assert(!(has_len<I> || ...)); /* FIXME */                \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank())  {        \
             return data()[select_loop<lens, steps>(i ...)];             \
         } else if constexpr ((is_beatable<I>::static_p && ...))  {      \

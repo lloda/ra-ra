@@ -265,7 +265,7 @@ struct View
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
     {
-        RA_CHECK(inside(i, dimv[k].len), " i ", i, " len ", dimv[k].len);
+        RA_CHECK(inside(i, dimv[k].len), " i ", i, " in axis of len[", k, "] ", dimv[k].len);
         return dimv[k].step*i;
     }
 
@@ -273,8 +273,8 @@ struct View
     constexpr dim_t
     select(Dim * dim, int k, I i) const
     {
-        RA_CHECK((inside(i.i, dimv[k].len) && inside(i.i+(i.n-1)*i.gets(), dimv[k].len))
-                 || (i.n==0 && i.i<=dimv[k].len));
+        RA_CHECK((inside(i.i, dimv[k].len) && inside(i.i+(i.n-1)*i.gets(), dimv[k].len)) || (i.n==0 && i.i<=dimv[k].len),
+                 "iota [", i.n, " ", i.i, " ", i.gets(), "] in len[", k, "] ", dimv[k].len);
         *dim = { .len = i.n, .step = dimv[k].step * i.gets() };
         return dimv[k].step*i.i;
     }
@@ -283,15 +283,16 @@ struct View
     constexpr dim_t
     select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
     {
-        return select(dim, k, std::forward<I0>(i0))
+        return select(dim, k, with_len(len(k), std::forward<I0>(i0)))
             + select_loop(dim + is_beatable<I0>::skip, k + is_beatable<I0>::skip_src,
                           std::forward<I>(i) ...);
     }
 
     template <int n, class ... I>
     constexpr dim_t
-    select_loop(Dim * dim, int k, dots_t<n> dots, I && ... i) const
+    select_loop(Dim * dim, int k, dots_t<n> i0, I && ... i) const
     {
+// k can be entirely ct if rank() is. FIXME worth specializing?
         int nn = (DIM_BAD==n) ? (rank() - k - (0 + ... + is_beatable<I>::skip_src)) : n;
         for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
             *dim = dimv[k];
@@ -301,7 +302,7 @@ struct View
 
     template <int n, class ... I>
     constexpr dim_t
-    select_loop(Dim * dim, int k, insert_t<n> insert, I && ... i) const
+    select_loop(Dim * dim, int k, insert_t<n> i0, I && ... i) const
     {
         for (Dim * end = dim+n; dim!=end; ++dim) {
             *dim = { .len = DIM_BAD, .step = 0 };
@@ -341,8 +342,9 @@ struct View
             }
 // may return rank 0 view if RANK==RANK_ANY; in that case rely on conversion to scalar.
             return sub;
-// TODO partial beating
+// TODO partial beating.
         } else {
+            static_assert(!(has_len<I> || ...)); // FIXME need to number the i's
             return from(*this, std::forward<I>(i) ...);
         }
     }
