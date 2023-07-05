@@ -53,7 +53,7 @@ env.Prepend(CPPPATH=['..', '.'],
 [ra.to_test_ra(env, variant_dir)(example)
  for example in ['agreement', 'cast', 'deriv', 'explode-collapse', 'indirect',
                  'laplace2d', 'laplace3d', 'maxwell', 'nested', 'newton', 'outer',
-                 'pitfall', 'rangexpr', 'readme', 'slicing', 'small', 'throw',
+                 'pitfall', 'rangexpr', 'read-me', 'slicing', 'small', 'throw',
                  'useret', 'view', 'where-pick']]
 
 if 'skip_summary' not in top:

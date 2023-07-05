@@ -315,6 +315,20 @@ struct View
         return 0;
     }
 
+    template <class II, class KK=mp::iota<mp::len<II>>>
+    struct unbeat;
+
+    template <class ... I, int ... K>
+    struct unbeat<std::tuple<I ...>, mp::int_list<K ...>>
+    {
+        template <class V>
+        constexpr static decltype(auto)
+        op(V & v, I && ... i)
+        {
+            return from(v, with_len(v.len(K), std::forward<I>(i)) ...);
+        }
+    };
+
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
     template <class ... I>
     constexpr decltype(auto)
@@ -341,9 +355,9 @@ struct View
             }
 // may return rank 0 view if RANK==RANK_ANY; in that case rely on conversion to scalar.
             return sub;
-// TODO partial beating.
+// TODO partial beating is necessary to support dots, insert here (or just to optimize iota).
         } else {
-            return from(*this, std::forward<I>(i) ...);
+            return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...);
         }
     }
 

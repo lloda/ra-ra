@@ -6,7 +6,7 @@ project (ra-examples)
 include_directories ("..")
 
 SET (TARGETS agreement cast deriv explode-collapse indirect laplace2d laplace3d
-  maxwell nested newton outer rangexpr readme slicing small useret view where-pick
+  maxwell nested newton outer rangexpr read-me slicing small useret view where-pick
   throw)
 
 include ("../config/cc.cmake")

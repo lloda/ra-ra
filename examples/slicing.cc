@@ -24,10 +24,9 @@ int main()
     A(ra::iota(1, 3), ra::all) = 1;
     A(3) = 1;
 
-// Set the last two rows to 0 (any of these)
-// TODO we don't have toEnd yet (would be ra::iota(2, toEnd-2))
-    A(ra::iota(2, 4), ra::all) = 0;
-    A(ra::iota(2, 4)) = 0;
+// Set the last two rows to 0 (these are equivalent)
+    A(ra::iota(2, ra::len-2), ra::all) = 0;
+    A(ra::iota(2, ra::len-2)) = 0;
 
 // Set the bottom right element to 8
     A(5, 5) = 8;

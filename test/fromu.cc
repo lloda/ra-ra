@@ -23,8 +23,12 @@ int main()
     tr.section("len in unbeatable subscript TODO");
     {
         ra::Big<int, 1> a({10}, ra::_0);
-        cout << a(ra::Small<int, 4> {0, 1, 2, 3}) << endl;
-        // cout << a(ra::len - ra::Small<int, 4> {0, 1, 2, 3}) << endl; // TODO
+        tr.test_eq(ra::start({9, 8, 7, 6}), a(ra::len - std::array {1, 2, 3, 4}));
+        ra::Big<int, 2> b({10, 10}, ra::_0-ra::_1);
+        b(ra::len - std::array {1, 3, 4}) += 100;
+        tr.test_eq(9 - ra::_0 + 100, b(9));
+        tr.test_eq(7 - ra::_0 + 100, b(7));
+        tr.test_eq(6 - ra::_0 + 100, b(6));
     }
     tr.section("unbeatable, 1D");
     {

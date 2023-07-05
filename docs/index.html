@@ -959,9 +959,12 @@ cout &lt;&lt; x(ra::all, ra::insert&lt;2&gt;) * a(insert&lt;1&gt;) &lt;&lt; endl
 </dd></dl>
 
 <span id="index-len"></span>
+<span id="index-end_002c-Octave_002fMatlab"></span>
 <span id="x_002dlen"></span><dl class="def">
 <dt id="index-len-1"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>len</strong><a href='#index-len-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Represents the length of the <var>i</var>-th axis of a subscripted expression, when used at the <var>i</var>-th place of a subscripting expression.
+</p>
+<p>This works like <code>end</code> in Octave/Matlab, but note that the last element of a vector <code>a</code> is <code>a(ra::len-1)</code> and not <code>a(ra::len-1)</code>.
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 2&gt; a({10, 10}, 100 + ra::_0 - ra::_1);
@@ -970,6 +973,7 @@ auto a1 = a(ra::all, ra::len-1); // last column a; ra::len is a.len(1)
 auto a2 = a(ra::len-1, ra::len-1); // last element of last row; the first ra::len is a.len(0) and the second one is a.len(1)
 auto a3 = a(ra::all, ra::iota(2, ra::len-2)); // last two columns of a
 auto a4 = a(ra::iota(ra::len/2, 1, 2)); // odd rows of a
+a(ra::len - std::array {1, 3, 4}) = 0; // set to 0 the 1st, 3rd and 4th rows of a, counting from the end
 </pre></div>
 
 <div class="example">
@@ -2719,6 +2723,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th id="Indices_cp_letter-E">E</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-early"><code>early</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-elision_002c-index">elision, index</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-end_002c-Octave_002fMatlab"><code>end</code>, Octave/Matlab</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-error">error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Functions">Functions</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-every"><code>every</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-explode"><code>explode</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

@@ -62,8 +62,9 @@ checkbox [C-ct] flip TODO
       - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
     - [-] Magic subscript len
       - [X] For Big/View in beatable subscripts <2023-07-04 Tue 18:20>
-      - [ ] For Big/View in unbeatable subscripts
+      - [X] For Big/View in unbeatable subscripts <2023-07-05 Wed 12:34>
       - [ ] For Small/SmallView
+      - [ ] Optimize iota(len...) + iota(len...)
   - [ ] Performance [0/1]
     - [ ] bench/bench-stencil* is weird.
   - [X] Error report, debugging [3/3]

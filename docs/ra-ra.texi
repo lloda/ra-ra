@@ -910,9 +910,12 @@ cout << x(ra::all, ra::insert<2>) * a(insert<1>) << endl;
 @end deffn
 
 @cindex @code{len}
+@cindex @code{end}, Octave/Matlab
 @anchor{x-len}
 @deffn @w{Special object} len
 Represents the length of the @var{i}-th axis of a subscripted expression, when used at the @var{i}-th place of a subscripting expression.
+
+This works like @code{end} in Octave/Matlab, but note that the last element of a vector @code{a} is @code{a(ra::len-1)} and not @code{a(ra::len-1)}.
 
 @example
 @verbatim
@@ -922,6 +925,7 @@ auto a1 = a(ra::all, ra::len-1); // last column a; ra::len is a.len(1)
 auto a2 = a(ra::len-1, ra::len-1); // last element of last row; the first ra::len is a.len(0) and the second one is a.len(1)
 auto a3 = a(ra::all, ra::iota(2, ra::len-2)); // last two columns of a
 auto a4 = a(ra::iota(ra::len/2, 1, 2)); // odd rows of a
+a(ra::len - std::array {1, 3, 4}) = 0; // set to 0 the 1st, 3rd and 4th rows of a, counting from the end
 @end verbatim
 @end example
 

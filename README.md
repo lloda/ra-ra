@@ -17,9 +17,9 @@ In this example ([examples/readme.cc](examples/readme.cc)), we add each element 
 
   int main()
   {
-    ra::Big<float, 2> A {{1, 2}, {3, 4}};  // compile-time rank, dynamic shape
-    A += std::vector<float> {10, 20};      // rank-extending op with STL object
-    std::cout << "A: " << A << std::endl;  // shape is dynamic, so it will be printed
+    ra::Big<float, 2> A = {{1, 2}, {3, 4}};  // compile-time rank, dynamic shape
+    A += std::vector<float> {10, 20};        // rank-extending op with STL object
+    std::cout << "A: " << A << std::endl;    // shape is dynamic, so it will be printed
   }
 ```
 ⇒
@@ -39,15 +39,15 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Compatibility with builtin arrays and with the standard library, including `<ranges>`.
 * Interoperability with other libraries and/or languages through transparent memory layout.
 * Iterators over cells (subarrays) of any rank.
-* Rank conjunction as in J (compile time ranks only).
-* Slicing with indices of arbitrary rank, beating of linear range indices, index skipping and elision.
+* Slicing with indices of arbitrary rank, linear range indices, axis skipping and elision, and contextual `len`.
+* Axis insertion (e.g. for broadcasting).
 * Outer product operation.
 * Tensor index object.
 * Short-circuiting logical operators.
 * Argument list selection operators (`where` with bool selector, or `pick` with integer selector).
-* Axis insertion (e.g. for broadcasting).
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
+* Rank conjunction as in J (compile time ranks only).
 * Many predefined array operations. Adding yours is trivial.
 
 `constexpr` is suported as much as possible. For example:
