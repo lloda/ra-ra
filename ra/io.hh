@@ -9,8 +9,6 @@
 
 #pragma once
 #include "big.hh"
-#include <iosfwd>
-#include <sstream>
 
 namespace ra {
 
@@ -19,6 +17,7 @@ template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
+    static_assert(!has_len<A>, "len used outside subscript context.");
 // FIXME note that this copies / resets the Iterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
     static_assert(size_s(a)!=DIM_BAD, "cannot print type");

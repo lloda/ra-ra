@@ -32,6 +32,8 @@ template <int A> constexpr void iter(ra::no_arg);
 
 namespace ra {
 
+template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
+
 template <int ... Iarg, class A>
 constexpr decltype(auto)
 transpose(mp::int_list<Iarg ...>, A && a)

@@ -9,7 +9,6 @@
 
 #pragma once
 #include "ply.hh"
-#include "len.hh"
 
 namespace ra {
 
@@ -354,7 +353,6 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
-        static_assert(!(has_len<I> || ...)); /* FIXME */                \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank())  {        \
             return data()[select_loop<lens, steps>(i ...)];             \
         } else if constexpr ((is_beatable<I>::static_p && ...))  {      \

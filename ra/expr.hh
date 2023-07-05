@@ -9,6 +9,7 @@
 
 #pragma once
 #include "match.hh"
+#include <functional>
 
 namespace ra {
 

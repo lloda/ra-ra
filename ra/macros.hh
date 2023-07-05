@@ -9,7 +9,6 @@
 
 #pragma once
 #include <cstddef>
-#include <cassert>
 #include <type_traits>
 
 #define STRINGIZE_( x ) #x

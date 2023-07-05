@@ -10,7 +10,6 @@
 #pragma once
 #include "small.hh"
 #include <memory>
-#include <iosfwd>
 
 namespace ra {
 
@@ -344,7 +343,6 @@ struct View
             return sub;
 // TODO partial beating.
         } else {
-            static_assert(!(has_len<I> || ...)); // FIXME need to number the i's
             return from(*this, std::forward<I>(i) ...);
         }
     }

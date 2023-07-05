@@ -13,8 +13,7 @@
 // TODO std::execution::xxx-policy, validate output argument strides.
 
 #pragma once
-#include "atom.hh"
-#include <functional>
+#include "len.hh"
 
 namespace ra {
 
@@ -189,6 +188,7 @@ template <IteratorConcept A>
 constexpr void
 ply(A && a)
 {
+    static_assert(!has_len<A>, "len used outside subscript context.");
     if constexpr (size_s<A>()==DIM_ANY) {
         ply_ravel(std::forward<A>(a));
     } else {
@@ -207,6 +207,7 @@ template <IteratorConcept A, class DEF>
 inline auto
 ply_ravel_exit(A && a, DEF && def)
 {
+    static_assert(!has_len<A>, "len used outside subscript context.");
     rank_t rank = a.rank();
 // FIXME without assert compiler thinks var rank may be negative. See test in [ra40].
 #ifdef NDEBUG

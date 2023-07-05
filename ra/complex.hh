@@ -8,11 +8,9 @@
 // later version.
 
 #pragma once
-#include "bootstrap.hh"
-#include <algorithm>
-#include <complex>
-#include <limits>
 #include <cmath>
+#include <limits>
+#include <complex>
 
 // FIXME expode() in big.hh depend on std::complex, operators.hh uses the function defs. Ideally this should be opt in.
 
@@ -46,12 +44,6 @@ RA_REAL_OVERLOAD_CE(T) norm2(T const x) { return std::abs(x); }
     constexpr T rel_error(T const a, T const b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
-
-namespace ra {
-
-template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
-
-} // namespace ra
 
 #define FOR_FLOAT(R, C)                                                 \
     inline /* constexpr */ R arg(C const x)     { return std::arg(x); } \

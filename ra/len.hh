@@ -38,23 +38,34 @@ constexpr Len len {};
 static_assert(IteratorConcept<Len>);
 template <> constexpr bool is_special_def<Len> = true;
 
+
+// ---------------------
+// does expr tree contain Len?
+// ---------------------
+
+RA_IS_DEF(has_len, false);
+
+template <>
+constexpr bool has_len_def<Len> = true;
+
+template <IteratorConcept ... P>
+constexpr bool has_len_def<Pick<std::tuple<P ...>>> = (has_len<P> || ...);
+
+template <class Op, IteratorConcept ... P>
+constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
+
+template <int w, class O, class N, class S>
+constexpr bool has_len_def<Iota<w, O, N, S>> = (has_len<O> || has_len<N> || has_len<S>);
+
+
 // ---------------------
 // replace Len in expr tree.
 // ---------------------
 
-template <class T>
-constexpr bool has_len = std::is_same_v<T, Len>;
-
-template <IteratorConcept ... P>
-constexpr bool has_len<Pick<std::tuple<P ...>>> = (has_len<std::decay_t<P>> || ...);
-
-template <class Op, IteratorConcept ... P>
-constexpr bool has_len<Expr<Op, std::tuple<P ...>>> = (has_len<std::decay_t<P>> || ...);
-
 template <class E_>
 struct WithLen
 {
-// constant & scalar are allowed for Iota args. dots_t and insert_t in subscripts.
+// constant & scalar appear in Iota args. dots_t and insert_t appear in subscripts.
 // FIXME what else? restrict to IteratorConcept<E_> || is_constant<E_> || is_scalar<E_> ...
     template <class E> constexpr static decltype(auto)
     f(dim_t len, E && e)
@@ -74,7 +85,7 @@ struct WithLen<Len>
 };
 
 template <class Op, IteratorConcept ... P, int ... I>
-requires (has_len<std::decay_t<P>> || ...)
+requires (has_len<P> || ...)
 struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
     template <class E> constexpr static decltype(auto)
@@ -85,7 +96,7 @@ struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 };
 
 template <IteratorConcept ... P, int ... I>
-requires (has_len<std::decay_t<P>> || ...)
+requires (has_len<P> || ...)
 struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
     template <class E> constexpr static decltype(auto)
@@ -96,12 +107,12 @@ struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 };
 
 template <int w, class O, class N, class S>
-requires (has_len<std::decay_t<O>> || has_len<std::decay_t<N>> || has_len<std::decay_t<S>>)
+requires (has_len<O> || has_len<N> || has_len<S>)
 struct WithLen<Iota<w, O, N, S>>
 {
 // usable iota types must be either is_constant or is_scalar.
-    template <class T>
-    constexpr static decltype(auto) coerce(T && t)
+    template <class T> constexpr static decltype(auto)
+    coerce(T && t)
     {
         if constexpr (IteratorConcept<T>) {
             return FLAT(t);
