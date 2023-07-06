@@ -14,10 +14,10 @@ namespace ra {
 
 template <class E> constexpr decltype(auto) optimize(E && e) { return std::forward<E>(e); }
 
-// FIXME only reduces iota exprs as op'ed on in operators.hh, not tree that is built directly, as in WithLen.
+// FIXME only reduces iota exprs as op'ed on in operators.hh, not a tree like WithLen does.
 #if RA_DO_OPT_IOTA==1
-// TODO iota(int)*real is not opt to iota(real) since a+a+... != n*a.
-template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::numeric_limits<value_t<X>>::is_integer;
+// TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
+template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<value_t<X>>;
 
 // TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
@@ -30,14 +30,14 @@ template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
-    return ITEM(0).set(ITEM(0).i + ITEM(1));
+    return iota(ITEM(0).n, ITEM(0).i+ITEM(1), ITEM(0).gets());
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
-    return ITEM(1).set(ITEM(1).i + ITEM(0));
+    return iota(ITEM(1).n, ITEM(0)+ITEM(1).i, ITEM(1).gets());
 }
 
 template <class I, class J> requires (is_iota<I> && is_iota<J>)
@@ -55,7 +55,7 @@ template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
-    return ITEM(0).set(ITEM(0).i - ITEM(1));
+    return iota(ITEM(0).n, ITEM(0).i-ITEM(1), ITEM(0).gets());
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)

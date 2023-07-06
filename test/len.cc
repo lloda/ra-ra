@@ -64,8 +64,12 @@ int main()
     }
     tr.section("len in iota");
     {
+        static_assert(ra::has_len<decltype(ra::len+1)>);
+        static_assert(ra::has_len<decltype(ra::iota(ra::len+1, ra::len+ra::len))>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::iota(ra::len)).i)>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::iota(ra::len)).n)>);
+        static_assert(std::is_integral_v<decltype(with_len(10, ra::iota(ra::len+1, ra::len+ra::len)).i)>);
+        static_assert(std::is_integral_v<decltype(with_len(10, ra::iota(ra::len+1, ra::len+ra::len)).n)>);
         tr.test_eq(ra::iota(5), with_len(5, ra::iota(ra::len)));
         tr.test_eq(ra::iota(5, 5), with_len(5, ra::iota(ra::len, ra::len)));
         tr.test_eq(ra::iota(5, 20), with_len(10, ra::iota(5, ra::len+ra::len)));

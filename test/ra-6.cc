@@ -54,19 +54,6 @@ int main()
     cout << B(i, i) << endl;
 
     TestRecorder tr(std::cout);
-    tr.section("iota.set()");
-    {
-        auto i = ra::iota(2, 1, 3);
-        std::cout << "i.i" << i.i << std::endl;
-        i.set(i.i+4);
-        std::cout << "i.i" << i.i <<std::endl;
-        tr.test_eq(5, i.at(ra::Small<int, 1>{0}));
-        tr.test_eq(8, i.at(ra::Small<int, 1>{1}));
-        i.set(i.i-1);
-        std::cout << "i.i" << i.i <<std::endl;
-        tr.test_eq(4, i.at(ra::Small<int, 1>{0}));
-        tr.test_eq(7, i.at(ra::Small<int, 1>{1}));
-    }
     tr.section("subs 1");
     {
         ra::Small<int, 2> ref1 {1, 2};

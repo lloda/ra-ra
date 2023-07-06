@@ -15,35 +15,8 @@ namespace ra {
 
 
 // ---------------------
-// never ply(), solely to be rewritten.
-// ---------------------
-
-struct Len
-{
-    constexpr static rank_t rank_s() { return 0; }
-    constexpr static rank_t rank() { return 0; }
-    constexpr static dim_t len_s(int k) { std::abort(); }
-    constexpr static dim_t len(int k) { std::abort(); }
-    constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
-    constexpr static dim_t step(int k) { std::abort(); }
-    constexpr static bool keep_step(dim_t st, int z, int j) { std::abort(); }
-    constexpr static Len const & flat() { std::abort(); }
-    constexpr void operator+=(dim_t d) const { std::abort(); }
-    constexpr dim_t operator*() const { std::abort(); }
-};
-
-constexpr Len len {};
-
-// let operators build expr trees.
-static_assert(IteratorConcept<Len>);
-template <> constexpr bool is_special_def<Len> = true;
-
-
-// ---------------------
 // does expr tree contain Len?
 // ---------------------
-
-RA_IS_DEF(has_len, false);
 
 template <>
 constexpr bool has_len_def<Len> = true;

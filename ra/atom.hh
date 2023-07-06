@@ -252,7 +252,7 @@ vector(V && v)
     }
 }
 
-// Sequence and IteratorConcept for same.
+// Sequence and IteratorConcept for same. Iota isn't really an atom, but its exprs must all have rank 0 so it kind of is.
 // FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
 template <int w, class O, class N, class S>
 struct Iota
@@ -271,7 +271,6 @@ struct Iota
 
     constexpr static O gets() requires (is_constant<S>) { return ss; }
     constexpr O gets() const requires (!is_constant<S>) { return s; }
-    constexpr decltype(auto) set(O const & ii) { i = ii; return *this; };
 
     struct Flat
     {
@@ -324,6 +323,28 @@ iota(N && n = N {}, O && org = 0, S && s = default_one<S>())
 #define DEF_TENSORINDEX(w) constexpr TensorIndex<w> JOIN(_, w);
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
+
+// Never ply(), solely to be rewritten.
+struct Len
+{
+    constexpr static rank_t rank_s() { return 0; }
+    constexpr static rank_t rank() { return 0; }
+    constexpr static dim_t len_s(int k) { std::abort(); }
+    constexpr static dim_t len(int k) { std::abort(); }
+    constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
+    constexpr static dim_t step(int k) { std::abort(); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { std::abort(); }
+    constexpr static Len const & flat() { std::abort(); }
+    constexpr void operator+=(dim_t d) const { std::abort(); }
+    constexpr dim_t operator*() const { std::abort(); }
+};
+
+constexpr Len len {};
+
+// let operators build expr trees.
+static_assert(IteratorConcept<Len>);
+template <> constexpr bool is_special_def<Len> = true;
+RA_IS_DEF(has_len, false);
 
 
 // --------------

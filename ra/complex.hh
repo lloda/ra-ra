@@ -11,6 +11,7 @@
 #include <cmath>
 #include <limits>
 #include <complex>
+#include <algorithm> // for clamp()
 
 // FIXME expode() in big.hh depend on std::complex, operators.hh uses the function defs. Ideally this should be opt in.
 

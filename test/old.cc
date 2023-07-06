@@ -18,6 +18,18 @@
 
 namespace ra {
 
+constexpr bool
+gt_len(dim_t sa, dim_t sb)
+{
+    return sb==DIM_BAD
+             ? 1
+             : sa==DIM_BAD
+               ? 0
+               : sb==DIM_ANY
+                 ? 1
+                 : (sa!=DIM_ANY && sa>=sb);
+}
+
 template <class A, class B>
 struct pick_driver
 {

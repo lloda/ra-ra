@@ -915,7 +915,7 @@ cout << x(ra::all, ra::insert<2>) * a(insert<1>) << endl;
 @deffn @w{Special object} len
 Represents the length of the @var{i}-th axis of a subscripted expression, when used at the @var{i}-th place of a subscripting expression.
 
-This works like @code{end} in Octave/Matlab, but note that the last element of a vector @code{a} is @code{a(ra::len-1)} and not @code{a(ra::len-1)}.
+This works like @code{end} in Octave/Matlab, but note that the last element of a vector @code{a} is @code{a(ra::len-1)}.
 
 @example
 @verbatim
@@ -1576,12 +1576,12 @@ Error handling in @code{ra::} is controlled by two macros:
 @item @code{RA_DO_CHECK}
 is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with @code{RA_ASSERT}.
 @item @code{RA_ASSERT(cond, ...)}
-is a function-like macro. @code{cond} is an expression that evaluates to true (in the @code{ra::} namespace) if the check passes. The other arguments are informative and may or may not be used. The default defintion of @code{RA_ASSERT(cond, ...)} in @code{"ra/atom.hh"} will try to print those arguments to @code{std::cerr} and then abort.
+is a function-like macro. @code{cond} is an expression that evaluates to true (in the @code{ra::} namespace) if the check passes. The other arguments are informative and do not need to be used. The default defintion of @code{RA_ASSERT(cond, ...)} prints those arguments to @code{std::cerr} and aborts.
 @end itemize
 
 @code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}.
 
-You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. @code{examples/throw.cc} in the distribution shows how to throw an user-defined exception instead.
+You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. @code{examples/throw.cc} in the distribution shows how to throw a user-defined exception instead.
 
 @c ------------------------------------------------
 @node Extras

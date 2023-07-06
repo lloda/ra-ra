@@ -23,8 +23,22 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr(std::cout);
+    tr.section("Iota ops, expr Iotas WIP");
+    {
+        tr.info("naked").test(ra::is_iota<decltype(ra::iota(ra::len))>);
+        tr.info("nop").test(ra::is_iota<decltype(with_len(10, ra::iota(ra::len)))>);
+// works unopt bc Match avoid checking if has_len
+        tr.test_eq(ra::iota(10, 0, 2), with_len(10, ra::iota(ra::len) + ra::iota(ra::len)));
+// works, but opt runs at + site, not after with_len (FIXME?)
+        tr.test_eq(ra::iota(10, 0, 2), optimize(with_len(10, ra::iota(ra::len) + ra::iota(ra::len))));
+// FIXME don't work, because optimize() can't determine the match-length of the result iota
+        // tr.info("+, naked").test(ra::is_iota<decltype(optimize(ra::iota(ra::len) + ra::iota(ra::len)))>);
+        // tr.info("+").test(ra::is_iota<decltype(with_len(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))))>);
+        // tr.test_eq(ra::iota(10, 0, 2), with_len(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))));
+    }
     tr.section("misc/sanity");
     {
+        cout << ra::is_iota<ra::Len> << endl;
         tr.test_eq(ra::iota(4, 1, 2), ra::Big<int, 1> {1, 3, 5, 7});
         {
             auto z = ra::iota(5, 1.5);
@@ -47,7 +61,7 @@ int main()
             tr.info("ops with non-integers don't reduce iota by default").test(!std::is_same_v<decltype(i), decltype(j)>);
         }
     }
-    tr.section("operations with Iota, plus");
+    tr.section("Iota ops, plus");
     {
         static_assert(ra::iota_op<ra::Scalar<int>>);
         static_assert(ra::is_iota<decltype(ra::iota(10, long(10)))>);
@@ -60,6 +74,8 @@ int main()
                 auto k2 = optimize(1+i);
                 auto k3 = optimize(ra::iota(5)+1);
                 auto k4 = optimize(1+ra::iota(5));
+                auto k5 = optimize(1.5+ra::iota(5));
+                auto k6 = optimize(ra::iota(5)-0.5);
                 tr.info("not optimized w/ RA_DO_OPT=0").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
                 tr.test_eq(org+1, k1.i);
@@ -67,17 +83,21 @@ int main()
                 tr.test_eq(org+1, k2.i);
                 tr.test_eq(org+1, k3.i);
                 tr.test_eq(org+1, k4.i);
+                tr.test_eq(org+1.5, k5.i);
+                tr.test_eq(org-0.5, k6.i);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), j);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k1);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k2);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k3);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k4);
+                tr.test_eq(1.5+ra::start({0, 1, 2, 3, 4}), k5);
+                tr.test_eq(ra::start({0, 1, 2, 3, 4})-0.5, k6);
             };
         test(int(0));
         test(double(0));
         test(float(0));
     }
-    tr.section("operations with Iota, negate");
+    tr.section("Iota ops, negate");
     {
         auto test = [&tr](auto && org)
             {
@@ -95,7 +115,7 @@ int main()
         test(double(0));
         test(float(0));
     }
-    tr.section("operations with Iota, multiplies");
+    tr.section("Iota ops, multiplies");
     {
         auto test = [&tr](auto && org)
         {

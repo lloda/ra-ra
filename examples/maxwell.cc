@@ -2,12 +2,11 @@
 // ra-ra/examples - Maxwell, 4-vector potential vacuum field equations
 // After Chaitin1986, p. 14. Attempt at straight translation from APL.
 
-// (c) Daniel Llorens - 2016
+// (c) Daniel Llorens - 2016-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
-
 
 #include <iostream>
 #include <thread>

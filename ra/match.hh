@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Prefix matching of array expression templates.
 
-// (c) Daniel Llorens - 2011-2022
+// (c) Daniel Llorens - 2011-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -24,18 +24,6 @@ gt_rank(rank_t ra, rank_t rb)
                    : ra==RANK_ANY
                      ? 1
                      : ra>=rb;
-}
-
-constexpr bool
-gt_len(dim_t sa, dim_t sb)
-{
-    return sb==DIM_BAD
-             ? 1
-             : sa==DIM_BAD
-               ? 0
-               : sb==DIM_ANY
-                 ? 1
-                 : (sa!=DIM_ANY && sa>=sb);
 }
 
 // TODO Allow infinite rank; need a special value of crank for that.
@@ -155,13 +143,15 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     using T = std::tuple<P ...>;
     T t;
 
-// TODO Maybe on ply? That would avoid the check flag and the agree_xxx() mess.
+// TODO Maybe on ply, would avoid the check flag and the agree_xxx() mess.
     constexpr
     Match(P ... p_): t(std::forward<P>(p_) ...)
     {
         if constexpr (check) {
-            if constexpr (check_expr_s<Match>()) { // may fail
-                RA_CHECK(check_expr<true>(*this));
+            if constexpr (!(has_len<P> || ...)) { // len will be replaced, so check then
+                if constexpr (check_expr_s<Match>()) { // may fail
+                    RA_CHECK(check_expr<true>(*this));
+                }
             }
         }
     }
@@ -222,26 +212,26 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     {
         if (dim_t ss=len_s(k); ss==DIM_ANY) {
             auto f = [this, &k](auto && f, auto i_)
-                     {
-                         constexpr int i = i_;
-                         if constexpr (i<std::tuple_size_v<T>) {
-                             auto const & a = std::get<i>(this->t);
-                             if (k<a.rank()) {
-                                 dim_t as = a.len(k);
-                                 if (as!=DIM_BAD) {
-                                     assert(as!=DIM_ANY); // cannot happen at runtime
-                                     return as;
-                                 } else {
-                                     return f(f, int_c<i+1> {});
-                                 }
-                             } else {
-                                 return f(f, int_c<i+1> {});
-                             }
-                         } else {
-                             assert(0 && "whole expr len cannot be undefined");
-                             return DIM_BAD;
-                         }
-                     };
+            {
+                constexpr int i = i_;
+                if constexpr (i<std::tuple_size_v<T>) {
+                    auto const & a = std::get<i>(this->t);
+                    if (k<a.rank()) {
+                        dim_t as = a.len(k);
+                        if (as!=DIM_BAD) {
+                            assert(as!=DIM_ANY); // cannot happen at runtime
+                            return as;
+                        } else {
+                            return f(f, int_c<i+1> {});
+                        }
+                    } else {
+                        return f(f, int_c<i+1> {});
+                    }
+                } else {
+                    assert(0 && "whole expr len cannot be undefined");
+                    return DIM_BAD;
+                }
+            };
             return f(f, int_c<0> {});
         } else {
             return ss;
