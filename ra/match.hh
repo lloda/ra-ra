@@ -185,7 +185,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
         }
     }
 
-// any size which is not DIM_BAD.
+// first positive size, if none first DIM_ANY, if none then DIM_BAD.
     constexpr static dim_t
     len_s(int k)
     {
@@ -194,13 +194,13 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
                                  {
                                      using A = std::decay_t<typename decltype(a)::type>;
                                      constexpr rank_t ar = A::rank_s();
-                                     if (s!=DIM_BAD) {
+                                     if (s>=0) {
                                          return s;
                                      } else if (ar>=0 && k>=ar) {
                                          return s;
                                      } else {
-                                         dim_t zz = A::len_s(k);
-                                         return zz;
+                                         dim_t z = A::len_s(k);
+                                         return (z!=DIM_BAD) ? z : s;
                                      }
                                  });
         return s;

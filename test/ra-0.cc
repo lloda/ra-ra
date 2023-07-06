@@ -54,6 +54,13 @@ void CheckArrayIO(TestRecorder & tr, A const & a, double * begin)
 int main()
 {
     TestRecorder tr(std::cout);
+    tr.section("expr len_s doesn't depend on operand order");
+    {
+        ra::Small<int, 4> a = ra::_0;
+        ra::Big<int, 1> b({4}, ra::_0);
+        tr.test_eq(4, (a+b).len_s(0));
+        tr.test_eq(4, (b+a).len_s(0));
+    }
     tr.section("internal fields");
     {
         {
