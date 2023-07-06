@@ -23,6 +23,15 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr(std::cout);
+    tr.section("optimizing static size Iotas");
+    {
+        tr.test_eq(4, optimize(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)).nn);
+        tr.test_eq(4, optimize(ra::iota(4) + ra::iota(ra::int_c<4>(), 0, 2)).nn);
+        tr.test_eq(ra::start({0, 3, 6, 9}), optimize(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)));
+        tr.test_eq(4, optimize(ra::iota(ra::int_c<4>()) - ra::iota(4, 0, 2)).nn);
+        tr.test_eq(4, optimize(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)).nn);
+        tr.test_eq(ra::start({0, -1, -2, -3}), optimize(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)));
+    }
     tr.section("Iota ops, expr Iotas WIP");
     {
         tr.info("naked").test(ra::is_iota<decltype(ra::iota(ra::len))>);
