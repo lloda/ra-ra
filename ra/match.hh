@@ -194,13 +194,11 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
                                  {
                                      using A = std::decay_t<typename decltype(a)::type>;
                                      constexpr rank_t ar = A::rank_s();
-                                     if (s>=0) {
-                                         return s;
-                                     } else if (ar>=0 && k>=ar) {
+                                     if (s>=0 || (ar>=0 && k>=ar)) {
                                          return s;
                                      } else {
                                          dim_t z = A::len_s(k);
-                                         return (z!=DIM_BAD) ? z : s;
+                                         return (DIM_BAD!=z) ? z : s;
                                      }
                                  });
         return s;

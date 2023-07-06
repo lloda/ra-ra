@@ -829,7 +829,11 @@ template <class E>
 constexpr auto
 concrete(E && e)
 {
+// FIXME gcc 11.3 on GH workflows (?)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     return concrete_type<E>(std::forward<E>(e));
+#pragma GCC diagnostic pop
 }
 
 template <class E>
@@ -847,11 +851,15 @@ template <class E, class X>
 constexpr auto
 with_same_shape(E && e, X && x)
 {
+// FIXME gcc 11.3 on GH workflows (?)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
         return concrete_type<E>(std::forward<X>(x));
     } else {
         return concrete_type<E>(ra::shape(e), std::forward<X>(x));
     }
+#pragma GCC diagnostic pop
 }
 
 template <class E, class S, class X>

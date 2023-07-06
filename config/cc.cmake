@@ -15,3 +15,5 @@ foreach (target ${TARGETS})
 endforeach ()
 
 enable_testing ()
+
+message ("* C++ compiler is: ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_VERSION}")

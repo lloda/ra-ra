@@ -19,6 +19,14 @@ int main()
 {
     ra::TestRecorder tr(std::cout);
 
+    tr.section("builtin array");
+    {
+        int const a[3] = { 1, 2, 3 };
+        auto b = ra::concrete(a);
+        b = -b;
+        tr.test_eq(ra::start({1, 2, 3}), a);
+        tr.test_eq(ra::start({-1, -2, -3}), b);
+    }
     tr.section("scalars");
     {
         int a = 3;
