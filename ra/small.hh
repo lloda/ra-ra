@@ -221,7 +221,7 @@ struct CellSmall
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
     static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
     static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
-    static_assert(fullr==cellr || gt_rank(fullr, cellr), "bad cell rank");
+    static_assert(choose_rank(fullr, cellr)==fullr, "bad cell rank");
 
     using cell_lens = mp::drop<typename V::lens, framer>;
     using cell_steps = mp::drop<typename V::steps, framer>;

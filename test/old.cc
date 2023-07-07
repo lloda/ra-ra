@@ -98,9 +98,9 @@ int main()
         static_assert(ra::pick_driver<UU<2>, UU<2>>::value==0, "bad match 4");
         static_assert(ra::driver_index<UU<2>, TI<0>, UU<2>> ==0, "bad match 5a");
 // dynamic rank counts as +inf.
-        static_assert(ra::gt_rank(ra::RANK_ANY, 2), "bad match 6a");
-        static_assert(ra::gt_rank(UU<ra::RANK_ANY>::rank_s(), UU<2>::rank_s()), "bad match 6b");
-        static_assert(!ra::gt_rank(UU<2>::rank_s(), UU<ra::RANK_ANY>::rank_s()), "bad match 6c");
+        static_assert(ra::RANK_ANY==ra::choose_rank(ra::RANK_ANY, 2), "bad match 6a");
+        static_assert(UU<ra::RANK_ANY>::rank_s()==ra::choose_rank(UU<ra::RANK_ANY>::rank_s(), UU<2>::rank_s()), "bad match 6b");
+        static_assert(UU<ra::RANK_ANY>::rank_s()==ra::choose_rank(UU<2>::rank_s(), UU<ra::RANK_ANY>::rank_s()), "bad match 6c");
         static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<2>>::value==0, "bad match 6d");
         static_assert(ra::pick_driver<UU<2>, UU<ra::RANK_ANY>>::value==1, "bad match 6e");
         static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<ra::RANK_ANY>>::value==0, "bad match 6f");

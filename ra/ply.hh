@@ -19,7 +19,7 @@ namespace ra {
 
 
 // --------------
-// Run time order
+// run time order
 // --------------
 
 // Traverse array expression looking to ravel the inner loop.
@@ -96,7 +96,7 @@ ply_ravel(A && a)
 
 
 // -------------------------
-// Compile time order.
+// compile time order
 // -------------------------
 
 template <class order, int ravel_rank, class A, class S>
@@ -181,7 +181,7 @@ plyf(A && a)
 
 
 // ---------------------------
-// Select best performance (or requirements) for each type.
+// select best performance (or requirements) for each type
 // ---------------------------
 
 template <IteratorConcept A>
@@ -198,7 +198,7 @@ ply(A && a)
 
 
 // ---------------------------
-// Short-circuiting pliers.
+// short-circuiting ply
 // ---------------------------
 
 // TODO Refactor with ply_ravel. Make exit available to plyf.

@@ -72,7 +72,7 @@ struct CellBig
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
     static_assert(cellr>=0 || cellr==RANK_ANY, "Bad cell rank.");
     static_assert(framer>=0 || framer==RANK_ANY, "Bad frame rank.");
-    static_assert(fullr==cellr || gt_rank(fullr, cellr), "Bad cell rank.");
+    static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
     using Dimv_ = typename std::decay_t<V>::Dimv;
 // FIXME necessary to support some cases of from() [ra14]. But cf https://stackoverflow.com/a/8609226

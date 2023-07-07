@@ -134,7 +134,7 @@ using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 template <class A, class B>
 struct max_i
 {
-    constexpr static int value = gt_rank(A::value, B::value) ? 0 : 1;
+    constexpr static int value = (A::value == choose_rank(A::value, B::value)) ? 0 : 1;
 };
 
 // Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.

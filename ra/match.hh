@@ -12,21 +12,13 @@
 
 namespace ra {
 
-constexpr bool
-gt_rank(rank_t ra, rank_t rb)
+constexpr rank_t
+choose_rank(rank_t ra, rank_t rb)
 {
-    return rb==RANK_BAD
-             ? 1
-             : rb==RANK_ANY
-               ? ra==RANK_ANY
-               : ra==RANK_BAD
-                   ? 0
-                   : ra==RANK_ANY
-                     ? 1
-                     : ra>=rb;
+    return RANK_BAD==rb ? ra : RANK_BAD==ra ? rb : RANK_ANY==ra ? ra : RANK_ANY==rb ? rb : (ra>=rb ? ra : rb);
 }
 
-// TODO Allow infinite rank; need a special value of crank for that.
+// TODO Allow infinite rank; need a special value of crank.
 constexpr rank_t
 dependent_cell_rank(rank_t rank, rank_t crank)
 {
@@ -46,15 +38,7 @@ dependent_frame_rank(rank_t rank, rank_t crank)
 constexpr dim_t
 choose_len(dim_t sa, dim_t sb)
 {
-    if (sa==DIM_BAD) {
-        return sb;
-    } else if (sb==DIM_BAD) {
-        return sa;
-    } else if (sa==DIM_ANY) {
-        return sb;
-    } else {
-        return sa;
-    }
+    return DIM_BAD==sa ? sb : DIM_BAD==sb ? sa : DIM_ANY==sa ? sb : sa;
 }
 
 // ct mismatch, abort (FIXME) | ct match, return 0 | rt check needed, return 1
@@ -114,14 +98,13 @@ check_expr(E const & e)
             if (k<std::get<i>(e.t).rank()) {
                 dim_t si = std::get<i>(e.t).len(k);
                 if (sk==DIM_BAD || si==DIM_BAD || si==sk) {
-                    return fi(fi, k, int_c<i+1> {}, choose_len(sk, si));
+                    sk = choose_len(sk, si);
                 } else {
                     RA_CHECK(!fail, " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
                     return false;
                 }
-            } else {
-                return fi(fi, k, int_c<i+1> {}, sk);
             }
+            return fi(fi, k, int_c<i+1> {}, sk);
         } else {
             return true;
         }
@@ -162,78 +145,57 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr static rank_t
     rank_s()
     {
-        return mp::fold_tuple(RANK_BAD, mp::map<box, T> {},
-                              [](rank_t r, auto a)
-                              {
-                                  constexpr rank_t ar = ra::rank_s<typename decltype(a)::type>();
-                                  return gt_rank(r, ar) ?  r : ar;
-                              });
-    }
-    constexpr rank_t
-    rank() const
-    {
-        if constexpr (constexpr rank_t rs=rank_s(); rs==RANK_ANY) {
-            return mp::fold_tuple(RANK_BAD, t,
-                                  [](rank_t r, auto && a)
-                                  {
-                                      rank_t ar = a.rank();
-                                      assert(ar!=RANK_ANY); // cannot happen at runtime
-                                      return gt_rank(r, ar) ?  r : ar;
-                                  });
-        } else {
-            return rs;
-        }
+        rank_t r = RANK_BAD;
+        return ((r = choose_rank(r, ra::rank_s<P>())), ...);
     }
 
-// first positive size, if none first DIM_ANY, if none then DIM_BAD.
+    constexpr static rank_t
+    rank()
+    requires (DIM_ANY != Match::rank_s())
+    {
+        return rank_s();
+    }
+
+    constexpr rank_t
+    rank() const
+    requires (DIM_ANY == Match::rank_s())
+    {
+        rank_t r = RANK_BAD; ((r = choose_rank(r, std::get<I>(t).rank())), ...);
+        assert(RANK_ANY!=r); // not at runtime
+        return r;
+    }
+
+// first positive size, if none first DIM_ANY, if none then DIM_BAD
     constexpr static dim_t
     len_s(int k)
     {
-        dim_t s = mp::fold_tuple(DIM_BAD, mp::map<box, T> {},
-                                 [&k](dim_t s, auto a)
-                                 {
-                                     using A = std::decay_t<typename decltype(a)::type>;
-                                     constexpr rank_t ar = A::rank_s();
-                                     if (s>=0 || (ar>=0 && k>=ar)) {
-                                         return s;
-                                     } else {
-                                         dim_t z = A::len_s(k);
-                                         return (DIM_BAD!=z) ? z : s;
-                                     }
-                                 });
+        auto f = [&k]<class A>(dim_t s)
+        {
+            constexpr rank_t ar = A::rank_s();
+            return (ar>=0 && k>=ar) ? s : choose_len(s, A::len_s(k));
+        };
+        dim_t s = DIM_BAD; ((s>=0 ? s : s = f.template operator()<std::decay_t<P>>(s)), ...);
         return s;
     }
 
-// do early exit with fold_tuple (and with len_s(k)).
+    constexpr static dim_t
+    len(int k)
+    requires (requires (int kk) { P::len(kk); } && ...)
+    {
+        return len_s(k);
+    }
+
     constexpr dim_t
     len(int k) const
+    requires (!(requires (int kk) { P::len(kk); } && ...))
     {
-        if (dim_t ss=len_s(k); ss==DIM_ANY) {
-            auto f = [this, &k](auto && f, auto i_)
-            {
-                constexpr int i = i_;
-                if constexpr (i<std::tuple_size_v<T>) {
-                    auto const & a = std::get<i>(this->t);
-                    if (k<a.rank()) {
-                        dim_t as = a.len(k);
-                        if (as!=DIM_BAD) {
-                            assert(as!=DIM_ANY); // cannot happen at runtime
-                            return as;
-                        } else {
-                            return f(f, int_c<i+1> {});
-                        }
-                    } else {
-                        return f(f, int_c<i+1> {});
-                    }
-                } else {
-                    assert(0 && "whole expr len cannot be undefined");
-                    return DIM_BAD;
-                }
-            };
-            return f(f, int_c<0> {});
-        } else {
-            return ss;
-        }
+        auto f = [&k](dim_t s, auto const & a)
+        {
+            return k>=a.rank() ? s : choose_len(s, a.len(k));
+        };
+        dim_t s = DIM_BAD; ((s>=0 ? s : s = f(s, std::get<I>(t))), ...);
+        assert(DIM_ANY!=s); // not at runtime
+        return s;
     }
 
     constexpr void
@@ -250,13 +212,13 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
 
     constexpr bool
     keep_step(dim_t st, int z, int j) const
-        requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...))
+    requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...))
     {
         return (std::get<I>(t).keep_step(st, z, j) && ...);
     }
     constexpr static bool
     keep_step(dim_t st, int z, int j)
-        requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...)
+    requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...)
     {
         return (std::decay_t<P>::keep_step(st, z, j) && ...);
     }
