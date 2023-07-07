@@ -66,7 +66,7 @@ int main()
 // FIXME should try to traverse the array once, e.g. explode() = pack(...), but we need to wrap around boundaries.
     auto diff = [&DA, &A, &delta](auto k_, real factor)
         {
-            constexpr int k = decltype(k_)::value;
+            constexpr int k = k_;
             const int o = DA.len(k);
             if (o>=2) {
                 DA(HH<k>, iota(o-2, 1), HH<4-k>, k) = (A(HH<k>, iota(o-2, 2)) - A(HH<k>, iota(o-2, 0)));

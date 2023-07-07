@@ -141,7 +141,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
 
     template <class T> struct box { using type = T; };
 
-// rank of largest subexpr. This is true for either prefix or suffix match.
+// rank of largest subexpr, so we look at all of them.
     constexpr static rank_t
     rank_s()
     {

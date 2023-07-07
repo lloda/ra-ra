@@ -9,7 +9,7 @@ Multidimensional arrays can be indexed in multiple dimensions. For example, vect
 
 **ra-ra** is small (about 6k loc), easy to extend, and generic — there are no arbitrary type restrictions or limits on rank or argument count.
 
-In this example ([examples/readme.cc](examples/readme.cc)), we add each element of a vector to each row of a matrix, and then print the result.
+In this example ([examples/readme.cc](examples/readme.cc)), we create an array, do some operations on it, and print the result.
 
 ```c++
   #include "ra/ra.hh"
@@ -17,16 +17,21 @@ In this example ([examples/readme.cc](examples/readme.cc)), we add each element 
 
   int main()
   {
-    ra::Big<float, 2> A = {{1, 2}, {3, 4}};  // compile-time rank, dynamic shape
-    A += std::vector<float> {10, 20};        // rank-extending op with STL object
-    std::cout << "A: " << A << std::endl;    // shape is dynamic, so it will be printed
+      // compile time rank, 4x2 array
+      ra::Big<float, 2> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+      // rank-extending op with STL object
+      A += std::vector {10., 20.};
+      // negate right half
+      A(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
+      // shape is dynamic, so will be printed
+      std::cout << "A: " << A << std::endl;
   }
 ```
 ⇒
 ```
-  A: 2 2
-  11 12
-  23 24
+A: 2 4
+11 12 -13 -14
+25 26 -27 -28
 ```
 
 Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or have a look at the [examples/](examples/) folder.
@@ -48,6 +53,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
 * Rank conjunction as in J (compile time ranks only).
+* Configurable error checking.
 * Many predefined array operations. Adding yours is trivial.
 
 `constexpr` is suported as much as possible. For example:
@@ -68,13 +74,7 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 * Some of the benchmarks will try to use BLAS if you have define `RA_USE_BLAS=1` in the environment.
 * The test suite is built with `-fsanitize=address` by default, and this can cause significant slowdown. Disable by passing `-fno-sanitize=address` to the compiler.
 
-**ra-ra** requires support for `-std=c++20`, including `<source_location>`. The most recent versions tested are:
-
-* gcc 13.1: `f632865f35fefe9e8cf00558cdc75e17f9fb9c2a` (`-std=c++2b`)
-* gcc 12.2: `f632865f35fefe9e8cf00558cdc75e17f9fb9c2a` (`-std=c++2b`)
-* gcc 11.3: `f632865f35fefe9e8cf00558cdc75e17f9fb9c2a` (`-std=c++20`)
-
-It's not practical for me to test Clang systematically, so some snags with that are likely.
+**ra-ra** requires support for `-std=c++20`, including `<source_location>`. I test regularly with gcc ≥ 11.3. If you can test with Clang, please let me know.
 
 #### Notes
 

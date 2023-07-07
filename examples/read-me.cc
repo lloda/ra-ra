@@ -19,6 +19,17 @@ using ra::mp::int_list;
 int main()
 {
     TestRecorder tr(std::cout);
+    tr.section("first example");
+    {
+// compile time rank, 4x2 array
+        ra::Big<float, 2> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+// rank-extending op with STL object
+        A += std::vector {10., 20.};
+// negate right half
+        A(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
+// shape is dynamic, so will be printed
+        std::cout << "A: " << A << std::endl;
+    }
     tr.section("dynamic/static shape");
 // Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).
     {

@@ -31,7 +31,7 @@
 
 namespace ra {
 
-constexpr int VERSION = 20;
+constexpr int VERSION = 21;
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
