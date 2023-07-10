@@ -20,7 +20,6 @@
 #include <numbers>
 
 using std::cout, std::endl, ra::TestRecorder;
-
 constexpr auto PI = std::numbers::pi_v<double>;
 
 Benchmark::clock::duration tmul(0);

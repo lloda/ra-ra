@@ -1,13 +1,12 @@
+// -*- mode: c++; coding: utf-8 -*-
+// ra-ra/examples - Conjugate gradient after Hestenes und Stiefel.
 
 // (c) Daniel Llorens - 2017
-
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-/// @file cghs.cc
-/// @brief Conjugate gradient after Hestenes und Stiefel
 // Adapted from lsolver/cghs.cc by Christian Badura, 1998/05.
 
 #pragma once

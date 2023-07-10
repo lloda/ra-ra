@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Operation nodes for expression templates.
+// ra-ra - Expression template that applies an operator.
 
 // (c) Daniel Llorens - 2011-2022
 // This library is free software; you can redistribute it and/or modify it under

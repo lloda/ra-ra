@@ -74,13 +74,15 @@ checkbox [C-ct] flip TODO
       - [X] for Container constructors
       - [X] for Small constructors
     - [X] General static check on prefix matching <2019-02-06 Wed 12:06>
-  - [-] Building, tests [3/6]
+  - [-] Building, tests [4/6]
     - [X] Build docs with cmake
     - [X] Support RA_USE_BLAS with cmake (linux)
     - [X] Support RA_USE_BLAS with cmake (mac) <2018-12-07 Fri 16:33>
+    - [X] TestRecorder.test_eq with mismatched shapes aborts. Should just fail the test. <2023-07-10 Mon 13:14>
+      - We have had agree() for a while.
     - [ ] Make cmake tests respect dependences and able to be run independently.
     - [ ] Test for expected compilation errors (static_assert, etc) [ra42].
-    - [ ] TestRecorder.test_eq with mismatched shapes aborts. Should just fail the test.
+      - One idea (libc++?) is to fork() and check that child breaks.
   - [ ] Documentation [0/3]
     - [ ] Complete section on internals
     - [ ] Complete section on other languages, libraries

@@ -8,7 +8,7 @@
 // later version.
 
 // In contrast to Expr, argument expressions are only evaluated where the
-// selector indicates. The implementation is parallel to Expr / Flat.
+// selector indicates. The implementation is parallel to Expr.
 
 #pragma once
 #include "core.hh"

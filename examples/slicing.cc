@@ -47,6 +47,13 @@ int main()
     B(1) = 7.;
     B(1, ra::dots<2>) = 7.;
 
+// If your compiler supports c++23, you can use [] instead of () for multi-indices. Single index [] works in any case.
+#if __cpp_multidimensional_subscript  >= 202110L
+    B[1, ra::all, ra::all] = 7.;
+    B[1] = 7.;
+    B[1, ra::dots<2>] = 7.;
+#endif
+
 // These are equivalent.
     B(2, ra::all, 1) = 5.;
     B(2, ra::dots<1>, 1) = 5.;
