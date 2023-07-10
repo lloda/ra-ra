@@ -104,6 +104,12 @@ int main()
 #undef EXPR
     }
 // If the size of an expr is static, dynamic checks may still need to be run if any of the terms of the expr has dynamic size. This is checked in match.hh: check_expr_s().
+    tr.section("static mismatch");
+    {
+        ra::Small<int, 2, 2> a;
+        ra::Small<int, 3, 2> b;
+        static_assert(!agree_s(a, b));
+    }
     tr.section("dynamic terms in match, static rank");
     {
         int error = 0;
@@ -111,7 +117,8 @@ int main()
         try {
             ra::Small<int, 2> a {2, 3};
             ra::Big<int, 1> b({1}, 77);
-            tr.test_eq(1, ra::check_expr_s<decltype(a+b)>());
+            tr.test_eq(true, decltype(a+b)::check_expr_s());
+            tr.test(!agree(a, b));
             a = b;
         } catch (ra_error & e) {
             error = 1;
@@ -179,7 +186,8 @@ int main()
         int error = 0;
         string s;
         try {
-            tr.info("dynamic test is needed").test_eq(1, ra::check_expr_s<decltype(EXPR)>());
+            tr.info("dynamic test is needed").test(decltype(EXPR)::check_expr_s());
+            tr.test(!agree(a, b));
             ply_ravel(EXPR);
         } catch (ra_error & e) {
             error = 1;
@@ -197,7 +205,8 @@ int main()
         try {
             std::cout << "A: " << a.iter().len(0) << endl;
             std::cout << "B: " << b.iter().len(0) << endl;
-            tr.info("dynamic test is needed").test_eq(1, ra::check_expr_s<decltype(EXPR)>());
+            tr.info("dynamic test is needed").test(decltype(EXPR)::check_expr_s());
+            tr.test(!agree(a, b));
             ply_ravel(EXPR);
         } catch (ra_error & e) {
             error = 1;

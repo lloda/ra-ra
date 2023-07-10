@@ -9,7 +9,7 @@ Multidimensional arrays can be indexed in multiple dimensions. For example, vect
 
 **ra-ra** is small (about 6k loc), easy to extend, and generic — there are no arbitrary type restrictions or limits on rank or argument count.
 
-In this example ([examples/readme.cc](examples/readme.cc)), we create an array, do some operations on it, and print the result.
+In this example ([examples/read-me.cc](examples/read-me.cc)), we create an array, do some operations on it, and print the result.
 
 ```c++
   #include "ra/ra.hh"

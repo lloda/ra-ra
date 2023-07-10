@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Test abilities of post v10 driverless frame matching Expr.
 
-// (c) Daniel Llorens - 2019-2022
+// (c) Daniel Llorens - 2019-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any

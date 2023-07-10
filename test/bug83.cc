@@ -14,12 +14,11 @@
 // Removed the patch for gcc 10.1 after 76bfad74c53e799e12d540d03318c3037bf624e0.
 
 #include <iostream>
-#include <iomanip>
-#include <random>
-#include "ra/big.hh"
+#include "ra/ra.hh"
 
 int main()
 {
     ra::Big<double, 2> A({4, 4}, 0.);
     A = ra::expr([](auto && a) { return a(0, 0); }, ra::iter<2>(A));
+    std::cout << "A " << A << std::endl;
 }

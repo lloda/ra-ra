@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 21
-@set UPDATED 2023 July 8
+@set UPDATED 2023 July 10
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -206,11 +206,11 @@ In C++, a library is enough.
 @c @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
 Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever the properties that justify their existence are not involved. When this isn't possible, it's a bug. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{SmallView}, even though you could do it on a @code{View}; this was a bug.
+Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{SmallView}, even though you could do it on a @code{View}; this was a bug.
 
-Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view B into view A. To change view A instead (to treat A as a pointer) would be the default meaning of A=B for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.@footnote{This particular decision may be revisited in the future.}
+Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view @code{B} into view @code{A}. To change view @code{A} instead (to treat @code{A} as a pointer) would be the default meaning of @code{A=B} for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
 
-Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding that. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn't hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
+Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding it. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn't hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
 
 That isn't to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably usable syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you'll be able to guarantee that an array is stored in compact columns, or that the real parts are interleaved with the imaginary parts.
 
@@ -1695,7 +1695,7 @@ Item 2
 @section Type hierarchy
 @c ------------------------------------------------
 
-Some of the categories below are actually C++20 ‘concepts’, some are still informal.
+Some of the categories below are C++20 ‘concepts’, some are still informal.
 
 @itemize
 @item @b{Container} --- @code{Big}, @code{Shared}, @code{Unique}, @code{Small}

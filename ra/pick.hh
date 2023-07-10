@@ -11,7 +11,7 @@
 // selector indicates. The implementation is parallel to Expr / Flat.
 
 #pragma once
-#include "match.hh"
+#include "core.hh"
 
 namespace ra {
 

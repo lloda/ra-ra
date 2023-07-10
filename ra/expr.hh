@@ -8,7 +8,7 @@
 // later version.
 
 #pragma once
-#include "match.hh"
+#include "core.hh"
 #include <functional>
 
 namespace ra {
@@ -253,7 +253,7 @@ map(Op && op, A && ... a)
 
 
 // ---------------
-// explicit agreement checks. FIXME provide separate agree_s().
+// explicit agreement checks
 // ---------------
 
 template <class ... P>
@@ -261,6 +261,13 @@ constexpr bool
 agree(P && ... p)
 {
     return agree_(ra::start(std::forward<P>(p)) ...);
+}
+
+template <class ... P>
+constexpr bool
+agree_s(P && ... p)
+{
+    return agree_s_(ra::start(std::forward<P>(p)) ...);
 }
 
 template <class Op, class ... P>
@@ -274,7 +281,14 @@ template <class ... P>
 constexpr bool
 agree_(P && ... p)
 {
-    return check_expr<false>(Match<false, std::tuple<P ...>> { std::forward<P>(p) ... });
+    return (Match<false, std::tuple<P ...>> { std::forward<P>(p) ... }).check_expr();
+}
+
+template <class ... P>
+constexpr bool
+agree_s_(P && ... p)
+{
+    return Match<false, std::tuple<P ...>>::check_expr_s();
 }
 
 template <class Op, class ... P>

@@ -1114,7 +1114,7 @@ auto explode(View<T, RANK> const & a)
     return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>())>(a);
 }
 
-// FIXME Consider these in as namespace level generics in atom.hh
+// FIXME Maybe namespace level generics in core.hh
 template <class T> inline int gstep(int i) { if constexpr (is_scalar<T>) return 1; else return T::step(i); }
 template <class T> inline int glen(int i) { if constexpr (is_scalar<T>) return 1; else return T::len(i); }
 
