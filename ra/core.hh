@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Terminal nodes for expression templates.
+// ra-ra - Terminal nodes for expression templates + prefix matching.
 
 // (c) Daniel Llorens - 2011-2023
 // This library is free software; you can redistribute it and/or modify it under

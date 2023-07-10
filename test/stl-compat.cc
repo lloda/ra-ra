@@ -62,6 +62,12 @@ int main()
         ra::Big<int, 1> d(3, ra::ptr(cp)); // alt shape
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, d);
     }
+    tr.section("raw pointers");
+    {
+        ra::Big<int, 1> a = {1, 2, 3};
+        ra::ptr(a.data()) = map([](auto const & a) { return -a; }, ra::iota(3, 1, 9));
+        tr.test_eq(ra::start({-1, -10, -19}), a);
+    }
     tr.section("ptr with other iterators");
     {
         std::vector a = {1, 2, 3};

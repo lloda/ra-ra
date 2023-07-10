@@ -104,7 +104,7 @@ struct CellBig
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const { return dependent_frame_rank(ssize(dimv), cellr_spec); }
+    constexpr rank_t rank() const requires (framer==DIM_ANY) { return dependent_frame_rank(ssize(dimv), cellr_spec); }
     constexpr static rank_t rank() requires (framer!=DIM_ANY) { return framer; }
     constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
     constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
@@ -209,7 +209,7 @@ struct View
     constexpr static rank_t rank() requires (RANK!=RANK_ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dimv.size()); }
     constexpr static dim_t len_s(int j) { return DIM_ANY; }
-    constexpr dim_t len(int j) const  { RA_CHECK(inside(j, rank())); return dimv[j].len; }
+    constexpr dim_t len(int j) const { RA_CHECK(inside(j, rank())); return dimv[j].len; }
     constexpr dim_t step(int j) const { RA_CHECK(inside(j, rank())); return dimv[j].step; }
     constexpr auto data() const { return p; }
     constexpr dim_t size() const { return prod(map(&Dim::len, dimv)); }
