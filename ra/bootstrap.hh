@@ -257,35 +257,33 @@ template <class V>
 requires (is_foreign_vector<V> && requires { std::tuple_size<V>::value; })
 struct ra_traits_def<V>
 {
-    constexpr static dim_t N = std::tuple_size_v<V>;
-    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { N }; }
-    constexpr static dim_t size(V const & v) { return N; }
-    constexpr static dim_t size_s() { return N; }
-    constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; };
+    constexpr static rank_t rank(V const & v) { return 1; }
+    constexpr static dim_t size_s() { return std::tuple_size_v<V>; }
+    constexpr static dim_t size(V const & v) { return size_s(); }
+    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { size_s() }; }
 };
 
 template <class V>
 requires (is_foreign_vector<V> && !(requires { std::tuple_size<V>::value; }))
 struct ra_traits_def<V>
 {
-// FIXME unqualified ssize fails on std::ranges::iota_view - looks iffy
-    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { std::ssize(v) }; }
-    constexpr static dim_t size(V const & v) { return std::ssize(v); }
-    constexpr static dim_t size_s() { return DIM_ANY; }
-    constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; }
+    constexpr static rank_t rank(V const & v) { return 1; }
+    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size(V const & v) { return std::ssize(v); }
+    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { std::ssize(v) }; }
 };
 
 template <class T>
 struct ra_traits_def<std::initializer_list<T>>
 {
     using V = std::initializer_list<T>;
-    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { ssize(v) }; }
-    constexpr static dim_t size(V const & v) { return ssize(v); }
-    constexpr static dim_t size_s() { return DIM_ANY; }
-    constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static rank_t rank_s() { return 1; }
+    constexpr static rank_t rank(V const & v) { return 1; }
+    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size(V const & v) { return ssize(v); }
+    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { ssize(v) }; }
 };
 
 template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...) && ((is_ra<A> || is_scalar<A> || is_foreign_vector<A> || is_builtin_array<A>) && ...);

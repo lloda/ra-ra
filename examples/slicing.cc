@@ -24,23 +24,27 @@ int main()
     A(ra::iota(1, 3), ra::all) = 1;
     A(3) = 1;
 
-// Set the last two rows to 0 (these are equivalent)
+// Set the last two rows to 0. These are equivalent.
+// ra::len represents the length of the subscribed axis, so iota(2, len-2) means the last 2 indices on that axis.
     A(ra::iota(2, ra::len-2), ra::all) = 0;
     A(ra::iota(2, ra::len-2)) = 0;
+// ra::len cannot be an array element, but the following is valid (and equivalent to the previous two).
+    A(ra::len + std::array { -2, -1 }) = 0;
 
-// Set the bottom right element to 8
+// Set the bottom right element to 8. These are equivalent.
     A(5, 5) = 8;
+    A(ra::len-1, ra::len-1) = 8;
 
     cout << "\nA = " << A << endl;
 
 // Demonstrating multi-axis selectors. Use these to skip over any number of
 // axes, just as ra::all skips over one axis.
-
     ra::Big<int, 3> B({3, 5, 5}, 99);
 
 // These are equivalent.
     B(ra::all, ra::all, 2) = 3.;
     B(ra::dots<2>, 2) = 3.;
+    B(ra::dots<>, 2) = 3.;
 
 // These are all equivalent.
     B(1, ra::all, ra::all) = 7.;

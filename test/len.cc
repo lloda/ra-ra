@@ -42,6 +42,7 @@ int main()
     }
     tr.section("bare len");
     {
+        static_assert(ra::has_len<decltype(ra::len+1)>);
         tr.test_eq(0, (ra::len + ra::len).rank());
         tr.test_eq(0, ra::map(std::plus(), ra::len, ra::len).rank());
         tr.test_eq(3, with_len(5, ra::scalar(3)));
@@ -64,7 +65,6 @@ int main()
     }
     tr.section("len in iota");
     {
-        static_assert(ra::has_len<decltype(ra::len+1)>);
         static_assert(ra::has_len<decltype(ra::iota(ra::len+1, ra::len+ra::len))>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::iota(ra::len)).i)>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::iota(ra::len)).n)>);
@@ -76,6 +76,14 @@ int main()
         tr.test_eq(ra::iota(10, 20), with_len(10, ra::iota(ra::len, ra::len+ra::len)));
         tr.test_eq(ra::iota(11, 20), with_len(10, ra::iota(ra::len+1, ra::len+ra::len)));
         tr.test_eq(ra::iota(10, 20, 2), with_len(10, ra::iota(ra::len, ra::len+ra::len, ra::len/5)));
+    }
+    tr.section("len in ptr");
+    {
+        int a[] = { 1, 2, 3, 4, 5 };
+        static_assert(ra::has_len<decltype(ra::ptr(a, ra::len))>);
+        static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len)).n)>);
+        static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len-1)).n)>);
+        tr.test_eq(ra::ptr(a, 5), with_len(5, ra::ptr(a, ra::len)));
     }
     return tr.summary();
 }

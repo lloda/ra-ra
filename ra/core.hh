@@ -176,7 +176,7 @@ resize(A & a, dim_t s)
 
 
 // --------------------
-// atom types
+// terminal types
 // --------------------
 
 // IteratorConcept for rank 0 object. This can be used on foreign objects, or as an alternative to the rank conjunction.
@@ -185,8 +185,6 @@ template <class C>
 struct Scalar
 {
     C c;
-
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr static rank_t rank_s() { return 0; }
     constexpr static rank_t rank() { return 0; }
@@ -203,29 +201,28 @@ struct Scalar
     constexpr void operator+=(dim_t d) const {}
     constexpr C & operator*() { return this->c; }
     constexpr C const & operator*() const { return this->c; } // [ra39]
+
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // IteratorConcept for foreign rank 1 objects.
-template <std::random_access_iterator I, dim_t N>
+template <std::random_access_iterator I, class N>
 struct Ptr
 {
-    static_assert(N>=0 || N==DIM_BAD || N==DIM_ANY);
+    static_assert(is_constant<N> || 0==rank_s<N>());
+    constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
+    static_assert(nn>=0 || nn==DIM_BAD || (!is_constant<N> && nn==DIM_ANY));
 
     I i;
-    [[no_unique_address]] std::conditional_t<N==DIM_ANY, dim_t, int_c<N>> n;
-
-    constexpr Ptr(I i) requires (N!=DIM_ANY): i(i) {}
-    constexpr Ptr(I i, dim_t n) requires (N==DIM_ANY): i(i), n(n) {}
-    RA_DEF_ASSIGNOPS_SELF(Ptr)
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    [[no_unique_address]] N const n = {};
 
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis ", k); return N; }
-    constexpr static dim_t len(int k) requires (N!=DIM_ANY) { RA_CHECK(k==0, "Bad axis ", k); return N; }
-    constexpr dim_t len(int k) const requires (N==DIM_ANY) { RA_CHECK(k==0, "Bad axis ", k); return n; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis ", k); return nn; }
+    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { return len_s(k); }
+    constexpr dim_t len(int k) const requires (nn==DIM_ANY) { RA_CHECK(k==0, "Bad axis ", k); return n; }
 
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
@@ -233,16 +230,28 @@ struct Ptr
     constexpr auto flat() const { return i; }
     constexpr decltype(auto) at(auto && j) const
     {
-        RA_CHECK(DIM_BAD==N || inside(j[0], len(0)), " j ", j[0], " size ", len(0));
+        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range ", j[0], " for length ", n, ".");
         return i[j[0]];
     }
+
+    constexpr Ptr(I i, N n): i(i), n(n) {}
+    RA_DEF_ASSIGNOPS_SELF(Ptr)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
-template <class I> constexpr auto ptr(I i) { return Ptr<I, DIM_BAD> { i }; }
-template <class I, int N> constexpr auto ptr(I i, int_c<N>) { return Ptr<I, N> { i }; }
-template <class I> constexpr auto ptr(I i, dim_t n) { return Ptr<I, DIM_ANY> { i, n }; }
+template <class I, class N=dim_c<DIM_BAD>>
+constexpr auto
+ptr(I i, N && n = N {})
+{
+    if constexpr (std::is_integral_v<N>) {
+        RA_CHECK(n>=0, "Bad iota length ", n);
+    }
+    using NN = std::conditional_t<is_constant<std::decay_t<N>> || is_scalar<std::decay_t<N>>, std::decay_t<N>, N>;
+    return Ptr<I, NN> { i, std::forward<N>(n) };
+}
 
-template <std::ranges::random_access_range V> constexpr auto
+template <std::ranges::random_access_range V>
+constexpr auto
 vector(V && v)
 {
     if constexpr (constexpr dim_t s = size_s<V>(); DIM_ANY==s) {
@@ -252,18 +261,18 @@ vector(V && v)
     }
 }
 
-// Sequence and IteratorConcept for same. Iota isn't really an atom, but its exprs must all have rank 0 so it kind of is.
+// Sequence and IteratorConcept for same. Iota isn't really a terminal, but its exprs must all have rank 0.
 // FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
 template <int w, class O, class N, class S>
 struct Iota
 {
+    static_assert(w>=0);
+    static_assert(is_constant<S> || 0==rank_s<S>());
+    static_assert(is_constant<N> || 0==rank_s<N>());
     constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
     constexpr static dim_t ss = [] { if constexpr (is_constant<S>) { return S::value; } else { return DIM_ANY; } }();
-
-    static_assert(w>=0);
-    static_assert(is_constant<N> || 0==rank_s<N>());
-    static_assert(is_constant<S> || 0==rank_s<S>());
-    static_assert(nn>=0 || nn==DIM_BAD || (!is_constant<N> && nn==DIM_ANY)); // forbid N dim_c<DIM_ANY>
+    static_assert((!is_constant<N> && nn==DIM_ANY) || nn>=0 || nn==DIM_BAD);
+    static_assert((!is_constant<S> && ss==DIM_ANY) || ss>=0);
 
     O i = {};
     [[no_unique_address]] N const n = {};
@@ -283,14 +292,18 @@ struct Iota
     constexpr static rank_t rank_s() { return w+1; };
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis", k); return k==w ? nn : DIM_BAD; }
-    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return k==w ? nn : DIM_BAD; }
+    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { return len_s(k); }
     constexpr dim_t len(int k) const requires (nn==DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return k==w ? n : DIM_BAD; }
 
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += O(step(k) * d) * O(s); }
     constexpr auto flat() const { return Flat { i, s }; }
-    constexpr auto at(auto && j) const { return i + O(j[w])*O(s); }
+    constexpr auto at(auto && j) const
+    {
+        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range ", j[0], " for length ", n, ".");
+        return i + O(j[w])*O(s);
+    }
 };
 
 template <int w> using TensorIndex = Iota<w, dim_t, dim_c<DIM_BAD>, dim_c<1>>;
@@ -354,9 +367,8 @@ template <class T>
 constexpr void
 start(T && t) { static_assert(mp::always_false<T>, "Type cannot be start()ed."); }
 
-// undefined len iota (ti) is excluded from optimization and beating to allow e.g. B = A(... ti ...).
-// FIXME find a way?
 RA_IS_DEF(is_iota, false)
+// DIM_BAD is excluded from beating to allow B = A(... ti ...). FIXME find a way?
 template <class O, class N, class S>
 constexpr bool is_iota_def<Iota<0, O, N, S>> = (DIM_BAD != Iota<0, O, N, S>::nn);
 
@@ -470,14 +482,18 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr bool
     check_expr() const
     {
-        for (int k=0; k<rank(); ++k) {
-            dim_t ls = len(k);
-            if (!((k>=std::get<I>(t).rank() || choose_len(std::get<I>(t).len(k), ls) == ls) && ...)) {
-                RA_CHECK(!check, "Mismatched lengths [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
-                return false;
+        if constexpr (check_expr_s()) {
+            for (int k=0; k<rank(); ++k) {
+                dim_t ls = len(k);
+                if (!((k>=std::get<I>(t).rank() || choose_len(std::get<I>(t).len(k), ls) == ls) && ...)) {
+                    RA_CHECK(!check, "Mismatched lengths [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
+                    return false;
+                }
             }
+            return true;
+        } else {
+            return false;
         }
-        return true;
     }
 
     constexpr

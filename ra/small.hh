@@ -589,11 +589,11 @@ template <class T> requires (is_builtin_array<T>)
 struct ra_traits_def<T>
 {
     using S = typename builtin_array_types<T>::view;
-    constexpr static decltype(auto) shape(T const & t) { return S::shape(); }
-    constexpr static dim_t size(T const & t) { return S::size_s(); }
-    constexpr static dim_t size_s() { return S::size_s(); }
-    constexpr static rank_t rank(T const & t) { return S::rank(); }
     constexpr static rank_t rank_s() { return S::rank_s(); }
+    constexpr static rank_t rank(T const & t) { return S::rank(); }
+    constexpr static dim_t size_s() { return S::size_s(); }
+    constexpr static dim_t size(T const & t) { return S::size_s(); }
+    constexpr static decltype(auto) shape(T const & t) { return S::shape(); }
 };
 
 RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typename A::lens, typename A::steps>>));

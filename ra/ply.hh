@@ -35,6 +35,9 @@ constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
 template <int w, class O, class N, class S>
 constexpr bool has_len_def<Iota<w, O, N, S>> = (has_len<O> || has_len<N> || has_len<S>);
 
+template <class I, class N>
+constexpr bool has_len_def<Ptr<I, N>> = has_len<N>;
+
 
 // ---------------------
 // replace Len in expr tree.
@@ -84,27 +87,39 @@ struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
     }
 };
 
+// usable iota types must be either is_constant or is_scalar.
+template <class T>
+constexpr static decltype(auto)
+coerce(T && t)
+{
+    if constexpr (IteratorConcept<T>) {
+        return FLAT(t);
+    } else {
+        return std::forward<T>(t);
+    }
+}
+
 template <int w, class O, class N, class S>
 requires (has_len<O> || has_len<N> || has_len<S>)
 struct WithLen<Iota<w, O, N, S>>
 {
-// usable iota types must be either is_constant or is_scalar.
-    template <class T> constexpr static decltype(auto)
-    coerce(T && t)
-    {
-        if constexpr (IteratorConcept<T>) {
-            return FLAT(t);
-        } else {
-            return std::forward<T>(t);
-        }
-    }
-
     template <class E> constexpr static decltype(auto)
     f(dim_t len, E && e)
     {
         return iota<w>(coerce(WithLen<std::decay_t<N>>::f(len, std::forward<E>(e).n)),
                        coerce(WithLen<std::decay_t<O>>::f(len, std::forward<E>(e).i)),
                        coerce(WithLen<std::decay_t<S>>::f(len, std::forward<E>(e).s)));
+    }
+};
+
+template <class I, class N>
+requires (has_len<N>)
+struct WithLen<Ptr<I, N>>
+{
+    template <class E> constexpr static decltype(auto)
+    f(dim_t len, E && e)
+    {
+        return ptr(std::forward<E>(e).i, coerce(WithLen<std::decay_t<N>>::f(len, std::forward<E>(e).n)));
     }
 };
 
