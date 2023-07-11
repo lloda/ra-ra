@@ -14,6 +14,8 @@
 #include <ranges>
 #include <iostream>
 #include <iterator>
+#include <span>
+#include <version>
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
@@ -99,13 +101,14 @@ int main()
             .test_eq(ra::DIM_ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
         tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
-    tr.section("other std::ranges");
+#if __cpp_lib_span >= 202002L
+    tr.section("std::span");
     {
         std::vector a = {1, 2, 3, 4};
         auto b = std::span(a);
         tr.test_eq(1, ra::rank(b));
         tr.test_eq(ra::iota(4, 1), b);
     }
-
+#endif
     return tr.summary();
 }
