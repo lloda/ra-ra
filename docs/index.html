@@ -395,7 +395,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 
 <p><code>ra::</code> is a header only library with no dependencies other than the standard library, so you just need to place the &lsquo;<samp>ra/</samp>&rsquo; folder somewhere in your include path and add <code>#include &quot;ra/ra.hh&quot;</code> at the top of your sources.
 </p>
-<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11</b> or with <samp>-std=c++20</samp>. Some C++23 features are available with <samp>-std=c++2b</samp>. Check the top README.md for more up-to-date information.
+<p>A compiler with C++20 support is required. At the time of writing this means <b>gcc 11</b> or with <samp>-std=c++20</samp>. Some C++23 features are available with <samp>-std=c++2b</samp>. Check the top <code>README.md</code> for more up-to-date information.
 </p>
 <p>Here is a minimal program<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>:
 </p>
@@ -926,8 +926,34 @@ auto l2 = a(ra::dots&lt;&gt;, 0); // same
 </p>
 </dd></dl>
 
-<p>The following special objects aren&rsquo;t related to linear ranges, but they are meant to be used in a subscript context.
+<p>The following special objects aren&rsquo;t related to linear ranges, but they are meant to be used in a subscript context. Using them in other contexts will result in a compile time error.
 </p>
+<span id="index-len"></span>
+<span id="index-end_002c-Octave_002fMatlab"></span>
+<span id="x_002dlen"></span><dl class="def">
+<dt id="index-len-1"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>len</strong><a href='#index-len-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Represents the length of the <var>i</var>-th axis of a subscripted expression, when used at the <var>i</var>-th place of a subscripting expression.
+</p>
+<p>This works like <code>end</code> in Octave/Matlab, but note that <code>ra::</code> indices begin at 0, so the last element of a vector <code>a</code> is <code>a(ra::len-1)</code>.
+</p>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int, 2&gt; a({10, 10}, 100 + ra::_0 - ra::_1);
+auto a0 = a(ra::len-1); // last row of a; ra::len is a.len(0)
+auto a1 = a(ra::all, ra::len-1); // last column a; ra::len is a.len(1)
+auto a2 = a(ra::len-1, ra::len-1); // last element of last row; the first ra::len is a.len(0) and the second one is a.len(1)
+auto a3 = a(ra::all, ra::iota(2, ra::len-2)); // last two columns of a
+auto a4 = a(ra::iota(ra::len/2, 1, 2)); // odd rows of a
+a(ra::len - std::array {1, 3, 4}) = 0; // set to 0 the 1st, 3rd and 4th rows of a, counting from the end
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int, 3&gt; b({2, 3, 4}, ...);
+auto b0 = b(ra::dots&lt;2&gt;, ra::len-1); // ra::len is a.len(2)
+auto b1 = b(ra::insert&lt;1&gt;, ra::len-1); // ra::len is a.len(0)
+</pre></div>
+
+</dd></dl>
+
 <span id="index-insert"></span>
 <span id="x_002dinsert"></span><dl class="def">
 <dt id="index-insert_003cn_003e"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>insert&lt;n&gt;</strong><a href='#index-insert_003cn_003e' class='copiable-anchor'> &para;</a></span></dt>
@@ -956,34 +982,6 @@ cout &lt;&lt; x(ra::all, ra::insert&lt;2&gt;) * a(insert&lt;1&gt;) &lt;&lt; endl
 50 60
 </pre></div>
 
-</dd></dl>
-
-<span id="index-len"></span>
-<span id="index-end_002c-Octave_002fMatlab"></span>
-<span id="x_002dlen"></span><dl class="def">
-<dt id="index-len-1"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>len</strong><a href='#index-len-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Represents the length of the <var>i</var>-th axis of a subscripted expression, when used at the <var>i</var>-th place of a subscripting expression.
-</p>
-<p>This works like <code>end</code> in Octave/Matlab, but note that the last element of a vector <code>a</code> is <code>a(ra::len-1)</code>.
-</p>
-<div class="example">
-<pre class="verbatim">ra::Big&lt;int, 2&gt; a({10, 10}, 100 + ra::_0 - ra::_1);
-auto a0 = a(ra::len-1); // last row of a; ra::len is a.len(0)
-auto a1 = a(ra::all, ra::len-1); // last column a; ra::len is a.len(1)
-auto a2 = a(ra::len-1, ra::len-1); // last element of last row; the first ra::len is a.len(0) and the second one is a.len(1)
-auto a3 = a(ra::all, ra::iota(2, ra::len-2)); // last two columns of a
-auto a4 = a(ra::iota(ra::len/2, 1, 2)); // odd rows of a
-a(ra::len - std::array {1, 3, 4}) = 0; // set to 0 the 1st, 3rd and 4th rows of a, counting from the end
-</pre></div>
-
-<div class="example">
-<pre class="verbatim">ra::Big&lt;int, 3&gt; b({2, 3, 4}, ...);
-auto b0 = b(ra::dots&lt;2&gt;, ra::len-1); // ra::len is a.len(2)
-auto b1 = b(ra::insert&lt;1&gt;, ra::len-1); // ra::len is a.len(0)
-</pre></div>
-
-<p>Using <code>ra::len</code> outside of a subscript context will result in a compile time error.<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>
-</p>
 </dd></dl>
 
 <p>We were speaking earlier of the outer product of the subscripts with operator <code>A</code>. Here&rsquo;s a way to perform the actual outer product (with operator <code>*</code>) of two <code>Views</code>, through broadcasting. All three lines are equivalent. See <a href="#x_002dfrom"><code>from</code></a> for a more general way to compute outer products.
@@ -1451,7 +1449,7 @@ my_fun(A &amp;&amp; ... a)
 <p>If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
 </p>
 <span id="index-overload-set"></span>
-<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
+<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">namespace ra {
@@ -1486,7 +1484,7 @@ Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Pre
 <div class="subsection" id="Standard-scalar-operations">
 <h4 class="subsection">2.11.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF12" href="#FOOT12"><sup>12</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF11" href="#FOOT11"><sup>11</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
 Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <code>odd</code>, <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 </p>
 <p>For example:
@@ -2913,10 +2911,8 @@ dot -Tpng headers.dot -Gdpi=100 &gt; headers.png
 <h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
 <p>The multi-argument square bracket form <code>A[i₀, i₁, ...]</code> is supported under C++23 compilers (e.g. gcc ≥ 12 with <code>-std=c++2b</code>), with the same meaning as <code>A(i₀, i₁, ...)</code>. Under C++20 only a single-argument square bracket form <code>A[i₀]</code> is available.</p>
 <h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
-<p>Currently, <code>ra::len</code> can only be used in scalar expressions or <code>ra::iota</code> expressions.</p>
-<h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
 <p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
-<h5><a id="FOOT12" href="#DOCF12">(12)</a></h5>
+<h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively.
 Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 </div>

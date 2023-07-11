@@ -48,6 +48,9 @@
 
 namespace ra {
 
+constexpr bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
+constexpr bool inside(dim_t i, dim_t a, dim_t b) { return i>=a && i<b; }
+
 
 // --------------------
 // global introspection I
@@ -68,12 +71,7 @@ rank_s()
     }
 }
 
-template <class V>
-constexpr rank_t
-rank_s(V const &)
-{
-    return rank_s<V>();
-}
+template <class V> constexpr rank_t rank_s(V const &) { return rank_s<V>(); }
 
 template <class V>
 requires (!std::is_void_v<V>)
@@ -105,12 +103,7 @@ size_s()
     }
 }
 
-template <class V>
-constexpr dim_t
-size_s(V const &)
-{
-    return size_s<V>();
-}
+template <class V> constexpr dim_t size_s(V const &) { return size_s<V>(); }
 
 template <class V>
 constexpr rank_t
@@ -121,7 +114,7 @@ rank(V const & v)
     } else if constexpr (requires { ra_traits<V>::rank(v); }) {
         return ra_traits<V>::rank(v);
     } else {
-        static_assert(!std::is_same_v<V, V>, "No rank() for this type.");
+        static_assert(mp::always_false<V>, "No rank() for this type.");
     }
 }
 
@@ -170,7 +163,7 @@ resize(A & a, dim_t s)
     if constexpr (DIM_ANY==size_s<A>()) {
         a.resize(s);
     } else {
-        RA_CHECK(s==dim_t(a.len_s(0)), "Bad resize ", s, " vs ", a.len_s(0));
+        RA_CHECK(s==dim_t(a.len_s(0)), "Bad resize ", s, " vs ", a.len_s(0), ".");
     }
 }
 
@@ -244,7 +237,7 @@ constexpr auto
 ptr(I i, N && n = N {})
 {
     if constexpr (std::is_integral_v<N>) {
-        RA_CHECK(n>=0, "Bad iota length ", n);
+        RA_CHECK(n>=0, "Bad ptr length ", n);
     }
     using NN = std::conditional_t<is_constant<std::decay_t<N>> || is_scalar<std::decay_t<N>>, std::decay_t<N>, N>;
     return Ptr<I, NN> { i, std::forward<N>(n) };

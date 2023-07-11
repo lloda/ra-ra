@@ -99,5 +99,13 @@ int main()
             .test_eq(ra::DIM_ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
         tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
+    tr.section("other std::ranges");
+    {
+        std::vector a = {1, 2, 3, 4};
+        auto b = std::span(a);
+        tr.test_eq(1, ra::rank(b));
+        tr.test_eq(ra::iota(4, 1), b);
+    }
+
     return tr.summary();
 }

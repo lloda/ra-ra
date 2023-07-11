@@ -18,6 +18,9 @@ struct Dim { dim_t len, step; };
 inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
 { o << "[Dim " << dim.len << " " << dim.step << "]"; return o; }
 
+constexpr rank_t rank_sum(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a+b; }
+constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a-b; }
+
 
 // --------------------
 // Develop indices for Big

@@ -40,19 +40,12 @@ static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
 template <dim_t V> using dim_c = std::integral_constant<dim_t, V>;
 template <rank_t V> using rank_c = std::integral_constant<rank_t, V>;
 
-// Negative numbers are used in some places as 'frame rank' in contrast to 'cell rank', so these numbers limit the rank that ra:: can handle besides the range of rank_t.
+// Negative numbers are used in some places as 'frame rank' in contrast to 'cell rank', so this limits the rank that ra:: can handle.
 
 constexpr dim_t DIM_ANY = -1944444444; // only on ct values: not known at ct, but maybe at rt
 constexpr rank_t RANK_ANY = -1944444444;
 constexpr dim_t DIM_BAD = -1988888888; // undefined
 constexpr rank_t RANK_BAD = -1988888888;
-
-constexpr dim_t dim_prod(dim_t a, dim_t b) { return (DIM_ANY==a || DIM_ANY==b) ? DIM_ANY : a*b; }
-constexpr rank_t rank_sum(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a+b; }
-constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a-b; }
-
-constexpr bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
-constexpr bool inside(dim_t i, dim_t a, dim_t b) { return i>=a && i<b; }
 
 
 // ---------------------
@@ -211,7 +204,7 @@ struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
 // FIXME https://wg21.link/p2841r0 ?
 #define RA_IS_DEF(NAME, PRED)                                           \
     template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
-    template <class A> constexpr bool NAME = JOIN(NAME, _def)< std::decay_t< A >>;
+    template <class A> constexpr bool NAME = JOIN(NAME, _def)<std::decay_t< A >>;
 
 // ra_traits are for foreign types only. FIXME Not sure this is the interface I want.
 
@@ -232,7 +225,6 @@ struct ra_traits_def<T>
     constexpr static rank_t rank_s() { return 0; }
 };
 
-// TODO make things is_iterator explicitly, as with is_scalar, and not by poking in the insides.
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
 RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && A::rank_s()!=0)
 RA_IS_DEF(is_slice, SliceConcept<A>)
@@ -240,10 +232,9 @@ RA_IS_DEF(is_slice_pos_rank, SliceConcept<A> && A::rank_s()!=0)
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
 template <class A> constexpr bool is_ra_pos_rank = is_iterator_pos_rank<A> || is_slice_pos_rank<A>; // internal only FIXME
-template <class A> constexpr bool is_ra_zero_rank = is_ra<A> && !is_ra_pos_rank<A>;
-template <class A> constexpr bool is_zero_or_scalar = is_ra_zero_rank<A> || is_scalar<A>;
+template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_ra_pos_rank<A>) || is_scalar<A>;
 
-// ra_traits defined in small.hh.
+// ra_traits in small.hh.
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 
 // std::string is std::ranges::range, but if we have it as is_scalar, we can't have it as is_foreign_vector.
@@ -252,7 +243,6 @@ RA_IS_DEF(is_foreign_vector, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A>
 // not using decay_t bc of builtin arrays.
 template <class A> using ra_traits = ra_traits_def<std::remove_cvref_t<A>>;
 
-// FIXME should be able to use std::span(V).extent (maybe p2325r3?) [ra2]
 template <class V>
 requires (is_foreign_vector<V> && requires { std::tuple_size<V>::value; })
 struct ra_traits_def<V>
@@ -272,7 +262,7 @@ struct ra_traits_def<V>
     constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static dim_t size_s() { return DIM_ANY; }
     constexpr static dim_t size(V const & v) { return std::ssize(v); }
-    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { std::ssize(v) }; }
+    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { size(v) }; }
 };
 
 template <class T>
@@ -282,17 +272,14 @@ struct ra_traits_def<std::initializer_list<T>>
     constexpr static rank_t rank_s() { return 1; }
     constexpr static rank_t rank(V const & v) { return 1; }
     constexpr static dim_t size_s() { return DIM_ANY; }
-    constexpr static dim_t size(V const & v) { return ssize(v); }
-    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { ssize(v) }; }
+    constexpr static dim_t size(V const & v) { return std::ssize(v); }
+    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { size(v) }; }
 };
-
-template <class ... A> constexpr bool ra_pos_and_any = (is_ra_pos_rank<A> || ...) && ((is_ra<A> || is_scalar<A> || is_foreign_vector<A> || is_builtin_array<A>) && ...);
-// all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).
-template <class ... A> constexpr bool ra_zero = !(is_scalar<A> && ...) && (is_zero_or_scalar<A> && ...);
 
 RA_IS_DEF(is_special, false) // these are rank-0 types that we don't want reduced.
 
-template <class ... A> constexpr bool ra_reducible = ra_zero<A ...> && (!is_special<A> && ...);
+// all args have rank 0 (so immediate application), but at least one is ra:: (don't collide with the scalar version).
+template <class ... A> constexpr bool ra_reducible = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
 template <class ... A> constexpr bool ra_irreducible = ((is_ra_pos_rank<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_foreign_vector<A> || is_builtin_array<A>) && ...);
 
 } // namespace ra
