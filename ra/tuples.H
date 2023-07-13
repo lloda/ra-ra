@@ -12,6 +12,7 @@
 #include "ra/macros.H"
 #include <tuple>
 #include <limits>
+#include <algorithm>
 
 namespace mp {
 

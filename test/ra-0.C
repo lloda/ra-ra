@@ -57,16 +57,6 @@ void CheckArrayIO(TestRecorder & tr, A const & a, double * begin)
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("concepts");
-    {
-        ra::Small<int, 2> a(0.), b(0.);
-        auto e0 = ra::expr([](int a, int b) { return a+b; }, start(a), start(b));
-        static_assert(std::is_literal_type_v<decltype(e0)>);
-        auto e1 = ra::expr([](int a, int b) { return a+b; }, start(a), ra::scalar(0.));
-        static_assert(std::is_literal_type_v<decltype(e1)>);
-        auto e2 = ra::expr([](int a, int b) { return a+b; }, start(a), ra::iota(2));
-        static_assert(std::is_literal_type_v<decltype(e2)>);
-    }
     tr.section("internal fields");
     {
         {
@@ -105,7 +95,7 @@ int main()
             tr.test_eq(77, a.p[9]);
         }
         {
-            auto pp = std::shared_ptr<double>(new double[10]);
+            auto pp = std::shared_ptr<double>(new double[10], std::default_delete<double[]>());
             pp.get()[9] = 88;
             double * p = pp.get();
             ra::Shared<double> a {};

@@ -43,7 +43,7 @@ struct TensorIndex
     constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
 };
 
-#define DEF_TENSORINDEX(i) TensorIndex<i> const JOIN(_, i) {};
+#define DEF_TENSORINDEX(i) constexpr TensorIndex<i> JOIN(_, i) {};
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
@@ -203,8 +203,8 @@ struct IotaFlat
 {
     T i_;
     T const stride_;
-    T const & operator*() const { return i_; } // TODO if not for this, I could use plain T. Maybe ra::eval_expr...
-    void operator+=(dim_t d) { i_ += T(d)*stride_; }
+    constexpr T const & operator*() const { return i_; } // TODO if not for this, I could use plain T. Maybe ra::eval_expr...
+    constexpr void operator+=(dim_t d) { i_ += T(d)*stride_; }
 };
 
 template <class T_>

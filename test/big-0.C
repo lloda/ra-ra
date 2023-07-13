@@ -202,5 +202,12 @@ int main(int argc, char * * argv)
         std::array<int, 2> b = {2, 2};
         tr.test_eq(22, a.at(b));
     }
+    tr.section("ra:: full shape resize");
+    {
+        ra::Big<int> a({3, 3, 3, 3}, ra::_0 - ra::_1 + ra::_2 - ra::_3);
+        ra::Big<int, 1> b = ra::reshape(a, {50});
+        a.resize(ra::Small<int, 2>{5, 10});
+        tr.test_eq(b, ra::reshape(a, {50}));
+    }
     return tr.summary();
 }

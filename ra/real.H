@@ -20,7 +20,6 @@ namespace ra {
 template <class T=double> constexpr T EPS = std::numeric_limits<T>::epsilon();
 constexpr double  ALINF = std::numeric_limits<double>::max();
 constexpr double   PINF = std::numeric_limits<double>::infinity();
-constexpr double   QNAN = std::numeric_limits<double>::quiet_NaN();
 constexpr double     PI = 3.14159265358979323846264338327950288419716939937510582;
 constexpr double    PI2 = PI/2.;
 constexpr double   EXP1 = 2.71828182845904523536028747135266249775724709369995957;

@@ -33,7 +33,7 @@ variant_dir = env['variant_dir']
 for var, default in [('CC', 'gcc'), ('CXX', 'g++'), ('FORTRAN', 'gfortran')]:
     ra.take_from_environ(env, var, default=default)
 for var in ['FORTRANFLAGS', 'LINKFLAGS', 'CCFLAGS', 'CXXFLAGS']:
-    ra.take_from_environ(env, var, wrapper=string.split)
+    ra.take_from_environ(env, var, wrapper=lambda x: x.split())
 for var in ['RPATH', 'LIBPATH']:
     ra.take_from_environ(env, var, wrapper=lambda x: [x])
 

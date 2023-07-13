@@ -124,6 +124,13 @@ struct TestRecorder
         test(c, LAZYINFO("comp(", where(true, a, b), " should be <= ", where(false, a, b), ")"), LAZYINFO(""));
         return c;
     }
+    template <class A, class B>
+    bool  test_ge(A && a, B && b)
+    {
+        bool c = every(a>=b);
+        test(c, LAZYINFO("comp(", where(true, a, b), " should be >= ", where(false, a, b), ")"), LAZYINFO(""));
+        return c;
+    }
     template <class R, class A>
     double test_rel_error(R && ref, A && a, double req_err, double level=0)
     {

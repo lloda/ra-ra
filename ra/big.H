@@ -522,9 +522,20 @@ template <class V> struct storage_traits
     static T const * data(V const & v) { return v.get(); }
     static T * data(V & v) { return v.get(); }
 };
+
+template <class P> struct storage_traits<std::shared_ptr<P>>
+{
+    using V = std::shared_ptr<P>;
+    using T = std::decay_t<decltype(*std::declval<V>().get())>;
+    static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
+    static T const * data(V const & v) { return v.get(); }
+    static T * data(V & v) { return v.get(); }
+};
+
 template <class T_, class A> struct storage_traits<std::vector<T_, A>>
 {
     using T = T_;
+    static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>");
     static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); }
     static T const * data(std::vector<T, A> const & v) { return v.data(); } // BUG not if T = bool
     static T * data(std::vector<T, A> & v) { return v.data(); }
@@ -686,6 +697,16 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
         store.resize(proddim(View::dim.begin()+1, View::dim.end())*s, t);
         View::dim[0].size = s;
+        View::p = store.data();
+    }
+    template <class S, std::enable_if_t<(ra::rank_s<S>() != 0), int> =0>
+    void resize(S const & s)
+    {
+        auto w = map([](auto && s) { return Dim { ra::dim_t(s), 0 }; }, s); \
+        ra::resize(View::dim, w.size(0)); /* [ra37] */
+        start(View::dim) = w;
+        filldim(View::dim.size(), View::dim.end());
+        store.resize(proddim(View::dim.begin(), View::dim.end()));
         View::p = store.data();
     }
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).

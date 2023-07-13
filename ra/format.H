@@ -26,11 +26,13 @@ constexpr char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
 constexpr char const * esc_plain = "\x1b[39m";
 constexpr char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
 constexpr char const * esc_pink = "\x1b[38;5;225m";
+constexpr char const * esc_invert = "\x1b[07m";
+constexpr char const * esc_underline = "\x1b[04m";
 
 template <class ... A> inline std::string
 format(A && ... a)
 {
-    std::ostringstream o; (o << ... << a); return o.str();
+    std::ostringstream o; (o << ... << std::forward<A>(a)); return o.str();
 }
 
 inline std::string const & format(std::string const & s) { return s; }

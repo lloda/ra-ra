@@ -16,9 +16,10 @@
 #include "ra/test.H"
 #include "ra/ra.H"
 
-using std::cout, std::endl, std::flush, std::tuple, ra::QNAN, ra::TestRecorder;
+using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
+constexpr double QNAN = std::numeric_limits<double>::quiet_NaN();
 
 int main()
 {
