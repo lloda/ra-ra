@@ -50,7 +50,7 @@ int main()
             auto sum_opt =
                 [&](auto & a, auto & b, auto & c)
                 {
-                    for (int i=0; i<a.size(0); ++i) {
+                    for (int i=0; i<a.len(0); ++i) {
                         c(i) = ra::optimize(a(i)+b(i));
                         static_assert(std::is_same_v<decltype(optimize(a(i)+b(i))), Vec>); // making sure opt is on
                     }
@@ -59,7 +59,7 @@ int main()
             auto sum_unopt =
                 [&](auto & a, auto & b, auto & c)
                 {
-                    for (int i=0; i<a.size(0); ++i) {
+                    for (int i=0; i<a.len(0); ++i) {
                         c(i) = a(i)+b(i);
                     }
                 };

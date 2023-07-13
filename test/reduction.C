@@ -153,7 +153,7 @@ int main()
         ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
 
         ra::Unique<real, 1> B({100}, 0.);
-        for (int i=0, iend=A.size(0); i<iend; ++i) {
+        for (int i=0, iend=A.len(0); i<iend; ++i) {
             B(i) = sum(A(i));
         }
 
@@ -194,7 +194,7 @@ int main()
     {
         ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
         ra::Unique<real, 1> B({111}, 0.);
-        for (int j=0, jend=A.size(1); j<jend; ++j) {
+        for (int j=0, jend=A.len(1); j<jend; ++j) {
             B(j) = sum(A(ra::all, j));
         }
 
@@ -287,8 +287,8 @@ int main()
         ra::Big<double, 2> A({0, 0}, 0.);
         ra::Big<double, 2> B({0, 0}, 0.);
         auto C = gemm(A, B);
-        tr.test_eq(0, C.size(0));
-        tr.test_eq(0, C.size(1));
+        tr.test_eq(0, C.len(0));
+        tr.test_eq(0, C.len(1));
     }
     tr.section("reference reductions");
     {

@@ -15,16 +15,6 @@
 
 using std::cout, std::endl, ra::TestRecorder;
 
-namespace ra {
-
-std::ostream & operator<<(std::ostream & o, ra::Dim const d)
-{
-    o << "{" << d.size << ", " << d.stride << "}";
-    return o;
-}
-
-} // namespace ra
-
 int main()
 {
     TestRecorder tr(std::cout);
@@ -40,7 +30,7 @@ int main()
 // tile.
         auto tilea = reshape(a, ra::Small<int, 3> {2, 2, 3});
         tr.info("reshape select").test_eq(ra::Big<int, 3>({2, 2, 3}, {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5}), tilea);
-        tr.info("some tile-reshapes are free (I)").test_eq(0, tilea.stride(0));
+        tr.info("some tile-reshapes are free (I)").test_eq(0, tilea.step(0));
         tr.info("some tile-reshapes are free (II)").test_eq(ra::scalar(a.data()), ra::scalar(tilea.data()));
 // reshape with free ravel
         tr.info("reshape w/free ravel I").test_eq(ra::Big<int, 2>({3, 2}, {0, 1, 2, 3, 4, 5}), reshape(a, ra::Small<int, 2> {3, 2}));

@@ -145,8 +145,8 @@ int main()
         auto f_small_indexed_2 = [](auto && A, auto && B)
             {
                 real y = 0;
-                for (int i=0; i!=A.size(0); ++i) {
-                    for (int j=0; j!=A.size(1); ++j) {
+                for (int i=0; i!=A.len(0); ++i) {
+                    for (int j=0; j!=A.len(1); ++j) {
                         y += A(i, j)*B(i, j);
                     }
                 }
@@ -156,9 +156,9 @@ int main()
         auto f_small_indexed_3 = [](auto && A, auto && B)
             {
                 real y = 0;
-                for (int i=0; i!=A.size(0); ++i) {
-                    for (int j=0; j!=A.size(1); ++j) {
-                        for (int k=0; k!=A.size(2); ++k) {
+                for (int i=0; i!=A.len(0); ++i) {
+                    for (int j=0; j!=A.len(1); ++j) {
+                        for (int k=0; k!=A.len(2); ++k) {
                             y += A(i, j, k)*B(i, j, k);
                         }
                     }

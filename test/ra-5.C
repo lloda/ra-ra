@@ -37,7 +37,7 @@ int main()
         tr.test_eq(Fcheck, F);
     }
 
-// They why: if x(0) is a temp, as in here, cell_iterator needs a copy of x(0).dim.
+// They why: if x(0) is a temp, as in here, cell_iterator needs a copy of x(0).dimv.
 // This is achieved by forwarding in start() -> iter() -> View.iter().
     {
         auto demo = [](auto & x)
@@ -47,7 +47,7 @@ int main()
 
         ra::Big<int, 2> A({3, 5}, 0);
         auto z = demo(A);
-        tr.test_eq(5, z.dim[0].size);
+        tr.test_eq(5, z.dimv[0].len);
         tr.test_eq(false, std::is_reference_v<decltype(z)::Dimv>);
 
         auto y = A(0);

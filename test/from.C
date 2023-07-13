@@ -54,18 +54,18 @@ int main()
         {
             ra::Iota<int> i(2, 1);
             auto b = a(i);
-            tr.test_eq(2, b.dim[0].size);
-            tr.test_eq(4, b.dim[1].size);
-            tr.test_eq(4, b.dim[0].stride);
-            tr.test_eq(1, b.dim[1].stride);
+            tr.test_eq(2, b.dimv[0].len);
+            tr.test_eq(4, b.dimv[1].len);
+            tr.test_eq(4, b.dimv[0].step);
+            tr.test_eq(1, b.dimv[1].step);
         }
         {
             ra::Iota<ra::dim_t> i(2, 1);
             auto b = a(i);
-            tr.test_eq(2, b.dim[0].size);
-            tr.test_eq(4, b.dim[1].size);
-            tr.test_eq(4, b.dim[0].stride);
-            tr.test_eq(1, b.dim[1].stride);
+            tr.test_eq(2, b.dimv[0].len);
+            tr.test_eq(4, b.dimv[1].len);
+            tr.test_eq(4, b.dimv[0].step);
+            tr.test_eq(1, b.dimv[1].step);
         }
     }
     tr.section("trivial case");

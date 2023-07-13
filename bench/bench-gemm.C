@@ -30,9 +30,9 @@ using real = double;
 template <class A, class B, class C> inline void
 gemm_block_3(ra::View<A, 2> const & a, ra::View<B, 2> const & b, ra::View<C, 2> c)
 {
-    dim_t const m = a.size(0);
-    dim_t const p = a.size(1);
-    dim_t const n = b.size(1);
+    dim_t const m = a.len(0);
+    dim_t const p = a.len(1);
+    dim_t const n = b.len(1);
 // terminal, using reduce_k, see below
     if (max(m, max(p, n))<=64) {
         for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })),
@@ -98,10 +98,10 @@ gemm_blas_3(ra::View<double, 2> const & A, ra::View<double, 2> const & B, ra::Vi
     lead_and_order(C, ldc, orderc);
     lead_and_order(A, lda, ordera);
     lead_and_order(B, ldb, orderb);
-    int K = A.size(1-istr(ta));
-    assert(K==B.size(istr(tb)) && "mismatched A/B");
-    assert(C.size(0)==A.size(istr(ta)) && "mismatched C/A");
-    assert(C.size(1)==B.size(1-istr(tb)) && "mismatched C/B");
+    int K = A.len(1-istr(ta));
+    assert(K==B.len(istr(tb)) && "mismatched A/B");
+    assert(C.len(0)==A.len(istr(ta)) && "mismatched C/A");
+    assert(C.len(1)==B.len(1-istr(tb)) && "mismatched C/B");
     if (ordera!=orderc) {
         ta = fliptr(ta);
     }
@@ -109,13 +109,13 @@ gemm_blas_3(ra::View<double, 2> const & A, ra::View<double, 2> const & B, ra::Vi
         tb = fliptr(tb);
     }
     if (C.size()>0) {
-        cblas_dgemm(orderc, ta, tb, C.size(0), C.size(1), K, 1., A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
+        cblas_dgemm(orderc, ta, tb, C.len(0), C.len(1), K, 1., A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
     }
 }
 inline auto
 gemm_blas(ra::View<double, 2> const & a, ra::View<double, 2> const & b)
 {
-    ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.size(0), b.size(1)}, 0);
+    ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
     gemm_blas_3(a, b, c);
     return c;
 }
@@ -127,15 +127,15 @@ int main()
 
     auto gemm_block = [&](auto const & a, auto const & b)
         {
-            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.size(0), b.size(1)}, 0);
+            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
             gemm_block_3(a, b, c);
             return c;
         };
 
     auto gemm_k = [&](auto const & a, auto const & b)
         {
-            dim_t const M = a.size(0);
-            dim_t const N = b.size(1);
+            dim_t const M = a.len(0);
+            dim_t const N = b.len(1);
             ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::none);
             for (dim_t i=0; i<M; ++i) {
                 for (dim_t j=0; j<N; ++j) {
@@ -149,8 +149,8 @@ int main()
 // TODO based on this, allow a Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k). Maybe using TensorIndex now that that works with ply_ravel.
     auto gemm_reduce_k = [&](auto const & a, auto const & b)
         {
-            dim_t const M = a.size(0);
-            dim_t const N = b.size(1);
+            dim_t const M = a.len(0);
+            dim_t const N = b.len(1);
             using T = decltype(a(0, 0)*b(0, 0));
             ra::Big<T, 2> c({M, N}, T());
             for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })),
@@ -161,9 +161,9 @@ int main()
 #define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT)     \
     auto NAME_K = [&](auto const & a, auto const & b)       \
         {                                                   \
-            dim_t const M = a.size(0);                      \
-            dim_t const N = b.size(1);                      \
-            dim_t const K = a.size(1);                      \
+            dim_t const M = a.len(0);                       \
+            dim_t const N = b.len(1);                       \
+            dim_t const K = a.len(1);                       \
             using T = decltype(a(0, 0)*b(0, 0));            \
             ra::Big<T, 2> c({M, N}, T());                   \
             T * RESTRICT cc = c.data();                     \
@@ -180,10 +180,10 @@ int main()
         };                                                  \
                                                             \
     auto NAME_IJ = [&](auto const & a, auto const & b)      \
-        {                                                   \
-            dim_t const M = a.size(0);                      \
-            dim_t const N = b.size(1);                      \
-            dim_t const K = a.size(1);                      \
+    {                                                       \
+        dim_t const M = a.len(0);                           \
+        dim_t const N = b.len(1);                           \
+        dim_t const K = a.len(1);                           \
             using T = decltype(a(0, 0)*b(0, 0));            \
             ra::Big<T, 2> c({M, N}, T());                   \
             T * RESTRICT cc = c.data();                     \

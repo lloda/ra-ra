@@ -38,7 +38,7 @@ int main()
 
     auto gemv_i = [&](auto const & a, auto const & b)
         {
-            int const M = a.size(0);
+            int const M = a.len(0);
             ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, ra::none);
             for (int i=0; i<M; ++i) {
                 c(i) = dot(a(i), b);
@@ -48,8 +48,8 @@ int main()
 
     auto gemv_j = [&](auto const & a, auto const & b)
         {
-            int const M = a.size(0);
-            int const N = a.size(1);
+            int const M = a.len(0);
+            int const N = a.len(1);
             ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, 0.);
             for (int j=0; j<N; ++j) {
                 c += a(ra::all, j)*b(j);
@@ -59,7 +59,7 @@ int main()
 
     auto gevm_j = [&](auto const & b, auto const & a)
         {
-            int const N = a.size(1);
+            int const N = a.len(1);
             ra::Big<decltype(b(0)*a(0, 0)), 1> c({N}, ra::none);
             for (int j=0; j<N; ++j) {
                 c(j) = dot(b, a(ra::all, j));
@@ -69,8 +69,8 @@ int main()
 
     auto gevm_i = [&](auto const & b, auto const & a)
         {
-            int const M = a.size(0);
-            int const N = a.size(1);
+            int const M = a.len(0);
+            int const N = a.len(1);
             ra::Big<decltype(b(0)*a(0, 0)), 1> c({N}, 0.);
             for (int i=0; i<M; ++i) {
                 c += b(i)*a(i);
@@ -84,7 +84,7 @@ int main()
             {
                 ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
                 auto a = t==TRANS ? transpose<1, 0>(aa) : aa();
-                ra::Big<real, 1> b({a.size(1)}, 1-2*ra::_0);
+                ra::Big<real, 1> b({a.len(1)}, 1-2*ra::_0);
                 ra::Big<real, 1> ref = gemv(a, b);
                 ra::Big<real, 1> c;
 
@@ -97,7 +97,7 @@ int main()
             {
                 ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
                 auto a = t==TRANS ? transpose<1, 0>(aa) : aa();
-                ra::Big<real, 1> b({a.size(0)}, 1-2*ra::_0);
+                ra::Big<real, 1> b({a.len(0)}, 1-2*ra::_0);
                 ra::Big<real, 1> ref = gevm(b, a);
                 ra::Big<real, 1> c;
 

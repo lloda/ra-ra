@@ -75,28 +75,28 @@ int main()
         ra::Big<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5});
         ra::Big<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5});
         auto c = transpose({1, 0}, ra::View<int, 2>({3, 2}, a.data()));
-        a.dim = c.dim;
+        a.dimv = c.dimv;
         for (int k=0; k!=c.rank(); ++k) {
-            std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;
-            std::cout << "CSIZE " << k << " " << c.size(k) << std::endl;
+            std::cout << "CSTEP " << k << " " << c.step(k) << std::endl;
+            std::cout << "CLEN " << k << " " << c.len(k) << std::endl;
         }
         cout << endl;
         for (int k=0; k!=a.rank(); ++k) {
-            std::cout << "ASTRIDE " << k << " " << a.stride(k) << std::endl;
-            std::cout << "ASIZE " << k << " " << a.size(k) << std::endl;
+            std::cout << "ASTEP " << k << " " << a.step(k) << std::endl;
+            std::cout << "ALEN " << k << " " << a.len(k) << std::endl;
         }
         cout << endl;
         c = b;
-// FIXME this clobbers the strides of a, which is surprising -> Container should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
+// FIXME this clobbers the steps of a, which is surprising -> Container should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
         a = b;
         for (int k=0; k!=c.rank(); ++k) {
-            std::cout << "CSTRIDE " << k << " " << c.stride(k) << std::endl;
-            std::cout << "CSIZE " << k << " " << c.size(k) << std::endl;
+            std::cout << "CSTEP " << k << " " << c.step(k) << std::endl;
+            std::cout << "CLEN " << k << " " << c.len(k) << std::endl;
         }
         cout << endl;
         for (int k=0; k!=a.rank(); ++k) {
-            std::cout << "ASTRIDE " << k << " " << a.stride(k) << std::endl;
-            std::cout << "ASIZE " << k << " " << a.size(k) << std::endl;
+            std::cout << "ASTEP " << k << " " << a.step(k) << std::endl;
+            std::cout << "ALEN " << k << " " << a.len(k) << std::endl;
         }
         cout << endl;
         std::cout << "a: " << a << std::endl;
@@ -109,9 +109,9 @@ int main()
         ra::View<double> b(a);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());
-        tr.test_eq(a.size(0), b.size(0));
-        tr.test_eq(a.size(1), b.size(1));
-        tr.test_eq(a.size(2), b.size(2));
+        tr.test_eq(a.len(0), b.len(0));
+        tr.test_eq(a.len(1), b.len(1));
+        tr.test_eq(a.len(2), b.len(2));
         tr.test(every(a==b));
 
         auto test = [&tr](ra::View<double, 3> a, double * p)
@@ -139,9 +139,9 @@ int main()
         ra::View<double, 3> b(a);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());
-        tr.test_eq(a.size(0), b.size(0));
-        tr.test_eq(a.size(1), b.size(1));
-        tr.test_eq(a.size(2), b.size(2));
+        tr.test_eq(a.len(0), b.len(0));
+        tr.test_eq(a.len(1), b.len(1));
+        tr.test_eq(a.len(2), b.len(2));
         tr.test(every(a==b));
 
         auto test = [&tr](ra::View<double> a, double * p)

@@ -23,7 +23,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("construct View<> from sizes AND strides");
+    tr.section("construct View<> from sizes AND steps");
     {
         int p[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
         int * pp = &p[0]; // force pointer decay in case we ever enforce p's shape

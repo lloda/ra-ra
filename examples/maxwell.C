@@ -64,7 +64,7 @@ int main()
     auto diff = [&DA, &A, &delta](auto k_, real factor)
         {
             constexpr int k = decltype(k_)::value;
-            const int o = DA.size(k);
+            const int o = DA.len(k);
             if (o>=2) {
                 DA(HH<k>, iota(o-2, 1), HH<4-k>, k) = (A(HH<k>, iota(o-2, 2)) - A(HH<k>, iota(o-2, 0)));
                 DA(HH<k>, 0, HH<4-k>, k) = (A(HH<k>, 1) - A(HH<k>, o-1));

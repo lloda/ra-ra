@@ -33,13 +33,13 @@ struct TensorIndex
     constexpr static int w = w_;
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t size_s(int k) { return DIM_BAD; }
-    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
+    constexpr static dim_t len_s(int k) { return DIM_BAD; }
+    constexpr static dim_t len(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
 
     template <class I> constexpr value_type at(I const & ii) const { return value_type(ii[w]); }
     constexpr void adv(rank_t k, dim_t d) { RA_CHECK(d<=1, "d ", d); i += (k==w) * d; }
-    constexpr static dim_t const stride(int k) { return (k==w); }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return st*stride(z)==stride(j); }
+    constexpr static dim_t const step(int k) { return (k==w); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr decltype(auto) flat() const { return TensorIndexFlat<w, value_type> {i}; }
 };
 
@@ -67,13 +67,13 @@ struct Scalar
 
     constexpr static rank_t rank_s() { return 0; }
     constexpr static rank_t rank() { return 0; }
-    constexpr static dim_t size_s(int k) { return DIM_BAD; }
-    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
+    constexpr static dim_t len_s(int k) { return DIM_BAD; }
+    constexpr static dim_t len(int k) { return DIM_BAD; } // used in shape checks with dyn rank.
 
     template <class I> constexpr C & at(I const & i) { return c; }
     constexpr static void adv(rank_t k, dim_t d) {}
-    constexpr static dim_t stride(int k) { return 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return true; }
+    constexpr static dim_t step(int k) { return 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) flat() { return static_cast<ScalarFlat<C> &>(*this); }
     constexpr decltype(auto) flat() const { return static_cast<ScalarFlat<C> const &>(*this); } // [ra39]
 
@@ -83,7 +83,7 @@ struct Scalar
 template <class C> inline constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // Wrap something with {size, begin} as 1-D vector. Sort of reduced ra_iterator.
-// ra::ra_traits_def<V> must be defined with ::size, ::size_s.
+// ra::ra_traits_def<V> must be defined with ::len, ::len_s.
 // FIXME This can handle temporaries and make_a().begin() can't, look out for that.
 // FIXME Do we need this class? holding rvalue is the only thing it does over View, and it doesn't handle rank!=1.
 template <class V_>
@@ -97,8 +97,8 @@ struct Vector
     decltype(v.begin()) p__;
     static_assert(!std::is_reference_v<decltype(p__)>, "bad iterator type");
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0); return traits::size(v); }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return traits::size_s(); }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0); return traits::size(v); }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0); return traits::size_s(); }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -125,8 +125,8 @@ struct Vector
         RA_CHECK(d==1 || d<0);
         p__ += (k==0) * d;
     }
-    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -142,8 +142,8 @@ struct Ptr
 {
     P p__;
 
-    constexpr static dim_t size(int k) { RA_CHECK(k==0); return DIM_BAD; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_BAD; }
+    constexpr static dim_t len(int k) { RA_CHECK(k==0); return DIM_BAD; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0); return DIM_BAD; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -157,8 +157,8 @@ struct Ptr
         RA_CHECK(d==1 || d<0);
         std::advance(p__, (k==0) * d);
     }
-    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -173,8 +173,8 @@ struct Span
     P p__;
     dim_t n__;
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0); return n__; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0); return n__; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
     constexpr static rank_t rank() { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
@@ -189,8 +189,8 @@ struct Span
         RA_CHECK(d==1 || d<0);
         std::advance(p__, (k==0) * d);
     }
-    constexpr static dim_t stride(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
     constexpr auto flat() const { return p__; }
 
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -202,9 +202,9 @@ template <class T>
 struct IotaFlat
 {
     T i_;
-    T const stride_;
+    T const step_;
     constexpr T const & operator*() const { return i_; } // TODO if not for this, I could use plain T. Maybe ra::eval_expr...
-    constexpr void operator+=(dim_t d) { i_ += T(d)*stride_; }
+    constexpr void operator+=(dim_t d) { i_ += T(d)*step_; }
 };
 
 template <class T_>
@@ -213,39 +213,39 @@ struct Iota
     using T = T_;
     dim_t const size_;
     T i_;
-    T const stride_;
+    T const step_;
 
-    constexpr Iota(dim_t size, T org=0, T stride=1): size_(size), i_(org), stride_(stride)
+    constexpr Iota(dim_t size, T org=0, T step=1): size_(size), i_(org), step_(step)
     {
         RA_CHECK(size>=0 && "Iota");
     }
 
-    constexpr dim_t size(int k) const { RA_CHECK(k==0); return size_; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
+    constexpr dim_t len(int k) const { RA_CHECK(k==0); return size_; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k==0); return DIM_ANY; }
     constexpr rank_t rank() const { return 1; }
     constexpr static rank_t rank_s() { return 1; };
 
     template <class I>
     constexpr decltype(auto) at(I const & i)
     {
-        return i_ + T(i[0])*stride_;
+        return i_ + T(i[0])*step_;
     }
     constexpr void adv(rank_t k, dim_t d)
     {
-        i_ += T((k==0) * d) * stride_; // cf Vector::adv
+        i_ += T((k==0) * d) * step_; // cf Vector::adv
     }
-    constexpr static dim_t stride(rank_t i) { return i==0 ? 1 : 0; }
-    constexpr static bool keep_stride(dim_t st, int z, int j) { return (z==0) == (j==0); }
-    constexpr auto flat() const { return IotaFlat<T> { i_, stride_ }; }
+    constexpr static dim_t step(rank_t i) { return i==0 ? 1 : 0; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return (z==0) == (j==0); }
+    constexpr auto flat() const { return IotaFlat<T> { i_, step_ }; }
     decltype(auto) operator+=(T const & b) { i_ += b; return *this; };
     decltype(auto) operator-=(T const & b) { i_ -= b; return *this; };
 };
 
 template <class O=dim_t, class S=O> inline constexpr auto
-iota(dim_t size, O org=0, S stride=1)
+iota(dim_t size, O org=0, S step=1)
 {
     using T = std::common_type_t<O, S>;
-    return Iota<T> { size, T(org), T(stride) };
+    return Iota<T> { size, T(org), T(step) };
 }
 
 template <class I> struct is_beatable_def
@@ -385,7 +385,7 @@ size_s()
         } else {
             ra::dim_t s = 1;
             for (int i=0; i!=V::rank_s(); ++i) {
-                if (dim_t ss=V::size_s(i); ss>=0) {
+                if (dim_t ss=V::len_s(i); ss>=0) {
                     s *= ss;
                 } else {
                     return ss; // either DIM_ANY or DIM_BAD
@@ -418,7 +418,7 @@ size(V const & v)
     if constexpr (has_traits<V>) {
         return ra_traits<V>::size(v);
     } else {
-        return prod(map([&v](auto && k) { return v.size(k); }, ra::iota(rank(v))));
+        return prod(map([&v](auto && k) { return v.len(k); }, ra::iota(rank(v))));
     }
 }
 
@@ -431,12 +431,12 @@ shape(V const & v)
 // FIXME version for static shape
 // FIXME would prefer to return the map directly (except maybe for static shapes)
     } else if constexpr (constexpr rank_t rs=v.rank_s(); rs>=0) {
-        return ra::Small<dim_t, rs>(map([&v](int k) { return v.size(k); }, ra::iota(rs)));
+        return ra::Small<dim_t, rs>(map([&v](int k) { return v.len(k); }, ra::iota(rs)));
     } else {
         static_assert(RANK_ANY==rs);
         rank_t r = v.rank();
         std::vector<dim_t> s(r);
-        for_each([&v, &s](int k) { s[k] = v.size(k); }, ra::iota(r));
+        for_each([&v, &s](int k) { s[k] = v.len(k); }, ra::iota(r));
         return s;
         // return map([this](int k) { return this->size(k); }, ra::iota(rank()));
     }

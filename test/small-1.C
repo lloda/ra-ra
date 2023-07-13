@@ -26,8 +26,8 @@ int main()
     TestRecorder tr;
     tr.section("pieces of transpose(ra::Small)");
     {
-        using sizes = mp::int_list<1, 2, 3, 4, 5>;
-        using strides = mp::int_list<1, 10, 100, 1000, 10000>;
+        using lens = mp::int_list<1, 2, 3, 4, 5>;
+        using steps = mp::int_list<1, 10, 100, 1000, 10000>;
 
         using c0 = ra::axis_indices<mp::int_list<0, 1, 3, 2, 0>, mp::int_t<0>>::type;
         using e0 = mp::int_list<0, 4>;
@@ -37,7 +37,7 @@ int main()
         using e1 = mp::int_list<1>;
         tr.info(mp::print_int_list<e1> {}, " vs ", mp::print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
 
-        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, sizes, strides>::type;
+        using call = ra::axes_list_indices<mp::int_list<0, 1, 3, 2, 0>, lens, steps>::type;
         using eall = std::tuple<mp::int_list<0, 4>, mp::int_list<1>, mp::int_list<3>, mp::int_list<2>>;
         tr.info(mp::print_int_list<eall> {}, " vs ", mp::print_int_list<call> {}).test(std::is_same_v<eall, call>);
     }
@@ -105,13 +105,13 @@ int main()
         ra::Small<double, 2, 3> a {1, 2, 3, 4, 5, 6};
         tr.test_eq(ra::Small<ra::dim_t, 2> {2, 3}, ra::ra_traits<decltype(a)>::shape(a));
     }
-    tr.section("static stride computation");
+    tr.section("static step computation");
     {
         using d = mp::int_list<3, 4, 5>;
-        using s = ra::default_strides<d>;
-        tr.info("stride 0").test_eq(20, mp::ref<s, 0>::value);
-        tr.info("stride 1").test_eq(5, mp::ref<s, 1>::value);
-        tr.info("stride 2").test_eq(1, mp::ref<s, 2>::value);
+        using s = ra::default_steps<d>;
+        tr.info("step 0").test_eq(20, mp::ref<s, 0>::value);
+        tr.info("step 1").test_eq(5, mp::ref<s, 1>::value);
+        tr.info("step 2").test_eq(1, mp::ref<s, 2>::value);
     }
     tr.section("subscripts");
     {
@@ -206,8 +206,8 @@ int main()
             cout << s << endl;
             auto t = s(ra::all, 1, ra::all);
             tr.test_eq(2, t.rank());
-            tr.test_eq(3, t.size(0));
-            tr.test_eq(2, t.size(1));
+            tr.test_eq(3, t.len(0));
+            tr.test_eq(2, t.len(1));
             tr.test_eq(10, t(0, 0));
             tr.test_eq(11, t(0, 1));
             tr.test_eq(110, t(1, 0));
@@ -215,8 +215,8 @@ int main()
             tr.test_eq(210, t(2, 0));
             tr.test_eq(211, t(2, 1));
             tr.test_eq(ra::Small<int, 3, 2> { 10, 11, 110, 111, 210, 211 }, t);
-            tr.test_eq(4, t.stride(0));
-            tr.test_eq(1, t.stride(1));
+            tr.test_eq(4, t.step(0));
+            tr.test_eq(1, t.step(1));
 // check STL iterator.
             {
                 int check[] = { 10, 11, 110, 111, 210, 211 };
@@ -236,7 +236,7 @@ int main()
         using Vb = mp::int_t<int(b)>;
         tr.test_eq(9, Vb::value);
     }
-    tr.section("custom strides. List init is always row-major.");
+    tr.section("custom steps. List init is always row-major.");
     {
         auto test = [&tr](auto && a)
                     {
@@ -256,10 +256,10 @@ int main()
 
                         using A = std::decay_t<decltype(a(0))>;
                         using dim1 = std::array<ra::dim_t, 1>;
-                        auto sizes = mp::tuple_values<dim1, typename A::sizes>();
-                        auto strides = mp::tuple_values<dim1, typename A::strides>();
-                        tr.test_eq(dim1 {3}, ra::start(sizes));
-                        tr.test_eq(dim1 {2}, ra::start(strides));
+                        auto lens = mp::tuple_values<dim1, typename A::lens>();
+                        auto steps = mp::tuple_values<dim1, typename A::steps>();
+                        tr.test_eq(dim1 {3}, ra::start(lens));
+                        tr.test_eq(dim1 {2}, ra::start(steps));
                     };
         ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> a { 1, 2, 3, 4, 5, 6 };
         ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> b { {1, 2, 3}, {4, 5, 6} };
@@ -271,7 +271,7 @@ int main()
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
         ra::SmallView<double, mp::int_list<2, 3>, mp::int_list<3, 1>> b = a();
         tr.test_eq(a, b);
-// non-default strides (fortran / column major order).
+// non-default steps (fortran / column major order).
         ra::SmallArray<double, mp::int_list<2, 3>, mp::int_list<1, 2>> ax { 1, 2, 3, 4, 5, 6 };
         ra::SmallView<double, mp::int_list<2, 3>, mp::int_list<1, 2>> bx = ax();
         tr.test_eq(a, ax);
@@ -298,7 +298,7 @@ int main()
     tr.section("expr with Small, rank 1, ply_index");
     {
         ra::Small<double, 3> a { 1, 4, 2 };
-        tr.test_eq(3, a.iter().size(0));
+        tr.test_eq(3, a.iter().len(0));
 #define TEST(plier)                                                     \
         {                                                               \
             double s = 0;                                               \
@@ -312,8 +312,8 @@ int main()
     tr.section("expr with Small, rank 2");
     {
         ra::Small<double, 3, 2> a { 1, 4, 2, 5, 3, 6 };
-        tr.test_eq(3, a.iter().size(0));
-        tr.test_eq(2, a.iter().size(1));
+        tr.test_eq(3, a.iter().len(0));
+        tr.test_eq(2, a.iter().len(1));
 #define TEST(plier)                                                     \
         {                                                               \
             double s = 0;                                               \
@@ -460,8 +460,8 @@ int main()
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
             {
-                tr.test_eq(2, b.size(0));
-                tr.test_eq(2, b.size(1));
+                tr.test_eq(2, b.len(0));
+                tr.test_eq(2, b.len(1));
                 tr.test_eq(ra::Small<double, 2, 2> { 3, 4, 5, 6 }, b);
                 b = ra::Small<double, 2, 2> { 13, 14, 15, 16 };
                 tr.test_eq(ra::Small<double, 3, 2> { 1, 2, 13, 14, 15, 16 }, a);

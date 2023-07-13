@@ -31,14 +31,14 @@ struct OldTensorIndex
 {
     static_assert(w_>=0, "bad OldTensorIndex");
     constexpr static int w = w_;
-    constexpr static dim_t size(int k) { return DIM_BAD; } // used in shape checks with dyn. rank.
+    constexpr static dim_t len(int k) { return DIM_BAD; } // used in shape checks with dyn. rank.
     constexpr static dim_t size_s() { return DIM_BAD; }
     constexpr static rank_t rank_s() { return w+1; }
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t size_s(int k) { RA_CHECK(k<=w); return DIM_BAD; }
+    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w); return DIM_BAD; }
 
     template <class I> constexpr static value_type at(I const & i) { return value_type(i[w]); }
-    constexpr static dim_t stride(int k) { assert(0); return 0; } // used by Expr::stride_t.
+    constexpr static dim_t step(int k) { assert(0); return 0; } // used by Expr::step_t.
     constexpr static value_type * flat() { assert(0); return nullptr; } // used by type signatures.
 };
 
@@ -63,7 +63,7 @@ void ply_index(A && a)
     rank_t order[rank];
     for (rank_t k=0; k<rank; ++k) {
         order[k] = rank-1-k;
-        sha[k] = a.size(order[k]);
+        sha[k] = a.len(order[k]);
         if (sha[k]==0) {
             return;
         }
@@ -96,7 +96,7 @@ subindexf(A & a, S & i_)
     } else if constexpr (mp::len<order> > 0) {
         dim_t & i = i_[mp::first<order>::value];
 // on every subloop, but not worth caching
-        dim_t const /* constexpr */ s = a.size(mp::first<order>::value);
+        dim_t const /* constexpr */ s = a.len(mp::first<order>::value);
         for (i=0; i<s; ++i) {
             subindexf<mp::drop1<order>>(a, i_);
         }

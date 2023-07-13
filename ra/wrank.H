@@ -22,15 +22,15 @@ namespace ra {
 // ---------------------------
 
 template <class T>
-struct zerostride
+struct zerostep
 {
     constexpr static T f() { return T(0); }
 };
 
 template <class ... T>
-struct zerostride<std::tuple<T ...>>
+struct zerostep<std::tuple<T ...>>
 {
-    constexpr static std::tuple<T ...> f() { return std::make_tuple(zerostride<T>::f() ...); }
+    constexpr static std::tuple<T ...> f() { return std::make_tuple(zerostep<T>::f() ...); }
 };
 
 // Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
@@ -47,15 +47,15 @@ struct Reframe
     constexpr static int orig(int k) { return mp::int_list_index<Dest>(k); }
     constexpr static rank_t rank_s() { return 1+mp::fold<mp::max, mp::int_t<-1>, Dest>::value; }
     constexpr static rank_t rank() { return rank_s(); }
-    constexpr static dim_t size_s(int k)
+    constexpr static dim_t len_s(int k)
     {
         int l = orig(k);
-        return l>=0 ? std::decay_t<A>::size_s(l) : DIM_BAD;
+        return l>=0 ? std::decay_t<A>::len_s(l) : DIM_BAD;
     }
-    constexpr dim_t size(int k) const
+    constexpr dim_t len(int k) const
     {
         int l = orig(k);
-        return l>=0 ? a.size(l) : DIM_BAD;
+        return l>=0 ? a.len(l) : DIM_BAD;
     }
     constexpr void adv(rank_t k, dim_t d)
     {
@@ -63,16 +63,16 @@ struct Reframe
             a.adv(l, d);
         }
     }
-    constexpr auto stride(int k) const
+    constexpr auto step(int k) const
     {
         int l = orig(k);
-        return l>=0 ? a.stride(l) : zerostride<decltype(a.stride(l))>::f();
+        return l>=0 ? a.step(l) : zerostep<decltype(a.step(l))>::f();
     }
-    constexpr bool keep_stride(dim_t st, int z, int j) const
+    constexpr bool keep_step(dim_t st, int z, int j) const
     {
         int wz = orig(z);
         int wj = orig(j);
-        return wz>=0 && wj>=0 && a.keep_stride(st, wz, wj);
+        return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
     }
     template <class I> constexpr decltype(auto) at(I const & i)
     {

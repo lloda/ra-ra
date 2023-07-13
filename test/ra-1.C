@@ -50,16 +50,16 @@ void CheckPly(TestRecorder & tr, char const * tag, AA && A, BB && B)
     CC C(B());
     auto sub = [](int & b, int const a) -> int { return b -= a; };
     ra::ply_ravel(ra::expr(sub, B.iter(), A.iter()));
-    for (int i=0; i!=A.size(0); ++i) {
-        for (int j=0; j!=A.size(1); ++j) {
+    for (int i=0; i!=A.len(0); ++i) {
+        for (int j=0; j!=A.len(1); ++j) {
             tr.info(tag, " ravel").test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
     auto add = [](int & b, int const a) -> int { return b += a; };
     ra::ply_ravel(ra::expr(add, B.iter(), A.iter()));
     ra::ply_index(ra::expr(sub, B.iter(), A.iter()));
-    for (int i=0; i!=A.size(0); ++i) {
-        for (int j=0; j!=A.size(1); ++j) {
+    for (int i=0; i!=A.len(0); ++i) {
+        for (int j=0; j!=A.len(1); ++j) {
             tr.info(tag, " index").test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
@@ -190,7 +190,7 @@ int main()
         CheckPlyReverse1(tr, ra::Unique<int, 1>({ 6 }, ra::none));
         CheckPlyReverse1(tr, ra::Unique<int>({ 6 }, ra::none));
     }
-    tr.section("mismatched strides");
+    tr.section("mismatched steps");
     {
         auto sum2 = [](int a, int b, int & c) { return c = a-b; };
         A2 a = A2({2, 3}, ra::none); std::iota(a.begin(), a.end(), 1);
@@ -250,7 +250,7 @@ int main()
         CheckPly<A2>(tr, "(f)", A, reverse(B, 1));
         CheckPly<A2>(tr, "(g)", reverse(A, 1), reverse(B, 1));
 
-// When BOTH strides are negative, B is still compact and this can be reduced to a single loop.
+// When BOTH steps are negative, B is still compact and this can be reduced to a single loop.
 // TODO Enforce that the loop is linearized over both dimensions.
 
         CheckPly<A2>(tr, "(h)", A, reverse(reverse(B, 0), 1));

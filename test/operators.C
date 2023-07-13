@@ -306,7 +306,7 @@ int main()
     tr.section("lexicographical_compare");
     {
         ra::Big<int, 3> a({10, 2, 2}, {0, 0, 1, 3, 0, 1, 3, 3, 0, 2, 3, 0, 3, 1, 2, 1, 1, 1, 3, 1, 0, 3, 2, 2, 2, 3, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 3, 0, 2, 1});
-        ra::Big<int, 1> i = ra::iota(a.size(0));
+        ra::Big<int, 1> i = ra::iota(a.len(0));
         std::sort(i.data(), i.data()+i.size(),
                   [&a](int i, int j)
                   {

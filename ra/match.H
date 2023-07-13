@@ -93,7 +93,7 @@ int check_expr_s()
                             if constexpr (i<mp::len<T>) {
                                 using Ti = std::decay_t<mp::ref<T, i>>;
                                 if constexpr (k<Ti::rank_s()) {
-                                    constexpr dim_t si = Ti::size_s(k);
+                                    constexpr dim_t si = Ti::len_s(k);
                                     static_assert(sk<0 || si<0 || si==sk, "mismatched static dimensions");
                                     return fi(fi, mp::int_t<i+1> {}, mp::int_t<chosen_size(sk, si)> {},
                                               mp::int_t<(1==vali || sk==DIM_ANY || si==DIM_ANY) ? 1 : 0> {});
@@ -129,7 +129,7 @@ bool check_expr(E const & e)
                 constexpr int i = i_;
                 if constexpr (i<mp::len<T>) {
                     if (k<std::get<i>(e.t).rank()) {
-                        dim_t si = std::get<i>(e.t).size(k);
+                        dim_t si = std::get<i>(e.t).len(k);
                         RA_CHECK((sk==DIM_BAD || si==DIM_BAD || si==sk),
                                  " k ", k, " sk ", sk, " != ", si, ": mismatched dimensions");
                         fi(fi, mp::int_t<i+1> {}, chosen_size(sk, si));
@@ -188,7 +188,7 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
     }
 
 // any size which is not DIM_BAD.
-    constexpr static dim_t size_s(int k)
+    constexpr static dim_t len_s(int k)
     {
         dim_t s = mp::fold_tuple(DIM_BAD, mp::map<box, T> {},
                                  [&k](dim_t s, auto a)
@@ -200,24 +200,24 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
                                      } else if (ar>=0 && k>=ar) {
                                          return s;
                                      } else {
-                                         dim_t zz = A::size_s(k);
+                                         dim_t zz = A::len_s(k);
                                          return zz;
                                      }
                                  });
         return s;
     }
 
-// do early exit with fold_tuple (and with size_s(k)).
-    constexpr dim_t size(int k) const
+// do early exit with fold_tuple (and with len_s(k)).
+    constexpr dim_t len(int k) const
     {
-        if (dim_t ss=size_s(k); ss==DIM_ANY) {
+        if (dim_t ss=len_s(k); ss==DIM_ANY) {
             auto f = [this, &k](auto && f, auto i_)
                      {
                          constexpr int i = i_;
                          if constexpr (i<std::tuple_size_v<T>) {
                              auto const & a = std::get<i>(this->t);
                              if (k<a.rank()) {
-                                 dim_t as = a.size(k);
+                                 dim_t as = a.len(k);
                                  if (as!=DIM_BAD) {
                                      assert(as!=DIM_ANY); // cannot happen at runtime
                                      return as;
@@ -243,14 +243,14 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
         (std::get<I>(t).adv(k, d), ...);
     }
 
-    constexpr bool keep_stride(dim_t st, int z, int j) const
+    constexpr bool keep_step(dim_t st, int z, int j) const
     {
-        return (std::get<I>(t).keep_stride(st, z, j) && ...);
+        return (std::get<I>(t).keep_step(st, z, j) && ...);
     }
 
-    constexpr auto stride(int i) const
+    constexpr auto step(int i) const
     {
-        return std::make_tuple(std::get<I>(t).stride(i) ...);
+        return std::make_tuple(std::get<I>(t).step(i) ...);
     }
 };
 

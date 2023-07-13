@@ -23,8 +23,8 @@ int main(int argc, char * * argv)
     {
         tr.section("regression with some shape arguments (fixed rank) [ra43]");
         {
-            ra::Big<int, 1> sizes = {5};
-            ra::Big<double, 1> a(sizes, ra::none);
+            ra::Big<int, 1> lens = {5};
+            ra::Big<double, 1> a(lens, ra::none);
             a = 33.;
             cout << a << endl;
         }
@@ -46,8 +46,8 @@ int main(int argc, char * * argv)
         {
             ra::Big<int, 2> a({int(3), ssize_t(2)}, {0, 1, 2, 3, 4, 5});
             tr.test_eq(ra::_0 * 2 + ra::_1, a);
-            tr.test_eq(3, a.size(0));
-            tr.test_eq(2, a.size(1));
+            tr.test_eq(3, a.len(0));
+            tr.test_eq(2, a.len(1));
         }
     }
     tr.section("should-fail constructors");
@@ -86,8 +86,8 @@ int main(int argc, char * * argv)
     {
         int ap[6] = {0, 1, 2, 3, 4, 5};
         ra::View<int, 2> a(2+ra::iota(2), ap);
-        tr.test_eq(2, a.size(0));
-        tr.test_eq(3, a.size(1));
+        tr.test_eq(2, a.len(0));
+        tr.test_eq(3, a.len(1));
         tr.test_eq(ra::Small<int, 2, 3> {{0, 1, 2}, {3, 4, 5}}, a);
         tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
     }
@@ -95,8 +95,8 @@ int main(int argc, char * * argv)
     {
         int ap[6] = {0, 1, 2, 3, 4, 5};
         ra::View<int> a(2+ra::iota(2), ap);
-        tr.test_eq(2, a.size(0));
-        tr.test_eq(3, a.size(1));
+        tr.test_eq(2, a.len(0));
+        tr.test_eq(3, a.len(1));
         tr.test_eq(ra::Small<int, 2, 3> {{0, 1, 2}, {3, 4, 5}}, a);
         tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
     }
@@ -109,15 +109,15 @@ int main(int argc, char * * argv)
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
         a = {{{4, 5, 6}, {7, 8, 9}}}; // this uses the nested_braces_r constructor (!!)
         tr.skip().test_eq(ra::scalar(ap), ra::scalar(a.data())); // FIXME fairly dangerous!
-        tr.test_eq(2, a.size(0));
-        tr.test_eq(3, a.size(1));
+        tr.test_eq(2, a.len(0));
+        tr.test_eq(3, a.len(1));
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
     }
     tr.section("nested braces constructor");
     {
         ra::Big<int, 2> a = {{4, 5, 6}, {7, 8, 9}};
-        tr.test_eq(2, a.size(0));
-        tr.test_eq(3, a.size(1));
+        tr.test_eq(2, a.len(0));
+        tr.test_eq(3, a.len(1));
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
     }
     tr.section("nested braces for nested type I");

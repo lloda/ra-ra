@@ -8,7 +8,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
+// TODO Lots of room for improvement: small (fixed lens) and large (tiling, etc. see eval.cc in Blitz++).
 
 #pragma once
 #include "ra/atom.H"
@@ -22,9 +22,9 @@ namespace ra {
 // --------------
 
 // Traverse array expression looking to ravel the inner loop.
-// size(k) has a single value.
-// adv(k), stride(k), keep_stride(st, k, l) and flat() are used on all the leaf arguments.
-// The strides must give 0 for k>=their own rank, to allow frame matching.
+// len(k) has a single value.
+// adv(k), step(k), keep_step(st, k, l) and flat() are used on all the leaf arguments.
+// The steps must give 0 for k>=their own rank, to allow frame matching.
 // TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
 template <class A> inline
 void ply_ravel(A && a)
@@ -41,28 +41,28 @@ void ply_ravel(A && a)
     default: // TODO find a decent heuristic
         // if (rank>1) {
         //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-        //               { return a.size(order[i])<a.size(order[j]); });
+        //               { return a.len(order[i])<a.len(order[j]); });
         // }
         ;
     }
 // outermost compact dim.
     rank_t * ocd = order;
-    auto ss = a.size(*ocd);
-    for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
-        ss *= a.size(*ocd);
+    auto ss = a.len(*ocd);
+    for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
+        ss *= a.len(*ocd);
     }
     dim_t sha[rank], ind[rank];
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
-        sha[k] = a.size(ocd[k]);
+        sha[k] = a.len(ocd[k]);
         if (sha[k]==0) { // for the ravelled dimensions ss takes care.
             return;
         }
         RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
     }
-// all sub xpr strides advance in compact dims, as they might be different.
-    auto const ss0 = a.stride(order[0]);
-// TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit stride.
+// all sub xpr steps advance in compact dims, as they might be different.
+    auto const ss0 = a.step(order[0]);
+// TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit step.
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {
@@ -102,7 +102,7 @@ void subindex(A & a, dim_t s, S const & ss0)
             *p;
         }
     } else if constexpr (mp::len<order> > ravel_rank) {
-        dim_t size = a.size(mp::first<order>::value); // TODO Precompute these at the top
+        dim_t size = a.len(mp::first<order>::value); // TODO Precompute these at the top
         for (dim_t i=0, iend=size; i<iend; ++i) {
             subindex<mp::drop1<order>, ravel_rank>(a, s, ss0);
             a.adv(mp::first<order>::value, 1);
@@ -141,7 +141,7 @@ auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()<=0)>
 template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()==1)>
 {
-    subindex<mp::iota<1>, 1>(a, a.size(0), a.stride(0));
+    subindex<mp::iota<1>, 1>(a, a.len(0), a.step(0));
 }
 
 // find the outermost compact dim.
@@ -149,10 +149,10 @@ template <class A>
 constexpr auto ocd(A && a)
 {
     rank_t const rank = a.rank();
-    auto s = a.size(rank-1);
+    auto s = a.len(rank-1);
     int j = 1;
-    while (j<rank && a.keep_stride(s, rank-1, rank-1-j)) {
-        s *= a.size(rank-1-j);
+    while (j<rank && a.keep_step(s, rank-1, rank-1-j)) {
+        s *= a.len(rank-1-j);
         ++j;
     }
     return std::make_tuple(s, j);
@@ -162,20 +162,20 @@ template <class A> RA_INLINE constexpr
 auto plyf(A && a) -> std::enable_if_t<(rank_s<A>()>1)>
 {
     constexpr rank_t rank = rank_s<A>();
-// this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_stride.
+// this can only be enabled when f() will be constexpr; size_s isn't enough b/c of keep_step.
 // test/concrete.C has a case that shows this.
 // cf https://stackoverflow.com/questions/55288555
     if constexpr(0 && size_s<A>()>=0) {
         constexpr auto sj = ocd(a);
         constexpr auto s = std::get<0>(sj);
         constexpr auto j = std::get<1>(sj);
-// all sub xpr strides advance in compact dims, as they might be different.
+// all sub xpr steps advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-        until<mp::iota<rank_s<A>()>, 0>(j, a, s, a.stride(rank-1));
+        until<mp::iota<rank_s<A>()>, 0>(j, a, s, a.step(rank-1));
     } else {
 // the unrolling above isn't worth it when s, j cannot be constexpr.
-        auto s = a.size(rank-1);
-        subindex<mp::iota<rank_s<A>()>, 1>(a, s, a.stride(rank-1));
+        auto s = a.len(rank-1);
+        subindex<mp::iota<rank_s<A>()>, 1>(a, s, a.step(rank-1));
     }
 }
 
@@ -224,28 +224,28 @@ auto ply_ravel_exit(A && a, DEF && def)
     default: // TODO find a decent heuristic
         // if (rank>1) {
         //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-        //               { return a.size(order[i])<a.size(order[j]); });
+        //               { return a.len(order[i])<a.len(order[j]); });
         // }
         ;
     }
 // outermost compact dim.
     rank_t * ocd = order;
-    auto ss = a.size(*ocd);
-    for (--rank, ++ocd; rank>0 && a.keep_stride(ss, order[0], *ocd); --rank, ++ocd) {
-        ss *= a.size(*ocd);
+    auto ss = a.len(*ocd);
+    for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
+        ss *= a.len(*ocd);
     }
     dim_t sha[rank], ind[rank];
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
-        sha[k] = a.size(ocd[k]);
+        sha[k] = a.len(ocd[k]);
         if (sha[k]==0) { // for the ravelled dimensions ss takes care.
             return def;
         }
         RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
     }
-// all sub xpr strides advance in compact dims, as they might be different.
-    auto const ss0 = a.stride(order[0]);
-// TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit stride.
+// all sub xpr steps advance in compact dims, as they might be different.
+    auto const ss0 = a.step(order[0]);
+// TODO Blitz++ uses explicit stack of end-of-dim p positions, has special cases for common/unit step.
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); s>0; --s, p+=ss0) {

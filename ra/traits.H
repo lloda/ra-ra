@@ -92,7 +92,7 @@ resize(A & a, dim_t k)
     if constexpr (ra_traits<A>::size_s()==DIM_ANY) {
         a.resize(k);
     } else {
-        RA_CHECK(k==dim_t(a.size_s(0)));
+        RA_CHECK(k==dim_t(a.len_s(0)));
     }
 }
 

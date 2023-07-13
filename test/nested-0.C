@@ -29,7 +29,7 @@ int main()
 // default init is required to make vector-of-vector, but I still want Vec {} to mean 'an empty vector' and not a default-init vector.
         {
             auto c = Vec<int> {};
-            tr.test_eq(0, c.size(0));
+            tr.test_eq(0, c.len(0));
             tr.test_eq(0, c.size());
         }
         {

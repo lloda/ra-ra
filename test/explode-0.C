@@ -102,8 +102,8 @@ int main()
                 {
                     A = map([](int i, int j) { return super(i-j+ra::_0-ra::_1); }, ra::_0, ra::_1);
                     auto B = ra::collapse<int>(A);
-                    for (int i=0; i<super::size(0); ++i) {
-                        for (int j=0; j<super::size(1); ++j) {
+                    for (int i=0; i<super::len(0); ++i) {
+                        for (int j=0; j<super::len(1); ++j) {
                             tr.test_eq(B(ra::all, ra::all, i, j), map([i, j](auto && a) { return a(i, j); }, A));
                         }
                     }
@@ -134,8 +134,8 @@ int main()
                     A = map([](complex a) { return super { a, conj(a), -conj(a), -a }; },
                             ra::cast<double>(ra::_0)*complex(4, 1) + ra::cast<double>(ra::_1)*complex(1, 4));
                     auto B = ra::collapse<double>(A);
-                    for (int i=0; i<super::size(0); ++i) {
-                        for (int j=0; j<super::size(1); ++j) {
+                    for (int i=0; i<super::len(0); ++i) {
+                        for (int j=0; j<super::len(1); ++j) {
                             tr.test_eq(B(ra::all, ra::all, i, j, 0), map([i, j](auto && a) { return real_part(a(i, j)); }, A));
                             tr.test_eq(B(ra::all, ra::all, i, j, 1), map([i, j](auto && a) { return imag_part(a(i, j)); }, A));
                         }
@@ -198,10 +198,10 @@ int main()
     {
         ra::Small<double, 2, 3> a(ra::_0 + 10*ra::_1);
         auto c = ra::explode<ra::Small<double, 3>>(a);
-        using sizes = std::decay_t<decltype(c)>::sizes;
-        using strides = std::decay_t<decltype(c)>::strides;
-        tr.info(mp::print_int_list<sizes> {}).test(std::is_same_v<mp::int_list<2>, sizes>);
-        tr.info(mp::print_int_list<strides> {}).test(std::is_same_v<mp::int_list<1>, strides>);
+        using lens = std::decay_t<decltype(c)>::lens;
+        using steps = std::decay_t<decltype(c)>::steps;
+        tr.info(mp::print_int_list<lens> {}).test(std::is_same_v<mp::int_list<2>, lens>);
+        tr.info(mp::print_int_list<steps> {}).test(std::is_same_v<mp::int_list<1>, steps>);
         tr.test_eq(ra::scalar(a[0].data()), ra::scalar(c[0].data()));
         tr.test_eq(ra::scalar(a[1].data()), ra::scalar(c[1].data()));
         c[1] = { 3, 2, 1 };

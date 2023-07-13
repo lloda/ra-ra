@@ -76,8 +76,8 @@ int main()
             double aa[20];
             aa[19] = 77;
             ra::View<double> a = { {{10, 2}, {2, 1}}, aa };
-            tr.test_eq(10, a.dim[0].size);
-            tr.test_eq(2, a.dim[1].size);
+            tr.test_eq(10, a.dimv[0].len);
+            tr.test_eq(2, a.dimv[1].len);
             cout << "a.p(3, 4): " << a.p[19] << endl;
             tr.test_eq(77, a.p[19]);
         }
@@ -88,9 +88,9 @@ int main()
             ra::Unique<double> a {};
             a.store = std::move(pp);
             a.p = p;
-            a.dim = {{5, 2}, {2, 1}};
-            tr.test_eq(5, a.dim[0].size);
-            tr.test_eq(2, a.dim[1].size);
+            a.dimv = {{5, 2}, {2, 1}};
+            tr.test_eq(5, a.dimv[0].len);
+            tr.test_eq(2, a.dimv[1].len);
             cout << "a.p(3, 4): " << a.p[9] << endl;
             tr.test_eq(77, a.p[9]);
         }
@@ -101,9 +101,9 @@ int main()
             ra::Shared<double> a {};
             a.store = pp;
             a.p = p;
-            a.dim = {{5, 2}, {2, 1}};
-            tr.test_eq(5, a.dim[0].size);
-            tr.test_eq(2, a.dim[1].size);
+            a.dimv = {{5, 2}, {2, 1}};
+            tr.test_eq(5, a.dimv[0].len);
+            tr.test_eq(2, a.dimv[1].len);
             cout << "a.p(3, 4): " << a.p[9] << endl;
             tr.test_eq(88, a.p[9]);
         }
@@ -114,9 +114,9 @@ int main()
             ra::Big<double> a {};
             a.store = pp;
             a.p = p;
-            a.dim = {{5, 2}, {2, 1}};
-            tr.test_eq(5, a.dim[0].size);
-            tr.test_eq(2, a.dim[1].size);
+            a.dimv = {{5, 2}, {2, 1}};
+            tr.test_eq(5, a.dimv[0].len);
+            tr.test_eq(2, a.dimv[1].len);
             cout << "a.p(3, 4): " << a.p[9] << endl;
             tr.test_eq(99, a.p[9]);
         }
@@ -158,7 +158,7 @@ int main()
         ra::Big<int> x {9};
         tr.test_eq(9, x(0));
         tr.test_eq(1, x.size());
-        tr.test_eq(1, x.size(0));
+        tr.test_eq(1, x.len(0));
         tr.test_eq(1, x.rank());
         ra::Big<int> y = 9;
         tr.test_eq(9, y());
@@ -195,7 +195,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
-        ra::cell_iterator<ra::View<double>> it(r.dim, r.p);
+        ra::cell_iterator<ra::View<double>> it(r.dimv, r.p);
         tr.test(r.data()==it.c.p);
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
@@ -205,7 +205,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::cell_iterator<ra::View<double, 1>> it(r.dim, r.p);
+        ra::cell_iterator<ra::View<double, 1>> it(r.dimv, r.p);
         cout << "View<double, 1> it.c.p: " << it.c.p << endl;
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
@@ -323,7 +323,7 @@ int main()
         std::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 
-        // Small strides are tested in test/small-0.C, test/small-1.C.
+        // Small steps are tested in test/small-0.C, test/small-1.C.
         ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
         std::copy(s.begin(), s.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, s.begin()));
@@ -451,8 +451,8 @@ int main()
         double checka[6] = { 2, 3, 1, 4, 8, 9 };
         {
             ra::Unique<double, 2> a({2, 3}, { 2, 3, 1, 4, 8, 9 });
-            tr.test_eq(2, a.dim[0].size);
-            tr.test_eq(3, a.dim[1].size);
+            tr.test_eq(2, a.dimv[0].len);
+            tr.test_eq(3, a.dimv[1].len);
             tr.test(std::equal(a.begin(), a.end(), checka));
         }
         {
@@ -505,8 +505,8 @@ int main()
 
         auto c = transpose({1, 0}, a);
         tr.test(a.data()==c.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
-        tr.test_eq(a.size(0), c.size(1));
-        tr.test_eq(a.size(1), c.size(0));
+        tr.test_eq(a.len(0), c.len(1));
+        tr.test_eq(a.len(1), c.len(0));
         tr.test_eq(b, c);
     }
     tr.section("row-major assignment from initializer_list, rank 1");
@@ -725,7 +725,7 @@ int main()
             ra::View<double> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
             double check[12] = { 3, 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, a, check);
-// default strides.
+// default steps.
             ra::View<double> b { {2, 2, 2}, rpool };
             CheckArrayOutput(tr, b, check);
         }
