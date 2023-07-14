@@ -59,7 +59,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
                 cout << ewv.len(k) << ": " << driver<0>(ewv.t, k) << endl;
             }
 
-            // cout << ra::mp::show_type<decltype(ra::ewv<FM>(FM::op(v), af0, af1))>::value << endl;
+            // cout << ra::mp::show<decltype(ra::ewv<FM>(FM::op(v), af0, af1))>::value << endl;
             cout << "\nusing (ewv &):\n";
             ra::ply_ravel(ewv);
             cout << endl;
@@ -67,7 +67,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
             ra::ply_ravel(ra::expr(FM::op(v), af0, af1));
         }
         {
-            // cout << ra::mp::show_type<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
+            // cout << ra::mp::show<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
             auto ewv = ra::expr(v, a.iter(), b.iter());
             cout << "shape(ewv): " << ra::noshape << shape(ewv) << endl;
 #define TEST(plier)                                                     \

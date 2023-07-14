@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Tuple utilities
+// ra-ra - Tuple library
 
 // (c) Daniel Llorens - 2005-2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -29,11 +29,8 @@ template <class ... T> constexpr bool always_false = false; // p2593r0
 
 
 // -------------------------
-// Tuples as compile time lists
+// xxx<...> is user facing and xxx_<...>::type (if needed) is implementation.
 // -------------------------
-
-// The convention here is that the alias xxx<...> is user facing and xxx_<...>::type is
-// implementation. Ideally we have only the alias.
 
 using std::tuple;
 using nil = tuple<>;
@@ -341,33 +338,12 @@ struct check_idx<tuple<A0, A ...>, I0, I ...>
 // Tuples in dynamic context
 // -------------------------
 
-// TODO Think about struct <int k> { int const value = k; constexpr static int static_value = k; }
-// where the tuple can be cast to an array ref.
-
 // like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
-// FIXME forward t, e.g. https://vittorioromeo.info/index/blog/capturing_perfectly_forwarded_objects_in_lambdas.html
-// until that's fixed, avoid using this for non trivial stuff.
-// template <class C, class T>
-// constexpr C from_tuple(T const & t)
-// {
-//     return std::apply([&t](auto ... i)
-//                       { return C { std::get<decltype(i)::value>(t) ... }; },
-//                       iota<len<std::decay_t<T>>> {});
-// }
-
-// like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
-template <class C, class T, int ... i>
-constexpr C
-from_tuple_(T && t, int_list<i ...>)
-{
-    return { std::get<i>(std::forward<T>(t)) ... };
-}
-
 template <class C, class T>
 constexpr C
 from_tuple(T && t)
 {
-    return from_tuple_<C>(std::forward<T>(t), iota<len<std::decay_t<T>>> {});
+    return std::apply([](auto && ... x) { return C { std::forward<decltype(x)>(x) ... }; }, t);
 }
 
 template <class C, class T>

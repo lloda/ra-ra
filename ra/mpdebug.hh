@@ -14,15 +14,8 @@
 
 namespace ra::mp {
 
-template <dim_t value_, bool condition=false>
-struct show_number
-{
-    static dim_t const value = value_;
-    static_assert(condition, "bad number");
-};
-
 template <class type_, bool condition=false>
-struct show_type
+struct show
 {
     using type = type_;
     static bool const value = condition;

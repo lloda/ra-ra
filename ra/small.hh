@@ -129,7 +129,7 @@ struct is_beatable_def
 template <class I> requires (is_iota<I>)
 struct is_beatable_def<I>
 {
-    constexpr static bool value = !std::is_same_v<dim_c<DIM_BAD>, decltype(I::n)>; // FIXME more robust
+    constexpr static bool value = (DIM_BAD != I::nn);
     constexpr static int skip_src = 1; // one position
     constexpr static int skip = 1; // rank 1
     constexpr static int add = 0; // relative to source rank
@@ -215,13 +215,13 @@ struct CellFlat
 template <class V, rank_t cellr_spec=0>
 struct CellSmall
 {
-    static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "bad cell rank");
+    static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "Bad cell rank.");
     constexpr static rank_t fullr = ra::rank_s<V>();
     constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
     constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
-    static_assert(cellr>=0 || cellr==RANK_ANY, "bad cell rank");
-    static_assert(framer>=0 || framer==RANK_ANY, "bad frame rank");
-    static_assert(choose_rank(fullr, cellr)==fullr, "bad cell rank");
+    static_assert(cellr>=0 || cellr==RANK_ANY, "Bad cell rank.");
+    static_assert(framer>=0 || framer==RANK_ANY, "Bad frame rank.");
+    static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
     using cell_lens = mp::drop<typename V::lens, framer>;
     using cell_steps = mp::drop<typename V::steps, framer>;

@@ -22,7 +22,7 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::is_
 // TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
 
-// Make ct len iotas if the argument has ct len.
+// Make ct len iotas from ct len arg.
 template <class E>
 constexpr auto
 len0(E && e)
@@ -34,6 +34,9 @@ len0(E && e)
     }
 }
 
+// FIXME gets() vs p2781r2
+// the qualifier ra::iota is necessary not to pick std::iota through ADL (test/headers.cc).
+
 // --------------
 // plus
 // --------------
@@ -42,21 +45,21 @@ template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(ITEM(0)), ITEM(0).i+ITEM(1), ITEM(0).gets());
+    return ra::iota(ITEM(0).n, ITEM(0).i+ITEM(1), ITEM(0).s);
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(ITEM(1)), ITEM(0)+ITEM(1).i, ITEM(1).gets());
+    return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i, ITEM(1).s);
 }
 
 template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(e), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
+    return ra::iota(len0(e), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
 }
 
 // --------------
@@ -67,21 +70,21 @@ template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(ITEM(0)), ITEM(0).i-ITEM(1), ITEM(0).gets());
+    return ra::iota(ITEM(0).n, ITEM(0).i-ITEM(1), ITEM(0).s);
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(ITEM(1)), ITEM(0)-ITEM(1).i, -ITEM(1).gets());
+    return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i, -ITEM(1).s);
 }
 
 template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(e), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
+    return ra::iota(len0(e), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
 }
 
 // --------------
@@ -92,14 +95,14 @@ template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(ITEM(0)), ITEM(0).i*ITEM(1), ITEM(0).gets()*ITEM(1));
+    return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).gets()*ITEM(1));
 }
 
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
 {
-    return iota(len0(ITEM(1)), ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets());
+    return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets());
 }
 
 // --------------
@@ -110,7 +113,7 @@ template <class I> requires (is_iota<I>)
 constexpr auto
 optimize(Expr<std::negate<>, std::tuple<I>> && e)
 {
-    return iota(len0(ITEM(0)), -ITEM(0).i, -ITEM(0).gets());
+    return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).gets());
 }
 
 #endif // RA_DO_OPT_IOTA

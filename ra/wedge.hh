@@ -105,7 +105,7 @@ struct Wedge
     constexpr static valtype<Va, Vb>
     term(Va const & a, Vb const & b)
     {
-        if constexpr (!mp::nilp<Fa>) {
+        if constexpr (mp::len<Fa> > 0) {
             using Fa0 = mp::first<Fa>;
             using Fb = mp::complement_list<Fa0, Xr>;
             using Sa = mp::FindCombination<Fa0, Ca>;
