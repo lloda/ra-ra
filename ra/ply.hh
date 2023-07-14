@@ -48,8 +48,8 @@ struct WithLen
 {
 // constant & scalar appear in Iota args. dots_t and insert_t appear in subscripts.
 // FIXME what else? restrict to IteratorConcept<E_> || is_constant<E_> || is_scalar<E_> ...
-    template <class E> constexpr static decltype(auto)
-    f(dim_t len, E && e)
+    template <class L, class E> constexpr static decltype(auto)
+    f(L len, E && e)
     {
         return std::forward<E>(e);
     }
@@ -58,10 +58,10 @@ struct WithLen
 template <>
 struct WithLen<Len>
 {
-    template <class E> constexpr static decltype(auto)
-    f(dim_t len, E && e)
+    template <class L, class E> constexpr static decltype(auto)
+    f(L len, E && e)
     {
-        return Scalar<dim_t>(len);
+        return Scalar<L>(len);
     }
 };
 
@@ -69,8 +69,8 @@ template <class Op, IteratorConcept ... P, int ... I>
 requires (has_len<P> || ...)
 struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
-    template <class E> constexpr static decltype(auto)
-    f(dim_t len, E && e)
+    template <class L, class E> constexpr static decltype(auto)
+    f(L len, E && e)
     {
         return expr(std::forward<E>(e).op, WithLen<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
     }
@@ -80,8 +80,8 @@ template <IteratorConcept ... P, int ... I>
 requires (has_len<P> || ...)
 struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
-    template <class E> constexpr static decltype(auto)
-    f(dim_t len, E && e)
+    template <class L, class E> constexpr static decltype(auto)
+    f(L len, E && e)
     {
         return pick(WithLen<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
     }
@@ -103,8 +103,8 @@ template <int w, class O, class N, class S>
 requires (has_len<O> || has_len<N> || has_len<S>)
 struct WithLen<Iota<w, O, N, S>>
 {
-    template <class E> constexpr static decltype(auto)
-    f(dim_t len, E && e)
+    template <class L, class E> constexpr static decltype(auto)
+    f(L len, E && e)
     {
         return iota<w>(coerce(WithLen<std::decay_t<N>>::f(len, std::forward<E>(e).n)),
                        coerce(WithLen<std::decay_t<O>>::f(len, std::forward<E>(e).i)),
@@ -116,17 +116,18 @@ template <class I, class N>
 requires (has_len<N>)
 struct WithLen<Ptr<I, N>>
 {
-    template <class E> constexpr static decltype(auto)
-    f(dim_t len, E && e)
+    template <class L, class E> constexpr static decltype(auto)
+    f(L len, E && e)
     {
         return ptr(std::forward<E>(e).i, coerce(WithLen<std::decay_t<N>>::f(len, std::forward<E>(e).n)));
     }
 };
 
-template <class E>
+template <class L, class E>
 constexpr decltype(auto)
-with_len(dim_t len, E && e)
+with_len(L len, E && e)
 {
+    static_assert(std::is_integral_v<std::decay_t<L>> || is_constant<std::decay_t<L>>);
     return WithLen<std::decay_t<E>>::f(len, std::forward<E>(e));
 }
 

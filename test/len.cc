@@ -7,11 +7,6 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// [X] if constexpr (no len in three) then don't rt-walk the tree, just identity
-// [X] support Pick like Expr
-// [X] handle iota with len (meaning also expr!) members
-// [ ] plug in view.operator() etc.
-
 #include "ra/test.hh"
 #include "ra/mpdebug.hh"
 #include <iomanip>
@@ -83,6 +78,10 @@ int main()
         static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len)).n)>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len-1)).n)>);
         tr.test_eq(ra::ptr(a, 5), with_len(5, ra::ptr(a, ra::len)));
+    }
+    tr.section("static len is preserved");
+    {
+        tr.test_eq(5, with_len(ra::int_c<5>(), ra::iota(ra::len)).len_s(0));
     }
     return tr.summary();
 }
