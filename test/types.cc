@@ -64,7 +64,7 @@ int main()
         TESTPRED(int,
                  false, false, false, true, false);
         TESTPRED(ra::dim_c<0>,
-                 false, false, false, false, false);
+                 false, false, false, true, false);
         TESTPRED(std::complex<double>,
                  false, false, false, true, false);
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()),

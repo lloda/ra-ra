@@ -135,7 +135,7 @@ static_assert(match_smallvector<ra::CellSmall<ra::SmallBase<ra::SmallView, doubl
     optimize(ra::Expr<NAME, std::tuple<A, B>> && e)                     \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
-        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.p)) OP *(extvector<T, N> *)((ITEM(1).c.p)); \
+        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.cp)) OP *(extvector<T, N> *)((ITEM(1).c.cp)); \
         return val;                                                     \
     }
 #define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)      \

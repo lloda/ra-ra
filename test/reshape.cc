@@ -22,10 +22,10 @@ int main()
         ra::Big<int, 3> aa({2, 3, 3}, ra::_0*3+ra::_1);
         auto a = aa(ra::all, ra::all, 0);
         tr.info("ravel_free").test_eq(ra::iota(6), ravel_free(a));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(ravel_free(a).p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(ravel_free(a).data()));
 // select.
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, reshape(a, ra::Small<int, 1> {3}));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 1> {3}).p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(reshape(a, ra::Small<int, 1> {3}).data()));
 // tile.
         auto tilea = reshape(a, ra::Small<int, 3> {2, 2, 3});
         tr.info("reshape select").test_eq(ra::Big<int, 3>({2, 2, 3}, {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5}), tilea);
@@ -33,22 +33,22 @@ int main()
         tr.info("some tile-reshapes are free (II)").test_eq(ra::scalar(a.data()), ra::scalar(tilea.data()));
 // reshape with free ravel
         tr.info("reshape w/free ravel I").test_eq(ra::Big<int, 2>({3, 2}, {0, 1, 2, 3, 4, 5}), reshape(a, ra::Small<int, 2> {3, 2}));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 2> {3, 2}).p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(reshape(a, ra::Small<int, 2> {3, 2}).data()));
         tr.info("reshape w/free ravel II").test_eq(ra::Big<int, 3>({2, 1, 2}, {0, 1, 2, 3}), reshape(a, ra::Small<int, 3> {2, 1, 2}));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 3> {2, 1, 2}).p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(reshape(a, ra::Small<int, 3> {2, 1, 2}).data()));
         tr.info("reshape w/free ravel III").test_eq(ra::Big<int, 2>({3, 2}, {0, 1, 2, 3, 4, 5}), reshape(a, ra::Small<int, 2> {-1, 2}));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 2> {-1, 2}).p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(reshape(a, ra::Small<int, 2> {-1, 2}).data()));
         tr.info("reshape w/free ravel IV").test_eq(ra::Big<int, 2>({2, 3}, {0, 1, 2, 3, 4, 5}), reshape(a, ra::Small<int, 2> {2, -1}));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 2> {2, -1}).p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(reshape(a, ra::Small<int, 2> {2, -1}).data()));
         tr.info("reshape w/free ravel V").test_eq(ra::Big<int, 3>({2, 1, 3}, {0, 1, 2, 3, 4, 5}), reshape(a, ra::Small<int, 3> {2, -1, 3}));
-        tr.test_eq(ra::scalar(a.p), ra::scalar(reshape(a, ra::Small<int, 3> {2, -1, 3}).p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(reshape(a, ra::Small<int, 3> {2, -1, 3}).data()));
     }
     tr.section("reshape from var rank to fixed rank");
     {
         ra::Big<int> a({2, 3}, ra::_0*3+ra::_1);
         auto b = reshape(a, ra::Small<int, 1> {3});
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, b);
-        tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         tr.info("reshape can fix rank").test_eq(1, rank_s(b));
     }
     tr.section("reshape from var rank to fixed rank using the initializer_list shim");
@@ -56,11 +56,11 @@ int main()
         ra::Big<int> a({2, 3}, ra::_0*3+ra::_1);
         auto b = reshape(a, {3, 2});
         tr.info("reshape").test_eq(ra::Big<int, 2> {{0, 1}, {2, 3}, {4, 5}}, b);
-        tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         tr.info("reshape can return fixed rank (2)").test_eq(2, rank_s(b));
         auto c = reshape(a, {3l, 2l}); // check deduction works regardless
         tr.info("reshape").test_eq(ra::Big<int, 2> {{0, 1}, {2, 3}, {4, 5}}, c);
-        tr.test_eq(ra::scalar(a.p), ra::scalar(c.p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(c.data()));
         tr.info("reshape can return fixed rank (3)").test_eq(2, rank_s(c));
     }
     tr.section("reshape from var rank to var rank");
@@ -68,7 +68,7 @@ int main()
         ra::Big<int> a({2, 3}, ra::_0*3+ra::_1);
         auto b = reshape(a, ra::Big<int, 1> {3});
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, b);
-        tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         tr.info("reshape can return var rank (1)").test_eq(ra::RANK_ANY, rank_s(b));
     }
     tr.section("reshape to fixed rank to var rank");
@@ -77,7 +77,7 @@ int main()
         ra::Big<int, 2> a({2, 3}, ra::_0*3+ra::_1);
         auto b = reshape(a, ra::Big<int, 1> {3});
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, b);
-        tr.test_eq(ra::scalar(a.p), ra::scalar(b.p));
+        tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         tr.info("reshape can return var rank").test_eq(ra::RANK_ANY, rank_s(b));
     }
     tr.section("conversion from var rank to fixed rank");

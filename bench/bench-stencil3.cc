@@ -48,7 +48,7 @@ struct f_raw
                 }
             }
         }
-        std::swap(A.p, Anext.p);
+        std::swap(A.cp, Anext.cp);
     };
 };
 
@@ -60,7 +60,7 @@ struct f_slices
         Anext(I, J, K) = -6*A(I, J, K)
             + A(I+1, J, K) + A(I, J+1, K) + A(I, J, K+1)
             + A(I-1, J, K) + A(I, J-1, K) + A(I, J, K-1);
-        std::swap(A.p, Anext.p);
+        std::swap(A.cp, Anext.cp);
     };
 };
 
@@ -69,12 +69,12 @@ struct f_stencil_explicit
 {
     THEOP
     {
-        Astencil.p = A.data();
+        Astencil.cp = A.data();
         Anext(I, J, K) = map([](auto && A) { return -6*A(1, 1, 1)
                     + A(2, 1, 1) + A(1, 2, 1) + A(1, 1, 2)
                     + A(0, 1, 1) + A(1, 0, 1) + A(1, 1, 0); },
             iter<3>(Astencil));
-        std::swap(A.p, Anext.p);
+        std::swap(A.cp, Anext.cp);
     };
 };
 
@@ -83,9 +83,9 @@ struct f_stencil_arrayop
 {
     THEOP
     {
-        Astencil.p = A.data();
+        Astencil.cp = A.data();
         Anext(I, J, K) = map([](auto && s) { return sum(s*mask); }, iter<3>(Astencil));
-        std::swap(A.p, Anext.p);
+        std::swap(A.cp, Anext.cp);
     };
 };
 
@@ -94,10 +94,10 @@ struct f_sumprod
 {
     THEOP
     {
-        Astencil.p = A.data();
+        Astencil.cp = A.data();
         Anext(I, J, K) = 0; // TODO miss notation for sum-of-axes without preparing destination...
         Anext(I, J, K) += map(ra::wrank<3, 3>(std::multiplies<>()), Astencil, mask);
-        std::swap(A.p, Anext.p);
+        std::swap(A.cp, Anext.cp);
     };
 };
 
@@ -106,10 +106,10 @@ struct f_sumprod2
 {
     THEOP
     {
-        Astencil.p = A.data();
+        Astencil.cp = A.data();
         Anext(I, J, K) = 0;
         plyf(map(ra::wrank<0, 3, 3>([](auto && A, auto && B, auto && C) { A += B*C; }), Anext(I, J, K), Astencil, mask));
-        std::swap(A.p, Anext.p);
+        std::swap(A.cp, Anext.cp);
     };
 };
 

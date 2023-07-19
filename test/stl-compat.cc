@@ -80,7 +80,7 @@ int main()
     {
         ra::Big<int, 3> aa({0, 2, 3}, 0.);
         auto a = aa(ra::all, 1);
-        tr.info("begin ", a.begin().ii.c.p, " end ", a.end().ii.c.p).test(a.begin()==a.end());
+        tr.info("begin ", a.begin().ii.c.data(), " end ", a.end().ii.c.data()).test(a.begin()==a.end());
     }
     tr.section("foreign vectors from std::");
     {

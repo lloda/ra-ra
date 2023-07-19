@@ -262,10 +262,10 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 * Cell iteration::             At any rank.
 * Slicing::                    Subscripting is a special operation.
 * Special objects::            Not arrays, yet arrays.
+* Functions::                  Ready to go.
 * The rank conjunction::       J comes to C++.
 * Compatibility::              With the STL and other libraries.
 * Extension::                  Using your own types and more.
-* Functions::                  Ready to go.
 * Error handling::             What to check and what to do.
 @end menu
 
@@ -276,7 +276,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies other than the standard library, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/ra.hh"} at the top of your sources.
 
-A compiler with C++20 support is required. At the time of writing this means @b{gcc 11} or with @option{-std=c++20}. Some C++23 features are available with @option{-std=c++2b}. Check the top @code{README.md} for more up-to-date information.
+A compiler with C++20 support is required. For the current version this means at least @b{gcc 11} with @option{-std=c++20}. Some C++23 features are available with @option{-std=c++2b}. Check the top @code{README.md} for more up-to-date information.
 
 Here is a minimal program@footnote{Examples given without context assume that one has declared @code{using std::cout;}, etc.}:
 
@@ -307,17 +307,7 @@ The following headers are @emph{not} included by default:
 @item @code{"ra/test.hh"}, @code{"ra/bench.hh"}: Used by the test and benchmark suites.
 @end itemize
 
-The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/bootstrap.hh"} before the rest of @code{ra::}.
-
-All other headers are for internal use by @code{ra::}@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
-
-@verbatim
-cd ra && cinclude2dot.pl --include . > headers.dot
-dot -Tpng headers.dot -Gdpi=100 > headers.png
-@end verbatim
-}
-
-@image{headers,4cm}
+The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/bootstrap.hh"} before the rest of @code{ra::}. All other headers are for internal use by @code{ra::}.
 
 @cindex container
 @c ------------------------------------------------
@@ -998,6 +988,131 @@ cout << (a + ra::_0 - ra::_1) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
 @c FIXME the rest
 
 @c ------------------------------------------------
+@node Functions
+@section Functions
+@c ------------------------------------------------
+
+You don't need to use @ref{Array operations,@code{map}} every time you want to do something with arrays in @code{ra::}. A number of array functions are already defined.
+
+@anchor{x-scalar-ops}
+@subsection Standard scalar operations
+
+@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively.
+Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{<=>}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}, and @code{lerp}.
+Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @code{odd}, @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+
+For example:
+@example @c [ma110]
+@verbatim
+cout << exp(ra::Small<double, 3> {4, 5, 6}) << endl;
+@end verbatim
+  @print{} 54.5982 148.413 403.429
+@end example
+
+@subsection Conditional operations
+
+@ref{x-map,@code{map}} evaluates all of its arguments before passing them along to its operator. This isn't always what you want. The simplest example is @code{where(condition, iftrue, iffalse)}, which returns an expression that will evaluate @code{iftrue} when @code{condition} is true and @code{iffalse} otherwise.
+
+@example
+@verbatim
+ra::Big<double> x ...
+ra::Big<double> y = where(x>0, expensive_expr_1(x), expensive_expr_2(x));
+@end verbatim
+@end example
+
+Here @code{expensive_expr_1} and @code{expensive_expr_2} are array expressions. So the computation of the other arm would be wasted if one were to do instead
+
+@example
+@verbatim
+ra::Big<double> y = map([](auto && w, auto && t, auto && f) -> decltype(auto) { return w ? t : f; }
+                        x>0, expensive_expr_1(x), expensive_function_2(x));
+@end verbatim
+@end example
+
+If the expressions have side effects, then @code{map} won't even give the right result.
+
+@c [ma109]
+@example
+@verbatim
+ra::Big<int, 1> o = {};
+ra::Big<int, 1> e = {};
+ra::Big<int, 1> n = {1, 2, 7, 9, 12};
+ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
+cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
+@end verbatim
+@print{} o: 1 7 9, e: 2 12
+@end example
+
+FIXME Artificial example.
+FIXME Do we want to expose ply(); this is the only example in the manual that uses it.
+
+When the choice is between more than two expressions, there's @ref{x-pick,@code{pick}}, which operates similarly, but accepts an integer instead of a boolean selector.
+
+@subsection Special operations
+
+Some operations are essentially scalar operations, but require special syntax and would need a lambda wrapper to be used with @code{map}. @code{ra::} comes with a few of these already defined.
+
+FIXME
+
+@subsection Elementwise reductions
+
+@code{ra::} defines the whole-array one-argument reductions @code{any}, @code{every}, @code{amax}, @code{amin}, @code{sum}, @code{prod} and the two-argument reductions @code{dot} and @code{cdot}. Note that @code{max} and @code{min} are two-argument scalar operations with array extensions, while @code{amax} and @code{amin} are reductions. @code{any} and @code{every} are short-circuiting.
+
+You can define reductions the same way @code{ra::} does:
+
+@example
+@verbatim
+template <class A>
+inline auto op_reduce(A && a)
+{
+    T c = op_default;
+    for_each([&c](auto && a) { c = op(c, a); }, a);
+    return c;
+}
+@end verbatim
+@end example
+
+Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the @ref{Rank extension,rank extension} mechanism, or using the @ref{The rank conjunction,rank conjunction}, or iterating over @ref{Cell iteration, cells of higher rank}. For example:
+
+@example
+@verbatim
+    ra::Big<double, 2> a({m, n}, ...);
+
+    ra::Big<double, 1> sum_rows({n}, 0.);
+    iter<1>(sum_rows) += iter<1>(a);
+    // for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), sum_rows, a) // alternative
+    // sum_rows += transpose<1, 0>(a); // another
+
+    ra::Big<double, 1> sum_cols({m}, 0.);
+    sum_cols += a;
+@end verbatim
+@end example
+
+FIXME example with assignment op
+
+A few common operations of this type are already packaged in @code{ra::}.
+
+@subsection Special reductions
+
+@code{ra::} defines the following special reductions.
+
+FIXME
+
+@subsection Shortcut reductions
+
+Some reductions do not need to traverse the whole array if a certain condition is encountered early. The most obvious ones are the reductions of @code{&&} and @code{||}, which @code{ra::} defines as @code{every} and @code{any}.
+
+FIXME
+
+These operations are defined on top of another function @code{early}.
+
+FIXME early
+
+The following is often useful.
+
+FIXME lexicographical compare etc.
+
+@c ------------------------------------------------
 @node The rank conjunction
 @section The rank conjunction
 @c ------------------------------------------------
@@ -1418,9 +1533,6 @@ my_fun(A && ... a)
 @end verbatim
 @end example
 
-@cindex Blitz++
-If you compare this with what Blitz++ had to do, modern C++ sure has made our lives easier.
-
 @cindex overload set
 If @code{my_fun} is an overload set, you can use@footnote{Simplified; see the references in @url{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html}.}
 
@@ -1436,131 +1548,6 @@ my_fun(A && ... a)
 @end verbatim
 @end example
 
-@c ------------------------------------------------
-@node Functions
-@section Functions
-@c ------------------------------------------------
-
-You don't need to use @ref{Array operations,@code{map}} every time you want to do something with arrays in @code{ra::}. A number of array functions are already defined.
-
-@anchor{x-scalar-ops}
-@subsection Standard scalar operations
-
-@code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively.
-Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{<=>}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}, and @code{lerp}.
-Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @code{odd}, @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
-
-For example:
-@example @c [ma110]
-@verbatim
-cout << exp(ra::Small<double, 3> {4, 5, 6}) << endl;
-@end verbatim
-  @print{} 54.5982 148.413 403.429
-@end example
-
-@subsection Conditional operations
-
-@ref{x-map,@code{map}} evaluates all of its arguments before passing them along to its operator. This isn't always what you want. The simplest example is @code{where(condition, iftrue, iffalse)}, which returns an expression that will evaluate @code{iftrue} when @code{condition} is true and @code{iffalse} otherwise.
-
-@example
-@verbatim
-ra::Big<double> x ...
-ra::Big<double> y = where(x>0, expensive_expr_1(x), expensive_expr_2(x));
-@end verbatim
-@end example
-
-Here @code{expensive_expr_1} and @code{expensive_expr_2} are array expressions. So the computation of the other arm would be wasted if one were to do instead
-
-@example
-@verbatim
-ra::Big<double> y = map([](auto && w, auto && t, auto && f) -> decltype(auto) { return w ? t : f; }
-                        x>0, expensive_expr_1(x), expensive_function_2(x));
-@end verbatim
-@end example
-
-If the expressions have side effects, then @code{map} won't even give the right result.
-
-@c [ma109]
-@example
-@verbatim
-ra::Big<int, 1> o = {};
-ra::Big<int, 1> e = {};
-ra::Big<int, 1> n = {1, 2, 7, 9, 12};
-ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
-cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
-@end verbatim
-@print{} o: 1 7 9, e: 2 12
-@end example
-
-FIXME Artificial example.
-FIXME Do we want to expose ply(); this is the only example in the manual that uses it.
-
-When the choice is between more than two expressions, there's @ref{x-pick,@code{pick}}, which operates similarly, but accepts an integer instead of a boolean selector.
-
-@subsection Special operations
-
-Some operations are essentially scalar operations, but require special syntax and would need a lambda wrapper to be used with @code{map}. @code{ra::} comes with a few of these already defined.
-
-FIXME
-
-@subsection Elementwise reductions
-
-@code{ra::} defines the whole-array one-argument reductions @code{any}, @code{every}, @code{amax}, @code{amin}, @code{sum}, @code{prod} and the two-argument reductions @code{dot} and @code{cdot}. Note that @code{max} and @code{min} are two-argument scalar operations with array extensions, while @code{amax} and @code{amin} are reductions. @code{any} and @code{every} are short-circuiting.
-
-You can define reductions the same way @code{ra::} does:
-
-@example
-@verbatim
-template <class A>
-inline auto op_reduce(A && a)
-{
-    T c = op_default;
-    for_each([&c](auto && a) { c = op(c, a); }, a);
-    return c;
-}
-@end verbatim
-@end example
-
-Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the @ref{Rank extension,rank extension} mechanism, or using the @ref{The rank conjunction,rank conjunction}, or iterating over @ref{Cell iteration, cells of higher rank}. For example:
-
-@example
-@verbatim
-    ra::Big<double, 2> a({m, n}, ...);
-
-    ra::Big<double, 1> sum_rows({n}, 0.);
-    iter<1>(sum_rows) += iter<1>(a);
-    // for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), sum_rows, a) // alternative
-    // sum_rows += transpose<1, 0>(a); // another
-
-    ra::Big<double, 1> sum_cols({m}, 0.);
-    sum_cols += a;
-@end verbatim
-@end example
-
-FIXME example with assignment op
-
-A few common operations of this type are already packaged in @code{ra::}.
-
-@subsection Special reductions
-
-@code{ra::} defines the following special reductions.
-
-FIXME
-
-@subsection Shortcut reductions
-
-Some reductions do not need to traverse the whole array if a certain condition is encountered early. The most obvious ones are the reductions of @code{&&} and @code{||}, which @code{ra::} defines as @code{every} and @code{any}.
-
-FIXME
-
-These operations are defined on top of another function @code{early}.
-
-FIXME early
-
-The following is often useful.
-
-FIXME lexicographical compare etc.
-
 @cindex error
 @cindex assert
 @c ------------------------------------------------
@@ -1574,7 +1561,7 @@ Error handling in @code{ra::} is controlled by two macros:
 @item @code{RA_DO_CHECK}
 is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with @code{RA_ASSERT}.
 @item @code{RA_ASSERT(cond, ...)}
-is a function-like macro. @code{cond} is an expression that evaluates to true (in the @code{ra::} namespace) if the check passes. The other arguments are informative and do not need to be used. The default defintion of @code{RA_ASSERT(cond, ...)} prints those arguments to @code{std::cerr} and aborts.
+is a function-like macro. @code{cond} is an expression that evaluates to true (in the @code{ra::} namespace) if the assertion is satisfied. The other arguments are informative and do not need to be used. If the assertion fails, the default definition of @code{RA_ASSERT(cond, ...)} prints those arguments to @code{std::cerr} and aborts.
 @end itemize
 
 @code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}.
@@ -1681,12 +1668,28 @@ Item 2
 @code{ra::} has two main components: a set of container classes, and the expression template mechanism. The container classes provide leaves for the expression template trees, and the container classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
 
 @menu
-* Type hierarchy::        From @code{Containers} to @code{Flat}.
-* Term agreement::        Abstain or approve.
-* Loop types::            Chosen for performance.
-* Introspection::         Speaking to myself.
-* Compiling and running:: Practical matters.
+* Header structure::
+* Type hierarchy::
+* Term agreement::
+* Loop types::
+* Introspection::
+* Compiling and running::
 @end menu
+
+@c ------------------------------------------------
+@node Headers
+@section Headers
+@c ------------------------------------------------
+
+The include structure of @code{ra::} is as follows.@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
+
+@verbatim
+cd ra && cinclude2dot.pl --include . > headers.dot
+dot -Tpng headers.dot -Gdpi=100 > headers.png
+@end verbatim
+}
+
+@image{headers,4cm}
 
 @c ------------------------------------------------
 @node Type hierarchy

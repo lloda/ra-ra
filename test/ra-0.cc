@@ -67,14 +67,14 @@ int main()
             double aa[10];
             aa[0] = 99;
             ra::View<double, 1> a { {{10, 1}}, aa }; // [ra36]
-            tr.test_eq(99., a.p[0]);
+            tr.test_eq(99., a.data()[0]);
         }
         {
             double aa[6] = { 1, 2, 3, 4, 5, 6 };
             aa[0] = 99;
             ra::View<double, 2> a { { {3, 2}, {2, 1}}, aa };
             tr.test_eq(4., a(1, 1));
-            tr.test_eq(99., a.p[0]);
+            tr.test_eq(99., a.data()[0]);
         }
         {
             double aa[20];
@@ -82,8 +82,8 @@ int main()
             ra::View<double> a = { {{10, 2}, {2, 1}}, aa };
             tr.test_eq(10, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.p(3, 4): " << a.p[19] << endl;
-            tr.test_eq(77, a.p[19]);
+            cout << "a.data()(3, 4): " << a.data()[19] << endl;
+            tr.test_eq(77, a.data()[19]);
         }
         {
             auto pp = std::unique_ptr<double []>(new double[10]);
@@ -91,12 +91,12 @@ int main()
             double * p = pp.get();
             ra::Unique<double> a {};
             a.store = std::move(pp);
-            a.p = p;
+            a.cp = p;
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.p(3, 4): " << a.p[9] << endl;
-            tr.test_eq(77, a.p[9]);
+            cout << "a.data()(3, 4): " << a.data()[9] << endl;
+            tr.test_eq(77, a.data()[9]);
         }
         {
             auto pp = std::shared_ptr<double>(new double[10], std::default_delete<double[]>());
@@ -104,12 +104,12 @@ int main()
             double * p = pp.get();
             ra::Shared<double> a {};
             a.store = pp;
-            a.p = p;
+            a.cp = p;
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.p(3, 4): " << a.p[9] << endl;
-            tr.test_eq(88, a.p[9]);
+            cout << "a.data()(3, 4): " << a.data()[9] << endl;
+            tr.test_eq(88, a.data()[9]);
         }
         {
             decltype(std::declval<ra::Big<double>>().store) pp(10);
@@ -117,12 +117,12 @@ int main()
             double * p = pp.data();
             ra::Big<double> a {};
             a.store = pp;
-            a.p = p;
+            a.cp = p;
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.p(3, 4): " << a.p[9] << endl;
-            tr.test_eq(99, a.p[9]);
+            cout << "a.data()(3, 4): " << a.data()[9] << endl;
+            tr.test_eq(99, a.data()[9]);
         }
     }
     tr.section("rank 0 -> scalar with Small");
@@ -200,8 +200,8 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
-        ra::CellBig<ra::View<double>> it(r.dimv, r.p);
-        tr.test(r.data()==it.c.p);
+        ra::CellBig<ra::View<double>> it(r.dimv, r.data());
+        tr.test(r.data()==it.c.data());
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
@@ -210,8 +210,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::CellBig<ra::View<double, 1>> it(r.dimv, r.p);
-        cout << "View<double, 1> it.c.p: " << it.c.p << endl;
+        ra::CellBig<ra::View<double, 1>> it(r.dimv, r.data());
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }

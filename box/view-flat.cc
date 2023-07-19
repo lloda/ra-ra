@@ -15,6 +15,15 @@
 
 using std::cout, std::endl, std::flush;
 
+namespace ra {
+
+
+
+
+
+
+}; // namespace ra
+
 int main()
 {
     ra::TestRecorder tr(std::cout);

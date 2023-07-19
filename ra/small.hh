@@ -86,23 +86,23 @@ struct STLIterator
     {
 // [ra12] Null p_ so begin()==end() for empty range. ply() uses lens so this doesn't matter.
         if (0==ra::size(ii)) {
-            ii.c.p = nullptr;
+            ii.c.cp = nullptr;
         }
     };
 
-    template <class PP> bool operator==(PP const & j) const { return ii.c.p==j.ii.c.p; }
-    template <class PP> bool operator!=(PP const & j) const { return ii.c.p!=j.ii.c.p; }
+    template <class PP> bool operator==(PP const & j) const { return ii.c.cp==j.ii.c.cp; }
+    template <class PP> bool operator!=(PP const & j) const { return ii.c.cp!=j.ii.c.cp; }
 
-    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
-    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.p; else return ii.c; }
+    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
+    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
     STLIterator & operator++()
     {
         if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough
-            ii.c.p = nullptr;
+            ii.c.cp = nullptr;
         } else if constexpr (DIM_ANY != ra::size_s<Iterator>()) {
-            next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::steps>(i, ii.c.p);
+            next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::steps>(i, ii.c.cp);
         } else {
-            next_in_cube(ii.rank(), ii.dimv, i, ii.c.p);
+            next_in_cube(ii.rank(), ii.dimv, i, ii.c.cp);
         }
         return *this;
     }
@@ -207,7 +207,7 @@ template <class C>
 struct CellFlat
 {
     C c;
-    constexpr void operator+=(dim_t const s) { c.p += s; }
+    constexpr void operator+=(dim_t const s) { c.cp += s; }
     constexpr C & operator*() { return c; }
 };
 
@@ -234,7 +234,7 @@ struct CellSmall
 
     cell_type c;
 
-    constexpr CellSmall(CellSmall const & ci): c { ci.c.p } {}
+    constexpr CellSmall(CellSmall const & ci): c { ci.c.cp } {}
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr CellSmall(atom_type * p_): c { p_ } {}
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -245,13 +245,13 @@ struct CellSmall
     constexpr static dim_t len(int k) { RA_CHECK(inside(k, rank())); return V::len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? V::step(k) : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { c.p += step(k)*d; }
+    constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
 
     constexpr auto
     flat() const
     {
         if constexpr (0==cellr) {
-            return c.p;
+            return c.cp;
         } else {
             return CellFlat<cell_type> { c };
         }
@@ -260,9 +260,9 @@ struct CellSmall
     at(auto const & i) const
     {
         if constexpr (0==cellr) {
-            return c.p[indexer0::longer<lens, steps>(i)];
+            return c.cp[indexer0::longer<lens, steps>(i)];
         } else {
-            return cell_type(c.p + indexer0::longer<lens, steps>(i));
+            return cell_type(c.cp + indexer0::longer<lens, steps>(i));
         }
     }
 };
@@ -348,7 +348,7 @@ struct SmallBase
     }
 
 #define RA_CONST_OR_NOT(CONST)                                          \
-    constexpr T CONST * data() CONST { return static_cast<Child CONST &>(*this).p; } \
+    constexpr T CONST * data() CONST { return static_cast<Child CONST &>(*this).cp; } \
     template <class ... I>                                              \
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
@@ -450,15 +450,15 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
     using Base = SmallBase<SmallView, T, lens, steps>;
     using Base::operator=;
 
-    T * p;
-    constexpr SmallView(T * p_): p(p_) {}
+    T * cp;
+    constexpr SmallView(T * cp_): cp(cp_) {}
     constexpr SmallView(SmallView const & s) = default;
 
-    constexpr operator T & () { static_assert(Base::convertible_to_scalar); return p[0]; }
-    constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return p[0]; };
+    constexpr operator T & () { static_assert(Base::convertible_to_scalar); return cp[0]; }
+    constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return cp[0]; };
 
     using ViewConst = SmallView<T const, lens, steps>;
-    constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(p); }
+    constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
     constexpr SmallView & view() { return *this; }
     constexpr SmallView const & view() const { return *this; }
 };
@@ -504,7 +504,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
     using Base = SmallBase<SmallArray, T, lens, steps>;
     using Base::rank, Base::size;
 
-    T p[Base::size()]; // cf what std::array does for zero size; wish zero size just worked :-/
+    T cp[Base::size()]; // cf what std::array does for zero size; wish zero size just worked :-/
 
     constexpr SmallArray() {}
 // braces don't match (X &&)
@@ -520,7 +520,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
 // needed if T isn't registered as scalar [ra44]
     constexpr SmallArray(T const & t)
     {
-        for (auto & x: p) { x = t; }
+        for (auto & x: cp) { x = t; }
     }
 // X && x makes this a better match than nested_args ... for 1 argument.
     template <class X>
@@ -532,11 +532,11 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
 
     using View = SmallView<T, lens, steps>;
     using ViewConst = SmallView<T const, lens, steps>;
-    constexpr View view() { return View(p); }
-    constexpr ViewConst view() const { return ViewConst(p); }
+    constexpr View view() { return View(cp); }
+    constexpr ViewConst view() const { return ViewConst(cp); }
 // conversion to const
-    constexpr operator View () { return View(p); }
-    constexpr operator ViewConst () const { return ViewConst(p); }
+    constexpr operator View () { return View(cp); }
+    constexpr operator ViewConst () const { return ViewConst(cp); }
 };
 
 template <class A0, class ... A>

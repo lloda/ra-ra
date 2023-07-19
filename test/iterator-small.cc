@@ -35,7 +35,7 @@ int main()
             cout << AI1::rank() << endl;
 
             AI0 bi(a.data());
-            cout << bi.c.p << endl;
+            cout << bi.c.data() << endl;
         }
         tr.section("STL style, should be a pointer for default steps");
         {

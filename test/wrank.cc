@@ -279,16 +279,16 @@ int main()
                             + A(i-1, j) + A(i, j-1);
                         }
                     }
-                    std::swap(A.p, Anext.p);
+                    std::swap(A.cp, Anext.cp);
                 }
             };
         auto f_sumprod = [&](ra::View<real, 2> & A, ra::View<real, 2> & Anext, ra::View<real, 4> & Astencil)
             {
                 for (int t=0; t!=ts; ++t) {
-                    Astencil.p = A.data();
+                    Astencil.cp = A.data();
                     Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
                     Anext(I, J) += map(ra::wrank<2, 2>(std::multiplies<>()), Astencil, mask);
-                    std::swap(A.p, Anext.p);
+                    std::swap(A.cp, Anext.cp);
                 }
             };
         auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f)

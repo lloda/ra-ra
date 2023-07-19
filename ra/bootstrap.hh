@@ -208,7 +208,7 @@ struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
 
 // ra_traits are for foreign types only. FIXME Not sure this is the interface I want.
 
-RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A>))
+RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A> || ra::is_constant<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
