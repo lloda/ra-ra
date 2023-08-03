@@ -303,7 +303,7 @@ template <int w> using TensorIndex = Iota<w, dim_t, dim_c<DIM_BAD>, dim_c<1>>;
 
 template <class T>
 constexpr auto
-default_one()
+default_1()
 {
     if constexpr (std::is_integral_v<T>) {
         return T(1);
@@ -315,7 +315,7 @@ default_one()
 
 template <int w=0, class O=dim_t, class N=dim_c<DIM_BAD>, class S=dim_c<1>>
 constexpr auto
-iota(N && n = N {}, O && org = 0, S && s = default_one<S>())
+iota(N && n = N {}, O && org = 0, S && s = default_1<S>())
 {
     if constexpr (std::is_integral_v<N>) {
         RA_CHECK(n>=0, "Bad iota length ", n);

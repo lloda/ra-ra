@@ -133,7 +133,7 @@ struct is_beatable_def<I>
     constexpr static int skip_src = 1; // one position
     constexpr static int skip = 1; // rank 1
     constexpr static int add = 0; // relative to source rank
-    constexpr static bool static_p = false; // FIXME see Iota with ct N, S
+    constexpr static bool static_p = false; // TBD I::nn>=0 && I::ss>=0;
 };
 
 template <int n>
@@ -315,15 +315,17 @@ struct SmallBase
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = (size()==1); // rank()==0 || (rank()==1 && size()==1);
 
-    template <dim_t len0, dim_t step0>
+// FIXME iota, stretch dots; the result type depends on their parameters (see FilterDims)
+
+    template <int k>
     constexpr static dim_t
     select(dim_t i0)
     {
-        RA_CHECK(inside(i0, len0), "i0 ", i0, " len0 ", len0);
-        return i0*step0;
+        RA_CHECK(inside(i0, slens[k]), "i0 ", i0, " len0 ", slens[k]);
+        return i0*ssteps[k];
     };
 
-    template <dim_t len0, dim_t step0, int n>
+    template <int k, int n>
     constexpr static dim_t
     select(dots_t<n> i0)
     {
@@ -331,21 +333,34 @@ struct SmallBase
         return 0;
     }
 
-    template <class lens, class steps>
+    template <int k>
     constexpr static dim_t
     select_loop()
     {
         return 0;
     }
 
-    template <class lens, class steps, class I0, class ... I>
+    template <int k, class I0, class ... I>
     constexpr static dim_t
-    select_loop(I0 i0, I ... i)
+    select_loop(I0 && i0, I && ... i)
     {
-        constexpr int s_src = is_beatable<I0>::skip_src;
-        return select<mp::first<lens>::value, mp::first<steps>::value>(i0)
-            + select_loop<mp::drop<lens, s_src>, mp::drop<steps, s_src>>(i ...);
+        return select<k>(with_len(int_c<slens[k]> {}, std::forward<I0>(i0)))
+            + select_loop<k + is_beatable<I0>::skip_src>(std::forward<I>(i) ...);
     }
+
+    template <class II, class KK=mp::iota<mp::len<II>>>
+    struct unbeat;
+
+    template <class ... I, int ... K>
+    struct unbeat<std::tuple<I ...>, mp::int_list<K ...>>
+    {
+        template <class V>
+        constexpr static decltype(auto)
+        op(V & v, I && ... i)
+        {
+            return from(v, with_len(int_c<v.len(K)> {}, std::forward<I>(i)) ...);
+        }
+    };
 
 #define RA_CONST_OR_NOT(CONST)                                          \
     constexpr T CONST * data() CONST { return static_cast<Child CONST &>(*this).cp; } \
@@ -354,13 +369,12 @@ struct SmallBase
     operator()(I && ... i) CONST                                        \
     {                                                                   \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank())  {        \
-            return data()[select_loop<lens, steps>(i ...)];             \
+            return data()[select_loop<0>(i ...)];                       \
         } else if constexpr ((is_beatable<I>::static_p && ...))  {      \
             using FD = FilterDims<lens, steps, I ...>;                  \
-            return SmallView<T CONST, typename FD::lens, typename FD::steps> \
-                (data()+select_loop<lens, steps>(i ...));               \
+            return SmallView<T CONST, typename FD::lens, typename FD::steps> (data()+select_loop<0>(i ...)); \
         } else { /* TODO partial beating */                             \
-            return from(*this, std::forward<I>(i) ...);                 \
+            return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...); \
         }                                                               \
     }                                                                   \
     template <class ... I>                                              \

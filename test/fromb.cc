@@ -42,14 +42,22 @@ int main()
         ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.test_eq(ra::_0*100 + ra::_1*10 + ra::_2, from(a));
     }
-    tr.section("scalar len");
+    tr.section("scalar len (var size)");
     {
         ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + (2 - ra::_2));
         tr.test_eq(a(1, 0, 0), a(ra::len-1, 0, 0));
         tr.test_eq(a(0, 2, 0), a(0, ra::len-1, 0));
         tr.test_eq(a(0, 0, 3), a(0, 0, ra::len-1));
     }
-    tr.section("iota len");
+    tr.section("scalar len (static size)");
+    {
+        ra::Small<int, 4, 3, 2> a = ra::_0 - 10*ra::_1 + 100*ra::_2;
+        tr.test_eq(a(3, 0, 0), a(ra::len-1, 0, 0));
+        tr.test_eq(a(0, 2, 0), a(0, ra::len-1, 0));
+        tr.test_eq(a(0, 0, 1), a(0, 0, ra::len-1));
+        tr.test_eq(a(3, 2, 1), a(ra::len-1, ra::len-1, ra::len-1));
+    }
+    tr.section("iota len (var size)");
     {
         ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + (2 - ra::_2));
 // expr len is beatable and gives views.
@@ -65,6 +73,9 @@ int main()
 // expr step is beatable.
         tr.test_eq(1, ra::size(a(0, 0, ra::iota(2, 0, ra::len/2)).dimv));
         tr.test_eq(a(0, 0, ra::iota(2, 0, 2)), a(0, 0, ra::iota(2, 0, ra::len/2)));
+    }
+    tr.section("iota len (static size) TBD");
+    {
     }
     tr.section("beatable multi-axis selectors, var size");
     {
@@ -102,10 +113,12 @@ int main()
         tr.info("a(ra::dots<1>, ...)").test_eq(a(ra::all, 1), a(ra::dots<1>, 1));
         tr.info("a(ra::dots<2>, ...)").test_eq(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
         tr.info("a(ra::dots<2>, ...)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
+        tr.info("a(ra::dots<2>, end-1)").test_eq(a(ra::all, ra::all, 3), a(ra::dots<2>, ra::len-1));
         tr.info("a(0)").test_eq(a(0, ra::all, ra::all), a(0));
         tr.info("a(1)").test_eq(a(1, ra::all, ra::all), a(1));
         tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
         tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
+        tr.info("a(end-1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(ra::len-1, ra::dots<2>));
     }
     tr.section("insert, var size");
     {
