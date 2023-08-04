@@ -116,47 +116,25 @@ struct STLIterator
 // FIXME condition should be zero rank, maybe convertibility, not is_integral
 template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
-template <class I>
-struct is_beatable_def
+struct beatable_t
 {
-    constexpr static bool value = is_scalar_index<I>;
-    constexpr static int skip_src = 1; // one position
-    constexpr static int skip = 0; // rank 0
-    constexpr static int add = -1; // relative to source rank
-    constexpr static bool static_p = value; // can the beating be resolved statically?
+    bool value;
+    int src; // axes on src
+    int dst; // axes on dst
+    int add; // dst - src
+    bool static_p; // beatable statically, e.g. in Small
 };
 
-template <class I> requires (is_iota<I>)
-struct is_beatable_def<I>
-{
-    constexpr static bool value = (DIM_BAD != I::nn);
-    constexpr static int skip_src = 1; // one position
-    constexpr static int skip = 1; // rank 1
-    constexpr static int add = 0; // relative to source rank
-    constexpr static bool static_p = false; // TBD I::nn>=0 && I::ss>=0;
-};
+template <class I> constexpr beatable_t beatable_def
+    = { .value=is_scalar_index<I>, .src=1, .dst=0, .add=-1, .static_p=is_scalar_index<I> };
+template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
+    = { .value=(DIM_BAD!=I::nn), .src=1, .dst=1, .add=0, .static_p = false };
+template <int n> constexpr beatable_t beatable_def<dots_t<n>>
+    = { .value=true, .src=n, .dst=n, .add=0, .static_p = true };
+template <int n> constexpr beatable_t beatable_def<insert_t<n>>
+    = { .value=true, .src=0, .dst=n, .add=n, .static_p = true };
 
-template <int n>
-struct is_beatable_def<dots_t<n>>
-{
-    constexpr static bool value = true;
-    constexpr static int skip_src = n;
-    constexpr static int skip = n;
-    constexpr static int add = 0; // relative to source rank
-    constexpr static bool static_p = true;
-};
-
-template <int n>
-struct is_beatable_def<insert_t<n>>
-{
-    constexpr static bool value = true;
-    constexpr static int skip_src = 0;
-    constexpr static int skip = n;
-    constexpr static int add = n; // relative to source rank
-    constexpr static bool static_p = true;
-};
-
-template <class I> using is_beatable = is_beatable_def<std::decay_t<I>>;
+template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
 
 // --------------------
@@ -282,11 +260,13 @@ struct FilterDims
 template <class lens_, class steps_, class I0, class ... I>
 struct FilterDims<lens_, steps_, I0, I ...>
 {
-    constexpr static int s = is_beatable<I0>::skip;
-    constexpr static int s_src = is_beatable<I0>::skip_src;
-    using next = FilterDims<mp::drop<lens_, s_src>, mp::drop<steps_, s_src>, I ...>;
-    using lens = mp::append<mp::take<lens_, s>, typename next::lens>;
-    using steps = mp::append<mp::take<steps_, s>, typename next::steps>;
+    constexpr static bool stretch = (beatable<I0>.dst==DIM_BAD);
+    static_assert(!stretch || ((beatable<I>.dst!=DIM_BAD) && ...), "Cannot repeat stretch index.");
+    constexpr static int dst = stretch ? (mp::len<lens_> - (0 + ... + beatable<I>.src)) : beatable<I0>.dst;
+    constexpr static int src = stretch ? (mp::len<lens_> - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
+    using next = FilterDims<mp::drop<lens_, src>, mp::drop<steps_, src>, I ...>;
+    using lens = mp::append<mp::take<lens_, dst>, typename next::lens>;
+    using steps = mp::append<mp::take<steps_, dst>, typename next::steps>;
 };
 
 template <template <class ...> class Child_, class T_, class lens_, class steps_>
@@ -315,8 +295,6 @@ struct SmallBase
 // allowing rank 1 for coord types
     constexpr static bool convertible_to_scalar = (size()==1); // rank()==0 || (rank()==1 && size()==1);
 
-// FIXME iota, stretch dots; the result type depends on their parameters (see FilterDims)
-
     template <int k>
     constexpr static dim_t
     select(dim_t i0)
@@ -329,7 +307,6 @@ struct SmallBase
     constexpr static dim_t
     select(dots_t<n> i0)
     {
-        static_assert(n>=0, "Stretch dots not yet supported in Small.");
         return 0;
     }
 
@@ -344,8 +321,9 @@ struct SmallBase
     constexpr static dim_t
     select_loop(I0 && i0, I && ... i)
     {
+        constexpr int nn = (DIM_BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
         return select<k>(with_len(int_c<slens[k]> {}, std::forward<I0>(i0)))
-            + select_loop<k + is_beatable<I0>::skip_src>(std::forward<I>(i) ...);
+            + select_loop<k + nn>(std::forward<I>(i) ...);
     }
 
     template <class II, class KK=mp::iota<mp::len<II>>>
@@ -368,9 +346,9 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
-        if constexpr ((0 + ... + is_scalar_index<I>)==rank())  {        \
+        if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {         \
             return data()[select_loop<0>(i ...)];                       \
-        } else if constexpr ((is_beatable<I>::static_p && ...))  {      \
+        } else if constexpr ((beatable<I>.static_p && ...)) {           \
             using FD = FilterDims<lens, steps, I ...>;                  \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> (data()+select_loop<0>(i ...)); \
         } else { /* TODO partial beating */                             \

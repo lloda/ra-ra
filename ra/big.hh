@@ -286,16 +286,14 @@ struct View
     select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
     {
         return select(dim, k, with_len(len(k), std::forward<I0>(i0)))
-            + select_loop(dim + is_beatable<I0>::skip, k + is_beatable<I0>::skip_src,
-                          std::forward<I>(i) ...);
+            + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, std::forward<I>(i) ...);
     }
 
     template <int n, class ... I>
     constexpr dim_t
     select_loop(Dim * dim, int k, dots_t<n> i0, I && ... i) const
     {
-// k can be entirely ct if rank() is. FIXME worth specializing?
-        int nn = (DIM_BAD==n) ? (rank() - k - (0 + ... + is_beatable<I>::skip_src)) : n;
+        int nn = (DIM_BAD==n) ? (rank() - k - (0 + ... + beatable<I>.src)) : n;
         for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
             *dim = dimv[k];
         }
@@ -337,12 +335,12 @@ struct View
     constexpr decltype(auto)
     operator()(I && ... i) const
     {
-        constexpr int stretch = (0 + ... + (is_beatable<I>::skip==DIM_BAD));
+        constexpr int stretch = (0 + ... + (beatable<I>.dst==DIM_BAD));
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
             return data()[select_loop(nullptr, 0, i ...)];
-        } else if constexpr ((is_beatable<I>::value && ...)) {
-            constexpr rank_t extended = (0 + ... + is_beatable<I>::add);
+        } else if constexpr ((beatable<I>.value && ...)) {
+            constexpr rank_t extended = (0 + ... + beatable<I>.add);
             View<T, rank_sum(RANK, extended)> sub;
             rank_t subrank = rank()+extended;
             if constexpr (RANK==RANK_ANY) {
@@ -351,9 +349,7 @@ struct View
             }
             sub.cp = data() + select_loop(sub.dimv.data(), 0, i ...);
 // fill the rest of dim, skipping over beatable subscripts.
-            for (int k = (0==stretch ? (0 + ... + is_beatable<I>::skip)
-                          : rank() + (0 + ... + is_beatable<I>::add));
-                 k<subrank; ++k) {
+            for (int k = (0==stretch ? (0 + ... + beatable<I>.dst) : subrank); k<subrank; ++k) {
                 sub.dimv[k] = dimv[k-extended];
             }
 // may return rank 0 view if RANK==RANK_ANY; in that case rely on conversion to scalar.

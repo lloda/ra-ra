@@ -43,7 +43,7 @@ transpose(mp::int_list<Iarg ...>, A && a)
 
 
 // ---------------------------
-// TODO integrate with is_beatable shortcuts, operator() in the various array types.
+// TODO integrate with beatable<> shortcuts, operator() in the various array types.
 // ---------------------------
 
 template <class II, int drop, class Op>

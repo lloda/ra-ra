@@ -79,7 +79,7 @@ int main()
     }
     tr.section("beatable multi-axis selectors, var size");
     {
-        static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
+        static_assert(ra::beatable<ra::dots_t<0>>.value, "dots_t<0> is beatable");
         auto test = [&tr](auto && a)
         {
             tr.info("a(ra::dots<0>, ...)").test_eq(a(0), a(ra::dots<0>, 0));
@@ -88,41 +88,28 @@ int main()
             tr.info("a(ra::dots<1>, 1, ...)").test_eq(a(ra::all, 1), a(ra::dots<1>, 1));
             tr.info("a(ra::dots<2>, 0)").test_eq(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
             tr.info("a(ra::dots<2>, 1)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
+            tr.info("a(ra::dots<2>, len-1)").test_eq(a(ra::all, ra::all, 3), a(ra::dots<2>, ra::len-1));
             tr.info("a(ra::dots<>, 1)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<>, 1));
             tr.info("a(0)").test_eq(a(0, ra::all, ra::all), a(0));
             tr.info("a(1)").test_eq(a(1, ra::all, ra::all), a(1));
             tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
             tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
+            tr.info("a(len-1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(ra::len-1, ra::dots<2>));
             tr.info("a(1, ra::dots<>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<>));
             tr.info("a(0, ra::dots<>, 1)").test_eq(a(0, ra::all, 1), a(0, ra::dots<>, 1));
             tr.info("a(1, ra::dots<>, 0)").test_eq(a(1, ra::all, 0), a(1, ra::dots<>, 0));
             // cout << a(ra::dots<>, 1, ra::dots<>) << endl; // ct error
         };
+        tr.section("fixed size");
+        test(ra::Small<int, 2, 3, 4>(ra::_0*100 + ra::_1*10 + ra::_2));
         tr.section("fixed rank");
         test(ra::Big<int, 3>({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2));
         tr.section("var rank");
         test(ra::Big<int>({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2));
     }
-    tr.section("beatable multi-axis selectors, fixed size");
-    {
-        static_assert(ra::is_beatable<ra::dots_t<0>>::value, "dots_t<0> is beatable");
-        ra::Small<int, 2, 3, 4> a = ra::_0*100 + ra::_1*10 + ra::_2;
-        tr.info("a(ra::dots<0>, ...)").test_eq(a(0), a(ra::dots<0>, 0));
-        tr.info("a(ra::dots<0>, ...)").test_eq(a(1), a(ra::dots<0>, 1));
-        tr.info("a(ra::dots<1>, ...)").test_eq(a(ra::all, 0), a(ra::dots<1>, 0));
-        tr.info("a(ra::dots<1>, ...)").test_eq(a(ra::all, 1), a(ra::dots<1>, 1));
-        tr.info("a(ra::dots<2>, ...)").test_eq(a(ra::all, ra::all, 0), a(ra::dots<2>, 0));
-        tr.info("a(ra::dots<2>, ...)").test_eq(a(ra::all, ra::all, 1), a(ra::dots<2>, 1));
-        tr.info("a(ra::dots<2>, end-1)").test_eq(a(ra::all, ra::all, 3), a(ra::dots<2>, ra::len-1));
-        tr.info("a(0)").test_eq(a(0, ra::all, ra::all), a(0));
-        tr.info("a(1)").test_eq(a(1, ra::all, ra::all), a(1));
-        tr.info("a(0, ra::dots<2>)").test_eq(a(0, ra::all, ra::all), a(0, ra::dots<2>));
-        tr.info("a(1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(1, ra::dots<2>));
-        tr.info("a(end-1, ra::dots<2>)").test_eq(a(1, ra::all, ra::all), a(ra::len-1, ra::dots<2>));
-    }
     tr.section("insert, var size");
     {
-        static_assert(ra::is_beatable<ra::insert_t<1>>::value, "insert_t<1> is beatable");
+        static_assert(ra::beatable<ra::insert_t<1>>.value, "insert_t<1> is beatable");
         ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::insert<0> ...)").test_eq(a(0), a(ra::insert<0>, 0));
         ra::Big<int, 4> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
@@ -139,7 +126,7 @@ int main()
     }
     tr.section("insert, var rank");
     {
-        static_assert(ra::is_beatable<ra::insert_t<1>>::value, "insert_t<1> is beatable");
+        static_assert(ra::beatable<ra::insert_t<1>>.value, "insert_t<1> is beatable");
         ra::Big<int> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::insert<0> ...)").test_eq(a(0), a(ra::insert<0>, 0));
         ra::Big<int> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
@@ -153,7 +140,7 @@ int main()
     }
     tr.section("mix insert + dots");
     {
-        static_assert(ra::is_beatable<ra::insert_t<1>>::value, "insert_t<1> is beatable");
+        static_assert(ra::beatable<ra::insert_t<1>>.value, "insert_t<1> is beatable");
         auto test = [&tr](auto && a, auto && b)
         {
             tr.info("a(ra::insert<0>, ra::dots<3>)").test_eq(a(ra::insert<0>, ra::dots<3>), a(ra::insert<0>, ra::dots<>));

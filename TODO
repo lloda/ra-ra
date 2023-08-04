@@ -63,7 +63,9 @@ checkbox [C-ct] flip TODO
     - [-] Magic subscript len
       - [X] For Big/View in beatable subscripts <2023-07-04 Tue 18:20>
       - [X] For Big/View in unbeatable subscripts <2023-07-05 Wed 12:34>
-      - [ ] For Small/SmallView
+      - [-] For Small/SmallView
+        - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
+        - [ ] Iota
       - [ ] Optimize iota(len...) + iota(len...)
   - [ ] Performance [0/1]
     - [ ] bench/bench-stencil* is weird.
