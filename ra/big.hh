@@ -316,20 +316,6 @@ struct View
         return 0;
     }
 
-    template <class II, class KK=mp::iota<mp::len<II>>>
-    struct unbeat;
-
-    template <class ... I, int ... K>
-    struct unbeat<std::tuple<I ...>, mp::int_list<K ...>>
-    {
-        template <class V>
-        constexpr static decltype(auto)
-        op(V & v, I && ... i)
-        {
-            return from(v, with_len(v.len(K), std::forward<I>(i)) ...);
-        }
-    };
-
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
     template <class ... I>
     constexpr decltype(auto)

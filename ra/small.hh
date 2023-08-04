@@ -118,23 +118,45 @@ template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
 struct beatable_t
 {
-    bool value;
-    int src; // axes on src
-    int dst; // axes on dst
-    int add; // dst - src
-    bool static_p; // beatable statically, e.g. in Small
+    bool value, static_p; // beatable at all and statically, e.g. in Small
+    int src, dst, add; // axes on src, dst, and dst-src
 };
 
 template <class I> constexpr beatable_t beatable_def
-    = { .value=is_scalar_index<I>, .src=1, .dst=0, .add=-1, .static_p=is_scalar_index<I> };
+    = { .value=is_scalar_index<I>, .static_p=is_scalar_index<I>, .src=1, .dst=0, .add=-1 };
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .value=(DIM_BAD!=I::nn), .src=1, .dst=1, .add=0, .static_p = false };
+    = { .value=(DIM_BAD!=I::nn), .static_p = false, .src=1, .dst=1, .add=0 };
 template <int n> constexpr beatable_t beatable_def<dots_t<n>>
-    = { .value=true, .src=n, .dst=n, .add=0, .static_p = true };
+    = { .value=true, .static_p = true, .src=n, .dst=n, .add=0 };
 template <int n> constexpr beatable_t beatable_def<insert_t<n>>
-    = { .value=true, .src=0, .dst=n, .add=n, .static_p = true };
+    = { .value=true, .static_p = true, .src=0, .dst=n, .add=n };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
+
+template <int k, class V>
+constexpr static decltype(auto)
+maybe_len(V && v)
+{
+    if constexpr (v.len_s(k)>=0) {
+        return int_c<v.len(k)> {};
+    } else {
+        return v.len(k);
+    }
+}
+
+template <class II, class KK=mp::iota<mp::len<II>>>
+struct unbeat;
+
+template <class ... I, int ... K>
+struct unbeat<std::tuple<I ...>, mp::int_list<K ...>>
+{
+    template <class V>
+    constexpr static decltype(auto)
+    op(V & v, I && ... i)
+    {
+        return from(v, with_len(maybe_len<K>(v), std::forward<I>(i)) ...);
+    }
+};
 
 
 // --------------------
@@ -325,20 +347,6 @@ struct SmallBase
         return select<k>(with_len(int_c<slens[k]> {}, std::forward<I0>(i0)))
             + select_loop<k + nn>(std::forward<I>(i) ...);
     }
-
-    template <class II, class KK=mp::iota<mp::len<II>>>
-    struct unbeat;
-
-    template <class ... I, int ... K>
-    struct unbeat<std::tuple<I ...>, mp::int_list<K ...>>
-    {
-        template <class V>
-        constexpr static decltype(auto)
-        op(V & v, I && ... i)
-        {
-            return from(v, with_len(int_c<v.len(K)> {}, std::forward<I>(i)) ...);
-        }
-    };
 
 #define RA_CONST_OR_NOT(CONST)                                          \
     constexpr T CONST * data() CONST { return static_cast<Child CONST &>(*this).cp; } \
