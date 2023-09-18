@@ -18,6 +18,8 @@
 #include <iosfwd>
 #include "macros.hh"
 
+namespace ra {
+
 using std::abs, std::sqrt, std::fma;
 
 template <class T>
@@ -77,7 +79,7 @@ template <class A, class B, class C>
 constexpr auto
 fma(Dual<A> const & a, Dual<B> const & b, Dual<C> const & c)
 {
-    return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du)));
+    return dual(::fma(a.re, b.re, c.re), ::fma(a.re, b.du, ::fma(a.du, b.re, c.du))); // FIXME shouldn't need ::
 }
 
 template <class A, class B>
@@ -276,3 +278,5 @@ std::istream & operator>>(std::istream & i, Dual<A> & a)
         return i;
     }
 }
+
+} // namespace ra

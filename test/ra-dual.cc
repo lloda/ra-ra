@@ -12,11 +12,11 @@
 #include <algorithm>
 #include "ra/test.hh"
 #include "ra/dual.hh"
-#include "ra/complex.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
+using ra::dual, ra::Dual;
 
 namespace ra {
 

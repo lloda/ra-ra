@@ -118,23 +118,23 @@ template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
 struct beatable_t
 {
-    bool value, static_p; // beatable at all and statically, e.g. in Small
+    bool value, value_s; // beatable at all and statically, e.g. in Small
     int src, dst, add; // axes on src, dst, and dst-src
 };
 
 template <class I> constexpr beatable_t beatable_def
-    = { .value=is_scalar_index<I>, .static_p=is_scalar_index<I>, .src=1, .dst=0, .add=-1 };
+    = { .value=is_scalar_index<I>, .value_s=is_scalar_index<I>, .src=1, .dst=0, .add=-1 };
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .value=(DIM_BAD!=I::nn), .static_p = false, .src=1, .dst=1, .add=0 };
+    = { .value=(DIM_BAD!=I::nn), .value_s = false, .src=1, .dst=1, .add=0 };
 template <int n> constexpr beatable_t beatable_def<dots_t<n>>
-    = { .value=true, .static_p = true, .src=n, .dst=n, .add=0 };
+    = { .value=true, .value_s = true, .src=n, .dst=n, .add=0 };
 template <int n> constexpr beatable_t beatable_def<insert_t<n>>
-    = { .value=true, .static_p = true, .src=0, .dst=n, .add=n };
+    = { .value=true, .value_s = true, .src=0, .dst=n, .add=n };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
 template <int k, class V>
-constexpr static decltype(auto)
+constexpr decltype(auto)
 maybe_len(V && v)
 {
     if constexpr (v.len_s(k)>=0) {
@@ -147,14 +147,14 @@ maybe_len(V && v)
 template <class II, class KK=mp::iota<mp::len<II>>>
 struct unbeat;
 
-template <class ... I, int ... K>
-struct unbeat<std::tuple<I ...>, mp::int_list<K ...>>
+template <class ... I, int ... k>
+struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
 {
     template <class V>
     constexpr static decltype(auto)
     op(V & v, I && ... i)
     {
-        return from(v, with_len(maybe_len<K>(v), std::forward<I>(i)) ...);
+        return from(v, with_len(maybe_len<k>(v), std::forward<I>(i)) ...);
     }
 };
 
@@ -356,7 +356,7 @@ struct SmallBase
     {                                                                   \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {         \
             return data()[select_loop<0>(i ...)];                       \
-        } else if constexpr ((beatable<I>.static_p && ...)) {           \
+        } else if constexpr ((beatable<I>.value_s && ...)) {            \
             using FD = FilterDims<lens, steps, I ...>;                  \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> (data()+select_loop<0>(i ...)); \
         } else { /* TODO partial beating */                             \

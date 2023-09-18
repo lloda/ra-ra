@@ -78,7 +78,7 @@ operator>>(std::istream & i, std::vector<T, A> & c)
 }
 
 // Expr size, so read shape and possibly allocate (TODO try to avoid).
-template <class C> requires (size_s<C>()==DIM_ANY)
+template <class C> requires (size_s<C>()==DIM_ANY && !std::is_convertible_v<C, std::string_view>)
 inline std::istream &
 operator>>(std::istream & i, C & c)
 {
