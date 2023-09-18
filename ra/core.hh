@@ -460,33 +460,47 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     using T = std::tuple<P ...>;
     T t;
 
-    constexpr static bool
+    // 0: fail, 1: check rt, 2: pass
+    constexpr static int
     check_expr_s()
     {
-        for (int k=0; k<rank_s(); ++k) {
-            dim_t ls = len_s(k);
-            if (!((k>=std::decay_t<P>::rank_s() || choose_len(std::decay_t<P>::len_s(k), ls) == ls) && ...)) {
-                return false;
+        if constexpr (sizeof...(P)<2) {
+            return 2;
+        } else if constexpr (RANK_ANY==rank_s()) {
+            return 1; // FIXME could be tightened to 2 in some cases
+        } else {
+            bool tbc = false;
+            for (int k=0; k<rank_s(); ++k) {
+                dim_t ls = len_s(k);
+                if (!((k>=std::decay_t<P>::rank_s() || ls==choose_len(std::decay_t<P>::len_s(k), ls)) && ...)) {
+                    return 0;
+                } else {
+                    int anyk = ((k<std::decay_t<P>::rank_s() && (DIM_ANY==std::decay_t<P>::len_s(k))) + ...);
+                    int fixk = ((k<std::decay_t<P>::rank_s() && (0<=std::decay_t<P>::len_s(k))) + ...);
+                    tbc = tbc || (anyk>0 && anyk+fixk>1);
+                }
             }
+            return tbc ? 1 : 2;
         }
-        return true;
     }
 
     constexpr bool
     check_expr() const
     {
-        if constexpr (check_expr_s()) {
+        if constexpr (sizeof...(P)<2) {
+            return true;
+        } else  if constexpr (constexpr int c = check_expr_s(); 0==c) {
+            return false;
+        } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
                 dim_t ls = len(k);
-                if (!((k>=std::get<I>(t).rank() || choose_len(std::get<I>(t).len(k), ls) == ls) && ...)) {
+                if (!((k>=std::get<I>(t).rank() || ls==choose_len(std::get<I>(t).len(k), ls)) && ...)) {
                     RA_CHECK(!check, "Mismatched lengths [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
                     return false;
                 }
             }
-            return true;
-        } else {
-            return false;
         }
+        return true;
     }
 
     constexpr
@@ -495,7 +509,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
 // TODO Maybe on ply, would avoid the check flag make agree_xxx() unnecessary.
         if constexpr (check && !(has_len<P> || ...)) {
             static_assert(check_expr_s(), "Mismatched shapes in expression.");
-            check_expr();
+            RA_CHECK(check_expr());
         }
     }
 
@@ -504,7 +518,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     rank_s()
     {
         rank_t r = RANK_BAD;
-        return ((r = choose_rank(r, ra::rank_s<P>())), ...);
+        return ((r=choose_rank(r, ra::rank_s<P>())), ...);
     }
 
     constexpr static rank_t

@@ -263,8 +263,9 @@ agree(P && ... p)
     return agree_(ra::start(std::forward<P>(p)) ...);
 }
 
+// 0: fail, 1: check rt, 2: pass
 template <class ... P>
-constexpr bool
+constexpr int
 agree_s(P && ... p)
 {
     return agree_s_(ra::start(std::forward<P>(p)) ...);
@@ -285,7 +286,7 @@ agree_(P && ... p)
 }
 
 template <class ... P>
-constexpr bool
+constexpr int
 agree_s_(P && ... p)
 {
     return Match<false, std::tuple<P ...>>::check_expr_s();

@@ -93,6 +93,8 @@ int main()
     {
         ra::Big<int, 3> a({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));
         ra::Big<int, 4> b({2, 4, 4, 5}, (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1));
+        tr.test_eq(1, agree_s(a, b));
+        tr.test_eq(0, agree(a, b));
 #define EXPR expr([](auto && a, auto && b) { return a+b; }, start(a), start(b))
         int x = 0;
         try {
@@ -108,7 +110,19 @@ int main()
     {
         ra::Small<int, 2, 2> a;
         ra::Small<int, 3, 2> b;
-        static_assert(!agree_s(a, b));
+        static_assert(0==agree_s(a, b));
+    }
+    tr.section("static match");
+    {
+        ra::Small<int, 2, 2> a;
+        ra::Small<int, 2> b;
+        static_assert(2==agree_s(a, b));
+    }
+    tr.section("static match with dynamic term");
+    {
+        ra::Small<int> a;
+        ra::Big<int, 1> b({1}, 77);
+        tr.info("with rank ", decltype(a+b)::rank_s()).test_eq(2, agree_s(a, b));
     }
     tr.section("dynamic terms in match, static rank");
     {
@@ -117,7 +131,8 @@ int main()
         try {
             ra::Small<int, 2> a {2, 3};
             ra::Big<int, 1> b({1}, 77);
-            tr.test_eq(true, decltype(a+b)::check_expr_s());
+            std::cout << "LEN " << decltype(a+b)::len_s(0) << std::endl;
+            tr.info("with rank ", decltype(a+b)::rank_s()).test_eq(1, decltype(a+b)::check_expr_s());
             tr.test(!agree(a, b));
             a = b;
         } catch (ra_error & e) {
@@ -186,7 +201,7 @@ int main()
         int error = 0;
         string s;
         try {
-            tr.info("dynamic test is needed").test(decltype(EXPR)::check_expr_s());
+            tr.info("dynamic test is needed").test(1==decltype(EXPR)::check_expr_s());
             tr.test(!agree(a, b));
             ply_ravel(EXPR);
         } catch (ra_error & e) {
@@ -205,7 +220,7 @@ int main()
         try {
             std::cout << "A: " << a.iter().len(0) << endl;
             std::cout << "B: " << b.iter().len(0) << endl;
-            tr.info("dynamic test is needed").test(decltype(EXPR)::check_expr_s());
+            tr.info("dynamic test is needed").test(1==decltype(EXPR)::check_expr_s());
             tr.test(!agree(a, b));
             ply_ravel(EXPR);
         } catch (ra_error & e) {
