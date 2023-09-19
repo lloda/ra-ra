@@ -35,7 +35,7 @@ struct ra_error: public std::exception
 // -------------------------------------
 
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
 using ra::int_c, ra::mp::int_list;
@@ -105,7 +105,7 @@ int main()
         tr.test_eq(0, x);
 #undef EXPR
     }
-// If the size of an expr is static, dynamic checks may still need to be run if any of the terms of the expr has dynamic size. This is checked in match.hh: check_expr_s().
+// If the size of an expr is static, dynamic checks may still need to be run if any of the terms of the expr has dynamic size. This is checked in Match::check_s().
     tr.section("static mismatch");
     {
         ra::Small<int, 2, 2> a;
@@ -132,7 +132,7 @@ int main()
             ra::Small<int, 2> a {2, 3};
             ra::Big<int, 1> b({1}, 77);
             std::cout << "LEN " << decltype(a+b)::len_s(0) << std::endl;
-            tr.info("with rank ", decltype(a+b)::rank_s()).test_eq(1, decltype(a+b)::check_expr_s());
+            tr.info("with rank ", decltype(a+b)::rank_s()).test_eq(1, decltype(a+b)::check_s());
             tr.test(!agree(a, b));
             a = b;
         } catch (ra_error & e) {
@@ -201,7 +201,7 @@ int main()
         int error = 0;
         string s;
         try {
-            tr.info("dynamic test is needed").test(1==decltype(EXPR)::check_expr_s());
+            tr.info("dynamic test is needed").test_eq(1, decltype(EXPR)::check_s());
             tr.test(!agree(a, b));
             ply_ravel(EXPR);
         } catch (ra_error & e) {
@@ -220,7 +220,7 @@ int main()
         try {
             std::cout << "A: " << a.iter().len(0) << endl;
             std::cout << "B: " << b.iter().len(0) << endl;
-            tr.info("dynamic test is needed").test(1==decltype(EXPR)::check_expr_s());
+            tr.info("dynamic test is needed").test_eq(1, decltype(EXPR)::check_s());
             tr.test(!agree(a, b));
             ply_ravel(EXPR);
         } catch (ra_error & e) {

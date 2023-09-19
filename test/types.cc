@@ -15,7 +15,7 @@
 #include <iostream>
 #include <iterator>
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 #ifdef __STDCPP_FLOAT128_T__
 #include <stdfloat>
 #endif

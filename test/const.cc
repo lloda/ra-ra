@@ -9,8 +9,8 @@
 
 #include <iostream>
 #include <iterator>
+#include "mpdebug.hh"
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
 #include "ra/complex.hh"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;

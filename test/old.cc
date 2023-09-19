@@ -12,7 +12,7 @@
 #include <iostream>
 #include <iterator>
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 // FIXME Remove these tests as soon as there's an updated equivalent elsewhere.
 

@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 constexpr auto QNAN = std::numeric_limits<double>::quiet_NaN();

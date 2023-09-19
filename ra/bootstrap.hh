@@ -31,7 +31,7 @@
 
 namespace ra {
 
-constexpr int VERSION = 22;
+constexpr int VERSION = 23;
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
@@ -42,9 +42,9 @@ template <rank_t V> using rank_c = std::integral_constant<rank_t, V>;
 
 // Negative numbers are used in some places as 'frame rank' in contrast to 'cell rank', so this limits the rank that ra:: can handle.
 
-constexpr dim_t DIM_ANY = -1944444444; // only on ct values: not known at ct, but maybe at rt
+constexpr dim_t DIM_ANY = -1944444444; // only at ct, meaning tbd at rt
 constexpr rank_t RANK_ANY = -1944444444;
-constexpr dim_t DIM_BAD = -1988888888; // undefined
+constexpr dim_t DIM_BAD = -1988888888; // undefined, eg dead axes
 constexpr rank_t RANK_BAD = -1988888888;
 
 

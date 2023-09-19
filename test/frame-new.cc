@@ -64,7 +64,7 @@ main()
 //         tr.test_eq(2*3*4*5, size_s(EXPR));
 //         tr.test_eq(3, EXPR.len_s(1));
 // #undef EXPR
-// we can use non-static check_expr() as constexpr however.
+// we can use non-static Match::check() as constexpr however.
         static_assert(!agree(a, b));
     }
     tr.section("static rank, dynamic size - like Expr");

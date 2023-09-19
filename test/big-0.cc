@@ -10,7 +10,7 @@
 #include <iostream>
 #include <iterator>
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 

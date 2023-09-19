@@ -446,23 +446,24 @@ dependent_frame_rank(rank_t rank, rank_t crank)
         : -crank;
 }
 
+// if non-negative args don't match, pick first (see below). FIXME maybe return invalid.
 constexpr dim_t
 choose_len(dim_t sa, dim_t sb)
 {
     return DIM_BAD==sa ? sb : DIM_BAD==sb ? sa : DIM_ANY==sa ? sb : sa;
 }
 
-template <bool check, class T, class K=mp::iota<mp::len<T>>> struct Match;
+template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
 
-template <bool check, IteratorConcept ... P, int ... I>
-struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
+template <bool checkp, IteratorConcept ... P, int ... I>
+struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 {
     using T = std::tuple<P ...>;
     T t;
 
-    // 0: fail, 1: check rt, 2: pass
+    // 0: fail, 1: rt, 2: pass
     constexpr static int
-    check_expr_s()
+    check_s()
     {
         if constexpr (sizeof...(P)<2) {
             return 2;
@@ -472,7 +473,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
             bool tbc = false;
             for (int k=0; k<rank_s(); ++k) {
                 dim_t ls = len_s(k);
-                if (!((k>=std::decay_t<P>::rank_s() || ls==choose_len(std::decay_t<P>::len_s(k), ls)) && ...)) {
+                if (((k<std::decay_t<P>::rank_s() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
                     return 0;
                 } else {
                     int anyk = ((k<std::decay_t<P>::rank_s() && (DIM_ANY==std::decay_t<P>::len_s(k))) + ...);
@@ -485,17 +486,17 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     }
 
     constexpr bool
-    check_expr() const
+    check() const
     {
         if constexpr (sizeof...(P)<2) {
             return true;
-        } else  if constexpr (constexpr int c = check_expr_s(); 0==c) {
+        } else  if constexpr (constexpr int c = check_s(); 0==c) {
             return false;
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
                 dim_t ls = len(k);
-                if (!((k>=std::get<I>(t).rank() || ls==choose_len(std::get<I>(t).len(k), ls)) && ...)) {
-                    RA_CHECK(!check, "Mismatched lengths [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
+                if (((k<std::get<I>(t).rank() && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
+                    RA_CHECK(!checkp, "Shape mismatch [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
                     return false;
                 }
             }
@@ -506,10 +507,10 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr
     Match(P ... p_): t(std::forward<P>(p_) ...)
     {
-// TODO Maybe on ply, would avoid the check flag make agree_xxx() unnecessary.
-        if constexpr (check && !(has_len<P> || ...)) {
-            static_assert(check_expr_s(), "Mismatched shapes in expression.");
-            RA_CHECK(check_expr());
+// TODO Maybe on ply, would avoid the checkp, make agree_xxx() unnecessary.
+        if constexpr (checkp && !(has_len<P> || ...)) {
+            static_assert(check_s(), "Shape mismatch.");
+            RA_CHECK(check());
         }
     }
 
@@ -538,7 +539,7 @@ struct Match<check, std::tuple<P ...>, mp::int_list<I ...>>
         return r;
     }
 
-// first positive size, if none first DIM_ANY, if none then DIM_BAD
+// first nonnegative size, if none first DIM_ANY, if none then DIM_BAD
     constexpr static dim_t
     len_s(int k)
     {

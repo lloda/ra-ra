@@ -12,7 +12,7 @@
 #include <iostream>
 #include <iterator>
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using ra::mp::int_list, ra::int_c, ra::mp::print_int_list, ra::mp::ref;

@@ -10,7 +10,7 @@
 #include <ranges>
 #include <iostream>
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
 using ra::int_c, ra::mp::int_list;

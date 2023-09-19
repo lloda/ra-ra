@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 22
-@set UPDATED 2023 July 10
+@set VERSION 23
+@set UPDATED 2023 September 19
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -301,8 +301,6 @@ int main()
 The following headers are @emph{not} included by default:
 @itemize
 @item @code{"ra/dual.hh"}: A dual number type for simple uses of automatic differentiation.
-
-@item @code{"ra/mpdebug.hh"}: Functions to help in debugging template tangles.
 
 @item @code{"ra/test.hh"}, @code{"ra/bench.hh"}: Used by the test and benchmark suites.
 @end itemize
@@ -1681,7 +1679,7 @@ Item 2
 @section Headers
 @c ------------------------------------------------
 
-The include structure of @code{ra::} is as follows.@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
+The header structure of @code{ra::} is as follows.@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
 
 @verbatim
 cd ra && cinclude2dot.pl --include . > headers.dot

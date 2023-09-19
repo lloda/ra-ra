@@ -15,7 +15,7 @@
 #endif
 
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::cout, std::endl, ra::TestRecorder;
 using complex = std::complex<double>;

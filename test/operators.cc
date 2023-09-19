@@ -8,9 +8,7 @@
 // later version.
 
 #include "ra/test.hh"
-#include "ra/wedge.hh"
-#include "ra/complex.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::cout, std::endl, ra::TestRecorder;
 using real = double;

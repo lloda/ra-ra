@@ -263,7 +263,7 @@ agree(P && ... p)
     return agree_(ra::start(std::forward<P>(p)) ...);
 }
 
-// 0: fail, 1: check rt, 2: pass
+// 0: fail, 1: rt, 2: pass
 template <class ... P>
 constexpr int
 agree_s(P && ... p)
@@ -282,14 +282,14 @@ template <class ... P>
 constexpr bool
 agree_(P && ... p)
 {
-    return (Match<false, std::tuple<P ...>> { std::forward<P>(p) ... }).check_expr();
+    return (Match<false, std::tuple<P ...>> { std::forward<P>(p) ... }).check();
 }
 
 template <class ... P>
 constexpr int
 agree_s_(P && ... p)
 {
-    return Match<false, std::tuple<P ...>>::check_expr_s();
+    return Match<false, std::tuple<P ...>>::check_s();
 }
 
 template <class Op, class ... P>

@@ -10,7 +10,7 @@
 
 #include <iostream>
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
+#include "mpdebug.hh"
 
 using std::tuple, std::tuple_element, std::is_same_v;
 using std::cout, std::endl, ra::TestRecorder;
