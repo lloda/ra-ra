@@ -10,7 +10,7 @@
 // Adapted from lsolver/cghs.cc by Christian Badura, 1998/05.
 
 #pragma once
-#include "ra/operators.hh"
+#include "ra/ra.hh"
 
 template <class A, class B, class X, class W>
 inline int

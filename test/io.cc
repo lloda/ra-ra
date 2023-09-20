@@ -135,7 +135,7 @@ int main()
         ra::Small<ra::Big<double, 1>, 3> g = { { 1 }, { 1, 2 }, { 1, 2, 3 } };
         iocheck(tr.info("nested type"), g, g);
     }
-// this behavior depends on [ra13] (std::string is scalar) and the specializations of ostream<< in io.hh.
+// this behavior depends on [ra13] (std::string is scalar) and the specializations of ostream<< in ply.hh.
     tr.section("Non-ra types in format()");
     {
         std::ostringstream o;

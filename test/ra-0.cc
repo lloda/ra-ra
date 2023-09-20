@@ -408,7 +408,7 @@ int main()
     {
         ra::Unique<double, 0> a(ra::scalar(33));
         ra::Unique<double> b(ra::scalar(44));
-// b.rank() is runtime, so b()==44. and the whole assert argument become array xprs when operators.hh is included.
+// b.rank() is runtime, so b()==44. and the whole assert argument become array xprs
         tr.test_eq(0, b.rank());
         tr.test_eq(1, b.size());
         tr.test_eq(44, b());

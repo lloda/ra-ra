@@ -133,7 +133,8 @@ size(V const & v)
     }
 }
 
-// To avoid, prefer implicit matching.
+// Avoid using for matching or agreement check.
+// operator<< depends on this returning a concrete type.
 template <class V>
 constexpr decltype(auto)
 shape(V const & v)

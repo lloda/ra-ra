@@ -178,7 +178,7 @@ int main()
     tr.section("constructors from expr"); // TODO For all other Container types.
     {
         {
-// TODO Systematic init-from-expr tests (every expr type vs every container type) with operators.hh included.
+// TODO Systematic init-from-expr tests (every expr type vs every container type)
             ra::Unique<int, 1> a({3}, { 1, 2, 3 });
             ra::Unique<int, 1> b({3}, { 10, 20, 30 });
             ra::Unique<int, 1> c(a.iter() + b.iter());

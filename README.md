@@ -110,12 +110,12 @@ From APL and J I've taken the rank extension mechanism, and perhaps an inclinati
 * [Boost.MultiArray](www.boost.org/doc/libs/master/libs/multi_array/doc/user.html)
 * [xtensor](https://github.com/QuantStack/xtensor)
 * [Adept](http://www.met.reading.ac.uk/clouds/adept/download.html)
-* [Towards a standard for a C++ multi-dimensional array library for scientific applications](http://www.met.reading.ac.uk/clouds/cpp_arrays/) Reviews a number of C++ array libraries, including **ra-ra** (2020-08).
 
 #### Links
 
+* [Towards a standard for a C++ multi-dimensional array library for scientific applications](http://www.met.reading.ac.uk/clouds/cpp_arrays/) Reviews C++ array libraries, including **ra-ra** (2020-08)
 * [libsimdpp](https://github.com/p12tic/libsimdpp) C++ SIMD library
-* [J for C programmers](http://www.jsoftware.com/help/jforc/contents.htm)
+* [J for C programmers](http://www.jsoftware.com/help/jforc/contents.htm) Array programming concepts
 * [GNU APL](https://www.gnu.org/software/apl/)
 * [Fortran wiki](http://fortranwiki.org/fortran/show/diff/HomePage)
 * [Numpy](https://numpy.org/)
