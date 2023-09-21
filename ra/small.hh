@@ -399,7 +399,7 @@ struct SmallBase
 // see same thing for View.
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X>                                                  \
-    requires (!mp::is_tuple_v<std::decay_t<X>>)                         \
+    requires (!mp::is_tuple<std::decay_t<X>>)                           \
     constexpr Child &                                                   \
     operator OP(X && x)                                                 \
     {                                                                   \
@@ -524,7 +524,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
     }
 // X && x makes this a better match than nested_args ... for 1 argument.
     template <class X>
-    requires (!std::is_same_v<std::decay_t<X>, T> && !mp::is_tuple_v<std::decay_t<X>>)
+    requires (!std::is_same_v<std::decay_t<X>, T> && !mp::is_tuple<std::decay_t<X>>)
     constexpr SmallArray(X && x)
     {
         static_cast<Base &>(*this) = x;

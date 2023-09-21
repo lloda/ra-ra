@@ -29,7 +29,7 @@ template <class A> struct print_int_list {};
 template <class A> std::ostream &
 operator<<(std::ostream & o, print_int_list<A> const & a)
 {
-    if constexpr (is_tuple_v<A>) {
+    if constexpr (is_tuple<A>) {
         std::apply([&o](auto ... a) { ((o << "[") << ... << print_int_list<decltype(a)> {}) << "]"; }, A {});
         return o;
     } else {

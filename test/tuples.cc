@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file tuples.cc
-/// @brief Test type list library based on tuples.
+// ra-ra/test - Test type list library based on tuples.
 
 // (c) Daniel Llorens - 2010
 // This library is free software; you can redistribute it and/or modify it under
@@ -174,17 +173,17 @@ int main()
 // InvertIndex
     {
         using II0 = int_list<4, 6, 7, 1>;
-        using II1 = ra::mp::InvertIndex_<II0>;
+        using II1 = ra::mp::InvertIndex<II0>;
         static_assert(is_same_v<int_list<-1, 3, -1, -1, 0, -1, 1, 2>, II1>);
     }
     {
         using II0 = int_list<3>;
-        using II1 = ra::mp::InvertIndex_<II0>;
+        using II1 = ra::mp::InvertIndex<II0>;
         static_assert(is_same_v<int_list<-1, -1, -1, 0>, II1>);
     }
     {
         using II0 = int_list<>;
-        using II1 = ra::mp::InvertIndex_<II0>;
+        using II1 = ra::mp::InvertIndex<II0>;
         static_assert(is_same_v<int_list<>, II1>);
     }
 // IndexIf.

@@ -17,7 +17,6 @@ namespace ra {
 
 template <class T> constexpr bool is_constant = false;
 template <class T, T N> constexpr bool is_constant<std::integral_constant<T, N>> = true;
-
 template <int V> using int_c = std::integral_constant<int, V>;
 template <bool V> using bool_c = std::integral_constant<bool, V>;
 
@@ -27,10 +26,7 @@ namespace ra::mp {
 
 template <class ... T> constexpr bool always_false = false; // p2593r0
 
-
-// -------------------------
 // xxx<...> is user facing and xxx_<...>::type (if needed) is implementation.
-// -------------------------
 
 using std::tuple;
 using nil = tuple<>;
@@ -39,19 +35,18 @@ template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
 template <int ... I> using int_list = tuple<int_c<I> ...>; // shortcut for std::integer_sequence<int, I ...>
 
-template <class T> struct is_tuple { constexpr static bool value = false; };
-template <class ... A> struct is_tuple<tuple<A ...>> { constexpr static bool value = true; };
-template <class T> constexpr bool is_tuple_v = is_tuple<T>::value;
+template <class T> constexpr bool is_tuple = false;
+template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;
 
-template <class A, class B> struct cons_ { static_assert(is_tuple_v<B>); };
+template <class A, class B> struct cons_ { static_assert(is_tuple<B>); };
 template <class A0, class ... A> struct cons_<A0, tuple<A ...>> { using type = tuple<A0, A ...>; };
 template <class A, class B> using cons = typename cons_<A, B>::type;
 
-template <class A, class B> struct append_ { static_assert(is_tuple_v<A> && is_tuple_v<B>); };
+template <class A, class B> struct append_ { static_assert(is_tuple<A> && is_tuple<B>); };
 template <class ... A, class ... B> struct append_<tuple<A ...>, tuple<B ...>> { using type = tuple<A ..., B ...>; };
 template <class A, class B> using append = typename append_<A, B>::type;
 
-template <class A, class B> struct zip_ { static_assert(is_tuple_v<A> && is_tuple_v<B>); };
+template <class A, class B> struct zip_ { static_assert(is_tuple<A> && is_tuple<B>); };
 template <class ... A, class ... B> struct zip_<tuple<A ...>, tuple<B ...>> { using type = tuple<tuple<A, B> ...>; };
 template <class A, class B> using zip = typename zip_<A, B>::type;
 
@@ -70,7 +65,6 @@ template <class A, int I0, int ... I> struct ref_<A, I0, I ...> { using type = r
 
 template <class A> using first = ref<A, 0>;
 template <class A> using last = ref<A, (len<A> - 1)>;
-
 template <bool a> using when = bool_c<a>;
 template <bool a> using unless = bool_c<(!a)>;
 
@@ -199,8 +193,8 @@ template <class A0, class ... A> struct min_<A0, A ...> { using type = int_c<std
 // Operations on int_c arguments.
 template <class ... A> using sum = int_c<(A::value + ... + 0)>;
 template <class ... A> using prod = int_c<(A::value * ... * 1)>;
-template <class ... A> using andb = bool_c<(A::value && ... && true)>;
-template <class ... A> using orb = bool_c<(A::value || ... || false)>;
+template <class ... A> using andb = bool_c<(A::value && ...)>;
+template <class ... A> using orb = bool_c<(A::value || ...)>;
 
 // Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
 template <class S, class T, class SS=S> struct complement_list_;
@@ -282,7 +276,7 @@ template <> struct combinations_<nil, 0> { using type = tuple<nil>; };
 template <class A, int K, int N>
 struct combinations_
 {
-    static_assert(is_tuple_v<A>);
+    static_assert(is_tuple<A>);
     static_assert(N>=0 && K>=0);
     static_assert(K<=N);
     using Rest = drop1<A>;
@@ -293,13 +287,12 @@ struct combinations_
 template <class C, class R> struct PermutationSign;
 
 template <int w, class C, class R>
-struct PermutationSignIfFound
-{
-    constexpr static int value = ((w & 1) ? -1 : +1) * PermutationSign<append<take<C, w>, drop<C, w+1>>,
-                                                                       drop1<R>>::value;
-};
+constexpr int PermutationSignIfFound = PermutationSign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value
+    * ((w & 1) ? -1 : +1);
 
-template <class C, class R> struct PermutationSignIfFound<-1, C, R> { constexpr static int value = 0; };
+template <class C, class R>
+constexpr int PermutationSignIfFound<-1, C, R>  = 0;
+
 template <> struct PermutationSign<nil, nil> { constexpr static int value = 1; };
 template <class C> struct PermutationSign<C, nil> { constexpr static int value = 0; };
 template <class R> struct PermutationSign<nil, R> { constexpr static int value = 0; };
@@ -307,21 +300,21 @@ template <class R> struct PermutationSign<nil, R> { constexpr static int value =
 template <class C, class Org>
 struct PermutationSign
 {
-    constexpr static int value = PermutationSignIfFound<index<C, first<Org>>::value, C, Org>::value;
+    constexpr static int value = PermutationSignIfFound<index<C, first<Org>>::value, C, Org>;
 };
 
 // increment the w-th element of an int_list
 template <class L, int w> using inc = append<take<L, w>, cons<int_c<ref<L, w>::value+1>, drop<L, w+1>>>;
 
-template <class A> struct InvertIndex;
-template <class ... A> struct InvertIndex<tuple<A ...>>
+template <class A> struct InvertIndex_;
+template <class ... A> struct InvertIndex_<tuple<A ...>>
 {
     using AT = tuple<A ...>;
     template <class T> using IndexA = int_c<index<AT, T>::value>;
     constexpr static int N = apply<max, AT>::value;
     using type = map<IndexA, iota<(N>=0 ? N+1 : 0)>>;
 };
-template <class A> using InvertIndex_ = typename InvertIndex<A>::type;
+template <class A> using InvertIndex = typename InvertIndex_<A>::type;
 
 // Used in tests.
 template <class A, int ... I> struct check_idx { constexpr static bool value = false; };

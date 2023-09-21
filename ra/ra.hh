@@ -113,8 +113,7 @@ DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
 struct unaryplus
 {
     template <class T> constexpr /* static P1169 in gcc13 */ auto
-    operator()(T && t) const noexcept
-    { return std::forward<T>(t); }
+    operator()(T && t) const noexcept { return std::forward<T>(t); }
 };
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                                  \
@@ -477,7 +476,7 @@ struct FindCombination
     constexpr static int sign = (where>=0) ? PermutationSign<P, typename type::type>::value : 0;
 };
 
-// A combination antiC complementary to C wrt [0, 1, ... Dim-1], but permuted to make the permutation [C, antiC] positive with respect to [0, 1, ... Dim-1].
+// Combination antiC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, antiC] has the same sign as [0, 1, ... Dim-1].
 template <class C, int D>
 struct AntiCombination
 {
@@ -717,12 +716,12 @@ DECL_WEDGE(general_case)
 
     using Ua = decltype(aa);
     using Ub = decltype(bb);
-
     typename fromrank1<mp::Wedge<D, Oa, Ob>, Ua, Ub>::type r;
 
-    auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
     auto & a1 = reinterpret_cast<typename torank1<Ua>::type const &>(aa);
     auto & b1 = reinterpret_cast<typename torank1<Ub>::type const &>(bb);
+    auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
+
     mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
 
     return r;
@@ -749,33 +748,29 @@ DECL_WEDGE(general_case)
 }
 #undef DECL_WEDGE
 
-template <class A, class B> requires (size_s<A>()==2 && size_s<B>()==2)
+template <class A, class B>
 constexpr auto
 cross(A const & a_, B const & b_)
 {
-    Small<std::decay_t<decltype(FLAT(a_))>, 2> a = a_;
-    Small<std::decay_t<decltype(FLAT(b_))>, 2> b = b_;
-    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 1> r;
-    mp::Wedge<2, 1, 1>::product(a, b, r);
-    return r[0];
-}
-
-template <class A, class B> requires (size_s<A>()==3 && size_s<B>()==3)
-constexpr auto
-cross(A const & a_, B const & b_)
-{
-    Small<std::decay_t<decltype(FLAT(a_))>, 3> a = a_;
-    Small<std::decay_t<decltype(FLAT(b_))>, 3> b = b_;
-    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, 3> r;
-    mp::Wedge<3, 1, 1>::product(a, b, r);
-    return r;
+    constexpr int n = size_s<A>();
+    static_assert(n==size_s<B>() && (2==n || 3==n));
+    Small<std::decay_t<decltype(FLAT(a_))>, n> a = a_;
+    Small<std::decay_t<decltype(FLAT(b_))>, n> b = b_;
+    using W = mp::Wedge<n, 1, 1>;
+    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, W::Nr> r;
+    W::product(a, b, r);
+    if constexpr (1==W::Nr) {
+        return r[0];
+    } else {
+        return r;
+    }
 }
 
 template <class V>
 constexpr auto
 perp(V const & v)
 {
-    static_assert(v.size()==2, "dimension error");
+    static_assert(2==v.size(), "Dimension error.");
     return Small<std::decay_t<decltype(FLAT(v))>, 2> {v[1], -v[0]};
 }
 
@@ -784,10 +779,10 @@ constexpr auto
 perp(V const & v, U const & n)
 {
     if constexpr (is_scalar<U>) {
-        static_assert(v.size()==2, "dimension error");
+        static_assert(2==v.size(), "Dimension error.");
         return Small<std::decay_t<decltype(FLAT(v) * n)>, 2> {v[1]*n, -v[0]*n};
     } else {
-        static_assert(v.size()==3, "dimension error");
+        static_assert(3==v.size(), "Dimension error.");
         return cross(v, n);
     }
 }
