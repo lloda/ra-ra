@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Tuple library
+// ra-ra - Tuple library.
 
 // (c) Daniel Llorens - 2005-2023
 // This library is free software; you can redistribute it and/or modify it under

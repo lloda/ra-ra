@@ -1,17 +1,195 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Expression template that applies an operator.
+// ra-ra - Expression templates with prefix matching.
 
-// (c) Daniel Llorens - 2011-2022
+// (c) Daniel Llorens - 2011-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
 #pragma once
-#include "core.hh"
+#include "atom.hh"
 #include <functional>
 
 namespace ra {
+
+
+// --------------------
+// prefix match
+// --------------------
+
+constexpr rank_t
+choose_rank(rank_t ra, rank_t rb)
+{
+    return RANK_BAD==rb ? ra : RANK_BAD==ra ? rb : RANK_ANY==ra ? ra : RANK_ANY==rb ? rb : (ra>=rb ? ra : rb);
+}
+
+// TODO Allow infinite rank; need a special value of crank.
+constexpr rank_t
+dependent_cell_rank(rank_t rank, rank_t crank)
+{
+    return crank>=0 ? crank // not dependent
+        : rank==RANK_ANY ? RANK_ANY // defer
+        : (rank+crank);
+}
+
+constexpr rank_t
+dependent_frame_rank(rank_t rank, rank_t crank)
+{
+    return rank==RANK_ANY ? RANK_ANY // defer
+        : crank>=0 ? (rank-crank) // not dependent
+        : -crank;
+}
+
+// if non-negative args don't match, pick first (see below). FIXME maybe return invalid.
+constexpr dim_t
+choose_len(dim_t sa, dim_t sb)
+{
+    return DIM_BAD==sa ? sb : DIM_BAD==sb ? sa : DIM_ANY==sa ? sb : sa;
+}
+
+template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
+
+template <bool checkp, IteratorConcept ... P, int ... I>
+struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
+{
+    using T = std::tuple<P ...>;
+    T t;
+
+    // 0: fail, 1: rt, 2: pass
+    constexpr static int
+    check_s()
+    {
+        if constexpr (sizeof...(P)<2) {
+            return 2;
+        } else if constexpr (RANK_ANY==rank_s()) {
+            return 1; // FIXME could be tightened to 2 in some cases
+        } else {
+            bool tbc = false;
+            for (int k=0; k<rank_s(); ++k) {
+                dim_t ls = len_s(k);
+                if (((k<std::decay_t<P>::rank_s() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
+                    return 0;
+                } else {
+                    int anyk = ((k<std::decay_t<P>::rank_s() && (DIM_ANY==std::decay_t<P>::len_s(k))) + ...);
+                    int fixk = ((k<std::decay_t<P>::rank_s() && (0<=std::decay_t<P>::len_s(k))) + ...);
+                    tbc = tbc || (anyk>0 && anyk+fixk>1);
+                }
+            }
+            return tbc ? 1 : 2;
+        }
+    }
+
+    constexpr bool
+    check() const
+    {
+        if constexpr (sizeof...(P)<2) {
+            return true;
+        } else  if constexpr (constexpr int c = check_s(); 0==c) {
+            return false;
+        } else if constexpr (1==c) {
+            for (int k=0; k<rank(); ++k) {
+                dim_t ls = len(k);
+                if (((k<std::get<I>(t).rank() && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
+                    RA_CHECK(!checkp, "Shape mismatch [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    constexpr
+    Match(P ... p_): t(std::forward<P>(p_) ...)
+    {
+// TODO Maybe on ply, would avoid the checkp, make agree_xxx() unnecessary.
+        if constexpr (checkp && !(has_len<P> || ...)) {
+            static_assert(check_s(), "Shape mismatch.");
+            RA_CHECK(check());
+        }
+    }
+
+// rank of largest subexpr, so we look at all of them.
+    constexpr static rank_t
+    rank_s()
+    {
+        rank_t r = RANK_BAD;
+        return ((r=choose_rank(r, ra::rank_s<P>())), ...);
+    }
+
+    constexpr static rank_t
+    rank()
+    requires (DIM_ANY != Match::rank_s())
+    {
+        return rank_s();
+    }
+
+    constexpr rank_t
+    rank() const
+    requires (DIM_ANY == Match::rank_s())
+    {
+        rank_t r = RANK_BAD;
+        ((r = choose_rank(r, std::get<I>(t).rank())), ...);
+        assert(RANK_ANY!=r); // not at runtime
+        return r;
+    }
+
+// first nonnegative size, if none first DIM_ANY, if none then DIM_BAD
+    constexpr static dim_t
+    len_s(int k)
+    {
+        auto f = [&k]<class A>(dim_t s) {
+            constexpr rank_t ar = A::rank_s();
+            return (ar<0 || k<ar) ? choose_len(s, A::len_s(k)) : s;
+        };
+        dim_t s = DIM_BAD; ((s>=0 ? s : s = f.template operator()<std::decay_t<P>>(s)), ...);
+        return s;
+    }
+
+    constexpr static dim_t
+    len(int k)
+    requires (requires (int kk) { P::len(kk); } && ...)
+    {
+        return len_s(k);
+    }
+
+    constexpr dim_t
+    len(int k) const
+    requires (!(requires (int kk) { P::len(kk); } && ...))
+    {
+        auto f = [&k](dim_t s, auto const & a) {
+            return k<a.rank() ? choose_len(s, a.len(k)) : s;
+        };
+        dim_t s = DIM_BAD; ((s>=0 ? s : s = f(s, std::get<I>(t))), ...);
+        assert(DIM_ANY!=s); // not at runtime
+        return s;
+    }
+
+    constexpr void
+    adv(rank_t k, dim_t d)
+    {
+        (std::get<I>(t).adv(k, d), ...);
+    }
+
+    constexpr auto
+    step(int i) const
+    {
+        return std::make_tuple(std::get<I>(t).step(i) ...);
+    }
+
+    constexpr bool
+    keep_step(dim_t st, int z, int j) const
+    requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...))
+    {
+        return (std::get<I>(t).keep_step(st, z, j) && ...);
+    }
+    constexpr static bool
+    keep_step(dim_t st, int z, int j)
+    requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...)
+    {
+        return (std::decay_t<P>::keep_step(st, z, j) && ...);
+    }
+};
 
 
 // ---------------------------
@@ -309,6 +487,120 @@ agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
     return agree_op_(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
+}
+
+
+// ---------------------------
+// pick
+// ---------------------------
+
+template <class T, class J> struct pick_at_type;
+template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
+{
+    using type = mp::apply<std::common_reference_t, std::tuple<decltype(std::declval<P>().at(std::declval<J>())) ...>>;
+};
+
+template <std::size_t I, class T, class J>
+constexpr pick_at_type<mp::drop1<std::decay_t<T>>, J>::type
+pick_at(std::size_t p0, T && t, J const & j)
+{
+    if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
+        if (p0==I) {
+            return std::get<I+1>(t).at(j);
+        } else {
+            return pick_at<I+1>(p0, t, j);
+        }
+    } else {
+        RA_CHECK(p0==I, " p0 ", p0, " I ", I);
+        return std::get<I+1>(t).at(j);
+    }
+}
+
+template <class T> struct pick_star_type;
+template <class ... P> struct pick_star_type<std::tuple<P ...>>
+{
+    using type = mp::apply<std::common_reference_t, std::tuple<decltype(*std::declval<P>()) ...>>;
+};
+
+template <std::size_t I, class T>
+constexpr pick_star_type<mp::drop1<std::decay_t<T>>>::type
+pick_star(std::size_t p0, T && t)
+{
+    if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
+        if (p0==I) {
+            return *(std::get<I+1>(t));
+        } else {
+            return pick_star<I+1>(p0, t);
+        }
+    } else {
+        RA_CHECK(p0==I, " p0 ", p0, " I ", I);
+        return *(std::get<I+1>(t));
+    }
+}
+
+template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
+
+template <IteratorConcept ... P, int ... I>
+struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
+{
+    static_assert(sizeof...(P)>1);
+
+    template <class T_>
+    struct Flat
+    {
+        T_ t;
+        template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
+        constexpr decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
+    };
+
+    template <class ... P_>
+    constexpr static auto
+    flat(P_ && ... p)
+    {
+        return Flat<std::tuple<P_ ...>> { std::tuple<P_ ...> { std::forward<P_>(p) ... } };
+    }
+
+    using Match_ = Match<true, std::tuple<P ...>>;
+
+// test/ra-9.cc [ra1]
+    constexpr Pick(P ... p_): Match_(std::forward<P>(p_) ...) {}
+    RA_DEF_ASSIGNOPS_SELF(Pick)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
+
+    constexpr decltype(auto)
+    flat()
+    {
+        return flat(std::get<I>(this->t).flat() ...);
+    }
+    constexpr decltype(auto)
+    at(auto const & j) const
+    {
+        return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
+    }
+// needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
+    constexpr
+    operator decltype(*(flat(std::get<I>(Match_::t).flat() ...))) ()
+    {
+        if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only
+            if constexpr (this->rank_s()!=0) {
+                static_assert(this->rank_s()==RANK_ANY);
+                assert(this->rank()==0);
+            }
+        }
+        return *flat();
+    }
+};
+
+template <IteratorConcept ... P>
+constexpr bool is_special_def<Pick<std::tuple<P ...>>> = (is_special<P> || ...);
+
+template <class ... P> Pick(P && ... p) -> Pick<std::tuple<P ...>>;
+
+template <class ... P>
+constexpr auto
+pick(P && ... p)
+{
+    return Pick { start(std::forward<P>(p)) ... };
 }
 
 } // namespace ra

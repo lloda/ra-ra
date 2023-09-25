@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 23
-@set UPDATED 2023 September 20
+@set UPDATED 2023 September 28
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})

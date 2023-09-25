@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Terminal nodes for expression templates + prefix matching.
+// ra-ra - Terminal nodes for expression templates.
 
 // (c) Daniel Llorens - 2011-2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -28,11 +28,11 @@
 #define RA_ASSERT(cond, ...)                                            \
     {                                                                   \
         if (std::is_constant_evaluated()) {                             \
-            assert(cond /* FIXME maybe one day */);                     \
+            assert(cond /* FIXME show args */);                         \
         } else {                                                        \
             if (bool c = cond; !c) [[unlikely]] {                       \
                 std::cerr << ra::format("**** ra: ", ##__VA_ARGS__, " ****") << std::endl; \
-                assert(c);                                              \
+                std::abort();                                           \
             }                                                           \
         }                                                               \
     }
@@ -256,6 +256,7 @@ vector(V && v)
 }
 
 // Sequence and IteratorConcept for same. Iota isn't really a terminal, but its exprs must all have rank 0.
+// FIXME w is a custom Reframe mechanism inherited from TensorIndex. Generalize/unify
 // FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
 template <int w, class O, class N, class S>
 struct Iota
@@ -278,7 +279,7 @@ struct Iota
     struct Flat
     {
         O i;
-        S s;
+        [[no_unique_address]] S const s;
         constexpr void operator+=(dim_t d) { i += O(d)*O(s); }
         constexpr auto operator*() const { return i; }
     };
@@ -300,29 +301,26 @@ struct Iota
     }
 };
 
-template <class T>
-constexpr auto
-default_1()
-{
-    if constexpr (std::is_integral_v<T>) {
-        return T(1);
-    } else if constexpr (is_constant<T>) {
-        static_assert(1==T::value);
-        return T {};
-    }
-}
+template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
 
 template <int w=0, class O=dim_t, class N=dim_c<DIM_BAD>, class S=dim_c<1>>
 constexpr auto
-iota(N && n = N {}, O && org = 0, S && s = default_1<S>())
+iota(N && n = N {}, O && org = 0,
+     S && s = [] {
+         if constexpr (std::is_integral_v<S>) {
+             return S(1);
+         } else if constexpr (is_constant<S>) {
+             static_assert(1==S::value);
+             return S {};
+         } else {
+             static_assert(mp::always_false<S>, "Invalid step type for Iota.");
+         }
+     }())
 {
     if constexpr (std::is_integral_v<N>) {
-        RA_CHECK(n>=0, "Bad iota length ", n);
+        RA_CHECK(n>=0, "Bad iota length ", n, ".");
     }
-    using OO = std::conditional_t<is_constant<std::decay_t<O>> || is_scalar<std::decay_t<O>>, std::decay_t<O>, O>;
-    using NN = std::conditional_t<is_constant<std::decay_t<N>> || is_scalar<std::decay_t<N>>, std::decay_t<N>, N>;
-    using SS = std::conditional_t<is_constant<std::decay_t<S>> || is_scalar<std::decay_t<S>>, std::decay_t<S>, S>;
-    return Iota<w, OO, NN, SS> { std::forward<O>(org), std::forward<N>(n), std::forward<S>(s) };
+    return Iota<w, iota_arg<O>, iota_arg<N>, iota_arg<S>> { std::forward<O>(org), std::forward<N>(n), std::forward<S>(s) };
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
@@ -416,183 +414,5 @@ FLAT(A && a)
 
 // FIXME do we really want to drop const? See use in concrete_type.
 template <class A> using value_t = std::decay_t<decltype(FLAT(std::declval<A>()))>;
-
-
-// --------------------
-// prefix match
-// --------------------
-
-constexpr rank_t
-choose_rank(rank_t ra, rank_t rb)
-{
-    return RANK_BAD==rb ? ra : RANK_BAD==ra ? rb : RANK_ANY==ra ? ra : RANK_ANY==rb ? rb : (ra>=rb ? ra : rb);
-}
-
-// TODO Allow infinite rank; need a special value of crank.
-constexpr rank_t
-dependent_cell_rank(rank_t rank, rank_t crank)
-{
-    return crank>=0 ? crank // not dependent
-        : rank==RANK_ANY ? RANK_ANY // defer
-        : (rank+crank);
-}
-
-constexpr rank_t
-dependent_frame_rank(rank_t rank, rank_t crank)
-{
-    return rank==RANK_ANY ? RANK_ANY // defer
-        : crank>=0 ? (rank-crank) // not dependent
-        : -crank;
-}
-
-// if non-negative args don't match, pick first (see below). FIXME maybe return invalid.
-constexpr dim_t
-choose_len(dim_t sa, dim_t sb)
-{
-    return DIM_BAD==sa ? sb : DIM_BAD==sb ? sa : DIM_ANY==sa ? sb : sa;
-}
-
-template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
-
-template <bool checkp, IteratorConcept ... P, int ... I>
-struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
-{
-    using T = std::tuple<P ...>;
-    T t;
-
-    // 0: fail, 1: rt, 2: pass
-    constexpr static int
-    check_s()
-    {
-        if constexpr (sizeof...(P)<2) {
-            return 2;
-        } else if constexpr (RANK_ANY==rank_s()) {
-            return 1; // FIXME could be tightened to 2 in some cases
-        } else {
-            bool tbc = false;
-            for (int k=0; k<rank_s(); ++k) {
-                dim_t ls = len_s(k);
-                if (((k<std::decay_t<P>::rank_s() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
-                    return 0;
-                } else {
-                    int anyk = ((k<std::decay_t<P>::rank_s() && (DIM_ANY==std::decay_t<P>::len_s(k))) + ...);
-                    int fixk = ((k<std::decay_t<P>::rank_s() && (0<=std::decay_t<P>::len_s(k))) + ...);
-                    tbc = tbc || (anyk>0 && anyk+fixk>1);
-                }
-            }
-            return tbc ? 1 : 2;
-        }
-    }
-
-    constexpr bool
-    check() const
-    {
-        if constexpr (sizeof...(P)<2) {
-            return true;
-        } else  if constexpr (constexpr int c = check_s(); 0==c) {
-            return false;
-        } else if constexpr (1==c) {
-            for (int k=0; k<rank(); ++k) {
-                dim_t ls = len(k);
-                if (((k<std::get<I>(t).rank() && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
-                    RA_CHECK(!checkp, "Shape mismatch [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    constexpr
-    Match(P ... p_): t(std::forward<P>(p_) ...)
-    {
-// TODO Maybe on ply, would avoid the checkp, make agree_xxx() unnecessary.
-        if constexpr (checkp && !(has_len<P> || ...)) {
-            static_assert(check_s(), "Shape mismatch.");
-            RA_CHECK(check());
-        }
-    }
-
-// rank of largest subexpr, so we look at all of them.
-    constexpr static rank_t
-    rank_s()
-    {
-        rank_t r = RANK_BAD;
-        return ((r=choose_rank(r, ra::rank_s<P>())), ...);
-    }
-
-    constexpr static rank_t
-    rank()
-    requires (DIM_ANY != Match::rank_s())
-    {
-        return rank_s();
-    }
-
-    constexpr rank_t
-    rank() const
-    requires (DIM_ANY == Match::rank_s())
-    {
-        rank_t r = RANK_BAD;
-        ((r = choose_rank(r, std::get<I>(t).rank())), ...);
-        assert(RANK_ANY!=r); // not at runtime
-        return r;
-    }
-
-// first nonnegative size, if none first DIM_ANY, if none then DIM_BAD
-    constexpr static dim_t
-    len_s(int k)
-    {
-        auto f = [&k]<class A>(dim_t s) {
-            constexpr rank_t ar = A::rank_s();
-            return (ar<0 || k<ar) ? choose_len(s, A::len_s(k)) : s;
-        };
-        dim_t s = DIM_BAD; ((s>=0 ? s : s = f.template operator()<std::decay_t<P>>(s)), ...);
-        return s;
-    }
-
-    constexpr static dim_t
-    len(int k)
-    requires (requires (int kk) { P::len(kk); } && ...)
-    {
-        return len_s(k);
-    }
-
-    constexpr dim_t
-    len(int k) const
-    requires (!(requires (int kk) { P::len(kk); } && ...))
-    {
-        auto f = [&k](dim_t s, auto const & a) {
-            return k<a.rank() ? choose_len(s, a.len(k)) : s;
-        };
-        dim_t s = DIM_BAD; ((s>=0 ? s : s = f(s, std::get<I>(t))), ...);
-        assert(DIM_ANY!=s); // not at runtime
-        return s;
-    }
-
-    constexpr void
-    adv(rank_t k, dim_t d)
-    {
-        (std::get<I>(t).adv(k, d), ...);
-    }
-
-    constexpr auto
-    step(int i) const
-    {
-        return std::make_tuple(std::get<I>(t).step(i) ...);
-    }
-
-    constexpr bool
-    keep_step(dim_t st, int z, int j) const
-    requires (!(requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...))
-    {
-        return (std::get<I>(t).keep_step(st, z, j) && ...);
-    }
-    constexpr static bool
-    keep_step(dim_t st, int z, int j)
-    requires (requires (dim_t d, rank_t i, rank_t j) { P::keep_step(d, i, j); } && ...)
-    {
-        return (std::decay_t<P>::keep_step(st, z, j) && ...);
-    }
-};
 
 } // namespace ra

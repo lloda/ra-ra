@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Operator overloads for expression templates, and root header
+// ra-ra - Operator overloads for expression templates, and root header.
 
 // (c) Daniel Llorens - 2014-2023
 // This library is free software; you can redistribute it and/or modify it under

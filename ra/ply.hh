@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Traverse (ply) array or array expression or array statement.
+// ra-ra - Traverse expression.
 
 // (c) Daniel Llorens - 2013-2019, 2021
 // This library is free software; you can redistribute it and/or modify it under
@@ -13,7 +13,6 @@
 // TODO std::execution::xxx-policy, validate output argument strides.
 
 #pragma once
-#include "pick.hh"
 #include "expr.hh"
 
 namespace ra {

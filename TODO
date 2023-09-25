@@ -114,7 +114,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
      size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
   11. [ ]
   12. [ ]
-  13. [ ] ra/ply.hh (i/o), ra/core.hh, ra/bootstrap.hh, test/compatibility.cc.
+  13. [ ] ra/ply.hh (i/o), ra/atom.hh, ra/bootstrap.hh, test/compatibility.cc.
       std::string used to be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want format(std::string_view) to print it as a foreign vector, so we have an exception for it there. As things stand, you can register it or not.
   14. [ ] CellBig needs to copy its Dimv in some cases, which also complicates View::iter<>. Problem is demonstrated in ra-5.cc.
   15. [ ] Conversion-to-scalar operators for dynamic-rank View().
