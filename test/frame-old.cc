@@ -19,7 +19,7 @@ using real = double;
 int main()
 {
     TestRecorder tr;
-    tr.section("frame matching - TensorIndex/Scalar");
+    tr.section("frame matching - undef-len-iota/Scalar");
     {
 // driver is highest rank, which is ra::_0 (1).
         constexpr auto e = ra::_0+1;
@@ -27,7 +27,7 @@ int main()
         static_assert(e.rank()==1, "bad rank");
         static_assert(e.len_s(0)==ra::DIM_BAD, "bad len");
     }
-    tr.section("frame matching - Unique/TensorIndex");
+    tr.section("frame matching - Unique/undef-len-iota");
     {
         ra::Unique<real, 2> c({3, 2}, ra::none);
         ra::Unique<real, 2> a({3, 2}, ra::none);
@@ -44,7 +44,7 @@ int main()
                  c.iter(), ra::start(ra::_0), a.iter()));
         tr.test_eq(check, c);
     }
-    tr.section("frame matching - Unique/TensorIndex - TensorIndex can't be driving arg");
+    tr.section("frame matching - Unique/undef-len-iota - undef-len-iota can't be driving arg");
     {
         ra::Unique<real, 2> c({3, 2}, ra::none);
         ra::Unique<real, 2> a({3, 2}, ra::none);

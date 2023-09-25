@@ -14,7 +14,6 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
-template <int i> using TI = ra::TensorIndex<i>;
 using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
 
@@ -118,10 +117,10 @@ int main()
                 transpose<1, 0>(a).iter(),
                 ra::Small<int, 2, 3> { 1, 3, 5, 2, 4, 6 });
     }
-    tr.section("IO can handle tensorindex, too");
+    tr.section("IO can handle undef len iota, too");
     {
         iocheck(tr.info("output of expr (1)"),
-                ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), TI<0>()),
+                ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), ra::iota<0>()),
                 ra::Small<double, 3>{0, -1, -4});
     }
     tr.section("IO of var rank expression");

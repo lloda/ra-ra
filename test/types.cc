@@ -87,11 +87,11 @@ int main()
                  true, false, true, false, false);
         TESTPRED(decltype(ra::iota(5)),
                  true, false, true, false, false);
-        TESTPRED(ra::TensorIndex<0>,
+        TESTPRED(decltype(ra::iota<0>()),
                  true, false, true, false, false);
-        TESTPRED(ra::TensorIndex<0> const, // is_iterator but not IteratorConcept (see RA_IS_DEF)
+        TESTPRED(decltype(ra::iota<0>()) const, // is_iterator but not IteratorConcept (see RA_IS_DEF)
                  true, false, false, false, false);
-        TESTPRED(ra::TensorIndex<0> &,
+        TESTPRED(decltype(ra::iota<0>()) &,
                  true, false, true, false, false);
         TESTPRED(decltype(std::declval<ra::Small<int, 2>>()),
                  true, true, false, false, false);
@@ -166,9 +166,9 @@ int main()
 // a regression.
         static_assert(ra::is_zero_or_scalar<ra::Scalar<int>>, "bad");
         static_assert(!ra::is_ra_pos_rank<ra::Scalar<int>>, "bad");
-        static_assert(!ra::is_zero_or_scalar<ra::TensorIndex<0>>, "bad");
-        static_assert(ra::is_ra_pos_rank<ra::TensorIndex<0>>, "bad");
-        static_assert(ra::is_ra_pos_rank<ra::Expr<std::multiplies<>, std::tuple<ra::TensorIndex<0>, ra::Scalar<int>>>>, "bad");
+        static_assert(!ra::is_zero_or_scalar<decltype(ra::iota<0>())>, "bad");
+        static_assert(ra::is_ra_pos_rank<decltype(ra::iota<0>())>, "bad");
+        static_assert(ra::is_ra_pos_rank<ra::Expr<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
         static_assert(ra::is_ra_pos_rank<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
     tr.section("builtin arrays I");

@@ -57,18 +57,14 @@ int main()
 
     // Some special expressions, such as tensor indices, do not have a
     // shape. Therefore they need to be accompanied by some other expression
-    // that does have a shape, or the overall expression is not valid. That's
-    // why you can do
+    // that does have a shape, or the overall expression is not valid.
     {
-        ra::TensorIndex<0> i;
-        ra::TensorIndex<1> j;
+        constexpr auto i = ra::iota<0>();
+        constexpr auto j = ra::iota<1>();
+    // That's why you can do
         ra::Big<float, 2> X({3, 4}, i-j);
         cout << "\ni-j: " << X << endl;
-    }
     // but the following would be invalid:
-    {
-        ra::TensorIndex<0> i;
-        ra::TensorIndex<1> j;
         // ra::Big<float, 2> X = i-j; // no shape to construct X with
     }
     // Axis insertion lets you match arguments more flexibly than simple prefix matching.

@@ -36,12 +36,12 @@ checkbox [C-ct] flip TODO
       - [ ] rank >1 SmallArray
       - [ ] Small
       - [ ] Big
-    - [ ] Should be able to reshape iota (??) or show examples with TensorIndex,
-      maybe. One idea is to generalize View (so View<Iota>, etc.) which is
-      something that newra does. But as long as Container is parent of View,
-      conversion of (Container const &) into (View const &) forces us to have
-      const/nonconst overloads in View (instead of just relying on the constness
-      of (View::p). This is just a mess when View::p isn't a pointer.
+    - [ ] Should be able to reshape iota (??). One idea is to generalize View
+      (so View<Iota>, etc.) which is something that newra does. But as long as
+      Container is parent of View, conversion of (Container const &) into (View
+      const &) forces us to have const/nonconst overloads in View (instead of
+      just relying on the constness of (View::p). This is just a mess when
+      View::p isn't a pointer.
       - [ ] Fix relationship between Container and View [0/5]
         - [ ] forward const/nonconst overloads to View or ViewConst from here.
         - [ ] remove inheritance relationship of Container on View
@@ -114,7 +114,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
      size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
   11. [ ]
   12. [ ]
-  13. [ ] ra/ply.hh (i/o), ra/atom.hh, ra/bootstrap.hh, test/compatibility.cc.
+  13. [ ] ra/ply.hh (i/o), ra/core.hh, ra/bootstrap.hh, test/compatibility.cc.
       std::string used to be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want format(std::string_view) to print it as a foreign vector, so we have an exception for it there. As things stand, you can register it or not.
   14. [ ] CellBig needs to copy its Dimv in some cases, which also complicates View::iter<>. Problem is demonstrated in ra-5.cc.
   15. [ ] Conversion-to-scalar operators for dynamic-rank View().

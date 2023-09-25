@@ -18,7 +18,8 @@
 
 using std::cout, std::endl;
 
-void example1()
+void
+example1()
 {
     // Indirection using a list of coordinates
 
@@ -54,7 +55,8 @@ void example1()
     //     0         0         0         0
 }
 
-void example2()
+void
+example2()
 {
     // Cartesian-product indirection
 
@@ -84,7 +86,8 @@ void example2()
 
 }
 
-void example3()
+void
+example3()
 {
     // Simple 1-D indirection, using a STL container of int
 
@@ -100,7 +103,8 @@ void example3()
     // A = [          0         2         3         0         5 ]
 }
 
-void example4()
+void
+example4()
 {
     // Indirection using a list of rect domains (RectDomain<N> objects in Blitz++).
     // ra:: doesn't have those, so we fake it.
@@ -150,7 +154,8 @@ void example4()
     //  0  0  0  0  0  0  0
 }
 
-void example5()
+void
+example5()
 {
     // suppose you have the x coordinates in one array and the y coordinates in another array.
     ra::Big<int, 2> x({4, 4}, {0, 1, 2, 0, /* */ 0, 1, 2, 0, /*  */ 0, 1, 2, 0, /* */ 0, 1, 2, 0});
@@ -166,11 +171,21 @@ void example5()
     cout << "outer product selection: " << a(x, y) << endl;
 }
 
-void example6()
+void
+example6()
 {
     ra::Big<int, 1> v = { 1, 3, 4, 9, 15, 12, 0, 1, 15, 12, 0, 3, 4, 8 };
     constexpr char chmap[] = "0123456789ABCDEF";
     cout << format_array(map(ra::Big<char, 1>(chmap), v), "") << endl; // FIXME make ra::start(chmap) work
+}
+
+// from the manual on ra::iota()
+void
+example7()
+{
+    ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
+    ra::Big<int, 1> b = {1, 2, 3};
+    cout << (b + a(ra::iota())) << endl; // a(iota()) has undefined length
 }
 
 int main()
@@ -181,4 +196,5 @@ int main()
     example4();
     example5();
     example6();
+    example7();
 }

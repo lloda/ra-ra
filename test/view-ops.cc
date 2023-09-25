@@ -14,7 +14,6 @@
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-template <int i> using TI = ra::TensorIndex<i>;
 
 template <class A>
 void CheckReverse(TestRecorder & tr, A && a)

@@ -138,7 +138,7 @@ int main()
     {
 // see src/test/bench-from.cc for examples of higher-D.
     }
-    tr.section("TensorIndex / where TODO elsewhere");
+    tr.section("undef-len-iota / where TODO elsewhere");
     {
         Ureal<2> a({4, 4}, 1.);
         a(3, 3) = 7.;
@@ -150,7 +150,7 @@ int main()
         tr.test_eq(where(ra::_0==3 && ra::_1==3, 7., 1.), a);
     }
 // The implementation of from() uses FrameMatch / Reframe and can't handle this yet.
-    tr.section("TensorIndex<i> as subscript, using ra::Expr directly.");
+    tr.section("undef-len-iota<i> as subscript, using ra::Expr directly.");
     {
         auto i = ra::_0;
         auto j = ra::_1;
@@ -160,7 +160,7 @@ int main()
         tr.test_eq(i-j, a);
         tr.test_eq(j-i, b);
     }
-    tr.section("TensorIndex<i> as subscripts, 1 subscript TODO elsewhere");
+    tr.section("undef-len-iota<i> as subscripts, 1 subscript TODO elsewhere");
     {
         Ureal<1> a {1, 4, 2, 3};
         Ureal<1> b({4}, 0.);
@@ -170,7 +170,7 @@ int main()
         b(3-ra::_0) = a;
         tr.test_eq(Ureal<1> {3, 2, 4, 1}, b);
     }
-    tr.section("TODO TensorIndex<i> as subscripts, 2 subscript (case I)");
+    tr.section("TODO undef-len-iota<i> as subscripts, 2 subscript (case I)");
     {
         Ureal<2> a({4, 4}, ra::_0-ra::_1);
         Ureal<2> b({4, 4}, -99.);
@@ -178,7 +178,7 @@ int main()
         cout << b << endl;
         // b = a(ra::_0, ra::_0);
     }
-    tr.section("TODO TensorIndex<i> as subscripts, 2 subscript (case II)");
+    tr.section("TODO undef-len-iota<i> as subscripts, 2 subscript (case II)");
     {
         Ureal<2> a({4, 4}, ra::_0-ra::_1);
         Ureal<2> b({4, 4}, 0.);
@@ -187,7 +187,7 @@ int main()
 // TODO these instantiate flat() when they should not (FIXME was for old OldTensorIndex; recheck)
         // tr.info("by_index I").test(ra::by_index<decltype(a(ra::_1, ra::_0))>);
         // cout << ra::mp::ref<decltype(a(ra::_1, ra::_0))>::rank_s() << endl;
-// these don't work because a(j, i) has rank 3 = [(w=1)+1 + (w=0)+1] and so it drives, but tensorindex exprs shouldn't ever drive.
+// these don't work because a(j, i) has rank 3 = [(w=1)+1 + (w=0)+1] and so it drives, but undef len exprs shouldn't ever drive.
         // tr.info("by_index II").test(ra::by_index<decltype(b+a(ra::_1, ra::_0))>);
         // cout << ra::mp::ref<decltype(b+a(ra::_1, ra::_0))::T, 0>::rank_s() << endl;
         // cout << ra::mp::ref<decltype(b+a(ra::_1, ra::_0))::T, 1>::rank_s() << endl;

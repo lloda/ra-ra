@@ -14,7 +14,6 @@
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-template <int i> using TI = ra::TensorIndex<i>;
 
 template <class A>
 void CheckArrayOutput(TestRecorder & tr, A const & a, double * begin)
@@ -374,14 +373,14 @@ int main()
             ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, start(ra::_0), start(ra::_1)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
-// TODO Check this is an error (chosen driver is TI<2>, that can't drive) [ra42]
+// TODO Check this is an error (chosen driver is ra::iota<2>(), that can't drive) [ra42]
         // {
-        //     ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::TI<2>, ra::TI<1>));
+        //     ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
         //     cout << b << endl;
         // }
 // TODO Could this be made to bomb at compile time? [ra42]
         // {
-        //     ra::Unique<int> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::TI<2>, ra::TI<1>));
+        //     ra::Unique<int> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
         //     cout << b << endl;
         // }
     }

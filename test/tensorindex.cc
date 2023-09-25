@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file tensorindex.cc
-/// @brief Limitations of ra::TensorIndex.
+// ra-ra/test - Limitations of ra::iota<n>(), formerly TensorIndex.
 
 // (c) Daniel Llorens - 2015
 // This library is free software; you can redistribute it and/or modify it under
@@ -35,7 +34,7 @@ int main()
         z = map(A, i, i);
         tr.info("diagonal").test_eq(ra::Big<float, 1> {1, 0, 6, -4}, z);
 
-// generally expressions using undelimited subscript TensorIndex should use ra::map and not ra::from.
+// generally expressions using undefined len iota should use ra::map and not ra::from.
         B = 0.;
         B = map(A, i, j);
         tr.info("copy")

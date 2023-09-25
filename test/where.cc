@@ -60,7 +60,7 @@ int main()
         ra::Small<double, 2> q = 3 + pick(p, a0, a1);
         tr.test_eq(ra::Small<int, 2> { 4, 23 }, q);
     }
-    tr.section("pick with TensorIndex");
+    tr.section("pick with undefined len iota");
     {
         ra::Small<double, 2> a0 = { 1, 2 };
         ra::Small<double, 2> a1 = { 10, 20 };
@@ -100,7 +100,7 @@ int main()
         tr.test_eq(ra::Unique<int, 1> { 1, 2, 2, 1 }, ra::where(ra::Unique<bool, 1> { true, false, false, true }, 1, 2));
         tr.test_eq(ra::Unique<int, 1> { 17, 2, 3, 17 }
 , ra::where(ra::_0>0 && ra::_0<3, ra::Unique<int, 1> { 1, 2, 3, 4 }, 17));
-// [raop00] TensorIndex returs value; so where()'s lambda must also return value.
+// [raop00] undef len iota returs value; so where()'s lambda must also return value.
         tr.test_eq(ra::Unique<int, 1> { 1, 2, 4, 7 }, ra::where(ra::Unique<bool, 1> { true, false, false, true }, 2*ra::_0+1, 2*ra::_0));
 // Using frame matching... TODO directly with ==expr?
         ra::Unique<int, 2> a({4, 3}, ra::_0-ra::_1);
@@ -159,10 +159,9 @@ int main()
         // ra::where(ra::_0>0 && ra::_0<3, ra::_0, a) = 99;
         // ra::where(ra::_0>0 && ra::_0<3, a, ra::_0) = 99;
     }
-    tr.section("where with rvalue TensorIndex, fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
+    tr.section("where with rvalue iota<n>(), fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
     {
-        tr.test_eq(ra::Small<int, 2> {0, 1},
-                   ra::where(ra::Unique<bool, 1> { true, false }, ra::TensorIndex<0>(), ra::TensorIndex<0>()));
+        tr.test_eq(ra::Small<int, 2> {0, 1}, ra::where(ra::Unique<bool, 1> { true, false }, ra::iota<0>(), ra::iota<0>()));
         tr.test_eq(ra::Unique<int, 1> { 0, 2 }, ra::where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
     }
     tr.section("&& and || are short-circuiting");

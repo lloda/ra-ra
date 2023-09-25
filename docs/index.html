@@ -378,10 +378,9 @@ Next: <a href="#Extras" accesskey="n" rel="next">Extras</a>, Previous: <a href="
 <li><a href="#Rank-extension" accesskey="4">Rank extension</a></li>
 <li><a href="#Cell-iteration" accesskey="5">Cell iteration</a></li>
 <li><a href="#Slicing" accesskey="6">Slicing</a></li>
-<li><a href="#Special-objects" accesskey="7">Special objects</a></li>
-<li><a href="#Functions" accesskey="8">Functions</a></li>
-<li><a href="#The-rank-conjunction" accesskey="9">The rank conjunction</a></li>
-<li><a href="#Compatibility">Compatibility</a></li>
+<li><a href="#Functions" accesskey="7">Functions</a></li>
+<li><a href="#The-rank-conjunction" accesskey="8">The rank conjunction</a></li>
+<li><a href="#Compatibility" accesskey="9">Compatibility</a></li>
 <li><a href="#Extension">Extension</a></li>
 <li><a href="#Error-handling">Error handling</a></li>
 </ul>
@@ -778,7 +777,7 @@ iter&lt;1&gt;(c) = iter&lt;1&gt;(a) * iter&lt;1&gt;(b); // multiply (each item o
 <div class="section" id="Slicing">
 <div class="header">
 <p>
-Next: <a href="#Special-objects" accesskey="n" rel="next">Special objects</a>, Previous: <a href="#Cell-iteration" accesskey="p" rel="prev">Cell iteration</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Functions" accesskey="n" rel="next">Functions</a>, Previous: <a href="#Cell-iteration" accesskey="p" rel="prev">Cell iteration</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Slicing-1"></span><h3 class="section">2.6 Slicing</h3>
 
@@ -859,6 +858,37 @@ auto c = a(iota(3, 3));
 </pre><pre class="example">&rArr; a = {1, 2, 3}
 &rArr; a = {4, 5, 6}
 </pre></div>
+
+<span id="index-TensorIndex"></span>
+<p><code>iota()</code> by itself is an expression of rank 1 and undefined length. It must be used with other terms whose lengths are defined, so that the overall shape of the array expression can be determined. In general, <code>iota&lt;n&gt;()</code> is an array expression of rank <code>n</code>+1 that represents the <code>n</code>-th index of an array expression. This is similar to Blitz++&rsquo;s <code>TensorIndex</code>.
+</p>
+<p><code>ra::</code> offers the shortcut <code>ra::_0</code> for <code>ra::iota&lt;0&gt;()</code>, etc.
+</p>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int, 1&gt; v = {1, 2, 3};
+cout &lt;&lt; (v - ra::_0) &lt;&lt; endl; // { 1-0, 2-1, 3-2 }
+// cout &lt;&lt; (ra::_0) &lt;&lt; endl; // error: undefined length
+// cout &lt;&lt; (v - ra::_1) &lt;&lt; endl; // error: undefined length on axis 1
+ra::Big&lt;int, 2&gt; a({3, 2}, 0);
+cout &lt;&lt; (a + ra::_0 - ra::_1) &lt;&lt; endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
+</pre></div>
+
+<p>When undefined length <code>iota()</code> is used as a subscript by itself, the result isn&rsquo;t a <code>View</code>. This allows <code>view(iota())</code> to match with expressions of different lengths, as in the following example.
+</p><div class="example">
+<pre class="verbatim">ra::Big&lt;int, 1&gt; a = {1, 2, 3, 4, 5, 6};
+ra::Big&lt;int, 1&gt; b = {1, 2, 3};
+cout &lt;&lt; (b + a(iota())) &lt;&lt; endl; // a(iota()) is not a View
+</pre><pre class="example">-| 3
+2 4 6
+</pre></div>
+
+<p>Note the difference between
+</p><ul>
+<li> <code>ra::iota&lt;3&gt;()</code> —
+an expression of rank 4 and undefined length, representing a linear sequence over the tensor index of axis 3
+</li><li> <code>ra::iota(3)</code> ≡ <code>ra::iota&lt;0&gt;(3)</code> —
+an expression of rank 1, representing the sequence <code>0, 1, 2</code>.
+</li></ul>
 
 </dd></dl>
 
@@ -1015,38 +1045,12 @@ cout &lt;&lt; f(b(0, 0)) &lt;&lt; endl; // ok, automatic conversion from View&lt
 <hr>
 </div>
 </div>
-<div class="section" id="Special-objects">
-<div class="header">
-<p>
-Next: <a href="#Functions" accesskey="n" rel="next">Functions</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
-</div>
-<span id="Special-objects-1"></span><h3 class="section">2.7 Special objects</h3>
-
-<dl class="def">
-<dt id="index-TensorIndex_003cn_002c"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>TensorIndex&lt;n,</strong> <em>integer_type=ra::dim_t&gt;</em><a href='#index-TensorIndex_003cn_002c' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p><code>TensorIndex&lt;n&gt;</code> represents the <code>n</code>-th index of an array expression. <code>TensorIndex&lt;n&gt;</code> is itself an array expression of rank <code>n</code>-1 and length undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
-</p>
-<p><code>ra::</code> offers the shortcut <code>ra::_0</code> for <code>ra::TensorIndex&lt;0&gt;{}</code>, etc.
-</p></dd></dl>
-
-<div class="example">
-<pre class="verbatim">ra::Big&lt;int, 1&gt; v = {1, 2, 3};
-cout &lt;&lt; (v - ra::_0) &lt;&lt; endl; // { 1-0, 2-1, 3-2 }
-// cout &lt;&lt; (ra::_0) &lt;&lt; endl; // error: TensorIndex cannot drive array expression
-// cout &lt;&lt; (v - ra::_1) &lt;&lt; endl; // error: TensorIndex cannot drive array expression
-ra::Big&lt;int, 2&gt; a({3, 2}, 0);
-cout &lt;&lt; (a + ra::_0 - ra::_1) &lt;&lt; endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
-</pre></div>
-
-
-<hr>
-</div>
 <div class="section" id="Functions">
 <div class="header">
 <p>
-Next: <a href="#The-rank-conjunction" accesskey="n" rel="next">The rank conjunction</a>, Previous: <a href="#Special-objects" accesskey="p" rel="prev">Special objects</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#The-rank-conjunction" accesskey="n" rel="next">The rank conjunction</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Functions-1"></span><h3 class="section">2.8 Functions</h3>
+<span id="Functions-1"></span><h3 class="section">2.7 Functions</h3>
 
 <p>You don&rsquo;t need to use <a href="#Array-operations"><code>map</code></a> every time you want to do something with arrays in <code>ra::</code>. A number of array functions are already defined.
 </p>
@@ -1059,7 +1063,7 @@ Next: <a href="#The-rank-conjunction" accesskey="n" rel="next">The rank conjunct
 <li><a href="#Shortcut-reductions" accesskey="6">Shortcut reductions</a></li>
 </ul>
 <div class="subsection" id="Standard-scalar-operations">
-<h4 class="subsection">2.8.1 Standard scalar operations</h4>
+<h4 class="subsection">2.7.1 Standard scalar operations</h4>
 
 <p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
 Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <code>odd</code>, <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
@@ -1072,7 +1076,7 @@ Extending other scalar operations is straightforward; see <a href="#x_002dnew_00
 
 </div>
 <div class="subsection" id="Conditional-operations">
-<h4 class="subsection">2.8.2 Conditional operations</h4>
+<h4 class="subsection">2.7.2 Conditional operations</h4>
 
 <p><a href="#x_002dmap"><code>map</code></a> evaluates all of its arguments before passing them along to its operator. This isn&rsquo;t always what you want. The simplest example is <code>where(condition, iftrue, iffalse)</code>, which returns an expression that will evaluate <code>iftrue</code> when <code>condition</code> is true and <code>iffalse</code> otherwise.
 </p>
@@ -1106,7 +1110,7 @@ FIXME Do we want to expose ply(); this is the only example in the manual that us
 </p>
 </div>
 <div class="subsection" id="Special-operations">
-<h4 class="subsection">2.8.3 Special operations</h4>
+<h4 class="subsection">2.7.3 Special operations</h4>
 
 <p>Some operations are essentially scalar operations, but require special syntax and would need a lambda wrapper to be used with <code>map</code>. <code>ra::</code> comes with a few of these already defined.
 </p>
@@ -1114,7 +1118,7 @@ FIXME Do we want to expose ply(); this is the only example in the manual that us
 </p>
 </div>
 <div class="subsection" id="Elementwise-reductions">
-<h4 class="subsection">2.8.4 Elementwise reductions</h4>
+<h4 class="subsection">2.7.4 Elementwise reductions</h4>
 
 <p><code>ra::</code> defines the whole-array one-argument reductions <code>any</code>, <code>every</code>, <code>amax</code>, <code>amin</code>, <code>sum</code>, <code>prod</code> and the two-argument reductions <code>dot</code> and <code>cdot</code>. Note that <code>max</code> and <code>min</code> are two-argument scalar operations with array extensions, while <code>amax</code> and <code>amin</code> are reductions. <code>any</code> and <code>every</code> are short-circuiting.
 </p>
@@ -1150,7 +1154,7 @@ inline auto op_reduce(A &amp;&amp; a)
 </p>
 </div>
 <div class="subsection" id="Special-reductions">
-<h4 class="subsection">2.8.5 Special reductions</h4>
+<h4 class="subsection">2.7.5 Special reductions</h4>
 
 <p><code>ra::</code> defines the following special reductions.
 </p>
@@ -1158,7 +1162,7 @@ inline auto op_reduce(A &amp;&amp; a)
 </p>
 </div>
 <div class="subsection" id="Shortcut-reductions">
-<h4 class="subsection">2.8.6 Shortcut reductions</h4>
+<h4 class="subsection">2.7.6 Shortcut reductions</h4>
 
 <p>Some reductions do not need to traverse the whole array if a certain condition is encountered early. The most obvious ones are the reductions of <code>&amp;&amp;</code> and <code>||</code>, which <code>ra::</code> defines as <code>every</code> and <code>any</code>.
 </p>
@@ -1180,7 +1184,7 @@ inline auto op_reduce(A &amp;&amp; a)
 <p>
 Next: <a href="#Compatibility" accesskey="n" rel="next">Compatibility</a>, Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="The-rank-conjunction-1"></span><h3 class="section">2.9 The rank conjunction</h3>
+<span id="The-rank-conjunction-1"></span><h3 class="section">2.8 The rank conjunction</h3>
 
 <p>We have seen in <a href="#Cell-iteration">Cell iteration</a> that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. With the <a href="#x_002diter"><code>iter&lt;cell rank&gt;</code></a> construction, this ‘exploding’ is performed (notionally) on the argument; the operation of the array expression is applied blindly to these cells, whatever they turn out to be.
 </p>
@@ -1284,7 +1288,7 @@ for_each(ra::wrank&lt;1, 1, 2&gt;(ra::wrank&lt;1, 0, 1&gt;([](auto &amp;&amp; c,
 <p>
 Next: <a href="#Extension" accesskey="n" rel="next">Extension</a>, Previous: <a href="#The-rank-conjunction" accesskey="p" rel="prev">The rank conjunction</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Compatibility-1"></span><h3 class="section">2.10 Compatibility</h3>
+<span id="Compatibility-1"></span><h3 class="section">2.9 Compatibility</h3>
 
 <ul class="section-toc">
 <li><a href="#Using-other-C-and-C_002b_002b-types-with-ra_003a_003a" accesskey="1">Using other C and C++ types with <code>ra::</code></a></li>
@@ -1292,7 +1296,7 @@ Next: <a href="#Extension" accesskey="n" rel="next">Extension</a>, Previous: <a 
 <li><a href="#Using-ra_003a_003a-types-with-other-libraries" accesskey="3">Using <code>ra::</code> types with other libraries</a></li>
 </ul>
 <div class="subsection" id="Using-other-C-and-C_002b_002b-types-with-ra_003a_003a">
-<h4 class="subsection">2.10.1 Using other C and C++ types with <code>ra::</code></h4>
+<h4 class="subsection">2.9.1 Using other C and C++ types with <code>ra::</code></h4>
 
 <span id="index-foreign-type"></span>
 <p><code>ra::</code> accepts certain types from outside <code>ra::</code> (<em>foreign types</em>) as array expressions. Generally it is enough to mix the foreign type with a type from <code>ra::</code> and let deduction work.
@@ -1354,7 +1358,7 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 </p>
 </div>
 <div class="subsection" id="Using-ra_003a_003a-types-with-the-STL">
-<h4 class="subsection">2.10.2 Using <code>ra::</code> types with the STL</h4>
+<h4 class="subsection">2.9.2 Using <code>ra::</code> types with the STL</h4>
 
 <p>General <code>ra::</code> <a href="#Containers-and-views">views</a> provide STL compatible <code>ForwardIterator</code>s through the members <code>begin()</code> and <code>end()</code>. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
 </p>
@@ -1371,7 +1375,7 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 <span id="index-other-libraries_002c-interfacing-with"></span>
 </div>
 <div class="subsection" id="Using-ra_003a_003a-types-with-other-libraries">
-<h4 class="subsection">2.10.3 Using <code>ra::</code> types with other libraries</h4>
+<h4 class="subsection">2.9.3 Using <code>ra::</code> types with other libraries</h4>
 
 <p>When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on memory layout. <code>ra::</code> gives you access to its own memory layout and allows you to obtain an <code>ra::</code> view on any type of memory.
 </p>
@@ -1380,7 +1384,7 @@ std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 <li><a href="#The-bad-array-citizen" accesskey="2">The bad array citizen</a></li>
 </ul>
 <div class="subsubsection" id="The-good-array-citizen">
-<h4 class="subsubsection">2.10.3.1 The good array citizen</h4>
+<h4 class="subsubsection">2.9.3.1 The good array citizen</h4>
 
 
 <span id="index-BLIS"></span>
@@ -1469,7 +1473,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 </p>
 </div>
 <div class="subsubsection" id="The-bad-array-citizen">
-<h4 class="subsubsection">2.10.3.2 The bad array citizen</h4>
+<h4 class="subsubsection">2.9.3.2 The bad array citizen</h4>
 
 <p>Unfortunately there are many libraries that don&rsquo;t accept arbitrary array parameters, or that do strange things with particular values of lengths and/or steps.
 </p>
@@ -1517,14 +1521,14 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <p>
 Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Previous: <a href="#Compatibility" accesskey="p" rel="prev">Compatibility</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Extension-1"></span><h3 class="section">2.11 Extension</h3>
+<span id="Extension-1"></span><h3 class="section">2.10 Extension</h3>
 
 <ul class="section-toc">
 <li><a href="#New-scalar-types" accesskey="1">New scalar types</a></li>
 <li><a href="#New-array-operations" accesskey="2">New array operations</a></li>
 </ul>
 <div class="subsection" id="New-scalar-types">
-<h4 class="subsection">2.11.1 New scalar types</h4>
+<h4 class="subsection">2.10.1 New scalar types</h4>
 
 <p><code>ra::</code> will let you construct arrays of arbitrary types out of the box. This is the same functionality you get with e.g. <code>std::vector</code>.
 </p>
@@ -1557,7 +1561,7 @@ for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; (x.x + y.y) &l
 
 <span id="x_002dnew_002darray_002doperations"></span></div>
 <div class="subsection" id="New-array-operations">
-<h4 class="subsection">2.11.2 New array operations</h4>
+<h4 class="subsection">2.10.2 New array operations</h4>
 
 <p><code>ra::</code> provides array extensions for standard operations such as <code>+</code>, <code>*</code>, <code>cos</code> <a href="#x_002dscalar_002dops">and so on</a>. You can add array extensions for your own operations in the obvious way, with <a href="#x_002dmap"><code>map</code></a> (but note the namespace qualifiers):
 </p>
@@ -1596,7 +1600,7 @@ my_fun(A &amp;&amp; ... a)
 <p>
 Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Error-handling-1"></span><h3 class="section">2.12 Error handling</h3>
+<span id="Error-handling-1"></span><h3 class="section">2.11 Error handling</h3>
 
 <p>Error handling in <code>ra::</code> is controlled by two macros:
 </p>
@@ -2366,9 +2370,9 @@ ra::Big&lt;int, 1&gt; v3 {1, 2, 3};
 ra::Big&lt;int, 1&gt; v4 {1, 2, 3, 4};
 v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
 v4 += ra::ptr(p); // undefined, shape (4): bad access to p[3]
-// cout &lt;&lt; (ra::ptr(p)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ct error, expression has undefined shape
-cout &lt;&lt; (ra::ptr(p, 3)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok, prints { 1, 3, 5 }
-cout &lt;&lt; (ra::ptr(p, 4)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // undefined, bad access at p[4]
+// cout &lt;&lt; (ra::ptr(p)+ra::iota()) &lt;&lt; endl; // ct error, expression has undefined shape
+cout &lt;&lt; (ra::ptr(p, 3)+ra::iota()) &lt;&lt; endl; // ok, prints { 1, 3, 5 }
+cout &lt;&lt; (ra::ptr(p, 4)+ra::iota()) &lt;&lt; endl; // undefined, bad access at p[4]
 </pre></div>
 
 <p>Of course in this example one could simply have used <code>p</code> instead of <code>ra::ptr(p)</code>, since the array type retains shape information.
@@ -2376,7 +2380,7 @@ cout &lt;&lt; (ra::ptr(p, 4)+ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // undef
 <div class="example">
 <pre class="verbatim">v3 += p; // ok
 v4 += p; // error checked by ra::, shape clash (4) += (3)
-cout &lt;&lt; (p + ra::TensorIndex&lt;0&gt;{}) &lt;&lt; endl; // ok
+cout &lt;&lt; (p + ra::iota()) &lt;&lt; endl; // ok
 </pre></div>
 
 <p><code>ptr</code> isn&rsquo;t meant to be used with STL containers, which are converted to rank-1 expressions automatically of the right size automatically. See also <a href="#x_002dstart"><code>start</code></a>.
@@ -2808,6 +2812,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-swap"><code>swap</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-T">T</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-TensorIndex">TensorIndex</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose"><code>transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-U">U</th><td></td><td></td></tr>

@@ -14,7 +14,6 @@
 #include "ra/complex.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-template <int i> using TI = ra::TensorIndex<i>;
 using real = double;
 
 struct Never
@@ -254,12 +253,12 @@ int main()
         tr.test_eq(7, a[0]);
         tr.test_eq(7, a[1]);
         tr.test_eq(7, a[2]);
-        ply(expr([](real & a, int b) { a = b; }, a.iter(), TI<0>()));
+        ply(expr([](real & a, int b) { a = b; }, a.iter(), ra::iota<0>()));
         tr.test_eq(0, a[0]);
         tr.test_eq(1, a[1]);
         tr.test_eq(2, a[2]);
 // TODO Check that these give ct error. Not clear that the second one should...
-        // ply(expr([](int b) { cout << b << endl; }, TI<0>()));
+        // ply(expr([](int b) { cout << b << endl; }, ra::iota<0>()));
         // ply(expr([](int b) { cout << b << endl; }, ra::scalar(3)));
     }
     tr.section("traversal - rank matching - Unique/Unique 1");

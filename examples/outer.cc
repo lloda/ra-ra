@@ -17,8 +17,8 @@ int main()
     x = { 1, 2, 3, 4 };
     y = { 1, 0, 0, -1 };
 
-    ra::TensorIndex<0> i;
-    ra::TensorIndex<1> j;
+    constexpr auto i = ra::iota<0>();
+    constexpr auto j = ra::iota<1>();
 
     A = x(i) * y(j);
 

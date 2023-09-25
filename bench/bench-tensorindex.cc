@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/bench - TensorIndex.
+// ra-ra/bench - Iota used as Blitz++'s TensorIndex.
 
 // (c) Daniel Llorens - 2019-2020
 // This library is free software; you can redistribute it and/or modify it under
@@ -21,17 +21,17 @@ int main()
     {
         ra::Big<int, 1> a = {0, 0, 0};
         ra::ply(map([](auto && i) { std::cout << "i: " << i << std::endl; },
-                    a+ra::TensorIndex<0> {}));
+                    a+ra::iota<0>()));
         ra::ply_ravel(map([](auto && i) { std::cout << "i: " << i << std::endl; },
-                          a+ra::TensorIndex<0> {}));
+                          a+ra::iota<0>()));
     }
     // rank 2
     {
         ra::Big<int, 2> a = {{0, 0, 0}, {0, 0, 0}};
         ra::ply(map([](auto && i, auto && j) { std::cout << "i: " << i << ", " << j << std::endl; },
-                    a+ra::TensorIndex<0> {}, a+ra::TensorIndex<1> {}));
+                    a+ra::iota<0>(), a+ra::iota<1>()));
         ra::ply_ravel(map([](auto && i, auto && j) { std::cout << "i: " << i << ", " << j << std::endl; },
-                          a+ra::TensorIndex<0> {}, a+ra::TensorIndex<1> {}));
+                          a+ra::iota<0>(), a+ra::iota<1>()));
     }
     // benchmark
     auto taking_view =
@@ -41,14 +41,14 @@ int main()
                       {
                           int c = 0;
                           ra::ply(ra::map([&c](auto && i, auto && j) { c += 2*i-j; },
-                                          a+ra::TensorIndex<0> {}, a+ra::TensorIndex<1> {}));
+                                          a+ra::iota<0>(), a+ra::iota<1>()));
                           return c;
                       };
             auto fb = [&a]()
                       {
                           int c = 0;
                           ra::ply_ravel(ra::map([&c](auto && i, auto && j) { c += 2*i-j; },
-                                                a+ra::TensorIndex<0> {}, a+ra::TensorIndex<1> {}));
+                                                a+ra::iota<0>(), a+ra::iota<1>()));
                           return c;
                       };
 

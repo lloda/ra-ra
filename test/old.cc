@@ -61,7 +61,7 @@ template <class ... P> constexpr int driver_index = mp::indexof<pick_driver, std
 } // namespace ra
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-template <int i> using TI = ra::TensorIndex<i>;
+template <int i> using TI = decltype(ra::iota<i>());
 template <int i> using UU = decltype(std::declval<ra::Unique<double, i>>().iter());
 using SM1 = decltype(std::declval<ra::Small<double, 2>>().iter());
 using SM2 = decltype(std::declval<ra::Small<double, 2, 2>>().iter());
@@ -91,7 +91,7 @@ int main()
 // prefer the larger rank.
         static_assert(ra::driver_index<SS, UU<1>> ==1, "bad match 2a");
         static_assert(ra::driver_index<UU<1>, SS> ==0, "bad match 2b");
-// never choose TensorIndex as driver.
+// never choose undef len expression as driver.
         static_assert(ra::pick_driver<UU<2>, TI<0>>::value==0, "bad match 3a");
         static_assert(ra::pick_driver<TI<0>, UU<2>>::value==1, "bad match 3b");
 // static size/rank identical; prefer the first.

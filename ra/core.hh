@@ -300,8 +300,6 @@ struct Iota
     }
 };
 
-template <int w> using TensorIndex = Iota<w, dim_t, dim_c<DIM_BAD>, dim_c<1>>;
-
 template <class T>
 constexpr auto
 default_1()
@@ -327,7 +325,7 @@ iota(N && n = N {}, O && org = 0, S && s = default_1<S>())
     return Iota<w, OO, NN, SS> { std::forward<O>(org), std::forward<N>(n), std::forward<S>(s) };
 }
 
-#define DEF_TENSORINDEX(w) constexpr TensorIndex<w> JOIN(_, w);
+#define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 

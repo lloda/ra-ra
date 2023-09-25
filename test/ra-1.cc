@@ -22,8 +22,6 @@ using std_int3 = std::array<int, 3>;
 using std_int2 = std::array<int, 2>;
 using ra::mp::int_list;
 
-template <int i> using TI = ra::TensorIndex<i>;
-
 template <class AA>
 void CheckPlyReverse1(TestRecorder & tr, AA && a)
 {
@@ -132,7 +130,7 @@ int main()
         auto sum2 = [](int2 const i, int2 const j, int2 & x) { x = { i[0]+j[0], i[1]+j[1] }; };
         A2of2 A({2, 3}, { {1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6} });
         ply(ra::expr([](int2 & a, int i, int j) { int k = i*3+j; a = {k, k}; },
-                     A.iter(), TI<0>(), TI<1>()));
+                     A.iter(), ra::iota<0>(), ra::iota<1>()));
         A2of2 B({2, 3}, ra::scalar(int2 {0, 0}));
         cout << "A: " << A << endl;
         cout << "B: " << B << endl;

@@ -148,7 +148,7 @@ int main()
         };
 
 // See test/wrank.cc "outer product variants" for the logic.
-// TODO based on this, allow a Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k). Maybe using TensorIndex now that that works with ply_ravel.
+// TODO based on this, allow a Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k).
     auto gemm_reduce_k = [&](auto const & a, auto const & b)
         {
             dim_t const M = a.len(0);

@@ -796,6 +796,41 @@ auto c = a(iota(3, 3));
 @result{} a = @{4, 5, 6@}
 @end example
 
+@cindex TensorIndex
+@code{iota()} by itself is an expression of rank 1 and undefined length. It must be used with other terms whose lengths are defined, so that the overall shape of the array expression can be determined. In general, @code{iota<n>()} is an array expression of rank @code{n}+1 that represents the @code{n}-th index of an array expression. This is similar to Blitz++'s @code{TensorIndex}.
+
+@code{ra::} offers the shortcut @code{ra::_0} for @code{ra::iota<0>()}, etc.
+
+@example
+@verbatim
+ra::Big<int, 1> v = {1, 2, 3};
+cout << (v - ra::_0) << endl; // { 1-0, 2-1, 3-2 }
+// cout << (ra::_0) << endl; // error: undefined length
+// cout << (v - ra::_1) << endl; // error: undefined length on axis 1
+ra::Big<int, 2> a({3, 2}, 0);
+cout << (a + ra::_0 - ra::_1) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
+@end verbatim
+@end example
+
+When undefined length @code{iota()} is used as a subscript by itself, the result isn't a @code{View}. This allows @code{view(iota())} to match with expressions of different lengths, as in the following example.
+@example
+@verbatim
+ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
+ra::Big<int, 1> b = {1, 2, 3};
+cout << (b + a(iota())) << endl; // a(iota()) is not a View
+@end verbatim
+@print{} 3
+2 4 6
+@end example
+
+Note the difference between
+@itemize
+@item @code{ra::iota<3>()} —
+an expression of rank 4 and undefined length, representing a linear sequence over the tensor index of axis 3
+@item @code{ra::iota(3)} ≡ @code{ra::iota<0>(3)} —
+an expression of rank 1, representing the sequence @code{0, 1, 2}.
+@end itemize
+
 @end deffn
 
 @anchor{x-all}
@@ -960,30 +995,6 @@ cout << f(b(0, 0)) << endl; // ok, automatic conversion from View<T> to T &
 @end verbatim
 @end example
 
-
-@c ------------------------------------------------
-@node Special objects
-@section Special objects
-@c ------------------------------------------------
-
-@deffn @w{Special object} TensorIndex<n, integer_type=ra::dim_t>
-@code{TensorIndex<n>} represents the @code{n}-th index of an array expression. @code{TensorIndex<n>} is itself an array expression of rank @code{n}-1 and length undefined. It must be used with other terms whose dimensions are defined, so that the overall shape of the array expression can be determined.
-
-@code{ra::} offers the shortcut @code{ra::_0} for @code{ra::TensorIndex<0>@{@}}, etc.
-@end deffn
-
-@example
-@verbatim
-ra::Big<int, 1> v = {1, 2, 3};
-cout << (v - ra::_0) << endl; // { 1-0, 2-1, 3-2 }
-// cout << (ra::_0) << endl; // error: TensorIndex cannot drive array expression
-// cout << (v - ra::_1) << endl; // error: TensorIndex cannot drive array expression
-ra::Big<int, 2> a({3, 2}, 0);
-cout << (a + ra::_0 - ra::_1) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
-@end verbatim
-@end example
-
-@c FIXME the rest
 
 @c ------------------------------------------------
 @node Functions
@@ -2298,9 +2309,9 @@ ra::Big<int, 1> v3 {1, 2, 3};
 ra::Big<int, 1> v4 {1, 2, 3, 4};
 v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
 v4 += ra::ptr(p); // undefined, shape (4): bad access to p[3]
-// cout << (ra::ptr(p)+ra::TensorIndex<0>{}) << endl; // ct error, expression has undefined shape
-cout << (ra::ptr(p, 3)+ra::TensorIndex<0>{}) << endl; // ok, prints { 1, 3, 5 }
-cout << (ra::ptr(p, 4)+ra::TensorIndex<0>{}) << endl; // undefined, bad access at p[4]
+// cout << (ra::ptr(p)+ra::iota()) << endl; // ct error, expression has undefined shape
+cout << (ra::ptr(p, 3)+ra::iota()) << endl; // ok, prints { 1, 3, 5 }
+cout << (ra::ptr(p, 4)+ra::iota()) << endl; // undefined, bad access at p[4]
 @end verbatim
 @end example
 
@@ -2310,7 +2321,7 @@ Of course in this example one could simply have used @code{p} instead of @code{r
 @verbatim
 v3 += p; // ok
 v4 += p; // error checked by ra::, shape clash (4) += (3)
-cout << (p + ra::TensorIndex<0>{}) << endl; // ok
+cout << (p + ra::iota()) << endl; // ok
 @end verbatim
 @end example
 

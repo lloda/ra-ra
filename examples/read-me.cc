@@ -84,9 +84,9 @@ int main()
     tr.section("rank iterators");
 // Iterators over cells of arbitrary rank.
     {
-        ra::TensorIndex<0> i;
-        ra::TensorIndex<1> j;
-        ra::TensorIndex<2> k;
+        constexpr auto i = ra::iota<0>();
+        constexpr auto j = ra::iota<1>();
+        constexpr auto k = ra::iota<2>();
         ra::Big<float, 3> A({2, 3, 4}, i+j+k);
         ra::Big<float, 2> B({2, 3}, 0);
         cout << "A: " << A << "\n\n";
@@ -139,11 +139,6 @@ int main()
 // resulting expression can still be written on.
         B(I) = ra::Big<char, 2> {{'x', 'y'}, {'z', 'w'}};
         cout << "B: " << B << endl;
-    }
-    // A tensor-index object as in Blitz++ (with some differences).
-    tr.section("tensorindex");
-    {
-// as shown above.
     }
     tr.section("STL compat");
     {
