@@ -49,7 +49,6 @@
 namespace ra {
 
 constexpr bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
-constexpr bool inside(dim_t i, dim_t a, dim_t b) { return i>=a && i<b; }
 
 
 // --------------------
@@ -133,7 +132,6 @@ size(V const & v)
     }
 }
 
-// Avoid using for matching or agreement check.
 // operator<< depends on this returning a concrete type.
 template <class V>
 constexpr decltype(auto)
