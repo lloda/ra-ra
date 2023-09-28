@@ -325,7 +325,7 @@ struct View
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
             return data()[select_loop(nullptr, 0, i ...)];
-        } else if constexpr ((beatable<I>.value && ...)) {
+        } else if constexpr ((beatable<I>.rt && ...)) {
             constexpr rank_t extended = (0 + ... + beatable<I>.add);
             View<T, rank_sum(RANK, extended)> sub;
             rank_t subrank = rank()+extended;

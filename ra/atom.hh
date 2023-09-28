@@ -256,22 +256,23 @@ vector(V && v)
 // Sequence and IteratorConcept for same. Iota isn't really a terminal, but its exprs must all have rank 0.
 // FIXME w is a custom Reframe mechanism inherited from TensorIndex. Generalize/unify
 // FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
-template <int w, class O, class N, class S>
+template <int w, class O, class N_, class S_>
 struct Iota
 {
+    using N = std::decay_t<N_>;
+    using S = std::decay_t<S_>;
+
     static_assert(w>=0);
     static_assert(is_constant<S> || 0==rank_s<S>());
     static_assert(is_constant<N> || 0==rank_s<N>());
     constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
-    constexpr static dim_t ss = [] { if constexpr (is_constant<S>) { return S::value; } else { return DIM_ANY; } }();
     static_assert((!is_constant<N> && nn==DIM_ANY) || nn>=0 || nn==DIM_BAD);
-    static_assert((!is_constant<S> && ss==DIM_ANY) || ss>=0);
 
     O i = {};
     [[no_unique_address]] N const n = {};
     [[no_unique_address]] S const s = {};
 
-    constexpr static O gets() requires (is_constant<S>) { return ss; }
+    constexpr static O gets() requires (is_constant<S>) { return S::value; }
     constexpr O gets() const requires (!is_constant<S>) { return s; }
 
     struct Flat

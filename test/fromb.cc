@@ -20,6 +20,48 @@ using Vint = ra::Unique<int, 1>;
 int main()
 {
     TestRecorder tr(std::cout);
+    tr.section("beating Small with static iota");
+    {
+        ra::Small<int, 10, 10> a = ra::_1 + 10*ra::_0;
+        {
+            auto b = a(3, ra::all);
+            tr.test_eq(ra::Small<int, 10>(30+ra::_0), b);
+            tr.test_eq(ra::scalar(a.data()+30), ra::scalar(b.data()));
+        }
+        {
+            auto b = a(ra::iota(ra::int_c<4>()));
+            tr.test_eq(ra::Small<int, 4, 10>(ra::_1 + 10*ra::_0), b);
+            tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
+        }
+        {
+            auto b = a(ra::iota(ra::int_c<4>(), 4));
+            tr.test_eq(ra::Small<int, 4, 10>(ra::_1 + 10*(ra::_0+4)), b);
+            tr.test_eq(ra::scalar(a.data()+40), ra::scalar(b.data()));
+        }
+        {
+            auto b = a(3, ra::iota(ra::int_c<5>(), 4));
+            tr.test_eq(ra::Small<int, 5>(30+ra::_0+4), b);
+            tr.test_eq(ra::scalar(a.data()+30+4), ra::scalar(b.data()));
+        }
+        {
+            auto b = a(ra::all, ra::iota(ra::int_c<4>(), 2, ra::int_c<2>()));
+            tr.test_eq(ra::Small<int, 10, 4>(10*ra::_0 + 2*(1+ra::_1)), b);
+            tr.test_eq(ra::scalar(a.data()+2), ra::scalar(b.data()));
+        }
+        {
+            auto b = a(ra::iota(ra::int_c<3>(), 1, ra::int_c<2>()),
+                       ra::iota(ra::int_c<2>(), 2, ra::int_c<3>()));
+            tr.test_eq(ra::Small<int, 3, 2>(10*(1+2*ra::_0) + 2+ra::_1*3), b);
+            tr.test_eq(ra::scalar(a.data()+12), ra::scalar(b.data()));
+        }
+        {
+            auto b = a(ra::iota(ra::int_c<3>(), 9, ra::int_c<-2>()),
+                       ra::iota(ra::int_c<2>(), 2, ra::int_c<3>()));
+            tr.test_eq(ra::Small<int, 3, 2>(10*(9-2*ra::_0) + 2+ra::_1*3), b);
+            tr.test_eq(ra::scalar(a.data()+92), ra::scalar(b.data()));
+        }
+// FIXME static iota(expr(ra::len) ...)
+    }
     tr.section("Iota<T> is beatable for any integral T");
     {
         Ureal<2> a({4, 4}, 0.);
@@ -79,7 +121,7 @@ int main()
     }
     tr.section("beatable multi-axis selectors, var size");
     {
-        static_assert(ra::beatable<ra::dots_t<0>>.value, "dots_t<0> is beatable");
+        static_assert(ra::beatable<ra::dots_t<0>>.rt, "dots_t<0> is beatable");
         auto test = [&tr](auto && a)
         {
             tr.info("a(ra::dots<0>, ...)").test_eq(a(0), a(ra::dots<0>, 0));
@@ -109,7 +151,7 @@ int main()
     }
     tr.section("insert, var size");
     {
-        static_assert(ra::beatable<ra::insert_t<1>>.value, "insert_t<1> is beatable");
+        static_assert(ra::beatable<ra::insert_t<1>>.rt, "insert_t<1> is beatable");
         ra::Big<int, 3> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::insert<0> ...)").test_eq(a(0), a(ra::insert<0>, 0));
         ra::Big<int, 4> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
@@ -126,7 +168,7 @@ int main()
     }
     tr.section("insert, var rank");
     {
-        static_assert(ra::beatable<ra::insert_t<1>>.value, "insert_t<1> is beatable");
+        static_assert(ra::beatable<ra::insert_t<1>>.rt, "insert_t<1> is beatable");
         ra::Big<int> a({2, 3, 4}, ra::_0*100 + ra::_1*10 + ra::_2);
         tr.info("a(ra::insert<0> ...)").test_eq(a(0), a(ra::insert<0>, 0));
         ra::Big<int> a1({1, 2, 3, 4}, ra::_1*100 + ra::_2*10 + ra::_3);
@@ -140,7 +182,7 @@ int main()
     }
     tr.section("mix insert + dots");
     {
-        static_assert(ra::beatable<ra::insert_t<1>>.value, "insert_t<1> is beatable");
+        static_assert(ra::beatable<ra::insert_t<1>>.rt, "insert_t<1> is beatable");
         auto test = [&tr](auto && a, auto && b)
         {
             tr.info("a(ra::insert<0>, ra::dots<3>)").test_eq(a(ra::insert<0>, ra::dots<3>), a(ra::insert<0>, ra::dots<>));

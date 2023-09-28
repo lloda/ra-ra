@@ -118,18 +118,21 @@ template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
 struct beatable_t
 {
-    bool value, value_s; // beatable at all and statically, e.g. in Small
+    bool rt, ct; // beatable at all and statically, e.g. in Small
     int src, dst, add; // axes on src, dst, and dst-src
 };
 
 template <class I> constexpr beatable_t beatable_def
-    = { .value=is_scalar_index<I>, .value_s=is_scalar_index<I>, .src=1, .dst=0, .add=-1 };
-template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .value=(DIM_BAD!=I::nn), .value_s = false, .src=1, .dst=1, .add=0 };
+    = { .rt=is_scalar_index<I>, .ct=is_scalar_index<I>, .src=1, .dst=0, .add=-1 };
+
 template <int n> constexpr beatable_t beatable_def<dots_t<n>>
-    = { .value=true, .value_s = true, .src=n, .dst=n, .add=0 };
+    = { .rt=true, .ct = true, .src=n, .dst=n, .add=0 };
+
 template <int n> constexpr beatable_t beatable_def<insert_t<n>>
-    = { .value=true, .value_s = true, .src=0, .dst=n, .add=n };
+    = { .rt=true, .ct = true, .src=0, .dst=n, .add=n };
+
+template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
+    = { .rt=(DIM_BAD!=I::nn), .ct=(is_constant<typename I::N> && is_constant<typename I::N>), .src=1, .dst=1, .add=0 };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
@@ -279,7 +282,7 @@ struct FilterDims
     using steps = steps_;
 };
 
-template <class lens_, class steps_, class I0, class ... I>
+template <class lens_, class steps_, class I0, class ... I> requires (!is_iota<I0>)
 struct FilterDims<lens_, steps_, I0, I ...>
 {
     constexpr static bool stretch = (beatable<I0>.dst==DIM_BAD);
@@ -289,6 +292,16 @@ struct FilterDims<lens_, steps_, I0, I ...>
     using next = FilterDims<mp::drop<lens_, src>, mp::drop<steps_, src>, I ...>;
     using lens = mp::append<mp::take<lens_, dst>, typename next::lens>;
     using steps = mp::append<mp::take<steps_, dst>, typename next::steps>;
+};
+
+template <class lens_, class steps_, class I0, class ... I> requires (is_iota<I0>)
+struct FilterDims<lens_, steps_, I0, I ...>
+{
+    constexpr static int dst = beatable<I0>.dst;
+    constexpr static int src = beatable<I0>.src;
+    using next = FilterDims<mp::drop<lens_, src>, mp::drop<steps_, src>, I ...>;
+    using lens = mp::append<mp::int_list<I0::nn>, typename next::lens>;
+    using steps = mp::append<mp::int_list<(mp::ref<steps_, 0>::value * I0::gets())>, typename next::steps>;
 };
 
 template <template <class ...> class Child_, class T_, class lens_, class steps_>
@@ -314,15 +327,15 @@ struct SmallBase
     constexpr static dim_t step(int k) { return ssteps[k]; }
     constexpr static decltype(auto) shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(slens.data()); }
 
-// allowing rank 1 for coord types
-    constexpr static bool convertible_to_scalar = (size()==1); // rank()==0 || (rank()==1 && size()==1);
+    constexpr static bool convertible_to_scalar = (size()==1); // allowing rank 1 for coord types
 
     template <int k>
     constexpr static dim_t
     select(dim_t i0)
     {
-        RA_CHECK(inside(i0, slens[k]), "i0 ", i0, " len0 ", slens[k]);
-        return i0*ssteps[k];
+        RA_CHECK(inside(i0, slens[k]),
+                 "Out of range on axis ", k, " len ", slens[k], ": ", i0, ".");
+        return ssteps[k]*i0;
     };
 
     template <int k, int n>
@@ -330,6 +343,20 @@ struct SmallBase
     select(dots_t<n> i0)
     {
         return 0;
+    }
+
+    template <int k, class I> requires (is_iota<std::decay_t<I>>)
+    constexpr static dim_t
+    select(I i0)
+    {
+// FIXME just use std::abs in c++23 :-/
+        if constexpr ((i0.s<0 ? -1 : +1)*i0.s*i0.n > slens[k]) {
+            static_assert(mp::always_false<I>, "Out of range.");
+        } else {
+            RA_CHECK(inside(i0.i, slens[k]) && inside(i0.i+(i0.n-1)*i0.s, slens[k]),
+                     "Out of range on axis ", k, " len ", slens[k], ": ", i0, ".");
+        }
+        return ssteps[k]*i0.i;
     }
 
     template <int k>
@@ -356,8 +383,8 @@ struct SmallBase
     {                                                                   \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {         \
             return data()[select_loop<0>(i ...)];                       \
-        } else if constexpr ((beatable<I>.value_s && ...)) {            \
-            using FD = FilterDims<lens, steps, I ...>;                  \
+        } else if constexpr ((beatable<I>.ct && ...)) {                 \
+            using FD = FilterDims<lens, steps, std::decay_t<I> ...>;    \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> (data()+select_loop<0>(i ...)); \
         } else { /* TODO partial beating */                             \
             return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...); \
@@ -377,14 +404,12 @@ struct SmallBase
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
             (data()+indexer0::shorter<lens, steps>(i));                 \
     }                                                                   \
-    /* TODO support s(static ra::iota) */                               \
+    /* vestigial, maybe remove if int_c becomes easier to use */        \
     template <int ss, int oo=0>                                         \
     constexpr auto                                                      \
     as() CONST                                                          \
     {                                                                   \
-        static_assert(rank()>=1, "bad rank for as<>");                  \
-        static_assert(ss>=0 && oo>=0 && ss+oo<=size(), "bad size for as<>"); \
-        return SmallView<T CONST, mp::cons<int_c<ss>, mp::drop1<lens>>, steps>(this->data()+oo*this->step(0)); \
+        return operator()(ra::iota(ra::int_c<ss>(), oo));               \
     }                                                                   \
     T CONST &                                                           \
     back() CONST                                                        \
