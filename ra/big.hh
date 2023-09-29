@@ -267,7 +267,8 @@ struct View
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
     {
-        RA_CHECK(inside(i, dimv[k].len), " i ", i, " in axis of len[", k, "] ", dimv[k].len);
+        RA_CHECK(inside(i, dimv[k].len),
+                 "Out of range on axis ", k, " len ", dimv[k].len, ": ", i, ".");
         return dimv[k].step*i;
     }
 
@@ -276,7 +277,7 @@ struct View
     select(Dim * dim, int k, I i) const
     {
         RA_CHECK((inside(i.i, dimv[k].len) && inside(i.i+(i.n-1)*i.s, dimv[k].len)) || (i.n==0 && i.i<=dimv[k].len),
-                 "iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "] ", dimv[k].len);
+                 "Out of range for len[", k, "]=", dimv[k].len, ": iota [", i.n, " ", i.i, " ", i.s, "].");
         *dim = { .len = i.n, .step = dimv[k].step * i.s };
         return dimv[k].step*i.i;
     }

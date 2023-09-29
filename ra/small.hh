@@ -331,32 +331,31 @@ struct SmallBase
 
     template <int k>
     constexpr static dim_t
-    select(dim_t i0)
+    select(dim_t i)
     {
-        RA_CHECK(inside(i0, slens[k]),
-                 "Out of range on axis ", k, " len ", slens[k], ": ", i0, ".");
-        return ssteps[k]*i0;
+        RA_CHECK(inside(i, slens[k]),
+                 "Out of range for len[", k, "]=", slens[k], ": ", i, ".");
+        return ssteps[k]*i;
     };
 
     template <int k, int n>
     constexpr static dim_t
-    select(dots_t<n> i0)
+    select(dots_t<n> i)
     {
         return 0;
     }
 
     template <int k, class I> requires (is_iota<std::decay_t<I>>)
     constexpr static dim_t
-    select(I i0)
+    select(I i)
     {
-// FIXME just use std::abs in c++23 :-/
-        if constexpr ((i0.s<0 ? -1 : +1)*i0.s*i0.n > slens[k]) {
+        if constexpr ((i.s<0 ? -1 : +1)*i.s*i.n > slens[k]) { // FIXME just use std::abs in c++23
             static_assert(mp::always_false<I>, "Out of range.");
         } else {
-            RA_CHECK(inside(i0.i, slens[k]) && inside(i0.i+(i0.n-1)*i0.s, slens[k]),
-                     "Out of range on axis ", k, " len ", slens[k], ": ", i0, ".");
+            RA_CHECK(inside(i.i, slens[k]) && inside(i.i+(i.n-1)*i.s, slens[k]),
+                     "Out of range for len[", k, "]=", slens[k], ": iota [", i.n, " ", i.i, " ", i.s, "]");
         }
-        return ssteps[k]*i0.i;
+        return ssteps[k]*i.i;
     }
 
     template <int k>

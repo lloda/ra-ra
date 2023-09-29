@@ -22,6 +22,18 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("beating Small with static iota");
     {
+        ra::Small<int, 10> a = ra::_0;
+        {
+            auto b = a(ra::iota(ra::int_c<4>()));
+            tr.test_eq(ra::Small<int, 4>(ra::_0), b);
+            tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
+        }
+        {
+            auto b = a(ra::iota(4));
+            tr.test_eq(ra::Small<int, 4>(ra::_0), b);
+        }
+    }
+    {
         ra::Small<int, 10, 10> a = ra::_1 + 10*ra::_0;
         {
             auto b = a(3, ra::all);
@@ -59,6 +71,16 @@ int main()
                        ra::iota(ra::int_c<2>(), 2, ra::int_c<3>()));
             tr.test_eq(ra::Small<int, 3, 2>(10*(9-2*ra::_0) + 2+ra::_1*3), b);
             tr.test_eq(ra::scalar(a.data()+92), ra::scalar(b.data()));
+        }
+// FIXME the unbeaten path caused by rt iota results in a nested rank expr.
+        {
+            cout << a(ra::iota(4)) << endl;
+            // tr.test_eq(ra::Small<int, 4, 10>(ra::_1 + 10*ra::_0), a(ra::iota(4)));
+        }
+// FIXME the unbeaten path caused by rt iota fails bc ra::all isn't an expr, just a 'special object' for subscripts. So we can't even print.
+        {
+            // cout << a(ra::all, ra::iota(4)) << endl;
+            // tr.test_eq(ra::Small<int, 10, 4>(ra::_1 + 10*ra::_0), a(ra::all, ra::iota(4)));
         }
 // FIXME static iota(expr(ra::len) ...)
     }
