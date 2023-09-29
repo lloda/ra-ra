@@ -131,8 +131,14 @@ template <int n> constexpr beatable_t beatable_def<dots_t<n>>
 template <int n> constexpr beatable_t beatable_def<insert_t<n>>
     = { .rt=true, .ct = true, .src=0, .dst=n, .add=n };
 
+template <class I> struct is_constant_iota
+{
+    using Ilen = std::decay_t<decltype(with_len(ic<1>, std::declval<I>()))>; // arbitrary constant len
+    constexpr static bool value = is_constant<typename Ilen::N> && is_constant<typename Ilen::S>;
+};
+
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .rt=(DIM_BAD!=I::nn), .ct=(is_constant<typename I::N> && is_constant<typename I::N>), .src=1, .dst=1, .add=0 };
+    = { .rt=(DIM_BAD!=I::nn), .ct=is_constant_iota<I>::value, .src=1, .dst=1, .add=0 };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
@@ -141,7 +147,7 @@ constexpr decltype(auto)
 maybe_len(V && v)
 {
     if constexpr (v.len_s(k)>=0) {
-        return int_c<v.len(k)> {};
+        return ic<v.len(k)>;
     } else {
         return v.len(k);
     }
@@ -312,7 +318,7 @@ struct SmallBase
     using T = T_;
 
     using Child = Child_<T, lens, steps>;
-    template <class TT> using BadDimension = int_c<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
+    template <class TT> using BadDimension = ic_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps."); // TODO static check on steps.
 
@@ -338,14 +344,7 @@ struct SmallBase
         return ssteps[k]*i;
     };
 
-    template <int k, int n>
-    constexpr static dim_t
-    select(dots_t<n> i)
-    {
-        return 0;
-    }
-
-    template <int k, class I> requires (is_iota<std::decay_t<I>>)
+    template <int k, class I> requires (is_iota<I>)
     constexpr static dim_t
     select(I i)
     {
@@ -360,9 +359,9 @@ struct SmallBase
         return ssteps[k]*i.i;
     }
 
-    template <int k>
+    template <int k, int n>
     constexpr static dim_t
-    select_loop()
+    select(dots_t<n> i)
     {
         return 0;
     }
@@ -372,8 +371,15 @@ struct SmallBase
     select_loop(I0 && i0, I && ... i)
     {
         constexpr int nn = (DIM_BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
-        return select<k>(with_len(int_c<slens[k]> {}, std::forward<I0>(i0)))
+        return select<k>(with_len(ic<slens[k]>, std::forward<I0>(i0)))
             + select_loop<k + nn>(std::forward<I>(i) ...);
+    }
+
+    template <int k>
+    constexpr static dim_t
+    select_loop()
+    {
+        return 0;
     }
 
 #define RA_CONST_OR_NOT(CONST)                                          \
@@ -382,8 +388,11 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
+        constexpr int stretch = (0 + ... + (beatable<I>.dst==DIM_BAD)); \
+        static_assert(stretch<=1, "Cannot repeat stretch index.");      \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {         \
             return data()[select_loop<0>(i ...)];                       \
+            /* FIXME with_len before this, cf is_constant_iota */       \
         } else if constexpr ((beatable<I>.ct && ...)) {                 \
             using FD = FilterDims<lens, steps, std::decay_t<I> ...>;    \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> (data() + select_loop<0>(i ...)); \
@@ -405,12 +414,12 @@ struct SmallBase
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
             (data()+indexer0::shorter<lens, steps>(i));                 \
     }                                                                   \
-    /* vestigial, maybe remove if int_c becomes easier to use */        \
+    /* vestigial, maybe remove if ic becomes easier to use */           \
     template <int ss, int oo=0>                                         \
     constexpr auto                                                      \
     as() CONST                                                          \
     {                                                                   \
-        return operator()(ra::iota(ra::int_c<ss>(), oo));               \
+        return operator()(ra::iota(ra::ic<ss>, oo));                    \
     }                                                                   \
     T CONST &                                                           \
     back() CONST                                                        \
@@ -633,7 +642,7 @@ RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typen
 template <class A, class i>
 struct axis_indices
 {
-    template <class T> using match_index = int_c<(T::value==i::value)>;
+    template <class T> using match_index = ic_t<(T::value==i::value)>;
     using I = mp::iota<mp::len<A>>;
     using type = mp::Filter_<mp::map<match_index, A>, I>;
 // allow dead axes (e.g. transpose<1>(rank 1 array)).
@@ -731,7 +740,7 @@ struct explode_divop
     template <class T> struct op_
     {
         static_assert((T::value/s)*s==T::value);
-        using type = int_c<T::value / s>;
+        using type = ic_t<T::value / s>;
     };
     template <class T> using op = typename op_<T>::type;
 };

@@ -30,7 +30,7 @@ len0(E && e)
     if constexpr (DIM_ANY==e.len_s(0)) {
         return e.len(0);
     } else {
-        return int_c<e.len_s(0)>();
+        return ic<e.len_s(0)>;
     }
 }
 

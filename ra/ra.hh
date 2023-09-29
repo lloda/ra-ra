@@ -49,12 +49,12 @@ from_partial(Op && op)
     if constexpr (drop==mp::len<II>) {
         return std::forward<Op>(op);
     } else {
-        return wrank(mp::append<mp::makelist<drop, int_c<0>>, mp::drop<II, drop>> {},
+        return wrank(mp::append<mp::makelist<drop, ic_t<0>>, mp::drop<II, drop>> {},
                      from_partial<II, drop+1>(std::forward<Op>(op)));
     }
 }
 
-template <class I> using index_rank = int_c<rank_s<I>()>;
+template <class I> using index_rank = ic_t<rank_s<I>()>;
 
 // TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
 template <class A, class ... I>

@@ -253,7 +253,7 @@ vector(V && v)
     if constexpr (constexpr dim_t s = size_s<V>(); DIM_ANY==s) {
         return ptr(std::begin(std::forward<V>(v)), std::ssize(v));
     } else {
-        return ptr(std::begin(std::forward<V>(v)), int_c<s> {});
+        return ptr(std::begin(std::forward<V>(v)), ic<s>);
     }
 }
 

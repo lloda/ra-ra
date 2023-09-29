@@ -7,11 +7,6 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifdef RA_DO_CHECK
-  #undef RA_DO_CHECK
-  #define RA_DO_CHECK 1 // kind of the point here
-#endif
-
 #include <iostream>
 #include <iterator>
 #include "ra/test.hh"
@@ -29,13 +24,20 @@ int main()
     {
         ra::Small<int, 10> a = ra::_0;
         {
-            auto b = a(ra::iota(ra::int_c<4>()));
+            auto b = a(ra::iota(ra::ic<4>));
             tr.test_eq(ra::Small<int, 4>(ra::_0), b);
             tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         }
         {
+            auto b = a(ra::iota(ra::len/2, 5));
+            tr.test_eq(ra::Small<int, 5>(ra::_0+5), b);
+            // FIXME see "static len is preserved" in len.cc
+            // tr.test_eq(ra::scalar(a.data()+5), ra::scalar(b.data()));
+        }
+        {
             auto b = a(ra::iota(4));
             tr.test_eq(ra::Small<int, 4>(ra::_0), b);
+            // not beaten
         }
     }
     {
@@ -46,34 +48,34 @@ int main()
             tr.test_eq(ra::scalar(a.data()+30), ra::scalar(b.data()));
         }
         {
-            auto b = a(ra::iota(ra::int_c<4>()));
+            auto b = a(ra::iota(ra::ic<4>));
             tr.test_eq(ra::Small<int, 4, 10>(ra::_1 + 10*ra::_0), b);
             tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         }
         {
-            auto b = a(ra::iota(ra::int_c<4>(), 4));
+            auto b = a(ra::iota(ra::ic<4>, 4));
             tr.test_eq(ra::Small<int, 4, 10>(ra::_1 + 10*(ra::_0+4)), b);
             tr.test_eq(ra::scalar(a.data()+40), ra::scalar(b.data()));
         }
         {
-            auto b = a(3, ra::iota(ra::int_c<5>(), 4));
+            auto b = a(3, ra::iota(ra::ic<5>, 4));
             tr.test_eq(ra::Small<int, 5>(30+ra::_0+4), b);
             tr.test_eq(ra::scalar(a.data()+30+4), ra::scalar(b.data()));
         }
         {
-            auto b = a(ra::all, ra::iota(ra::int_c<4>(), 2, ra::int_c<2>()));
+            auto b = a(ra::all, ra::iota(ra::ic<4>, 2, ra::ic<2>));
             tr.test_eq(ra::Small<int, 10, 4>(10*ra::_0 + 2*(1+ra::_1)), b);
             tr.test_eq(ra::scalar(a.data()+2), ra::scalar(b.data()));
         }
         {
-            auto b = a(ra::iota(ra::int_c<3>(), 1, ra::int_c<2>()),
-                       ra::iota(ra::int_c<2>(), 2, ra::int_c<3>()));
+            auto b = a(ra::iota(ra::ic<3>, 1, ra::ic<2>),
+                       ra::iota(ra::ic<2>, 2, ra::ic<3>));
             tr.test_eq(ra::Small<int, 3, 2>(10*(1+2*ra::_0) + 2+ra::_1*3), b);
             tr.test_eq(ra::scalar(a.data()+12), ra::scalar(b.data()));
         }
         {
-            auto b = a(ra::iota(ra::int_c<3>(), 9, ra::int_c<-2>()),
-                       ra::iota(ra::int_c<2>(), 2, ra::int_c<3>()));
+            auto b = a(ra::iota(ra::ic<3>, 9, ra::ic<-2>),
+                       ra::iota(ra::ic<2>, 2, ra::ic<3>));
             tr.test_eq(ra::Small<int, 3, 2>(10*(9-2*ra::_0) + 2+ra::_1*3), b);
             tr.test_eq(ra::scalar(a.data()+92), ra::scalar(b.data()));
         }
@@ -94,13 +96,13 @@ int main()
 // 1-past is ok but 1-before is not, so these just leave the pointer unchanged.
         {
             ra::Small<int, 10> a = ra::_0;
-            auto b = a(ra::iota(ra::int_c<0>(), 10));
+            auto b = a(ra::iota(ra::ic<0>, 10));
             tr.test_eq(ra::Small<int, 0>(ra::_0+10), b);
             tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         }
         {
             ra::Small<int, 10> a = ra::_0;
-            auto b = a(ra::iota(ra::int_c<0>(), 10, ra::int_c<-1>()));
+            auto b = a(ra::iota(ra::ic<0>, 10, ra::ic<-1>));
             tr.test_eq(ra::Small<int, 0>(ra::_0-1), b);
             cout << "a " << a.data() << " b " << b.data() << endl;
             tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));

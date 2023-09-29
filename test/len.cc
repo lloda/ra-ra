@@ -82,6 +82,7 @@ int main()
     tr.section("static len is preserved");
     {
         tr.test_eq(5, with_len(ra::int_c<5>(), ra::iota(ra::len)).len_s(0));
+        // tr.test_eq(5, with_len(ra::int_c<6>(), ra::iota(ra::len-1)).len_s(0)); // FIXME
     }
     return tr.summary();
 }

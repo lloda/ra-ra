@@ -66,6 +66,8 @@ int main()
                  true, true, false, false, false);
         TESTPRED(int,
                  false, false, false, true, false);
+        TESTPRED(ra::int_c<3>,
+                 false, false, false, true, false);
         TESTPRED(ra::dim_c<0>,
                  false, false, false, true, false);
         TESTPRED(std::complex<double>,

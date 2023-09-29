@@ -268,7 +268,7 @@ struct View
     select(Dim * dim, int k, dim_t i) const
     {
         RA_CHECK(inside(i, dimv[k].len),
-                 "Out of range on axis ", k, " len ", dimv[k].len, ": ", i, ".");
+                 "Out of range for len[", k, "]=", dimv[k].len, ": ", i, ".");
         return dimv[k].step*i;
     }
 
@@ -931,7 +931,7 @@ auto transpose(View<T, RANK> const & view)
     static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "Bad output rank.");
     RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank: ", view.rank(), "should be ", (sizeof...(Iarg)), ".");
 
-    using dummy_s = mp::makelist<sizeof...(Iarg), int_c<0>>;
+    using dummy_s = mp::makelist<sizeof...(Iarg), ic_t<0>>;
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
     constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
 
