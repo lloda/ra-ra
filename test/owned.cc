@@ -31,6 +31,7 @@ int main()
                 }
                 tr.test_eq(ref(ra::iota(testsize)), a(ra::iota(testsize)));
             };
+        tr.section("rank 2");
         {
             ra::Big<int, 2> a({5, 3}, ra::_0 - ra::_1);
             ra::Big<int, 2> ref = a;
@@ -39,6 +40,7 @@ int main()
             test(ref, a, 3, 3);
             test(ref, a, 5, 3);
         }
+        tr.section("rank 1");
         {
             ra::Big<int, 1> a({2}, 3);
             a.resize(4, 9);
@@ -47,6 +49,7 @@ int main()
             tr.test_eq(9, a[2]);
             tr.test_eq(9, a[3]);
         }
+        tr.section("rank 3");
         {
             ra::Big<int, 3> a({0, 3, 2}, ra::_0 - ra::_1 + ra::_2); // BUG If <int, 2>, I get [can't drive] instead of [rank error].
             ra::Big<int, 3> ref0 = a;

@@ -136,7 +136,8 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   30. [ ]
   31. [ ]
   32. [ ]
-  33. [ ]
+  33. [ ] test/frame-old.cc, test/fromb.cc.
+      When mixing beaten & unbeaten subscripts and the unbeaten subscripts go first, the result is a nested expression. This has to be fixed in the view operator()s.
   34. [ ]
   35. [ ]
   36. [ ]

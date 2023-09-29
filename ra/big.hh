@@ -276,7 +276,7 @@ struct View
     constexpr dim_t
     select(Dim * dim, int k, I i) const
     {
-        RA_CHECK((inside(i.i, dimv[k].len) && inside(i.i+(i.n-1)*i.s, dimv[k].len)) || (i.n==0 && i.i<=dimv[k].len),
+        RA_CHECK(inside(i, dimv[k].len),
                  "Out of range for len[", k, "]=", dimv[k].len, ": iota [", i.n, " ", i.i, " ", i.s, "].");
         *dim = { .len = i.n, .step = dimv[k].step * i.s };
         return dimv[k].step*i.i;
@@ -341,7 +341,7 @@ struct View
             }
 // may return rank 0 view if RANK==RANK_ANY; in that case rely on conversion to scalar.
             return sub;
-// TODO partial beating is necessary to support dots, insert here (or just to optimize iota).
+// TODO partial beating
         } else {
             return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...);
         }

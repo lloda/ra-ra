@@ -119,12 +119,12 @@ int main()
         tr.test_eq(2, a(1, 0));
         tr.test_eq(1, a(1, 1));
     }
-    tr.section("unintiuitive behavior [ra33]");
+    tr.section("FIXME nested expressions from mixing unbeaten/beaten subscripts [ra33]");
     {
         ra::Big<int, 1> i = {0, 1, 2};
         ra::Big<double, 2> A({3, 2}, ra::_0 - ra::_1);
         ra::Big<double, 2> F({3, 2}, 0.);
-        iter<-1>(F) = A(i); // A(i) returns a nested expression. FIXME Should it?
+        iter<-1>(F) = A(i); // A(i) returns a nested expression.
         tr.test_eq(A, F);
     }
 

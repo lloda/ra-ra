@@ -110,7 +110,7 @@ struct STLIterator
 
 
 // --------------------
-// Helpers for slicing
+// Slicing helpers
 // --------------------
 
 // FIXME condition should be zero rank, maybe convertibility, not is_integral
@@ -118,7 +118,7 @@ template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
 struct beatable_t
 {
-    bool rt, ct; // beatable at all and statically, e.g. in Small
+    bool rt, ct; // beatable at all and statically
     int src, dst, add; // axes on src, dst, and dst-src
 };
 
@@ -327,7 +327,7 @@ struct SmallBase
     constexpr static dim_t step(int k) { return ssteps[k]; }
     constexpr static decltype(auto) shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(slens.data()); }
 
-    constexpr static bool convertible_to_scalar = (size()==1); // allowing rank 1 for coord types
+    constexpr static bool convertible_to_scalar = (1==size()); // allowed for 1 for coord types
 
     template <int k>
     constexpr static dim_t
@@ -349,10 +349,12 @@ struct SmallBase
     constexpr static dim_t
     select(I i)
     {
-        if constexpr ((i.s<0 ? -1 : +1)*i.s*i.n > slens[k]) { // FIXME just use std::abs in c++23
+        if constexpr (0==i.n) {
+            return 0;
+        } else if constexpr ((1==i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > slens[k]) { // FIXME c++23 std::abs
             static_assert(mp::always_false<I>, "Out of range.");
         } else {
-            RA_CHECK(inside(i.i, slens[k]) && inside(i.i+(i.n-1)*i.s, slens[k]),
+            RA_CHECK(inside(i, slens[k]),
                      "Out of range for len[", k, "]=", slens[k], ": iota [", i.n, " ", i.i, " ", i.s, "]");
         }
         return ssteps[k]*i.i;
@@ -384,7 +386,7 @@ struct SmallBase
             return data()[select_loop<0>(i ...)];                       \
         } else if constexpr ((beatable<I>.ct && ...)) {                 \
             using FD = FilterDims<lens, steps, std::decay_t<I> ...>;    \
-            return SmallView<T CONST, typename FD::lens, typename FD::steps> (data()+select_loop<0>(i ...)); \
+            return SmallView<T CONST, typename FD::lens, typename FD::steps> (data() + select_loop<0>(i ...)); \
         } else { /* TODO partial beating */                             \
             return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...); \
         }                                                               \

@@ -48,7 +48,11 @@
 
 namespace ra {
 
-constexpr bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
+constexpr bool
+inside(dim_t i, dim_t b)
+{
+    return i>=0 && i<b;
+}
 
 
 // --------------------
@@ -326,6 +330,18 @@ iota(N && n = N {}, O && org = 0,
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
+RA_IS_DEF(is_iota, false)
+// DIM_BAD is excluded from beating to allow B = A(... ti ...). FIXME find a way?
+template <class O, class N, class S>
+constexpr bool is_iota_def<Iota<0, O, N, S>> = (DIM_BAD != Iota<0, O, N, S>::nn);
+
+template <class I>
+constexpr bool
+inside(I const & i, dim_t l) requires (is_iota<I>)
+{
+    return (inside(i.i, l) && inside(i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
+}
+
 // Never ply(), solely to be rewritten.
 struct Len
 {
@@ -355,11 +371,6 @@ RA_IS_DEF(has_len, false);
 template <class T>
 constexpr void
 start(T && t) { static_assert(mp::always_false<T>, "Type cannot be start()ed."); }
-
-RA_IS_DEF(is_iota, false)
-// DIM_BAD is excluded from beating to allow B = A(... ti ...). FIXME find a way?
-template <class O, class N, class S>
-constexpr bool is_iota_def<Iota<0, O, N, S>> = (DIM_BAD != Iota<0, O, N, S>::nn);
 
 template <class T> requires (is_foreign_vector<T>)
 constexpr auto

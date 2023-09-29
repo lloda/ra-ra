@@ -7,6 +7,11 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+#ifdef RA_DO_CHECK
+  #undef RA_DO_CHECK
+  #define RA_DO_CHECK 1 // kind of the point here
+#endif
+
 #include <iostream>
 #include <iterator>
 #include "ra/test.hh"
@@ -72,7 +77,7 @@ int main()
             tr.test_eq(ra::Small<int, 3, 2>(10*(9-2*ra::_0) + 2+ra::_1*3), b);
             tr.test_eq(ra::scalar(a.data()+92), ra::scalar(b.data()));
         }
-// FIXME the unbeaten path caused by rt iota results in a nested rank expr.
+// FIXME the unbeaten path caused by rt iota results in a nested rank expr [ra33]
         {
             cout << a(ra::iota(4)) << endl;
             // tr.test_eq(ra::Small<int, 4, 10>(ra::_1 + 10*ra::_0), a(ra::iota(4)));
@@ -83,6 +88,23 @@ int main()
             // tr.test_eq(ra::Small<int, 10, 4>(ra::_1 + 10*ra::_0), a(ra::all, ra::iota(4)));
         }
 // FIXME static iota(expr(ra::len) ...)
+    }
+    tr.section("zero length iota");
+    {
+// 1-past is ok but 1-before is not, so these just leave the pointer unchanged.
+        {
+            ra::Small<int, 10> a = ra::_0;
+            auto b = a(ra::iota(ra::int_c<0>(), 10));
+            tr.test_eq(ra::Small<int, 0>(ra::_0+10), b);
+            tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
+        }
+        {
+            ra::Small<int, 10> a = ra::_0;
+            auto b = a(ra::iota(ra::int_c<0>(), 10, ra::int_c<-1>()));
+            tr.test_eq(ra::Small<int, 0>(ra::_0-1), b);
+            cout << "a " << a.data() << " b " << b.data() << endl;
+            tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
+        }
     }
     tr.section("Iota<T> is beatable for any integral T");
     {

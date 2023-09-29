@@ -56,6 +56,24 @@ int main()
         }
         tr.info(msg).test(yes);
     }
+
+
+// ------------------------------
+// see test/fromb.cc
+// ------------------------------
+
+    tr.section("out of range with iota subscripts");
+    {
+        std::string msg;
+        try {
+            ra::Small<int, 10> a = ra::_0;
+            cout << a(ra::iota(ra::int_c<1>(), 10)) << endl;
+        } catch (ra_error & e) {
+            msg = e.what();
+        }
+        tr.info(msg).test(0<msg.size());
+    }
+
 
 // ------------------------------
 // see test/compatibility.cc
