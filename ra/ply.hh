@@ -142,22 +142,14 @@ inline void
 ply_ravel(A && a)
 {
     rank_t rank = a.rank();
-    if (0==rank) {
+    if (0>=rank) {
+// FIXME always check, else compiler may complain of bad vla; see test in [ra40].
+        if (0>rank) [[unlikely]] { std::abort(); }
         *(a.flat());
         return;
     }
-// FIXME without assert compiler thinks var rank may be negative. See test in [ra40].
-#ifdef NDEBUG
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wvla-larger-than="
     rank_t order[rank];
     dim_t sha[rank], ind[rank];
-#pragma GCC diagnostic pop
-#else
-    assert(rank>=0);
-    rank_t order[rank];
-    dim_t sha[rank], ind[rank];
-#endif
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
@@ -182,7 +174,7 @@ ply_ravel(A && a)
         if (0==sha[k]) { // for the raveled dimensions ss takes care.
             return;
         }
-        RA_CHECK(DIM_BAD!=sha[k], "undefined dim ", ocd[k]);
+        RA_CHECK(DIM_BAD!=sha[k], "Undefined len[", ocd[k], "].");
     }
 // all sub xpr steps advance in compact dims, as they might be different.
     auto const ss0 = a.step(order[0]);
@@ -325,24 +317,16 @@ ply_ravel_exit(A && a, DEF && def)
     static_assert(0<=rank_s<A>() || RANK_ANY==rank_s<A>());
 
     rank_t rank = a.rank();
-    if (0==rank) {
+    if (0>=rank) {
+// FIXME always check, else compiler may complain of bad vla; see test in [ra40].
+        if (0>rank) [[unlikely]] { std::abort(); }
         if (auto what = *(a.flat()); std::get<0>(what)) {
             return std::get<1>(what);
         }
         return def;
     }
-// FIXME without assert compiler thinks var rank may be negative. See test in [ra40].
-#ifdef NDEBUG
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wvla-larger-than="
     rank_t order[rank];
     dim_t sha[rank], ind[rank];
-#pragma GCC diagnostic pop
-#else
-    assert(rank>=0);
-    rank_t order[rank];
-    dim_t sha[rank], ind[rank];
-#endif
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
@@ -367,7 +351,7 @@ ply_ravel_exit(A && a, DEF && def)
         if (0==sha[k]) { // for the raveled dimensions ss takes care.
             return def;
         }
-        RA_CHECK(DIM_BAD!=sha[k], "undefined dim ", ocd[k]);
+        RA_CHECK(DIM_BAD!=sha[k], "Undefined len[", ocd[k], "].");
     }
 // all sub xpr steps advance in compact dims, as they might be different.
     auto const ss0 = a.step(order[0]);
