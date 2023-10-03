@@ -17,10 +17,9 @@ class Style: BRIGHT = '\x1b[1m'; RESET_ALL = '\x1b[0m';
 from os.path import join, abspath, split
 from subprocess import call
 
-# Make sure to disable for benchmarks.
-# SANITIZE = []
-# SANITIZE = ['-fsanitize=address', '-fsanitize=undefined']
-SANITIZE = ['-fsanitize=address']
+# Make sure to disable (-fno-sanitize=all) for benchmarks.
+# SANITIZE = ['-fsanitize=address,leak,undefined']
+SANITIZE = ['-fsanitize=address,leak']
 
 CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
             '-fdiagnostics-color=always', '-Wno-unknown-pragmas',

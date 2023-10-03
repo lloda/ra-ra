@@ -32,7 +32,7 @@ template <class Op, IteratorConcept ... P>
 constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
 
 template <int w, class O, class N, class S>
-constexpr bool has_len_def<Iota<w, O, N, S>> = (has_len<O> || has_len<N> || has_len<S>);
+constexpr bool has_len_def<Iota<w, N, O, S>> = (has_len<N> || has_len<O> || has_len<S>);
 
 template <class I, class N>
 constexpr bool has_len_def<Ptr<I, N>> = has_len<N>;
@@ -98,9 +98,9 @@ coerce(T && t)
     }
 }
 
-template <int w, class O, class N, class S>
-requires (has_len<O> || has_len<N> || has_len<S>)
-struct WithLen<Iota<w, O, N, S>>
+template <int w, class N, class O, class S>
+requires (has_len<N> || has_len<O> || has_len<S>)
+struct WithLen<Iota<w, N, O, S>>
 {
     template <class L, class E> constexpr static decltype(auto)
     f(L len, E && e)

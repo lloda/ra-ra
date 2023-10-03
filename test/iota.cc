@@ -65,6 +65,7 @@ int main()
             tr.test_eq(6, b[1]);
             tr.test_eq(2, b[2]);
             tr.test_eq(2, b[3]);
+            tr.test_eq(99, ra::iota().at(std::array {99}));
         }
     }
     tr.section("deduced types");

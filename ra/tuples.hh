@@ -20,7 +20,7 @@ template <class T, T N> constexpr bool is_constant<std::integral_constant<T, N>>
 template <int V> using int_c = std::integral_constant<int, V>;
 template <bool V> using bool_c = std::integral_constant<bool, V>;
 template <auto V> using ic_t = std::integral_constant<decltype(V), V>;
-template <auto V> inline constexpr std::integral_constant<decltype(V), V> ic {};
+template <auto V> constexpr std::integral_constant<decltype(V), V> ic {};
 
 } // namespace ra
 

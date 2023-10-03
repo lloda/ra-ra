@@ -29,7 +29,7 @@ int main()
             tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         }
         {
-            auto b = a(ra::iota(ra::len/2, 5));
+            auto b = a(ra::iota(ra::len-ra::ic<5>, 5));
             tr.test_eq(ra::Small<int, 5>(ra::_0+5), b);
             // FIXME see "static len is preserved" in len.cc
             // tr.test_eq(ra::scalar(a.data()+5), ra::scalar(b.data()));

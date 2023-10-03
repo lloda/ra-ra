@@ -355,7 +355,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
         Op & op;
         T t;
         template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-// FIXME gcc 12.1 flags this (-O3 only).
+// FIXME flagged by gcc 12.1 -O3
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
         constexpr decltype(auto) operator*() { return std::invoke(op, *std::get<I>(t) ...); }

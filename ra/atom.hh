@@ -209,7 +209,7 @@ struct Ptr
 {
     static_assert(is_constant<N> || 0==rank_s<N>());
     constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
-    static_assert(nn>=0 || nn==DIM_BAD || (!is_constant<N> && nn==DIM_ANY));
+    static_assert(nn==DIM_ANY || nn>=0 || nn==DIM_BAD);
 
     I i;
     [[no_unique_address]] N const n = {};
@@ -226,7 +226,7 @@ struct Ptr
     constexpr auto flat() const { return i; }
     constexpr decltype(auto) at(auto && j) const
     {
-        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range ", j[0], " for length ", n, ".");
+        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i[j[0]];
     }
 
@@ -235,15 +235,16 @@ struct Ptr
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
+template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
+
 template <class I, class N=dim_c<DIM_BAD>>
 constexpr auto
 ptr(I i, N && n = N {})
 {
     if constexpr (std::is_integral_v<N>) {
-        RA_CHECK(n>=0, "Bad ptr length ", n);
+        RA_CHECK(n>=0, "Bad ptr length ", n, ".");
     }
-    using NN = std::conditional_t<is_constant<std::decay_t<N>> || is_scalar<std::decay_t<N>>, std::decay_t<N>, N>;
-    return Ptr<I, NN> { i, std::forward<N>(n) };
+    return Ptr<I, iota_arg<N>> { i, std::forward<N>(n) };
 }
 
 template <std::ranges::random_access_range V>
@@ -260,7 +261,7 @@ vector(V && v)
 // Sequence and IteratorConcept for same. Iota isn't really a terminal, but its exprs must all have rank 0.
 // FIXME w is a custom Reframe mechanism inherited from TensorIndex. Generalize/unify
 // FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
-template <int w, class O, class N_, class S_>
+template <int w, class N_, class O, class S_>
 struct Iota
 {
     using N = std::decay_t<N_>;
@@ -270,13 +271,13 @@ struct Iota
     static_assert(is_constant<S> || 0==rank_s<S>());
     static_assert(is_constant<N> || 0==rank_s<N>());
     constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
-    static_assert((!is_constant<N> && nn==DIM_ANY) || nn>=0 || nn==DIM_BAD);
+    static_assert(nn==DIM_ANY || nn>=0 || nn==DIM_BAD);
 
-    O i = {};
     [[no_unique_address]] N const n = {};
+    O i = {};
     [[no_unique_address]] S const s = {};
 
-    constexpr static O gets() requires (is_constant<S>) { return S::value; }
+    constexpr static S gets() requires (is_constant<S>) { return S {}; }
     constexpr O gets() const requires (!is_constant<S>) { return s; }
 
     struct Flat
@@ -290,8 +291,8 @@ struct Iota
     constexpr static rank_t rank_s() { return w+1; };
     constexpr static rank_t rank() { return w+1; }
     constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis", k); return k==w ? nn : DIM_BAD; }
-    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (nn==DIM_ANY) { RA_CHECK(k<=w, "Bad axis ", k); return k==w ? n : DIM_BAD; }
+    constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { RA_CHECK(k<=w, "Bad axis ", k); return k==w ? n : DIM_BAD; }
 
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
@@ -299,12 +300,10 @@ struct Iota
     constexpr auto flat() const { return Flat { i, s }; }
     constexpr auto at(auto && j) const
     {
-        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range ", j[0], " for length ", n, ".");
+        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i + O(j[w])*O(s);
     }
 };
-
-template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
 
 template <int w=0, class O=dim_t, class N=dim_c<DIM_BAD>, class S=dim_c<1>>
 constexpr auto
@@ -316,14 +315,14 @@ iota(N && n = N {}, O && org = 0,
              static_assert(1==S::value);
              return S {};
          } else {
-             static_assert(mp::always_false<S>, "Invalid step type for Iota.");
+             static_assert(mp::always_false<S>, "Bad step type for Iota.");
          }
      }())
 {
     if constexpr (std::is_integral_v<N>) {
         RA_CHECK(n>=0, "Bad iota length ", n, ".");
     }
-    return Iota<w, iota_arg<O>, iota_arg<N>, iota_arg<S>> { std::forward<O>(org), std::forward<N>(n), std::forward<S>(s) };
+    return Iota<w, iota_arg<N>, iota_arg<O>, iota_arg<S>> { std::forward<N>(n), std::forward<O>(org), std::forward<S>(s) };
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
@@ -332,8 +331,8 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 
 RA_IS_DEF(is_iota, false)
 // DIM_BAD is excluded from beating to allow B = A(... ti ...). FIXME find a way?
-template <class O, class N, class S>
-constexpr bool is_iota_def<Iota<0, O, N, S>> = (DIM_BAD != Iota<0, O, N, S>::nn);
+template <class N, class O, class S>
+constexpr bool is_iota_def<Iota<0, N, O, S>> = (DIM_BAD != Iota<0, N, O, S>::nn);
 
 template <class I>
 constexpr bool

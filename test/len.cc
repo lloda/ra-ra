@@ -15,6 +15,12 @@
 
 using std::cout, std::endl, std::flush;
 
+namespace ra {
+
+template <auto A, auto B> constexpr auto operator-(ic_t<A> const &, ic_t<B> const &) { return ic<A-B>; } // (*)
+
+} // namespace ra
+
 int main()
 {
     ra::TestRecorder tr(std::cout);
@@ -81,8 +87,10 @@ int main()
     }
     tr.section("static len is preserved");
     {
-        tr.test_eq(5, with_len(ra::int_c<5>(), ra::iota(ra::len)).len_s(0));
-        // tr.test_eq(5, with_len(ra::int_c<6>(), ra::iota(ra::len-1)).len_s(0)); // FIXME
+        tr.test_eq(5, with_len(ra::ic<5>, ra::iota(ra::len)).len_s(0));
+        // tr.test_eq(4, std::decay<decltype(*(with_len(ra::ic<5>, ra::len-ra::ic<1>).flat()))>::type::value); // FIXME (*) with_len
+        // tr.test_eq(5, with_len(ra::ic<5>, ra::iota(ra::len-ra::ic<1>)).ronk()); // FIXME
+        // tr.test_eq(5, with_len(ra::ic<6>, ra::iota(ra::len-ra::ic<1>)).len_s(0)); // FIXME
     }
     return tr.summary();
 }

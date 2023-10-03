@@ -59,6 +59,22 @@ int main()
 
 
 // ------------------------------
+// see test/iota.cc
+// ------------------------------
+
+    tr.section("ot of range with iota");
+    {
+        std::string msg;
+        try {
+            cout << ra::iota(10).at(std::array {11}) << endl;
+        } catch (ra_error & e) {
+            msg = e.what();
+        }
+        tr.info(msg).test(0<msg.size());
+    }
+
+
+// ------------------------------
 // see test/fromb.cc
 // ------------------------------
 
