@@ -524,7 +524,10 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         if constexpr (RANK_ANY==RANK) {
 // rank 1 to avoid store init
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Warray-bounds"
             View::dimv = { Dim {0, 1} };
+#pragma GCC diagnostic pop
         } else if constexpr (0==RANK) {
 // cannot have zero size
             store = storage_traits<Store>::create(1);
@@ -817,7 +820,7 @@ concrete(E && e)
 {
 // FIXME gcc 11.3 on GH workflows (?)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     return concrete_type<E>(std::forward<E>(e));
 #pragma GCC diagnostic pop
 }
@@ -839,7 +842,7 @@ with_same_shape(E && e, X && x)
 {
 // FIXME gcc 11.3 on GH workflows (?)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
         return concrete_type<E>(std::forward<X>(x));
     } else {

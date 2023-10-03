@@ -19,7 +19,7 @@ from subprocess import call
 
 # Make sure to disable (-fno-sanitize=all) for benchmarks.
 # SANITIZE = ['-fsanitize=address,leak,undefined']
-SANITIZE = ['-fsanitize=address,leak']
+SANITIZE = ['-fsanitize=address,leak,undefined']
 
 CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
             '-fdiagnostics-color=always', '-Wno-unknown-pragmas',

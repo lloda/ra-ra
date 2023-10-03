@@ -142,10 +142,14 @@ inline void
 ply_ravel(A && a)
 {
     rank_t rank = a.rank();
+    if (0==rank) {
+        *(a.flat());
+        return;
+    }
 // FIXME without assert compiler thinks var rank may be negative. See test in [ra40].
 #ifdef NDEBUG
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvla-larger-than="
+#pragma GCC diagnostic warning "-Wvla-larger-than="
     rank_t order[rank];
     dim_t sha[rank], ind[rank];
 #pragma GCC diagnostic pop
@@ -157,21 +161,16 @@ ply_ravel(A && a)
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
-    switch (rank) {
-    case 0: *(a.flat()); return;
-    case 1: break;
-    default: // TODO better heuristic
-        // if (rank>1) {
-        //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-        //               { return a.len(order[i])<a.len(order[j]); });
-        // }
-        ;
-    }
+    // FIXME better heuristic - but first need a way to force row-major
+    // if (rank>1) {
+    //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
+    //               { return a.len(order[i])<a.len(order[j]); });
+    // }
 // outermost compact dim.
     rank_t * ocd = order;
 // FIXME see same thing below.
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     auto ss = a.len(*ocd);
 #pragma GCC diagnostic pop
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
@@ -180,10 +179,10 @@ ply_ravel(A && a)
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
         sha[k] = a.len(ocd[k]);
-        if (sha[k]==0) { // for the raveled dimensions ss takes care.
+        if (0==sha[k]) { // for the raveled dimensions ss takes care.
             return;
         }
-        RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
+        RA_CHECK(DIM_BAD!=sha[k], "undefined dim ", ocd[k]);
     }
 // all sub xpr steps advance in compact dims, as they might be different.
     auto const ss0 = a.step(order[0]);
@@ -255,7 +254,7 @@ template <class A>
 constexpr auto
 ocd()
 {
-    rank_t const rank = A::rank_s();
+    constexpr rank_t rank = rank_s<A>();
     auto s = A::len_s(rank-1);
     int j = 1;
     while (j<rank && A::keep_step(s, rank-1, rank-1-j)) {
@@ -270,31 +269,31 @@ constexpr void
 plyf(A && a)
 {
     constexpr rank_t rank = rank_s<A>();
-    static_assert(rank>=0, "plyf needs static rank");
+    static_assert(0<=rank, "plyf needs static rank");
 
-    if constexpr (rank_s<A>()==0) {
+    if constexpr (0==rank) {
         *(a.flat());
     } else if constexpr (rank_s<A>()==1) {
         subindex<mp::iota<1>, 1>(a, a.len(0), a.step(0));
 // this can only be enabled when f() will be constexpr; static keep_step implies all else is also static.
 // important rank>1 for with static size operands [ra43].
-    } else if constexpr (rank_s<A>()>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
+    } else if constexpr (rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
         constexpr auto sj = ocd<std::decay_t<A>>();
         constexpr auto s = std::get<0>(sj);
         constexpr auto j = std::get<1>(sj);
 // all sub xpr steps advance in compact dims, as they might be different.
 // send with static j. Note that order here is inverse of order.
-        until<mp::iota<rank_s<A>()>, 0>(j, a, s, a.step(rank-1));
+        until<mp::iota<rank>, 0>(j, a, s, a.step(rank-1));
     } else {
 // the unrolling above isn't worth it when s, j cannot be constexpr.
         auto s = a.len(rank-1);
-        subindex<mp::iota<rank_s<A>()>, 1>(a, s, a.step(rank-1));
+        subindex<mp::iota<rank>, 1>(a, s, a.step(rank-1));
     }
 }
 
 
 // ---------------------------
-// select best performance (or requirements) for each type
+// select best for each type
 // ---------------------------
 
 template <IteratorConcept A>
@@ -302,7 +301,9 @@ constexpr void
 ply(A && a)
 {
     static_assert(!has_len<A>, "len used outside subscript context.");
-    if constexpr (size_s<A>()==DIM_ANY) {
+    static_assert(0<=rank_s<A>() || RANK_ANY==rank_s<A>());
+
+    if constexpr (DIM_ANY==size_s<A>()) {
         ply_ravel(std::forward<A>(a));
     } else {
         plyf(std::forward<A>(a));
@@ -315,17 +316,25 @@ ply(A && a)
 // ---------------------------
 
 // TODO Refactor with ply_ravel. Make exit available to plyf.
-// TODO These are reductions. How to do higher rank?
+// TODO These are reductions. How about higher rank?
 template <IteratorConcept A, class DEF>
 inline auto
 ply_ravel_exit(A && a, DEF && def)
 {
     static_assert(!has_len<A>, "len used outside subscript context.");
+    static_assert(0<=rank_s<A>() || RANK_ANY==rank_s<A>());
+
     rank_t rank = a.rank();
+    if (0==rank) {
+        if (auto what = *(a.flat()); std::get<0>(what)) {
+            return std::get<1>(what);
+        }
+        return def;
+    }
 // FIXME without assert compiler thinks var rank may be negative. See test in [ra40].
 #ifdef NDEBUG
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wvla-larger-than="
+#pragma GCC diagnostic warning "-Wvla-larger-than="
     rank_t order[rank];
     dim_t sha[rank], ind[rank];
 #pragma GCC diagnostic pop
@@ -337,26 +346,16 @@ ply_ravel_exit(A && a, DEF && def)
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
-    switch (rank) {
-    case 0: {
-        if (auto what = *(a.flat()); std::get<0>(what)) {
-            return std::get<1>(what);
-        }
-        return def;
-    }
-    case 1: break;
-    default: // TODO better heuristic
-        // if (rank>1) {
-        //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-        //               { return a.len(order[i])<a.len(order[j]); });
-        // }
-        ;
-    }
+    // FIXME better heuristic - but first need a way to force row-major
+    // if (rank>1) {
+    //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
+    //               { return a.len(order[i])<a.len(order[j]); });
+    // }
 // outermost compact dim.
     rank_t * ocd = order;
 // FIXME on github actions ubuntu-latest g++-11 -O3 :-|
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     auto ss = a.len(*ocd);
 #pragma GCC diagnostic pop
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
@@ -365,10 +364,10 @@ ply_ravel_exit(A && a, DEF && def)
     for (int k=0; k<rank; ++k) {
         ind[k] = 0;
         sha[k] = a.len(ocd[k]);
-        if (sha[k]==0) { // for the raveled dimensions ss takes care.
+        if (0==sha[k]) { // for the raveled dimensions ss takes care.
             return def;
         }
-        RA_CHECK(sha[k]!=DIM_BAD, "undefined dim ", ocd[k]);
+        RA_CHECK(DIM_BAD!=sha[k], "undefined dim ", ocd[k]);
     }
 // all sub xpr steps advance in compact dims, as they might be different.
     auto const ss0 = a.step(order[0]);
