@@ -108,6 +108,8 @@ int main()
     ref = a*b*S1[0]*N;
 
     TestRecorder tr;
+    tr.o.width(6);
+    tr.o.precision(4);
     {
         auto bench = [&tr](char const * tag, auto s, auto && ref, int reps, auto && f)
             {
@@ -117,7 +119,7 @@ int main()
                 decltype(s) B(b);
                 real y(0.);
                 auto bv = Benchmark().repeats(reps).runs(3).run([&]() { y += f(A, B); });
-                tr.info(std::setw(6), std::fixed, Benchmark::avg(bv)/M/1e-9, " ns [", Benchmark::stddev(bv)/M/1e-9, "] ", tag)
+                tr.info(Benchmark::avg(bv)/M/1e-9, " ns [", std::setprecision(3), Benchmark::stddev(bv)/M/1e-9, "] ", tag)
                     .test_rel_error(a*b*M*reps*3, y, rspec);
             };
 
@@ -211,7 +213,7 @@ int main()
                  {
                      real x = 0.;
                      auto bv = Benchmark().repeats(reps).runs(3).run([&]() { x += f(a, b); });
-                     tr.info(std::setw(6), std::fixed, Benchmark::avg(bv)/1e-9, " ns [", Benchmark::stddev(bv)/1e-9, "] ", f.name)
+                     tr.info(Benchmark::avg(bv)/1e-9, " ns [", std::setprecision(3), Benchmark::stddev(bv)/1e-9, "] ", f.name)
                          .test_rel_error(ref*3, x, rspec);
                  };
 #define BENCH(f) bench(A, B, ref, rspec, N, f {});

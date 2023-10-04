@@ -158,13 +158,9 @@ ply_ravel(A && a)
     //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
     //               { return a.len(order[i])<a.len(order[j]); });
     // }
-// outermost compact dim.
+// find outermost compact dim.
     rank_t * ocd = order;
-// FIXME see same thing below.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     auto ss = a.len(*ocd);
-#pragma GCC diagnostic pop
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
@@ -335,13 +331,9 @@ ply_ravel_exit(A && a, DEF && def)
     //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
     //               { return a.len(order[i])<a.len(order[j]); });
     // }
-// outermost compact dim.
+// find outermost compact dim.
     rank_t * ocd = order;
-// FIXME on github actions ubuntu-latest g++-11 -O3 :-|
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     auto ss = a.len(*ocd);
-#pragma GCC diagnostic pop
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }

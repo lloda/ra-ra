@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bug83.cc
-/// @brief Triggers gcc 8.3 ICE: in verify_ctor_sanity, at cp/constexpr.c:2805
+// ra-ra/test - Triggers gcc 8.3 ICE: in verify_ctor_sanity, at cp/constexpr.c:2805
 
 // (c) Daniel Llorens - 2016-2017, 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -14,11 +13,14 @@
 // Removed the patch for gcc 10.1 after 76bfad74c53e799e12d540d03318c3037bf624e0.
 
 #include <iostream>
-#include "ra/ra.hh"
+#include "ra/test.hh"
 
-int main()
+int
+main()
 {
-    ra::Big<double, 2> A({4, 4}, 0.);
+    ra::TestRecorder tr(std::cout);
+    ra::Big<double, 2> A({4, 4}, ra::_1*10 + ra::_0 + 3);
     A = ra::expr([](auto && a) { return a(0, 0); }, ra::iter<2>(A));
-    std::cout << "A " << A << std::endl;
+    tr.info("A ", A).test_eq(3, A);
+    return tr.summary();
 }

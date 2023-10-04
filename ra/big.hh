@@ -110,8 +110,12 @@ struct CellBig
     constexpr rank_t rank() const requires (framer==DIM_ANY) { return dependent_frame_rank(ssize(dimv), cellr_spec); }
     constexpr static rank_t rank() requires (framer!=DIM_ANY) { return framer; }
     constexpr static dim_t len_s(int i) { /* RA_CHECK(inside(k, rank())); */ return DIM_ANY; }
+// gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Warray-bounds"
     constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
+#pragma GCC diagnostic pop
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
 

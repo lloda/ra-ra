@@ -18,7 +18,7 @@ from os.path import join, abspath, split
 from subprocess import call
 
 # Make sure to disable (-fno-sanitize=all) for benchmarks.
-# SANITIZE = ['-fsanitize=address,leak,undefined']
+# SANITIZE = []
 SANITIZE = ['-fsanitize=address,leak,undefined']
 
 CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',

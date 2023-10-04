@@ -6,7 +6,8 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/config/")
 
 set (BASE_CXXFLAGS "-std=c++2b -Wall -Werror -fdiagnostics-color=always -Wno-unknown-pragmas \
 -finput-charset=UTF-8 -fextended-identifiers -Wno-error=strict-overflow \
--Werror=zero-as-null-pointer-constant")
+-Werror=zero-as-null-pointer-constant \
+-fsanitize=address,leak,undefined")
 set (CMAKE_CXX_FLAGS "${BASE_CXXFLAGS} $ENV{CXXFLAGS}")
 
 foreach (target ${TARGETS})

@@ -16,7 +16,8 @@ jobs:
                    '"-O3 -std=c++20 -DRA_DO_OPT_SMALLVECTOR=1"',
                    '"-O3 -DNDEBUG -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0"',
                    '"-O3 -DRA_DO_CHECK=0 -DNDEBUG -std=c++20 -DRA_DO_OPT_SMALLVECTOR=0"',
-                   '"-O3 -std=c++2b"']
+                   '"-O3 -std=c++2b"',
+                   '"-O3 -DRA_DO_CHECK=0 -DNDEBUG -std=c++2b -fno-sanitize=all"']
     steps:
     - uses: actions/checkout@v3
     - name: update
