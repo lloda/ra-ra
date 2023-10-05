@@ -389,12 +389,12 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
         return flat(op, std::get<I>(t).flat() ...);
     }
 // needed for rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
+    constexpr
     operator decltype(*(flat(op, std::get<I>(t).flat() ...))) ()
     {
-// for coord types; so ct only
-        if constexpr ((rank_s()!=1 || size_s<Expr>()!=1) && rank_s()!=0) {
+        if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Expr>())) { // for coord types; so ct only
             static_assert(rank_s()==RANK_ANY);
-            assert(rank()==0);
+            assert(0==rank());
         }
         return *flat();
     }
@@ -561,6 +561,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
+    using Match_::t, Match_::rank_s, Match_::rank;
 
 // test/ra-9.cc [ra1]
     constexpr Pick(P ... p_): Match_(std::forward<P>(p_) ...) {}
@@ -570,22 +571,20 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr decltype(auto)
     flat()
     {
-        return flat(std::get<I>(this->t).flat() ...);
+        return flat(std::get<I>(t).flat() ...);
     }
     constexpr decltype(auto)
     at(auto const & j) const
     {
-        return pick_at<0>(std::get<0>(this->t).at(j), this->t, j);
+        return pick_at<0>(std::get<0>(t).at(j), t, j);
     }
 // needed for xpr with rank_s()==RANK_ANY, which don't decay to scalar when used as operator arguments.
     constexpr
-    operator decltype(*(flat(std::get<I>(Match_::t).flat() ...))) ()
+    operator decltype(*(flat(std::get<I>(t).flat() ...))) ()
     {
-        if constexpr (this->rank_s()!=1 || size_s(*this)!=1) { // for coord types; so fixed only
-            if constexpr (this->rank_s()!=0) {
-                static_assert(this->rank_s()==RANK_ANY);
-                assert(this->rank()==0);
-            }
+        if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Pick>())) { // for coord types; so ct only
+            static_assert(rank_s()==RANK_ANY);
+            assert(0==rank());
         }
         return *flat();
     }
