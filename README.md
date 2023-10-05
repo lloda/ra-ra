@@ -1,5 +1,5 @@
 
-# ra-ra [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/c-cpp.yml)
+# ra-ra [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml) [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml)
 
 **ra-ra** is a C++20 header-only library for handling multidimensional dense arrays. These are objects that can be indexed on 0 or more dimensions; the number of dimensions is known as ‘rank’. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2.
 
