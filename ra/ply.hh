@@ -149,7 +149,7 @@ ply_ravel(A && a)
         return;
     }
     rank_t order[rank];
-    dim_t sha[rank], ind[rank];
+    dim_t sha[rank], ind[rank] = {};
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
@@ -160,14 +160,13 @@ ply_ravel(A && a)
     // }
 // find outermost compact dim.
     rank_t * ocd = order;
-    auto ss = a.len(*ocd);
+    dim_t ss = a.len(*ocd);
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
     for (int k=0; k<rank; ++k) {
-        ind[k] = 0;
-        sha[k] = a.len(ocd[k]);
-        if (0==sha[k]) { // for the raveled dimensions ss takes care.
+// ss takes care of the raveled dimensions ss.
+        if (0 == (sha[k]=a.len(ocd[k]))) {
             return;
         }
         RA_CHECK(DIM_BAD!=sha[k], "Undefined len[", ocd[k], "].");
@@ -176,14 +175,13 @@ ply_ravel(A && a)
     auto const ss0 = a.step(order[0]);
     for (;;) {
         dim_t s = ss;
-        for (auto p=a.flat(); s>0; --s, p+=ss0) {
+        for (auto p=a.flat(); --s>=0; p+=ss0) {
             *p;
         }
         for (int k=0; ; ++k) {
             if (k>=rank) {
                 return;
-            } else if (ind[k]<sha[k]-1) {
-                ++ind[k];
+            } else if (++ind[k]<sha[k]) {
                 a.adv(ocd[k], 1);
                 break;
             } else {
@@ -207,13 +205,13 @@ subindex(A & a, dim_t s, S const & ss0)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wstringop-overflow"
 #pragma GCC diagnostic warning "-Wstringop-overread"
-        for (auto p=a.flat(); s>0; --s, p+=ss0) {
+        for (auto p=a.flat(); --s>=0; p+=ss0) {
             *p;
         }
 #pragma GCC diagnostic pop
     } else {
-        dim_t size = a.len(mp::first<order>::value); // TODO Precompute these at the top
-        for (dim_t i=0, iend=size; i<iend; ++i) {
+        dim_t size = a.len(mp::first<order>::value); // TODO Precompute above
+        for (dim_t i=0; i<size; ++i) {
             subindex<mp::drop1<order>, ravel_rank>(a, s, ss0);
             a.adv(mp::first<order>::value, 1);
         }
@@ -222,35 +220,16 @@ subindex(A & a, dim_t s, S const & ss0)
 }
 
 // convert runtime jj into compile time j. TODO a.adv<k>().
-template <class order, int j, class A, class S>
+template <class order, int j, int jj, class A, class S>
 constexpr void
-until(int const jj, A & a, dim_t const s, S const & ss0)
+until(A & a, dim_t s, S const & ss0)
 {
-    if constexpr (mp::len<order> >= j) {
-        if (jj==j) {
-            subindex<order, j>(a, s, ss0);
-        } else {
-            until<order, j+1>(jj, a, s, ss0);
-        }
+    if constexpr (j<jj) {
+        until<order, j+1, jj>(a, s, ss0);
     } else {
-        std::abort();
+        subindex<order, j>(a, s, ss0);
     }
 }
-
-// find outermost compact dim.
-template <class A>
-constexpr auto
-ocd()
-{
-    constexpr rank_t rank = rank_s<A>();
-    auto s = A::len_s(rank-1);
-    int j = 1;
-    while (j<rank && A::keep_step(s, rank-1, rank-1-j)) {
-        s *= A::len_s(rank-1-j);
-        ++j;
-    }
-    return std::make_tuple(s, j);
-};
 
 template <IteratorConcept A>
 constexpr void
@@ -261,21 +240,24 @@ plyf(A && a)
 
     if constexpr (0==rank) {
         *(a.flat());
-    } else if constexpr (rank_s<A>()==1) {
-        subindex<mp::iota<1>, 1>(a, a.len(0), a.step(0));
-// this can only be enabled when f() will be constexpr; static keep_step implies all else is also static.
-// important rank>1 for with static size operands [ra43].
+// static unrolling. static keep_step implies all else is also static.
     } else if constexpr (rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
-        constexpr auto sj = ocd<std::decay_t<A>>();
-        constexpr auto s = std::get<0>(sj);
-        constexpr auto j = std::get<1>(sj);
-// all sub xpr steps advance in compact dims, as they might be different.
-// send with static j. Note that order here is inverse of order.
-        until<mp::iota<rank>, 0>(j, a, s, a.step(rank-1));
+// find outermost compact dim.
+        constexpr auto sj = []
+        {
+            dim_t s = A::len_s(rank-1);
+            int j = 1;
+            while (j<rank && A::keep_step(s, rank-1, rank-1-j)) {
+                s *= A::len_s(rank-1-j);
+                ++j;
+            }
+            return std::make_tuple(s, j);
+        } ();
+// sub xpr steps advance in compact dims, as they might differ. Note that order here is inverse of order.
+        until<mp::iota<rank>, 0, std::get<1>(sj)>(a, std::get<0>(sj), a.step(rank-1));
     } else {
-// the unrolling above isn't worth it when s, j cannot be constexpr.
-        auto s = a.len(rank-1);
-        subindex<mp::iota<rank>, 1>(a, s, a.step(rank-1));
+// not worth unrolling.
+        subindex<mp::iota<rank>, 1>(a, a.len(rank-1), a.step(rank-1));
     }
 }
 
@@ -322,7 +304,7 @@ ply_ravel_exit(A && a, DEF && def)
         return def;
     }
     rank_t order[rank];
-    dim_t sha[rank], ind[rank];
+    dim_t sha[rank], ind[rank] = {};
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
@@ -333,14 +315,13 @@ ply_ravel_exit(A && a, DEF && def)
     // }
 // find outermost compact dim.
     rank_t * ocd = order;
-    auto ss = a.len(*ocd);
+    dim_t ss = a.len(*ocd);
     for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
     for (int k=0; k<rank; ++k) {
-        ind[k] = 0;
-        sha[k] = a.len(ocd[k]);
-        if (0==sha[k]) { // for the raveled dimensions ss takes care.
+// ss takes care of the raveled dimensions ss.
+        if (0 == (sha[k]=a.len(ocd[k]))) {
             return def;
         }
         RA_CHECK(DIM_BAD!=sha[k], "Undefined len[", ocd[k], "].");
@@ -349,7 +330,7 @@ ply_ravel_exit(A && a, DEF && def)
     auto const ss0 = a.step(order[0]);
     for (;;) {
         dim_t s = ss;
-        for (auto p=a.flat(); s>0; --s, p+=ss0) {
+        for (auto p=a.flat(); --s>=0; p+=ss0) {
             if (auto what = *p; std::get<0>(what)) {
                 return std::get<1>(what);
             }
@@ -357,8 +338,7 @@ ply_ravel_exit(A && a, DEF && def)
         for (int k=0; ; ++k) {
             if (k>=rank) {
                 return def;
-            } else if (ind[k]<sha[k]-1) {
-                ++ind[k];
+            } else if (++ind[k]<sha[k]) {
                 a.adv(ocd[k], 1);
                 break;
             } else {
@@ -399,7 +379,6 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     static_assert(size_s(a)!=DIM_BAD, "cannot print type");
     rank_t const rank = a.rank();
     auto sha = shape(a);
-    auto ind = sha; for_each([](auto & s) { s=0; }, ind);
     if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==DIM_ANY)) {
         o << start(sha) << '\n';
     }
@@ -409,13 +388,13 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
         }
     }
 // order here is row-major on purpose.
+    auto ind = sha; for_each([](auto & s) { s=0; }, ind);
     for (;;) {
         o << *(a.flat());
         for (int k=0; ; ++k) {
             if (k>=rank) {
                 return o;
-            } else if (ind[rank-1-k]<sha[rank-1-k]-1) {
-                ++ind[rank-1-k];
+            } else if (++ind[rank-1-k]<sha[rank-1-k]) {
                 a.adv(rank-1-k, 1);
                 switch (k) {
                 case 0: o << fa.sep0; break;

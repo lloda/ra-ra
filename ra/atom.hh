@@ -30,7 +30,7 @@
         if (std::is_constant_evaluated()) {                             \
             assert(cond /* FIXME show args */);                         \
         } else {                                                        \
-            if (bool c = cond; !c) [[unlikely]] {                       \
+            if (!(cond)) [[unlikely]] {                                 \
                 std::cerr << ra::format("**** ra: ", ##__VA_ARGS__, " ****") << std::endl; \
                 std::abort();                                           \
             }                                                           \

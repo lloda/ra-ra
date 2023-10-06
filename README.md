@@ -1,7 +1,9 @@
 
-# ra-ra [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml) [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml)
+[![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml) [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml)
 
-**ra-ra** is a C++20 header-only library for handling multidimensional dense arrays. These are objects that can be indexed on 0 or more dimensions; the number of dimensions is known as ‘rank’. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2.
+# ra-ra
+
+**ra-ra** is a C++20 header-only library for handling multidimensional dense arrays. These are objects that can be indexed in 0 or more dimensions; the number of dimensions is known as ‘rank’. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2.
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by [Blitz++](http://blitz.sourceforge.net)) to delay the execution of expressions involving array operands, and in this way avoid the unnecessary creation of large temporary array objects.
 
@@ -71,7 +73,7 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 
 * Some of the benchmarks will try to use BLAS if you have define `RA_USE_BLAS=1` in the environment.
 * The test suite is built with `-fsanitize=address` by default, and this can cause significant slowdown. Disable by adding `-fno-sanitize=address` to `CXXFLAGS` at build time.
-* The performance of **ra-ra** depends heavily on the optimization level. The test suite should pass with `-O0`, but that can take a long time.
+* The performance of **ra-ra** depends heavily on optimization level. The test suite should pass with `-O0`, but that can take a long time.
 
 #### Notes
 
