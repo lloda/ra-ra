@@ -241,7 +241,8 @@ plyf(A && a)
     if constexpr (0==rank) {
         *(a.flat());
 // static unrolling. static keep_step implies all else is also static.
-    } else if constexpr (rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
+    } else if constexpr (false && // pessimization, see bench-dot [ra43]. Compiler too good!
+                         rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
 // find outermost compact dim.
         constexpr auto sj = []
         {
@@ -263,7 +264,7 @@ plyf(A && a)
 
 
 // ---------------------------
-// select best for each type
+// ply, best for each type
 // ---------------------------
 
 template <IteratorConcept A>
@@ -368,7 +369,7 @@ for_each(Op && op, A && ... a)
 // i/o
 // ---------------------------
 
-// TODO once ply_ravel lets one specify row-major, reuse that
+// TODO once ply_ravel lets one specify row-major, reuse that.
 template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
