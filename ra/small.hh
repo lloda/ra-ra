@@ -142,12 +142,12 @@ template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
-template <int k, class V>
+template <int k=0, class V>
 constexpr decltype(auto)
 maybe_len(V && v)
 {
-    if constexpr (v.len_s(k)>=0) {
-        return ic<v.len(k)>;
+    if constexpr (DIM_ANY!=std::decay_t<V>::len_s(k)) {
+        return ic<std::decay_t<V>::len_s(k)>;
     } else {
         return v.len(k);
     }

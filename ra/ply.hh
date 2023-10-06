@@ -135,7 +135,6 @@ with_len(L len, E && e)
 // ply, run time order
 // --------------
 
-// Traverse array expression looking to ravel the inner loop.
 // step() must give 0 for k>=their own rank, to allow frame matching.
 template <IteratorConcept A>
 inline void

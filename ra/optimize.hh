@@ -22,18 +22,6 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::is_
 // TODO need something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
 
-// Make ct len iotas from ct len arg.
-template <class E>
-constexpr auto
-len0(E && e)
-{
-    if constexpr (DIM_ANY==e.len_s(0)) {
-        return e.len(0);
-    } else {
-        return ic<e.len_s(0)>;
-    }
-}
-
 // FIXME gets() vs p2781r2
 // the qualifier ra::iota is necessary not to pick std::iota through ADL (test/headers.cc).
 
@@ -59,7 +47,7 @@ template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
-    return ra::iota(len0(e), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
+    return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
 }
 
 // --------------
@@ -84,7 +72,7 @@ template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
-    return ra::iota(len0(e), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
+    return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
 }
 
 // --------------
