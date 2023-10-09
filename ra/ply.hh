@@ -265,7 +265,7 @@ ply(A && a)
     static_assert(!has_len<A>, "len used outside subscript context.");
     static_assert(0<=rank_s<A>() || RANK_ANY==rank_s<A>());
 
-    if constexpr (DIM_ANY==rank_s<A>()) {
+    if constexpr (DIM_ANY==size_s<A>()) {
         ply_ravel(std::forward<A>(a));
     } else {
         plyf(std::forward<A>(a));
