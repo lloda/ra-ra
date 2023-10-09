@@ -58,7 +58,12 @@ else:
     env_blas = env
     print("[%s] BLAS won't be used." % Dir('.').path)
 
-[ra.to_test_ra(env, variant_dir)(bench)
+[ra.to_test_ra(env_blas, variant_dir)(bench)
+ for bench in ['bench-gemm']]
+
+tester = ra.to_test_ra(env, variant_dir)
+
+[tester(bench)
  for bench in ['bench-dot', 'bench-reduce-sqrm',
                'bench-gemv', 'bench-sum-rows', 'bench-sum-cols',
                'bench-pack', 'bench-from',
@@ -66,8 +71,8 @@ else:
                'bench-optimize', 'bench-tensorindex'
            ]]
 
-[ra.to_test_ra(env_blas, variant_dir)(bench)
- for bench in ['bench-gemm']]
+tester('bench-dot', target='bench-dot-no-su', cppdefines={'RA_STATIC_UNROLL': '0'})
+tester('bench-dot', target='bench-dot-su', cppdefines={'RA_STATIC_UNROLL': '1'})
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/bench'))
