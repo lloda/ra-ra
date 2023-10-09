@@ -232,7 +232,7 @@ int main()
         using Vb = int_c<int(b)>;
         tr.test_eq(9, Vb::value);
     }
-    tr.section("custom steps. List init is always row-major.");
+    tr.section("custom steps. List init is row-major regardless.");
     {
         auto test = [&tr](auto && a)
                     {
@@ -252,8 +252,8 @@ int main()
 
                         using A = std::decay_t<decltype(a(0))>;
                         using dim1 = std::array<ra::dim_t, 1>;
-                        auto lens = ra::mp::tuple_values<dim1, typename A::lens>();
-                        auto steps = ra::mp::tuple_values<dim1, typename A::steps>();
+                        auto lens = ra::mp::tuple_values<ra::dim_t, typename A::lens>();
+                        auto steps = ra::mp::tuple_values<ra::dim_t, typename A::steps>();
                         tr.test_eq(dim1 {3}, ra::start(lens));
                         tr.test_eq(dim1 {2}, ra::start(steps));
                     };

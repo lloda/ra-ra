@@ -324,8 +324,8 @@ struct SmallBase
 
     constexpr static rank_t rank() { return mp::len<lens>; }
     constexpr static rank_t rank_s() { return mp::len<lens>; }
-    constexpr static auto slens = mp::tuple_values<std::array<dim_t, rank()>, lens>();
-    constexpr static auto ssteps = mp::tuple_values<std::array<dim_t, rank()>, steps>();
+    constexpr static auto slens = mp::tuple_values<dim_t, lens>();
+    constexpr static auto ssteps = mp::tuple_values<dim_t, steps>();
     constexpr static dim_t size() { return mp::apply<mp::prod, lens>::value; }
     constexpr static dim_t size_s() { return size(); }
     constexpr static dim_t len(int k) { return slens[k]; }

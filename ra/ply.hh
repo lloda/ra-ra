@@ -149,7 +149,6 @@ ply_ravel(A && a)
     }
 // inside first.
     rank_t order[rank];
-    dim_t sha[rank], ind[rank] = {};
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
@@ -158,6 +157,7 @@ ply_ravel(A && a)
     //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
     //               { return a.len(order[i])<a.len(order[j]); });
     // }
+    dim_t sha[rank], ind[rank] = {};
 // find outermost compact dim.
     rank_t * ocd = order;
     dim_t ss = a.len(*ocd);
@@ -172,7 +172,7 @@ ply_ravel(A && a)
         RA_CHECK(DIM_BAD!=sha[k], "Undefined len[", ocd[k], "].");
     }
 // sub xpr steps advance in compact dims, as they might differ.
-    auto const ss0 = a.step(order[0]);
+    auto ss0 = a.step(order[0]);
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); --s>=0; p+=ss0) {
@@ -197,11 +197,11 @@ ply_ravel(A && a)
 // ply, compile time order/rank.
 // -------------------------
 
-template <class order, int ravel_rank, class A, class S>
+template <auto order, int k, int urank, class A, class S>
 constexpr void
 subindex(A & a, dim_t s, S const & ss0)
 {
-    if constexpr (mp::len<order> == ravel_rank) {
+    if constexpr (k < urank) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wstringop-overflow"
 #pragma GCC diagnostic warning "-Wstringop-overread"
@@ -210,12 +210,12 @@ subindex(A & a, dim_t s, S const & ss0)
         }
 #pragma GCC diagnostic pop
     } else {
-        dim_t size = a.len(mp::first<order>::value); // TODO Precompute above
+        dim_t size = a.len(order[k]); // TODO Precompute above
         for (dim_t i=0; i<size; ++i) {
-            subindex<mp::drop1<order>, ravel_rank>(a, s, ss0);
-            a.adv(mp::first<order>::value, 1);
+            subindex<order, k-1, urank>(a, s, ss0);
+            a.adv(order[k], 1);
         }
-        a.adv(mp::first<order>::value, -size);
+        a.adv(order[k], -size);
     }
 }
 
@@ -225,32 +225,31 @@ plyf(A && a)
 {
     constexpr rank_t rank = rank_s<A>();
     static_assert(0<=rank, "plyf needs static rank");
-// inside last.
-    using order = mp::iota<rank>;
-    constexpr static auto o = mp::tuple_values<std::array<dim_t, rank>, order>();
+// inside first.
+    constexpr /* static P2647 gcc13 */ auto order = mp::tuple_values<int, mp::reverse<mp::iota<rank>>>();
 
     if constexpr (0==rank) {
         *(a.flat());
 // static unrolling. static keep_step implies all else is static.
-#if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // pessimization, see bench-dot [ra43]
+#if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // maybe pessimization, see bench-dot [ra43]
     } else if constexpr (rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
 // find outermost compact dim.
         constexpr auto sj = []
         {
-            dim_t ss = A::len_s(o[rank-1]);
+            dim_t ss = A::len_s(order[0]);
             int j = 1;
-            while (j<rank && A::keep_step(ss, o[rank-1], o[rank-1-j])) {
-                ss *= A::len_s(o[rank-1-j]);
+            while (j<rank && A::keep_step(ss, order[0], order[j])) {
+                ss *= A::len_s(order[j]);
                 ++j;
             }
             return std::make_tuple(ss, j);
         } ();
 // sub xpr steps advance in compact dims, as they might differ.
-        subindex<order, std::get<1>(sj)>(a, std::get<0>(sj), a.step(o[rank-1]));
+        subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), a.step(order[0]));
 #endif
     } else {
 // not worth unrolling.
-        subindex<order, 1>(a, a.len(o[rank-1]), a.step(o[rank-1]));
+        subindex<order, rank-1, 1>(a, a.len(order[0]), a.step(order[0]));
     }
 }
 
@@ -305,7 +304,6 @@ ply_ravel_exit(A && a, DEF && def)
     }
 // inside first.
     rank_t order[rank];
-    dim_t sha[rank], ind[rank] = {};
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
@@ -314,6 +312,7 @@ ply_ravel_exit(A && a, DEF && def)
     //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
     //               { return a.len(order[i])<a.len(order[j]); });
     // }
+    dim_t sha[rank], ind[rank] = {};
 // find outermost compact dim.
     rank_t * ocd = order;
     dim_t ss = a.len(*ocd);

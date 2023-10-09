@@ -342,10 +342,10 @@ from_tuple(T && t)
 }
 
 template <class C, class T>
-constexpr C
+constexpr auto
 tuple_values()
 {
-    return std::apply([](auto ... t) { return C { decltype(t)::value ... }; }, T {});
+    return std::apply([](auto ... t) { return std::array<C, std::tuple_size_v<T>> { decltype(t)::value ... }; }, T {});
 }
 
 template <class C, class T, class I>
