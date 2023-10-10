@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Traversal.
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -42,7 +42,7 @@ int main()
                 tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin()));  \
             }
             TEST(ply_ravel);
-            TEST(plyf);
+            TEST(ply_fixed);
 #undef TEST
         }
 #define TEST(plier)                                                     \
@@ -60,7 +60,7 @@ int main()
             tr.test_eq(+9, C[2]);                                       \
         }
         TEST(ply_ravel);
-        TEST(plyf);
+        TEST(ply_fixed);
 #undef TEST
         {
             ra::Unique<int, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
@@ -75,7 +75,7 @@ int main()
                 for (int ci: c) { tr.test_eq(0, ci); }                  \
             }
             TEST(ply_ravel);
-            TEST(plyf);
+            TEST(ply_fixed);
 #undef TEST
         }
     }
@@ -97,7 +97,7 @@ int main()
             TEST(plier)(ra::Small<real> {}, ra::Small<real> {});        \
             TEST(plier)(ra::Small<real> {}, ra::Unique<real, 0>({}, ra::none));
             TEST2(ply_ravel);
-            TEST2(plyf);
+            TEST2(ply_fixed);
 #undef TEST2
 #undef TEST
         }
@@ -125,8 +125,8 @@ int main()
             TEST(plier, "05")(ra::Unique<int, 0>({}, ra::none), true);
 
             TEST2(ply_ravel);
-            TEST2(plyf);
-// this one cannot be done with plyf.
+            TEST2(ply_fixed);
+// this one cannot be done with ply_fixed.
             TEST(ply_ravel, "06")(ra::Unique<int>({ 0 }, ra::none), false);
 #undef TEST2
 #undef TEST
@@ -148,7 +148,7 @@ int main()
             TEST(plier, "14")(ra::Unique<int, 2>({ 2, 0 }, ra::none)+ra::scalar(1), false); \
             TEST(plier, "15")(ra::Unique<int, 2>({ 0, 2 }, ra::none)+ra::scalar(1), false);
 
-            TEST2(plyf);
+            TEST2(ply_fixed);
             TEST2(ply_ravel);
         }
 #undef TEST2
@@ -162,7 +162,7 @@ int main()
             auto test = [&](auto && a)
                 {
                     ra::ply_ravel(ra::expr(print, a.iter())); cout << endl;
-                    ra::plyf(ra::expr(print, a.iter())); cout << endl;
+                    ra::ply_fixed(ra::expr(print, a.iter())); cout << endl;
                 };
             ra::Unique<real, 3> a(std::vector<ra::dim_t> {1, 2, 3}, ra::none);
             std::iota(a.begin(), a.end(), 0);
@@ -287,7 +287,7 @@ int main()
                           c.iter(), b.iter(), a.iter()));           \
             tr.info(STRINGIZE(plier) " b-a").test(std::equal(check, check+24, c.begin()));
             TEST(ply_ravel);
-            TEST(plyf);
+            TEST(ply_fixed);
 #undef TEST
         }
     }
@@ -307,7 +307,7 @@ int main()
             tr.info(STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
         }
         TEST(ply_ravel);
-        TEST(plyf);
+        TEST(ply_fixed);
 #undef TEST
     }
     tr.section("helpers for ply - map, for_each");
@@ -332,7 +332,7 @@ int main()
             tr.info(STRINGIZE(plier)).test(c==99);              \
         }
         TEST(ply_ravel);
-        TEST(plyf);
+        TEST(ply_fixed);
 #undef TEST
     }
     tr.section("more pliers on scalar");

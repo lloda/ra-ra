@@ -1,15 +1,15 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Traverse expression.
 
-// (c) Daniel Llorens - 2013-2019, 2021
+// (c) Daniel Llorens - 2013-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// TODO Lots of room for improvement: small (fixed sizes) and large (tiling, etc. see eval.cc in Blitz++).
-// TODO Traversal order should be a parameter, since some operations (e.g. output, ravel) require a specific order.
+// TODO Traversal order should be a parameter, some operations (e.g. output, ravel) require specific orders.
 // TODO Better heuristic for traversal order.
+// TODO Tiling, etc. (see eval.cc in Blitz++).
 // TODO std::execution::xxx-policy, validate output argument strides.
 
 #pragma once
@@ -135,17 +135,27 @@ with_len(L len, E && e)
 // ply, run time order/rank.
 // --------------
 
+struct Nop {};
+
 // step() must give 0 for k>=their own rank, to allow frame matching.
-template <IteratorConcept A>
-inline void
-ply_ravel(A && a)
+template <IteratorConcept A, class Early = Nop>
+inline auto
+ply_ravel(A && a, Early && early = Nop {})
 {
     rank_t rank = a.rank();
+// must avoid 0-length vlas [ra40].
     if (0>=rank) {
-// FIXME always check, else compiler may complain of bad vla; see test in [ra40].
         if (0>rank) [[unlikely]] { std::abort(); }
-        *(a.flat());
-        return;
+        if constexpr (requires {early.def;}) {
+            if (auto stop = *(a.flat())) {
+                return stop.value();
+            } else {
+                return early.def;
+            }
+        } else {
+            *(a.flat());
+            return;
+        }
     }
 // inside first.
     rank_t order[rank];
@@ -166,21 +176,34 @@ ply_ravel(A && a)
     }
     for (int k=0; k<rank; ++k) {
 // ss takes care of the raveled dimensions ss.
-        if (0 == (sha[k]=a.len(ocd[k]))) {
-            return;
+        if (0>=(sha[k]=a.len(ocd[k]))) {
+            if (0>sha[k]) [[unlikely]] { std::abort(); }
+            if constexpr (requires {early.def;}) {
+                return early.def;
+            } else {
+                return;
+            }
         }
-        RA_CHECK(DIM_BAD!=sha[k], "Undefined len[", ocd[k], "].");
     }
-// sub xpr steps advance in compact dims, as they might differ.
     auto ss0 = a.step(order[0]);
     for (;;) {
         dim_t s = ss;
         for (auto p=a.flat(); --s>=0; p+=ss0) {
-            *p;
+            if constexpr (requires {early.def;}) {
+                if (auto stop = *p) {
+                    return stop.value();
+                }
+            } else {
+                *p;
+            }
         }
         for (int k=0; ; ++k) {
             if (k>=rank) {
-                return;
+                if constexpr (requires {early.def;}) {
+                    return early.def;
+                } else {
+                    return;
+                }
             } else if (++ind[k]<sha[k]) {
                 a.adv(ocd[k], 1);
                 break;
@@ -197,41 +220,57 @@ ply_ravel(A && a)
 // ply, compile time order/rank.
 // -------------------------
 
-template <auto order, int k, int urank, class A, class S>
-constexpr void
-subindex(A & a, dim_t s, S const & ss0)
+template <auto order, int k, int urank, class A, class S, class Early>
+constexpr auto
+subindex(A & a, dim_t s, S const & ss0, Early && early)
 {
     if constexpr (k < urank) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wstringop-overflow"
-#pragma GCC diagnostic warning "-Wstringop-overread"
         for (auto p=a.flat(); --s>=0; p+=ss0) {
-            *p;
+            if constexpr (requires {early.def;}) {
+                if (auto stop = *p) {
+                    return stop.value();
+                }
+            } else {
+                *p;
+            }
         }
-#pragma GCC diagnostic pop
     } else {
-        dim_t size = a.len(order[k]); // TODO Precompute above
+        dim_t size = a.len(order[k]); // TODO precompute above
         for (dim_t i=0; i<size; ++i) {
-            subindex<order, k-1, urank>(a, s, ss0);
+            subindex<order, k-1, urank>(a, s, ss0, early);
             a.adv(order[k], 1);
         }
         a.adv(order[k], -size);
     }
+    if constexpr (requires {early.def;}) {
+        return early.def;
+    } else {
+        return;
+    }
 }
 
-template <IteratorConcept A>
-constexpr void
-plyf(A && a)
+template <IteratorConcept A, class Early = Nop>
+constexpr auto
+ply_fixed(A && a, Early && early = Nop {})
 {
     constexpr rank_t rank = rank_s<A>();
-    static_assert(0<=rank, "plyf needs static rank");
+    static_assert(0<=rank, "ply_fixed needs static rank");
 // inside first.
     constexpr /* static P2647 gcc13 */ auto order = mp::tuple_values<int, mp::reverse<mp::iota<rank>>>();
 
     if constexpr (0==rank) {
-        *(a.flat());
+        if constexpr (requires {early.def;}) {
+            if (auto stop = *(a.flat())) {
+                return stop.value();
+            } else {
+                return early.def;
+            }
+        } else {
+            *(a.flat());
+            return;
+        }
 // static unrolling. static keep_step implies all else is static.
-#if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // maybe pessimization, see bench-dot [ra43]
+#if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // pessimization? see bench-dot [ra43]
     } else if constexpr (rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
 // find outermost compact dim.
         constexpr auto sj = []
@@ -244,12 +283,11 @@ plyf(A && a)
             }
             return std::make_tuple(ss, j);
         } ();
-// sub xpr steps advance in compact dims, as they might differ.
-        subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), a.step(order[0]));
+        return subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), a.step(order[0]), early);
 #endif
     } else {
 // not worth unrolling.
-        subindex<order, rank-1, 1>(a, a.len(order[0]), a.step(order[0]));
+        return subindex<order, rank-1, 1>(a, a.len(order[0]), a.step(order[0]), early);
     }
 }
 
@@ -258,17 +296,17 @@ plyf(A && a)
 // ply, best for each type
 // ---------------------------
 
-template <IteratorConcept A>
-constexpr void
-ply(A && a)
+template <IteratorConcept A, class Early = Nop>
+constexpr auto
+ply(A && a, Early && early = Nop {})
 {
     static_assert(!has_len<A>, "len used outside subscript context.");
     static_assert(0<=rank_s<A>() || RANK_ANY==rank_s<A>());
 
     if constexpr (DIM_ANY==size_s<A>()) {
-        ply_ravel(std::forward<A>(a));
+        return ply_ravel(std::forward<A>(a), std::forward<Early>(early));
     } else {
-        plyf(std::forward<A>(a));
+        return ply_fixed(std::forward<A>(a), std::forward<Early>(early));
     }
 }
 
@@ -284,76 +322,14 @@ for_each(Op && op, A && ... a)
 // ply, short-circuiting
 // ---------------------------
 
-// TODO Refactor with ply_ravel. Make exit available to plyf.
-// TODO These are reductions. How about higher rank?
-template <IteratorConcept A, class DEF>
-inline auto
-ply_ravel_exit(A && a, DEF && def)
-{
-    static_assert(!has_len<A>, "len used outside subscript context.");
-    static_assert(0<=rank_s<A>() || RANK_ANY==rank_s<A>());
+template <class T> struct Default { T def; };
+template <class T> Default(T &&) -> Default<T>;
 
-    rank_t rank = a.rank();
-    if (0>=rank) {
-// FIXME always check, else compiler may complain of bad vla; see test in [ra40].
-        if (0>rank) [[unlikely]] { std::abort(); }
-        if (auto what = *(a.flat()); std::get<0>(what)) {
-            return std::get<1>(what);
-        }
-        return def;
-    }
-// inside first.
-    rank_t order[rank];
-    for (rank_t i=0; i<rank; ++i) {
-        order[i] = rank-1-i;
-    }
-    // FIXME better heuristic - but first need a way to force row-major
-    // if (rank>1) {
-    //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-    //               { return a.len(order[i])<a.len(order[j]); });
-    // }
-    dim_t sha[rank], ind[rank] = {};
-// find outermost compact dim.
-    rank_t * ocd = order;
-    dim_t ss = a.len(*ocd);
-    for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
-        ss *= a.len(*ocd);
-    }
-    for (int k=0; k<rank; ++k) {
-// ss takes care of the raveled dimensions ss.
-        if (0 == (sha[k]=a.len(ocd[k]))) {
-            return def;
-        }
-        RA_CHECK(DIM_BAD!=sha[k], "Undefined len[", ocd[k], "].");
-    }
-// sub xpr steps advance in compact dims, as they might differ.
-    auto const ss0 = a.step(order[0]);
-    for (;;) {
-        dim_t s = ss;
-        for (auto p=a.flat(); --s>=0; p+=ss0) {
-            if (auto what = *p; std::get<0>(what)) {
-                return std::get<1>(what);
-            }
-        }
-        for (int k=0; ; ++k) {
-            if (k>=rank) {
-                return def;
-            } else if (++ind[k]<sha[k]) {
-                a.adv(ocd[k], 1);
-                break;
-            } else {
-                ind[k] = 0;
-                a.adv(ocd[k], 1-sha[k]);
-            }
-        }
-    }
-}
-
-template <IteratorConcept A, class DEF>
+template <IteratorConcept A, class Def>
 constexpr decltype(auto)
-early(A && a, DEF && def)
+early(A && a, Def && def)
 {
-    return ply_ravel_exit(std::forward<A>(a), std::forward<DEF>(def));
+    return ply(std::forward<A>(a), Default {def});
 }
 
 

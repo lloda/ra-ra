@@ -119,14 +119,14 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 
     constexpr static rank_t
     rank()
-    requires (DIM_ANY != Match::rank_s())
+    requires (RANK_ANY != Match::rank_s())
     {
         return rank_s();
     }
 
     constexpr rank_t
     rank() const
-    requires (DIM_ANY == Match::rank_s())
+    requires (RANK_ANY == Match::rank_s())
     {
         rank_t r = RANK_BAD;
         ((r = choose_rank(r, std::get<I>(t).rank())), ...);

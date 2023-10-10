@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Checks operations (verbs) with cell rank>0.
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -76,7 +76,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
             cout << "\n\nusing " STRINGIZE(plier) " ply (ewv &&):\n";   \
             ra::plier(ra::expr(v, a.iter(), b.iter()));
             TEST(ply_ravel);
-            TEST(plyf);
+            TEST(ply_fixed);
         }
         cout << "\n\n" << endl;
     }

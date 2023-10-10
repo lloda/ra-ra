@@ -59,7 +59,7 @@ int main()
             plier(ra::expr(f, ARGi, a.iter<-1>(), ARGd));       \
             tr.test(std::equal(check, check+4, dump.begin()));
             TEST(ply_ravel);
-            TEST(plyf);
+            TEST(ply_fixed);
 #undef TEST
         }
 // TODO Use explicit DRIVER arg to ra::expr; the fixed size ARGi should always drive.
@@ -82,7 +82,7 @@ int main()
             plier(ra::expr(f, a.iter<-1>(), ARGi, ARGd));    \
             tr.test(std::equal(check, check+4, dump.begin()));
             TEST(ply_ravel);
-            TEST(plyf);
+            TEST(ply_fixed);
 #undef TEST
         }
     }

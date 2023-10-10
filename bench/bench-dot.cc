@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/bench - dot() with various array types.
 
-// (c) Daniel Llorens - 2011, 2014-2015, 2017
+// (c) Daniel Llorens - 2011-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -95,7 +95,7 @@ struct by_raw
                                      a, b))));
 
 BY_PLY_TAGGED(ply_ravel);
-BY_PLY_TAGGED(plyf);
+BY_PLY_TAGGED(ply_fixed);
 
 real a, b, ref, rspec;
 
@@ -167,7 +167,7 @@ int main()
                 return y;
             };
 
-// optimize() plugs into the definition of operator*, etc. See plyf [ra43].
+// optimize() plugs into the definition of operator*, etc. See ply_fixed [ra43].
         auto f_small_op = [](auto && A, auto && B)
             {
                 return sum(A*B);
@@ -181,7 +181,7 @@ int main()
                 return y;                                               \
             }
         DEFINE_SMALL_PLY(ply_ravel, ply_ravel);
-        DEFINE_SMALL_PLY(plyf, plyf);
+        DEFINE_SMALL_PLY(ply_fixed, ply_fixed);
         DEFINE_SMALL_PLY(ply, ply);
 
         auto bench_all = [&](auto s, auto && f_small_indexed)
@@ -194,7 +194,7 @@ int main()
                 bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
                 bench("op", s, ref, reps+extra(), f_small_op);
                 bench("ply_ravel", s, ref, reps+extra(), f_small_ply_ravel);
-                bench("plyf", s, ref, reps+extra(), f_small_plyf);
+                bench("ply_fixed", s, ref, reps+extra(), f_small_ply_fixed);
                 bench("ply", s, ref, reps+extra(), f_small_ply);
             };
         bench_all(ra::Small<real, 2>(), f_small_indexed_1);
@@ -233,8 +233,9 @@ int main()
         BENCH(by_raw);
     }
 #define BENCH_ALL                                                       \
-    FOR_EACH(BENCH, by_raw, by_1l_ply_ravel, by_2l_ply_ravel, by_1w_ply_ravel, by_2w_ply_ravel); \
-    FOR_EACH(BENCH, by_1l_plyf, by_2l_plyf, by_1w_plyf, by_2w_plyf);    \
+    FOR_EACH(BENCH, by_raw);                                            \
+    FOR_EACH(BENCH, by_1l_ply_ravel, by_2l_ply_ravel, by_1w_ply_ravel, by_2w_ply_ravel); \
+    FOR_EACH(BENCH, by_1l_ply_fixed, by_2l_ply_fixed, by_1w_ply_fixed, by_2w_ply_fixed);
 
     tr.section("ra:: wrapped std::vector<>");
     {

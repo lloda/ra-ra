@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Fundamental tests.
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -85,7 +85,7 @@ int main()
         TEST(plier)(ra::Small<int, 3> {});                      \
         TEST(plier)(ra::Unique<int, 1>({3}, ra::none));
         TEST2(ply_ravel)
-        TEST2(plyf)
+        TEST2(ply_fixed)
 #undef TEST2
 #undef TEST
             }
@@ -104,7 +104,7 @@ int main()
         TEST(plier, B.iter(), C.iter())(int3 { 1, 2, 3 }, int3 { 77, 88, 99 }); \
         TEST(plier, ra::vector(B), ra::vector(C))(std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
         TEST2(ply_ravel)
-        TEST2(plyf)
+        TEST2(ply_fixed)
 #undef TEST2
 #undef TEST
             }
@@ -196,7 +196,7 @@ int main()
             tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }
         TEST(ply_ravel);
-        TEST(plyf);
+        TEST(ply_fixed);
 #undef TEST
     }
     tr.section("reverse 1/1 axis, traverse");
@@ -217,7 +217,7 @@ int main()
         }                                                       \
     }
     TEST(ply_ravel)
-    TEST(plyf)
+    TEST(ply_fixed)
 #undef TEST
     tr.section("reverse (ref & non ref), traverse");
     {

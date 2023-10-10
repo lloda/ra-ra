@@ -13,7 +13,7 @@
 int main(int argc, char * * argv)
 {
     ra::TestRecorder tr;
-    tr.section("-DNDEBUG breaks at ply_ravel etc. order[rank] vlas when traversing dyamic rank objects [ra40]");
+    tr.section("-DNDEBUG breaks at ply_ravel etc. order[rank] vlas when traversing dynamic rank objects [ra40]");
     {
         int ap[6] = {0, 1, 2, 3, 4, 5};
         ra::View<int> a({6}, ap);

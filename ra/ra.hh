@@ -235,20 +235,21 @@ FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
 // --------------------------------
 // Some whole-array reductions.
 // TODO First rank reductions? Variable rank reductions?
+// FIXME C++23 and_then/or_else/etc
 // --------------------------------
 
 template <class A>
 constexpr bool
 any(A && a)
 {
-    return early(map([](bool x) { return std::make_tuple(x, x); }, std::forward<A>(a)), false);
+    return early(map([](bool x) { return x ? std::make_optional(true) : std::nullopt; }, std::forward<A>(a)), false);
 }
 
 template <class A>
 constexpr bool
 every(A && a)
 {
-    return early(map([](bool x) { return std::make_tuple(!x, x); }, std::forward<A>(a)), true);
+    return early(map([](bool x) { return !x ? std::make_optional(false) : std::nullopt; }, std::forward<A>(a)), true);
 }
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
@@ -256,7 +257,7 @@ template <class A>
 constexpr auto
 index(A && a)
 {
-    return early(map([](auto && a, auto && i) { return std::make_tuple(bool(a), i); },
+    return early(map([](auto && a, auto && i) { return bool(a) ? std::make_optional(i) : std::nullopt; },
                      std::forward<A>(a), ra::iota(ra::start(a).len(0))),
                  ra::dim_t(-1));
 }
@@ -266,9 +267,8 @@ template <class A, class B>
 constexpr bool
 lexicographical_compare(A && a, B && b)
 {
-    return early(map([](auto && a, auto && b)
-                     { return a==b ? std::make_tuple(false, true) : std::make_tuple(true, a<b); },
-                     a, b),
+    return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
+                     std::forward<A>(a), std::forward<B>(b)),
                  false);
 }
 

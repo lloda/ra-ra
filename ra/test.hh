@@ -26,12 +26,11 @@ struct TestRecorder
     inline static auto
     amax_strict(A && a)
     {
-        using std::max;
         using T = value_t<A>;
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
-        return early(map([&c](auto && a) { if (c<a) { c = a; }; return std::make_tuple(isnan(a), QNAN*a); },
-                         std::forward<A>(a)), c);
-        return c;
+        return early(map([&c](auto && a) { if (c<a) { c=a; }; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; },
+                         std::forward<A>(a)),
+                     c);
     }
 
     enum verbose_t { QUIET, // as NOISY if failed, else no output

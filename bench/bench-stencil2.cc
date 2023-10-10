@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/bench - Stencil-as-view (rank 2).
 
-// (c) Daniel Llorens - 2016-2017
+// (c) Daniel Llorens - 2016-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -102,7 +102,7 @@ struct f_sumprod2
     {
         Astencil.cp = A.data();
         Anext(I, J) = 0;
-        plyf(map(ra::wrank<0, 2, 2>([](auto && A, auto && B, auto && C) { A += B*C; }), Anext(I, J), Astencil, mask));
+        ply_fixed(map(ra::wrank<0, 2, 2>([](auto && A, auto && B, auto && C) { A += B*C; }), Anext(I, J), Astencil, mask));
         std::swap(A.cp, Anext.cp);
     };
 };

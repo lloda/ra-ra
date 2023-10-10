@@ -11,7 +11,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 23
+@set VERSION 24
 @set UPDATED 2023 September 28
 
 @copying
@@ -2475,18 +2475,18 @@ Return the minimum of the elements of @var{expr}. If @var{expr} is empty, return
 
 @cindex @code{early}
 @anchor{x-early} @defun early expr default
-@var{expr} shall be an array expression that returns @code{std::tuple<bool, T>}. @var{expr} is traversed as by @code{for_each}; if the expression ever returns @code{true} in the first element of the tuple, traversal stops and the second element is returned. If this never happens, @var{default} is returned instead.
+@var{expr} is an array expression that returns @code{std::optional<T>}. @var{expr} is traversed as by @code{for_each}. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, @var{default} is returned instead. @code{default} may be a reference.
 
 The following definition of elementwise @code{lexicographical_compare} relies on @code{early}.
 
 @example @c [ma108]
 @verbatim
 template <class A, class B>
-inline bool lexicographical_compare(A && a, B && b)
+inline bool
+lexicographical_compare(A && a, B && b)
 {
-    return early(map([](auto && a, auto && b)
-                     { return a==b ? std::make_tuple(false, true) : std::make_tuple(true, a<b); },
-                     a, b),
+    return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
+                     std::forward<A>(a), std::forward<B>(b)),
                  false);
 }
 @end verbatim
