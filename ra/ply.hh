@@ -147,26 +147,17 @@ ply_ravel(A && a, Early && early = Nop {})
     if (0>=rank) {
         if (0>rank) [[unlikely]] { std::abort(); }
         if constexpr (requires {early.def;}) {
-            if (auto stop = *(a.flat())) {
-                return stop.value();
-            } else {
-                return early.def;
-            }
+            return (*(a.flat())).value_or(early.def);
         } else {
             *(a.flat());
             return;
         }
     }
-// inside first.
+// inside first. FIXME better heuristic - but first need a way to force row-major
     rank_t order[rank];
     for (rank_t i=0; i<rank; ++i) {
         order[i] = rank-1-i;
     }
-    // FIXME better heuristic - but first need a way to force row-major
-    // if (rank>1) {
-    //     std::sort(order, order+rank, [&a, &order](auto && i, auto && j)
-    //               { return a.len(order[i])<a.len(order[j]); });
-    // }
     dim_t sha[rank], ind[rank] = {};
 // find outermost compact dim.
     rank_t * ocd = order;
@@ -228,7 +219,7 @@ subindex(A & a, dim_t s, S const & ss0, Early && early)
         for (auto p=a.flat(); --s>=0; p+=ss0) {
             if constexpr (requires {early.def;}) {
                 if (auto stop = *p) {
-                    return stop.value();
+                    return stop;
                 }
             } else {
                 *p;
@@ -237,57 +228,71 @@ subindex(A & a, dim_t s, S const & ss0, Early && early)
     } else {
         dim_t size = a.len(order[k]); // TODO precompute above
         for (dim_t i=0; i<size; ++i) {
-            subindex<order, k-1, urank>(a, s, ss0, early);
+            if constexpr (requires {early.def;}) {
+                if (auto stop = subindex<order, k-1, urank>(a, s, ss0, early)) {
+                    return stop;
+                }
+            } else {
+                subindex<order, k-1, urank>(a, s, ss0, early);
+            }
             a.adv(order[k], 1);
         }
         a.adv(order[k], -size);
     }
     if constexpr (requires {early.def;}) {
-        return early.def;
+        return static_cast<decltype(*(a.flat()))>(std::nullopt);
     } else {
         return;
     }
 }
 
 template <IteratorConcept A, class Early = Nop>
-constexpr auto
+constexpr decltype(auto)
 ply_fixed(A && a, Early && early = Nop {})
 {
     constexpr rank_t rank = rank_s<A>();
     static_assert(0<=rank, "ply_fixed needs static rank");
-// inside first.
+// inside first. FIXME better heuristic - but first need a way to force row-major
     constexpr /* static P2647 gcc13 */ auto order = mp::tuple_values<int, mp::reverse<mp::iota<rank>>>();
 
     if constexpr (0==rank) {
         if constexpr (requires {early.def;}) {
-            if (auto stop = *(a.flat())) {
-                return stop.value();
-            } else {
-                return early.def;
-            }
+            return (*(a.flat())).value_or(early.def);
         } else {
             *(a.flat());
             return;
         }
-// static unrolling. static keep_step implies all else is static.
+    }
 #if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // pessimization? see bench-dot [ra43]
-    } else if constexpr (rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
+    constexpr bool unroll = true;
+#else
+    constexpr bool unroll = false;
+#endif
+    auto ss0 = a.step(order[0]);
+// static unrolling. static keep_step implies all else is static.
+    if constexpr (unroll && rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
 // find outermost compact dim.
-        constexpr auto sj = []
+        constexpr auto sj = [&order]
         {
             dim_t ss = A::len_s(order[0]);
             int j = 1;
-            while (j<rank && A::keep_step(ss, order[0], order[j])) {
+            for (; j<rank && A::keep_step(ss, order[0], order[j]); ++j) {
                 ss *= A::len_s(order[j]);
-                ++j;
             }
             return std::make_tuple(ss, j);
         } ();
-        return subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), a.step(order[0]), early);
-#endif
+        if constexpr (requires {early.def;}) {
+            return (subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early)).value_or(early.def);
+        } else {
+            subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
+        }
     } else {
 // not worth unrolling.
-        return subindex<order, rank-1, 1>(a, a.len(order[0]), a.step(order[0]), early);
+        if constexpr (requires {early.def;}) {
+            return (subindex<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
+        } else {
+            subindex<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
+        }
     }
 }
 
@@ -297,7 +302,7 @@ ply_fixed(A && a, Early && early = Nop {})
 // ---------------------------
 
 template <IteratorConcept A, class Early = Nop>
-constexpr auto
+constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
     static_assert(!has_len<A>, "len used outside subscript context.");

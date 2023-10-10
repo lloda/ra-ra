@@ -2475,7 +2475,7 @@ Return the minimum of the elements of @var{expr}. If @var{expr} is empty, return
 
 @cindex @code{early}
 @anchor{x-early} @defun early expr default
-@var{expr} is an array expression that returns @code{std::optional<T>}. @var{expr} is traversed as by @code{for_each}. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, @var{default} is returned instead. @code{default} may be a reference.
+@var{expr} is an array expression that returns @code{std::optional<T>}. @var{expr} is traversed as by @code{for_each}. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, @var{default} is returned instead. If @code{default} is a reference, @code{early} will return its value. @c FIXME
 
 The following definition of elementwise @code{lexicographical_compare} relies on @code{early}.
 

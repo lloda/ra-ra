@@ -34,6 +34,15 @@ int main()
         tr.test(!ra::any(odd(a)));
         tr.test(ra::every(!odd(a)));
     }
+    tr.section("early with static lens. Regression with ununrolled expr");
+    {
+        ra::Small<int, 2, 3> a = { { 1, 1, 1 }, { 1, 0, 1} };
+        tr.test(!every(1==a));
+        tr.test(any(0==a));
+        auto b = ra::transpose<1, 0>(a);
+        tr.test(!every(1==b));
+        tr.test(any(0==b));
+    }
     tr.section("early with static lens is constexpr");
     {
         constexpr ra::Small<int, 2, 3> a = ra::_0*2 + ra::_1*10;
