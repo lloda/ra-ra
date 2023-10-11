@@ -352,7 +352,7 @@ template <class C, class T, class I>
 constexpr C
 map_indices(I const & i)
 {
-    return std::apply([&i](auto ... t) { return C { i[decltype(t)::value] ... }; }, T {});
+    return std::apply([&i](auto ... t) { return std::array<C, std::tuple_size_v<T>> { i[decltype(t)::value] ... }; }, T {});
 };
 
 template <class T, int k=0>

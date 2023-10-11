@@ -32,7 +32,7 @@ driver(T && t, int k)
         }
         return driver<iarg+1>(t, k);
     } else {
-        assert(0 && "there was no driver"); abort();
+        std::abort(); // no driver
     }
 }
 

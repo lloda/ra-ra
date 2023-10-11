@@ -256,7 +256,7 @@ struct Reframe
     constexpr decltype(auto)
     at(auto const & i) const
     {
-        return a.at(mp::map_indices<std::array<dim_t, mp::len<Dest>>, Dest>(i));
+        return a.at(mp::map_indices<dim_t, Dest>(i));
     }
 };
 

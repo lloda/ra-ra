@@ -29,9 +29,11 @@ std::string typecheck(auto && a)
 int main()
 {
     TestRecorder tr;
-    tr.section("basic");
+    tr.section("predicates");
     {
         tr.test(std::is_standard_layout_v<ra::Small<float, 2>>);
+        ra::Small<int, 2, 3> a;
+        static_assert(std::input_iterator<decltype(a.begin())>);
     }
     tr.section("BUG ambiguous case I");
     {

@@ -136,7 +136,7 @@ int main()
         tr.test_eq(66, a);
         tr.test_eq(132, b);
     }
-    tr.section("(170) rank 0 -> scalar with View");
+    tr.section("[170] rank 0 -> scalar with View");
     {
         auto rank0test0 = [](double & a) { a *= 2; };
         auto rank0test1 = [](double const & a) { return a*2; };
@@ -300,15 +300,15 @@ int main()
     {
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
 
-        ra::Shared<double> s({3, 2}, pool, pool+6);
+        ra::Shared<double> s({3, 2}, pool, 6);
         tr.test_eq(2, s.rank());
         tr.test(std::equal(pool, pool+6, s.begin()));
 
-        ra::Unique<double> u({3, 2}, pool, pool+6);
+        ra::Unique<double> u({3, 2}, pool, 6);
         tr.test_eq(2, u.rank());
         tr.test(std::equal(pool, pool+6, u.begin()));
 
-        ra::Big<double> o({3, 2}, pool, pool+6);
+        ra::Big<double> o({3, 2}, pool, 6);
         tr.test_eq(2, o.rank());
         tr.test(std::equal(pool, pool+6, o.begin()));
     }
@@ -322,7 +322,7 @@ int main()
         std::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, r.begin()));
 
-        ra::Unique<double> u({3, 2}, r.begin(), r.end());
+        ra::Unique<double> u({3, 2}, r.begin(), r.size());
         std::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 
@@ -407,7 +407,7 @@ int main()
     {
         ra::Unique<double, 0> a(ra::scalar(33));
         ra::Unique<double> b(ra::scalar(44));
-// b.rank() is runtime, so b()==44. and the whole assert argument become array xprs
+// b.rank() is runtime, so b()==44. and the test arguments become array xprs
         tr.test_eq(0, b.rank());
         tr.test_eq(1, b.size());
         tr.test_eq(44, b());
@@ -425,8 +425,7 @@ int main()
         ra::Unique<double, 0> a(ra::scalar(33));
         tr.test_eq(1, a.size());
 
-// See note in (170).
-        // static_assert(sizeof(a())==sizeof(double *), "bad assumption");
+        // static_assert(sizeof(a())==sizeof(double *), "bad assumption"); // [170]
 
         rank0test0(a);
         tr.test_eq(66, a);
@@ -441,8 +440,7 @@ int main()
         ra::Unique<double, 0> a({}, ra::scalar(33));
         tr.test_eq(1, a.size());
 
-// See note in (170).
-        // static_assert(sizeof(a())==sizeof(double *), "bad assumption");
+        // static_assert(sizeof(a())==sizeof(double *), "bad assumption"); // [170]
         rank0test0(a);
         tr.test_eq(66, a);
         double b = rank0test1(a);
@@ -704,8 +702,7 @@ int main()
             double check[1] = { 88 };
             CheckArrayOutput(tr, r, check);
             tr.test_eq(1, r.size());
-// See note in (170).
-            // static_assert(sizeof(r)==sizeof(double *), "bad assumption");
+            // static_assert(sizeof(r)==sizeof(double *), "bad assumption"); [170]
             tr.test_eq(88, r);
         }
         tr.section("8");

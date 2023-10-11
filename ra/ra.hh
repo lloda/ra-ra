@@ -160,7 +160,7 @@ FOR_EACH(DEF_NAME_OP, real_part, imag_part) // return ref
 template <class T, class A>
 constexpr auto cast(A && a)
 {
-    return map([](auto && b) { return T(b); }, std::forward<A>(a));
+    return map([](auto && b) -> decltype(auto) { return T(b); }, std::forward<A>(a));
 }
 
 // TODO could be useful to deduce T as tuple of value_types (&).

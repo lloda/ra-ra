@@ -60,7 +60,6 @@ struct STLIterator
     using difference_type = dim_t;
     using pointer = value_type *;
     using reference = value_type &;
-    using iterator_category = std::forward_iterator_tag;
     using shape_type = decltype(ra::shape(std::declval<Iterator>()));
 
     Iterator ii;
@@ -105,6 +104,12 @@ struct STLIterator
             next_in_cube(ii.rank(), ii.dimv, i, ii.c.cp);
         }
         return *this;
+    }
+    STLIterator & operator++(int)
+    {
+        auto old = *this;
+        ++(*this);
+        return old;
     }
 };
 

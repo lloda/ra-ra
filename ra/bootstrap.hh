@@ -141,12 +141,12 @@ constexpr bool odd(unsigned int N) { return N & 1; }
 
 // This logically belongs in ra/small.hh, but it's here so that shape() can return ra:: types.
 
-// The general SmallArray has 4 constructors,
+// SmallArray has 4 special constructors:
 // 1. The empty constructor.
 // 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which isn't required purely for container use.
 // 3. The ravel constructor.
 // 4. The nested constructor.
-// When SmallArray has rank 1, or the first dimension is empty, or the shape is [1] or [], several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of no_arg.
+// When the rank is 1 or the first dimension is empty, several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of no_arg.
 
 template <class T, class lens>
 struct nested_tuple;

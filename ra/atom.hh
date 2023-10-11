@@ -204,7 +204,7 @@ struct Scalar
 template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
 
 // IteratorConcept for foreign rank 1 objects.
-template <std::random_access_iterator I, class N>
+template <std::bidirectional_iterator I, class N>
 struct Ptr
 {
     static_assert(is_constant<N> || 0==rank_s<N>());
@@ -224,7 +224,7 @@ struct Ptr
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr auto flat() const { return i; }
-    constexpr decltype(auto) at(auto && j) const
+    constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
         RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i[j[0]];

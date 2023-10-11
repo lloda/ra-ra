@@ -161,7 +161,7 @@ int main()
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
                            ad.iter<-1>(), b.iter<-1>()));
     }
-    tr.section("FIXME strange need for assert in ply_ravel with CellBig on VAR_RANK array [ra40]");
+    tr.section("FIXME ply_ravel with CellBig on VAR_RANK array [ra40]");
     {
         ra::Big<int> ad({5, 2}, ra::_0 - ra::_1);
         auto ii = iter<1>(ad);

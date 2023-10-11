@@ -79,8 +79,8 @@ int main()
 {
     TestRecorder tr(std::cout);
 
-    assert(Dual<real>{3}.du==0.);
-    assert(dual(3.).du==0.);
+    tr.test_eq(0., Dual<real>{3}.du);
+    tr.test_eq(0., dual(3.).du);
 
 #define TESTER(testn, x)                        \
     {                                           \

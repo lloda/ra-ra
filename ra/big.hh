@@ -562,36 +562,27 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     void init(ra::dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
-// FIXME use of fill1 requires T to be copiable, this is unfortunate as it conflicts with the semantics of view_.operator=.
-// store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
-    template <class Pbegin> constexpr void
-    fill1(dim_t xsize, Pbegin xbegin)
+// FIXME fill1 requires T to be copyable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
+// FIXME expr traversal is not possible for STLIterator. Fix by having plyers that don't require adv.
+    template <class Xbegin>
+    constexpr void
+    fill1(Xbegin xbegin, dim_t xsize)
     {
-        RA_CHECK(this->size()==xsize, "Mismatched sizes ", this->size(), " and ", xsize, ".");
-        std::copy_n(xbegin, xsize, begin()); // TODO Use xpr traversal.
+        RA_CHECK(View::size()==xsize, "Mismatched sizes ", View::size(), " ", xsize, ".");
+        std::copy_n(xbegin, xsize, begin());
     }
 
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
 
-// explicit shape.
-    Container(shape_arg const & s, none_t)
-    {
-        init(s);
-    }
+    Container(shape_arg const & s, none_t) { init(s); }
 
     template <class XX>
-    Container(shape_arg const & s, XX && x): Container(s, none)
-    {
-        view() = x;
-    }
+    Container(shape_arg const & s, XX && x): Container(s, none) { view() = x; }
 
-// shape from data.
     template <class XX>
-    Container(XX && x): Container(ra::shape(x), none)
-    {
-        view() = x;
-    }
+    Container(XX && x): Container(ra::shape(x), none) { view() = x; }
 
+// FIXME broken for RANK_ANY
     Container(typename nested_braces<T, RANK>::list x)
     {
         std::array<dim_t, RANK> s;
@@ -600,23 +591,25 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         view() = x;
     }
 
-// for RANK_ANY from rank 1. FIXME higher ranks don't work; must give shape.
+// for RANK_ANY sets rank to 1. Higher ranks require shape.
     Container(typename View::ravel_arg x)
         : Container(x.size(), x) {}
 
-// shape + row-major ravel. // TODO Maybe remove these? See also small.hh.
+// shape + row-major ravel. // FIXME explicit it-is-ravel mark
     Container(shape_arg const & s, std::initializer_list<T> x)
-        : Container(s, none) { fill1(x.size(), x.begin()); }
+        : Container(s, none) { fill1(x.begin(), x.size()); }
 
+// FIXME remove
     template <class TT>
     Container(shape_arg const & s, TT * p)
-        : Container(s, none) { fill1(this->size(), p); }
+        : Container(s, none) { fill1(p, View::size()); } // FIXME fake check
 
+// FIXME remove
     template <class P>
-    Container(shape_arg const & s, P pbegin, P pend)
-        : Container(s, none) { fill1(this->size(), pbegin); }
+    Container(shape_arg const & s, P pbegin, dim_t psize)
+        : Container(s, none) { fill1(pbegin, psize); }
 
-// needed when shape_arg is std::vector, since that doesn't handle conversions like Small does.
+// for SS that doesn't convert implicitly to shape_arg
     template <class SS>
     Container(SS && s, none_t) { init(std::forward<SS>(s)); }
 
@@ -626,7 +619,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     template <class SS>
     Container(SS && s, std::initializer_list<T> x)
-        : Container(std::forward<SS>(s), none) { fill1(x.size(), x.begin()); }
+        : Container(std::forward<SS>(s), none) { fill1(x.begin(), x.size()); }
 
     using View::operator=;
 

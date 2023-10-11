@@ -21,14 +21,20 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("first example");
     {
-// compile time rank, 4x2 array
-        ra::Big<float, 2> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+// run time rank
+        // ra::Big<float> A({2, 4}, {{ 1, 2, 3, 4}, {5, 6, 7, 8}}); // FIXME
+        ra::Big<float> A({2, 4}, { 1, 2, 3, 4, 5, 6, 7, 8});
+// static rank, run time dimensions
+        ra::Big<float, 2> B = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+// static dimensions
+        ra::Small<float, 2, 4> C = { {1, 2, 3, 4}, {5, 6, 7, 8} };
 // rank-extending op with STL object
-        A += std::vector {10., 20.};
+        B += A + C + std::vector {100., 200.};
 // negate right half
-        A(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
+        B(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
 // shape is dynamic, so will be printed
-        std::cout << "A: " << A << std::endl;
+        std::cout << "B: " << B << std::endl;
+        tr.test_eq(ra::Small<float, 2, 4> { {1, 2, 3, 4}, {5, 6, 7, 8} }, B);
     }
     tr.section("dynamic/static shape");
 // Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).

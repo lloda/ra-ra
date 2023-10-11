@@ -213,7 +213,7 @@ ply_ravel(A && a, Early && early = Nop {})
 
 template <auto order, int k, int urank, class A, class S, class Early>
 constexpr auto
-subindex(A & a, dim_t s, S const & ss0, Early && early)
+subply(A & a, dim_t s, S const & ss0, Early & early)
 {
     if constexpr (k < urank) {
         for (auto p=a.flat(); --s>=0; p+=ss0) {
@@ -229,11 +229,11 @@ subindex(A & a, dim_t s, S const & ss0, Early && early)
         dim_t size = a.len(order[k]); // TODO precompute above
         for (dim_t i=0; i<size; ++i) {
             if constexpr (requires {early.def;}) {
-                if (auto stop = subindex<order, k-1, urank>(a, s, ss0, early)) {
+                if (auto stop = subply<order, k-1, urank>(a, s, ss0, early)) {
                     return stop;
                 }
             } else {
-                subindex<order, k-1, urank>(a, s, ss0, early);
+                subply<order, k-1, urank>(a, s, ss0, early);
             }
             a.adv(order[k], 1);
         }
@@ -282,16 +282,16 @@ ply_fixed(A && a, Early && early = Nop {})
             return std::make_tuple(ss, j);
         } ();
         if constexpr (requires {early.def;}) {
-            return (subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early)).value_or(early.def);
+            return (subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early)).value_or(early.def);
         } else {
-            subindex<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
+            subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
         }
     } else {
 // not worth unrolling.
         if constexpr (requires {early.def;}) {
-            return (subindex<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
+            return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
         } else {
-            subindex<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
+            subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
         }
     }
 }

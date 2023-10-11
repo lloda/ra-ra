@@ -28,7 +28,7 @@ int main()
         tr.test_eq(ra::Small<ra::dim_t, 1> {2}, shape(iter<-1>(A)));
 
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::Unique<double> u({3, 2}, pool, pool+6);
+        ra::Unique<double> u({3, 2}, pool, 6);
         tr.test(std::equal(pool, pool+6, u.begin()));
 
         ra::Unique<double> q(ra::scalar(44));
@@ -41,6 +41,3 @@ int main()
     }
     return tr.summary();
 }
-
-// copy ra-0.cc to dum0.cc and
-// git bisect run sh -c '/opt/gcc-8.3/bin/g++ -o src/ext/ra/test/dum0 -std=c++17 -Wall -Werror -fdiagnostics-color=always -Wno-unknown-pragmas -finput-charset=UTF-8 -fextended-identifiers -Wno-error=strict-overflow -Werror=zero-as-null-pointer-constant -O3 -march=native -Isrc/ext/ra -Isrc/ext/ra/test src/ext/ra/test/dum0.cc && src/ext/ra/test/dum0'

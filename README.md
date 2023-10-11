@@ -17,7 +17,7 @@ In this example ([examples/read-me.cc](examples/read-me.cc)), we create an array
 
   int main()
   {
-      // compile time rank, 4x2 array
+      // static rank, runtime dimensions, 2x4 array
       ra::Big<float, 2> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
       // rank-extending op with STL object
       A += std::vector {10., 20.};

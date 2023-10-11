@@ -22,6 +22,12 @@ template <class T> constexpr bool ctest4 = requires { ra::Big<T, 0> ({3, 4}, 3.)
 int main(int argc, char * * argv)
 {
     TestRecorder tr;
+    tr.section("predicates");
+    {
+        ra::View<int, 2> a;
+        static_assert(std::input_iterator<decltype(a.begin())>);
+        static_assert(std::output_iterator<decltype(a.begin()), int>);
+    }
     tr.section("constructors");
     {
         tr.section("null View constructor");
