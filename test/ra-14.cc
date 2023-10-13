@@ -17,30 +17,31 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 int main()
 {
     TestRecorder tr(std::cout);
+
+    using int2 = ra::Small<int, 2>;
     tr.section("Values");
     {
         tr.section("From var rank 1 through view [ra15]");
         {
-            ra::Big<ra::Small<int, 2>> a = {{ 1, 2 }};
-            cout << a.rank() << endl;
-            cout << "a(0): " << a(0) << endl;
-            ra::Small<int, 2> c = a(0);
+            ra::Big<int2> a = {int2{ 1, 2 }}; // [ra16] for the need to say int2
+            tr.test_eq(1, a.rank());
+            tr.test_eq(1, a.len(0));
+            int2 c = a(0);
             tr.test_eq(1, c[0]);
             tr.test_eq(2, c[1]);
         }
         tr.section("From var rank 0 through view [ra15]");
         {
-            ra::Big<ra::Small<int, 2>> a({}, {{ 1, 2 }});
-            cout << a.rank() << endl;
-            cout << "a(): " << a() << endl;
-            ra::Small<int, 2> c = a();
+            ra::Big<int2> a({}, {{ 1, 2 }});
+            tr.test_eq(0, a.rank());
+            int2 c = a();
             tr.test_eq(1, c[0]);
             tr.test_eq(2, c[1]);
         }
-        tr.section("From var rank 0  [ra15]");
+        tr.section("From var rank 0 [ra15]");
         {
-            ra::Big<ra::Small<int, 2>> a({}, {{ 1, 2 }});
-            ra::Small<int, 2> c = a;
+            ra::Big<int2> a({}, {{ 1, 2 }});
+            int2 c = a;
             tr.test_eq(1, c[0]);
             tr.test_eq(2, c[1]);
         }
@@ -50,21 +51,21 @@ int main()
     {
         tr.section("From var rank 0 to ref");
         {
-            ra::Big<ra::Small<int, 2>> a({}, {{ 1, 2 }});
-            ra::Small<int, 2> & c = a;
+            ra::Big<int2> a({}, {{ 1, 2 }});
+            int2 & c = a;
             tr.test_eq(1, c[0]);
             tr.test_eq(2, c[1]);
         }
         tr.section("From const var rank 0 to ref");
         {
-            ra::Big<ra::Small<int, 2>> const a({}, {{ 1, 2 }});
-            ra::Small<int, 2> const & c = a;
+            ra::Big<int2> const a({}, {{ 1, 2 }});
+            int2 const & c = a;
             tr.test_eq(1, c[0]);
             tr.test_eq(2, c[1]);
         }
         tr.section("From const var rank 0 to ref");
         {
-            static_assert(requires { requires !(std::is_convertible_v<ra::Big<ra::Small<int, 2>> const, ra::Small<int, 2> &>); });
+            static_assert(requires { requires !(std::is_convertible_v<ra::Big<int2> const, int2 &>); });
         }
     }
     return tr.summary();

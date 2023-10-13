@@ -9,7 +9,7 @@
 
 **ra-ra** is compact (≈ 6k loc), easy to extend, and generic. There are no arbitrary type restrictions or limits on rank or argument count.
 
-In this example ([examples/read-me.cc](examples/read-me.cc)), we create an array, do some operations on it, and print the result.
+In this example ([examples/read-me.cc](examples/read-me.cc)), we create some arrays, do operations on them, and print the result.
 
 ```c++
   #include "ra/ra.hh"
@@ -17,21 +17,25 @@ In this example ([examples/read-me.cc](examples/read-me.cc)), we create an array
 
   int main()
   {
-      // static rank, runtime dimensions, 2x4 array
-      ra::Big<float, 2> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
-      // rank-extending op with STL object
-      A += std::vector {10., 20.};
-      // negate right half
-      A(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
-      // shape is dynamic, so will be printed
-      std::cout << "A: " << A << std::endl;
+    // run time rank
+    ra::Big<float> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+    // static rank, run time dimensions
+    ra::Big<float, 2> B = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+    // static dimensions
+    ra::Small<float, 2, 4> C = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+    // rank-extending op with STL object
+    B += A + C + std::vector {100., 200.};
+    // negate right half
+    B(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
+    // shape is dynamic, so will be printed
+    std::cout << "B: " << B << std::endl;
   }
 ```
 ⇒
 ```
 A: 2 4
-11 12 -13 -14
-25 26 -27 -28
+103 106 -109 -112
+215 218 -221 -224
 ```
 
 Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or have a look at the [examples/](examples/) folder.

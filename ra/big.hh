@@ -144,42 +144,37 @@ struct CellBig
 // nested braces for Container initializers
 // --------------------
 
-// Avoid clash of T with scalar constructors (for rank 0).
 template <class T, rank_t rank>
-struct nested_braces { using list = no_arg; };
+struct braces_def { using type = no_arg; };
 
 template <class T, rank_t rank>
-requires (rank==1)
-struct nested_braces<T, rank>
-{
-    using list = std::initializer_list<T>;
-    template <std::size_t N>
-    constexpr static
-    void shape(list l, std::array<dim_t, N> & s)
-    {
-        static_assert(N>0);
-        s[N-1] = l.size();
-    }
-};
+using braces = braces_def<T, rank>::type;
 
-template <class T, rank_t rank>
-requires (rank>1)
-struct nested_braces<T, rank>
+template <class T, rank_t rank> requires (rank==1)
+struct braces_def<T, rank> { using type = std::initializer_list<T>; };
+
+template <class T, rank_t rank> requires (rank>1)
+struct braces_def<T, rank> { using type = std::initializer_list<braces<T, rank-1>>; };
+
+template <int i, class T, rank_t rank>
+constexpr dim_t braces_len(braces<T, rank> const & l)
 {
-    using sub = nested_braces<T, rank-1>;
-    using list = std::initializer_list<typename sub::list>;
-    template <std::size_t N>
-    constexpr static
-    void shape(list l, std::array<dim_t, N> & s)
-    {
-        s[N-rank] = l.size();
-        if (l.size()>0) {
-            sub::template shape(*(l.begin()), s);
-        } else {
-            std::fill(s.begin()+N-rank+1, s.end(), 0);
-        }
+    if constexpr (i>=rank) {
+        return 0;
+    } else if constexpr (i==0) {
+        return l.size();
+    } else {
+        return braces_len<i-1, T, rank-1>(*(l.begin()));
     }
-};
+}
+
+template <class T, rank_t rank, class S = std::array<dim_t, rank>>
+constexpr S
+braces_shape(braces<T, rank> const & l)
+{
+    return std::apply([&l](auto ... i) { return S { braces_len<decltype(i)::value, T, rank>(l) ... }; },
+                      mp::iota<rank> {});
+}
 
 
 // --------------------
@@ -189,7 +184,7 @@ struct nested_braces<T, rank>
 // FIXME size is immutable so that it can be kept together with rank.
 // TODO Parameterize on Child having .data() so that there's only one pointer.
 // TODO Parameterize on iterator type not on value type.
-// TODO A constructor, if only for RA_CHECK (nonnegative lens, steps inside, etc.)
+// TODO Constructor, if only for RA_CHECK (nonnegative lens, steps inside, etc.)
 template <class T, rank_t RANK>
 struct View
 {
@@ -246,27 +241,46 @@ struct View
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
 
-// array type is not deduced by X &&.
     constexpr View &
-    operator=(typename nested_braces<T, RANK>::list x)
+    operator=(braces<T, RANK> x) requires (RANK!=RANK_ANY)
     {
         ra::iter<-1>(*this) = x;
         return *this;
     }
+#define RA_BRACES_RANK_ANY(N)                                       \
+    constexpr View &                                                \
+    operator=(braces<T, N> x) requires (RANK==RANK_ANY)             \
+    {                                                               \
+        ra::iter<-1>(*this) = x;                                    \
+        return *this;                                               \
+    }
+    FOR_EACH(RA_BRACES_RANK_ANY, 2, 3, 4);
+#undef RA_BRACES_RANK_ANY
+
+// FIXME fill1 requires T to be copyable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
+// FIXME expr traversal is not possible for STLIterator. Fix by having plyers that don't require adv.
+    template <class Xbegin>
+    constexpr void
+    fill1(Xbegin xbegin, dim_t xsize)
+    {
+        RA_CHECK(View::size()==xsize, "Mismatched sizes ", View::size(), " ", xsize, ".");
+        std::copy_n(xbegin, xsize, begin());
+    }
+
 // braces row-major ravel for rank!=1
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>;
     View & operator=(ravel_arg const x)
     {
-        RA_CHECK(cp && size()==ssize(x), "bad assignment");
-        std::copy(x.begin(), x.end(), begin());
+        fill1(x.begin(), ssize(x));
         return *this;
     }
+
     constexpr bool const empty() const { return 0==size(); } // TODO Optimize
 
     template <rank_t c=0> constexpr auto iter() const && { return ra::CellBig<View<T, RANK>, c>(std::move(dimv), cp); }
     template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T, RANK> &, c>(dimv, cp); }
     constexpr auto begin() const { return STLIterator(iter()); }
-    constexpr auto end() const { return STLIterator(decltype(iter())(dimv, nullptr)); } // dimv could be anything
+    constexpr auto end() const { return STLIterator(decltype(iter())(dimv, nullptr)); } // dimv is arbitrary
 
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
@@ -335,7 +349,7 @@ struct View
             View<T, rank_sum(RANK, extended)> sub;
             rank_t subrank = rank()+extended;
             if constexpr (RANK==RANK_ANY) {
-                RA_CHECK(subrank>=0, "bad rank");
+                RA_CHECK(subrank>=0, "Bad rank.");
                 sub.dimv.resize(subrank);
             }
             sub.cp = data() + select_loop(sub.dimv.data(), 0, i ...);
@@ -562,16 +576,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     void init(ra::dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
-// FIXME fill1 requires T to be copyable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
-// FIXME expr traversal is not possible for STLIterator. Fix by having plyers that don't require adv.
-    template <class Xbegin>
-    constexpr void
-    fill1(Xbegin xbegin, dim_t xsize)
-    {
-        RA_CHECK(View::size()==xsize, "Mismatched sizes ", View::size(), " ", xsize, ".");
-        std::copy_n(xbegin, xsize, begin());
-    }
-
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
 
     Container(shape_arg const & s, none_t) { init(s); }
@@ -582,32 +586,32 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class XX>
     Container(XX && x): Container(ra::shape(x), none) { view() = x; }
 
-// FIXME broken for RANK_ANY
-    Container(typename nested_braces<T, RANK>::list x)
-    {
-        std::array<dim_t, RANK> s;
-        nested_braces<T, RANK>::template shape(x, s);
-        init(s);
-        view() = x;
-    }
+    Container(shape_arg const & s, braces<T, RANK> x) requires (RANK==1)
+        : Container(s, none) { view() = x; }
+    Container(braces<T, RANK> x) requires (RANK!=RANK_ANY)
+        : Container(braces_shape<T, RANK>(x), none) { view() = x; }
 
-// for RANK_ANY sets rank to 1. Higher ranks require shape.
-    Container(typename View::ravel_arg x)
-        : Container(x.size(), x) {}
+#define RA_BRACES_RANK_ANY(N)                                           \
+    Container(braces<T, N> x) requires (RANK==RANK_ANY)                 \
+        : Container(braces_shape<T, N>(x), none) { view() = x; }
+    FOR_EACH(RA_BRACES_RANK_ANY, 1, 2, 3, 4)
+#undef RA_BRACES_RANK_ANY
 
-// shape + row-major ravel. // FIXME explicit it-is-ravel mark
-    Container(shape_arg const & s, std::initializer_list<T> x)
-        : Container(s, none) { fill1(x.begin(), x.size()); }
+// shape + row-major ravel.
+// FIXME explicit it-is-ravel mark
+// FIXME regular (no need for fill1) for RANK_ANY if rank is 1.
+    Container(shape_arg const & s, typename View::ravel_arg x)
+        : Container(s, none) { View::fill1(x.begin(), x.size()); }
 
 // FIXME remove
     template <class TT>
     Container(shape_arg const & s, TT * p)
-        : Container(s, none) { fill1(p, View::size()); } // FIXME fake check
+        : Container(s, none) { View::fill1(p, View::size()); } // FIXME fake check
 
 // FIXME remove
     template <class P>
     Container(shape_arg const & s, P pbegin, dim_t psize)
-        : Container(s, none) { fill1(pbegin, psize); }
+        : Container(s, none) { View::fill1(pbegin, psize); }
 
 // for SS that doesn't convert implicitly to shape_arg
     template <class SS>
@@ -619,7 +623,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     template <class SS>
     Container(SS && s, std::initializer_list<T> x)
-        : Container(std::forward<SS>(s), none) { fill1(x.begin(), x.size()); }
+        : Container(std::forward<SS>(s), none) { View::fill1(x.begin(), x.size()); }
 
     using View::operator=;
 
@@ -1117,13 +1121,13 @@ auto collapse(View<super_t, RANK> const & a)
     resize(b.dimv, a.rank()+SUBR+int(subtype>1));
 
     constexpr dim_t r = sizeof(super_t)/sizeof(sub_t);
-    static_assert(sizeof(super_t)==r*sizeof(sub_t), "cannot make axis of super_t from sub_t");
+    static_assert(sizeof(super_t)==r*sizeof(sub_t), "Cannot make axis of super_t from sub_t.");
     for (int i=0; i<a.rank(); ++i) {
         b.dimv[i] = { .len = a.len(i), .step = a.step(i) * r };
     }
     constexpr int t = sizeof(super_v)/sizeof(sub_v);
     constexpr int s = sizeof(sub_t)/sizeof(sub_v);
-    static_assert(t*sizeof(sub_v)>=1, "bad subtype");
+    static_assert(t*sizeof(sub_v)>=1, "Bad subtype.");
     for (int i=0; i<SUBR; ++i) {
         RA_CHECK(((gstep<super_t>(i)/s)*s==gstep<super_t>(i)), "Bad steps."); // TODO is actually static
         b.dimv[a.rank()+i] = { .len = glen<super_t>(i), .step = gstep<super_t>(i) / s * t };

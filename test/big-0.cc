@@ -79,7 +79,8 @@ int main(int argc, char * * argv)
         static_assert(!ctest3<int>);
         static_assert(!ctest4<int>);
 
-        // these errors depend on  static_assert so cannot be checked with requires.
+        // FIXME these errors depend on  static_assert so cannot be checked with requires.
+        // ra::Big<T, 2> {3, 4}; // Invalid shape for rank
         // ra::Big<int, 2> (2, ra::none); // shape arg must have rank 1 for array rank>1
         // ra::Big<T, 2> {1, 2, 3, 4, 5, 6}; // bad deduced shape from content arg
         // ra::Big<T, 2> (ra::Small<int, 3>{2, 3, 4}, 99.); // bad shape for rank
@@ -144,10 +145,12 @@ int main(int argc, char * * argv)
     }
     tr.section("nested braces for nested type I");
     {
-        ra::Big<ra::Small<int, 2>, 2> a({2, 2}, { {1, 2}, {2, 3}, {4, 5}, {6, 7} });
-        ra::Big<ra::Small<int, 2>, 2> b({{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}});
-        ra::Big<ra::Small<int, 2>, 2> c {{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}};
-        ra::Big<ra::Small<int, 2>, 2> d = {{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}};
+        using int2 = ra::Small<int, 2>;
+// FIXME removed (shape, nested) constructors so this wouldn't be ambiguous (bc 1 converts to int2). But maybe 1 shouldn't convert to int2 [ra16]
+        ra::Big<int2, 2> a({2, 2}, { {1, 2}, {2, 3}, {4, 5}, {6, 7} });
+        ra::Big<int2, 2> b({{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}});
+        ra::Big<int2, 2> c {{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}};
+        ra::Big<int2, 2> d = {{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}};
         tr.test_eq(a, b);
     }
     tr.section("nested braces for nested type II");
@@ -209,10 +212,25 @@ int main(int argc, char * * argv)
         tr.test_eq(ra::start({1, 2}), g[1]);
         tr.test_eq(ra::start({1, 2, 3}), g[2]);
     }
-// FIXME This works for Small, would be nice here as well. Right now this calls the 2-elem constructor shape, content instead of the braces constructor, since intializer_list<T> doesn't match. I'd need multiple args, as in Small.
-    // tr.section("free constructor FIXME");
+    tr.section("more nested braces");
+    {
+        tr.section("with dynamic rank");
+        ra::Small<float, 2, 4> ref = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+        ra::Big<float> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+        ra::Big<float> B({2, 4}, {1, 2, 3, 4, 5, 6, 7, 8});
+        // ra::Big<float> C({2, 4}, { {1, 2, 3, 4}, {5, 6, 7, 8} }); // not allowed bc ambiguity with empty braces
+        ra::Big<float, 2> A2 = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+        ra::Big<float, 2> B2({2, 4}, {1, 2, 3, 4, 5, 6, 7, 8});
+        // ra::Big<float, 2> C2({2, 4}, { {1, 2, 3, 4}, {5, 6, 7, 8} }); // not allowed to avoid ambiguity in [ra16] :-/
+        tr.test_eq(ref, A);
+        tr.test_eq(ref, B);
+        tr.test_eq(ref, A2);
+        tr.test_eq(ref, B2);
+    }
+// FIXME This works for Small, that has multi-arg constructors. Right now this calls the 2-elem constructor shape, content instead of the braces constructor, since initializer_list<T> doesn't match.
+    // tr.section("free constructor");
     // {
-    //     ra::Big<int, 2> a = {{1, 2}, ra::iota(2, 33)};
+    //     ra::Big<int, 2> a {{1, 2}, ra::iota(2, 33)};
     //     tr.test_eq(1, a(0, 0));
     //     tr.test_eq(2, a(0, 1));
     //     tr.test_eq(33, a(1, 0));

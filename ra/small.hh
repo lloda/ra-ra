@@ -547,7 +547,6 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
     T cp[Base::size()]; // cf what std::array does for zero size; wish zero size just worked :-/
 
     constexpr SmallArray() {}
-// braces don't match (X &&)
     constexpr SmallArray(nested_args const & ... x)
     {
         static_cast<Base &>(*this) = nested_arg<T, lens> { x ... };

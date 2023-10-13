@@ -22,8 +22,7 @@ int main()
     tr.section("first example");
     {
 // run time rank
-        // ra::Big<float> A({2, 4}, {{ 1, 2, 3, 4}, {5, 6, 7, 8}}); // FIXME
-        ra::Big<float> A({2, 4}, { 1, 2, 3, 4, 5, 6, 7, 8});
+        ra::Big<float> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
 // static rank, run time dimensions
         ra::Big<float, 2> B = { {1, 2, 3, 4}, {5, 6, 7, 8} };
 // static dimensions
@@ -34,7 +33,7 @@ int main()
         B(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
 // shape is dynamic, so will be printed
         std::cout << "B: " << B << std::endl;
-        tr.test_eq(ra::Small<float, 2, 4> { {1, 2, 3, 4}, {5, 6, 7, 8} }, B);
+        tr.test_eq(ra::Small<float, 2, 4> { {103, 106, -109, -112}, {215, 218, -221, -224} }, B);
     }
     tr.section("dynamic/static shape");
 // Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).

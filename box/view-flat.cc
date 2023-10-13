@@ -46,5 +46,8 @@ int main()
     //     cout << "a " << a << endl;
     //     cout << "b " << b << endl;
     // }
+// template <class T> struct ravel_init { T data; };
+// template <class T> ravel_init(T && t) -> ravel_init<T>;
+// template <class T> ravel_init(std::initializer_list<T> && t) -> ravel_init<std::initializer_list<T>>;
     return tr.summary();
 }
