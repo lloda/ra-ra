@@ -213,7 +213,7 @@ int main()
             tr.test_eq(3, a[0].a);
             tr.test_eq(3, a[1].a);
         }
-        // Braced versions used to work but now they don't. This is on purpose.
+// Braced versions used to work but now they don't. This is on purpose.
         // tr.section("= braced");
         // {
         //     ra::Small<int, 2> a = {{9, 3}};
@@ -307,7 +307,7 @@ int main()
             // tr.test_eq(4, b(0, 0));
             // tr.test_eq(2, b(0, 1));
         }
-        // Braced versions used to work but now they don't. This is on purpose.
+// Braced versions used to work but now they don't. This is on purpose.
         // tr.section("rank 2 (paren braced)");
         // {
         //     ra::Small<double, 2, 2> a({{{1, 2}, {3, 4}}});
