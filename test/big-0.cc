@@ -146,7 +146,7 @@ int main(int argc, char * * argv)
     tr.section("nested braces for nested type I");
     {
         using int2 = ra::Small<int, 2>;
-// FIXME removed (shape, nested) constructors so this wouldn't be ambiguous (bc 1 converts to int2). But maybe 1 shouldn't convert to int2 [ra16]
+// FIXME removed (shape, nested) constructors so this wouldn't be ambiguous (bc 1 converts to int2). But maybe int shouldn't convert to int2 [ra16]
         ra::Big<int2, 2> a({2, 2}, { {1, 2}, {2, 3}, {4, 5}, {6, 7} });
         ra::Big<int2, 2> b({{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}});
         ra::Big<int2, 2> c {{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}};

@@ -139,7 +139,7 @@ struct Nop {};
 
 // step() must give 0 for k>=their own rank, to allow frame matching.
 template <IteratorConcept A, class Early = Nop>
-inline auto
+constexpr inline auto
 ply_ravel(A && a, Early && early = Nop {})
 {
     rank_t rank = a.rank();

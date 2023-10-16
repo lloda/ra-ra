@@ -17,7 +17,7 @@ using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
 using ra::Small, ra::View, ra::Unique, ra::dim_t;
 using real = double;
 
-int const N = 200000;
+int const N = 100000;
 Small<dim_t, 1> S1 { 24*24 };
 Small<dim_t, 2> S2 { 24, 24 };
 Small<dim_t, 3> S3 { 8, 8, 9 };
@@ -83,12 +83,12 @@ struct by_raw
                              ra::map([](real const a, real const b) { return a*b; }, \
                                      a, b))))                           \
                                                                         \
-    /* using trivial rank conjunction */                                \
+    /* using trivial rank conjunction. FIXME requires static rank */    \
     BY_PLY(JOIN(by_1w_, PLYER),                                         \
            ra::PLYER(ra::map(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), \
                              a, b)))                                    \
                                                                         \
-    /* separate reduction: using trivial rank conjunction */            \
+    /* separate reduction: using trivial rank conjunction. FIXME requires static rank */ \
     BY_PLY(JOIN(by_2w_, PLYER),                                         \
            ra::PLYER(ra::map(ra::wrank<0>([&y](real const a) { y += a; }), \
                              ra::map(ra::wrank<0, 0>([](real const a, real const b) { return a*b; }), \
@@ -189,7 +189,7 @@ int main()
                 constexpr int M = ra::size(s);
                 tr.section("small <", ra::shape(s), ">");
                 auto extra = [&]() { return int(double(std::rand())*100/RAND_MAX); };
-                int reps = (1000*1000*200)/M;
+                int reps = (1000*1000*100)/M;
                 bench("indexed", s, ref, reps+extra(), f_small_indexed);
                 bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
                 bench("op", s, ref, reps+extra(), f_small_op);
@@ -243,23 +243,22 @@ int main()
         auto B = std::vector<real>(S1[0], b);
         BENCH_ALL;
     }
-    tr.section("raw<1>");
+    tr.section("Unique<1>");
     {
         ra::Unique<real, 1> A(S1, a);
         ra::Unique<real, 1> B(S1, b);
         BENCH_ALL;
     }
-    tr.section("raw<2>");
+    tr.section("Unique<2>");
     {
         ra::Unique<real, 2> A(S2, a);
         ra::Unique<real, 2> B(S2, b);
         BENCH_ALL;
     }
-    tr.section("raw<3>");
+    tr.section("Unique<3>");
     {
         ra::Unique<real, 3> A(S3, a);
         ra::Unique<real, 3> B(S3, b);
-        std::vector<real> x(17, std::numeric_limits<real>::max());
         BENCH_ALL;
     }
     return tr.summary();

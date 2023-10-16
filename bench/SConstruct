@@ -68,7 +68,8 @@ tester = ra.to_test_ra(env, variant_dir)
                'bench-gemv', 'bench-sum-rows', 'bench-sum-cols',
                'bench-pack', 'bench-from',
                'bench-stencil1', 'bench-stencil2', 'bench-stencil3',
-               'bench-optimize', 'bench-tensorindex'
+               'bench-optimize', 'bench-tensorindex',
+               'bench-iterator'
            ]]
 
 tester('bench-dot', target='bench-dot-no-su', cppdefines={'RA_STATIC_UNROLL': '0'})

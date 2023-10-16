@@ -62,20 +62,20 @@ int main()
         };
 
         tr.section("fixed rank");
-        rank1_test(ra::Unique<real, 1>(), 10000, 500, 20, 10000);
-        rank1_test(ra::Unique<real, 1>(), 1000, 50, 20, 10*10000);
-        rank1_test(ra::Unique<real, 1>(), 100, 5, 20, 100*10000);
-        rank1_test(ra::Unique<real, 1>(), 10000, 500, 2, 10000);
-        rank1_test(ra::Unique<real, 1>(), 1000, 50, 2, 10*10000);
-        rank1_test(ra::Unique<real, 1>(), 100, 5, 2, 100*10000);
+        rank1_test(ra::Unique<real, 1>(), 10000, 500, 20, 5000);
+        rank1_test(ra::Unique<real, 1>(), 1000, 50, 20, 10*5000);
+        rank1_test(ra::Unique<real, 1>(), 100, 5, 20, 100*5000);
+        rank1_test(ra::Unique<real, 1>(), 10000, 500, 2, 5000);
+        rank1_test(ra::Unique<real, 1>(), 1000, 50, 2, 10*5000);
+        rank1_test(ra::Unique<real, 1>(), 100, 5, 2, 100*5000);
 
         tr.section("var rank");
-        rank1_test(ra::Unique<real>(), 10000, 500, 20, 10000);
-        rank1_test(ra::Unique<real>(), 1000, 50, 20, 10*10000);
-        rank1_test(ra::Unique<real>(), 100, 5, 20, 100*10000);
-        rank1_test(ra::Unique<real>(), 10000, 500, 2, 10000);
-        rank1_test(ra::Unique<real>(), 1000, 50, 2, 10*10000);
-        rank1_test(ra::Unique<real>(), 100, 5, 2, 100*10000);
+        rank1_test(ra::Unique<real>(), 10000, 500, 20, 5000);
+        rank1_test(ra::Unique<real>(), 1000, 50, 20, 10*5000);
+        rank1_test(ra::Unique<real>(), 100, 5, 20, 100*5000);
+        rank1_test(ra::Unique<real>(), 10000, 500, 2, 5000);
+        rank1_test(ra::Unique<real>(), 1000, 50, 2, 10*5000);
+        rank1_test(ra::Unique<real>(), 100, 5, 2, 100*5000);
     }
     tr.section("rank2(rank1, rank1)");
     {
@@ -111,18 +111,18 @@ int main()
                    }));
         };
         tr.section("fixed rank");
-        rank1_11_test(ra::Unique<real, 2>(), 1000, 50, 20, 10000);
-        rank1_11_test(ra::Unique<real, 2>(), 100, 5, 20, 10*10*10000);
-        rank1_11_test(ra::Unique<real, 2>(), 1000, 50, 2, 10000);
-        rank1_11_test(ra::Unique<real, 2>(), 100, 5, 2, 10*10*10000);
-        rank1_11_test(ra::Unique<real, 2>(), 10, 5, 2, 10*10*10000);
+        rank1_11_test(ra::Unique<real, 2>(), 1000, 50, 20, 5000);
+        rank1_11_test(ra::Unique<real, 2>(), 100, 5, 20, 10*10*5000);
+        rank1_11_test(ra::Unique<real, 2>(), 1000, 50, 2, 5000);
+        rank1_11_test(ra::Unique<real, 2>(), 100, 5, 2, 10*10*5000);
+        rank1_11_test(ra::Unique<real, 2>(), 10, 5, 2, 10*10*5000);
 
         tr.section("var rank");
-        rank1_11_test(ra::Unique<real>(), 1000, 50, 20, 10000);
-        rank1_11_test(ra::Unique<real>(), 100, 5, 20, 10*10*10000);
-        rank1_11_test(ra::Unique<real>(), 1000, 50, 2, 10000);
-        rank1_11_test(ra::Unique<real>(), 100, 5, 2, 10*10*10000);
-        rank1_11_test(ra::Unique<real>(), 10, 5, 2, 10*10*10000);
+        rank1_11_test(ra::Unique<real>(), 1000, 50, 20, 5000);
+        rank1_11_test(ra::Unique<real>(), 100, 5, 20, 10*10*5000);
+        rank1_11_test(ra::Unique<real>(), 1000, 50, 2, 5000);
+        rank1_11_test(ra::Unique<real>(), 100, 5, 2, 10*10*5000);
+        rank1_11_test(ra::Unique<real>(), 10, 5, 2, 10*10*5000);
     }
     tr.section("rank3(rank1, rank1, rank1)");
     {
@@ -160,9 +160,9 @@ int main()
                    }));
         };
         tr.section("fixed rank");
-        rank1_111_test(ra::Unique<real, 3>(), 40, 20, 2, 4000);
-        rank1_111_test(ra::Unique<real, 3>(), 100, 5, 20, 4*4*4*4000);
-        rank1_111_test(ra::Unique<real, 3>(), 10, 5, 2, 4*4*4*4000);
+        rank1_111_test(ra::Unique<real, 3>(), 40, 20, 2, 2000);
+        rank1_111_test(ra::Unique<real, 3>(), 100, 5, 20, 4*4*4*2000);
+        rank1_111_test(ra::Unique<real, 3>(), 10, 5, 2, 4*4*4*2000);
     }
     tr.section("rank4(rank1, rank1, rank1, rank1)");
     {
@@ -212,8 +212,8 @@ int main()
                    }));
         };
         tr.section("fixed rank");
-        rank1_1111_test(ra::Unique<real, 4>(), 40, 20, 2, 200);
-        rank1_1111_test(ra::Unique<real, 4>(), 10, 5, 2, 4*4*4*4*200);
+        rank1_1111_test(ra::Unique<real, 4>(), 40, 20, 2, 100);
+        rank1_1111_test(ra::Unique<real, 4>(), 10, 5, 2, 4*4*4*4*100);
     }
     return tr.summary();
 }

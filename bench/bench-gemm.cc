@@ -239,8 +239,8 @@ DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
             bench([&](auto const & a, auto const & b) { return gemm(a, b); }, "default");
         };
 
-    bench_all(3, 10, 10, 10, 10000);
-    bench_all(2, 100, 100, 100, 100);
+    bench_all(3, 10, 10, 10, 1000);
+    bench_all(2, 100, 100, 100, 10);
     bench_all(2, 500, 400, 500, 1);
     bench_all(1, 10000, 10, 1000, 1);
     bench_all(1, 1000, 10, 10000, 1);

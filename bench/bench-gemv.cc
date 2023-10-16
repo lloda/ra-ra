@@ -120,8 +120,8 @@ int main()
             }
         };
 
-    bench_all(3, 10, 10, 10000);
-    bench_all(3, 100, 100, 100);
+    bench_all(3, 10, 10, 1000);
+    bench_all(3, 100, 100, 10);
     bench_all(3, 500, 500, 1);
     bench_all(3, 10000, 1000, 1);
     bench_all(3, 1000, 10000, 1);
