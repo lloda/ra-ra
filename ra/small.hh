@@ -79,7 +79,8 @@ struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
 namespace indexer0 {
 
     template <class lens, class steps, class P, rank_t end, rank_t k=0>
-    constexpr dim_t index(P const & p)
+    constexpr dim_t
+    index(P const & p)
     {
         if constexpr (k==end) {
             return 0;
@@ -90,14 +91,16 @@ namespace indexer0 {
     }
 
     template <class lens, class steps, class P>
-    constexpr dim_t shorter(P const & p) // for Container::at().
+    constexpr dim_t
+    shorter(P const & p) // for Container::at().
     {
         static_assert(mp::len<lens> >= size_s<P>(), "Too many indices.");
         return index<lens, steps, P, size_s<P>()>(p);
     }
 
     template <class lens, class steps, class P>
-    constexpr dim_t longer(P const & p) // for IteratorConcept::at().
+    constexpr dim_t
+    longer(P const & p) // for IteratorConcept::at().
     {
         if constexpr (RANK_ANY==size_s<P>()) {
             RA_CHECK(mp::len<lens> <= p.size(), "Too few indices.");
@@ -113,7 +116,6 @@ namespace indexer0 {
 // --------------------
 // Small iterator
 // --------------------
-// TODO Refactor with CellBig / STLIterator
 
 // Used by CellBig / CellSmall.
 template <class C>
@@ -124,6 +126,7 @@ struct CellFlat
     constexpr C & operator*() { return c; }
 };
 
+// TODO Refactor with CellBig / STLIterator
 // V is always SmallBase<SmallView, ...>
 template <class V, rank_t cellr_spec=0>
 struct CellSmall

@@ -60,11 +60,12 @@ namespace indexer1 {
 // --------------------
 // Big iterator
 // --------------------
-// TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
-// TODO Clear up Dimv's type. Should I use span/Ptr?
 
 template <class T, rank_t RANK=RANK_ANY> struct View;
 
+// TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
+// TODO Clear up Dimv's type. Should I use span/Ptr?
+// FIXME avoid copying c in flat().
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
 template <class V, rank_t cellr_spec=0>
 struct CellBig

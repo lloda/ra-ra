@@ -411,7 +411,6 @@ struct STLIterator
     };
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.cp==j.ii.c.cp; }
-    template <class PP> bool operator!=(PP const & j) const { return ii.c.cp!=j.ii.c.cp; }
 
     decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
