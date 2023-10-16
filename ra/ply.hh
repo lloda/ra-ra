@@ -139,7 +139,7 @@ struct Nop {};
 
 // step() must give 0 for k>=their own rank, to allow frame matching.
 template <IteratorConcept A, class Early = Nop>
-constexpr inline auto
+constexpr auto
 ply_ravel(A && a, Early && early = Nop {})
 {
     rank_t rank = a.rank();
@@ -262,36 +262,37 @@ ply_fixed(A && a, Early && early = Nop {})
             *(a.flat());
             return;
         }
-    }
-#if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // pessimization? see bench-dot [ra43]
-    constexpr bool unroll = true;
-#else
-    constexpr bool unroll = false;
-#endif
-    auto ss0 = a.step(order[0]);
-// static unrolling. static keep_step implies all else is static.
-    if constexpr (unroll && rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
-// find outermost compact dim.
-        constexpr auto sj = [&order]
-        {
-            dim_t ss = A::len_s(order[0]);
-            int j = 1;
-            for (; j<rank && A::keep_step(ss, order[0], order[j]); ++j) {
-                ss *= A::len_s(order[j]);
-            }
-            return std::make_tuple(ss, j);
-        } ();
-        if constexpr (requires {early.def;}) {
-            return (subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early)).value_or(early.def);
-        } else {
-            subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
-        }
     } else {
-// not worth unrolling.
-        if constexpr (requires {early.def;}) {
-            return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
+#if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // pessimization? see bench-dot [ra43]
+        constexpr bool unroll = true;
+#else
+        constexpr bool unroll = false;
+#endif
+        auto ss0 = a.step(order[0]);
+// static unrolling. static keep_step implies all else is static.
+        if constexpr (unroll && rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
+// find outermost compact dim.
+            constexpr auto sj = [&order]
+            {
+                dim_t ss = A::len_s(order[0]);
+                int j = 1;
+                for (; j<rank && A::keep_step(ss, order[0], order[j]); ++j) {
+                    ss *= A::len_s(order[j]);
+                }
+                return std::make_tuple(ss, j);
+            } ();
+            if constexpr (requires {early.def;}) {
+                return (subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early)).value_or(early.def);
+            } else {
+                subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
+            }
         } else {
-            subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
+// not worth unrolling.
+            if constexpr (requires {early.def;}) {
+                return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
+            } else {
+                subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
+            }
         }
     }
 }
@@ -339,39 +340,36 @@ early(A && a, Def && def)
 
 
 // --------------------
-// STLIterator for both CellSmall & CellBig
-// FIXME make it work for any array iterator, as in ply_ravel, ply_index.
+// STLIterator for CellSmall / CellBig. FIXME make it work for any IteratorConcept.
 // --------------------
 
 template <class S, class I, class P>
 constexpr void
-next_in_cube(rank_t const framer, S const & dimv, I & i, P & p)
+cube_next(rank_t k, S const & it, I & i, P & p)
 {
-    for (int k=framer-1; k>=0; --k) {
-        ++i[k];
-        if (i[k]<dimv[k].len) {
-            p += dimv[k].step;
+    for (; k>=0; --k) {
+        if (++i[k]<it.len(k)) {
+            p += it.step(k);
             return;
         } else {
             i[k] = 0;
-            p -= dimv[k].step*(dimv[k].len-1);
+            p -= it.step(k)*(it.len(k)-1);
         }
     }
     p = nullptr;
 }
 
-template <int k, class lens, class steps, class I, class P>
+template <int k, class S, class I, class P>
 constexpr void
-next_in_cube(I & i, P & p)
+cube_next(S const & it, I & i, P & p)
 {
     if constexpr (k>=0) {
-        ++i[k];
-        if (i[k]<mp::ref<lens, k>::value) {
-            p += mp::ref<steps, k>::value;
+        if (++i[k]<it.len(k)) {
+            p += it.step(k);
         } else {
             i[k] = 0;
-            p -= mp::ref<steps, k>::value*(mp::ref<lens, k>::value-1);
-            next_in_cube<k-1, lens, steps>(i, p);
+            p -= it.step(k)*(it.len(k)-1);
+            cube_next<k-1>(it, i, p);
         }
     } else {
         p = nullptr;
@@ -381,8 +379,8 @@ next_in_cube(I & i, P & p)
 template <class Iterator>
 struct STLIterator
 {
-    using value_type = typename Iterator::value_type;
     using difference_type = dim_t;
+    using value_type = typename Iterator::value_type;
     using shape_type = decltype(ra::shape(std::declval<Iterator>()));
 
     Iterator ii;
@@ -399,7 +397,7 @@ struct STLIterator
         : ii(ii_),
 // shape_type may be std::array or std::vector.
           i([&] {
-              if constexpr (RANK_ANY==rank_s<Iterator>()) {
+              if constexpr (RANK_ANY == Iterator::rank_s()) {
                   return shape_type(ii.rank(), 0);
               } else {
                   return shape_type {0};
@@ -419,12 +417,10 @@ struct STLIterator
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
     STLIterator & operator++()
     {
-        if constexpr (0==Iterator::rank_s()) { // when rank==0, DIM_ANY check isn't enough
-            ii.c.cp = nullptr;
-        } else if constexpr (DIM_ANY != ra::size_s<Iterator>()) {
-            next_in_cube<Iterator::rank()-1, typename Iterator::lens, typename Iterator::steps>(i, ii.c.cp);
+        if constexpr (RANK_ANY == Iterator::rank_s()) {
+            cube_next(ii.rank()-1, ii, i, ii.c.cp);
         } else {
-            next_in_cube(ii.rank(), ii.dimv, i, ii.c.cp);
+            cube_next<Iterator::rank_s()-1>(ii, i, ii.c.cp);
         }
         return *this;
     }

@@ -216,11 +216,13 @@ struct Ptr
 
     constexpr static rank_t rank_s() { return 1; };
     constexpr static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k==0, "Bad axis ", k); return nn; }
-    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (nn==DIM_ANY) { RA_CHECK(k==0, "Bad axis ", k); return n; }
 
+    // len(k==0) or step(k>=0)
+    constexpr static dim_t len_s(int k) { return nn; }
+    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { return len_s(k); }
+    constexpr dim_t len(int k) const requires (nn==DIM_ANY) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr auto flat() const { return i; }
@@ -290,11 +292,13 @@ struct Iota
 
     constexpr static rank_t rank_s() { return w+1; };
     constexpr static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(k<=w, "Bad axis", k); return k==w ? nn : DIM_BAD; }
-    constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { RA_CHECK(k<=w, "Bad axis ", k); return k==w ? n : DIM_BAD; }
 
+    // len(0<=k<=w) or step(0<=k)
+    constexpr static dim_t len_s(int k) { return k==w ? nn : DIM_BAD; }
+    constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : DIM_BAD; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
+
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += O(step(k) * d) * O(s); }
     constexpr auto flat() const { return Flat { i, s }; }

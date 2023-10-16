@@ -154,8 +154,12 @@ struct CellSmall
 
     constexpr static rank_t rank_s() { return framer; }
     constexpr static rank_t rank() { return framer; }
-    constexpr static dim_t len_s(int k) { RA_CHECK(inside(k, rank_s())); return V::len(k); }
-    constexpr static dim_t len(int k) { RA_CHECK(inside(k, rank())); return V::len(k); }
+    // len(0<=k<rank) or step(0<=k)
+#pragma GCC diagnostic push // gcc 13.2
+#pragma GCC diagnostic warning "-Warray-bounds"
+    constexpr static dim_t len_s(int k) { return V::len(k); }
+#pragma GCC diagnostic pop
+    constexpr static dim_t len(int k) { return len_s(k); }
     constexpr static dim_t step(int k) { return k<rank() ? V::step(k) : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
@@ -224,16 +228,17 @@ struct SmallBase
     using Child = Child_<T, lens, steps>;
     template <class TT> using BadDimension = ic_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
-    static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps."); // TODO static check on steps.
+// TODO static steps check
+    static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
+    constexpr static auto slens = mp::tuple_values<dim_t, lens>();
+    constexpr static auto ssteps = mp::tuple_values<dim_t, steps>();
 
     constexpr static rank_t rank() { return mp::len<lens>; }
     constexpr static rank_t rank_s() { return mp::len<lens>; }
-    constexpr static auto slens = mp::tuple_values<dim_t, lens>();
-    constexpr static auto ssteps = mp::tuple_values<dim_t, steps>();
     constexpr static dim_t size() { return mp::apply<mp::prod, lens>::value; }
     constexpr static dim_t size_s() { return size(); }
-    constexpr static dim_t len(int k) { return slens[k]; }
     constexpr static dim_t len_s(int k) { return slens[k]; }
+    constexpr static dim_t len(int k) { return len_s(k); }
     constexpr static dim_t step(int k) { return ssteps[k]; }
     constexpr static decltype(auto) shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(slens.data()); }
 
