@@ -212,8 +212,8 @@ struct View
     constexpr static rank_t rank() requires (RANK!=RANK_ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dimv.size()); }
     constexpr static dim_t len_s(int j) { return DIM_ANY; }
-    constexpr dim_t len(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].len; }
-    constexpr dim_t step(int k) const { RA_CHECK(inside(k, rank())); return dimv[k].step; }
+    constexpr dim_t len(int k) const { return dimv[k].len; }
+    constexpr dim_t step(int k) const { return dimv[k].step; }
     constexpr auto data() const { return cp; }
     constexpr dim_t size() const { return prod(map(&Dim::len, dimv)); }
 

@@ -201,7 +201,7 @@ int main()
         int x = 0;
         try {
             ra::Big<int> a = 0;
-            cout << a.len(0) << endl;
+            cout << shape(a, 0) << endl;
             x = 1;
         } catch (ra_error & e) {
             x = 2;

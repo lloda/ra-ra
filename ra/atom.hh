@@ -48,11 +48,7 @@
 
 namespace ra {
 
-constexpr bool
-inside(dim_t i, dim_t b)
-{
-    return i>=0 && i<b;
-}
+constexpr bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
 
 
 // --------------------
@@ -156,6 +152,14 @@ shape(V const & v)
         for (rank_t k=0; k<r; ++k) { s[k] = v.len(k); }
         return s;
     }
+}
+
+template <class V>
+constexpr dim_t
+shape(V const & v, int k)
+{
+    RA_CHECK(inside(k, rank(v)), "Bad axis ", k, " for rank ", rank(v), ".");
+    return v.len(k);
 }
 
 // To handle arrays of static/dynamic size.

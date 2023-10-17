@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 24
-@set UPDATED 2023 September 28
+@set UPDATED 2023 October 17
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1754,6 +1754,26 @@ TODO
 @section Introspection
 @c ------------------------------------------------
 
+The following functions are available to query the properties of @code{ra::} objects.
+
+@cindex @code{rank}
+@anchor{x-rank}
+@deftypefn @w{Function} rank_t rank e
+
+Return the rank of expression @var{e}.
+
+@end deftypefn
+
+@cindex @code{shape}
+@anchor{x-shape}
+@deftypefn @w{Function} array shape e
+@deftypefnx @w{Function} dim_t shape e k
+
+The first form returns the shape of expression @var{e} as an array. The second form returns the length of axis @var{k}, i.e. @code{shape(e)[k]} ≡ @code{shape(e, k)}.
+
+@end deftypefn
+
+
 @c ------------------------------------------------
 @node Compiling and running
 @section Compiling and running
@@ -2082,18 +2102,6 @@ This is equivalent to @code{view(ra::dots<k>, ra::iota(ra::len, ra::len-1, -1))}
 This operation does not work on arbitrary array expressions yet. TODO FILL
 
 @end defun
-
-@cindex @code{shape}
-@anchor{x-shape} @defun shape a
-Get the shape of an @code{ra::} object.
-
-The shape of a rt rank array is a rank-1 object with rt size, and the shape of a ct rank array is a rank-1 object with ct size.
-
-This function may return an expression object or an array object. If you need to operate on the result, it might be necessary to use @code{concrete}.
-
-@end defun
-
-@c FIXME example
 
 @cindex @code{size}
 @anchor{x-size} @defun size a

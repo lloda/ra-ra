@@ -1829,6 +1829,26 @@ Next: <a href="#Compiling-and-running" accesskey="n" rel="next">Compiling and ru
 </div>
 <span id="Introspection-1"></span><h3 class="section">5.5 Introspection</h3>
 
+<p>The following functions are available to query the properties of <code>ra::</code> objects.
+</p>
+<span id="index-rank-1"></span>
+<span id="x_002drank"></span><dl class="def">
+<dt id="index-rank-2"><span class="category">Function<!-- /@w -->: </span><span><em>rank_t</em> <strong>rank</strong> <em>e</em><a href='#index-rank-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Return the rank of expression <var>e</var>.
+</p>
+</dd></dl>
+
+<span id="index-shape-1"></span>
+<span id="x_002dshape"></span><dl class="def">
+<dt id="index-shape-2"><span class="category">Function<!-- /@w -->: </span><span><em>array</em> <strong>shape</strong> <em>e</em><a href='#index-shape-2' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-shape-3"><span class="category">Function<!-- /@w -->: </span><span><em>dim_t</em> <strong>shape</strong> <em>e k</em><a href='#index-shape-3' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>The first form returns the shape of expression <var>e</var> as an array object. The second form returns the length of axis <var>k</var>, i.e. <code>shape(e)[k]</code> ≡ <code>shape(e, k)</code>.
+</p>
+</dd></dl>
+
+
 <hr>
 </div>
 <div class="section" id="Compiling-and-running">
@@ -2169,18 +2189,6 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <p>This operation does not work on arbitrary array expressions yet. TODO FILL
 </p>
 </dd></dl>
-
-<span id="index-shape-1"></span>
-<span id="x_002dshape"></span><dl class="def">
-<dt id="index-shape-2"><span class="category">Function: </span><span><strong>shape</strong> <em>a</em><a href='#index-shape-2' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Get the shape of an <code>ra::</code> object.
-</p>
-<p>The shape of a rt rank array is a rank-1 object with rt size, and the shape of a ct rank array is a rank-1 object with ct size.
-</p>
-<p>This function may return an expression object or an array object. If you need to operate on the result, it might be necessary to use <code>concrete</code>.
-</p>
-</dd></dl>
-
 
 <span id="index-size"></span>
 <span id="x_002dsize"></span><dl class="def">
@@ -2525,8 +2533,7 @@ cout &lt;&lt; &quot;s: &quot; &lt;&lt; map([](auto &amp;&amp; a) { return sum(di
 <span id="index-early"></span>
 <span id="x_002dearly"></span><dl class="def">
 <dt id="index-early-1"><span class="category">Function: </span><span><strong>early</strong> <em>expr default</em><a href='#index-early-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p><var>expr</var> is an array expression that returns <code>std::optional&lt;T&gt;</code>. <var>expr</var> is traversed as by <code>for_each</code>. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, <var>default</var> is returned instead. <code>default</code> may be a reference.
-</p>
+<dd><p><var>expr</var> is an array expression that returns <code>std::optional&lt;T&gt;</code>. <var>expr</var> is traversed as by <code>for_each</code>. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, <var>default</var> is returned instead. If <code>default</code> is a reference, <code>early</code> will return its value. </p>
 <p>The following definition of elementwise <code>lexicographical_compare</code> relies on <code>early</code>.
 </p>
 <div class="example">
@@ -2786,6 +2793,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-R">R</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank-1"><code>rank</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introspection">Introspection</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank_002c-compile_002dtime">rank, compile-time</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank_002c-runtime">rank, runtime</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-real_005fpart"><code>real_part</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2797,7 +2805,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th id="Indices_cp_letter-S">S</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-scalar"><code>scalar</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape">shape</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-shape-1"><code>shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-shape-1"><code>shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introspection">Introspection</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-prefix">shape agreement, prefix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-suffix">shape agreement, suffix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-size"><code>size</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
