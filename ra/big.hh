@@ -23,35 +23,42 @@ constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY
 
 
 // --------------------
-// Develop indices for Big
+// Develop indices for var rank
 // --------------------
 
 namespace indexer1 {
 
-    template <class Dimv, class P>
+    template <class Q, class P>
     constexpr dim_t
-    shorter(Dimv const & dimv, P && p)
+    index(Q const & q, P & p, rank_t end)
     {
-        RA_CHECK(ssize(dimv)>=start(p).len(0), "Too many indices.");
-// use dim.data() to skip the size check.
         dim_t c = 0;
-        for_each([&c](auto && d, auto && p) { RA_CHECK(inside(p, d.len)); c += d.step*p; },
-                 ptr(dimv.data()), p);
+        auto pp = p.flat();
+        auto ss0 = p.step(0);
+        for (rank_t k=0; k<end; ++k, pp+=ss0) {
+            auto pk = *pp;
+            RA_CHECK(inside(pk, q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
+            c += q.step(k) * pk;
+        }
         return c;
     }
 
-// for rank matching on rank<driving rank, no slicing. TODO Static check?
-    template <class Dimv, class P>
+    template <class Q, class P>
     constexpr dim_t
-    longer(rank_t framer, Dimv const & dimv, P const & p)
+    shorter(Q const & q, P && p)  // for View::at().
     {
-        RA_CHECK(framer<=ssize(p), "Too few indices.");
-        dim_t c = 0;
-        for (rank_t k=0; k<framer; ++k) {
-            RA_CHECK(inside(p[k], dimv[k].len) || (dimv[k].len==DIM_BAD && dimv[k].step==0));
-            c += dimv[k].step * p[k];
-        }
-        return c;
+        decltype(auto) pp = start(p);
+        RA_CHECK(pp.len(0) <= q.rank(), "Too many indices.");
+        return index(q, pp, pp.len(0));
+    }
+
+    template <class Q, class P>
+    constexpr dim_t
+    longer(Q const & q, P && p)  // for IteratorConcept::at().
+    {
+        decltype(auto) pp = start(p);
+        RA_CHECK(pp.len(0) >= q.rank(), "Too few indices.");
+        return index(q, pp, q.rank());
     }
 
 } // namespace indexer1
@@ -133,9 +140,9 @@ struct CellBig
     at(auto const & i) const
     {
         if constexpr (0==cellr) {
-            return c.cp[indexer1::longer(rank(), dimv, i)];
+            return c.cp[indexer1::longer(*this, i)];
         } else {
-            return cell_type { c.dimv, c.cp + indexer1::longer(rank(), dimv, i) };
+            return cell_type { c.dimv, c.cp + indexer1::longer(*this, i) };
         }
     }
 };
@@ -369,21 +376,16 @@ struct View
     constexpr decltype(auto)
     at(I && i) const
     {
-        if constexpr (RANK_ANY!=RANK) {
-            constexpr rank_t subrank = rank_diff(RANK, ra::size_s<I>());
-            using Sub = View<T, subrank>;
-            if constexpr (RANK_ANY==subrank) {
-                return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()),  // Dimv is std::vector
-                        data() + indexer1::shorter(dimv, i) };
-            } else if constexpr (subrank>0) {
-                return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  // Dimv is ra::Small
-                        data() + indexer1::shorter(dimv, i) };
-            } else {
-                return data()[indexer1::shorter(dimv, i)];
-            }
+        constexpr rank_t idim = DIM_ANY==ra::size_s<I>() ? DIM_ANY : ra::size_s<I>();
+        constexpr rank_t subrank = rank_diff(RANK, idim);
+        using Sub = View<T, (RANK_ANY!=RANK) ? subrank : RANK_ANY>;
+        auto p = data() + indexer1::shorter(*this, i);
+        if constexpr (RANK_ANY==subrank) {
+            return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()), p }; // Dimv is std::vector
+        } else if constexpr (subrank>0) {
+            return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  p }; // Div is Small
         } else {
-            return View<T, RANK_ANY> { Dimv(dimv.begin()+i.size(), dimv.end()), // Dimv is std::vector
-                    data() + indexer1::shorter(dimv, i) };
+            return *p;
         }
     }
 
@@ -392,7 +394,7 @@ struct View
     operator T & () const
     {
         if constexpr (RANK_ANY==RANK) {
-            RA_CHECK(rank()==0, "Error converting rank ", rank(), " to scalar.");
+            RA_CHECK(0==rank(), "Error converting rank ", rank(), " to scalar.");
         } else {
             static_assert(0==RANK, "Bad rank for conversion to scalar.");
         }
@@ -601,7 +603,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 
 // shape + row-major ravel.
-// FIXME explicit it-is-ravel mark
+// FIXME explicit it-is-ravel mark. Also iter<n> initializers.
 // FIXME regular (no need for fill1) for RANK_ANY if rank is 1.
     Container(shape_arg const & s, typename View::ravel_arg x)
         : Container(s, none) { fill1(x.begin(), x.size()); }

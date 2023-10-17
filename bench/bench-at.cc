@@ -32,8 +32,7 @@ int main()
 
         int ref0 = 0, val0 = 0;
         for (int i=0; i<O; ++i) {
-            // ref0 += C(I(i, 0), I(i, 1)); // FIXME for runtime rank
-            ref0 += C(dim_t(I(i, 0)), dim_t(I(i, 1))); // FIXME for runtime rank
+            ref0 += C(dim_t(I(i, 0)), dim_t(I(i, 1))); // conversions needed for runtime rank I
         }
 
         Benchmark bm { reps, 3 };
@@ -46,7 +45,7 @@ int main()
                bm.run([&] {
                    int val = 0;
                    for (int i=0; i<O; ++i) {
-                       val += C(dim_t(I(i, 0)), dim_t(I(i, 1))); // FIXME for runtime rank
+                       val += C(dim_t(I(i, 0)), dim_t(I(i, 1))); // conversions needed for runtime rank I
                    }
                    val0 = val;
                }));

@@ -73,41 +73,45 @@ struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
 
 
 // --------------------
-// Develop indices for Small
+// Develop indices for static rank. FIXME allow p to be generic expr, as in indexer1.
 // --------------------
 
 namespace indexer0 {
 
-    template <class lens, class steps, class P, rank_t end, rank_t k=0>
+    template <rank_t end, rank_t k=0, class Q, class P>
     constexpr dim_t
-    index(P const & p)
+    index(Q const & q, P const & p)
     {
         if constexpr (k==end) {
             return 0;
         } else {
-            RA_CHECK(inside(p[k], mp::ref<lens, k>::value));
-            return (p[k] * mp::ref<steps, k>::value) + index<lens, steps, P, end, k+1>(p);
+            RA_CHECK(inside(p[k], q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
+            return (p[k] * q.step(k)) + index<end, k+1>(q, p);
         }
     }
 
-    template <class lens, class steps, class P>
+    template <class Q, class P>
     constexpr dim_t
-    shorter(P const & p) // for Container::at().
-    {
-        static_assert(mp::len<lens> >= size_s<P>(), "Too many indices.");
-        return index<lens, steps, P, size_s<P>()>(p);
-    }
-
-    template <class lens, class steps, class P>
-    constexpr dim_t
-    longer(P const & p) // for IteratorConcept::at().
+    shorter(Q const & q, P const & p) // for View::at().
     {
         if constexpr (RANK_ANY==size_s<P>()) {
-            RA_CHECK(mp::len<lens> <= p.size(), "Too few indices.");
+            RA_CHECK(p.size() <= rank_s<Q>(), "Too many indices.");
         } else {
-            static_assert(mp::len<lens> <= size_s<P>(), "Too few indices.");
+            static_assert(size_s<P>() <= rank_s<Q>(), "Too many indices.");
         }
-        return index<lens, steps, P, mp::len<lens>>(p);
+        return index<size_s<P>(), 0>(q, p);
+    }
+
+    template <class Q, class P>
+    constexpr dim_t
+    longer(Q const & q, P const & p) // for IteratorConcept::at().
+    {
+        if constexpr (RANK_ANY==size_s<P>()) {
+            RA_CHECK(p.size() >= rank_s<Q>(), "Too few indices.");
+        } else {
+            static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
+        }
+        return index<rank_s<Q>(), 0>(q, p);
     }
 
 } // namespace indexer0
@@ -180,9 +184,9 @@ struct CellSmall
     at(auto const & i) const
     {
         if constexpr (0==cellr) {
-            return c.cp[indexer0::longer<lens, steps>(i)];
+            return c.cp[indexer0::longer(*this, i)];
         } else {
-            return cell_type(c.cp + indexer0::longer<lens, steps>(i));
+            return cell_type(c.cp + indexer0::longer(*this, i));
         }
     }
 };
@@ -318,25 +322,25 @@ struct SmallBase
     {                                                                   \
         return (*this)(std::forward<I>(i) ...);                         \
     }                                                                   \
-    /* BUG I must be fixed size, otherwise we can't make out the output type. */ \
+    /* FIXME I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
     at(I const & i) CONST                                               \
     {                                                                   \
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
-            (data()+indexer0::shorter<lens, steps>(i));                 \
+            (data()+indexer0::shorter(*this, i));                       \
     }                                                                   \
-    /* vestigial, maybe remove if ic becomes easier to use */           \
+    /* maybe remove if ic becomes easier to use */                      \
     template <int ss, int oo=0>                                         \
     constexpr auto                                                      \
     as() CONST                                                          \
     {                                                                   \
         return operator()(ra::iota(ra::ic<ss>, oo));                    \
     }                                                                   \
-    T CONST &                                                           \
+    decltype(auto)                                                      \
     back() CONST                                                        \
     {                                                                   \
-        static_assert(rank()==1 && size()>0, "back() is not available"); \
+        static_assert(rank()>=1 && size()>0, "back() is not available"); \
         return (*this)[size()-1];                                       \
     }                                                                   \
     constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; }
