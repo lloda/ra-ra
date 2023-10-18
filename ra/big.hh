@@ -18,9 +18,6 @@ struct Dim { dim_t len, step; };
 inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
 { o << "[Dim " << dim.len << " " << dim.step << "]"; return o; }
 
-constexpr rank_t rank_sum(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a+b; }
-constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a-b; }
-
 
 // --------------------
 // Big iterator
@@ -97,10 +94,11 @@ struct CellBig
     constexpr decltype(auto)
     at(auto const & i) const
     {
+        auto d = longer(*this, i);
         if constexpr (0==cellr) {
-            return c.cp[longer(*this, i)];
+            return c.cp[d];
         } else {
-            return cell_type { c.dimv, c.cp + longer(*this, i) };
+            return cell_type { c.dimv, c.cp + d };
         }
     }
 };
@@ -336,16 +334,11 @@ struct View
     {
         constexpr rank_t idim = DIM_ANY==ra::size_s<I>() ? DIM_ANY : ra::size_s<I>();
         constexpr rank_t subrank = rank_diff(RANK, idim);
-        using Sub = View<T, (RANK_ANY!=RANK) ? subrank : RANK_ANY>;
-        auto p = data() + shorter(*this, i);
-        if constexpr (0==subrank) {
-            return *p;
-        } else if constexpr (subrank>0) {
-            return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  p };
-        } else if constexpr (RANK_ANY==subrank) {
-            return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()), p };
+        if constexpr (RANK_ANY==subrank) {
+            using Sub = View<T, (RANK_ANY!=RANK) ? subrank : RANK_ANY>;
+            return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()), data() + shorter(*this, i) };
         } else {
-            static_assert(mp::always_false<subrank>);
+            return iter<subrank>().at(std::forward<I>(i));
         }
     }
 

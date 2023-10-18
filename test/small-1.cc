@@ -124,11 +124,6 @@ int main()
             cout << "s1: " << s1(0) << ", " << s1(1) << endl;
             tr.test(s1(0)==2 && s1(1)==5);
             tr.test(std::equal(s1.begin(), s1.end(), check1));
-
-// only valid if operator() -> rank 0 returns rank 0 array and not scalar
-            // auto s2 = s(1, 1);
-            // double check2[1] = { 5 };
-            // tr.test(std::equal(s2.begin(), s2.end(), check2));
             tr.test_eq(5, s(1, 1));
         }
         tr.section("using SmallView as rvalue");
@@ -160,7 +155,9 @@ int main()
             double check2[1] = { 5 };
             double check1[2] = { 2, 5 };
             double check0[6] = { 1, 4, 2, 5, 3, 6 };
-            auto k2 = s.at(i2).begin(); tr.test(std::equal(check2, check2+1, k2));
+            auto k2 = s.at(i2);
+            tr.test_eq(0, ra::rank(k2));
+            tr.test_eq(check2[0], k2);
             auto k1 = s.at(i1).begin(); tr.test(std::equal(check1, check1+2, k1));
             auto k0 = s.at(i0).begin(); tr.test(std::equal(check0, check0+6, k0));
         }

@@ -170,12 +170,12 @@ constexpr auto pack(A && ... a)
     return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
 }
 
-// FIXME needs a nested array for I, which is ugly.
+// FIXME needs a nested array for I
 template <class A, class I>
 constexpr auto at(A && a, I && i)
 {
-    return map([a = std::tuple<A>(std::forward<A>(a))]
-               (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); }, i);
+    return map([a = std::tuple<A>(std::forward<A>(a))] (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); },
+               std::forward<I>(i));
 }
 
 

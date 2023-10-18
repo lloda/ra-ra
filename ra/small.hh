@@ -12,6 +12,9 @@
 
 namespace ra {
 
+constexpr rank_t rank_sum(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a+b; }
+constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a-b; }
+
 
 // --------------------
 // Slicing helpers
@@ -220,10 +223,11 @@ struct CellSmall
     constexpr decltype(auto)
     at(auto const & i) const
     {
+        auto d = longer(*this, i);
         if constexpr (0==cellr) {
-            return c.cp[longer(*this, i)];
+            return c.cp[d];
         } else {
-            return cell_type(c.cp + longer(*this, i));
+            return cell_type(c.cp + d);
         }
     }
 };
@@ -364,8 +368,7 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     at(I && i) CONST                                                    \
     {                                                                   \
-        return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
-            (data()+shorter(*this, i));                                 \
+        return iter<rank_diff(rank(), ra::size_s<I>())>().at(std::forward<I>(i)); \
     }                                                                   \
     /* maybe remove if ic becomes easier to use */                      \
     template <int ss, int oo=0>                                         \
