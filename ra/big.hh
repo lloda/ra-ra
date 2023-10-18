@@ -23,48 +23,6 @@ constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY
 
 
 // --------------------
-// Develop indices for var rank
-// --------------------
-
-namespace indexer1 {
-
-    template <class Q, class P>
-    constexpr dim_t
-    index(Q const & q, P & p, rank_t end)
-    {
-        dim_t c = 0;
-        auto pp = p.flat();
-        auto ss0 = p.step(0);
-        for (rank_t k=0; k<end; ++k, pp+=ss0) {
-            auto pk = *pp;
-            RA_CHECK(inside(pk, q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
-            c += q.step(k) * pk;
-        }
-        return c;
-    }
-
-    template <class Q, class P>
-    constexpr dim_t
-    shorter(Q const & q, P const & pp)  // for View::at().
-    {
-        decltype(auto) p = start(pp);
-        indexer_check<false>(q, p);
-        return index(q, p, p.len(0));
-    }
-
-    template <class Q, class P>
-    constexpr dim_t
-    longer(Q const & q, P const & pp)  // for IteratorConcept::at().
-    {
-        decltype(auto) p = start(pp);
-        indexer_check<true>(q, p);
-        return index(q, p, q.rank());
-    }
-
-} // namespace indexer1
-
-
-// --------------------
 // Big iterator
 // --------------------
 
@@ -140,9 +98,9 @@ struct CellBig
     at(auto const & i) const
     {
         if constexpr (0==cellr) {
-            return c.cp[indexer1::longer(*this, i)];
+            return c.cp[longer(*this, i)];
         } else {
-            return cell_type { c.dimv, c.cp + indexer1::longer(*this, i) };
+            return cell_type { c.dimv, c.cp + longer(*this, i) };
         }
     }
 };
@@ -379,7 +337,7 @@ struct View
         constexpr rank_t idim = DIM_ANY==ra::size_s<I>() ? DIM_ANY : ra::size_s<I>();
         constexpr rank_t subrank = rank_diff(RANK, idim);
         using Sub = View<T, (RANK_ANY!=RANK) ? subrank : RANK_ANY>;
-        auto p = data() + indexer1::shorter(*this, i);
+        auto p = data() + shorter(*this, i);
         if constexpr (0==subrank) {
             return *p;
         } else if constexpr (subrank>0) {

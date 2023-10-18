@@ -73,9 +73,8 @@ struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
 
 
 // --------------------
-// Develop indices for static rank.
+// Develop indices
 // --------------------
-// FIXME replace by indexer1 to support arbitrary expr for p. But that can be slower with RA_DO_CHECK=1 (see bench-at).
 
 template <bool few, class Q, class P>
 constexpr void
@@ -102,37 +101,57 @@ indexer_check(Q const & q, P const & p)
     }
 }
 
-namespace indexer0 {
-
-    template <rank_t k, class Q, class P>
-    constexpr dim_t
-    index(Q const & q, P const & p)
-    {
-        if constexpr (k<0) {
-            return 0;
-        } else {
-            RA_CHECK(inside(p[k], q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
-            return (p[k] * q.step(k)) + index<k-1>(q, p);
-        }
+template <rank_t k, rank_t end, class Q, class P, class S>
+constexpr dim_t
+indexer(Q const & q, P && pp, S const & ss0)
+{
+    if constexpr (k==end) {
+        return 0;
+    } else {
+        auto pk = *pp;
+        RA_CHECK(inside(pk, q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
+        return (q.step(k) * pk) + (pp+=ss0, indexer<k+1, end>(q, pp, ss0));
     }
+}
 
-    template <class Q, class P>
-    constexpr dim_t
-    shorter(Q const & q, P const & p) // for View::at().
-    {
-        indexer_check<false>(q, p);
-        return index<size_s<P>()-1>(q, p);
+template <class Q, class P, class S>
+constexpr dim_t
+indexer(rank_t end, Q const & q, P && pp, S const & ss0)
+{
+    dim_t c = 0;
+    for (rank_t k=0; k<end; ++k, pp+=ss0) {
+        auto pk = *pp;
+        RA_CHECK(inside(pk, q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
+        c += q.step(k) * pk;
     }
+    return c;
+}
 
-    template <class Q, class P>
-    constexpr dim_t
-    longer(Q const & q, P const & p) // for IteratorConcept::at().
-    {
-        indexer_check<true>(q, p);
-        return index<rank_s<Q>()-1>(q, p);
+template <class Q, class P>
+constexpr dim_t
+shorter(Q const & q, P const & pp) // for View::at().
+{
+    decltype(auto) p = start(pp);
+    indexer_check<false>(q, p);
+    if constexpr (DIM_ANY==size_s<P>()) {
+        return indexer(p.len(0), q, p.flat(), p.step(0));
+    } else {
+        return indexer<0, size_s<P>()>(q, p.flat(), p.step(0));
     }
+}
 
-} // namespace indexer0
+template <class Q, class P>
+constexpr dim_t
+longer(Q const & q, P const & pp) // for IteratorConcept::at().
+{
+    decltype(auto) p = start(pp);
+    indexer_check<true>(q, p);
+    if constexpr (RANK_ANY==rank_s<Q>()) {
+        return indexer(q.rank(), q, p.flat(), p.step(0));
+    } else {
+        return indexer<0, rank_s<Q>()>(q, p.flat(), p.step(0));
+    }
+}
 
 
 // --------------------
@@ -202,9 +221,9 @@ struct CellSmall
     at(auto const & i) const
     {
         if constexpr (0==cellr) {
-            return c.cp[indexer0::longer(*this, i)];
+            return c.cp[longer(*this, i)];
         } else {
-            return cell_type(c.cp + indexer0::longer(*this, i));
+            return cell_type(c.cp + longer(*this, i));
         }
     }
 };
@@ -346,7 +365,7 @@ struct SmallBase
     at(I && i) CONST                                                    \
     {                                                                   \
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
-            (data()+indexer0::shorter(*this, i));                       \
+            (data()+shorter(*this, i));                                 \
     }                                                                   \
     /* maybe remove if ic becomes easier to use */                      \
     template <int ss, int oo=0>                                         \

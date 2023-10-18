@@ -29,6 +29,15 @@ int main()
             = at(B, I2);
         tr.test_eq(C, A);
 
+        // check that at() takes arbitrary rank-1 expr as index
+        using int2 = ra::Small<int, 2>;
+        for (int i=0; i<C.len(0); ++i) {
+            for (int j=0; j<C.len(1); ++j) {
+                tr.test_eq(C(i, j), C.at(std::array {i, j}));
+                tr.test_eq(C(i, j), C.at(int2 {i, 0} + int2 {0, j}));
+            }
+        }
+
         A = 0;
         at(A, I2)
             = map([&B](auto && i) -> decltype(auto) { return B.at(i); }, I2);

@@ -21,6 +21,7 @@ checkbox [C-ct] flip TODO
     - [X] size_s, rank_s in Ryn:: are broken [ra7]
     - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
     - [ ] ambiguity / bad init in nested constructors [ra45]
+    - [ ] ra::at(A, I) needs nested I, so the obvious ra::at(A, [i j]) doesn't work (although a.at([i j]) does for View a).
     - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
       rank 1, then `A(i)` will return a nested expression instead of preserving
       `A`'s rank.
