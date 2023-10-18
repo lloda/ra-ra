@@ -45,20 +45,20 @@ namespace indexer1 {
 
     template <class Q, class P>
     constexpr dim_t
-    shorter(Q const & q, P && p)  // for View::at().
+    shorter(Q const & q, P const & pp)  // for View::at().
     {
-        decltype(auto) pp = start(p);
-        RA_CHECK(pp.len(0) <= q.rank(), "Too many indices.");
-        return index(q, pp, pp.len(0));
+        decltype(auto) p = start(pp);
+        indexer_check<false>(q, p);
+        return index(q, p, p.len(0));
     }
 
     template <class Q, class P>
     constexpr dim_t
-    longer(Q const & q, P && p)  // for IteratorConcept::at().
+    longer(Q const & q, P const & pp)  // for IteratorConcept::at().
     {
-        decltype(auto) pp = start(p);
-        RA_CHECK(pp.len(0) >= q.rank(), "Too few indices.");
-        return index(q, pp, q.rank());
+        decltype(auto) p = start(pp);
+        indexer_check<true>(q, p);
+        return index(q, p, q.rank());
     }
 
 } // namespace indexer1
@@ -380,12 +380,14 @@ struct View
         constexpr rank_t subrank = rank_diff(RANK, idim);
         using Sub = View<T, (RANK_ANY!=RANK) ? subrank : RANK_ANY>;
         auto p = data() + indexer1::shorter(*this, i);
-        if constexpr (RANK_ANY==subrank) {
-            return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()), p }; // Dimv is std::vector
-        } else if constexpr (subrank>0) {
-            return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  p }; // Div is Small
-        } else {
+        if constexpr (0==subrank) {
             return *p;
+        } else if constexpr (subrank>0) {
+            return Sub { typename Sub::Dimv(ptr(dimv.begin()+ra::size(i))),  p };
+        } else if constexpr (RANK_ANY==subrank) {
+            return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()), p };
+        } else {
+            static_assert(mp::always_false<subrank>);
         }
     }
 

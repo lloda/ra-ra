@@ -73,20 +73,46 @@ struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
 
 
 // --------------------
-// Develop indices for static rank. FIXME allow p to be generic expr, as in indexer1.
+// Develop indices for static rank.
 // --------------------
+// FIXME replace by indexer1 to support arbitrary expr for p. But that can be slower with RA_DO_CHECK=1 (see bench-at).
+
+template <bool few, class Q, class P>
+constexpr void
+indexer_check(Q const & q, P const & p)
+{
+    if constexpr (RANK_ANY==rank_s<P>()) {
+        RA_CHECK(1==rank(p), "Bad rank ", rank(p), " for subscript.");
+    } else {
+        static_assert(1==rank_s<P>(), "Bad rank for subscript.");
+    }
+// same performance, but prefer compile time error.
+    if constexpr (DIM_ANY==size_s<P>() || RANK_ANY==rank_s<Q>()) {
+        if constexpr (few) {
+            RA_CHECK(p.len(0) >= q.rank(), "Too few indices.");
+        } else {
+            RA_CHECK(p.len(0) <= q.rank(), "Too many indices.");
+        }
+    } else {
+        if constexpr (few) {
+            static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
+        } else {
+            static_assert(size_s<P>() <= rank_s<Q>(), "Too many indices.");
+        }
+    }
+}
 
 namespace indexer0 {
 
-    template <rank_t end, rank_t k=0, class Q, class P>
+    template <rank_t k, class Q, class P>
     constexpr dim_t
     index(Q const & q, P const & p)
     {
-        if constexpr (k==end) {
+        if constexpr (k<0) {
             return 0;
         } else {
             RA_CHECK(inside(p[k], q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
-            return (p[k] * q.step(k)) + index<end, k+1>(q, p);
+            return (p[k] * q.step(k)) + index<k-1>(q, p);
         }
     }
 
@@ -94,24 +120,16 @@ namespace indexer0 {
     constexpr dim_t
     shorter(Q const & q, P const & p) // for View::at().
     {
-        if constexpr (RANK_ANY==size_s<P>()) {
-            RA_CHECK(p.size() <= rank_s<Q>(), "Too many indices.");
-        } else {
-            static_assert(size_s<P>() <= rank_s<Q>(), "Too many indices.");
-        }
-        return index<size_s<P>(), 0>(q, p);
+        indexer_check<false>(q, p);
+        return index<size_s<P>()-1>(q, p);
     }
 
     template <class Q, class P>
     constexpr dim_t
     longer(Q const & q, P const & p) // for IteratorConcept::at().
     {
-        if constexpr (RANK_ANY==size_s<P>()) {
-            RA_CHECK(p.size() >= rank_s<Q>(), "Too few indices.");
-        } else {
-            static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
-        }
-        return index<rank_s<Q>(), 0>(q, p);
+        indexer_check<true>(q, p);
+        return index<rank_s<Q>()-1>(q, p);
     }
 
 } // namespace indexer0
@@ -325,7 +343,7 @@ struct SmallBase
     /* FIXME I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
-    at(I const & i) CONST                                               \
+    at(I && i) CONST                                                    \
     {                                                                   \
         return SmallView<T CONST, mp::drop<lens, ra::size_s<I>()>, mp::drop<steps, ra::size_s<I>()>> \
             (data()+indexer0::shorter(*this, i));                       \

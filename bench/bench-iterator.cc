@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <cstdlib>
 #include "ra/test.hh"
 #include "ra/bench.hh"
 
