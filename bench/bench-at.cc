@@ -76,7 +76,8 @@ int main()
         ra::Big<int> I({1000, 2}, ra::none);
         test(C, I, 100);
     }
-    tr.section("Small/Small"); // FIXME regression in b40c2d412be04c4c2b4758a332424c05257f71ff
+// regression in b40c2d412be04c4c2b4758a332424c05257f71ff due to CellSmall copy ctor.
+    tr.section("Small/Small");
     {
         ra::Small<int, 10, 4> C;
         ra::Small<int, 10, 2> I;

@@ -177,7 +177,7 @@ struct CellSmall
 
     cell_type c;
 
-    constexpr CellSmall(CellSmall const & ci) = default;
+    constexpr CellSmall(CellSmall const & ci): c { ci.c.cp } {}
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr CellSmall(atom_type * p_): c { p_ } {}
     RA_DEF_ASSIGNOPS_DEFAULT_SET
