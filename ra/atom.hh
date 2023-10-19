@@ -31,7 +31,8 @@
             assert(cond /* FIXME show args */);                         \
         } else {                                                        \
             if (!(cond)) [[unlikely]] {                                 \
-                std::cerr << ra::format("**** ra (", std::source_location::current(), "): ", ##__VA_ARGS__, " ****") << std::endl; \
+                std::cerr << ra::format("**** ra (", std::source_location::current(), "): ", \
+                                        ##__VA_ARGS__, " ****") << std::endl; \
                 std::abort();                                           \
             }                                                           \
         }                                                               \
@@ -48,7 +49,7 @@
 
 namespace ra {
 
-constexpr bool inside(dim_t i, dim_t b) { return i>=0 && i<b; }
+constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
 
 // --------------------
@@ -83,8 +84,8 @@ size_s()
     } else if constexpr (requires { ra_traits<V>::size_s(); }) {
         return ra_traits<V>::size_s();
     } else {
-        if constexpr (RANK_ANY==rank_s<V>()) {
-            return DIM_ANY;
+        if constexpr (ANY==rank_s<V>()) {
+            return ANY;
 // make it work for non-registered types.
         } else if constexpr (0==rank_s<V>()) {
             return 1;
@@ -94,7 +95,7 @@ size_s()
                 if (dim_t ss=dV::len_s(i); ss>=0) {
                     s *= ss;
                 } else {
-                    return ss; // either DIM_ANY or DIM_BAD
+                    return ss; // either ANY or BAD
                 }
             }
             return s;
@@ -113,7 +114,7 @@ rank(V const & v)
     } else if constexpr (requires { ra_traits<V>::rank(v); }) {
         return ra_traits<V>::rank(v);
     } else {
-        static_assert(mp::always_false<V>, "No rank() for this type.");
+        static_assert(always_false<V>, "No rank() for this type.");
     }
 }
 
@@ -146,7 +147,7 @@ shape(V const & v)
         for (rank_t k=0; k<rs; ++k) { s[k] = v.len(k); }
         return s;
     } else {
-        static_assert(RANK_ANY==rs);
+        static_assert(ANY==rs);
         rank_t r = v.rank();
         std::vector<dim_t> s(r);
         for (rank_t k=0; k<r; ++k) { s[k] = v.len(k); }
@@ -167,7 +168,7 @@ template <class A>
 inline void
 resize(A & a, dim_t s)
 {
-    if constexpr (DIM_ANY==size_s<A>()) {
+    if constexpr (ANY==size_s<A>()) {
         a.resize(s);
     } else {
         RA_CHECK(s==dim_t(a.len_s(0)), "Bad resize ", s, " vs ", a.len_s(0), ".");
@@ -205,15 +206,26 @@ struct Scalar
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
-template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
+template <class C> constexpr auto
+scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
+
+template <class N> constexpr int
+maybe_any = []{
+    if constexpr (is_constant<N>) {
+        return N::value;
+    } else {
+        static_assert(std::is_integral_v<N> || !std::is_same_v<N, bool>);
+        return ANY;
+    }
+}();
 
 // IteratorConcept for foreign rank 1 objects.
 template <std::bidirectional_iterator I, class N>
 struct Ptr
 {
     static_assert(is_constant<N> || 0==rank_s<N>());
-    constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
-    static_assert(nn==DIM_ANY || nn>=0 || nn==DIM_BAD);
+    constexpr static dim_t nn = maybe_any<N>;
+    static_assert(nn==ANY || nn>=0 || nn==BAD);
 
     I i;
     [[no_unique_address]] N const n = {};
@@ -223,8 +235,8 @@ struct Ptr
 
     // len(k==0) or step(k>=0)
     constexpr static dim_t len_s(int k) { return nn; }
-    constexpr static dim_t len(int k) requires (nn!=DIM_ANY) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (nn==DIM_ANY) { return n; }
+    constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }
+    constexpr dim_t len(int k) const requires (nn==ANY) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
 
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
@@ -232,7 +244,7 @@ struct Ptr
     constexpr auto flat() const { return i; }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
-        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
+        RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i[j[0]];
     }
 
@@ -243,7 +255,7 @@ struct Ptr
 
 template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
 
-template <class I, class N=dim_c<DIM_BAD>>
+template <class I, class N=dim_c<BAD>>
 constexpr auto
 ptr(I i, N && n = N {})
 {
@@ -257,7 +269,8 @@ template <std::ranges::random_access_range V>
 constexpr auto
 vector(V && v)
 {
-    if constexpr (constexpr dim_t s = size_s<V>(); DIM_ANY==s) {
+    constexpr dim_t s = size_s<V>();
+    if constexpr (ANY==s) {
         return ptr(std::begin(std::forward<V>(v)), std::ssize(v));
     } else {
         return ptr(std::begin(std::forward<V>(v)), ic<s>);
@@ -276,8 +289,8 @@ struct Iota
     static_assert(w>=0);
     static_assert(is_constant<S> || 0==rank_s<S>());
     static_assert(is_constant<N> || 0==rank_s<N>());
-    constexpr static dim_t nn = [] { if constexpr (is_constant<N>) { return N::value; } else { return DIM_ANY; } }();
-    static_assert(nn==DIM_ANY || nn>=0 || nn==DIM_BAD);
+    constexpr static dim_t nn = maybe_any<N>;
+    static_assert(nn==ANY || nn>=0 || nn==BAD);
 
     [[no_unique_address]] N const n = {};
     O i = {};
@@ -298,9 +311,9 @@ struct Iota
     constexpr static rank_t rank() { return w+1; }
 
     // len(0<=k<=w) or step(0<=k)
-    constexpr static dim_t len_s(int k) { return k==w ? nn : DIM_BAD; }
+    constexpr static dim_t len_s(int k) { return k==w ? nn : BAD; }
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : DIM_BAD; }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : BAD; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
 
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
@@ -308,12 +321,12 @@ struct Iota
     constexpr auto flat() const { return Flat { i, s }; }
     constexpr auto at(auto && j) const
     {
-        RA_CHECK(DIM_BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
+        RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i + O(j[w])*O(s);
     }
 };
 
-template <int w=0, class O=dim_t, class N=dim_c<DIM_BAD>, class S=dim_c<1>>
+template <int w=0, class O=dim_t, class N=dim_c<BAD>, class S=dim_c<1>>
 constexpr auto
 iota(N && n = N {}, O && org = 0,
      S && s = [] {
@@ -323,7 +336,7 @@ iota(N && n = N {}, O && org = 0,
              static_assert(1==S::value);
              return S {};
          } else {
-             static_assert(mp::always_false<S>, "Bad step type for Iota.");
+             static_assert(always_false<S>, "Bad step type for Iota.");
          }
      }())
 {
@@ -338,9 +351,9 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
 RA_IS_DEF(is_iota, false)
-// DIM_BAD is excluded from beating to allow B = A(... ti ...). FIXME find a way?
+// BAD is excluded from beating to allow B = A(... ti ...). FIXME find a way?
 template <class N, class O, class S>
-constexpr bool is_iota_def<Iota<0, N, O, S>> = (DIM_BAD != Iota<0, N, O, S>::nn);
+constexpr bool is_iota_def<Iota<0, N, O, S>> = (BAD != Iota<0, N, O, S>::nn);
 
 template <class I>
 constexpr bool
@@ -377,7 +390,7 @@ RA_IS_DEF(has_len, false);
 
 template <class T>
 constexpr void
-start(T && t) { static_assert(mp::always_false<T>, "Type cannot be start()ed."); }
+start(T && t) { static_assert(always_false<T>, "Type cannot be start()ed."); }
 
 template <class T> requires (is_foreign_vector<T>)
 constexpr auto

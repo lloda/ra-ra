@@ -25,7 +25,7 @@ int main()
         constexpr auto e = ra::_0+1;
         static_assert(e.rank_s()==1, "bad rank_s");
         static_assert(e.rank()==1, "bad rank");
-        static_assert(e.len_s(0)==ra::DIM_BAD, "bad len");
+        static_assert(e.len_s(0)==ra::BAD, "bad len");
     }
     tr.section("frame matching - Unique/undef-len-iota");
     {

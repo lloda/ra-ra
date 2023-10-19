@@ -21,13 +21,13 @@ namespace ra {
 constexpr bool
 gt_len(dim_t sa, dim_t sb)
 {
-    return sb==DIM_BAD
+    return sb==BAD
              ? 1
-             : sa==DIM_BAD
+             : sa==BAD
                ? 0
-               : sb==DIM_ANY
+               : sb==ANY
                  ? 1
-                 : (sa!=DIM_ANY && sa>=sb);
+                 : (sa!=ANY && sa>=sb);
 }
 
 template <class A, class B>
@@ -38,13 +38,13 @@ struct pick_driver
 
     constexpr static bool value_ =
 // check by rank
-        rb==RANK_BAD
+        rb==BAD
           ? 1
-          : rb==RANK_ANY
-            ? ra==RANK_ANY
-            : ra==RANK_BAD
+          : rb==ANY
+            ? ra==ANY
+            : ra==BAD
                 ? 0
-                : ra==RANK_ANY
+                : ra==ANY
                   ? 1
                   : ra>rb
                     ? 1
@@ -98,26 +98,26 @@ int main()
         static_assert(ra::pick_driver<UU<2>, UU<2>>::value==0, "bad match 4");
         static_assert(ra::driver_index<UU<2>, TI<0>, UU<2>> ==0, "bad match 5a");
 // dynamic rank counts as +inf.
-        static_assert(ra::RANK_ANY==ra::choose_rank(ra::RANK_ANY, 2), "bad match 6a");
-        static_assert(UU<ra::RANK_ANY>::rank_s()==ra::choose_rank(UU<ra::RANK_ANY>::rank_s(), UU<2>::rank_s()), "bad match 6b");
-        static_assert(UU<ra::RANK_ANY>::rank_s()==ra::choose_rank(UU<2>::rank_s(), UU<ra::RANK_ANY>::rank_s()), "bad match 6c");
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<2>>::value==0, "bad match 6d");
-        static_assert(ra::pick_driver<UU<2>, UU<ra::RANK_ANY>>::value==1, "bad match 6e");
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, UU<ra::RANK_ANY>>::value==0, "bad match 6f");
-        static_assert(ra::pick_driver<TI<0>, UU<ra::RANK_ANY>>::value==1, "bad match 6g");
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, TI<0>>::value==0, "bad match 6h");
-        static_assert(ra::driver_index<TI<0>, UU<ra::RANK_ANY>> ==1, "bad match 6i");
-        static_assert(ra::driver_index<UU<ra::RANK_ANY>, TI<0>> ==0, "bad match 6j");
-        static_assert(ra::driver_index<UU<2>, UU<ra::RANK_ANY>, TI<0>> ==1, "bad match 6k");
+        static_assert(ra::ANY==ra::choose_rank(ra::ANY, 2), "bad match 6a");
+        static_assert(UU<ra::ANY>::rank_s()==ra::choose_rank(UU<ra::ANY>::rank_s(), UU<2>::rank_s()), "bad match 6b");
+        static_assert(UU<ra::ANY>::rank_s()==ra::choose_rank(UU<2>::rank_s(), UU<ra::ANY>::rank_s()), "bad match 6c");
+        static_assert(ra::pick_driver<UU<ra::ANY>, UU<2>>::value==0, "bad match 6d");
+        static_assert(ra::pick_driver<UU<2>, UU<ra::ANY>>::value==1, "bad match 6e");
+        static_assert(ra::pick_driver<UU<ra::ANY>, UU<ra::ANY>>::value==0, "bad match 6f");
+        static_assert(ra::pick_driver<TI<0>, UU<ra::ANY>>::value==1, "bad match 6g");
+        static_assert(ra::pick_driver<UU<ra::ANY>, TI<0>>::value==0, "bad match 6h");
+        static_assert(ra::driver_index<TI<0>, UU<ra::ANY>> ==1, "bad match 6i");
+        static_assert(ra::driver_index<UU<ra::ANY>, TI<0>> ==0, "bad match 6j");
+        static_assert(ra::driver_index<UU<2>, UU<ra::ANY>, TI<0>> ==1, "bad match 6k");
         static_assert(ra::driver_index<UU<1>, UU<2>, UU<3>> ==2, "bad match 6l");
-        static_assert(ra::driver_index<UU<2>, TI<0>, UU<ra::RANK_ANY>> ==2, "bad match 6m");
+        static_assert(ra::driver_index<UU<2>, TI<0>, UU<ra::ANY>> ==2, "bad match 6m");
 // dynamic vs static size, both static rank
         static_assert(ra::pick_driver<UU<3>, SM3>::value==1, "static rank, dynamic vs static size");
 // dynamic rank vs static size & rank
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, SM1 >::value==0, "bad match 7a");
-        static_assert(ra::pick_driver<SM1, UU<ra::RANK_ANY>>::value==1, "bad match 7b");
-        static_assert(ra::pick_driver<UU<ra::RANK_ANY>, SM2 >::value==0, "bad match 7c");
-        static_assert(ra::pick_driver<SM2, UU<ra::RANK_ANY>>::value==1, "bad match 7d");
+        static_assert(ra::pick_driver<UU<ra::ANY>, SM1 >::value==0, "bad match 7a");
+        static_assert(ra::pick_driver<SM1, UU<ra::ANY>>::value==1, "bad match 7b");
+        static_assert(ra::pick_driver<UU<ra::ANY>, SM2 >::value==0, "bad match 7c");
+        static_assert(ra::pick_driver<SM2, UU<ra::ANY>>::value==1, "bad match 7d");
 // more cases with +2 candidates.
         static_assert(ra::driver_index<UU<3>, UU<1>, TI<0>> ==0, "bad match 7b");
         static_assert(ra::driver_index<TI<0>, UU<3>, UU<1>> ==1, "bad match 7c");

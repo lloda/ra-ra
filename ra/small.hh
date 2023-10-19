@@ -12,8 +12,18 @@
 
 namespace ra {
 
-constexpr rank_t rank_sum(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a+b; }
-constexpr rank_t rank_diff(rank_t a, rank_t b) { return (RANK_ANY==a || RANK_ANY==b) ? RANK_ANY : a-b; }
+constexpr rank_t
+rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
+
+constexpr rank_t
+rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
+
+// cr>=0 is cell rank. -cr>0 is frame rank. TODO A way to indicate frame rank 0.
+constexpr rank_t
+rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* independent */ : r==ANY ? ANY /* defer */ : (r+cr); }
+
+constexpr rank_t
+rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* independent */ : -cr; }
 
 
 // --------------------
@@ -45,7 +55,7 @@ template <class I> struct is_constant_iota
 };
 
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .rt=(DIM_BAD!=I::nn), .ct=is_constant_iota<I>::value, .src=1, .dst=1, .add=0 };
+    = { .rt=(BAD!=I::nn), .ct=is_constant_iota<I>::value, .src=1, .dst=1, .add=0 };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
@@ -53,7 +63,7 @@ template <int k=0, class V>
 constexpr decltype(auto)
 maybe_len(V && v)
 {
-    if constexpr (DIM_ANY!=std::decay_t<V>::len_s(k)) {
+    if constexpr (ANY!=std::decay_t<V>::len_s(k)) {
         return ic<std::decay_t<V>::len_s(k)>;
     } else {
         return v.len(k);
@@ -83,13 +93,12 @@ template <bool few, class Q, class P>
 constexpr void
 indexer_check(Q const & q, P const & p)
 {
-    if constexpr (RANK_ANY==rank_s<P>()) {
+    if constexpr (ANY==rank_s<P>()) {
         RA_CHECK(1==rank(p), "Bad rank ", rank(p), " for subscript.");
     } else {
         static_assert(1==rank_s<P>(), "Bad rank for subscript.");
     }
-// same performance, but prefer compile time error.
-    if constexpr (DIM_ANY==size_s<P>() || RANK_ANY==rank_s<Q>()) {
+    if constexpr (ANY==size_s<P>() || ANY==rank_s<Q>()) {
         if constexpr (few) {
             RA_CHECK(p.len(0) >= q.rank(), "Too few indices.");
         } else {
@@ -112,7 +121,7 @@ indexer(Q const & q, P && pp, S const & ss0)
         return 0;
     } else {
         auto pk = *pp;
-        RA_CHECK(inside(pk, q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
+        RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
         return (q.step(k) * pk) + (pp+=ss0, indexer<k+1, end>(q, pp, ss0));
     }
 }
@@ -124,7 +133,7 @@ indexer(rank_t end, Q const & q, P && pp, S const & ss0)
     dim_t c = 0;
     for (rank_t k=0; k<end; ++k, pp+=ss0) {
         auto pk = *pp;
-        RA_CHECK(inside(pk, q.len(k)) || (DIM_BAD==q.len(k) && 0==q.step(k)));
+        RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
         c += q.step(k) * pk;
     }
     return c;
@@ -136,7 +145,7 @@ shorter(Q const & q, P const & pp) // for View::at().
 {
     decltype(auto) p = start(pp);
     indexer_check<false>(q, p);
-    if constexpr (DIM_ANY==size_s<P>()) {
+    if constexpr (ANY==size_s<P>()) {
         return indexer(p.len(0), q, p.flat(), p.step(0));
     } else {
         return indexer<0, size_s<P>()>(q, p.flat(), p.step(0));
@@ -149,7 +158,7 @@ longer(Q const & q, P const & pp) // for IteratorConcept::at().
 {
     decltype(auto) p = start(pp);
     indexer_check<true>(q, p);
-    if constexpr (RANK_ANY==rank_s<Q>()) {
+    if constexpr (ANY==rank_s<Q>()) {
         return indexer(q.rank(), q, p.flat(), p.step(0));
     } else {
         return indexer<0, rank_s<Q>()>(q, p.flat(), p.step(0));
@@ -175,12 +184,12 @@ struct CellFlat
 template <class V, rank_t cellr_spec=0>
 struct CellSmall
 {
-    static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "Bad cell rank.");
+    static_assert(cellr_spec!=ANY && cellr_spec!=BAD, "Bad cell rank.");
     constexpr static rank_t fullr = ra::rank_s<V>();
-    constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
-    constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
-    static_assert(cellr>=0 || cellr==RANK_ANY, "Bad cell rank.");
-    static_assert(framer>=0 || framer==RANK_ANY, "Bad frame rank.");
+    constexpr static rank_t cellr = rank_cell(fullr, cellr_spec);
+    constexpr static rank_t framer = rank_frame(fullr, cellr_spec);
+    static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
+    static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
     static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
     using cell_lens = mp::drop<typename V::lens, framer>;
@@ -194,7 +203,7 @@ struct CellSmall
 
     cell_type c;
 
-    constexpr CellSmall(CellSmall const & ci): c { ci.c.cp } {}
+    constexpr CellSmall(CellSmall const & ci) = default;
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr CellSmall(atom_type * p_): c { p_ } {}
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -247,8 +256,8 @@ struct FilterDims
 template <class lens_, class steps_, class I0, class ... I> requires (!is_iota<I0>)
 struct FilterDims<lens_, steps_, I0, I ...>
 {
-    constexpr static bool stretch = (beatable<I0>.dst==DIM_BAD);
-    static_assert(!stretch || ((beatable<I>.dst!=DIM_BAD) && ...), "Cannot repeat stretch index.");
+    constexpr static bool stretch = (beatable<I0>.dst==BAD);
+    static_assert(!stretch || ((beatable<I>.dst!=BAD) && ...), "Cannot repeat stretch index.");
     constexpr static int dst = stretch ? (mp::len<lens_> - (0 + ... + beatable<I>.src)) : beatable<I0>.dst;
     constexpr static int src = stretch ? (mp::len<lens_> - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
     using next = FilterDims<mp::drop<lens_, src>, mp::drop<steps_, src>, I ...>;
@@ -274,7 +283,7 @@ struct SmallBase
     using T = T_;
 
     using Child = Child_<T, lens, steps>;
-    template <class TT> using BadDimension = ic_t<(TT::value<0 || TT::value==DIM_ANY || TT::value==DIM_BAD)>;
+    template <class TT> using BadDimension = ic_t<(TT::value<0 || TT::value==ANY || TT::value==BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
 // TODO static steps check
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
@@ -308,7 +317,7 @@ struct SmallBase
         if constexpr (0==i.n) {
             return 0;
         } else if constexpr ((1==i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > slens[k]) { // FIXME c++23 std::abs
-            static_assert(mp::always_false<I>, "Out of range.");
+            static_assert(always_false<I>, "Out of range.");
         } else {
             RA_CHECK(inside(i, slens[k]),
                      "Out of range for len[", k, "]=", slens[k], ": iota [", i.n, " ", i.i, " ", i.s, "]");
@@ -327,7 +336,7 @@ struct SmallBase
     constexpr static dim_t
     select_loop(I0 && i0, I && ... i)
     {
-        constexpr int nn = (DIM_BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
+        constexpr int nn = (BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
         return select<k>(with_len(ic<slens[k]>, std::forward<I0>(i0)))
             + select_loop<k + nn>(std::forward<I>(i) ...);
     }
@@ -345,7 +354,7 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
-        constexpr int stretch = (0 + ... + (beatable<I>.dst==DIM_BAD)); \
+        constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD)); \
         static_assert(stretch<=1, "Cannot repeat stretch index.");      \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {         \
             return data()[select_loop<0>(i ...)];                       \
@@ -684,7 +693,7 @@ cat(A1 && a1_, A2 && a2_)
         std::copy(a2.begin(), a2.end(), val.begin()+1);
         return val;
     } else {
-        static_assert(mp::always_false<A1, A2>); /* p2593r0 */ \
+        static_assert(always_false<A1, A2>);
     }
 }
 

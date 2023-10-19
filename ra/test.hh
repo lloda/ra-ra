@@ -140,7 +140,7 @@ struct TestRecorder
         if (willstrictshape
             ? [&] {
                 if constexpr (ra::rank_s<decltype(a)>()==ra::rank_s<decltype(b)>()
-                              || ra::rank_s<decltype(a)>()==RANK_ANY || ra::rank_s<decltype(b)>()==RANK_ANY) {
+                              || ra::rank_s<decltype(a)>()==ANY || ra::rank_s<decltype(b)>()==ANY) {
                     return ra::rank(a)==ra::rank(b) && every(ra::shape(a)==ra::shape(b));
                 } else {
                     return false;

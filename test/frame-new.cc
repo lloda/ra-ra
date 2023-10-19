@@ -81,11 +81,11 @@ main()
 // could check all statically through decltype, although Big cannot be constexpr yet.
         static_assert(4==ra::rank_s<decltype(EXPR)>());
         tr.test_eq(4, EXPR.rank_s());
-        tr.test_eq(ra::DIM_ANY, EXPR.len_s(0));
-        tr.test_eq(ra::DIM_ANY, EXPR.len_s(1));
-        tr.test_eq(ra::DIM_ANY, EXPR.len_s(2));
-        tr.test_eq(ra::DIM_ANY, EXPR.len_s(3));
-        tr.test_eq(ra::DIM_ANY, size_s(EXPR));
+        tr.test_eq(ra::ANY, EXPR.len_s(0));
+        tr.test_eq(ra::ANY, EXPR.len_s(1));
+        tr.test_eq(ra::ANY, EXPR.len_s(2));
+        tr.test_eq(ra::ANY, EXPR.len_s(3));
+        tr.test_eq(ra::ANY, size_s(EXPR));
         cout << EXPR << endl;
 #undef EXPR
     }
@@ -122,13 +122,13 @@ main()
                         tr.test_eq(b.len(2), EXPR(a, b).len(2));
                         tr.test_eq(b.len(3), EXPR(a, b).len(3));
                         tr.info("0-size()").test_eq(2*3*4*5, size(EXPR(a, b)));
-                        tr.test_eq(ra::RANK_ANY, EXPR(a, b).rank_s());
-                        tr.test_eq(ra::DIM_ANY, size_s(EXPR(a, b)));
-                        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(0));
-                        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(1));
-                        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(2));
-                        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(3));
-                        tr.info("0-size_s()").test_eq(ra::DIM_ANY, size_s(EXPR(a, b)));
+                        tr.test_eq(ra::ANY, EXPR(a, b).rank_s());
+                        tr.test_eq(ra::ANY, size_s(EXPR(a, b)));
+                        tr.test_eq(ra::ANY, EXPR(a, b).len_s(0));
+                        tr.test_eq(ra::ANY, EXPR(a, b).len_s(1));
+                        tr.test_eq(ra::ANY, EXPR(a, b).len_s(2));
+                        tr.test_eq(ra::ANY, EXPR(a, b).len_s(3));
+                        tr.info("0-size_s()").test_eq(ra::ANY, size_s(EXPR(a, b)));
                     };
         test("sta-dyn", as, bd);
         test("dyn-sta", ad, bs);
@@ -149,11 +149,11 @@ main()
 // could check all statically through decltype, although Big cannot be constexpr yet.
         static_assert(4==ra::rank_s<decltype(EXPR(a, b))>());
         tr.test_eq(4, EXPR(a, b).rank_s());
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(0));
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(1));
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(2));
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(3));
-        tr.test_eq(ra::DIM_ANY, size_s(EXPR(a, b)));
+        tr.test_eq(ra::ANY, EXPR(a, b).len_s(0));
+        tr.test_eq(ra::ANY, EXPR(a, b).len_s(1));
+        tr.test_eq(ra::ANY, EXPR(a, b).len_s(2));
+        tr.test_eq(ra::ANY, EXPR(a, b).len_s(3));
+        tr.test_eq(ra::ANY, size_s(EXPR(a, b)));
         cout << EXPR(a, b) << endl;
 // value test.
         ra::Big<int, 4> c({2, 3, 4, 4}, 0);
@@ -172,9 +172,9 @@ main()
         cout << ra::start(ra::shape(from([](auto && a, auto && b) { return a-b; }, a, b))) << endl;
 #define EXPR(a, b) expr([](auto && a, auto && b) { return a-b; }, start(a(ra::dots<2>, ra::insert<1>)), start(b(ra::insert<2>, ra::dots<1>)))
         tr.test_eq(3, EXPR(a, b).rank_s());
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(0));
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(1));
-        tr.test_eq(ra::DIM_ANY, EXPR(a, b).len_s(2));
+        tr.test_eq(ra::ANY, EXPR(a, b).len_s(0));
+        tr.test_eq(ra::ANY, EXPR(a, b).len_s(1));
+        tr.test_eq(ra::ANY, EXPR(a, b).len_s(2));
         tr.test_eq(3, EXPR(a, b).rank());
         tr.test_eq(4, EXPR(a, b).len(0));
         tr.test_eq(3, EXPR(a, b).len(1));
@@ -196,11 +196,11 @@ main()
 #define EXPR expr([](auto && a, auto && b) { return a==b; }, ra::_0*1 + ra::_1*0 + ra::_2*5 + 1, start(d))
         tr.test(every(EXPR));
         auto x = EXPR;
-        static_assert(ra::DIM_ANY==size_s(x));
-        static_assert(ra::DIM_ANY==ra::size_s(x));
+        static_assert(ra::ANY==size_s(x));
+        static_assert(ra::ANY==ra::size_s(x));
         tr.test_eq(10, size(EXPR));
     }
-    tr.section("DIM_BAD on any len_s(k) means size_s() is DIM_BAD");
+    tr.section("BAD on any len_s(k) means size_s() is BAD");
     {
         using order = std::tuple<int_c<0>, int_c<1>>;
         using T0 = ra::Expr<std::multiplies<void>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>, order>;
@@ -209,9 +209,9 @@ main()
         ra::dim_t s1 = ra::size_s<T1>();
         using T2 = ra::Expr<std::multiplies<void>, std::tuple<decltype(ra::iota<2>()), ra::Scalar<int>>, order>;
         ra::dim_t s2 = ra::size_s<T2>();
-        tr.test_eq(ra::DIM_BAD, s0);
-        tr.test_eq(ra::DIM_BAD, s1);
-        tr.test_eq(ra::DIM_BAD, s2);
+        tr.test_eq(ra::BAD, s0);
+        tr.test_eq(ra::BAD, s1);
+        tr.test_eq(ra::BAD, s2);
     }
     return tr.summary();
 }

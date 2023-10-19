@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Traverse expression.
+// ra-ra - Expression traversal.
 
 // (c) Daniel Llorens - 2013-2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -7,10 +7,11 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// TODO Traversal order should be a parameter, some operations (e.g. output, ravel) require specific orders.
+// TODO Make traversal order a parameter, some operations (e.g. output, ravel) require specific orders.
 // TODO Better heuristic for traversal order.
 // TODO Tiling, etc. (see eval.cc in Blitz++).
-// TODO std::execution::xxx-policy, validate output argument strides.
+// TODO std::execution::xxx-policy
+// TODO Validate output argument strides.
 
 #pragma once
 #include "expr.hh"
@@ -246,6 +247,11 @@ subply(A & a, dim_t s, S const & ss0, Early & early)
     }
 }
 
+// possible pessimization in ply_fixed(). See bench-dot [ra43]
+#ifndef RA_STATIC_UNROLL
+#define RA_STATIC_UNROLL 0
+#endif
+
 template <IteratorConcept A, class Early = Nop>
 constexpr decltype(auto)
 ply_fixed(A && a, Early && early = Nop {})
@@ -263,14 +269,9 @@ ply_fixed(A && a, Early && early = Nop {})
             return;
         }
     } else {
-#if defined(RA_STATIC_UNROLL) && RA_STATIC_UNROLL!=0 // pessimization? see bench-dot [ra43]
-        constexpr bool unroll = true;
-#else
-        constexpr bool unroll = false;
-#endif
         auto ss0 = a.step(order[0]);
-// static unrolling. static keep_step implies all else is static.
-        if constexpr (unroll && rank>1 && requires (dim_t d, rank_t i, rank_t j) { A::keep_step(d, i, j); }) {
+// static keep_step implies all else is static.
+        if constexpr (bool(RA_STATIC_UNROLL) && rank>1 && requires (dim_t st, rank_t z, rank_t j) { A::keep_step(st, z, j); }) {
 // find outermost compact dim.
             constexpr auto sj = [&order]
             {
@@ -307,9 +308,8 @@ constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
     static_assert(!has_len<A>, "len used outside subscript context.");
-    static_assert(0<=rank_s<A>() || RANK_ANY==rank_s<A>());
-
-    if constexpr (DIM_ANY==size_s<A>()) {
+    static_assert(0<=rank_s<A>() || ANY==rank_s<A>());
+    if constexpr (ANY==size_s<A>()) {
         return ply_ravel(std::forward<A>(a), std::forward<Early>(early));
     } else {
         return ply_fixed(std::forward<A>(a), std::forward<Early>(early));
@@ -389,7 +389,7 @@ struct STLIterator
     constexpr STLIterator & operator=(STLIterator const & it)
     {
         i = it.i;
-        ii.Iterator::~Iterator(); // no-op except for View<RANK_ANY>. Still...
+        ii.Iterator::~Iterator(); // no-op except for View<ANY>. Still...
         new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
         return *this;
     }
@@ -397,7 +397,7 @@ struct STLIterator
         : ii(ii_),
 // shape_type may be std::array or std::vector.
           i([&] {
-              if constexpr (RANK_ANY == Iterator::rank_s()) {
+              if constexpr (ANY==Iterator::rank_s()) {
                   return shape_type(ii.rank(), 0);
               } else {
                   return shape_type {0};
@@ -416,7 +416,7 @@ struct STLIterator
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
     STLIterator & operator++()
     {
-        if constexpr (RANK_ANY == Iterator::rank_s()) {
+        if constexpr (ANY==Iterator::rank_s()) {
             cube_next(ii.rank()-1, ii, i, ii.c.cp);
         } else {
             cube_next<Iterator::rank_s()-1>(ii, i, ii.c.cp);
@@ -444,10 +444,10 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     static_assert(!has_len<A>, "len used outside subscript context.");
 // FIXME note that this copies / resets the Iterator if fa.a already is one; see [ra35].
     auto a = ra::start(fa.a);
-    static_assert(size_s(a)!=DIM_BAD, "cannot print type");
+    static_assert(size_s(a)!=BAD, "cannot print type");
     rank_t const rank = a.rank();
     auto sha = shape(a);
-    if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==DIM_ANY)) {
+    if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==ANY)) {
         o << start(sha) << '\n';
     }
     for (rank_t k=0; k<rank; ++k) {
@@ -479,7 +479,7 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
 }
 
 // Static size.
-template <class C> requires (!is_scalar<C> && size_s<C>()!=DIM_ANY)
+template <class C> requires (!is_scalar<C> && size_s<C>()!=ANY)
 inline std::istream &
 operator>>(std::istream & i, C & c)
 {
@@ -501,7 +501,7 @@ operator>>(std::istream & i, std::vector<T, A> & c)
 }
 
 // Expr size, so read shape and possibly allocate (TODO try to avoid).
-template <class C> requires (size_s<C>()==DIM_ANY && !std::is_convertible_v<C, std::string_view>)
+template <class C> requires (size_s<C>()==ANY && !std::is_convertible_v<C, std::string_view>)
 inline std::istream &
 operator>>(std::istream & i, C & c)
 {

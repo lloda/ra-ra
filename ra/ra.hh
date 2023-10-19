@@ -56,7 +56,7 @@ from_partial(Op && op)
 
 template <class I> using index_rank = ic_t<rank_s<I>()>;
 
-// TODO we should be able to do better by slicing at each dimension, etc. But verb<> only supports rank-0 for the innermost op.
+// TODO should be able to do better by slicing at each dimension, etc. But verb<>'s innermost op must be rank 0.
 template <class A, class ... I>
 constexpr auto
 from(A && a, I && ... i)

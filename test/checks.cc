@@ -132,7 +132,7 @@ int main()
 #define EXPR expr([](auto && a, auto && b) { return a+b; }, start(a), start(b))
         int x = 0;
         try {
-            tr.test_eq(ra::DIM_ANY, EXPR.len_s(1));
+            tr.test_eq(ra::ANY, EXPR.len_s(1));
             x = 1;
         } catch (ra_error & e) {
         }

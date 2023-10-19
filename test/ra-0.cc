@@ -156,7 +156,7 @@ int main()
         tr.test_eq(198, a);
         tr.test_eq(396, b);
     }
-    tr.section("rank 0 and rank 1 constructors with RANK_ANY");
+    tr.section("rank 0 and rank 1 constructors with ANY");
     {
         ra::Big<int> x {9};
         tr.test_eq(9, x(0));

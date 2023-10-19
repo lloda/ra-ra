@@ -151,7 +151,7 @@ int main()
         tr.test_eq(1, as.iter<-1>().rank());
         auto cellr = as.iter<-1>().cellr; tr.test_eq(1, cellr);
         tr.test_eq(1, ad.iter<-1>().rank());
-        tr.test_eq(ra::RANK_ANY, ad.iter<-1>().rank_s());
+        tr.test_eq(ra::ANY, ad.iter<-1>().rank_s());
         auto e = ra::expr([](auto const & a, auto const & b) { cout << (b-2*a) << endl; },
                           ad.iter<-1>(), b.iter<-1>());
         tr.test_eq(1, e.rank());

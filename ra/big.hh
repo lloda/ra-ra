@@ -15,33 +15,36 @@ namespace ra {
 
 struct Dim { dim_t len, step; };
 
-inline std::ostream & operator<<(std::ostream & o, Dim const & dim)
-{ o << "[Dim " << dim.len << " " << dim.step << "]"; return o; }
+inline std::ostream &
+operator<<(std::ostream & o, Dim const & dim)
+{
+    o << "[Dim " << dim.len << " " << dim.step << "]"; return o;
+}
 
 
 // --------------------
 // Big iterator
 // --------------------
 
-template <class T, rank_t RANK=RANK_ANY> struct View;
+template <class T, rank_t RANK=ANY> struct View;
 
 // TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
 // TODO Clear up Dimv's type. Should I use span/Ptr?
 // FIXME avoid copying c in flat().
 // V is View. FIXME Parameterize? apparently only for order-of-decl.
-template <class V, rank_t cellr_spec=0>
+template <class V, rank_t spec=0>
 struct CellBig
 {
-    static_assert(cellr_spec!=RANK_ANY && cellr_spec!=RANK_BAD, "Bad cell rank.");
+    static_assert(spec!=ANY && spec!=BAD, "Bad cell rank.");
     constexpr static rank_t fullr = ra::rank_s<V>();
-    constexpr static rank_t cellr = dependent_cell_rank(fullr, cellr_spec);
-    constexpr static rank_t framer = dependent_frame_rank(fullr, cellr_spec);
-    static_assert(cellr>=0 || cellr==RANK_ANY, "Bad cell rank.");
-    static_assert(framer>=0 || framer==RANK_ANY, "Bad frame rank.");
+    constexpr static rank_t cellr = rank_cell(fullr, spec);
+    constexpr static rank_t framer = rank_frame(fullr, spec);
+    static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
+    static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
     static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
     using Dimv_ = typename std::decay_t<V>::Dimv;
-// FIXME necessary to support some cases of from() [ra14]. But cf https://stackoverflow.com/a/8609226
+// FIXME necessary for some cases of from() [ra14]. Cf https://stackoverflow.com/a/8609226
     using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
     Dimv dimv;
 
@@ -51,33 +54,33 @@ struct CellBig
 
     cell_type c;
 
-    constexpr CellBig(CellBig const & ci): dimv(ci.dimv), c { ci.c.dimv, ci.c.cp } {}
+    constexpr CellBig(CellBig const & ci) = default;
 // s_ is array's full shape; split it into dimv/i (frame) and c (cell).
     constexpr CellBig(Dimv const & dimv_, atom_type * cp_): dimv(dimv_)
     {
 // see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
         c.cp = cp_;
-        rank_t cellr = dependent_cell_rank(ssize(dimv), cellr_spec);
+        rank_t cellr = rank_cell(ssize(dimv), spec);
         rank_t rank = this->rank();
-        if constexpr (RANK_ANY==framer) {
+        if constexpr (ANY==framer) {
             RA_CHECK(rank>=0, "bad cell rank (array rank ", ssize(dimv), ", cell rank ", cellr, ").");
         }
         resize(c.dimv, cellr);
         for (int k=0; k<cellr; ++k) {
-            c.dimv[k] = dimv_[rank+k];
+            c.dimv[k] = dimv[rank+k];
         }
     }
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const requires (framer==DIM_ANY) { return dependent_frame_rank(ssize(dimv), cellr_spec); }
-    constexpr static rank_t rank() requires (framer!=DIM_ANY) { return framer; }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ssize(dimv), spec); }
+    constexpr static rank_t rank() requires (ANY!=framer) { return framer; }
     // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
     constexpr dim_t len(int k) const { return dimv[k].len; }
 #pragma GCC diagnostic pop
-    constexpr static dim_t len_s(int k) { return DIM_ANY; }
+    constexpr static dim_t len_s(int k) { return ANY; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
@@ -152,7 +155,7 @@ braces_shape(braces<T, rank> const & l)
 template <class T, rank_t RANK>
 struct View
 {
-    using Dimv = std::conditional_t<RANK==RANK_ANY, std::vector<Dim>, Small<Dim, RANK==RANK_ANY ? 0 : RANK>>;
+    using Dimv = std::conditional_t<RANK==ANY, std::vector<Dim>, Small<Dim, RANK==ANY ? 0 : RANK>>;
 
     Dimv dimv;
     T * cp;
@@ -172,9 +175,9 @@ struct View
     }
 
     constexpr static rank_t rank_s() { return RANK; };
-    constexpr static rank_t rank() requires (RANK!=RANK_ANY) { return RANK; }
-    constexpr rank_t rank() const requires (RANK==RANK_ANY) { return rank_t(dimv.size()); }
-    constexpr static dim_t len_s(int j) { return DIM_ANY; }
+    constexpr static rank_t rank() requires (RANK!=ANY) { return RANK; }
+    constexpr rank_t rank() const requires (RANK==ANY) { return rank_t(dimv.size()); }
+    constexpr static dim_t len_s(int j) { return ANY; }
     constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return dimv[k].step; }
     constexpr auto data() const { return cp; }
@@ -206,20 +209,20 @@ struct View
 #undef DEF_ASSIGNOPS
 
     constexpr View &
-    operator=(braces<T, RANK> x) requires (RANK!=RANK_ANY)
+    operator=(braces<T, RANK> x) requires (RANK!=ANY)
     {
         ra::iter<-1>(*this) = x;
         return *this;
     }
-#define RA_BRACES_RANK_ANY(N)                                       \
+#define RA_BRACES_ANY(N)                                       \
     constexpr View &                                                \
-    operator=(braces<T, N> x) requires (RANK==RANK_ANY)             \
+    operator=(braces<T, N> x) requires (RANK==ANY)             \
     {                                                               \
         ra::iter<-1>(*this) = x;                                    \
         return *this;                                               \
     }
-    FOR_EACH(RA_BRACES_RANK_ANY, 2, 3, 4);
-#undef RA_BRACES_RANK_ANY
+    FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
+#undef RA_BRACES_ANY
 
 // braces row-major ravel for rank!=1. See Container::fill1
     using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>;
@@ -268,7 +271,7 @@ struct View
     constexpr dim_t
     select_loop(Dim * dim, int k, dots_t<n> i0, I && ... i) const
     {
-        int nn = (DIM_BAD==n) ? (rank() - k - (0 + ... + beatable<I>.src)) : n;
+        int nn = (BAD==n) ? (rank() - k - (0 + ... + beatable<I>.src)) : n;
         for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
             *dim = dimv[k];
         }
@@ -280,7 +283,7 @@ struct View
     select_loop(Dim * dim, int k, insert_t<n> i0, I && ... i) const
     {
         for (Dim * end = dim+n; dim!=end; ++dim) {
-            *dim = { .len = DIM_BAD, .step = 0 };
+            *dim = { .len = BAD, .step = 0 };
         }
         return select_loop(dim, k, std::forward<I>(i) ...);
     }
@@ -296,7 +299,7 @@ struct View
     constexpr decltype(auto)
     operator()(I && ... i) const
     {
-        constexpr int stretch = (0 + ... + (beatable<I>.dst==DIM_BAD));
+        constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD));
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
             return data()[select_loop(nullptr, 0, i ...)];
@@ -304,7 +307,7 @@ struct View
             constexpr rank_t extended = (0 + ... + beatable<I>.add);
             View<T, rank_sum(RANK, extended)> sub;
             rank_t subrank = rank()+extended;
-            if constexpr (RANK==RANK_ANY) {
+            if constexpr (RANK==ANY) {
                 RA_CHECK(subrank>=0, "Bad rank.");
                 sub.dimv.resize(subrank);
             }
@@ -313,7 +316,7 @@ struct View
             for (int k = (0==stretch ? (0 + ... + beatable<I>.dst) : subrank); k<subrank; ++k) {
                 sub.dimv[k] = dimv[k-extended];
             }
-// may return rank 0 view if RANK==RANK_ANY; in that case rely on conversion to scalar.
+// may return rank 0 view if RANK==ANY; in that case rely on conversion to scalar.
             return sub;
 // TODO partial beating
         } else {
@@ -332,13 +335,12 @@ struct View
     constexpr decltype(auto)
     at(I && i) const
     {
-        constexpr rank_t idim = DIM_ANY==ra::size_s<I>() ? DIM_ANY : ra::size_s<I>();
-        constexpr rank_t subrank = rank_diff(RANK, idim);
-        if constexpr (RANK_ANY==subrank) {
-            using Sub = View<T, (RANK_ANY!=RANK) ? subrank : RANK_ANY>;
+        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
+        if constexpr (ANY==crank) {
+            using Sub = View<T, ANY>;
             return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()), data() + shorter(*this, i) };
         } else {
-            return iter<subrank>().at(std::forward<I>(i));
+            return iter<crank>().at(std::forward<I>(i));
         }
     }
 
@@ -346,7 +348,7 @@ struct View
     constexpr
     operator T & () const
     {
-        if constexpr (RANK_ANY==RANK) {
+        if constexpr (ANY==RANK) {
             RA_CHECK(0==rank(), "Error converting rank ", rank(), " to scalar.");
         } else {
             static_assert(0==RANK, "Bad rank for conversion to scalar.");
@@ -358,15 +360,15 @@ struct View
     constexpr operator T & () { return std::as_const(*this); }
 
 // conversions from var rank to fixed rank
-    template <rank_t R> requires (R==RANK_ANY && R!=RANK)
+    template <rank_t R> requires (R==ANY && R!=RANK)
     constexpr View(View<T, R> const & x): dimv(x.dimv), cp(x.cp) {}
-    template <rank_t R> requires (R==RANK_ANY && R!=RANK && std::is_const_v<T>)
+    template <rank_t R> requires (R==ANY && R!=RANK && std::is_const_v<T>)
     constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv), cp(x.cp) {}
 
 // conversion from fixed rank to var rank
-    template <rank_t R> requires (R!=RANK_ANY && RANK==RANK_ANY)
+    template <rank_t R> requires (R!=ANY && RANK==ANY)
     constexpr View(View<T, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
-    template <rank_t R> requires (R!=RANK_ANY && RANK==RANK_ANY && std::is_const_v<T>)
+    template <rank_t R> requires (R!=ANY && RANK==ANY && std::is_const_v<T>)
     constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
 
 // conversion to const. We rely on it for Container::view().
@@ -488,7 +490,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // provided so that {} calls shape_arg constructor below.
     Container()
     {
-        if constexpr (RANK_ANY==RANK) {
+        if constexpr (ANY==RANK) {
 // rank 1 to avoid store init
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Warray-bounds"
@@ -504,19 +506,19 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 
     template <class S>
-    requires (1==ra::rank_s<S>() || RANK_ANY==ra::rank_s<S>())
+    requires (1==ra::rank_s<S>() || ANY==ra::rank_s<S>())
     void
     init(S && s)
     {
         static_assert(!std::is_convertible_v<value_t<S>, Dim>);
         RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
 // [ra37] Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
-        if constexpr (RANK_ANY==RANK) {
+        if constexpr (ANY==RANK) {
             ra::resize(View::dimv, ra::size(s));
-        } else if constexpr (DIM_ANY==ra::size_s<S>()) {
+        } else if constexpr (ANY==ra::size_s<S>()) {
             RA_CHECK(RANK==ra::size(s), "Bad shape [", ra::noshape, s, "] for rank ", RANK, ".");
         } else {
-            static_assert(RANK==ra::size_s<S>() || DIM_BAD==ra::size_s<S>(), "Invalid shape for rank.");
+            static_assert(RANK==ra::size_s<S>() || BAD==ra::size_s<S>(), "Invalid shape for rank.");
         }
         store = storage_traits<Store>::create(View::filldim(s));
         View::cp = storage_traits<Store>::data(store);
@@ -537,13 +539,13 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container(shape_arg const & s, braces<T, RANK> x) requires (RANK==1)
         : Container(s, none) { view() = x; }
 
-    Container(braces<T, RANK> x) requires (RANK!=RANK_ANY)
+    Container(braces<T, RANK> x) requires (RANK!=ANY)
         : Container(braces_shape<T, RANK>(x), none) { view() = x; }
-#define RA_BRACES_RANK_ANY(N)                                           \
-    Container(braces<T, N> x) requires (RANK==RANK_ANY)                 \
+#define RA_BRACES_ANY(N)                                           \
+    Container(braces<T, N> x) requires (RANK==ANY)                 \
         : Container(braces_shape<T, N>(x), none) { view() = x; }
-    FOR_EACH(RA_BRACES_RANK_ANY, 1, 2, 3, 4)
-#undef RA_BRACES_RANK_ANY
+    FOR_EACH(RA_BRACES_ANY, 1, 2, 3, 4)
+#undef RA_BRACES_ANY
 
 // FIXME requires T to be copyable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
 // FIXME expr traversal is not possible for STLIterator. Fix by having plyers that don't require adv.
@@ -557,7 +559,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
 // shape + row-major ravel.
 // FIXME explicit it-is-ravel mark. Also iter<n> initializers.
-// FIXME regular (no need for fill1) for RANK_ANY if rank is 1.
+// FIXME regular (no need for fill1) for ANY if rank is 1.
     Container(shape_arg const & s, typename View::ravel_arg x)
         : Container(s, none) { fill1(x.begin(), x.size()); }
 
@@ -588,14 +590,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // resize first axis. Only for some kinds of store.
     void resize(dim_t const s)
     {
-        static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
+        static_assert(RANK==ANY || RANK>0); RA_CHECK(this->rank()>0);
         View::dimv[0].len = s;
         store.resize(View::size());
         View::cp = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
-        static_assert(RANK==RANK_ANY || RANK>0); RA_CHECK(this->rank()>0);
+        static_assert(RANK==ANY || RANK>0); RA_CHECK(this->rank()>0);
         View::dimv[0].len = s;
         store.resize(View::size(), t);
         View::cp = store.data();
@@ -612,14 +614,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
         store.push_back(std::move(t));
         ++View::dimv[0].len;
         View::cp = store.data();
     }
     void push_back(T const & t)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
         store.push_back(t);
         ++View::dimv[0].len;
         View::cp = store.data();
@@ -627,14 +629,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A>
     void emplace_back(A && ... a)
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
         store.emplace_back(std::forward<A>(a) ...);
         ++View::dimv[0].len;
         View::cp = store.data();
     }
     void pop_back()
     {
-        static_assert(RANK==1 || RANK==RANK_ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
         RA_CHECK(View::dimv[0].len>0);
         store.pop_back();
         --View::dimv[0].len;
@@ -669,12 +671,12 @@ requires (RANKA!=RANKB) // rely on std::swap; else ambiguous
 void
 swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
 {
-    if constexpr (RANK_ANY==RANKA) {
+    if constexpr (ANY==RANKA) {
         RA_CHECK(a.rank()==b.rank());
         decltype(b.dimv) c = a.dimv;
         start(a.dimv) = b.dimv;
         std::swap(b.dimv, c);
-    } else if constexpr (RANK_ANY==RANKB) {
+    } else if constexpr (ANY==RANKB) {
         RA_CHECK(a.rank()==b.rank());
         decltype(a.dimv) c = b.dimv;
         start(b.dimv) = a.dimv;
@@ -714,9 +716,9 @@ struct default_init_allocator: public A
 };
 
 // Beyond this, we probably should have fixed-size (~std::dynarray), resizeable (~std::vector).
-template <class T, rank_t RANK=RANK_ANY> using Big = Container<std::vector<T, default_init_allocator<T>>, RANK>;
-template <class T, rank_t RANK=RANK_ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
-template <class T, rank_t RANK=RANK_ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
+template <class T, rank_t RANK=ANY> using Big = Container<std::vector<T, default_init_allocator<T>>, RANK>;
+template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
+template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
 // -------------
 // Used in the Guile wrappers to allow an array parameter to either borrow from Guile storage or convert into a new array (e.g. passing 'f32 into 'f64).
@@ -746,14 +748,14 @@ struct concrete_type_def
 };
 
 template <class E>
-requires (size_s<E>()==DIM_ANY)
+requires (size_s<E>()==ANY)
 struct concrete_type_def<E>
 {
     using type = Big<value_t<E>, rank_s<E>()>;
 };
 
 template <class E>
-requires (size_s<E>()!=DIM_ANY)
+requires (size_s<E>()!=ANY)
 struct concrete_type_def<E>
 {
     template <class I> struct T;
@@ -788,7 +790,7 @@ template <class E>
 constexpr auto
 with_same_shape(E && e)
 {
-    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+    if constexpr (size_s<concrete_type<E>>()!=ANY) {
         return concrete_type<E>();
     } else {
         return concrete_type<E>(ra::shape(e), ra::none);
@@ -802,7 +804,7 @@ with_same_shape(E && e, X && x)
 // FIXME gcc 11.3 on GH workflows (?)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wmaybe-uninitialized"
-    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+    if constexpr (size_s<concrete_type<E>>()!=ANY) {
         return concrete_type<E>(std::forward<X>(x));
     } else {
         return concrete_type<E>(ra::shape(e), std::forward<X>(x));
@@ -814,7 +816,7 @@ template <class E, class S, class X>
 constexpr auto
 with_shape(S && s, X && x)
 {
-    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+    if constexpr (size_s<concrete_type<E>>()!=ANY) {
         return concrete_type<E>(std::forward<X>(x));
     } else {
         return concrete_type<E>(std::forward<S>(s), std::forward<X>(x));
@@ -825,7 +827,7 @@ template <class E, class S, class X>
 constexpr auto
 with_shape(std::initializer_list<S> && s, X && x)
 {
-    if constexpr (size_s<concrete_type<E>>()!=DIM_ANY) {
+    if constexpr (size_s<concrete_type<E>>()!=ANY) {
         return concrete_type<E>(std::forward<X>(x));
     } else {
         return concrete_type<E>(s, std::forward<X>(x));
@@ -857,13 +859,13 @@ View<T, RANK> reverse(View<T, RANK> const & view, int k)
 
 // dynamic transposed axes list.
 template <class T, rank_t RANK, class S> inline
-View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
+View<T, ANY> transpose_(S && s, View<T, RANK> const & view)
 {
     RA_CHECK(view.rank()==ra::size(s));
     auto rp = std::max_element(s.begin(), s.end());
     rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
 
-    View<T, RANK_ANY> r { decltype(r.dimv)(dstrank, Dim { DIM_BAD, 0 }), view.data() };
+    View<T, ANY> r { decltype(r.dimv)(dstrank, Dim { BAD, 0 }), view.data() };
     for (int k=0; int sk: s) {
         Dim & dest = r.dimv[sk];
         dest.step += view.dimv[k].step;
@@ -874,14 +876,14 @@ View<T, RANK_ANY> transpose_(S && s, View<T, RANK> const & view)
 }
 
 template <class T, rank_t RANK, class S> inline
-View<T, RANK_ANY> transpose(S && s, View<T, RANK> const & view)
+View<T, ANY> transpose(S && s, View<T, RANK> const & view)
 {
     return transpose_(std::forward<S>(s), view);
 }
 
 // Note that we need the compile time values and not the sizes to deduce the rank of the output, so it would be useless to provide a builtin array shim as we do with reshape().
 template <class T, rank_t RANK> inline
-View<T, RANK_ANY> transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> const & view)
+View<T, ANY> transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> const & view)
 {
     return transpose_(s, view);
 }
@@ -890,14 +892,14 @@ View<T, RANK_ANY> transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> c
 template <int ... Iarg, class T, rank_t RANK> inline
 auto transpose(View<T, RANK> const & view)
 {
-    static_assert(RANK==RANK_ANY || RANK==sizeof...(Iarg), "Bad output rank.");
+    static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
     RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank: ", view.rank(), "should be ", (sizeof...(Iarg)), ".");
 
     using dummy_s = mp::makelist<sizeof...(Iarg), ic_t<0>>;
     using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
     constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
 
-    View<T, DSTRANK> r { decltype(r.dimv)(Dim { DIM_BAD, 0 }), view.data() };
+    View<T, DSTRANK> r { decltype(r.dimv)(Dim { BAD, 0 }), view.data() };
     std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
     for (int k=0; int sk: s) {
         Dim & dest = r.dimv[sk];
@@ -967,7 +969,7 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
     }
     auto sa = shape(a);
 // FIXME should be able to reshape Scalar etc.
-    View<T, ra::size_s(sb)> b(map([](auto i) { return Dim { DIM_BAD, 0 }; }, ra::iota(ra::size(sb))), a.data());
+    View<T, ra::size_s(sb)> b(map([](auto i) { return Dim { BAD, 0 }; }, ra::iota(ra::size(sb))), a.data());
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
@@ -1038,7 +1040,7 @@ template <class super_t, rank_t SUPERR, class T, rank_t RANK> inline
 auto explode_(View<T, RANK> const & a)
 {
 // TODO Reduce to single check, either the first or the second.
-    static_assert(RANK>=SUPERR || RANK==RANK_ANY, "rank of a is too low");
+    static_assert(RANK>=SUPERR || RANK==ANY, "rank of a is too low");
     RA_CHECK(a.rank()>=SUPERR, "Rank of a ", a.rank(), " should be at least ", SUPERR, ".");
     View<super_t, rank_sum(RANK, -SUPERR)> b;
     ra::resize(b.dimv, a.rank()-SUPERR);

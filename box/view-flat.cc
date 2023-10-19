@@ -35,7 +35,7 @@ int main()
     //     cout << "b " << b << endl;
     // }
     // {
-    //     using ptr_type = ra::Ptr<decltype(std::declval<default_view::Dimv>().begin()), ra::DIM_ANY>;
+    //     using ptr_type = ra::Ptr<decltype(std::declval<default_view::Dimv>().begin()), ra::ANY>;
     //     ra::Big<int, 2> a({2, 3}, 0.);
     //     ptr_type x = ra::ptr(a.dimv.begin(), 2);
     //     cout << "x: " << x << endl;

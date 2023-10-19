@@ -22,11 +22,11 @@ template <bool V> using bool_c = std::integral_constant<bool, V>;
 template <auto V> using ic_t = std::integral_constant<decltype(V), V>;
 template <auto V> constexpr std::integral_constant<decltype(V), V> ic {};
 
+template <class ... T> constexpr bool always_false = false; // p2593r0
+
 } // namespace ra
 
 namespace ra::mp {
-
-template <class ... T> constexpr bool always_false = false; // p2593r0
 
 // xxx<...> is user facing and xxx_<...>::type (if needed) is implementation.
 

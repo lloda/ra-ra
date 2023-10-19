@@ -17,7 +17,7 @@
 // ---------------------
 // Default #defines.
 // ---------------------
-// Since these are tested with #if, define them at the very top so accidental nodef isn't mistaken for 0.
+// Since these are tested with #if, give defaults so accidental nodef isn't mistaken for 0.
 
 // benchmark shows it's bad by default; probably requires optimizing also +=, etc.
 #ifndef RA_DO_OPT_SMALLVECTOR
@@ -31,21 +31,19 @@
 
 namespace ra {
 
-constexpr int VERSION = 23;
+constexpr int VERSION = 24;
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
 static_assert(sizeof(rank_t)>=4 && sizeof(dim_t)>=4);
+static_assert(sizeof(rank_t)>=sizeof(int) && sizeof(dim_t)>=sizeof(rank_t));
 static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
 template <dim_t V> using dim_c = std::integral_constant<dim_t, V>;
 template <rank_t V> using rank_c = std::integral_constant<rank_t, V>;
 
-// Negative numbers are used in some places as 'frame rank' in contrast to 'cell rank', so this limits the rank that ra:: can handle.
-
-constexpr dim_t DIM_ANY = -1944444444; // only at ct, meaning tbd at rt
-constexpr rank_t RANK_ANY = DIM_ANY;
-constexpr dim_t DIM_BAD = -1988888888; // undefined, eg dead axes
-constexpr rank_t RANK_BAD = DIM_BAD;
+// Negative rank is used places as 'frame rank' in contrast to 'cell rank'. This limits the rank that ra:: can handle.
+constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
+constexpr int BAD = -1988888888; // undefined, eg dead axes
 
 
 // ---------------------
@@ -106,12 +104,12 @@ struct default_steps_<std::tuple<t0, t1, ti ...>>
 
 template <class S> using default_steps = typename default_steps_<S>::type;
 
-template <int n=DIM_BAD> struct dots_t
+template <int n=BAD> struct dots_t
 {
-    static_assert(n>=0 || DIM_BAD==n);
+    static_assert(n>=0 || BAD==n);
     constexpr static rank_t rank_s() { return n; }
 };
-template <int n=DIM_BAD> constexpr dots_t<n> dots = dots_t<n>();
+template <int n=BAD> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
 template <int n> struct insert_t
@@ -122,7 +120,7 @@ template <int n> struct insert_t
 
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
-// Common to View / SmallBase. TODO Shouldn't it work on ... foreign vectors? arbitrary exprs?
+// For View / SmallBase. TODO on foreign vectors? arbitrary exprs?
 template <int cell_rank, class A> constexpr auto
 iter(A && a) { return std::forward<A>(a).template iter<cell_rank>(); }
 
@@ -260,7 +258,7 @@ struct ra_traits_def<V>
 {
     constexpr static rank_t rank_s() { return 1; }
     constexpr static rank_t rank(V const & v) { return 1; }
-    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size_s() { return ANY; }
     constexpr static dim_t size(V const & v) { return std::ssize(v); }
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { size(v) }; }
 };
@@ -271,7 +269,7 @@ struct ra_traits_def<std::initializer_list<T>>
     using V = std::initializer_list<T>;
     constexpr static rank_t rank_s() { return 1; }
     constexpr static rank_t rank(V const & v) { return 1; }
-    constexpr static dim_t size_s() { return DIM_ANY; }
+    constexpr static dim_t size_s() { return ANY; }
     constexpr static dim_t size(V const & v) { return std::ssize(v); }
     constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { size(v) }; }
 };

@@ -180,7 +180,7 @@ int main()
             ra::scalar(c) += A(0);
             tr.test_eq(B(0), c);
         }
-// This will fail because the assumed driver (RANK_ANY) has lower actual rank than the other argument. TODO check that it fails.
+// This will fail because the assumed driver (ANY) has lower actual rank than the other argument. TODO check that it fails.
         // {
         //     ra::Unique<real, 2> A({2, 3}, {1, 2, 3, 4 ,5, 6});
         //     ra::Unique<real> C({}, 0.);

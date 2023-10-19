@@ -169,7 +169,7 @@ int main()
             test(a);
             test(a()); // also View.
         }
-// TODO See Expr::CAN_DRIVE in expr.hh. Doesn't generally work with Unique<RANK_ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() is rank-dynamic.
+// TODO See Expr::CAN_DRIVE in expr.hh. Doesn't generally work with Unique<ANY> because Expr needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() is rank-dynamic.
         {
             auto test = [&](auto && a)
                 {
@@ -181,7 +181,7 @@ int main()
             test(a()); // also View.
         }
     }
-    tr.section("[ra6] constructor cases with scalar or RANK_ANY arguments");
+    tr.section("[ra6] constructor cases with scalar or ANY arguments");
     {
 // TODO Move these to the constructor tests, and put assignment versions here.
         tr.section("construction of 0 rank <- scalar expr");

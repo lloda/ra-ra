@@ -95,7 +95,7 @@ checkbox [C-ct] flip TODO
     - [ ] Describe xreferenced issues in doc ([raxx], etc.)
   - [ ] Other [0/2]
     - [ ] Reconsider len/len_s etc.
-      Same as there are static/nonstatic versions of keep_step, we could remove len_s/rank_s use staticness of len/rank instead of RANK_ANY/DIM_ANY. A problem with this is that len_s lets me return DIM_ANY for some axes and finite for others and to do that with just len() would require len(integral constant) overloads possibly -- len(int k) cannot be static or not depending on k.
+      Same as there are static/nonstatic versions of keep_step, we could remove len_s/rank_s use staticness of len/rank instead of ANY/ANY. A problem with this is that len_s lets me return ANY for some axes and finite for others and to do that with just len() would require len(integral constant) overloads possibly -- len(int k) cannot be static or not depending on k.
     - [ ] Review Container constructors. Why do we need (&) when we have (const &)?
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).

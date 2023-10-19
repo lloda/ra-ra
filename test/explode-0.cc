@@ -176,7 +176,7 @@ int main()
                     tr.test_eq(i*2+1, convtest(B(i)).imag());           \
                 }                                                       \
             }
-            TEST(ra::RANK_ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
+            TEST(ra::ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
             TEST(1)(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
         }
         tr.section("super rank 2");

@@ -85,7 +85,7 @@ int main()
     tr.section("foreign vectors from std::");
     {
         tr.info("adapted std::array has static size").test_eq(3, size_s(ra::start(std::array {1, 2, 0})));
-        tr.info("adapted std::vector has dynamic size").test_eq(ra::DIM_ANY, size_s(ra::start(std::vector {1, 2, 0})));
+        tr.info("adapted std::vector has dynamic size").test_eq(ra::ANY, size_s(ra::start(std::vector {1, 2, 0})));
     }
     tr.section("std::string");
     {
@@ -98,7 +98,7 @@ int main()
     {
         tr.test_eq(15, size(ra::start(std::ranges::iota_view(-5, 10))));
         tr.info("adapted std::ranges::iota_view has dynamic size")
-            .test_eq(ra::DIM_ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
+            .test_eq(ra::ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
         tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
 #if __cpp_lib_span >= 202002L

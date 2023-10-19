@@ -85,13 +85,13 @@ int main()
     tr.section("Bigs/Small");
     {
         ra::Big<int, 2> C({1000, 4}, ra::none);
-        ra::Small<int, 3, 2> I;
+        ra::Small<int, 10, 2> I;
         test(C, I, 1000);
     }
     tr.section("Bigd/Small");
     {
         ra::Big<int> C({1000, 4}, ra::none);
-        ra::Small<int, 3, 2> I;
+        ra::Small<int, 10, 2> I;
         test(C, I, 1000);
     }
 // FIXME not supported atm bc small.at output type depends on the length of the subscript.

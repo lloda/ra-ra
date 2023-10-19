@@ -173,7 +173,7 @@ int main()
         ra::Unique<double, 1> a({3}, {1, 2, 3});
         tr.test_eq(a-a(ra::insert<1>), a-transpose<1>(a));
     }
-// FIXME Small cannot have DIM_BAD sizes yet.
+// FIXME Small cannot have BAD sizes yet.
     // tr.section("transpose K");
     // {
     //     ra::Small<double, 3> a = {1, 2, 3};

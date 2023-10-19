@@ -69,7 +69,7 @@ int main()
         auto b = reshape(a, ra::Big<int, 1> {3});
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, b);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
-        tr.info("reshape can return var rank (1)").test_eq(ra::RANK_ANY, rank_s(b));
+        tr.info("reshape can return var rank (1)").test_eq(ra::ANY, rank_s(b));
     }
     tr.section("reshape to fixed rank to var rank");
     {
@@ -78,7 +78,7 @@ int main()
         auto b = reshape(a, ra::Big<int, 1> {3});
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, b);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
-        tr.info("reshape can return var rank").test_eq(ra::RANK_ANY, rank_s(b));
+        tr.info("reshape can return var rank").test_eq(ra::ANY, rank_s(b));
     }
     tr.section("conversion from var rank to fixed rank");
     {

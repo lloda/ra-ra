@@ -19,7 +19,7 @@ using real = double;
 int main()
 {
     TestRecorder tr;
-    tr.section("[ra6] assignment cases with scalar or RANK_ANY arguments");
+    tr.section("[ra6] assignment cases with scalar or ANY arguments");
     {
         tr.section("assignment of 0 rank <- scalar expr");
         {

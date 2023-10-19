@@ -14,7 +14,7 @@
 using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 
 using real = double;
-template <int rank=ra::RANK_ANY> using Ureal = ra::Unique<real, rank>;
+template <int rank=ra::ANY> using Ureal = ra::Unique<real, rank>;
 using Vint = ra::Unique<int, 1>;
 
 int main()
