@@ -67,7 +67,17 @@ int main()
         ra::Big<ra::Small<int, 2>, 1> I2 = { {1, 1}, {2, 2} };
         test(C, A, B, I1, I2);
     }
-    tr.section("Small");
+    tr.section("Small basic");
+    {
+        ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
+        ra::Small<int, 2> i2 { 1, 1 };
+        ra::Small<int, 1> i1 { 1 };
+        ra::Small<int, 0> i0 { };
+        tr.test_eq(2, ra::rank_s<decltype(s.at(i0))>());
+        tr.test_eq(1, ra::rank_s<decltype(s.at(i1))>());
+        tr.test_eq(0, ra::rank_s<decltype(s.at(i2))>());
+    }
+    tr.section("Small ops");
     {
         ra::Small<int, 4, 4> C = {{0, 0, 0, 0}, {0, 11, 0, 0}, {0, 0, 22, 0}, {0, 0, 0, 0}};
         ra::Small<int, 4, 4> A = 0;

@@ -31,17 +31,15 @@ template <class T, rank_t RANK=ANY> struct View;
 // TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
 // TODO Clear up Dimv's type. Should I use span/Ptr?
 // FIXME avoid copying c in flat().
-// V is View. FIXME Parameterize? apparently only for order-of-decl.
-template <class V, rank_t spec=0>
+template <class V, class Spec=ic_t<0>>
 struct CellBig
 {
-    static_assert(spec!=ANY && spec!=BAD, "Bad cell rank.");
+    constexpr static rank_t spec = maybe_any<Spec>;
     constexpr static rank_t fullr = ra::rank_s<V>();
-    constexpr static rank_t cellr = rank_cell(fullr, spec);
-    constexpr static rank_t framer = rank_frame(fullr, spec);
+    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
+    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
     static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
     static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
-    static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
     using Dimv_ = typename std::decay_t<V>::Dimv;
 // FIXME necessary for some cases of from() [ra14]. Cf https://stackoverflow.com/a/8609226
@@ -53,27 +51,10 @@ struct CellBig
     using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
 
     cell_type c;
-
-    constexpr CellBig(CellBig const & ci) = default;
-// s_ is array's full shape; split it into dimv/i (frame) and c (cell).
-    constexpr CellBig(Dimv const & dimv_, atom_type * cp_): dimv(dimv_)
-    {
-// see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
-        c.cp = cp_;
-        rank_t cellr = rank_cell(ssize(dimv), spec);
-        rank_t rank = this->rank();
-        if constexpr (ANY==framer) {
-            RA_CHECK(rank>=0, "bad cell rank (array rank ", ssize(dimv), ", cell rank ", cellr, ").");
-        }
-        resize(c.dimv, cellr);
-        for (int k=0; k<cellr; ++k) {
-            c.dimv[k] = dimv[rank+k];
-        }
-    }
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    [[no_unique_address]] Spec const dspec = {};
 
     constexpr static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ssize(dimv), spec); }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ssize(dimv), dspec); }
     constexpr static rank_t rank() requires (ANY!=framer) { return framer; }
     // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
@@ -84,6 +65,22 @@ struct CellBig
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
+
+    constexpr CellBig(CellBig const & ci) = default;
+    constexpr CellBig(Dimv const & dimv_, atom_type * cp_, Spec dspec_ = Spec {})
+        : dimv(dimv_), dspec(dspec_)
+    {
+// see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
+        c.cp = cp_;
+        rank_t dcellr = rank_cell(ssize(dimv), dspec);
+        rank_t dframer = this->rank();
+        RA_CHECK(0<=dframer && 0<=dcellr, "Bad cell rank ", dcellr, " for array rank ", ssize(dimv), ").");
+        resize(c.dimv, dcellr);
+        for (int k=0; k<dcellr; ++k) {
+            c.dimv[k] = dimv[dframer+k];
+        }
+    }
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr auto
     flat() const
@@ -214,12 +211,12 @@ struct View
         ra::iter<-1>(*this) = x;
         return *this;
     }
-#define RA_BRACES_ANY(N)                                       \
-    constexpr View &                                                \
-    operator=(braces<T, N> x) requires (RANK==ANY)             \
-    {                                                               \
-        ra::iter<-1>(*this) = x;                                    \
-        return *this;                                               \
+#define RA_BRACES_ANY(N)                            \
+    constexpr View &                                \
+    operator=(braces<T, N> x) requires (RANK==ANY)  \
+    {                                               \
+        ra::iter<-1>(*this) = x;                    \
+        return *this;                               \
     }
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
@@ -236,10 +233,13 @@ struct View
 
     constexpr bool const empty() const { return 0==size(); } // TODO Optimize
 
-    template <rank_t c=0> constexpr auto iter() const && { return ra::CellBig<View<T, RANK>, c>(std::move(dimv), cp); }
-    template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T, RANK> &, c>(dimv, cp); }
+    template <rank_t c=0> constexpr auto iter() const && { return ra::CellBig<View<T, RANK>, ic_t<c>>(std::move(dimv), cp); }
+    template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T, RANK> &, ic_t<c>>(dimv, cp); }
+    constexpr auto iter(rank_t c) const && { return ra::CellBig<View<T, RANK>, dim_t>(std::move(dimv), cp, c); }
+    constexpr auto iter(rank_t c) const & { return ra::CellBig<View<T, RANK> &, dim_t>(dimv, cp, c); }
     constexpr auto begin() const { return STLIterator(iter()); }
-    constexpr auto end() const { return STLIterator(decltype(iter())(dimv, nullptr)); } // dimv is arbitrary
+// dimv is arbitrary. FIXME do something cheaper
+    constexpr auto end() const { return STLIterator(decltype(iter())(dimv, nullptr)); }
 
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
@@ -335,10 +335,10 @@ struct View
     constexpr decltype(auto)
     at(I && i) const
     {
-        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
-        if constexpr (ANY==crank) {
-            using Sub = View<T, ANY>;
-            return Sub { typename Sub::Dimv(dimv.begin()+ra::size(i), dimv.end()), data() + shorter(*this, i) };
+// FIXME I'd prefer spec = -size but that fails for 0; there's no way to say 'frame rank 0'.
+       constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
+       if constexpr (ANY==crank) {
+            return iter(rank()-ra::size(i)).at(std::forward<I>(i));
         } else {
             return iter<crank>().at(std::forward<I>(i));
         }

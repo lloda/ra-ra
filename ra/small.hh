@@ -89,30 +89,6 @@ struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
 // Develop indices
 // --------------------
 
-template <bool few, class Q, class P>
-constexpr void
-indexer_check(Q const & q, P const & p)
-{
-    if constexpr (ANY==rank_s<P>()) {
-        RA_CHECK(1==rank(p), "Bad rank ", rank(p), " for subscript.");
-    } else {
-        static_assert(1==rank_s<P>(), "Bad rank for subscript.");
-    }
-    if constexpr (ANY==size_s<P>() || ANY==rank_s<Q>()) {
-        if constexpr (few) {
-            RA_CHECK(p.len(0) >= q.rank(), "Too few indices.");
-        } else {
-            RA_CHECK(p.len(0) <= q.rank(), "Too many indices.");
-        }
-    } else {
-        if constexpr (few) {
-            static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
-        } else {
-            static_assert(size_s<P>() <= rank_s<Q>(), "Too many indices.");
-        }
-    }
-}
-
 template <rank_t k, rank_t end, class Q, class P, class S>
 constexpr dim_t
 indexer(Q const & q, P && pp, S const & ss0)
@@ -141,23 +117,21 @@ indexer(rank_t end, Q const & q, P && pp, S const & ss0)
 
 template <class Q, class P>
 constexpr dim_t
-shorter(Q const & q, P const & pp) // for View::at().
-{
-    decltype(auto) p = start(pp);
-    indexer_check<false>(q, p);
-    if constexpr (ANY==size_s<P>()) {
-        return indexer(p.len(0), q, p.flat(), p.step(0));
-    } else {
-        return indexer<0, size_s<P>()>(q, p.flat(), p.step(0));
-    }
-}
-
-template <class Q, class P>
-constexpr dim_t
 longer(Q const & q, P const & pp) // for IteratorConcept::at().
 {
     decltype(auto) p = start(pp);
-    indexer_check<true>(q, p);
+
+    if constexpr (ANY==rank_s<P>()) {
+        RA_CHECK(1==rank(p), "Bad rank ", rank(p), " for subscript.");
+    } else {
+        static_assert(1==rank_s<P>(), "Bad rank for subscript.");
+    }
+    if constexpr (ANY==size_s<P>() || ANY==rank_s<Q>()) {
+        RA_CHECK(p.len(0) >= q.rank(), "Too few indices.");
+    } else {
+        static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
+    }
+
     if constexpr (ANY==rank_s<Q>()) {
         return indexer(q.rank(), q, p.flat(), p.step(0));
     } else {
@@ -181,13 +155,13 @@ struct CellFlat
 
 // TODO Refactor with CellBig / STLIterator
 // V is always SmallBase<SmallView, ...>
-template <class V, rank_t cellr_spec=0>
+template <class V, rank_t spec=0>
 struct CellSmall
 {
-    static_assert(cellr_spec!=ANY && cellr_spec!=BAD, "Bad cell rank.");
+    static_assert(spec!=ANY && spec!=BAD, "Bad cell rank.");
     constexpr static rank_t fullr = ra::rank_s<V>();
-    constexpr static rank_t cellr = rank_cell(fullr, cellr_spec);
-    constexpr static rank_t framer = rank_frame(fullr, cellr_spec);
+    constexpr static rank_t cellr = rank_cell(fullr, spec);
+    constexpr static rank_t framer = rank_frame(fullr, spec);
     static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
     static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
     static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
@@ -354,7 +328,7 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     operator()(I && ... i) CONST                                        \
     {                                                                   \
-        constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD)); \
+        constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD));     \
         static_assert(stretch<=1, "Cannot repeat stretch index.");      \
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {         \
             return data()[select_loop<0>(i ...)];                       \
@@ -372,12 +346,14 @@ struct SmallBase
     {                                                                   \
         return (*this)(std::forward<I>(i) ...);                         \
     }                                                                   \
-    /* FIXME I must be fixed size, otherwise we can't make out the output type. */ \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
     at(I && i) CONST                                                    \
     {                                                                   \
-        return iter<rank_diff(rank(), ra::size_s<I>())>().at(std::forward<I>(i)); \
+        /* FIXME I'd prefer spec = -size but that fails for 0; there's no way to say 'frame rank 0'. */ \
+        constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());    \
+        static_assert(crank>=0); /* else we can't make out the output type */ \
+        return iter<crank>().at(std::forward<I>(i));                    \
     }                                                                   \
     /* maybe remove if ic becomes easier to use */                      \
     template <int ss, int oo=0>                                         \

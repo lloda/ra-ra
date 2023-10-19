@@ -76,11 +76,23 @@ int main()
         ra::Big<int> I({1000, 2}, ra::none);
         test(C, I, 100);
     }
-    tr.section("Small/Small");
+    tr.section("Small/Small"); // FIXME regression in b40c2d412be04c4c2b4758a332424c05257f71ff
     {
         ra::Small<int, 10, 4> C;
         ra::Small<int, 10, 2> I;
         test(C, I, 10000);
+    }
+    tr.section("Bigd/Bigs");
+    {
+        ra::Big<int> C({1000, 4}, ra::none);
+        ra::Big<int, 2> I({1000, 2}, ra::none);
+        test(C, I, 100);
+    }
+    tr.section("Bigs/Bigd");
+    {
+        ra::Big<int, 2> C({1000, 4}, ra::none);
+        ra::Big<int> I({1000, 2}, ra::none);
+        test(C, I, 100);
     }
     tr.section("Bigs/Small");
     {
