@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 24, updated 2023 September 28)
+<!-- ra:: (version 24, updated 2023 October 17)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 24, updated 2023 September 28)
+<p><code>ra::</code> (version 24, updated 2023 October 17)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -1299,7 +1299,7 @@ Next: <a href="#Extension" accesskey="n" rel="next">Extension</a>, Previous: <a 
 <h4 class="subsection">2.9.1 Using other C and C++ types with <code>ra::</code></h4>
 
 <span id="index-foreign-type"></span>
-<p><code>ra::</code> accepts certain types from outside <code>ra::</code> (<em>foreign types</em>) as array expressions. Generally it is enough to mix the foreign type with a type from <code>ra::</code> and let deduction work.
+<span id="x_002dforeign_002dtype"></span><p><code>ra::</code> accepts certain types from outside <code>ra::</code> (<em>foreign types</em>) as array expressions. Generally it is enough to mix the foreign type with a type from <code>ra::</code> and let deduction work.
 </p>
 <div class="example">
 <pre class="verbatim">std::vector&lt;int&gt; x = {1, 2, 3};
@@ -1422,7 +1422,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 {
     int const rank = a.rank();
     assert(r&gt;0 &amp;&amp; r&lt;=rank);
-    assert(every(shape(a)==shape(b)));
+    assert(every(ra::start(shape(a))==shape(b)));
     fftw_iodim dims[r];
     fftw_iodim howmany_dims[rank-r];
     for (int i=0; i!=rank; ++i) {
@@ -1649,14 +1649,14 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <div class="section" id="Reuse-of-expression-objects">
 <h3 class="section">4.1 Reuse of expression objects</h3>
 
-<p>Expression objects are meant to be used once. This applies to anything produced with <code>ra::map</code>, <code>ra::iter</code>, <code>ra::start</code>, <code>ra::vector</code>, or <code>ra::ptr</code>. Reuse errors are <em>not</em> checked. For example:
+<p>Expression objects are meant to be used once. This applies to anything produced with <code>ra::map</code>, <code>ra::iter</code>, <code>ra::start</code>, or <code>ra::ptr</code>. Reuse errors are <em>not</em> checked. For example:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 2&gt; B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
 std::array&lt;int, 2&gt; l = { 1, 2 };
-cout &lt;&lt; B(ra::vector(l), ra::vector(l)) &lt;&lt; endl; // ok =&gt; {{4 5} {7 8}}
-auto ll = ra::vector(l);
-cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ?? take cover
+cout &lt;&lt; B(ra::ptr(l), ra::ptr(l)) &lt;&lt; endl; // ok =&gt; {{4 5} {7 8}}
+auto ll = ra::ptr(l);
+cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ??
 </pre></div>
 
 </div>
@@ -1844,7 +1844,9 @@ Next: <a href="#Compiling-and-running" accesskey="n" rel="next">Compiling and ru
 <dt id="index-shape-2"><span class="category">Function<!-- /@w -->: </span><span><em>array</em> <strong>shape</strong> <em>e</em><a href='#index-shape-2' class='copiable-anchor'> &para;</a></span></dt>
 <dt id="index-shape-3"><span class="category">Function<!-- /@w -->: </span><span><em>dim_t</em> <strong>shape</strong> <em>e k</em><a href='#index-shape-3' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>The first form returns the shape of expression <var>e</var> as an array object. The second form returns the length of axis <var>k</var>, i.e. <code>shape(e)[k]</code> ≡ <code>shape(e, k)</code>.
+<p>The first form returns the shape of expression <var>e</var> as an array. The second form returns the length of axis <var>k</var>, i.e. <code>shape(e)[k]</code> ≡ <code>shape(e, k)</code>.
+</p>
+<p><var>array</var> might be a <a href="#x_002dforeign_002dtype"><code>foreign type</code></a> (such as <code>std::array</code> or <code>std::vector</code>) instead of a <code>ra-ra</code> type.
 </p>
 </dd></dl>
 
@@ -2367,13 +2369,15 @@ case c:
 
 <span id="index-ptr"></span>
 <span id="x_002dptr"></span><dl class="def">
-<dt id="index-ptr-1"><span class="category">Function: </span><span><strong>ptr</strong> <em>random_access_iterator [len]</em><a href='#index-ptr-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create rank-1 expression from <var>random_access_iterator</var>, which can be a raw pointer.
+<dt id="index-ptr-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ptr</strong> <em>bidirectional_iterator [len]</em><a href='#index-ptr-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ptr-2"><span class="category">Function<!-- /@w -->: </span><span><strong>ptr</strong> <em>bidirectional_range</em><a href='#index-ptr-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create rank-1 expression from foreign object.
 </p>
-<p>If <code>len</code> is not given, the expression has undefined length, and it will need to be matched with other expressions whose length is defined. <code>ra::</code> doesn&rsquo;t know what is actually accessible through the iterator, so be careful. For instance:
+<p>If <code>len</code> is not given for <var>bidirectional_iterator</var>, the expression has undefined length, and it will need to be matched with other expressions whose length is defined. <code>ra::</code> doesn&rsquo;t know what is actually accessible through the iterator, so be careful. For instance:
 </p>
 <div class="example">
-<pre class="verbatim">int p[] = {1, 2, 3};
+<pre class="verbatim">int pp[] = {1, 2, 3};
+int * p = pp; // erase length
 ra::Big&lt;int, 1&gt; v3 {1, 2, 3};
 ra::Big&lt;int, 1&gt; v4 {1, 2, 3, 4};
 v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
@@ -2383,15 +2387,15 @@ cout &lt;&lt; (ra::ptr(p, 3)+ra::iota()) &lt;&lt; endl; // ok, prints { 1, 3, 5 
 cout &lt;&lt; (ra::ptr(p, 4)+ra::iota()) &lt;&lt; endl; // undefined, bad access at p[4]
 </pre></div>
 
-<p>Of course in this example one could simply have used <code>p</code> instead of <code>ra::ptr(p)</code>, since the array type retains shape information.
+<p>Of course in this example one could simply have used <code>pp</code> instead of <code>ra::ptr(p)</code>, since the array type retains shape information.
 </p>
 <div class="example">
-<pre class="verbatim">v3 += p; // ok
-v4 += p; // error checked by ra::, shape clash (4) += (3)
+<pre class="verbatim">v3 += pp; // ok
+v4 += pp; // error checked by ra::, shape clash (4) += (3)
 cout &lt;&lt; (p + ra::iota()) &lt;&lt; endl; // ok
 </pre></div>
 
-<p><code>ptr</code> isn&rsquo;t meant to be used with STL containers, which are converted to rank-1 expressions automatically of the right size automatically. See also <a href="#x_002dstart"><code>start</code></a>.
+<p>You don&rsquo;t need to use <code>ra::ptr</code> on STL containers and built in arrays, which are converted to rank-1 expressions of the right size automatically. See also <a href="#x_002dstart"><code>start</code></a>.
 </p>
 </dd></dl>
 

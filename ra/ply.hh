@@ -386,13 +386,6 @@ struct STLIterator
     Iterator ii;
     shape_type i;
     STLIterator(STLIterator const & it) = default;
-    constexpr STLIterator & operator=(STLIterator const & it)
-    {
-        i = it.i;
-        ii.Iterator::~Iterator(); // no-op except for View<ANY>. Still...
-        new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
-        return *this;
-    }
     STLIterator(Iterator const & ii_)
         : ii(ii_),
 // shape_type may be std::array or std::vector.
@@ -409,9 +402,16 @@ struct STLIterator
             ii.c.cp = nullptr;
         }
     };
+    constexpr STLIterator &
+    operator=(STLIterator const & it)
+    {
+        i = it.i;
+        ii.Iterator::~Iterator(); // no-op except for View<ANY>. Still...
+        new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
+        return *this;
+    }
 
     template <class PP> bool operator==(PP const & j) const { return ii.c.cp==j.ii.c.cp; }
-
     decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
     STLIterator & operator++()

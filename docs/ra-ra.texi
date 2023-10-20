@@ -1254,6 +1254,7 @@ I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, wher
 @subsection Using other C and C++ types with @code{ra::}
 
 @cindex foreign type
+@anchor{x-foreign-type}
 @code{ra::} accepts certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Generally it is enough to mix the foreign type with a type from @code{ra::} and let deduction work.
 
 @example
@@ -1385,7 +1386,7 @@ void fftw(int r, ra::View<complex> const a, ra::View<complex> b)
 {
     int const rank = a.rank();
     assert(r>0 && r<=rank);
-    assert(every(shape(a)==shape(b)));
+    assert(every(ra::start(shape(a))==shape(b)));
     fftw_iodim dims[r];
     fftw_iodim howmany_dims[rank-r];
     for (int i=0; i!=rank; ++i) {
@@ -1592,15 +1593,15 @@ Some of these issues arise because @code{ra::} applies its principles systematic
 
 @section Reuse of expression objects
 
-Expression objects are meant to be used once. This applies to anything produced with @code{ra::map}, @code{ra::iter}, @code{ra::start}, @code{ra::vector}, or @code{ra::ptr}. Reuse errors are @emph{not} checked. For example:
+Expression objects are meant to be used once. This applies to anything produced with @code{ra::map}, @code{ra::iter}, @code{ra::start}, or @code{ra::ptr}. Reuse errors are @emph{not} checked. For example:
 
 @example
 @verbatim
 ra::Big<int, 2> B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
 std::array<int, 2> l = { 1, 2 };
-cout << B(ra::vector(l), ra::vector(l)) << endl; // ok => {{4 5} {7 8}}
-auto ll = ra::vector(l);
-cout << B(ll, ll) << endl; // ?? take cover
+cout << B(ra::ptr(l), ra::ptr(l)) << endl; // ok => {{4 5} {7 8}}
+auto ll = ra::ptr(l);
+cout << B(ll, ll) << endl; // ??
 @end verbatim
 @end example
 
@@ -1770,6 +1771,8 @@ Return the rank of expression @var{e}.
 @deftypefnx @w{Function} dim_t shape e k
 
 The first form returns the shape of expression @var{e} as an array. The second form returns the length of axis @var{k}, i.e. @code{shape(e)[k]} ≡ @code{shape(e, k)}.
+
+@var{array} might be a @ref{x-foreign-type,@code{foreign type}} (such as @code{std::array} or @code{std::vector}) instead of a @code{ra-ra} type.
 
 @end deftypefn
 
@@ -2305,14 +2308,17 @@ See also @ref{x-format_array,@code{format_array}}.
 @end deffn
 
 @cindex @code{ptr}
-@anchor{x-ptr} @defun ptr random_access_iterator [len]
-Create rank-1 expression from @var{random_access_iterator}, which can be a raw pointer.
+@anchor{x-ptr}
+@deffn @w{Function} ptr bidirectional_iterator [len]
+@deffnx @w{Function} ptr bidirectional_range
+Create rank-1 expression from foreign object.
 
-If @code{len} is not given, the expression has undefined length, and it will need to be matched with other expressions whose length is defined. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
+If @code{len} is not given for @var{bidirectional_iterator}, the expression has undefined length, and it will need to be matched with other expressions whose length is defined. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
 
 @example
 @verbatim
-int p[] = {1, 2, 3};
+int pp[] = {1, 2, 3};
+int * p = pp; // erase length
 ra::Big<int, 1> v3 {1, 2, 3};
 ra::Big<int, 1> v4 {1, 2, 3, 4};
 v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
@@ -2323,19 +2329,19 @@ cout << (ra::ptr(p, 4)+ra::iota()) << endl; // undefined, bad access at p[4]
 @end verbatim
 @end example
 
-Of course in this example one could simply have used @code{p} instead of @code{ra::ptr(p)}, since the array type retains shape information.
+Of course in this example one could simply have used @code{pp} instead of @code{ra::ptr(p)}, since the array type retains shape information.
 
 @example
 @verbatim
-v3 += p; // ok
-v4 += p; // error checked by ra::, shape clash (4) += (3)
+v3 += pp; // ok
+v4 += pp; // error checked by ra::, shape clash (4) += (3)
 cout << (p + ra::iota()) << endl; // ok
 @end verbatim
 @end example
 
-@code{ptr} isn't meant to be used with STL containers, which are converted to rank-1 expressions automatically of the right size automatically. See also @ref{x-start,@code{start}}.
+You don't need to use @code{ra::ptr} on STL containers and built in arrays, which are converted to rank-1 expressions of the right size automatically. See also @ref{x-start,@code{start}}.
 
-@end defun
+@end deffn
 
 @cindex @code{start}
 @anchor{x-start} @defun start foreign_object

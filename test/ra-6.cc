@@ -32,13 +32,13 @@ int main()
 // naturally unbeatable.
     ra::Small<int, 2> k { 1, 2 };
     auto l = std::array<int, 2> { 1, 2 };
-    auto ll = ra::vector(l);
-    // auto ll = ra::vector(std::array<int, 2> { 1, 2 }); // FIXME find a way to forbid this [ra9]
+    auto ll = ra::ptr(l);
+    // auto ll = ra::ptr(std::array<int, 2> { 1, 2 }); // FIXME find a way to forbid this [ra9]
 
     cout << "X0: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, i, i, i) << endl;
     cout << "X1: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, j, j, j) << endl;
     cout << "X2: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, k, k, k) << endl;
-    cout << "X3: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ra::vector(l), ra::vector(l), ra::vector(l)) << endl;
+    cout << "X3: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ra::ptr(l), ra::ptr(l), ra::ptr(l)) << endl;
     cout << "X4: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, l, l, l) << endl;
     cout << "X5: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, ll, ll, ll) << endl;
 
@@ -47,7 +47,7 @@ int main()
     cout << "Y0: " << ra::from(A, i, i, i) << endl;
     cout << "Y1: " << ra::from(A, j, j, j) << endl;
     cout << "Y2: " << ra::from(A, k, k, k) << endl;
-    cout << "Y3: " << ra::from(A, ra::vector(l), ra::vector(l), ra::vector(l)) << endl;
+    cout << "Y3: " << ra::from(A, ra::ptr(l), ra::ptr(l), ra::ptr(l)) << endl;
     cout << "Y4: " << ra::from(A, l, l, l) << endl;
     cout << "Y5: " << ra::from(A, ll, ll, ll) << endl;
 
@@ -60,7 +60,7 @@ int main()
         tr.test_eq(ref1, C(i));
         tr.test_eq(ref1, C(j));
         tr.test_eq(ref1, C(k));
-        tr.test_eq(ref1, C(ra::vector(l)));
+        tr.test_eq(ref1, C(ra::ptr(l)));
         tr.info("ll").test_eq(ref1, C(ll));
     }
     tr.section("subs 2");
@@ -69,7 +69,7 @@ int main()
         tr.test_eq(ref2, B(i, i));
         tr.test_eq(ref2, B(j, j));
         tr.test_eq(ref2, B(k, k));
-        tr.test_eq(ref2, B(ra::vector(l), ra::vector(l)));
+        tr.test_eq(ref2, B(ra::ptr(l), ra::ptr(l)));
         tr.test_eq(ref2, B(l, l));
         tr.info("ll").test_eq(ref2, B(ll, ll));
     }
@@ -80,7 +80,7 @@ int main()
         tr.test_eq(ref3, A(i, i, i));
         tr.test_eq(ref3, A(j, j, j));
         tr.test_eq(ref3, A(k, k, k));
-        tr.test_eq(ref3, A(ra::vector(l), ra::vector(l), ra::vector(l)));
+        tr.test_eq(ref3, A(ra::ptr(l), ra::ptr(l), ra::ptr(l)));
         tr.test_eq(ref3, A(l, l, l));
         tr.info("ll").test_eq(ref3, A(ll, ll, ll));
     }

@@ -98,7 +98,7 @@ int main()
         std::array a1 = {1, 2};
         std::vector a2 = {1, 2};
 
-        for_each([](auto && a, auto && b) { a = b; }, ra::vector(a1), 99);
+        for_each([](auto && a, auto && b) { a = b; }, ra::ptr(a1), 99);
         tr.test_eq(99, ra::start(a1));
     }
     tr.section("[ra35] - value");
@@ -106,14 +106,14 @@ int main()
         auto fun1 = [] { return std::array {7, 2}; };
         auto fun2 = [] { return std::vector {5, 2}; };
 
-        tr.test_eq(ra::start({7, 2}), ra::vector(fun1()));
-        tr.test_eq(ra::start({5, 2}), ra::vector(fun2()));
+        tr.test_eq(ra::start({7, 2}), ra::ptr(fun1()));
+        tr.test_eq(ra::start({5, 2}), ra::ptr(fun2()));
     }
-    tr.section("self assigment of ra::vector");
+    tr.section("self assigment of ra::ptr");
     {
         auto a0 = std::array {0, 10};
         auto a1 = std::array {1, 11};
-        ra::vector(a0) = ra::vector(a1);
+        ra::ptr(a0) = ra::ptr(a1);
         tr.test_eq(1, a0[0]);
         tr.test_eq(11, a0[1]);
         tr.test_eq(1, a1[0]);
@@ -122,8 +122,8 @@ int main()
 // This used to be supported, but it really made no sense. Now v0 is a read-only location so this will ct error [ra42]
     // {
     //     auto fun1 = [](int a) { return std::array {a, a+10}; };
-    //     auto v0 = ra::vector(fun1(0));
-    //     auto v1 = ra::vector(fun1(1));
+    //     auto v0 = ra::ptr(fun1(0));
+    //     auto v1 = ra::ptr(fun1(1));
     //     v0 = v1;
     //     tr.test_eq(1, v0.at(std::array { 0 }));
     //     tr.test_eq(11, v0.at(std::array { 1 }));

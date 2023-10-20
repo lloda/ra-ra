@@ -494,8 +494,8 @@ int main()
     {
         ra::Small<int, 3, 4> a = 0;
         tr.test_eq(2, int_c<rank(a)>::value);
-        tr.test_eq(3, int_c<shape(a)(0)>::value);
-        tr.test_eq(4, int_c<shape(a)(1)>::value);
+        tr.test_eq(3, int_c<shape(a)[0]>::value);
+        tr.test_eq(4, int_c<shape(a)[1]>::value);
 // FIXME std::size makes this ambiguous without the qualifier, which looks wrong to me :-/
         tr.test_eq(12, int_c<ra::size(a)>::value);
     }

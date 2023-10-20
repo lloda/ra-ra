@@ -115,7 +115,7 @@ int main()
                  false, false, false, false, false);
         TESTPRED(decltype(std::ranges::iota_view(-5, 10)),
                  false, false, false, false, true);
-// std::string can be registered as is_scalar or not [ra13]. One may do ra::vector(std::string) or ra::scalar(std::string) to get the other behavior.
+// std::string can be registered as is_scalar or not [ra13]. One may do ra::ptr(std::string) or ra::scalar(std::string) to get the other behavior.
         if constexpr(ra::is_scalar<std::string>) {
             TESTPRED(std::string,
                      false, false, false, true, false);
@@ -215,7 +215,7 @@ int main()
     }
     tr.section("adaptors II");
     {
-        static_assert(ra::is_iterator<decltype(ra::vector(std::array { 1, 2 }))>);
+        static_assert(ra::is_iterator<decltype(ra::ptr(std::array { 1, 2 }))>);
         static_assert(ra::is_iterator<decltype(ra::start(std::array { 1, 2 }))>);
     }
     return tr.summary();

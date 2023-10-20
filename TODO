@@ -118,7 +118,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   8. [ ] test/operators.cc
      Some simple expressions with scalars fail in *FLAT(). The patch in ra.hh triggers the address sanitizer in test/ra-9.cc.
   9. [ ] test/ra-6.cc
-     ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so ra::vector(temp) must only be used as temp. Really forbidding auto ll = ra::vector(lvalue) would also be ok.
+     ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so ra::ptr(temp) must only be used as temp. Really forbidding auto ll = ra::ptr(lvalue) would also be ok.
   10. [ ] test/ra-0.cc
      size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
   11. [ ]

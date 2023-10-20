@@ -102,7 +102,7 @@ int main()
             int p[] = {10, 20, 30};
             tr.test_eq(p[2], ra::ptr(p).at(std::array {2}));
             x = 1;
-            tr.test_eq(p[2], ra::ptr(p, ra::int_c<2>{}).at(std::array {2}));
+            tr.test_eq(p[2], ra::ptr((int *)p, ra::int_c<2>{}).at(std::array {2}));
             x = 2;
         } catch (ra_error & e) {
             x = x+10;
@@ -111,7 +111,7 @@ int main()
         x = 0;
         try {
             int p[] = {10, 20, 30};
-            tr.test_eq(p[2], ra::ptr(p, 2).at(std::array {2}));
+            tr.test_eq(p[2], ra::ptr((int *)p, 2).at(std::array {2}));
             x = 1;
         } catch (ra_error & e) {
             x = x+10;

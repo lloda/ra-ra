@@ -64,7 +64,7 @@ int main()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
         tr.info("<=> a").test_eq(true, (2<=>1)>0);
-        tr.info("<=> b").test_eq(ra::ptr("+0-"),
+        tr.info("<=> b").test_eq(ra::ptr((char const *)"+0-"),
                                  map([](auto z) { return z>0 ? '+' : z<0 ? '-' : '0'; },
                                      ra::Small<int, 3>{3, 4, 5} <=> ra::Small<double, 3>{2., 4., 6.}));
 #pragma GCC diagnostic pop

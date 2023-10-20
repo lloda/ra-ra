@@ -86,8 +86,7 @@ size_s()
     } else {
         if constexpr (ANY==rank_s<V>()) {
             return ANY;
-// make it work for non-registered types.
-        } else if constexpr (0==rank_s<V>()) {
+        } else if constexpr (0==rank_s<V>()) { // for non-registered types.
             return 1;
         } else {
             dim_t s = 1;
@@ -133,19 +132,18 @@ size(V const & v)
     }
 }
 
-// operator<< depends on this returning a concrete type.
+// Returns a concrete type, or a reference to a concrete type. Cf operator<<.
+// FIXME would return ra:: types, but can't do that for the var rank case so.
 template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
     if constexpr (requires { v.shape(); }) {
-        return v.shape();
+        return v.shape(); // std::array & for v Small
     } else if constexpr (requires { ra_traits<V>::shape(v); }) {
         return ra_traits<V>::shape(v);
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
-        Small<dim_t, rs> s;
-        for (rank_t k=0; k<rs; ++k) { s[k] = v.len(k); }
-        return s;
+        return std::apply([&v](auto ... i) { return Small<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         static_assert(ANY==rs);
         rank_t r = v.rank();
@@ -257,23 +255,24 @@ template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<
 
 template <class I, class N=dim_c<BAD>>
 constexpr auto
-ptr(I i, N && n = N {})
+ptr(I && i, N && n = N {})
 {
-    if constexpr (std::is_integral_v<N>) {
-        RA_CHECK(n>=0, "Bad ptr length ", n, ".");
-    }
-    return Ptr<I, iota_arg<N>> { i, std::forward<N>(n) };
-}
-
-template <std::ranges::random_access_range V>
-constexpr auto
-vector(V && v)
-{
-    constexpr dim_t s = size_s<V>();
-    if constexpr (ANY==s) {
-        return ptr(std::begin(std::forward<V>(v)), std::ssize(v));
+// preserve builtin array
+    if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
+        static_assert(std::is_same_v<dim_c<BAD>, N>, "Object has own length.");
+        constexpr dim_t s = size_s<I>();
+        if constexpr (ANY==s) {
+            return ptr(std::begin(std::forward<I>(i)), std::ssize(i));
+        } else {
+            return ptr(std::begin(std::forward<I>(i)), ic<s>);
+        }
+    } else if constexpr (std::bidirectional_iterator<std::decay_t<I>>) {
+        if constexpr (std::is_integral_v<N>) {
+            RA_CHECK(n>=0, "Bad ptr length ", n, ".");
+        }
+        return Ptr<std::decay_t<I>, iota_arg<N>> { i, std::forward<N>(n) };
     } else {
-        return ptr(std::begin(std::forward<V>(v)), ic<s>);
+        static_assert(always_false<I>, "Bad type for ptr().");
     }
 }
 
@@ -394,7 +393,7 @@ start(T && t) { static_assert(always_false<T>, "Type cannot be start()ed."); }
 
 template <class T> requires (is_foreign_vector<T>)
 constexpr auto
-start(T && t) { return ra::vector(std::forward<T>(t)); }
+start(T && t) { return ptr(std::forward<T>(t)); }
 
 template <class T> requires (is_scalar<T>)
 constexpr auto

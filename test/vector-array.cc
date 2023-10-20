@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - Comparison of ra::vector(std::vector) vs ra::vector(std::array)
+// ra-ra/test - Comparison of ra::ptr(std::vector) vs ra::ptr(std::array)
 
 // (c) Daniel Llorens - 2021
 // This library is free software; you can redistribute it and/or modify it under

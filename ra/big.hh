@@ -430,7 +430,8 @@ is_c_order(View<T, RANK> const & a)
     return true;
 }
 
-// FIXME avoid duplicating View::p
+// FIXME avoid duplicating View::p.
+// FIXME avoid overhead with rank 1.
 template <class Store, rank_t RANK>
 struct Container: public View<typename storage_traits<Store>::T, RANK>
 {

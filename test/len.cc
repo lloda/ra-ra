@@ -79,7 +79,8 @@ int main()
     }
     tr.section("len in ptr");
     {
-        int a[] = { 1, 2, 3, 4, 5 };
+        int aa[] = { 1, 2, 3, 4, 5 };
+        int * a = aa;
         static_assert(ra::has_len<decltype(ra::ptr(a, ra::len))>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len)).n)>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len-1)).n)>);

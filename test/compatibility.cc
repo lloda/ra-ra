@@ -81,8 +81,8 @@ int main()
 // cf small-0.cc
         int a[3][4] = {};
         tr.test_eq(2, int_c<ra::rank(a)>::value);
-        tr.test_eq(3, int_c<ra::shape(a)(0)>::value);
-        tr.test_eq(4, int_c<ra::shape(a)(1)>::value);
+        tr.test_eq(3, int_c<ra::shape(a)[0]>::value);
+        tr.test_eq(4, int_c<ra::shape(a)[1]>::value);
         tr.test_eq(12, int_c<ra::size(a)>::value);
     }
     tr.section("operators take foreign types");
@@ -146,8 +146,8 @@ int main()
             tr.test_eq(string("hello"), quote(ra::scalar(hello)));
             tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, ra::start(hello));
             tr.test_eq(6, size_s(ra::start(hello)));
-            tr.test_eq(6, size_s(ra::vector(hello)));
-            tr.test_eq(ra::vector(string("hello\0")), ra::ptr(hello, 5)); // char by char
+            tr.test_eq(6, size_s(ra::ptr(hello)));
+            tr.test_eq(ra::ptr(string("hello\0")), ra::ptr((char *)hello)); // char by char
         }
         cout << endl;
         {
@@ -155,7 +155,7 @@ int main()
             tr.test_eq(string("hello"), quote(hello));
             tr.test_eq(ra::scalar(string("hello")), ra::scalar(hello));
             // cout << ra::start(hello) << endl; // cannot be start()ed
-            // cout << ra::vector(hello) << endl; // same, but FIXME improve error message
+            // cout << ra::ptr(hello) << endl; // same, but FIXME improve error message
         }
     }
     return tr.summary();

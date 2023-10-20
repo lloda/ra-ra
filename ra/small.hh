@@ -252,8 +252,8 @@ struct SmallBase
     using lens = lens_;
     using steps = steps_;
     using T = T_;
-
     using Child = Child_<T, lens, steps>;
+
     template <class TT> using BadDimension = ic_t<(TT::value<0 || TT::value==ANY || TT::value==BAD)>;
     static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
 // TODO static steps check
@@ -442,21 +442,15 @@ template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = 
 template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 #endif
 
-template <class Z>
-struct equal_to_t
-{
-    template <class ... T> constexpr static bool value = (std::is_same_v<Z, T> || ...);
-};
+template <class Z, class ... T>
+constexpr static bool equal_to_any = (std::is_same_v<Z, T> || ...);
 
 template <class T, size_t N>
 consteval size_t
 align_req()
 {
-    if constexpr (equal_to_t<T>::template value<char, unsigned char,
-                  short, unsigned short,
-                  int, unsigned int,
-                  long, unsigned long,
-                  long long, unsigned long long,
+    if constexpr (equal_to_any<T, char, unsigned char, short, unsigned short,
+                  int, unsigned int, long, unsigned long, long long, unsigned long long,
                   float, double>
                   && 0<N && 0==(N & (N-1))) {
         return alignof(extvector<T, N>);
@@ -582,8 +576,6 @@ struct axis_indices
     template <class T> using match_index = ic_t<(T::value==i::value)>;
     using I = mp::iota<mp::len<A>>;
     using type = mp::Filter_<mp::map<match_index, A>, I>;
-// allow dead axes (e.g. transpose<1>(rank 1 array)).
-    // static_assert((mp::len<type>)>0, "dst axis doesn't appear in transposed axes list");
 };
 
 template <class axes_list, class src_lens, class src_steps>
@@ -593,8 +585,6 @@ struct axes_list_indices
     constexpr static int talmax = mp::fold<mp::max, void, axes_list>::value;
     constexpr static int talmin = mp::fold<mp::min, void, axes_list>::value;
     static_assert(talmin >= 0, "Bad index in transposed axes list.");
-// allow dead axes (e.g. transpose<1>(rank 1 array)).
-    // static_assert(talmax < mp::len<src_lens>, "bad index in transposed axes list");
 
     template <class dst_i> struct dst_indices_
     {

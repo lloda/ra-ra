@@ -332,7 +332,7 @@ int main()
         tr.test(std::equal(check, check+6, s.begin()));
 
         // construct Small from pointers / iterators. These still work by prefix match.
-        // If you want row major fill, use std::copy() after construction.
+        // use std::copy() after construction for row major fill.
         double rrcheck[6] = { 1, 1, 2, 2, 3, 3 };
         auto check_ptr
             = [&](auto && rr)
@@ -347,7 +347,7 @@ int main()
         }
         {
             double rr[6] { 1, 2, 3, 4, 5, 6 };
-            check_ptr(rr);
+            check_ptr((double  *)rr);
         }
         {
             ra::Unique<double, 1> rr = { 1, 2, 3, 4, 5, 6 };

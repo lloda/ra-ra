@@ -91,7 +91,7 @@ int main()
     {
         tr.info("std::string is is_foreign_vector unless registered as is_scalar")
             .test_eq(ra::is_scalar<std::string> ? 0 : 1, ra::rank_s(std::string("hello")));
-        tr.info("explicit adaption to rank 1 is possible").test_eq(5, size(ra::vector(std::string("hello"))));
+        tr.info("explicit adaption to rank 1 is possible").test_eq(5, size(ra::ptr(std::string("hello"))));
         tr.info("note the difference with a char array").test_eq(6, ra::size("hello"));
     }
     tr.section("other std::ranges");

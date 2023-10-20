@@ -141,7 +141,7 @@ struct TestRecorder
             ? [&] {
                 if constexpr (ra::rank_s<decltype(a)>()==ra::rank_s<decltype(b)>()
                               || ra::rank_s<decltype(a)>()==ANY || ra::rank_s<decltype(b)>()==ANY) {
-                    return ra::rank(a)==ra::rank(b) && every(ra::shape(a)==ra::shape(b));
+                    return ra::rank(a)==ra::rank(b) && every(ra::start(ra::shape(a))==ra::shape(b));
                 } else {
                     return false;
                 } }()

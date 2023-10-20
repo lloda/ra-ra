@@ -84,7 +84,7 @@ int main()
     }
     tr.section("iota simulation with ptr(iota_view)");
     {
-        tr.strictshape().test_eq(ra::iota(10, 0, 3), ra::vector(std::ranges::iota_view(0, 10))*3);
+        tr.strictshape().test_eq(ra::iota(10, 0, 3), ra::ptr(std::ranges::iota_view(0, 10))*3);
     }
     return tr.summary();
 }
