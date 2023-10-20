@@ -117,10 +117,9 @@ indexer(rank_t end, Q const & q, P && pp, S const & ss0)
 
 template <class Q, class P>
 constexpr dim_t
-longer(Q const & q, P const & pp) // for IteratorConcept::at().
+longer(Q const & q, P const & pp)
 {
     decltype(auto) p = start(pp);
-
     if constexpr (ANY==rank_s<P>()) {
         RA_CHECK(1==rank(p), "Bad rank ", rank(p), " for subscript.");
     } else {
@@ -131,7 +130,6 @@ longer(Q const & q, P const & pp) // for IteratorConcept::at().
     } else {
         static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
     }
-
     if constexpr (ANY==rank_s<Q>()) {
         return indexer(q.rank(), q, p.flat(), p.step(0));
     } else {
@@ -144,7 +142,6 @@ longer(Q const & q, P const & pp) // for IteratorConcept::at().
 // Small iterator
 // --------------------
 
-// Used by CellBig / CellSmall.
 template <class C>
 struct CellFlat
 {
@@ -154,7 +151,7 @@ struct CellFlat
 };
 
 // TODO Refactor with CellBig / STLIterator
-// V is always SmallBase<SmallView, ...>
+// V is always SmallView<...>
 template <class V, rank_t spec=0>
 struct CellSmall
 {
@@ -177,22 +174,22 @@ struct CellSmall
 
     cell_type c;
 
-    constexpr CellSmall(CellSmall const & ci): c { ci.c.cp } {}
-// see STLIterator for the case of s_[0]=0, etc. [ra12].
-    constexpr CellSmall(atom_type * p_): c { p_ } {}
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
-
     constexpr static rank_t rank_s() { return framer; }
     constexpr static rank_t rank() { return framer; }
     // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic push // gcc 13.2
 #pragma GCC diagnostic warning "-Warray-bounds"
-    constexpr static dim_t len_s(int k) { return V::len(k); }
+    constexpr static dim_t len(int k) { return V::len(k); }
 #pragma GCC diagnostic pop
-    constexpr static dim_t len(int k) { return len_s(k); }
+    constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? V::step(k) : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
+
+// see STLIterator for the case of s_[0]=0, etc. [ra12].
+    constexpr CellSmall(atom_type * p_): c { p_ } {}
+    constexpr CellSmall(CellSmall const & ci) = default;
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr auto
     flat() const
@@ -350,7 +347,7 @@ struct SmallBase
     constexpr decltype(auto)                                            \
     at(I && i) CONST                                                    \
     {                                                                   \
-        /* FIXME I'd prefer spec = -size but that fails for 0; there's no way to say 'frame rank 0'. */ \
+        /* FIXME there's no way to say 'frame rank 0' so -size wouldn't work. */ \
         constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());    \
         static_assert(crank>=0); /* else we can't make out the output type */ \
         return iter<crank>().at(std::forward<I>(i));                    \
@@ -401,8 +398,8 @@ struct SmallBase
         return static_cast<Child &>(*this);
     }
 
-    template <rank_t c=0> using iterator = ra::CellSmall<SmallBase<SmallView, T, lens, steps>, c>;
-    template <rank_t c=0> using const_iterator = ra::CellSmall<SmallBase<SmallView, T const, lens, steps>, c>;
+    template <rank_t c=0> using iterator = ra::CellSmall<SmallView<T, lens, steps>, c>;
+    template <rank_t c=0> using const_iterator = ra::CellSmall<SmallView<T const, lens, steps>, c>;
     template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
@@ -428,7 +425,7 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
 
     T * cp;
     constexpr SmallView(T * cp_): cp(cp_) {}
-    constexpr SmallView(SmallView const & s) = default;
+    constexpr SmallView(SmallView const & s): cp(s.cp) {}
 
     constexpr operator T & () { static_assert(Base::convertible_to_scalar); return cp[0]; }
     constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return cp[0]; };

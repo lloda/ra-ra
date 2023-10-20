@@ -33,7 +33,7 @@ In this example ([examples/read-me.cc](examples/read-me.cc)), we create some arr
 ```
 ⇒
 ```
-A: 2 4
+B: 2 4
 103 106 -109 -112
 215 218 -221 -224
 ```

@@ -32,7 +32,7 @@ constexpr bool has_len_def<Pick<std::tuple<P ...>>> = (has_len<P> || ...);
 template <class Op, IteratorConcept ... P>
 constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
 
-template <int w, class O, class N, class S>
+template <int w, class N, class O, class S>
 constexpr bool has_len_def<Iota<w, N, O, S>> = (has_len<N> || has_len<O> || has_len<S>);
 
 template <class I, class N>

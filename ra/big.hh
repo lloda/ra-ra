@@ -29,8 +29,7 @@ operator<<(std::ostream & o, Dim const & dim)
 template <class T, rank_t RANK=ANY> struct View;
 
 // TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
-// TODO Clear up Dimv's type. Should I use span/Ptr?
-// FIXME avoid copying c in flat().
+// TODO Clear up Dimv's type. Should I use span/Ptr? Avoid copying c in flat().
 template <class V, class Spec=ic_t<0>>
 struct CellBig
 {
@@ -66,11 +65,10 @@ struct CellBig
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
 
-    constexpr CellBig(CellBig const & ci) = default;
     constexpr CellBig(Dimv const & dimv_, atom_type * cp_, Spec dspec_ = Spec {})
         : dimv(dimv_), dspec(dspec_)
     {
-// see stl_iterator for the case of dimv_[0]=0, etc. [ra12].
+// see STLIterator for the case of dimv_[0]=0, etc. [ra12].
         c.cp = cp_;
         rank_t dcellr = rank_cell(ssize(dimv), dspec);
         rank_t dframer = this->rank();
@@ -80,6 +78,7 @@ struct CellBig
             c.dimv[k] = dimv[dframer+k];
         }
     }
+    constexpr CellBig(CellBig const & ci) = default;
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
     constexpr auto
@@ -335,7 +334,7 @@ struct View
     constexpr decltype(auto)
     at(I && i) const
     {
-// FIXME I'd prefer spec = -size but that fails for 0; there's no way to say 'frame rank 0'.
+// FIXME there's no way to say 'frame rank 0' so -size wouldn't work.
        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
        if constexpr (ANY==crank) {
             return iter(rank()-ra::size(i)).at(std::forward<I>(i));

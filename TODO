@@ -6,17 +6,18 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/7]
-  - [-] Bugs [2/11]
+  - [-] Bugs [3/12]
     - [ ] const issues in View vs Container
       - [ ] fix conversion to const op in View, or
       - [ ] fix view() members in Container not to depend on conversion to const op in view (make View a member union??)
       - [ ] fix SmallView/SmallArray after the same pattern
       - [ ] fix RA_DEF_ASSIGNOPS return type and reuse that and RA_DEF_ASSIGNOPS_SELF in View
-    - [ ] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
+    - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
       - Appears to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
       - Looks good in v20 in g++-11, but bad in 12/13. Bummer.
+      - Investigated & resolved in e297ee0561a647065fb5b92880fe0f994340595c ss.
     - [ ] Small/Big unification
     - [X] size_s, rank_s in Ryn:: are broken [ra7]
     - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
@@ -27,12 +28,13 @@ checkbox [C-ct] flip TODO
     - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
       rank 1, then `A(i)` will return a nested expression instead of preserving
       `A`'s rank.
-    - [ ] beatable subscripts are not beaten if mixed with non-beatable
-      subscripts. E.g. in A(vector, iota, vector) the iota isn't beaten.
+    - [ ] beatable subscripts are not beaten if mixed with non-beatable subscripts. E.g. in
+      A(vector, iota, vector) the iota isn't beaten. (This is related to 'subscripting
+      inconsistencies' above).
     - [ ] be namespace clean except for possibly complex.hh.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
-  - [-] Features [1/8]
+  - [-] Features [1/10]
     - [ ] Can choose iteration order in plyers. Order is already explicit, just need to expose it.
     - [ ] Merge Ptr and Iota. Why need more than one rank 1 IteratorConcept adaptor.
     - [-] Deduction guides, e.g. ra::Small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
@@ -69,10 +71,11 @@ checkbox [C-ct] flip TODO
       - [X] For Big/View in unbeatable subscripts <2023-07-05 Wed 12:34>
       - [-] For Small/SmallView
         - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
-        - [ ] Iota
+        - [ ] Iota. But Iota args need to integral constants for this to work.
       - [ ] Optimize iota(len...) + iota(len...)
   - [ ] Performance [0/1]
     - [ ] bench/bench-stencil* is weird.
+    - [ ] Bigd cases in bench-at.
   - [X] Error report, debugging [3/3]
     - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/ra-12.cc
       * This was fixed between v8 and v10, see examples/throw.cc.
@@ -93,7 +96,7 @@ checkbox [C-ct] flip TODO
     - [ ] Complete section on internals
     - [ ] Complete section on other languages, libraries
     - [ ] Describe xreferenced issues in doc ([raxx], etc.)
-  - [ ] Other [0/2]
+  - [ ] Other [0/3]
     - [ ] Reconsider len/len_s etc.
       Same as there are static/nonstatic versions of keep_step, we could remove len_s/rank_s use staticness of len/rank instead of ANY/ANY. A problem with this is that len_s lets me return ANY for some axes and finite for others and to do that with just len() would require len(integral constant) overloads possibly -- len(int k) cannot be static or not depending on k.
     - [ ] Review Container constructors. Why do we need (&) when we have (const &)?
