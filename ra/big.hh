@@ -9,6 +9,7 @@
 
 #pragma once
 #include "small.hh"
+#include "../test/svector.hh"
 #include <memory>
 
 namespace ra {
@@ -18,7 +19,7 @@ struct Dim { dim_t len, step; };
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim)
 {
-    o << "[Dim " << dim.len << " " << dim.step << "]"; return o;
+    return (o << "[Dim " << dim.len << " " << dim.step << "]");
 }
 
 
@@ -53,7 +54,7 @@ struct CellBig
     [[no_unique_address]] Spec const dspec = {};
 
     constexpr static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ssize(dimv), dspec); }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(std::ssize(dimv), dspec); }
     constexpr static rank_t rank() requires (ANY!=framer) { return framer; }
     // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
@@ -70,7 +71,7 @@ struct CellBig
     {
 // see STLIterator for the case of dimv_[0]=0, etc. [ra12].
         c.cp = cp_;
-        rank_t dcellr = rank_cell(ssize(dimv), dspec);
+        rank_t dcellr = rank_cell(std::ssize(dimv), dspec);
         rank_t dframer = this->rank();
         RA_CHECK(0<=dframer && 0<=dcellr, "Bad cell rank ", dcellr, " for array rank ", ssize(dimv), ").");
         resize(c.dimv, dcellr);
@@ -151,7 +152,7 @@ braces_shape(braces<T, rank> const & l)
 template <class T, rank_t RANK>
 struct View
 {
-    using Dimv = std::conditional_t<RANK==ANY, std::vector<Dim>, Small<Dim, RANK==ANY ? 0 : RANK>>;
+    using Dimv = std::conditional_t<RANK==ANY, vector<Dim>, Small<Dim, RANK==ANY ? 0 : RANK>>;
 
     Dimv dimv;
     T * cp;
@@ -384,11 +385,23 @@ struct View
 // Container types
 // --------------------
 
+// std::vector-like
 template <class V>
 struct storage_traits
 {
+    using T = V::value_type;
+    static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
+    constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(n); }
+    constexpr static T const * data(V const & v) { return v.data(); }
+    constexpr static T * data(V & v) { return v.data(); }
+};
+
+template <class P>
+struct storage_traits<std::unique_ptr<P>>
+{
+    using V = std::unique_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    constexpr static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
+    constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
     constexpr static T const * data(V const & v) { return v.get(); }
     constexpr static T * data(V & v) { return v.get(); }
 };
@@ -398,19 +411,9 @@ struct storage_traits<std::shared_ptr<P>>
 {
     using V = std::shared_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    constexpr static V create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
+    constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
     constexpr static T const * data(V const & v) { return v.get(); }
     constexpr static T * data(V & v) { return v.get(); }
-};
-
-template <class T_, class A>
-struct storage_traits<std::vector<T_, A>>
-{
-    using T = T_;
-    static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
-    constexpr static std::vector<T, A> create(dim_t n) { return std::vector<T, A>(n); }
-    constexpr static T const * data(std::vector<T, A> const & v) { return v.data(); }
-    constexpr static T * data(std::vector<T, A> & v) { return v.data(); }
 };
 
 template <class T, rank_t RANK>
@@ -654,16 +657,16 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A> constexpr decltype(auto) operator[](A && ... a) const { return view()(std::forward<A>(a) ...); }
     template <class I> constexpr decltype(auto) at(I && i) { return view().at(std::forward<I>(i)); }
     template <class I> constexpr decltype(auto) at(I && i) const { return view().at(std::forward<I>(i)); }
-    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
-    template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
-    constexpr operator T & () { return view(); }
-    constexpr operator T const & () const { return view(); }
-
-// Container is always compact/row-major, so STL-like iterators can be raw pointers. TODO But .iter() should also be able to benefit from this constraint, and the check should be faster for some cases (like RANK==1).
+// container is always compact/row-major, so STL-like iterators can be raw pointers.
     constexpr auto begin() { assert(is_c_order(*this)); return view().data(); }
     constexpr auto begin() const { assert(is_c_order(*this)); return view().data(); }
     constexpr auto end() { return view().data()+this->size(); }
     constexpr auto end() const { return view().data()+this->size(); }
+// FIXME size is redundant e.g. for Store = std::vector.
+    template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), View::size()); } else { return view().template iter<c>(); } }
+    template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), View::size()); } else { return view().template iter<c>(); } }
+    constexpr operator T & () { return view(); }
+    constexpr operator T const & () const { return view(); }
 };
 
 template <class Store, rank_t RANKA, rank_t RANKB>
@@ -717,6 +720,7 @@ struct default_init_allocator: public A
 
 // Beyond this, we probably should have fixed-size (~std::dynarray), resizeable (~std::vector).
 template <class T, rank_t RANK=ANY> using Big = Container<std::vector<T, default_init_allocator<T>>, RANK>;
+// template <class T, rank_t RANK=ANY> using Big = Container<vector<T>, RANK>;
 template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
