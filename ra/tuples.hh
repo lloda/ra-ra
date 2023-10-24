@@ -345,14 +345,14 @@ template <class C, class T>
 constexpr auto
 tuple_values()
 {
-    return std::apply([](auto ... t) { return std::array<C, std::tuple_size_v<T>> { decltype(t)::value ... }; }, T {});
+    return std::apply([](auto ... t) { return std::array<C, std::tuple_size_v<T>> { C(t) ... }; }, T {});
 }
 
 template <class C, class T, class I>
 constexpr C
 map_indices(I const & i)
 {
-    return std::apply([&i](auto ... t) { return std::array<C, std::tuple_size_v<T>> { i[decltype(t)::value] ... }; }, T {});
+    return std::apply([&i](auto ... t) { return std::array<C, std::tuple_size_v<T>> { i[t] ... }; }, T {});
 };
 
 template <class T, int k=0>

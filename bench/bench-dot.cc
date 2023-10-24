@@ -120,7 +120,7 @@ int main()
                 real y(0.);
                 auto bv = Benchmark().repeats(reps).runs(3).run([&]() { y += f(A, B); });
                 tr.info(Benchmark::avg(bv)/M/1e-9, " ns [", std::setprecision(3), Benchmark::stddev(bv)/M/1e-9, "] ", tag)
-                    .test_rel_error(a*b*M*reps*3, y, rspec);
+                    .test_rel(a*b*M*reps*3, y, rspec);
             };
 
         auto f_small_indexed_1 = [](auto && A, auto && B)
@@ -213,7 +213,7 @@ int main()
                      real x = 0.;
                      auto bv = Benchmark().repeats(reps).runs(3).run([&]() { x += f(a, b); });
                      tr.info(Benchmark::avg(bv)/1e-9, " ns [", std::setprecision(3), Benchmark::stddev(bv)/1e-9, "] ", f.name)
-                         .test_rel_error(ref*3, x, rspec);
+                         .test_rel(ref*3, x, rspec);
                  };
 #define BENCH(f) bench(A, B, ref, rspec, N, f {});
     tr.section("std::vector<>");

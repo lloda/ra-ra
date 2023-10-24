@@ -9,18 +9,35 @@
 
 #pragma once
 #include "small.hh"
-#include "../test/svector.hh"
 #include <memory>
 
 namespace ra {
 
-struct Dim { dim_t len, step; };
-
-inline std::ostream &
-operator<<(std::ostream & o, Dim const & dim)
+// Default storage for Big - see https://stackoverflow.com/a/21028912
+// Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
+template <typename T, typename A=std::allocator<T>>
+struct default_init_allocator: public A
 {
-    return (o << "[Dim " << dim.len << " " << dim.step << "]");
-}
+    using a_t = std::allocator_traits<A>;
+    using A::A;
+
+    template <typename U>
+    struct rebind
+    {
+        using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
+    };
+
+    template <typename U>
+    void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
+    {
+        ::new(static_cast<void *>(ptr)) U;
+    }
+    template <typename U, typename... Args>
+    void construct(U * ptr, Args &&... args)
+    {
+        a_t::construct(static_cast<A &>(*this), ptr, std::forward<Args>(args)...);
+    }
+};
 
 
 // --------------------
@@ -30,47 +47,41 @@ operator<<(std::ostream & o, Dim const & dim)
 template <class T, rank_t RANK=ANY> struct View;
 
 // TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
-// TODO Clear up Dimv's type. Should I use span/Ptr? Avoid copying c in flat().
-template <class V, class Spec=ic_t<0>>
+// TODO Clear up Dimv's type. Should I use span/Ptr? Avoid copying c in flat/at.
+template <class T, class Dimv, class Spec=ic_t<0>>
 struct CellBig
 {
     constexpr static rank_t spec = maybe_any<Spec>;
-    constexpr static rank_t fullr = ra::rank_s<V>();
+    constexpr static rank_t fullr = size_s<Dimv>();
     constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
     constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
     static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
     static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
 
-    using Dimv_ = typename std::decay_t<V>::Dimv;
-// FIXME necessary for some cases of from() [ra14]. Cf https://stackoverflow.com/a/8609226
-    using Dimv = std::conditional_t<std::is_lvalue_reference_v<V>, Dimv_ const &, Dimv_>;
+    using ctype = View<T, cellr>;
+    using value_type = std::conditional_t<0==cellr, T, ctype>;
+
+    ctype c;
     Dimv dimv;
-
-    using atom_type = std::remove_reference_t<decltype(*(std::declval<V>().data()))>;
-    using cell_type = View<atom_type, cellr>;
-    using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
-
-    cell_type c;
     [[no_unique_address]] Spec const dspec = {};
 
     constexpr static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(std::ssize(dimv), dspec); }
     constexpr static rank_t rank() requires (ANY!=framer) { return framer; }
-    // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
-    constexpr dim_t len(int k) const { return dimv[k].len; }
+    constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic pop
     constexpr static dim_t len_s(int k) { return ANY; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
 
-    constexpr CellBig(Dimv const & dimv_, atom_type * cp_, Spec dspec_ = Spec {})
+    constexpr CellBig(T * cp, Dimv const & dimv_, Spec dspec_ = Spec {})
         : dimv(dimv_), dspec(dspec_)
     {
 // see STLIterator for the case of dimv_[0]=0, etc. [ra12].
-        c.cp = cp_;
+        c.cp = cp;
         rank_t dcellr = rank_cell(std::ssize(dimv), dspec);
         rank_t dframer = this->rank();
         RA_CHECK(0<=dframer && 0<=dcellr, "Bad cell rank ", dcellr, " for array rank ", ssize(dimv), ").");
@@ -88,7 +99,7 @@ struct CellBig
         if constexpr (0==cellr) {
             return c.cp;
         } else {
-            return CellFlat<cell_type> { c };
+            return CellFlat<ctype> { c };
         }
     }
     constexpr decltype(auto)
@@ -98,7 +109,8 @@ struct CellBig
         if constexpr (0==cellr) {
             return c.cp[d];
         } else {
-            return cell_type { c.dimv, c.cp + d };
+            ctype cc(c); cc.cp += d;
+            return cc;
         }
     }
 };
@@ -152,7 +164,7 @@ braces_shape(braces<T, rank> const & l)
 template <class T, rank_t RANK>
 struct View
 {
-    using Dimv = std::conditional_t<RANK==ANY, vector<Dim>, Small<Dim, RANK==ANY ? 0 : RANK>>;
+    using Dimv = std::conditional_t<RANK==ANY, std::vector<Dim>, Small<Dim, RANK==ANY ? 0 : RANK>>;
 
     Dimv dimv;
     T * cp;
@@ -233,13 +245,13 @@ struct View
 
     constexpr bool const empty() const { return 0==size(); } // TODO Optimize
 
-    template <rank_t c=0> constexpr auto iter() const && { return ra::CellBig<View<T, RANK>, ic_t<c>>(std::move(dimv), cp); }
-    template <rank_t c=0> constexpr auto iter() const & { return ra::CellBig<View<T, RANK> &, ic_t<c>>(dimv, cp); }
-    constexpr auto iter(rank_t c) const && { return ra::CellBig<View<T, RANK>, dim_t>(std::move(dimv), cp, c); }
-    constexpr auto iter(rank_t c) const & { return ra::CellBig<View<T, RANK> &, dim_t>(dimv, cp, c); }
-    constexpr auto begin() const { return STLIterator(iter()); }
-// dimv is arbitrary. FIXME do something cheaper
-    constexpr auto end() const { return STLIterator(decltype(iter())(dimv, nullptr)); }
+    template <rank_t c=0> constexpr auto iter() const && { return CellBig<T, Dimv, ic_t<c>>(cp, std::move(dimv)); }
+    template <rank_t c=0> constexpr auto iter() const & { return CellBig<T, Dimv const &, ic_t<c>>(cp, dimv); }
+    constexpr auto iter(rank_t c) const && { return CellBig<T, Dimv, dim_t>(cp, std::move(dimv), c); }
+    constexpr auto iter(rank_t c) const & { return CellBig<T, Dimv const &, dim_t>(cp, dimv, c); }
+// FIXME [ra17] should return a static object. Dimv should never be used, check also need for Dim's initializers.
+    constexpr decltype(auto) static end() { return STLIterator(CellBig<T, Dimv const &>(nullptr, Dimv {})); }
+    constexpr auto begin() const { return STLIterator(CellBig<T, Dimv const &>(cp, dimv)); }
 
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
@@ -316,7 +328,7 @@ struct View
             for (int k = (0==stretch ? (0 + ... + beatable<I>.dst) : subrank); k<subrank; ++k) {
                 sub.dimv[k] = dimv[k-extended];
             }
-// may return rank 0 view if RANK==ANY; in that case rely on conversion to scalar.
+// if RANK==ANY then rank may be 0
             return sub;
 // TODO partial beating
         } else {
@@ -691,32 +703,6 @@ swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
     std::swap(a.store, b.store);
     std::swap(a.cp, b.cp);
 }
-
-// Default storage for Big - see https://stackoverflow.com/a/21028912
-// Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
-template <typename T, typename A=std::allocator<T>>
-struct default_init_allocator: public A
-{
-    using a_t = std::allocator_traits<A>;
-    using A::A;
-
-    template <typename U>
-    struct rebind
-    {
-        using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
-    };
-
-    template <typename U>
-    void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
-    {
-        ::new(static_cast<void *>(ptr)) U;
-    }
-    template <typename U, typename... Args>
-    void construct(U * ptr, Args &&... args)
-    {
-        a_t::construct(static_cast<A &>(*this), ptr, std::forward<Args>(args)...);
-    }
-};
 
 // Beyond this, we probably should have fixed-size (~std::dynarray), resizeable (~std::vector).
 template <class T, rank_t RANK=ANY> using Big = Container<std::vector<T, default_init_allocator<T>>, RANK>;

@@ -397,8 +397,8 @@ struct STLIterator
               }
           }())
     {
-// [ra12] Null p_ so begin()==end() for empty range. ply() uses lens so this doesn't matter.
-        if (0==ra::size(ii)) {
+// [ra12] Null p_ so begin()==end() for empty range. [ra17] FIXME make 0==size() more efficient.
+        if (ii.c.cp && 0==ra::size(ii)) {
             ii.c.cp = nullptr;
         }
     };

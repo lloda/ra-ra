@@ -25,6 +25,11 @@ rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* independent */ : r==ANY ? 
 constexpr rank_t
 rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* independent */ : -cr; }
 
+struct Dim { dim_t len=0, step=0; }; // cf View::end() [ra17]
+
+inline std::ostream &
+operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
+
 
 // --------------------
 // Slicing helpers
@@ -151,43 +156,39 @@ struct CellFlat
 };
 
 // TODO Refactor with CellBig / STLIterator
-// V is always SmallView<...>
-template <class V, rank_t spec=0>
+template <class T, class Dimv, rank_t spec=0>
 struct CellSmall
 {
+    constexpr static auto dimv = Dimv::value;
     static_assert(spec!=ANY && spec!=BAD, "Bad cell rank.");
-    constexpr static rank_t fullr = ra::rank_s<V>();
+    constexpr static rank_t fullr = ssize(dimv);
     constexpr static rank_t cellr = rank_cell(fullr, spec);
     constexpr static rank_t framer = rank_frame(fullr, spec);
     static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
     static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
     static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
-    using cell_lens = mp::drop<typename V::lens, framer>;
-    using cell_steps = mp::drop<typename V::steps, framer>;
-    using lens = mp::take<typename V::lens, framer>; // these are steps on atom_type * p !!
-    using steps = mp::take<typename V::steps, framer>;
+// FIXME Small take dimv instead of lens/steps
+    using clens = decltype(std::apply([](auto ... i) { return std::tuple<int_c<dimv[i].len> ...> {}; }, mp::iota<cellr, framer> {}));
+    using csteps = decltype(std::apply([](auto ... i) { return std::tuple<int_c<dimv[i].step> ...> {}; }, mp::iota<cellr, framer> {}));
+    using ctype = SmallView<T, clens, csteps>;
+    using value_type = std::conditional_t<0==cellr, T, ctype>;
 
-    using atom_type = std::remove_reference_t<decltype(*(std::declval<V>().data()))>;
-    using cell_type = SmallView<atom_type, cell_lens, cell_steps>;
-    using value_type = std::conditional_t<0==cellr, atom_type, cell_type>;
-
-    cell_type c;
+    ctype c;
 
     constexpr static rank_t rank_s() { return framer; }
     constexpr static rank_t rank() { return framer; }
-    // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic push // gcc 13.2
 #pragma GCC diagnostic warning "-Warray-bounds"
-    constexpr static dim_t len(int k) { return V::len(k); }
+    constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
 #pragma GCC diagnostic pop
     constexpr static dim_t len_s(int k) { return len(k); }
-    constexpr static dim_t step(int k) { return k<rank() ? V::step(k) : 0; }
+    constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
 
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
-    constexpr CellSmall(atom_type * p_): c { p_ } {}
+    constexpr CellSmall(T * p): c { p } {}
     constexpr CellSmall(CellSmall const & ci) = default;
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
@@ -197,7 +198,7 @@ struct CellSmall
         if constexpr (0==cellr) {
             return c.cp;
         } else {
-            return CellFlat<cell_type> { c };
+            return CellFlat<ctype> { c };
         }
     }
     constexpr decltype(auto)
@@ -207,7 +208,8 @@ struct CellSmall
         if constexpr (0==cellr) {
             return c.cp[d];
         } else {
-            return cell_type(c.cp + d);
+            ctype cc(c); cc.cp += d;
+            return cc;
         }
     }
 };
@@ -260,6 +262,8 @@ struct SmallBase
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
     constexpr static auto slens = mp::tuple_values<dim_t, lens>();
     constexpr static auto ssteps = mp::tuple_values<dim_t, steps>();
+    constexpr static auto dimv = std::apply([](auto && ... i) { return std::array<Dim, slens.size()> { Dim { slens[i], ssteps[i] } ... }; },
+                                            mp::iota<slens.size()> {});
 
     constexpr static rank_t rank() { return mp::len<lens>; }
     constexpr static rank_t rank_s() { return mp::len<lens>; }
@@ -398,17 +402,16 @@ struct SmallBase
         return static_cast<Child &>(*this);
     }
 
-    template <rank_t c=0> using iterator = ra::CellSmall<SmallView<T, lens, steps>, c>;
-    template <rank_t c=0> using const_iterator = ra::CellSmall<SmallView<T const, lens, steps>, c>;
+    template <rank_t c=0> using iterator = CellSmall<T, ic_t<dimv>, c>;
+    template <rank_t c=0> using const_iterator = CellSmall<T const, ic_t<dimv>, c>;
     template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
-// FIXME extend for cellr!=0?
-    constexpr static bool steps_default = std::same_as<steps, default_steps<lens>>;
-    constexpr auto begin() const { if constexpr (steps_default) return data(); else return STLIterator(iter()); }
-    constexpr auto begin() { if constexpr (steps_default) return data(); else return STLIterator(iter()); }
-    constexpr auto end() const { if constexpr (steps_default) return data()+size(); else return STLIterator(const_iterator<0>(nullptr)); }
-    constexpr auto end() { if constexpr (steps_default) return data()+size(); else return STLIterator(iterator<0>(nullptr)); }
+    constexpr static bool def = std::same_as<steps, default_steps<lens>>;
+    constexpr auto begin() const { if constexpr (def) return data(); else return STLIterator(iter()); }
+    constexpr auto begin() { if constexpr (def) return data(); else return STLIterator(iter()); }
+    constexpr auto end() const { if constexpr (def) return data()+size(); else return STLIterator(const_iterator<0>(nullptr)); }
+    constexpr auto end() { if constexpr (def) return data()+size(); else return STLIterator(iterator<0>(nullptr)); }
 };
 
 
@@ -680,7 +683,7 @@ explode(A && a_)
 // the returned type has steps in super_t, but to support general steps we'd need steps in T. Maybe FIXME?
     decltype(auto) a = a_.view();
     using AA = std::decay_t<decltype(a)>;
-    static_assert(super_t::steps_default);
+    static_assert(super_t::def);
     constexpr rank_t ra = AA::rank_s();
     constexpr rank_t rb = super_t::rank_s();
     static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);

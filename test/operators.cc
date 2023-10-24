@@ -29,10 +29,10 @@ int main()
             {                                                           \
                 using T = decltype(token);                              \
                 using TY = decltype(OP(std::declval<T>()));             \
-                tr.info("scalar-scalar").test_abs_error(OP(T(x)), TY(y), err); \
-                tr.info("array(0)-scalar").test_abs_error(OP(ra::Unique<T, 0>(x)), TY(y), err); \
-                tr.info("array(var)-scalar").test_abs_error(OP(ra::Unique<T>(x)), TY(y), err); \
-                tr.info("array(1)-array(1)").test_abs_error(OP(vx), vy, err); \
+                tr.info("scalar-scalar").test_abs(OP(T(x)), TY(y), err); \
+                tr.info("array(0)-scalar").test_abs(OP(ra::Unique<T, 0>(x)), TY(y), err); \
+                tr.info("array(var)-scalar").test_abs(OP(ra::Unique<T>(x)), TY(y), err); \
+                tr.info("array(1)-array(1)").test_abs(OP(vx), vy, err); \
             };
         {
             DEF_TEST_UNARY_OP(abs);

@@ -32,17 +32,17 @@ int main()
         std::ostream devnull(nullptr);
         TestRecorder ut(devnull);
         tr.test(0==ut.summary());
-        ut.test_rel_error(0, QNAN, 1e-15);
+        ut.test_rel(0, QNAN, 1e-15);
         tr.test(1==ut.summary());
-        ut.test_abs_error(0, QNAN, 1e-15);
+        ut.test_abs(0, QNAN, 1e-15);
         tr.test(2==ut.summary());
     }
     tr.section("inf in numeric tests");
     {
         auto test = [&tr](bool fail, auto ref, auto a, auto err)
         {
-            tr.expectfail(fail).test_abs_error(ref, a, err);
-            tr.expectfail(fail).test_rel_error(ref, a, err);
+            tr.expectfail(fail).test_abs(ref, a, err);
+            tr.expectfail(fail).test_rel(ref, a, err);
         };
         test(false, QNAN, QNAN, 0.);
         test(false, PINF, PINF, 0.);

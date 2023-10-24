@@ -70,8 +70,8 @@ template <class Case, class X>
 void test1(TestRecorder & tr, std::string info, X && x, real const rspec=2e-15)
 {
     for (unsigned int i=0; i!=x.size(); ++i) {
-        tr.info(info, " ", i, " f vs Dual").test_rel_error(Case::f(x[i]), Case::f(dual(x[i], 1.)).re, rspec);
-        tr.info(info, " ", i, " df vs Dual").test_rel_error(Case::df(x[i]), Case::f(dual(x[i], 1.)).du, rspec);
+        tr.info(info, " ", i, " f vs Dual").test_rel(Case::f(x[i]), Case::f(dual(x[i], 1.)).re, rspec);
+        tr.info(info, " ", i, " df vs Dual").test_rel(Case::df(x[i]), Case::f(dual(x[i], 1.)).du, rspec);
     }
 }
 

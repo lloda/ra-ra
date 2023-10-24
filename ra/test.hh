@@ -74,10 +74,12 @@ struct TestRecorder
     TestRecorder & strictshape(bool s=true) { willstrictshape = s; return *this; }
     TestRecorder & expectfail(bool s=true) { willexpectfail = s; return *this; }
 
+#define RA_CURRENT_LOC std::source_location const loc = std::source_location::current()
+#define RA_LAZYINFO(...) [&] { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
+
     template <class A, class B>
     void
-    test(bool c, A && info_full, B && info_min,
-         std::source_location const loc = std::source_location::current())
+    test(bool c, A && info_full, B && info_min, RA_CURRENT_LOC)
     {
         switch (verbose) {
         case QUIET: {
@@ -114,28 +116,38 @@ struct TestRecorder
         willstrictshape = willskip = willexpectfail = false;
     }
 
-#define LAZYINFO(...) [&] { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
-
     template <class A>
     void
-    test(bool c, A && info_full,
-         std::source_location const loc = std::source_location::current())
+    test(bool c, A && info_full, RA_CURRENT_LOC)
     {
         test(c, info_full, info_full, loc);
     }
     void
-    test(bool c,
-         std::source_location const loc = std::source_location::current())
+    test(bool c, RA_CURRENT_LOC)
     {
-        test(c, LAZYINFO(""), loc);
+        test(c, RA_LAZYINFO(""), loc);
+    }
+
+    template <class A, class B, class Comp>
+    bool
+    test_scomp(A && a, B && b, Comp && comp, char const * msg, RA_CURRENT_LOC)
+    {
+        bool c = comp(a, b);
+        test(c, RA_LAZYINFO(b, " (", msg, " ", a, ")"), RA_LAZYINFO(""), loc);
+        return c;
+    }
+    template <class R, class A>
+    bool
+    test_seq(R && ref, A && a, RA_CURRENT_LOC)
+    {
+        return test_scomp(ref, a, [](auto && a, auto && b) { return a==b; }, "should be strictly ==", loc);
     }
 
 // Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
 // where() is used to match shapes if either REF or A don't't have one.
     template <class A, class B, class Comp>
     bool
-    test_comp(A && a, B && b, Comp && comp, char const * msg,
-              std::source_location const loc = std::source_location::current())
+    test_comp(A && a, B && b, Comp && comp, char const * msg, RA_CURRENT_LOC)
     {
         if (willstrictshape
             ? [&] {
@@ -148,63 +160,38 @@ struct TestRecorder
             : agree_op(comp, a, b)) {
 
             bool c = every(ra::map(comp, a, b));
-            test(c, LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
-                 LAZYINFO(""), loc);
+            test(c,
+                 RA_LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
+                 RA_LAZYINFO(""),
+                 loc);
             return c;
         } else {
             test(false,
-                 LAZYINFO("Mismatched args [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]",
-                          willstrictshape ? " (strict shape)" : ""),
-                 LAZYINFO("Shape mismatch", willstrictshape ? " (strict shape)" : ""),
+                 RA_LAZYINFO("Mismatched args [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]",
+                             willstrictshape ? " (strict shape)" : ""),
+                 RA_LAZYINFO("Shape mismatch", willstrictshape ? " (strict shape)" : ""),
                  loc);
             return false;
         }
     }
-    template <class R, class A>
-    bool
-    test_eq(R && ref, A && a,
-            std::source_location const loc = std::source_location::current())
-    {
-        return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b) { return every(a==b); },
-                         "should be ==", loc);
+#define RA_TEST_COMP(NAME, OP)                                          \
+    template <class R, class A>                                         \
+    bool                                                                \
+    JOIN(test_, NAME)(R && ref, A && a, RA_CURRENT_LOC)                 \
+    {                                                                   \
+        return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b) { return every(a OP b); }, \
+                         "should be " STRINGIZE(OP), loc);              \
     }
-    template <class A, class B>
-    bool
-    test_lt(A && a, B && b,
-            std::source_location const loc = std::source_location::current())
-    {
-        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a<b); },
-                         "should be <", loc);
-    }
-    template <class A, class B>
-    bool
-    test_le(A && a, B && b,
-            std::source_location const loc = std::source_location::current())
-    {
-        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a<=b); },
-                         "should be <=", loc);
-    }
-// These two are included so that the first argument can remain the reference.
-    template <class A, class B>
-    bool
-    test_gt(A && a, B && b,
-            std::source_location const loc = std::source_location::current())
-    {
-        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a>b); },
-                         "should be >", loc);
-    }
-    template <class A, class B>
-    bool
-    test_ge(A && a, B && b,
-            std::source_location const loc = std::source_location::current())
-    {
-        return test_comp(ra::start(a), ra::start(b), [](auto && a, auto && b) { return every(a>=b); },
-                         "should be >=", loc);
-    }
+    RA_TEST_COMP(eq, ==)
+    RA_TEST_COMP(lt, <)
+    RA_TEST_COMP(le, <=)
+    RA_TEST_COMP(gt, >)
+    RA_TEST_COMP(ge, >=)
+#undef RA_TEST_COMP
+
     template <class R, class A>
     double
-    test_rel_error(R && ref, A && a, double req, double level=0,
-                   std::source_location const loc = std::source_location::current())
+    test_rel(R && ref, A && a, double req, double level=0, RA_CURRENT_LOC)
     {
         double e = (level<=0)
             ? amax_strict(where(isfinite(ref),
@@ -218,17 +205,16 @@ struct TestRecorder
                                       where(ref==a, 0., PINF),
                                       where(isnan(a), 0., PINF))));
         test(e<=req,
-             LAZYINFO("rerr (", esc_yellow, "ref", esc_reset, ": ", ref, esc_yellow, ", got", esc_reset, ": ", a,
-                      ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req),
-             LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
-                      ", req. ", req),
+             RA_LAZYINFO("rerr (", esc_yellow, "ref", esc_reset, ": ", ref, esc_yellow, ", got", esc_reset, ": ", a,
+                         ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req),
+             RA_LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
+                         ", req. ", req),
              loc);
         return e;
     }
     template <class R, class A>
     double
-    test_abs_error(R && ref, A && a, double req=0,
-                   std::source_location const loc = std::source_location::current())
+    test_abs(R && ref, A && a, double req=0, RA_CURRENT_LOC)
     {
         double e = amax_strict(where(isfinite(ref),
                                      abs(ref-a),
@@ -236,13 +222,14 @@ struct TestRecorder
                                            where(ref==a, 0., PINF),
                                            where(isnan(a), 0., PINF))));
         test(e<=req,
-             LAZYINFO("aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req),
-             LAZYINFO("aerr: ", format_error(e), ", req. ", req),
+             RA_LAZYINFO("aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req),
+             RA_LAZYINFO("aerr: ", format_error(e), ", req. ", req),
              loc);
         return e;
     }
 
-#undef LAZYINFO
+#undef RA_CURRENT_LOC
+#undef RA_LAZYINFO
 
     int
     summary() const

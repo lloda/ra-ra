@@ -20,8 +20,7 @@ using ra::dual, ra::Dual;
 
 namespace ra {
 
-// Register our type as a scalar with ra:: . This isn't needed to have
-// containers of Dual<>, only to use Dual<>s by themselves as expr terms.
+// not needed to put Dual<> in containers, but needed to use Dual<>s by themselves as expr terms.
 template <class T> constexpr bool is_scalar_def<Dual<T>> = true;
 
 } // namespace ra
@@ -50,29 +49,31 @@ DEFINE_CASE(6, sinh(x)/cosh(x),
 #undef DEFINE_CASE
 
 template <class Case, class X>
-void test1(TestRecorder & tr, std::string const & info, X && x, real const rspec=2e-15)
+void
+test1(TestRecorder & tr, std::string const & info, X && x, real const rspec=2e-15)
 {
     tr.info(info, ": f vs Dual")
-        .test_rel_error(ra::map([](auto && x) { return Case::f(x); }, x),
-                        ra::map([](auto && x) { return Case::f(dual(x, 1.)).re; }, x),
-                        rspec);
+        .test_rel(ra::map([](auto && x) { return Case::f(x); }, x),
+                  ra::map([](auto && x) { return Case::f(dual(x, 1.)).re; }, x),
+                  rspec);
     tr.info(info, ": df vs Dual")
-        .test_rel_error(ra::map([](auto && x) { return Case::df(x); }, x),
-                        ra::map([](auto && x) { return Case::f(dual(x, 1.)).du; }, x),
-                        rspec);
+        .test_rel(ra::map([](auto && x) { return Case::df(x); }, x),
+                  ra::map([](auto && x) { return Case::f(dual(x, 1.)).du; }, x),
+                  rspec);
 }
 
 template <class Case, class D>
-void test2(TestRecorder & tr, std::string const & info, D && d, real const rspec=2e-15)
+void
+test2(TestRecorder & tr, std::string const & info, D && d, real const rspec=2e-15)
 {
     tr.info(info, ": f vs Dual")
-        .test_rel_error(ra::map([](auto && d) { return Case::f(d.re); }, d),
-                        ra::map([](auto && d) { return Case::f(d).re; }, d),
-                        rspec);
+        .test_rel(ra::map([](auto && d) { return Case::f(d.re); }, d),
+                  ra::map([](auto && d) { return Case::f(d).re; }, d),
+                  rspec);
     tr.info(info, ": df vs Dual")
-        .test_rel_error(ra::map([](auto && d) { return Case::df(d.re); }, d),
-                        ra::map([](auto && d) { return Case::f(d).du; }, d),
-                        rspec);
+        .test_rel(ra::map([](auto && d) { return Case::df(d.re); }, d),
+                  ra::map([](auto && d) { return Case::f(d).du; }, d),
+                  rspec);
 }
 
 int main()
@@ -106,11 +107,11 @@ int main()
         auto test3 = [](TestRecorder & tr, std::string const & info, auto && d, real const rspec=2e-15)
             {
                 tr.info(info, ": f vs Dual")
-                .test_rel_error(ra::map([](auto && d) { return cos(d.re); }, d),
+                .test_rel(ra::map([](auto && d) { return cos(d.re); }, d),
                                 ra::map([](auto && d) { return d.re; }, cos(d)),
                                 rspec);
                 tr.info(info, ": df vs Dual")
-                .test_rel_error(ra::map([](auto && d) { return -sin(d.re); }, d),
+                .test_rel(ra::map([](auto && d) { return -sin(d.re); }, d),
                                 ra::map([](auto && d) { return d.du; }, cos(d)),
                                 rspec);
             };

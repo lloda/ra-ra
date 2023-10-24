@@ -72,6 +72,6 @@ int main()
     }
 
     TestRecorder tr(std::cout);
-    tr.quiet().test_rel_error(first_A, A, 0.);
+    tr.quiet().test_rel(first_A, A, 0.);
     return tr.summary();
 }

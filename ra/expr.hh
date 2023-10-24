@@ -243,8 +243,7 @@ struct Reframe
     }
 };
 
-// Optimize no-op case.
-// TODO If A is CellBig, etc. beat Dest directly on it, same for eventual transpose_expr<>.
+// Optimize no-op case. TODO If A is CellBig, etc. beat Dest on it, same for eventual transpose_expr<>.
 
 template <class Dest, class A>
 constexpr decltype(auto)
@@ -317,7 +316,7 @@ template <class V, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
     static_assert(sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
-// TODO -crank::value when the actual verb rank is used (eg to use CellBig<A, that_rank> instead of just begin()).
+// TODO -crank::value when the actual verb rank is used (eg to use CellBig<... that_rank> instead of just begin()).
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
     template <class VV> static decltype(auto) op(VV && v) { return std::forward<VV>(v); }
 };

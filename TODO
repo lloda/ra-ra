@@ -128,7 +128,7 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   14. [ ] CellBig needs to copy its Dimv in some cases, which also complicates View::iter<>. Problem is demonstrated in ra-5.cc.
   15. [ ] Conversion-to-scalar operators for dynamic-rank View().
   16. [ ] Ambiguity in ravel vs nested constructors bc bc 1 converts to int2. Should be explicit (and ravel constructors also).
-  17. [ ]
+  17. [ ] We would like for View::end() to be a free op, until it does we have to do extra checks in STLIterator and init Dim.
   18. [ ]
   19. [ ]
   20. [ ]

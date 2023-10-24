@@ -131,7 +131,7 @@ int main()
                         });
             tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/A.size()/1e-9, " ns [",
                     Benchmark::stddev(bv)/A.size()/1e-9 ,"] ", tag)
-                .test_rel_error(ref, A, 1e-11);
+                .test_rel(ref, A, 1e-11);
         };
 
     ra::Big<real, 3> Aref;

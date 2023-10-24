@@ -55,11 +55,11 @@ int main()
         ra::Big<int, 2> A({3, 5}, 0);
         auto z = demo(A);
         tr.test_eq(5, z.dimv[0].len);
-        tr.test_eq(false, std::is_reference_v<decltype(z)::Dimv>);
+        tr.test_eq(false, std::is_reference_v<decltype(z.dimv)>);
 
         auto y = A(0);
         auto yi = iter<0>(y);
-        tr.test_eq(true, std::is_reference_v<decltype(yi)::Dimv>);
+        tr.test_eq(true, std::is_reference_v<decltype(yi.dimv)>);
     }
 
 // const/nonconst begin :p

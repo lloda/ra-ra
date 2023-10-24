@@ -199,8 +199,8 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
-        ra::CellBig<ra::View<double>> it(r.dimv, r.data());
-        tr.test(r.data()==it.c.data());
+        auto it = r.iter();
+        tr.test_seq(r.data(), it.c.data());
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
@@ -209,7 +209,8 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
-        ra::CellBig<ra::View<double, 1>> it(r.dimv, r.data());
+        auto it = r.iter();
+        tr.test_seq(r.data(), it.c.data());
         std::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }

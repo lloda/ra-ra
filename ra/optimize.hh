@@ -113,8 +113,7 @@ template <class A, class T, dim_t N> constexpr bool match_smallvector =
     std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template iterator<0>>
     || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template const_iterator<0>>;
 
-static_assert(match_smallvector<ra::CellSmall<ra::SmallView<double, mp::int_list<4>, mp::int_list<1>>, 0>,
-                                double, 4>);
+static_assert(match_smallvector<ra::CellSmall<double, ic_t<std::array { Dim { 4, 1 } }>, 0>, double, 4>);
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B>                                         \

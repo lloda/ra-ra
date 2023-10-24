@@ -59,9 +59,9 @@ int main()
     tr.section("norm2");
     {
         ra::Small<real, 2> a {1, 2};
-        tr.test_abs_error(std::sqrt(5.), norm2(a), 1e-15);
+        tr.test_abs(std::sqrt(5.), norm2(a), 1e-15);
         ra::Small<float, 2> b {1, 2};
-        tr.test_abs_error(std::sqrt(5.f), norm2(b), 4e-8);
+        tr.test_abs(std::sqrt(5.f), norm2(b), 4e-8);
         tr.info("type of norm2(floats)").test(std::is_same_v<float, decltype(norm2(b))>);
         tr.info("type of reduce_sqrm(floats)").test(std::is_same_v<float, decltype(reduce_sqrm(b))>);
         tr.info("type of sqrm(floats)").test(std::is_same_v<float, decltype(sqrm(b[0]))>);

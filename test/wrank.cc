@@ -298,7 +298,7 @@ int main()
 
                 f(A, Anext, Astencil);
 
-                tr.info(tag).test_rel_error(ref, A, 1e-11);
+                tr.info(tag).test_rel(ref, A, 1e-11);
             };
 
         ra::Big<real, 2> Aref;
