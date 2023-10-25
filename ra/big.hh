@@ -428,9 +428,9 @@ struct storage_traits<std::shared_ptr<P>>
     constexpr static T * data(V & v) { return v.get(); }
 };
 
-template <class T, rank_t RANK>
+template <class V>
 constexpr bool
-is_c_order(View<T, RANK> const & a)
+is_c_order(V const & a)
 {
     dim_t s = 1;
     for (int i=a.rank()-1; i>=0; --i) {

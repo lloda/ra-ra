@@ -256,23 +256,19 @@ struct SmallBase
     using T = T_;
     using Child = Child_<T, lens, steps>;
 
-    template <class TT> using BadDimension = ic_t<(TT::value<0 || TT::value==ANY || TT::value==BAD)>;
-    static_assert(!mp::apply<mp::orb, mp::map<BadDimension, lens>>::value, "Negative dimensions.");
-// TODO static steps check
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
-    constexpr static auto slens = mp::tuple_values<dim_t, lens>();
-    constexpr static auto ssteps = mp::tuple_values<dim_t, steps>();
-    constexpr static auto dimv = std::apply([](auto && ... i) { return std::array<Dim, slens.size()> { Dim { slens[i], ssteps[i] } ... }; },
-                                            mp::iota<slens.size()> {});
-
-    constexpr static rank_t rank() { return mp::len<lens>; }
-    constexpr static rank_t rank_s() { return mp::len<lens>; }
-    constexpr static dim_t size() { return mp::apply<mp::prod, lens>::value; }
-    constexpr static dim_t size_s() { return size(); }
-    constexpr static dim_t len_s(int k) { return slens[k]; }
-    constexpr static dim_t len(int k) { return len_s(k); }
-    constexpr static dim_t step(int k) { return ssteps[k]; }
-    constexpr static decltype(auto) shape() { return SmallView<ra::dim_t const, mp::int_list<rank_s()>, mp::int_list<1>>(slens.data()); }
+    consteval static rank_t rank() { return mp::len<lens>; }
+    constexpr static auto dimv = std::apply([](auto ... i) { return std::array<Dim, rank()> { Dim { mp::ref<lens, i>::value, mp::ref<steps, i>::value } ... }; }, mp::iota<rank()> {});
+    constexpr static auto theshape = mp::tuple_values<dim_t, lens>();
+    consteval static dim_t size() { return std::apply([](auto ... s) { return (s * ... * 1); }, theshape); }
+    constexpr static dim_t len(int k) { return dimv[k].len; }
+    consteval static rank_t rank_s() { return rank(); }
+    consteval static dim_t size_s() { return size(); }
+    constexpr static dim_t len_s(int k) { return len(k); }
+    constexpr static dim_t step(int k) { return dimv[k].step; }
+    consteval static auto shape() { return SmallView<ra::dim_t const, mp::int_list<rank()>, mp::int_list<1>>(theshape.data()); }
+// TODO check steps
+    static_assert(!std::apply([](auto ... s) { return ((0>s || ANY==s || BAD==s) || ...); }, theshape), "Bad dimensions.");
 
     constexpr static bool convertible_to_scalar = (1==size()); // allowed for 1 for coord types
 
@@ -280,9 +276,9 @@ struct SmallBase
     constexpr static dim_t
     select(dim_t i)
     {
-        RA_CHECK(inside(i, slens[k]),
-                 "Out of range for len[", k, "]=", slens[k], ": ", i, ".");
-        return ssteps[k]*i;
+        RA_CHECK(inside(i, len(k)),
+                 "Out of range for len[", k, "]=", len(k), ": ", i, ".");
+        return step(k)*i;
     };
 
     template <int k, class I> requires (is_iota<I>)
@@ -291,13 +287,13 @@ struct SmallBase
     {
         if constexpr (0==i.n) {
             return 0;
-        } else if constexpr ((1==i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > slens[k]) { // FIXME c++23 std::abs
+        } else if constexpr ((1==i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME c++23 std::abs
             static_assert(always_false<I>, "Out of range.");
         } else {
-            RA_CHECK(inside(i, slens[k]),
-                     "Out of range for len[", k, "]=", slens[k], ": iota [", i.n, " ", i.i, " ", i.s, "]");
+            RA_CHECK(inside(i, len(k)),
+                     "Out of range for len[", k, "]=", len(k), ": iota [", i.n, " ", i.i, " ", i.s, "]");
         }
-        return ssteps[k]*i.i;
+        return step(k)*i.i;
     }
 
     template <int k, int n>
@@ -312,7 +308,7 @@ struct SmallBase
     select_loop(I0 && i0, I && ... i)
     {
         constexpr int nn = (BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
-        return select<k>(with_len(ic<slens[k]>, std::forward<I0>(i0)))
+        return select<k>(with_len(ic<len(k)>, std::forward<I0>(i0)))
             + select_loop<k + nn>(std::forward<I>(i) ...);
     }
 
