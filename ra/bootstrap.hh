@@ -90,20 +90,6 @@ struct noarg {}; // used in array constructors to mean ‘don't instantiate’
 template <class C> struct Scalar; // for type predicates
 template <class V> struct ra_traits_def;
 
-template <class S> struct default_steps_ {};
-template <class tend> struct default_steps_<std::tuple<tend>> { using type = mp::int_list<1>; };
-template <> struct default_steps_<std::tuple<>> { using type = mp::int_list<>; };
-
-template <class t0, class t1, class ... ti>
-struct default_steps_<std::tuple<t0, t1, ti ...>>
-{
-    using rest = typename default_steps_<std::tuple<t1, ti ...>>::type;
-    constexpr static int step0 = t1::value * mp::first<rest>::value;
-    using type = mp::cons<ic_t<step0>, rest>;
-};
-
-template <class S> using default_steps = typename default_steps_<S>::type;
-
 template <int n=BAD> struct dots_t
 {
     static_assert(n>=0 || BAD==n);
@@ -120,7 +106,7 @@ template <int n> struct insert_t
 
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
-// For View / SmallBase. TODO on foreign vectors? arbitrary exprs?
+// For views. TODO on foreign vectors? arbitrary exprs?
 template <int crank, class A> constexpr auto iter(A && a) { return std::forward<A>(a).template iter<crank>(); }
 
 // Used in big.hh (selectors, etc).
@@ -130,65 +116,6 @@ template <class A, class ... I> constexpr auto from(A && a, I && ... i);
 constexpr bool any(bool const x) { return x; }
 constexpr bool every(bool const x) { return x; }
 constexpr bool odd(unsigned int N) { return N & 1; }
-
-
-// ---------------------
-// nested braces for Small initializers
-// ---------------------
-// FIXME belongs in ra/small.hh, was here so shape() could return ra:: types.
-
-// SmallArray has 4 special constructors:
-// 1. The empty constructor.
-// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which isn't required purely for container use.
-// 3. The ravel constructor.
-// 4. The nested constructor.
-// When the rank is 1 or the first dimension is empty, several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of noarg.
-
-template <class T, class lens>
-struct nested_tuple;
-
-// ambiguity with empty constructor and scalar constructor.
-// if len(0) is 0, then prefer empty constructor. if shape is [1] scalar constructor.
-template <class lens> constexpr bool nonest = (mp::first<lens>::value<1);
-template <> constexpr bool nonest<mp::nil> = true;
-template <> constexpr bool nonest<mp::int_list<1>> = true;
-template <class T, class lens>
-using nested_arg = std::conditional_t<nonest<lens>,
-                                      std::tuple<noarg>, // match SmallArray template
-                                      typename nested_tuple<T, lens>::list>;
-
-// ambiguity with scalar constructors (for rank 0) and nested_tuple (for rank 1).
-template <class T, class lens>
-using ravel_arg = std::conditional_t<((mp::len<lens> <=1) || (mp::apply<mp::prod, lens>::value <= 1)),
-                                     std::tuple<noarg, noarg>, // match SmallArray template
-                                     mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
-
-template <class T, class lens, class steps = default_steps<lens>> struct SmallView; // for CellSmall
-template <class T, class lens, class steps = default_steps<lens>,
-          class nested_arg_ = nested_arg<T, lens>, class ravel_arg_ = ravel_arg<T, lens>>
-struct SmallArray;
-template <class T, dim_t ... lens> using Small = SmallArray<T, mp::int_list<lens ...>>;
-
-template <class T>
-struct nested_tuple<T, mp::nil>
-{
-    using sub = noarg;
-    using list = std::tuple<noarg>; // match the template for SmallArray.
-};
-
-template <class T, int S0>
-struct nested_tuple<T, mp::int_list<S0>>
-{
-    using sub = T;
-    using list = mp::makelist<S0, T>;
-};
-
-template <class T, int S0, int S1, int ... S>
-struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
-{
-    using sub = Small<T, S1, S ...>;
-    using list = mp::makelist<S0, sub>;
-};
 
 
 // --------------

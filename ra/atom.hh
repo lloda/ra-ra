@@ -10,19 +10,15 @@
 #pragma once
 #include <vector>
 #include <utility>
+#include <cassert>
+#include "bootstrap.hh"
 
 
 // --------------------
-// error function
+// what to do on errors. See examples/throw.cc for how to customize.
 // --------------------
 
-#include <cassert>
-#include "bootstrap.hh"
-// If you define your own RA_ASSERT, you might remove this from here.
-#include <iostream>
-
-// https://en.cppreference.com/w/cpp/preprocessor/replace
-// See examples/throw.cc for how to override this RA_ASSERT.
+#include <iostream> // might not be needed with a different RA_ASSERT.
 
 #ifndef RA_ASSERT
 #define RA_ASSERT(cond, ...)                                            \
@@ -86,16 +82,13 @@ size_s()
     } else {
         if constexpr (ANY==rank_s<V>()) {
             return ANY;
-        } else if constexpr (0==rank_s<V>()) { // for non-registered types.
+        } else if constexpr (0==rank_s<V>()) { // also non-registered types
             return 1;
         } else {
             dim_t s = 1;
             for (int i=0; i!=dV::rank_s(); ++i) {
-                if (dim_t ss=dV::len_s(i); ss>=0) {
-                    s *= ss;
-                } else {
-                    return ss; // either ANY or BAD
-                }
+                dim_t ss = dV::len_s(i);
+                if (ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
             }
             return s;
         }
@@ -348,7 +341,7 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
 RA_IS_DEF(is_iota, false)
-// BAD is excluded from beating to allow B = A(... ti ...) to use B's len. FIXME find a way?
+// BAD is excluded from beating to allow B = A(... i ...) to use B's len. FIXME find a way?
 template <class N, class O, class S>
 constexpr bool is_iota_def<Iota<0, N, O, S>> = (BAD != Iota<0, N, O, S>::nn);
 
@@ -393,13 +386,13 @@ template <class T> requires (is_fov<T>)
 constexpr auto
 start(T && t) { return ptr(std::forward<T>(t)); }
 
-template <class T> requires (is_scalar<T>)
-constexpr auto
-start(T && t) { return ra::scalar(std::forward<T>(t)); }
-
 template <class T>
 constexpr auto
 start(std::initializer_list<T> v) { return ptr(v.begin(), v.size()); }
+
+template <class T> requires (is_scalar<T>)
+constexpr auto
+start(T && t) { return scalar(std::forward<T>(t)); }
 
 // forward declare for Match; implemented in small.hh.
 template <class T> requires (is_builtin_array<T>)
