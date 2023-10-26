@@ -659,8 +659,11 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr auto end() { return view().data()+this->size(); }
     constexpr auto end() const { return view().data()+this->size(); }
 // FIXME size is redundant e.g. for Store = std::vector.
-    template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
-    template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
+    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
+    template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
+// FIXME variants fail test/io.cc CXXFLAGS="-O3 -fno-sanitize=all" on gcc 11/12/13, pass with -O2 or sanitizers on. Weird!
+    // template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
+    // template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };

@@ -29,6 +29,20 @@ std::string typecheck(auto && a)
 int main()
 {
     TestRecorder tr;
+// Small isn't an aggregate so we can't separate T; vs T {}; like std::array.
+    {
+        std::array<int, 9> a; // default init, unlike {} which is aggregate init
+        cout << ra::start(a) << endl;
+        ra::Small<int, 9> b; // default init, just like {}
+        cout << b << endl;
+    }
+    tr.section("initialization that works with either");
+    {
+        std::array<int, 9> a = {0};
+        tr.test_eq(0, a);
+        ra::Small<int, 9> b = {0};
+        tr.test_eq(0, b);
+    }
     tr.section("predicates");
     {
         tr.test(std::is_standard_layout_v<ra::Small<float, 2>>);
