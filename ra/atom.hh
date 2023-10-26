@@ -232,13 +232,11 @@ struct Ptr
 
     consteval static rank_t rank_s() { return 1; };
     consteval static rank_t rank() { return 1; }
-
     // len(k==0) or step(k>=0)
     constexpr static dim_t len_s(int k) { return nn; }
     constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }
     constexpr dim_t len(int k) const requires (nn==ANY) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr auto flat() const { return i; }

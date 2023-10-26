@@ -519,8 +519,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
     constexpr operator ViewConst () const { return ViewConst(cp); }
 };
 
-template <class A0, class ... A>
-SmallArray(A0, A ...) -> SmallArray<A0, mp::int_list<1+sizeof...(A)>>;
+template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
 
 // FIXME remove the need, also of (S, begin, end) in Container, once nested_tuple constructors work.
 template <class A, class I, class J>
