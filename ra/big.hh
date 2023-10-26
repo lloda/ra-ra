@@ -13,7 +13,7 @@
 
 namespace ra {
 
-// Default storage for Big - see https://stackoverflow.com/a/21028912
+// Default storage for Big - see https://stackoverflow.com/a/21028912.
 // Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
 template <typename T, typename A=std::allocator<T>>
 struct default_init_allocator: public A
@@ -65,9 +65,9 @@ struct CellBig
     Dimv dimv;
     [[no_unique_address]] Spec const dspec = {};
 
-    constexpr static rank_t rank_s() { return framer; }
+    consteval static rank_t rank_s() { return framer; }
     constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(std::ssize(dimv), dspec); }
-    constexpr static rank_t rank() requires (ANY!=framer) { return framer; }
+    consteval static rank_t rank() requires (ANY!=framer) { return framer; }
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
     constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
@@ -117,11 +117,11 @@ struct CellBig
 
 
 // --------------------
-// nested braces for Container initializers
+// nested braces for Container initializers. Cf nested_arg for Small.
 // --------------------
 
 template <class T, rank_t rank>
-struct braces_def { using type = no_arg; };
+struct braces_def { using type = noarg; };
 
 template <class T, rank_t rank>
 using braces = braces_def<T, rank>::type;
@@ -183,8 +183,8 @@ struct View
         return next;
     }
 
-    constexpr static rank_t rank_s() { return RANK; };
-    constexpr static rank_t rank() requires (RANK!=ANY) { return RANK; }
+    consteval static rank_t rank_s() { return RANK; };
+    consteval static rank_t rank() requires (RANK!=ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==ANY) { return rank_t(dimv.size()); }
     constexpr static dim_t len_s(int j) { return ANY; }
     constexpr dim_t len(int k) const { return dimv[k].len; }
@@ -234,7 +234,7 @@ struct View
 #undef RA_BRACES_ANY
 
 // braces row-major ravel for rank!=1. See Container::fill1
-    using ravel_arg = std::conditional_t<RANK==1, no_arg, std::initializer_list<T>>;
+    using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
     View & operator=(ravel_arg const x)
     {
         auto xsize = ssize(x);
@@ -300,8 +300,8 @@ struct View
         return select_loop(dim, k, std::forward<I>(i) ...);
     }
 
-    constexpr dim_t
-    select_loop(Dim * dim, int k) const
+    constexpr static dim_t
+    select_loop(Dim * dim, int k)
     {
         return 0;
     }
@@ -454,7 +454,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     using T = typename storage_traits<Store>::T;
     using View = ra::View<T, RANK>;
     using ViewConst = ra::View<T const, RANK>;
-    using View::rank_s;
+    using View::size;
     using shape_arg = decltype(ra::shape(std::declval<View>().iter()));
 
     constexpr View & view() { return *this; }
@@ -568,7 +568,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr void
     fill1(Xbegin xbegin, dim_t xsize)
     {
-        RA_CHECK(View::size()==xsize, "Mismatched sizes ", View::size(), " ", xsize, ".");
+        RA_CHECK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
         std::copy_n(xbegin, xsize, begin());
     }
 
@@ -581,7 +581,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // FIXME remove
     template <class TT>
     Container(shape_arg const & s, TT * p)
-        : Container(s, none) { fill1(p, View::size()); } // FIXME fake check
+        : Container(s, none) { fill1(p, size()); } // FIXME fake check
 
 // FIXME remove
     template <class P>
@@ -607,14 +607,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         static_assert(RANK==ANY || RANK>0); RA_CHECK(this->rank()>0);
         View::dimv[0].len = s;
-        store.resize(View::size());
+        store.resize(size());
         View::cp = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
         static_assert(RANK==ANY || RANK>0); RA_CHECK(this->rank()>0);
         View::dimv[0].len = s;
-        store.resize(View::size(), t);
+        store.resize(size(), t);
         View::cp = store.data();
     }
 // resize full shape. Only for some kinds of store.
@@ -675,8 +675,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr auto end() { return view().data()+this->size(); }
     constexpr auto end() const { return view().data()+this->size(); }
 // FIXME size is redundant e.g. for Store = std::vector.
-    template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), View::size()); } else { return view().template iter<c>(); } }
-    template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), View::size()); } else { return view().template iter<c>(); } }
+    template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
+    template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };

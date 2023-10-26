@@ -108,7 +108,9 @@ template <class V>
 constexpr rank_t
 rank(V const & v)
 {
-    if constexpr (requires { v.rank(); })  {
+    if constexpr (ANY!=rank_s<V>()) {
+        return rank_s<V>();
+    } else if constexpr (requires { v.rank(); })  {
         return v.rank();
     } else if constexpr (requires { ra_traits<V>::rank(v); }) {
         return ra_traits<V>::rank(v);
@@ -121,7 +123,9 @@ template <class V>
 constexpr dim_t
 size(V const & v)
 {
-    if constexpr (requires { v.size(); }) {
+    if constexpr (ANY!=size_s<V>()) {
+        return size_s<V>();
+    } else if constexpr (requires { v.size(); }) {
         return v.size();
     } else if constexpr (requires { ra_traits<V>::size(v); }) {
         return ra_traits<V>::size(v);
@@ -132,24 +136,22 @@ size(V const & v)
     }
 }
 
-// Returns a concrete type, or a reference to a concrete type. Cf operator<<.
+// Returns concrete type or const & thereto. Cf operator<<.
 // FIXME would return ra:: types, but can't do that for the var rank case so.
 template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
     if constexpr (requires { v.shape(); }) {
-        return v.shape(); // std::array & for v Small
+        return v.shape();
     } else if constexpr (requires { ra_traits<V>::shape(v); }) {
         return ra_traits<V>::shape(v);
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
-        return std::apply([&v](auto ... i) { return Small<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
+        return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         static_assert(ANY==rs);
-        rank_t r = v.rank();
-        std::vector<dim_t> s(r);
-        for (rank_t k=0; k<r; ++k) { s[k] = v.len(k); }
-        return s;
+        auto i = std::ranges::iota_view { 0, v.rank() } | std::views::transform([&v](auto k) { return v.len(k); });
+        return std::vector<dim_t>(i.begin(), i.end()); // FIXME C++23 p1206? Still fugly
     }
 }
 
@@ -257,7 +259,7 @@ template <class I, class N=dim_c<BAD>>
 constexpr auto
 ptr(I && i, N && n = N {})
 {
-// preserve builtin array
+// not decay_t bc of builtin arrays.
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
         static_assert(std::is_same_v<dim_c<BAD>, N>, "Object has own length.");
         constexpr dim_t s = size_s<I>();
@@ -350,7 +352,7 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
 RA_IS_DEF(is_iota, false)
-// BAD is excluded from beating to allow B = A(... ti ...). FIXME find a way?
+// BAD is excluded from beating to allow B = A(... ti ...) to use B's len. FIXME find a way?
 template <class N, class O, class S>
 constexpr bool is_iota_def<Iota<0, N, O, S>> = (BAD != Iota<0, N, O, S>::nn);
 
@@ -391,7 +393,7 @@ template <class T>
 constexpr void
 start(T && t) { static_assert(always_false<T>, "Type cannot be start()ed."); }
 
-template <class T> requires (is_foreign_vector<T>)
+template <class T> requires (is_fov<T>)
 constexpr auto
 start(T && t) { return ptr(std::forward<T>(t)); }
 

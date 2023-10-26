@@ -26,14 +26,14 @@ using ra::mp::int_list, ra::mp::nil;
 template <class A>
 void
 test_predicates(char const * type, TestRecorder & tr,
-                bool ra, bool slice, bool iterator, bool scalar, bool foreign_vector)
+                bool ra, bool slice, bool iterator, bool scalar, bool fov)
 {
     cout << std::string(90-size(std::string(type)), ' ') << type << " : "
          << (ra::is_ra<A> ? "ra " : "")
          << (ra::is_slice<A> ? "slice " : "")
          << (ra::IteratorConcept<A> ? "iterator " : "")
          << (ra::is_scalar<A> ? "scalar " : "")
-         << (ra::is_foreign_vector<A> ? "fovector " : "")
+         << (ra::is_fov<A> ? "fov " : "")
          << (ra::is_builtin_array<A> ? "builtinarray " : "")
          << (std::ranges::range<A> ? "range " : "")
          << (std::is_const_v<A> ? "const " : "")
@@ -42,7 +42,7 @@ test_predicates(char const * type, TestRecorder & tr,
     tr.quiet().info(type).info("slice").test_eq(slice, ra::is_slice<A>);
     tr.quiet().info(type).info("Iterator").test_eq(iterator, ra::IteratorConcept<A>);
     tr.quiet().info(type).info("scalar").test_eq(scalar, ra::is_scalar<A>);
-    tr.quiet().info(type).info("foreign_vector").test_eq(foreign_vector, ra::is_foreign_vector<A>);
+    tr.quiet().info(type).info("fov").test_eq(fov, ra::is_fov<A>);
     tr.quiet().info(type).info("std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>);
 }
 
@@ -184,9 +184,9 @@ int main()
         static_assert(ra::is_builtin_array<decltype(b)>);
         static_assert(ra::is_builtin_array<decltype(c) &>);
         static_assert(ra::is_builtin_array<decltype(c)>);
-        static_assert(requires { ra::ra_traits<decltype(a)>::size(a); });
-        static_assert(requires { ra::ra_traits<decltype(b)>::size(b); });
-        static_assert(requires { ra::ra_traits<decltype(c)>::size(c); });
+        static_assert(requires { ra::ra_traits<decltype(a)>::size_s(); });
+        static_assert(requires { ra::ra_traits<decltype(b)>::size_s(); });
+        static_assert(requires { ra::ra_traits<decltype(c)>::size_s(); });
         tr.test_eq(1, ra::rank_s(a));
         tr.test_eq(1, ra::rank_s(b));
         tr.test_eq(2, ra::rank_s(c));

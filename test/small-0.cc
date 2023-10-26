@@ -347,7 +347,7 @@ int main()
         c = ra::iota(48, 1);
         tr.test_eq(b, a);
     }
-    tr.section("free constructor");
+    tr.section("item constructor");
     {
         ra::Small<int, 2, 2> a = {{1, 2}, ra::iota(2, 33)};
         tr.test_eq(1, a(0, 0));

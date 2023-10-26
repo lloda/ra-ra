@@ -40,7 +40,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     T t;
 
     // 0: fail, 1: rt, 2: pass
-    constexpr static int
+    consteval static int
     check_s()
     {
         if constexpr (sizeof...(P)<2) {
@@ -93,14 +93,14 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     }
 
 // rank of largest subexpr, so we look at all of them.
-    constexpr static rank_t
+    consteval static rank_t
     rank_s()
     {
         rank_t r = BAD;
         return ((r=choose_rank(r, ra::rank_s<P>())), ...);
     }
 
-    constexpr static rank_t
+    consteval static rank_t
     rank()
     requires (ANY != Match::rank_s())
     {
@@ -198,8 +198,8 @@ struct Reframe
     A a;
 
     constexpr static int orig(int k) { return mp::int_list_index<Dest>(k); }
-    constexpr static rank_t rank_s() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
-    constexpr static rank_t rank() { return rank_s(); }
+    consteval static rank_t rank_s() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
+    consteval static rank_t rank() { return rank_s(); }
     constexpr static dim_t len_s(int k)
     {
         int l = orig(k);

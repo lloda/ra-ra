@@ -176,8 +176,8 @@ struct CellSmall
 
     ctype c;
 
-    constexpr static rank_t rank_s() { return framer; }
-    constexpr static rank_t rank() { return framer; }
+    consteval static rank_t rank_s() { return framer; }
+    consteval static rank_t rank() { return framer; }
 #pragma GCC diagnostic push // gcc 13.2
 #pragma GCC diagnostic warning "-Warray-bounds"
     constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
@@ -266,7 +266,7 @@ struct SmallBase
     consteval static dim_t size_s() { return size(); }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
-    consteval static auto shape() { return SmallView<ra::dim_t const, mp::int_list<rank()>, mp::int_list<1>>(theshape.data()); }
+    consteval static decltype(auto) shape() { return theshape; }
 // TODO check steps
     static_assert(!std::apply([](auto ... s) { return ((0>s || ANY==s || BAD==s) || ...); }, theshape), "Bad dimensions.");
 
@@ -313,7 +313,7 @@ struct SmallBase
     }
 
     template <int k>
-    constexpr static dim_t
+    consteval static dim_t
     select_loop()
     {
         return 0;
@@ -349,7 +349,7 @@ struct SmallBase
     {                                                                   \
         /* FIXME there's no way to say 'frame rank 0' so -size wouldn't work. */ \
         constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());    \
-        static_assert(crank>=0); /* else we can't make out the output type */ \
+        static_assert(crank>=0); /* to make out the output type */      \
         return iter<crank>().at(std::forward<I>(i));                    \
     }                                                                   \
     /* maybe remove if ic becomes easier to use */                      \
@@ -369,10 +369,8 @@ struct SmallBase
     FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
 #undef RA_CONST_OR_NOT
 
-// see same thing for View.
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X>                                                  \
-    requires (!mp::is_tuple<std::decay_t<X>>)                           \
+    template <class X> requires (!mp::is_tuple<std::decay_t<X>>)        \
     constexpr Child &                                                   \
     operator OP(X && x)                                                 \
     {                                                                   \
@@ -386,7 +384,7 @@ struct SmallBase
     constexpr Child &
     operator=(nested_arg<T, lens> const & x)
     {
-        ra::iter<-1>(static_cast<Child &>(*this)) = mp::from_tuple<std::array<typename nested_tuple<T, lens>::sub, len(0)>>(x);
+        ra::iter<-1>(*this) = mp::from_tuple<std::array<typename nested_tuple<T, lens>::sub, len(0)>>(x);
         return static_cast<Child &>(*this);
     }
 // braces row-major ravel for rank!=1
@@ -394,7 +392,7 @@ struct SmallBase
     operator=(ravel_arg<T, lens> const & x_)
     {
         auto x = mp::from_tuple<std::array<T, size()>>(x_);
-        std::copy(x.begin(), x.end(), this->begin());
+        std::copy(x.begin(), x.end(), begin());
         return static_cast<Child &>(*this);
     }
 
@@ -554,10 +552,8 @@ template <class T> requires (is_builtin_array<T>)
 struct ra_traits_def<T>
 {
     using S = typename builtin_array_types<T>::view;
-    constexpr static rank_t rank_s() { return S::rank_s(); }
-    constexpr static rank_t rank(T const & t) { return S::rank(); }
-    constexpr static dim_t size_s() { return S::size_s(); }
-    constexpr static dim_t size(T const & t) { return S::size_s(); }
+    consteval static rank_t rank_s() { return S::rank_s(); }
+    consteval static dim_t size_s() { return S::size_s(); }
     constexpr static decltype(auto) shape(T const & t) { return S::shape(); }
 };
 

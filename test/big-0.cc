@@ -229,7 +229,7 @@ int main(int argc, char * * argv)
         tr.test_eq(ref, B2);
     }
 // FIXME This works for Small, that has multi-arg constructors. Right now this calls the 2-elem constructor shape, content instead of the braces constructor, since initializer_list<T> doesn't match.
-    // tr.section("free constructor");
+    // tr.section("item constructor");
     // {
     //     ra::Big<int, 2> a {{1, 2}, ra::iota(2, 33)};
     //     tr.test_eq(1, a(0, 0));

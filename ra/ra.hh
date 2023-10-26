@@ -23,8 +23,8 @@
 
 // These global versions must be available so that e.g. ra::transpose<> may be searched by ADL even when giving explicit template args. See http://stackoverflow.com/questions/9838862 .
 // FIXME do we really need them?
-template <class A> constexpr void transpose(ra::no_arg);
-template <int A> constexpr void iter(ra::no_arg);
+template <class A> constexpr void transpose(ra::noarg);
+template <int A> constexpr void iter(ra::noarg);
 
 namespace ra {
 

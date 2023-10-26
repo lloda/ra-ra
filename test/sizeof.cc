@@ -9,7 +9,7 @@
 
 #include "ra/test.hh"
 
-struct no_argx {}; // Small uses no_arg for its own
+struct noargx {}; // Small uses noarg for its own
 
 struct sample1
 {
@@ -20,7 +20,7 @@ struct sample1
 struct sample2
 {
     uint8_t a[16];
-    [[no_unique_address]] ra::Small<no_argx, 1> b;
+    [[no_unique_address]] ra::Small<noargx, 1> b;
 };
 
 struct sample3
@@ -32,7 +32,7 @@ struct sample3
 struct sample4
 {
     uint8_t a[16];
-    [[no_unique_address]] no_argx b[1];
+    [[no_unique_address]] noargx b[1];
 };
 
 struct sample5
@@ -44,7 +44,7 @@ struct sample5
 struct sample6
 {
     uint8_t a[16];
-    [[no_unique_address]] std::array<no_argx, 1> b;
+    [[no_unique_address]] std::array<noargx, 1> b;
 };
 
 int main()
@@ -53,16 +53,16 @@ int main()
     tr.section("self");
     {
         std::cout << sizeof(std::array<ra::none_t, 9> {}) << std::endl;
-        std::cout << sizeof(std::array<ra::no_arg, 9> {}) << std::endl;
+        std::cout << sizeof(std::array<ra::noarg, 9> {}) << std::endl;
         std::cout << sizeof(ra::none_t [9]) << std::endl;
-        std::cout << sizeof(ra::no_arg [9]) << std::endl;
+        std::cout << sizeof(ra::noarg [9]) << std::endl;
         std::cout << sizeof(std::array<ra::none_t, 0> {}) << std::endl;
-        std::cout << sizeof(std::array<ra::no_arg, 0> {}) << std::endl;
+        std::cout << sizeof(std::array<ra::noarg, 0> {}) << std::endl;
         std::cout << sizeof(ra::none_t [0]) << std::endl;
-        std::cout << sizeof(ra::no_arg [0]) << std::endl;
+        std::cout << sizeof(ra::noarg [0]) << std::endl;
         std::cout << sizeof(ra::Small<int, 0>) << std::endl;
         std::cout << sizeof(ra::Small<ra::none_t, 0>) << std::endl;
-        std::cout << sizeof(ra::Small<no_argx, 0>) << std::endl;
+        std::cout << sizeof(ra::Small<noargx, 0>) << std::endl;
     }
     tr.section("base class");
     {

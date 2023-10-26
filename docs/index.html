@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 24, updated 2023 October 17)
+<!-- ra:: (version 25, updated 2023 October 26)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 24, updated 2023 October 17)
+<p><code>ra::</code> (version 25, updated 2023 October 26)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -1807,7 +1807,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 </p>
 <p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for rt-size expressions and <code>plyf</code> for ct-size expressions.
 </p>
-<p>Finally we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v24) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
+<p>Finally we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v25) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
 <hr>
 </div>
