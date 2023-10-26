@@ -30,6 +30,23 @@ struct Dim { dim_t len=0, step=0; }; // cf View::end() [ra17]
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
 
+template <class V>
+constexpr bool
+is_c_order(V const & d)
+{
+    if constexpr (requires { d.dimv; }) {
+        return is_c_order(d.dimv);
+    } else {
+        dim_t s = 1;
+        for (int i=d.size()-1; i>=0; --i) {
+            if (s!=d[i].step) { return false; }
+            s *= d[i].len;
+            if (s==0) { return true; }
+        }
+        return true;
+    }
+}
+
 
 // --------------------
 // Slicing helpers
@@ -268,7 +285,7 @@ struct SmallBase
     constexpr static dim_t step(int k) { return dimv[k].step; }
     consteval static decltype(auto) shape() { return theshape; }
 // TODO check steps
-    static_assert(!std::apply([](auto ... s) { return ((0>s || ANY==s || BAD==s) || ...); }, theshape), "Bad dimensions.");
+    static_assert(std::apply([](auto ... s) { return ((0<=s) && ...); }, theshape), "Bad shape.");
 
     constexpr static bool convertible_to_scalar = (1==size()); // allowed for 1 for coord types
 
@@ -389,10 +406,10 @@ struct SmallBase
     }
 // braces row-major ravel for rank!=1
     constexpr Child &
-    operator=(ravel_arg<T, lens> const & x_)
+    operator=(ravel_arg<T, lens> const & x)
     {
-        auto x = mp::from_tuple<std::array<T, size()>>(x_);
-        std::copy(x.begin(), x.end(), begin());
+        auto a = mp::from_tuple<std::array<T, size()>>(x);
+        std::copy(a.begin(), a.end(), begin());
         return static_cast<Child &>(*this);
     }
 
@@ -401,7 +418,7 @@ struct SmallBase
     template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
-    constexpr static bool def = std::same_as<steps, default_steps<lens>>;
+    constexpr static bool def = is_c_order(dimv);
     constexpr auto begin() const { if constexpr (def) return data(); else return STLIterator(iter()); }
     constexpr auto begin() { if constexpr (def) return data(); else return STLIterator(iter()); }
     constexpr auto end() const { if constexpr (def) return data()+size(); else return STLIterator(const_iterator<0>(nullptr)); }

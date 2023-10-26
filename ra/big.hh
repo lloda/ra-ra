@@ -164,11 +164,12 @@ braces_shape(braces<T, rank> const & l)
 template <class T, rank_t RANK>
 struct View
 {
-    using Dimv = std::conditional_t<RANK==ANY, std::vector<Dim>, Small<Dim, RANK==ANY ? 0 : RANK>>;
+    using Dimv = std::conditional_t<ANY==RANK, std::vector<Dim, default_init_allocator<Dim>>, Small<Dim, ANY==RANK ? 0 : RANK>>;
 
     Dimv dimv;
     T * cp;
 
+// FIXME reuse as default shape->dimv for Big/Small
     template <class S>
     constexpr dim_t
     filldim(S && s)
@@ -186,7 +187,7 @@ struct View
     consteval static rank_t rank_s() { return RANK; };
     consteval static rank_t rank() requires (RANK!=ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==ANY) { return rank_t(dimv.size()); }
-    constexpr static dim_t len_s(int j) { return ANY; }
+    constexpr static dim_t len_s(int k) { return ANY; }
     constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return dimv[k].step; }
     constexpr auto data() const { return cp; }
@@ -428,23 +429,6 @@ struct storage_traits<std::shared_ptr<P>>
     constexpr static T * data(V & v) { return v.get(); }
 };
 
-template <class V>
-constexpr bool
-is_c_order(V const & a)
-{
-    dim_t s = 1;
-    for (int i=a.rank()-1; i>=0; --i) {
-        if (s!=a.step(i)) {
-            return false;
-        }
-        s *= a.len(i);
-        if (s==0) {
-            return true;
-        }
-    }
-    return true;
-}
-
 // FIXME avoid duplicating View::p.
 // FIXME avoid overhead with rank 1.
 template <class Store, rank_t RANK>
@@ -670,8 +654,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class I> constexpr decltype(auto) at(I && i) { return view().at(std::forward<I>(i)); }
     template <class I> constexpr decltype(auto) at(I && i) const { return view().at(std::forward<I>(i)); }
 // container is always compact/row-major, so STL-like iterators can be raw pointers.
-    constexpr auto begin() { assert(is_c_order(*this)); return view().data(); }
-    constexpr auto begin() const { assert(is_c_order(*this)); return view().data(); }
+    constexpr auto begin() { assert(is_c_order(View::dimv)); return view().data(); }
+    constexpr auto begin() const { assert(is_c_order(View::dimv)); return view().data(); }
     constexpr auto end() { return view().data()+this->size(); }
     constexpr auto end() const { return view().data()+this->size(); }
 // FIXME size is redundant e.g. for Store = std::vector.

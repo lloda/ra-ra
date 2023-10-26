@@ -187,8 +187,8 @@ struct Scalar
 {
     C c;
 
-    constexpr static rank_t rank_s() { return 0; }
-    constexpr static rank_t rank() { return 0; }
+    consteval static rank_t rank_s() { return 0; }
+    consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
 
@@ -230,8 +230,8 @@ struct Ptr
     I i;
     [[no_unique_address]] N const n = {};
 
-    constexpr static rank_t rank_s() { return 1; };
-    constexpr static rank_t rank() { return 1; }
+    consteval static rank_t rank_s() { return 1; };
+    consteval static rank_t rank() { return 1; }
 
     // len(k==0) or step(k>=0)
     constexpr static dim_t len_s(int k) { return nn; }
@@ -308,15 +308,13 @@ struct Iota
         constexpr auto operator*() const { return i; }
     };
 
-    constexpr static rank_t rank_s() { return w+1; };
-    constexpr static rank_t rank() { return w+1; }
-
+    consteval static rank_t rank_s() { return w+1; };
+    consteval static rank_t rank() { return w+1; }
     // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len_s(int k) { return k==w ? nn : BAD; }
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : BAD; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
-
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += O(step(k) * d) * O(s); }
     constexpr auto flat() const { return Flat { i, s }; }
@@ -366,8 +364,8 @@ inside(I const & i, dim_t l) requires (is_iota<I>)
 // Never ply(), solely to be rewritten.
 struct Len
 {
-    constexpr static rank_t rank_s() { return 0; }
-    constexpr static rank_t rank() { return 0; }
+    consteval static rank_t rank_s() { return 0; }
+    consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
     constexpr static void adv(rank_t k, dim_t d) { std::abort(); }

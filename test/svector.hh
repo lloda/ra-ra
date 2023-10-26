@@ -1,6 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Basic dynamic size vector that isn't foreign
-// Adapted from https://github.com/KonanM/vector
+// From https://github.com/KonanM/vector. Removed rebinding support...
 
 #pragma once
 #include <cstddef>
@@ -14,6 +14,7 @@ namespace ra {
 template <class T, size_t N>
 struct sb_alloc
 {
+// Cf https://old.reddit.com/r/cpp/comments/hfv24j/small_vector_implementation_using_propagate_on/fw1kw7u/
     alignas(alignof(T)) T buffer[N];
     std::allocator<T> alloc;
     bool used = false;
