@@ -211,10 +211,10 @@ struct View
 // [ra38] [ra34] and RA_DEF_ASSIGNOPS_SELF
     View(View && x) = default;
     View(View const & x) = default;
-    View & operator=(View && x) { ra::start(*this) = x; return *this; }
-    View & operator=(View const & x) { ra::start(*this) = x; return *this; }
+    View & operator=(View && x) { start(*this) = x; return *this; }
+    View & operator=(View const & x) { start(*this) = x; return *this; }
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> View & operator OP (X && x) { ra::start(*this) OP x; return *this; }
+    template <class X> View & operator OP (X && x) { start(*this) OP x; return *this; }
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
 
@@ -250,9 +250,9 @@ struct View
     template <rank_t c=0> constexpr auto iter() const & { return CellBig<T, Dimv const &, ic_t<c>>(cp, dimv); }
     constexpr auto iter(rank_t c) const && { return CellBig<T, Dimv, dim_t>(cp, std::move(dimv), c); }
     constexpr auto iter(rank_t c) const & { return CellBig<T, Dimv const &, dim_t>(cp, dimv, c); }
+    constexpr auto begin() const { return STLIterator(iter<0>()); }
 // FIXME [ra17] should return a static object. Dimv should never be used, check also need for Dim's initializers.
     constexpr decltype(auto) static end() { return STLIterator(CellBig<T, Dimv const &>(nullptr, Dimv {})); }
-    constexpr auto begin() const { return STLIterator(CellBig<T, Dimv const &>(cp, dimv)); }
 
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
@@ -331,7 +331,7 @@ struct View
             }
 // if RANK==ANY then rank may be 0
             return sub;
-// TODO partial beating
+// TODO partial beating. FIXME forward this? cf unbeat
         } else {
             return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...);
         }
@@ -439,7 +439,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     using View = ra::View<T, RANK>;
     using ViewConst = ra::View<T const, RANK>;
     using View::size;
-    using shape_arg = decltype(ra::shape(std::declval<View>().iter()));
+    using shape_arg = decltype(shape(std::declval<View>().iter()));
 
     constexpr View & view() { return *this; }
     constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
@@ -505,7 +505,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 
     template <class S>
-    requires (1==ra::rank_s<S>() || ANY==ra::rank_s<S>())
+    requires (1==rank_s<S>() || ANY==rank_s<S>())
     void
     init(S && s)
     {
@@ -515,15 +515,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         if constexpr (ANY==RANK) {
             ra::resize(View::dimv, ra::size(s));
         } else if constexpr (ANY==ra::size_s<S>()) {
-            RA_CHECK(RANK==ra::size(s), "Bad shape [", ra::noshape, s, "] for rank ", RANK, ".");
+            RA_CHECK(RANK==ra::size(s), "Bad shape [", noshape, s, "] for rank ", RANK, ".");
         } else {
-            static_assert(RANK==ra::size_s<S>() || BAD==ra::size_s<S>(), "Invalid shape for rank.");
+            static_assert(RANK==size_s<S>() || BAD==size_s<S>(), "Invalid shape for rank.");
         }
         store = storage_traits<Store>::create(View::filldim(s));
         View::cp = storage_traits<Store>::data(store);
     }
 
-    void init(ra::dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
+    void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
 
@@ -603,7 +603,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 // resize full shape. Only for some kinds of store.
     template <class S>
-    requires (ra::rank_s<S>() > 0)
+    requires (rank_s<S>() > 0)
     void resize(S const & s)
     {
         ra::resize(View::dimv, start(s).len(0)); // [ra37] FIXME is View constructor

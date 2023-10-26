@@ -62,7 +62,7 @@ constexpr auto
 from(A && a, I && ... i)
 {
     if constexpr (0==sizeof...(i)) {
-        return a();
+        return std::forward<A>(a)();
     } else if constexpr (1==sizeof...(i)) {
 // support dynamic rank for 1 arg only (see test in test/from.cc).
         return map(std::forward<A>(a), std::forward<I>(i) ...);

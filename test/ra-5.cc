@@ -20,20 +20,19 @@ int main()
 {
     TestRecorder tr(std::cout);
 
-// [ra14] A(b) which is from() can require CellBig to copy its source Dimv.
+// [ra14] A(b) which is from(A, b) can require CellBig to copy its source Dimv.
     tr.section("Big");
     {
         ra::Big<int, 1> b = { 2, 1 };
         ra::Big<int, 2> A({3, 5}, ra::_0 - ra::_1);
         ra::Big<int, 2> F({2, 5}, 0);
 
-// This creates View & CellBig on each call of A(b(0) ...) as the driver is b and A is handled as a generic object with operator().
-// This seems unnecessary; I should be able to create a single CellBig and just bump a pointer as I move through b. Hmm.
+// This creates View & CellBig on each call of A(b(0) ...) as the driver is b and A is handled as generic object with operator().
+// But I should be able to create a single CellBig and just bump a pointer as I move through b. Hmm.
         iter<-1>(F) = b*A(b);
         int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
         tr.test_eq(Fcheck, F);
     }
-
 // Equivalent for Small is static so no such issues.
     tr.section("Small");
     {
@@ -45,7 +44,6 @@ int main()
         int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
         tr.test_eq(Fcheck, F);
     }
-
 // Why: if x(0) is a temp, as in here, CellBig needs a copy of x(0).dim.
 // This is achieved by forwarding in start() -> iter() -> View.iter().
     tr.section("CellBig handling of temps");
@@ -61,7 +59,6 @@ int main()
         auto yi = iter<0>(y);
         tr.test_eq(true, std::is_reference_v<decltype(yi.dimv)>);
     }
-
 // const/nonconst begin :p
     {
         ra::Big<int> A({2, 3}, 3);

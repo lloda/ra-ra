@@ -25,7 +25,7 @@ rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* independent */ : r==ANY ? 
 constexpr rank_t
 rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* independent */ : -cr; }
 
-struct Dim { dim_t len=0, step=0; }; // cf View::end() [ra17]
+struct Dim { dim_t len, step; }; // cf View::end() [ra17]
 
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }

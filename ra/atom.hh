@@ -392,7 +392,7 @@ start(std::initializer_list<T> v) { return ptr(v.begin(), v.size()); }
 
 template <class T> requires (is_scalar<T>)
 constexpr auto
-start(T && t) { return scalar(std::forward<T>(t)); }
+start(T && t) { return ra::scalar(std::forward<T>(t)); }
 
 // forward declare for Match; implemented in small.hh.
 template <class T> requires (is_builtin_array<T>)
