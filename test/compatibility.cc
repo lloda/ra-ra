@@ -111,18 +111,25 @@ int main()
     }
     {
         int o[2];
+        static_assert(1==ra::rank(o));
+        static_assert(2==ra::start(o).len(0));
+
         int p[3][2];
+        static_assert(2==ra::rank(p));
+        static_assert(3==ra::shape(p)[0]);
+        static_assert(2==ra::shape(p)[1]);
+
         int q[4][3][2];
+        static_assert(3==ra::rank(q));
+        static_assert(4==ra::shape(q)[0]);
+        static_assert(3==ra::shape(q)[1]);
+        static_assert(2==ra::shape(q)[2]);
+
         int r[][2] = {{1, 2}, {3, 4}};
-        static_assert(std::is_same<ra::builtin_array_types<decltype(o)>::lens,
-                      int_list<2>>::value);
-        static_assert(std::is_same<ra::builtin_array_types<decltype(p)>::lens,
-                      int_list<3, 2>>::value);
-        static_assert(std::is_same<ra::builtin_array_types<decltype(q)>::lens,
-                      int_list<4, 3, 2>>::value);
-        static_assert(std::is_same<ra::builtin_array_types<decltype(r)>::lens,
-                      int_list<2, 2>>::value);
         static_assert(std::rank<decltype(r)>::value==2);
+        static_assert(2==ra::rank(r));
+        static_assert(2==ra::shape(r)[0]);
+        static_assert(2==ra::shape(r)[1]);
     }
     tr.section("example from the manual [ma106]");
     {

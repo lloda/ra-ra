@@ -605,23 +605,17 @@ A ravel_from_iterators(I && begin, J && end)
 // Builtin arrays
 // ---------------------
 
-template <class T>
-struct builtin_array_types
-{
-    using A = std::remove_volatile_t<std::remove_reference_t<T>>; // preserve const
-    using E = std::remove_all_extents_t<A>;
-    using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
-                                     mp::iota<std::rank_v<A>> {}));
-    using view = SmallView<E, lens, default_steps<lens>>;
-};
-
 // forward declared in bootstrap.hh.
 template <class T> requires (is_builtin_array<T>)
 constexpr auto
 start(T && t)
 {
-    using Z = builtin_array_types<T>;
-    return typename Z::view((typename Z::E *)(t)).iter();
+    using A = std::remove_volatile_t<std::remove_reference_t<T>>; // preserve const
+    using E = std::remove_all_extents_t<A>;
+    using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
+                                     mp::iota<std::rank_v<A>> {}));
+// FIXME cast prevents constexpr, so do without it
+    return SmallView<E, lens, default_steps<lens>>((E *)(t)).iter();
 }
 
 RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typename A::lens, typename A::steps>>));
