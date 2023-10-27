@@ -256,8 +256,8 @@ struct CellSmall
     static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
 // FIXME Small take dimv instead of lens/steps
-    using clens = decltype(std::apply([](auto ... i) { return std::tuple<int_c<dimv[i].len> ...> {}; }, mp::iota<cellr, framer> {}));
-    using csteps = decltype(std::apply([](auto ... i) { return std::tuple<int_c<dimv[i].step> ...> {}; }, mp::iota<cellr, framer> {}));
+    using clens = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].len ...> {}; }, mp::iota<cellr, framer> {}));
+    using csteps = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<cellr, framer> {}));
     using ctype = SmallView<T, clens, csteps>;
     using value_type = std::conditional_t<0==cellr, T, ctype>;
 
@@ -605,23 +605,13 @@ A ravel_from_iterators(I && begin, J && end)
 // Builtin arrays
 // ---------------------
 
-template <class T, class I=mp::iota<std::rank_v<T>>>
-struct builtin_array_lens;
-
-template <class T, int ... I>
-struct builtin_array_lens<T, mp::int_list<I ...>>
-{
-    using type = mp::int_list<std::extent_v<T, I> ...>;
-};
-
-template <class T> using builtin_array_lens_t = typename builtin_array_lens<T>::type;
-
 template <class T>
 struct builtin_array_types
 {
     using A = std::remove_volatile_t<std::remove_reference_t<T>>; // preserve const
     using E = std::remove_all_extents_t<A>;
-    using lens = builtin_array_lens_t<A>;
+    using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
+                                     mp::iota<std::rank_v<A>> {}));
     using view = SmallView<E, lens, default_steps<lens>>;
 };
 

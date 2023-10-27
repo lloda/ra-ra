@@ -28,7 +28,7 @@ main()
     }
     tr.section("II");
     {
-        std::tuple<int_c<6>, int_c<3>, int_c<-4>> x;
+        ra::mp::int_list<6, 3, -4> x;
         constexpr int ma = ra::mp::fold_tuple(-99, x, [](auto && k, auto && a) { return max(k, std::decay_t<decltype(a)>::value); });
         constexpr int mi = ra::mp::fold_tuple(+99, x, [](auto && k, auto && a) { return min(k, std::decay_t<decltype(a)>::value); });
         constexpr int su = ra::mp::fold_tuple(0, x, [](auto && k, auto && a) { return k + std::decay_t<decltype(a)>::value; });
@@ -202,7 +202,7 @@ main()
     }
     tr.section("BAD on any len_s(k) means size_s() is BAD");
     {
-        using order = std::tuple<int_c<0>, int_c<1>>;
+        using order = ra::mp::int_list<0, 1>;
         using T0 = ra::Expr<std::multiplies<void>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>, order>;
         ra::dim_t s0 = ra::size_s<T0>();
         using T1 = ra::Expr<std::multiplies<void>, std::tuple<decltype(ra::iota<1>()), ra::Scalar<int>>, order>;
