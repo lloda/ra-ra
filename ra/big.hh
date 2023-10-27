@@ -429,8 +429,7 @@ struct storage_traits<std::shared_ptr<P>>
     constexpr static T * data(V & v) { return v.get(); }
 };
 
-// FIXME avoid duplicating View::p.
-// FIXME avoid overhead with rank 1.
+// FIXME avoid duplicating View::p. Avoid overhead with rank 1.
 template <class Store, rank_t RANK>
 struct Container: public View<typename storage_traits<Store>::T, RANK>
 {
@@ -487,21 +486,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 
 // provided so that {} calls shape_arg constructor below.
-    Container()
+    Container() requires (ANY==RANK)
+        : View({ Dim {0, 1} }, nullptr) {} // rank 1 to avoid store init
+    Container() requires (ANY!=RANK && 0!=RANK)
+        : View(typename View::Dimv(Dim {0, 1}), nullptr) {}
+    Container() requires (0==RANK)
     {
-        if constexpr (ANY==RANK) {
-// rank 1 to avoid store init
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Warray-bounds"
-            View::dimv = { Dim {0, 1} };
-#pragma GCC diagnostic pop
-        } else if constexpr (0==RANK) {
 // cannot have zero size
-            store = storage_traits<Store>::create(1);
-            View::cp = storage_traits<Store>::data(store);
-        } else {
-            for (Dim & dimi: View::dimv) { dimi = {0, 1}; } // 1 so we can push_back()
-        }
+        store = storage_traits<Store>::create(1);
+        View::cp = storage_traits<Store>::data(store);
     }
 
     template <class S>
@@ -691,13 +684,12 @@ swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
     std::swap(a.cp, b.cp);
 }
 
-// Beyond this, we probably should have fixed-size (~std::dynarray), resizeable (~std::vector).
 template <class T, rank_t RANK=ANY> using Big = Container<std::vector<T, default_init_allocator<T>>, RANK>;
 template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
 // -------------
-// Used in the Guile wrappers to allow an array parameter to either borrow from Guile storage or convert into a new array (e.g. passing 'f32 into 'f64).
+// Used in Guile wrappers to let an array parameter to either borrow from Guile storage or convert into new array (eg passing 'f32 into 'f64).
 // TODO Can use unique_ptr's deleter for this?
 // TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
 // -------------
