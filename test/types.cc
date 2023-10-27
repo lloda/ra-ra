@@ -173,7 +173,7 @@ int main()
         static_assert(ra::is_ra_pos_rank<ra::Expr<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
         static_assert(ra::is_ra_pos_rank<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
-    tr.section("builtin arrays I");
+    tr.section("builtin arrays");
     {
         int const a[] = {1, 2, 3};
         int b[] = {1, 2, 3};
@@ -184,9 +184,6 @@ int main()
         static_assert(ra::is_builtin_array<decltype(b)>);
         static_assert(ra::is_builtin_array<decltype(c) &>);
         static_assert(ra::is_builtin_array<decltype(c)>);
-        static_assert(requires { ra::ra_traits<decltype(a)>::size_s(); });
-        static_assert(requires { ra::ra_traits<decltype(b)>::size_s(); });
-        static_assert(requires { ra::ra_traits<decltype(c)>::size_s(); });
         tr.test_eq(1, ra::rank_s(a));
         tr.test_eq(1, ra::rank_s(b));
         tr.test_eq(2, ra::rank_s(c));
@@ -196,9 +193,6 @@ int main()
         tr.test_eq(3, ra::size_s(a));
         tr.test_eq(3, ra::size_s(b));
         tr.test_eq(4, ra::size_s(c));
-        tr.test_eq(3, ra::ra_traits<decltype(a)>::size_s());
-        tr.test_eq(3, ra::ra_traits<decltype(b)>::size_s());
-        tr.test_eq(4, ra::ra_traits<decltype(c)>::size_s());
     }
     tr.section("adaptors I");
     {

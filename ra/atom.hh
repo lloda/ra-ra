@@ -52,22 +52,17 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 // global introspection I
 // --------------------
 
-// ra_traits are only used for builtin arrays, but could be used for other non ra:: types.
-template <class V> struct ra_traits_def;
-// not decay_t bc of builtin arrays.
-template <class A> using ra_traits = ra_traits_def<std::remove_cvref_t<A>>;
-
-template <class V>
-requires (!std::is_void_v<V>)
+template <class VV>
+requires (!std::is_void_v<VV>)
 constexpr dim_t
 rank_s()
 {
-    using dV = std::remove_cvref_t<V>;
-    if constexpr (requires { ra_traits<V>::rank_s(); }) {
-        return ra_traits<V>::rank_s();
-    } else if constexpr (requires { dV::rank_s(); }) {
-        return dV::rank_s();
-    } else if constexpr (is_fov<dV>) {
+    using V = std::remove_cvref_t<VV>;
+    if constexpr (is_builtin_array<V>) {
+        return std::rank_v<V>;
+    } else if constexpr (requires { V::rank_s(); }) {
+        return V::rank_s();
+    } else if constexpr (is_fov<V>) {
         return 1;
     } else {
         return 0;
@@ -76,30 +71,35 @@ rank_s()
 
 template <class V> constexpr rank_t rank_s(V const &) { return rank_s<V>(); }
 
-template <class V>
-requires (!std::is_void_v<V>)
+template <class VV>
+requires (!std::is_void_v<VV>)
 constexpr dim_t
 size_s()
 {
-    using dV = std::remove_cvref_t<V>;
-    if constexpr (0==rank_s<dV>()) {
+    using V = std::remove_cvref_t<VV>;
+    constexpr rank_t rs = rank_s<V>();
+    if constexpr (0==rs) {
         return 1;
-    } else if constexpr (requires { ra_traits<V>::size_s(); }) {
-        return ra_traits<V>::size_s();
-    } else if constexpr (requires { dV::size_s(); }) {
-        return dV::size_s();
-    } else if constexpr (is_fov<dV> && requires { std::tuple_size<dV>::value; }) {
-        return std::tuple_size_v<dV>;
-    } else if constexpr (is_fov<dV>) {
+    } else if constexpr (is_builtin_array<V>) {
+        return std::apply([] (auto ... i) { return (std::extent_v<V, i> * ... * 1); }, mp::iota<rs> {});
+    } else if constexpr (requires { V::size_s(); }) {
+        return V::size_s();
+    } else if constexpr (is_fov<V> && requires { std::tuple_size<V>::value; }) {
+        return std::tuple_size_v<V>;
+    } else if constexpr (is_fov<V>) {
         return ANY;
-    } else if constexpr (ANY==rank_s<V>()) {
+    } else if constexpr (ANY==rs) {
         return ANY;
     } else {
-        dim_t s = 1;
-        for (int i=0; i!=dV::rank_s(); ++i) {
-            dim_t ss = dV::len_s(i);
-            if (ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
-        }
+        constexpr dim_t s = []
+        {
+            dim_t s = 1;
+            for (int i=0; i<rs; ++i) {
+                dim_t ss = V::len_s(i);
+                if (ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
+            }
+            return s;
+        }();
         return s;
     }
 }
@@ -136,21 +136,22 @@ size(V const & v)
     }
 }
 
-// Returns concrete type or const & thereto. Cf operator<<.
-// FIXME would return ra:: types, but can't do that for the var rank case so.
+// Returns concrete types or const & thereto. FIXME return ra:: types, but only if it's in all cases.
 template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
-    if constexpr (requires { ra_traits<V>::shape(v); }) {
-        return ra_traits<V>::shape(v);
+    constexpr rank_t rs = rank_s<V>();
+// FIXME use __cpp_constexpr >= 202211L to return references to the constexpr cases
+    if constexpr (is_builtin_array<V>) {
+        return std::apply([] (auto ... i) { return std::array<dim_t, rs> { std::extent_v<V, i> ... }; }, mp::iota<rs> {});
     } else if constexpr (requires { v.shape(); }) {
         return v.shape();
-    } else if constexpr (0==rank_s<V>()) {
+    } else if constexpr (0==rs) {
         return std::array<dim_t, 0> {};
-    } else if constexpr (1==rank_s<V>()) {
+    } else if constexpr (1==rs) {
         return std::array<dim_t, 1> { ra::size(v) };
-    } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
+    } else if constexpr (1<rs) {
         return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         static_assert(ANY==rs);
@@ -167,7 +168,6 @@ shape(V const & v, int k)
     return v.len(k);
 }
 
-// To handle arrays of static/dynamic size.
 template <class A>
 inline void
 resize(A & a, dim_t s)
