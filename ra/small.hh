@@ -605,20 +605,28 @@ A ravel_from_iterators(I && begin, J && end)
 // Builtin arrays
 // ---------------------
 
-// forward declared in bootstrap.hh.
+// FIXME wish I could just reinterpret_cast
+template <class T>
+constexpr auto
+peel(T && t)
+{
+    static_assert(0 < std::extent_v<std::remove_cvref_t<T>, 0>);
+    if constexpr (1 < std::rank_v<std::remove_cvref_t<T>>) {
+        return peel(*std::data(std::forward<T>(t)));
+    } else {
+        return std::data(t);
+    }
+}
+
 template <class T> requires (is_builtin_array<T>)
 constexpr auto
 start(T && t)
 {
     using A = std::remove_volatile_t<std::remove_reference_t<T>>; // preserve const
-    using E = std::remove_all_extents_t<A>;
     using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
                                      mp::iota<std::rank_v<A>> {}));
-// FIXME cast prevents constexpr, so do without it
-    return SmallView<E, lens, default_steps<lens>>((E *)(t)).iter();
+    return SmallView<std::remove_all_extents_t<A>, lens, default_steps<lens>>(peel(t)).iter();
 }
-
-RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typename A::lens, typename A::steps>>));
 
 
 // --------------------
@@ -661,8 +669,9 @@ struct axes_list_indices
     using steps = mp::map<dst_step, dst>;
 };
 
-template <int ... Iarg, class A>
-requires (cv_smallview<A>)
+RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typename A::lens, typename A::steps>>));
+
+template <int ... Iarg, class A> requires (cv_smallview<A>)
 constexpr auto
 transpose(A && a_)
 {
@@ -672,8 +681,7 @@ transpose(A && a_)
     return SmallView<typename AA::T, typename ti::lens, typename ti::steps>(a.data());
 };
 
-template <class A>
-requires (cv_smallview<A>)
+template <class A> requires (cv_smallview<A>)
 constexpr auto
 diag(A && a)
 {
@@ -681,8 +689,7 @@ diag(A && a)
 }
 
 // TODO generalize
-template <class A1, class A2>
-requires (cv_smallview<A1> || cv_smallview<A2>)
+template <class A1, class A2> requires (cv_smallview<A1> || cv_smallview<A2>)
 constexpr auto
 cat(A1 && a1_, A2 && a2_)
 {
@@ -728,8 +735,7 @@ struct explode_divop
     template <class T> using op = typename op_<T>::type;
 };
 
-template <class super_t, class A>
-requires (cv_smallview<A>)
+template <class super_t, class A> requires (cv_smallview<A>)
 constexpr auto
 explode(A && a_)
 {

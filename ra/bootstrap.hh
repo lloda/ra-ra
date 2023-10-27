@@ -135,9 +135,9 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
-RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && A::rank_s()!=0)
+RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && 0!=A::rank_s())
 RA_IS_DEF(is_slice, SliceConcept<A>)
-RA_IS_DEF(is_slice_pos_rank, SliceConcept<A> && A::rank_s()!=0)
+RA_IS_DEF(is_slice_pos_rank, SliceConcept<A> && 0!=A::rank_s())
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
 template <class A> constexpr bool is_ra_pos_rank = is_iterator_pos_rank<A> || is_slice_pos_rank<A>;
@@ -221,7 +221,6 @@ operator<<(std::ostream & o, A && a)
     return o << format_array(a);
 }
 
-// initializer_list cannot match A && above.
 template <class T>
 constexpr std::ostream &
 operator<<(std::ostream & o, std::initializer_list<T> const & a)

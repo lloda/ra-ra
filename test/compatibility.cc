@@ -125,6 +125,11 @@ int main()
         static_assert(3==ra::shape(q)[1]);
         static_assert(2==ra::shape(q)[2]);
 
+        static_assert(3==ra::start(q).rank());
+        static_assert(4==ra::start(q).len(0));
+        static_assert(3==ra::start(q).len(1));
+        static_assert(2==ra::start(q).len(2));
+
         int r[][2] = {{1, 2}, {3, 4}};
         static_assert(std::rank<decltype(r)>::value==2);
         static_assert(2==ra::rank(r));

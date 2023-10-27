@@ -86,9 +86,7 @@ size_s()
         return V::size_s();
     } else if constexpr (is_fov<V> && requires { std::tuple_size<V>::value; }) {
         return std::tuple_size_v<V>;
-    } else if constexpr (is_fov<V>) {
-        return ANY;
-    } else if constexpr (ANY==rs) {
+    } else if constexpr (is_fov<V> || rs==ANY) {
         return ANY;
     } else {
         constexpr dim_t s = []
@@ -380,7 +378,7 @@ struct Len
 
 constexpr Len len {};
 
-// don't try to reduce operations with Len.
+// protect exprs with Len from reduction.
 template <> constexpr bool is_special_def<Len> = true;
 RA_IS_DEF(has_len, false);
 
@@ -395,11 +393,11 @@ start(T && t) { static_assert(always_false<T>, "Type cannot be start()ed."); }
 
 template <class T> requires (is_fov<T>)
 constexpr auto
-start(T && t) { return ptr(std::forward<T>(t)); }
+start(T && t) { return ra::ptr(std::forward<T>(t)); }
 
 template <class T>
 constexpr auto
-start(std::initializer_list<T> v) { return ptr(v.begin(), v.size()); }
+start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
 
 template <class T> requires (is_scalar<T>)
 constexpr auto
