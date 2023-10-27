@@ -84,8 +84,8 @@ concept SliceConcept = requires (A a)
 // other types, forward decl
 // ---------------------
 
-enum none_t { none }; // used in array constructors to mean ‘don't initialize’
-struct noarg {}; // used in array constructors to mean ‘don't instantiate’
+enum none_t { none }; // in array constructors means ‘don't initialize’
+struct noarg { noarg() = delete; }; // in array constructors means ‘don't instantiate’
 
 template <class C> struct Scalar; // for type predicates
 template <class V> struct ra_traits_def;
@@ -110,7 +110,7 @@ template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 template <int crank, class A> constexpr auto iter(A && a) { return std::forward<A>(a).template iter<crank>(); }
 
 // Used in big.hh (selectors, etc).
-template <class A, class ... I> constexpr auto from(A && a, I && ... i);
+template <class A, class ... I> constexpr decltype(auto) from(A && a, I && ... i);
 
 // Extended in ra.hh (reductions)
 constexpr bool any(bool const x) { return x; }

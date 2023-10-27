@@ -251,7 +251,7 @@ struct View
     constexpr auto iter(rank_t c) const && { return CellBig<T, Dimv, dim_t>(cp, std::move(dimv), c); }
     constexpr auto iter(rank_t c) const & { return CellBig<T, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
-// FIXME [ra17] should return a static object. Dimv should never be used, check also need for Dim's initializers.
+// FIXME should return a static object. This Dimv is not to be used [ra17]
     constexpr decltype(auto) static end() { return STLIterator(CellBig<T, Dimv const &>(nullptr, Dimv {})); }
 
     constexpr dim_t
@@ -644,7 +644,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
     constexpr T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
 
-// FIXME P0847R7 explicit object parameter
+// FIXME __cpp_explicit_this_parameter
     constexpr auto data() { return view().data(); }
     constexpr auto data() const { return view().data(); }
     template <class ... A> constexpr decltype(auto) operator()(A && ... a) { return view()(std::forward<A>(a) ...); }
@@ -693,7 +693,6 @@ swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
 
 // Beyond this, we probably should have fixed-size (~std::dynarray), resizeable (~std::vector).
 template <class T, rank_t RANK=ANY> using Big = Container<std::vector<T, default_init_allocator<T>>, RANK>;
-// template <class T, rank_t RANK=ANY> using Big = Container<vector<T>, RANK>;
 template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 

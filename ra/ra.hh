@@ -54,11 +54,9 @@ from_partial(Op && op)
     }
 }
 
-template <class I> using index_rank = ic_t<rank_s<I>()>;
-
 // TODO should be able to do better by slicing at each dimension, etc. But verb<>'s innermost op must be rank 0.
 template <class A, class ... I>
-constexpr auto
+constexpr decltype(auto)
 from(A && a, I && ... i)
 {
     if constexpr (0==sizeof...(i)) {
@@ -67,8 +65,8 @@ from(A && a, I && ... i)
 // support dynamic rank for 1 arg only (see test in test/from.cc).
         return map(std::forward<A>(a), std::forward<I>(i) ...);
     } else {
-        using II = mp::map<index_rank, mp::tuple<decltype(std::forward<I>(i)) ...>>;
-        return map(from_partial<II, 1>(std::forward<A>(a)), std::forward<I>(i) ...);
+        return map(from_partial<mp::tuple<ic_t<rank_s<I>()> ...>, 1>(std::forward<A>(a)),
+                   std::forward<I>(i) ...);
     }
 }
 
@@ -587,7 +585,7 @@ struct Wedge
     constexpr static void
     product(Va const & a, Vb const & b, Vr & r)
     {
-        static_assert(int(Va::size())==Na, "bad Va dim");  // gcc accepts a.size(), etc.
+        static_assert(int(Va::size())==Na, "bad Va dim");
         static_assert(int(Vb::size())==Nb, "bad Vb dim");
         static_assert(int(Vr::size())==Nr, "bad Vr dim");
         coeff<Va, Vb, Vr, 0>(a, b, r);
@@ -637,7 +635,7 @@ constexpr void
 hodgex(Va const & a, Vb & b)
 {
     static_assert(O<=D, "bad orders");
-    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc.
+    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error");
     static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
     mp::Hodge<D, O>::template hodge_aux<0>(a, b);
 }
@@ -654,7 +652,7 @@ constexpr void
 hodge(Va const & a, Vb & b)
 {
     if constexpr (TRIVIAL(D, O)) {
-        static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size(), etc
+        static_assert(Va::size()==mp::Hodge<D, O>::Na, "error");
         static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
         b = a;
     } else {
@@ -667,7 +665,7 @@ requires (TRIVIAL(D, O))
 constexpr Va const &
 hodge(Va const & a)
 {
-    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error"); // gcc accepts a.size()
+    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error");
     return a;
 }
 
