@@ -174,62 +174,6 @@ longer(Q const & q, P const & pp)
 }
 
 
-// ---------------------
-// nested braces for Small initializers + forward decl Small types
-// ---------------------
-
-// SmallArray has 4 special constructors:
-// 1. The empty constructor.
-// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which isn't required purely for container use.
-// 3. The ravel constructor.
-// 4. The nested constructor.
-// When the rank is 1 or the first dimension is empty, several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of noarg.
-
-template <class T, class lens>
-struct nested_tuple
-{
-    using sub = noarg;
-    using list = std::tuple<noarg>; // match the template for SmallArray.
-};
-
-// ambiguity with empty constructor and scalar constructor.
-// if len(0) is 0, then prefer empty constructor. if shape is [1] scalar constructor.
-template <class lens> constexpr bool nonest = (mp::first<lens>::value<1);
-template <> constexpr bool nonest<mp::nil> = true;
-template <> constexpr bool nonest<mp::int_list<1>> = true;
-template <class T, class lens>
-using nested_arg = std::conditional_t<nonest<lens>,
-                                      std::tuple<noarg>, // match SmallArray template
-                                      typename nested_tuple<T, lens>::list>;
-
-// ambiguity with scalar constructors (for rank 0) and nested_tuple (for rank 1).
-template <class T, class lens>
-using ravel_arg = std::conditional_t<((mp::len<lens> <=1) || (mp::apply<mp::prod, lens>::value <= 1)),
-                                     std::tuple<noarg, noarg>, // match SmallArray template
-                                     mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
-
-template <class T, class lens, class steps> struct SmallView; // for CellSmall
-template <class T, class lens, class steps,
-          class nested_arg_ = nested_arg<T, lens>, class ravel_arg_ = ravel_arg<T, lens>>
-struct SmallArray;
-template <class T, dim_t ... lens>
-using Small = SmallArray<T, mp::int_list<lens ...>, default_steps<mp::int_list<lens ...>>>;
-
-template <class T, int S0>
-struct nested_tuple<T, mp::int_list<S0>>
-{
-    using sub = T;
-    using list = mp::makelist<S0, T>;
-};
-
-template <class T, int S0, int S1, int ... S>
-struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
-{
-    using sub = Small<T, S1, S ...>;
-    using list = mp::makelist<S0, sub>;
-};
-
-
 // --------------------
 // Small iterator
 // --------------------
@@ -241,6 +185,8 @@ struct CellFlat
     constexpr void operator+=(dim_t const s) { c.cp += s; }
     constexpr C & operator*() { return c; }
 };
+
+template <class T, class lens, class steps> struct SmallView;
 
 // TODO Refactor with CellBig / STLIterator
 template <class T, class Dimv, rank_t spec=0>
@@ -299,6 +245,61 @@ struct CellSmall
             return cc;
         }
     }
+};
+
+
+// ---------------------
+// nested braces for Small initializers + forward decl Small types
+// ---------------------
+
+// SmallArray has 4 special constructors:
+// 1. The empty constructor.
+// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which isn't required purely for container use.
+// 3. The ravel constructor.
+// 4. The nested constructor.
+// When the rank is 1 or the first dimension is empty, several of the constructors above become ambiguous. We solve this by defining the constructor arguments to variants of noarg.
+
+template <class T, class lens>
+struct nested_tuple
+{
+    using sub = noarg;
+    using list = std::tuple<noarg>; // match the template for SmallArray.
+};
+
+// ambiguity with empty constructor and scalar constructor.
+// if len(0) is 0, then prefer empty constructor. if shape is [1] scalar constructor.
+template <class lens> constexpr bool nonest = (mp::first<lens>::value<1);
+template <> constexpr bool nonest<mp::nil> = true;
+template <> constexpr bool nonest<mp::int_list<1>> = true;
+template <class T, class lens>
+using nested_arg = std::conditional_t<nonest<lens>,
+                                      std::tuple<noarg>, // match SmallArray template
+                                      typename nested_tuple<T, lens>::list>;
+
+// ambiguity with scalar constructors (for rank 0) and nested_tuple (for rank 1).
+template <class T, class lens>
+using ravel_arg = std::conditional_t<((mp::len<lens> <=1) || (mp::apply<mp::prod, lens>::value <= 1)),
+                                     std::tuple<noarg, noarg>, // match SmallArray template
+                                     mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
+
+template <class T, class lens, class steps,
+          class nested_arg_ = nested_arg<T, lens>, class ravel_arg_ = ravel_arg<T, lens>>
+struct SmallArray;
+template <class T, dim_t ... lens>
+using Small = SmallArray<T, mp::int_list<lens ...>, default_steps<mp::int_list<lens ...>>>;
+
+template <class T, int S0>
+struct nested_tuple<T, mp::int_list<S0>>
+{
+    using sub = T;
+    using list = mp::makelist<S0, T>;
+};
+
+template <class T, int S0, int S1, int ... S>
+struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
+{
+    using sub = Small<T, S1, S ...>;
+    using list = mp::makelist<S0, sub>;
 };
 
 

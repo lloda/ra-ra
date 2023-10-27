@@ -251,7 +251,7 @@ struct View
     constexpr auto iter(rank_t c) const && { return CellBig<T, Dimv, dim_t>(cp, std::move(dimv), c); }
     constexpr auto iter(rank_t c) const & { return CellBig<T, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
-// FIXME should return a static object. This Dimv is not to be used [ra17]
+// FIXME should return a static object, but CellBig is incomplete here. Dimv is not to be used [ra17]
     constexpr decltype(auto) static end() { return STLIterator(CellBig<T, Dimv const &>(nullptr, Dimv {})); }
 
     constexpr dim_t
