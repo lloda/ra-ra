@@ -24,7 +24,7 @@
 #define RA_DO_OPT_SMALLVECTOR 0
 #endif
 
-// no real downside to this.
+// no real downside.
 #ifndef RA_DO_OPT_IOTA
 #define RA_DO_OPT_IOTA 1
 #endif
@@ -88,7 +88,6 @@ enum none_t { none }; // in array constructors means ‘don't initialize’
 struct noarg { noarg() = delete; }; // in array constructors means ‘don't instantiate’
 
 template <class C> struct Scalar; // for type predicates
-template <class V> struct ra_traits_def;
 
 template <int n=BAD> struct dots_t
 {
@@ -107,10 +106,12 @@ template <int n> struct insert_t
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
 // For views. TODO on foreign vectors? arbitrary exprs?
-template <int crank, class A> constexpr auto iter(A && a) { return std::forward<A>(a).template iter<crank>(); }
+template <int crank, class A> constexpr auto
+iter(A && a) { return std::forward<A>(a).template iter<crank>(); }
 
 // Used in big.hh (selectors, etc).
-template <class A, class ... I> constexpr decltype(auto) from(A && a, I && ... i);
+template <class A, class ... I> constexpr decltype(auto)
+from(A && a, I && ... i);
 
 // Extended in ra.hh (reductions)
 constexpr bool any(bool const x) { return x; }
@@ -127,21 +128,11 @@ constexpr bool odd(unsigned int N) { return N & 1; }
     template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
     template <class A> constexpr bool NAME = JOIN(NAME, _def)<std::decay_t< A >>;
 
-// ra_traits are for non-ra:: types only. FIXME Not sure this is the interface I want.
-
 RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A> || ra::is_constant<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
-
-template <class V> requires (is_scalar<V>)
-struct ra_traits_def<V>
-{
-    consteval static rank_t rank_s() { return 0; }
-    consteval static dim_t size_s() { return 1; }
-    constexpr static auto shape(V const &) { return std::array<dim_t, 0> {}; }
-};
 
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
 RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && A::rank_s()!=0)
@@ -151,34 +142,9 @@ RA_IS_DEF(is_slice_pos_rank, SliceConcept<A> && A::rank_s()!=0)
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
 template <class A> constexpr bool is_ra_pos_rank = is_iterator_pos_rank<A> || is_slice_pos_rank<A>;
 template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_ra_pos_rank<A>) || is_scalar<A>;
-
-// ra_traits in small.hh.
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 
 RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
-
-// not decay_t bc of builtin arrays.
-template <class A> using ra_traits = ra_traits_def<std::remove_cvref_t<A>>;
-
-template <class V>
-requires (is_fov<V> && requires { std::tuple_size<V>::value; })
-struct ra_traits_def<V>
-{
-    consteval static rank_t rank_s() { return 1; };
-    consteval static dim_t size_s() { return std::tuple_size_v<V>; }
-    constexpr static auto shape(V const &) { return std::array<dim_t, 1> { size_s() }; }
-};
-
-template <class V>
-requires (is_fov<V> && !(requires { std::tuple_size<V>::value; }))
-struct ra_traits_def<V>
-{
-    consteval static rank_t rank_s() { return 1; }
-    consteval static dim_t size_s() { return ANY; }
-    constexpr static dim_t size(V const & v) { return std::ssize(v); }
-    constexpr static auto shape(V const & v) { return std::array<dim_t, 1> { size(v) }; }
-};
-
 RA_IS_DEF(is_special, false) // these are rank-0 types that we don't want reduced.
 
 // all args rank 0 (so immediate application), but at least one ra:: (don't collide with the scalar version).

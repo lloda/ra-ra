@@ -53,11 +53,9 @@ int main()
     tr.section("self");
     {
         std::cout << sizeof(std::array<ra::none_t, 9> {}) << std::endl;
-        std::cout << sizeof(std::array<ra::noarg, 9> {}) << std::endl;
         std::cout << sizeof(ra::none_t [9]) << std::endl;
         std::cout << sizeof(ra::noarg [9]) << std::endl;
         std::cout << sizeof(std::array<ra::none_t, 0> {}) << std::endl;
-        std::cout << sizeof(std::array<ra::noarg, 0> {}) << std::endl;
         std::cout << sizeof(ra::none_t [0]) << std::endl;
         std::cout << sizeof(ra::noarg [0]) << std::endl;
         std::cout << sizeof(ra::Small<int, 0>) << std::endl;

@@ -22,8 +22,8 @@
 #include <iostream>
 #include <iomanip>
 
-using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
-using ra::Small, ra::View, ra::Unique, ra::ra_traits;
+using std::cout, std::endl, std::setw, std::setprecision;
+using ra::TestRecorder, ra::Small, ra::View, ra::Unique;
 
 using Vec = ra::Small<float, 4>;
 

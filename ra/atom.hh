@@ -52,16 +52,23 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 // global introspection I
 // --------------------
 
+// ra_traits are only used for builtin arrays, but could be used for other non ra:: types.
+template <class V> struct ra_traits_def;
+// not decay_t bc of builtin arrays.
+template <class A> using ra_traits = ra_traits_def<std::remove_cvref_t<A>>;
+
 template <class V>
 requires (!std::is_void_v<V>)
 constexpr dim_t
 rank_s()
 {
-    using dV = std::decay_t<V>;
-    if constexpr (requires { dV::rank_s(); }) {
-        return dV::rank_s();
-    } else if constexpr (requires { ra_traits<V>::rank_s(); }) {
+    using dV = std::remove_cvref_t<V>;
+    if constexpr (requires { ra_traits<V>::rank_s(); }) {
         return ra_traits<V>::rank_s();
+    } else if constexpr (requires { dV::rank_s(); }) {
+        return dV::rank_s();
+    } else if constexpr (is_fov<dV>) {
+        return 1;
     } else {
         return 0;
     }
@@ -74,24 +81,26 @@ requires (!std::is_void_v<V>)
 constexpr dim_t
 size_s()
 {
-    using dV = std::decay_t<V>;
-    if constexpr (requires { dV::size_s(); }) {
-        return dV::size_s();
+    using dV = std::remove_cvref_t<V>;
+    if constexpr (0==rank_s<dV>()) {
+        return 1;
     } else if constexpr (requires { ra_traits<V>::size_s(); }) {
         return ra_traits<V>::size_s();
+    } else if constexpr (requires { dV::size_s(); }) {
+        return dV::size_s();
+    } else if constexpr (is_fov<dV> && requires { std::tuple_size<dV>::value; }) {
+        return std::tuple_size_v<dV>;
+    } else if constexpr (is_fov<dV>) {
+        return ANY;
+    } else if constexpr (ANY==rank_s<V>()) {
+        return ANY;
     } else {
-        if constexpr (ANY==rank_s<V>()) {
-            return ANY;
-        } else if constexpr (0==rank_s<V>()) { // also non-registered types
-            return 1;
-        } else {
-            dim_t s = 1;
-            for (int i=0; i!=dV::rank_s(); ++i) {
-                dim_t ss = dV::len_s(i);
-                if (ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
-            }
-            return s;
+        dim_t s = 1;
+        for (int i=0; i!=dV::rank_s(); ++i) {
+            dim_t ss = dV::len_s(i);
+            if (ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
         }
+        return s;
     }
 }
 
@@ -105,8 +114,6 @@ rank(V const & v)
         return rank_s<V>();
     } else if constexpr (requires { v.rank(); })  {
         return v.rank();
-    } else if constexpr (requires { ra_traits<V>::rank(v); }) {
-        return ra_traits<V>::rank(v);
     } else {
         static_assert(always_false<V>, "No rank() for this type.");
     }
@@ -120,8 +127,8 @@ size(V const & v)
         return size_s<V>();
     } else if constexpr (requires { v.size(); }) {
         return v.size();
-    } else if constexpr (requires { ra_traits<V>::size(v); }) {
-        return ra_traits<V>::size(v);
+    } else if constexpr (is_fov<V>) {
+        return std::ssize(v);
     } else {
         dim_t s = 1;
         for (rank_t k=0; k<rank(v); ++k) { s *= v.len(k); }
@@ -135,10 +142,14 @@ template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
-    if constexpr (requires { v.shape(); }) {
-        return v.shape();
-    } else if constexpr (requires { ra_traits<V>::shape(v); }) {
+    if constexpr (requires { ra_traits<V>::shape(v); }) {
         return ra_traits<V>::shape(v);
+    } else if constexpr (requires { v.shape(); }) {
+        return v.shape();
+    } else if constexpr (0==rank_s<V>()) {
+        return std::array<dim_t, 0> {};
+    } else if constexpr (1==rank_s<V>()) {
+        return std::array<dim_t, 1> { ra::size(v) };
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); rs>=0) {
         return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
