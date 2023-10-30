@@ -47,6 +47,34 @@ namespace ra {
 
 constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
+// Default storage for Big - see https://stackoverflow.com/a/21028912.
+// Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
+template <typename T, typename A=std::allocator<T>>
+struct default_init_allocator: public A
+{
+    using a_t = std::allocator_traits<A>;
+    using A::A;
+
+    template <typename U>
+    struct rebind
+    {
+        using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
+    };
+
+    template <typename U>
+    void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
+    {
+        ::new(static_cast<void *>(ptr)) U;
+    }
+    template <typename U, typename... Args>
+    void construct(U * ptr, Args &&... args)
+    {
+        a_t::construct(static_cast<A &>(*this), ptr, std::forward<Args>(args)...);
+    }
+};
+
+template <class T> using vector_default_init = std::vector<T, default_init_allocator<T>>;
+
 
 // --------------------
 // global introspection I
@@ -54,7 +82,7 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
 template <class VV>
 requires (!std::is_void_v<VV>)
-constexpr dim_t
+consteval dim_t
 rank_s()
 {
     using V = std::remove_cvref_t<VV>;
@@ -73,7 +101,7 @@ template <class V> constexpr rank_t rank_s(V const &) { return rank_s<V>(); }
 
 template <class VV>
 requires (!std::is_void_v<VV>)
-constexpr dim_t
+consteval dim_t
 size_s()
 {
     using V = std::remove_cvref_t<VV>;
@@ -89,15 +117,10 @@ size_s()
     } else if constexpr (is_fov<V> || rs==ANY) {
         return ANY;
     } else {
-        constexpr dim_t s = []
-        {
-            dim_t s = 1;
-            for (int i=0; i<rs; ++i) {
-                dim_t ss = V::len_s(i);
-                if (ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
-            }
-            return s;
-        }();
+        dim_t s = 1;
+        for (int i=0; i<rs; ++i) {
+            if (dim_t ss=V::len_s(i); ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
+        }
         return s;
     }
 }
@@ -134,7 +157,7 @@ size(V const & v)
     }
 }
 
-// Returns concrete types or const & thereto. FIXME return ra:: types, but only if it's in all cases.
+// Returns concrete types, value or const &. FIXME return ra:: types, but only if it's in all cases.
 template <class V>
 constexpr decltype(auto)
 shape(V const & v)
@@ -154,7 +177,7 @@ shape(V const & v)
     } else {
         static_assert(ANY==rs);
         auto i = std::ranges::iota_view { 0, v.rank() } | std::views::transform([&v](auto k) { return v.len(k); });
-        return std::vector<dim_t>(i.begin(), i.end()); // FIXME C++23 p1206? Still fugly
+        return vector_default_init<dim_t>(i.begin(), i.end()); // FIXME C++23 p1206? Still fugly
     }
 }
 
@@ -167,13 +190,14 @@ shape(V const & v, int k)
 }
 
 template <class A>
-inline void
+constexpr void
 resize(A & a, dim_t s)
 {
     if constexpr (ANY==size_s<A>()) {
+        RA_CHECK(s>=0, "Bad resize ", s, ".");
         a.resize(s);
     } else {
-        RA_CHECK(s==dim_t(a.len_s(0)), "Bad resize ", s, " vs ", a.len_s(0), ".");
+        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, " vs ", start(a).len(0), ".");
     }
 }
 

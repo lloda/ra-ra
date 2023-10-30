@@ -13,32 +13,6 @@
 
 namespace ra {
 
-// Default storage for Big - see https://stackoverflow.com/a/21028912.
-// Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
-template <typename T, typename A=std::allocator<T>>
-struct default_init_allocator: public A
-{
-    using a_t = std::allocator_traits<A>;
-    using A::A;
-
-    template <typename U>
-    struct rebind
-    {
-        using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
-    };
-
-    template <typename U>
-    void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
-    {
-        ::new(static_cast<void *>(ptr)) U;
-    }
-    template <typename U, typename... Args>
-    void construct(U * ptr, Args &&... args)
-    {
-        a_t::construct(static_cast<A &>(*this), ptr, std::forward<Args>(args)...);
-    }
-};
-
 
 // --------------------
 // Big iterator
@@ -164,25 +138,10 @@ braces_shape(braces<T, rank> const & l)
 template <class T, rank_t RANK>
 struct View
 {
-    using Dimv = std::conditional_t<ANY==RANK, std::vector<Dim, default_init_allocator<Dim>>, Small<Dim, ANY==RANK ? 0 : RANK>>;
+    using Dimv = std::conditional_t<ANY==RANK, vector_default_init<Dim>, Small<Dim, ANY==RANK ? 0 : RANK>>;
 
     Dimv dimv;
     T * cp;
-
-// FIXME reuse as default shape->dimv for Big/Small
-    template <class S>
-    constexpr dim_t
-    filldim(S && s)
-    {
-        for_each([](Dim & dim, dim_t s) { RA_CHECK(s>=0, "Bad len ", s, "."); dim.len = s; },
-                 dimv, s);
-        dim_t next = 1;
-        for (int i=dimv.size(); --i>=0;) {
-            dimv[i].step = next;
-            next *= dimv[i].len;
-        }
-        return next;
-    }
 
     consteval static rank_t rank_s() { return RANK; };
     consteval static rank_t rank() requires (RANK!=ANY) { return RANK; }
@@ -192,6 +151,7 @@ struct View
     constexpr dim_t step(int k) const { return dimv[k].step; }
     constexpr auto data() const { return cp; }
     constexpr dim_t size() const { return prod(map(&Dim::len, dimv)); }
+    constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
 // FIXME Used by Big::init(). View can be a deduced type (e.g. from value_t<X>)
     constexpr View(): cp() {}
@@ -199,11 +159,11 @@ struct View
     template <class SS>
     constexpr View(SS && s, T * cp_): cp(cp_)
     {
-        ra::resize(dimv, start(s).len(0)); // [ra37]
+        ra::resize(dimv, ra::size(s)); // [ra37]
         if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {
             start(dimv) = s;
         } else {
-            filldim(s);
+            filldim(dimv, s);
         }
     }
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
@@ -243,8 +203,6 @@ struct View
         std::copy_n(x.begin(), xsize, begin());
         return *this;
     }
-
-    constexpr bool const empty() const { return 0==size(); } // TODO Optimize
 
     template <rank_t c=0> constexpr auto iter() const && { return CellBig<T, Dimv, ic_t<c>>(cp, std::move(dimv)); }
     template <rank_t c=0> constexpr auto iter() const & { return CellBig<T, Dimv const &, ic_t<c>>(cp, dimv); }
@@ -438,6 +396,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     using View = ra::View<T, RANK>;
     using ViewConst = ra::View<T const, RANK>;
     using View::size;
+    using View::rank;
     using shape_arg = decltype(shape(std::declval<View>().iter()));
 
     constexpr View & view() { return *this; }
@@ -461,7 +420,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 
 // override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.cc [ra20].
-// TODO do this through .set() op.
 // TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     Container & operator=(Container && w)
     {
@@ -504,15 +462,10 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     {
         static_assert(!std::is_convertible_v<value_t<S>, Dim>);
         RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
+        static_assert(ANY==RANK || ANY==size_s<S>() || RANK==size_s<S>() || BAD==size_s<S>(), "Bad shape for rank.");
 // [ra37] Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
-        if constexpr (ANY==RANK) {
-            ra::resize(View::dimv, ra::size(s));
-        } else if constexpr (ANY==ra::size_s<S>()) {
-            RA_CHECK(RANK==ra::size(s), "Bad shape [", noshape, s, "] for rank ", RANK, ".");
-        } else {
-            static_assert(RANK==size_s<S>() || BAD==size_s<S>(), "Invalid shape for rank.");
-        }
-        store = storage_traits<Store>::create(View::filldim(s));
+        ra::resize(View::dimv, ra::size(s));
+        store = storage_traits<Store>::create(filldim(View::dimv, s));
         View::cp = storage_traits<Store>::data(store);
     }
 
@@ -582,14 +535,14 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // resize first axis. Only for some kinds of store.
     void resize(dim_t const s)
     {
-        static_assert(RANK==ANY || RANK>0); RA_CHECK(this->rank()>0);
+        static_assert(RANK==ANY || RANK>0); RA_CHECK(0<rank());
         View::dimv[0].len = s;
         store.resize(size());
         View::cp = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
-        static_assert(RANK==ANY || RANK>0); RA_CHECK(this->rank()>0);
+        static_assert(RANK==ANY || RANK>0); RA_CHECK(0<rank());
         View::dimv[0].len = s;
         store.resize(size(), t);
         View::cp = store.data();
@@ -600,20 +553,20 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     void resize(S const & s)
     {
         ra::resize(View::dimv, start(s).len(0)); // [ra37] FIXME is View constructor
-        store.resize(View::filldim(s));
+        store.resize(filldim(View::dimv, s));
         View::cp = store.data();
     }
 // lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
         store.push_back(std::move(t));
         ++View::dimv[0].len;
         View::cp = store.data();
     }
     void push_back(T const & t)
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
         store.push_back(t);
         ++View::dimv[0].len;
         View::cp = store.data();
@@ -621,21 +574,20 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class ... A>
     void emplace_back(A && ... a)
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
         store.emplace_back(std::forward<A>(a) ...);
         ++View::dimv[0].len;
         View::cp = store.data();
     }
     void pop_back()
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(this->rank()==1);
+        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
         RA_CHECK(View::dimv[0].len>0);
         store.pop_back();
         --View::dimv[0].len;
     }
-    constexpr bool empty() const { return 0==this->size(); }
-    constexpr T const & back() const { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
-    constexpr T & back() { RA_CHECK(this->rank()==1 && this->size()>0); return store[this->size()-1]; }
+    constexpr T const & back() const { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
+    constexpr T & back() { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
 
 // FIXME __cpp_explicit_this_parameter
     constexpr auto data() { return view().data(); }
@@ -684,7 +636,7 @@ swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
     std::swap(a.cp, b.cp);
 }
 
-template <class T, rank_t RANK=ANY> using Big = Container<std::vector<T, default_init_allocator<T>>, RANK>;
+template <class T, rank_t RANK=ANY> using Big = Container<vector_default_init<T>, RANK>;
 template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
@@ -944,7 +896,7 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
             assert(is_ravel_free(a) && "reshape w/copy not implemented");
             if (la>=lb) {
 // FIXME View(SS const & s, T * p). Cf [ra37].
-                b.filldim(sb);
+                filldim(b.dimv, sb);
                 for (int j=0; j!=b.rank(); ++j) {
                     b.dimv[j].step *= a.step(a.rank()-1);
                 }

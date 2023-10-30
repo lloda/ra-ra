@@ -47,6 +47,21 @@ is_c_order(V const & d)
     }
 }
 
+// FIXME reuse as default shape->dimv for Big/Small
+template <class Dimv, class S>
+constexpr dim_t
+filldim(Dimv & dimv, S && s)
+{
+    for_each([](Dim & dim, dim_t s) { RA_CHECK(s>=0, "Bad len ", s, "."); dim.len = s; },
+             dimv, s);
+    dim_t next = 1;
+    for (int i=dimv.size(); --i>=0;) {
+        dimv[i].step = next;
+        next *= dimv[i].len;
+    }
+    return next;
+}
+
 template <class S> struct default_steps_ {};
 template <class tend> struct default_steps_<std::tuple<tend>> { using type = mp::int_list<1>; };
 template <> struct default_steps_<std::tuple<>> { using type = mp::int_list<>; };

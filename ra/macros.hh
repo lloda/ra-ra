@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Basic macros and types.
 
-// (c) Daniel Llorens - 2005--2022
+// (c) Daniel Llorens - 2005--2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -16,7 +16,7 @@
 #define JOIN_( x, y ) x##y
 #define JOIN( x, y ) JOIN_( x, y )
 
-// by G. Pakosz @ http://stackoverflow.com/a/1872506
+// see http://stackoverflow.com/a/1872506
 #define FOR_EACH_1(what, x, ...) what(x)
 #define FOR_EACH_2(what, x, ...) what(x) FOR_EACH_1(what, __VA_ARGS__)
 #define FOR_EACH_3(what, x, ...) what(x) FOR_EACH_2(what, __VA_ARGS__)

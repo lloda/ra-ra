@@ -342,17 +342,17 @@ from_tuple(T && t)
 }
 
 template <class C, class T>
-constexpr auto
+consteval auto
 tuple_values()
 {
-    return std::apply([](auto ... t) { return std::array<C, std::tuple_size_v<T>> { C(t) ... }; }, T {});
+    return std::apply([](auto ... t) { return std::array<C, len<T>> { C(t) ... }; }, T {});
 }
 
 template <class C, class T, class I>
 constexpr C
 map_indices(I const & i)
 {
-    return std::apply([&i](auto ... t) { return std::array<C, std::tuple_size_v<T>> { i[t] ... }; }, T {});
+    return std::apply([&i](auto ... t) { return std::array<C, len<T>> { i[t] ... }; }, T {});
 };
 
 template <class T, int k=0>
@@ -370,7 +370,7 @@ template <class K, class T, class F, class I = int_c<0>>
 constexpr auto
 fold_tuple(K && k, T && t, F && f, I && i = int_c<0> {})
 {
-    if constexpr (I::value==std::tuple_size_v<std::decay_t<T>>) {
+    if constexpr (I::value==len<std::decay_t<T>>) {
         return k;
     } else {
         return fold_tuple(f(k, std::get<I::value>(t)), t, f, int_c<I::value+1> {});

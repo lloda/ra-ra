@@ -61,9 +61,9 @@ template <class A>
 concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
 // FIXME we still allow ply(&) in some places. Cf also test/types.cc.
-    { std::decay_t<A>::rank_s() } -> std::convertible_to<rank_t>;
-    { a.rank() } -> std::convertible_to<rank_t>;
-    { std::decay_t<A>::len_s(k) } -> std::convertible_to<dim_t>;
+    { std::decay_t<A>::rank_s() } -> std::same_as<rank_t>;
+    { a.rank() } -> std::same_as<rank_t>;
+    { std::decay_t<A>::len_s(k) } -> std::same_as<dim_t>;
     { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
     { a.step(k) };
@@ -74,8 +74,8 @@ concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 template <class A>
 concept SliceConcept = requires (A a)
 {
-    { A::rank_s() } -> std::convertible_to<rank_t>;
-    { a.rank() } -> std::convertible_to<rank_t>;
+    { A::rank_s() } -> std::same_as<rank_t>;
+    { a.rank() } -> std::same_as<rank_t>;
     { a.iter() } -> IteratorConcept;
 };
 
