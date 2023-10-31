@@ -153,8 +153,7 @@ struct View
     constexpr dim_t size() const { return prod(map(&Dim::len, dimv)); }
     constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
-// FIXME Used by Big::init(). View can be a deduced type (e.g. from value_t<X>)
-    constexpr View(): cp() {}
+    constexpr View(): cp() {} // FIXME used by Container constructors
     constexpr View(Dimv const & dimv_, T * cp_): dimv(dimv_), cp(cp_) {} // [ra36]
     template <class SS>
     constexpr View(SS && s, T * cp_): cp(cp_)
@@ -402,7 +401,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr View & view() { return *this; }
     constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
 
-// Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray, then remove the constructors and the assignment operators.
+// Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray, then remove constructors and assignment operators.
     Container(Container && w): store(std::move(w.store))
     {
         View::dimv = std::move(w.dimv);
@@ -413,13 +412,9 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         View::dimv = w.dimv;
         View::cp = storage_traits<Store>::data(store);
     }
-    Container(Container & w): store(w.store)
-    {
-        View::dimv = w.dimv;
-        View::cp = storage_traits<Store>::data(store);
-    }
+    Container(Container & w): Container(std::as_const(w)) {}
 
-// override View::operator= to allow initialization-of-reference. Unfortunately operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.cc [ra20].
+// override View::operator= to allow initialization-of-reference. operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.cc [ra20].
 // TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     Container & operator=(Container && w)
     {
@@ -435,13 +430,20 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         View::cp = storage_traits<Store>::data(store);
         return *this;
     }
-    Container & operator=(Container & w)
+    Container & operator=(Container & w) { return *this = std::as_const(w); }
+
+    template <class S> requires (1==rank_s<S>() || ANY==rank_s<S>())
+    void
+    init(S && s)
     {
-        store = w.store;
-        View::dimv = w.dimv;
+        static_assert(!std::is_convertible_v<value_t<S>, Dim>);
+        RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
+        static_assert(ANY==RANK || ANY==size_s<S>() || RANK==size_s<S>() || BAD==size_s<S>(), "Bad shape for rank.");
+        ra::resize(View::dimv, ra::size(s)); // [ra37]
+        store = storage_traits<Store>::create(filldim(View::dimv, s));
         View::cp = storage_traits<Store>::data(store);
-        return *this;
     }
+    void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
 // provided so that {} calls shape_arg constructor below.
     Container() requires (ANY==RANK)
@@ -449,30 +451,9 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container() requires (ANY!=RANK && 0!=RANK)
         : View(typename View::Dimv(Dim {0, 1}), nullptr) {}
     Container() requires (0==RANK)
-    {
-// cannot have zero size
-        store = storage_traits<Store>::create(1);
-        View::cp = storage_traits<Store>::data(store);
-    }
-
-    template <class S>
-    requires (1==rank_s<S>() || ANY==rank_s<S>())
-    void
-    init(S && s)
-    {
-        static_assert(!std::is_convertible_v<value_t<S>, Dim>);
-        RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
-        static_assert(ANY==RANK || ANY==size_s<S>() || RANK==size_s<S>() || BAD==size_s<S>(), "Bad shape for rank.");
-// [ra37] Dimv might be STL type. Otherwise I'd just View::dimv.set(map(...)).
-        ra::resize(View::dimv, ra::size(s));
-        store = storage_traits<Store>::create(filldim(View::dimv, s));
-        View::cp = storage_traits<Store>::data(store);
-    }
-
-    void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
+        : Container({}, ra::none) {}
 
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
-
     Container(shape_arg const & s, none_t) { init(s); }
 
     template <class XX>
@@ -532,7 +513,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
     using View::operator=;
 
-// resize first axis. Only for some kinds of store.
+// resize first axis or full shape. Only for some kinds of store.
     void resize(dim_t const s)
     {
         static_assert(RANK==ANY || RANK>0); RA_CHECK(0<rank());
@@ -547,9 +528,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         store.resize(size(), t);
         View::cp = store.data();
     }
-// resize full shape. Only for some kinds of store.
-    template <class S>
-    requires (rank_s<S>() > 0)
+    template <class S> requires (rank_s<S>() > 0)
     void resize(S const & s)
     {
         ra::resize(View::dimv, start(s).len(0)); // [ra37] FIXME is View constructor

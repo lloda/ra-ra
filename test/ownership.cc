@@ -16,35 +16,6 @@ using std::cout, std::endl, ra::TestRecorder;
 using real = double;
 
 // TODO Test construction both by-value and by-ref, and between types.
-
-// TODO Correct and complete this table, both for
-// array-type-A::operator=(array-type-B) and for
-// array-type-A::array-type::A(array-type-B).
-
-// TODO Do/organize the tests for these tables. Table is probably wrong also.
-// The constructors are all plain, the fields of the array record are copied/moved.
-/*
-| to\fro cons | View           | Shared | Unique    | Big       | Small          | SmallView  | Tested in        |
-|-------------+----------------+--------+-----------+-----------+----------------+------------+------------------|
-| R           | borrow         | borrow | borrow    | borrow    | borrow         | ...        |                  |
-| Shared      | share, null d. | share  | move      | share     | share, null d. |            | test/ownership.cc |
-| Unique      | copy           | copy   | move      | copy/move | copy           |            |                  |
-| Big         | copy           | copy   | copy/move | copy/move | copy           |            |                  |
-| Small       |                |        |           |           | copy           |            |                  |
-*/
-
-// operator= however copies into. This is so that array ops look natural.
-// The reason for the diagonal exceptions is to allow array-types to be initialized from a ref argument, which is required in operator>>(istream &, array-type). Maybe there's a better solution.
-/*
-| to\fro op= | View      | Shared    | Unique    | Big         | Small     | Tested in        |
-|------------+-----------+-----------+-----------+-------------+-----------+------------------|
-| View       | copy into | copy into | copy into | copy into   | copy into | test/operators.cc |
-| Shared     | copy into | *share*   | copy into | copy into   | copy into |                  |
-| Unique     | copy into | copy into | *move*    | copy into   | copy into |                  |
-| Big        | copy into | copy into | copy into | *copy/move* | copy into |                  |
-| Small      | copy into | copy into | copy into | copy into   | *copy*    |                  |
-*/
-
 // TODO Maybe I want Container/View<T> const and Container/View<T const> to behave differently....
 int main()
 {
@@ -132,10 +103,14 @@ int main()
         ra::Shared<real, 1> o({5}, 11.);
         ra::Shared<real, 1> z(o);
         o = 99.;
-        tr.test(std::equal(check99, check99+5, z.begin()));
+        tr.test_eq(5, o.size());
+        tr.test_eq(5, z.size());
+        tr.test_eq(99, z);
+        tr.test_eq(99, o);
 
         ra::Shared<real, 1> const c(o);
-        tr.test(std::equal(check99, check99+5, c.begin()));
+        tr.test_eq(5, c.size());
+        tr.test_eq(99, c);
         tr.test(c.data()==o.data());
         ra::Shared<real, 1> const q(c);
         tr.test(q.data()==c.data());

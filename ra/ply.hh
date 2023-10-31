@@ -335,7 +335,7 @@ template <IteratorConcept A, class Def>
 constexpr decltype(auto)
 early(A && a, Def && def)
 {
-    return ply(std::forward<A>(a), Default {def});
+    return ply(std::forward<A>(a), Default { std::forward<Def>(def) });
 }
 
 
@@ -343,37 +343,37 @@ early(A && a, Def && def)
 // STLIterator for CellSmall / CellBig. FIXME make it work for any IteratorConcept.
 // --------------------
 
-template <class S, class I, class P>
+template <class A, class I>
 constexpr void
-cube_next(rank_t k, S const & it, I & i, P & p)
+cube_next(rank_t k, A & a, I & ind)
 {
     for (; k>=0; --k) {
-        if (++i[k]<it.len(k)) {
-            p += it.step(k);
+        if (++ind[k]<a.len(k)) {
+            a.adv(k, 1);
             return;
         } else {
-            i[k] = 0;
-            p -= it.step(k)*(it.len(k)-1);
+            ind[k] = 0;
+            a.adv(k, 1-a.len(k));
         }
     }
-    p = nullptr;
+    a.c.cp = nullptr;
 }
 
-template <int k, class S, class I, class P>
+template <int k, class A, class I>
 constexpr void
-cube_next(S const & it, I & i, P & p)
+cube_next(A & a, I & ind)
 {
     if constexpr (k>=0) {
-        if (++i[k]<it.len(k)) {
-            p += it.step(k);
+        if (++ind[k]<a.len(k)) {
+            a.adv(k, 1);
         } else {
-            i[k] = 0;
-            p -= it.step(k)*(it.len(k)-1);
-            cube_next<k-1>(it, i, p);
+            ind[k] = 0;
+            a.adv(k, 1-a.len(k));
+            cube_next<k-1>(a, ind);
         }
-    } else {
-        p = nullptr;
+        return;
     }
+    a.c.cp = nullptr;
 }
 
 template <class Iterator>
@@ -381,14 +381,15 @@ struct STLIterator
 {
     using difference_type = dim_t;
     using value_type = typename Iterator::value_type;
+// std::array or std::vector.
     using shape_type = decltype(ra::shape(std::declval<Iterator>()));
 
     Iterator ii;
     shape_type i;
+
     STLIterator(STLIterator const & it) = default;
     STLIterator(Iterator const & ii_)
         : ii(ii_),
-// shape_type may be std::array or std::vector.
           i([&] {
               if constexpr (ANY==Iterator::rank_s()) {
                   return shape_type(ii.rank(), 0);
@@ -401,7 +402,7 @@ struct STLIterator
         if (ii.c.cp && 0==ra::size(ii)) {
             ii.c.cp = nullptr;
         }
-    };
+    }
     constexpr STLIterator &
     operator=(STLIterator const & it)
     {
@@ -417,9 +418,9 @@ struct STLIterator
     STLIterator & operator++()
     {
         if constexpr (ANY==Iterator::rank_s()) {
-            cube_next(ii.rank()-1, ii, i, ii.c.cp);
+            cube_next(ii.rank()-1, ii, i);
         } else {
-            cube_next<Iterator::rank_s()-1>(ii, i, ii.c.cp);
+            cube_next<Iterator::rank_s()-1>(ii, i);
         }
         return *this;
     }
@@ -442,20 +443,18 @@ inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
     static_assert(!has_len<A>, "len used outside subscript context.");
-// FIXME note that this copies / resets the Iterator if fa.a already is one; see [ra35].
-    auto a = ra::start(fa.a);
-    static_assert(size_s(a)!=BAD, "cannot print type");
+    static_assert(BAD!=size_s<A>(), "Cannot print undefined size expr.");
+    auto a = ra::start(fa.a); // [ra35]
     rank_t const rank = a.rank();
     auto sha = shape(a);
     if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==ANY)) {
-        o << start(sha) << '\n';
+        o << sha << '\n';
     }
     for (rank_t k=0; k<rank; ++k) {
         if (0==sha[k]) {
             return o;
         }
     }
-// order here is row-major on purpose.
     auto ind = sha; for_each([](auto & s) { s=0; }, ind);
     for (;;) {
         o << *(a.flat());
@@ -479,7 +478,7 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
 }
 
 // Static size.
-template <class C> requires (!is_scalar<C> && size_s<C>()!=ANY)
+template <class C> requires (ANY!=size_s<C>() && !is_scalar<C>)
 inline std::istream &
 operator>>(std::istream & i, C & c)
 {
@@ -487,31 +486,30 @@ operator>>(std::istream & i, C & c)
     return i;
 }
 
-// Special case for std::vector, to handle create-new / resize() difference.
+// std::vector needs a special constructor.
 template <class T, class A>
 inline std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
-    if (dim_t n; !((i >> n).fail())) {
-        RA_CHECK(n>=0, "negative sizes in input: ", n);
-        c.resize(n);
+    if (dim_t n; i >> n) {
+        RA_CHECK(n>=0, "Negative length in input [", n, "].");
+        std::vector<T, A> cc(n);
+        swap(c, cc);
         for (auto & ci: c) { i >> ci; }
     }
     return i;
 }
 
-// Expr size, so read shape and possibly allocate (TODO try to avoid).
-template <class C> requires (size_s<C>()==ANY && !std::is_convertible_v<C, std::string_view>)
+// Read shape and possibly allocate.
+template <class C> requires (ANY==size_s<C>() && !std::is_convertible_v<C, std::string_view>)
 inline std::istream &
 operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
-        std::decay_t<C> cc(s, ra::none);
-        RA_CHECK(every(start(s)>=0), "negative sizes in input: ", s);
-// avoid copying in case Container's elements don't support it.
+        RA_CHECK(every(start(s)>=0), "Negative length in input [", noshape, s, "].");
+        C cc(s, ra::none);
         swap(c, cc);
-// need row-major, serial iteration here. FIXME use ra:: traversal.
-        for (auto & ci: c) { i >> ci; }
+        for (auto & ci: c) { i >> ci; } // FIXME must guarantee row-major for ra:: traversal.
     }
     return i;
 }
