@@ -32,20 +32,20 @@ operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len 
 
 template <class V>
 constexpr bool
-is_c_order(V const & d)
+is_c_order_dimv(V const & d)
 {
-    if constexpr (requires { d.dimv; }) {
-        return is_c_order(d.dimv);
-    } else {
-        dim_t s = 1;
-        for (int i=d.size()-1; i>=0; --i) {
-            if (s!=d[i].step) { return false; }
-            s *= d[i].len;
-            if (s==0) { return true; }
-        }
-        return true;
+    bool steps = true;
+    dim_t s = 1;
+    for (int i=d.size()-1; i>=0; --i) {
+        steps = steps && d[i].step==s;
+        s *= d[i].len;
+        if (0==s) { return true; }
     }
+    return steps;
 }
+
+template <class V> constexpr bool
+is_c_order(V const & d) { return is_c_order_dimv(d.dimv); }
 
 // FIXME reuse as default shape->dimv for Big/Small
 template <class Dimv, class S>
@@ -266,12 +266,12 @@ struct CellSmall
 // nested braces for Small initializers + forward decl Small types
 // ---------------------
 
-// SmallArray has 4 special constructors:
+// Beyond the expr constructor, SmallArray has 4 special constructors:
 // 1. The empty constructor.
-// 2. The scalar constructor. This is needed when T isn't registered as ra::scalar, which isn't required purely for container use.
+// 2. The scalar constructor, needed when T isn't registered as ra::scalar.
 // 3. The ravel constructor.
 // 4. The nested constructor.
-// In some cases the ravel or nested constructors are ambiguous. We solve this by defining the constructor arguments to noarg variants.
+// Sometimes the ravel/nested/scalar constructors are ambiguous. This is solved by defining arguments to noarg variants.
 
 template <class T, class lens>
 struct nested_tuple
@@ -501,7 +501,7 @@ struct SmallBase
     template <rank_t c=0> constexpr iterator<c> iter() { return data(); }
     template <rank_t c=0> constexpr const_iterator<c> iter() const { return data(); }
 
-    constexpr static bool def = is_c_order(dimv);
+    constexpr static bool def = is_c_order_dimv(dimv);
     constexpr auto begin() const { if constexpr (def) return data(); else return STLIterator(iter()); }
     constexpr auto begin() { if constexpr (def) return data(); else return STLIterator(iter()); }
     constexpr auto end() const { if constexpr (def) return data()+size(); else return STLIterator(const_iterator<0>(nullptr)); }

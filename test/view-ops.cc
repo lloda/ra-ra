@@ -87,6 +87,8 @@ int main()
             auto b = transpose(ra::Small<int, 0> {}, a);
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
+            tr.test(is_c_order(a));
+            tr.test(is_c_order(b));
         }
         {
             ra::Unique<double, 0> a({}, 99);
@@ -123,12 +125,15 @@ int main()
                 tr.test_eq(4, b[1]);
             };
         ra::Unique<double> a({3, 2}, ra::_0*2 + ra::_1 + 1);
-        cout << "A: " << a << endl;
+        tr.test(is_c_order(a));
         transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, a)); // dyn rank to dyn rank
         transpose_test(transpose<0, 0>(a));                       // dyn rank to static rank
         ra::Unique<double, 2> b({3, 2}, ra::_0*2 + ra::_1*1 + 1);
         transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
         transpose_test(transpose<0, 0>(b));                       // static rank to static rank
+        auto bt = transpose<0, 0>(b);
+        tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order(bt));
+        tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order_dimv(bt.dimv));
     }
     tr.section("transpose C");
     {

@@ -107,7 +107,8 @@ template <class T, rank_t rank> requires (rank>1)
 struct braces_def<T, rank> { using type = std::initializer_list<braces<T, rank-1>>; };
 
 template <int i, class T, rank_t rank>
-constexpr dim_t braces_len(braces<T, rank> const & l)
+constexpr dim_t
+braces_len(braces<T, rank> const & l)
 {
     if constexpr (i>=rank) {
         return 0;
@@ -572,8 +573,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class I> constexpr decltype(auto) at(I && i) { return view().at(std::forward<I>(i)); }
     template <class I> constexpr decltype(auto) at(I && i) const { return view().at(std::forward<I>(i)); }
 // container is always compact/row-major, so STL-like iterators can be raw pointers.
-    constexpr auto begin() { assert(is_c_order(View::dimv)); return view().data(); }
-    constexpr auto begin() const { assert(is_c_order(View::dimv)); return view().data(); }
+    constexpr auto begin() { assert(is_c_order_dimv(View::dimv)); return view().data(); }
+    constexpr auto begin() const { assert(is_c_order_dimv(View::dimv)); return view().data(); }
     constexpr auto end() { return view().data()+this->size(); }
     constexpr auto end() const { return view().data()+this->size(); }
 // FIXME size is redundant e.g. for Store = std::vector.
@@ -990,13 +991,6 @@ auto collapse(View<super_t, RANK> const & a)
     }
     b.cp = reinterpret_cast<sub_t *>(a.data());
     return b;
-}
-
-// For functions that require compact arrays (TODO they really shouldn't).
-template <class A> inline
-bool const crm(A const & a)
-{
-    return ra::size(a)==0 || is_c_order(a);
 }
 
 } // namespace ra
