@@ -121,13 +121,13 @@ maybe_len(V && v)
     }
 }
 
-template <class II, class KK=mp::iota<mp::len<II>>>
+template <int N, class KK=mp::iota<N>>
 struct unbeat;
 
-template <class ... I, int ... k>
-struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
+template <int N, int ... k>
+struct unbeat<N, mp::int_list<k ...>>
 {
-    template <class V>
+    template <class V, class ... I>
     constexpr static decltype(auto)
     op(V & v, I && ... i)
     {
@@ -142,14 +142,14 @@ struct unbeat<std::tuple<I ...>, mp::int_list<k ...>>
 
 template <rank_t k, rank_t end, class Q, class P, class S>
 constexpr dim_t
-indexer(Q const & q, P && pp, S const & ss0)
+indexer(Q const & q, P && pp, S const & ss0, dim_t c)
 {
     if constexpr (k==end) {
-        return 0;
+        return c;
     } else {
         auto pk = *pp;
         RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
-        return (q.step(k) * pk) + (pp+=ss0, indexer<k+1, end>(q, pp, ss0));
+        return pp+=ss0, indexer<k+1, end>(q, pp, ss0, c + (q.step(k) * pk));
     }
 }
 
@@ -184,7 +184,7 @@ longer(Q const & q, P const & pp)
     if constexpr (ANY==rank_s<Q>()) {
         return indexer(q.rank(), q, p.flat(), p.step(0));
     } else {
-        return indexer<0, rank_s<Q>()>(q, p.flat(), p.step(0));
+        return indexer<0, rank_s<Q>()>(q, p.flat(), p.step(0), 0);
     }
 }
 
@@ -437,15 +437,13 @@ struct SmallBase
             using FD = FilterDims<lens, steps, std::decay_t<I> ...>;    \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> (data() + select_loop<0>(i ...)); \
         } else { /* TODO partial beating */                             \
-            return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...); \
+            return unbeat<sizeof...(I)>::op(*this, std::forward<I>(i) ...); \
         }                                                               \
     }                                                                   \
     template <class ... I>                                              \
     constexpr decltype(auto)                                            \
-    operator[](I && ... i) CONST                                        \
-    {                                                                   \
-        return (*this)(std::forward<I>(i) ...);                         \
-    }                                                                   \
+    operator[](I && ... i) CONST { return (*this)(std::forward<I>(i) ...); } \
+                                                                        \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
     at(I && i) CONST                                                    \

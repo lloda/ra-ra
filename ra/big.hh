@@ -208,7 +208,7 @@ struct View
     constexpr auto iter(rank_t c) const && { return CellBig<T, Dimv, dim_t>(cp, std::move(dimv), c); }
     constexpr auto iter(rank_t c) const & { return CellBig<T, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
-// FIXME should return a static object, but CellBig is incomplete here. Dimv is not to be used [ra17]
+// FIXME return a static object, but CellBig is incomplete here. Dimv is not to be used [ra17]
     constexpr decltype(auto) static end() { return STLIterator(CellBig<T, Dimv const &>(nullptr, Dimv {})); }
 
     constexpr dim_t
@@ -290,16 +290,13 @@ struct View
             return sub;
 // TODO partial beating. FIXME forward this? cf unbeat
         } else {
-            return unbeat<std::tuple<I ...>>::op(*this, std::forward<I>(i) ...);
+            return unbeat<sizeof...(I)>::op(*this, std::forward<I>(i) ...);
         }
     }
 
     template <class ... I>
     constexpr decltype(auto)
-    operator[](I && ... i) const
-    {
-        return (*this)(std::forward<I>(i) ...);
-    }
+    operator[](I && ... i) const { return (*this)(std::forward<I>(i) ...); }
 
     template <class I>
     constexpr decltype(auto)
@@ -314,18 +311,15 @@ struct View
         }
     }
 
-// conversion to scalar.
     constexpr
     operator T & () const
     {
+        static_assert(ANY==RANK || 0==RANK, "Bad rank for conversion to scalar.");
         if constexpr (ANY==RANK) {
             RA_CHECK(0==rank(), "Error converting rank ", rank(), " to scalar.");
-        } else {
-            static_assert(0==RANK, "Bad rank for conversion to scalar.");
         }
         return data()[0];
     }
-
 // necessary here per [ra15] (?)
     constexpr operator T & () { return std::as_const(*this); }
 
@@ -620,7 +614,7 @@ template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T [
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
 // -------------
-// Used in Guile wrappers to let an array parameter to either borrow from Guile storage or convert into new array (eg passing 'f32 into 'f64).
+// Used in Guile wrappers to let array parameter either borrow from Guile storage or convert into new array (eg 'f32 into 'f64).
 // TODO Can use unique_ptr's deleter for this?
 // TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
 // -------------
