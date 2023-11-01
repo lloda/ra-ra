@@ -73,7 +73,6 @@ struct default_steps_<std::tuple<t0, t1, ti ...>>
     constexpr static int step0 = t1::value * mp::first<rest>::value;
     using type = mp::cons<ic_t<step0>, rest>;
 };
-
 template <class S> using default_steps = typename default_steps_<S>::type;
 
 

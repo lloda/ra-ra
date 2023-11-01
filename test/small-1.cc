@@ -17,6 +17,19 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using ra::mp::int_list, ra::int_c, ra::mp::print_int_list, ra::mp::ref;
 
+namespace ra {
+
+// FIXME Replacement for ra::default_steps works here, but not in small.hh (ICE in gcc11 and garbage errors in gcc13).
+
+template <class lens>
+using default_steps0 = decltype([] {
+    constexpr int rank = mp::len<lens>;
+    constexpr auto dimv = [] { std::array<Dim, mp::len<lens>> dimv; filldim(dimv, mp::tuple_values<dim_t, lens>()); return dimv; } ();
+    return std::apply([&dimv](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<rank> {});
+} ());
+
+} // namespace ra
+
 int main()
 {
     TestRecorder tr;
@@ -105,6 +118,8 @@ int main()
     {
         using d = int_list<3, 4, 5>;
         using s = ra::default_steps<d>;
+        using z = ra::default_steps0<d>;
+        tr.info(print_int_list<s> {}, " vs ", print_int_list<z> {}).test(std::is_same_v<s, z>);
         tr.info("step 0").test_eq(20, ref<s, 0>::value);
         tr.info("step 1").test_eq(5, ref<s, 1>::value);
         tr.info("step 2").test_eq(1, ref<s, 2>::value);
