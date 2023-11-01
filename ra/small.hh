@@ -18,7 +18,7 @@ rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
 constexpr rank_t
 rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
 
-// cr>=0 is cell rank. -cr>0 is frame rank. TODO A way to indicate frame rank 0.
+// cr>=0 is cell rank. -cr>0 is frame rank. TODO A way to say frame rank 0.
 constexpr rank_t
 rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* independent */ : r==ANY ? ANY /* defer */ : (r+cr); }
 
@@ -737,23 +737,11 @@ cat(A1 && a1_, A2 && a2_)
     }
 }
 
-// FIXME should be local (constexpr lambda + mp::apply?)
-template <int s>
-struct explode_divop
-{
-    template <class T> struct op_
-    {
-        static_assert((T::value/s)*s==T::value);
-        using type = ic_t<T::value / s>;
-    };
-    template <class T> using op = typename op_<T>::type;
-};
-
 template <class super_t, class A> requires (cv_smallview<A>)
 constexpr auto
 explode(A && a_)
 {
-// the returned type has steps in super_t, but to support general steps we'd need steps in T. Maybe FIXME?
+// result has steps in super_t, but to support general steps we'd need steps in T. FIXME?
     decltype(auto) a = a_.view();
     using AA = std::decay_t<decltype(a)>;
     static_assert(super_t::def);
@@ -761,7 +749,14 @@ explode(A && a_)
     constexpr rank_t rb = super_t::rank_s();
     static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
     static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);
-    using csteps = mp::map<explode_divop<ra::size_s<super_t>()>::template op, mp::take<typename AA::steps, ra-rb>>;
+
+    constexpr dim_t supers = ra::size_s<super_t>();
+    using csteps = decltype(std::apply([](auto ... i)
+                                       {
+                                           static_assert(((i==(i/supers)*supers) && ...));
+                                           return mp::int_list<(i/supers) ...> {};
+                                       }, mp::take<typename AA::steps, ra-rb> {}));
+
     return SmallView<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
 }
 
