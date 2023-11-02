@@ -174,10 +174,10 @@ int main()
             {
                 int check0[] = { 1, 2, 3 };
                 int check1[] = { 4, 5, 6 };
-                tr.test(std::equal(check0, check0+3, s(ra::all, 0).begin()));
-                tr.test(std::equal(check1, check1+3, s(ra::all, 1).begin()));
-                tr.test(std::equal(s(ra::all, 0).begin(), s(ra::all, 0).end(), check0));
-                tr.test(std::equal(s(ra::all, 1).begin(), s(ra::all, 1).end(), check1));
+                tr.test(std::ranges::equal(check0, check0+3, s(ra::all, 0).begin(), s(ra::all, 0).end()));
+                tr.test(std::ranges::equal(check1, check1+3, s(ra::all, 1).begin(), s(ra::all, 1).end()));
+                tr.test(std::ranges::equal(s(ra::all, 0).begin(), s(ra::all, 0).end(), check0, check0+3));
+                tr.test(std::ranges::equal(s(ra::all, 1).begin(), s(ra::all, 1).end(), check1, check1+3));
             }
             tr.test_eq(1, s(ra::all, 0)[0]);
             tr.test_eq(2, s(ra::all, 0)[1]);
@@ -213,8 +213,8 @@ int main()
 // check STL iterator.
             {
                 int check[] = { 10, 11, 110, 111, 210, 211 };
-                tr.test(std::equal(t.begin(), t.end(), check));
-                tr.test(std::equal(check, check+6, t.begin()));
+                tr.test(std::ranges::equal(t.begin(), t.end(), check, check+6));
+                tr.test(std::ranges::equal(check, check+6, t.begin(), t.end()));
             }
         }
     }
@@ -270,10 +270,10 @@ int main()
         tr.test_eq(a, ax);
         tr.test_eq(a, bx);
 // check iterators.
-        tr.test(std::equal(a.begin(), a.end(), ax.begin()));
-        tr.test(std::equal(ax.begin(), ax.end(), a.begin()));
-        tr.test(std::equal(b.begin(), b.end(), bx.begin()));
-        tr.test(std::equal(bx.begin(), bx.end(), b.begin()));
+        tr.test(std::ranges::equal(a.begin(), a.end(), ax.begin(), ax.end()));
+        tr.test(std::ranges::equal(ax.begin(), ax.end(), a.begin(), a.end()));
+        tr.test(std::ranges::equal(b.begin(), b.end(), bx.begin(), bx.end()));
+        tr.test(std::ranges::equal(bx.begin(), bx.end(), b.begin(), b.end()));
 // check memory order.
         double fcheck[6] = { 1, 4, 2, 5, 3, 6 };
         tr.test(std::equal(fcheck, fcheck+6, ax.data()));

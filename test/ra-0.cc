@@ -201,7 +201,7 @@ int main()
         ra::View<double> r { {{3, 2}, {2, 1}}, pool };
         auto it = r.iter();
         tr.test_seq(r.data(), it.c.data());
-        std::copy(r.begin(), r.end(), chk);
+        std::ranges::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
     tr.section("iterator for View (II)");
@@ -211,7 +211,7 @@ int main()
         ra::View<double, 1> r { { ra::Dim {6, 1}}, pool };
         auto it = r.iter();
         tr.test_seq(r.data(), it.c.data());
-        std::copy(r.begin(), r.end(), chk);
+        std::ranges::copy(r.begin(), r.end(), chk);
         tr.test(std::equal(pool, pool+6, r.begin()));
     }
     // some of these tests are disabled depending on CellBig::operator=.
@@ -261,12 +261,12 @@ int main()
             auto biter = rb.begin();
             aiter = biter;
             tr.test_eq(0, ra); // ra unchanged
-            tr.test(std::equal(rb.begin(), rb.end(), aiter)); // aiter changed
+            tr.test(std::ranges::equal(rb.begin(), rb.end(), aiter, rb.end())); // aiter changed
         }
         {
             aiter = rb.begin();
             tr.test_eq(0, ra); // ra unchanged
-            tr.test(std::equal(rb.begin(), rb.end(), aiter)); // aiter changed
+            tr.test(std::ranges::equal(rb.begin(), rb.end(), aiter, rb.end())); // aiter changed
         }
     }
     tr.section("shape of .iter()");
@@ -292,7 +292,7 @@ int main()
         double spool[6] = { 0, 0, 0, 0, 0, 0 };
         ra::View<double> s { {{3, 1}, {2, 3}}, spool };
 
-        std::copy(r.begin(), r.end(), s.begin());
+        std::ranges::copy(r.begin(), r.end(), s.begin());
 
         double cpool[6] = { 1, 3, 5, 2, 4, 6 };
         tr.test(std::equal(cpool, cpool+6, spool));
@@ -320,11 +320,11 @@ int main()
         double check[6] = { 1, 4, 2, 5, 3, 6 };
 
         ra::View<double> r { {{3, 1}, {2, 3}}, rpool };
-        std::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+        std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, r.begin()));
 
         ra::Unique<double> u({3, 2}, r.begin(), r.size());
-        std::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+        std::ranges::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 
         // Small steps are tested in test/small-0.cc, test/small-1.cc.
@@ -542,21 +542,21 @@ int main()
             double rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::View<double, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             cout << "org" << endl;
-            std::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+            std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             {
                 double rcheck[6] = { 1, 4, 2, 5, 3, 6 };
                 auto r0 = r();
-                tr.test(std::equal(r0.begin(), r0.end(), rcheck));
+                tr.test(std::ranges::equal(r0.begin(), r0.end(), rcheck, rcheck+6));
                 ra::Small<int, 0> i0 {};
                 tr.info("ra::Small<int, 0> rank").test_eq(1, i0.rank());
                 auto r0a = r.at(ra::Small<int, 0> {});
-                tr.info("fix size").test(std::equal(r0a.begin(), r0a.end(), rcheck));
+                tr.info("fix size").test(std::ranges::equal(r0a.begin(), r0a.end(), rcheck, rcheck+6));
                 auto r0b = r.at(ra::Big<int, 1> {});
-                tr.info("fix rank").test(std::equal(r0b.begin(), r0b.end(), rcheck));
+                tr.info("fix rank").test(std::ranges::equal(r0b.begin(), r0b.end(), rcheck, rcheck+6));
                 auto r0c = r.at(0+ra::Big<int, 1> {});
-                tr.info("fix rank expr").test(std::equal(r0c.begin(), r0c.end(), rcheck));
+                tr.info("fix rank expr").test(std::ranges::equal(r0c.begin(), r0c.end(), rcheck, rcheck+6));
                 auto r0d = r.at(0+ra::Big<int>({0}, {}));
-                tr.info("r0d: [", r0d, "]").test(std::equal(r0d.begin(), r0d.end(), rcheck));
+                tr.info("r0d: [", r0d, "]").test(std::ranges::equal(r0d.begin(), r0d.end(), rcheck, rcheck+6));
             }
             {
                 double rcheck[2] = { 2, 5 };
@@ -601,7 +601,7 @@ int main()
             ra::View<double> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             tr.test_eq(2, r.rank());
             cout << "org" << endl;
-            std::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+            std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
 
             double rcheck0[6] = { 1, 4, 2, 5, 3, 6 };
             auto r0 = r();
@@ -609,9 +609,9 @@ int main()
             tr.test_eq(2, r0a.rank());
             tr.test_eq(2, r0.rank());
             cout << "r0" << endl;
-            std::copy(r0.begin(), r0.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
-            tr.test(std::equal(r0.begin(), r0.end(), rcheck0));
-            tr.test(std::equal(r0a.begin(), r0a.end(), rcheck0));
+            std::ranges::copy(r0.begin(), r0.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+            tr.test(std::ranges::equal(r0.begin(), r0.end(), rcheck0, rcheck0+6));
+            tr.test(std::ranges::equal(r0a.begin(), r0a.end(), rcheck0, rcheck0+6));
 
             double rcheck1[2] = { 2, 5 };
             auto r1 = r(1);
@@ -619,18 +619,18 @@ int main()
             tr.test_eq(1, r1a.rank());
             tr.test_eq(1, r1.rank());
             cout << "r1" << endl;
-            std::copy(r1.begin(), r1.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
-            tr.test(std::equal(r1.begin(), r1.end(), rcheck1));
-            tr.test(std::equal(r1a.begin(), r1a.end(), rcheck1));
+            std::ranges::copy(r1.begin(), r1.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+            tr.test(std::ranges::equal(r1.begin(), r1.end(), rcheck1, rcheck1+2));
+            tr.test(std::ranges::equal(r1a.begin(), r1a.end(), rcheck1, rcheck1+2));
 
-            double rcheck2[2] = { 5 };
+            double rcheck2[1] = { 5 };
             auto r2 = r(1, 1);
             auto r2a = r.at(ra::Small<int, 2> {1, 1});
             tr.test_eq(0, r2a.rank());
             cout << "r2" << endl;
-            std::copy(r2.begin(), r2.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
-            tr.test(std::equal(r2.begin(), r2.end(), rcheck2));
-            tr.test(std::equal(r2a.begin(), r2a.end(), rcheck2));
+            std::ranges::copy(r2.begin(), r2.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+            tr.test(std::ranges::equal(r2.begin(), r2.end(), rcheck2, rcheck2+1));
+            tr.test(std::ranges::equal(r2a.begin(), r2a.end(), rcheck2, rcheck2+1));
         }
 // TODO Make sure that this is double & = 99, etc. and not View<double, 0> = 99, etc.
         tr.section("assign to rank-0 result of subscript");

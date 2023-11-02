@@ -10,6 +10,7 @@
 // TODO Make traversal order a parameter, some operations (e.g. output, ravel) require specific orders.
 // TODO Better heuristic for traversal order.
 // TODO Tiling, etc. (see eval.cc in Blitz++).
+// TODO Unit step case?
 // TODO std::execution::xxx-policy
 // TODO Validate output argument strides.
 
@@ -260,7 +261,6 @@ ply_fixed(A && a, Early && early = Nop {})
     static_assert(0<=rank, "ply_fixed needs static rank");
 // inside first. FIXME better heuristic - but first need a way to force row-major
     constexpr /* static P2647 gcc13 */ auto order = mp::tuple_values<int, mp::reverse<mp::iota<rank>>>();
-
     if constexpr (0==rank) {
         if constexpr (requires {early.def;}) {
             return (*(a.flat())).value_or(early.def);
@@ -343,39 +343,6 @@ early(A && a, Def && def)
 // STLIterator for CellSmall / CellBig. FIXME make it work for any IteratorConcept.
 // --------------------
 
-template <class A, class I>
-constexpr void
-cube_next(rank_t k, A & a, I & ind)
-{
-    for (; k>=0; --k) {
-        if (++ind[k]<a.len(k)) {
-            a.adv(k, 1);
-            return;
-        } else {
-            ind[k] = 0;
-            a.adv(k, 1-a.len(k));
-        }
-    }
-    a.c.cp = nullptr;
-}
-
-template <int k, class A, class I>
-constexpr void
-cube_next(A & a, I & ind)
-{
-    if constexpr (k>=0) {
-        if (++ind[k]<a.len(k)) {
-            a.adv(k, 1);
-        } else {
-            ind[k] = 0;
-            a.adv(k, 1-a.len(k));
-            cube_next<k-1>(a, ind);
-        }
-        return;
-    }
-    a.c.cp = nullptr;
-}
-
 template <class Iterator>
 struct STLIterator
 {
@@ -385,12 +352,11 @@ struct STLIterator
     using shape_type = decltype(ra::shape(std::declval<Iterator>()));
 
     Iterator ii;
-    shape_type i;
+    shape_type ind;
 
-    STLIterator(STLIterator const & it) = default;
     STLIterator(Iterator const & ii_)
         : ii(ii_),
-          i([&] {
+          ind([&] {
               if constexpr (ANY==Iterator::rank_s()) {
                   return shape_type(ii.rank(), 0);
               } else {
@@ -398,38 +364,65 @@ struct STLIterator
               }
           }())
     {
-// [ra12] Null p_ so begin()==end() for empty range. [ra17] FIXME make 0==size() more efficient.
-        if (ii.c.cp && 0==ra::size(ii)) {
+// [ra12] mark empty range. FIXME make 0==size() more efficient.
+        if (0==ra::size(ii)) {
             ii.c.cp = nullptr;
         }
     }
     constexpr STLIterator &
     operator=(STLIterator const & it)
     {
-        i = it.i;
+        ind = it.ind;
         ii.Iterator::~Iterator(); // no-op except for View<ANY>. Still...
         new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
         return *this;
     }
 
-    template <class PP> bool operator==(PP const & j) const { return ii.c.cp==j.ii.c.cp; }
+    bool operator==(std::default_sentinel_t end) const { return !(ii.c.cp); }
     decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
     decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
+
+    constexpr void
+    cube_next(rank_t k)
+    {
+        for (; k>=0; --k) {
+            if (++ind[k]<ii.len(k)) {
+                ii.adv(k, 1);
+                return;
+            } else {
+                ind[k] = 0;
+                ii.adv(k, 1-ii.len(k));
+            }
+        }
+        ii.c.cp = nullptr;
+    }
+    template <int k>
+    constexpr void
+    cube_next()
+    {
+        if constexpr (k>=0) {
+            if (++ind[k]<ii.len(k)) {
+                ii.adv(k, 1);
+            } else {
+                ind[k] = 0;
+                ii.adv(k, 1-ii.len(k));
+                cube_next<k-1>();
+            }
+            return;
+        }
+        ii.c.cp = nullptr;
+    }
     STLIterator & operator++()
     {
         if constexpr (ANY==Iterator::rank_s()) {
-            cube_next(ii.rank()-1, ii, i);
+            cube_next(ii.rank()-1);
         } else {
-            cube_next<Iterator::rank_s()-1>(ii, i);
+            cube_next<Iterator::rank_s()-1>();
         }
         return *this;
     }
-    STLIterator & operator++(int)
-    {
-        auto old = *this;
-        ++(*this);
-        return old;
-    }
+// required by std::input_or_output_iterator
+    STLIterator & operator++(int)  { auto old = *this; ++(*this); return old; }
 };
 
 

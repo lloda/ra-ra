@@ -96,7 +96,7 @@ int main()
                 real check[12] = {1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6};
                 tr.section("not driving");
                 {
-                    auto f = [](int i, auto && a, real & d) { std::iota(a.begin(), a.end(), d); };
+                    auto f = [](int i, auto && a, int d) { for (auto & ai: a) { ai = d; ++d; } };
                     std::fill(a.begin(), a.end(), 0);
                     ply(ra::expr(f, ARGi, ARGa, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));
@@ -107,7 +107,7 @@ int main()
                 }
                 tr.section("driving");
                 {
-                    auto f = [](auto && a, int i, real & d) { std::iota(a.begin(), a.end(), d); };
+                    auto f = [](auto && a, int i, int d) { for (auto & ai: a) { ai = d; ++d; } };
                     std::fill(a.begin(), a.end(), 0);
                     ply(ra::expr(f, ARGa, ARGi, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));

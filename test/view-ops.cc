@@ -60,7 +60,7 @@ void CheckTranspose1(TestRecorder & tr, A && a)
         auto b = transpose(ra::Small<int, 2>{1, 0}, a);
         cout << "b: " << b << endl;
         double check[6] = {1, 3, 5, 2, 4, 6};
-        tr.test(std::equal(b.begin(), b.end(), check));
+        tr.test(std::ranges::equal(b.begin(), b.end(), check, check+6));
     }
     {
         std::iota(a.begin(), a.end(), 1);
@@ -68,7 +68,7 @@ void CheckTranspose1(TestRecorder & tr, A && a)
         auto b = transpose<1, 0>(a);
         cout << "b: " << b << endl;
         double check[6] = {1, 3, 5, 2, 4, 6};
-        tr.test(std::equal(b.begin(), b.end(), check));
+        tr.test(std::ranges::equal(b.begin(), b.end(), check, check+6));
     }
 }
 

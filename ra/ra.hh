@@ -182,16 +182,14 @@ constexpr auto at(A && a, I && i)
 // --------------------------------
 
 // These ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
-template <class T, class F>
-requires (ra_reducible<T, F>)
+template <class T, class F> requires (ra_reducible<T, F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
     return w ? FLAT(t) : FLAT(f);
 }
 
-template <class W, class T, class F>
-requires (ra_irreducible<W, T, F>)
+template <class W, class T, class F> requires (ra_irreducible<W, T, F>)
 constexpr auto
 where(W && w, T && t, F && f)
 {
@@ -199,29 +197,27 @@ where(W && w, T && t, F && f)
 }
 
 // catch all for non-ra types.
-template <class T, class F>
-requires (!(ra_irreducible<T, F>) && !(ra_reducible<T, F>))
+template <class T, class F> requires (!(ra_irreducible<T, F>) && !(ra_reducible<T, F>))
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
     return w ? t : f;
 }
 
-template <class A, class B>
-requires (ra_irreducible<A, B>)
-constexpr auto operator &&(A && a, B && b)
+template <class A, class B> requires (ra_irreducible<A, B>)
+constexpr auto
+operator &&(A && a, B && b)
 {
     return where(std::forward<A>(a), cast<bool>(std::forward<B>(b)), false);
 }
-template <class A, class B>
-requires (ra_irreducible<A, B>)
-constexpr auto operator ||(A && a, B && b)
+template <class A, class B> requires (ra_irreducible<A, B>)
+constexpr auto
+operator ||(A && a, B && b)
 {
     return where(std::forward<A>(a), true, cast<bool>(std::forward<B>(b)));
 }
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
-    template <class A, class B>                                         \
-    requires (ra_reducible<A, B>)                                       \
+    template <class A, class B> requires (ra_reducible<A, B>)           \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
@@ -503,8 +499,7 @@ struct ChooseComponents
 
 template <int D, int O> using ChooseComponents_ = typename ChooseComponents<D, O>::type;
 
-template <int D, int O>
-requires ((D>1) && (2*O>D))
+template <int D, int O> requires ((D>1) && (2*O>D))
 struct ChooseComponents<D, O>
 {
     static_assert(D>=O, "bad dimension or form order");
@@ -660,8 +655,7 @@ hodge(Va const & a, Vb & b)
     }
 }
 
-template <int D, int O, class Va>
-requires (TRIVIAL(D, O))
+template <int D, int O, class Va> requires (TRIVIAL(D, O))
 constexpr Va const &
 hodge(Va const & a)
 {
@@ -669,8 +663,7 @@ hodge(Va const & a)
     return a;
 }
 
-template <int D, int O, class Va>
-requires (!TRIVIAL(D, O))
+template <int D, int O, class Va> requires (!TRIVIAL(D, O))
 constexpr Va &
 hodge(Va & a)
 {
@@ -703,8 +696,7 @@ struct fromrank1
 };
 
 #define DECL_WEDGE(condition)                                           \
-    template <int D, int Oa, int Ob, class Va, class Vb>                \
-    requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
+    template <int D, int Oa, int Ob, class Va, class Vb> requires (!(is_scalar<Va> && is_scalar<Vb>)) \
     decltype(auto)                                                      \
     wedge(Va const & a, Vb const & b)
 DECL_WEDGE(general_case)
@@ -727,8 +719,7 @@ DECL_WEDGE(general_case)
 #undef DECL_WEDGE
 
 #define DECL_WEDGE(condition)                                           \
-    template <int D, int Oa, int Ob, class Va, class Vb, class Vr>      \
-    requires (!(is_scalar<Va> && is_scalar<Vb>))                        \
+    template <int D, int Oa, int Ob, class Va, class Vb, class Vr> requires (!(is_scalar<Va> && is_scalar<Vb>)) \
     void                                                                \
     wedge(Va const & a, Vb const & b, Vr & r)
 DECL_WEDGE(general_case)

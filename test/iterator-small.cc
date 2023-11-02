@@ -51,8 +51,8 @@ int main()
         {
             ra::Small<int, 2, 3> a = {{1, 2, 3}, {4, 5, 6}};
             auto b = transpose<1, 0>(a);
-            tr.test_eq(ra::start({0, 0}), ra::start(b.begin().i));
-            tr.test_eq(ra::start({0, 1}), ra::start((++b.begin()).i));
+            tr.test_eq(ra::start({0, 0}), ra::start(b.begin().ind));
+            tr.test_eq(ra::start({0, 1}), ra::start((++b.begin()).ind));
             tr.test(!std::is_same_v<int *, decltype(b.begin())>);
             int bref[6] = {1, 4, 2, 5, 3, 6};
             for (int i=0; auto && bi: b) {

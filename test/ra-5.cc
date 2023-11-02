@@ -64,7 +64,7 @@ int main()
         ra::Big<int> A({2, 3}, 3);
         auto const b = A();
         int x[6] = { 0, 0, 0, 0, 0, 0 };
-        std::copy(b.begin(), b.end(), x);
+        std::ranges::copy(b.begin(), b.end(), x);
         tr.test_eq(3, ra::start(x));
     }
     return tr.summary();

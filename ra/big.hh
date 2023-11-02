@@ -209,8 +209,7 @@ struct View
     constexpr auto iter(rank_t c) const && { return CellBig<T, Dimv, dim_t>(cp, std::move(dimv), c); }
     constexpr auto iter(rank_t c) const & { return CellBig<T, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
-// FIXME return a static object, but CellBig is incomplete here. Dimv is not to be used [ra17]
-    constexpr decltype(auto) static end() { return STLIterator(CellBig<T, Dimv const &>(nullptr, Dimv {})); }
+    constexpr decltype(auto) static end() { return std::default_sentinel; }
 
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
@@ -475,7 +474,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     fill1(Xbegin xbegin, dim_t xsize)
     {
         RA_CHECK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
-        std::copy_n(xbegin, xsize, begin());
+        std::ranges::copy_n(xbegin, xsize, begin());
     }
 
 // shape + row-major ravel.
@@ -573,18 +572,18 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class I> constexpr decltype(auto) at(I && i) { return view().at(std::forward<I>(i)); }
     template <class I> constexpr decltype(auto) at(I && i) const { return view().at(std::forward<I>(i)); }
 // container is always compact/row-major, so STL-like iterators can be raw pointers.
-    constexpr auto begin() { assert(is_c_order_dimv(View::dimv)); return view().data(); }
-    constexpr auto begin() const { assert(is_c_order_dimv(View::dimv)); return view().data(); }
-    constexpr auto end() { return view().data()+this->size(); }
+    constexpr auto begin() const { assert(is_c_order(view())); return view().data(); }
+    constexpr auto begin() { assert(is_c_order(view())); return view().data(); }
     constexpr auto end() const { return view().data()+this->size(); }
+    constexpr auto end() { return view().data()+this->size(); }
 // FIXME size is redundant e.g. for Store = std::vector.
-    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
     template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
+    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
 // FIXME variants fail test/io.cc CXXFLAGS="-O3 -fno-sanitize=all" on gcc 11/12/13, pass with -O2 or sanitizers on. Weird!
-    // template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     // template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
-    constexpr operator T & () { return view(); }
+    // template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     constexpr operator T const & () const { return view(); }
+    constexpr operator T & () { return view(); }
 };
 
 template <class Store, rank_t RANKA, rank_t RANKB>
