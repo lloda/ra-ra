@@ -30,50 +30,45 @@ struct Dim { dim_t len, step; }; // cf View::end() [ra17]
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
 
-template <class V>
+template <class Dimv>
 constexpr bool
-is_c_order_dimv(V const & d)
+is_c_order_dimv(Dimv const & dimv)
 {
     bool steps = true;
     dim_t s = 1;
-    for (int i=d.size()-1; i>=0; --i) {
-        steps = steps && d[i].step==s;
-        s *= d[i].len;
+    for (int i=dimv.size(); --i>=0;) {
+        steps = steps && dimv[i].step==s;
+        s *= dimv[i].len;
         if (0==s) { return true; }
     }
     return steps;
 }
 
 template <class V> constexpr bool
-is_c_order(V const & d) { return is_c_order_dimv(d.dimv); }
+is_c_order(V const & v) { return is_c_order_dimv(v.dimv); }
 
-// FIXME reuse as default shape->dimv for Big/Small
 template <class Dimv, class S>
 constexpr dim_t
-filldim(Dimv & dimv, S && s)
+filldim(Dimv & dimv, S && shape)
 {
-    for_each([](Dim & dim, dim_t s) { RA_CHECK(s>=0, "Bad len ", s, "."); dim.len = s; },
-             dimv, s);
-    dim_t next = 1;
+    map(&Dim::len, dimv) = shape;
+    dim_t s = 1;
     for (int i=dimv.size(); --i>=0;) {
-        dimv[i].step = next;
-        next *= dimv[i].len;
+        dimv[i].step = s;
+        RA_CHECK(dimv[i].len>=0, "Bad len[", i, "] ", dimv[i].len, ".");
+        s *= dimv[i].len;
     }
-    return next;
+    return s;
 }
 
-template <class S> struct default_steps_ {};
-template <class tend> struct default_steps_<std::tuple<tend>> { using type = mp::int_list<1>; };
-template <> struct default_steps_<std::tuple<>> { using type = mp::int_list<>; };
-
-template <class t0, class t1, class ... ti>
-struct default_steps_<std::tuple<t0, t1, ti ...>>
-{
-    using rest = typename default_steps_<std::tuple<t1, ti ...>>::type;
-    constexpr static int step0 = t1::value * mp::first<rest>::value;
-    using type = mp::cons<ic_t<step0>, rest>;
+// FIXME parameterize Small on dimv, then simplify this.
+template <class lens>
+struct default_steps_ {
+    constexpr static int rank = mp::len<lens>;
+    constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, mp::tuple_values<dim_t, lens>()); return dimv; } ();
+    using type = decltype([] { return std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<rank> {}); } ());
 };
-template <class S> using default_steps = typename default_steps_<S>::type;
+template <class lens> using default_steps = typename default_steps_<lens>::type;
 
 
 // --------------------
