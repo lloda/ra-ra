@@ -73,9 +73,15 @@ checkbox [C-ct] flip TODO
         - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
         - [ ] Iota. But Iota args need to integral constants for this to work.
       - [ ] Optimize iota(len...) + iota(len...)
-  - [ ] Performance [0/1]
+  - [ ] Performance [0/3]
     - [ ] bench/bench-stencil* is weird.
     - [ ] Bigd cases in bench-at.
+    - [ ] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ? see also FLAT().
+    - [ ] during traversal (ply) the pattern loc = save_location(it); move flat;
+      it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
+      so this would be cheap. The current design is that move flat can't modify it so it has to be a
+      new object. CellBig is one case where that is costly, because dimv has to be copied along with
+      the pointer to make up a View, even though dimv is constant all through traversal.
   - [X] Error report, debugging [3/3]
     - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/ra-12.cc
       * This was fixed between v8 and v10, see examples/throw.cc.

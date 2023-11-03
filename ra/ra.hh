@@ -91,20 +91,13 @@ from(A && a, I && ... i)
     {                                                                   \
         return FLAT(std::forward<A>(a)) OP FLAT(std::forward<B>(b));    \
     }
-DEF_NAMED_BINARY_OP(+, std::plus<>)
-DEF_NAMED_BINARY_OP(-, std::minus<>)
-DEF_NAMED_BINARY_OP(*, std::multiplies<>)
-DEF_NAMED_BINARY_OP(/, std::divides<>)
-DEF_NAMED_BINARY_OP(==, std::equal_to<>)
-DEF_NAMED_BINARY_OP(>, std::greater<>)
-DEF_NAMED_BINARY_OP(<, std::less<>)
-DEF_NAMED_BINARY_OP(>=, std::greater_equal<>)
-DEF_NAMED_BINARY_OP(<=, std::less_equal<>)
-DEF_NAMED_BINARY_OP(!=, std::not_equal_to<>)
-DEF_NAMED_BINARY_OP(|, std::bit_or<>)
-DEF_NAMED_BINARY_OP(&, std::bit_and<>)
-DEF_NAMED_BINARY_OP(^, std::bit_xor<>)
-DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
+DEF_NAMED_BINARY_OP(+, std::plus<>)               DEF_NAMED_BINARY_OP(-, std::minus<>)
+DEF_NAMED_BINARY_OP(*, std::multiplies<>)         DEF_NAMED_BINARY_OP(/, std::divides<>)
+DEF_NAMED_BINARY_OP(==, std::equal_to<>)          DEF_NAMED_BINARY_OP(>, std::greater<>)
+DEF_NAMED_BINARY_OP(<, std::less<>)               DEF_NAMED_BINARY_OP(>=, std::greater_equal<>)
+DEF_NAMED_BINARY_OP(<=, std::less_equal<>)        DEF_NAMED_BINARY_OP(!=, std::not_equal_to<>)
+DEF_NAMED_BINARY_OP(|, std::bit_or<>)             DEF_NAMED_BINARY_OP(&, std::bit_and<>)
+DEF_NAMED_BINARY_OP(^, std::bit_xor<>)            DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
 #undef DEF_NAMED_BINARY_OP
 
 // FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive
@@ -148,29 +141,31 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
     {                                                                   \
         return OP(FLAT(std::forward<A>(a)) ...);                        \
     }
-FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, cos, sin)
-FOR_EACH(DEF_NAME_OP, exp, expm1, log, log1p, log10, isfinite, isnan, isinf, clamp)
-FOR_EACH(DEF_NAME_OP, max, min, abs, ra::odd, asin, acos, atan, atan2, lerp, arg)
-FOR_EACH(DEF_NAME_OP, cosh, sinh, tanh)
+FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, clamp, exp, expm1, lerp, arg)
+FOR_EACH(DEF_NAME_OP, log, log1p, log10, isfinite, isnan, isinf, max, min, abs, ra::odd)
+FOR_EACH(DEF_NAME_OP, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan, atan2)
 FOR_EACH(DEF_NAME_OP, real_part, imag_part) // return ref
 #undef DEF_NAME_OP
 
 template <class T, class A>
-constexpr auto cast(A && a)
+constexpr auto
+cast(A && a)
 {
     return map([](auto && b) -> decltype(auto) { return T(b); }, std::forward<A>(a));
 }
 
-// TODO could be useful to deduce T as tuple of value_types (&).
+// TODO std::forward_as_tuple?
 template <class T, class ... A>
-constexpr auto pack(A && ... a)
+constexpr auto
+pack(A && ... a)
 {
     return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
 }
 
 // FIXME needs a nested array for I
 template <class A, class I>
-constexpr auto at(A && a, I && i)
+constexpr auto
+at(A && a, I && i)
 {
     return map([a = std::tuple<A>(std::forward<A>(a))] (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); },
                std::forward<I>(i));
@@ -178,7 +173,7 @@ constexpr auto at(A && a, I && i)
 
 
 // --------------------------------
-// selection / shorcutting
+// selection / shortcutting
 // --------------------------------
 
 // These ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
