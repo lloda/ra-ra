@@ -82,13 +82,11 @@ int main()
     tr.section("ra::start() on foreign types");
     {
         auto ref = std::array<int, 4> {12, 77, 44, 1};
-        tr.test_eq(2, expr([](int i) { return i; },
-                           ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
+        tr.test_eq(2, expr([](int i) { return i; }, ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
-// [ra1] these require ra::start and ra::Expr to forward in the constructor. Clue for why is in the ra::Unique case below.
+// [ra1] no need to forward in Expr() or Match(), that is done in expr() (used to need it bc CTE in older gcc).
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
-// these require ra::start and ra::Expr constructors to forward (otherwise CTE), but this makes sense, as argname is otherwise always an lref.
         ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
                        ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
     }

@@ -29,7 +29,7 @@ struct TestRecorder
         using T = value_t<A>;
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
         return early(map([&c](auto && a) { if (c<a) { c=a; }; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; },
-                         std::forward<A>(a)),
+                         RA_FWD(a)),
                      c);
     }
 

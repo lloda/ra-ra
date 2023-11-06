@@ -125,7 +125,7 @@ struct unbeat<N, mp::int_list<k ...>>
     constexpr static decltype(auto)
     op(V & v, I && ... i)
     {
-        return from(v, with_len(maybe_len<k>(v), std::forward<I>(i)) ...);
+        return from(v, with_len(maybe_len<k>(v), RA_FWD(i)) ...);
     }
 };
 
@@ -405,8 +405,8 @@ struct SmallBase
     select_loop(I0 && i0, I && ... i)
     {
         constexpr int nn = (BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
-        return select<k>(with_len(ic<len(k)>, std::forward<I0>(i0)))
-            + select_loop<k + nn>(std::forward<I>(i) ...);
+        return select<k>(with_len(ic<len(k)>, RA_FWD(i0)))
+            + select_loop<k + nn>(RA_FWD(i) ...);
     }
 
     template <int k>
@@ -431,12 +431,12 @@ struct SmallBase
             using FD = FilterDims<lens, steps, std::decay_t<I> ...>;    \
             return SmallView<T CONST, typename FD::lens, typename FD::steps> (data() + select_loop<0>(i ...)); \
         } else { /* TODO partial beating */                             \
-            return unbeat<sizeof...(I)>::op(*this, std::forward<I>(i) ...); \
+            return unbeat<sizeof...(I)>::op(*this, RA_FWD(i) ...); \
         }                                                               \
     }                                                                   \
     template <class ... I>                                              \
     constexpr decltype(auto)                                            \
-    operator[](I && ... i) CONST { return (*this)(std::forward<I>(i) ...); } \
+    operator[](I && ... i) CONST { return (*this)(RA_FWD(i) ...); } \
                                                                         \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
@@ -445,7 +445,7 @@ struct SmallBase
         /* FIXME there's no way to say 'frame rank 0' so -size wouldn't work. */ \
         constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());    \
         static_assert(crank>=0); /* to make out the output type */      \
-        return iter<crank>().at(std::forward<I>(i));                    \
+        return iter<crank>().at(RA_FWD(i));                             \
     }                                                                   \
     /* maybe remove if ic becomes easier to use */                      \
     template <int ss, int oo=0>                                         \
@@ -604,7 +604,7 @@ template <class A, class I, class J>
 A ravel_from_iterators(I && begin, J && end)
 {
     A a;
-    std::copy(std::forward<I>(begin), std::forward<J>(end), a.begin());
+    std::copy(RA_FWD(begin), RA_FWD(end), a.begin());
     return a;
 }
 
@@ -620,7 +620,7 @@ peel(T && t)
 {
     static_assert(0 < std::extent_v<std::remove_cvref_t<T>, 0>);
     if constexpr (1 < std::rank_v<std::remove_cvref_t<T>>) {
-        return peel(*std::data(std::forward<T>(t)));
+        return peel(*std::data(RA_FWD(t)));
     } else {
         return std::data(t);
     }

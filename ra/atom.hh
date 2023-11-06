@@ -69,7 +69,7 @@ struct default_init_allocator: public A
     template <typename U, typename... Args>
     void construct(U * ptr, Args &&... args)
     {
-        a_t::construct(static_cast<A &>(*this), ptr, std::forward<Args>(args)...);
+        a_t::construct(static_cast<A &>(*this), ptr, RA_FWD(args)...);
     }
 };
 
@@ -233,7 +233,7 @@ struct Scalar
 };
 
 template <class C> constexpr auto
-scalar(C && c) { return Scalar<C> { std::forward<C>(c) }; }
+scalar(C && c) { return Scalar<C> { RA_FWD(c) }; }
 
 template <class N> constexpr int
 maybe_any = []{
@@ -288,15 +288,15 @@ ptr(I && i, N && n = N {})
         static_assert(std::is_same_v<dim_c<BAD>, N>, "Object has own length.");
         constexpr dim_t s = size_s<I>();
         if constexpr (ANY==s) {
-            return ptr(std::begin(std::forward<I>(i)), std::ssize(i));
+            return ptr(std::begin(RA_FWD(i)), std::ssize(i));
         } else {
-            return ptr(std::begin(std::forward<I>(i)), ic<s>);
+            return ptr(std::begin(RA_FWD(i)), ic<s>);
         }
     } else if constexpr (std::bidirectional_iterator<std::decay_t<I>>) {
         if constexpr (std::is_integral_v<N>) {
             RA_CHECK(n>=0, "Bad ptr length ", n, ".");
         }
-        return Ptr<std::decay_t<I>, iota_arg<N>> { i, std::forward<N>(n) };
+        return Ptr<std::decay_t<I>, iota_arg<N>> { i, RA_FWD(n) };
     } else {
         static_assert(always_false<I>, "Bad type for ptr().");
     }
@@ -366,7 +366,7 @@ iota(N && n = N {}, O && org = 0,
     if constexpr (std::is_integral_v<N>) {
         RA_CHECK(n>=0, "Bad iota length ", n, ".");
     }
-    return Iota<w, iota_arg<N>, iota_arg<O>, iota_arg<S>> { std::forward<N>(n), std::forward<O>(org), std::forward<S>(s) };
+    return Iota<w, iota_arg<N>, iota_arg<O>, iota_arg<S>> { RA_FWD(n), RA_FWD(org), RA_FWD(s) };
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
@@ -417,7 +417,7 @@ start(T && t) { static_assert(always_false<T>, "Type cannot be start()ed."); }
 
 template <class T> requires (is_fov<T>)
 constexpr auto
-start(T && t) { return ra::ptr(std::forward<T>(t)); }
+start(T && t) { return ra::ptr(RA_FWD(t)); }
 
 template <class T>
 constexpr auto
@@ -425,7 +425,7 @@ start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
 
 template <class T> requires (is_scalar<T>)
 constexpr auto
-start(T && t) { return ra::scalar(std::forward<T>(t)); }
+start(T && t) { return ra::scalar(RA_FWD(t)); }
 
 // forward declare for Match; implemented in small.hh.
 template <class T> requires (is_builtin_array<T>)
@@ -435,18 +435,18 @@ start(T && t);
 // neither CellBig nor CellSmall will retain rvalues [ra4].
 template <class T> requires (is_slice<T>)
 constexpr auto
-start(T && t) { return iter<0>(std::forward<T>(t)); }
+start(T && t) { return iter<0>(RA_FWD(t)); }
 
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
 
 template <class T> requires (is_ra_scalar<T>)
 constexpr decltype(auto)
-start(T && t) { return std::forward<T>(t); }
+start(T && t) { return RA_FWD(t); }
 
 // iterators need to be restarted on each use (eg ra::cross()) [ra35].
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
-start(T && t) { return std::forward<T>(t); }
+start(T && t) { return RA_FWD(t); }
 
 
 // --------------------
@@ -459,9 +459,9 @@ constexpr decltype(auto)
 FLAT(A && a)
 {
     if constexpr (is_scalar<A>) {
-        return std::forward<A>(a); // avoid dangling temp in this case [ra8]
+        return RA_FWD(a); // avoid dangling temp in this case [ra8]
     } else {
-        return *(ra::start(std::forward<A>(a)).flat());
+        return *(ra::start(RA_FWD(a)).flat());
     }
 }
 

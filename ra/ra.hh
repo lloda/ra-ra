@@ -34,7 +34,7 @@ template <int ... Iarg, class A>
 constexpr decltype(auto)
 transpose(mp::int_list<Iarg ...>, A && a)
 {
-    return transpose<Iarg ...>(std::forward<A>(a));
+    return transpose<Iarg ...>(RA_FWD(a));
 }
 
 
@@ -47,10 +47,10 @@ constexpr decltype(auto)
 from_partial(Op && op)
 {
     if constexpr (drop==mp::len<II>) {
-        return std::forward<Op>(op);
+        return RA_FWD(op);
     } else {
         return wrank(mp::append<mp::makelist<drop, ic_t<0>>, mp::drop<II, drop>> {},
-                     from_partial<II, drop+1>(std::forward<Op>(op)));
+                     from_partial<II, drop+1>(RA_FWD(op)));
     }
 }
 
@@ -60,13 +60,12 @@ constexpr decltype(auto)
 from(A && a, I && ... i)
 {
     if constexpr (0==sizeof...(i)) {
-        return std::forward<A>(a)();
+        return RA_FWD(a)();
     } else if constexpr (1==sizeof...(i)) {
 // support dynamic rank for 1 arg only (see test in test/from.cc).
-        return map(std::forward<A>(a), std::forward<I>(i) ...);
+        return map(RA_FWD(a), RA_FWD(i) ...);
     } else {
-        return map(from_partial<mp::tuple<ic_t<rank_s<I>()> ...>, 1>(std::forward<A>(a)),
-                   std::forward<I>(i) ...);
+        return map(from_partial<mp::tuple<ic_t<rank_s<I>()> ...>, 1>(RA_FWD(a)), RA_FWD(i) ...);
     }
 }
 
@@ -83,28 +82,28 @@ from(A && a, I && ... i)
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
-        return RA_OPT(map(OPNAME(), std::forward<A>(a), std::forward<B>(b))); \
+        return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b))); \
     }                                                                   \
     template <class A, class B> requires (ra_reducible<A, B>)           \
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
-        return FLAT(std::forward<A>(a)) OP FLAT(std::forward<B>(b));    \
+        return FLAT(RA_FWD(a)) OP FLAT(RA_FWD(b));    \
     }
-DEF_NAMED_BINARY_OP(+, std::plus<>)               DEF_NAMED_BINARY_OP(-, std::minus<>)
-DEF_NAMED_BINARY_OP(*, std::multiplies<>)         DEF_NAMED_BINARY_OP(/, std::divides<>)
-DEF_NAMED_BINARY_OP(==, std::equal_to<>)          DEF_NAMED_BINARY_OP(>, std::greater<>)
-DEF_NAMED_BINARY_OP(<, std::less<>)               DEF_NAMED_BINARY_OP(>=, std::greater_equal<>)
-DEF_NAMED_BINARY_OP(<=, std::less_equal<>)        DEF_NAMED_BINARY_OP(!=, std::not_equal_to<>)
-DEF_NAMED_BINARY_OP(|, std::bit_or<>)             DEF_NAMED_BINARY_OP(&, std::bit_and<>)
-DEF_NAMED_BINARY_OP(^, std::bit_xor<>)            DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
+DEF_NAMED_BINARY_OP(+, std::plus<>)          DEF_NAMED_BINARY_OP(-, std::minus<>)
+DEF_NAMED_BINARY_OP(*, std::multiplies<>)    DEF_NAMED_BINARY_OP(/, std::divides<>)
+DEF_NAMED_BINARY_OP(==, std::equal_to<>)     DEF_NAMED_BINARY_OP(>, std::greater<>)
+DEF_NAMED_BINARY_OP(<, std::less<>)          DEF_NAMED_BINARY_OP(>=, std::greater_equal<>)
+DEF_NAMED_BINARY_OP(<=, std::less_equal<>)   DEF_NAMED_BINARY_OP(!=, std::not_equal_to<>)
+DEF_NAMED_BINARY_OP(|, std::bit_or<>)        DEF_NAMED_BINARY_OP(&, std::bit_and<>)
+DEF_NAMED_BINARY_OP(^, std::bit_xor<>)       DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
 #undef DEF_NAMED_BINARY_OP
 
 // FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive
 struct unaryplus
 {
     template <class T> constexpr /* static P1169 in gcc13 */ auto
-    operator()(T && t) const noexcept { return std::forward<T>(t); }
+    operator()(T && t) const noexcept { return RA_FWD(t); }
 };
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                                  \
@@ -112,16 +111,15 @@ struct unaryplus
     constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
-        return map(OPNAME(), std::forward<A>(a));                       \
+        return map(OPNAME(), RA_FWD(a));                                \
     }                                                                   \
     template <class A> requires (ra_reducible<A>)                       \
     constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
-        return OP FLAT(std::forward<A>(a));                             \
+        return OP FLAT(RA_FWD(a));                                      \
     }
-DEF_NAMED_UNARY_OP(+, unaryplus)
-DEF_NAMED_UNARY_OP(-, std::negate<>)
+DEF_NAMED_UNARY_OP(+, unaryplus)             DEF_NAMED_UNARY_OP(-, std::negate<>)
 DEF_NAMED_UNARY_OP(!, std::logical_not<>)
 #undef DEF_NAMED_UNARY_OP
 
@@ -133,13 +131,13 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
     constexpr auto                                                      \
     OP(A && ... a)                                                      \
     {                                                                   \
-        return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, std::forward<A>(a) ...); \
+        return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, RA_FWD(a) ...); \
     }                                                                   \
     template <class ... A> requires (ra_reducible<A ...>)               \
     constexpr decltype(auto)                                            \
     OP(A && ... a)                                                      \
     {                                                                   \
-        return OP(FLAT(std::forward<A>(a)) ...);                        \
+        return OP(FLAT(RA_FWD(a)) ...);                                 \
     }
 FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, clamp, exp, expm1, lerp, arg)
 FOR_EACH(DEF_NAME_OP, log, log1p, log10, isfinite, isnan, isinf, max, min, abs, ra::odd)
@@ -151,7 +149,7 @@ template <class T, class A>
 constexpr auto
 cast(A && a)
 {
-    return map([](auto && b) -> decltype(auto) { return T(b); }, std::forward<A>(a));
+    return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FWD(a));
 }
 
 // TODO std::forward_as_tuple?
@@ -159,7 +157,7 @@ template <class T, class ... A>
 constexpr auto
 pack(A && ... a)
 {
-    return map([](auto && ... a) { return T { a ... }; }, std::forward<A>(a) ...);
+    return map([](auto && ... a) { return T { a ... }; }, RA_FWD(a) ...);
 }
 
 // FIXME needs a nested array for I
@@ -167,8 +165,8 @@ template <class A, class I>
 constexpr auto
 at(A && a, I && i)
 {
-    return map([a = std::tuple<A>(std::forward<A>(a))] (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); },
-               std::forward<I>(i));
+    return map([a = std::tuple<A>(RA_FWD(a))] (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); },
+               RA_FWD(i));
 }
 
 
@@ -188,7 +186,7 @@ template <class W, class T, class F> requires (ra_irreducible<W, T, F>)
 constexpr auto
 where(W && w, T && t, F && f)
 {
-    return pick(cast<bool>(std::forward<W>(w)), std::forward<F>(f), std::forward<T>(t));
+    return pick(cast<bool>(RA_FWD(w)), RA_FWD(f), RA_FWD(t));
 }
 
 // catch all for non-ra types.
@@ -203,13 +201,13 @@ template <class A, class B> requires (ra_irreducible<A, B>)
 constexpr auto
 operator &&(A && a, B && b)
 {
-    return where(std::forward<A>(a), cast<bool>(std::forward<B>(b)), false);
+    return where(RA_FWD(a), cast<bool>(RA_FWD(b)), false);
 }
 template <class A, class B> requires (ra_irreducible<A, B>)
 constexpr auto
 operator ||(A && a, B && b)
 {
-    return where(std::forward<A>(a), true, cast<bool>(std::forward<B>(b)));
+    return where(RA_FWD(a), true, cast<bool>(RA_FWD(b)));
 }
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
     template <class A, class B> requires (ra_reducible<A, B>)           \
@@ -231,14 +229,14 @@ template <class A>
 constexpr bool
 any(A && a)
 {
-    return early(map([](bool x) { return x ? std::make_optional(true) : std::nullopt; }, std::forward<A>(a)), false);
+    return early(map([](bool x) { return x ? std::make_optional(true) : std::nullopt; }, RA_FWD(a)), false);
 }
 
 template <class A>
 constexpr bool
 every(A && a)
 {
-    return early(map([](bool x) { return !x ? std::make_optional(false) : std::nullopt; }, std::forward<A>(a)), true);
+    return early(map([](bool x) { return !x ? std::make_optional(false) : std::nullopt; }, RA_FWD(a)), true);
 }
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
@@ -247,7 +245,7 @@ constexpr auto
 index(A && a)
 {
     return early(map([](auto && a, auto && i) { return bool(a) ? std::make_optional(i) : std::nullopt; },
-                     std::forward<A>(a), ra::iota(ra::start(a).len(0))),
+                     RA_FWD(a), ra::iota(ra::start(a).len(0))),
                  ra::dim_t(-1));
 }
 
@@ -257,11 +255,10 @@ constexpr bool
 lexicographical_compare(A && a, B && b)
 {
     return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
-                     std::forward<A>(a), std::forward<B>(b)),
+                     RA_FWD(a), RA_FWD(b)),
                  false);
 }
 
-// FIXME only works with numeric types.
 template <class A>
 constexpr auto
 amin(A && a)
@@ -488,7 +485,7 @@ struct MapAntiCombination<std::tuple<C ...>, D>
 template <int D, int O>
 struct ChooseComponents
 {
-    static_assert(D>=O, "bad dimension or form order");
+    static_assert(D>=O, "Bad dimension or form order.");
     using type = mp::combinations<iota<D>, O>;
 };
 
@@ -497,7 +494,7 @@ template <int D, int O> using ChooseComponents_ = typename ChooseComponents<D, O
 template <int D, int O> requires ((D>1) && (2*O>D))
 struct ChooseComponents<D, O>
 {
-    static_assert(D>=O, "bad dimension or form order");
+    static_assert(D>=O, "Bad dimension or form order.");
     using type = typename MapAntiCombination<ChooseComponents_<D, D-O>, D>::type;
 };
 
@@ -575,14 +572,14 @@ struct Wedge
     constexpr static void
     product(Va const & a, Vb const & b, Vr & r)
     {
-        static_assert(int(Va::size())==Na, "bad Va dim");
-        static_assert(int(Vb::size())==Nb, "bad Vb dim");
-        static_assert(int(Vr::size())==Nr, "bad Vr dim");
+        static_assert(int(Va::size())==Na, "Bad Va dim.");
+        static_assert(int(Vb::size())==Nb, "Bad Vb dim.");
+        static_assert(int(Vr::size())==Nr, "Bad Vr dim.");
         coeff<Va, Vb, Vr, 0>(a, b, r);
     }
 };
 
-// This is for Euclidean space, it only does component shuffling.
+// Euclidean space, only component shuffling.
 template <int D, int O>
 struct Hodge
 {
@@ -601,16 +598,16 @@ struct Hodge
         static_assert(i<=W::Na, "Bad argument to hodge_aux");
         if constexpr (i<W::Na) {
             using Cai = mp::ref<Ca, i>;
-            static_assert(mp::len<Cai> == O, "bad");
+            static_assert(mp::len<Cai> == O, "Bad.");
 // sort Cai, because mp::complement only accepts sorted combinations.
 // ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
             using SCai = mp::ref<LexOrCa, mp::FindCombination<Cai, LexOrCa>::where>;
             using CompCai = mp::complement<SCai, D>;
-            static_assert(mp::len<CompCai> == D-O, "bad");
+            static_assert(mp::len<CompCai> == D-O, "Bad.");
             using fpw = mp::FindCombination<CompCai, Cb>;
 // for the sign see e.g. DoCarmo1991 I.Ex 10.
             using fps = mp::FindCombination<mp::append<Cai, mp::ref<Cb, fpw::where>>, Cr>;
-            static_assert(fps::sign!=0, "bad");
+            static_assert(fps::sign!=0, "Bad.");
             b[fpw::where] = decltype(a[i])(fps::sign)*a[i];
             hodge_aux<i+1>(a, b);
         }
@@ -632,11 +629,10 @@ hodgex(Va const & a, Vb & b)
 
 } // namespace ra::mp
 
-// This depends on Wedge<>::Ca, Cb, Cr coming from ChooseCombinations, as enforced in test_wedge_product. hodgex() should always work, but this is cheaper.
+// This depends on Wedge<>::Ca, Cb, Cr coming from ChooseCombinations. hodgex() should always work, but this is cheaper.
 // However if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
 // Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w in that case, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
 #define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))))
-
 template <int D, int O, class Va, class Vb>
 constexpr void
 hodge(Va const & a, Vb & b)
@@ -673,9 +669,9 @@ hodge(Va & a)
 // Wedge product
 // --------------------
 
-template <int D, int Oa, int Ob, class A, class B>
-requires (ra::is_scalar<A> && ra::is_scalar<B>)
-constexpr auto wedge(A const & a, B const & b) { return a*b; }
+template <int D, int Oa, int Ob, class A, class B> requires (ra::is_scalar<A> && ra::is_scalar<B>)
+constexpr auto
+wedge(A const & a, B const & b) { return a*b; }
 
 template <class A>
 struct torank1

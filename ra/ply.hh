@@ -52,7 +52,7 @@ struct WithLen
     template <class L, class E> constexpr static decltype(auto)
     f(L len, E && e)
     {
-        return std::forward<E>(e);
+        return RA_FWD(e);
     }
 };
 
@@ -73,7 +73,7 @@ struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
     template <class L, class E> constexpr static decltype(auto)
     f(L len, E && e)
     {
-        return expr(std::forward<E>(e).op, WithLen<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
+        return expr(RA_FWD(e).op, WithLen<std::decay_t<P>>::f(len, std::get<I>(RA_FWD(e).t)) ...);
     }
 };
 
@@ -84,7 +84,7 @@ struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
     template <class L, class E> constexpr static decltype(auto)
     f(L len, E && e)
     {
-        return pick(WithLen<std::decay_t<P>>::f(len, std::get<I>(std::forward<E>(e).t)) ...);
+        return pick(WithLen<std::decay_t<P>>::f(len, std::get<I>(RA_FWD(e).t)) ...);
     }
 };
 
@@ -96,7 +96,7 @@ coerce(T && t)
     if constexpr (IteratorConcept<T>) {
         return FLAT(t);
     } else {
-        return std::forward<T>(t);
+        return RA_FWD(t);
     }
 }
 
@@ -107,9 +107,9 @@ struct WithLen<Iota<w, N, O, S>>
     template <class L, class E> constexpr static decltype(auto)
     f(L len, E && e)
     {
-        return iota<w>(coerce(WithLen<std::decay_t<N>>::f(len, std::forward<E>(e).n)),
-                       coerce(WithLen<std::decay_t<O>>::f(len, std::forward<E>(e).i)),
-                       coerce(WithLen<std::decay_t<S>>::f(len, std::forward<E>(e).s)));
+        return iota<w>(coerce(WithLen<std::decay_t<N>>::f(len, RA_FWD(e).n)),
+                       coerce(WithLen<std::decay_t<O>>::f(len, RA_FWD(e).i)),
+                       coerce(WithLen<std::decay_t<S>>::f(len, RA_FWD(e).s)));
     }
 };
 
@@ -120,7 +120,7 @@ struct WithLen<Ptr<I, N>>
     template <class L, class E> constexpr static decltype(auto)
     f(L len, E && e)
     {
-        return ptr(std::forward<E>(e).i, coerce(WithLen<std::decay_t<N>>::f(len, std::forward<E>(e).n)));
+        return ptr(RA_FWD(e).i, coerce(WithLen<std::decay_t<N>>::f(len, RA_FWD(e).n)));
     }
 };
 
@@ -129,7 +129,7 @@ constexpr decltype(auto)
 with_len(L len, E && e)
 {
     static_assert(std::is_integral_v<std::decay_t<L>> || is_constant<std::decay_t<L>>);
-    return WithLen<std::decay_t<E>>::f(len, std::forward<E>(e));
+    return WithLen<std::decay_t<E>>::f(len, RA_FWD(e));
 }
 
 
@@ -310,9 +310,9 @@ ply(A && a, Early && early = Nop {})
     static_assert(!has_len<A>, "len used outside subscript context.");
     static_assert(0<=rank_s<A>() || ANY==rank_s<A>());
     if constexpr (ANY==size_s<A>()) {
-        return ply_ravel(std::forward<A>(a), std::forward<Early>(early));
+        return ply_ravel(RA_FWD(a), RA_FWD(early));
     } else {
-        return ply_fixed(std::forward<A>(a), std::forward<Early>(early));
+        return ply_fixed(RA_FWD(a), RA_FWD(early));
     }
 }
 
@@ -320,7 +320,7 @@ template <class Op, class ... A>
 constexpr void
 for_each(Op && op, A && ... a)
 {
-    ply(map(std::forward<Op>(op), std::forward<A>(a) ...));
+    ply(map(RA_FWD(op), RA_FWD(a) ...));
 }
 
 
@@ -335,7 +335,7 @@ template <IteratorConcept A, class Def>
 constexpr decltype(auto)
 early(A && a, Def && def)
 {
-    return ply(std::forward<A>(a), Default { std::forward<Def>(def) });
+    return ply(RA_FWD(a), Default { RA_FWD(def) });
 }
 
 

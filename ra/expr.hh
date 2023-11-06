@@ -83,7 +83,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     }
 
     constexpr
-    Match(P ... p_): t(std::forward<P>(p_) ...)
+    Match(P ... p_): t(p_ ...) // [ra1]
     {
 // TODO Maybe on ply, would avoid the checkp, make agree_xxx() unnecessary.
         if constexpr (checkp && !(has_len<P> || ...)) {
@@ -250,9 +250,9 @@ constexpr decltype(auto)
 reframe(A && a)
 {
     if constexpr (std::is_same_v<Dest, mp::iota<1+mp::fold<mp::max, ic_t<-1>, Dest>::value>>) {
-        return std::forward<A>(a);
+        return RA_FWD(a);
     } else {
-        return Reframe<Dest, A> { std::forward<A>(a) };
+        return Reframe<Dest, A> { RA_FWD(a) };
     }
 }
 
@@ -275,14 +275,14 @@ template <class cranks, class Op>
 constexpr auto
 wrank(cranks cranks_, Op && op)
 {
-    return Verb<cranks, Op> { std::forward<Op>(op) };
+    return Verb<cranks, Op> { RA_FWD(op) };
 }
 
 template <rank_t ... crank, class Op>
 constexpr auto
 wrank(Op && op)
 {
-    return Verb<mp::int_list<crank ...>, Op> { std::forward<Op>(op) };
+    return Verb<mp::int_list<crank ...>, Op> { RA_FWD(op) };
 }
 
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
@@ -308,7 +308,7 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
     using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + mp::ref<live, mp::indexof<max_i, live>>::value>;
     using R = typename FM::R;
-    template <class VV> static decltype(auto) op(VV && v) { return FM::op(std::forward<VV>(v).op); } // cf [ra31]
+    template <class VV> constexpr static decltype(auto) op(VV && v) { return FM::op(RA_FWD(v).op); } // cf [ra31]
 };
 
 // Terminal case where V doesn't have rank (is a raw op()).
@@ -318,7 +318,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
     static_assert(sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
 // TODO -crank::value when the actual verb rank is used (eg to use CellBig<... that_rank> instead of just begin()).
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
-    template <class VV> static decltype(auto) op(VV && v) { return std::forward<VV>(v); }
+    template <class VV> constexpr static decltype(auto) op(VV && v) { return RA_FWD(v); }
 };
 
 
@@ -348,15 +348,14 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr static auto
     flat(Op & op, F && ... f)
     {
-        return Flat<std::tuple<F ...>> { op, { std::forward<F>(f) ... } };
+        return Flat<std::tuple<F ...>> { op, { RA_FWD(f) ... } };
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t, Match_::rank_s, Match_::rank;
     Op op;
 
-// test/ra-9.cc [ra1]
-    constexpr Expr(Op op_, P ... p_): Match_(std::forward<P>(p_) ...), op(std::forward<Op>(op_)) {}
+    constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Expr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
@@ -390,7 +389,7 @@ constexpr auto
 expr_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return expr(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
+    return expr(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(t)) ...);
 }
 
 template <class Op, class ... P>
@@ -398,9 +397,9 @@ constexpr auto
 expr(Op && op, P && ... p)
 {
     if constexpr (is_verb<Op>) {
-        return expr_verb(mp::iota<sizeof...(P)> {}, std::forward<Op>(op), std::forward<P>(p) ...);
+        return expr_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
     } else {
-        return Expr<Op, std::tuple<P ...>> { std::forward<Op>(op), std::forward<P>(p) ... };
+        return Expr<Op, std::tuple<P ...>> { RA_FWD(op), RA_FWD(p) ... };
     }
 }
 
@@ -408,7 +407,7 @@ template <class Op, class ... A>
 constexpr auto
 map(Op && op, A && ... a)
 {
-    return expr(std::forward<Op>(op), start(std::forward<A>(a)) ...);
+    return expr(RA_FWD(op), start(RA_FWD(a)) ...);
 }
 
 
@@ -420,7 +419,7 @@ template <class ... P>
 constexpr bool
 agree(P && ... p)
 {
-    return agree_(ra::start(std::forward<P>(p)) ...);
+    return agree_(ra::start(RA_FWD(p)) ...);
 }
 
 // 0: fail, 1: rt, 2: pass
@@ -428,21 +427,21 @@ template <class ... P>
 constexpr int
 agree_s(P && ... p)
 {
-    return agree_s_(ra::start(std::forward<P>(p)) ...);
+    return agree_s_(ra::start(RA_FWD(p)) ...);
 }
 
 template <class Op, class ... P>
 constexpr bool
 agree_op(Op && op, P && ... p)
 {
-    return agree_op_(std::forward<Op>(op), ra::start(std::forward<P>(p)) ...);
+    return agree_op_(RA_FWD(op), ra::start(RA_FWD(p)) ...);
 }
 
 template <class ... P>
 constexpr bool
 agree_(P && ... p)
 {
-    return (Match<false, std::tuple<P ...>> { std::forward<P>(p) ... }).check();
+    return (Match<false, std::tuple<P ...>> { RA_FWD(p) ... }).check();
 }
 
 template <class ... P>
@@ -457,9 +456,9 @@ constexpr bool
 agree_op_(Op && op, P && ... p)
 {
     if constexpr (is_verb<Op>) {
-        return agree_verb(mp::iota<sizeof...(P)> {}, std::forward<Op>(op), std::forward<P>(p) ...);
+        return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
     } else {
-        return agree_(std::forward<P>(p) ...);
+        return agree_(RA_FWD(p) ...);
     }
 }
 
@@ -468,7 +467,7 @@ constexpr bool
 agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op_(FM::op(std::forward<V>(v)), reframe<mp::ref<typename FM::R, i>>(std::forward<T>(t)) ...);
+    return agree_op_(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(t)) ...);
 }
 
 
@@ -539,14 +538,13 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr static auto
     flat(P_ && ... p)
     {
-        return Flat<std::tuple<P_ ...>> { std::tuple<P_ ...> { std::forward<P_>(p) ... } };
+        return Flat<std::tuple<P_ ...>> { std::tuple<P_ ...> { RA_FWD(p) ... } };
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t, Match_::rank_s, Match_::rank;
 
-// test/ra-9.cc [ra1]
-    constexpr Pick(P ... p_): Match_(std::forward<P>(p_) ...) {}
+    constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
@@ -581,7 +579,7 @@ template <class ... P>
 constexpr auto
 pick(P && ... p)
 {
-    return Pick { start(std::forward<P>(p)) ... };
+    return Pick { start(RA_FWD(p)) ... };
 }
 
 } // namespace ra

@@ -233,8 +233,8 @@ struct View
     constexpr dim_t
     select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
     {
-        return select(dim, k, with_len(len(k), std::forward<I0>(i0)))
-            + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, std::forward<I>(i) ...);
+        return select(dim, k, with_len(len(k), RA_FWD(i0)))
+            + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, RA_FWD(i) ...);
     }
 
     template <int n, class ... I>
@@ -245,7 +245,7 @@ struct View
         for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
             *dim = dimv[k];
         }
-        return select_loop(dim, k, std::forward<I>(i) ...);
+        return select_loop(dim, k, RA_FWD(i) ...);
     }
 
     template <int n, class ... I>
@@ -255,7 +255,7 @@ struct View
         for (Dim * end = dim+n; dim!=end; ++dim) {
             *dim = { .len = BAD, .step = 0 };
         }
-        return select_loop(dim, k, std::forward<I>(i) ...);
+        return select_loop(dim, k, RA_FWD(i) ...);
     }
 
     constexpr static dim_t
@@ -290,13 +290,13 @@ struct View
             return sub;
 // TODO partial beating. FIXME forward this? cf unbeat
         } else {
-            return unbeat<sizeof...(I)>::op(*this, std::forward<I>(i) ...);
+            return unbeat<sizeof...(I)>::op(*this, RA_FWD(i) ...);
         }
     }
 
     template <class ... I>
     constexpr decltype(auto)
-    operator[](I && ... i) const { return (*this)(std::forward<I>(i) ...); }
+    operator[](I && ... i) const { return (*this)(RA_FWD(i) ...); }
 
     template <class I>
     constexpr decltype(auto)
@@ -305,9 +305,9 @@ struct View
 // FIXME there's no way to say 'frame rank 0' so -size wouldn't work.
        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
        if constexpr (ANY==crank) {
-            return iter(rank()-ra::size(i)).at(std::forward<I>(i));
+            return iter(rank()-ra::size(i)).at(RA_FWD(i));
         } else {
-            return iter<crank>().at(std::forward<I>(i));
+            return iter<crank>().at(RA_FWD(i));
         }
     }
 
@@ -495,15 +495,15 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
 // for SS that doesn't convert implicitly to shape_arg
     template <class SS>
-    Container(SS && s, none_t) { init(std::forward<SS>(s)); }
+    Container(SS && s, none_t) { init(RA_FWD(s)); }
 
     template <class SS, class XX>
     Container(SS && s, XX && x)
-        : Container(std::forward<SS>(s), none) { view() = x; }
+        : Container(RA_FWD(s), none) { view() = x; }
 
     template <class SS>
     Container(SS && s, std::initializer_list<T> x)
-        : Container(std::forward<SS>(s), none) { fill1(x.begin(), x.size()); }
+        : Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
 
     using View::operator=;
 
@@ -529,7 +529,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         store.resize(filldim(View::dimv, s));
         View::cp = store.data();
     }
-// lets us move. A template + std::forward wouldn't work for push_back(brace-enclosed-list).
+// lets us move. A template + RA_FWD wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
         static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
@@ -548,7 +548,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     void emplace_back(A && ... a)
     {
         static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
-        store.emplace_back(std::forward<A>(a) ...);
+        store.emplace_back(RA_FWD(a) ...);
         ++View::dimv[0].len;
         View::cp = store.data();
     }
@@ -565,12 +565,12 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // FIXME __cpp_explicit_this_parameter
     constexpr auto data() { return view().data(); }
     constexpr auto data() const { return view().data(); }
-    template <class ... A> constexpr decltype(auto) operator()(A && ... a) { return view()(std::forward<A>(a) ...); }
-    template <class ... A> constexpr decltype(auto) operator()(A && ... a) const { return view()(std::forward<A>(a) ...); }
-    template <class ... A> constexpr decltype(auto) operator[](A && ... a) { return view()(std::forward<A>(a) ...); }
-    template <class ... A> constexpr decltype(auto) operator[](A && ... a) const { return view()(std::forward<A>(a) ...); }
-    template <class I> constexpr decltype(auto) at(I && i) { return view().at(std::forward<I>(i)); }
-    template <class I> constexpr decltype(auto) at(I && i) const { return view().at(std::forward<I>(i)); }
+    template <class ... A> constexpr decltype(auto) operator()(A && ... a) { return view()(RA_FWD(a) ...); }
+    template <class ... A> constexpr decltype(auto) operator()(A && ... a) const { return view()(RA_FWD(a) ...); }
+    template <class ... A> constexpr decltype(auto) operator[](A && ... a) { return view()(RA_FWD(a) ...); }
+    template <class ... A> constexpr decltype(auto) operator[](A && ... a) const { return view()(RA_FWD(a) ...); }
+    template <class I> constexpr decltype(auto) at(I && i) { return view().at(RA_FWD(i)); }
+    template <class I> constexpr decltype(auto) at(I && i) const { return view().at(RA_FWD(i)); }
 // container is always compact/row-major, so STL-like iterators can be raw pointers.
     constexpr auto begin() const { assert(is_c_order(view())); return view().data(); }
     constexpr auto begin() { assert(is_c_order(view())); return view().data(); }
@@ -675,7 +675,7 @@ concrete(E && e)
 // FIXME gcc 11.3 on GH workflows (?)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wmaybe-uninitialized"
-    return concrete_type<E>(std::forward<E>(e));
+    return concrete_type<E>(RA_FWD(e));
 #pragma GCC diagnostic pop
 }
 
@@ -698,9 +698,9 @@ with_same_shape(E && e, X && x)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     if constexpr (size_s<concrete_type<E>>()!=ANY) {
-        return concrete_type<E>(std::forward<X>(x));
+        return concrete_type<E>(RA_FWD(x));
     } else {
-        return concrete_type<E>(ra::shape(e), std::forward<X>(x));
+        return concrete_type<E>(ra::shape(e), RA_FWD(x));
     }
 #pragma GCC diagnostic pop
 }
@@ -710,9 +710,9 @@ constexpr auto
 with_shape(S && s, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=ANY) {
-        return concrete_type<E>(std::forward<X>(x));
+        return concrete_type<E>(RA_FWD(x));
     } else {
-        return concrete_type<E>(std::forward<S>(s), std::forward<X>(x));
+        return concrete_type<E>(RA_FWD(s), RA_FWD(x));
     }
 }
 
@@ -721,9 +721,9 @@ constexpr auto
 with_shape(std::initializer_list<S> && s, X && x)
 {
     if constexpr (size_s<concrete_type<E>>()!=ANY) {
-        return concrete_type<E>(std::forward<X>(x));
+        return concrete_type<E>(RA_FWD(x));
     } else {
-        return concrete_type<E>(s, std::forward<X>(x));
+        return concrete_type<E>(s, RA_FWD(x));
     }
 }
 
@@ -771,7 +771,7 @@ View<T, ANY> transpose_(S && s, View<T, RANK> const & view)
 template <class T, rank_t RANK, class S> inline
 View<T, ANY> transpose(S && s, View<T, RANK> const & view)
 {
-    return transpose_(std::forward<S>(s), view);
+    return transpose_(RA_FWD(s), view);
 }
 
 // Note that we need the compile time values and not the sizes to deduce the rank of the output, so it would be useless to provide a builtin array shim as we do with reshape().
@@ -840,7 +840,7 @@ View<T, 1> ravel_free(View<T, RANK> const & a)
 template <class T, rank_t RANK, class S> inline
 auto reshape_(View<T, RANK> const & a, S && sb_)
 {
-    auto sb = concrete(std::forward<S>(sb_));
+    auto sb = concrete(RA_FWD(sb_));
 // FIXME when we need to copy, accept/return Shared
     dim_t la = ra::size(a);
     dim_t lb = 1;
@@ -894,7 +894,7 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
 template <class T, rank_t RANK, class S> inline
 auto reshape(View<T, RANK> const & a, S && sb_)
 {
-    return reshape_(a, std::forward<S>(sb_));
+    return reshape_(a, RA_FWD(sb_));
 }
 
 // We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t.

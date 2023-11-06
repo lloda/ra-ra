@@ -338,7 +338,7 @@ template <class C, class T>
 constexpr C
 from_tuple(T && t)
 {
-    return std::apply([](auto && ... x) { return C { std::forward<decltype(x)>(x) ... }; }, t);
+    return std::apply([](auto && ... x) { return C { RA_FWD(x) ... }; }, t);
 }
 
 template <class C, class T>

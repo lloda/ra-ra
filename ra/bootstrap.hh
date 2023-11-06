@@ -107,7 +107,7 @@ template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
 // For views. TODO on foreign vectors? arbitrary exprs?
 template <int crank, class A> constexpr auto
-iter(A && a) { return std::forward<A>(a).template iter<crank>(); }
+iter(A && a) { return RA_FWD(a).template iter<crank>(); }
 
 // Used in big.hh (selectors, etc).
 template <class A, class ... I> constexpr decltype(auto)
@@ -257,7 +257,7 @@ constexpr std::string
 format(A && ... a)
 {
     if constexpr (sizeof ... (A)>0) {
-        std::ostringstream o; (o << ... << std::forward<A>(a)); return o.str();
+        std::ostringstream o; (o << ... << RA_FWD(a)); return o.str();
     } else {
         return "";
     }

@@ -12,7 +12,7 @@
 
 namespace ra {
 
-template <class E> constexpr decltype(auto) optimize(E && e) { return std::forward<E>(e); }
+template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e); }
 
 // FIXME only reduces iota exprs as op'ed on in ra.hh (operators), not a tree like WithLen does.
 #if RA_DO_OPT_IOTA==1
