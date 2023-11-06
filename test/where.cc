@@ -54,7 +54,7 @@ int main()
     tr.section("pick works as any other array expression");
     {
         ra::Small<double, 2> a0 = { 1, 2 };
-        ra::Small<double, 2> a1 = { 10, 20 };
+        ra::Small<double, 2> const a1 = { 10, 20 };
         ra::Small<int, 2> const p = { 0, 1 };
 
         ra::Small<double, 2> q = 3 + pick(p, a0, a1);

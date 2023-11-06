@@ -84,11 +84,19 @@ int main()
         auto ref = std::array<int, 4> {12, 77, 44, 1};
         tr.test_eq(2, expr([](int i) { return i; }, ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
-// [ra1] no need to forward in Expr() or Match(), that is done in expr() (used to need it bc CTE in older gcc).
+// [ra1] no need to forward in Expr()/Match()/Pick(), that is done in expr()/pick(). Used to need it bc CTE in older gcc.
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
         tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
-        ply_ravel(expr([](int i) { std::cout << "Bi: " << i << std::endl; return i; },
-                       ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
+        {
+            int c = 0;
+            ply_ravel(expr([&c](int i) { c += i; }, ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
+            tr.test_eq(12+77+44+1, c);
+        }
+        {
+            int c = 0;
+            for_each([&c](int i) { c += i; }, ra::Unique<int, 1> {12, 77, 44, 1});
+            tr.test_eq(12+77+44+1, c);
+        }
     }
 // ra::Vector() constructors are needed for V=std::array (cf test/vector-array.cc).
     tr.section("[ra35] - reference");

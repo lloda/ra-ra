@@ -36,8 +36,7 @@ template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <bool checkp, IteratorConcept ... P, int ... I>
 struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 {
-    using T = std::tuple<P ...>;
-    T t;
+    std::tuple<P ...> t;
 
     // 0: fail, 1: rt, 2: pass
     consteval static int
@@ -62,13 +61,12 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
             return tbc ? 1 : 2;
         }
     }
-
     constexpr bool
     check() const
     {
         if constexpr (sizeof...(P)<2) {
             return true;
-        } else  if constexpr (constexpr int c = check_s(); 0==c) {
+        } else if constexpr (constexpr int c = check_s(); 0==c) {
             return false;
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
@@ -99,17 +97,13 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         rank_t r = BAD;
         return ((r=choose_rank(r, ra::rank_s<P>())), ...);
     }
-
     consteval static rank_t
-    rank()
-    requires (ANY != Match::rank_s())
+    rank() requires (ANY != Match::rank_s())
     {
         return rank_s();
     }
-
     constexpr rank_t
-    rank() const
-    requires (ANY == Match::rank_s())
+    rank() const requires (ANY == Match::rank_s())
     {
         rank_t r = BAD;
         ((r = choose_rank(r, std::get<I>(t).rank())), ...);
@@ -128,17 +122,13 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         dim_t s = BAD; ((s>=0 ? s : s = f.template operator()<std::decay_t<P>>(s)), ...);
         return s;
     }
-
     constexpr static dim_t
-    len(int k)
-    requires (requires (int kk) { P::len(kk); } && ...)
+    len(int k) requires (requires (int kk) { P::len(kk); } && ...)
     {
         return len_s(k);
     }
-
     constexpr dim_t
-    len(int k) const
-    requires (!(requires (int kk) { P::len(kk); } && ...))
+    len(int k) const requires (!(requires (int kk) { P::len(kk); } && ...))
     {
         auto f = [&k](dim_t s, auto const & a) {
             return k<a.rank() ? choose_len(s, a.len(k)) : s;
@@ -190,7 +180,7 @@ template <class ... T> constexpr std::tuple<T ...> zerostep<std::tuple<T ...>> =
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
 // If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
-// TODO invalid for ANY (since Dest is compile time). [ra7]
+// TODO invalid for ANY, since Dest is compile time. [ra7]
 
 template <class Dest, IteratorConcept A>
 struct Reframe
@@ -337,11 +327,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
         Op & op;
         T t;
         template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-// FIXME flagged by gcc 12.1 -O3
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
         constexpr decltype(auto) operator*() { return std::invoke(op, *std::get<I>(t) ...); }
-#pragma GCC diagnostic pop
     };
 
     template <class ... F>
@@ -417,39 +403,24 @@ map(Op && op, A && ... a)
 
 template <class ... P>
 constexpr bool
-agree(P && ... p)
-{
-    return agree_(ra::start(RA_FWD(p)) ...);
-}
+agree(P && ... p) { return agree_(ra::start(RA_FWD(p)) ...); }
 
 // 0: fail, 1: rt, 2: pass
 template <class ... P>
 constexpr int
-agree_s(P && ... p)
-{
-    return agree_s_(ra::start(RA_FWD(p)) ...);
-}
+agree_s(P && ... p) { return agree_s_(ra::start(RA_FWD(p)) ...); }
 
 template <class Op, class ... P>
 constexpr bool
-agree_op(Op && op, P && ... p)
-{
-    return agree_op_(RA_FWD(op), ra::start(RA_FWD(p)) ...);
-}
+agree_op(Op && op, P && ... p) { return agree_op_(RA_FWD(op), ra::start(RA_FWD(p)) ...); }
 
 template <class ... P>
 constexpr bool
-agree_(P && ... p)
-{
-    return (Match<false, std::tuple<P ...>> { RA_FWD(p) ... }).check();
-}
+agree_(P && ... p) { return (Match<false, std::tuple<P ...>> { RA_FWD(p) ... }).check(); }
 
 template <class ... P>
 constexpr int
-agree_s_(P && ... p)
-{
-    return Match<false, std::tuple<P ...>>::check_s();
-}
+agree_s_(P && ... p) { return Match<false, std::tuple<P ...>>::check_s(); }
 
 template <class Op, class ... P>
 constexpr bool
@@ -478,44 +449,36 @@ agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 template <class T, class J> struct pick_at_type;
 template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
 {
-    using type = mp::apply<std::common_reference_t, std::tuple<decltype(std::declval<P>().at(std::declval<J>())) ...>>;
+    using type = std::common_reference_t<decltype(std::declval<P>().at(std::declval<J>())) ...>;
 };
 
 template <std::size_t I, class T, class J>
 constexpr pick_at_type<mp::drop1<std::decay_t<T>>, J>::type
 pick_at(std::size_t p0, T && t, J const & j)
 {
-    if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
-        if (p0==I) {
-            return std::get<I+1>(t).at(j);
-        } else {
-            return pick_at<I+1>(p0, t, j);
-        }
+    constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
+    if constexpr (I < N) {
+        return (p0==I) ? std::get<I+1>(t).at(j) : pick_at<I+1>(p0, t, j);
     } else {
-        RA_CHECK(p0==I, " p0 ", p0, " I ", I);
-        return std::get<I+1>(t).at(j);
+        RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
     }
 }
 
 template <class T> struct pick_star_type;
 template <class ... P> struct pick_star_type<std::tuple<P ...>>
 {
-    using type = mp::apply<std::common_reference_t, std::tuple<decltype(*std::declval<P>()) ...>>;
+    using type = std::common_reference_t<decltype(*std::declval<P>()) ...>;
 };
 
 template <std::size_t I, class T>
 constexpr pick_star_type<mp::drop1<std::decay_t<T>>>::type
 pick_star(std::size_t p0, T && t)
 {
-    if constexpr (I+2<std::tuple_size_v<std::decay_t<T>>) {
-        if (p0==I) {
-            return *(std::get<I+1>(t));
-        } else {
-            return pick_star<I+1>(p0, t);
-        }
+    constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
+    if constexpr (I < N) {
+        return (p0==I) ? *(std::get<I+1>(t)) : pick_star<I+1>(p0, t);
     } else {
-        RA_CHECK(p0==I, " p0 ", p0, " I ", I);
-        return *(std::get<I+1>(t));
+        RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
     }
 }
 
@@ -577,9 +540,6 @@ template <class ... P> Pick(P && ... p) -> Pick<std::tuple<P ...>>;
 
 template <class ... P>
 constexpr auto
-pick(P && ... p)
-{
-    return Pick { start(RA_FWD(p)) ... };
-}
+pick(P && ... p) { return Pick { start(RA_FWD(p)) ... }; }
 
 } // namespace ra

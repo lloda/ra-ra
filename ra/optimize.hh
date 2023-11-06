@@ -19,30 +19,25 @@ template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e);
 // TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
 template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<value_t<X>>;
 
-// TODO need something to handle the & variants...
+// TODO something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
 
 // FIXME gets() vs p2781r2
-// the qualifier ra::iota is necessary not to pick std::iota through ADL (test/headers.cc).
+// qualified ra::iota is necessary not to pick std::iota through ADL (test/headers.cc).
 
-// --------------
 // plus
-// --------------
-
 template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(0).n, ITEM(0).i+ITEM(1), ITEM(0).s);
 }
-
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i, ITEM(1).s);
 }
-
 template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
@@ -50,24 +45,19 @@ optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
     return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
 }
 
-// --------------
 // minus
-// --------------
-
 template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(0).n, ITEM(0).i-ITEM(1), ITEM(0).s);
 }
-
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i, -ITEM(1).s);
 }
-
 template <class I, class J> requires (is_iota<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
@@ -75,17 +65,13 @@ optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
     return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
 }
 
-// --------------
 // times
-// --------------
-
 template <class I, class J> requires (is_iota<I> && iota_op<J>)
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).gets()*ITEM(1));
 }
-
 template <class I, class J> requires (iota_op<I> && is_iota<J>)
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
@@ -93,10 +79,7 @@ optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
     return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets());
 }
 
-// --------------
 // negate
-// --------------
-
 template <class I> requires (is_iota<I>)
 constexpr auto
 optimize(Expr<std::negate<>, std::tuple<I>> && e)
@@ -108,7 +91,7 @@ optimize(Expr<std::negate<>, std::tuple<I>> && e)
 
 #if RA_DO_OPT_SMALLVECTOR==1
 
-// FIXME find a way to peel qualifiers from parameter type of start(), to ignore SmallBase<SmallArray> vs SmallBase<SmallView> or const vs nonconst.
+// FIXME peel qualifiers from start() parameter, to ignore SmallBase<SmallArray> vs SmallBase<SmallView> or const vs nonconst.
 template <class A, class T, dim_t N> constexpr bool match_smallvector =
     std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template iterator<0>>
     || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template const_iterator<0>>;
@@ -135,9 +118,7 @@ static_assert(match_smallvector<ra::CellSmall<double, ic_t<std::array { Dim { 4,
     RA_OPT_SMALLVECTOR_OP_FUNS(T, 2)          \
     RA_OPT_SMALLVECTOR_OP_FUNS(T, 4)          \
     RA_OPT_SMALLVECTOR_OP_FUNS(T, 8)
-
-RA_OPT_SMALLVECTOR_OP_SIZES(double)
-RA_OPT_SMALLVECTOR_OP_SIZES(float)
+FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 
 #undef RA_OPT_SMALLVECTOR_OP_SIZES
 #undef RA_OPT_SMALLVECTOR_OP_FUNS
