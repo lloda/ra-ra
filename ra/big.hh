@@ -751,7 +751,7 @@ transpose(S && s, View<T, RANK> const & view)
     return transpose_(RA_FWD(s), view);
 }
 
-// Note that we need the compile time values and not the sizes to deduce the rank of the output, so it would be useless to provide a builtin array shim as we do with reshape().
+// Need compile time values and not sizes to deduce the output rank, so a builtin array shim (as for reshape()) would be useless.
 template <class T, rank_t RANK>
 inline View<T, ANY>
 transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> const & view)
@@ -759,7 +759,7 @@ transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> const & view)
     return transpose_(s, view);
 }
 
-// static transposed axes list.
+// Static transposed axes list.
 template <int ... Iarg, class T, rank_t RANK>
 inline auto
 transpose(View<T, RANK> const & view)
@@ -790,29 +790,10 @@ diag(View<T, RANK> const & view)
 }
 
 template <class T, rank_t RANK>
-inline bool
-is_ravel_free(View<T, RANK> const & a)
-{
-    int r = a.rank()-1;
-    for (; r>=0 && a.len(r)==1; --r) {}
-    if (r<0) { return true; }
-    ra::dim_t s = a.step(r)*a.len(r);
-    while (--r>=0) {
-        if (1!=a.len(r)) {
-            if (a.step(r)!=s) {
-                return false;
-            }
-            s *= a.len(r);
-        }
-    }
-    return true;
-}
-
-template <class T, rank_t RANK>
 inline View<T, 1>
 ravel_free(View<T, RANK> const & a)
 {
-    RA_CHECK(is_ravel_free(a));
+    RA_CHECK(is_c_order(a, false));
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
     ra::dim_t s = r<0 ? 1 : a.step(r);
@@ -849,7 +830,7 @@ reshape_(View<T, RANK> const & a, S && sb_)
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
-            assert(is_ravel_free(a) && "reshape w/copy not implemented");
+            assert(is_c_order(a, false) && "reshape w/copy not implemented"); // FIXME bad abort for rt condition
             if (la>=lb) {
 // FIXME View(SS const & s, T * p). Cf [ra37].
                 filldim(b.dimv, sb);
@@ -858,7 +839,7 @@ reshape_(View<T, RANK> const & a, S && sb_)
                 }
                 return b;
             } else {
-                assert(0 && "reshape case not implemented");
+                assert(0 && "reshape case not implemented"); // FIXME bad abort for rt condition
             }
         } else {
 // select
@@ -882,7 +863,7 @@ reshape(View<T, RANK> const & a, S && sb_)
 }
 
 // We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t.
-// We could use initializer_list to handle the general case, but that would produce a var rank result because its size cannot be deduced at compile time :-/. Unfortunately an initializer_list specialization would override this one, so we cannot provide it as a fallback.
+// initializer_list could handle the general case, but the result would have var rank and would override this one (?).
 template <class T, rank_t RANK, class dimtype, int N>
 inline auto
 reshape(View<T, RANK> const & a, dimtype const (&sb_)[N])

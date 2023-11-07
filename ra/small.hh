@@ -18,12 +18,12 @@ rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
 constexpr rank_t
 rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
 
-// cr>=0 is cell rank. -cr>0 is frame rank. TODO A way to say frame rank 0.
+// cr>=0 is cell rank. -cr>0 is frame rank. TODO How to say frame rank 0.
 constexpr rank_t
-rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* independent */ : r==ANY ? ANY /* defer */ : (r+cr); }
+rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* indep */ : r==ANY ? ANY /* defer */ : (r+cr); }
 
 constexpr rank_t
-rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* independent */ : -cr; }
+rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* indep */ : -cr; }
 
 struct Dim { dim_t len, step; };
 
@@ -32,20 +32,25 @@ operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len 
 
 template <class Dimv>
 constexpr bool
-is_c_order_dimv(Dimv const & dimv)
+is_c_order_dimv(Dimv const & dimv, bool unitstep=true)
 {
     bool steps = true;
     dim_t s = 1;
-    for (int i=dimv.size(); --i>=0;) {
-        steps = steps && dimv[i].step==s;
-        s *= dimv[i].len;
-        if (0==s) { return true; }
+    int k = dimv.size();
+    if (!unitstep) {
+        while (--k>=0 && 1==dimv[k].len) {}
+        if (k<=0) { return true; }
+        s = dimv[k].step*dimv[k].len;
     }
-    return steps;
+    while (--k>=0) {
+        steps = steps && (1==dimv[k].len || dimv[k].step==s);
+        s *= dimv[k].len;
+    }
+    return s==0 || steps;
 }
 
 template <class V> constexpr bool
-is_c_order(V const & v) { return is_c_order_dimv(v.dimv); }
+is_c_order(V const & v, bool unitstep=true) { return is_c_order_dimv(v.dimv, unitstep); }
 
 template <class Dimv, class S>
 constexpr dim_t
@@ -53,10 +58,10 @@ filldim(Dimv & dimv, S && shape)
 {
     map(&Dim::len, dimv) = shape;
     dim_t s = 1;
-    for (int i=dimv.size(); --i>=0;) {
-        dimv[i].step = s;
-        RA_CHECK(dimv[i].len>=0, "Bad len[", i, "] ", dimv[i].len, ".");
-        s *= dimv[i].len;
+    for (int k=dimv.size(); --k>=0;) {
+        dimv[k].step = s;
+        RA_CHECK(dimv[k].len>=0, "Bad len[", k, "] ", dimv[k].len, ".");
+        s *= dimv[k].len;
     }
     return s;
 }
@@ -67,7 +72,7 @@ struct default_steps_
 {
     constexpr static int rank = mp::len<lens>;
     constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, mp::tuple_values<dim_t, lens>()); return dimv; } ();
-    using type = decltype([] { return std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<rank> {}); } ());
+    using type = decltype([] { return std::apply([](auto ... k) { return mp::int_list<dimv[k].step ...> {}; }, mp::iota<rank> {}); } ());
 };
 template <class lens> using default_steps = typename default_steps_<lens>::type;
 
