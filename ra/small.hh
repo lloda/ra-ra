@@ -232,8 +232,8 @@ struct CellSmall
 #pragma GCC diagnostic pop
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
 
 // see STLIterator for the case of s_[0]=0, etc. [ra12].
     constexpr CellSmall(T * p): c { p } {}
@@ -739,7 +739,7 @@ explode(A && a_)
     decltype(auto) a = a_.view();
     using AA = std::decay_t<decltype(a)>;
     static_assert(super_t::def);
-    constexpr rank_t ra = AA::rank_s();
+    constexpr rank_t ra = ra::rank_s<AA>();
     constexpr rank_t rb = super_t::rank_s();
     static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
     static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);

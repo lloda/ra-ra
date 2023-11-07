@@ -80,18 +80,17 @@ template <class T> using vector_default_init = std::vector<T, default_init_alloc
 // global introspection I
 // --------------------
 
-template <class VV>
-requires (!std::is_void_v<VV>)
-consteval dim_t
+template <class VV> requires (!std::is_void_v<VV>)
+consteval rank_t
 rank_s()
 {
     using V = std::remove_cvref_t<VV>;
     if constexpr (is_builtin_array<V>) {
         return std::rank_v<V>;
-    } else if constexpr (requires { V::rank_s(); }) {
-        return V::rank_s();
     } else if constexpr (is_fov<V>) {
         return 1;
+    } else if constexpr (requires { V::rank_s(); }) {
+        return V::rank_s();
     } else {
         return 0;
     }
@@ -99,8 +98,7 @@ rank_s()
 
 template <class V> constexpr rank_t rank_s(V const &) { return rank_s<V>(); }
 
-template <class VV>
-requires (!std::is_void_v<VV>)
+template <class VV> requires (!std::is_void_v<VV>)
 consteval dim_t
 size_s()
 {
@@ -110,12 +108,12 @@ size_s()
         return 1;
     } else if constexpr (is_builtin_array<V>) {
         return std::apply([] (auto ... i) { return (std::extent_v<V, i> * ... * 1); }, mp::iota<rs> {});
-    } else if constexpr (requires { V::size_s(); }) {
-        return V::size_s();
     } else if constexpr (is_fov<V> && requires { std::tuple_size<V>::value; }) {
         return std::tuple_size_v<V>;
     } else if constexpr (is_fov<V> || rs==ANY) {
         return ANY;
+    } else if constexpr (requires { V::size_s(); }) {
+        return V::size_s();
     } else {
         dim_t s = 1;
         for (int i=0; i<rs; ++i) {
@@ -146,10 +144,10 @@ size(V const & v)
 {
     if constexpr (ANY!=size_s<V>()) {
         return size_s<V>();
-    } else if constexpr (requires { v.size(); }) {
-        return v.size();
     } else if constexpr (is_fov<V>) {
         return std::ssize(v);
+    } else if constexpr (requires { v.size(); }) {
+        return v.size();
     } else {
         dim_t s = 1;
         for (rank_t k=0; k<rank(v); ++k) { s *= v.len(k); }
@@ -176,7 +174,7 @@ shape(V const & v)
         return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         static_assert(ANY==rs);
-        auto i = std::ranges::iota_view { 0, v.rank() } | std::views::transform([&v](auto k) { return v.len(k); });
+        auto i = std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k) { return v.len(k); });
         return vector_default_init<dim_t>(i.begin(), i.end()); // FIXME C++23 p1206? Still fugly
     }
 }
@@ -217,8 +215,8 @@ struct Scalar
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
-    constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t step(int k) { return 0; }
+    constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) flat() const { return *this; } // [ra39]
     constexpr decltype(auto) at(auto && j) const { return c; }
@@ -260,8 +258,8 @@ struct Ptr
     constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }
     constexpr dim_t len(int k) const requires (nn==ANY) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return i; }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
@@ -335,8 +333,8 @@ struct Iota
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : BAD; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { i += O(step(k) * d) * O(s); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto flat() const { return Flat { i, s }; }
     constexpr auto at(auto && j) const
     {
@@ -388,8 +386,8 @@ struct Len
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
-    constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
     constexpr static dim_t step(int k) { std::abort(); }
+    constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
     constexpr static bool keep_step(dim_t st, int z, int j) { std::abort(); }
     constexpr static Len const & flat() { std::abort(); }
     constexpr void operator+=(dim_t d) const { std::abort(); }

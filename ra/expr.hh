@@ -19,17 +19,11 @@ namespace ra {
 // --------------------
 
 constexpr rank_t
-choose_rank(rank_t ra, rank_t rb)
-{
-    return BAD==rb ? ra : BAD==ra ? rb : ANY==ra ? ra : ANY==rb ? rb : (ra>=rb ? ra : rb);
-}
+choose_rank(rank_t ra, rank_t rb) { return BAD==rb ? ra : BAD==ra ? rb : ANY==ra ? ra : ANY==rb ? rb : std::max(ra, rb); }
 
-// if non-negative args don't match, pick first (see below). FIXME maybe return invalid.
+// pick first if mismatch (see below). FIXME maybe return invalid.
 constexpr dim_t
-choose_len(dim_t sa, dim_t sb)
-{
-    return BAD==sa ? sb : BAD==sb ? sa : ANY==sa ? sb : sa;
-}
+choose_len(dim_t sa, dim_t sb) { return BAD==sa ? sb : BAD==sb ? sa : ANY==sa ? sb : sa; }
 
 template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
 
@@ -38,7 +32,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 {
     std::tuple<P ...> t;
 
-    // 0: fail, 1: rt, 2: pass
+// 0: fail, 1: rt, 2: pass
     consteval static int
     check_s()
     {
@@ -50,11 +44,11 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
             bool tbc = false;
             for (int k=0; k<rank_s(); ++k) {
                 dim_t ls = len_s(k);
-                if (((k<std::decay_t<P>::rank_s() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
+                if (((k<ra::rank_s<P>() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
                     return 0;
                 } else {
-                    int anyk = ((k<std::decay_t<P>::rank_s() && (ANY==std::decay_t<P>::len_s(k))) + ...);
-                    int fixk = ((k<std::decay_t<P>::rank_s() && (0<=std::decay_t<P>::len_s(k))) + ...);
+                    int anyk = ((k<ra::rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
+                    int fixk = ((k<ra::rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
                     tbc = tbc || (anyk>0 && anyk+fixk>1);
                 }
             }
@@ -71,8 +65,8 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
                 dim_t ls = len(k);
-                if (((k<std::get<I>(t).rank() && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
-                    RA_CHECK(!checkp, "Shape mismatch [", (std::array { std::get<I>(t).len(k) ... }), "] on axis ", k, ".");
+                if (((k<ra::rank(std::get<I>(t)) && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
+                    RA_CHECK(!checkp, "Shape mismatch on axis ", k, " [", (std::array { std::get<I>(t).len(k) ... }), "].");
                     return false;
                 }
             }
@@ -106,17 +100,16 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     rank() const requires (ANY == Match::rank_s())
     {
         rank_t r = BAD;
-        ((r = choose_rank(r, std::get<I>(t).rank())), ...);
+        ((r = choose_rank(r, ra::rank(std::get<I>(t)))), ...);
         assert(ANY!=r); // not at runtime
         return r;
     }
-
 // first nonnegative size, if none first ANY, if none then BAD
     constexpr static dim_t
     len_s(int k)
     {
         auto f = [&k]<class A>(dim_t s) {
-            constexpr rank_t ar = A::rank_s();
+            constexpr rank_t ar = ra::rank_s<A>();
             return (ar<0 || k<ar) ? choose_len(s, A::len_s(k)) : s;
         };
         dim_t s = BAD; ((s>=0 ? s : s = f.template operator()<std::decay_t<P>>(s)), ...);
@@ -131,25 +124,22 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     len(int k) const requires (!(requires (int kk) { P::len(kk); } && ...))
     {
         auto f = [&k](dim_t s, auto const & a) {
-            return k<a.rank() ? choose_len(s, a.len(k)) : s;
+            return k<ra::rank(a) ? choose_len(s, a.len(k)) : s;
         };
         dim_t s = BAD; ((s>=0 ? s : s = f(s, std::get<I>(t))), ...);
         assert(ANY!=s); // not at runtime
         return s;
     }
-
-    constexpr void
-    adv(rank_t k, dim_t d)
-    {
-        (std::get<I>(t).adv(k, d), ...);
-    }
-
     constexpr auto
     step(int i) const
     {
         return std::make_tuple(std::get<I>(t).step(i) ...);
     }
-
+    constexpr void
+    adv(rank_t k, dim_t d)
+    {
+        (std::get<I>(t).adv(k, d), ...);
+    }
     constexpr bool
     keep_step(dim_t st, int z, int j) const
     requires (!(requires (dim_t st, rank_t z, rank_t j) { P::keep_step(st, z, j); } && ...))
@@ -201,18 +191,18 @@ struct Reframe
         int l = orig(k);
         return l>=0 ? a.len(l) : BAD;
     }
+    constexpr auto
+    step(int k) const
+    {
+        int l = orig(k);
+        return l>=0 ? a.step(l) : zerostep<decltype(a.step(l))>;
+    }
     constexpr void
     adv(rank_t k, dim_t d)
     {
         if (int l = orig(k); l>=0) {
             a.adv(l, d);
         }
-    }
-    constexpr auto
-    step(int k) const
-    {
-        int l = orig(k);
-        return l>=0 ? a.step(l) : zerostep<decltype(a.step(l))>;
     }
     constexpr bool
     keep_step(dim_t st, int z, int j) const
@@ -538,8 +528,7 @@ constexpr bool is_special_def<Pick<std::tuple<P ...>>> = (is_special<P> || ...);
 
 template <class ... P> Pick(P && ... p) -> Pick<std::tuple<P ...>>;
 
-template <class ... P>
-constexpr auto
+template <class ... P> constexpr auto
 pick(P && ... p) { return Pick { start(RA_FWD(p)) ... }; }
 
 } // namespace ra

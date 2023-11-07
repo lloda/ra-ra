@@ -144,7 +144,7 @@ template <IteratorConcept A, class Early = Nop>
 constexpr auto
 ply_ravel(A && a, Early && early = Nop {})
 {
-    rank_t rank = a.rank();
+    rank_t rank = ra::rank(a);
 // must avoid 0-length vlas [ra40].
     if (0>=rank) {
         if (0>rank) [[unlikely]] { std::abort(); }
@@ -357,8 +357,8 @@ struct STLIterator
     STLIterator(Iterator const & ii_)
         : ii(ii_),
           ind([&] {
-              if constexpr (ANY==Iterator::rank_s()) {
-                  return shape_type(ii.rank(), 0);
+              if constexpr (ANY==rank_s<Iterator>()) {
+                  return shape_type(rank(ii), 0);
               } else {
                   return shape_type {0};
               }
@@ -414,10 +414,10 @@ struct STLIterator
     }
     STLIterator & operator++()
     {
-        if constexpr (ANY==Iterator::rank_s()) {
-            cube_next(ii.rank()-1);
+        if constexpr (ANY==rank_s<Iterator>()) {
+            cube_next(rank(ii)-1);
         } else {
-            cube_next<Iterator::rank_s()-1>();
+            cube_next<rank_s<Iterator>()-1>();
         }
         return *this;
     }
@@ -438,7 +438,7 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     static_assert(!has_len<A>, "len used outside subscript context.");
     static_assert(BAD!=size_s<A>(), "Cannot print undefined size expr.");
     auto a = ra::start(fa.a); // [ra35]
-    rank_t const rank = a.rank();
+    rank_t const rank = ra::rank(a);
     auto sha = shape(a);
     if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==ANY)) {
         o << sha << '\n';
