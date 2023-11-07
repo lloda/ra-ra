@@ -163,7 +163,7 @@ constexpr decltype(auto)
 shape(V const & v)
 {
     constexpr rank_t rs = rank_s<V>();
-// FIXME use __cpp_constexpr >= 202211L to return references to the constexpr cases
+// FIXME __cpp_constexpr >= 202211L to return references to the constexpr cases
     if constexpr (is_builtin_array<V>) {
         return std::apply([] (auto ... i) { return std::array<dim_t, rs> { std::extent_v<V, i> ... }; }, mp::iota<rs> {});
     } else if constexpr (requires { v.shape(); }) {
@@ -217,17 +217,15 @@ struct Scalar
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
-
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static dim_t step(int k) { return 0; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) flat() const { return *this; } // [ra39]
     constexpr decltype(auto) at(auto && j) const { return c; }
-
-// use self as Flat
+// self as Flat
     constexpr void operator+=(dim_t d) const {}
-    constexpr C & operator*() { return this->c; }
-    constexpr C const & operator*() const { return this->c; } // [ra39]
+    constexpr C & operator*() { return c; }
+    constexpr C const & operator*() const { return c; } // [ra39]
 
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
@@ -258,8 +256,7 @@ struct Ptr
 
     consteval static rank_t rank_s() { return 1; };
     consteval static rank_t rank() { return 1; }
-    // len(k==0) or step(k>=0)
-    constexpr static dim_t len_s(int k) { return nn; }
+    constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
     constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }
     constexpr dim_t len(int k) const requires (nn==ANY) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
@@ -334,8 +331,7 @@ struct Iota
 
     consteval static rank_t rank_s() { return w+1; };
     consteval static rank_t rank() { return w+1; }
-    // len(0<=k<=w) or step(0<=k)
-    constexpr static dim_t len_s(int k) { return k==w ? nn : BAD; }
+    constexpr static dim_t len_s(int k) { return k==w ? nn : BAD; } // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : BAD; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }

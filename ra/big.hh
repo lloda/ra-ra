@@ -218,7 +218,6 @@ struct View
                  "Out of range for len[", k, "]=", dimv[k].len, ": ", i, ".");
         return dimv[k].step*i;
     }
-
     template <class I> requires (is_iota<I>)
     constexpr dim_t
     select(Dim * dim, int k, I i) const
@@ -228,7 +227,6 @@ struct View
         *dim = { .len = i.n, .step = dimv[k].step * i.s };
         return dimv[k].step*i.i;
     }
-
     template <class I0, class ... I>
     constexpr dim_t
     select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
@@ -236,7 +234,6 @@ struct View
         return select(dim, k, with_len(len(k), RA_FWD(i0)))
             + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, RA_FWD(i) ...);
     }
-
     template <int n, class ... I>
     constexpr dim_t
     select_loop(Dim * dim, int k, dots_t<n> i0, I && ... i) const
@@ -247,7 +244,6 @@ struct View
         }
         return select_loop(dim, k, RA_FWD(i) ...);
     }
-
     template <int n, class ... I>
     constexpr dim_t
     select_loop(Dim * dim, int k, insert_t<n> i0, I && ... i) const
@@ -257,13 +253,11 @@ struct View
         }
         return select_loop(dim, k, RA_FWD(i) ...);
     }
-
     constexpr static dim_t
     select_loop(Dim * dim, int k)
     {
         return 0;
     }
-
 // Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
     template <class ... I>
     constexpr decltype(auto)
@@ -293,7 +287,6 @@ struct View
             return unbeat<sizeof...(I)>::op(*this, RA_FWD(i) ...);
         }
     }
-
     template <class ... I>
     constexpr decltype(auto)
     operator[](I && ... i) const { return (*this)(RA_FWD(i) ...); }
@@ -302,7 +295,7 @@ struct View
     constexpr decltype(auto)
     at(I && i) const
     {
-// FIXME there's no way to say 'frame rank 0' so -size wouldn't work.
+// FIXME no way to say 'frame rank 0' so -size wouldn't work.
        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
        if constexpr (ANY==crank) {
             return iter(rank()-ra::size(i)).at(RA_FWD(i));
@@ -310,7 +303,7 @@ struct View
             return iter<crank>().at(RA_FWD(i));
         }
     }
-
+// conversion to scalar
     constexpr
     operator T & () const
     {
@@ -322,21 +315,17 @@ struct View
     }
 // necessary here per [ra15] (?)
     constexpr operator T & () { return std::as_const(*this); }
-
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)
     constexpr View(View<T, R> const & x): dimv(x.dimv), cp(x.cp) {}
     template <rank_t R> requires (R==ANY && R!=RANK && std::is_const_v<T>)
     constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv), cp(x.cp) {}
-
 // conversion from fixed rank to var rank
     template <rank_t R> requires (R!=ANY && RANK==ANY)
     constexpr View(View<T, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
     template <rank_t R> requires (R!=ANY && RANK==ANY && std::is_const_v<T>)
     constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
-
-// conversion to const. We rely on it for Container::view().
-// FIXME probably illegal, and doesn't work for SmallBase. Need another way.
+// conversion to const. We rely on it for Container::view(). FIXME iffy? not constexpr, and doesn't work for SmallBase
     constexpr
     operator View<T const, RANK> const & () const requires (!std::is_const_v<T>)
     {
@@ -349,15 +338,13 @@ struct View
 // Container types
 // --------------------
 
-// std::vector-like
 template <class V>
 struct storage_traits
 {
     using T = V::value_type;
     static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
     constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(n); }
-    constexpr static T const * data(V const & v) { return v.data(); }
-    constexpr static T * data(V & v) { return v.data(); }
+    template <class VV> constexpr static auto data(VV & v) { return v.data(); }
 };
 
 template <class P>
@@ -366,8 +353,7 @@ struct storage_traits<std::unique_ptr<P>>
     using V = std::unique_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
     constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
-    constexpr static T const * data(V const & v) { return v.get(); }
-    constexpr static T * data(V & v) { return v.get(); }
+    template <class VV> constexpr static auto data(VV & v) { return v.get(); }
 };
 
 template <class P>
@@ -376,8 +362,7 @@ struct storage_traits<std::shared_ptr<P>>
     using V = std::shared_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
     constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
-    constexpr static T const * data(V const & v) { return v.get(); }
-    constexpr static T * data(V & v) { return v.get(); }
+    template <class VV> constexpr static auto data(VV & v) { return v.get(); }
 };
 
 // FIXME avoid duplicating View::p. Avoid overhead with rank 1.
@@ -559,10 +544,9 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         store.pop_back();
         --View::dimv[0].len;
     }
+// FIXME __cpp_explicit_this_parameter
     constexpr T const & back() const { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
     constexpr T & back() { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
-
-// FIXME __cpp_explicit_this_parameter
     constexpr auto data() { return view().data(); }
     constexpr auto data() const { return view().data(); }
     template <class ... A> constexpr decltype(auto) operator()(A && ... a) { return view()(RA_FWD(a) ...); }
@@ -579,7 +563,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // FIXME size is redundant e.g. for Store = std::vector.
     template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
     template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
-// FIXME variants fail test/io.cc CXXFLAGS="-O3 -fno-sanitize=all" on gcc 11/12/13, pass with -O2 or sanitizers on. Weird!
+// FIXME variants fail test/io.cc CXXFLAGS="-O3 -fno-sanitize=all" on gcc 11/12/13, pass with sanitizers on. Weird!
     // template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     // template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     constexpr operator T const & () const { return view(); }
@@ -620,7 +604,8 @@ template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>,
 // -------------
 
 template <rank_t RANK, class T>
-Shared<T, RANK> shared_borrowing(View<T, RANK> & raw)
+Shared<T, RANK>
+shared_borrowing(View<T, RANK> & raw)
 {
     Shared<T, RANK> a;
     a.dimv = raw.dimv;
@@ -639,33 +624,22 @@ struct concrete_type_def
 {
     using type = void;
 };
-
-template <class E>
-requires (size_s<E>()==ANY)
+template <class E> requires (size_s<E>()==ANY)
 struct concrete_type_def<E>
 {
     using type = Big<value_t<E>, rank_s<E>()>;
 };
-
-template <class E>
-requires (size_s<E>()!=ANY)
+template <class E> requires (size_s<E>()!=ANY)
 struct concrete_type_def<E>
 {
-    template <class I> struct T;
-    template <int ... I> struct T<mp::int_list<I ...>>
-    {
-        using type = Small<value_t<E>, E::len_s(I) ...>;
-    };
-    using type = typename T<mp::iota<rank_s<E>()>>::type;
+    using type = decltype(std::apply([](auto ... i) { return Small<value_t<E>, E::len_s(i) ...> {}; }, mp::iota<rank_s<E>()> {}));
 };
-
 // Scalars are their own concrete_type. Treat unregistered types as scalars. FIXME (in bootstrap.hh).
 template <class E>
 using concrete_type = std::decay_t<
-    std::conditional_t<
-        (0==rank_s<E>() && !(requires { std::decay_t<E>::rank_s(); })) || is_scalar<E>,
-        std::decay_t<E>,
-        typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>
+    std::conditional_t<(0==rank_s<E>() && !(requires { std::decay_t<E>::rank_s(); })) || is_scalar<E>,
+                       std::decay_t<E>,
+                       typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>
     >;
 
 template <class E>
@@ -738,8 +712,9 @@ namespace ra {
 // Operations specific to View.
 // --------------------
 
-template <class T, rank_t RANK> inline
-View<T, RANK> reverse(View<T, RANK> const & view, int k)
+template <class T, rank_t RANK>
+inline View<T, RANK>
+reverse(View<T, RANK> const & view, int k)
 {
     View<T, RANK> r = view;
     auto & dim = r.dimv[k];
@@ -751,8 +726,9 @@ View<T, RANK> reverse(View<T, RANK> const & view, int k)
 }
 
 // dynamic transposed axes list.
-template <class T, rank_t RANK, class S> inline
-View<T, ANY> transpose_(S && s, View<T, RANK> const & view)
+template <class T, rank_t RANK, class S>
+inline View<T, ANY>
+transpose_(S && s, View<T, RANK> const & view)
 {
     RA_CHECK(view.rank()==ra::size(s));
     auto rp = std::max_element(s.begin(), s.end());
@@ -768,22 +744,25 @@ View<T, ANY> transpose_(S && s, View<T, RANK> const & view)
     return r;
 }
 
-template <class T, rank_t RANK, class S> inline
-View<T, ANY> transpose(S && s, View<T, RANK> const & view)
+template <class T, rank_t RANK, class S>
+inline View<T, ANY>
+transpose(S && s, View<T, RANK> const & view)
 {
     return transpose_(RA_FWD(s), view);
 }
 
 // Note that we need the compile time values and not the sizes to deduce the rank of the output, so it would be useless to provide a builtin array shim as we do with reshape().
-template <class T, rank_t RANK> inline
-View<T, ANY> transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> const & view)
+template <class T, rank_t RANK>
+inline View<T, ANY>
+transpose(std::initializer_list<ra::rank_t> s, View<T, RANK> const & view)
 {
     return transpose_(s, view);
 }
 
 // static transposed axes list.
-template <int ... Iarg, class T, rank_t RANK> inline
-auto transpose(View<T, RANK> const & view)
+template <int ... Iarg, class T, rank_t RANK>
+inline auto
+transpose(View<T, RANK> const & view)
 {
     static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
     RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank: ", view.rank(), "should be ", (sizeof...(Iarg)), ".");
@@ -803,14 +782,16 @@ auto transpose(View<T, RANK> const & view)
     return r;
 }
 
-template <class T, rank_t RANK> inline
-auto diag(View<T, RANK> const & view)
+template <class T, rank_t RANK>
+inline auto
+diag(View<T, RANK> const & view)
 {
     return transpose<0, 0>(view);
 }
 
-template <class T, rank_t RANK> inline
-bool is_ravel_free(View<T, RANK> const & a)
+template <class T, rank_t RANK>
+inline bool
+is_ravel_free(View<T, RANK> const & a)
 {
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
@@ -827,8 +808,9 @@ bool is_ravel_free(View<T, RANK> const & a)
     return true;
 }
 
-template <class T, rank_t RANK> inline
-View<T, 1> ravel_free(View<T, RANK> const & a)
+template <class T, rank_t RANK>
+inline View<T, 1>
+ravel_free(View<T, RANK> const & a)
 {
     RA_CHECK(is_ravel_free(a));
     int r = a.rank()-1;
@@ -837,8 +819,9 @@ View<T, 1> ravel_free(View<T, RANK> const & a)
     return ra::View<T, 1>({{size(a), s}}, a.cp);
 }
 
-template <class T, rank_t RANK, class S> inline
-auto reshape_(View<T, RANK> const & a, S && sb_)
+template <class T, rank_t RANK, class S>
+inline auto
+reshape_(View<T, RANK> const & a, S && sb_)
 {
     auto sb = concrete(RA_FWD(sb_));
 // FIXME when we need to copy, accept/return Shared
@@ -891,24 +874,26 @@ auto reshape_(View<T, RANK> const & a, S && sb_)
     return b;
 }
 
-template <class T, rank_t RANK, class S> inline
-auto reshape(View<T, RANK> const & a, S && sb_)
+template <class T, rank_t RANK, class S>
+inline auto
+reshape(View<T, RANK> const & a, S && sb_)
 {
     return reshape_(a, RA_FWD(sb_));
 }
 
 // We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t.
 // We could use initializer_list to handle the general case, but that would produce a var rank result because its size cannot be deduced at compile time :-/. Unfortunately an initializer_list specialization would override this one, so we cannot provide it as a fallback.
-template <class T, rank_t RANK, class dimtype, int N> inline
-auto reshape(View<T, RANK> const & a, dimtype const (&sb_)[N])
+template <class T, rank_t RANK, class dimtype, int N>
+inline auto
+reshape(View<T, RANK> const & a, dimtype const (&sb_)[N])
 {
     return reshape_(a, sb_);
 }
 
 // lo = lower bounds, hi = upper bounds.
 // The stencil indices are in [0 lo+1+hi] = [-lo +hi].
-template <class LO, class HI, class T, rank_t N> inline
-View<T, rank_sum(N, N)>
+template <class LO, class HI, class T, rank_t N>
+inline View<T, rank_sum(N, N)>
 stencil(View<T, N> const & a, LO && lo, HI && hi)
 {
     View<T, rank_sum(N, N)> s;
@@ -929,8 +914,9 @@ stencil(View<T, N> const & a, LO && lo, HI && hi)
 }
 
 // Make last sizes of View<> be compile-time constants.
-template <class super_t, rank_t SUPERR, class T, rank_t RANK> inline
-auto explode_(View<T, RANK> const & a)
+template <class super_t, rank_t SUPERR, class T, rank_t RANK>
+inline auto
+explode_(View<T, RANK> const & a)
 {
 // TODO Reduce to single check, either the first or the second.
     static_assert(RANK>=SUPERR || RANK==ANY, "rank of a is too low");
@@ -951,8 +937,9 @@ auto explode_(View<T, RANK> const & a)
     return b;
 }
 
-template <class super_t, class T, rank_t RANK> inline
-auto explode(View<T, RANK> const & a)
+template <class super_t, class T, rank_t RANK>
+inline auto
+explode(View<T, RANK> const & a)
 {
     return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>())>(a);
 }
@@ -962,8 +949,9 @@ template <class T> inline int gstep(int i) { if constexpr (is_scalar<T>) return 
 template <class T> inline int glen(int i) { if constexpr (is_scalar<T>) return 1; else return T::len(i); }
 
 // TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
-template <class sub_t, class super_t, rank_t RANK> inline
-auto collapse(View<super_t, RANK> const & a)
+template <class sub_t, class super_t, rank_t RANK>
+inline auto
+collapse(View<super_t, RANK> const & a)
 {
     using super_v = value_t<super_t>;
     using sub_v = value_t<sub_t>;
@@ -982,7 +970,7 @@ auto collapse(View<super_t, RANK> const & a)
     constexpr int s = sizeof(sub_t)/sizeof(sub_v);
     static_assert(t*sizeof(sub_v)>=1, "Bad subtype.");
     for (int i=0; i<SUBR; ++i) {
-        RA_CHECK(((gstep<super_t>(i)/s)*s==gstep<super_t>(i)), "Bad steps."); // TODO is actually static
+        RA_CHECK(((gstep<super_t>(i)/s)*s==gstep<super_t>(i)), "Bad steps."); // TODO actually static
         b.dimv[a.rank()+i] = { .len = glen<super_t>(i), .step = gstep<super_t>(i) / s * t };
     }
     if (subtype>1) {

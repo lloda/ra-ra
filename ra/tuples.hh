@@ -35,7 +35,7 @@ using nil = tuple<>;
 
 template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
-template <int ... I> using int_list = tuple<int_c<I> ...>; // shortcut for std::integer_sequence<int, I ...>
+template <int ... I> using int_list = tuple<int_c<I> ...>;
 
 template <class T> constexpr bool is_tuple = false;
 template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;

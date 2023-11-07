@@ -21,8 +21,7 @@
   #define RA_OPT
 #endif
 
-// These globals are needed so that eg ra::transpose<> can be ADL searched even with explicit template args.
-// See http://stackoverflow.com/questions/9838862 FIXME really?
+// Enable ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
 template <class A> constexpr void transpose(ra::noarg);
 template <int A> constexpr void iter(ra::noarg);
 
@@ -75,8 +74,7 @@ from(A && a, I && ... i)
 // --------------------------------
 
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
-
-// These depend on OPNAME defined in optimize.hh and used there to match ET patterns.
+// The function objects are matched in optimize.hh.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B> requires (ra_irreducible<A, B>)         \
     constexpr auto                                                      \
@@ -174,21 +172,19 @@ at(A && a, I && i)
 // selection / shortcutting
 // --------------------------------
 
-// These ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
+// ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F> requires (ra_reducible<T, F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
     return w ? FLAT(t) : FLAT(f);
 }
-
 template <class W, class T, class F> requires (ra_irreducible<W, T, F>)
 constexpr auto
 where(W && w, T && t, F && f)
 {
     return pick(cast<bool>(RA_FWD(w)), RA_FWD(f), RA_FWD(t));
 }
-
 // catch all for non-ra types.
 template <class T, class F> requires (!(ra_irreducible<T, F>) && !(ra_reducible<T, F>))
 constexpr decltype(auto)
@@ -462,7 +458,7 @@ struct FindCombination
     constexpr static int sign = (where>=0) ? PermutationSign<P, typename type::type>::value : 0;
 };
 
-// Combination antiC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, antiC] has the same sign as [0, 1, ... Dim-1].
+// Combination antiC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, antiC] has the sign of [0, 1, ... Dim-1].
 template <class C, int D>
 struct AntiCombination
 {
@@ -498,7 +494,7 @@ struct ChooseComponents<D, O>
     using type = typename MapAntiCombination<ChooseComponents_<D, D-O>, D>::type;
 };
 
-// Works *almost* to the range of std::size_t.
+// Works almost to the range of std::size_t.
 constexpr std::size_t
 n_over_p(std::size_t const n, std::size_t p)
 {

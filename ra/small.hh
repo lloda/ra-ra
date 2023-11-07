@@ -63,7 +63,8 @@ filldim(Dimv & dimv, S && shape)
 
 // FIXME parameterize Small on dimv, then simplify this.
 template <class lens>
-struct default_steps_ {
+struct default_steps_
+{
     constexpr static int rank = mp::len<lens>;
     constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, mp::tuple_values<dim_t, lens>()); return dimv; } ();
     using type = decltype([] { return std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<rank> {}); } ());
@@ -261,12 +262,9 @@ struct CellSmall
 // nested braces for Small initializers + forward decl Small types
 // ---------------------
 
-// Beyond the expr constructor, SmallArray has 4 special constructors:
-// 1. The empty constructor.
-// 2. The scalar constructor, needed when T isn't registered as ra::scalar.
-// 3. The ravel constructor.
-// 4. The nested constructor.
-// Sometimes the ravel/nested/scalar constructors are ambiguous. This is solved by defining arguments to noarg variants.
+// Other than the expr constructor, SmallArray has 4 others: empty, scalar, ravel, and nested.
+// The scalar constructor is needed when T isn't registered as ra::scalar.
+// The ravel/nested/scalar constructors can be ambiguous. This is solved by defining arguments to noarg variants.
 
 template <class T, class lens>
 struct nested_tuple
@@ -291,7 +289,9 @@ struct small_args
         mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
 };
 
-template <class T, class lens, class steps, class nested_args = small_args<T, lens>::nested, class ravel_args = small_args<T, lens>::ravel>
+template <class T, class lens, class steps,
+          class nested_args = small_args<T, lens>::nested,
+          class ravel_args = small_args<T, lens>::ravel>
 struct SmallArray;
 
 template <class T, dim_t ... lens>
@@ -376,8 +376,7 @@ struct SmallBase
         RA_CHECK(inside(i, len(k)),
                  "Out of range for len[", k, "]=", len(k), ": ", i, ".");
         return step(k)*i;
-    };
-
+    }
     template <int k, class I> requires (is_iota<I>)
     constexpr static dim_t
     select(I i)
@@ -392,14 +391,12 @@ struct SmallBase
         }
         return step(k)*i.i;
     }
-
     template <int k, int n>
     constexpr static dim_t
     select(dots_t<n> i)
     {
         return 0;
     }
-
     template <int k, class I0, class ... I>
     constexpr static dim_t
     select_loop(I0 && i0, I && ... i)
@@ -408,7 +405,6 @@ struct SmallBase
         return select<k>(with_len(ic<len(k)>, RA_FWD(i0)))
             + select_loop<k + nn>(RA_FWD(i) ...);
     }
-
     template <int k>
     consteval static dim_t
     select_loop()
@@ -436,7 +432,7 @@ struct SmallBase
     }                                                                   \
     template <class ... I>                                              \
     constexpr decltype(auto)                                            \
-    operator[](I && ... i) CONST { return (*this)(RA_FWD(i) ...); } \
+    operator[](I && ... i) CONST { return (*this)(RA_FWD(i) ...); }     \
                                                                         \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
@@ -520,7 +516,7 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
     constexpr SmallView(SmallView const & s): cp(s.cp) {}
 
     constexpr operator T & () { static_assert(Base::convertible_to_scalar); return cp[0]; }
-    constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return cp[0]; };
+    constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return cp[0]; }
 
     using ViewConst = SmallView<T const, lens, steps>;
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
@@ -610,10 +606,9 @@ A ravel_from_iterators(I && begin, J && end)
 
 
 // ---------------------
-// Builtin arrays
+// Builtin arrays. FIXME wish I could reinterpret_cast
 // ---------------------
 
-// FIXME wish I could reinterpret_cast
 template <class T>
 constexpr auto
 peel(T && t)
@@ -638,7 +633,7 @@ start(T && t)
 
 
 // --------------------
-// Small view ops; cf View ops in big.hh.
+// Small view ops. Cf View ops in big.hh
 // TODO Merge with Reframe (eg beat(reframe(a)) -> transpose(a) ?)
 // --------------------
 
