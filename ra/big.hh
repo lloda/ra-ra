@@ -708,11 +708,11 @@ with_shape(std::initializer_list<S> && s, X && x)
 
 template <class T, rank_t RANK>
 inline View<T, RANK>
-reverse(View<T, RANK> const & view, int k)
+reverse(View<T, RANK> const & view, int k=0)
 {
+    RA_CHECK(inside(k, view.rank()), "Bad reverse axis ", k, " for view of rank ", view.rank(), ".");
     View<T, RANK> r = view;
-    auto & dim = r.dimv[k];
-    if (dim.len!=0) {
+    if (auto & dim=r.dimv[k]; dim.len!=0) {
         r.cp += dim.step*(dim.len-1);
         dim.step *= -1;
     }
