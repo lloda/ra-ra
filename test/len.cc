@@ -31,12 +31,12 @@ int main()
         tr.test(ra::is_zero_or_scalar<ra::Len>);
         tr.test(!ra::is_ra_pos<ra::Len>);
         tr.test(ra::is_special<ra::Len>);
-        tr.test(ra::ra_irreducible<ra::Len>);
-        tr.test(!ra::ra_reducible<ra::Len>);
-        tr.test(ra::ra_irreducible<ra::Len, ra::Len>);
-        tr.test(!ra::ra_reducible<ra::Len, ra::Len>);
-        tr.test(ra::ra_irreducible<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
-        tr.test(!ra::ra_reducible<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
+        tr.test(ra::tomap<ra::Len>);
+        tr.test(!ra::toreduce<ra::Len>);
+        tr.test(ra::tomap<ra::Len, ra::Len>);
+        tr.test(!ra::toreduce<ra::Len, ra::Len>);
+        tr.test(ra::tomap<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
+        tr.test(!ra::toreduce<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
         tr.test(ra::is_zero_or_scalar<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
         tr.test(ra::IteratorConcept<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
     }

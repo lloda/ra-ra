@@ -195,8 +195,10 @@ struct TestRecorder
 #undef RA_TEST_COMP
 
     template <class R, class A> double
-    test_rel(R && ref, A && a, double req, double level=0, RA_CURRENT_LOC)
+    test_rel(R && ref_, A && a_, double req, double level=0, RA_CURRENT_LOC)
     {
+        decltype(auto) ref = ra::start(ref_);
+        decltype(auto) a = ra::start(a_);
         double e = (level<=0)
             ? amax_strict(where(isfinite(ref),
                                 rel_error(ref, a),
@@ -217,8 +219,10 @@ struct TestRecorder
         return e;
     }
     template <class R, class A> double
-    test_abs(R && ref, A && a, double req=0, RA_CURRENT_LOC)
+    test_abs(R && ref_, A && a_, double req=0, RA_CURRENT_LOC)
     {
+        decltype(auto) ref = ra::start(ref_);
+        decltype(auto) a = ra::start(a_);
         double e = amax_strict(where(isfinite(ref),
                                      abs(ref-a),
                                      where(isinf(ref),

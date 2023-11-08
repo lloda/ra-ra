@@ -132,21 +132,20 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
-RA_IS_DEF(is_iterator_pos, IteratorConcept<A> && 0!=A::rank_s())
 RA_IS_DEF(is_slice, SliceConcept<A>)
-RA_IS_DEF(is_slice_pos, SliceConcept<A> && 0!=A::rank_s())
-
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
+template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
+RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
+
+RA_IS_DEF(is_iterator_pos, IteratorConcept<A> && 0!=A::rank_s())
+RA_IS_DEF(is_slice_pos, SliceConcept<A> && 0!=A::rank_s())
 template <class A> constexpr bool is_ra_pos = is_iterator_pos<A> || is_slice_pos<A>;
 template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_ra_pos<A>) || is_scalar<A>;
-template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
-
-RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
-RA_IS_DEF(is_special, false) // these are rank-0 types that we don't want reduced.
 
 // all args rank 0 (immediate application), but at least one ra:: (don't collide with the scalar version).
-template <class ... A> constexpr bool ra_reducible = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
-template <class ... A> constexpr bool ra_irreducible = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
+RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
+template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
+template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
 
 
 // --------------
@@ -240,5 +239,5 @@ constexpr std::string const & format(std::string const & s) { return s; }
 } // namespace ra
 
 #ifdef RA_AFTER_CHECK
-#error Bad header include order! Do not include ra/bootstrap.hh after ra/ra.hh.
+#error Bad header include order! Do not include ra/bootstrap.hh after other ra:: headers.
 #endif

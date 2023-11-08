@@ -60,5 +60,11 @@ int main()
         test(true, -PINF, 3., 0.);
         test(true, QNAN, 3., 0.);
     }
+    tr.section("fov in test_abs/test_rel");
+    {
+        std::array ref = { 1., 2., 3. };
+        std::vector a = { 1., 2., 3. };
+        tr.test_abs(ref, a, 0.);
+    }
     return tr.summary();
 }

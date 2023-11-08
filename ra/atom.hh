@@ -15,7 +15,7 @@
 
 
 // --------------------
-// what to do on errors. See examples/throw.cc for how to customize.
+// error handling. See examples/throw.cc for how to customize.
 // --------------------
 
 #include <iostream> // might not be needed with a different RA_ASSERT.
@@ -27,20 +27,17 @@
             assert(cond /* FIXME show args */);                         \
         } else {                                                        \
             if (!(cond)) [[unlikely]] {                                 \
-                std::cerr << ra::format("**** ra (", std::source_location::current(), "): ", \
-                                        ##__VA_ARGS__, " ****") << std::endl; \
+                std::cerr << ra::format("**** ra (", std::source_location::current(), "): ", ##__VA_ARGS__, " ****") << std::endl; \
                 std::abort();                                           \
             }                                                           \
         }                                                               \
     }
 #endif
-
 #if defined(RA_DO_CHECK) && RA_DO_CHECK==0
   #define RA_CHECK( ... )
 #else
   #define RA_CHECK( ... ) RA_ASSERT( __VA_ARGS__ )
 #endif
-
 #define RA_AFTER_CHECK Yes
 
 namespace ra {
@@ -77,7 +74,7 @@ template <class T> using vector_default_init = std::vector<T, default_init_alloc
 
 
 // --------------------
-// global introspection I
+// introspection I
 // --------------------
 
 template <class VV> requires (!std::is_void_v<VV>)
@@ -97,6 +94,19 @@ rank_s()
 }
 
 template <class V> constexpr rank_t rank_s(V const &) { return rank_s<V>(); }
+
+template <class V>
+constexpr rank_t
+rank(V const & v)
+{
+    if constexpr (ANY!=rank_s<V>()) {
+        return rank_s<V>();
+    } else if constexpr (requires { v.rank(); })  {
+        return v.rank();
+    } else {
+        static_assert(always_false<V>, "No rank() for this type.");
+    }
+}
 
 template <class VV> requires (!std::is_void_v<VV>)
 consteval dim_t
@@ -124,19 +134,6 @@ size_s()
 }
 
 template <class V> constexpr dim_t size_s(V const &) { return size_s<V>(); }
-
-template <class V>
-constexpr rank_t
-rank(V const & v)
-{
-    if constexpr (ANY!=rank_s<V>()) {
-        return rank_s<V>();
-    } else if constexpr (requires { v.rank(); })  {
-        return v.rank();
-    } else {
-        static_assert(always_false<V>, "No rank() for this type.");
-    }
-}
 
 template <class V>
 constexpr dim_t
@@ -444,7 +441,7 @@ start(T && t) { return RA_FWD(t); }
 
 
 // --------------------
-// global introspection II
+// introspection II
 // --------------------
 
 // also used to paper over Scalar<X> vs X

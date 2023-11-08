@@ -76,17 +76,17 @@ from(A && a, I && ... i)
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
 // The function objects are matched in optimize.hh.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
-    template <class A, class B> requires (ra_irreducible<A, B>)         \
+    template <class A, class B> requires (tomap<A, B>)                  \
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
-        return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b))); \
+        return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b)));             \
     }                                                                   \
-    template <class A, class B> requires (ra_reducible<A, B>)           \
+    template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto                                                      \
     operator OP(A && a, B && b)                                         \
     {                                                                   \
-        return FLAT(RA_FWD(a)) OP FLAT(RA_FWD(b));    \
+        return FLAT(RA_FWD(a)) OP FLAT(RA_FWD(b));                      \
     }
 DEF_NAMED_BINARY_OP(+, std::plus<>)          DEF_NAMED_BINARY_OP(-, std::minus<>)
 DEF_NAMED_BINARY_OP(*, std::multiplies<>)    DEF_NAMED_BINARY_OP(/, std::divides<>)
@@ -105,13 +105,13 @@ struct unaryplus
 };
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                                  \
-    template <class A> requires (ra_irreducible<A>)                     \
+    template <class A> requires (tomap<A>)                              \
     constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
         return map(OPNAME(), RA_FWD(a));                                \
     }                                                                   \
-    template <class A> requires (ra_reducible<A>)                       \
+    template <class A> requires (toreduce<A>)                           \
     constexpr auto                                                      \
     operator OP(A && a)                                                 \
     {                                                                   \
@@ -125,13 +125,13 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
 // TODO Cf examples/useret.cc, test/reexported.cc
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
-    template <class ... A> requires (ra_irreducible<A ...>)             \
+    template <class ... A> requires (tomap<A ...>)                      \
     constexpr auto                                                      \
     OP(A && ... a)                                                      \
     {                                                                   \
         return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, RA_FWD(a) ...); \
     }                                                                   \
-    template <class ... A> requires (ra_reducible<A ...>)               \
+    template <class ... A> requires (toreduce<A ...>)                   \
     constexpr decltype(auto)                                            \
     OP(A && ... a)                                                      \
     {                                                                   \
@@ -173,40 +173,40 @@ at(A && a, I && i)
 // --------------------------------
 
 // ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
-template <class T, class F> requires (ra_reducible<T, F>)
+template <class T, class F> requires (toreduce<T, F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
     return w ? FLAT(t) : FLAT(f);
 }
-template <class W, class T, class F> requires (ra_irreducible<W, T, F>)
+template <class W, class T, class F> requires (tomap<W, T, F>)
 constexpr auto
 where(W && w, T && t, F && f)
 {
     return pick(cast<bool>(RA_FWD(w)), RA_FWD(f), RA_FWD(t));
 }
 // catch all for non-ra types.
-template <class T, class F> requires (!(ra_irreducible<T, F>) && !(ra_reducible<T, F>))
+template <class T, class F> requires (!(tomap<T, F>) && !(toreduce<T, F>))
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
     return w ? t : f;
 }
 
-template <class A, class B> requires (ra_irreducible<A, B>)
+template <class A, class B> requires (tomap<A, B>)
 constexpr auto
 operator &&(A && a, B && b)
 {
     return where(RA_FWD(a), cast<bool>(RA_FWD(b)), false);
 }
-template <class A, class B> requires (ra_irreducible<A, B>)
+template <class A, class B> requires (tomap<A, B>)
 constexpr auto
 operator ||(A && a, B && b)
 {
     return where(RA_FWD(a), true, cast<bool>(RA_FWD(b)));
 }
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
-    template <class A, class B> requires (ra_reducible<A, B>)           \
+    template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
         return FLAT(a) OP FLAT(b);                                      \
