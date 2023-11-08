@@ -373,12 +373,11 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     using T = typename storage_traits<Store>::T;
     using View = ra::View<T, RANK>;
     using ViewConst = ra::View<T const, RANK>;
-    using View::size;
-    using View::rank;
+    using View::size, View::rank;
     using shape_arg = decltype(shape(std::declval<View>().iter()));
 
-    constexpr View & view() { return *this; }
     constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
+    constexpr View & view() { return *this; }
 
 // Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray, then remove constructors and assignment operators.
     Container(Container && w): store(std::move(w.store))

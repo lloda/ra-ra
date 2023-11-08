@@ -12,12 +12,16 @@
 #include <array>
 #include <cstdint>
 #include "tuples.hh"
+// format
+#include <iosfwd>
+#include <sstream>
+#include <version>
+#include <source_location>
 
 
 // ---------------------
 // Default #defines.
 // ---------------------
-// Since these are tested with #if, give defaults so accidental nodef isn't mistaken for 0.
 
 // benchmark shows it's bad by default; probably requires optimizing also +=, etc.
 #ifndef RA_DO_OPT_SMALLVECTOR
@@ -31,7 +35,11 @@
 
 namespace ra {
 
-constexpr int VERSION = 25;
+constexpr int VERSION = 26;
+
+// rank<0 is used as 'frame rank' in contrast to 'cell rank'. This limits the rank that ra:: can handle.
+constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
+constexpr int BAD = -1988888888; // undefined, eg dead axes
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
@@ -41,13 +49,9 @@ static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
 template <dim_t V> using dim_c = std::integral_constant<dim_t, V>;
 template <rank_t V> using rank_c = std::integral_constant<rank_t, V>;
 
-// rank<0 is used places as 'frame rank' in contrast to 'cell rank'. This limits the rank that ra:: can handle.
-constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
-constexpr int BAD = -1988888888; // undefined, eg dead axes
-
 
 // ---------------------
-// concepts (WIP) - not sure i want duck typing, tbr.
+// concepts. Not sure i want duck typing, tbr.
 // ---------------------
 
 template <class P, class S>
@@ -60,7 +64,7 @@ concept FlatConcept = requires (P p, S d)
 template <class A>
 concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
-// FIXME we still allow ply(&) in some places. Cf also test/types.cc.
+// FIXME still have ply(&) in places. Cf test/types.cc.
     { std::decay_t<A>::rank_s() } -> std::same_as<rank_t>;
     { a.rank() } -> std::same_as<rank_t>;
     { std::decay_t<A>::len_s(k) } -> std::same_as<dim_t>;
@@ -87,9 +91,8 @@ concept SliceConcept = requires (A a)
 enum none_t { none }; // in array constructors means ‘don't initialize’
 struct noarg { noarg() = delete; }; // in array constructors means ‘don't instantiate’
 
-template <class C> struct Scalar; // for type predicates
-
-template <int n=BAD> struct dots_t
+template <int n=BAD>
+struct dots_t
 {
     static_assert(n>=0 || BAD==n);
     consteval static rank_t rank_s() { return n; }
@@ -97,21 +100,16 @@ template <int n=BAD> struct dots_t
 template <int n=BAD> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
-template <int n> struct insert_t
+template <int n>
+struct insert_t
 {
     static_assert(n>=0);
     consteval static rank_t rank_s() { return n; }
 };
-
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
 // For views. TODO on foreign vectors? arbitrary exprs?
-template <int crank, class A> constexpr auto
-iter(A && a) { return RA_FWD(a).template iter<crank>(); }
-
-// Used in big.hh (selectors, etc).
-template <class A, class ... I> constexpr decltype(auto)
-from(A && a, I && ... i);
+template <int crank, class A> constexpr auto iter(A && a) { return RA_FWD(a).template iter<crank>(); }
 
 // Extended in ra.hh (reductions)
 constexpr bool any(bool const x) { return x; }
@@ -135,50 +133,26 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
-RA_IS_DEF(is_iterator_pos_rank, IteratorConcept<A> && 0!=A::rank_s())
+RA_IS_DEF(is_iterator_pos, IteratorConcept<A> && 0!=A::rank_s())
 RA_IS_DEF(is_slice, SliceConcept<A>)
-RA_IS_DEF(is_slice_pos_rank, SliceConcept<A> && 0!=A::rank_s())
+RA_IS_DEF(is_slice_pos, SliceConcept<A> && 0!=A::rank_s())
 
 template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
-template <class A> constexpr bool is_ra_pos_rank = is_iterator_pos_rank<A> || is_slice_pos_rank<A>;
-template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_ra_pos_rank<A>) || is_scalar<A>;
+template <class A> constexpr bool is_ra_pos = is_iterator_pos<A> || is_slice_pos<A>;
+template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_ra_pos<A>) || is_scalar<A>;
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 
 RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
 RA_IS_DEF(is_special, false) // these are rank-0 types that we don't want reduced.
 
-// all args rank 0 (so immediate application), but at least one ra:: (don't collide with the scalar version).
+// all args rank 0 (immediate application), but at least one ra:: (don't collide with the scalar version).
 template <class ... A> constexpr bool ra_reducible = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
-template <class ... A> constexpr bool ra_irreducible = ((is_ra_pos_rank<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
-
-} // namespace ra
+template <class ... A> constexpr bool ra_irreducible = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
 
 
 // --------------
-// formatting
+// format
 // --------------
-
-#include <iterator>
-#include <iosfwd>
-#include <sstream>
-#include <version>
-#include <source_location>
-
-namespace ra {
-
-constexpr char const * esc_bold = "\x1b[01m";
-constexpr char const * esc_unbold = "\x1b[0m";
-constexpr char const * esc_invert = "\x1b[07m";
-constexpr char const * esc_underline = "\x1b[04m";
-constexpr char const * esc_red = "\x1b[31m";
-constexpr char const * esc_green = "\x1b[32m";
-constexpr char const * esc_cyan = "\x1b[36m";
-constexpr char const * esc_yellow = "\x1b[33m";
-constexpr char const * esc_blue = "\x1b[34m";
-constexpr char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
-constexpr char const * esc_plain = "\x1b[39m";
-constexpr char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
-constexpr char const * esc_pink = "\x1b[38;5;225m";
 
 enum print_shape_t { defaultshape, withshape, noshape };
 
@@ -211,8 +185,8 @@ operator<<(std::ostream & o, print_shape_t shape)
     return shape_manip_t { o, shape };
 }
 
-// is_fov is included bc std::vector or std::array may be used as the type of shape().
-// Excluding std::string_view allows it to be is_fov and still print as a string [ra13].
+// include is_fov bc std::vector or std::array may be used as the type of shape().
+// exclude std::string_view to let it be is_fov and still print as a string [ra13].
 
 template <class A> requires (is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>))
 constexpr std::ostream &
@@ -245,11 +219,10 @@ operator<<(shape_manip_t const & sm, FormatArray<A> fa)
     return sm.o << fa;
 }
 
-inline std::ostream &
+/* constexpr */ inline std::ostream &
 operator<<(std::ostream & o, std::source_location const & loc)
 {
-    o << loc.file_name() << ":" << loc.line() << "," << loc.column();
-    return o;
+    return o << loc.file_name() << ":" << loc.line() << "," << loc.column();
 }
 
 template <class ... A>
@@ -263,8 +236,7 @@ format(A && ... a)
     }
 }
 
-constexpr std::string const &
-format(std::string const & s) { return s; }
+constexpr std::string const & format(std::string const & s) { return s; }
 
 } // namespace ra
 

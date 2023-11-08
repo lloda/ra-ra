@@ -81,7 +81,6 @@ template <class lens> using default_steps = typename default_steps_<lens>::type;
 // Slicing helpers
 // --------------------
 
-// FIXME condition should be zero rank, maybe convertibility, not is_integral
 template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
 struct beatable_t
@@ -99,7 +98,8 @@ template <int n> constexpr beatable_t beatable_def<dots_t<n>>
 template <int n> constexpr beatable_t beatable_def<insert_t<n>>
     = { .rt=true, .ct = true, .src=0, .dst=n, .add=n };
 
-template <class I> struct is_constant_iota
+template <class I>
+struct is_constant_iota
 {
     using Ilen = std::decay_t<decltype(with_len(ic<1>, std::declval<I>()))>; // arbitrary constant len
     constexpr static bool value = is_constant<typename Ilen::N> && is_constant<typename Ilen::S>;
@@ -121,8 +121,9 @@ maybe_len(V && v)
     }
 }
 
-template <int N, class KK=mp::iota<N>>
-struct unbeat;
+template <class A, class ... I> constexpr decltype(auto) from(A && a, I && ... i);
+
+template <int N, class KK=mp::iota<N>> struct unbeat;
 
 template <int N, int ... k>
 struct unbeat<N, mp::int_list<k ...>>
@@ -371,7 +372,6 @@ struct SmallBase
     consteval static decltype(auto) shape() { return theshape; }
 // TODO check steps
     static_assert(std::apply([](auto ... s) { return ((0<=s) && ...); }, theshape), "Bad shape.");
-
     constexpr static bool convertible_to_scalar = (1==size()); // allowed for 1 for coord types
 
     template <int k>
@@ -442,8 +442,7 @@ struct SmallBase
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
     at(I && i) CONST                                                    \
-    {                                                                   \
-        /* FIXME there's no way to say 'frame rank 0' so -size wouldn't work. */ \
+    { /* FIXME no way to say 'frame rank 0' so -size wouldn't work. */  \
         constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());    \
         static_assert(crank>=0); /* to make out the output type */      \
         return iter<crank>().at(RA_FWD(i));                             \
@@ -462,7 +461,7 @@ struct SmallBase
         return (*this)[size()-1];                                       \
     }                                                                   \
     constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; }
-    FOR_EACH(RA_CONST_OR_NOT, /*const*/, const)
+    FOR_EACH(RA_CONST_OR_NOT, /*not const*/, const)
 #undef RA_CONST_OR_NOT
 
 #define DEF_ASSIGNOPS(OP)                                               \
@@ -520,13 +519,12 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
     constexpr SmallView(T * cp_): cp(cp_) {}
     constexpr SmallView(SmallView const & s): cp(s.cp) {}
 
-    constexpr operator T & () { static_assert(Base::convertible_to_scalar); return cp[0]; }
     constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return cp[0]; }
-
+    constexpr operator T & () { static_assert(Base::convertible_to_scalar); return cp[0]; }
     using ViewConst = SmallView<T const, lens, steps>;
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
-    constexpr SmallView & view() { return *this; }
     constexpr SmallView const & view() const { return *this; }
+    constexpr SmallView & view() { return *this; }
 };
 
 #if defined (__clang__)
@@ -602,7 +600,8 @@ template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(
 
 // FIXME remove the need, also of (S, begin, end) in Container, once nested_tuple constructors work.
 template <class A, class I, class J>
-A ravel_from_iterators(I && begin, J && end)
+constexpr auto
+ravel_from_iterators(I && begin, J && end)
 {
     A a;
     std::copy(RA_FWD(begin), RA_FWD(end), a.begin());
@@ -611,7 +610,7 @@ A ravel_from_iterators(I && begin, J && end)
 
 
 // ---------------------
-// Builtin arrays. FIXME wish I could reinterpret_cast
+// Builtin arrays.
 // ---------------------
 
 template <class T>
@@ -638,8 +637,8 @@ start(T && t)
 
 
 // --------------------
-// Small view ops. Cf View ops in big.hh
-// TODO Merge with Reframe (eg beat(reframe(a)) -> transpose(a) ?)
+// Small view ops, see View ops in big.hh.
+// FIXME Merge with Reframe (eg beat(reframe(a)) -> transpose(a) ?)
 // --------------------
 
 template <class A, class i>
@@ -666,7 +665,6 @@ struct axes_list_indices
         using step = mp::fold<mp::sum, void, mp::map<stepsi, type>>;
         using len = mp::fold<mp::min, void, mp::map<lensi, type>>;
     };
-
     template <class dst_i> using dst_indices = typename dst_indices_<dst_i>::type;
     template <class dst_i> using dst_len = typename dst_indices_<dst_i>::len;
     template <class dst_i> using dst_step = typename dst_indices_<dst_i>::step;

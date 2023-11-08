@@ -167,11 +167,11 @@ int main()
         static_assert(!ra::is_scalar<decltype(ra::start(a))>, "bad is_scalar Scalar");
 // a regression.
         static_assert(ra::is_zero_or_scalar<ra::Scalar<int>>, "bad");
-        static_assert(!ra::is_ra_pos_rank<ra::Scalar<int>>, "bad");
+        static_assert(!ra::is_ra_pos<ra::Scalar<int>>, "bad");
         static_assert(!ra::is_zero_or_scalar<decltype(ra::iota<0>())>, "bad");
-        static_assert(ra::is_ra_pos_rank<decltype(ra::iota<0>())>, "bad");
-        static_assert(ra::is_ra_pos_rank<ra::Expr<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
-        static_assert(ra::is_ra_pos_rank<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
+        static_assert(ra::is_ra_pos<decltype(ra::iota<0>())>, "bad");
+        static_assert(ra::is_ra_pos<ra::Expr<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
+        static_assert(ra::is_ra_pos<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
     tr.section("builtin arrays");
     {

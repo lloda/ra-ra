@@ -77,7 +77,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr
     Match(P ... p_): t(p_ ...) // [ra1]
     {
-// TODO Maybe on ply, would avoid the checkp, make agree_xxx() unnecessary.
+// TODO Maybe on ply, would make checkp unnecessary, make agree_xxx() unnecessary.
         if constexpr (checkp && !(has_len<P> || ...)) {
             static_assert(check_s(), "Shape mismatch.");
             RA_CHECK(check());
@@ -159,9 +159,8 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 // reframe
 // ---------------------------
 
-// Reframe is a variant of transpose that works on any IteratorConcept.  As in transpose(), one names
-// the destination axis for each original axis.  However, unlike general transpose, axes may not be
-// repeated. The main application is the rank conjunction below.
+// Transpose variant for IteratorConcepts. As in transpose(), one names the destination axis for
+// each original axis. However, axes may not be repeated. Used in the rank conjunction below.
 
 template <class T> constexpr T zerostep = 0;
 template <class ... T> constexpr std::tuple<T ...> zerostep<std::tuple<T ...>> = { zerostep<T> ... };
@@ -253,17 +252,11 @@ RA_IS_DEF(is_verb, (std::is_same_v<A, Verb<typename A::cranks, typename A::Op>>)
 
 template <class cranks, class Op>
 constexpr auto
-wrank(cranks cranks_, Op && op)
-{
-    return Verb<cranks, Op> { RA_FWD(op) };
-}
+wrank(cranks cranks_, Op && op) { return Verb<cranks, Op> { RA_FWD(op) }; }
 
 template <rank_t ... crank, class Op>
 constexpr auto
-wrank(Op && op)
-{
-    return Verb<mp::int_list<crank ...>, Op> { RA_FWD(op) };
-}
+wrank(Op && op) { return Verb<mp::int_list<crank ...>, Op> { RA_FWD(op) }; }
 
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 struct Framematch_def;
@@ -278,7 +271,6 @@ struct max_i
 };
 
 // Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
-
 template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
@@ -351,7 +343,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     {
         if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Expr>())) { // for coord types; so ct only
             static_assert(rank_s()==ANY);
-            assert(0==rank());
+            assert(0==rank()); // FIXME bad abort for rt condition
         }
         return *flat();
     }
@@ -479,10 +471,10 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
 {
     static_assert(sizeof...(P)>1);
 
-    template <class T_>
+    template <class T>
     struct Flat
     {
-        T_ t;
+        T t;
         template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
         constexpr decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
     };
@@ -491,7 +483,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr static auto
     flat(P_ && ... p)
     {
-        return Flat<std::tuple<P_ ...>> { std::tuple<P_ ...> { RA_FWD(p) ... } };
+        return Flat<std::tuple<P_ ...>> { { RA_FWD(p) ... } };
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
@@ -517,7 +509,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     {
         if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Pick>())) { // for coord types; so ct only
             static_assert(rank_s()==ANY);
-            assert(0==rank());
+            assert(0==rank()); // FIXME bad abort for rt condition
         }
         return *flat();
     }

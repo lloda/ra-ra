@@ -17,10 +17,9 @@
 #endif
 #define RA_DO_OPT_SMALLVECTOR 1
 
-#include "ra/test.hh"
-#include "ra/bench.hh"
 #include <iostream>
 #include <iomanip>
+#include "ra/bench.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision;
 using ra::TestRecorder, ra::Small, ra::View, ra::Unique;

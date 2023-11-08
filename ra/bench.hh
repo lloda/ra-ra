@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Benchmarking library.
 
-// (c) Daniel Llorens - 2017
+// (c) Daniel Llorens - 2017-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -12,28 +12,14 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
-#include "ra.hh"
+#include "test.hh"
 
-/*
-  TODO
-  - measure empty loops
-  - better reporting
-  - allow benchmarked functions to return results
-*/
+// TODO measure empty loops
+// TODO better reporting
+// TODO allow benchmarked functions to return results
 
 struct Benchmark
 {
-    constexpr static char const * esc_bold = "\x1b[01m";
-    constexpr static char const * esc_unbold = "\x1b[0m";
-    constexpr static char const * esc_red = "\x1b[31m";
-    constexpr static char const * esc_green = "\x1b[32m";
-    constexpr static char const * esc_cyan = "\x1b[36m";
-    constexpr static char const * esc_yellow = "\x1b[33m";
-    constexpr static char const * esc_blue = "\x1b[34m";
-    constexpr static char const * esc_white = "\x1b[97m"; // an AIXTERM sequence
-    constexpr static char const * esc_plain = "\x1b[39m";
-    constexpr static char const * esc_reset = "\x1b[39m\x1b[0m"; // plain + unbold
-
     using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
                                      std::chrono::high_resolution_clock,
                                      std::chrono::steady_clock>;
@@ -43,7 +29,6 @@ struct Benchmark
     {
         return (full>empty) ? full-empty : full;
     }
-
     static double
     toseconds(clock::duration const & t)
     {
@@ -58,18 +43,19 @@ struct Benchmark
         ra::Big<clock::duration, 1> times;
     };
 
-    static double avg(Value const & bv)
+    static double
+    avg(Value const & bv)
     {
         return toseconds(sum(bv.times))/bv.repeats/bv.times.size();
     }
-    static double stddev(Value const & bv)
+    static double
+    stddev(Value const & bv)
     {
         double m = avg(bv);
         return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.repeats-m))/bv.times.size());
     }
-
-    template <class B>
-    void report(std::ostream & o, B const & b, double frac)
+    template <class B> void
+    report(std::ostream & o, B const & b, double frac)
     {
         o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return avg(bv); }, b)/frac << std::endl;
         o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return stddev(bv); }, b)/frac << std::endl;
@@ -81,13 +67,14 @@ struct Benchmark
     std::string const name_ = "";
     std::string info_str = "";
 
-    template <class ... A> Benchmark & info(A && ... a)
+    template <class ... A> Benchmark &
+    info(A && ... a)
     {
         bool empty = (info_str=="");
-        info_str += esc_plain;
+        info_str += ra::esc::plain;
         info_str += (empty ? "" : "; ");
         info_str += ra::format(a ...);
-        info_str += esc_plain;
+        info_str += ra::esc::plain;
         return *this;
     }
 
@@ -112,7 +99,6 @@ struct Benchmark
         }
         return Value { name_, repeats_, empty, std::move(times) };
     }
-
     template <class G, class ... A> auto
     once_f(G && g, A && ... a)
     {
@@ -143,7 +129,6 @@ struct Benchmark
     {
         return ra::concrete(ra::from([this, &f](auto && ... b) { return this->once(f, b ...); }, a ...));
     }
-
     template <class F, class ... A> auto
     run_f(F && f, A && ... a)
     {

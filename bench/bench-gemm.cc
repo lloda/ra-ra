@@ -13,7 +13,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include "ra/test.hh"
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;

@@ -29,7 +29,7 @@ int main()
         tr.test(ra::IteratorConcept<ra::Len>);
         tr.test(!ra::is_scalar<ra::Len>);
         tr.test(ra::is_zero_or_scalar<ra::Len>);
-        tr.test(!ra::is_ra_pos_rank<ra::Len>);
+        tr.test(!ra::is_ra_pos<ra::Len>);
         tr.test(ra::is_special<ra::Len>);
         tr.test(ra::ra_irreducible<ra::Len>);
         tr.test(!ra::ra_reducible<ra::Len>);
