@@ -22,19 +22,18 @@ checkbox [C-ct] flip TODO
     - [X] size_s, rank_s in Ryn:: are broken [ra7]
     - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
     - [ ] ambiguity / bad init in nested constructors [ra45]
-    - [ ] ra::at(A, I) needs nested I, so the obvious ra::at(A, [i j]) doesn't
-      work (although view.at([i j]) does). But I would get rid of view.at(i) if
-      ra::at(view, i) worked the same way.
-    - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is
-      rank 1, then `A(i)` will return a nested expression instead of preserving
-      `A`'s rank.
+    - [ ] ra::at(A, I) needs nested I, so the obvious ra::at(A, [i j]) doesn't work (although
+      view.at([i j]) does). But I would get rid of view.at(i) if ra::at(view, i) worked the same
+      way.
+    - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)`
+      will return a nested expression instead of preserving `A`'s rank [ra33]
     - [ ] beatable subscripts are not beaten if mixed with non-beatable subscripts. E.g. in
-      A(vector, iota, vector) the iota isn't beaten. (This is related to 'subscripting
-      inconsistencies' above).
+      A(vector, iota, vector) the iota isn't beaten. [ra33].
     - [ ] be namespace clean except for possibly complex.hh.
+    - [ ] bad uses of assert [ra17]
+  - [-] Features [1/10]
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
-  - [-] Features [1/10]
     - [ ] Can choose iteration order in plyers. Order is already explicit, just need to expose it.
     - [ ] Merge Ptr and Iota. Why need more than one rank 1 IteratorConcept adaptor.
     - [-] Deduction guides, e.g. ra::Small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
@@ -43,27 +42,25 @@ checkbox [C-ct] flip TODO
       - [ ] Small
       - [ ] Big
     - [ ] Support ra::len in x in o.len(x).
-    - [ ] Should be able to reshape iota (??). One idea is to generalize View
-      (so View<Iota>, etc.) which is something that newra does. But as long as
-      Container is parent of View, conversion of (Container const &) into (View
-      const &) forces us to have const/nonconst overloads in View (instead of
-      just relying on the constness of (View::p). This is just a mess when
-      View::p isn't a pointer.
+    - [ ] Should be able to reshape iota (??). One idea is to generalize View (so View<Iota>, etc.)
+      which is something that newra does. But as long as Container is parent of View, conversion of
+      (Container const &) into (View const &) forces us to have const/nonconst overloads in View
+      (instead of just relying on the constness of (View::p). This is just a mess when View::p isn't
+      a pointer.
       - [ ] Fix relationship between Container and View [0/5]
         - [ ] forward const/nonconst overloads to View or ViewConst from here.
         - [ ] remove inheritance relationship of Container on View
         - [ ] add const/nonconst casts of Container to View or ViewConst
         - [ ] remove const overloads from View::operator()
         - [ ] make View be View<pointer> and not View<value_type>
-    - [ ] Should be able to turn ravel iterators (e.g. View::begin()) into array
-      iterators. Ptr() doesn't work for that. Or to obtain STLIterator from any
-      array iterator. That may come of merging STLIterator with plyers.
+    - [ ] Should be able to turn ravel iterators (e.g. View::begin()) into array iterators. Ptr()
+      doesn't work for that. Or to obtain STLIterator from any array iterator. That may come of
+      merging STLIterator with plyers.
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
-    - [ ] port some of the View ops to generic Iterator. reverse,
-          transpose, etc. seem easy enough. Only it kind of bothers me that they
-          need their own Expr-like types while on Views it's just a one time
-          op. Propagating ops down Expr into leaf Views (a kind of beating) would be
-          better.
+    - [ ] port some of the View ops to generic Iterator. reverse, transpose, etc. seem easy
+      enough. Only it kind of bothers me that they need their own Expr-like types while on Views
+      it's just a one time op. Propagating ops down Expr into leaf Views (a kind of beating) would
+      be better.
     - [X] Support operator <=> <2020-09-15 Tue 13:50>
       - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
     - [-] Magic subscript len
@@ -76,8 +73,10 @@ checkbox [C-ct] flip TODO
   - [ ] Performance [0/3]
     - [ ] bench/bench-stencil* is weird.
     - [ ] Bigd cases in bench-at.
-    - [ ] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ? see also FLAT().
-    - [ ] during traversal (ply) the pattern loc = save_location(it); move flat;
+    - [ ] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
+      in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ? See also
+      FLAT().
+    - [ ] During traversal (ply) the pattern loc = save_location(it); move flat;
       it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
       so this would be cheap. The current design is that move flat can't modify it so it has to be a
       new object. CellBig is one case where that is costly, because dimv has to be copied along with
@@ -103,38 +102,52 @@ checkbox [C-ct] flip TODO
     - [ ] Complete section on other languages, libraries
     - [ ] Describe xreferenced issues in doc ([raxx], etc.)
   - [ ] Other [0/3]
-    - [ ] Reconsider len/len_s etc.
-      Same as there are static/nonstatic versions of keep_step, we could remove len_s/rank_s use staticness of len/rank instead of ANY/ANY. A problem with this is that len_s lets me return ANY for some axes and finite for others and to do that with just len() would require len(integral constant) overloads possibly -- len(int k) cannot be static or not depending on k.
+    - [ ] Reconsider len/len_s etc: Same as there are static/nonstatic versions of keep_step, we
+      could remove len_s/rank_s use staticness of len/rank instead of ANY/ANY. A problem with this
+      is that len_s lets me return ANY for some axes and finite for others and to do that with just
+      len() would require len(integral constant) overloads possibly -- len(int k) cannot be static
+      or not depending on k.
     - [ ] Review Container constructors. Why do we need (&) when we have (const &)?
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).
       - [ ] Appropriate ply. Possibly restrict it to rank 1.
 
-Will stop reusing issue numbers so I can keep the record. Some of these aren't bugs in the sense that I expect to solve them, but more like footnotes.
+Some of these aren't bugs in the sense that I expect to solve them, but more like footnotes.
 
 * Numbered issues throughout the source [ra...]
   1. [ ]
   2. [ ]
   3. [ ]
-  4. [ ] test/optimize.cc
-     Expression objects only keep pointers to data objects. This means that it is unsafe to define expression objects unless none of the data objects are temporaries. E.g. `auto e = temp + temp;` is unsafe. Either `obj a; obj b; auto e = a + b;` or `obj o = temp + temp;` is safe. Generally there's no reason to ever define expression objects explicitly.
+  4. [ ] test/optimize.cc: Expression objects only keep pointers to data objects. This means that it
+     is unsafe to define expression objects unless none of the data objects are
+     temporaries. E.g. `auto e = temp + temp;` is unsafe. Either `obj a; obj b; auto e = a + b;` or
+     `obj o = temp + temp;` is safe. Generally there's no reason to ever define expression objects
+     explicitly.
   5. [ ]
   6. [ ]
   7. [ ]
-  8. [ ] test/operators.cc
-     Some simple expressions with scalars fail in *FLAT(). The patch in ra.hh triggers the address sanitizer in test/ra-9.cc.
-  9. [ ] test/ra-6.cc
-     ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so ra::ptr(temp) must only be used as temp. Really forbidding auto ll = ra::ptr(lvalue) would also be ok.
-  10. [ ] test/ra-0.cc
-     size(SmallArray) requires ra:: to avoid collision with std::size, but not size(Big) (??).
+  8. [ ] test/operators.cc: Some simple expressions with scalars fail in *FLAT(). The patch in ra.hh
+     triggers the address sanitizer in test/ra-9.cc.
+  9. [ ] test/ra-6.cc: ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so
+     ra::ptr(temp) must only be used as temp. Really forbidding auto ll = ra::ptr(lvalue) would also
+     be ok.
+  10. [ ] test/ra-0.cc: size(SmallArray) requires ra:: to avoid collision with std::size, but not
+      size(Big) (??).
   11. [ ]
   12. [ ]
-  13. [ ] ra/ply.hh (i/o), ra/atom.hh, ra/bootstrap.hh, test/compatibility.cc.
-      std::string used to be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want format(std::string_view) to print it as a foreign vector, so we have an exception for it there. As things stand, you can register it as scalar or not.
-  14. [ ] CellBig needs to copy its Dimv in some cases, which also complicates View::iter<>. Problem is demonstrated in ra-5.cc.
+  13. [ ] ra/ply.hh (i/o), ra/atom.hh, ra/bootstrap.hh, test/compatibility.cc: std::string used to
+      be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want
+      format(std::string_view) to print it as a foreign vector, so we have an exception for it
+      there. As things stand, you can register it as scalar or not.
+  14. [ ] CellBig needs to copy its Dimv in some cases, which also complicates View::iter<>. Problem
+      is demonstrated in ra-5.cc.
   15. [ ] Conversion-to-scalar operators for dynamic-rank View().
-  16. [ ] Ambiguity in ravel vs nested constructors bc bc 1 converts to int2. Should be explicit (and ravel constructors also).
-  17. [ ]
+  16. [ ] Ambiguity in ravel vs nested constructors bc bc 1 converts to int2. Should be explicit
+      (and ravel constructors also).
+  17. [ ] assert() is used in some cases for runtime conditions that aren't ra::'s fault. This is
+      bad because if RA_ASSERT is defined to throw, the caller probably expects to be able to handle
+      the error. On the other hand if RA_DO_CHECK is 0, we shouldn't continue. But ofc we do in
+      index checks etc. So is this different?
   18. [ ]
   19. [ ]
   20. [ ]
@@ -150,21 +163,25 @@ Will stop reusing issue numbers so I can keep the record. Some of these aren't b
   30. [ ]
   31. [ ]
   32. [ ]
-  33. [ ] test/frame-old.cc, test/fromb.cc.
-      When mixing beaten & unbeaten subscripts and the unbeaten subscripts go first, the result is a nested expression. This has to be fixed in the view operator()s.
+  33. [ ] test/frame-old.cc, test/fromb.cc: When mixing beaten & unbeaten subscripts and the
+      unbeaten subscripts go first, the result is a nested expression. This has to be fixed in the
+      view operator()s.
   34. [ ]
   35. [ ]
   36. [ ]
   37. [ ]
   38. [ ]
-  39. [ ] test/ra-7.cc
-      There's no reason to restart, since the Iterator methods are all static. So start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const overload is required for ScalarFlat::operator*.
+  39. [ ] test/ra-7.cc: There's no reason to restart, since the Iterator methods are all static. So
+      start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const
+      overload is required for ScalarFlat::operator*.
   40. [ ]
   41. [ ]
-  42. [ ] Ways to test that compile time assertions or constraints are triggered appropriately, esp. for things like ct array lookup.  Some are doable with concepts, see e.g. ra-14.cc or big-0.cc.
+  42. [ ] Ways to test that compile time assertions or constraints are triggered appropriately,
+      esp. for things like ct array lookup.  Some are doable with concepts, see e.g. ra-14.cc or
+      big-0.cc.
   43. [ ]
   44. [ ]
   45. [ ]
   46. [ ]
-  47. [ ] ra/big.hh, test/const.cc, ra/view-ops.hh ...
-      Review constness in ra/view-ops.hh after the Big/View const fixes after 913d6b531801609cb61bb7f631ddf50de701a802.
+  47. [ ] ra/big.hh, test/const.cc, ra/view-ops.hh ...: Review constness in ra/view-ops.hh after the
+      Big/View const fixes after 913d6b531801609cb61bb7f631ddf50de701a802.

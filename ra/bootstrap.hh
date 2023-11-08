@@ -12,8 +12,7 @@
 #include <array>
 #include <cstdint>
 #include "tuples.hh"
-// format
-#include <iosfwd>
+#include <iosfwd> // for format, ss.
 #include <sstream>
 #include <version>
 #include <source_location>

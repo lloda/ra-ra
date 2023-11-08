@@ -10,6 +10,7 @@
 #pragma once
 #include "small.hh"
 #include <memory>
+#include <complex> // for View ops
 
 namespace ra {
 
@@ -615,7 +616,7 @@ shared_borrowing(View<T, RANK> & raw)
 
 
 // --------------------
-// Obtain concrete type from array expression.
+// Concrete (container) type from array expression.
 // --------------------
 
 template <class E>
@@ -633,7 +634,7 @@ struct concrete_type_def<E>
 {
     using type = decltype(std::apply([](auto ... i) { return Small<value_t<E>, E::len_s(i) ...> {}; }, mp::iota<rank_s<E>()> {}));
 };
-// Scalars are their own concrete_type. Treat unregistered types as scalars. FIXME (in bootstrap.hh).
+// Scalars are their own concrete_type. Treat unregistered types as scalars.
 template <class E>
 using concrete_type = std::decay_t<
     std::conditional_t<(0==rank_s<E>() && !(requires { std::decay_t<E>::rank_s(); })) || is_scalar<E>,
@@ -656,7 +657,7 @@ template <class E>
 constexpr auto
 with_same_shape(E && e)
 {
-    if constexpr (size_s<concrete_type<E>>()!=ANY) {
+    if constexpr (ANY!=size_s<concrete_type<E>>()) {
         return concrete_type<E>();
     } else {
         return concrete_type<E>(ra::shape(e), ra::none);
@@ -670,7 +671,7 @@ with_same_shape(E && e, X && x)
 // FIXME gcc 11.3 on GH workflows (?)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wmaybe-uninitialized"
-    if constexpr (size_s<concrete_type<E>>()!=ANY) {
+    if constexpr (ANY!=size_s<concrete_type<E>>()) {
         return concrete_type<E>(RA_FWD(x));
     } else {
         return concrete_type<E>(ra::shape(e), RA_FWD(x));
@@ -682,7 +683,7 @@ template <class E, class S, class X>
 constexpr auto
 with_shape(S && s, X && x)
 {
-    if constexpr (size_s<concrete_type<E>>()!=ANY) {
+    if constexpr (ANY!=size_s<concrete_type<E>>()) {
         return concrete_type<E>(RA_FWD(x));
     } else {
         return concrete_type<E>(RA_FWD(s), RA_FWD(x));
@@ -693,18 +694,12 @@ template <class E, class S, class X>
 constexpr auto
 with_shape(std::initializer_list<S> && s, X && x)
 {
-    if constexpr (size_s<concrete_type<E>>()!=ANY) {
+    if constexpr (ANY!=size_s<concrete_type<E>>()) {
         return concrete_type<E>(RA_FWD(x));
     } else {
         return concrete_type<E>(s, RA_FWD(x));
     }
 }
-
-} // namespace ra
-
-#include <complex> // for View ops
-
-namespace ra {
 
 
 // --------------------
@@ -829,7 +824,7 @@ reshape_(View<T, RANK> const & a, S && sb_)
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
-            assert(is_c_order(a, false) && "reshape w/copy not implemented"); // FIXME bad abort for rt condition
+            assert(is_c_order(a, false) && "reshape w/copy not implemented"); // FIXME bad abort [ra17]
             if (la>=lb) {
 // FIXME View(SS const & s, T * p). Cf [ra37].
                 filldim(b.dimv, sb);
@@ -838,7 +833,7 @@ reshape_(View<T, RANK> const & a, S && sb_)
                 }
                 return b;
             } else {
-                assert(0 && "reshape case not implemented"); // FIXME bad abort for rt condition
+                assert(0 && "reshape case not implemented"); // FIXME bad abort [ra17]
             }
         } else {
 // select
@@ -861,8 +856,7 @@ reshape(View<T, RANK> const & a, S && sb_)
     return reshape_(a, RA_FWD(sb_));
 }
 
-// We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t.
-// initializer_list could handle the general case, but the result would have var rank and would override this one (?).
+// We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t. initializer_list could handle the general case, but the result would have var rank and would override this one (?).
 template <class T, rank_t RANK, class dimtype, int N>
 inline auto
 reshape(View<T, RANK> const & a, dimtype const (&sb_)[N])
@@ -870,8 +864,7 @@ reshape(View<T, RANK> const & a, dimtype const (&sb_)[N])
     return reshape_(a, sb_);
 }
 
-// lo = lower bounds, hi = upper bounds.
-// The stencil indices are in [0 lo+1+hi] = [-lo +hi].
+// lo: lower bounds, hi: upper bounds. The stencil indices are in [0 lo+1+hi] = [-lo +hi].
 template <class LO, class HI, class T, rank_t N>
 inline View<T, rank_sum(N, N)>
 stencil(View<T, N> const & a, LO && lo, HI && hi)
@@ -879,8 +872,7 @@ stencil(View<T, N> const & a, LO && lo, HI && hi)
     View<T, rank_sum(N, N)> s;
     s.cp = a.data();
     ra::resize(s.dimv, 2*a.rank());
-    RA_CHECK(every(lo>=0));
-    RA_CHECK(every(hi>=0));
+    RA_CHECK(every(lo>=0) && every(hi>=0), "Bad stencil bounds lo ", noshape, lo, " hi ", noshape, hi, ".");
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
              {
                  RA_CHECK(dima.len>=lo+hi, "Stencil is too large for array.");
@@ -928,7 +920,7 @@ explode(View<T, RANK> const & a)
 template <class T> inline int gstep(int i) { if constexpr (is_scalar<T>) return 1; else return T::step(i); }
 template <class T> inline int glen(int i) { if constexpr (is_scalar<T>) return 1; else return T::len(i); }
 
-// TODO This routine is not totally safe; the ranks below SUBR must be compact, which is not checked.
+// TODO The ranks below SUBR must be compact, which is not checked.
 template <class sub_t, class super_t, rank_t RANK>
 inline auto
 collapse(View<super_t, RANK> const & a)

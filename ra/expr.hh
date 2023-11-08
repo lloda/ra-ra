@@ -343,7 +343,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     {
         if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Expr>())) { // for coord types; so ct only
             static_assert(rank_s()==ANY);
-            assert(0==rank()); // FIXME bad abort for rt condition
+            assert(0==rank()); // FIXME bad abort [ra17]
         }
         return *flat();
     }
@@ -509,7 +509,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     {
         if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Pick>())) { // for coord types; so ct only
             static_assert(rank_s()==ANY);
-            assert(0==rank()); // FIXME bad abort for rt condition
+            assert(0==rank()); // FIXME bad abort [ra17]
         }
         return *flat();
     }
