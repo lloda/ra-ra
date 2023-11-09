@@ -26,11 +26,12 @@ constexpr dim_t
 choose_len(dim_t sa, dim_t sb) { return BAD==sa ? sb : BAD==sb ? sa : ANY==sa ? sb : sa; }
 
 template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
-
 template <bool checkp, IteratorConcept ... P, int ... I>
 struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 {
     std::tuple<P ...> t;
+// rank of largest subexpr
+    constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(r, ra::rank_s<P>())), ...); }();
 
 // 0: fail, 1: rt, 2: pass
     consteval static int
@@ -38,11 +39,11 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     {
         if constexpr (sizeof...(P)<2) {
             return 2;
-        } else if constexpr (ANY==rank_s()) {
-            return 1; // FIXME could be tightened to 2 in some cases
+        } else if constexpr (ANY==rs) {
+            return 1; // FIXME can be tightened to 2 if all args are rank 0 save one
         } else {
             bool tbc = false;
-            for (int k=0; k<rank_s(); ++k) {
+            for (int k=0; k<rs; ++k) {
                 dim_t ls = len_s(k);
                 if (((k<ra::rank_s<P>() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
                     return 0;
@@ -84,20 +85,13 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         }
     }
 
-// rank of largest subexpr, so we look at all of them.
     consteval static rank_t
-    rank_s()
+    rank() requires (ANY!=rs)
     {
-        rank_t r = BAD;
-        return ((r=choose_rank(r, ra::rank_s<P>())), ...);
-    }
-    consteval static rank_t
-    rank() requires (ANY != Match::rank_s())
-    {
-        return rank_s();
+        return rs;
     }
     constexpr rank_t
-    rank() const requires (ANY == Match::rank_s())
+    rank() const requires (ANY==rs)
     {
         rank_t r = BAD;
         ((r = choose_rank(r, ra::rank(std::get<I>(t)))), ...);
@@ -177,8 +171,7 @@ struct Reframe
     A a;
 
     constexpr static int orig(int k) { return mp::int_list_index<Dest>(k); }
-    consteval static rank_t rank_s() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
-    consteval static rank_t rank() { return rank_s(); }
+    consteval static rank_t rank() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
     constexpr static dim_t len_s(int k)
     {
         int l = orig(k);
@@ -299,7 +292,6 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // ---------------------------
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
-
 template <class Op, IteratorConcept ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
@@ -320,7 +312,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
-    using Match_::t, Match_::rank_s, Match_::rank;
+    using Match_::t, Match_::rs, Match_::rank;
     Op op;
 
     constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
@@ -337,12 +329,12 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     {
         return flat(op, std::get<I>(t).flat() ...);
     }
-// needed for rank_s()==ANY, which don't decay to scalar when used as operator arguments.
+// needed for rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
     operator decltype(*(flat(op, std::get<I>(t).flat() ...))) ()
     {
-        if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Expr>())) { // for coord types; so ct only
-            static_assert(rank_s()==ANY);
+        if constexpr (0!=rs && (1!=rs || 1!=size_s<Expr>())) { // for coord types; so ct only
+            static_assert(rs==ANY);
             assert(0==rank()); // FIXME bad abort [ra17]
         }
         return *flat();
@@ -465,7 +457,6 @@ pick_star(std::size_t p0, T && t)
 }
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
-
 template <IteratorConcept ... P, int ... I>
 struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
@@ -487,7 +478,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     }
 
     using Match_ = Match<true, std::tuple<P ...>>;
-    using Match_::t, Match_::rank_s, Match_::rank;
+    using Match_::t, Match_::rs, Match_::rank;
 
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)
@@ -503,12 +494,12 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     {
         return pick_at<0>(std::get<0>(t).at(j), t, j);
     }
-// needed for xpr with rank_s()==ANY, which don't decay to scalar when used as operator arguments.
+// needed for xpr with rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
     operator decltype(*(flat(std::get<I>(t).flat() ...))) ()
     {
-        if constexpr (0!=rank_s() && (1!=rank_s() || 1!=size_s<Pick>())) { // for coord types; so ct only
-            static_assert(rank_s()==ANY);
+        if constexpr (0!=rs && (1!=rs || 1!=size_s<Pick>())) { // for coord types; so ct only
+            static_assert(rs==ANY);
             assert(0==rank()); // FIXME bad abort [ra17]
         }
         return *flat();

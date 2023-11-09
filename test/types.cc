@@ -30,7 +30,7 @@ test_predicates(char const * type, TestRecorder & tr,
 {
     cout << std::string(90-size(std::string(type)), ' ') << type << " : "
          << (ra::is_ra<A> ? "ra " : "")
-         << (ra::is_slice<A> ? "slice " : "")
+         << (ra::SliceConcept<A> ? "slice " : "")
          << (ra::IteratorConcept<A> ? "iterator " : "")
          << (ra::is_scalar<A> ? "scalar " : "")
          << (ra::is_fov<A> ? "fov " : "")
@@ -39,7 +39,7 @@ test_predicates(char const * type, TestRecorder & tr,
          << (std::is_const_v<A> ? "const " : "")
          << (std::is_lvalue_reference_v<A> ? "ref " : "") << endl;
     tr.quiet().info(type).info("ra").test_eq(ra, ra::is_ra<A>);
-    tr.quiet().info(type).info("slice").test_eq(slice, ra::is_slice<A>);
+    tr.quiet().info(type).info("slice").test_eq(slice, ra::SliceConcept<A>);
     tr.quiet().info(type).info("Iterator").test_eq(iterator, ra::IteratorConcept<A>);
     tr.quiet().info(type).info("scalar").test_eq(scalar, ra::is_scalar<A>);
     tr.quiet().info(type).info("fov").test_eq(fov, ra::is_fov<A>);
@@ -61,7 +61,7 @@ int main()
         static_assert(std::is_same_v<ra::value_t<decltype(a)>, T>);
     }
     {
-// SmallBase is not excluded in is_slice.
+// SmallBase is not excluded in SliceConcept.
         TESTPRED(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, int_list<3>, int_list<1>>>()),
                  true, true, false, false, false);
         TESTPRED(int,
@@ -134,9 +134,9 @@ int main()
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {
-        static_assert(ra::is_slice<ra::View<int, 0>>);
-        static_assert(ra::is_slice<ra::View<int, 2>>);
-        static_assert(ra::is_slice<ra::SmallView<int, int_list<>, int_list<>>>);
+        static_assert(ra::SliceConcept<ra::View<int, 0>>);
+        static_assert(ra::SliceConcept<ra::View<int, 2>>);
+        static_assert(ra::SliceConcept<ra::SmallView<int, int_list<>, int_list<>>>);
 
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
         static_assert(ra::is_ra<ra::SmallView<int, nil, nil>>, "bad is_ra SmallView");
@@ -198,12 +198,12 @@ int main()
     {
         tr.test_eq(2, size_s(ra::start(std::array<int, 2> { 1, 2 })));
         tr.test_eq(2, ra::size_s(std::array<int, 2> { 1, 2 }));
-        tr.test_eq(ra::ANY, size_s(ra::start(std::vector<int> { 1, 2, 3})));
-        tr.test_eq(ra::ANY, ra::size_s(std::vector<int> { 1, 2, 3}));
+        tr.test_eq(ra::ANY, ra::size_s<decltype(ra::start(std::vector<int> { 1, 2, 3}))>());
+        tr.test_eq(ra::ANY, ra::size_s<decltype(std::vector<int> { 1, 2, 3})>());
         tr.test_eq(2, ra::start(std::array<int, 2> { 1, 2 }).len_s(0));
         tr.test_eq(ra::ANY, ra::start(std::vector<int> { 1, 2, 3 }).len_s(0));
-        tr.test_eq(1, ra::start(std::array<int, 2> { 1, 2 }).rank_s());
-        tr.test_eq(1, ra::start(std::vector<int> { 1, 2, 3 }).rank_s());
+        tr.test_eq(1, ra::rank_s<decltype(ra::start(std::array<int, 2> { 1, 2 }))>());
+        tr.test_eq(1, ra::rank_s<decltype(ra::start(std::vector<int> { 1, 2, 3 }))>());
         tr.test_eq(1, ra::start(std::array<int, 2> { 1, 2 }).rank());
         tr.test_eq(1, ra::start(std::vector<int> { 1, 2, 3 }).rank());
     }

@@ -23,7 +23,7 @@ int main()
     {
 // driver is highest rank, which is ra::_0 (1).
         constexpr auto e = ra::_0+1;
-        static_assert(e.rank_s()==1, "bad rank_s");
+        static_assert(ra::rank_s<decltype(e)>()==1, "bad rank_s");
         static_assert(e.rank()==1, "bad rank");
         static_assert(e.len_s(0)==ra::BAD, "bad len");
     }

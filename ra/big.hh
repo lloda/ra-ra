@@ -40,9 +40,8 @@ struct CellBig
     Dimv dimv;
     [[no_unique_address]] Spec const dspec = {};
 
-    consteval static rank_t rank_s() { return framer; }
-    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(std::ssize(dimv), dspec); }
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(std::ssize(dimv), dspec); }
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
     constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
@@ -145,7 +144,6 @@ struct View
     Dimv dimv;
     T * cp;
 
-    consteval static rank_t rank_s() { return RANK; };
     consteval static rank_t rank() requires (RANK!=ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==ANY) { return rank_t(dimv.size()); }
     constexpr static dim_t len_s(int k) { return ANY; }
@@ -576,12 +574,12 @@ void
 swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
 {
     if constexpr (ANY==RANKA) {
-        RA_CHECK(a.rank()==b.rank());
+        RA_CHECK(rank(a)==rank(b));
         decltype(b.dimv) c = a.dimv;
         start(a.dimv) = b.dimv;
         std::swap(b.dimv, c);
     } else if constexpr (ANY==RANKB) {
-        RA_CHECK(a.rank()==b.rank());
+        RA_CHECK(rank(a)==rank(b));
         decltype(a.dimv) c = b.dimv;
         start(b.dimv) = a.dimv;
         std::swap(a.dimv, c);
@@ -637,10 +635,9 @@ struct concrete_type_def<E>
 // Scalars are their own concrete_type. Treat unregistered types as scalars.
 template <class E>
 using concrete_type = std::decay_t<
-    std::conditional_t<(0==rank_s<E>() && !(requires { std::decay_t<E>::rank_s(); })) || is_scalar<E>,
+    std::conditional_t<(0==rank_s<E>() && !is_ra<E>) || is_scalar<E>,
                        std::decay_t<E>,
-                       typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>
-    >;
+                       typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>>;
 
 template <class E>
 constexpr auto

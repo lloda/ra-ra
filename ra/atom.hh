@@ -46,24 +46,24 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
 // Default storage for Big - see https://stackoverflow.com/a/21028912.
 // Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
-template <typename T, typename A=std::allocator<T>>
+template <class T, class A=std::allocator<T>>
 struct default_init_allocator: public A
 {
     using a_t = std::allocator_traits<A>;
     using A::A;
 
-    template <typename U>
+    template <class U>
     struct rebind
     {
         using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
     };
 
-    template <typename U>
+    template <class U>
     void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
     {
         ::new(static_cast<void *>(ptr)) U;
     }
-    template <typename U, typename... Args>
+    template <class U, class... Args>
     void construct(U * ptr, Args &&... args)
     {
         a_t::construct(static_cast<A &>(*this), ptr, RA_FWD(args)...);
@@ -76,37 +76,6 @@ template <class T> using vector_default_init = std::vector<T, default_init_alloc
 // --------------------
 // introspection I
 // --------------------
-
-template <class VV> requires (!std::is_void_v<VV>)
-consteval rank_t
-rank_s()
-{
-    using V = std::remove_cvref_t<VV>;
-    if constexpr (is_builtin_array<V>) {
-        return std::rank_v<V>;
-    } else if constexpr (is_fov<V>) {
-        return 1;
-    } else if constexpr (requires { V::rank_s(); }) {
-        return V::rank_s();
-    } else {
-        return 0;
-    }
-}
-
-template <class V> constexpr rank_t rank_s(V const &) { return rank_s<V>(); }
-
-template <class V>
-constexpr rank_t
-rank(V const & v)
-{
-    if constexpr (ANY!=rank_s<V>()) {
-        return rank_s<V>();
-    } else if constexpr (requires { v.rank(); })  {
-        return v.rank();
-    } else {
-        static_assert(always_false<V>, "No rank() for this type.");
-    }
-}
 
 template <class VV> requires (!std::is_void_v<VV>)
 consteval dim_t
@@ -133,7 +102,7 @@ size_s()
     }
 }
 
-template <class V> constexpr dim_t size_s(V const &) { return size_s<V>(); }
+template <class V> consteval dim_t size_s(V const &) { return size_s<V>(); } // waiting for c++23 p2280r4
 
 template <class V>
 constexpr dim_t
@@ -201,14 +170,14 @@ resize(A & a, dim_t s)
 // terminal types
 // --------------------
 
-// IteratorConcept for rank 0 object. This can be used on foreign objects, or as an alternative to the rank conjunction.
-// We still want f(C) to be a specialization in most cases (ie avoid ply(f, C) when C is rank 0).
+// Rank-0 IteratorConcept. Can be used on foreign objects, or as alternative to the rank conjunction.
+// We still want f(scalar(C)) to be f(C) and not map(f, C), this is controlled by tomap/toreduce.
 template <class C>
 struct Scalar
 {
     C c;
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    consteval static rank_t rank_s() { return 0; }
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
@@ -221,8 +190,6 @@ struct Scalar
     constexpr void operator+=(dim_t d) const {}
     constexpr C & operator*() { return c; }
     constexpr C const & operator*() const { return c; } // [ra39]
-
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 template <class C> constexpr auto
@@ -249,7 +216,10 @@ struct Ptr
     I i;
     [[no_unique_address]] N const n = {};
 
-    consteval static rank_t rank_s() { return 1; };
+    constexpr Ptr(I i, N n): i(i), n(n) {}
+    RA_DEF_ASSIGNOPS_SELF(Ptr)
+    RA_DEF_ASSIGNOPS_DEFAULT_SET
+
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
     constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }
@@ -263,10 +233,6 @@ struct Ptr
         RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i[j[0]];
     }
-
-    constexpr Ptr(I i, N n): i(i), n(n) {}
-    RA_DEF_ASSIGNOPS_SELF(Ptr)
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
 };
 
 template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
@@ -324,7 +290,6 @@ struct Iota
         constexpr auto operator*() const { return i; }
     };
 
-    consteval static rank_t rank_s() { return w+1; };
     consteval static rank_t rank() { return w+1; }
     constexpr static dim_t len_s(int k) { return k==w ? nn : BAD; } // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
@@ -379,7 +344,6 @@ inside(I const & i, dim_t l) requires (is_iota<I>)
 // Never ply(), solely to be rewritten.
 struct Len
 {
-    consteval static rank_t rank_s() { return 0; }
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
@@ -423,8 +387,12 @@ template <class T> requires (is_builtin_array<T>)
 constexpr auto
 start(T && t);
 
+// TODO fovs? arbitrary exprs?
+template <int cr, class A> constexpr auto
+iter(A && a) { return RA_FWD(a).template iter<cr>(); }
+
 // neither CellBig nor CellSmall will retain rvalues [ra4].
-template <class T> requires (is_slice<T>)
+template <SliceConcept T>
 constexpr auto
 start(T && t) { return iter<0>(RA_FWD(t)); }
 

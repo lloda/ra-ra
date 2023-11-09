@@ -81,6 +81,13 @@ template <class lens> using default_steps = typename default_steps_<lens>::type;
 // Slicing helpers
 // --------------------
 
+template <int n=BAD> struct dots_t { static_assert(n>=0 || BAD==n); };
+template <int n=BAD> constexpr dots_t<n> dots = dots_t<n>();
+constexpr auto all = dots<1>;
+
+template <int n> struct insert_t { static_assert(n>=0); };
+template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
+
 template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
 
 struct beatable_t
@@ -225,7 +232,6 @@ struct CellSmall
 
     ctype c;
 
-    consteval static rank_t rank_s() { return framer; }
     consteval static rank_t rank() { return framer; }
 #pragma GCC diagnostic push // gcc 13.2
 #pragma GCC diagnostic warning "-Warray-bounds"
@@ -365,7 +371,6 @@ struct SmallBase
     constexpr static auto theshape = mp::tuple_values<dim_t, lens>();
     consteval static dim_t size() { return std::apply([](auto ... s) { return (s * ... * 1); }, theshape); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
-    consteval static rank_t rank_s() { return rank(); }
     consteval static dim_t size_s() { return size(); }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
@@ -738,7 +743,7 @@ explode(A && a_)
     using AA = std::decay_t<decltype(a)>;
     static_assert(super_t::def);
     constexpr rank_t ra = ra::rank_s<AA>();
-    constexpr rank_t rb = super_t::rank_s();
+    constexpr rank_t rb = rank_s<super_t>();
     static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
     static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);
     constexpr dim_t supers = ra::size_s<super_t>();

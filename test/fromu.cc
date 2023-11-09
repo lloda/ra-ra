@@ -191,7 +191,7 @@ int main()
         // tr.info("by_index II").test(ra::by_index<decltype(b+a(ra::_1, ra::_0))>);
         // cout << ra::mp::ref<decltype(b+a(ra::_1, ra::_0))::T, 0>::rank_s() << endl;
         // cout << ra::mp::ref<decltype(b+a(ra::_1, ra::_0))::T, 1>::rank_s() << endl;
-        cout << ra::mp::ref<decltype(ra::_1)>::rank_s() << endl;
+        cout << ra::rank_s<ra::mp::ref<decltype(ra::_1)>>() << endl;
         // b = a(ra::_1, ra::_0);
     }
 // Small(Iota) isn't beaten because the the output type cannot depend on argument values. So we treat it as a common expr.

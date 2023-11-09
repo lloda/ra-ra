@@ -35,7 +35,6 @@
 namespace ra {
 
 constexpr int VERSION = 26;
-
 // rank<0 is used as 'frame rank' in contrast to 'cell rank'. This limits the rank that ra:: can handle.
 constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
 constexpr int BAD = -1988888888; // undefined, eg dead axes
@@ -45,8 +44,15 @@ using dim_t = std::ptrdiff_t;
 static_assert(sizeof(rank_t)>=4 && sizeof(dim_t)>=4);
 static_assert(sizeof(rank_t)>=sizeof(int) && sizeof(dim_t)>=sizeof(rank_t));
 static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
+
 template <dim_t V> using dim_c = std::integral_constant<dim_t, V>;
 template <rank_t V> using rank_c = std::integral_constant<rank_t, V>;
+enum none_t { none }; // in constructors to mean: don't initialize
+struct noarg { noarg() = delete; }; // in constructors to mean: don't instantiate
+
+// forward decl, extended in ra.hh
+constexpr bool any(bool const x) { return x; }
+constexpr bool every(bool const x) { return x; }
 
 
 // ---------------------
@@ -63,9 +69,8 @@ concept FlatConcept = requires (P p, S d)
 template <class A>
 concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
-// FIXME still have ply(&) in places. Cf test/types.cc.
-    { std::decay_t<A>::rank_s() } -> std::same_as<rank_t>;
     { a.rank() } -> std::same_as<rank_t>;
+// FIXME still have ply(&) in places. Cf test/types.cc.
     { std::decay_t<A>::len_s(k) } -> std::same_as<dim_t>;
     { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
@@ -77,47 +82,13 @@ concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 template <class A>
 concept SliceConcept = requires (A a)
 {
-    { A::rank_s() } -> std::same_as<rank_t>;
     { a.rank() } -> std::same_as<rank_t>;
     { a.iter() } -> IteratorConcept;
 };
 
 
-// ---------------------
-// other types, forward decl
-// ---------------------
-
-enum none_t { none }; // in array constructors means ‘don't initialize’
-struct noarg { noarg() = delete; }; // in array constructors means ‘don't instantiate’
-
-template <int n=BAD>
-struct dots_t
-{
-    static_assert(n>=0 || BAD==n);
-    consteval static rank_t rank_s() { return n; }
-};
-template <int n=BAD> constexpr dots_t<n> dots = dots_t<n>();
-constexpr auto all = dots<1>;
-
-template <int n>
-struct insert_t
-{
-    static_assert(n>=0);
-    consteval static rank_t rank_s() { return n; }
-};
-template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
-
-// For views. TODO on foreign vectors? arbitrary exprs?
-template <int crank, class A> constexpr auto iter(A && a) { return RA_FWD(a).template iter<crank>(); }
-
-// Extended in ra.hh (reductions)
-constexpr bool any(bool const x) { return x; }
-constexpr bool every(bool const x) { return x; }
-constexpr bool odd(unsigned int N) { return N & 1; }
-
-
 // --------------
-// type classification
+// type classification / introspection
 // --------------
 
 // FIXME https://wg21.link/p2841r0 ?
@@ -132,16 +103,46 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
-RA_IS_DEF(is_slice, SliceConcept<A>)
-template <class A> constexpr bool is_ra = is_iterator<A> || is_slice<A>;
+template <class A> constexpr bool is_ra = is_iterator<A> || SliceConcept<A>;
 template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
 
-RA_IS_DEF(is_iterator_pos, IteratorConcept<A> && 0!=A::rank_s())
-RA_IS_DEF(is_slice_pos, SliceConcept<A> && 0!=A::rank_s())
-template <class A> constexpr bool is_ra_pos = is_iterator_pos<A> || is_slice_pos<A>;
-template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_ra_pos<A>) || is_scalar<A>;
+template <class VV> requires (!std::is_void_v<VV>)
+consteval rank_t
+rank_s()
+{
+    using V = std::remove_cvref_t<VV>;
+    if constexpr (is_builtin_array<V>) {
+        return std::rank_v<V>;
+    } else if constexpr (is_fov<V>) {
+        return 1;
+    } else if constexpr (requires { V::rank(); }) {
+        return V::rank();
+    } else if constexpr (requires (V v) { v.rank(); }) {
+        return ANY;
+    } else {
+        return 0;
+    }
+}
 
+template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); } // waiting for c++23 p2280r4
+
+template <class V>
+constexpr rank_t
+rank(V const & v)
+{
+    if constexpr (ANY!=rank_s<V>()) {
+        return rank_s<V>();
+    } else if constexpr (requires { v.rank(); })  {
+        return v.rank();
+    } else {
+        static_assert(always_false<V>, "No rank() for this type.");
+    }
+}
+
+RA_IS_DEF(is_pos, 0!=rank_s<A>())
+template <class A> constexpr bool is_ra_pos = is_ra<A> && is_pos<A>;
+template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_pos<A>) || is_scalar<A>;
 // all args rank 0 (immediate application), but at least one ra:: (don't collide with the scalar version).
 RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
 template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
@@ -159,9 +160,8 @@ struct FormatArray
 {
     A const & a;
     print_shape_t shape;
-    char const * sep0;
-    char const * sep1;
-    char const * sep2;
+    using pchar = char const *;
+    pchar sep0, sep1, sep2;
 };
 
 template <class A>
@@ -178,44 +178,25 @@ struct shape_manip_t
 };
 
 constexpr shape_manip_t
-operator<<(std::ostream & o, print_shape_t shape)
-{
-    return shape_manip_t { o, shape };
-}
+operator<<(std::ostream & o, print_shape_t shape) { return shape_manip_t { o, shape }; }
 
-// include is_fov bc std::vector or std::array may be used as the type of shape().
+// include is_fov bc shape() may be std::vector or std::array.
 // exclude std::string_view to let it be is_fov and still print as a string [ra13].
-
 template <class A> requires (is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>))
 constexpr std::ostream &
-operator<<(std::ostream & o, A && a)
-{
-    return o << format_array(a);
-}
+operator<<(std::ostream & o, A && a) { return o << format_array(a); }
 
 template <class T>
 constexpr std::ostream &
-operator<<(std::ostream & o, std::initializer_list<T> const & a)
-{
-    return o << format_array(a);
-}
+operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << format_array(a); }
 
 template <class A>
 constexpr std::ostream &
-operator<<(shape_manip_t const & sm, A const & a)
-{
-    FormatArray<A> fa = format_array(a);
-    fa.shape = sm.shape;
-    return sm.o << fa;
-}
+operator<<(shape_manip_t const & sm, FormatArray<A> fa) { return sm.o << (fa.shape=sm.shape, fa); }
 
 template <class A>
 constexpr std::ostream &
-operator<<(shape_manip_t const & sm, FormatArray<A> fa)
-{
-    fa.shape = sm.shape;
-    return sm.o << fa;
-}
+operator<<(shape_manip_t const & sm, A const & a) { return sm << format_array(a); }
 
 /* constexpr */ inline std::ostream &
 operator<<(std::ostream & o, std::source_location const & loc)

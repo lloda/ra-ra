@@ -86,12 +86,12 @@ int main()
     tr.section("foreign vectors from std::");
     {
         tr.info("adapted std::array has static size").test_eq(3, size_s(ra::start(std::array {1, 2, 0})));
-        tr.info("adapted std::vector has dynamic size").test_eq(ra::ANY, size_s(ra::start(std::vector {1, 2, 0})));
+        tr.info("adapted std::vector has dynamic size").test_eq(ra::ANY, ra::size_s<decltype(ra::start(std::vector {1, 2, 0}))>());
     }
     tr.section("std::string");
     {
         tr.info("std::string is is_foreign_vector unless registered as is_scalar")
-            .test_eq(ra::is_scalar<std::string> ? 0 : 1, ra::rank_s(std::string("hello")));
+            .test_eq(ra::is_scalar<std::string> ? 0 : 1, ra::rank_s<decltype(std::string("hello"))>());
         tr.info("explicit adaption to rank 1 is possible").test_eq(5, size(ra::ptr(std::string("hello"))));
         tr.info("note the difference with a char array").test_eq(6, ra::size("hello"));
     }

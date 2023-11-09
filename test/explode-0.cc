@@ -26,7 +26,7 @@ int main()
     {
         ra::Big<int, 2> A({2, 3}, ra::_0 - ra::_1);
         auto B = ra::explode<ra::Small<int, 3>>(A);
-        tr.test_eq(3, size_s(B(0)));
+        tr.test_eq(3, ra::size_s<decltype(B(0))>());
         tr.test_eq(ra::Small<int, 3> {0, -1, -2}, B(0));
         tr.test_eq(ra::Small<int, 3> {1, 0, -1}, B(1));
         B(1) = 9;
@@ -38,7 +38,7 @@ int main()
     {
         ra::Big<int> A({2, 3}, ra::_0 - ra::_1);
         auto B = ra::explode<ra::Small<int, 3>>(A);
-        tr.test_eq(3, size_s(*(B(0).data())));
+        tr.test_eq(3, ra::size_s<decltype(*(B(0).data()))>());
         tr.test_eq(ra::scalar(ra::Small<int, 3> {0, -1, -2}), B(0));
         tr.test_eq(ra::scalar(ra::Small<int, 3> {1, 0, -1}), B(1));
         B(1) = 9;

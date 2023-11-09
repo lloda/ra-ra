@@ -36,6 +36,8 @@ transpose(mp::int_list<Iarg ...>, A && a)
     return transpose<Iarg ...>(RA_FWD(a));
 }
 
+constexpr bool odd(unsigned int N) { return N & 1; }
+
 
 // ---------------------------
 // TODO integrate with beatable<> shortcuts, operator() in the various array types.

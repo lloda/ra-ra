@@ -47,12 +47,12 @@ main()
         tr.test_eq(b.len(2), EXPR.len(2));
         tr.test_eq(b.len(3), EXPR.len(3));
         tr.test_eq(2*3*4*5, size(EXPR));
-        static_assert(4==EXPR.rank_s());
+        static_assert(4==ra::rank_s<decltype(EXPR)>());
         static_assert(b.len_s(0)==EXPR.len_s(0));
         static_assert(b.len_s(1)==EXPR.len_s(1));
         static_assert(b.len_s(2)==EXPR.len_s(2));
         static_assert(b.len_s(3)==EXPR.len_s(3));
-        static_assert(2*3*4*5 == size_s(EXPR));
+        static_assert(2*3*4*5 == ra::size_s<decltype(EXPR)>());
 #undef EXPR
     }
     tr.section("check mismatches - static");
@@ -61,7 +61,7 @@ main()
         ra::Small<int, 2, 4, 4, 5> b = (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1);
 // properly fails to compile, which we cannot check at present [ra42]
 // #define EXPR expr([](auto && a, auto && b) { return a+b; }, start(a), start(b))
-//         tr.test_eq(2*3*4*5, size_s(EXPR));
+//         tr.test_eq(2*3*4*5, ra::size_s<decltype(EXPR)>());
 //         tr.test_eq(3, EXPR.len_s(1));
 // #undef EXPR
 // we can use non-static Match::check() as constexpr however.
@@ -80,12 +80,11 @@ main()
         tr.test_eq(2*3*4*5, size(EXPR));
 // could check all statically through decltype, although Big cannot be constexpr yet.
         static_assert(4==ra::rank_s<decltype(EXPR)>());
-        tr.test_eq(4, EXPR.rank_s());
         tr.test_eq(ra::ANY, EXPR.len_s(0));
         tr.test_eq(ra::ANY, EXPR.len_s(1));
         tr.test_eq(ra::ANY, EXPR.len_s(2));
         tr.test_eq(ra::ANY, EXPR.len_s(3));
-        tr.test_eq(ra::ANY, size_s(EXPR));
+        tr.test_eq(ra::ANY, ra::size_s<decltype(EXPR)>());
         cout << EXPR << endl;
 #undef EXPR
     }
@@ -122,13 +121,13 @@ main()
                         tr.test_eq(b.len(2), EXPR(a, b).len(2));
                         tr.test_eq(b.len(3), EXPR(a, b).len(3));
                         tr.info("0-size()").test_eq(2*3*4*5, size(EXPR(a, b)));
-                        tr.test_eq(ra::ANY, EXPR(a, b).rank_s());
-                        tr.test_eq(ra::ANY, size_s(EXPR(a, b)));
+                        tr.test_eq(ra::ANY, ra::rank_s<decltype(EXPR(a, b))>());
+                        tr.test_eq(ra::ANY, ra::size_s<decltype(EXPR(a, b))>());
                         tr.test_eq(ra::ANY, EXPR(a, b).len_s(0));
                         tr.test_eq(ra::ANY, EXPR(a, b).len_s(1));
                         tr.test_eq(ra::ANY, EXPR(a, b).len_s(2));
                         tr.test_eq(ra::ANY, EXPR(a, b).len_s(3));
-                        tr.info("0-size_s()").test_eq(ra::ANY, size_s(EXPR(a, b)));
+                        tr.info("0-size_s()").test_eq(ra::ANY, ra::size_s<decltype(EXPR(a, b))>());
                     };
         test("sta-dyn", as, bd);
         test("dyn-sta", ad, bs);
@@ -148,12 +147,11 @@ main()
         tr.test_eq(2*3*4*4, size(EXPR(a, b)));
 // could check all statically through decltype, although Big cannot be constexpr yet.
         static_assert(4==ra::rank_s<decltype(EXPR(a, b))>());
-        tr.test_eq(4, EXPR(a, b).rank_s());
         tr.test_eq(ra::ANY, EXPR(a, b).len_s(0));
         tr.test_eq(ra::ANY, EXPR(a, b).len_s(1));
         tr.test_eq(ra::ANY, EXPR(a, b).len_s(2));
         tr.test_eq(ra::ANY, EXPR(a, b).len_s(3));
-        tr.test_eq(ra::ANY, size_s(EXPR(a, b)));
+        tr.test_eq(ra::ANY, ra::size_s<decltype(EXPR(a, b))>());
         cout << EXPR(a, b) << endl;
 // value test.
         ra::Big<int, 4> c({2, 3, 4, 4}, 0);
@@ -171,7 +169,7 @@ main()
         ra::Big<int, 1> b({5}, ra::_0);
         cout << ra::start(ra::shape(from([](auto && a, auto && b) { return a-b; }, a, b))) << endl;
 #define EXPR(a, b) expr([](auto && a, auto && b) { return a-b; }, start(a(ra::dots<2>, ra::insert<1>)), start(b(ra::insert<2>, ra::dots<1>)))
-        tr.test_eq(3, EXPR(a, b).rank_s());
+        tr.test_eq(3, ra::rank_s<decltype(EXPR(a, b))>());
         tr.test_eq(ra::ANY, EXPR(a, b).len_s(0));
         tr.test_eq(ra::ANY, EXPR(a, b).len_s(1));
         tr.test_eq(ra::ANY, EXPR(a, b).len_s(2));
@@ -196,8 +194,8 @@ main()
 #define EXPR expr([](auto && a, auto && b) { return a==b; }, ra::_0*1 + ra::_1*0 + ra::_2*5 + 1, start(d))
         tr.test(every(EXPR));
         auto x = EXPR;
-        static_assert(ra::ANY==size_s(x));
-        static_assert(ra::ANY==ra::size_s(x));
+        static_assert(ra::ANY==ra::size_s<decltype(x)>());
+        static_assert(ra::ANY==ra::size_s<decltype(x)>());
         tr.test_eq(10, size(EXPR));
     }
     tr.section("BAD on any len_s(k) means size_s() is BAD");

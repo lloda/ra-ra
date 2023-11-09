@@ -156,7 +156,7 @@ int main()
     {
         ra::Small<int> a;
         ra::Big<int, 1> b({1}, 77);
-        tr.info("with rank ", decltype(a+b)::rank_s()).test_eq(2, agree_s(a, b));
+        tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(2, agree_s(a, b));
     }
     tr.section("dynamic terms in match, static rank");
     {
@@ -166,7 +166,7 @@ int main()
             ra::Small<int, 2> a {2, 3};
             ra::Big<int, 1> b({1}, 77);
             std::cout << "LEN " << decltype(a+b)::len_s(0) << std::endl;
-            tr.info("with rank ", decltype(a+b)::rank_s()).test_eq(1, decltype(a+b)::check_s());
+            tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(1, decltype(a+b)::check_s());
             tr.test(!agree(a, b));
             a = b;
         } catch (ra_error & e) {

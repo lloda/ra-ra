@@ -115,7 +115,7 @@ int main()
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a+b));
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
-    tr.section("concrete on is_slice fixed size");
+    tr.section("concrete on SliceConcept fixed size");
     {
         ra::Small<int, 3> a = {1, 2, 3};
         auto c = concrete(a);
@@ -129,7 +129,7 @@ int main()
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a));
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
-    tr.section("concrete on is_slice var size");
+    tr.section("concrete on SliceConcept var size");
     {
         ra::Big<int, 1> a = {1, 2, 3};
         auto c = concrete(a);
