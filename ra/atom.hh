@@ -8,7 +8,6 @@
 // later version.
 
 #pragma once
-#include <vector>
 #include <utility>
 #include <cassert>
 #include "bootstrap.hh"
@@ -19,7 +18,6 @@
 // --------------------
 
 #include <iostream> // might not be needed with a different RA_ASSERT.
-
 #ifndef RA_ASSERT
 #define RA_ASSERT(cond, ...)                                            \
     {                                                                   \
@@ -43,127 +41,6 @@
 namespace ra {
 
 constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
-
-// Default storage for Big - see https://stackoverflow.com/a/21028912.
-// Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
-template <class T, class A=std::allocator<T>>
-struct default_init_allocator: public A
-{
-    using a_t = std::allocator_traits<A>;
-    using A::A;
-
-    template <class U>
-    struct rebind
-    {
-        using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
-    };
-
-    template <class U>
-    void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
-    {
-        ::new(static_cast<void *>(ptr)) U;
-    }
-    template <class U, class... Args>
-    void construct(U * ptr, Args &&... args)
-    {
-        a_t::construct(static_cast<A &>(*this), ptr, RA_FWD(args)...);
-    }
-};
-
-template <class T> using vector_default_init = std::vector<T, default_init_allocator<T>>;
-
-
-// --------------------
-// introspection I
-// --------------------
-
-template <class VV> requires (!std::is_void_v<VV>)
-consteval dim_t
-size_s()
-{
-    using V = std::remove_cvref_t<VV>;
-    constexpr rank_t rs = rank_s<V>();
-    if constexpr (0==rs) {
-        return 1;
-    } else if constexpr (is_builtin_array<V>) {
-        return std::apply([] (auto ... i) { return (std::extent_v<V, i> * ... * 1); }, mp::iota<rs> {});
-    } else if constexpr (is_fov<V> && requires { std::tuple_size<V>::value; }) {
-        return std::tuple_size_v<V>;
-    } else if constexpr (is_fov<V> || rs==ANY) {
-        return ANY;
-    } else if constexpr (requires { V::size_s(); }) {
-        return V::size_s();
-    } else {
-        dim_t s = 1;
-        for (int i=0; i<rs; ++i) {
-            if (dim_t ss=V::len_s(i); ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
-        }
-        return s;
-    }
-}
-
-template <class V> consteval dim_t size_s(V const &) { return size_s<V>(); } // waiting for c++23 p2280r4
-
-template <class V>
-constexpr dim_t
-size(V const & v)
-{
-    if constexpr (ANY!=size_s<V>()) {
-        return size_s<V>();
-    } else if constexpr (is_fov<V>) {
-        return std::ssize(v);
-    } else if constexpr (requires { v.size(); }) {
-        return v.size();
-    } else {
-        dim_t s = 1;
-        for (rank_t k=0; k<rank(v); ++k) { s *= v.len(k); }
-        return s;
-    }
-}
-
-// Returns concrete types, value or const &. FIXME return ra:: types, but only if it's in all cases.
-template <class V>
-constexpr decltype(auto)
-shape(V const & v)
-{
-    constexpr rank_t rs = rank_s<V>();
-// FIXME __cpp_constexpr >= 202211L to return references to the constexpr cases
-    if constexpr (is_builtin_array<V>) {
-        return std::apply([] (auto ... i) { return std::array<dim_t, rs> { std::extent_v<V, i> ... }; }, mp::iota<rs> {});
-    } else if constexpr (requires { v.shape(); }) {
-        return v.shape();
-    } else if constexpr (0==rs) {
-        return std::array<dim_t, 0> {};
-    } else if constexpr (1==rs) {
-        return std::array<dim_t, 1> { ra::size(v) };
-    } else if constexpr (1<rs) {
-        return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
-    } else {
-        static_assert(ANY==rs);
-        auto i = std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k) { return v.len(k); });
-        return vector_default_init<dim_t>(i.begin(), i.end()); // FIXME C++23 p1206? Still fugly
-    }
-}
-
-template <class V>
-constexpr dim_t
-shape(V const & v, int k)
-{
-    RA_CHECK(inside(k, rank(v)), "Bad axis ", k, " for rank ", rank(v), ".");
-    return v.len(k);
-}
-
-template <class A>
-constexpr void
-resize(A & a, dim_t s)
-{
-    if constexpr (ANY==size_s<A>()) {
-        RA_CHECK(s>=0, "Bad resize ", s, ".");
-        a.resize(s);
-    } else {
-        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, " vs ", start(a).len(0), ".");
-    }
-}
 
 
 // --------------------
@@ -342,7 +219,7 @@ inside(I const & i, dim_t l) requires (is_iota<I>)
 }
 
 // Never ply(), solely to be rewritten.
-struct Len
+constexpr struct Len
 {
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
@@ -353,9 +230,7 @@ struct Len
     constexpr static Len const & flat() { std::abort(); }
     constexpr void operator+=(dim_t d) const { std::abort(); }
     constexpr dim_t operator*() const { std::abort(); }
-};
-
-constexpr Len len {};
+} len;
 
 // protect exprs with Len from reduction.
 template <> constexpr bool is_special_def<Len> = true;
@@ -406,25 +281,5 @@ start(T && t) { return RA_FWD(t); }
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
 start(T && t) { return RA_FWD(t); }
-
-
-// --------------------
-// introspection II
-// --------------------
-
-// also used to paper over Scalar<X> vs X
-template <class A>
-constexpr decltype(auto)
-FLAT(A && a)
-{
-    if constexpr (is_scalar<A>) {
-        return RA_FWD(a); // avoid dangling temp in this case [ra8]
-    } else {
-        return *(ra::start(RA_FWD(a)).flat());
-    }
-}
-
-// FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using value_t = std::decay_t<decltype(FLAT(std::declval<A>()))>;
 
 } // namespace ra

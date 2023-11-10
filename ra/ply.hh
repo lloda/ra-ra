@@ -19,9 +19,24 @@
 
 namespace ra {
 
+// also used to paper over Scalar<X> vs X
+template <class A>
+constexpr decltype(auto)
+FLAT(A && a)
+{
+    if constexpr (is_scalar<A>) {
+        return RA_FWD(a); // avoid dangling temp in this case [ra8]
+    } else {
+        return *(ra::start(RA_FWD(a)).flat());
+    }
+}
+
+// FIXME do we really want to drop const? See use in concrete_type.
+template <class A> using value_t = std::decay_t<decltype(FLAT(std::declval<A>()))>;
+
 
 // ---------------------
-// does expr tree contain Len?
+// replace Len in expr tree.
 // ---------------------
 
 template <>
@@ -38,11 +53,6 @@ constexpr bool has_len_def<Iota<w, N, O, S>> = (has_len<N> || has_len<O> || has_
 
 template <class I, class N>
 constexpr bool has_len_def<Ptr<I, N>> = has_len<N>;
-
-
-// ---------------------
-// replace Len in expr tree.
-// ---------------------
 
 template <class E_>
 struct WithLen
@@ -66,8 +76,7 @@ struct WithLen<Len>
     }
 };
 
-template <class Op, IteratorConcept ... P, int ... I>
-requires (has_len<P> || ...)
+template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
     template <class L, class E> constexpr static decltype(auto)
@@ -77,8 +86,7 @@ struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
     }
 };
 
-template <IteratorConcept ... P, int ... I>
-requires (has_len<P> || ...)
+template <IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
     template <class L, class E> constexpr static decltype(auto)
@@ -100,8 +108,7 @@ coerce(T && t)
     }
 }
 
-template <int w, class N, class O, class S>
-requires (has_len<N> || has_len<O> || has_len<S>)
+template <int w, class N, class O, class S> requires (has_len<N> || has_len<O> || has_len<S>)
 struct WithLen<Iota<w, N, O, S>>
 {
     template <class L, class E> constexpr static decltype(auto)
@@ -113,8 +120,7 @@ struct WithLen<Iota<w, N, O, S>>
     }
 };
 
-template <class I, class N>
-requires (has_len<N>)
+template <class I, class N> requires (has_len<N>)
 struct WithLen<Ptr<I, N>>
 {
     template <class L, class E> constexpr static decltype(auto)
@@ -271,7 +277,7 @@ ply_fixed(A && a, Early && early = Nop {})
     } else {
         auto ss0 = a.step(order[0]);
 // static keep_step implies all else is static.
-        if constexpr (bool(RA_STATIC_UNROLL) && rank>1 && requires (dim_t st, rank_t z, rank_t j) { A::keep_step(st, z, j); }) {
+        if constexpr (RA_STATIC_UNROLL && rank>1 && requires (dim_t st, rank_t z, rank_t j) { A::keep_step(st, z, j); }) {
 // find outermost compact dim.
             constexpr auto sj = [&order]
             {

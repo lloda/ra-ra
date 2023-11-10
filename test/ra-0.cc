@@ -651,6 +651,9 @@ int main()
         tr.test_eq(3, sa[0]);
         tr.test_eq(2, sa[1]);
         tr.test_eq(4, sa[2]);
+        tr.test_eq(3, ra::shape(a, 0));
+        tr.test_eq(2, ra::shape(a, 1));
+        tr.test_eq(4, ra::shape(a, 2));
         double check[24];
         std::iota(check, check+24, 0);
         tr.test(std::equal(check, check+24, a.begin()));

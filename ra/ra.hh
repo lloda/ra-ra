@@ -378,20 +378,18 @@ gemm(A const & a, B const & b, C & c)
     for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
 }
 
-#define MMTYPE decltype(from(std::multiplies<>(), a(ra::all, 0), b(0)))
+#define MMTYPE decltype(from(std::multiplies<>(), a(all, 0), b(0)))
 
 // default for row-major x row-major. See bench-gemm.cc for variants.
 template <class S, class T>
 constexpr auto
 gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 {
-    int M = a.len(0);
-    int N = b.len(1);
-    int K = a.len(1);
+    dim_t M=a.len(0), N=b.len(1), K=a.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, decltype(std::declval<S>()*std::declval<T>())());
     for (int k=0; k<K; ++k) {
-        c += from(std::multiplies<>(), a(ra::all, k), b(k));
+        c += from(std::multiplies<>(), a(all, k), b(k));
     }
     return c;
 }
@@ -401,13 +399,12 @@ template <class A, class B>
 constexpr ra::Small<std::decay_t<decltype(FLAT(std::declval<A>()) * FLAT(std::declval<B>()))>, A::len(0), B::len(1)>
 gemm(A const & a, B const & b)
 {
-    constexpr int M = a.len(0);
-    constexpr int N = b.len(1);
+    dim_t M=a.len(0), N=b.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<MMTYPE>({M, N}, ra::none);
     for (int i=0; i<M; ++i) {
         for (int j=0; j<N; ++j) {
-            c(i, j) = dot(a(i), b(ra::all, j));
+            c(i, j) = dot(a(i), b(all, j));
         }
     }
     return c;
@@ -419,8 +416,7 @@ template <class A, class B>
 constexpr auto
 gevm(A const & a, B const & b)
 {
-    int const M = b.len(0);
-    int const N = b.len(1);
+    dim_t M=b.len(0), N=b.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty
     auto c = with_shape<decltype(a[0]*b(0))>({N}, 0);
     for (int i=0; i<M; ++i) {
@@ -434,12 +430,11 @@ template <class A, class B>
 constexpr auto
 gemv(A const & a, B const & b)
 {
-    int const M = a.len(0);
-    int const N = a.len(1);
+    dim_t M=a.len(0), N=a.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty
-    auto c = with_shape<decltype(a(ra::all, 0)*b[0])>({M}, 0);
+    auto c = with_shape<decltype(a(all, 0)*b[0])>({M}, 0);
     for (int j=0; j<N; ++j) {
-        c += a(ra::all, j) * b[j];
+        c += a(all, j) * b[j];
     }
     return c;
 }
@@ -570,9 +565,9 @@ struct Wedge
     constexpr static void
     product(Va const & a, Vb const & b, Vr & r)
     {
-        static_assert(int(Va::size())==Na, "Bad Va dim.");
-        static_assert(int(Vb::size())==Nb, "Bad Vb dim.");
-        static_assert(int(Vr::size())==Nr, "Bad Vr dim.");
+        static_assert(Va::size()==Na, "Bad Va dim.");
+        static_assert(Vb::size()==Nb, "Bad Vb dim.");
+        static_assert(Vr::size()==Nr, "Bad Vr dim.");
         coeff<Va, Vb, Vr, 0>(a, b, r);
     }
 };
@@ -630,12 +625,13 @@ hodgex(Va const & a, Vb & b)
 // This depends on Wedge<>::Ca, Cb, Cr coming from ChooseCombinations. hodgex() should always work, but this is cheaper.
 // However if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
 // Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w in that case, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
-#define TRIVIAL(D, O) (2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))))
+consteval bool trivial_hodge(int D, int O) { return 2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))); }
+
 template <int D, int O, class Va, class Vb>
 constexpr void
 hodge(Va const & a, Vb & b)
 {
-    if constexpr (TRIVIAL(D, O)) {
+    if constexpr (trivial_hodge(D, O)) {
         static_assert(Va::size()==mp::Hodge<D, O>::Na, "error");
         static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
         b = a;
@@ -644,7 +640,7 @@ hodge(Va const & a, Vb & b)
     }
 }
 
-template <int D, int O, class Va> requires (TRIVIAL(D, O))
+template <int D, int O, class Va> requires (trivial_hodge(D, O))
 constexpr Va const &
 hodge(Va const & a)
 {
@@ -652,7 +648,7 @@ hodge(Va const & a)
     return a;
 }
 
-template <int D, int O, class Va> requires (!TRIVIAL(D, O))
+template <int D, int O, class Va> requires (!trivial_hodge(D, O))
 constexpr Va &
 hodge(Va & a)
 {
@@ -660,7 +656,6 @@ hodge(Va & a)
     ra::mp::hodgex<D, O>(b, a);
     return a;
 }
-#undef TRIVIAL
 
 
 // --------------------
@@ -672,59 +667,39 @@ constexpr auto
 wedge(A const & a, B const & b) { return a*b; }
 
 template <class A>
-struct torank1
-{
-    using type = std::conditional_t<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
-};
+using torank1 = std::conditional_t<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
 
-template <class Wedge, class Va, class Vb>
-struct fromrank1
-{
-    using valtype = typename Wedge::template valtype<Va, Vb>;
-    using type = std::conditional_t<Wedge::Nr==1, valtype, Small<valtype, Wedge::Nr>>;
-};
-
-#define DECL_WEDGE(condition)                                           \
-    template <int D, int Oa, int Ob, class Va, class Vb> requires (!(is_scalar<Va> && is_scalar<Vb>)) \
-    decltype(auto)                                                      \
-    wedge(Va const & a, Vb const & b)
-DECL_WEDGE(general_case)
+template <int D, int Oa, int Ob, class Va, class Vb> requires (!(is_scalar<Va> && is_scalar<Vb>))
+decltype(auto)
+wedge(Va const & a, Vb const & b)
 {
     Small<value_t<Va>, size_s<Va>()> aa = a;
     Small<value_t<Vb>, size_s<Vb>()> bb = b;
-
     using Ua = decltype(aa);
     using Ub = decltype(bb);
-    typename fromrank1<mp::Wedge<D, Oa, Ob>, Ua, Ub>::type r;
-
-    auto & a1 = reinterpret_cast<typename torank1<Ua>::type const &>(aa);
-    auto & b1 = reinterpret_cast<typename torank1<Ub>::type const &>(bb);
-    auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
-
+    using Wedge = mp::Wedge<D, Oa, Ob>;
+    using valtype = typename Wedge::template valtype<Ua, Ub>;
+    std::conditional_t<Wedge::Nr==1, valtype, Small<valtype, Wedge::Nr>> r;
+    auto & a1 = reinterpret_cast<torank1<Ua> const &>(aa);
+    auto & b1 = reinterpret_cast<torank1<Ub> const &>(bb);
+    auto & r1 = reinterpret_cast<torank1<decltype(r)> &>(r);
     mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
-
     return r;
 }
-#undef DECL_WEDGE
 
-#define DECL_WEDGE(condition)                                           \
-    template <int D, int Oa, int Ob, class Va, class Vb, class Vr> requires (!(is_scalar<Va> && is_scalar<Vb>)) \
-    void                                                                \
-    wedge(Va const & a, Vb const & b, Vr & r)
-DECL_WEDGE(general_case)
+template <int D, int Oa, int Ob, class Va, class Vb, class Vr> requires (!(is_scalar<Va> && is_scalar<Vb>))
+void
+wedge(Va const & a, Vb const & b, Vr & r)
 {
     Small<value_t<Va>, size_s<Va>()> aa = a;
     Small<value_t<Vb>, size_s<Vb>()> bb = b;
-
     using Ua = decltype(aa);
     using Ub = decltype(bb);
-
-    auto & r1 = reinterpret_cast<typename torank1<decltype(r)>::type &>(r);
-    auto & a1 = reinterpret_cast<typename torank1<Ua>::type const &>(aa);
-    auto & b1 = reinterpret_cast<typename torank1<Ub>::type const &>(bb);
+    auto & r1 = reinterpret_cast<torank1<decltype(r)> &>(r);
+    auto & a1 = reinterpret_cast<torank1<Ua> const &>(aa);
+    auto & b1 = reinterpret_cast<torank1<Ub> const &>(bb);
     mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
 }
-#undef DECL_WEDGE
 
 template <class A, class B>
 constexpr auto

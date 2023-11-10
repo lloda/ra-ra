@@ -76,6 +76,26 @@ struct default_steps_
 };
 template <class lens> using default_steps = typename default_steps_<lens>::type;
 
+template <class V>
+constexpr dim_t
+shape(V const & v, int k)
+{
+    RA_CHECK(inside(k, rank(v)), "Bad axis ", k, " for rank ", rank(v), ".");
+    return v.len(k);
+}
+
+template <class A>
+constexpr void
+resize(A & a, dim_t s)
+{
+    if constexpr (ANY==size_s<A>()) {
+        RA_CHECK(s>=0, "Bad resize ", s, ".");
+        a.resize(s);
+    } else {
+        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, " vs ", start(a).len(0), ".");
+    }
+}
+
 
 // --------------------
 // Slicing helpers
@@ -274,8 +294,7 @@ struct CellSmall
 // nested braces for Small initializers + forward decl Small types
 // ---------------------
 
-// Other than the expr constructor, SmallArray has 4 others: empty, scalar, ravel, and nested.
-// The scalar constructor is needed when T isn't registered as ra::scalar.
+// Other than the expr constructor, SmallArray has 4 others: empty, scalar, ravel, and nested. The scalar constructor is needed when T isn't registered as ra::scalar.
 // The ravel/nested/scalar constructors can be ambiguous. This is solved by defining arguments to noarg variants.
 
 template <class T, class lens>
@@ -288,15 +307,15 @@ struct nested_tuple
 template <class T, class lens>
 struct small_args
 {
-    constexpr static int r = mp::len<lens>;
+    constexpr static int rs = mp::len<lens>;
 // if len(0)==0, prefer empty constructor. If shape==[1] scalar constructor.
     using nested = std::conditional_t<
-        [] { if constexpr (0<r) { return 0==mp::ref<lens, 0>::value || (1==r && 1==mp::ref<lens, 0>::value); } else { return true; } } (),
+        [] { if constexpr (0<rs) { int s = mp::ref<lens, 0>::value; return 0==s || (1==rs && 1==s); } else { return true; } } (),
         std::tuple<noarg>, // match SmallArray template
         typename nested_tuple<T, lens>::list>;
 // if rank=1 prefer nested tuple constructor. If rank=0 prefer scalar constructor.
     using ravel = std::conditional_t<
-        (r <=1) || (mp::apply<mp::prod, lens>::value <= 1),
+        (rs <=1) || (mp::apply<mp::prod, lens>::value <= 1),
         std::tuple<noarg, noarg>, // match SmallArray template
         mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
 };

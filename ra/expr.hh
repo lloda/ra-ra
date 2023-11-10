@@ -287,8 +287,53 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 };
 
 
+// ---------------
+// explicit agreement checks
+// ---------------
+
+template <class ... P>
+constexpr bool
+agree(P && ... p) { return agree_(ra::start(RA_FWD(p)) ...); }
+
+// 0: fail, 1: rt, 2: pass
+template <class ... P>
+constexpr int
+agree_s(P && ... p) { return agree_s_(ra::start(RA_FWD(p)) ...); }
+
+template <class Op, class ... P>
+constexpr bool
+agree_op(Op && op, P && ... p) { return agree_op_(RA_FWD(op), ra::start(RA_FWD(p)) ...); }
+
+template <class ... P>
+constexpr bool
+agree_(P && ... p) { return (Match<false, std::tuple<P ...>> { RA_FWD(p) ... }).check(); }
+
+template <class ... P>
+constexpr int
+agree_s_(P && ... p) { return Match<false, std::tuple<P ...>>::check_s(); }
+
+template <class Op, class ... P>
+constexpr bool
+agree_op_(Op && op, P && ... p)
+{
+    if constexpr (is_verb<Op>) {
+        return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
+    } else {
+        return agree_(RA_FWD(p) ...);
+    }
+}
+
+template <class V, class ... T, int ... i>
+constexpr bool
+agree_verb(mp::int_list<i ...>, V && v, T && ... t)
+{
+    using FM = Framematch<V, std::tuple<T ...>>;
+    return agree_op_(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(t)) ...);
+}
+
+
 // ---------------------------
-// general expression
+// operator expression
 // ---------------------------
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
@@ -371,51 +416,6 @@ map(Op && op, A && ... a)
 }
 
 
-// ---------------
-// explicit agreement checks
-// ---------------
-
-template <class ... P>
-constexpr bool
-agree(P && ... p) { return agree_(ra::start(RA_FWD(p)) ...); }
-
-// 0: fail, 1: rt, 2: pass
-template <class ... P>
-constexpr int
-agree_s(P && ... p) { return agree_s_(ra::start(RA_FWD(p)) ...); }
-
-template <class Op, class ... P>
-constexpr bool
-agree_op(Op && op, P && ... p) { return agree_op_(RA_FWD(op), ra::start(RA_FWD(p)) ...); }
-
-template <class ... P>
-constexpr bool
-agree_(P && ... p) { return (Match<false, std::tuple<P ...>> { RA_FWD(p) ... }).check(); }
-
-template <class ... P>
-constexpr int
-agree_s_(P && ... p) { return Match<false, std::tuple<P ...>>::check_s(); }
-
-template <class Op, class ... P>
-constexpr bool
-agree_op_(Op && op, P && ... p)
-{
-    if constexpr (is_verb<Op>) {
-        return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
-    } else {
-        return agree_(RA_FWD(p) ...);
-    }
-}
-
-template <class V, class ... T, int ... i>
-constexpr bool
-agree_verb(mp::int_list<i ...>, V && v, T && ... t)
-{
-    using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op_(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(t)) ...);
-}
-
-
 // ---------------------------
 // pick
 // ---------------------------
@@ -460,8 +460,6 @@ template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <IteratorConcept ... P, int ... I>
 struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
-    static_assert(sizeof...(P)>1);
-
     template <class T>
     struct Flat
     {
@@ -479,6 +477,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
 
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t, Match_::rs, Match_::rank;
+    static_assert(sizeof...(P)>1);
 
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)

@@ -360,6 +360,10 @@ int main()
         ra::SmallView<int, int_list<48>, int_list<1>> c(b.data());
         c = ra::iota(48, 1);
         tr.test_eq(b, a);
+        tr.test_eq(2, ra::shape(a, 0));
+        tr.test_eq(3, ra::shape(a, 1));
+        tr.test_eq(4, ra::shape(a, 2));
+        tr.test_eq(2, ra::shape(a, 3));
     }
     tr.section("item constructor");
     {
