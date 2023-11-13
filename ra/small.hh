@@ -287,6 +287,20 @@ struct CellSmall
             return cc;
         }
     }
+
+// save-load interface
+    constexpr auto save() const { return c.cp; }
+    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
+    constexpr decltype(auto)
+    operator*()
+    {
+        if constexpr (0==cellr) {
+            return *(c.cp);
+        } else {
+            return c;
+        }
+    }
+    constexpr void adv0(dim_t d) { c.cp += d; }
 };
 
 

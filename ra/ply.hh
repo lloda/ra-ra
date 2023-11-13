@@ -27,7 +27,7 @@ FLAT(A && a)
     if constexpr (is_scalar<A>) {
         return RA_FWD(a); // avoid dangling temp in this case [ra8]
     } else {
-        return *(ra::start(RA_FWD(a)).flat());
+        return *(ra::start(RA_FWD(a)));
     }
 }
 
@@ -214,6 +214,77 @@ ply_ravel(A && a, Early && early = Nop {})
     }
 }
 
+// step() must give 0 for k>=their own rank, to allow frame matching.
+template <IteratorConcept A, class Early = Nop>
+constexpr auto
+ply_ravel_saveload(A && a, Early && early = Nop {})
+{
+    rank_t rank = ra::rank(a);
+// must avoid 0-length vlas [ra40].
+    if (0>=rank) {
+        if (0>rank) [[unlikely]] { std::abort(); }
+        if constexpr (requires {early.def;}) {
+            return (*a).value_or(early.def);
+        } else {
+            *a;
+            return;
+        }
+    }
+// inside first. FIXME better heuristic - but first need a way to force row-major
+    rank_t order[rank];
+    for (rank_t i=0; i<rank; ++i) {
+        order[i] = rank-1-i;
+    }
+    dim_t sha[rank], ind[rank] = {};
+// find outermost compact dim.
+    rank_t * ocd = order;
+    dim_t ss = a.len(*ocd);
+    for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
+        ss *= a.len(*ocd);
+    }
+    for (int k=0; k<rank; ++k) {
+// ss takes care of the raveled dimensions ss.
+        if (0>=(sha[k]=a.len(ocd[k]))) {
+            if (0>sha[k]) [[unlikely]] { std::abort(); }
+            if constexpr (requires {early.def;}) {
+                return early.def;
+            } else {
+                return;
+            }
+        }
+    }
+    auto ss0 = a.step(order[0]);
+    for (;;) {
+        dim_t s = ss;
+        auto place = a.save();
+        for (; --s>=0; a.adv0(ss0)) {
+            if constexpr (requires {early.def;}) {
+                if (auto stop = *a) {
+                    return stop.value();
+                }
+            } else {
+                *a;
+            }
+        }
+        a.load(place);
+        for (int k=0; ; ++k) {
+            if (k>=rank) {
+                if constexpr (requires {early.def;}) {
+                    return early.def;
+                } else {
+                    return;
+                }
+            } else if (++ind[k]<sha[k]) {
+                a.adv(ocd[k], 1);
+                break;
+            } else {
+                ind[k] = 0;
+                a.adv(ocd[k], 1-sha[k]);
+            }
+        }
+    }
+}
+
 
 // -------------------------
 // ply, compile time order/rank.
@@ -249,6 +320,43 @@ subply(A & a, dim_t s, S const & ss0, Early & early)
     }
     if constexpr (requires {early.def;}) {
         return static_cast<decltype(*(a.flat()))>(std::nullopt);
+    } else {
+        return;
+    }
+}
+
+template <auto order, int k, int urank, class A, class S, class Early>
+constexpr auto
+subply_saveload(A & a, dim_t s, S const & ss0, Early & early)
+{
+    if constexpr (k < urank) {
+        auto place = a.save();
+        for (; --s>=0; a.adv0(ss0)) {
+            if constexpr (requires {early.def;}) {
+                if (auto stop = *a) {
+                    return stop;
+                }
+            } else {
+                *a;
+            }
+        }
+        a.load(place);
+    } else {
+        dim_t size = a.len(order[k]); // TODO precompute above
+        for (dim_t i=0; i<size; ++i) {
+            if constexpr (requires {early.def;}) {
+                if (auto stop = subply_saveload<order, k-1, urank>(a, s, ss0, early)) {
+                    return stop;
+                }
+            } else {
+                subply_saveload<order, k-1, urank>(a, s, ss0, early);
+            }
+            a.adv(order[k], 1);
+        }
+        a.adv(order[k], -size);
+    }
+    if constexpr (requires {early.def;}) {
+        return static_cast<decltype(*a)>(std::nullopt);
     } else {
         return;
     }
@@ -304,6 +412,51 @@ ply_fixed(A && a, Early && early = Nop {})
     }
 }
 
+template <IteratorConcept A, class Early = Nop>
+constexpr decltype(auto)
+ply_fixed_saveload(A && a, Early && early = Nop {})
+{
+    constexpr rank_t rank = rank_s<A>();
+    static_assert(0<=rank, "ply_fixed needs static rank");
+// inside first. FIXME better heuristic - but first need a way to force row-major
+    constexpr /* static P2647 gcc13 */ auto order = mp::tuple_values<int, mp::reverse<mp::iota<rank>>>();
+    if constexpr (0==rank) {
+        if constexpr (requires {early.def;}) {
+            return (*a).value_or(early.def);
+        } else {
+            *a;
+            return;
+        }
+    } else {
+        auto ss0 = a.step(order[0]);
+// static keep_step implies all else is static.
+        if constexpr (RA_STATIC_UNROLL && rank>1 && requires (dim_t st, rank_t z, rank_t j) { A::keep_step(st, z, j); }) {
+// find outermost compact dim.
+            constexpr auto sj = [&order]
+            {
+                dim_t ss = A::len_s(order[0]);
+                int j = 1;
+                for (; j<rank && A::keep_step(ss, order[0], order[j]); ++j) {
+                    ss *= A::len_s(order[j]);
+                }
+                return std::make_tuple(ss, j);
+            } ();
+            if constexpr (requires {early.def;}) {
+                return (subply_saveload<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early)).value_or(early.def);
+            } else {
+                subply_saveload<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
+            }
+        } else {
+// not worth unrolling.
+            if constexpr (requires {early.def;}) {
+                return (subply_saveload<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
+            } else {
+                subply_saveload<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
+            }
+        }
+    }
+}
+
 
 // ---------------------------
 // ply, best for each type
@@ -316,9 +469,9 @@ ply(A && a, Early && early = Nop {})
     static_assert(!has_len<A>, "len used outside subscript context.");
     static_assert(0<=rank_s<A>() || ANY==rank_s<A>());
     if constexpr (ANY==size_s<A>()) {
-        return ply_ravel(RA_FWD(a), RA_FWD(early));
+        return ply_ravel_saveload(RA_FWD(a), RA_FWD(early));
     } else {
-        return ply_fixed(RA_FWD(a), RA_FWD(early));
+        return ply_fixed_saveload(RA_FWD(a), RA_FWD(early));
     }
 }
 
@@ -456,7 +609,7 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     }
     auto ind = sha; for_each([](auto & s) { s=0; }, ind);
     for (;;) {
-        o << *(a.flat());
+        o << *a;
         for (int k=0; ; ++k) {
             if (k>=rank) {
                 return o;

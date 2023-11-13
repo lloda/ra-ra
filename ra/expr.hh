@@ -146,6 +146,11 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     {
         return (std::decay_t<P>::keep_step(st, z, j) && ...);
     }
+
+// save-load interface
+    constexpr auto save() const { return std::make_tuple(std::get<I>(t).save() ...); }
+    template <class PP> constexpr void load(PP const & pp) { ((std::get<I>(t).load(std::get<I>(pp))), ...); }
+    template <class S> constexpr void adv0(S const & s) { ((std::get<I>(t).adv0(std::get<I>(s))), ...); }
 };
 
 
@@ -213,6 +218,12 @@ struct Reframe
     {
         return a.at(mp::map_indices<dim_t, Dest>(i));
     }
+// save-load interface
+// FIXME this only works if Dest only displaces axes in order, which is how wrank works, but this limitation of Reframe should be clear.
+    constexpr auto save() const { return a.save(); }
+    template <class PP> constexpr void load(PP const & p) { a.load(p); }
+    constexpr decltype(auto) operator*() { return *a; }
+    template <class S> constexpr void adv0(S const & s) { a.adv0(s); }
 };
 
 // Optimize no-op case. TODO If A is CellBig, etc. beat Dest on it, same for eventual transpose_expr<>.
@@ -384,6 +395,9 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
         }
         return *flat();
     }
+
+// save-load interface
+    constexpr decltype(auto) operator*() { return std::invoke(op, *std::get<I>(t) ...); }
 };
 
 template <class Op, IteratorConcept ... P>
@@ -477,8 +491,8 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
 
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t, Match_::rs, Match_::rank;
-    static_assert(sizeof...(P)>1);
 
+    static_assert(sizeof...(P)>1);
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -503,6 +517,9 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
         }
         return *flat();
     }
+
+// save-load interface
+    constexpr decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
 };
 
 template <IteratorConcept ... P>

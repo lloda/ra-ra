@@ -93,7 +93,9 @@ struct by_raw
                              ra::map(ra::wrank<0, 0>([](real const a, real const b) { return a*b; }), \
                                      a, b))));
 
+BY_PLY_TAGGED(ply_ravel_saveload);
 BY_PLY_TAGGED(ply_ravel);
+BY_PLY_TAGGED(ply_fixed_saveload);
 BY_PLY_TAGGED(ply_fixed);
 
 real a, b, ref, rspec;
@@ -179,7 +181,9 @@ int main()
                 plier(ra::map([&y](real a, real b) { y += a*b; }, A, B)); \
                 return y;                                               \
             }
+        DEFINE_SMALL_PLY(ply_ravel_saveload, ply_ravel_saveload);
         DEFINE_SMALL_PLY(ply_ravel, ply_ravel);
+        DEFINE_SMALL_PLY(ply_fixed_saveload, ply_fixed_saveload);
         DEFINE_SMALL_PLY(ply_fixed, ply_fixed);
         DEFINE_SMALL_PLY(ply, ply);
 
@@ -192,7 +196,9 @@ int main()
                 bench("indexed", s, ref, reps+extra(), f_small_indexed);
                 bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
                 bench("op", s, ref, reps+extra(), f_small_op);
+                bench("ply_ravel_saveload", s, ref, reps+extra(), f_small_ply_ravel_saveload);
                 bench("ply_ravel", s, ref, reps+extra(), f_small_ply_ravel);
+                bench("ply_fixed_saveload", s, ref, reps+extra(), f_small_ply_fixed_saveload);
                 bench("ply_fixed", s, ref, reps+extra(), f_small_ply_fixed);
                 bench("ply", s, ref, reps+extra(), f_small_ply);
             };
@@ -233,7 +239,9 @@ int main()
     }
 #define BENCH_ALL                                                       \
     FOR_EACH(BENCH, by_raw);                                            \
+    FOR_EACH(BENCH, by_1l_ply_ravel_saveload, by_2l_ply_ravel_saveload, by_1w_ply_ravel_saveload, by_2w_ply_ravel_saveload); \
     FOR_EACH(BENCH, by_1l_ply_ravel, by_2l_ply_ravel, by_1w_ply_ravel, by_2w_ply_ravel); \
+    FOR_EACH(BENCH, by_1l_ply_fixed_saveload, by_2l_ply_fixed_saveload, by_1w_ply_fixed_saveload, by_2w_ply_fixed_saveload); \
     FOR_EACH(BENCH, by_1l_ply_fixed, by_2l_ply_fixed, by_1w_ply_fixed, by_2w_ply_fixed);
 
     tr.section("ra:: wrapped std::vector<>");
