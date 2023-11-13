@@ -123,7 +123,7 @@ DEF_NAMED_UNARY_OP(+, unaryplus)             DEF_NAMED_UNARY_OP(-, std::negate<>
 DEF_NAMED_UNARY_OP(!, std::logical_not<>)
 #undef DEF_NAMED_UNARY_OP
 
-// When OP(a) isn't found from ra::, the deduction from rank(0) -> scalar doesn't work.
+// When OP(a) isn't found in ra::, deduction from rank(0) -> scalar doesn't work.
 // TODO Cf examples/useret.cc, test/reexported.cc
 #define DEF_NAME_OP(OP)                                                 \
     using ::OP;                                                         \
@@ -287,7 +287,7 @@ refmin(A && a, Less && less = std::less<value_t<A>>())
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
-    auto p = &(*s.flat());
+    auto p = &(*s);
     for_each([&less, &p](auto & a) { if (less(a, *p)) { p = &a; } }, s);
     return *p;
 }
@@ -298,7 +298,7 @@ refmax(A && a, Less && less = std::less<value_t<A>>())
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
-    auto p = &(*s.flat());
+    auto p = &(*s);
     for_each([&less, &p](auto & a) { if (less(*p, a)) { p = &a; } }, s);
     return *p;
 }

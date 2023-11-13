@@ -67,15 +67,6 @@ struct CellBig
     constexpr CellBig(CellBig const & ci) = default;
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    constexpr auto
-    flat() const
-    {
-        if constexpr (0==cellr) {
-            return c.cp;
-        } else {
-            return CellFlat<ctype> { c };
-        }
-    }
     constexpr decltype(auto)
     at(auto const & i) const
     {
@@ -87,8 +78,6 @@ struct CellBig
             return cc;
         }
     }
-
-// save-load interface
     constexpr auto save() const{ return c.cp; }
     constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr decltype(auto)
@@ -100,7 +89,7 @@ struct CellBig
             return c;
         }
     }
-    constexpr void adv0(dim_t d) { c.cp += d; }
+    constexpr void mov(dim_t d) { c.cp += d; }
 };
 
 

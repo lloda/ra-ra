@@ -15,7 +15,6 @@ template <class C>
 struct Scalar
 {
     C c;
-    constexpr decltype(auto) flat() const { return *this; }
     constexpr C & operator*() { return this->c; }
     constexpr C const & operator*() const { return this->c; }
 };
@@ -34,7 +33,7 @@ template <class A>
 constexpr decltype(auto)
 FLAT(A && a)
 {
-    return *(start(std::forward<A>(a)).flat());
+    return *(start(std::forward<A>(a)));
 }
 
 template <class A, class B>

@@ -88,13 +88,6 @@ template <class T> using vector_default_init = std::vector<T, default_init_alloc
 // concepts. Not sure i want duck typing, tbr.
 // ---------------------
 
-template <class P, class S>
-concept FlatConcept = requires (P p, S d)
-{
-    { *p };
-    { p += d };
-};
-
 template <class A>
 concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
@@ -105,7 +98,10 @@ concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
     { a.adv(k, d) } -> std::same_as<void>;
     { a.step(k) };
     { a.keep_step(d, i, j) } -> std::same_as<bool>;
-    { a.flat() } -> FlatConcept<decltype(a.step(k))>;
+    { a.save() };
+    { a.load(std::declval<decltype(a.save())>()) } -> std::same_as<void>;
+    { a.mov(d) } -> std::same_as<void>;
+    { *a };
 };
 
 template <class A>

@@ -17,7 +17,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 using ra::dim_t;
 
-// FIXME Bigd/Bigd at loop is an outlier, maybe look into CellBig::flat().
+// FIXME Bigd/Bigd at loop is an outlier
 
 int main()
 {

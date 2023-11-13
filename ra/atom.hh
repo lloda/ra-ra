@@ -61,18 +61,12 @@ struct Scalar
     constexpr static dim_t step(int k) { return 0; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
-    constexpr decltype(auto) flat() const { return *this; } // [ra39]
     constexpr decltype(auto) at(auto && j) const { return c; }
-// self as Flat
-    constexpr void operator+=(dim_t d) const {}
-    constexpr decltype(auto) operator*() { return c; }
-    constexpr decltype(auto) operator*() const { return c; } // [ra39]
-
-// save-load interface
-    // constexpr decltype(auto) operator*() { return c; }
-    constexpr int save() const { return 0; } // FIXME
-    constexpr void load(int ii) {} // FIXME
-    constexpr void adv0(dim_t d) {}
+    constexpr static int save() { return 0; } // FIXME
+    constexpr static void load(int) {} // FIXME
+    constexpr C & operator*() { return c; }
+    constexpr C const & operator*() const { return c; } // [ra39]
+    constexpr static void mov(dim_t d) {}
 };
 
 template <class C> constexpr auto
@@ -110,18 +104,15 @@ struct Ptr
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr auto flat() const { return i; }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
         RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i[j[0]];
     }
-
-// save-load interface
     constexpr auto save() const { return i; }
     constexpr void load(I ii) { i = ii; }
     constexpr decltype(auto) operator*() { return *i; }
-    constexpr void adv0(dim_t d) { i += d; }
+    constexpr void mov(dim_t d) { i += d; }
 };
 
 template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
@@ -171,14 +162,6 @@ struct Iota
     constexpr static S gets() requires (is_constant<S>) { return S {}; }
     constexpr O gets() const requires (!is_constant<S>) { return s; }
 
-    struct Flat
-    {
-        O i;
-        [[no_unique_address]] S const s;
-        constexpr void operator+=(dim_t d) { i += O(d)*O(s); }
-        constexpr auto operator*() const { return i; }
-    };
-
     consteval static rank_t rank() { return w+1; }
     constexpr static dim_t len_s(int k) { return k==w ? nn : BAD; } // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
@@ -186,18 +169,15 @@ struct Iota
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr void adv(rank_t k, dim_t d) { i += O(step(k) * d) * O(s); }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
-    constexpr auto flat() const { return Flat { i, s }; }
     constexpr auto at(auto && j) const
     {
         RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i + O(j[w])*O(s);
     }
-
-// save-load interface
     constexpr auto save() const { return i; }
     constexpr void load(O ii) { i = ii; }
     constexpr auto operator*() { return i; }
-    constexpr void adv0(dim_t d) { i += O(d)*O(s); }
+    constexpr void mov(dim_t d) { i += O(d)*O(s); }
 };
 
 template <int w=0, class O=dim_t, class N=dim_c<BAD>, class S=dim_c<1>>
@@ -245,11 +225,10 @@ constexpr struct Len
     constexpr static dim_t step(int k) { std::abort(); }
     constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
     constexpr static bool keep_step(dim_t st, int z, int j) { std::abort(); }
-    constexpr static Len const & flat() { std::abort(); }
-    constexpr void operator+=(dim_t d) const { std::abort(); }
+    constexpr static int save() { std::abort(); }
+    constexpr static void load(int) { std::abort(); }
     constexpr dim_t operator*() const { std::abort(); }
-// save-load interface TODO
-    constexpr void adv0(dim_t d) { std::abort(); }
+    constexpr static void mov(dim_t d) { std::abort(); }
 } len;
 
 // protect exprs with Len from reduction.

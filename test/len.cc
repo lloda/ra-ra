@@ -89,7 +89,7 @@ int main()
     tr.section("static len is preserved");
     {
         tr.test_eq(5, with_len(ra::ic<5>, ra::iota(ra::len)).len_s(0));
-        // tr.test_eq(4, std::decay<decltype(*(with_len(ra::ic<5>, ra::len-ra::ic<1>).flat()))>::type::value); // FIXME (*) with_len
+        // tr.test_eq(4, std::decay<decltype(*(with_len(ra::ic<5>, ra::len-ra::ic<1>)))>::type::value); // FIXME (*) with_len
         // tr.test_eq(5, with_len(ra::ic<5>, ra::iota(ra::len-ra::ic<1>)).ronk()); // FIXME
         // tr.test_eq(5, with_len(ra::ic<6>, ra::iota(ra::len-ra::ic<1>)).len_s(0)); // FIXME
     }
