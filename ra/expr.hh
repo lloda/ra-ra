@@ -156,8 +156,8 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 // Transpose variant for IteratorConcepts. As in transpose(), one names the destination axis for
 // each original axis. However, axes may not be repeated. Used in the rank conjunction below.
 
-template <class T> constexpr T zerostep = 0;
-template <class ... T> constexpr std::tuple<T ...> zerostep<std::tuple<T ...>> = { zerostep<T> ... };
+template <dim_t N, class T> constexpr T samestep = N;
+template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
 
 // Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
@@ -187,7 +187,7 @@ struct Reframe
     step(int k) const
     {
         int l = orig(k);
-        return l>=0 ? a.step(l) : zerostep<decltype(a.step(l))>;
+        return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>;
     }
     constexpr void
     adv(rank_t k, dim_t d)
