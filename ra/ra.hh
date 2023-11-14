@@ -131,7 +131,7 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
     constexpr auto                                                      \
     OP(A && ... a)                                                      \
     {                                                                   \
-        return map([](auto && ... a) -> decltype(auto) { return OP(a ...); }, RA_FWD(a) ...); \
+        return map([](auto && ... a) -> decltype(auto) { return OP(RA_FWD(a) ...); }, RA_FWD(a) ...); \
     }                                                                   \
     template <class ... A> requires (toreduce<A ...>)                   \
     constexpr decltype(auto)                                            \
