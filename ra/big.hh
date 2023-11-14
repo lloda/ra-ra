@@ -81,7 +81,7 @@ struct CellBig
     constexpr auto save() const{ return c.cp; }
     constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr decltype(auto)
-    operator*()
+    operator*() const
     {
         if constexpr (0==cellr) {
             return *(c.cp);

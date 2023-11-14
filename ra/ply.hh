@@ -389,8 +389,7 @@ struct STLIterator
     }
 
     bool operator==(std::default_sentinel_t end) const { return !(ii.c.cp); }
-    decltype(auto) operator*() const { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
-    decltype(auto) operator*() { if constexpr (0==Iterator::cellr) return *ii.c.cp; else return ii.c; }
+    decltype(auto) operator*() const { return *ii; }
 
     constexpr void
     cube_next(rank_t k)
