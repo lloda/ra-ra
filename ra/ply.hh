@@ -26,8 +26,8 @@ FLAT(A && a)
 {
     if constexpr (is_scalar<A>) {
         return RA_FWD(a); // avoid dangling temp in this case [ra8] (?? maybe unnecessary)
-    // } else if constexpr (is_iterator<A>) {
-    //     return *a; // no need to start() for one FIXME but needs const/nonconst operator*()s (p0847)
+    } else if constexpr (is_iterator<A>) {
+        return *a; // no need to start() for one
     } else {
         return *(ra::start(RA_FWD(a)));
     }

@@ -214,7 +214,7 @@ struct Reframe
 // FIXME only if Dest displaces axes in order, which is how wrank works, but this limitation of Reframe should be explicit.
     constexpr auto save() const { return a.save(); }
     template <class PP> constexpr void load(PP const & p) { a.load(p); }
-    constexpr decltype(auto) operator*() { return *a; }
+    constexpr decltype(auto) operator*() const { return *a; }
     template <class S> constexpr void mov(S const & s) { a.mov(s); }
 };
 
@@ -350,12 +350,8 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Expr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
-    constexpr decltype(auto)
-    at(auto const & j) const
-    {
-        return std::invoke(op, std::get<I>(t).at(j) ...);
-    }
+    constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, std::get<I>(t).at(j) ...); }
+    constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
 // needed for rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
     operator decltype(std::invoke(op, *std::get<I>(t) ...)) ()
@@ -366,7 +362,6 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
         }
         return *(*this);
     }
-    constexpr decltype(auto) operator*() { return std::invoke(op, *std::get<I>(t) ...); }
 };
 
 template <class Op, IteratorConcept ... P>
@@ -450,12 +445,8 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
-    constexpr decltype(auto)
-    at(auto const & j) const
-    {
-        return pick_at<0>(std::get<0>(t).at(j), t, j);
-    }
+    constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
+    constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
 // needed for xpr with rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
     operator decltype(pick_star<0>(*std::get<0>(t), t)) ()
@@ -466,7 +457,6 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
         }
         return *(*this);
     }
-    constexpr decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
 };
 
 template <IteratorConcept ... P>
