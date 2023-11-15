@@ -78,8 +78,6 @@ struct CellBig
             return cc;
         }
     }
-    constexpr auto save() const{ return c.cp; }
-    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr decltype(auto)
     operator*() const
     {
@@ -89,6 +87,8 @@ struct CellBig
             return c;
         }
     }
+    constexpr auto save() const{ return c.cp; }
+    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr void mov(dim_t d) { c.cp += d; }
 };
 
@@ -545,7 +545,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         store.pop_back();
         --View::dimv[0].len;
     }
-// FIXME __cpp_explicit_this_parameter
+// const/nonconst shims over View's methods. FIXME > gcc13 ? __cpp_explicit_this_parameter
     constexpr T const & back() const { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
     constexpr T & back() { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
     constexpr auto data() { return view().data(); }
@@ -561,12 +561,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr auto begin() { assert(is_c_order(view())); return view().data(); }
     constexpr auto end() const { return view().data()+this->size(); }
     constexpr auto end() { return view().data()+this->size(); }
-// FIXME size is redundant e.g. for Store = std::vector.
     template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
     template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
-// FIXME variants fail test/io.cc CXXFLAGS="-O3 -fno-sanitize=all" on gcc 11/12/13, pass with sanitizers on. Weird!
-    // template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
-    // template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     constexpr operator T const & () const { return view(); }
     constexpr operator T & () { return view(); }
 };

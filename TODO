@@ -76,7 +76,7 @@ checkbox [C-ct] flip TODO
     - [ ] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
       in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ? See also
       FLAT().
-    - [ ] During traversal (ply) the pattern loc = save_location(it); move flat;
+    - [X] During traversal (ply) the pattern loc = save_location(it); move flat;
       it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
       so this would be cheap. The current design is that move flat can't modify it so it has to be a
       new object. CellBig is one case where that is costly, because dimv has to be copied along with

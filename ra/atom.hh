@@ -62,11 +62,11 @@ struct Scalar
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) at(auto && j) const { return c; }
-    constexpr static int save() { return 0; }
-    constexpr static void load(int) {}
     constexpr C & operator*() requires (std::is_lvalue_reference_v<C>) { return c; } // [ra37]
     constexpr C const & operator*() requires (!std::is_lvalue_reference_v<C>) { return c; }
     constexpr C const & operator*() const { return c; } // [ra39]
+    constexpr static int save() { return 0; }
+    constexpr static void load(int) {}
     constexpr static void mov(dim_t d) {}
 };
 
@@ -110,9 +110,9 @@ struct Ptr
         RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i[j[0]];
     }
+    constexpr decltype(auto) operator*() const { return *i; }
     constexpr auto save() const { return i; }
     constexpr void load(I ii) { i = ii; }
-    constexpr decltype(auto) operator*() const { return *i; }
     constexpr void mov(dim_t d) { i += d; }
 };
 
@@ -175,9 +175,9 @@ struct Iota
         RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i + O(j[w])*O(s);
     }
+    constexpr auto operator*() const { return i; }
     constexpr auto save() const { return i; }
     constexpr void load(O ii) { i = ii; }
-    constexpr auto operator*() const { return i; }
     constexpr void mov(dim_t d) { i += O(d)*O(s); }
 };
 

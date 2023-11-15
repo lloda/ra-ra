@@ -211,10 +211,10 @@ struct Reframe
     {
         return a.at(mp::map_indices<dim_t, Dest>(i));
     }
-// FIXME only if Dest displaces axes in order, which is how wrank works, but this limitation of Reframe should be explicit.
-    constexpr auto save() const { return a.save(); }
-    template <class PP> constexpr void load(PP const & p) { a.load(p); }
     constexpr decltype(auto) operator*() const { return *a; }
+    constexpr auto save() const { return a.save(); }
+    template <class P> constexpr void load(P const & p) { a.load(p); }
+// FIXME only if Dest preserves axis order, which is how wrank works, but this limitation should be explicit.
     template <class S> constexpr void mov(S const & s) { a.mov(s); }
 };
 
@@ -350,6 +350,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Expr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
+
     constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, std::get<I>(t).at(j) ...); }
     constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
 // needed for rs==ANY, which don't decay to scalar when used as operator arguments.
@@ -445,6 +446,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
+
     constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
     constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
 // needed for xpr with rs==ANY, which don't decay to scalar when used as operator arguments.

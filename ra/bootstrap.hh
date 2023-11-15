@@ -150,7 +150,7 @@ rank_s()
     }
 }
 
-template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); } // waiting for c++23 p2280r4
+template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); } // c++23 p2280r4
 
 template <class V>
 constexpr rank_t
@@ -198,7 +198,7 @@ size_s()
     }
 }
 
-template <class V> consteval dim_t size_s(V const &) { return size_s<V>(); } // waiting for c++23 p2280r4
+template <class V> consteval dim_t size_s(V const &) { return size_s<V>(); } // c++23 p2280r4
 
 template <class V>
 constexpr dim_t

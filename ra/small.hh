@@ -66,7 +66,7 @@ filldim(Dimv & dimv, S && shape)
     return s;
 }
 
-// FIXME parameterize Small on dimv, then simplify this.
+// FIXME parameterize Small on dimv, then simplify.
 template <class lens>
 struct default_steps_
 {
@@ -270,8 +270,6 @@ struct CellSmall
             return cc;
         }
     }
-    constexpr auto save() const { return c.cp; }
-    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr decltype(auto)
     operator*() const
     {
@@ -281,6 +279,8 @@ struct CellSmall
             return c;
         }
     }
+    constexpr auto save() const { return c.cp; }
+    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr void mov(dim_t d) { c.cp += d; }
 };
 

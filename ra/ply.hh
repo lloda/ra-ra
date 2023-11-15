@@ -19,7 +19,6 @@
 
 namespace ra {
 
-// also used to paper over Scalar<X> vs X
 template <class A>
 constexpr decltype(auto)
 FLAT(A && a)
@@ -59,10 +58,9 @@ constexpr bool has_len_def<Ptr<I, N>> = has_len<N>;
 template <class E_>
 struct WithLen
 {
-// constant & scalar appear in Iota args. dots_t and insert_t appear in subscripts.
-// FIXME what else? restrict to IteratorConcept<E_> || is_constant<E_> || is_scalar<E_> ...
-    template <class L, class E> constexpr static decltype(auto)
-    f(L len, E && e)
+// constant/scalar appear in Iota args. dots_t and insert_t appear in subscripts. FIXME restrict to known cases
+    template <class Ln, class E> constexpr static decltype(auto)
+    f(Ln ln, E && e)
     {
         return RA_FWD(e);
     }
@@ -71,73 +69,62 @@ struct WithLen
 template <>
 struct WithLen<Len>
 {
-    template <class L, class E> constexpr static decltype(auto)
-    f(L len, E && e)
+    template <class Ln, class E> constexpr static decltype(auto)
+    f(Ln ln, E && e)
     {
-        return Scalar<L>(len);
+        return Scalar<Ln>(ln);
     }
 };
 
 template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
-    template <class L, class E> constexpr static decltype(auto)
-    f(L len, E && e)
+    template <class Ln, class E> constexpr static decltype(auto)
+    f(Ln ln, E && e)
     {
-        return expr(RA_FWD(e).op, WithLen<std::decay_t<P>>::f(len, std::get<I>(RA_FWD(e).t)) ...);
+        return expr(RA_FWD(e).op, WithLen<std::decay_t<P>>::f(ln, std::get<I>(RA_FWD(e).t)) ...);
     }
 };
 
 template <IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
-    template <class L, class E> constexpr static decltype(auto)
-    f(L len, E && e)
+    template <class Ln, class E> constexpr static decltype(auto)
+    f(Ln ln, E && e)
     {
-        return pick(WithLen<std::decay_t<P>>::f(len, std::get<I>(RA_FWD(e).t)) ...);
+        return pick(WithLen<std::decay_t<P>>::f(ln, std::get<I>(RA_FWD(e).t)) ...);
     }
 };
-
-// usable iota types must be either is_constant or is_scalar.
-template <class T>
-constexpr static decltype(auto)
-coerce(T && t)
-{
-    if constexpr (IteratorConcept<T>) {
-        return FLAT(t);
-    } else {
-        return RA_FWD(t);
-    }
-}
 
 template <int w, class N, class O, class S> requires (has_len<N> || has_len<O> || has_len<S>)
 struct WithLen<Iota<w, N, O, S>>
 {
-    template <class L, class E> constexpr static decltype(auto)
-    f(L len, E && e)
+    template <class Ln, class E> constexpr static decltype(auto)
+    f(Ln ln, E && e)
     {
-        return iota<w>(coerce(WithLen<std::decay_t<N>>::f(len, RA_FWD(e).n)),
-                       coerce(WithLen<std::decay_t<O>>::f(len, RA_FWD(e).i)),
-                       coerce(WithLen<std::decay_t<S>>::f(len, RA_FWD(e).s)));
+// usable iota types must be either is_constant or is_scalar.
+        return iota<w>(FLAT(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
+                       FLAT(WithLen<std::decay_t<O>>::f(ln, RA_FWD(e).i)),
+                       FLAT(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
     }
 };
 
 template <class I, class N> requires (has_len<N>)
 struct WithLen<Ptr<I, N>>
 {
-    template <class L, class E> constexpr static decltype(auto)
-    f(L len, E && e)
+    template <class Ln, class E> constexpr static decltype(auto)
+    f(Ln ln, E && e)
     {
-        return ptr(RA_FWD(e).i, coerce(WithLen<std::decay_t<N>>::f(len, RA_FWD(e).n)));
+        return ptr(RA_FWD(e).i, FLAT(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)));
     }
 };
 
-template <class L, class E>
+template <class Ln, class E>
 constexpr decltype(auto)
-with_len(L len, E && e)
+with_len(Ln ln, E && e)
 {
-    static_assert(std::is_integral_v<std::decay_t<L>> || is_constant<std::decay_t<L>>);
-    return WithLen<std::decay_t<E>>::f(len, RA_FWD(e));
+    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
+    return WithLen<std::decay_t<E>>::f(ln, RA_FWD(e));
 }
 
 
@@ -511,7 +498,7 @@ operator>>(std::istream & i, C & c)
         RA_CHECK(every(start(s)>=0), "Negative length in input [", noshape, s, "].");
         C cc(s, ra::none);
         swap(c, cc);
-        for (auto & ci: c) { i >> ci; } // FIXME must guarantee row-major for ra:: traversal.
+        for (auto & ci: c) { i >> ci; }
     }
     return i;
 }
