@@ -7,13 +7,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include <ranges>
-#include <string>
 #include <chrono>
 #include <numeric>
 #include <typeinfo>
 #include <iostream>
-#include <iterator>
 #include "ra/test.hh"
 #include "mpdebug.hh"
 #ifdef __STDCPP_FLOAT128_T__
