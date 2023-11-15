@@ -228,7 +228,7 @@ int main()
         scalar(m) = max(scalar(m), iter<1>(c)); // requires inner forward in ra.hh: DEF_NAME_OP
         tr.info("max of columns I").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
-        iter<1>(m) = max(iter<1>(m), iter<1>(c));
+        iter<1>(m) = max(iter<1>(m), iter<1>(c)); // FIXME
         tr.info("max of columns III [ma113]").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
         for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));

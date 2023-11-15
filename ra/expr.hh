@@ -355,11 +355,11 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
 // needed for rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
-    operator decltype(std::invoke(op, *std::get<I>(t) ...)) ()
+    operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const
     {
         if constexpr (0!=rs && (1!=rs || 1!=size_s<Expr>())) { // for coord types; so ct only
             static_assert(rs==ANY);
-            assert(0==rank()); // FIXME bad abort [ra17]
+            RA_CHECK(0==rank(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return *(*this);
     }
@@ -451,11 +451,11 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
 // needed for xpr with rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
-    operator decltype(pick_star<0>(*std::get<0>(t), t)) ()
+    operator decltype(pick_star<0>(*std::get<0>(t), t)) () const
     {
         if constexpr (0!=rs && (1!=rs || 1!=size_s<Pick>())) { // for coord types; so ct only
             static_assert(rs==ANY);
-            assert(0==rank()); // FIXME bad abort [ra17]
+            RA_CHECK(0==rank(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return *(*this);
     }

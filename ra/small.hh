@@ -270,15 +270,8 @@ struct CellSmall
             return cc;
         }
     }
-    constexpr decltype(auto)
-    operator*() const
-    {
-        if constexpr (0==cellr) {
-            return *(c.cp);
-        } else {
-            return c;
-        }
-    }
+    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
+    constexpr ctype operator*() const requires (0!=cellr) { return c; } // FIXME cf CellBig
     constexpr auto save() const { return c.cp; }
     constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr void mov(dim_t d) { c.cp += d; }

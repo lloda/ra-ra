@@ -175,7 +175,7 @@ struct Iota
         RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
         return i + O(j[w])*O(s);
     }
-    constexpr auto operator*() const { return i; }
+    constexpr O operator*() const { return i; }
     constexpr auto save() const { return i; }
     constexpr void load(O ii) { i = ii; }
     constexpr void mov(dim_t d) { i += O(d)*O(s); }

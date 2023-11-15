@@ -24,9 +24,14 @@ int main()
         ra::Big<int, 1> C({4}, 10);
         for_each([&](auto & a, auto & b, auto & c)
         {
-            a += b + c;
+            a = b + c;
         }, iter<2>(A), iter<1>(B), C);
         tr.test_eq(11, A);
+        for_each([&](auto & a, auto & b, auto & c)
+        {
+            a += b + c;
+        }, iter<2>(A), iter<1>(B), C);
+        tr.test_eq(22, A);
     }
     {
         ra::Big<int, 3> A({4, 2, 3}, 0);

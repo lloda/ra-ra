@@ -78,15 +78,8 @@ struct CellBig
             return cc;
         }
     }
-    constexpr decltype(auto)
-    operator*() const
-    {
-        if constexpr (0==cellr) {
-            return *(c.cp);
-        } else {
-            return c;
-        }
-    }
+    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
+    constexpr ctype const & operator*() const requires (0!=cellr) { return c; }
     constexpr auto save() const{ return c.cp; }
     constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr void mov(dim_t d) { c.cp += d; }
@@ -176,7 +169,8 @@ struct View
     View & operator=(View && x) { start(*this) = x; return *this; }
     View & operator=(View const & x) { start(*this) = x; return *this; }
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> View & operator OP (X && x) { start(*this) OP x; return *this; }
+    template <class X> View const & operator OP (X && x) const { start(*this) OP x; return *this; } \
+    template <class X> View & operator OP (X && x) { start(*this) OP x; return *this; } // ! FIXME
     FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
 

@@ -13,12 +13,10 @@
 #include <complex>
 #include <algorithm> // for clamp()
 
-// FIXME explode() in big.hh depend on std::complex, ra.hh operators use the function defs. Ideally this should be opt in.
-
 // just as max() and min() are found for ra:: types w/o qualifying (through ADL) they should also be found for the POD types.
 // gcc still leaks cmath functions into the global namespace, eg sqrt is C double sqrt(double) instead of the overload set.
 // cf http://ericniebler.com/2014/10/21/customization-point-design-in-c11-and-beyond/
-using std::max, std::min, std::abs, std::fma, std::clamp, std::sqrt, std::pow, std::exp,
+using std::min, std::abs, std::fma, std::clamp, std::sqrt, std::pow, std::exp,
       std::swap, std::isfinite, std::isinf, std::lerp;
 
 #define RA_IS_REAL(T) (std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>)
@@ -60,8 +58,8 @@ FOR_EACH(FOR_FLOAT, float, double)
     constexpr R norm2(C const x, C const y)     { return sqrt(sqrm(x, y)); } \
     inline /* constexpr */ R & real_part(C & z) { return reinterpret_cast<R *>(&z)[0]; } \
     inline /* constexpr */ R & imag_part(C & z) { return reinterpret_cast<R *>(&z)[1]; }
-FOR_FLOAT(double, std::complex<double>);
-FOR_FLOAT(float, std::complex<float>);
+FOR_FLOAT(double, std::complex<double>)
+FOR_FLOAT(float, std::complex<float>)
 #undef FOR_FLOAT
 
 #define RA_REAL double
