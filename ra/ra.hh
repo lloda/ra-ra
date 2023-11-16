@@ -78,18 +78,11 @@ from(A && a, I && ... i)
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
 // The function objects are matched in optimize.hh.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
-    template <class A, class B> requires (tomap<A, B>)                  \
-    constexpr auto                                                      \
-    operator OP(A && a, B && b)                                         \
-    {                                                                   \
-        return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b)));             \
-    }                                                                   \
-    template <class A, class B> requires (toreduce<A, B>)               \
-    constexpr auto                                                      \
-    operator OP(A && a, B && b)                                         \
-    {                                                                   \
-        return FLAT(RA_FWD(a)) OP FLAT(RA_FWD(b));                      \
-    }
+    template <class A, class B> requires (tomap<A, B>) constexpr auto   \
+        operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b))); } \
+    template <class A, class B> requires (toreduce<A, B>) constexpr auto \
+        operator OP(A && a, B && b) { return FLAT(RA_FWD(a)) OP FLAT(RA_FWD(b)); }
+
 DEF_NAMED_BINARY_OP(+, std::plus<>)          DEF_NAMED_BINARY_OP(-, std::minus<>)
 DEF_NAMED_BINARY_OP(*, std::multiplies<>)    DEF_NAMED_BINARY_OP(/, std::divides<>)
 DEF_NAMED_BINARY_OP(==, std::equal_to<>)     DEF_NAMED_BINARY_OP(>, std::greater<>)
@@ -107,43 +100,48 @@ struct unaryplus
 };
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                                  \
-    template <class A> requires (tomap<A>)                              \
-    constexpr auto                                                      \
-    operator OP(A && a)                                                 \
-    {                                                                   \
-        return map(OPNAME(), RA_FWD(a));                                \
-    }                                                                   \
-    template <class A> requires (toreduce<A>)                           \
-    constexpr auto                                                      \
-    operator OP(A && a)                                                 \
-    {                                                                   \
-        return OP FLAT(RA_FWD(a));                                      \
-    }
-DEF_NAMED_UNARY_OP(+, unaryplus)             DEF_NAMED_UNARY_OP(-, std::negate<>)
+    template <class A> requires (tomap<A>) constexpr auto operator      \
+        OP(A && a) { return map(OPNAME(), RA_FWD(a)); }                 \
+    template <class A> requires (toreduce<A>) constexpr auto operator   \
+        OP(A && a) { return OP FLAT(RA_FWD(a)); }
+
+DEF_NAMED_UNARY_OP(+, unaryplus)
+DEF_NAMED_UNARY_OP(-, std::negate<>)
 DEF_NAMED_UNARY_OP(!, std::logical_not<>)
 #undef DEF_NAMED_UNARY_OP
 
-// When OP(a) isn't found in ra::, deduction from rank(0) -> scalar doesn't work.
-// TODO Cf examples/useret.cc, test/reexported.cc
-#define DEF_NAME_OP(OP)                                                 \
-    using ::OP;                                                         \
-    template <class ... A> requires (tomap<A ...>)                      \
-    constexpr auto                                                      \
-    OP(A && ... a)                                                      \
-    {                                                                   \
-        return map([](auto && ... a) -> decltype(auto) { return OP(RA_FWD(a) ...); }, RA_FWD(a) ...); \
-    }                                                                   \
-    template <class ... A> requires (toreduce<A ...>)                   \
-    constexpr decltype(auto)                                            \
-    OP(A && ... a)                                                      \
-    {                                                                   \
-        return OP(FLAT(RA_FWD(a)) ...);                                 \
-    }
-FOR_EACH(DEF_NAME_OP, rel_error, pow, xI, conj, sqr, sqrm, sqrt, clamp, exp, expm1, lerp, arg)
-FOR_EACH(DEF_NAME_OP, log, log1p, log10, isfinite, isnan, isinf, max, min, abs, ra::odd)
-FOR_EACH(DEF_NAME_OP, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan, atan2)
-FOR_EACH(DEF_NAME_OP, real_part, imag_part) // return ref
-#undef DEF_NAME_OP
+// if OP(a) isn't found in ra::, deduction from rank(0) -> scalar doesn't work.
+// TODO Cf useret.cc, reexported.cc
+#define DEF_NAME(OP)                                                   \
+    template <class ... A> requires (tomap<A ...>) constexpr auto      \
+        OP(A && ... a) { return map([](auto && ... a) -> decltype(auto) { return OP(RA_FWD(a) ...); }, RA_FWD(a) ...); } \
+    template <class ... A> requires (toreduce<A ...>) constexpr decltype(auto) \
+        OP(A && ... a) { return OP(FLAT(RA_FWD(a)) ...); }
+#define DEF_NAME_FWD(QUALIFIED_OP, OP)                                  \
+    template <class ... A> requires (!tomap<A ...> && !toreduce<A ...>) constexpr decltype(auto) \
+        OP(A && ... a) { return QUALIFIED_OP(RA_FWD(a) ...); }          \
+    DEF_NAME(OP)
+#define DEF_NAME_USING(QUALIFIED_OP, OP)      \
+    using QUALIFIED_OP;                       \
+    DEF_NAME(OP)
+
+// can't DEF_NAME_USING bc std::max will gobble ra:: objects if passed by const & (!)
+// FIXME define own global max/min overloads for basic types. std::max seems too much of a special case to be usinged.
+#define DEF_NAME_GLOBAL(f) DEF_NAME_FWD(::f, f)
+FOR_EACH(DEF_NAME_GLOBAL, max, min)
+#undef DEF_NAME_GLOBAL
+// don't use DEF_NAME_FWD for these bc we want to allow ADL, e.g. for exp(dual).
+#define DEF_NAME_GLOBAL(f) DEF_NAME_USING(::f, f)
+FOR_EACH(DEF_NAME_GLOBAL, rel_error, pow, conj, xI, sqr, sqrm, sqrt, exp, expm1, log, log1p, log10)
+FOR_EACH(DEF_NAME_GLOBAL, abs, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan)
+FOR_EACH(DEF_NAME_GLOBAL, clamp, lerp, arg, isfinite, isnan, isinf, atan2, real_part, imag_part)
+#undef DEF_NAME_GLOBAL
+// FIXME move rel_error etc. out of :: and in here. Maybe do _FWD just for std:: types?
+DEF_NAME(odd)
+
+#undef DEF_NAME_USING
+#undef DEF_NAME_FWD
+#undef DEF_NAME
 
 template <class T, class A>
 constexpr auto

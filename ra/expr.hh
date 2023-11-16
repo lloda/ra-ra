@@ -350,7 +350,6 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Expr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
     constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, std::get<I>(t).at(j) ...); }
     constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
 // needed for rs==ANY, which don't decay to scalar when used as operator arguments.
@@ -441,12 +440,11 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
 {
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t, Match_::rs, Match_::rank;
-
     static_assert(sizeof...(P)>1);
+
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
     constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
     constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
 // needed for xpr with rs==ANY, which don't decay to scalar when used as operator arguments.
