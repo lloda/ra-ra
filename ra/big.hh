@@ -162,41 +162,30 @@ struct View
         }
     }
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
+    constexpr View(View const & x) = default;
 
-// [ra38] [ra34] and RA_DEF_ASSIGNOPS_SELF
-    View(View const & x) = default;
-    View & operator=(View const & x) { start(*this) = x; return *this; }
+// the non-template is required, and to avoid ambiguity the template must then be constrained [ra38] [ra34]
+    View const & operator=(View const & x) const { start(*this) = x; return *this; }
+    template <class X> View const &
+    operator=(X && x) const requires (!std::is_same_v<View, std::decay_t<X>>) { start(*this) = x; return *this; }
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> View const & operator OP (X && x) const { start(*this) OP x; return *this; } \
-    template <class X> View & operator OP (X && x) { start(*this) OP x; return *this; } // ! FIXME
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    template <class X> View const & operator OP (X && x) const { start(*this) OP x; return *this; }
+    FOR_EACH(DEF_ASSIGNOPS, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
-
-    constexpr View &
-    operator=(braces<T, RANK> x) requires (RANK!=ANY)
-    {
-        ra::iter<-1>(*this) = x;
-        return *this;
-    }
-#define RA_BRACES_ANY(N)                                    \
-    constexpr View &                                        \
-    operator=(braces<T, N> x) requires (RANK==ANY)          \
-    {                                                       \
-        ra::iter<-1>(*this) = x;                            \
-        return *this;                                       \
-    }
-    FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
-#undef RA_BRACES_ANY
-
 // braces row-major ravel for rank!=1. See Container::fill1
     using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
-    View & operator=(ravel_arg const x)
+    View const & operator=(ravel_arg const x) const
     {
         auto xsize = ssize(x);
         RA_CHECK(size()==xsize, "Mismatched sizes ", View::size(), " ", xsize, ".");
         std::copy_n(x.begin(), xsize, begin());
         return *this;
     }
+    constexpr View const & operator=(braces<T, RANK> x) const requires (RANK!=ANY) { ra::iter<-1>(*this) = x; return *this; }
+#define RA_BRACES_ANY(N)                                                \
+    constexpr View const & operator=(braces<T, N> x) const requires (RANK==ANY) { ra::iter<-1>(*this) = x; return *this; }
+    FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
+#undef RA_BRACES_ANY
 
     template <rank_t c=0> constexpr auto iter() const && { return CellBig<T, Dimv, ic_t<c>>(cp, std::move(dimv)); }
     template <rank_t c=0> constexpr auto iter() const & { return CellBig<T, Dimv const &, ic_t<c>>(cp, dimv); }
@@ -373,7 +362,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
     constexpr View & view() { return *this; }
 
-// Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray, then remove constructors and assignment operators.
+// Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray.
     Container(Container && w): store(std::move(w.store))
     {
         View::dimv = std::move(w.dimv);
@@ -386,7 +375,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
     Container(Container & w): Container(std::as_const(w)) {}
 
-// override View::operator= to allow initialization-of-reference. operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.cc [ra20].
+// because of these operator=s, A(shape 2 3) = type-of-A [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which uses View::operator= and frame match. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
 // TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     Container & operator=(Container && w)
     {
@@ -404,7 +393,18 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
-    using View::operator=;
+// non-copy assignment operators follow View, but cannot be just using'd because of constness.
+#define DEF_ASSIGNOPS(OP)                                               \
+    template <class X> Container & operator OP (X && x) { view() OP x; return *this; }
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
+    using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
+    Container & operator=(ravel_arg const x) { view() = x; return *this; }
+    constexpr Container & operator=(braces<T, RANK> x) requires (RANK!=ANY) { view() = x; return *this; }
+#define RA_BRACES_ANY(N)                                                \
+    constexpr Container & operator=(braces<T, N> x) requires (RANK==ANY) { view() = x; return *this; }
+    FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
+#undef RA_BRACES_ANY
 
     template <class S> requires (1==rank_s<S>() || ANY==rank_s<S>())
     void

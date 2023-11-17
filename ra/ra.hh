@@ -142,7 +142,7 @@ FOR_EACH(DEF_GLOBAL, max, min)
 
 // don't use DEF_FWD for these bc we want to allow ADL, e.g. for exp(dual).
 #define DEF_GLOBAL(f) DEF_USING(::f, f)
-FOR_EACH(DEF_GLOBAL, pow, conj, sqrt, exp, expm1, log, log1p, log10,isfinite, isnan, isinf, atan2)
+FOR_EACH(DEF_GLOBAL, pow, conj, sqrt, exp, expm1, log, log1p, log10, isfinite, isnan, isinf, atan2)
 FOR_EACH(DEF_GLOBAL, abs, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan, clamp, lerp)
 #undef DEF_GLOBAL
 

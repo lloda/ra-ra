@@ -6,11 +6,12 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/7]
-  - [-] Bugs [3/12]
-    - [ ] Before merging saveload [0/2]
-      - [ ] Fix cellrank.cc: "using View::operator= on sliding view"
-        - [ ] For that, View::operator= have to be const. That breaks a lot of things
-      - [ ] (not required) Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
+  - [-] Bugs [4/13]
+    - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
+    - [X] Before merging saveload [1/1]
+      - [X] Fix cellrank.cc: "using View::operator= on sliding view". For that, View::operator= have
+        to be const. That breaks a lot of things
+        - Fixed by duplicating operator= overloads on Container :-\ <2023-11-17 Fri 16:33>
     - [ ] const issues in View vs Container
       - [ ] fix conversion to const op in View, or
       - [ ] fix view() members in Container not to depend on conversion to const op in view (make View a member union??)

@@ -29,7 +29,10 @@ FOR_EACH(FOR_FLOAT, float, double)
     {                                                                   \
         return C(fma(a.real(), b.real(), fma(-a.imag(), b.imag(), c.real())), \
                  fma(a.real(), b.imag(), fma(a.imag(), b.real(), c.imag()))); \
-    }
+    }                                                                   \
+    constexpr bool isfinite(C z)       { return isfinite(z.real()) && isfinite(z.imag()); } \
+    constexpr bool isnan(C z)          { return isnan(z.real()) || isnan(z.imag()); } \
+    constexpr bool isinf(C z)          { return (isinf(z.real()) || isinf(z.imag())) && !isnan(z); }
 FOR_FLOAT(float, std::complex<float>)
 FOR_FLOAT(double, std::complex<double>)
 #undef FOR_FLOAT
@@ -53,7 +56,8 @@ template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x)  { retu
     constexpr T norm2(T x)              { return std::abs(x); }         \
     constexpr T norm2(T x, T y)         { return std::abs(x-y); }       \
     constexpr T rel_error(T a, T b)     { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
-    constexpr T & real_part(T & x)      { return x; } \
+    constexpr T const & real_part(T const & x)  { return x; }           \
+    constexpr T & real_part(T & x)      { return x; }                   \
     constexpr T imag_part(T x)          { return T(0); }
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
@@ -63,9 +67,6 @@ FOR_EACH(FOR_FLOAT, float, double)
     inline R arg(C x)                  { return std::arg(x); }          \
     constexpr C sqr(C x)               { return x*x; }                  \
     constexpr C dot(C x, C y)          { return x*y; }                  \
-    constexpr bool isfinite(C z)       { return std::isfinite(z.real()) && std::isfinite(z.imag()); } \
-    constexpr bool isnan(C z)          { return std::isnan(z.real()) || std::isnan(z.imag()); } \
-    constexpr bool isinf(C z)          { return (std::isinf(z.real()) || std::isinf(z.imag())) && !isnan(z); } \
     constexpr C xI(R x)                { return C(0, x); }              \
     constexpr C xI(C z)                { return C(-z.imag(), z.real()); } \
     constexpr R real_part(C const & z) { return z.real(); }             \
