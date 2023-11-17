@@ -177,33 +177,31 @@ struct Reframe
     consteval static rank_t rank() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
     constexpr static dim_t len_s(int k)
     {
-        int l = orig(k);
+        int l=orig(k);
         return l>=0 ? std::decay_t<A>::len_s(l) : BAD;
     }
     constexpr dim_t
     len(int k) const
     {
-        int l = orig(k);
+        int l=orig(k);
         return l>=0 ? a.len(l) : BAD;
     }
     constexpr auto
     step(int k) const
     {
-        int l = orig(k);
+        int l=orig(k);
         return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>;
     }
     constexpr void
     adv(rank_t k, dim_t d)
     {
-        if (int l = orig(k); l>=0) {
-            a.adv(l, d);
-        }
+        int l=orig(k);
+        if (l>=0) { a.adv(l, d); }
     }
     constexpr bool
     keep_step(dim_t st, int z, int j) const
     {
-        int wz = orig(z);
-        int wj = orig(j);
+        int wz=orig(z), wj=orig(j);
         return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
     }
     constexpr decltype(auto)
@@ -303,9 +301,13 @@ template <class ... P>
 constexpr int
 agree_s(P && ... p) { return agree_s_(ra::start(RA_FWD(p)) ...); }
 
-template <class Op, class ... P>
+template <class Op, class ... P> requires (is_verb<Op>)
 constexpr bool
-agree_op(Op && op, P && ... p) { return agree_op_(RA_FWD(op), ra::start(RA_FWD(p)) ...); }
+agree_op(Op && op, P && ... p) { return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...); }
+
+template <class Op, class ... P> requires (!is_verb<Op>)
+constexpr bool
+agree_op(Op && op, P && ... p) { return agree(RA_FWD(p) ...); }
 
 template <class ... P>
 constexpr bool
@@ -315,23 +317,12 @@ template <class ... P>
 constexpr int
 agree_s_(P && ... p) { return Match<false, std::tuple<P ...>>::check_s(); }
 
-template <class Op, class ... P>
-constexpr bool
-agree_op_(Op && op, P && ... p)
-{
-    if constexpr (is_verb<Op>) {
-        return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
-    } else {
-        return agree_(RA_FWD(p) ...);
-    }
-}
-
 template <class V, class ... T, int ... i>
 constexpr bool
 agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op_(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(t)) ...);
+    return agree_op(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(ra::start(RA_FWD(t))) ...);
 }
 
 

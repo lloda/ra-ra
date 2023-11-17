@@ -444,8 +444,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     FOR_EACH(RA_BRACES_ANY, 1, 2, 3, 4)
 #undef RA_BRACES_ANY
 
-// FIXME requires T to be copyable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
-// FIXME expr traversal is not possible for STLIterator. Fix by having plyers that don't require adv.
+// FIXME requires T to be copiable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
     template <class Xbegin>
     constexpr void
     fill1(Xbegin xbegin, dim_t xsize)
