@@ -162,6 +162,7 @@ struct View
         }
     }
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
+    constexpr View(View && x) = default;
     constexpr View(View const & x) = default;
 
 // the non-template is required, and to avoid ambiguity the template must then be constrained [ra38] [ra34]
