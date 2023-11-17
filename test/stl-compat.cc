@@ -7,10 +7,6 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// ra:: iterators are only partially STL compatible, because of copiability,
-// lack of random access (which for the STL also means linear, but at least for
-// 1D expressions it should be available), etc. Check some cases here.
-
 #include <ranges>
 #include <iostream>
 #include <iterator>
@@ -102,6 +98,11 @@ int main()
             .test_eq(ra::ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
         tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
+    // tr.section("STLIterator works with arbitrary expr not just views");
+    // {
+    //     ra::Big<int, 3> aa({4, 2, 3}, ra::_0 - ra::_1 + ra::_2);
+    //     ra::STLIterator(ra::start(aa))
+    // }
 #if __cpp_lib_span >= 202002L
     tr.section("std::span");
     {

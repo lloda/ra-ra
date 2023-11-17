@@ -28,6 +28,11 @@ int main()
         m = 0;
         iter<1>(m) = max(iter<1>(m), iter<1>(c)); // works also
         tr.info("max of columns [ma113]").test_eq(ra::Big<double, 1> {7, 3, 3}, m);
+// using std::max within ra:: caused std::max() to grab T = View when CellBig returned View const &.
+// that's why ra::max is declared with DEF_NAME_OP_FWD.
+        auto c1 = iter<1>(c);
+        auto m1 = iter<1>(m);
+        cout << ra::max(*c1, *m1) << endl;
     }
     tr.section("reductions with references II");
     {
@@ -41,7 +46,7 @@ int main()
         m = 0;
         iter<1>(m) = real_part(iter<1>(c));
         tr.info("max of columns [ma113]").test_eq(ra::Big<double, 1> {7, 1, 3}, m);
-// should be the same FIXME doesn't work
+// should be the same FIXME doesn't work, and didn't work with the flat() interface either.
         // m = 0;
         // real_part(iter<1>(m)) = real_part(iter<1>(c));
         // tr.info("max of columns [ma113]").test_eq(ra::Big<double, 1> {7, 1, 3}, m);

@@ -146,6 +146,9 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     {
         return (std::decay_t<P>::keep_step(st, z, j) && ...);
     }
+    constexpr auto save() const { return std::make_tuple(std::get<I>(t).save() ...); }
+    template <class PP> constexpr void load(PP const & pp) { ((std::get<I>(t).load(std::get<I>(pp))), ...); }
+    template <class S> constexpr void mov(S const & s) { ((std::get<I>(t).mov(std::get<I>(s))), ...); }
 };
 
 
@@ -174,45 +177,43 @@ struct Reframe
     consteval static rank_t rank() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
     constexpr static dim_t len_s(int k)
     {
-        int l = orig(k);
+        int l=orig(k);
         return l>=0 ? std::decay_t<A>::len_s(l) : BAD;
     }
     constexpr dim_t
     len(int k) const
     {
-        int l = orig(k);
+        int l=orig(k);
         return l>=0 ? a.len(l) : BAD;
     }
     constexpr auto
     step(int k) const
     {
-        int l = orig(k);
+        int l=orig(k);
         return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>;
     }
     constexpr void
     adv(rank_t k, dim_t d)
     {
-        if (int l = orig(k); l>=0) {
-            a.adv(l, d);
-        }
+        int l=orig(k);
+        if (l>=0) { a.adv(l, d); }
     }
     constexpr bool
     keep_step(dim_t st, int z, int j) const
     {
-        int wz = orig(z);
-        int wj = orig(j);
+        int wz=orig(z), wj=orig(j);
         return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
-    }
-    constexpr decltype(auto)
-    flat()
-    {
-        return a.flat();
     }
     constexpr decltype(auto)
     at(auto const & i) const
     {
         return a.at(mp::map_indices<dim_t, Dest>(i));
     }
+    constexpr decltype(auto) operator*() const { return *a; }
+    constexpr auto save() const { return a.save(); }
+    template <class P> constexpr void load(P const & p) { a.load(p); }
+// FIXME only if Dest preserves axis order, which is how wrank works, but this limitation should be explicit.
+    template <class S> constexpr void mov(S const & s) { a.mov(s); }
 };
 
 // Optimize no-op case. TODO If A is CellBig, etc. beat Dest on it, same for eventual transpose_expr<>.
@@ -300,9 +301,13 @@ template <class ... P>
 constexpr int
 agree_s(P && ... p) { return agree_s_(ra::start(RA_FWD(p)) ...); }
 
-template <class Op, class ... P>
+template <class Op, class ... P> requires (is_verb<Op>)
 constexpr bool
-agree_op(Op && op, P && ... p) { return agree_op_(RA_FWD(op), ra::start(RA_FWD(p)) ...); }
+agree_op(Op && op, P && ... p) { return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...); }
+
+template <class Op, class ... P> requires (!is_verb<Op>)
+constexpr bool
+agree_op(Op && op, P && ... p) { return agree(RA_FWD(p) ...); }
 
 template <class ... P>
 constexpr bool
@@ -312,23 +317,12 @@ template <class ... P>
 constexpr int
 agree_s_(P && ... p) { return Match<false, std::tuple<P ...>>::check_s(); }
 
-template <class Op, class ... P>
-constexpr bool
-agree_op_(Op && op, P && ... p)
-{
-    if constexpr (is_verb<Op>) {
-        return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
-    } else {
-        return agree_(RA_FWD(p) ...);
-    }
-}
-
 template <class V, class ... T, int ... i>
 constexpr bool
 agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op_(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(t)) ...);
+    return agree_op(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(ra::start(RA_FWD(t))) ...);
 }
 
 
@@ -340,22 +334,6 @@ template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 template <class Op, IteratorConcept ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
-    template <class T>
-    struct Flat
-    {
-        Op & op;
-        T t;
-        template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-        constexpr decltype(auto) operator*() { return std::invoke(op, *std::get<I>(t) ...); }
-    };
-
-    template <class ... F>
-    constexpr static auto
-    flat(Op & op, F && ... f)
-    {
-        return Flat<std::tuple<F ...>> { op, { RA_FWD(f) ... } };
-    }
-
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t, Match_::rs, Match_::rank;
     Op op;
@@ -363,26 +341,17 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Expr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
-    constexpr decltype(auto)
-    at(auto const & j) const
-    {
-        return std::invoke(op, std::get<I>(t).at(j) ...);
-    }
-    constexpr decltype(auto)
-    flat() // FIXME can't be const bc of Flat::op. Carries over to Pick / Reframe .flat() ...
-    {
-        return flat(op, std::get<I>(t).flat() ...);
-    }
+    constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, std::get<I>(t).at(j) ...); }
+    constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
 // needed for rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
-    operator decltype(*(flat(op, std::get<I>(t).flat() ...))) ()
+    operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const
     {
         if constexpr (0!=rs && (1!=rs || 1!=size_s<Expr>())) { // for coord types; so ct only
             static_assert(rs==ANY);
-            assert(0==rank()); // FIXME bad abort [ra17]
+            RA_CHECK(0==rank(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
         }
-        return *flat();
+        return *(*this);
     }
 };
 
@@ -460,21 +429,6 @@ template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <IteratorConcept ... P, int ... I>
 struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
-    template <class T>
-    struct Flat
-    {
-        T t;
-        template <class S> constexpr void operator+=(S const & s) { ((std::get<I>(t) += std::get<I>(s)), ...); }
-        constexpr decltype(auto) operator*() { return pick_star<0>(*std::get<0>(t), t); }
-    };
-
-    template <class ... P_>
-    constexpr static auto
-    flat(P_ && ... p)
-    {
-        return Flat<std::tuple<P_ ...>> { { RA_FWD(p) ... } };
-    }
-
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t, Match_::rs, Match_::rank;
     static_assert(sizeof...(P)>1);
@@ -482,26 +436,17 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_DEF_ASSIGNOPS_SELF(Pick)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
-    constexpr decltype(auto)
-    flat()
-    {
-        return flat(std::get<I>(t).flat() ...);
-    }
-    constexpr decltype(auto)
-    at(auto const & j) const
-    {
-        return pick_at<0>(std::get<0>(t).at(j), t, j);
-    }
+    constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
+    constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
 // needed for xpr with rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
-    operator decltype(*(flat(std::get<I>(t).flat() ...))) ()
+    operator decltype(pick_star<0>(*std::get<0>(t), t)) () const
     {
         if constexpr (0!=rs && (1!=rs || 1!=size_s<Pick>())) { // for coord types; so ct only
             static_assert(rs==ANY);
-            assert(0==rank()); // FIXME bad abort [ra17]
+            RA_CHECK(0==rank(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
         }
-        return *flat();
+        return *(*this);
     }
 };
 

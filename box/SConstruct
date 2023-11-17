@@ -51,7 +51,7 @@ env.Prepend(CPPPATH=['..', '.'],
             LINKFLAGS=ra.LINKFLAGS)
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['view-flat', 'tuple-construct', 'iterator-as-ravel']]
+ for example in ['save-load', 'view-flat', 'tuple-construct', 'iterator-as-ravel']]
 
 if 'skip_summary' not in top:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/box'))

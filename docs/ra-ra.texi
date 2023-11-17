@@ -1721,13 +1721,9 @@ These are array views into data in memory, which may be writable. Any of the @b{
 
 This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
-@b{Iterator}s provide a @code{flat()} method to obtain a linearized view of a section of the array. Together with the methods @code{len()}, @code{step()}, @code{keep_step()} and @code{adv()}, a loop involving @b{Iterator}s can have its inner loop unfolded and traversed using @b{Flat} objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+@b{Iterator}s have two traversal functions. The first one, @code{.adv(k, d)}, moves the iterator along any axis @var{k}. The other one, @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep_step()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
 @b{Iterator}s also provide an @code{at(i ...)} method for random access to any element of the expression.
-
-@item @b{Flat} @code{Iota::Flat}, @code{Scalar}, @code{Expr::Flat}, @code{Pick::Flat}, @code{CellFlat}
-
-These are types that support ‘forward iterator’ traversal. They have methods @code{operator+=} (to advance) and @code{operator*} (to derreference). @b{Flat} objects are obtained from @b{Iterator} objects through a method @code{flat()}. @code{Scalar} is its own @b{Flat}.
 
 @end itemize
 
@@ -1739,9 +1735,9 @@ These are types that support ‘forward iterator’ traversal. They have methods
 
 The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{iota()} or view axes created with @code{insert}) are ignored. All the other terms must match.
 
-Then we select a traversal method depending on the types of the arguments. @code{ra::} has two traversal methods, both based on pointer-like iterators. @code{ply_ravel} is used for rt-size expressions and @code{plyf} for ct-size expressions.
+Then we select a order of traversal. @code{ra::} supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v@value{VERSION}) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn't be relied upon). @code{ply_ravel} will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 
-Finally we select an order of traversal. @code{ra::} supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v@value{VERSION}) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn't be relied upon). @code{ply_ravel} will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
+Finally we select a traversal method. @code{ra::} has two traversal methods: @code{ply_fixed} can be used when the rank and the traversal order are known at compile time, and @code{ply_ravel} can be used in the general case.
 
 @c ------------------------------------------------
 @node Loop types

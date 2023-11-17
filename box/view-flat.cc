@@ -8,7 +8,6 @@
 // later version.
 
 #include "ra/test.hh"
-#include "ra/mpdebug.hh"
 #include <iomanip>
 #include <chrono>
 #include <span>

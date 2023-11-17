@@ -66,7 +66,7 @@ filldim(Dimv & dimv, S && shape)
     return s;
 }
 
-// FIXME parameterize Small on dimv, then simplify this.
+// FIXME parameterize Small on dimv, then simplify.
 template <class lens>
 struct default_steps_
 {
@@ -177,7 +177,7 @@ indexer(Q const & q, P && pp, S const & ss0, dim_t c)
     } else {
         auto pk = *pp;
         RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
-        return pp+=ss0, indexer<k+1, end>(q, pp, ss0, c + (q.step(k) * pk));
+        return pp.mov(ss0), indexer<k+1, end>(q, pp, ss0, c + (q.step(k) * pk));
     }
 }
 
@@ -186,7 +186,7 @@ constexpr dim_t
 indexer(rank_t end, Q const & q, P && pp, S const & ss0)
 {
     dim_t c = 0;
-    for (rank_t k=0; k<end; ++k, pp+=ss0) {
+    for (rank_t k=0; k<end; ++k, pp.mov(ss0)) {
         auto pk = *pp;
         RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
         c += q.step(k) * pk;
@@ -210,9 +210,9 @@ longer(Q const & q, P const & pp)
         static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
     }
     if constexpr (ANY==rank_s<Q>()) {
-        return indexer(q.rank(), q, p.flat(), p.step(0));
+        return indexer(q.rank(), q, p, p.step(0));
     } else {
-        return indexer<0, rank_s<Q>()>(q, p.flat(), p.step(0), 0);
+        return indexer<0, rank_s<Q>()>(q, p, p.step(0), 0);
     }
 }
 
@@ -220,14 +220,6 @@ longer(Q const & q, P const & pp)
 // --------------------
 // Small iterator
 // --------------------
-
-template <class C>
-struct CellFlat
-{
-    C c;
-    constexpr void operator+=(dim_t const s) { c.cp += s; }
-    constexpr C & operator*() { return c; }
-};
 
 template <class T, class lens, class steps> struct SmallView;
 
@@ -267,15 +259,6 @@ struct CellSmall
     constexpr CellSmall(CellSmall const & ci) = default;
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    constexpr auto
-    flat() const
-    {
-        if constexpr (0==cellr) {
-            return c.cp;
-        } else {
-            return CellFlat<ctype> { c };
-        }
-    }
     constexpr decltype(auto)
     at(auto const & i) const
     {
@@ -287,6 +270,11 @@ struct CellSmall
             return cc;
         }
     }
+    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
+    constexpr ctype operator*() const requires (0!=cellr) { return c; } // FIXME cf CellBig
+    constexpr auto save() const { return c.cp; }
+    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
+    constexpr void mov(dim_t d) { c.cp += d; }
 };
 
 

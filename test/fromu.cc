@@ -184,7 +184,7 @@ int main()
         Ureal<2> b({4, 4}, 0.);
         cout << a << endl;
         cout << b << endl;
-// TODO these instantiate flat() when they should not (FIXME was for old OldTensorIndex; recheck)
+// TODO these used to instantiate flat() when they should not (FIXME was for old OldTensorIndex; recheck)
         // tr.info("by_index I").test(ra::by_index<decltype(a(ra::_1, ra::_0))>);
         // cout << ra::mp::ref<decltype(a(ra::_1, ra::_0))>::rank_s() << endl;
 // these don't work because a(j, i) has rank 3 = [(w=1)+1 + (w=0)+1] and so it drives, but undef len exprs shouldn't ever drive.

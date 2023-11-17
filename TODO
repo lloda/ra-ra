@@ -6,7 +6,12 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/7]
-  - [-] Bugs [3/12]
+  - [-] Bugs [4/13]
+    - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
+    - [X] Before merging saveload [1/1]
+      - [X] Fix cellrank.cc: "using View::operator= on sliding view". For that, View::operator= have
+        to be const. That breaks a lot of things
+        - Fixed by duplicating operator= overloads on Container :-\ <2023-11-17 Fri 16:33>
     - [ ] const issues in View vs Container
       - [ ] fix conversion to const op in View, or
       - [ ] fix view() members in Container not to depend on conversion to const op in view (make View a member union??)
@@ -31,7 +36,7 @@ checkbox [C-ct] flip TODO
       A(vector, iota, vector) the iota isn't beaten. [ra33].
     - [ ] be namespace clean except for possibly complex.hh.
     - [ ] bad uses of assert [ra17]
-  - [-] Features [1/10]
+  - [-] Features [1/12]
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
     - [ ] Can choose iteration order in plyers. Order is already explicit, just need to expose it.
@@ -70,13 +75,13 @@ checkbox [C-ct] flip TODO
         - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
         - [ ] Iota. But Iota args need to integral constants for this to work.
       - [ ] Optimize iota(len...) + iota(len...)
-  - [ ] Performance [0/3]
+  - [-] Performance [1/4]
     - [ ] bench/bench-stencil* is weird.
     - [ ] Bigd cases in bench-at.
     - [ ] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
       in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ? See also
       FLAT().
-    - [ ] During traversal (ply) the pattern loc = save_location(it); move flat;
+    - [X] During traversal (ply) the pattern loc = save_location(it); move flat;
       it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
       so this would be cheap. The current design is that move flat can't modify it so it has to be a
       new object. CellBig is one case where that is costly, because dimv has to be copied along with

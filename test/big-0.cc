@@ -58,7 +58,7 @@ int main(int argc, char * * argv)
             X(ra::all) = A();
             tr.test_eq(ra::start({1, 2}), X);
         }
-        tr.section("need for explicit View::operator=(View const & x) [ra34]");
+        tr.section("need for non-default View::operator=(View const & x) [ra34]");
         {
             ra::Big<int, 1> a {0, 1, 2, 3, 4, 5};
             ra::View<int, 1> const va = a();
@@ -153,6 +153,8 @@ int main(int argc, char * * argv)
         ra::Big<int2, 2> c {{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}};
         ra::Big<int2, 2> d = {{{1, 2},  {2, 3}}, {{4, 5},  {6, 7}}};
         tr.test_eq(a, b);
+        tr.test_eq(a, c);
+        tr.test_eq(a, d);
     }
     tr.section("nested braces for nested type II");
     {

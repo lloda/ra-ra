@@ -66,5 +66,11 @@ int main()
         std::vector a = { 1., 2., 3. };
         tr.test_abs(ref, a, 0.);
     }
+    tr.section("export assumption");
+    {
+        tr.test(isfinite(3.));
+        tr.test(!isfinite(PINF));
+        tr.test(!isfinite(QNAN));
+    }
     return tr.summary();
 }

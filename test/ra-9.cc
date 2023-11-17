@@ -26,7 +26,7 @@ int main()
         tr.test_eq(ra::Big<int2, 1> { {2, 10}, {3, 20}, {4, 30} }, b);
         ra::Big<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };
     }
-    tr.section("regression [ra22]");
+    tr.section("regression [ra37]");
     {
         ra::Big<int2, 1> b { {0, 10}, {0, 20}, {0, 30} };
         ra::Big<int2, 1> c { {1, 0}, {2, 0}, {3, 0} };

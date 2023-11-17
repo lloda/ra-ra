@@ -13,6 +13,7 @@
 using std::cout, std::endl, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
+using ra::xI;
 
 int main()
 {

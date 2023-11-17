@@ -21,8 +21,8 @@ namespace ra {
 
 template <class T, rank_t RANK=ANY> struct View;
 
-// TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
-// TODO Clear up Dimv's type. Should I use span/Ptr? Avoid copying c in flat/at.
+// TODO Refactor with CellSmall. Clear up Dimv's type. Should I use span/Ptr?
+// TODO Take iterator like Ptr does and View should, not raw pointers
 template <class T, class Dimv, class Spec=ic_t<0>>
 struct CellBig
 {
@@ -67,15 +67,6 @@ struct CellBig
     constexpr CellBig(CellBig const & ci) = default;
     RA_DEF_ASSIGNOPS_DEFAULT_SET
 
-    constexpr auto
-    flat() const
-    {
-        if constexpr (0==cellr) {
-            return c.cp;
-        } else {
-            return CellFlat<ctype> { c };
-        }
-    }
     constexpr decltype(auto)
     at(auto const & i) const
     {
@@ -87,6 +78,11 @@ struct CellBig
             return cc;
         }
     }
+    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
+    constexpr ctype const & operator*() const requires (0!=cellr) { return c; }
+    constexpr auto save() const{ return c.cp; }
+    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
+    constexpr void mov(dim_t d) { c.cp += d; }
 };
 
 
@@ -166,42 +162,30 @@ struct View
         }
     }
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
+    constexpr View(View const & x) = default;
 
-// [ra38] [ra34] and RA_DEF_ASSIGNOPS_SELF
-    View(View && x) = default;
-    View(View const & x) = default;
-    View & operator=(View && x) { start(*this) = x; return *this; }
-    View & operator=(View const & x) { start(*this) = x; return *this; }
+// the non-template is required, and to avoid ambiguity the template must then be constrained [ra38] [ra34]
+    View const & operator=(View const & x) const { start(*this) = x; return *this; }
+    template <class X> View const &
+    operator=(X && x) const requires (!std::is_same_v<View, std::decay_t<X>>) { start(*this) = x; return *this; }
 #define DEF_ASSIGNOPS(OP)                                               \
-    template <class X> View & operator OP (X && x) { start(*this) OP x; return *this; }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+    template <class X> View const & operator OP (X && x) const { start(*this) OP x; return *this; }
+    FOR_EACH(DEF_ASSIGNOPS, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
-
-    constexpr View &
-    operator=(braces<T, RANK> x) requires (RANK!=ANY)
-    {
-        ra::iter<-1>(*this) = x;
-        return *this;
-    }
-#define RA_BRACES_ANY(N)                            \
-    constexpr View &                                \
-    operator=(braces<T, N> x) requires (RANK==ANY)  \
-    {                                               \
-        ra::iter<-1>(*this) = x;                    \
-        return *this;                               \
-    }
-    FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
-#undef RA_BRACES_ANY
-
 // braces row-major ravel for rank!=1. See Container::fill1
     using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
-    View & operator=(ravel_arg const x)
+    View const & operator=(ravel_arg const x) const
     {
         auto xsize = ssize(x);
         RA_CHECK(size()==xsize, "Mismatched sizes ", View::size(), " ", xsize, ".");
         std::copy_n(x.begin(), xsize, begin());
         return *this;
     }
+    constexpr View const & operator=(braces<T, RANK> x) const requires (RANK!=ANY) { ra::iter<-1>(*this) = x; return *this; }
+#define RA_BRACES_ANY(N)                                                \
+    constexpr View const & operator=(braces<T, N> x) const requires (RANK==ANY) { ra::iter<-1>(*this) = x; return *this; }
+    FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
+#undef RA_BRACES_ANY
 
     template <rank_t c=0> constexpr auto iter() const && { return CellBig<T, Dimv, ic_t<c>>(cp, std::move(dimv)); }
     template <rank_t c=0> constexpr auto iter() const & { return CellBig<T, Dimv const &, ic_t<c>>(cp, dimv); }
@@ -378,7 +362,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
     constexpr View & view() { return *this; }
 
-// Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray, then remove constructors and assignment operators.
+// Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray.
     Container(Container && w): store(std::move(w.store))
     {
         View::dimv = std::move(w.dimv);
@@ -391,7 +375,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
     Container(Container & w): Container(std::as_const(w)) {}
 
-// override View::operator= to allow initialization-of-reference. operator>>(std::istream &, Container &) requires it. The presence of these operator= means that A(shape 2 3) = type-of-A [1 2 3] initializes so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which will use View::operator= and frame match. See test/ownership.cc [ra20].
+// because of these operator=s, A(shape 2 3) = type-of-A [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which uses View::operator= and frame match. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
 // TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
     Container & operator=(Container && w)
     {
@@ -409,6 +393,19 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
+// non-copy assignment operators follow View, but cannot be just using'd because of constness.
+#define DEF_ASSIGNOPS(OP)                                               \
+    template <class X> Container & operator OP (X && x) { view() OP x; return *this; }
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#undef DEF_ASSIGNOPS
+    using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
+    Container & operator=(ravel_arg const x) { view() = x; return *this; }
+    constexpr Container & operator=(braces<T, RANK> x) requires (RANK!=ANY) { view() = x; return *this; }
+#define RA_BRACES_ANY(N)                                                \
+    constexpr Container & operator=(braces<T, N> x) requires (RANK==ANY) { view() = x; return *this; }
+    FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
+#undef RA_BRACES_ANY
+
     template <class S> requires (1==rank_s<S>() || ANY==rank_s<S>())
     void
     init(S && s)
@@ -423,12 +420,9 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
 // provided so that {} calls shape_arg constructor below.
-    Container() requires (ANY==RANK)
-        : View({ Dim {0, 1} }, nullptr) {} // rank 1 to avoid store init
-    Container() requires (ANY!=RANK && 0!=RANK)
-        : View(typename View::Dimv(Dim {0, 1}), nullptr) {}
-    Container() requires (0==RANK)
-        : Container({}, ra::none) {}
+    Container() requires (ANY==RANK): View({ Dim {0, 1} }, nullptr) {}
+    Container() requires (ANY!=RANK && 0!=RANK): View(typename View::Dimv(Dim {0, 1}), nullptr) {}
+    Container() requires (0==RANK): Container({}, ra::none) {}
 
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
     Container(shape_arg const & s, none_t) { init(s); }
@@ -436,11 +430,11 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class XX>
     Container(shape_arg const & s, XX && x): Container(s, none) { view() = x; }
 
-    template <class XX>
-    Container(XX && x): Container(ra::shape(x), none) { view() = x; }
-
     Container(shape_arg const & s, braces<T, RANK> x) requires (RANK==1)
         : Container(s, none) { view() = x; }
+
+    template <class XX>
+    Container(XX && x): Container(ra::shape(x), none) { view() = x; }
 
     Container(braces<T, RANK> x) requires (RANK!=ANY)
         : Container(braces_shape<T, RANK>(x), none) { view() = x; }
@@ -450,8 +444,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     FOR_EACH(RA_BRACES_ANY, 1, 2, 3, 4)
 #undef RA_BRACES_ANY
 
-// FIXME requires T to be copyable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
-// FIXME expr traversal is not possible for STLIterator. Fix by having plyers that don't require adv.
+// FIXME requires T to be copiable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
     template <class Xbegin>
     constexpr void
     fill1(Xbegin xbegin, dim_t xsize)
@@ -487,8 +480,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class SS>
     Container(SS && s, std::initializer_list<T> x)
         : Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
-
-    using View::operator=;
 
 // resize first axis or full shape. Only for some kinds of store.
     void resize(dim_t const s)
@@ -542,7 +533,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         store.pop_back();
         --View::dimv[0].len;
     }
-// FIXME __cpp_explicit_this_parameter
+// const/nonconst shims over View's methods. FIXME > gcc13 ? __cpp_explicit_this_parameter
     constexpr T const & back() const { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
     constexpr T & back() { RA_CHECK(1==rank() && this->size()>0); return store[this->size()-1]; }
     constexpr auto data() { return view().data(); }
@@ -558,12 +549,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr auto begin() { assert(is_c_order(view())); return view().data(); }
     constexpr auto end() const { return view().data()+this->size(); }
     constexpr auto end() { return view().data()+this->size(); }
-// FIXME size is redundant e.g. for Store = std::vector.
     template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
     template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
-// FIXME variants fail test/io.cc CXXFLAGS="-O3 -fno-sanitize=all" on gcc 11/12/13, pass with sanitizers on. Weird!
-    // template <rank_t c=0> constexpr auto iter() const { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
-    // template <rank_t c=0> constexpr auto iter() { if constexpr (1==RANK && 0==c) { return ptr(begin(), size()); } else { return view().template iter<c>(); } }
     constexpr operator T const & () const { return view(); }
     constexpr operator T & () { return view(); }
 };

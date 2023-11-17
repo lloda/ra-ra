@@ -18,6 +18,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
 using ra::dual, ra::Dual;
+using ra::sqr, ra::fma;
 
 #define DEFINE_CASE(N,  F, DF)                                          \
     struct JOIN(case, N)                                                \
