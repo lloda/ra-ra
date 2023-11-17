@@ -15,6 +15,7 @@
 using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
+using ra::sqrm;
 
 int main()
 {

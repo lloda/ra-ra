@@ -16,7 +16,7 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
-using ra::dual, ra::Dual;
+using ra::dual, ra::Dual, ra::sqr;
 
 namespace ra {
 

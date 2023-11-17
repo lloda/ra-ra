@@ -14,6 +14,7 @@
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
 using real = double;
 using real4 = ra::Small<real, 4>;
+using ra::sqrm;
 
 int const N = 500000;
 ra::Small<ra::dim_t, 1> S1 { 24*24 };

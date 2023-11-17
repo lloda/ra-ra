@@ -54,7 +54,6 @@ struct Scalar
 {
     C c;
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
@@ -97,7 +96,6 @@ struct Ptr
     constexpr Ptr(I i, N n): i(i), n(n) {}
     RA_DEF_ASSIGNOPS_SELF(Ptr)
     RA_DEF_ASSIGNOPS_DEFAULT_SET
-
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
     constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }

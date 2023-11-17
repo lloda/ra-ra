@@ -43,5 +43,17 @@ int main()
         }, iter<2>(A), iter<1>(B), C);
         tr.test_eq(11, A);
     }
+    tr.section("using View::operator= on sliding view");
+    {
+        ra::Big<int, 2> A({3, 2}, 0);
+        for_each([&](auto && a)
+        {
+            a(0) = 3;
+            a(1) = 7;
+            // a = { 3, 7 }; // FIXME
+        }, iter<1>(A));
+        ra::Big<int, 2> ref = {{3, 7}, {3, 7}, {3, 7}};
+        tr.test_eq(ref, A);
+    }
     return tr.summary();
 }

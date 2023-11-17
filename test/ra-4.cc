@@ -14,6 +14,7 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using complex = std::complex<double>;
+using ra::sqrm;
 
 template <class AA>
 double sqrm_ai(AA && a)

@@ -21,8 +21,8 @@ namespace ra {
 
 template <class T, rank_t RANK=ANY> struct View;
 
-// TODO Refactor with CellSmall. Take iterator like Ptr does and View should, not raw pointers
-// TODO Clear up Dimv's type. Should I use span/Ptr? Avoid copying c in flat/at.
+// TODO Refactor with CellSmall. Clear up Dimv's type. Should I use span/Ptr?
+// TODO Take iterator like Ptr does and View should, not raw pointers
 template <class T, class Dimv, class Spec=ic_t<0>>
 struct CellBig
 {
@@ -164,9 +164,7 @@ struct View
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
 
 // [ra38] [ra34] and RA_DEF_ASSIGNOPS_SELF
-    View(View && x) = default;
     View(View const & x) = default;
-    View & operator=(View && x) { start(*this) = x; return *this; }
     View & operator=(View const & x) { start(*this) = x; return *this; }
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View const & operator OP (X && x) const { start(*this) OP x; return *this; } \
@@ -180,12 +178,12 @@ struct View
         ra::iter<-1>(*this) = x;
         return *this;
     }
-#define RA_BRACES_ANY(N)                            \
-    constexpr View &                                \
-    operator=(braces<T, N> x) requires (RANK==ANY)  \
-    {                                               \
-        ra::iter<-1>(*this) = x;                    \
-        return *this;                               \
+#define RA_BRACES_ANY(N)                                    \
+    constexpr View &                                        \
+    operator=(braces<T, N> x) requires (RANK==ANY)          \
+    {                                                       \
+        ra::iter<-1>(*this) = x;                            \
+        return *this;                                       \
     }
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
@@ -406,6 +404,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
+    using View::operator=;
+
     template <class S> requires (1==rank_s<S>() || ANY==rank_s<S>())
     void
     init(S && s)
@@ -420,12 +420,9 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
 // provided so that {} calls shape_arg constructor below.
-    Container() requires (ANY==RANK)
-        : View({ Dim {0, 1} }, nullptr) {} // rank 1 to avoid store init
-    Container() requires (ANY!=RANK && 0!=RANK)
-        : View(typename View::Dimv(Dim {0, 1}), nullptr) {}
-    Container() requires (0==RANK)
-        : Container({}, ra::none) {}
+    Container() requires (ANY==RANK): View({ Dim {0, 1} }, nullptr) {}
+    Container() requires (ANY!=RANK && 0!=RANK): View(typename View::Dimv(Dim {0, 1}), nullptr) {}
+    Container() requires (0==RANK): Container({}, ra::none) {}
 
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
     Container(shape_arg const & s, none_t) { init(s); }
@@ -433,11 +430,11 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class XX>
     Container(shape_arg const & s, XX && x): Container(s, none) { view() = x; }
 
-    template <class XX>
-    Container(XX && x): Container(ra::shape(x), none) { view() = x; }
-
     Container(shape_arg const & s, braces<T, RANK> x) requires (RANK==1)
         : Container(s, none) { view() = x; }
+
+    template <class XX>
+    Container(XX && x): Container(ra::shape(x), none) { view() = x; }
 
     Container(braces<T, RANK> x) requires (RANK!=ANY)
         : Container(braces_shape<T, RANK>(x), none) { view() = x; }
@@ -484,8 +481,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class SS>
     Container(SS && s, std::initializer_list<T> x)
         : Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
-
-    using View::operator=;
 
 // resize first axis or full shape. Only for some kinds of store.
     void resize(dim_t const s)

@@ -17,6 +17,7 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
+using ra::real_part, ra::imag_part;
 
 int main()
 {

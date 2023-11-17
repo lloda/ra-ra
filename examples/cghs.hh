@@ -16,6 +16,8 @@ template <class A, class B, class X, class W>
 inline int
 cghs(A & a, B const & b, X & x, W & work, double eps)
 {
+    using ra::sqr;
+
     work = 0.;
     auto g = work(0);
     auto r = work(1);

@@ -17,6 +17,7 @@
 #include <iostream>
 
 using std::cout, std::endl;
+using ra::sqr;
 
 void
 example1()
