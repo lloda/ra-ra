@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file iterator-small.cc
-/// @brief Higher-rank iterator for SmallArray/SmallView.
+// ra-ra/test - Higher-rank iterator for SmallArray/SmallView.
 
 // (c) Daniel Llorens - 2014, 2016
 // This library is free software; you can redistribute it and/or modify it under
@@ -9,9 +8,7 @@
 // later version.
 
 #include <iostream>
-#include <iterator>
 #include "ra/test.hh"
-#include "ra/complex.hh"
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;

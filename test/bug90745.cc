@@ -1,9 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bug90745.cc
-/// @brief Reduced regression from 8.3 to 9.1.
+// ra-ra/test - Reduced regression from 8.3 to 9.1
 
 // /opt/gcc-10.2/bin/g++ -o const -std=c++20 -Wall -Werror -ftemplate-backtrace-limit=0 const.cc
-
 // from redi @ #gcc
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745
 

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file self-assign.cc
-/// @brief Assign to expr from the same exact type. This bug was revealed by gcc 11.
+// ra-ra/test - Assign to expr from the same exact type. This bug was revealed by gcc 11.
 
 // (c) Daniel Llorens - 2021
 // This library is free software; you can redistribute it and/or modify it under

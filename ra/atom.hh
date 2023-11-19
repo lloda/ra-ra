@@ -290,13 +290,13 @@ start(T && t) { return iter<0>(RA_FWD(t)); }
 
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
 
-template <class T> requires (is_ra_scalar<T>)
-constexpr decltype(auto)
-start(T && t) { return RA_FWD(t); }
-
 // iterators need to be restarted on each use (eg ra::cross()) [ra35].
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
+start(T & t) { return t; }
+
+template <class T> requires (is_iterator<T>)
+constexpr decltype(auto)
 start(T && t) { return RA_FWD(t); }
 
 } // namespace ra

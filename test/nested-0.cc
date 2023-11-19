@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file nested-0.cc
-/// @brief Using nested arrays as if they were arrays if higher rank.
+// ra-ra/test - Using nested arrays as if they were arrays if higher rank.
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under
@@ -12,9 +11,7 @@
 
 #include <sstream>
 #include <iostream>
-#include <iterator>
 #include "ra/test.hh"
-#include "ra/complex.hh"
 
 using std::cout, std::endl, std::flush, std::cerr, ra::TestRecorder;
 template <class T, int N> using Array = ra::Big<T, N>;

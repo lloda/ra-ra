@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file list9.cc
-/// @brief Demo new warning in 9.1
+// ra-ra/test - Demo new warning in 9.1
 
 // (c) Daniel Llorens - 2019
 // This library is free software; you can redistribute it and/or modify it under

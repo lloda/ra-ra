@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file old.cc
-/// @brief Deprecated parts of test/ra-0.cc.
+// ra-ra/test - Deprecated parts of test/ra-0.cc.
 
 // (c) Daniel Llorens - 2013-2015, 2019
 // This library is free software; you can redistribute it and/or modify it under

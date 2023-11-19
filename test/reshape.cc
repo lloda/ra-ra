@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file reshape.cc
-/// @brief Tests for reshape().
+// ra-ra/test - Tests for reshape().
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file tuple-construct.cc
-/// @brief If I were to construct Small from tuples
+// ra-ra/test - If I were to construct Small from tuples
 
 // (c) Daniel Llorens - 2018
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bench.hh
-/// @brief Test the benchmarking microlibrary.
+// ra-ra/test - Test the benchmarking library.
 
 // (c) Daniel Llorens - 2017
 // This library is free software; you can redistribute it and/or modify it under

@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file explode-0.cc
-/// @brief Tests for explode() and collapse().
+// ra-ra/test - Tests for explode() and collapse().
 
 // (c) Daniel Llorens - 2013-2016
 // This library is free software; you can redistribute it and/or modify it under

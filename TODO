@@ -34,7 +34,7 @@ checkbox [C-ct] flip TODO
       will return a nested expression instead of preserving `A`'s rank [ra33]
     - [ ] beatable subscripts are not beaten if mixed with non-beatable subscripts. E.g. in
       A(vector, iota, vector) the iota isn't beaten. [ra33].
-    - [ ] be namespace clean except for possibly complex.hh.
+    - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] bad uses of assert [ra17]
   - [-] Features [1/12]
     - [ ] make iter work with w/rank.

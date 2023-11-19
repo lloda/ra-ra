@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file foreign.cc
-/// @brief Regression for value_t, rank_s
+// ra-ra/test - Regression for value_t, rank_s
 
 // (c) Daniel Llorens - 2020
 // This library is free software; you can redistribute it and/or modify it under

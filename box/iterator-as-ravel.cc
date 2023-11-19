@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file iterator-as-ravel.cc
-/// @brief Using ptr(begin()) work as a lazy ravel (WIP)
+// ra-ra/box - Using ptr(begin()) work as a lazy ravel (WIP)
 
 // (c) Daniel Llorens - 2019
 // This library is free software; you can redistribute it and/or modify it under

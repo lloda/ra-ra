@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file macros.cc
-/// @brief test type list library based on tuples.
+// ra-ra/test - Test type list library based on tuples.
 
 // (c) Daniel Llorens - 2010
 // This library is free software; you can redistribute it and/or modify it under

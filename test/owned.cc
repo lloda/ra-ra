@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file owned.cc
-/// @brief Array operations limited to ra::Big.
+// ra-ra/test - Array operations limited to ra::Big.
 
 // (c) Daniel Llorens - 2014
 // This library is free software; you can redistribute it and/or modify it under
@@ -10,7 +9,6 @@
 
 #include <iostream>
 #include "ra/test.hh"
-#include "ra/complex.hh"
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;

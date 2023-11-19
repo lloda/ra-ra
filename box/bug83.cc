@@ -1,6 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-/// @file bug83.cc
-/// @brief Triggers gcc 8.3 ICE: in verify_ctor_sanity, at cp/constexpr.c:2805
+// ra-ra/box - Triggers gcc 8.3 ICE: in verify_ctor_sanity, at cp/constexpr.c:2805
 
 // (c) Daniel Llorens - 2016-2017, 2019
 // This library is free software; you can redistribute it and/or modify it under

@@ -1307,15 +1307,7 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 @end example
 
 @anchor{x-is-scalar}
-Some types are accepted automatically as scalars. These include:
-@itemize
-@item
-Any type @code{T} for which @code{std::is_scalar_v<T>} is true, @emph{except} pointers. These include @code{char}, @code{int}, @code{double}, etc.
-@item
-@code{std::complex<T>}, if you import @code{ra/complex.hh}.
-@end itemize
-
-You can add your own types as scalar types with the following declaration (see @code{ra/complex.hh}):
+Some types are accepted automatically as scalars. These include non-pointer types for which @code{std::is_scalar_v} is true, like @code{char}, @code{int}, @code{double}, etc. as well as @code{std::complex<T>}. You can add your own types as scalar types with the following declaration:
 
 @verbatim
     namespace ra { template <> constexpr bool is_scalar_def<MYTYPE> = true; }
