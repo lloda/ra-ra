@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Basic macros and types.
+// ra-ra - Basic macros.
 
 // (c) Daniel Llorens - 2005--2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -8,8 +8,7 @@
 // later version.
 
 #pragma once
-#include <cstddef>
-#include <type_traits>
+#include <utility>
 
 #define STRINGIZE_( x ) #x
 #define STRINGIZE( x ) STRINGIZE_( x )
@@ -37,20 +36,3 @@
 #define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
 
 #define RA_FWD(a) std::forward<decltype(a)>(a)
-
-// Assign ops for settable array iterators; these must be members. For containers & views this might be defined differently.
-// Forward to make sure value y is not misused as ref [ra5].
-#define RA_DEF_ASSIGNOPS_LINE(OP)                                       \
-    for_each([](auto && y, auto && x) { RA_FWD(y) OP x; }, *this, x)
-#define RA_DEF_ASSIGNOPS(OP)                                            \
-    template <class X> constexpr void operator OP(X && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
-// But see local DEF_ASSIGNOPS elsewhere.
-#define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-
-// Restate RA_DEF_ASSIGNOPS for expression classes since the template doesn't replace the assignment ops.
-#define RA_DEF_ASSIGNOPS_SELF(TYPE)                                     \
-    TYPE & operator=(TYPE && x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
-    TYPE & operator=(TYPE const & x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
-    constexpr TYPE(TYPE && x) = default;                                \
-    constexpr TYPE(TYPE const & x) = default;

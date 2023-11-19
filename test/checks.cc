@@ -18,7 +18,7 @@
 
 
 // -------------------------------------
-// bit from example/throw.cc which FIXME should be easier. Maybe an option in ra/macros.hh.
+// bit from example/throw.cc which FIXME should be easier, maybe a prepared option.
 
 struct ra_error: public std::exception
 {

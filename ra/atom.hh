@@ -8,7 +8,6 @@
 // later version.
 
 #pragma once
-#include <utility>
 #include <cassert>
 #include "bootstrap.hh"
 
@@ -41,6 +40,26 @@
 namespace ra {
 
 constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
+
+
+// --------------------
+// assign ops for settable iterators. Might be different for e.g. Views.
+// --------------------
+
+// Forward to make sure value y is not misused as ref [ra5].
+#define RA_DEF_ASSIGNOPS_LINE(OP)                                       \
+    for_each([](auto && y, auto && x) { RA_FWD(y) OP x; }, *this, x)
+#define RA_DEF_ASSIGNOPS(OP)                                            \
+    template <class X> constexpr void operator OP(X && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
+// But see local DEF_ASSIGNOPS elsewhere.
+#define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
+    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+// Restate for expression classes since a template doesn't replace the copy assignment op.
+#define RA_DEF_ASSIGNOPS_SELF(TYPE)                                     \
+    TYPE & operator=(TYPE && x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
+    TYPE & operator=(TYPE const & x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
+    constexpr TYPE(TYPE && x) = default;                                \
+    constexpr TYPE(TYPE const & x) = default;
 
 
 // --------------------

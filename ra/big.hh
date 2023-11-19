@@ -131,7 +131,7 @@ braces_shape(braces<T, rank> const & l)
 // FIXME size is immutable so that it can be kept together with rank.
 // TODO Parameterize on Child having .data() so that there's only one pointer.
 // TODO Parameterize on iterator type not on value type.
-// TODO Constructor, if only for RA_CHECK (nonnegative lens, steps inside, etc.)
+// TODO Constructor checks (nonnegative lens, steps inside, etc.).
 template <class T, rank_t RANK>
 struct View
 {
@@ -164,14 +164,12 @@ struct View
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
     constexpr View(View && x) = default;
     constexpr View(View const & x) = default;
-
-// the non-template is required, and to avoid ambiguity the template must then be constrained [ra38] [ra34]
+// cf RA_DEF_ASSIGNOPS_SELF [ra38] [ra34]
+    View const & operator=(View && x) const { start(*this) = x; return *this; }
     View const & operator=(View const & x) const { start(*this) = x; return *this; }
-    template <class X> View const &
-    operator=(X && x) const requires (!std::is_same_v<View, std::decay_t<X>>) { start(*this) = x; return *this; }
 #define DEF_ASSIGNOPS(OP)                                               \
     template <class X> View const & operator OP (X && x) const { start(*this) OP x; return *this; }
-    FOR_EACH(DEF_ASSIGNOPS, *=, +=, -=, /=)
+    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef DEF_ASSIGNOPS
 // braces row-major ravel for rank!=1. See Container::fill1
     using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
@@ -376,8 +374,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
     Container(Container & w): Container(std::as_const(w)) {}
 
-// because of these operator=s, A(shape 2 3) = type-of-A [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-type-of-A [1 2 3] which uses View::operator= and frame match. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
-// TODO don't require copiable T from constructors, see fill1 below. That requires initialization and not update semantics for operator=.
+// A(shape 2 3) = A-type [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-A-type [1 2 3] which uses View::operator= and frame match. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
+// TODO don't require copiable T in constructors, see fill1. That requires operator= to initialize, not update.
     Container & operator=(Container && w)
     {
         store = std::move(w.store);
@@ -464,7 +462,6 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     template <class TT>
     Container(shape_arg const & s, TT * p)
         : Container(s, none) { fill1(p, size()); } // FIXME fake check
-
 // FIXME remove
     template <class P>
     Container(shape_arg const & s, P pbegin, dim_t psize)
@@ -473,11 +470,9 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // for SS that doesn't convert implicitly to shape_arg
     template <class SS>
     Container(SS && s, none_t) { init(RA_FWD(s)); }
-
     template <class SS, class XX>
     Container(SS && s, XX && x)
         : Container(RA_FWD(s), none) { view() = x; }
-
     template <class SS>
     Container(SS && s, std::initializer_list<T> x)
         : Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
@@ -550,6 +545,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr auto begin() { assert(is_c_order(view())); return view().data(); }
     constexpr auto end() const { return view().data()+this->size(); }
     constexpr auto end() { return view().data()+this->size(); }
+// FIXME optimize & replace .view() = ...
     template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
     template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
     constexpr operator T const & () const { return view(); }

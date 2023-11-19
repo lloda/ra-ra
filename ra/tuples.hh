@@ -11,6 +11,7 @@
 #include <tuple>
 #include <limits>
 #include <algorithm>
+#include <type_traits>
 #include "macros.hh"
 
 namespace ra {
