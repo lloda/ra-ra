@@ -123,8 +123,8 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
 RA_IS_DEF(is_iterator, IteratorConcept<A>)
-template <class A> constexpr bool is_ra = is_iterator<A> || SliceConcept<A>;
-template <class A> constexpr bool is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
+template <class A> concept is_ra = is_iterator<A> || SliceConcept<A>;
+template <class A> concept is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::random_access_range<A>))
 
 template <class VV> requires (!std::is_void_v<VV>)
@@ -161,8 +161,8 @@ rank(V const & v)
 }
 
 RA_IS_DEF(is_pos, 0!=rank_s<A>())
-template <class A> constexpr bool is_ra_pos = is_ra<A> && is_pos<A>;
-template <class A> constexpr bool is_zero_or_scalar = (is_ra<A> && !is_pos<A>) || is_scalar<A>;
+template <class A> concept is_ra_pos = is_ra<A> && is_pos<A>;
+template <class A> concept is_zero_or_scalar = (is_ra<A> && !is_pos<A>) || is_scalar<A>;
 // all args rank 0 (immediate application), but at least one ra:: (don't collide with the scalar version).
 RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
 template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);

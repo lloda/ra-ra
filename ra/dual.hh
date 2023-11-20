@@ -37,12 +37,12 @@ struct Dual
     constexpr Dual(real_type const & r) requires (is_complex): re(r), du(0.) {}
     constexpr Dual() {}
 
-#define DEF_ASSIGNOPS(OP)                                              \
+#define ASSIGNOPS(OP)                                              \
     constexpr Dual & operator JOIN(OP, =)(T const & r) { *this = *this OP r; return *this; } \
     constexpr Dual & operator JOIN(OP, =)(Dual const & r) { *this = *this OP r; return *this; } \
     constexpr Dual & operator JOIN(OP, =)(real_type const & r) requires (is_complex) { *this = *this OP r; return *this; }
-    FOR_EACH(DEF_ASSIGNOPS, +, -, /, *)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(ASSIGNOPS, +, -, /, *)
+#undef ASSIGNOPS
 };
 
 // conversions are by default constants.

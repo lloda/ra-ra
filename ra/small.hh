@@ -256,7 +256,7 @@ struct CellSmall
 // see STLIterator for len(0)=0, etc. [ra12].
     constexpr CellSmall(T * p): c { p } {}
     constexpr CellSmall(CellSmall const & ci) = default;
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    RA_ASSIGNOPS_DEFAULT_SET
 
     constexpr decltype(auto)
     at(auto const & i) const
@@ -475,7 +475,7 @@ struct SmallBase
     FOR_EACH(RA_CONST_OR_NOT, /*not const*/, const)
 #undef RA_CONST_OR_NOT
 
-#define DEF_ASSIGNOPS(OP)                                               \
+#define ASSIGNOPS(OP)                                               \
     template <class X> requires (!mp::is_tuple<std::decay_t<X>>)        \
     constexpr Child &                                                   \
     operator OP(X && x)                                                 \
@@ -483,8 +483,8 @@ struct SmallBase
         ra::start(*this) OP x;                                          \
         return static_cast<Child &>(*this);                             \
     }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
+#undef ASSIGNOPS
 
 // braces don't match X &&
     constexpr Child &
@@ -637,11 +637,10 @@ peel(T && t)
     }
 }
 
-template <class T> requires (is_builtin_array<T>)
 constexpr auto
-start(T && t)
+start(is_builtin_array auto && t)
 {
-    using A = std::remove_volatile_t<std::remove_reference_t<T>>; // preserve const
+    using A = std::remove_volatile_t<std::remove_reference_t<decltype(t)>>; // preserve const
     using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
                                      mp::iota<std::rank_v<A>> {}));
     return SmallView<std::remove_all_extents_t<A>, lens, default_steps<lens>>(peel(t)).iter();

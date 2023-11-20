@@ -1675,7 +1675,7 @@ Item 2
 * Term agreement::
 * Loop types::
 * Introspection::
-* Compiling and running::
+* Building with @code{ra::}::
 @end menu
 
 @c ------------------------------------------------
@@ -1713,9 +1713,9 @@ These are array views into data in memory, which may be writable. Any of the @b{
 
 This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
-@b{Iterator}s have two traversal functions. The first one, @code{.adv(k, d)}, moves the iterator along any axis @var{k}. The other one, @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep_step()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+@b{Iterator}s have two traversal functions: @code{.adv(k, d)}, moves the iterator along any dimension @var{k}, and @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep_step()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 
-@b{Iterator}s also provide an @code{at(i ...)} method for random access to any element of the expression.
+@b{Iterator}s also provide an @code{at(i ...)} method for random access to any element.
 
 @end itemize
 
@@ -1725,7 +1725,7 @@ This is a traversable object. @b{Iterator}s are accepted by all the array functi
 @section Term agreement
 @c ------------------------------------------------
 
-The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{iota()} or view axes created with @code{insert}) are ignored. All the other terms must match.
+The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{iota()} or dimensions created with @code{insert}) are ignored. All the other terms must match.
 
 Then we select a order of traversal. @code{ra::} supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v@value{VERSION}) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn't be relied upon). @code{ply_ravel} will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 
@@ -1766,8 +1766,8 @@ The first form returns the shape of expression @var{e} as an array. The second f
 
 
 @c ------------------------------------------------
-@node Compiling and running
-@section Compiling and running
+@node Building with @code{ra::}
+@section Building with @code{ra::}
 @c ------------------------------------------------
 
 The following @code{#define}s affect the behavior of @code{ra::}.
@@ -1780,7 +1780,7 @@ The following @code{#define}s affect the behavior of @code{ra::}.
 @item @code{RA_DO_OPT_SMALLVECTOR} (default 0): Perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
 @end itemize
 
-@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}. Like most expression template libraries, @code{ra::} is highly dependent on optimization by the compiler and will be orders of magnitude slower with @option{-O0} compared to @option{-O2}.
+@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}. @code{ra::} is highly dependent on optimization by the compiler and will be much slower with @option{-O0}.
 
 The following environment variables affect the test suite under SCons:
 

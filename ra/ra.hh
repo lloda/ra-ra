@@ -170,7 +170,7 @@ from(A && a, I && ... i)
     { return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b))); }             \
     template <class A, class B> requires (toreduce<A, B>) constexpr auto \
     operator OP(A && a, B && b)                                         \
-    { return FLAT(RA_FWD(a)) OP FLAT(RA_FWD(b)); }
+    { return VALUE(RA_FWD(a)) OP VALUE(RA_FWD(b)); }
 
 DEF_NAMED_BINARY_OP(+, std::plus<>)          DEF_NAMED_BINARY_OP(-, std::minus<>)
 DEF_NAMED_BINARY_OP(*, std::multiplies<>)    DEF_NAMED_BINARY_OP(/, std::divides<>)
@@ -194,7 +194,7 @@ struct unaryplus
     { return map(OPNAME(), RA_FWD(a)); }                        \
     template <class A> requires (toreduce<A>) constexpr auto    \
     operator OP(A && a)                                         \
-    { return OP FLAT(RA_FWD(a)); }
+    { return OP VALUE(RA_FWD(a)); }
 
 DEF_NAMED_UNARY_OP(+, unaryplus)
 DEF_NAMED_UNARY_OP(-, std::negate<>)
@@ -208,7 +208,7 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
     { return map([](auto && ... a) -> decltype(auto) { return OP(RA_FWD(a) ...); }, RA_FWD(a) ...); } \
     template <class ... A> requires (toreduce<A ...>) constexpr decltype(auto) \
     OP(A && ... a)                                                      \
-    { return OP(FLAT(RA_FWD(a)) ...); }
+    { return OP(VALUE(RA_FWD(a)) ...); }
 #define DEF_FWD(QUALIFIED_OP, OP)                                       \
     template <class ... A> requires (!tomap<A ...> && !toreduce<A ...>) constexpr decltype(auto) \
     OP(A && ... a)                                                      \
@@ -218,7 +218,6 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
     using QUALIFIED_OP;                         \
     DEF_NAME(OP)
 
-// FIXME move rel_error etc. out of :: and in here. Maybe do _FWD just for std:: types?
 FOR_EACH(DEF_NAME, odd, arg, sqr, sqrm, real_part, imag_part, xI, rel_error)
 
 // can't DEF_USING bc std::max will gobble ra:: objects if passed by const & (!)
@@ -252,7 +251,7 @@ pack(A && ... a)
     return map([](auto && ... a) { return T { a ... }; }, RA_FWD(a) ...);
 }
 
-// FIXME needs a nested array for I
+// FIXME needs nested array for I
 template <class A, class I>
 constexpr auto
 at(A && a, I && i)
@@ -271,7 +270,7 @@ template <class T, class F> requires (toreduce<T, F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
-    return w ? FLAT(t) : FLAT(f);
+    return w ? VALUE(t) : VALUE(f);
 }
 template <class W, class T, class F> requires (tomap<W, T, F>)
 constexpr auto
@@ -303,7 +302,7 @@ operator ||(A && a, B && b)
     template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
-        return FLAT(a) OP FLAT(b);                                      \
+        return VALUE(a) OP VALUE(b);                                    \
     }
 FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
 #undef DEF_SHORTCIRCUIT_BINARY_OP
@@ -419,7 +418,7 @@ template <class A, class B>
 constexpr auto
 dot(A && a, B && b)
 {
-    std::decay_t<decltype(FLAT(a) * FLAT(b))> c(0.);
+    std::decay_t<decltype(VALUE(a) * VALUE(b))> c(0.);
     for_each([&c](auto && a, auto && b)
              {
 #ifdef FP_FAST_FMA
@@ -435,7 +434,7 @@ template <class A, class B>
 constexpr auto
 cdot(A && a, B && b)
 {
-    std::decay_t<decltype(conj(FLAT(a)) * FLAT(b))> c(0.);
+    std::decay_t<decltype(conj(VALUE(a)) * VALUE(b))> c(0.);
     for_each([&c](auto && a, auto && b)
              {
 #ifdef FP_FAST_FMA
@@ -487,7 +486,7 @@ gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
 
 // we still want the Small version to be different.
 template <class A, class B>
-constexpr ra::Small<std::decay_t<decltype(FLAT(std::declval<A>()) * FLAT(std::declval<B>()))>, A::len(0), B::len(1)>
+constexpr ra::Small<std::decay_t<decltype(VALUE(std::declval<A>()) * VALUE(std::declval<B>()))>, A::len(0), B::len(1)>
 gemm(A const & a, B const & b)
 {
     dim_t M=a.len(0), N=b.len(1);
@@ -793,10 +792,10 @@ cross(A const & a_, B const & b_)
 {
     constexpr int n = size_s<A>();
     static_assert(n==size_s<B>() && (2==n || 3==n));
-    Small<std::decay_t<decltype(FLAT(a_))>, n> a = a_;
-    Small<std::decay_t<decltype(FLAT(b_))>, n> b = b_;
+    Small<std::decay_t<decltype(VALUE(a_))>, n> a = a_;
+    Small<std::decay_t<decltype(VALUE(b_))>, n> b = b_;
     using W = mp::Wedge<n, 1, 1>;
-    Small<std::decay_t<decltype(FLAT(a_) * FLAT(b_))>, W::Nr> r;
+    Small<std::decay_t<decltype(VALUE(a_) * VALUE(b_))>, W::Nr> r;
     W::product(a, b, r);
     if constexpr (1==W::Nr) {
         return r[0];
@@ -810,7 +809,7 @@ constexpr auto
 perp(V const & v)
 {
     static_assert(2==v.size(), "Dimension error.");
-    return Small<std::decay_t<decltype(FLAT(v))>, 2> {v[1], -v[0]};
+    return Small<std::decay_t<decltype(VALUE(v))>, 2> {v[1], -v[0]};
 }
 
 template <class V, class U>
@@ -819,7 +818,7 @@ perp(V const & v, U const & n)
 {
     if constexpr (is_scalar<U>) {
         static_assert(2==v.size(), "Dimension error.");
-        return Small<std::decay_t<decltype(FLAT(v) * n)>, 2> {v[1]*n, -v[0]*n};
+        return Small<std::decay_t<decltype(VALUE(v) * n)>, 2> {v[1]*n, -v[0]*n};
     } else {
         static_assert(3==v.size(), "Dimension error.");
         return cross(v, n);

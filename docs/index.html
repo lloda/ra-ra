@@ -1739,7 +1739,7 @@ Next: <a href="#The-future" accesskey="n" rel="next">The future</a>, Previous: <
 <li><a href="#Term-agreement" accesskey="3">Term agreement</a></li>
 <li><a href="#Loop-types" accesskey="4">Loop types</a></li>
 <li><a href="#Introspection" accesskey="5">Introspection</a></li>
-<li><a href="#Compiling-and-running" accesskey="6">Compiling and running</a></li>
+<li><a href="#Building-with-ra_003a_003a" accesskey="6">Building with <code>ra::</code></a></li>
 </ul>
 <hr>
 <div class="section" id="Headers">
@@ -1777,9 +1777,9 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
-<p><b>Iterator</b>s have two traversal functions. The first one, <code>.adv(k, d)</code>, moves the iterator along any axis <var>k</var>. The other one, <code>.mov(d)</code>, is used on linearized views of the array. The methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> are used to determine the extent of these linearized views. In this way, a loop involving <b>Iterator</b>s can have its inner loop unfolded, which is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+<p><b>Iterator</b>s have two traversal functions: <code>.adv(k, d)</code>, moves the iterator along any dimension <var>k</var>, and <code>.mov(d)</code>, is used on linearized views of the array. The methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> are used to determine the extent of these linearized views. In this way, a loop involving <b>Iterator</b>s can have its inner loop unfolded, which is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
-<p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element of the expression.
+<p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element.
 </p>
 </li></ul>
 
@@ -1793,7 +1793,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 </div>
 <span id="Term-agreement-1"></span><h3 class="section">5.3 Term agreement</h3>
 
-<p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>iota()</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
+<p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>iota()</code> or dimensions created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
 <p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v26) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
@@ -1815,7 +1815,7 @@ Next: <a href="#Introspection" accesskey="n" rel="next">Introspection</a>, Previ
 <div class="section" id="Introspection">
 <div class="header">
 <p>
-Next: <a href="#Compiling-and-running" accesskey="n" rel="next">Compiling and running</a>, Previous: <a href="#Loop-types" accesskey="p" rel="prev">Loop types</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Building-with-ra_003a_003a" accesskey="n" rel="next">Building with <code>ra::</code></a>, Previous: <a href="#Loop-types" accesskey="p" rel="prev">Loop types</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Introspection-1"></span><h3 class="section">5.5 Introspection</h3>
 
@@ -1843,12 +1843,12 @@ Next: <a href="#Compiling-and-running" accesskey="n" rel="next">Compiling and ru
 
 <hr>
 </div>
-<div class="section" id="Compiling-and-running">
+<div class="section" id="Building-with-ra_003a_003a">
 <div class="header">
 <p>
 Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Compiling-and-running-1"></span><h3 class="section">5.6 Compiling and running</h3>
+<span id="Building-with-ra_003a_003a-1"></span><h3 class="section">5.6 Building with <code>ra::</code></h3>
 
 <p>The following <code>#define</code>s affect the behavior of <code>ra::</code>.
 </p>
@@ -1859,7 +1859,7 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 </li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0): Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
 </li></ul>
 
-<p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>. Like most expression template libraries, <code>ra::</code> is highly dependent on optimization by the compiler and will be orders of magnitude slower with <samp>-O0</samp> compared to <samp>-O2</samp>.
+<p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>. <code>ra::</code> is highly dependent on optimization by the compiler and will be much slower with <samp>-O0</samp>.
 </p>
 <p>The following environment variables affect the test suite under SCons:
 </p>

@@ -65,7 +65,7 @@ struct CellBig
         }
     }
     constexpr CellBig(CellBig const & ci) = default;
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    RA_ASSIGNOPS_DEFAULT_SET
 
     constexpr decltype(auto)
     at(auto const & i) const
@@ -163,13 +163,13 @@ struct View
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
     constexpr View(View && x) = default;
     constexpr View(View const & x) = default;
-// cf RA_DEF_ASSIGNOPS_SELF [ra38] [ra34]
+// cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     View const & operator=(View && x) const { start(*this) = x; return *this; }
     View const & operator=(View const & x) const { start(*this) = x; return *this; }
-#define DEF_ASSIGNOPS(OP)                                               \
+#define ASSIGNOPS(OP)                                               \
     View const & operator OP (auto && x) const { start(*this) OP x; return *this; }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
+#undef ASSIGNOPS
 // braces row-major ravel for rank!=1. See Container::fill1
     using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
     View const & operator=(ravel_arg const x) const
@@ -412,10 +412,10 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr operator T & () { return view(); }
 
 // non-copy assignment operators follow View, but cannot be just using'd because of constness.
-#define DEF_ASSIGNOPS(OP)                                               \
+#define ASSIGNOPS(OP)                                               \
     template <class X> Container & operator OP (X && x) { view() OP x; return *this; }
-    FOR_EACH(DEF_ASSIGNOPS, =, *=, +=, -=, /=)
-#undef DEF_ASSIGNOPS
+    FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
+#undef ASSIGNOPS
     using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
     Container & operator=(ravel_arg const x) { view() = x; return *this; }
     constexpr Container & operator=(braces<T, RANK> x) requires (RANK!=ANY) { view() = x; return *this; }

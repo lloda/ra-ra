@@ -47,17 +47,17 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 // --------------------
 
 // Forward to make sure value y is not misused as ref [ra5].
-#define RA_DEF_ASSIGNOPS_LINE(OP)                                       \
+#define RA_ASSIGNOPS_LINE(OP) \
     for_each([](auto && y, auto && x) { RA_FWD(y) OP x; }, *this, x)
-#define RA_DEF_ASSIGNOPS(OP)                                            \
-    constexpr void operator OP(auto && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
-// But see local DEF_ASSIGNOPS elsewhere.
-#define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
-    FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
+#define RA_ASSIGNOPS(OP) \
+    constexpr void operator OP(auto && x) { RA_ASSIGNOPS_LINE(OP); }
+// But see local ASSIGNOPS elsewhere.
+#define RA_ASSIGNOPS_DEFAULT_SET \
+    FOR_EACH(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 // Restate for expression classes since a template doesn't replace the copy assignment op.
-#define RA_DEF_ASSIGNOPS_SELF(TYPE)                                     \
-    TYPE & operator=(TYPE && x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
-    TYPE & operator=(TYPE const & x) { RA_DEF_ASSIGNOPS_LINE(=); return *this; } \
+#define RA_ASSIGNOPS_SELF(TYPE)                                     \
+    TYPE & operator=(TYPE && x) { RA_ASSIGNOPS_LINE(=); return *this; } \
+    TYPE & operator=(TYPE const & x) { RA_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE(TYPE && x) = default;                                \
     constexpr TYPE(TYPE const & x) = default;
 
@@ -72,7 +72,7 @@ template <class C>
 struct Scalar
 {
     C c;
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    RA_ASSIGNOPS_DEFAULT_SET
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); }
     constexpr static dim_t len(int k) { std::abort(); }
@@ -113,8 +113,8 @@ struct Ptr
     [[no_unique_address]] N const n = {};
 
     constexpr Ptr(I i, N n): i(i), n(n) {}
-    RA_DEF_ASSIGNOPS_SELF(Ptr)
-    RA_DEF_ASSIGNOPS_DEFAULT_SET
+    RA_ASSIGNOPS_SELF(Ptr)
+    RA_ASSIGNOPS_DEFAULT_SET
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
     constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }
@@ -233,7 +233,6 @@ inside(is_iota auto const & i, dim_t l)
     return (inside(i.i, l) && inside(i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
-// Never ply(), solely to be rewritten.
 constexpr struct Len
 {
     consteval static rank_t rank() { return 0; }
@@ -254,8 +253,12 @@ RA_IS_DEF(has_len, false);
 
 
 // --------------
-// coerce potential Iterators
+// making Iterators
 // --------------
+
+// TODO arbitrary exprs?
+template <int cr> constexpr auto
+iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
 
 template <class T>
 constexpr void
@@ -272,13 +275,8 @@ constexpr auto
 start(is_scalar auto && t) { return ra::scalar(RA_FWD(t)); }
 
 // forward declare for Match; implemented in small.hh.
-template <class T> requires (is_builtin_array<T>)
 constexpr auto
-start(T && t);
-
-// TODO fovs? arbitrary exprs?
-template <int cr, class A> constexpr auto
-iter(A && a) { return RA_FWD(a).template iter<cr>(); }
+start(is_builtin_array auto && t);
 
 // neither CellBig nor CellSmall will retain rvalues [ra4].
 constexpr auto

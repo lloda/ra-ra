@@ -21,7 +21,7 @@ namespace ra {
 
 template <class A>
 constexpr decltype(auto)
-FLAT(A && a)
+VALUE(A && a)
 {
     if constexpr (is_scalar<A>) {
         return RA_FWD(a); // avoid dangling temp in this case [ra8] (?? maybe unnecessary)
@@ -33,7 +33,7 @@ FLAT(A && a)
 }
 
 // FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using value_t = std::decay_t<decltype(FLAT(std::declval<A>()))>;
+template <class A> using value_t = std::decay_t<decltype(VALUE(std::declval<A>()))>;
 
 
 // ---------------------
@@ -103,9 +103,9 @@ struct WithLen<Iota<w, N, O, S>>
     f(Ln ln, E && e)
     {
 // usable iota types must be either is_constant or is_scalar.
-        return iota<w>(FLAT(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
-                       FLAT(WithLen<std::decay_t<O>>::f(ln, RA_FWD(e).i)),
-                       FLAT(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
+        return iota<w>(VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
+                       VALUE(WithLen<std::decay_t<O>>::f(ln, RA_FWD(e).i)),
+                       VALUE(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
     }
 };
 
@@ -115,7 +115,7 @@ struct WithLen<Ptr<I, N>>
     template <class Ln, class E> constexpr static decltype(auto)
     f(Ln ln, E && e)
     {
-        return ptr(RA_FWD(e).i, FLAT(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)));
+        return ptr(RA_FWD(e).i, VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)));
     }
 };
 

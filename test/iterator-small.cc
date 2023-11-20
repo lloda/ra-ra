@@ -23,11 +23,11 @@ int main()
             A a = {{1, 2, 3}, {4, 5, 6}};
             cout << a << endl;
 
-            using AI0 = typename A::iterator<0>;
+            using AI0 = decltype(a.iter<0>());
             cout << "AI0 " << std::is_same_v<int, AI0> << endl;
             cout << AI0::rank() << endl;
 
-            using AI1 = typename A::iterator<1>;
+            using AI1 = decltype(a.iter<1>());
             cout << "AI1 " << std::is_same_v<int, AI1> << endl;
             cout << AI1::rank() << endl;
 

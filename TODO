@@ -78,12 +78,11 @@ checkbox [C-ct] flip TODO
         - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
         - [ ] Iota. But Iota args need to integral constants for this to work.
       - [ ] Optimize iota(len...) + iota(len...)
-  - [-] Performance [1/4]
+  - [-] Performance [2/4]
     - [ ] bench/bench-stencil* is weird.
     - [ ] Bigd cases in bench-at.
-    - [ ] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
-      in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ? See also
-      FLAT().
+    - [X] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
+      in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ?
     - [X] During traversal (ply) the pattern loc = save_location(it); move flat;
       it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
       so this would be cheap. The current design is that move flat can't modify it so it has to be a
@@ -134,7 +133,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   5. [ ]
   6. [ ]
   7. [ ]
-  8. [ ] test/operators.cc: Some simple expressions with scalars fail in *FLAT(). The patch in ra.hh
+  8. [X] test/operators.cc: Some simple expressions with scalars fail in VALUE(). The patch in ra.hh
      triggers the address sanitizer in test/ra-9.cc.
   9. [ ] test/ra-6.cc: ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so
      ra::ptr(temp) must only be used as temp. Really forbidding auto ll = ra::ptr(lvalue) would also

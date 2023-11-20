@@ -14,10 +14,10 @@ namespace ra {
 
 template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e); }
 
-// FIXME only reduces iota exprs as op'ed on in ra.hh (operators), not a tree like WithLen does.
+// FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like WithLen does.
 #if RA_DO_OPT_IOTA==1
 // TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
-template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<value_t<X>>;
+template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<value_t<X>>;
 
 // TODO something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
@@ -25,62 +25,58 @@ template <class X> constexpr bool iota_op = ra::is_zero_or_scalar<X> && std::is_
 // FIXME gets() vs p2781r2
 // qualified ra::iota is necessary not to pick std::iota through ADL (test/headers.cc).
 
-// plus
-template <class I, class J> requires (is_iota<I> && iota_op<J>)
+template <is_iota I, iota_op J>
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(0).n, ITEM(0).i+ITEM(1), ITEM(0).s);
 }
-template <class I, class J> requires (iota_op<I> && is_iota<J>)
+template <iota_op I, is_iota J>
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i, ITEM(1).s);
 }
-template <class I, class J> requires (is_iota<I> && is_iota<J>)
+template <is_iota I, is_iota J>
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets());
 }
 
-// minus
-template <class I, class J> requires (is_iota<I> && iota_op<J>)
+template <is_iota I, iota_op J>
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(0).n, ITEM(0).i-ITEM(1), ITEM(0).s);
 }
-template <class I, class J> requires (iota_op<I> && is_iota<J>)
+template <iota_op I, is_iota J>
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i, -ITEM(1).s);
 }
-template <class I, class J> requires (is_iota<I> && is_iota<J>)
+template <is_iota I, is_iota J>
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 {
     return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets());
 }
 
-// times
-template <class I, class J> requires (is_iota<I> && iota_op<J>)
+template <is_iota I, iota_op J>
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).gets()*ITEM(1));
 }
-template <class I, class J> requires (iota_op<I> && is_iota<J>)
+template <iota_op I, is_iota J>
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
 {
     return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets());
 }
 
-// negate
-template <class I> requires (is_iota<I>)
+template <is_iota I>
 constexpr auto
 optimize(Expr<std::negate<>, std::tuple<I>> && e)
 {
@@ -91,16 +87,15 @@ optimize(Expr<std::negate<>, std::tuple<I>> && e)
 
 #if RA_DO_OPT_SMALLVECTOR==1
 
-// FIXME peel qualifiers from start() parameter, to ignore SmallBase<SmallArray> vs SmallBase<SmallView> or const vs nonconst.
-template <class A, class T, dim_t N> constexpr bool match_smallvector =
+// FIXME I'm not able to match CellSmall directly, maybe bc N is in std::array { Dim { N, 1 } }.
+template <class A, class T, dim_t N> constexpr bool match_small =
     std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template iterator<0>>
     || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template const_iterator<0>>;
 
-static_assert(match_smallvector<ra::CellSmall<double, ic_t<std::array { Dim { 4, 1 } }>, 0>, double, 4>);
+static_assert(match_small<ra::CellSmall<double, ic_t<std::array { Dim { 4, 1 } }>, 0>, double, 4>);
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
-    template <class A, class B>                                         \
-    requires (match_smallvector<A, T, N> && match_smallvector<B, T, N>) \
+    template <class A, class B> requires (match_small<A, T, N> && match_small<B, T, N>) \
     constexpr auto                                                      \
     optimize(ra::Expr<NAME, std::tuple<A, B>> && e)                     \
     {                                                                   \
