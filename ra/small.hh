@@ -30,9 +30,8 @@ struct Dim { dim_t len, step; };
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
 
-template <class Dimv>
 constexpr bool
-is_c_order_dimv(Dimv const & dimv, bool unitstep=true)
+is_c_order_dimv(auto const & dimv, bool unitstep=true)
 {
     bool steps = true;
     dim_t s = 1;
@@ -49,8 +48,8 @@ is_c_order_dimv(Dimv const & dimv, bool unitstep=true)
     return s==0 || steps;
 }
 
-template <class V> constexpr bool
-is_c_order(V const & v, bool unitstep=true) { return is_c_order_dimv(v.dimv, unitstep); }
+constexpr bool
+is_c_order(auto const & v, bool unitstep=true) { return is_c_order_dimv(v.dimv, unitstep); }
 
 template <class Dimv, class S>
 constexpr dim_t
@@ -254,7 +253,7 @@ struct CellSmall
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
 
-// see STLIterator for the case of s_[0]=0, etc. [ra12].
+// see STLIterator for len(0)=0, etc. [ra12].
     constexpr CellSmall(T * p): c { p } {}
     constexpr CellSmall(CellSmall const & ci) = default;
     RA_DEF_ASSIGNOPS_DEFAULT_SET
@@ -271,7 +270,7 @@ struct CellSmall
         }
     }
     constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
-    constexpr ctype operator*() const requires (0!=cellr) { return c; } // FIXME cf CellBig
+    constexpr ctype operator*() const requires (0!=cellr) { return c; }
     constexpr auto save() const { return c.cp; }
     constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr void mov(dim_t d) { c.cp += d; }
@@ -394,14 +393,14 @@ struct SmallBase
                  "Out of range for len[", k, "]=", len(k), ": ", i, ".");
         return step(k)*i;
     }
-    template <int k, class I> requires (is_iota<I>)
+    template <int k>
     constexpr static dim_t
-    select(I i)
+    select(is_iota auto i)
     {
         if constexpr (0==i.n) {
             return 0;
         } else if constexpr ((1==i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME c++23 std::abs
-            static_assert(always_false<I>, "Out of range.");
+            static_assert(always_false<k>, "Out of range.");
         } else {
             RA_CHECK(inside(i, len(k)),
                      "Out of range for len[", k, "]=", len(k), ": iota [", i.n, " ", i.i, " ", i.s, "]");
@@ -526,6 +525,7 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
 {
     using Base = SmallBase<SmallView, T, lens, steps>;
     using Base::operator=;
+    using ViewConst = SmallView<T const, lens, steps>;
 
     T * cp;
     constexpr SmallView(T * cp_): cp(cp_) {}
@@ -533,7 +533,6 @@ struct SmallView: public SmallBase<SmallView, T, lens, steps>
 
     constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return cp[0]; }
     constexpr operator T & () { static_assert(Base::convertible_to_scalar); return cp[0]; }
-    using ViewConst = SmallView<T const, lens, steps>;
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
     constexpr SmallView const & view() const { return *this; }
     constexpr SmallView & view() { return *this; }

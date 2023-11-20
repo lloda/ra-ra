@@ -162,7 +162,7 @@ from(A && a, I && ... i)
 // Array versions of operators and functions
 // --------------------------------
 
-// We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion from zero->scalar is also needed. That is, without those specializations, ra::View<complex, 0> * complex will fail.
+// We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit conversion to scalar is also needed, and e.g. ra::View<complex, 0> * complex would fail.
 // The function objects are matched in optimize.hh.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
@@ -748,7 +748,7 @@ hodge(Va & a)
     return a;
 }
 
-template <int D, int Oa, int Ob, class A, class B> requires (ra::is_scalar<A> && ra::is_scalar<B>)
+template <int D, int Oa, int Ob, class A, class B> requires (is_scalar<A> && is_scalar<B>)
 constexpr auto
 wedge(A const & a, B const & b) { return a*b; }
 

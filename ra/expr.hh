@@ -147,8 +147,8 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         return (std::decay_t<P>::keep_step(st, z, j) && ...);
     }
     constexpr auto save() const { return std::make_tuple(std::get<I>(t).save() ...); }
-    template <class PP> constexpr void load(PP const & pp) { ((std::get<I>(t).load(std::get<I>(pp))), ...); }
-    template <class S> constexpr void mov(S const & s) { ((std::get<I>(t).mov(std::get<I>(s))), ...); }
+    constexpr void load(auto const & pp) { ((std::get<I>(t).load(std::get<I>(pp))), ...); }
+    constexpr void mov(auto const & s) { ((std::get<I>(t).mov(std::get<I>(s))), ...); }
 };
 
 
@@ -211,9 +211,9 @@ struct Reframe
     }
     constexpr decltype(auto) operator*() const { return *a; }
     constexpr auto save() const { return a.save(); }
-    template <class P> constexpr void load(P const & p) { a.load(p); }
+    constexpr void load(auto const & p) { a.load(p); }
 // FIXME only if Dest preserves axis order, which is how wrank works, but this limitation should be explicit.
-    template <class S> constexpr void mov(S const & s) { a.mov(s); }
+    constexpr void mov(auto const & s) { a.mov(s); }
 };
 
 // Optimize no-op case. TODO If A is CellBig, etc. beat Dest on it, same for eventual transpose_expr<>.

@@ -50,7 +50,7 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 #define RA_DEF_ASSIGNOPS_LINE(OP)                                       \
     for_each([](auto && y, auto && x) { RA_FWD(y) OP x; }, *this, x)
 #define RA_DEF_ASSIGNOPS(OP)                                            \
-    template <class X> constexpr void operator OP(X && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
+    constexpr void operator OP(auto && x) { RA_DEF_ASSIGNOPS_LINE(OP); }
 // But see local DEF_ASSIGNOPS elsewhere.
 #define RA_DEF_ASSIGNOPS_DEFAULT_SET                \
     FOR_EACH(RA_DEF_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -227,9 +227,8 @@ RA_IS_DEF(is_iota, false)
 template <class N, class O, class S>
 constexpr bool is_iota_def<Iota<0, N, O, S>> = (BAD != Iota<0, N, O, S>::nn);
 
-template <class I>
 constexpr bool
-inside(I const & i, dim_t l) requires (is_iota<I>)
+inside(is_iota auto const & i, dim_t l)
 {
     return (inside(i.i, l) && inside(i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
@@ -262,17 +261,15 @@ template <class T>
 constexpr void
 start(T && t) { static_assert(always_false<T>, "Type cannot be start()ed."); }
 
-template <class T> requires (is_fov<T>)
 constexpr auto
-start(T && t) { return ra::ptr(RA_FWD(t)); }
+start(is_fov auto && t) { return ra::ptr(RA_FWD(t)); }
 
 template <class T>
 constexpr auto
 start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
 
-template <class T> requires (is_scalar<T>)
 constexpr auto
-start(T && t) { return ra::scalar(RA_FWD(t)); }
+start(is_scalar auto && t) { return ra::scalar(RA_FWD(t)); }
 
 // forward declare for Match; implemented in small.hh.
 template <class T> requires (is_builtin_array<T>)
@@ -284,9 +281,8 @@ template <int cr, class A> constexpr auto
 iter(A && a) { return RA_FWD(a).template iter<cr>(); }
 
 // neither CellBig nor CellSmall will retain rvalues [ra4].
-template <SliceConcept T>
 constexpr auto
-start(T && t) { return iter<0>(RA_FWD(t)); }
+start(SliceConcept auto && t) { return iter<0>(RA_FWD(t)); }
 
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
 
@@ -295,8 +291,7 @@ template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
 start(T & t) { return t; }
 
-template <class T> requires (is_iterator<T>)
 constexpr decltype(auto)
-start(T && t) { return RA_FWD(t); }
+start(is_iterator auto && t) { return RA_FWD(t); }
 
 } // namespace ra

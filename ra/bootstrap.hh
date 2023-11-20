@@ -18,11 +18,6 @@
 #include <version>
 #include <source_location>
 
-
-// ---------------------
-// Default #defines.
-// ---------------------
-
 // benchmark shows it's bad by default; probably requires optimizing also +=, etc.
 #ifndef RA_DO_OPT_SMALLVECTOR
 #define RA_DO_OPT_SMALLVECTOR 0
@@ -119,7 +114,7 @@ concept SliceConcept = requires (A a)
 // FIXME https://wg21.link/p2841r0 ?
 #define RA_IS_DEF(NAME, PRED)                                           \
     template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
-    template <class A> constexpr bool NAME = JOIN(NAME, _def)<std::decay_t< A >>;
+    template <class A> concept NAME = JOIN(NAME, _def)<std::decay_t< A >>;
 
 RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A> || ra::is_constant<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
