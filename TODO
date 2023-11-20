@@ -36,7 +36,8 @@ checkbox [C-ct] flip TODO
       A(vector, iota, vector) the iota isn't beaten. [ra33].
     - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] bad uses of assert [ra17]
-  - [-] Features [1/12]
+  - [-] Features [1/13]
+    - [ ] support expr = braces for any expr, not just views.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
     - [ ] Can choose iteration order in plyers. Order is already explicit, just need to expose it.
@@ -47,20 +48,22 @@ checkbox [C-ct] flip TODO
       - [ ] Small
       - [ ] Big
     - [ ] Support ra::len in x in o.len(x).
-    - [ ] Should be able to reshape iota (??). One idea is to generalize View (so View<Iota>, etc.)
+    - [-] Should be able to reshape iota (??). One idea is to generalize View (so View<Iota>, etc.)
       which is something that newra does. But as long as Container is parent of View, conversion of
       (Container const &) into (View const &) forces us to have const/nonconst overloads in View
       (instead of just relying on the constness of (View::p). This is just a mess when View::p isn't
       a pointer.
-      - [ ] Fix relationship between Container and View [0/5]
-        - [ ] forward const/nonconst overloads to View or ViewConst from here.
+      - [-] Fix relationship between Container and View [3/5]
+        - [X] forward const/nonconst overloads to View or ViewConst from here.
+        - [X] add const/nonconst casts of Container to View or ViewConst
+        - [X] remove const overloads from View::operator()
         - [ ] remove inheritance relationship of Container on View
-        - [ ] add const/nonconst casts of Container to View or ViewConst
-        - [ ] remove const overloads from View::operator()
         - [ ] make View be View<pointer> and not View<value_type>
     - [ ] Should be able to turn ravel iterators (e.g. View::begin()) into array iterators. Ptr()
       doesn't work for that. Or to obtain STLIterator from any array iterator. That may come of
       merging STLIterator with plyers.
+      - This has become more feasible after changing the iterator interface from flat to saveload,
+        main obstacle atm seems to be the need to support copy. <2023-11-20 Mon 12:45>
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
     - [ ] port some of the View ops to generic Iterator. reverse, transpose, etc. seem easy
       enough. Only it kind of bothers me that they need their own Expr-like types while on Views

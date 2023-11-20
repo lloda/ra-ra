@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 25
-@set UPDATED 2023 November 1
+@set VERSION 26
+@set UPDATED 2023 November 20
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -305,7 +305,7 @@ The following headers are @emph{not} included by default:
 @item @code{"ra/test.hh"}, @code{"ra/bench.hh"}: Used by the test and benchmark suites.
 @end itemize
 
-The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/bootstrap.hh"} before the rest of @code{ra::}. All other headers are for internal use by @code{ra::}.
+The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/bootstrap.hh"} before the rest of @code{ra::} in order to override the default handler. All other headers are for internal use by @code{ra::}.
 
 @cindex container
 @c ------------------------------------------------
@@ -492,7 +492,7 @@ you may pass it an object of type @code{ra::Big<int, 3>}.
 @section Array operations
 @c ------------------------------------------------
 
-To apply an operation to each element of an array, use the function @code{for_each}. The array is traversed in an order that is decided by the library.
+To apply an operation to each element of an array, use the function @ref{x-for_each,@code{for_each}}. The array is traversed in an order that is decided by the library.
 
 @example
 @verbatim
@@ -1903,9 +1903,9 @@ See also @ref{x-collapse,@code{collapse}}.
 
 @cindex @code{for_each}
 @anchor{x-for_each} @defun for_each op expr ...
-Create an array expression that applies @var{op} to @var{expr} ..., and traverse it.
+Create an array expression that applies @var{op} to @var{expr} ..., and traverse it. The return value of @var{op} is discarded.
 
-@var{op} is run for effect; whatever it returns is discarded. For example:
+For example:
 @example
 @verbatim
 double s = 0.;

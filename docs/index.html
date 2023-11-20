@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 25, updated 2023 November 1)
+<!-- ra:: (version 26, updated 2023 November 20)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 25, updated 2023 November 1)
+<p><code>ra::</code> (version 26, updated 2023 November 20)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -421,7 +421,7 @@ int main()
 </li><li> <code>&quot;ra/test.hh&quot;</code>, <code>&quot;ra/bench.hh&quot;</code>: Used by the test and benchmark suites.
 </li></ul>
 
-<p>The header <code>&quot;ra/bootstrap.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/bootstrap.hh&quot;</code> before the rest of <code>ra::</code>. All other headers are for internal use by <code>ra::</code>.
+<p>The header <code>&quot;ra/bootstrap.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/bootstrap.hh&quot;</code> before the rest of <code>ra::</code> in order to override the default handler. All other headers are for internal use by <code>ra::</code>.
 </p>
 <span id="index-container"></span>
 <hr>
@@ -583,7 +583,7 @@ Next: <a href="#Rank-extension" accesskey="n" rel="next">Rank extension</a>, Pre
 </div>
 <span id="Array-operations-1"></span><h3 class="section">2.3 Array operations</h3>
 
-<p>To apply an operation to each element of an array, use the function <code>for_each</code>. The array is traversed in an order that is decided by the library.
+<p>To apply an operation to each element of an array, use the function <a href="#x_002dfor_005feach"><code>for_each</code></a>. The array is traversed in an order that is decided by the library.
 </p>
 <div class="example">
 <pre class="verbatim">ra::Small&lt;double, 2, 3&gt; a = {{1, 2, 3}, {4, 5, 6}};
@@ -1344,13 +1344,7 @@ ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start(
 ra::ptr(z) += p; // ok, shape is determined by foreign object p
 </pre></div>
 
-<span id="x_002dis_002dscalar"></span><p>Some types are accepted automatically as scalars. These include:
-</p><ul>
-<li> Any type <code>T</code> for which <code>std::is_scalar_v&lt;T&gt;</code> is true, <em>except</em> pointers. These include <code>char</code>, <code>int</code>, <code>double</code>, etc.
-</li><li> <code>std::complex&lt;T&gt;</code>, if you import <code>ra/complex.hh</code>.
-</li></ul>
-
-<p>You can add your own types as scalar types with the following declaration (see <code>ra/complex.hh</code>):
+<span id="x_002dis_002dscalar"></span><p>Some types are accepted automatically as scalars. These include non-pointer types for which <code>std::is_scalar_v</code> is true, like <code>char</code>, <code>int</code>, <code>double</code>, etc. as well as <code>std::complex&lt;T&gt;</code>. You can add your own types as scalar types with the following declaration:
 </p>
 <pre class="verbatim">    namespace ra { template &lt;&gt; constexpr bool is_scalar_def&lt;MYTYPE&gt; = true; }
 </pre>
@@ -1783,13 +1777,9 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
-<p><b>Iterator</b>s provide a <code>flat()</code> method to obtain a linearized view of a section of the array. Together with the methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> and <code>adv()</code>, a loop involving <b>Iterator</b>s can have its inner loop unfolded and traversed using <b>Flat</b> objects. This is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+<p><b>Iterator</b>s have two traversal functions. The first one, <code>.adv(k, d)</code>, moves the iterator along any axis <var>k</var>. The other one, <code>.mov(d)</code>, is used on linearized views of the array. The methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> are used to determine the extent of these linearized views. In this way, a loop involving <b>Iterator</b>s can have its inner loop unfolded, which is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
 </p>
 <p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element of the expression.
-</p>
-</li><li> <b>Flat</b> <code>Iota::Flat</code>, <code>Scalar</code>, <code>Expr::Flat</code>, <code>Pick::Flat</code>, <code>CellFlat</code>
-
-<p>These are types that support ‘forward iterator’ traversal. They have methods <code>operator+=</code> (to advance) and <code>operator*</code> (to derreference). <b>Flat</b> objects are obtained from <b>Iterator</b> objects through a method <code>flat()</code>. <code>Scalar</code> is its own <b>Flat</b>.
 </p>
 </li></ul>
 
@@ -1805,9 +1795,9 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 
 <p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>iota()</code> or view axes created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
-<p>Then we select a traversal method depending on the types of the arguments. <code>ra::</code> has two traversal methods, both based on pointer-like iterators. <code>ply_ravel</code> is used for rt-size expressions and <code>plyf</code> for ct-size expressions.
+<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v26) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
-<p>Finally we select an order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v25) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
+<p>Finally we select a traversal method. <code>ra::</code> has two traversal methods: <code>ply_fixed</code> can be used when the rank and the traversal order are known at compile time, and <code>ply_ravel</code> can be used in the general case.
 </p>
 <hr>
 </div>
@@ -2013,9 +2003,9 @@ See also <a href="#x_002dexplode"><code>explode</code></a>.
 <span id="index-for_005feach"></span>
 <span id="x_002dfor_005feach"></span><dl class="def">
 <dt id="index-for_005feach-1"><span class="category">Function: </span><span><strong>for_each</strong> <em>op expr ...</em><a href='#index-for_005feach-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ..., and traverse it.
+<dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ..., and traverse it. The return value of <var>op</var> is discarded.
 </p>
-<p><var>op</var> is run for effect; whatever it returns is discarded. For example:
+<p>For example:
 </p><div class="example">
 <pre class="verbatim">double s = 0.;
 for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2., 3})

@@ -510,8 +510,9 @@ struct SmallBase
     constexpr static bool def = is_c_order_dimv(dimv);
     constexpr auto begin() const { if constexpr (def) return data(); else return STLIterator(iter()); }
     constexpr auto begin() { if constexpr (def) return data(); else return STLIterator(iter()); }
-    constexpr auto end() const { if constexpr (def) return data()+size(); else return std::default_sentinel; }
-    constexpr auto end() { if constexpr (def) return data()+size(); else return std::default_sentinel; }
+    constexpr auto end() const requires (def) { return data()+size(); }
+    constexpr auto end() requires (def) { return data()+size(); }
+    constexpr static auto end() requires (!def) { return std::default_sentinel; }
 };
 
 
