@@ -267,9 +267,8 @@ struct View
             return unbeat<sizeof...(I)>::op(*this, RA_FWD(i) ...);
         }
     }
-    template <class ... I>
     constexpr decltype(auto)
-    operator[](I && ... i) const { return (*this)(RA_FWD(i) ...); }
+    operator[](auto && ... i) const { return (*this)(RA_FWD(i) ...); }
 
     template <class I>
     constexpr decltype(auto)
@@ -394,12 +393,12 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     constexpr T & back() { RA_CHECK(1==rank() && size()>0); return store[size()-1]; }
     constexpr auto data() { return view().data(); }
     constexpr auto data() const { return view().data(); }
-    template <class ... A> constexpr decltype(auto) operator()(A && ... a) { return view()(RA_FWD(a) ...); }
-    template <class ... A> constexpr decltype(auto) operator()(A && ... a) const { return view()(RA_FWD(a) ...); }
-    template <class ... A> constexpr decltype(auto) operator[](A && ... a) { return view()(RA_FWD(a) ...); }
-    template <class ... A> constexpr decltype(auto) operator[](A && ... a) const { return view()(RA_FWD(a) ...); }
-    template <class I> constexpr decltype(auto) at(I && i) { return view().at(RA_FWD(i)); }
-    template <class I> constexpr decltype(auto) at(I && i) const { return view().at(RA_FWD(i)); }
+    constexpr decltype(auto) operator()(auto && ... a) { return view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) operator()(auto && ... a) const { return view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) operator[](auto && ... a) { return view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) operator[](auto && ... a) const { return view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) at(auto && i) { return view().at(RA_FWD(i)); }
+    constexpr decltype(auto) at(auto && i) const { return view().at(RA_FWD(i)); }
 // container is always compact/row-major, so STL-like iterators can be raw pointers.
     constexpr auto begin() const { assert(is_c_order(view())); return view().data(); }
     constexpr auto begin() { assert(is_c_order(view())); return view().data(); }
@@ -413,7 +412,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
 // non-copy assignment operators follow View, but cannot be just using'd because of constness.
 #define ASSIGNOPS(OP)                                               \
-    template <class X> Container & operator OP (X && x) { view() OP x; return *this; }
+    Container & operator OP (auto && x) { view() OP x; return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
     using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
@@ -440,19 +439,13 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 // provided so that {} calls shape_arg constructor below.
     Container() requires (ANY==RANK): View({ Dim {0, 1} }, nullptr) {}
     Container() requires (ANY!=RANK && 0!=RANK): View(typename View::Dimv(Dim {0, 1}), nullptr) {}
-    Container() requires (0==RANK): Container({}, ra::none) {}
+    Container() requires (0==RANK): Container({}, none) {}
 
 // shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
     Container(shape_arg const & s, none_t) { init(s); }
-
-    template <class XX>
-    Container(shape_arg const & s, XX && x): Container(s, none) { iter() = x; }
-
-    Container(shape_arg const & s, braces<T, RANK> x) requires (RANK==1)
-        : Container(s, none) { view() = x; }
-
-    template <class XX>
-    Container(XX && x): Container(ra::shape(x), none) { iter() = x; }
+    Container(shape_arg const & s, auto && x): Container(s, none) { iter() = x; }
+    Container(shape_arg const & s, braces<T, RANK> x) requires (RANK==1) : Container(s, none) { view() = x; }
+    Container(auto && x): Container(ra::shape(x), none) { iter() = x; }
 
     Container(braces<T, RANK> x) requires (RANK!=ANY)
         : Container(braces_shape<T, RANK>(x), none) { view() = x; }
@@ -463,9 +456,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 #undef RA_BRACES_ANY
 
 // FIXME requires T to be copiable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
-    template <class Xbegin>
     constexpr void
-    fill1(Xbegin xbegin, dim_t xsize)
+    fill1(auto xbegin, dim_t xsize)
     {
         RA_CHECK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
         std::ranges::copy_n(xbegin, xsize, begin());
@@ -478,22 +470,18 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         : Container(s, none) { fill1(x.begin(), x.size()); }
 
 // FIXME remove
-    template <class TT>
-    Container(shape_arg const & s, TT * p)
+    Container(shape_arg const & s, auto * p)
         : Container(s, none) { fill1(p, size()); } // FIXME fake check
 // FIXME remove
-    template <class P>
-    Container(shape_arg const & s, P pbegin, dim_t psize)
+    Container(shape_arg const & s, auto pbegin, dim_t psize)
         : Container(s, none) { fill1(pbegin, psize); }
 
-// for SS that doesn't convert implicitly to shape_arg
-    template <class SS>
-    Container(SS && s, none_t) { init(RA_FWD(s)); }
-    template <class SS, class XX>
-    Container(SS && s, XX && x)
+// for shape arguments that doesn't convert implicitly to shape_arg
+    Container(auto && s, none_t)
+        { init(RA_FWD(s)); }
+    Container(auto && s, auto && x)
         : Container(RA_FWD(s), none) { iter() = x; }
-    template <class SS>
-    Container(SS && s, std::initializer_list<T> x)
+    Container(auto && s, std::initializer_list<T> x)
         : Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
 
 // resize first axis or full shape. Only for some kinds of store.
@@ -533,8 +521,7 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
         ++View::dimv[0].len;
         View::cp = store.data();
     }
-    template <class ... A>
-    void emplace_back(A && ... a)
+    void emplace_back(auto && ... a)
     {
         static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
         store.emplace_back(RA_FWD(a) ...);
@@ -639,7 +626,7 @@ with_same_shape(E && e)
     if constexpr (ANY!=size_s<concrete_type<E>>()) {
         return concrete_type<E>();
     } else {
-        return concrete_type<E>(ra::shape(e), ra::none);
+        return concrete_type<E>(ra::shape(e), none);
     }
 }
 
@@ -895,7 +882,7 @@ explode(View<T, RANK> const & a)
     return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>())>(a);
 }
 
-// FIXME Maybe namespace level generics in atom.hh
+// FIXME Maybe namespace level generics
 template <class T> inline int gstep(int i) { if constexpr (is_scalar<T>) return 1; else return T::step(i); }
 template <class T> inline int glen(int i) { if constexpr (is_scalar<T>) return 1; else return T::len(i); }
 

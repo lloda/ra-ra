@@ -292,18 +292,18 @@ operator<<(std::ostream & o, std::source_location const & loc)
     return o << loc.file_name() << ":" << loc.line() << "," << loc.column();
 }
 
-template <class ... A>
 constexpr std::string
-format(A && ... a)
+format(auto && ... a)
 {
-    if constexpr (sizeof ... (A)>0) {
+    if constexpr (sizeof... (a)>0) {
         std::ostringstream o; (o << ... << RA_FWD(a)); return o.str();
     } else {
         return "";
     }
 }
 
-constexpr std::string const & format(std::string const & s) { return s; }
+constexpr std::string const &
+format(std::string const & s) { return s; }
 
 } // namespace ra
 

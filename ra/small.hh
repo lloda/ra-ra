@@ -446,9 +446,8 @@ struct SmallBase
             return unbeat<sizeof...(I)>::op(*this, RA_FWD(i) ...); \
         }                                                               \
     }                                                                   \
-    template <class ... I>                                              \
     constexpr decltype(auto)                                            \
-    operator[](I && ... i) CONST { return (*this)(RA_FWD(i) ...); }     \
+    operator[](auto && ... i) CONST { return (*this)(RA_FWD(i) ...); }  \
                                                                         \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
@@ -640,7 +639,7 @@ peel(T && t)
 constexpr auto
 start(is_builtin_array auto && t)
 {
-    using A = std::remove_volatile_t<std::remove_reference_t<decltype(t)>>; // preserve const
+    using A = std::remove_reference_t<decltype(t)>; // preserve const
     using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
                                      mp::iota<std::rank_v<A>> {}));
     return SmallView<std::remove_all_extents_t<A>, lens, default_steps<lens>>(peel(t)).iter();

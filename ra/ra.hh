@@ -313,24 +313,21 @@ FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
 // FIXME C++23 and_then/or_else/etc
 // --------------------------------
 
-template <class A>
 constexpr bool
-any(A && a)
+any(auto && a)
 {
     return early(map([](bool x) { return x ? std::make_optional(true) : std::nullopt; }, RA_FWD(a)), false);
 }
 
-template <class A>
 constexpr bool
-every(A && a)
+every(auto && a)
 {
     return early(map([](bool x) { return !x ? std::make_optional(false) : std::nullopt; }, RA_FWD(a)), true);
 }
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
-template <class A>
 constexpr auto
-index(A && a)
+index(auto && a)
 {
     return early(map([](auto && a, auto && i) { return bool(a) ? std::make_optional(i) : std::nullopt; },
                      RA_FWD(a), ra::iota(ra::start(a).len(0))),
@@ -338,9 +335,8 @@ index(A && a)
 }
 
 // [ma108]
-template <class A, class B>
 constexpr bool
-lexicographical_compare(A && a, B && b)
+lexicographical_compare(auto && a, auto && b)
 {
     return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
                      RA_FWD(a), RA_FWD(b)),
@@ -411,12 +407,11 @@ prod(A && a)
     return c;
 }
 
-template <class A> constexpr auto reduce_sqrm(A && a) { return sum(sqrm(a)); }
-template <class A> constexpr auto norm2(A && a) { return std::sqrt(reduce_sqrm(a)); }
+constexpr auto reduce_sqrm(auto && a) { return sum(sqrm(a)); }
+constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
 
-template <class A, class B>
 constexpr auto
-dot(A && a, B && b)
+dot(auto && a, auto && b)
 {
     std::decay_t<decltype(VALUE(a) * VALUE(b))> c(0.);
     for_each([&c](auto && a, auto && b)
@@ -430,9 +425,8 @@ dot(A && a, B && b)
     return c;
 }
 
-template <class A, class B>
 constexpr auto
-cdot(A && a, B && b)
+cdot(auto && a, auto && b)
 {
     std::decay_t<decltype(conj(VALUE(a)) * VALUE(b))> c(0.);
     for_each([&c](auto && a, auto && b)
@@ -451,9 +445,8 @@ cdot(A && a, B && b)
 // Other whole-array ops.
 // --------------------
 
-template <class A>
 constexpr auto
-normv(A const & a)
+normv(auto const & a)
 {
     auto b = concrete(a);
     b /= norm2(b);
@@ -461,9 +454,8 @@ normv(A const & a)
 }
 
 // FIXME benchmark w/o allocation and do Small/Big versions if it's worth it.
-template <class A, class B, class C>
 constexpr void
-gemm(A const & a, B const & b, C & c)
+gemm(auto const & a, auto const & b, auto & c)
 {
     for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
 }
@@ -502,9 +494,8 @@ gemm(A const & a, B const & b)
 
 #undef MMTYPE
 
-template <class A, class B>
 constexpr auto
-gevm(A const & a, B const & b)
+gevm(auto const & a, auto const & b)
 {
     dim_t M=b.len(0), N=b.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty
@@ -516,9 +507,8 @@ gevm(A const & a, B const & b)
 }
 
 // FIXME a must be a view, so it doesn't work with e.g. gemv(conj(a), b).
-template <class A, class B>
 constexpr auto
-gemv(A const & a, B const & b)
+gemv(auto const & a, auto const & b)
 {
     dim_t M=a.len(0), N=a.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty

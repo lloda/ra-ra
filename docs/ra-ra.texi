@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 26
-@set UPDATED 2023 November 20
+@set UPDATED 2023 November 21
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1690,6 +1690,31 @@ cd ra && cinclude2dot.pl --include . > headers.dot
 dot -Tpng headers.dot -Gdpi=100 > headers.png
 @end verbatim
 }
+
+@itemize
+@item @code{tuples.hh} -
+Generic macros and tuple library.
+@item @code{bootstrap.hh} -
+Basic types, concepts, type predicates, introspection.
+@item @code{expr.hh} -
+Expression template nodes, prefix matching.
+@item @code{ply.hh} -
+Traversal, including I/O.
+@item @code{small.hh} -
+Array type with compile time dimensions.
+@item @code{big.hh} -
+Array type with run time dimensions.
+@item @code{optimize.hh} -
+Optimization templates.
+@item @code{ra.hh} -
+Functions and operators. Main header.
+@item @code{test.hh} -
+(accessory) Testing library.
+@item @code{bench.hh} -
+(accessory) Benchmarking library.
+@item @code{dual.hh} -
+(accessory) Dual number type and operations.
+@end itemize
 
 @image{headers,4cm}
 

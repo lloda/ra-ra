@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 26, updated 2023 November 20)
+<!-- ra:: (version 26, updated 2023 November 21)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 26, updated 2023 November 20)
+<p><code>ra::</code> (version 26, updated 2023 November 21)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -1751,6 +1751,31 @@ Next: <a href="#Type-hierarchy" accesskey="n" rel="next">Type hierarchy</a>, Up:
 
 <p>The header structure of <code>ra::</code> is as follows.<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
 </p>
+<ul>
+<li> <code>tuples.hh</code> -
+Generic macros and tuple library.
+</li><li> <code>bootstrap.hh</code> -
+Basic types, concepts, type predicates, introspection.
+</li><li> <code>expr.hh</code> -
+Expression template nodes, prefix matching.
+</li><li> <code>ply.hh</code> -
+Traversal, including I/O.
+</li><li> <code>small.hh</code> -
+Array type with compile time dimensions.
+</li><li> <code>big.hh</code> -
+Array type with run time dimensions.
+</li><li> <code>optimize.hh</code> -
+Optimization templates.
+</li><li> <code>ra.hh</code> -
+Functions and operators. Main header.
+</li><li> <code>test.hh</code> -
+(accessory) Testing library.
+</li><li> <code>bench.hh</code> -
+(accessory) Benchmarking library.
+</li><li> <code>dual.hh</code> -
+(accessory) Dual number type and operations.
+</li></ul>
+
 <img src="headers.png" alt="headers">
 
 <hr>

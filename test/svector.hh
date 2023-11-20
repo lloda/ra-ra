@@ -7,7 +7,7 @@
 #include <memory>
 #include <type_traits>
 #include <vector>
-#include "ra/atom.hh"
+#include "ra/expr.hh"
 
 namespace ra {
 

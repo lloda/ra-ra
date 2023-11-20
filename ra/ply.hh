@@ -59,8 +59,8 @@ template <class E_>
 struct WithLen
 {
 // constant/scalar appear in Iota args. dots_t and insert_t appear in subscripts. FIXME restrict to known cases
-    template <class Ln, class E> constexpr static decltype(auto)
-    f(Ln ln, E && e)
+    constexpr static decltype(auto)
+    f(auto ln, auto && e)
     {
         return RA_FWD(e);
     }
@@ -69,7 +69,8 @@ struct WithLen
 template <>
 struct WithLen<Len>
 {
-    template <class Ln, class E> constexpr static decltype(auto)
+    template <class Ln, class E>
+    constexpr static decltype(auto)
     f(Ln ln, E && e)
     {
         return Scalar<Ln>(ln);
@@ -79,8 +80,8 @@ struct WithLen<Len>
 template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
-    template <class Ln, class E> constexpr static decltype(auto)
-    f(Ln ln, E && e)
+    constexpr static decltype(auto)
+    f(auto ln, auto && e)
     {
         return expr(RA_FWD(e).op, WithLen<std::decay_t<P>>::f(ln, std::get<I>(RA_FWD(e).t)) ...);
     }
@@ -89,8 +90,8 @@ struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 template <IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
-    template <class Ln, class E> constexpr static decltype(auto)
-    f(Ln ln, E && e)
+    constexpr static decltype(auto)
+    f(auto ln, auto && e)
     {
         return pick(WithLen<std::decay_t<P>>::f(ln, std::get<I>(RA_FWD(e).t)) ...);
     }
@@ -99,10 +100,10 @@ struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 template <int w, class N, class O, class S> requires (has_len<N> || has_len<O> || has_len<S>)
 struct WithLen<Iota<w, N, O, S>>
 {
-    template <class Ln, class E> constexpr static decltype(auto)
-    f(Ln ln, E && e)
+    constexpr static decltype(auto)
+    f(auto ln, auto && e)
     {
-// usable iota types must be either is_constant or is_scalar.
+// final iota types must be either is_constant or is_scalar.
         return iota<w>(VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
                        VALUE(WithLen<std::decay_t<O>>::f(ln, RA_FWD(e).i)),
                        VALUE(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
@@ -112,8 +113,8 @@ struct WithLen<Iota<w, N, O, S>>
 template <class I, class N> requires (has_len<N>)
 struct WithLen<Ptr<I, N>>
 {
-    template <class Ln, class E> constexpr static decltype(auto)
-    f(Ln ln, E && e)
+    constexpr static decltype(auto)
+    f(auto ln, auto && e)
     {
         return ptr(RA_FWD(e).i, VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)));
     }
@@ -314,12 +315,8 @@ ply(A && a, Early && early = Nop {})
     }
 }
 
-template <class Op, class ... A>
 constexpr void
-for_each(Op && op, A && ... a)
-{
-    ply(map(RA_FWD(op), RA_FWD(a) ...));
-}
+for_each(auto && op, auto && ... a) {  ply(map(RA_FWD(op), RA_FWD(a) ...)); }
 
 
 // ---------------------------
@@ -329,12 +326,8 @@ for_each(Op && op, A && ... a)
 template <class T> struct Default { T def; };
 template <class T> Default(T &&) -> Default<T>;
 
-template <IteratorConcept A, class Def>
 constexpr decltype(auto)
-early(A && a, Def && def)
-{
-    return ply(RA_FWD(a), Default { RA_FWD(def) });
-}
+early(IteratorConcept auto && a, auto && def) { return ply(RA_FWD(a), Default { RA_FWD(def) }); }
 
 
 // --------------------
@@ -466,7 +459,8 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     }
 }
 
-// Static size.
+// Possibly read shape, possibly allocate.
+
 template <class C> requires (ANY!=size_s<C>() && !is_scalar<C>)
 inline std::istream &
 operator>>(std::istream & i, C & c)
@@ -475,7 +469,6 @@ operator>>(std::istream & i, C & c)
     return i;
 }
 
-// std::vector needs a special constructor.
 template <class T, class A>
 inline std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
@@ -489,7 +482,6 @@ operator>>(std::istream & i, std::vector<T, A> & c)
     return i;
 }
 
-// Read shape and possibly allocate.
 template <class C> requires (ANY==size_s<C>() && !std::is_convertible_v<C, std::string_view>)
 inline std::istream &
 operator>>(std::istream & i, C & c)
