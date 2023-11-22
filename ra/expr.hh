@@ -194,7 +194,7 @@ struct Iota
         return i + O(j[w])*O(s);
     }
     constexpr O operator*() const { return i; }
-    constexpr auto save() const { return i; }
+    constexpr O save() const { return i; }
     constexpr void load(O ii) { i = ii; }
     constexpr void mov(dim_t d) { i += O(d)*O(s); }
 };
@@ -242,9 +242,9 @@ constexpr struct Len
     constexpr static dim_t step(int k) { std::abort(); }
     constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
     constexpr static bool keep_step(dim_t st, int z, int j) { std::abort(); }
+    constexpr dim_t operator*() const { std::abort(); }
     constexpr static int save() { std::abort(); }
     constexpr static void load(int) { std::abort(); }
-    constexpr dim_t operator*() const { std::abort(); }
     constexpr static void mov(dim_t d) { std::abort(); }
 } len;
 
@@ -285,11 +285,12 @@ start(SliceConcept auto && t) { return iter<0>(RA_FWD(t)); }
 
 RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
 
-// iterators need to be restarted on each use (eg ra::cross()) [ra35].
+// iterators need to be start()ed on each use [ra35].
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
 start(T & t) { return t; }
 
+// FIXME const Iterator would still be unusable after start()
 constexpr decltype(auto)
 start(is_iterator auto && t) { return RA_FWD(t); }
 

@@ -64,7 +64,7 @@ struct CellBig
             c.dimv[k] = dimv[dframer+k];
         }
     }
-    constexpr CellBig(CellBig const & ci) = default;
+    RA_ASSIGNOPS_SELF(CellBig)
     RA_ASSIGNOPS_DEFAULT_SET
 
     constexpr decltype(auto)
@@ -161,11 +161,11 @@ struct View
         }
     }
     constexpr View(std::initializer_list<dim_t> s, T * cp_): View(start(s), cp_) {}
-    constexpr View(View && x) = default;
-    constexpr View(View const & x) = default;
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     View const & operator=(View && x) const { start(*this) = x; return *this; }
     View const & operator=(View const & x) const { start(*this) = x; return *this; }
+    constexpr View(View && x) = default;
+    constexpr View(View const & x) = default;
 #define ASSIGNOPS(OP)                                               \
     View const & operator OP (auto && x) const { start(*this) OP x; return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
@@ -389,26 +389,20 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
 // const/nonconst shims over View's methods. FIXME > gcc13 ? __cpp_explicit_this_parameter
-    constexpr T const & back() const { RA_CHECK(1==rank() && size()>0); return store[size()-1]; }
-    constexpr T & back() { RA_CHECK(1==rank() && size()>0); return store[size()-1]; }
-    constexpr auto data() { return view().data(); }
-    constexpr auto data() const { return view().data(); }
-    constexpr decltype(auto) operator()(auto && ... a) { return view()(RA_FWD(a) ...); }
-    constexpr decltype(auto) operator()(auto && ... a) const { return view()(RA_FWD(a) ...); }
-    constexpr decltype(auto) operator[](auto && ... a) { return view()(RA_FWD(a) ...); }
-    constexpr decltype(auto) operator[](auto && ... a) const { return view()(RA_FWD(a) ...); }
-    constexpr decltype(auto) at(auto && i) { return view().at(RA_FWD(i)); }
-    constexpr decltype(auto) at(auto && i) const { return view().at(RA_FWD(i)); }
-// container is always compact/row-major, so STL-like iterators can be raw pointers.
-    constexpr auto begin() const { assert(is_c_order(view())); return view().data(); }
-    constexpr auto begin() { assert(is_c_order(view())); return view().data(); }
-    constexpr auto end() const { return view().data()+size(); }
-    constexpr auto end() { return view().data()+size(); }
-// FIXME cannot use this with braces<> yet. FIXME optimization (1==RANK && 0==c) opt breaks test/io.cc (?)
-    template <rank_t c=0> constexpr auto iter() const { return view().template iter<c>(); }
-    template <rank_t c=0> constexpr auto iter() { return view().template iter<c>(); }
-    constexpr operator T const & () const { return view(); }
-    constexpr operator T & () { return view(); }
+#define RA_CONST_OR_NOT(CONST)                                          \
+    constexpr T CONST & back() CONST { RA_CHECK(1==rank() && size()>0); return store[size()-1]; } \
+    constexpr auto data() CONST { return view().data(); }               \
+    constexpr decltype(auto) operator()(auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
+    constexpr decltype(auto) operator[](auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
+    constexpr decltype(auto) at(auto && i) CONST { return view().at(RA_FWD(i)); } \
+    /* always compact/row-major, so STL-like iterators can be raw pointers. */ \
+    constexpr auto begin() CONST { assert(is_c_order(view())); return view().data(); } \
+    constexpr auto end() CONST { return view().data()+size(); }         \
+    /* FIXME cannot use this with braces<> yet. FIXME optimization (1==RANK && 0==c) opt breaks test/io.cc (?) */ \
+    template <rank_t c=0> constexpr auto iter() CONST { return view().template iter<c>(); } \
+    constexpr operator T CONST & () CONST { return view(); }
+    FOR_EACH(RA_CONST_OR_NOT, /*not const*/, const)
+#undef RA_CONST_OR_NOT
 
 // non-copy assignment operators follow View, but cannot be just using'd because of constness.
 #define ASSIGNOPS(OP)                                               \
@@ -537,8 +531,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     }
 };
 
-template <class Store, rank_t RANKA, rank_t RANKB>
-requires (RANKA!=RANKB) // rely on std::swap; else ambiguous
+// rely on std::swap; else ambiguous
+template <class Store, rank_t RANKA, rank_t RANKB> requires (RANKA!=RANKB)
 void
 swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
 {
@@ -599,7 +593,8 @@ struct concrete_type_def<E>
 template <class E> requires (size_s<E>()!=ANY)
 struct concrete_type_def<E>
 {
-    using type = decltype(std::apply([](auto ... i) { return Small<value_t<E>, E::len_s(i) ...> {}; }, mp::iota<rank_s<E>()> {}));
+    using type = decltype(std::apply([](auto ... i) { return Small<value_t<E>, E::len_s(i) ...> {}; },
+                                     mp::iota<rank_s<E>()> {}));
 };
 // Scalars are their own concrete_type. Treat unregistered types as scalars.
 template <class E>

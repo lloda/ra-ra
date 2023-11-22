@@ -51,9 +51,8 @@ is_c_order_dimv(auto const & dimv, bool unitstep=true)
 constexpr bool
 is_c_order(auto const & v, bool unitstep=true) { return is_c_order_dimv(v.dimv, unitstep); }
 
-template <class Dimv, class S>
 constexpr dim_t
-filldim(Dimv & dimv, S && shape)
+filldim(auto & dimv, auto && shape)
 {
     map(&Dim::len, dimv) = shape;
     dim_t s = 1;
@@ -75,9 +74,8 @@ struct default_steps_
 };
 template <class lens> using default_steps = typename default_steps_<lens>::type;
 
-template <class V>
 constexpr dim_t
-shape(V const & v, int k)
+shape(auto const & v, int k)
 {
     RA_CHECK(inside(k, rank(v)), "Bad axis ", k, " for rank ", rank(v), ".");
     return v.len(k);
@@ -167,9 +165,9 @@ struct unbeat<N, mp::int_list<k ...>>
 // Develop indices
 // --------------------
 
-template <rank_t k, rank_t end, class Q, class P, class S>
+template <rank_t k, rank_t end>
 constexpr dim_t
-indexer(Q const & q, P && pp, S const & ss0, dim_t c)
+indexer(auto const & q, auto && pp, auto const & ss0, dim_t c)
 {
     if constexpr (k==end) {
         return c;
@@ -180,9 +178,8 @@ indexer(Q const & q, P && pp, S const & ss0, dim_t c)
     }
 }
 
-template <class Q, class P, class S>
 constexpr dim_t
-indexer(rank_t end, Q const & q, P && pp, S const & ss0)
+indexer(rank_t end, auto const & q, auto && pp, auto const & ss0)
 {
     dim_t c = 0;
     for (rank_t k=0; k<end; ++k, pp.mov(ss0)) {
@@ -255,7 +252,7 @@ struct CellSmall
 
 // see STLIterator for len(0)=0, etc. [ra12].
     constexpr CellSmall(T * p): c { p } {}
-    constexpr CellSmall(CellSmall const & ci) = default;
+    RA_ASSIGNOPS_SELF(CellSmall)
     RA_ASSIGNOPS_DEFAULT_SET
 
     constexpr decltype(auto)
@@ -448,7 +445,6 @@ struct SmallBase
     }                                                                   \
     constexpr decltype(auto)                                            \
     operator[](auto && ... i) CONST { return (*this)(RA_FWD(i) ...); }  \
-                                                                        \
     template <class I>                                                  \
     constexpr decltype(auto)                                            \
     at(I && i) CONST                                                    \
@@ -467,14 +463,14 @@ struct SmallBase
     decltype(auto)                                                      \
     back() CONST                                                        \
     {                                                                   \
-        static_assert(rank()>=1 && size()>0, "back() is not available"); \
+        static_assert(rank()>=1 && size()>0, "No back().");             \
         return (*this)[size()-1];                                       \
     }                                                                   \
     constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return data()[0]; }
     FOR_EACH(RA_CONST_OR_NOT, /*not const*/, const)
 #undef RA_CONST_OR_NOT
 
-#define ASSIGNOPS(OP)                                               \
+#define ASSIGNOPS(OP)                                                   \
     template <class X> requires (!mp::is_tuple<std::decay_t<X>>)        \
     constexpr Child &                                                   \
     operator OP(X && x)                                                 \

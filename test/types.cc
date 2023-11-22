@@ -77,6 +77,10 @@ int main()
 #endif
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()),
                  true, true, false, false, false);
+        TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()) const,
+                 true, true, false, false, false);
+        TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()) &,
+                 true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::View<int, 2>>()),
                  true, true, false, false, false);
         TESTPRED(decltype(ra::Unique<int, 2>().iter()),
@@ -88,7 +92,8 @@ int main()
                  true, false, true, false, false);
         TESTPRED(decltype(ra::iota<0>()),
                  true, false, true, false, false);
-        TESTPRED(decltype(ra::iota<0>()) const, // is_iterator but not IteratorConcept (see RA_IS_DEF)
+// is_iterator (by RA_IS_DEF) but not IteratorConcept, since it cannot be traversed.
+        TESTPRED(decltype(ra::iota<0>()) const,
                  true, false, false, false, false);
         TESTPRED(decltype(ra::iota<0>()) &,
                  true, false, true, false, false);
@@ -112,7 +117,7 @@ int main()
                  false, false, false, false, false);
         TESTPRED(decltype(std::ranges::iota_view(-5, 10)),
                  false, false, false, false, true);
-// std::string can be registered as is_scalar or not [ra13]. One may do ra::ptr(std::string) or ra::scalar(std::string) to get the other behavior.
+// std::string can be registered as is_scalar or not [ra13]. Use ra::ptr(std::string) or ra::scalar(std::string) to get the other behavior.
         if constexpr(ra::is_scalar<std::string>) {
             TESTPRED(std::string,
                      false, false, false, true, false);

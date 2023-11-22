@@ -31,7 +31,7 @@
 namespace ra {
 
 constexpr int VERSION = 26;
-// rank<0 is used as 'frame rank' in contrast to 'cell rank'. This limits the rank that ra:: can handle.
+// negative rank is used as 'frame rank' in contrast to 'cell rank'. These values limit what can be handled.
 constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
 constexpr int BAD = -1988888888; // undefined, eg dead axes
 
@@ -50,8 +50,8 @@ struct noarg { noarg() = delete; }; // in constructors to mean: don't instantiat
 constexpr bool any(bool const x) { return x; }
 constexpr bool every(bool const x) { return x; }
 
-// Default storage for Big - see https://stackoverflow.com/a/21028912.
-// Allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
+// default storage for Big - see https://stackoverflow.com/a/21028912.
+// allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
 template <class T, class A=std::allocator<T>>
 struct default_init_allocator: public A
 {
@@ -80,7 +80,7 @@ template <class T> using vector_default_init = std::vector<T, default_init_alloc
 
 
 // ---------------------
-// concepts. Not sure i want duck typing, tbr.
+// concepts
 // ---------------------
 
 template <class A>
