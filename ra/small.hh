@@ -278,52 +278,32 @@ struct CellSmall
 // nested braces for Small initializers + forward decl Small types
 // ---------------------
 
-// Other than the expr constructor, SmallArray has 4 others: empty, scalar, ravel, and nested. The scalar constructor is needed when T isn't registered as ra::scalar.
-// The ravel/nested/scalar constructors can be ambiguous. This is solved by defining arguments to noarg variants.
+// SmallArray has 5 constructors: expression, empty, scalar, ravel, and nested.
+// The scalar constructor is needed when T isn't registered as ra::scalar.
+// Ambiguity between scalar/ravel/nested is solved by defining arguments to noarg variants (here) or requires (in class).
 
 template <class T, class lens>
-struct nested_tuple
-{
-    using sub = noarg;
-    using list = std::tuple<noarg>; // match the template for SmallArray.
-};
+struct nested_tuple { using sub = noarg; };
 
 template <class T, class lens>
-struct small_args
+struct small_args { using nested = std::tuple<noarg>; };
+
+template <class T, class lens> requires (0<mp::len<lens>)
+struct small_args<T, lens>
 {
-    constexpr static int rs = mp::len<lens>;
-// if len(0)==0, prefer empty constructor. If shape==[1] scalar constructor.
-    using nested = std::conditional_t<
-        [] { if constexpr (0<rs) { int s = mp::ref<lens, 0>::value; return 0==s || (1==rs && 1==s); } else { return true; } } (),
-        std::tuple<noarg>, // match SmallArray template
-        typename nested_tuple<T, lens>::list>;
-// if rank=1 prefer nested tuple constructor. If rank=0 prefer scalar constructor.
-    using ravel = std::conditional_t<
-        (rs <=1) || (mp::apply<mp::prod, lens>::value <= 1),
-        std::tuple<noarg, noarg>, // match SmallArray template
-        mp::makelist<mp::apply<mp::prod, lens>::value, T>>;
+    using nested = mp::makelist<mp::ref<lens, 0>::value, typename nested_tuple<T, lens>::sub>;
 };
 
-template <class T, class lens, class steps,
-          class nested_args = small_args<T, lens>::nested,
-          class ravel_args = small_args<T, lens>::ravel>
+template <class T, class lens, class steps, class nested_args = small_args<T, lens>::nested>
 struct SmallArray;
 
 template <class T, dim_t ... lens>
 using Small = SmallArray<T, mp::int_list<lens ...>, default_steps<mp::int_list<lens ...>>>;
 
-template <class T, int S0>
-struct nested_tuple<T, mp::int_list<S0>>
+template <class T, int S0, int ... S>
+struct nested_tuple<T, mp::int_list<S0, S ...>>
 {
-    using sub = T;
-    using list = mp::makelist<S0, T>;
-};
-
-template <class T, int S0, int S1, int ... S>
-struct nested_tuple<T, mp::int_list<S0, S1, S ...>>
-{
-    using sub = Small<T, S1, S ...>;
-    using list = mp::makelist<S0, sub>;
+    using sub = std::conditional_t<0==sizeof...(S), T, Small<T, S ...>>;
 };
 
 
@@ -367,6 +347,7 @@ struct SmallBase
     using steps = steps_;
     using T = T_;
     using Child = Child_<T, lens, steps>;
+    using sub = typename nested_tuple<T, lens>::sub;
 
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
     consteval static rank_t rank() { return mp::len<lens>; }
@@ -473,27 +454,25 @@ struct SmallBase
 #define ASSIGNOPS(OP)                                                   \
     template <class X> requires (!mp::is_tuple<std::decay_t<X>>)        \
     constexpr Child &                                                   \
-    operator OP(X && x)                                                 \
-    {                                                                   \
-        ra::start(*this) OP x;                                          \
-        return static_cast<Child &>(*this);                             \
-    }
+    operator OP(X && x) { ra::start(*this) OP x; return static_cast<Child &>(*this); }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
 
-// braces don't match X &&
+    constexpr static dim_t len0 = rank()>0 ? len(0) : 0;
+// nested braces
     constexpr Child &
-    operator=(small_args<T, lens>::nested const & x)
+    operator=(sub (&&x)[len0])
+    requires (0<rank() && 0!=len0 && (1!=rank() || 1!=len0))
     {
-        ra::iter<-1>(*this) = mp::from_tuple<std::array<typename nested_tuple<T, lens>::sub, len(0)>>(x);
+        ra::iter<-1>(*this) = x;
         return static_cast<Child &>(*this);
     }
-// braces row-major ravel for rank!=1
+// row-major ravel braces
     constexpr Child &
-    operator=(small_args<T, lens>::ravel const & x)
+    operator=(T (&&x)[size()])
+    requires ((rank()>1) && (size()>1))
     {
-        auto a = mp::from_tuple<std::array<T, size()>>(x);
-        std::copy(a.begin(), a.end(), begin());
+        std::copy(std::begin(x), std::end(x), begin());
         return static_cast<Child &>(*this);
     }
 
@@ -520,16 +499,16 @@ template <class T, class lens, class steps>
 struct SmallView: public SmallBase<SmallView, T, lens, steps>
 {
     using Base = SmallBase<SmallView, T, lens, steps>;
-    using Base::operator=;
+    using Base::operator=, Base::convertible_to_scalar;
     using ViewConst = SmallView<T const, lens, steps>;
 
     T * cp;
     constexpr SmallView(T * cp_): cp(cp_) {}
     constexpr SmallView(SmallView const & s): cp(s.cp) {}
 
-    constexpr operator T const & () const { static_assert(Base::convertible_to_scalar); return cp[0]; }
-    constexpr operator T & () { static_assert(Base::convertible_to_scalar); return cp[0]; }
+    constexpr operator T & () const { static_assert(convertible_to_scalar); return cp[0]; }
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
+// FIXME we should have our own accessors and not need the nonconst variant, as in View.
     constexpr SmallView const & view() const { return *this; }
     constexpr SmallView & view() { return *this; }
 };
@@ -540,8 +519,7 @@ template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = 
 template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 #endif
 
-template <class Z, class ... T>
-constexpr static bool equal_to_any = (std::is_same_v<Z, T> || ...);
+template <class Z, class ... T> constexpr static bool equal_to_any = (std::is_same_v<Z, T> || ...);
 
 template <class T, size_t N>
 consteval size_t
@@ -557,29 +535,34 @@ align_req()
     }
 }
 
-template <class T, class lens, class steps, class ... nested_args, class ... ravel_args>
+template <class T, class lens, class steps, class ... nested_args>
 struct
 #if RA_DO_OPT_SMALLVECTOR==1
 alignas(align_req<T, mp::apply<mp::prod, lens>::value>())
 #else
 #endif
-SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ...>>
+SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     : public SmallBase<SmallArray, T, lens, steps>
 {
     using Base = SmallBase<SmallArray, T, lens, steps>;
+    using sub = Base::sub;
     using Base::rank, Base::size;
 
-    T cp[Base::size()]; // cf what std::array does for zero size; wish zero size just worked :-/
+    T cp[size()]; // cf what std::array does for zero size; wish zero size just worked :-/
 
     constexpr SmallArray() {}
+
+// nested braces
     constexpr SmallArray(nested_args const & ... x)
+    requires ((0<rank() && 0!=Base::len(0) && (1!=rank() || 1!=Base::len(0))))
     {
-        static_cast<Base &>(*this) = typename small_args<T, lens>::nested { x ... };
+        static_cast<Base &>(*this) = { x ... };
     }
-// braces row-major ravel for rank!=1
-    constexpr SmallArray(ravel_args const & ... x)
+// row-major ravel braces
+    constexpr SmallArray(T const & x0, std::convertible_to<T> auto const & ... x)
+    requires ((rank()>1) && (size()>1) && ((1+sizeof...(x))==size()))
     {
-        static_cast<Base &>(*this) = typename small_args<T, lens>::ravel { x ... };
+        static_cast<Base &>(*this) = { T(x0), T(x) ... };
     }
 // needed if T isn't registered as scalar [ra44]
     constexpr SmallArray(T const & t)
@@ -587,8 +570,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
         for (auto & x: cp) { x = t; }
     }
 // X && x makes this a better match than nested_args ... for 1 argument.
-    template <class X>
-    requires (!std::is_same_v<std::decay_t<X>, T> && !mp::is_tuple<std::decay_t<X>>)
+    template <class X> requires (!std::is_same_v<std::decay_t<X>, T> && !std::is_same_v<std::decay_t<X>, sub>)
     constexpr SmallArray(X && x)
     {
         static_cast<Base &>(*this) = x;
@@ -606,9 +588,9 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>, std::tuple<ravel_args ..
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
 
 // FIXME remove the need, also of (S, begin, end) in Container, once nested_tuple constructors work.
-template <class A, class I, class J>
+template <class A>
 constexpr auto
-ravel_from_iterators(I && begin, J && end)
+ravel_from_iterators(auto && begin, auto && end)
 {
     A a;
     std::copy(RA_FWD(begin), RA_FWD(end), a.begin());
