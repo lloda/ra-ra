@@ -87,7 +87,7 @@ struct CellBig
 
 
 // --------------------
-// nested braces for Container initializers, cf nested_arg for Small. FIXME Let any expr = braces.
+// nested braces for Container initializers, cf small_args in small.hh. FIXME Let any expr = braces.
 // --------------------
 
 template <class T, rank_t rank>
@@ -150,11 +150,10 @@ struct View
 
     constexpr View(): cp() {} // FIXME used by Container constructors
     constexpr View(Dimv const & dimv_, T * cp_): dimv(dimv_), cp(cp_) {} // [ra36]
-    template <class SS>
-    constexpr View(SS && s, T * cp_): cp(cp_)
+    constexpr View(auto && s, T * cp_): cp(cp_)
     {
         ra::resize(dimv, ra::size(s)); // [ra37]
-        if constexpr (std::is_convertible_v<value_t<SS>, Dim>) {
+        if constexpr (std::is_convertible_v<value_t<decltype(s)>, Dim>) {
             start(dimv) = s;
         } else {
             filldim(dimv, s);
@@ -164,8 +163,8 @@ struct View
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     View const & operator=(View && x) const { start(*this) = x; return *this; }
     View const & operator=(View const & x) const { start(*this) = x; return *this; }
-    constexpr View(View && x) = default;
-    constexpr View(View const & x) = default;
+    constexpr View(View &&) = default;
+    constexpr View(View const &) = default;
 #define ASSIGNOPS(OP)                                               \
     View const & operator OP (auto && x) const { start(*this) OP x; return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
@@ -195,17 +194,15 @@ struct View
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
     {
-        RA_CHECK(inside(i, dimv[k].len),
-                 "Out of range for len[", k, "]=", dimv[k].len, ": ", i, ".");
-        return dimv[k].step*i;
+        RA_CHECK(inside(i, len(k)), "Bad index in len[", k, "]=", len(k), ": ", i, ".");
+        return step(k)*i;
     }
     constexpr dim_t
     select(Dim * dim, int k, is_iota auto i) const
     {
-        RA_CHECK(inside(i, dimv[k].len),
-                 "Out of range for len[", k, "]=", dimv[k].len, ": iota [", i.n, " ", i.i, " ", i.s, "].");
-        *dim = { .len = i.n, .step = dimv[k].step * i.s };
-        return dimv[k].step*i.i;
+        RA_CHECK(inside(i, len(k)), "Bad index in len[", k, "]=", len(k), ": iota [", i.n, " ", i.i, " ", i.s, "].");
+        *dim = { .len = i.n, .step = step(k) * i.s };
+        return 0==i.n ? 0 : step(k)*i.i;
     }
     template <class I0, class ... I>
     constexpr dim_t
@@ -246,7 +243,7 @@ struct View
         constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD));
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
-            return data()[select_loop(nullptr, 0, i ...)];
+            return cp[select_loop(nullptr, 0, i ...)];
         } else if constexpr ((beatable<I>.rt && ...)) {
             constexpr rank_t extended = (0 + ... + beatable<I>.add);
             View<T, rank_sum(RANK, extended)> sub;
@@ -255,14 +252,13 @@ struct View
                 RA_CHECK(subrank>=0, "Bad rank.");
                 sub.dimv.resize(subrank);
             }
-            sub.cp = data() + select_loop(sub.dimv.data(), 0, i ...);
+            sub.cp = cp + select_loop(sub.dimv.data(), 0, i ...);
 // fill the rest of dim, skipping over beatable subscripts.
             for (int k = (0==stretch ? (0 + ... + beatable<I>.dst) : subrank); k<subrank; ++k) {
                 sub.dimv[k] = dimv[k-extended];
             }
-// if RANK==ANY then rank may be 0
             return sub;
-// TODO partial beating. FIXME forward this? cf unbeat
+// TODO partial beating. FIXME should forward this; see unbeat, SmallView::operator()
         } else {
             return unbeat<sizeof...(I)>::op(*this, RA_FWD(i) ...);
         }
@@ -274,7 +270,7 @@ struct View
     constexpr decltype(auto)
     at(I && i) const
     {
-// FIXME no way to say 'frame rank 0' so -size wouldn't work.
+// can't say 'frame rank 0' so -size wouldn't work.
        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
        if constexpr (ANY==crank) {
             return iter(rank()-ra::size(i)).at(RA_FWD(i));
@@ -289,9 +285,9 @@ struct View
         if constexpr (ANY==RANK) {
             RA_CHECK(0==rank(), "Error converting rank ", rank(), " to scalar.");
         }
-        return data()[0];
+        return cp[0];
     }
-// necessary here per [ra15] (?)
+// FIXME necessary here per [ra15], conflict with converting constructor?
     constexpr operator T & () { return std::as_const(*this); }
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)
@@ -303,7 +299,7 @@ struct View
     constexpr View(View<T, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
     template <rank_t R> requires (R!=ANY && RANK==ANY && std::is_const_v<T>)
     constexpr View(View<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
-// conversion to const. We rely on it for Container::view(). FIXME iffy? not constexpr, and doesn't work for SmallBase
+// conversion to const. We rely on it for Container::view(). FIXME iffy? not constexpr, and doesn't work for Small.
     constexpr
     operator View<T const, RANK> const & () const requires (!std::is_const_v<T>)
     {
@@ -692,8 +688,8 @@ transpose_(S && s, View<T, RANK> const & view)
     View<T, ANY> r { decltype(r.dimv)(dstrank, Dim { BAD, 0 }), view.data() };
     for (int k=0; int sk: s) {
         Dim & dest = r.dimv[sk];
-        dest.step += view.dimv[k].step;
-        dest.len = dest.len>=0 ? std::min(dest.len, view.dimv[k].len) : view.dimv[k].len;
+        dest.step += view.step(k);
+        dest.len = dest.len>=0 ? std::min(dest.len, view.len(k)) : view.len(k);
         ++k;
     }
     return r;
@@ -730,8 +726,8 @@ transpose(View<T, RANK> const & view)
     std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
     for (int k=0; int sk: s) {
         Dim & dest = r.dimv[sk];
-        dest.step += view.dimv[k].step;
-        dest.len = dest.len>=0 ? std::min(dest.len, view.dimv[k].len) : view.dimv[k].len;
+        dest.step += view.step(k);
+        dest.len = dest.len>=0 ? std::min(dest.len, view.len(k)) : view.len(k);
         ++k;
     }
     return r;

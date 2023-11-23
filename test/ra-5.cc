@@ -19,7 +19,7 @@ using std::cout, std::endl, ra::TestRecorder;
 int main()
 {
     TestRecorder tr(std::cout);
-
+    tr.section("looking into Small");
 // [ra14] A(b) which is from(A, b) can require CellBig to copy its source Dimv.
     tr.section("Big");
     {
@@ -29,17 +29,6 @@ int main()
 
 // This creates View & CellBig on each call of A(b(0) ...) as the driver is b and A is handled as generic object with operator().
 // But I should be able to create a single CellBig and just bump a pointer as I move through b. Hmm.
-        iter<-1>(F) = b*A(b);
-        int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
-        tr.test_eq(Fcheck, F);
-    }
-// Equivalent for Small is static so no such issues.
-    tr.section("Small");
-    {
-        ra::Small<int, 2> b = { 2, 1 };
-        ra::Small<int, 3, 5> A = ra::_0 - ra::_1;
-        ra::Small<int, 2, 5> F = 0;
-
         iter<-1>(F) = b*A(b);
         int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
         tr.test_eq(Fcheck, F);
@@ -58,6 +47,17 @@ int main()
         auto y = A(0);
         auto yi = iter<0>(y);
         tr.test_eq(true, std::is_reference_v<decltype(yi.dimv)>);
+    }
+// On Small, the container and the view are separate objects, so we must make sure to forward any temporary views(). See SmallView::operator().
+    tr.section("Small");
+    {
+        ra::Small<int, 2> b = { 2, 1 };
+        ra::Small<int, 3, 5> A = ra::_0 - ra::_1;
+        ra::Small<int, 2, 5> F = 0;
+
+        iter<-1>(F) = b*A(b);
+        int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
+        tr.test_eq(Fcheck, F);
     }
 // const/nonconst begin :p
     {

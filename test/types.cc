@@ -58,8 +58,7 @@ int main()
         static_assert(std::is_same_v<ra::value_t<decltype(a)>, T>);
     }
     {
-// SmallBase is not excluded in SliceConcept.
-        TESTPRED(decltype(std::declval<ra::SmallBase<ra::SmallArray, ra::Dim, int_list<3>, int_list<1>>>()),
+        TESTPRED(decltype(std::declval<ra::SmallView<ra::Dim, int_list<3>, int_list<1>>>()),
                  true, true, false, false, false);
         TESTPRED(int,
                  false, false, false, true, false);

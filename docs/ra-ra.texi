@@ -1317,15 +1317,15 @@ Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the 
 
 @subsection Using @code{ra::} types with the STL
 
-General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{ForwardIterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
+General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{std::input_iterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
 
-For @ref{Containers and views,containers} @code{begin()} provides @code{RandomAccessIterator}s, which is handy for certain functions such as @code{sort}. There's no reason why all views couldn't provide @code{RandomAccessIterator}, but these wouldn't be efficient for ranks above 1, and I haven't implemented them. The container @code{RandomAccessIterator}s that are provided are in fact raw pointers.
+For @ref{Containers and views,containers} @code{begin()} provides @code{std::random_access_iterator}s, which is handy for certain functions such as @code{std::sort}. There's no reason why all views couldn't provide @code{std::random_access_iterator}, but these wouldn't be efficient for ranks above 1, and I haven't implemented them. The container @code{std::random_access_iterator}s that are provided are in fact raw pointers.
 
 @example @c [ma106]
 @verbatim
 ra::Big<int> x {3, 2, 1}; // x is a Container
 auto y = x(); // y is a View on x
-// std::sort(y.begin(), y.end()); // error: y.begin() is not RandomAccessIterator
+// std::sort(y.begin(), y.end()); // error: y.begin() is not std::random_access_iterator
 std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 @end verbatim
 @result{} x = @{1, 2, 3@}

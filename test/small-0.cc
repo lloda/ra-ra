@@ -480,6 +480,12 @@ int main()
             X(ra::all) = A();
             tr.test_eq(ra::start({1, 2}), X);
         }
+        tr.section("operator=(scalar) on non-unit steps");
+        {
+            ra::Small<int, 2, 2> a(0);
+            diag(a) = 1;
+            tr.test_eq(ra::Small<int, 2, 2> {{1, 0}, {0, 1}}, a);
+        }
     }
 // These tests should fail at compile time. No way to check them yet [ra42].
     // tr.section("size checks");
