@@ -16,7 +16,7 @@ using std::tuple, std::cout, std::endl;
 template <class T, class sizes> struct nested_tuple;
 
 template <class T>
-struct nested_tuple<T, mp::int_list<>>
+struct nested_tuple<T, ra::mp::int_list<>>
 {
     constexpr static int rank = 0;
     using type = T;
@@ -25,23 +25,25 @@ struct nested_tuple<T, mp::int_list<>>
 template <class T, class sizes>
 struct nested_tuple
 {
-    constexpr static int rank = mp::len<sizes>;
-    using sub = typename nested_tuple<T, mp::drop1<sizes>>::type;
-    using type = mp::makelist<mp::ref<sizes, 0>::value, sub>;
+    constexpr static int rank = ra::mp::len<sizes>;
+    using sub = typename nested_tuple<T, ra::mp::drop1<sizes>>::type;
+    using type = ra::mp::makelist<ra::mp::ref<sizes, 0>::value, sub>;
+    using atype = sub[ra::mp::ref<sizes, 0>::value];
 };
 
 struct foo
 {
     int x = true;
-    foo(nested_tuple<int, mp::int_list<2, 3>>::type const & a) { cout << "A" << endl; }
+    // foo(nested_tuple<int, ra::mp::int_list<2, 3>>::type const & a) { cout << "A" << endl; }
+    foo(nested_tuple<int, ra::mp::int_list<2, 3>>::atype const & a) { cout << "A" << endl; }
 };
 
 int main()
 {
-    using sizes0 = mp::int_list<>;
-    using sizes1 = mp::int_list<3>;
-    using sizes2 = mp::int_list<3, 4>;
-    using sizes3 = mp::int_list<3, 4, 5>;
+    using sizes0 = ra::mp::int_list<>;
+    using sizes1 = ra::mp::int_list<3>;
+    using sizes2 = ra::mp::int_list<3, 4>;
+    using sizes3 = ra::mp::int_list<3, 4, 5>;
     {
         std::cout << nested_tuple<int, sizes0>::rank << std::endl;
         std::cout << nested_tuple<int, sizes1>::rank << std::endl;
@@ -56,7 +58,7 @@ int main()
     cout << g.x << endl;
     cout << h.x << endl;
 // extra pair isn't required for the tuples themselves though :-/
-    nested_tuple<int, mp::int_list<2, 3>>::type i = {{1, 2, 3}, {4, 5, 6}};
-    cout << foo(i).x << endl;
+    // nested_tuple<int, ra::mp::int_list<2, 3>>::type i = {{1, 2, 3}, {4, 5, 6}};
+    // cout << foo(i).x << endl;
     return 0;
 }

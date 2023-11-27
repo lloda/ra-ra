@@ -20,10 +20,6 @@ using ra::mp::int_list, ra::int_c, ra::mp::print_int_list, ra::mp::ref;
 int main()
 {
     TestRecorder tr;
-    {
-        ra::SmallArray a {1, 2, 3}; // FIXME the deduction guide can't work for ra::Small
-        tr.test_eq(ra::start({1, 2, 3}), a);
-    }
     tr.section("pieces of transpose(ra::Small)");
     {
         using lens = int_list<1, 2, 3, 4, 5>;
@@ -484,5 +480,10 @@ int main()
         tr.test_eq(a(ra::all, 0), a[ra::all, 0]);
     }
 #endif
+    tr.section("deduction guides");
+    {
+        ra::SmallArray a {1, 2, 3}; // FIXME the deduction guide can't work for ra::Small
+        tr.test_eq(ra::start({1, 2, 3}), a);
+    }
     return tr.summary();
 }

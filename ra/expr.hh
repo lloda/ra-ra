@@ -49,7 +49,7 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
 // Forward to forbid misusing value y as ref [ra5].
 #define RA_ASSIGNOPS_LINE(OP) \
-    for_each([](auto && y, auto && x) { RA_FWD(y) OP x; }, *this, x)
+    for_each([](auto && y, auto && x) { RA_FWD(y) OP x; }, *this, RA_FWD(x))
 #define RA_ASSIGNOPS(OP) \
     constexpr void operator OP(auto && x) { RA_ASSIGNOPS_LINE(OP); }
 // But see local ASSIGNOPS elsewhere.

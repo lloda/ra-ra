@@ -126,38 +126,6 @@ transpose(mp::int_list<Iarg ...>, A && a)
 constexpr bool odd(unsigned int N) { return N & 1; }
 
 
-// ---------------------------
-// outer product
-// ---------------------------
-
-template <class II, int drop, class Op>
-constexpr decltype(auto)
-from_partial(Op && op)
-{
-    if constexpr (drop==mp::len<II>) {
-        return RA_FWD(op);
-    } else {
-        return wrank(mp::append<mp::makelist<drop, ic_t<0>>, mp::drop<II, drop>> {},
-                     from_partial<II, drop+1>(RA_FWD(op)));
-    }
-}
-
-// TODO should be able to do better by slicing at each dimension, etc. But verb<>'s innermost op must be rank 0.
-template <class A, class ... I>
-constexpr decltype(auto)
-from(A && a, I && ... i)
-{
-    if constexpr (0==sizeof...(i)) {
-        return RA_FWD(a)();
-    } else if constexpr (1==sizeof...(i)) {
-// support dynamic rank for 1 arg only (see test in test/from.cc).
-        return map(RA_FWD(a), RA_FWD(i) ...);
-    } else {
-        return map(from_partial<mp::tuple<ic_t<rank_s<I>()> ...>, 1>(RA_FWD(a)), RA_FWD(i) ...);
-    }
-}
-
-
 // --------------------------------
 // Array versions of operators and functions
 // --------------------------------
