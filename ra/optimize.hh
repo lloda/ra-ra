@@ -87,15 +87,15 @@ optimize(Expr<std::negate<>, std::tuple<I>> && e)
 
 #if RA_DO_OPT_SMALLVECTOR==1
 
-// FIXME I'm not able to match CellSmall directly, maybe bc N is in std::array { Dim { N, 1 } }.
-template <class A, class T, dim_t N> constexpr bool match_small =
-    std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template iterator<0>>
-    || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::template const_iterator<0>>;
+// FIXME can't match CellSmall directly, maybe bc N is in std::array { Dim { N, 1 } }.
+template <class T, dim_t N, class A> constexpr bool match_small =
+    std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::View::iterator<0>>
+    || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::ViewConst::iterator<0>>;
 
-static_assert(match_small<ra::CellSmall<double, ic_t<std::array { Dim { 4, 1 } }>, 0>, double, 4>);
+static_assert(match_small<double, 4, ra::CellSmall<double, ic_t<std::array { Dim { 4, 1 } }>, 0>>);
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
-    template <class A, class B> requires (match_small<A, T, N> && match_small<B, T, N>) \
+    template <class A, class B> requires (match_small<T, N, A> && match_small<T, N, B>) \
     constexpr auto                                                      \
     optimize(ra::Expr<NAME, std::tuple<A, B>> && e)                     \
     {                                                                   \

@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 26, updated 2023 November 21)
+<!-- ra:: (version 26, updated 2023 November 27)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 26, updated 2023 November 21)
+<p><code>ra::</code> (version 26, updated 2023 November 27)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -1354,14 +1354,14 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 <div class="subsection" id="Using-ra_003a_003a-types-with-the-STL">
 <h4 class="subsection">2.9.2 Using <code>ra::</code> types with the STL</h4>
 
-<p>General <code>ra::</code> <a href="#Containers-and-views">views</a> provide STL compatible <code>ForwardIterator</code>s through the members <code>begin()</code> and <code>end()</code>. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
+<p>General <code>ra::</code> <a href="#Containers-and-views">views</a> provide STL compatible <code>std::input_iterator</code>s through the members <code>begin()</code> and <code>end()</code>. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
 </p>
-<p>For <a href="#Containers-and-views">containers</a> <code>begin()</code> provides <code>RandomAccessIterator</code>s, which is handy for certain functions such as <code>sort</code>. There&rsquo;s no reason why all views couldn&rsquo;t provide <code>RandomAccessIterator</code>, but these wouldn&rsquo;t be efficient for ranks above 1, and I haven&rsquo;t implemented them. The container <code>RandomAccessIterator</code>s that are provided are in fact raw pointers.
+<p>For <a href="#Containers-and-views">containers</a> <code>begin()</code> provides <code>std::random_access_iterator</code>s, which is handy for certain functions such as <code>std::sort</code>. There&rsquo;s no reason why all views couldn&rsquo;t provide <code>std::random_access_iterator</code>, but these wouldn&rsquo;t be efficient for ranks above 1, and I haven&rsquo;t implemented them. The container <code>std::random_access_iterator</code>s that are provided are in fact raw pointers.
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int&gt; x {3, 2, 1}; // x is a Container
 auto y = x(); // y is a View on x
-// std::sort(y.begin(), y.end()); // error: y.begin() is not RandomAccessIterator
+// std::sort(y.begin(), y.end()); // error: y.begin() is not std::random_access_iterator
 std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
 </pre><pre class="example">&rArr; x = {1, 2, 3}
 </pre></div>

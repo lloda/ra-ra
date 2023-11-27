@@ -549,7 +549,6 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     using ViewConst = SmallView<T const, lens, steps>;
     constexpr View view() { return View(cp); }
     constexpr ViewConst view() const { return ViewConst(cp); }
-// conversion to const
     constexpr operator View () { return View(cp); }
     constexpr operator ViewConst () const { return ViewConst(cp); }
 
@@ -571,7 +570,6 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     {
         view() = { static_cast<T>(x0), static_cast<T>(x) ... };
     }
-    SmallArray & operator=(SmallArray const &) = default;
 // X && x makes this a better match than nested_args ... for 1 argument.
     template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
     constexpr SmallArray(X && x)
@@ -582,11 +580,6 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     constexpr decltype(auto) operator OP(auto && x) { view() OP RA_FWD(x); return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
-
-// FIXME
-    constexpr static bool def = View::def;
-    template <rank_t c=0> using iterator = View::template iterator<c>;
-    template <rank_t c=0> using const_iterator = ViewConst::template iterator<c>;
 
 #define RA_CONST_OR_NOT(CONST)                                          \
     constexpr T CONST & back() CONST { return view().back(); }          \
