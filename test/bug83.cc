@@ -20,7 +20,7 @@ main()
 {
     ra::TestRecorder tr(std::cout);
     ra::Big<double, 2> A({4, 4}, ra::_1*10 + ra::_0 + 3);
-    A = ra::expr([](auto && a) { return a(0, 0); }, ra::iter<2>(A));
+    A = ra::expr([](auto && a) { return a(0, 0); }, ra::iter<2>(A)); // [ra1]
     tr.info("A ", A).test_eq(3, A);
     return tr.summary();
 }

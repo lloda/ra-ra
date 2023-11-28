@@ -346,7 +346,10 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
             return false;
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
+#pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all.
+#pragma GCC diagnostic warning "-Warray-bounds"
                 dim_t ls = len(k);
+#pragma GCC diagnostic pop
                 if (((k<ra::rank(std::get<I>(t)) && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
                     RA_CHECK(!checkp, "Mismatch on axis ", k, " [", (std::array { std::get<I>(t).len(k) ... }), "].");
                     return false;
@@ -357,7 +360,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     }
 
     constexpr
-    Match(P ... p_): t(RA_FWD(p_) ...) // [ra1]
+    Match(P ... p_): t(p_ ...) // [ra1]
     {
 // TODO Maybe on ply, would make checkp unnecessary, make agree_xxx() unnecessary.
         if constexpr (checkp && !(has_len<P> || ...)) {

@@ -265,10 +265,7 @@ struct CellSmall
     ctype c;
 
     consteval static rank_t rank() { return framer; }
-#pragma GCC diagnostic push // gcc 13.2
-#pragma GCC diagnostic warning "-Warray-bounds"
     constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
-#pragma GCC diagnostic pop
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }

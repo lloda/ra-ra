@@ -42,10 +42,7 @@ struct CellBig
 
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
     constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(std::ssize(dimv), dspec); }
-#pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
-#pragma GCC diagnostic warning "-Warray-bounds"
     constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
-#pragma GCC diagnostic pop
     constexpr static dim_t len_s(int k) { return ANY; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
