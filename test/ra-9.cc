@@ -83,10 +83,10 @@ int main()
     {
         auto ref = std::array<int, 4> {12, 77, 44, 1};
         tr.test_eq(2, expr([](int i) { return i; }, ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
-        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
-// [ra1] no need to forward in Expr()/Match()/Pick(), that is done in expr()/pick(). Used to need it bc CTE in older gcc.
-        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
-        tr.test_eq(ra::start(ref), expr([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
+        tr.test_eq(ref, expr([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
+// [ra1] used to need forward in Match/Expr/Pick bc CTE in older gcc. But see bug83.cc.
+        tr.test_eq(ref, expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
+        tr.test_eq(ref, expr([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
         {
             int c = 0;
             ply_ravel(expr([&c](int i) { c += i; }, ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));

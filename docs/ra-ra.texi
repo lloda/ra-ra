@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 26
-@set UPDATED 2023 November 27
+@set VERSION 27
+@set UPDATED 2023 November 28
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1683,19 +1683,19 @@ Item 2
 @section Headers
 @c ------------------------------------------------
 
-The header structure of @code{ra::} is as follows.@footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
+The header structure of @code{ra::} is as follows.@c @footnote{Diagram generated using Graphviz and @url{https://www.flourish.org/cinclude2dot}.
 
-@verbatim
-cd ra && cinclude2dot.pl --include . > headers.dot
-dot -Tpng headers.dot -Gdpi=100 > headers.png
-@end verbatim
-}
+@c @verbatim
+@c cd ra && cinclude2dot.pl --include . > headers.dot
+@c dot -Tpng headers.dot -Gdpi=100 > headers.png
+@c @end verbatim
+@c }
 
 @itemize
 @item @code{tuples.hh} -
 Generic macros and tuple library.
 @item @code{bootstrap.hh} -
-Basic types, concepts, type predicates, introspection.
+Basic types and concepts, introspection.
 @item @code{expr.hh} -
 Expression template nodes, prefix matching.
 @item @code{ply.hh} -
@@ -1704,10 +1704,8 @@ Traversal, including I/O.
 Array type with compile time dimensions.
 @item @code{big.hh} -
 Array type with run time dimensions.
-@item @code{optimize.hh} -
-Optimization templates.
 @item @code{ra.hh} -
-Functions and operators. Main header.
+Functions and operators, main header.
 @item @code{test.hh} -
 (accessory) Testing library.
 @item @code{bench.hh} -
@@ -1716,7 +1714,7 @@ Functions and operators. Main header.
 (accessory) Dual number type and operations.
 @end itemize
 
-@image{headers,4cm}
+@c @image{headers,4cm}
 
 @c ------------------------------------------------
 @node Type hierarchy

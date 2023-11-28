@@ -231,11 +231,8 @@ struct View
         return select_loop(dim, k, RA_FWD(i) ...);
     }
     constexpr static dim_t
-    select_loop(Dim * dim, int k)
-    {
-        return 0;
-    }
-// Specialize for rank() integer-args -> scalar, same in ra::SmallBase in small.hh.
+    select_loop(Dim * dim, int k) { return 0; }
+
     template <class ... I>
     constexpr decltype(auto)
     operator()(I && ... i) const
@@ -555,7 +552,7 @@ template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T [
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
 // -------------
-// Used in Guile wrappers to let array parameter either borrow from Guile storage or convert into new array (eg 'f32 into 'f64).
+// Used in Guile wrappers to let parameter either borrow from Guile storage or convert into new array (eg 'f32 into 'f64).
 // TODO Can use unique_ptr's deleter for this?
 // TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
 // -------------
@@ -573,7 +570,7 @@ shared_borrowing(View<T, RANK> & raw)
 
 
 // --------------------
-// Concrete (container) type from array expression.
+// concrete (container) type from array expression.
 // --------------------
 
 template <class E>
@@ -660,7 +657,7 @@ with_shape(std::initializer_list<S> && s, X && x)
 
 
 // --------------------
-// Operations specific to View.
+// View ops
 // --------------------
 
 template <class T, rank_t RANK>

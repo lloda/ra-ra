@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 26, updated 2023 November 27)
+<!-- ra:: (version 27, updated 2023 November 28)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 26, updated 2023 November 27)
+<p><code>ra::</code> (version 27, updated 2023 November 28)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -1749,13 +1749,13 @@ Next: <a href="#Type-hierarchy" accesskey="n" rel="next">Type hierarchy</a>, Up:
 </div>
 <span id="Headers-1"></span><h3 class="section">5.1 Headers</h3>
 
-<p>The header structure of <code>ra::</code> is as follows.<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
-</p>
+<p>The header structure of <code>ra::</code> is as follows.</p>
+
 <ul>
 <li> <code>tuples.hh</code> -
 Generic macros and tuple library.
 </li><li> <code>bootstrap.hh</code> -
-Basic types, concepts, type predicates, introspection.
+Basic types and concepts, introspection.
 </li><li> <code>expr.hh</code> -
 Expression template nodes, prefix matching.
 </li><li> <code>ply.hh</code> -
@@ -1764,10 +1764,8 @@ Traversal, including I/O.
 Array type with compile time dimensions.
 </li><li> <code>big.hh</code> -
 Array type with run time dimensions.
-</li><li> <code>optimize.hh</code> -
-Optimization templates.
 </li><li> <code>ra.hh</code> -
-Functions and operators. Main header.
+Functions and operators, main header.
 </li><li> <code>test.hh</code> -
 (accessory) Testing library.
 </li><li> <code>bench.hh</code> -
@@ -1776,7 +1774,6 @@ Functions and operators. Main header.
 (accessory) Dual number type and operations.
 </li></ul>
 
-<img src="headers.png" alt="headers">
 
 <hr>
 </div>
@@ -1820,7 +1817,7 @@ Next: <a href="#Loop-types" accesskey="n" rel="next">Loop types</a>, Previous: <
 
 <p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>iota()</code> or dimensions created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
-<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v26) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
+<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v27) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
 <p>Finally we select a traversal method. <code>ra::</code> has two traversal methods: <code>ply_fixed</code> can be used when the rank and the traversal order are known at compile time, and <code>ply_ravel</code> can be used in the general case.
 </p>
@@ -2945,12 +2942,6 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 <h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
 <p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
-<h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
-<p>Diagram generated using Graphviz and <a href="https://www.flourish.org/cinclude2dot">https://www.flourish.org/cinclude2dot</a>.
-</p>
-<pre class="verbatim">cd ra &amp;&amp; cinclude2dot.pl --include . &gt; headers.dot
-dot -Tpng headers.dot -Gdpi=100 &gt; headers.png
-</pre>
 </div>
 
 

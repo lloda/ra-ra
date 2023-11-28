@@ -95,7 +95,7 @@ resize(A & a, dim_t s)
 
 
 // --------------------
-// Slicing helpers
+// slicing helpers
 // --------------------
 
 template <int n=BAD> struct dots_t { static_assert(n>=0 || BAD==n); };
@@ -177,9 +177,8 @@ template <int N, class KK=mp::iota<N>> struct unbeat;
 template <int N, int ... k>
 struct unbeat<N, mp::int_list<k ...>>
 {
-    template <class V, class ... I>
     constexpr static decltype(auto)
-    op(V && v, I && ... i)
+    op(auto && v, auto && ... i)
     {
         return from(RA_FWD(v), with_len(maybe_len<k>(v), RA_FWD(i)) ...);
     }
@@ -187,7 +186,7 @@ struct unbeat<N, mp::int_list<k ...>>
 
 
 // --------------------
-// Develop indices
+// develop indices
 // --------------------
 
 template <rank_t k, rank_t end>
@@ -463,10 +462,8 @@ struct SmallView: public SmallBase<T, lens, steps>
     }
     template <int k>
     consteval static dim_t
-    select_loop()
-    {
-        return 0;
-    }
+    select_loop() { return 0; }
+
     template <class ... I>
     constexpr decltype(auto)
     operator()(I && ... i) const
@@ -610,7 +607,7 @@ ravel_from_iterators(auto && begin, auto && end)
 
 
 // ---------------------
-// Builtin arrays.
+// builtin arrays.
 // ---------------------
 
 template <class T>
@@ -701,7 +698,7 @@ cat(A1 && a1_, A2 && a2_)
     if constexpr (cv_smallview<A1> && cv_smallview<A2>) {
         decltype(auto) a1 = a1_.view();
         decltype(auto) a2 = a2_.view();
-        static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat."); // gcc accepts a1.rank(), etc.
+        static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
         using T = std::common_type_t<std::decay_t<decltype(a1[0])>, std::decay_t<decltype(a2[0])>>;
         Small<T, a1.size()+a2.size()> val;
         std::copy(a1.begin(), a1.end(), val.begin());
@@ -709,7 +706,7 @@ cat(A1 && a1_, A2 && a2_)
         return val;
     } else if constexpr (cv_smallview<A1> && is_scalar<A2>) {
         decltype(auto) a1 = a1_.view();
-        static_assert(1==a1.rank(), "bad ranks for cat");
+        static_assert(1==a1.rank(), "Bad ranks for cat.");
         using T = std::common_type_t<std::decay_t<decltype(a1[0])>, A2>;
         Small<T, a1.size()+1> val;
         std::copy(a1.begin(), a1.end(), val.begin());
@@ -717,7 +714,7 @@ cat(A1 && a1_, A2 && a2_)
         return val;
     } else if constexpr (is_scalar<A1> && cv_smallview<A2>) {
         decltype(auto) a2 = a2_.view();
-        static_assert(1==a2.rank(), "bad ranks for cat");
+        static_assert(1==a2.rank(), "Bad ranks for cat.");
         using T = std::common_type_t<A1, std::decay_t<decltype(a2[0])>>;
         Small<T, 1+a2.size()> val;
         val[0] = a1_;

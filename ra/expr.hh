@@ -357,7 +357,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     }
 
     constexpr
-    Match(P ... p_): t(p_ ...) // [ra1]
+    Match(P ... p_): t(RA_FWD(p_) ...) // [ra1]
     {
 // TODO Maybe on ply, would make checkp unnecessary, make agree_xxx() unnecessary.
         if constexpr (checkp && !(has_len<P> || ...)) {
