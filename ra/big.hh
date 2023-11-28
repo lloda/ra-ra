@@ -172,7 +172,7 @@ struct View
     {
         auto xsize = ssize(x);
         RA_CHECK(size()==xsize, "Mismatched sizes ", View::size(), " ", xsize, ".");
-        std::copy_n(x.begin(), xsize, begin());
+        std::ranges::copy_n(x.begin(), xsize, begin());
         return *this;
     }
     constexpr View const & operator=(braces<T, RANK> x) const requires (RANK!=ANY) { ra::iter<-1>(*this) = x; return *this; }
@@ -441,10 +441,10 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
 
 // FIXME requires T to be copiable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
     constexpr void
-    fill1(auto xbegin, dim_t xsize)
+    fill1(auto && xbegin, dim_t xsize)
     {
         RA_CHECK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
-        std::ranges::copy_n(xbegin, xsize, begin());
+        std::ranges::copy_n(RA_FWD(xbegin), xsize, begin());
     }
 
 // shape + row-major ravel.
@@ -457,8 +457,8 @@ struct Container: public View<typename storage_traits<Store>::T, RANK>
     Container(shape_arg const & s, auto * p)
         : Container(s, none) { fill1(p, size()); } // FIXME fake check
 // FIXME remove
-    Container(shape_arg const & s, auto pbegin, dim_t psize)
-        : Container(s, none) { fill1(pbegin, psize); }
+    Container(shape_arg const & s, auto && pbegin, dim_t psize)
+        : Container(s, none) { fill1(RA_FWD(pbegin), psize); }
 
 // for shape arguments that doesn't convert implicitly to shape_arg
     Container(auto && s, none_t)

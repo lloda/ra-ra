@@ -302,7 +302,7 @@ ply_fixed(A && a, Early && early = Nop {})
 
 
 // ---------------------------
-// ply, best for each type
+// default ply
 // ---------------------------
 
 template <IteratorConcept A, class Early = Nop>
@@ -320,11 +320,6 @@ ply(A && a, Early && early = Nop {})
 
 constexpr void
 for_each(auto && op, auto && ... a) {  ply(map(RA_FWD(op), RA_FWD(a) ...)); }
-
-
-// ---------------------------
-// ply, short-circuiting
-// ---------------------------
 
 template <class T> struct Default { T def; };
 template <class T> Default(T &&) -> Default<T>;
@@ -362,20 +357,15 @@ struct STLIterator
             ii.c.cp = nullptr;
         }
     }
-    constexpr STLIterator &
-    operator=(STLIterator const & it)
-    {
-        ind = it.ind;
-        ii.Iterator::~Iterator(); // no-op except for View<ANY>. Still...
-        new (&ii) Iterator(it.ii); // avoid ii = it.ii [ra11]
-        return *this;
-    }
-
+    constexpr STLIterator(STLIterator && it) = default;
+    constexpr STLIterator(STLIterator const & it) = delete;
+    constexpr STLIterator & operator=(STLIterator && it) = default;
+    constexpr STLIterator & operator=(STLIterator const & it) = delete;
     bool operator==(std::default_sentinel_t end) const { return !(ii.c.cp); }
     decltype(auto) operator*() const { return *ii; }
 
     constexpr void
-    cube_next(rank_t k)
+    next(rank_t k)
     {
         for (; k>=0; --k) {
             if (++ind[k]<ii.len(k)) {
@@ -390,7 +380,7 @@ struct STLIterator
     }
     template <int k>
     constexpr void
-    cube_next()
+    next()
     {
         if constexpr (k>=0) {
             if (++ind[k]<ii.len(k)) {
@@ -398,7 +388,7 @@ struct STLIterator
             } else {
                 ind[k] = 0;
                 ii.adv(k, 1-ii.len(k));
-                cube_next<k-1>();
+                next<k-1>();
             }
             return;
         }
@@ -407,14 +397,14 @@ struct STLIterator
     STLIterator & operator++()
     {
         if constexpr (ANY==rank_s<Iterator>()) {
-            cube_next(rank(ii)-1);
+            next(rank(ii)-1);
         } else {
-            cube_next<rank_s<Iterator>()-1>();
+            next<rank_s<Iterator>()-1>();
         }
         return *this;
     }
-// required by std::input_or_output_iterator
-    STLIterator & operator++(int)  { auto old = *this; ++(*this); return old; }
+// std::input_iterator allows void, but std::output_iterator doesn't (p0541). Avoid
+    STLIterator & operator++(int) { static_assert(always_false<Iterator>); }
 };
 
 

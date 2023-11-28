@@ -37,7 +37,10 @@ int main()
         double rpool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::View<double, 2> r { {{3, 1}, {2, 3}}, rpool };
         double rcheck[6] = { 1, 4, 2, 5, 3, 6 };
-        tr.test(std::equal(rcheck, rcheck+6, r.at(ra::Big<int>({0}, {})).begin()));
+// kinda... long
+        auto v = r.at(ra::Big<int>({0}, {}));
+        tr.test(std::ranges::equal(std::ranges::subrange(rcheck, rcheck+6),
+                                   std::ranges::subrange(v)));
     }
     return tr.summary();
 }

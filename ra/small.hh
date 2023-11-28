@@ -422,7 +422,7 @@ struct SmallView: public SmallBase<T, lens, steps>
     constexpr SmallView const &
     operator=(T (&&x)[size()]) const requires ((rank()>1) && (size()>1))
     {
-        std::copy(std::begin(x), std::end(x), begin()); return *this;
+        std::ranges::copy(std::ranges::subrange(x), begin()); return *this;
     }
 
     template <int k>

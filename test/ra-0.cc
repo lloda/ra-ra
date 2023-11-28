@@ -202,7 +202,7 @@ int main()
         auto it = r.iter();
         tr.test_seq(r.data(), it.c.data());
         std::ranges::copy(r.begin(), r.end(), chk);
-        tr.test(std::equal(pool, pool+6, r.begin()));
+        tr.test(std::ranges::equal(pool, pool+6, r.begin(), r.end()));
     }
     tr.section("iterator for View (II)");
     {
@@ -212,7 +212,7 @@ int main()
         auto it = r.iter();
         tr.test_seq(r.data(), it.c.data());
         std::ranges::copy(r.begin(), r.end(), chk);
-        tr.test(std::equal(pool, pool+6, r.begin()));
+        tr.test(std::ranges::equal(pool, pool+6, r.begin(), r.end()));
     }
     // some of these tests are disabled depending on CellBig::operator=.
     tr.section("[ra11a] (skipped) CellBig operator= (from CellBig) does NOT copy contents");
@@ -250,25 +250,26 @@ int main()
         tr.test_eq(ra::_0 - ra::_1, AA);
         tr.test_eq(A, AA);
     }
-    tr.section("[ra11c] STL-type iterators never copy contents");
-    {
-        double a[6] = { 0, 0, 0, 0, 0, 0 };
-        double b[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::View<double> ra { {{3, 2}, {2, 1}}, a };
-        ra::View<double> rb { {{3, 2}, {2, 1}}, b };
-        auto aiter = ra.begin();
-        {
-            auto biter = rb.begin();
-            aiter = biter;
-            tr.test_eq(0, ra); // ra unchanged
-            tr.test(std::ranges::equal(rb.begin(), rb.end(), aiter, rb.end())); // aiter changed
-        }
-        {
-            aiter = rb.begin();
-            tr.test_eq(0, ra); // ra unchanged
-            tr.test(std::ranges::equal(rb.begin(), rb.end(), aiter, rb.end())); // aiter changed
-        }
-    }
+// FIXME re-enable if STL-type iterators become copyable again.
+    // tr.section("[ra11c] STL-type iterators never copy contents");
+    // {
+    //     double a[6] = { 0, 0, 0, 0, 0, 0 };
+    //     double b[6] = { 1, 2, 3, 4, 5, 6 };
+    //     ra::View<double> ra { {{3, 2}, {2, 1}}, a };
+    //     ra::View<double> rb { {{3, 2}, {2, 1}}, b };
+    //     auto aiter = ra.begin();
+    //     {
+    //         auto biter = rb.begin();
+    //         aiter = biter;
+    //         tr.test_eq(0, ra); // ra unchanged
+    //         tr.test(std::ranges::equal(rb.begin(), rb.end(), aiter, rb.end())); // aiter changed
+    //     }
+    //     {
+    //         aiter = rb.begin();
+    //         tr.test_eq(0, ra); // ra unchanged
+    //         tr.test(std::ranges::equal(rb.begin(), rb.end(), aiter, rb.end())); // aiter changed
+    //     }
+    // }
     tr.section("shape of .iter()");
     {
         auto test = [&tr](auto && A)
@@ -321,7 +322,7 @@ int main()
 
         ra::View<double> r { {{3, 1}, {2, 3}}, rpool };
         std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
-        tr.test(std::equal(check, check+6, r.begin()));
+        tr.test(std::ranges::equal(check, check+6, r.begin(), r.end()));
 
         ra::Unique<double> u({3, 2}, r.begin(), r.size());
         std::ranges::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
