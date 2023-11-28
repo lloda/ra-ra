@@ -44,12 +44,15 @@ int main()
                 ++i;
             }
         }
-        tr.section("STL style with non-default steps, which keeps indices (as internal detail)");
+        tr.section("STL style with non-default steps");
         {
             ra::Small<int, 2, 3> a = {{1, 2, 3}, {4, 5, 6}};
             auto b = transpose<1, 0>(a);
-            tr.test_eq(ra::start({0, 0}), ra::start(b.begin().ind));
-            tr.test_eq(ra::start({0, 1}), ra::start((++b.begin()).ind));
+
+            // we don't necessarily walk ind this way.
+            // tr.test_eq(ra::start({0, 0}), ra::start(b.begin().ind));
+            // tr.test_eq(ra::start({0, 1}), ra::start((++b.begin()).ind));
+
             tr.test(!std::is_same_v<int *, decltype(b.begin())>);
             int bref[6] = {1, 4, 2, 5, 3, 6};
             for (int i=0; auto && bi: b) {

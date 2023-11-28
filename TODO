@@ -60,10 +60,10 @@ checkbox [C-ct] flip TODO
         - [ ] remove inheritance relationship of Container on View
         - [ ] make View be View<pointer> and not View<value_type>
     - [ ] Should be able to turn ravel iterators (e.g. View::begin()) into array iterators. Ptr()
-      doesn't work for that. Or to obtain STLIterator from any array iterator. That may come of
-      merging STLIterator with plyers.
+      doesn't work for that.
       - This has become more feasible after changing the iterator interface from flat to saveload,
         main obstacle atm seems to be the need to support copy. <2023-11-20 Mon 12:45>
+      - One can now create a ravel iterator from an IteratorConcept <2023-11-28 Tue 16:37>
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down an Expr??
     - [ ] port some of the View ops to generic Iterator. reverse, transpose, etc. seem easy
       enough. Only it kind of bothers me that they need their own Expr-like types while on Views

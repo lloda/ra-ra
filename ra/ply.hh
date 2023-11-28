@@ -332,7 +332,7 @@ early(IteratorConcept auto && a, auto && def) { return ply(RA_FWD(a), Default { 
 
 
 // --------------------
-// STLIterator for CellSmall / CellBig. FIXME make it work for any IteratorConcept.
+// iterator adapter for the standard library
 // --------------------
 
 template <IteratorConcept A>
@@ -346,18 +346,8 @@ struct STLIterator
     shape_type ind;
     bool over;
 
-    STLIterator(A a_)
-        : a(a_),
-          ind([&] {
-              if constexpr (ANY==rank_s<A>()) {
-                  return shape_type(rank(a), 0);
-              } else {
-                  return shape_type {0};
-              }
-          }()),
 // [ra12] mark empty range. FIXME make 0==size() more efficient.
-          over(0==ra::size(a))
-    {}
+    STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) {}
     constexpr STLIterator(STLIterator && it) = default;
     constexpr STLIterator(STLIterator const & it) = delete;
     constexpr STLIterator & operator=(STLIterator && it) = default;
@@ -369,11 +359,11 @@ struct STLIterator
     next(rank_t k)
     {
         for (; k>=0; --k) {
-            if (++ind[k]<a.len(k)) {
+            if (--ind[k]>0) {
                 a.adv(k, 1);
                 return;
             } else {
-                ind[k] = 0;
+                ind[k] = a.len(k);
                 a.adv(k, 1-a.len(k));
             }
         }
@@ -384,10 +374,10 @@ struct STLIterator
     next()
     {
         if constexpr (k>=0) {
-            if (++ind[k]<a.len(k)) {
+            if (--ind[k]>0) {
                 a.adv(k, 1);
             } else {
-                ind[k] = 0;
+                ind[k] = a.len(k);
                 a.adv(k, 1-a.len(k));
                 next<k-1>();
             }
