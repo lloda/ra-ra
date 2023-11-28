@@ -48,7 +48,6 @@ struct CellBig
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
 
-// see STLIterator for len(0)=0, etc. [ra12].
     constexpr CellBig(T * cp, Dimv const & dimv_, Spec dspec_ = Spec {})
         : dimv(dimv_), dspec(dspec_)
     {
@@ -775,17 +774,14 @@ reshape_(View<T, RANK> const & a, S && sb_)
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
-            assert(is_c_order(a, false) && "reshape w/copy not implemented"); // FIXME bad abort [ra17]
-            if (la>=lb) {
+            RA_CHECK(is_c_order(a, false), "Reshape with copy not implemented.");
+            RA_CHECK(la>=lb, "Reshape with copy not implemented.");
 // FIXME View(SS const & s, T * p). Cf [ra37].
-                filldim(b.dimv, sb);
-                for (int j=0; j!=b.rank(); ++j) {
-                    b.dimv[j].step *= a.step(a.rank()-1);
-                }
-                return b;
-            } else {
-                assert(0 && "reshape case not implemented"); // FIXME bad abort [ra17]
+            filldim(b.dimv, sb);
+            for (int j=0; j!=b.rank(); ++j) {
+                b.dimv[j].step *= a.step(a.rank()-1);
             }
+            return b;
         } else {
 // select
             b.dimv[b.rank()-i-1] = a.dimv[a.rank()-i-1];

@@ -290,12 +290,15 @@ ply_fixed(A && a, Early && early = Nop {})
                 subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
             }
         } else {
+#pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
+#pragma GCC diagnostic warning "-Warray-bounds"
 // not worth unrolling.
             if constexpr (requires {early.def;}) {
                 return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
             } else {
                 subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
             }
+#pragma GCC diagnostic pop
         }
     }
 }
@@ -332,80 +335,80 @@ early(IteratorConcept auto && a, auto && def) { return ply(RA_FWD(a), Default { 
 // STLIterator for CellSmall / CellBig. FIXME make it work for any IteratorConcept.
 // --------------------
 
-template <class Iterator>
+template <IteratorConcept A>
 struct STLIterator
 {
     using difference_type = dim_t;
-    using value_type = typename Iterator::value_type;
-    using shape_type = decltype(ra::shape(std::declval<Iterator>())); // std::array or std::vector
+    using value_type = value_t<A>;
+    using shape_type = decltype(ra::shape(std::declval<A>())); // std::array or std::vector
 
-    Iterator ii;
+    A a;
     shape_type ind;
+    bool over;
 
-    STLIterator(Iterator const & ii_)
-        : ii(ii_),
+    STLIterator(A a_)
+        : a(a_),
           ind([&] {
-              if constexpr (ANY==rank_s<Iterator>()) {
-                  return shape_type(rank(ii), 0);
+              if constexpr (ANY==rank_s<A>()) {
+                  return shape_type(rank(a), 0);
               } else {
                   return shape_type {0};
               }
-          }())
-    {
+          }()),
 // [ra12] mark empty range. FIXME make 0==size() more efficient.
-        if (0==ra::size(ii)) {
-            ii.c.cp = nullptr;
-        }
-    }
+          over(0==ra::size(a))
+    {}
     constexpr STLIterator(STLIterator && it) = default;
     constexpr STLIterator(STLIterator const & it) = delete;
     constexpr STLIterator & operator=(STLIterator && it) = default;
     constexpr STLIterator & operator=(STLIterator const & it) = delete;
-    bool operator==(std::default_sentinel_t end) const { return !(ii.c.cp); }
-    decltype(auto) operator*() const { return *ii; }
+    bool operator==(std::default_sentinel_t end) const { return over; }
+    decltype(auto) operator*() const { return *a; }
 
     constexpr void
     next(rank_t k)
     {
         for (; k>=0; --k) {
-            if (++ind[k]<ii.len(k)) {
-                ii.adv(k, 1);
+            if (++ind[k]<a.len(k)) {
+                a.adv(k, 1);
                 return;
             } else {
                 ind[k] = 0;
-                ii.adv(k, 1-ii.len(k));
+                a.adv(k, 1-a.len(k));
             }
         }
-        ii.c.cp = nullptr;
+        over = true;
     }
     template <int k>
     constexpr void
     next()
     {
         if constexpr (k>=0) {
-            if (++ind[k]<ii.len(k)) {
-                ii.adv(k, 1);
+            if (++ind[k]<a.len(k)) {
+                a.adv(k, 1);
             } else {
                 ind[k] = 0;
-                ii.adv(k, 1-ii.len(k));
+                a.adv(k, 1-a.len(k));
                 next<k-1>();
             }
             return;
         }
-        ii.c.cp = nullptr;
+        over = true;
     }
     STLIterator & operator++()
     {
-        if constexpr (ANY==rank_s<Iterator>()) {
-            next(rank(ii)-1);
+        if constexpr (ANY==rank_s<A>()) {
+            next(rank(a)-1);
         } else {
-            next<rank_s<Iterator>()-1>();
+            next<rank_s<A>()-1>();
         }
         return *this;
     }
 // std::input_iterator allows void, but std::output_iterator doesn't (p0541). Avoid
-    STLIterator & operator++(int) { static_assert(always_false<Iterator>); }
+    STLIterator & operator++(int) { static_assert(always_false<A>); }
 };
+
+template <class A> STLIterator(A &&) -> STLIterator<A>;
 
 
 // ---------------------------

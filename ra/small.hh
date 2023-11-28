@@ -271,7 +271,6 @@ struct CellSmall
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
 
-// see STLIterator for len(0)=0, etc. [ra12].
     constexpr CellSmall(T * p): c { p } {}
     RA_ASSIGNOPS_SELF(CellSmall)
     RA_ASSIGNOPS_DEFAULT_SET

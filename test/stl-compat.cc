@@ -98,11 +98,14 @@ int main()
             .test_eq(ra::ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
         tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
-    // tr.section("STLIterator works with arbitrary expr not just views");
-    // {
-    //     ra::Big<int, 3> aa({4, 2, 3}, ra::_0 - ra::_1 + ra::_2);
-    //     ra::STLIterator(ra::start(aa))
-    // }
+    tr.section("STLIterator works with arbitrary expr not just views");
+// FIXME give begin/end to exprs so subrange(expr) works by itself.
+    {
+        ra::Big<int, 3> a({4, 2, 3}, ra::_0 - ra::_1 + ra::_2);
+        ra::Big<int, 1> b(4*2*3, 0);
+        std::ranges::copy(std::ranges::subrange(ra::STLIterator(a+1), std::default_sentinel), b.begin());
+        tr.test_eq(ra::ravel_free(a) + 1, b);
+    }
 #if __cpp_lib_span >= 202002L
     tr.section("std::span");
     {
