@@ -56,6 +56,12 @@ int main()
         using T = std::chrono::duration<long int, std::ratio<1, 1000000000>>;
         ra::Big<T, 1> a;
         static_assert(std::is_same_v<ra::value_t<decltype(a)>, T>);
+        ra::Small<T const, 1> ac;
+        static_assert(std::is_same_v<ra::value_t<decltype(ac)>, T const>);
+        static_assert(std::is_same_v<ra::ncvalue_t<decltype(ac)>, T>);
+        ra::Small<T, 1> an;
+        static_assert(std::is_same_v<ra::value_t<decltype(an)>, T>);
+        static_assert(std::is_same_v<ra::ncvalue_t<decltype(an)>, T>);
     }
     {
         TESTPRED(decltype(std::declval<ra::SmallView<ra::Dim, int_list<3>, int_list<1>>>()),

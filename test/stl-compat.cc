@@ -72,7 +72,7 @@ int main()
         ra::Small<int, 3> b = ra::ptr(a.begin());
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, b);
     }
-    tr.section("[ra12] check that begin() and end() match for empty views");
+    tr.section("check that begin() and end() match for empty views");
     {
         ra::Big<int, 3> aa({0, 2, 3}, 0.);
         auto a = aa(ra::all, 1);

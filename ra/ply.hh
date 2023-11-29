@@ -32,8 +32,8 @@ VALUE(A && a)
     }
 }
 
-// FIXME do we really want to drop const? See use in concrete_type.
-template <class A> using value_t = std::decay_t<decltype(VALUE(std::declval<A>()))>;
+template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VALUE(std::declval<A>()))>>;
+template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 
 
 // ---------------------
@@ -346,7 +346,6 @@ struct STLIterator
     shape_type ind;
     bool over;
 
-// [ra12] mark empty range. FIXME make 0==size() more efficient.
     STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) {}
     constexpr STLIterator(STLIterator && it) = default;
     constexpr STLIterator(STLIterator const & it) = delete;

@@ -41,7 +41,7 @@ struct TestRecorder
     template <class A> static auto
     amax_strict(A && a)
     {
-        using T = value_t<A>;
+        using T = ncvalue_t<A>;
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
         return early(map([&c](auto && a) { if (c<a) { c=a; }; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; },
                          RA_FWD(a)),

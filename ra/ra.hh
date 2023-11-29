@@ -134,7 +134,7 @@ template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e);
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like WithLen does.
 #if RA_DO_OPT_IOTA==1
 // TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
-template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<value_t<X>>;
+template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<ncvalue_t<X>>;
 
 // TODO something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
@@ -431,7 +431,7 @@ constexpr auto
 amin(A && a)
 {
     using std::min;
-    using T = value_t<A>;
+    using T = ncvalue_t<A>;
     T c = std::numeric_limits<T>::has_infinity ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::max();
     for_each([&c](auto && a) { if (a<c) { c = a; } }, a);
     return c;
@@ -442,7 +442,7 @@ constexpr auto
 amax(A && a)
 {
     using std::max;
-    using T = value_t<A>;
+    using T = ncvalue_t<A>;
     T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
     for_each([&c](auto && a) { if (c<a) { c = a; } }, a);
     return c;
@@ -450,9 +450,9 @@ amax(A && a)
 
 // FIXME encapsulate this kind of reference-reduction.
 // FIXME expr/ply mechanism doesn't allow partial iteration (adv then continue).
-template <class A, class Less = std::less<value_t<A>>>
+template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
-refmin(A && a, Less && less = std::less<value_t<A>>())
+refmin(A && a, Less && less = std::less<ncvalue_t<A>>())
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
@@ -461,9 +461,9 @@ refmin(A && a, Less && less = std::less<value_t<A>>())
     return *p;
 }
 
-template <class A, class Less = std::less<value_t<A>>>
+template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
-refmax(A && a, Less && less = std::less<value_t<A>>())
+refmax(A && a, Less && less = std::less<ncvalue_t<A>>())
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
@@ -476,7 +476,7 @@ template <class A>
 constexpr auto
 sum(A && a)
 {
-    auto c = concrete_type<value_t<A>>(0);
+    auto c = concrete_type<ncvalue_t<A>>(0);
     for_each([&c](auto && a) { c += a; }, a);
     return c;
 }
@@ -485,7 +485,7 @@ template <class A>
 constexpr auto
 prod(A && a)
 {
-    auto c = concrete_type<value_t<A>>(1);
+    auto c = concrete_type<ncvalue_t<A>>(1);
     for_each([&c](auto && a) { c *= a; }, a);
     return c;
 }
@@ -831,8 +831,8 @@ template <int D, int Oa, int Ob, class Va, class Vb> requires (!(is_scalar<Va> &
 decltype(auto)
 wedge(Va const & a, Vb const & b)
 {
-    Small<value_t<Va>, size_s<Va>()> aa = a;
-    Small<value_t<Vb>, size_s<Vb>()> bb = b;
+    Small<ncvalue_t<Va>, size_s<Va>()> aa = a;
+    Small<ncvalue_t<Vb>, size_s<Vb>()> bb = b;
     using Ua = decltype(aa);
     using Ub = decltype(bb);
     using Wedge = mp::Wedge<D, Oa, Ob>;
@@ -849,8 +849,8 @@ template <int D, int Oa, int Ob, class Va, class Vb, class Vr> requires (!(is_sc
 void
 wedge(Va const & a, Vb const & b, Vr & r)
 {
-    Small<value_t<Va>, size_s<Va>()> aa = a;
-    Small<value_t<Vb>, size_s<Vb>()> bb = b;
+    Small<ncvalue_t<Va>, size_s<Va>()> aa = a;
+    Small<ncvalue_t<Vb>, size_s<Vb>()> bb = b;
     using Ua = decltype(aa);
     using Ub = decltype(bb);
     auto & r1 = reinterpret_cast<torank1<decltype(r)> &>(r);

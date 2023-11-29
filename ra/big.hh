@@ -577,12 +577,12 @@ struct concrete_type_def
 template <class E> requires (size_s<E>()==ANY)
 struct concrete_type_def<E>
 {
-    using type = Big<value_t<E>, rank_s<E>()>;
+    using type = Big<ncvalue_t<E>, rank_s<E>()>;
 };
 template <class E> requires (size_s<E>()!=ANY)
 struct concrete_type_def<E>
 {
-    using type = decltype(std::apply([](auto ... i) { return Small<value_t<E>, E::len_s(i) ...> {}; },
+    using type = decltype(std::apply([](auto ... i) { return Small<ncvalue_t<E>, E::len_s(i) ...> {}; },
                                      mp::iota<rank_s<E>()> {}));
 };
 // Scalars are their own concrete_type. Treat unregistered types as scalars.
