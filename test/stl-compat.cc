@@ -106,6 +106,14 @@ int main()
         std::ranges::copy(std::ranges::subrange(ra::STLIterator(a+1), std::default_sentinel), b.begin());
         tr.test_eq(ra::ravel_free(a) + 1, b);
     }
+    tr.section("STLIterator as output");
+    {
+        using complex = std::complex<double>;
+        ra::Big<complex, 3> a({4, 2, 3}, ra::_0 - ra::_1 + ra::_2);
+        ra::Big<double, 1> b(4*2*3, real_part(ra::ravel_free(a)));
+        std::ranges::copy(std::ranges::subrange(b), ra::STLIterator(imag_part(a)));
+        tr.test_eq((ra::_0 - ra::_1 + ra::_2)*1.*complex(1, 1), a);
+    }
 #if __cpp_lib_span >= 202002L
     tr.section("std::span");
     {

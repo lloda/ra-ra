@@ -27,7 +27,7 @@ int main(int argc, char * * argv)
         ra::View<int, 2> a;
         static_assert(ra::rank_s<decltype(a().iter<0>())>()==ra::rank_s<decltype(a().iter())>());
         static_assert(std::input_iterator<decltype(a.begin())>);
-        static_assert(std::output_iterator<decltype(a.begin()), int>);
+        // static_assert(std::weak_output_iterator<decltype(a.begin()), int>); // p2550 when ready c++
     }
     tr.section("constructors");
     {

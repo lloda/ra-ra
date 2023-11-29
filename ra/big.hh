@@ -741,7 +741,7 @@ ravel_free(View<T, RANK> const & a)
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
     ra::dim_t s = r<0 ? 1 : a.step(r);
-    return ra::View<T, 1>({{size(a), s}}, a.cp);
+    return ra::View<T, 1>({{ra::size(a), s}}, a.cp);
 }
 
 template <class T, rank_t RANK, class S>

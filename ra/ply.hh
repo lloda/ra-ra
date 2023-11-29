@@ -393,8 +393,8 @@ struct STLIterator
         }
         return *this;
     }
-// std::input_iterator allows void, but std::output_iterator doesn't (p0541). Avoid
-    STLIterator & operator++(int) { static_assert(always_false<A>); }
+// see p0541 and p2550. Or just avoid.
+    void operator++(int) { return ++(*this); }
 };
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;
