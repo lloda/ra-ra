@@ -98,12 +98,24 @@ int main()
             .test_eq(ra::ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
         tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
+    tr.section("STL predicates");
+    {
+        ra::View<int, 2> a;
+        tr.test(std::input_iterator<decltype(a.begin())>);
+        // tr.test(std::weak_output_iterator<decltype(a.begin()), int>); // p2550 when ready c++
+        tr.test(std::input_iterator<decltype(begin(a+1))>);
+        tr.test(std::sentinel_for<decltype(end(a+1)), decltype(begin(a+1))>);
+    }
     tr.section("STLIterator works with arbitrary expr not just views");
-// FIXME give begin/end to exprs so subrange(expr) works by itself.
     {
         ra::Big<int, 3> a({4, 2, 3}, ra::_0 - ra::_1 + ra::_2);
         ra::Big<int, 1> b(4*2*3, 0);
-        std::ranges::copy(std::ranges::subrange(ra::STLIterator(a+1), std::default_sentinel), b.begin());
+        std::ranges::copy(std::ranges::subrange(ra::STLIterator(a+1), std::default_sentinel), begin(b));
+        tr.test_eq(ra::ravel_free(a) + 1, b);
+        b =  0;
+// FIXME broken bc of hairy ADL issues (https://stackoverflow.com/a/33576098). Use ra::range instead.
+        // static_assert(std::ranges::input_range<decltype(a+1)>);
+        std::ranges::copy(range(a+1), begin(b));
         tr.test_eq(ra::ravel_free(a) + 1, b);
     }
     tr.section("STLIterator as output");
@@ -113,6 +125,12 @@ int main()
         ra::Big<double, 1> b(4*2*3, real_part(ra::ravel_free(a)));
         std::ranges::copy(std::ranges::subrange(b), ra::STLIterator(imag_part(a)));
         tr.test_eq((ra::_0 - ra::_1 + ra::_2)*1.*complex(1, 1), a);
+        a = 0;
+        std::ranges::copy(std::ranges::subrange(b), begin(imag_part(a)));
+        tr.test_eq((ra::_0 - ra::_1 + ra::_2)*1.*complex(0, 1), a);
+        a = 0;
+        std::ranges::copy(range(b*1.) | std::views::transform([](auto x) { return -x; }), begin(a));
+        tr.test_eq((ra::_0 - ra::_1 + ra::_2)*(-1.), a);
     }
 #if __cpp_lib_span >= 202002L
     tr.section("std::span");

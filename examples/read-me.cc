@@ -19,7 +19,7 @@ using ra::mp::int_list;
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("first example");
+    tr.section("First example");
     {
 // run time rank
         ra::Big<float> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
@@ -35,8 +35,12 @@ int main()
         std::cout << "B: " << B << std::endl;
         tr.test_eq(ra::Small<float, 2, 4> { {103, 106, -109, -112}, {215, 218, -221, -224} }, B);
     }
-    tr.section("dynamic/static shape");
-// Dynamic or static array rank. Dynamic or static array shape (all dimensions or none).
+    tr.section("Most things are constexpr");
+    {
+        constexpr ra::Small<int, 3> a = { 1, 2, 3 };
+        static_assert(6==ra::sum(a));
+    }
+    tr.section("Dynamic or static array rank. Dynamic or static array shape (all dimensions or none)");
     {
         ra::Big<char> A({2, 3}, 'a');     // dynamic rank = 2, dynamic shape = {2, 3}
         ra::Big<char, 2> B({2, 3}, 'b');  // static rank = 2, dynamic shape = {2, 3}
@@ -45,8 +49,7 @@ int main()
         cout << "B: " << B << "\n\n";
         cout << "C: " << C << "\n\n";
     }
-    tr.section("storage");
-// Memory-owning types and views. You can make array views over any piece of memory.
+    tr.section("Memory-owning types and views. You can make array views over any piece of memory");
     {
         // memory-owning types
         ra::Big<char, 2> A({2, 3}, 'a');     // storage is std::vector inside A
@@ -69,7 +72,7 @@ int main()
         cout << "D3: " << D3 << "\n\n";
         cout << "D4: " << D4 << "\n\n";
     }
-    tr.section("shape agreement");
+    tr.section("Shape agreement");
 // Shape agreement rules and rank extension (broadcasting) for rank-0 operations of any arity
 // and operands of any rank, any of which can a reference (so you can write on them). These
 // rules are taken from the array language, J.
@@ -86,8 +89,7 @@ int main()
         D += A * B;  // D(i) += A(i, j) * C(i)
         cout << "D: " << D << "\n\n";
     }
-    tr.section("rank iterators");
-// Iterators over cells of arbitrary rank.
+    tr.section("Iterators over cells of arbitrary rank");
     {
         constexpr auto i = ra::iota<0>();
         constexpr auto j = ra::iota<1>();
@@ -107,16 +109,14 @@ int main()
         for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<2>()); // give cell rank
         cout << "B: " << B << "\n\n";
     }
-// A rank conjunction (only for static rank and somewhat fragile).
-    tr.section("rank conjuction");
+    tr.section("A rank conjunction (only for static rank and somewhat fragile)");
     {
 // This is a translation of J: A = (i.3) -"(0 1) i.4, that is: A(i, j) = b(i)-c(j).
         ra::Big<float, 2> A = map(ra::wrank<0, 1>(std::minus<float>()), ra::iota(3), ra::iota(4));
         cout << "A: " << A << "\n\n";
     }
-// A proper selection operator with 'beating' of range or scalar subscripts.
 // See examples/slicing.cc for more examples.
-    tr.section("selector");
+    tr.section("A proper selection operator with 'beating' of range or scalar subscripts.");
     {
 // TODO do implicit reshape in constructors?? so I can accept any 1-array and not only an initializer_list.
         ra::Big<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
@@ -145,7 +145,8 @@ int main()
         B(I) = ra::Big<char, 2> {{'x', 'y'}, {'z', 'w'}};
         cout << "B: " << B << endl;
     }
-    tr.section("STL compat");
+// FIXME bring in some examples from test/stl-compat.cc. Show examples both ways.
+    tr.section("STL compatibility");
     {
         ra::Big<char, 1> A = {'x', 'z', 'y'};
         std::sort(A.begin(), A.end());
@@ -155,13 +156,13 @@ int main()
         B += std::vector<float> {10, 20};
         cout << "B: " << B << "\n\n";
     }
-    tr.section("example from the manual [ma100]");
+    tr.section("Example from the manual [ma100]");
     {
         ra::Small<int, 3> s {2, 1, 0};
         ra::Small<double, 3> z = pick(s, s*s, s+s, sqrt(s));
         cout << "z: " << z << endl;
     }
-    tr.section("example from the manual [ma101]");
+    tr.section("Example from the manual [ma101]");
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
         std::cout << ra::noshape << format_array(transpose<1, 0>(A), "|") << std::endl;
@@ -170,13 +171,13 @@ int main()
         ra::Big<char const *, 1> A = {"hello", "array", "world"};
         std::cout << ra::noshape << format_array(A, "|") << std::endl;
     }
-    tr.section("example from the manual [ma102]");
+    tr.section("Example from the manual [ma102]");
     {
         // ra::Big<char const *, 1> A({3}, "hello"); // ERROR bc of pointer constructor
         ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
         std::cout << ra::noshape << format_array(A, "|") << std::endl;
     }
-    tr.section("example from the manual [ma103]");
+    tr.section("Example from the manual [ma103]");
     {
         ra::Big<int, 2> A {{1, 2}, {3, 4}, {5, 6}};
         ra::Big<int, 2> B {{7, 8, 9}, {10, 11, 12}};
@@ -188,19 +189,19 @@ int main()
    95 106 117 */
         cout << C << endl;
     }
-    tr.section("example from the manual [ma104] - dynamic size");
+    tr.section("Example from the manual [ma104] - dynamic size");
     {
         ra::Big<int, 3> c({3, 2, 2}, ra::_0 - ra::_1 - 2*ra::_2);
         cout << "c: " << c << endl;
         cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
     }
-    tr.section("example from the manual [ma104] - static size");
+    tr.section("Example from the manual [ma104] - static size");
     {
         ra::Small<int, 3, 2, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
         cout << "c: " << c << endl;
         cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
     }
-    tr.section("example from the manual [ma105]");
+    tr.section("Example from the manual [ma105]");
     {
         ra::Big<double, 2> a {{1, 2, 3}, {4, 5, 6}};
         ra::Big<double, 1> b {10, 20, 30};
@@ -208,7 +209,7 @@ int main()
         iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply each item of a by b
         cout << c << endl;
     }
-// example from the manual [ma109]. This is a rare case where I need explicit ply.
+    tr.section("Example from the manual [ma109]. Contrived to need explicit ply");
     {
         ra::Big<int, 1> o = {};
         ra::Big<int, 1> e = {};
@@ -216,23 +217,23 @@ int main()
         ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
         cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
     }
-    tr.section("example from manual [ma110]");
+    tr.section("Example from manual [ma110]");
     {
         std::cout << exp(ra::Small<double, 3> {4, 5, 6}) << std::endl;
     }
-    tr.section("example from manual [ma111]");
+    tr.section("Example from manual [ma111]");
     {
         ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
         ra::Small<int, 2, 2> b = {1, 2, 3, 4};  // ravel of content
         cout << "a: " << a << ", b: " << b << endl;
     }
-    tr.section("example from manual [ma112]");
+    tr.section("Example from manual [ma112]");
     {
         double bx[6] = {1, 2, 3, 4, 5, 6};
         ra::Big<double, 2> b({3, 2}, bx); // {{1, 2}, {3, 4}, {5, 6}}
         cout << "b: " << b << endl;
     }
-    tr.section("example from manual [ma114]");
+    tr.section("Example from manual [ma114]");
     {
         using sizes = int_list<2, 3>;
         using steps = int_list<1, 2>;
@@ -240,7 +241,7 @@ int main()
         cout << "a: " << a << endl;
         cout << ra::Small<int, 6>(ra::ptr(a.data())) << endl;
     }
-    tr.section("example from manual [ma116]");
+    tr.section("Example from manual [ma116]");
     {
         ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
         ra::Big<int, 1> x = {1, 10};

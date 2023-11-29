@@ -664,7 +664,7 @@ map(auto && op, auto && ... a) { return expr(RA_FWD(op), start(RA_FWD(a)) ...); 
 
 
 // ---------------------------
-// pick
+// pick expression
 // ---------------------------
 
 template <class T, class J> struct pick_at_type;

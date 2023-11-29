@@ -42,30 +42,21 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 
 **ra-ra** offers:
 
-* Array types with arbitrary compile time or runtime rank, and compile time or runtime shape.
+* Array types with arbitrary compile time or runtime rank and shape.
 * Memory owning types as well as views over any piece of memory.
-* Support for builtin arrays and for the standard library, including `<ranges>`.
-* Interoperability with other libraries and/or languages through transparent memory layout.
-* Slicing with indices of arbitrary rank, linear range indices, axis skipping and elision, and contextual `len`.
+* Compatibility with builtin arrays and with the standard library, including ranges.
+* Interoperability with other libraries and languages through transparent memory layout.
+* Slicing with indices of arbitrary rank, axis skipping and insertion (e.g. for broadcasting), and contextual `len`.
 * Rank extension by prefix matching, as in APL/J, for functions of any number of arguments.
-* Iterators over subarrays of any rank.
-* Axis insertion, e.g. for broadcasting.
-* Outer product operation.
-* Tensor index object.
+* Iterators over subarrays (cells) of any rank.
+* Rank conjunction as in J (compile time rank only), outer product operation.
 * Short-circuiting logical operators.
-* Argument list selection operators (`where` with bool selector, or `pick` with integer selector).
+* Argument list selection operators (`where` with bool selector, `pick` with integer selector).
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
 * Many predefined array operations. Adding yours is trivial.
-* Rank conjunction as in J (compile time ranks only).
 * Configurable error checking.
-
-`constexpr` is suported as much as possible. For example:
-
-```
-  constexpr ra::Small<int, 3> a = { 1, 2, 3 };
-  static_assert(6==ra::sum(a));
-```
+* Mostly `constexpr`.
 
 Performance is competitive with hand written scalar (element by element) loops, but probably not with cache-tuned code such as your platform BLAS, or with code using SIMD. Please have a look at the benchmarks in [bench/](bench/).
 

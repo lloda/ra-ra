@@ -332,7 +332,7 @@ early(IteratorConcept auto && a, auto && def) { return ply(RA_FWD(a), Default { 
 
 
 // --------------------
-// iterator adapter for the standard library
+// iterator adapter for the standard library. FIXME maybe random for rank 1?
 // --------------------
 
 template <IteratorConcept A>
@@ -347,10 +347,10 @@ struct STLIterator
     bool over;
 
     STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) {}
-    constexpr STLIterator(STLIterator && it) = default;
-    constexpr STLIterator(STLIterator const & it) = delete;
-    constexpr STLIterator & operator=(STLIterator && it) = default;
-    constexpr STLIterator & operator=(STLIterator const & it) = delete;
+    constexpr STLIterator(STLIterator &&) = default;
+    constexpr STLIterator(STLIterator const &) = delete;
+    constexpr STLIterator & operator=(STLIterator &&) = default;
+    constexpr STLIterator & operator=(STLIterator const &) = delete;
     bool operator==(std::default_sentinel_t end) const { return over; }
     decltype(auto) operator*() const { return *a; }
 
@@ -398,6 +398,9 @@ struct STLIterator
 };
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;
+constexpr auto begin(is_ra auto && a) { return STLIterator(ra::start(RA_FWD(a))); }
+constexpr auto end(is_ra auto && a) { return std::default_sentinel; }
+constexpr auto range(is_ra auto && a) { return std::ranges::subrange(ra::begin(RA_FWD(a)), std::default_sentinel); }
 
 
 // ---------------------------
