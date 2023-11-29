@@ -250,7 +250,7 @@ subply(A & a, dim_t s, S const & ss0, Early & early)
     }
 }
 
-// possible pessimization in ply_fixed(). See bench-dot [ra43]
+// possibly pessimize ply_fixed(). See bench-dot [ra43]
 #ifndef RA_STATIC_UNROLL
 #define RA_STATIC_UNROLL 0
 #endif
@@ -332,7 +332,7 @@ early(IteratorConcept auto && a, auto && def) { return ply(RA_FWD(a), Default { 
 
 
 // --------------------
-// iterator adapter for the standard library. FIXME maybe random for rank 1?
+// input/'output' iterator adapter. FIXME maybe random for rank 1?
 // --------------------
 
 template <IteratorConcept A>
@@ -340,10 +340,9 @@ struct STLIterator
 {
     using difference_type = dim_t;
     using value_type = value_t<A>;
-    using shape_type = decltype(ra::shape(std::declval<A>())); // std::array or std::vector
 
     A a;
-    shape_type ind;
+    std::decay_t<decltype(ra::shape(a))> ind; // is a concrete type
     bool over;
 
     STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) {}
@@ -351,7 +350,7 @@ struct STLIterator
     constexpr STLIterator(STLIterator const &) = delete;
     constexpr STLIterator & operator=(STLIterator &&) = default;
     constexpr STLIterator & operator=(STLIterator const &) = delete;
-    bool operator==(std::default_sentinel_t end) const { return over; }
+    constexpr bool operator==(std::default_sentinel_t end) const { return over; }
     decltype(auto) operator*() const { return *a; }
 
     constexpr void
@@ -384,17 +383,10 @@ struct STLIterator
         }
         over = true;
     }
-    STLIterator & operator++()
-    {
-        if constexpr (ANY==rank_s<A>()) {
-            next(rank(a)-1);
-        } else {
-            next<rank_s<A>()-1>();
-        }
-        return *this;
-    }
+    constexpr STLIterator & operator++() requires (ANY==rank_s<A>()) { next(rank(a)-1); return *this; }
+    constexpr STLIterator & operator++() requires (ANY!=rank_s<A>()) { next<rank_s<A>()-1>(); return *this; }
 // see p0541 and p2550. Or just avoid.
-    void operator++(int) { return ++(*this); }
+    constexpr void operator++(int) { ++(*this); }
 };
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;
@@ -420,10 +412,8 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==ANY)) {
         o << sha << '\n';
     }
-    for (rank_t k=0; k<rank; ++k) {
-        if (0==sha[k]) {
-            return o;
-        }
+    if (0==size(a)) {
+        return o;
     }
     auto ind = sha; for_each([](auto & s) { s=0; }, ind);
     for (;;) {
@@ -446,8 +436,6 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
         }
     }
 }
-
-// Possibly read shape, possibly allocate.
 
 template <class C> requires (ANY!=size_s<C>() && !is_scalar<C>)
 inline std::istream &
