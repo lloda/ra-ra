@@ -356,7 +356,7 @@ int main()
                                          {{41, 42}, {43, 44}, {45, 46}, {47, 48}}}};
         // FIXME reshape for Small or something! Big/View have these things.
         ra::Small<int, 2, 3, 4, 2> b = 0;
-        ra::SmallView<int, int_list<48>, int_list<1>> c(b.data());
+        ra::ViewSmall<int, int_list<48>, int_list<1>> c(b.data());
         c = ra::iota(48, 1);
         tr.test_eq(b, a);
         tr.test_eq(2, ra::shape(a, 0));
@@ -461,14 +461,14 @@ int main()
         {
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::SmallView<int, int_list<2>, int_list<1>> a0 = a(0);
-                ra::SmallView<int, int_list<2>, int_list<1>> a1 = a(1);
+                ra::ViewSmall<int, int_list<2>, int_list<1>> a0 = a(0);
+                ra::ViewSmall<int, int_list<2>, int_list<1>> a1 = a(1);
                 a0 = a1;
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::SmallView<int, int_list<2>, int_list<1>> a0 = a(0);
+                ra::ViewSmall<int, int_list<2>, int_list<1>> a0 = a(0);
                 a0 = a(1);
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }

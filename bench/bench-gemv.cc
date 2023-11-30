@@ -15,7 +15,7 @@
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
-using ra::Small, ra::View, ra::Unique;
+using ra::Small, ra::ViewBig, ra::Unique;
 
 using real = double;
 

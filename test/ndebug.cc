@@ -16,7 +16,7 @@ int main(int argc, char * * argv)
     tr.section("-DNDEBUG breaks at ply_ravel etc. order[rank] vlas when traversing dynamic rank objects [ra40]");
     {
         int ap[6] = {0, 1, 2, 3, 4, 5};
-        ra::View<int> a({6}, ap);
+        ra::ViewBig<int> a({6}, ap);
         tr.test_eq(ra::ptr(ap), a);
     }
     return tr.summary();

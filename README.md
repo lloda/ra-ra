@@ -56,7 +56,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Arbitrary types as array elements, or as scalar operands.
 * Many predefined array operations. Adding yours is trivial.
 * Configurable error checking.
-* Mostly `constexpr`.
+* As much `constexpr` as possible.
 
 Performance is competitive with hand written scalar (element by element) loops, but probably not with cache-tuned code such as your platform BLAS, or with code using SIMD. Please have a look at the benchmarks in [bench/](bench/).
 

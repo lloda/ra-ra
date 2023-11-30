@@ -320,8 +320,8 @@ int main()
     tr.section("the loop cannot be unrolled entirely and one of the outside dims is zero");
     {
         real aa = 100;
-        ra::View<real, 3> a { {{0, 22}, {11, 2}, {2, 1}}, &aa };
-        ra::View<real, 3> b { {{0, 1}, {11, 2}, {2, 1}}, &aa };
+        ra::ViewBig<real, 3> a { {{0, 22}, {11, 2}, {2, 1}}, &aa };
+        ra::ViewBig<real, 3> b { {{0, 1}, {11, 2}, {2, 1}}, &aa };
 #define TEST(plier)                                             \
         {                                                       \
             real c = 99;                                        \

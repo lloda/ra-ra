@@ -22,7 +22,7 @@
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision;
-using ra::TestRecorder, ra::Small, ra::View, ra::Unique;
+using ra::TestRecorder, ra::Small, ra::ViewBig, ra::Unique;
 
 using Vec = ra::Small<float, 4>;
 
@@ -71,9 +71,9 @@ int main()
                             alignas (alignof(Vec)) Vec bstore[m];
                             alignas (alignof(Vec)) Vec cstore[m];
 
-                            ra::View<Vec, 1> a({m}, astore);
-                            ra::View<Vec, 1> b({m}, bstore);
-                            ra::View<Vec, 1> c({m}, cstore);
+                            ra::ViewBig<Vec, 1> a({m}, astore);
+                            ra::ViewBig<Vec, 1> b({m}, bstore);
+                            ra::ViewBig<Vec, 1> c({m}, cstore);
 
                             a = +ra::_0 +1;
                             b = -ra::_0 -1;

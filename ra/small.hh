@@ -238,29 +238,25 @@ longer(Q const & q, P const & pp)
 
 
 // --------------------
-// Small iterator
+// view iterators. TODO Take iterator like Ptr does and Views should, not raw pointers
 // --------------------
 
-template <class T, class lens, class steps> struct SmallView;
+template <class T, class lens, class steps> struct ViewSmall;
 
-// TODO Refactor with CellBig / STLIterator
-template <class T, class Dimv, rank_t spec=0>
+template <class T, class Dimv, class Spec>
 struct CellSmall
 {
     constexpr static auto dimv = Dimv::value;
-    static_assert(spec!=ANY && spec!=BAD, "Bad cell rank.");
+
+    constexpr static rank_t spec = Spec::value;
     constexpr static rank_t fullr = ssize(dimv);
     constexpr static rank_t cellr = rank_cell(fullr, spec);
     constexpr static rank_t framer = rank_frame(fullr, spec);
-    static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
-    static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
-    static_assert(choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
-
+    static_assert(spec!=ANY && spec!=BAD && choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 // FIXME Small take dimv instead of lens/steps
     using clens = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].len ...> {}; }, mp::iota<cellr, framer> {}));
     using csteps = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<cellr, framer> {}));
-    using ctype = SmallView<T, clens, csteps>;
-    using value_type = std::conditional_t<0==cellr, T, ctype>;
+    using ctype = ViewSmall<T, clens, csteps>;
 
     ctype c;
 
@@ -268,11 +264,58 @@ struct CellSmall
     constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
-    constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
 
     constexpr CellSmall(T * p): c { p } {}
-    RA_ASSIGNOPS_SELF(CellSmall)
+};
+
+template <class T, rank_t RANK=ANY> struct ViewBig;
+
+template <class T, class Dimv, class Spec>
+struct CellBig
+{
+    constexpr static rank_t spec = maybe_any<Spec>;
+    constexpr static rank_t fullr = size_s<Dimv>();
+    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
+    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
+    using ctype = ViewBig<T, cellr>;
+
+    Dimv dimv;
+    ctype c;
+    [[no_unique_address]] Spec const dspec = {};
+
+    consteval static rank_t rank() requires (ANY!=framer) { return framer; }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(dimv.size(), dspec); }
+    constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
+    constexpr static dim_t len_s(int k) { return ANY; }
+    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
+    constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
+
+    constexpr CellBig(T * cp, Dimv const & dimv_, Spec dspec_ = Spec {})
+        : dimv(dimv_), dspec(dspec_)
+    {
+        c.cp = cp;
+        rank_t dcellr = rank_cell(dimv.size(), dspec);
+        rank_t dframer = rank();
+        RA_CHECK(0<=dframer && 0<=dcellr, "Bad cell rank ", dcellr, " for array rank ", ssize(dimv), ").");
+        resize(c.dimv, dcellr);
+        for (int k=0; k<dcellr; ++k) {
+            c.dimv[k] = dimv[dframer+k];
+        }
+    }
+};
+
+template <class T, class Dimv, class Spec,
+          class Base = std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>>
+struct Cell: public Base
+{
+    using Base::Base, Base::cellr, Base::framer, Base::c, Base::step;
+    using ctype = Base::ctype;
+
+    static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
+    static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
+
+    RA_ASSIGNOPS_SELF(Cell)
     RA_ASSIGNOPS_DEFAULT_SET
 
     constexpr decltype(auto)
@@ -286,6 +329,7 @@ struct CellSmall
             return cc;
         }
     }
+    constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr ctype const & operator*() const requires (0!=cellr) { return c; }
     constexpr auto save() const { return c.cp; }
@@ -381,7 +425,7 @@ struct SmallBase
 };
 
 template <class T, class lens, class steps>
-struct SmallView: public SmallBase<T, lens, steps>
+struct ViewSmall: public SmallBase<T, lens, steps>
 {
     using Base = SmallBase<T, lens, steps>;
     using Base::rank, Base::size, Base::convertible_to_scalar, Base::dimv;
@@ -390,35 +434,35 @@ struct SmallView: public SmallBase<T, lens, steps>
 
     T * cp;
 
-    template <rank_t c=0> using iterator = CellSmall<T, ic_t<dimv>, c>;
-    using ViewConst = SmallView<T const, lens, steps>;
+    template <rank_t c=0> using iterator = Cell<T, ic_t<dimv>, ic_t<c>>;
+    using ViewConst = ViewSmall<T const, lens, steps>;
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
-    constexpr SmallView const & view() const { return *this; }
+    constexpr ViewSmall const & view() const { return *this; }
 
-    constexpr SmallView(T * cp_): cp(cp_) {}
+    constexpr ViewSmall(T * cp_): cp(cp_) {}
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
-    SmallView const & operator=(SmallView const & x) const { start(*this) = x; return *this; }
-    constexpr SmallView(SmallView const & s) = default;
+    ViewSmall const & operator=(ViewSmall const & x) const { start(*this) = x; return *this; }
+    constexpr ViewSmall(ViewSmall const & s) = default;
     template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
-    constexpr SmallView const & operator=(X && x) const { start(*this) = x; return *this; }
+    constexpr ViewSmall const & operator=(X && x) const { start(*this) = x; return *this; }
 #define ASSIGNOPS(OP)                                                   \
-    constexpr SmallView const & operator OP(auto && x) const { start(*this) OP x; return *this; }
+    constexpr ViewSmall const & operator OP(auto && x) const { start(*this) OP x; return *this; }
     FOR_EACH(ASSIGNOPS, *=, +=, -=, /=)
 #undef ASSIGNOPS
 // needed if T isn't registered as scalar [ra44]
-    constexpr SmallView const &
+    constexpr ViewSmall const &
     operator=(T const & t) const
     {
         start(*this) = ra::scalar(t); return *this;
     }
 // nested braces
-    constexpr SmallView const &
+    constexpr ViewSmall const &
     operator=(sub (&&x)[len0]) const requires (0<rank() && 0!=len0 && (1!=rank() || 1!=len0))
     {
         ra::iter<-1>(*this) = x; return *this;
     }
 // row-major ravel braces
-    constexpr SmallView const &
+    constexpr ViewSmall const &
     operator=(T (&&x)[size()]) const requires ((rank()>1) && (size()>1))
     {
         std::ranges::copy(std::ranges::subrange(x), begin()); return *this;
@@ -471,12 +515,12 @@ struct SmallView: public SmallBase<T, lens, steps>
 // FIXME with_len before this, cf is_constant_iota
         } else if constexpr ((beatable<I>.ct && ...)) {
             using FD = FilterDims<lens, steps, std::decay_t<I> ...>;
-            return SmallView<T, typename FD::lens, typename FD::steps> (cp + select_loop<0>(i ...));
+            return ViewSmall<T, typename FD::lens, typename FD::steps> (cp + select_loop<0>(i ...));
 // TODO partial beating
         } else {
 // FIXME must forward *this so that expr can hold to it (c++23 deducing this).
 // Container's view is self so we get away with a ref, but here we create new temp views on every Small::view() call.
-            return unbeat<sizeof...(I)>::op(SmallView(*this), RA_FWD(i) ...);
+            return unbeat<sizeof...(I)>::op(ViewSmall(*this), RA_FWD(i) ...);
         }
     }
     constexpr decltype(auto)
@@ -538,8 +582,8 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
 
     T cp[size()]; // cf what std::array does for zero size; wish zero size just worked :-/
 
-    using View = SmallView<T, lens, steps>;
-    using ViewConst = SmallView<T const, lens, steps>;
+    using View = ViewSmall<T, lens, steps>;
+    using ViewConst = ViewSmall<T const, lens, steps>;
     constexpr View view() { return View(cp); }
     constexpr ViewConst view() const { return ViewConst(cp); }
     constexpr operator View () { return View(cp); }
@@ -624,7 +668,7 @@ start(is_builtin_array auto && t)
     using A = std::remove_reference_t<decltype(t)>; // preserve const
     using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
                                      mp::iota<std::rank_v<A>> {}));
-    return SmallView<std::remove_all_extents_t<A>, lens, default_steps<lens>>(peel(t)).iter();
+    return ViewSmall<std::remove_all_extents_t<A>, lens, default_steps<lens>>(peel(t)).iter();
 }
 
 
@@ -667,7 +711,7 @@ struct axes_list_indices
     using steps = mp::map<dst_step, dst>;
 };
 
-RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, SmallView<typename A::T, typename A::lens, typename A::steps>>));
+RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<typename A::T, typename A::lens, typename A::steps>>));
 
 template <int ... Iarg, class A> requires (cv_smallview<A>)
 constexpr auto
@@ -676,7 +720,7 @@ transpose(A && a_)
     decltype(auto) a = a_.view();
     using AA = typename std::decay_t<decltype(a)>;
     using ti = axes_list_indices<mp::int_list<Iarg ...>, typename AA::lens, typename AA::steps>;
-    return SmallView<typename AA::T, typename ti::lens, typename ti::steps>(a.data());
+    return ViewSmall<typename AA::T, typename ti::lens, typename ti::steps>(a.data());
 };
 
 template <class A> requires (cv_smallview<A>)
@@ -739,7 +783,7 @@ explode(A && a_)
                                            static_assert(((i==(i/supers)*supers) && ...));
                                            return mp::int_list<(i/supers) ...> {};
                                        }, mp::take<typename AA::steps, ra-rb> {}));
-    return SmallView<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
+    return ViewSmall<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
 }
 
 } // namespace ra

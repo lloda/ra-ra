@@ -48,7 +48,7 @@ int main()
         auto yi = iter<0>(y);
         tr.test_eq(true, std::is_reference_v<decltype(yi.dimv)>);
     }
-// On Small, the container and the view are separate objects, so we must make sure to forward any temporary views(). See SmallView::operator().
+// On Small, the container and the view are separate objects, so we must make sure to forward any temporary views(). See ViewSmall::operator().
     tr.section("Small");
     {
         ra::Small<int, 2> b = { 2, 1 };

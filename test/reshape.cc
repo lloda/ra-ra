@@ -82,7 +82,7 @@ int main()
     tr.section("conversion from var rank to fixed rank");
     {
         ra::Big<int> a({2, 3}, ra::_0*3+ra::_1);
-        ra::View<int, 2> b = a;
+        ra::ViewBig<int, 2> b = a;
         tr.info("fixing rank").test_eq(ra::_0*3+ra::_1, b);
         tr.info("fixing rank is view").test(a.data()==b.data());
     }

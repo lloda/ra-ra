@@ -64,7 +64,7 @@ int main()
         static_assert(std::is_same_v<ra::ncvalue_t<decltype(an)>, T>);
     }
     {
-        TESTPRED(decltype(std::declval<ra::SmallView<ra::Dim, int_list<3>, int_list<1>>>()),
+        TESTPRED(decltype(std::declval<ra::ViewSmall<ra::Dim, int_list<3>, int_list<1>>>()),
                  true, true, false, false, false);
         TESTPRED(int,
                  false, false, false, true, false);
@@ -86,7 +86,7 @@ int main()
                  true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()) &,
                  true, true, false, false, false);
-        TESTPRED(decltype(std::declval<ra::View<int, 2>>()),
+        TESTPRED(decltype(std::declval<ra::ViewBig<int, 2>>()),
                  true, true, false, false, false);
         TESTPRED(decltype(ra::Unique<int, 2>().iter()),
                  true, false, true, false, false);
@@ -141,20 +141,20 @@ int main()
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {
-        static_assert(ra::SliceConcept<ra::View<int, 0>>);
-        static_assert(ra::SliceConcept<ra::View<int, 2>>);
-        static_assert(ra::SliceConcept<ra::SmallView<int, int_list<>, int_list<>>>);
+        static_assert(ra::SliceConcept<ra::ViewBig<int, 0>>);
+        static_assert(ra::SliceConcept<ra::ViewBig<int, 2>>);
+        static_assert(ra::SliceConcept<ra::ViewSmall<int, int_list<>, int_list<>>>);
 
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallView<int, nil, nil>>, "bad is_ra SmallView");
+        static_assert(ra::is_ra<ra::ViewSmall<int, nil, nil>>, "bad is_ra ViewSmall");
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::View<int, 0>>, "bad is_ra View");
+        static_assert(ra::is_ra<ra::ViewBig<int, 0>>, "bad is_ra View");
 
         static_assert(ra::is_ra<ra::Small<int, 1>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::SmallView<int, int_list<1>, int_list<1>>>, "bad is_ra SmallView");
+        static_assert(ra::is_ra<ra::ViewSmall<int, int_list<1>, int_list<1>>>, "bad is_ra ViewSmall");
         static_assert(ra::is_ra<ra::Unique<int, 1>>, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::View<int, 1>>, "bad is_ra View");
-        static_assert(ra::is_ra<ra::View<int>>, "bad is_ra View");
+        static_assert(ra::is_ra<ra::ViewBig<int, 1>>, "bad is_ra View");
+        static_assert(ra::is_ra<ra::ViewBig<int>>, "bad is_ra View");
 
         using Scalar = decltype(ra::scalar(3));
         using Vector = decltype(ra::start({1, 2, 3}));

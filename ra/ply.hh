@@ -8,9 +8,7 @@
 // later version.
 
 // TODO Make traversal order a parameter, some operations (e.g. output, ravel) require specific orders.
-// TODO Better heuristic for traversal order.
-// TODO Tiling, etc. (see eval.cc in Blitz++).
-// TODO Unit step case?
+// TODO Better traversal. Tiling, etc. (see eval.cc in Blitz++). Unit step case?
 // TODO std::execution::xxx-policy
 // TODO Validate output argument strides.
 
@@ -427,10 +425,10 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
                 return o;
             } else if (++ind[rank-1-k]<sha[rank-1-k]) {
                 a.adv(rank-1-k, 1);
-                switch (k) {
-                case 0: o << fa.sep0; break;
-                case 1: o << fa.sep1; break;
-                default: std::fill_n(std::ostream_iterator<char const *>(o, ""), k, fa.sep2);
+                if (k<2) {
+                    o << fa.sep[k];
+                } else {
+                    std::fill_n(std::ostream_iterator<char const *>(o, ""), k, fa.sep[2]);
                 }
                 break;
             } else {

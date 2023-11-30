@@ -298,7 +298,7 @@ Next: <a href="#Other-libraries" accesskey="n" rel="next">Other array libraries<
 </p>
 <p>Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. <code>ra::</code> supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 </p>
-<p>Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. <code>ra::</code> offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn&rsquo;t create a higher rank iterator on a <code>SmallView</code>, even though you could do it on a <code>View</code>; this was a bug.
+<p>Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. <code>ra::</code> offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn&rsquo;t create a higher rank iterator on a <code>ViewSmall</code>, even though you could do it on a <code>View</code>; this was a bug.
 </p>
 <p>Sometimes consistency requires a choice. For example, given array views A and B, <code>A=B</code> copies the contents of view <code>B</code> into view <code>A</code>. To change view <code>A</code> instead (to treat <code>A</code> as a pointer) would be the default meaning of <code>A=B</code> for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren&rsquo;t) is more important.
 </p>
@@ -1818,7 +1818,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 
 <p>These are array types that own their data in one way or another. Creating or destroying these objects may allocate or deallocate memory, respectively.
 </p>
-</li><li> <b>View</b> &mdash; <code>View</code>, <code>SmallView</code>
+</li><li> <b>View</b> &mdash; <code>View</code>, <code>ViewSmall</code>
 
 <p>These are array views into data in memory, which may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s that aren&rsquo;t associated with any <b>Container</b>, for example into memory allocated by a different library. Creating and destroying <b>View</b>s doesn&rsquo;t allocate or deallocate memory for array elements.
 </p>

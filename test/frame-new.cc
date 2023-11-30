@@ -29,9 +29,9 @@ main()
     tr.section("II");
     {
         ra::mp::int_list<6, 3, -4> x;
-        constexpr int ma = ra::mp::fold_tuple(-99, x, [](auto && k, auto && a) { return max(k, std::decay_t<decltype(a)>::value); });
-        constexpr int mi = ra::mp::fold_tuple(+99, x, [](auto && k, auto && a) { return min(k, std::decay_t<decltype(a)>::value); });
-        constexpr int su = ra::mp::fold_tuple(0, x, [](auto && k, auto && a) { return k + std::decay_t<decltype(a)>::value; });
+        constexpr int ma = ra::mp::fold_tuple(-99, x, [](auto && k, auto && a) { return max(k, a.value); });
+        constexpr int mi = ra::mp::fold_tuple(+99, x, [](auto && k, auto && a) { return min(k, a.value); });
+        constexpr int su = ra::mp::fold_tuple(0, x, [](auto && k, auto && a) { return k + a.value; });
         cout << ma << endl;
         cout << mi << endl;
         cout << su << endl;
@@ -190,7 +190,7 @@ main()
     {
         int p[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
         int * pp = &p[0]; // force pointer decay in case we ever enforce p's shape
-        ra::View<int> d(ra::pack<ra::Dim>(ra::Small<int, 3> {5, 1, 2}, ra::Small<int, 3> {1, 0, 5}), pp);
+        ra::ViewBig<int> d(ra::pack<ra::Dim>(ra::Small<int, 3> {5, 1, 2}, ra::Small<int, 3> {1, 0, 5}), pp);
 #define EXPR expr([](auto && a, auto && b) { return a==b; }, ra::_0*1 + ra::_1*0 + ra::_2*5 + 1, start(d))
         tr.test(every(EXPR));
         auto x = EXPR;

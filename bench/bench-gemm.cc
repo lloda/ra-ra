@@ -16,7 +16,7 @@
 #include "ra/bench.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
-using ra::Small, ra::View, ra::Unique, ra::dim_t;
+using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t;
 using real = double;
 
 // -------------------
@@ -24,7 +24,7 @@ using real = double;
 // -------------------
 
 template <class A, class B, class C> inline void
-gemm_block_3(ra::View<A, 2> const & a, ra::View<B, 2> const & b, ra::View<C, 2> c)
+gemm_block_3(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewBig<C, 2> c)
 {
     dim_t const m = a.len(0);
     dim_t const p = a.len(1);
@@ -90,7 +90,7 @@ lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
 }
 
 inline void
-gemm_blas_3(ra::View<double, 2> const & A, ra::View<double, 2> const & B, ra::View<double, 2> C)
+gemm_blas_3(ra::ViewBig<double, 2> const & A, ra::ViewBig<double, 2> const & B, ra::ViewBig<double, 2> C)
 {
     CBLAS_TRANSPOSE ta = CblasNoTrans;
     CBLAS_TRANSPOSE tb = CblasNoTrans;
@@ -114,7 +114,7 @@ gemm_blas_3(ra::View<double, 2> const & A, ra::View<double, 2> const & B, ra::Vi
     }
 }
 inline auto
-gemm_blas(ra::View<double, 2> const & a, ra::View<double, 2> const & b)
+gemm_blas(ra::ViewBig<double, 2> const & a, ra::ViewBig<double, 2> const & b)
 {
     ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
     gemm_blas_3(a, b, c);
@@ -159,48 +159,48 @@ int main()
             return c;
         };
 
-#define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT)     \
-    auto NAME_K = [&](auto const & a, auto const & b)       \
-        {                                                   \
-            dim_t const M = a.len(0);                      \
-            dim_t const N = b.len(1);                      \
-            dim_t const K = a.len(1);                      \
-            using T = decltype(a(0, 0)*b(0, 0));            \
-            ra::Big<T, 2> c({M, N}, T());                   \
-            T * RESTRICT cc = c.data();                     \
-            T const * RESTRICT aa = a.data();               \
-            T const * RESTRICT bb = b.data();               \
-            for (dim_t i=0; i<M; ++i) {                     \
-                for (dim_t j=0; j<N; ++j) {                 \
-                    for (dim_t k=0; k<K; ++k) {             \
-                        cc[i*N+j] += aa[i*K+k] * bb[k*N+j]; \
-                    }                                       \
-                }                                           \
-            }                                               \
-            return c;                                       \
-        };                                                  \
-                                                            \
-    auto NAME_IJ = [&](auto const & a, auto const & b)      \
-        {                                                   \
-            dim_t const M = a.len(0);                      \
-            dim_t const N = b.len(1);                      \
-            dim_t const K = a.len(1);                      \
-            using T = decltype(a(0, 0)*b(0, 0));            \
-            ra::Big<T, 2> c({M, N}, T());                   \
-            T * RESTRICT cc = c.data();                     \
-            T const * RESTRICT aa = a.data();               \
-            T const * RESTRICT bb = b.data();               \
-            for (dim_t k=0; k<K; ++k) {                     \
-                for (dim_t i=0; i<M; ++i) {                 \
-                    for (dim_t j=0; j<N; ++j) {             \
-                        cc[i*N+j] += aa[i*K+k] * bb[k*N+j]; \
-                    }                                       \
-                }                                           \
-            }                                               \
-            return c;                                       \
-        };
-DEFINE_GEMM_RESTRICT(gemm_k_raw, gemm_ij_raw, /* */)
-DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
+#define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT) \
+    auto NAME_K = [&](auto const & a, auto const & b)   \
+    {                                                   \
+        dim_t const M = a.len(0);                       \
+        dim_t const N = b.len(1);                       \
+        dim_t const K = a.len(1);                       \
+        using T = decltype(a(0, 0)*b(0, 0));            \
+        ra::Big<T, 2> c({M, N}, T());                   \
+        T * RESTRICT cc = c.data();                     \
+        T const * RESTRICT aa = a.data();               \
+        T const * RESTRICT bb = b.data();               \
+        for (dim_t i=0; i<M; ++i) {                     \
+            for (dim_t j=0; j<N; ++j) {                 \
+                for (dim_t k=0; k<K; ++k) {             \
+                    cc[i*N+j] += aa[i*K+k] * bb[k*N+j]; \
+                }                                       \
+            }                                           \
+        }                                               \
+        return c;                                       \
+    };                                                  \
+                                                        \
+    auto NAME_IJ = [&](auto const & a, auto const & b)  \
+    {                                                   \
+        dim_t const M = a.len(0);                       \
+        dim_t const N = b.len(1);                       \
+        dim_t const K = a.len(1);                       \
+        using T = decltype(a(0, 0)*b(0, 0));            \
+        ra::Big<T, 2> c({M, N}, T());                   \
+        T * RESTRICT cc = c.data();                     \
+        T const * RESTRICT aa = a.data();               \
+        T const * RESTRICT bb = b.data();               \
+        for (dim_t k=0; k<K; ++k) {                     \
+            for (dim_t i=0; i<M; ++i) {                 \
+                for (dim_t j=0; j<N; ++j) {             \
+                    cc[i*N+j] += aa[i*K+k] * bb[k*N+j]; \
+                }                                       \
+            }                                           \
+        }                                               \
+        return c;                                       \
+    };
+    DEFINE_GEMM_RESTRICT(gemm_k_raw, gemm_ij_raw, /* */)
+    DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
 #undef DEFINE_GEMM_RESTRICT
 
     auto bench_all = [&](int k, int m, int p, int n, int reps)

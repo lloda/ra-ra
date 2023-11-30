@@ -63,7 +63,7 @@ template <class T> requires (ra_is_real<T>) constexpr T amax(T const & x) { retu
 template <class T> requires (ra_is_real<T>) constexpr T amin(T const & x) { return x; }
 template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x)  { return x*x; }
 
-#define FOR_FLOAT(T)                                                    \
+#define RA_FOR_TYPES(T)                                                 \
     constexpr T arg(T x)                { return T(0); }                \
     constexpr T conj(T x)               { return x; }                   \
     constexpr T mul_conj(T x, T y)      { return x*y; }                 \
@@ -77,11 +77,11 @@ template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x)  { retu
     constexpr T const & real_part(T const & x)  { return x; }           \
     constexpr T & real_part(T & x)      { return x; }                   \
     constexpr T imag_part(T x)          { return T(0); }
-FOR_EACH(FOR_FLOAT, float, double)
-#undef FOR_FLOAT
+FOR_EACH(RA_FOR_TYPES, float, double)
+#undef RA_FOR_TYPES
 
 // FIXME few still inline should eventually be constexpr.
-#define FOR_FLOAT(R, C)                                                 \
+#define RA_FOR_TYPES(R, C)                                              \
     inline R arg(C x)                  { return std::arg(x); }          \
     constexpr C sqr(C x)               { return x*x; }                  \
     constexpr C dot(C x, C y)          { return x*y; }                  \
@@ -110,20 +110,18 @@ FOR_EACH(FOR_FLOAT, float, double)
         return C(a.real()*b.real()+a.imag()*b.imag(),                   \
                  a.real()*b.imag()-a.imag()*b.real());                  \
     }
-FOR_FLOAT(float, std::complex<float>)
-FOR_FLOAT(double, std::complex<double>)
-#undef FOR_FLOAT
+RA_FOR_TYPES(float, std::complex<float>)
+RA_FOR_TYPES(double, std::complex<double>)
+#undef RA_FOR_TYPES
 
 template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 
 template <int ... Iarg, class A>
 constexpr decltype(auto)
-transpose(mp::int_list<Iarg ...>, A && a)
-{
-    return transpose<Iarg ...>(RA_FWD(a));
-}
+transpose(mp::int_list<Iarg ...>, A && a) { return transpose<Iarg ...>(RA_FWD(a)); }
 
-constexpr bool odd(unsigned int N) { return N & 1; }
+constexpr bool
+odd(unsigned int N) { return N & 1; }
 
 
 // --------------------------------
@@ -196,8 +194,7 @@ optimize(Expr<std::negate<>, std::tuple<I>> && e)
 template <class T, dim_t N, class A> constexpr bool match_small =
     std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::View::iterator<0>>
     || std::is_same_v<std::decay_t<A>, typename ra::Small<T, N>::ViewConst::iterator<0>>;
-
-static_assert(match_small<double, 4, ra::CellSmall<double, ic_t<std::array { Dim { 4, 1 } }>, 0>>);
+static_assert(match_small<double, 4, ra::Cell<double, ic_t<std::array { Dim { 4, 1 } }>, ic_t<0>>>);
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B> requires (match_small<T, N, A> && match_small<T, N, B>) \
@@ -405,7 +402,6 @@ index(auto && a)
                  ra::dim_t(-1));
 }
 
-// [ma108]
 constexpr bool
 lexicographical_compare(auto && a, auto && b)
 {
@@ -418,9 +414,9 @@ template <class A>
 constexpr auto
 amin(A && a)
 {
-    using std::min;
+    using std::min, std::numeric_limits;
     using T = ncvalue_t<A>;
-    T c = std::numeric_limits<T>::has_infinity ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::max();
+    T c = numeric_limits<T>::has_infinity ? numeric_limits<T>::infinity() : numeric_limits<T>::max();
     for_each([&c](auto && a) { if (a<c) { c = a; } }, a);
     return c;
 }
@@ -429,9 +425,9 @@ template <class A>
 constexpr auto
 amax(A && a)
 {
-    using std::max;
+    using std::max, std::numeric_limits;
     using T = ncvalue_t<A>;
-    T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
+    T c = numeric_limits<T>::has_infinity ? -numeric_limits<T>::infinity() : numeric_limits<T>::lowest();
     for_each([&c](auto && a) { if (c<a) { c = a; } }, a);
     return c;
 }
@@ -536,7 +532,7 @@ gemm(auto const & a, auto const & b, auto & c)
 // default for row-major x row-major. See bench-gemm.cc for variants.
 template <class S, class T>
 constexpr auto
-gemm(ra::View<S, 2> const & a, ra::View<T, 2> const & b)
+gemm(ViewBig<S, 2> const & a, ViewBig<T, 2> const & b)
 {
     dim_t M=a.len(0), N=b.len(1), K=a.len(1);
 // no with_same_shape bc cannot index 0 for type if A/B are empty

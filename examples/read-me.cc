@@ -62,10 +62,10 @@ int main()
 
         // view types
         char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-        ra::View<char, 2> D1({2, 3}, cs);            // dynamic sizes and steps, C order
-        ra::View<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and steps, Fortran order.
-        ra::SmallView<char, int_list<2, 3>, int_list<3, 1>> D3(cs); // static sizes & steps, C order.
-        ra::SmallView<char, int_list<2, 3>, int_list<1, 2>> D4(cs); // static sizes & steps, Fortran order.
+        ra::ViewBig<char, 2> D1({2, 3}, cs);            // dynamic sizes and steps, C order
+        ra::ViewBig<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and steps, Fortran order.
+        ra::ViewSmall<char, int_list<2, 3>, int_list<3, 1>> D3(cs); // static sizes & steps, C order.
+        ra::ViewSmall<char, int_list<2, 3>, int_list<1, 2>> D4(cs); // static sizes & steps, Fortran order.
 
         cout << "D1: " << D1 << "\n\n";
         cout << "D2: " << D2 << "\n\n";
@@ -140,7 +140,7 @@ int main()
         ra::Big<int, 2> J {{1, 0}, {0, 1}};
         cout << "A(J, 1, J): " << A(J, 1, J) << "\n\n";
 
-// explicit indices do not result in a View view (= pointer + steps), but the
+// explicit indices do not result in a view (= pointer + steps), but the
 // resulting expression can still be written on.
         B(I) = ra::Big<char, 2> {{'x', 'y'}, {'z', 'w'}};
         cout << "B: " << B << endl;

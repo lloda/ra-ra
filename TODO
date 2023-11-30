@@ -15,7 +15,7 @@ checkbox [C-ct] flip TODO
     - [ ] const issues in View vs Container
       - [ ] fix conversion to const op in View, or
       - [ ] fix view() members in Container not to depend on conversion to const op in view (make View a member union??)
-      - [ ] fix SmallView/SmallArray after the same pattern
+      - [ ] fix ViewSmall/SmallArray after the same pattern
       - [ ] fix RA_DEF_ASSIGNOPS return type and reuse that and RA_DEF_ASSIGNOPS_SELF in View
     - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
       than indexed
@@ -74,7 +74,7 @@ checkbox [C-ct] flip TODO
     - [-] Magic subscript len
       - [X] For Big/View in beatable subscripts <2023-07-04 Tue 18:20>
       - [X] For Big/View in unbeatable subscripts <2023-07-05 Wed 12:34>
-      - [-] For Small/SmallView
+      - [-] For Small/ViewSmall
         - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
         - [ ] Iota. But Iota args need to integral constants for this to work.
       - [ ] Optimize iota(len...) + iota(len...)

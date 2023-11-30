@@ -206,7 +206,7 @@ In C++, a library is enough.
 @c @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
 Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{SmallView}, even though you could do it on a @code{View}; this was a bug.
+Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{ViewSmall}, even though you could do it on a @code{View}; this was a bug.
 
 Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view @code{B} into view @code{A}. To change view @code{A} instead (to treat @code{A} as a pointer) would be the default meaning of @code{A=B} for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
 
@@ -1757,7 +1757,7 @@ Some of the categories below are C++20 ‘concepts’, some are still informal.
 
 These are array types that own their data in one way or another. Creating or destroying these objects may allocate or deallocate memory, respectively.
 
-@item @b{View} --- @code{View}, @code{SmallView}
+@item @b{View} --- @code{View}, @code{ViewSmall}
 
 These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s that aren't associated with any @b{Container}, for example into memory allocated by a different library. Creating and destroying @b{View}s doesn't allocate or deallocate memory for array elements.
 
@@ -2560,7 +2560,7 @@ Return the minimum of the elements of @var{expr}. If @var{expr} is empty, return
 
 The following definition of elementwise @code{lexicographical_compare} relies on @code{early}.
 
-@example @c [ma108]
+@example
 @verbatim
 template <class A, class B>
 inline bool

@@ -122,7 +122,7 @@ int main()
             tr.test(std::equal(s1.begin(), s1.end(), check1));
             tr.test_eq(5, s(1, 1));
         }
-        tr.section("using SmallView as rvalue");
+        tr.section("using ViewSmall as rvalue");
         {
             ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
 // use as rvalue.
@@ -135,7 +135,7 @@ int main()
             ra::Small<double, 3, 2> z = s;
             z *= -1;
 
-// check that SmallView = SmallView copies contents, just as View = View.
+// check that ViewSmall = ViewSmall copies contents, just as View = View.
             s(0) = z(2);
             s(1) = z(1);
             s(2) = z(0);
@@ -255,14 +255,14 @@ int main()
         test(a);
         test(b);
     }
-    tr.section("SmallArray converted to SmallView");
+    tr.section("SmallArray converted to ViewSmall");
     {
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
-        ra::SmallView<double, int_list<2, 3>, int_list<3, 1>> b = a();
+        ra::ViewSmall<double, int_list<2, 3>, int_list<3, 1>> b = a();
         tr.test_eq(a, b);
 // non-default steps (fortran / column major order).
         ra::SmallArray<double, int_list<2, 3>, int_list<1, 2>> ax { 1, 2, 3, 4, 5, 6 };
-        ra::SmallView<double, int_list<2, 3>, int_list<1, 2>> bx = ax();
+        ra::ViewSmall<double, int_list<2, 3>, int_list<1, 2>> bx = ax();
         tr.test_eq(a, ax);
         tr.test_eq(a, bx);
 // check iterators.
@@ -414,7 +414,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, int_list<3>, int_list<2>> c(b.data()); // TODO no syntax yet.
+            ra::ViewSmall<double, int_list<3>, int_list<2>> c(b.data()); // TODO no syntax yet.
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
@@ -431,7 +431,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::SmallView<double, int_list<3>, int_list<2>> c(b.data()); // TODO no syntax yet.
+            ra::ViewSmall<double, int_list<3>, int_list<2>> c(b.data()); // TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
@@ -446,7 +446,7 @@ int main()
             ra::Small<double, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
             ra::Small<double, 6, 2> b = { 1, 2, 99, 99, 3, 4, 99, 99, 5, 6, 99, 99 };
-            ra::SmallView<double, int_list<3, 2>, int_list<4, 1>> c(b.data()); // TODO no syntax yet.
+            ra::ViewSmall<double, int_list<3, 2>, int_list<4, 1>> c(b.data()); // TODO no syntax yet.
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }

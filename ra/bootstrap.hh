@@ -248,15 +248,14 @@ struct FormatArray
 {
     A const & a;
     print_shape_t shape;
-    using pchar = char const *;
-    pchar sep0, sep1, sep2;
+    char const * sep[3];
 };
 
 template <class A>
 constexpr FormatArray<A>
 format_array(A const & a, char const * sep0=" ", char const * sep1="\n", char const * sep2="\n")
 {
-    return FormatArray<A> { a,  defaultshape, sep0, sep1, sep2 };
+    return FormatArray<A> { a,  defaultshape, { sep0, sep1, sep2 } };
 }
 
 struct shape_manip_t
