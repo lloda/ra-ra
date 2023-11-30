@@ -2587,12 +2587,12 @@ Return @code{true} if every element of @var{expr} is true, @code{false} otherwis
 
 @cindex @code{sqr}
 @anchor{x-sqr} @defun sqr expr
-Compute the square of @var{expr}.
+Compute the square of the elements of @var{expr}.
 @end defun
 
 @cindex @code{sqrm}
 @anchor{x-sqrm} @defun sqrm expr
-Compute the square of the norm-2 of @var{expr}, that is, @code{conj(expr)*expr}.
+Compute the square of the norm-2 of the elements of @var{expr}, that is, @code{conj(expr)*expr}.
 @end defun
 
 @cindex @code{conj}
