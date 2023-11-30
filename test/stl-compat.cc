@@ -105,6 +105,10 @@ int main()
         // tr.test(std::weak_output_iterator<decltype(a.begin()), int>); // p2550 when ready c++
         tr.test(std::input_iterator<decltype(begin(a+1))>);
         tr.test(std::sentinel_for<decltype(end(a+1)), decltype(begin(a+1))>);
+        ra::Big<int, 2> b;
+        tr.test(std::random_access_iterator<decltype(ra::begin(b))>);
+        ra::Small<int, 2, 3> c;
+        tr.test(std::random_access_iterator<decltype(ra::begin(c))>);
     }
     tr.section("STLIterator works with arbitrary expr not just views");
     {
@@ -131,6 +135,17 @@ int main()
         a = 0;
         std::ranges::copy(range(b*1.) | std::views::transform([](auto x) { return -x; }), begin(a));
         tr.test_eq((ra::_0 - ra::_1 + ra::_2)*(-1.), a);
+    }
+    tr.section("ra::begin / ra::end use members if they exist");
+    {
+        ra::Big<char, 1> A = {'x', 'z', 'y'};
+        std::sort(ra::begin(A), ra::end(A));
+        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
+    }
+    {
+        ra::Big<char, 1> A = {'x', 'z', 'y'};
+        std::ranges::sort(ra::range(A));
+        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
     }
 #if __cpp_lib_span >= 202002L
     tr.section("std::span");

@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 27
-@set UPDATED 2023 November 28
+@set UPDATED 2023 November 30
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1315,18 +1315,46 @@ Some types are accepted automatically as scalars. These include non-pointer type
 
 Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the function @ref{x-scalar,@code{scalar}}.
 
+@node Using @code{ra::} types with the STL
 @subsection Using @code{ra::} types with the STL
 
-General @code{ra::} @ref{Containers and views,views} provide STL compatible @code{std::input_iterator}s through the members @code{begin()} and @code{end()}. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
+STL compatible input/output iterators and ranges can be obtained from general @code{ra::} expressions through the functions @ref{x-begin,@code{begin}}, @ref{x-end,@code{end}}, and @ref{x-range,@code{range}}. These objects traverse the elements of the expression (0-cells) in row major order.@footnote{Unqualified @code{begin()} would find @code{std::begin} through ADL since @code{Big} is parameterized by @code{std::vector}. This still works since @code{std::begin} forwards to @code{A.begin()}. It's up to you if you want to rely on such things.}
 
-For @ref{Containers and views,containers} @code{begin()} provides @code{std::random_access_iterator}s, which is handy for certain functions such as @code{std::sort}. There's no reason why all views couldn't provide @code{std::random_access_iterator}, but these wouldn't be efficient for ranks above 1, and I haven't implemented them. The container @code{std::random_access_iterator}s that are provided are in fact raw pointers.
+@example @c [ma118]
+@verbatim
+ra::Big<int, 2> A = {{3, 0, 0}, {4, 5, 6}, {0, 5, 6}};
+std::accumulate(ra::begin(A), ra::end(A), 0); // or just sum(A)
+@end verbatim
+@result{} 29
+@end example
+
+For temporary expressions that are stated once, the ranges interface is more appropriate.
+
+@example @c [ma118]
+@verbatim
+cout << std::ranges::count(range(A>3), true) << endl; // or sum(cast<int>(A>3))
+@end verbatim
+@result{} 5
+@end example
+
+One can create ranges from higher rank @code{ra::} iterators and thus use STL algorithms over cells of any rank, but note that in the current version of @code{ra::}, @ref{x-iter,@code{iter<k>()}} only works on views, not on general expressions.
+
+@example @c [ma118]
+@verbatim
+// count rows with 0s in them
+cout << std::ranges::count_if(range(iter<1>(A)), [](auto const & x) { return any(x==0); }) << endl;
+@end verbatim
+@result{} 2
+@end example
+
+For @ref{Containers and views,containers}, @code{ra::} @code{begin}/@code{end}/@code{range} provide random access iterators and ranges, which is handy for functions such as @code{std::sort}. These could be provided for general expressions, but they wouldn't be efficient for ranks above 1, and I haven't implemented them. The container @code{std::random_access_iterator}s that are provided are in fact raw pointers.
 
 @example @c [ma106]
 @verbatim
 ra::Big<int> x {3, 2, 1}; // x is a Container
 auto y = x(); // y is a View on x
-// std::sort(y.begin(), y.end()); // error: y.begin() is not std::random_access_iterator
-std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
+// std::sort(ra::begin(y), ra::end(y)); // error: begin(y) is not std::random_access_iterator
+std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major order
 @end verbatim
 @result{} x = @{1, 2, 3@}
 @end example
@@ -1438,6 +1466,7 @@ The most common case is that a library doesn't handle steps at all, and it only 
 
 @c FIXME using is_c_order, etc.
 
+@cindex BLAS
 Other libraries do accept steps, but not arbitrary ones. For example @url{https://www.netlib.org/blas}' @code{cblas_dgemm} has this prototype:
 
 @quotation
@@ -1451,7 +1480,7 @@ cblas_dgemm(order, transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
 Sometimes you can work around this by fiddling with @code{transA} and @code{transB}, but in general you need to check your array parameters and you may need to make copies.
 
 @cindex OpenGL
-OpenGL is another library that requires @url{https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml,contortions:}
+OpenGL is another library that requires @url{https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml,contortions:}. Quote:
 
 @quotation
 @verbatim
@@ -1807,6 +1836,7 @@ The following @code{#define}s affect the behavior of @code{ra::}.
 
 The following environment variables affect the test suite under SCons:
 
+@cindex BLAS
 @itemize
 @item @code{RA_USE_BLAS} (default 0): Use BLAS for @code{gemm} and @code{gemv} benchmarks.
 @end itemize
@@ -1888,7 +1918,15 @@ This can be used for sparse subscripting. For example:
 @end verbatim
   @result{} B = @{@{101, 120@}, @{110, 121@}@}
 @end example
+@end defun
 
+@cindex @code{begin}
+@anchor{x-begin} @defun begin expr
+Create STL iterator from @var{expr}.
+
+See @ref{Using @code{ra::} types with the STL}.
+
+See also @ref{x-end,@code{end}}, @ref{x-range,@code{range}}.
 @end defun
 
 @cindex @code{cast}
@@ -1922,6 +1960,15 @@ Equivalent to @code{transpose<0, 0>(view)}.
 TODO
 
 See also @ref{x-collapse,@code{collapse}}.
+@end defun
+
+@cindex @code{end}
+@anchor{x-end} @defun end expr
+Create STL end iterator from @var{expr}.
+
+See @ref{Using @code{ra::} types with the STL}.
+
+See also @ref{x-begin,@code{begin}}, @ref{x-range,@code{range}}.
 @end defun
 
 @cindex @code{for_each}
@@ -2354,6 +2401,15 @@ You don't need to use @code{ra::ptr} on STL containers and built in arrays, whic
 
 @end deffn
 
+@cindex @code{range}
+@anchor{x-range} @defun range expr
+Create STL range iterator from @var{expr}.
+
+See @ref{Using @code{ra::} types with the STL}.
+
+See also @ref{x-begin,@code{begin}}, @ref{x-end,@code{end}}.
+@end defun
+
 @cindex @code{start}
 @anchor{x-start} @defun start foreign_object
 Create array expression from @var{foreign_object}.
@@ -2560,7 +2616,7 @@ Compute @code{(0+1j)} times @var{expr}.
 @cindex @code{none}
 @anchor{x-none}
 @deffn @w{Special object} {none}
-Pass @code{none} to container constructors to indicate that the contents shouldn't be initialized. This is appropriate when the initialization you have in mind wouldn't fit in a constructor argument. For example:
+Pass @code{none} to container constructors to indicate that the contents shouldn't be initialized. This is appropriate when the initialization you have in mind doesn't fit in a constructor argument. For example:
 
 @example
 @verbatim

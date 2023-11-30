@@ -342,7 +342,7 @@ struct STLIterator
     using value_type = value_t<A>;
 
     A a;
-    std::decay_t<decltype(ra::shape(a))> ind; // is a concrete type
+    std::decay_t<decltype(ra::shape(a))> ind; // concrete type
     bool over;
 
     STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) {}
@@ -385,21 +385,25 @@ struct STLIterator
     }
     constexpr STLIterator & operator++() requires (ANY==rank_s<A>()) { next(rank(a)-1); return *this; }
     constexpr STLIterator & operator++() requires (ANY!=rank_s<A>()) { next<rank_s<A>()-1>(); return *this; }
-// see p0541 and p2550. Or just avoid.
-    constexpr void operator++(int) { ++(*this); }
+    constexpr void operator++(int) { ++(*this); } // see p0541 and p2550. Or just avoid.
 };
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;
+
 constexpr auto begin(is_ra auto && a) { return STLIterator(ra::start(RA_FWD(a))); }
 constexpr auto end(is_ra auto && a) { return std::default_sentinel; }
 constexpr auto range(is_ra auto && a) { return std::ranges::subrange(ra::begin(RA_FWD(a)), std::default_sentinel); }
 
+// unqualified might find .begin() anyway through std::begin etc (!) Yet another footgun
+constexpr auto begin(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.begin(); }
+constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.end(); }
+constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
+
 
 // ---------------------------
-// i/o
+// i/o FIXME reuse general plyers once they allow specifying order
 // ---------------------------
 
-// TODO once ply_ravel lets one specify row-major, reuse that.
 template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)

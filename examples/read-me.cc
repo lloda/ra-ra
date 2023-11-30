@@ -9,9 +9,9 @@
 
 // TODO Generate README.md and/or these examples.
 
-#include "ra/ra.hh"
-#include "ra/test.hh"
 #include <iostream>
+#include <numeric>
+#include "ra/test.hh" // ra/ra.hh without TestRecorder
 
 using std::cout, std::endl, ra::TestRecorder;
 using ra::mp::int_list;
@@ -151,10 +151,17 @@ int main()
         ra::Big<char, 1> A = {'x', 'z', 'y'};
         std::sort(A.begin(), A.end());
         cout << "A: " << A << "\n\n";
-
+        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
+        A = {'x', 'z', 'y'};
+        std::sort(begin(A), end(A));
+        cout << "A: " << A << "\n\n";
+        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
+    }
+    {
         ra::Big<float, 2> B {{1, 2}, {3, 4}};
         B += std::vector<float> {10, 20};
         cout << "B: " << B << "\n\n";
+        tr.test_eq(ra::Big<float, 2> {{11, 12}, {23, 24}}, B);
     }
     tr.section("Example from the manual [ma100]");
     {
@@ -248,5 +255,13 @@ int main()
         cout << (x(ra::all, ra::insert<2>) * a(ra::insert<1>)) << endl;
         cout << (x * a(ra::insert<1>)) << endl; // same thing
     }
-    return 0;
+    tr.section("Examples from manual [ma118]");
+    {
+        ra::Big<int, 2> A = {{3, 0, 0}, {4, 5, 6}, {0, 5, 6}};
+        tr.test_eq(sum(A), std::accumulate(ra::begin(A), ra::end(A), 0));
+        tr.test_eq(sum(cast<int>(A>3)), std::ranges::count(range(A>3), true));
+// count rows with 0s in them
+        tr.test_eq(2, std::ranges::count_if(range(iter<1>(A)), [](auto const & x) { return any(x==0); }));
+    }
+    return tr.summary();
 }

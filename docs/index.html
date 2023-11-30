@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 27, updated 2023 November 28)
+<!-- ra:: (version 27, updated 2023 November 30)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 27, updated 2023 November 28)
+<p><code>ra::</code> (version 27, updated 2023 November 30)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -1350,19 +1350,45 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 </pre>
 <p>Otherwise, you can bring a scalar object into <code>ra::</code> on the spot, with the function <a href="#x_002dscalar"><code>scalar</code></a>.
 </p>
+<hr>
 </div>
 <div class="subsection" id="Using-ra_003a_003a-types-with-the-STL">
-<h4 class="subsection">2.9.2 Using <code>ra::</code> types with the STL</h4>
+<div class="header">
+<p>
+Up: <a href="#Compatibility" accesskey="u" rel="up">Compatibility</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<span id="Using-ra_003a_003a-types-with-the-STL-1"></span><h4 class="subsection">2.9.2 Using <code>ra::</code> types with the STL</h4>
 
-<p>General <code>ra::</code> <a href="#Containers-and-views">views</a> provide STL compatible <code>std::input_iterator</code>s through the members <code>begin()</code> and <code>end()</code>. These iterators traverse the elements of the array (0-cells) in row major order, regardless of the storage order of the view.
+<p>STL compatible input/output iterators and ranges can be obtained from general <code>ra::</code> expressions through the functions <a href="#x_002dbegin"><code>begin</code></a>, <a href="#x_002dend"><code>end</code></a>, and <a href="#x_002drange"><code>range</code></a>. These objects traverse the elements of the expression (0-cells) in row major order.<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>
 </p>
-<p>For <a href="#Containers-and-views">containers</a> <code>begin()</code> provides <code>std::random_access_iterator</code>s, which is handy for certain functions such as <code>std::sort</code>. There&rsquo;s no reason why all views couldn&rsquo;t provide <code>std::random_access_iterator</code>, but these wouldn&rsquo;t be efficient for ranks above 1, and I haven&rsquo;t implemented them. The container <code>std::random_access_iterator</code>s that are provided are in fact raw pointers.
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int, 2&gt; A = {{3, 0, 0}, {4, 5, 6}, {0, 5, 6}};
+std::accumulate(ra::begin(A), ra::end(A), 0); // or just sum(A)
+</pre><pre class="example">&rArr; 29
+</pre></div>
+
+<p>For temporary expressions that are stated once, the ranges interface is more appropriate.
+</p>
+<div class="example">
+<pre class="verbatim">cout &lt;&lt; std::ranges::count(range(A&gt;3), true) &lt;&lt; endl; // or sum(cast&lt;int&gt;(A&gt;3))
+</pre><pre class="example">&rArr; 5
+</pre></div>
+
+<p>One can create ranges from higher rank <code>ra::</code> iterators and thus use STL algorithms over cells of any rank, but note that in the current version of <code>ra::</code>, <a href="#x_002diter"><code>iter&lt;k&gt;()</code></a> only works on views, not on general expressions.
+</p>
+<div class="example">
+<pre class="verbatim">// count rows with 0s in them
+cout &lt;&lt; std::ranges::count_if(range(iter&lt;1&gt;(A)), [](auto const &amp; x) { return any(x==0); }) &lt;&lt; endl;
+</pre><pre class="example">&rArr; 2
+</pre></div>
+
+<p>For <a href="#Containers-and-views">containers</a>, <code>ra::</code> <code>begin</code>/<code>end</code>/<code>range</code> provide random access iterators and ranges, which is handy for functions such as <code>std::sort</code>. These could be provided for general expressions, but they wouldn&rsquo;t be efficient for ranks above 1, and I haven&rsquo;t implemented them. The container <code>std::random_access_iterator</code>s that are provided are in fact raw pointers.
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int&gt; x {3, 2, 1}; // x is a Container
 auto y = x(); // y is a View on x
-// std::sort(y.begin(), y.end()); // error: y.begin() is not std::random_access_iterator
-std::sort(x.begin(), x.end()); // ok, we know x is stored in row-major order
+// std::sort(ra::begin(y), ra::end(y)); // error: begin(y) is not std::random_access_iterator
+std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major order
 </pre><pre class="example">&rArr; x = {1, 2, 3}
 </pre></div>
 
@@ -1474,6 +1500,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <p>The most common case is that a library doesn&rsquo;t handle steps at all, and it only accepts unit step for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
 </p>
 
+<span id="index-BLAS"></span>
 <p>Other libraries do accept steps, but not arbitrary ones. For example <a href="https://www.netlib.org/blas">https://www.netlib.org/blas</a>&rsquo; <code>cblas_dgemm</code> has this prototype:
 </p>
 <blockquote>
@@ -1485,7 +1512,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <p>Sometimes you can work around this by fiddling with <code>transA</code> and <code>transB</code>, but in general you need to check your array parameters and you may need to make copies.
 </p>
 <span id="index-OpenGL"></span>
-<p>OpenGL is another library that requires <a href="https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml">contortions:</a>
+<p>OpenGL is another library that requires <a href="https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml">contortions:</a>. Quote:
 </p>
 <blockquote>
 <pre class="verbatim">void glVertexAttribPointer(GLuint index,
@@ -1572,7 +1599,7 @@ my_fun(A &amp;&amp; ... a)
 </pre></div>
 
 <span id="index-overload-set"></span>
-<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF10" href="#FOOT10"><sup>10</sup></a>
+<p>If <code>my_fun</code> is an overload set, you can use<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">namespace ra {
@@ -1885,6 +1912,7 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 </p>
 <p>The following environment variables affect the test suite under SCons:
 </p>
+<span id="index-BLAS-1"></span>
 <ul>
 <li> <code>RA_USE_BLAS</code> (default 0): Use BLAS for <code>gemm</code> and <code>gemv</code> benchmarks.
 </li></ul>
@@ -1982,8 +2010,17 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
     ra::Big&lt;int, 2&gt; B = at(A, i);
 </pre><pre class="example">  &rArr; B = {{101, 120}, {110, 121}}
 </pre></div>
-
 </dd></dl>
+
+<span id="index-begin"></span>
+<span id="x_002dbegin"></span><dl class="def">
+<dt id="index-begin-1"><span class="category">Function: </span><span><strong>begin</strong> <em>expr</em><a href='#index-begin-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create STL iterator from <var>expr</var>.
+</p>
+<p>See <a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a>.
+</p>
+<p>See also <a href="#x_002dend"><code>end</code></a>, <a href="#x_002drange"><code>range</code></a>.
+</p></dd></dl>
 
 <span id="index-cast"></span>
 <span id="x_002dcast"></span><dl class="def">
@@ -2020,6 +2057,16 @@ See also <a href="#x_002dexplode"><code>explode</code></a>.
 <dd><p>TODO
 </p>
 <p>See also <a href="#x_002dcollapse"><code>collapse</code></a>.
+</p></dd></dl>
+
+<span id="index-end"></span>
+<span id="x_002dend"></span><dl class="def">
+<dt id="index-end-1"><span class="category">Function: </span><span><strong>end</strong> <em>expr</em><a href='#index-end-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create STL end iterator from <var>expr</var>.
+</p>
+<p>See <a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a>.
+</p>
+<p>See also <a href="#x_002dbegin"><code>begin</code></a>, <a href="#x_002drange"><code>range</code></a>.
 </p></dd></dl>
 
 <span id="index-for_005feach"></span>
@@ -2411,6 +2458,16 @@ cout &lt;&lt; (p + ra::iota()) &lt;&lt; endl; // ok
 </p>
 </dd></dl>
 
+<span id="index-range"></span>
+<span id="x_002drange"></span><dl class="def">
+<dt id="index-range-1"><span class="category">Function: </span><span><strong>range</strong> <em>expr</em><a href='#index-range-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Create STL range iterator from <var>expr</var>.
+</p>
+<p>See <a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a>.
+</p>
+<p>See also <a href="#x_002dbegin"><code>begin</code></a>, <a href="#x_002dend"><code>end</code></a>.
+</p></dd></dl>
+
 <span id="index-start-1"></span>
 <span id="x_002dstart"></span><dl class="def">
 <dt id="index-start-2"><span class="category">Function: </span><span><strong>start</strong> <em>foreign_object</em><a href='#index-start-2' class='copiable-anchor'> &para;</a></span></dt>
@@ -2613,7 +2670,7 @@ lexicographical_compare(A &amp;&amp; a, B &amp;&amp; b)
 <span id="index-none-2"></span>
 <span id="x_002dnone"></span><dl class="def">
 <dt id="index-none-3"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>none</strong><a href='#index-none-3' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Pass <code>none</code> to container constructors to indicate that the contents shouldn&rsquo;t be initialized. This is appropriate when the initialization you have in mind wouldn&rsquo;t fit in a constructor argument. For example:
+<dd><p>Pass <code>none</code> to container constructors to indicate that the contents shouldn&rsquo;t be initialized. This is appropriate when the initialization you have in mind doesn&rsquo;t fit in a constructor argument. For example:
 </p>
 <div class="example">
 <pre class="verbatim">void old_style_initializer(int m, int n, double *);
@@ -2729,7 +2786,10 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-at"><code>at</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-BLIS">BLIS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-begin"><code>begin</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-BLAS">BLAS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-BLAS-1">BLAS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Building-with-ra_003a_003a">Building with <code>ra::</code></a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-BLIS">BLIS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b-1">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-libraries">Other libraries</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton_002c-newaxis">broadcasting, singleton, newaxis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
@@ -2752,13 +2812,14 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th id="Indices_cp_letter-E">E</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-early"><code>early</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-elision_002c-index">elision, index</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-end"><code>end</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-end_002c-Octave_002fMatlab"><code>end</code>, Octave/Matlab</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-error">error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Extension">Extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-every"><code>every</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-explode"><code>explode</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-F">F</th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-FFTW">FFTW</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-FFTW">FFTW</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-foreign-type">foreign type</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-format_005farray"><code>format_array</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-for_005feach"><code>for_each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2766,7 +2827,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-from"><code>from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-G">G</th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Guile">Guile</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Guile">Guile</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-I">I</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-imag_005fpart"><code>imag_part</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2790,13 +2851,13 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-noshape"><code>noshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy-1">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Numpy-2">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Numpy-2">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-O">O</th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-OpenGL">OpenGL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-OpenGL">OpenGL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-order_002c-column_002dmajor">order, column-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-other-libraries_002c-interfacing-with">other libraries, interfacing with</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-other-libraries_002c-interfacing-with">other libraries, interfacing with</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-overload-set">overload set</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Extension">Extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-P">P</th><td></td><td></td></tr>
@@ -2805,9 +2866,10 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-ply"><code>ply</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prod"><code>prod</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ptr"><code>ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Python">Python</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Python">Python</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-R">R</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-range"><code>range</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank-1"><code>rank</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introspection">Introspection</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank_002c-compile_002dtime">rank, compile-time</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
@@ -2941,6 +3003,8 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <p><code>&amp;&amp;</code>, <code>||</code> are short-circuiting as array operations; the elements of the second operand won&rsquo;t be evaluated if the elements of the first one evaluate to <code>false</code> or <code>true</code>, respectively.
 Note that if both operands are of rank 0 and at least one of them is an <code>ra::</code> object, they is no way to preserve the behavior of <code>&amp;&amp;</code> and <code>||</code> with built in types and avoid evaluating both, since the overloaded operators <a href="http://en.cppreference.com/w/cpp/language/operators">are normal functions</a>.</p>
 <h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
+<p>Unqualified <code>begin()</code> would find <code>std::begin</code> through ADL since <code>Big</code> is parameterized by <code>std::vector</code>. This still works since <code>std::begin</code> forwards to <code>A.begin()</code>. It&rsquo;s up to you if you want to rely on such things.</p>
+<h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
 <p>Simplified; see the references in <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1170r0.html</a>.</p>
 </div>
 
