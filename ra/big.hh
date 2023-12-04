@@ -498,7 +498,7 @@ shared_borrowing(ViewBig<T, RANK> & raw)
 
 
 // --------------------
-// concrete (container) type from array expression.
+// concrete (container) type from expression.
 // --------------------
 
 template <class E>

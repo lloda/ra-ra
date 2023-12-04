@@ -582,6 +582,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     constexpr operator ViewConst () const { return ViewConst(cp); }
 
     constexpr SmallArray() {}
+    constexpr SmallArray(ra::none_t) {}
 // needed if T isn't registered as scalar [ra44]
     constexpr SmallArray(T const & t)
     {
