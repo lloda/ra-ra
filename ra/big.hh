@@ -601,22 +601,30 @@ reverse(ViewBig<T, RANK> const & view, int k=0)
     return r;
 }
 
-// dynamic transposed axes list.
+// static transposed axes list, output rank is static.
+template <int ... Iarg, class T, rank_t RANK>
+inline auto
+transpose(ViewBig<T, RANK> const & view)
+{
+    static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
+    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank: ", view.rank(), "should be ", (sizeof...(Iarg)), ".");
+    constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
+    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
+    ViewBig<T, dstrank> r;
+    r.cp = view.data();
+    transpose_filldim(s, view.dimv, r.dimv);
+    return r;
+}
+
+// dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
 template <class T, rank_t RANK, class S>
 inline ViewBig<T, ANY>
 transpose_(S && s, ViewBig<T, RANK> const & view)
 {
-    RA_CHECK(view.rank()==ra::size(s));
-    auto rp = std::max_element(s.begin(), s.end());
-    rank_t dstrank = (rp==s.end() ? 0 : *rp+1);
-
-    ViewBig<T, ANY> r { decltype(r.dimv)(dstrank, Dim { BAD, 0 }), view.data() };
-    for (int k=0; int sk: s) {
-        Dim & dest = r.dimv[sk];
-        dest.step += view.step(k);
-        dest.len = dest.len>=0 ? std::min(dest.len, view.len(k)) : view.len(k);
-        ++k;
-    }
+    RA_CHECK(view.rank()==ra::size(s), "Bad size for transposed axes list.");
+    rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
+    ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
+    transpose_filldim(s, view.dimv, r.dimv);
     return r;
 }
 
@@ -627,35 +635,12 @@ transpose(S && s, ViewBig<T, RANK> const & view)
     return transpose_(RA_FWD(s), view);
 }
 
-// Need compile time values and not sizes to deduce the output rank, so a builtin array shim (as for reshape()) would be useless.
+// Need compile time values and not sizes to deduce the output rank, so initializer_list suffices.
 template <class T, rank_t RANK>
 inline ViewBig<T, ANY>
 transpose(std::initializer_list<ra::rank_t> s, ViewBig<T, RANK> const & view)
 {
     return transpose_(s, view);
-}
-
-// Static transposed axes list.
-template <int ... Iarg, class T, rank_t RANK>
-inline auto
-transpose(ViewBig<T, RANK> const & view)
-{
-    static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
-    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank: ", view.rank(), "should be ", (sizeof...(Iarg)), ".");
-
-    using dummy_s = mp::makelist<sizeof...(Iarg), ic_t<0>>;
-    using ti = axes_list_indices<mp::int_list<Iarg ...>, dummy_s, dummy_s>;
-    constexpr rank_t DSTRANK = mp::len<typename ti::dst>;
-
-    ViewBig<T, DSTRANK> r { decltype(r.dimv)(Dim { BAD, 0 }), view.data() };
-    std::array<int, sizeof...(Iarg)> s {{ Iarg ... }};
-    for (int k=0; int sk: s) {
-        Dim & dest = r.dimv[sk];
-        dest.step += view.step(k);
-        dest.len = dest.len>=0 ? std::min(dest.len, view.len(k)) : view.len(k);
-        ++k;
-    }
-    return r;
 }
 
 template <class T, rank_t RANK>

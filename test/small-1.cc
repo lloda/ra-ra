@@ -20,23 +20,6 @@ using ra::mp::int_list, ra::int_c, ra::mp::print_int_list, ra::mp::ref;
 int main()
 {
     TestRecorder tr;
-    tr.section("pieces of transpose(ra::Small)");
-    {
-        using lens = int_list<1, 2, 3, 4, 5>;
-        using steps = int_list<1, 10, 100, 1000, 10000>;
-
-        using c0 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_c<0>>::type;
-        using e0 = int_list<0, 4>;
-        tr.info(print_int_list<e0> {}, " vs ", print_int_list<c0> {}).test(std::is_same_v<e0, c0>);
-
-        using c1 = ra::axis_indices<int_list<0, 1, 3, 2, 0>, int_c<1>>::type;
-        using e1 = int_list<1>;
-        tr.info(print_int_list<e1> {}, " vs ", print_int_list<c1> {}).test(std::is_same_v<e1, c1>);
-
-        using call = ra::axes_list_indices<int_list<0, 1, 3, 2, 0>, lens, steps>::type;
-        using eall = std::tuple<int_list<0, 4>, int_list<1>, int_list<3>, int_list<2>>;
-        tr.info(print_int_list<eall> {}, " vs ", print_int_list<call> {}).test(std::is_same_v<eall, call>);
-    }
     tr.section("transpose(ra::Small)");
     {
         ra::Small<double, 2, 3> const a(ra::_0 + 10*ra::_1);

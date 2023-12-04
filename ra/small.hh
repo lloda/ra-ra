@@ -242,6 +242,15 @@ longer(Q const & q, P const & pp)
 // view iterators. TODO Take iterator like Ptr does and Views should, not raw pointers
 // --------------------
 
+template <auto dimv, int cellr, int framer=0>
+using clens = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].len ...> {}; }, mp::iota<cellr, framer> {}));
+
+template <auto dimv, int cellr, int framer=0>
+using csteps = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<cellr, framer> {}));
+
+template <class lens, class steps>
+constexpr static auto cdimv = std::apply([](auto ... i) { return std::array<Dim, mp::len<lens>> { Dim { mp::ref<lens, i>::value, mp::ref<steps, i>::value } ... }; }, mp::iota<mp::len<lens>> {});
+
 template <class T, class lens, class steps> struct ViewSmall;
 
 template <class T, class Dimv, class Spec>
@@ -255,9 +264,7 @@ struct CellSmall
     constexpr static rank_t framer = rank_frame(fullr, spec);
     static_assert(spec!=ANY && spec!=BAD && choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 // FIXME Small take dimv instead of lens/steps
-    using clens = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].len ...> {}; }, mp::iota<cellr, framer> {}));
-    using csteps = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<cellr, framer> {}));
-    using ctype = ViewSmall<T, clens, csteps>;
+    using ctype = ViewSmall<T, clens<dimv, cellr, framer>, csteps<dimv, cellr, framer>>;
 
     ctype c;
 
@@ -401,7 +408,7 @@ struct SmallBase
 
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
     consteval static rank_t rank() { return mp::len<lens>; }
-    constexpr static auto dimv = std::apply([](auto ... i) { return std::array<Dim, rank()> { Dim { mp::ref<lens, i>::value, mp::ref<steps, i>::value } ... }; }, mp::iota<rank()> {});
+    constexpr static auto dimv = cdimv<lens, steps>;
     constexpr static auto theshape = mp::tuple_values<dim_t, lens>();
     consteval static dim_t size() { return std::apply([](auto ... s) { return (s * ... * 1); }, theshape); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
@@ -667,60 +674,61 @@ start(is_builtin_array auto && t)
 
 // --------------------
 // Small view ops, see View ops in big.hh.
-// FIXME Merge with Reframe (eg beat(reframe(a)) -> transpose(a) ?)
+// FIXME Merge transpose(ViewBig), Reframe (eg beat(reframe(a)) -> transpose(a) ?)
 // --------------------
 
-template <class A, class i>
-struct axis_indices
+constexpr void
+transpose_filldim(auto const & s, auto const & src, auto & dst)
 {
-    template <class T> using match_index = ic_t<(T::value==i::value)>;
-    using I = mp::iota<mp::len<A>>;
-    using type = mp::Filter_<mp::map<match_index, A>, I>;
-};
-
-template <class axes_list, class src_lens, class src_steps>
-struct axes_list_indices
-{
-    static_assert(mp::len<axes_list> == mp::len<src_lens>, "Bad size for transposed axes list.");
-    constexpr static int talmax = mp::fold<mp::max, void, axes_list>::value;
-    constexpr static int talmin = mp::fold<mp::min, void, axes_list>::value;
-    static_assert(talmin >= 0, "Bad index in transposed axes list.");
-
-    template <class dst_i> struct dst_indices_
-    {
-        using type = typename axis_indices<axes_list, dst_i>::type;
-        template <class i> using lensi = mp::ref<src_lens, i::value>;
-        template <class i> using stepsi = mp::ref<src_steps, i::value>;
-        using step = mp::fold<mp::sum, void, mp::map<stepsi, type>>;
-        using len = mp::fold<mp::min, void, mp::map<lensi, type>>;
-    };
-    template <class dst_i> using dst_indices = typename dst_indices_<dst_i>::type;
-    template <class dst_i> using dst_len = typename dst_indices_<dst_i>::len;
-    template <class dst_i> using dst_step = typename dst_indices_<dst_i>::step;
-
-    using dst = mp::iota<(talmax>=0 ? (1+talmax) : 0)>;
-    using type = mp::map<dst_indices, dst>;
-    using lens = mp::map<dst_len, dst>;
-    using steps = mp::map<dst_step, dst>;
-};
+    std::ranges::fill(dst, Dim { BAD, 0 });
+    for (int k=0; int sk: s) {
+        dst[sk].step += src[k].step;
+        dst[sk].len = dst[sk].len>=0 ? std::min(dst[sk].len, src[k].len) : src[k].len;
+        ++k;
+    }
+}
 
 RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<typename A::T, typename A::lens, typename A::steps>>));
 
-template <int ... Iarg, class A> requires (cv_smallview<A>)
+template <int ... Iarg>
 constexpr auto
-transpose(A && a_)
+transpose(cv_smallview auto && a_)
 {
     decltype(auto) a = a_.view();
     using AA = typename std::decay_t<decltype(a)>;
-    using ti = axes_list_indices<mp::int_list<Iarg ...>, typename AA::lens, typename AA::steps>;
-    return ViewSmall<typename AA::T, typename ti::lens, typename ti::steps>(a.data());
+    constexpr std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
+    constexpr auto src = cdimv<typename AA::lens, typename AA::steps>;
+    static_assert(src.size()==s.size(), "Bad size for transposed axes list.");
+    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
+    constexpr auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
+    return ViewSmall<typename AA::T, clens<dst, dstrank>, csteps<dst, dstrank>>(a.data());
 };
 
-template <class A> requires (cv_smallview<A>)
 constexpr auto
-diag(A && a)
+diag(cv_smallview auto && a)
 {
     return transpose<0, 0>(a);
+}
+
+template <class super_t>
+constexpr auto
+explode(cv_smallview auto && a_)
+{
+// result has steps in super_t, but to support general steps we'd need steps in T. FIXME?
+    decltype(auto) a = a_.view();
+    using AA = std::decay_t<decltype(a)>;
+    static_assert(super_t::def);
+    constexpr rank_t ra = ra::rank_s<AA>();
+    constexpr rank_t rb = rank_s<super_t>();
+    static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
+    static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);
+    constexpr dim_t supers = ra::size_s<super_t>();
+    using csteps = decltype(std::apply([](auto ... i)
+                                       {
+                                           static_assert(((i==(i/supers)*supers) && ...));
+                                           return mp::int_list<(i/supers) ...> {};
+                                       }, mp::take<typename AA::steps, ra-rb> {}));
+    return ViewSmall<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
 }
 
 // TODO generalize
@@ -740,7 +748,7 @@ cat(A1 && a1_, A2 && a2_)
     } else if constexpr (cv_smallview<A1> && is_scalar<A2>) {
         decltype(auto) a1 = a1_.view();
         static_assert(1==a1.rank(), "Bad ranks for cat.");
-        using T = std::common_type_t<std::decay_t<decltype(a1[0])>, A2>;
+        using T = std::common_type_t<std::decay_t<decltype(a1[0])>, decltype(a2_)>;
         Small<T, a1.size()+1> val;
         std::copy(a1.begin(), a1.end(), val.begin());
         val[a1.size()] = a2_;
@@ -748,7 +756,7 @@ cat(A1 && a1_, A2 && a2_)
     } else if constexpr (is_scalar<A1> && cv_smallview<A2>) {
         decltype(auto) a2 = a2_.view();
         static_assert(1==a2.rank(), "Bad ranks for cat.");
-        using T = std::common_type_t<A1, std::decay_t<decltype(a2[0])>>;
+        using T = std::common_type_t<decltype(a1_), std::decay_t<decltype(a2[0])>>;
         Small<T, 1+a2.size()> val;
         val[0] = a1_;
         std::copy(a2.begin(), a2.end(), val.begin()+1);
@@ -756,27 +764,6 @@ cat(A1 && a1_, A2 && a2_)
     } else {
         static_assert(always_false<A1, A2>);
     }
-}
-
-template <class super_t, class A> requires (cv_smallview<A>)
-constexpr auto
-explode(A && a_)
-{
-// result has steps in super_t, but to support general steps we'd need steps in T. FIXME?
-    decltype(auto) a = a_.view();
-    using AA = std::decay_t<decltype(a)>;
-    static_assert(super_t::def);
-    constexpr rank_t ra = ra::rank_s<AA>();
-    constexpr rank_t rb = rank_s<super_t>();
-    static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
-    static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);
-    constexpr dim_t supers = ra::size_s<super_t>();
-    using csteps = decltype(std::apply([](auto ... i)
-                                       {
-                                           static_assert(((i==(i/supers)*supers) && ...));
-                                           return mp::int_list<(i/supers) ...> {};
-                                       }, mp::take<typename AA::steps, ra-rb> {}));
-    return ViewSmall<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
 }
 
 } // namespace ra

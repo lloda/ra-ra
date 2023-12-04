@@ -37,12 +37,13 @@ int main()
         ra::Small<int, 3> c(ra::none); // if you want to be explicit
         cout << c << endl;
     }
-    tr.section("initialization that works with either");
+    tr.section("can't really init std::array with constant");
     {
-        std::array<int, 9> a = {0};
-        tr.test_eq(0, a);
-        ra::Small<int, 9> b = {0};
-        tr.test_eq(0, b);
+        std::array<int, 9> a = {1};
+        tr.test_eq(1, a[0]);
+        tr.test_eq(0, a[1]);
+        ra::Small<int, 9> b = {1};
+        tr.test_eq(1, b);
     }
     tr.section("predicates");
     {

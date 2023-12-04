@@ -410,23 +410,21 @@ lexicographical_compare(auto && a, auto && b)
                  false);
 }
 
-template <class A>
 constexpr auto
-amin(A && a)
+amin(auto && a)
 {
     using std::min, std::numeric_limits;
-    using T = ncvalue_t<A>;
+    using T = ncvalue_t<decltype(a)>;
     T c = numeric_limits<T>::has_infinity ? numeric_limits<T>::infinity() : numeric_limits<T>::max();
     for_each([&c](auto && a) { if (a<c) { c = a; } }, a);
     return c;
 }
 
-template <class A>
 constexpr auto
-amax(A && a)
+amax(auto && a)
 {
     using std::max, std::numeric_limits;
-    using T = ncvalue_t<A>;
+    using T = ncvalue_t<decltype(a)>;
     T c = numeric_limits<T>::has_infinity ? -numeric_limits<T>::infinity() : numeric_limits<T>::lowest();
     for_each([&c](auto && a) { if (c<a) { c = a; } }, a);
     return c;
