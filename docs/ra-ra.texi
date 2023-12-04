@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 27
-@set UPDATED 2023 November 30
+@set UPDATED 2023 December 4
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -50,7 +50,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{ra::}@footnote{/ə'ɹ-eɪ/, I guess.} is a general purpose multidimensional array and expression template library for C++20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+@code{ra::}@footnote{/ə'ɹ-eɪ/} is a general purpose multidimensional array and expression template library for C++20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
 
 @menu
 * Overview::          Array programming and C++.
@@ -1810,9 +1810,17 @@ Return the rank of expression @var{e}.
 @deftypefn @w{Function} array shape e
 @deftypefnx @w{Function} dim_t shape e k
 
-The first form returns the shape of expression @var{e} as an array. The second form returns the length of axis @var{k}, i.e. @code{shape(e)[k]} ≡ @code{shape(e, k)}.
+The first form returns the shape of expression @var{e} as an array. The second form returns the length of axis @var{k}, i.e. @code{shape(e)[k]} ≡ @code{shape(e, k)}. It is possible to use @ref{x-len,@code{len}} in @var{k} to mean the rank of @var{e}.
 
-@var{array} might be a @ref{x-foreign-type,@code{foreign type}} (such as @code{std::array} or @code{std::vector}) instead of a @code{ra-ra} type.
+@example
+@verbatim
+    ra::Small<int, 2, 3, 4> A;
+    cout << shape(A, ra::len-1) << endl; // length of last axis
+@end verbatim
+@print{} 4
+@end example
+
+@var{array} might be a @ref{x-foreign-type,foreign type} (such as @code{std::array} or @code{std::vector}) instead of a @code{ra::} type.
 
 @end deftypefn
 

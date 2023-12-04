@@ -205,11 +205,11 @@ static_assert(match_small<double, 4, ra::Cell<double, ic_t<std::array { Dim { 4,
         *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.cp)) OP *(extvector<T, N> *)((ITEM(1).c.cp)); \
         return val;                                                     \
     }
-#define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)      \
+#define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)                                \
     static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
-    RA_OPT_SMALLVECTOR_OP(+, std::plus<>, T, N)  \
-    RA_OPT_SMALLVECTOR_OP(-, std::minus<>, T, N) \
-    RA_OPT_SMALLVECTOR_OP(/, std::divides<>, T, N) \
+    RA_OPT_SMALLVECTOR_OP(+, std::plus<>, T, N)                         \
+    RA_OPT_SMALLVECTOR_OP(-, std::minus<>, T, N)                        \
+    RA_OPT_SMALLVECTOR_OP(/, std::divides<>, T, N)                      \
     RA_OPT_SMALLVECTOR_OP(*, std::multiplies<>, T, N)
 #define RA_OPT_SMALLVECTOR_OP_SIZES(T)        \
     RA_OPT_SMALLVECTOR_OP_FUNS(T, 2)          \

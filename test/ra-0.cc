@@ -659,6 +659,12 @@ int main()
         std::iota(check, check+24, 0);
         tr.test(std::equal(check, check+24, a.begin()));
     }
+    tr.section("shape accepts len");
+    {
+        ra::Unique<double> a({3, 2, 4}, ra::none);
+        tr.test_eq(4, shape(a, ra::len-1));
+        tr.test_eq(3, shape(ra::Small<int, 4, 3, 2> {}, ra::len-2));
+    }
     tr.section("I/O");
     {
         tr.section("1");

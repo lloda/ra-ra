@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 27, updated 2023 November 30)
+<!-- ra:: (version 27, updated 2023 December 4)
 
 (c) Daniel Llorens 2005-2023
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 27, updated 2023 November 30)
+<p><code>ra::</code> (version 27, updated 2023 December 4)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2023
 </p>
@@ -1883,9 +1883,15 @@ Next: <a href="#Building-with-ra_003a_003a" accesskey="n" rel="next">Building wi
 <dt id="index-shape-2"><span class="category">Function<!-- /@w -->: </span><span><em>array</em> <strong>shape</strong> <em>e</em><a href='#index-shape-2' class='copiable-anchor'> &para;</a></span></dt>
 <dt id="index-shape-3"><span class="category">Function<!-- /@w -->: </span><span><em>dim_t</em> <strong>shape</strong> <em>e k</em><a href='#index-shape-3' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>The first form returns the shape of expression <var>e</var> as an array. The second form returns the length of axis <var>k</var>, i.e. <code>shape(e)[k]</code> ≡ <code>shape(e, k)</code>.
+<p>The first form returns the shape of expression <var>e</var> as an array. The second form returns the length of axis <var>k</var>, i.e. <code>shape(e)[k]</code> ≡ <code>shape(e, k)</code>. It is possible to use <a href="#x_002dlen"><code>len</code></a> in <var>k</var> to mean the rank of <var>e</var>.
 </p>
-<p><var>array</var> might be a <a href="#x_002dforeign_002dtype"><code>foreign type</code></a> (such as <code>std::array</code> or <code>std::vector</code>) instead of a <code>ra-ra</code> type.
+<div class="example">
+<pre class="verbatim">    ra::Small&lt;int, 2, 3, 4&gt; A;
+    cout &lt;&lt; shape(A, ra::len-1) &lt;&lt; endl; // length of last axis
+</pre><pre class="example">-| 4
+</pre></div>
+
+<p><var>array</var> might be a <a href="#x_002dforeign_002dtype">foreign type</a> (such as <code>std::array</code> or <code>std::vector</code>) instead of a <code>ra::</code> type.
 </p>
 </dd></dl>
 
@@ -2983,7 +2989,7 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h4 class="footnotes-heading">Footnotes</h4>
 
 <h5><a id="FOOT1" href="#DOCF1">(1)</a></h5>
-<p>/ə&rsquo;ɹ-eɪ/, I guess.</p>
+<p>/ə&rsquo;ɹ-eɪ/</p>
 <h5><a id="FOOT2" href="#DOCF2">(2)</a></h5>
 <p>Sometimes &lsquo;strides&rsquo;. Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
 <h5><a id="FOOT3" href="#DOCF3">(3)</a></h5>

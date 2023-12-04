@@ -75,9 +75,10 @@ struct default_steps_
 template <class lens> using default_steps = typename default_steps_<lens>::type;
 
 constexpr dim_t
-shape(auto const & v, int k)
+shape(auto const & v, auto && e)
 {
-    RA_CHECK(inside(k, rank(v)), "Bad axis ", k, " for rank ", rank(v), ".");
+    dim_t k = with_len(ra::rank(v), RA_FWD(e));
+    RA_CHECK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
     return v.len(k);
 }
 
@@ -134,17 +135,6 @@ template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
-template <int k=0, class V>
-constexpr decltype(auto)
-maybe_len(V && v)
-{
-    if constexpr (ANY!=std::decay_t<V>::len_s(k)) {
-        return ic<std::decay_t<V>::len_s(k)>;
-    } else {
-        return v.len(k);
-    }
-}
-
 template <class II, int drop, class Op>
 constexpr decltype(auto)
 from_partial(Op && op)
@@ -169,6 +159,17 @@ from(A && a, I && ... i)
         return map(RA_FWD(a), RA_FWD(i) ...);
     } else {
         return map(from_partial<mp::tuple<ic_t<rank_s<I>()> ...>, 1>(RA_FWD(a)), RA_FWD(i) ...);
+    }
+}
+
+template <int k=0, class V>
+constexpr decltype(auto)
+maybe_len(V && v)
+{
+    if constexpr (ANY!=std::decay_t<V>::len_s(k)) {
+        return ic<std::decay_t<V>::len_s(k)>;
+    } else {
+        return v.len(k);
     }
 }
 
@@ -305,10 +306,10 @@ struct CellBig
     }
 };
 
-template <class T, class Dimv, class Spec,
-          class Base = std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>>
-struct Cell: public Base
+template <class T, class Dimv, class Spec>
+struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>
 {
+    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>;
     using Base::Base, Base::cellr, Base::framer, Base::c, Base::step;
     using ctype = Base::ctype;
 
@@ -318,17 +319,8 @@ struct Cell: public Base
     RA_ASSIGNOPS_SELF(Cell)
     RA_ASSIGNOPS_DEFAULT_SET
 
-    constexpr decltype(auto)
-    at(auto const & i) const
-    {
-        auto d = longer(*this, i);
-        if constexpr (0==cellr) {
-            return c.cp[d];
-        } else {
-            ctype cc(c); cc.cp += d;
-            return cc;
-        }
-    }
+    constexpr decltype(auto) at(auto const & i) const requires (0==cellr) { return c.cp[longer(*this, i)]; }
+    constexpr decltype(auto) at(auto const & i) const requires (0!=cellr) { ctype cc(c); cc.cp += longer(*this, i); return cc; }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr ctype const & operator*() const requires (0!=cellr) { return c; }
