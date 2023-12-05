@@ -31,8 +31,7 @@ gemm_block_3(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewB
     dim_t const n = b.len(1);
 // terminal, using reduce_k, see below
     if (max(m, max(p, n))<=64) {
-        for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })),
-                 c, a, b);
+        gemm(a, b, c);
 // split a's rows
     } else if (m>=max(p, n)) {
         gemm_block_3(a(ra::iota(m/2)), b, c(ra::iota(m/2)));
@@ -125,6 +124,8 @@ gemm_blas(ra::ViewBig<double, 2> const & a, ra::ViewBig<double, 2> const & b)
 int main()
 {
     TestRecorder tr(std::cout);
+    cout << "FP_FAST_FMA is " << FP_FAST_FMA << endl;
+    cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
 
     auto gemm_block = [&](auto const & a, auto const & b)
         {
@@ -146,16 +147,14 @@ int main()
             return c;
         };
 
-// See test/wrank.cc "outer product variants" for the logic.
-// TODO based on this, allow a Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k).
+// See test/wrank.cc "outer product variants". // TODO based on this, allow Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k).
     auto gemm_reduce_k = [&](auto const & a, auto const & b)
         {
             dim_t const M = a.len(0);
             dim_t const N = b.len(1);
             using T = decltype(a(0, 0)*b(0, 0));
             ra::Big<T, 2> c({M, N}, T());
-            for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })),
-                     c, a, b);
+            gemm(a, b, c);
             return c;
         };
 
@@ -238,7 +237,7 @@ int main()
             bench([&](auto const & a, auto const & b) { return gemm(a, b); }, "default");
         };
 
-    bench_all(3, 10, 10, 10, 1000);
+    bench_all(3, 10, 10, 10, 100);
     bench_all(2, 100, 100, 100, 10);
     bench_all(2, 500, 400, 500, 1);
     bench_all(1, 10000, 10, 1000, 1);

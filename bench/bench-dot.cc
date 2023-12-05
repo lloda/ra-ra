@@ -100,15 +100,17 @@ real a, b, ref, rspec;
 
 int main()
 {
-    std::random_device rand;
-    a = rand();
-    b = rand();
-
-    ref = a*b*S1[0]*N;
-
     TestRecorder tr;
     tr.o.width(6);
     tr.o.precision(4);
+    cout << "FP_FAST_FMA is " << FP_FAST_FMA << endl;
+    cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
+
+    std::random_device rand;
+    a = rand();
+    b = rand();
+    ref = a*b*S1[0]*N;
+
     {
         auto bench = [&tr](char const * tag, auto s, auto && ref, int reps, auto && f)
             {

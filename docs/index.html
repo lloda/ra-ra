@@ -1065,7 +1065,7 @@ Next: <a href="#The-rank-conjunction" accesskey="n" rel="next">The rank conjunct
 <div class="subsection" id="Standard-scalar-operations">
 <h4 class="subsection">2.7.1 Standard scalar operations</h4>
 
-<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, and <code>lerp</code>.
+<p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, <code>lerp</code>, and <code>fma</code>.
 Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <code>odd</code>, <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
 </p>
 <p>For example:
@@ -1715,9 +1715,14 @@ ra::scalar(a) += 3 + ra::Small&lt;int, 3&gt; {4, 5, 6}; // 0 + 3 + 4 + 5 + 6
 </pre><pre class="example">  &rArr; a = 18
 </pre></div>
 
+<hr>
 </div>
 <div class="section" id="Performance-pitfalls-of-rank-extension">
-<h3 class="section">4.5 Performance pitfalls of rank extension</h3>
+<div class="header">
+<p>
+Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<span id="Performance-pitfalls-of-rank-extension-1"></span><h3 class="section">4.5 Performance pitfalls of rank extension</h3>
 
 <p>In the following example where <code>b</code> has its shape extended from (3) to (3, 4), <code>f</code> is called 12 times, even though only 3 calls are needed if <code>f</code> doesn&rsquo;t have side effects. In such cases it might be preferrable to write the outer loop explicitly, or to do some precomputation.
 </p>
@@ -1908,11 +1913,26 @@ Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, U
 <p>The following <code>#define</code>s affect the behavior of <code>ra::</code>.
 </p>
 <ul>
-<li> <code>RA_DO_CHECK</code> (default 1):  Check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
-</li><li> <code>RA_DO_OPT</code> (default 1): Sets the default for all <code>RA_DO_OPT_XXX</code> flags.
-</li><li> <code>RA_DO_OPT_IOTA</code> (default 1): Perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::iota(3, 0) + 1</code> becomes <code>ra::iota(3, 1)</code> instead of a two-operand expression template.
-</li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0): Perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
-</li></ul>
+<li> <code>RA_DO_CHECK</code> (default 1)
+
+<p>If 1, check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
+</p>
+</li><li> <code>RA_DO_OPT</code> (default 1)
+
+<p>Set the default for all <code>RA_DO_OPT_XXX</code> flags.
+</p>
+</li><li> <code>RA_DO_OPT_IOTA</code> (default 1)
+
+<p>If 1, perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::iota(3, 0) + 1</code> becomes <code>ra::iota(3, 1)</code> instead of a two-operand expression template.
+</p>
+</li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0)
+
+<p>If 1, perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
+</p>
+</li><li> <code>RA_DO_FMA</code> (default <code>FP_FAST_FMA</code>)
+
+<p>If 1, use <code>fma</code> in certain array reductions such as <a href="#x_002ddot"><code>dot</code></a>, <a href="#x_002dgemm"><code>gemm</code></a>, etc.
+</p></li></ul>
 
 <p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>. <code>ra::</code> is highly dependent on optimization by the compiler and will be much slower with <samp>-O0</samp>.
 </p>
@@ -2057,6 +2077,14 @@ See also <a href="#x_002dexplode"><code>explode</code></a>.
 <dd><p>Equivalent to <code>transpose&lt;0, 0&gt;(view)</code>.
 </p></dd></dl>
 
+<span id="index-dot"></span>
+<span id="x_002ddot"></span><dl class="def">
+<dt id="index-dot-1"><span class="category">Function: </span><span><strong>dot</strong> <em>a b</em><a href='#index-dot-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Compute dot product of expressions <var>a</var> and <var>b</var>.
+</p>
+<p>TODO
+</p></dd></dl>
+
 <span id="index-explode"></span>
 <span id="x_002dexplode"></span><dl class="def">
 <dt id="index-explode-1"><span class="category">Function: </span><span><strong>explode</strong><a href='#index-explode-1' class='copiable-anchor'> &para;</a></span></dt>
@@ -2147,6 +2175,36 @@ case c:
 <p>The last example is more or less how <code>A(i, j)</code> is implemented for arbitrary subscripts (see <a href="#The-rank-conjunction">The rank conjunction</a>).
 </p>
 </dd></dl>
+
+<span id="index-gemm"></span>
+<span id="x_002dgemm"></span><dl class="def">
+<dt id="index-gemm-1"><span class="category">Function: </span><span><strong>gemm</strong> <em>a b</em><a href='#index-gemm-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Compute matrix-matrix product of expressions <var>a</var> and <var>b</var>. This funcion returns a container.
+</p>
+<p>TODO
+</p>
+<p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
+</p></dd></dl>
+
+<span id="index-gemv"></span>
+<span id="x_002dgemv"></span><dl class="def">
+<dt id="index-gemv-1"><span class="category">Function: </span><span><strong>gemv</strong> <em>a b</em><a href='#index-gemv-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Compute matrix-vector product of expressions <var>a</var> and <var>b</var>. This funcion returns a container.
+</p>
+<p>TODO
+</p>
+<p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
+</p></dd></dl>
+
+<span id="index-gevm"></span>
+<span id="x_002dgevm"></span><dl class="def">
+<dt id="index-gevm-1"><span class="category">Function: </span><span><strong>gevm</strong> <em>a b</em><a href='#index-gevm-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Compute vector-matrix product of expressions <var>a</var> and <var>b</var>. This funcion returns a container.
+</p>
+<p>TODO
+</p>
+<p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
+</p></dd></dl>
 
 <span id="index-imag_005fpart"></span>
 <span id="x_002dimag_005fpart"></span><dl class="def">
@@ -2814,6 +2872,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-D">D</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-diag"><code>diag</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-dot"><code>dot</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-E">E</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-early"><code>early</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2833,6 +2892,9 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-from"><code>from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-G">G</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-gemm"><code>gemm</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-gemv"><code>gemv</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-gevm"><code>gevm</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Guile">Guile</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-I">I</th><td></td><td></td></tr>

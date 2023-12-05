@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Array reductions.
 
-// (c) Daniel Llorens - 2014
+// (c) Daniel Llorens - 2014-2023
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -20,7 +20,11 @@ using ra::sqrm;
 int main()
 {
     TestRecorder tr(std::cout);
-
+    tr.section("fma");
+    {
+        cout << "FP_FAST_FMA is " << FP_FAST_FMA << endl;
+        cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
+    }
     tr.section("amax with different expr types");
     {
         auto test_amax_expr = [&tr](auto && a, auto && b)
@@ -279,13 +283,47 @@ int main()
         test(int(0), double(0), double(0));
         test(double(0), int(0), double(0));
     }
-    tr.section("matrix-matrix reductions");
+    tr.section("gemm with dynamic shape, corner case");
     {
-        ra::Big<double, 2> A({0, 0}, 0.);
-        ra::Big<double, 2> B({0, 0}, 0.);
+        ra::Big<double, 2> A({0, 0}, 2.);
+        ra::Big<double, 2> B({0, 0}, 3.);
         auto C = gemm(A, B);
         tr.test_eq(0, C.len(0));
         tr.test_eq(0, C.len(1));
+    }
+    tr.section("gemm with dynamic shape");
+    {
+        ra::Big<complex, 2> A({3, 2}, 2.);
+        ra::Big<complex, 2> B({2, 4}, 3.);
+        auto C = gemm(A, B);
+        tr.test_eq(3, C.len(0));
+        tr.test_eq(4, C.len(1));
+        tr.test_eq(12., C);
+    }
+    tr.section("gemm with static shape");
+    {
+        ra::Small<double, 3, 2> A = 2;
+        ra::Small<double, 2, 4> B = 3;
+        auto C = gemm(A, B);
+        tr.test_eq(3, C.len_s(0));
+        tr.test_eq(4, C.len_s(1));
+        tr.test_eq(12, C);
+    }
+    tr.section("gemv with static shape");
+    {
+        ra::Small<double, 3, 2> A = 2;
+        ra::Small<double, 2> B = 3;
+        auto C = gemv(A, B);
+        tr.test_eq(3, C.len_s(0));
+        tr.test_eq(12, C);
+    }
+    tr.section("gevm with static shape");
+    {
+        ra::Small<double, 2> A = 3;
+        ra::Small<double, 2, 3> B = 2;
+        auto C = gevm(A, B);
+        tr.test_eq(3, C.len_s(0));
+        tr.test_eq(12, C);
     }
     tr.section("reference reductions");
     {

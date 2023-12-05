@@ -15,10 +15,19 @@
 #ifndef RA_DO_OPT
   #define RA_DO_OPT 1 // enabled by default
 #endif
+
 #if RA_DO_OPT==1
   #define RA_OPT optimize
 #else
   #define RA_OPT
+#endif
+
+#ifndef RA_DO_FMA
+  #ifdef FP_FAST_FMA
+    #define RA_DO_FMA FP_FAST_FMA
+  #endif
+#else
+  #define RA_DO_FMA 0
 #endif
 
 // Enable ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
@@ -74,7 +83,7 @@ template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x)  { retu
     constexpr T norm2(T x)              { return std::abs(x); }         \
     constexpr T norm2(T x, T y)         { return std::abs(x-y); }       \
     constexpr T rel_error(T a, T b)     { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
-    constexpr T const & real_part(T const & x)  { return x; }           \
+    constexpr T const & real_part(T const & x) { return x; }            \
     constexpr T & real_part(T & x)      { return x; }                   \
     constexpr T imag_part(T x)          { return T(0); }
 FOR_EACH(RA_FOR_TYPES, float, double)
@@ -298,6 +307,7 @@ FOR_EACH(DEF_GLOBAL, max, min)
 #define DEF_GLOBAL(f) DEF_USING(::f, f)
 FOR_EACH(DEF_GLOBAL, pow, conj, sqrt, exp, expm1, log, log1p, log10, isfinite, isnan, isinf, atan2)
 FOR_EACH(DEF_GLOBAL, abs, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan, clamp, lerp)
+FOR_EACH(DEF_GLOBAL, fma)
 #undef DEF_GLOBAL
 
 #undef DEF_USING
@@ -372,12 +382,12 @@ operator ||(A && a, B && b)
     {                                                                   \
         return VALUE(a) OP VALUE(b);                                    \
     }
-FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||);
+FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
 #undef DEF_SHORTCIRCUIT_BINARY_OP
 
 
 // --------------------------------
-// whole-array reductions. TODO First rank reductions? Variable rank reductions?
+// whole-array ops. TODO First rank reductions? Variable rank reductions?
 // FIXME C++23 and_then/or_else/etc
 // --------------------------------
 
@@ -434,7 +444,7 @@ amax(auto && a)
 // FIXME expr/ply mechanism doesn't allow partial iteration (adv then continue).
 template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
-refmin(A && a, Less && less = std::less<ncvalue_t<A>>())
+refmin(A && a, Less && less = {})
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
@@ -445,7 +455,7 @@ refmin(A && a, Less && less = std::less<ncvalue_t<A>>())
 
 template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
-refmax(A && a, Less && less = std::less<ncvalue_t<A>>())
+refmax(A && a, Less && less = {})
 {
     RA_CHECK(a.size()>0);
     decltype(auto) s = ra::start(a);
@@ -454,20 +464,18 @@ refmax(A && a, Less && less = std::less<ncvalue_t<A>>())
     return *p;
 }
 
-template <class A>
 constexpr auto
-sum(A && a)
+sum(auto && a)
 {
-    auto c = concrete_type<ncvalue_t<A>>(0);
+    auto c = concrete_type<ncvalue_t<decltype(a)>>(0);
     for_each([&c](auto && a) { c += a; }, a);
     return c;
 }
 
-template <class A>
 constexpr auto
-prod(A && a)
+prod(auto && a)
 {
-    auto c = concrete_type<ncvalue_t<A>>(1);
+    auto c = concrete_type<ncvalue_t<decltype(a)>>(1);
     for_each([&c](auto && a) { c *= a; }, a);
     return c;
 }
@@ -475,18 +483,23 @@ prod(A && a)
 constexpr auto reduce_sqrm(auto && a) { return sum(sqrm(a)); }
 constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
 
+constexpr void
+maybe_fma(auto && a, auto && b, auto & c)
+{
+    if constexpr (1==RA_DO_FMA) { c = fma(a, b, c); } else { c += a*b; }
+}
+
+constexpr void
+maybe_fma_conj(auto && a, auto && b, auto & c)
+{
+    if constexpr (1==RA_DO_FMA) { c = fma_conj(a, b, c); } else { c += conj(a)*b; }
+}
+
 constexpr auto
 dot(auto && a, auto && b)
 {
     std::decay_t<decltype(VALUE(a) * VALUE(b))> c(0.);
-    for_each([&c](auto && a, auto && b)
-             {
-#ifdef FP_FAST_FMA
-                 c = fma(a, b, c);
-#else
-                 c += a*b;
-#endif
-             }, a, b);
+    for_each([&c](auto && a, auto && b) { maybe_fma(a, b, c); }, a, b);
     return c;
 }
 
@@ -494,21 +507,9 @@ constexpr auto
 cdot(auto && a, auto && b)
 {
     std::decay_t<decltype(conj(VALUE(a)) * VALUE(b))> c(0.);
-    for_each([&c](auto && a, auto && b)
-             {
-#ifdef FP_FAST_FMA
-                 c = fma_conj(a, b, c);
-#else
-                 c += conj(a)*b;
-#endif
-             }, a, b);
+    for_each([&c](auto && a, auto && b) { maybe_fma_conj(a, b, c); }, a, b);
     return c;
 }
-
-
-// --------------------
-// other whole-array ops.
-// --------------------
 
 constexpr auto
 normv(auto const & a)
@@ -522,51 +523,43 @@ normv(auto const & a)
 constexpr void
 gemm(auto const & a, auto const & b, auto & c)
 {
-    for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { c += a*b; })), c, a, b);
+    for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { maybe_fma(a, b, c); })),
+             c, a, b);
 }
 
-#define MMTYPE decltype(from(std::multiplies<>(), a(all, 0), b(0)))
-
-// default for row-major x row-major. See bench-gemm.cc for variants.
-template <class S, class T>
+// default for row-major x row-major.
+// FIXME bench these exact variants in bench-gemm.cc, plus sizes.
 constexpr auto
-gemm(ViewBig<S, 2> const & a, ViewBig<T, 2> const & b)
+gemm(auto const & a, auto const & b)
 {
     dim_t M=a.len(0), N=b.len(1), K=a.len(1);
-// no with_same_shape bc cannot index 0 for type if A/B are empty
-    auto c = with_shape<MMTYPE>({M, N}, decltype(std::declval<S>()*std::declval<T>())());
-    for (int k=0; k<K; ++k) {
-        c += from(std::multiplies<>(), a(all, k), b(k));
-    }
-    return c;
-}
-
-// we still want the Small version to be different.
-template <class A, class B>
-constexpr ra::Small<std::decay_t<decltype(VALUE(std::declval<A>()) * VALUE(std::declval<B>()))>, A::len(0), B::len(1)>
-gemm(A const & a, B const & b)
-{
-    dim_t M=a.len(0), N=b.len(1);
-// no with_same_shape bc cannot index 0 for type if A/B are empty
-    auto c = with_shape<MMTYPE>({M, N}, ra::none);
-    for (int i=0; i<M; ++i) {
-        for (int j=0; j<N; ++j) {
-            c(i, j) = dot(a(i), b(all, j));
+    using T = decltype(VALUE(a)*VALUE(b));
+    using MMTYPE = decltype(from(std::multiplies<>(), a(all, 0), b(0)));
+    if (K<M+N) {
+        auto c = with_shape<MMTYPE>({M, N}, T());
+        for (int k=0; k<K; ++k) {
+            c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma?
         }
+        return c;
+    } else {
+        auto c = with_shape<MMTYPE>({M, N}, ra::none);
+        for (int i=0; i<M; ++i) {
+            for (int j=0; j<N; ++j) {
+                c(i, j) = dot(a(i), b(all, j));
+            }
+        }
+        return c;
     }
-    return c;
 }
-
-#undef MMTYPE
 
 constexpr auto
 gevm(auto const & a, auto const & b)
 {
     dim_t M=b.len(0), N=b.len(1);
-// no with_same_shape bc cannot index 0 for type if A/B are empty
-    auto c = with_shape<decltype(a[0]*b(0))>({N}, 0);
+    using T = decltype(VALUE(a)*VALUE(b));
+    auto c = with_shape<decltype(a[0]*b(0))>({N}, T());
     for (int i=0; i<M; ++i) {
-        c += a[i]*b(i);
+        maybe_fma(a[i], b(i), c);
     }
     return c;
 }
@@ -576,10 +569,10 @@ constexpr auto
 gemv(auto const & a, auto const & b)
 {
     dim_t M=a.len(0), N=a.len(1);
-// no with_same_shape bc cannot index 0 for type if A/B are empty
-    auto c = with_shape<decltype(a(all, 0)*b[0])>({M}, 0);
+    using T = decltype(VALUE(a)*VALUE(b));
+    auto c = with_shape<decltype(a(all, 0)*b[0])>({M}, T());
     for (int j=0; j<N; ++j) {
-        c += a(all, j) * b[j];
+        maybe_fma(a(all, j), b[j], c);
     }
     return c;
 }
@@ -677,7 +670,7 @@ struct Wedge
     constexpr static bool general_case = (Na>1 && Nb>1) && ((Oa+Ob!=D) || (Oa==Ob));
 
     template <class Va, class Vb>
-    using valtype = std::decay_t<decltype(std::declval<Va>()[0] * std::declval<Vb>()[0])>;
+    using valtype = decltype(std::declval<Va>()[0] * std::declval<Vb>()[0]);
 
     template <class Xr, class Fa, class Va, class Vb>
     constexpr static valtype<Va, Vb>

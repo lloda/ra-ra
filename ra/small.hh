@@ -420,7 +420,7 @@ struct SmallBase
     static_assert(std::apply([](auto ... s) { return ((0<=s) && ...); }, theshape), "Bad shape.");
     constexpr static bool convertible_to_scalar = (1==size()); // allowed for 1 for coord types
     constexpr static dim_t len0 = rank()>0 ? len(0) : 0;
-    constexpr static bool def = is_c_order_dimv(dimv);
+    constexpr static bool defsteps = is_c_order_dimv(dimv);
 };
 
 template <class T, class lens, class steps>
@@ -428,7 +428,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
 {
     using Base = SmallBase<T, lens, steps>;
     using Base::rank, Base::size, Base::convertible_to_scalar, Base::dimv;
-    using Base::len, Base::len_s, Base::step, Base::len0, Base::def;
+    using Base::len, Base::len_s, Base::step, Base::len0, Base::defsteps;
     using sub = typename nested_arg<T, lens>::sub;
 
     T * cp;
@@ -538,9 +538,9 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     template <int ss, int oo=0> constexpr auto as() const { return operator()(ra::iota(ra::ic<ss>, oo)); }
     constexpr T * data() const { return cp; }
     template <rank_t c=0> constexpr iterator<c> iter() const { return cp; }
-    constexpr auto begin() const { if constexpr (def) return cp; else return STLIterator(iter()); }
-    constexpr auto end() const requires (def) { return cp+size(); }
-    constexpr static auto end() requires (!def) { return std::default_sentinel; }
+    constexpr auto begin() const { if constexpr (defsteps) return cp; else return STLIterator(iter()); }
+    constexpr auto end() const requires (defsteps) { return cp+size(); }
+    constexpr static auto end() requires (!defsteps) { return std::default_sentinel; }
     constexpr T & back() const { static_assert(rank()>=1 && size()>0, "No back()."); return cp[size()-1]; }
     constexpr operator T & () const { static_assert(convertible_to_scalar); return cp[0]; }
 };
@@ -717,7 +717,7 @@ explode(cv_smallview auto && a_)
 // result has steps in super_t, but to support general steps we'd need steps in T. FIXME?
     decltype(auto) a = a_.view();
     using AA = std::decay_t<decltype(a)>;
-    static_assert(super_t::def);
+    static_assert(super_t::defsteps);
     constexpr rank_t ra = ra::rank_s<AA>();
     constexpr rank_t rb = rank_s<super_t>();
     static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);

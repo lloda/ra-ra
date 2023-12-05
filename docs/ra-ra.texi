@@ -1007,7 +1007,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 @subsection Standard scalar operations
 
 @code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively.
-Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{<=>}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}, and @code{lerp}.
+Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{<=>}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}, @code{lerp}, and @code{fma}.
 Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @code{odd}, @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
 
 For example:
@@ -1660,6 +1660,7 @@ ra::scalar(a) += 3 + ra::Small<int, 3> {4, 5, 6}; // 0 + 3 + 4 + 5 + 6
   @result{} a = 18
 @end example
 
+@node Performance pitfalls of rank extension
 @section Performance pitfalls of rank extension
 
 In the following example where @code{b} has its shape extended from (3) to (3, 4), @code{f} is called 12 times, even though only 3 calls are needed if @code{f} doesn't have side effects. In such cases it might be preferrable to write the outer loop explicitly, or to do some precomputation.
@@ -1834,10 +1835,25 @@ The following @code{#define}s affect the behavior of @code{ra::}.
 
 @itemize
 @c FIXME The flag should only apply to dynamic checks.
-@item @code{RA_DO_CHECK} (default 1):  Check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
-@item @code{RA_DO_OPT} (default 1): Sets the default for all @code{RA_DO_OPT_XXX} flags.
-@item @code{RA_DO_OPT_IOTA} (default 1): Perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::iota(3, 0) + 1} becomes @code{ra::iota(3, 1)} instead of a two-operand expression template.
-@item @code{RA_DO_OPT_SMALLVECTOR} (default 0): Perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
+@item @code{RA_DO_CHECK} (default 1)
+
+If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
+
+@item @code{RA_DO_OPT} (default 1)
+
+Set the default for all @code{RA_DO_OPT_XXX} flags.
+
+@item @code{RA_DO_OPT_IOTA} (default 1)
+
+If 1, perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::iota(3, 0) + 1} becomes @code{ra::iota(3, 1)} instead of a two-operand expression template.
+
+@item @code{RA_DO_OPT_SMALLVECTOR} (default 0)
+
+If 1, perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
+
+@item @code{RA_DO_FMA} (default @code{FP_FAST_FMA})
+
+If 1, use @code{fma} in certain array reductions such as @ref{x-dot,@code{dot}}, @ref{x-gemm,@code{gemm}}, etc.
 @end itemize
 
 @code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}. @code{ra::} is highly dependent on optimization by the compiler and will be much slower with @option{-O0}.
@@ -1963,6 +1979,13 @@ If the argument has rt or ct shape, it is the same for the result. The main use 
 Equivalent to @code{transpose<0, 0>(view)}.
 @end defun
 
+@cindex @code{dot}
+@anchor{x-dot} @defun dot a b
+Compute dot product of expressions @var{a} and @var{b}.
+
+TODO
+@end defun
+
 @cindex @code{explode}
 @anchor{x-explode} @defun explode
 TODO
@@ -2055,6 +2078,33 @@ For example:
 
 The last example is more or less how @code{A(i, j)} is implemented for arbitrary subscripts (@pxref{The rank conjunction}).
 
+@end defun
+
+@cindex @code{gemm}
+@anchor{x-gemm} @defun gemm a b
+Compute matrix-matrix product of expressions @var{a} and @var{b}. This funcion returns a container.
+
+TODO
+
+See @ref{Performance pitfalls of rank extension}.
+@end defun
+
+@cindex @code{gemv}
+@anchor{x-gemv} @defun gemv a b
+Compute matrix-vector product of expressions @var{a} and @var{b}. This funcion returns a container.
+
+TODO
+
+See @ref{Performance pitfalls of rank extension}.
+@end defun
+
+@cindex @code{gevm}
+@anchor{x-gevm} @defun gevm a b
+Compute vector-matrix product of expressions @var{a} and @var{b}. This funcion returns a container.
+
+TODO
+
+See @ref{Performance pitfalls of rank extension}.
 @end defun
 
 @cindex @code{imag_part}
