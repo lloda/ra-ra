@@ -22,10 +22,9 @@
   #define RA_OPT
 #endif
 
-#ifndef RA_DO_FMA
-  #ifdef FP_FAST_FMA
-    #define RA_DO_FMA FP_FAST_FMA
-  #endif
+#if defined(RA_DO_FMA)
+#elif defined(FP_FAST_FMA)
+  #define RA_DO_FMA FP_FAST_FMA
 #else
   #define RA_DO_FMA 0
 #endif
@@ -483,23 +482,19 @@ prod(auto && a)
 constexpr auto reduce_sqrm(auto && a) { return sum(sqrm(a)); }
 constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
 
-constexpr void
-maybe_fma(auto && a, auto && b, auto & c)
-{
-    if constexpr (1==RA_DO_FMA) { c = fma(a, b, c); } else { c += a*b; }
-}
-
-constexpr void
-maybe_fma_conj(auto && a, auto && b, auto & c)
-{
-    if constexpr (1==RA_DO_FMA) { c = fma_conj(a, b, c); } else { c += conj(a)*b; }
-}
+#if 1==RA_DO_FMA
+constexpr void maybe_fma(auto && a, auto && b, auto & c) { c = fma(a, b, c); };
+constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { c = fma_conj(a, b, c); };
+#else
+constexpr void maybe_fma(auto && a, auto && b, auto & c) { c += a*b; };
+constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { c += conj(a)*b; };
+#endif
 
 constexpr auto
 dot(auto && a, auto && b)
 {
     std::decay_t<decltype(VALUE(a) * VALUE(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { maybe_fma(a, b, c); }, a, b);
+    for_each([&c](auto && a, auto && b) { maybe_fma(a, b, c); }, RA_FWD(a), RA_FWD(b));
     return c;
 }
 
@@ -507,7 +502,7 @@ constexpr auto
 cdot(auto && a, auto && b)
 {
     std::decay_t<decltype(conj(VALUE(a)) * VALUE(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { maybe_fma_conj(a, b, c); }, a, b);
+    for_each([&c](auto && a, auto && b) { maybe_fma_conj(a, b, c); }, RA_FWD(a), RA_FWD(b));
     return c;
 }
 
@@ -519,37 +514,24 @@ normv(auto const & a)
     return b;
 }
 
-// FIXME benchmark w/o allocation and do Small/Big versions if it's worth it.
+// FIXME benchmark w/o allocation and do Small/Big versions if it's worth it (see bench-gemm.cc)
+
 constexpr void
 gemm(auto const & a, auto const & b, auto & c)
 {
-    for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && b) { maybe_fma(a, b, c); })),
-             c, a, b);
+    for_each(ra::wrank<1, 2, 1>(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto & c) { maybe_fma(a, b, c); })),
+             RA_FWD(a), RA_FWD(b), RA_FWD(c));
 }
 
-// default for row-major x row-major.
-// FIXME bench these exact variants in bench-gemm.cc, plus sizes.
 constexpr auto
 gemm(auto const & a, auto const & b)
 {
-    dim_t M=a.len(0), N=b.len(1), K=a.len(1);
+    dim_t M=a.len(0), N=b.len(1);
     using T = decltype(VALUE(a)*VALUE(b));
     using MMTYPE = decltype(from(std::multiplies<>(), a(all, 0), b(0)));
-    if (K<M+N) {
-        auto c = with_shape<MMTYPE>({M, N}, T());
-        for (int k=0; k<K; ++k) {
-            c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma?
-        }
-        return c;
-    } else {
-        auto c = with_shape<MMTYPE>({M, N}, ra::none);
-        for (int i=0; i<M; ++i) {
-            for (int j=0; j<N; ++j) {
-                c(i, j) = dot(a(i), b(all, j));
-            }
-        }
-        return c;
-    }
+    auto c = with_shape<MMTYPE>({M, N}, T());
+    gemm(a, b, c);
+    return c;
 }
 
 constexpr auto
@@ -579,7 +561,7 @@ gemv(auto const & a, auto const & b)
 
 
 // --------------------
-// wedge product and cross product
+// wedge product and cross product. FIXME seriously
 // --------------------
 
 namespace mp {

@@ -20,11 +20,7 @@ using ra::sqrm;
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("fma");
-    {
-        cout << "FP_FAST_FMA is " << FP_FAST_FMA << endl;
-        cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
-    }
+    cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
     tr.section("amax with different expr types");
     {
         auto test_amax_expr = [&tr](auto && a, auto && b)

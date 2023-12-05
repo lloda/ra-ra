@@ -103,7 +103,6 @@ int main()
     TestRecorder tr;
     tr.o.width(6);
     tr.o.precision(4);
-    cout << "FP_FAST_FMA is " << FP_FAST_FMA << endl;
     cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
 
     std::random_device rand;

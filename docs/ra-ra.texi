@@ -1756,17 +1756,17 @@ Some of the categories below are C++20 ‘concepts’, some are still informal.
 @itemize
 @item @b{Container} --- @code{Big}, @code{Shared}, @code{Unique}, @code{Small}
 
-These are array types that own their data in one way or another. Creating or destroying these objects may allocate or deallocate memory, respectively.
+These are array types that own their data in one way or another.
 
-@item @b{View} --- @code{View}, @code{ViewSmall}
+@item @b{View} --- @code{ViewBig}, @code{ViewSmall}
 
-These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s that aren't associated with any @b{Container}, for example into memory allocated by a different library. Creating and destroying @b{View}s doesn't allocate or deallocate memory for array elements.
+These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently.
 
 @item @b{Iterator} --- @code{CellBig}, @code{CellSmall}, @code{Iota}, @code{Ptr}, @code{Scalar}, @code{Expr}, @code{Pick}
 
 This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 
-@b{Iterator}s have two traversal functions: @code{.adv(k, d)}, moves the iterator along any dimension @var{k}, and @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep_step()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a multidimensional loop, especially if the inner dimensions of the loop are small.
+@b{Iterator}s have two traversal functions: @code{.adv(k, d)}, moves the iterator along any dimension @var{k}, and @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep_step()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a nested loop, especially if the inner dimensions of the loop are small.
 
 @b{Iterator}s also provide an @code{at(i ...)} method for random access to any element.
 
@@ -1851,7 +1851,7 @@ If 1, perform immediately (beat) certain operations on @code{ra::Iota} objects. 
 
 If 1, perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
 
-@item @code{RA_DO_FMA} (default @code{FP_FAST_FMA})
+@item @code{RA_DO_FMA} (default @code{FP_FAST_FMA} if defined, else 0)
 
 If 1, use @code{fma} in certain array reductions such as @ref{x-dot,@code{dot}}, @ref{x-gemm,@code{gemm}}, etc.
 @end itemize
