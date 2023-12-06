@@ -19,15 +19,14 @@ using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
 using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t, ra::all;
 using real = double;
 
-// FIXME variants of IJ that were at some point used in gemm()
 void
-gemm1(auto && a, auto && b, auto && c)
+gemm1(auto && a, auto && b, auto & c)
 {
     for_each(ra::wrank<1, 2, 1>(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto & c) { ra::maybe_fma(a, b, c); })),
              RA_FWD(a), RA_FWD(b), RA_FWD(c));
 }
 void
-gemm2(auto && a, auto && b, auto && c)
+gemm2(auto && a, auto && b, auto & c)
 {
     dim_t K=a.len(1);
     for (int k=0; k<K; ++k) {
@@ -35,16 +34,15 @@ gemm2(auto && a, auto && b, auto && c)
     }
 }
 void
-gemm3(auto && a, auto && b, auto && c)
+gemm3(auto && a, auto && b, auto & c)
 {
     dim_t K=a.len(1);
     for (int k=0; k<K; ++k) {
-        for_each(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto && c) { ra::maybe_fma(a, b, c); }), a(all, k), b(k), c);
+        for_each(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto & c) { ra::maybe_fma(a, b, c); }), a(all, k), b(k), c);
     }
 }
-// variant of K, same. Overwrites c
 void
-gemm4(auto && a, auto && b, auto && c)
+gemm4(auto && a, auto && b, auto & c)
 {
     dim_t M=a.len(0), N=b.len(1);
     for (int i=0; i<M; ++i) {
@@ -59,7 +57,7 @@ gemm4(auto && a, auto && b, auto && c)
 // -------------------
 
 template <class A, class B, class C> inline void
-gemm_block_3(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewBig<C, 2> c)
+gemm_block(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewBig<C, 2> c)
 {
     dim_t const m = a.len(0);
     dim_t const p = a.len(1);
@@ -69,16 +67,16 @@ gemm_block_3(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewB
         gemm(a, b, c);
 // split a's rows
     } else if (m>=max(p, n)) {
-        gemm_block_3(a(ra::iota(m/2)), b, c(ra::iota(m/2)));
-        gemm_block_3(a(ra::iota(m-m/2, m/2)), b, c(ra::iota(m-m/2, m/2)));
+        gemm_block(a(ra::iota(m/2)), b, c(ra::iota(m/2)));
+        gemm_block(a(ra::iota(m-m/2, m/2)), b, c(ra::iota(m-m/2, m/2)));
 // split b's columns
     } else if (n>=max(m, p)) {
-        gemm_block_3(a, b(all, ra::iota(n/2)), c(all, ra::iota(n/2)));
-        gemm_block_3(a, b(all, ra::iota(n-n/2, n/2)), c(all, ra::iota(n-n/2, n/2)));
+        gemm_block(a, b(all, ra::iota(n/2)), c(all, ra::iota(n/2)));
+        gemm_block(a, b(all, ra::iota(n-n/2, n/2)), c(all, ra::iota(n-n/2, n/2)));
 // split a's columns and b's rows
     } else {
-        gemm_block_3(a(all, ra::iota(p/2)), b(ra::iota(p/2)), c);
-        gemm_block_3(a(all, ra::iota(p-p/2, p/2)), b(ra::iota(p-p/2, p/2)), c);
+        gemm_block(a(all, ra::iota(p/2)), b(ra::iota(p/2)), c);
+        gemm_block(a(all, ra::iota(p-p/2, p/2)), b(ra::iota(p-p/2, p/2)), c);
     }
 }
 
@@ -124,7 +122,7 @@ lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
 }
 
 inline void
-gemm_blas_3(ra::ViewBig<double, 2> const & A, ra::ViewBig<double, 2> const & B, ra::ViewBig<double, 2> C)
+gemm_blas(ra::ViewBig<double, 2> const & A, ra::ViewBig<double, 2> const & B, ra::ViewBig<double, 2> C)
 {
     CBLAS_TRANSPOSE ta = CblasNoTrans;
     CBLAS_TRANSPOSE tb = CblasNoTrans;
@@ -147,13 +145,6 @@ gemm_blas_3(ra::ViewBig<double, 2> const & A, ra::ViewBig<double, 2> const & B, 
         cblas_dgemm(orderc, ta, tb, C.len(0), C.len(1), K, 1., A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
     }
 }
-inline auto
-gemm_blas(ra::ViewBig<double, 2> const & a, ra::ViewBig<double, 2> const & b)
-{
-    ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
-    gemm_blas_3(a, b, c);
-    return c;
-}
 #endif // RA_USE_BLAS
 
 int main()
@@ -161,76 +152,27 @@ int main()
     TestRecorder tr(std::cout);
     cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
 
-    auto gemm_ply1 = [&](auto const & a, auto const & b)
+    auto gemm_k = [&](auto const & a, auto const & b, auto & c)
     {
-        ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
-        gemm1(a, b, c);
-        return c;
-    };
-
-    auto gemm_ply2 = [&](auto const & a, auto const & b)
-    {
-        ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
-        gemm2(a, b, c);
-        return c;
-    };
-
-    auto gemm_ply3 = [&](auto const & a, auto const & b)
-    {
-        ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
-        gemm3(a, b, c);
-        return c;
-    };
-
-    auto gemm_ply4 = [&](auto const & a, auto const & b)
-    {
-        ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, ra::none);
-        gemm4(a, b, c);
-        return c;
-    };
-
-    auto gemm_block = [&](auto const & a, auto const & b)
-        {
-            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({a.len(0), b.len(1)}, 0);
-            gemm_block_3(a, b, c);
-            return c;
-        };
-
-    auto gemm_k = [&](auto const & a, auto const & b)
-        {
-            dim_t const M = a.len(0);
-            dim_t const N = b.len(1);
-            ra::Big<decltype(a(0, 0)*b(0, 0)), 2> c({M, N}, ra::none);
-            for (dim_t i=0; i<M; ++i) {
-                for (dim_t j=0; j<N; ++j) {
-                    c(i, j) = dot(a(i), b(all, j));
-                }
+        dim_t const M = a.len(0);
+        dim_t const N = b.len(1);
+        for (dim_t i=0; i<M; ++i) {
+            for (dim_t j=0; j<N; ++j) {
+                c(i, j) = dot(a(i), b(all, j));
             }
-            return c;
-        };
-
-// See test/wrank.cc "outer product variants". // TODO based on this, allow Blitz++ like notation C(i, j) = sum(A(i, k)*B(k, j), k).
-    auto gemm_reduce_k = [&](auto const & a, auto const & b)
-        {
-            dim_t const M = a.len(0);
-            dim_t const N = b.len(1);
-            using T = decltype(a(0, 0)*b(0, 0));
-            ra::Big<T, 2> c({M, N}, T());
-            gemm(a, b, c);
-            return c;
-        };
+        }
+        return c;
+    };
 
 #define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT) \
-    auto NAME_K = [&](auto const & a, auto const & b)   \
+    auto NAME_K = [&](auto const & a, auto const & b, auto & c) \
     {                                                   \
         dim_t const M = a.len(0);                       \
         dim_t const N = b.len(1);                       \
         dim_t const K = a.len(1);                       \
-        using T = decltype(a(0, 0)*b(0, 0));            \
-        ra::Big<T, 2> c({M, N}, T());                   \
-        T * RESTRICT cc = c.data();                     \
-        T const * RESTRICT aa = a.data();               \
-        T const * RESTRICT bb = b.data();               \
+        auto * RESTRICT cc = c.data();                  \
+        auto const * RESTRICT aa = a.data();            \
+        auto const * RESTRICT bb = b.data();            \
         for (dim_t i=0; i<M; ++i) {                     \
             for (dim_t j=0; j<N; ++j) {                 \
                 for (dim_t k=0; k<K; ++k) {             \
@@ -238,19 +180,15 @@ int main()
                 }                                       \
             }                                           \
         }                                               \
-        return c;                                       \
     };                                                  \
-                                                        \
-    auto NAME_IJ = [&](auto const & a, auto const & b)  \
+    auto NAME_IJ = [&](auto const & a, auto const & b, auto & c) \
     {                                                   \
         dim_t const M = a.len(0);                       \
         dim_t const N = b.len(1);                       \
         dim_t const K = a.len(1);                       \
-        using T = decltype(a(0, 0)*b(0, 0));            \
-        ra::Big<T, 2> c({M, N}, T());                   \
-        T * RESTRICT cc = c.data();                     \
-        T const * RESTRICT aa = a.data();               \
-        T const * RESTRICT bb = b.data();               \
+        auto * RESTRICT cc = c.data();                  \
+        auto const * RESTRICT aa = a.data();            \
+        auto const * RESTRICT bb = b.data();            \
         for (dim_t k=0; k<K; ++k) {                     \
             for (dim_t i=0; i<M; ++i) {                 \
                 for (dim_t j=0; j<N; ++j) {             \
@@ -258,53 +196,53 @@ int main()
                 }                                       \
             }                                           \
         }                                               \
-        return c;                                       \
     };
     DEFINE_GEMM_RESTRICT(gemm_k_raw, gemm_ij_raw, /* */)
     DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
 #undef DEFINE_GEMM_RESTRICT
 
     auto bench_all = [&](int k, int m, int p, int n, int reps)
+    {
+        auto bench = [&](auto && f, char const * tag)
         {
-            auto bench = [&](auto && f, char const * tag)
-            {
-                ra::Big<real, 2> a({m, p}, ra::_0-ra::_1);
-                ra::Big<real, 2> b({p, n}, ra::_1-2*ra::_0);
-                ra::Big<real, 2> ref = gemm(a, b);
-                ra::Big<real, 2> c;
+            ra::Big<real, 2> a({m, p}, ra::_0-ra::_1);
+            ra::Big<real, 2> b({p, n}, ra::_1-2*ra::_0);
+            ra::Big<real, 2> ref = gemm(a, b);
+            ra::Big<real, 2> c({m, n}, 0.);
 
-                auto bv = Benchmark().repeats(reps).runs(3).run([&]() { c = f(a, b); });
-                tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n*p)/1e-9, " ns [",
-                        Benchmark::stddev(bv)/(m*n*p)/1e-9 ,"] ", tag).test_eq(ref, c);
-            };
-
-            tr.section(m, " (", p, ") ", n, " times ", reps);
-// some variants are way too slow to check with larger arrays.
-            if (k>2) {
-                bench(gemm_k, "k");
-            }
-            if (k>1) {
-                bench(gemm_k_raw, "k_raw");
-                bench(gemm_k_raw_restrict, "k_raw_restrict");
-            }
-            if (k>0) {
-                bench(gemm_reduce_k, "reduce_k");
-                bench(gemm_ij_raw, "ij_raw");
-                bench(gemm_ij_raw_restrict, "ij_raw_restrict");
-            }
-            bench(gemm_block, "block");
-#if RA_USE_BLAS==1
-            bench(gemm_blas, "blas");
-#endif
-            bench(gemm_ply1, "ply1");
-            bench(gemm_ply2, "ply2");
-            bench(gemm_ply3, "ply3");
-            bench(gemm_ply4, "ply4");
-            bench([&](auto const & a, auto const & b) { return gemm(a, b); }, "default");
+            auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
+            tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n*p)/1e-9, " ns [",
+                    Benchmark::stddev(bv)/(m*n*p)/1e-9 ,"] ", tag).test_eq(ref, c);
         };
 
+        tr.section(m, " (", p, ") ", n, " times ", reps);
+#define ZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c) { c = 0; GEMM(a, b, c); }
+#define NOTZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c) { GEMM(a, b, c); }
+// some variants are way too slow to check with larger arrays.
+        if (k>2) {
+            bench(NOTZEROFIRST(gemm_k), "k");
+        }
+        if (k>1) {
+            bench(ZEROFIRST(gemm_k_raw), "k_raw");
+            bench(ZEROFIRST(gemm_k_raw_restrict), "k_raw_restrict");
+        }
+        if (k>0) {
+            bench(ZEROFIRST(gemm_ij_raw), "ij_raw");
+            bench(ZEROFIRST(gemm_ij_raw_restrict), "ij_raw_restrict");
+        }
+        bench(ZEROFIRST(gemm_block), "block");
+        bench(ZEROFIRST(gemm1), "gemm1");
+        bench(ZEROFIRST(gemm2), "gemm2");
+        bench(ZEROFIRST(gemm3), "gemm3");
+        bench(ZEROFIRST(gemm4), "gemm4");
+#if RA_USE_BLAS==1
+        bench(ZEROFIRST(gemm_blas), "blas");
+#endif
+        bench(ZEROFIRST(gemm), "default");
+    };
+
     bench_all(3, 4, 4, 4, 100);
-    bench_all(3, 10, 10, 10, 100);
+    bench_all(3, 10, 10, 10, 10);
     bench_all(2, 100, 100, 100, 10);
     bench_all(2, 500, 400, 500, 1);
     bench_all(1, 10000, 10, 1000, 1);

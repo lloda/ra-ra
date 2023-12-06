@@ -49,18 +49,17 @@ using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std
 FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
 
-#define FOR_FLOAT(R, C)                                                 \
-    constexpr C                                                         \
-    fma(C const & a, C const & b, C const & c)                          \
+#define FOR_FLOAT(R)                                                    \
+    constexpr std::complex<R>                                           \
+    fma(std::complex<R> const & a, std::complex<R> const & b, std::complex<R> const & c) \
     {                                                                   \
-        return C(fma(a.real(), b.real(), fma(-a.imag(), b.imag(), c.real())), \
-                 fma(a.real(), b.imag(), fma(a.imag(), b.real(), c.imag()))); \
+        return std::complex<R>(fma(a.real(), b.real(), fma(-a.imag(), b.imag(), c.real())), \
+                               fma(a.real(), b.imag(), fma(a.imag(), b.real(), c.imag()))); \
     }                                                                   \
-    constexpr bool isfinite(C z)       { return isfinite(z.real()) && isfinite(z.imag()); } \
-    constexpr bool isnan(C z)          { return isnan(z.real()) || isnan(z.imag()); } \
-    constexpr bool isinf(C z)          { return (isinf(z.real()) || isinf(z.imag())) && !isnan(z); }
-FOR_FLOAT(float, std::complex<float>)
-FOR_FLOAT(double, std::complex<double>)
+    constexpr bool isfinite(std::complex<R> z) { return isfinite(z.real()) && isfinite(z.imag()); } \
+    constexpr bool isnan(std::complex<R> z)    { return isnan(z.real()) || isnan(z.imag()); } \
+    constexpr bool isinf(std::complex<R> z)    { return (isinf(z.real()) || isinf(z.imag())) && !isnan(z); }
+FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
 
 namespace ra {
@@ -147,7 +146,7 @@ template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithme
 #define ITEM(i) std::get<(i)>(e.t)
 
 // FIXME gets() vs p2781r2
-// qualified ra::iota is necessary not to pick std::iota through ADL (test/headers.cc).
+// qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
 
 template <is_iota I, iota_op J>
 constexpr auto
@@ -320,7 +319,6 @@ cast(A && a)
     return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FWD(a));
 }
 
-// TODO std::forward_as_tuple?
 template <class T, class ... A>
 constexpr auto
 pack(A && ... a)
@@ -328,7 +326,7 @@ pack(A && ... a)
     return map([](auto && ... a) { return T { a ... }; }, RA_FWD(a) ...);
 }
 
-// FIXME needs nested array for I
+// FIXME needs nested array for I, but iter<-1> should work
 template <class A, class I>
 constexpr auto
 at(A && a, I && i)
@@ -403,7 +401,7 @@ every(auto && a)
 }
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
-constexpr auto
+constexpr dim_t
 index(auto && a)
 {
     return early(map([](auto && a, auto && i) { return bool(a) ? std::make_optional(i) : std::nullopt; },
@@ -596,19 +594,19 @@ struct MapAntiCombination<std::tuple<C ...>, D>
 };
 
 template <int D, int O>
-struct ChooseComponents
+struct ChooseComponents_
 {
     static_assert(D>=O, "Bad dimension or form order.");
     using type = mp::combinations<iota<D>, O>;
 };
 
-template <int D, int O> using ChooseComponents_ = typename ChooseComponents<D, O>::type;
+template <int D, int O> using ChooseComponents = typename ChooseComponents_<D, O>::type;
 
 template <int D, int O> requires ((D>1) && (2*O>D))
-struct ChooseComponents<D, O>
+struct ChooseComponents_<D, O>
 {
     static_assert(D>=O, "Bad dimension or form order.");
-    using type = typename MapAntiCombination<ChooseComponents_<D, D-O>, D>::type;
+    using type = typename MapAntiCombination<ChooseComponents<D, D-O>, D>::type;
 };
 
 // Works almost to the range of std::size_t.
@@ -639,9 +637,9 @@ struct Wedge
 // in lexicographic order. Can be used to sort Ca below with FindPermutation.
     using LexOrCa = mp::combinations<mp::iota<D>, Oa>;
 // the actual components used, which are in lex. order only in some cases.
-    using Ca = mp::ChooseComponents_<D, Oa>;
-    using Cb = mp::ChooseComponents_<D, Ob>;
-    using Cr = mp::ChooseComponents_<D, Or>;
+    using Ca = mp::ChooseComponents<D, Oa>;
+    using Cb = mp::ChooseComponents<D, Ob>;
+    using Cr = mp::ChooseComponents<D, Or>;
 // optimizations.
     constexpr static bool yields_expr = (Na>1) != (Nb>1);
     constexpr static bool yields_expr_a1 = yields_expr && Na==1;

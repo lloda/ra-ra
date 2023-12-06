@@ -158,25 +158,25 @@ int main()
 
     tr.section("Testing ChooseComponents");
     {
-        using c1 = ra::mp::ChooseComponents<3, 1>::type;
+        using c1 = ra::mp::ChooseComponents<3, 1>;
         static_assert(ra::mp::len<c1> == 3, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 0>, 0>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 1>, 1>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 2>, 2>::value, "bad");
-        using c2 = ra::mp::ChooseComponents<3, 2>::type;
+        using c2 = ra::mp::ChooseComponents<3, 2>;
         static_assert(ra::mp::len<c2> == 3, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c2, 0>, 1, 2>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c2, 1>, 2, 0>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c2, 2>, 0, 1>::value, "bad");
-        using c3 = ra::mp::ChooseComponents<3, 3>::type;
+        using c3 = ra::mp::ChooseComponents<3, 3>;
         static_assert(ra::mp::len<c3> == 1, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c3, 0>, 0, 1, 2>::value, "bad");
     }
     {
-        using c0 = ra::mp::ChooseComponents<1, 0>::type;
+        using c0 = ra::mp::ChooseComponents<1, 0>;
         static_assert(ra::mp::len<c0> == 1, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c0, 0>>::value, "bad");
-        using c1 = ra::mp::ChooseComponents<1, 1>::type;
+        using c1 = ra::mp::ChooseComponents<1, 1>;
         static_assert(ra::mp::len<c1> == 1, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 0>, 0>::value, "bad");
     }
