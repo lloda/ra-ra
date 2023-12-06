@@ -69,7 +69,7 @@ template <class lens>
 struct default_steps_
 {
     constexpr static int rank = mp::len<lens>;
-    constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, mp::tuple_values<dim_t, lens>()); return dimv; } ();
+    constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, mp::tuple2array<dim_t, lens>()); return dimv; } ();
     using type = decltype([] { return std::apply([](auto ... k) { return mp::int_list<dimv[k].step ...> {}; }, mp::iota<rank> {}); } ());
 };
 template <class lens> using default_steps = typename default_steps_<lens>::type;
@@ -242,14 +242,11 @@ longer(Q const & q, P const & pp)
 // view iterators. TODO Take iterator like Ptr does and Views should, not raw pointers
 // --------------------
 
-template <auto dimv, int cellr, int framer=0>
-using clens = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].len ...> {}; }, mp::iota<cellr, framer> {}));
-
-template <auto dimv, int cellr, int framer=0>
-using csteps = decltype(std::apply([](auto ... i) { return mp::int_list<dimv[i].step ...> {}; }, mp::iota<cellr, framer> {}));
+template <auto f, auto dimv, int cellr, int framer=0>
+using ctuple = decltype(std::apply([](auto ... i) { return mp::int_list<std::invoke(f, dimv[i]) ...> {}; }, mp::iota<cellr, framer> {}));
 
 template <class lens, class steps>
-constexpr static auto cdimv = std::apply([](auto ... i) { return std::array<Dim, mp::len<lens>> { Dim { mp::ref<lens, i>::value, mp::ref<steps, i>::value } ... }; }, mp::iota<mp::len<lens>> {});
+constexpr static auto cdimv = mp::tuple2array<Dim, mp::zip<lens, steps>, [](auto i) { return std::make_from_tuple<Dim>(i); }>();
 
 template <class T, class lens, class steps> struct ViewSmall;
 
@@ -264,7 +261,7 @@ struct CellSmall
     constexpr static rank_t framer = rank_frame(fullr, spec);
     static_assert(spec!=ANY && spec!=BAD && choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 // FIXME Small take dimv instead of lens/steps
-    using ctype = ViewSmall<T, clens<dimv, cellr, framer>, csteps<dimv, cellr, framer>>;
+    using ctype = ViewSmall<T, ctuple<&Dim::len, dimv, cellr, framer>, ctuple<&Dim::step, dimv, cellr, framer>>;
 
     ctype c;
 
@@ -409,7 +406,7 @@ struct SmallBase
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
     consteval static rank_t rank() { return mp::len<lens>; }
     constexpr static auto dimv = cdimv<lens, steps>;
-    constexpr static auto theshape = mp::tuple_values<dim_t, lens>();
+    constexpr static auto theshape = mp::tuple2array<dim_t, lens>();
     consteval static dim_t size() { return std::apply([](auto ... s) { return (s * ... * 1); }, theshape); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
     consteval static dim_t size_s() { return size(); }
@@ -570,7 +567,7 @@ align_req()
 template <class T, class lens, class steps, class ... nested_args>
 struct
 #if RA_DO_OPT_SMALLVECTOR==1
-alignas(align_req<T, mp::apply<mp::prod, lens>::value>())
+alignas(align_req<T, std::apply([](auto && ... i) { return (i * ... * 1); }, lens {})>())
 #else
 #endif
 SmallArray<T, lens, steps, std::tuple<nested_args ...>>
@@ -701,7 +698,7 @@ transpose(cv_smallview auto && a_)
     static_assert(src.size()==s.size(), "Bad size for transposed axes list.");
     constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
     constexpr auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
-    return ViewSmall<typename AA::T, clens<dst, dstrank>, csteps<dst, dstrank>>(a.data());
+    return ViewSmall<typename AA::T, ctuple<&Dim::len, dst, dstrank>, ctuple<&Dim::step, dst, dstrank>>(a.data());
 };
 
 constexpr auto

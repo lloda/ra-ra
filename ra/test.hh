@@ -38,10 +38,10 @@ struct TestRecorder
     constexpr static double PINF = std::numeric_limits<double>::infinity();
 
 // ra::amax ignores nans like fmax does, we don't want that here.
-    template <class A> static auto
-    amax_strict(A && a)
+    static auto
+    amax_strict(auto && a)
     {
-        using T = ncvalue_t<A>;
+        using T = ncvalue_t<decltype(a)>;
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
         return early(map([&c](auto && a) { if (c<a) { c=a; }; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; },
                          RA_FWD(a)),
@@ -62,8 +62,8 @@ struct TestRecorder
     TestRecorder(std::ostream & o_=std::cout, verbose_t verbose_default_=ERRORS)
         : o(o_), verbose_default(verbose_default_), verbose(verbose_default_) {}
 
-    template <class ... A> void
-    section(A const & ... a)
+    void
+    section(auto const & ... a)
     {
         o << "\n" << esc::bold << format(a ...) << esc::unbold << std::endl;
     }
@@ -72,8 +72,8 @@ struct TestRecorder
     {
         return format(esc::yellow, std::setprecision(2), e, esc::reset);
     }
-    template <class ... A> TestRecorder &
-    info(A && ... a)
+    TestRecorder &
+    info(auto && ... a)
     {
         bool empty = (info_str=="");
         info_str += esc::pink;
@@ -89,8 +89,8 @@ struct TestRecorder
 #define RA_CURRENT_LOC std::source_location const loc = std::source_location::current()
 #define RA_LAZYINFO(...) [&] { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
 
-    template <class A, class B> void
-    test(bool c, A && info_full, B && info_min, RA_CURRENT_LOC)
+    void
+    test(bool c, auto && info_full, auto && info_min, RA_CURRENT_LOC)
     {
         switch (verbose) {
         case QUIET: {
@@ -126,8 +126,8 @@ struct TestRecorder
         ++total;
         willstrictshape = willskip = willexpectfail = false;
     }
-    template <class A> void
-    test(bool c, A && info_full, RA_CURRENT_LOC)
+    void
+    test(bool c, auto && info_full, RA_CURRENT_LOC)
     {
         test(c, info_full, info_full, loc);
     }
@@ -137,23 +137,23 @@ struct TestRecorder
         test(c, RA_LAZYINFO(""), loc);
     }
 
-    template <class A, class B, class Comp> bool
-    test_scomp(A && a, B && b, Comp && comp, char const * msg, RA_CURRENT_LOC)
+    bool
+    test_scomp(auto && a, auto && b, auto && comp, char const * msg, RA_CURRENT_LOC)
     {
         bool c = comp(a, b);
         test(c, RA_LAZYINFO(b, " (", msg, " ", a, ")"), RA_LAZYINFO(""), loc);
         return c;
     }
-    template <class R, class A> bool
-    test_seq(R && ref, A && a, RA_CURRENT_LOC)
+    bool
+    test_seq(auto && ref, auto && a, RA_CURRENT_LOC)
     {
         return test_scomp(ref, a, [](auto && a, auto && b) { return a==b; }, "should be strictly ==", loc);
     }
 
 // Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
 // where() is used to match shapes if either REF or A don't't have one.
-    template <class A, class B, class Comp> bool
-    test_comp(A && a, B && b, Comp && comp, char const * msg, RA_CURRENT_LOC)
+    bool
+    test_comp(auto && a, auto && b, auto && comp, char const * msg, RA_CURRENT_LOC)
     {
         if (willstrictshape
             ? [&] {
@@ -181,8 +181,8 @@ struct TestRecorder
         }
     }
 #define RA_TEST_COMP(NAME, OP)                                          \
-    template <class R, class A> bool                                    \
-    JOIN(test_, NAME)(R && ref, A && a, RA_CURRENT_LOC)                 \
+    bool                                                                \
+    JOIN(test_, NAME)(auto && ref, auto && a, RA_CURRENT_LOC)           \
     {                                                                   \
         return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b) { return every(a OP b); }, \
                          "should be " STRINGIZE(OP), loc);              \
@@ -194,8 +194,8 @@ struct TestRecorder
     RA_TEST_COMP(ge, >=)
 #undef RA_TEST_COMP
 
-    template <class R, class A> double
-    test_rel(R && ref_, A && a_, double req, double level=0, RA_CURRENT_LOC)
+    double
+    test_rel(auto && ref_, auto && a_, double req, double level=0, RA_CURRENT_LOC)
     {
         decltype(auto) ref = ra::start(ref_);
         decltype(auto) a = ra::start(a_);
@@ -218,8 +218,8 @@ struct TestRecorder
              loc);
         return e;
     }
-    template <class R, class A> double
-    test_abs(R && ref_, A && a_, double req=0, RA_CURRENT_LOC)
+    double
+    test_abs(auto && ref_, auto && a_, double req=0, RA_CURRENT_LOC)
     {
         decltype(auto) ref = ra::start(ref_);
         decltype(auto) a = ra::start(a_);

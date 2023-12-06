@@ -12,6 +12,7 @@
 #include <limits>
 #include <algorithm>
 #include <type_traits>
+#include <functional>
 #include <utility>
 
 #define STRINGIZE_( x ) #x
@@ -49,7 +50,6 @@ template <int V> using int_c = std::integral_constant<int, V>;
 template <bool V> using bool_c = std::integral_constant<bool, V>;
 template <auto V> using ic_t = std::integral_constant<decltype(V), V>;
 template <auto V> constexpr std::integral_constant<decltype(V), V> ic {};
-
 template <class ... T> constexpr bool always_false = false; // p2593r0
 
 } // namespace ra
@@ -64,13 +64,23 @@ using nil = tuple<>;
 template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
 template <int ... I> using int_list = tuple<int_c<I> ...>;
-
 template <class T> constexpr bool is_tuple = false;
 template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;
+
+// A is a nested list, I the indices at each level.
+template <class A, int ... I> struct ref_ { using type = A; };
+template <class A, int ... I> using ref = typename ref_<A, I ...>::type;
+template <class A, int I0, int ... I> struct ref_<A, I0, I ...> { using type = ref<std::tuple_element_t<I0, A>, I ...>; };
+template <class A> using first = ref<A, 0>;
+template <class A> using last = ref<A, len<A>-1>;
 
 template <class A, class B> struct cons_ { static_assert(is_tuple<B>); };
 template <class A0, class ... A> struct cons_<A0, tuple<A ...>> { using type = tuple<A0, A ...>; };
 template <class A, class B> using cons = typename cons_<A, B>::type;
+
+template <int n, int o=0, int s=1> struct iota_ { static_assert(n>0); using type = cons<int_c<o>, typename iota_<n-1, o+s, s>::type>; };
+template <int o, int s> struct iota_<0, o, s> { using type = nil; };
+template <int n, int o=0, int s=1> using iota = typename iota_<n, o, s>::type;
 
 template <class A, class B> struct append_ { static_assert(is_tuple<A> && is_tuple<B>); };
 template <class ... A, class ... B> struct append_<tuple<A ...>, tuple<B ...>> { using type = tuple<A ..., B ...>; };
@@ -80,23 +90,9 @@ template <class A, class B> struct zip_ { static_assert(is_tuple<A> && is_tuple<
 template <class ... A, class ... B> struct zip_<tuple<A ...>, tuple<B ...>> { using type = tuple<tuple<A, B> ...>; };
 template <class A, class B> using zip = typename zip_<A, B>::type;
 
-template <int n, int o=0, int s=1> struct iota_ { static_assert(n>0); using type = cons<int_c<o>, typename iota_<n-1, o+s, s>::type>; };
-template <int o, int s> struct iota_<0, o, s> { using type = nil; };
-template <int n, int o=0, int s=1> using iota = typename iota_<n, o, s>::type;
-
 template <int n, class T> struct makelist_ { static_assert(n>0); using type = cons<T, typename makelist_<n-1, T>::type>; };
 template <class T> struct makelist_<0, T> { using type = nil; };
 template <int n, class T> using makelist = typename makelist_<n, T>::type;
-
-// A is a nested list, I the indices at each level.
-template <class A, int ... I> struct ref_ { using type = A; };
-template <class A, int ... I> using ref = typename ref_<A, I ...>::type;
-template <class A, int I0, int ... I> struct ref_<A, I0, I ...> { using type = ref<std::tuple_element_t<I0, A>, I ...>; };
-
-template <class A> using first = ref<A, 0>;
-template <class A> using last = ref<A, (len<A> - 1)>;
-template <bool a> using when = bool_c<a>;
-template <bool a> using unless = bool_c<(!a)>;
 
 // Return the index of a type in a type list, or -1 if not found.
 template <class A, class T, int i=0> struct index_ { using type = int_c<-1>; };
@@ -146,14 +142,12 @@ struct indexof_<pick_i, tuple<T0, T1, Ti ...>, k, sel>
 template <template <class A, class B> class pick_i, class T>
 constexpr int indexof = indexof_<pick_i, T>::value;
 
-// Return the first tail of A headed by Val, like find-tail.
 template <class A, class Val> struct findtail_;
 template <class A, class Val> using findtail = typename findtail_<A, Val>::type;
 template <class Val> struct findtail_<nil, Val> { using type = nil; };
 template <class ... A, class Val> struct findtail_<tuple<Val, A ...>, Val> { using type = tuple<Val, A ...>; };
 template <class A0, class ... A, class Val> struct findtail_<tuple<A0, A ...>, Val> { using type = findtail<tuple<A ...>, Val>; };
 
-// Reverse list. See TSPL^3, p. 137.
 template <class A, class B=nil> struct reverse_ { using type = B; };
 template <class A, class B=nil> using reverse = typename reverse_<A, B>::type;
 template <class A0, class ... A, class B> struct reverse_<tuple<A0, A ...>, B> { using type = reverse<tuple<A ...>, cons<A0, B>>; };
@@ -220,12 +214,6 @@ template <class ... A> struct min_ { using type = int_c<std::numeric_limits<int>
 template <class ... A> using min = typename min_<A ...>::type;
 template <class A0, class ... A> struct min_<A0, A ...> { using type = int_c<std::min(A0::value, min<A ...>::value)>; };
 
-// Operations on int_c arguments.
-template <class ... A> using sum = int_c<(A::value + ... + 0)>;
-template <class ... A> using prod = int_c<(A::value * ... * 1)>;
-template <class ... A> using andb = bool_c<(A::value && ...)>;
-template <class ... A> using orb = bool_c<(A::value || ...)>;
-
 // Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
 template <class S, class T, class SS=S> struct complement_list_;
 template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
@@ -280,28 +268,26 @@ struct complement_sorted_list_<tuple<S0, S ...>, tuple<T0, T ...>>
 template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
 
 // Prepend an element to each of a list of lists.
-template <class c, class A> struct MapCons;
-template <class c, class A> using MapCons_ = typename MapCons<c, A>::type;
-template <class c, class ... A> struct MapCons<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
+template <class c, class A> struct MapCons_;
+template <class c, class A> using MapCons = typename MapCons_<c, A>::type;
+template <class c, class ... A> struct MapCons_<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
 
 // Prepend a list to each list in a list of lists.
-template <class c, class A> struct MapPrepend;
-template <class c, class A> using MapPrepend_ = typename MapPrepend<c, A>::type;
-template <class c, class ... A> struct MapPrepend<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
+template <class c, class A> struct MapPrepend_;
+template <class c, class A> using MapPrepend = typename MapPrepend_<c, A>::type;
+template <class c, class ... A> struct MapPrepend_<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
 
 // Form all possible lists by prepending an element of A to an element of B.
-template <class A, class B> struct ProductAppend { using type = nil; };
-template <class A, class B> using ProductAppend_ = typename ProductAppend<A, B>::type;
-template <class A0, class ... A, class B> struct ProductAppend<tuple<A0, A ...>, B> { using type = append<MapPrepend_<A0, B>, ProductAppend_<tuple<A ...>, B>>; };
+template <class A, class B> struct ProductAppend_ { using type = nil; };
+template <class A, class B> using ProductAppend = typename ProductAppend_<A, B>::type;
+template <class A0, class ... A, class B> struct ProductAppend_<tuple<A0, A ...>, B> { using type = append<MapPrepend<A0, B>, ProductAppend<tuple<A ...>, B>>; };
 
 // Compute the K-combinations of the N elements of list A.
 template <class A, int K, int N=len<A>> struct combinations_;
 template <class A, int k, int N=len<A>> using combinations = typename combinations_<A, k, N>::type;
-// In this case, return a list with one element: the empty list.
 template <class A, int N> struct combinations_<A, 0, N> { using type = tuple<nil>; };
-// In this case, return a list with one element: the whole list.
 template <class A, int N> struct combinations_<A, N, N> { using type = tuple<A>; };
-// Special case for 0 over 0, to resolve ambiguity of 0/N and N/N when N=0.
+// Resolve ambiguity of 0/N and N/N when N=0.
 template <> struct combinations_<nil, 0> { using type = tuple<nil>; };
 template <class A, int K, int N>
 struct combinations_
@@ -310,7 +296,7 @@ struct combinations_
     static_assert(N>=0 && K>=0);
     static_assert(K<=N);
     using Rest = drop1<A>;
-    using type = append<MapCons_<first<A>, combinations<Rest, K-1, N-1>>, combinations<Rest, K, N-1>>;
+    using type = append<MapCons<first<A>, combinations<Rest, K-1, N-1>>, combinations<Rest, K, N-1>>;
 };
 
 // Sign of permutations.
@@ -333,9 +319,6 @@ struct PermutationSign
     constexpr static int value = PermutationSignIfFound<index<C, first<Org>>::value, C, Org>;
 };
 
-// increment the w-th element of an int_list
-template <class L, int w> using inc = append<take<L, w>, cons<int_c<ref<L, w>::value+1>, drop<L, w+1>>>;
-
 template <class A> struct InvertIndex_;
 template <class ... A> struct InvertIndex_<tuple<A ...>>
 {
@@ -346,22 +329,12 @@ template <class ... A> struct InvertIndex_<tuple<A ...>>
 };
 template <class A> using InvertIndex = typename InvertIndex_<A>::type;
 
-// Used in tests.
-template <class A, int ... I> struct check_idx { constexpr static bool value = false; };
-template <> struct check_idx<nil> { constexpr static bool value = true; };
-
-template <class A0, int I0, class ... A, int ... I>
-struct check_idx<tuple<A0, A ...>, I0, I ...>
-{
-    constexpr static bool value = (A0::value==I0) && check_idx<tuple<A ...>, I ...>::value;
-};
-
 
-// -------------------------
-// Tuples in dynamic context
-// -------------------------
+// ---------------------
+// tuples in dynamic context
+// ---------------------
 
-// like std::make_trom_tuple, but use brace constructor (e.g. for std::array).
+// like std::make_trom_tuple, but use brace constructor.
 template <class C, class T>
 constexpr C
 from_tuple(T && t)
@@ -369,11 +342,11 @@ from_tuple(T && t)
     return std::apply([](auto && ... x) { return C { RA_FWD(x) ... }; }, t);
 }
 
-template <class C, class T>
+template <class C, class T, auto f = std::identity {}>
 consteval auto
-tuple_values()
+tuple2array()
 {
-    return std::apply([](auto ... t) { return std::array<C, len<T>> { C(t) ... }; }, T {});
+    return std::apply([](auto ... t) { return std::array<C, len<T>> { C(f(t)) ... }; }, T {});
 }
 
 template <class C, class T, class I>

@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 27
-@set UPDATED 2023 December 4
+@set UPDATED 2023 December 6
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1309,9 +1309,11 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 @anchor{x-is-scalar}
 Some types are accepted automatically as scalars. These include non-pointer types for which @code{std::is_scalar_v} is true, like @code{char}, @code{int}, @code{double}, etc. as well as @code{std::complex<T>}. You can add your own types as scalar types with the following declaration:
 
+@quotation
 @verbatim
-    namespace ra { template <> constexpr bool is_scalar_def<MYTYPE> = true; }
+template <> constexpr bool ra::is_scalar_def<MYTYPE> = true;
 @end verbatim
+@end quotation
 
 Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the function @ref{x-scalar,@code{scalar}}.
 
@@ -1527,7 +1529,7 @@ However, if you want to mix arbitrary types in array operations, you'll need to 
 
 @example
 @verbatim
-namespace ra { template <> constexpr bool is_scalar_def<W> = true; }
+template <> constexpr bool ra::is_scalar_def<W> = true;
 ...
 W ww {11};
 for_each([](auto && x, auto && y) { cout << (x.x + y.y) << " "; }, w, ww); // ok

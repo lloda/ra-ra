@@ -260,7 +260,7 @@ ply_fixed(A && a, Early && early = Nop {})
     constexpr rank_t rank = rank_s<A>();
     static_assert(0<=rank, "ply_fixed needs static rank");
 // inside first. FIXME better heuristic - but first need a way to force row-major
-    constexpr /* static P2647 gcc13 */ auto order = mp::tuple_values<int, mp::reverse<mp::iota<rank>>>();
+    constexpr /* static P2647 gcc13 */ auto order = mp::tuple2array<int, mp::reverse<mp::iota<rank>>>();
     if constexpr (0==rank) {
         if constexpr (requires {early.def;}) {
             return (*a).value_or(early.def);

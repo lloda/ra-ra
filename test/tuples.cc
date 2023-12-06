@@ -54,6 +54,22 @@ struct True
     constexpr static bool value = true;
 };
 
+// These used to be in tuples.hh, but then I thought it wasn't worth having them there. Some are tested below.
+namespace ra::mp {
+
+template <class ... A> using sum = int_c<(A::value + ... + 0)>;
+template <class ... A> using prod = int_c<(A::value * ... * 1)>;
+template <class ... A> using andb = bool_c<(A::value && ...)>;
+template <class ... A> using orb = bool_c<(A::value || ...)>;
+
+// increment L[w]
+template <class L, int w> using inc = append<take<L, w>, cons<int_c<ref<L, w>::value+1>, drop<L, w+1>>>;
+
+template <bool a> using when = bool_c<a>;
+template <bool a> using unless = bool_c<(!a)>;
+
+} // namespace ra::mp
+
 int main()
 {
     TestRecorder tr(std::cout);
@@ -282,7 +298,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<int_list A , B > C >::va
     {
         using a = ra::mp::iota<2>;
         using b = ra::mp::iota<2, 1>;
-        using mc = ra::mp::MapCons<int_c<9>, tuple<a, b>>::type;
+        using mc = ra::mp::MapCons<int_c<9>, tuple<a, b>>;
         static_assert(ra::mp::check_idx<ref<mc, 0>, 9, 0, 1>::value, "a");
         static_assert(ra::mp::check_idx<ref<mc, 1>, 9, 1, 2>::value, "b");
     }
@@ -334,15 +350,15 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<int_list A , B > C >::va
         using ca = ra::mp::combinations<la, 1>;
         using lb = ra::mp::iota<3>;
         using cb = ra::mp::combinations<lb, 1>;
-        using test0 = ra::mp::MapPrepend<ra::mp::nil, cb>::type;
+        using test0 = ra::mp::MapPrepend<ra::mp::nil, cb>;
         static_assert(is_same_v<test0, cb>, "");
-        using test1 = ra::mp::MapPrepend<la, cb>::type;
+        using test1 = ra::mp::MapPrepend<la, cb>;
         static_assert(ra::mp::len<test1> == int(ra::mp::len<cb>), "");
         static_assert(ra::mp::check_idx<ref<test1, 0>, 0, 1, 2, 0>::value, "");
         static_assert(ra::mp::check_idx<ref<test1, 1>, 0, 1, 2, 1>::value, "");
         static_assert(ra::mp::check_idx<ref<test1, 2>, 0, 1, 2, 2>::value, "");
 
-        using test2 = ra::mp::ProductAppend<ca, cb>::type;
+        using test2 = ra::mp::ProductAppend<ca, cb>;
         static_assert(ra::mp::len<test2> == 9, "");
         static_assert(ra::mp::check_idx<ref<test2, 0>, 0, 0>::value, "");
         static_assert(ra::mp::check_idx<ref<test2, 1>, 0, 1>::value, "");

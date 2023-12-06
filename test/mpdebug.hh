@@ -54,4 +54,13 @@ type_name()
     return r;
 }
 
+template <class A, int ... I> struct check_idx { constexpr static bool value = false; };
+template <> struct check_idx<nil> { constexpr static bool value = true; };
+
+template <class A0, int I0, class ... A, int ... I>
+struct check_idx<tuple<A0, A ...>, I0, I ...>
+{
+    constexpr static bool value = (A0::value==I0) && check_idx<tuple<A ...>, I ...>::value;
+};
+
 } // namespace ra::mp

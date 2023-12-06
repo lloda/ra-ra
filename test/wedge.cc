@@ -8,6 +8,7 @@
 // later version.
 
 #include <iostream>
+#include "mpdebug.hh"
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
@@ -36,7 +37,8 @@ struct FindCombinationTester
 };
 
 template <int N, int O>
-void test_optimized_hodge_aux(TestRecorder & tr)
+void
+test_optimized_hodge_aux(TestRecorder & tr)
 {
     if constexpr (O<=N) {
         tr.section(ra::format("hodge() vs hodgex() with N=", N, " O=", O));
@@ -84,7 +86,8 @@ void test_optimized_hodge_aux(TestRecorder & tr)
 }
 
 template <int N>
-void test_optimized_hodge(TestRecorder & tr)
+void
+test_optimized_hodge(TestRecorder & tr)
 {
     static_assert(N>=0, "bad_N");
     test_optimized_hodge_aux<N, 0>(tr);
@@ -92,12 +95,14 @@ void test_optimized_hodge(TestRecorder & tr)
 }
 
 template <>
-void test_optimized_hodge<-1>(TestRecorder & tr)
+void
+test_optimized_hodge<-1>(TestRecorder & tr)
 {
 }
 
 template <int D, class R, class A, class B>
-R test_scalar_case(A const & a, B const & b)
+R
+test_scalar_case(A const & a, B const & b)
 {
     R r = ra::wedge<D, 0, 0>(a, b);
     cout << "[" << D << "/0/0] " << a << " ^ " << b << " -> " << r << endl;
@@ -105,7 +110,8 @@ R test_scalar_case(A const & a, B const & b)
 }
 
 template <int D, int OA, int OB, class R, class A, class B>
-R test_one_one_case(TestRecorder & tr, A const & a, B const & b)
+R
+test_one_one_case(TestRecorder & tr, A const & a, B const & b)
 {
     R r1(GARBAGE);
     Wedge<D, OA, OB>::product(a, b, r1);
@@ -117,14 +123,16 @@ R test_one_one_case(TestRecorder & tr, A const & a, B const & b)
 }
 
 template <int D, int OA, int OB, class R, class A, class B>
-R test_one_scalar_case(A const & a, B const & b)
+R
+test_one_scalar_case(A const & a, B const & b)
 {
     R r2(ra::wedge<D, OA, OB>(a, b));
     cout << "[" << D << "/" << OA << "/" << OB << "] " << a << " ^ " << b << " -> " << r2 << endl;
     return r2;
 }
 
-int main()
+int
+main()
 {
     TestRecorder tr(std::cout);
     static_assert(ra::mp::n_over_p(0, 0)==1, "");

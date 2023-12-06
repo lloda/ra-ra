@@ -54,8 +54,8 @@ struct Benchmark
         double m = avg(bv);
         return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.repeats-m))/bv.times.size());
     }
-    template <class B> void
-    report(std::ostream & o, B const & b, double frac)
+    void
+    report(std::ostream & o, auto const & b, double frac)
     {
         o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return avg(bv); }, b)/frac << std::endl;
         o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return stddev(bv); }, b)/frac << std::endl;
@@ -67,8 +67,8 @@ struct Benchmark
     std::string const name_ = "";
     std::string info_str = "";
 
-    template <class ... A> Benchmark &
-    info(A && ... a)
+    Benchmark &
+    info(auto && ... a)
     {
         bool empty = (info_str=="");
         info_str += ra::esc::plain;
@@ -82,8 +82,8 @@ struct Benchmark
     Benchmark repeats(int repeats_) { return Benchmark { repeats_, runs_, name_, "" }; }
     Benchmark runs(int runs_) { return Benchmark { repeats_, runs_, name_, "" }; }
 
-    template <class F, class ... A> auto
-    once(F && f, A && ... a)
+    auto
+    once(auto && f, auto && ... a)
     {
         auto t0 = clock::now();
         clock::duration empty = clock::now()-t0;
@@ -99,8 +99,8 @@ struct Benchmark
         }
         return Value { name_, repeats_, empty, std::move(times) };
     }
-    template <class G, class ... A> auto
-    once_f(G && g, A && ... a)
+    auto
+    once_f(auto && g, auto && ... a)
     {
         clock::duration empty;
         g([&](auto && f)
@@ -123,17 +123,16 @@ struct Benchmark
         }
         return Value { name_, repeats_, empty, std::move(times) };
     }
-
-    template <class F, class ... A> auto
-    run(F && f, A && ... a)
+    auto
+    run(auto && f, auto && ... a)
     {
         return ra::concrete(ra::from([this, &f](auto && ... b) { return this->once(f, b ...); }, a ...));
     }
-    template <class F, class ... A> auto
-    run_f(F && f, A && ... a)
+    auto
+    run_f(auto && f, auto && ... a)
     {
         return ra::concrete(ra::from([this, &f](auto && ... b) { return this->once_f(f, b ...); }, a ...));
     }
 };
 
-namespace ra { template <> constexpr bool is_scalar_def<Benchmark::Value> = true; }
+template <> constexpr bool ra::is_scalar_def<Benchmark::Value> = true;

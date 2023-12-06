@@ -18,12 +18,8 @@ using real = double;
 using complex = std::complex<double>;
 using ra::dual, ra::Dual, ra::sqr;
 
-namespace ra {
-
 // not needed to put Dual<> in containers, but needed to use Dual<>s by themselves as expr terms.
-template <class T> constexpr bool is_scalar_def<Dual<T>> = true;
-
-} // namespace ra
+template <class T> constexpr bool ra::is_scalar_def<Dual<T>> = true;
 
 #define DEFINE_CASE(N,  F, DF)                                          \
     struct JOIN(case, N)                                                \
