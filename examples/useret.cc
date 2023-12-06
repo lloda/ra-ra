@@ -35,6 +35,19 @@ auto foobar_ra(A && a, B && b)
     return ra::map(foobar, std::forward<A>(a), std::forward<B>(b));
 }
 
+// the functions above will work with scalars as well as arrays, but you can overload the name of the scalar function by defining the overload in ra:: like so. See 'New array operations' in the manual.
+
+namespace ra {
+
+template <class A, class B>
+inline auto
+foobar(A && a, B && b)
+{
+    return map(::foobar, std::forward<A>(a), std::forward<B>(b));
+}
+
+} // namespace ra
+
 int main()
 {
     ra::Big<double,2> A({4, 4}, 0.), B({4, 4}, 0.), C({4, 4}, 0.);
@@ -52,6 +65,9 @@ int main()
     cout << "B = myFunction(A) = " << B << endl;
 
     B = foobar_ra(A, C);
+    cout << "B = foobar(A, C) = " << B << endl;
+
+    B = foobar(A, C);
     cout << "B = foobar(A, C) = " << B << endl;
 
     B = foobar_ra(A, 1.);
