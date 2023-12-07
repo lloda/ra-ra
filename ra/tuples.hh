@@ -19,7 +19,7 @@
 #define STRINGIZE( x ) STRINGIZE_( x )
 #define JOIN_( x, y ) x##y
 #define JOIN( x, y ) JOIN_( x, y )
-
+#define RA_FWD(a) std::forward<decltype(a)>(a)
 // see http://stackoverflow.com/a/1872506
 #define FOR_EACH_1(what, x, ...) what(x)
 #define FOR_EACH_2(what, x, ...) what(x) FOR_EACH_1(what, __VA_ARGS__)
@@ -40,8 +40,6 @@
 #define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
 #define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
 
-#define RA_FWD(a) std::forward<decltype(a)>(a)
-
 namespace ra {
 
 template <class T> constexpr bool is_constant = false;
@@ -55,8 +53,6 @@ template <class ... T> constexpr bool always_false = false; // p2593r0
 } // namespace ra
 
 namespace ra::mp {
-
-// xxx<...> is user facing and xxx_<...>::type (if needed) is implementation.
 
 using std::tuple;
 using nil = tuple<>;
@@ -123,7 +119,7 @@ struct IndexIf<tuple<A0, A ...>, Pred, i>
     constexpr static int value = next::value;
 };
 
-// Index (& type) of pairwise winner. A variant of fold.
+// index & type of pairwise winner. A variant of fold.
 template <template <class A, class B> class pick_i, class T, int k=1, int sel=0> struct indexof_;
 template <template <class A, class B> class pick_i, class T0, int k, int sel>
 struct indexof_<pick_i, tuple<T0>, k, sel>
@@ -169,7 +165,6 @@ template <template <class ... A> class F, class L> struct apply_;
 template <template <class ... A> class F, class ... L> struct apply_<F, tuple<L ...>> { using type = F<L ...>; };
 template <template <class ... A> class F, class L> using apply = typename apply_<F, L>::type;
 
-// As map.
 template <template <class ... A> class F, class ... L>
 struct map_ { using type = cons<F<first<L> ...>, typename map_<F, drop1<L> ...>::type>; };
 template <template <class ... A> class F, class ... L>
@@ -186,7 +181,7 @@ template <class A, class B> struct Filter
 template <class B> struct Filter<mp::nil, B> { using type = B; };
 template <class A, class B> using Filter_ = typename Filter<A, B>::type;
 
-// As SRFI-1 fold (= fold-left).
+// like fold-left
 template <template <class ... A> class F, class Def, class ... L>
 struct fold_
 {
@@ -206,15 +201,10 @@ struct fold_<F, Def>
 template <template <class ... A> class F, class Def, class ... L>
 using fold = typename fold_<F, Def, L ...>::type;
 
-template <class ... A> struct max_ { using type = int_c<std::numeric_limits<int>::min()>; };
-template <class ... A> using max = typename max_<A ...>::type;
-template <class A0, class ... A> struct max_<A0, A ...> { using type = int_c<std::max(A0::value, max<A ...>::value)>; };
+template <class ... A> using max = int_c<[]() { int r=std::numeric_limits<int>::min(); ((r=std::max(r, A::value)), ...); return r; }()>;
+template <class ... A> using min = int_c<[]() { int r=std::numeric_limits<int>::max(); ((r=std::min(r, A::value)), ...); return r; }()>;
 
-template <class ... A> struct min_ { using type = int_c<std::numeric_limits<int>::max()>; };
-template <class ... A> using min = typename min_<A ...>::type;
-template <class A0, class ... A> struct min_<A0, A ...> { using type = int_c<std::min(A0::value, min<A ...>::value)>; };
-
-// Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
+// remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
 template <class S, class T, class SS=S> struct complement_list_;
 template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
 
@@ -260,7 +250,7 @@ struct complement_sorted_list_<tuple<F, S ...>, tuple<F, T ...>>
 template <class S0, class ... S, class T0, class ... T>
 struct complement_sorted_list_<tuple<S0, S ...>, tuple<T0, T ...>>
 {
-    static_assert(T0::value<=S0::value, "bad lists for complement_sorted_list<>");
+    static_assert(T0::value<=S0::value, "Bad lists for complement_sorted_list<>.");
     using type = cons<T0, complement_sorted_list<tuple<S0, S ...>, tuple<T ...>>>;
 };
 
@@ -282,7 +272,7 @@ template <class A, class B> struct ProductAppend_ { using type = nil; };
 template <class A, class B> using ProductAppend = typename ProductAppend_<A, B>::type;
 template <class A0, class ... A, class B> struct ProductAppend_<tuple<A0, A ...>, B> { using type = append<MapPrepend<A0, B>, ProductAppend<tuple<A ...>, B>>; };
 
-// Compute the K-combinations of the N elements of list A.
+// K-combinations of the N elements of list A.
 template <class A, int K, int N=len<A>> struct combinations_;
 template <class A, int k, int N=len<A>> using combinations = typename combinations_<A, k, N>::type;
 template <class A, int N> struct combinations_<A, 0, N> { using type = tuple<nil>; };
@@ -303,7 +293,6 @@ template <class C, class R> struct PermutationSign;
 
 template <int w, class C, class R>
 constexpr int PermutationSignIfFound = PermutationSign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value * ((w & 1) ? -1 : +1);
-
 template <class C, class R>
 constexpr int PermutationSignIfFound<-1, C, R>  = 0;
 

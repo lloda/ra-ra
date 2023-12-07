@@ -311,7 +311,6 @@ template <bool checkp, IteratorConcept ... P, int ... I>
 struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 {
     std::tuple<P ...> t;
-// rank of largest subexpr
     constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(r, ra::rank_s<P>())), ...); }();
 
 // 0: fail, 1: rt, 2: pass
@@ -440,12 +439,11 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 // reframe
 // ---------------------------
 
-// Transpose variant for IteratorConcepts. As in transpose(), one names the destination axis for
-// each original axis. However, axes may not be repeated. Used in the rank conjunction below.
-
 template <dim_t N, class T> constexpr T samestep = N;
 template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
 
+// Transpose variant for IteratorConcepts. As in transpose(), one names the destination axis for
+// each original axis. However, axes may not be repeated. Used in the rank conjunction below.
 // Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
