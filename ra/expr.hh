@@ -457,15 +457,20 @@ struct Reframe
 {
     A a;
 
-    constexpr static int orig(int k) { return mp::int_list_index<Dest>(k); }
+    constexpr static int orig(int k){ return mp::int_list_index<Dest>(k); }
     consteval static rank_t rank() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
     constexpr static dim_t len_s(int k)
     {
         int l=orig(k);
         return l>=0 ? std::decay_t<A>::len_s(l) : BAD;
     }
+    constexpr static dim_t
+    len(int k) requires (requires (int kk) { std::decay_t<A>::len(kk); })
+    {
+        return len_s(k);
+    }
     constexpr dim_t
-    len(int k) const
+    len(int k) const requires (!(requires (int kk) { std::decay_t<A>::len(kk); }))
     {
         int l=orig(k);
         return l>=0 ? a.len(l) : BAD;
@@ -482,8 +487,14 @@ struct Reframe
         int l=orig(k);
         if (l>=0) { a.adv(l, d); }
     }
+    constexpr static bool
+    keep_step(dim_t st, int z, int j) requires (requires (dim_t st, rank_t z, rank_t j) { std::decay_t<A>::keep_step(st, z, j); })
+    {
+        int wz=orig(z), wj=orig(j);
+        return wz>=0 && wj>=0 && std::decay_t<A>::keep_step(st, wz, wj);
+    }
     constexpr bool
-    keep_step(dim_t st, int z, int j) const
+    keep_step(dim_t st, int z, int j) const requires (!(requires (dim_t st, rank_t z, rank_t j) { std::decay_t<A>::keep_step(st, z, j); }))
     {
         int wz=orig(z), wj=orig(j);
         return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
@@ -496,7 +507,7 @@ struct Reframe
     constexpr decltype(auto) operator*() const { return *a; }
     constexpr auto save() const { return a.save(); }
     constexpr void load(auto const & p) { a.load(p); }
-// FIXME only if Dest preserves axis order, which is how wrank works, but this limitation should be explicit.
+// FIXME only if Dest preserves axis order (?) which is how wrank works
     constexpr void mov(auto const & s) { a.mov(s); }
 };
 

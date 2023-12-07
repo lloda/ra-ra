@@ -299,12 +299,10 @@ struct combinations_
     using type = append<MapCons<first<A>, combinations<Rest, K-1, N-1>>, combinations<Rest, K, N-1>>;
 };
 
-// Sign of permutations.
 template <class C, class R> struct PermutationSign;
 
 template <int w, class C, class R>
-constexpr int PermutationSignIfFound = PermutationSign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value
-    * ((w & 1) ? -1 : +1);
+constexpr int PermutationSignIfFound = PermutationSign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value * ((w & 1) ? -1 : +1);
 
 template <class C, class R>
 constexpr int PermutationSignIfFound<-1, C, R>  = 0;
@@ -338,15 +336,15 @@ template <class C, class T, auto f = std::identity {}>
 consteval auto
 tuple2array()
 {
-    return std::apply([](auto ... t) { return std::array<C, len<T>> { C(f(t)) ... }; }, T {});
+    return std::apply([](auto ... t) { return std::array<C, sizeof...(t)> { C(f(t)) ... }; }, T {});
 }
 
 template <class T>
 constexpr int
 int_list_index(int k)
 {
-    return std::apply([&k](auto ... i) { int r=-1; (((k==mp::ref<T, i>::value) && (r=i, 1)) || ...); return r; },
-                      mp::iota<mp::len<T>> {});
+    return std::apply([&k](auto ... i) { int r=-1; ((k==mp::ref<T, i>::value && (r=i, 1)) || ...); return r; },
+                      iota<len<T>> {});
 }
 
 } // namespace ra::mp

@@ -30,7 +30,7 @@ gemm2(auto && a, auto && b, auto & c)
 {
     dim_t K=a.len(1);
     for (int k=0; k<K; ++k) {
-        c += from(std::multiplies<>(), a(all, k), b(k));
+        c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma
     }
 }
 void
