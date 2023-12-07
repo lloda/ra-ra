@@ -16,6 +16,22 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 template <int i> using UU = decltype(std::declval<ra::Unique<double, i>>().iter());
 using ra::int_c;
 
+namespace ra::mp {
+
+// once we had fold expr this became less useful.
+template <class K, class T, class F, class I = int_c<0>>
+constexpr auto
+fold_tuple(K && k, T && t, F && f, I && i = int_c<0> {})
+{
+    if constexpr (I::value==len<std::decay_t<T>>) {
+        return k;
+    } else {
+        return fold_tuple(f(k, std::get<I::value>(t)), t, f, int_c<I::value+1> {});
+    }
+}
+
+} // namespace ra::mp
+
 int
 main()
 {

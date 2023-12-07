@@ -334,14 +334,6 @@ template <class A> using InvertIndex = typename InvertIndex_<A>::type;
 // tuples in dynamic context
 // ---------------------
 
-// like std::make_trom_tuple, but use brace constructor.
-template <class C, class T>
-constexpr C
-from_tuple(T && t)
-{
-    return std::apply([](auto && ... x) { return C { RA_FWD(x) ... }; }, t);
-}
-
 template <class C, class T, auto f = std::identity {}>
 consteval auto
 tuple2array()
@@ -349,33 +341,12 @@ tuple2array()
     return std::apply([](auto ... t) { return std::array<C, len<T>> { C(f(t)) ... }; }, T {});
 }
 
-template <class C, class T, class I>
-constexpr C
-map_indices(I const & i)
-{
-    return std::apply([&i](auto ... t) { return std::array<C, len<T>> { i[t] ... }; }, T {});
-};
-
-template <class T, int k=0>
+template <class T>
 constexpr int
-int_list_index(int i)
+int_list_index(int k)
 {
-    if constexpr (k>=mp::len<T>) {
-        return -1;
-    } else {
-        return (i==mp::ref<T, k>::value) ? k : int_list_index<T, k+1>(i);
-    }
-}
-
-template <class K, class T, class F, class I = int_c<0>>
-constexpr auto
-fold_tuple(K && k, T && t, F && f, I && i = int_c<0> {})
-{
-    if constexpr (I::value==len<std::decay_t<T>>) {
-        return k;
-    } else {
-        return fold_tuple(f(k, std::get<I::value>(t)), t, f, int_c<I::value+1> {});
-    }
+    return std::apply([&k](auto ... i) { int r=-1; (((k==mp::ref<T, i>::value) && (r=i, 1)) || ...); return r; },
+                      mp::iota<mp::len<T>> {});
 }
 
 } // namespace ra::mp

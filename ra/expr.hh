@@ -491,7 +491,7 @@ struct Reframe
     constexpr decltype(auto)
     at(auto const & i) const
     {
-        return a.at(mp::map_indices<dim_t, Dest>(i));
+        return a.at(std::apply([&i](auto ... t) { return std::array<dim_t, sizeof...(t)> { i[t] ... }; }, Dest {}));
     }
     constexpr decltype(auto) operator*() const { return *a; }
     constexpr auto save() const { return a.save(); }
