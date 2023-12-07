@@ -18,11 +18,11 @@ In this example ([examples/read-me.cc](examples/read-me.cc)), we create some arr
   int main()
   {
     // run time rank
-    ra::Big<float> A = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+    ra::Big<float> A = {{1, 2, 3, 4}, {5, 6, 7, 8}};
     // static rank, run time dimensions
-    ra::Big<float, 2> B = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+    ra::Big<float, 2> B = {{1, 2, 3, 4}, {5, 6, 7, 8}};
     // static dimensions
-    ra::Small<float, 2, 4> C = { {1, 2, 3, 4}, {5, 6, 7, 8} };
+    ra::Small<float, 2, 4> C = {{1, 2, 3, 4}, {5, 6, 7, 8}};
     // rank-extending op with STL object
     B += A + C + std::vector {100., 200.};
     // negate right half

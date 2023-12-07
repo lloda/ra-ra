@@ -212,7 +212,7 @@ struct ViewBig
         }
         return cp[0];
     }
-// FIXME necessary here per [ra15], conflict with converting constructor?
+// FIXME necessary here per [ra15], conflict with converting constructor? maybe gcc14 https://wg21.link/cwg976
     constexpr operator T & () { return std::as_const(*this); }
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)

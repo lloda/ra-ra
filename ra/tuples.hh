@@ -181,29 +181,6 @@ template <class A, class B> struct Filter
 template <class B> struct Filter<mp::nil, B> { using type = B; };
 template <class A, class B> using Filter_ = typename Filter<A, B>::type;
 
-// like fold-left
-template <template <class ... A> class F, class Def, class ... L>
-struct fold_
-{
-    using def = std::conditional_t<std::is_same_v<void, Def>, F<>, Def>;
-    using type = typename fold_<F, F<def, first<L> ...>, drop1<L> ...>::type;
-};
-template <template <class ... A> class F, class Def, class ... L>
-struct fold_<F, Def, nil, L ...>
-{
-    using type = std::conditional_t<std::is_same_v<void, Def>, F<>, Def>;
-};
-template <template <class ... A> class F, class Def>
-struct fold_<F, Def>
-{
-    using type = std::conditional_t<std::is_same_v<void, Def>, F<>, Def>;
-};
-template <template <class ... A> class F, class Def, class ... L>
-using fold = typename fold_<F, Def, L ...>::type;
-
-template <class ... A> using max = int_c<[]() { int r=std::numeric_limits<int>::min(); ((r=std::max(r, A::value)), ...); return r; }()>;
-template <class ... A> using min = int_c<[]() { int r=std::numeric_limits<int>::max(); ((r=std::min(r, A::value)), ...); return r; }()>;
-
 // remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
 template <class S, class T, class SS=S> struct complement_list_;
 template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
@@ -305,16 +282,6 @@ struct PermutationSign
 {
     constexpr static int value = PermutationSignIfFound<index<C, first<Org>>::value, C, Org>;
 };
-
-template <class A> struct InvertIndex_;
-template <class ... A> struct InvertIndex_<tuple<A ...>>
-{
-    using AT = tuple<A ...>;
-    template <class T> using IndexA = int_c<index<AT, T>::value>;
-    constexpr static int N = apply<max, AT>::value;
-    using type = map<IndexA, iota<(N>=0 ? N+1 : 0)>>;
-};
-template <class A> using InvertIndex = typename InvertIndex_<A>::type;
 
 
 // ---------------------

@@ -393,12 +393,12 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         return s;
     }
     constexpr static dim_t
-    len(int k) requires (requires (int kk) { P::len(kk); } && ...)
+    len(int k) requires (requires { P::len(k); } && ...)
     {
         return len_s(k);
     }
     constexpr dim_t
-    len(int k) const requires (!(requires (int kk) { P::len(kk); } && ...))
+    len(int k) const requires (!(requires { P::len(k); } && ...))
     {
         auto f = [&k](dim_t s, auto const & a) {
             return k<ra::rank(a) ? choose_len(s, a.len(k)) : s;
@@ -407,6 +407,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         assert(ANY!=s); // not at runtime
         return s;
     }
+// could preserve static, but ply doesn't use it atm.
     constexpr auto
     step(int i) const
     {
@@ -418,14 +419,12 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         (std::get<I>(t).adv(k, d), ...);
     }
     constexpr bool
-    keep_step(dim_t st, int z, int j) const
-    requires (!(requires (dim_t st, rank_t z, rank_t j) { P::keep_step(st, z, j); } && ...))
+    keep_step(dim_t st, int z, int j) const requires (!(requires { P::keep_step(st, z, j); }  && ...))
     {
         return (std::get<I>(t).keep_step(st, z, j) && ...);
     }
     constexpr static bool
-    keep_step(dim_t st, int z, int j)
-    requires (requires (dim_t st, rank_t z, rank_t j) { P::keep_step(st, z, j); } && ...)
+    keep_step(dim_t st, int z, int j) requires (requires { P::keep_step(st, z, j); } && ...)
     {
         return (std::decay_t<P>::keep_step(st, z, j) && ...);
     }
@@ -455,20 +454,27 @@ struct Reframe
 {
     A a;
 
-    constexpr static int orig(int k){ return mp::int_list_index<Dest>(k); }
-    consteval static rank_t rank() { return 1+mp::fold<mp::max, ic_t<-1>, Dest>::value; }
+    consteval static rank_t
+    rank()
+    {
+        return 1 + std::apply([](auto ... i) { int r=-1; ((r=std::max(r, int(i))), ...); return r; }, Dest {});
+    }
+    constexpr static int orig(int k)
+    {
+        return mp::int_list_index<Dest>(k);
+    }
     constexpr static dim_t len_s(int k)
     {
         int l=orig(k);
         return l>=0 ? std::decay_t<A>::len_s(l) : BAD;
     }
     constexpr static dim_t
-    len(int k) requires (requires (int kk) { std::decay_t<A>::len(kk); })
+    len(int k) requires (requires { std::decay_t<A>::len(k); })
     {
         return len_s(k);
     }
     constexpr dim_t
-    len(int k) const requires (!(requires (int kk) { std::decay_t<A>::len(kk); }))
+    len(int k) const requires (!(requires { std::decay_t<A>::len(k); }))
     {
         int l=orig(k);
         return l>=0 ? a.len(l) : BAD;
@@ -486,13 +492,13 @@ struct Reframe
         if (l>=0) { a.adv(l, d); }
     }
     constexpr static bool
-    keep_step(dim_t st, int z, int j) requires (requires (dim_t st, rank_t z, rank_t j) { std::decay_t<A>::keep_step(st, z, j); })
+    keep_step(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep_step(st, z, j); })
     {
         int wz=orig(z), wj=orig(j);
         return wz>=0 && wj>=0 && std::decay_t<A>::keep_step(st, wz, wj);
     }
     constexpr bool
-    keep_step(dim_t st, int z, int j) const requires (!(requires (dim_t st, rank_t z, rank_t j) { std::decay_t<A>::keep_step(st, z, j); }))
+    keep_step(dim_t st, int z, int j) const requires (!(requires { std::decay_t<A>::keep_step(st, z, j); }))
     {
         int wz=orig(z), wj=orig(j);
         return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
@@ -515,7 +521,7 @@ template <class Dest, class A>
 constexpr decltype(auto)
 reframe(A && a)
 {
-    if constexpr (std::is_same_v<Dest, mp::iota<1+mp::fold<mp::max, ic_t<-1>, Dest>::value>>) {
+    if constexpr (std::is_same_v<Dest, mp::iota<Reframe<Dest, A>::rank()>>) {
         return RA_FWD(a);
     } else {
         return Reframe<Dest, A> { RA_FWD(a) };

@@ -67,11 +67,10 @@ struct WithLen
 template <>
 struct WithLen<Len>
 {
-    template <class Ln, class E>
     constexpr static decltype(auto)
-    f(Ln ln, E && e)
+    f(auto ln, auto && e)
     {
-        return Scalar<Ln>(ln);
+        return Scalar<decltype(ln)>(ln);
     }
 };
 
