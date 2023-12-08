@@ -309,7 +309,7 @@ template <IteratorConcept A, class Early = Nop>
 constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
-    static_assert(!has_len<A>, "len used outside subscript context.");
+    static_assert(!has_len<A>, "len outside subscript context.");
     static_assert(0<=rank_s<A>() || ANY==rank_s<A>());
     if constexpr (ANY==size_s<A>()) {
         return ply_ravel(RA_FWD(a), RA_FWD(early));
@@ -391,51 +391,53 @@ constexpr auto begin(is_ra auto && a) { return STLIterator(ra::start(RA_FWD(a)))
 constexpr auto end(is_ra auto && a) { return std::default_sentinel; }
 constexpr auto range(is_ra auto && a) { return std::ranges::subrange(ra::begin(RA_FWD(a)), std::default_sentinel); }
 
-// unqualified might find .begin() anyway through std::begin etc (!) Yet another footgun
+// unqualified might find .begin() anyway through std::begin etc (!)
 constexpr auto begin(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.begin(); }
 constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.end(); }
 constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
 
 
 // ---------------------------
-// i/o FIXME reuse general plyers once they allow specifying order
+// i/o
 // ---------------------------
 
 template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-    static_assert(!has_len<A>, "len used outside subscript context.");
+    static_assert(!has_len<A>, "len outside subscript context.");
     static_assert(BAD!=size_s<A>(), "Cannot print undefined size expr.");
     auto a = ra::start(fa.a); // [ra35]
-    rank_t const rank = ra::rank(a);
     auto sha = shape(a);
-    if (withshape==fa.shape || (defaultshape==fa.shape && size_s(a)==ANY)) {
+    if (withshape==fa.fmt.shape || (defaultshape==fa.fmt.shape && size_s(a)==ANY)) {
         o << sha << '\n';
     }
-    if (0==size(a)) {
-        return o;
-    }
-    auto ind = sha; for_each([](auto & s) { s=0; }, ind);
-    for (;;) {
-        o << *a;
-        for (int k=0; ; ++k) {
-            if (k>=rank) {
-                return o;
-            } else if (++ind[rank-1-k]<sha[rank-1-k]) {
-                a.adv(rank-1-k, 1);
-                if (k<2) {
-                    o << fa.sep[k];
+    rank_t const rank = ra::rank(a);
+    auto goin = [&](int k, auto & goin) -> void
+    {
+        if (k==rank) {
+            o << *a;
+        } else {
+            o << fa.fmt.open;
+            for (int i=0; i<sha[k]; ++i) {
+                goin(k+1, goin);
+                if (i+1<sha[k]) {
+                    a.adv(k, 1);
+                    o << (k==rank-1 ? fa.fmt.sep0 : fa.fmt.sepn);
+                    std::fill_n(std::ostream_iterator<char const *>(o, ""), std::max(0, rank-2-k), fa.fmt.rep);
+                    if (fa.fmt.align && k<rank-1) {
+                        std::fill_n(std::ostream_iterator<char const *>(o, ""), (k+1)*ra::size(fa.fmt.open), " ");
+                    }
                 } else {
-                    std::fill_n(std::ostream_iterator<char const *>(o, ""), k, fa.sep[2]);
+                    a.adv(k, 1-sha[k]);
+                    break;
                 }
-                break;
-            } else {
-                ind[rank-1-k] = 0;
-                a.adv(rank-1-k, 1-sha[rank-1-k]);
             }
+            o << fa.fmt.close;
         }
-    }
+    };
+    goin(0, goin);
+    return o;
 }
 
 template <class C> requires (ANY!=size_s<C>() && !is_scalar<C>)

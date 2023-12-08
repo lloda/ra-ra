@@ -59,15 +59,129 @@ int main()
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
-        o << ra::withshape << format_array(A, "|", "-");
+        o << ra::withshape << format_array(A, { .sep0="|", .sepn="-" } );
         tr.test_eq(std::string("2 2\n1|2-3|4"), o.str());
     }
     tr.section("IO format parameters against default (II)");
     {
         ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << ra::noshape << format_array(A, "|", "-");
+        o << ra::noshape << format_array(A, { .sep0="|", .sepn="-" });
         tr.test_eq(std::string("1|2-3|4"), o.str());
+    }
+    tr.section("IO format parameters against default (III)");
+    {
+        ra::Big<int, 4> A({2, 2, 2, 2}, ra::_0 + ra::_1 + ra::_2 + ra::_3);
+        {
+            std::ostringstream o;
+            o << "\n" << format_array(A, ra::cstyle) << endl;
+            tr.test_seq(
+                R"---(
+{{{{0, 1},
+   {1, 2}},
+  {{1, 2},
+   {2, 3}}},
+ {{{1, 2},
+   {2, 3}},
+  {{2, 3},
+   {3, 4}}}}
+)---"
+                , o.str());
+        }
+        {
+            std::ostringstream o;
+            auto style = ra::cstyle;
+            style.shape = ra::withshape;
+            o << "\n" << format_array(A, style) << endl;
+            tr.test_seq(
+                R"---(
+2 2 2 2
+{{{{0, 1},
+   {1, 2}},
+  {{1, 2},
+   {2, 3}}},
+ {{{1, 2},
+   {2, 3}},
+  {{2, 3},
+   {3, 4}}}}
+)---"
+                , o.str());
+        }
+        {
+            std::ostringstream o;
+            o << "\n" << format_array(A, ra::jstyle) << endl;
+            tr.test_seq(
+                R"---(
+2 2 2 2
+0 1
+1 2
+
+1 2
+2 3
+
+
+1 2
+2 3
+
+2 3
+3 4
+)---"
+                , o.str());
+        }
+        {
+            std::ostringstream o;
+            o << "\n" << format_array(A, ra::lstyle) << endl;
+            tr.test_seq(
+                R"---(
+((((0 1)
+   (1 2))
+  ((1 2)
+   (2 3)))
+ (((1 2)
+   (2 3))
+  ((2 3)
+   (3 4))))
+)---"
+                , o.str());
+        }
+        {
+            std::ostringstream o;
+            auto style = ra::lstyle;
+            style.align = false;
+            o << "\n" << format_array(A, style) << endl;
+            tr.test_seq(
+                R"---(
+((((0 1)
+(1 2))
+((1 2)
+(2 3)))
+(((1 2)
+(2 3))
+((2 3)
+(3 4))))
+)---"
+                , o.str());
+        }
+        {
+            std::ostringstream o;
+            o << "\n" << format_array(A, ra::pstyle) << endl;
+            tr.test_seq(
+                R"---(
+[[[[0, 1],
+   [1, 2]],
+
+  [[1, 2],
+   [2, 3]]],
+
+
+ [[[1, 2],
+   [2, 3]],
+
+  [[2, 3],
+   [3, 4]]]]
+)---"
+                , o.str());
+        }
     }
     tr.section("IO manip without FormatArray");
     {
@@ -139,17 +253,25 @@ int main()
         o << ra::format(std::string("once"), " ", std::array {1, 2, 3});
         tr.info(o.str()).test_eq(std::string("once 1 2 3"), o.str());
     }
-// regression against lack of forwarding in ra::format(...)
+    tr.section("regression against lack of forwarding in ra::format(...)");
     {
         std::ostringstream o;
         o << ra::format(Q { 33 });
         tr.test_eq(std::string("33"), o.str());
     }
-// print rank 0
+    tr.section("empty array");
     {
-        ra::Big<int, 0> pick = {}; // uninitialized
-        cout << format_array(pick) << endl;
-        cout << ra::noshape << format_array(pick) << endl;
+        ra::Big<int, 1> pick;
+        std::ostringstream o;
+        o << format_array(pick, ra::cstyle);
+        tr.test_eq(std::string("{}"), o.str());
+    }
+    tr.section("rank 0");
+    {
+        ra::Big<int, 0> pick = 7;
+        std::ostringstream o;
+        o << format_array(pick);
+        tr.test_eq(std::string("7"), o.str());
     }
     return tr.summary();
 }

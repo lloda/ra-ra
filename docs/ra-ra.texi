@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 117.
 
 @set VERSION 27
-@set UPDATED 2023 December 6
+@set UPDATED 2023 December 9
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -50,7 +50,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{ra::}@footnote{/ə'ɹ-eɪ/} is a general purpose multidimensional array and expression template library for C++20. Please keep in mind that this manual is a work in progress. There are many errors and whole sections unwritten.
+@code{ra::}@footnote{/ə'ɹ-eɪ/} is a general purpose multidimensional array and expression template library for C++20. This manual is a work in progress.
 
 @menu
 * Overview::          Array programming and C++.
@@ -288,7 +288,7 @@ Here is a minimal program@footnote{Examples given without context assume that on
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << ra::noshape << format_array(transpose<1, 0>(A), "|") << std::endl;
+    std::cout << ra::noshape << format_array(transpose<1, 0>(A), {.sep="|"}) << std::endl;
 }
 @end verbatim
 @print{} h|w
@@ -427,7 +427,7 @@ Sometimes the pointer constructor gets in the way (see @ref{x-scalar,@code{scala
 @verbatim
 ra::Big<char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
 ra::Big<char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
-cout << ra::noshape << format_array(A, "|") << endl;
+cout << ra::noshape << format_array(A, {.sep="|"}) << endl;
 @end verbatim
 @print{} hello|hello|hello
 @end example
@@ -1281,8 +1281,9 @@ cout << ra::sum(x) << endl;
 
 The following types are accepted as foreign types:
 
+@cindex built-in array
 @itemize
-@item Built-in arrays @cindex built-in array
+@item Built-in arrays
 produce an expression of positive rank and ct size.
 @item @code{std::array}
 produces an expression of rank 1 and ct size.
@@ -2022,29 +2023,76 @@ See also @ref{x-map,@code{map}}.
 @end defun
 
 @cindex @code{format_array}
-@anchor{x-format_array} @defun format_array expr [last_axis_separator [second_last_axis_separator ...]]
-Formats an array for character output.
+@anchor{x-format_array} @defun format_array expr fmt
+Format expression for character output. @var{fmt} is a struct with the following fields:
 
-For example:
+@itemize
+@item @code{shape} (@code{bool}):
+Whether to print the shape of @var{expr} before @var{expr} itself.
+@item @code{sep0} (@code{char const *}):
+Separator between 0-cells.
+@item @code{sepn} (@code{char const *}):
+Separator between cells of rank > 0. Printed once.
+@item @code{rep} (@code{char const *}):
+Separator between cells of rank > 1. Printed @var{c}-1 times, where @var{c} is the rank of cells.
+@item @code{open} (@code{char const *}):
+Dimension opener.
+@item @code{end} (@code{char const *}):
+Dimension closer.
+@item @code{align} (@code{bool}):
+Align the dimension openers. This works better (or at all) when @code{sepn} ends in a newline.
+@end itemize
+
+The shape that might be printed depending on @code{.shape} is not subject to these separators and is always printed as if @code{@{.open="", .close="", .sep0=" "@}}.
 
 @example
 @verbatim
 ra::Small<int, 2, 2> A = {{1, 2}, {3, 4}};
 cout << "case a:\n" << A << endl;
-cout << "case b:\n" << format_array(A) << endl;
-cout << "case c:\n" <<  format_array(A, "|", "-") << endl;
+cout << "\ncase b:\n" << format_array(A) << endl;
+cout << "\ncase c:\n" <<  format_array(A, {.sep0="|", .sepn="-"}) << endl;
+cout << "\ncase d:\n" <<  format_array(A, {.shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true}) << endl;
 @end verbatim
-@print{} case a:
+@print{}
+@verbatim
+case a:
 1 2
 3 4
+
 case b:
 1 2
 3 4
+
 case c:
 1|2-3|4
+
+case d:
+{{1, 2},
+ {3, 4}}
+@end verbatim
 @end example
 
-The shape that might be printed before the expression itself (depending on its type) is not subject to these separators.
+@cindex @code{jstyle}
+@cindex @code{cstyle}
+@cindex @code{lstyle}
+@cindex @code{pstyle}
+
+The following styles are predefined: @code{jstyle} (the default), @code{cstyle}, @code{lstyle}, and @code{pstyle}. Currently @code{ra::operator>>(std::istream &)} can only read whitespace formats, like @code{jstyle}.
+
+@example
+@verbatim
+ra::Big<int> A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
+cout <<  format_array(A, ra::pstyle) << endl;
+@end verbatim
+@print{}
+@verbatim
+[[[1, 2, 3],
+  [3, 4, 5]],
+
+ [[4, 5, 6],
+  [7, 8, 9]]]
+@end verbatim
+@end example
 
 See also @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
 

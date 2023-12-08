@@ -243,19 +243,33 @@ shape(V const & v)
 
 enum print_shape_t { defaultshape, withshape, noshape };
 
+struct array_format
+{
+    print_shape_t shape = defaultshape;
+    char const * open = "";
+    char const * close = "";
+    char const * sep0 = " ";
+    char const * sepn = "\n";
+    char const * rep = "\n";
+    bool align = false;
+};
+
+constexpr array_format jstyle = {};
+constexpr array_format cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true};
+constexpr array_format lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true};
+constexpr array_format pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true};
+
 template <class A>
 struct FormatArray
 {
     A const & a;
-    print_shape_t shape;
-    char const * sep[3];
+    array_format fmt = {};
 };
 
-template <class A>
-constexpr FormatArray<A>
-format_array(A const & a, char const * sep0=" ", char const * sep1="\n", char const * sep2="\n")
+constexpr auto
+format_array(auto const & a, array_format fmt = {})
 {
-    return FormatArray<A> { a,  defaultshape, { sep0, sep1, sep2 } };
+    return FormatArray<decltype(a)> { a,  fmt };
 }
 
 struct shape_manip_t
@@ -279,7 +293,7 @@ operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << f
 
 template <class A>
 constexpr std::ostream &
-operator<<(shape_manip_t const & sm, FormatArray<A> fa) { return sm.o << (fa.shape=sm.shape, fa); }
+operator<<(shape_manip_t const & sm, FormatArray<A> fa) { return sm.o << (fa.fmt.shape=sm.shape, fa); }
 
 template <class A>
 constexpr std::ostream &

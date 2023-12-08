@@ -172,17 +172,17 @@ int main()
     tr.section("Example from the manual [ma101]");
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
-        std::cout << ra::noshape << format_array(transpose<1, 0>(A), "|") << std::endl;
+        std::cout << ra::noshape << format_array(transpose<1, 0>(A), { .sep0="|" }) << std::endl;
     }
     {
         ra::Big<char const *, 1> A = {"hello", "array", "world"};
-        std::cout << ra::noshape << format_array(A, "|") << std::endl;
+        std::cout << ra::noshape << format_array(A, { .sep0="|" }) << std::endl;
     }
     tr.section("Example from the manual [ma102]");
     {
         // ra::Big<char const *, 1> A({3}, "hello"); // ERROR bc of pointer constructor
         ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
-        std::cout << ra::noshape << format_array(A, "|") << std::endl;
+        std::cout << ra::noshape << format_array(A, { .sep0="|" }) << std::endl;
     }
     tr.section("Example from the manual [ma103]");
     {

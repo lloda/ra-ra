@@ -517,8 +517,10 @@ normv(auto const & a)
 constexpr void
 gemm(auto const & a, auto const & b, auto & c)
 {
-    for_each(ra::wrank<1, 2, 1>(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto & c) { maybe_fma(a, b, c); })),
-             RA_FWD(a), RA_FWD(b), RA_FWD(c));
+    dim_t K=a.len(1);
+    for (int k=0; k<K; ++k) {
+        c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma
+    }
 }
 
 constexpr auto
