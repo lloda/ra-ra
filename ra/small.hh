@@ -123,15 +123,9 @@ template <int n> constexpr beatable_t beatable_def<dots_t<n>>
 template <int n> constexpr beatable_t beatable_def<insert_t<n>>
     = { .rt=true, .ct = true, .src=0, .dst=n, .add=n };
 
-template <class I>
-struct is_constant_iota
-{
-    using Ilen = std::decay_t<decltype(with_len(ic<1>, std::declval<I>()))>; // arbitrary constant len
-    constexpr static bool value = is_constant<typename Ilen::N> && is_constant<typename Ilen::S>;
-};
-
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .rt=(BAD!=I::nn), .ct=is_constant_iota<I>::value, .src=1, .dst=1, .add=0 };
+    = { .rt=(BAD!=I::nn), .ct=std::decay_t<decltype(with_len(ic<1>, std::declval<I>()))>::constant,
+        .src=1, .dst=1, .add=0 };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 

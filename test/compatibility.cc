@@ -166,8 +166,8 @@ int main()
             char const * hello = "hello";
             tr.test_eq(string("hello"), quote(hello));
             tr.test_eq(ra::scalar(string("hello")), ra::scalar(hello));
-            // cout << ra::start(hello) << endl; // cannot be start()ed
-            // cout << ra::ptr(hello) << endl; // same, but FIXME improve error message
+            // cout << ra::start(hello) << endl; // error, cannot be start()ed
+            // cout << ra::ptr(hello) << endl; // error, pointer has no size
         }
     }
     return tr.summary();

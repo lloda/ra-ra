@@ -2475,7 +2475,7 @@ See also @ref{x-format_array,@code{format_array}}.
 
 @cindex @code{ptr}
 @anchor{x-ptr}
-@deffn @w{Function} ptr bidirectional_iterator [len]
+@deffn @w{Function} ptr bidirectional_iterator [len [step]]
 @deffnx @w{Function} ptr bidirectional_range
 Create rank-1 expression from foreign object.
 
@@ -2505,7 +2505,19 @@ cout << (p + ra::iota()) << endl; // ok
 @end verbatim
 @end example
 
-You don't need to use @code{ra::ptr} on STL containers and built in arrays, which are converted to rank-1 expressions of the right size automatically. See also @ref{x-start,@code{start}}.
+@var{len} and @var{step} can be constant types. For example:
+
+@example
+@verbatim
+char const * s = "hello";
+auto p = ra::ptr(s, std::integral_constant<int, 2> {});
+static_assert(2==ra::size(p)); // p not constexpr, but still ok
+@end verbatim
+@end example
+
+You don't need to use @code{ra::ptr} on STL containers or ranges, or on built in arrays. Those are converted to rank-1 expressions of the right size automatically.
+
+See also @ref{x-start,@code{start}}, @ref{x-iota,@code{iota}}.
 
 @end deffn
 

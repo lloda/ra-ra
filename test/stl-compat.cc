@@ -72,6 +72,19 @@ int main()
         ra::Small<int, 3> b = ra::ptr(a.begin());
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, b);
     }
+    tr.section("ptr with step");
+    {
+        std::vector a = {1, 2, 3, 4, 5, 6};
+        tr.test_eq(std::vector {1, 3, 5}, ra::ptr(a.begin(), 3, 2));
+        tr.test_eq(5, ra::ptr(a.begin(), 3, 2).at(std::array { 2 }));
+    }
+    tr.section("ptr with step");
+    {
+        char const * s = "hello";
+        auto p = ra::ptr(s, std::integral_constant<int, 2> {});
+        static_assert(2==ra::size(p)); // ok
+        tr.test_eq(ra::start({'h', 'e'}), p);
+    }
     tr.section("check that begin() and end() match for empty views");
     {
         ra::Big<int, 3> aa({0, 2, 3}, 0.);

@@ -47,11 +47,11 @@ constexpr bool has_len_def<Pick<std::tuple<P ...>>> = (has_len<P> || ...);
 template <class Op, IteratorConcept ... P>
 constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
 
-template <int w, class N, class O, class S>
-constexpr bool has_len_def<Iota<w, N, O, S>> = (has_len<N> || has_len<O> || has_len<S>);
+template <int w, class I, class N, class S>
+constexpr bool has_len_def<Iota<w, I, N, S>> = (has_len<I> || has_len<N> || has_len<S>);
 
-template <class I, class N>
-constexpr bool has_len_def<Ptr<I, N>> = has_len<N>;
+template <class I, class N, class S>
+constexpr bool has_len_def<Ptr<I, N, S>> = has_len<N> || has_len<S>;
 
 template <class E>
 struct WithLen
@@ -94,21 +94,21 @@ struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
     }
 };
 
-template <int w, class N, class O, class S> requires (has_len<N> || has_len<O> || has_len<S>)
-struct WithLen<Iota<w, N, O, S>>
+template <int w, class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
+struct WithLen<Iota<w, I, N, S>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
 // final iota types must be either is_constant or is_scalar.
         return iota<w>(VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
-                       VALUE(WithLen<std::decay_t<O>>::f(ln, RA_FWD(e).i)),
+                       VALUE(WithLen<std::decay_t<I>>::f(ln, RA_FWD(e).i)),
                        VALUE(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
     }
 };
 
-template <class I, class N> requires (has_len<N>)
-struct WithLen<Ptr<I, N>>
+template <class I, class N, class S> requires (has_len<N>)
+struct WithLen<Ptr<I, N, S>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)

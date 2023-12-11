@@ -161,7 +161,7 @@ optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
 template <is_iota I, is_iota J>
 constexpr auto
 optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).gets()+ITEM(1).gets()); }
+{ return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).s+ITEM(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto
@@ -176,22 +176,22 @@ optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
 template <is_iota I, is_iota J>
 constexpr auto
 optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).gets()-ITEM(1).gets()); }
+{ return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).s-ITEM(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).gets()*ITEM(1)); }
+{ return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).s*ITEM(1)); }
 
 template <iota_op I, is_iota J>
 constexpr auto
 optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).gets()); }
+{ return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).s); }
 
 template <is_iota I>
 constexpr auto
 optimize(Expr<std::negate<>, std::tuple<I>> && e)
-{ return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).gets()); }
+{ return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).s); }
 
 #endif // RA_DO_OPT_IOTA
 
