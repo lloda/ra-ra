@@ -260,8 +260,7 @@ template <class A, int K, int N>
 struct combinations_
 {
     static_assert(is_tuple<A>);
-    static_assert(N>=0 && K>=0);
-    static_assert(K<=N);
+    static_assert(N>=0 && K>=0 && K<=N);
     using Rest = drop1<A>;
     using type = append<MapCons<first<A>, combinations<Rest, K-1, N-1>>, combinations<Rest, K, N-1>>;
 };

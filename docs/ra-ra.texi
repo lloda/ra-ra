@@ -2103,7 +2103,7 @@ See also @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
 Create outer product expression. This is defined as
 
 @display
-E = from(op, e₀, e₁ ...) ⇒ E(i₀₀, i₀₁ ..., i₁₀, i₁₁, ..., ...) = op[expr₀(i₀₀, i₀₁, ...), expr₁(i₁₀, i₁₁, ...), ...].
+@math{E = \mathrm{from}(\mathrm{op}, \mathrm{expr}_0, \mathrm{expr}_1 ...) ⇒ E(i_{00}, i_{01} ..., i_{10}, i_{11}, ..., ...) = \mathrm{op}\big(\mathrm{expr}_0(i_{00}, i_{01}, ...), \mathrm{expr}_1(i_{10}, i_{11}, ...), ...\big)}.
 @end display
 
 For example:
@@ -2201,8 +2201,6 @@ map(x, i, j) = 1;
 @result{} x = @{@{0, 1, 0@}, @{1, 0, 1@}, @{0, 1, 0@}@}
 @end example
 
-Note that @code{map(x, i, j)} is @ref{x-subscript-outer-product,not the same} as @code{x(i, j)}.
-
 @var{op} can be any callable. For example:
 @example
 @verbatim
@@ -2212,6 +2210,8 @@ ra::map(&A::a, v) = -ra::map(&A::b, v); // pointer to member
 @end verbatim
 @result{} v = @{@{-2, 2@}, @{-4, 4@}@}
 @end example
+
+Operations defined on scalar arguments are usually extended to higher rank arguments through @code{op(i ...)} ≡ @code{map(op, i ...)}, but note that @ref{x-subscript-outer-product,this is not the case} when @var{op} is a view.
 
 See also @ref{x-for_each,@code{for_each}}.
 

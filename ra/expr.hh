@@ -118,8 +118,8 @@ struct Ptr
     RA_ASSIGNOPS_DEFAULT_SET
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
-    constexpr static dim_t len(int k) requires (nn!=ANY) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (nn==ANY) { return n; }
+    constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
     constexpr void adv(rank_t k, dim_t d) { i += step(k) * d; }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }

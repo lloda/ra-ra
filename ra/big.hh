@@ -319,8 +319,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     /* always compact/row-major, so STL-like iterators can be raw pointers. */ \
     constexpr auto begin() CONST { assert(is_c_order(view())); return view().data(); } \
     constexpr auto end() CONST { return view().data()+size(); }         \
-    /* FIXME cannot use this with braces<> yet. FIXME optimization (1==RANK && 0==c) opt breaks test/io.cc (?) */ \
-    template <rank_t c=0> constexpr auto iter() CONST { return view().template iter<c>(); } \
+    template <rank_t c=0> constexpr auto iter() CONST { if constexpr (1==RANK && 0==c) { return ptr(data(), size()); } else { return view().template iter<c>(); } } \
     constexpr operator T CONST & () CONST { return view(); }
     FOR_EACH(RA_CONST_OR_NOT, /*not const*/, const)
 #undef RA_CONST_OR_NOT

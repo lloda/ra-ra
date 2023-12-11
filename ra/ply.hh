@@ -22,7 +22,7 @@ constexpr decltype(auto)
 VALUE(A && a)
 {
     if constexpr (is_scalar<A>) {
-        return RA_FWD(a); // avoid dangling temp in this case [ra8] (?? maybe unnecessary)
+        return RA_FWD(a); // [ra8]
     } else if constexpr (is_iterator<A>) {
         return *a; // no need to start() for one
     } else {
@@ -53,10 +53,10 @@ constexpr bool has_len_def<Iota<w, N, O, S>> = (has_len<N> || has_len<O> || has_
 template <class I, class N>
 constexpr bool has_len_def<Ptr<I, N>> = has_len<N>;
 
-template <class E_>
+template <class E>
 struct WithLen
 {
-// constant/scalar appear in Iota args. dots_t and insert_t appear in subscripts. FIXME restrict to known cases
+    static_assert(!has_len<E>, "Unhandled len.");
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
