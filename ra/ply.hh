@@ -107,13 +107,15 @@ struct WithLen<Iota<w, I, N, S>>
     }
 };
 
-template <class I, class N, class S> requires (has_len<N>)
+template <class I, class N, class S> requires (has_len<N> || has_len<S>)
 struct WithLen<Ptr<I, N, S>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return ptr(RA_FWD(e).i, VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)));
+        return ptr(RA_FWD(e).i,
+                   VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
+                   VALUE(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
     }
 };
 

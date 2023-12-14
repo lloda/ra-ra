@@ -137,7 +137,7 @@ struct Ptr
     constexpr void mov(dim_t d) { i += d*s; }
 };
 
-template <class X> using iota_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
+template <class X> using seq_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
 
 template <class S>
 constexpr auto
@@ -170,7 +170,7 @@ ptr(I && i, N && n = N {}, S && s = thestep<S>())
         if constexpr (std::is_integral_v<N>) {
             RA_CHECK(n>=0, "Bad ptr length ", n, ".");
         }
-        return Ptr<std::decay_t<I>, iota_arg<N>, iota_arg<S>> { i, RA_FWD(n), RA_FWD(s) };
+        return Ptr<std::decay_t<I>, seq_arg<N>, seq_arg<S>> { i, RA_FWD(n), RA_FWD(s) };
     } else {
         static_assert(always_false<I>, "Bad type for ptr().");
     }
@@ -221,7 +221,7 @@ iota(N && n = N {}, I && i = 0, S && s = thestep<S>())
     if constexpr (std::is_integral_v<N>) {
         RA_CHECK(n>=0, "Bad iota length ", n, ".");
     }
-    return Iota<w, iota_arg<I>, iota_arg<N>, iota_arg<S>> { RA_FWD(i), RA_FWD(n), RA_FWD(s) };
+    return Iota<w, seq_arg<I>, seq_arg<N>, seq_arg<S>> { RA_FWD(i), RA_FWD(n), RA_FWD(s) };
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();

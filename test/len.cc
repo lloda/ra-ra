@@ -79,12 +79,13 @@ int main()
     }
     tr.section("len in ptr");
     {
-        int aa[] = { 1, 2, 3, 4, 5 };
+        int aa[] = { 1, 2, 3, 4, 5, 6 };
         int * a = aa;
         static_assert(ra::has_len<decltype(ra::ptr(a, ra::len))>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len)).n)>);
         static_assert(std::is_integral_v<decltype(with_len(5, ra::ptr(a, ra::len-1)).n)>);
         tr.test_eq(ra::ptr(a, 5), with_len(5, ra::ptr(a, ra::len)));
+        tr.info("len in step argument").test_eq(ra::ptr(a, 3)*2, with_len(6, ra::ptr(a+1, ra::len/2, ra::len/3)));
     }
     tr.section("static len is preserved");
     {
