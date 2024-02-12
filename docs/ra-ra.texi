@@ -81,9 +81,11 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 @cindex shape
 A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list of all the @dfn{lengths} (n₀, n₁, ... nᵣ₋₁) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
 
-Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.
+Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.@footnote{@c
+@cindex arity
+This leads to ‘rank’ being called ‘arity’ in some contexts, especially when there is risk of confusion with the meaning of ‘rank’ in linear algebra.}
 
-Arrays (as a representation of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
+Arrays (as a representation of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are common objects in math and programming, and it's very useful to be able to manipulate arrays as individual entities rather than as aggregates. Not only is
 
 @verbatim
 A = B+C;
@@ -241,11 +243,11 @@ One important difference between Blitz++ and @code{ra::} is that Blitz++'s array
 
 @subsection Other C++ libraries
 
-TODO
+@c TODO
 
 @subsection Other languages
 
-TODO Maybe review other languages, at least the big ones (Fortran / APL / J / Matlab / Python-Numpy).
+@c TODO Maybe review other languages, at least the big ones (Fortran / APL / J / Matlab / Python-Numpy).
 
 @c ------------------------------------------------
 @node Usage
@@ -503,7 +505,7 @@ for_each([&s](auto && a) { s+=a; }, a);
 @result{} s = 21.
 @end example
 
-To construct an array expression but stop short of traversing it, use the function @code{map}. The expression will be traversed when it is assigned to a view, printed out, etc.
+To construct an array expression but stop short of traversing it, use the function @code{map}. The expression will be traversed when it's assigned to a view, printed out, etc.
 
 @example
 @verbatim
@@ -1365,7 +1367,7 @@ std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major ord
 @cindex other libraries, interfacing with
 @subsection Using @code{ra::} types with other libraries
 
-When you have to pass arrays back and forth between your program and an external library, perhaps even another language, it is necessary for both sides to agree on memory layout. @code{ra::} gives you access to its own memory layout and allows you to obtain an @code{ra::} view on any type of memory.
+When you have to pass arrays back and forth between your program and an external library, or perhaps another language, it is necessary for both sides to agree on memory layout. @code{ra::} gives you access to its own memory layout and allows you to obtain an @code{ra::} view on any piece of memory.
 
 @subsubsection The good array citizen
 
@@ -1706,7 +1708,7 @@ Item 2
 * Header structure::
 * Type hierarchy::
 * Term agreement::
-* Loop types::
+* Kinds of loop::
 * Introspection::
 * Building with @code{ra::}::
 @end menu
@@ -1788,11 +1790,11 @@ Then we select a order of traversal. @code{ra::} supports ‘array’ orders, me
 Finally we select a traversal method. @code{ra::} has two traversal methods: @code{ply_fixed} can be used when the rank and the traversal order are known at compile time, and @code{ply_ravel} can be used in the general case.
 
 @c ------------------------------------------------
-@node Loop types
-@section Loop types
+@node Kinds of loop
+@section Kinds of loop
 @c ------------------------------------------------
 
-TODO
+@c TODO
 
 @c ------------------------------------------------
 @node Introspection
@@ -1963,7 +1965,7 @@ Create an array expression that casts @var{expr} into @var{type}.
 
 @cindex @code{collapse}
 @anchor{x-collapse} @defun collapse
-TODO
+@c TODO
 See also @ref{x-explode,@code{explode}}.
 @end defun
 
@@ -1986,12 +1988,12 @@ Equivalent to @code{transpose<0, 0>(view)}.
 @anchor{x-dot} @defun dot a b
 Compute dot product of expressions @var{a} and @var{b}.
 
-TODO
+@c TODO
 @end defun
 
 @cindex @code{explode}
 @anchor{x-explode} @defun explode
-TODO
+@c TODO
 
 See also @ref{x-collapse,@code{collapse}}.
 @end defun
@@ -2132,29 +2134,35 @@ The last example is more or less how @code{A(i, j)} is implemented for arbitrary
 
 @cindex @code{gemm}
 @anchor{x-gemm} @defun gemm a b
-Compute matrix-matrix product of expressions @var{a} and @var{b}. This funcion returns a container.
+Compute matrix-matrix product of expressions @var{a} and @var{b}. This function returns a container.
 
-TODO
+@c TODO
 
 See @ref{Performance pitfalls of rank extension}.
+
+See also @ref{x-gemv,@code{gemv}}, @ref{x-gevm,@code{gevm}}.
 @end defun
 
 @cindex @code{gemv}
 @anchor{x-gemv} @defun gemv a b
-Compute matrix-vector product of expressions @var{a} and @var{b}. This funcion returns a container.
+Compute matrix-vector product of expressions @var{a} and @var{b}. This function returns a container.
 
-TODO
+@c TODO
 
 See @ref{Performance pitfalls of rank extension}.
+
+See also @ref{x-gemm,@code{gemm}}, @ref{x-gevm,@code{gevm}}.
 @end defun
 
 @cindex @code{gevm}
 @anchor{x-gevm} @defun gevm a b
-Compute vector-matrix product of expressions @var{a} and @var{b}. This funcion returns a container.
+Compute vector-matrix product of expressions @var{a} and @var{b}. This function returns a container.
 
-TODO
+@c TODO
 
 See @ref{Performance pitfalls of rank extension}.
+
+See also @ref{x-gemm,@code{gemm}}, @ref{x-gemv,@code{gemv}}.
 @end defun
 
 @cindex @code{imag_part}
@@ -2237,13 +2245,15 @@ For example:
   @result{} z = @{1.41421, 2, 0@}
 @end example
 
+See also @ref{x-where,@code{where}}.
+
 @end defun
 
 @cindex @code{ply}
 @anchor{x-ply} @defun ply expr
 Traverse @var{expr}. @code{ply} returns @code{void} so @var{expr} should be run for effect.
 
-It is rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)}, which is equivalent to @code{ply(map(...))}, should cover most other uses.
+It's rarely necessary to use @code{ply}. Expressions are traversed automatically when they are assigned to views, for example, or printed out. @ref{x-for_each,@code{for_each}}@code{(...)}, which is equivalent to @code{ply(map(...))}, should cover most other uses.
 
 @example
 @verbatim
@@ -2268,7 +2278,7 @@ Create a new view by reversing axis @var{k} of @var{view}.
 
 This is equivalent to @code{view(ra::dots<k>, ra::iota(ra::len, ra::len-1, -1))}.
 
-This operation does not work on arbitrary array expressions yet. TODO FILL
+This operation does not work on arbitrary array expressions yet. @c TODO FILL
 
 @end defun
 
@@ -2285,7 +2295,7 @@ Create a stencil on @var{view} with lower bounds @var{lo} and higher bounds @var
 
 @var{lo} and @var{hi} are expressions of rank 1 indicating the extent of the stencil on each dimension. Scalars are rank extended, that is, @var{lo}=0 is equivalent to @var{lo}=(0, 0, ..., 0) with length equal to the rank @code{r} of @var{view}. The stencil view has twice as many axes as @var{view}. The first @code{r} dimensions are the same as those of @var{view} except that they have their lengths reduced by @var{lo}+@var{hi}. The last @code{r} dimensions correspond to the stencil around each element of @var{view}; the center element is at @code{s(i0, i1, ..., lo(0), lo(1), ...)}.
 
-This operation does not work on arbitrary array expressions yet. TODO FILL
+This operation does not work on arbitrary array expressions yet. @c TODO FILL
 
 @end defun
 
@@ -2312,7 +2322,7 @@ This function reuses @code{std::swap} for same-rank overloads, so it must not be
 @defun transpose <axes ...> (view) | (axes, view)
 Create a new view by transposing the axes of @var{view}. The number of @var{axes} must match the rank of @var{view}.
 
-For example:
+@code{axes} are the @emph{destination} axes, that is, axis @math{i} of @var{view} matches axis @var{axes}@math{_i} of the result. For example:
 
 @example
 @verbatim
@@ -2326,7 +2336,7 @@ For example:
   3 6
 @end example
 
-The rank of the result is @code{maxᵢ(axesᵢ)+1} and it may be smaller or larger than that of @var{view}. If an axis is repeated, the smallest of the dimensions of @var{view} is used. For example:
+The rank of the result is @math{1+\mathrm{max}ᵢ(}@var{axes}@math{_i}@math{)} and it may be smaller or larger than that of @var{view}. If an axis is repeated, the step on the destination is the sum of the steps of the source axes and the length is the smallest of the lengths of the source axes. For example:
 
 @example
 @verbatim
@@ -2338,7 +2348,7 @@ The rank of the result is @code{maxᵢ(axesᵢ)+1} and it may be smaller or larg
   1 5
 @end example
 
-If one of the destination axes isn't mentioned in @var{axes}, then it becomes a ‘dead’ axis similar to those produced by @ref{x-insert,@code{insert}}. For example:
+If one of the destination axes isn't listed in @var{axes}, then it becomes a ‘dead’ axis similar to those produced by @ref{x-insert,@code{insert}}. For example:
 
 @example
 @verbatim
@@ -2352,7 +2362,7 @@ If one of the destination axes isn't mentioned in @var{axes}, then it becomes a 
   13 23 33
 @end example
 
-The two argument form lets you specify the axis list at runtime. In that case the result will have rt rank as well. For example: @c [ma117]
+The two argument form lets you specify the axis list at runtime. In that case the result will have runtime rank as well. For example: @c [ma117]
 
 @example
 @verbatim
@@ -2374,13 +2384,14 @@ The two argument form lets you specify the axis list at runtime. In that case th
   3 6
 @end example
 
-This operation does not work on arbitrary array expressions yet. TODO FILL
+This operation does not work on arbitrary array expressions yet. @c TODO FILL
 
 @end defun
 
 @cindex @code{where}
-@anchor{x-where} @defun where pred_expr true_expr false_expr
-Create an array expression that selects @var{true_expr} if @var{pred_expr} is @code{true}, and @var{false_expr} if @var{pred_expr} is @code{false}. The expression that is not selected is not looked up.
+@cindex Masking
+@anchor{x-where} @defun where expred extrue exfalse
+Create an array expression that selects @var{extrue} if @var{expred} is @code{true}, and @var{exfalse} if @var{expred} is @code{false}. The expression that is not selected is not looked up.
 
 For example:
 @example
@@ -2391,18 +2402,15 @@ For example:
   @result{} s = @{1, -1, 2, 2@}
 @end example
 
+See also @ref{x-pick,@code{pick}}.
+
 @end defun
 
 @cindex @code{wrank}
 @anchor{x-wrank} @defun wrank <input_rank ...> op
 Wrap @var{op} using a rank conjunction (@pxref{The rank conjunction}).
 
-For example: TODO
-@example
-@verbatim
-@end verbatim
-  @result{} x = 0
-@end example
+@c TODO examples
 
 @end defun
 
@@ -2424,7 +2432,7 @@ For example: TODO
 @anchor{x-noshape}
 @anchor{x-withshape}
 @deffn @w{Special object} {withshape noshape}
-If either of these objects is sent to @code{std::ostream} before an expression object, the shape of that object will or will not be printed.
+If either of these objects is sent to a @code{std::ostream} before an expression object, the shape of that object will or will not be printed.
 
 If the object has ct shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has rt shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] expect the shape to be present or not according to the default.
 
@@ -2479,7 +2487,7 @@ See also @ref{x-format_array,@code{format_array}}.
 @deffnx @w{Function} ptr bidirectional_range
 Create rank-1 expression from foreign object.
 
-If @code{len} is not given for @var{bidirectional_iterator}, the expression has undefined length, and it will need to be matched with other expressions whose length is defined. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
+If @code{len} is not given for @var{bidirectional_iterator}, the expression has undefined length, and needs to be matched with other expressions whose length is defined. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
 
 @example
 @verbatim
@@ -2499,9 +2507,9 @@ Of course in this example one could simply have used @code{pp} instead of @code{
 
 @example
 @verbatim
-v3 += pp; // ok
+v3 += pp; // ok, shapes match
 v4 += pp; // error checked by ra::, shape clash (4) += (3)
-cout << (p + ra::iota()) << endl; // ok
+cout << (pp + ra::iota()) << endl; // ok, shape from pp
 @end verbatim
 @end example
 
@@ -2515,9 +2523,9 @@ static_assert(2==ra::size(p)); // p not constexpr, but still ok
 @end verbatim
 @end example
 
-You don't need to use @code{ra::ptr} on STL containers or ranges, or on built in arrays. Those are converted to rank-1 expressions of the right size automatically.
+@code{ra::ptr} is often equivalent to @ref{x-start,@code{start}}, and can be omitted in the same way, but raw pointers require @code{ra::ptr}.
 
-See also @ref{x-start,@code{start}}, @ref{x-iota,@code{iota}}.
+See also @ref{x-start,@code{start}}, @ref{x-scalar,@code{scalar}}, @ref{x-iota,@code{iota}}.
 
 @end deffn
 
@@ -2534,7 +2542,9 @@ See also @ref{x-begin,@code{begin}}, @ref{x-end,@code{end}}.
 @anchor{x-start} @defun start foreign_object
 Create array expression from @var{foreign_object}.
 
-@var{foreign_object} can be a built-in array (e.g. @code{int[3][2]}), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}). The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which will always produce an expression of rank 0.
+@var{foreign_object} can be a built-in array (e.g. @code{int[3][2]}), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}).
+
+The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which only produces rank 0 expressions, or @ref{x-ptr,@code{ptr}}, which only produces rank 1 expressions.
 
 Generally one can mix these types with @code{ra::} expressions without needing @code{ra::start}, but sometimes this isn't possible, for example for operators that must be class members.
 
@@ -2551,6 +2561,7 @@ ra::start(x) += y; // ok
   @result{} x = @{ 11, 22, 33 @}
 @end example
 
+See also @ref{x-scalar,@code{scalar}}, @ref{x-ptr,@code{ptr}}.
 @end defun
 
 @cindex @code{scalar}
@@ -2597,11 +2608,12 @@ c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
 @end example
 where the result is @{c(0)+x(0), c(1)+x(1), c(2)@}.
 
+See also @ref{x-start,@code{start}}.
 @end defun
 
 @cindex @code{iter}
 @anchor{x-iter} @defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it is interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have rt or ct shape.
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it's interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have rt or ct shape.
 
 @example
 @verbatim
@@ -2623,7 +2635,7 @@ cout << "max of each column again: " << m << endl;
 @end example
 
 @c [ma113]
-In the following example, @code{iter} emulates @code{scalar}. Note that the shape () of @code{iter<1>(m)} matches the shape (3) of @code{iter<1>(c)}. Thus, each of the 1-cells of @code{c} matches against the single 1-cell of @code{m}.
+In the following example, @code{iter} emulates @ref{x-scalar,@code{scalar}}. Note that the shape () of @code{iter<1>(m)} matches the shape (3) of @code{iter<1>(c)}. Thus, each of the 1-cells of @code{c} matches against the single 1-cell of @code{m}.
 
 @example
 @verbatim
@@ -2740,9 +2752,9 @@ Pass @code{none} to container constructors to indicate that the contents shouldn
 
 @example
 @verbatim
-void old_style_initializer(int m, int n, double *);
+void foreign_initializer(int m, int n, double *);
 ra::Big<double> b({2, 3}, ra::none);
-old_style_initializer(2, 3, b.data());
+foreign_initializer(2, 3, b.data());
 @end verbatim
 @end example
 

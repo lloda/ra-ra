@@ -262,7 +262,7 @@ RA_IS_DEF(has_len, false);
 // making Iterators
 // --------------
 
-// TODO arbitrary exprs?
+// TODO arbitrary exprs? runtime cr? ra::len in cr?
 template <int cr>
 constexpr auto
 iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
@@ -649,9 +649,8 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     constexpr
     operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const
     {
-        if constexpr (0!=rs && (1!=rs || 1!=size_s<Expr>())) { // for coord types; so ct only
-            static_assert(rs==ANY);
-            RA_CHECK(0==rank(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
+        if constexpr (1!=size_s<Expr>()) {
+            RA_CHECK(1==size(*this), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return *(*this);
     }
@@ -736,13 +735,12 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     RA_ASSIGNOPS_DEFAULT_SET
     constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
     constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
-// needed for xpr with rs==ANY, which don't decay to scalar when used as operator arguments.
+// needed for rs==ANY, which don't decay to scalar when used as operator arguments.
     constexpr
     operator decltype(pick_star<0>(*std::get<0>(t), t)) () const
     {
-        if constexpr (0!=rs && (1!=rs || 1!=size_s<Pick>())) { // for coord types; so ct only
-            static_assert(rs==ANY);
-            RA_CHECK(0==rank(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
+        if constexpr (1!=size_s<Pick>()) {
+            RA_CHECK(1==size(*this), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return *(*this);
     }

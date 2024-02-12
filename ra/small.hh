@@ -409,7 +409,6 @@ struct SmallBase
     consteval static decltype(auto) shape() { return theshape; }
 // TODO check steps
     static_assert(std::apply([](auto ... s) { return ((0<=s) && ...); }, theshape), "Bad shape.");
-    constexpr static bool convertible_to_scalar = (1==size()); // allowed for 1 for coord types
     constexpr static dim_t len0 = rank()>0 ? len(0) : 0;
     constexpr static bool defsteps = is_c_order_dimv(dimv);
 };
@@ -418,7 +417,7 @@ template <class T, class lens, class steps>
 struct ViewSmall: public SmallBase<T, lens, steps>
 {
     using Base = SmallBase<T, lens, steps>;
-    using Base::rank, Base::size, Base::convertible_to_scalar, Base::dimv;
+    using Base::rank, Base::size, Base::dimv;
     using Base::len, Base::len_s, Base::step, Base::len0, Base::defsteps;
     using sub = typename nested_arg<T, lens>::sub;
 
@@ -520,7 +519,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr decltype(auto)
     at(I && i) const
     {
-// can't say 'frame rank 0' so -size wouldn't work.
+// can't say 'frame rank 0' so -size wouldn't work. What about ra::len
         constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());
         static_assert(crank>=0); // to make out the output type
         return iter<crank>().at(RA_FWD(i));
@@ -533,7 +532,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr auto end() const requires (defsteps) { return cp+size(); }
     constexpr static auto end() requires (!defsteps) { return std::default_sentinel; }
     constexpr T & back() const { static_assert(rank()>=1 && size()>0, "No back()."); return cp[size()-1]; }
-    constexpr operator T & () const { static_assert(convertible_to_scalar); return cp[0]; }
+    constexpr operator T & () const { static_assert(1==size(), "Bad conversion to scalar."); return cp[0]; }
 };
 
 #if defined (__clang__)
@@ -568,7 +567,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     : public SmallBase<T, lens, steps>
 {
     using Base = SmallBase<T, lens, steps>;
-    using Base::rank, Base::size, Base::convertible_to_scalar, Base::len0;
+    using Base::rank, Base::size, Base::len0;
 
     T cp[size()]; // cf what std::array does for zero size; wish zero size just worked :-/
 
@@ -612,7 +611,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
 #define RA_CONST_OR_NOT(CONST)                                          \
     constexpr T CONST & back() CONST { return view().back(); }          \
     constexpr T CONST * data() CONST { return view().data(); }          \
-    constexpr operator T CONST & () CONST requires (convertible_to_scalar) { return view(); } \
+    constexpr operator T CONST & () CONST { return view(); }            \
     constexpr decltype(auto) operator()(auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
     constexpr decltype(auto) operator[](auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
     constexpr decltype(auto) at(auto && i) CONST { return view().at(RA_FWD(i)); } \
@@ -693,7 +692,7 @@ transpose(cv_smallview auto && a_)
     constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
     constexpr auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
     return ViewSmall<typename AA::T, ctuple<&Dim::len, dst, dstrank>, ctuple<&Dim::step, dst, dstrank>>(a.data());
-};
+}
 
 constexpr auto
 diag(cv_smallview auto && a)

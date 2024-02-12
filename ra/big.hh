@@ -195,7 +195,7 @@ struct ViewBig
     constexpr decltype(auto)
     at(I && i) const
     {
-// can't say 'frame rank 0' so -size wouldn't work.
+// can't say 'frame rank 0' so -size wouldn't work. What about ra::len
        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
        if constexpr (ANY==crank) {
             return iter(rank()-ra::size(i)).at(RA_FWD(i));
@@ -206,13 +206,12 @@ struct ViewBig
     constexpr
     operator T & () const
     {
-        static_assert(ANY==RANK || 0==RANK, "Bad rank for conversion to scalar.");
-        if constexpr (ANY==RANK) {
-            RA_CHECK(0==rank(), "Error converting rank ", rank(), " to scalar.");
+        if constexpr (0!=RANK) {
+            RA_CHECK(1==size(), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(this), "].");
         }
         return cp[0];
     }
-// FIXME necessary here per [ra15], conflict with converting constructor? maybe gcc14 https://wg21.link/cwg976
+// FIXME necessary per [ra15], conflict with converting constructor? maybe gcc14 https://wg21.link/cwg976
     constexpr operator T & () { return std::as_const(*this); }
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)

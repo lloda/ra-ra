@@ -252,7 +252,7 @@ int main(int argc, char * * argv)
         tr.test_eq(1, a.rank());
         tr.test_eq(0, a.len(0));
     }
-    tr.section("allow scalar for rank 1 shapes");
+    tr.section("allow scalar shape for rank 1");
     {
         ra::Big<int> a(3, ra::_0);
         tr.test_eq(1, rank(a));
@@ -277,6 +277,18 @@ int main(int argc, char * * argv)
         ra::Big<int, 1> b = { 1, 2, 3 };
         tr.test(std::is_same_v<int &, decltype(b(a))>);
         tr.test_eq(2, b(a));
+    }
+    tr.section("scalar conversion");
+    {
+        ra::Big<int, 0> xa({}, 1);
+        ra::Big<int, 1> xb({1}, 2);
+        ra::Big<int, 2> xc({1, 1}, 3);
+        int a = xa;
+        int b = xb;
+        int c = xc;
+        tr.test_eq(1, a);
+        tr.test_eq(2, b);
+        tr.test_eq(3, c);
     }
     return tr.summary();
 }

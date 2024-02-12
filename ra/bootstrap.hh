@@ -145,7 +145,7 @@ rank_s()
     }
 }
 
-template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); } // c++23 p2280r4
+template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); } // c++23 p2280r4 on gcc14
 
 template <class V>
 constexpr rank_t
