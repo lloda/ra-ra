@@ -321,5 +321,5 @@ format(std::string const & s) { return s; }
 } // namespace ra
 
 #ifdef RA_AFTER_CHECK
-#error Bad header include order! Do not include ra/bootstrap.hh after other ra:: headers.
+#error Bad header include order! Do not include ra/base.hh after other ra:: headers.
 #endif

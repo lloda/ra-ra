@@ -10,7 +10,7 @@
 #pragma once
 #include <cassert>
 #include <functional>
-#include "bootstrap.hh"
+#include "base.hh"
 
 
 // --------------------

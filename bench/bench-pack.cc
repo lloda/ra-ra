@@ -54,9 +54,9 @@ int main()
         {
             a = ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.));
         };
-    auto f_xI = [](auto & a, int size)
+    auto f_xi = [](auto & a, int size)
         {
-            a = ra::iota(size, 0.) + xI(size-ra::iota(size, 0.));
+            a = ra::iota(size, 0.) + xi(size-ra::iota(size, 0.));
         };
 
     auto bench_all = [&](auto A_, int size, int n)
@@ -66,7 +66,7 @@ int main()
             bench(f_reim, A_, "re/im", size, n);
             bench(f_collapse, A_, "collapse", size, n);
             bench(f_pack, A_, "pack", size, n);
-            bench(f_xI, A_, "xI", size, n);
+            bench(f_xi, A_, "xi", size, n);
         };
 
     bench_all(ra::Big<complex, 1>(), 10, 1000000);

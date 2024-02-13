@@ -72,7 +72,6 @@ int main()
     }
     tr.section("reshape to fixed rank to var rank");
     {
-// FIXME warning w/ gcc 6.3 in bootstrap.hh inside() [ra32]. Apparent root is in decl of b in reshape().
         ra::Big<int, 2> a({2, 3}, ra::_0*3+ra::_1);
         auto b = reshape(a, ra::Big<int, 1> {3});
         tr.info("reshape select").test_eq(ra::Big<int, 1> {0, 1, 2}, b);

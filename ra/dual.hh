@@ -250,9 +250,9 @@ isfinite(Dual<A> const & a)
 
 template <class A>
 constexpr auto
-xI(Dual<A> const & a)
+xi(Dual<A> const & a)
 {
-    return dual(xI(a.re), xI(a.du));
+    return dual(xi(a.re), xi(a.du));
 }
 
 template <class A>

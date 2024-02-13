@@ -330,7 +330,7 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 
 <p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These decay to pointers when you do nearly anything with them, don&rsquo;t know their own shape or rank at runtime, and are generally too limited.
 </p>
-<p>The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: <code>&lt;array&gt;</code>, <code>&lt;vector&gt;</code> and <code>&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code>&lt;valarray&gt;</code> offers array operations for 1-arrays. <code>ra::</code> makes use of <code>&lt;array&gt;</code> and <code>&lt;vector&gt;</code> for storage and bootstrapping.
+<p>The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: <code>&lt;array&gt;</code>, <code>&lt;vector&gt;</code> and <code>&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code>&lt;valarray&gt;</code> offers array operations for 1-arrays. <code>ra::</code> makes use of <code>&lt;array&gt;</code> and <code>&lt;vector&gt;</code> internally and for storage.
 </p>
 <p><code>ra::</code> accepts built-in arrays and standard library types as array objects (see <a href="#Compatibility">Compatibility</a>).
 </p>
@@ -419,7 +419,7 @@ int main()
 </li><li> <code>&quot;ra/test.hh&quot;</code>, <code>&quot;ra/bench.hh&quot;</code>: Used by the test and benchmark suites.
 </li></ul>
 
-<p>The header <code>&quot;ra/bootstrap.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/bootstrap.hh&quot;</code> before the rest of <code>ra::</code> in order to override the default handler. All other headers are for internal use by <code>ra::</code>.
+<p>The header <code>&quot;ra/base.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/base.hh&quot;</code> before the rest of <code>ra::</code> in order to override the default handler. All other headers are for internal use by <code>ra::</code>.
 </p>
 <span id="index-container"></span>
 <hr>
@@ -1064,7 +1064,7 @@ Next: <a href="#The-rank-conjunction" accesskey="n" rel="next">The rank conjunct
 <h4 class="subsection">2.7.1 Standard scalar operations</h4>
 
 <p><code>ra::</code> defines array extensions for <code>+</code>, <code>-</code> (both unary and binary), <code>*</code>, <code>/</code>, <code>!</code>, <code>&amp;&amp;</code>, <code>||</code><a id="DOCF10" href="#FOOT10"><sup>10</sup></a>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>&lt;=&gt;</code>, <code>==</code>, <code>!=</code>, <code>pow</code>, <code>sqr</code>, <code>abs</code>, <code>cos</code>, <code>sin</code>, <code>exp</code>, <code>expm1</code>, <code>sqrt</code>, <code>log</code>, <code>log1p</code>, <code>log10</code>, <code>isfinite</code>, <code>isnan</code>, <code>isinf</code>, <code>max</code>, <code>min</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>cosh</code>, <code>sinh</code>, <code>tanh</code>, <code>lerp</code>, and <code>fma</code>.
-Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <code>odd</code>, <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxI"><code>xI</code></a>.
+Extending other scalar operations is straightforward; see <a href="#x_002dnew_002darray_002doperations">New array operations</a>. <code>ra::</code> also defines (and extends) the non-standard functions <code>odd</code>, <a href="#x_002dsqr"><code>sqr</code></a>, <a href="#x_002dsqrm"><code>sqrm</code></a>, <a href="#x_002dconj"><code>conj</code></a>, <a href="#x_002drel_002derror"><code>rel_error</code></a>, and <a href="#x_002dxi"><code>xi</code></a>.
 </p>
 <p>For example:
 </p><div class="example">
@@ -1770,7 +1770,7 @@ Next: <a href="#The-future" accesskey="n" rel="next">The future</a>, Previous: <
 <li><a href="#Headers" accesskey="1">Headers</a></li>
 <li><a href="#Type-hierarchy" accesskey="2">Type hierarchy</a></li>
 <li><a href="#Term-agreement" accesskey="3">Term agreement</a></li>
-<li><a href="#Kinds-of-loop" accesskey="4">Kinds of loop</a></li>
+<li><a href="#Traversal" accesskey="4">Traversal</a></li>
 <li><a href="#Introspection" accesskey="5">Introspection</a></li>
 <li><a href="#Building-with-ra_003a_003a" accesskey="6">Building with <code>ra::</code></a></li>
 </ul>
@@ -1787,10 +1787,10 @@ Next: <a href="#Type-hierarchy" accesskey="n" rel="next">Type hierarchy</a>, Up:
 <ul>
 <li> <code>tuples.hh</code> -
 Generic macros and tuple library.
-</li><li> <code>bootstrap.hh</code> -
+</li><li> <code>base.hh</code> -
 Basic types and concepts, introspection.
 </li><li> <code>expr.hh</code> -
-Expression template nodes, prefix matching.
+Expression template nodes.
 </li><li> <code>ply.hh</code> -
 Traversal, including I/O.
 </li><li> <code>small.hh</code> -
@@ -1844,7 +1844,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 <div class="section" id="Term-agreement">
 <div class="header">
 <p>
-Next: <a href="#Kinds-of-loop" accesskey="n" rel="next">Kinds of loop</a>, Previous: <a href="#Type-hierarchy" accesskey="p" rel="prev">Type hierarchy</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Traversal" accesskey="n" rel="next">Traversal</a>, Previous: <a href="#Type-hierarchy" accesskey="p" rel="prev">Type hierarchy</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Term-agreement-1"></span><h3 class="section">5.3 Term agreement</h3>
 
@@ -1856,12 +1856,12 @@ Next: <a href="#Kinds-of-loop" accesskey="n" rel="next">Kinds of loop</a>, Previ
 </p>
 <hr>
 </div>
-<div class="section" id="Kinds-of-loop">
+<div class="section" id="Traversal">
 <div class="header">
 <p>
 Next: <a href="#Introspection" accesskey="n" rel="next">Introspection</a>, Previous: <a href="#Term-agreement" accesskey="p" rel="prev">Term agreement</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Kinds-of-loop-1"></span><h3 class="section">5.4 Kinds of loop</h3>
+<span id="Traversal-1"></span><h3 class="section">5.4 Traversal</h3>
 
 
 <hr>
@@ -1869,7 +1869,7 @@ Next: <a href="#Introspection" accesskey="n" rel="next">Introspection</a>, Previ
 <div class="section" id="Introspection">
 <div class="header">
 <p>
-Next: <a href="#Building-with-ra_003a_003a" accesskey="n" rel="next">Building with <code>ra::</code></a>, Previous: <a href="#Kinds-of-loop" accesskey="p" rel="prev">Kinds of loop</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Building-with-ra_003a_003a" accesskey="n" rel="next">Building with <code>ra::</code></a>, Previous: <a href="#Traversal" accesskey="p" rel="prev">Traversal</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Introspection-1"></span><h3 class="section">5.5 Introspection</h3>
 
@@ -2769,9 +2769,9 @@ lexicographical_compare(A &amp;&amp; a, B &amp;&amp; b)
 <dd><p>Compute the complex conjugate of <var>expr</var>.
 </p></dd></dl>
 
-<span id="index-xI"></span>
-<span id="x_002dxI"></span><dl class="def">
-<dt id="index-xI-1"><span class="category">Function: </span><span><strong>xI</strong> <em>expr</em><a href='#index-xI-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="index-xi"></span>
+<span id="x_002dxi"></span><dl class="def">
+<dt id="index-xi-1"><span class="category">Function: </span><span><strong>xi</strong> <em>expr</em><a href='#index-xi-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Compute <code>(0+1j)</code> times <var>expr</var>.
 </p></dd></dl>
 
@@ -3042,7 +3042,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-wrank"><code>wrank</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-X">X</th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-xI"><code>xI</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-xi"><code>xi</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 </table>
 <table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>

@@ -13,7 +13,6 @@
 using std::cout, std::endl, ra::TestRecorder;
 using real = double;
 using complex = std::complex<double>;
-using ra::xI;
 
 int main()
 {
@@ -53,7 +52,7 @@ int main()
         TEST_UNARY_OP_CR(sin, 1.57079632679489661, 1., complex(1.57079632679489661, 0), complex(1., 0.), 0.);
         TEST_UNARY_OP_CR(exp, 0., 1., complex(0, 0), complex(1., 0.), 0.);
         TEST_UNARY_OP_CR(sqrt, 4., 2., complex(-1, 0), complex(0., 1.), 1e-16);
-        TEST_UNARY_OP_CR(xI, 4., complex(0, 4.), complex(1., -2.), complex(2., 1.), 0.);
+        TEST_UNARY_OP_CR(ra::xi, 4., complex(0, 4.), complex(1., -2.), complex(2., 1.), 0.);
 #undef TEST_UNARY_OP_CR
 #undef DEF_TEST_UNARY_OP
 // TODO merge with DEF_TEST_UNARY_OP
@@ -112,7 +111,7 @@ int main()
     {
         ra::Unique<complex, 1> a({3}, 0.);
         imag_part(a) = ra::Unique<real, 1> { 7., 2., 3. }; // TODO operator=(initializer_list) ?
-        real_part(a) = -imag_part(ra::Unique<complex, 1> { xI(7.), xI(2.), xI(3.) })+1;
+        real_part(a) = -imag_part(ra::Unique<complex, 1> { ra::xi(7.), ra::xi(2.), ra::xi(3.) })+1;
         tr.test_eq(ra::Unique<complex, 1> {{-6., 7.}, {-1., 2.}, {-2., 3.}}, a);
     }
     tr.section("lvalue-rvalue operators II [ma115]");

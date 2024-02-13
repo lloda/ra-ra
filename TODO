@@ -142,7 +142,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
       size(Big) (??).
   11. [ ]
   12. [ ]
-  13. [ ] ra/ply.hh (i/o), ra/expr.hh, ra/bootstrap.hh, test/compatibility.cc: std::string used to
+  13. [ ] ra/ply.hh (i/o), ra/expr.hh, ra/base.hh, test/compatibility.cc: std::string used to
       be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want
       format(std::string_view) to print it as a foreign vector, so we have an exception for it
       there. As things stand, you can register it as scalar or not.

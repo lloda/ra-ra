@@ -229,7 +229,7 @@ Since the C++ standard library doesn't offer a standard multidimensional array t
 
 The C++ language offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These decay to pointers when you do nearly anything with them, don't know their own shape or rank at runtime, and are generally too limited.
 
-The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. @code{ra::} makes use of @code{<array>} and @code{<vector>} for storage and bootstrapping.
+The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. @code{ra::} makes use of @code{<array>} and @code{<vector>} internally and for storage.
 
 @code{ra::} accepts built-in arrays and standard library types as array objects (@pxref{Compatibility}).
 
@@ -307,7 +307,7 @@ The following headers are @emph{not} included by default:
 @item @code{"ra/test.hh"}, @code{"ra/bench.hh"}: Used by the test and benchmark suites.
 @end itemize
 
-The header @code{"ra/bootstrap.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/bootstrap.hh"} before the rest of @code{ra::} in order to override the default handler. All other headers are for internal use by @code{ra::}.
+The header @code{"ra/base.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/base.hh"} before the rest of @code{ra::} in order to override the default handler. All other headers are for internal use by @code{ra::}.
 
 @cindex container
 @c ------------------------------------------------
@@ -1010,7 +1010,7 @@ You don't need to use @ref{Array operations,@code{map}} every time you want to d
 
 @code{ra::} defines array extensions for @code{+}, @code{-} (both unary and binary), @code{*}, @code{/}, @code{!}, @code{&&}, @code{||}@footnote{@code{&&}, @code{||} are short-circuiting as array operations; the elements of the second operand won't be evaluated if the elements of the first one evaluate to @code{false} or @code{true}, respectively.
 Note that if both operands are of rank 0 and at least one of them is an @code{ra::} object, they is no way to preserve the behavior of @code{&&} and @code{||} with built in types and avoid evaluating both, since the overloaded operators @url{http://en.cppreference.com/w/cpp/language/operators, are normal functions}.}, @code{>}, @code{<}, @code{>=}, @code{<=}, @code{<=>}, @code{==}, @code{!=}, @code{pow}, @code{sqr}, @code{abs}, @code{cos}, @code{sin}, @code{exp}, @code{expm1}, @code{sqrt}, @code{log}, @code{log1p}, @code{log10}, @code{isfinite}, @code{isnan}, @code{isinf}, @code{max}, @code{min}, @code{asin}, @code{acos}, @code{atan}, @code{atan2}, @code{cosh}, @code{sinh}, @code{tanh}, @code{lerp}, and @code{fma}.
-Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @code{odd}, @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xI,@code{xI}}.
+Extending other scalar operations is straightforward; see @ref{x-new-array-operations,New array operations}. @code{ra::} also defines (and extends) the non-standard functions @code{odd}, @ref{x-sqr,@code{sqr}}, @ref{x-sqrm,@code{sqrm}}, @ref{x-conj,@code{conj}}, @ref{x-rel-error,@code{rel_error}}, and @ref{x-xi,@code{xi}}.
 
 For example:
 @example @c [ma110]
@@ -1708,7 +1708,7 @@ Item 2
 * Header structure::
 * Type hierarchy::
 * Term agreement::
-* Kinds of loop::
+* Traversal::
 * Introspection::
 * Building with @code{ra::}::
 @end menu
@@ -1729,10 +1729,10 @@ The header structure of @code{ra::} is as follows.@c @footnote{Diagram generated
 @itemize
 @item @code{tuples.hh} -
 Generic macros and tuple library.
-@item @code{bootstrap.hh} -
+@item @code{base.hh} -
 Basic types and concepts, introspection.
 @item @code{expr.hh} -
-Expression template nodes, prefix matching.
+Expression template nodes.
 @item @code{ply.hh} -
 Traversal, including I/O.
 @item @code{small.hh} -
@@ -1790,8 +1790,8 @@ Then we select a order of traversal. @code{ra::} supports ‘array’ orders, me
 Finally we select a traversal method. @code{ra::} has two traversal methods: @code{ply_fixed} can be used when the rank and the traversal order are known at compile time, and @code{ply_ravel} can be used in the general case.
 
 @c ------------------------------------------------
-@node Kinds of loop
-@section Kinds of loop
+@node Traversal
+@section Traversal
 @c ------------------------------------------------
 
 @c TODO
@@ -2732,8 +2732,8 @@ Compute the square of the norm-2 of the elements of @var{expr}, that is, @code{c
 Compute the complex conjugate of @var{expr}.
 @end defun
 
-@cindex @code{xI}
-@anchor{x-xI} @defun xI expr
+@cindex @code{xi}
+@anchor{x-xi} @defun xi expr
 Compute @code{(0+1j)} times @var{expr}.
 @end defun
 

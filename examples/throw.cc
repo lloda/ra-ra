@@ -15,9 +15,9 @@
 #include <exception>
 #include <string>
 
-// "ra/bootstrap.hh" doesn't depend directly on RA_ASSERT, so the following override is able to use ra::format.
+// "ra/base.hh" doesn't depend directly on RA_ASSERT, so the following override is able to use ra::format.
 
-#include "ra/bootstrap.hh"
+#include "ra/base.hh"
 
 struct ra_error: public std::exception
 {

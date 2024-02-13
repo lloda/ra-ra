@@ -92,8 +92,8 @@ FOR_EACH(RA_FOR_TYPES, float, double)
     inline R arg(C x)                  { return std::arg(x); }          \
     constexpr C sqr(C x)               { return x*x; }                  \
     constexpr C dot(C x, C y)          { return x*y; }                  \
-    constexpr C xI(R x)                { return C(0, x); }              \
-    constexpr C xI(C z)                { return C(-z.imag(), z.real()); } \
+    constexpr C xi(R x)                { return C(0, x); }              \
+    constexpr C xi(C z)                { return C(-z.imag(), z.real()); } \
     constexpr R real_part(C const & z) { return z.real(); }             \
     constexpr R imag_part(C const & z) { return z.imag(); }             \
     inline R & real_part(C & z)        { return reinterpret_cast<R *>(&z)[0]; } \
@@ -293,7 +293,7 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
     using QUALIFIED_OP;                         \
     DEF_NAME(OP)
 
-FOR_EACH(DEF_NAME, odd, arg, sqr, sqrm, real_part, imag_part, xI, rel_error)
+FOR_EACH(DEF_NAME, odd, arg, sqr, sqrm, real_part, imag_part, xi, rel_error)
 
 // can't DEF_USING bc std::max will gobble ra:: objects if passed by const & (!)
 // FIXME define own global max/min overloads for basic types. std::max seems too much of a special case to be usinged.
