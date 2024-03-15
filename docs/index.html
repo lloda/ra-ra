@@ -403,7 +403,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 int main()
 {
     ra::Big&lt;char, 2&gt; A({2, 5}, &quot;helloworld&quot;);
-    std::cout &lt;&lt; ra::noshape &lt;&lt; format_array(transpose&lt;1, 0&gt;(A), {.sep=&quot;|&quot;}) &lt;&lt; std::endl;
+    std::cout &lt;&lt; ra::noshape &lt;&lt; format_array(transpose&lt;1, 0&gt;(A), {.sep0=&quot;|&quot;}) &lt;&lt; std::endl;
 }
 </pre><pre class="example">-| h|w
    e|o
@@ -523,7 +523,7 @@ Small&lt;int, 2, 2&gt; b = {1, 2, 3};         // error: bad size
 <div class="example">
 <pre class="verbatim">ra::Big&lt;char const *, 1&gt; A({3}, &quot;hello&quot;); // error: try to convert char to char const *
 ra::Big&lt;char const *, 1&gt; A({3}, ra::scalar(&quot;hello&quot;)); // ok, &quot;hello&quot; is a single item
-cout &lt;&lt; ra::noshape &lt;&lt; format_array(A, {.sep=&quot;|&quot;}) &lt;&lt; endl;
+cout &lt;&lt; ra::noshape &lt;&lt; format_array(A, {.sep0=&quot;|&quot;}) &lt;&lt; endl;
 </pre><pre class="example">-| hello|hello|hello
 </pre></div>
 

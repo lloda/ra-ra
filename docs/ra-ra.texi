@@ -290,7 +290,7 @@ Here is a minimal program@footnote{Examples given without context assume that on
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << ra::noshape << format_array(transpose<1, 0>(A), {.sep="|"}) << std::endl;
+    std::cout << ra::noshape << format_array(transpose<1, 0>(A), {.sep0="|"}) << std::endl;
 }
 @end verbatim
 @print{} h|w
@@ -429,7 +429,7 @@ Sometimes the pointer constructor gets in the way (see @ref{x-scalar,@code{scala
 @verbatim
 ra::Big<char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
 ra::Big<char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
-cout << ra::noshape << format_array(A, {.sep="|"}) << endl;
+cout << ra::noshape << format_array(A, {.sep0="|"}) << endl;
 @end verbatim
 @print{} hello|hello|hello
 @end example
