@@ -221,6 +221,26 @@ int main()
         }
         tr.info("uninitialized dynamic rank").test_eq(2, x);
     }
+    tr.section("iffy conversions");
+// FIXME this fails at runtime bc val[0] might have size 1, but this is much more likely to be a coding error.
+// FIXME shape doesn't show in the error message as it should.
+    {
+        ra::Big<double, 2> val = { { 7, 0, 0, 0.5, 1.5, 1, 1, 1 } };
+        ra::Big<double, 2> bal = { { 7 }, { 0 } };
+        double x = bal[0];
+        tr.test_eq(7, x);
+        int error = 0;
+        string s;
+        try {
+            double x = val[0];
+            cout << "x " << x << " (!)" << endl;
+        } catch (ra_error & e) {
+            error = 1;
+            s = e.s;
+        }
+        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
+    }
+
 
 // ------------------------------
 // see test/frame-old.cc
@@ -264,5 +284,6 @@ int main()
         tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
 #undef EXPR
+
     return tr.summary();
 }
