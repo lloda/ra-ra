@@ -1,7 +1,7 @@
 # -*- coding: utf-8; mode: Python -*-
 # SConstruct for ra/test
 
-# (c) Daniel Llorens - 2015-2023
+# (c) Daniel Llorens - 2015-2024
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
@@ -58,12 +58,13 @@ tester = ra.to_test_ra(env, variant_dir)
               'frame-old', 'fromb', 'fromu', 'headers', 'io', 'iota', 'iterator-small', 'len',
               'list9', 'macros', 'mem-fn', 'ndebug', 'nested-0', 'old', 'operators', 'optimize',
               'owned', 'ownership', 'ply', 'ra-0', 'ra-1', 'ra-10', 'ra-11', 'ra-12', 'ra-13',
-              'ra-14', 'ra-15', 'ra-2', 'ra-3', 'ra-4', 'ra-5', 'ra-6', 'ra-7', 'ra-8', 'ra-9',
-              'ra-dual', 'reduction', 'reduction-1', 'reexported', 'reshape', 'return-expr',
+              'ra-14', 'ra-15', 'ra-2', 'ra-3', 'ra-4', 'ra-5', 'ra-6', 'ra-7', 'ra-8',
+              'ra-9', 'ra-dual', 'reduction', 'reduction-1', 'reexported', 'reshape', 'return-expr',
               'self-assign', 'sizeof', 'small-0', 'small-1', 'stl-compat', 'swap', 'tensorindex',
               'test', 'tuples', 'types', 'vector-array', 'view-ops', 'wedge', 'where', 'wrank',
               # 'bug90745', # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 gcc 9-10.2 so far
               # 'end'
+              # 'ra-16' # FIXME broken on gcc11, ok on gcc12/13
               ]]
 
 tester('early', target='early-no-su', cppdefines={'RA_STATIC_UNROLL': '0'})

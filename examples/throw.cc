@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/examples - Customize ra:: reaction to errors.
 
-// (c) Daniel Llorens - 2019-2023
+// (c) Daniel Llorens - 2019-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -30,7 +30,7 @@ struct ra_error: public std::exception
 };
 
 #define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "] " __VA_OPT__(,) __VA_ARGS__); }
+    { if (!( cond )) throw ra_error("ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
 
 // The override will be in effect for the rest of ra::.
 

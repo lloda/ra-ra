@@ -173,9 +173,9 @@ struct TestRecorder
             return c;
         } else {
             test(false,
-                 RA_LAZYINFO("Mismatched args [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]",
+                 RA_LAZYINFO("Mismatched shapes [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]",
                              willstrictshape ? " (strict shape)" : ""),
-                 RA_LAZYINFO("Shape mismatch", willstrictshape ? " (strict shape)" : ""),
+                 RA_LAZYINFO("Mismatched shapes", willstrictshape ? " (strict shape)" : ""),
                  loc);
             return false;
         }

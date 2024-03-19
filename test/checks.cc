@@ -1,13 +1,13 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Runtime checks.
 
-// (c) Daniel Llorens - 2019-2023
+// (c) Daniel Llorens - 2019-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifdef RA_DO_CHECK
+#if RA_DO_CHECK==0
   #undef RA_DO_CHECK
   #define RA_DO_CHECK 1 // kind of the point here
 #endif
@@ -31,7 +31,7 @@ struct ra_error: public std::exception
 };
 
 #define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) throw ra_error("ra:: assert [" STRINGIZE(cond) "]", ##__VA_ARGS__); }
+    { if (!( cond )) throw ra_error("ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
 // -------------------------------------
 
 #include "ra/test.hh"
@@ -42,6 +42,7 @@ using ra::int_c, ra::mp::int_list;
 
 int main()
 {
+    cout << "******* " << RA_DO_CHECK << "******" << endl;
     TestRecorder tr(std::cout);
     tr.section("bad cell rank");
     {
@@ -222,7 +223,7 @@ int main()
         tr.info("uninitialized dynamic rank").test_eq(2, x);
     }
     tr.section("iffy conversions");
-// FIXME this fails at runtime bc val[0] might have size 1, but this is much more likely to be a coding error.
+// won't fail until runtime bc val[0] might have size 1, but FIXME this is very likely a coding error.
 // FIXME shape doesn't show in the error message as it should.
     {
         ra::Big<double, 2> val = { { 7, 0, 0, 0.5, 1.5, 1, 1, 1 } };

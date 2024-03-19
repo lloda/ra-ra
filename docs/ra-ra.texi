@@ -1595,7 +1595,7 @@ Error handling in @code{ra::} is controlled by two macros:
 
 @itemize
 @item @code{RA_DO_CHECK}
-is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with @code{RA_ASSERT}.
+is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with @code{RA_ASSERT}. After including @code{ra/ra.hh}, this flag will always be defined.
 @item @code{RA_ASSERT(cond, ...)}
 is a function-like macro. @code{cond} is an expression that evaluates to true (in the @code{ra::} namespace) if the assertion is satisfied. The other arguments are informative and do not need to be used. If the assertion fails, the default definition of @code{RA_ASSERT(cond, ...)} prints those arguments to @code{std::cerr} and aborts.
 @end itemize
@@ -1696,6 +1696,10 @@ Item 1
 @item
 Item 2
 @end enumerate
+
+@section The cost of @code{RA_DO_CHECK}
+
+FIXME
 
 @c ------------------------------------------------
 @node Internals

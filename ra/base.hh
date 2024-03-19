@@ -281,8 +281,7 @@ struct shape_manip_t
 constexpr shape_manip_t
 operator<<(std::ostream & o, print_shape_t shape) { return shape_manip_t { o, shape }; }
 
-// include is_fov bc shape() may be std::vector or std::array.
-// exclude std::string_view so it is is_fov but still prints as a string [ra13].
+// exclude std::string_view so it still prints as a string [ra13].
 template <class A> requires (is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>))
 constexpr std::ostream &
 operator<<(std::ostream & o, A && a) { return o << format_array(a); }

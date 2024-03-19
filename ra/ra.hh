@@ -443,7 +443,7 @@ template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
 refmin(A && a, Less && less = {})
 {
-    RA_CHECK(a.size()>0);
+    RA_CHECK(a.size()>0, "refmin requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
     for_each([&less, &p](auto & a) { if (less(a, *p)) { p = &a; } }, s);
@@ -454,7 +454,7 @@ template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
 refmax(A && a, Less && less = {})
 {
-    RA_CHECK(a.size()>0);
+    RA_CHECK(a.size()>0, "refmax requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
     for_each([&less, &p](auto & a) { if (less(*p, a)) { p = &a; } }, s);

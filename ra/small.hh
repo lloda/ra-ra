@@ -90,7 +90,7 @@ resize(A & a, dim_t s)
         RA_CHECK(s>=0, "Bad resize ", s, ".");
         a.resize(s);
     } else {
-        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, " vs ", start(a).len(0), ".");
+        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, " needing ", start(a).len(0), ".");
     }
 }
 
@@ -461,7 +461,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr static dim_t
     select(dim_t i)
     {
-        RA_CHECK(inside(i, len(k)), "Bad index in len[", k, "]=", len(k), ": ", i, ".");
+        RA_CHECK(inside(i, len(k)), "Bad index ", i, " in len[", k, "]=", len(k), ".");
         return step(k)*i;
     }
     template <int k>
@@ -471,7 +471,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
         if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME c++23 std::abs
             static_assert(always_false<k>, "Bad index.");
         } else {
-            RA_CHECK(inside(i, len(k)), "Bad index in len[", k, "]=", len(k), ": iota [", i.n, " ", i.i, " ", i.s, "]");
+            RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
         }
         return 0==i.n ? 0 : step(k)*i.i;
     }

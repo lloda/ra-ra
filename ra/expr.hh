@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Expression templates with prefix matching.
 
-// (c) Daniel Llorens - 2011-2023
+// (c) Daniel Llorens - 2011-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -25,7 +25,7 @@
             assert(cond /* FIXME show args */);                         \
         } else {                                                        \
             if (!(cond)) [[unlikely]] {                                 \
-                std::cerr << ra::format("**** ra (", std::source_location::current(), "): ", ##__VA_ARGS__, " ****") << std::endl; \
+                std::cerr << ra::format("*** ra (", std::source_location::current(), "): " __VA_OPT__(,) __VA_ARGS__, " ***") << std::endl; \
                 std::abort();                                           \
             }                                                           \
         }                                                               \
@@ -131,7 +131,7 @@ struct Ptr
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
-        RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
+        RA_CHECK(BAD==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
         return i[j[0]*s];
     }
     constexpr decltype(auto) operator*() const { return *i; }
@@ -207,7 +207,7 @@ struct Iota
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto at(auto && j) const
     {
-        RA_CHECK(BAD==nn || inside(j[0], n), "Out of range for len[0]=", n, ": ", j[0], ".");
+        RA_CHECK(BAD==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
         return i + I(j[w])*I(s);
     }
     constexpr I operator*() const { return i; }
@@ -297,7 +297,7 @@ template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
 start(T & t) { return t; }
 
-// FIXME const Iterator would still be unusable after start()
+// FIXME const Iterator would still be unusable after start().
 constexpr decltype(auto)
 start(is_iterator auto && t) { return RA_FWD(t); }
 
@@ -334,11 +334,10 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
                 dim_t ls = len_s(k);
                 if (((k<ra::rank_s<P>() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
                     return 0;
-                } else {
-                    int anyk = ((k<ra::rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
-                    int fixk = ((k<ra::rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
-                    tbc = tbc || (anyk>0 && anyk+fixk>1);
                 }
+                int anyk = ((k<ra::rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
+                int fixk = ((k<ra::rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
+                tbc = tbc || (anyk>0 && anyk+fixk>1);
             }
             return tbc ? 1 : 2;
         }
@@ -346,9 +345,9 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr bool
     check() const
     {
-        if constexpr (sizeof...(P)<2) {
+        if constexpr (constexpr int c = check_s(); 2==c) {
             return true;
-        } else if constexpr (constexpr int c = check_s(); 0==c) {
+        } else if constexpr (0==c) {
             return false;
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
@@ -357,7 +356,6 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
                 dim_t ls = len(k);
 #pragma GCC diagnostic pop
                 if (((k<ra::rank(std::get<I>(t)) && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
-                    RA_CHECK(!checkp, "Mismatch on axis ", k, " [", (std::array { std::get<I>(t).len(k) ... }), "].");
                     return false;
                 }
             }
@@ -368,10 +366,13 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr
     Match(P ... p_): t(p_ ...) // [ra1]
     {
-// TODO Maybe on ply, would make checkp unnecessary, make agree_xxx() unnecessary.
+// TODO Maybe on ply would make checkp, agree_xxx() unnecessary.
         if constexpr (checkp && !(has_len<P> || ...)) {
-            static_assert(check_s(), "Shape mismatch.");
-            RA_CHECK(check());
+            constexpr int c = check_s();
+            static_assert(0!=c, "Mismatched shapes."); // FIXME c++26
+            if constexpr (1==c) {
+                RA_CHECK(check(), "Mismatched shapes", format_array(ra::shape(p_), {.shape=noshape, .open=" [", .close="]"}) ..., ".");
+            }
         }
     }
 

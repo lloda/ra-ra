@@ -122,13 +122,13 @@ struct ViewBig
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
     {
-        RA_CHECK(inside(i, len(k)), "Bad index in len[", k, "]=", len(k), ": ", i, ".");
+        RA_CHECK(inside(i, len(k)), "Bad index ", i, " for len[", k, "]=", len(k), ".");
         return step(k)*i;
     }
     constexpr dim_t
     select(Dim * dim, int k, is_iota auto i) const
     {
-        RA_CHECK(inside(i, len(k)), "Bad index in len[", k, "]=", len(k), ": iota [", i.n, " ", i.i, " ", i.s, "].");
+        RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] for len[", k, "]=", len(k), ".");
         *dim = { .len = i.n, .step = step(k) * i.s };
         return 0==i.n ? 0 : step(k)*i.i;
     }
@@ -173,8 +173,7 @@ struct ViewBig
             constexpr rank_t extended = (0 + ... + beatable<I>.add);
             ViewBig<T, rank_sum(RANK, extended)> sub;
             rank_t subrank = rank()+extended;
-            if constexpr (RANK==ANY) {
-                RA_CHECK(subrank>=0, "Bad rank.");
+            if constexpr (ANY==RANK) {
                 sub.dimv.resize(subrank);
             }
             sub.cp = cp + select_loop(sub.dimv.data(), 0, i ...);
@@ -207,7 +206,7 @@ struct ViewBig
     operator T & () const
     {
         if constexpr (0!=RANK) {
-            RA_CHECK(1==size(), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(this), "].");
+            RA_CHECK(1==size(), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return cp[0];
     }
@@ -241,7 +240,7 @@ struct storage_traits
 {
     using T = V::value_type;
     static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
-    constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(n); }
+    constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(n); }
     template <class VV> constexpr static auto data(VV & v) { return v.data(); }
 };
 
@@ -250,7 +249,7 @@ struct storage_traits<std::unique_ptr<P>>
 {
     using V = std::unique_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(new T[n]); }
+    constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(new T[n]); }
     template <class VV> constexpr static auto data(VV & v) { return v.get(); }
 };
 
@@ -259,7 +258,7 @@ struct storage_traits<std::shared_ptr<P>>
 {
     using V = std::shared_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    constexpr static auto create(dim_t n) { RA_CHECK(n>=0); return V(new T[n], std::default_delete<T[]>()); }
+    constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(new T[n], std::default_delete<T[]>()); }
     template <class VV> constexpr static auto data(VV & v) { return v.get(); }
 };
 
@@ -310,7 +309,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
 
 // const/nonconst shims over View's methods. FIXME > gcc13 ? __cpp_explicit_this_parameter
 #define RA_CONST_OR_NOT(CONST)                                          \
-    constexpr T CONST & back() CONST { RA_CHECK(1==rank() && size()>0); return store[size()-1]; } \
+    constexpr T CONST & back() CONST { RA_CHECK(1==rank() && size()>0, "Bad back()."); return store[size()-1]; } \
     constexpr auto data() CONST { return view().data(); }               \
     constexpr decltype(auto) operator()(auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
     constexpr decltype(auto) operator[](auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
@@ -400,14 +399,14 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
 // resize first axis or full shape. Only for some kinds of store.
     void resize(dim_t const s)
     {
-        static_assert(RANK==ANY || RANK>0); RA_CHECK(0<rank());
+        static_assert(ANY==RANK || 0<RANK); RA_CHECK(0<rank());
         View::dimv[0].len = s;
         store.resize(size());
         View::cp = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
-        static_assert(RANK==ANY || RANK>0); RA_CHECK(0<rank());
+        static_assert(ANY==RANK || 0<RANK); RA_CHECK(0<rank());
         View::dimv[0].len = s;
         store.resize(size(), t);
         View::cp = store.data();
@@ -422,31 +421,31 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
 // lets us move. A template + RA_FWD wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
+        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
         store.push_back(std::move(t));
         ++View::dimv[0].len;
         View::cp = store.data();
     }
     void push_back(T const & t)
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
+        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
         store.push_back(t);
         ++View::dimv[0].len;
         View::cp = store.data();
     }
     void emplace_back(auto && ... a)
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
+        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
         store.emplace_back(RA_FWD(a) ...);
         ++View::dimv[0].len;
         View::cp = store.data();
     }
     void pop_back()
     {
-        static_assert(RANK==1 || RANK==ANY); RA_CHECK(1==rank());
-        RA_CHECK(View::dimv[0].len>0);
-        store.pop_back();
+        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
+        RA_CHECK(0<View::dimv[0].len, "Empty array trying to pop_back().");
         --View::dimv[0].len;
+        store.pop_back();
     }
 };
 
@@ -456,12 +455,12 @@ void
 swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
 {
     if constexpr (ANY==RANKA) {
-        RA_CHECK(rank(a)==rank(b));
+        RA_CHECK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
         decltype(b.dimv) c = a.dimv;
         start(a.dimv) = b.dimv;
         std::swap(b.dimv, c);
     } else if constexpr (ANY==RANKB) {
-        RA_CHECK(rank(a)==rank(b));
+        RA_CHECK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
         decltype(a.dimv) c = b.dimv;
         start(b.dimv) = a.dimv;
         std::swap(a.dimv, c);
@@ -590,7 +589,7 @@ template <class T, rank_t RANK>
 inline ViewBig<T, RANK>
 reverse(ViewBig<T, RANK> const & view, int k=0)
 {
-    RA_CHECK(inside(k, view.rank()), "Bad reverse axis ", k, " for view of rank ", view.rank(), ".");
+    RA_CHECK(inside(k, view.rank()), "Bad axis ", k, " for rank ", view.rank(), ".");
     ViewBig<T, RANK> r = view;
     if (auto & dim=r.dimv[k]; dim.len!=0) {
         r.cp += dim.step*(dim.len-1);
@@ -689,8 +688,7 @@ reshape_(ViewBig<T, RANK> const & a, S && sb_)
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
-            RA_CHECK(is_c_order(a, false), "Reshape with copy not implemented.");
-            RA_CHECK(la>=lb, "Reshape with copy not implemented.");
+            RA_CHECK(is_c_order(a, false) && la>=lb, "Reshape with copy not implemented.");
 // FIXME ViewBig(SS const & s, T * p). Cf [ra37].
             filldim(b.dimv, sb);
             for (int j=0; j!=b.rank(); ++j) {
@@ -703,7 +701,7 @@ reshape_(ViewBig<T, RANK> const & a, S && sb_)
         }
     }
     if (i==a.rank()) {
-// tile & return
+// tile
         for (rank_t j=i; j<b.rank(); ++j) {
             b.dimv[b.rank()-j-1] = { sb[b.rank()-j-1], 0 };
         }
