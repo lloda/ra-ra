@@ -9,15 +9,13 @@
 
 #ifdef RA_DO_CHECK
   #undef RA_DO_CHECK
-  #define RA_DO_CHECK 1 // kind of the point here
 #endif
-
-#include <exception>
-#include <string>
+#define RA_DO_CHECK 1 // kind of the point here
 
 // "ra/base.hh" doesn't depend directly on RA_ASSERT, so the following override is able to use ra::format.
 
 #include "ra/base.hh"
+#include <exception>
 
 struct ra_error: public std::exception
 {

@@ -30,8 +30,7 @@
 
 namespace ra {
 
-constexpr int VERSION = 27;
-// negative rank is used as 'frame rank' in contrast to 'cell rank'. These values limit what can be handled.
+constexpr int VERSION = 28;
 constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
 constexpr int BAD = -1988888888; // undefined, eg dead axes
 

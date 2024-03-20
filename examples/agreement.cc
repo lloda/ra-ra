@@ -83,6 +83,13 @@ int main()
         A = c(ra::insert<1>);
         cout << "\nA: " << A << endl;
     }
-
+    // Example is over: this is a demo for how errors look like depending on RA_DO_CHECK.
+    /*
+    {
+        ra::Big<int, 2> a({10, 3}, 1);
+        ra::Big<int, 2> b({40, 3}, 2);
+        cout << sum(a+b) << endl;
+    }
+    */
     return 0;
 }

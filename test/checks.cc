@@ -9,12 +9,11 @@
 
 #if RA_DO_CHECK==0
   #undef RA_DO_CHECK
-  #define RA_DO_CHECK 1 // kind of the point here
 #endif
+#define RA_DO_CHECK 1 // kind of the point here
 
-#include <ranges>
-#include <iostream>
 #include "ra/base.hh"
+#include <exception>
 
 
 // -------------------------------------

@@ -3,9 +3,9 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 27, updated 2023 December 9)
+<!-- ra:: (version 28, updated 2024 March 20)
 
-(c) Daniel Llorens 2005-2023
+(c) Daniel Llorens 2005-2024
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -116,9 +116,9 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 27, updated 2023 December 9)
+<p><code>ra::</code> (version 28, updated 2024 March 20)
 </p>
-<p>(c) Daniel Llorens 2005&ndash;2023
+<p>(c) Daniel Llorens 2005&ndash;2024
 </p>
 <div class="display">
 <pre class="display">Permission is granted to copy, distribute and/or modify this document
@@ -1624,18 +1624,55 @@ Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a hr
 </div>
 <span id="Error-handling-1"></span><h3 class="section">2.11 Error handling</h3>
 
-<p>Error handling in <code>ra::</code> is controlled by two macros:
+<p>Runtime error handling in <code>ra::</code> is controlled by two macros.
 </p>
 <ul>
-<li> <code>RA_DO_CHECK</code>
-is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with <code>RA_ASSERT</code>.
-</li><li> <code>RA_ASSERT(cond, ...)</code>
-is a function-like macro. <code>cond</code> is an expression that evaluates to true (in the <code>ra::</code> namespace) if the assertion is satisfied. The other arguments are informative and do not need to be used. If the assertion fails, the default definition of <code>RA_ASSERT(cond, ...)</code> prints those arguments to <code>std::cerr</code> and aborts.
+<li> <code>RA_ASSERT(cond, ...)</code> &mdash;
+<code>cond</code> evaluates to true (in the <code>ra::</code> namespace) if the check is satisfied. The other arguments are informative.
+</li><li> <code>RA_DO_CHECK</code> &mdash;
+must have one of the values 0, 1, or 2.
 </li></ul>
 
-<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>.
+<p>The behavior is as follows.
 </p>
-<p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. <code>examples/throw.cc</code> in the distribution shows how to throw a user-defined exception instead.
+<ul>
+<li> If <code>RA_DO_CHECK</code> is 0, runtime checks are skipped.
+</li><li> If <code>RA_DO_CHECK</code> is not 0, runtime checks are done:
+    <ul>
+<li> If <code>RA_ASSERT</code> is user defined, then that is used.
+    </li><li> If it isn&rsquo;t, then <code>ra::</code> provides one depending on the value of <code>RA_DO_CHECK</code>. The two options are 1 (plain <code>assert</code>) and 2 (prints the informative arguments before aborting). Other values are an error.
+    </li></ul>
+</li></ul>
+
+<p><code>RA_DO_CHECK</code> defaults to 2. After including <code>ra/ra.hh</code>, it will always be defined.
+</p>
+<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>, but note that <samp>-DNDEBUG</samp> will also disable <code>assert</code> used in <code>RA_ASSERT</code> (e.g. if <code>RA_DO_CHECK is 1</code>).
+</p>
+<p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. As an example, <code>examples/throw.cc</code> shows how to throw a user-defined exception.
+</p>
+<p>The following is an example of how errors might be reported depending on <code>RA_DO_CHECK</code>.
+</p>
+<table class="cartouche" border="1"><tr><td>
+<pre class="verbatim">ra::Big&lt;int, 2&gt; a({10, 3}, 1);
+ra::Big&lt;int, 2&gt; b({40, 3}, 2);
+cout &lt;&lt; sum(a+b) &lt;&lt; endl;
+</pre></td></tr></table>
+
+<ul>
+<li> <code>RA_DO_CHECK=2</code>
+<pre class="verbatim">*** ra::./ra/expr.hh:389,17 (check()) Mismatched shapes [10 3] [40 3]. ***}
+</pre></li><li> <code>RA_DO_CHECK=1</code>
+<pre class="verbatim">*** ./ra/expr.hh:389: constexpr ra::Match&lt;checkp, std::tuple&lt;_UTypes ...&gt;, std::tuple&lt;std::integral_constant&lt;int, I&gt;...&gt; &gt;::Match(P ...)
+[with bool checkp = true; P = {ra::Cell&lt;int, const ra::SmallArray&lt;ra::Dim, std::tuple&lt;std::integral_constant&lt;int, 2&gt; &gt;,
+std::tuple&lt;std::integral_constant&lt;int, 1&gt; &gt;, std::tuple&lt;ra::Dim, ra::Dim&gt; &gt;&amp;, std::integral_constant&lt;int, 0&gt; &gt;, ra::Cell&lt;int, const
+ra::SmallArray&lt;ra::Dim, std::tuple&lt;std::integral_constant&lt;int, 2&gt; &gt;, std::tuple&lt;std::integral_constant&lt;int, 1&gt; &gt;, std::tuple&lt;ra::Dim,
+ra::Dim&gt; &gt;&amp;, std::integral_constant&lt;int, 0&gt; &gt;}; int ...I = {0, 1}]: Assertion `check()' failed.
+</pre></li><li> <code>RA_DO_CHECK=0</code>
+
+<p><em>crickets</em>
+</p></li></ul>
+
+<p>The results with <code>RA_DO_CHECK=0</code> will of course vary.
 </p>
 <hr>
 </div>
@@ -1667,6 +1704,7 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <li><a href="#Performance-pitfalls-of-rank-extension" accesskey="5">Performance pitfalls of rank extension</a></li>
 <li><a href="#Chained-assignment" accesskey="6">Chained assignment</a></li>
 <li><a href="#Unregistered-scalar-types" accesskey="7">Unregistered scalar types</a></li>
+<li><a href="#The-cost-of-RA_005fDO_005fCHECK" accesskey="8">The cost of <code>RA_DO_CHECK</code></a></li>
 </ul>
 <div class="section" id="Reuse-of-expression-objects">
 <h3 class="section">4.1 Reuse of expression objects</h3>
@@ -1753,6 +1791,12 @@ When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as 
 </li><li> Item 2
 </li></ol>
 
+</div>
+<div class="section" id="The-cost-of-RA_005fDO_005fCHECK">
+<h3 class="section">4.8 The cost of <code>RA_DO_CHECK</code></h3>
+
+<p>FIXME
+</p>
 <hr>
 </div>
 </div>
@@ -1850,7 +1894,7 @@ Next: <a href="#Traversal" accesskey="n" rel="next">Traversal</a>, Previous: <a 
 
 <p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>iota()</code> or dimensions created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
-<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v27) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
+<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v28) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
 <p>Finally we select a traversal method. <code>ra::</code> has two traversal methods: <code>ply_fixed</code> can be used when the rank and the traversal order are known at compile time, and <code>ply_ravel</code> can be used in the general case.
 </p>

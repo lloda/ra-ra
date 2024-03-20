@@ -11,13 +11,13 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 27
-@set UPDATED 2023 December 9
+@set VERSION 28
+@set UPDATED 2024 March 20
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
 
-(c) Daniel Llorens 2005--2023
+(c) Daniel Llorens 2005--2024
 
 @smalldisplay
 Permission is granted to copy, distribute and/or modify this document
@@ -1591,18 +1591,61 @@ my_fun(A && ... a)
 @section Error handling
 @c ------------------------------------------------
 
-Error handling in @code{ra::} is controlled by two macros:
+Runtime error handling in @code{ra::} is controlled by two macros.
 
 @itemize
-@item @code{RA_DO_CHECK}
-is a binary flag that controls runtime checks. The default is 1 which means to check for errors. 0 means not to check. The checks themselves are done with @code{RA_ASSERT}. After including @code{ra/ra.hh}, this flag will always be defined.
-@item @code{RA_ASSERT(cond, ...)}
-is a function-like macro. @code{cond} is an expression that evaluates to true (in the @code{ra::} namespace) if the assertion is satisfied. The other arguments are informative and do not need to be used. If the assertion fails, the default definition of @code{RA_ASSERT(cond, ...)} prints those arguments to @code{std::cerr} and aborts.
+@item @code{RA_ASSERT(cond, ...)} ---
+@code{cond} evaluates to true (in the @code{ra::} namespace) if the check is satisfied. The other arguments are informative.
+@item @code{RA_DO_CHECK} ---
+must have one of the values 0, 1, or 2.
 @end itemize
 
-@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}.
+The behavior is as follows.
 
-You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. @code{examples/throw.cc} in the distribution shows how to throw a user-defined exception instead.
+@itemize
+@item If @code{RA_DO_CHECK} is 0, runtime checks are skipped.
+@item If @code{RA_DO_CHECK} is not 0, runtime checks are done:
+    @itemize
+    @item If @code{RA_ASSERT} is user defined, then that is used.
+    @item If it isn't, then @code{ra::} provides one depending on the value of @code{RA_DO_CHECK}. The two options are 1 (plain @code{assert}) and 2 (prints the informative arguments before aborting). Other values are an error.
+    @end itemize
+@end itemize
+
+@code{RA_DO_CHECK} defaults to 2. After including @code{ra/ra.hh}, it will always be defined.
+
+@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}, but note that @option{-DNDEBUG} will also disable @code{assert} used in @code{RA_ASSERT} (e.g. if @code{RA_DO_CHECK is 1}).
+
+You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. As an example, @code{examples/throw.cc} shows how to throw a user-defined exception.
+
+The following is an example of how errors might be reported depending on @code{RA_DO_CHECK}.
+
+@cartouche
+@verbatim
+ra::Big<int, 2> a({10, 3}, 1);
+ra::Big<int, 2> b({40, 3}, 2);
+cout << sum(a+b) << endl;
+@end verbatim
+@end cartouche
+
+@itemize
+@item @code{RA_DO_CHECK=2}
+@verbatim
+*** ra::./ra/expr.hh:389,17 (check()) Mismatched shapes [10 3] [40 3]. ***}
+@end verbatim
+@item @code{RA_DO_CHECK=1}
+@verbatim
+*** ./ra/expr.hh:389: constexpr ra::Match<checkp, std::tuple<_UTypes ...>, std::tuple<std::integral_constant<int, I>...> >::Match(P ...)
+[with bool checkp = true; P = {ra::Cell<int, const ra::SmallArray<ra::Dim, std::tuple<std::integral_constant<int, 2> >,
+std::tuple<std::integral_constant<int, 1> >, std::tuple<ra::Dim, ra::Dim> >&, std::integral_constant<int, 0> >, ra::Cell<int, const
+ra::SmallArray<ra::Dim, std::tuple<std::integral_constant<int, 2> >, std::tuple<std::integral_constant<int, 1> >, std::tuple<ra::Dim,
+ra::Dim> >&, std::integral_constant<int, 0> >}; int ...I = {0, 1}]: Assertion `check()' failed.
+@end verbatim
+@item @code{RA_DO_CHECK=0}
+
+@emph{crickets}
+@end itemize
+
+The results with @code{RA_DO_CHECK=0} will of course vary.
 
 @c ------------------------------------------------
 @node Extras

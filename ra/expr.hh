@@ -18,27 +18,42 @@
 // --------------------
 
 #include <iostream> // might not be needed with a different RA_ASSERT.
-#ifndef RA_ASSERT
-#define RA_ASSERT(cond, ...)                                            \
+#define RA_ASSERT_MSG(cond, ...)                                        \
     {                                                                   \
         if (std::is_constant_evaluated()) {                             \
             assert(cond /* FIXME show args */);                         \
         } else {                                                        \
             if (!(cond)) [[unlikely]] {                                 \
-                std::cerr << ra::format("*** ra (", std::source_location::current(), "): " __VA_OPT__(,) __VA_ARGS__, " ***") << std::endl; \
+                std::cerr << ra::format("*** ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__, " ***") << std::endl; \
                 std::abort();                                           \
             }                                                           \
         }                                                               \
     }
-#endif
+#define RA_ASSERT_PLAIN(cond, ...)              \
+    { assert(cond /* FIXME show args */); }
+
 #if !defined(RA_DO_CHECK)
-  #define RA_DO_CHECK 1 // tell users so they need not know the default
+  #define RA_DO_CHECK 2 // tell users so they need not know the default
 #endif
-#if RA_DO_CHECK
-  #define RA_CHECK( ... ) RA_ASSERT( __VA_ARGS__ )
+
+#ifndef RA_ASSERT
+  #if RA_DO_CHECK==0
+    #define RA_CHECK(...)
+  #elif RA_DO_CHECK==1
+    #define RA_CHECK(...) RA_ASSERT_PLAIN(__VA_ARGS__)
+  #elif RA_DO_CHECK==2
+    #define RA_CHECK(...) RA_ASSERT_MSG(__VA_ARGS__)
+  #else
+    #error Bad value for RA_DO_CHECK
+  #endif
 #else
-  #define RA_CHECK( ... )
+  #if RA_DO_CHECK==0
+    #define RA_CHECK(...)
+  #else
+    #define RA_CHECK(...) RA_ASSERT(__VA_ARGS__)
+  #endif
 #endif
+
 #define RA_AFTER_CHECK Yes
 
 namespace ra {
