@@ -1624,33 +1624,33 @@ Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a hr
 </div>
 <span id="Error-handling-1"></span><h3 class="section">2.11 Error handling</h3>
 
+<p><code>ra::</code> tries to detect a many errors as possible at compile time, but some errors, such as <a href="#Rank-extension">mismatch</a> between expressions of runtime shape or <a href="#Slicing">out of range indices</a>, aren&rsquo;t apparent until runtime.
+</p>
 <p>Runtime error handling in <code>ra::</code> is controlled by two macros.
 </p>
 <ul>
 <li> <code>RA_ASSERT(cond, ...)</code> &mdash;
-<code>cond</code> evaluates to true (in the <code>ra::</code> namespace) if the check is satisfied. The other arguments are informative.
+check that <code>cond</code> evaluates to true in the <code>ra::</code> namespace. The other arguments are informative.
 </li><li> <code>RA_DO_CHECK</code> &mdash;
 must have one of the values 0, 1, or 2.
 </li></ul>
 
-<p>The behavior is as follows.
+<p>They work as follows:
 </p>
 <ul>
 <li> If <code>RA_DO_CHECK</code> is 0, runtime checks are skipped.
-</li><li> If <code>RA_DO_CHECK</code> is not 0, runtime checks are done:
+</li><li> If <code>RA_DO_CHECK</code> is not 0, runtime checks are done.
     <ul>
-<li> If <code>RA_ASSERT</code> is user defined, then that is used.
-    </li><li> If it isn&rsquo;t, then <code>ra::</code> provides one depending on the value of <code>RA_DO_CHECK</code>. The two options are 1 (plain <code>assert</code>) and 2 (prints the informative arguments before aborting). Other values are an error.
+<li> If <code>RA_ASSERT</code> is defined, using <code>RA_ASSERT</code>.
+    </li><li> If <code>RA_ASSERT</code> isn&rsquo;t defined, the method depends on the value of <code>RA_DO_CHECK</code>. The two options are 1 (plain <code>assert</code>) and 2 (prints the informative arguments and aborts). Other values are an error.
     </li></ul>
 </li></ul>
 
-<p><code>RA_DO_CHECK</code> defaults to 2. After including <code>ra/ra.hh</code>, it will always be defined.
+<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>, but note that <samp>-DNDEBUG</samp> will also disable any <code>assert</code>s that are a result of <code>RA_DO_CHECK=1</code>.
 </p>
-<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>, but note that <samp>-DNDEBUG</samp> will also disable <code>assert</code> used in <code>RA_ASSERT</code> (e.g. if <code>RA_DO_CHECK is 1</code>).
+<p>The performance cost of the runtime checks depends on the program. Without custom <code>RA_ASSERT</code>, <code>RA_DO_CHECK=1</code> usually has an acceptable cost, but <code>RA_DO_CHECK=2</code> may be more expensive. The default is <code>RA_DO_CHECK=1</code>.
 </p>
-<p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. As an example, <code>examples/throw.cc</code> shows how to throw a user-defined exception.
-</p>
-<p>The following is an example of how errors might be reported depending on <code>RA_DO_CHECK</code>.
+<p>The following example shows how errors might be reported depending on <code>RA_DO_CHECK</code>.
 </p>
 <table class="cartouche" border="1"><tr><td>
 <pre class="verbatim">ra::Big&lt;int, 2&gt; a({10, 3}, 1);
@@ -1662,17 +1662,15 @@ cout &lt;&lt; sum(a+b) &lt;&lt; endl;
 <li> <code>RA_DO_CHECK=2</code>
 <pre class="verbatim">*** ra::./ra/expr.hh:389,17 (check()) Mismatched shapes [10 3] [40 3]. ***}
 </pre></li><li> <code>RA_DO_CHECK=1</code>
-<pre class="verbatim">*** ./ra/expr.hh:389: constexpr ra::Match&lt;checkp, std::tuple&lt;_UTypes ...&gt;, std::tuple&lt;std::integral_constant&lt;int, I&gt;...&gt; &gt;::Match(P ...)
+<pre class="verbatim">./ra/expr.hh:389: constexpr ra::Match&lt;checkp, std::tuple&lt;_UTypes ...&gt;, std::tuple&lt;std::integral_constant&lt;int, I&gt;...&gt; &gt;::Match(P ...)
 [with bool checkp = true; P = {ra::Cell&lt;int, const ra::SmallArray&lt;ra::Dim, std::tuple&lt;std::integral_constant&lt;int, 2&gt; &gt;,
 std::tuple&lt;std::integral_constant&lt;int, 1&gt; &gt;, std::tuple&lt;ra::Dim, ra::Dim&gt; &gt;&amp;, std::integral_constant&lt;int, 0&gt; &gt;, ra::Cell&lt;int, const
 ra::SmallArray&lt;ra::Dim, std::tuple&lt;std::integral_constant&lt;int, 2&gt; &gt;, std::tuple&lt;std::integral_constant&lt;int, 1&gt; &gt;, std::tuple&lt;ra::Dim,
 ra::Dim&gt; &gt;&amp;, std::integral_constant&lt;int, 0&gt; &gt;}; int ...I = {0, 1}]: Assertion `check()' failed.
-</pre></li><li> <code>RA_DO_CHECK=0</code>
+</pre></li></ul>
 
-<p><em>crickets</em>
-</p></li></ul>
-
-<p>The results with <code>RA_DO_CHECK=0</code> will of course vary.
+<span id="index-exception"></span>
+<p>You can redefine <code>RA_ASSERT</code> to something that is more appropriate for your program. For example, if you run <code>ra::</code> code under a shell, an abort may not be acceptable. <code>examples/throw.cc</code> shows how to throw a user-defined exception instead.
 </p>
 <hr>
 </div>
@@ -2980,6 +2978,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-end_002c-Octave_002fMatlab"><code>end</code>, Octave/Matlab</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-error">error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Extension">Extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-every"><code>every</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-exception">exception</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Error-handling">Error handling</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-explode"><code>explode</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-F">F</th><td></td><td></td></tr>

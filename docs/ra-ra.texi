@@ -1591,33 +1591,33 @@ my_fun(A && ... a)
 @section Error handling
 @c ------------------------------------------------
 
+@code{ra::} tries to detect a many errors as possible at compile time, but some errors, such as @ref{Rank extension,mismatch} between expressions of runtime shape or @ref{Slicing,out of range indices}, aren't apparent until runtime.
+
 Runtime error handling in @code{ra::} is controlled by two macros.
 
 @itemize
 @item @code{RA_ASSERT(cond, ...)} ---
-@code{cond} evaluates to true (in the @code{ra::} namespace) if the check is satisfied. The other arguments are informative.
+check that @code{cond} evaluates to true in the @code{ra::} namespace. The other arguments are informative.
 @item @code{RA_DO_CHECK} ---
 must have one of the values 0, 1, or 2.
 @end itemize
 
-The behavior is as follows.
+They work as follows:
 
 @itemize
 @item If @code{RA_DO_CHECK} is 0, runtime checks are skipped.
-@item If @code{RA_DO_CHECK} is not 0, runtime checks are done:
+@item If @code{RA_DO_CHECK} is not 0, runtime checks are done.
     @itemize
-    @item If @code{RA_ASSERT} is user defined, then that is used.
-    @item If it isn't, then @code{ra::} provides one depending on the value of @code{RA_DO_CHECK}. The two options are 1 (plain @code{assert}) and 2 (prints the informative arguments before aborting). Other values are an error.
+    @item If @code{RA_ASSERT} is defined, using @code{RA_ASSERT}.
+    @item If @code{RA_ASSERT} isn't defined, the method depends on the value of @code{RA_DO_CHECK}. The two options are 1 (plain @code{assert}) and 2 (prints the informative arguments and aborts). Other values are an error.
     @end itemize
 @end itemize
 
-@code{RA_DO_CHECK} defaults to 2. After including @code{ra/ra.hh}, it will always be defined.
+@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}, but note that @option{-DNDEBUG} will also disable any @code{assert}s that are a result of @code{RA_DO_CHECK=1}.
 
-@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}, but note that @option{-DNDEBUG} will also disable @code{assert} used in @code{RA_ASSERT} (e.g. if @code{RA_DO_CHECK is 1}).
+The performance cost of the runtime checks depends on the program. Without custom @code{RA_ASSERT}, @code{RA_DO_CHECK=1} usually has an acceptable cost, but @code{RA_DO_CHECK=2} may be more expensive. The default is @code{RA_DO_CHECK=1}.
 
-You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. As an example, @code{examples/throw.cc} shows how to throw a user-defined exception.
-
-The following is an example of how errors might be reported depending on @code{RA_DO_CHECK}.
+The following example shows how errors might be reported depending on @code{RA_DO_CHECK}.
 
 @cartouche
 @verbatim
@@ -1634,18 +1634,16 @@ cout << sum(a+b) << endl;
 @end verbatim
 @item @code{RA_DO_CHECK=1}
 @verbatim
-*** ./ra/expr.hh:389: constexpr ra::Match<checkp, std::tuple<_UTypes ...>, std::tuple<std::integral_constant<int, I>...> >::Match(P ...)
+./ra/expr.hh:389: constexpr ra::Match<checkp, std::tuple<_UTypes ...>, std::tuple<std::integral_constant<int, I>...> >::Match(P ...)
 [with bool checkp = true; P = {ra::Cell<int, const ra::SmallArray<ra::Dim, std::tuple<std::integral_constant<int, 2> >,
 std::tuple<std::integral_constant<int, 1> >, std::tuple<ra::Dim, ra::Dim> >&, std::integral_constant<int, 0> >, ra::Cell<int, const
 ra::SmallArray<ra::Dim, std::tuple<std::integral_constant<int, 2> >, std::tuple<std::integral_constant<int, 1> >, std::tuple<ra::Dim,
 ra::Dim> >&, std::integral_constant<int, 0> >}; int ...I = {0, 1}]: Assertion `check()' failed.
 @end verbatim
-@item @code{RA_DO_CHECK=0}
-
-@emph{crickets}
 @end itemize
 
-The results with @code{RA_DO_CHECK=0} will of course vary.
+@cindex exception
+You can redefine @code{RA_ASSERT} to something that is more appropriate for your program. For example, if you run @code{ra::} code under a shell, an abort may not be acceptable. @code{examples/throw.cc} shows how to throw a user-defined exception instead.
 
 @c ------------------------------------------------
 @node Extras

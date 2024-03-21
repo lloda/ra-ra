@@ -17,20 +17,17 @@
 
 
 // -------------------------------------
-// bit from example/throw.cc which FIXME should be easier, maybe a prepared option.
+// bit from example/throw.cc which FIXME maybe a prepared option.
 
 struct ra_error: public std::exception
 {
     std::string s;
     template <class ... A> ra_error(A && ... a): s(ra::format(std::forward<A>(a) ...)) {}
-    virtual char const * what() const throw ()
-    {
-        return s.c_str();
-    }
+    virtual char const * what() const throw () { return s.c_str(); }
 };
 
 #define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) throw ra_error("ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
+    { if (!( cond )) [[unlikely]] throw ra_error("ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
 // -------------------------------------
 
 #include "ra/test.hh"
