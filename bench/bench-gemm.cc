@@ -9,11 +9,13 @@
 
 // These operations aren't really part of the ET framework, just standalone functions.
 // Cf bench-gemv.cc for BLAS-2 type ops.
-// FIXME Benchmark w/o allocation.
+// FIXME Bench w/o allocation.
+// FIXME Bench offloading, e.g. RA_USE_BLAS=1 GOMP_DEBUG=0 CXXFLAGS="-O3 -fopenmp" LINKFLAGS="-fopenmp" scons -j6 -k  bench/bench-gemm.test
 
 #include <iostream>
 #include <iomanip>
 #include "ra/bench.hh"
+#include <omp.h>
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
 using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t, ra::all;
@@ -56,7 +58,8 @@ gemm4(auto && a, auto && b, auto & c)
 // variants of the defaults, should be slower if the default is well picked.
 // -------------------
 
-template <class A, class B, class C> inline void
+template <class A, class B, class C>
+inline void
 gemm_block(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewBig<C, 2> c)
 {
     dim_t const m = a.len(0);
@@ -77,6 +80,44 @@ gemm_block(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewBig
     } else {
         gemm_block(a(all, ra::iota(p/2)), b(ra::iota(p/2)), c);
         gemm_block(a(all, ra::iota(p-p/2, p/2)), b(ra::iota(p-p/2, p/2)), c);
+    }
+}
+
+template <class PTR, class CPTR>
+void
+gemm_k_raw(auto const & a, auto const & b, auto & c)
+{
+    dim_t const M = a.len(0);
+    dim_t const N = b.len(1);
+    dim_t const K = a.len(1);
+    PTR cc = c.data();
+    CPTR aa = a.data();
+    CPTR bb = b.data();
+    for (dim_t k=0; k<K; ++k) {
+        for (dim_t i=0; i<M; ++i) {
+            for (dim_t j=0; j<N; ++j) {
+                cc[i*N+j] += aa[i*K+k] * bb[k*N+j];
+            }
+        }
+    }
+}
+
+template <class PTR, class CPTR>
+void
+gemm_ij_raw(auto const & a, auto const & b, auto & c)
+{
+    dim_t const M = a.len(0);
+    dim_t const N = b.len(1);
+    dim_t const K = a.len(1);
+    PTR cc = c.data();
+    CPTR aa = a.data();
+    CPTR bb = b.data();
+    for (dim_t i=0; i<M; ++i) {
+        for (dim_t j=0; j<N; ++j) {
+            for (dim_t k=0; k<K; ++k) {
+                cc[i*N+j] += aa[i*K+k] * bb[k*N+j];
+            }
+        }
     }
 }
 
@@ -121,8 +162,9 @@ lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
     }
 }
 
-inline void
-gemm_blas(ra::ViewBig<double, 2> const & A, ra::ViewBig<double, 2> const & B, ra::ViewBig<double, 2> C)
+template <class T>
+void
+gemm_blas(ra::ViewBig<T, 2> const & A, ra::ViewBig<T, 2> const & B, ra::ViewBig<T, 2> C)
 {
     CBLAS_TRANSPOSE ta = CblasNoTrans;
     CBLAS_TRANSPOSE tb = CblasNoTrans;
@@ -142,7 +184,13 @@ gemm_blas(ra::ViewBig<double, 2> const & A, ra::ViewBig<double, 2> const & B, ra
         tb = fliptr(tb);
     }
     if (C.size()>0) {
-        cblas_dgemm(orderc, ta, tb, C.len(0), C.len(1), K, 1., A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
+        if constexpr (std::is_same_v<T, double>) {
+            cblas_dgemm(orderc, ta, tb, C.len(0), C.len(1), K, real(1.), A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
+        } else if constexpr (std::is_same_v<T, float>) {
+            cblas_sgemm(orderc, ta, tb, C.len(0), C.len(1), K, real(1.), A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
+        } else {
+            abort();
+        }
     }
 }
 #endif // RA_USE_BLAS
@@ -164,46 +212,9 @@ int main()
         return c;
     };
 
-#define DEFINE_GEMM_RESTRICT(NAME_K, NAME_IJ, RESTRICT) \
-    auto NAME_K = [&](auto const & a, auto const & b, auto & c) \
-    {                                                   \
-        dim_t const M = a.len(0);                       \
-        dim_t const N = b.len(1);                       \
-        dim_t const K = a.len(1);                       \
-        auto * RESTRICT cc = c.data();                  \
-        auto const * RESTRICT aa = a.data();            \
-        auto const * RESTRICT bb = b.data();            \
-        for (dim_t i=0; i<M; ++i) {                     \
-            for (dim_t j=0; j<N; ++j) {                 \
-                for (dim_t k=0; k<K; ++k) {             \
-                    cc[i*N+j] += aa[i*K+k] * bb[k*N+j]; \
-                }                                       \
-            }                                           \
-        }                                               \
-    };                                                  \
-    auto NAME_IJ = [&](auto const & a, auto const & b, auto & c) \
-    {                                                   \
-        dim_t const M = a.len(0);                       \
-        dim_t const N = b.len(1);                       \
-        dim_t const K = a.len(1);                       \
-        auto * RESTRICT cc = c.data();                  \
-        auto const * RESTRICT aa = a.data();            \
-        auto const * RESTRICT bb = b.data();            \
-        for (dim_t k=0; k<K; ++k) {                     \
-            for (dim_t i=0; i<M; ++i) {                 \
-                for (dim_t j=0; j<N; ++j) {             \
-                    cc[i*N+j] += aa[i*K+k] * bb[k*N+j]; \
-                }                                       \
-            }                                           \
-        }                                               \
-    };
-    DEFINE_GEMM_RESTRICT(gemm_k_raw, gemm_ij_raw, /* */)
-    DEFINE_GEMM_RESTRICT(gemm_k_raw_restrict, gemm_ij_raw_restrict, __restrict__)
-#undef DEFINE_GEMM_RESTRICT
-
     auto bench_all = [&](int k, int m, int p, int n, int reps)
     {
-        auto bench = [&](auto && f, char const * tag)
+        auto bench = [&](auto && f, char const * tag, real rerr=0)
         {
             ra::Big<real, 2> a({m, p}, ra::_0-ra::_1);
             ra::Big<real, 2> b({p, n}, ra::_1-2*ra::_0);
@@ -212,23 +223,23 @@ int main()
 
             auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
             tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n*p)/1e-9, " ns [",
-                    Benchmark::stddev(bv)/(m*n*p)/1e-9 ,"] ", tag).test_eq(ref, c);
+                    Benchmark::stddev(bv)/(m*n*p)/1e-9 ,"] ", tag).test_rel(ref, c, rerr);
         };
 
         tr.section(m, " (", p, ") ", n, " times ", reps);
 #define ZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c) { c = 0; GEMM(a, b, c); }
 #define NOTZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c) { GEMM(a, b, c); }
-// some variants are way too slow to check with larger arrays.
+// some variants are too slow to check with larger arrays.
         if (k>2) {
             bench(NOTZEROFIRST(gemm_k), "k");
         }
-        if (k>1) {
-            bench(ZEROFIRST(gemm_k_raw), "k_raw");
-            bench(ZEROFIRST(gemm_k_raw_restrict), "k_raw_restrict");
+        if (k>0) {
+            bench(ZEROFIRST((gemm_k_raw<real *,  real const *>)), "k_raw");
+            bench(ZEROFIRST((gemm_k_raw<real * __restrict__,  real const * __restrict__>)), "k_raw_restrict");
         }
         if (k>0) {
-            bench(ZEROFIRST(gemm_ij_raw), "ij_raw");
-            bench(ZEROFIRST(gemm_ij_raw_restrict), "ij_raw_restrict");
+            bench(ZEROFIRST((gemm_ij_raw<real *,  real const *>)), "ij_raw");
+            bench(ZEROFIRST((gemm_ij_raw<real * __restrict__,  real const * __restrict__>)), "ij_raw_restrict");
         }
         bench(ZEROFIRST(gemm_block), "block");
         bench(ZEROFIRST(gemm1), "gemm1");
@@ -236,7 +247,7 @@ int main()
         bench(ZEROFIRST(gemm3), "gemm3");
         bench(ZEROFIRST(gemm4), "gemm4");
 #if RA_USE_BLAS==1
-        bench(ZEROFIRST(gemm_blas), "blas");
+        bench(ZEROFIRST(gemm_blas), "blas", 100*std::numeric_limits<real>::epsilon()); // ahem
 #endif
         bench(ZEROFIRST(gemm), "default");
     };

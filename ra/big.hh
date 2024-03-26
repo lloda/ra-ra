@@ -604,7 +604,7 @@ inline auto
 transpose(ViewBig<T, RANK> const & view)
 {
     static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
-    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank: ", view.rank(), "should be ", (sizeof...(Iarg)), ".");
+    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank ", view.rank(), " should be ", (sizeof...(Iarg)), ".");
     constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
     constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
     ViewBig<T, dstrank> r;
