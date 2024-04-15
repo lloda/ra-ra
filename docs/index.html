@@ -421,6 +421,30 @@ int main()
 
 <p>The header <code>&quot;ra/base.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/base.hh&quot;</code> before the rest of <code>ra::</code> in order to override the default handler. All other headers are for internal use by <code>ra::</code>.
 </p>
+<p>The following <code>#define</code>s affect the behavior of <code>ra::</code>.
+</p>
+<ul>
+<li> <code>RA_DO_CHECK</code> (default 1)
+
+<p>If 1, check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
+</p>
+</li><li> <code>RA_DO_OPT</code> (default 1)
+
+<p>Set the default for all <code>RA_DO_OPT_XXX</code> flags.
+</p>
+</li><li> <code>RA_DO_OPT_IOTA</code> (default 1)
+
+<p>If 1, perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::iota(3, 0) + 1</code> becomes <code>ra::iota(3, 1)</code> instead of a two-operand expression template.
+</p>
+</li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0)
+
+<p>If 1, perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
+</p>
+</li><li> <code>RA_DO_FMA</code> (default <code>FP_FAST_FMA</code> if defined, else 0)
+
+<p>If 1, use <code>fma</code> in certain array reductions such as <a href="#x_002ddot"><code>dot</code></a>, <a href="#x_002dgemm"><code>gemm</code></a>, etc.
+</p></li></ul>
+
 <span id="index-container"></span>
 <hr>
 </div>
@@ -1814,7 +1838,7 @@ Next: <a href="#The-future" accesskey="n" rel="next">The future</a>, Previous: <
 <li><a href="#Term-agreement" accesskey="3">Term agreement</a></li>
 <li><a href="#Traversal" accesskey="4">Traversal</a></li>
 <li><a href="#Introspection" accesskey="5">Introspection</a></li>
-<li><a href="#Building-with-ra_003a_003a" accesskey="6">Building with <code>ra::</code></a></li>
+<li><a href="#Building-the-test-suite" accesskey="6">Building the test suite</a></li>
 </ul>
 <hr>
 <div class="section" id="Headers">
@@ -1911,7 +1935,7 @@ Next: <a href="#Introspection" accesskey="n" rel="next">Introspection</a>, Previ
 <div class="section" id="Introspection">
 <div class="header">
 <p>
-Next: <a href="#Building-with-ra_003a_003a" accesskey="n" rel="next">Building with <code>ra::</code></a>, Previous: <a href="#Traversal" accesskey="p" rel="prev">Traversal</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Building-the-test-suite" accesskey="n" rel="next">Building the test suite</a>, Previous: <a href="#Traversal" accesskey="p" rel="prev">Traversal</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Introspection-1"></span><h3 class="section">5.5 Introspection</h3>
 
@@ -1945,45 +1969,37 @@ Next: <a href="#Building-with-ra_003a_003a" accesskey="n" rel="next">Building wi
 
 <hr>
 </div>
-<div class="section" id="Building-with-ra_003a_003a">
+<div class="section" id="Building-the-test-suite">
 <div class="header">
 <p>
 Previous: <a href="#Introspection" accesskey="p" rel="prev">Introspection</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Building-with-ra_003a_003a-1"></span><h3 class="section">5.6 Building with <code>ra::</code></h3>
+<span id="Building-the-test-suite-1"></span><h3 class="section">5.6 Building the test suite</h3>
 
-<p>The following <code>#define</code>s affect the behavior of <code>ra::</code>.
+<p><code>ra::</code> uses its own test and benchmark suites and it comes with three kinds of tests: proper tests, benchmarks, and examples. To build and run them all, run the following from the top directory:
 </p>
-<ul>
-<li> <code>RA_DO_CHECK</code> (default 1)
+<blockquote>
+<pre class="verbatim">CXXFLAGS=-O3 scons
+</pre></blockquote>
+<p>or
+</p><blockquote>
+<pre class="verbatim">CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test
+</pre></blockquote>
 
-<p>If 1, check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
+<p><code>ra::</code> is highly dependent on the optimization level and the test suite may run much slower with <samp>-O0</samp> or <samp>-O1</samp>.
 </p>
-</li><li> <code>RA_DO_OPT</code> (default 1)
-
-<p>Set the default for all <code>RA_DO_OPT_XXX</code> flags.
-</p>
-</li><li> <code>RA_DO_OPT_IOTA</code> (default 1)
-
-<p>If 1, perform immediately (beat) certain operations on <code>ra::Iota</code> objects. For example, <code>ra::iota(3, 0) + 1</code> becomes <code>ra::iota(3, 1)</code> instead of a two-operand expression template.
-</p>
-</li><li> <code>RA_DO_OPT_SMALLVECTOR</code> (default 0)
-
-<p>If 1, perform immediately certain operations on <code>ra::Small</code> objects, using small vector intrinsics. Currently this only works on <b>gcc</b> and doesn&rsquo;t necessarily result in improved performance.
-</p>
-</li><li> <code>RA_DO_FMA</code> (default <code>FP_FAST_FMA</code> if defined, else 0)
-
-<p>If 1, use <code>fma</code> in certain array reductions such as <a href="#x_002ddot"><code>dot</code></a>, <a href="#x_002dgemm"><code>gemm</code></a>, etc.
-</p></li></ul>
-
-<p><code>ra::</code> comes with three kinds of tests: examples, proper tests, and benchmarks. <code>ra::</code> uses its own test and benchmark suites. Run <code>CXXFLAGS=-O3 scons</code> from the top directory of the distribution to build and run them all.  Alternatively, you can use <code>CXXFLAGS=-O3 cmake . &amp;&amp; make &amp;&amp; make test</code>. <code>ra::</code> is highly dependent on optimization by the compiler and will be much slower with <samp>-O0</samp>.
-</p>
-<p>The following environment variables affect the test suite under SCons:
+<p>The SCons/CMake scripts accept the following options:
 </p>
 <span id="index-BLAS-1"></span>
 <ul>
-<li> <code>RA_USE_BLAS</code> (default 0): Use BLAS for <code>gemm</code> and <code>gemv</code> benchmarks.
-</li></ul>
+<li> <code>scons --no-sanitize</code> / <code>cmake -DSANITIZE=0</code>
+
+<p>Remove the sanitizer flags. This is necessary because appending <code>-fno-sanitize=all</code> to <code>CXXFLAGS</code>, as in <code>-fsanitize=... -fno-sanitize=all</code>, doesn&rsquo;t completely remove the sanitizers. The default is to build with sanitizers.
+</p>
+</li><li> <code>scons --blas</code>
+
+<p>Try to use BLAS in the benchmarks. The CMake script tries to detect BLAS automatically, but the SCons script doesn&rsquo;t, hence this option.
+</p></li></ul>
 
 
 <hr>
@@ -2948,7 +2964,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-begin"><code>begin</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-BLAS">BLAS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-BLAS-1">BLAS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Building-with-ra_003a_003a">Building with <code>ra::</code></a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-BLAS-1">BLAS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Building-the-test-suite">Building the test suite</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-BLIS">BLIS</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Blitz_002b_002b-1">Blitz++</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-libraries">Other libraries</a></td></tr>

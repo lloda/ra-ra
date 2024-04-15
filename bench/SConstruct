@@ -1,24 +1,24 @@
 # -*- coding: utf-8; mode: Python -*-
-# (c) Daniel Llorens - 2015-2016, 2018-2019
+# SConstruct for ra/bench
 
+# (c) Daniel Llorens - 2015-2016, 2018-2019
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
 
-# SConstruct for ra/bench
 # FIXME Shared pieces with {examples,test,docs}/SConstruct
 
 import os, string, atexit
 from os.path import join, abspath
 import imp
 ra = imp.load_source('ra', '../config/ra.py')
-
 # FIXME pick BLAS flags from here.
 try:
     Import('top')
 except:
-    top = {}
+    top = { 'skip_summary': False, 'sanitize': False, 'use_blas': False }
+raflags = ra.flags(top['sanitize'])
 
 vars = Variables()
 vars.AddVariables(PathVariable('variant_dir', 'build directory', '.', PathVariable.PathIsDirCreate))
@@ -26,8 +26,7 @@ vars.AddVariables(PathVariable('variant_dir', 'build directory', '.', PathVariab
 env = Environment(options=vars,
                   ENV=dict([(k, os.environ[k] if k in os.environ else '')
                             for k in ['PATH', 'HOME', 'TERM', 'LD_RUN_PATH', 'DYLD_LIBRARY_PATH',
-                                      'RPATH', 'LIBRARY_PATH', 'TEXINPUTS', 'GCC_COLORS', 'BOOST_ROOT',
-                                      'RA_USE_BLAS']]))
+                                      'RPATH', 'LIBRARY_PATH', 'TEXINPUTS', 'GCC_COLORS', 'BOOST_ROOT']]))
 variant_dir = env['variant_dir']
 
 for var, default in [('CC', 'gcc'), ('CXX', 'g++'), ('FORTRAN', 'gfortran')]:
@@ -47,10 +46,10 @@ else:
 
 env.Prepend(CPPPATH=['..', '.'],
             CCFLAGS=archflags if str(env['CCFLAGS']).strip()=='' else '',
-            CXXFLAGS=ra.CXXFLAGS,
-            LINKFLAGS=ra.LINKFLAGS)
+            CXXFLAGS=raflags['CXXFLAGS'],
+            LINKFLAGS=raflags['LINKFLAGS'])
 
-if 'RA_USE_BLAS' in env['ENV'] and env['ENV']['RA_USE_BLAS']=='1':
+if top['use_blas']:
     print("[%s] BLAS will be used." % Dir('.').path)
     env_blas = ra.blas_flags(Configure, env, arch)
     env_blas.Append(CPPDEFINES={'RA_USE_BLAS': 1})
@@ -75,5 +74,5 @@ tester = ra.to_test_ra(env, variant_dir)
 tester('bench-dot', target='bench-dot-no-su', cppdefines={'RA_STATIC_UNROLL': '0'})
 tester('bench-dot', target='bench-dot-su', cppdefines={'RA_STATIC_UNROLL': '1'})
 
-if 'skip_summary' not in top:
+if not top['skip_summary']:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/bench'))

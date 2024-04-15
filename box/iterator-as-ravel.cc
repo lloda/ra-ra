@@ -9,14 +9,13 @@
 
 #include <iostream>
 #include <iterator>
-#include "ra/ra.hh"
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush;
 
 int main()
 {
-    TestRecorder tr;
+    ra::TestRecorder tr;
 // this is trivial since Big::begin() is a raw pointer.
     tr.section("not driving, order I");
     {

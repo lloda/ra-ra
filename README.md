@@ -64,11 +64,7 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 **ra-ra** is header-only and has no dependencies other than a C++20 compiler and the standard library. I test regularly with gcc ≥ 11.3. If you can test with Clang, please let me know.
 
-The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the [examples](examples/) and the [benchmarks](bench/).
-
-* Some of the benchmarks will try to use BLAS if you have define `RA_USE_BLAS=1` in the environment.
-* The test suite is built with sanitizers by default, and this can cause significant slowdown. Disable them by adding `-fno-sanitize=address` to `CXXFLAGS` at build time.
-* The performance of **ra-ra** depends heavily on optimization level. The test suite should pass with `-O0`, but that can take a long time.
+The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the [examples](examples/) and the [benchmarks](bench/). Please check the manual for options.
 
 #### Notes
 

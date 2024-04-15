@@ -309,6 +309,31 @@ The following headers are @emph{not} included by default:
 
 The header @code{"ra/base.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/base.hh"} before the rest of @code{ra::} in order to override the default handler. All other headers are for internal use by @code{ra::}.
 
+The following @code{#define}s affect the behavior of @code{ra::}.
+
+@itemize
+@c FIXME The flag should only apply to dynamic checks.
+@item @code{RA_DO_CHECK} (default 1)
+
+If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
+
+@item @code{RA_DO_OPT} (default 1)
+
+Set the default for all @code{RA_DO_OPT_XXX} flags.
+
+@item @code{RA_DO_OPT_IOTA} (default 1)
+
+If 1, perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::iota(3, 0) + 1} becomes @code{ra::iota(3, 1)} instead of a two-operand expression template.
+
+@item @code{RA_DO_OPT_SMALLVECTOR} (default 0)
+
+If 1, perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
+
+@item @code{RA_DO_FMA} (default @code{FP_FAST_FMA} if defined, else 0)
+
+If 1, use @code{fma} in certain array reductions such as @ref{x-dot,@code{dot}}, @ref{x-gemm,@code{gemm}}, etc.
+@end itemize
+
 @cindex container
 @c ------------------------------------------------
 @node Containers and views
@@ -1755,7 +1780,7 @@ FIXME
 * Term agreement::
 * Traversal::
 * Introspection::
-* Building with @code{ra::}::
+* Building the test suite::
 @end menu
 
 @c ------------------------------------------------
@@ -1877,42 +1902,37 @@ The first form returns the shape of expression @var{e} as an array. The second f
 
 
 @c ------------------------------------------------
-@node Building with @code{ra::}
-@section Building with @code{ra::}
+@node Building the test suite
+@section Building the test suite
 @c ------------------------------------------------
 
-The following @code{#define}s affect the behavior of @code{ra::}.
+@code{ra::} uses its own test and benchmark suites and it comes with three kinds of tests: proper tests, benchmarks, and examples. To build and run them all, run the following from the top directory:
 
-@itemize
-@c FIXME The flag should only apply to dynamic checks.
-@item @code{RA_DO_CHECK} (default 1)
+@quotation
+@verbatim
+CXXFLAGS=-O3 scons
+@end verbatim
+@end quotation
+or
+@quotation
+@verbatim
+CXXFLAGS=-O3 cmake . && make && make test
+@end verbatim
+@end quotation
 
-If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
+@code{ra::} is highly dependent on the optimization level and the test suite may run much slower with @option{-O0} or @option{-O1}.
 
-@item @code{RA_DO_OPT} (default 1)
-
-Set the default for all @code{RA_DO_OPT_XXX} flags.
-
-@item @code{RA_DO_OPT_IOTA} (default 1)
-
-If 1, perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::iota(3, 0) + 1} becomes @code{ra::iota(3, 1)} instead of a two-operand expression template.
-
-@item @code{RA_DO_OPT_SMALLVECTOR} (default 0)
-
-If 1, perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
-
-@item @code{RA_DO_FMA} (default @code{FP_FAST_FMA} if defined, else 0)
-
-If 1, use @code{fma} in certain array reductions such as @ref{x-dot,@code{dot}}, @ref{x-gemm,@code{gemm}}, etc.
-@end itemize
-
-@code{ra::} comes with three kinds of tests: examples, proper tests, and benchmarks. @code{ra::} uses its own test and benchmark suites. Run @code{CXXFLAGS=-O3 scons} from the top directory of the distribution to build and run them all.  Alternatively, you can use @code{CXXFLAGS=-O3 cmake . && make && make test}. @code{ra::} is highly dependent on optimization by the compiler and will be much slower with @option{-O0}.
-
-The following environment variables affect the test suite under SCons:
+The SCons/CMake scripts accept the following options:
 
 @cindex BLAS
 @itemize
-@item @code{RA_USE_BLAS} (default 0): Use BLAS for @code{gemm} and @code{gemv} benchmarks.
+@item @code{scons --no-sanitize} / @code{cmake -DSANITIZE=0}
+
+Remove the sanitizer flags. This is necessary because appending @code{-fno-sanitize=all} to @code{CXXFLAGS}, as in @code{-fsanitize=... -fno-sanitize=all}, doesn't completely remove the sanitizers. The default is to build with sanitizers.
+
+@item @code{scons --blas}
+
+Try to use BLAS in the benchmarks. The CMake script tries to detect BLAS automatically, but the SCons script doesn't, hence this option.
 @end itemize
 
 @c TODO Flags and notes about different compilers

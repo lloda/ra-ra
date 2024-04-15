@@ -1,12 +1,11 @@
 # -*- coding: utf-8; mode: Python -*-
-# (c) Daniel Llorens - 2016, 2017-2023
+# Utilities for SConstructs
 
+# (c) Daniel Llorens - 2016-2024
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
-
-# Utilities for SConstructs
 
 import os, string
 
@@ -17,18 +16,19 @@ class Style: BRIGHT = '\x1b[1m'; RESET_ALL = '\x1b[0m';
 from os.path import join, abspath, split
 from subprocess import call
 
-# Make sure to disable (-fno-sanitize=all) for benchmarks.
-# SANITIZE = []
-SANITIZE = ['-fsanitize=address,leak,undefined']
-
-CXXFLAGS = ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
-            '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
-            '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
-            #'-Wconversion',
-            # '-funsafe-math-optimizations', # TODO Test with this.
-        ] + SANITIZE
-
-LINKFLAGS = SANITIZE
+def flags(sanitize=False):
+    if sanitize:
+        SANITIZE = ['-fsanitize=address,leak,undefined']
+    else:
+        SANITIZE = []
+    LINKFLAGS = SANITIZE
+    return { 'LINKFLAGS': SANITIZE,
+             'CXXFLAGS': ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
+                          '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
+                          '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
+                          #'-Wconversion',
+                          # '-funsafe-math-optimizations', # FIXME
+                          ] + SANITIZE }
 
 def blas_flags(Configure, env, arch):
     env_blas = env.Clone()
