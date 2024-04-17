@@ -38,6 +38,7 @@ struct TestRecorder
     constexpr static double PINF = std::numeric_limits<double>::infinity();
 
 // ra::amax ignores nans like fmax does, we don't want that here.
+    __attribute__((optimize("-fno-finite-math-only")))
     static auto
     amax_strict(auto && a)
     {
@@ -167,7 +168,7 @@ struct TestRecorder
 
             bool c = every(ra::map(comp, a, b));
             test(c,
-                 RA_LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
+                 RA_LAZYINFO(where(false, a, b), " (", where(true, a, b), " ", msg, ")"),
                  RA_LAZYINFO(""),
                  loc);
             return c;
@@ -194,6 +195,7 @@ struct TestRecorder
     RA_TEST_COMP(ge, >=)
 #undef RA_TEST_COMP
 
+    __attribute__((optimize("-fno-finite-math-only")))
     double
     test_rel(auto && ref_, auto && a_, double req, double level=0, RA_CURRENT_LOC)
     {
@@ -218,6 +220,7 @@ struct TestRecorder
              loc);
         return e;
     }
+    __attribute__((optimize("-fno-finite-math-only")))
     double
     test_abs(auto && ref_, auto && a_, double req=0, RA_CURRENT_LOC)
     {

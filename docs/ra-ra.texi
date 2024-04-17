@@ -2499,7 +2499,7 @@ Wrap @var{op} using a rank conjunction (@pxref{The rank conjunction}).
 @deffn @w{Special object} {withshape noshape}
 If either of these objects is sent to a @code{std::ostream} before an expression object, the shape of that object will or will not be printed.
 
-If the object has ct shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has rt shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] expect the shape to be present or not according to the default.
+If the object has ct shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has rt shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] require the default setting.
 
 For example:
 
