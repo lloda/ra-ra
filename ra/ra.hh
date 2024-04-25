@@ -477,9 +477,6 @@ prod(auto && a)
     return c;
 }
 
-constexpr auto reduce_sqrm(auto && a) { return sum(sqrm(a)); }
-constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
-
 #if 1==RA_DO_FMA
 constexpr void maybe_fma(auto && a, auto && b, auto & c) { c = fma(a, b, c); };
 constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { c = fma_conj(a, b, c); };
@@ -505,11 +502,20 @@ cdot(auto && a, auto && b)
 }
 
 constexpr auto
+reduce_sqrm(auto && a)
+{
+    std::decay_t<decltype(conj(VALUE(a)) * VALUE(a))> c(0.);
+    for_each([&c](auto && a) { maybe_fma_conj(a, a, c); }, RA_FWD(a));
+    return c;
+}
+
+constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
+
+constexpr auto
 normv(auto const & a)
 {
     auto b = concrete(a);
-    b /= norm2(b);
-    return b;
+    return b /= norm2(b);
 }
 
 // FIXME benchmark w/o allocation and do Small/Big versions if it's worth it (see bench-gemm.cc)
