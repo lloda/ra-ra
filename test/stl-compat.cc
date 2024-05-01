@@ -174,6 +174,7 @@ int main()
     {
         std::map<int, float> m;
         for (int i=0; i<9; ++i) { m[i] = -i; }
+        tr.test_eq(9, ra::size(ra::ptr(m)));
         for_each([&](auto const & m) { tr.test_eq(-m.first, m.second); }, ra::ptr(m));
     }
     return tr.summary();

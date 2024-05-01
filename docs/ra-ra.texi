@@ -1314,7 +1314,7 @@ The following types are accepted as foreign types:
 produce an expression of positive rank and ct size.
 @item @code{std::array}
 produces an expression of rank 1 and ct size.
-@item Other types conforming to @code{std::ranges::random_access_range}, including @code{std::vector}, @code{std::string}, etc.
+@item Other types conforming to @code{std::ranges::bidirectional_range}, such as @code{std::vector}, @code{std::string}, or @code{std::map}
 produce an expression of rank 1 and rt size.
 @end itemize
 
