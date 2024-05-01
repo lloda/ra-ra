@@ -132,7 +132,7 @@ struct Ptr
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
-    constexpr void adv(rank_t k, dim_t d) { i += step(k) * d * s; }
+    constexpr void adv(rank_t k, dim_t d) { mov(step(k) * d); }
     constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
@@ -142,7 +142,14 @@ struct Ptr
     constexpr decltype(auto) operator*() const { return *i; }
     constexpr auto save() const { return i; }
     constexpr void load(I ii) { i = ii; }
-    constexpr void mov(dim_t d) { i += d*s; }
+    constexpr void mov(dim_t d)
+    {
+        if constexpr (std::random_access_iterator<I>) {
+            i += d*s;
+        } else {
+            if (dim_t j=d*s; j>0) while (j>0) { ++i; --j; } else while (j<0) { --i; ++j; }
+        }
+    }
 };
 
 template <class X> using seq_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;

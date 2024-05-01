@@ -7,11 +7,12 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+#include <map>
+#include <span>
 #include <ranges>
+#include <version>
 #include <iostream>
 #include <iterator>
-#include <span>
-#include <version>
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
@@ -169,5 +170,11 @@ int main()
         tr.test_eq(ra::iota(4, 1), b);
     }
 #endif
+    tr.section("ptr(bidirectional iterator)");
+    {
+        std::map<int, float> m;
+        for (int i=0; i<9; ++i) { m[i] = -i; }
+        for_each([&](auto const & m) { tr.test_eq(-m.first, m.second); }, ra::ptr(m));
+    }
     return tr.summary();
 }
