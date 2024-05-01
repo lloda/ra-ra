@@ -56,6 +56,11 @@ FOR_EACH(FOR_FLOAT, float, double)
         return std::complex<R>(fma(a.real(), b.real(), fma(-a.imag(), b.imag(), c.real())), \
                                fma(a.real(), b.imag(), fma(a.imag(), b.real(), c.imag()))); \
     }                                                                   \
+    constexpr R                                                         \
+    fma_sqrm(std::complex<R> const & a, R const & c)                    \
+    {                                                                   \
+        return fma(a.real(), a.real(), fma(a.imag(), a.imag(), c));     \
+    }                                                                   \
     constexpr bool isfinite(std::complex<R> z) { return isfinite(z.real()) && isfinite(z.imag()); } \
     constexpr bool isnan(std::complex<R> z)    { return isnan(z.real()) || isnan(z.imag()); } \
     constexpr bool isinf(std::complex<R> z)    { return (isinf(z.real()) || isinf(z.imag())) && !isnan(z); }
@@ -480,9 +485,11 @@ prod(auto && a)
 #if 1==RA_DO_FMA
 constexpr void maybe_fma(auto && a, auto && b, auto & c) { c = fma(a, b, c); };
 constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { c = fma_conj(a, b, c); };
+constexpr void maybe_fma_sqrm(auto && a, auto & c) { c = fma_sqrm(a, c); };
 #else
 constexpr void maybe_fma(auto && a, auto && b, auto & c) { c += a*b; };
 constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { c += conj(a)*b; };
+constexpr void maybe_fma_sqrm(auto && a, auto & c) { c += sqrm(a); };
 #endif
 
 constexpr auto
@@ -504,8 +511,8 @@ cdot(auto && a, auto && b)
 constexpr auto
 reduce_sqrm(auto && a)
 {
-    std::decay_t<decltype(conj(VALUE(a)) * VALUE(a))> c(0.);
-    for_each([&c](auto && a) { maybe_fma_conj(a, a, c); }, RA_FWD(a));
+    std::decay_t<decltype(sqrm(VALUE(a)))> c(0.);
+    for_each([&c](auto && a) { maybe_fma_sqrm(a, c); }, RA_FWD(a));
     return c;
 }
 

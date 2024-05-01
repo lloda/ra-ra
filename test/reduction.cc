@@ -35,7 +35,6 @@ int main()
 // failed in gcc 5.1 when amax() took its args by plain auto (now auto &&).
         test_amax_expr(ra::Unique<real, 2>({2, 2}, 0.), ra::Small<real, 2, 2>());
     }
-
     tr.section("every / any");
     {
         tr.test(every(ra::Unique<real, 2>({4, 4}, 10+ra::_0-ra::_1)));
@@ -55,7 +54,6 @@ int main()
         tr.test(any(ra::Unique<int, 1> {5, 2}==5));
         tr.test(!any(ra::Unique<int, 1> {2, 3}==5));
     }
-
     tr.section("norm2");
     {
         ra::Small<real, 2> a {1, 2};
@@ -65,8 +63,11 @@ int main()
         tr.info("type of norm2(floats)").test(std::is_same_v<float, decltype(norm2(b))>);
         tr.info("type of reduce_sqrm(floats)").test(std::is_same_v<float, decltype(reduce_sqrm(b))>);
         tr.info("type of sqrm(floats)").test(std::is_same_v<float, decltype(sqrm(b[0]))>);
+        ra::Small<complex, 2> c {1, 2};
+        tr.info("type of norm2(complex<double>)").test(std::is_same_v<double, decltype(norm2(c))>);
+        tr.info("type of reduce_sqrm(complex<double>)").test(std::is_same_v<double, decltype(reduce_sqrm(c))>);
+        tr.info("type of sqrm(complex<double>)").test(std::is_same_v<double, decltype(sqrm(c[0]))>);
     }
-
     tr.section("normv");
     {
         ra::Small<real, 2> a {1, 2};
@@ -82,7 +83,6 @@ int main()
         tr.test_eq(b[0], 2./sqrt(5));
         tr.test_eq(b[1], 1./sqrt(5));
     }
-
     tr.section("reductions");
     {
         auto test_dot = [](auto && test) // TODO Use this for other real reductions.
@@ -135,7 +135,6 @@ int main()
         test_sum([&tr](auto && a) { tr.test_eq(sqrt(41.), amax(abs(a))); });
         test_sum([&tr](auto && a) { tr.test_eq(6., amin(abs(a))); });
     }
-
     tr.section("amax/amin ignore NaN");
     {
         constexpr real QNAN = std::numeric_limits<real>::quiet_NaN();
