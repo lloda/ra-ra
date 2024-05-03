@@ -135,7 +135,14 @@ int
 main()
 {
     TestRecorder tr(std::cout);
-    static_assert(ra::mp::n_over_p(0, 0)==1, "");
+
+    static_assert(ra::mp::binom(0, 0)==1, "");
+    if constexpr (sizeof(size_t)>=4) {
+        tr.test_eq(size_t(265182525), ra::mp::binom(31, 14));
+    }
+    if constexpr (sizeof(size_t)>=8) {
+        tr.test_eq(size_t(629308289804197437), ra::mp::binom(63, 28));
+    }
     tr.section("Testing FindCombination");
     {
         using la = ra::mp::iota<3>;

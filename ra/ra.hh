@@ -69,7 +69,7 @@ FOR_EACH(FOR_FLOAT, float, double)
 
 namespace ra {
 
-// As an array op; special definitions for rank 0.
+// As array op; special definitions for rank 0.
 template <class T> constexpr bool ra_is_real = std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>;
 template <class T> requires (ra_is_real<T>) constexpr T amax(T const & x) { return x; }
 template <class T> requires (ra_is_real<T>) constexpr T amin(T const & x) { return x; }
@@ -246,11 +246,9 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 // The function objects are matched in optimize.hh.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
-    operator OP(A && a, B && b)                                         \
-    { return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b))); }             \
+        operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b))); } \
     template <class A, class B> requires (toreduce<A, B>) constexpr auto \
-    operator OP(A && a, B && b)                                         \
-    { return VALUE(RA_FWD(a)) OP VALUE(RA_FWD(b)); }
+        operator OP(A && a, B && b) { return VALUE(RA_FWD(a)) OP VALUE(RA_FWD(b)); }
 
 DEF_NAMED_BINARY_OP(+, std::plus<>)          DEF_NAMED_BINARY_OP(-, std::minus<>)
 DEF_NAMED_BINARY_OP(*, std::multiplies<>)    DEF_NAMED_BINARY_OP(/, std::divides<>)
@@ -268,13 +266,11 @@ struct unaryplus
     operator()(T && t) const noexcept { return RA_FWD(t); }
 };
 
-#define DEF_NAMED_UNARY_OP(OP, OPNAME)                          \
-    template <class A> requires (tomap<A>) constexpr auto       \
-    operator OP(A && a)                                         \
-    { return map(OPNAME(), RA_FWD(a)); }                        \
-    template <class A> requires (toreduce<A>) constexpr auto    \
-    operator OP(A && a)                                         \
-    { return OP VALUE(RA_FWD(a)); }
+#define DEF_NAMED_UNARY_OP(OP, OPNAME)                              \
+    template <class A> requires (tomap<A>) constexpr auto           \
+        operator OP(A && a) { return map(OPNAME(), RA_FWD(a)); }    \
+    template <class A> requires (toreduce<A>) constexpr auto        \
+        operator OP(A && a) { return OP VALUE(RA_FWD(a)); }
 
 DEF_NAMED_UNARY_OP(+, unaryplus)
 DEF_NAMED_UNARY_OP(-, std::negate<>)
@@ -284,15 +280,12 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
 // if OP(a) isn't found in ra::, deduction rank(0) -> scalar doesn't work. TODO Cf useret.cc, reexported.cc
 #define DEF_NAME(OP)                                                    \
     template <class ... A> requires (tomap<A ...>) constexpr auto       \
-    OP(A && ... a)                                                      \
-    { return map([](auto && ... a) -> decltype(auto) { return OP(RA_FWD(a) ...); }, RA_FWD(a) ...); } \
+        OP(A && ... a) { return map([](auto && ... a) -> decltype(auto) { return OP(RA_FWD(a) ...); }, RA_FWD(a) ...); } \
     template <class ... A> requires (toreduce<A ...>) constexpr decltype(auto) \
-    OP(A && ... a)                                                      \
-    { return OP(VALUE(RA_FWD(a)) ...); }
+        OP(A && ... a) { return OP(VALUE(RA_FWD(a)) ...); }
 #define DEF_FWD(QUALIFIED_OP, OP)                                       \
     template <class ... A> requires (!tomap<A ...> && !toreduce<A ...>) constexpr decltype(auto) \
-    OP(A && ... a)                                                      \
-    { return QUALIFIED_OP(RA_FWD(a) ...); }                             \
+        OP(A && ... a) { return QUALIFIED_OP(RA_FWD(a) ...); }          \
     DEF_NAME(OP)
 #define DEF_USING(QUALIFIED_OP, OP)             \
     using QUALIFIED_OP;                         \
@@ -389,8 +382,7 @@ FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
 
 
 // --------------------------------
-// whole-array ops. TODO First rank reductions? Variable rank reductions?
-// FIXME C++23 and_then/or_else/etc
+// whole-array ops. TODO First/variable rank reductions? FIXME C++23 and_then/or_else/etc
 // --------------------------------
 
 constexpr bool
@@ -482,15 +474,9 @@ prod(auto && a)
     return c;
 }
 
-#if 1==RA_DO_FMA
-constexpr void maybe_fma(auto && a, auto && b, auto & c) { c = fma(a, b, c); };
-constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { c = fma_conj(a, b, c); };
-constexpr void maybe_fma_sqrm(auto && a, auto & c) { c = fma_sqrm(a, c); };
-#else
-constexpr void maybe_fma(auto && a, auto && b, auto & c) { c += a*b; };
-constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { c += conj(a)*b; };
-constexpr void maybe_fma_sqrm(auto && a, auto & c) { c += sqrm(a); };
-#endif
+constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c = fma(a, b, c); else c += a*b; }
+constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c = fma_conj(a, b, c); else c += conj(a)*b; }
+constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_DO_FMA) c = fma_sqrm(a, c); else c += sqrm(a); }
 
 constexpr auto
 dot(auto && a, auto && b)
@@ -624,9 +610,9 @@ struct ChooseComponents_<D, O>
     using type = typename MapAntiCombination<ChooseComponents<D, D-O>, D>::type;
 };
 
-// Works almost to the range of std::size_t.
+// Up to (62 x) or (63 28) ~ 2^59 on 64 bit size_t.
 constexpr std::size_t
-n_over_p(std::size_t const n, std::size_t p)
+binom(std::size_t n, std::size_t p)
 {
     if (p>n) {
         return 0;
@@ -634,7 +620,7 @@ n_over_p(std::size_t const n, std::size_t p)
         p = n-p;
     }
     std::size_t v = 1;
-    for (std::size_t i=0; i!=p; ++i) {
+    for (std::size_t i=0; i<p; ++i) {
         v = v*(n-i)/(i+1);
     }
     return v;
@@ -646,9 +632,9 @@ struct Wedge
 {
     constexpr static int Or = Oa+Ob;
     static_assert(Oa<=D && Ob<=D && Or<=D, "bad orders");
-    constexpr static int Na = n_over_p(D, Oa);
-    constexpr static int Nb = n_over_p(D, Ob);
-    constexpr static int Nr = n_over_p(D, Or);
+    constexpr static int Na = binom(D, Oa);
+    constexpr static int Nb = binom(D, Ob);
+    constexpr static int Nr = binom(D, Or);
 // in lexicographic order. Can be used to sort Ca below with FindPermutation.
     using LexOrCa = mp::combinations<mp::iota<D>, Oa>;
 // the actual components used, which are in lex. order only in some cases.
