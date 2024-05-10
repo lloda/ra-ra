@@ -9,7 +9,6 @@
 
 #include <iostream>
 #include <iterator>
-#include <ranges>
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;

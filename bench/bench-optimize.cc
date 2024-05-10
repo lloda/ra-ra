@@ -7,11 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// FIXME RA_DO_OPT_SMALLVECTOR (?)
-
 #define RA_DO_OPT 0 // disable automatic use, so we can compare with (forced) and without
-#define RA_DO_OPT_IOTA 1
-
 #ifdef RA_DO_OPT_SMALLVECTOR // bench requires 1 to be meaningful.
 #undef RA_DO_OPT_SMALLVECTOR
 #endif

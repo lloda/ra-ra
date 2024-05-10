@@ -18,14 +18,15 @@
 #include <version>
 #include <source_location>
 
+// to be used
+// static_assert(__cpp_constexpr >= 202211); // c++23
+// static_assert(__cpp_constexpr >= 202306L);  // c++26
+// static_assert(__cpp_static_assert >= 202306L); // c++26
+// static_assert(__cpp_explicit_this_parameter >= 202110L); // c++26
+
 // benchmark shows it's bad by default; probably requires optimizing also +=, etc.
 #ifndef RA_DO_OPT_SMALLVECTOR
 #define RA_DO_OPT_SMALLVECTOR 0
-#endif
-
-// no real downside.
-#ifndef RA_DO_OPT_IOTA
-#define RA_DO_OPT_IOTA 1
 #endif
 
 namespace ra {
@@ -155,7 +156,7 @@ rank(V const & v)
     } else if constexpr (requires { v.rank(); })  {
         return v.rank();
     } else {
-        static_assert(always_false<V>, "No rank() for this type.");
+        static_assert(false, "No rank() for this type.");
     }
 }
 
@@ -230,8 +231,8 @@ shape(V const & v)
         return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         static_assert(ANY==rs);
-        auto i = std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k) { return v.len(k); });
-        return vector_default_init<dim_t>(i.begin(), i.end()); // FIXME C++23 p1206? Still fugly
+        return std::ranges::to<vector_default_init<dim_t>>(
+            std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k) { return v.len(k); }));
     }
 }
 
@@ -297,7 +298,7 @@ template <class A>
 constexpr std::ostream &
 operator<<(shape_manip_t const & sm, A const & a) { return sm << format_array(a); }
 
-/* constexpr */ inline std::ostream &
+constexpr std::ostream &
 operator<<(std::ostream & o, std::source_location const & loc)
 {
     return o << loc.file_name() << ":" << loc.line() << "," << loc.column();

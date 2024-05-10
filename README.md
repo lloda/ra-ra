@@ -3,7 +3,7 @@
 
 # ra-ra
 
-**ra-ra** is a C++20 header-only library for handling multidimensional dense arrays. These are objects that can be indexed in 0 or more dimensions; the number of dimensions is known as ‘rank’. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2.
+**ra-ra** is a C++23 header-only library for handling multidimensional dense arrays. These are objects that can be indexed in 0 or more dimensions; the number of dimensions is known as ‘rank’. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2.
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by [Blitz++](http://blitz.sourceforge.net)) to delay the execution of expressions involving array operands, and in this way avoid the unnecessary creation of large temporary array objects.
 
@@ -62,7 +62,7 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 #### Building the tests and the benchmarks
 
-**ra-ra** is header-only and has no dependencies other than a C++20 compiler and the standard library. I test regularly with gcc ≥ 11.3. If you can test with Clang, please let me know.
+**ra-ra** is header-only and has no dependencies other than a C++23 compiler and the standard library. At the moment I test with gcc 14.1. If you can test with Clang, please let me know.
 
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the [examples](examples/) and the [benchmarks](bench/). Please check the manual for options.
 
@@ -70,7 +70,7 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 
 * Both index and size types are signed. Index base is 0.
 * The default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C order.
-* The subscripting operator is `()` or `[]` indistinctly. Multi-argument `[]` requires `__cpp_multidimensional_subscript > 202110L` (in gcc 12 with `-std=c++2b`).
+* The subscripting operator is `()` or `[]`, indistinctly.
 * Indices are checked by default. This can be disabled with a compilation flag.
 * **ra-ra** doesn't use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
 * **ra-ra** uses zero size arrays and VLAs internally.

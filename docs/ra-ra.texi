@@ -318,14 +318,6 @@ The following @code{#define}s affect the behavior of @code{ra::}.
 
 If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
 
-@item @code{RA_DO_OPT} (default 1)
-
-Set the default for all @code{RA_DO_OPT_XXX} flags.
-
-@item @code{RA_DO_OPT_IOTA} (default 1)
-
-If 1, perform immediately (beat) certain operations on @code{ra::Iota} objects. For example, @code{ra::iota(3, 0) + 1} becomes @code{ra::iota(3, 1)} instead of a two-operand expression template.
-
 @item @code{RA_DO_OPT_SMALLVECTOR} (default 0)
 
 If 1, perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.

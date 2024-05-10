@@ -307,7 +307,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
-// const/nonconst shims over View's methods. FIXME > gcc13 ? __cpp_explicit_this_parameter
+// const/nonconst shims over View's methods. FIXME __cpp_explicit_this_parameter ?
 #define RA_CONST_OR_NOT(CONST)                                          \
     constexpr T CONST & back() CONST { RA_CHECK(1==rank() && size()>0, "Bad back()."); return store[size()-1]; } \
     constexpr auto data() CONST { return view().data(); }               \

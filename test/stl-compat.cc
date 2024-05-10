@@ -9,7 +9,6 @@
 
 #include <map>
 #include <span>
-#include <ranges>
 #include <version>
 #include <iostream>
 #include <iterator>
@@ -161,7 +160,6 @@ int main()
         std::ranges::sort(ra::range(A));
         tr.test_eq(ra::start({'x', 'y', 'z'}), A);
     }
-#if __cpp_lib_span >= 202002L
     tr.section("std::span");
     {
         std::vector a = {1, 2, 3, 4};
@@ -169,7 +167,6 @@ int main()
         tr.test_eq(1, ra::rank(b));
         tr.test_eq(ra::iota(4, 1), b);
     }
-#endif
     tr.section("ptr(bidirectional iterator)");
     {
         std::map<int, float> m;

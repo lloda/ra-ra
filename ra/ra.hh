@@ -143,7 +143,6 @@ odd(unsigned int N) { return N & 1; }
 template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e); }
 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like WithLen does.
-#if RA_DO_OPT_IOTA==1
 // TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
 template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<ncvalue_t<X>>;
 
@@ -197,8 +196,6 @@ template <is_iota I>
 constexpr auto
 optimize(Expr<std::negate<>, std::tuple<I>> && e)
 { return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).s); }
-
-#endif // RA_DO_OPT_IOTA
 
 #if RA_DO_OPT_SMALLVECTOR==1
 
@@ -262,8 +259,7 @@ DEF_NAMED_BINARY_OP(^, std::bit_xor<>)       DEF_NAMED_BINARY_OP(<=>, std::compa
 // FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive
 struct unaryplus
 {
-    template <class T> constexpr /* static P1169 in gcc13 */ auto
-    operator()(T && t) const noexcept { return RA_FWD(t); }
+    template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FWD(t); }
 };
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                              \

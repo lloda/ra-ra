@@ -89,11 +89,11 @@ struct vector: public std::vector<T, sb_alloc<T, N>>
     using V::data, V::size;
     template <rank_t c=0> constexpr auto iter()
     {
-        if constexpr (0==c) { return ra::ptr(data(), size()); } else { static_assert(always_false<c>); } // tbd
+        if constexpr (0==c) { return ra::ptr(data(), size()); } else { static_assert(false); } // tbd
     }
     template <rank_t c=0> constexpr auto iter() const
     {
-        if constexpr (0==c) { return ra::ptr(data(), size()); } else { static_assert(always_false<c>); } // tbd
+        if constexpr (0==c) { return ra::ptr(data(), size()); } else { static_assert(false); } // tbd
     }
 };
 

@@ -164,7 +164,7 @@ thestep()
         static_assert(1==S::value);
         return S {};
     } else {
-        static_assert(always_false<S>, "Bad step type for sequence.");
+        static_assert(false, "Bad step type for sequence.");
     }
 }
 
@@ -186,7 +186,7 @@ ptr(I && i, N && n = N {}, S && s = thestep<S>())
         }
         return Ptr<std::decay_t<I>, seq_arg<N>, seq_arg<S>> { i, RA_FWD(n), RA_FWD(s) };
     } else {
-        static_assert(always_false<I>, "Bad type for ptr().");
+        static_assert(false, "Bad type for ptr().");
     }
 }
 
@@ -282,7 +282,7 @@ constexpr auto
 iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
 
 constexpr void
-start(auto && t) { static_assert(always_false<decltype(t)>, "Cannot start() type."); }
+start(auto && t) { static_assert(false, "Cannot start() type."); }
 
 constexpr auto
 start(is_fov auto && t) { return ra::ptr(RA_FWD(t)); }

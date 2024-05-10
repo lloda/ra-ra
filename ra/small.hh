@@ -469,7 +469,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     select(is_iota auto i)
     {
         if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME c++23 std::abs
-            static_assert(always_false<decltype(k)>, "Bad index.");
+            static_assert(false, "Bad index.");
         } else {
             RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
         }
@@ -752,7 +752,7 @@ cat(A1 && a1_, A2 && a2_)
         std::copy(a2.begin(), a2.end(), val.begin()+1);
         return val;
     } else {
-        static_assert(always_false<A1, A2>);
+        static_assert(false);
     }
 }
 

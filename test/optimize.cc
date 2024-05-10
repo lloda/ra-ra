@@ -8,8 +8,6 @@
 // later version.
 
 #define RA_DO_OPT 0 // disable automatic use, so we can compare with (forced) and without
-#define RA_DO_OPT_IOTA 1
-
 #ifndef RA_DO_OPT_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
 #define RA_DO_OPT_SMALLVECTOR 1
 #endif
