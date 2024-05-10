@@ -11,7 +11,7 @@
 #include <iomanip>
 #include <string>
 #include <cstdlib>
-#include "ra/bench.hh"
+#include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
@@ -34,7 +34,7 @@ int main()
 
         int ref0 = sum(at(C, iter<1>(I))), val0 = 0;
 
-        Benchmark bm { reps, 3 };
+        ra::Benchmark bm { reps, 3 };
         auto report = [&](std::string const & tag, auto && bv)
         {
             tr.info(std::setw(5), std::fixed, bm.avg(bv)/M/N/1e-9, " ns [", bm.stddev(bv)/M/N/1e-9, "] ", tag)

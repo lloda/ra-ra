@@ -8,9 +8,9 @@
 // later version.
 
 #include <iostream>
-#include "ra/bench.hh"
+#include "ra/test.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 
 int main()
 {

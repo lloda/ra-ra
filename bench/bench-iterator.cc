@@ -11,9 +11,9 @@
 #include <iomanip>
 #include <string>
 #include <cstdlib>
-#include "ra/bench.hh"
+#include "ra/test.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 using real = double;
 
 // FIXME Small cases get reduced statically by -O3 (at least gcc11-13), which isn't very useful.

@@ -19,10 +19,10 @@
 
 #include <iostream>
 #include <iomanip>
-#include "ra/bench.hh"
+#include "ra/test.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision;
-using ra::TestRecorder, ra::Small, ra::ViewBig, ra::Unique;
+using ra::TestRecorder, ra::Benchmark, ra::Small, ra::ViewBig, ra::Unique;
 
 using Vec = ra::Small<float, 4>;
 

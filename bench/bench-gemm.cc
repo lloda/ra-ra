@@ -14,10 +14,10 @@
 
 #include <iostream>
 #include <iomanip>
-#include "ra/bench.hh"
+#include "ra/test.hh"
 #include <omp.h>
 
-using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
+using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder, ra::Benchmark;
 using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t, ra::all;
 using real = double;
 

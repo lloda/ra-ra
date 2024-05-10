@@ -15,10 +15,10 @@
 #include "ra/ra.hh"
 #include "ra/test.hh"
 #include "examples/cghs.hh"
-#include "ra/bench.hh"
+#include "ra/test.hh"
 #include <numbers>
 
-using std::cout, std::endl, std::flush, ra::TestRecorder;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 
 constexpr auto PI = std::numbers::pi_v<double>;
 

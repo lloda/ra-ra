@@ -14,9 +14,8 @@
 #include <iomanip>
 #include <iostream>
 #include "ra/test.hh"
-#include "ra/bench.hh"
 
-using std::cout, std::endl, ra::TestRecorder;
+using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 
 int main()
 {

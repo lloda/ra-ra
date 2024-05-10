@@ -414,9 +414,10 @@ int main()
 
 <p>The following headers are <em>not</em> included by default:
 </p><ul>
-<li> <code>&quot;ra/dual.hh&quot;</code>: A dual number type for simple uses of automatic differentiation.
-
-</li><li> <code>&quot;ra/test.hh&quot;</code>, <code>&quot;ra/bench.hh&quot;</code>: Used by the test and benchmark suites.
+<li> <code>&quot;ra/dual.hh&quot;</code>:
+A dual number type for simple uses of automatic differentiation.
+</li><li> <code>&quot;ra/test.hh&quot;</code>:
+Used by the test suite.
 </li></ul>
 
 <p>The header <code>&quot;ra/base.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/base.hh&quot;</code> before the rest of <code>ra::</code> in order to override the default handler. All other headers are for internal use by <code>ra::</code>.
@@ -1866,9 +1867,7 @@ Array type with run time dimensions.
 </li><li> <code>ra.hh</code> -
 Functions and operators, main header.
 </li><li> <code>test.hh</code> -
-(accessory) Testing library.
-</li><li> <code>bench.hh</code> -
-(accessory) Benchmarking library.
+(accessory) Testing/benchmarking library.
 </li><li> <code>dual.hh</code> -
 (accessory) Dual number type and operations.
 </li></ul>

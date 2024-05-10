@@ -10,10 +10,10 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include "ra/bench.hh"
+#include "ra/test.hh"
 
 using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
-using ra::Small, ra::Unique, ra::dim_t;
+using ra::Small, ra::Unique, ra::dim_t, ra::Benchmark;
 using real = double;
 
 int const N = 100000;

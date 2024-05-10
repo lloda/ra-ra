@@ -10,9 +10,9 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include "ra/bench.hh"
+#include "ra/test.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 using real = double;
 
 int nx = 1000000;

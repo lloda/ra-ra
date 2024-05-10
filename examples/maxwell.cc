@@ -13,18 +13,17 @@
 #include <string>
 #include "ra/test.hh"
 #include "ra/ra.hh"
-#include "ra/bench.hh"
+#include "ra/test.hh"
 #include <numbers>
 
 using real = double;
 template <class T, int rank> using array = ra::Big<T, rank>;
-using ra::iota;
 auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 constexpr auto PI = std::numbers::pi_v<double>;
 
-using std::cout, std::endl, ra::TestRecorder;
-using ra::int_c;
+using std::cout, std::endl;
+using ra::iota, ra::int_c, ra::TestRecorder, ra::Benchmark;
 
 int main()
 {
