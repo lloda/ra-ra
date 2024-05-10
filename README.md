@@ -7,7 +7,7 @@
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by [Blitz++](http://blitz.sourceforge.net)) to delay the execution of expressions involving array operands, and in this way avoid the unnecessary creation of large temporary array objects.
 
-**ra-ra** is compact (≈5k loc), easy to extend, and generic. There are no arbitrary type restrictions or limits on rank or argument count.
+**ra-ra** is compact (<5k loc), easy to extend, and generic. There are no arbitrary type restrictions or limits on rank or argument count.
 
 In this example ([examples/read-me.cc](examples/read-me.cc)), we create some arrays, do operations on them, and print the result.
 

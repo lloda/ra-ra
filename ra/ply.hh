@@ -261,7 +261,7 @@ ply_fixed(A && a, Early && early = Nop {})
     constexpr rank_t rank = rank_s<A>();
     static_assert(0<=rank, "ply_fixed needs static rank");
 // inside first. FIXME better heuristic - but first need a way to force row-major
-    constexpr /* static P2647 gcc13 */ auto order = mp::tuple2array<int, mp::reverse<mp::iota<rank>>>();
+    constexpr auto order = mp::tuple2array<int, mp::reverse<mp::iota<rank>>>();
     if constexpr (0==rank) {
         if constexpr (requires {early.def;}) {
             return (*a).value_or(early.def);
@@ -270,9 +270,9 @@ ply_fixed(A && a, Early && early = Nop {})
             return;
         }
     } else {
-        auto ss0 = a.step(order[0]);
 // static keep_step implies all else is static.
         if constexpr (RA_STATIC_UNROLL && rank>1 && requires (dim_t st, rank_t z, rank_t j) { A::keep_step(st, z, j); }) {
+            constexpr auto ss0 = a.step(order[0]);
 // find outermost compact dim.
             constexpr auto sj = [&order]
             {
@@ -291,6 +291,7 @@ ply_fixed(A && a, Early && early = Nop {})
         } else {
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
+            auto ss0 = a.step(order[0]); // gcc 14.1 with RA_DO_CHECK=0 and sanitizer on
 // not worth unrolling.
             if constexpr (requires {early.def;}) {
                 return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
