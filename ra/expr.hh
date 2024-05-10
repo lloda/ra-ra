@@ -665,7 +665,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const
     {
         if constexpr (1!=size_s<Expr>()) {
-            RA_CHECK(1==size(*this), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
+            RA_CHECK(1==size(*this), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return *(*this);
     }
@@ -755,7 +755,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     operator decltype(pick_star<0>(*std::get<0>(t), t)) () const
     {
         if constexpr (1!=size_s<Pick>()) {
-            RA_CHECK(1==size(*this), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
+            RA_CHECK(1==size(*this), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return *(*this);
     }

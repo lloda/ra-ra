@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Arrays with dynamic lengths/strides, cf small.hh.
 
-// (c) Daniel Llorens - 2013-2023
+// (c) Daniel Llorens - 2013-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -206,12 +206,11 @@ struct ViewBig
     operator T & () const
     {
         if constexpr (0!=RANK) {
-            RA_CHECK(1==size(), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
+            RA_CHECK(1==size(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
         }
         return cp[0];
     }
-// FIXME necessary per [ra15], conflict with converting constructor? maybe gcc14 https://wg21.link/cwg976
-    constexpr operator T & () { return std::as_const(*this); }
+    constexpr operator T & () { return std::as_const(*this); } // FIXME not sure why this is necessary [ra15]
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)
     constexpr ViewBig(ViewBig<T, R> const & x): dimv(x.dimv), cp(x.cp) {}
@@ -223,8 +222,7 @@ struct ViewBig
     template <rank_t R> requires (R!=ANY && RANK==ANY && std::is_const_v<T>)
     constexpr ViewBig(ViewBig<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
 // conversion to const. We rely on it for Container::view(). FIXME iffy? not constexpr, and doesn't work for Small.
-    constexpr
-    operator ViewBig<T const, RANK> const & () const requires (!std::is_const_v<T>)
+    constexpr operator ViewBig<T const, RANK> const & () const requires (!std::is_const_v<T>)
     {
         return *reinterpret_cast<ViewBig<T const, RANK> const *>(this);
     }
@@ -307,20 +305,17 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
-// const/nonconst shims over View's methods. FIXME __cpp_explicit_this_parameter ?
-#define RA_CONST_OR_NOT(CONST)                                          \
-    constexpr T CONST & back() CONST { RA_CHECK(1==rank() && size()>0, "Bad back()."); return store[size()-1]; } \
-    constexpr auto data() CONST { return view().data(); }               \
-    constexpr decltype(auto) operator()(auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
-    constexpr decltype(auto) operator[](auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
-    constexpr decltype(auto) at(auto && i) CONST { return view().at(RA_FWD(i)); } \
-    /* always compact/row-major, so STL-like iterators can be raw pointers. */ \
-    constexpr auto begin() CONST { assert(is_c_order(view())); return view().data(); } \
-    constexpr auto end() CONST { return view().data()+size(); }         \
-    template <rank_t c=0> constexpr auto iter() CONST { if constexpr (1==RANK && 0==c) { return ptr(data(), size()); } else { return view().template iter<c>(); } } \
-    constexpr operator T CONST & () CONST { return view(); }
-    FOR_EACH(RA_CONST_OR_NOT, /*not const*/, const)
-#undef RA_CONST_OR_NOT
+    constexpr decltype(auto) back(this auto && self) { auto s=self.size(); RA_CHECK(1==rank() && s>0, "Bad back()."); return RA_FWD(self).store[s-1]; }
+    constexpr auto data(this auto && self) { return self.view().data(); }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) at(this auto && self, auto && i) { return RA_FWD(self).view().at(RA_FWD(i)); }
+// always compact/row-major, so STL-like iterators can be raw pointers.
+    constexpr auto begin(this auto && self) { assert(is_c_order(self.view())); return self.view().data(); }
+    constexpr auto end(this auto && self) { return self.view().data()+self.size(); }
+    template <rank_t c=0> constexpr auto iter(this auto && self) { if constexpr (1==RANK && 0==c) { return ptr(self.data(), self.size()); } else { return RA_FWD(self).view().template iter<c>(); } }
+    constexpr operator T & () { return view(); }
+    constexpr operator T const & () const { return view(); }
 
 // non-copy assignment operators follow View, but cannot be just using'd because of constness.
 #define ASSIGNOPS(OP)                                               \

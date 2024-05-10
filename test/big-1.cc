@@ -29,6 +29,7 @@ int main()
         int2 check[1] = {{1, 2}};
         tr.test_eq(check, ra::start(a));
         tr.test_eq(check, b);
+        tr.test_eq(check[0], b.back());
     }
     tr.section("behavior of resize with default Container");
     {

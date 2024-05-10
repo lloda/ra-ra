@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Arrays with static lengths/strides, cf big.hh.
 
-// (c) Daniel Llorens - 2013-2023
+// (c) Daniel Llorens - 2013-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -532,7 +532,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr auto end() const requires (defsteps) { return cp+size(); }
     constexpr static auto end() requires (!defsteps) { return std::default_sentinel; }
     constexpr T & back() const { static_assert(rank()>=1 && size()>0, "No back()."); return cp[size()-1]; }
-    constexpr operator T & () const { static_assert(1==size(), "Bad conversion to scalar."); return cp[0]; }
+    constexpr operator T & () const { static_assert(1==size(), "Bad scalar conversion."); return cp[0]; }
 };
 
 #if defined (__clang__)
@@ -608,19 +608,18 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
 
-#define RA_CONST_OR_NOT(CONST)                                          \
-    constexpr T CONST & back() CONST { return view().back(); }          \
-    constexpr T CONST * data() CONST { return view().data(); }          \
-    constexpr operator T CONST & () CONST { return view(); }            \
-    constexpr decltype(auto) operator()(auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
-    constexpr decltype(auto) operator[](auto && ... a) CONST { return view()(RA_FWD(a) ...); } \
-    constexpr decltype(auto) at(auto && i) CONST { return view().at(RA_FWD(i)); } \
-    template <int ss, int oo=0> constexpr decltype(auto) as() CONST { return view().template as<ss, oo>(); } \
-    template <rank_t c=0> constexpr auto iter() CONST { return view().template iter<c>(); } \
-    constexpr auto begin() CONST { return view().begin(); }             \
-    constexpr auto end() CONST { return view().end(); }
-    FOR_EACH(RA_CONST_OR_NOT, /*not const*/, const)
-#undef RA_CONST_OR_NOT
+    constexpr decltype(auto) back(this auto && self) { return RA_FWD(self).view().back(); }
+    constexpr auto data(this auto && self) { return self.view().data(); }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
+    constexpr decltype(auto) at(this auto && self, auto && i) { return RA_FWD(self).view().at(RA_FWD(i)); }
+    constexpr auto begin(this auto && self) { return self.view().begin(); }
+    constexpr auto end(this auto && self) { return self.view().end(); }
+    template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FWD(self).view().template iter<c>(); }
+    constexpr operator T & () { return view(); }
+    constexpr operator T const & () const { return view(); }
+// FIXME deprecate, can do (iota(ic<> ...)) instead
+    template <int ss, int oo=0> constexpr decltype(auto) as(this auto && self) { return RA_FWD(self).view().template as<ss, oo>(); }
 };
 
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;

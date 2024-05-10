@@ -22,7 +22,6 @@
 // static_assert(__cpp_constexpr >= 202211); // c++23
 // static_assert(__cpp_constexpr >= 202306L);  // c++26
 // static_assert(__cpp_static_assert >= 202306L); // c++26
-// static_assert(__cpp_explicit_this_parameter >= 202110L); // c++26
 
 // benchmark shows it's bad by default; probably requires optimizing also +=, etc.
 #ifndef RA_DO_OPT_SMALLVECTOR
