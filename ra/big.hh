@@ -330,13 +330,12 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
 
-    template <class S> requires (1==rank_s<S>() || ANY==rank_s<S>())
     void
-    init(S && s)
+    init(auto && s) requires (1==rank_s(s) || ANY==rank_s(s))
     {
-        static_assert(!std::is_convertible_v<value_t<S>, Dim>);
+        static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
         RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
-        static_assert(ANY==RANK || ANY==size_s<S>() || RANK==size_s<S>() || BAD==size_s<S>(), "Bad shape for rank.");
+        static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || BAD==size_s(s), "Bad shape for rank.");
         ra::resize(View::dimv, ra::size(s)); // [ra37]
         store = storage_traits<Store>::create(filldim(View::dimv, s));
         View::cp = storage_traits<Store>::data(store);
@@ -406,8 +405,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
         store.resize(size(), t);
         View::cp = store.data();
     }
-    template <class S> requires (rank_s<S>() > 0)
-    void resize(S const & s)
+    void resize(auto const & s) requires (rank_s(s) > 0)
     {
         ra::resize(View::dimv, start(s).len(0)); // [ra37] FIXME is View constructor
         store.resize(filldim(View::dimv, s));

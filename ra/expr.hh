@@ -175,10 +175,10 @@ ptr(I && i, N && n = N {}, S && s = thestep<S>())
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
         static_assert(std::is_same_v<dim_c<BAD>, N>, "Object has own length.");
         static_assert(std::is_same_v<dim_c<1>, S>, "No step with deduced size.");
-        if constexpr (ANY==size_s<I>()) {
+        if constexpr (ANY==size_s(i)) {
             return ptr(std::begin(RA_FWD(i)), std::ssize(i), RA_FWD(s));
         } else {
-            return ptr(std::begin(RA_FWD(i)), ic<size_s<I>()>, RA_FWD(s));
+            return ptr(std::begin(RA_FWD(i)), ic<size_s(i)>, RA_FWD(s));
         }
     } else if constexpr (std::bidirectional_iterator<std::decay_t<I>>) {
         if constexpr (std::is_integral_v<N>) {

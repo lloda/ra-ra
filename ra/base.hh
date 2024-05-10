@@ -30,7 +30,7 @@
 
 namespace ra {
 
-constexpr int VERSION = 28;
+constexpr int VERSION = 29;
 constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
 constexpr int BAD = -1988888888; // undefined, eg dead axes
 
@@ -144,14 +144,13 @@ rank_s()
     }
 }
 
-template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); } // c++23 p2280r4 on gcc14
+template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); }
 
-template <class V>
 constexpr rank_t
-rank(V const & v)
+rank(auto const & v)
 {
-    if constexpr (ANY!=rank_s<V>()) {
-        return rank_s<V>();
+    if constexpr (ANY!=rank_s(v)) {
+        return rank_s(v);
     } else if constexpr (requires { v.rank(); })  {
         return v.rank();
     } else {
@@ -192,14 +191,14 @@ size_s()
     }
 }
 
-template <class V> consteval dim_t size_s(V const &) { return size_s<V>(); } // c++23 p2280r4
+template <class V> consteval dim_t size_s(V const &) { return size_s<V>(); }
 
 template <class V>
 constexpr dim_t
 size(V const & v)
 {
-    if constexpr (ANY!=size_s<V>()) {
-        return size_s<V>();
+    if constexpr (ANY!=size_s(v)) {
+        return size_s(v);
     } else if constexpr (is_fov<V>) {
         return std::ssize(v);
     } else if constexpr (requires { v.size(); }) {
@@ -216,7 +215,7 @@ template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
-    constexpr rank_t rs = rank_s<V>();
+    constexpr rank_t rs = rank_s(v);
 // FIXME __cpp_constexpr >= 202211L to return references to the constexpr cases
     if constexpr (is_builtin_array<V>) {
         return std::apply([] (auto ... i) { return std::array<dim_t, rs> { std::extent_v<V, i> ... }; }, mp::iota<rs> {});

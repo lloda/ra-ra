@@ -258,7 +258,7 @@ template <IteratorConcept A, class Early = Nop>
 constexpr decltype(auto)
 ply_fixed(A && a, Early && early = Nop {})
 {
-    constexpr rank_t rank = rank_s<A>();
+    constexpr rank_t rank = rank_s(a);
     static_assert(0<=rank, "ply_fixed needs static rank");
 // inside first. FIXME better heuristic - but first need a way to force row-major
     constexpr auto order = mp::tuple2array<int, mp::reverse<mp::iota<rank>>>();
@@ -313,7 +313,7 @@ constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
     static_assert(!has_len<A>, "len outside subscript context.");
-    static_assert(0<=rank_s<A>() || ANY==rank_s<A>());
+    static_assert(0<=rank_s(a) || ANY==rank_s(a));
     if constexpr (ANY==size_s<A>()) {
         return ply_ravel(RA_FWD(a), RA_FWD(early));
     } else {
