@@ -7,7 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#define RA_DO_OPT 0 // disable automatic use, so we can compare with (forced) and without
+#define RA_OPT // disable so we can compare with (forced) and without
 #ifndef RA_DO_OPT_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
 #define RA_DO_OPT_SMALLVECTOR 1
 #endif
@@ -83,7 +83,7 @@ int main()
                 auto k4 = optimize(1+ra::iota(5));
                 auto k5 = optimize(1.5+ra::iota(5));
                 auto k6 = optimize(ra::iota(5)-0.5);
-                tr.info("not optimized w/ RA_DO_OPT=0").test(!std::is_same_v<decltype(i), decltype(j)>);
+                tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
                 tr.test_eq(org+1, k1.i);
                 tr.test_eq(org+1, k1.i);
@@ -112,7 +112,7 @@ int main()
                 auto j = -i;
                 auto k1 = optimize(-i);
                 static_assert(ra::is_iota<decltype(k1)>);
-                tr.info("not optimized w/ RA_DO_OPT=0").test(!std::is_same_v<decltype(i), decltype(j)>);
+                tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
                 tr.test_eq(-org, k1.i);
                 tr.test_eq(-ra::start({0, 1, 2, 3, 4}), j);
@@ -132,7 +132,7 @@ int main()
             auto k2 = optimize(2*i);
             auto k3 = optimize(ra::iota(5)*2);
             auto k4 = optimize(2*ra::iota(5));
-            tr.info("not optimized w/ RA_DO_OPT=0").test(!std::is_same_v<decltype(i), decltype(j)>);
+            tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a Iota
             tr.test_eq(0, k1.i);
             tr.test_eq(0, k2.i);

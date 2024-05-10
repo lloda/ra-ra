@@ -12,14 +12,8 @@
 #include <cmath>
 #include <complex>
 
-#ifndef RA_DO_OPT
-  #define RA_DO_OPT 1 // enabled by default
-#endif
-
-#if RA_DO_OPT==1
+#ifndef RA_OPT
   #define RA_OPT optimize
-#else
-  #define RA_OPT
 #endif
 
 #if defined(RA_DO_FMA)

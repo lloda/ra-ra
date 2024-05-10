@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Before all other ra:: includes.
 
-// (c) Daniel Llorens - 2013-2023
+// (c) Daniel Llorens - 2013-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -18,7 +18,6 @@
 #include <version>
 #include <source_location>
 
-// to be used
 // static_assert(__cpp_constexpr >= 202211); // c++23
 // static_assert(__cpp_constexpr >= 202306L);  // c++26
 // static_assert(__cpp_static_assert >= 202306L); // c++26
