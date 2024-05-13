@@ -31,7 +31,7 @@
     #include <iostream>
     #define RA_CHECK(cond, ...)                                         \
 {                                                                       \
-    if (std::is_constant_evaluated()) {                                 \
+    if consteval {                                                      \
         assert(cond /* FIXME show args */);                             \
     } else {                                                            \
         if (!(cond)) [[unlikely]] {                                     \
