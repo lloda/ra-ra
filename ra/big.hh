@@ -194,7 +194,7 @@ struct ViewBig
     constexpr decltype(auto)
     at(I && i) const
     {
-// can't say 'frame rank 0' so -size wouldn't work. What about ra::len
+// can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
        constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
        if constexpr (ANY==crank) {
             return iter(rank()-ra::size(i)).at(RA_FWD(i));
@@ -210,7 +210,8 @@ struct ViewBig
         }
         return cp[0];
     }
-    constexpr operator T & () { return std::as_const(*this); } // FIXME not sure why this is necessary [ra15]
+// FIXME override SmallArray(X && x) if T is SmallArray [ra15]
+    constexpr operator T & () { return std::as_const(*this); }
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)
     constexpr ViewBig(ViewBig<T, R> const & x): dimv(x.dimv), cp(x.cp) {}

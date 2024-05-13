@@ -18,7 +18,7 @@ rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
 constexpr rank_t
 rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
 
-// cr>=0 is cell rank. -cr>0 is frame rank. TODO How to say frame rank 0.
+// cr>=0 is cell rank. -cr>0 is frame rank. TODO How to say frame rank 0. Maybe ra::end?
 constexpr rank_t
 rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* indep */ : r==ANY ? ANY /* defer */ : (r+cr); }
 
@@ -90,7 +90,7 @@ resize(A & a, dim_t s)
         RA_CHECK(s>=0, "Bad resize ", s, ".");
         a.resize(s);
     } else {
-        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, " needing ", start(a).len(0), ".");
+        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, ", need ", start(a).len(0), ".");
     }
 }
 
@@ -184,34 +184,9 @@ struct unbeat<N, mp::int_list<k ...>>
 // develop indices
 // --------------------
 
-template <rank_t k, rank_t end>
-constexpr dim_t
-indexer(auto const & q, auto && pp, auto const & ss0, dim_t c)
-{
-    if constexpr (k==end) {
-        return c;
-    } else {
-        auto pk = *pp;
-        RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
-        return pp.mov(ss0), indexer<k+1, end>(q, pp, ss0, c + (q.step(k) * pk));
-    }
-}
-
-constexpr dim_t
-indexer(rank_t end, auto const & q, auto && pp, auto const & ss0)
-{
-    dim_t c = 0;
-    for (rank_t k=0; k<end; ++k, pp.mov(ss0)) {
-        auto pk = *pp;
-        RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
-        c += q.step(k) * pk;
-    }
-    return c;
-}
-
 template <class Q, class P>
 constexpr dim_t
-longer(Q const & q, P const & pp)
+indexer(Q const & q, P const & pp)
 {
     decltype(auto) p = start(pp);
     if constexpr (ANY==rank_s<P>()) {
@@ -225,9 +200,25 @@ longer(Q const & q, P const & pp)
         static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
     }
     if constexpr (ANY==rank_s<Q>()) {
-        return indexer(q.rank(), q, p, p.step(0));
+        dim_t c = 0;
+        for (rank_t k=0; k<q.rank(); ++k, p.mov(p.step(0))) {
+            auto pk = *p;
+            RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
+            c += q.step(k) * pk;
+        }
+        return c;
     } else {
-        return indexer<0, rank_s<Q>()>(q, p, p.step(0), 0);
+        auto loop = [&](this auto && loop, auto && k, dim_t c)
+        {
+            if constexpr (k==rank_s<Q>()) {
+                return c;
+            } else {
+                auto pk = *p;
+                RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
+                return p.mov(p.step(0)), loop(ic<k+1>, c + (q.step(k) * pk));
+            }
+        };
+        return loop(ic<0>, 0);
     }
 }
 
@@ -317,8 +308,8 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spe
     RA_ASSIGNOPS_SELF(Cell)
     RA_ASSIGNOPS_DEFAULT_SET
 
-    constexpr decltype(auto) at(auto const & i) const requires (0==cellr) { return c.cp[longer(*this, i)]; }
-    constexpr decltype(auto) at(auto const & i) const requires (0!=cellr) { ctype cc(c); cc.cp += longer(*this, i); return cc; }
+    constexpr decltype(auto) at(auto const & i) const requires (0==cellr) { return c.cp[indexer(*this, i)]; }
+    constexpr decltype(auto) at(auto const & i) const requires (0!=cellr) { ctype cc(c); cc.cp += indexer(*this, i); return cc; }
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr ctype const & operator*() const requires (0!=cellr) { return c; }
