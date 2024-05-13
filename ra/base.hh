@@ -230,7 +230,7 @@ shape(V const & v)
 
 
 // --------------
-// format
+// format FIXME std::format
 // --------------
 
 enum print_shape_t { defaultshape, withshape, noshape };

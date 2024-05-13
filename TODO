@@ -54,7 +54,7 @@ checkbox [C-ct] flip TODO
       (instead of just relying on the constness of (View::p). This is just a mess when View::p isn't
       a pointer.
       - [-] Fix relationship between Container and View [3/5]
-        - [X] forward const/nonconst overloads to View or ViewConst from here.
+        - [X] fwd const/nonconst overloads to View or ViewConst from here.
         - [X] add const/nonconst casts of Container to View or ViewConst
         - [X] remove const overloads from View::operator()
         - [ ] remove inheritance relationship of Container on View
@@ -187,7 +187,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   37. [ ]
   38. [ ]
   39. [ ] test/ra-7.cc: There's no reason to restart, since the Iterator methods are all static. So
-      start(ra::Scalar) just forwards. But that means that Scalar::c maintain constness, so a const
+      start(ra::Scalar) just fwds. But that means that Scalar::c maintain constness, so a const
       overload is required for ScalarFlat::operator*.
   40. [ ]
   41. [ ]

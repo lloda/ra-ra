@@ -486,25 +486,24 @@ struct ViewSmall: public SmallBase<T, lens, steps>
 
     template <class ... I>
     constexpr decltype(auto)
-    operator()(I && ... i) const
+    operator()(this auto && self, I && ... i)
     {
         constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD));
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {
-            return cp[select_loop<0>(i ...)];
+            return self.cp[select_loop<0>(i ...)];
 // FIXME with_len before this, cf is_constant_iota
         } else if constexpr ((beatable<I>.ct && ...)) {
             using FD = FilterDims<lens, steps, std::decay_t<I> ...>;
-            return ViewSmall<T, typename FD::lens, typename FD::steps> (cp + select_loop<0>(i ...));
+            return ViewSmall<T, typename FD::lens, typename FD::steps> (self.cp + select_loop<0>(i ...));
 // TODO partial beating
         } else {
-// FIXME must forward *this so that expr can hold to it (c++23 deducing this).
-// Container's view is self so we get away with a ref, but here we create new temp views on every Small::view() call.
-            return unbeat<sizeof...(I)>::op(ViewSmall(*this), RA_FWD(i) ...);
+// must fwd *this because we create temp views on every Small::view() call
+            return unbeat<sizeof...(I)>::op(RA_FWD(self), RA_FWD(i) ...);
         }
     }
     constexpr decltype(auto)
-    operator[](auto && ... i) const { return (*this)(RA_FWD(i) ...); } // see above about forwarding
+    operator[](this auto && self, auto && ... i) { return RA_FWD(self)(RA_FWD(i) ...); }
 
     template <class I>
     constexpr decltype(auto)

@@ -163,32 +163,33 @@ struct ViewBig
 
     template <class ... I>
     constexpr decltype(auto)
-    operator()(I && ... i) const
+    operator()(this auto && self, I && ... i)
     {
         constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD));
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
-            return cp[select_loop(nullptr, 0, i ...)];
+            return self.cp[self.select_loop(nullptr, 0, i ...)];
         } else if constexpr ((beatable<I>.rt && ...)) {
             constexpr rank_t extended = (0 + ... + beatable<I>.add);
             ViewBig<T, rank_sum(RANK, extended)> sub;
-            rank_t subrank = rank()+extended;
+            rank_t subrank = self.rank()+extended;
             if constexpr (ANY==RANK) {
                 sub.dimv.resize(subrank);
             }
-            sub.cp = cp + select_loop(sub.dimv.data(), 0, i ...);
-// fill the rest of dim, skipping over beatable subscripts.
+            sub.cp = self.cp + self.select_loop(sub.dimv.data(), 0, i ...);
+// fill rest of dim, skipping over beatable subscripts.
             for (int k = (0==stretch ? (0 + ... + beatable<I>.dst) : subrank); k<subrank; ++k) {
-                sub.dimv[k] = dimv[k-extended];
+                sub.dimv[k] = self.dimv[k-extended];
             }
             return sub;
-// TODO partial beating. FIXME should forward this; see unbeat, ViewSmall::operator()
+// TODO partial beating
         } else {
-            return unbeat<sizeof...(I)>::op(*this, RA_FWD(i) ...);
+// cf ViewSmall::operator()
+            return unbeat<sizeof...(I)>::op(RA_FWD(self), RA_FWD(i) ...);
         }
     }
     constexpr decltype(auto)
-    operator[](auto && ... i) const { return (*this)(RA_FWD(i) ...); }
+    operator[](this auto && self, auto && ... i) { return RA_FWD(self)(RA_FWD(i) ...); }
 
     template <class I>
     constexpr decltype(auto)
