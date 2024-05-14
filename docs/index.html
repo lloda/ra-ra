@@ -1149,7 +1149,7 @@ inline auto op_reduce(A &amp;&amp; a)
 }
 </pre></div>
 
-<p>Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the <a href="#Rank-extension">rank extension</a> mechanism, or using the <a href="#The-rank-conjunction">rank conjunction</a>, or iterating over <a href="#Cell-iteration">cells of higher rank</a>. For example:
+<span id="x_002daxis_002dreductions"></span><p>Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the <a href="#Rank-extension">rank extension</a> mechanism, or using the <a href="#The-rank-conjunction">rank conjunction</a>, or iterating over <a href="#Cell-iteration">cells of higher rank</a>. For example:
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Big&lt;double, 2&gt; a({m, n}, ...);
@@ -1717,9 +1717,10 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <li><a href="#View-of-const-vs-const-view" accesskey="3">View of const vs const view</a></li>
 <li><a href="#Rank-extension-in-assignments" accesskey="4">Rank extension in assignments</a></li>
 <li><a href="#Performance-pitfalls-of-rank-extension" accesskey="5">Performance pitfalls of rank extension</a></li>
-<li><a href="#Chained-assignment" accesskey="6">Chained assignment</a></li>
-<li><a href="#Unregistered-scalar-types" accesskey="7">Unregistered scalar types</a></li>
-<li><a href="#The-cost-of-RA_005fDO_005fCHECK" accesskey="8">The cost of <code>RA_DO_CHECK</code></a></li>
+<li><a href="#Initialization-of-nested-types" accesskey="6">Initialization of nested types</a></li>
+<li><a href="#Chained-assignment" accesskey="7">Chained assignment</a></li>
+<li><a href="#Unregistered-scalar-types" accesskey="8">Unregistered scalar types</a></li>
+<li><a href="#The-cost-of-RA_005fDO_005fCHECK" accesskey="9">The cost of <code>RA_DO_CHECK</code></a></li>
 </ul>
 <div class="section" id="Reuse-of-expression-objects">
 <h3 class="section">4.1 Reuse of expression objects</h3>
@@ -1774,7 +1775,7 @@ ra::scalar(a) += 3 + ra::Small&lt;int, 3&gt; {4, 5, 6}; // 0 + 3 + 4 + 5 + 6
 <div class="section" id="Performance-pitfalls-of-rank-extension">
 <div class="header">
 <p>
-Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Initialization-of-nested-types" accesskey="n" rel="next">Initialization of nested types</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Performance-pitfalls-of-rank-extension-1"></span><h3 class="section">4.5 Performance pitfalls of rank extension</h3>
 
@@ -1786,16 +1787,40 @@ ra::Big&lt;int, 1&gt; b = {1, 2, 3};
 ra::Big&lt;int, 2&gt; c = map(f, b) + a;
 </pre></div>
 
+<hr>
+</div>
+<div class="section" id="Initialization-of-nested-types">
+<div class="header">
+<p>
+Previous: <a href="#Performance-pitfalls-of-rank-extension" accesskey="p" rel="prev">Performance pitfalls of rank extension</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<span id="Initialization-of-nested-types-1"></span><h3 class="section">4.6 Initialization of nested types</h3>
+
+<p>This doesn&rsquo;t do what you probably think it does.
+</p><div class="example">
+<pre class="verbatim">ra::Big&lt;int2, 0&gt; b({}, int2 {1, 3}); // b = {int2 {3, 3}} (*)
+</pre></div>
+
+<p>What happens here is that rank-0 <code>b</code> is prefix matched to rank-1 <code>int2 {1, 3}</code> which results in two assignments, first <code>b</code> ← 1 and then <code>b</code> ← 3. Compare with
+</p>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int2, 0&gt; b({}, ra::scalar(int2 {1, 3})); // b = {int2 {1, 3}} @c [ma116]
+</pre></div>
+
+<p>The use of <a href="#x_002dscalar"><code>scalar</code></a> forces <code>b</code> to match the whole of <code>int2 {1, 3}</code> as a rank-0 object. After that, the single element in <code>b</code> is matched to <code>int2 {1, 3}</code>.
+</p>
+<p>Assignment or initialization from higher rank to lower rank is something of a footgun. Assignments have some <a href="#x_002daxis_002dreductions">legitimate uses</a>, but initializations like <code>(*)</code> may become errors in future versions of <code>ra::</code>.
+</p>
 </div>
 <div class="section" id="Chained-assignment">
-<h3 class="section">4.6 Chained assignment</h3>
+<h3 class="section">4.7 Chained assignment</h3>
 
 <p>FIXME
 When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as an array expression.
 </p>
 </div>
 <div class="section" id="Unregistered-scalar-types">
-<h3 class="section">4.7 Unregistered scalar types</h3>
+<h3 class="section">4.8 Unregistered scalar types</h3>
 
 <p>FIXME
 <code>View&lt;T, N&gt; x; x = T()</code> fails if <code>T</code> isn&rsquo;t registered as <code>is_scalar</code>.
@@ -1808,7 +1833,7 @@ When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as 
 
 </div>
 <div class="section" id="The-cost-of-RA_005fDO_005fCHECK">
-<h3 class="section">4.8 The cost of <code>RA_DO_CHECK</code></h3>
+<h3 class="section">4.9 The cost of <code>RA_DO_CHECK</code></h3>
 
 <p>FIXME
 </p>

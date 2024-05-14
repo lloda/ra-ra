@@ -16,6 +16,7 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using ra::mp::int_list, ra::int_c, ra::mp::print_int_list, ra::mp::ref;
+using int2 = ra::Small<int, 2>;
 
 int main()
 {
@@ -379,7 +380,11 @@ int main()
         tr.test_eq(6, a[2]);
         tr.test_eq(6, a.back());
     }
-
+    tr.section(".back() is last element not last item");
+    {
+        ra::Small<int2> b(ra::scalar(int2 {1, 3})); // cf [ma116]
+        tr.test_eq(int2 {1, 3}, b.back());
+    }
 // TODO Replace with uniform subscripting (ra::iota).
     tr.section("compile time subscripting of ra::Small (as)");
     {

@@ -521,7 +521,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr auto begin() const { if constexpr (defsteps) return cp; else return STLIterator(iter()); }
     constexpr auto end() const requires (defsteps) { return cp+size(); }
     constexpr static auto end() requires (!defsteps) { return std::default_sentinel; }
-    constexpr T & back() const { static_assert(rank()>=1 && size()>0, "No back()."); return cp[size()-1]; }
+    constexpr T & back() const { static_assert(size()>0, "No back()."); return cp[size()-1]; }
     constexpr operator T & () const { static_assert(1==size(), "Bad scalar conversion."); return cp[0]; }
 };
 

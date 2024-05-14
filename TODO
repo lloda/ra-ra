@@ -6,7 +6,7 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/7]
-  - [-] Bugs [4/13]
+  - [-] Bugs [4/14]
     - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
     - [X] Before merging saveload [1/1]
       - [X] Fix cellrank.cc: "using View::operator= on sliding view". For that, View::operator= have
@@ -24,6 +24,8 @@ checkbox [C-ct] flip TODO
       - Looks good in v20 in g++-11, but bad in 12/13. Bummer.
       - Investigated & resolved in e297ee0561a647065fb5b92880fe0f994340595c ss.
     - [ ] Small/Big unification
+    - [ ] Forbid initialization from higher rank
+      - Cf 'Initialization of nested types' in the manual.
     - [X] size_s, rank_s in Ryn:: are broken [ra7]
     - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
     - [ ] ambiguity / bad init in nested constructors [ra45]
@@ -36,7 +38,8 @@ checkbox [C-ct] flip TODO
       A(vector, iota, vector) the iota isn't beaten. [ra33].
     - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] bad uses of assert [ra17]
-  - [-] Features [1/13]
+  - [-] Features [1/14]
+    - [ ] support std::format
     - [ ] support expr = braces for any expr, not just views.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
@@ -108,7 +111,7 @@ checkbox [C-ct] flip TODO
     - [ ] Complete section on internals
     - [ ] Complete section on other languages, libraries
     - [ ] Describe xreferenced issues in doc ([raxx], etc.)
-  - [ ] Other [0/3]
+  - [ ] Other [0/4]
     - [ ] Reconsider len/len_s etc: Same as there are static/nonstatic versions of keep_step, we
       could remove len_s/rank_s use staticness of len/rank instead of ANY/ANY. A problem with this
       is that len_s lets me return ANY for some axes and finite for others and to do that with just

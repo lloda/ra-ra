@@ -14,13 +14,13 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 template <class T, ra::rank_t RANK=ra::ANY> using BigValueInit = ra::Container<std::vector<T>, RANK>;
+using int2 = ra::Small<int, 2>;
 
 int main()
 {
     TestRecorder tr;
     tr.section("push_back");
     {
-        using int2 = ra::Small<int, 2>;
         std::vector<int2> a;
         a.push_back({1, 2});
         ra::Big<int2, 1> b;
@@ -30,6 +30,11 @@ int main()
         tr.test_eq(check, ra::start(a));
         tr.test_eq(check, b);
         tr.test_eq(check[0], b.back());
+    }
+    tr.section(".back() is last element not last item");
+    {
+        ra::Big<int2, 0> b({}, ra::scalar(int2 {1, 3})); // cf [ma116]
+        tr.test_eq(int2 {1, 3}, b.back());
     }
     tr.section("behavior of resize with default Container");
     {

@@ -307,7 +307,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
-    constexpr decltype(auto) back(this auto && self) { auto s=self.size(); RA_CHECK(1==rank() && s>0, "Bad back()."); return RA_FWD(self).store[s-1]; }
+    constexpr decltype(auto) back(this auto && self) { auto s=self.size(); RA_CHECK(s>0, "Bad back()."); return RA_FWD(self).store[s-1]; }
     constexpr auto data(this auto && self) { return self.view().data(); }
     constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
@@ -413,7 +413,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
         store.resize(filldim(View::dimv, s));
         View::cp = store.data();
     }
-// lets us move. A template + RA_FWD wouldn't work for push_back(brace-enclosed-list).
+// template + RA_FWD wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
         static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());

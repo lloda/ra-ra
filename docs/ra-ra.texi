@@ -1101,6 +1101,7 @@ inline auto op_reduce(A && a)
 @end verbatim
 @end example
 
+@anchor{x-axis-reductions}
 Often enough you need to reduce over particular axes. This is possible by combining assignment operators with the @ref{Rank extension,rank extension} mechanism, or using the @ref{The rank conjunction,rank conjunction}, or iterating over @ref{Cell iteration, cells of higher rank}. For example:
 
 @example
@@ -1736,6 +1737,28 @@ ra::Big<int, 1> b = {1, 2, 3};
 ra::Big<int, 2> c = map(f, b) + a;
 @end verbatim
 @end example
+
+@node Initialization of nested types
+@section Initialization of nested types
+
+This doesn't do what you probably think it does.
+@example
+@verbatim
+ra::Big<int2, 0> b({}, int2 {1, 3}); // b = {int2 {3, 3}} (*)
+@end verbatim
+@end example
+
+What happens here is that rank-0 @code{b} is prefix matched to rank-1 @code{int2 @{1, 3@}} which results in two assignments, first @code{b} ← 1 and then @code{b} ← 3. Compare with
+
+@example
+@verbatim
+ra::Big<int2, 0> b({}, ra::scalar(int2 {1, 3})); // b = {int2 {1, 3}} @c [ma116]
+@end verbatim
+@end example
+
+The use of @ref{x-scalar,@code{scalar}} forces @code{b} to match the whole of @code{int2 @{1, 3@}} as a rank-0 object. After that, the single element in @code{b} is matched to @code{int2 @{1, 3@}}.
+
+Assignment or initialization from higher rank to lower rank is something of a footgun. Assignments have some @ref{x-axis-reductions,legitimate uses}, but initializations like @code{(*)} may become errors in future versions of @code{ra::}.
 
 @section Chained assignment
 
