@@ -38,6 +38,7 @@ checkbox [C-ct] flip TODO
       A(vector, iota, vector) the iota isn't beaten. [ra33].
     - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] bad uses of assert [ra17]
+    - [X] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 (bad operator=) is cleared up. Cf [ra5].
   - [-] Features [1/14]
     - [ ] support std::format
     - [ ] support expr = braces for any expr, not just views.

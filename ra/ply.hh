@@ -414,18 +414,19 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
     auto sha = shape(a);
 // the following assert fixes a segfault in gcc11.3 test/io.c with -O3 -DRA_DO_CHECK=1.
     assert(every(ra::start(sha)>=0));
+// always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
     if (withshape==fa.fmt.shape || (defaultshape==fa.fmt.shape && size_s(a)==ANY)) {
-        o << sha << '\n';
+        o << ra::defaultshape << sha << '\n';
     }
     rank_t const rank = ra::rank(a);
-    auto goin = [&](int k, auto & goin) -> void
+    auto goin = [&](this auto && goin, int k) -> void
     {
         if (k==rank) {
             o << *a;
         } else {
             o << fa.fmt.open;
             for (int i=0; i<sha[k]; ++i) {
-                goin(k+1, goin);
+                goin(k+1);
                 if (i+1<sha[k]) {
                     a.adv(k, 1);
                     o << (k==rank-1 ? fa.fmt.sep0 : fa.fmt.sepn);
@@ -441,7 +442,7 @@ operator<<(std::ostream & o, FormatArray<A> const & fa)
             o << fa.fmt.close;
         }
     };
-    goin(0, goin);
+    goin(0);
     return o;
 }
 

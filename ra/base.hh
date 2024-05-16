@@ -238,11 +238,8 @@ enum print_shape_t { defaultshape, withshape, noshape };
 struct array_format
 {
     print_shape_t shape = defaultshape;
-    char const * open = "";
-    char const * close = "";
-    char const * sep0 = " ";
-    char const * sepn = "\n";
-    char const * rep = "\n";
+    using pchar = char const *;
+    pchar open = "", close = "", sep0 = " ", sepn = "\n", rep = "\n";
     bool align = false;
 };
 
