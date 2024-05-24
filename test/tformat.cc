@@ -133,7 +133,7 @@ int main()
 {
     std::print(stdout, "a number {:015.9}\n", std::numbers::pi_v<double>);
     std::print(stdout, "a Q {}\n", Q { 3 });
-    std::print(stdout, "a small {::}\n", ra::Small<int, 3> {1, 2, 3});
+    std::print(stdout, "a small {:}\n", ra::Small<int, 3> {1, 2, 3});
     std::print(stdout, "a small {::}\n", ra::Small<int, 3> {1, 2, 3});
     std::print(stdout, "a small {::9}\n", ra::Small<int, 3> {1, 2, 3});
     std::print(stdout, "a small {::<9}\n", ra::Small<int, 3> {1, 2, 3});

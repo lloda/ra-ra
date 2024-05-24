@@ -112,13 +112,6 @@ struct ViewBig
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
 
-    template <rank_t c=0> constexpr auto iter() const && { return Cell<T, Dimv, ic_t<c>>(cp, std::move(dimv)); }
-    template <rank_t c=0> constexpr auto iter() const & { return Cell<T, Dimv const &, ic_t<c>>(cp, dimv); }
-    constexpr auto iter(rank_t c) const && { return Cell<T, Dimv, dim_t>(cp, std::move(dimv), c); }
-    constexpr auto iter(rank_t c) const & { return Cell<T, Dimv const &, dim_t>(cp, dimv, c); }
-    constexpr auto begin() const { return STLIterator(iter<0>()); }
-    constexpr decltype(auto) static end() { return std::default_sentinel; }
-
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
     {
@@ -203,6 +196,15 @@ struct ViewBig
             return iter<crank>().at(RA_FWD(i));
         }
     }
+
+    template <rank_t c=0> constexpr auto iter() const && { return Cell<T, Dimv, ic_t<c>>(cp, std::move(dimv)); }
+    template <rank_t c=0> constexpr auto iter() const & { return Cell<T, Dimv const &, ic_t<c>>(cp, dimv); }
+    constexpr auto iter(rank_t c) const && { return Cell<T, Dimv, dim_t>(cp, std::move(dimv), c); }
+    constexpr auto iter(rank_t c) const & { return Cell<T, Dimv const &, dim_t>(cp, dimv, c); }
+    constexpr auto begin() const { return STLIterator(iter<0>()); }
+    constexpr decltype(auto) static end() { return std::default_sentinel; }
+    constexpr T & back() const { dim_t s = size(); RA_CHECK(s>0, "Bad back()."); return cp[s-1]; }
+
     constexpr
     operator T & () const
     {
@@ -307,7 +309,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
-    constexpr decltype(auto) back(this auto && self) { auto s=self.size(); RA_CHECK(s>0, "Bad back()."); return RA_FWD(self).store[s-1]; }
+    constexpr decltype(auto) back(this auto && self) { return RA_FWD(self).view().back(); }
     constexpr auto data(this auto && self) { return self.view().data(); }
     constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
@@ -520,11 +522,7 @@ template <class E>
 constexpr auto
 concrete(E && e)
 {
-// FIXME gcc 11.3 on GH workflows (?)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     return concrete_type<E>(RA_FWD(e));
-#pragma GCC diagnostic pop
 }
 
 template <class E>
@@ -542,15 +540,11 @@ template <class E, class X>
 constexpr auto
 with_same_shape(E && e, X && x)
 {
-// FIXME gcc 11.3 on GH workflows (?)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
     if constexpr (ANY!=size_s<concrete_type<E>>()) {
         return concrete_type<E>(RA_FWD(x));
     } else {
         return concrete_type<E>(ra::shape(e), RA_FWD(x));
     }
-#pragma GCC diagnostic pop
 }
 
 template <class E, class S, class X>
@@ -711,7 +705,7 @@ reshape(ViewBig<T, RANK> const & a, S && sb_)
     return reshape_(a, RA_FWD(sb_));
 }
 
-// We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t. initializer_list could handle the general case, but the result would have var rank and would override this one (?).
+// We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t. initializer_list could handle the general case, but the result would have var rank and override this one (?).
 template <class T, rank_t RANK, class dimtype, int N>
 inline auto
 reshape(ViewBig<T, RANK> const & a, dimtype const (&sb_)[N])
@@ -771,11 +765,7 @@ explode(ViewBig<T, RANK> const & a)
     return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>())>(a);
 }
 
-// FIXME Maybe namespace level generics
-template <class T> inline int gstep(int i) { if constexpr (is_scalar<T>) return 1; else return T::step(i); }
-template <class T> inline int glen(int i) { if constexpr (is_scalar<T>) return 1; else return T::len(i); }
-
-// TODO The ranks below SUBR must be compact, which is not checked.
+// TODO Check that ranks below SUBR are compact.
 template <class sub_t, class super_t, rank_t RANK>
 inline auto
 collapse(ViewBig<super_t, RANK> const & a)
@@ -784,6 +774,8 @@ collapse(ViewBig<super_t, RANK> const & a)
     using sub_v = value_t<sub_t>;
     constexpr int subtype = sizeof(super_v)/sizeof(sub_t);
     constexpr int SUBR = rank_s<super_t>() - rank_s<sub_t>();
+    static auto gstep = [](int i) { if constexpr (is_scalar<super_t>) return 1; else return super_t::step(i); };
+    static auto glen = [](int i) { if constexpr (is_scalar<super_t>) return 1; else return super_t::len(i); };
 
     ViewBig<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
     resize(b.dimv, a.rank()+SUBR+int(subtype>1));
@@ -797,8 +789,8 @@ collapse(ViewBig<super_t, RANK> const & a)
     constexpr int s = sizeof(sub_t)/sizeof(sub_v);
     static_assert(t*sizeof(sub_v)>=1, "Bad subtype.");
     for (int i=0; i<SUBR; ++i) {
-        RA_CHECK(((gstep<super_t>(i)/s)*s==gstep<super_t>(i)), "Bad steps."); // TODO actually static
-        b.dimv[a.rank()+i] = { .len = glen<super_t>(i), .step = gstep<super_t>(i) / s * t };
+        RA_CHECK(((gstep(i)/s)*s==gstep(i)), "Bad steps."); // TODO actually static
+        b.dimv[a.rank()+i] = { .len = glen(i), .step = gstep(i) / s * t };
     }
     if (subtype>1) {
         b.dimv[a.rank()+SUBR] = { .len = t, .step = 1 };

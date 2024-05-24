@@ -12,18 +12,11 @@
 
 namespace ra {
 
-constexpr rank_t
-rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
-
-constexpr rank_t
-rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
-
-// cr>=0 is cell rank. -cr>0 is frame rank. TODO How to say frame rank 0. Maybe ra::end?
-constexpr rank_t
-rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* indep */ : r==ANY ? ANY /* defer */ : (r+cr); }
-
-constexpr rank_t
-rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* indep */ : -cr; }
+constexpr rank_t rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
+constexpr rank_t rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
+// cr>=0 is cell rank, -cr>0 is frame rank. TODO How to say frame rank 0. Maybe ra::end?
+constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* indep */ : r==ANY ? ANY /* defer */ : (r+cr); }
+constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* indep */ : -cr; }
 
 struct Dim { dim_t len, step; };
 
@@ -96,7 +89,7 @@ resize(A & a, dim_t s)
 
 
 // --------------------
-// slicing helpers
+// slicing/indexing helpers
 // --------------------
 
 template <int n=BAD> struct dots_t { static_assert(n>=0 || BAD==n); };
@@ -178,11 +171,6 @@ struct unbeat<N, mp::int_list<k ...>>
         return from(RA_FWD(v), with_len(maybe_len<k>(v), RA_FWD(i)) ...);
     }
 };
-
-
-// --------------------
-// develop indices
-// --------------------
 
 template <class Q, class P>
 constexpr dim_t
@@ -418,6 +406,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     using ViewConst = ViewSmall<T const, lens, steps>;
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
     constexpr ViewSmall const & view() const { return *this; }
+    constexpr T * data() const { return cp; }
 
     constexpr ViewSmall(T * cp_): cp(cp_) {}
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
@@ -516,7 +505,6 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     }
 // maybe remove if ic becomes easier to use
     template <int ss, int oo=0> constexpr auto as() const { return operator()(ra::iota(ra::ic<ss>, oo)); }
-    constexpr T * data() const { return cp; }
     template <rank_t c=0> constexpr iterator<c> iter() const { return cp; }
     constexpr auto begin() const { if constexpr (defsteps) return cp; else return STLIterator(iter()); }
     constexpr auto end() const requires (defsteps) { return cp+size(); }
@@ -559,7 +547,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     using Base = SmallBase<T, lens, steps>;
     using Base::rank, Base::size, Base::len0;
 
-    T cp[size()]; // cf what std::array does for zero size; wish zero size just worked :-/
+    T cp[size()]; // cf what std::array does for zero size; wish zero size just worked
 
     using View = ViewSmall<T, lens, steps>;
     using ViewConst = ViewSmall<T const, lens, steps>;
@@ -711,38 +699,41 @@ explode(cv_smallview auto && a_)
 }
 
 // TODO generalize
-template <class A1, class A2> requires (cv_smallview<A1> || cv_smallview<A2>)
 constexpr auto
-cat(A1 && a1_, A2 && a2_)
+cat(cv_smallview auto && a1_, cv_smallview auto && a2_)
 {
-    if constexpr (cv_smallview<A1> && cv_smallview<A2>) {
-        decltype(auto) a1 = a1_.view();
-        decltype(auto) a2 = a2_.view();
-        static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
-        using T = std::common_type_t<std::decay_t<decltype(a1[0])>, std::decay_t<decltype(a2[0])>>;
-        Small<T, a1.size()+a2.size()> val;
-        std::copy(a1.begin(), a1.end(), val.begin());
-        std::copy(a2.begin(), a2.end(), val.begin()+a1.size());
-        return val;
-    } else if constexpr (cv_smallview<A1> && is_scalar<A2>) {
-        decltype(auto) a1 = a1_.view();
-        static_assert(1==a1.rank(), "Bad ranks for cat.");
-        using T = std::common_type_t<std::decay_t<decltype(a1[0])>, decltype(a2_)>;
-        Small<T, a1.size()+1> val;
-        std::copy(a1.begin(), a1.end(), val.begin());
-        val[a1.size()] = a2_;
-        return val;
-    } else if constexpr (is_scalar<A1> && cv_smallview<A2>) {
-        decltype(auto) a2 = a2_.view();
-        static_assert(1==a2.rank(), "Bad ranks for cat.");
-        using T = std::common_type_t<decltype(a1_), std::decay_t<decltype(a2[0])>>;
-        Small<T, 1+a2.size()> val;
-        val[0] = a1_;
-        std::copy(a2.begin(), a2.end(), val.begin()+1);
-        return val;
-    } else {
-        static_assert(false);
-    }
+    decltype(auto) a1 = a1_.view();
+    decltype(auto) a2 = a2_.view();
+    static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
+    using T = std::common_type_t<std::decay_t<decltype(a1[0])>, std::decay_t<decltype(a2[0])>>;
+    Small<T, a1.size()+a2.size()> val;
+    std::copy(a1.begin(), a1.end(), val.begin());
+    std::copy(a2.begin(), a2.end(), val.begin()+a1.size());
+    return val;
+}
+
+constexpr auto
+cat(cv_smallview auto && a1_, is_scalar auto && a2_)
+{
+    decltype(auto) a1 = a1_.view();
+    static_assert(1==a1.rank(), "Bad ranks for cat.");
+    using T = std::common_type_t<std::decay_t<decltype(a1[0])>, decltype(a2_)>;
+    Small<T, a1.size()+1> val;
+    std::copy(a1.begin(), a1.end(), val.begin());
+    val[a1.size()] = a2_;
+    return val;
+}
+
+constexpr auto
+cat(is_scalar auto && a1_, cv_smallview auto && a2_)
+{
+    decltype(auto) a2 = a2_.view();
+    static_assert(1==a2.rank(), "Bad ranks for cat.");
+    using T = std::common_type_t<decltype(a1_), std::decay_t<decltype(a2[0])>>;
+    Small<T, 1+a2.size()> val;
+    val[0] = a1_;
+    std::copy(a2.begin(), a2.end(), val.begin()+1);
+    return val;
 }
 
 } // namespace ra
