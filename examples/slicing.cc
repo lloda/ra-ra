@@ -51,7 +51,7 @@ int main()
     B(1) = 7.;
     B(1, ra::dots<2>) = 7.;
 
-// Under c++23 you can use [] instead of () for multi-indices. Single index [] works in any case.
+// You can use [] instead of () for multi-indices.
     B[1, ra::all, ra::all] = 7.;
     B[1] = 7.;
     B[1, ra::dots<2>] = 7.;

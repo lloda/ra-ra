@@ -448,7 +448,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr static dim_t
     select(is_iota auto i)
     {
-        if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME c++23 std::abs
+        if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME constexpr abs not yet in gcc14 grr
             static_assert(false, "Bad index.");
         } else {
             RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
@@ -558,11 +558,8 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
 
     constexpr SmallArray() {}
     constexpr SmallArray(ra::none_t) {}
-// needed if T isn't registered as scalar [ra44]
-    constexpr SmallArray(T const & t)
-    {
-        for (auto & x: cp) { x = t; }
-    }
+// needed if T isn't is_scalar [ra44]
+    constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); }
 // nested braces FIXME p1219??
     constexpr SmallArray(nested_args const & ... x)
     requires ((0<rank() && 0!=Base::len(0) && (1!=rank() || 1!=Base::len(0))))
@@ -602,13 +599,15 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
 
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
 
-// FIXME tagged ravel constructor. Then we can pass any rank 1 thing not just iterator pairs.
+// FIXME tagged ravel constructor
 template <class A>
 constexpr auto
-ravel_from_iterators(auto && begin, auto && end)
+from_ravel(auto && b)
 {
     A a;
-    std::copy(RA_FWD(begin), RA_FWD(end), a.begin());
+    RA_CHECK(1==ra::rank(b) && ra::size(b)==ra::size(a),
+             "Bad ravel argument [", ra::noshape, ra::shape(b), "] expecting [", ra::size(a), "].");
+    std::ranges::copy(RA_FWD(b), a.begin());
     return a;
 }
 

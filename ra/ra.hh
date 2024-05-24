@@ -101,7 +101,7 @@ FOR_EACH(RA_FOR_TYPES, float, double)
     constexpr R sqrm(C x, C y)         { return sqr(x.real()-y.real())+sqr(x.imag()-y.imag()); } \
     constexpr R norm2(C x)             { return hypot(x.real(), x.imag()); } \
     constexpr R norm2(C x, C y)        { return sqrt(sqrm(x, y)); }     \
-    inline R rel_error(C a, C b)       { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
+    constexpr R rel_error(C a, C b)    { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
     /* conj(a) * b + c */                                               \
     constexpr C                                                         \
     fma_conj(C const & a, C const & b, C const & c)                     \
@@ -604,15 +604,10 @@ struct ChooseComponents_<D, O>
 constexpr std::size_t
 binom(std::size_t n, std::size_t p)
 {
-    if (p>n) {
-        return 0;
-    } else if (p>(n-p)) {
-        p = n-p;
-    }
+    if (p>n) { return 0; }
+    if (p>(n-p)) { p=n-p; }
     std::size_t v = 1;
-    for (std::size_t i=0; i<p; ++i) {
-        v = v*(n-i)/(i+1);
-    }
+    for (std::size_t i=0; i<p; ++i) { v = v*(n-i)/(i+1); }
     return v;
 }
 
@@ -638,7 +633,7 @@ struct Wedge
     constexpr static bool both_scalars = (Na==1 && Nb==1);
     constexpr static bool dot_plus = Na>1 && Nb>1 && Or==D && (Oa<Ob || (Oa>Ob && !ra::odd(Oa*Ob)));
     constexpr static bool dot_minus = Na>1 && Nb>1 && Or==D && (Oa>Ob && ra::odd(Oa*Ob));
-    constexpr static bool general_case = (Na>1 && Nb>1) && ((Oa+Ob!=D) || (Oa==Ob));
+    constexpr static bool other = (Na>1 && Nb>1) && ((Oa+Ob!=D) || (Oa==Ob));
 
     template <class Va, class Vb>
     using valtype = decltype(std::declval<Va>()[0] * std::declval<Vb>()[0]);
