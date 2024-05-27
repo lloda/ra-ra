@@ -125,6 +125,8 @@ RA_IS_DEF(is_iterator, IteratorConcept<A>)
 template <class A> concept is_ra = is_iterator<A> || SliceConcept<A>;
 template <class A> concept is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::bidirectional_range<A>))
+template <class> constexpr bool is_std_array = false; // snowflake
+template <class T, std::size_t N> constexpr bool is_std_array<std::array<T, N>> = true;
 
 template <class VV> requires (!std::is_void_v<VV>)
 consteval rank_t
@@ -177,8 +179,11 @@ size_s()
         return 1;
     } else if constexpr (is_builtin_array<V>) {
         return std::apply([] (auto ... i) { return (std::extent_v<V, i> * ... * 1); }, mp::iota<rs> {});
-    } else if constexpr (is_fov<V> && requires { std::tuple_size<V>::value; }) {
+    } else if constexpr (is_std_array<V>) {
         return std::tuple_size_v<V>;
+    } else if constexpr (is_fov<V> && requires { V::size(); }) {
+        return V::size();
+// FIXME no std::dynamic_extent in gcc 11
     } else if constexpr (is_fov<V> || rs==ANY) {
         return ANY;
     } else if constexpr (requires { V::size_s(); }) {

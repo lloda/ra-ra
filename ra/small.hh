@@ -625,13 +625,15 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
 
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
 
-// FIXME tagged ravel constructor. Then we can pass any rank 1 thing not just iterator pairs.
+// FIXME tagged ravel constructor
 template <class A>
 constexpr auto
-ravel_from_iterators(auto && begin, auto && end)
+from_ravel(auto && b)
 {
     A a;
-    std::copy(RA_FWD(begin), RA_FWD(end), a.begin());
+    RA_CHECK(1==ra::rank(b) && ra::size(b)==ra::size(a),
+             "Bad ravel argument [", ra::noshape, ra::shape(b), "] expecting [", ra::size(a), "].");
+    std::ranges::copy(RA_FWD(b), a.begin());
     return a;
 }
 
