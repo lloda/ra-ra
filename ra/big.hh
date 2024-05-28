@@ -129,7 +129,7 @@ struct ViewBig
     constexpr dim_t
     select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
     {
-        return select(dim, k, with_len(len(k), RA_FWD(i0)))
+        return select(dim, k, wlen(len(k), RA_FWD(i0)))
             + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, RA_FWD(i) ...);
     }
     template <int n, class ... I>

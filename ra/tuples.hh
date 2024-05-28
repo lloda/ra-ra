@@ -10,10 +10,10 @@
 #pragma once
 #include <tuple>
 #include <limits>
+#include <utility>
 #include <algorithm>
 #include <type_traits>
 #include <functional>
-#include <utility>
 
 #define STRINGIZE_( x ) #x
 #define STRINGIZE( x ) STRINGIZE_( x )

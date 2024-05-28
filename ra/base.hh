@@ -8,12 +8,12 @@
 // later version.
 
 #pragma once
-#include <ranges>
-#include <array>
-#include <vector>
-#include <cstdint>
 #include "tuples.hh"
+#include <array>
+#include <ranges>
+#include <vector>
 #include <iosfwd> // for format, ss.
+#include <cstdint>
 #include <sstream>
 #include <version>
 #include <source_location>

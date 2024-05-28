@@ -33,15 +33,15 @@ int main()
     tr.section("Iota ops, expr Iotas WIP");
     {
         tr.info("naked").test(ra::is_iota<decltype(ra::iota(ra::len))>);
-        tr.info("nop").test(ra::is_iota<decltype(with_len(10, ra::iota(ra::len)))>);
+        tr.info("nop").test(ra::is_iota<decltype(wlen(10, ra::iota(ra::len)))>);
 // works unopt bc Match avoid checking if has_len
-        tr.test_eq(ra::iota(10, 0, 2), with_len(10, ra::iota(ra::len) + ra::iota(ra::len)));
-// works, but opt runs at + site, not after with_len (FIXME?)
-        tr.test_eq(ra::iota(10, 0, 2), optimize(with_len(10, ra::iota(ra::len) + ra::iota(ra::len))));
+        tr.test_eq(ra::iota(10, 0, 2), wlen(10, ra::iota(ra::len) + ra::iota(ra::len)));
+// works, but opt runs at + site, not after wlen (FIXME?)
+        tr.test_eq(ra::iota(10, 0, 2), optimize(wlen(10, ra::iota(ra::len) + ra::iota(ra::len))));
 // FIXME don't work, because optimize() can't determine the match-length of the result iota
         // tr.info("+, naked").test(ra::is_iota<decltype(optimize(ra::iota(ra::len) + ra::iota(ra::len)))>);
-        // tr.info("+").test(ra::is_iota<decltype(with_len(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))))>);
-        // tr.test_eq(ra::iota(10, 0, 2), with_len(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))));
+        // tr.info("+").test(ra::is_iota<decltype(wlen(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))))>);
+        // tr.test_eq(ra::iota(10, 0, 2), wlen(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))));
     }
     tr.section("misc/sanity");
     {

@@ -33,8 +33,8 @@ template <class T> constexpr void cast(ra::noarg);
 // scalar overloads
 // ---------------------------
 
-// abs() needs no qualifying for ra:: types (ADL), shouldn't need it on pods either. FIXME maybe let user decide.
-// std::max/min are special, see DEF_NAME in ra.hh.
+// abs() needs no qualifying for ra:: types (ADL), shouldn't on pods either. FIXME maybe let user decide.
+// std::max/min are special, see DEF_NAME.
 using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std::swap,
       std::isfinite, std::isinf, std::isnan, std::clamp, std::lerp, std::conj, std::expm1;
 
@@ -136,7 +136,7 @@ odd(unsigned int N) { return N & 1; }
 
 template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e); }
 
-// FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like WithLen does.
+// FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
 // TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
 template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<ncvalue_t<X>>;
 
