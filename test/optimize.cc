@@ -185,6 +185,6 @@ int main()
         tr.info("optimization of view").test(std::is_same_v<decltype(c), ra::Small<double, 8>>);
         tr.test_eq(34, c);
     }
-#endif
+#endif // RA_DO_OPT_SMALLVECTOR==1
     return tr.summary();
 }

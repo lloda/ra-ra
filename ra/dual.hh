@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Dual numbers for automatic differentiation.
 
-// (c) Daniel Llorens - 2013-2023
+// (c) Daniel Llorens - 2013-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -264,19 +264,17 @@ std::ostream & operator<<(std::ostream & o, Dual<A> const & a)
 template <class A>
 std::istream & operator>>(std::istream & i, Dual<A> & a)
 {
-    std::string s;
+    char s;
     i >> s;
-    if (s!="[") {
+    if (s!='[') {
         i.setstate(std::ios::failbit);
-        return i;
+    } else {
+        i >> a.re >> a.du >> s;
+        if (s!=']') {
+            i.setstate(std::ios::failbit);
+        }
     }
-    a >> a.re;
-    a >> a.du;
-    i >> s;
-    if (s!="]") {
-        i.setstate(std::ios::failbit);
-        return i;
-    }
+    return i;
 }
 
 } // namespace ra

@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Operator overloads for expression templates, and root header.
 
-// (c) Daniel Llorens - 2014-2023
+// (c) Daniel Llorens - 2014-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any

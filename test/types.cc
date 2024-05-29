@@ -13,9 +13,7 @@
 #include <iostream>
 #include "ra/test.hh"
 #include "mpdebug.hh"
-#ifdef __STDCPP_FLOAT128_T__
 #include <stdfloat>
-#endif
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using ra::mp::int_list, ra::mp::nil;
@@ -79,7 +77,7 @@ int main()
                  false, false, false, true, false);
         TESTPRED(std::complex<std::float128_t>,
                  false, false, false, true, false);
-#endif
+#endif // __STDCPP_FLOAT128_T__
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()),
                  true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()) const,

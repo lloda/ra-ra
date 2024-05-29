@@ -56,7 +56,6 @@ braces_shape(braces<T, rank> const & l)
 // ViewBig
 // --------------------
 
-// FIXME size is immutable so that it can be kept together with rank.
 // TODO Parameterize on Child having .data() so that there's only one pointer.
 // TODO Parameterize on iterator type not on value type.
 // TODO Constructor checks (nonnegative lens, steps inside, etc.).

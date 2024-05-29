@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Expression traversal.
 
-// (c) Daniel Llorens - 2013-2023
+// (c) Daniel Llorens - 2013-2024
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -21,13 +21,9 @@ template <class A>
 constexpr decltype(auto)
 VALUE(A && a)
 {
-    if constexpr (is_scalar<A>) {
-        return RA_FWD(a); // [ra8]
-    } else if constexpr (is_iterator<A>) {
-        return *a; // no need to start() for one
-    } else {
-        return *(ra::start(RA_FWD(a)));
-    }
+    if constexpr (is_scalar<A>) { return RA_FWD(a); } // [ra8]
+    else if constexpr (is_iterator<A>) { return *a; } // no need to start()
+    else { return *(ra::start(RA_FWD(a))); }
 }
 
 template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VALUE(std::declval<A>()))>>;

@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Test/benchmarking library.
 
-// (c) Daniel Llorens - 2012-2023
+// (c) Daniel Llorens - 2012-2024
 // This library is free software; you can redisribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -260,9 +260,8 @@ struct TestRecorder
     }
 };
 
-// TODO measure empty loops
-// TODO better reporting
-// TODO allow benchmarked functions to return results
+// TODO measure empty loops, better reporting
+// TODO let benchmarked functions to return results
 
 struct Benchmark
 {

@@ -129,5 +129,21 @@ int main()
         test1<case7>(tr, "case7", x);
         test1<case8>(tr, "case8", x);
     }
+    tr.section("i/o");
+    {
+        std::istringstream i("[2 7]");
+        Dual<real> a { 0., 0. };
+        i >> a;
+        tr.test(bool(i));
+        tr.test_eq(2, a.re);
+        tr.test_eq(7, a.du);
+        std::ostringstream o;
+        o << Dual<real> { 9., 3. };
+        std::istringstream j(o.str());
+        j >> a;
+        tr.test(bool(j));
+        tr.test_eq(9, a.re);
+        tr.test_eq(3, a.du);
+    }
     return tr.summary();
 }

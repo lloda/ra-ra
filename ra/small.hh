@@ -498,7 +498,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr decltype(auto)
     at(I && i) const
     {
-// can't say 'frame rank 0' so -size wouldn't work. What about ra::len
+// can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
         constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());
         static_assert(crank>=0); // to make out the output type
         return iter<crank>().at(RA_FWD(i));
@@ -525,10 +525,9 @@ template <class T, size_t N>
 consteval size_t
 align_req()
 {
-    if constexpr (equal_to_any<T, char, unsigned char, short, unsigned short,
-                  int, unsigned int, long, unsigned long, long long, unsigned long long,
-                  float, double>
-                  && 0<N && 0==(N & (N-1))) {
+    if constexpr (equal_to_any<T, char, unsigned char, short, unsigned short, int, unsigned int,
+                  long, unsigned long, long long, unsigned long long, float, double
+                  > && 0<N && 0==(N & (N-1))) {
         return alignof(extvector<T, N>);
     } else {
         return alignof(T[N]);
@@ -547,7 +546,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     using Base = SmallBase<T, lens, steps>;
     using Base::rank, Base::size, Base::len0;
 
-    T cp[size()]; // cf what std::array does for zero size; wish zero size just worked
+    T cp[size()]; // cf what std::array does for zero size
 
     using View = ViewSmall<T, lens, steps>;
     using ViewConst = ViewSmall<T const, lens, steps>;
@@ -593,7 +592,7 @@ SmallArray<T, lens, steps, std::tuple<nested_args ...>>
     template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FWD(self).view().template iter<c>(); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
-// FIXME deprecate, can do (iota(ic<> ...)) instead
+// FIXME do (iota(ic<> ...)) instead
     template <int ss, int oo=0> constexpr decltype(auto) as(this auto && self) { return RA_FWD(self).view().template as<ss, oo>(); }
 };
 
