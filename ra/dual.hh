@@ -264,19 +264,17 @@ std::ostream & operator<<(std::ostream & o, Dual<A> const & a)
 template <class A>
 std::istream & operator>>(std::istream & i, Dual<A> & a)
 {
-    std::string s;
+    char s;
     i >> s;
-    if (s!="[") {
+    if (s!='[') {
         i.setstate(std::ios::failbit);
-        return i;
+    } else {
+        i >> a.re >> a.du >> s;
+        if (s!=']') {
+            i.setstate(std::ios::failbit);
+        }
     }
-    a >> a.re;
-    a >> a.du;
-    i >> s;
-    if (s!="]") {
-        i.setstate(std::ios::failbit);
-        return i;
-    }
+    return i;
 }
 
 } // namespace ra

@@ -21,13 +21,9 @@ template <class A>
 constexpr decltype(auto)
 VALUE(A && a)
 {
-    if constexpr (is_scalar<A>) {
-        return RA_FWD(a); // [ra8]
-    } else if constexpr (is_iterator<A>) {
-        return *a; // no need to start() for one
-    } else {
-        return *(ra::start(RA_FWD(a)));
-    }
+    if constexpr (is_scalar<A>) { return RA_FWD(a); } // [ra8]
+    else if constexpr (is_iterator<A>) { return *a; } // no need to start()
+    else { return *(ra::start(RA_FWD(a))); }
 }
 
 template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VALUE(std::declval<A>()))>>;
@@ -38,34 +34,20 @@ template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 // replace Len in expr tree.
 // ---------------------
 
-template <>
-constexpr bool has_len_def<Len> = true;
-
-template <IteratorConcept ... P>
-constexpr bool has_len_def<Pick<std::tuple<P ...>>> = (has_len<P> || ...);
-
-template <class Op, IteratorConcept ... P>
-constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
-
-template <int w, class I, class N, class S>
-constexpr bool has_len_def<Iota<w, I, N, S>> = (has_len<I> || has_len<N> || has_len<S>);
-
-template <class I, class N, class S>
-constexpr bool has_len_def<Ptr<I, N, S>> = has_len<N> || has_len<S>;
-
-template <class E>
-struct WithLen
+template <class Ln, class E>
+constexpr decltype(auto)
+wlen(Ln ln, E && e)
 {
-    static_assert(!has_len<E>, "Unhandled len.");
-    constexpr static decltype(auto)
-    f(auto ln, auto && e)
-    {
+    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
+    if constexpr (has_len<E>) {
+        return WLen<std::decay_t<E>>::f(ln, RA_FWD(e));
+    } else {
         return RA_FWD(e);
     }
-};
+}
 
 template <>
-struct WithLen<Len>
+struct WLen<Len>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
@@ -75,57 +57,46 @@ struct WithLen<Len>
 };
 
 template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
-struct WithLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
+struct WLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return expr(RA_FWD(e).op, WithLen<std::decay_t<P>>::f(ln, std::get<I>(RA_FWD(e).t)) ...);
+        return expr(RA_FWD(e).op, wlen(ln, std::get<I>(RA_FWD(e).t)) ...);
     }
 };
 
 template <IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
-struct WithLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
+struct WLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return pick(WithLen<std::decay_t<P>>::f(ln, std::get<I>(RA_FWD(e).t)) ...);
+        return pick(wlen(ln, std::get<I>(RA_FWD(e).t)) ...);
     }
 };
 
+// final iota/ptr types must be either is_constant or is_scalar.
+
 template <int w, class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
-struct WithLen<Iota<w, I, N, S>>
+struct WLen<Iota<w, I, N, S>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-// final iota types must be either is_constant or is_scalar.
-        return iota<w>(VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
-                       VALUE(WithLen<std::decay_t<I>>::f(ln, RA_FWD(e).i)),
-                       VALUE(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
+        return iota<w>(VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).i)), VALUE(wlen(ln, RA_FWD(e).s)));
     }
 };
 
 template <class I, class N, class S> requires (has_len<N> || has_len<S>)
-struct WithLen<Ptr<I, N, S>>
+struct WLen<Ptr<I, N, S>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return ptr(RA_FWD(e).i,
-                   VALUE(WithLen<std::decay_t<N>>::f(ln, RA_FWD(e).n)),
-                   VALUE(WithLen<std::decay_t<S>>::f(ln, RA_FWD(e).s)));
+        return ptr(RA_FWD(e).i, VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s)));
     }
 };
-
-template <class Ln, class E>
-constexpr decltype(auto)
-with_len(Ln ln, E && e)
-{
-    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
-    return WithLen<std::decay_t<E>>::f(ln, RA_FWD(e));
-}
 
 
 // --------------

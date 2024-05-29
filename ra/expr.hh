@@ -269,7 +269,8 @@ constexpr struct Len
 
 // protect exprs with Len from reduction.
 template <> constexpr bool is_special_def<Len> = true;
-RA_IS_DEF(has_len, false);
+template <class E> struct WLen {};
+template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FWD(e)); };
 
 
 // --------------

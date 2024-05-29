@@ -142,7 +142,7 @@ odd(unsigned int N) { return N & 1; }
 
 template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e); }
 
-// FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like WithLen does.
+// FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like WLen does.
 #if RA_DO_OPT_IOTA==1
 // TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
 template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<ncvalue_t<X>>;

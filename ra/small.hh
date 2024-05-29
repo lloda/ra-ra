@@ -77,7 +77,7 @@ template <class lens> using default_steps = typename default_steps_<lens>::type;
 constexpr dim_t
 shape(auto const & v, auto && e)
 {
-    dim_t k = with_len(ra::rank(v), RA_FWD(e));
+    dim_t k = wlen(ra::rank(v), RA_FWD(e));
     RA_CHECK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
     return v.len(k);
 }
@@ -124,7 +124,7 @@ template <int n> constexpr beatable_t beatable_def<insert_t<n>>
     = { .rt=true, .ct = true, .src=0, .dst=n, .add=n };
 
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .rt=(BAD!=I::nn), .ct=std::decay_t<decltype(with_len(ic<1>, std::declval<I>()))>::constant,
+    = { .rt=(BAD!=I::nn), .ct=std::decay_t<decltype(wlen(ic<1>, std::declval<I>()))>::constant,
         .src=1, .dst=1, .add=0 };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
@@ -175,7 +175,7 @@ struct unbeat<N, mp::int_list<k ...>>
     constexpr static decltype(auto)
     op(auto && v, auto && ... i)
     {
-        return from(RA_FWD(v), with_len(maybe_len<k>(v), RA_FWD(i)) ...);
+        return from(RA_FWD(v), wlen(maybe_len<k>(v), RA_FWD(i)) ...);
     }
 };
 
@@ -486,7 +486,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     select_loop(I0 && i0, I && ... i)
     {
         constexpr int nn = (BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
-        return select<k>(with_len(ic<len(k)>, RA_FWD(i0)))
+        return select<k>(wlen(ic<len(k)>, RA_FWD(i0)))
             + select_loop<k + nn>(RA_FWD(i) ...);
     }
     template <int k>
@@ -501,7 +501,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {
             return cp[select_loop<0>(i ...)];
-// FIXME with_len before this, cf is_constant_iota
+// FIXME wlen before this, cf is_constant_iota
         } else if constexpr ((beatable<I>.ct && ...)) {
             using FD = FilterDims<lens, steps, std::decay_t<I> ...>;
             return ViewSmall<T, typename FD::lens, typename FD::steps> (cp + select_loop<0>(i ...));
