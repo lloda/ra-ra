@@ -38,24 +38,6 @@ template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 // replace Len in expr tree.
 // ---------------------
 
-template <>
-constexpr bool has_len_def<Len> = true;
-
-template <IteratorConcept ... P>
-constexpr bool has_len_def<Pick<std::tuple<P ...>>> = (has_len<P> || ...);
-
-template <class Op, IteratorConcept ... P>
-constexpr bool has_len_def<Expr<Op, std::tuple<P ...>>> = (has_len<P> || ...);
-
-template <int w, class I, class N, class S>
-constexpr bool has_len_def<Iota<w, I, N, S>> = (has_len<I> || has_len<N> || has_len<S>);
-
-template <class I, class N, class S>
-constexpr bool has_len_def<Ptr<I, N, S>> = has_len<N> || has_len<S>;
-
-template <class E>
-struct WLen {};
-
 template <class Ln, class E>
 constexpr decltype(auto)
 wlen(Ln ln, E && e)
@@ -78,7 +60,7 @@ struct WLen<Len>
     }
 };
 
-template <class Op, IteratorConcept ... P, int ... I>
+template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
     constexpr static decltype(auto)
@@ -88,7 +70,7 @@ struct WLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
     }
 };
 
-template <IteratorConcept ... P, int ... I>
+template <IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 {
     constexpr static decltype(auto)
@@ -100,7 +82,7 @@ struct WLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
 
 // final iota/ptr types must be either is_constant or is_scalar.
 
-template <int w, class I, class N, class S>
+template <int w, class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
 struct WLen<Iota<w, I, N, S>>
 {
     constexpr static decltype(auto)
@@ -110,7 +92,7 @@ struct WLen<Iota<w, I, N, S>>
     }
 };
 
-template <class I, class N, class S>
+template <class I, class N, class S> requires (has_len<N> || has_len<S>)
 struct WLen<Ptr<I, N, S>>
 {
     constexpr static decltype(auto)
