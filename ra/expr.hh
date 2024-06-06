@@ -320,11 +320,11 @@ start(is_iterator auto && t) { return RA_FWD(t); }
 // --------------------
 
 constexpr rank_t
-choose_rank(rank_t ra, rank_t rb) { return BAD==rb ? ra : BAD==ra ? rb : ANY==ra ? ra : ANY==rb ? rb : std::max(ra, rb); }
+choose_rank(rank_t a, rank_t b) { return BAD==b ? a : BAD==a ? b : ANY==a ? a : ANY==b ? b : std::max(a, b); }
 
 // pick first if mismatch (see below). FIXME maybe return invalid.
 constexpr dim_t
-choose_len(dim_t sa, dim_t sb) { return BAD==sa ? sb : BAD==sb ? sa : ANY==sa ? sb : sa; }
+choose_len(dim_t a, dim_t b) { return BAD==a ? b : BAD==b ? a : ANY==a ? b : a; }
 
 template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <bool checkp, IteratorConcept ... P, int ... I>
@@ -340,7 +340,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         if constexpr (sizeof...(P)<2) {
             return 2;
         } else if constexpr (ANY==rs) {
-            return 1; // FIXME can be tightened to 2 if all args are rank 0 save one
+            return sizeof...(P)==1+(bool(0==ra::rank_s<P>()) + ...) ? 2 : 1;
         } else {
             bool tbc = false;
             for (int k=0; k<rs; ++k) {
