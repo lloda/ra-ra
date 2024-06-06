@@ -220,11 +220,6 @@ subply(A & a, dim_t s, S const & ss0, Early & early)
     }
 }
 
-// possibly pessimize ply_fixed(). See bench-dot [ra43]
-#ifndef RA_STATIC_UNROLL
-#define RA_STATIC_UNROLL 0
-#endif
-
 template <IteratorConcept A, class Early = Nop>
 constexpr decltype(auto)
 ply_fixed(A && a, Early && early = Nop {})
@@ -241,35 +236,14 @@ ply_fixed(A && a, Early && early = Nop {})
             return;
         }
     } else {
-// static keep_step implies all else is static.
-        if constexpr (RA_STATIC_UNROLL && rank>1 && requires (dim_t st, rank_t z, rank_t j) { A::keep_step(st, z, j); }) {
-            constexpr auto ss0 = a.step(order[0]);
-// find outermost compact dim.
-            constexpr auto sj = [&order]
-            {
-                dim_t ss = A::len_s(order[0]);
-                int j = 1;
-                for (; j<rank && A::keep_step(ss, order[0], order[j]); ++j) {
-                    ss *= A::len_s(order[j]);
-                }
-                return std::make_tuple(ss, j);
-            } ();
-            if constexpr (requires {early.def;}) {
-                return (subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early)).value_or(early.def);
-            } else {
-                subply<order, rank-1, std::get<1>(sj)>(a, std::get<0>(sj), ss0, early);
-            }
-        } else {
-#pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
+#pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Warray-bounds"
-            auto ss0 = a.step(order[0]); // gcc 14.1 with RA_DO_CHECK=0 and sanitizer on
-// not worth unrolling.
-            if constexpr (requires {early.def;}) {
-                return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
-            } else {
-                subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
-            }
+    auto ss0 = a.step(order[0]); // gcc 14.1 with RA_DO_CHECK=0 and sanitizer on
 #pragma GCC diagnostic pop
+        if constexpr (requires {early.def;}) {
+            return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
+        } else {
+            subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
         }
     }
 }

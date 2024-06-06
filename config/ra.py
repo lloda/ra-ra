@@ -130,12 +130,9 @@ def to_source_from_noweb(env, targets, source):
     return [env.Notangle(target, remove_ext(main) + '.nw') for target in targets]
 
 def to_test_ra(env_, variant_dir):
-    def f(source, target='', cxxflags=[], cppdefines=[]):
-        if len(cxxflags)==0 or len(cppdefines)==0:
-            env = env_
-        else:
-            env = env_.Clone()
-            env.Append(CXXFLAGS=cxxflags + ['-U' + k for k in cppdefines.keys()], CPPDEFINES=cppdefines)
+    def f(source, target='', cxxflags=[], cppdefines={}):
+        env = env_.Clone()
+        env.Append(CXXFLAGS=cxxflags + ['-U' + k for k in cppdefines.keys()], CPPDEFINES=cppdefines)
         if len(target)==0:
             target = source
         obj = env.Object(target, [source + '.cc'])
