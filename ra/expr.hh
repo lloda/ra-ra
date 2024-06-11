@@ -314,6 +314,17 @@ start(T & t) { return t; }
 constexpr decltype(auto)
 start(is_iterator auto && t) { return RA_FWD(t); }
 
+// a form of ply() for conversion ops
+template <class E>
+decltype(auto) to_scalar(E && e)
+{
+    static_assert(!has_len<E>, "len outside subscript context.");
+    if constexpr (1!=size_s<E>()) {
+        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", ra::noshape, ra::shape(e), "].");
+    }
+    return *e;
+}
+
 
 // --------------------
 // prefix match
@@ -337,11 +348,9 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     consteval static int
     check_s()
     {
-        if constexpr (sizeof...(P)<2) {
+        if constexpr (sizeof...(P)<2 || sizeof...(P)==1+(bool(0==ra::rank_s<P>()) + ...)) {
             return 2;
-        } else if constexpr (ANY==rs) {
-            return sizeof...(P)==1+(bool(0==ra::rank_s<P>()) + ...) ? 2 : 1;
-        } else {
+        } else if constexpr (ANY!=rs) {
             bool tbc = false;
             for (int k=0; k<rs; ++k) {
                 dim_t ls = len_s(k);
@@ -353,12 +362,14 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
                 tbc = tbc || (anyk>0 && anyk+fixk>1);
             }
             return tbc ? 1 : 2;
+        } else {
+            return 1;
         }
     }
     constexpr bool
     check() const
     {
-        if constexpr (constexpr int c = check_s(); 2==c) {
+        if constexpr (constexpr int c=check_s(); 2==c) {
             return true;
         } else if constexpr (0==c) {
             return false;
@@ -653,7 +664,7 @@ template <class Op, IteratorConcept ... P, int ... I>
 struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
     using Match_ = Match<true, std::tuple<P ...>>;
-    using Match_::t, Match_::rs, Match_::rank;
+    using Match_::t;
     Op op;
 
     constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
@@ -661,15 +672,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     RA_ASSIGNOPS_DEFAULT_SET
     constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, std::get<I>(t).at(j) ...); }
     constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
-// needed for rs==ANY, which don't decay to scalar when used as operator arguments.
-    constexpr
-    operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const
-    {
-        if constexpr (1!=size_s<Expr>()) {
-            RA_CHECK(1==size(*this), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
-        }
-        return *(*this);
-    }
+    constexpr operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const { return to_scalar(*this); }
 };
 
 template <class Op, IteratorConcept ... P>
@@ -743,7 +746,7 @@ template <IteratorConcept ... P, int ... I>
 struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
     using Match_ = Match<true, std::tuple<P ...>>;
-    using Match_::t, Match_::rs, Match_::rank;
+    using Match_::t;
     static_assert(sizeof...(P)>1);
 
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
@@ -751,15 +754,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     RA_ASSIGNOPS_DEFAULT_SET
     constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
     constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
-// needed for rs==ANY, which don't decay to scalar when used as operator arguments.
-    constexpr
-    operator decltype(pick_star<0>(*std::get<0>(t), t)) () const
-    {
-        if constexpr (1!=size_s<Pick>()) {
-            RA_CHECK(1==size(*this), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
-        }
-        return *(*this);
-    }
+    constexpr operator decltype(pick_star<0>(*std::get<0>(t), t)) () const { return to_scalar(*this); }
 };
 
 template <IteratorConcept ... P>
