@@ -7,11 +7,9 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// Traversal may be through 1) ply 2) as iterator/range 3) ostream/std::format 4) scalar conversion.
-// This file has 1-3), scalar conversion is defined in each expr type.
-// TODO Make traversal order a parameter, some operations (e.g. output, ravel) require specific orders.  TODO
-// Better traversal. Tiling, etc. (see eval.cc in Blitz++). Unit step case?  TODO
-// std::execution::xxx-policy TODO Validate output argument strides.
+// TODO Make traversal order a parameter, some operations (e.g. output, ravel) require specific orders.
+// TODO Better traversal. Tiling, etc. (see eval.cc in Blitz++). Unit step case?
+// TODO std::execution::xxx-policy TODO Validate output argument strides.
 
 #pragma once
 #include "expr.hh"
@@ -258,7 +256,6 @@ template <IteratorConcept A, class Early = Nop>
 constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
-    static_assert(!has_len<A>, "len outside subscript context.");
     static_assert(0<=rank_s(a) || ANY==rank_s(a));
     if constexpr (ANY==size_s<A>()) {
         return ply_ravel(RA_FWD(a), RA_FWD(early));
@@ -284,7 +281,6 @@ early(IteratorConcept auto && a, auto && def) { return ply(RA_FWD(a), Default { 
 template <IteratorConcept A>
 struct STLIterator
 {
-    static_assert(!has_len<A>, "len outside subscript context.");
     using difference_type = dim_t;
     using value_type = value_t<A>;
 
@@ -355,7 +351,6 @@ template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-    static_assert(!has_len<A>, "len outside subscript context.");
     static_assert(BAD!=size_s<A>(), "Cannot print undefined size expr.");
     auto a = ra::start(fa.a); // [ra35]
     auto sha = shape(a);

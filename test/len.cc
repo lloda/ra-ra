@@ -94,11 +94,12 @@ int main()
         // tr.test_eq(5, wlen(ra::ic<5>, ra::iota(ra::len-ra::ic<1>)).ronk()); // FIXME
         // tr.test_eq(5, wlen(ra::ic<6>, ra::iota(ra::len-ra::ic<1>)).len_s(0)); // FIXME
     }
-    // tr.section("ra::len in ... in x.len(...)");
-    // {
-    //     ra::Big<int, 3> a({2, 3, 4}, 0);
-    //     // int z = ra::len-1; // static assert; use outside subscript context
-    //     cout << a.len(ra::len-1) << endl; // FIXME
-    // }
+    tr.section("ra::len in ... in x.len(...)");
+    {
+        // ra::Big<int, 3> a({2, 3, 4}, 0);
+        // int z = ra::len-1; // static assert; use outside subscript context [ra42]
+        // std::cout << z << std::endl;
+        // cout << a.len(ra::len-1) << endl; // FIXME
+    }
     return tr.summary();
 }

@@ -52,6 +52,7 @@ checkbox [C-ct] flip TODO
       - [ ] Small
       - [ ] Big
     - [ ] Support ra::len in x in o.len(x).
+    - [ ] Shape returns Small not std::array (for static rank expr).
     - [-] Should be able to reshape iota (??). One idea is to generalize View (so View<Iota>, etc.)
       which is something that newra does. But as long as Container is parent of View, conversion of
       (Container const &) into (View const &) forces us to have const/nonconst overloads in View
