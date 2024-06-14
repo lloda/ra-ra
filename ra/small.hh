@@ -242,7 +242,7 @@ struct CellSmall
     constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
+    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
 
     constexpr CellSmall(T * p): c { p } {}
 };
@@ -267,7 +267,7 @@ struct CellBig
     constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
     constexpr static dim_t len_s(int k) { return ANY; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
-    constexpr bool keep_step(dim_t st, int z, int j) const { return st*step(z)==step(j); }
+    constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
 
     constexpr CellBig(T * cp, Dimv const & dimv_, Spec dspec_ = Spec {})
         : dimv(dimv_), dspec(dspec_)

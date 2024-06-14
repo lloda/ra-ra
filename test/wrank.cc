@@ -254,7 +254,7 @@ int main()
             tr.info("sum_k a(i,k)*b(k,j)").test_eq(c1, c2);
         }
     }
-    tr.section("stencil test for Reframe::keep_step. Reduced from test/bench-stencil2.cc");
+    tr.section("stencil test for Reframe::keep. Reduced from test/bench-stencil2.cc");
     {
         int nx = 4;
         int ny = 4;

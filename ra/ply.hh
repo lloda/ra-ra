@@ -33,18 +33,6 @@ template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 // replace Len in expr tree.
 // ---------------------
 
-template <class Ln, class E>
-constexpr decltype(auto)
-wlen(Ln ln, E && e)
-{
-    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
-    if constexpr (has_len<E>) {
-        return WLen<std::decay_t<E>>::f(ln, RA_FWD(e));
-    } else {
-        return RA_FWD(e);
-    }
-}
-
 template <>
 struct WLen<Len>
 {
@@ -131,7 +119,7 @@ ply_ravel(A && a, Early && early = Nop {})
     dim_t ss = a.len(*ocd);
 #pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
-    for (--rank, ++ocd; rank>0 && a.keep_step(ss, order[0], *ocd); --rank, ++ocd) {
+    for (--rank, ++ocd; rank>0 && a.keep(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
     }
     for (int k=0; k<rank; ++k) {

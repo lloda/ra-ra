@@ -83,7 +83,7 @@ constexpr struct Len
     consteval static dim_t len(int k) { len_outside_subscript_context(); }
     consteval static dim_t step(int k) { len_outside_subscript_context(); }
     consteval static void adv(rank_t k, dim_t d) { len_outside_subscript_context(); }
-    consteval static bool keep_step(dim_t st, int z, int j) { len_outside_subscript_context(); }
+    consteval static bool keep(dim_t st, int z, int j) { len_outside_subscript_context(); }
     consteval dim_t operator*() const { len_outside_subscript_context(); }
     consteval static int save() { len_outside_subscript_context(); }
     consteval static void load(int) { len_outside_subscript_context(); }
@@ -93,6 +93,18 @@ constexpr struct Len
 template <> constexpr bool is_special_def<Len> = true;  // protect exprs with Len from reduction.
 template <class E> struct WLen;                         // defined in ply.hh.
 template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FWD(e)); };
+
+template <class Ln, class E>
+constexpr decltype(auto)
+wlen(Ln ln, E && e)
+{
+    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
+    if constexpr (has_len<E>) {
+        return WLen<std::decay_t<E>>::f(ln, RA_FWD(e));
+    } else {
+        return RA_FWD(e);
+    }
+}
 
 // Rank-0 IteratorConcept. Can be used on foreign objects, or as alternative to the rank conjunction.
 // We still want f(scalar(C)) to be f(C) and not map(f, C), this is controlled by tomap/toreduce.
@@ -106,7 +118,7 @@ struct Scalar
     constexpr static dim_t len(int k) { std::abort(); } // FIXME idem
     constexpr static dim_t step(int k) { return 0; }
     constexpr static void adv(rank_t k, dim_t d) {}
-    constexpr static bool keep_step(dim_t st, int z, int j) { return true; }
+    constexpr static bool keep(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) at(auto && j) const { return c; }
     constexpr C & operator*() requires (std::is_lvalue_reference_v<C>) { return c; } // [ra37]
     constexpr C const & operator*() requires (!std::is_lvalue_reference_v<C>) { return c; }
@@ -152,7 +164,7 @@ struct Ptr
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
     constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k) * d); }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
+    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
         RA_CHECK(BAD==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
@@ -235,7 +247,7 @@ struct Iota
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : BAD; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr void adv(rank_t k, dim_t d) { i += I(step(k) * d) * I(s); }
-    constexpr static bool keep_step(dim_t st, int z, int j) { return st*step(z)==step(j); }
+    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto at(auto && j) const
     {
         RA_CHECK(BAD==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
@@ -278,9 +290,7 @@ inside(is_iota auto const & i, dim_t l)
 // --------------
 
 // TODO arbitrary exprs? runtime cr? ra::len in cr?
-template <int cr>
-constexpr auto
-iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
+template <int cr> constexpr auto iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
 
 constexpr void
 start(auto && t) { static_assert(false, "Cannot start() type."); }
@@ -450,14 +460,14 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         (std::get<I>(t).adv(k, d), ...);
     }
     constexpr bool
-    keep_step(dim_t st, int z, int j) const requires (!(requires { P::keep_step(st, z, j); }  && ...))
+    keep(dim_t st, int z, int j) const requires (!(requires { P::keep(st, z, j); }  && ...))
     {
-        return (std::get<I>(t).keep_step(st, z, j) && ...);
+        return (std::get<I>(t).keep(st, z, j) && ...);
     }
     constexpr static bool
-    keep_step(dim_t st, int z, int j) requires (requires { P::keep_step(st, z, j); } && ...)
+    keep(dim_t st, int z, int j) requires (requires { P::keep(st, z, j); } && ...)
     {
-        return (std::decay_t<P>::keep_step(st, z, j) && ...);
+        return (std::decay_t<P>::keep(st, z, j) && ...);
     }
     constexpr auto save() const { return std::make_tuple(std::get<I>(t).save() ...); }
     constexpr void load(auto const & pp) { ((std::get<I>(t).load(std::get<I>(pp))), ...); }
@@ -523,16 +533,16 @@ struct Reframe
         if (l>=0) { a.adv(l, d); }
     }
     constexpr static bool
-    keep_step(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep_step(st, z, j); })
+    keep(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep(st, z, j); })
     {
         int wz=orig(z), wj=orig(j);
-        return wz>=0 && wj>=0 && std::decay_t<A>::keep_step(st, wz, wj);
+        return wz>=0 && wj>=0 && std::decay_t<A>::keep(st, wz, wj);
     }
     constexpr bool
-    keep_step(dim_t st, int z, int j) const requires (!(requires { std::decay_t<A>::keep_step(st, z, j); }))
+    keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<A>::keep(st, z, j); }))
     {
         int wz=orig(z), wj=orig(j);
-        return wz>=0 && wj>=0 && a.keep_step(st, wz, wj);
+        return wz>=0 && wj>=0 && a.keep(st, wz, wj);
     }
     constexpr decltype(auto)
     at(auto const & i) const

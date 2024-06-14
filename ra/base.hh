@@ -85,7 +85,7 @@ concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
     { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
     { a.step(k) };
-    { a.keep_step(d, i, j) } -> std::same_as<bool>;
+    { a.keep(d, i, j) } -> std::same_as<bool>;
     { a.save() };
     { a.load(std::declval<decltype(a.save())>()) } -> std::same_as<void>;
     { a.mov(d) } -> std::same_as<void>;

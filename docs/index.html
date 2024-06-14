@@ -1914,7 +1914,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
-<p><b>Iterator</b>s have two traversal functions: <code>.adv(k, d)</code>, moves the iterator along any dimension <var>k</var>, and <code>.mov(d)</code>, is used on linearized views of the array. The methods <code>len()</code>, <code>step()</code>, <code>keep_step()</code> are used to determine the extent of these linearized views. In this way, a loop involving <b>Iterator</b>s can have its inner loop unfolded, which is faster than a nested loop, especially if the inner dimensions of the loop are small.
+<p><b>Iterator</b>s have two traversal functions: <code>.adv(k, d)</code>, moves the iterator along any dimension <var>k</var>, and <code>.mov(d)</code>, is used on linearized views of the array. The methods <code>len()</code>, <code>step()</code>, <code>keep()</code> are used to determine the extent of these linearized views. In this way, a loop involving <b>Iterator</b>s can have its inner loop unfolded, which is faster than a nested loop, especially if the inner dimensions of the loop are small.
 </p>
 <p><b>Iterator</b>s also provide an <code>at(i ...)</code> method for random access to any element.
 </p>
