@@ -359,10 +359,10 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     consteval static int
     check_s()
     {
-        if constexpr (sizeof...(P)<2) {
+        if constexpr (sizeof...(P)<2 || sizeof...(P)==1+(bool(0==ra::rank_s<P>()) + ...)) {
             return 2;
         } else if constexpr (ANY==rs) {
-            return 1; // FIXME can be tightened to 2 if all args are rank 0 save one
+            return 1;
         } else {
             bool tbc = false;
             for (int k=0; k<rs; ++k) {

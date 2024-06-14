@@ -120,6 +120,11 @@ int main()
 // see test/frame-new.cc
 // ------------------------------
 
+    tr.section("static match in dynamic case");
+    {
+        ra::Big<int> a({2, 3, 4}, 0);
+        tr.test_eq(2, agree_s(a, 99));
+    }
     tr.section("dynamic (implicit) match");
     {
         ra::Big<int, 3> a({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));
