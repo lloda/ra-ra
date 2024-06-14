@@ -68,11 +68,9 @@ tester = ra.to_test_ra(env, variant_dir)
                'bench-pack', 'bench-from',
                'bench-stencil1', 'bench-stencil2', 'bench-stencil3',
                'bench-optimize', 'bench-tensorindex',
-               'bench-iterator', 'bench-at'
+               'bench-iterator', 'bench-at',
+               'bench-dot'
            ]]
-
-tester('bench-dot', target='bench-dot-no-su', cppdefines={'RA_STATIC_UNROLL': '0'})
-tester('bench-dot', target='bench-dot-su', cppdefines={'RA_STATIC_UNROLL': '1'})
 
 if not top['skip_summary']:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/bench'))
