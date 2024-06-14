@@ -34,18 +34,6 @@ template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 // replace Len in expr tree.
 // ---------------------
 
-template <class Ln, class E>
-constexpr decltype(auto)
-wlen(Ln ln, E && e)
-{
-    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
-    if constexpr (has_len<E>) {
-        return WLen<std::decay_t<E>>::f(ln, RA_FWD(e));
-    } else {
-        return RA_FWD(e);
-    }
-}
-
 template <>
 struct WLen<Len>
 {

@@ -75,6 +75,36 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 // terminal types
 // --------------------
 
+constexpr struct Len
+{
+    consteval static rank_t rank() { return 0; }
+    constexpr static dim_t len_s(int k) { std::abort(); }
+    constexpr static dim_t len(int k) { std::abort(); }
+    constexpr static dim_t step(int k) { std::abort(); }
+    constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
+    constexpr static bool keep_step(dim_t st, int z, int j) { std::abort(); }
+    constexpr dim_t operator*() const { std::abort(); }
+    constexpr static int save() { std::abort(); }
+    constexpr static void load(int) { std::abort(); }
+    constexpr static void mov(dim_t d) { std::abort(); }
+} len;
+
+template <> constexpr bool is_special_def<Len> = true;  // protect exprs with Len from reduction.
+template <class E> struct WLen;                         // defined in ply.hh.
+template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FWD(e)); };
+
+template <class Ln, class E>
+constexpr decltype(auto)
+wlen(Ln ln, E && e)
+{
+    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
+    if constexpr (has_len<E>) {
+        return WLen<std::decay_t<E>>::f(ln, RA_FWD(e));
+    } else {
+        return RA_FWD(e);
+    }
+}
+
 // Rank-0 IteratorConcept. Can be used on foreign objects, or as alternative to the rank conjunction.
 // We still want f(scalar(C)) to be f(C) and not map(f, C), this is controlled by tomap/toreduce.
 template <class C>
@@ -253,25 +283,6 @@ inside(is_iota auto const & i, dim_t l)
     return (inside(i.i, l) && inside(i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
-constexpr struct Len
-{
-    consteval static rank_t rank() { return 0; }
-    constexpr static dim_t len_s(int k) { std::abort(); }
-    constexpr static dim_t len(int k) { std::abort(); }
-    constexpr static dim_t step(int k) { std::abort(); }
-    constexpr static void adv(rank_t k, dim_t d) { std::abort(); }
-    constexpr static bool keep_step(dim_t st, int z, int j) { std::abort(); }
-    constexpr dim_t operator*() const { std::abort(); }
-    constexpr static int save() { std::abort(); }
-    constexpr static void load(int) { std::abort(); }
-    constexpr static void mov(dim_t d) { std::abort(); }
-} len;
-
-// protect exprs with Len from reduction.
-template <> constexpr bool is_special_def<Len> = true;
-template <class E> struct WLen {};
-template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FWD(e)); };
-
 
 // --------------
 // making Iterators
@@ -313,6 +324,17 @@ start(T & t) { return t; }
 // FIXME const Iterator would still be unusable after start().
 constexpr decltype(auto)
 start(is_iterator auto && t) { return RA_FWD(t); }
+
+// a form of ply() for conversion ops
+template <class E>
+decltype(auto) to_scalar(E && e)
+{
+    static_assert(!has_len<E>, "len outside subscript context.");
+    if constexpr (1!=size_s<E>()) {
+        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", ra::noshape, ra::shape(e), "].");
+    }
+    return *e;
+}
 
 
 // --------------------
@@ -661,15 +683,7 @@ struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std:
     RA_ASSIGNOPS_DEFAULT_SET
     constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, std::get<I>(t).at(j) ...); }
     constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
-// needed for rs==ANY, which don't decay to scalar when used as operator arguments.
-    constexpr
-    operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const
-    {
-        if constexpr (1!=size_s<Expr>()) {
-            RA_CHECK(1==size(*this), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
-        }
-        return *(*this);
-    }
+    constexpr operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const { return to_scalar(*this); }
 };
 
 template <class Op, IteratorConcept ... P>
@@ -751,15 +765,7 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     RA_ASSIGNOPS_DEFAULT_SET
     constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
     constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
-// needed for rs==ANY, which don't decay to scalar when used as operator arguments.
-    constexpr
-    operator decltype(pick_star<0>(*std::get<0>(t), t)) () const
-    {
-        if constexpr (1!=size_s<Pick>()) {
-            RA_CHECK(1==size(*this), "Bad conversion to scalar from shape [", ra::noshape, ra::shape(*this), "].");
-        }
-        return *(*this);
-    }
+    constexpr operator decltype(pick_star<0>(*std::get<0>(t), t)) () const { return to_scalar(*this); }
 };
 
 template <IteratorConcept ... P>
