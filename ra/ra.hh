@@ -772,8 +772,8 @@ template <int D, int Oa, int Ob, class Va, class Vb> requires (!(is_scalar<Va> &
 decltype(auto)
 wedge(Va const & a, Vb const & b)
 {
-    Small<ncvalue_t<Va>, size_s<Va>()> aa = a;
-    Small<ncvalue_t<Vb>, size_s<Vb>()> bb = b;
+    Small<ncvalue_t<Va>, size_s(a)> aa = a;
+    Small<ncvalue_t<Vb>, size_s(b)> bb = b;
     using Ua = decltype(aa);
     using Ub = decltype(bb);
     using Wedge = mp::Wedge<D, Oa, Ob>;
@@ -790,8 +790,8 @@ template <int D, int Oa, int Ob, class Va, class Vb, class Vr> requires (!(is_sc
 void
 wedge(Va const & a, Vb const & b, Vr & r)
 {
-    Small<ncvalue_t<Va>, size_s<Va>()> aa = a;
-    Small<ncvalue_t<Vb>, size_s<Vb>()> bb = b;
+    Small<ncvalue_t<Va>, size_s(a)> aa = a;
+    Small<ncvalue_t<Vb>, size_s(b)> bb = b;
     using Ua = decltype(aa);
     using Ub = decltype(bb);
     auto & r1 = reinterpret_cast<torank1<decltype(r)> &>(r);
@@ -804,8 +804,8 @@ template <class A, class B>
 constexpr auto
 cross(A const & a_, B const & b_)
 {
-    constexpr int n = size_s<A>();
-    static_assert(n==size_s<B>() && (2==n || 3==n));
+    constexpr int n = size_s(a_);
+    static_assert(n==size_s(b_) && (2==n || 3==n));
     Small<std::decay_t<decltype(VALUE(a_))>, n> a = a_;
     Small<std::decay_t<decltype(VALUE(b_))>, n> b = b_;
     using W = mp::Wedge<n, 1, 1>;

@@ -245,7 +245,7 @@ constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
     static_assert(0<=rank_s(a) || ANY==rank_s(a));
-    if constexpr (ANY==size_s<A>()) {
+    if constexpr (ANY==size_s(a)) {
         return ply_ravel(RA_FWD(a), RA_FWD(early));
     } else {
         return ply_fixed(RA_FWD(a), RA_FWD(early));
@@ -314,8 +314,7 @@ struct STLIterator
         }
         over = true;
     }
-    constexpr STLIterator & operator++() requires (ANY==rank_s<A>()) { next(rank(a)-1); return *this; }
-    constexpr STLIterator & operator++() requires (ANY!=rank_s<A>()) { next<rank_s<A>()-1>(); return *this; }
+    constexpr STLIterator & operator++() { if constexpr (ANY==rank_s(a)) { next(rank(a)-1); } else { next<rank_s(a)-1>(); } return *this; }
     constexpr void operator++(int) { ++(*this); } // see p0541 and p2550. Or just avoid.
 };
 
@@ -339,13 +338,13 @@ template <class A>
 inline std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-    static_assert(BAD!=size_s<A>(), "Cannot print undefined size expr.");
     auto a = ra::start(fa.a); // [ra35]
+    static_assert(BAD!=size_s(a), "Cannot print undefined size expr.");
     auto sha = shape(a);
 // the following assert fixes a segfault in gcc11.3 test/io.c with -O3 -DRA_DO_CHECK=1.
     assert(every(ra::start(sha)>=0));
 // always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
-    if (withshape==fa.fmt.shape || (defaultshape==fa.fmt.shape && size_s(a)==ANY)) {
+    if (withshape==fa.fmt.shape || (defaultshape==fa.fmt.shape && ANY==size_s(a))) {
         o << ra::defaultshape << sha << '\n';
     }
     rank_t const rank = ra::rank(a);

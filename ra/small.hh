@@ -79,7 +79,7 @@ template <class A>
 constexpr void
 resize(A & a, dim_t s)
 {
-    if constexpr (ANY==size_s<A>()) {
+    if constexpr (ANY==size_s(a)) {
         RA_CHECK(s>=0, "Bad resize ", s, ".");
         a.resize(s);
     } else {
@@ -145,7 +145,7 @@ from(A && a, I && ... i)
 // support dynamic rank for 1 arg only (see test in test/from.cc).
         return map(RA_FWD(a), RA_FWD(i) ...);
     } else {
-        return map(from_partial<mp::tuple<ic_t<rank_s<I>()> ...>, 1>(RA_FWD(a)), RA_FWD(i) ...);
+        return map(from_partial<mp::tuple<ic_t<rank_s(i)> ...>, 1>(RA_FWD(a)), RA_FWD(i) ...);
     }
 }
 
@@ -177,17 +177,17 @@ constexpr dim_t
 indexer(Q const & q, P const & pp)
 {
     decltype(auto) p = start(pp);
-    if constexpr (ANY==rank_s<P>()) {
+    if constexpr (ANY==rank_s(p)) {
         RA_CHECK(1==rank(p), "Bad rank ", rank(p), " for subscript.");
     } else {
-        static_assert(1==rank_s<P>(), "Bad rank for subscript.");
+        static_assert(1==rank_s(p), "Bad rank for subscript.");
     }
-    if constexpr (ANY==size_s<P>() || ANY==rank_s<Q>()) {
+    if constexpr (ANY==size_s(p) || ANY==rank_s(q)) {
         RA_CHECK(p.len(0) >= q.rank(), "Too few indices.");
     } else {
-        static_assert(size_s<P>() >= rank_s<Q>(), "Too few indices.");
+        static_assert(size_s(p) >= rank_s(q), "Too few indices.");
     }
-    if constexpr (ANY==rank_s<Q>()) {
+    if constexpr (ANY==rank_s(q)) {
         dim_t c = 0;
         for (rank_t k=0; k<q.rank(); ++k, p.mov(p.step(0))) {
             auto pk = *p;
@@ -198,7 +198,7 @@ indexer(Q const & q, P const & pp)
     } else {
         auto loop = [&](this auto && loop, auto && k, dim_t c)
         {
-            if constexpr (k==rank_s<Q>()) {
+            if constexpr (k==rank_s(q)) {
                 return c;
             } else {
                 auto pk = *p;
@@ -499,7 +499,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     at(I && i) const
     {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
-        constexpr rank_t crank = rank_diff(rank(), ra::size_s<I>());
+        constexpr rank_t crank = rank_diff(rank(), ra::size_s(i));
         static_assert(crank>=0); // to make out the output type
         return iter<crank>().at(RA_FWD(i));
     }
@@ -509,7 +509,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr auto begin() const { if constexpr (defsteps) return cp; else return STLIterator(iter()); }
     constexpr auto end() const requires (defsteps) { return cp+size(); }
     constexpr static auto end() requires (!defsteps) { return std::default_sentinel; }
-    constexpr T & back() const { static_assert(size()>0, "No back()."); return cp[size()-1]; }
+    constexpr T & back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
     constexpr operator T & () const { static_assert(1==size(), "Bad scalar conversion."); return cp[0]; }
 };
 
@@ -683,11 +683,11 @@ explode(cv_smallview auto && a_)
     decltype(auto) a = a_.view();
     using AA = std::decay_t<decltype(a)>;
     static_assert(super_t::defsteps);
-    constexpr rank_t ra = ra::rank_s<AA>();
+    constexpr rank_t ra = ra::rank_s(a);
     constexpr rank_t rb = rank_s<super_t>();
     static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
     static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);
-    constexpr dim_t supers = ra::size_s<super_t>();
+    constexpr dim_t supers = size_s<super_t>();
     using csteps = decltype(std::apply([](auto ... i)
                                        {
                                            static_assert(((i==(i/supers)*supers) && ...));

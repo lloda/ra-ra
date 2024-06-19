@@ -188,7 +188,7 @@ struct ViewBig
     at(I && i) const
     {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
-       constexpr rank_t crank = rank_diff(RANK, ra::size_s<I>());
+       constexpr rank_t crank = rank_diff(RANK, ra::size_s(i));
        if constexpr (ANY==crank) {
             return iter(rank()-ra::size(i)).at(RA_FWD(i));
         } else {
@@ -528,7 +528,7 @@ template <class E>
 constexpr auto
 with_same_shape(E && e)
 {
-    if constexpr (ANY!=size_s<concrete_type<E>>()) {
+    if constexpr (ANY!=size_s(e)) {
         return concrete_type<E>();
     } else {
         return concrete_type<E>(ra::shape(e), none);
@@ -539,7 +539,7 @@ template <class E, class X>
 constexpr auto
 with_same_shape(E && e, X && x)
 {
-    if constexpr (ANY!=size_s<concrete_type<E>>()) {
+    if constexpr (ANY!=size_s(e)) {
         return concrete_type<E>(RA_FWD(x));
     } else {
         return concrete_type<E>(ra::shape(e), RA_FWD(x));
@@ -550,7 +550,7 @@ template <class E, class S, class X>
 constexpr auto
 with_shape(S && s, X && x)
 {
-    if constexpr (ANY!=size_s<concrete_type<E>>()) {
+    if constexpr (ANY!=size_s<E>()) {
         return concrete_type<E>(RA_FWD(x));
     } else {
         return concrete_type<E>(RA_FWD(s), RA_FWD(x));
@@ -561,7 +561,7 @@ template <class E, class S, class X>
 constexpr auto
 with_shape(std::initializer_list<S> && s, X && x)
 {
-    if constexpr (ANY!=size_s<concrete_type<E>>()) {
+    if constexpr (ANY!=size_s<E>()) {
         return concrete_type<E>(RA_FWD(x));
     } else {
         return concrete_type<E>(s, RA_FWD(x));

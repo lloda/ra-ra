@@ -328,7 +328,7 @@ start(is_iterator auto && t) { return RA_FWD(t); }
 template <class E>
 decltype(auto) to_scalar(E && e)
 {
-    if constexpr (1!=size_s<E>()) {
+    if constexpr (1!=size_s(e)) {
         RA_CHECK(1==size(e), "Bad scalar conversion from shape [", ra::noshape, ra::shape(e), "].");
     }
     return *e;
@@ -371,16 +371,13 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
                 tbc = tbc || (anyk>0 && anyk+fixk>1);
             }
             return tbc ? 1 : 2;
-        } else {
-            return 1;
         }
+        return 1;
     }
     constexpr bool
     check() const
     {
-        if constexpr (constexpr int c=check_s(); 2==c) {
-            return true;
-        } else if constexpr (0==c) {
+        if constexpr (constexpr int c=check_s(); 0==c) {
             return false;
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
