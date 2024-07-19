@@ -284,6 +284,17 @@ inside(is_iota auto const & i, dim_t l)
     return (inside(i.i, l) && inside(i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
+template <int w, class I, class N, class S>
+constexpr auto
+reverse(Iota<w, I, N, S> const & i)
+{
+    static_assert(i.nn!=BAD, "Undefined size iota cannot be reversed.");
+    static_assert(0==w, "Only rank 1 iota can be reversed.");
+    return ra::iota([&i]() { if constexpr (is_constant<N>) return dim_c<N {}> {}; else return i.n; }(),
+                    i.i+(i.n-1)*i.s,
+                    [&i]() { if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+}
+
 
 // --------------
 // making Iterators

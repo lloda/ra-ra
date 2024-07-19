@@ -8,6 +8,8 @@ checkbox [C-ct] flip TODO
 * TODO [1/7]
   - [-] Bugs [4/14]
     - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
+    - [ ] Invalid expressions that aren't caught by Match, either bc it makes assumptions, or bc
+      Match isn't even involved. See checks.cc.
     - [X] Before merging saveload [1/1]
       - [X] Fix cellrank.cc: "using View::operator= on sliding view". For that, View::operator= have
         to be const. That breaks a lot of things
@@ -41,6 +43,8 @@ checkbox [C-ct] flip TODO
     - [X] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 (bad operator=) is cleared up. Cf [ra5].
   - [-] Features [1/14]
     - [ ] support std::format
+    - [ ] compatibility with OpenMP, even if only for trivially parallel cases
+          The way ply() works atm, with iterators, more or press precludes it.
     - [ ] support expr = braces for any expr, not just views.
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.

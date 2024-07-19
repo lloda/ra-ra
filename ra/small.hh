@@ -15,8 +15,8 @@ namespace ra {
 constexpr rank_t rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
 constexpr rank_t rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
 // cr>=0 is cell rank, -cr>0 is frame rank. TODO How to say frame rank 0. Maybe ra::end?
-constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr /* indep */ : r==ANY ? ANY /* defer */ : (r+cr); }
-constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY /* defer */ : cr>=0 ? (r-cr) /* indep */ : -cr; }
+constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
+constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
 
 struct Dim { dim_t len, step; };
 
@@ -446,9 +446,9 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     }
     template <int k>
     constexpr static dim_t
-    select(is_iota auto i)
+    select(is_iota auto const & i)
     {
-        if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME constexpr abs not yet in gcc14 grr
+        if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME constexpr abs
             static_assert(false, "Bad index.");
         } else {
             RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");

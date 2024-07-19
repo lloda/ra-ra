@@ -118,7 +118,7 @@ struct ViewBig
         return step(k)*i;
     }
     constexpr dim_t
-    select(Dim * dim, int k, is_iota auto i) const
+    select(Dim * dim, int k, is_iota auto const & i) const
     {
         RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] for len[", k, "]=", len(k), ".");
         *dim = { .len = i.n, .step = step(k) * i.s };

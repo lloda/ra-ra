@@ -7,10 +7,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#if RA_DO_CHECK==0
+#ifdef RA_DO_CHECK
   #undef RA_DO_CHECK
 #endif
-#define RA_DO_CHECK 1 // kind of the point here
+#define RA_DO_CHECK 1 // the point here
 
 #include "ra/base.hh"
 #include <exception>
@@ -115,6 +115,23 @@ int main()
         }
         tr.info("ptr.at()").test_eq(10, x);
     }
+
+
+// ------------------------------
+// FIXME checking at Match isn't enough, and ply() doesn't check nicely
+// ------------------------------
+/*
+    ra::Big<double> z(10, 0.);
+    auto w = z(ra::insert<1>, ra::all);
+// causes abort() in ply(). Checks are skipped bc there's only one positive rank arg
+    w *= -1;
+// causes abort() in ply(). Checks are skipped bc there's only one argument
+    for_each([](auto & w) { w *= -1; }, -w) ;
+// causes abort() in ply(). Checks are skipped bc no expr is built.
+    for_each([](auto & w) { w *= -1; }, w) ;
+    std::cout << w << std::endl;
+*/
+
 
 // ------------------------------
 // see test/frame-new.cc

@@ -253,7 +253,7 @@ ply(A && a, Early && early = Nop {})
 }
 
 constexpr void
-for_each(auto && op, auto && ... a) {  ply(map(RA_FWD(op), RA_FWD(a) ...)); }
+for_each(auto && op, auto && ... a) { ply(map(RA_FWD(op), RA_FWD(a) ...)); }
 
 template <class T> struct Default { T def; };
 template <class T> Default(T &&) -> Default<T>;

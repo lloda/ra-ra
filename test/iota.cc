@@ -85,5 +85,21 @@ int main()
     {
         tr.strictshape().test_eq(ra::iota(10, 0, 3), ra::ptr(std::ranges::iota_view(0, 10))*3);
     }
+    tr.section("reverse(iota)");
+    {
+        auto i = ra::iota(ra::dim_c<5> {}, 3, ra::dim_c<-2> {});
+        auto ri = reverse(i);
+        static_assert(5==size(ri));
+        static_assert(2==ri.s);
+        tr.strictshape().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
+    }
+    {
+        auto i = ra::iota(ra::dim_c<5> {}, 3, -2);
+        tr.strictshape().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
+    }
+    {
+        auto i = ra::iota(5, 3, -2);
+        tr.strictshape().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
+    }
     return tr.summary();
 }
