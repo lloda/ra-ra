@@ -1968,7 +1968,7 @@ Next: <a href="#Building-the-test-suite" accesskey="n" rel="next">Building the t
 <span id="index-shape-1"></span>
 <span id="x_002dshape"></span><dl class="def">
 <dt id="index-shape-2"><span class="category">Function<!-- /@w -->: </span><span><em>array</em> <strong>shape</strong> <em>e</em><a href='#index-shape-2' class='copiable-anchor'> &para;</a></span></dt>
-<dt id="index-shape-3"><span class="category">Function<!-- /@w -->: </span><span><em>dim_t</em> <strong>shape</strong> <em>e k</em><a href='#index-shape-3' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-shape-3"><span class="category">Function<!-- /@w -->: </span><span><em>expr</em> <strong>shape</strong> <em>e k</em><a href='#index-shape-3' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
 <p>The first form returns the shape of expression <var>e</var> as an array. The second form returns the length of axis <var>k</var>, i.e. <code>shape(e)[k]</code> ≡ <code>shape(e, k)</code>. It is possible to use <a href="#x_002dlen"><code>len</code></a> in <var>k</var> to mean the rank of <var>e</var>.
 </p>
@@ -1978,7 +1978,14 @@ Next: <a href="#Building-the-test-suite" accesskey="n" rel="next">Building the t
 </pre><pre class="example">-| 4
 </pre></div>
 
-<p><var>array</var> might be a <a href="#x_002dforeign_002dtype">foreign type</a> (such as <code>std::array</code> or <code>std::vector</code>) instead of a <code>ra::</code> type.
+<p>If <var>k</var> is not a scalar, <code>shape(e, k)</code> returns a map of <var>k</var> over <code>shape(e, ·)</code>.
+</p>
+<div class="example">
+<pre class="verbatim">    cout &lt;&lt; shape(A, ra::iota(2, ra::len-2)) &lt;&lt; endl; // last two lengths
+</pre><pre class="example">-| 3 4
+</pre></div>
+
+<p>Note that the return type <var>array</var> of <code>shape(e)</code> might be a <a href="#x_002dforeign_002dtype">foreign type</a> (such as <code>std::array</code> or <code>std::vector</code>) instead of a <code>ra::</code> type. In that case, <code>shape(A)(ra::iota(2, ra::len-2))</code> will not work.
 </p>
 </dd></dl>
 

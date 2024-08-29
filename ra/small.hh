@@ -67,12 +67,16 @@ struct default_steps_
 };
 template <class lens> using default_steps = typename default_steps_<lens>::type;
 
-constexpr dim_t
+constexpr auto
 shape(auto const & v, auto && e)
 {
-    dim_t k = wlen(ra::rank(v), RA_FWD(e));
-    RA_CHECK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
-    return v.len(k);
+    if constexpr (is_scalar<decltype(e)>) {
+        dim_t k = wlen(ra::rank(v), RA_FWD(e));
+        RA_CHECK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
+        return v.len(k);
+    } else {
+        return map([&v](auto && e) { return shape(v, e); }, wlen(ra::rank(v), RA_FWD(e)));
+    }
 }
 
 template <class A>

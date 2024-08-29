@@ -1898,7 +1898,7 @@ Return the rank of expression @var{e}.
 @cindex @code{shape}
 @anchor{x-shape}
 @deftypefn @w{Function} array shape e
-@deftypefnx @w{Function} dim_t shape e k
+@deftypefnx @w{Function} expr shape e k
 
 The first form returns the shape of expression @var{e} as an array. The second form returns the length of axis @var{k}, i.e. @code{shape(e)[k]} ≡ @code{shape(e, k)}. It is possible to use @ref{x-len,@code{len}} in @var{k} to mean the rank of @var{e}.
 
@@ -1910,7 +1910,16 @@ The first form returns the shape of expression @var{e} as an array. The second f
 @print{} 4
 @end example
 
-@var{array} might be a @ref{x-foreign-type,foreign type} (such as @code{std::array} or @code{std::vector}) instead of a @code{ra::} type.
+If @var{k} is not a scalar, @code{shape(e, k)} returns a map of @var{k} over @code{shape(e, ·)}.
+
+@example
+@verbatim
+    cout << shape(A, ra::iota(2, ra::len-2)) << endl; // last two lengths
+@end verbatim
+@print{} 3 4
+@end example
+
+Note that the return type @var{array} of @code{shape(e)} might be a @ref{x-foreign-type,foreign type} (such as @code{std::array} or @code{std::vector}) instead of a @code{ra::} type. In that case, @code{shape(A)(ra::iota(2, ra::len-2))} will not work.
 
 @end deftypefn
 

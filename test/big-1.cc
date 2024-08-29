@@ -108,6 +108,16 @@ int main()
         std::cout << "b: " << b << std::endl;
         std::cout << "c: " << c << std::endl;
     }
+    tr.section("using shape as expr");
+    {
+        ra::Unique<double, 3> v({3, 2, 4}, ra::_0 + 15*ra::_1);
+        tr.test_eq(ra::start({3, 2}), ra::shape(v, ra::iota(2)));
+        tr.test_eq(ra::start({3, 2}), ra::shape(v, ra::iota(ra::len-1)));
+        tr.test_eq(ra::start({2, 4}), ra::shape(v, ra::iota(2, 1)));
+        tr.test_eq(ra::start({2, 4}), ra::shape(v, ra::iota(2, ra::len-2)));
+        ra::Small<int, 4> i = {0, 2, 1, 0};
+        tr.test_eq(ra::start({3, 4}), ra::shape(v, i(ra::iota(ra::len-2)))); // len is i's
+    }
     tr.section("casts from fixed rank View");
     {
         ra::Unique<double, 3> a({3, 2, 4}, ra::_0 + 15*ra::_1);

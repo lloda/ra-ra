@@ -284,15 +284,18 @@ inside(is_iota auto const & i, dim_t l)
     return (inside(i.i, l) && inside(i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
-template <int w, class I, class N, class S>
+template <int w, class I, class N, class S, class K=dim_c<0>>
 constexpr auto
-reverse(Iota<w, I, N, S> const & i)
+reverse(Iota<w, I, N, S> const & i, K k = {})
 {
-    static_assert(i.nn!=BAD, "Undefined size iota cannot be reversed.");
-    static_assert(0==w, "Only rank 1 iota can be reversed.");
-    return ra::iota([&i]() { if constexpr (is_constant<N>) return dim_c<N {}> {}; else return i.n; }(),
-                    i.i+(i.n-1)*i.s,
-                    [&i]() { if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+    static_assert(i.nn!=BAD && k>=0 && k<=w, "Bad arguments to reverse(iota).");
+    if constexpr (k==w) {
+        return ra::iota<w>([&i]() { if constexpr (is_constant<N>) return dim_c<N {}> {}; else return i.n; }(),
+                           i.i+(i.n-1)*i.s,
+                           [&i]() { if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+    } else {
+        return i;
+    }
 }
 
 
@@ -334,16 +337,6 @@ start(T & t) { return t; }
 // FIXME const Iterator would still be unusable after start().
 constexpr decltype(auto)
 start(is_iterator auto && t) { return RA_FWD(t); }
-
-// a form of ply() for conversion ops
-template <class E>
-decltype(auto) to_scalar(E && e)
-{
-    if constexpr (1!=size_s(e)) {
-        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", ra::noshape, ra::shape(e), "].");
-    }
-    return *e;
-}
 
 
 // --------------------
@@ -490,7 +483,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 template <dim_t N, class T> constexpr T samestep = N;
 template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
 
-// Transpose variant for IteratorConcepts. As in transpose(), one names the destination axis for
+// Transpose for IteratorConcepts. As in transpose(), one names the destination axis for
 // each original axis. However, axes may not be repeated. Used in the rank conjunction below.
 // Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
@@ -675,6 +668,15 @@ agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 // ---------------------------
 // operator expression
 // ---------------------------
+
+template <class E>
+decltype(auto) to_scalar(E && e)
+{
+    if constexpr (1!=size_s(e)) {
+        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", ra::noshape, ra::shape(e), "].");
+    }
+    return *e;
+}
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
 template <class Op, IteratorConcept ... P, int ... I>
