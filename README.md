@@ -1,5 +1,5 @@
 
-[![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml) [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml)
+[![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11.yml) [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc11-no-sanitize.yml) [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc14.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc14.yml) [![C/C++ CI](https://github.com/lloda/ra-ra/actions/workflows/gcc14-no-sanitize.yml/badge.svg)](https://github.com/lloda/ra-ra/actions/workflows/gcc14-no-sanitize.yml)
 
 # ra-ra
 
