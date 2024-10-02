@@ -3,6 +3,8 @@
 
 # ra-ra
 
+*Note that the C++20 version of **ra-ra** is no longer being actively developed. Check the `main` branch.*
+
 **ra-ra** is a C++20 header-only library for handling multidimensional dense arrays. These are objects that can be indexed in 0 or more dimensions; the number of dimensions is known as ‘rank’. For example, vectors are arrays of rank 1 and matrices are arrays of rank 2.
 
 **ra-ra** implements [expression templates](https://en.wikipedia.org/wiki/Expression_templates). This is a C++ technique (pioneered by [Blitz++](http://blitz.sourceforge.net)) to delay the execution of expressions involving array operands, and in this way avoid the unnecessary creation of large temporary array objects.
