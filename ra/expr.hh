@@ -14,7 +14,7 @@
 
 
 // --------------------
-// error handling. See examples/throw.cc for how to customize.
+// error handling. To customize see examples/throw.cc.
 // --------------------
 
 #if !defined(RA_DO_CHECK)

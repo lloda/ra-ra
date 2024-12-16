@@ -13,6 +13,7 @@
 
 #pragma once
 #include "expr.hh"
+#include <print>
 
 namespace ra {
 
@@ -329,49 +330,122 @@ constexpr auto begin(is_ra auto && a) requires (requires { a.begin(); }) { stati
 constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.end(); }
 constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
 
+} // namespace ra
+
 
 // ---------------------------
 // i/o
 // ---------------------------
 
+template <class A> requires (ra::is_ra<A> || (ra::is_fov<A> && !std::is_convertible_v<A, std::string_view>))
+struct std::formatter<A>
+{
+    ra::format_t fmt;
+    std::formatter<ra::value_t<A>> under;
+
+    constexpr auto
+    parse(auto & ctx)
+    {
+        auto i = ctx.begin();
+        for (; i!=ctx.end() && ':'!=*i && '}'!=*i; ++i) {
+            switch (*i) {
+            case 'j': fmt = ra::jstyle; break;
+            case 'c': fmt = ra::cstyle; break;
+            case 'l': fmt = ra::lstyle; break;
+            case 'p': fmt = ra::pstyle; break;
+            case 'a': fmt.align = true; break;
+            case 'e': fmt.align = false; break;
+            case 's': fmt.shape = ra::withshape; break;
+            case 'n': fmt.shape = ra::noshape; break;
+            case 'd': fmt.shape = ra::defaultshape; break;
+            default: throw std::format_error("Bad format for ra:: object.");
+            }
+        }
+        if (i!=ctx.end() && ':'==*i) {
+            ctx.advance_to(i+1);
+            i = under.parse(ctx);
+        }
+        if (i!=ctx.end() && '}'!=*i) {
+            throw std::format_error("Bad input while parsing format for ra:: object.");
+        }
+        return i;
+    }
+    constexpr auto
+    format(A const & a_, auto & ctx, ra::format_t const & fmt) const
+    {
+        static_assert(!ra::has_len<A>, "len outside subscript context.");
+        static_assert(ra::BAD!=ra::size_s<A>(), "Cannot print undefined size expr.");
+        auto a = ra::start(a_); // [ra35]
+        auto sha = ra::shape(a);
+        assert(every(ra::start(sha)>=0));
+        auto out = ctx.out();
+// always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
+        if (fmt.shape==ra::withshape || (fmt.shape==ra::defaultshape && size_s(a)==ra::ANY)) {
+            out = std::format_to(out, "{:d}\n", ra::start(sha));
+        }
+        ra::rank_t const rank = ra::rank(a);
+        auto goin = [&](int k, auto & goin) -> void
+        {
+            using std::ranges::copy;
+            if (k==rank) {
+                ctx.advance_to(under.format(*a, ctx));
+                out = ctx.out();
+            } else {
+                out = copy(fmt.open, out).out;
+                for (int i=0; i<sha[k]; ++i) {
+                    goin(k+1, goin);
+                    if (i+1<sha[k]) {
+                        a.adv(k, 1);
+                        out = copy((k==rank-1 ? fmt.sep0 : fmt.sepn), out).out;
+                        for (int i=0; i<std::max(0, rank-2-k); ++i) {
+                            out = copy(fmt.rep, out).out;
+                        }
+                        if (fmt.align && k<rank-1) {
+                            for (int i=0; i<(k+1)*ra::size(fmt.open); ++i) {
+                                *out++ = ' ';
+                            }
+                        }
+                    } else {
+                        a.adv(k, 1-sha[k]);
+                        break;
+                    }
+                }
+                out = copy(fmt.close, out).out;
+            }
+        };
+        goin(0, goin);
+        return out;
+    }
+    constexpr auto format(A const & a_, auto & ctx) const { return format(a_, ctx, fmt); }
+};
+
 template <class A>
-inline std::ostream &
+struct std::formatter<ra::FormatArray<A>>
+{
+    std::formatter<std::decay_t<A>> fmt;
+    constexpr auto
+    parse(auto & ctx)
+    {
+        auto i = ctx.begin();
+        if (i!=ctx.end() && '}'!=*i) {
+            throw std::format_error("Bad input while parsing format for ra:: format object.");
+        }
+        return i;
+    }
+    constexpr auto
+    format(ra::FormatArray<A> const & f_, auto & ctx) const
+    {
+        return fmt.format(f_.a, ctx, f_.fmt);
+    }
+};
+
+namespace ra {
+
+template <class A>
+constexpr std::ostream &
 operator<<(std::ostream & o, FormatArray<A> const & fa)
 {
-    auto a = ra::start(fa.a); // [ra35]
-    static_assert(BAD!=size_s(a), "Cannot print undefined size expr.");
-    auto sha = shape(a);
-// the following assert fixes a segfault in gcc11.3 test/io.c with -O3 -DRA_DO_CHECK=1.
-    assert(every(ra::start(sha)>=0));
-// always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
-    if (withshape==fa.fmt.shape || (defaultshape==fa.fmt.shape && ANY==size_s(a))) {
-        o << ra::defaultshape << sha << '\n';
-    }
-    rank_t const rank = ra::rank(a);
-    auto goin = [&](this auto && goin, int k) -> void
-    {
-        if (k==rank) {
-            o << *a;
-        } else {
-            o << fa.fmt.open;
-            for (int i=0; i<sha[k]; ++i) {
-                goin(k+1);
-                if (i+1<sha[k]) {
-                    a.adv(k, 1);
-                    o << (k==rank-1 ? fa.fmt.sep0 : fa.fmt.sepn);
-                    std::fill_n(std::ostream_iterator<char const *>(o, ""), std::max(0, rank-2-k), fa.fmt.rep);
-                    if (fa.fmt.align && k<rank-1) {
-                        std::fill_n(std::ostream_iterator<char const *>(o, ""), (k+1)*ra::size(fa.fmt.open), " ");
-                    }
-                } else {
-                    a.adv(k, 1-sha[k]);
-                    break;
-                }
-            }
-            o << fa.fmt.close;
-        }
-    };
-    goin(0);
+    std::print(o, "{}", fa);
     return o;
 }
 

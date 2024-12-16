@@ -154,7 +154,7 @@ int main()
         {
             char hello[] = "hello";
             tr.test_eq(string("hello"), quote(hello)); // not ra:: types
-            tr.test_eq(string("hello"), quote(ra::scalar(hello)));
+            tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, quote(ra::scalar(hello)));
             tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, ra::start(hello));
             tr.test_eq(6, size_s(ra::start(hello)));
             tr.test_eq(6, size_s(ra::ptr(hello)));

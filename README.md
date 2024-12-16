@@ -72,8 +72,7 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 * The default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C order.
 * The subscripting operator is `()` or `[]`, indistinctly.
 * Indices are checked by default. This can be disabled with a compilation flag.
-* **ra-ra** doesn't use exceptions, but it provides a hook so you can throw your own exceptions on **ra-ra** errors. See ‘Error handling’ in the manual.
-* **ra-ra** uses zero size arrays and VLAs internally.
+* **ra-ra** doesn't use exceptions, except for `std::format_error`, but you can choose to throw your own exceptions on **ra-ra** errors.
 
 #### Bugs & defects
 

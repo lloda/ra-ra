@@ -6,7 +6,7 @@ checkbox [C-ct] flip TODO
 #+STARTUP: logdone
 
 * TODO [1/7]
-  - [-] Bugs [4/14]
+  - [-] Bugs [5/16]
     - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
     - [ ] Invalid expressions that aren't caught by Match, either bc it makes assumptions, or bc
       Match isn't even involved. See checks.cc.
@@ -41,8 +41,12 @@ checkbox [C-ct] flip TODO
     - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] bad uses of assert [ra17]
     - [X] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 (bad operator=) is cleared up. Cf [ra5].
-  - [-] Features [1/14]
-    - [ ] support std::format
+  - [-] Features [1/16]
+    - [-] support std::format
+      - [X] basic support
+      - [X] ways to use the formatter without parsing, like ra::format_t { .option = value ... }.
+      - [ ] ellipsis feature, e.g. max width/max length.
+      - [ ] formatting options for the shape (needed?)
     - [ ] compatibility with OpenMP, even if only for trivially parallel cases
           The way ply() works atm, with iterators, more or press precludes it.
     - [ ] support expr = braces for any expr, not just views.

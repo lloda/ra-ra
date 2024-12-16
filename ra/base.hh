@@ -154,7 +154,6 @@ rank(auto const & v)
     }
 }
 
-
 RA_IS_DEF(is_pos, 0!=rank_s<A>())
 template <class A> concept is_ra_pos = is_ra<A> && is_pos<A>;
 template <class A> concept is_zero_or_scalar = (is_ra<A> && !is_pos<A>) || is_scalar<A>;
@@ -237,7 +236,7 @@ shape(V const & v)
 
 
 // --------------
-// format FIXME std::format
+// format
 // --------------
 
 enum shape_t { defaultshape, withshape, noshape };
@@ -245,12 +244,11 @@ enum shape_t { defaultshape, withshape, noshape };
 struct format_t
 {
     shape_t shape = defaultshape;
-    using pchar = char const *;
-    pchar open = "", close = "", sep0 = " ", sepn = "\n", rep = "\n";
+    std::string open = "", close = "", sep0 = " ", sepn = "\n", rep = "\n";
     bool align = false;
 };
 
-constexpr format_t jstyle = {};
+constexpr format_t jstyle = { .shape=defaultshape, .open="", .close="", .sep0=" ", .sepn="\n", .rep="\n", .align=false};
 constexpr format_t cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true};
 constexpr format_t lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true};
 constexpr format_t pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true};
@@ -270,21 +268,21 @@ format_array(auto const & a, format_t fmt = {})
 
 // exclude std::string_view so it still prints as a string [ra13].
 template <class A> requires (is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>))
-constexpr std::ostream & operator<<(std::ostream & o, A && a) { return o << format_array(a); }
+constexpr std::ostream & operator<<(std::ostream & o, A && a) { return o << FormatArray(a); }
 
 template <class T>
-constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << format_array(a); }
+constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << FormatArray(a); }
 
 struct shape_o { std::ostream & o; shape_t shape; };
 struct format_o { std::ostream & o; format_t fmt; };
 
-constexpr shape_o operator<<(std::ostream & o, shape_t shape) { return shape_o { o, shape }; }
-constexpr format_o operator<<(std::ostream & o, format_t fmt) { return format_o { o, fmt }; }
-constexpr std::ostream & operator<<(format_o const & m, auto const & a) { return m.o << format_array(a, m.fmt); }
+constexpr shape_o operator<<(std::ostream & o, shape_t const & shape) { return shape_o { o, shape }; }
+constexpr format_o operator<<(std::ostream & o, format_t const & fmt) { return format_o { o, fmt }; }
+constexpr std::ostream & operator<<(format_o const & m, auto const & a) { return m.o << FormatArray(a, m.fmt); }
 
 template <class A>
 constexpr std::ostream & operator<<(shape_o const & m, FormatArray<A> fa) { fa.fmt.shape=m.shape; return m.o << fa; }
-constexpr std::ostream & operator<<(shape_o const & m, auto const & a) { return m << format_array(a); }
+constexpr std::ostream & operator<<(shape_o const & m, auto const & a) { return m << FormatArray(a); }
 constexpr format_o operator<<(shape_o const & m, format_t f) { f.shape=m.shape; return m.o << f; }
 
 constexpr std::ostream &
@@ -305,6 +303,19 @@ format(auto && ... a)
 
 constexpr std::string const &
 format(std::string const & s) { return s; }
+
+// fmt/ostream.h or https://stackoverflow.com/a/75738462
+struct ostream_formatter: std::formatter<std::basic_string_view<char>, char>
+{
+    template <class T, class O>
+    constexpr O
+    format(T const & value, std::basic_format_context<O, char> & ctx) const
+    {
+        std::basic_stringstream<char> ss;
+        ss << value;
+        return std::formatter<std::basic_string_view<char>, char>::format(ss.view(), ctx);
+    }
+};
 
 } // namespace ra
 

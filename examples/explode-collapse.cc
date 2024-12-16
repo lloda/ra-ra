@@ -7,8 +7,8 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include "ra/ra.hh"
 #include <iostream>
+#include "ra/ra.hh"
 
 using std::cout, std::endl, std::flush;
 template <class T, int rank> using Array = ra::Big<T, rank>;
@@ -55,6 +55,7 @@ int main()
     {
         using complex = std::complex<double>;
         Array<complex, 2> A({2, 2}, 0.);
+        std::print(cout, "{}", complex {1, 0});
 
 // construct array views into real and imag parts of A
         auto B = ra::collapse<double>(A);
