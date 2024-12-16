@@ -17,6 +17,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 
 using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
+using double2 = ra::Small<double, 2>;
 
 struct Q
 {
@@ -41,13 +42,13 @@ struct std::formatter<Q>
     }
 };
 
-// FIXME a way to use the formatter without parsing, like ra::array_format { .option = value ... }.
+// FIXME a way to use the formatter without parsing, like ra::format_t { .option = value ... }.
 // FIXME an ellipsis feature, e.g. max width/max length.
 // FIXME formatting options for the shape (needed?)
 template <class A> requires (ra::is_ra<A> || (ra::is_fov<A> && !std::is_convertible_v<A, std::string_view>))
 struct std::formatter<A>
 {
-    ra::print_shape_t shape = ra::defaultshape;
+    ra::shape_t shape = ra::defaultshape;
     std::string open = "", close = "", sep0 = " ", sepn = "\n", rep = "\n";
     std::formatter<ra::value_t<A>> under;
     bool align = false;
@@ -142,6 +143,6 @@ int main()
     std::print(stdout, "a big\n{:p:5}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "a big\n{:pe:5}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "a big\n{::5}\n", ra::Big<int>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big(small)\n{:cs:p}\n", ra::Big<int2>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "a big(small)\n{:cs:p:06.3f}\n", ra::Big<double2>({3, 4}, ra::_0 + ra::_1));
     return 0;
 }

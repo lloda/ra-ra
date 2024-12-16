@@ -69,6 +69,20 @@ int main()
         o << ra::noshape << format_array(A, { .sep0="|", .sepn="-" });
         tr.test_eq(std::string("1|2-3|4"), o.str());
     }
+    tr.section("IO format parameters against default (IIb)");
+    {
+        ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
+        std::ostringstream o;
+        o << ra::format_t { .shape=ra::noshape, .sep0="|", .sepn="-" } << A;
+        tr.test_eq(std::string("1|2-3|4"), o.str());
+    }
+    tr.section("IO format parameters against default (IIc)");
+    {
+        ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
+        std::ostringstream o;
+        o << ra::noshape << ra::format_t { .sep0="|", .sepn="-" } << A;
+        tr.test_eq(std::string("1|2-3|4"), o.str());
+    }
     tr.section("IO format parameters against default (III)");
     {
         ra::Big<int, 4> A({2, 2, 2, 2}, ra::_0 + ra::_1 + ra::_2 + ra::_3);
@@ -92,7 +106,7 @@ int main()
             std::ostringstream o;
             auto style = ra::cstyle;
             style.shape = ra::withshape;
-            o << "\n" << format_array(A, style) << endl;
+            o << "\n" << style << A << endl;
             tr.test_seq(
                 R"---(
 2 2 2 2

@@ -240,59 +240,52 @@ shape(V const & v)
 // format FIXME std::format
 // --------------
 
-enum print_shape_t { defaultshape, withshape, noshape };
+enum shape_t { defaultshape, withshape, noshape };
 
-struct array_format
+struct format_t
 {
-    print_shape_t shape = defaultshape;
+    shape_t shape = defaultshape;
     using pchar = char const *;
     pchar open = "", close = "", sep0 = " ", sepn = "\n", rep = "\n";
     bool align = false;
 };
 
-constexpr array_format jstyle = {};
-constexpr array_format cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true};
-constexpr array_format lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true};
-constexpr array_format pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true};
+constexpr format_t jstyle = {};
+constexpr format_t cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true};
+constexpr format_t lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true};
+constexpr format_t pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true};
 
 template <class A>
 struct FormatArray
 {
     A const & a;
-    array_format fmt = {};
+    format_t fmt = {};
 };
 
 constexpr auto
-format_array(auto const & a, array_format fmt = {})
+format_array(auto const & a, format_t fmt = {})
 {
     return FormatArray<decltype(a)> { a,  fmt };
 }
 
-struct shape_manip_t
-{
-    std::ostream & o;
-    print_shape_t shape;
-};
-
-constexpr shape_manip_t
-operator<<(std::ostream & o, print_shape_t shape) { return shape_manip_t { o, shape }; }
-
 // exclude std::string_view so it still prints as a string [ra13].
 template <class A> requires (is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>))
-constexpr std::ostream &
-operator<<(std::ostream & o, A && a) { return o << format_array(a); }
+constexpr std::ostream & operator<<(std::ostream & o, A && a) { return o << format_array(a); }
 
 template <class T>
-constexpr std::ostream &
-operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << format_array(a); }
+constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << format_array(a); }
+
+struct shape_o { std::ostream & o; shape_t shape; };
+struct format_o { std::ostream & o; format_t fmt; };
+
+constexpr shape_o operator<<(std::ostream & o, shape_t shape) { return shape_o { o, shape }; }
+constexpr format_o operator<<(std::ostream & o, format_t fmt) { return format_o { o, fmt }; }
+constexpr std::ostream & operator<<(format_o const & m, auto const & a) { return m.o << format_array(a, m.fmt); }
 
 template <class A>
-constexpr std::ostream &
-operator<<(shape_manip_t const & sm, FormatArray<A> fa) { return sm.o << (fa.fmt.shape=sm.shape, fa); }
-
-template <class A>
-constexpr std::ostream &
-operator<<(shape_manip_t const & sm, A const & a) { return sm << format_array(a); }
+constexpr std::ostream & operator<<(shape_o const & m, FormatArray<A> fa) { fa.fmt.shape=m.shape; return m.o << fa; }
+constexpr std::ostream & operator<<(shape_o const & m, auto const & a) { return m << format_array(a); }
+constexpr format_o operator<<(shape_o const & m, format_t f) { f.shape=m.shape; return m.o << f; }
 
 constexpr std::ostream &
 operator<<(std::ostream & o, std::source_location const & loc)

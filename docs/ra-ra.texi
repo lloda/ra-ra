@@ -2172,7 +2172,8 @@ The following styles are predefined: @code{jstyle} (the default), @code{cstyle},
 @example
 @verbatim
 ra::Big<int> A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
-cout <<  format_array(A, ra::pstyle) << endl;
+cout << format_array(A, ra::pstyle) << endl;
+// cout << ra::pstyle << A << endl; // variant
 @end verbatim
 @print{}
 @verbatim
