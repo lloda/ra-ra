@@ -43,7 +43,7 @@ int main()
                               + B(I, J+1, K) + B(I, J-1, K) + B(I, J, K+1) + B(I, J, K-1));
             dt += (now()-t0);
 // Output the result along a line through the centre
-            cout << std::setprecision(4) << std::fixed << ra::noshape << A(N/2, N/2, ra::iota(8, 0, N/8)) << endl;
+            cout << std::setprecision(4) << std::fixed << ra::nstyle << A(N/2, N/2, ra::iota(8, 0, N/8)) << endl;
         }
         cout << std::setw(10) << std::fixed << (ms(dt)/double(numIters)) << " ms / iter " << endl;
     }
@@ -66,7 +66,7 @@ int main()
                               + B(I, Ip, I) + B(I, Im, I) + B(I, I, Ip) + B(I, I, Im));
             dt += (now()-t0);
 // Output the result along a line through the centre
-            cout << std::setprecision(4) << std::fixed << ra::noshape << A(N/2, N/2, ra::iota(8, 0, N/8)) << endl;
+            cout << std::setprecision(4) << std::fixed << ra::nstyle << A(N/2, N/2, ra::iota(8, 0, N/8)) << endl;
         }
         cout << std::setw(10) << std::fixed << (ms(dt)/double(numIters)) << " ms / iter " << endl;
     }

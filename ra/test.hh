@@ -174,7 +174,7 @@ struct TestRecorder
             return c;
         } else {
             test(false,
-                 RA_LAZYINFO("Mismatched shapes [", ra::noshape, ra::shape(a), "] [", ra::noshape, ra::shape(b), "]",
+                 RA_LAZYINFO("Mismatched shapes [", nstyle, ra::shape(a), "] [", nstyle, ra::shape(b), "]",
                              willstrictshape ? " (strict shape)" : ""),
                  RA_LAZYINFO("Mismatched shapes", willstrictshape ? " (strict shape)" : ""),
                  loc);
@@ -253,8 +253,7 @@ struct TestRecorder
                     " (", passed_bad, " unexpected), failed ", (failed_good+failed_bad),
                     " (", failed_bad, " unexpected), skipped ", skipped, ".\n");
         if (bad.size()>0) {
-            o << format(bad.size(), " bad tests: [", esc::bold, esc::red, ra::noshape, format_array(bad),
-                        esc::reset, "].\n");
+            o << format(bad.size(), " bad tests: [", esc::bold, esc::red, nstyle, bad, esc::reset, "].\n");
         }
         return bad.size();
     }
@@ -262,7 +261,6 @@ struct TestRecorder
 
 // TODO measure empty loops, better reporting
 // TODO let benchmarked functions to return results
-
 struct Benchmark
 {
     using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,

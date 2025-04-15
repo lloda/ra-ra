@@ -290,7 +290,7 @@ Here is a minimal program@footnote{Examples given without context assume that on
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << ra::noshape << format_array(transpose<1, 0>(A), {.sep0="|"}) << std::endl;
+    std::cout << ra::nstyle << format_array(transpose<1, 0>(A), {.sep0="|"}) << std::endl;
 }
 @end verbatim
 @print{} h|w
@@ -447,7 +447,7 @@ Sometimes the pointer constructor gets in the way (see @ref{x-scalar,@code{scala
 @verbatim
 ra::Big<char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
 ra::Big<char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
-cout << ra::noshape << format_array(A, {.sep0="|"}) << endl;
+cout << ra::nstyle << format_array(A, {.sep0="|"}) << endl;
 @end verbatim
 @print{} hello|hello|hello
 @end example
@@ -1067,7 +1067,7 @@ ra::Big<int, 1> o = {};
 ra::Big<int, 1> e = {};
 ra::Big<int, 1> n = {1, 2, 7, 9, 12};
 ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
-cout << "o: " << ra::noshape << o << ", e: " << ra::noshape << e << endl;
+cout << "o: " << ra::nstyle << o << ", e: " << ra::nstyle << e << endl;
 @end verbatim
 @print{} o: 1 7 9, e: 2 12
 @end example
@@ -1266,6 +1266,146 @@ for_each(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto && c, auto && a, auto && 
 Note that @code{wrank} cannot be used to transpose axes in general.
 
 I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, where @code{i, j, k} are special objects, can be automatically translated to the requisite combination of @code{wrank} and perhaps also @ref{x-transpose,@code{transpose}}. For the time being, you have to align or transpose the axes yourself.
+
+@c ------------------------------------------------
+@node Formatted I/O
+@section Formatted I/O
+@c ------------------------------------------------
+
+@code{ra::} supports both iostreams and @code{std::format}.
+
+For iostreams, output format is configured with an object
+
+@quotation
+@verbatim
+format_t { shape, open, close, sep0, sepn, rep, align }
+@end verbatim
+@end quotation
+
+that is sent to the ostream before the @code{ra::} expression. For example:
+
+@example @c [ma103]
+@verbatim
+std::cout << ra::format_t { .shape=ra::noshape, .sep0=", " } << ra::iota(4) << std::endl;
+@end verbatim
+@print{} 0, 1, 2, 3
+@end example
+
+The fields are as follows:
+
+@itemize
+@item @code{shape} (@code{shape_t}):
+Whether to print the shape of @var{expr} before @var{expr} itself.
+
+@code{shape_t} is @code{enum @{ defaultshape, noshape, withshape @}}. The default is to print the shape if it is rt and not otherwise. Note that the array readers @code{operator>>(std::istream &, ...)} expect @code{defaultshape}.
+@item @code{sep0} (@code{std::string}) --
+Separator between 0-cells.
+@item @code{sepn} (@code{std::string}) --
+Separator between cells of rank > 0. Printed once.
+@item @code{rep} (@code{std::string}) --
+Separator between cells of rank > 1. Printed @var{c}-1 times, where @var{c} is the rank of cells.
+@item @code{open} (@code{std::string}) --
+Dimension opener.
+@item @code{end} (@code{std::string}) --
+Dimension closer.
+@item @code{align} (@code{bool}) --
+Try to align the dimension openers. This only really works when @code{sepn} ends in a newline.
+@end itemize
+
+The shape that might be printed depending on @code{.shape} is not subject to these separators and is always printed as if @code{@{.open="", .close="", .sep0=" "@}}.
+
+@example
+@verbatim
+ra::Small<int, 2, 2> A = {{1, 2}, {3, 4}};
+cout << "case a:\n" << A << endl;
+cout << "\ncase b:\n" << A << endl;
+cout << "\ncase c:\n" <<  ra::format_t {.sep0="|", .sepn="-"} << A << endl;
+cout << "\ncase d:\n" <<  ra::format_t {.shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true} << A << endl;
+@end verbatim
+@print{}
+@verbatim
+case a:
+1 2
+3 4
+
+case b:
+1 2
+3 4
+
+case c:
+1|2-3|4
+
+case d:
+{{1, 2},
+ {3, 4}}
+@end verbatim
+@end example
+
+@cindex @code{jstyle}
+@cindex @code{nstyle}
+@cindex @code{cstyle}
+@cindex @code{lstyle}
+@cindex @code{pstyle}
+
+The following predefined styles are named after popular languages: @code{jstyle}, @code{nstyle}, @code{cstyle}, @code{lstyle}, and @code{pstyle}. The default is @code{jstyle}; @code{nstyle} is like @code{jstyle} but with @code{.shape=noshape}. @code{ra::operator>>(std::istream &)} only reads @code{jstyle}.
+
+@example
+@verbatim
+ra::Big<int> A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
+cout << format_array(A, ra::pstyle) << endl;
+// cout << ra::pstyle << A << endl; // variant
+@end verbatim
+@print{}
+@verbatim
+[[[1, 2, 3],
+  [3, 4, 5]],
+
+ [[4, 5, 6],
+  [7, 8, 9]]]
+@end verbatim
+@end example
+
+For @code{std::format}, the following specifiers are available:
+
+@itemize
+@item @code{j} --
+Like @code{ra::jstyle}.
+@item @code{c} --
+Like @code{ra::cstyle}.
+@item @code{l} --
+Like @code{ra::lstyle}.
+@item @code{p} --
+Like @code{ra::pstyle}.
+@item @code{a} --
+Like @code{.align=true}.
+@item @code{e} --
+Like @code{.align=false}.
+@item @code{s} --
+Like @code{.shape=withshape}.
+@item @code{n} --
+Like @code{.shape=noshape}.
+@item @code{d} --
+Like @code{.shape=default}.
+@end itemize
+
+After a colon, the remainder of the format string is applied to the type of the element. For example:
+
+@example
+@verbatim
+using bigofsmallofdouble = ra::Big<ra::Small<double, 2>>;
+std::print(stdout, "a big(small)\n{:cs:p:06.3f}\n", bigofsmallofdouble ({3, 4}, ra::_0 + ra::_1))
+@end verbatim
+@print{}
+@verbatim
+2
+3 4
+{{[00.000, 00.000], [01.000, 01.000], [02.000, 02.000], [03.000, 03.000]},
+ {[01.000, 01.000], [02.000, 02.000], [03.000, 03.000], [04.000, 04.000]},
+ {[02.000, 02.000], [03.000, 03.000], [04.000, 04.000], [05.000, 05.000]}}
+@end verbatim
+@end example
+
+Here @code{cs} applies to @code{Big}, @code{p} applies to @code{Small}, and @code{06.3f} applies to @code{double}.
 
 @c ------------------------------------------------
 @node Compatibility
@@ -2112,83 +2252,6 @@ See also @ref{x-map,@code{map}}.
 
 @end defun
 
-@cindex @code{format_array}
-@anchor{x-format_array} @defun format_array expr fmt
-Format expression for character output. @var{fmt} is a struct with the following fields:
-
-@itemize
-@item @code{shape} (@code{bool}):
-Whether to print the shape of @var{expr} before @var{expr} itself.
-@item @code{sep0} (@code{char const *}):
-Separator between 0-cells.
-@item @code{sepn} (@code{char const *}):
-Separator between cells of rank > 0. Printed once.
-@item @code{rep} (@code{char const *}):
-Separator between cells of rank > 1. Printed @var{c}-1 times, where @var{c} is the rank of cells.
-@item @code{open} (@code{char const *}):
-Dimension opener.
-@item @code{end} (@code{char const *}):
-Dimension closer.
-@item @code{align} (@code{bool}):
-Align the dimension openers. This works better (or at all) when @code{sepn} ends in a newline.
-@end itemize
-
-The shape that might be printed depending on @code{.shape} is not subject to these separators and is always printed as if @code{@{.open="", .close="", .sep0=" "@}}.
-
-@example
-@verbatim
-ra::Small<int, 2, 2> A = {{1, 2}, {3, 4}};
-cout << "case a:\n" << A << endl;
-cout << "\ncase b:\n" << format_array(A) << endl;
-cout << "\ncase c:\n" <<  format_array(A, {.sep0="|", .sepn="-"}) << endl;
-cout << "\ncase d:\n" <<  format_array(A, {.shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true}) << endl;
-@end verbatim
-@print{}
-@verbatim
-case a:
-1 2
-3 4
-
-case b:
-1 2
-3 4
-
-case c:
-1|2-3|4
-
-case d:
-{{1, 2},
- {3, 4}}
-@end verbatim
-@end example
-
-@cindex @code{jstyle}
-@cindex @code{cstyle}
-@cindex @code{lstyle}
-@cindex @code{pstyle}
-
-The following styles are predefined: @code{jstyle} (the default), @code{cstyle}, @code{lstyle}, and @code{pstyle}. Currently @code{ra::operator>>(std::istream &)} can only read whitespace formats, like @code{jstyle}.
-
-@example
-@verbatim
-ra::Big<int> A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
-cout << format_array(A, ra::pstyle) << endl;
-// cout << ra::pstyle << A << endl; // variant
-@end verbatim
-@print{}
-@verbatim
-[[[1, 2, 3],
-  [3, 4, 5]],
-
- [[4, 5, 6],
-  [7, 8, 9]]]
-@end verbatim
-@end example
-
-See also @ref{x-noshape,@code{noshape}}, @ref{x-withshape,@code{withshape}}.
-
-@end defun
-
 @cindex @code{from}
 @anchor{x-from} @defun from op expr ...
 Create outer product expression. This is defined as
@@ -2515,60 +2578,6 @@ Wrap @var{op} using a rank conjunction (@pxref{The rank conjunction}).
 @c Return the ravel of @var{view} as a view on @var{view}.
 @c FIXME fill when the implementation is more mature...
 @c @end defun
-
-@cindex @code{noshape}
-@cindex @code{withshape}
-@anchor{x-noshape}
-@anchor{x-withshape}
-@deffn @w{Special object} {withshape noshape}
-If either of these objects is sent to a @code{std::ostream} before an expression object, the shape of that object will or will not be printed.
-
-If the object has ct shape, the default is not to print the shape, so @code{noshape} isn't necessary, and conversely for @code{withshape} if the object has rt shape. Note that the array readers [@code{operator>>(std::istream &, ...)}] require the default setting.
-
-For example:
-
-@example
-@verbatim
-ra::Small<int, 2, 2> A = {77, 99};
-cout << "case a:\n" << A << endl;
-cout << "case b:\n" << ra::noshape << A << endl;
-cout << "case c:\n" << ra::withshape << A << endl;
-@end verbatim
-@print{} case a:
-77 99
-case b:
-77 99
-case c:
-2
-77 99
-@end example
-
-but:
-
-@example
-@verbatim
-ra::Big<int> A = {77, 99};
-cout << "case a:\n" << A << endl;
-cout << "case b:\n" << ra::noshape << A << endl;
-cout << "case c:\n" << ra::withshape << A << endl;
-@end verbatim
-@print{} case a:
-1
-2
-77 99
-case b:
-77 99
-case c:
-1
-2
-77 99
-@end example
-
-Note that in the last example the very shape of @code{ra::Big<int>} has rt length, so that length (the rank of @code{A}, that is 1) is printed as part of the shape of @code{A}.
-
-See also @ref{x-format_array,@code{format_array}}.
-
-@end deffn
 
 @cindex @code{ptr}
 @anchor{x-ptr}

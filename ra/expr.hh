@@ -673,7 +673,7 @@ template <class E>
 decltype(auto) to_scalar(E && e)
 {
     if constexpr (1!=size_s(e)) {
-        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", ra::noshape, ra::shape(e), "].");
+        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", nstyle, ra::shape(e), "].");
     }
     return *e;
 }

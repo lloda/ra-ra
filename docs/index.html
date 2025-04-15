@@ -378,7 +378,8 @@ Next: <a href="#Extras" accesskey="n" rel="next">Extras</a>, Previous: <a href="
 <li><a href="#Slicing" accesskey="6">Slicing</a></li>
 <li><a href="#Functions" accesskey="7">Functions</a></li>
 <li><a href="#The-rank-conjunction" accesskey="8">The rank conjunction</a></li>
-<li><a href="#Compatibility" accesskey="9">Compatibility</a></li>
+<li><a href="#Formatted-I_002fO" accesskey="9">Formatted I/O</a></li>
+<li><a href="#Compatibility">Compatibility</a></li>
 <li><a href="#Extension">Extension</a></li>
 <li><a href="#Error-handling">Error handling</a></li>
 </ul>
@@ -403,7 +404,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 int main()
 {
     ra::Big&lt;char, 2&gt; A({2, 5}, &quot;helloworld&quot;);
-    std::cout &lt;&lt; ra::noshape &lt;&lt; format_array(transpose&lt;1, 0&gt;(A), {.sep0=&quot;|&quot;}) &lt;&lt; std::endl;
+    std::cout &lt;&lt; ra::nstyle &lt;&lt; format_array(transpose&lt;1, 0&gt;(A), {.sep0=&quot;|&quot;}) &lt;&lt; std::endl;
 }
 </pre><pre class="example">-| h|w
    e|o
@@ -540,7 +541,7 @@ Small&lt;int, 2, 2&gt; b = {1, 2, 3};         // error: bad size
 <div class="example">
 <pre class="verbatim">ra::Big&lt;char const *, 1&gt; A({3}, &quot;hello&quot;); // error: try to convert char to char const *
 ra::Big&lt;char const *, 1&gt; A({3}, ra::scalar(&quot;hello&quot;)); // ok, &quot;hello&quot; is a single item
-cout &lt;&lt; ra::noshape &lt;&lt; format_array(A, {.sep0=&quot;|&quot;}) &lt;&lt; endl;
+cout &lt;&lt; ra::nstyle &lt;&lt; format_array(A, {.sep0=&quot;|&quot;}) &lt;&lt; endl;
 </pre><pre class="example">-| hello|hello|hello
 </pre></div>
 
@@ -1114,7 +1115,7 @@ ra::Big&lt;double&gt; y = where(x&gt;0, expensive_expr_1(x), expensive_expr_2(x)
 ra::Big&lt;int, 1&gt; e = {};
 ra::Big&lt;int, 1&gt; n = {1, 2, 7, 9, 12};
 ply(where(odd(n), map([&amp;o](auto &amp;&amp; x) { o.push_back(x); }, n), map([&amp;e](auto &amp;&amp; x) { e.push_back(x); }, n)));
-cout &lt;&lt; &quot;o: &quot; &lt;&lt; ra::noshape &lt;&lt; o &lt;&lt; &quot;, e: &quot; &lt;&lt; ra::noshape &lt;&lt; e &lt;&lt; endl;
+cout &lt;&lt; &quot;o: &quot; &lt;&lt; ra::nstyle &lt;&lt; o &lt;&lt; &quot;, e: &quot; &lt;&lt; ra::nstyle &lt;&lt; e &lt;&lt; endl;
 </pre><pre class="example">-| o: 1 7 9, e: 2 12
 </pre></div>
 
@@ -1197,7 +1198,7 @@ inline auto op_reduce(A &amp;&amp; a)
 <div class="section" id="The-rank-conjunction">
 <div class="header">
 <p>
-Next: <a href="#Compatibility" accesskey="n" rel="next">Compatibility</a>, Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Formatted-I_002fO" accesskey="n" rel="next">Formatted I/O</a>, Previous: <a href="#Functions" accesskey="p" rel="prev">Functions</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="The-rank-conjunction-1"></span><h3 class="section">2.8 The rank conjunction</h3>
 
@@ -1298,12 +1299,140 @@ for_each(ra::wrank&lt;1, 1, 2&gt;(ra::wrank&lt;1, 0, 1&gt;([](auto &amp;&amp; c,
 </p>
 <hr>
 </div>
+<div class="section" id="Formatted-I_002fO">
+<div class="header">
+<p>
+Next: <a href="#Compatibility" accesskey="n" rel="next">Compatibility</a>, Previous: <a href="#The-rank-conjunction" accesskey="p" rel="prev">The rank conjunction</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<span id="Formatted-I_002fO-1"></span><h3 class="section">2.9 Formatted I/O</h3>
+
+<p><code>ra::</code> supports both iostreams and <code>std::format</code>.
+</p>
+<p>For iostreams, output format is configured with an object
+</p>
+<blockquote>
+<pre class="verbatim">format_t { shape, open, close, sep0, sepn, rep, align }
+</pre></blockquote>
+
+<p>that is sent to the ostream before the <code>ra::</code> expression. For example:
+</p>
+<div class="example">
+<pre class="verbatim">std::cout &lt;&lt; ra::format_t { .shape=ra::noshape, .sep0=&quot;, &quot; } &lt;&lt; ra::iota(4) &lt;&lt; std::endl;
+</pre><pre class="example">-| 0, 1, 2, 3
+</pre></div>
+
+<p>The fields are as follows:
+</p>
+<ul>
+<li> <code>shape</code> (<code>shape_t</code>):
+Whether to print the shape of <var>expr</var> before <var>expr</var> itself.
+
+<p><code>shape_t</code> is <code>enum { defaultshape, noshape, withshape }</code>. The default is to print the shape if it is rt and not otherwise. Note that the array readers <code>operator&gt;&gt;(std::istream &amp;, ...)</code> expect <code>defaultshape</code>.
+</p></li><li> <code>sep0</code> (<code>std::string</code>) &ndash;
+Separator between 0-cells.
+</li><li> <code>sepn</code> (<code>std::string</code>) &ndash;
+Separator between cells of rank &gt; 0. Printed once.
+</li><li> <code>rep</code> (<code>std::string</code>) &ndash;
+Separator between cells of rank &gt; 1. Printed <var>c</var>-1 times, where <var>c</var> is the rank of cells.
+</li><li> <code>open</code> (<code>std::string</code>) &ndash;
+Dimension opener.
+</li><li> <code>end</code> (<code>std::string</code>) &ndash;
+Dimension closer.
+</li><li> <code>align</code> (<code>bool</code>) &ndash;
+Try to align the dimension openers. This only really works when <code>sepn</code> ends in a newline.
+</li></ul>
+
+<p>The shape that might be printed depending on <code>.shape</code> is not subject to these separators and is always printed as if <code>{.open=&quot;&quot;, .close=&quot;&quot;, .sep0=&quot; &quot;}</code>.
+</p>
+<div class="example">
+<pre class="verbatim">ra::Small&lt;int, 2, 2&gt; A = {{1, 2}, {3, 4}};
+cout &lt;&lt; &quot;case a:\n&quot; &lt;&lt; A &lt;&lt; endl;
+cout &lt;&lt; &quot;\ncase b:\n&quot; &lt;&lt; A &lt;&lt; endl;
+cout &lt;&lt; &quot;\ncase c:\n&quot; &lt;&lt;  ra::format_t {.sep0=&quot;|&quot;, .sepn=&quot;-&quot;} &lt;&lt; A &lt;&lt; endl;
+cout &lt;&lt; &quot;\ncase d:\n&quot; &lt;&lt;  ra::format_t {.shape=noshape, .open=&quot;{&quot;, .close=&quot;}&quot;, .sep0=&quot;, &quot;, .sepn=&quot;,\n&quot;, .rep=&quot;&quot;, .align=true} &lt;&lt; A &lt;&lt; endl;
+</pre><pre class="example">-|
+</pre><pre class="verbatim">case a:
+1 2
+3 4
+
+case b:
+1 2
+3 4
+
+case c:
+1|2-3|4
+
+case d:
+{{1, 2},
+ {3, 4}}
+</pre></div>
+
+<span id="index-jstyle"></span>
+<span id="index-nstyle"></span>
+<span id="index-cstyle"></span>
+<span id="index-lstyle"></span>
+<span id="index-pstyle"></span>
+
+<p>The following predefined styles are named after popular languages: <code>jstyle</code>, <code>nstyle</code>, <code>cstyle</code>, <code>lstyle</code>, and <code>pstyle</code>. The default is <code>jstyle</code>; <code>nstyle</code> is like <code>jstyle</code> but with <code>.shape=noshape</code>. <code>ra::operator&gt;&gt;(std::istream &amp;)</code> only reads <code>jstyle</code>.
+</p>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int&gt; A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
+cout &lt;&lt; format_array(A, ra::pstyle) &lt;&lt; endl;
+// cout &lt;&lt; ra::pstyle &lt;&lt; A &lt;&lt; endl; // variant
+</pre><pre class="example">-|
+</pre><pre class="verbatim">[[[1, 2, 3],
+  [3, 4, 5]],
+
+ [[4, 5, 6],
+  [7, 8, 9]]]
+</pre></div>
+
+<p>For <code>std::format</code>, the following specifiers are available:
+</p>
+<ul>
+<li> <code>j</code> &ndash;
+Like <code>ra::jstyle</code>.
+</li><li> <code>c</code> &ndash;
+Like <code>ra::cstyle</code>.
+</li><li> <code>l</code> &ndash;
+Like <code>ra::lstyle</code>.
+</li><li> <code>p</code> &ndash;
+Like <code>ra::pstyle</code>.
+</li><li> <code>a</code> &ndash;
+Like <code>.align=true</code>.
+</li><li> <code>e</code> &ndash;
+Like <code>.align=false</code>.
+</li><li> <code>s</code> &ndash;
+Like <code>.shape=withshape</code>.
+</li><li> <code>n</code> &ndash;
+Like <code>.shape=noshape</code>.
+</li><li> <code>d</code> &ndash;
+Like <code>.shape=default</code>.
+</li></ul>
+
+<p>After a colon, the remainder of the format string is applied to the type of the element. For example:
+</p>
+<div class="example">
+<pre class="verbatim">using bigofsmallofdouble = ra::Big&lt;ra::Small&lt;double, 2&gt;&gt;;
+std::print(stdout, &quot;a big(small)\n{:cs:p:06.3f}\n&quot;, bigofsmallofdouble ({3, 4}, ra::_0 + ra::_1))
+</pre><pre class="example">-|
+</pre><pre class="verbatim">2
+3 4
+{{[00.000, 00.000], [01.000, 01.000], [02.000, 02.000], [03.000, 03.000]},
+ {[01.000, 01.000], [02.000, 02.000], [03.000, 03.000], [04.000, 04.000]},
+ {[02.000, 02.000], [03.000, 03.000], [04.000, 04.000], [05.000, 05.000]}}
+</pre></div>
+
+<p>Here <code>cs</code> applies to <code>Big</code>, <code>p</code> applies to <code>Small</code>, and <code>06.3f</code> applies to <code>double</code>.
+</p>
+<hr>
+</div>
 <div class="section" id="Compatibility">
 <div class="header">
 <p>
-Next: <a href="#Extension" accesskey="n" rel="next">Extension</a>, Previous: <a href="#The-rank-conjunction" accesskey="p" rel="prev">The rank conjunction</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Extension" accesskey="n" rel="next">Extension</a>, Previous: <a href="#Formatted-I_002fO" accesskey="p" rel="prev">Formatted I/O</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Compatibility-1"></span><h3 class="section">2.9 Compatibility</h3>
+<span id="Compatibility-1"></span><h3 class="section">2.10 Compatibility</h3>
 
 <ul class="section-toc">
 <li><a href="#Using-other-C-and-C_002b_002b-types-with-ra_003a_003a" accesskey="1">Using other C and C++ types with <code>ra::</code></a></li>
@@ -1311,7 +1440,7 @@ Next: <a href="#Extension" accesskey="n" rel="next">Extension</a>, Previous: <a 
 <li><a href="#Using-ra_003a_003a-types-with-other-libraries" accesskey="3">Using <code>ra::</code> types with other libraries</a></li>
 </ul>
 <div class="subsection" id="Using-other-C-and-C_002b_002b-types-with-ra_003a_003a">
-<h4 class="subsection">2.9.1 Using other C and C++ types with <code>ra::</code></h4>
+<h4 class="subsection">2.10.1 Using other C and C++ types with <code>ra::</code></h4>
 
 <span id="index-foreign-type"></span>
 <span id="x_002dforeign_002dtype"></span><p><code>ra::</code> accepts certain types from outside <code>ra::</code> (<em>foreign types</em>) as array expressions. Generally it is enough to mix the foreign type with a type from <code>ra::</code> and let deduction work.
@@ -1375,7 +1504,7 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 <p>
 Up: <a href="#Compatibility" accesskey="u" rel="up">Compatibility</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Using-ra_003a_003a-types-with-the-STL-1"></span><h4 class="subsection">2.9.2 Using <code>ra::</code> types with the STL</h4>
+<span id="Using-ra_003a_003a-types-with-the-STL-1"></span><h4 class="subsection">2.10.2 Using <code>ra::</code> types with the STL</h4>
 
 <p>STL compatible input/output iterators and ranges can be obtained from general <code>ra::</code> expressions through the functions <a href="#x_002dbegin"><code>begin</code></a>, <a href="#x_002dend"><code>end</code></a>, and <a href="#x_002drange"><code>range</code></a>. These objects traverse the elements of the expression (0-cells) in row major order.<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
 </p>
@@ -1413,7 +1542,7 @@ std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major ord
 <span id="index-other-libraries_002c-interfacing-with"></span>
 </div>
 <div class="subsection" id="Using-ra_003a_003a-types-with-other-libraries">
-<h4 class="subsection">2.9.3 Using <code>ra::</code> types with other libraries</h4>
+<h4 class="subsection">2.10.3 Using <code>ra::</code> types with other libraries</h4>
 
 <p>When you have to pass arrays back and forth between your program and an external library, or perhaps another language, it is necessary for both sides to agree on memory layout. <code>ra::</code> gives you access to its own memory layout and allows you to obtain an <code>ra::</code> view on any piece of memory.
 </p>
@@ -1422,7 +1551,7 @@ std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major ord
 <li><a href="#The-bad-array-citizen" accesskey="2">The bad array citizen</a></li>
 </ul>
 <div class="subsubsection" id="The-good-array-citizen">
-<h4 class="subsubsection">2.9.3.1 The good array citizen</h4>
+<h4 class="subsubsection">2.10.3.1 The good array citizen</h4>
 
 
 <span id="index-BLIS"></span>
@@ -1511,7 +1640,7 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 </p>
 </div>
 <div class="subsubsection" id="The-bad-array-citizen">
-<h4 class="subsubsection">2.9.3.2 The bad array citizen</h4>
+<h4 class="subsubsection">2.10.3.2 The bad array citizen</h4>
 
 <p>Unfortunately there are many libraries that don&rsquo;t accept arbitrary array parameters, or that do strange things with particular values of lengths and/or steps.
 </p>
@@ -1560,14 +1689,14 @@ void fftw(int r, ra::View&lt;complex&gt; const a, ra::View&lt;complex&gt; b)
 <p>
 Next: <a href="#Error-handling" accesskey="n" rel="next">Error handling</a>, Previous: <a href="#Compatibility" accesskey="p" rel="prev">Compatibility</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Extension-1"></span><h3 class="section">2.10 Extension</h3>
+<span id="Extension-1"></span><h3 class="section">2.11 Extension</h3>
 
 <ul class="section-toc">
 <li><a href="#New-scalar-types" accesskey="1">New scalar types</a></li>
 <li><a href="#New-array-operations" accesskey="2">New array operations</a></li>
 </ul>
 <div class="subsection" id="New-scalar-types">
-<h4 class="subsection">2.10.1 New scalar types</h4>
+<h4 class="subsection">2.11.1 New scalar types</h4>
 
 <p><code>ra::</code> will let you construct arrays of arbitrary types out of the box. This is the same functionality you get with e.g. <code>std::vector</code>.
 </p>
@@ -1600,7 +1729,7 @@ for_each([](auto &amp;&amp; x, auto &amp;&amp; y) { cout &lt;&lt; (x.x + y.y) &l
 
 <span id="x_002dnew_002darray_002doperations"></span></div>
 <div class="subsection" id="New-array-operations">
-<h4 class="subsection">2.10.2 New array operations</h4>
+<h4 class="subsection">2.11.2 New array operations</h4>
 
 <p><code>ra::</code> provides array extensions for standard operations such as <code>+</code>, <code>*</code>, <code>cos</code> <a href="#x_002dscalar_002dops">and so on</a>. You can add array extensions for your own operations in the obvious way, with <a href="#x_002dmap"><code>map</code></a> (but note the namespace qualifiers):
 </p>
@@ -1639,7 +1768,7 @@ my_fun(A &amp;&amp; ... a)
 <p>
 Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Error-handling-1"></span><h3 class="section">2.11 Error handling</h3>
+<span id="Error-handling-1"></span><h3 class="section">2.12 Error handling</h3>
 
 <p><code>ra::</code> tries to detect a many errors as possible at compile time, but some errors, such as <a href="#Rank-extension">mismatch</a> between expressions of runtime shape or <a href="#Slicing">out of range indices</a>, aren&rsquo;t apparent until runtime.
 </p>
@@ -2197,76 +2326,6 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 </p>
 </dd></dl>
 
-<span id="index-format_005farray"></span>
-<span id="x_002dformat_005farray"></span><dl class="def">
-<dt id="index-format_005farray-1"><span class="category">Function: </span><span><strong>format_array</strong> <em>expr fmt</em><a href='#index-format_005farray-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Format expression for character output. <var>fmt</var> is a struct with the following fields:
-</p>
-<ul>
-<li> <code>shape</code> (<code>bool</code>):
-Whether to print the shape of <var>expr</var> before <var>expr</var> itself.
-</li><li> <code>sep0</code> (<code>char const *</code>):
-Separator between 0-cells.
-</li><li> <code>sepn</code> (<code>char const *</code>):
-Separator between cells of rank &gt; 0. Printed once.
-</li><li> <code>rep</code> (<code>char const *</code>):
-Separator between cells of rank &gt; 1. Printed <var>c</var>-1 times, where <var>c</var> is the rank of cells.
-</li><li> <code>open</code> (<code>char const *</code>):
-Dimension opener.
-</li><li> <code>end</code> (<code>char const *</code>):
-Dimension closer.
-</li><li> <code>align</code> (<code>bool</code>):
-Align the dimension openers. This works better (or at all) when <code>sepn</code> ends in a newline.
-</li></ul>
-
-<p>The shape that might be printed depending on <code>.shape</code> is not subject to these separators and is always printed as if <code>{.open=&quot;&quot;, .close=&quot;&quot;, .sep0=&quot; &quot;}</code>.
-</p>
-<div class="example">
-<pre class="verbatim">ra::Small&lt;int, 2, 2&gt; A = {{1, 2}, {3, 4}};
-cout &lt;&lt; &quot;case a:\n&quot; &lt;&lt; A &lt;&lt; endl;
-cout &lt;&lt; &quot;\ncase b:\n&quot; &lt;&lt; format_array(A) &lt;&lt; endl;
-cout &lt;&lt; &quot;\ncase c:\n&quot; &lt;&lt;  format_array(A, {.sep0=&quot;|&quot;, .sepn=&quot;-&quot;}) &lt;&lt; endl;
-cout &lt;&lt; &quot;\ncase d:\n&quot; &lt;&lt;  format_array(A, {.shape=noshape, .open=&quot;{&quot;, .close=&quot;}&quot;, .sep0=&quot;, &quot;, .sepn=&quot;,\n&quot;, .rep=&quot;&quot;, .align=true}) &lt;&lt; endl;
-</pre><pre class="example">-|
-</pre><pre class="verbatim">case a:
-1 2
-3 4
-
-case b:
-1 2
-3 4
-
-case c:
-1|2-3|4
-
-case d:
-{{1, 2},
- {3, 4}}
-</pre></div>
-
-<span id="index-jstyle"></span>
-<span id="index-cstyle"></span>
-<span id="index-lstyle"></span>
-<span id="index-pstyle"></span>
-
-<p>The following styles are predefined: <code>jstyle</code> (the default), <code>cstyle</code>, <code>lstyle</code>, and <code>pstyle</code>. Currently <code>ra::operator&gt;&gt;(std::istream &amp;)</code> can only read whitespace formats, like <code>jstyle</code>.
-</p>
-<div class="example">
-<pre class="verbatim">ra::Big&lt;int&gt; A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
-cout &lt;&lt; format_array(A, ra::pstyle) &lt;&lt; endl;
-// cout &lt;&lt; ra::pstyle &lt;&lt; A &lt;&lt; endl; // variant
-</pre><pre class="example">-|
-</pre><pre class="verbatim">[[[1, 2, 3],
-  [3, 4, 5]],
-
- [[4, 5, 6],
-  [7, 8, 9]]]
-</pre></div>
-
-<p>See also <a href="#x_002dnoshape"><code>noshape</code></a>, <a href="#x_002dwithshape"><code>withshape</code></a>.
-</p>
-</dd></dl>
-
 <span id="index-from"></span>
 <span id="x_002dfrom"></span><dl class="def">
 <dt id="index-from-1"><span class="category">Function: </span><span><strong>from</strong> <em>op expr ...</em><a href='#index-from-1' class='copiable-anchor'> &para;</a></span></dt>
@@ -2561,55 +2620,6 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 
 
 
-
-<span id="index-noshape"></span>
-<span id="index-withshape"></span>
-<span id="x_002dnoshape"></span><span id="x_002dwithshape"></span><dl class="def">
-<dt id="index-withshape-noshape"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>withshape noshape</strong><a href='#index-withshape-noshape' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>If either of these objects is sent to a <code>std::ostream</code> before an expression object, the shape of that object will or will not be printed.
-</p>
-<p>If the object has ct shape, the default is not to print the shape, so <code>noshape</code> isn&rsquo;t necessary, and conversely for <code>withshape</code> if the object has rt shape. Note that the array readers [<code>operator&gt;&gt;(std::istream &amp;, ...)</code>] require the default setting.
-</p>
-<p>For example:
-</p>
-<div class="example">
-<pre class="verbatim">ra::Small&lt;int, 2, 2&gt; A = {77, 99};
-cout &lt;&lt; &quot;case a:\n&quot; &lt;&lt; A &lt;&lt; endl;
-cout &lt;&lt; &quot;case b:\n&quot; &lt;&lt; ra::noshape &lt;&lt; A &lt;&lt; endl;
-cout &lt;&lt; &quot;case c:\n&quot; &lt;&lt; ra::withshape &lt;&lt; A &lt;&lt; endl;
-</pre><pre class="example">-| case a:
-77 99
-case b:
-77 99
-case c:
-2
-77 99
-</pre></div>
-
-<p>but:
-</p>
-<div class="example">
-<pre class="verbatim">ra::Big&lt;int&gt; A = {77, 99};
-cout &lt;&lt; &quot;case a:\n&quot; &lt;&lt; A &lt;&lt; endl;
-cout &lt;&lt; &quot;case b:\n&quot; &lt;&lt; ra::noshape &lt;&lt; A &lt;&lt; endl;
-cout &lt;&lt; &quot;case c:\n&quot; &lt;&lt; ra::withshape &lt;&lt; A &lt;&lt; endl;
-</pre><pre class="example">-| case a:
-1
-2
-77 99
-case b:
-77 99
-case c:
-1
-2
-77 99
-</pre></div>
-
-<p>Note that in the last example the very shape of <code>ra::Big&lt;int&gt;</code> has rt length, so that length (the rank of <code>A</code>, that is 1) is printed as part of the shape of <code>A</code>.
-</p>
-<p>See also <a href="#x_002dformat_005farray"><code>format_array</code></a>.
-</p>
-</dd></dl>
 
 <span id="index-ptr"></span>
 <span id="x_002dptr"></span><dl class="def">
@@ -3004,7 +3014,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-concrete"><code>concrete</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-conj"><code>conj</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-container">container</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-the-library">Using the library</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cstyle"><code>cstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cstyle"><code>cstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Formatted-I_002fO">Formatted I/O</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ct">ct</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-D">D</th><td></td><td></td></tr>
@@ -3024,7 +3034,6 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th id="Indices_cp_letter-F">F</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-FFTW">FFTW</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-foreign-type">foreign type</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-format_005farray"><code>format_array</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-for_005feach"><code>for_each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-from"><code>from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -3042,12 +3051,12 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-J">J</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-J">J</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Why-C_002b_002b">Why C++</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-jstyle"><code>jstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-jstyle"><code>jstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Formatted-I_002fO">Formatted I/O</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-L">L</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-len"><code>len</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-length">length</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-lstyle"><code>lstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-lstyle"><code>lstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Formatted-I_002fO">Formatted I/O</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-M">M</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-map"><code>map</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -3057,7 +3066,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-none"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none-1"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Containers-and-views">Containers and views</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-none-2"><code>none</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-noshape"><code>noshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-nstyle"><code>nstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Formatted-I_002fO">Formatted I/O</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy-1">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy-2">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
@@ -3074,7 +3083,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-pick"><code>pick</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ply"><code>ply</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prod"><code>prod</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-pstyle"><code>pstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-pstyle"><code>pstyle</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Formatted-I_002fO">Formatted I/O</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ptr"><code>ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Python">Python</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
@@ -3121,7 +3130,6 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-W">W</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-where"><code>where</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-withshape"><code>withshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-wrank"><code>wrank</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-X">X</th><td></td><td></td></tr>

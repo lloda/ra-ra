@@ -248,6 +248,7 @@ struct format_t
     bool align = false;
 };
 
+constexpr format_t nstyle = { .shape=noshape, .open="", .close="", .sep0=" ", .sepn="\n", .rep="\n", .align=false};
 constexpr format_t jstyle = { .shape=defaultshape, .open="", .close="", .sep0=" ", .sepn="\n", .rep="\n", .align=false};
 constexpr format_t cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true};
 constexpr format_t lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true};
@@ -273,17 +274,9 @@ constexpr std::ostream & operator<<(std::ostream & o, A && a) { return o << Form
 template <class T>
 constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << FormatArray(a); }
 
-struct shape_o { std::ostream & o; shape_t shape; };
 struct format_o { std::ostream & o; format_t fmt; };
-
-constexpr shape_o operator<<(std::ostream & o, shape_t const & shape) { return shape_o { o, shape }; }
 constexpr format_o operator<<(std::ostream & o, format_t const & fmt) { return format_o { o, fmt }; }
 constexpr std::ostream & operator<<(format_o const & m, auto const & a) { return m.o << FormatArray(a, m.fmt); }
-
-template <class A>
-constexpr std::ostream & operator<<(shape_o const & m, FormatArray<A> fa) { fa.fmt.shape=m.shape; return m.o << fa; }
-constexpr std::ostream & operator<<(shape_o const & m, auto const & a) { return m << FormatArray(a); }
-constexpr format_o operator<<(shape_o const & m, format_t f) { f.shape=m.shape; return m.o << f; }
 
 constexpr std::ostream &
 operator<<(std::ostream & o, std::source_location const & loc)

@@ -59,14 +59,14 @@ int main()
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
-        o << ra::withshape << format_array(A, { .sep0="|", .sepn="-" } );
+        o << format_array(A, { .shape=ra::withshape, .sep0="|", .sepn="-" } );
         tr.test_eq(std::string("2 2\n1|2-3|4"), o.str());
     }
     tr.section("IO format parameters against default (II)");
     {
         ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << ra::noshape << format_array(A, { .sep0="|", .sepn="-" });
+        o << format_array(A, { .shape=ra::noshape, .sep0="|", .sepn="-" });
         tr.test_eq(std::string("1|2-3|4"), o.str());
     }
     tr.section("IO format parameters against default (IIb)");
@@ -80,7 +80,7 @@ int main()
     {
         ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << ra::noshape << ra::format_t { .sep0="|", .sepn="-" } << A;
+        o << ra::format_t { .shape=ra::noshape, .sep0="|", .sepn="-" } << A;
         tr.test_eq(std::string("1|2-3|4"), o.str());
     }
     tr.section("IO format parameters against default (III)");
@@ -201,14 +201,16 @@ int main()
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
-        o << ra::withshape << A;
+        auto style = ra::jstyle;
+        style.shape = ra::withshape;
+        o << style << A;
         tr.test_eq(std::string("2 2\n1 2\n3 4"), o.str());
     }
     tr.section("IO manip without FormatArray");
     {
         ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << ra::noshape << A;
+        o << ra::nstyle << A;
         tr.test_eq(std::string("1 2\n3 4"), o.str());
     }
     tr.section("[ra02a] printing Expr");

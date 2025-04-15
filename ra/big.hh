@@ -208,7 +208,7 @@ struct ViewBig
     operator T & () const
     {
         if constexpr (0!=RANK) {
-            RA_CHECK(1==size(), "Bad scalar conversion from shape [", ra::noshape, ra::shape(*this), "].");
+            RA_CHECK(1==size(), "Bad scalar conversion from shape [", nstyle, ra::shape(*this), "].");
         }
         return cp[0];
     }
@@ -720,7 +720,7 @@ stencil(ViewBig<T, N> const & a, LO && lo, HI && hi)
     ViewBig<T, rank_sum(N, N)> s;
     s.cp = a.data();
     ra::resize(s.dimv, 2*a.rank());
-    RA_CHECK(every(lo>=0) && every(hi>=0), "Bad stencil bounds lo ", noshape, lo, " hi ", noshape, hi, ".");
+    RA_CHECK(every(lo>=0) && every(hi>=0), "Bad stencil bounds lo ", nstyle, lo, " hi ", nstyle, hi, ".");
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
              {
                  RA_CHECK(dima.len>=lo+hi, "Stencil is too large for array.");

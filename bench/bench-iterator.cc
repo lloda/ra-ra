@@ -31,7 +31,7 @@ int main()
             auto report = [&](std::string const & tag, auto && bv)
             {
                 tr.info(std::setw(5), std::fixed, bm.avg(bv)/s/1e-9, " ns [", bm.stddev(bv)/s/1e-9, "] ",
-                        atag, " [", ra::noshape, ra::shape(A), "] ", tag)
+                        atag, " [", ra::nstyle, ra::shape(A), "] ", tag)
                     .test_eq(ra::iota(s), A);
             };
             report("range for",
@@ -73,7 +73,7 @@ int main()
             {
                 auto B = ra::Unique<real, 1>({s}, A.begin(), s);
                 tr.info(std::setw(5), std::fixed, bm.avg(bv)/s/1e-9, " ns [", bm.stddev(bv)/s/1e-9, "] ",
-                        atag, " [", ra::noshape, ra::shape(A), "] ", tag)
+                        atag, " [", ra::nstyle, ra::shape(A), "] ", tag)
                     .test_eq(ra::iota(s), B);
             };
             report("range for",
