@@ -28,11 +28,6 @@ template <class A> constexpr void transpose(ra::noarg);
 template <int A> constexpr void iter(ra::noarg);
 template <class T> constexpr void cast(ra::noarg);
 
-// FIXME remove when lib catches up https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2930r0.html#ref-P2197R0
-template <class T> struct std::formatter<std::complex<T>>: ra::ostream_formatter {};
-// FIXME have a catch all for types that already have operator<<, or the other way around
-template <> struct std::formatter<ra::Dim>: ra::ostream_formatter {};
-
 
 // ---------------------------
 // scalar overloads

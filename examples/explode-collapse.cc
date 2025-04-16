@@ -13,6 +13,8 @@
 using std::cout, std::endl, std::flush;
 template <class T, int rank> using Array = ra::Big<T, rank>;
 template <class T, int ... sizes> using Small = ra::Small<T, sizes ...>;
+// FIXME remove when stdlib has it
+template <class T> struct std::formatter<std::complex<T>>: ra::ostream_formatter {};
 
 int main()
 {

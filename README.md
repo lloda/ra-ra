@@ -44,7 +44,8 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 
 * Array types with arbitrary compile time or runtime rank and shape.
 * Memory owning types as well as views over any piece of memory.
-* Compatibility with builtin arrays and with the standard library, including ranges.
+* Compatibility with builtin arrays.
+* Compatibility with the standard library, including ranges, streams, and `<format>`.
 * Interoperability with other libraries and languages through transparent memory layout.
 * Slicing with indices of arbitrary rank, axis skipping and insertion (e.g. for broadcasting), and contextual `len`.
 * Rank extension by prefix matching, as in APL/J, for functions of any number of arguments.
@@ -55,7 +56,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
 * Many predefined array operations. Adding yours is trivial.
-* Configurable error checking.
+* Configurable error handling.
 * As much `constexpr` as possible.
 
 Performance is competitive with hand written scalar (element by element) loops, but probably not with cache-tuned code such as your platform BLAS, or with code using SIMD. Please have a look at the benchmarks in [bench/](bench/).
@@ -72,7 +73,6 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 * The default array order is C or row-major (last dimension changes fastest). You can make array views with other orders, but newly created arrays use C order.
 * The subscripting operator is `()` or `[]`, indistinctly.
 * Indices are checked by default. This can be disabled with a compilation flag.
-* **ra-ra** doesn't use exceptions, except for `std::format_error`, but you can choose to throw your own exceptions on **ra-ra** errors.
 
 #### Bugs & defects
 

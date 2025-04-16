@@ -297,19 +297,6 @@ format(auto && ... a)
 constexpr std::string const &
 format(std::string const & s) { return s; }
 
-// fmt/ostream.h or https://stackoverflow.com/a/75738462
-struct ostream_formatter: std::formatter<std::basic_string_view<char>, char>
-{
-    template <class T, class O>
-    constexpr O
-    format(T const & value, std::basic_format_context<O, char> & ctx) const
-    {
-        std::basic_stringstream<char> ss;
-        ss << value;
-        return std::formatter<std::basic_string_view<char>, char>::format(ss.view(), ctx);
-    }
-};
-
 } // namespace ra
 
 #ifdef RA_AFTER_CHECK

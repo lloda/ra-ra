@@ -330,18 +330,32 @@ constexpr auto begin(is_ra auto && a) requires (requires { a.begin(); }) { stati
 constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.end(); }
 constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
 
+// fmt/ostream.h or https://stackoverflow.com/a/75738462
+struct ostream_formatter: std::formatter<std::basic_string_view<char>, char>
+{
+    template <class T, class O>
+    constexpr O
+    format(T const & value, std::basic_format_context<O, char> & ctx) const
+    {
+        std::basic_stringstream<char> ss;
+        ss << value;
+        return std::formatter<std::basic_string_view<char>, char>::format(ss.view(), ctx);
+    }
+};
+
 } // namespace ra
 
 
 // ---------------------------
 // i/o
-// ---------------------------
+// --------------------------
 
 template <class A> requires (ra::is_ra<A> || (ra::is_fov<A> && !std::is_convertible_v<A, std::string_view>))
 struct std::formatter<A>
 {
     ra::format_t fmt;
-    std::formatter<ra::value_t<A>> under;
+    std::conditional_t<std::formattable<ra::value_t<A>, char>,
+                       std::formatter<ra::value_t<A>>, ra::ostream_formatter> under;
 
     constexpr auto
     parse(auto & ctx)

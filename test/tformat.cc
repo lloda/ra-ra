@@ -17,13 +17,13 @@ using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
 using double2 = ra::Small<double, 2>;
 
-struct Q
+struct Yes
 {
     int x = 1;
 };
 
 template <>
-struct std::formatter<Q>
+struct std::formatter<Yes>
 {
     constexpr auto
     parse(std::format_parse_context const & ctx)
@@ -34,17 +34,39 @@ struct std::formatter<Q>
     }
     template <class Ctx>
     auto
-    format(Q const & q, Ctx & ctx) const
+    format(Yes const & q, Ctx & ctx) const
     {
-        return std::format_to(ctx.out(), "Q{}", q.x);
+        return std::format_to(ctx.out(), "Yes{}", q.x);
     }
 };
 
+struct No
+{
+    int y = 1;
+};
+
+std::ostream & operator<<(std::ostream & o, No const & no) { return o << "No" << no.y; }
+
 int main()
 {
+    TestRecorder tr(std::cout);
+    static_assert(std::formattable<Yes, char>);
+    static_assert(!std::formattable<No, char>);
     std::print(stdout, "a number {:015.9}\n", std::numbers::pi_v<double>);
-    std::print(stdout, "a Q {}\n", Q { 3 });
-    std::print(stdout, "a complex {}\n", std::complex {1, -1});
+    std::print(stdout, "a Yes {}\n", Yes { 3 });
+
+    std::print(stdout, "a small of Yes {:}\n", ra::Small<Yes, 2> {Yes{1}, Yes{2}});
+    std::print(stdout, "a small of No {:}\n", ra::Small<No, 2> {No{1}, No{2}});
+    std::print(stdout, "a small of complex {:}\n", ra::Small<std::complex<double>, 2> {{1, -1}, {-1, 1}});
+    if constexpr (std::formattable<std::complex<double>, char>) {
+        std::print(stdout, "a complex {}\n", std::complex {1, -1});
+    } else {
+        std::print(stdout, "complex aren't currently formattable!\n");
+    }
+    tr.test_seq("Yes1 Yes2", std::format("{}", ra::Small<Yes, 2> {Yes{1}, Yes{2}}));
+    tr.test_seq("No1 No2", std::format("{}", ra::Small<No, 2> {No{1}, No{2}}));
+    tr.test_seq("(1,-1) (-1,1)", std::format("{}", ra::Small<std::complex<double>, 2> {{1, -1}, {-1, 1}}));
+
     std::print(stdout, "a small {:}\n", ra::Small<ra::dim_t, 1> {1});
     std::print(stdout, "a small {:}\n", ra::Small<int, 3> {1, 2, 3});
     std::print(stdout, "a small {::}\n", ra::Small<int, 3> {1, 2, 3});
@@ -58,5 +80,5 @@ int main()
     std::print(stdout, "a big(small)\n{:cs:p:06.3f}\n", ra::Big<double2>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "a big\n{}\n", ra::format_array(ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1), ra::cstyle));
     std::print(stdout, "a big\n{}\n", ra::format(ra::cstyle, ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1)));
-    return 0;
+    return tr.summary();
 }
