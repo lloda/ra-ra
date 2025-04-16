@@ -184,6 +184,11 @@ int main()
         ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
         std::cout << format_array(A, { .shape=ra::noshape, .sep0="|" }) << std::endl;
     }
+    tr.section("Example from the manual [ma108]");
+    {
+        std::cout << format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}) << std::endl;
+        std::print(stdout, "{}\n", format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}));
+    }
     tr.section("Example from the manual [ma103]");
     {
         ra::Big<int, 2> A {{1, 2}, {3, 4}, {5, 6}};

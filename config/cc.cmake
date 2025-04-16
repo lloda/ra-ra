@@ -12,9 +12,9 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/config/")
 set (SANITIZE 1
   CACHE BOOL "Build with sanitizers.")
 
-set (BASE_CXXFLAGS "-std=c++2b -Wall -Werror -fdiagnostics-color=always -Wno-unknown-pragmas \
--finput-charset=UTF-8 -fextended-identifiers -Wno-error=strict-overflow \
--Werror=zero-as-null-pointer-constant")
+set (BASE_CXXFLAGS "-std=c++23 -Wall -Werror -fdiagnostics-color=always -Wno-unknown-pragmas \
+-Wno-error=strict-overflow -Werror=zero-as-null-pointer-constant \
+-finput-charset=UTF-8 -fextended-identifiers")
 
 if (SANITIZE)
   set (BASE_CXXFLAGS "${BASE_CXXFLAGS} -fsanitize=address,leak,undefined")

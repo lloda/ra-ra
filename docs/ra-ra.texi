@@ -290,7 +290,7 @@ Here is a minimal program@footnote{Examples given without context assume that on
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << ra::nstyle << format_array(transpose<1, 0>(A), {.sep0="|"}) << std::endl;
+    std::cout << format_array(transpose<1, 0>(A), {.shape=ra::noshape, .sep0="|"}) << std::endl;
 }
 @end verbatim
 @print{} h|w
@@ -447,7 +447,7 @@ Sometimes the pointer constructor gets in the way (see @ref{x-scalar,@code{scala
 @verbatim
 ra::Big<char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
 ra::Big<char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
-cout << ra::nstyle << format_array(A, {.sep0="|"}) << endl;
+cout << format_array(A, {.shape=ra::noshape, .sep0="|"}) << endl;
 @end verbatim
 @print{} hello|hello|hello
 @end example
@@ -1276,6 +1276,8 @@ I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, wher
 
 For iostreams, output format is configured with an object
 
+@cindex @code{format_t}
+@anchor{x-format_t}
 @quotation
 @verbatim
 format_t { shape, open, close, sep0, sepn, rep, align }
@@ -1352,8 +1354,8 @@ The following predefined styles are named after popular languages: @code{jstyle}
 @example
 @verbatim
 ra::Big<int> A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
-cout << format_array(A, ra::pstyle) << endl;
-// cout << ra::pstyle << A << endl; // variant
+cout << ra::pstyle << A << endl;
+// cout << format_array(A, ra::pstyle) << endl; // variant
 @end verbatim
 @print{}
 @verbatim
@@ -1364,6 +1366,8 @@ cout << format_array(A, ra::pstyle) << endl;
   [7, 8, 9]]]
 @end verbatim
 @end example
+
+See also @ref{x-format_array,format_array}.
 
 For @code{std::format}, the following specifiers are available:
 
@@ -2252,6 +2256,30 @@ for_each([&s](auto && a) { s+=a; }, ra::Small<double, 1> {1., 2., 3})
 
 See also @ref{x-map,@code{map}}.
 
+@end defun
+
+@cindex @code{format_array}
+@anchor{x-format_array} @defun format_array expr fmt
+Attaches format @var{fmt} (of type @ref{x-format_t,@code{format_t}}) to expression @var{expr} for formatted output. This can be used with an ostream or with @code{std::format}.
+
+@c [ma108]
+@example
+@verbatim
+std::cout << format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}) << std::endl;
+@end verbatim
+@print{} 2|3
+@end example
+
+@example
+@verbatim
+std::print(stdout, "{}\n", format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}));
+@end verbatim
+@print{} 2|3
+@end example
+
+Note however that @code{... << ra::format_t @{...@} << ra::format_array(...) << ...} is not supported.
+
+See also @ref{Formatted I/O}.
 @end defun
 
 @cindex @code{from}

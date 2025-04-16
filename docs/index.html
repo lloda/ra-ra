@@ -404,7 +404,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 int main()
 {
     ra::Big&lt;char, 2&gt; A({2, 5}, &quot;helloworld&quot;);
-    std::cout &lt;&lt; ra::nstyle &lt;&lt; format_array(transpose&lt;1, 0&gt;(A), {.sep0=&quot;|&quot;}) &lt;&lt; std::endl;
+    std::cout &lt;&lt; format_array(transpose&lt;1, 0&gt;(A), {.shape=ra::noshape, .sep0=&quot;|&quot;}) &lt;&lt; std::endl;
 }
 </pre><pre class="example">-| h|w
    e|o
@@ -541,7 +541,7 @@ Small&lt;int, 2, 2&gt; b = {1, 2, 3};         // error: bad size
 <div class="example">
 <pre class="verbatim">ra::Big&lt;char const *, 1&gt; A({3}, &quot;hello&quot;); // error: try to convert char to char const *
 ra::Big&lt;char const *, 1&gt; A({3}, ra::scalar(&quot;hello&quot;)); // ok, &quot;hello&quot; is a single item
-cout &lt;&lt; ra::nstyle &lt;&lt; format_array(A, {.sep0=&quot;|&quot;}) &lt;&lt; endl;
+cout &lt;&lt; format_array(A, {.shape=ra::noshape, .sep0=&quot;|&quot;}) &lt;&lt; endl;
 </pre><pre class="example">-| hello|hello|hello
 </pre></div>
 
@@ -1310,7 +1310,8 @@ Next: <a href="#Compatibility" accesskey="n" rel="next">Compatibility</a>, Previ
 </p>
 <p>For iostreams, output format is configured with an object
 </p>
-<blockquote>
+<span id="index-format_005ft"></span>
+<span id="x_002dformat_005ft"></span><blockquote>
 <pre class="verbatim">format_t { shape, open, close, sep0, sepn, rep, align }
 </pre></blockquote>
 
@@ -1377,8 +1378,8 @@ case d:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int&gt; A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
-cout &lt;&lt; format_array(A, ra::pstyle) &lt;&lt; endl;
-// cout &lt;&lt; ra::pstyle &lt;&lt; A &lt;&lt; endl; // variant
+cout &lt;&lt; ra::pstyle &lt;&lt; A &lt;&lt; endl;
+// cout &lt;&lt; format_array(A, ra::pstyle) &lt;&lt; endl; // variant
 </pre><pre class="example">-|
 </pre><pre class="verbatim">[[[1, 2, 3],
   [3, 4, 5]],
@@ -1387,6 +1388,8 @@ cout &lt;&lt; format_array(A, ra::pstyle) &lt;&lt; endl;
   [7, 8, 9]]]
 </pre></div>
 
+<p>See also <a href="#x_002dformat_005farray">format_array</a>.
+</p>
 <p>For <code>std::format</code>, the following specifiers are available:
 </p>
 <ul>
@@ -1424,6 +1427,8 @@ std::print(stdout, &quot;a big(small)\n{:cs:p:06.3f}\n&quot;, bigofsmallofdouble
 </pre></div>
 
 <p>Here <code>cs</code> applies to <code>Big</code>, <code>p</code> applies to <code>Small</code>, and <code>06.3f</code> applies to <code>double</code>.
+</p>
+<p><code>ra::</code> array formatter has a fallback for when array elements aren&rsquo;t <code>std::formattable</code>. In that case, the format string for the element must be empty.
 </p>
 <hr>
 </div>
@@ -2326,6 +2331,26 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 </p>
 </dd></dl>
 
+<span id="index-format_005farray"></span>
+<span id="x_002dformat_005farray"></span><dl class="def">
+<dt id="index-format_005farray-1"><span class="category">Function: </span><span><strong>format_array</strong> <em>expr fmt</em><a href='#index-format_005farray-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Attaches format <var>fmt</var> (of type <a href="#x_002dformat_005ft"><code>format_t</code></a>) to expression <var>expr</var> for formatted output. This can be used with an ostream or with <code>std::format</code>.
+</p>
+<div class="example">
+<pre class="verbatim">std::cout &lt;&lt; format_array(ra::Small&lt;int, 2&gt; { 2, 3 }, {.sep0=&quot;|&quot;}) &lt;&lt; std::endl;
+</pre><pre class="example">-| 2|3
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">std::print(stdout, &quot;{}\n&quot;, format_array(ra::Small&lt;int, 2&gt; { 2, 3 }, {.sep0=&quot;|&quot;}));
+</pre><pre class="example">-| 2|3
+</pre></div>
+
+<p>Note however that <code>... &lt;&lt; ra::format_t {...} &lt;&lt; ra::format_array(...) &lt;&lt; ...</code> is not supported.
+</p>
+<p>See also <a href="#Formatted-I_002fO">Formatted I/O</a>.
+</p></dd></dl>
+
 <span id="index-from"></span>
 <span id="x_002dfrom"></span><dl class="def">
 <dt id="index-from-1"><span class="category">Function: </span><span><strong>from</strong> <em>op expr ...</em><a href='#index-from-1' class='copiable-anchor'> &para;</a></span></dt>
@@ -3034,6 +3059,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><th id="Indices_cp_letter-F">F</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-FFTW">FFTW</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code>ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-foreign-type">foreign type</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Compatibility">Compatibility</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-format_005farray"><code>format_array</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-format_005ft"><code>format_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Formatted-I_002fO">Formatted I/O</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-for_005feach"><code>for_each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-from"><code>from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
