@@ -216,9 +216,9 @@ constexpr decltype(auto)
 shape(V const & v)
 {
     constexpr rank_t rs = rank_s(v);
-// FIXME __cpp_constexpr >= 202211L to return references to the constexpr cases
     if constexpr (is_builtin_array<V>) {
-        return std::apply([] (auto ... i) { return std::array<dim_t, rs> { std::extent_v<V, i> ... }; }, mp::iota<rs> {});
+        constexpr auto s = std::apply([](auto ... i) { return std::array<dim_t, rs> { std::extent_v<V, i> ... }; }, mp::iota<rs> {});
+        return s;
     } else if constexpr (requires { v.shape(); }) {
         return v.shape();
     } else if constexpr (0==rs) {
