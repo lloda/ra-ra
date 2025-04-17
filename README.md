@@ -28,7 +28,7 @@ In this example ([examples/read-me.cc](examples/read-me.cc)), we create some arr
     // negate right half
     B(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
     // print c style
-    std::println(stdout, "B:\n{:c:4.2f}\n", B);
+    std::println(stdout, "B:\n{:c:4.2f}", B);
   }
 ```
 ⇒

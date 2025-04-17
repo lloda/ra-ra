@@ -59,28 +59,14 @@ int main()
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
-        o << format_array(A, { .shape=ra::withshape, .sep0="|", .sepn="-" } );
+        o << fmt({ .shape=ra::withshape, .sep0="|", .sepn="-" }, A);
         tr.test_eq(std::string("2 2\n1|2-3|4"), o.str());
     }
     tr.section("IO format parameters against default (II)");
     {
         ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << format_array(A, { .shape=ra::noshape, .sep0="|", .sepn="-" });
-        tr.test_eq(std::string("1|2-3|4"), o.str());
-    }
-    tr.section("IO format parameters against default (IIb)");
-    {
-        ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
-        std::ostringstream o;
-        o << ra::format_t { .shape=ra::noshape, .sep0="|", .sepn="-" } << A;
-        tr.test_eq(std::string("1|2-3|4"), o.str());
-    }
-    tr.section("IO format parameters against default (IIc)");
-    {
-        ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
-        std::ostringstream o;
-        o << ra::format_t { .shape=ra::noshape, .sep0="|", .sepn="-" } << A;
+        o << fmt({ .shape=ra::noshape, .sep0="|", .sepn="-" }, A);
         tr.test_eq(std::string("1|2-3|4"), o.str());
     }
     tr.section("IO format parameters against default (III)");
@@ -88,7 +74,7 @@ int main()
         ra::Big<int, 4> A({2, 2, 2, 2}, ra::_0 + ra::_1 + ra::_2 + ra::_3);
         {
             std::ostringstream o;
-            o << "\n" << format_array(A, ra::cstyle) << endl;
+            o << "\n" << fmt(ra::cstyle, A) << endl;
             tr.test_seq(
                 R"---(
 {{{{0, 1},
@@ -106,7 +92,7 @@ int main()
             std::ostringstream o;
             auto style = ra::cstyle;
             style.shape = ra::withshape;
-            o << "\n" << style << A << endl;
+            o << "\n" << fmt(style, A) << endl;
             tr.test_seq(
                 R"---(
 2 2 2 2
@@ -123,7 +109,7 @@ int main()
         }
         {
             std::ostringstream o;
-            o << "\n" << format_array(A, ra::jstyle) << endl;
+            o << "\n" << fmt(ra::jstyle, A) << endl;
             tr.test_seq(
                 R"---(
 2 2 2 2
@@ -144,7 +130,7 @@ int main()
         }
         {
             std::ostringstream o;
-            o << "\n" << format_array(A, ra::lstyle) << endl;
+            o << "\n" << fmt(ra::lstyle, A) << endl;
             tr.test_seq(
                 R"---(
 ((((0 1)
@@ -162,7 +148,7 @@ int main()
             std::ostringstream o;
             auto style = ra::lstyle;
             style.align = false;
-            o << "\n" << format_array(A, style) << endl;
+            o << "\n" << fmt(style, A) << endl;
             tr.test_seq(
                 R"---(
 ((((0 1)
@@ -178,7 +164,7 @@ int main()
         }
         {
             std::ostringstream o;
-            o << "\n" << format_array(A, ra::pstyle) << endl;
+            o << "\n" << fmt(ra::pstyle, A) << endl;
             tr.test_seq(
                 R"---(
 [[[[0, 1],
@@ -197,20 +183,20 @@ int main()
                 , o.str());
         }
     }
-    tr.section("IO manip without FormatArray");
+    tr.section("IO manip I");
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         std::ostringstream o;
         auto style = ra::jstyle;
         style.shape = ra::withshape;
-        o << style << A;
+        o << fmt(style, A);
         tr.test_eq(std::string("2 2\n1 2\n3 4"), o.str());
     }
-    tr.section("IO manip without FormatArray");
+    tr.section("IO manip II");
     {
         ra::Big<int, 2> A({2, 2}, {1, 2, 3, 4});
         std::ostringstream o;
-        o << ra::nstyle << A;
+        o << fmt(ra::nstyle, A);
         tr.test_eq(std::string("1 2\n3 4"), o.str());
     }
     tr.section("[ra02a] printing Expr");
@@ -279,14 +265,14 @@ int main()
     {
         ra::Big<int, 1> pick;
         std::ostringstream o;
-        o << format_array(pick, ra::cstyle);
+        o << fmt(ra::cstyle, pick);
         tr.test_eq(std::string("{}"), o.str());
     }
     tr.section("rank 0");
     {
         ra::Big<int, 0> pick = 7;
         std::ostringstream o;
-        o << format_array(pick);
+        o << fmt(ra::format_t {}, pick);
         tr.test_eq(std::string("7"), o.str());
     }
     return tr.summary();

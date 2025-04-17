@@ -225,10 +225,9 @@ shape(V const & v)
         return std::array<dim_t, 0> {};
     } else if constexpr (1==rs) {
         return std::array<dim_t, 1> { ra::size(v) };
-    } else if constexpr (1<rs) {
+    } else if constexpr (ANY!=rs) {
         return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
-        static_assert(ANY==rs);
         return std::ranges::to<vector_default_init<dim_t>>(
             std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k) { return v.len(k); }));
     }
@@ -254,29 +253,15 @@ constexpr format_t cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ",
 constexpr format_t lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true };
 constexpr format_t pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true };
 
-template <class A>
-struct FormatArray
-{
-    A const & a;
-    format_t fmt = {};
-};
-
-constexpr auto
-format_array(auto const & a, format_t fmt = {})
-{
-    return FormatArray<decltype(a)> { a,  fmt };
-}
+template <class A> struct Fmt { format_t f = {}; A a; };
+template <class A> constexpr auto fmt(format_t f, A && a) { return Fmt<A> { f, RA_FWD(a) }; }
 
 // exclude std::string_view so it still prints as a string [ra13].
-template <class A> requires (is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>))
-constexpr std::ostream & operator<<(std::ostream & o, A && a) { return o << FormatArray(a); }
+RA_IS_DEF(is_array_formattable, ra::is_ra<A> || (ra::is_fov<A> && !std::is_convertible_v<A, std::string_view>));
 
+constexpr std::ostream & operator<<(std::ostream & o, is_array_formattable auto && a) { return o << fmt({}, RA_FWD(a)); }
 template <class T>
-constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << FormatArray(a); }
-
-struct format_o { std::ostream & o; format_t fmt; };
-constexpr format_o operator<<(std::ostream & o, format_t const & fmt) { return format_o { o, fmt }; }
-constexpr std::ostream & operator<<(format_o const & m, auto const & a) { return m.o << FormatArray(a, m.fmt); }
+constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << fmt({}, a); }
 
 constexpr std::ostream &
 operator<<(std::ostream & o, std::source_location const & loc)
@@ -284,7 +269,9 @@ operator<<(std::ostream & o, std::source_location const & loc)
     return o << loc.file_name() << ":" << loc.line() << "," << loc.column();
 }
 
-constexpr std::ostream & print(std::ostream & o, auto && ... a) { return (o << ... << RA_FWD(a)); }
+template <class A> requires (std::formattable<A, char>) constexpr void print1(auto & o, A && a) { std::print(o, "{}", RA_FWD(a)); }
+template <class A> requires (!std::formattable<A, char>) constexpr void print1(auto & o, A && a) { o << RA_FWD(a); }
+constexpr auto & print(auto & o, auto && ... a) { (print1(o, RA_FWD(a)), ...); return o; }
 constexpr std::string format(auto && ... a) { std::ostringstream o; print(o, RA_FWD(a) ...); return o.str(); }
 constexpr std::string const & format(std::string const & s) { return s; }
 

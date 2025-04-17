@@ -173,22 +173,22 @@ int main()
     tr.section("Example from the manual [ma101]");
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
-        std::cout << format_array(transpose<1, 0>(A), { .shape=ra::noshape, .sep0="|" }) << std::endl;
+        std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, transpose<1, 0>(A)) << std::endl;
     }
     {
         ra::Big<char const *, 1> A = {"hello", "array", "world"};
-        std::cout << format_array(A, { .shape=ra::noshape, .sep0="|" }) << std::endl;
+        std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, A) << std::endl;
     }
     tr.section("Example from the manual [ma102]");
     {
         // ra::Big<char const *, 1> A({3}, "hello"); // ERROR bc of pointer constructor
         ra::Big<char const *, 1> A({3}, ra::scalar("hello"));
-        std::cout << format_array(A, { .shape=ra::noshape, .sep0="|" }) << std::endl;
+        std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, A) << std::endl;
     }
     tr.section("Example from the manual [ma108]");
     {
-        std::cout << format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}) << std::endl;
-        std::print(stdout, "{}\n", format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}));
+        std::cout << fmt({.sep0="|"}, ra::Small<int, 2> { 2, 3 }) << std::endl;
+        std::print(stdout, "{}\n", fmt({.sep0="|"}, ra::Small<int, 2> { 2, 3 }));
     }
     tr.section("Example from the manual [ma103]");
     {
@@ -228,7 +228,7 @@ int main()
         ra::Big<int, 1> e = {};
         ra::Big<int, 1> n = {1, 2, 7, 9, 12};
         ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
-        cout << "o: " << ra::nstyle << o << ", e: " << ra::nstyle << e << endl;
+        cout << "o: " << fmt(ra::nstyle, o) << ", e: " << fmt(ra::nstyle, e) << endl;
     }
     tr.section("Example from manual [ma110]");
     {

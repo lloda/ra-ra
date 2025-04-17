@@ -69,7 +69,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
         {
             // cout << ra::mp::show<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
             auto ewv = ra::expr(v, a.iter(), b.iter());
-            cout << "shape(ewv): " << ra::nstyle << shape(ewv) << endl;
+            cout << "shape(ewv): " << fmt(ra::nstyle, shape(ewv)) << endl;
 #define TEST(plier)                                                     \
             cout << "\n\nusing " STRINGIZE(plier) " (ewv &):\n";        \
             ra::plier(ewv);                                             \

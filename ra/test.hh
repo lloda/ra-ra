@@ -78,8 +78,7 @@ struct TestRecorder
     info(auto && ... a)
     {
         bool empty = (info_str=="");
-        info_str += esc::pink;
-        info_str += (empty ? "" : "; ") + format(a ...) + esc::reset;
+        info_str += format(esc::pink, (empty ? "" : "; "), a ..., esc::reset);
         return *this;
     }
     TestRecorder & quiet(verbose_t v=QUIET) { verbose = v; return *this; }
@@ -174,7 +173,7 @@ struct TestRecorder
             return c;
         } else {
             test(false,
-                 RA_LAZYINFO("Mismatched shapes [", nstyle, ra::shape(a), "] [", nstyle, ra::shape(b), "]",
+                 RA_LAZYINFO("Mismatched shapes [", fmt(nstyle, ra::shape(a)), "] [", fmt(nstyle, ra::shape(b)), "]",
                              willstrictshape ? " (strict shape)" : ""),
                  RA_LAZYINFO("Mismatched shapes", willstrictshape ? " (strict shape)" : ""),
                  loc);
@@ -253,7 +252,7 @@ struct TestRecorder
               " (", passed_bad, " unexpected), failed ", (failed_good+failed_bad),
               " (", failed_bad, " unexpected), skipped ", skipped, ".\n");
         if (bad.size()>0) {
-            print(o, bad.size(), " bad tests: [", esc::bold, esc::red, nstyle, bad, esc::reset, "].\n");
+            print(o, bad.size(), " bad tests: [", esc::bold, esc::red, fmt(nstyle, bad), esc::reset, "].\n");
         }
         return bad.size();
     }
@@ -314,10 +313,7 @@ struct Benchmark
     info(auto && ... a)
     {
         bool empty = (info_str=="");
-        info_str += ra::esc::plain;
-        info_str += (empty ? "" : "; ");
-        info_str += ra::format(a ...);
-        info_str += ra::esc::plain;
+        info_str += format(ra::esc::plain, (empty ? "" : "; "), a ..., ra::esc::plain);
         return *this;
     }
 

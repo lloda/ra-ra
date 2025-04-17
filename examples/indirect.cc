@@ -161,7 +161,7 @@ example5()
     // suppose you have the x coordinates in one array and the y coordinates in another array.
     ra::Big<int, 2> x({4, 4}, {0, 1, 2, 0, /* */ 0, 1, 2, 0, /*  */ 0, 1, 2, 0, /* */ 0, 1, 2, 0});
     ra::Big<int, 2> y({4, 4}, {1, 2, 0, 1, /* */ 1, 2, 0, 1, /*  */ 1, 2, 0, 1, /* */ 1, 2, 0, 1});
-    cout << "coordinates: " << format_array(ra::pack<ra::Small<int, 2>>(x, y), { .sep0="|" }) << endl;
+    cout << "coordinates: " << fmt({ .sep0="|" }, ra::pack<ra::Small<int, 2>>(x, y)) << endl;
 
     // you can use these for indirect access without creating temporaries.
     ra::Big<int, 2> a({3, 3}, {0, 1, 2, 3, 4, 5, 6, 7, 8});
@@ -177,7 +177,7 @@ example6()
 {
     ra::Big<int, 1> v = { 1, 3, 4, 9, 15, 12, 0, 1, 15, 12, 0, 3, 4, 8 };
     constexpr char chmap[] = "0123456789ABCDEF";
-    cout << format_array(map(ra::Big<char, 1>(chmap), v), { .sep0="" }) << endl; // FIXME make ra::start(chmap) work
+    cout << fmt({ .sep0="" }, map(ra::Big<char, 1>(chmap), v)) << endl; // FIXME make ra::start(chmap) work
 }
 
 // from the manual on ra::iota()

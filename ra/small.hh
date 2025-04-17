@@ -609,7 +609,7 @@ from_ravel(auto && b)
 {
     A a;
     RA_CHECK(1==ra::rank(b) && ra::size(b)==ra::size(a),
-             "Bad ravel argument [", nstyle, ra::shape(b), "] expecting [", ra::size(a), "].");
+             "Bad ravel argument [", fmt(nstyle, ra::shape(b)), "] expecting [", ra::size(a), "].");
     std::ranges::copy(RA_FWD(b), a.begin());
     return a;
 }

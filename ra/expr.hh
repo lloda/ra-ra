@@ -405,7 +405,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
             constexpr int c = check_s();
             static_assert(0!=c, "Mismatched shapes."); // FIXME c++26
             if constexpr (1==c) {
-                RA_CHECK(check(), "Mismatched shapes", format_array(ra::shape(p_), {.shape=noshape, .open=" [", .close="]"}) ..., ".");
+                RA_CHECK(check(), "Mismatched shapes", fmt({.shape=noshape, .open=" [", .close="]"}, ra::shape(p_)) ..., ".");
             }
         }
     }
@@ -673,7 +673,7 @@ template <class E>
 decltype(auto) to_scalar(E && e)
 {
     if constexpr (1!=size_s(e)) {
-        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", nstyle, ra::shape(e), "].");
+        RA_CHECK(1==size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
     }
     return *e;
 }

@@ -349,7 +349,7 @@ struct ostream_formatter: std::formatter<std::basic_string_view<char>>
 // i/o
 // --------------------------
 
-template <class A> requires (ra::is_ra<A> || (ra::is_fov<A> && !std::is_convertible_v<A, std::string_view>))
+template <ra::is_array_formattable A>
 struct std::formatter<A>
 {
     ra::format_t fmt;
@@ -433,13 +433,13 @@ struct std::formatter<A>
 };
 
 template <class A>
-struct std::formatter<ra::FormatArray<A>>: std::formatter<std::basic_string_view<char>>
+struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
 {
     std::formatter<std::decay_t<A>> fmt;
     constexpr auto
-    format(ra::FormatArray<A> const & f_, auto & ctx) const
+    format(ra::Fmt<A> const & f_, auto & ctx) const
     {
-        return fmt.format(f_.a, ctx, f_.fmt);
+        return fmt.format(f_.a, ctx, f_.f);
     }
 };
 
@@ -447,7 +447,7 @@ namespace ra {
 
 template <class A>
 constexpr std::ostream &
-operator<<(std::ostream & o, FormatArray<A> const & fa)
+operator<<(std::ostream & o, Fmt<A> const & fa)
 {
     std::print(o, "{}", fa);
     return o;
@@ -479,7 +479,7 @@ inline std::istream &
 operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
-        RA_CHECK(every(start(s)>=0), "Negative length in input [", nstyle, s, "].");
+        RA_CHECK(every(start(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
         C cc(s, ra::none);
         swap(c, cc);
         for (auto & ci: c) { i >> ci; }

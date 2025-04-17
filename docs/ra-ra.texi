@@ -290,7 +290,7 @@ Here is a minimal program@footnote{Examples given without context assume that on
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << format_array(transpose<1, 0>(A), {.shape=ra::noshape, .sep0="|"}) << std::endl;
+    std::cout << fmt({.shape=ra::noshape, .sep0="|"}, transpose<1, 0>(A)) << std::endl;
 }
 @end verbatim
 @print{} h|w
@@ -447,7 +447,7 @@ Sometimes the pointer constructor gets in the way (see @ref{x-scalar,@code{scala
 @verbatim
 ra::Big<char const *, 1> A({3}, "hello"); // error: try to convert char to char const *
 ra::Big<char const *, 1> A({3}, ra::scalar("hello")); // ok, "hello" is a single item
-cout << format_array(A, {.shape=ra::noshape, .sep0="|"}) << endl;
+cout << fmt(A, {.shape=ra::noshape, .sep0="|"}) << endl;
 @end verbatim
 @print{} hello|hello|hello
 @end example
@@ -1067,7 +1067,7 @@ ra::Big<int, 1> o = {};
 ra::Big<int, 1> e = {};
 ra::Big<int, 1> n = {1, 2, 7, 9, 12};
 ply(where(odd(n), map([&o](auto && x) { o.push_back(x); }, n), map([&e](auto && x) { e.push_back(x); }, n)));
-cout << "o: " << ra::nstyle << o << ", e: " << ra::nstyle << e << endl;
+cout << "o: " << fmt(ra::nstyle, o) << ", e: " << fmt(ra::nstyle, e) << endl;
 @end verbatim
 @print{} o: 1 7 9, e: 2 12
 @end example
@@ -1284,11 +1284,11 @@ format_t { shape, open, close, sep0, sepn, rep, align }
 @end verbatim
 @end quotation
 
-that is sent to the ostream before the @code{ra::} expression. For example:
+The function @ref{x-fmt,fmt} is used to attach the format to the @code{ra::} expression. For example:
 
 @example @c [ma103]
 @verbatim
-std::cout << ra::format_t { .shape=ra::noshape, .sep0=", " } << ra::iota(4) << std::endl;
+std::cout << fmt({ .shape=ra::noshape, .sep0=", " }, ra::iota(4)) << std::endl;
 @end verbatim
 @print{} 0, 1, 2, 3
 @end example
@@ -1299,7 +1299,7 @@ The fields are as follows:
 @item @code{shape} (@code{shape_t}):
 Whether to print the shape of @var{expr} before @var{expr} itself.
 
-@code{shape_t} is @code{enum @{ defaultshape, noshape, withshape @}}. The default is to print the shape if it is rt and not otherwise. Note that the array readers @code{operator>>(std::istream &, ...)} expect @code{defaultshape}.
+@code{shape_t} is @code{enum @{ defaultshape, noshape, withshape @}}. The default is to print the shape if it is rt and not otherwise.
 @item @code{sep0} (@code{std::string}) --
 Separator between 0-cells.
 @item @code{sepn} (@code{std::string}) --
@@ -1349,13 +1349,12 @@ case d:
 @cindex @code{lstyle}
 @cindex @code{pstyle}
 
-The following predefined styles are named after popular languages: @code{jstyle}, @code{nstyle}, @code{cstyle}, @code{lstyle}, and @code{pstyle}. The default is @code{jstyle}; @code{nstyle} is like @code{jstyle} but with @code{.shape=noshape}. @code{ra::operator>>(std::istream &)} only reads @code{jstyle}.
+The following predefined styles are named after popular languages: @code{jstyle}, @code{nstyle}, @code{cstyle}, @code{lstyle}, and @code{pstyle}. The default is @code{jstyle}; @code{nstyle} is like @code{jstyle} but with @code{.shape=noshape}.
 
 @example
 @verbatim
 ra::Big<int> A = {{{1, 2, 3}, {3, 4, 5}}, {{4, 5, 6}, {7, 8, 9}}};
-cout << ra::pstyle << A << endl;
-// cout << format_array(A, ra::pstyle) << endl; // variant
+cout << fmt(ra::pstyle, A) << endl;
 @end verbatim
 @print{}
 @verbatim
@@ -1367,7 +1366,7 @@ cout << ra::pstyle << A << endl;
 @end verbatim
 @end example
 
-See also @ref{x-format_array,format_array}.
+@code{jstyle} is the only style parsed by @code{ra::operator>>(std::istream &)}. See also @ref{x-fmt,fmt}.
 
 For @code{std::format}, the following specifiers are available:
 
@@ -2258,26 +2257,24 @@ See also @ref{x-map,@code{map}}.
 
 @end defun
 
-@cindex @code{format_array}
-@anchor{x-format_array} @defun format_array expr fmt
-Attaches format @var{fmt} (of type @ref{x-format_t,@code{format_t}}) to expression @var{expr} for formatted output. This can be used with an ostream or with @code{std::format}.
+@cindex @code{fmt}
+@anchor{x-fmt} @defun fmt format expr
+Attaches @var{format} (of type @ref{x-format_t,@code{format_t}}) to expression @var{expr} for formatted output. This can be used with an ostream or with @code{std::format}.
 
 @c [ma108]
 @example
 @verbatim
-std::cout << format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}) << std::endl;
+std::cout << fmt({.sep0="|"}, ra::Small<int, 2> { 2, 3 }) << std::endl;
 @end verbatim
 @print{} 2|3
 @end example
 
 @example
 @verbatim
-std::print(stdout, "{}\n", format_array(ra::Small<int, 2> { 2, 3 }, {.sep0="|"}));
+std::print(stdout, "{}\n", fmt({.sep0="|"}, ra::Small<int, 2> { 2, 3 }));
 @end verbatim
 @print{} 2|3
 @end example
-
-Note however that @code{... << ra::format_t @{...@} << ra::format_array(...) << ...} is not supported.
 
 See also @ref{Formatted I/O}.
 @end defun

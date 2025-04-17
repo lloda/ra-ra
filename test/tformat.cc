@@ -79,7 +79,6 @@ int main()
     std::print(stdout, "a big\n{:pe:5}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "a big\n{::5}\n", ra::Big<int>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "a big(small)\n{:cs:p:06.3f}\n", ra::Big<double2>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big\n{}\n", ra::format_array(ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1), ra::cstyle));
-    std::print(stdout, "a big\n{}\n", ra::format(ra::cstyle, ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1)));
+    std::print(stdout, "a big\n{}\n", ra::fmt(ra::cstyle, ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1)));
     return tr.summary();
 }

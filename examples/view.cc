@@ -35,7 +35,6 @@ int main()
         std::chrono::duration<float> dt(0);
         double c = 1/6.5;
         for (int i=0; i<numIters; ++i) {
-
             auto t0 = now();
             B(I, J, K) = c * (.5 * A(I, J, K) + A(I+1, J, K) + A(I-1, J, K)
                               + A(I, J+1, K) + A(I, J-1, K) + A(I, J, K+1) + A(I, J, K-1));
@@ -43,9 +42,9 @@ int main()
                               + B(I, J+1, K) + B(I, J-1, K) + B(I, J, K+1) + B(I, J, K-1));
             dt += (now()-t0);
 // Output the result along a line through the centre
-            cout << std::setprecision(4) << std::fixed << ra::nstyle << A(N/2, N/2, ra::iota(8, 0, N/8)) << endl;
+            std::println(cout, "{:n:.4f}", A(N/2, N/2, ra::iota(8, 0, N/8)));
         }
-        cout << std::setw(10) << std::fixed << (ms(dt)/double(numIters)) << " ms / iter " << endl;
+        std::println(cout, "{:10f} ms/iter", (ms(dt)/double(numIters)));
     }
     ra::Big<float, 3> first_A = A;
 
@@ -58,7 +57,6 @@ int main()
         std::chrono::duration<float> dt(0);
         double c = 1/6.5;
         for (int i=0; i<numIters; ++i) {
-
             auto t0 = now();
             B(I, I, I) = c * (.5 * A(I, I, I) + A(Ip, I, I) + A(Im, I, I)
                               + A(I, Ip, I) + A(I, Im, I) + A(I, I, Ip) + A(I, I, Im));
@@ -66,9 +64,9 @@ int main()
                               + B(I, Ip, I) + B(I, Im, I) + B(I, I, Ip) + B(I, I, Im));
             dt += (now()-t0);
 // Output the result along a line through the centre
-            cout << std::setprecision(4) << std::fixed << ra::nstyle << A(N/2, N/2, ra::iota(8, 0, N/8)) << endl;
+            std::println(cout, "{:n:.4f}", A(N/2, N/2, ra::iota(8, 0, N/8)));
         }
-        cout << std::setw(10) << std::fixed << (ms(dt)/double(numIters)) << " ms / iter " << endl;
+        std::println(cout, "{:10f} ms/iter", (ms(dt)/double(numIters)));
     }
 
     TestRecorder tr(std::cout);

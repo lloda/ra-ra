@@ -49,7 +49,7 @@ int main()
 // 2. alternative w/o temps
             for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
                      iter<1>(x), c);
-            std::cout << "TIME IN HOURS " << (t/3600.) << " " << format_array(orbit, {.shape=ra::noshape, .sep0=""}) << "\n";
+            ra::print(std::cout, "TIME IN HOURS ", (t/3600.), " ", fmt({.shape=ra::noshape, .sep0=""}, orbit), "\n");
         };
 
     real t = 0;
