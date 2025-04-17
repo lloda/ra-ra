@@ -10,6 +10,7 @@
 // The binary cannot be called format bc gcc14 will try to include it (!!)
 
 #include "ra/test.hh"
+#include <print>
 
 using ra::TestRecorder;
 

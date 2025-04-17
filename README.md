@@ -13,7 +13,7 @@ In this example ([examples/read-me.cc](examples/read-me.cc)), we create some arr
 
 ```c++
   #include "ra/ra.hh"
-  #include <iostream>
+  #include <cstdio>
 
   int main()
   {
@@ -27,15 +27,15 @@ In this example ([examples/read-me.cc](examples/read-me.cc)), we create some arr
     B += A + C + std::vector {100., 200.};
     // negate right half
     B(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
-    // shape is dynamic, so will be printed
-    std::cout << "B: " << B << std::endl;
+    // print c style
+    std::println(stdout, "B:\n{:c:4.2f}\n", B);
   }
 ```
 ⇒
 ```
-B: 2 4
-103 106 -109 -112
-215 218 -221 -224
+B:
+{{103.00, 106.00, -109.00, -112.00},
+ {215.00, 218.00, -221.00, -224.00}}
 ```
 
 Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.io/ra-ra), or have a look at the [examples/](examples/) folder.

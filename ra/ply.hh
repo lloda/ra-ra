@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Expression traversal.
 
-// (c) Daniel Llorens - 2013-2024
+// (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -13,7 +13,7 @@
 
 #pragma once
 #include "expr.hh"
-#include <print>
+#include <format>
 
 namespace ra {
 
@@ -331,11 +331,10 @@ constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_as
 constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
 
 // fmt/ostream.h or https://stackoverflow.com/a/75738462
-struct ostream_formatter: std::formatter<std::basic_string_view<char>, char>
+struct ostream_formatter: std::formatter<std::basic_string_view<char>>
 {
-    template <class T, class O>
-    constexpr O
-    format(T const & value, std::basic_format_context<O, char> & ctx) const
+    constexpr auto
+    format(auto const & value, auto & ctx) const
     {
         std::basic_stringstream<char> ss;
         ss << value;
@@ -434,18 +433,9 @@ struct std::formatter<A>
 };
 
 template <class A>
-struct std::formatter<ra::FormatArray<A>>
+struct std::formatter<ra::FormatArray<A>>: std::formatter<std::basic_string_view<char>>
 {
     std::formatter<std::decay_t<A>> fmt;
-    constexpr auto
-    parse(auto & ctx)
-    {
-        auto i = ctx.begin();
-        if (i!=ctx.end() && '}'!=*i) {
-            throw std::format_error("Bad input while parsing format for ra:: format object.");
-        }
-        return i;
-    }
     constexpr auto
     format(ra::FormatArray<A> const & f_, auto & ctx) const
     {
@@ -489,7 +479,7 @@ inline std::istream &
 operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
-        RA_CHECK(every(start(s)>=0), "Negative length in input [", noshape, s, "].");
+        RA_CHECK(every(start(s)>=0), "Negative length in input [", nstyle, s, "].");
         C cc(s, ra::none);
         swap(c, cc);
         for (auto & ci: c) { i >> ci; }

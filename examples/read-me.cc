@@ -10,6 +10,7 @@
 // TODO Generate README.md and/or these examples.
 
 #include <iostream>
+#include <print>
 #include <numeric>
 #include "ra/test.hh" // ra/ra.hh without TestRecorder
 
@@ -31,8 +32,8 @@ int main()
         B += A + C + std::vector {100., 200.};
 // negate right half
         B(ra::all, ra::iota(ra::len/2, ra::len/2)) *= -1;
-// shape is dynamic, so will be printed
-        std::cout << "B: " << B << std::endl;
+// c style
+        std::println(stdout, "B:\n{:c:4.2f}", B);
         tr.test_eq(ra::Small<float, 2, 4> { {103, 106, -109, -112}, {215, 218, -221, -224} }, B);
     }
     tr.section("Most things are constexpr");

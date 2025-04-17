@@ -67,7 +67,7 @@ struct TestRecorder
     void
     section(auto const & ... a)
     {
-        o << "\n" << esc::bold << format(a ...) << esc::unbold << std::endl;
+        print(o, "\n", esc::bold, a ..., esc::unbold) << std::endl;
     }
     static std::string
     format_error(double e)
@@ -97,21 +97,21 @@ struct TestRecorder
         switch (verbose) {
         case QUIET: {
             if (!c) {
-                o << format(esc::cyan, "[", total, ":", loc, "]", esc::reset, " ...",
-                            esc::bold, esc::red, " FAILED", esc::reset,
-                            esc::yellow, (willskip ? " skipped" : ""), (willexpectfail ? " expected" : ""), esc::reset,
-                            " ", info_full())
-                  << std::endl;
+                print(o, esc::cyan, total, ":", loc, "]", esc::reset, " ...",
+                      esc::bold, esc::red, " FAILED", esc::reset,
+                      esc::yellow, (willskip ? " skipped" : ""), (willexpectfail ? " expected" : ""), esc::reset,
+                      " ", info_full())
+                    << std::endl;
             }
         }; break;
         case NOISY: case ERRORS: {
-            o << format(esc::cyan, "[", total, ":", loc, "]", esc::reset, " ...")
-              << (c ? std::string(esc::green) + " ok" + esc::reset
-                  : std::string(esc::bold) + esc::red + " FAILED" + esc::reset)
-              << esc::yellow << (willskip ? " skipped" : "")
-              << (willexpectfail ? (c ? " not expected" : " expected") : "") << esc::reset
-              << " " << ((verbose==NOISY || c==willexpectfail) ? info_full() : info_min())
-              << std::endl;
+            print(o, esc::cyan, "[", total, ":", loc, "]", esc::reset, " ...",
+                  (c ? std::string(esc::green) + " ok" + esc::reset
+                   : std::string(esc::bold) + esc::red + " FAILED" + esc::reset),
+                  esc::yellow, (willskip ? " skipped" : ""),
+                  (willexpectfail ? (c ? " not expected" : " expected") : ""), esc::reset,
+                  " ", (verbose==NOISY || c==willexpectfail ? info_full() : info_min()))
+                << std::endl;
         }; break;
         default: std::abort();
         }
@@ -248,12 +248,12 @@ struct TestRecorder
         tm * tmp = std::localtime(&t);
         char buf[64];
         std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", tmp);
-        o << "--------------\nTests end " << buf << ". ";
-        o << format("Of ", total, " tests passed ", (passed_good+passed_bad),
-                    " (", passed_bad, " unexpected), failed ", (failed_good+failed_bad),
-                    " (", failed_bad, " unexpected), skipped ", skipped, ".\n");
+        print(o, "--------------\nTests end ", buf, ". ",
+              "Of ", total, " tests passed ", (passed_good+passed_bad),
+              " (", passed_bad, " unexpected), failed ", (failed_good+failed_bad),
+              " (", failed_bad, " unexpected), skipped ", skipped, ".\n");
         if (bad.size()>0) {
-            o << format(bad.size(), " bad tests: [", esc::bold, esc::red, nstyle, bad, esc::reset, "].\n");
+            print(o, bad.size(), " bad tests: [", esc::bold, esc::red, nstyle, bad, esc::reset, "].\n");
         }
         return bad.size();
     }
@@ -300,8 +300,8 @@ struct Benchmark
     void
     report(std::ostream & o, auto const & b, double frac)
     {
-        o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return avg(bv); }, b)/frac << std::endl;
-        o << (info_str=="" ? "" : info_str + " : ") << ra::map([](auto && bv) { return stddev(bv); }, b)/frac << std::endl;
+        print(o, (info_str=="" ? "" : info_str + " : "), ra::map([](auto && bv) { return avg(bv); }, b)/frac) << std::endl;
+        print(o, (info_str=="" ? "" : info_str + " : "), ra::map([](auto && bv) { return stddev(bv); }, b)/frac) << std::endl;
         info_str = "";
     }
 

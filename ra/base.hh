@@ -236,7 +236,7 @@ shape(V const & v)
 
 
 // --------------
-// format
+// format/print
 // --------------
 
 enum shape_t { defaultshape, withshape, noshape };
@@ -248,11 +248,11 @@ struct format_t
     bool align = false;
 };
 
-constexpr format_t nstyle = { .shape=noshape, .open="", .close="", .sep0=" ", .sepn="\n", .rep="\n", .align=false};
-constexpr format_t jstyle = { .shape=defaultshape, .open="", .close="", .sep0=" ", .sepn="\n", .rep="\n", .align=false};
-constexpr format_t cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true};
-constexpr format_t lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true};
-constexpr format_t pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true};
+constexpr format_t jstyle = { };
+constexpr format_t nstyle = { .shape=noshape };
+constexpr format_t cstyle = { .shape=noshape, .open="{", .close="}", .sep0=", ", .sepn=",\n", .rep="", .align=true };
+constexpr format_t lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", .sepn="\n", .rep="", .align=true };
+constexpr format_t pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true };
 
 template <class A>
 struct FormatArray
@@ -284,18 +284,9 @@ operator<<(std::ostream & o, std::source_location const & loc)
     return o << loc.file_name() << ":" << loc.line() << "," << loc.column();
 }
 
-constexpr std::string
-format(auto && ... a)
-{
-    if constexpr (sizeof... (a)>0) {
-        std::ostringstream o; (o << ... << RA_FWD(a)); return o.str();
-    } else {
-        return "";
-    }
-}
-
-constexpr std::string const &
-format(std::string const & s) { return s; }
+constexpr std::ostream & print(std::ostream & o, auto && ... a) { return (o << ... << RA_FWD(a)); }
+constexpr std::string format(auto && ... a) { std::ostringstream o; print(o, RA_FWD(a) ...); return o.str(); }
+constexpr std::string const & format(std::string const & s) { return s; }
 
 } // namespace ra
 

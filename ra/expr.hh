@@ -35,7 +35,7 @@
         assert(cond /* FIXME show args */);                             \
     } else {                                                            \
         if (!(cond)) [[unlikely]] {                                     \
-            std::cerr << ra::format("*** ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__, " ***") << std::endl; \
+            ra::print(std::cerr, "*** ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__, " ***") << std::endl; \
             std::abort();                                               \
         }                                                               \
     }                                                                   \

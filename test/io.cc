@@ -266,13 +266,13 @@ int main()
     tr.section("Non-ra types in format()");
     {
         std::ostringstream o;
-        o << ra::format(std::string("once"), " ", std::array {1, 2, 3});
+        ra::print(o, std::string("once"), " ", std::array {1, 2, 3});
         tr.info(o.str()).test_eq(std::string("once 1 2 3"), o.str());
     }
     tr.section("regression against lack of forwarding in ra::format(...)");
     {
         std::ostringstream o;
-        o << ra::format(Q { 33 });
+        ra::print(o, Q { 33 });
         tr.test_eq(std::string("33"), o.str());
     }
     tr.section("empty array");

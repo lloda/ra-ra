@@ -1411,7 +1411,7 @@ std::print(stdout, "a big(small)\n{:cs:p:06.3f}\n", bigofsmallofdouble ({3, 4}, 
 
 Here @code{cs} applies to @code{Big}, @code{p} applies to @code{Small}, and @code{06.3f} applies to @code{double}.
 
-@code{ra::} array formatter has a fallback for when array elements aren't @code{std::formattable}. In that case, the format string for the element must be empty.
+@code{ra::}'s array formatter has a fallback for when array elements aren't @code{std::formattable}. In that case, the format string for the element must be empty.
 
 @c ------------------------------------------------
 @node Compatibility
