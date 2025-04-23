@@ -82,14 +82,14 @@ int main()
     tr.section("ra::start() on foreign types");
     {
         auto ref = std::array<int, 4> {12, 77, 44, 1};
-        tr.test_eq(2, expr([](int i) { return i; }, ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
-        tr.test_eq(ref, expr([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
-// [ra1] used to need forward in Match/Expr/Pick bc CTE in older gcc. But see bug83.cc.
-        tr.test_eq(ref, expr([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
-        tr.test_eq(ref, expr([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
+        tr.test_eq(2, ra::map_([](int i) { return i; }, ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
+        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
+// [ra1] used to need forward in Match/Map/Pick bc CTE in older gcc. But see bug83.cc.
+        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
+        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
         {
             int c = 0;
-            ply_ravel(expr([&c](int i) { c += i; }, ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
+            ply_ravel(ra::map_([&c](int i) { c += i; }, ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
             tr.test_eq(12+77+44+1, c);
         }
         {

@@ -26,12 +26,12 @@ void CheckPlyReverse1(TestRecorder & tr, AA && a)
 {
     std::iota(a.begin(), a.end(), 1);
     auto invert = [](int & a) { a = -a; return a; };
-    ply_ravel(ra::expr(invert, a.iter()));
+    ply_ravel(ra::map_(invert, a.iter()));
     for (int i=0; i<6; ++i) {
         tr.test_eq(-(i+1), a(i));
     }
     auto b = reverse(a, 0);
-    ply_ravel(ra::expr(invert, b.iter()));
+    ply_ravel(ra::map_(invert, b.iter()));
     for (int i=0; i<6; ++i) {
         tr.test_eq(6-i, b(i));
         tr.test_eq(i+1, a(i));
@@ -44,15 +44,15 @@ void CheckPly(TestRecorder & tr, char const * tag, AA && A, BB && B)
 // need to slice because B may be Unique (!) and I have left own-type constructors as default on purpose. Here, I need C's contents to be a fresh copy of B's.
     CC C(B());
     auto sub = [](int & b, int const a) -> int { return b -= a; };
-    ra::ply_ravel(ra::expr(sub, B.iter(), A.iter()));
+    ra::ply_ravel(ra::map_(sub, B.iter(), A.iter()));
     for (int i=0; i!=A.len(0); ++i) {
         for (int j=0; j!=A.len(1); ++j) {
             tr.info(tag, " ravel").test_eq(C(i, j)-A(i, j), B(i, j));
         }
     }
     auto add = [](int & b, int const a) -> int { return b += a; };
-    ra::ply_ravel(ra::expr(add, B.iter(), A.iter()));
-    ra::ply(ra::expr(sub, B.iter(), A.iter()));
+    ra::ply_ravel(ra::map_(add, B.iter(), A.iter()));
+    ra::ply(ra::map_(sub, B.iter(), A.iter()));
     for (int i=0; i!=A.len(0); ++i) {
         for (int j=0; j!=A.len(1); ++j) {
             tr.info(tag, " index").test_eq(C(i, j)-A(i, j), B(i, j));
@@ -74,9 +74,9 @@ int main()
         [&tr, &A, &B, check](auto && C)                                 \
         {                                                               \
             std::fill(C.begin(), C.end(), -99);                         \
-            plier(ra::expr([](int & k, int const i) { k = -i; },        \
+            plier(ra::map_([](int & k, int const i) { k = -i; },        \
                            C.iter(),                                    \
-                           ra::expr([](int const i, int const j) { return i-j; }, \
+                           ra::map_([](int const i, int const j) { return i-j; }, \
                                     A.iter(), B.iter())));              \
             tr.test(std::equal(check, check+3, C.begin()));             \
         }
@@ -93,7 +93,7 @@ int main()
 #define TEST(plier, Biter, Citer)                                       \
         [&tr](auto && B, auto && C)                                     \
         {                                                               \
-            plier(ra::expr([](int & k, int const i, int const j) { k = i+j; return k; }, \
+            plier(ra::map_([](int & k, int const i, int const j) { k = i+j; return k; }, \
                            Citer, Biter, Biter));                       \
             tr.test_eq(2, C[0]);                                        \
             tr.test_eq(4, C[1]);                                        \
@@ -112,7 +112,7 @@ int main()
 #define TEST(plier, Biter, Citer, Btemp)                                \
         [&tr](auto && B, auto && C)                                     \
         {                                                               \
-            plier(ra::expr([](int & k, int const i, int const j) { k = i*j; return k; }, \
+            plier(ra::map_([](int & k, int const i, int const j) { k = i*j; return k; }, \
                            Citer, Btemp, Biter));                       \
             tr.test_eq(1, C[0]);                                        \
             tr.test_eq(4, C[1]);                                        \
@@ -128,31 +128,31 @@ int main()
         using A2of2 = ra::Unique<int2, 2>;
         auto sum2 = [](int2 const i, int2 const j, int2 & x) { x = { i[0]+j[0], i[1]+j[1] }; };
         A2of2 A({2, 3}, { int2{1,1}, int2{2,2}, int2{3,3}, int2{4,4}, int2{5,5}, int2{6,6} });
-        ply(ra::expr([](int2 & a, int i, int j) { int k = i*3+j; a = {k, k}; },
+        ply(ra::map_([](int2 & a, int i, int j) { int k = i*3+j; a = {k, k}; },
                      A.iter(), ra::iota<0>(), ra::iota<1>()));
         A2of2 B({2, 3}, ra::scalar(int2 {0, 0}));
         cout << "A: " << A << endl;
         cout << "B: " << B << endl;
 
         cout << "\ntraverse_index..." << endl;
-        ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
-        ply(ra::expr(sum2, A.iter(), ra::scalar(int2{2, 2}), B.iter()));
+        ply_ravel(ra::map_([](int2 & b) { b = {0, 0}; }, B.iter()));
+        ply(ra::map_(sum2, A.iter(), ra::scalar(int2{2, 2}), B.iter()));
         cout << B << endl;
         for (int i=2; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
-        ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
-        ply(ra::expr(sum2, ra::scalar(int2{3, 3}), A.iter(), B.iter()));
+        ply_ravel(ra::map_([](int2 & b) { b = {0, 0}; }, B.iter()));
+        ply(ra::map_(sum2, ra::scalar(int2{3, 3}), A.iter(), B.iter()));
         cout << B << endl;
         for (int i=3; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
 
         cout << "\ntraverse..." << endl;
-        ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
-        ply_ravel(ra::expr(sum2, A.iter(), ra::scalar(int2{4, 5}), B.iter()));
+        ply_ravel(ra::map_([](int2 & b) { b = {0, 0}; }, B.iter()));
+        ply_ravel(ra::map_(sum2, A.iter(), ra::scalar(int2{4, 5}), B.iter()));
         cout << B << endl;
         for (int i=4; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i+1, b[1]); ++i; }
 
-        ply_ravel(ra::expr([](int2 & b) { b = {0, 0}; }, B.iter()));
-        ply_ravel(ra::expr(sum2, ra::scalar(int2{5, 5}), A.iter(), B.iter()));
+        ply_ravel(ra::map_([](int2 & b) { b = {0, 0}; }, B.iter()));
+        ply_ravel(ra::map_(sum2, ra::scalar(int2{5, 5}), A.iter(), B.iter()));
         cout << B << endl;
         for (int i=5; int2 & b: B) { tr.test_eq(i, b[0]); tr.test_eq(i, b[1]); ++i; }
     }
@@ -162,11 +162,11 @@ int main()
         std::iota(A.begin(), A.end(), 1);
         ra::Unique<int, 1> B { {6}, ra::scalar(99) };
         auto copy = [](int & b, int const a) { b = a; return b; };
-        ply(ra::expr(copy, B.iter(), A.iter()));
+        ply(ra::map_(copy, B.iter(), A.iter()));
         for (int i=0; i<6; ++i) {
             tr.test_eq(i+1, B(i));
         }
-        ply(ra::expr(copy, B.iter(), reverse(A, 0).iter()));
+        ply(ra::map_(copy, B.iter(), reverse(A, 0).iter()));
         for (int i=0; i<6; ++i) {
             tr.test_eq(6-i, B(i));
         }
@@ -186,12 +186,12 @@ int main()
 #define TEST(plier)                                                     \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
-            plier(ra::expr(sum2, a.iter(), transpose<1, 0>(b).iter(), c.iter())); \
+            plier(ra::map_(sum2, a.iter(), transpose<1, 0>(b).iter(), c.iter())); \
             tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }                                                               \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
-            plier(ra::expr(sum2, transpose<1, 0>(a).iter(), b.iter(), transpose<1, 0>(c).iter())); \
+            plier(ra::map_(sum2, transpose<1, 0>(a).iter(), b.iter(), transpose<1, 0>(c).iter())); \
             tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }
         TEST(ply_ravel);
@@ -205,12 +205,12 @@ int main()
         std::iota(a.begin(), a.end(), 1);                       \
         A1 b { {6}, ra::scalar(99) };                           \
         auto copy = [](int & b, int const a) { b = a; };        \
-        plier(ra::expr(copy, b.iter(), a.iter()));              \
+        plier(ra::map_(copy, b.iter(), a.iter()));              \
         cout << flush;                                          \
         for (int i=0; i<6; ++i) {                               \
             tr.test_eq(i+1, b[i]);                              \
         }                                                       \
-        plier(ra::expr(copy, b.iter(), reverse(a, 0).iter()));  \
+        plier(ra::map_(copy, b.iter(), reverse(a, 0).iter()));  \
         for (int i=0; i<6; ++i) {                               \
             tr.test_eq(6-i, b(i));                              \
         }                                                       \

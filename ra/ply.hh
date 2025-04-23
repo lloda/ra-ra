@@ -45,12 +45,12 @@ struct WLen<Len>
 };
 
 template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
-struct WLen<Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>>
+struct WLen<Map<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return expr(RA_FWD(e).op, wlen(ln, std::get<I>(RA_FWD(e).t)) ...);
+        return map_(RA_FWD(e).op, wlen(ln, std::get<I>(RA_FWD(e).t)) ...);
     }
 };
 

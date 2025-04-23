@@ -7,7 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// Failed for Expr::, Ryn:: (now Reframe), Vector:: =, += ... on gcc 6.1 due to
+// Failed for Expr:: (now Map), Ryn:: (now Reframe), Vector:: =, += ... on gcc 6.1 due to
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70942. This is kept to show why that
 // forward<decltype(y)>(y) is there.
 

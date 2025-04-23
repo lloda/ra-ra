@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - Frame-matching tests for pre v10 Expr, previously in test/ra-0.cc.
+// ra-ra/test - Frame-matching tests for pre v10 Expr (now Map), previously in test/ra-0.cc.
 
 // (c) Daniel Llorens - 2013-2014, 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -33,12 +33,12 @@ int main()
 
         std::iota(a.begin(), a.end(), 1);
         std::fill(c.begin(), c.end(), 0);
-        ply(expr([](real & c, real a, int b) { c = a-(b+1); },
+        ply(map_([](real & c, real a, int b) { c = a-(b+1); },
                  c.iter(), a.iter(), ra::start(ra::_0)));
         tr.test_eq(check, c);
 
         std::fill(c.begin(), c.end(), 0);
-        ply(expr([](real & c, int a, real b) { c = b-(a+1); },
+        ply(map_([](real & c, int a, real b) { c = b-(a+1); },
                  c.iter(), ra::start(ra::_0), a.iter()));
         tr.test_eq(check, c);
     }
@@ -50,23 +50,23 @@ int main()
 
         std::iota(a.begin(), a.end(), 1);
         std::fill(c.begin(), c.end(), 0);
-        ply(expr([](real a, int b, real & c) { c = a-(b+1); },
+        ply(map_([](real a, int b, real & c) { c = a-(b+1); },
                  a.iter(), ra::start(ra::_1), c.iter()));
         tr.test_eq(check, c);
 
         std::fill(c.begin(), c.end(), 0);
-        ply(expr([](int a, real b, real & c) { c = b-(a+1); },
+        ply(map_([](int a, real b, real & c) { c = b-(a+1); },
                  ra::start(ra::_1), a.iter(), c.iter()));
         tr.test_eq(check, c);
     }
 #define TEST(plier)                                         \
     std::fill(c.begin(), c.end(), 0);                       \
-    plier(expr([](real & c, real a, real b) { c = a-b; },   \
+    plier(map_([](real & c, real a, real b) { c = a-b; },   \
                c.iter(), a.iter(), b.iter()));              \
     tr.test_eq(check, c);                                   \
                                                             \
     std::fill(c.begin(), c.end(), 0);                       \
-    plier(expr([](real & c, real a, real b) { c = b-a; },   \
+    plier(map_([](real & c, real a, real b) { c = b-a; },   \
                c.iter(), b.iter(), a.iter()));              \
     tr.test_eq(check, c);
 
@@ -104,13 +104,13 @@ int main()
         TEST(ply_ravel);
     }
 #undef TEST
-    tr.section("frame match is good only for full expr, so test on ply, not construction");
+    tr.section("frame match is good only for full expression, so test on ply, not construction");
     {
         ra::Unique<real, 2> a({2, 2}, 0.);
         ra::Unique<real, 1> b {1., 2.};
 // note that b-c has no driver, but all that matters is that the full expression does.
-        auto e = expr([](real & a, real bc) { a = bc; },
-                      a.iter(), expr([](real b, real c) { return b-c; },  b.iter(), ra::start(ra::_1)));
+        auto e = map_([](real & a, real bc) { a = bc; },
+                      a.iter(), map_([](real b, real c) { return b-c; },  b.iter(), ra::start(ra::_1)));
         ply(e);
         tr.test_eq(1, a(0, 0));
         tr.test_eq(0, a(0, 1));
@@ -122,7 +122,7 @@ int main()
         ra::Big<int, 1> i = {0, 1, 2};
         ra::Big<double, 2> A({3, 2}, ra::_0 - ra::_1);
         ra::Big<double, 2> F({3, 2}, 0.);
-        iter<-1>(F) = A(i); // A(i) returns a nested expression.
+        iter<-1>(F) = A(i); // A(i) returns a nested map.
         tr.test_eq(A, F);
     }
 

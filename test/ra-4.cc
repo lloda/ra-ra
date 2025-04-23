@@ -19,7 +19,7 @@ template <class AA>
 double sqrm_ai(AA && a)
 {
     double c(0.);
-    ply(ra::expr([&c](complex const a) { c += sqrm(a); }, a));
+    ply(ra::map_([&c](complex const a) { c += sqrm(a); }, a));
     return c;
 }
 
@@ -27,6 +27,6 @@ int main()
 {
     TestRecorder tr;
     ra::Unique<complex, 1> a({3}, {1, 2, 3});
-    tr.test_eq(14, sqrm_ai(ra::expr([](complex a) { return a; }, a.iter())));
+    tr.test_eq(14, sqrm_ai(ra::map_([](complex a) { return a; }, a.iter())));
     return tr.summary();
 }

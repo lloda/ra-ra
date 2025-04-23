@@ -52,7 +52,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
         cout << "af0: " << sizeof(af0) << endl;
         cout << "af1: " << sizeof(af1) << endl;
         {
-            auto ewv = ra::expr(FM::op(v), af0, af1);
+            auto ewv = ra::map_(FM::op(v), af0, af1);
             cout << sizeof(ewv) << endl;
             cout << "ewv rank I: " << ewv.rank() << endl;
             for (int k=0; k<ewv.rank(); ++k) {
@@ -64,17 +64,17 @@ void nested_wrank_demo(V && v, A && a, B && b)
             ra::ply_ravel(ewv);
             cout << endl;
             cout << "\nusing (ewv &&):\n";
-            ra::ply_ravel(ra::expr(FM::op(v), af0, af1));
+            ra::ply_ravel(ra::map_(FM::op(v), af0, af1));
         }
         {
-            // cout << ra::mp::show<decltype(ra::expr(v, a.iter(), b.iter()))>::value << endl;
-            auto ewv = ra::expr(v, a.iter(), b.iter());
+            // cout << ra::mp::show<decltype(ra::map_(v, a.iter(), b.iter()))>::value << endl;
+            auto ewv = ra::map_(v, a.iter(), b.iter());
             cout << "shape(ewv): " << fmt(ra::nstyle, shape(ewv)) << endl;
 #define TEST(plier)                                                     \
             cout << "\n\nusing " STRINGIZE(plier) " (ewv &):\n";        \
             ra::plier(ewv);                                             \
             cout << "\n\nusing " STRINGIZE(plier) " ply (ewv &&):\n";   \
-            ra::plier(ra::expr(v, a.iter(), b.iter()));
+            ra::plier(ra::map_(v, a.iter(), b.iter()));
             TEST(ply_ravel);
             TEST(ply_fixed);
         }
@@ -115,7 +115,7 @@ int main()
             auto af1 = ra::reframe<ra::mp::ref<FM::R, 1>>(b.iter());
             cout << "af0: " << sizeof(af0) << endl;
             cout << "af1: " << sizeof(af1) << endl;
-            auto ewv = expr(FM::op(v), af0, af1);
+            auto ewv = ra::map_(FM::op(v), af0, af1);
             cout << sizeof(ewv) << "\n" << endl;
             cout << "ewv rank II: " << ewv.rank() << endl;
             for (int k=0; k<ewv.rank(); ++k) {
@@ -171,18 +171,18 @@ int main()
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
         ra::Unique<real, 2> c({3, 4}, ra::none);
-        ra::ply(ra::expr(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
+        ra::ply(ra::map_(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
                                /* 11-[1 2 3 4] */ 10, 9, 8, 7,
                                /* 12-[1 2 3 4] */ 11, 10, 9, 8 };
         tr.test(std::equal(checkc34, checkc34+3*4, c.begin()));
-        ra::Unique<real, 2> d34(ra::expr(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d34(ra::map_(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
         tr.test(std::equal(checkc34, checkc34+3*4, d34.begin()));
         real checkc43[3*4] = { /* [10 11 12]-1 */ 9, 10, 11,
                                /* [10 11 12]-2 */ 8, 9, 10,
                                /* [10 11 12]-3 */ 7, 8, 9,
                                /* [10 11 12]-4 */ 6, 7, 8 };
-        ra::Unique<real, 2> d43(ra::expr(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d43(ra::map_(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
         tr.test(d43.len(0)==4 && d43.len(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
     }
@@ -197,18 +197,18 @@ int main()
 
         real checkd[3*4] = { 1001, 1002, 1003, 1004,  1101, 1102, 1103, 1104,  1201, 1202, 1203, 1204 };
 // default auto is value, so need to speficy.
-#define EXPR ra::expr(ra::wrank<0, 1>([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
+#define MAP ra::map_(ra::wrank<0, 1>([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
                       a.iter(), b.iter())
         std::ostringstream os;
-        os << EXPR << endl;
+        os << MAP << endl;
         ra::Unique<real, 2> cc {};
         std::istringstream is(os.str());
         is >> cc;
         tr.test(std::equal(checkd, checkd+3*4, cc.begin()));
-        ra::Unique<real, 2> d(EXPR);
+        ra::Unique<real, 2> d(MAP);
         tr.test(std::equal(checkd, checkd+3*4, d.begin()));
 // Using expr as lvalue.
-        EXPR = 7.;
+        MAP = 7.;
         tr.test_eq(c, where(ra::_0>=10 && ra::_0<=12 && ra::_1>=1 && ra::_1<=4, 7, ra::_0*100+ra::_1));
 // looping...
         bool valid = true;
@@ -227,9 +227,9 @@ int main()
         ra::Unique<real, 3> a({2, 2, 2}, 1.);
         ra::Unique<real, 3> b({2, 2, 2}, 2.);
         real y = 0;
-        auto e = ra::expr(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
+        auto e = ra::map_(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
         static_assert(3==e.rank(), "bad rank in static rank expr");
-        ra::ply_ravel(ra::expr(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
+        ra::ply_ravel(ra::map_(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
         tr.test_eq(16, y);
     }
     tr.section("outer product variants");
@@ -239,7 +239,7 @@ int main()
         ra::Big<real, 2> c1 = gemm(a, b);
 // matrix product as outer product + reduction (no reductions yet, so manually).
         {
-            ra::Big<real, 3> d = ra::expr(ra::wrank<1, 2>(ra::wrank<0, 1>(std::multiplies<>())), start(a), start(b));
+            ra::Big<real, 3> d = ra::map_(ra::wrank<1, 2>(ra::wrank<0, 1>(std::multiplies<>())), start(a), start(b));
             ra::Big<real, 2> c2({d.len(0), d.len(2)}, 0.);
             for (int k=0; k<d.len(1); ++k) {
                 c2 += d(ra::all, k, ra::all);
@@ -249,7 +249,7 @@ int main()
 // do the k-reduction by plying with wrank.
         {
             ra::Big<real, 2> c2({a.len(0), b.len(1)}, 0.);
-            ra::ply(ra::expr(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
+            ra::ply(ra::map_(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
                              start(c2), start(a), start(b)));
             tr.info("sum_k a(i,k)*b(k,j)").test_eq(c1, c2);
         }

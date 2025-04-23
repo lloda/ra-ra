@@ -25,7 +25,7 @@ int main()
         {
             auto i = a.iter<1>();
             tr.test_eq(1, i.rank());
-            ply_ravel(expr([](ra::ViewBig<real, 1> const & x) { cout << x << endl; }, i));
+            ply_ravel(ra::map_([](ra::ViewBig<real, 1> const & x) { cout << x << endl; }, i));
         }
     }
 #define ARGa iter<1>(a)
@@ -44,25 +44,25 @@ int main()
                     d = a[0] + a[1] + a[2];
                 };
             ra::Small<real, 4> dump;
-            //             plier(ra::expr(f, a.iter<0>(), ARGa, ARGd));  // how the hell does this work,
+            //             plier(ra::map_(f, a.iter<0>(), ARGa, ARGd));  // how the hell does this work,
 #define TEST(plier)                                             \
             dump = 0;                                           \
             cout << "-> explicit iterator" << endl;             \
-            plier(ra::expr(f, ARGi, ARGa, ARGd));               \
+            plier(ra::map_(f, ARGi, ARGa, ARGd));               \
             tr.test(std::equal(check, check+4, dump.begin()));  \
             dump = 0;                                           \
             cout << "-> iter<cell rank>()" << endl;             \
-            plier(ra::expr(f, ARGi, a.iter<1>(), ARGd));        \
+            plier(ra::map_(f, ARGi, a.iter<1>(), ARGd));        \
             tr.test(std::equal(check, check+4, dump.begin()));  \
             dump = 0;                                           \
             cout << "-> iter<frame rank>()" << endl;            \
-            plier(ra::expr(f, ARGi, a.iter<-1>(), ARGd));       \
+            plier(ra::map_(f, ARGi, a.iter<-1>(), ARGd));       \
             tr.test(std::equal(check, check+4, dump.begin()));
             TEST(ply_ravel);
             TEST(ply_fixed);
 #undef TEST
         }
-// TODO Use explicit DRIVER arg to ra::expr; the fixed size ARGi should always drive.
+// TODO Use explicit DRIVER arg to ra::map_; the fixed size ARGi should always drive.
         tr.section("driving");
         {
             auto f = [](ra::ViewBig<real, 1> const & a, int i, real & d)
@@ -73,13 +73,13 @@ int main()
             ra::Small<real, 4> dump;
 #define TEST(plier)                                             \
             dump = 0;                                           \
-            plier(ra::expr(f, ARGa, ARGi, ARGd));            \
+            plier(ra::map_(f, ARGa, ARGi, ARGd));            \
             tr.test(std::equal(check, check+4, dump.begin())); \
             dump = 0;                                           \
-            plier(ra::expr(f, a.iter<1>(), ARGi, ARGd));     \
+            plier(ra::map_(f, a.iter<1>(), ARGi, ARGd));     \
             tr.test(std::equal(check, check+4, dump.begin())); \
             dump = 0;                                           \
-            plier(ra::expr(f, a.iter<-1>(), ARGi, ARGd));    \
+            plier(ra::map_(f, a.iter<-1>(), ARGi, ARGd));    \
             tr.test(std::equal(check, check+4, dump.begin()));
             TEST(ply_ravel);
             TEST(ply_fixed);
@@ -98,22 +98,22 @@ int main()
                 {
                     auto f = [](int i, auto && a, int d) { for (auto & ai: a) { ai = d; ++d; } };
                     std::fill(a.begin(), a.end(), 0);
-                    ply(ra::expr(f, ARGi, ARGa, ARGd));
+                    ply(ra::map_(f, ARGi, ARGa, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));
 
                     std::fill(a.begin(), a.end(), 0);
-                    ply_ravel(ra::expr(f, ARGi, ARGa, ARGd));
+                    ply_ravel(ra::map_(f, ARGi, ARGa, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));
                 }
                 tr.section("driving");
                 {
                     auto f = [](auto && a, int i, int d) { for (auto & ai: a) { ai = d; ++d; } };
                     std::fill(a.begin(), a.end(), 0);
-                    ply(ra::expr(f, ARGa, ARGi, ARGd));
+                    ply(ra::map_(f, ARGa, ARGi, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));
 
                     std::fill(a.begin(), a.end(), 0);
-                    ply_ravel(ra::expr(f, ARGa, ARGi, ARGd));
+                    ply_ravel(ra::map_(f, ARGa, ARGi, ARGd));
                     tr.test(std::equal(check, check+12, a.begin()));
                 }
             };
@@ -152,7 +152,7 @@ int main()
         auto cellr = as.iter<-1>().cellr; tr.test_eq(1, cellr);
         tr.test_eq(1, ad.iter<-1>().rank());
         tr.test_eq(ra::ANY, ra::rank_s<decltype(ad.iter<-1>())>());
-        auto e = ra::expr([](auto const & a, auto const & b) { cout << (b-2*a) << endl; },
+        auto e = ra::map_([](auto const & a, auto const & b) { cout << (b-2*a) << endl; },
                           ad.iter<-1>(), b.iter<-1>());
         tr.test_eq(1, e.rank());
 

@@ -264,21 +264,21 @@ int main()
         b = 99.;
         tr.test_eq(99., a);
     }
-    tr.section("expr with Small, rank 1");
+    tr.section("map with Small, rank 1");
     {
         ra::Small<double, 3> a { 1, 4, 2 };
         tr.test_eq(3, a.iter().len(0));
 #define TEST(plier)                                                     \
         {                                                               \
             double s = 0;                                               \
-            plier(ra::expr([&s](double & a) { s += a; }, a.iter()));    \
+            plier(ra::map_([&s](double & a) { s += a; }, a.iter()));    \
             tr.test_eq(7, s);                                           \
         }
         TEST(ply_ravel);
         TEST(ply);
 #undef TEST
             }
-    tr.section("expr with Small, rank 2");
+    tr.section("map with Small, rank 2");
     {
         ra::Small<double, 3, 2> a { 1, 4, 2, 5, 3, 6 };
         tr.test_eq(3, a.iter().len(0));
@@ -286,7 +286,7 @@ int main()
 #define TEST(plier)                                                     \
         {                                                               \
             double s = 0;                                               \
-            plier(ra::expr([&s](double & a) { s += a; }, a.iter()));    \
+            plier(ra::map_([&s](double & a) { s += a; }, a.iter()));    \
             tr.test_eq(21, s);                                          \
         }
         TEST(ply_ravel);
@@ -295,7 +295,7 @@ int main()
 #define TEST(plier)                                                     \
         {                                                               \
             ra::Small<double, 3, 2> b;                                  \
-            plier(ra::expr([](double & a, double & b) { b = -a; }, a.iter(), b.iter())); \
+            plier(ra::map_([](double & a, double & b) { b = -a; }, a.iter(), b.iter())); \
             tr.test_eq(-1, b(0, 0));                                    \
             tr.test_eq(-4, b(0, 1));                                    \
             tr.test_eq(-2, b(1, 0));                                    \

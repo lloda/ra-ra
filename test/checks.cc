@@ -148,17 +148,17 @@ int main()
         ra::Big<int, 4> b({2, 4, 4, 5}, (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1));
         tr.test_eq(1, agree_s(a, b));
         tr.test_eq(0, agree(a, b));
-#define EXPR expr([](auto && a, auto && b) { return a+b; }, start(a), start(b))
+#define MAP map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
         int x = 0;
         try {
-            tr.test_eq(ra::ANY, EXPR.len_s(1));
+            tr.test_eq(ra::ANY, MAP.len_s(1));
             x = 1;
         } catch (ra_error & e) {
         }
         tr.test_eq(0, x);
-#undef EXPR
+#undef MAP
     }
-// If the size of an expr is static, dynamic checks may still need to be run if any of the terms of the expr has dynamic size. This is checked in Match::check_s().
+// If the size of an expression is static, dynamic checks may still need to be run if any of the terms of the expression has dynamic size. This is checked in Match::check_s().
     tr.section("static mismatch");
     {
         ra::Small<int, 2, 2> a;
@@ -265,7 +265,7 @@ int main()
 // see test/frame-old.cc
 // ------------------------------
 
-#define EXPR ra::expr(plus2double_print, a.iter(), b.iter())
+#define MAP ra::map_(plus2double_print, a.iter(), b.iter())
     tr.section("frame matching should-be-error cases. See frame-old.cc");
     {
         ra::Unique<double, 1> a({3}, 10);
@@ -274,9 +274,9 @@ int main()
         int error = 0;
         string s;
         try {
-            tr.info("dynamic test is needed").test_eq(1, decltype(EXPR)::check_s());
+            tr.info("dynamic test is needed").test_eq(1, decltype(MAP)::check_s());
             tr.test(!agree(a, b));
-            ply_ravel(EXPR);
+            ply_ravel(MAP);
         } catch (ra_error & e) {
             error = 1;
             s = e.s;
@@ -293,16 +293,16 @@ int main()
         try {
             std::cout << "A: " << a.iter().len(0) << endl;
             std::cout << "B: " << b.iter().len(0) << endl;
-            tr.info("dynamic test is needed").test_eq(1, decltype(EXPR)::check_s());
+            tr.info("dynamic test is needed").test_eq(1, decltype(MAP)::check_s());
             tr.test(!agree(a, b));
-            ply_ravel(EXPR);
+            ply_ravel(MAP);
         } catch (ra_error & e) {
             error = 1;
             s = e.s;
         }
         tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
-#undef EXPR
+#undef MAP
 
     return tr.summary();
 }

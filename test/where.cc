@@ -89,7 +89,7 @@ int main()
 // pick_at
         tr.test_eq(1, ra::where(true, b, -b).at(std::array {0}));
 
-// test against a bug where the op in where()'s Expr returned a dangling reference when both its args are rvalue refs. This was visible only at certain -O levels.
+// test against a bug where the op in where()'s Map returned a dangling reference when both its args are rvalue refs. This was visible only at certain -O levels.
         cc[0] = cc[1] = 99;
         c = ra::where(true, b-3, -b);
         tr.test_eq(-2, cc[0]);
@@ -102,7 +102,7 @@ int main()
 , ra::where(ra::_0>0 && ra::_0<3, ra::Unique<int, 1> { 1, 2, 3, 4 }, 17));
 // [raop00] undef len iota returs value; so where()'s lambda must also return value.
         tr.test_eq(ra::Unique<int, 1> { 1, 2, 4, 7 }, ra::where(ra::Unique<bool, 1> { true, false, false, true }, 2*ra::_0+1, 2*ra::_0));
-// Using frame matching... TODO directly with ==expr?
+// Using frame matching... TODO directly with ==map?
         ra::Unique<int, 2> a({4, 3}, ra::_0-ra::_1);
         ra::Unique<int, 2> b = ra::where(ra::Unique<bool, 1> { true, false, false, true }, 99, a);
         tr.test_eq(ra::Unique<int, 2> ({4, 3}, { 99, 99, 99, 1, 0, -1, 2, 1, 0, 99, 99, 99 }), b);

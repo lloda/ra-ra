@@ -121,7 +121,7 @@ int main()
         TESTPRED(decltype(std::ranges::iota_view(-5, 10)),
                  false, false, false, false, true);
 // std::string can be registered as is_scalar or not [ra13]. Use ra::ptr(std::string) or ra::scalar(std::string) to get the other behavior.
-        if constexpr(ra::is_scalar<std::string>) {
+        if constexpr (ra::is_scalar<std::string>) {
             TESTPRED(std::string,
                      false, false, false, true, false);
         } else {
@@ -175,7 +175,7 @@ int main()
         static_assert(!ra::is_ra_pos<ra::Scalar<int>>, "bad");
         static_assert(!ra::is_zero_or_scalar<decltype(ra::iota<0>())>, "bad");
         static_assert(ra::is_ra_pos<decltype(ra::iota<0>())>, "bad");
-        static_assert(ra::is_ra_pos<ra::Expr<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
+        static_assert(ra::is_ra_pos<ra::Map<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
         static_assert(ra::is_ra_pos<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
     tr.section("builtin arrays");

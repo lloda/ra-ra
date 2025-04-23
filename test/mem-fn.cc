@@ -42,7 +42,7 @@ int main()
         tr.test_eq(0, ex(1, 1).b);
         tr.test_eq(1, ex(1, 2).b);
     }
-    tr.section("naw that Expr uses std::invoke() we can use the member directly");
+    tr.section("now that Map uses std::invoke() we can use the member directly");
     {
         ra::Big<example, 2> ex({2, 3}, ra::scalar(example {99}));
         map(&example::b, ex) = ra::_0-ra::_1;

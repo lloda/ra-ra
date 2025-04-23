@@ -38,9 +38,9 @@ template <class T> constexpr void cast(ra::noarg);
 using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std::swap,
       std::isfinite, std::isinf, std::isnan, std::clamp, std::lerp, std::conj, std::expm1;
 
-#define FOR_FLOAT(T)                                      \
-    constexpr T conj(T x) { return x; }                   \
-FOR_EACH(FOR_FLOAT, float, double)
+#define FOR_FLOAT(T)                            \
+    constexpr T conj(T x) { return x; }         \
+    FOR_EACH(FOR_FLOAT, float, double)
 #undef FOR_FLOAT
 
 #define FOR_FLOAT(R)                                                    \
@@ -148,47 +148,47 @@ template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithme
 
 template <is_iota I, iota_op J>
 constexpr auto
-optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
+optimize(Map<std::plus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(0).n, ITEM(0).i+ITEM(1), ITEM(0).s); }
 
 template <iota_op I, is_iota J>
 constexpr auto
-optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
+optimize(Map<std::plus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i, ITEM(1).s); }
 
 template <is_iota I, is_iota J>
 constexpr auto
-optimize(Expr<std::plus<>, std::tuple<I, J>> && e)
+optimize(Map<std::plus<>, std::tuple<I, J>> && e)
 { return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).s+ITEM(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto
-optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
+optimize(Map<std::minus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(0).n, ITEM(0).i-ITEM(1), ITEM(0).s); }
 
 template <iota_op I, is_iota J>
 constexpr auto
-optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
+optimize(Map<std::minus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i, -ITEM(1).s); }
 
 template <is_iota I, is_iota J>
 constexpr auto
-optimize(Expr<std::minus<>, std::tuple<I, J>> && e)
+optimize(Map<std::minus<>, std::tuple<I, J>> && e)
 { return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).s-ITEM(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto
-optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
+optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).s*ITEM(1)); }
 
 template <iota_op I, is_iota J>
 constexpr auto
-optimize(Expr<std::multiplies<>, std::tuple<I, J>> && e)
+optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).s); }
 
 template <is_iota I>
 constexpr auto
-optimize(Expr<std::negate<>, std::tuple<I>> && e)
+optimize(Map<std::negate<>, std::tuple<I>> && e)
 { return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).s); }
 
 #if RA_DO_OPT_SMALLVECTOR==1
@@ -202,7 +202,7 @@ static_assert(match_small<double, 4, ra::Cell<double, ic_t<std::array { Dim { 4,
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B> requires (match_small<T, N, A> && match_small<T, N, B>) \
     constexpr auto                                                      \
-    optimize(ra::Expr<NAME, std::tuple<A, B>> && e)                     \
+    optimize(Map<NAME, std::tuple<A, B>> && e)                          \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
         *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.cp)) OP *(extvector<T, N> *)((ITEM(1).c.cp)); \
@@ -274,7 +274,7 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
     template <class ... A> requires (toreduce<A ...>) constexpr decltype(auto) \
         OP(A && ... a) { return OP(VALUE(RA_FWD(a)) ...); }
 #define DEF_FWD(QUALIFIED_OP, OP)                                       \
-    template <class ... A> requires (!tomap<A ...> && !toreduce<A ...>) constexpr decltype(auto) \
+    template <class ... A> /* requires neither */ constexpr decltype(auto) \
         OP(A && ... a) { return QUALIFIED_OP(RA_FWD(a) ...); }          \
     DEF_NAME(OP)
 #define DEF_USING(QUALIFIED_OP, OP)             \
@@ -311,7 +311,7 @@ template <class T, class ... A>
 constexpr auto
 pack(A && ... a)
 {
-    return map([](auto && ... a) { return T { a ... }; }, RA_FWD(a) ...);
+    return map([](auto && ... a) { return T { RA_FWD(a) ... }; }, RA_FWD(a) ...);
 }
 
 // FIXME needs nested array for I, but iter<-1> should work
@@ -319,8 +319,7 @@ template <class A, class I>
 constexpr auto
 at(A && a, I && i)
 {
-    return map([a = std::tuple<A>(RA_FWD(a))] (auto && i) -> decltype(auto) { return std::get<0>(a).at(i); },
-               RA_FWD(i));
+    return map([a = std::tuple<A>{RA_FWD(a)}] (auto && i) -> decltype(auto) { return get<0>(a).at(i); }, RA_FWD(i));
 }
 
 
@@ -425,7 +424,7 @@ amax(auto && a)
 }
 
 // FIXME encapsulate this kind of reference-reduction.
-// FIXME expr/ply mechanism doesn't allow partial iteration (adv then continue).
+// FIXME ply mechanism doesn't allow partial iteration (adv then continue).
 template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
 refmin(A && a, Less && less = {})

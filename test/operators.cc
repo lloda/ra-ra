@@ -125,14 +125,14 @@ int main()
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Unique<int, 1> b({3}, { 10, 20, 30 });
-#define TESTSUM(expr)                                                   \
-        tr.test_eq(expr, ra::Small<int, 3, 2> {11, 12, 23, 40, 35, 36});
-        TESTSUM(ra::expr([](int a, int b) { return a + b; }, a.iter(), b.iter()));
+#define TESTSUM(arg)                                                   \
+        tr.test_eq(arg, ra::Small<int, 3, 2> {11, 12, 23, 40, 35, 36});
+        TESTSUM(ra::map_([](int a, int b) { return a + b; }, a.iter(), b.iter()));
         TESTSUM(a.iter() + b.iter());
         TESTSUM(a+b);
 #undef TESTSUM
-#define TESTEQ(expr)                                                   \
-        tr.test_eq(expr, ra::Small<bool, 3, 2> {false, false, false, true, false, false});
+#define TESTEQ(arg)                                                   \
+        tr.test_eq(arg, ra::Small<bool, 3, 2> {false, false, false, true, false, false});
         TESTEQ(a==b);
         TESTEQ(!(a!=b));
 #undef TESTEQ
@@ -170,12 +170,12 @@ int main()
     {
         ra::Small<int, 3> a { 1, 2, 3 };
         ra::Small<int, 3> b { 1, 2, 4 };
-        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, ra::expr([](int a, int b) { return a + b; }, a.iter(), b.iter()));
+        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, ra::map_([](int a, int b) { return a + b; }, a.iter(), b.iter()));
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, (a.iter() + b.iter()));
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, a+b);
     }
 
-    tr.section("constructors from expr"); // TODO For all other Container types.
+    tr.section("constructors from Map"); // TODO For all other Container types.
     {
         {
 // TODO Systematic init-from-expr tests (every expr type vs every container type)
@@ -198,12 +198,12 @@ int main()
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Small<int, 3, 2> ref {4, 5, 6, 23, 8, 9};
-        tr.test_eq(ref, ra::expr([](int a, int b) { return a + b; }, ra::start(a), ra::start(3)));
+        tr.test_eq(ref, ra::map_([](int a, int b) { return a + b; }, ra::start(a), ra::start(3)));
         tr.test_eq(ref, ra::start(a) + ra::start(3));
         tr.test_eq(ref, a+3);
     }
 // These are rather different because they have to be defined in-class.
-    tr.section("constructors & assignment operators with expr rhs"); // TODO use TestRecorder::test_eq().
+    tr.section("constructors & assignment operators with Map rhs"); // TODO use TestRecorder::test_eq().
     {
         real check0[6] = { 0, -1, 1, 0, 2, 1 };
         real check1[6] = { 4, 3, 5, 4, 6, 5 };
@@ -268,7 +268,7 @@ int main()
         ra::Unique<int, 1> a({7}, 7);
         ra::Small<ra::dim_t, 3> i { 2, 3, 5 };
         ra::Small<int, 3> b { 22, 33, 55 };
-        ra::expr([&a](ra::dim_t i) -> decltype(auto) { return a(i); }, ra::start(i)) = b;
+        ra::map_([&a](ra::dim_t i) -> decltype(auto) { return a(i); }, ra::start(i)) = b;
         int checka[] = { 7, 7, 22, 33, 7, 55, 7 };
         tr.test(std::equal(checka, checka+7, a.begin()));
     }

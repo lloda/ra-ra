@@ -389,7 +389,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 #pragma GCC diagnostic warning "-Warray-bounds"
                 dim_t ls = len(k);
 #pragma GCC diagnostic pop
-                if (((k<ra::rank(std::get<I>(t)) && ls!=choose_len(std::get<I>(t).len(k), ls)) || ...)) {
+                if (((k<ra::rank(get<I>(t)) && ls!=choose_len(get<I>(t).len(k), ls)) || ...)) {
                     return false;
                 }
             }
@@ -419,7 +419,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     rank() const requires (ANY==rs)
     {
         rank_t r = BAD;
-        ((r = choose_rank(r, ra::rank(std::get<I>(t)))), ...);
+        ((r = choose_rank(r, ra::rank(get<I>(t)))), ...);
         assert(ANY!=r); // not at runtime
         return r;
     }
@@ -445,7 +445,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         auto f = [&k](dim_t s, auto const & a) {
             return k<ra::rank(a) ? choose_len(s, a.len(k)) : s;
         };
-        dim_t s = BAD; ((s>=0 ? s : s = f(s, std::get<I>(t))), ...);
+        dim_t s = BAD; ((s>=0 ? s : s = f(s, get<I>(t))), ...);
         assert(ANY!=s); // not at runtime
         return s;
     }
@@ -453,26 +453,26 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr auto
     step(int i) const
     {
-        return std::make_tuple(std::get<I>(t).step(i) ...);
+        return std::make_tuple(get<I>(t).step(i) ...);
     }
     constexpr void
     adv(rank_t k, dim_t d)
     {
-        (std::get<I>(t).adv(k, d), ...);
+        (get<I>(t).adv(k, d), ...);
     }
     constexpr bool
     keep(dim_t st, int z, int j) const requires (!(requires { P::keep(st, z, j); }  && ...))
     {
-        return (std::get<I>(t).keep(st, z, j) && ...);
+        return (get<I>(t).keep(st, z, j) && ...);
     }
     constexpr static bool
     keep(dim_t st, int z, int j) requires (requires { P::keep(st, z, j); } && ...)
     {
         return (std::decay_t<P>::keep(st, z, j) && ...);
     }
-    constexpr auto save() const { return std::make_tuple(std::get<I>(t).save() ...); }
-    constexpr void load(auto const & pp) { ((std::get<I>(t).load(std::get<I>(pp))), ...); }
-    constexpr void mov(auto const & s) { ((std::get<I>(t).mov(std::get<I>(s))), ...); }
+    constexpr auto save() const { return std::make_tuple(get<I>(t).save() ...); }
+    constexpr void load(auto const & pp) { ((get<I>(t).load(get<I>(pp))), ...); }
+    constexpr void mov(auto const & s) { ((get<I>(t).mov(get<I>(s))), ...); }
 };
 
 
@@ -633,12 +633,17 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // explicit agreement checks
 // ---------------
 
-constexpr bool
-agree(auto && ... p) { return agree_(ra::start(RA_FWD(p)) ...); }
+template <bool checkp, class ... P>
+constexpr auto
+match(P && ... p) { return Match<checkp, std::tuple<P ...>> { RA_FWD(p) ... }; }
 
-// 0: fail, 1: rt, 2: pass
+template <class ... P>
+constexpr bool
+agree(P && ... p) { return match<false>(ra::start(RA_FWD(p)) ...).check(); }
+
+template <class ... P>
 constexpr int
-agree_s(auto && ... p) { return agree_s_(ra::start(RA_FWD(p)) ...); }
+agree_s(P && ... p) { return decltype(match<false>(ra::start(RA_FWD(p)) ...))::check_s(); }
 
 template <class Op, class ... P> requires (is_verb<Op>)
 constexpr bool
@@ -647,14 +652,6 @@ agree_op(Op && op, P && ... p) { return agree_verb(mp::iota<sizeof...(P)> {}, RA
 template <class Op, class ... P> requires (!is_verb<Op>)
 constexpr bool
 agree_op(Op && op, P && ... p) { return agree(RA_FWD(p) ...); }
-
-template <class ... P>
-constexpr bool
-agree_(P && ... p) { return (Match<false, std::tuple<P ...>> { RA_FWD(p) ... }).check(); }
-
-template <class ... P>
-constexpr int
-agree_s_(P && ... p) { return Match<false, std::tuple<P ...>>::check_s(); }
 
 template <class V, class ... T, int ... i>
 constexpr bool
@@ -672,89 +669,82 @@ agree_verb(mp::int_list<i ...>, V && v, T && ... t)
 template <class E>
 decltype(auto) to_scalar(E && e)
 {
-    if constexpr (1!=size_s(e)) {
+    if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
+        static_assert(ANY==s, "Bad scalar conversion from shape.");
         RA_CHECK(1==size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
     }
     return *e;
 }
 
-template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Expr;
+template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
 template <class Op, IteratorConcept ... P, int ... I>
-struct Expr<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
+struct Map<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
 {
     using Match_ = Match<true, std::tuple<P ...>>;
     using Match_::t;
     Op op;
 
-    constexpr Expr(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
-    RA_ASSIGNOPS_SELF(Expr)
+    constexpr Map(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
+    RA_ASSIGNOPS_SELF(Map)
     RA_ASSIGNOPS_DEFAULT_SET
-    constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, std::get<I>(t).at(j) ...); }
-    constexpr decltype(auto) operator*() const { return std::invoke(op, *std::get<I>(t) ...); }
-    constexpr operator decltype(std::invoke(op, *std::get<I>(t) ...)) () const { return to_scalar(*this); }
+    constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, get<I>(t).at(j) ...); }
+    constexpr decltype(auto) operator*() const { return std::invoke(op, *get<I>(t) ...); }
+    constexpr operator decltype(std::invoke(op, *get<I>(t) ...)) () const { return to_scalar(*this); }
 };
 
 template <class Op, IteratorConcept ... P>
-constexpr bool is_special_def<Expr<Op, std::tuple<P ...>>> = (is_special<P> || ...);
+constexpr bool is_special_def<Map<Op, std::tuple<P ...>>> = (is_special<P> || ...);
 
-template <class V, class ... T, int ... i>
+template <class Op, class ... P, int ... i>
 constexpr auto
-expr_verb(mp::int_list<i ...>, V && v, T && ... t)
+map_verb(mp::int_list<i ...>, Op && op, P && ... p)
 {
-    using FM = Framematch<V, std::tuple<T ...>>;
-    return expr(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(t)) ...);
+    using FM = Framematch<Op, std::tuple<P ...>>;
+    return map_(FM::op(RA_FWD(op)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(p)) ...);
 }
 
 template <class Op, class ... P>
 constexpr auto
-expr(Op && op, P && ... p)
+map_(Op && op, P && ... p)
 {
     if constexpr (is_verb<Op>) {
-        return expr_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
+        return map_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
     } else {
-        return Expr<Op, std::tuple<P ...>> { RA_FWD(op), RA_FWD(p) ... };
+        return Map<Op, std::tuple<P ...>> { RA_FWD(op), RA_FWD(p) ... };
     }
 }
 
 constexpr auto
-map(auto && op, auto && ... a) { return expr(RA_FWD(op), start(RA_FWD(a)) ...); }
+map(auto && op, auto && ... a) { return map_(RA_FWD(op), start(RA_FWD(a)) ...); }
 
 
 // ---------------------------
 // pick expression
 // ---------------------------
 
-template <class T, class J> struct pick_at_type;
-template <class ... P, class J> struct pick_at_type<std::tuple<P ...>, J>
-{
-    using type = std::common_reference_t<decltype(std::declval<P>().at(std::declval<J>())) ...>;
-};
+template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 
 template <std::size_t I, class T, class J>
-constexpr pick_at_type<mp::drop1<std::decay_t<T>>, J>::type
+constexpr mp::apply<std::common_reference_t, mp::map<type_at<J>::template type, mp::drop1<std::decay_t<T>>>>
 pick_at(std::size_t p0, T && t, J const & j)
 {
     constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
     if constexpr (I < N) {
-        return (p0==I) ? std::get<I+1>(t).at(j) : pick_at<I+1>(p0, t, j);
+        return (p0==I) ? get<I+1>(t).at(j) : pick_at<I+1>(p0, t, j);
     } else {
         RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
     }
 }
 
-template <class T> struct pick_star_type;
-template <class ... P> struct pick_star_type<std::tuple<P ...>>
-{
-    using type = std::common_reference_t<decltype(*std::declval<P>()) ...>;
-};
+template <class P> using type_star = decltype(*std::declval<P>());
 
 template <std::size_t I, class T>
-constexpr pick_star_type<mp::drop1<std::decay_t<T>>>::type
+constexpr mp::apply<std::common_reference_t, mp::map<type_star, mp::drop1<std::decay_t<T>>>>
 pick_star(std::size_t p0, T && t)
 {
     constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
     if constexpr (I < N) {
-        return (p0==I) ? *(std::get<I+1>(t)) : pick_star<I+1>(p0, t);
+        return (p0==I) ? *(get<I+1>(t)) : pick_star<I+1>(p0, t);
     } else {
         RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
     }
@@ -771,9 +761,9 @@ struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tup
     constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
     RA_ASSIGNOPS_SELF(Pick)
     RA_ASSIGNOPS_DEFAULT_SET
-    constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(std::get<0>(t).at(j), t, j); }
-    constexpr decltype(auto) operator*() const { return pick_star<0>(*std::get<0>(t), t); }
-    constexpr operator decltype(pick_star<0>(*std::get<0>(t), t)) () const { return to_scalar(*this); }
+    constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(get<0>(t).at(j), t, j); }
+    constexpr decltype(auto) operator*() const { return pick_star<0>(*get<0>(t), t); }
+    constexpr operator decltype(pick_star<0>(*get<0>(t), t)) () const { return to_scalar(*this); }
 };
 
 template <IteratorConcept ... P>

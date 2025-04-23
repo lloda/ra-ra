@@ -84,7 +84,7 @@ int main()
             tr.test_eq(3, a(2, 0));
             tr.test_eq(3, a(2, 1));
         }
-// driver selection is done at compile time (see Expr::DRIVER). Here it'll be the var rank expr, which results in an error at run time. TODO Do run time driver selection to avoid this error.
+// driver selection is done at compile time (see Map). Here it'll be the var rank expr, which results in an error at run time. TODO Do run time driver selection to avoid this error.
         // tr.section("construction of var rank <- higher rank expr");
         // {
         //     ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});

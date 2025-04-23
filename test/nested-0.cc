@@ -40,7 +40,7 @@ int main()
             tr.test_eq(d[1], Vec<int>{1});
             tr.test_eq(d[2], Vec<int>{1, 2});
 // TODO Actually nested 'as if higher rank' should allow just (every(c==d)). This is explicit nesting.
-            tr.test(every(ra::expr([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
+            tr.test(every(ra::map_([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
         }
     }
     tr.section("selector experiments");

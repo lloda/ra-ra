@@ -367,22 +367,22 @@ int main()
 // This requires the driverless xpr dyn(scalar, tensorindex) to be constructible.
         {
             int checkb[6] = { 3, 3, 4, 4, 5, 5 };
-            ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a+b; }, ra::scalar(3), start(ra::_0)));
+            ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a+b; }, ra::scalar(3), start(ra::_0)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
         {
             int checkb[6] = { 0, -1, 1, 0, 2, 1 };
-            ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, start(ra::_0), start(ra::_1)));
+            ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, start(ra::_0), start(ra::_1)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
 // TODO Check this is an error (chosen driver is ra::iota<2>(), that can't drive) [ra42]
         // {
-        //     ra::Unique<int, 2> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
+        //     ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
         //     cout << b << endl;
         // }
 // TODO Could this be made to bomb at compile time? [ra42]
         // {
-        //     ra::Unique<int> b({3, 2}, ra::expr([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
+        //     ra::Unique<int> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
         //     cout << b << endl;
         // }
     }

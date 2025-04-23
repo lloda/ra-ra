@@ -150,7 +150,7 @@ int main()
         tr.test_eq(where(ra::_0==3 && ra::_1==3, 7., 1.), a);
     }
 // The implementation of from() uses FrameMatch / Reframe and can't handle this yet.
-    tr.section("undef-len-iota<i> as subscript, using ra::Expr directly.");
+    tr.section("undef-len-iota<i> as subscript, using ra::Map directly.");
     {
         auto i = ra::_0;
         auto j = ra::_1;

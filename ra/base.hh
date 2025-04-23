@@ -157,7 +157,7 @@ rank(auto const & v)
 RA_IS_DEF(is_pos, 0!=rank_s<A>())
 template <class A> concept is_ra_pos = is_ra<A> && is_pos<A>;
 template <class A> concept is_zero_or_scalar = (is_ra<A> && !is_pos<A>) || is_scalar<A>;
-// all args rank 0 (immediate application), but at least one ra:: (don't collide with the scalar version).
+// all args rank 0 (apply immediately), but at least one ra:: (disambiguate scalar version).
 RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
 template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
 template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);

@@ -199,19 +199,19 @@ int main()
         o << fmt(ra::nstyle, A);
         tr.test_eq(std::string("1 2\n3 4"), o.str());
     }
-    tr.section("[ra02a] printing Expr");
+    tr.section("[ra02a] printing Map");
     {
-        iocheck(tr.info("output of expr (1)"),
-                ra::expr([](double i) { return -i; }, start(ra::Small<double, 3>{0, 1, 2})),
+        iocheck(tr.info("output of map (1)"),
+                ra::map_([](double i) { return -i; }, start(ra::Small<double, 3>{0, 1, 2})),
                 ra::Small<double, 3>{0, -1, -2});
-        iocheck(tr.info("output of expr (2)"),
-                ra::expr([](double i) { return -i; }, start(ra::Small<double, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
+        iocheck(tr.info("output of map (2)"),
+                ra::map_([](double i) { return -i; }, start(ra::Small<double, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
                 (ra::Small<double, 3, 2, 3> (-(ra::_0 - ra::_1 + ra::_2))));
     }
     {
         ra::Unique<int, 2> a({2, 3}, { 1, 2, 3, 4, 5, 6 });
-        iocheck(tr.info("output of expr (3)"),
-                ra::expr([](int i) { return -i; }, a.iter()),
+        iocheck(tr.info("output of map (3)"),
+                ra::map_([](int i) { return -i; }, a.iter()),
                 ra::Unique<int, 2>({2, 3}, { -1, -2, -3, -4, -5, -6 }));
     }
     tr.section("[ra02b] printing array iterators");
@@ -233,15 +233,15 @@ int main()
     }
     tr.section("IO can handle undef len iota, too");
     {
-        iocheck(tr.info("output of expr (1)"),
-                ra::expr([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), ra::iota<0>()),
+        iocheck(tr.info("output of map (1)"),
+                ra::map_([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), ra::iota<0>()),
                 ra::Small<double, 3>{0, -1, -4});
     }
-    tr.section("IO of var rank expression");
+    tr.section("IO of var rank map");
     {
         ra::Small<int, 2, 2> A {1, 2, 3, 4};
         ra::Unique<int> B({2, 2}, {1, 2, 3, 4});
-        iocheck(tr.info("var rank expr"), A+B, ra::Unique<int>({2, 2}, { 2, 4, 6, 8 }));
+        iocheck(tr.info("var rank map"), A+B, ra::Unique<int>({2, 2}, { 2, 4, 6, 8 }));
     }
     tr.section("IO of nested type");
     {
