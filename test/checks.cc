@@ -163,6 +163,7 @@ int main()
     {
         ra::Small<int, 2, 2> a;
         ra::Small<int, 3, 2> b;
+        cout << match<false>(start(a), start(b)).len_s(0) << endl;
         static_assert(0==agree_s(a, b));
         static_assert(0==agree_s(b, a));
     }

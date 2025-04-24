@@ -83,8 +83,12 @@ int main()
 #define TEST2(plier)                                            \
         TEST(plier)(ra::Small<int, 3> {});                      \
         TEST(plier)(ra::Unique<int, 1>({3}, ra::none));
+// gcc 14.2, no warning with sanitizers
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
         TEST2(ply_ravel)
         TEST2(ply_fixed)
+#pragma GCC diagnostic pop
 #undef TEST2
 #undef TEST
             }

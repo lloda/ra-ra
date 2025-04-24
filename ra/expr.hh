@@ -349,7 +349,7 @@ choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 
 
 // first nonnegative size, if none first ANY, if none then BAD
 constexpr dim_t
-choose_len(dim_t a, dim_t b) { return a>=0 ? a : b>=0 ? b : BAD==a ? b : a; }
+choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MISS : a) : BAD==a ? b : BAD==b ? a : b; }
 
 template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <bool checkp, IteratorConcept ... P, int ... I>
@@ -367,12 +367,9 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         } else if constexpr (ANY!=rs) {
             bool tbc = false;
             for (int k=0; k<rs; ++k) {
-                dim_t ls = len_s(k);
-                if (((k<rank_s<P>() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
-                    return 0;
-                }
-                int anyk = ((k<rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
-                int fixk = ((k<rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
+                if (MISS==len_s(k)) { return 0; }
+                int anyk = ((k<ra::rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
+                int fixk = ((k<ra::rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
                 tbc = tbc || (anyk>0 && anyk+fixk>1);
             }
             return tbc ? 1 : 2;
@@ -386,10 +383,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
             return false;
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
-                dim_t ls = len(k);
-                if (((k<ra::rank(get<I>(t)) && ls!=choose_len(get<I>(t).len(k), ls)) || ...)) {
-                    return false;
-                }
+                if (MISS==len(k)) { return false; }
             }
         }
         return true;
@@ -398,7 +392,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr
     Match(P ... p_): t(p_ ...) // [ra1]
     {
-// TODO Maybe on ply would make checkp, agree_xxx() unnecessary.
+// TODO On ply would make checkp, agree...() unnecessary, but needs deep check_s(), because we can't rely on subexprs having been checked already.
         if constexpr (checkp && !(has_len<P> || ...)) {
             constexpr int c = check_s();
             static_assert(0!=c, "Mismatched shapes."); // FIXME c++26
@@ -423,10 +417,13 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     len_s(int k)
     {
         auto f = [&k]<class A>(dim_t s) {
-            constexpr rank_t ar = rank_s<A>();
-            return (ar<0 || k<ar) ? choose_len(A::len_s(k), s) : s;
+            if (constexpr rank_t ar = ra::rank_s<A>(); ar<0 || k<ar) {
+                dim_t sk = A::len_s(k);
+                return (MISS==sk) ? sk : choose_len(sk, s);
+            }
+            return s;
         };
-        dim_t s = BAD; (void)(((s = f.template operator()<std::decay_t<P>>(s)) < 0) && ...);
+        dim_t s = BAD; (void)(((s = f.template operator()<std::decay_t<P>>(s)) != MISS) && ...);
         return s;
     }
     constexpr static dim_t
@@ -438,9 +435,13 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     len(int k) const requires (!(requires { P::len(k); } && ...))
     {
         auto f = [&k](auto const & a, dim_t s) {
-            return k<ra::rank(a) ? choose_len(a.len(k), s) : s;
+            if (rank_t ar = ra::rank(a); k<ar) {
+                dim_t sk = a.len(k);
+                return (MISS==sk) ? sk : choose_len(sk, s);
+            }
+            return s;
         };
-        dim_t s = BAD; (void)(((s = f(get<I>(t), s)) < 0) && ...); assert(ANY!=s); // not at runtime
+        dim_t s = BAD; (void)(((s = f(get<I>(t), s)) != MISS) && ...); assert(ANY!=s); // not at runtime
         return s;
     }
 // could preserve static, but ply doesn't use it atm.

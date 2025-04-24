@@ -52,7 +52,11 @@ filldim(auto & dimv, auto && shape)
     for (int k=dimv.size(); --k>=0;) {
         dimv[k].step = s;
         RA_CHECK(dimv[k].len>=0, "Bad len[", k, "] ", dimv[k].len, ".");
+// gcc 14.2, no warning with sanitizers
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
         s *= dimv[k].len;
+#pragma GCC diagnostic pop
     }
     return s;
 }
