@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Dual numbers for automatic differentiation.
 
-// (c) Daniel Llorens - 2013-2024
+// (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -45,12 +45,10 @@ struct Dual
 #undef ASSIGNOPS
 };
 
-// conversions are by default constants.
 template <class R> constexpr auto dual(Dual<R> const & r) { return r; }
 template <class R> constexpr auto dual(R const & r) { return Dual<R> { r, 0. }; }
 
-template <class R, class D>
-constexpr auto
+template <class R, class D> constexpr auto
 dual(R const & r, D const & d)
 {
     return Dual<std::common_type_t<R, D>> { r, d };
@@ -79,7 +77,7 @@ template <class A, class B, class C>
 constexpr auto
 fma(Dual<A> const & a, Dual<B> const & b, Dual<C> const & c)
 {
-    return dual(::fma(a.re, b.re, c.re), ::fma(a.re, b.du, ::fma(a.du, b.re, c.du))); // FIXME shouldn't need ::
+    return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du)));
 }
 
 template <class A, class B>
@@ -136,10 +134,17 @@ operator+(Dual<A> const & a)
 
 template <class A>
 constexpr auto
+sqr(Dual<A> const & a)
+{
+    return a*a;
+}
+
+template <class A>
+constexpr auto
 inv(Dual<A> const & a)
 {
     auto i = 1./a.re;
-    return dual(i, -a.du*(i*i));
+    return dual(i, -a.du*sqr(i));
 }
 
 template <class A, class B>
@@ -225,13 +230,6 @@ constexpr auto
 sqrt(Dual<A> const & a)
 {
     return dual(sqrt(a.re), +a.du/(2.*sqrt(a.re)));
-}
-
-template <class A>
-constexpr auto
-sqr(Dual<A> const & a)
-{
-    return a*a;
 }
 
 template <class A>

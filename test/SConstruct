@@ -1,7 +1,7 @@
 # -*- coding: utf-8; mode: Python -*-
 # SConstruct for ra/test
 
-# (c) Daniel Llorens - 2015-2024
+# (c) Daniel Llorens - 2015-2025
 # This library is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
@@ -55,7 +55,7 @@ tester = ra.to_test_ra(env, variant_dir)
  for test in ['at', 'bench', 'big-0', 'big-1', 'bug83', 'cellrank', 'checks', 'compatibility',
               'concrete', 'const', 'constexpr', 'dual', 'early', 'explode-0', 'foreign', 'frame-new',
               'frame-old', 'fromb', 'fromu', 'headers', 'io', 'iota', 'iterator-small', 'len',
-              'list9', 'macros', 'mem-fn', 'ndebug', 'nested-0', 'old', 'operators', 'optimize',
+              'list9', 'macros', 'mem-fn', 'ndebug', 'nested-0', 'operators', 'optimize',
               'owned', 'ownership', 'ply', 'ra-0', 'ra-1', 'ra-10', 'ra-11', 'ra-12', 'ra-13',
               'ra-14', 'ra-15', 'ra-2', 'ra-3', 'ra-4', 'ra-5', 'ra-6', 'ra-7', 'ra-8', 'ra-16',
               'ra-9', 'ra-dual', 'reduction', 'reduction-1', 'reexported', 'reshape', 'return-expr',

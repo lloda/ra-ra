@@ -164,18 +164,21 @@ int main()
         ra::Small<int, 2, 2> a;
         ra::Small<int, 3, 2> b;
         static_assert(0==agree_s(a, b));
+        static_assert(0==agree_s(b, a));
     }
     tr.section("static match");
     {
         ra::Small<int, 2, 2> a;
         ra::Small<int, 2> b;
         static_assert(2==agree_s(a, b));
+        static_assert(2==agree_s(b, a));
     }
     tr.section("static match with dynamic term");
     {
         ra::Small<int> a;
         ra::Big<int, 1> b({1}, 77);
         tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(2, agree_s(a, b));
+        tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(2, agree_s(b, a));
     }
     tr.section("dynamic terms in match, static rank");
     {

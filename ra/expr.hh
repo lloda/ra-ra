@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Expression templates with prefix matching.
 
-// (c) Daniel Llorens - 2011-2024
+// (c) Daniel Llorens - 2011-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -304,7 +304,9 @@ reverse(Iota<w, I, N, S> const & i, K k = {})
 // --------------
 
 // TODO arbitrary exprs? runtime cr? ra::len in cr?
-template <int cr> constexpr auto iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
+template <int cr>
+constexpr auto
+iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
 
 constexpr void
 start(auto && t) { static_assert(false, "Cannot start() type."); }
@@ -334,7 +336,6 @@ template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
 constexpr auto
 start(T & t) { return t; }
 
-// FIXME const Iterator would still be unusable after start().
 constexpr decltype(auto)
 start(is_iterator auto && t) { return RA_FWD(t); }
 
@@ -344,18 +345,17 @@ start(is_iterator auto && t) { return RA_FWD(t); }
 // --------------------
 
 constexpr rank_t
-choose_rank(rank_t a, rank_t b) { return BAD==b ? a : BAD==a ? b : ANY==a ? a : ANY==b ? b : std::max(a, b); }
+choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
 
-// pick first if mismatch (see below). FIXME maybe return invalid.
 constexpr dim_t
-choose_len(dim_t a, dim_t b) { return BAD==a ? b : BAD==b ? a : ANY==a ? b : a; }
+choose_len(dim_t a, dim_t b) { return a>=0 ? a : b>=0 ? b : BAD==a ? b : a; }
 
 template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <bool checkp, IteratorConcept ... P, int ... I>
 struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 {
     std::tuple<P ...> t;
-    constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(r, ra::rank_s<P>())), ...); }();
+    constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(ra::rank_s<P>(), r)), ...); }();
 
 // 0: fail, 1: rt, 2: pass
     consteval static int
@@ -385,10 +385,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
             return false;
         } else if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
-#pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all.
-#pragma GCC diagnostic warning "-Warray-bounds"
                 dim_t ls = len(k);
-#pragma GCC diagnostic pop
                 if (((k<ra::rank(get<I>(t)) && ls!=choose_len(get<I>(t).len(k), ls)) || ...)) {
                     return false;
                 }
@@ -418,9 +415,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr rank_t
     rank() const requires (ANY==rs)
     {
-        rank_t r = BAD;
-        ((r = choose_rank(r, ra::rank(get<I>(t)))), ...);
-        assert(ANY!=r); // not at runtime
+        rank_t r = BAD; ((r = choose_rank(ra::rank(get<I>(t)), r)), ...); assert(ANY!=r); // not at runtime
         return r;
     }
 // first nonnegative size, if none first ANY, if none then BAD
@@ -429,7 +424,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     {
         auto f = [&k]<class A>(dim_t s) {
             constexpr rank_t ar = ra::rank_s<A>();
-            return (ar<0 || k<ar) ? choose_len(s, A::len_s(k)) : s;
+            return (ar<0 || k<ar) ? choose_len(A::len_s(k), s) : s;
         };
         dim_t s = BAD; ((s>=0 ? s : s = f.template operator()<std::decay_t<P>>(s)), ...);
         return s;
@@ -443,10 +438,9 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     len(int k) const requires (!(requires { P::len(k); } && ...))
     {
         auto f = [&k](dim_t s, auto const & a) {
-            return k<ra::rank(a) ? choose_len(s, a.len(k)) : s;
+            return k<ra::rank(a) ? choose_len(a.len(k), s) : s;
         };
-        dim_t s = BAD; ((s>=0 ? s : s = f(s, get<I>(t))), ...);
-        assert(ANY!=s); // not at runtime
+        dim_t s = BAD; ((s>=0 ? s : s = f(s, get<I>(t))), ...); assert(ANY!=s); // not at runtime
         return s;
     }
 // could preserve static, but ply doesn't use it atm.
