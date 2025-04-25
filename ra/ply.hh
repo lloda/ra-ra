@@ -118,7 +118,7 @@ ply_ravel(A && a, Early && early = Nop {})
 // find outermost compact dim.
     rank_t * ocd = order;
     dim_t ss = a.len(*ocd);
-#pragma GCC diagnostic push // gcc 12.2 and 13.2 with RA_DO_CHECK=0 and -fno-sanitize=all
+#pragma GCC diagnostic push // gcc 14.2 with RA_DO_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
     for (--rank, ++ocd; rank>0 && a.keep(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);

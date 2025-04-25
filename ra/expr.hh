@@ -347,6 +347,7 @@ start(is_iterator auto && t) { return RA_FWD(t); }
 constexpr rank_t
 choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
 
+// first nonnegative size, if none first ANY, if none then BAD
 constexpr dim_t
 choose_len(dim_t a, dim_t b) { return a>=0 ? a : b>=0 ? b : BAD==a ? b : a; }
 
@@ -418,7 +419,6 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
         rank_t r = BAD; ((r = choose_rank(ra::rank(get<I>(t)), r)), ...); assert(ANY!=r); // not at runtime
         return r;
     }
-// first nonnegative size, if none first ANY, if none then BAD
     constexpr static dim_t
     len_s(int k)
     {
@@ -426,7 +426,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
             constexpr rank_t ar = ra::rank_s<A>();
             return (ar<0 || k<ar) ? choose_len(A::len_s(k), s) : s;
         };
-        dim_t s = BAD; ((s>=0 ? s : s = f.template operator()<std::decay_t<P>>(s)), ...);
+        dim_t s = BAD; (void)(((s = f.template operator()<std::decay_t<P>>(s)) < 0) && ...);
         return s;
     }
     constexpr static dim_t
@@ -437,10 +437,10 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr dim_t
     len(int k) const requires (!(requires { P::len(k); } && ...))
     {
-        auto f = [&k](dim_t s, auto const & a) {
+        auto f = [&k](auto const & a, dim_t s) {
             return k<ra::rank(a) ? choose_len(a.len(k), s) : s;
         };
-        dim_t s = BAD; ((s>=0 ? s : s = f(s, get<I>(t))), ...); assert(ANY!=s); // not at runtime
+        dim_t s = BAD; (void)(((s = f(get<I>(t), s)) < 0) && ...); assert(ANY!=s); // not at runtime
         return s;
     }
 // could preserve static, but ply doesn't use it atm.
