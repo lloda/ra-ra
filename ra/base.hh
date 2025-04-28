@@ -10,6 +10,7 @@
 #pragma once
 #include "tuples.hh"
 #include <array>
+#include <format>
 #include <ranges>
 #include <vector>
 #include <iosfwd> // for format, ss.
@@ -269,8 +270,8 @@ operator<<(std::ostream & o, std::source_location const & loc)
     return o << loc.file_name() << ":" << loc.line() << "," << loc.column();
 }
 
-template <class A> requires (std::formattable<A, char>) constexpr void print1(auto & o, A && a) { std::print(o, "{}", RA_FWD(a)); }
-template <class A> requires (!std::formattable<A, char>) constexpr void print1(auto & o, A && a) { o << RA_FWD(a); }
+constexpr void print1(auto & o, std::formattable<char> auto && a) { std::print(o, "{}", RA_FWD(a)); }
+constexpr void print1(auto & o, auto && a) { o << RA_FWD(a); }
 constexpr auto & print(auto & o, auto && ... a) { (print1(o, RA_FWD(a)), ...); return o; }
 constexpr std::string format(auto && ... a) { std::ostringstream o; print(o, RA_FWD(a) ...); return o.str(); }
 constexpr std::string const & format(std::string const & s) { return s; }

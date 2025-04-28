@@ -10,7 +10,8 @@
 #pragma once
 #include "ra/tuples.hh"
 #include <typeinfo>
-#include <sys/types.h>
+#include <string>
+#include <cxxabi.h>
 
 namespace ra::mp {
 
@@ -41,17 +42,11 @@ template <class T>
 std::string
 type_name()
 {
-    using TR = std::remove_cvref_t<T>;
-    std::string r = typeid(TR).name();
-    if (std::is_const_v<TR>)
-        r += " const";
-    if (std::is_volatile_v<TR>)
-        r += " volatile";
-    if (std::is_lvalue_reference_v<T>)
-        r += " &";
-    else if (std::is_rvalue_reference_v<T>)
-        r += " &&";
-    return r;
+    int status;
+    auto s = abi::__cxa_demangle(typeid(T).name(), NULL, NULL, &status);
+    std::string out(s);
+    free(s);
+    return out;
 }
 
 template <class A, int ... I> struct check_idx { constexpr static bool value = false; };

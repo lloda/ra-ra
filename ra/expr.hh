@@ -356,23 +356,23 @@ template <bool checkp, IteratorConcept ... P, int ... I>
 struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
 {
     std::tuple<P ...> t;
-    constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(ra::rank_s<P>(), r)), ...); }();
+    constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
 
 // 0: fail, 1: rt, 2: pass
     consteval static int
     check_s()
     {
-        if constexpr (sizeof...(P)<2 || sizeof...(P)==1+(bool(0==ra::rank_s<P>()) + ...)) {
+        if constexpr (sizeof...(P)<2 || sizeof...(P)==1+(bool(0==rank_s<P>()) + ...)) {
             return 2;
         } else if constexpr (ANY!=rs) {
             bool tbc = false;
             for (int k=0; k<rs; ++k) {
                 dim_t ls = len_s(k);
-                if (((k<ra::rank_s<P>() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
+                if (((k<rank_s<P>() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
                     return 0;
                 }
-                int anyk = ((k<ra::rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
-                int fixk = ((k<ra::rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
+                int anyk = ((k<rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
+                int fixk = ((k<rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
                 tbc = tbc || (anyk>0 && anyk+fixk>1);
             }
             return tbc ? 1 : 2;
@@ -423,7 +423,7 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     len_s(int k)
     {
         auto f = [&k]<class A>(dim_t s) {
-            constexpr rank_t ar = ra::rank_s<A>();
+            constexpr rank_t ar = rank_s<A>();
             return (ar<0 || k<ar) ? choose_len(A::len_s(k), s) : s;
         };
         dim_t s = BAD; (void)(((s = f.template operator()<std::decay_t<P>>(s)) < 0) && ...);

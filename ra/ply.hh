@@ -13,7 +13,6 @@
 
 #pragma once
 #include "expr.hh"
-#include <format>
 
 namespace ra {
 
@@ -353,8 +352,8 @@ template <ra::is_array_formattable A>
 struct std::formatter<A>
 {
     ra::format_t fmt;
-    std::conditional_t<std::formattable<ra::value_t<A>, char>,
-                       std::formatter<ra::value_t<A>>, ra::ostream_formatter> under;
+    std::conditional_t<std::formattable<ra::ncvalue_t<A>, char>,
+                       std::formatter<ra::ncvalue_t<A>>, ra::ostream_formatter> under;
 
     constexpr auto
     parse(auto & ctx)
