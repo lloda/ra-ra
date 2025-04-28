@@ -151,7 +151,8 @@ int main()
 #define MAP map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
         int x = 0;
         try {
-            tr.test_eq(ra::ANY, MAP.len_s(1));
+            cout << "CHECK " << MAP.check() << endl;
+            cout << MAP << endl; // check happens here
             x = 1;
         } catch (ra_error & e) {
         }
@@ -163,7 +164,7 @@ int main()
     {
         ra::Small<int, 2, 2> a;
         ra::Small<int, 3, 2> b;
-        cout << match<false>(start(a), start(b)).len_s(0) << endl;
+        cout << match(start(a), start(b)).len_s(0) << endl;
         static_assert(0==agree_s(a, b));
         static_assert(0==agree_s(b, a));
     }
@@ -188,7 +189,7 @@ int main()
         try {
             ra::Small<int, 2> a {2, 3};
             ra::Big<int, 1> b({1}, 77);
-            std::cout << "LEN " << decltype(a+b)::len_s(0) << std::endl;
+            static_assert(2==decltype(a+b)::len_s(0));
             tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(1, decltype(a+b)::check_s());
             tr.test(!agree(a, b));
             a = b;
