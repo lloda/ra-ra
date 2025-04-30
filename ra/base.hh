@@ -29,7 +29,7 @@ namespace ra {
 constexpr int VERSION = 29;
 constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
 constexpr int BAD = -1988888888; // undefined, eg dead axes
-constexpr int MIS = -1922222222;  // only from choose_len
+constexpr int MIS = -1922222222; // only from choose_len
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
@@ -111,7 +111,7 @@ concept SliceConcept = requires (A a)
     template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
     template <class A> concept NAME = JOIN(NAME, _def)<std::decay_t< A >>;
 
-RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A> || ra::is_constant<A>))
+RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A> || is_constant<A>))
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
@@ -245,7 +245,7 @@ enum shape_t { defaultshape, withshape, noshape };
 struct format_t
 {
     shape_t shape = defaultshape;
-    std::string open = "", close = "", sep0 = " ", sepn = "\n", rep = "\n";
+    std::string open="", close="", sep0=" ", sepn="\n", rep="\n";
     bool align = false;
 };
 
@@ -259,7 +259,7 @@ template <class A> struct Fmt { format_t f = {}; A a; };
 template <class A> constexpr auto fmt(format_t f, A && a) { return Fmt<A> { f, RA_FWD(a) }; }
 
 // exclude std::string_view so it still prints as a string [ra13].
-RA_IS_DEF(is_array_formattable, ra::is_ra<A> || (ra::is_fov<A> && !std::is_convertible_v<A, std::string_view>));
+RA_IS_DEF(is_array_formattable, is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>));
 
 constexpr std::ostream & operator<<(std::ostream & o, is_array_formattable auto && a) { return o << fmt({}, RA_FWD(a)); }
 template <class T>
