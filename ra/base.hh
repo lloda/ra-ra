@@ -29,7 +29,7 @@ namespace ra {
 constexpr int VERSION = 29;
 constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
 constexpr int BAD = -1988888888; // undefined, eg dead axes
-constexpr int MISS = -1922222222;  // only from choose_len
+constexpr int MIS = -1922222222;  // only from choose_len
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;

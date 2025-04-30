@@ -54,6 +54,19 @@ int main()
         tr.info(msg).test(yes);
     }
 
+    tr.section("choose_len");
+    {
+        using ra::MIS, ra::BAD, ra::ANY, ra::choose_len;
+        tr.test_eq(ANY, choose_len(BAD, ANY));
+        tr.test_eq(ANY, choose_len(ANY, BAD));
+        tr.test_eq(0,   choose_len(0, BAD));
+        tr.test_eq(0,   choose_len(BAD, 0));
+        tr.test_eq(0,   choose_len(0, ANY));
+        tr.test_eq(0,   choose_len(ANY, 0));
+        tr.test_eq(MIS, choose_len(1, 0));
+        tr.test_eq(0,   choose_len(0, 0));
+    }
+
 
 // ------------------------------
 // see test/iota.cc
@@ -160,14 +173,29 @@ int main()
 #undef MAP
     }
 // If the size of an expression is static, dynamic checks may still need to be run if any of the terms of the expression has dynamic size. This is checked in Match::check_s().
-    tr.section("static mismatch");
+    tr.section("static mismatch I");
     {
         ra::Small<int, 2, 2> a;
         ra::Small<int, 3, 2> b;
-        cout << match(start(a), start(b)).len_s(0) << endl;
+        cout << ra::Match(start(a), start(b)).len_s(0) << endl;
         static_assert(0==agree_s(a, b));
         static_assert(0==agree_s(b, a));
     }
+    tr.section("static mismatch II");
+    {
+        ra::Small<int, 2> a;
+        ra::Small<int, 2, 2> b;
+        ra::Small<int, 2, 3> c;
+        static_assert(2==agree_s(a, b));
+        static_assert(2==agree_s(a, c));
+        static_assert(2==agree_s(b, a));
+        static_assert(2==agree_s(c, a));
+        static_assert(0==agree_s(a, b+c));
+        static_assert(0==agree_s(b+c, a));
+        static_assert(0==agree_s(a+(b+c)));
+        static_assert(0==agree_s((b+c)+a));
+    }
+
     tr.section("static match");
     {
         ra::Small<int, 2, 2> a;
