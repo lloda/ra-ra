@@ -9,8 +9,9 @@
 
 #pragma once
 #include "ra/tuples.hh"
-#include <typeinfo>
+#include <iosfwd>
 #include <string>
+#include <typeinfo>
 #include <cxxabi.h>
 
 namespace ra::mp {

@@ -90,13 +90,9 @@ int main()
     tr.section("declaring verbs");
     {
         auto v = ra::wrank<0, 1>(plus2real);
-        cout << ra::mp::ref<decltype(v)::cranks, 0>::value << endl;
-        cout << ra::mp::ref<decltype(v)::cranks, 1>::value << endl;
         auto vv = ra::wrank<1, 1>(v);
-        cout << ra::mp::ref<decltype(vv)::cranks, 0>::value << endl;
-        cout << ra::mp::ref<decltype(vv)::cranks, 1>::value << endl;
-
         static_assert(ra::is_verb<decltype(v)>);
+        static_assert(ra::is_verb<decltype(vv)>);
         static_assert(!ra::is_verb<decltype(plus2real)>);
     }
     tr.section("using Framematch");

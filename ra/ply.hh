@@ -97,6 +97,7 @@ template <IteratorConcept A, class Early = Nop>
 constexpr auto
 ply_ravel(A && a, Early && early = Nop {})
 {
+    validate(a);
     rank_t rank = ra::rank(a);
 // must avoid 0-length vlas [ra40].
     if (0>=rank) {
@@ -211,8 +212,9 @@ template <IteratorConcept A, class Early = Nop>
 constexpr decltype(auto)
 ply_fixed(A && a, Early && early = Nop {})
 {
+    validate(a);
     constexpr rank_t rank = rank_s(a);
-    static_assert(0<=rank, "ply_fixed needs static rank");
+    static_assert(0<=rank, "ply_fixed requires static rank");
 // inside first. FIXME better heuristic - but first need a way to force row-major
     constexpr auto order = mp::tuple2array<int, mp::reverse<mp::iota<rank>>>();
     if constexpr (0==rank) {
@@ -244,7 +246,6 @@ template <IteratorConcept A, class Early = Nop>
 constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
-    static_assert(0<=rank_s(a) || ANY==rank_s(a));
     if constexpr (ANY==size_s(a)) {
         return ply_ravel(RA_FWD(a), RA_FWD(early));
     } else {
@@ -276,7 +277,7 @@ struct STLIterator
     std::decay_t<decltype(ra::shape(a))> ind; // concrete type
     bool over;
 
-    STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) {}
+    STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) { validate(a, bool_c<true> {}); }
     constexpr STLIterator(STLIterator &&) = default;
     constexpr STLIterator(STLIterator const &) = delete;
     constexpr STLIterator & operator=(STLIterator &&) = default;
@@ -385,9 +386,8 @@ struct std::formatter<A>
     constexpr auto
     format(A const & a_, auto & ctx, ra::format_t const & fmt) const
     {
-        static_assert(!ra::has_len<A>, "len outside subscript context.");
-        static_assert(ra::BAD!=ra::size_s<A>(), "Cannot print undefined size expr.");
         auto a = ra::start(a_); // [ra35]
+        validate(a);
         auto sha = ra::shape(a);
         assert(every(ra::start(sha)>=0));
         auto out = ctx.out();

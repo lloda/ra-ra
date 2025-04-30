@@ -109,7 +109,7 @@ wlen(Ln ln, E && e)
 // Rank-0 IteratorConcept. Can be used on foreign objects, or as alternative to the rank conjunction.
 // We still want f(scalar(C)) to be f(C) and not map(f, C), this is controlled by tomap/toreduce.
 template <class C>
-struct Scalar
+struct Scalar final
 {
     C c;
     RA_ASSIGNOPS_DEFAULT_SET
@@ -143,7 +143,7 @@ maybe_any = []{
 
 // IteratorConcept for foreign rank 1 objects.
 template <std::bidirectional_iterator I, class N, class S>
-struct Ptr
+struct Ptr final
 {
     static_assert(is_constant<N> || 0==rank_s<N>());
     static_assert(is_constant<S> || 0==rank_s<S>());
@@ -222,10 +222,10 @@ ptr(I && i, N && n = N {}, S && s = thestep<S>())
 }
 
 // Sequence and IteratorConcept for same. Iota isn't really a terminal, but its exprs must all have rank 0.
-// FIXME w is a custom Reframe mechanism inherited from TensorIndex. Generalize/unify
+// FIXME w is a custom Reframe mechanism. Generalize/unify
 // FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
 template <int w, class I, class N, class S>
-struct Iota
+struct Iota final
 {
     static_assert(w>=0);
     static_assert(is_constant<S> || 0==rank_s<S>());
@@ -273,10 +273,12 @@ iota(N && n = N {}, I && i = 0, S && s = thestep<S>())
 FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 #undef DEF_TENSORINDEX
 
-RA_IS_DEF(is_iota, false)
-// BAD is excluded from beating to allow B = A(... i ...) to use B's len. FIXME find a way?
-template <class I, class N, class S>
-constexpr bool is_iota_def<Iota<0, I, N, S>> = (BAD != Iota<0, I, N, S>::nn);
+template <class A> concept is_iota = requires (A a)
+{
+    []<class I, class N, class S>(Iota<0, I, N, S> const &){}(a);
+// exclude BAD from beating to allow B = A(... i ...) to use B's len. FIXME
+    requires BAD!=A::nn;
+};
 
 constexpr bool
 inside(is_iota auto const & i, dim_t l)
@@ -329,7 +331,7 @@ start(is_builtin_array auto && t);
 constexpr auto
 start(SliceConcept auto && t) { return iter<0>(RA_FWD(t)); }
 
-RA_IS_DEF(is_ra_scalar, (std::same_as<A, Scalar<decltype(std::declval<A>().c)>>))
+template <class A> concept is_ra_scalar = requires (A a) { []<class C>(Scalar<C> const &){}(a); };
 
 // iterators need to be start()ed on each use [ra35].
 template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
@@ -347,65 +349,73 @@ start(is_iterator auto && t) { return RA_FWD(t); }
 constexpr rank_t
 choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
 
-// first nonnegative size, if none first ANY, if none then BAD
+// finite before ANY before BAD, assumes checks pass.
 constexpr dim_t
-choose_len(dim_t a, dim_t b) { return a>=0 ? a : b>=0 ? b : BAD==a ? b : a; }
+choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : BAD==a ? b : BAD==b ? a : b; }
 
-template <bool checkp, class T, class K=mp::iota<mp::len<T>>> struct Match;
-template <bool checkp, IteratorConcept ... P, int ... I>
-struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
+template <class T, class K=mp::iota<mp::len<T>>> struct Match;
+// https://stackoverflow.com/a/71921982
+template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
+
+// count leaves with unknown rt (ANY) size. We need a rt check if there's more than one.
+template <class TOP, class A=TOP>
+consteval int
+tbc(int sofar)
+{
+    if constexpr (is_match<A>) {
+        return A::template tbc<TOP>(sofar);
+    } else {
+        if (int rt=rank_s<TOP>(), ra=rank_s<A>(); 0==rt || 0==ra) {
+            return sofar;
+        } else if (ANY==rt || ANY==ra) {
+            return 1+sofar;
+        } else {
+// by choose_rank ra<=rt always, plus MIS==la implies MIS==lt, so no need to check both.
+            for (int k=0; k<ra; ++k) {
+                if (dim_t lt = TOP::len_s(k, true), la = A::len_s(k); MIS==lt) {
+                    return -1;
+                } else if (BAD!=la && BAD!=lt && (ANY==la || ANY==lt)) {
+                    return 1+sofar;
+                }
+            }
+            return sofar;
+        }
+    }
+}
+
+template <IteratorConcept ... P, int ... I>
+struct Match<std::tuple<P ...>, mp::int_list<I ...>>
 {
     std::tuple<P ...> t;
+
+    constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
+
     constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
 
-// 0: fail, 1: rt, 2: pass
+    template <class TOP>
+    consteval static int
+    tbc(int sofar)
+    {
+        (void)(((sofar = ra::tbc<TOP, std::decay_t<P>>(sofar))>=0) && ...);
+        return sofar;
+    }
+// 0: fail, 1: rt check, 2: pass
     consteval static int
     check_s()
     {
-        if constexpr (sizeof...(P)<2 || sizeof...(P)==1+(bool(0==rank_s<P>()) + ...)) {
-            return 2;
-        } else if constexpr (ANY!=rs) {
-            bool tbc = false;
-            for (int k=0; k<rs; ++k) {
-                dim_t ls = len_s(k);
-                if (((k<rank_s<P>() && ls!=choose_len(std::decay_t<P>::len_s(k), ls)) || ...)) {
-                    return 0;
-                }
-                int anyk = ((k<rank_s<P>() && (ANY==std::decay_t<P>::len_s(k))) + ...);
-                int fixk = ((k<rank_s<P>() && (0<=std::decay_t<P>::len_s(k))) + ...);
-                tbc = tbc || (anyk>0 && anyk+fixk>1);
-            }
-            return tbc ? 1 : 2;
-        }
-        return 1;
+        int sofar = ra::tbc<Match<std::tuple<P ...>>>(0);
+        return 0>sofar ? 0 : 2>sofar ? 2 : 1;
     }
     constexpr bool
     check() const
     {
-        if constexpr (constexpr int c=check_s(); 0==c) {
-            return false;
-        } else if constexpr (1==c) {
+        constexpr int c = check_s();
+        if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
-                dim_t ls = len(k);
-                if (((k<ra::rank(get<I>(t)) && ls!=choose_len(get<I>(t).len(k), ls)) || ...)) {
-                    return false;
-                }
+                if (len(k)<0) { return false; }
             }
         }
-        return true;
-    }
-
-    constexpr
-    Match(P ... p_): t(p_ ...) // [ra1]
-    {
-// TODO Maybe on ply would make checkp, agree_xxx() unnecessary.
-        if constexpr (checkp && !(has_len<P> || ...)) {
-            constexpr int c = check_s();
-            static_assert(0!=c, "Mismatched shapes."); // FIXME c++26
-            if constexpr (1==c) {
-                RA_CHECK(check(), "Mismatched shapes", fmt({.shape=noshape, .open=" [", .close="]"}, ra::shape(p_)) ..., ".");
-            }
-        }
+        return !(0==c);
     }
 
     consteval static rank_t
@@ -416,17 +426,20 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     constexpr rank_t
     rank() const requires (ANY==rs)
     {
-        rank_t r = BAD; ((r = choose_rank(ra::rank(get<I>(t)), r)), ...); assert(ANY!=r); // not at runtime
+        rank_t r = BAD; ((r = choose_rank(ra::rank(get<I>(t)), r)), ...); assert(ANY!=r); // not at rt
         return r;
     }
     constexpr static dim_t
-    len_s(int k)
+    len_s(int k, bool check=false)
     {
-        auto f = [&k]<class A>(dim_t s) {
-            constexpr rank_t ar = rank_s<A>();
-            return (ar<0 || k<ar) ? choose_len(A::len_s(k), s) : s;
+        auto f = [&k, &check]<class A>(dim_t s) {
+            if (constexpr rank_t r=rank_s<A>(); r<0 || k<r) {
+                dim_t sk = [&]{ if constexpr (is_match<A>) return A::len_s(k, check); else return A::len_s(k); }();
+                return (MIS==sk) ? MIS : check && (ANY==sk || ANY==s) ? ANY : choose_len(sk, s);
+            }
+            return s;
         };
-        dim_t s = BAD; (void)(((s = f.template operator()<std::decay_t<P>>(s)) < 0) && ...);
+        dim_t s = BAD; (void)(((s = f.template operator()<std::decay_t<P>>(s)) != MIS) && ...);
         return s;
     }
     constexpr static dim_t
@@ -438,21 +451,14 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     len(int k) const requires (!(requires { P::len(k); } && ...))
     {
         auto f = [&k](auto const & a, dim_t s) {
-            return k<ra::rank(a) ? choose_len(a.len(k), s) : s;
+            if (k<ra::rank(a)) {
+                dim_t sk = a.len(k);
+                return (MIS==sk) ? MIS : choose_len(sk, s);
+            }
+            return s;
         };
-        dim_t s = BAD; (void)(((s = f(get<I>(t), s)) < 0) && ...); assert(ANY!=s); // not at runtime
+        dim_t s = BAD; (void)(((s = f(get<I>(t), s)) != MIS) && ...); assert(ANY!=s); // not at rt
         return s;
-    }
-// could preserve static, but ply doesn't use it atm.
-    constexpr auto
-    step(int i) const
-    {
-        return std::make_tuple(get<I>(t).step(i) ...);
-    }
-    constexpr void
-    adv(rank_t k, dim_t d)
-    {
-        (get<I>(t).adv(k, d), ...);
     }
     constexpr bool
     keep(dim_t st, int z, int j) const requires (!(requires { P::keep(st, z, j); }  && ...))
@@ -464,6 +470,9 @@ struct Match<checkp, std::tuple<P ...>, mp::int_list<I ...>>
     {
         return (std::decay_t<P>::keep(st, z, j) && ...);
     }
+// could preserve static, but ply doesn't use it atm.
+    constexpr auto step(int i) const { return std::make_tuple(get<I>(t).step(i) ...); }
+    constexpr void adv(rank_t k, dim_t d) { (get<I>(t).adv(k, d), ...); }
     constexpr auto save() const { return std::make_tuple(get<I>(t).save() ...); }
     constexpr void load(auto const & pp) { ((get<I>(t).load(get<I>(pp))), ...); }
     constexpr void mov(auto const & s) { ((get<I>(t).mov(get<I>(s))), ...); }
@@ -515,18 +524,6 @@ struct Reframe
         int l=orig(k);
         return l>=0 ? a.len(l) : BAD;
     }
-    constexpr auto
-    step(int k) const
-    {
-        int l=orig(k);
-        return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>;
-    }
-    constexpr void
-    adv(rank_t k, dim_t d)
-    {
-        int l=orig(k);
-        if (l>=0) { a.adv(l, d); }
-    }
     constexpr static bool
     keep(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep(st, z, j); })
     {
@@ -544,6 +541,8 @@ struct Reframe
     {
         return a.at(std::apply([&i](auto ... t) { return std::array<dim_t, sizeof...(t)> { i[t] ... }; }, Dest {}));
     }
+    constexpr auto step(int k) const { int l=orig(k); return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>; }
+    constexpr void adv(rank_t k, dim_t d) { if (int l=orig(k); l>=0) { a.adv(l, d); } }
     constexpr decltype(auto) operator*() const { return *a; }
     constexpr auto save() const { return a.save(); }
     constexpr void load(auto const & p) { a.load(p); }
@@ -569,19 +568,12 @@ reframe(A && a)
 // verbs and rank conjunction
 // ---------------------------
 
-template <class cranks_, class Op_>
-struct Verb
-{
-    using cranks = cranks_;
-    using Op = Op_;
-    Op op;
-};
-
-RA_IS_DEF(is_verb, (std::is_same_v<A, Verb<typename A::cranks, typename A::Op>>))
+template <class cranks, class Op> struct Verb final { Op op; };
+template <class A> concept is_verb = requires (A a) { []<class cranks, class Op>(Verb<cranks, Op> const &){}(a); };
 
 template <class cranks, class Op>
 constexpr auto
-wrank(cranks cranks_, Op && op) { return Verb<cranks, Op> { RA_FWD(op) }; }
+wrank(cranks, Op && op) { return Verb<cranks, Op> { RA_FWD(op) }; }
 
 template <rank_t ... crank, class Op>
 constexpr auto
@@ -627,32 +619,43 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // explicit agreement checks
 // ---------------
 
-template <bool checkp, class ... P>
-constexpr auto
-match(P && ... p) { return Match<checkp, std::tuple<P ...>> { RA_FWD(p) ... }; }
-
 template <class ... P>
-constexpr bool
-agree(P && ... p) { return match<false>(ra::start(RA_FWD(p)) ...).check(); }
+Match(P && ... p) -> Match<std::tuple<P ...>>;
 
-template <class ... P>
-constexpr int
-agree_s(P && ... p) { return decltype(match<false>(ra::start(RA_FWD(p)) ...))::check_s(); }
-
-template <class Op, class ... P> requires (is_verb<Op>)
 constexpr bool
-agree_op(Op && op, P && ... p) { return agree_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...); }
+agree(auto const & ... p) { return Match(ra::start(p) ...).check(); }
 
-template <class Op, class ... P> requires (!is_verb<Op>)
+consteval int
+agree_s(auto const & ... p) { return decltype(Match(ra::start(p) ...))::check_s(); }
+
 constexpr bool
-agree_op(Op && op, P && ... p) { return agree(RA_FWD(p) ...); }
+agree_op(is_verb auto const & op, auto const & ... p) { return agree_verb(mp::iota<sizeof...(p)> {}, op, p ...); }
+
+constexpr bool
+agree_op(auto const & op, auto const & ... p) { return agree(p ...); }
 
 template <class V, class ... T, int ... i>
 constexpr bool
-agree_verb(mp::int_list<i ...>, V && v, T && ... t)
+agree_verb(mp::int_list<i ...>, V const & v, T const & ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op(FM::op(RA_FWD(v)), reframe<mp::ref<typename FM::R, i>>(ra::start(RA_FWD(t))) ...);
+    return agree_op(FM::op(v), reframe<mp::ref<typename FM::R, i>>(ra::start(t)) ...);
+}
+
+template <class A, class U = bool_c<false>>
+constexpr void
+validate(A const & a, U allow_unb = {})
+{
+    static_assert(!has_len<A>, "Out of context ra::len .");
+    static_assert(allow_unb || ra::BAD!=ra::size_s<A>(), "Undefined size.");
+    static_assert(0<=rank_s(a) || ANY==rank_s(a), "Undefined rank.");
+    if constexpr (is_match<A>) {
+        if constexpr (constexpr int c=a.check_s(); 1==c) {
+            std::apply([c=a.check()](auto const & ... p) { RA_CHECK(c, "Bad shapes", fmt(lstyle, shape(p)) ..., "."); }, a.t);
+        } else {
+            static_assert(0!=c, "Bad shapes."); // FIXME c++26
+        }
+    }
 }
 
 
@@ -672,13 +675,12 @@ decltype(auto) to_scalar(E && e)
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
 template <class Op, IteratorConcept ... P, int ... I>
-struct Map<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
+struct Map<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
 {
-    using Match_ = Match<true, std::tuple<P ...>>;
-    using Match_::t;
+    using Match<std::tuple<P ...>>::t;
     Op op;
 
-    constexpr Map(Op op_, P ... p_): Match_(p_ ...), op(op_) {} // [ra1]
+    constexpr Map(Op op_, P ... p_): Match<std::tuple<P ...>>(p_ ...), op(op_) {} // [ra1]
     RA_ASSIGNOPS_SELF(Map)
     RA_ASSIGNOPS_DEFAULT_SET
     constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, get<I>(t).at(j) ...); }
@@ -689,6 +691,9 @@ struct Map<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::
 template <class Op, IteratorConcept ... P>
 constexpr bool is_special_def<Map<Op, std::tuple<P ...>>> = (is_special<P> || ...);
 
+template <class Op, class ... P>
+Map(Op && op, P && ... p) -> Map<Op, std::tuple<P ...>>;
+
 template <class Op, class ... P, int ... i>
 constexpr auto
 map_verb(mp::int_list<i ...>, Op && op, P && ... p)
@@ -697,16 +702,11 @@ map_verb(mp::int_list<i ...>, Op && op, P && ... p)
     return map_(FM::op(RA_FWD(op)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(p)) ...);
 }
 
-template <class Op, class ... P>
 constexpr auto
-map_(Op && op, P && ... p)
-{
-    if constexpr (is_verb<Op>) {
-        return map_verb(mp::iota<sizeof...(P)> {}, RA_FWD(op), RA_FWD(p) ...);
-    } else {
-        return Map<Op, std::tuple<P ...>> { RA_FWD(op), RA_FWD(p) ... };
-    }
-}
+map_(is_verb auto && op, auto && ... p) { return map_verb(mp::iota<sizeof...(p)> {}, RA_FWD(op), RA_FWD(p) ...); }
+
+constexpr auto
+map_(auto && op, auto && ... p) { return Map(RA_FWD(op), RA_FWD(p) ...); }
 
 constexpr auto
 map(auto && op, auto && ... a) { return map_(RA_FWD(op), start(RA_FWD(a)) ...); }
@@ -723,7 +723,7 @@ constexpr mp::apply<std::common_reference_t, mp::map<type_at<J>::template type, 
 pick_at(std::size_t p0, T && t, J const & j)
 {
     constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
-    if constexpr (I < N) {
+    if constexpr (I<N) {
         return (p0==I) ? get<I+1>(t).at(j) : pick_at<I+1>(p0, t, j);
     } else {
         RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
@@ -737,7 +737,7 @@ constexpr mp::apply<std::common_reference_t, mp::map<type_star, mp::drop1<std::d
 pick_star(std::size_t p0, T && t)
 {
     constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
-    if constexpr (I < N) {
+    if constexpr (I<N) {
         return (p0==I) ? *(get<I+1>(t)) : pick_star<I+1>(p0, t);
     } else {
         RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
@@ -746,13 +746,12 @@ pick_star(std::size_t p0, T && t)
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <IteratorConcept ... P, int ... I>
-struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<true, std::tuple<P ...>>
+struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
 {
-    using Match_ = Match<true, std::tuple<P ...>>;
-    using Match_::t;
+    using Match<std::tuple<P ...>>::t;
     static_assert(sizeof...(P)>1);
 
-    constexpr Pick(P ... p_): Match_(p_ ...) {} // [ra1]
+    constexpr Pick(P ... p_): Match<std::tuple<P ...>>(p_ ...) {} // [ra1]
     RA_ASSIGNOPS_SELF(Pick)
     RA_ASSIGNOPS_DEFAULT_SET
     constexpr decltype(auto) at(auto const & j) const { return pick_at<0>(get<0>(t).at(j), t, j); }

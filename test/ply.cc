@@ -43,6 +43,9 @@ int main()
             TEST(ply_fixed);
 #undef TEST
         }
+// gcc 14.2, no warning with sanitizers
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
 #define TEST(plier)                                                     \
         {                                                               \
             ra::Small<int, 3> A {1, 2, 3};                              \
@@ -59,6 +62,7 @@ int main()
         }
         TEST(ply_ravel);
         TEST(ply_fixed);
+#pragma GCC diagnostic pop
 #undef TEST
         {
             ra::Unique<int, 3> a(std::vector<ra::dim_t> {3, 2, 4}, ra::none);
