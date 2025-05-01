@@ -11,7 +11,7 @@
 #include <iomanip>
 #include "ra/test.hh"
 
-using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder, ra::Benchmark;
+using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 using real = double;
 using real4 = ra::Small<real, 4>;
 using ra::sqrm;
@@ -27,7 +27,7 @@ real y;
 template <class BV>
 void report(int size, BV const & bv)
 {
-    tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/size/1e-9, " ns [", Benchmark::stddev(bv)/size/1e-9 ,"] ", bv.name)
+    tr.info(Benchmark::report(bv, size), " ", bv.name)
         .test_eq(prod(S1)*N*4*4, y);
 }
 

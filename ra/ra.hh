@@ -95,8 +95,8 @@ FOR_EACH(RA_FOR_TYPES, float, double)
     constexpr C xi(C z)                { return C(-z.imag(), z.real()); } \
     constexpr R real_part(C const & z) { return z.real(); }             \
     constexpr R imag_part(C const & z) { return z.imag(); }             \
-    inline R & real_part(C & z)        { return reinterpret_cast<R *>(&z)[0]; } \
-    inline R & imag_part(C & z)        { return reinterpret_cast<R *>(&z)[1]; } \
+    constexpr R & real_part(C & z)     { return std::bit_cast<R *>(&z)[0]; } \
+    constexpr R & imag_part(C & z)     { return std::bit_cast<R *>(&z)[1]; } \
     constexpr R sqrm(C x)              { return sqr(x.real())+sqr(x.imag()); } \
     constexpr R sqrm(C x, C y)         { return sqr(x.real()-y.real())+sqr(x.imag()-y.imag()); } \
     constexpr R norm2(C x)             { return hypot(x.real(), x.imag()); } \
@@ -409,7 +409,7 @@ amin(auto && a)
     using std::min, std::numeric_limits;
     using T = ncvalue_t<decltype(a)>;
     T c = numeric_limits<T>::has_infinity ? numeric_limits<T>::infinity() : numeric_limits<T>::max();
-    for_each([&c](auto && a) { if (a<c) { c = a; } }, a);
+    for_each([&c](auto && a) { if (a<c) { c=a; } }, a);
     return c;
 }
 
@@ -419,7 +419,7 @@ amax(auto && a)
     using std::max, std::numeric_limits;
     using T = ncvalue_t<decltype(a)>;
     T c = numeric_limits<T>::has_infinity ? -numeric_limits<T>::infinity() : numeric_limits<T>::lowest();
-    for_each([&c](auto && a) { if (c<a) { c = a; } }, a);
+    for_each([&c](auto && a) { if (c<a) { c=a; } }, a);
     return c;
 }
 
@@ -432,7 +432,7 @@ refmin(A && a, Less && less = {})
     RA_CHECK(a.size()>0, "refmin requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
-    for_each([&less, &p](auto & a) { if (less(a, *p)) { p = &a; } }, s);
+    for_each([&less, &p](auto & a) { if (less(a, *p)) { p=&a; } }, s);
     return *p;
 }
 
@@ -443,7 +443,7 @@ refmax(A && a, Less && less = {})
     RA_CHECK(a.size()>0, "refmax requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
-    for_each([&less, &p](auto & a) { if (less(*p, a)) { p = &a; } }, s);
+    for_each([&less, &p](auto & a) { if (less(*p, a)) { p=&a; } }, s);
     return *p;
 }
 
@@ -451,7 +451,7 @@ constexpr auto
 sum(auto && a)
 {
     auto c = concrete_type<ncvalue_t<decltype(a)>>(0);
-    for_each([&c](auto && a) { c += a; }, a);
+    for_each([&c](auto && a) { c+=a; }, a);
     return c;
 }
 
@@ -459,13 +459,13 @@ constexpr auto
 prod(auto && a)
 {
     auto c = concrete_type<ncvalue_t<decltype(a)>>(1);
-    for_each([&c](auto && a) { c *= a; }, a);
+    for_each([&c](auto && a) { c*=a; }, a);
     return c;
 }
 
-constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c = fma(a, b, c); else c += a*b; }
-constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c = fma_conj(a, b, c); else c += conj(a)*b; }
-constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_DO_FMA) c = fma_sqrm(a, c); else c += sqrm(a); }
+constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c=fma(a, b, c); else c+=a*b; }
+constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c=fma_conj(a, b, c); else c+=conj(a)*b; }
+constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_DO_FMA) c=fma_sqrm(a, c); else c+=sqrm(a); }
 
 constexpr auto
 dot(auto && a, auto && b)
@@ -491,7 +491,11 @@ reduce_sqrm(auto && a)
     return c;
 }
 
-constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
+constexpr auto
+norm2(auto && a)
+{
+    return std::sqrt(reduce_sqrm(a));
+}
 
 constexpr auto
 normv(auto const & a)
@@ -549,7 +553,54 @@ gemv(auto const & a, auto const & b)
 
 
 // --------------------
-// wedge product and cross product. FIXME seriously
+// Big/ViewBig functions, but at are easier to implement here.
+// --------------------
+
+// static transposed axes list, output rank is static.
+template <int ... Iarg, class T, rank_t RANK>
+inline auto
+transpose(ViewBig<T, RANK> const & view)
+{
+    static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
+    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank ", view.rank(), " should be ", (sizeof...(Iarg)), ".");
+    constexpr std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
+    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + ra::amax(s);
+    ViewBig<T, dstrank> r;
+    r.cp = view.data();
+    transpose_filldim(s, view.dimv, r.dimv);
+    return r;
+}
+
+// dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
+template <class T, rank_t RANK, class S>
+inline ViewBig<T, ANY>
+transpose(S && s, ViewBig<T, RANK> const & view)
+{
+    RA_CHECK(view.rank()==ra::size(s), "Bad size for transposed axes list.");
+    rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + ra::amax(s);
+    ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
+    transpose_filldim(s, view.dimv, r.dimv);
+    return r;
+}
+
+// Need compile time values and not sizes to deduce the output rank, so initializer_list suffices.
+template <class T, rank_t RANK>
+inline ViewBig<T, ANY>
+transpose(std::initializer_list<ra::rank_t> s, ViewBig<T, RANK> const & view)
+{
+    return transpose(start(s), view);
+}
+
+template <class T, rank_t RANK>
+constexpr auto
+diag(ViewBig<T, RANK> const & view)
+{
+    return transpose<0, 0>(view);
+}
+
+
+// --------------------
+// wedge product and cross product. FIXME
 // --------------------
 
 namespace mp {

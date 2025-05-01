@@ -12,7 +12,7 @@
 # VERBOSE=1 make -j7
 # VERBOSE=1 make -j7 test
 
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.10)
 project (ra-ra)
 
 foreach (dir test bench examples docs)

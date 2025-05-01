@@ -12,7 +12,7 @@
 #include <random>
 #include "ra/test.hh"
 
-using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder;
+using std::cout, std::endl, ra::TestRecorder;
 using ra::Small, ra::Unique, ra::dim_t, ra::Benchmark;
 using real = double;
 
@@ -119,7 +119,7 @@ int main()
                 decltype(s) B(b);
                 real y(0.);
                 auto bv = Benchmark().repeats(reps).runs(3).run([&]() { y += f(A, B); });
-                tr.info(Benchmark::avg(bv)/M/1e-9, " ns [", std::setprecision(3), Benchmark::stddev(bv)/M/1e-9, "] ", tag)
+                tr.info(Benchmark::report(bv, M), " ", tag)
                     .test_rel(a*b*M*reps*3, y, rspec);
             };
 
@@ -212,7 +212,7 @@ int main()
                  {
                      real x = 0.;
                      auto bv = Benchmark().repeats(reps).runs(3).run([&]() { x += f(a, b); });
-                     tr.info(Benchmark::avg(bv)/1e-9, " ns [", std::setprecision(3), Benchmark::stddev(bv)/1e-9, "] ", f.name)
+                     tr.info(Benchmark::report(bv), " ", f.name)
                          .test_rel(ref*3, x, rspec);
                  };
 #define BENCH(f) bench(A, B, ref, rspec, N, f {});

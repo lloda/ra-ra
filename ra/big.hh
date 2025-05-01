@@ -586,55 +586,6 @@ reverse(ViewBig<T, RANK> const & view, int k=0)
     return r;
 }
 
-// static transposed axes list, output rank is static.
-template <int ... Iarg, class T, rank_t RANK>
-inline auto
-transpose(ViewBig<T, RANK> const & view)
-{
-    static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
-    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank ", view.rank(), " should be ", (sizeof...(Iarg)), ".");
-    constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
-    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
-    ViewBig<T, dstrank> r;
-    r.cp = view.data();
-    transpose_filldim(s, view.dimv, r.dimv);
-    return r;
-}
-
-// dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
-template <class T, rank_t RANK, class S>
-inline ViewBig<T, ANY>
-transpose_(S && s, ViewBig<T, RANK> const & view)
-{
-    RA_CHECK(view.rank()==ra::size(s), "Bad size for transposed axes list.");
-    rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
-    ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
-    transpose_filldim(s, view.dimv, r.dimv);
-    return r;
-}
-
-template <class T, rank_t RANK, class S>
-inline ViewBig<T, ANY>
-transpose(S && s, ViewBig<T, RANK> const & view)
-{
-    return transpose_(RA_FWD(s), view);
-}
-
-// Need compile time values and not sizes to deduce the output rank, so initializer_list suffices.
-template <class T, rank_t RANK>
-inline ViewBig<T, ANY>
-transpose(std::initializer_list<ra::rank_t> s, ViewBig<T, RANK> const & view)
-{
-    return transpose_(s, view);
-}
-
-template <class T, rank_t RANK>
-inline auto
-diag(ViewBig<T, RANK> const & view)
-{
-    return transpose<0, 0>(view);
-}
-
 template <class T, rank_t RANK>
 inline ViewBig<T, 1>
 ravel_free(ViewBig<T, RANK> const & a)
@@ -648,7 +599,7 @@ ravel_free(ViewBig<T, RANK> const & a)
 
 template <class T, rank_t RANK, class S>
 inline auto
-reshape_(ViewBig<T, RANK> const & a, S && sb_)
+reshape(ViewBig<T, RANK> const & a, S && sb_)
 {
     auto sb = concrete(RA_FWD(sb_));
 // FIXME when we need to copy, accept/return Shared
@@ -697,19 +648,12 @@ reshape_(ViewBig<T, RANK> const & a, S && sb_)
     return b;
 }
 
-template <class T, rank_t RANK, class S>
-inline auto
-reshape(ViewBig<T, RANK> const & a, S && sb_)
-{
-    return reshape_(a, RA_FWD(sb_));
-}
-
 // We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t. initializer_list could handle the general case, but the result would have var rank and override this one (?).
 template <class T, rank_t RANK, class dimtype, int N>
 inline auto
 reshape(ViewBig<T, RANK> const & a, dimtype const (&sb_)[N])
 {
-    return reshape_(a, sb_);
+    return reshape(a, start(sb_));
 }
 
 // lo: lower bounds, hi: upper bounds. The stencil indices are in [0 lo+1+hi] = [-lo +hi].

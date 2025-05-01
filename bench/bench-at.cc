@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include "ra/test.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 using real = double;
 using ra::dim_t;
 
@@ -34,10 +34,10 @@ int main()
 
         int ref0 = sum(at(C, iter<1>(I))), val0 = 0;
 
-        ra::Benchmark bm { reps, 3 };
+        Benchmark bm { reps, 3 };
         auto report = [&](std::string const & tag, auto && bv)
         {
-            tr.info(std::setw(5), std::fixed, bm.avg(bv)/M/N/1e-9, " ns [", bm.stddev(bv)/M/N/1e-9, "] ", tag)
+            tr.info(Benchmark::report(bv, M*N), " ", tag)
                 .test_eq(val0, ref0);
         };
 

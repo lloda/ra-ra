@@ -11,8 +11,8 @@
 
 import os, string, atexit
 from os.path import join, abspath
-import imp
-ra = imp.load_source('ra', '../config/ra.py')
+from importlib.machinery import SourceFileLoader
+ra = SourceFileLoader('ra', '../config/ra.py').load_module()
 
 try:
     Import('top')

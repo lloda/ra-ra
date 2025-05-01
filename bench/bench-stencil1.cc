@@ -110,8 +110,7 @@ int main()
                                      A = value;
                                      repeat([&]() { f(A, Anext, Astencil); });
                                  });
-                     tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/A.size()/1e-9, " ns [",
-                             Benchmark::stddev(bv)/A.size()/1e-9 ,"] ", tag)
+                     tr.info(Benchmark::report(bv, A.size()), " ", tag)
                          .test_rel(ref, A, 1e-11);
                  };
 

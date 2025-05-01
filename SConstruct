@@ -10,7 +10,7 @@
 import os, atexit
 from os.path import join, abspath
 from SCons.Script import GetBuildFailures
-import imp
+from importlib.machinery import SourceFileLoader
 
 # Make sure to disable (-no-sanitize) for benchmarks.
 AddOption('--no-sanitize', default=True, action='store_false', dest='sanitize', help='Disable sanitizer flags.')
@@ -19,7 +19,7 @@ AddOption('--blas', default=False, action='store_true', dest='use_blas', help='T
 top = {'skip_summary': True, 'sanitize': GetOption('sanitize'), 'use_blas': GetOption('use_blas')}
 Export('top');
 
-ra = imp.load_source('ra', 'config/ra.py')
+ra = SourceFileLoader('ra', 'config/ra.py').load_module()
 
 SConscript('test/SConstruct', 'top')
 SConscript('bench/SConstruct', 'top')

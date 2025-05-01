@@ -363,7 +363,7 @@ consteval int
 tbc(int sofar)
 {
     if constexpr (is_match<A>) {
-        return A::template tbc<TOP>(sofar);
+        return A::template tbc<TOP>(sofar); // just to peel P from A. Sad!
     } else {
         if (int rt=rank_s<TOP>(), ra=rank_s<A>(); 0==rt || 0==ra) {
             return sofar;
@@ -372,7 +372,7 @@ tbc(int sofar)
         } else {
 // by choose_rank ra<=rt always, plus MIS==la implies MIS==lt, so no need to check both.
             for (int k=0; k<ra; ++k) {
-                if (dim_t lt = TOP::len_s(k, true), la = A::len_s(k); MIS==lt) {
+                if (dim_t lt=TOP::len_s(k, true), la=A::len_s(k); MIS==lt) {
                     return -1;
                 } else if (BAD!=la && BAD!=lt && (ANY==la || ANY==lt)) {
                     return 1+sofar;
@@ -403,7 +403,7 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
     consteval static int
     check_s()
     {
-        int sofar = ra::tbc<Match<std::tuple<P ...>>>(0);
+        int sofar = tbc<Match<std::tuple<P ...>>>(0);
         return 0>sofar ? 0 : 2>sofar ? 2 : 1;
     }
     constexpr bool

@@ -22,7 +22,7 @@ auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 constexpr auto PI = std::numbers::pi_v<double>;
 
-using std::cout, std::endl;
+using std::cout, std::endl, std::println;
 using ra::iota, ra::int_c, ra::TestRecorder, ra::Benchmark;
 
 int main()
@@ -97,18 +97,18 @@ int main()
         {
             tr.quiet().test(amin(F)>=-1);
             tr.quiet().test(amax(F)<=+1);
-            cout << name << "(0)=" << std::setprecision(10) << std::setw(12) << F(0) << " t=" << (t*delta) << ":\n";
-            for_each([](auto && F) { cout << std::string(int(round(20*(clamp(F, -1., 1.)+1))), ' ') << "*\n"; }, F);
+            println(cout, "(0)={:12.10} t={}:", F(0), (t*delta));
+            for_each([](auto && F) { println(cout, "{}*", std::string(int(round(20*(clamp(F, -1., 1.)+1))), ' ')); }, F);
         };
 
     for (int t=0; t<o; ++t) {
         show("Ey", t, F(t, H, 0, 0, 2, 0));
         show("Bz", t, F(t, H, 0, 0, 2, 1));
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        cout << endl;
+        println(cout, "");
     }
-    cout << Benchmark::toseconds(time_A)/1e-6 << " μs time_A" << endl;
-    cout << Benchmark::toseconds(time_DA)/1e-6 << " μs time_DA" << endl;
+    println(cout, "{:3f} μs time_A", Benchmark::toseconds(time_A)/1e-6);
+    println(cout, "{:3f} μs time_DA", Benchmark::toseconds(time_DA)/1e-6);
 
     return tr.summary();
 }

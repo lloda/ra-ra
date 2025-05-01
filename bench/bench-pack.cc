@@ -27,7 +27,7 @@ int main()
 
             Benchmark bm { reps, 3 };
             auto bv = bm.run([&]() { f(a, size); });
-            tr.info(std::setw(5), std::fixed, bm.avg(bv)/size/1e-9, " ns [", bm.stddev(bv)/size/1e-9 ,"] ", tag)
+            tr.info(Benchmark::report(bv, size), " ", tag)
                 .test_eq(ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.)), a);
         };
 

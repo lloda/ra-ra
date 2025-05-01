@@ -29,8 +29,8 @@ int main()
 
             auto bv = Benchmark().repeats(reps).runs(3)
                 .once_f([&](auto && repeat) { c = 0.; repeat([&]() { f(c, a); }); });
-            tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n)/1e-9, " ns [",
-                    Benchmark::stddev(bv)/(m*n)/1e-9 ,"] ", tag).test_eq(ref, c);
+            tr.info(Benchmark::report(bv, m*n), " ", tag)
+                .test_eq(ref, c);
         };
 
     auto bench_all =

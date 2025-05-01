@@ -35,7 +35,7 @@ int main()
             Benchmark bm { N, 3 };
             auto report = [&](std::string const & tag, auto && bv)
             {
-                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                tr.info(Benchmark::report(bv, B.size()), " ", tag)
                     .test_eq(ra::iota(Isize)*Istep, B);
             };
             report("indexing on raw pointers",
@@ -92,7 +92,7 @@ int main()
             Benchmark bm { N, 3 };
             auto report = [&](std::string const &tag, auto && bv)
             {
-                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                tr.info(Benchmark::report(bv, B.size()), " ", tag)
                     .test_eq(Istep*(ra::_0 + ra::_1), B);
             };
 
@@ -139,7 +139,7 @@ int main()
             Benchmark bm { N, 3 };
             auto report = [&](std::string const &tag, auto && bv)
             {
-                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                tr.info(Benchmark::report(bv, B.size()), " ", tag)
                     .test_eq(Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2), B);
             };
 
@@ -179,7 +179,7 @@ int main()
             Benchmark bm { N, 3 };
             auto report = [&](std::string const &tag, auto && bv)
             {
-                tr.info(std::setw(5), std::fixed, bm.avg(bv)/B.size()/1e-9, " ns [", bm.stddev(bv)/B.size()/1e-9, "] ", tag)
+                tr.info(Benchmark::report(bv, B.size()), " ", tag)
                     .test_eq(Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3), B);
             };
 

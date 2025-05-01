@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Test/benchmarking library.
 
-// (c) Daniel Llorens - 2012-2024
+// (c) Daniel Llorens - 2012-2025
 // This library is free software; you can redisribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -41,13 +41,11 @@ struct TestRecorder
 // ra::amax ignores nans like fmax does, we don't want that here.
     __attribute__((optimize("-fno-finite-math-only")))
     static auto
-    amax_strict(auto && a)
+    amax_strict(auto const & a)
     {
         using T = ncvalue_t<decltype(a)>;
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
-        return early(map([&c](auto && a) { if (c<a) { c=a; }; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; },
-                         RA_FWD(a)),
-                     c);
+        return early(map([&c](auto const & a) { if (c<a) c=a; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; }, a), c);
     }
 
     enum verbose_t { QUIET, // as NOISY if failed, else no output
@@ -59,7 +57,7 @@ struct TestRecorder
     bool willskip=false, willexpectfail=false, willstrictshape=false;
     int total=0, skipped=0, passed_good=0, passed_bad=0, failed_good=0, failed_bad=0;
     std::vector<int> bad;
-    std::string info_str;
+    std::string infos;
 
     TestRecorder(std::ostream & o_=std::cout, verbose_t verbose_default_=ERRORS)
         : o(o_), verbose_default(verbose_default_), verbose(verbose_default_) {}
@@ -67,18 +65,18 @@ struct TestRecorder
     void
     section(auto const & ... a)
     {
-        print(o, "\n", esc::bold, a ..., esc::unbold) << std::endl;
+        print(o, "\n", esc::bold, a ..., esc::unbold, "\n");
     }
     static std::string
     format_error(double e)
     {
-        return format(esc::yellow, std::setprecision(2), e, esc::reset);
+        return std::format("{}{:.2}{}", esc::yellow, e, esc::reset);
     }
     TestRecorder &
     info(auto && ... a)
     {
-        bool empty = (info_str=="");
-        info_str += format(esc::pink, (empty ? "" : "; "), a ..., esc::reset);
+        bool empty = (infos=="");
+        infos += format(esc::pink, (empty ? "" : "; "), a ..., esc::reset);
         return *this;
     }
     TestRecorder & quiet(verbose_t v=QUIET) { verbose = v; return *this; }
@@ -88,7 +86,7 @@ struct TestRecorder
     TestRecorder & expectfail(bool s=true) { willexpectfail = s; return *this; }
 
 #define RA_CURRENT_LOC std::source_location const loc = std::source_location::current()
-#define RA_LAZYINFO(...) [&] { return format(info_str, (info_str=="" ? "" : "; "), __VA_ARGS__); }
+#define RA_LAZYINFO(...) [&] { return format(infos, (infos=="" ? "" : "; "), __VA_ARGS__); }
 
     void
     test(bool c, auto && info_full, auto && info_min, RA_CURRENT_LOC)
@@ -96,25 +94,22 @@ struct TestRecorder
         switch (verbose) {
         case QUIET: {
             if (!c) {
-                print(o, esc::cyan, total, ":", loc, "]", esc::reset, " ...",
-                      esc::bold, esc::red, " FAILED", esc::reset,
+                print(o, esc::cyan, total, ":", loc, "]", esc::reset, " ...", esc::bold, esc::red, " FAIL", esc::reset,
                       esc::yellow, (willskip ? " skipped" : ""), (willexpectfail ? " expected" : ""), esc::reset,
-                      " ", info_full())
-                    << std::endl;
+                      " ", info_full(), "\n");
             }
         }; break;
         case NOISY: case ERRORS: {
             print(o, esc::cyan, "[", total, ":", loc, "]", esc::reset, " ...",
                   (c ? std::string(esc::green) + " ok" + esc::reset
-                   : std::string(esc::bold) + esc::red + " FAILED" + esc::reset),
+                   : std::string(esc::bold) + esc::red + " FAIL" + esc::reset),
                   esc::yellow, (willskip ? " skipped" : ""),
                   (willexpectfail ? (c ? " not expected" : " expected") : ""), esc::reset,
-                  " ", (verbose==NOISY || c==willexpectfail ? info_full() : info_min()))
-                << std::endl;
+                  " ", (verbose==NOISY || c==willexpectfail ? info_full() : info_min()), "\n");
         }; break;
         default: std::abort();
         }
-        info_str = "";
+        infos = "";
         verbose = verbose_default;
         if (!willskip) {
             ++(willexpectfail? (c ? passed_bad : failed_good) : (c ? passed_good : failed_bad));
@@ -151,7 +146,6 @@ struct TestRecorder
         return test_scomp(ref, a, [](auto && a, auto && b) { return a==b; }, "should be strictly ==", loc);
     }
 
-// Comp = ... is non-deduced context, so can't replace test_eq() with a default argument here.
 // where() is used to match shapes if either REF or A don't't have one.
     bool
     test_comp(auto && a, auto && b, auto && comp, char const * msg, RA_CURRENT_LOC)
@@ -258,8 +252,7 @@ struct TestRecorder
     }
 };
 
-// TODO measure empty loops, better reporting
-// TODO let benchmarked functions to return results
+// TODO measure empty loops, better reporting. Let benchmarked functions return results
 struct Benchmark
 {
     using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
@@ -293,27 +286,31 @@ struct Benchmark
     static double
     stddev(Value const & bv)
     {
-        double m = avg(bv);
-        return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.repeats-m))/bv.times.size());
+        return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.repeats-avg(bv)))/bv.times.size());
+    }
+    static std::string
+    report(Value const & bv, double scale=1., double u=1e-9)
+    {
+        return std::format("{0:3f} {2} [{1:3f}]", avg(bv)/scale/u, stddev(bv)/scale/u,
+                           1e-9==u ? "ns" : 1e-6==u ? "us" : 1e-3==u ? "ms" : 1==u ? "s" : "?");
     }
     void
     report(std::ostream & o, auto const & b, double frac)
     {
-        print(o, (info_str=="" ? "" : info_str + " : "), ra::map([](auto && bv) { return avg(bv); }, b)/frac) << std::endl;
-        print(o, (info_str=="" ? "" : info_str + " : "), ra::map([](auto && bv) { return stddev(bv); }, b)/frac) << std::endl;
-        info_str = "";
+        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), start(ra::map(avg, b)/frac));
+        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), start(ra::map(stddev, b)/frac));
+        infos = "";
     }
 
-    int const repeats_ = 1;
-    int const runs_ = 1;
+    int repeats_ = 1, runs_ = 1;
     std::string const name_ = "";
-    std::string info_str = "";
+    std::string infos = "";
 
     Benchmark &
     info(auto && ... a)
     {
-        bool empty = (info_str=="");
-        info_str += format(ra::esc::plain, (empty ? "" : "; "), a ..., ra::esc::plain);
+        bool empty = (infos=="");
+        infos += format(ra::esc::plain, (empty ? "" : "; "), a ..., ra::esc::plain);
         return *this;
     }
 
@@ -353,9 +350,7 @@ struct Benchmark
             g([&](auto && f)
               {
                   auto t0 = clock::now();
-                  for (int i=0; i<repeats_; ++i) {
-                      f();
-                  }
+                  for (int i=0; i<repeats_; ++i) { f(); }
                   clock::duration full = clock::now()-t0;
                   times.push_back(lapse(empty, full));
               }, RA_FWD(a) ...);

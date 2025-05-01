@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/bench - BLAS-2 type ops.
 
-// (c) Daniel Llorens - 2017
+// (c) Daniel Llorens - 2017-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -14,7 +14,7 @@
 #include <iomanip>
 #include "ra/test.hh"
 
-using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder, ra::Benchmark;
+using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 using ra::Small, ra::ViewBig, ra::Unique;
 
 using real = double;
@@ -84,8 +84,8 @@ int main()
                 ra::Big<real, 1> c;
 
                 auto bv = Benchmark().repeats(reps).runs(3).run([&]() { c = f(a, b); });
-                tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n)/1e-9, " ns [",
-                        Benchmark::stddev(bv)/(m*n)/1e-9 ,"] ", tag, t==TRANS ? " [T]" : " [N]").test_eq(ref, c);
+                tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]")
+                    .test_eq(ref, c);
             };
 
             auto bench_vm = [&tr, &m, &n, &reps](auto && f, char const * tag, trans_t t)
@@ -97,8 +97,8 @@ int main()
                 ra::Big<real, 1> c;
 
                 auto bv = Benchmark().repeats(reps).runs(4).run([&]() { c = f(b, a); });
-                tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n)/1e-9, " ns [",
-                        Benchmark::stddev(bv)/(m*n)/1e-9 ,"] ", tag, t==TRANS ? " [T]" : " [N]").test_eq(ref, c);
+                tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]")
+                    .test_eq(ref, c);
             };
 
             tr.section(m, " x ", n, " times ", reps);

@@ -17,7 +17,7 @@
 #include <iomanip>
 #include "ra/test.hh"
 
-using std::cout, std::endl, std::setw, std::setprecision;
+using std::cout, std::endl;
 using ra::TestRecorder, ra::Benchmark, ra::Small, ra::ViewBig, ra::Unique;
 
 using Vec = ra::Small<float, 4>;
@@ -76,8 +76,8 @@ int main()
                             c = 99;
 
                             auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
-                            tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m)/1e-9, " ns [",
-                                    Benchmark::stddev(bv)/(m)/1e-9 ,"] ", tag).test(true);
+                            tr.info(Benchmark::report(bv, m), " ", tag)
+                                .test(true);
                         };
 
                     tr.section("[", (std::is_same_v<float, std::decay_t<decltype(std::declval<Vec>()[0])>> ? "float" : "double"),

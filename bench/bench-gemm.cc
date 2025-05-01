@@ -17,7 +17,7 @@
 #include "ra/test.hh"
 #include <omp.h>
 
-using std::cout, std::endl, std::setw, std::setprecision, ra::TestRecorder, ra::Benchmark;
+using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t, ra::all;
 using real = double;
 
@@ -222,8 +222,8 @@ int main()
             ra::Big<real, 2> c({m, n}, 0.);
 
             auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
-            tr.info(std::setw(5), std::fixed, Benchmark::avg(bv)/(m*n*p)/1e-9, " ns [",
-                    Benchmark::stddev(bv)/(m*n*p)/1e-9 ,"] ", tag).test_rel(ref, c, rerr);
+            tr.info(Benchmark::report(bv, m*n*p), " ", tag)
+                .test_rel(ref, c, rerr);
         };
 
         tr.section(m, " (", p, ") ", n, " times ", reps);
