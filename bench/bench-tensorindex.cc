@@ -62,7 +62,7 @@ int main()
 
     ra::Big<int, 2> const a({1000, 1000}, 0);
     taking_view(tr, a);
-    auto b = transpose<1, 0>(a);
+    auto b = transpose(a);
     taking_view(tr, b);
 
     return tr.summary();

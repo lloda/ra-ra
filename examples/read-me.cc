@@ -15,7 +15,7 @@
 #include "ra/test.hh" // ra/ra.hh without TestRecorder
 
 using std::cout, std::endl, ra::TestRecorder;
-using ra::mp::int_list;
+using ra::int_list;
 
 int main()
 {
@@ -173,7 +173,7 @@ int main()
     tr.section("Example from the manual [ma101]");
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
-        std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, transpose<1, 0>(A)) << std::endl;
+        std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, transpose(A)) << std::endl;
     }
     {
         ra::Big<char const *, 1> A = {"hello", "array", "world"};

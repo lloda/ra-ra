@@ -651,9 +651,9 @@ reshape(ViewBig<T, RANK> const & a, S && sb_)
 // We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t. initializer_list could handle the general case, but the result would have var rank and override this one (?).
 template <class T, rank_t RANK, class dimtype, int N>
 inline auto
-reshape(ViewBig<T, RANK> const & a, dimtype const (&sb_)[N])
+reshape(ViewBig<T, RANK> const & a, dimtype const (&s)[N])
 {
-    return reshape(a, start(sb_));
+    return reshape(a, start(s));
 }
 
 // lo: lower bounds, hi: upper bounds. The stencil indices are in [0 lo+1+hi] = [-lo +hi].

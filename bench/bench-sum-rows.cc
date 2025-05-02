@@ -85,7 +85,7 @@ int main()
             bench("frametransp", m, n, reps,
                   [](auto & c, auto const & a)
                   {
-                      c += transpose<1, 0>(a);
+                      c += transpose(a);
                   });
         };
 

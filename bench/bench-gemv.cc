@@ -78,7 +78,7 @@ int main()
             auto bench_mv = [&tr, &m, &n, &reps](auto && f, char const * tag, trans_t t)
             {
                 ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
-                auto a = t==TRANS ? transpose<1, 0>(aa) : aa();
+                auto a = t==TRANS ? transpose(aa) : aa();
                 ra::Big<real, 1> b({a.len(1)}, 1-2*ra::_0);
                 ra::Big<real, 1> ref = gemv(a, b);
                 ra::Big<real, 1> c;
@@ -91,7 +91,7 @@ int main()
             auto bench_vm = [&tr, &m, &n, &reps](auto && f, char const * tag, trans_t t)
             {
                 ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
-                auto a = t==TRANS ? transpose<1, 0>(aa) : aa();
+                auto a = t==TRANS ? transpose(aa) : aa();
                 ra::Big<real, 1> b({a.len(0)}, 1-2*ra::_0);
                 ra::Big<real, 1> ref = gevm(b, a);
                 ra::Big<real, 1> c;

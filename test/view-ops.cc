@@ -13,7 +13,7 @@
 #include "ra/test.hh"
 #include "mpdebug.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::int_list;
 
 template <class A>
 void CheckReverse(TestRecorder & tr, A && a)
@@ -22,8 +22,6 @@ void CheckReverse(TestRecorder & tr, A && a)
     cout << "a: " << a << endl;
     auto b0 = reverse(a, 0);
     auto c0 = a(ra::iota(ra::len, ra::len-1, -1));
-    cout << "b: " << b0 << endl;
-    cout << "c: " << b0 << endl;
     double check0[24] = { 17, 18, 19, 20,   21, 22, 23, 24,
                           9, 10, 11, 12,  13, 14, 15, 16,
                           1, 2, 3, 4,     5, 6, 7, 8 };
@@ -32,8 +30,6 @@ void CheckReverse(TestRecorder & tr, A && a)
 
     auto b1 = reverse(a, 1);
     auto c1 = a(ra::dots<1>, ra::iota(ra::len, ra::len-1, -1));
-    cout << "b: " << b1 << endl;
-    cout << "c: " << c1 << endl;
     double check1[24] = { 5, 6, 7, 8,      1, 2, 3, 4,
                           13, 14, 15, 16,  9, 10, 11, 12,
                           21, 22, 23, 24,  17, 18, 19, 20 };
@@ -42,8 +38,6 @@ void CheckReverse(TestRecorder & tr, A && a)
 
     auto b2 = reverse(a, 2);
     auto c2 = a(ra::dots<2>, ra::iota(ra::len, ra::len-1, -1));
-    cout << "b: " << b2 << endl;
-    cout << "c: " << c2 << endl;
     double check2[24] = { 4, 3, 2, 1,      8, 7, 6, 5,
                           12, 11, 10, 9,   16, 15, 14, 13,
                           20, 19, 18, 17,  24, 23, 22, 21 };
@@ -56,17 +50,19 @@ void CheckTranspose1(TestRecorder & tr, A && a)
 {
     {
         std::iota(a.begin(), a.end(), 1);
-        cout << "a: " << a << endl;
-        auto b = transpose(ra::Small<int, 2>{1, 0}, a);
-        cout << "b: " << b << endl;
+        auto b = transpose(a, ra::Small<int, 2>{1, 0});
         double check[6] = {1, 3, 5, 2, 4, 6};
         tr.test(std::ranges::equal(b.begin(), b.end(), check, check+6));
     }
     {
         std::iota(a.begin(), a.end(), 1);
-        cout << "a: " << a << endl;
-        auto b = transpose<1, 0>(a);
-        cout << "b: " << b << endl;
+        auto b = transpose(a, int_list<1, 0>{});
+        double check[6] = {1, 3, 5, 2, 4, 6};
+        tr.test(std::ranges::equal(b.begin(), b.end(), check, check+6));
+    }
+    {
+        std::iota(a.begin(), a.end(), 1);
+        auto b = transpose(a); // meaning int_list<1, 0>{}
         double check[6] = {1, 3, 5, 2, 4, 6};
         tr.test(std::ranges::equal(b.begin(), b.end(), check, check+6));
     }
@@ -84,7 +80,7 @@ int main()
     {
         {
             ra::Unique<double, 0> a({}, 99);
-            auto b = transpose(ra::Small<int, 0> {}, a);
+            auto b = transpose(a, ra::Small<int, 0> {});
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
             tr.test(is_c_order(a));
@@ -92,20 +88,20 @@ int main()
         }
         {
             ra::Unique<double, 0> a({}, 99);
-            auto b = transpose(a);
+            auto b = transpose(a, int_list<>{});
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
         }
-// FIXME this doesn't work because init_list {} competes with mp::int_list<>.
-        // {
-        //     ra::Unique<double, 0> a({}, 99);
-        //     auto b = transpose({}, a);
-        //     tr.test_eq(0, b.rank());
-        //     tr.test_eq(99, b());
-        // }
         {
             ra::Unique<double, 0> a({}, 99);
-            auto b = transpose<>(a);
+            auto b = transpose(a, {});
+            tr.test_eq(0, b.rank());
+            tr.test_eq(0, rank_s(b)); // even
+            tr.test_eq(99, b());
+        }
+        {
+            ra::Unique<double, 0> a({}, 99);
+            auto b = transpose(a, int_list<> {});
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
         }
@@ -126,12 +122,12 @@ int main()
             };
         ra::Unique<double> a({3, 2}, ra::_0*2 + ra::_1 + 1);
         tr.test(is_c_order(a));
-        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, a)); // dyn rank to dyn rank
-        transpose_test(transpose<0, 0>(a));                       // dyn rank to static rank
+        transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
+        transpose_test(transpose(a, int_list<0, 0>{}));           // dyn rank to static rank
         ra::Unique<double, 2> b({3, 2}, ra::_0*2 + ra::_1*1 + 1);
-        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
-        transpose_test(transpose<0, 0>(b));                       // static rank to static rank
-        auto bt = transpose<0, 0>(b);
+        transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
+        transpose_test(transpose(b, int_list<0, 0>{}));           // static rank to static rank
+        auto bt = transpose(b, int_list<0, 0>{});
         tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order(bt));
         tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order_dimv(bt.dimv));
     }
@@ -145,11 +141,11 @@ int main()
                 tr.test_eq(5, b[1]);
             };
         ra::Unique<double> a({2, 3}, ra::_0*3 + ra::_1 + 1);
-        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, a)); // dyn rank to dyn rank
-        transpose_test(transpose<0, 0>(a));                       // dyn rank to static rank
+        transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
+        transpose_test(transpose(a, int_list<0, 0>{}));           // dyn rank to static rank
         ra::Unique<double, 2> b({2, 3}, ra::_0*3 + ra::_1 + 1);
-        transpose_test(transpose(ra::Small<int, 2> { 0, 0 }, b)); // static rank to dyn rank
-        transpose_test(transpose<0, 0>(b));                       // static rank to static rank
+        transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
+        transpose_test(transpose(b, int_list<0, 0>{}));           // static rank to static rank
     }
     tr.section("transpose D");
     {
@@ -161,22 +157,22 @@ int main()
                 tr.test_eq(5, b[1]);
             };
         ra::Unique<double> a({2, 3}, ra::_0*3 + ra::_1 + 1);
-        transpose_test(transpose({ 0, 0 }, a)); // dyn rank to dyn rank
+        transpose_test(transpose(a, { 0, 0 })); // dyn rank to dyn rank
     }
     tr.section("transpose E");
     {
         ra::Unique<double> a({3}, {1, 2, 3});
-        tr.test_eq(a-a(ra::insert<1>), a-transpose({1}, a));
+        tr.test_eq(a-a(ra::insert<1>), a-transpose(a, {1}));
     }
     tr.section("transpose F");
     {
         ra::Unique<double> a({3}, {1, 2, 3});
-        tr.test_eq(a-a(ra::insert<1>), a-transpose<1>(a));
+        tr.test_eq(a-a(ra::insert<1>), a-transpose(a, int_list<1>{}));
     }
     tr.section("transpose G");
     {
         ra::Unique<double, 1> a({3}, {1, 2, 3});
-        tr.test_eq(a-a(ra::insert<1>), a-transpose<1>(a));
+        tr.test_eq(a-a(ra::insert<1>), a-transpose(a, int_list<1>{}));
     }
 // FIXME Small cannot have BAD sizes yet.
     // tr.section("transpose K");
@@ -188,15 +184,15 @@ int main()
     {
         ra::Small<int, 2> axes = {0, 1};
         ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-        cout << "A: " << transpose(axes, a) << endl;
+        cout << "A: " << transpose(a, axes) << endl;
         axes = {1, 0};
-        cout << "B: " << transpose(axes, a) << endl;
+        cout << "B: " << transpose(a, axes) << endl;
     }
     tr.section("free ravel?");
     {
         ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
         tr.test(is_c_order(a, false));
-        auto b = transpose<1, 0>(a);
+        auto b = transpose(a, int_list<1, 0>{});
         tr.test(!is_c_order(b, false));
     }
 // trailing singleton dimensions

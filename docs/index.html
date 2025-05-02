@@ -404,7 +404,7 @@ Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and vi
 int main()
 {
     ra::Big&lt;char, 2&gt; A({2, 5}, &quot;helloworld&quot;);
-    std::cout &lt;&lt; fmt({.shape=ra::noshape, .sep0=&quot;|&quot;}, transpose&lt;1, 0&gt;(A)) &lt;&lt; std::endl;
+    std::cout &lt;&lt; fmt({.shape=ra::noshape, .sep0=&quot;|&quot;}, transpose(A)) &lt;&lt; std::endl;
 }
 </pre><pre class="example">-| h|w
    e|o
@@ -524,8 +524,8 @@ ra::Big&lt;double, 2&gt; c({3, 2}, cx); // *** WHO NOSE ***
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">using lens = mp::int_list&lt;2, 3&gt;;
-using steps = mp::int_list&lt;1, 2&gt;;
+<pre class="verbatim">using lens = ra::int_list&lt;2, 3&gt;;
+using steps = ra::int_list&lt;1, 2&gt;;
 ra::SmallArray&lt;double, lens, steps&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 </pre></div>
 
@@ -565,15 +565,15 @@ auto c1 = c(1);
 c1(2) = 9.;                        // c(1, 2) = 9.
 </pre></div>
 
-<p>Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. <code>ra::</code> has functions to create the most common kinds of views:
+<p>Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. <code>ra::</code> has the usual functions that operate on views:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double&gt; c {{1, 2, 3}, {4, 5, 6}};
-auto ct = transpose&lt;1, 0&gt;(c); // {{1, 4}, {2, 5}, {3, 6}}
+auto ct = transpose(c); // {{1, 4}, {2, 5}, {3, 6}}
 auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 </pre></div>
 
-<p>However, views can point to anywhere in memory and that memory doesn&rsquo;t have to belong to an <code>ra::</code> container. For example:
+<p>Views can point to anywhere in memory and that memory doesn&rsquo;t have to belong to an <code>ra::</code> container. For example:
 </p>
 <div class="example">
 <pre class="verbatim">int raw[6] = {1, 2, 3, 4, 5, 6};
@@ -708,7 +708,7 @@ x += a; // sum the rows of a
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 3&gt; a({5, 3, 3}, ra::_0);
 ra::Big&lt;double, 1&gt; b({5}, 0.);
-b += transpose&lt;0, 1, 1&gt;(a); // b(i) = ∑ⱼ a(i, j, j)
+b += transpose(a, ra::int_list&lt;0, 1, 1&gt;{}); // b(i) = ∑ⱼ a(i, j, j)
 </pre><pre class="example">&rArr; b = {0, 3, 6, 9, 12}
 </pre></div>
 
@@ -1158,7 +1158,7 @@ inline auto op_reduce(A &amp;&amp; a)
     ra::Big&lt;double, 1&gt; sum_rows({n}, 0.);
     iter&lt;1&gt;(sum_rows) += iter&lt;1&gt;(a);
     // for_each(ra::wrank&lt;1, 1&gt;([](auto &amp; c, auto &amp;&amp; a) { c += a; }), sum_rows, a) // alternative
-    // sum_rows += transpose&lt;1, 0&gt;(a); // another
+    // sum_rows += transpose(a); // another
 
     ra::Big&lt;double, 1&gt; sum_cols({m}, 0.);
     sum_cols += a;
@@ -2287,7 +2287,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <span id="index-diag"></span>
 <span id="x_002ddiag"></span><dl class="def">
 <dt id="index-diag-1"><span class="category">Function: </span><span><strong>diag</strong> <em>view</em><a href='#index-diag-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Equivalent to <code>transpose&lt;0, 0&gt;(view)</code>.
+<dd><p>Equivalent to <code>transpose(view, ra::int_list&lt;0, 0&gt; {})</code>.
 </p></dd></dl>
 
 <span id="index-dot"></span>
@@ -2556,14 +2556,17 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 
 <span id="index-transpose"></span>
 <span id="x_002dtranspose"></span><dl class="def">
-<dt id="index-transpose-1"><span class="category">Function: </span><span><strong>transpose</strong> <em>&lt;axes ...&gt; (view) | (axes, view)</em><a href='#index-transpose-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create a new view by transposing the axes of <var>view</var>. The number of <var>axes</var> must match the rank of <var>view</var>.
+<dt id="index-transpose-1"><span class="category">Function<!-- /@w -->: </span><span><strong>transpose</strong> <em>view axes</em><a href='#index-transpose-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-transpose-2"><span class="category">Function<!-- /@w -->: </span><span><strong>transpose</strong> <em>view</em><a href='#index-transpose-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Create a new view by transposing the axes of <var>view</var>. The number of <var>axes</var> must match the rank of <var>view</var>.
 </p>
-<p><code>axes</code> are the <em>destination</em> axes, that is, axis <em class='tex2jax_process'>\(i\)</em> of <var>view</var> matches axis <var>axes</var><em class='tex2jax_process'>\(_i\)</em> of the result. For example:
+<p><var>axes</var> are the <em>destination</em> axes, that is, axis <em class='tex2jax_process'>\(i\)</em> of <var>view</var> matches axis <var>axes</var><em class='tex2jax_process'>\(_i\)</em> of the result. <var>axes</var> may be either an array with runtime values, or an <code>ra::int_list&lt;&gt;</code>. <code>transpose(a)</code> is a shortcut for <code>transpose(a, ra::int_list&lt;1, 0&gt;{})</code>. For example:
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
-    cout &lt;&lt; transpose&lt;1, 0&gt;(a) &lt;&lt; endl;
+    cout &lt;&lt; transpose(a, ra::int_list&lt;1, 0&gt;{}) &lt;&lt; endl;
+    // cout &lt;&lt; transpose(a) &lt;&lt; endl; // same
 </pre><pre class="example">  -|
   3 2
   1 4
@@ -2575,7 +2578,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
-    cout &lt;&lt; transpose&lt;0, 0&gt;(a) &lt;&lt; endl; // { a(0, 0), a(1, 1) }
+    cout &lt;&lt; transpose(a, ra::int_list&lt;0, 0&gt;{}) &lt;&lt; endl; // { a(0, 0), a(1, 1) }
 </pre><pre class="example">  -|
   2
   1 5
@@ -2585,7 +2588,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Unique&lt;double, 1&gt; a = {1, 2, 3};
-    cout &lt;&lt; ((a*10) + transpose&lt;1&gt;(a)) &lt;&lt; endl;
+    cout &lt;&lt; ((a*10) + transpose(a, ra::int_list&lt;1&gt;{})) &lt;&lt; endl;
 </pre><pre class="example">  -|
   3 3
   11 21 31
@@ -2593,13 +2596,13 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
   13 23 33
 </pre></div>
 
-<p>The two argument form lets you specify the axis list at runtime. In that case the result will have runtime rank as well. For example: </p>
+<p>If the <var>axes</var> are an <code>ra::int_list&lt;&gt;</code>, then the result will have static rank, otherwise it will have runtime rank. For example: </p>
 <div class="example">
 <pre class="verbatim">    ra::Small&lt;int, 2&gt; axes = {0, 1};
     ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
-    cout &lt;&lt; &quot;A: &quot; &lt;&lt; transpose(axes, a) &lt;&lt; endl;
+    cout &lt;&lt; &quot;A: &quot; &lt;&lt; transpose(a, axes) &lt;&lt; endl;
     axes = {1, 0};
-    cout &lt;&lt; &quot;B: &quot; &lt;&lt; transpose(axes, a) &lt;&lt; endl;
+    cout &lt;&lt; &quot;B: &quot; &lt;&lt; transpose(a, axes) &lt;&lt; endl;
 </pre><pre class="example">  -|
   A: 2
   2 3
@@ -2612,8 +2615,9 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
   3 6
 </pre></div>
 
-<p>This operation does not work on arbitrary array expressions yet. </p>
+
 </dd></dl>
+
 
 <span id="index-where"></span>
 <span id="index-Masking"></span>

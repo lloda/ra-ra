@@ -48,6 +48,7 @@
 
 namespace ra {
 
+template <int ... I> using int_list = std::tuple<int_c<I> ...>;
 constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
 
@@ -384,7 +385,7 @@ tbc(int sofar)
 }
 
 template <IteratorConcept ... P, int ... I>
-struct Match<std::tuple<P ...>, mp::int_list<I ...>>
+struct Match<std::tuple<P ...>, int_list<I ...>>
 {
     std::tuple<P ...> t;
 
@@ -403,7 +404,7 @@ struct Match<std::tuple<P ...>, mp::int_list<I ...>>
     consteval static int
     check_s()
     {
-        int sofar = tbc<Match<std::tuple<P ...>>>(0);
+        int sofar = tbc<Match>(0);
         return 0>sofar ? 0 : 2>sofar ? 2 : 1;
     }
     constexpr bool
@@ -577,7 +578,7 @@ wrank(cranks, Op && op) { return Verb<cranks, Op> { RA_FWD(op) }; }
 
 template <rank_t ... crank, class Op>
 constexpr auto
-wrank(Op && op) { return Verb<mp::int_list<crank ...>, Op> { RA_FWD(op) }; }
+wrank(Op && op) { return Verb<int_list<crank ...>, Op> { RA_FWD(op) }; }
 
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 struct Framematch_def;
@@ -597,7 +598,7 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 {
     static_assert(sizeof...(Ti)==sizeof...(crank) && sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
 // live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
-    using live = mp::int_list<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
+    using live = int_list<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
     using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + mp::ref<live, mp::indexof<max_i, live>>::value>;
     using R = typename FM::R;
@@ -636,7 +637,7 @@ agree_op(auto const & op, auto const & ... p) { return agree(p ...); }
 
 template <class V, class ... T, int ... i>
 constexpr bool
-agree_verb(mp::int_list<i ...>, V const & v, T const & ... t)
+agree_verb(int_list<i ...>, V const & v, T const & ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
     return agree_op(FM::op(v), reframe<mp::ref<typename FM::R, i>>(ra::start(t)) ...);
@@ -675,7 +676,7 @@ decltype(auto) to_scalar(E && e)
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
 template <class Op, IteratorConcept ... P, int ... I>
-struct Map<Op, std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
+struct Map<Op, std::tuple<P ...>, int_list<I ...>>: public Match<std::tuple<P ...>>
 {
     using Match<std::tuple<P ...>>::t;
     Op op;
@@ -696,7 +697,7 @@ Map(Op && op, P && ... p) -> Map<Op, std::tuple<P ...>>;
 
 template <class Op, class ... P, int ... i>
 constexpr auto
-map_verb(mp::int_list<i ...>, Op && op, P && ... p)
+map_verb(int_list<i ...>, Op && op, P && ... p)
 {
     using FM = Framematch<Op, std::tuple<P ...>>;
     return map_(FM::op(RA_FWD(op)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(p)) ...);
@@ -746,7 +747,7 @@ pick_star(std::size_t p0, T && t)
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
 template <IteratorConcept ... P, int ... I>
-struct Pick<std::tuple<P ...>, mp::int_list<I ...>>: public Match<std::tuple<P ...>>
+struct Pick<std::tuple<P ...>, int_list<I ...>>: public Match<std::tuple<P ...>>
 {
     using Match<std::tuple<P ...>>::t;
     static_assert(sizeof...(P)>1);

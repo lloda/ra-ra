@@ -24,7 +24,6 @@
 #endif
 
 // Enable ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
-template <class A> constexpr void transpose(ra::noarg);
 template <int A> constexpr void iter(ra::noarg);
 template <class T> constexpr void cast(ra::noarg);
 
@@ -121,10 +120,6 @@ RA_FOR_TYPES(double, std::complex<double>)
 #undef RA_FOR_TYPES
 
 template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
-
-template <int ... Iarg, class A>
-constexpr decltype(auto)
-transpose(mp::int_list<Iarg ...>, A && a) { return transpose<Iarg ...>(RA_FWD(a)); }
 
 constexpr bool
 odd(unsigned int N) { return N & 1; }
@@ -558,8 +553,8 @@ gemv(auto const & a, auto const & b)
 
 // static transposed axes list, output rank is static.
 template <int ... Iarg, class T, rank_t RANK>
-inline auto
-transpose(ViewBig<T, RANK> const & view)
+constexpr auto
+transpose(ViewBig<T, RANK> const & view, int_list<Iarg ...>)
 {
     static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
     RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank ", view.rank(), " should be ", (sizeof...(Iarg)), ".");
@@ -574,7 +569,7 @@ transpose(ViewBig<T, RANK> const & view)
 // dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
 template <class T, rank_t RANK, class S>
 inline ViewBig<T, ANY>
-transpose(S && s, ViewBig<T, RANK> const & view)
+transpose(ViewBig<T, RANK> const & view, S && s)
 {
     RA_CHECK(view.rank()==ra::size(s), "Bad size for transposed axes list.");
     rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + ra::amax(s);
@@ -583,20 +578,18 @@ transpose(S && s, ViewBig<T, RANK> const & view)
     return r;
 }
 
-// Need compile time values and not sizes to deduce the output rank, so initializer_list suffices.
-template <class T, rank_t RANK>
+template <class T, rank_t RANK, class dimtype, int N>
 inline ViewBig<T, ANY>
-transpose(std::initializer_list<ra::rank_t> s, ViewBig<T, RANK> const & view)
+transpose(ViewBig<T, RANK> const & view, dimtype const (&s)[N])
 {
-    return transpose(start(s), view);
+    return transpose(view, start(s));
 }
 
-template <class T, rank_t RANK>
-constexpr auto
-diag(ViewBig<T, RANK> const & view)
-{
-    return transpose<0, 0>(view);
-}
+constexpr decltype(auto)
+transpose(auto && a) { return transpose(RA_FWD(a), int_list<1, 0> {}); }
+
+constexpr decltype(auto)
+diag(auto && a) { return transpose(RA_FWD(a), int_list<0, 0>{}); };
 
 
 // --------------------

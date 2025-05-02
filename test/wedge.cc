@@ -12,7 +12,7 @@
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::mp::Wedge, ra::mp::hodgex, ra::mp::int_list;
+using ra::mp::Wedge, ra::mp::hodgex, ra::int_list;
 
 using real = double;
 using complex = std::complex<double>;

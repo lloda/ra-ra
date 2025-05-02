@@ -16,7 +16,7 @@
 #include <stdfloat>
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::mp::int_list, ra::mp::nil;
+using ra::int_list, ra::mp::nil;
 
 template <class A>
 void

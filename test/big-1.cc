@@ -79,7 +79,7 @@ int main()
     {
         ra::Big<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5});
         ra::Big<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5});
-        auto c = transpose({1, 0}, ra::ViewBig<int, 2>({3, 2}, a.data()));
+        auto c = transpose(ra::ViewBig<int, 2>({3, 2}, a.data()), {1, 0});
         a.dimv = c.dimv;
         for (int k=0; k!=c.rank(); ++k) {
             std::cout << "CSTRIDE " << k << " " << c.step(k) << std::endl;

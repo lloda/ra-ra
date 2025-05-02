@@ -68,9 +68,9 @@ struct TestRecorder
         print(o, "\n", esc::bold, a ..., esc::unbold, "\n");
     }
     static std::string
-    format_error(double e)
+    format_error(double e, char const * col = esc::yellow)
     {
-        return std::format("{}{:.2}{}", esc::yellow, e, esc::reset);
+        return std::format("{}{:.2}{}", col, e, esc::reset);
     }
     TestRecorder &
     info(auto && ... a)
@@ -206,10 +206,11 @@ struct TestRecorder
                                       where(ref==a, 0., PINF),
                                       where(isnan(a), 0., PINF))));
         test(e<=req,
-             RA_LAZYINFO("rerr (", esc::yellow, "ref", esc::reset, ": ", ref, esc::yellow, ", got", esc::reset, ": ", a,
-                         ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")), ", req. ", req),
+             RA_LAZYINFO("rerr (", esc::yellow, "ref", esc::reset, ": ", ref, esc::yellow, ", got", esc::reset,
+                         ": ", a, ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
+                         ", req. ", format_error(req, esc::plain)),
              RA_LAZYINFO("rerr: ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
-                         ", req. ", req),
+                         ", req. ", format_error(req, esc::plain)),
              loc);
         return e;
     }

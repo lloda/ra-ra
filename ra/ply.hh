@@ -44,7 +44,7 @@ struct WLen<Len>
 };
 
 template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
-struct WLen<Map<Op, std::tuple<P ...>, mp::int_list<I ...>>>
+struct WLen<Map<Op, std::tuple<P ...>, int_list<I ...>>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
@@ -54,7 +54,7 @@ struct WLen<Map<Op, std::tuple<P ...>, mp::int_list<I ...>>>
 };
 
 template <IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
-struct WLen<Pick<std::tuple<P ...>, mp::int_list<I ...>>>
+struct WLen<Pick<std::tuple<P ...>, int_list<I ...>>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)

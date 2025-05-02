@@ -82,15 +82,15 @@ int main()
     diff(int_c<3>(), -1/(2*delta));
     auto time_DA = Benchmark::clock::now()-t0;
 
-    F = ra::transpose<0, 1, 2, 3, 5, 4>(DA) - DA;
+    F = ra::transpose(DA, ra::int_list<0, 1, 2, 3, 5, 4>{}) - DA;
 
 // abuse shape matching to reduce last axis.
-    divA += ra::transpose<0, 1, 2, 3, 4, 4>(DA);
+    divA += ra::transpose(DA, ra::int_list<0, 1, 2, 3, 4, 4>{});
     tr.info("Lorentz test max div A (1)").test_eq(0., amax(divA));
 // an alternative without a temporary.
     tr.info("Lorentz test max div A (2)")
         .test_eq(0., amax(map([](auto && a) { return sum(a); },
-                              iter<1>(ra::transpose<0, 1, 2, 3, 4, 4>(DA)))));
+                              iter<1>(ra::transpose(DA, ra::int_list<0, 1, 2, 3, 4, 4>{})))));
     tr.quiet().test_eq(0.3039588939177449, F(19, 0, 0, 0, 2, 1));
 
     auto show = [&tr, &delta](char const * name, int t, auto && F)

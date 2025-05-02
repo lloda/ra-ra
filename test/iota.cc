@@ -35,7 +35,7 @@ int main()
     tr.section("frame-matching, forbidding unroll");
     {
         ra::Big<int, 3> b ({3, 4, 2}, ra::none);
-        transpose({0, 2, 1}, b) = ra::iota(3, 1);
+        transpose(b, {0, 2, 1}) = ra::iota(3, 1);
         cout << b << endl;
         tr.test(every(b(0)==1));
         tr.test(every(b(1)==2));
@@ -43,7 +43,7 @@ int main()
     }
     {
         ra::Big<int, 3> b ({3, 4, 2}, ra::none);
-        transpose<0, 2, 1>(b) = ra::iota(3, 1);
+        transpose(b, ra::int_list<0, 2, 1>{}) = ra::iota(3, 1);
         cout << b << endl;
         tr.test(every(b(0)==1));
         tr.test(every(b(1)==2));

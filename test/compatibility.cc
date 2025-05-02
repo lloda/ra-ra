@@ -12,7 +12,7 @@
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
-using ra::int_c, ra::mp::int_list;
+using ra::int_c, ra::int_list;
 
 int main()
 {
@@ -32,7 +32,7 @@ int main()
         {
             std::vector const a = { 1, 2, 3 };
             ra::Big<int, 3> b ({3, 4, 2}, ra::none);
-            transpose({0, 2, 1}, b) = ra::start(a);
+            transpose(b, {0, 2, 1}) = ra::start(a);
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));

@@ -256,7 +256,7 @@ int main()
         c = d;
         tr.test(std::equal(a.begin(), a.end(), check5));
         ra::Unique<int, 2> t({2, 3}, 9);
-        c = transpose({1, 0}, t);
+        c = transpose(t, {1, 0});
         tr.test(std::equal(a.begin(), a.end(), check9));
         a = d;
         tr.test(std::equal(a.begin(), a.end(), check5));

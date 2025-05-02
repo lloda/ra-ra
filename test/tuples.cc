@@ -13,7 +13,7 @@
 
 using std::tuple, std::tuple_element, std::is_same_v;
 using std::cout, std::endl, ra::TestRecorder;
-using ra::int_c, ra::mp::ref, ra::mp::int_list;
+using ra::int_c, ra::mp::ref, ra::int_list;
 
 template <class A>
 struct Inc1

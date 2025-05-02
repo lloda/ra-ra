@@ -67,7 +67,7 @@ struct default_steps_
 {
     constexpr static int rank = mp::len<lens>;
     constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, mp::tuple2array<dim_t, lens>()); return dimv; } ();
-    using type = decltype([] { return std::apply([](auto ... k) { return mp::int_list<dimv[k].step ...> {}; }, mp::iota<rank> {}); } ());
+    using type = decltype([] { return std::apply([](auto ... k) { return int_list<dimv[k].step ...> {}; }, mp::iota<rank> {}); } ());
 };
 template <class lens> using default_steps = typename default_steps_<lens>::type;
 
@@ -171,7 +171,7 @@ maybe_len(V && v)
 template <int N, class KK=mp::iota<N>> struct unbeat;
 
 template <int N, int ... k>
-struct unbeat<N, mp::int_list<k ...>>
+struct unbeat<N, int_list<k ...>>
 {
     constexpr static decltype(auto)
     op(auto && v, auto && ... i)
@@ -224,7 +224,7 @@ indexer(Q const & q, P const & pp)
 // --------------------
 
 template <auto f, auto dimv, int cellr, int framer=0>
-using ctuple = decltype(std::apply([](auto ... i) { return mp::int_list<std::invoke(f, dimv[i]) ...> {}; }, mp::iota<cellr, framer> {}));
+using ctuple = decltype(std::apply([](auto ... i) { return int_list<std::invoke(f, dimv[i]) ...> {}; }, mp::iota<cellr, framer> {}));
 
 template <class lens, class steps>
 constexpr static auto cdimv = mp::tuple2array<Dim, mp::zip<lens, steps>, [](auto i) { return std::make_from_tuple<Dim>(i); }>();
@@ -335,10 +335,10 @@ template <class T, class lens, class steps, class nested_args = small_args<T, le
 struct SmallArray;
 
 template <class T, dim_t ... lens>
-using Small = SmallArray<T, mp::int_list<lens ...>, default_steps<mp::int_list<lens ...>>>;
+using Small = SmallArray<T, int_list<lens ...>, default_steps<int_list<lens ...>>>;
 
 template <class T, int S0, int ... S>
-struct nested_arg<T, mp::int_list<S0, S ...>>
+struct nested_arg<T, int_list<S0, S ...>>
 {
     using sub = std::conditional_t<0==sizeof...(S), T, Small<T, S ...>>;
 };
@@ -373,8 +373,8 @@ struct FilterDims<lens_, steps_, I0, I ...>
     constexpr static int dst = beatable<I0>.dst;
     constexpr static int src = beatable<I0>.src;
     using next = FilterDims<mp::drop<lens_, src>, mp::drop<steps_, src>, I ...>;
-    using lens = mp::append<mp::int_list<I0::nn>, typename next::lens>;
-    using steps = mp::append<mp::int_list<(mp::ref<steps_, 0>::value * I0::gets())>, typename next::steps>;
+    using lens = mp::append<int_list<I0::nn>, typename next::lens>;
+    using steps = mp::append<int_list<(mp::ref<steps_, 0>::value * I0::gets())>, typename next::steps>;
 };
 
 template <class T_, class lens_, class steps_>
@@ -639,7 +639,7 @@ constexpr auto
 start(is_builtin_array auto && t)
 {
     using A = std::remove_reference_t<decltype(t)>; // preserve const
-    using lens = decltype(std::apply([](auto ... i) { return mp::int_list<std::extent_v<A, i> ...> {}; },
+    using lens = decltype(std::apply([](auto ... i) { return int_list<std::extent_v<A, i> ...> {}; },
                                      mp::iota<std::rank_v<A>> {}));
     return ViewSmall<std::remove_all_extents_t<A>, lens, default_steps<lens>>(peel(t)).iter();
 }
@@ -665,7 +665,7 @@ RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<typename A::T, typen
 
 template <int ... Iarg>
 constexpr auto
-transpose(cv_smallview auto && a_)
+transpose(cv_smallview auto && a_, int_list<Iarg ...>)
 {
     decltype(auto) a = a_.view();
     using AA = typename std::decay_t<decltype(a)>;
@@ -675,12 +675,6 @@ transpose(cv_smallview auto && a_)
     constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
     constexpr auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
     return ViewSmall<typename AA::T, ctuple<&Dim::len, dst, dstrank>, ctuple<&Dim::step, dst, dstrank>>(a.data());
-}
-
-constexpr auto
-diag(cv_smallview auto && a)
-{
-    return transpose<0, 0>(a);
 }
 
 template <class super_t>
@@ -699,7 +693,7 @@ explode(cv_smallview auto && a_)
     using csteps = decltype(std::apply([](auto ... i)
                                        {
                                            static_assert(((i==(i/supers)*supers) && ...));
-                                           return mp::int_list<(i/supers) ...> {};
+                                           return int_list<(i/supers) ...> {};
                                        }, mp::take<typename AA::steps, ra-rb> {}));
     return ViewSmall<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
 }

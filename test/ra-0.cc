@@ -490,7 +490,7 @@ int main()
         tr.test_eq(8, a(2, 0));
         tr.test_eq(9, a(2, 1));
 
-        auto b = transpose({1, 0}, a);
+        auto b = transpose(a, {1, 0});
         b = { 2, 3, 1, 4, 8, 9 };
         tr.test_eq(2, b(0, 0));
         tr.test_eq(3, b(0, 1));
@@ -506,7 +506,7 @@ int main()
         tr.test_eq(1, a(2, 0));
         tr.test_eq(9, a(2, 1));
 
-        auto c = transpose({1, 0}, a);
+        auto c = transpose(a, {1, 0});
         tr.test(a.data()==c.data()); // pointers are not ra::scalars. Dunno if this deserves fixing.
         tr.test_eq(a.len(0), c.len(1));
         tr.test_eq(a.len(1), c.len(0));

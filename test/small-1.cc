@@ -15,7 +15,7 @@
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::mp::int_list, ra::int_c, ra::mp::print_int_list, ra::mp::ref;
+using ra::int_list, ra::int_c, ra::mp::print_int_list, ra::mp::ref, ra::transpose;
 using int2 = ra::Small<int, 2>;
 
 int main()
@@ -24,25 +24,27 @@ int main()
     tr.section("transpose(ra::Small)");
     {
         ra::Small<double, 2, 3> const a(ra::_0 + 10*ra::_1);
-        tr.info("<0 1>").test_eq(a, ra::transpose<0, 1>(a));
-        tr.info("<1 0>").test_eq(ra::Small<double, 3, 2>(10*ra::_0 + ra::_1), ra::transpose<1, 0>(a));
-        tr.info("<0 0>").test_eq(ra::Small<double, 2> {0, 11}, ra::transpose<0, 0>(a));
+        tr.info("<0 1>").test_eq(a, transpose(a, int_list<0, 1>{}));
+        tr.info("<1 0>").test_eq(ra::Small<double, 3, 2>(10*ra::_0 + ra::_1), transpose(a, int_list<1, 0>{}));
+        tr.info("<1 0> by default").test_eq(ra::Small<double, 3, 2>(10*ra::_0 + ra::_1), transpose(a));
+        tr.info("<0 0>").test_eq(ra::Small<double, 2> {0, 11}, transpose(a, int_list<0, 0>{}));
 
         ra::Small<double, 2, 3> b(ra::_0 + 10*ra::_1);
-        tr.info("<0 1>").test_eq(a, ra::transpose<0, 1>(a));
-        tr.info("<1 0>").test_eq(ra::Small<double, 3, 2>(10*ra::_0 + ra::_1), ra::transpose<1, 0>(a));
-        ra::transpose<0, 0>(b) = {7, 9};
+        tr.info("<0 1>").test_eq(a, transpose(a, int_list<0, 1>{}));
+        tr.info("<1 0>").test_eq(ra::Small<double, 3, 2>(10*ra::_0 + ra::_1), transpose(a, int_list<1, 0>{}));
+        tr.info("<1 0> by default").test_eq(ra::Small<double, 3, 2>(10*ra::_0 + ra::_1), transpose(a));
+        transpose(b, int_list<0, 0>{}) = {7, 9};
         tr.info("<0 0>").test_eq(ra::Small<double, 2, 3>{7, 10, 20, 1, 9, 21}, b);
 
         ra::Small<double> x {99};
-        auto xt = transpose<>(x);
+        auto xt = transpose(x, int_list<>{});
         tr.info("<> rank").test_eq(0, xt.rank());
         tr.info("<>").test_eq(99, xt);
 
         ra::Small<double, 3, 3> x3 = ra::_0 - ra::_1;
-        ra::Small<double, 3, 3> y3 = transpose<1, 0>(x3);
+        ra::Small<double, 3, 3> y3 = transpose(x3, int_list<1, 0>{});
         tr.info("transpose copy").test_eq(y3, ra::_1 - ra::_0);
-        x3() = transpose<1, 0>(y3());
+        x3() = transpose(y3(), int_list<1, 0>{});
         tr.info("transpose copy").test_eq(x3, ra::_0 - ra::_1);
     }
     tr.section("sizeof");
@@ -361,8 +363,8 @@ int main()
     tr.section("transpose");
     {
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
-        tr.test_eq(ra::Small<double, 3, 2> { 1, 4, 2, 5, 3, 6 }, transpose<1, 0>(a));
-        ra::transpose<1, 0>(a) = { 1, 2, 3, 4, 5, 6 };
+        tr.test_eq(ra::Small<double, 3, 2> { 1, 4, 2, 5, 3, 6 }, transpose(a, int_list<1, 0>{}));
+        transpose(a, int_list<1, 0>{}) = { 1, 2, 3, 4, 5, 6 };
         tr.test_eq(ra::Small<double, 2, 3> { 1, 3, 5, 2, 4, 6 }, a);
     }
     tr.section("diag");

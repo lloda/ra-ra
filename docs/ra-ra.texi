@@ -290,7 +290,7 @@ Here is a minimal program@footnote{Examples given without context assume that on
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << fmt({.shape=ra::noshape, .sep0="|"}, transpose<1, 0>(A)) << std::endl;
+    std::cout << fmt({.shape=ra::noshape, .sep0="|"}, transpose(A)) << std::endl;
 }
 @end verbatim
 @print{} h|w
@@ -424,8 +424,8 @@ ra::Big<double, 2> c({3, 2}, cx); // *** WHO NOSE ***
 @c [ma114]
 @example
 @verbatim
-using lens = mp::int_list<2, 3>;
-using steps = mp::int_list<1, 2>;
+using lens = ra::int_list<2, 3>;
+using steps = ra::int_list<1, 2>;
 ra::SmallArray<double, lens, steps> a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 @end verbatim
 @end example
@@ -476,17 +476,17 @@ c1(2) = 9.;                        // c(1, 2) = 9.
 @end verbatim
 @end example
 
-Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. @code{ra::} has functions to create the most common kinds of views:
+Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. @code{ra::} has the usual functions that operate on views:
 
 @example
 @verbatim
 ra::Big<double> c {{1, 2, 3}, {4, 5, 6}};
-auto ct = transpose<1, 0>(c); // {{1, 4}, {2, 5}, {3, 6}}
+auto ct = transpose(c); // {{1, 4}, {2, 5}, {3, 6}}
 auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 @end verbatim
 @end example
 
-However, views can point to anywhere in memory and that memory doesn't have to belong to an @code{ra::} container. For example:
+Views can point to anywhere in memory and that memory doesn't have to belong to an @code{ra::} container. For example:
 
 @example
 @verbatim
@@ -632,7 +632,7 @@ x += a; // sum the rows of a
 @verbatim
 ra::Big<double, 3> a({5, 3, 3}, ra::_0);
 ra::Big<double, 1> b({5}, 0.);
-b += transpose<0, 1, 1>(a); // b(i) = ∑ⱼ a(i, j, j)
+b += transpose(a, ra::int_list<0, 1, 1>{}); // b(i) = ∑ⱼ a(i, j, j)
 @end verbatim
 @result{} b = @{0, 3, 6, 9, 12@}
 @end example
@@ -1111,7 +1111,7 @@ Often enough you need to reduce over particular axes. This is possible by combin
     ra::Big<double, 1> sum_rows({n}, 0.);
     iter<1>(sum_rows) += iter<1>(a);
     // for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), sum_rows, a) // alternative
-    // sum_rows += transpose<1, 0>(a); // another
+    // sum_rows += transpose(a); // another
 
     ra::Big<double, 1> sum_cols({m}, 0.);
     sum_cols += a;
@@ -2214,7 +2214,7 @@ If the argument has rt or ct shape, it is the same for the result. The main use 
 
 @cindex @code{diag}
 @anchor{x-diag} @defun diag view
-Equivalent to @code{transpose<0, 0>(view)}.
+Equivalent to @code{transpose(view, ra::int_list<0, 0> @{@})}.
 @end defun
 
 @cindex @code{dot}
@@ -2498,15 +2498,18 @@ This function reuses @code{std::swap} for same-rank overloads, so it must not be
 
 @cindex @code{transpose}
 @anchor{x-transpose}
-@defun transpose <axes ...> (view) | (axes, view)
+@deffn @w{Function} transpose view axes
+@deffnx @w{Function} transpose view
+
 Create a new view by transposing the axes of @var{view}. The number of @var{axes} must match the rank of @var{view}.
 
-@code{axes} are the @emph{destination} axes, that is, axis @math{i} of @var{view} matches axis @var{axes}@math{_i} of the result. For example:
+@var{axes} are the @emph{destination} axes, that is, axis @math{i} of @var{view} matches axis @var{axes}@math{_i} of the result. @var{axes} may be either an array with runtime values, or an @code{ra::int_list<>}. @code{transpose(a)} is a shortcut for @code{transpose(a, ra::int_list<1, 0>@{@})}. For example:
 
 @example
 @verbatim
     ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-    cout << transpose<1, 0>(a) << endl;
+    cout << transpose(a, ra::int_list<1, 0>{}) << endl;
+    // cout << transpose(a) << endl; // same
 @end verbatim
   @print{}
   3 2
@@ -2520,7 +2523,7 @@ The rank of the result is @math{1+\mathrm{max}ᵢ(}@var{axes}@math{_i}@math{)} a
 @example
 @verbatim
     ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-    cout << transpose<0, 0>(a) << endl; // { a(0, 0), a(1, 1) }
+    cout << transpose(a, ra::int_list<0, 0>{}) << endl; // { a(0, 0), a(1, 1) }
 @end verbatim
   @print{}
   2
@@ -2532,7 +2535,7 @@ If one of the destination axes isn't listed in @var{axes}, then it becomes a ‘
 @example
 @verbatim
     ra::Unique<double, 1> a = {1, 2, 3};
-    cout << ((a*10) + transpose<1>(a)) << endl;
+    cout << ((a*10) + transpose(a, ra::int_list<1>{})) << endl;
 @end verbatim
   @print{}
   3 3
@@ -2541,15 +2544,15 @@ If one of the destination axes isn't listed in @var{axes}, then it becomes a ‘
   13 23 33
 @end example
 
-The two argument form lets you specify the axis list at runtime. In that case the result will have runtime rank as well. For example: @c [ma117]
+If the @var{axes} are an @code{ra::int_list<>}, then the result will have static rank, otherwise it will have runtime rank. For example: @c [ma117]
 
 @example
 @verbatim
     ra::Small<int, 2> axes = {0, 1};
     ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-    cout << "A: " << transpose(axes, a) << endl;
+    cout << "A: " << transpose(a, axes) << endl;
     axes = {1, 0};
-    cout << "B: " << transpose(axes, a) << endl;
+    cout << "B: " << transpose(a, axes) << endl;
 @end verbatim
   @print{}
   A: 2
@@ -2563,9 +2566,10 @@ The two argument form lets you specify the axis list at runtime. In that case th
   3 6
 @end example
 
-This operation does not work on arbitrary array expressions yet. @c TODO FILL
+@c TODO transpose for non-view exprs
 
-@end defun
+@end deffn
+
 
 @cindex @code{where}
 @cindex Masking
