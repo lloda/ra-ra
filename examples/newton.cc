@@ -30,27 +30,27 @@ int main()
     array<real, 2> v({bodies, 3}, { 0, 0, 0,  0, 6e3, 0 });
 
     auto force = [&m, &x](int i, int j) -> real3
-        {
-            if (i==j) {
-                return 0.;
-            } else {
-                real3 deltax = x(j)-x(i);
-                return deltax*(G*m(i)*m(j) / pow(sum(deltax*deltax), 3/2.));
-            }
-        };
+    {
+        if (i==j) {
+            return 0.;
+        } else {
+            real3 deltax = x(j)-x(i);
+            return deltax*(G*m(i)*m(j) / pow(sum(deltax*deltax), 3/2.));
+        }
+    };
 
     array<char, 2> orbit({50, 50}, ' ');
     auto draw = [&orbit, &c](auto && x, auto && t)
-        {
-            auto mapc = [](real x) { return clamp(int(round(25+x/5e5)), 0, 49); };
+    {
+        auto mapc = [](real x) { return clamp(int(round(25+x/5e5)), 0, 49); };
 // 1. TODO we still can't use iter<1> on an ET.
-            array<int, 2> xi = map(mapc, x);
-            at(orbit, iter<1>(xi(ra::all, ra::iota(2)))) = c;
+        array<int, 2> xi = map(mapc, x);
+        at(orbit, iter<1>(xi(ra::all, ra::iota(2)))) = c;
 // 2. alternative w/o temps
-            for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
-                     iter<1>(x), c);
-            ra::print(std::cout, "TIME IN HOURS ", (t/3600.), " ", fmt({.shape=ra::noshape, .sep0=""}, orbit), "\n");
-        };
+        for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
+                 iter<1>(x), c);
+        std::print(std::cout, "TIME IN HOURS {:.4f}{}\n", (t/3600.), fmt({.shape=ra::noshape, .sep0=""}, orbit));
+    };
 
     real t = 0;
     array<real, 3> F({bodies, bodies, 3}, 0.);
@@ -66,7 +66,6 @@ int main()
         v += a*delta;
         x += v*delta;
         draw(x, t);
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     return 0;
 }

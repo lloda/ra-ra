@@ -359,17 +359,21 @@ template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 // https://stackoverflow.com/a/71921982
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
 
-// count leaves with unknown rt (ANY) size. We need a rt check if there's more than one.
+// need runtime check if there's more than one leaf with ANY size.
 template <class TOP, class A=TOP>
 consteval int
 tbc(int sofar)
 {
     if constexpr (is_match<A>) {
-        return A::template tbc<TOP>(sofar); // just to peel P from A. Sad!
+        using T = decltype(std::declval<A>().t);
+        [&sofar]<int ... i>(ilist_t<i ...>) {
+            (void)(((sofar = tbc<TOP, std::decay_t<mp::ref<T, i>>>(sofar)) >= 0) && ...);
+        } (mp::iota<mp::len<T>> {});
+        return sofar;
     } else {
         if (int rt=rank_s<TOP>(), ra=rank_s<A>(); 0==rt || 0==ra) {
             return sofar;
-        } else if (ANY==rt || ANY==ra) {
+        } else if (ANY==sofar || ANY==ra) {
             return 1+sofar;
         } else {
 // by choose_rank ra<=rt always, plus MIS==la implies MIS==lt, so no need to check both.
@@ -394,13 +398,6 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
 
     constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
 
-    template <class TOP>
-    consteval static int
-    tbc(int sofar)
-    {
-        (void)(((sofar = ra::tbc<TOP, std::decay_t<P>>(sofar))>=0) && ...);
-        return sofar;
-    }
 // 0: fail, 1: rt check, 2: pass
     consteval static int
     check_s()

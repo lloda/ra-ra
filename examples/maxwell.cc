@@ -23,7 +23,7 @@ template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 constexpr auto PI = std::numbers::pi_v<double>;
 
 using std::cout, std::endl, std::println;
-using ra::iota, ra::int_c, ra::TestRecorder, ra::Benchmark;
+using ra::iota, ra::ic, ra::TestRecorder, ra::Benchmark;
 
 int main()
 {
@@ -76,10 +76,10 @@ int main()
         };
 
     t0 = Benchmark::clock::now();
-    diff(int_c<0>(), +1/(2*delta));
-    diff(int_c<1>(), -1/(2*delta));
-    diff(int_c<2>(), -1/(2*delta));
-    diff(int_c<3>(), -1/(2*delta));
+    diff(ic<0>, +1/(2*delta));
+    diff(ic<1>, -1/(2*delta));
+    diff(ic<2>, -1/(2*delta));
+    diff(ic<3>, -1/(2*delta));
     auto time_DA = Benchmark::clock::now()-t0;
 
     F = ra::transpose(DA, ra::ilist<0, 1, 2, 3, 5, 4>) - DA;
@@ -97,14 +97,13 @@ int main()
         {
             tr.quiet().test(amin(F)>=-1);
             tr.quiet().test(amax(F)<=+1);
-            println(cout, "(0)={:12.10} t={}:", F(0), (t*delta));
+            println(cout, "(0)={:10.8} t={}:", F(0), (t*delta));
             for_each([](auto && F) { println(cout, "{}*", std::string(int(round(20*(clamp(F, -1., 1.)+1))), ' ')); }, F);
         };
 
     for (int t=0; t<o; ++t) {
         show("Ey", t, F(t, H, 0, 0, 2, 0));
         show("Bz", t, F(t, H, 0, 0, 2, 1));
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         println(cout, "");
     }
     println(cout, "{:3f} μs time_A", Benchmark::toseconds(time_A)/1e-6);
