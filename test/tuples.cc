@@ -13,7 +13,7 @@
 
 using std::tuple, std::tuple_element, std::is_same_v;
 using std::cout, std::endl, ra::TestRecorder;
-using ra::int_c, ra::mp::ref, ra::int_list;
+using ra::int_c, ra::mp::ref, ra::ilist_t;
 
 template <class A>
 struct Inc1
@@ -112,15 +112,15 @@ int main()
     }
 // Map
     {
-        using A = int_list<5, 6, 3>;
-        using B = int_list<2, 3, -1>;
+        using A = ilist_t<5, 6, 3>;
+        using B = ilist_t<2, 3, -1>;
         static_assert(ra::mp::check_idx<ra::mp::map<ra::mp::sum, A>, 5, 6, 3>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::map<ra::mp::sum, A, B>, 7, 9, 2>::value, "");
     }
 // fold.
     {
-        using A = int_list<5, 6, 3>;
-        using B = int_list<2, 3, -1>;
+        using A = ilist_t<5, 6, 3>;
+        using B = ilist_t<2, 3, -1>;
         static_assert(ra::mp::fold<ra::mp::sum, int_c<1>, A>::value==15, "");
         static_assert(ra::mp::fold<ra::mp::sum, int_c<3>, B>::value==7, "");
         static_assert(ra::mp::fold<ra::mp::max, int_c<4>, A>::value==6, "");
@@ -132,13 +132,13 @@ int main()
     }
 // Reductions.
     {
-        using list_ = int_list<>;
-        using list_1 = int_list<1>;
-        using list_0 = int_list<0>;
-        using list_10 = int_list<1, 0>;
-        using list_01 = int_list<0, 1>;
-        using list_11 = int_list<1, 1>;
-        using list_00 = int_list<0, 0>;
+        using list_ = ilist_t<>;
+        using list_1 = ilist_t<1>;
+        using list_0 = ilist_t<0>;
+        using list_10 = ilist_t<1, 0>;
+        using list_01 = ilist_t<0, 1>;
+        using list_11 = ilist_t<1, 1>;
+        using list_00 = ilist_t<0, 0>;
         static_assert(ra::mp::apply<ra::mp::andb, list_>::value, "bad And");
         static_assert(ra::mp::apply<ra::mp::andb, list_1>::value, "bad And");
         static_assert(!ra::mp::apply<ra::mp::andb, list_0>::value, "bad And");
@@ -154,15 +154,15 @@ int main()
         static_assert(ra::mp::apply<ra::mp::orb, list_11>::value, "bad Or");
         static_assert(!ra::mp::apply<ra::mp::orb, list_00>::value, "bad Or");
         static_assert(ra::mp::apply<ra::mp::sum, list_>::value==0, "bad Sum");
-        static_assert(ra::mp::apply<ra::mp::sum, int_list<2, 4>>::value==6, "bad Sum");
+        static_assert(ra::mp::apply<ra::mp::sum, ilist_t<2, 4>>::value==6, "bad Sum");
         static_assert(ra::mp::apply<ra::mp::prod, list_>::value==1, "bad Prod");
-        static_assert(ra::mp::apply<ra::mp::prod, int_list<2, 3>>::value==6, "bad Prod");
+        static_assert(ra::mp::apply<ra::mp::prod, ilist_t<2, 3>>::value==6, "bad Prod");
     }
 // append.
-    using A = int_list<0, 2, 3>;
-    using B = int_list<5, 6, 7>;
-    using C = int_list<9, 8>;
-    static_assert(is_same_v<int_list<>, ra::mp::nil>, "");
+    using A = ilist_t<0, 2, 3>;
+    using B = ilist_t<5, 6, 7>;
+    using C = ilist_t<9, 8>;
+    static_assert(is_same_v<ilist_t<>, ra::mp::nil>, "");
     static_assert(is_same_v<C, tuple<int_c<9>, int_c<8>>>, "");
     using O = ra::mp::nil;
     using A_B = ra::mp::append<A, B>;
@@ -221,19 +221,19 @@ int main()
     static_assert(ra::mp::index<S3, S2BC>::value==1, "4e");
 // InvertIndex
     {
-        using II0 = int_list<4, 6, 7, 1>;
+        using II0 = ilist_t<4, 6, 7, 1>;
         using II1 = ra::mp::InvertIndex<II0>;
-        static_assert(is_same_v<int_list<-1, 3, -1, -1, 0, -1, 1, 2>, II1>);
+        static_assert(is_same_v<ilist_t<-1, 3, -1, -1, 0, -1, 1, 2>, II1>);
     }
     {
-        using II0 = int_list<3>;
+        using II0 = ilist_t<3>;
         using II1 = ra::mp::InvertIndex<II0>;
-        static_assert(is_same_v<int_list<-1, -1, -1, 0>, II1>);
+        static_assert(is_same_v<ilist_t<-1, -1, -1, 0>, II1>);
     }
     {
-        using II0 = int_list<>;
+        using II0 = ilist_t<>;
         using II1 = ra::mp::InvertIndex<II0>;
-        static_assert(is_same_v<int_list<>, II1>);
+        static_assert(is_same_v<ilist_t<>, II1>);
     }
 // IndexIf.
     static_assert(ra::mp::IndexIf<A, SamePP<int_c<0>>::type>::value==0, "5a");
@@ -261,7 +261,7 @@ int main()
     static_assert(ra::mp::check_idx<ra::mp::take<A, 3>, 0, 2, 3>::value, "bad 6h");
 // complement.
     {
-        using case1 = int_list<1>;
+        using case1 = ilist_t<1>;
         static_assert(ra::mp::check_idx<ra::mp::complement<case1, 0>>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<case1, 1>, 0>::value, "");
         static_assert(ra::mp::check_idx<ra::mp::complement<case1, 2>, 0>::value, "");
@@ -280,11 +280,11 @@ int main()
     {
 #define _ ,
 #define CHECK_COMPLEMENT_SLIST( A, B, C ) \
-static_assert(ra::mp::check_idx<ra::mp::complement_sorted_list<int_list A , B > C >::value, "a");
-        CHECK_COMPLEMENT_SLIST( <1>, int_list<>, )
-        CHECK_COMPLEMENT_SLIST( <1>, int_list<0>, _ 0)
-        CHECK_COMPLEMENT_SLIST( <1>, int_list<0 _ 1>, _ 0)
-        CHECK_COMPLEMENT_SLIST( <1>, int_list<0 _ 1 _ 2>, _ 0 _ 2)
+static_assert(ra::mp::check_idx<ra::mp::complement_sorted_list<ilist_t A , B > C >::value, "a");
+        CHECK_COMPLEMENT_SLIST( <1>, ilist_t<>, )
+        CHECK_COMPLEMENT_SLIST( <1>, ilist_t<0>, _ 0)
+        CHECK_COMPLEMENT_SLIST( <1>, ilist_t<0 _ 1>, _ 0)
+        CHECK_COMPLEMENT_SLIST( <1>, ilist_t<0 _ 1 _ 2>, _ 0 _ 2)
         using l2 = ra::mp::iota<2>;
         CHECK_COMPLEMENT_SLIST( <0>,     l2,  _ 1 )
         CHECK_COMPLEMENT_SLIST( <1>,     l2,  _ 0 )
@@ -302,7 +302,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_sorted_list<int_list A , B > 
 #undef _
 #define _ ,
 #define CHECK_COMPLEMENT_LIST( A, B, C ) \
-static_assert(ra::mp::check_idx<ra::mp::complement_list<int_list A , B > C >::value, "a");
+static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::value, "a");
         using l2 = ra::mp::iota<2>;
         CHECK_COMPLEMENT_LIST( <0>,     l2,  _ 1 )
         CHECK_COMPLEMENT_LIST( <1>,     l2,  _ 0 )
@@ -320,7 +320,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<int_list A , B > C >::va
         CHECK_COMPLEMENT_LIST( <1 _ 0>, l3,  _ 2 )
         CHECK_COMPLEMENT_LIST( <2 _ 1>, l3,  _ 0 )
         CHECK_COMPLEMENT_LIST( <2 _ 0>, l3,  _ 1 )
-        using x3 = int_list<2, 0, 1>;
+        using x3 = ilist_t<2, 0, 1>;
         CHECK_COMPLEMENT_LIST( <1 _ 0>, x3,  _ 2 )
         CHECK_COMPLEMENT_LIST( <2 _ 0>, x3,  _ 1 )
         CHECK_COMPLEMENT_LIST( <2 _ 1>, x3,  _ 0 )
@@ -407,7 +407,7 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<int_list A , B > C >::va
     {
 #define _ ,
 #define CHECK_PERM_SIGN( A, B, C ) \
-static_assert(ra::mp::PermutationSign<int_list A , int_list B >::value == C, "");
+static_assert(ra::mp::PermutationSign<ilist_t A , ilist_t B >::value == C, "");
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <0 _ 1 _ 2>, +1 );
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <0 _ 2 _ 1>, -1 );
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <1 _ 2 _ 0>, +1 );
@@ -432,7 +432,7 @@ static_assert(ra::mp::PermutationSign<int_list A , int_list B >::value == C, "")
     }
 // inc
     {
-        using l = int_list<7, 8, 2>;
+        using l = ilist_t<7, 8, 2>;
         static_assert(ra::mp::check_idx<l, 7, 8, 2>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::inc<l, 0>, 8, 8, 2>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::inc<l, 1>, 7, 9, 2>::value, "bad");
@@ -440,17 +440,17 @@ static_assert(ra::mp::PermutationSign<int_list A , int_list B >::value == C, "")
     }
 // Prod & Sum
     {
-        using l = int_list<3, 5, 7>;
+        using l = ilist_t<3, 5, 7>;
         static_assert(ra::mp::apply<ra::mp::prod, l>::value==105, "bad");
         static_assert(ra::mp::apply<ra::mp::sum, l>::value==15, "bad");
     }
 // tuples in dynamic context
     {
-        using l = int_list<3, 4, 5>;
-        tr.test_eq(0, ra::mp::int_list_index<l>(3));
-        tr.test_eq(1, ra::mp::int_list_index<l>(4));
-        tr.test_eq(2, ra::mp::int_list_index<l>(5));
-        tr.test_eq(-1, ra::mp::int_list_index<l>(7));
+        using l = ilist_t<3, 4, 5>;
+        tr.test_eq(0, ra::mp::ilist_index<l>(3));
+        tr.test_eq(1, ra::mp::ilist_index<l>(4));
+        tr.test_eq(2, ra::mp::ilist_index<l>(5));
+        tr.test_eq(-1, ra::mp::ilist_index<l>(7));
     }
     return tr.summary();
 };

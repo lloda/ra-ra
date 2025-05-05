@@ -294,7 +294,7 @@ tuple2array()
 
 template <class T>
 constexpr int
-int_list_index(int k)
+ilist_index(int k)
 {
     return std::apply([&k](auto ... i) { int r=-1; ((k==mp::ref<T, i>::value && (r=i, 1)) || ...); return r; },
                       iota<len<T>> {});

@@ -16,7 +16,7 @@
 #include <stdfloat>
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::int_list, ra::mp::nil;
+using ra::ilist_t, ra::mp::nil;
 
 template <class A>
 void
@@ -62,7 +62,7 @@ int main()
         static_assert(std::is_same_v<ra::ncvalue_t<decltype(an)>, T>);
     }
     {
-        TESTPRED(decltype(std::declval<ra::ViewSmall<ra::Dim, int_list<3>, int_list<1>>>()),
+        TESTPRED(decltype(std::declval<ra::ViewSmall<ra::Dim, ilist_t<3>, ilist_t<1>>>()),
                  true, true, false, false, false);
         TESTPRED(int,
                  false, false, false, true, false);
@@ -141,7 +141,7 @@ int main()
     {
         static_assert(ra::SliceConcept<ra::ViewBig<int, 0>>);
         static_assert(ra::SliceConcept<ra::ViewBig<int, 2>>);
-        static_assert(ra::SliceConcept<ra::ViewSmall<int, int_list<>, int_list<>>>);
+        static_assert(ra::SliceConcept<ra::ViewSmall<int, ilist_t<>, ilist_t<>>>);
 
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
         static_assert(ra::is_ra<ra::ViewSmall<int, nil, nil>>, "bad is_ra ViewSmall");
@@ -149,7 +149,7 @@ int main()
         static_assert(ra::is_ra<ra::ViewBig<int, 0>>, "bad is_ra View");
 
         static_assert(ra::is_ra<ra::Small<int, 1>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::ViewSmall<int, int_list<1>, int_list<1>>>, "bad is_ra ViewSmall");
+        static_assert(ra::is_ra<ra::ViewSmall<int, ilist_t<1>, ilist_t<1>>>, "bad is_ra ViewSmall");
         static_assert(ra::is_ra<ra::Unique<int, 1>>, "bad is_ra Unique");
         static_assert(ra::is_ra<ra::ViewBig<int, 1>>, "bad is_ra View");
         static_assert(ra::is_ra<ra::ViewBig<int>>, "bad is_ra View");

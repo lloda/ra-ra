@@ -12,14 +12,14 @@
 #include <iterator>
 #include "ra/test.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder, ra::int_list;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::ilist_t;
 using A2 = ra::Unique<int, 2>;
 using A1 = ra::Unique<int, 1>;
 using int3 = ra::Small<int, 3>;
 using int2 = ra::Small<int, 2>;
 using std_int3 = std::array<int, 3>;
 using std_int2 = std::array<int, 2>;
-using ra::int_list;
+using ra::ilist_t;
 
 template <class AA>
 void CheckPlyReverse1(TestRecorder & tr, AA && a)
@@ -190,12 +190,12 @@ int main()
 #define TEST(plier)                                                     \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
-            plier(ra::map_(sum2, a.iter(), transpose(b, int_list<1, 0>{}).iter(), c.iter())); \
+            plier(ra::map_(sum2, a.iter(), transpose(b, ilist_t<1, 0>{}).iter(), c.iter())); \
             tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }                                                               \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
-            plier(ra::map_(sum2, transpose(a, int_list<1, 0>{}).iter(), b.iter(), transpose(c, int_list<1, 0>{}).iter())); \
+            plier(ra::map_(sum2, transpose(a, ilist_t<1, 0>{}).iter(), b.iter(), transpose(c, ilist_t<1, 0>{}).iter())); \
             tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }
         TEST(ply_ravel);
@@ -254,15 +254,15 @@ int main()
         CheckPly<A2>(tr, "(c)", reverse(reverse(transpose(A, {1, 0}), 1), 0), B);
         CheckPly<A2>(tr, "(d)", A, reverse(reverse(transpose(B, {1, 0}), 1), 0));
 
-        CheckPly<A2>(tr, "(e)", transpose(A, int_list<1, 0>{}), B);
-        CheckPly<A2>(tr, "(f)", A, transpose(B, int_list<1, 0>{}));
-        CheckPly<A2>(tr, "(g)", reverse(reverse(transpose(A, int_list<1, 0>{}), 1), 0), B);
-        CheckPly<A2>(tr, "(h)", A, reverse(reverse(transpose(B, int_list<1, 0>{}), 1), 0));
+        CheckPly<A2>(tr, "(e)", transpose(A, ilist_t<1, 0>{}), B);
+        CheckPly<A2>(tr, "(f)", A, transpose(B, ilist_t<1, 0>{}));
+        CheckPly<A2>(tr, "(g)", reverse(reverse(transpose(A, ilist_t<1, 0>{}), 1), 0), B);
+        CheckPly<A2>(tr, "(h)", A, reverse(reverse(transpose(B, ilist_t<1, 0>{}), 1), 0));
 
-        CheckPly<A2>(tr, "(i)", transpose(A, int_list<1, 0>{}), B);
-        CheckPly<A2>(tr, "(j)", A, transpose(B, int_list<1, 0>{}));
-        CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(A, int_list<1, 0>{}), 1), 0), B);
-        CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(B, int_list<1, 0>{}), 1), 0));
+        CheckPly<A2>(tr, "(i)", transpose(A, ilist_t<1, 0>{}), B);
+        CheckPly<A2>(tr, "(j)", A, transpose(B, ilist_t<1, 0>{}));
+        CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(A, ilist_t<1, 0>{}), 1), 0), B);
+        CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(B, ilist_t<1, 0>{}), 1), 0));
     }
     return tr.summary();
 }

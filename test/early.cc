@@ -39,7 +39,7 @@ int main()
         ra::Small<int, 2, 3> a = { { 1, 1, 1 }, { 1, 0, 1} };
         tr.test(!every(1==a));
         tr.test(any(0==a));
-        auto b = ra::transpose(a, ra::int_list<1, 0>{});
+        auto b = ra::transpose(a, ra::ilist_t<1, 0>{});
         tr.test(!every(1==b));
         tr.test(any(0==b));
     }

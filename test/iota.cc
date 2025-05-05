@@ -43,7 +43,7 @@ int main()
     }
     {
         ra::Big<int, 3> b ({3, 4, 2}, ra::none);
-        transpose(b, ra::int_list<0, 2, 1>{}) = ra::iota(3, 1);
+        transpose(b, ra::ilist_t<0, 2, 1>{}) = ra::iota(3, 1);
         cout << b << endl;
         tr.test(every(b(0)==1));
         tr.test(every(b(1)==2));

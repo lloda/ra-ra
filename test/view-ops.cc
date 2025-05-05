@@ -13,7 +13,7 @@
 #include "ra/test.hh"
 #include "mpdebug.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder, ra::int_list;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::ilist;
 
 template <class A>
 void CheckReverse(TestRecorder & tr, A && a)
@@ -56,13 +56,13 @@ void CheckTranspose1(TestRecorder & tr, A && a)
     }
     {
         std::iota(a.begin(), a.end(), 1);
-        auto b = transpose(a, int_list<1, 0>{});
+        auto b = transpose(a, ilist<1, 0>);
         double check[6] = {1, 3, 5, 2, 4, 6};
         tr.test(std::ranges::equal(b.begin(), b.end(), check, check+6));
     }
     {
         std::iota(a.begin(), a.end(), 1);
-        auto b = transpose(a); // meaning int_list<1, 0>{}
+        auto b = transpose(a); // meaning (... , ilist<1, 0>)
         double check[6] = {1, 3, 5, 2, 4, 6};
         tr.test(std::ranges::equal(b.begin(), b.end(), check, check+6));
     }
@@ -88,7 +88,7 @@ int main()
         }
         {
             ra::Unique<double, 0> a({}, 99);
-            auto b = transpose(a, int_list<>{});
+            auto b = transpose(a, ilist<>);
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
         }
@@ -101,7 +101,7 @@ int main()
         }
         {
             ra::Unique<double, 0> a({}, 99);
-            auto b = transpose(a, int_list<> {});
+            auto b = transpose(a, ilist<>);
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
         }
@@ -123,11 +123,11 @@ int main()
         ra::Unique<double> a({3, 2}, ra::_0*2 + ra::_1 + 1);
         tr.test(is_c_order(a));
         transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
-        transpose_test(transpose(a, int_list<0, 0>{}));           // dyn rank to static rank
+        transpose_test(transpose(a, ilist<0, 0>));                // dyn rank to static rank
         ra::Unique<double, 2> b({3, 2}, ra::_0*2 + ra::_1*1 + 1);
         transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
-        transpose_test(transpose(b, int_list<0, 0>{}));           // static rank to static rank
-        auto bt = transpose(b, int_list<0, 0>{});
+        transpose_test(transpose(b, ilist<0, 0>));                // static rank to static rank
+        auto bt = transpose(b, ilist<0, 0>);
         tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order(bt));
         tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order_dimv(bt.dimv));
     }
@@ -142,10 +142,10 @@ int main()
             };
         ra::Unique<double> a({2, 3}, ra::_0*3 + ra::_1 + 1);
         transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
-        transpose_test(transpose(a, int_list<0, 0>{}));           // dyn rank to static rank
+        transpose_test(transpose(a, ilist<0, 0>));                // dyn rank to static rank
         ra::Unique<double, 2> b({2, 3}, ra::_0*3 + ra::_1 + 1);
         transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
-        transpose_test(transpose(b, int_list<0, 0>{}));           // static rank to static rank
+        transpose_test(transpose(b, ilist<0, 0>));                // static rank to static rank
     }
     tr.section("transpose D");
     {
@@ -167,12 +167,12 @@ int main()
     tr.section("transpose F");
     {
         ra::Unique<double> a({3}, {1, 2, 3});
-        tr.test_eq(a-a(ra::insert<1>), a-transpose(a, int_list<1>{}));
+        tr.test_eq(a-a(ra::insert<1>), a-transpose(a, ilist<1>));
     }
     tr.section("transpose G");
     {
         ra::Unique<double, 1> a({3}, {1, 2, 3});
-        tr.test_eq(a-a(ra::insert<1>), a-transpose(a, int_list<1>{}));
+        tr.test_eq(a-a(ra::insert<1>), a-transpose(a, ilist<1>));
     }
 // FIXME Small cannot have BAD sizes yet.
     // tr.section("transpose K");
@@ -192,7 +192,7 @@ int main()
     {
         ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
         tr.test(is_c_order(a, false));
-        auto b = transpose(a, int_list<1, 0>{});
+        auto b = transpose(a, ilist<1, 0>);
         tr.test(!is_c_order(b, false));
     }
 // trailing singleton dimensions

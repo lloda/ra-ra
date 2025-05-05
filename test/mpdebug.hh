@@ -26,13 +26,13 @@ struct show
 
 // Prints value recursively, e.g. for int_c trees.
 
-template <class A> struct print_int_list {};
+template <class A> struct print_ilist_t {};
 
 template <class A> std::ostream &
-operator<<(std::ostream & o, print_int_list<A> const & a)
+operator<<(std::ostream & o, print_ilist_t<A> const & a)
 {
     if constexpr (is_tuple<A>) {
-        std::apply([&o](auto ... a) { ((o << "[") << ... << print_int_list<decltype(a)> {}) << "]"; }, A {});
+        std::apply([&o](auto ... a) { ((o << "[") << ... << print_ilist_t<decltype(a)> {}) << "]"; }, A {});
         return o;
     } else {
         return (o << A::value << " ");

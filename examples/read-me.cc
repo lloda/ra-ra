@@ -15,7 +15,7 @@
 #include "ra/test.hh" // ra/ra.hh without TestRecorder
 
 using std::cout, std::endl, ra::TestRecorder;
-using ra::int_list;
+using ra::ilist_t;
 
 int main()
 {
@@ -65,8 +65,8 @@ int main()
         char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
         ra::ViewBig<char, 2> D1({2, 3}, cs);            // dynamic sizes and steps, C order
         ra::ViewBig<char, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and steps, Fortran order.
-        ra::ViewSmall<char, int_list<2, 3>, int_list<3, 1>> D3(cs); // static sizes & steps, C order.
-        ra::ViewSmall<char, int_list<2, 3>, int_list<1, 2>> D4(cs); // static sizes & steps, Fortran order.
+        ra::ViewSmall<char, ilist_t<2, 3>, ilist_t<3, 1>> D3(cs); // static sizes & steps, C order.
+        ra::ViewSmall<char, ilist_t<2, 3>, ilist_t<1, 2>> D4(cs); // static sizes & steps, Fortran order.
 
         cout << "D1: " << D1 << "\n\n";
         cout << "D2: " << D2 << "\n\n";
@@ -248,8 +248,8 @@ int main()
     }
     tr.section("Example from manual [ma114]");
     {
-        using sizes = int_list<2, 3>;
-        using steps = int_list<1, 2>;
+        using sizes = ilist_t<2, 3>;
+        using steps = ilist_t<1, 2>;
         ra::SmallArray<int, sizes, steps> a {{1, 2, 3}, {4, 5, 6}}; //  stored column-major
         cout << "a: " << a << endl;
         cout << ra::Small<int, 6>(ra::ptr(a.data())) << endl;

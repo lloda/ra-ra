@@ -49,10 +49,10 @@ far(real const f, ra::ViewBig<real, 2> const & rr, ra::ViewBig<complex, 3> & a)
             real32 op;
             sph22c_s_op(c2s2(r), op);
             real pn = A*std::pow(r[2], n);
-            real23 opmn = transpose(op, ra::int_list<1, 0>{})*real2 { pn*std::pow(r[2], m-1), pn };
+            real23 opmn = transpose(op, ra::ilist_t<1, 0>{})*real2 { pn*std::pow(r[2], m-1), pn };
             gemm(dip, gemm(op, opmn), a);
         }
-    },  iter<1>(rr), iter<2>(ra::transpose(a, ra::int_list<1, 0, 2>{})));
+    },  iter<1>(rr), iter<2>(ra::transpose(a, ra::ilist_t<1, 0, 2>{})));
 }
 
 int main()

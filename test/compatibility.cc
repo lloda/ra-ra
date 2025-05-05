@@ -12,7 +12,7 @@
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::string, ra::TestRecorder;
-using ra::int_c, ra::int_list;
+using ra::int_c, ra::ilist_t;
 
 int main()
 {

@@ -11,7 +11,7 @@
 #include "ra/test.hh"
 #include "mpdebug.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder, ra::int_list;
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::ilist_t;
 
 int main()
 {
@@ -47,7 +47,7 @@ int main()
         tr.section("STL style with non-default steps");
         {
             ra::Small<int, 2, 3> a = {{1, 2, 3}, {4, 5, 6}};
-            auto b = transpose(a, int_list<1, 0>{});
+            auto b = transpose(a, ilist_t<1, 0>{});
 
             // we don't necessarily walk ind this way.
             // tr.test_eq(ra::start({0, 0}), ra::start(b.begin().ind));
@@ -80,7 +80,7 @@ int main()
             tr.section("default steps");
             test_over(ra::Small<int, 2, 3> {{1, 2, 3}, {4, 5, 6}});
             tr.section("non-default steps");
-            test_over(ra::transpose(ra::Small<int, 3, 2> {{1, 4}, {2, 5}, {3, 6}}, int_list<1, 0>{}));
+            test_over(ra::transpose(ra::Small<int, 3, 2> {{1, 4}, {2, 5}, {3, 6}}, ilist_t<1, 0>{}));
         }
     }
     return tr.summary();

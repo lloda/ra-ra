@@ -86,17 +86,17 @@ int main()
 
         tr.section("static dimensions");
         test2("small", ra::Small<real, 10, 10>(), 1000000);
-        test2("small transposed", ra::transpose(ra::Small<real, 10, 10>(), ra::int_list<1, 0>{}), 1000000);
+        test2("small transposed", ra::transpose(ra::Small<real, 10, 10>(), ra::ilist_t<1, 0>{}), 1000000);
 
         tr.section("static rank");
         test2("unique", ra::Unique<real, 2>({1000, 1000}, ra::none), 100);
         test2("view", ra::Unique<real, 2>({1000, 1000}, ra::none).view(), 100);
-        test2("transposed view", ra::transpose(ra::Unique<real, 2>({1000, 1000}, ra::none), ra::int_list<1, 0>{}), 100);
+        test2("transposed view", ra::transpose(ra::Unique<real, 2>({1000, 1000}, ra::none), ra::ilist_t<1, 0>{}), 100);
 
         tr.section("var rank");
         test2("unique", ra::Unique<real>({1000, 1000}, ra::none), 100);
         test2("view", ra::Unique<real>({1000, 1000}, ra::none).view(), 100);
-        test2("transposed view", ra::transpose(ra::Unique<real>({1000, 1000}, ra::none), ra::int_list<1, 0>{}), 100);
+        test2("transposed view", ra::transpose(ra::Unique<real>({1000, 1000}, ra::none), ra::ilist_t<1, 0>{}), 100);
     }
     return tr.summary();
 }

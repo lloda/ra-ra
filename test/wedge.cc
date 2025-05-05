@@ -12,7 +12,7 @@
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::mp::Wedge, ra::mp::hodgex, ra::int_list;
+using ra::mp::Wedge, ra::mp::hodgex, ra::ilist_t;
 
 using real = double;
 using complex = std::complex<double>;
@@ -147,16 +147,16 @@ main()
     {
         using la = ra::mp::iota<3>;
         using ca = ra::mp::combinations<la, 2>;
-        FindCombinationTester<int_list<0, 1>, ca, 0, +1>::check();
-        FindCombinationTester<int_list<1, 0>, ca, 0, -1>::check();
-        FindCombinationTester<int_list<0, 2>, ca, 1, +1>::check();
-        FindCombinationTester<int_list<2, 0>, ca, 1, -1>::check();
-        FindCombinationTester<int_list<1, 2>, ca, 2, +1>::check();
-        FindCombinationTester<int_list<2, 1>, ca, 2, -1>::check();
-        FindCombinationTester<int_list<0, 0>, ca, -1,  0>::check();
-        FindCombinationTester<int_list<1, 1>, ca, -1,  0>::check();
-        FindCombinationTester<int_list<2, 2>, ca, -1,  0>::check();
-        FindCombinationTester<int_list<3, 0>, ca, -1,  0>::check();
+        FindCombinationTester<ilist_t<0, 1>, ca, 0, +1>::check();
+        FindCombinationTester<ilist_t<1, 0>, ca, 0, -1>::check();
+        FindCombinationTester<ilist_t<0, 2>, ca, 1, +1>::check();
+        FindCombinationTester<ilist_t<2, 0>, ca, 1, -1>::check();
+        FindCombinationTester<ilist_t<1, 2>, ca, 2, +1>::check();
+        FindCombinationTester<ilist_t<2, 1>, ca, 2, -1>::check();
+        FindCombinationTester<ilist_t<0, 0>, ca, -1,  0>::check();
+        FindCombinationTester<ilist_t<1, 1>, ca, -1,  0>::check();
+        FindCombinationTester<ilist_t<2, 2>, ca, -1,  0>::check();
+        FindCombinationTester<ilist_t<3, 0>, ca, -1,  0>::check();
     }
 
     tr.section("Testing AntiCombination");

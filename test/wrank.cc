@@ -46,7 +46,7 @@ void nested_wrank_demo(V && v, A && a, B && b)
     {
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
         cout << "width of fm: " << ra::mp::len<typename FM::R> << endl;
-        cout << ra::mp::print_int_list<typename FM::R> {} << endl;
+        cout << ra::mp::print_ilist_t<typename FM::R> {} << endl;
         auto af0 = ra::reframe<ra::mp::ref<typename FM::R, 0>>(a.iter());
         auto af1 = ra::reframe<ra::mp::ref<typename FM::R, 1>>(b.iter());
         cout << "af0: " << sizeof(af0) << endl;
@@ -106,7 +106,7 @@ int main()
             auto v = ra::wrank<0, 2>(plus2real_print);
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
             cout << "width of fm: " << ra::mp::len<FM::R> << endl;
-            cout << ra::mp::print_int_list<FM::R> {} << endl;
+            cout << ra::mp::print_ilist_t<FM::R> {} << endl;
             auto af0 = ra::reframe<ra::mp::ref<FM::R, 0>>(a.iter());
             auto af1 = ra::reframe<ra::mp::ref<FM::R, 1>>(b.iter());
             cout << "af0: " << sizeof(af0) << endl;

@@ -16,7 +16,7 @@ using std::tuple, std::cout, std::endl;
 template <class T, class sizes> struct nested_tuple;
 
 template <class T>
-struct nested_tuple<T, ra::int_list<>>
+struct nested_tuple<T, ra::ilist_t<>>
 {
     constexpr static int rank = 0;
     using type = T;
@@ -34,16 +34,16 @@ struct nested_tuple
 struct foo
 {
     int x = true;
-    // foo(nested_tuple<int, ra::int_list<2, 3>>::type const & a) { cout << "A" << endl; }
-    foo(nested_tuple<int, ra::int_list<2, 3>>::atype const & a) { cout << "A" << endl; }
+    // foo(nested_tuple<int, ra::ilist_t<2, 3>>::type const & a) { cout << "A" << endl; }
+    foo(nested_tuple<int, ra::ilist_t<2, 3>>::atype const & a) { cout << "A" << endl; }
 };
 
 int main()
 {
-    using sizes0 = ra::int_list<>;
-    using sizes1 = ra::int_list<3>;
-    using sizes2 = ra::int_list<3, 4>;
-    using sizes3 = ra::int_list<3, 4, 5>;
+    using sizes0 = ra::ilist_t<>;
+    using sizes1 = ra::ilist_t<3>;
+    using sizes2 = ra::ilist_t<3, 4>;
+    using sizes3 = ra::ilist_t<3, 4, 5>;
     {
         std::cout << nested_tuple<int, sizes0>::rank << std::endl;
         std::cout << nested_tuple<int, sizes1>::rank << std::endl;
@@ -58,7 +58,7 @@ int main()
     cout << g.x << endl;
     cout << h.x << endl;
 // extra pair isn't required for the tuples themselves though :-/
-    // nested_tuple<int, ra::int_list<2, 3>>::type i = {{1, 2, 3}, {4, 5, 6}};
+    // nested_tuple<int, ra::ilist_t<2, 3>>::type i = {{1, 2, 3}, {4, 5, 6}};
     // cout << foo(i).x << endl;
     return 0;
 }

@@ -34,7 +34,7 @@ int main()
 
 // [ra] alternative II by transposing
 
-    cout << (x * transpose(y, ra::int_list<1>{})) << endl;
+    cout << (x * transpose(y, ra::ilist_t<1>{})) << endl;
 
     return 0;
 }

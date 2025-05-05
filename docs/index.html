@@ -524,8 +524,8 @@ ra::Big&lt;double, 2&gt; c({3, 2}, cx); // *** WHO NOSE ***
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">using lens = ra::int_list&lt;2, 3&gt;;
-using steps = ra::int_list&lt;1, 2&gt;;
+<pre class="verbatim">using lens = ra::ilist_t&lt;2, 3&gt;;
+using steps = ra::ilist_t&lt;1, 2&gt;;
 ra::SmallArray&lt;double, lens, steps&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 </pre></div>
 
@@ -708,7 +708,7 @@ x += a; // sum the rows of a
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 3&gt; a({5, 3, 3}, ra::_0);
 ra::Big&lt;double, 1&gt; b({5}, 0.);
-b += transpose(a, ra::int_list&lt;0, 1, 1&gt;{}); // b(i) = ∑ⱼ a(i, j, j)
+b += transpose(a, ra::ilist&lt;0, 1, 1&gt;); // b(i) = ∑ⱼ a(i, j, j)
 </pre><pre class="example">&rArr; b = {0, 3, 6, 9, 12}
 </pre></div>
 
@@ -2287,7 +2287,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <span id="index-diag"></span>
 <span id="x_002ddiag"></span><dl class="def">
 <dt id="index-diag-1"><span class="category">Function: </span><span><strong>diag</strong> <em>view</em><a href='#index-diag-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Equivalent to <code>transpose(view, ra::int_list&lt;0, 0&gt; {})</code>.
+<dd><p>Equivalent to <code>transpose(view, ra::ilist&lt;0, 0&gt;)</code>.
 </p></dd></dl>
 
 <span id="index-dot"></span>
@@ -2561,11 +2561,11 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 <dd>
 <p>Create a new view by transposing the axes of <var>view</var>. The number of <var>axes</var> must match the rank of <var>view</var>.
 </p>
-<p><var>axes</var> are the <em>destination</em> axes, that is, axis <em class='tex2jax_process'>\(i\)</em> of <var>view</var> matches axis <var>axes</var><em class='tex2jax_process'>\(_i\)</em> of the result. <var>axes</var> may be either an array with runtime values, or an <code>ra::int_list&lt;&gt;</code>. <code>transpose(a)</code> is a shortcut for <code>transpose(a, ra::int_list&lt;1, 0&gt;{})</code>. For example:
+<p><var>axes</var> are the <em>destination</em> axes, that is, axis <em class='tex2jax_process'>\(i\)</em> of <var>view</var> matches axis <var>axes</var><em class='tex2jax_process'>\(_i\)</em> of the result. <var>axes</var> may be either an array with runtime values, or an <code>ra::ilist_t&lt;...&gt;</code>. <code>transpose(a)</code> is a shortcut for <code>transpose(a, ra::ilist&lt;1, 0&gt;)</code>. For example:
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
-    cout &lt;&lt; transpose(a, ra::int_list&lt;1, 0&gt;{}) &lt;&lt; endl;
+    cout &lt;&lt; transpose(a, ra::ilist&lt;1, 0&gt;) &lt;&lt; endl;
     // cout &lt;&lt; transpose(a) &lt;&lt; endl; // same
 </pre><pre class="example">  -|
   3 2
@@ -2578,7 +2578,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
-    cout &lt;&lt; transpose(a, ra::int_list&lt;0, 0&gt;{}) &lt;&lt; endl; // { a(0, 0), a(1, 1) }
+    cout &lt;&lt; transpose(a, ra::ilist&lt;0, 0&gt;) &lt;&lt; endl; // { a(0, 0), a(1, 1) }
 </pre><pre class="example">  -|
   2
   1 5
@@ -2588,7 +2588,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Unique&lt;double, 1&gt; a = {1, 2, 3};
-    cout &lt;&lt; ((a*10) + transpose(a, ra::int_list&lt;1&gt;{})) &lt;&lt; endl;
+    cout &lt;&lt; ((a*10) + transpose(a, ra::ilist&lt;1&gt;)) &lt;&lt; endl;
 </pre><pre class="example">  -|
   3 3
   11 21 31
@@ -2596,7 +2596,7 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
   13 23 33
 </pre></div>
 
-<p>If the <var>axes</var> are an <code>ra::int_list&lt;&gt;</code>, then the result will have static rank, otherwise it will have runtime rank. For example: </p>
+<p>If the <var>axes</var> are an <code>ra::ilist_t&lt;...&gt;</code>, then the result will have static rank, otherwise it will have runtime rank. For example: </p>
 <div class="example">
 <pre class="verbatim">    ra::Small&lt;int, 2&gt; axes = {0, 1};
     ra::Unique&lt;double, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};

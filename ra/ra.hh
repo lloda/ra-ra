@@ -554,7 +554,7 @@ gemv(auto const & a, auto const & b)
 // static transposed axes list, output rank is static.
 template <int ... Iarg, class T, rank_t RANK>
 constexpr auto
-transpose(ViewBig<T, RANK> const & view, int_list<Iarg ...>)
+transpose(ViewBig<T, RANK> const & view, ilist_t<Iarg ...>)
 {
     static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
     RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank ", view.rank(), " should be ", (sizeof...(Iarg)), ".");
@@ -586,10 +586,10 @@ transpose(ViewBig<T, RANK> const & view, dimtype const (&s)[N])
 }
 
 constexpr decltype(auto)
-transpose(auto && a) { return transpose(RA_FWD(a), int_list<1, 0> {}); }
+transpose(auto && a) { return transpose(RA_FWD(a), ilist<1, 0>); }
 
 constexpr decltype(auto)
-diag(auto && a) { return transpose(RA_FWD(a), int_list<0, 0>{}); };
+diag(auto && a) { return transpose(RA_FWD(a), ilist<0, 0>); };
 
 
 // --------------------

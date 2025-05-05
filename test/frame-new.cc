@@ -39,7 +39,7 @@ main()
     }
     tr.section("II");
     {
-        ra::int_list<6, 3, -4> x;
+        ra::ilist_t<6, 3, -4> x;
         static_assert(6==ra::mp::fold_tuple(-99, x, [](auto && k, auto && a) { return max(k, a.value); }));
         static_assert(-4==ra::mp::fold_tuple(+99, x, [](auto && k, auto && a) { return min(k, a.value); }));
         static_assert(5==ra::mp::fold_tuple(0, x, [](auto && k, auto && a) { return k + a.value; }));
@@ -209,7 +209,7 @@ main()
 #undef MAP
     tr.section("BAD on any len_s(k) means size_s() is BAD");
     {
-        using order = ra::int_list<0, 1>;
+        using order = ra::ilist_t<0, 1>;
         using T0 = ra::Map<std::multiplies<void>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>, order>;
         ra::dim_t s0 = ra::size_s<T0>();
         using T1 = ra::Map<std::multiplies<void>, std::tuple<decltype(ra::iota<1>()), ra::Scalar<int>>, order>;

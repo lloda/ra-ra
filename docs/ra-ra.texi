@@ -424,8 +424,8 @@ ra::Big<double, 2> c({3, 2}, cx); // *** WHO NOSE ***
 @c [ma114]
 @example
 @verbatim
-using lens = ra::int_list<2, 3>;
-using steps = ra::int_list<1, 2>;
+using lens = ra::ilist_t<2, 3>;
+using steps = ra::ilist_t<1, 2>;
 ra::SmallArray<double, lens, steps> a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
 @end verbatim
 @end example
@@ -632,7 +632,7 @@ x += a; // sum the rows of a
 @verbatim
 ra::Big<double, 3> a({5, 3, 3}, ra::_0);
 ra::Big<double, 1> b({5}, 0.);
-b += transpose(a, ra::int_list<0, 1, 1>{}); // b(i) = ∑ⱼ a(i, j, j)
+b += transpose(a, ra::ilist<0, 1, 1>); // b(i) = ∑ⱼ a(i, j, j)
 @end verbatim
 @result{} b = @{0, 3, 6, 9, 12@}
 @end example
@@ -2214,7 +2214,7 @@ If the argument has rt or ct shape, it is the same for the result. The main use 
 
 @cindex @code{diag}
 @anchor{x-diag} @defun diag view
-Equivalent to @code{transpose(view, ra::int_list<0, 0> @{@})}.
+Equivalent to @code{transpose(view, ra::ilist<0, 0>)}.
 @end defun
 
 @cindex @code{dot}
@@ -2503,12 +2503,12 @@ This function reuses @code{std::swap} for same-rank overloads, so it must not be
 
 Create a new view by transposing the axes of @var{view}. The number of @var{axes} must match the rank of @var{view}.
 
-@var{axes} are the @emph{destination} axes, that is, axis @math{i} of @var{view} matches axis @var{axes}@math{_i} of the result. @var{axes} may be either an array with runtime values, or an @code{ra::int_list<>}. @code{transpose(a)} is a shortcut for @code{transpose(a, ra::int_list<1, 0>@{@})}. For example:
+@var{axes} are the @emph{destination} axes, that is, axis @math{i} of @var{view} matches axis @var{axes}@math{_i} of the result. @var{axes} may be either an array with runtime values, or an @code{ra::ilist_t<...>}. @code{transpose(a)} is a shortcut for @code{transpose(a, ra::ilist<1, 0>)}. For example:
 
 @example
 @verbatim
     ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-    cout << transpose(a, ra::int_list<1, 0>{}) << endl;
+    cout << transpose(a, ra::ilist<1, 0>) << endl;
     // cout << transpose(a) << endl; // same
 @end verbatim
   @print{}
@@ -2523,7 +2523,7 @@ The rank of the result is @math{1+\mathrm{max}ᵢ(}@var{axes}@math{_i}@math{)} a
 @example
 @verbatim
     ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-    cout << transpose(a, ra::int_list<0, 0>{}) << endl; // { a(0, 0), a(1, 1) }
+    cout << transpose(a, ra::ilist<0, 0>) << endl; // { a(0, 0), a(1, 1) }
 @end verbatim
   @print{}
   2
@@ -2535,7 +2535,7 @@ If one of the destination axes isn't listed in @var{axes}, then it becomes a ‘
 @example
 @verbatim
     ra::Unique<double, 1> a = {1, 2, 3};
-    cout << ((a*10) + transpose(a, ra::int_list<1>{})) << endl;
+    cout << ((a*10) + transpose(a, ra::ilist<1>)) << endl;
 @end verbatim
   @print{}
   3 3
@@ -2544,7 +2544,7 @@ If one of the destination axes isn't listed in @var{axes}, then it becomes a ‘
   13 23 33
 @end example
 
-If the @var{axes} are an @code{ra::int_list<>}, then the result will have static rank, otherwise it will have runtime rank. For example: @c [ma117]
+If the @var{axes} are an @code{ra::ilist_t<...>}, then the result will have static rank, otherwise it will have runtime rank. For example: @c [ma117]
 
 @example
 @verbatim

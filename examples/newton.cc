@@ -62,7 +62,7 @@ int main()
         ra::explode<real3>(F) = from(force, ra::iota(bodies), ra::iota(bodies));
 // match axes a[0, 1] with F[0, 2]; accumulate on F[1]. TODO proper reductions.
         a = 0.;
-        a += transpose(F, ra::int_list<0, 2, 1>{}) / m;
+        a += transpose(F, ra::ilist<0, 2, 1>) / m;
         v += a*delta;
         x += v*delta;
         draw(x, t);
