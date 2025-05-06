@@ -112,91 +112,91 @@ int main()
 
     {
         auto bench = [&tr](char const * tag, auto s, auto && ref, int reps, auto && f)
-            {
-                rspec = 1e-2;
-                constexpr int M = ra::size(s);
-                decltype(s) A(a);
-                decltype(s) B(b);
-                real y(0.);
-                auto bv = Benchmark().repeats(reps).runs(3).run([&]() { y += f(A, B); });
-                tr.info(Benchmark::report(bv, M), " ", tag)
-                    .test_rel(a*b*M*reps*3, y, rspec);
-            };
+        {
+            rspec = 1e-2;
+            constexpr int M = ra::size(s);
+            decltype(s) A(a);
+            decltype(s) B(b);
+            real y(0.);
+            auto bv = Benchmark().repeats(reps).runs(3).run([&]() { y += f(A, B); });
+            tr.info(Benchmark::report(bv, M), " ", tag)
+                .test_rel(a*b*M*reps*3, y, rspec);
+        };
 
         auto f_small_indexed_1 = [](auto && A, auto && B)
-            {
-                real y = 0;
-                for (int j=0; j!=A.size(); ++j) {
-                    y += A(j)*B(j);
-                }
-                return y;
-            };
+        {
+            real y = 0;
+            for (int j=0; j!=A.size(); ++j) {
+                y += A(j)*B(j);
+            }
+            return y;
+        };
 
         auto f_small_indexed_2 = [](auto && A, auto && B)
-            {
-                real y = 0;
-                for (int i=0; i!=A.len(0); ++i) {
-                    for (int j=0; j!=A.len(1); ++j) {
-                        y += A(i, j)*B(i, j);
-                    }
+        {
+            real y = 0;
+            for (int i=0; i!=A.len(0); ++i) {
+                for (int j=0; j!=A.len(1); ++j) {
+                    y += A(i, j)*B(i, j);
                 }
-                return y;
-            };
+            }
+            return y;
+        };
 
         auto f_small_indexed_3 = [](auto && A, auto && B)
-            {
-                real y = 0;
-                for (int i=0; i!=A.len(0); ++i) {
-                    for (int j=0; j!=A.len(1); ++j) {
-                        for (int k=0; k!=A.len(2); ++k) {
-                            y += A(i, j, k)*B(i, j, k);
-                        }
+        {
+            real y = 0;
+            for (int i=0; i!=A.len(0); ++i) {
+                for (int j=0; j!=A.len(1); ++j) {
+                    for (int k=0; k!=A.len(2); ++k) {
+                        y += A(i, j, k)*B(i, j, k);
                     }
                 }
-                return y;
-            };
+            }
+            return y;
+        };
 
         auto f_small_indexed_raw = [](auto && A, auto && B)
-            {
-                real * a = A.data();
-                real * b = B.data();
-                real y = 0;
-                for (int j=0; j!=A.size(); ++j) {
-                    y += a[j]*b[j];
-                }
-                return y;
-            };
+        {
+            real * a = A.data();
+            real * b = B.data();
+            real y = 0;
+            for (int j=0; j!=A.size(); ++j) {
+                y += a[j]*b[j];
+            }
+            return y;
+        };
 
 // optimize() plugs into the definition of operator*, etc. See ply_fixed [ra43].
         auto f_small_op = [](auto && A, auto && B)
-            {
-                return sum(A*B);
-            };
+        {
+            return sum(A*B);
+        };
 
 #define DEFINE_SMALL_PLY(name, plier)                                   \
         auto JOIN(f_small_, plier) = [](auto && A, auto && B)           \
-            {                                                           \
-                real y = 0;                                             \
-                plier(ra::map([&y](real a, real b) { y += a*b; }, A, B)); \
-                return y;                                               \
-            }
+        {                                                               \
+            real y = 0;                                                 \
+            plier(ra::map([&y](real a, real b) { y += a*b; }, A, B));   \
+            return y;                                                   \
+        }
         DEFINE_SMALL_PLY(ply_ravel, ply_ravel);
         DEFINE_SMALL_PLY(ply_fixed, ply_fixed);
         DEFINE_SMALL_PLY(ply, ply);
 
         auto bench_all = [&](auto s, auto && f_small_indexed)
-            {
-                constexpr int M = ra::size(s);
-                tr.section("small <", ra::shape(s), ">");
-                auto extra = [&]() { return int(double(std::rand())*100/RAND_MAX); };
-                int reps = (1000*1000*100)/M;
-                bench("indexed", s, ref, reps+extra(), f_small_indexed);
-                bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
-                bench("op", s, ref, reps+extra(), f_small_op);
-                bench("ply_ravel", s, ref, reps+extra(), f_small_ply_ravel);
-                bench("ply_fixed", s, ref, reps+extra(), f_small_ply_fixed);
-                bench("ply", s, ref, reps+extra(), f_small_ply);
-            };
+        {
+            constexpr int M = ra::size(s);
+            tr.section("small <", ra::shape(s), ">");
+            auto extra = [&]() { return int(double(std::rand())*100/RAND_MAX); };
+            int reps = (1000*1000*100)/M;
+            bench("indexed", s, ref, reps+extra(), f_small_indexed);
+            bench("indexed_raw", s, ref, reps+extra(), f_small_indexed_raw);
+            bench("op", s, ref, reps+extra(), f_small_op);
+            bench("ply_ravel", s, ref, reps+extra(), f_small_ply_ravel);
+            bench("ply_fixed", s, ref, reps+extra(), f_small_ply_fixed);
+            bench("ply", s, ref, reps+extra(), f_small_ply);
+        };
         bench_all(ra::Small<real, 2>(), f_small_indexed_1);
         bench_all(ra::Small<real, 3>(), f_small_indexed_1);
         bench_all(ra::Small<real, 4>(), f_small_indexed_1);
@@ -209,12 +209,12 @@ int main()
 
     rspec = 2e-11;
     auto bench = [&tr](auto && a, auto && b, auto && ref, real rspec, int reps, auto && f)
-                 {
-                     real x = 0.;
-                     auto bv = Benchmark().repeats(reps).runs(3).run([&]() { x += f(a, b); });
-                     tr.info(Benchmark::report(bv), " ", f.name)
-                         .test_rel(ref*3, x, rspec);
-                 };
+    {
+        real x = 0.;
+        auto bv = Benchmark().repeats(reps).runs(3).run([&]() { x += f(a, b); });
+        tr.info(Benchmark::report(bv), " ", f.name)
+            .test_rel(ref*3, x, rspec);
+    };
 #define BENCH(f) bench(A, B, ref, rspec, N, f {});
     tr.section("std::vector<>");
     {

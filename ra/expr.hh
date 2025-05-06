@@ -185,7 +185,7 @@ struct Ptr final
     }
 };
 
-template <class X> using seq_arg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<std::decay_t<X>>, std::decay_t<X>, X>;
+template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
 template <class S>
 consteval auto
@@ -217,7 +217,7 @@ ptr(I && i, N && n = N {}, S && s = thestep<S>())
         if constexpr (std::is_integral_v<N>) {
             RA_CHECK(n>=0, "Bad ptr length ", n, ".");
         }
-        return Ptr<std::decay_t<I>, seq_arg<N>, seq_arg<S>> { i, RA_FWD(n), RA_FWD(s) };
+        return Ptr<std::decay_t<I>, sarg<N>, sarg<S>> { i, RA_FWD(n), RA_FWD(s) };
     } else {
         static_assert(false, "Bad type for ptr().");
     }
@@ -268,7 +268,7 @@ iota(N && n = N {}, I && i = 0, S && s = thestep<S>())
     if constexpr (std::is_integral_v<N>) {
         RA_CHECK(n>=0, "Bad iota length ", n, ".");
     }
-    return Iota<w, seq_arg<I>, seq_arg<N>, seq_arg<S>> { RA_FWD(i), RA_FWD(n), RA_FWD(s) };
+    return Iota<w, sarg<I>, sarg<N>, sarg<S>> { RA_FWD(i), RA_FWD(n), RA_FWD(s) };
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
@@ -279,7 +279,7 @@ template <class A> concept is_iota = requires (A a)
 {
     []<class I, class N, class S>(Iota<0, I, N, S> const &){}(a);
 // exclude BAD from beating to allow B = A(... i ...) to use B's len. FIXME
-    requires BAD!=A::nn;
+    requires BAD!=a.nn;
 };
 
 constexpr bool
@@ -333,15 +333,13 @@ start(is_builtin_array auto && t);
 constexpr auto
 start(SliceConcept auto && t) { return iter<0>(RA_FWD(t)); }
 
-template <class A> concept is_ra_scalar = requires (A a) { []<class C>(Scalar<C> const &){}(a); };
-
-// iterators need to be start()ed on each use [ra35].
-template <class T> requires (is_iterator<T> && !is_ra_scalar<T>)
+// iterators need to be reset on each use [ra35].
+template <class A> requires (is_iterator<A> && !(requires (A a) { []<class C>(Scalar<C> const &){}(a); }))
 constexpr auto
-start(T & t) { return t; }
+start(A & a) { return a; }
 
 constexpr decltype(auto)
-start(is_iterator auto && t) { return RA_FWD(t); }
+start(is_iterator auto && a) { return RA_FWD(a); }
 
 
 // --------------------
@@ -356,7 +354,6 @@ constexpr dim_t
 choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : BAD==a ? b : BAD==b ? a : b; }
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
-// https://stackoverflow.com/a/71921982
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
 
 // need runtime check if there's more than one leaf with ANY size.
@@ -389,6 +386,16 @@ tbc(int sofar)
     }
 }
 
+template <class A, class U = bool_c<false>>
+constexpr void
+validate(A const & a, U allow_unb = {})
+{
+    static_assert(!has_len<A>, "Stray ra::len.");
+    static_assert(allow_unb || ra::BAD!=ra::size_s<A>(), "Undefined size.");
+    static_assert(0<=rank_s(a) || ANY==rank_s(a), "Undefined rank.");
+    if constexpr (is_match<A>) { a.validate(); }
+}
+
 template <IteratorConcept ... P, int ... I>
 struct Match<std::tuple<P ...>, ilist_t<I ...>>
 {
@@ -415,6 +422,15 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
             }
         }
         return !(0==c);
+    }
+    constexpr void
+    validate() const
+    {
+        if constexpr (constexpr int c=check_s(); 1==c) {
+            RA_CHECK(check(), "Bad shapes ", fmt(lstyle, shape(get<I>(t))) ..., ".");
+        } else {
+            static_assert(0!=c, "Bad shapes."); // FIXME c++26
+        }
     }
 
     consteval static rank_t
@@ -639,22 +655,6 @@ agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
     return agree_op(FM::op(v), reframe<mp::ref<typename FM::R, i>>(ra::start(t)) ...);
-}
-
-template <class A, class U = bool_c<false>>
-constexpr void
-validate(A const & a, U allow_unb = {})
-{
-    static_assert(!has_len<A>, "Out of context ra::len .");
-    static_assert(allow_unb || ra::BAD!=ra::size_s<A>(), "Undefined size.");
-    static_assert(0<=rank_s(a) || ANY==rank_s(a), "Undefined rank.");
-    if constexpr (is_match<A>) {
-        if constexpr (constexpr int c=a.check_s(); 1==c) {
-            std::apply([c=a.check()](auto const & ... p) { RA_CHECK(c, "Bad shapes", fmt(lstyle, shape(p)) ..., "."); }, a.t);
-        } else {
-            static_assert(0!=c, "Bad shapes."); // FIXME c++26
-        }
-    }
 }
 
 

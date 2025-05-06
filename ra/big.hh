@@ -224,7 +224,7 @@ struct ViewBig
     constexpr ViewBig(ViewBig<T, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
     template <rank_t R> requires (R!=ANY && RANK==ANY && std::is_const_v<T>)
     constexpr ViewBig(ViewBig<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
-// conversion to const. We rely on it for Container::view(). FIXME iffy? not constexpr, and doesn't work for Small.
+// conversion to const. We rely on it for Container::view(). FIXME iffy? wb Small?
     constexpr operator ViewBig<T const, RANK> const & () const requires (!std::is_const_v<T>)
     {
         return *reinterpret_cast<ViewBig<T const, RANK> const *>(this);
@@ -271,22 +271,22 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     using T = typename storage_traits<Store>::T;
     using View = ra::ViewBig<T, RANK>;
     using ViewConst = ra::ViewBig<T const, RANK>;
-    using View::size, View::rank;
+    using View::size, View::rank, View::dimv, View::cp;
     using shape_arg = decltype(shape(std::declval<View>().iter()));
 
     constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
     constexpr View & view() { return *this; }
 
-// Needed to set View::cp. FIXME Remove duplication as in SmallBase/SmallArray.
+// Needed to set cp. FIXME Remove duplication as in SmallBase/SmallArray.
     Container(Container && w): store(std::move(w.store))
     {
-        View::dimv = std::move(w.dimv);
-        View::cp = storage_traits<Store>::data(store);
+        dimv = std::move(w.dimv);
+        cp = storage_traits<Store>::data(store);
     }
     Container(Container const & w): store(w.store)
     {
-        View::dimv = w.dimv;
-        View::cp = storage_traits<Store>::data(store);
+        dimv = w.dimv;
+        cp = storage_traits<Store>::data(store);
     }
     Container(Container & w): Container(std::as_const(w)) {}
 
@@ -295,15 +295,15 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     Container & operator=(Container && w)
     {
         store = std::move(w.store);
-        View::dimv = std::move(w.dimv);
-        View::cp = storage_traits<Store>::data(store);
+        dimv = std::move(w.dimv);
+        cp = storage_traits<Store>::data(store);
         return *this;
     }
     Container & operator=(Container const & w)
     {
         store = w.store;
-        View::dimv = w.dimv;
-        View::cp = storage_traits<Store>::data(store);
+        dimv = w.dimv;
+        cp = storage_traits<Store>::data(store);
         return *this;
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
@@ -339,9 +339,9 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
         static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
         RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
         static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || BAD==size_s(s), "Bad shape for rank.");
-        ra::resize(View::dimv, ra::size(s)); // [ra37]
-        store = storage_traits<Store>::create(filldim(View::dimv, s));
-        View::cp = storage_traits<Store>::data(store);
+        ra::resize(dimv, ra::size(s)); // [ra37]
+        store = storage_traits<Store>::create(filldim(dimv, s));
+        cp = storage_traits<Store>::data(store);
     }
     void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
@@ -397,50 +397,50 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     void resize(dim_t const s)
     {
         static_assert(ANY==RANK || 0<RANK); RA_CHECK(0<rank());
-        View::dimv[0].len = s;
+        dimv[0].len = s;
         store.resize(size());
-        View::cp = store.data();
+        cp = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
         static_assert(ANY==RANK || 0<RANK); RA_CHECK(0<rank());
-        View::dimv[0].len = s;
+        dimv[0].len = s;
         store.resize(size(), t);
-        View::cp = store.data();
+        cp = store.data();
     }
     void resize(auto const & s) requires (rank_s(s) > 0)
     {
-        ra::resize(View::dimv, start(s).len(0)); // [ra37] FIXME is View constructor
-        store.resize(filldim(View::dimv, s));
-        View::cp = store.data();
+        ra::resize(dimv, start(s).len(0)); // [ra37] FIXME is View constructor
+        store.resize(filldim(dimv, s));
+        cp = store.data();
     }
 // template + RA_FWD wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
         static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
         store.push_back(std::move(t));
-        ++View::dimv[0].len;
-        View::cp = store.data();
+        ++dimv[0].len;
+        cp = store.data();
     }
     void push_back(T const & t)
     {
         static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
         store.push_back(t);
-        ++View::dimv[0].len;
-        View::cp = store.data();
+        ++dimv[0].len;
+        cp = store.data();
     }
     void emplace_back(auto && ... a)
     {
         static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
         store.emplace_back(RA_FWD(a) ...);
-        ++View::dimv[0].len;
-        View::cp = store.data();
+        ++dimv[0].len;
+        cp = store.data();
     }
     void pop_back()
     {
         static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
-        RA_CHECK(0<View::dimv[0].len, "Empty array trying to pop_back().");
-        --View::dimv[0].len;
+        RA_CHECK(0<dimv[0].len, "Empty array trying to pop_back().");
+        --dimv[0].len;
         store.pop_back();
     }
 };

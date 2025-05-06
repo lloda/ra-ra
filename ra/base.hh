@@ -47,28 +47,27 @@ constexpr bool any(bool const x) { return x; }
 constexpr bool every(bool const x) { return x; }
 
 // default storage for Big - see https://stackoverflow.com/a/21028912.
-// allocator adaptor that interposes construct() calls to convert value initialization into default initialization.
+// adaptor that interposes construct() calls to convert value initialization into default initialization.
 template <class T, class A=std::allocator<T>>
 struct default_init_allocator: public A
 {
-    using a_t = std::allocator_traits<A>;
-    using A::A;
+    using traits = std::allocator_traits<A>;
 
     template <class U>
     struct rebind
     {
-        using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
+        using other = default_init_allocator<U, typename traits::template rebind_alloc<U>>;
     };
 
     template <class U>
-    void construct(U * ptr) noexcept(std::is_nothrow_default_constructible<U>::value)
+    void construct(U * ptr) noexcept (std::is_nothrow_default_constructible<U>::value)
     {
         ::new(static_cast<void *>(ptr)) U;
     }
     template <class U, class... Args>
     void construct(U * ptr, Args &&... args)
     {
-        a_t::construct(static_cast<A &>(*this), ptr, RA_FWD(args)...);
+        traits::construct(static_cast<A &>(*this), ptr, RA_FWD(args)...);
     }
 };
 

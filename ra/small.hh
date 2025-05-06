@@ -623,12 +623,12 @@ from_ravel(auto && b)
 // builtin arrays.
 // ---------------------
 
-template <class T>
 constexpr auto
-peel(T && t)
+peel(auto && t)
 {
-    static_assert(0 < std::extent_v<std::remove_cvref_t<T>, 0>);
-    if constexpr (1 < std::rank_v<std::remove_cvref_t<T>>) {
+    using T = std::remove_cvref_t<decltype(t)>;
+    if constexpr (1 < std::rank_v<T>) {
+        static_assert(0 < std::extent_v<T, 0>);
         return peel(*std::data(RA_FWD(t)));
     } else {
         return std::data(t);
