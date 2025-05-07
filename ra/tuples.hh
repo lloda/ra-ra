@@ -261,24 +261,4 @@ struct PermutationSign
     constexpr static int value = PermutationSignIfFound<index<C, first<Org>>::value, C, Org>;
 };
 
-
-// ---------------------
-// tuples in dynamic context
-// ---------------------
-
-template <class C, class T, auto f = std::identity {}>
-consteval auto
-tuple2array()
-{
-    return std::apply([](auto ... t) { return std::array<C, sizeof...(t)> { C(f(t)) ... }; }, T {});
-}
-
-template <class T>
-constexpr int
-ilist_index(int k)
-{
-    return std::apply([&k](auto ... i) { int r=-1; ((k==mp::ref<T, i>::value && (r=i, 1)) || ...); return r; },
-                      iota<len<T>> {});
-}
-
 } // namespace ra::mp

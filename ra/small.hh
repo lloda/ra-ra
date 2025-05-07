@@ -66,7 +66,7 @@ template <class lens>
 struct default_steps_
 {
     constexpr static int rank = mp::len<lens>;
-    constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, mp::tuple2array<dim_t, lens>()); return dimv; } ();
+    constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, tuple2array<dim_t, lens>()); return dimv; } ();
     using type = decltype([] { return std::apply([](auto ... k) { return ilist<dimv[k].step ...>; }, mp::iota<rank> {}); } ());
 };
 template <class lens> using default_steps = typename default_steps_<lens>::type;
@@ -227,7 +227,7 @@ template <auto f, auto dimv, int cellr, int framer=0>
 using ctuple = decltype(std::apply([](auto ... i) { return ilist<std::invoke(f, dimv[i]) ...>; }, mp::iota<cellr, framer> {}));
 
 template <class lens, class steps>
-constexpr auto cdimv = mp::tuple2array<Dim, mp::zip<lens, steps>, [](auto i) { return make_from_tuple<Dim>(i); }>();
+constexpr auto cdimv = tuple2array<Dim, mp::zip<lens, steps>, [](auto i) { return make_from_tuple<Dim>(i); }>();
 
 template <class T, class lens, class steps> struct ViewSmall;
 
@@ -387,7 +387,7 @@ struct SmallBase
     static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
     consteval static rank_t rank() { return mp::len<lens>; }
     constexpr static auto dimv = cdimv<lens, steps>;
-    constexpr static auto theshape = mp::tuple2array<dim_t, lens>();
+    constexpr static auto theshape = tuple2array<dim_t, lens>();
     consteval static dim_t size() { return std::apply([](auto ... s) { return (s * ... * 1); }, theshape); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
     consteval static dim_t size_s() { return size(); }

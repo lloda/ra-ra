@@ -444,13 +444,5 @@ static_assert(ra::mp::PermutationSign<ilist_t A , ilist_t B >::value == C, "");
         static_assert(ra::mp::apply<ra::mp::prod, l>::value==105, "bad");
         static_assert(ra::mp::apply<ra::mp::sum, l>::value==15, "bad");
     }
-// tuples in dynamic context
-    {
-        using l = ilist_t<3, 4, 5>;
-        tr.test_eq(0, ra::mp::ilist_index<l>(3));
-        tr.test_eq(1, ra::mp::ilist_index<l>(4));
-        tr.test_eq(2, ra::mp::ilist_index<l>(5));
-        tr.test_eq(-1, ra::mp::ilist_index<l>(7));
-    }
     return tr.summary();
 };

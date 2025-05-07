@@ -351,7 +351,7 @@ int main()
         ra::Small<int, 4> b = 10-ra::iota(4);
         ra::Small<int, 3, 4> c = from(std::multiplies<>(), a, b);
         tr.strictshape()
-            .test_eq(c, from([o = from(std::multiplies<>(), a, b)](auto i, auto j) { return o.at(ra::Small<dim_t, 2> {i, j}); },
+            .test_eq(c, from([o = from(std::multiplies<>(), a, b)](auto i, auto j) { return o.at(std::array {i, j}); },
                              ra::iota(3), ra::iota(4)));
     }
     return tr.summary();
