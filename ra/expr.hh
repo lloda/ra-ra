@@ -373,7 +373,6 @@ tbc(int sofar)
         } else if (ANY==sofar || ANY==ra) {
             return 1+sofar;
         } else {
-// by choose_rank ra<=rt always, plus MIS==la implies MIS==lt, so no need to check both.
             for (int k=0; k<ra; ++k) {
                 if (dim_t lt=TOP::len_s(k, true), la=A::len_s(k); MIS==lt) {
                     return -1;
@@ -600,12 +599,6 @@ struct Framematch_def;
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
 using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 
-template <class A, class B>
-struct max_i
-{
-    constexpr static int value = (A::value == choose_rank(A::value, B::value)) ? 0 : 1;
-};
-
 // Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
 template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
 struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
@@ -614,9 +607,9 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 // live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
     using live = ilist_t<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
-    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + mp::ref<live, mp::indexof<max_i, live>>::value>;
+    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(mp::tuple2array<int, live>())>;
     using R = typename FM::R;
-    template <class VV> constexpr static decltype(auto) op(VV && v) { return FM::op(RA_FWD(v).op); } // cf [ra31]
+    template <class U> constexpr static decltype(auto) op(U && v) { return FM::op(RA_FWD(v).op); } // cf [ra31]
 };
 
 // Terminal case where V doesn't have rank (is a raw op()).
@@ -626,7 +619,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
     static_assert(sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
 // TODO -crank::value when the actual verb rank is used (eg to use CellBig<... that_rank> instead of just begin()).
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
-    template <class VV> constexpr static decltype(auto) op(VV && v) { return RA_FWD(v); }
+    template <class U> constexpr static decltype(auto) op(U && v) { return RA_FWD(v); }
 };
 
 
@@ -678,7 +671,6 @@ struct Map<Op, std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...
 {
     using Match<std::tuple<P ...>>::t;
     Op op;
-
     constexpr Map(Op op_, P ... p_): Match<std::tuple<P ...>>(p_ ...), op(op_) {} // [ra1]
     RA_ASSIGNOPS_SELF(Map)
     RA_ASSIGNOPS_DEFAULT_SET
@@ -721,8 +713,7 @@ template <std::size_t I, class T, class J>
 constexpr mp::apply<std::common_reference_t, mp::map<type_at<J>::template type, mp::drop1<std::decay_t<T>>>>
 pick_at(std::size_t p0, T && t, J const & j)
 {
-    constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
-    if constexpr (I<N) {
+    if constexpr (constexpr std::size_t N = mp::len<std::decay_t<T>> - 1; I<N) {
         return (p0==I) ? get<I+1>(t).at(j) : pick_at<I+1>(p0, t, j);
     } else {
         RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
@@ -735,8 +726,7 @@ template <std::size_t I, class T>
 constexpr mp::apply<std::common_reference_t, mp::map<type_star, mp::drop1<std::decay_t<T>>>>
 pick_star(std::size_t p0, T && t)
 {
-    constexpr std::size_t N = mp::len<std::decay_t<T>> - 1;
-    if constexpr (I<N) {
+    if constexpr (constexpr std::size_t N = mp::len<std::decay_t<T>> - 1; I<N) {
         return (p0==I) ? *(get<I+1>(t)) : pick_star<I+1>(p0, t);
     } else {
         RA_CHECK(p0 < N, "Bad pick ", p0, " with ", N, " arguments."); std::abort();
@@ -749,7 +739,6 @@ struct Pick<std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
 {
     using Match<std::tuple<P ...>>::t;
     static_assert(sizeof...(P)>1);
-
     constexpr Pick(P ... p_): Match<std::tuple<P ...>>(p_ ...) {} // [ra1]
     RA_ASSIGNOPS_SELF(Pick)
     RA_ASSIGNOPS_DEFAULT_SET

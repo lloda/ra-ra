@@ -62,6 +62,8 @@ FOR_EACH(FOR_FLOAT, float, double)
 
 namespace ra {
 
+constexpr bool odd(unsigned int N) { return N & 1; }
+
 // As array op; special definitions for rank 0.
 template <class T> constexpr bool ra_is_real = std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>;
 template <class T> requires (ra_is_real<T>) constexpr T amax(T const & x) { return x; }
@@ -102,15 +104,13 @@ FOR_EACH(RA_FOR_TYPES, float, double)
     constexpr R norm2(C x, C y)        { return sqrt(sqrm(x, y)); }     \
     constexpr R rel_error(C a, C b)    { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
     /* conj(a) * b + c */                                               \
-    constexpr C                                                         \
-    fma_conj(C const & a, C const & b, C const & c)                     \
+    constexpr C fma_conj(C const & a, C const & b, C const & c)         \
     {                                                                   \
         return C(fma(a.real(), b.real(), fma(a.imag(), b.imag(), c.real())), \
                  fma(a.real(), b.imag(), fma(-a.imag(), b.real(), c.imag()))); \
     }                                                                   \
     /* conj(a) * b */                                                   \
-    constexpr C                                                         \
-    mul_conj(C const & a, C const & b)                                  \
+    constexpr C mul_conj(C const & a, C const & b)                      \
     {                                                                   \
         return C(a.real()*b.real()+a.imag()*b.imag(),                   \
                  a.real()*b.imag()-a.imag()*b.real());                  \
@@ -120,9 +120,6 @@ RA_FOR_TYPES(double, std::complex<double>)
 #undef RA_FOR_TYPES
 
 template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
-
-constexpr bool
-odd(unsigned int N) { return N & 1; }
 
 
 // --------------------------------
@@ -142,48 +139,39 @@ template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithme
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
 
 template <is_iota I, iota_op J>
-constexpr auto
-optimize(Map<std::plus<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(0).n, ITEM(0).i+ITEM(1), ITEM(0).s); }
 
 template <iota_op I, is_iota J>
-constexpr auto
-optimize(Map<std::plus<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i, ITEM(1).s); }
 
 template <is_iota I, is_iota J>
-constexpr auto
-optimize(Map<std::plus<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
 { return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).s+ITEM(1).s); }
 
 template <is_iota I, iota_op J>
-constexpr auto
-optimize(Map<std::minus<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(0).n, ITEM(0).i-ITEM(1), ITEM(0).s); }
 
 template <iota_op I, is_iota J>
-constexpr auto
-optimize(Map<std::minus<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i, -ITEM(1).s); }
 
 template <is_iota I, is_iota J>
-constexpr auto
-optimize(Map<std::minus<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
 { return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).s-ITEM(1).s); }
 
 template <is_iota I, iota_op J>
-constexpr auto
-optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).s*ITEM(1)); }
 
 template <iota_op I, is_iota J>
-constexpr auto
-optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
+constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
 { return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).s); }
 
 template <is_iota I>
-constexpr auto
-optimize(Map<std::negate<>, std::tuple<I>> && e)
+constexpr auto optimize(Map<std::negate<>, std::tuple<I>> && e)
 { return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).s); }
 
 #if RA_DO_OPT_SMALLVECTOR==1
@@ -196,8 +184,7 @@ static_assert(match_small<double, 4, ra::Cell<double, ic_t<std::array { Dim { 4,
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B> requires (match_small<T, N, A> && match_small<T, N, B>) \
-    constexpr auto                                                      \
-    optimize(Map<NAME, std::tuple<A, B>> && e)                          \
+    constexpr auto optimize(Map<NAME, std::tuple<A, B>> && e)           \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
         *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.cp)) OP *(extvector<T, N> *)((ITEM(1).c.cp)); \

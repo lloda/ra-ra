@@ -227,7 +227,7 @@ template <auto f, auto dimv, int cellr, int framer=0>
 using ctuple = decltype(std::apply([](auto ... i) { return ilist<std::invoke(f, dimv[i]) ...>; }, mp::iota<cellr, framer> {}));
 
 template <class lens, class steps>
-constexpr static auto cdimv = mp::tuple2array<Dim, mp::zip<lens, steps>, [](auto i) { return std::make_from_tuple<Dim>(i); }>();
+constexpr auto cdimv = mp::tuple2array<Dim, mp::zip<lens, steps>, [](auto i) { return make_from_tuple<Dim>(i); }>();
 
 template <class T, class lens, class steps> struct ViewSmall;
 
@@ -672,7 +672,7 @@ transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
     constexpr std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
     constexpr auto src = cdimv<typename AA::lens, typename AA::steps>;
     static_assert(src.size()==s.size(), "Bad size for transposed axes list.");
-    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + *std::ranges::max_element(s);
+    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
     constexpr auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
     return ViewSmall<typename AA::T, ctuple<&Dim::len, dst, dstrank>, ctuple<&Dim::step, dst, dstrank>>(a.data());
 }

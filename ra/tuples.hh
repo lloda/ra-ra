@@ -117,25 +117,6 @@ struct IndexIf<tuple<A0, A ...>, Pred, i>
     constexpr static int value = next::value;
 };
 
-// index & type of pairwise winner. A variant of fold.
-template <template <class A, class B> class pick_i, class T, int k=1, int sel=0> struct indexof_;
-template <template <class A, class B> class pick_i, class T0, int k, int sel>
-struct indexof_<pick_i, tuple<T0>, k, sel>
-{
-    constexpr static int value = sel;
-    using type = T0;
-};
-template <template <class A, class B> class pick_i, class T0, class T1, class ... Ti, int k, int sel>
-struct indexof_<pick_i, tuple<T0, T1, Ti ...>, k, sel>
-{
-    constexpr static int i = pick_i<std::decay_t<T0>, std::decay_t<T1>>::value;
-    using next = indexof_<pick_i, tuple<std::conditional_t<i==0, T0, T1>, Ti ...>, k+1, i==0 ? sel : k>;
-    using type = typename next::type;
-    constexpr static int value = next::value;
-};
-template <template <class A, class B> class pick_i, class T>
-constexpr int indexof = indexof_<pick_i, T>::value;
-
 template <class A, class Val> struct findtail_;
 template <class A, class Val> using findtail = typename findtail_<A, Val>::type;
 template <class Val> struct findtail_<nil, Val> { using type = nil; };
