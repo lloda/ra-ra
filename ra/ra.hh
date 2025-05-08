@@ -16,11 +16,11 @@
   #define RA_OPT optimize
 #endif
 
-#if defined(RA_DO_FMA)
+#if defined(RA_FMA)
 #elif defined(FP_FAST_FMA)
-  #define RA_DO_FMA FP_FAST_FMA
+  #define RA_FMA FP_FAST_FMA
 #else
-  #define RA_DO_FMA 0
+  #define RA_FMA 0
 #endif
 
 // Enable ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
@@ -174,7 +174,7 @@ template <is_iota I>
 constexpr auto optimize(Map<std::negate<>, std::tuple<I>> && e)
 { return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).s); }
 
-#if RA_DO_OPT_SMALLVECTOR==1
+#if RA_OPT_SMALLVECTOR==1
 
 // FIXME can't match CellSmall directly, maybe bc N is in std::array { Dim { N, 1 } }.
 template <class T, dim_t N, class A> constexpr bool match_small =
@@ -206,7 +206,7 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 #undef RA_OPT_SMALLVECTOR_OP_FUNS
 #undef RA_OPT_SMALLVECTOR_OP_OP
 
-#endif // RA_DO_OPT_SMALLVECTOR
+#endif // RA_OPT_SMALLVECTOR
 
 #undef ITEM
 
@@ -445,9 +445,9 @@ prod(auto && a)
     return c;
 }
 
-constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c=fma(a, b, c); else c+=a*b; }
-constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_DO_FMA) c=fma_conj(a, b, c); else c+=conj(a)*b; }
-constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_DO_FMA) c=fma_sqrm(a, c); else c+=sqrm(a); }
+constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_FMA) c=fma(a, b, c); else c+=a*b; }
+constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_FMA) c=fma_conj(a, b, c); else c+=conj(a)*b; }
+constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_FMA) c=fma_sqrm(a, c); else c+=sqrm(a); }
 
 constexpr auto
 dot(auto && a, auto && b)
@@ -539,14 +539,17 @@ gemv(auto const & a, auto const & b)
 // --------------------
 
 // static transposed axes list, output rank is static.
-template <int ... Iarg, class T, rank_t RANK>
+template <int ... I, class T, rank_t RANK>
 constexpr auto
-transpose(ViewBig<T, RANK> const & view, ilist_t<Iarg ...>)
+transpose(ViewBig<T, RANK> const & view, ilist_t<I ...>)
 {
-    static_assert(RANK==ANY || RANK==sizeof...(Iarg), "Bad output rank.");
-    RA_CHECK(view.rank()==sizeof...(Iarg), "Bad output rank ", view.rank(), " should be ", (sizeof...(Iarg)), ".");
-    constexpr std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
-    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + ra::amax(s);
+    if constexpr (ANY==RANK) {
+        RA_CHECK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
+    } else {
+        static_assert(RANK==sizeof...(I), "Bad rank."); // c++26
+    }
+    constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
+    constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + ra::amax(s);
     ViewBig<T, dstrank> r;
     r.cp = view.data();
     transpose_filldim(s, view.dimv, r.dimv);
@@ -558,8 +561,8 @@ template <class T, rank_t RANK, class S>
 inline ViewBig<T, ANY>
 transpose(ViewBig<T, RANK> const & view, S && s)
 {
-    RA_CHECK(view.rank()==ra::size(s), "Bad size for transposed axes list.");
-    rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + ra::amax(s);
+    RA_CHECK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
+    rank_t dstrank = 0==ra::size(s) ? 0 : 1 + ra::amax(s);
     ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
     transpose_filldim(s, view.dimv, r.dimv);
     return r;

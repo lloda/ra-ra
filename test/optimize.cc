@@ -8,8 +8,8 @@
 // later version.
 
 #define RA_OPT // disable so we can compare with (forced) and without
-#ifndef RA_DO_OPT_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
-#define RA_DO_OPT_SMALLVECTOR 1
+#ifndef RA_OPT_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
+#define RA_OPT_SMALLVECTOR 1
 #endif
 
 #include "ra/test.hh"
@@ -148,7 +148,7 @@ int main()
         test(double(0));
         test(float(0));
     }
-#if RA_DO_OPT_SMALLVECTOR==1
+#if RA_OPT_SMALLVECTOR==1
     tr.section("small vector ops through vector extensions");
     {
         using Vec = ra::Small<double, 4>;
@@ -185,6 +185,6 @@ int main()
         tr.info("optimization of view").test(std::is_same_v<decltype(c), ra::Small<double, 8>>);
         tr.test_eq(34, c);
     }
-#endif // RA_DO_OPT_SMALLVECTOR==1
+#endif // RA_OPT_SMALLVECTOR==1
     return tr.summary();
 }

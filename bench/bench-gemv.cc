@@ -29,7 +29,7 @@ enum trans_t { NOTRANS, TRANS };
 int main()
 {
     TestRecorder tr(std::cout);
-    cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
+    cout << "RA_FMA is " << RA_FMA << endl;
 
     auto gemv_i = [&](auto const & a, auto const & b)
         {

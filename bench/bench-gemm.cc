@@ -198,7 +198,7 @@ gemm_blas(ra::ViewBig<T, 2> const & A, ra::ViewBig<T, 2> const & B, ra::ViewBig<
 int main()
 {
     TestRecorder tr(std::cout);
-    cout << "RA_DO_FMA is " << RA_DO_FMA << endl;
+    cout << "RA_FMA is " << RA_FMA << endl;
 
     auto gemm_k = [&](auto const & a, auto const & b, auto & c)
     {

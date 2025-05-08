@@ -88,7 +88,7 @@ int main()
     {
         ra::Big<int, 2> a({10, 3}, 1);
         ra::Big<int, 2> b({40, 3}, 2);
-        cout << sum(a+b) << endl;
+        cout << (a+b) << endl;
     }
     */
     return 0;

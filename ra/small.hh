@@ -23,13 +23,24 @@ struct Dim { dim_t len, step; };
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
 
+template <auto v, int n>
+constexpr auto vdrop = []()
+{
+    std::array<Dim, ssize(v)-n> r;
+    for (int i=0; i<int(r.size()); ++i) { r[i] = v[n+i]; }
+    return r;
+}();
+
+template <auto f, auto dimv, int n=ssize(dimv)>
+using ctuple = decltype(std::apply([](auto ... i) { return ilist<std::invoke(f, dimv[i]) ...>; }, mp::iota<n> {}));
+
 constexpr bool
-is_c_order_dimv(auto const & dimv, bool unitstep=true)
+is_c_order_dimv(auto const & dimv, bool step1=true)
 {
     bool steps = true;
     dim_t s = 1;
     int k = dimv.size();
-    if (!unitstep) {
+    if (!step1) {
         while (--k>=0 && 1==dimv[k].len) {}
         if (k<=0) { return true; }
         s = dimv[k].step*dimv[k].len;
@@ -42,7 +53,7 @@ is_c_order_dimv(auto const & dimv, bool unitstep=true)
 }
 
 constexpr bool
-is_c_order(auto const & v, bool unitstep=true) { return is_c_order_dimv(v.dimv, unitstep); }
+is_c_order(auto const & v, bool step1=true) { return is_c_order_dimv(v.dimv, step1); }
 
 constexpr dim_t
 filldim(auto & dimv, auto && shape)
@@ -61,15 +72,13 @@ filldim(auto & dimv, auto && shape)
     return s;
 }
 
-// FIXME parameterize Small on dimv, then simplify.
-template <class lens>
-struct default_steps_
+template <auto lenv>
+constexpr auto default_dims = []()
 {
-    constexpr static int rank = mp::len<lens>;
-    constexpr static auto dimv = [] { std::array<Dim, rank> dimv; filldim(dimv, tuple2array<dim_t, lens>()); return dimv; } ();
-    using type = decltype([] { return std::apply([](auto ... k) { return ilist<dimv[k].step ...>; }, mp::iota<rank> {}); } ());
-};
-template <class lens> using default_steps = typename default_steps_<lens>::type;
+    std::array<Dim, ra::size(lenv)> dimv;
+    filldim(dimv, lenv);
+    return dimv;
+}();
 
 constexpr auto
 shape(auto const & v, auto && e)
@@ -83,9 +92,8 @@ shape(auto const & v, auto && e)
     }
 }
 
-template <class A>
 constexpr void
-resize(A & a, dim_t s)
+resize(auto & a, dim_t s)
 {
     if constexpr (ANY==size_s(a)) {
         RA_CHECK(s>=0, "Bad resize ", s, ".");
@@ -223,28 +231,19 @@ indexer(Q const & q, P const & pp)
 // view iterators. TODO Take iterator like Ptr does and Views should, not raw pointers
 // --------------------
 
-template <auto f, auto dimv, int cellr, int framer=0>
-using ctuple = decltype(std::apply([](auto ... i) { return ilist<std::invoke(f, dimv[i]) ...>; }, mp::iota<cellr, framer> {}));
-
-template <class lens, class steps>
-constexpr auto cdimv = tuple2array<Dim, mp::zip<lens, steps>, [](auto i) { return make_from_tuple<Dim>(i); }>();
-
-template <class T, class lens, class steps> struct ViewSmall;
+template <class T, class Dimv> struct ViewSmall;
 
 template <class T, class Dimv, class Spec>
 struct CellSmall
 {
-    constexpr static auto dimv = Dimv::value;
-
     constexpr static rank_t spec = Spec::value;
-    constexpr static rank_t fullr = ssize(dimv);
+    constexpr static rank_t fullr = ssize(Dimv::value);
     constexpr static rank_t cellr = rank_cell(fullr, spec);
     constexpr static rank_t framer = rank_frame(fullr, spec);
     static_assert(spec!=ANY && spec!=BAD && choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
-// FIXME Small take dimv instead of lens/steps
-    using ctype = ViewSmall<T, ctuple<&Dim::len, dimv, cellr, framer>, ctuple<&Dim::step, dimv, cellr, framer>>;
 
-    ctype c;
+    constexpr static auto dimv = Dimv::value;
+    ViewSmall<T, ic_t<vdrop<dimv, framer>>> c;
 
     consteval static rank_t rank() { return framer; }
     constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
@@ -264,10 +263,9 @@ struct CellBig
     constexpr static rank_t fullr = size_s<Dimv>();
     constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
     constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
-    using ctype = ViewBig<T, cellr>;
 
     Dimv dimv;
-    ctype c;
+    ViewBig<T, cellr> c;
     [[no_unique_address]] Spec const dspec = {};
 
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
@@ -296,7 +294,7 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spe
 {
     using Base = std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>;
     using Base::Base, Base::cellr, Base::framer, Base::c, Base::step;
-    using ctype = Base::ctype;
+    using ctype = decltype(std::declval<Base>().c);
 
     static_assert(cellr>=0 || cellr==ANY, "Bad cell rank.");
     static_assert(framer>=0 || framer==ANY, "Bad frame rank.");
@@ -331,11 +329,11 @@ struct small_args<T, lens>
     using nested = mp::makelist<mp::ref<lens, 0>::value, typename nested_arg<T, lens>::sub>;
 };
 
-template <class T, class lens, class steps, class nested_args = small_args<T, lens>::nested>
+template <class T, class Dimv, class nested_args = small_args<T, ctuple<&Dim::len, Dimv::value>>::nested>
 struct SmallArray;
 
 template <class T, dim_t ... lens>
-using Small = SmallArray<T, ilist_t<lens ...>, default_steps<ilist_t<lens ...>>>;
+using Small = SmallArray<T, ic_t<default_dims<std::array<dim_t, sizeof...(lens)> {lens ...}>>>;
 
 template <class T, int S0, int ... S>
 struct nested_arg<T, ilist_t<S0, S ...>>
@@ -348,70 +346,74 @@ struct nested_arg<T, ilist_t<S0, S ...>>
 // Small view & container
 // ---------------------
 
-template <class lens_, class steps_, class ... I>
+template <auto prev, class ... I>
 struct FilterDims
 {
-    using lens = lens_;
-    using steps = steps_;
+    constexpr static auto dimv = prev;
 };
 
-template <class lens_, class steps_, class I0, class ... I> requires (!is_iota<I0>)
-struct FilterDims<lens_, steps_, I0, I ...>
+template <auto prev, class I0, class ... I> requires (!is_iota<I0>)
+struct FilterDims<prev, I0, I ...>
 {
     constexpr static bool stretch = (beatable<I0>.dst==BAD);
-    static_assert(!stretch || ((beatable<I>.dst!=BAD) && ...), "Cannot repeat stretch index.");
-    constexpr static int dst = stretch ? (mp::len<lens_> - (0 + ... + beatable<I>.src)) : beatable<I0>.dst;
-    constexpr static int src = stretch ? (mp::len<lens_> - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
-    using next = FilterDims<mp::drop<lens_, src>, mp::drop<steps_, src>, I ...>;
-    using lens = mp::append<mp::take<lens_, dst>, typename next::lens>;
-    using steps = mp::append<mp::take<steps_, dst>, typename next::steps>;
+    static_assert(!stretch || ((beatable<I>.dst!=BAD) && ...), "Repeated stretch index.");
+    constexpr static int dst = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.dst;
+    constexpr static int src = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
+    constexpr static auto next = FilterDims<vdrop<prev, src>, I ...>::dimv;
+    constexpr static auto dimv = []()
+    {
+        std::array<Dim, dst+ssize(next)> r;
+        for (int i=0; i<dst; ++i) { r[i] = prev[i]; }
+        for (int i=0; i<ssize(next); ++i) { r[dst+i] = next[i]; }
+        return r;
+    }();
 };
 
-template <class lens_, class steps_, class I0, class ... I> requires (is_iota<I0>)
-struct FilterDims<lens_, steps_, I0, I ...>
+template <auto prev, class I0, class ... I> requires (is_iota<I0>)
+struct FilterDims<prev, I0, I ...>
 {
-    constexpr static int dst = beatable<I0>.dst;
     constexpr static int src = beatable<I0>.src;
-    using next = FilterDims<mp::drop<lens_, src>, mp::drop<steps_, src>, I ...>;
-    using lens = mp::append<ilist_t<I0::nn>, typename next::lens>;
-    using steps = mp::append<ilist_t<(mp::ref<steps_, 0>::value * I0::gets())>, typename next::steps>;
+    constexpr static auto next = FilterDims<vdrop<prev, src>, I ...>::dimv;
+    constexpr static auto dimv = []()
+    {
+        std::array<Dim, 1+ssize(next)> r;
+        r[0] = Dim { I0::nn, prev[0].step * I0::gets() };
+        for (int i=0; i<ssize(next); ++i) { r[1+i] = next[i]; }
+        return r;
+    }();
 };
 
-template <class T_, class lens_, class steps_>
+template <class T_, class Dimv>
 struct SmallBase
 {
-    using lens = lens_;
-    using steps = steps_;
+    constexpr static auto dimv = Dimv::value;
+
     using T = T_;
 
-    static_assert(mp::len<lens> == mp::len<steps>, "Mismatched lengths & steps.");
-    consteval static rank_t rank() { return mp::len<lens>; }
-    constexpr static auto dimv = cdimv<lens, steps>;
-    constexpr static auto theshape = tuple2array<dim_t, lens>();
-    consteval static dim_t size() { return std::apply([](auto ... s) { return (s * ... * 1); }, theshape); }
+    consteval static rank_t rank() { return ssize(dimv); }
+    consteval static dim_t size() { dim_t s=1; for (auto dim: dimv) { s*=dim.len; } return s; }
     constexpr static dim_t len(int k) { return dimv[k].len; }
     consteval static dim_t size_s() { return size(); }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
-    consteval static decltype(auto) shape() { return theshape; }
 // TODO check steps
-    static_assert(std::apply([](auto ... s) { return ((0<=s) && ...); }, theshape), "Bad shape.");
+    static_assert([]{ for (auto dim: dimv) { if (0>dim.len) return false; }; return true; }(), "Bad shape.");
     constexpr static dim_t len0 = rank()>0 ? len(0) : 0;
     constexpr static bool defsteps = is_c_order_dimv(dimv);
 };
 
-template <class T, class lens, class steps>
-struct ViewSmall: public SmallBase<T, lens, steps>
+template <class T, class Dimv>
+struct ViewSmall: public SmallBase<T, Dimv>
 {
-    using Base = SmallBase<T, lens, steps>;
+    using Base = SmallBase<T, Dimv>;
     using Base::rank, Base::size, Base::dimv;
     using Base::len, Base::len_s, Base::step, Base::len0, Base::defsteps;
-    using sub = typename nested_arg<T, lens>::sub;
+    using sub = typename nested_arg<T, ctuple<&Dim::len, dimv>>::sub;
 
     T * cp;
 
     template <rank_t c=0> using iterator = Cell<T, ic_t<dimv>, ic_t<c>>;
-    using ViewConst = ViewSmall<T const, lens, steps>;
+    using ViewConst = ViewSmall<T const, Dimv>;
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
     constexpr ViewSmall const & view() const { return *this; }
     constexpr T * data() const { return cp; }
@@ -456,7 +458,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
     constexpr static dim_t
     select(is_iota auto const & i)
     {
-        if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME constexpr abs
+        if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME abs not yet in g++14 c++23
             static_assert(false, "Bad index.");
         } else {
             RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
@@ -491,8 +493,7 @@ struct ViewSmall: public SmallBase<T, lens, steps>
             return self.cp[select_loop<0>(i ...)];
 // FIXME wlen before this, cf is_constant_iota
         } else if constexpr ((beatable<I>.ct && ...)) {
-            using FD = FilterDims<lens, steps, std::decay_t<I> ...>;
-            return ViewSmall<T, typename FD::lens, typename FD::steps> (self.cp + select_loop<0>(i ...));
+            return ViewSmall<T, ic_t<FilterDims<dimv, std::decay_t<I> ...>::dimv>> (self.cp + select_loop<0>(i ...));
 // TODO partial beating
         } else {
 // must fwd *this because we create temp views on every Small::view() call
@@ -542,22 +543,22 @@ align_req()
     }
 }
 
-template <class T, class lens, class steps, class ... nested_args>
+template <class T, class Dimv, class ... nested_args>
 struct
-#if RA_DO_OPT_SMALLVECTOR==1
-alignas(align_req<T, std::apply([](auto && ... i) { return (i * ... * 1); }, lens {})>())
+#if RA_OPT_SMALLVECTOR==1
+alignas(align_req<T, std::apply([](auto ... i) { return (i.len * ... * 1); }, Dimv::value)>())
 #else
 #endif
-SmallArray<T, lens, steps, std::tuple<nested_args ...>>
-    : public SmallBase<T, lens, steps>
+SmallArray<T, Dimv, std::tuple<nested_args ...>>
+    : public SmallBase<T, Dimv>
 {
-    using Base = SmallBase<T, lens, steps>;
-    using Base::rank, Base::size, Base::len0;
+    using Base = SmallBase<T, Dimv>;
+    using Base::rank, Base::size, Base::len0, Base::dimv;
 
     T cp[size()]; // cf what std::array does for zero size
 
-    using View = ViewSmall<T, lens, steps>;
-    using ViewConst = ViewSmall<T const, lens, steps>;
+    using View = ViewSmall<T, Dimv>;
+    using ViewConst = ViewSmall<T const, Dimv>;
     constexpr View view() { return View(cp); }
     constexpr ViewConst view() const { return ViewConst(cp); }
     constexpr operator View () { return View(cp); }
@@ -629,7 +630,7 @@ peel(auto && t)
     using T = std::remove_cvref_t<decltype(t)>;
     if constexpr (1 < std::rank_v<T>) {
         static_assert(0 < std::extent_v<T, 0>);
-        return peel(*std::data(RA_FWD(t)));
+        return peel(*std::data(t));
     } else {
         return std::data(t);
     }
@@ -638,10 +639,8 @@ peel(auto && t)
 constexpr auto
 start(is_builtin_array auto && t)
 {
-    using A = std::remove_reference_t<decltype(t)>; // preserve const
-    using lens = decltype(std::apply([](auto ... i) { return ilist<std::extent_v<A, i> ...>; },
-                                     mp::iota<std::rank_v<A>> {}));
-    return ViewSmall<std::remove_all_extents_t<A>, lens, default_steps<lens>>(peel(t)).iter();
+    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
+    return ViewSmall<T, ic_t<default_dims<ra::shape(t)>>>(peel(t)).iter();
 }
 
 
@@ -661,41 +660,46 @@ transpose_filldim(auto const & s, auto const & src, auto & dst)
     }
 }
 
-RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<typename A::T, typename A::lens, typename A::steps>>));
+RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<typename A::T, ic_t<A::dimv>>>));
 
 template <int ... Iarg>
 constexpr auto
 transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
 {
     decltype(auto) a = a_.view();
-    using AA = typename std::decay_t<decltype(a)>;
-    constexpr std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
-    constexpr auto src = cdimv<typename AA::lens, typename AA::steps>;
+    using A = typename std::decay_t<decltype(a)>;
+    constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
+    constexpr static auto src = A::dimv;
     static_assert(src.size()==s.size(), "Bad size for transposed axes list.");
-    constexpr rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
-    constexpr auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
-    return ViewSmall<typename AA::T, ctuple<&Dim::len, dst, dstrank>, ctuple<&Dim::step, dst, dstrank>>(a.data());
+    constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
+    constexpr static auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
+    return ViewSmall<typename A::T, ic_t<dst>>(a.data());
 }
 
+// FIXME refactor with explode(Big), support general steps, complex
 template <class super_t>
 constexpr auto
 explode(cv_smallview auto && a_)
 {
-// result has steps in super_t, but to support general steps we'd need steps in T. FIXME?
-    decltype(auto) a = a_.view();
-    using AA = std::decay_t<decltype(a)>;
     static_assert(super_t::defsteps);
-    constexpr rank_t ra = ra::rank_s(a);
-    constexpr rank_t rb = rank_s<super_t>();
-    static_assert(std::is_same_v<mp::drop<typename AA::lens, ra-rb>, typename super_t::lens>);
-    static_assert(std::is_same_v<mp::drop<typename AA::steps, ra-rb>, typename super_t::steps>);
-    constexpr dim_t supers = size_s<super_t>();
-    using csteps = decltype(std::apply([](auto ... i)
-                                       {
-                                           static_assert(((i==(i/supers)*supers) && ...));
-                                           return ilist<(i/supers) ...>;
-                                       }, mp::take<typename AA::steps, ra-rb> {}));
-    return ViewSmall<super_t, mp::take<typename AA::lens, ra-rb>, csteps>((super_t *) a.data());
+    decltype(auto) a = a_.view();
+    constexpr static rank_t ra = ra::rank_s(a);
+    constexpr static rank_t rb = rank_s<super_t>();
+    constexpr static dim_t s = size_s<super_t>();
+    constexpr static auto dst = [&a]()
+    {
+        std::array<Dim, ra-rb> r;
+        for (int i=0; i<rb; ++i) {
+            RA_CHECK(super_t::dimv[i].len==a.dimv[i+ra-rb].len && super_t::dimv[i].step==a.dimv[i+ra-rb].step);
+        }
+        for (int i=0; i<ra-rb; ++i) {
+            dim_t step = a.dimv[i].step;
+            RA_CHECK(0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
+            r[i] = Dim { a.dimv[i].len, step/s };
+        }
+        return r;
+    }();
+    return ViewSmall<super_t, ic_t<dst>>(reinterpret_cast<super_t *>(a.data()));
 }
 
 // TODO generalize
@@ -705,8 +709,7 @@ cat(cv_smallview auto && a1_, cv_smallview auto && a2_)
     decltype(auto) a1 = a1_.view();
     decltype(auto) a2 = a2_.view();
     static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
-    using T = std::common_type_t<std::decay_t<decltype(a1[0])>, std::decay_t<decltype(a2[0])>>;
-    Small<T, a1.size()+a2.size()> val;
+    Small<std::common_type_t<decltype(a1[0]), decltype(a2[0])>, a1.size()+a2.size()> val;
     std::copy(a1.begin(), a1.end(), val.begin());
     std::copy(a2.begin(), a2.end(), val.begin()+a1.size());
     return val;
@@ -717,8 +720,7 @@ cat(cv_smallview auto && a1_, is_scalar auto && a2_)
 {
     decltype(auto) a1 = a1_.view();
     static_assert(1==a1.rank(), "Bad ranks for cat.");
-    using T = std::common_type_t<std::decay_t<decltype(a1[0])>, decltype(a2_)>;
-    Small<T, a1.size()+1> val;
+    Small<std::common_type_t<decltype(a1[0]), decltype(a2_)>, a1.size()+1> val;
     std::copy(a1.begin(), a1.end(), val.begin());
     val[a1.size()] = a2_;
     return val;
@@ -729,8 +731,7 @@ cat(is_scalar auto && a1_, cv_smallview auto && a2_)
 {
     decltype(auto) a2 = a2_.view();
     static_assert(1==a2.rank(), "Bad ranks for cat.");
-    using T = std::common_type_t<decltype(a1_), std::decay_t<decltype(a2[0])>>;
-    Small<T, 1+a2.size()> val;
+    Small<std::common_type_t<decltype(a1_), decltype(a2[0])>, 1+a2.size()> val;
     val[0] = a1_;
     std::copy(a2.begin(), a2.end(), val.begin()+1);
     return val;

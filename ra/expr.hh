@@ -53,11 +53,7 @@ template <int ... I> constexpr ilist_t<I ...> ilist {};
 constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
 template <class C, class T, auto f = std::identity {}>
-consteval auto
-tuple2array()
-{
-    return std::apply([](auto ... t) { return std::array<C, sizeof...(t)> { C(f(t)) ... }; }, T {});
-}
+constexpr auto tuple2array = std::apply([](auto ... t) { return std::array<C, sizeof...(t)> { C(f(t)) ... }; }, T {});
 
 
 // --------------------
@@ -519,7 +515,7 @@ template <class Dest, IteratorConcept A>
 struct Reframe
 {
     A a;
-    constexpr static auto dest = tuple2array<int, Dest>();
+    constexpr static auto dest = tuple2array<int, Dest>;
 
     consteval static rank_t
     rank()
@@ -616,7 +612,7 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 // live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
     using live = ilist_t<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
-    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(tuple2array<int, live>())>;
+    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(tuple2array<int, live>)>;
     using R = typename FM::R;
     template <class U> constexpr static decltype(auto) op(U && v) { return FM::op(RA_FWD(v).op); } // cf [ra31]
 };

@@ -20,8 +20,8 @@
 #include <source_location>
 
 // FIMXE benchmark shows it's bad by default; probably requires optimizing also +=, etc.
-#ifndef RA_DO_OPT_SMALLVECTOR
-#define RA_DO_OPT_SMALLVECTOR 0
+#ifndef RA_OPT_SMALLVECTOR
+#define RA_OPT_SMALLVECTOR 0
 #endif
 
 namespace ra {
@@ -216,18 +216,18 @@ template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
-    constexpr rank_t rs = rank_s(v);
-    if constexpr (is_builtin_array<V>) {
-        constexpr auto s = std::apply([](auto ... i) { return std::array<dim_t, rs> { std::extent_v<V, i> ... }; }, mp::iota<rs> {});
+    if constexpr (constexpr rank_t rs=rank_s(v); is_builtin_array<V>) {
+        constexpr auto s = std::apply([](auto ... i) { return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
         return s;
-    } else if constexpr (requires { v.shape(); }) {
-        return v.shape();
-    } else if constexpr (0==rs) {
+    } else if constexpr (0==rs) { // including scalars
         return std::array<dim_t, 0> {};
-    } else if constexpr (1==rs) {
+    } else if constexpr (1==rs) { // including std::array, std::vector
         return std::array<dim_t, 1> { ra::size(v) };
+    } else if constexpr (ra::size_s(v)!=ANY) {
+        constexpr auto s = std::apply([](auto ... i) { return std::array { V::len_s(i) ... }; }, mp::iota<rs> {});
+        return s;
     } else if constexpr (ANY!=rs) {
-        return std::apply([&v](auto ... i) { return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
+        return std::apply([&v](auto ... i) { return std::array { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         return std::ranges::to<vector_default_init<dim_t>>(
             std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k) { return v.len(k); }));

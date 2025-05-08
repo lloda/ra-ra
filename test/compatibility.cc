@@ -84,6 +84,12 @@ int main()
         tr.test_eq(4, int_c<ra::shape(a)[1]>::value);
         tr.test_eq(12, int_c<ra::size(a)>::value);
     }
+// shape on std:: types
+    {
+        tr.test_eq(ra::start({3}), ra::shape(std::array<int, 3> {1, 2, 3}));
+        tr.test_eq(ra::start({4}), ra::shape(std::vector<int> {1, 2, 3, 4}));
+    }
+
     tr.section("operators take foreign types");
     {
         std::vector x = {1, 2, 3};

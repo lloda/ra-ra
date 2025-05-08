@@ -512,10 +512,9 @@ struct concrete_type_def<E>
 };
 // Scalars are their own concrete_type. Treat unregistered types as scalars.
 template <class E>
-using concrete_type = std::decay_t<
-    std::conditional_t<(0==rank_s<E>() && !is_ra<E>) || is_scalar<E>,
-                       std::decay_t<E>,
-                       typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>>;
+using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>) || is_scalar<E>,
+                                         std::decay_t<E>,
+                                         typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>;
 
 template <class E>
 constexpr auto
@@ -561,11 +560,7 @@ template <class E, class S, class X>
 constexpr auto
 with_shape(std::initializer_list<S> && s, X && x)
 {
-    if constexpr (ANY!=size_s<E>()) {
-        return concrete_type<E>(RA_FWD(x));
-    } else {
-        return concrete_type<E>(s, RA_FWD(x));
-    }
+    return with_shape<E>(start(s), RA_FWD(x));
 }
 
 
@@ -668,11 +663,11 @@ stencil(ViewBig<T, N> const & a, LO && lo, HI && hi)
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
              {
                  RA_CHECK(dima.len>=lo+hi, "Stencil is too large for array.");
-                 dims = {dima.len-lo-hi, dima.step};
+                 dims = { dima.len-lo-hi, dima.step };
              },
              ptr(s.dimv.data()), a.dimv, lo, hi);
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
-             { dims = {lo+hi+1, dima.step}; },
+             { dims = { lo+hi+1, dima.step }; },
              ptr(s.dimv.data()+a.rank()), a.dimv, lo, hi);
     return s;
 }
@@ -687,16 +682,17 @@ explode_(ViewBig<T, RANK> const & a)
     RA_CHECK(a.rank()>=SUPERR, "Rank of a ", a.rank(), " should be at least ", SUPERR, ".");
     ViewBig<super_t, rank_sum(RANK, -SUPERR)> b;
     ra::resize(b.dimv, a.rank()-SUPERR);
-    dim_t r = 1;
+    dim_t s = 1;
     for (int i=0; i<SUPERR; ++i) {
-        r *= a.len(i+b.rank());
+        s *= a.len(i+b.rank());
     }
-    RA_CHECK(r*sizeof(T)==sizeof(super_t), "Length of axes ", r*sizeof(T), " doesn't match type ", sizeof(super_t), ".");
+    RA_CHECK(s*sizeof(T)==sizeof(super_t), "Size of axes ", s*sizeof(T), " doesn't match ", sizeof(super_t), ".");
     for (int i=0; i<b.rank(); ++i) {
-        RA_CHECK(a.step(i) % r==0, "Step of axes ", a.step(i), " doesn't match type ", r, " on axis ", i, ".");
-        b.dimv[i] = { .len = a.len(i), .step = a.step(i) / r };
+        dim_t step = a.step(i);
+        RA_CHECK(0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
+        b.dimv[i] = Dim { a.len(i), step/s };
     }
-    RA_CHECK((b.rank()==0 || a.step(b.rank()-1)==r), "Super type is not compact in array.");
+    RA_CHECK((b.rank()==0 || a.step(b.rank()-1)==s), "Super type is not compact in array.");
     b.cp = reinterpret_cast<super_t *>(a.data());
     return b;
 }
@@ -708,7 +704,7 @@ explode(ViewBig<T, RANK> const & a)
     return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>())>(a);
 }
 
-// TODO Check that ranks below SUBR are compact.
+// TODO Check that ranks below SUBR are compact. Version for Small.
 template <class sub_t, class super_t, rank_t RANK>
 inline auto
 collapse(ViewBig<super_t, RANK> const & a)
@@ -719,24 +715,23 @@ collapse(ViewBig<super_t, RANK> const & a)
     constexpr int SUBR = rank_s<super_t>() - rank_s<sub_t>();
     static auto gstep = [](int i) { if constexpr (is_scalar<super_t>) return 1; else return super_t::step(i); };
     static auto glen = [](int i) { if constexpr (is_scalar<super_t>) return 1; else return super_t::len(i); };
-
     ViewBig<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
     resize(b.dimv, a.rank()+SUBR+int(subtype>1));
-
     constexpr dim_t r = sizeof(super_t)/sizeof(sub_t);
     static_assert(sizeof(super_t)==r*sizeof(sub_t), "Cannot make axis of super_t from sub_t.");
     for (int i=0; i<a.rank(); ++i) {
-        b.dimv[i] = { .len = a.len(i), .step = a.step(i) * r };
+        b.dimv[i] = Dim { a.len(i), a.step(i)*r };
     }
-    constexpr int t = sizeof(super_v)/sizeof(sub_v);
-    constexpr int s = sizeof(sub_t)/sizeof(sub_v);
+    constexpr dim_t t = sizeof(super_v)/sizeof(sub_v);
+    constexpr dim_t s = sizeof(sub_t)/sizeof(sub_v);
     static_assert(t*sizeof(sub_v)>=1, "Bad subtype.");
     for (int i=0; i<SUBR; ++i) {
-        RA_CHECK(((gstep(i)/s)*s==gstep(i)), "Bad steps."); // TODO actually static
-        b.dimv[a.rank()+i] = { .len = glen(i), .step = gstep(i) / s * t };
+        dim_t step = gstep(i);
+        RA_CHECK(0==step % s, "Bad steps.");
+        b.dimv[a.rank()+i] = Dim { glen(i), step/s*t };
     }
     if (subtype>1) {
-        b.dimv[a.rank()+SUBR] = { .len = t, .step = 1 };
+        b.dimv[a.rank()+SUBR] = Dim { t, 1 };
     }
     b.cp = reinterpret_cast<sub_t *>(a.data());
     return b;
