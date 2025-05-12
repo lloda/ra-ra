@@ -83,7 +83,7 @@ struct ViewBig
         if constexpr (std::is_convertible_v<value_t<decltype(s)>, Dim>) {
             start(dimv) = s;
         } else {
-            filldim(dimv, s);
+            filldim(s, dimv);
         }
     }
     constexpr ViewBig(std::initializer_list<dim_t> s, T * cp_): ViewBig(start(s), cp_) {}
@@ -340,7 +340,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
         RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
         static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || BAD==size_s(s), "Bad shape for rank.");
         ra::resize(dimv, ra::size(s)); // [ra37]
-        store = storage_traits<Store>::create(filldim(dimv, s));
+        store = storage_traits<Store>::create(filldim(s, dimv));
         cp = storage_traits<Store>::data(store);
     }
     void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
@@ -411,7 +411,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     void resize(auto const & s) requires (rank_s(s) > 0)
     {
         ra::resize(dimv, start(s).len(0)); // [ra37] FIXME is View constructor
-        store.resize(filldim(dimv, s));
+        store.resize(filldim(s, dimv));
         cp = store.data();
     }
 // template + RA_FWD wouldn't work for push_back(brace-enclosed-list).
@@ -624,7 +624,7 @@ reshape(ViewBig<T, RANK> const & a, S && sb_)
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
             RA_CHECK(is_c_order(a, false) && la>=lb, "Reshape with copy not implemented.");
 // FIXME ViewBig(SS const & s, T * p). Cf [ra37].
-            filldim(b.dimv, sb);
+            filldim(sb, b.dimv);
             for (int j=0; j!=b.rank(); ++j) {
                 b.dimv[j].step *= a.step(a.rank()-1);
             }
@@ -686,7 +686,7 @@ transpose(ViewBig<T, RANK> const & view, ilist_t<I ...>)
     constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s);
     ViewBig<T, dstrank> r;
     r.cp = view.data();
-    transpose_filldim(s, view.dimv, r.dimv);
+    transpose_dims(s, view.dimv, r.dimv);
     return r;
 }
 
@@ -698,7 +698,7 @@ transpose(ViewBig<T, RANK> const & view, S && s)
     RA_CHECK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
     rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s); // FIXME amax(), but that's in ra.hh
     ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
-    transpose_filldim(s, view.dimv, r.dimv);
+    transpose_dims(s, view.dimv, r.dimv);
     return r;
 }
 
@@ -715,47 +715,33 @@ transpose(auto && a) { return transpose(RA_FWD(a), ilist<1, 0>); }
 constexpr decltype(auto)
 diag(auto && a) { return transpose(RA_FWD(a), ilist<0, 0>); };
 
-// Make last sizes of ViewBig<> be compile-time constants.
-template <class super_t, class T, rank_t RANK>
+template <class sup_t, class T, rank_t RANK>
 inline auto
 explode(ViewBig<T, RANK> const & a)
 {
-    constexpr rank_t SUPERR = std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>();
-// TODO Reduce to single check, either the first or the second.
-    static_assert(RANK>=SUPERR || RANK==ANY, "rank of a is too low");
-    RA_CHECK(a.rank()>=SUPERR, "Rank of a ", a.rank(), " should be at least ", SUPERR, ".");
-    ViewBig<super_t, rank_sum(RANK, -SUPERR)> b;
-    ra::resize(b.dimv, a.rank()-SUPERR);
-    dim_t s = 1;
-    for (int i=0; i<SUPERR; ++i) {
-        s *= a.len(i+b.rank());
-    }
-    RA_CHECK(s*sizeof(T)==sizeof(super_t), "Size of axes ", s*sizeof(T), " doesn't match ", sizeof(super_t), ".");
-    for (int i=0; i<b.rank(); ++i) {
-        dim_t step = a.step(i);
-        RA_CHECK(0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
-        b.dimv[i] = Dim { a.len(i), step/s };
-    }
-    RA_CHECK((b.rank()==0 || a.step(b.rank()-1)==s), "Super type is not compact in array.");
-    b.cp = reinterpret_cast<super_t *>(a.data());
+    constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
+    ViewBig<sup_t, rank_sum(RANK, -rank_s<sup_t>()-ru)> b;
+    ra::resize(b.dimv, a.rank()-rank_s<sup_t>()-ru);
+    explode_dims<sup_t, T>(a.dimv, b.dimv);
+    b.cp = reinterpret_cast<sup_t *>(a.data());
     return b;
 }
 
 // TODO Check that ranks below SUBR are compact. Version for Small.
-template <class sub_t, class super_t, rank_t RANK>
+template <class sub_t, class sup_t, rank_t RANK>
 inline auto
-collapse(ViewBig<super_t, RANK> const & a)
+collapse(ViewBig<sup_t, RANK> const & a)
 {
-    using super_v = value_t<super_t>;
+    using super_v = value_t<sup_t>;
     using sub_v = value_t<sub_t>;
     constexpr int subtype = sizeof(super_v)/sizeof(sub_t);
-    constexpr int SUBR = rank_s<super_t>() - rank_s<sub_t>();
-    static auto gstep = [](int i) { if constexpr (is_scalar<super_t>) return 1; else return super_t::step(i); };
-    static auto glen = [](int i) { if constexpr (is_scalar<super_t>) return 1; else return super_t::len(i); };
+    constexpr int SUBR = rank_s<sup_t>() - rank_s<sub_t>();
+    static auto gstep = [](int i) { if constexpr (is_scalar<sup_t>) return 1; else return sup_t::step(i); };
+    static auto glen = [](int i) { if constexpr (is_scalar<sup_t>) return 1; else return sup_t::len(i); };
     ViewBig<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
     resize(b.dimv, a.rank()+SUBR+int(subtype>1));
-    constexpr dim_t r = sizeof(super_t)/sizeof(sub_t);
-    static_assert(sizeof(super_t)==r*sizeof(sub_t), "Cannot make axis of super_t from sub_t.");
+    constexpr dim_t r = sizeof(sup_t)/sizeof(sub_t);
+    static_assert(sizeof(sup_t)==r*sizeof(sub_t), "Cannot make axis of sup_t from sub_t.");
     for (int i=0; i<a.rank(); ++i) {
         b.dimv[i] = Dim { a.len(i), a.step(i)*r };
     }

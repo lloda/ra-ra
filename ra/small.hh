@@ -56,7 +56,7 @@ constexpr bool
 is_c_order(auto const & v, bool step1=true) { return is_c_order_dimv(v.dimv, step1); }
 
 constexpr dim_t
-filldim(auto & dimv, auto && shape)
+filldim(auto && shape, auto & dimv)
 {
     map(&Dim::len, dimv) = shape;
     dim_t s = 1;
@@ -76,7 +76,7 @@ template <auto lenv>
 constexpr auto default_dims = []()
 {
     std::array<Dim, ra::size(lenv)> dimv;
-    filldim(dimv, lenv);
+    filldim(lenv, dimv);
     return dimv;
 }();
 
@@ -649,7 +649,7 @@ start(is_builtin_array auto && t)
 // --------------------
 
 constexpr void
-transpose_filldim(auto const & s, auto const & src, auto & dst)
+transpose_dims(auto const & s, auto const & src, auto & dst)
 {
     std::ranges::fill(dst, Dim { BAD, 0 });
     for (int k=0; int sk: s) {
@@ -671,34 +671,48 @@ transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
     constexpr static auto src = A::dimv;
     static_assert(src.size()==s.size(), "Bad size for transposed axes list.");
     constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
-    constexpr static auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_filldim(s, src, dst); return dst; }();
+    constexpr static auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
     return ViewSmall<typename A::T, ic_t<dst>>(a.data());
 }
 
-// FIXME refactor with explode(Big), support general steps, complex
-template <class super_t>
-constexpr auto
-explode(cv_smallview auto && a_)
+template <class sup_t, class T, class A, class B>
+constexpr void
+explode_dims(A const & adimv, B & bdimv)
 {
-    static_assert(super_t::defsteps);
-    decltype(auto) a = a_.view();
-    constexpr static rank_t ra = ra::rank_s(a);
-    constexpr static rank_t rb = rank_s<super_t>();
-    constexpr static dim_t s = size_s<super_t>();
-    constexpr static auto dst = [&a]()
+    rank_t rb = ssize(bdimv);
+    constexpr rank_t rs = rank_s<sup_t>();
+    dim_t s = 1;
+// FIXME check compactness on these axes only (cf Small::defsteps)
+    for (int i=rb+rs; i<ssize(adimv); ++i) {
+        s *= adimv[i].len;
+    }
+    RA_CHECK(s*sizeof(T)==sizeof(value_t<sup_t>), "Bad subtype.");
+    if constexpr (rs>0) {
+        for (int i=rb; i<rb+rs; ++i) {
+            RA_CHECK(sup_t::dimv[i-rb].len==adimv[i].len && s*sup_t::dimv[i-rb].step==adimv[i].step,
+                     "Mismatched axes.");
+        }
+    }
+    s *= size_s<sup_t>();
+    for (int i=0; i<rb; ++i) {
+        dim_t step = adimv[i].step;
+        RA_CHECK(0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
+        bdimv[i] = Dim { adimv[i].len, step/s };
+    }
+}
+
+template <class sup_t>
+constexpr auto
+explode(cv_smallview auto && a)
+{
+    constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
+    constexpr static auto bdimv = [&a]()
     {
-        std::array<Dim, ra-rb> r;
-        for (int i=0; i<rb; ++i) {
-            RA_CHECK(super_t::dimv[i].len==a.dimv[i+ra-rb].len && super_t::dimv[i].step==a.dimv[i+ra-rb].step);
-        }
-        for (int i=0; i<ra-rb; ++i) {
-            dim_t step = a.dimv[i].step;
-            RA_CHECK(0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
-            r[i] = Dim { a.dimv[i].len, step/s };
-        }
-        return r;
+        std::array<Dim, ra::rank_s(a)-rank_s<sup_t>()-ru> bdimv;
+        explode_dims<sup_t, value_t<decltype(a)>>(a.dimv, bdimv);
+        return bdimv;
     }();
-    return ViewSmall<super_t, ic_t<dst>>(reinterpret_cast<super_t *>(a.data()));
+    return ViewSmall<sup_t, ic_t<bdimv>>(reinterpret_cast<sup_t *>(a.data()));
 }
 
 // TODO generalize

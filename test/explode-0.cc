@@ -21,7 +21,6 @@ using ra::real_part, ra::imag_part;
 int main()
 {
     TestRecorder tr(std::cout);
-
     tr.section("explode");
     {
         ra::Big<int, 2> A({2, 3}, ra::_0 - ra::_1);
@@ -143,26 +142,24 @@ int main()
             test_sub_real(ra::Unique<super>({4, 4}, ra::none));
         }
     }
-    tr.section("old tests");
+    tr.section("super rank 1");
     {
-        tr.section("super rank 1");
+        auto test = [&tr](auto && A)
         {
-            auto test = [&tr](auto && A)
-            {
-                using T = ra::Small<double, 2>;
-                auto B = ra::explode<T>(A);
-                for (int i=0; i<3; ++i) {
-                    tr.test_eq(i*2, ((T &)(B(i)))(0));
-                    tr.test_eq(i*2+1, ((T &)(B(i)))(1));
-                }
-            };
-            test(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
-            test(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
-        }
-        tr.section("super rank 0");
-        {
+            using T = ra::Small<double, 2>;
+            auto B = ra::explode<T>(A);
+            for (int i=0; i<3; ++i) {
+                tr.test_eq(i*2, ((T &)(B(i)))(0));
+                tr.test_eq(i*2+1, ((T &)(B(i)))(1));
+            }
+        };
+        test(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
+        test(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
+    }
+    tr.section("super rank 0");
+    {
 #define TEST(CHECK_RANK_S)                                              \
-            [&tr](auto && A)                                            \
+        [&tr](auto && A)                                                \
             {                                                           \
                 using T = complex;                                      \
                 auto convtest = [](T & x) -> T & { return x; };         \
@@ -176,26 +173,25 @@ int main()
                     tr.test_eq(i*2+1, convtest(B(i)).imag());           \
                 }                                                       \
             }
-            TEST(ra::ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
-            TEST(1)(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
-        }
-        tr.section("super rank 2");
-        {
-            auto test = [&tr](auto && A)
-            {
-                using T = ra::Small<double, 2, 2>;
-                auto B = ra::explode<T>(A);
-                tr.test_eq(1, B.rank());
-                tr.test_eq(T { 0, 1, 2, 3 }, (T &)(B[0]));
-                tr.test_eq(T { 4, 5, 6, 7 }, (T &)(B[1]));
-                tr.test_eq(T { 8, 9, 10, 11 }, (T &)(B[2]));
-                tr.test_eq(T { 12, 13, 14, 15}, (T &)(B[3]));
-            };
-            test(ra::Unique<double, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
-            test(ra::Unique<double>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
-        }
+        TEST(ra::ANY)(ra::Unique<double>({4, 2}, ra::_0*2 + ra::_1));
+        TEST(1)(ra::Unique<double, 2>({4, 2}, ra::_0*2 + ra::_1));
     }
-    tr.section("explode for Small");
+    tr.section("super rank 2");
+    {
+        auto test = [&tr](auto && A)
+        {
+            using T = ra::Small<double, 2, 2>;
+            auto B = ra::explode<T>(A);
+            tr.test_eq(1, B.rank());
+            tr.test_eq(T { 0, 1, 2, 3 }, (T &)(B[0]));
+            tr.test_eq(T { 4, 5, 6, 7 }, (T &)(B[1]));
+            tr.test_eq(T { 8, 9, 10, 11 }, (T &)(B[2]));
+            tr.test_eq(T { 12, 13, 14, 15}, (T &)(B[3]));
+        };
+        test(ra::Unique<double, 3>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
+        test(ra::Unique<double>({4, 2, 2}, ra::_0*4 + ra::_1*2 + ra::_2));
+    }
+    tr.section("explode for Small/T");
     {
         ra::Small<double, 2, 3> a(ra::_0 + 10*ra::_1);
         auto c = ra::explode<ra::Small<double, 3>>(a);
@@ -208,6 +204,34 @@ int main()
         tr.test_eq(ra::Small<double, 3> { 0, 10, 20 }, c[0]);
         tr.test_eq(ra::Small<double, 3> { 0, 10, 20 }, a[0]);
         tr.test_eq(ra::Small<double, 3> { 3, 2, 1 }, a[1]);
+    }
+    tr.section("explode for Small/complex<T>");
+    {
+        ra::Small<double, 3, 2> a(ra::_0 + 10*ra::_1);
+        auto c = ra::explode<complex>(a);
+        static_assert(1==ssize(c.dimv));
+        tr.test_eq(3, c.dimv[0].len);
+        tr.test_eq(1, c.dimv[0].step);
+        tr.test_eq(a(ra::all, 0), real_part(c));
+        tr.test_eq(a(ra::all, 1), imag_part(c));
+        c = { {3, 0}, {2, 1}, {1, 2} };
+        tr.test_eq(ra::Small<double, 3> { 3, 2, 1 }, a(ra::all, 0));
+        tr.test_eq(ra::Small<double, 3> { 0, 1, 2 }, a(ra::all, 1));
+    }
+    tr.section("explode for Small/rank/complex<T>");
+    {
+        ra::Small<double, 2, 3, 2> a(ra::_0 + 10*ra::_1 + 100*ra::_2);
+        auto c = ra::explode<ra::Small<complex, 3>>(a);
+        static_assert(1==ssize(c.dimv));
+        tr.test_eq(2, c.dimv[0].len);
+        tr.test_eq(1, c.dimv[0].step);
+        tr.test_eq(a(0, ra::all, 0), real_part(c(0)));
+        tr.test_eq(a(1, ra::all, 0), real_part(c(1)));
+        tr.test_eq(a(0, ra::all, 1), imag_part(c(0)));
+        tr.test_eq(a(1, ra::all, 1), imag_part(c(1)));
+        c[0] = { {3, 0}, {2, 1}, {1, 2} };
+        c[1] = { {6, 7}, {4, 3}, {5, 9} };
+        tr.test_eq(ra::Small<double, 2, 3, 2> { { {3, 0}, {2, 1}, {1, 2} }, { {6, 7}, {4, 3}, {5, 9} } }, a);
     }
     return tr.summary();
 }
