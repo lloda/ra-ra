@@ -395,7 +395,10 @@ validate(A const & a, U allow_unb = {})
     static_assert(!has_len<A>, "Stray ra::len.");
     static_assert(allow_unb || ra::BAD!=ra::size_s<A>(), "Undefined size.");
     static_assert(0<=rank_s(a) || ANY==rank_s(a), "Undefined rank.");
-    if constexpr (is_match<A>) { a.validate(); }
+    if constexpr (is_match<A>) {
+        static_assert(0!=a.check_s(), "Bad shapes."); // FIXME c++26
+        a.check(false);
+    }
 }
 
 template <IteratorConcept ... P, int ... I>
@@ -415,24 +418,18 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         return 0>sofar ? 0 : 2>sofar ? 2 : 1;
     }
     constexpr bool
-    check() const
+    check(bool allow=true) const
     {
         constexpr int c = check_s();
         if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
-                if (len(k)<0) { return false; }
+                if (len(k)<0) {
+                    RA_CHECK(allow, "Bad shapes ", fmt(lstyle, shape(get<I>(t))) ..., ".");
+                    return false;
+                }
             }
         }
         return !(0==c);
-    }
-    constexpr void
-    validate() const
-    {
-        if constexpr (constexpr int c=check_s(); 1==c) {
-            RA_CHECK(check(), "Bad shapes ", fmt(lstyle, shape(get<I>(t))) ..., ".");
-        } else {
-            static_assert(0!=c, "Bad shapes."); // FIXME c++26
-        }
     }
 
     consteval static rank_t

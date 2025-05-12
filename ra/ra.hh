@@ -535,54 +535,6 @@ gemv(auto const & a, auto const & b)
 
 
 // --------------------
-// Big/ViewBig functions, but at are easier to implement here.
-// --------------------
-
-// static transposed axes list, output rank is static.
-template <int ... I, class T, rank_t RANK>
-constexpr auto
-transpose(ViewBig<T, RANK> const & view, ilist_t<I ...>)
-{
-    if constexpr (ANY==RANK) {
-        RA_CHECK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
-    } else {
-        static_assert(RANK==sizeof...(I), "Bad rank."); // c++26
-    }
-    constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
-    constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + ra::amax(s);
-    ViewBig<T, dstrank> r;
-    r.cp = view.data();
-    transpose_filldim(s, view.dimv, r.dimv);
-    return r;
-}
-
-// dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
-template <class T, rank_t RANK, class S>
-inline ViewBig<T, ANY>
-transpose(ViewBig<T, RANK> const & view, S && s)
-{
-    RA_CHECK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
-    rank_t dstrank = 0==ra::size(s) ? 0 : 1 + ra::amax(s);
-    ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
-    transpose_filldim(s, view.dimv, r.dimv);
-    return r;
-}
-
-template <class T, rank_t RANK, class dimtype, int N>
-inline ViewBig<T, ANY>
-transpose(ViewBig<T, RANK> const & view, dimtype const (&s)[N])
-{
-    return transpose(view, start(s));
-}
-
-constexpr decltype(auto)
-transpose(auto && a) { return transpose(RA_FWD(a), ilist<1, 0>); }
-
-constexpr decltype(auto)
-diag(auto && a) { return transpose(RA_FWD(a), ilist<0, 0>); };
-
-
-// --------------------
 // wedge product and cross product. FIXME
 // --------------------
 

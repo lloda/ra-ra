@@ -166,7 +166,7 @@ int main()
             {                                                           \
                 using T = complex;                                      \
                 auto convtest = [](T & x) -> T & { return x; };         \
-                auto B = ra::explode_<T, 1>(A);                         \
+                auto B = ra::explode<T>(A);                             \
                 static_assert(rank_s(B)==CHECK_RANK_S, "bad static rank"); \
                 cout << B << endl;                                      \
                 for (int i=0; i<3; ++i) {                               \

@@ -387,7 +387,6 @@ template <class T_, class Dimv>
 struct SmallBase
 {
     constexpr static auto dimv = Dimv::value;
-
     using T = T_;
 
     consteval static rank_t rank() { return ssize(dimv); }
@@ -513,7 +512,7 @@ struct ViewSmall: public SmallBase<T, Dimv>
         return iter<crank>().at(RA_FWD(i));
     }
 // maybe remove if ic becomes easier to use
-    template <int ss, int oo=0> constexpr auto as() const { return operator()(ra::iota(ra::ic<ss>, oo)); }
+    template <int s, int o=0> constexpr auto as() const { return operator()(ra::iota(ra::ic<s>, o)); }
     template <rank_t c=0> constexpr iterator<c> iter() const { return cp; }
     constexpr auto begin() const { if constexpr (defsteps) return cp; else return STLIterator(iter()); }
     constexpr auto end() const requires (defsteps) { return cp+size(); }
@@ -602,7 +601,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 // FIXME do (iota(ic<> ...)) instead
-    template <int ss, int oo=0> constexpr decltype(auto) as(this auto && self) { return RA_FWD(self).view().template as<ss, oo>(); }
+    template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FWD(self).view().template as<s, o>(); }
 };
 
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;

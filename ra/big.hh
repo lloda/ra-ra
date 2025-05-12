@@ -672,11 +672,55 @@ stencil(ViewBig<T, N> const & a, LO && lo, HI && hi)
     return s;
 }
 
-// Make last sizes of ViewBig<> be compile-time constants.
-template <class super_t, rank_t SUPERR, class T, rank_t RANK>
-inline auto
-explode_(ViewBig<T, RANK> const & a)
+// static transposed axes list, output rank is static.
+template <int ... I, class T, rank_t RANK>
+constexpr auto
+transpose(ViewBig<T, RANK> const & view, ilist_t<I ...>)
 {
+    if constexpr (ANY==RANK) {
+        RA_CHECK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
+    } else {
+        static_assert(RANK==sizeof...(I), "Bad rank."); // c++26
+    }
+    constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
+    constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s);
+    ViewBig<T, dstrank> r;
+    r.cp = view.data();
+    transpose_filldim(s, view.dimv, r.dimv);
+    return r;
+}
+
+// dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
+template <class T, rank_t RANK, class S>
+inline ViewBig<T, ANY>
+transpose(ViewBig<T, RANK> const & view, S && s)
+{
+    RA_CHECK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
+    rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s); // FIXME amax(), but that's in ra.hh
+    ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
+    transpose_filldim(s, view.dimv, r.dimv);
+    return r;
+}
+
+template <class T, rank_t RANK, class dimtype, int N>
+inline ViewBig<T, ANY>
+transpose(ViewBig<T, RANK> const & view, dimtype const (&s)[N])
+{
+    return transpose(view, start(s));
+}
+
+constexpr decltype(auto)
+transpose(auto && a) { return transpose(RA_FWD(a), ilist<1, 0>); }
+
+constexpr decltype(auto)
+diag(auto && a) { return transpose(RA_FWD(a), ilist<0, 0>); };
+
+// Make last sizes of ViewBig<> be compile-time constants.
+template <class super_t, class T, rank_t RANK>
+inline auto
+explode(ViewBig<T, RANK> const & a)
+{
+    constexpr rank_t SUPERR = std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>();
 // TODO Reduce to single check, either the first or the second.
     static_assert(RANK>=SUPERR || RANK==ANY, "rank of a is too low");
     RA_CHECK(a.rank()>=SUPERR, "Rank of a ", a.rank(), " should be at least ", SUPERR, ".");
@@ -695,13 +739,6 @@ explode_(ViewBig<T, RANK> const & a)
     RA_CHECK((b.rank()==0 || a.step(b.rank()-1)==s), "Super type is not compact in array.");
     b.cp = reinterpret_cast<super_t *>(a.data());
     return b;
-}
-
-template <class super_t, class T, rank_t RANK>
-inline auto
-explode(ViewBig<T, RANK> const & a)
-{
-    return explode_<super_t, (std::is_same_v<super_t, std::complex<T>> ? 1 : rank_s<super_t>())>(a);
 }
 
 // TODO Check that ranks below SUBR are compact. Version for Small.
