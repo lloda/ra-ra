@@ -457,26 +457,20 @@ struct ViewSmall: public SmallBase<T, Dimv>
     constexpr static dim_t
     select(is_iota auto const & i)
     {
-        if constexpr ((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) > len(k)) { // FIXME abs not yet in g++14 c++23
-            static_assert(false, "Bad index.");
-        } else {
-            RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
-        }
+        static_assert((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) <= len(k), "Bad index.");
+        RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
         return 0==i.n ? 0 : step(k)*i.i;
     }
     template <int k, int n>
     constexpr static dim_t
-    select(dots_t<n> i)
-    {
-        return 0;
-    }
+    select(dots_t<n> i) { return 0; }
+
     template <int k, class I0, class ... I>
     constexpr static dim_t
     select_loop(I0 && i0, I && ... i)
     {
         constexpr int nn = (BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
-        return select<k>(wlen(ic<len(k)>, RA_FWD(i0)))
-            + select_loop<k + nn>(RA_FWD(i) ...);
+        return select<k>(wlen(ic<len(k)>, RA_FWD(i0))) + select_loop<k + nn>(RA_FWD(i) ...);
     }
     template <int k>
     consteval static dim_t
@@ -677,27 +671,26 @@ transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
 
 template <class sup_t, class T, class A, class B>
 constexpr void
-explode_dims(A const & adimv, B & bdimv)
+explode_dims(A const & av, B & bv)
 {
-    rank_t rb = ssize(bdimv);
+    rank_t rb = ssize(bv);
     constexpr rank_t rs = rank_s<sup_t>();
     dim_t s = 1;
-// FIXME check compactness on these axes only (cf Small::defsteps)
-    for (int i=rb+rs; i<ssize(adimv); ++i) {
-        s *= adimv[i].len;
+    for (int i=rb+rs; i<ssize(av); ++i) {
+        RA_CHECK(av[i].step==s, "Subtype axes are not compact.");
+        s *= av[i].len;
     }
-    RA_CHECK(s*sizeof(T)==sizeof(value_t<sup_t>), "Bad subtype.");
+    RA_CHECK(s*sizeof(T)==sizeof(value_t<sup_t>), "Mismatched types.");
     if constexpr (rs>0) {
         for (int i=rb; i<rb+rs; ++i) {
-            RA_CHECK(sup_t::dimv[i-rb].len==adimv[i].len && s*sup_t::dimv[i-rb].step==adimv[i].step,
-                     "Mismatched axes.");
+            RA_CHECK(sup_t::dimv[i-rb].len==av[i].len && s*sup_t::dimv[i-rb].step==av[i].step, "Mismatched axes.");
         }
     }
     s *= size_s<sup_t>();
     for (int i=0; i<rb; ++i) {
-        dim_t step = adimv[i].step;
+        dim_t step = av[i].step;
         RA_CHECK(0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
-        bdimv[i] = Dim { adimv[i].len, step/s };
+        bv[i] = Dim { av[i].len, step/s };
     }
 }
 

@@ -2225,10 +2225,67 @@ Compute dot product of expressions @var{a} and @var{b}.
 @end defun
 
 @cindex @code{explode}
-@anchor{x-explode} @defun explode
+@anchor{x-explode} @defun explode<sup_t> view
+
+Convert @var{view} of type @var{T} into view of type @var{sup_t}. The result view has lower rank than @var{view} by the rank of @var{sup_t} relative to @var{T}. The axes of @var{view} taken up by @var{sub_t} must have compatible lengths and steps.
+
+In this example, a 2-rank view of scalars is converted to a 1-rank view of 3-vectors.
+
+@example
+@verbatim
+    ra::Big<int, 2> A({2, 3}, ra::_0 - ra::_1);
+    ra::ViewBig<std::Small<int, 3>, 1> B = ra::explode<ra::Small<int, 3>>(A);
+    std::println(cout, "A:\n{:p}\nB:\n{:p:l}", A, B);
+@end verbatim
+  @print{}
+A:
+[[0, -1, -2],
+ [1, 0, -1]]
+B:
+[(0 -1 -2), (1 0 -1)]
+@end example
+Note that @code{A} and @code{B} are views over the same data:
+@example
+@verbatim
+    A *= -1;
+    std::println(cout, "A:\n{:p}\nB:\n{:p:l}", A, B);
+@end verbatim
+  @print{}
+A:
+[[0, 1, 2],
+ [-1, 0, 1]]
+B:
+[(0 1 2), (-1 0 1)]
+@end example
+
+@code{explode} can also be used to obtain a view of complex values from a view of real values.
+@example
+@verbatim
+    using real = double;
+    using complex = std::complex<double>;
+    ra::Big<real, 3> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
+    ra::ViewBig<complex, 2> B = ra::explode<complex>(A);
+    std::println(cout, "A:\n{:p}\nB:\n{:p}", A, B);
+@end verbatim
+  @print{}
+A:
+[[[0, 1],
+  [-1, 0],
+  [-2, -1]],
+
+ [[1, 2],
+  [0, 1],
+  [-1, 0]]]
+B:
+[[(0,1), (-1,0), (-2,-1)],
+ [(1,2), (0,1), (-1,0)]]
+@end example
+
+@var{sup_t} must have static sizes, because in this case the operation is reduced to a type cast. Generally, one can operate on the cells of an array without having to explode it; see @ref{Cell iteration}.
+
 @c TODO
 
-See also @ref{x-collapse,@code{collapse}}.
+See also @ref{x-collapse,@code{collapse}}, @ref{x-iter,@code{iter}}.
 @end defun
 
 @cindex @code{end}

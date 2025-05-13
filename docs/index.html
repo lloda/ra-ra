@@ -524,9 +524,8 @@ ra::Big&lt;double, 2&gt; c({3, 2}, cx); // *** WHO NOSE ***
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">using lens = ra::ilist_t&lt;2, 3&gt;;
-using steps = ra::ilist_t&lt;1, 2&gt;;
-ra::SmallArray&lt;double, lens, steps&gt; a {{1, 2, 3}, {4, 5, 6}}; // stored column-major: 1 4 2 5 3 6
+<pre class="verbatim">constexpr std::array dimv = {ra::Dim {2, 1}, ra::Dim {3, 2}};
+ra::SmallArray&lt;int, ra::ic_t&lt;dimv&gt;&gt; a {{1, 2, 3}, {4, 5, 6}}; //  stored column-major: 1 4 2 5 3 6
 </pre></div>
 
 <p>These produce compile time errors:
@@ -1936,7 +1935,7 @@ Previous: <a href="#Performance-pitfalls-of-rank-extension" accesskey="p" rel="p
 <p>What happens here is that rank-0 <code>b</code> is prefix matched to rank-1 <code>int2 {1, 3}</code> which results in two assignments, first <code>b</code> ← 1 and then <code>b</code> ← 3. Compare with
 </p>
 <div class="example">
-<pre class="verbatim">ra::Big&lt;int2, 0&gt; b({}, ra::scalar(int2 {1, 3})); // b = {int2 {1, 3}} @c [ma116]
+<pre class="verbatim">ra::Big&lt;int2, 0&gt; b({}, ra::scalar(int2 {1, 3})); // b = {int2 {1, 3}}
 </pre></div>
 
 <p>The use of <a href="#x_002dscalar"><code>scalar</code></a> forces <code>b</code> to match the whole of <code>int2 {1, 3}</code> as a rank-0 object. After that, the single element in <code>b</code> is matched to <code>int2 {1, 3}</code>.
@@ -2298,9 +2297,60 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 
 <span id="index-explode"></span>
 <span id="x_002dexplode"></span><dl class="def">
-<dt id="index-explode-1"><span class="category">Function: </span><span><strong>explode</strong><a href='#index-explode-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-explode_003csup_005ft_003e"><span class="category">Function: </span><span><strong>explode&lt;sup_t&gt;</strong> <em>view</em><a href='#index-explode_003csup_005ft_003e' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>See also <a href="#x_002dcollapse"><code>collapse</code></a>.
+<p>Convert <var>view</var> of type <var>T</var> into view of type <var>sup_t</var>. The result view has lower rank than <var>view</var> by the rank of <var>sup_t</var> relative to <var>T</var>. The axes of <var>view</var> taken up by <var>sub_t</var> must have compatible lengths and steps.
+</p>
+<p>In this example, a 2-rank view of scalars is converted to a 1-rank view of 3-vectors.
+</p>
+<div class="example">
+<pre class="verbatim">    ra::Big&lt;int, 2&gt; A({2, 3}, ra::_0 - ra::_1);
+    ra::ViewBig&lt;std::Small&lt;int, 3&gt;, 1&gt; B = ra::explode&lt;ra::Small&lt;int, 3&gt;&gt;(A);
+    std::println(cout, &quot;A:\n{:p}\nB:\n{:p:l}&quot;, A, B);
+</pre><pre class="example">  -|
+A:
+[[0, -1, -2],
+ [1, 0, -1]]
+B:
+[(0 -1 -2), (1 0 -1)]
+</pre></div>
+<p>Note that <code>A</code> and <code>B</code> are views over the same data:
+</p><div class="example">
+<pre class="verbatim">    A *= -1;
+    std::println(cout, &quot;A:\n{:p}\nB:\n{:p:l}&quot;, A, B);
+</pre><pre class="example">  -|
+A:
+[[0, 1, 2],
+ [-1, 0, 1]]
+B:
+[(0 1 2), (-1 0 1)]
+</pre></div>
+
+<p><code>explode</code> can also be used to obtain a view of complex values from a view of real values.
+</p><div class="example">
+<pre class="verbatim">    using real = double;
+    using complex = std::complex&lt;double&gt;;
+    ra::Big&lt;real, 3&gt; A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
+    ra::ViewBig&lt;complex, 2&gt; B = ra::explode&lt;complex&gt;(A);
+    std::println(cout, &quot;A:\n{:p}\nB:\n{:p}&quot;, A, B);
+</pre><pre class="example">  -|
+A:
+[[[0, 1],
+  [-1, 0],
+  [-2, -1]],
+
+ [[1, 2],
+  [0, 1],
+  [-1, 0]]]
+B:
+[[(0,1), (-1,0), (-2,-1)],
+ [(1,2), (0,1), (-1,0)]]
+</pre></div>
+
+<p><var>sup_t</var> must have static sizes, because in this case the operation is reduced to a type cast. Generally, one can operate on the cells of an array without having to explode it; see <a href="#Cell-iteration">Cell iteration</a>.
+</p>
+
+<p>See also <a href="#x_002dcollapse"><code>collapse</code></a>, <a href="#x_002diter"><code>iter</code></a>.
 </p></dd></dl>
 
 <span id="index-end"></span>
