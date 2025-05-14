@@ -21,7 +21,7 @@
   #define RA_DO_CHECK 1 // tell users
 #endif
 #if RA_DO_CHECK==0
-  #define RA_CHECK(...) // good luck
+  #define RA_CHECK(...)
 #else
   #ifdef RA_ASSERT
     #define RA_CHECK(...) RA_ASSERT(__VA_ARGS__)
@@ -111,7 +111,7 @@ wlen(Ln ln, E && e)
     }
 }
 
-// Rank-0 IteratorConcept. Can be used on foreign objects, or as alternative to the rank conjunction.
+// Rank-0 Iterator. Can be used on foreign objects, or as alternative to the rank conjunction.
 // We still want f(scalar(C)) to be f(C) and not map(f, C), this is controlled by tomap/toreduce.
 template <class C>
 struct Scalar final
@@ -137,23 +137,16 @@ template <class C> constexpr auto
 scalar(C && c) { return Scalar<C> { RA_FWD(c) }; }
 
 template <class N> constexpr int
-maybe_any = []{
-    if constexpr (is_constant<N>) {
-        return N::value;
-    } else {
-        static_assert(std::is_integral_v<N> || !std::is_same_v<N, bool>);
-        return ANY;
-    }
-}();
+maybe_any = []{ if constexpr (is_constant<N>) { return N::value; } else { return ANY; } }();
 
-// IteratorConcept for foreign rank 1 objects.
+// Iterator for foreign rank 1 objects.
 template <std::bidirectional_iterator I, class N, class S>
 struct Ptr final
 {
     static_assert(is_constant<N> || 0==rank_s<N>());
     static_assert(is_constant<S> || 0==rank_s<S>());
     constexpr static dim_t nn = maybe_any<N>;
-    static_assert(nn==ANY || nn>=0 || nn==BAD);
+    static_assert(nn==ANY || nn>=0 || nn==UNB);
     constexpr static bool constant = is_constant<N> && is_constant<S>;
 
     I i;
@@ -172,7 +165,7 @@ struct Ptr final
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
-        RA_CHECK(BAD==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
+        RA_CHECK(UNB==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
         return i[j[0]*s];
     }
     constexpr decltype(auto) operator*() const { return *i; }
@@ -204,12 +197,12 @@ thestep()
     }
 }
 
-template <class I, class N=dim_c<BAD>, class S=dim_c<1>>
+template <class I, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
 ptr(I && i, N && n = N {}, S && s = thestep<S>())
 {
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
-        static_assert(std::is_same_v<dim_c<BAD>, N>, "Object has own length.");
+        static_assert(std::is_same_v<dim_c<UNB>, N>, "Object has own length.");
         static_assert(std::is_same_v<dim_c<1>, S>, "No step with deduced size.");
         if constexpr (ANY==size_s(i)) {
             return ptr(std::begin(RA_FWD(i)), std::ssize(i), RA_FWD(s));
@@ -226,9 +219,9 @@ ptr(I && i, N && n = N {}, S && s = thestep<S>())
     }
 }
 
-// Sequence and IteratorConcept for same. Iota isn't really a terminal, but its exprs must all have rank 0.
+// Sequence and Iterator for same. Iota isn't really a terminal, but its exprs must all have rank 0.
 // FIXME w is a custom Reframe mechanism. Generalize/unify
-// FIXME Sequence should be its own type, we can't represent a ct origin bc IteratorConcept interface takes up i.
+// FIXME Sequence should be its own type, we can't represent a ct origin bc Iterator interface takes up i.
 template <int w, class I, class N, class S>
 struct Iota final
 {
@@ -236,7 +229,7 @@ struct Iota final
     static_assert(is_constant<S> || 0==rank_s<S>());
     static_assert(is_constant<N> || 0==rank_s<N>());
     constexpr static dim_t nn = maybe_any<N>;
-    static_assert(nn==ANY || nn>=0 || nn==BAD);
+    static_assert(nn==ANY || nn>=0 || nn==UNB);
     constexpr static bool constant = is_constant<N> && is_constant<S>;
 
     I i = {};
@@ -247,15 +240,15 @@ struct Iota final
     constexpr I gets() const requires (!is_constant<S>) { return s; }
 
     consteval static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { return k==w ? nn : BAD; } // len(0<=k<=w) or step(0<=k)
+    constexpr static dim_t len_s(int k) { return k==w ? nn : UNB; } // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : BAD; }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : UNB; }
     constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
     constexpr void adv(rank_t k, dim_t d) { i += I(step(k) * d) * I(s); }
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto at(auto && j) const
     {
-        RA_CHECK(BAD==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
+        RA_CHECK(UNB==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
         return i + I(j[w])*I(s);
     }
     constexpr I operator*() const { return i; }
@@ -264,7 +257,7 @@ struct Iota final
     constexpr void mov(dim_t d) { i += I(d)*I(s); }
 };
 
-template <int w=0, class I=dim_t, class N=dim_c<BAD>, class S=dim_c<1>>
+template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
 iota(N && n = N {}, I && i = 0, S && s = thestep<S>())
 {
@@ -281,8 +274,8 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 template <class A> concept is_iota = requires (A a)
 {
     []<class I, class N, class S>(Iota<0, I, N, S> const &){}(a);
-// exclude BAD from beating to allow B = A(... i ...) to use B's len. FIXME
-    requires BAD!=a.nn;
+// exclude UNB from beating to allow B = A(... i ...) to use B's len. FIXME
+    requires UNB!=a.nn;
 };
 
 constexpr bool
@@ -295,7 +288,7 @@ template <int w, class I, class N, class S, class K=dim_c<0>>
 constexpr auto
 reverse(Iota<w, I, N, S> const & i, K k = {})
 {
-    static_assert(i.nn!=BAD && k>=0 && k<=w, "Bad arguments to reverse(iota).");
+    static_assert(i.nn!=UNB && k>=0 && k<=w, "Bad arguments to reverse(iota).");
     if constexpr (k==w) {
         return ra::iota<w>([&i]() { if constexpr (is_constant<N>) return dim_c<N {}> {}; else return i.n; }(),
                            i.i+(i.n-1)*i.s,
@@ -313,7 +306,7 @@ reverse(Iota<w, I, N, S> const & i, K k = {})
 // TODO arbitrary exprs? runtime cr? ra::len in cr?
 template <int cr>
 constexpr auto
-iter(SliceConcept auto && a) { return RA_FWD(a).template iter<cr>(); }
+iter(Slice auto && a) { return RA_FWD(a).template iter<cr>(); }
 
 constexpr void
 start(auto && t) { static_assert(false, "Cannot start() type."); }
@@ -334,7 +327,7 @@ start(is_builtin_array auto && t);
 
 // neither CellBig nor CellSmall will retain rvalues [ra4].
 constexpr auto
-start(SliceConcept auto && t) { return iter<0>(RA_FWD(t)); }
+start(Slice auto && t) { return iter<0>(RA_FWD(t)); }
 
 // iterators need to be reset on each use [ra35].
 template <class A> requires (is_iterator<A> && !(requires (A a) { []<class C>(Scalar<C> const &){}(a); }))
@@ -352,9 +345,9 @@ start(is_iterator auto && a) { return RA_FWD(a); }
 constexpr rank_t
 choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
 
-// finite before ANY before BAD, assumes checks pass.
+// finite before ANY before UNB, assumes checks pass.
 constexpr dim_t
-choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : BAD==a ? b : BAD==b ? a : b; }
+choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : UNB==a ? b : UNB==b ? a : b; }
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
@@ -379,7 +372,7 @@ tbc(int sofar)
             for (int k=0; k<ra; ++k) {
                 if (dim_t lt=TOP::len_s(k, true), la=A::len_s(k); MIS==lt) {
                     return -1;
-                } else if (BAD!=la && BAD!=lt && (ANY==la || ANY==lt)) {
+                } else if (UNB!=la && UNB!=lt && (ANY==la || ANY==lt)) {
                     return 1+sofar;
                 }
             }
@@ -393,7 +386,7 @@ constexpr void
 validate(A const & a, U allow_unb = {})
 {
     static_assert(!has_len<A>, "Stray ra::len.");
-    static_assert(allow_unb || ra::BAD!=ra::size_s<A>(), "Undefined size.");
+    static_assert(allow_unb || ra::UNB!=ra::size_s<A>(), "Undefined size.");
     static_assert(0<=rank_s(a) || ANY==rank_s(a), "Undefined rank.");
     if constexpr (is_match<A>) {
         static_assert(0!=a.check_s(), "Bad shapes."); // FIXME c++26
@@ -401,14 +394,14 @@ validate(A const & a, U allow_unb = {})
     }
 }
 
-template <IteratorConcept ... P, int ... I>
+template <Iterator ... P, int ... I>
 struct Match<std::tuple<P ...>, ilist_t<I ...>>
 {
     std::tuple<P ...> t;
 
     constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
 
-    constexpr static rank_t rs = [] { rank_t r=BAD; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
+    constexpr static rank_t rs = [] { rank_t r=UNB; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
 
 // 0: fail, 1: rt check, 2: pass
     consteval static int
@@ -440,7 +433,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr rank_t
     rank() const requires (ANY==rs)
     {
-        rank_t r = BAD; ((r = choose_rank(ra::rank(get<I>(t)), r)), ...); assert(ANY!=r); // not at rt
+        rank_t r = UNB; ((r = choose_rank(ra::rank(get<I>(t)), r)), ...); assert(ANY!=r); // not at rt
         return r;
     }
     constexpr static dim_t
@@ -453,7 +446,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
             }
             return s;
         };
-        dim_t s = BAD; (void)(((s = f.template operator()<std::decay_t<P>>(s)) != MIS) && ...);
+        dim_t s = UNB; (void)(((s = f.template operator()<std::decay_t<P>>(s)) != MIS) && ...);
         return s;
     }
     constexpr static dim_t
@@ -471,7 +464,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
             }
             return s;
         };
-        dim_t s = BAD; (void)(((s = f(get<I>(t), s)) != MIS) && ...); assert(ANY!=s); // not at rt
+        dim_t s = UNB; (void)(((s = f(get<I>(t), s)) != MIS) && ...); assert(ANY!=s); // not at rt
         return s;
     }
     constexpr bool
@@ -500,7 +493,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
 template <dim_t N, class T> constexpr T samestep = N;
 template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
 
-// Transpose for IteratorConcepts. As in transpose(), one names the destination axis for
+// Transpose for Iterators. As in transpose(), one names the destination axis for
 // each original axis. However, axes may not be repeated. Used in the rank conjunction below.
 // Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
@@ -508,7 +501,7 @@ template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tup
 // If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
 // TODO invalid for ANY, since Dest is compile time. [ra7]
 
-template <class Dest, IteratorConcept A>
+template <class Dest, Iterator A>
 struct Reframe
 {
     A a;
@@ -527,7 +520,7 @@ struct Reframe
     constexpr static dim_t len_s(int k)
     {
         int l=orig(k);
-        return l>=0 ? std::decay_t<A>::len_s(l) : BAD;
+        return l>=0 ? std::decay_t<A>::len_s(l) : UNB;
     }
     constexpr static dim_t
     len(int k) requires (requires { std::decay_t<A>::len(k); })
@@ -538,7 +531,7 @@ struct Reframe
     len(int k) const requires (!(requires { std::decay_t<A>::len(k); }))
     {
         int l=orig(k);
-        return l>=0 ? a.len(l) : BAD;
+        return l>=0 ? a.len(l) : UNB;
     }
     constexpr static bool
     keep(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep(st, z, j); })
@@ -668,7 +661,7 @@ decltype(auto) to_scalar(E && e)
 }
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
-template <class Op, IteratorConcept ... P, int ... I>
+template <class Op, Iterator ... P, int ... I>
 struct Map<Op, std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
 {
     using Match<std::tuple<P ...>>::t;
@@ -681,7 +674,7 @@ struct Map<Op, std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...
     constexpr operator decltype(std::invoke(op, *get<I>(t) ...)) () const { return to_scalar(*this); }
 };
 
-template <class Op, IteratorConcept ... P>
+template <class Op, Iterator ... P>
 constexpr bool is_special_def<Map<Op, std::tuple<P ...>>> = (is_special<P> || ...);
 
 template <class Op, class ... P>
@@ -736,7 +729,7 @@ pick_star(std::size_t p0, T && t)
 }
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Pick;
-template <IteratorConcept ... P, int ... I>
+template <Iterator ... P, int ... I>
 struct Pick<std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
 {
     using Match<std::tuple<P ...>>::t;
@@ -749,7 +742,7 @@ struct Pick<std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
     constexpr operator decltype(pick_star<0>(*get<0>(t), t)) () const { return to_scalar(*this); }
 };
 
-template <IteratorConcept ... P>
+template <Iterator ... P>
 constexpr bool is_special_def<Pick<std::tuple<P ...>>> = (is_special<P> || ...);
 
 template <class ... P>

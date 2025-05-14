@@ -16,7 +16,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 int main()
 {
     TestRecorder tr(std::cout);
-    static_assert(ra::IteratorConcept<decltype(ra::iota(10))>, "bad type pred for iota");
+    static_assert(ra::Iterator<decltype(ra::iota(10))>, "bad type pred for iota");
     tr.section("straight cases");
     {
         ra::Big<int, 1> a = ra::iota(4, 1);

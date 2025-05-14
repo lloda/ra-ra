@@ -207,7 +207,7 @@ main()
         tr.test_eq(10, size(MAP));
     }
 #undef MAP
-    tr.section("BAD on any len_s(k) means size_s() is BAD");
+    tr.section("UNB on any len_s(k) means size_s() is UNB");
     {
         using order = ra::ilist_t<0, 1>;
         using T0 = ra::Map<std::multiplies<void>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>, order>;
@@ -216,9 +216,9 @@ main()
         ra::dim_t s1 = ra::size_s<T1>();
         using T2 = ra::Map<std::multiplies<void>, std::tuple<decltype(ra::iota<2>()), ra::Scalar<int>>, order>;
         ra::dim_t s2 = ra::size_s<T2>();
-        tr.test_eq(ra::BAD, s0);
-        tr.test_eq(ra::BAD, s1);
-        tr.test_eq(ra::BAD, s2);
+        tr.test_eq(ra::UNB, s0);
+        tr.test_eq(ra::UNB, s1);
+        tr.test_eq(ra::UNB, s2);
     }
     return tr.summary();
 }

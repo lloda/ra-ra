@@ -25,8 +25,8 @@ test_predicates(char const * type, TestRecorder & tr,
 {
     cout << std::string(90-size(std::string(type)), ' ') << type << " : "
          << (ra::is_ra<A> ? "ra " : "")
-         << (ra::SliceConcept<A> ? "slice " : "")
-         << (ra::IteratorConcept<A> ? "iterator " : "")
+         << (ra::Slice<A> ? "slice " : "")
+         << (ra::Iterator<A> ? "iterator " : "")
          << (ra::is_scalar<A> ? "scalar " : "")
          << (ra::is_fov<A> ? "fov " : "")
          << (ra::is_builtin_array<A> ? "builtinarray " : "")
@@ -34,8 +34,8 @@ test_predicates(char const * type, TestRecorder & tr,
          << (std::is_const_v<A> ? "const " : "")
          << (std::is_lvalue_reference_v<A> ? "ref " : "") << endl;
     tr.quiet().info(type).info("ra").test_eq(ra, ra::is_ra<A>);
-    tr.quiet().info(type).info("slice").test_eq(slice, ra::SliceConcept<A>);
-    tr.quiet().info(type).info("Iterator").test_eq(iterator, ra::IteratorConcept<A>);
+    tr.quiet().info(type).info("slice").test_eq(slice, ra::Slice<A>);
+    tr.quiet().info(type).info("Iterator").test_eq(iterator, ra::Iterator<A>);
     tr.quiet().info(type).info("scalar").test_eq(scalar, ra::is_scalar<A>);
     tr.quiet().info(type).info("fov").test_eq(fov, ra::is_fov<A>);
     tr.quiet().info(type).info("std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>);
@@ -88,14 +88,14 @@ int main()
                  true, true, false, false, false);
         TESTPRED(decltype(ra::Unique<int, 2>().iter()),
                  true, false, true, false, false);
-        static_assert(ra::IteratorConcept<decltype(ra::Unique<int, 2>().iter())>);
+        static_assert(ra::Iterator<decltype(ra::Unique<int, 2>().iter())>);
         TESTPRED(decltype(ra::Unique<int, 1>().iter()) &,
                  true, false, true, false, false);
         TESTPRED(decltype(ra::iota(5)),
                  true, false, true, false, false);
         TESTPRED(decltype(ra::iota<0>()),
                  true, false, true, false, false);
-// is_iterator (by RA_IS_DEF) but not IteratorConcept, since it cannot be traversed.
+// is_iterator (by RA_IS_DEF) but not Iterator, since it cannot be traversed.
         TESTPRED(decltype(ra::iota<0>()) const,
                  true, false, false, false, false);
         TESTPRED(decltype(ra::iota<0>()) &,
@@ -139,9 +139,9 @@ int main()
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {
-        static_assert(ra::SliceConcept<ra::ViewBig<int, 0>>);
-        static_assert(ra::SliceConcept<ra::ViewBig<int, 2>>);
-        static_assert(ra::SliceConcept<ra::ViewSmall<int, ra::ic_t<std::array<ra::Dim, 0> {} >>>);
+        static_assert(ra::Slice<ra::ViewBig<int, 0>>);
+        static_assert(ra::Slice<ra::ViewBig<int, 2>>);
+        static_assert(ra::Slice<ra::ViewSmall<int, ra::ic_t<std::array<ra::Dim, 0> {} >>>);
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
         static_assert(ra::is_ra<ra::ViewSmall<int, ra::ic_t<std::array<ra::Dim, 0> {} >>>, "bad is_ra ViewSmall");
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");

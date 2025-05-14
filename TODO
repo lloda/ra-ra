@@ -53,7 +53,7 @@ checkbox [C-ct] flip TODO
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
     - [ ] Can choose iteration order in plyers. Order is already explicit, just need to expose it.
-    - [ ] Merge Ptr and Iota. Why need more than one rank 1 IteratorConcept adaptor.
+    - [ ] Merge Ptr and Iota. Why need more than one rank 1 Iterator adaptor.
     - [-] Deduction guides, e.g. ra::Small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
       - [X] rank 1 SmallArray <2023-06-23 Fri 13:24> (not very useful)
       - [ ] rank >1 SmallArray
@@ -76,7 +76,7 @@ checkbox [C-ct] flip TODO
       doesn't work for that.
       - This has become more feasible after changing the iterator interface from flat to saveload,
         main obstacle atm seems to be the need to support copy. <2023-11-20 Mon 12:45>
-      - One can now create a ravel iterator from an IteratorConcept <2023-11-28 Tue 16:37>
+      - One can now create a ravel iterator from an Iterator <2023-11-28 Tue 16:37>
     - [ ] gemv(conj(a), b) should work. Beat View-like selectors down a Map??
     - [ ] port some of the View ops to generic Iterator. reverse, transpose, etc. seem easy
       enough. Only it kind of bothers me that they need their own Map-like types while on Views
@@ -95,7 +95,7 @@ checkbox [C-ct] flip TODO
     - [ ] bench/bench-stencil* is weird.
     - [ ] Bigd cases in bench-at.
     - [X] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
-      in case it gets modified, and then it isn't. Do we need IteratorConcept::operator* ?
+      in case it gets modified, and then it isn't. Do we need Iterator::operator* ?
     - [X] During traversal (ply) the pattern loc = save_location(it); move flat;
       it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
       so this would be cheap. The current design is that move flat can't modify it so it has to be a

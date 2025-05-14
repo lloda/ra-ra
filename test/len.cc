@@ -26,7 +26,7 @@ int main()
     ra::TestRecorder tr(std::cout);
     tr.section("type predicates");
     {
-        tr.test(ra::IteratorConcept<ra::Len>);
+        tr.test(ra::Iterator<ra::Len>);
         tr.test(!ra::is_scalar<ra::Len>);
         tr.test(ra::is_zero_or_scalar<ra::Len>);
         tr.test(!ra::is_ra_pos<ra::Len>);
@@ -38,7 +38,7 @@ int main()
         tr.test(ra::tomap<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
         tr.test(!ra::toreduce<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
         tr.test(ra::is_zero_or_scalar<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
-        tr.test(ra::IteratorConcept<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
+        tr.test(ra::Iterator<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
     }
     tr.section("bare len");
     {

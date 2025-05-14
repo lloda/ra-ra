@@ -99,7 +99,7 @@ resize(auto & a, dim_t s)
         RA_CHECK(s>=0, "Bad resize ", s, ".");
         a.resize(s);
     } else {
-        RA_CHECK(s==start(a).len(0) || BAD==s, "Bad resize ", s, ", need ", start(a).len(0), ".");
+        RA_CHECK(s==start(a).len(0) || UNB==s, "Bad resize ", s, ", need ", start(a).len(0), ".");
     }
 }
 
@@ -108,8 +108,8 @@ resize(auto & a, dim_t s)
 // slicing/indexing helpers
 // --------------------
 
-template <int n=BAD> struct dots_t { static_assert(n>=0 || BAD==n); };
-template <int n=BAD> constexpr dots_t<n> dots = dots_t<n>();
+template <int n=UNB> struct dots_t { static_assert(n>=0 || UNB==n); };
+template <int n=UNB> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
 template <int n> struct insert_t { static_assert(n>=0); };
@@ -133,7 +133,7 @@ template <int n> constexpr beatable_t beatable_def<insert_t<n>>
     = { .rt=true, .ct = true, .src=0, .dst=n, .add=n };
 
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
-    = { .rt=(BAD!=I::nn), .ct=std::decay_t<decltype(wlen(ic<1>, std::declval<I>()))>::constant,
+    = { .rt=(UNB!=I::nn), .ct=std::decay_t<decltype(wlen(ic<1>, std::declval<I>()))>::constant,
         .src=1, .dst=1, .add=0 };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
@@ -207,7 +207,7 @@ indexer(Q const & q, P const & pp)
         dim_t c = 0;
         for (rank_t k=0; k<q.rank(); ++k, p.mov(p.step(0))) {
             auto pk = *p;
-            RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
+            RA_CHECK(inside(pk, q.len(k)) || (UNB==q.len(k) && 0==q.step(k)));
             c += q.step(k) * pk;
         }
         return c;
@@ -218,7 +218,7 @@ indexer(Q const & q, P const & pp)
                 return c;
             } else {
                 auto pk = *p;
-                RA_CHECK(inside(pk, q.len(k)) || (BAD==q.len(k) && 0==q.step(k)));
+                RA_CHECK(inside(pk, q.len(k)) || (UNB==q.len(k) && 0==q.step(k)));
                 return p.mov(p.step(0)), loop(ic<k+1>, c + (q.step(k) * pk));
             }
         };
@@ -240,7 +240,7 @@ struct CellSmall
     constexpr static rank_t fullr = ssize(Dimv::value);
     constexpr static rank_t cellr = rank_cell(fullr, spec);
     constexpr static rank_t framer = rank_frame(fullr, spec);
-    static_assert(spec!=ANY && spec!=BAD && choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
+    static_assert(spec!=ANY && spec!=UNB && choose_rank(fullr, cellr)==fullr, "Bad cell rank.");
 
     constexpr static auto dimv = Dimv::value;
     ViewSmall<T, ic_t<vdrop<dimv, framer>>> c;
@@ -355,8 +355,8 @@ struct FilterDims
 template <auto prev, class I0, class ... I> requires (!is_iota<I0>)
 struct FilterDims<prev, I0, I ...>
 {
-    constexpr static bool stretch = (beatable<I0>.dst==BAD);
-    static_assert(!stretch || ((beatable<I>.dst!=BAD) && ...), "Repeated stretch index.");
+    constexpr static bool stretch = (beatable<I0>.dst==UNB);
+    static_assert(!stretch || ((beatable<I>.dst!=UNB) && ...), "Repeated stretch index.");
     constexpr static int dst = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.dst;
     constexpr static int src = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
     constexpr static auto next = FilterDims<vdrop<prev, src>, I ...>::dimv;
@@ -469,7 +469,7 @@ struct ViewSmall: public SmallBase<T, Dimv>
     constexpr static dim_t
     select_loop(I0 && i0, I && ... i)
     {
-        constexpr int nn = (BAD==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
+        constexpr int nn = (UNB==beatable<I0>.src) ? (rank() - k - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
         return select<k>(wlen(ic<len(k)>, RA_FWD(i0))) + select_loop<k + nn>(RA_FWD(i) ...);
     }
     template <int k>
@@ -480,7 +480,7 @@ struct ViewSmall: public SmallBase<T, Dimv>
     constexpr decltype(auto)
     operator()(this auto && self, I && ... i)
     {
-        constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD));
+        constexpr int stretch = (0 + ... + (beatable<I>.dst==UNB));
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==rank()) {
             return self.cp[select_loop<0>(i ...)];
@@ -645,7 +645,7 @@ start(is_builtin_array auto && t)
 constexpr void
 transpose_dims(auto const & s, auto const & src, auto & dst)
 {
-    std::ranges::fill(dst, Dim { BAD, 0 });
+    std::ranges::fill(dst, Dim { UNB, 0 });
     for (int k=0; int sk: s) {
         dst[sk].step += src[k].step;
         dst[sk].len = dst[sk].len>=0 ? std::min(dst[sk].len, src[k].len) : src[k].len;

@@ -135,7 +135,7 @@ struct ViewBig
     constexpr dim_t
     select_loop(Dim * dim, int k, dots_t<n> i0, I && ... i) const
     {
-        int nn = (BAD==n) ? (rank() - k - (0 + ... + beatable<I>.src)) : n;
+        int nn = (UNB==n) ? (rank() - k - (0 + ... + beatable<I>.src)) : n;
         for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
             *dim = dimv[k];
         }
@@ -146,7 +146,7 @@ struct ViewBig
     select_loop(Dim * dim, int k, insert_t<n> i0, I && ... i) const
     {
         for (Dim * end = dim+n; dim!=end; ++dim) {
-            *dim = { .len = BAD, .step = 0 };
+            *dim = { .len = UNB, .step = 0 };
         }
         return select_loop(dim, k, RA_FWD(i) ...);
     }
@@ -157,7 +157,7 @@ struct ViewBig
     constexpr decltype(auto)
     operator()(this auto && self, I && ... i)
     {
-        constexpr int stretch = (0 + ... + (beatable<I>.dst==BAD));
+        constexpr int stretch = (0 + ... + (beatable<I>.dst==UNB));
         static_assert(stretch<=1, "Cannot repeat stretch index.");
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
             return self.cp[self.select_loop(nullptr, 0, i ...)];
@@ -338,7 +338,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     {
         static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
         RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
-        static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || BAD==size_s(s), "Bad shape for rank.");
+        static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
         ra::resize(dimv, ra::size(s)); // [ra37]
         store = storage_traits<Store>::create(filldim(s, dimv));
         cp = storage_traits<Store>::data(store);
@@ -618,7 +618,7 @@ reshape(ViewBig<T, RANK> const & a, S && sb_)
     }
     auto sa = shape(a);
 // FIXME should be able to reshape Scalar etc.
-    ViewBig<T, ra::size_s(sb)> b(map([](auto i) { return Dim { BAD, 0 }; }, ra::iota(ra::size(sb))), a.data());
+    ViewBig<T, ra::size_s(sb)> b(map([](auto i) { return Dim { UNB, 0 }; }, ra::iota(ra::size(sb))), a.data());
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {

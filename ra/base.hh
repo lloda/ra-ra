@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Before all other ra:: includes.
 
-// (c) Daniel Llorens - 2013-2024
+// (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -26,10 +26,10 @@
 
 namespace ra {
 
-constexpr int VERSION = 30;
-constexpr int ANY = -1944444444; // only at ct, meaning tbd at rt
-constexpr int BAD = -1988888888; // undefined, eg dead axes
-constexpr int MIS = -1922222222; // only from choose_len
+constexpr int VERSION = 31;
+constexpr int ANY = -1944444444; // only static, meaning tbd at runtime
+constexpr int UNB = -1988888888; // unbounded, eg dead axes
+constexpr int MIS = -1922222222; // mismatch, only from choose_len
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
@@ -79,7 +79,7 @@ template <class T> using vector_default_init = std::vector<T, default_init_alloc
 // ---------------------
 
 template <class A>
-concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
+concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
     { a.rank() } -> std::same_as<rank_t>;
     { std::decay_t<A>::len_s(k) } -> std::same_as<dim_t>;
@@ -94,10 +94,10 @@ concept IteratorConcept = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 };
 
 template <class A>
-concept SliceConcept = requires (A a)
+concept Slice = requires (A a)
 {
     { a.rank() } -> std::same_as<rank_t>;
-    { a.iter() } -> IteratorConcept;
+    { a.iter() } -> Iterator;
 };
 
 
@@ -116,12 +116,10 @@ template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 // template <> constexpr bool is_scalar_def<std::string_view> = true; // [ra13]
 
-RA_IS_DEF(is_iterator, IteratorConcept<A>)
-template <class A> concept is_ra = is_iterator<A> || SliceConcept<A>;
+RA_IS_DEF(is_iterator, Iterator<A>)
+template <class A> concept is_ra = is_iterator<A> || Slice<A>;
 template <class A> concept is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
 RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::bidirectional_range<A>))
-template<class> constexpr bool is_std_array = false; // snowflake
-template<class T, std::size_t N> constexpr bool is_std_array<std::array<T, N>> = true;
 
 template <class VV> requires (!std::is_void_v<VV>)
 consteval rank_t
@@ -155,10 +153,9 @@ rank(auto const & v)
     }
 }
 
-RA_IS_DEF(is_pos, 0!=rank_s<A>())
-template <class A> concept is_ra_pos = is_ra<A> && is_pos<A>;
-template <class A> concept is_zero_or_scalar = (is_ra<A> && !is_pos<A>) || is_scalar<A>;
 // all args rank 0 (apply immediately), but at least one ra:: (disambiguate scalar version).
+template <class A> concept is_ra_pos = is_ra<A> && 0!=rank_s<A>();
+template <class A> concept is_zero_or_scalar = (is_ra<A> && 0==rank_s<A>()) || is_scalar<A>;
 RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
 template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
 template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
@@ -168,15 +165,13 @@ consteval dim_t
 size_s()
 {
     using V = std::remove_cvref_t<VV>;
-    constexpr rank_t rs = rank_s<V>();
-    if constexpr (0==rs) {
+    if constexpr (constexpr rank_t rs = rank_s<V>(); 0==rs) {
         return 1;
     } else if constexpr (is_builtin_array<V>) {
         return std::apply([] (auto ... i) { return (std::extent_v<V, i> * ... * 1); }, mp::iota<rs> {});
-    } else if constexpr (is_std_array<V>) {
+// tuple_size is the only way for std::array, but it's not used for size generally (ranges, complex).
+    } else if constexpr (requires  (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
         return std::tuple_size_v<V>;
-    } else if constexpr (is_fov<V> && requires { V::size(); }) {
-        return V::size();
     } else if constexpr (is_fov<V> && requires { V::extent; }) {
         return std::dynamic_extent==V::extent ? ANY : V::extent;
     } else if constexpr (is_fov<V> || rs==ANY) {
@@ -185,8 +180,8 @@ size_s()
         return V::size_s();
     } else {
         dim_t s = 1;
-        for (int i=0; i<rs; ++i) {
-            if (dim_t ss=V::len_s(i); ss>=0) { s *= ss; } else { return ss; } // ANY or BAD
+        for (int k=0; k<rs; ++k) {
+            if (dim_t ss=V::len_s(k); ss>=0) { s *= ss; } else { return ss; } // ANY or UNB
         }
         return s;
     }
@@ -216,14 +211,14 @@ template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
-    if constexpr (constexpr rank_t rs=rank_s(v); is_builtin_array<V>) {
+    if constexpr (constexpr rank_t rs=rank_s(v); 0==rs) {
+        return std::array<dim_t, 0> {};
+    } else if constexpr (is_builtin_array<V>) {
         constexpr auto s = std::apply([](auto ... i) { return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
         return s;
-    } else if constexpr (0==rs) { // including scalars
-        return std::array<dim_t, 0> {};
     } else if constexpr (1==rs) { // including std::array, std::vector
         return std::array<dim_t, 1> { ra::size(v) };
-    } else if constexpr (ra::size_s(v)!=ANY) {
+    } else if constexpr (ANY!=ra::size_s(v)) {
         constexpr auto s = std::apply([](auto ... i) { return std::array { V::len_s(i) ... }; }, mp::iota<rs> {});
         return s;
     } else if constexpr (ANY!=rs) {

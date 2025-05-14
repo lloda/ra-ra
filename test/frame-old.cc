@@ -23,7 +23,7 @@ int main()
         constexpr auto e = ra::_0+1;
         static_assert(ra::rank_s<decltype(e)>()==1, "bad rank_s");
         static_assert(e.rank()==1, "bad rank");
-        static_assert(e.len_s(0)==ra::BAD, "bad len");
+        static_assert(e.len_s(0)==ra::UNB, "bad len");
     }
     tr.section("frame matching - Unique/undef-len-iota");
     {

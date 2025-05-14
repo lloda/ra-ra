@@ -56,11 +56,11 @@ int main()
 
     tr.section("choose_len");
     {
-        using ra::MIS, ra::BAD, ra::ANY, ra::choose_len;
-        tr.test_eq(ANY, choose_len(BAD, ANY));
-        tr.test_eq(ANY, choose_len(ANY, BAD));
-        tr.test_eq(0,   choose_len(0, BAD));
-        tr.test_eq(0,   choose_len(BAD, 0));
+        using ra::MIS, ra::UNB, ra::ANY, ra::choose_len;
+        tr.test_eq(ANY, choose_len(UNB, ANY));
+        tr.test_eq(ANY, choose_len(ANY, UNB));
+        tr.test_eq(0,   choose_len(0, UNB));
+        tr.test_eq(0,   choose_len(UNB, 0));
         tr.test_eq(0,   choose_len(0, ANY));
         tr.test_eq(0,   choose_len(ANY, 0));
         tr.test_eq(MIS, choose_len(1, 0));

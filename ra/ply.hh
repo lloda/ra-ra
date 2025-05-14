@@ -43,7 +43,7 @@ struct WLen<Len>
     }
 };
 
-template <class Op, IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
+template <class Op, Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
 {
     constexpr static decltype(auto)
@@ -53,7 +53,7 @@ struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
     }
 };
 
-template <IteratorConcept ... P, int ... I> requires (has_len<P> || ...)
+template <Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
 {
     constexpr static decltype(auto)
@@ -93,7 +93,7 @@ struct WLen<Ptr<I, N, S>>
 struct Nop {};
 
 // step() must give 0 for k>=their own rank, to allow frame matching.
-template <IteratorConcept A, class Early = Nop>
+template <Iterator A, class Early = Nop>
 constexpr auto
 ply_ravel(A && a, Early && early = Nop {})
 {
@@ -208,7 +208,7 @@ subply(A & a, dim_t s, S const & ss0, Early & early)
     }
 }
 
-template <IteratorConcept A, class Early = Nop>
+template <Iterator A, class Early = Nop>
 constexpr decltype(auto)
 ply_fixed(A && a, Early && early = Nop {})
 {
@@ -242,7 +242,7 @@ ply_fixed(A && a, Early && early = Nop {})
 // default ply
 // ---------------------------
 
-template <IteratorConcept A, class Early = Nop>
+template <Iterator A, class Early = Nop>
 constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
@@ -260,14 +260,14 @@ template <class T> struct Default { T def; };
 template <class T> Default(T &&) -> Default<T>;
 
 constexpr decltype(auto)
-early(IteratorConcept auto && a, auto && def) { return ply(RA_FWD(a), Default { RA_FWD(def) }); }
+early(Iterator auto && a, auto && def) { return ply(RA_FWD(a), Default { RA_FWD(def) }); }
 
 
 // --------------------
 // input/'output' iterator adapter. FIXME maybe random for rank 1?
 // --------------------
 
-template <IteratorConcept A>
+template <Iterator A>
 struct STLIterator
 {
     using difference_type = dim_t;
