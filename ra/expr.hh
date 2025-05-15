@@ -651,7 +651,7 @@ agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 // ---------------------------
 
 template <class E>
-decltype(auto) to_scalar(E && e)
+constexpr decltype(auto) to_scalar(E && e)
 {
     if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
         static_assert(ANY==s, "Bad scalar conversion from shape.");

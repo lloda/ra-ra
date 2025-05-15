@@ -88,26 +88,40 @@ struct ViewBig
     }
     constexpr ViewBig(std::initializer_list<dim_t> s, T * cp_): ViewBig(start(s), cp_) {}
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
-    ViewBig const & operator=(ViewBig && x) const { start(*this) = x; return *this; }
     ViewBig const & operator=(ViewBig const & x) const { start(*this) = x; return *this; }
-    constexpr ViewBig(ViewBig &&) = default;
     constexpr ViewBig(ViewBig const &) = default;
+
+    template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
+    constexpr ViewBig const & operator=(X && x) const { start(*this) = x; return *this; }
 #define ASSIGNOPS(OP)                                               \
-    ViewBig const & operator OP (auto && x) const { start(*this) OP x; return *this; }
-    FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
+    constexpr ViewBig const & operator OP (auto && x) const { start(*this) OP x; return *this; }
+    FOR_EACH(ASSIGNOPS, *=, +=, -=, /=)
 #undef ASSIGNOPS
-// braces row-major ravel for rank!=1. See Container::fill1
-    using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
-    ViewBig const & operator=(ravel_arg const x) const
+// if T isn't is_scalar [ra44]
+    constexpr ViewBig const &
+    operator=(T const & t) const
+    {
+        start(*this) = ra::scalar(t); return *this;
+    }
+// row-major ravel braces
+    constexpr ViewBig const &
+    operator=(std::initializer_list<T> const x) const requires (1!=RANK)
     {
         auto xsize = ssize(x);
         RA_CHECK(size()==xsize, "Mismatched sizes ", ViewBig::size(), " ", xsize, ".");
         std::ranges::copy_n(x.begin(), xsize, begin());
         return *this;
     }
-    constexpr ViewBig const & operator=(braces<T, RANK> x) const requires (RANK!=ANY) { ra::iter<-1>(*this) = x; return *this; }
+// nested braces
+    constexpr ViewBig const & operator=(braces<T, RANK> x) const requires (RANK!=ANY)
+    {
+        ra::iter<-1>(*this) = x; return *this;
+    }
 #define RA_BRACES_ANY(N)                                                \
-    constexpr ViewBig const & operator=(braces<T, N> x) const requires (RANK==ANY) { ra::iter<-1>(*this) = x; return *this; }
+    constexpr ViewBig const & operator=(braces<T, N> x) const requires (RANK==ANY) \
+    {                                                                   \
+        ra::iter<-1>(*this) = x; return *this;                          \
+    }
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
 
@@ -320,16 +334,16 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 
-// non-copy assignment operators follow View, but cannot be just using'd because of constness.
+// these need repeating bc of various reasons; constness, no TAD for initializer_list, or constructor overriding.
 #define ASSIGNOPS(OP)                                               \
-    Container & operator OP (auto && x) { view() OP x; return *this; }
+    constexpr Container & operator OP (auto && x) { view() OP x; return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
-    using ravel_arg = std::conditional_t<RANK==1, noarg, std::initializer_list<T>>;
-    Container & operator=(ravel_arg const x) { view() = x; return *this; }
-    constexpr Container & operator=(braces<T, RANK> x) requires (RANK!=ANY) { view() = x; return *this; }
+// can't do using View:: bc of auto doesn't deduce to initializer_list.
+    constexpr Container & operator=(std::initializer_list<T> const x) requires (1!=RANK) { view() = x; return *this; }
+    constexpr Container & operator=(braces<T, RANK> x) requires (ANY!=RANK) { view() = x; return *this; }
 #define RA_BRACES_ANY(N)                                                \
-    constexpr Container & operator=(braces<T, N> x) requires (RANK==ANY) { view() = x; return *this; }
+    constexpr Container & operator=(braces<T, N> x) requires (ANY==RANK) { view() = x; return *this; }
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
 
@@ -375,7 +389,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
 // shape + row-major ravel.
 // FIXME explicit it-is-ravel mark. Also iter<n> initializers.
 // FIXME regular (no need for fill1) for ANY if rank is 1.
-    Container(shape_arg const & s, typename View::ravel_arg x)
+    Container(shape_arg const & s, std::initializer_list<T> x) requires (1!=RANK)
         : Container(s, none) { fill1(x.begin(), x.size()); }
 
 // FIXME remove

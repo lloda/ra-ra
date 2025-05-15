@@ -2,7 +2,7 @@
 @c %**start of header
 @setfilename ra-ra.info
 @documentencoding UTF-8
-@settitle ra:: — An array library for C++20
+@settitle ra:: — An array library for C++23
 @c %**end of header
 
 @c Keep track of
@@ -50,7 +50,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{ra::}@footnote{/ə'ɹ-eɪ/} is a general purpose multidimensional array and expression template library for C++20. This manual is a work in progress.
+@code{ra::}@footnote{/ə'ɹ-eɪ/} is a general purpose multidimensional array and expression template library for C++23. This manual is a work in progress.
 
 @menu
 * Overview::          Array programming and C++.
@@ -278,7 +278,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @code{ra::} is a header only library with no dependencies other than the standard library, so you just need to place the @samp{ra/} folder somewhere in your include path and add @code{#include "ra/ra.hh"} at the top of your sources.
 
-A compiler with C++20 support is required. For the current version this means at least @b{gcc 11} with @option{-std=c++20}. Some C++23 features are available with @option{-std=c++2b}. Check the top @code{README.md} for more up-to-date information.
+A compiler with C++23 support is required. For the current version this means at least @b{gcc 14} with @option{-std=c++23}. Check the top @code{README.md} for more up-to-date information.
 
 Here is a minimal program@footnote{Examples given without context assume that one has declared @code{using std::cout;}, etc.}:
 
@@ -724,7 +724,7 @@ FIXME More examples.
 
 Slicing is an array extension of the subscripting operation. However, tradition and convenience have given it a special status in most array languages, together with some peculiar semantics that @code{ra::} supports.
 
-The form of the scripting operator @code{A(i₀, i₁, ...)} makes it plain that @code{A} is a function of @code{rank(A)} integer arguments@footnote{The multi-argument square bracket form @code{A[i₀, i₁, ...]} is supported under C++23 compilers (e.g. gcc ≥ 12 with @code{-std=c++2b}), with the same meaning as @code{A(i₀, i₁, ...)}. Under C++20 only a single-argument square bracket form @code{A[i₀]} is available.}. An array extension is immediately available through @code{map}. For example:
+The form of the scripting operator @code{A(i₀, i₁, ...)} makes it plain that @code{A} is a function of @code{rank(A)} integer arguments@footnote{The multi-argument square bracket form @code{A[i₀, i₁, ...]} is also supported, with the same meaning as @code{A(i₀, i₁, ...)}}. An array extension is immediately available through @code{map}. For example:
 
 @example
 @verbatim
@@ -1985,7 +1985,7 @@ Functions and operators, main header.
 @section Type hierarchy
 @c ------------------------------------------------
 
-Some of the categories below are C++20 ‘concepts’, some are still informal.
+Some of the categories below are formalized as concepts, some are still informal.
 
 @itemize
 @item @b{Container} --- @code{Big}, @code{Shared}, @code{Unique}, @code{Small}

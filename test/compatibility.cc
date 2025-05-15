@@ -101,6 +101,8 @@ int main()
         struct W { int x; };
         ra::Big<W, 1> w = { {1}, {2} };
         tr.test_eq(ra::start({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
+        w() = W {3};
+        tr.test_eq(3, map([](auto && a) { return a.x; }, w));
     }
     {
         int o[4];

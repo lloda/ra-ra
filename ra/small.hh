@@ -395,9 +395,7 @@ struct SmallBase
     consteval static dim_t size_s() { return size(); }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
-// TODO check steps
-    static_assert([]{ for (auto dim: dimv) { if (0>dim.len) return false; }; return true; }(), "Bad shape.");
-    constexpr static dim_t len0 = rank()>0 ? len(0) : 0;
+    static_assert(every(0<=map(&Dim::len, dimv)), "Bad shape."); // TODO check steps
     constexpr static bool defsteps = is_c_order_dimv(dimv);
 };
 
@@ -405,13 +403,10 @@ template <class T, class Dimv>
 struct ViewSmall: public SmallBase<T, Dimv>
 {
     using Base = SmallBase<T, Dimv>;
-    using Base::rank, Base::size, Base::dimv;
-    using Base::len, Base::len_s, Base::step, Base::len0, Base::defsteps;
+    using Base::rank, Base::size, Base::dimv, Base::len, Base::len_s, Base::step, Base::defsteps;
     using sub = typename nested_arg<T, ctuple<&Dim::len, dimv>>::sub;
-
     T * cp;
 
-    template <rank_t c=0> using iterator = Cell<T, ic_t<dimv>, ic_t<c>>;
     using ViewConst = ViewSmall<T const, Dimv>;
     constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
     constexpr ViewSmall const & view() const { return *this; }
@@ -421,29 +416,30 @@ struct ViewSmall: public SmallBase<T, Dimv>
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     ViewSmall const & operator=(ViewSmall const & x) const { start(*this) = x; return *this; }
     constexpr ViewSmall(ViewSmall const & s) = default;
+
     template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
     constexpr ViewSmall const & operator=(X && x) const { start(*this) = x; return *this; }
 #define ASSIGNOPS(OP)                                                   \
     constexpr ViewSmall const & operator OP(auto && x) const { start(*this) OP x; return *this; }
     FOR_EACH(ASSIGNOPS, *=, +=, -=, /=)
 #undef ASSIGNOPS
-// needed if T isn't registered as scalar [ra44]
+// if T isn't is_scalar [ra44]
     constexpr ViewSmall const &
     operator=(T const & t) const
     {
         start(*this) = ra::scalar(t); return *this;
-    }
-// nested braces
-    constexpr ViewSmall const &
-    operator=(sub (&&x)[len0]) const requires (0<rank() && 0!=len0 && (1!=rank() || 1!=len0))
-    {
-        ra::iter<-1>(*this) = x; return *this;
     }
 // row-major ravel braces
     constexpr ViewSmall const &
     operator=(T (&&x)[size()]) const requires ((rank()>1) && (size()>1))
     {
         std::ranges::copy(std::ranges::subrange(x), begin()); return *this;
+    }
+// nested braces
+    constexpr ViewSmall const &
+    operator=(sub (&&x)[rank()>0 ? len(0) : 0]) const requires (0<rank() && 0!=len(0) && (1!=rank() || 1!=len(0)))
+    {
+        ra::iter<-1>(*this) = x; return *this;
     }
 
     template <int k>
@@ -507,7 +503,7 @@ struct ViewSmall: public SmallBase<T, Dimv>
     }
 // maybe remove if ic becomes easier to use
     template <int s, int o=0> constexpr auto as() const { return operator()(ra::iota(ra::ic<s>, o)); }
-    template <rank_t c=0> constexpr iterator<c> iter() const { return cp; }
+    template <rank_t c=0> constexpr auto iter() const { return Cell<T, ic_t<dimv>, ic_t<c>>(cp); }
     constexpr auto begin() const { if constexpr (defsteps) return cp; else return STLIterator(iter()); }
     constexpr auto end() const requires (defsteps) { return cp+size(); }
     constexpr static auto end() requires (!defsteps) { return std::default_sentinel; }
@@ -546,7 +542,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     : public SmallBase<T, Dimv>
 {
     using Base = SmallBase<T, Dimv>;
-    using Base::rank, Base::size, Base::len0, Base::dimv;
+    using Base::rank, Base::size, Base::dimv;
 
     T cp[size()]; // cf what std::array does for zero size
 
@@ -559,19 +555,19 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
 
     constexpr SmallArray() {}
     constexpr SmallArray(ra::none_t) {}
-// needed if T isn't is_scalar [ra44]
+// if T isn't is_scalar [ra44]
     constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); }
-// nested braces FIXME p1219??
-    constexpr SmallArray(nested_args const & ... x)
-    requires ((0<rank() && 0!=Base::len(0) && (1!=rank() || 1!=Base::len(0))))
-    {
-        view() = { x ... };
-    }
 // row-major ravel braces
     constexpr SmallArray(T const & x0, std::convertible_to<T> auto const & ... x)
     requires ((rank()>1) && (size()>1) && ((1+sizeof...(x))==size()))
     {
         view() = { static_cast<T>(x0), static_cast<T>(x) ... };
+    }
+// nested braces FIXME p1219??
+    constexpr SmallArray(nested_args const & ... x)
+    requires ((0<rank() && 0!=Base::len(0) && (1!=rank() || 1!=Base::len(0))))
+    {
+        view() = { x ... };
     }
 // X && x makes this a better match than nested_args ... for 1 argument.
     template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
@@ -580,7 +576,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
         view() = RA_FWD(x);
     }
 #define ASSIGNOPS(OP)                                                   \
-    constexpr decltype(auto) operator OP(auto && x) { view() OP RA_FWD(x); return *this; }
+    constexpr SmallArray & operator OP(auto && x) { view() OP RA_FWD(x); return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
 
