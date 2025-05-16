@@ -160,29 +160,35 @@ RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
 template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
 template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
 
-template <class VV> requires (!std::is_void_v<VV>)
+// Sometimes we can't do shape(std::declval<V>()) even for static shape :-/ FIXME
+template <class VV>
+constexpr auto shape_s = []
+{
+    using V = std::remove_cvref_t<VV>;
+    if constexpr (constexpr rank_t rs=rank_s<V>(); 0==rs) {
+        return std::array<dim_t, 0> {};
+    } else if constexpr (is_builtin_array<V>) {
+        return std::apply([](auto ... i) { return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
+    } else if constexpr (requires  (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
+        return std::array { dim_t(std::tuple_size_v<V>) };
+    } else if constexpr (is_fov<V> && requires { V::extent; }) {
+        return std::array { std::dynamic_extent==V::extent ? ANY : dim_t(V::extent) };
+    } else if constexpr (is_fov<V>) {
+        return std::array { ANY };
+    } else {
+        return std::apply([](auto ... i) { return std::array { V::len_s(i) ... }; }, mp::iota<rs> {});
+    }
+}();
+
+template <class V> requires (!std::is_void_v<V>)
 consteval dim_t
 size_s()
 {
-    using V = std::remove_cvref_t<VV>;
-    if constexpr (constexpr rank_t rs = rank_s<V>(); 0==rs) {
-        return 1;
-    } else if constexpr (is_builtin_array<V>) {
-        return std::apply([] (auto ... i) { return (std::extent_v<V, i> * ... * 1); }, mp::iota<rs> {});
-// tuple_size is the only way for std::array, but it's not used for size generally (ranges, complex).
-    } else if constexpr (requires  (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
-        return std::tuple_size_v<V>;
-    } else if constexpr (is_fov<V> && requires { V::extent; }) {
-        return std::dynamic_extent==V::extent ? ANY : V::extent;
-    } else if constexpr (is_fov<V> || rs==ANY) {
+    if constexpr (ANY==rank_s<V>()) {
         return ANY;
-    } else if constexpr (requires { V::size_s(); }) {
-        return V::size_s();
     } else {
         dim_t s = 1;
-        for (int k=0; k<rs; ++k) {
-            if (dim_t ss=V::len_s(k); ss>=0) { s *= ss; } else { return ss; } // ANY or UNB
-        }
+        for (dim_t len: shape_s<V>) { if (len>=0) s*=len; else return len; }; // ANY or UNB
         return s;
     }
 }
@@ -211,16 +217,10 @@ template <class V>
 constexpr decltype(auto)
 shape(V const & v)
 {
-    if constexpr (constexpr rank_t rs=rank_s(v); 0==rs) {
-        return std::array<dim_t, 0> {};
-    } else if constexpr (is_builtin_array<V>) {
-        constexpr auto s = std::apply([](auto ... i) { return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
-        return s;
-    } else if constexpr (1==rs) { // including std::array, std::vector
+    if constexpr (ANY!=size_s<V>()) {
+        return shape_s<V>;
+    } else if constexpr (constexpr rank_t rs=rank_s<V>(); 1==rs) {
         return std::array<dim_t, 1> { ra::size(v) };
-    } else if constexpr (ANY!=ra::size_s(v)) {
-        constexpr auto s = std::apply([](auto ... i) { return std::array { V::len_s(i) ... }; }, mp::iota<rs> {});
-        return s;
     } else if constexpr (ANY!=rs) {
         return std::apply([&v](auto ... i) { return std::array { v.len(i) ... }; }, mp::iota<rs> {});
     } else {

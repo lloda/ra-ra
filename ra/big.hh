@@ -19,36 +19,29 @@ namespace ra {
 // nested braces for Container initializers, cf small_args in small.hh. FIXME Let any expr = braces.
 // --------------------
 
-template <class T, rank_t rank>
-struct braces_def { using type = noarg; };
+template <class T, rank_t r> struct braces_ { using type = noarg; };
+template <class T, rank_t r> using braces = braces_<T, r>::type;
+template <class T, rank_t r> requires (r==1) struct braces_<T, r> { using type = std::initializer_list<T>; };
+template <class T, rank_t r> requires (r>1) struct braces_<T, r> { using type = std::initializer_list<braces<T, r-1>>; };
 
-template <class T, rank_t rank>
-using braces = braces_def<T, rank>::type;
-
-template <class T, rank_t rank> requires (rank==1)
-struct braces_def<T, rank> { using type = std::initializer_list<T>; };
-
-template <class T, rank_t rank> requires (rank>1)
-struct braces_def<T, rank> { using type = std::initializer_list<braces<T, rank-1>>; };
-
-template <int i, class T, rank_t rank>
+template <int i, class T, rank_t r>
 constexpr dim_t
-braces_len(braces<T, rank> const & l)
+braces_len(braces<T, r> const & l)
 {
-    if constexpr (i>=rank) {
+    if constexpr (i>=r) {
         return 0;
     } else if constexpr (i==0) {
         return l.size();
     } else {
-        return braces_len<i-1, T, rank-1>(*(l.begin()));
+        return braces_len<i-1, T, r-1>(*(l.begin()));
     }
 }
 
-template <class T, rank_t rank, class S = std::array<dim_t, rank>>
-constexpr S
-braces_shape(braces<T, rank> const & l)
+template <class T, rank_t r>
+constexpr auto
+braces_shape(braces<T, r> const & l)
 {
-    return std::apply([&l](auto ... i) { return S { braces_len<i.value, T, rank>(l) ... }; }, mp::iota<rank> {});
+    return [&l]<int ... i>(ilist_t<i ...>){ return std::array { braces_len<i, T, r>(l) ... }; }(mp::iota<r>{});
 }
 
 
@@ -256,7 +249,7 @@ struct storage_traits
     using T = V::value_type;
     static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
     constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(n); }
-    template <class VV> constexpr static auto data(VV & v) { return v.data(); }
+    constexpr static auto data(auto & v) { return v.data(); }
 };
 
 template <class P>
@@ -265,7 +258,7 @@ struct storage_traits<std::unique_ptr<P>>
     using V = std::unique_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
     constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(new T[n]); }
-    template <class VV> constexpr static auto data(VV & v) { return v.get(); }
+    constexpr static auto data(auto & v) { return v.get(); }
 };
 
 template <class P>
@@ -274,7 +267,7 @@ struct storage_traits<std::shared_ptr<P>>
     using V = std::shared_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
     constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(new T[n], std::default_delete<T[]>()); }
-    template <class VV> constexpr static auto data(VV & v) { return v.get(); }
+    constexpr static auto data(auto & v) { return v.get(); }
 };
 
 // FIXME avoid duplicating ViewBig::p. Avoid overhead with rank 1.
@@ -505,37 +498,23 @@ shared_borrowing(ViewBig<T, RANK> & raw)
 
 
 // --------------------
-// concrete (container) type from expression.
+// concrete (container) type from expr. Scalars are their own concrete_type, even unregistered.
 // --------------------
 
 template <class E>
-struct concrete_type_def
-{
-    using type = void;
-};
-template <class E> requires (size_s<E>()==ANY)
-struct concrete_type_def<E>
-{
-    using type = Big<ncvalue_t<E>, rank_s<E>()>;
-};
-template <class E> requires (size_s<E>()!=ANY)
-struct concrete_type_def<E>
-{
-    using type = decltype(std::apply([](auto ... i) { return Small<ncvalue_t<E>, E::len_s(i) ...> {}; },
-                                     mp::iota<rank_s<E>()> {}));
-};
-// Scalars are their own concrete_type. Treat unregistered types as scalars.
-template <class E>
-using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>) || is_scalar<E>,
-                                         std::decay_t<E>,
-                                         typename concrete_type_def<std::decay_t<decltype(start(std::declval<E>()))>>::type>;
+struct concrete_type_ { using type = void; };
+
+template <class E> requires (ANY==size_s<E>())
+struct concrete_type_<E> { using type = Big<ncvalue_t<E>, rank_s<E>()>; };
+
+template <class E> requires (ANY!=size_s<E>())
+struct concrete_type_<E> { using type = SmallArray<ncvalue_t<E>, ic_t<default_dims<shape_s<E>>>>; };
 
 template <class E>
-constexpr auto
-concrete(E && e)
-{
-    return concrete_type<E>(RA_FWD(e));
-}
+using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>) || is_scalar<E>, std::decay_t<E>,
+                                         typename concrete_type_<std::decay_t<decltype(start(std::declval<E>()))>>::type>;
+
+template <class E> constexpr auto concrete(E && e) { return concrete_type<E>(RA_FWD(e)); }
 
 template <class E>
 constexpr auto

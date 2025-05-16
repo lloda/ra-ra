@@ -72,7 +72,7 @@ template <class A, class B> struct cons_ { static_assert(is_tuple<B>); };
 template <class A0, class ... A> struct cons_<A0, tuple<A ...>> { using type = tuple<A0, A ...>; };
 template <class A, class B> using cons = typename cons_<A, B>::type;
 
-template <int n, int o=0, int s=1> struct iota_ { static_assert(n>0); using type = cons<int_c<o>, typename iota_<n-1, o+s, s>::type>; };
+template <int n, int o, int s> struct iota_ { static_assert(n>0); using type = cons<int_c<o>, typename iota_<n-1, o+s, s>::type>; };
 template <int o, int s> struct iota_<0, o, s> { using type = nil; };
 template <int n, int o=0, int s=1> using iota = typename iota_<n, o, s>::type;
 
@@ -96,23 +96,23 @@ template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>,
 
 // Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
 template <class A, template <class> class Pred, int i=0>
-struct IndexIf
+struct indexif
 {
     constexpr static int value = -1;
     using type = nil;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
 requires (Pred<A0>::value)
-struct IndexIf<tuple<A0, A ...>, Pred, i>
+struct indexif<tuple<A0, A ...>, Pred, i>
 {
     using type = A0;
     constexpr static int value = i;
 };
 template <class A0, class ... A, template <class> class Pred, int i>
 requires (!(Pred<A0>::value))
-struct IndexIf<tuple<A0, A ...>, Pred, i>
+struct indexif<tuple<A0, A ...>, Pred, i>
 {
-    using next = IndexIf<tuple<A ...>, Pred, i+1>;
+    using next = indexif<tuple<A ...>, Pred, i+1>;
     using type = typename next::type;
     constexpr static int value = next::value;
 };
@@ -123,7 +123,7 @@ template <class Val> struct findtail_<nil, Val> { using type = nil; };
 template <class ... A, class Val> struct findtail_<tuple<Val, A ...>, Val> { using type = tuple<Val, A ...>; };
 template <class A0, class ... A, class Val> struct findtail_<tuple<A0, A ...>, Val> { using type = findtail<tuple<A ...>, Val>; };
 
-template <class A, class B=nil> struct reverse_ { using type = B; };
+template <class A, class B> struct reverse_ { using type = B; };
 template <class A, class B=nil> using reverse = typename reverse_<A, B>::type;
 template <class A0, class ... A, class B> struct reverse_<tuple<A0, A ...>, B> { using type = reverse<tuple<A ...>, cons<A0, B>>; };
 
@@ -144,26 +144,18 @@ template <template <class ... A> class F, class L> struct apply_;
 template <template <class ... A> class F, class ... L> struct apply_<F, tuple<L ...>> { using type = F<L ...>; };
 template <template <class ... A> class F, class L> using apply = typename apply_<F, L>::type;
 
-template <template <class ... A> class F, class ... L>
-struct map_ { using type = cons<F<first<L> ...>, typename map_<F, drop1<L> ...>::type>; };
-template <template <class ... A> class F, class ... L>
-struct map_<F, nil, L ...> { using type = nil; };
-template <template <class ... A> class F>
-struct map_<F> { using type = nil; };
+template <template <class ... A> class F, class ... L> struct map_ { using type = cons<F<first<L> ...>, typename map_<F, drop1<L> ...>::type>; };
+template <template <class ... A> class F, class ... L> struct map_<F, nil, L ...> { using type = nil; };
+template <template <class ... A> class F> struct map_<F> { using type = nil; };
 template <template <class ... A> class F, class ... L> using map = typename map_<F, L ...>::type;
 
-template <class A, class B> struct Filter
-{
-    using type = mp::append<std::conditional_t<mp::first<A>::value, mp::take<B, 1>, mp::nil>,
-                            typename Filter<mp::drop1<A>, mp::drop1<B>>::type>;
-};
-template <class B> struct Filter<mp::nil, B> { using type = B; };
-template <class A, class B> using Filter_ = typename Filter<A, B>::type;
+template <class A, class B> struct filter_ { using type = append<std::conditional_t<first<A>::value, take<B, 1>, nil>, typename filter_<drop1<A>, drop1<B>>::type>; };
+template <class B> struct filter_<nil, B> { using type = B; };
+template <class A, class B> using filter = typename filter_<A, B>::type;
 
-// remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
+// Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
 template <class S, class T, class SS=S> struct complement_list_;
 template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
-
 // end of T.
 template <class S, class SS>
 struct complement_list_<S, nil, SS>
@@ -192,12 +184,7 @@ struct complement_list_<tuple<S0, S ...>, tuple<T0, T ...>, SS>
 // Like complement_list, but assume that both lists are sorted.
 template <class S, class T> struct complement_sorted_list_ { using type = nil; };
 template <class S, class T> using complement_sorted_list = typename complement_sorted_list_<S, T>::type;
-
-template <class T>
-struct complement_sorted_list_<nil, T>
-{
-    using type = T;
-};
+template <class T> struct complement_sorted_list_<nil, T> { using type = T; };
 template <class F, class ... S, class ... T>
 struct complement_sorted_list_<tuple<F, S ...>, tuple<F, T ...>>
 {
@@ -210,55 +197,44 @@ struct complement_sorted_list_<tuple<S0, S ...>, tuple<T0, T ...>>
     using type = cons<T0, complement_sorted_list<tuple<S0, S ...>, tuple<T ...>>>;
 };
 
-// Variant of complement_list where the second argument is [0 .. end-1].
+// Like complement_list where the second argument is [0 .. end-1].
 template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
 
-// Prepend an element to each of a list of lists.
-template <class c, class A> struct MapCons_;
-template <class c, class A> using MapCons = typename MapCons_<c, A>::type;
-template <class c, class ... A> struct MapCons_<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
+// Prepend element to each of a list of lists.
+template <class c, class A> struct mapcons_;
+template <class c, class A> using mapcons = typename mapcons_<c, A>::type;
+template <class c, class ... A> struct mapcons_<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
 
-// Prepend a list to each list in a list of lists.
-template <class c, class A> struct MapPrepend_;
-template <class c, class A> using MapPrepend = typename MapPrepend_<c, A>::type;
-template <class c, class ... A> struct MapPrepend_<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
+// Prepend list to each list in a list of lists.
+template <class c, class A> struct mapprepend_;
+template <class c, class A> using mapprepend = typename mapprepend_<c, A>::type;
+template <class c, class ... A> struct mapprepend_<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
 
-// Form all possible lists by prepending an element of A to an element of B.
-template <class A, class B> struct ProductAppend_ { using type = nil; };
-template <class A, class B> using ProductAppend = typename ProductAppend_<A, B>::type;
-template <class A0, class ... A, class B> struct ProductAppend_<tuple<A0, A ...>, B> { using type = append<MapPrepend<A0, B>, ProductAppend<tuple<A ...>, B>>; };
+// Form all lists by prepending an element of A to an element of B.
+template <class A, class B> struct prodappend_ { using type = nil; };
+template <class A, class B> using prodappend = typename prodappend_<A, B>::type;
+template <class A0, class ... A, class B> struct prodappend_<tuple<A0, A ...>, B> { using type = append<mapprepend<A0, B>, prodappend<tuple<A ...>, B>>; };
 
 // K-combinations of the N elements of list A.
-template <class A, int K, int N=len<A>> struct combinations_;
-template <class A, int k, int N=len<A>> using combinations = typename combinations_<A, k, N>::type;
-template <class A, int N> struct combinations_<A, 0, N> { using type = tuple<nil>; };
-template <class A, int N> struct combinations_<A, N, N> { using type = tuple<A>; };
-// Resolve ambiguity of 0/N and N/N when N=0.
-template <> struct combinations_<nil, 0> { using type = tuple<nil>; };
-template <class A, int K, int N>
-struct combinations_
+template <class A, int K> struct combs_;
+template <class A, int K> using combs = typename combs_<A, K>::type;
+template <class A> struct combs_<A, 0> { using type = tuple<nil>; };
+template <class A> struct combs_<A, len<A>> { using type = tuple<A>; };
+template <> struct combs_<nil, 0> { using type = tuple<nil>; };
+template <class A, int K>
+struct combs_
 {
-    static_assert(is_tuple<A>);
-    static_assert(N>=0 && K>=0 && K<=N);
-    using Rest = drop1<A>;
-    using type = append<MapCons<first<A>, combinations<Rest, K-1, N-1>>, combinations<Rest, K, N-1>>;
+    static_assert(is_tuple<A> && K>=0);
+    using rest = drop1<A>;
+    using type = append<mapcons<first<A>, combs<rest, K-1>>, combs<rest, K>>;
 };
 
-template <class C, class R> struct PermutationSign;
-
-template <int w, class C, class R>
-constexpr int PermutationSignIfFound = PermutationSign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value * ((w & 1) ? -1 : +1);
-template <class C, class R>
-constexpr int PermutationSignIfFound<-1, C, R>  = 0;
-
-template <> struct PermutationSign<nil, nil> { constexpr static int value = 1; };
-template <class C> struct PermutationSign<C, nil> { constexpr static int value = 0; };
-template <class R> struct PermutationSign<nil, R> { constexpr static int value = 0; };
-
-template <class C, class Org>
-struct PermutationSign
-{
-    constexpr static int value = PermutationSignIfFound<index<C, first<Org>>::value, C, Org>;
-};
+template <class C, class R> struct permsign;
+template <int w, class C, class R> constexpr int permsignfound = permsign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value * ((w & 1) ? -1 : +1);
+template <class C, class R> constexpr int permsignfound<-1, C, R>  = 0;
+template <> struct permsign<nil, nil> { constexpr static int value = 1; };
+template <class C> struct permsign<C, nil> { constexpr static int value = 0; };
+template <class R> struct permsign<nil, R> { constexpr static int value = 0; };
+template <class C, class O> struct permsign { constexpr static int value = permsignfound<index<C, first<O>>::value, C, O>; };
 
 } // namespace ra::mp

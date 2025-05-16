@@ -235,11 +235,11 @@ int main()
         using II1 = ra::mp::InvertIndex<II0>;
         static_assert(is_same_v<ilist_t<>, II1>);
     }
-// IndexIf.
-    static_assert(ra::mp::IndexIf<A, SamePP<int_c<0>>::type>::value==0, "5a");
-    static_assert(ra::mp::IndexIf<A, SamePP<int_c<2>>::type>::value==1, "5b");
-    static_assert(ra::mp::IndexIf<A, SamePP<int_c<3>>::type>::value==2, "5c");
-    static_assert(ra::mp::IndexIf<A, SamePP<int_c<9>>::type>::value==-1, "5d");
+// indexif.
+    static_assert(ra::mp::indexif<A, SamePP<int_c<0>>::type>::value==0, "5a");
+    static_assert(ra::mp::indexif<A, SamePP<int_c<2>>::type>::value==1, "5b");
+    static_assert(ra::mp::indexif<A, SamePP<int_c<3>>::type>::value==2, "5c");
+    static_assert(ra::mp::indexif<A, SamePP<int_c<9>>::type>::value==-1, "5d");
 // findtail.
     static_assert(is_same_v<ra::mp::findtail<A, int_c<0>>, A>, "4a");
     static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<2>>, 2, 3>::value, "4b");
@@ -327,20 +327,20 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::val
 #undef CHECK_COMPLEMENT_LIST
 #undef _
     }
-// MapCons.
+// mapcons.
     {
         using a = ra::mp::iota<2>;
         using b = ra::mp::iota<2, 1>;
-        using mc = ra::mp::MapCons<int_c<9>, tuple<a, b>>;
+        using mc = ra::mp::mapcons<int_c<9>, tuple<a, b>>;
         static_assert(ra::mp::check_idx<ref<mc, 0>, 9, 0, 1>::value, "a");
         static_assert(ra::mp::check_idx<ref<mc, 1>, 9, 1, 2>::value, "b");
     }
 // Combinations.
     {
-        static_assert(ra::mp::len<ra::mp::combinations<ra::mp::nil, 0>> == 1, "");
+        static_assert(ra::mp::len<ra::mp::combs<ra::mp::nil, 0>> == 1, "");
         using l3 = ra::mp::iota<3>;
-        using c31 = ra::mp::combinations<l3, 1>;
-        using c32 = ra::mp::combinations<l3, 2>;
+        using c31 = ra::mp::combs<l3, 1>;
+        using c32 = ra::mp::combs<l3, 2>;
         static_assert(ra::mp::len<c31> == 3, "a");
         static_assert(ra::mp::check_idx<ref<c31, 0>, 0>::value, "a");
         static_assert(ra::mp::check_idx<ref<c31, 1>, 1>::value, "b");
@@ -350,11 +350,11 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::val
         static_assert(ra::mp::check_idx<ref<c32, 1>, 0, 2>::value, "e");
         static_assert(ra::mp::check_idx<ref<c32, 2>, 1, 2>::value, "f");
         using l4 = ra::mp::iota<4>;
-        using c40 = ra::mp::combinations<l4, 0>;
-        using c41 = ra::mp::combinations<l4, 1>;
-        using c42 = ra::mp::combinations<l4, 2>;
-        using c43 = ra::mp::combinations<l4, 3>;
-        using c44 = ra::mp::combinations<l4, 4>;
+        using c40 = ra::mp::combs<l4, 0>;
+        using c41 = ra::mp::combs<l4, 1>;
+        using c42 = ra::mp::combs<l4, 2>;
+        using c43 = ra::mp::combs<l4, 3>;
+        using c44 = ra::mp::combs<l4, 4>;
         static_assert(ra::mp::len<c40> == 1, "a");
         static_assert(ra::mp::check_idx<ref<c40, 0>>::value, "a");
         static_assert(ra::mp::len<c41> == 4, "b");
@@ -377,21 +377,21 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::val
         static_assert(ra::mp::len<c44> == 1, "e");
         static_assert(ra::mp::check_idx<ref<c44, 0>, 0, 1, 2, 3>::value, "e");
     }
-// MapPrepend & ProductAppend.
+// mapprepend & prodappend.
     {
         using la = ra::mp::iota<3>;
-        using ca = ra::mp::combinations<la, 1>;
+        using ca = ra::mp::combs<la, 1>;
         using lb = ra::mp::iota<3>;
-        using cb = ra::mp::combinations<lb, 1>;
-        using test0 = ra::mp::MapPrepend<ra::mp::nil, cb>;
+        using cb = ra::mp::combs<lb, 1>;
+        using test0 = ra::mp::mapprepend<ra::mp::nil, cb>;
         static_assert(is_same_v<test0, cb>, "");
-        using test1 = ra::mp::MapPrepend<la, cb>;
+        using test1 = ra::mp::mapprepend<la, cb>;
         static_assert(ra::mp::len<test1> == int(ra::mp::len<cb>), "");
         static_assert(ra::mp::check_idx<ref<test1, 0>, 0, 1, 2, 0>::value, "");
         static_assert(ra::mp::check_idx<ref<test1, 1>, 0, 1, 2, 1>::value, "");
         static_assert(ra::mp::check_idx<ref<test1, 2>, 0, 1, 2, 2>::value, "");
 
-        using test2 = ra::mp::ProductAppend<ca, cb>;
+        using test2 = ra::mp::prodappend<ca, cb>;
         static_assert(ra::mp::len<test2> == 9, "");
         static_assert(ra::mp::check_idx<ref<test2, 0>, 0, 0>::value, "");
         static_assert(ra::mp::check_idx<ref<test2, 1>, 0, 1>::value, "");
@@ -403,11 +403,11 @@ static_assert(ra::mp::check_idx<ra::mp::complement_list<ilist_t A , B > C >::val
         static_assert(ra::mp::check_idx<ref<test2, 7>, 2, 1>::value, "");
         static_assert(ra::mp::check_idx<ref<test2, 8>, 2, 2>::value, "");
     }
-// PermutationSign.
+// permsign.
     {
 #define _ ,
 #define CHECK_PERM_SIGN( A, B, C ) \
-static_assert(ra::mp::PermutationSign<ilist_t A , ilist_t B >::value == C, "");
+static_assert(ra::mp::permsign<ilist_t A , ilist_t B >::value == C, "");
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <0 _ 1 _ 2>, +1 );
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <0 _ 2 _ 1>, -1 );
         CHECK_PERM_SIGN( <0 _ 1 _ 2>, <1 _ 2 _ 0>, +1 );

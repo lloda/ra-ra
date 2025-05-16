@@ -29,9 +29,9 @@ using complex2 = vec<complex, 2>;
 using complex3 = vec<complex, 3>;
 
 template <class P, class Plist, int w, int s>
-struct FindCombinationTester
+struct findcombtester
 {
-    using finder = ra::mp::FindCombination<P, Plist>;
+    using finder = ra::mp::findcomb<P, Plist>;
     static_assert(finder::where==w && finder::sign==s, "bad");
     static void check() {};
 };
@@ -143,55 +143,59 @@ main()
     if constexpr (sizeof(size_t)>=8) {
         tr.test_eq(size_t(629308289804197437), ra::mp::binom(63, 28));
     }
-    tr.section("Testing FindCombination");
+    tr.section("Testing findcomb I");
     {
         using la = ra::mp::iota<3>;
-        using ca = ra::mp::combinations<la, 2>;
-        FindCombinationTester<ilist_t<0, 1>, ca, 0, +1>::check();
-        FindCombinationTester<ilist_t<1, 0>, ca, 0, -1>::check();
-        FindCombinationTester<ilist_t<0, 2>, ca, 1, +1>::check();
-        FindCombinationTester<ilist_t<2, 0>, ca, 1, -1>::check();
-        FindCombinationTester<ilist_t<1, 2>, ca, 2, +1>::check();
-        FindCombinationTester<ilist_t<2, 1>, ca, 2, -1>::check();
-        FindCombinationTester<ilist_t<0, 0>, ca, -1,  0>::check();
-        FindCombinationTester<ilist_t<1, 1>, ca, -1,  0>::check();
-        FindCombinationTester<ilist_t<2, 2>, ca, -1,  0>::check();
-        FindCombinationTester<ilist_t<3, 0>, ca, -1,  0>::check();
+        using ca = ra::mp::combs<la, 2>;
+        findcombtester<ilist_t<0, 1>, ca, 0, +1>::check();
+        findcombtester<ilist_t<1, 0>, ca, 0, -1>::check();
+        findcombtester<ilist_t<0, 2>, ca, 1, +1>::check();
+        findcombtester<ilist_t<2, 0>, ca, 1, -1>::check();
+        findcombtester<ilist_t<1, 2>, ca, 2, +1>::check();
+        findcombtester<ilist_t<2, 1>, ca, 2, -1>::check();
+        findcombtester<ilist_t<0, 0>, ca, -1,  0>::check();
+        findcombtester<ilist_t<1, 1>, ca, -1,  0>::check();
+        findcombtester<ilist_t<2, 2>, ca, -1,  0>::check();
+        findcombtester<ilist_t<3, 0>, ca, -1,  0>::check();
     }
-
-    tr.section("Testing AntiCombination");
+    tr.section("Testing findcomb II");
     {
         using la = ra::mp::iota<3>;
-        using ca = ra::mp::combinations<la, 1>;
-        using cc0 = ra::mp::AntiCombination<ra::mp::ref<ca, 0>, 3>::type;
+        static_assert(std::is_same_v<ra::mp::combs<la, 3>, std::tuple<la>>);
+    }
+    tr.section("Testing anticomb");
+    {
+        using la = ra::mp::iota<3>;
+        using ca = ra::mp::combs<la, 1>;
+        using cc0 = ra::mp::anticomb<ra::mp::ref<ca, 0>, 3>::type;
         static_assert(ra::mp::check_idx<cc0, 1, 2>::value, "bad");
-        using cc1 = ra::mp::AntiCombination<ra::mp::ref<ca, 1>, 3>::type;
+        using cc1 = ra::mp::anticomb<ra::mp::ref<ca, 1>, 3>::type;
         static_assert(ra::mp::check_idx<cc1, 2, 0>::value, "bad");
-        using cc2 = ra::mp::AntiCombination<ra::mp::ref<ca, 2>, 3>::type;
+        using cc2 = ra::mp::anticomb<ra::mp::ref<ca, 2>, 3>::type;
         static_assert(ra::mp::check_idx<cc2, 0, 1>::value, "bad");
     }
 
-    tr.section("Testing ChooseComponents");
+    tr.section("Testing choose");
     {
-        using c1 = ra::mp::ChooseComponents<3, 1>;
+        using c1 = ra::mp::choose<3, 1>;
         static_assert(ra::mp::len<c1> == 3, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 0>, 0>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 1>, 1>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 2>, 2>::value, "bad");
-        using c2 = ra::mp::ChooseComponents<3, 2>;
+        using c2 = ra::mp::choose<3, 2>;
         static_assert(ra::mp::len<c2> == 3, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c2, 0>, 1, 2>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c2, 1>, 2, 0>::value, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c2, 2>, 0, 1>::value, "bad");
-        using c3 = ra::mp::ChooseComponents<3, 3>;
+        using c3 = ra::mp::choose<3, 3>;
         static_assert(ra::mp::len<c3> == 1, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c3, 0>, 0, 1, 2>::value, "bad");
     }
     {
-        using c0 = ra::mp::ChooseComponents<1, 0>;
+        using c0 = ra::mp::choose<1, 0>;
         static_assert(ra::mp::len<c0> == 1, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c0, 0>>::value, "bad");
-        using c1 = ra::mp::ChooseComponents<1, 1>;
+        using c1 = ra::mp::choose<1, 1>;
         static_assert(ra::mp::len<c1> == 1, "bad");
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 0>, 0>::value, "bad");
     }
@@ -269,7 +273,7 @@ main()
         real1 h(GARBAGE);
         hodgex<3, 3>(r, h);
         tr.info("\thodge-star: ", h).test_eq(-1, h[0]);
-// this is not forced for hodgex (depends on vec::ChooseComponents<> as used in Wedge<>) so if you change that, change this too.
+// this is not forced for hodgex (depends on choose<> as used in Wedge<>) so if you change that, change this too.
         real3 c;
         hodgex<3, 1>(b, c);
         tr.info("hodge<3, 1>(", b, "): ", c).test_eq(real3{0, -1, 0}, b);
