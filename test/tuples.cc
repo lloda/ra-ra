@@ -244,7 +244,7 @@ int main()
     static_assert(is_same_v<ra::mp::findtail<A, int_c<0>>, A>, "4a");
     static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<2>>, 2, 3>::value, "4b");
     static_assert(ra::mp::check_idx<ra::mp::findtail<A, int_c<3>>, 3>::value, "4c");
-    static_assert(ra::mp::nilp<ra::mp::findtail<A, int_c<4>>>, "4d");
+    static_assert(std::is_same_v<ra::mp::nil, ra::mp::findtail<A, int_c<4>>>, "4d");
     static_assert(is_same_v<ra::mp::findtail<S3, S2BC>, tuple<S2BC>>, "4e");
 // reverse.
     static_assert(ra::mp::check_idx<ra::mp::reverse<A_B>, 7, 6, 5, 3, 2, 0>::value, "5a");

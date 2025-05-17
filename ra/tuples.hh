@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Basic macros & tuple library.
 
-// (c) Daniel Llorens - 2005-2024
+// (c) Daniel Llorens - 2005-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -54,9 +54,8 @@ template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(
 namespace ra::mp {
 
 using std::tuple;
-using nil = std::tuple<>;
+using nil = tuple<>;
 
-template <class T> constexpr bool nilp = std::is_same_v<nil, T>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
 template <class T> constexpr bool is_tuple = false;
 template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;

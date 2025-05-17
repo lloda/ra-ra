@@ -214,5 +214,9 @@ int main()
         static_assert(ra::is_iterator<decltype(ra::ptr(std::array { 1, 2 }))>);
         static_assert(ra::is_iterator<decltype(ra::start(std::array { 1, 2 }))>);
     }
+    tr.section("compatibility");
+    {
+        static_assert(std::input_iterator<decltype(ra::Big<int, 2> {{1,2},{3,4}}.begin())>);
+    }
     return tr.summary();
 }

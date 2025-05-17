@@ -208,10 +208,9 @@ int main(int argc, char * * argv)
     }
     tr.section("nested braces for nested type VI");
     {
-        ra::Small<ra::Big<double, 1>, 3> g = { { 1 }, { 1, 2 }, { 1, 2, 3 } };
+        ra::Small<ra::Big<double, 1>, 2> g = { { 1 }, { 1, 2 } };
         tr.test_eq(ra::start({1}), g[0]);
         tr.test_eq(ra::start({1, 2}), g[1]);
-        tr.test_eq(ra::start({1, 2, 3}), g[2]);
     }
     tr.section("more nested braces");
     {

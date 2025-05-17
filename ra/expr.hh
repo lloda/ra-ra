@@ -184,16 +184,13 @@ struct Ptr final
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
 template <class S>
-consteval auto
-thestep()
+constexpr auto thestep()
 {
     if constexpr (std::is_integral_v<S>) {
         return S(1);
-    } else if constexpr (is_constant<S>) {
-        static_assert(1==S::value);
-        return S {};
     } else {
-        static_assert(false, "Bad step type for sequence.");
+        static_assert(is_constant<S> && 1==S::value);
+        return S {};
     }
 }
 
@@ -219,9 +216,9 @@ ptr(I && i, N && n = N {}, S && s = thestep<S>())
     }
 }
 
-// Sequence and Iterator for same. Iota isn't really a terminal, but its exprs must all have rank 0.
-// FIXME w is a custom Reframe mechanism. Generalize/unify
-// FIXME Sequence should be its own type, we can't represent a ct origin bc Iterator interface takes up i.
+// Sequence and its Iterator. Iota parameters can be expressions, but they must all have rank 0.
+// FIXME w is a custom Reframe mechanism. Generalize/unify.
+// FIXME Can't represent a ct origin bc Iterator interface takes up i. Sequence should be its own type.
 template <int w, class I, class N, class S>
 struct Iota final
 {
@@ -290,8 +287,7 @@ reverse(Iota<w, I, N, S> const & i, K k = {})
 {
     static_assert(i.nn!=UNB && k>=0 && k<=w, "Bad arguments to reverse(iota).");
     if constexpr (k==w) {
-        return ra::iota<w>([&i]() { if constexpr (is_constant<N>) return dim_c<N {}> {}; else return i.n; }(),
-                           i.i+(i.n-1)*i.s,
+        return ra::iota<w>(i.n, i.i+(i.n-1)*i.s,
                            [&i]() { if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
     } else {
         return i;

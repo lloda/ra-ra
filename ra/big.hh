@@ -332,7 +332,6 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     constexpr Container & operator OP (auto && x) { view() OP x; return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
-// can't do using View:: bc of auto doesn't deduce to initializer_list.
     constexpr Container & operator=(std::initializer_list<T> const x) requires (1!=RANK) { view() = x; return *this; }
     constexpr Container & operator=(braces<T, RANK> x) requires (ANY!=RANK) { view() = x; return *this; }
 #define RA_BRACES_ANY(N)                                                \
@@ -357,17 +356,15 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     Container() requires (ANY!=RANK && 0!=RANK): View(typename View::Dimv(Dim {0, 1}), nullptr) {}
     Container() requires (0==RANK): Container({}, none) {}
 
-// shape_arg overloads handle {...} arguments. Size check is at conversion (if shape_arg is Small) or init().
+// shape_arg overloads handle {...} arguments. Size check is at conversion if shape_arg is Small.
     Container(shape_arg const & s, none_t) { init(s); }
-    Container(shape_arg const & s, auto && x): Container(s, none) { iter() = x; }
-    Container(shape_arg const & s, braces<T, RANK> x) requires (RANK==1) : Container(s, none) { view() = x; }
-    Container(auto && x): Container(ra::shape(x), none) { iter() = x; }
+    Container(shape_arg const & s, auto && x): Container(s, none) { view() = x; }
+    Container(shape_arg const & s, braces<T, RANK> x) requires (1==RANK): Container(s, none) { view() = x; }
 
-    Container(braces<T, RANK> x) requires (RANK!=ANY)
-        : Container(braces_shape<T, RANK>(x), none) { view() = x; }
-#define RA_BRACES_ANY(N)                                           \
-    Container(braces<T, N> x) requires (RANK==ANY)                 \
-        : Container(braces_shape<T, N>(x), none) { view() = x; }
+    Container(auto && x): Container(ra::shape(x), none) { view() = x; }
+    Container(braces<T, RANK> x) requires (RANK!=ANY): Container(braces_shape<T, RANK>(x), none) { view() = x; }
+#define RA_BRACES_ANY(N)                                                \
+    Container(braces<T, N> x) requires (RANK==ANY): Container(braces_shape<T, N>(x), none) { view() = x; }
     FOR_EACH(RA_BRACES_ANY, 1, 2, 3, 4)
 #undef RA_BRACES_ANY
 
@@ -384,7 +381,6 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
 // FIXME regular (no need for fill1) for ANY if rank is 1.
     Container(shape_arg const & s, std::initializer_list<T> x) requires (1!=RANK)
         : Container(s, none) { fill1(x.begin(), x.size()); }
-
 // FIXME remove
     Container(shape_arg const & s, auto * p)
         : Container(s, none) { fill1(p, size()); } // FIXME fake check
@@ -393,12 +389,9 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
         : Container(s, none) { fill1(RA_FWD(pbegin), psize); }
 
 // for shape arguments that doesn't convert implicitly to shape_arg
-    Container(auto && s, none_t)
-        { init(RA_FWD(s)); }
-    Container(auto && s, auto && x)
-        : Container(RA_FWD(s), none) { iter() = x; }
-    Container(auto && s, std::initializer_list<T> x)
-        : Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
+    Container(auto && s, none_t) { init(RA_FWD(s)); }
+    Container(auto && s, auto && x): Container(RA_FWD(s), none) { view() = x; }
+    Container(auto && s, std::initializer_list<T> x): Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
 
 // resize first axis or full shape. Only for some kinds of store.
     void resize(dim_t const s)

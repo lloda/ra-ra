@@ -302,15 +302,15 @@ int main()
     {
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
 
-        ra::Shared<double> s({3, 2}, pool, 6);
+        ra::Shared<double> s({3, 2}, pool);
         tr.test_eq(2, s.rank());
         tr.test(std::equal(pool, pool+6, s.begin()));
 
-        ra::Unique<double> u({3, 2}, pool, 6);
+        ra::Unique<double> u({3, 2}, pool);
         tr.test_eq(2, u.rank());
         tr.test(std::equal(pool, pool+6, u.begin()));
 
-        ra::Big<double> o({3, 2}, pool, 6);
+        ra::Big<double> o({3, 2}, pool);
         tr.test_eq(2, o.rank());
         tr.test(std::equal(pool, pool+6, o.begin()));
     }

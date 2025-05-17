@@ -28,7 +28,7 @@ int main()
         tr.test_eq(ra::Small<ra::dim_t, 1> {2}, shape(iter<-1>(A)));
 
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::Unique<double> u({3, 2}, pool, 6);
+        ra::Unique<double> u({3, 2}, pool);
         tr.test(std::equal(pool, pool+6, u.begin()));
 
         ra::Unique<double> q(ra::scalar(44));
