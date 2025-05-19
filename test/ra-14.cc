@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Conversion to scalar from Big/View, corner cases.
 
-// (c) Daniel Llorens - 2023
+// (c) Daniel Llorens - 2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -68,7 +68,8 @@ int main()
         }
         tr.section("From const var rank 0 to ref");
         {
-            static_assert(requires { requires !(std::is_convertible_v<ra::Big<int2> const, int2 &>); });
+            static_assert(!std::is_convertible_v<ra::Big<int2> const, int2 &>);
+            static_assert(std::is_convertible_v<ra::Big<int2> const, int2 const &>);
         }
     }
     return tr.summary();
