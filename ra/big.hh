@@ -472,11 +472,9 @@ template <class T, rank_t RANK=ANY> using Big = Container<vector_default_init<T>
 template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
-// -------------
 // Used in Guile wrappers to let parameter either borrow from Guile storage or convert into new array (eg 'f32 into 'f64).
 // TODO Can use unique_ptr's deleter for this?
 // TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
-// -------------
 
 template <rank_t RANK, class T>
 Shared<T, RANK>

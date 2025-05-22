@@ -54,7 +54,7 @@ struct True
     constexpr static bool value = true;
 };
 
-// These used to be in tuples.hh, but then I thought it wasn't worth having them there. Some are tested below.
+// These used to be in base.hh, but then I thought it wasn't worth having them there. Some are tested below.
 namespace ra::mp {
 
 template <class ... A> using sum = int_c<(A::value + ... + 0)>;

@@ -1958,10 +1958,8 @@ The header structure of @code{ra::} is as follows.@c @footnote{Diagram generated
 @c }
 
 @itemize
-@item @code{tuples.hh} -
-Generic macros and tuple library.
 @item @code{base.hh} -
-Basic types and concepts, introspection.
+Generic macros, tuple library, basic types and concepts.
 @item @code{expr.hh} -
 Expression template nodes.
 @item @code{ply.hh} -

@@ -52,8 +52,8 @@ template <int ... I> using ilist_t = std::tuple<int_c<I> ...>;
 template <int ... I> constexpr ilist_t<I ...> ilist {};
 constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
-template <class C, class T, auto f = std::identity {}>
-constexpr auto tuple2array = std::apply([](auto ... t) { return std::array<C, sizeof...(t)> { C(f(t)) ... }; }, T {});
+template <class C, class T>
+constexpr auto tuple2array = std::apply([](auto ... t) { return std::array<C, sizeof...(t)> { C(t) ... }; }, T {});
 
 
 // --------------------
@@ -184,7 +184,7 @@ struct Ptr final
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
 template <class S>
-constexpr auto thestep()
+consteval auto maybe_step()
 {
     if constexpr (std::is_integral_v<S>) {
         return S(1);
@@ -196,7 +196,7 @@ constexpr auto thestep()
 
 template <class I, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
-ptr(I && i, N && n = N {}, S && s = thestep<S>())
+ptr(I && i, N && n = N {}, S && s = maybe_step<S>())
 {
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
         static_assert(std::is_same_v<dim_c<UNB>, N>, "Object has own length.");
@@ -256,7 +256,7 @@ struct Iota final
 
 template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
-iota(N && n = N {}, I && i = 0, S && s = thestep<S>())
+iota(N && n = N {}, I && i = 0, S && s = maybe_step<S>())
 {
     if constexpr (std::is_integral_v<N>) {
         RA_CHECK(n>=0, "Bad iota length ", n, ".");
@@ -271,8 +271,7 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 template <class A> concept is_iota = requires (A a)
 {
     []<class I, class N, class S>(Iota<0, I, N, S> const &){}(a);
-// exclude UNB from beating to allow B = A(... i ...) to use B's len. FIXME
-    requires UNB!=a.nn;
+    requires UNB!=a.nn; // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
 };
 
 constexpr bool
@@ -394,10 +393,9 @@ template <Iterator ... P, int ... I>
 struct Match<std::tuple<P ...>, ilist_t<I ...>>
 {
     std::tuple<P ...> t;
+    constexpr static rank_t rs = [] { rank_t r=UNB; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
 
     constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
-
-    constexpr static rank_t rs = [] { rank_t r=UNB; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
 
 // 0: fail, 1: rt check, 2: pass
     consteval static int
@@ -489,8 +487,8 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
 template <dim_t N, class T> constexpr T samestep = N;
 template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
 
-// Transpose for Iterators. As in transpose(), one names the destination axis for
-// each original axis. However, axes may not be repeated. Used in the rank conjunction below.
+// Transpose for Iterators. As in transpose(), one names the destination axis for each original axis.
+// However, axes may not be repeated. Used in the rank conjunction below.
 // Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
 // The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
@@ -650,7 +648,7 @@ template <class E>
 constexpr decltype(auto) to_scalar(E && e)
 {
     if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
-        static_assert(ANY==s, "Bad scalar conversion from shape.");
+        static_assert(ANY==s, "Bad scalar conversion.");
         RA_CHECK(1==size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
     }
     return *e;

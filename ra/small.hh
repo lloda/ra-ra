@@ -24,15 +24,12 @@ inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
 
 template <auto v, int n>
-constexpr auto vdrop = []()
+constexpr auto vdrop = []
 {
     std::array<Dim, ssize(v)-n> r;
     for (int i=0; i<int(r.size()); ++i) { r[i] = v[n+i]; }
     return r;
 }();
-
-template <auto f, auto dimv, int n=ssize(dimv)>
-using ctuple = decltype(std::apply([](auto ... i) { return ilist<std::invoke(f, dimv[i]) ...>; }, mp::iota<n> {}));
 
 constexpr bool
 is_c_order_dimv(auto const & dimv, bool step1=true)
@@ -72,13 +69,8 @@ filldim(auto && shape, auto & dimv)
     return s;
 }
 
-template <auto lenv>
-constexpr auto default_dims = []()
-{
-    std::array<Dim, ra::size(lenv)> dimv;
-    filldim(lenv, dimv);
-    return dimv;
-}();
+template <auto lenv> constexpr auto
+default_dims = []{ std::array<Dim, ra::size(lenv)> dimv; filldim(lenv, dimv); return dimv; }();
 
 constexpr auto
 shape(auto const & v, auto && e)
@@ -151,9 +143,8 @@ from_partial(Op && op)
 }
 
 // TODO should be able to do better by slicing at each dimension, etc. But verb<>'s innermost op must be rank 0.
-template <class A, class ... I>
 constexpr decltype(auto)
-from(A && a, I && ... i)
+from(auto && a, auto && ... i)
 {
     if constexpr (0==sizeof...(i)) {
         return RA_FWD(a)();
@@ -166,8 +157,8 @@ from(A && a, I && ... i)
 }
 
 template <int k=0, class V>
-constexpr decltype(auto)
-maybe_len(V && v)
+constexpr auto
+maybe_len(V const & v)
 {
     if constexpr (ANY!=std::decay_t<V>::len_s(k)) {
         return ic<std::decay_t<V>::len_s(k)>;
@@ -177,15 +168,11 @@ maybe_len(V && v)
 }
 
 template <int N, class KK=mp::iota<N>> struct unbeat;
-
 template <int N, int ... k>
 struct unbeat<N, ilist_t<k ...>>
 {
     constexpr static decltype(auto)
-    op(auto && v, auto && ... i)
-    {
-        return from(RA_FWD(v), wlen(maybe_len<k>(v), RA_FWD(i)) ...);
-    }
+    op(auto && v, auto && ... i) { return from(RA_FWD(v), wlen(maybe_len<k>(v), RA_FWD(i)) ...); }
 };
 
 template <class Q, class P>
@@ -232,6 +219,7 @@ indexer(Q const & q, P const & pp)
 // --------------------
 
 template <class T, class Dimv> struct ViewSmall;
+template <class T, rank_t RANK=ANY> struct ViewBig;
 
 template <class T, class Dimv, class Spec>
 struct CellSmall
@@ -251,8 +239,6 @@ struct CellSmall
 
     constexpr CellSmall(T * p): c { p } {}
 };
-
-template <class T, rank_t RANK=ANY> struct ViewBig;
 
 template <class T, class Dimv, class Spec>
 struct CellBig
@@ -290,7 +276,6 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spe
     using Base = std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>;
     using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len;
     using View = decltype(std::declval<Base>().c);
-
     static_assert(cellr>=0 || cellr==ANY || framer>=0 || framer==ANY, "Bad cell/frame rank.");
 
     RA_ASSIGNOPS_SELF(Cell)
@@ -309,37 +294,10 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spe
 
 
 // ---------------------
-// nested braces for Small initializers. Cf braces_def for in big.hh.
-// ---------------------
-
-template <class T, class lens>
-struct nested_arg { using sub = noarg; };
-
-template <class T, class lens>
-struct small_args { using nested = std::tuple<noarg>; };
-
-template <class T, class lens> requires (0<mp::len<lens>)
-struct small_args<T, lens>
-{
-    using nested = mp::makelist<mp::ref<lens, 0>::value, typename nested_arg<T, lens>::sub>;
-};
-
-template <class T, class Dimv, class nested_args = small_args<T, ctuple<&Dim::len, Dimv::value>>::nested>
-struct SmallArray;
-
-template <class T, dim_t ... lens>
-using Small = SmallArray<T, ic_t<default_dims<std::array<dim_t, sizeof...(lens)> {lens ...}>>>;
-
-template <class T, int S0, int ... S>
-struct nested_arg<T, ilist_t<S0, S ...>>
-{
-    using sub = std::conditional_t<0==sizeof...(S), T, Small<T, S ...>>;
-};
-
-
-// ---------------------
 // Small view & container
 // ---------------------
+
+// helpers for operator()
 
 template <auto prev, class ... I>
 struct filterdims
@@ -355,7 +313,7 @@ struct filterdims<prev, I0, I ...>
     constexpr static int dst = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.dst;
     constexpr static int src = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
     constexpr static auto next = filterdims<vdrop<prev, src>, I ...>::dimv;
-    constexpr static auto dimv = []()
+    constexpr static auto dimv = []
     {
         std::array<Dim, dst+ssize(next)> r;
         for (int i=0; i<dst; ++i) { r[i] = prev[i]; }
@@ -369,7 +327,7 @@ struct filterdims<prev, I0, I ...>
 {
     constexpr static int src = beatable<I0>.src;
     constexpr static auto next = filterdims<vdrop<prev, src>, I ...>::dimv;
-    constexpr static auto dimv = []()
+    constexpr static auto dimv = []
     {
         std::array<Dim, 1+ssize(next)> r;
         r[0] = Dim { I0::nn, prev[0].step * I0::gets() };
@@ -378,12 +336,34 @@ struct filterdims<prev, I0, I ...>
     }();
 };
 
-template <class T_, class Dimv>
+// nested braces for Small initializers. Cf braces_def for in big.hh.
+
+template <class T, class Dimv> struct nested_arg { using sub = noarg; };
+
+template <class T, class Dimv> struct small_args { using nested = std::tuple<>; };
+
+template <class T, class Dimv> requires (0<ssize(Dimv::value))
+struct small_args<T, Dimv>
+{
+    using nested = mp::makelist<Dimv::value[0].len, typename nested_arg<T, Dimv>::sub>;
+};
+
+template <class T, class Dimv, class nested_args = small_args<T, Dimv>::nested>
+struct SmallArray;
+
+template <class T, class Dimv> requires (0<ssize(Dimv::value))
+struct nested_arg<T, Dimv>
+{
+    constexpr static auto sn = ssize(Dimv::value)-1;
+    constexpr static auto s = std::apply([](auto ... i) { return std::array<dim_t, sn> { Dimv::value[i].len ... }; }, mp::iota<sn, 1> {});
+    using sub = std::conditional_t<0==sn, T, SmallArray<T, ic_t<default_dims<s>>>>;
+};
+
+
+template <class T, class Dimv>
 struct SmallBase
 {
     constexpr static auto dimv = Dimv::value;
-    using T = T_;
-
     consteval static rank_t rank() { return ssize(dimv); }
     consteval static dim_t size() { dim_t s=1; for (auto dim: dimv) { s*=dim.len; } return s; }
     constexpr static dim_t len(int k) { return dimv[k].len; }
@@ -398,7 +378,7 @@ struct ViewSmall: public SmallBase<T, Dimv>
 {
     using Base = SmallBase<T, Dimv>;
     using Base::rank, Base::size, Base::dimv, Base::len, Base::len_s, Base::step, Base::defsteps;
-    using sub = typename nested_arg<T, ctuple<&Dim::len, dimv>>::sub;
+    using sub = typename nested_arg<T, Dimv>::sub;
     T * cp;
 
     using ViewConst = ViewSmall<T const, Dimv>;
@@ -512,7 +492,6 @@ template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)
 #endif
 
 template <class Z, class ... T> constexpr static bool equal_to_any = (std::is_same_v<Z, T> || ...);
-
 template <class T, size_t N>
 consteval size_t
 align_req()
@@ -530,7 +509,6 @@ template <class T, class Dimv, class ... nested_args>
 struct
 #if RA_OPT_SMALLVECTOR==1
 alignas(align_req<T, std::apply([](auto ... i) { return (i.len * ... * 1); }, Dimv::value)>())
-#else
 #endif
 SmallArray<T, Dimv, std::tuple<nested_args ...>>
     : public SmallBase<T, Dimv>
@@ -588,9 +566,12 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FWD(self).view().template as<s, o>(); }
 };
 
+template <class T, dim_t ... lens>
+using Small = SmallArray<T, ic_t<default_dims<std::array<dim_t, sizeof...(lens)> {lens ...}>>>;
+
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
 
-// FIXME tagged ravel constructor
+// FIXME ravel constructor
 template <class A>
 constexpr auto
 from_ravel(auto && b)
@@ -602,35 +583,8 @@ from_ravel(auto && b)
     return a;
 }
 
-
-// ---------------------
-// builtin arrays.
-// ---------------------
-
-constexpr auto
-peel(auto && t)
-{
-    using T = std::remove_cvref_t<decltype(t)>;
-    if constexpr (1 < std::rank_v<T>) {
-        static_assert(0 < std::extent_v<T, 0>);
-        return peel(*std::data(t));
-    } else {
-        return std::data(t);
-    }
-}
-
-constexpr auto
-start(is_builtin_array auto && t)
-{
-    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
-    return ViewSmall<T, ic_t<default_dims<ra::shape(t)>>>(peel(t)).iter();
-}
-
-
-// --------------------
 // Small view ops, see View ops in big.hh.
 // FIXME Merge transpose(ViewBig), Reframe (eg beat(reframe(a)) -> transpose(a) ?)
-// --------------------
 
 constexpr void
 transpose_dims(auto const & s, auto const & src, auto & dst)
@@ -643,20 +597,20 @@ transpose_dims(auto const & s, auto const & src, auto & dst)
     }
 }
 
-RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<typename A::T, ic_t<A::dimv>>>));
+RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<value_t<A>, ic_t<A::dimv>>>));
 
 template <int ... Iarg>
 constexpr auto
 transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
 {
     decltype(auto) a = a_.view();
-    using A = typename std::decay_t<decltype(a)>;
+    using A = std::decay_t<decltype(a)>;
     constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
     constexpr static auto src = A::dimv;
     static_assert(src.size()==s.size(), "Bad size for transposed axes list.");
     constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
     constexpr static auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
-    return ViewSmall<typename A::T, ic_t<dst>>(a.data());
+    return ViewSmall<value_t<A>, ic_t<dst>>(a.data());
 }
 
 template <class sup_t, class T, class A, class B>
@@ -731,6 +685,30 @@ cat(is_scalar auto && a1_, cv_smallview auto && a2_)
     val[0] = a1_;
     std::copy(a2.begin(), a2.end(), val.begin()+1);
     return val;
+}
+
+
+// ---------------------
+// builtin arrays.
+// ---------------------
+
+constexpr auto
+peel(auto && t)
+{
+    using T = std::remove_cvref_t<decltype(t)>;
+    if constexpr (1 < std::rank_v<T>) {
+        static_assert(0 < std::extent_v<T, 0>);
+        return peel(*std::data(t));
+    } else {
+        return std::data(t);
+    }
+}
+
+constexpr auto
+start(is_builtin_array auto && t)
+{
+    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
+    return ViewSmall<T, ic_t<default_dims<ra::shape(t)>>>(peel(t)).iter();
 }
 
 } // namespace ra

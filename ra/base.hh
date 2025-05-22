@@ -1,28 +1,266 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Before all other ra:: includes.
 
-// (c) Daniel Llorens - 2013-2025
+// (c) Daniel Llorens - 2005-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
 #pragma once
-#include "tuples.hh"
+#include <tuple>
 #include <array>
-#include <format>
 #include <ranges>
 #include <vector>
+#include <format>
+#include <limits>
 #include <iosfwd> // for format, ss.
-#include <cstdint>
 #include <sstream>
 #include <version>
+#include <cstdint>
+#include <utility>
+#include <algorithm>
+#include <type_traits>
+#include <functional>
 #include <source_location>
+
+#define STRINGIZE_( x ) #x
+#define STRINGIZE( x ) STRINGIZE_( x )
+#define JOIN_( x, y ) x##y
+#define JOIN( x, y ) JOIN_( x, y )
+#define RA_FWD(a) std::forward<decltype(a)>(a)
+// see http://stackoverflow.com/a/1872506
+#define FOR_EACH_1(what, x, ...) what(x)
+#define FOR_EACH_2(what, x, ...) what(x) FOR_EACH_1(what, __VA_ARGS__)
+#define FOR_EACH_3(what, x, ...) what(x) FOR_EACH_2(what, __VA_ARGS__)
+#define FOR_EACH_4(what, x, ...) what(x) FOR_EACH_3(what, __VA_ARGS__)
+#define FOR_EACH_5(what, x, ...) what(x) FOR_EACH_4(what, __VA_ARGS__)
+#define FOR_EACH_6(what, x, ...) what(x) FOR_EACH_5(what, __VA_ARGS__)
+#define FOR_EACH_7(what, x, ...) what(x) FOR_EACH_6(what, __VA_ARGS__)
+#define FOR_EACH_8(what, x, ...) what(x) FOR_EACH_7(what, __VA_ARGS__)
+#define FOR_EACH_9(what, x, ...) what(x) FOR_EACH_8(what, __VA_ARGS__)
+#define FOR_EACH_10(what, x, ...) what(x) FOR_EACH_9(what, __VA_ARGS__)
+#define FOR_EACH_11(what, x, ...) what(x) FOR_EACH_10(what, __VA_ARGS__)
+#define FOR_EACH_12(what, x, ...) what(x) FOR_EACH_11(what, __VA_ARGS__)
+#define FOR_EACH_NARG(...) FOR_EACH_NARG_(__VA_ARGS__, FOR_EACH_RSEQ_N())
+#define FOR_EACH_NARG_(...) FOR_EACH_ARG_N(__VA_ARGS__)
+#define FOR_EACH_ARG_N(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, N, ...) N
+#define FOR_EACH_RSEQ_N() 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
+#define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
+#define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
+
+namespace ra {
+
+template <class T> constexpr bool is_constant = false;
+template <class T, T N> constexpr bool is_constant<std::integral_constant<T, N>> = true;
+template <int V> using int_c = std::integral_constant<int, V>;
+template <bool V> using bool_c = std::integral_constant<bool, V>;
+template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
+template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
+
+} // namespace ra
+
+
+// ---------------------
+// tuple library
+// ---------------------
+
+namespace ra::mp {
+
+using std::tuple;
+using nil = tuple<>;
+
+template <class A> constexpr int len = std::tuple_size_v<A>;
+template <class T> constexpr bool is_tuple = false;
+template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;
+
+// A is a nested list, I the indices at each level.
+template <class A, int ... I> struct ref_ { using type = A; };
+template <class A, int ... I> using ref = typename ref_<A, I ...>::type;
+template <class A, int I0, int ... I> struct ref_<A, I0, I ...> { using type = ref<std::tuple_element_t<I0, A>, I ...>; };
+template <class A> using first = ref<A, 0>;
+template <class A> using last = ref<A, len<A>-1>;
+
+template <class A, class B> struct cons_ { static_assert(is_tuple<B>); };
+template <class A0, class ... A> struct cons_<A0, tuple<A ...>> { using type = tuple<A0, A ...>; };
+template <class A, class B> using cons = typename cons_<A, B>::type;
+
+template <int n, int o, int s> struct iota_ { static_assert(n>0); using type = cons<int_c<o>, typename iota_<n-1, o+s, s>::type>; };
+template <int o, int s> struct iota_<0, o, s> { using type = nil; };
+template <int n, int o=0, int s=1> using iota = typename iota_<n, o, s>::type;
+
+template <class A, class B> struct append_ { static_assert(is_tuple<A> && is_tuple<B>); };
+template <class ... A, class ... B> struct append_<tuple<A ...>, tuple<B ...>> { using type = tuple<A ..., B ...>; };
+template <class A, class B> using append = typename append_<A, B>::type;
+
+template <class A, class B> struct zip_ { static_assert(is_tuple<A> && is_tuple<B>); };
+template <class ... A, class ... B> struct zip_<tuple<A ...>, tuple<B ...>> { using type = tuple<tuple<A, B> ...>; };
+template <class A, class B> using zip = typename zip_<A, B>::type;
+
+template <int n, class T> struct makelist_ { static_assert(n>0); using type = cons<T, typename makelist_<n-1, T>::type>; };
+template <class T> struct makelist_<0, T> { using type = nil; };
+template <int n, class T> using makelist = typename makelist_<n, T>::type;
+
+// Return the index of a type in a type list, or -1 if not found.
+template <class A, class T, int i=0> struct index_ { using type = int_c<-1>; };
+template <class A, class T, int i=0> using index = typename index_<A, T, i>::type;
+template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { using type = int_c<i>; };
+template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>, T, i> { using type = index<tuple<A ...>, T, i+1>; };
+
+// Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
+template <class A, template <class> class Pred, int i=0>
+struct indexif
+{
+    constexpr static int value = -1;
+    using type = nil;
+};
+template <class A0, class ... A, template <class> class Pred, int i>
+requires (Pred<A0>::value)
+struct indexif<tuple<A0, A ...>, Pred, i>
+{
+    using type = A0;
+    constexpr static int value = i;
+};
+template <class A0, class ... A, template <class> class Pred, int i>
+requires (!(Pred<A0>::value))
+struct indexif<tuple<A0, A ...>, Pred, i>
+{
+    using next = indexif<tuple<A ...>, Pred, i+1>;
+    using type = typename next::type;
+    constexpr static int value = next::value;
+};
+
+template <class A, class Val> struct findtail_;
+template <class A, class Val> using findtail = typename findtail_<A, Val>::type;
+template <class Val> struct findtail_<nil, Val> { using type = nil; };
+template <class ... A, class Val> struct findtail_<tuple<Val, A ...>, Val> { using type = tuple<Val, A ...>; };
+template <class A0, class ... A, class Val> struct findtail_<tuple<A0, A ...>, Val> { using type = findtail<tuple<A ...>, Val>; };
+
+template <class A, class B> struct reverse_ { using type = B; };
+template <class A, class B=nil> using reverse = typename reverse_<A, B>::type;
+template <class A0, class ... A, class B> struct reverse_<tuple<A0, A ...>, B> { using type = reverse<tuple<A ...>, cons<A0, B>>; };
+
+// drop1 is needed to avoid ambiguity in the declarations of drop, take.
+template <class A> struct drop1_;
+template <class A0, class ... A> struct drop1_<tuple<A0, A ...>> { using type = tuple<A ...>; };
+template <class A> using drop1 = typename drop1_<A>::type;
+
+template <class A, int n> struct drop_ { static_assert(n>0); using type = typename drop_<drop1<A>, n-1>::type; };
+template <class A> struct drop_<A, 0> { using type = A; };
+template <class A, int n> using drop = typename drop_<A, n>::type;
+
+template <class A, int n> struct take_ { static_assert(n>0); using type = cons<first<A>, typename take_<drop1<A>, n-1>::type>; };
+template <class A> struct take_<A, 0> { using type = nil; };
+template <class A, int n> using take = typename take_<A, n>::type;
+
+template <template <class ... A> class F, class L> struct apply_;
+template <template <class ... A> class F, class ... L> struct apply_<F, tuple<L ...>> { using type = F<L ...>; };
+template <template <class ... A> class F, class L> using apply = typename apply_<F, L>::type;
+
+template <template <class ... A> class F, class ... L> struct map_ { using type = cons<F<first<L> ...>, typename map_<F, drop1<L> ...>::type>; };
+template <template <class ... A> class F, class ... L> struct map_<F, nil, L ...> { using type = nil; };
+template <template <class ... A> class F> struct map_<F> { using type = nil; };
+template <template <class ... A> class F, class ... L> using map = typename map_<F, L ...>::type;
+
+template <class A, class B> struct filter_ { using type = append<std::conditional_t<first<A>::value, take<B, 1>, nil>, typename filter_<drop1<A>, drop1<B>>::type>; };
+template <class B> struct filter_<nil, B> { using type = B; };
+template <class A, class B> using filter = typename filter_<A, B>::type;
+
+// Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
+template <class S, class T, class SS=S> struct complement_list_;
+template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
+// end of T.
+template <class S, class SS>
+struct complement_list_<S, nil, SS>
+{
+    using type = nil;
+};
+// end search on S, did not find.
+template <class T0, class ... T, class SS>
+struct complement_list_<nil, tuple<T0, T ...>, SS>
+{
+    using type = cons<T0, complement_list<SS, tuple<T ...>>>;
+};
+// end search on S, found.
+template <class F, class ... S, class ... T, class SS>
+struct complement_list_<tuple<F, S ...>, tuple<F, T ...>, SS>
+{
+    using type = complement_list<SS, tuple<T ...>>;
+};
+// keep searching on S.
+template <class S0, class ... S, class T0, class ... T, class SS>
+struct complement_list_<tuple<S0, S ...>, tuple<T0, T ...>, SS>
+{
+    using type = complement_list<tuple<S ...>, tuple<T0, T ...>, SS>;
+};
+
+// Like complement_list, but assume that both lists are sorted.
+template <class S, class T> struct complement_sorted_list_ { using type = nil; };
+template <class S, class T> using complement_sorted_list = typename complement_sorted_list_<S, T>::type;
+template <class T> struct complement_sorted_list_<nil, T> { using type = T; };
+template <class F, class ... S, class ... T>
+struct complement_sorted_list_<tuple<F, S ...>, tuple<F, T ...>>
+{
+    using type = complement_sorted_list<tuple<S ...>, tuple<T ...>>;
+};
+template <class S0, class ... S, class T0, class ... T>
+struct complement_sorted_list_<tuple<S0, S ...>, tuple<T0, T ...>>
+{
+    static_assert(T0::value<=S0::value, "Bad lists for complement_sorted_list<>.");
+    using type = cons<T0, complement_sorted_list<tuple<S0, S ...>, tuple<T ...>>>;
+};
+
+// Like complement_list where the second argument is [0 .. end-1].
+template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
+
+// Prepend element to each of a list of lists.
+template <class c, class A> struct mapcons_;
+template <class c, class A> using mapcons = typename mapcons_<c, A>::type;
+template <class c, class ... A> struct mapcons_<c, tuple<A ...>> { using type = tuple<cons<c, A> ...>; };
+
+// Prepend list to each list in a list of lists.
+template <class c, class A> struct mapprepend_;
+template <class c, class A> using mapprepend = typename mapprepend_<c, A>::type;
+template <class c, class ... A> struct mapprepend_<c, tuple<A ...>> { using type = tuple<append<c, A> ...>; };
+
+// Form all lists by prepending an element of A to an element of B.
+template <class A, class B> struct prodappend_ { using type = nil; };
+template <class A, class B> using prodappend = typename prodappend_<A, B>::type;
+template <class A0, class ... A, class B> struct prodappend_<tuple<A0, A ...>, B> { using type = append<mapprepend<A0, B>, prodappend<tuple<A ...>, B>>; };
+
+// K-combinations of the N elements of list A.
+template <class A, int K> struct combs_;
+template <class A, int K> using combs = typename combs_<A, K>::type;
+template <class A> struct combs_<A, 0> { using type = tuple<nil>; };
+template <class A> struct combs_<A, len<A>> { using type = tuple<A>; };
+template <> struct combs_<nil, 0> { using type = tuple<nil>; };
+template <class A, int K>
+struct combs_
+{
+    static_assert(is_tuple<A> && K>=0);
+    using rest = drop1<A>;
+    using type = append<mapcons<first<A>, combs<rest, K-1>>, combs<rest, K>>;
+};
+
+template <class C, class R> struct permsign;
+template <int w, class C, class R> constexpr int permsignfound = permsign<append<take<C, w>, drop<C, w+1>>, drop1<R>>::value * ((w & 1) ? -1 : +1);
+template <class C, class R> constexpr int permsignfound<-1, C, R>  = 0;
+template <> struct permsign<nil, nil> { constexpr static int value = 1; };
+template <class C> struct permsign<C, nil> { constexpr static int value = 0; };
+template <class R> struct permsign<nil, R> { constexpr static int value = 0; };
+template <class C, class O> struct permsign { constexpr static int value = permsignfound<index<C, first<O>>::value, C, O>; };
+
+} // namespace ra::mp
 
 // FIMXE benchmark shows it's bad by default; probably requires optimizing also +=, etc.
 #ifndef RA_OPT_SMALLVECTOR
 #define RA_OPT_SMALLVECTOR 0
 #endif
+
+
+// ---------------------
+// ra:: proper
+// ---------------------
 
 namespace ra {
 
@@ -73,11 +311,6 @@ struct default_init_allocator: public A
 
 template <class T> using vector_default_init = std::vector<T, default_init_allocator<T>>;
 
-
-// ---------------------
-// concepts
-// ---------------------
-
 template <class A>
 concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
@@ -102,7 +335,7 @@ concept Slice = requires (A a)
 
 
 // --------------
-// type classification / introspection
+// type classification & introspection
 // --------------
 
 // FIXME https://wg21.link/p2841r0 ?
