@@ -2202,9 +2202,9 @@ See also @ref{x-explode,@code{explode}}.
 
 @cindex @code{concrete}
 @anchor{x-concrete} @defun concrete a
-Convert the argument to a container of the same shape as @var{a}.
+Convert the argument to a container or value type of the same shape as @var{a}.
 
-If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+If the argument has rt or ct shape, it is the same for the result. Expressions with ct rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 
 @c FIXME example
 

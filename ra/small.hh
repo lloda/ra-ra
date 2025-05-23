@@ -107,7 +107,7 @@ constexpr auto all = dots<1>;
 template <int n> struct insert_t { static_assert(n>=0); };
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
-template <class I> constexpr bool is_scalar_index = ra::is_zero_or_scalar<I>;
+template <class I> constexpr bool is_scalar_index = is_zero_or_scalar<I>;
 
 struct beatable_t
 {

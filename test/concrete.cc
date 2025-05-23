@@ -90,6 +90,15 @@ int main()
         cout << ra::start(c) << endl;
         tr.info(c.len(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
+    {
+        ra::Big<int, 1> a = {1, 2, 3};
+        auto b = ra::with_same_shape(a);
+        tr.test_eq(1, rank(b));
+        tr.test_eq(3, ra::size(b));
+        b = {3, 4, 5};
+        tr.test_eq(ra::start({1, 2, 3}), a);
+        tr.test_eq(ra::start({3, 4, 5}), b);
+    }
     tr.section("var size + fixed size");
     {
         ra::Small<int, 3, 2> a = {1, 2, 3, 4, 5, 6};
@@ -163,6 +172,14 @@ int main()
         auto b = ra::with_same_shape(a, 8);
         tr.test_eq(8, b);
         tr.test_eq(9, a);
+        b = 7;
+        tr.test_eq(7, b);
+        tr.test_eq(9, a);
+    }
+    tr.section("concrete on scalar");
+    {
+        int a = 9;
+        auto b = ra::with_same_shape(a);
         b = 7;
         tr.test_eq(7, b);
         tr.test_eq(9, a);

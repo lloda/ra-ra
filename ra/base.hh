@@ -49,6 +49,11 @@
 #define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
 #define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
 
+// FIMXE benchmark shows it's bad by default; probably requires optimizing also +=, etc.
+#ifndef RA_OPT_SMALLVECTOR
+#define RA_OPT_SMALLVECTOR 0
+#endif
+
 namespace ra {
 
 template <class T> constexpr bool is_constant = false;
@@ -58,14 +63,12 @@ template <bool V> using bool_c = std::integral_constant<bool, V>;
 template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
 template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
 
-} // namespace ra
-
 
 // ---------------------
 // tuple library
 // ---------------------
 
-namespace ra::mp {
+namespace mp {
 
 using std::tuple;
 using nil = tuple<>;
@@ -252,17 +255,10 @@ template <class C, class O> struct permsign { constexpr static int value = perms
 
 } // namespace ra::mp
 
-// FIMXE benchmark shows it's bad by default; probably requires optimizing also +=, etc.
-#ifndef RA_OPT_SMALLVECTOR
-#define RA_OPT_SMALLVECTOR 0
-#endif
-
 
 // ---------------------
 // ra:: proper
 // ---------------------
-
-namespace ra {
 
 constexpr int VERSION = 31;
 constexpr int ANY = -1944444444; // only static, meaning tbd at runtime

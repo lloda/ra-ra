@@ -31,7 +31,7 @@ constexpr char const * white = "\x1b[97m"; // AIXTERM
 constexpr char const * plain = "\x1b[39m";
 constexpr char const * reset = "\x1b[39m\x1b[0m"; // plain + unbold
 constexpr char const * pink = "\x1b[38;5;225m";
-} // namespace esc
+} // namespace ra::esc
 
 struct TestRecorder
 {

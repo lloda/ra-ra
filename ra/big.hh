@@ -472,7 +472,7 @@ template <class T, rank_t RANK=ANY> using Big = Container<vector_default_init<T>
 template <class T, rank_t RANK=ANY> using Unique = Container<std::unique_ptr<T []>, RANK>;
 template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>, RANK>;
 
-// Used in Guile wrappers to let parameter either borrow from Guile storage or convert into new array (eg 'f32 into 'f64).
+// In Guile wrappers to either borrow from Guile storage or convert into new array (eg 'f32 to 'f64).
 // TODO Can use unique_ptr's deleter for this?
 // TODO Shared/Unique should maybe have constructors with unique_ptr/shared_ptr args
 
@@ -489,63 +489,43 @@ shared_borrowing(ViewBig<T, RANK> & raw)
 
 
 // --------------------
-// concrete (container) type from expr. Scalars are their own concrete_type, even unregistered.
+// concrete type from expr, container if rank>0, else value type, even unregistered.
 // --------------------
 
-template <class E>
-struct concrete_type_ { using type = void; };
+template <class E> struct concrete_type_;
+
+template <class E> requires (0==rank_s<E>())
+struct concrete_type_<E> { using type = ncvalue_t<E>; };
 
 template <class E> requires (ANY==size_s<E>())
 struct concrete_type_<E> { using type = Big<ncvalue_t<E>, rank_s<E>()>; };
 
-template <class E> requires (ANY!=size_s<E>())
+template <class E> requires (0!=rank_s<E>() && ANY!=size_s<E>())
 struct concrete_type_<E> { using type = SmallArray<ncvalue_t<E>, ic_t<default_dims<shape_s<E>>>>; };
 
-template <class E>
-using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>) || is_scalar<E>, std::decay_t<E>,
-                                         typename concrete_type_<std::decay_t<decltype(start(std::declval<E>()))>>::type>;
+template <class E> using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>), std::decay_t<E>,
+                                                            typename concrete_type_<E>::type>;
 
-template <class E> constexpr auto concrete(E && e) { return concrete_type<E>(RA_FWD(e)); }
+template <class E> constexpr auto
+concrete(E && e) { return concrete_type<E>(RA_FWD(e)); }
 
-template <class E>
-constexpr auto
-with_same_shape(E && e)
-{
-    if constexpr (ANY!=size_s(e)) {
-        return concrete_type<E>();
-    } else {
-        return concrete_type<E>(ra::shape(e), none);
-    }
-}
+template <class E, class ... X> constexpr auto
+with_same_shape(E && e, X && ... x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FWD(x) ...); }
 
-template <class E, class X>
-constexpr auto
-with_same_shape(E && e, X && x)
-{
-    if constexpr (ANY!=size_s(e)) {
-        return concrete_type<E>(RA_FWD(x));
-    } else {
-        return concrete_type<E>(ra::shape(e), RA_FWD(x));
-    }
-}
+template <class E> constexpr auto
+with_same_shape(E && e) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), none); }
 
-template <class E, class S, class X>
-constexpr auto
-with_shape(S && s, X && x)
-{
-    if constexpr (ANY!=size_s<E>()) {
-        return concrete_type<E>(RA_FWD(x));
-    } else {
-        return concrete_type<E>(RA_FWD(s), RA_FWD(x));
-    }
-}
+template <class E, class X> constexpr auto
+with_same_shape(E && e, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), RA_FWD(x)); }
 
-template <class E, class S, class X>
-constexpr auto
-with_shape(std::initializer_list<S> && s, X && x)
-{
-    return with_shape<E>(start(s), RA_FWD(x));
-}
+template <class E, class S, class X> constexpr auto
+with_shape(S && s, X && x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FWD(x)); }
+
+template <class E, class S, class X> constexpr auto
+with_shape(S && s, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(RA_FWD(s), RA_FWD(x)); }
+
+template <class E, class S, class X> constexpr auto
+with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s), RA_FWD(x)); }
 
 
 // --------------------
