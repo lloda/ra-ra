@@ -34,7 +34,7 @@ int main()
                     .test_eq(ra::iota(s), A);
             };
             report("range for",
-                   bm.run([&] {
+                   bm.run([&]{
                        int i = 0;
                        for (auto & a: A) {
                            a = i;
@@ -42,11 +42,11 @@ int main()
                        }
                    }));
             report("ply undef",
-                   bm.run([&] {
+                   bm.run([&]{
                        A = ra::_0;
                    }));
             report("ply def",
-                   bm.run([&] {
+                   bm.run([&]{
                        A = ra::iota(s);
                    }));
         };
@@ -75,7 +75,7 @@ int main()
                     .test_eq(ra::iota(s), B);
             };
             report("range for",
-                   bm.run([&] {
+                   bm.run([&]{
                        int i = 0;
                        for (auto & a: A) {
                            a = i;

@@ -42,7 +42,7 @@ int main()
         };
 
         report("direct subscript",
-               bm.run([&] {
+               bm.run([&]{
                    int val = 0;
                    for (int i=0; i<O; ++i) {
                        val += C(dim_t(I(i, 0)), dim_t(I(i, 1))); // conversions needed when I has runtime rank
@@ -50,7 +50,7 @@ int main()
                    val0 = val;
                }));
         report("at member + loop",
-               bm.run([&] {
+               bm.run([&]{
                    int val = 0;
                    for (int i=0; i<O; ++i) {
                        val += C.at(I(i));
@@ -58,7 +58,7 @@ int main()
                    val0 = val;
                }));
         report("at op + iter",
-               bm.run([&] {
+               bm.run([&]{
                    val0 = sum(at(C, iter<1>(I)));
                }));
     };

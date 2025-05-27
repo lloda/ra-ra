@@ -109,8 +109,8 @@ int main()
     }
     tr.section("[ra35] - value");
     {
-        auto fun1 = [] { return std::array {7, 2}; };
-        auto fun2 = [] { return std::vector {5, 2}; };
+        auto fun1 = []{ return std::array {7, 2}; };
+        auto fun2 = []{ return std::vector {5, 2}; };
 
         tr.test_eq(ra::start({7, 2}), ra::ptr(fun1()));
         tr.test_eq(ra::start({5, 2}), ra::ptr(fun2()));

@@ -46,8 +46,8 @@ vec(V && v)
 
 int main()
 {
-    auto f1 = [] { return std::array {7, 2}; };
-    auto f2 = [] { return std::vector {5, 2}; };
+    auto f1 = []{ return std::array {7, 2}; };
+    auto f2 = []{ return std::vector {5, 2}; };
     auto v1 = vec(f1());
     auto v2 = vec(f2());
 

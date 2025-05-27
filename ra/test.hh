@@ -86,7 +86,7 @@ struct TestRecorder
     TestRecorder & expectfail(bool s=true) { willexpectfail = s; return *this; }
 
 #define RA_CURRENT_LOC std::source_location const loc = std::source_location::current()
-#define RA_LAZYINFO(...) [&] { return format(infos, (infos=="" ? "" : "; "), __VA_ARGS__); }
+#define RA_LAZYINFO(...) [&]{ return format(infos, (infos=="" ? "" : "; "), __VA_ARGS__); }
 
     void
     test(bool c, auto && info_full, auto && info_min, RA_CURRENT_LOC)
@@ -151,7 +151,7 @@ struct TestRecorder
     test_comp(auto && a, auto && b, auto && comp, char const * msg, RA_CURRENT_LOC)
     {
         if (willstrictshape
-            ? [&] {
+            ? [&]{
                 if constexpr (ra::rank_s(a)==ra::rank_s(b) || ra::rank_s(a)==ANY || ra::rank_s(b)==ANY) {
                     return ra::rank(a)==ra::rank(b) && every(ra::start(ra::shape(a))==ra::shape(b));
                 } else {

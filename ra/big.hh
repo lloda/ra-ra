@@ -644,7 +644,7 @@ transpose(ViewBig<T, RANK> const & view, ilist_t<I ...>)
     if constexpr (ANY==RANK) {
         RA_CHECK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
     } else {
-        static_assert(RANK==sizeof...(I), "Bad rank."); // c++26
+        static_assert(ANY==RANK || RANK==sizeof...(I), "Bad rank."); // c++26
     }
     constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
     constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s);

@@ -39,21 +39,21 @@ int main()
                     .test_eq(ra::iota(Isize)*Istep, B);
             };
             report("indexing on raw pointers",
-                   bm.run([&] {
+                   bm.run([&]{
                        for (int i=0; i<Isize; ++i) {
                            BB[i] = AA[II[i]];
                        }
                    }));
             report("vectorized selection",
-                   bm.run([&] {
+                   bm.run([&]{
                        B = A(I);
                    }));
             report("write out the indexing loop",
-                   bm.run([&] {
+                   bm.run([&]{
                        for_each([&A](auto & b, auto i) { b = A(i); }, B, I);
                    }));
             report("loop on scalar selection",
-                   bm.run([&]() {
+                   bm.run([&]{
                        for (int i=0; i<Isize; ++i) {
                            B(i) = A(I(i));
                        }
@@ -97,7 +97,7 @@ int main()
             };
 
             report("2D indexing on raw pointers",
-                   bm.run([&] {
+                   bm.run([&]{
                        for (int i=0; i<Isize; ++i) {
                            for (int j=0; j<Isize; ++j) {
                                BB[i*Isize + j] = AA[II[i]*Asize + II[j]];
@@ -105,7 +105,7 @@ int main()
                        }
                    }));
             report("vectorized selection",
-                   bm.run([&] {
+                   bm.run([&]{
                        B = A(I, I);
                    }));
         };
@@ -144,7 +144,7 @@ int main()
             };
 
             report("3D indexing on raw pointers",
-                   bm.run([&] {
+                   bm.run([&]{
                        for (int i=0; i<Isize; ++i) {
                            for (int j=0; j<Isize; ++j) {
                                for (int k=0; k<Isize; ++k) {
@@ -154,7 +154,7 @@ int main()
                        }
                    }));
             report("vectorized selection",
-                   bm.run([&] {
+                   bm.run([&]{
                        B = A(I, I, I);
                    }));
         };
@@ -184,7 +184,7 @@ int main()
             };
 
             report("3D indexing on raw pointers",
-                   bm.run([&] {
+                   bm.run([&]{
                        for (int i=0; i<Isize; ++i) {
                            for (int j=0; j<Isize; ++j) {
                                for (int k=0; k<Isize; ++k) {
@@ -196,11 +196,11 @@ int main()
                        }
                    }));
             report("vectorized selection",
-                   bm.run([&] {
+                   bm.run([&]{
                        B = A(I, I, I, I);
                    }));
             report("slice one axis at a time", // TODO one way A(i, i, i, i) could work
-                   bm.run([&] {
+                   bm.run([&]{
                        for (int i=0; i<Isize; ++i) {
                            for (int j=0; j<Isize; ++j) {
                                for (int k=0; k<Isize; ++k) {

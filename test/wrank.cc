@@ -319,7 +319,7 @@ int main()
     }
     tr.section("no arguments -> zero rank");
     {
-        int x = ra::from([] { return 3; });
+        int x = ra::from([]{ return 3; });
         tr.test_eq(3, x);
     }
     tr.section("counting ops");

@@ -171,20 +171,13 @@ struct Ptr final
     constexpr decltype(auto) operator*() const { return *i; }
     constexpr auto save() const { return i; }
     constexpr void load(I ii) { i = ii; }
-    constexpr void mov(dim_t d)
-    {
-        if constexpr (std::random_access_iterator<I>) {
-            i += d*s;
-        } else {
-            if (dim_t j=d*s; j>0) while (j>0) { ++i; --j; } else while (j<0) { --i; ++j; }
-        }
-    }
+    constexpr void mov(dim_t d) { std::ranges::advance(i, d*s); }
 };
 
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
-template <class S>
-consteval auto maybe_step()
+template <class S> consteval auto
+maybe_step()
 {
     if constexpr (std::is_integral_v<S>) {
         return S(1);
@@ -287,7 +280,7 @@ reverse(Iota<w, I, N, S> const & i, K k = {})
     static_assert(i.nn!=UNB && k>=0 && k<=w, "Bad arguments to reverse(iota).");
     if constexpr (k==w) {
         return ra::iota<w>(i.n, i.i+(i.n-1)*i.s,
-                           [&i]() { if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+                           [&i]{ if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
     } else {
         return i;
     }
@@ -393,7 +386,7 @@ template <Iterator ... P, int ... I>
 struct Match<std::tuple<P ...>, ilist_t<I ...>>
 {
     std::tuple<P ...> t;
-    constexpr static rank_t rs = [] { rank_t r=UNB; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
+    constexpr static rank_t rs = []{ rank_t r=UNB; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
 
     constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
 
