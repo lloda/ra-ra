@@ -546,16 +546,16 @@ struct findcomb
     constexpr static int sign = (where>=0) ? permsign<P, typename ii::type>::value : 0;
 };
 
-// Combination antiC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, antiC] has the sign of [0, 1, ... Dim-1].
+// Combination aC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, aC] has the sign of [0, 1, ... Dim-1].
 template <class C, int D>
 struct anticomb
 {
     using EC = complement<C, D>;
     static_assert((len<EC>)>=2, "can't correct this complement");
     constexpr static int sign = permsign<append<C, EC>, iota<D>>::value;
-// Produce permutation of opposite sign if sign<0.
-    using type = cons<std::tuple_element_t<(sign<0) ? 1 : 0, EC>,
-                      cons<std::tuple_element_t<(sign<0) ? 0 : 1, EC>,
+// produce permutation of opposite sign if sign<0.
+    using type = cons<ref<EC, (sign<0) ? 1 : 0>,
+                      cons<ref<EC, (sign<0) ? 0 : 1>,
                            drop<EC, 2>>>;
 };
 
@@ -582,6 +582,8 @@ struct choose_<D, O>
     using type = typename mapanticomb<choose<D, D-O>, D>::type;
 };
 
+} // namespace ra::mp
+
 // Up to (62 x) or (63 28) ~ 2^59 on 64 bit size_t.
 constexpr std::size_t
 binom(std::size_t n, std::size_t p)
@@ -603,11 +605,11 @@ struct Wedge
     constexpr static int Nb = binom(D, Ob);
     constexpr static int Nr = binom(D, Or);
 // in lexicographic order. Can be used to sort Ca below with FindPermutation.
-    using LexOrCa = combs<iota<D>, Oa>;
+    using LexOrCa = mp::combs<mp::iota<D>, Oa>;
 // the actual components used, which are in lex. order only in some cases.
-    using Ca = choose<D, Oa>;
-    using Cb = choose<D, Ob>;
-    using Cr = choose<D, Or>;
+    using Ca = mp::choose<D, Oa>;
+    using Cb = mp::choose<D, Ob>;
+    using Cr = mp::choose<D, Or>;
 // optimizations.
     constexpr static bool yields_expr = (Na>1) != (Nb>1);
     constexpr static bool yields_expr_a1 = yields_expr && Na==1;
@@ -617,42 +619,29 @@ struct Wedge
     constexpr static bool dot_minus = Na>1 && Nb>1 && Or==D && (Oa>Ob && ra::odd(Oa*Ob));
     constexpr static bool other = (Na>1 && Nb>1) && ((Oa+Ob!=D) || (Oa==Ob));
 
-    template <class Va, class Vb>
-    using valtype = decltype(std::declval<Va>()[0] * std::declval<Vb>()[0]);
-
     template <class Xr, class Fa, class Va, class Vb>
-    constexpr static valtype<Va, Vb>
-    term(Va const & a, Vb const & b)
+    constexpr static auto
+    term(Va const & a, Vb const & b) -> decltype(VALUE(a) * VALUE(b))
     {
-        if constexpr (0<len<Fa>) {
-            using Fa0 = first<Fa>;
-            using Fb = complement_list<Fa0, Xr>;
-            using Sa = findcomb<Fa0, Ca>;
-            using Sb = findcomb<Fb, Cb>;
-            constexpr int sign = Sa::sign * Sb::sign * permsign<append<Fa0, Fb>, Xr>::value;
-            static_assert(sign==+1 || sign==-1, "Bad sign in wedge term.");
-            return valtype<Va, Vb>(sign)*a[Sa::where]*b[Sb::where] + term<Xr, drop1<Fa>>(a, b);
+        if constexpr (0==mp::len<Fa>) {
+            return 0;
         } else {
-            return 0.;
+            using Fa0 = mp::first<Fa>;
+            using Fb = mp::complement_list<Fa0, Xr>;
+            using Sa = mp::findcomb<Fa0, Ca>;
+            using Sb = mp::findcomb<Fb, Cb>;
+            constexpr int sign = Sa::sign * Sb::sign * mp::permsign<mp::append<Fa0, Fb>, Xr>::value;
+            static_assert(sign==+1 || sign==-1, "Bad sign in wedge term.");
+            auto aw = [&a]{ if constexpr (is_scalar<Va>) { static_assert(0==Sa::where); return a; } else { return a[Sa::where]; } }();
+            auto bw = [&b]{ if constexpr (is_scalar<Vb>) { static_assert(0==Sb::where); return b; } else { return b[Sb::where]; } }();
+            return (decltype(aw)(sign))*aw*bw + term<Xr, mp::drop1<Fa>>(a, b);
         }
     }
-    template <class Va, class Vb, class Vr, int wr>
     constexpr static void
-    coeff(Va const & a, Vb const & b, Vr & r)
+    product(auto const & a, auto const & b, auto & r)
     {
-        if constexpr (wr<Nr) {
-            using Xr = ref<Cr, wr>;
-            using Fa = combs<Xr, Oa>;
-            r[wr] = term<Xr, Fa>(a, b);
-            coeff<Va, Vb, Vr, wr+1>(a, b, r);
-        }
-    }
-    template <class Va, class Vb, class Vr>
-    constexpr static void
-    product(Va const & a, Vb const & b, Vr & r)
-    {
-        static_assert(Va::size()==Na && Vb::size()==Nb && Vr::size()==Nr, "Bad dims.");
-        coeff<Va, Vb, Vr, 0>(a, b, r);
+        static_assert(ra::size(a)==Na && ra::size(b)==Nb && ra::size(r)==Nr, "Bad dims.");
+        [&]<class ... Xr>(std::tuple<Xr ...>) { r = { term<Xr, mp::combs<Xr, Oa>>(a, b) ... }; }(Cr{});
     }
 };
 
@@ -674,17 +663,17 @@ struct Hodge
     {
         static_assert(i<=W::Na, "Bad argument to hodge_aux");
         if constexpr (i<W::Na) {
-            using Cai = ref<Ca, i>;
-            static_assert(len<Cai> == O, "Bad.");
+            using Cai = mp::ref<Ca, i>;
+            static_assert(mp::len<Cai> == O);
 // sort Cai, because complement only accepts sorted combs.
 // ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
-            using SCai = ref<LexOrCa, findcomb<Cai, LexOrCa>::where>;
-            using CompCai = complement<SCai, D>;
-            static_assert(len<CompCai> == D-O, "Bad.");
-            using fpw = findcomb<CompCai, Cb>;
+            using SCai = mp::ref<LexOrCa, mp::findcomb<Cai, LexOrCa>::where>;
+            using CompCai = mp::complement<SCai, D>;
+            static_assert(D-O==mp::len<CompCai>);
+            using fpw = mp::findcomb<CompCai, Cb>;
 // for the sign see e.g. DoCarmo1991 I.Ex 10.
-            using fps = findcomb<append<Cai, ref<Cb, fpw::where>>, Cr>;
-            static_assert(fps::sign!=0, "Bad.");
+            using fps = mp::findcomb<mp::append<Cai, mp::ref<Cb, fpw::where>>, Cr>;
+            static_assert(0!=fps::sign);
             b[fpw::where] = decltype(a[i])(fps::sign)*a[i];
             hodge_aux<i+1>(a, b);
         }
@@ -698,13 +687,9 @@ template <int D, int O, class Va, class Vb>
 constexpr void
 hodgex(Va const & a, Vb & b)
 {
-    static_assert(O<=D, "bad orders");
-    static_assert(Va::size()==Hodge<D, O>::Na, "error");
-    static_assert(Vb::size()==Hodge<D, O>::Nb, "error");
+    static_assert(O<=D && ra::size(a)==Hodge<D, O>::Na && ra::size(b)==Hodge<D, O>::Nb);
     Hodge<D, O>::template hodge_aux<0>(a, b);
 }
-
-} // namespace ra::mp
 
 // hodgex() should always work, but this is cheaper.
 // However if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
@@ -716,11 +701,10 @@ constexpr void
 hodge(Va const & a, Vb & b)
 {
     if constexpr (trivial_hodge(D, O)) {
-        static_assert(Va::size()==mp::Hodge<D, O>::Na, "error");
-        static_assert(Vb::size()==mp::Hodge<D, O>::Nb, "error");
+        static_assert(ra::size(a)==Hodge<D, O>::Na && ra::size(b)==Hodge<D, O>::Nb);
         b = a;
     } else {
-        ra::mp::hodgex<D, O>(a, b);
+        hodgex<D, O>(a, b);
     }
 }
 
@@ -728,7 +712,7 @@ template <int D, int O, class Va> requires (trivial_hodge(D, O))
 constexpr Va const &
 hodge(Va const & a)
 {
-    static_assert(Va::size()==mp::Hodge<D, O>::Na, "error");
+    static_assert(ra::size(a)==Hodge<D, O>::Na, "error");
     return a;
 }
 
@@ -737,66 +721,32 @@ constexpr Va &
 hodge(Va & a)
 {
     Va b(a);
-    ra::mp::hodgex<D, O>(b, a);
+    hodgex<D, O>(b, a);
     return a;
 }
 
-template <int D, int Oa, int Ob, class A, class B> requires (is_scalar<A> && is_scalar<B>)
+// FIXME concrete() isn't needed if a/b are already views.
+template <int D, int Oa, int Ob, class Va, class Vb, class Vr>
+constexpr void
+wedge(Va const & a, Vb const & b, Vr & r) { Wedge<D, Oa, Ob>::product(concrete(a), concrete(b), r); }
+
+template <int D, int Oa, int Ob, class Va, class Vb>
 constexpr auto
-wedge(A const & a, B const & b) { return a*b; }
-
-template <class A>
-using torank1 = std::conditional_t<is_scalar<A>, Small<std::decay_t<A>, 1>, A>;
-
-template <int D, int Oa, int Ob, class Va, class Vb> requires (!(is_scalar<Va> && is_scalar<Vb>))
-decltype(auto)
 wedge(Va const & a, Vb const & b)
 {
-    Small<ncvalue_t<Va>, size_s(a)> aa = a;
-    Small<ncvalue_t<Vb>, size_s(b)> bb = b;
-    using Ua = decltype(aa);
-    using Ub = decltype(bb);
-    using Wedge = mp::Wedge<D, Oa, Ob>;
-    using valtype = typename Wedge::template valtype<Ua, Ub>;
-    std::conditional_t<Wedge::Nr==1, valtype, Small<valtype, Wedge::Nr>> r;
-    auto & a1 = reinterpret_cast<torank1<Ua> const &>(aa);
-    auto & b1 = reinterpret_cast<torank1<Ub> const &>(bb);
-    auto & r1 = reinterpret_cast<torank1<decltype(r)> &>(r);
-    mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
-    return r;
-}
-
-template <int D, int Oa, int Ob, class Va, class Vb, class Vr> requires (!(is_scalar<Va> && is_scalar<Vb>))
-void
-wedge(Va const & a, Vb const & b, Vr & r)
-{
-    Small<ncvalue_t<Va>, size_s(a)> aa = a;
-    Small<ncvalue_t<Vb>, size_s(b)> bb = b;
-    using Ua = decltype(aa);
-    using Ub = decltype(bb);
-    auto & r1 = reinterpret_cast<torank1<decltype(r)> &>(r);
-    auto & a1 = reinterpret_cast<torank1<Ua> const &>(aa);
-    auto & b1 = reinterpret_cast<torank1<Ub> const &>(bb);
-    mp::Wedge<D, Oa, Ob>::product(a1, b1, r1);
-}
-
-template <class A, class B>
-constexpr auto
-cross(A const & a_, B const & b_)
-{
-    constexpr int n = size_s(a_);
-    static_assert(n==size_s(b_) && (2==n || 3==n));
-    Small<std::decay_t<decltype(VALUE(a_))>, n> a = a_;
-    Small<std::decay_t<decltype(VALUE(b_))>, n> b = b_;
-    using W = mp::Wedge<n, 1, 1>;
-    Small<std::decay_t<decltype(VALUE(a_) * VALUE(b_))>, W::Nr> r;
-    W::product(a, b, r);
-    if constexpr (1==W::Nr) {
-        return r[0];
+    if constexpr (is_scalar<Va> && is_scalar<Vb>) {
+        return a*b;
     } else {
+        constexpr int Nr = Wedge<D, Oa, Ob>::Nr;
+        using valtype = decltype(VALUE(a) * VALUE(b));
+        std::conditional_t<Nr==1, valtype, Small<valtype, Nr>> r;
+        wedge<D, Oa, Ob>(a, b, r);
         return r;
     }
 }
+
+constexpr auto
+cross(auto const & a, auto const & b) { return wedge<size_s(a), 1, 1>(a, b); }
 
 template <class V>
 constexpr auto

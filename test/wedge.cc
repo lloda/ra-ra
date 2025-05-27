@@ -12,7 +12,7 @@
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
-using ra::mp::Wedge, ra::mp::hodgex, ra::ilist_t;
+using ra::Wedge, ra::hodgex, ra::ilist_t;
 
 using real = double;
 using complex = std::complex<double>;
@@ -136,12 +136,12 @@ main()
 {
     TestRecorder tr(std::cout);
 
-    static_assert(ra::mp::binom(0, 0)==1, "");
+    static_assert(ra::binom(0, 0)==1, "");
     if constexpr (sizeof(size_t)>=4) {
-        tr.test_eq(size_t(265182525), ra::mp::binom(31, 14));
+        tr.test_eq(size_t(265182525), ra::binom(31, 14));
     }
     if constexpr (sizeof(size_t)>=8) {
-        tr.test_eq(size_t(629308289804197437), ra::mp::binom(63, 28));
+        tr.test_eq(size_t(629308289804197437), ra::binom(63, 28));
     }
     tr.section("Testing findcomb I");
     {
