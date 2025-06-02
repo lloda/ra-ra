@@ -71,10 +71,8 @@ int main(int argc, char *argv[])
     ra::Big<double, 2> v({N+1, N+1}, 0.), u({N+1, N+1}, 0.), w({N+1, N+1}, 0.), b({N+1, N+1}, 0.);
     auto i = ra::iota(N-1, 1);
     auto j = ra::iota(N-1, 1);
-    auto ih = ra::iota(N-1, h, h);
-    auto jh = ra::iota(N-1, h, h);
-    v(i, j) = from(g, ih, jh);
-    w(i, j) = from(f, ih, jh);
+    v(i, j) = from(g, i*h, j*h);
+    w(i, j) = from(f, i*h, j*h);
 
     StiffMat sm { h };
     MassMat mm { h };

@@ -153,10 +153,10 @@ struct Ptr final
     I i;
     [[no_unique_address]] N const n = {};
     [[no_unique_address]] S const s = {};
-
     constexpr Ptr(I i, N n, S s): i(i), n(n), s(s) {}
     RA_ASSIGNOPS_SELF(Ptr)
     RA_ASSIGNOPS_DEFAULT_SET
+
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
@@ -222,11 +222,11 @@ struct Iota final
     constexpr static dim_t nn = maybe_any<N>;
     static_assert(nn==ANY || nn>=0 || nn==UNB);
     constexpr static bool constant = is_constant<N> && is_constant<S>;
+    static_assert(is_constant<S> || has_len<S> || std::is_integral_v<S>);
 
-    I i = {};
+    I i;
     [[no_unique_address]] N const n = {};
     [[no_unique_address]] S const s = {};
-
     constexpr static S gets() requires (is_constant<S>) { return S {}; }
     constexpr I gets() const requires (!is_constant<S>) { return s; }
 

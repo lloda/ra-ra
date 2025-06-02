@@ -129,8 +129,7 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e); }
 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
-// TODO maybe don't opt iota(int)*real -> iota(real) since a+a+... != n*a
-template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_arithmetic_v<ncvalue_t<X>>;
+template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_integral_v<ncvalue_t<X>>;
 
 // TODO something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)

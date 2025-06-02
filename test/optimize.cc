@@ -90,8 +90,6 @@ int main()
                 tr.test_eq(org+1, k2.i);
                 tr.test_eq(org+1, k3.i);
                 tr.test_eq(org+1, k4.i);
-                tr.test_eq(org+1.5, k5.i);
-                tr.test_eq(org-0.5, k6.i);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), j);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k1);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k2);
