@@ -161,9 +161,11 @@ struct Ptr final
     constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
-    constexpr static dim_t step(int k) { return k==0 ? 1 : 0; }
+    constexpr static dim_t step(int k) requires (is_constant<S>) { return k==0 ? S {} : 0; }
+    constexpr dim_t step(int k) const requires (!is_constant<S>) { return k==0 ? s : 0; }
+    constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
+    constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
         RA_CHECK(UNB==nn || inside(j[0], n), "Bad index ", j[0], " for len[", 0, "]=", n, ".");
@@ -172,7 +174,7 @@ struct Ptr final
     constexpr decltype(auto) operator*() const { return *i; }
     constexpr auto save() const { return i; }
     constexpr void load(I ii) { i = ii; }
-    constexpr void mov(dim_t d) { std::ranges::advance(i, d*s); }
+    constexpr void mov(dim_t d) { std::ranges::advance(i, d); }
 };
 
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
@@ -234,9 +236,11 @@ struct Iota final
     constexpr static dim_t len_s(int k) { return k==w ? nn : UNB; } // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : UNB; }
-    constexpr static dim_t step(rank_t k) { return k==w ? 1 : 0; }
+    constexpr static dim_t step(int k) requires (is_constant<S>) { return k==w ? S {} : 0; }
+    constexpr dim_t step(int k) const requires (!is_constant<S>) { return k==w ? s : 0; }
+    constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
+    constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
     constexpr auto at(auto && j) const
     {
         RA_CHECK(UNB==nn || inside(j[w], n), "Bad index ", j[w], " for len[", w, "]=", n, ".");
@@ -245,7 +249,7 @@ struct Iota final
     constexpr I operator*() const { return i; }
     constexpr I save() const { return i; }
     constexpr void load(I ii) { i = ii; }
-    constexpr void mov(dim_t d) { i += I(d*s); }
+    constexpr void mov(dim_t d) { i += I(d); }
 };
 
 template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
