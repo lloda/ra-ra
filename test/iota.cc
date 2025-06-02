@@ -101,5 +101,12 @@ int main()
         auto i = ra::iota(5, 3, -2);
         tr.strictshape().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
     }
+    tr.section("in real expressions I");
+    {
+        int n = 20;
+        auto z = concrete(ra::iota(n)*0.5);
+        std::vector<double> t(n); for (int i=0; i<n; ++i) { t[i] = i*0.5; };
+        tr.strictshape().test_eq(t, z);
+    }
     return tr.summary();
 }
