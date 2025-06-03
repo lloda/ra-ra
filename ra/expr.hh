@@ -139,37 +139,66 @@ scalar(C && c) { return Scalar<C> { RA_FWD(c) }; }
 template <class N> constexpr int
 maybe_any = []{ if constexpr (is_constant<N>) { return N::value; } else { return ANY; } }();
 
-// Iterator for foreign rank 1 objects.
-// FIXME Absorb Iota. Then replace with ViewBig/ViewSmall.
-template <std::bidirectional_iterator I, class N, class S>
+template <class I>
+struct Seq
+{
+    I i;
+    static_assert(has_len<I> || std::is_arithmetic_v<I>); // hmm
+    using difference_type = dim_t;
+    using value_type = I;
+    constexpr I operator*() const { return i; }
+    constexpr I operator[](dim_t d) const { return i+I(d); }
+    constexpr decltype(auto) operator++() { ++i; return *this; }
+    constexpr decltype(auto) operator--() { --i; return *this; }
+    constexpr auto operator-(Seq const & j) const { return i-j.i; }
+    constexpr auto operator+(dim_t d) const { return Seq{i+I(d)}; }
+    constexpr auto operator-(dim_t d) const { return Seq{i-I(d)}; }
+    constexpr friend auto operator+(dim_t d, Seq const & j) { return Seq{I(d)+j.i}; }
+    constexpr auto operator++(int) { return Seq{i++}; }
+    constexpr auto operator--(int) { return Seq{i--}; }
+    constexpr decltype(auto) operator+=(dim_t d) { i+=I(d); return *this; }
+    constexpr decltype(auto) operator-=(dim_t d) { i-=I(d); return *this; }
+    constexpr auto operator<=>(Seq const & j) const { return i<=>j.i; }
+    constexpr bool operator==(Seq const & j) const = default;
+};
+
+// Iterator for foreign rank 1 objects. FIXME replace with ViewBig/ViewSmall.
+template <int w, class I, class N, class S>
 struct Ptr final
 {
-    static_assert(is_constant<N> || 0==rank_s<N>());
-    static_assert(is_constant<S> || 0==rank_s<S>());
+    static_assert(has_len<N> || is_constant<N> || std::is_integral_v<N>);
+    static_assert(has_len<S> || is_constant<S> || std::is_integral_v<S>);
+    static_assert(has_len<I> || std::bidirectional_iterator<I>);
     constexpr static dim_t nn = maybe_any<N>;
-    static_assert(nn==ANY || nn>=0 || nn==UNB);
     constexpr static bool constant = is_constant<N> && is_constant<S>;
 
     I i;
     [[no_unique_address]] N const n = {};
     [[no_unique_address]] S const s = {};
-    constexpr Ptr(I i, N n, S s): i(i), n(n), s(s) {}
+    constexpr static S gets() requires (is_constant<S>) { return S {}; }
+    constexpr I gets() const requires (!is_constant<S>) { return s; }
+
+    constexpr Ptr(I i, N n, S s): i(i), n(n), s(s)
+    {
+        static_assert(ANY==nn || 0<=nn || UNB==nn);
+        if constexpr (std::is_integral_v<N>) { RA_CHECK(n>=0, "Bad Ptr length ", n, "."); }
+    }
     RA_ASSIGNOPS_SELF(Ptr)
     RA_ASSIGNOPS_DEFAULT_SET
 
-    consteval static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { return nn; } // len(k==0) or step(k>=0)
+    consteval static rank_t rank() { return w+1; }
+    constexpr static dim_t len_s(int k) { return k==w ? nn : UNB; } // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
-    constexpr static dim_t step(int k) requires (is_constant<S>) { return k==0 ? S {} : 0; }
-    constexpr dim_t step(int k) const requires (!is_constant<S>) { return k==0 ? s : 0; }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : UNB; }
+    constexpr static dim_t step(int k) requires (is_constant<S>) { return k==w ? S {} : 0; }
+    constexpr dim_t step(int k) const requires (!is_constant<S>) { return k==w ? s : 0; }
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
-        RA_CHECK(UNB==nn || inside(j[0], n), "Bad index ", j[0], " for len[", 0, "]=", n, ".");
-        return i[j[0]*s];
+        RA_CHECK(UNB==nn || inside(j[w], n), "Bad index ", j[w], " for len[", w, "]=", n, ".");
+        return i[j[w]*s];
     }
     constexpr decltype(auto) operator*() const { return *i; }
     constexpr auto save() const { return i; }
@@ -190,7 +219,7 @@ maybe_step()
     }
 }
 
-template <class I, class N=dim_c<UNB>, class S=dim_c<1>>
+template <int w=0, class I, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
 ptr(I && i, N && n = N {}, S && s = maybe_step<S>())
 {
@@ -198,68 +227,21 @@ ptr(I && i, N && n = N {}, S && s = maybe_step<S>())
         static_assert(std::is_same_v<dim_c<UNB>, N>, "Object has own length.");
         static_assert(std::is_same_v<dim_c<1>, S>, "No step with deduced size.");
         if constexpr (ANY==size_s(i)) {
-            return ptr(std::begin(RA_FWD(i)), std::ssize(i), RA_FWD(s));
+            return ptr<w>(std::begin(RA_FWD(i)), std::ssize(i), RA_FWD(s));
         } else {
-            return ptr(std::begin(RA_FWD(i)), ic<size_s(i)>, RA_FWD(s));
+            return ptr<w>(std::begin(RA_FWD(i)), ic<size_s(i)>, RA_FWD(s));
         }
-    } else if constexpr (std::bidirectional_iterator<std::decay_t<I>>) {
-        if constexpr (std::is_integral_v<N>) {
-            RA_CHECK(n>=0, "Bad ptr length ", n, ".");
-        }
-        return Ptr<std::decay_t<I>, sarg<N>, sarg<S>> { i, RA_FWD(n), RA_FWD(s) };
     } else {
-        static_assert(false, "Bad type for ptr().");
+        static_assert(std::bidirectional_iterator<std::decay_t<I>>, "Bad type for ptr().");
+        return Ptr<w, std::decay_t<I>, sarg<N>, sarg<S>> { i, RA_FWD(n), RA_FWD(s) };
     }
 }
-
-// Sequence and its Iterator. Iota parameters can be expressions, but they must all have rank 0.
-// FIXME w is a custom Reframe mechanism. Generalize/unify.
-// FIXME Can't represent a ct origin bc Iterator interface takes up i. Sequence should be its own type.
-template <int w, class I, class N, class S>
-struct Iota final
-{
-    static_assert(w>=0);
-    static_assert(is_constant<S> || 0==rank_s<S>());
-    static_assert(is_constant<N> || 0==rank_s<N>());
-    constexpr static dim_t nn = maybe_any<N>;
-    static_assert(nn==ANY || nn>=0 || nn==UNB);
-    constexpr static bool constant = is_constant<N> && is_constant<S>;
-    static_assert(is_constant<S> || has_len<S> || std::is_integral_v<S>);
-
-    I i;
-    [[no_unique_address]] N const n = {};
-    [[no_unique_address]] S const s = {};
-    constexpr static S gets() requires (is_constant<S>) { return S {}; }
-    constexpr I gets() const requires (!is_constant<S>) { return s; }
-
-    consteval static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { return k==w ? nn : UNB; } // len(0<=k<=w) or step(0<=k)
-    constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : UNB; }
-    constexpr static dim_t step(int k) requires (is_constant<S>) { return k==w ? S {} : 0; }
-    constexpr dim_t step(int k) const requires (!is_constant<S>) { return k==w ? s : 0; }
-    constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
-    constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr auto at(auto && j) const
-    {
-        RA_CHECK(UNB==nn || inside(j[w], n), "Bad index ", j[w], " for len[", w, "]=", n, ".");
-        return i + I(j[w]*s);
-    }
-    constexpr I operator*() const { return i; }
-    constexpr I save() const { return i; }
-    constexpr void load(I ii) { i = ii; }
-    constexpr void mov(dim_t d) { i += I(d); }
-};
 
 template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
 iota(N && n = N {}, I && i = 0, S && s = maybe_step<S>())
 {
-    if constexpr (std::is_integral_v<N>) {
-        RA_CHECK(n>=0, "Bad iota length ", n, ".");
-    }
-    return Iota<w, sarg<I>, sarg<N>, sarg<S>> { RA_FWD(i), RA_FWD(n), RA_FWD(s) };
+    return Ptr<w, Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FWD(i)}, RA_FWD(n), RA_FWD(s) };
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
@@ -268,24 +250,24 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 
 template <class A> concept is_iota = requires (A a)
 {
-    []<class I, class N, class S>(Iota<0, I, N, S> const &){}(a);
+    []<class I, class N, class S>(Ptr<0, Seq<I>, N, S> const &){}(a);
     requires UNB!=a.nn; // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
 };
 
 constexpr bool
 inside(is_iota auto const & i, dim_t l)
 {
-    return (inside(i.i, l) && inside(i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
+    return (inside(i.i.i, l) && inside(i.i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
 template <int w, class I, class N, class S, class K=dim_c<0>>
 constexpr auto
-reverse(Iota<w, I, N, S> const & i, K k = {})
+reverse(Ptr<w, Seq<I>, N, S> const & i, K k = {})
 {
     static_assert(i.nn!=UNB && k>=0 && k<=w, "Bad arguments to reverse(iota).");
     if constexpr (k==w) {
-        return ra::iota<w>(i.n, i.i+(i.n-1)*i.s,
-                           [&i]{ if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+        return iota<w>(i.n, i.i.i+(i.n-1)*i.s,
+                       [&i]{ if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
     } else {
         return i;
     }

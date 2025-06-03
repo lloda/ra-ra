@@ -7,8 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// Regression test for a bug with > 2 non-beatable selectors. The bug was due to
-// bad assumptions in ra::Iota::adv() and ra::Ptr::adv().
+// Regression test for a bug with > 2 non-beatable selectors, due to bad assumptions in ra::Ptr::adv().
 
 #include "ra/test.hh"
 
@@ -27,7 +26,7 @@ int main()
 
 // beatable.
     auto i = ra::iota(2, 1);
-// making unbeatable on purpose, but still depends on Iota's internal counter.
+// making unbeatable on purpose, but still depends on iota's internal counter.
     auto j = ra::map([](int i) { return i; }, i);
 // naturally unbeatable.
     ra::Small<int, 2> k { 1, 2 };

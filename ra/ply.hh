@@ -65,24 +65,23 @@ struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
 };
 
 // final iota/ptr types must be either is_constant or is_scalar.
-
-template <int w, class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
-struct WLen<Iota<w, I, N, S>>
+template <class I> requires (has_len<I>)
+struct WLen<Seq<I>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return iota<w>(VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).i)), VALUE(wlen(ln, RA_FWD(e).s)));
+        return Seq { VALUE(wlen(ln, RA_FWD(e).i)) };
     }
 };
 
-template <class I, class N, class S> requires (has_len<N> || has_len<S>)
-struct WLen<Ptr<I, N, S>>
+template <int w, class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
+struct WLen<Ptr<w, I, N, S>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return ptr(RA_FWD(e).i, VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s)));
+        return ptr<w>(wlen(ln, RA_FWD(e).i), VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s)));
     }
 };
 

@@ -69,7 +69,7 @@ int main()
     }
     tr.section("deduced types");
     {
-        tr.test(std::is_same_v<double, decltype(ra::iota(5, double(4)).i)>);
+        tr.test(std::is_same_v<char, decltype(ra::iota(5, char(4)).i.i)>);
     }
     tr.section("ra::iota with static members");
     {

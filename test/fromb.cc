@@ -108,13 +108,13 @@ int main()
             tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data()));
         }
     }
-    tr.section("Iota<T> is beatable for any integral T");
+    tr.section("iota<T> is beatable for any integral T");
     {
         Ureal<2> a({4, 4}, 0.);
         auto test = [&](auto org)
         {
             auto i = ra::iota(2, org);
-            static_assert(std::is_same_v<decltype(i.i), decltype(org)>);
+            static_assert(std::is_same_v<decltype(i.i.i), decltype(org)>);
             auto b = a(i);
             tr.test_eq(2, b.dimv[0].len);
             tr.test_eq(4, b.dimv[1].len);

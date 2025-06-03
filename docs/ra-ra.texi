@@ -1994,7 +1994,7 @@ These are array types that own their data in one way or another.
 
 These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently.
 
-@item @b{Iterator} --- @code{CellBig}, @code{CellSmall}, @code{Iota}, @code{Ptr}, @code{Scalar}, @code{Map}, @code{Pick}
+@item @b{Iterator} --- @code{CellBig}, @code{CellSmall}, @code{Ptr}, @code{Scalar}, @code{Map}, @code{Pick}
 
 This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
 

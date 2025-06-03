@@ -134,44 +134,44 @@ template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_integra
 // TODO something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
 
-// FIXME gets() vs p2781r2
+// FIXME iota.gets() vs p2781r2
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
 
 template <is_iota I, iota_op J>
 constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(0).n, ITEM(0).i+ITEM(1), ITEM(0).s); }
+{ return ra::iota(ITEM(0).n, ITEM(0).i.i+ITEM(1), ITEM(0).s); }
 
 template <iota_op I, is_iota J>
 constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i, ITEM(1).s); }
+{ return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i.i, ITEM(1).s); }
 
 template <is_iota I, is_iota J>
 constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e), ITEM(0).i+ITEM(1).i, ITEM(0).s+ITEM(1).s); }
+{ return ra::iota(maybe_len(e), ITEM(0).i.i+ITEM(1).i.i, ITEM(0).s+ITEM(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(0).n, ITEM(0).i-ITEM(1), ITEM(0).s); }
+{ return ra::iota(ITEM(0).n, ITEM(0).i.i-ITEM(1), ITEM(0).s); }
 
 template <iota_op I, is_iota J>
 constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i, -ITEM(1).s); }
+{ return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i.i, -ITEM(1).s); }
 
 template <is_iota I, is_iota J>
 constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e), ITEM(0).i-ITEM(1).i, ITEM(0).s-ITEM(1).s); }
+{ return ra::iota(maybe_len(e), ITEM(0).i.i-ITEM(1).i.i, ITEM(0).s-ITEM(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(0).n, ITEM(0).i*ITEM(1), ITEM(0).s*ITEM(1)); }
+{ return ra::iota(ITEM(0).n, ITEM(0).i.i*ITEM(1), ITEM(0).s*ITEM(1)); }
 
 template <iota_op I, is_iota J>
 constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i, ITEM(0)*ITEM(1).s); }
+{ return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i.i, ITEM(0)*ITEM(1).s); }
 
 template <is_iota I>
 constexpr auto optimize(Map<std::negate<>, std::tuple<I>> && e)
-{ return ra::iota(ITEM(0).n, -ITEM(0).i, -ITEM(0).s); }
+{ return ra::iota(ITEM(0).n, -ITEM(0).i.i, -ITEM(0).s); }
 
 #if RA_OPT_SMALLVECTOR==1
 template <class T, dim_t N, class A> constexpr bool match_small =

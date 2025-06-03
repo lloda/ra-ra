@@ -2039,7 +2039,7 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 
 <p>These are array views into data in memory, which may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s into memory that has been allocated independently.
 </p>
-</li><li> <b>Iterator</b> &mdash; <code>CellBig</code>, <code>CellSmall</code>, <code>Iota</code>, <code>Ptr</code>, <code>Scalar</code>, <code>Map</code>, <code>Pick</code>
+</li><li> <b>Iterator</b> &mdash; <code>CellBig</code>, <code>CellSmall</code>, <code>Ptr</code>, <code>Scalar</code>, <code>Map</code>, <code>Pick</code>
 
 <p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>start</code>. This is done automatically when those types are used in array expressions.
 </p>
@@ -2273,9 +2273,9 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <span id="index-concrete"></span>
 <span id="x_002dconcrete"></span><dl class="def">
 <dt id="index-concrete-1"><span class="category">Function: </span><span><strong>concrete</strong> <em>a</em><a href='#index-concrete-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Convert the argument to a container of the same shape as <var>a</var>.
+<dd><p>Convert the argument to a container or value type of the same shape as <var>a</var>.
 </p>
-<p>If the argument has rt or ct shape, it is the same for the result. The main use of this function is to obtain modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+<p>If the argument has rt or ct shape, it is the same for the result. Expressions with ct rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 </p>
 
 </dd></dl>

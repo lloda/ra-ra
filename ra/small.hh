@@ -233,7 +233,8 @@ struct CellSmall
     ViewSmall<T, ic_t<vdrop<dimv, framer>>> c;
 
     consteval static rank_t rank() { return framer; }
-    constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
+// assert or diagnostic warning "-Warray-bounds" needed with gcc14.3/15.1 -O3 (but not -O<3)
+    constexpr static dim_t len(int k) { assert(inside(k, framer)); return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
 
@@ -428,8 +429,8 @@ struct ViewSmall: public SmallBase<T, Dimv>
     select(is_iota auto const & i)
     {
         static_assert((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) <= len(k), "Bad index.");
-        RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
-        return 0==i.n ? 0 : step(k)*i.i;
+        RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
+        return 0==i.n ? 0 : step(k)*i.i.i;
     }
     template <int k, int n>
     constexpr static dim_t

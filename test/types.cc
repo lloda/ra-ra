@@ -18,36 +18,6 @@
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using ra::ilist_t, ra::mp::nil;
 
-namespace ra {
-
-// FIXME make Iota<I> be Ptr<Seq<I>>, also use Seq<I> as P in View<P>.
-// FIXME maybe real step isn't worth it, we can always do k*iota.
-// Some problems to be solved for Iota<expr(len)>.
-template <class I>
-struct Seq
-{
-    I i;
-    using difference_type = dim_t;
-    using value_type = dim_t;
-    constexpr I operator*() const { return i; }
-    constexpr I operator[](dim_t d) const { return i+I(d); }
-    constexpr decltype(auto) operator++() { ++i; return *this; }
-    constexpr decltype(auto) operator--() { --i; return *this; }
-    constexpr auto operator-(Seq const & j) const { return i-j.i; }
-    constexpr auto operator+(dim_t d) const { return Seq{i+I(d)}; }
-    constexpr auto operator-(dim_t d) const { return Seq{i-I(d)}; }
-    constexpr friend auto operator+(dim_t d, Seq const & j) { return Seq{I(d)+j.i}; }
-    constexpr friend auto operator-(dim_t d, Seq const & j) { return Seq{I(d)+j.i}; }
-    constexpr auto operator++(int) { return Seq{i++}; }
-    constexpr auto operator--(int) { return Seq{i--}; }
-    constexpr decltype(auto) operator+=(dim_t d) { i+=I(d); return *this; }
-    constexpr decltype(auto) operator-=(dim_t d) { i-=I(d); return *this; }
-    constexpr auto operator<=>(Seq const & j) const { return i<=>j.i; }
-    constexpr bool operator==(Seq const & j) const = default;
-};
-
-} // namespace ra::
-
 template <class A>
 void
 test_predicates(char const * type, TestRecorder & tr,
@@ -247,7 +217,8 @@ int main()
     tr.section("compatibility");
     {
         static_assert(std::input_iterator<decltype(ra::Big<int, 2> {{1,2},{3,4}}.begin())>);
-        static_assert(std::is_aggregate_v<ra::Iota<0, ra::dim_t, ra::dim_t, ra::dim_t>>);
+// would be if (unusable) Ptr::operator= and constructor were removed
+        // static_assert(std::is_aggregate_v<ra::Ptr<0, Seq<ra::dim_t>, ra::dim_t, ra::dim_t>>);
         static_assert(std::random_access_iterator<ra::Seq<ra::dim_t>>);
         cout << ra::ptr(ra::Seq{0}, 10) << endl;
         cout << ra::ptr(ra::Seq{3.}, 8) << endl;

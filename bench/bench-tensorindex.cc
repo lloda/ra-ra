@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/bench - Iota used as Blitz++'s TensorIndex.
+// ra-ra/bench - iota used as Blitz++'s TensorIndex.
 
 // (c) Daniel Llorens - 2019-2020
 // This library is free software; you can redistribute it and/or modify it under
@@ -15,8 +15,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 int main()
 {
     TestRecorder tr;
-
-    // rank 1
+// rank 1
     {
         ra::Big<int, 1> a = {0, 0, 0};
         ra::ply(map([](auto && i) { std::cout << "i: " << i << std::endl; },
@@ -24,7 +23,7 @@ int main()
         ra::ply_ravel(map([](auto && i) { std::cout << "i: " << i << std::endl; },
                           a+ra::iota<0>()));
     }
-    // rank 2
+// rank 2
     {
         ra::Big<int, 2> a = {{0, 0, 0}, {0, 0, 0}};
         ra::ply(map([](auto && i, auto && j) { std::cout << "i: " << i << ", " << j << std::endl; },
@@ -32,7 +31,7 @@ int main()
         ra::ply_ravel(map([](auto && i, auto && j) { std::cout << "i: " << i << ", " << j << std::endl; },
                           a+ra::iota<0>(), a+ra::iota<1>()));
     }
-    // benchmark
+// benchmark
     auto taking_view =
         [](TestRecorder & tr, auto && a)
         {

@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ek/box - Can I do View<Iota>, what does it look like?
+// ek/box - Can I do View<iota>, what does it look like?
 
 // (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under

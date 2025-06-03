@@ -194,8 +194,8 @@ int main()
         cout << ra::rank_s<ra::mp::ref<decltype(ra::_1)>>() << endl;
         // b = a(ra::_1, ra::_0);
     }
-// Small(Iota) isn't beaten because the the output type cannot depend on argument values. So we treat it as a common expr.
-    tr.section("ra::Small(Iota)");
+// Small(iota) isn't beaten because the the output type cannot depend on argument values. So we treat it as a common expr.
+    tr.section("ra::Small(iota)");
     {
         ra::Small<real, 4> a = ra::_0;
         tr.test_eq(a(ra::iota(2, 1)), Ureal<1> { 1, 2 });
