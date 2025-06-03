@@ -360,8 +360,7 @@ struct nested_arg<T, Dimv>
     using sub = std::conditional_t<0==sn, T, SmallArray<T, ic_t<default_dims<s>>>>;
 };
 
-
-template <class T, class Dimv>
+template <class Dimv>
 struct SmallBase
 {
     constexpr static auto dimv = Dimv::value;
@@ -375,9 +374,9 @@ struct SmallBase
 };
 
 template <class T, class Dimv>
-struct ViewSmall: public SmallBase<T, Dimv>
+struct ViewSmall: public SmallBase<Dimv>
 {
-    using Base = SmallBase<T, Dimv>;
+    using Base = SmallBase<Dimv>;
     using Base::rank, Base::size, Base::dimv, Base::len, Base::len_s, Base::step, Base::defsteps;
     using sub = typename nested_arg<T, Dimv>::sub;
     T * cp;
@@ -511,10 +510,9 @@ struct
 #if RA_OPT_SMALLVECTOR==1
 alignas(align_req<T, std::apply([](auto ... i) { return (i.len * ... * 1); }, Dimv::value)>())
 #endif
-SmallArray<T, Dimv, std::tuple<nested_args ...>>
-    : public SmallBase<T, Dimv>
+SmallArray<T, Dimv, std::tuple<nested_args ...>>: public SmallBase<Dimv>
 {
-    using Base = SmallBase<T, Dimv>;
+    using Base = SmallBase<Dimv>;
     using Base::rank, Base::size, Base::dimv;
 
     T cp[size()]; // cf what std::array does for zero size
