@@ -36,7 +36,7 @@ is_c_order_dimv(auto const & dimv, bool step1=true)
 {
     bool steps = true;
     dim_t s = 1;
-    int k = dimv.size();
+    int k = ra::size(dimv);
     if (!step1) {
         while (--k>=0 && 1==dimv[k].len) {}
         if (k<=0) { return true; }
@@ -57,7 +57,7 @@ filldim(auto && shape, auto & dimv)
 {
     map(&Dim::len, dimv) = shape;
     dim_t s = 1;
-    for (int k=dimv.size(); --k>=0;) {
+    for (int k=ra::size(dimv); --k>=0;) {
         dimv[k].step = s;
         RA_CHECK(dimv[k].len>=0, "Bad len[", k, "] ", dimv[k].len, ".");
 // gcc 14.2, no warning with sanitizers
@@ -233,8 +233,10 @@ struct CellSmall
     ViewSmall<T, ic_t<vdrop<dimv, framer>>> c;
 
     consteval static rank_t rank() { return framer; }
-// assert or diagnostic warning "-Warray-bounds" needed with gcc14.3/15.1 -O3 (but not -O<3)
-    constexpr static dim_t len(int k) { assert(inside(k, framer)); return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Warray-bounds" // gcc14.3/15.1 -O3 (but not -O<3)
+    constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
+#pragma GCC diagnostic pop
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
 
@@ -254,7 +256,7 @@ struct CellBig
     [[no_unique_address]] Spec const dspec = {};
 
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
-    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(dimv.size(), dspec); }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
     constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
@@ -262,7 +264,7 @@ struct CellBig
     constexpr CellBig(T * cp, Dimv const & dimv_, Spec dspec_=Spec {}): dimv(dimv_), dspec(dspec_)
     {
         c.cp = cp;
-        rank_t dcellr=rank_cell(dimv.size(), dspec), dframer=rank();
+        rank_t dcellr=rank_cell(ra::size(dimv), dspec), dframer=rank();
         RA_CHECK(0<=dframer && 0<=dcellr, "Bad cell rank ", dcellr, " for full rank ", ssize(dimv), ").");
         resize(c.dimv, dcellr);
         for (int k=0; k<dcellr; ++k) {
@@ -365,12 +367,12 @@ struct SmallBase
 {
     constexpr static auto dimv = Dimv::value;
     consteval static rank_t rank() { return ssize(dimv); }
-    consteval static dim_t size() { dim_t s=1; for (auto dim: dimv) { s*=dim.len; } return s; }
     constexpr static dim_t len(int k) { return dimv[k].len; }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
     static_assert(every(0<=map(&Dim::len, dimv)), "Bad shape."); // TODO check steps
     constexpr static bool defsteps = is_c_order_dimv(dimv);
+    consteval static dim_t size() { return ra::size_s<SmallBase>(); }
 };
 
 template <class T, class Dimv>
@@ -606,7 +608,7 @@ transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
     using A = std::decay_t<decltype(a)>;
     constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
     constexpr static auto src = A::dimv;
-    static_assert(src.size()==s.size(), "Bad size for transposed axes list.");
+    static_assert(ra::size(src)==ra::size(s), "Bad size for transposed axes list.");
     constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
     constexpr static auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
     return ViewSmall<value_t<A>, ic_t<dst>>(a.data());
@@ -658,9 +660,9 @@ cat(cv_smallview auto && a1_, cv_smallview auto && a2_)
     decltype(auto) a1 = a1_.view();
     decltype(auto) a2 = a2_.view();
     static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
-    Small<std::common_type_t<decltype(a1[0]), decltype(a2[0])>, a1.size()+a2.size()> val;
+    Small<std::common_type_t<decltype(a1[0]), decltype(a2[0])>, ra::size(a1)+ra::size(a2)> val;
     std::copy(a1.begin(), a1.end(), val.begin());
-    std::copy(a2.begin(), a2.end(), val.begin()+a1.size());
+    std::copy(a2.begin(), a2.end(), val.begin()+ra::size(a1));
     return val;
 }
 
@@ -669,9 +671,9 @@ cat(cv_smallview auto && a1_, is_scalar auto && a2_)
 {
     decltype(auto) a1 = a1_.view();
     static_assert(1==a1.rank(), "Bad ranks for cat.");
-    Small<std::common_type_t<decltype(a1[0]), decltype(a2_)>, a1.size()+1> val;
+    Small<std::common_type_t<decltype(a1[0]), decltype(a2_)>, ra::size(a1)+1> val;
     std::copy(a1.begin(), a1.end(), val.begin());
-    val[a1.size()] = a2_;
+    val[ra::size(a1)] = a2_;
     return val;
 }
 
@@ -680,7 +682,7 @@ cat(is_scalar auto && a1_, cv_smallview auto && a2_)
 {
     decltype(auto) a2 = a2_.view();
     static_assert(1==a2.rank(), "Bad ranks for cat.");
-    Small<std::common_type_t<decltype(a1_), decltype(a2[0])>, 1+a2.size()> val;
+    Small<std::common_type_t<decltype(a1_), decltype(a2[0])>, 1+ra::size(a2)> val;
     val[0] = a1_;
     std::copy(a2.begin(), a2.end(), val.begin()+1);
     return val;

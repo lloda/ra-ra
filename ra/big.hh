@@ -65,7 +65,7 @@ struct ViewBig
     constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return dimv[k].step; }
     constexpr auto data() const { return cp; }
-    constexpr dim_t size() const { return prod(map(&Dim::len, dimv)); }
+    constexpr dim_t size() const { return ra::size(*this); }
     constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
     constexpr ViewBig(): cp() {} // FIXME used by Container constructors

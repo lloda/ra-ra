@@ -432,8 +432,6 @@ size(V const & v)
         return size_s(v);
     } else if constexpr (is_fov<V>) {
         return std::ssize(v);
-    } else if constexpr (requires { v.size(); }) {
-        return v.size();
     } else {
         dim_t s = 1;
         for (rank_t k=0; k<rank(v); ++k) { s *= v.len(k); }
