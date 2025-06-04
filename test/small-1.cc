@@ -243,11 +243,11 @@ int main()
     {
 
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
-        ra::ViewSmall<double, ic_t<std::array {Dim {2, 3}, Dim {3, 1}}>> b = a();
+        ra::ViewSmall<double *, ic_t<std::array {Dim {2, 3}, Dim {3, 1}}>> b = a();
         tr.test_eq(a, b);
 // non-default steps (fortran / column major order).
         ra::SmallArray<double, ic_t<std::array {Dim {2, 1}, Dim {3, 2}}>> ax { 1, 2, 3, 4, 5, 6 };
-        ra::ViewSmall<double, ic_t<std::array {Dim {2, 1}, Dim {3, 2}}>> bx = ax();
+        ra::ViewSmall<double *, ic_t<std::array {Dim {2, 1}, Dim {3, 2}}>> bx = ax();
         tr.test_eq(a, ax);
         tr.test_eq(a, bx);
 // check iterators.
@@ -403,7 +403,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::ViewSmall<double, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
+            ra::ViewSmall<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
@@ -420,7 +420,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::ViewSmall<double, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
+            ra::ViewSmall<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
@@ -435,7 +435,7 @@ int main()
             ra::Small<double, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
             ra::Small<double, 6, 2> b = { 1, 2, 99, 99, 3, 4, 99, 99, 5, 6, 99, 99 };
-            ra::ViewSmall<double, ic_t<std::array {Dim {3, 4}, Dim {2, 1}}>> c(b.data()); // TODO no syntax yet.
+            ra::ViewSmall<double *, ic_t<std::array {Dim {3, 4}, Dim {2, 1}}>> c(b.data()); // TODO no syntax yet.
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }

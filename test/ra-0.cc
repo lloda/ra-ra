@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Arrays, iterators.
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -65,20 +65,20 @@ int main()
         {
             double aa[10];
             aa[0] = 99;
-            ra::ViewBig<double, 1> a { {{10, 1}}, aa }; // [ra36]
+            ra::ViewBig<double *, 1> a { {{10, 1}}, aa }; // [ra36]
             tr.test_eq(99., a.data()[0]);
         }
         {
             double aa[6] = { 1, 2, 3, 4, 5, 6 };
             aa[0] = 99;
-            ra::ViewBig<double, 2> a { { {3, 2}, {2, 1}}, aa };
+            ra::ViewBig<double *, 2> a { { {3, 2}, {2, 1}}, aa };
             tr.test_eq(4., a(1, 1));
             tr.test_eq(99., a.data()[0]);
         }
         {
             double aa[20];
             aa[19] = 77;
-            ra::ViewBig<double> a = { {{10, 2}, {2, 1}}, aa };
+            ra::ViewBig<double *> a = { {{10, 2}, {2, 1}}, aa };
             tr.test_eq(10, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
             cout << "a.data()(3, 4): " << a.data()[19] << endl;
@@ -141,10 +141,10 @@ int main()
         auto rank0test0 = [](double & a) { a *= 2; };
         auto rank0test1 = [](double const & a) { return a*2; };
         double x { 99 };
-        ra::ViewBig<double, 0> a { {}, &x };
+        ra::ViewBig<double *, 0> a { {}, &x };
         tr.test_eq(1, a.size());
 
-// ra::ViewBig<T, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0. That was specific of gcc, so better not to depend on it anyway...
+// ra::ViewBig<T *, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0. That was specific of gcc, so better not to depend on it anyway...
         cout << "a()" << a() << endl;
         cout << "sizeof(a())" << sizeof(a()) << endl;
         cout << "sizeof(double *)" << sizeof(double *) << endl;
@@ -183,13 +183,13 @@ int main()
         }
         {
             double pool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::ViewBig<double> r { {{3, 2}, {2, 1}}, pool };
+            ra::ViewBig<double *> r { {{3, 2}, {2, 1}}, pool };
             tr.test_eq(2, rank(r));
             tr.test_eq(6, size(r));
         }
         {
             double pool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::ViewBig<double, 2> r {{ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
+            ra::ViewBig<double *, 2> r {{ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
             tr.test_eq(2, rank(r));
             tr.test_eq(6, size(r));
         }
@@ -198,7 +198,7 @@ int main()
     {
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::ViewBig<double> r { {{3, 2}, {2, 1}}, pool };
+        ra::ViewBig<double *> r { {{3, 2}, {2, 1}}, pool };
         auto it = r.iter();
         tr.test_seq(r.data(), it.c.data());
         std::ranges::copy(r.begin(), r.end(), chk);
@@ -208,7 +208,7 @@ int main()
     {
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::ViewBig<double, 1> r { { ra::Dim {6, 1}}, pool };
+        ra::ViewBig<double *, 1> r { { ra::Dim {6, 1}}, pool };
         auto it = r.iter();
         tr.test_seq(r.data(), it.c.data());
         std::ranges::copy(r.begin(), r.end(), chk);
@@ -219,8 +219,8 @@ int main()
     {
         double a[6] = { 0, 0, 0, 0, 0, 0 };
         double b[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::ViewBig<double> ra { {{3, 2}, {2, 1}}, a };
-        ra::ViewBig<double> rb { {{3, 2}, {2, 1}}, b };
+        ra::ViewBig<double *> ra { {{3, 2}, {2, 1}}, a };
+        ra::ViewBig<double *> rb { {{3, 2}, {2, 1}}, b };
         auto aiter = ra.iter();
         {
             auto biter = rb.iter();
@@ -255,8 +255,8 @@ int main()
     // {
     //     double a[6] = { 0, 0, 0, 0, 0, 0 };
     //     double b[6] = { 1, 2, 3, 4, 5, 6 };
-    //     ra::ViewBig<double> ra { {{3, 2}, {2, 1}}, a };
-    //     ra::ViewBig<double> rb { {{3, 2}, {2, 1}}, b };
+    //     ra::ViewBig<double *> ra { {{3, 2}, {2, 1}}, a };
+    //     ra::ViewBig<double *> rb { {{3, 2}, {2, 1}}, b };
     //     auto aiter = ra.begin();
     //     {
     //         auto biter = rb.begin();
@@ -288,10 +288,10 @@ int main()
     tr.section("STL-type iterators");
     {
         double rpool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::ViewBig<double, 1> r { {ra::Dim {6, 1}}, rpool };
+        ra::ViewBig<double *, 1> r { {ra::Dim {6, 1}}, rpool };
 
         double spool[6] = { 0, 0, 0, 0, 0, 0 };
-        ra::ViewBig<double> s { {{3, 1}, {2, 3}}, spool };
+        ra::ViewBig<double *> s { {{3, 1}, {2, 3}}, spool };
 
         std::ranges::copy(r.begin(), r.end(), s.begin());
 
@@ -320,7 +320,7 @@ int main()
         double rpool[6] = { 1, 2, 3, 4, 5, 6 };
         double check[6] = { 1, 4, 2, 5, 3, 6 };
 
-        ra::ViewBig<double> r { {{3, 1}, {2, 3}}, rpool };
+        ra::ViewBig<double *> r { {{3, 1}, {2, 3}}, rpool };
         std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::ranges::equal(check, check+6, r.begin(), r.end()));
 
@@ -527,11 +527,11 @@ int main()
         tr.section("View fixed rank == 0");
         {
             double x = 99;
-            ra::ViewBig<double, 0> y(ra::Small<int, 0>{}, &x);
+            ra::ViewBig<double *, 0> y(ra::Small<int, 0>{}, &x);
             tr.test_eq(99, y());
             tr.test_eq(99, y);
             double u = 77.;
-            ra::ViewBig<double, 0> v(ra::Small<int, 0>{}, &u);
+            ra::ViewBig<double *, 0> v(ra::Small<int, 0>{}, &u);
             y = v;
             tr.test_eq(77, u);
             tr.test_eq(77, v);
@@ -541,7 +541,7 @@ int main()
         tr.section("View fixed rank > 0");
         {
             double rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::ViewBig<double, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            ra::ViewBig<double *, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             cout << "org" << endl;
             std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             {
@@ -599,7 +599,7 @@ int main()
         tr.section("View var rank");
         {
             double rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::ViewBig<double> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            ra::ViewBig<double *> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             tr.test_eq(2, r.rank());
             cout << "org" << endl;
             std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
@@ -633,7 +633,7 @@ int main()
             tr.test(std::ranges::equal(r2.begin(), r2.end(), rcheck2, rcheck2+1));
             tr.test(std::ranges::equal(r2a.begin(), r2a.end(), rcheck2, rcheck2+1));
         }
-// TODO Make sure that this is double & = 99, etc. and not View<double, 0> = 99, etc.
+// TODO Make sure that this is double & = 99, etc. and not View<double *, 0> = 99, etc.
         tr.section("assign to rank-0 result of subscript");
         {
             double check[6] = {99, 88, 77, 66, 55, 44};
@@ -688,28 +688,28 @@ int main()
         tr.section("4. View<> can't allocate, so have no istream >>. Check output only.");
         {
             double rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-            ra::ViewBig<double, 3> r { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
+            ra::ViewBig<double *, 3> r { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
             double check[11] = { 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("5");
         {
             double rpool[6] = { 1, 2, 3, 4, 5, 6 };
-            ra::ViewBig<double, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
+            ra::ViewBig<double *, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             double check[8] = { 3, 2, 1, 4, 2, 5, 3, 6 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("6");
         {
             double rpool[3] = { 1, 2, 3 };
-            ra::ViewBig<double, 1> r { {ra::Dim {3, 1}}, rpool };
+            ra::ViewBig<double *, 1> r { {ra::Dim {3, 1}}, rpool };
             double check[4] = { 3, 1, 2, 3 };
             CheckArrayOutput(tr, r, check);
         }
         tr.section("7");
         {
             double rpool[1] = { 88 };
-            ra::ViewBig<double, 0> r { {}, rpool };
+            ra::ViewBig<double *, 0> r { {}, rpool };
             double check[1] = { 88 };
             CheckArrayOutput(tr, r, check);
             tr.test_eq(1, r.size());
@@ -719,11 +719,11 @@ int main()
         tr.section("8");
         {
             double rpool[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-            ra::ViewBig<double> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
+            ra::ViewBig<double *> a { {ra::Dim {2, 4}, ra::Dim {2, 2}, ra::Dim {2, 1}}, rpool };
             double check[12] = { 3, 2, 2, 2, 1, 2, 3, 4, 5, 6, 7, 8 };
             CheckArrayOutput(tr, a, check);
 // default steps.
-            ra::ViewBig<double> b { {2, 2, 2}, rpool };
+            ra::ViewBig<double *> b { {2, 2, 2}, rpool };
             CheckArrayOutput(tr, b, check);
         }
         tr.section("9");

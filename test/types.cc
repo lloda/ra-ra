@@ -23,7 +23,23 @@ void
 test_predicates(char const * type, TestRecorder & tr,
                 bool ra, bool slice, bool iterator, bool scalar, bool fov)
 {
-    cout << std::string(90-size(std::string(type)), ' ') << type << " : "
+    constexpr int width = 70;
+    std::string s = type;
+    std::string prefix = "decltype(std::declval<";
+    std::string suffix = ">())";
+    if (0==s.find(prefix) && (s.size()-size(suffix)==s.rfind(suffix))) {
+        s = s.substr(size(prefix), s.size()-size(prefix)-size(suffix));
+    }
+    suffix = ">()) const";
+    if (0==s.find(prefix) && (s.size()-size(suffix)==s.rfind(suffix))) {
+        s = s.substr(size(prefix), s.size()-size(prefix)-size(suffix)) + " const";
+    }
+    suffix = ">()) &";
+    if (0==s.find(prefix) && (s.size()-size(suffix)==s.rfind(suffix))) {
+        s = s.substr(size(prefix), s.size()-size(prefix)-size(suffix)) + " &";
+    }
+    if (size(s)>width) { s = s.substr(0, width-size(std::string(" …"))) + " …"; }
+    cout << std::string(width-size(s), ' ') << s << " : "
          << (ra::is_ra<A> ? "ra " : "")
          << (ra::Slice<A> ? "slice " : "")
          << (ra::Iterator<A> ? "iterator " : "")
@@ -62,7 +78,7 @@ int main()
         static_assert(std::is_same_v<ra::ncvalue_t<decltype(an)>, T>);
     }
     {
-        TESTPRED(decltype(std::declval<ra::ViewSmall<ra::Dim, ra::ic_t<std::array { ra::Dim {3, 1} }>>>()),
+        TESTPRED(decltype(std::declval<ra::ViewSmall<ra::Dim *, ra::ic_t<std::array { ra::Dim {3, 1} }>>>()),
                  true, true, false, false, false);
         TESTPRED(int,
                  false, false, false, true, false);
@@ -84,7 +100,7 @@ int main()
                  true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()) &,
                  true, true, false, false, false);
-        TESTPRED(decltype(std::declval<ra::ViewBig<int, 2>>()),
+        TESTPRED(decltype(std::declval<ra::ViewBig<int *, 2>>()),
                  true, true, false, false, false);
         TESTPRED(decltype(ra::Unique<int, 2>().iter()),
                  true, false, true, false, false);
@@ -139,19 +155,19 @@ int main()
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {
-        static_assert(ra::Slice<ra::ViewBig<int, 0>>);
-        static_assert(ra::Slice<ra::ViewBig<int, 2>>);
-        static_assert(ra::Slice<ra::ViewSmall<int, ra::ic_t<std::array<ra::Dim, 0> {} >>>);
+        static_assert(ra::Slice<ra::ViewBig<int *, 0>>);
+        static_assert(ra::Slice<ra::ViewBig<int *, 2>>);
+        static_assert(ra::Slice<ra::ViewSmall<int *, ra::ic_t<std::array<ra::Dim, 0> {} >>>);
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::ViewSmall<int, ra::ic_t<std::array<ra::Dim, 0> {} >>>, "bad is_ra ViewSmall");
+        static_assert(ra::is_ra<ra::ViewSmall<int *, ra::ic_t<std::array<ra::Dim, 0> {} >>>, "bad is_ra ViewSmall");
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::ViewBig<int, 0>>, "bad is_ra View");
+        static_assert(ra::is_ra<ra::ViewBig<int *, 0>>, "bad is_ra View");
 
         static_assert(ra::is_ra<ra::Small<int, 1>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::ViewSmall<int, ra::ic_t<std::array {ra::Dim {1, 1}} >>>, "bad is_ra ViewSmall");
+        static_assert(ra::is_ra<ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {1, 1}} >>>, "bad is_ra ViewSmall");
         static_assert(ra::is_ra<ra::Unique<int, 1>>, "bad is_ra Unique");
-        static_assert(ra::is_ra<ra::ViewBig<int, 1>>, "bad is_ra View");
-        static_assert(ra::is_ra<ra::ViewBig<int>>, "bad is_ra View");
+        static_assert(ra::is_ra<ra::ViewBig<int *, 1>>, "bad is_ra View");
+        static_assert(ra::is_ra<ra::ViewBig<int *>>, "bad is_ra View");
 
         using Vector = decltype(ra::start({1, 2, 3}));
         static_assert(ra::is_ra<decltype(ra::scalar(3))>, "bad is_ra Scalar");

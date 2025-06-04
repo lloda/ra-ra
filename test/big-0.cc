@@ -24,14 +24,14 @@ int main(int argc, char * * argv)
     TestRecorder tr;
     tr.section("predicates");
     {
-        ra::ViewBig<int, 2> a;
+        ra::ViewBig<int *, 2> a;
         static_assert(ra::rank_s<decltype(a().iter<0>())>()==ra::rank_s<decltype(a().iter())>());
     }
     tr.section("constructors");
     {
         tr.section("null View constructor");
         {
-            ra::ViewBig<int, 1> a;
+            ra::ViewBig<int *, 1> a;
             tr.test(nullptr==a.data());
         }
         tr.section("regression with some shape arguments (fixed rank)");
@@ -59,7 +59,7 @@ int main(int argc, char * * argv)
         tr.section("need for non-default View::operator=(View const & x) [ra34]");
         {
             ra::Big<int, 1> a {0, 1, 2, 3, 4, 5};
-            ra::ViewBig<int, 1> const va = a();
+            ra::ViewBig<int *, 1> const va = a();
             ra::Big<int, 1> x(va); // replacing default operator= by copy-to-view.
             tr.test_eq(ra::iota(6), x);
         }
@@ -97,7 +97,7 @@ int main(int argc, char * * argv)
     tr.section("also on raw views");
     {
         int ap[6] = {0, 1, 2, 3, 4, 5};
-        ra::ViewBig<int, 2> a(2+ra::iota(2), ap);
+        ra::ViewBig<int *, 2> a(2+ra::iota(2), ap);
         tr.test_eq(2, a.len(0));
         tr.test_eq(3, a.len(1));
         tr.test_eq(ra::Small<int, 2, 3> {{0, 1, 2}, {3, 4, 5}}, a);
@@ -106,7 +106,7 @@ int main(int argc, char * * argv)
     tr.section("also on raw views with var rank");
     {
         int ap[6] = {0, 1, 2, 3, 4, 5};
-        ra::ViewBig<int> a(2+ra::iota(2), ap);
+        ra::ViewBig<int *> a(2+ra::iota(2), ap);
         tr.test_eq(2, a.len(0));
         tr.test_eq(3, a.len(1));
         tr.test_eq(ra::Small<int, 2, 3> {{0, 1, 2}, {3, 4, 5}}, a);
@@ -288,6 +288,12 @@ int main(int argc, char * * argv)
         tr.test_eq(1, a);
         tr.test_eq(2, b);
         tr.test_eq(3, c);
+    }
+// make ViewBig of Seq
+    {
+        ra::ViewBig<ra::Seq<int>, 2> a({3, 2}, ra::Seq {1});
+        std::println(cout, "{:c:2}\n", transpose(a));
+        tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
     }
     return tr.summary();
 }

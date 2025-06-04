@@ -221,7 +221,7 @@ indexer(Q const & q, P const & pp)
 template <class T, class Dimv> struct ViewSmall;
 template <class T, rank_t RANK=ANY> struct ViewBig;
 
-template <class T, class Dimv, class Spec>
+template <class P, class Dimv, class Spec>
 struct CellSmall
 {
     constexpr static auto dimv = Dimv::value;
@@ -230,7 +230,8 @@ struct CellSmall
     constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
     constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
 
-    ViewSmall<T, ic_t<vdrop<dimv, framer>>> c;
+    ViewSmall<P, ic_t<vdrop<dimv, framer>>> c;
+    constexpr explicit CellSmall(P p): c { p } {}
 
     consteval static rank_t rank() { return framer; }
 #pragma GCC diagnostic push
@@ -239,29 +240,20 @@ struct CellSmall
 #pragma GCC diagnostic pop
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
-
-    constexpr CellSmall(T * p): c { p } {}
 };
 
-template <class T, class Dimv, class Spec>
+template <class P, class Dimv, class Spec>
 struct CellBig
 {
-    Dimv dimv;
     constexpr static rank_t spec = maybe_any<Spec>;
-    constexpr static rank_t fullr = size_s<decltype(dimv)>();
+    constexpr static rank_t fullr = size_s<Dimv>();
     constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
     constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
 
-    ViewBig<T, cellr> c;
+    Dimv dimv;
+    ViewBig<P, cellr> c;
     [[no_unique_address]] Spec const dspec = {};
-
-    consteval static rank_t rank() requires (ANY!=framer) { return framer; }
-    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
-    constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
-    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
-    constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
-
-    constexpr CellBig(T * cp, Dimv const & dimv_, Spec dspec_=Spec {}): dimv(dimv_), dspec(dspec_)
+    constexpr CellBig(P cp, Dimv const & dimv_, Spec dspec_=Spec {}): dimv(dimv_), dspec(dspec_)
     {
         c.cp = cp;
         rank_t dcellr=rank_cell(ra::size(dimv), dspec), dframer=rank();
@@ -271,12 +263,18 @@ struct CellBig
             c.dimv[k] = dimv[dframer+k];
         }
     }
+
+    consteval static rank_t rank() requires (ANY!=framer) { return framer; }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
+    constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
+    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
+    constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
 };
 
-template <class T, class Dimv, class Spec>
-struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>
+template <class P, class Dimv, class Spec>
+struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>
 {
-    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spec>, CellBig<T, Dimv, Spec>>;
+    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>;
     using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len;
     using View = decltype(std::declval<Base>().c);
     static_assert(cellr>=0 || cellr==ANY || framer>=0 || framer==ANY, "Bad cell/frame rank.");
@@ -297,7 +295,7 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spe
 
 
 // ---------------------
-// Small view & container
+// Small view and containers
 // ---------------------
 
 // helpers for operator()
@@ -371,24 +369,29 @@ struct SmallBase
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
     static_assert(every(0<=map(&Dim::len, dimv)), "Bad shape."); // TODO check steps
-    constexpr static bool defsteps = is_c_order_dimv(dimv);
     consteval static dim_t size() { return ra::size_s<SmallBase>(); }
 };
 
-template <class T, class Dimv>
+template <class P> struct reconst_t { using type = void; };
+template <class P> struct unconst_t { using type = void; };
+template <class T> requires (!std::is_const_v<T>) struct reconst_t<T *> { using type = T const *; };
+template <class T> struct unconst_t<T const *> { using type = T *; };
+template <class P> using reconst = reconst_t<P>::type;
+template <class P> using unconst = unconst_t<P>::type;
+
+template <class P, class Dimv>
 struct ViewSmall: public SmallBase<Dimv>
 {
+    using T = std::remove_reference_t<decltype(*std::declval<P>())>;
     using Base = SmallBase<Dimv>;
-    using Base::rank, Base::size, Base::dimv, Base::len, Base::len_s, Base::step, Base::defsteps;
+    using Base::rank, Base::size, Base::dimv, Base::len, Base::len_s, Base::step;
     using sub = typename nested_arg<T, Dimv>::sub;
-    T * cp;
+    P cp;
 
-    using ViewConst = ViewSmall<T const, Dimv>;
-    constexpr operator ViewConst () const requires (!std::is_const_v<T>) { return ViewConst(cp); }
     constexpr ViewSmall const & view() const { return *this; }
-    constexpr T * data() const { return cp; }
+    constexpr P data() const { return cp; }
 
-    constexpr ViewSmall(T * cp_): cp(cp_) {}
+    constexpr explicit ViewSmall(P cp_): cp(cp_) {}
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     ViewSmall const & operator=(ViewSmall const & x) const { start(*this) = x; return *this; }
     constexpr ViewSmall(ViewSmall const & s) = default;
@@ -458,7 +461,7 @@ struct ViewSmall: public SmallBase<Dimv>
             return self.cp[select_loop<0>(i ...)];
 // FIXME wlen before this, cf is_constant_iota
         } else if constexpr ((beatable<I>.ct && ...)) {
-            return ViewSmall<T, ic_t<filterdims<dimv, std::decay_t<I> ...>::dimv>> (self.cp + select_loop<0>(i ...));
+            return ViewSmall<P, ic_t<filterdims<dimv, std::decay_t<I> ...>::dimv>> (self.cp + select_loop<0>(i ...));
 // TODO partial beating
         } else {
 // must fwd *this because we create temp views on every Small::view() call
@@ -479,12 +482,16 @@ struct ViewSmall: public SmallBase<Dimv>
     }
 // maybe remove if ic becomes easier to use
     template <int s, int o=0> constexpr auto as() const { return operator()(ra::iota(ra::ic<s>, o)); }
-    template <rank_t c=0> constexpr auto iter() const { return Cell<T, ic_t<dimv>, ic_t<c>>(cp); }
-    constexpr auto begin() const { if constexpr (defsteps) return cp; else return STLIterator(iter()); }
-    constexpr auto end() const requires (defsteps) { return cp+size(); }
-    constexpr static auto end() requires (!defsteps) { return std::default_sentinel; }
-    constexpr T & back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
+    template <rank_t c=0> constexpr auto iter() const { return Cell<P, ic_t<dimv>, ic_t<c>>(cp); }
+    constexpr auto begin() const { if constexpr (is_c_order_dimv(dimv)) return cp; else return STLIterator(iter()); }
+    constexpr auto end() const requires (is_c_order_dimv(dimv)) { return cp+size(); }
+    constexpr static auto end() requires (!is_c_order_dimv(dimv)) { return std::default_sentinel; }
+    constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
     constexpr operator T & () const { static_assert(1==size(), "Bad scalar conversion."); return cp[0]; }
+    constexpr operator ViewSmall<reconst<P>, Dimv> () const requires (!std::is_void_v<reconst<P>>)
+    {
+        return ViewSmall<reconst<P>, Dimv>(cp);
+    }
 };
 
 #if defined (__clang__)
@@ -519,8 +526,8 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>: public SmallBase<Dimv>
 
     T cp[size()]; // cf what std::array does for zero size
 
-    using View = ViewSmall<T, Dimv>;
-    using ViewConst = ViewSmall<T const, Dimv>;
+    using View = ViewSmall<T *, Dimv>;
+    using ViewConst = ViewSmall<T const *, Dimv>;
     constexpr View view() { return View(cp); }
     constexpr ViewConst view() const { return ViewConst(cp); }
     constexpr operator View () { return View(cp); }
@@ -585,7 +592,7 @@ from_ravel(auto && b)
 }
 
 // Small view ops, see View ops in big.hh.
-// FIXME Merge transpose(ViewBig), Reframe (eg beat(reframe(a)) -> transpose(a) ?)
+// FIXME Merge transpose & Reframe (eg beat(reframe(a)) -> transpose(a) ?)
 
 constexpr void
 transpose_dims(auto const & s, auto const & src, auto & dst)
@@ -598,11 +605,11 @@ transpose_dims(auto const & s, auto const & src, auto & dst)
     }
 }
 
-RA_IS_DEF(cv_smallview, (std::is_convertible_v<A, ViewSmall<value_t<A>, ic_t<A::dimv>>>));
+RA_IS_DEF(cv_viewsmall, (std::is_convertible_v<A, ViewSmall<decltype(std::declval<A>().data()), ic_t<A::dimv>>>));
 
 template <int ... Iarg>
 constexpr auto
-transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
+transpose(cv_viewsmall auto && a_, ilist_t<Iarg ...>)
 {
     decltype(auto) a = a_.view();
     using A = std::decay_t<decltype(a)>;
@@ -611,7 +618,7 @@ transpose(cv_smallview auto && a_, ilist_t<Iarg ...>)
     static_assert(ra::size(src)==ra::size(s), "Bad size for transposed axes list.");
     constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
     constexpr static auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
-    return ViewSmall<value_t<A>, ic_t<dst>>(a.data());
+    return ViewSmall<decltype(a.cp), ic_t<dst>>(a.data());
 }
 
 template <class sup_t, class T, class A, class B>
@@ -641,7 +648,7 @@ explode_dims(A const & av, B & bv)
 
 template <class sup_t>
 constexpr auto
-explode(cv_smallview auto && a)
+explode(cv_viewsmall auto && a)
 {
     constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
     constexpr static auto bdimv = [&a]()
@@ -650,12 +657,12 @@ explode(cv_smallview auto && a)
         explode_dims<sup_t, value_t<decltype(a)>>(a.dimv, bdimv);
         return bdimv;
     }();
-    return ViewSmall<sup_t, ic_t<bdimv>>(reinterpret_cast<sup_t *>(a.data()));
+    return ViewSmall<sup_t *, ic_t<bdimv>>(reinterpret_cast<sup_t *>(a.data()));
 }
 
 // TODO generalize
 constexpr auto
-cat(cv_smallview auto && a1_, cv_smallview auto && a2_)
+cat(cv_viewsmall auto && a1_, cv_viewsmall auto && a2_)
 {
     decltype(auto) a1 = a1_.view();
     decltype(auto) a2 = a2_.view();
@@ -667,7 +674,7 @@ cat(cv_smallview auto && a1_, cv_smallview auto && a2_)
 }
 
 constexpr auto
-cat(cv_smallview auto && a1_, is_scalar auto && a2_)
+cat(cv_viewsmall auto && a1_, is_scalar auto && a2_)
 {
     decltype(auto) a1 = a1_.view();
     static_assert(1==a1.rank(), "Bad ranks for cat.");
@@ -678,7 +685,7 @@ cat(cv_smallview auto && a1_, is_scalar auto && a2_)
 }
 
 constexpr auto
-cat(is_scalar auto && a1_, cv_smallview auto && a2_)
+cat(is_scalar auto && a1_, cv_viewsmall auto && a2_)
 {
     decltype(auto) a2 = a2_.view();
     static_assert(1==a2.rank(), "Bad ranks for cat.");
@@ -709,7 +716,7 @@ constexpr auto
 start(is_builtin_array auto && t)
 {
     using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
-    return ViewSmall<T, ic_t<default_dims<ra::shape(t)>>>(peel(t)).iter();
+    return ViewSmall<T *, ic_t<default_dims<ra::shape(t)>>>(peel(t)).iter();
 }
 
 } // namespace ra

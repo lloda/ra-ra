@@ -265,7 +265,7 @@ int main()
 
         real value = 1;
 
-        auto f_raw = [&](ra::ViewBig<real, 2> & A, ra::ViewBig<real, 2> & Anext, ra::ViewBig<real, 4> & Astencil)
+        auto f_raw = [&](ra::ViewBig<real *, 2> & A, ra::ViewBig<real *, 2> & Anext, ra::ViewBig<real *, 4> & Astencil)
             {
                 for (int t=0; t<ts; ++t) {
                     for (int i=1; i+1<nx; ++i) {
@@ -278,7 +278,7 @@ int main()
                     std::swap(A.cp, Anext.cp);
                 }
             };
-        auto f_sumprod = [&](ra::ViewBig<real, 2> & A, ra::ViewBig<real, 2> & Anext, ra::ViewBig<real, 4> & Astencil)
+        auto f_sumprod = [&](ra::ViewBig<real *, 2> & A, ra::ViewBig<real *, 2> & Anext, ra::ViewBig<real *, 4> & Astencil)
             {
                 for (int t=0; t!=ts; ++t) {
                     Astencil.cp = A.data();

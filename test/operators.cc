@@ -251,8 +251,8 @@ int main()
         real check9[6] = { 9, 9, 9, 9, 9, 9 };
         ra::Unique<int, 2> a({3, 2}, 7);
         ra::Unique<int, 2> b({3, 2}, 5);
-        ra::ViewBig<int, 2> c = a();
-        ra::ViewBig<int, 2> d = b();
+        ra::ViewBig<int *, 2> c = a();
+        ra::ViewBig<int *, 2> d = b();
         c = d;
         tr.test(std::equal(a.begin(), a.end(), check5));
         ra::Unique<int, 2> t({2, 3}, 9);

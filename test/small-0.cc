@@ -364,7 +364,7 @@ int main()
                                          {{41, 42}, {43, 44}, {45, 46}, {47, 48}}}};
         // FIXME reshape for Small or something! Big/View have these things.
         ra::Small<int, 2, 3, 4, 2> b = 0;
-        ra::ViewSmall<int, ra::ic_t<std::array {ra::Dim {48, 1}}>> c(b.data());
+        ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {48, 1}}>> c(b.data());
         c = ra::iota(48, 1);
         tr.test_eq(b, a);
         tr.test_eq(2, ra::shape(a, 0));
@@ -479,14 +479,14 @@ int main()
         {
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::ViewSmall<int, ra::ic_t<std::array {ra::Dim {2, 1}}>> a0 = a(0);
-                ra::ViewSmall<int, ra::ic_t<std::array {ra::Dim {2, 1}}>> a1 = a(1);
+                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2, 1}}>> a0 = a(0);
+                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2, 1}}>> a1 = a(1);
                 a0 = a1;
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::ViewSmall<int, ra::ic_t<std::array {ra::Dim {2, 1}}>> a0 = a(0);
+                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2, 1}}>> a0 = a(0);
                 a0 = a(1);
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }
@@ -505,7 +505,7 @@ int main()
             tr.test_eq(ra::Small<int, 2, 2> {{1, 0}, {0, 1}}, a);
         }
     }
-// These tests should fail at compile time. No way to check them yet [ra42].
+// These tests should fail at compile time. No way to check that yet [ra42].
     // tr.section("size checks");
     // {
     //     ra::Small<int, 3> a = { 1, 2, 3 };
@@ -531,6 +531,20 @@ int main()
         tr.test_eq(a, c);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(pa));
     }
+// convert to const
+    {
+        ra::Small<int, 3, 4> a = ra::_0 - ra::_1;
+        auto vn = a.view();
+        tr.test_seq(a.cp, vn.cp);
+        static_assert(std::is_same_v<int *, decltype(vn.cp)>);
+        auto vc = std::as_const(a).view();
+        tr.test_seq(a.cp, vc.cp);
+        static_assert(std::is_same_v<int const *, decltype(vc.cp)>);
+// needs ViewSmall::ViewConst conversion op
+        decltype(vc) vk = vn;
+        tr.test_seq(a.cp, vk.cp);
+        static_assert(std::is_same_v<int const *, decltype(vk.cp)>);
+    }
 // ra::shape / ra::size are static for Small types
     {
         ra::Small<int, 3, 4> a = 0;
@@ -539,6 +553,12 @@ int main()
         tr.test_eq(4, int_c<shape(a)[1]>::value);
 // FIXME std::size makes this ambiguous without the qualifier, which looks wrong to me :-/
         tr.test_eq(12, int_c<ra::size(a)>::value);
+    }
+// make ViewSmall of Seq
+    {
+        ra::ViewSmall<ra::Seq<int>, ra::ic_t<std::array {ra::Dim {3, 2}, ra::Dim {2, 1}}>> a(ra::Seq {1});
+        std::println(cout, "{:c:2}\n", transpose(a));
+        tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
     }
     return tr.summary();
 }

@@ -16,8 +16,10 @@ namespace ra {
 
 
 // --------------------
-// nested braces for Container initializers, cf small_args in small.hh. FIXME Let any expr = braces.
+// Big view and containers
 // --------------------
+
+// nested braces for Big initializers, cf small_args in small.hh. FIXME Let any expr = braces.
 
 template <class T, rank_t r> struct braces_ { using type = noarg; };
 template <class T, rank_t r> using braces = braces_<T, r>::type;
@@ -44,20 +46,15 @@ braces_shape(braces<T, r> const & l)
     return [&l]<int ... i>(ilist_t<i ...>){ return std::array { braces_len<i, T, r>(l) ... }; }(mp::iota<r>{});
 }
 
-
-// --------------------
-// ViewBig
-// --------------------
-
 // TODO Parameterize on Child having .data() so that there's only one pointer.
-// TODO Parameterize on iterator type not on value type.
 // TODO Constructor checks (nonnegative lens, steps inside, etc.).
-template <class T, rank_t RANK>
+template <class P, rank_t RANK>
 struct ViewBig
 {
+    using T = std::remove_reference_t<decltype(*std::declval<P>())>;
     using Dimv = std::conditional_t<ANY==RANK, vector_default_init<Dim>, Small<Dim, ANY==RANK ? 0 : RANK>>;
     Dimv dimv;
-    T * cp;
+    P cp;
 
     consteval static rank_t rank() requires (RANK!=ANY) { return RANK; }
     constexpr rank_t rank() const requires (RANK==ANY) { return rank_t(dimv.size()); }
@@ -69,8 +66,8 @@ struct ViewBig
     constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
     constexpr ViewBig(): cp() {} // FIXME used by Container constructors
-    constexpr ViewBig(Dimv const & dimv_, T * cp_): dimv(dimv_), cp(cp_) {} // [ra36]
-    constexpr ViewBig(auto && s, T * cp_): cp(cp_)
+    constexpr ViewBig(Dimv const & dimv_, P cp_): dimv(dimv_), cp(cp_) {} // [ra36]
+    constexpr ViewBig(auto && s, P cp_): cp(cp_)
     {
         ra::resize(dimv, ra::size(s)); // [ra37]
         if constexpr (std::is_convertible_v<value_t<decltype(s)>, Dim>) {
@@ -79,7 +76,7 @@ struct ViewBig
             filldim(s, dimv);
         }
     }
-    constexpr ViewBig(std::initializer_list<dim_t> s, T * cp_): ViewBig(start(s), cp_) {}
+    constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(start(s), cp_) {}
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     ViewBig const & operator=(ViewBig const & x) const { start(*this) = x; return *this; }
     constexpr ViewBig(ViewBig const &) = default;
@@ -101,7 +98,7 @@ struct ViewBig
     operator=(std::initializer_list<T> const x) const requires (1!=RANK)
     {
         auto xsize = ssize(x);
-        RA_CHECK(size()==xsize, "Mismatched sizes ", ViewBig::size(), " ", xsize, ".");
+        RA_CHECK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
         std::ranges::copy_n(x.begin(), xsize, begin());
         return *this;
     }
@@ -170,7 +167,7 @@ struct ViewBig
             return self.cp[self.select_loop(nullptr, 0, i ...)];
         } else if constexpr ((beatable<I>.rt && ...)) {
             constexpr rank_t extended = (0 + ... + beatable<I>.add);
-            ViewBig<T, rank_sum(RANK, extended)> sub;
+            ViewBig<P, rank_sum(RANK, extended)> sub;
             rank_t subrank = self.rank()+extended;
             if constexpr (ANY==RANK) {
                 sub.dimv.resize(subrank);
@@ -203,13 +200,13 @@ struct ViewBig
         }
     }
 
-    template <rank_t c=0> constexpr auto iter() const && { return Cell<T, Dimv, ic_t<c>>(cp, std::move(dimv)); }
-    template <rank_t c=0> constexpr auto iter() const & { return Cell<T, Dimv const &, ic_t<c>>(cp, dimv); }
-    constexpr auto iter(rank_t c) const && { return Cell<T, Dimv, dim_t>(cp, std::move(dimv), c); }
-    constexpr auto iter(rank_t c) const & { return Cell<T, Dimv const &, dim_t>(cp, dimv, c); }
+    template <rank_t c=0> constexpr auto iter() const && { return Cell<P, Dimv, ic_t<c>>(cp, std::move(dimv)); }
+    template <rank_t c=0> constexpr auto iter() const & { return Cell<P, Dimv const &, ic_t<c>>(cp, dimv); }
+    constexpr auto iter(rank_t c) const && { return Cell<P, Dimv, dim_t>(cp, std::move(dimv), c); }
+    constexpr auto iter(rank_t c) const & { return Cell<P, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
     constexpr decltype(auto) static end() { return std::default_sentinel; }
-    constexpr T & back() const { dim_t s = size(); RA_CHECK(s>0, "Bad back()."); return cp[s-1]; }
+    constexpr decltype(auto) back() const { dim_t s=size(); RA_CHECK(s>0, "Bad back()."); return cp[s-1]; }
 
     constexpr
     operator T & () const
@@ -223,25 +220,20 @@ struct ViewBig
     constexpr operator T & () { return std::as_const(*this); }
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)
-    constexpr ViewBig(ViewBig<T, R> const & x): dimv(x.dimv), cp(x.cp) {}
-    template <rank_t R> requires (R==ANY && R!=RANK && std::is_const_v<T>)
-    constexpr ViewBig(ViewBig<std::remove_const_t<T>, R> const & x): dimv(x.dimv), cp(x.cp) {}
+    constexpr ViewBig(ViewBig<P, R> const & x): dimv(x.dimv), cp(x.cp) {}
+    template <rank_t R> requires (R==ANY && R!=RANK && !std::is_void_v<unconst<P>>)
+    constexpr ViewBig(ViewBig<unconst<P>, R> const & x): dimv(x.dimv), cp(x.cp) {}
 // conversion from fixed rank to var rank
     template <rank_t R> requires (R!=ANY && RANK==ANY)
-    constexpr ViewBig(ViewBig<T, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
-    template <rank_t R> requires (R!=ANY && RANK==ANY && std::is_const_v<T>)
-    constexpr ViewBig(ViewBig<std::remove_const_t<T>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
+    constexpr ViewBig(ViewBig<P, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
+    template <rank_t R> requires (R!=ANY && RANK==ANY && !std::is_void_v<unconst<P>>)
+    constexpr ViewBig(ViewBig<unconst<P>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
 // conversion to const. We rely on it for Container::view(). FIXME iffy? wb Small?
-    constexpr operator ViewBig<T const, RANK> const & () const requires (!std::is_const_v<T>)
+    constexpr operator ViewBig<reconst<P>, RANK> const & () const requires (!std::is_void_v<reconst<P>>)
     {
-        return *reinterpret_cast<ViewBig<T const, RANK> const *>(this);
+        return *reinterpret_cast<ViewBig<reconst<P>, RANK> const *>(this);
     }
 };
-
-
-// --------------------
-// Container types
-// --------------------
 
 template <class V>
 struct storage_traits
@@ -272,17 +264,15 @@ struct storage_traits<std::shared_ptr<P>>
 
 // FIXME avoid duplicating ViewBig::p. Avoid overhead with rank 1.
 template <class Store, rank_t RANK>
-struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
+struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
 {
     Store store;
     using T = typename storage_traits<Store>::T;
-    using View = ra::ViewBig<T, RANK>;
-    using ViewConst = ra::ViewBig<T const, RANK>;
-    using View::size, View::rank, View::dimv, View::cp;
-    using shape_arg = decltype(shape(std::declval<View>().iter()));
-
-    constexpr ViewConst const & view() const { return static_cast<View const &>(*this); }
+    using View = ViewBig<T *, RANK>;
+    using ViewConst = ViewBig<T const *, RANK>;
+    constexpr ViewConst const & view() const { return *this; }
     constexpr View & view() { return *this; }
+    using View::size, View::rank, View::dimv, View::cp;
 
 // Needed to set cp. FIXME Remove duplication as in SmallBase/SmallArray.
     Container(Container && w): store(std::move(w.store))
@@ -356,6 +346,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T, RANK>
     Container() requires (ANY!=RANK && 0!=RANK): View(typename View::Dimv(Dim {0, 1}), nullptr) {}
     Container() requires (0==RANK): Container({}, none) {}
 
+    using shape_arg = decltype(shape(std::declval<View>().iter()));
 // shape_arg overloads handle {...} arguments. Size check is at conversion if shape_arg is Small.
     Container(shape_arg const & s, none_t) { init(s); }
     Container(shape_arg const & s, auto && x): Container(s, none) { view() = x; }
@@ -478,7 +469,7 @@ template <class T, rank_t RANK=ANY> using Shared = Container<std::shared_ptr<T>,
 
 template <rank_t RANK, class T>
 Shared<T, RANK>
-shared_borrowing(ViewBig<T, RANK> & raw)
+shared_borrowing(ViewBig<T *, RANK> & raw)
 {
     Shared<T, RANK> a;
     a.dimv = raw.dimv;
@@ -529,15 +520,15 @@ with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s
 
 
 // --------------------
-// ViewBig ops
+// Big view ops
 // --------------------
 
-template <class T, rank_t RANK>
-inline ViewBig<T, RANK>
-reverse(ViewBig<T, RANK> const & view, int k=0)
+template <class P, rank_t RANK>
+inline ViewBig<P, RANK>
+reverse(ViewBig<P, RANK> const & view, int k=0)
 {
     RA_CHECK(inside(k, view.rank()), "Bad axis ", k, " for rank ", view.rank(), ".");
-    ViewBig<T, RANK> r = view;
+    ViewBig<P, RANK> r = view;
     if (auto & dim=r.dimv[k]; dim.len!=0) {
         r.cp += dim.step*(dim.len-1);
         dim.step *= -1;
@@ -545,20 +536,20 @@ reverse(ViewBig<T, RANK> const & view, int k=0)
     return r;
 }
 
-template <class T, rank_t RANK>
-inline ViewBig<T, 1>
-ravel_free(ViewBig<T, RANK> const & a)
+template <class P, rank_t RANK>
+inline ViewBig<P, 1>
+ravel_free(ViewBig<P, RANK> const & a)
 {
     RA_CHECK(is_c_order(a, false));
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
     ra::dim_t s = r<0 ? 1 : a.step(r);
-    return ra::ViewBig<T, 1>({{ra::size(a), s}}, a.cp);
+    return ViewBig<P, 1>({{ra::size(a), s}}, a.cp);
 }
 
-template <class T, rank_t RANK, class S>
+template <class P, rank_t RANK, class S>
 inline auto
-reshape(ViewBig<T, RANK> const & a, S && sb_)
+reshape(ViewBig<P, RANK> const & a, S && sb_)
 {
     auto sb = concrete(RA_FWD(sb_));
 // FIXME when we need to copy, accept/return Shared
@@ -582,7 +573,7 @@ reshape(ViewBig<T, RANK> const & a, S && sb_)
     }
     auto sa = shape(a);
 // FIXME should be able to reshape Scalar etc.
-    ViewBig<T, ra::size_s(sb)> b(map([](auto i) { return Dim { UNB, 0 }; }, ra::iota(ra::size(sb))), a.data());
+    ViewBig<P, ra::size_s(sb)> b(map([](auto i) { return Dim { UNB, 0 }; }, ra::iota(ra::size(sb))), a.data());
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
@@ -608,19 +599,19 @@ reshape(ViewBig<T, RANK> const & a, S && sb_)
 }
 
 // We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t. initializer_list could handle the general case, but the result would have var rank and override this one (?).
-template <class T, rank_t RANK, class dimtype, int N>
+template <class P, rank_t RANK, class dimtype, int N>
 inline auto
-reshape(ViewBig<T, RANK> const & a, dimtype const (&s)[N])
+reshape(ViewBig<P, RANK> const & a, dimtype const (&s)[N])
 {
     return reshape(a, start(s));
 }
 
 // lo: lower bounds, hi: upper bounds. The stencil indices are in [0 lo+1+hi] = [-lo +hi].
-template <class LO, class HI, class T, rank_t N>
-inline ViewBig<T, rank_sum(N, N)>
-stencil(ViewBig<T, N> const & a, LO && lo, HI && hi)
+template <class LO, class HI, class P, rank_t N>
+inline ViewBig<P, rank_sum(N, N)>
+stencil(ViewBig<P, N> const & a, LO && lo, HI && hi)
 {
-    ViewBig<T, rank_sum(N, N)> s;
+    ViewBig<P, rank_sum(N, N)> s;
     s.cp = a.data();
     ra::resize(s.dimv, 2*a.rank());
     RA_CHECK(every(lo>=0) && every(hi>=0), "Bad stencil bounds lo ", fmt(nstyle, lo), " hi ", fmt(nstyle, hi), ".");
@@ -637,9 +628,9 @@ stencil(ViewBig<T, N> const & a, LO && lo, HI && hi)
 }
 
 // static transposed axes list, output rank is static.
-template <int ... I, class T, rank_t RANK>
+template <int ... I, class P, rank_t RANK>
 constexpr auto
-transpose(ViewBig<T, RANK> const & view, ilist_t<I ...>)
+transpose(ViewBig<P, RANK> const & view, ilist_t<I ...>)
 {
     if constexpr (ANY==RANK) {
         RA_CHECK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
@@ -648,27 +639,27 @@ transpose(ViewBig<T, RANK> const & view, ilist_t<I ...>)
     }
     constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
     constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s);
-    ViewBig<T, dstrank> r;
+    ViewBig<P, dstrank> r;
     r.cp = view.data();
     transpose_dims(s, view.dimv, r.dimv);
     return r;
 }
 
 // dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
-template <class T, rank_t RANK, class S>
-inline ViewBig<T, ANY>
-transpose(ViewBig<T, RANK> const & view, S && s)
+template <class P, rank_t RANK, class S>
+inline ViewBig<P, ANY>
+transpose(ViewBig<P, RANK> const & view, S && s)
 {
     RA_CHECK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
     rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s); // FIXME amax(), but that's in ra.hh
-    ViewBig<T, ANY> r { decltype(r.dimv)(dstrank), view.data() };
+    ViewBig<P, ANY> r { decltype(r.dimv)(dstrank), view.data() };
     transpose_dims(s, view.dimv, r.dimv);
     return r;
 }
 
-template <class T, rank_t RANK, class dimtype, int N>
-inline ViewBig<T, ANY>
-transpose(ViewBig<T, RANK> const & view, dimtype const (&s)[N])
+template <class P, rank_t RANK, class dimtype, int N>
+inline ViewBig<P, ANY>
+transpose(ViewBig<P, RANK> const & view, dimtype const (&s)[N])
 {
     return transpose(view, start(s));
 }
@@ -681,10 +672,10 @@ diag(auto && a) { return transpose(RA_FWD(a), ilist<0, 0>); };
 
 template <class sup_t, class T, rank_t RANK>
 inline auto
-explode(ViewBig<T, RANK> const & a)
+explode(ViewBig<T *, RANK> const & a)
 {
     constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
-    ViewBig<sup_t, rank_sum(RANK, -rank_s<sup_t>()-ru)> b;
+    ViewBig<sup_t *, rank_sum(RANK, -rank_s<sup_t>()-ru)> b;
     ra::resize(b.dimv, a.rank()-rank_s<sup_t>()-ru);
     explode_dims<sup_t, T>(a.dimv, b.dimv);
     b.cp = reinterpret_cast<sup_t *>(a.data());
@@ -694,7 +685,7 @@ explode(ViewBig<T, RANK> const & a)
 // TODO Check that ranks below SUBR are compact. Version for Small.
 template <class sub_t, class sup_t, rank_t RANK>
 inline auto
-collapse(ViewBig<sup_t, RANK> const & a)
+collapse(ViewBig<sup_t *, RANK> const & a)
 {
     using super_v = value_t<sup_t>;
     using sub_v = value_t<sub_t>;
@@ -702,7 +693,7 @@ collapse(ViewBig<sup_t, RANK> const & a)
     constexpr int SUBR = rank_s<sup_t>() - rank_s<sub_t>();
     static auto gstep = [](int i) { if constexpr (is_scalar<sup_t>) return 1; else return sup_t::step(i); };
     static auto glen = [](int i) { if constexpr (is_scalar<sup_t>) return 1; else return sup_t::len(i); };
-    ViewBig<sub_t, rank_sum(RANK, SUBR+int(subtype>1))> b;
+    ViewBig<sub_t *, rank_sum(RANK, SUBR+int(subtype>1))> b;
     resize(b.dimv, a.rank()+SUBR+int(subtype>1));
     constexpr dim_t r = sizeof(sup_t)/sizeof(sub_t);
     static_assert(sizeof(sup_t)==r*sizeof(sub_t), "Cannot make axis of sup_t from sub_t.");

@@ -113,7 +113,7 @@ int main()
     }
     tr.section("STL predicates");
     {
-        ra::ViewBig<int, 2> a;
+        ra::ViewBig<int *, 2> a;
         tr.test(std::input_iterator<decltype(a.begin())>);
         // tr.test(std::weak_output_iterator<decltype(a.begin()), int>); // p2550 when ready c++
         tr.test(std::input_iterator<decltype(begin(a+1))>);

@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - View operations
 
-// (c) Daniel Llorens - 2013-2015, 2019
+// (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -198,14 +198,14 @@ int main()
 // trailing singleton dimensions
     {
         ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-        ra::ViewBig<double, 2> c{{{2, 1}, {1, 3}}, a.data()};
+        ra::ViewBig<double *, 2> c{{{2, 1}, {1, 3}}, a.data()};
         tr.test(is_c_order(c, false));
         tr.test_eq(ra::Small<int, 2>{1, 2}, ravel_free(c));
     }
 // singleton dimensions elsewhere
     {
         ra::Unique<double, 1> a = ra::iota(30);
-        ra::ViewBig<double, 3> c{{{2, 10}, {1, 8}, {5, 2}}, a.data()};
+        ra::ViewBig<double *, 3> c{{{2, 10}, {1, 8}, {5, 2}}, a.data()};
         tr.test(is_c_order(c, false));
         tr.test_eq(ra::iota(10, 0, 2), ravel_free(c));
     }

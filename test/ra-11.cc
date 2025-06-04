@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Reduce a bug in gcc 8.3.
 
-// (c) Daniel Llorens - 2013-2015
+// (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -20,7 +20,7 @@ int main()
     TestRecorder tr(std::cout);
     {
         double b[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::ViewBig<double> ra { {6}, b };
+        ra::ViewBig<double *> ra { {6}, b };
         tr.test_eq(b, ra);
 
         ra::Unique<double> A({2, 3}, 0);
@@ -35,7 +35,7 @@ int main()
         tr.test_eq(1, q.size());
 
         double rpool[6] = { 1, 2, 3, 4, 5, 6 };
-        ra::ViewBig<double, 2> r { {{3, 1}, {2, 3}}, rpool };
+        ra::ViewBig<double *, 2> r { {{3, 1}, {2, 3}}, rpool };
         double rcheck[6] = { 1, 4, 2, 5, 3, 6 };
 // kinda... long
         auto v = r.at(ra::Big<int>({0}, {}));

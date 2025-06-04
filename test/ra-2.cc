@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Positive cell rank.
 
-// (c) Daniel Llorens - 2013, 2014
+// (c) Daniel Llorens - 2013, 2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -25,7 +25,7 @@ int main()
         {
             auto i = a.iter<1>();
             tr.test_eq(1, i.rank());
-            ply_ravel(ra::map_([](ra::ViewBig<real, 1> const & x) { cout << x << endl; }, i));
+            ply_ravel(ra::map_([](ra::ViewBig<real *, 1> const & x) { cout << x << endl; }, i));
         }
     }
 #define ARGa iter<1>(a)
@@ -38,7 +38,7 @@ int main()
         real check[4] = {6, 15, 24, 33};
         tr.section("not driving");
         {
-            auto f = [](int i, ra::ViewBig<real, 1> const & a, real & d)
+            auto f = [](int i, ra::ViewBig<real *, 1> const & a, real & d)
                 {
                     cout << i << ": " << a << endl;
                     d = a[0] + a[1] + a[2];
@@ -65,7 +65,7 @@ int main()
 // TODO Use explicit DRIVER arg to ra::map_; the fixed size ARGi should always drive.
         tr.section("driving");
         {
-            auto f = [](ra::ViewBig<real, 1> const & a, int i, real & d)
+            auto f = [](ra::ViewBig<real *, 1> const & a, int i, real & d)
                 {
                     cout << i << ": " << a << endl;
                     d = a[0] + a[1] + a[2];
@@ -139,8 +139,8 @@ int main()
     }
     tr.section("FYI");
     {
-        cout << "..." << sizeof(ra::ViewBig<real, 0>) << endl;
-        cout << "..." << sizeof(ra::ViewBig<real, 1>) << endl;
+        cout << "..." << sizeof(ra::ViewBig<real *, 0>) << endl;
+        cout << "..." << sizeof(ra::ViewBig<real *, 1>) << endl;
     }
     tr.section("ply on cell rank > 0, dynamic rank");
     {

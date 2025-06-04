@@ -203,7 +203,10 @@ struct Ptr final
     constexpr decltype(auto) operator*() const { return *i; }
     constexpr auto save() const { return i; }
     constexpr void load(I ii) { i = ii; }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 (but not -O<3)
     constexpr void mov(dim_t d) { std::ranges::advance(i, d); }
+#pragma GCC diagnostic pop
 };
 
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;

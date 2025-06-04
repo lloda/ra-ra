@@ -79,7 +79,7 @@ int main()
     {
         ra::Big<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5});
         ra::Big<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5});
-        auto c = transpose(ra::ViewBig<int, 2>({3, 2}, a.data()), {1, 0});
+        auto c = transpose(ra::ViewBig<int *, 2>({3, 2}, a.data()), {1, 0});
         a.dimv = c.dimv;
         for (int k=0; k!=c.rank(); ++k) {
             std::cout << "CSTRIDE " << k << " " << c.step(k) << std::endl;
@@ -121,7 +121,7 @@ int main()
     tr.section("casts from fixed rank View");
     {
         ra::Unique<double, 3> a({3, 2, 4}, ra::_0 + 15*ra::_1);
-        ra::ViewBig<double> b(a);
+        ra::ViewBig<double *> b(a);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());
         tr.test_eq(a.len(0), b.len(0));
@@ -129,17 +129,17 @@ int main()
         tr.test_eq(a.len(2), b.len(2));
         tr.test(every(a==b));
 
-        auto test = [&tr](ra::ViewBig<double, 3> a, double * p)
+        auto test = [&tr](ra::ViewBig<double *, 3> a, double * p)
                     {
                         tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
                         tr.test(p==a.data());
                     };
-        auto test_const = [&tr](ra::ViewBig<double const, 3> a, double * p)
+        auto test_const = [&tr](ra::ViewBig<double const *, 3> a, double * p)
                     {
                         tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
                         tr.test(p==a.data());
                     };
-        auto test_const_ref = [&tr](ra::ViewBig<double const, 3> const & a, double * p)
+        auto test_const_ref = [&tr](ra::ViewBig<double const *, 3> const & a, double * p)
                     {
                         tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
                         tr.test(p==a.data());
@@ -151,7 +151,7 @@ int main()
     tr.section("casts from var rank View");
     {
         ra::Unique<double> a({3, 2, 4}, ra::none);
-        ra::ViewBig<double, 3> b(a);
+        ra::ViewBig<double *, 3> b(a);
         tr.test_eq(ra::scalar(a.data()), ra::scalar(b.data())); // FIXME? pointers are not ra::scalars.
         tr.test_eq(a.rank(), b.rank());
         tr.test_eq(a.len(0), b.len(0));
@@ -159,17 +159,17 @@ int main()
         tr.test_eq(a.len(2), b.len(2));
         tr.test(every(a==b));
 
-        auto test = [&tr](ra::ViewBig<double> a, double * p)
+        auto test = [&tr](ra::ViewBig<double *> a, double * p)
                     {
                         tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
                         tr.test(p==a.data());
                     };
-        auto test_const = [&tr](ra::ViewBig<double const> a, double * p)
+        auto test_const = [&tr](ra::ViewBig<double const *> a, double * p)
                     {
                         tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
                         tr.test(p==a.data());
                     };
-        auto test_const_ref = [&tr](ra::ViewBig<double const> const & a, double * p)
+        auto test_const_ref = [&tr](ra::ViewBig<double const *> const & a, double * p)
                     {
                         tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
                         tr.test(p==a.data());

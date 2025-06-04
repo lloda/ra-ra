@@ -175,9 +175,9 @@ constexpr auto optimize(Map<std::negate<>, std::tuple<I>> && e)
 
 #if RA_OPT_SMALLVECTOR==1
 template <class T, dim_t N, class A> constexpr bool match_small =
-    std::is_same_v<std::decay_t<A>, Cell<T, ic_t<std::array { Dim { N, 1 } }>, ic_t<0>>>
-    || std::is_same_v<std::decay_t<A>, Cell<T const, ic_t<std::array { Dim { N, 1 } }>, ic_t<0>>>;
-static_assert(match_small<double, 4, Cell<double, ic_t<std::array { Dim { 4, 1 } }>, ic_t<0>>>);
+    std::is_same_v<std::decay_t<A>, Cell<T *, ic_t<std::array { Dim { N, 1 } }>, ic_t<0>>>
+    || std::is_same_v<std::decay_t<A>, Cell<T const *, ic_t<std::array { Dim { N, 1 } }>, ic_t<0>>>;
+static_assert(match_small<double, 4, Cell<double *, ic_t<std::array { Dim { 4, 1 } }>, ic_t<0>>>);
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B> requires (match_small<T, N, A> && match_small<T, N, B>) \

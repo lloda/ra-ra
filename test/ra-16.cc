@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra/test - Spurious out of range error with gcc11 -O3 I can't reproduce
 
-// (c) Daniel Llorens - 2024
+// (c) Daniel Llorens - 2024-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -40,7 +40,7 @@ ra::Big<complex, 3> a({20, 1, 3}, 0.);
 ra::Big<complex, 2> dip({20, 2}, 1.);
 
 void
-far(real const f, ra::ViewBig<real, 2> const & rr, ra::ViewBig<complex, 3> & a)
+far(real const f, ra::ViewBig<real *, 2> const & rr, ra::ViewBig<complex *, 3> & a)
 {
     real A = 1., m = .5, n = .4;
     for_each([&](auto && r, auto & a) {

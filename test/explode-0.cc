@@ -24,7 +24,7 @@ int main()
     tr.section("explode");
     {
         ra::Big<int, 2> A({2, 3}, ra::_0 - ra::_1);
-        ra::ViewBig<ra::Small<int, 3>, 1> B = ra::explode<ra::Small<int, 3>>(A);
+        ra::ViewBig<ra::Small<int, 3> *, 1> B = ra::explode<ra::Small<int, 3>>(A);
         // std::println(cout, "A:\n{:p}\nB:\n{:p:l}", A, B);
         // A *= -1;
         // std::println(cout, "A:\n{:p}\nB:\n{:p:l}", A, B);
@@ -50,7 +50,7 @@ int main()
     tr.section("explode<complex>");
     {
         ra::Big<real, 3> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
-        ra::ViewBig<complex, 2> B = ra::explode<complex>(A);
+        ra::ViewBig<complex *, 2> B = ra::explode<complex>(A);
         // std::println(cout, "A:\n{:p}\nB:\n{:p}", A, B);
         tr.test_eq(2, B.rank());
         tr.test_eq(ra::Small<real, 2, 3> {0, -1, -2,  1, 0, -1}, real_part(B));

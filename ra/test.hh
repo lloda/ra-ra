@@ -176,16 +176,16 @@ struct TestRecorder
     }
 #define RA_TEST_COMP(NAME, OP)                                          \
     bool                                                                \
-    JOIN(test_, NAME)(auto && ref, auto && a, RA_CURRENT_LOC)           \
+    NAME(auto && ref, auto && a, RA_CURRENT_LOC)                        \
     {                                                                   \
         return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b) { return every(a OP b); }, \
                          "should be " STRINGIZE(OP), loc);              \
     }
-    RA_TEST_COMP(eq, ==)
-    RA_TEST_COMP(lt, <)
-    RA_TEST_COMP(le, <=)
-    RA_TEST_COMP(gt, >)
-    RA_TEST_COMP(ge, >=)
+    RA_TEST_COMP(test_eq, ==)
+    RA_TEST_COMP(test_lt, <)
+    RA_TEST_COMP(test_le, <=)
+    RA_TEST_COMP(test_gt, >)
+    RA_TEST_COMP(test_ge, >=)
 #undef RA_TEST_COMP
 
     __attribute__((optimize("-fno-finite-math-only")))
