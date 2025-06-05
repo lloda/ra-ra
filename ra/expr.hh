@@ -163,7 +163,7 @@ struct Seq
 };
 
 // Iterator for foreign rank 1 objects. FIXME replace with ViewBig/ViewSmall.
-template <int w, class I, class N, class S>
+template <class I, class N, class S>
 struct Ptr final
 {
     static_assert(has_len<N> || is_constant<N> || std::is_integral_v<N>);
@@ -185,20 +185,19 @@ struct Ptr final
     }
     RA_ASSIGNOPS_SELF(Ptr)
     RA_ASSIGNOPS_DEFAULT_SET
-
-    consteval static rank_t rank() { return w+1; }
-    constexpr static dim_t len_s(int k) { return k==w ? nn : UNB; } // len(0<=k<=w) or step(0<=k)
+    consteval static rank_t rank() { return 1; }
+    constexpr static dim_t len_s(int k) { return nn; } // len(0<=k<=w) or step(0<=k)
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return k==w ? n : UNB; }
-    constexpr static dim_t step(int k) requires (is_constant<S>) { return k==w ? S {} : 0; }
-    constexpr dim_t step(int k) const requires (!is_constant<S>) { return k==w ? s : 0; }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
+    constexpr static dim_t step(int k) requires (is_constant<S>) { return 0==k ? S {} : 0; }
+    constexpr dim_t step(int k) const requires (!is_constant<S>) { return 0==k ? s : 0; }
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
-        RA_CHECK(UNB==nn || inside(j[w], n), "Bad index ", j[w], " for len[", w, "]=", n, ".");
-        return i[j[w]*s];
+        RA_CHECK(UNB==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
+        return i[j[0]*s];
     }
     constexpr decltype(auto) operator*() const { return *i; }
     constexpr auto save() const { return i; }
@@ -222,7 +221,7 @@ maybe_step()
     }
 }
 
-template <int w=0, class I, class N=dim_c<UNB>, class S=dim_c<1>>
+template <class I, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
 ptr(I && i, N && n = N {}, S && s = maybe_step<S>())
 {
@@ -230,30 +229,19 @@ ptr(I && i, N && n = N {}, S && s = maybe_step<S>())
         static_assert(std::is_same_v<dim_c<UNB>, N>, "Object has own length.");
         static_assert(std::is_same_v<dim_c<1>, S>, "No step with deduced size.");
         if constexpr (ANY==size_s(i)) {
-            return ptr<w>(std::begin(RA_FWD(i)), std::ssize(i), RA_FWD(s));
+            return ptr(std::begin(RA_FWD(i)), std::ssize(i), RA_FWD(s));
         } else {
-            return ptr<w>(std::begin(RA_FWD(i)), ic<size_s(i)>, RA_FWD(s));
+            return ptr(std::begin(RA_FWD(i)), ic<size_s(i)>, RA_FWD(s));
         }
     } else {
         static_assert(std::bidirectional_iterator<std::decay_t<I>>, "Bad type for ptr().");
-        return Ptr<w, std::decay_t<I>, sarg<N>, sarg<S>> { i, RA_FWD(n), RA_FWD(s) };
+        return Ptr<std::decay_t<I>, sarg<N>, sarg<S>> { i, RA_FWD(n), RA_FWD(s) };
     }
 }
 
-template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
-constexpr auto
-iota(N && n = N {}, I && i = 0, S && s = maybe_step<S>())
-{
-    return Ptr<w, Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FWD(i)}, RA_FWD(n), RA_FWD(s) };
-}
-
-#define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
-FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
-#undef DEF_TENSORINDEX
-
 template <class A> concept is_iota = requires (A a)
 {
-    []<class I, class N, class S>(Ptr<0, Seq<I>, N, S> const &){}(a);
+    []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a);
     requires UNB!=a.nn; // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
 };
 
@@ -263,18 +251,145 @@ inside(is_iota auto const & i, dim_t l)
     return (inside(i.i.i, l) && inside(i.i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
-template <int w, class I, class N, class S, class K=dim_c<0>>
+template <class I, class N, class S, class K=dim_c<0>>
 constexpr auto
-reverse(Ptr<w, Seq<I>, N, S> const & i, K k = {})
+reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
-    static_assert(i.nn!=UNB && k>=0 && k<=w, "Bad arguments to reverse(iota).");
-    if constexpr (k==w) {
-        return iota<w>(i.n, i.i.i+(i.n-1)*i.s,
-                       [&i]{ if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+    static_assert(i.nn!=UNB, "Bad arguments to reverse(iota).");
+    return ptr(Seq { i.i.i+(i.n-1)*i.s }, i.n, [&i]{ if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+}
+
+
+// ---------------------------
+// reframe
+// ---------------------------
+
+template <dim_t N, class T> constexpr T samestep = N;
+template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
+
+// Transpose for Iterators. As in transpose(), one names the destination axis for each original axis.
+// However, axes may not be repeated. Used in the rank conjunction below.
+// The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
+// If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
+// If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
+// TODO invalid for ANY, since Dest is compile time. [ra7]
+
+template <Iterator A, class Dest, class I=mp::iota<mp::len<Dest>>> struct Reframe;
+template <Iterator A, int ... di, int ... i>
+struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
+{
+    A a;
+    consteval static rank_t rank() { return 0==sizeof...(i) ? 0 : 1+std::ranges::max(std::array<int, sizeof...(i)> { di ... }); }
+    constexpr static int orig(int k) { int r=-1; (void)((di==k && (r=i, 1)) || ...); return r; }
+    constexpr static dim_t len_s(int k)
+    {
+        int l=orig(k);
+        return l>=0 ? std::decay_t<A>::len_s(l) : UNB;
+    }
+    constexpr static dim_t
+    len(int k) requires (requires { std::decay_t<A>::len(k); })
+    {
+        return len_s(k);
+    }
+    constexpr dim_t
+    len(int k) const requires (!(requires { std::decay_t<A>::len(k); }))
+    {
+        int l=orig(k);
+        return l>=0 ? a.len(l) : UNB;
+    }
+    constexpr static bool
+    keep(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep(st, z, j); })
+    {
+        int wz=orig(z), wj=orig(j);
+        return wz>=0 && wj>=0 && std::decay_t<A>::keep(st, wz, wj);
+    }
+    constexpr bool
+    keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<A>::keep(st, z, j); }))
+    {
+        int wz=orig(z), wj=orig(j);
+        return wz>=0 && wj>=0 && a.keep(st, wz, wj);
+    }
+    constexpr decltype(auto)
+    at(auto const & j) const
+    {
+        return a.at(std::array<dim_t, sizeof...(i)> { j[di] ... });
+    }
+    constexpr auto step(int k) const { int l=orig(k); return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>; }
+    constexpr void adv(rank_t k, dim_t d) { if (int l=orig(k); l>=0) { a.adv(l, d); } }
+    constexpr decltype(auto) operator*() const { return *a; }
+    constexpr auto save() const { return a.save(); }
+    constexpr void load(auto const & p) { a.load(p); }
+// FIXME only if Dest preserves axis order (?) which is how wrank works
+    constexpr void mov(auto const & s) { a.mov(s); }
+};
+
+// Optimize nop case. TODO If A is CellBig, etc. beat Dest on it, same for eventual transpose_expr<>.
+template <class Dest, class A>
+constexpr decltype(auto)
+reframe(A && a)
+{
+    if constexpr (std::is_same_v<Dest, mp::iota<Reframe<A, Dest>::rank()>>) {
+        return RA_FWD(a);
     } else {
-        return i;
+        return Reframe<A, Dest> { RA_FWD(a) };
     }
 }
+
+template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
+constexpr auto
+iota(N && n = N {}, I && i = 0, S && s = maybe_step<S>())
+{
+    return reframe<ilist_t<w>>(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FWD(i)}, RA_FWD(n), RA_FWD(s) });
+}
+
+#define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
+FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
+#undef DEF_TENSORINDEX
+
+
+// ---------------------------
+// verbs and rank conjunction
+// ---------------------------
+
+template <class cranks, class Op> struct Verb final { Op op; };
+template <class A> concept is_verb = requires (A a) { []<class cranks, class Op>(Verb<cranks, Op> const &){}(a); };
+
+template <class cranks, class Op>
+constexpr auto
+wrank(cranks, Op && op) { return Verb<cranks, Op> { RA_FWD(op) }; }
+
+template <rank_t ... crank, class Op>
+constexpr auto
+wrank(Op && op) { return Verb<ilist_t<crank ...>, Op> { RA_FWD(op) }; }
+
+template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
+struct Framematch_def;
+
+template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
+using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
+
+// Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
+template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
+struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
+{
+    static_assert(sizeof...(Ti)==sizeof...(crank) && sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
+// live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
+    using live = ilist_t<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
+    using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
+    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(tuple2array<int, live>)>;
+    using R = typename FM::R;
+    template <class U> constexpr static decltype(auto) op(U && v) { return FM::op(RA_FWD(v).op); } // cf [ra31]
+};
+
+// Terminal case where V doesn't have rank (is a raw op()).
+template <class V, class ... Ti, class ... Ri, rank_t skip>
+struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
+{
+    static_assert(sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
+// TODO -crank::value when the actual verb rank is used (eg to use CellBig<... that_rank> instead of just begin()).
+    using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
+    template <class U> constexpr static decltype(auto) op(U && v) { return RA_FWD(v); }
+};
 
 
 // --------------
@@ -455,143 +570,11 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         return (std::decay_t<P>::keep(st, z, j) && ...);
     }
 // could preserve static, but ply doesn't use it atm.
-    constexpr auto step(int i) const { return std::make_tuple(get<I>(t).step(i) ...); }
+    constexpr auto step(int k) const { return std::make_tuple(get<I>(t).step(k) ...); }
     constexpr void adv(rank_t k, dim_t d) { (get<I>(t).adv(k, d), ...); }
     constexpr auto save() const { return std::make_tuple(get<I>(t).save() ...); }
     constexpr void load(auto const & pp) { ((get<I>(t).load(get<I>(pp))), ...); }
     constexpr void mov(auto const & s) { ((get<I>(t).mov(get<I>(s))), ...); }
-};
-
-
-// ---------------------------
-// reframe
-// ---------------------------
-
-template <dim_t N, class T> constexpr T samestep = N;
-template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
-
-// Transpose for Iterators. As in transpose(), one names the destination axis for each original axis.
-// However, axes may not be repeated. Used in the rank conjunction below.
-// Dest is a list of destination axes [l0 l1 ... li ... l(rank(A)-1)].
-// The dimensions of the reframed A are numbered as [0 ... k ... max(l)-1].
-// If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
-// If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
-// TODO invalid for ANY, since Dest is compile time. [ra7]
-
-template <class Dest, Iterator A>
-struct Reframe
-{
-    A a;
-    constexpr static auto dest = tuple2array<int, Dest>;
-
-    consteval static rank_t
-    rank()
-    {
-        return dest.size()==0 ? 0 : 1 + std::ranges::max(dest);
-    }
-    constexpr static int orig(int k)
-    {
-        return [&k]<int ... i>(ilist_t<i ...>) { int r=-1; (void)((k==dest[i] && (r=i, 1)) || ...); return r; }
-        (mp::iota<dest.size()> {});
-    }
-    constexpr static dim_t len_s(int k)
-    {
-        int l=orig(k);
-        return l>=0 ? std::decay_t<A>::len_s(l) : UNB;
-    }
-    constexpr static dim_t
-    len(int k) requires (requires { std::decay_t<A>::len(k); })
-    {
-        return len_s(k);
-    }
-    constexpr dim_t
-    len(int k) const requires (!(requires { std::decay_t<A>::len(k); }))
-    {
-        int l=orig(k);
-        return l>=0 ? a.len(l) : UNB;
-    }
-    constexpr static bool
-    keep(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep(st, z, j); })
-    {
-        int wz=orig(z), wj=orig(j);
-        return wz>=0 && wj>=0 && std::decay_t<A>::keep(st, wz, wj);
-    }
-    constexpr bool
-    keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<A>::keep(st, z, j); }))
-    {
-        int wz=orig(z), wj=orig(j);
-        return wz>=0 && wj>=0 && a.keep(st, wz, wj);
-    }
-    constexpr decltype(auto)
-    at(auto const & i) const
-    {
-        return a.at(std::apply([&i](auto ... t) { return std::array<dim_t, sizeof...(t)> { i[t] ... }; }, Dest {}));
-    }
-    constexpr auto step(int k) const { int l=orig(k); return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>; }
-    constexpr void adv(rank_t k, dim_t d) { if (int l=orig(k); l>=0) { a.adv(l, d); } }
-    constexpr decltype(auto) operator*() const { return *a; }
-    constexpr auto save() const { return a.save(); }
-    constexpr void load(auto const & p) { a.load(p); }
-// FIXME only if Dest preserves axis order (?) which is how wrank works
-    constexpr void mov(auto const & s) { a.mov(s); }
-};
-
-// Optimize no-op case. TODO If A is CellBig, etc. beat Dest on it, same for eventual transpose_expr<>.
-
-template <class Dest, class A>
-constexpr decltype(auto)
-reframe(A && a)
-{
-    if constexpr (std::is_same_v<Dest, mp::iota<Reframe<Dest, A>::rank()>>) {
-        return RA_FWD(a);
-    } else {
-        return Reframe<Dest, A> { RA_FWD(a) };
-    }
-}
-
-
-// ---------------------------
-// verbs and rank conjunction
-// ---------------------------
-
-template <class cranks, class Op> struct Verb final { Op op; };
-template <class A> concept is_verb = requires (A a) { []<class cranks, class Op>(Verb<cranks, Op> const &){}(a); };
-
-template <class cranks, class Op>
-constexpr auto
-wrank(cranks, Op && op) { return Verb<cranks, Op> { RA_FWD(op) }; }
-
-template <rank_t ... crank, class Op>
-constexpr auto
-wrank(Op && op) { return Verb<ilist_t<crank ...>, Op> { RA_FWD(op) }; }
-
-template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
-struct Framematch_def;
-
-template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
-using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
-
-// Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
-template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
-struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
-{
-    static_assert(sizeof...(Ti)==sizeof...(crank) && sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
-// live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
-    using live = ilist_t<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
-    using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
-    using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(tuple2array<int, live>)>;
-    using R = typename FM::R;
-    template <class U> constexpr static decltype(auto) op(U && v) { return FM::op(RA_FWD(v).op); } // cf [ra31]
-};
-
-// Terminal case where V doesn't have rank (is a raw op()).
-template <class V, class ... Ti, class ... Ri, rank_t skip>
-struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
-{
-    static_assert(sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
-// TODO -crank::value when the actual verb rank is used (eg to use CellBig<... that_rank> instead of just begin()).
-    using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
-    template <class U> constexpr static decltype(auto) op(U && v) { return RA_FWD(v); }
 };
 
 

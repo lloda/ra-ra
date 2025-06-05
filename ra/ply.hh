@@ -75,13 +75,13 @@ struct WLen<Seq<I>>
     }
 };
 
-template <int w, class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
-struct WLen<Ptr<w, I, N, S>>
+template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
+struct WLen<Ptr<I, N, S>>
 {
     constexpr static decltype(auto)
     f(auto ln, auto && e)
     {
-        return ptr<w>(wlen(ln, RA_FWD(e).i), VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s)));
+        return ptr(wlen(ln, RA_FWD(e).i), VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s)));
     }
 };
 

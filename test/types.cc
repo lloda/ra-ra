@@ -233,8 +233,8 @@ int main()
     tr.section("compatibility");
     {
         static_assert(std::input_iterator<decltype(ra::Big<int, 2> {{1,2},{3,4}}.begin())>);
-// would be if (unusable) Ptr::operator= and constructor were removed
-        // static_assert(std::is_aggregate_v<ra::Ptr<0, Seq<ra::dim_t>, ra::dim_t, ra::dim_t>>);
+// would be if (unusable with I=Seq) Ptr::operator= and constructor were removed
+        // static_assert(std::is_aggregate_v<ra::Ptr<Seq<ra::dim_t>, ra::dim_t, ra::dim_t>>);
         static_assert(std::random_access_iterator<ra::Seq<ra::dim_t>>);
         cout << ra::ptr(ra::Seq{0}, 10) << endl;
         cout << ra::ptr(ra::Seq{3.}, 8) << endl;
