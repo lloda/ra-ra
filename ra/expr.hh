@@ -186,7 +186,7 @@ struct Ptr final
     RA_ASSIGNOPS_SELF(Ptr)
     RA_ASSIGNOPS_DEFAULT_SET
     consteval static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { return nn; } // len(0<=k<=w) or step(0<=k)
+    constexpr static dim_t len_s(int k) { return nn; }
     constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
     constexpr static dim_t step(int k) requires (is_constant<S>) { return 0==k ? S {} : 0; }
@@ -294,32 +294,34 @@ struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
     constexpr dim_t
     len(int k) const requires (!(requires { std::decay_t<A>::len(k); }))
     {
-        int l=orig(k);
-        return l>=0 ? a.len(l) : UNB;
+        int l=orig(k); return l>=0 ? a.len(l) : UNB;
     }
     constexpr static bool
     keep(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep(st, z, j); })
     {
-        int wz=orig(z), wj=orig(j);
-        return wz>=0 && wj>=0 && std::decay_t<A>::keep(st, wz, wj);
+        int wz=orig(z), wj=orig(j); return wz>=0 && wj>=0 && std::decay_t<A>::keep(st, wz, wj);
     }
     constexpr bool
     keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<A>::keep(st, z, j); }))
     {
-        int wz=orig(z), wj=orig(j);
-        return wz>=0 && wj>=0 && a.keep(st, wz, wj);
+        int wz=orig(z), wj=orig(j); return wz>=0 && wj>=0 && a.keep(st, wz, wj);
     }
-    constexpr decltype(auto)
-    at(auto const & j) const
+    constexpr static auto
+    step(int k) requires (requires { std::decay_t<A>::step(k); })
     {
-        return a.at(std::array<dim_t, sizeof...(i)> { j[di] ... });
+        int l=orig(k); return l>=0 ? std::decay_t<A>::step(l) : samestep<0, decltype(std::decay_t<A>::step(l))>;
     }
-    constexpr auto step(int k) const { int l=orig(k); return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>; }
+    constexpr auto
+    step(int k) const requires (!(requires { std::decay_t<A>::step(k); }))
+    {
+        int l=orig(k); return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>;
+    }
     constexpr void adv(rank_t k, dim_t d) { if (int l=orig(k); l>=0) { a.adv(l, d); } }
+    constexpr decltype(auto) at(auto const & j) const { return a.at(std::array<dim_t, sizeof...(i)> { j[di] ... }); }
     constexpr decltype(auto) operator*() const { return *a; }
     constexpr auto save() const { return a.save(); }
     constexpr void load(auto const & p) { a.load(p); }
-// FIXME only if Dest preserves axis order (?) which is how wrank works
+// FIXME if Dest preserves axis order (?) which wrank does
     constexpr void mov(auto const & s) { a.mov(s); }
 };
 
@@ -569,8 +571,17 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     {
         return (std::decay_t<P>::keep(st, z, j) && ...);
     }
-// could preserve static, but ply doesn't use it atm.
-    constexpr auto step(int k) const { return std::make_tuple(get<I>(t).step(k) ...); }
+// step/adv may call sub Iterators with k>= their rank, so they must return 0 in that case.
+    constexpr auto
+    step(int k) const requires (!(requires { P::step(k); } && ...))
+    {
+        return std::make_tuple(get<I>(t).step(k) ...);
+    }
+    constexpr static auto
+    step(int k) requires (requires { P::step(k); } && ...)
+    {
+        return std::make_tuple(std::decay_t<P>::step(k) ...);
+    }
     constexpr void adv(rank_t k, dim_t d) { (get<I>(t).adv(k, d), ...); }
     constexpr auto save() const { return std::make_tuple(get<I>(t).save() ...); }
     constexpr void load(auto const & pp) { ((get<I>(t).load(get<I>(pp))), ...); }

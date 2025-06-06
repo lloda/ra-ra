@@ -435,11 +435,7 @@ template <class A>
 struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
 {
     std::formatter<std::decay_t<A>> fmt;
-    constexpr auto
-    format(ra::Fmt<A> const & f_, auto & ctx) const
-    {
-        return fmt.format(f_.a, ctx, f_.f);
-    }
+    constexpr auto format(ra::Fmt<A> const & f, auto & ctx) const { return fmt.format(f.a, ctx, f.f); }
 };
 
 namespace ra {

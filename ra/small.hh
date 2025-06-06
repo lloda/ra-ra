@@ -236,7 +236,7 @@ struct CellSmall
     consteval static rank_t rank() { return framer; }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Warray-bounds" // gcc14.3/15.1 -O3 (but not -O<3)
-    constexpr static dim_t len(int k) { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
+    constexpr static dim_t len(int k) { return dimv[k].len; }
 #pragma GCC diagnostic pop
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
@@ -266,7 +266,7 @@ struct CellBig
 
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
     constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
-    constexpr dim_t len(int k) const { return dimv[k].len; } // len(0<=k<rank) or step(0<=k)
+    constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
 };
@@ -283,9 +283,9 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spe
     RA_ASSIGNOPS_DEFAULT_SET
 
     constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
+    constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(auto) at(auto const & i) const requires (0==cellr) { return c.cp[indexer(*this, i)]; }
     constexpr decltype(auto) at(auto const & i) const requires (0!=cellr) { View cc(c); cc.cp += indexer(*this, i); return cc; }
-    constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr View const & operator*() const requires (0!=cellr) { return c; }
     constexpr auto save() const { return c.cp; }
@@ -524,7 +524,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>: public SmallBase<Dimv>
     using Base = SmallBase<Dimv>;
     using Base::rank, Base::size, Base::dimv;
 
-    T cp[size()]; // cf what std::array does for zero size
+    T cp[size()]; // FIXME what std::array does for zero size
 
     using View = ViewSmall<T *, Dimv>;
     using ViewConst = ViewSmall<T const *, Dimv>;
