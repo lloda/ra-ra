@@ -144,11 +144,9 @@ int main()
         ra::ViewBig<double *, 0> a { {}, &x };
         tr.test_eq(1, a.size());
 
-// ra::ViewBig<T *, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0. That was specific of gcc, so better not to depend on it anyway...
-        cout << "a()" << a() << endl;
-        cout << "sizeof(a())" << sizeof(a()) << endl;
-        cout << "sizeof(double *)" << sizeof(double *) << endl;
-        // static_assert(sizeof(a())==sizeof(double *), "bad assumption");
+// ra::ViewBig<T *, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0.
+// i found out that this happens because of an EBO corner case (see test/sizeof.cc). It should be fixed now, but having sizeof(T[0])==0 may be gcc specific, so better not to depend on it.
+        tr.info("sizeof(double *) vs sizeof(a() = ", a(), ")").skip().test_eq(sizeof(a()), sizeof(double *));
 
         rank0test0(a);
         tr.test_eq(198, a);

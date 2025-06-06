@@ -274,7 +274,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     constexpr View & view() { return *this; }
     using View::size, View::rank, View::dimv, View::cp;
 
-// Needed to set cp. FIXME Remove duplication as in SmallBase/SmallArray.
+// Needed to set cp. FIXME Remove duplication as in SmallArray.
     Container(Container && w): store(std::move(w.store))
     {
         dimv = std::move(w.dimv);

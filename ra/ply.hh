@@ -38,30 +38,21 @@ template <>
 struct WLen<Len>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e)
-    {
-        return Scalar<decltype(ln)>(ln);
-    }
+    f(auto ln, auto && e) { return Scalar<decltype(ln)>(ln); }
 };
 
 template <class Op, Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e)
-    {
-        return map_(RA_FWD(e).op, wlen(ln, std::get<I>(RA_FWD(e).t)) ...);
-    }
+    f(auto ln, auto && e) { return map_(RA_FWD(e).op, wlen(ln, std::get<I>(RA_FWD(e).t)) ...); }
 };
 
 template <Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e)
-    {
-        return pick(wlen(ln, std::get<I>(RA_FWD(e).t)) ...);
-    }
+    f(auto ln, auto && e) { return pick(wlen(ln, std::get<I>(RA_FWD(e).t)) ...); }
 };
 
 // final iota/ptr types must be either is_constant or is_scalar.
@@ -69,20 +60,14 @@ template <class I> requires (has_len<I>)
 struct WLen<Seq<I>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e)
-    {
-        return Seq { VALUE(wlen(ln, RA_FWD(e).i)) };
-    }
+    f(auto ln, auto && e) { return Seq { VALUE(wlen(ln, RA_FWD(e).i)) }; }
 };
 
 template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
 struct WLen<Ptr<I, N, S>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e)
-    {
-        return ptr(wlen(ln, RA_FWD(e).i), VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s)));
-    }
+    f(auto ln, auto && e) { return Ptr(wlen(ln, RA_FWD(e).i), VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s))); }
 };
 
 

@@ -360,18 +360,6 @@ struct nested_arg<T, Dimv>
     using sub = std::conditional_t<0==sn, T, SmallArray<T, ic_t<default_dims<s>>>>;
 };
 
-template <class Dimv>
-struct SmallBase
-{
-    constexpr static auto dimv = Dimv::value;
-    consteval static rank_t rank() { return ssize(dimv); }
-    constexpr static dim_t len(int k) { return dimv[k].len; }
-    constexpr static dim_t len_s(int k) { return len(k); }
-    constexpr static dim_t step(int k) { return dimv[k].step; }
-    static_assert(every(0<=map(&Dim::len, dimv)), "Bad shape."); // TODO check steps
-    consteval static dim_t size() { return ra::size_s<SmallBase>(); }
-};
-
 template <class P> struct reconst_t { using type = void; };
 template <class P> struct unconst_t { using type = void; };
 template <class T> requires (!std::is_const_v<T>) struct reconst_t<T *> { using type = T const *; };
@@ -380,11 +368,16 @@ template <class P> using reconst = reconst_t<P>::type;
 template <class P> using unconst = unconst_t<P>::type;
 
 template <class P, class Dimv>
-struct ViewSmall: public SmallBase<Dimv>
+struct ViewSmall
 {
+    constexpr static auto dimv = Dimv::value;
+    consteval static rank_t rank() { return ssize(dimv); }
+    constexpr static dim_t len(int k) { return dimv[k].len; }
+    constexpr static dim_t len_s(int k) { return len(k); }
+    constexpr static dim_t step(int k) { return dimv[k].step; }
+    consteval static dim_t size() { return std::apply([](auto ... i) { return (i.len * ... * 1); }, dimv); }
+
     using T = std::remove_reference_t<decltype(*std::declval<P>())>;
-    using Base = SmallBase<Dimv>;
-    using Base::rank, Base::size, Base::dimv, Base::len, Base::len_s, Base::step;
     using sub = typename nested_arg<T, Dimv>::sub;
     P cp;
 
@@ -519,12 +512,16 @@ struct
 #if RA_OPT_SMALLVECTOR==1
 alignas(align_req<T, std::apply([](auto ... i) { return (i.len * ... * 1); }, Dimv::value)>())
 #endif
-SmallArray<T, Dimv, std::tuple<nested_args ...>>: public SmallBase<Dimv>
+SmallArray<T, Dimv, std::tuple<nested_args ...>>
 {
-    using Base = SmallBase<Dimv>;
-    using Base::rank, Base::size, Base::dimv;
+    constexpr static auto dimv = Dimv::value;
+    consteval static rank_t rank() { return ssize(dimv); }
+    constexpr static dim_t len(int k) { return dimv[k].len; }
+    constexpr static dim_t len_s(int k) { return len(k); }
+    constexpr static dim_t step(int k) { return dimv[k].step; }
+    consteval static dim_t size() { return std::apply([](auto ... i) { return (i.len * ... * 1); }, dimv); }
 
-    T cp[size()]; // FIXME what std::array does for zero size
+    T cp[size()]; // std::array avoids 0, but why would I
 
     using View = ViewSmall<T *, Dimv>;
     using ViewConst = ViewSmall<T const *, Dimv>;
@@ -545,7 +542,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>: public SmallBase<Dimv>
     }
 // nested braces FIXME p1219??
     constexpr SmallArray(nested_args const & ... x)
-    requires ((0<rank() && 0!=Base::len(0) && (1!=rank() || 1!=Base::len(0))))
+    requires ((0<rank() && 0!=len(0) && (1!=rank() || 1!=len(0))))
     {
         view() = { x ... };
     }
