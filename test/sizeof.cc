@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - What to expect of sizeof... no checks.
+// ra-ra/test - What to expect of sizeof...
 
 // (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -16,7 +16,7 @@ struct noargx {}; // Small uses noarg for its own
 struct sample1
 {
     uint8_t a[16];
-    [[no_unique_address]] ra::Small<int, 0> b; // adds actually 0, but I don't rely on this atm
+    [[no_unique_address]] ra::Small<int, 0> b; // 0 or 1, don't rely on this
 };
 
 struct sample2
@@ -64,6 +64,7 @@ int main()
         cout << sizeof(ra::Small<ra::none_t, 0>) << endl;
         cout << sizeof(ra::Small<noargx, 0>) << endl;
 // the following tests were broken at some point because Small had a fixed empty base class, so nesting Smalls created multiples of these which added useless padding. Not a fan of the rule but w/e - the base class wasn't doing all that much.
+// See
         {
             using nest = ra::Small<ra::Small<int, 2>, 2>;
             cout << "nest " << sizeof(nest) << " " << alignof(nest) << endl;
@@ -101,6 +102,22 @@ int main()
         cout << sizeof(sample4) << endl;
         cout << sizeof(sample5) << endl;
         cout << sizeof(sample6) << endl;
+    }
+    tr.section("sizeof for  Small");
+    {
+        tr.info("sizeof(ra::Small<double>)").test_eq(sizeof(double), sizeof(ra::Small<double>));
+        tr.info("sizeof(ra::Small<double, 1>)").test_eq(sizeof(double), sizeof(ra::Small<double, 1>));
+        tr.info("sizeof(ra::Small<double, 2>)").test_eq(2*sizeof(double), sizeof(ra::Small<double, 2>));
+// don't rely on these.
+        tr.skip().info("sizeof(ra::Small<double, 0>)?").test_eq(0u, sizeof(ra::Small<double, 0>));
+        tr.skip().info("sizeof(ra::Small<double, 0>)?").test_eq(sizeof(double), sizeof(ra::Small<double, 0>));
+    }
+// this needs some EBO grease in SmallArray, or using std::array as member instead of T[].
+    tr.section("Small<T, 0> are allocatable");
+    {
+        using Zero = ra::Small<int, 0>;
+        ra::Big<Zero, 1> a(0, ra::none);
+        tr.test_eq(0u, a.size());
     }
     return tr.summary();
 }

@@ -535,14 +535,14 @@ int main()
     {
         ra::Small<int, 3, 4> a = ra::_0 - ra::_1;
         auto vn = a.view();
-        tr.test_seq(a.cp, vn.cp);
+        tr.test_seq(a.data(), vn.cp);
         static_assert(std::is_same_v<int *, decltype(vn.cp)>);
         auto vc = std::as_const(a).view();
-        tr.test_seq(a.cp, vc.cp);
+        tr.test_seq(a.data(), vc.cp);
         static_assert(std::is_same_v<int const *, decltype(vc.cp)>);
 // needs ViewSmall::ViewConst conversion op
         decltype(vc) vk = vn;
-        tr.test_seq(a.cp, vk.cp);
+        tr.test_seq(a.data(), vk.cp);
         static_assert(std::is_same_v<int const *, decltype(vk.cp)>);
     }
 // ra::shape / ra::size are static for Small types

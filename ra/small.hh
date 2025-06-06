@@ -493,24 +493,17 @@ template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = 
 template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
 #endif
 
-template <class Z, class ... T> constexpr static bool equal_to_any = (std::is_same_v<Z, T> || ...);
+template <class T, size_t N> constexpr size_t align_req = alignof(T[N]);
+template <class Z, class ... T> constexpr static bool equals_any = (std::is_same_v<Z, T> || ...);
 template <class T, size_t N>
-consteval size_t
-align_req()
-{
-    if constexpr (equal_to_any<T, char, unsigned char, short, unsigned short, int, unsigned int,
-                  long, unsigned long, long long, unsigned long long, float, double
-                  > && 0<N && 0==(N & (N-1))) {
-        return alignof(extvector<T, N>);
-    } else {
-        return alignof(T[N]);
-    }
-}
+requires (equals_any<T, char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long,
+          long long, unsigned long long, float, double> && 0<N && 0==(N & (N-1)))
+constexpr size_t align_req<T, N> = alignof(extvector<T, N>);
 
 template <class T, class Dimv, class ... nested_args>
 struct
 #if RA_OPT_SMALLVECTOR==1
-alignas(align_req<T, std::apply([](auto ... i) { return (i.len * ... * 1); }, Dimv::value)>())
+alignas(align_req<T, std::apply([](auto ... i) { return (i.len * ... * 1); }, Dimv::value)>)
 #endif
 SmallArray<T, Dimv, std::tuple<nested_args ...>>
 {
@@ -521,14 +514,16 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     constexpr static dim_t step(int k) { return dimv[k].step; }
     consteval static dim_t size() { return std::apply([](auto ... i) { return (i.len * ... * 1); }, dimv); }
 
-    T cp[size()]; // std::array avoids 0, but why would I
+    T cp[size()];
+    [[no_unique_address]] struct {} prevent_zero_size; // or reuse std::array
+    constexpr auto data(this auto && self) { return self.cp; }
 
     using View = ViewSmall<T *, Dimv>;
     using ViewConst = ViewSmall<T const *, Dimv>;
-    constexpr View view() { return View(cp); }
-    constexpr ViewConst view() const { return ViewConst(cp); }
+    constexpr View view() { return View(data()); }
+    constexpr ViewConst view() const { return ViewConst(data()); }
     constexpr operator View () { return View(cp); }
-    constexpr operator ViewConst () const { return ViewConst(cp); }
+    constexpr operator ViewConst () const { return ViewConst(data()); }
 
     constexpr SmallArray() {}
     constexpr SmallArray(ra::none_t) {}
@@ -558,7 +553,6 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
 #undef ASSIGNOPS
 
     constexpr decltype(auto) back(this auto && self) { return RA_FWD(self).view().back(); }
-    constexpr auto data(this auto && self) { return self.view().data(); }
     constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
     constexpr decltype(auto) at(this auto && self, auto && i) { return RA_FWD(self).view().at(RA_FWD(i)); }

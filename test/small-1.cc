@@ -47,18 +47,6 @@ int main()
         x3() = transpose(y3(), ilist_t<1, 0>{});
         tr.info("transpose copy").test_eq(x3, ra::_0 - ra::_1);
     }
-    tr.section("sizeof");
-    {
-// These all static, but show the numbers if there's an error.
-        tr.info("sizeof(ra::Small<double>)")
-            .test_eq(sizeof(double), sizeof(ra::Small<double>));
-        tr.info("sizeof(ra::Small<double, 0>)")
-            .test(sizeof(double)==sizeof(ra::Small<double, 0>) || 0==sizeof(ra::Small<double, 0>)); // don't rely on either.
-        tr.info("sizeof(ra::Small<double, 1>)")
-            .test_eq(sizeof(double), sizeof(ra::Small<double, 1>));
-        tr.info("sizeof(ra::Small<double, 2>)")
-            .test_eq(2*sizeof(double), sizeof(ra::Small<double, 2>));
-    }
     tr.section("internal fields");
     {
         {
