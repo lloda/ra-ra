@@ -554,11 +554,5 @@ int main()
 // FIXME std::size makes this ambiguous without the qualifier, which looks wrong to me :-/
         tr.test_eq(12, int_c<ra::size(a)>::value);
     }
-// make ViewSmall of Seq
-    {
-        ra::ViewSmall<ra::Seq<int>, ra::ic_t<std::array {ra::Dim {3, 2}, ra::Dim {2, 1}}>> a(ra::Seq {1});
-        std::println(cout, "{:c:2}\n", transpose(a));
-        tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
-    }
     return tr.summary();
 }

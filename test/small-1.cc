@@ -229,7 +229,6 @@ int main()
     }
     tr.section("SmallArray converted to ViewSmall");
     {
-
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
         ra::ViewSmall<double *, ic_t<std::array {Dim {2, 3}, Dim {3, 1}}>> b = a();
         tr.test_eq(a, b);
@@ -450,15 +449,31 @@ int main()
         s.iter() += 9;
         tr.test_eq(ra::start({10, 11, 12}), s);
     }
+    tr.section("deduction guides");
+    {
+        ra::SmallArray a {1, 2, 3}; // FIXME the deduction guide can't work for ra::Small
+        tr.test_eq(ra::start({1, 2, 3}), a);
+    }
     tr.section("multidimensional []");
     {
         ra::Small<int, 3, 2, 4> a = ra::_0 + ra::_1 - ra::_2;
         tr.test_eq(a(ra::all, 0), a[ra::all, 0]);
     }
-    tr.section("deduction guides");
+    tr.section("ViewSmall of Seq");
     {
-        ra::SmallArray a {1, 2, 3}; // FIXME the deduction guide can't work for ra::Small
-        tr.test_eq(ra::start({1, 2, 3}), a);
+        ra::ViewSmall<ra::Seq<int>, ra::ic_t<std::array {ra::Dim {3, 2}, ra::Dim {2, 1}}>> a(ra::Seq {1});
+        std::println(cout, "{:c:2}\n", transpose(a));
+        tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
+    }
+    tr.section("ViewSmall as iota<w>");
+    {
+        constexpr ra::ViewSmall<ra::Seq<ra::dim_t>, ra::ic_t<std::array {ra::Dim {ra::UNB, 1}}>>
+            i0(ra::Seq<ra::dim_t> {0});
+        constexpr ra::ViewSmall<ra::Seq<ra::dim_t>, ra::ic_t<std::array {ra::Dim {ra::UNB, 0}, ra::Dim {ra::UNB, 1}}>>
+            i1(ra::Seq<ra::dim_t> {0});
+        tr.strict().test_eq(ra::Small<int, 3> {1, 3, 5}, i0 + ra::Small<int, 3> {1, 2, 3});
+        ra::Big<ra::dim_t> p({3, 4}, i0 - i1);
+        tr.strict().test_eq(ra::Big<ra::dim_t, 2> {{0, -1, -2, -3}, {1, 0, -1, -2}, {2, 1, 0, -1}}, p);
     }
     return tr.summary();
 }

@@ -289,11 +289,5 @@ int main(int argc, char * * argv)
         tr.test_eq(2, b);
         tr.test_eq(3, c);
     }
-// make ViewBig of Seq
-    {
-        ra::ViewBig<ra::Seq<int>, 2> a({3, 2}, ra::Seq {1});
-        std::println(cout, "{:c:2}\n", transpose(a));
-        tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
-    }
     return tr.summary();
 }

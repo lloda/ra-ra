@@ -54,7 +54,7 @@ struct TestRecorder
 
     std::ostream & o;
     verbose_t verbose_default, verbose;
-    bool willskip=false, willexpectfail=false, willstrictshape=false;
+    bool willskip=false, willexpectfail=false, willstrict=false;
     int total=0, skipped=0, passed_good=0, passed_bad=0, failed_good=0, failed_bad=0;
     std::vector<int> bad;
     std::string infos;
@@ -82,7 +82,7 @@ struct TestRecorder
     TestRecorder & quiet(verbose_t v=QUIET) { verbose = v; return *this; }
     TestRecorder & noisy(verbose_t v=NOISY) { verbose = v; return *this; }
     TestRecorder & skip(bool s=true) { willskip = s; return *this; }
-    TestRecorder & strictshape(bool s=true) { willstrictshape = s; return *this; }
+    TestRecorder & strict(bool s=true) { willstrict = s; return *this; }
     TestRecorder & expectfail(bool s=true) { willexpectfail = s; return *this; }
 
 #define RA_CURRENT_LOC std::source_location const loc = std::source_location::current()
@@ -120,7 +120,7 @@ struct TestRecorder
             ++skipped;
         }
         ++total;
-        willstrictshape = willskip = willexpectfail = false;
+        willstrict = willskip = willexpectfail = false;
     }
     void
     test(bool c, auto && info_full, RA_CURRENT_LOC)
@@ -150,7 +150,7 @@ struct TestRecorder
     bool
     test_comp(auto && a, auto && b, auto && comp, char const * msg, RA_CURRENT_LOC)
     {
-        if (willstrictshape
+        if (willstrict
             ? [&]{
                 if constexpr (ra::rank_s(a)==ra::rank_s(b) || ra::rank_s(a)==ANY || ra::rank_s(b)==ANY) {
                     return ra::rank(a)==ra::rank(b) && every(ra::start(ra::shape(a))==ra::shape(b));
@@ -168,8 +168,8 @@ struct TestRecorder
         } else {
             test(false,
                  RA_LAZYINFO("Mismatched shapes [", fmt(nstyle, ra::shape(a)), "] [", fmt(nstyle, ra::shape(b)), "]",
-                             willstrictshape ? " (strict shape)" : ""),
-                 RA_LAZYINFO("Mismatched shapes", willstrictshape ? " (strict shape)" : ""),
+                             willstrict ? " (strict shape)" : ""),
+                 RA_LAZYINFO("Mismatched shapes", willstrict ? " (strict shape)" : ""),
                  loc);
             return false;
         }

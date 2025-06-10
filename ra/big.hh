@@ -524,7 +524,7 @@ with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s
 // --------------------
 
 template <class P, rank_t RANK>
-inline ViewBig<P, RANK>
+constexpr ViewBig<P, RANK>
 reverse(ViewBig<P, RANK> const & view, int k=0)
 {
     RA_CHECK(inside(k, view.rank()), "Bad axis ", k, " for rank ", view.rank(), ".");
@@ -537,7 +537,7 @@ reverse(ViewBig<P, RANK> const & view, int k=0)
 }
 
 template <class P, rank_t RANK>
-inline ViewBig<P, 1>
+constexpr ViewBig<P, 1>
 ravel_free(ViewBig<P, RANK> const & a)
 {
     RA_CHECK(is_c_order(a, false));
@@ -600,7 +600,7 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
 
 // We need dimtype bc {1, ...} deduces to int and that fails to match ra::dim_t. initializer_list could handle the general case, but the result would have var rank and override this one (?).
 template <class P, rank_t RANK, class dimtype, int N>
-inline auto
+constexpr auto
 reshape(ViewBig<P, RANK> const & a, dimtype const (&s)[N])
 {
     return reshape(a, start(s));
@@ -647,7 +647,7 @@ transpose(ViewBig<P, RANK> const & view, ilist_t<I ...>)
 
 // dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
 template <class P, rank_t RANK, class S>
-inline ViewBig<P, ANY>
+constexpr ViewBig<P, ANY>
 transpose(ViewBig<P, RANK> const & view, S && s)
 {
     RA_CHECK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
@@ -658,7 +658,7 @@ transpose(ViewBig<P, RANK> const & view, S && s)
 }
 
 template <class P, rank_t RANK, class dimtype, int N>
-inline ViewBig<P, ANY>
+constexpr ViewBig<P, ANY>
 transpose(ViewBig<P, RANK> const & view, dimtype const (&s)[N])
 {
     return transpose(view, start(s));
@@ -671,7 +671,7 @@ constexpr decltype(auto)
 diag(auto && a) { return transpose(RA_FWD(a), ilist<0, 0>); };
 
 template <class sup_t, class T, rank_t RANK>
-inline auto
+constexpr auto
 explode(ViewBig<T *, RANK> const & a)
 {
     constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
@@ -684,7 +684,7 @@ explode(ViewBig<T *, RANK> const & a)
 
 // TODO Check that ranks below SUBR are compact. Version for Small.
 template <class sub_t, class sup_t, rank_t RANK>
-inline auto
+constexpr auto
 collapse(ViewBig<sup_t *, RANK> const & a)
 {
     using super_v = value_t<sup_t>;

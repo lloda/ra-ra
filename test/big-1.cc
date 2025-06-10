@@ -183,5 +183,11 @@ int main()
         ra::Unique<int> a({3, 2, 4}, ra::_0 + ra::_1 - ra::_2);
         tr.test_eq(a(ra::all, 0), a[ra::all, 0]);
     }
+    tr.section("ViewBig of Seq");
+    {
+        ra::ViewBig<ra::Seq<int>, 2> a({3, 2}, ra::Seq {1});
+        std::println(cout, "{:c:2}\n", transpose(a));
+        tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
+    }
     return tr.summary();
 }

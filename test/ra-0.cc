@@ -561,10 +561,10 @@ int main()
                 double rcheck[2] = { 2, 5 };
                 auto r1 = r(1);
                 tr.test_eq(rcheck, r1);
-                tr.strictshape().test_eq(rcheck, r.at(ra::Small<int, 1> {1}));
-                tr.strictshape().test_eq(rcheck, r.at(ra::Big<int, 1> {1}));
-                tr.strictshape().test_eq(rcheck, r.at(0+ra::Big<int, 1> {1}));
-                tr.strictshape().test_eq(rcheck, r.at(0+ra::Big<int> {1}));
+                tr.strict().test_eq(rcheck, r.at(ra::Small<int, 1> {1}));
+                tr.strict().test_eq(rcheck, r.at(ra::Big<int, 1> {1}));
+                tr.strict().test_eq(rcheck, r.at(0+ra::Big<int, 1> {1}));
+                tr.strict().test_eq(rcheck, r.at(0+ra::Big<int> {1}));
             }
             {
                 auto r2 = r(1, 1);

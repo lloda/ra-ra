@@ -340,19 +340,14 @@ struct filterdims<prev, I0, I ...>
 // nested braces for Small initializers. Cf braces_def for in big.hh.
 
 template <class T, class Dimv> struct nested_arg { using sub = noarg; };
-
 template <class T, class Dimv> struct small_args { using nested = std::tuple<>; };
-
 template <class T, class Dimv> requires (0<ssize(Dimv::value))
-struct small_args<T, Dimv>
-{
-    using nested = mp::makelist<Dimv::value[0].len, typename nested_arg<T, Dimv>::sub>;
-};
+struct small_args<T, Dimv> { using nested = mp::makelist<Dimv::value[0].len, typename nested_arg<T, Dimv>::sub>; };
 
 template <class T, class Dimv, class nested_args = small_args<T, Dimv>::nested>
 struct SmallArray;
 
-template <class T, class Dimv> requires (0<ssize(Dimv::value))
+template <class T, class Dimv> requires (requires { T(); } && (0<ssize(Dimv::value)))
 struct nested_arg<T, Dimv>
 {
     constexpr static auto sn = ssize(Dimv::value)-1;
@@ -377,9 +372,11 @@ struct ViewSmall
     constexpr static dim_t step(int k) { return dimv[k].step; }
     consteval static dim_t size() { return std::apply([](auto ... i) { return (i.len * ... * 1); }, dimv); }
 
-    using T = std::remove_reference_t<decltype(*std::declval<P>())>;
-    using sub = typename nested_arg<T, Dimv>::sub;
     P cp;
+// exclude all T and sub constructors by making T & sub noarg
+    constexpr static bool have_braces = std::is_reference_v<decltype(*cp)>;
+    using T = std::conditional_t<have_braces, std::remove_reference_t<decltype(*cp)>, noarg>;
+    using sub = typename nested_arg<T, Dimv>::sub;
 
     constexpr ViewSmall const & view() const { return *this; }
     constexpr P data() const { return cp; }
@@ -403,13 +400,15 @@ struct ViewSmall
     }
 // row-major ravel braces
     constexpr ViewSmall const &
-    operator=(T (&&x)[size()]) const requires ((rank()>1) && (size()>1))
+    operator=(T (&&x)[have_braces ? size() : 0]) const
+        requires (have_braces && rank()>1 && size()>1)
     {
         std::ranges::copy(std::ranges::subrange(x), begin()); return *this;
     }
 // nested braces
     constexpr ViewSmall const &
-    operator=(sub (&&x)[rank()>0 ? len(0) : 0]) const requires (0<rank() && 0!=len(0) && (1!=rank() || 1!=len(0)))
+    operator=(sub (&&x)[have_braces ? (rank()>0 ? len(0) : 0) : 0]) const
+        requires (have_braces && 0<rank() && 0<len(0) && (1!=rank() || 1!=len(0)))
     {
         ra::iter<-1>(*this) = x; return *this;
     }
@@ -583,8 +582,8 @@ from_ravel(auto && b)
 }
 
 // Small view ops, see View ops in big.hh.
-// FIXME Merge transpose & Reframe (eg beat(reframe(a)) -> transpose(a) ?)
 
+// FIXME Merge transpose & Reframe (beat reframe(view) into transpose(view)).
 constexpr void
 transpose_dims(auto const & s, auto const & src, auto & dst)
 {
