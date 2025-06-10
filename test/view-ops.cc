@@ -19,30 +19,40 @@ template <class A>
 void CheckReverse(TestRecorder & tr, A && a)
 {
     std::iota(a.begin(), a.end(), 1);
-    cout << "a: " << a << endl;
-    auto b0 = reverse(a, 0);
-    auto c0 = a(ra::iota(ra::len, ra::len-1, -1));
+    auto bd = reverse(a);
+    auto b0 = reverse(a, ra::ic<0>);
     double check0[24] = { 17, 18, 19, 20,   21, 22, 23, 24,
                           9, 10, 11, 12,  13, 14, 15, 16,
                           1, 2, 3, 4,     5, 6, 7, 8 };
     tr.test(std::ranges::equal(check0, check0+24, b0.begin(), b0.end()));
-    tr.test_eq(b0, c0);
+    tr.test(std::ranges::equal(check0, check0+24, bd.begin(), bd.end()));
+// FIXME ViewSmall doesn't support these subscripts
+    if constexpr (ra::ANY==size_s(a)) {
+        auto c0 = a(ra::iota(ra::len, ra::len-1, -1));
+        tr.test_eq(b0, c0);
+    }
 
-    auto b1 = reverse(a, 1);
-    auto c1 = a(ra::dots<1>, ra::iota(ra::len, ra::len-1, -1));
+    auto b1 = reverse(a, ra::ic<1>);
     double check1[24] = { 5, 6, 7, 8,      1, 2, 3, 4,
                           13, 14, 15, 16,  9, 10, 11, 12,
                           21, 22, 23, 24,  17, 18, 19, 20 };
     tr.test(std::ranges::equal(check1, check1+24, b1.begin(), b1.end()));
-    tr.test_eq(b1, c1);
+// FIXME ViewSmall doesn't support these subscripts
+    if constexpr (ra::ANY==size_s(a)) {
+        auto c1 = a(ra::dots<1>, ra::iota(ra::len, ra::len-1, -1));
+        tr.test_eq(b1, c1);
+    }
 
-    auto b2 = reverse(a, 2);
-    auto c2 = a(ra::dots<2>, ra::iota(ra::len, ra::len-1, -1));
+    auto b2 = reverse(a, ra::ic<2>);
     double check2[24] = { 4, 3, 2, 1,      8, 7, 6, 5,
                           12, 11, 10, 9,   16, 15, 14, 13,
                           20, 19, 18, 17,  24, 23, 22, 21 };
     tr.test(std::ranges::equal(check2, check2+24, b2.begin(), b2.end()));
-    tr.test_eq(b2, c2);
+// FIXME ViewSmall doesn't support these subscripts
+    if constexpr (ra::ANY==size_s(a)) {
+        auto c2 = a(ra::dots<2>, ra::iota(ra::len, ra::len-1, -1));
+        tr.test_eq(b2, c2);
+    }
 }
 
 template <class A>
@@ -75,6 +85,7 @@ int main()
     {
         CheckReverse(tr, ra::Unique<double>({ 3, 2, 4 }, ra::none));
         CheckReverse(tr, ra::Unique<double, 3>({ 3, 2, 4 }, ra::none));
+        CheckReverse(tr, ra::Small<double, 3, 2, 4>(ra::none));
     }
     tr.section("transpose of 0 rank");
     {

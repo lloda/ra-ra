@@ -391,8 +391,7 @@ template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) |
 
 // Sometimes we can't do shape(std::declval<V>()) even for static shape :-/ FIXME
 template <class VV>
-constexpr auto shape_s = []
-{
+constexpr auto shape_s = []{
     using V = std::remove_cvref_t<VV>;
     if constexpr (constexpr rank_t rs=rank_s<V>(); 0==rs) {
         return std::array<dim_t, 0> {};

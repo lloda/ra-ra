@@ -2559,11 +2559,18 @@ ply(map([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 2
 
 <span id="index-reverse"></span>
 <span id="x_002dreverse"></span><dl class="def">
-<dt id="index-reverse-1"><span class="category">Function: </span><span><strong>reverse</strong> <em>view axis</em><a href='#index-reverse-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-reverse-1"><span class="category">Function: </span><span><strong>reverse</strong> <em>view k</em><a href='#index-reverse-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Create a new view by reversing axis <var>k</var> of <var>view</var>.
 </p>
 <p>This is equivalent to <code>view(ra::dots&lt;k&gt;, ra::iota(ra::len, ra::len-1, -1))</code>.
 </p>
+<p>If <var>view</var> has static dimensions, then <var>k</var> must be a static constant, e.g.
+</p><div class="example">
+<pre class="verbatim">ra::Small&lt;int, 3, 2&gt; a = {{1, 2, 3}, {4, 5, 6}};
+auto z = reverse(a, ra::ic&lt;0&gt;); // z has static dimensions
+</pre><pre class="example">&rArr; z = {{3, 2, 1}, {6, 5, 4}}
+</pre></div>
+
 <p>This operation does not work on arbitrary array expressions yet. </p>
 </dd></dl>
 

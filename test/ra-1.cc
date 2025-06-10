@@ -222,7 +222,7 @@ int main()
     TEST(ply_ravel)
     TEST(ply_fixed)
 #undef TEST
-    tr.section("reverse (ref & non ref), traverse");
+    tr.section("big reverse (ref & non ref), traverse");
     {
         A2 A({2, 3}, { 1, 2, 3, 4, 5, 6 });
         A2 B({2, 3}, { 1, 2, 3, 4, 5, 6 });
@@ -243,9 +243,8 @@ int main()
         CheckPly<A2>(tr, "(i)", reverse(reverse(A, 0), 1), B);
         CheckPly<A2>(tr, "(j)", reverse(reverse(A, 0), 1), reverse(reverse(B, 0), 1));
     }
-    tr.section("reverse & transpose (ref & non ref), traverse");
+    tr.section("big reverse & transpose (ref & non ref), traverse");
     {
-        using A2 = ra::Unique<int, 2>;
         A2 A({2, 2}, { 1, 2, 3, 4 });
         A2 B({2, 2}, { 1, 2, 3, 4 });
 
@@ -263,6 +262,27 @@ int main()
         CheckPly<A2>(tr, "(j)", A, transpose(B, ilist_t<1, 0>{}));
         CheckPly<A2>(tr, "(k)", reverse(reverse(transpose(A, ilist_t<1, 0>{}), 1), 0), B);
         CheckPly<A2>(tr, "(l)", A, reverse(reverse(transpose(B, ilist_t<1, 0>{}), 1), 0));
+    }
+    tr.section("small reverse (ref & non ref), traverse");
+    {
+        ra::Small<int, 2, 3> A = { 1, 2, 3, 4, 5, 6 };
+        ra::Small<int, 2, 3> B = { 1, 2, 3, 4, 5, 6 };
+
+        CheckPly<A2>(tr, "(a)", A, B);
+        CheckPly<A2>(tr, "(b)", reverse(A, ra::ic<0>), B);
+        CheckPly<A2>(tr, "(c)", A, reverse(B, ra::ic<0>));
+        CheckPly<A2>(tr, "(d)", reverse(A, ra::ic<0>), reverse(B, ra::ic<0>));
+
+        CheckPly<A2>(tr, "(e)", reverse(A, ra::ic<1>), B);
+        CheckPly<A2>(tr, "(f)", A, reverse(B, ra::ic<1>));
+        CheckPly<A2>(tr, "(g)", reverse(A, ra::ic<1>), reverse(B, ra::ic<1>));
+
+// When BOTH steps are negative, B is still compact and this can be reduced to a single loop.
+// TODO Enforce that the loop is linearized over both dimensions.
+
+        CheckPly<A2>(tr, "(h)", A, reverse(reverse(B, ra::ic<0>), ra::ic<1>));
+        CheckPly<A2>(tr, "(i)", reverse(reverse(A, ra::ic<0>), ra::ic<1>), B);
+        CheckPly<A2>(tr, "(j)", reverse(reverse(A, ra::ic<0>), ra::ic<1>), reverse(reverse(B, ra::ic<0>), ra::ic<1>));
     }
     return tr.summary();
 }

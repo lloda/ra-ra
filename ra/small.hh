@@ -24,8 +24,7 @@ inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
 
 template <auto v, int n>
-constexpr auto vdrop = []
-{
+constexpr auto vdrop = []{
     std::array<Dim, ssize(v)-n> r;
     for (int i=0; i<int(r.size()); ++i) { r[i] = v[n+i]; }
     return r;
@@ -314,8 +313,7 @@ struct filterdims<prev, I0, I ...>
     constexpr static int dst = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.dst;
     constexpr static int src = stretch ? (ssize(prev) - (0 + ... + beatable<I>.src)) : beatable<I0>.src;
     constexpr static auto next = filterdims<vdrop<prev, src>, I ...>::dimv;
-    constexpr static auto dimv = []
-    {
+    constexpr static auto dimv = []{
         std::array<Dim, dst+ssize(next)> r;
         for (int i=0; i<dst; ++i) { r[i] = prev[i]; }
         for (int i=0; i<ssize(next); ++i) { r[dst+i] = next[i]; }
@@ -328,8 +326,7 @@ struct filterdims<prev, I0, I ...>
 {
     constexpr static int src = beatable<I0>.src;
     constexpr static auto next = filterdims<vdrop<prev, src>, I ...>::dimv;
-    constexpr static auto dimv = []
-    {
+    constexpr static auto dimv = []{
         std::array<Dim, 1+ssize(next)> r;
         r[0] = Dim { I0::nn, prev[0].step * I0::gets() };
         for (int i=0; i<ssize(next); ++i) { r[1+i] = next[i]; }
@@ -373,25 +370,13 @@ struct ViewSmall
     consteval static dim_t size() { return std::apply([](auto ... i) { return (i.len * ... * 1); }, dimv); }
 
     P cp;
+    constexpr ViewSmall const & view() const { return *this; }
+    constexpr P data() const { return cp; }
+    constexpr explicit ViewSmall(P cp_): cp(cp_) {}
 // exclude all T and sub constructors by making T & sub noarg
     constexpr static bool have_braces = std::is_reference_v<decltype(*cp)>;
     using T = std::conditional_t<have_braces, std::remove_reference_t<decltype(*cp)>, noarg>;
     using sub = typename nested_arg<T, Dimv>::sub;
-
-    constexpr ViewSmall const & view() const { return *this; }
-    constexpr P data() const { return cp; }
-
-    constexpr explicit ViewSmall(P cp_): cp(cp_) {}
-// cf RA_ASSIGNOPS_SELF [ra38] [ra34]
-    ViewSmall const & operator=(ViewSmall const & x) const { start(*this) = x; return *this; }
-    constexpr ViewSmall(ViewSmall const & s) = default;
-
-    template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
-    constexpr ViewSmall const & operator=(X && x) const { start(*this) = x; return *this; }
-#define ASSIGNOPS(OP)                                                   \
-    constexpr ViewSmall const & operator OP(auto && x) const { start(*this) OP x; return *this; }
-    FOR_EACH(ASSIGNOPS, *=, +=, -=, /=)
-#undef ASSIGNOPS
 // if T isn't is_scalar [ra44]
     constexpr ViewSmall const &
     operator=(T const & t) const
@@ -412,6 +397,15 @@ struct ViewSmall
     {
         ra::iter<-1>(*this) = x; return *this;
     }
+// cf RA_ASSIGNOPS_SELF [ra38] [ra34]
+    ViewSmall const & operator=(ViewSmall const & x) const { start(*this) = x; return *this; }
+    constexpr ViewSmall(ViewSmall const & s) = default;
+    template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
+    constexpr ViewSmall const & operator=(X && x) const { start(*this) = x; return *this; }
+#define ASSIGNOPS(OP)                                                   \
+    constexpr ViewSmall const & operator OP(auto && x) const { start(*this) OP x; return *this; }
+    FOR_EACH(ASSIGNOPS, *=, +=, -=, /=)
+#undef ASSIGNOPS
 
     template <int k>
     constexpr static dim_t
@@ -597,6 +591,21 @@ transpose_dims(auto const & s, auto const & src, auto & dst)
 
 RA_IS_DEF(cv_viewsmall, (std::is_convertible_v<A, ViewSmall<decltype(std::declval<A>().data()), ic_t<A::dimv>>>));
 
+template <class K=ic_t<0>>
+constexpr auto
+reverse(cv_viewsmall auto && a_, K k = K {})
+{
+    decltype(auto) a = a_.view();
+    using A = std::decay_t<decltype(a)>;
+    constexpr auto rdimv = [&]{
+        std::remove_const_t<decltype(A::dimv)> rdimv = A::dimv;
+        RA_CHECK(inside(k, ssize(rdimv)), "Bad axis ", K::value, " for rank ", ssize(rdimv), ".");
+        rdimv[k].step *= -1;
+        return rdimv;
+    }();
+    return ViewSmall<decltype(a.cp), ic_t<rdimv>>(0==rdimv[k].len ? a.cp : a.cp + rdimv[k].step*(1-rdimv[k].len));
+}
+
 template <int ... Iarg>
 constexpr auto
 transpose(cv_viewsmall auto && a_, ilist_t<Iarg ...>)
@@ -607,7 +616,7 @@ transpose(cv_viewsmall auto && a_, ilist_t<Iarg ...>)
     constexpr static auto src = A::dimv;
     static_assert(ra::size(src)==ra::size(s), "Bad size for transposed axes list.");
     constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
-    constexpr static auto dst = [&]() { std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
+    constexpr static auto dst = [&]{ std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
     return ViewSmall<decltype(a.cp), ic_t<dst>>(a.data());
 }
 
@@ -641,8 +650,7 @@ constexpr auto
 explode(cv_viewsmall auto && a)
 {
     constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
-    constexpr static auto bdimv = [&a]()
-    {
+    constexpr static auto bdimv = [&a]{
         std::array<Dim, ra::rank_s(a)-rank_s<sup_t>()-ru> bdimv;
         explode_dims<sup_t, value_t<decltype(a)>>(a.dimv, bdimv);
         return bdimv;

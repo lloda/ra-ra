@@ -2507,10 +2507,19 @@ See also @ref{x-imag_part,@code{imag_part}}.
 @end defun
 
 @cindex @code{reverse}
-@anchor{x-reverse} @defun reverse view axis
+@anchor{x-reverse} @defun reverse view k
 Create a new view by reversing axis @var{k} of @var{view}.
 
 This is equivalent to @code{view(ra::dots<k>, ra::iota(ra::len, ra::len-1, -1))}.
+
+If @var{view} has static dimensions, then @var{k} must be a static constant, e.g.
+@example
+@verbatim
+ra::Small<int, 3, 2> a = {{1, 2, 3}, {4, 5, 6}};
+auto z = reverse(a, ra::ic<0>); // z has static dimensions
+@end verbatim
+@result{} z = @{@{3, 2, 1@}, @{6, 5, 4@}@}
+@end example
 
 This operation does not work on arbitrary array expressions yet. @c TODO FILL
 

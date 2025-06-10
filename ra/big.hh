@@ -524,15 +524,14 @@ with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s
 // --------------------
 
 template <class P, rank_t RANK>
-constexpr ViewBig<P, RANK>
+constexpr auto
 reverse(ViewBig<P, RANK> const & view, int k=0)
 {
     RA_CHECK(inside(k, view.rank()), "Bad axis ", k, " for rank ", view.rank(), ".");
     ViewBig<P, RANK> r = view;
-    if (auto & dim=r.dimv[k]; dim.len!=0) {
-        r.cp += dim.step*(dim.len-1);
-        dim.step *= -1;
-    }
+    auto & dim = r.dimv[k];
+    dim.step *= -1;
+    if (dim.len!=0) { r.cp += dim.step*(1-dim.len); }
     return r;
 }
 
