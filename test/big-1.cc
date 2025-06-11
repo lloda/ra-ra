@@ -189,5 +189,16 @@ int main()
         std::println(cout, "{:c:2}\n", transpose(a));
         tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
     }
+    tr.section("ViewBig as iota<w>");
+// in order to replace Ptr<>, we must support Len both in P and in Dimv.
+    {
+        constexpr ra::ViewBig<ra::Seq<ra::dim_t>, 1>
+            i0({{ra::UNB, 1}}, ra::Seq<ra::dim_t> {0});
+        constexpr ra::ViewBig<ra::Seq<ra::dim_t>, 2>
+            i1({{ra::UNB, 0}, {ra::UNB, 1}}, ra::Seq<ra::dim_t> {0});
+        tr.strict().test_eq(ra::Small<int, 3> {1, 3, 5}, i0 + ra::Small<int, 3> {1, 2, 3});
+        ra::Big<ra::dim_t> p({3, 4}, i0 - i1);
+        tr.strict().test_eq(ra::Big<ra::dim_t, 2> {{0, -1, -2, -3}, {1, 0, -1, -2}, {2, 1, 0, -1}}, p);
+    }
     return tr.summary();
 }

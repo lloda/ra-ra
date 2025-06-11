@@ -27,7 +27,7 @@ struct Dual
 {
     T re, du;
 
-    constexpr static bool is_complex = requires { requires !(std::is_same_v<T, std::decay_t<decltype(std::declval<T>().real())>>); };
+    constexpr static bool is_complex = requires (T & a) { []<class R>(std::complex<R> &){}(a); };
     template <class S> struct real_part { struct type {}; };
     template <class S> requires (is_complex) struct real_part<S> { using type = typename S::value_type; };
     using real_type = typename real_part<T>::type;
@@ -45,222 +45,108 @@ struct Dual
 #undef ASSIGNOPS
 };
 
-template <class R> constexpr auto dual(Dual<R> const & r) { return r; }
+template <class A> concept is_dual = requires (A & a) { []<class T>(Dual<T> &){}(a); };
+
+constexpr auto dual(is_dual auto const & r) { return r; }
 template <class R> constexpr auto dual(R const & r) { return Dual<R> { r, 0. }; }
 
-template <class R, class D> constexpr auto
-dual(R const & r, D const & d)
-{
-    return Dual<std::common_type_t<R, D>> { r, d };
-}
+template <class R, class D>
+constexpr auto dual(R const & r, D const & d)
+{ return Dual<std::common_type_t<R, D>> { r, d }; }
 
-template <class A, class B>
-constexpr auto
-operator*(Dual<A> const & a, Dual<B> const & b)
-{
-    return dual(a.re*b.re, a.re*b.du + a.du*b.re);
-}
-template <class A, class B>
-constexpr auto
-operator*(A const & a, Dual<B> const & b)
-{
-    return dual(a*b.re, a*b.du);
-}
-template <class A, class B>
-constexpr auto
-operator*(Dual<A> const & a, B const & b)
-{
-    return dual(a.re*b, a.du*b);
-}
+constexpr auto operator*(is_dual auto const & a, is_dual auto const & b)
+{ return dual(a.re*b.re, a.re*b.du + a.du*b.re); }
 
-template <class A, class B, class C>
-constexpr auto
-fma(Dual<A> const & a, Dual<B> const & b, Dual<C> const & c)
-{
-    return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du)));
-}
+constexpr auto operator*(auto const & a, is_dual auto const & b)
+{ return dual(a*b.re, a*b.du); }
 
-template <class A, class B>
-constexpr auto
-operator+(Dual<A> const & a, Dual<B> const & b)
-{
-    return dual(a.re+b.re, a.du+b.du);
-}
-template <class A, class B>
-constexpr auto
-operator+(A const & a, Dual<B> const & b)
-{
-    return dual(a+b.re, b.du);
-}
-template <class A, class B>
-constexpr auto
-operator+(Dual<A> const & a, B const & b)
-{
-    return dual(a.re+b, a.du);
-}
+constexpr auto operator*(is_dual auto const & a, auto const & b)
+{ return dual(a.re*b, a.du*b); }
 
-template <class A, class B>
-constexpr auto
-operator-(Dual<A> const & a, Dual<B> const & b)
-{
-    return dual(a.re-b.re, a.du-b.du);
-}
-template <class A, class B>
-constexpr auto
-operator-(Dual<A> const & a, B const & b)
-{
-    return dual(a.re-b, a.du);
-}
-template <class A, class B>
-constexpr auto
-operator-(A const & a, Dual<B> const & b)
-{
-    return dual(a-b.re, -b.du);
-}
+constexpr auto fma(is_dual auto const & a, is_dual auto const & b, is_dual auto const & c)
+{ return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du))); }
 
-template <class A>
-constexpr auto
-operator-(Dual<A> const & a)
-{
-    return dual(-a.re, -a.du);
-}
+constexpr auto operator+(is_dual auto const & a, is_dual auto const & b)
+{ return dual(a.re+b.re, a.du+b.du); }
 
-template <class A>
-constexpr decltype(auto)
-operator+(Dual<A> const & a)
-{
-    return a;
-}
+constexpr auto operator+(auto const & a, is_dual auto const & b)
+{ return dual(a+b.re, b.du); }
 
-template <class A>
-constexpr auto
-sqr(Dual<A> const & a)
-{
-    return a*a;
-}
+constexpr auto operator+(is_dual auto const & a, auto const & b)
+{ return dual(a.re+b, a.du); }
 
-template <class A>
-constexpr auto
-inv(Dual<A> const & a)
-{
-    auto i = 1./a.re;
-    return dual(i, -a.du*sqr(i));
-}
+constexpr auto operator-(is_dual auto const & a, is_dual auto const & b)
+{ return dual(a.re-b.re, a.du-b.du); }
 
-template <class A, class B>
-constexpr auto
-operator/(Dual<A> const & a, Dual<B> const & b)
-{
-    return a*inv(b);
-}
+constexpr auto operator-(is_dual auto const & a, auto const & b)
+{ return dual(a.re-b, a.du); }
 
-template <class A, class B>
-constexpr auto
-operator/(Dual<A> const & a, B const & b)
-{
-    return a*inv(dual(b));
-}
+constexpr auto operator-(auto const & a, is_dual auto const & b)
+{ return dual(a-b.re, -b.du); }
 
-template <class A, class B>
-constexpr auto
-operator/(A const & a, Dual<B> const & b)
-{
-    return dual(a)*inv(b);
-}
+constexpr auto operator-(is_dual auto const & a)
+{ return dual(-a.re, -a.du); }
 
-template <class A>
-constexpr auto
-cos(Dual<A> const & a)
-{
-    return dual(cos(a.re), -sin(a.re)*a.du);
-}
+constexpr decltype(auto) operator+(is_dual auto const & a)
+{ return a; }
 
-template <class A>
-constexpr auto
-sin(Dual<A> const & a)
-{
-    return dual(sin(a.re), +cos(a.re)*a.du);
-}
+constexpr auto sqr(is_dual auto const & a)
+{ return a*a; }
 
-template <class A>
-constexpr auto
-cosh(Dual<A> const & a)
-{
-    return dual(cosh(a.re), +sinh(a.re)*a.du);
-}
+constexpr auto inv(is_dual auto const & a)
+{ auto i = 1./a.re; return dual(i, -a.du*sqr(i)); }
 
-template <class A>
-constexpr auto
-sinh(Dual<A> const & a)
-{
-    return dual(sinh(a.re), +cosh(a.re)*a.du);
-}
+constexpr auto operator/(is_dual auto const & a, is_dual auto const & b)
+{ return a*inv(b); }
 
-template <class A>
-constexpr auto
-tan(Dual<A> const & a)
-{
-    auto c = cos(a.du);
-    return dual(tan(a.re), a.du/(c*c));
-}
+constexpr auto operator/(is_dual auto const & a, auto const & b)
+{ return a*inv(dual(b)); }
 
-template <class A>
-constexpr auto
-exp(Dual<A> const & a)
-{
-    return dual(exp(a.re), +exp(a.re)*a.du);
-}
+constexpr auto operator/(auto const & a, is_dual auto const & b)
+{ return dual(a)*inv(b); }
 
-template <class A, class B>
-constexpr auto
-pow(Dual<A> const & a, B const & b)
-{
-    return dual(pow(a.re, b), +b*pow(a.re, b-1)*a.du);
-}
+constexpr auto cos(is_dual auto const & a)
+{ return dual(cos(a.re), -sin(a.re)*a.du); }
 
-template <class A>
-constexpr auto
-log(Dual<A> const & a)
-{
-    return dual(log(a.re), +a.du/a.re);
-}
+constexpr auto sin(is_dual auto const & a)
+{ return dual(sin(a.re), +cos(a.re)*a.du); }
 
-template <class A>
-constexpr auto
-sqrt(Dual<A> const & a)
-{
-    return dual(sqrt(a.re), +a.du/(2.*sqrt(a.re)));
-}
+constexpr auto cosh(is_dual auto const & a)
+{ return dual(cosh(a.re), +sinh(a.re)*a.du); }
 
-template <class A>
-constexpr auto
-abs(Dual<A> const & a)
-{
-    return abs(a.re);
-}
+constexpr auto sinh(is_dual auto const & a)
+{ return dual(sinh(a.re), +cosh(a.re)*a.du); }
 
-template <class A>
-constexpr bool
-isfinite(Dual<A> const & a)
-{
-    return isfinite(a.re) && isfinite(a.du);
-}
+constexpr auto tan(is_dual auto const & a)
+{ auto c = cos(a.du); return dual(tan(a.re), a.du/(c*c)); }
 
-template <class A>
-constexpr auto
-xi(Dual<A> const & a)
-{
-    return dual(xi(a.re), xi(a.du));
-}
+constexpr auto exp(is_dual auto const & a)
+{ return dual(exp(a.re), +exp(a.re)*a.du); }
 
-template <class A>
-std::ostream & operator<<(std::ostream & o, Dual<A> const & a)
-{
-    return o << "[" << a.re << " " << a.du << "]";
-}
+constexpr auto pow(is_dual auto const & a, auto const & b)
+{ return dual(pow(a.re, b), +b*pow(a.re, b-1)*a.du); }
 
-template <class A>
-std::istream & operator>>(std::istream & i, Dual<A> & a)
+constexpr auto log(is_dual auto const & a)
+{  return dual(log(a.re), +a.du/a.re); }
+
+constexpr auto sqrt(is_dual auto const & a)
+{ return dual(sqrt(a.re), +a.du/(2.*sqrt(a.re))); }
+
+constexpr auto abs(is_dual auto const & a)
+{ return abs(a.re); }
+
+constexpr bool isfinite(is_dual auto const & a)
+{ return isfinite(a.re) && isfinite(a.du); }
+
+constexpr auto xi(is_dual auto const & a)
+{ return dual(xi(a.re), xi(a.du)); }
+
+std::ostream &
+operator<<(std::ostream & o, is_dual auto const & a)
+{ return o << "[" << a.re << " " << a.du << "]"; }
+
+std::istream &
+operator>>(std::istream & i, is_dual auto & a)
 {
     char s;
     i >> s;

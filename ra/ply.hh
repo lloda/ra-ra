@@ -433,7 +433,7 @@ operator<<(std::ostream & o, Fmt<A> const & fa)
     return o;
 }
 
-template <class C> requires (ANY!=size_s<C>() && !is_scalar<C>)
+template <class C> requires (ANY!=size_s<C>() && ((is_ra<C> && !is_scalar<C>) || is_fov<C>))
 inline std::istream &
 operator>>(std::istream & i, C & c)
 {
