@@ -147,7 +147,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   5. [ ]
   6. [ ]
   7. [ ]
-  8. [X] test/operators.cc: Some simple expressions with scalars fail in VALUE(). The patch in ra.hh
+  8. [X] test/operators.cc: Some simple expressions with scalars fail in VAL(). The patch in ra.hh
      triggers the address sanitizer in test/ra-9.cc.
   9. [ ] test/ra-6.cc: ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so
      ra::ptr(temp) must only be used as temp. Really forbidding auto ll = ra::ptr(lvalue) would also
@@ -170,7 +170,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
       (and ravel constructors also).
   17. [ ] assert() is used in some cases for runtime conditions that aren't ra::'s fault. This is
       bad because if RA_ASSERT is defined to throw, the caller probably expects to be able to handle
-      the error. On the other hand if RA_DO_CHECK is 0, we shouldn't continue. But ofc we do in
+      the error. On the other hand if RA_CHECK is 0, we shouldn't continue. But ofc we do in
       index checks etc. So is this different?
   18. [ ]
   19. [ ]

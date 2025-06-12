@@ -25,7 +25,7 @@ void
 gemm1(auto && a, auto && b, auto & c)
 {
     for_each(ra::wrank<1, 2, 1>(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto & c) { ra::maybe_fma(a, b, c); })),
-             RA_FWD(a), RA_FWD(b), RA_FWD(c));
+             RA_FW(a), RA_FW(b), RA_FW(c));
 }
 void
 gemm2(auto && a, auto && b, auto & c)

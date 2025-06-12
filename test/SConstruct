@@ -64,10 +64,10 @@ tester = ra.to_test_ra(env, variant_dir)
               'wrank'
               ]]
 
-tester('ra-10', target='ra-10a', cxxflags=['-O3'], cppdefines={'RA_DO_CHECK': '0'})
-tester('ra-10', target='ra-10b', cxxflags=['-O1'], cppdefines={'RA_DO_CHECK': '0'})
-tester('ra-10', target='ra-10c', cxxflags=['-O3'], cppdefines={'RA_DO_CHECK': '1'})
-tester('ra-10', target='ra-10d', cxxflags=['-O1'], cppdefines={'RA_DO_CHECK': '1'})
+tester('ra-10', target='ra-10a', cxxflags=['-O3'], cppdefines={'RA_CHECK': '0'})
+tester('ra-10', target='ra-10b', cxxflags=['-O1'], cppdefines={'RA_CHECK': '0'})
+tester('ra-10', target='ra-10c', cxxflags=['-O3'], cppdefines={'RA_CHECK': '1'})
+tester('ra-10', target='ra-10d', cxxflags=['-O1'], cppdefines={'RA_CHECK': '1'})
 
 if not top['skip_summary']:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/test'))

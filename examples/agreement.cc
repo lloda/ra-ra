@@ -83,7 +83,7 @@ int main()
         A = c(ra::insert<1>);
         cout << "\nA: " << A << endl;
     }
-    // Example is over: this is a demo for how errors look like depending on RA_DO_CHECK.
+    // Example is over: this is a demo for how errors look like depending on RA_CHECK.
     /*
     {
         ra::Big<int, 2> a({10, 3}, 1);

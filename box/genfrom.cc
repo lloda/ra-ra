@@ -8,12 +8,11 @@
 // later version.
 
 // Atm view(i ...) only beats i of rank ≤1 and only when all i are beatable. This is a sandbox for a version that beats any combination of scalar or view<Seq> of any rank, and only returns an expr for the unbeatable subscripts.
-// There is an additional issue that eg A2(i1) (indicating ranks) returns a nested expression, that is, a rank-1 expr where each element is a rank-1 view. We'd prefer if the result was rank 2 and not nested, iow, the value type of the result should always be the same as that of A.
+// There is an additional issue that eg A2(unbeatable-i1) (indicating ranks) returns a nested expression, that is, a rank-1 expr where each element is a rank-1 view. It should instead be rank 2 and not nested, iow, the value type of the result should always be the same as that of A.
+// 1) Need to split the static and the dynamic parts so some/most of the routine can be used for Small or Big
+// 2) Need to find a way to use len like in Ptr-based iota.
 
 #include "ra/test.hh"
-#include <iomanip>
-#include <chrono>
-#include <span>
 
 using std::cout, std::endl, std::flush;
 
@@ -24,6 +23,25 @@ constexpr auto ii(dim_t (&&s)[rank])
 {
     return ViewBig<Seq<dim_t>, rank>(s, Seq<dim_t>{0});
 }
+
+template <std::integral auto ... i>
+constexpr auto ii(ra::ilist_t<i ...>)
+{
+    return ViewSmall<Seq<dim_t>, ra::ic_t<ra::default_dims(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<dim_t>{0});
+}
+
+template <class A> concept is_iota_static = requires (A a)
+{
+    []<class I, class Dimv>(ViewSmall<Seq<I>, Dimv> const &){}(a);
+    requires UNB!=ra::size(a); // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
+};
+
+template <class A> concept is_iota_dynamic = requires (A a)
+{
+    []<class I, rank_t RANK>(ViewBig<Seq<I>, RANK> const &){}(a);
+};
+
+template <class A> concept is_iota_any = is_iota_dynamic<A> || is_iota_static<A>;
 
 template <class A, class ... I>
 constexpr auto
@@ -39,6 +57,6 @@ int main()
 {
     ra::TestRecorder tr(std::cout);
     cout << ra::ii({3, 4}) << endl;
+    cout << ra::ii(ra::ilist<3, 4>) << endl;
     return tr.summary();
 }
-x

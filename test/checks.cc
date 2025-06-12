@@ -7,10 +7,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifdef RA_DO_CHECK
-  #undef RA_DO_CHECK
+#ifdef RA_CHECK
+  #undef RA_CHECK
 #endif
-#define RA_DO_CHECK 1 // the point here
+#define RA_CHECK 1 // the point here
 
 #include "ra/base.hh"
 #include <exception>
@@ -38,7 +38,7 @@ using ra::int_c, ra::ilist_t;
 
 int main()
 {
-    cout << "******* " << RA_DO_CHECK << "******" << endl;
+    cout << "******* " << RA_CHECK << "******" << endl;
     TestRecorder tr(std::cout);
     tr.section("bad cell rank");
     {

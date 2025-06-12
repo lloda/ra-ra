@@ -14,7 +14,7 @@ jobs:
       matrix:
         cxxflags: ['"-O3 -fno-sanitize=all -std=c++23 -DRA_OPT_SMALLVECTOR=0"',
                    '"-O3 -fno-sanitize=all -std=c++23 -DRA_OPT_SMALLVECTOR=1"',
-                   '"-O3 -fno-sanitize=all -DRA_DO_CHECK=0 -DNDEBUG -std=c++23"']
+                   '"-O3 -fno-sanitize=all -DRA_CHECK=0 -DNDEBUG -std=c++23"']
     steps:
     - uses: actions/checkout@v4
     - name: update

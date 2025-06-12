@@ -28,7 +28,7 @@
 #define STRINGIZE( x ) STRINGIZE_( x )
 #define JOIN_( x, y ) x##y
 #define JOIN( x, y ) JOIN_( x, y )
-#define RA_FWD(a) std::forward<decltype(a)>(a)
+#define RA_FW(a) std::forward<decltype(a)>(a)
 // see http://stackoverflow.com/a/1872506
 #define FOR_EACH_1(what, x, ...) what(x)
 #define FOR_EACH_2(what, x, ...) what(x) FOR_EACH_1(what, __VA_ARGS__)
@@ -267,12 +267,10 @@ constexpr int MIS = -1922222222; // mismatch, only from choose_len
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;
-static_assert(sizeof(rank_t)>=4 && sizeof(dim_t)>=4);
-static_assert(sizeof(rank_t)>=sizeof(int) && sizeof(dim_t)>=sizeof(rank_t));
+static_assert(sizeof(rank_t)>=4 && sizeof(rank_t)>=sizeof(int) && sizeof(dim_t)>=sizeof(rank_t));
 static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
 
 template <dim_t V> using dim_c = std::integral_constant<dim_t, V>;
-template <rank_t V> using rank_c = std::integral_constant<rank_t, V>;
 enum none_t { none }; // in constructors to mean: don't initialize
 struct noarg { noarg() = delete; }; // in constructors to mean: don't instantiate
 
@@ -301,7 +299,7 @@ struct default_init_allocator: public A
     template <class U, class... Args>
     void construct(U * ptr, Args &&... args)
     {
-        traits::construct(static_cast<A &>(*this), ptr, RA_FWD(args)...);
+        traits::construct(static_cast<A &>(*this), ptr, RA_FW(args)...);
     }
 };
 
@@ -331,7 +329,7 @@ concept Slice = requires (A a)
 
 
 // --------------
-// type classification & introspection
+// type classification and introspection
 // --------------
 
 // FIXME https://wg21.link/p2841r0 ?
@@ -339,7 +337,7 @@ concept Slice = requires (A a)
     template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
     template <class A> concept NAME = JOIN(NAME, _def)<std::decay_t< A >>;
 
-RA_IS_DEF(is_scalar, (!std::is_pointer_v<A> && std::is_scalar_v<A> || is_constant<A>))
+RA_IS_DEF(is_scalar, !std::is_pointer_v<A> && std::is_scalar_v<A> || is_constant<A>)
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
@@ -348,7 +346,7 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 RA_IS_DEF(is_iterator, Iterator<A>)
 template <class A> concept is_ra = is_iterator<A> || Slice<A>;
 template <class A> concept is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
-RA_IS_DEF(is_fov, (!is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::bidirectional_range<A>))
+RA_IS_DEF(is_fov, !is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::bidirectional_range<A>)
 
 template <class VV> requires (!std::is_void_v<VV>)
 consteval rank_t
@@ -384,9 +382,9 @@ rank(auto const & v)
 
 // all args rank 0 (apply immediately), but at least one ra:: (disambiguate scalar version).
 template <class A> concept is_ra_pos = is_ra<A> && 0!=rank_s<A>();
-template <class A> concept is_zero_or_scalar = (is_ra<A> && 0==rank_s<A>()) || is_scalar<A>;
+template <class A> concept is_ra_0 = (is_ra<A> && 0==rank_s<A>()) || is_scalar<A>;
 RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
-template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_zero_or_scalar<A> && !is_special<A>) && ...);
+template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_ra_0<A> && !is_special<A>) && ...);
 template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
 
 // Sometimes we can't do shape(std::declval<V>()) even for static shape :-/ FIXME
@@ -451,7 +449,7 @@ shape(V const & v)
         return std::apply([&v](auto ... i) { return std::array { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         return std::ranges::to<vector_default_init<dim_t>>(
-            std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k) { return v.len(k); }));
+            std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k){ return v.len(k); }));
     }
 }
 
@@ -476,12 +474,12 @@ constexpr format_t lstyle = { .shape=noshape, .open="(", .close=")", .sep0=" ", 
 constexpr format_t pstyle = { .shape=noshape, .open="[", .close="]", .sep0=", ", .sepn=",\n", .rep="\n", .align=true };
 
 template <class A> struct Fmt { format_t f = {}; A a; };
-template <class A> constexpr auto fmt(format_t f, A && a) { return Fmt<A> { f, RA_FWD(a) }; }
+template <class A> constexpr auto fmt(format_t f, A && a) { return Fmt<A> { f, RA_FW(a) }; }
 
 // exclude std::string_view so it still prints as a string [ra13].
 RA_IS_DEF(is_array_formattable, is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>));
 
-constexpr std::ostream & operator<<(std::ostream & o, is_array_formattable auto && a) { return o << fmt({}, RA_FWD(a)); }
+constexpr std::ostream & operator<<(std::ostream & o, is_array_formattable auto && a) { return o << fmt({}, RA_FW(a)); }
 template <class T>
 constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << fmt({}, a); }
 
@@ -491,10 +489,10 @@ operator<<(std::ostream & o, std::source_location const & loc)
     return o << loc.file_name() << ":" << loc.line() << "," << loc.column();
 }
 
-constexpr void print1(auto & o, std::formattable<char> auto && a) { std::print(o, "{}", RA_FWD(a)); }
-constexpr void print1(auto & o, auto && a) { o << RA_FWD(a); }
-constexpr auto & print(auto & o, auto && ... a) { (print1(o, RA_FWD(a)), ...); return o; }
-constexpr std::string format(auto && ... a) { std::ostringstream o; print(o, RA_FWD(a) ...); return o.str(); }
+constexpr void print1(auto & o, std::formattable<char> auto && a) { std::print(o, "{}", RA_FW(a)); }
+constexpr void print1(auto & o, auto && a) { o << RA_FW(a); }
+constexpr auto & print(auto & o, auto && ... a) { (print1(o, RA_FW(a)), ...); return o; }
+constexpr std::string format(auto && ... a) { std::ostringstream o; print(o, RA_FW(a) ...); return o.str(); }
 constexpr std::string const & format(std::string const & s) { return s; }
 
 } // namespace ra

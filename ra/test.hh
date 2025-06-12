@@ -329,7 +329,7 @@ struct Benchmark
         for (int k=0; k<runs_; ++k) {
             auto t0 = clock::now();
             for (int i=0; i<repeats_; ++i) {
-                f(RA_FWD(a) ...);
+                f(RA_FW(a) ...);
             }
             clock::duration full = clock::now()-t0;
             times.push_back(lapse(empty, full));
@@ -344,7 +344,7 @@ struct Benchmark
           {
               auto t0 = clock::now();
               empty = clock::now()-t0;
-          }, RA_FWD(a) ...);
+          }, RA_FW(a) ...);
 
         ra::Big<clock::duration, 1> times;
         for (int k=0; k<runs_; ++k) {
@@ -354,7 +354,7 @@ struct Benchmark
                   for (int i=0; i<repeats_; ++i) { f(); }
                   clock::duration full = clock::now()-t0;
                   times.push_back(lapse(empty, full));
-              }, RA_FWD(a) ...);
+              }, RA_FW(a) ...);
         }
         return Value { name_, repeats_, empty, std::move(times) };
     }

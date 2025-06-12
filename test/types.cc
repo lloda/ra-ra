@@ -111,7 +111,7 @@ int main()
                  true, false, true, false, false);
         TESTPRED(decltype(ra::iota<0>()),
                  true, false, true, false, false);
-// is_iterator (by RA_IS_DEF) but not Iterator, since it cannot be traversed.
+// is_iterator by RA_IS_DEF, but not Iterator, since it cannot be traversed.
         TESTPRED(decltype(ra::iota<0>()) const,
                  true, false, false, false, false);
         TESTPRED(decltype(ra::iota<0>()) &,
@@ -184,9 +184,9 @@ int main()
         int a = 3;
         static_assert(!ra::is_scalar<decltype(ra::start(a))>, "bad is_scalar Scalar");
 // a regression.
-        static_assert(ra::is_zero_or_scalar<ra::Scalar<int>>, "bad");
+        static_assert(ra::is_ra_0<ra::Scalar<int>>, "bad");
         static_assert(!ra::is_ra_pos<ra::Scalar<int>>, "bad");
-        static_assert(!ra::is_zero_or_scalar<decltype(ra::iota<0>())>, "bad");
+        static_assert(!ra::is_ra_0<decltype(ra::iota<0>())>, "bad");
         static_assert(ra::is_ra_pos<decltype(ra::iota<0>())>, "bad");
         static_assert(ra::is_ra_pos<ra::Map<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
         static_assert(ra::is_ra_pos<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");

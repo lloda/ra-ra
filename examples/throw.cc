@@ -7,10 +7,10 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#ifdef RA_DO_CHECK
-  #undef RA_DO_CHECK
+#ifdef RA_CHECK
+  #undef RA_CHECK
 #endif
-#define RA_DO_CHECK 1 // kind of the point here
+#define RA_CHECK 1 // kind of the point here
 
 // "ra/base.hh" doesn't depend directly on RA_ASSERT, so the following override is able to use ra::format.
 

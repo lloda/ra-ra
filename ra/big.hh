@@ -98,7 +98,7 @@ struct ViewBig
     operator=(std::initializer_list<T> const x) const requires (1!=RANK)
     {
         auto xsize = ssize(x);
-        RA_CHECK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
+        RA_CK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
         std::ranges::copy_n(x.begin(), xsize, begin());
         return *this;
     }
@@ -118,13 +118,13 @@ struct ViewBig
     constexpr dim_t
     select(Dim * dim, int k, dim_t i) const
     {
-        RA_CHECK(inside(i, len(k)), "Bad index ", i, " for len[", k, "]=", len(k), ".");
+        RA_CK(inside(i, len(k)), "Bad index ", i, " for len[", k, "]=", len(k), ".");
         return step(k)*i;
     }
     constexpr dim_t
     select(Dim * dim, int k, is_iota auto const & i) const
     {
-        RA_CHECK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i.i, " ", i.s, "] for len[", k, "]=", len(k), ".");
+        RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i.i, " ", i.s, "] for len[", k, "]=", len(k), ".");
         *dim = { .len = i.n, .step = step(k) * i.s };
         return 0==i.n ? 0 : step(k)*i.i.i;
     }
@@ -132,8 +132,8 @@ struct ViewBig
     constexpr dim_t
     select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
     {
-        return select(dim, k, wlen(len(k), RA_FWD(i0)))
-            + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, RA_FWD(i) ...);
+        return select(dim, k, wlen(len(k), RA_FW(i0)))
+            + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, RA_FW(i) ...);
     }
     template <int n, class ... I>
     constexpr dim_t
@@ -143,7 +143,7 @@ struct ViewBig
         for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
             *dim = dimv[k];
         }
-        return select_loop(dim, k, RA_FWD(i) ...);
+        return select_loop(dim, k, RA_FW(i) ...);
     }
     template <int n, class ... I>
     constexpr dim_t
@@ -152,7 +152,7 @@ struct ViewBig
         for (Dim * end = dim+n; dim!=end; ++dim) {
             *dim = { .len = UNB, .step = 0 };
         }
-        return select_loop(dim, k, RA_FWD(i) ...);
+        return select_loop(dim, k, RA_FW(i) ...);
     }
     constexpr static dim_t
     select_loop(Dim * dim, int k) { return 0; }
@@ -181,22 +181,21 @@ struct ViewBig
 // TODO partial beating
         } else {
 // cf ViewSmall::operator()
-            return unbeat<sizeof...(I)>::op(RA_FWD(self), RA_FWD(i) ...);
+            return unbeat<sizeof...(I)>::op(RA_FW(self), RA_FW(i) ...);
         }
     }
     constexpr decltype(auto)
-    operator[](this auto && self, auto && ... i) { return RA_FWD(self)(RA_FWD(i) ...); }
+    operator[](this auto && self, auto && ... i) { return RA_FW(self)(RA_FW(i) ...); }
 
-    template <class I>
     constexpr decltype(auto)
-    at(I && i) const
+    at(auto && i) const
     {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
        constexpr rank_t crank = rank_diff(RANK, ra::size_s(i));
        if constexpr (ANY==crank) {
-            return iter(rank()-ra::size(i)).at(RA_FWD(i));
+            return iter(rank()-ra::size(i)).at(RA_FW(i));
         } else {
-            return iter<crank>().at(RA_FWD(i));
+            return iter<crank>().at(RA_FW(i));
         }
     }
 
@@ -206,13 +205,13 @@ struct ViewBig
     constexpr auto iter(rank_t c) const & { return Cell<P, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
     constexpr decltype(auto) static end() { return std::default_sentinel; }
-    constexpr decltype(auto) back() const { dim_t s=size(); RA_CHECK(s>0, "Bad back()."); return cp[s-1]; }
+    constexpr decltype(auto) back() const { dim_t s=size(); RA_CK(s>0, "Bad back()."); return cp[s-1]; }
 
     constexpr
     operator T & () const
     {
         if constexpr (0!=RANK) {
-            RA_CHECK(1==size(), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(*this)), "].");
+            RA_CK(1==size(), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(*this)), "].");
         }
         return cp[0];
     }
@@ -240,7 +239,7 @@ struct storage_traits
 {
     using T = V::value_type;
     static_assert(!std::is_same_v<std::remove_const_t<T>, bool>, "No pointers to bool in std::vector<bool>.");
-    constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(n); }
+    constexpr static auto create(dim_t n) { RA_CK(0<=n, "Bad size ", n, "."); return V(n); }
     constexpr static auto data(auto & v) { return v.data(); }
 };
 
@@ -249,7 +248,7 @@ struct storage_traits<std::unique_ptr<P>>
 {
     using V = std::unique_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(new T[n]); }
+    constexpr static auto create(dim_t n) { RA_CK(0<=n, "Bad size ", n, "."); return V(new T[n]); }
     constexpr static auto data(auto & v) { return v.get(); }
 };
 
@@ -258,7 +257,7 @@ struct storage_traits<std::shared_ptr<P>>
 {
     using V = std::shared_ptr<P>;
     using T = std::decay_t<decltype(*std::declval<V>().get())>;
-    constexpr static auto create(dim_t n) { RA_CHECK(0<=n, "Bad size ", n, "."); return V(new T[n], std::default_delete<T[]>()); }
+    constexpr static auto create(dim_t n) { RA_CK(0<=n, "Bad size ", n, "."); return V(new T[n], std::default_delete<T[]>()); }
     constexpr static auto data(auto & v) { return v.get(); }
 };
 
@@ -305,15 +304,15 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     }
     Container & operator=(Container & w) { return *this = std::as_const(w); }
 
-    constexpr decltype(auto) back(this auto && self) { return RA_FWD(self).view().back(); }
+    constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
     constexpr auto data(this auto && self) { return self.view().data(); }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FWD(self).view()(RA_FWD(a) ...); }
-    constexpr decltype(auto) at(this auto && self, auto && i) { return RA_FWD(self).view().at(RA_FWD(i)); }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FW(self).view()(RA_FW(a) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FW(self).view()(RA_FW(a) ...); }
+    constexpr decltype(auto) at(this auto && self, auto && i) { return RA_FW(self).view().at(RA_FW(i)); }
 // always compact/row-major, so STL-like iterators can be raw pointers.
     constexpr auto begin(this auto && self) { assert(is_c_order(self.view())); return self.view().data(); }
     constexpr auto end(this auto && self) { return self.view().data()+self.size(); }
-    template <rank_t c=0> constexpr auto iter(this auto && self) { if constexpr (1==RANK && 0==c) { return ptr(self.data(), self.size()); } else { return RA_FWD(self).view().template iter<c>(); } }
+    template <rank_t c=0> constexpr auto iter(this auto && self) { if constexpr (1==RANK && 0==c) { return ptr(self.data(), self.size()); } else { return RA_FW(self).view().template iter<c>(); } }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 
@@ -333,7 +332,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     init(auto && s) requires (1==rank_s(s) || ANY==rank_s(s))
     {
         static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
-        RA_CHECK(1==ra::rank(s), "Rank mismatch for init shape.");
+        RA_CK(1==ra::rank(s), "Rank mismatch for init shape.");
         static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
         ra::resize(dimv, ra::size(s)); // [ra37]
         store = storage_traits<Store>::create(filldim(s, dimv));
@@ -363,8 +362,8 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     constexpr void
     fill1(auto && xbegin, dim_t xsize)
     {
-        RA_CHECK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
-        std::ranges::copy_n(RA_FWD(xbegin), xsize, begin());
+        RA_CK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
+        std::ranges::copy_n(RA_FW(xbegin), xsize, begin());
     }
 
 // shape + row-major ravel.
@@ -377,24 +376,24 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
         : Container(s, none) { fill1(p, size()); } // FIXME fake check
 // FIXME remove
     Container(shape_arg const & s, auto && pbegin, dim_t psize)
-        : Container(s, none) { fill1(RA_FWD(pbegin), psize); }
+        : Container(s, none) { fill1(RA_FW(pbegin), psize); }
 
 // for shape arguments that doesn't convert implicitly to shape_arg
-    Container(auto && s, none_t) { init(RA_FWD(s)); }
-    Container(auto && s, auto && x): Container(RA_FWD(s), none) { view() = x; }
-    Container(auto && s, std::initializer_list<T> x): Container(RA_FWD(s), none) { fill1(x.begin(), x.size()); }
+    Container(auto && s, none_t) { init(RA_FW(s)); }
+    Container(auto && s, auto && x): Container(RA_FW(s), none) { view() = x; }
+    Container(auto && s, std::initializer_list<T> x): Container(RA_FW(s), none) { fill1(x.begin(), x.size()); }
 
 // resize first axis or full shape. Only for some kinds of store.
     void resize(dim_t const s)
     {
-        static_assert(ANY==RANK || 0<RANK); RA_CHECK(0<rank());
+        static_assert(ANY==RANK || 0<RANK); RA_CK(0<rank());
         dimv[0].len = s;
         store.resize(size());
         cp = store.data();
     }
     void resize(dim_t const s, T const & t)
     {
-        static_assert(ANY==RANK || 0<RANK); RA_CHECK(0<rank());
+        static_assert(ANY==RANK || 0<RANK); RA_CK(0<rank());
         dimv[0].len = s;
         store.resize(size(), t);
         cp = store.data();
@@ -405,32 +404,32 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
         store.resize(filldim(s, dimv));
         cp = store.data();
     }
-// template + RA_FWD wouldn't work for push_back(brace-enclosed-list).
+// template + RA_FW wouldn't work for push_back(brace-enclosed-list).
     void push_back(T && t)
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
+        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
         store.push_back(std::move(t));
         ++dimv[0].len;
         cp = store.data();
     }
     void push_back(T const & t)
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
+        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
         store.push_back(t);
         ++dimv[0].len;
         cp = store.data();
     }
     void emplace_back(auto && ... a)
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
-        store.emplace_back(RA_FWD(a) ...);
+        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
+        store.emplace_back(RA_FW(a) ...);
         ++dimv[0].len;
         cp = store.data();
     }
     void pop_back()
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CHECK(1==rank());
-        RA_CHECK(0<dimv[0].len, "Empty array trying to pop_back().");
+        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
+        RA_CK(0<dimv[0].len, "Empty array trying to pop_back().");
         --dimv[0].len;
         store.pop_back();
     }
@@ -442,12 +441,12 @@ void
 swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
 {
     if constexpr (ANY==RANKA) {
-        RA_CHECK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
+        RA_CK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
         decltype(b.dimv) c = a.dimv;
         start(a.dimv) = b.dimv;
         std::swap(b.dimv, c);
     } else if constexpr (ANY==RANKB) {
-        RA_CHECK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
+        RA_CK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
         decltype(a.dimv) c = b.dimv;
         start(b.dimv) = a.dimv;
         std::swap(a.dimv, c);
@@ -498,25 +497,25 @@ template <class E> using concrete_type = std::conditional_t<(0==rank_s<E>() && !
                                                             typename concrete_type_<E>::type>;
 
 template <class E> constexpr auto
-concrete(E && e) { return concrete_type<E>(RA_FWD(e)); }
+concrete(E && e) { return concrete_type<E>(RA_FW(e)); }
 
 template <class E, class ... X> constexpr auto
-with_same_shape(E && e, X && ... x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FWD(x) ...); }
+with_same_shape(E && e, X && ... x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FW(x) ...); }
 
 template <class E> constexpr auto
 with_same_shape(E && e) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), none); }
 
 template <class E, class X> constexpr auto
-with_same_shape(E && e, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), RA_FWD(x)); }
+with_same_shape(E && e, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), RA_FW(x)); }
 
 template <class E, class S, class X> constexpr auto
-with_shape(S && s, X && x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FWD(x)); }
+with_shape(S && s, X && x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FW(x)); }
 
 template <class E, class S, class X> constexpr auto
-with_shape(S && s, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(RA_FWD(s), RA_FWD(x)); }
+with_shape(S && s, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(RA_FW(s), RA_FW(x)); }
 
 template <class E, class S, class X> constexpr auto
-with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s), RA_FWD(x)); }
+with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s), RA_FW(x)); }
 
 
 // --------------------
@@ -527,7 +526,7 @@ template <class P, rank_t RANK>
 constexpr auto
 reverse(ViewBig<P, RANK> const & view, int k=0)
 {
-    RA_CHECK(inside(k, view.rank()), "Bad axis ", k, " for rank ", view.rank(), ".");
+    RA_CK(inside(k, view.rank()), "Bad axis ", k, " for rank ", view.rank(), ".");
     ViewBig<P, RANK> r = view;
     auto & dim = r.dimv[k];
     dim.step *= -1;
@@ -539,7 +538,7 @@ template <class P, rank_t RANK>
 constexpr ViewBig<P, 1>
 ravel_free(ViewBig<P, RANK> const & a)
 {
-    RA_CHECK(is_c_order(a, false));
+    RA_CK(is_c_order(a, false));
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
     ra::dim_t s = r<0 ? 1 : a.step(r);
@@ -550,7 +549,7 @@ template <class P, rank_t RANK, class S>
 inline auto
 reshape(ViewBig<P, RANK> const & a, S && sb_)
 {
-    auto sb = concrete(RA_FWD(sb_));
+    auto sb = concrete(RA_FW(sb_));
 // FIXME when we need to copy, accept/return Shared
     dim_t la = ra::size(a);
     dim_t lb = 1;
@@ -559,10 +558,10 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
             dim_t quot = lb;
             for (int j=i+1; j<ra::size(sb); ++j) {
                 quot *= sb[j];
-                RA_CHECK(quot>0, "Cannot deduce dimensions.");
+                RA_CK(quot>0, "Cannot deduce dimensions.");
             }
             auto pv = la/quot;
-            RA_CHECK((la%quot==0 && pv>=0), "Bad placeholder.");
+            RA_CK((la%quot==0 && pv>=0), "Bad placeholder.");
             sb[i] = pv;
             lb = la;
             break;
@@ -576,7 +575,7 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
-            RA_CHECK(is_c_order(a, false) && la>=lb, "Reshape with copy not implemented.");
+            RA_CK(is_c_order(a, false) && la>=lb, "Reshape with copy not implemented.");
 // FIXME ViewBig(SS const & s, T * p). Cf [ra37].
             filldim(sb, b.dimv);
             for (int j=0; j!=b.rank(); ++j) {
@@ -613,10 +612,10 @@ stencil(ViewBig<P, N> const & a, LO && lo, HI && hi)
     ViewBig<P, rank_sum(N, N)> s;
     s.cp = a.data();
     ra::resize(s.dimv, 2*a.rank());
-    RA_CHECK(every(lo>=0) && every(hi>=0), "Bad stencil bounds lo ", fmt(nstyle, lo), " hi ", fmt(nstyle, hi), ".");
+    RA_CK(every(lo>=0) && every(hi>=0), "Bad stencil bounds lo ", fmt(nstyle, lo), " hi ", fmt(nstyle, hi), ".");
     for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
              {
-                 RA_CHECK(dima.len>=lo+hi, "Stencil is too large for array.");
+                 RA_CK(dima.len>=lo+hi, "Stencil is too large for array.");
                  dims = { dima.len-lo-hi, dima.step };
              },
              ptr(s.dimv.data()), a.dimv, lo, hi);
@@ -632,7 +631,7 @@ constexpr auto
 transpose(ViewBig<P, RANK> const & view, ilist_t<I ...>)
 {
     if constexpr (ANY==RANK) {
-        RA_CHECK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
+        RA_CK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
     } else {
         static_assert(ANY==RANK || RANK==sizeof...(I), "Bad rank."); // c++26
     }
@@ -649,7 +648,7 @@ template <class P, rank_t RANK, class S>
 constexpr ViewBig<P, ANY>
 transpose(ViewBig<P, RANK> const & view, S && s)
 {
-    RA_CHECK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
+    RA_CK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
     rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s); // FIXME amax(), but that's in ra.hh
     ViewBig<P, ANY> r { decltype(r.dimv)(dstrank), view.data() };
     transpose_dims(s, view.dimv, r.dimv);
@@ -664,10 +663,10 @@ transpose(ViewBig<P, RANK> const & view, dimtype const (&s)[N])
 }
 
 constexpr decltype(auto)
-transpose(auto && a) { return transpose(RA_FWD(a), ilist<1, 0>); }
+transpose(auto && a) { return transpose(RA_FW(a), ilist<1, 0>); }
 
 constexpr decltype(auto)
-diag(auto && a) { return transpose(RA_FWD(a), ilist<0, 0>); };
+diag(auto && a) { return transpose(RA_FW(a), ilist<0, 0>); };
 
 template <class sup_t, class T, rank_t RANK>
 constexpr auto
@@ -704,7 +703,7 @@ collapse(ViewBig<sup_t *, RANK> const & a)
     static_assert(t*sizeof(sub_v)>=1, "Bad subtype.");
     for (int i=0; i<SUBR; ++i) {
         dim_t step = gstep(i);
-        RA_CHECK(0==step % s, "Bad steps.");
+        RA_CK(0==step % s, "Bad steps.");
         b.dimv[a.rank()+i] = Dim { glen(i), step/s*t };
     }
     if (subtype>1) {

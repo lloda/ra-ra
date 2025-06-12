@@ -426,7 +426,7 @@ Used by the test suite.
 <p>The following <code>#define</code>s affect the behavior of <code>ra::</code>.
 </p>
 <ul>
-<li> <code>RA_DO_CHECK</code> (default 1)
+<li> <code>RA_CHECK</code> (default 1)
 
 <p>If 1, check shape agreement (e.g. <code>Big&lt;int, 1&gt; {2, 3} + Big&lt;int, 1&gt; {1, 2, 3}</code>) and random array accesses (e.g. <code>Small&lt;int, 2&gt; a = 0; int i = 10; a[i] = 0;</code>). See <a href="#Error-handling">Error handling</a>.
 </p>
@@ -1780,26 +1780,26 @@ Previous: <a href="#Extension" accesskey="p" rel="prev">Extension</a>, Up: <a hr
 <ul>
 <li> <code>RA_ASSERT(cond, ...)</code> &mdash;
 check that <code>cond</code> evaluates to true in the <code>ra::</code> namespace. The other arguments are informative.
-</li><li> <code>RA_DO_CHECK</code> &mdash;
+</li><li> <code>RA_CHECK</code> &mdash;
 must have one of the values 0, 1, or 2.
 </li></ul>
 
 <p>They work as follows:
 </p>
 <ul>
-<li> If <code>RA_DO_CHECK</code> is 0, runtime checks are skipped.
-</li><li> If <code>RA_DO_CHECK</code> is not 0, runtime checks are done.
+<li> If <code>RA_CHECK</code> is 0, runtime checks are skipped.
+</li><li> If <code>RA_CHECK</code> is not 0, runtime checks are done.
     <ul>
 <li> If <code>RA_ASSERT</code> is defined, using <code>RA_ASSERT</code>.
-    </li><li> If <code>RA_ASSERT</code> isn&rsquo;t defined, the method depends on the value of <code>RA_DO_CHECK</code>. The two options are 1 (plain <code>assert</code>) and 2 (prints the informative arguments and aborts). Other values are an error.
+    </li><li> If <code>RA_ASSERT</code> isn&rsquo;t defined, the method depends on the value of <code>RA_CHECK</code>. The two options are 1 (plain <code>assert</code>) and 2 (prints the informative arguments and aborts). Other values are an error.
     </li></ul>
 </li></ul>
 
-<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>, but note that <samp>-DNDEBUG</samp> will also disable any <code>assert</code>s that are a result of <code>RA_DO_CHECK=1</code>.
+<p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>, but note that <samp>-DNDEBUG</samp> will also disable any <code>assert</code>s that are a result of <code>RA_CHECK=1</code>.
 </p>
-<p>The performance cost of the runtime checks depends on the program. Without custom <code>RA_ASSERT</code>, <code>RA_DO_CHECK=1</code> usually has an acceptable cost, but <code>RA_DO_CHECK=2</code> is usually more expensive, because having the arguments around to print can prevent optimization. The default is <code>RA_DO_CHECK=1</code>.
+<p>The performance cost of the runtime checks depends on the program. Without custom <code>RA_ASSERT</code>, <code>RA_CHECK=1</code> usually has an acceptable cost, but <code>RA_CHECK=2</code> is usually more expensive, because having the arguments around to print can prevent optimization. The default is <code>RA_CHECK=1</code>.
 </p>
-<p>The following example shows how errors might be reported depending on <code>RA_DO_CHECK</code>.
+<p>The following example shows how errors might be reported depending on <code>RA_CHECK</code>.
 </p>
 <table class="cartouche" border="1"><tr><td>
 <pre class="verbatim">ra::Big&lt;int, 2&gt; a({10, 3}, 1);
@@ -1808,9 +1808,9 @@ cout &lt;&lt; (a+b) &lt;&lt; endl;
 </pre></td></tr></table>
 
 <ul>
-<li> <code>RA_DO_CHECK=2</code>
+<li> <code>RA_CHECK=2</code>
 <pre class="verbatim">*** ra::./ra/expr.hh:436,13 (check()) Bad shapes (10 3)(40 3). ***
-</pre></li><li> <code>RA_DO_CHECK=1</code>
+</pre></li><li> <code>RA_CHECK=1</code>
 <pre class="verbatim">agreement: ./ra/expr.hh:436: constexpr void ra::Match&lt;std::tuple&lt;_Ts ...&gt;, std::tuple&lt;std::integral_constant&lt;int, I&gt;...&gt; &gt;::validate() const [with P = {ra::Cell&lt;int, const ra::
 SmallArray&lt;ra::Dim, std::tuple&lt;std::integral_constant&lt;int, 2&gt; &gt;, std::tuple&lt;std::integral_constant&lt;int, 1&gt; &gt;, std::tuple&lt;ra::Dim, ra::Dim&gt; &gt;&amp;, std::integral_constant&lt;int, 0&gt; &gt;,
  ra::Cell&lt;int, const ra::SmallArray&lt;ra::Dim, std::tuple&lt;std::integral_constant&lt;int, 2&gt; &gt;, std::tuple&lt;std::integral_constant&lt;int, 1&gt; &gt;, std::tuple&lt;ra::Dim, ra::Dim&gt; &gt;&amp;, std::int
@@ -1851,7 +1851,7 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <li><a href="#Initialization-of-nested-types" accesskey="6">Initialization of nested types</a></li>
 <li><a href="#Chained-assignment" accesskey="7">Chained assignment</a></li>
 <li><a href="#Unregistered-scalar-types" accesskey="8">Unregistered scalar types</a></li>
-<li><a href="#The-cost-of-RA_005fDO_005fCHECK" accesskey="9">The cost of <code>RA_DO_CHECK</code></a></li>
+<li><a href="#The-cost-of-RA_005fDO_005fCHECK" accesskey="9">The cost of <code>RA_CHECK</code></a></li>
 </ul>
 <div class="section" id="Reuse-of-expression-objects">
 <h3 class="section">4.1 Reuse of expression objects</h3>
@@ -1964,7 +1964,7 @@ When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as 
 
 </div>
 <div class="section" id="The-cost-of-RA_005fDO_005fCHECK">
-<h3 class="section">4.9 The cost of <code>RA_DO_CHECK</code></h3>
+<h3 class="section">4.9 The cost of <code>RA_CHECK</code></h3>
 
 <p>FIXME
 </p>

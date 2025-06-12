@@ -39,8 +39,8 @@ int main()
         ra::Big<complex, 2> c = {{1, 3, 2}, {7, 1, 3}};
         ra::Big<complex, 1> m(3, 0);
         m = 0;
-        map([](auto && ... a) -> decltype(auto) { return real_part(RA_FWD(a) ...); }, iter<1>(m))
-            = map([](auto && ... a) -> decltype(auto) { return real_part(RA_FWD(a) ...); }, iter<1>(c));
+        map([](auto && ... a) -> decltype(auto) { return real_part(RA_FW(a) ...); }, iter<1>(m))
+            = map([](auto && ... a) -> decltype(auto) { return real_part(RA_FW(a) ...); }, iter<1>(c));
         tr.info("max of columns [ma113]").test_eq(ra::Big<double, 1> {7, 1, 3}, m);
 // still works
         m = 0;

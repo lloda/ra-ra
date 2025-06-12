@@ -314,7 +314,7 @@ The following @code{#define}s affect the behavior of @code{ra::}.
 
 @itemize
 @c FIXME The flag should only apply to dynamic checks.
-@item @code{RA_DO_CHECK} (default 1)
+@item @code{RA_CHECK} (default 1)
 
 If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
 
@@ -1761,26 +1761,26 @@ Runtime error handling in @code{ra::} is controlled by two macros.
 @itemize
 @item @code{RA_ASSERT(cond, ...)} ---
 check that @code{cond} evaluates to true in the @code{ra::} namespace. The other arguments are informative.
-@item @code{RA_DO_CHECK} ---
+@item @code{RA_CHECK} ---
 must have one of the values 0, 1, or 2.
 @end itemize
 
 They work as follows:
 
 @itemize
-@item If @code{RA_DO_CHECK} is 0, runtime checks are skipped.
-@item If @code{RA_DO_CHECK} is not 0, runtime checks are done.
+@item If @code{RA_CHECK} is 0, runtime checks are skipped.
+@item If @code{RA_CHECK} is not 0, runtime checks are done.
     @itemize
     @item If @code{RA_ASSERT} is defined, using @code{RA_ASSERT}.
-    @item If @code{RA_ASSERT} isn't defined, the method depends on the value of @code{RA_DO_CHECK}. The two options are 1 (plain @code{assert}) and 2 (prints the informative arguments and aborts). Other values are an error.
+    @item If @code{RA_ASSERT} isn't defined, the method depends on the value of @code{RA_CHECK}. The two options are 1 (plain @code{assert}) and 2 (prints the informative arguments and aborts). Other values are an error.
     @end itemize
 @end itemize
 
-@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}, but note that @option{-DNDEBUG} will also disable any @code{assert}s that are a result of @code{RA_DO_CHECK=1}.
+@code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}, but note that @option{-DNDEBUG} will also disable any @code{assert}s that are a result of @code{RA_CHECK=1}.
 
-The performance cost of the runtime checks depends on the program. Without custom @code{RA_ASSERT}, @code{RA_DO_CHECK=1} usually has an acceptable cost, but @code{RA_DO_CHECK=2} is usually more expensive, because having the arguments around to print can prevent optimization. The default is @code{RA_DO_CHECK=1}.
+The performance cost of the runtime checks depends on the program. Without custom @code{RA_ASSERT}, @code{RA_CHECK=1} usually has an acceptable cost, but @code{RA_CHECK=2} is usually more expensive, because having the arguments around to print can prevent optimization. The default is @code{RA_CHECK=1}.
 
-The following example shows how errors might be reported depending on @code{RA_DO_CHECK}.
+The following example shows how errors might be reported depending on @code{RA_CHECK}.
 
 @cartouche
 @verbatim
@@ -1792,11 +1792,11 @@ cout << (a+b) << endl;
 
 @c FIXME we'd get 'Bad shapes (-1922222222 3)' on sum(a+b) bc of the check only at top strategy. Improve that.
 @itemize
-@item @code{RA_DO_CHECK=2}
+@item @code{RA_CHECK=2}
 @verbatim
 *** ra::./ra/expr.hh:436,13 (check()) Bad shapes (10 3)(40 3). ***
 @end verbatim
-@item @code{RA_DO_CHECK=1}
+@item @code{RA_CHECK=1}
 @verbatim
 agreement: ./ra/expr.hh:436: constexpr void ra::Match<std::tuple<_Ts ...>, std::tuple<std::integral_constant<int, I>...> >::validate() const [with P = {ra::Cell<int, const ra::
 SmallArray<ra::Dim, std::tuple<std::integral_constant<int, 2> >, std::tuple<std::integral_constant<int, 1> >, std::tuple<ra::Dim, ra::Dim> >&, std::integral_constant<int, 0> >,
@@ -1924,7 +1924,7 @@ Item 1
 Item 2
 @end enumerate
 
-@section The cost of @code{RA_DO_CHECK}
+@section The cost of @code{RA_CHECK}
 
 FIXME
 

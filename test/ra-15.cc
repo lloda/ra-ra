@@ -31,7 +31,7 @@ start(Scalar<T> && t) { return std::forward<decltype(t)>(t); }
 
 template <class A>
 constexpr decltype(auto)
-VALUE(A && a)
+VAL(A && a)
 {
     return *(start(std::forward<A>(a)));
 }
@@ -39,7 +39,7 @@ VALUE(A && a)
 template <class A, class B>
 constexpr auto operator +(A && a, B && b)
 {
-    return VALUE(std::forward<A>(a)) + VALUE(std::forward<B>(b));
+    return VAL(std::forward<A>(a)) + VAL(std::forward<B>(b));
 }
 
 int main()

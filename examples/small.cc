@@ -5,7 +5,7 @@
 // Adapted from blitz++/examples/tiny.cpp
 
 // The point of this example is to show the assembly; I will when it's not awful :-/
-// $CXX -o small.s -S -O3 -DRA_DO_CHECK=0 -std=c++14 -Wall -Werror -Wno-unknown-pragmas -Wno-parentheses -Wno-error=strict-overflow -march=native -I.. small.cc -funroll-loops -ffast-math -fno-exceptions
+// $CXX -o small.s -S -O3 -DRA_CHECK=0 -std=c++14 -Wall -Werror -Wno-unknown-pragmas -Wno-parentheses -Wno-error=strict-overflow -march=native -I.. small.cc -funroll-loops -ffast-math -fno-exceptions
 
 #include "ra/ra.hh"
 #include <iostream>

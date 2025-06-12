@@ -18,56 +18,55 @@ namespace ra {
 
 template <class A>
 constexpr decltype(auto)
-VALUE(A && a)
+VAL(A && a)
 {
-    if constexpr (is_scalar<A>) { return RA_FWD(a); } // [ra8]
+    if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
     else if constexpr (is_iterator<A>) { return *a; } // no need to start()
-    else if constexpr (requires { *ra::start(RA_FWD(a)); }) { return *ra::start(RA_FWD(a)); }
+    else if constexpr (requires { *ra::start(RA_FW(a)); }) { return *ra::start(RA_FW(a)); }
     // else void
 }
 
-template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VALUE(std::declval<A>()))>>;
+template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VAL(std::declval<A>()))>>;
 template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 
 
 // ---------------------
-// replace Len in expr tree.
+// replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
 // ---------------------
 
 template <>
 struct WLen<Len>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e) { return Scalar<decltype(ln)>(ln); }
+    f(auto ln, auto && e) { return Scalar {ln}; }
 };
 
 template <class Op, Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e) { return map_(RA_FWD(e).op, wlen(ln, std::get<I>(RA_FWD(e).t)) ...); }
+    f(auto ln, auto && e) { return map_(RA_FW(e).op, wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
 };
 
 template <Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e) { return pick(wlen(ln, std::get<I>(RA_FWD(e).t)) ...); }
+    f(auto ln, auto && e) { return pick(wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
 };
 
-// final iota/ptr types must be either is_constant or is_scalar.
 template <class I> requires (has_len<I>)
 struct WLen<Seq<I>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e) { return Seq { VALUE(wlen(ln, RA_FWD(e).i)) }; }
+    f(auto ln, auto && e) { return Seq { VAL(wlen(ln, RA_FW(e).i)) }; }
 };
 
 template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
 struct WLen<Ptr<I, N, S>>
 {
     constexpr static decltype(auto)
-    f(auto ln, auto && e) { return Ptr(wlen(ln, RA_FWD(e).i), VALUE(wlen(ln, RA_FWD(e).n)), VALUE(wlen(ln, RA_FWD(e).s))); }
+    f(auto ln, auto && e) { return Ptr(wlen(ln, RA_FW(e).i), VAL(wlen(ln, RA_FW(e).n)), VAL(wlen(ln, RA_FW(e).s))); }
 };
 
 
@@ -90,8 +89,7 @@ ply_ravel(A && a, Early && early = Nop {})
         if constexpr (requires {early.def;}) {
             return (*a).value_or(early.def);
         } else {
-            *a;
-            return;
+            *a; return;
         }
     }
 // inside first. FIXME better heuristic - but first need a way to force row-major
@@ -103,7 +101,7 @@ ply_ravel(A && a, Early && early = Nop {})
 // find outermost compact dim.
     rank_t * ocd = order;
     dim_t ss = a.len(*ocd);
-#pragma GCC diagnostic push // gcc 14.2 with RA_DO_CHECK=0 and -fno-sanitize=all
+#pragma GCC diagnostic push // gcc 14.2 with RA_CHECK=0 and -fno-sanitize=all
 #pragma GCC diagnostic warning "-Warray-bounds"
     for (--rank, ++ocd; rank>0 && a.keep(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
@@ -201,18 +199,17 @@ ply_fixed(A && a, Early && early = Nop {})
     constexpr rank_t rank = rank_s(a);
     static_assert(0<=rank, "ply_fixed requires static rank");
 // inside first. FIXME better heuristic - but first need a way to force row-major
-    constexpr auto order = tuple2array<int, mp::reverse<mp::iota<rank>>>;
+    constexpr auto order = std::apply([](auto ... i){ return std::array<int, rank>{(rank-1-i) ...}; }, mp::iota<rank>{});
     if constexpr (0==rank) {
         if constexpr (requires {early.def;}) {
             return (*a).value_or(early.def);
         } else {
-            *a;
-            return;
+            *a; return;
         }
     } else {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Warray-bounds"
-    auto ss0 = a.step(order[0]); // gcc 14.1 with RA_DO_CHECK=0 and sanitizer on
+    auto ss0 = a.step(order[0]); // gcc 14.1 with RA_CHECK=0 and sanitizer on
 #pragma GCC diagnostic pop
         if constexpr (requires {early.def;}) {
             return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
@@ -232,20 +229,20 @@ constexpr decltype(auto)
 ply(A && a, Early && early = Nop {})
 {
     if constexpr (ANY==size_s(a)) {
-        return ply_ravel(RA_FWD(a), RA_FWD(early));
+        return ply_ravel(RA_FW(a), RA_FW(early));
     } else {
-        return ply_fixed(RA_FWD(a), RA_FWD(early));
+        return ply_fixed(RA_FW(a), RA_FW(early));
     }
 }
 
 constexpr void
-for_each(auto && op, auto && ... a) { ply(map(RA_FWD(op), RA_FWD(a) ...)); }
+for_each(auto && op, auto && ... a) { ply(map(RA_FW(op), RA_FW(a) ...)); }
 
 template <class T> struct Default { T def; };
 template <class T> Default(T &&) -> Default<T>;
 
 constexpr decltype(auto)
-early(Iterator auto && a, auto && def) { return ply(RA_FWD(a), Default { RA_FWD(def) }); }
+early(Iterator auto && a, auto && def) { return ply(RA_FW(a), Default { RA_FW(def) }); }
 
 
 // --------------------
@@ -306,9 +303,9 @@ struct STLIterator
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;
 
-constexpr auto begin(is_ra auto && a) { return STLIterator(ra::start(RA_FWD(a))); }
+constexpr auto begin(is_ra auto && a) { return STLIterator(ra::start(RA_FW(a))); }
 constexpr auto end(is_ra auto && a) { return std::default_sentinel; }
-constexpr auto range(is_ra auto && a) { return std::ranges::subrange(ra::begin(RA_FWD(a)), std::default_sentinel); }
+constexpr auto range(is_ra auto && a) { return std::ranges::subrange(ra::begin(RA_FW(a)), std::default_sentinel); }
 
 // unqualified might find .begin() anyway through std::begin etc (!)
 constexpr auto begin(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.begin(); }
@@ -433,7 +430,7 @@ operator<<(std::ostream & o, Fmt<A> const & fa)
     return o;
 }
 
-template <class C> requires (ANY!=size_s<C>() && ((is_ra<C> && !is_scalar<C>) || is_fov<C>))
+template <class C> requires (ANY!=size_s<C>() && (is_ra<C> || is_fov<C>))
 inline std::istream &
 operator>>(std::istream & i, C & c)
 {
@@ -446,7 +443,7 @@ inline std::istream &
 operator>>(std::istream & i, std::vector<T, A> & c)
 {
     if (dim_t n; i >> n) {
-        RA_CHECK(n>=0, "Negative length in input [", n, "].");
+        RA_CK(n>=0, "Negative length in input [", n, "].");
         std::vector<T, A> cc(n);
         swap(c, cc);
         for (auto & ci: c) { i >> ci; }
@@ -459,7 +456,7 @@ inline std::istream &
 operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
-        RA_CHECK(every(start(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
+        RA_CK(every(start(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
         C cc(s, ra::none);
         swap(c, cc);
         for (auto & ci: c) { i >> ci; }

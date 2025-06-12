@@ -28,7 +28,7 @@ int main()
     {
         tr.test(ra::Iterator<ra::Len>);
         tr.test(!ra::is_scalar<ra::Len>);
-        tr.test(ra::is_zero_or_scalar<ra::Len>);
+        tr.test(ra::is_ra_0<ra::Len>);
         tr.test(!ra::is_ra_pos<ra::Len>);
         tr.test(ra::is_special<ra::Len>);
         tr.test(ra::is_special<decltype(ra::len + ra::len)>);
@@ -40,7 +40,7 @@ int main()
         tr.test(!ra::toreduce<ra::Len, ra::Len>);
         tr.test(ra::tomap<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
         tr.test(!ra::toreduce<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
-        tr.test(ra::is_zero_or_scalar<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
+        tr.test(ra::is_ra_0<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
         tr.test(ra::Iterator<decltype((ra::len + ra::len) + (ra::len + ra::len))>);
     }
     tr.section("bare len");

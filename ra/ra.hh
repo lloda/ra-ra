@@ -126,10 +126,10 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 // optimization pass over expression templates.
 // --------------------------------
 
-template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FWD(e); }
+template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FW(e); }
 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
-template <class X> concept iota_op = ra::is_zero_or_scalar<X> && std::is_integral_v<ncvalue_t<X>>;
+template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
 
 // TODO something to handle the & variants...
 #define ITEM(i) std::get<(i)>(e.t)
@@ -215,9 +215,9 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 // The function objects are matched in optimize.hh.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
-        operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FWD(a), RA_FWD(b))); } \
+        operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FW(a), RA_FW(b))); } \
     template <class A, class B> requires (toreduce<A, B>) constexpr auto \
-        operator OP(A && a, B && b) { return VALUE(RA_FWD(a)) OP VALUE(RA_FWD(b)); }
+        operator OP(A && a, B && b) { return VAL(RA_FW(a)) OP VAL(RA_FW(b)); }
 
 DEF_NAMED_BINARY_OP(+, std::plus<>)          DEF_NAMED_BINARY_OP(-, std::minus<>)
 DEF_NAMED_BINARY_OP(*, std::multiplies<>)    DEF_NAMED_BINARY_OP(/, std::divides<>)
@@ -231,14 +231,14 @@ DEF_NAMED_BINARY_OP(^, std::bit_xor<>)       DEF_NAMED_BINARY_OP(<=>, std::compa
 // FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive
 struct unaryplus
 {
-    template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FWD(t); }
+    template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FW(t); }
 };
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                              \
     template <class A> requires (tomap<A>) constexpr auto           \
-        operator OP(A && a) { return map(OPNAME(), RA_FWD(a)); }    \
+        operator OP(A && a) { return map(OPNAME(), RA_FW(a)); }    \
     template <class A> requires (toreduce<A>) constexpr auto        \
-        operator OP(A && a) { return OP VALUE(RA_FWD(a)); }
+        operator OP(A && a) { return OP VAL(RA_FW(a)); }
 
 DEF_NAMED_UNARY_OP(+, unaryplus)
 DEF_NAMED_UNARY_OP(-, std::negate<>)
@@ -248,12 +248,12 @@ DEF_NAMED_UNARY_OP(!, std::logical_not<>)
 // if OP(a) isn't found in ra::, deduction rank(0) -> scalar doesn't work. TODO Cf useret.cc, reexported.cc
 #define DEF_NAME(OP)                                                    \
     template <class ... A> requires (tomap<A ...>) constexpr auto       \
-        OP(A && ... a) { return map([](auto && ... a) -> decltype(auto) { return OP(RA_FWD(a) ...); }, RA_FWD(a) ...); } \
+        OP(A && ... a) { return map([](auto && ... a) -> decltype(auto) { return OP(RA_FW(a) ...); }, RA_FW(a) ...); } \
     template <class ... A> requires (toreduce<A ...>) constexpr decltype(auto) \
-        OP(A && ... a) { return OP(VALUE(RA_FWD(a)) ...); }
+        OP(A && ... a) { return OP(VAL(RA_FW(a)) ...); }
 #define DEF_FWD(QUALIFIED_OP, OP)                                       \
     template <class ... A> /* requires neither */ constexpr decltype(auto) \
-        OP(A && ... a) { return QUALIFIED_OP(RA_FWD(a) ...); }          \
+        OP(A && ... a) { return QUALIFIED_OP(RA_FW(a) ...); }          \
     DEF_NAME(OP)
 #define DEF_USING(QUALIFIED_OP, OP)             \
     using QUALIFIED_OP;                         \
@@ -282,14 +282,14 @@ template <class T, class A>
 constexpr auto
 cast(A && a)
 {
-    return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FWD(a));
+    return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a));
 }
 
 template <class T, class ... A>
 constexpr auto
 pack(A && ... a)
 {
-    return map([](auto && ... a) { return T { RA_FWD(a) ... }; }, RA_FWD(a) ...);
+    return map([](auto && ... a) { return T { RA_FW(a) ... }; }, RA_FW(a) ...);
 }
 
 // FIXME needs nested array for I, but iter<-1> should work
@@ -297,7 +297,7 @@ template <class A, class I>
 constexpr auto
 at(A && a, I && i)
 {
-    return map([a = std::tuple<A>{RA_FWD(a)}] (auto && i) -> decltype(auto) { return get<0>(a).at(i); }, RA_FWD(i));
+    return map([a = std::tuple<A>{RA_FW(a)}] (auto && i) -> decltype(auto) { return get<0>(a).at(i); }, RA_FW(i));
 }
 
 
@@ -310,13 +310,13 @@ template <class T, class F> requires (toreduce<T, F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)
 {
-    return w ? VALUE(t) : VALUE(f);
+    return w ? VAL(t) : VAL(f);
 }
 template <class W, class T, class F> requires (tomap<W, T, F>)
 constexpr auto
 where(W && w, T && t, F && f)
 {
-    return pick(cast<bool>(RA_FWD(w)), RA_FWD(f), RA_FWD(t));
+    return pick(cast<bool>(RA_FW(w)), RA_FW(f), RA_FW(t));
 }
 // catch all for non-ra types.
 template <class T, class F> requires (!(tomap<T, F>) && !(toreduce<T, F>))
@@ -330,19 +330,19 @@ template <class A, class B> requires (tomap<A, B>)
 constexpr auto
 operator &&(A && a, B && b)
 {
-    return where(RA_FWD(a), cast<bool>(RA_FWD(b)), false);
+    return where(RA_FW(a), cast<bool>(RA_FW(b)), false);
 }
 template <class A, class B> requires (tomap<A, B>)
 constexpr auto
 operator ||(A && a, B && b)
 {
-    return where(RA_FWD(a), true, cast<bool>(RA_FWD(b)));
+    return where(RA_FW(a), true, cast<bool>(RA_FW(b)));
 }
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
     template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
-        return VALUE(a) OP VALUE(b);                                    \
+        return VAL(a) OP VAL(b);                                    \
     }
 FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
 #undef DEF_SHORTCIRCUIT_BINARY_OP
@@ -355,13 +355,13 @@ FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
 constexpr bool
 any(auto && a)
 {
-    return early(map([](bool x) { return x ? std::make_optional(true) : std::nullopt; }, RA_FWD(a)), false);
+    return early(map([](bool x) { return x ? std::make_optional(true) : std::nullopt; }, RA_FW(a)), false);
 }
 
 constexpr bool
 every(auto && a)
 {
-    return early(map([](bool x) { return !x ? std::make_optional(false) : std::nullopt; }, RA_FWD(a)), true);
+    return early(map([](bool x) { return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true);
 }
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
@@ -369,7 +369,7 @@ constexpr dim_t
 index(auto && a)
 {
     return early(map([](auto && a, auto && i) { return bool(a) ? std::make_optional(i) : std::nullopt; },
-                     RA_FWD(a), ra::iota(ra::start(a).len(0))),
+                     RA_FW(a), ra::iota(ra::start(a).len(0))),
                  ra::dim_t(-1));
 }
 
@@ -377,7 +377,7 @@ constexpr bool
 lexicographical_compare(auto && a, auto && b)
 {
     return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
-                     RA_FWD(a), RA_FWD(b)),
+                     RA_FW(a), RA_FW(b)),
                  false);
 }
 
@@ -407,7 +407,7 @@ template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
 refmin(A && a, Less && less = {})
 {
-    RA_CHECK(a.size()>0, "refmin requires nonempty argument.");
+    RA_CK(a.size()>0, "refmin requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
     for_each([&less, &p](auto & a) { if (less(a, *p)) { p=&a; } }, s);
@@ -418,7 +418,7 @@ template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
 refmax(A && a, Less && less = {})
 {
-    RA_CHECK(a.size()>0, "refmax requires nonempty argument.");
+    RA_CK(a.size()>0, "refmax requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
     for_each([&less, &p](auto & a) { if (less(*p, a)) { p=&a; } }, s);
@@ -448,24 +448,24 @@ constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_FMA) c=fma
 constexpr auto
 dot(auto && a, auto && b)
 {
-    std::decay_t<decltype(VALUE(a) * VALUE(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { maybe_fma(a, b, c); }, RA_FWD(a), RA_FWD(b));
+    std::decay_t<decltype(VAL(a) * VAL(b))> c(0.);
+    for_each([&c](auto && a, auto && b) { maybe_fma(a, b, c); }, RA_FW(a), RA_FW(b));
     return c;
 }
 
 constexpr auto
 cdot(auto && a, auto && b)
 {
-    std::decay_t<decltype(conj(VALUE(a)) * VALUE(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { maybe_fma_conj(a, b, c); }, RA_FWD(a), RA_FWD(b));
+    std::decay_t<decltype(conj(VAL(a)) * VAL(b))> c(0.);
+    for_each([&c](auto && a, auto && b) { maybe_fma_conj(a, b, c); }, RA_FW(a), RA_FW(b));
     return c;
 }
 
 constexpr auto
 reduce_sqrm(auto && a)
 {
-    std::decay_t<decltype(sqrm(VALUE(a)))> c(0.);
-    for_each([&c](auto && a) { maybe_fma_sqrm(a, c); }, RA_FWD(a));
+    std::decay_t<decltype(sqrm(VAL(a)))> c(0.);
+    for_each([&c](auto && a) { maybe_fma_sqrm(a, c); }, RA_FW(a));
     return c;
 }
 
@@ -497,7 +497,7 @@ constexpr auto
 gemm(auto const & a, auto const & b)
 {
     dim_t M=a.len(0), N=b.len(1);
-    using T = decltype(VALUE(a)*VALUE(b));
+    using T = decltype(VAL(a)*VAL(b));
     using MMTYPE = decltype(from(std::multiplies<>(), a(all, 0), b(0)));
     auto c = with_shape<MMTYPE>({M, N}, T());
     gemm(a, b, c);
@@ -508,7 +508,7 @@ constexpr auto
 gevm(auto const & a, auto const & b)
 {
     dim_t M=b.len(0), N=b.len(1);
-    using T = decltype(VALUE(a)*VALUE(b));
+    using T = decltype(VAL(a)*VAL(b));
     auto c = with_shape<decltype(a[0]*b(0))>({N}, T());
     for (int i=0; i<M; ++i) {
         maybe_fma(a[i], b(i), c);
@@ -521,7 +521,7 @@ constexpr auto
 gemv(auto const & a, auto const & b)
 {
     dim_t M=a.len(0), N=a.len(1);
-    using T = decltype(VALUE(a)*VALUE(b));
+    using T = decltype(VAL(a)*VAL(b));
     auto c = with_shape<decltype(a(all, 0)*b[0])>({M}, T());
     for (int j=0; j<N; ++j) {
         maybe_fma(a(all, j), b[j], c);
@@ -620,7 +620,7 @@ struct Wedge
 
     template <class Xr, class Fa, class Va, class Vb>
     constexpr static auto
-    term(Va const & a, Vb const & b) -> decltype(VALUE(a) * VALUE(b))
+    term(Va const & a, Vb const & b) -> decltype(VAL(a) * VAL(b))
     {
         if constexpr (0==mp::len<Fa>) {
             return 0;
@@ -737,7 +737,7 @@ wedge(Va const & a, Vb const & b)
         return a*b;
     } else {
         constexpr int Nr = Wedge<D, Oa, Ob>::Nr;
-        using valtype = decltype(VALUE(a) * VALUE(b));
+        using valtype = decltype(VAL(a) * VAL(b));
         std::conditional_t<Nr==1, valtype, Small<valtype, Nr>> r;
         wedge<D, Oa, Ob>(a, b, r);
         return r;
@@ -752,7 +752,7 @@ constexpr auto
 perp(V const & v)
 {
     static_assert(2==v.size(), "Dimension error.");
-    return Small<std::decay_t<decltype(VALUE(v))>, 2> {v[1], -v[0]};
+    return Small<std::decay_t<decltype(VAL(v))>, 2> {v[1], -v[0]};
 }
 
 template <class V, class U>
@@ -761,7 +761,7 @@ perp(V const & v, U const & n)
 {
     if constexpr (is_scalar<U>) {
         static_assert(2==v.size(), "Dimension error.");
-        return Small<std::decay_t<decltype(VALUE(v) * n)>, 2> {v[1]*n, -v[0]*n};
+        return Small<std::decay_t<decltype(VAL(v) * n)>, 2> {v[1]*n, -v[0]*n};
     } else {
         static_assert(3==v.size(), "Dimension error.");
         return cross(v, n);
