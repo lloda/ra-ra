@@ -47,8 +47,8 @@ void nested_wrank_demo(V && v, A && a, B && b)
         using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
         cout << "width of fm: " << ra::mp::len<typename FM::R> << endl;
         cout << ra::mp::print_ilist_t<typename FM::R> {} << endl;
-        auto af0 = ra::reframe<ra::mp::ref<typename FM::R, 0>>(a.iter());
-        auto af1 = ra::reframe<ra::mp::ref<typename FM::R, 1>>(b.iter());
+        auto af0 = reframe(a.iter(), ra::mp::ref<typename FM::R, 0>{});
+        auto af1 = reframe(b.iter(), ra::mp::ref<typename FM::R, 1>{});
         cout << "af0: " << sizeof(af0) << endl;
         cout << "af1: " << sizeof(af1) << endl;
         {
@@ -107,8 +107,8 @@ int main()
             using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
             cout << "width of fm: " << ra::mp::len<FM::R> << endl;
             cout << ra::mp::print_ilist_t<FM::R> {} << endl;
-            auto af0 = ra::reframe<ra::mp::ref<FM::R, 0>>(a.iter());
-            auto af1 = ra::reframe<ra::mp::ref<FM::R, 1>>(b.iter());
+            auto af0 = reframe(a.iter(), ra::mp::ref<FM::R, 0>{});
+            auto af1 = reframe(b.iter(), ra::mp::ref<FM::R, 1>{});
             cout << "af0: " << sizeof(af0) << endl;
             cout << "af1: " << sizeof(af1) << endl;
             auto ewv = ra::map_(FM::op(v), af0, af1);
@@ -353,6 +353,17 @@ int main()
         tr.strict()
             .test_eq(c, from([o = from(std::multiplies<>(), a, b)](auto i, auto j) { return o.at(std::array {i, j}); },
                              ra::iota(3), ra::iota(4)));
+    }
+    tr.section("Reframe as transpose");
+    {
+        ra::ViewSmall<ra::Seq<int>, ra::ic_t<ra::default_dims(std::array<int, 3> {2, 3, 4})>> a(ra::Seq<int> {0});
+        auto test = [&](auto dest) { tr.strict().test_eq(transpose(a, dest), reframe(start(a), dest)); };
+        test(ra::ilist_t<0, 1, 2> {});
+        test(ra::ilist_t<1, 2, 0> {});
+        test(ra::ilist_t<2, 0, 1> {});
+        test(ra::ilist_t<2, 1, 0> {});
+        test(ra::ilist_t<1, 0, 2> {});
+        test(ra::ilist_t<0, 2, 1> {});
     }
     return tr.summary();
 }

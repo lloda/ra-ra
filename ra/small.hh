@@ -68,8 +68,8 @@ filldim(auto && shape, auto & dimv)
     return s;
 }
 
-template <auto lenv> constexpr auto
-default_dims = []{ std::array<Dim, ra::size(lenv)> dimv; filldim(lenv, dimv); return dimv; }();
+consteval auto
+default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldim(lv, dv); return dv; };
 
 constexpr auto
 shape(auto const & v, auto && e)
@@ -349,7 +349,7 @@ struct nested_arg<T, Dimv>
 {
     constexpr static auto sn = ssize(Dimv::value)-1;
     constexpr static auto s = std::apply([](auto ... i) { return std::array<dim_t, sn> { Dimv::value[i].len ... }; }, mp::iota<sn, 1> {});
-    using sub = std::conditional_t<0==sn, T, SmallArray<T, ic_t<default_dims<s>>>>;
+    using sub = std::conditional_t<0==sn, T, SmallArray<T, ic_t<default_dims(s)>>>;
 };
 
 template <class P> struct reconst_t { using type = void; };
@@ -559,7 +559,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
 };
 
 template <class T, dim_t ... lens>
-using Small = SmallArray<T, ic_t<default_dims<std::array<dim_t, sizeof...(lens)> {lens ...}>>>;
+using Small = SmallArray<T, ic_t<default_dims(std::array<dim_t, sizeof...(lens)> {lens ...})>>;
 
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
 
@@ -714,7 +714,7 @@ constexpr auto
 start(is_builtin_array auto && t)
 {
     using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
-    return ViewSmall<T *, ic_t<default_dims<ra::shape(t)>>>(peel(t)).iter();
+    return ViewSmall<T *, ic_t<default_dims(ra::shape(t))>>(peel(t)).iter();
 }
 
 } // namespace ra

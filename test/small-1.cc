@@ -73,7 +73,7 @@ int main()
     }
     tr.section("static step computation");
     {
-        auto dims = ra::default_dims<std::array<ra::dim_t, 3> {3, 4, 5}>;
+        auto dims = ra::default_dims(std::array<ra::dim_t, 3> {3, 4, 5});
         tr.info("step 0").test_eq(20, dims[0].step);
         tr.info("step 1").test_eq(5, dims[1].step);
         tr.info("step 2").test_eq(1, dims[2].step);
@@ -466,7 +466,7 @@ int main()
         tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
     }
     tr.section("ViewSmall as iota<w>");
-// in order to replace Ptr<>, we must support Len both in P and in Dimv.
+// in order to replace Ptr<>, we must support Len in View::P and View::Dimv.
     {
         constexpr ra::ViewSmall<ra::Seq<ra::dim_t>, ra::ic_t<std::array {ra::Dim {ra::UNB, 1}}>>
             i0(ra::Seq<ra::dim_t> {0});

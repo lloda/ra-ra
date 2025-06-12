@@ -301,7 +301,7 @@ struct STLIterator
         over = true;
     }
     constexpr STLIterator & operator++() { if constexpr (ANY==rank_s(a)) { next(rank(a)-1); } else { next<rank_s(a)-1>(); } return *this; }
-    constexpr void operator++(int) { ++(*this); } // see p0541 and p2550. Or just avoid.
+    constexpr void operator++(int) { ++(*this); }
 };
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;

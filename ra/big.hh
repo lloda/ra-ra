@@ -492,7 +492,7 @@ template <class E> requires (ANY==size_s<E>())
 struct concrete_type_<E> { using type = Big<ncvalue_t<E>, rank_s<E>()>; };
 
 template <class E> requires (0!=rank_s<E>() && ANY!=size_s<E>())
-struct concrete_type_<E> { using type = SmallArray<ncvalue_t<E>, ic_t<default_dims<shape_s<E>>>>; };
+struct concrete_type_<E> { using type = SmallArray<ncvalue_t<E>, ic_t<default_dims(shape_s<E>)>>; };
 
 template <class E> using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>), std::decay_t<E>,
                                                             typename concrete_type_<E>::type>;

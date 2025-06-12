@@ -223,7 +223,7 @@ maybe_step()
 
 template <class I, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
-ptr(I && i, N && n = N {}, S && s = maybe_step<S>())
+ptr(I && i, N && n=N {}, S && s=maybe_step<S>())
 {
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
         static_assert(std::is_same_v<dim_c<UNB>, N>, "Object has own length.");
@@ -283,8 +283,7 @@ struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
     constexpr static int orig(int k) { int r=-1; (void)((di==k && (r=i, 1)) || ...); return r; }
     constexpr static dim_t len_s(int k)
     {
-        int l=orig(k);
-        return l>=0 ? std::decay_t<A>::len_s(l) : UNB;
+        int l=orig(k); return l>=0 ? std::decay_t<A>::len_s(l) : UNB;
     }
     constexpr static dim_t
     len(int k) requires (requires { std::decay_t<A>::len(k); })
@@ -321,16 +320,15 @@ struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
     constexpr decltype(auto) operator*() const { return *a; }
     constexpr auto save() const { return a.save(); }
     constexpr void load(auto const & p) { a.load(p); }
-// FIXME if Dest preserves axis order (?) which wrank does
     constexpr void mov(auto const & s) { a.mov(s); }
 };
 
 // Optimize nop case. TODO If A is CellBig, etc. beat Dest on it, same for eventual transpose_expr<>.
-template <class Dest, class A>
+template <class A, class Dest>
 constexpr decltype(auto)
-reframe(A && a)
+reframe(A && a, Dest)
 {
-    if constexpr (std::is_same_v<Dest, mp::iota<Reframe<A, Dest>::rank()>>) {
+    if constexpr (std::is_same_v<Dest, mp::iota<mp::len<Dest>>>) {
         return RA_FWD(a);
     } else {
         return Reframe<A, Dest> { RA_FWD(a) };
@@ -339,9 +337,9 @@ reframe(A && a)
 
 template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
 constexpr auto
-iota(N && n = N {}, I && i = 0, S && s = maybe_step<S>())
+iota(N && n=N {}, I && i=0, S && s=maybe_step<S>())
 {
-    return reframe<ilist_t<w>>(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FWD(i)}, RA_FWD(n), RA_FWD(s) });
+    return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FWD(i)}, RA_FWD(n), RA_FWD(s) }, ilist_t<w>{});
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
@@ -613,7 +611,7 @@ constexpr bool
 agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op(FM::op(v), reframe<mp::ref<typename FM::R, i>>(ra::start(t)) ...);
+    return agree_op(FM::op(v), reframe(ra::start(t), mp::ref<typename FM::R, i>{}) ...);
 }
 
 
@@ -656,7 +654,7 @@ constexpr auto
 map_verb(ilist_t<i ...>, Op && op, P && ... p)
 {
     using FM = Framematch<Op, std::tuple<P ...>>;
-    return map_(FM::op(RA_FWD(op)), reframe<mp::ref<typename FM::R, i>>(RA_FWD(p)) ...);
+    return map_(FM::op(RA_FWD(op)), reframe(RA_FWD(p), mp::ref<typename FM::R, i>{}) ...);
 }
 
 constexpr auto
