@@ -95,15 +95,15 @@ constexpr struct Len
     consteval static void mov(dim_t d) { len_outside_subscript_context(); }
 } len;
 
-template <> constexpr bool is_special_def<Len> = true;  // protect exprs with Len from reduction.
-template <class E> struct WLen;                         // defined in ply.hh.
+template <class E> struct WLen;                                // defined in ply.hh.
 template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FWD(e)); };
+template <has_len E> constexpr bool is_special_def<E> = true;  // protect exprs with Len from reduction.
 
 template <class Ln, class E>
 constexpr decltype(auto)
 wlen(Ln ln, E && e)
 {
-    static_assert(std::is_integral_v<std::decay_t<Ln>> || is_constant<std::decay_t<Ln>>);
+    static_assert(std::is_integral_v<Ln> || is_constant<Ln>);
     if constexpr (has_len<E>) {
         return WLen<std::decay_t<E>>::f(ln, RA_FWD(e));
     } else {
@@ -170,6 +170,7 @@ struct Ptr final
     static_assert(has_len<S> || is_constant<S> || std::is_integral_v<S>);
     static_assert(has_len<I> || std::bidirectional_iterator<I>);
     constexpr static dim_t nn = maybe_any<N>;
+    static_assert(0<=nn || ANY==nn || UNB==nn);
     constexpr static bool constant = is_constant<N> && is_constant<S>;
 
     I i;
@@ -177,10 +178,8 @@ struct Ptr final
     [[no_unique_address]] S const s = {};
     constexpr static S gets() requires (is_constant<S>) { return S {}; }
     constexpr I gets() const requires (!is_constant<S>) { return s; }
-
     constexpr Ptr(I i, N n, S s): i(i), n(n), s(s)
     {
-        static_assert(ANY==nn || 0<=nn || UNB==nn);
         if constexpr (std::is_integral_v<N>) { RA_CHECK(n>=0, "Bad Ptr length ", n, "."); }
     }
     RA_ASSIGNOPS_SELF(Ptr)
@@ -352,7 +351,7 @@ FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
 // ---------------------------
 
 template <class cranks, class Op> struct Verb final { Op op; };
-template <class A> concept is_verb = requires (A a) { []<class cranks, class Op>(Verb<cranks, Op> const &){}(a); };
+template <class A> concept is_verb = requires (A & a) { []<class cranks, class Op>(Verb<cranks, Op> &){}(a); };
 
 template <class cranks, class Op>
 constexpr auto
@@ -362,18 +361,17 @@ template <rank_t ... crank, class Op>
 constexpr auto
 wrank(Op && op) { return Verb<ilist_t<crank ...>, Op> { RA_FWD(op) }; }
 
-template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
+template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, int skip=0>
 struct Framematch_def;
 
-template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, rank_t skip=0>
+template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, int skip=0>
 using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 
 // Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
-template <class ... crank, class W, class ... Ti, class ... Ri, rank_t skip>
+template <class ... crank, class W, class ... Ti, class ... Ri, int skip>
 struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
-    static_assert(sizeof...(Ti)==sizeof...(crank) && sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
-// live = number of live axes on this frame, for each argument. // TODO crank negative, inf.
+// TODO crank negative, inf.
     using live = ilist_t<(rank_s<Ti>() - mp::len<Ri> - crank::value) ...>;
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
     using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(tuple2array<int, live>)>;
@@ -381,54 +379,13 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
     template <class U> constexpr static decltype(auto) op(U && v) { return FM::op(RA_FWD(v).op); } // cf [ra31]
 };
 
-// Terminal case where V doesn't have rank (is a raw op()).
-template <class V, class ... Ti, class ... Ri, rank_t skip>
+template <class V, class ... Ti, class ... Ri, int skip>
 struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
-    static_assert(sizeof...(Ti)==sizeof...(Ri), "Bad arguments.");
 // TODO -crank::value when the actual verb rank is used (eg to use CellBig<... that_rank> instead of just begin()).
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
     template <class U> constexpr static decltype(auto) op(U && v) { return RA_FWD(v); }
 };
-
-
-// --------------
-// making Iterators
-// --------------
-
-// TODO arbitrary exprs? runtime cr? ra::len in cr?
-template <int cr>
-constexpr auto
-iter(Slice auto && a) { return RA_FWD(a).template iter<cr>(); }
-
-constexpr void
-start(auto && t) { static_assert(false, "Cannot start() type."); }
-
-constexpr auto
-start(is_fov auto && t) { return ra::ptr(RA_FWD(t)); }
-
-template <class T>
-constexpr auto
-start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
-
-constexpr auto
-start(is_scalar auto && t) { return ra::scalar(RA_FWD(t)); }
-
-// forward declare for Match; implemented in small.hh.
-constexpr auto
-start(is_builtin_array auto && t);
-
-// neither CellBig nor CellSmall will retain rvalues [ra4].
-constexpr auto
-start(Slice auto && t) { return iter<0>(RA_FWD(t)); }
-
-// iterators need to be reset on each use [ra35].
-template <class A> requires (is_iterator<A> && !(requires (A a) { []<class C>(Scalar<C> const &){}(a); }))
-constexpr auto
-start(A & a) { return a; }
-
-constexpr decltype(auto)
-start(is_iterator auto && a) { return RA_FWD(a); }
 
 
 // --------------------
@@ -438,7 +395,7 @@ start(is_iterator auto && a) { return RA_FWD(a); }
 constexpr rank_t
 choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
 
-// finite before ANY before UNB, assumes checks pass.
+// finite before ANY before UNB, assumes neither is MIS.
 constexpr dim_t
 choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : UNB==a ? b : UNB==b ? a : b; }
 
@@ -587,6 +544,45 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
 };
 
 
+// --------------
+// making Iterators
+// --------------
+
+// TODO arbitrary exprs? runtime cr? ra::len in cr?
+template <int cr>
+constexpr auto
+iter(Slice auto && a) { return RA_FWD(a).template iter<cr>(); }
+
+constexpr void
+start(auto && t) { static_assert(false, "Cannot start() type."); }
+
+constexpr auto
+start(is_fov auto && t) { return ra::ptr(RA_FWD(t)); }
+
+template <class T>
+constexpr auto
+start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
+
+constexpr auto
+start(is_scalar auto && t) { return ra::scalar(RA_FWD(t)); }
+
+// forward declare for Match; implemented in small.hh.
+constexpr auto
+start(is_builtin_array auto && t);
+
+// neither CellBig nor CellSmall will retain rvalues [ra4].
+constexpr auto
+start(Slice auto && t) { return iter<0>(RA_FWD(t)); }
+
+// iterators need to be reset on each use [ra35].
+template <class A> requires (is_iterator<A> && !(requires (A a) { []<class C>(Scalar<C> const &){}(a); }))
+constexpr auto
+start(A & a) { return a; }
+
+constexpr decltype(auto)
+start(is_iterator auto && a) { return RA_FWD(a); }
+
+
 // ---------------
 // explicit agreement checks
 // ---------------
@@ -616,7 +612,7 @@ agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 
 
 // ---------------------------
-// operator expression
+// map and pick
 // ---------------------------
 
 template <class E>
@@ -643,9 +639,6 @@ struct Map<Op, std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...
     constexpr operator decltype(std::invoke(op, *get<I>(t) ...)) () const { return to_scalar(*this); }
 };
 
-template <class Op, Iterator ... P>
-constexpr bool is_special_def<Map<Op, std::tuple<P ...>>> = (is_special<P> || ...);
-
 template <class Op, class ... P>
 Map(Op && op, P && ... p) -> Map<Op, std::tuple<P ...>>;
 
@@ -665,11 +658,6 @@ map_(auto && op, auto && ... p) { return Map(RA_FWD(op), RA_FWD(p) ...); }
 
 constexpr auto
 map(auto && op, auto && ... a) { return map_(RA_FWD(op), start(RA_FWD(a)) ...); }
-
-
-// ---------------------------
-// pick expression
-// ---------------------------
 
 template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 
@@ -710,9 +698,6 @@ struct Pick<std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
     constexpr decltype(auto) operator*() const { return pick_star<0>(*get<0>(t), t); }
     constexpr operator decltype(pick_star<0>(*get<0>(t), t)) () const { return to_scalar(*this); }
 };
-
-template <Iterator ... P>
-constexpr bool is_special_def<Pick<std::tuple<P ...>>> = (is_special<P> || ...);
 
 template <class ... P>
 Pick(P && ... p) -> Pick<std::tuple<P ...>>;

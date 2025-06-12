@@ -31,6 +31,9 @@ int main()
         tr.test(ra::is_zero_or_scalar<ra::Len>);
         tr.test(!ra::is_ra_pos<ra::Len>);
         tr.test(ra::is_special<ra::Len>);
+        tr.test(ra::is_special<decltype(ra::len + ra::len)>);
+        tr.test(ra::is_special<decltype(ra::pick(std::array {0, 1, 0}, ra::len, 3))>);
+        tr.test(!ra::is_special<decltype(ra::pick(std::array {0, 1, 0}, 1, 3))>);
         tr.test(ra::tomap<ra::Len>);
         tr.test(!ra::toreduce<ra::Len>);
         tr.test(ra::tomap<ra::Len, ra::Len>);
