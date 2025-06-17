@@ -60,18 +60,17 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 // assign ops for settable iterators. Might be different for e.g. Views.
 // --------------------
 
-// Forward to forbid misusing value y as ref [ra5].
-#define RA_ASSIGNOPS_LINE(OP) \
-    for_each([](auto && y, auto && x) { RA_FW(y) OP x; }, *this, RA_FW(x))
+// But see local ASSIGNOPS elsewhere.
+#define RA_ASSIGNOPS_LINE(OP)                                           \
+    for_each([](auto && y, auto && x) { /* [ra5] */ RA_FW(y) OP RA_FW(x); }, *this, RA_FW(x))
 #define RA_ASSIGNOPS(OP) \
     constexpr void operator OP(auto && x) { RA_ASSIGNOPS_LINE(OP); }
-// But see local ASSIGNOPS elsewhere.
 #define RA_ASSIGNOPS_DEFAULT_SET \
     FOR_EACH(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 // Restate for expression classes since a template doesn't replace the copy assignment op.
 #define RA_ASSIGNOPS_SELF(TYPE)                                         \
-    TYPE & operator=(TYPE && x) { RA_ASSIGNOPS_LINE(=); return *this; } \
-    TYPE & operator=(TYPE const & x) { RA_ASSIGNOPS_LINE(=); return *this; } \
+    constexpr TYPE & operator=(TYPE && x) { RA_ASSIGNOPS_LINE(=); return *this; } \
+    constexpr TYPE & operator=(TYPE const & x) { RA_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE(TYPE && x) = default;                                \
     constexpr TYPE(TYPE const & x) = default;
 

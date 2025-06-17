@@ -52,7 +52,7 @@ constexpr bool
 is_c_order(auto const & v, bool step1=true) { return is_c_order_dimv(v.dimv, step1); }
 
 constexpr dim_t
-filldim(auto && shape, auto & dimv)
+filldim(auto const & shape, auto & dimv)
 {
     map(&Dim::len, dimv) = shape;
     dim_t s = 1;
@@ -198,7 +198,7 @@ indexer(Q const & q, P const & pp)
         }
         return c;
     } else {
-        auto loop = [&](this auto && loop, auto && k, dim_t c)
+        auto loop = [&](this auto && loop, auto k, dim_t c)
         {
             if constexpr (k==rank_s(q)) {
                 return c;
@@ -373,7 +373,7 @@ struct ViewSmall
     constexpr ViewSmall const & view() const { return *this; }
     constexpr P data() const { return cp; }
     constexpr explicit ViewSmall(P cp_): cp(cp_) {}
-// exclude all T and sub constructors by making T & sub noarg
+// exclude T and sub constructors by making T & sub noarg
     constexpr static bool have_braces = std::is_reference_v<decltype(*cp)>;
     using T = std::conditional_t<have_braces, std::remove_reference_t<decltype(*cp)>, noarg>;
     using sub = typename nested_arg<T, Dimv>::sub;
@@ -397,14 +397,13 @@ struct ViewSmall
     {
         ra::iter<-1>(*this) = x; return *this;
     }
+    constexpr ViewSmall(ViewSmall const & s) = default;
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     ViewSmall const & operator=(ViewSmall const & x) const { start(*this) = x; return *this; }
-    constexpr ViewSmall(ViewSmall const & s) = default;
-    template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
-    constexpr ViewSmall const & operator=(X && x) const { start(*this) = x; return *this; }
 #define ASSIGNOPS(OP)                                                   \
-    constexpr ViewSmall const & operator OP(auto && x) const { start(*this) OP x; return *this; }
-    FOR_EACH(ASSIGNOPS, *=, +=, -=, /=)
+    constexpr ViewSmall const & operator OP(Iterator auto && x) const { start(*this) OP RA_FW(x); return *this; } \
+    constexpr ViewSmall const & operator OP(auto const & x) const { start(*this) OP x; return *this; }
+    FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
 
     template <int k>
@@ -458,24 +457,27 @@ struct ViewSmall
     operator[](this auto && self, auto && ... i) { return RA_FW(self)(RA_FW(i) ...); }
 
     constexpr decltype(auto)
-    at(auto && i) const
+    at(auto const & i) const
     {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
         constexpr rank_t crank = rank_diff(rank(), ra::size_s(i));
         static_assert(crank>=0); // to make out the output type
-        return iter<crank>().at(RA_FW(i));
+        return iter<crank>().at(i);
     }
-// maybe remove if ic becomes easier to use
     template <int s, int o=0> constexpr auto as() const { return operator()(ra::iota(ra::ic<s>, o)); }
     template <rank_t c=0> constexpr auto iter() const { return Cell<P, ic_t<dimv>, ic_t<c>>(cp); }
     constexpr auto begin() const { if constexpr (is_c_order_dimv(dimv)) return cp; else return STLIterator(iter()); }
     constexpr auto end() const requires (is_c_order_dimv(dimv)) { return cp+size(); }
     constexpr static auto end() requires (!is_c_order_dimv(dimv)) { return std::default_sentinel; }
     constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
-    constexpr operator T & () const { static_assert(1==size(), "Bad scalar conversion."); return cp[0]; }
     constexpr operator ViewSmall<reconst<P>, Dimv> () const requires (!std::is_void_v<reconst<P>>)
     {
         return ViewSmall<reconst<P>, Dimv>(cp);
+    }
+    constexpr operator T & () const
+    {
+        static_assert(1==size(), "Bad scalar conversion.");
+        return cp[0];
     }
 };
 
@@ -509,7 +511,6 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     T cp[size()];
     [[no_unique_address]] struct {} prevent_zero_size; // or reuse std::array
     constexpr auto data(this auto && self) { return self.cp; }
-
     using View = ViewSmall<T *, Dimv>;
     using ViewConst = ViewSmall<T const *, Dimv>;
     constexpr View view() { return View(data()); }
@@ -519,7 +520,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
 
     constexpr SmallArray() {}
     constexpr SmallArray(ra::none_t) {}
-// if T isn't is_scalar [ra44]
+// T not is_scalar [ra44]
     constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); }
 // row-major ravel braces
     constexpr SmallArray(T const & x0, std::convertible_to<T> auto const & ... x)
@@ -533,28 +534,24 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     {
         view() = { x ... };
     }
-// X && x makes this a better match than nested_args ... for 1 argument.
-    template <class X> requires (!std::is_same_v<std::decay_t<X>, T>)
-    constexpr SmallArray(X && x)
-    {
-        view() = RA_FW(x);
-    }
+    constexpr SmallArray(auto const & x) { view() = x; }
+    constexpr SmallArray(Iterator auto && x) { view() = RA_FW(x); }
 #define ASSIGNOPS(OP)                                                   \
-    constexpr SmallArray & operator OP(auto && x) { view() OP RA_FW(x); return *this; }
+    constexpr SmallArray & operator OP(auto const & x) { view() OP x; return *this; } \
+    constexpr SmallArray & operator OP(Iterator auto && x) { view() OP RA_FW(x); return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
 
+    template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FW(self).view().template as<s, o>(); }
     constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
     constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FW(self).view()(RA_FW(a) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FW(self).view()(RA_FW(a) ...); }
-    constexpr decltype(auto) at(this auto && self, auto && i) { return RA_FW(self).view().at(RA_FW(i)); }
+    constexpr decltype(auto) at(this auto && self, auto const & i) { return RA_FW(self).view().at(i); }
     constexpr auto begin(this auto && self) { return self.view().begin(); }
     constexpr auto end(this auto && self) { return self.view().end(); }
     template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FW(self).view().template iter<c>(); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
-// FIXME do (iota(ic<> ...)) instead
-    template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FW(self).view().template as<s, o>(); }
 };
 
 template <class T, dim_t ... lens>

@@ -162,10 +162,13 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
       there. As things stand, you can register it as scalar or not.
   14. [ ] CellBig needs to copy its Dimv in some cases, which also complicates ViewBig::iter<>. Problem
       is demonstrated in ra-5.cc.
-  15. [ ] Conversion-to-scalar operators for dynamic-rank ViewBig(). I thought this could be
+  15. [X] Conversion-to-scalar operators for dynamic-rank ViewBig(). I thought this could be
       https://wg21.link/cwg976 but gcc 14 doesn't fix it. There are two issues here, 1) why isn't
       const conversion enough and 2) ambiguity with Small's 'any' constructor (cf 'c++ converting
       constructor vs conversion operator').
+      - <2025-06-17 Tue> This was fixed mostly by replacing the (auto && x) constructors in the
+        array classes by (const & x). This may cause iterators to be copied, so maybe we can redo
+        (auto && x) in the future if we find out it matters.
   16. [ ] Ambiguity in ravel vs nested constructors bc bc 1 converts to int2. Should be explicit
       (and ravel constructors also).
   17. [ ] assert() is used in some cases for runtime conditions that aren't ra::'s fault. This is
