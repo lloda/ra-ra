@@ -59,14 +59,14 @@ namespace ra::mp {
 
 template <class ... A> using sum = int_c<(A::value + ... + 0)>;
 template <class ... A> using prod = int_c<(A::value * ... * 1)>;
-template <class ... A> using andb = bool_c<(A::value && ...)>;
-template <class ... A> using orb = bool_c<(A::value || ...)>;
+template <class ... A> using andb = ic_t<(A::value && ...)>;
+template <class ... A> using orb = ic_t<(A::value || ...)>;
 
 // increment L[w]
 template <class L, int w> using inc = append<take<L, w>, cons<int_c<ref<L, w>::value+1>, drop<L, w+1>>>;
 
-template <bool a> using when = bool_c<a>;
-template <bool a> using unless = bool_c<(!a)>;
+template <bool a> using when = ic_t<a>;
+template <bool a> using unless = ic_t<(!a)>;
 
 // like fold-left
 template <template <class ... A> class F, class Def, class ... L>

@@ -162,9 +162,9 @@ lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
     }
 }
 
-template <class T>
+template <class P>
 void
-gemm_blas(ra::ViewBig<T, 2> const & A, ra::ViewBig<T, 2> const & B, ra::ViewBig<T, 2> C)
+gemm_blas(ra::ViewBig<P, 2> const & A, ra::ViewBig<P, 2> const & B, ra::ViewBig<P, 2> C)
 {
     CBLAS_TRANSPOSE ta = CblasNoTrans;
     CBLAS_TRANSPOSE tb = CblasNoTrans;
@@ -184,12 +184,12 @@ gemm_blas(ra::ViewBig<T, 2> const & A, ra::ViewBig<T, 2> const & B, ra::ViewBig<
         tb = fliptr(tb);
     }
     if (C.size()>0) {
-        if constexpr (std::is_same_v<T, double>) {
+        if constexpr (std::is_same_v<P, double *>) {
             cblas_dgemm(orderc, ta, tb, C.len(0), C.len(1), K, real(1.), A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
-        } else if constexpr (std::is_same_v<T, float>) {
+        } else if constexpr (std::is_same_v<P, float *>) {
             cblas_sgemm(orderc, ta, tb, C.len(0), C.len(1), K, real(1.), A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
         } else {
-            abort();
+            static_assert(false, "Bad type for BLAS");
         }
     }
 }

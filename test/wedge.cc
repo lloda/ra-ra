@@ -423,5 +423,12 @@ main()
     {
         tr.test_eq(6., ra::wedge<1, 0, 1>(3., complex1(2.)));
     }
+    tr.section("Regression.");
+    {
+        real2 a { 1, 2 };
+        real2 b { 3, 4 };
+        real2 p { 6, 5 };
+        tr.test_eq(-4, cross(real2(b-a), real2(p-a)));
+    }
     return tr.summary();
 }

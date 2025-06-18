@@ -7,7 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// TODO Make traversal order a parameter, some operations (e.g. output, ravel) require specific orders.
+// TODO Parametrize traversal order, some ops (e.g. output, ravel) require specific orders.
 // TODO Better traversal. Tiling, etc. (see eval.cc in Blitz++). Unit step case?
 // TODO std::execution::xxx-policy TODO Validate output argument strides.
 
@@ -33,6 +33,18 @@ template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 // ---------------------
 // replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
 // ---------------------
+
+template <class Ln, class E>
+constexpr decltype(auto)
+wlen(Ln ln, E && e)
+{
+    static_assert(std::is_integral_v<Ln> || is_constant<Ln>);
+    if constexpr (has_len<E>) {
+        return WLen<std::decay_t<E>>::f(ln, RA_FW(e));
+    } else {
+        return RA_FW(e);
+    }
+}
 
 template <>
 struct WLen<Len>
@@ -259,7 +271,7 @@ struct STLIterator
     std::decay_t<decltype(ra::shape(a))> ind; // concrete type
     bool over;
 
-    STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) { validate(a, bool_c<true> {}); }
+    STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) { validate(a, ic<true>); }
     constexpr STLIterator(STLIterator &&) = default;
     constexpr STLIterator(STLIterator const &) = delete;
     constexpr STLIterator & operator=(STLIterator &&) = default;
@@ -268,9 +280,9 @@ struct STLIterator
     decltype(auto) operator*() const { return *a; }
 
     constexpr void
-    next(rank_t k)
+    next()
     {
-        for (; k>=0; --k) {
+        for (rank_t k=rank(a)-1; k>=0; --k) {
             if (--ind[k]>0) {
                 a.adv(k, 1);
                 return;
@@ -281,23 +293,23 @@ struct STLIterator
         }
         over = true;
     }
-    template <int k>
+    template <int k=rank_s<A>()-1>
     constexpr void
-    next()
+    nexts(ic_t<k> = {})
     {
         if constexpr (k>=0) {
             if (--ind[k]>0) {
                 a.adv(k, 1);
+                return;
             } else {
                 ind[k] = a.len(k);
                 a.adv(k, 1-a.len(k));
-                next<k-1>();
+                return nexts(ic<k-1>);
             }
-            return;
         }
         over = true;
     }
-    constexpr STLIterator & operator++() { if constexpr (ANY==rank_s(a)) { next(rank(a)-1); } else { next<rank_s(a)-1>(); } return *this; }
+    constexpr STLIterator & operator++() { if constexpr (ANY==rank_s(a)) next(); else nexts(); return *this; }
     constexpr void operator++(int) { ++(*this); }
 };
 

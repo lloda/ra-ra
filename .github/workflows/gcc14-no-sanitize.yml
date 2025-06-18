@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        cxxflags: ['"-O3 -fno-sanitize=all -std=c++23 -DRA_OPT_SMALLVECTOR=0"',
-                   '"-O3 -fno-sanitize=all -std=c++23 -DRA_OPT_SMALLVECTOR=1"',
-                   '"-O3 -fno-sanitize=all -DRA_CHECK=0 -DNDEBUG -std=c++23"']
+        cxxflags: ['"-O3 -std=c++23 -DRA_OPT_SMALLVECTOR=0"',
+                   '"-O3 -std=c++23 -DRA_OPT_SMALLVECTOR=1"',
+                   '"-O3 -std=c++23 -DRA_CHECK=0 -DNDEBUG"']
     steps:
     - uses: actions/checkout@v4
     - name: update
@@ -22,7 +22,7 @@ jobs:
          sudo apt update
          sudo apt install gcc-14 g++-14
     - name: configure
-      run: CXXFLAGS=${{matrix.cxxflags}} cmake .
+      run: CXXFLAGS=${{matrix.cxxflags}} cmake -DSANITIZE=0 .
       env:
         CXX: g++-14
         CC: gcc-14

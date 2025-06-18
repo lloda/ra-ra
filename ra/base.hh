@@ -58,10 +58,10 @@ namespace ra {
 
 template <class T> constexpr bool is_constant = false;
 template <class T, T N> constexpr bool is_constant<std::integral_constant<T, N>> = true;
-template <int V> using int_c = std::integral_constant<int, V>;
-template <bool V> using bool_c = std::integral_constant<bool, V>;
 template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
 template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
+template <int ... I> using ilist_t = std::tuple<ic_t<I> ...>;
+template <int ... I> constexpr ilist_t<I ...> ilist {};
 
 
 // ---------------------
@@ -88,7 +88,7 @@ template <class A, class B> struct cons_ { static_assert(is_tuple<B>); };
 template <class A0, class ... A> struct cons_<A0, tuple<A ...>> { using type = tuple<A0, A ...>; };
 template <class A, class B> using cons = typename cons_<A, B>::type;
 
-template <int n, int o, int s> struct iota_ { static_assert(n>0); using type = cons<int_c<o>, typename iota_<n-1, o+s, s>::type>; };
+template <int n, int o, int s> struct iota_ { static_assert(n>0); using type = cons<ic_t<o>, typename iota_<n-1, o+s, s>::type>; };
 template <int o, int s> struct iota_<0, o, s> { using type = nil; };
 template <int n, int o=0, int s=1> using iota = typename iota_<n, o, s>::type;
 
@@ -105,9 +105,9 @@ template <class T> struct makelist_<0, T> { using type = nil; };
 template <int n, class T> using makelist = typename makelist_<n, T>::type;
 
 // Return the index of a type in a type list, or -1 if not found.
-template <class A, class T, int i=0> struct index_ { using type = int_c<-1>; };
+template <class A, class T, int i=0> struct index_ { using type = ic_t<-1>; };
 template <class A, class T, int i=0> using index = typename index_<A, T, i>::type;
-template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { using type = int_c<i>; };
+template <class ... A, class T, int i> struct index_<tuple<T, A ...>, T, i> { using type = ic_t<i>; };
 template <class A0, class ... A, class T, int i> struct index_<tuple<A0, A ...>, T, i> { using type = index<tuple<A ...>, T, i+1>; };
 
 // Index (& type) of the 1st item for which Pred<> is true, or -1 (& nil).
@@ -269,28 +269,25 @@ using rank_t = int;
 using dim_t = std::ptrdiff_t;
 static_assert(sizeof(rank_t)>=4 && sizeof(rank_t)>=sizeof(int) && sizeof(dim_t)>=sizeof(rank_t));
 static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
+constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
-template <dim_t V> using dim_c = std::integral_constant<dim_t, V>;
-enum none_t { none }; // in constructors to mean: don't initialize
-struct noarg { noarg() = delete; }; // in constructors to mean: don't instantiate
+constexpr struct none_t {} none; // in constructors: don't initialize
+struct noarg { noarg() = delete; }; // in constructors: don't instantiate
 
-// forward decl, extended in ra.hh
-constexpr bool any(bool const x) { return x; }
+constexpr bool any(bool const x) { return x; } // extended in ra.hh
 constexpr bool every(bool const x) { return x; }
 
-// default storage for Big - see https://stackoverflow.com/a/21028912.
 // adaptor that interposes construct() calls to convert value initialization into default initialization.
+// default storage for Big - see https://stackoverflow.com/a/21028912.
 template <class T, class A=std::allocator<T>>
 struct default_init_allocator: public A
 {
     using traits = std::allocator_traits<A>;
-
     template <class U>
     struct rebind
     {
         using other = default_init_allocator<U, typename traits::template rebind_alloc<U>>;
     };
-
     template <class U>
     void construct(U * ptr) noexcept (std::is_nothrow_default_constructible<U>::value)
     {

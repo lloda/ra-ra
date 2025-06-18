@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <iterator>
+#include "mpdebug.hh"
 #include "ra/test.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;

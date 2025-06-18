@@ -303,7 +303,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
 
-    void
+    constexpr void
     init(auto const & s) requires (1==rank_s(s) || ANY==rank_s(s))
     {
         static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
@@ -313,23 +313,23 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
         store = storage_traits<Store>::create(filldim(s, dimv));
         cp = storage_traits<Store>::data(store);
     }
-    void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
+    constexpr void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
 
 // provided so that {} calls sharg constructor below.
-    Container() requires (ANY==RANK): View({ Dim {0, 1} }, nullptr) {}
-    Container() requires (ANY!=RANK && 0!=RANK): View(typename View::Dimv(Dim {0, 1}), nullptr) {}
-    Container() requires (0==RANK): Container({}, none) {}
+    constexpr Container() requires (ANY==RANK): View({ Dim {0, 1} }, nullptr) {}
+    constexpr Container() requires (ANY!=RANK && 0!=RANK): View(typename View::Dimv(Dim {0, 1}), nullptr) {}
+    constexpr Container() requires (0==RANK): Container({}, none) {}
 
     using sharg = decltype(shape(std::declval<View>().iter()));
 // sharg overloads handle {...} arguments. Size check is at conversion if sharg is Small.
-    Container(sharg const & s, none_t) { init(s); }
-    Container(sharg const & s, auto && x): Container(s, none) { view() = x; }
-    Container(sharg const & s, braces<T, RANK> x) requires (1==RANK): Container(s, none) { view() = x; }
+    constexpr Container(sharg const & s, none_t) { init(s); }
+    constexpr Container(sharg const & s, auto && x): Container(s, none) { view() = x; }
+    constexpr Container(sharg const & s, braces<T, RANK> x) requires (1==RANK): Container(s, none) { view() = x; }
 
-    Container(auto const & x): Container(ra::shape(x), none) { view() = x; }
-    Container(braces<T, RANK> x) requires (RANK!=ANY): Container(braces_shape<T, RANK>(x), none) { view() = x; }
+    constexpr Container(auto const & x): Container(ra::shape(x), none) { view() = x; }
+    constexpr Container(braces<T, RANK> x) requires (RANK!=ANY): Container(braces_shape<T, RANK>(x), none) { view() = x; }
 #define RA_BRACES_ANY(N)                                                \
-    Container(braces<T, N> x) requires (RANK==ANY): Container(braces_shape<T, N>(x), none) { view() = x; }
+    constexpr Container(braces<T, N> x) requires (RANK==ANY): Container(braces_shape<T, N>(x), none) { view() = x; }
     FOR_EACH(RA_BRACES_ANY, 1, 2, 3, 4)
 #undef RA_BRACES_ANY
 
@@ -344,59 +344,59 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
 // shape + row-major ravel.
 // FIXME explicit it-is-ravel mark. Also iter<n> initializers.
 // FIXME regular (no need for fill1) for ANY if rank is 1.
-    Container(sharg const & s, std::initializer_list<T> x) requires (1!=RANK): Container(s, none) { fill1(x.begin(), x.size()); }
+    constexpr Container(sharg const & s, std::initializer_list<T> x) requires (1!=RANK): Container(s, none) { fill1(x.begin(), x.size()); }
 // FIXME remove these two
-    Container(sharg const & s, auto * p): Container(s, none) { fill1(p, size()); } // FIXME fake check
-    Container(sharg const & s, auto && pbegin, dim_t psize): Container(s, none) { fill1(RA_FW(pbegin), psize); }
+    constexpr Container(sharg const & s, auto * p): Container(s, none) { fill1(p, size()); } // FIXME fake check
+    constexpr Container(sharg const & s, auto && pbegin, dim_t psize): Container(s, none) { fill1(RA_FW(pbegin), psize); }
 // for shape arguments that doesn't convert implicitly to sharg
-    Container(auto const & s, none_t) { init(s); }
-    Container(auto const & s, auto const & x): Container(s, none) { view() = x; }
-    Container(auto const & s, std::initializer_list<T> x): Container(s, none) { fill1(x.begin(), x.size()); }
+    constexpr Container(auto const & s, none_t) { init(s); }
+    constexpr Container(auto const & s, auto const & x): Container(s, none) { view() = x; }
+    constexpr Container(auto const & s, std::initializer_list<T> x): Container(s, none) { fill1(x.begin(), x.size()); }
 
 // resize first axis or full shape. Only for some kinds of store.
-    void resize(dim_t const s)
+    constexpr void resize(dim_t const s)
     {
         static_assert(ANY==RANK || 0<RANK); RA_CK(0<rank());
         dimv[0].len = s;
         store.resize(size());
         cp = store.data();
     }
-    void resize(dim_t const s, T const & t)
+    constexpr void resize(dim_t const s, T const & t)
     {
         static_assert(ANY==RANK || 0<RANK); RA_CK(0<rank());
         dimv[0].len = s;
         store.resize(size(), t);
         cp = store.data();
     }
-    void resize(auto const & s) requires (rank_s(s) > 0)
+    constexpr void resize(auto const & s) requires (rank_s(s) > 0)
     {
         ra::resize(dimv, start(s).len(0)); // [ra37] FIXME is View constructor
         store.resize(filldim(s, dimv));
         cp = store.data();
     }
 // template + RA_FW wouldn't work for push_back(brace-enclosed-list).
-    void push_back(T && t)
+    constexpr void push_back(T && t)
     {
         static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
         store.push_back(std::move(t));
         ++dimv[0].len;
         cp = store.data();
     }
-    void push_back(T const & t)
+    constexpr void push_back(T const & t)
     {
         static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
         store.push_back(t);
         ++dimv[0].len;
         cp = store.data();
     }
-    void emplace_back(auto && ... a)
+    constexpr void emplace_back(auto && ... a)
     {
         static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
         store.emplace_back(RA_FW(a) ...);
         ++dimv[0].len;
         cp = store.data();
     }
-    void pop_back()
+    constexpr void pop_back()
     {
         static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
         RA_CK(0<dimv[0].len, "Empty array trying to pop_back().");

@@ -14,6 +14,13 @@
 #include <typeinfo>
 #include <cxxabi.h>
 
+namespace ra {
+
+template <int V> using int_c = std::integral_constant<int, V>;
+template <int V> using dim_c = std::integral_constant<dim_t, V>;
+
+} // namespace ra
+
 namespace ra::mp {
 
 template <class type_, bool condition=false>

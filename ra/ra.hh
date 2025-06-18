@@ -539,7 +539,7 @@ namespace mp {
 template <class P, class Plist>
 struct findcomb
 {
-    template <class A> using match = bool_c<0 != permsign<P, A>::value>;
+    template <class A> using match = ic_t<0 != permsign<P, A>::value>;
     using ii = indexif<Plist, match>;
     constexpr static int where = ii::value;
     constexpr static int sign = (where>=0) ? permsign<P, typename ii::type>::value : 0;

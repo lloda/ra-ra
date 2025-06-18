@@ -51,10 +51,6 @@
 
 namespace ra {
 
-template <int ... I> using ilist_t = std::tuple<int_c<I> ...>;
-template <int ... I> constexpr ilist_t<I ...> ilist {};
-constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
-
 
 // --------------------
 // assign ops for settable iterators. Might be different for e.g. Views.
@@ -97,18 +93,6 @@ constexpr struct Len
 template <class E> struct WLen;                                // defined in ply.hh.
 template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FW(e)); };
 template <has_len E> constexpr bool is_special_def<E> = true;  // protect exprs with Len from reduction.
-
-template <class Ln, class E>
-constexpr decltype(auto)
-wlen(Ln ln, E && e)
-{
-    static_assert(std::is_integral_v<Ln> || is_constant<Ln>);
-    if constexpr (has_len<E>) {
-        return WLen<std::decay_t<E>>::f(ln, RA_FW(e));
-    } else {
-        return RA_FW(e);
-    }
-}
 
 template <class I>
 struct Seq
@@ -219,13 +203,13 @@ maybe_step()
     }
 }
 
-template <class I, class N=dim_c<UNB>, class S=dim_c<1>>
+template <class I, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
 ptr(I && i, N && n=N {}, S && s=maybe_step<S>())
 {
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
-        static_assert(std::is_same_v<dim_c<UNB>, N>, "Object has own length.");
-        static_assert(std::is_same_v<dim_c<1>, S>, "No step with deduced size.");
+        static_assert(std::is_same_v<ic_t<dim_t(UNB)>, N>, "Object has own length.");
+        static_assert(std::is_same_v<ic_t<dim_t(1)>, S>, "No step with deduced size.");
         if constexpr (ANY==size_s(i)) {
             return ptr(std::begin(RA_FW(i)), std::ssize(i), RA_FW(s));
         } else {
@@ -249,12 +233,12 @@ inside(is_iota auto const & i, dim_t l)
     return (inside(i.i.i, l) && inside(i.i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
-template <class I, class N, class S, class K=dim_c<0>>
+template <class I, class N, class S, class K=ic_t<dim_t(0)>>
 constexpr auto
 reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
     static_assert(i.nn!=UNB, "Bad arguments to reverse(iota).");
-    return ptr(Seq { i.i.i+(i.n-1)*i.s }, i.n, [&i]{ if constexpr (is_constant<S>) return dim_c<-S {}> {}; else return -i.s; }());
+    return ptr(Seq { i.i.i+(i.n-1)*i.s }, i.n, [&i]{ if constexpr (is_constant<S>) return ic_t<dim_t(-S{})> {}; else return -i.s; }());
 }
 
 
@@ -332,7 +316,7 @@ reframe(A && a, Dest)
     }
 }
 
-template <int w=0, class I=dim_t, class N=dim_c<UNB>, class S=dim_c<1>>
+template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
 iota(N && n=N {}, I && i=0, S && s=maybe_step<S>())
 {
@@ -462,7 +446,7 @@ tbc(int sofar)
     }
 }
 
-template <class A, class U = bool_c<false>>
+template <class A, class U = ic_t<false>>
 constexpr void
 validate(A const & a, U allow_unb = {})
 {
@@ -554,7 +538,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr static bool
     keep(dim_t st, int z, int j) requires (requires { P::keep(st, z, j); } && ...)
     {
-        return (std::decay_t<P>::keep(st, z, j) && ...);
+        return (P::keep(st, z, j) && ...);
     }
 // step/adv may call sub Iterators with k>= their rank, so they must return 0 in that case.
     constexpr auto
@@ -565,7 +549,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr static auto
     step(int k) requires (requires { P::step(k); } && ...)
     {
-        return std::make_tuple(std::decay_t<P>::step(k) ...);
+        return std::make_tuple(P::step(k) ...);
     }
     constexpr void adv(rank_t k, dim_t d) { (get<I>(t).adv(k, d), ...); }
     constexpr auto save() const { return std::make_tuple(get<I>(t).save() ...); }
