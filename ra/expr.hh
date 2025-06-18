@@ -512,12 +512,12 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         return s;
     }
     constexpr static dim_t
-    len(int k) requires (requires { P::len(k); } && ...)
+    len(int k) requires (requires { std::decay_t<P>::len(k); } && ...)
     {
         return len_s(k);
     }
     constexpr dim_t
-    len(int k) const requires (!(requires { P::len(k); } && ...))
+    len(int k) const requires (!(requires { std::decay_t<P>::len(k); } && ...))
     {
         auto f = [&k](auto const & a, dim_t s)
         {
@@ -531,25 +531,25 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         return s;
     }
     constexpr bool
-    keep(dim_t st, int z, int j) const requires (!(requires { P::keep(st, z, j); }  && ...))
+    keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<P>::keep(st, z, j); }  && ...))
     {
         return (get<I>(t).keep(st, z, j) && ...);
     }
     constexpr static bool
-    keep(dim_t st, int z, int j) requires (requires { P::keep(st, z, j); } && ...)
+    keep(dim_t st, int z, int j) requires (requires { std::decay_t<P>::keep(st, z, j); } && ...)
     {
-        return (P::keep(st, z, j) && ...);
+        return (std::decay_t<P>::keep(st, z, j) && ...);
     }
 // step/adv may call sub Iterators with k>= their rank, so they must return 0 in that case.
     constexpr auto
-    step(int k) const requires (!(requires { P::step(k); } && ...))
+    step(int k) const requires (!(requires { std::decay_t<P>::step(k); } && ...))
     {
         return std::make_tuple(get<I>(t).step(k) ...);
     }
     constexpr static auto
-    step(int k) requires (requires { P::step(k); } && ...)
+    step(int k) requires (requires { std::decay_t<P>::step(k); } && ...)
     {
-        return std::make_tuple(P::step(k) ...);
+        return std::make_tuple(std::decay_t<P>::step(k) ...);
     }
     constexpr void adv(rank_t k, dim_t d) { (get<I>(t).adv(k, d), ...); }
     constexpr auto save() const { return std::make_tuple(get<I>(t).save() ...); }
