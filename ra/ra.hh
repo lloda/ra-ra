@@ -131,47 +131,46 @@ template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FW(e); 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
 template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
 
-// TODO something to handle the & variants...
-#define ITEM(i) std::get<(i)>(e.t)
-
 // FIXME iota.gets() vs p2781r2
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
 
+// TODO something to handle the & variants...
+#define RA_IT(i) std::get<(i)>(e.t)
 template <is_iota I, iota_op J>
 constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(0).n, ITEM(0).i.i+ITEM(1), ITEM(0).s); }
+{ return ra::iota(RA_IT(0).n, RA_IT(0).i.i+RA_IT(1), RA_IT(0).s); }
 
 template <iota_op I, is_iota J>
 constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(1).n, ITEM(0)+ITEM(1).i.i, ITEM(1).s); }
+{ return ra::iota(RA_IT(1).n, RA_IT(0)+RA_IT(1).i.i, RA_IT(1).s); }
 
 template <is_iota I, is_iota J>
 constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e), ITEM(0).i.i+ITEM(1).i.i, ITEM(0).s+ITEM(1).s); }
+{ return ra::iota(maybe_len(e), RA_IT(0).i.i+RA_IT(1).i.i, RA_IT(0).s+RA_IT(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(0).n, ITEM(0).i.i-ITEM(1), ITEM(0).s); }
+{ return ra::iota(RA_IT(0).n, RA_IT(0).i.i-RA_IT(1), RA_IT(0).s); }
 
 template <iota_op I, is_iota J>
 constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(1).n, ITEM(0)-ITEM(1).i.i, -ITEM(1).s); }
+{ return ra::iota(RA_IT(1).n, RA_IT(0)-RA_IT(1).i.i, -RA_IT(1).s); }
 
 template <is_iota I, is_iota J>
 constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e), ITEM(0).i.i-ITEM(1).i.i, ITEM(0).s-ITEM(1).s); }
+{ return ra::iota(maybe_len(e), RA_IT(0).i.i-RA_IT(1).i.i, RA_IT(0).s-RA_IT(1).s); }
 
 template <is_iota I, iota_op J>
 constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(0).n, ITEM(0).i.i*ITEM(1), ITEM(0).s*ITEM(1)); }
+{ return ra::iota(RA_IT(0).n, RA_IT(0).i.i*RA_IT(1), RA_IT(0).s*RA_IT(1)); }
 
 template <iota_op I, is_iota J>
 constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(ITEM(1).n, ITEM(0)*ITEM(1).i.i, ITEM(0)*ITEM(1).s); }
+{ return ra::iota(RA_IT(1).n, RA_IT(0)*RA_IT(1).i.i, RA_IT(0)*RA_IT(1).s); }
 
 template <is_iota I>
 constexpr auto optimize(Map<std::negate<>, std::tuple<I>> && e)
-{ return ra::iota(ITEM(0).n, -ITEM(0).i.i, -ITEM(0).s); }
+{ return ra::iota(RA_IT(0).n, -RA_IT(0).i.i, -RA_IT(0).s); }
 
 #if RA_OPT_SMALLVECTOR==1
 template <class T, dim_t N, class A> constexpr bool match_small =
@@ -184,7 +183,7 @@ static_assert(match_small<double, 4, Cell<double *, ic_t<std::array { Dim { 4, 1
     constexpr auto optimize(Map<NAME, std::tuple<A, B>> && e)           \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
-        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((ITEM(0).c.cp)) OP *(extvector<T, N> *)((ITEM(1).c.cp)); \
+        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((RA_IT(0).c.cp)) OP *(extvector<T, N> *)((RA_IT(1).c.cp)); \
         return val;                                                     \
     }
 #define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)                                \
@@ -203,8 +202,7 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 #undef RA_OPT_SMALLVECTOR_OP_FUNS
 #undef RA_OPT_SMALLVECTOR_OP_OP
 #endif // RA_OPT_SMALLVECTOR
-
-#undef ITEM
+#undef RA_IT
 
 
 // --------------------------------
@@ -236,7 +234,7 @@ struct unaryplus
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                              \
     template <class A> requires (tomap<A>) constexpr auto           \
-        operator OP(A && a) { return map(OPNAME(), RA_FW(a)); }    \
+        operator OP(A && a) { return map(OPNAME(), RA_FW(a)); }     \
     template <class A> requires (toreduce<A>) constexpr auto        \
         operator OP(A && a) { return OP VAL(RA_FW(a)); }
 
@@ -342,7 +340,7 @@ operator ||(A && a, B && b)
     template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto operator OP(A && a, B && b)                          \
     {                                                                   \
-        return VAL(a) OP VAL(b);                                    \
+        return VAL(a) OP VAL(b);                                        \
     }
 FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
 #undef DEF_SHORTCIRCUIT_BINARY_OP
@@ -637,7 +635,7 @@ struct Wedge
         }
     }
     constexpr static void
-    product(auto const & a, auto const & b, auto & r)
+    prod(auto const & a, auto const & b, auto & r)
     {
         static_assert(ra::size(a)==Na && ra::size(b)==Nb && ra::size(r)==Nr, "Bad dims.");
         [&]<class ... Xr>(std::tuple<Xr ...>) { r = { term<Xr, mp::combs<Xr, Oa>>(a, b) ... }; }(Cr{});
@@ -655,15 +653,20 @@ struct Hodge
     using LexOrCa = typename W::LexOrCa;
     constexpr static int Na = W::Na;
     constexpr static int Nb = W::Nb;
+// If 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
+// Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w,
+// and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
+    constexpr static bool trivial = 2*O!=D && ((2*O<D) || !ra::odd(O*(D-O)));
 
-    template <int i, class Va, class Vb>
+    template <int i=0>
     constexpr static void
-    hodge_aux(Va const & a, Vb & b)
+    hodge_aux(auto const & a, auto & b)
     {
-        static_assert(i<=W::Na, "Bad argument to hodge_aux");
-        if constexpr (i<W::Na) {
+        static_assert(i<=Na, "Bad argument to hodge_aux");
+        static_assert(ra::size(a)==Na && ra::size(b)==Nb);
+        if constexpr (i<Na) {
             using Cai = mp::ref<Ca, i>;
-            static_assert(mp::len<Cai> == O);
+            static_assert(O==mp::len<Cai>);
 // sort Cai, because complement only accepts sorted combs.
 // ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
             using SCai = mp::ref<LexOrCa, mp::findcomb<Cai, LexOrCa>::where>;
@@ -684,50 +687,28 @@ struct Hodge
 // With the order given by choose<>, fpw::where==i and fps::sign==+1 in hodge_aux(), always. Then hodge() becomes a free operation, (with one exception) and the next function hodge() can be used.
 template <int D, int O, class Va, class Vb>
 constexpr void
-hodgex(Va const & a, Vb & b)
-{
-    static_assert(O<=D && ra::size(a)==Hodge<D, O>::Na && ra::size(b)==Hodge<D, O>::Nb);
-    Hodge<D, O>::template hodge_aux<0>(a, b);
-}
+hodgex(Va const & a, Vb & b) { Hodge<D, O>::hodge_aux(a, b); }
 
-// hodgex() should always work, but this is cheaper.
-// However if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
-// Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w in that case, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
-consteval bool trivial_hodge(int D, int O) { return 2*O!=D && ((2*O<D) || !ra::odd(O*(D-O))); }
-
-template <int D, int O, class Va, class Vb>
+template <int D, int O, class Va, class Vb> requires (Hodge<D, O>::trivial)
 constexpr void
-hodge(Va const & a, Vb & b)
-{
-    if constexpr (trivial_hodge(D, O)) {
-        static_assert(ra::size(a)==Hodge<D, O>::Na && ra::size(b)==Hodge<D, O>::Nb);
-        b = a;
-    } else {
-        hodgex<D, O>(a, b);
-    }
-}
+hodge(Va const & a, Vb & b) { static_assert(ra::size(a)==Hodge<D, O>::Na && ra::size(b)==Hodge<D, O>::Nb); b = a; }
 
-template <int D, int O, class Va> requires (trivial_hodge(D, O))
+template <int D, int O, class Va, class Vb> requires (!Hodge<D, O>::trivial)
+constexpr void
+hodge(Va const & a, Vb & b) { Hodge<D, O>::hodge_aux(a, b); }
+
+template <int D, int O, class Va> requires (Hodge<D, O>::trivial)
 constexpr Va const &
-hodge(Va const & a)
-{
-    static_assert(ra::size(a)==Hodge<D, O>::Na, "error");
-    return a;
-}
+hodge(Va const & a) { static_assert(ra::size(a)==Hodge<D, O>::Na, "error"); return a; }
 
-template <int D, int O, class Va> requires (!trivial_hodge(D, O))
+template <int D, int O, class Va> requires (!Hodge<D, O>::trivial)
 constexpr Va &
-hodge(Va & a)
-{
-    Va b(a);
-    hodgex<D, O>(b, a);
-    return a;
-}
+hodge(Va & a) { Va b(a); hodgex<D, O>(b, a); return a; }
 
 // FIXME concrete() isn't needed if a/b are already views.
 template <int D, int Oa, int Ob, class Va, class Vb, class Vr>
 constexpr void
-wedge(Va const & a, Vb const & b, Vr & r) { Wedge<D, Oa, Ob>::product(concrete(a), concrete(b), r); }
+wedge(Va const & a, Vb const & b, Vr & r) { Wedge<D, Oa, Ob>::prod(concrete(a), concrete(b), r); }
 
 template <int D, int Oa, int Ob, class Va, class Vb>
 constexpr auto

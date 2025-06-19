@@ -554,5 +554,16 @@ int main()
 // FIXME std::size makes this ambiguous without the qualifier, which looks wrong to me :-/
         tr.test_eq(12, int_c<ra::size(a)>::value);
     }
+// default vs {} initialization
+    {
+        ra::Small<int, 3> a; // default init
+        ra::Small<int, 3> b({}); // direct init
+        ra::Small<int, 3> c = {}; // list init with empty list same as default init (a not b (!))
+        ra::Small<int, 3> d(ra::none);
+        cout << a << endl;
+        cout << b << endl;
+        cout << c << endl;
+        cout << d << endl;
+    }
     return tr.summary();
 }

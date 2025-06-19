@@ -47,8 +47,36 @@ template <class A, class ... I>
 constexpr auto
 genfrom(A && a, I && ...  i)
 {
-
-
+    std::vector<int> dest;
+    std::vector<Dim> dimv;
+    std::vector<int> unbeateni;
+    dim_t place = 0;
+    int k = 0;
+    for (int j=0; j<sizeof...(i);  ++j) {
+        if (i is scalar) {
+            place += i*a.dimv[k].step;
+            ++k;
+        } else if (i is iota) {
+            for (int q=0; q<rank(i); ++q) {
+                dimv.push_back(Dim {i.dimv[q].len, i.dimv[q].step*a.dimv[k].step});
+                place += i.i * a.dimv[k].step;
+            }
+            ++k;
+        } else if (i is dots) {
+            int n = (i.n==UNB) ? a.rank() - ...;
+            for (int q=0; q<n; ++q) {
+                dimv.push_back(a.dimv[k]);
+                ++k;
+            }
+        } else if (i is insert) {
+            for (q=0; q<i.n; ++q) {
+                dimv.push_back(Dim {UNB, 0});
+            }
+        } else if (i is indices) {
+            dest.push_back(k);
+            add i to unbeateni;
+        }
+    }
 }
 
 }; // namespace ra

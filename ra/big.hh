@@ -73,7 +73,7 @@ struct ViewBig
         if constexpr (std::is_convertible_v<value_t<decltype(s)>, Dim>) {
             start(dimv) = s;
         } else {
-            filldim(s, dimv);
+            filldimv(s, dimv);
         }
     }
     constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(start(s), cp_) {}
@@ -214,14 +214,7 @@ struct ViewBig
     {
         return *reinterpret_cast<ViewBig<reconst<P>, RANK> const *>(this);
     }
-// conversion to scalar
-    constexpr operator T & () const
-    {
-        if constexpr (0!=RANK) {
-            RA_CK(1==size(), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(*this)), "].");
-        }
-        return cp[0];
-    }
+    constexpr operator T & () const { return to_scalar(*this); }
 };
 
 template <class V>
@@ -310,7 +303,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
         RA_CK(1==ra::rank(s), "Rank mismatch for init shape.");
         static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
         ra::resize(dimv, ra::size(s)); // [ra37]
-        store = storage_traits<Store>::create(filldim(s, dimv));
+        store = storage_traits<Store>::create(filldimv(s, dimv));
         cp = storage_traits<Store>::data(store);
     }
     constexpr void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
@@ -371,7 +364,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     constexpr void resize(auto const & s) requires (rank_s(s) > 0)
     {
         ra::resize(dimv, start(s).len(0)); // [ra37] FIXME is View constructor
-        store.resize(filldim(s, dimv));
+        store.resize(filldimv(s, dimv));
         cp = store.data();
     }
 // template + RA_FW wouldn't work for push_back(brace-enclosed-list).
@@ -557,7 +550,7 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
             RA_CK(is_c_order(a, false) && la>=lb, "Reshape with copy not implemented.");
 // FIXME ViewBig(SS const & s, T * p). Cf [ra37].
-            filldim(sb, b.dimv);
+            filldimv(sb, b.dimv);
             for (int j=0; j!=b.rank(); ++j) {
                 b.dimv[j].step *= a.step(a.rank()-1);
             }

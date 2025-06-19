@@ -278,14 +278,14 @@ int main()
             ra::Small<real, 3> a {1, 2, 3};
             ra::Small<real, 3> b {4, 5, 7};
             ra::Small<real, 3> c;
-            ra::Wedge<3, 1, 1>::product(a, b, c);
+            ra::Wedge<3, 1, 1>::prod(a, b, c);
             tr.test_eq(ra::Small<real, 3> {-1, 5, -3}, c);
         }
         {
             ra::Small<real, 1> a {2};
             ra::Small<real, 1> b {3};
             ra::Small<real, 1> r;
-            ra::Wedge<1, 0, 0>::product(a, b, r);
+            ra::Wedge<1, 0, 0>::prod(a, b, r);
             tr.test_eq(6, r[0]);
             tr.test_eq(6, ra::wedge<1, 0, 0>(ra::Small<real, 1>{2}, ra::Small<real, 1>{3}));
             tr.test_eq(6, ra::wedge<1, 0, 0>(ra::Small<real, 1>{2}, 3.));

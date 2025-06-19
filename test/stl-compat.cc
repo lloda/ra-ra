@@ -152,6 +152,8 @@ int main()
     tr.section("ra::begin / ra::end use members if they exist");
     {
         ra::Big<char, 1> A = {'x', 'z', 'y'};
+        ra::Big<char, 1> const & B = A;
+        tr.test_seq(ra::begin(A), ra::begin(B));
         std::sort(ra::begin(A), ra::end(A));
         tr.test_eq(ra::start({'x', 'y', 'z'}), A);
     }

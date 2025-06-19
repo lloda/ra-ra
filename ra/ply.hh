@@ -16,19 +16,6 @@
 
 namespace ra {
 
-template <class A>
-constexpr decltype(auto)
-VAL(A && a)
-{
-    if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
-    else if constexpr (is_iterator<A>) { return *a; } // no need to start()
-    else if constexpr (requires { *ra::start(RA_FW(a)); }) { return *ra::start(RA_FW(a)); }
-    // else void
-}
-
-template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VAL(std::declval<A>()))>>;
-template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
-
 
 // ---------------------
 // replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
@@ -83,12 +70,14 @@ struct WLen<Ptr<I, N, S>>
 
 
 // --------------
-// ply, run time order/rank.
+// ply
 // --------------
 
 struct Nop {};
 
+// run time order/rank.
 // step() must give 0 for k>=their own rank, to allow frame matching.
+
 template <Iterator A, class Early = Nop>
 constexpr auto
 ply_ravel(A && a, Early && early = Nop {})
@@ -161,10 +150,7 @@ ply_ravel(A && a, Early && early = Nop {})
 #pragma GCC diagnostic pop
 }
 
-
-// -------------------------
-// ply, compile time order/rank.
-// -------------------------
+// compile time order/rank.
 
 template <auto order, int k, int urank, class A, class S, class Early>
 constexpr auto
@@ -231,10 +217,7 @@ ply_fixed(A && a, Early && early = Nop {})
     }
 }
 
-
-// ---------------------------
-// default ply
-// ---------------------------
+// defaults.
 
 template <Iterator A, class Early = Nop>
 constexpr decltype(auto)
@@ -336,12 +319,54 @@ struct ostream_formatter: std::formatter<std::basic_string_view<char>>
     }
 };
 
-} // namespace ra
-
 
 // ---------------------------
 // i/o
-// --------------------------
+// ---------------------------
+
+template <class A>
+constexpr std::ostream &
+operator<<(std::ostream & o, Fmt<A> const & fa)
+{
+    std::print(o, "{}", fa);
+    return o;
+}
+
+template <class C> requires (ANY!=size_s<C>() && (is_ra<C> || is_fov<C>))
+inline std::istream &
+operator>>(std::istream & i, C & c)
+{
+    for (auto & ci: c) { i >> ci; }
+    return i;
+}
+
+template <class T, class A>
+inline std::istream &
+operator>>(std::istream & i, std::vector<T, A> & c)
+{
+    if (dim_t n; i >> n) {
+        RA_CK(n>=0, "Negative length in input [", n, "].");
+        std::vector<T, A> cc(n);
+        swap(c, cc);
+        for (auto & ci: c) { i >> ci; }
+    }
+    return i;
+}
+
+template <class C> requires (ANY==size_s<C>() && !std::is_convertible_v<C, std::string_view>)
+inline std::istream &
+operator>>(std::istream & i, C & c)
+{
+    if (decltype(shape(c)) s; i >> s) {
+        RA_CK(every(start(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
+        C cc(s, ra::none);
+        swap(c, cc);
+        for (auto & ci: c) { i >> ci; }
+    }
+    return i;
+}
+
+} // namespace ra
 
 template <ra::is_array_formattable A>
 struct std::formatter<A>
@@ -380,7 +405,7 @@ struct std::formatter<A>
     constexpr auto
     format(A const & a_, auto & ctx, ra::format_t const & fmt) const
     {
-        auto a = ra::start(a_); // [ra35]
+        auto a = ra::start(a_);
         validate(a);
         auto sha = ra::shape(a);
         assert(every(ra::start(sha)>=0));
@@ -431,49 +456,3 @@ struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
     std::formatter<std::decay_t<A>> fmt;
     constexpr auto format(ra::Fmt<A> const & f, auto & ctx) const { return fmt.format(f.a, ctx, f.f); }
 };
-
-namespace ra {
-
-template <class A>
-constexpr std::ostream &
-operator<<(std::ostream & o, Fmt<A> const & fa)
-{
-    std::print(o, "{}", fa);
-    return o;
-}
-
-template <class C> requires (ANY!=size_s<C>() && (is_ra<C> || is_fov<C>))
-inline std::istream &
-operator>>(std::istream & i, C & c)
-{
-    for (auto & ci: c) { i >> ci; }
-    return i;
-}
-
-template <class T, class A>
-inline std::istream &
-operator>>(std::istream & i, std::vector<T, A> & c)
-{
-    if (dim_t n; i >> n) {
-        RA_CK(n>=0, "Negative length in input [", n, "].");
-        std::vector<T, A> cc(n);
-        swap(c, cc);
-        for (auto & ci: c) { i >> ci; }
-    }
-    return i;
-}
-
-template <class C> requires (ANY==size_s<C>() && !std::is_convertible_v<C, std::string_view>)
-inline std::istream &
-operator>>(std::istream & i, C & c)
-{
-    if (decltype(shape(c)) s; i >> s) {
-        RA_CK(every(start(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
-        C cc(s, ra::none);
-        swap(c, cc);
-        for (auto & ci: c) { i >> ci; }
-    }
-    return i;
-}
-
-} // namespace ra

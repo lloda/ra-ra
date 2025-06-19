@@ -24,6 +24,10 @@
 #include <functional>
 #include <source_location>
 
+#ifdef RA_AFTER_CHECK
+#error Bad header include order! Do not include ra/base.hh after other ra:: headers.
+#endif
+
 #define STRINGIZE_( x ) #x
 #define STRINGIZE( x ) STRINGIZE_( x )
 #define JOIN_( x, y ) x##y
@@ -269,11 +273,11 @@ using rank_t = int;
 using dim_t = std::ptrdiff_t;
 static_assert(sizeof(rank_t)>=4 && sizeof(rank_t)>=sizeof(int) && sizeof(dim_t)>=sizeof(rank_t));
 static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
-constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 
 constexpr struct none_t {} none; // in constructors: don't initialize
 struct noarg { noarg() = delete; }; // in constructors: don't instantiate
 
+constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 constexpr bool any(bool const x) { return x; } // extended in ra.hh
 constexpr bool every(bool const x) { return x; }
 
@@ -493,7 +497,3 @@ constexpr std::string format(auto && ... a) { std::ostringstream o; print(o, RA_
 constexpr std::string const & format(std::string const & s) { return s; }
 
 } // namespace ra
-
-#ifdef RA_AFTER_CHECK
-#error Bad header include order! Do not include ra/base.hh after other ra:: headers.
-#endif

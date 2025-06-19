@@ -12,23 +12,10 @@
 
 namespace ra {
 
-constexpr rank_t rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
-constexpr rank_t rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
-// cr>=0 is cell rank, -cr>0 is frame rank. TODO How to say frame rank 0. Maybe ra::end?
-constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
-constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
-
 struct Dim { dim_t len, step; };
 
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { return (o << "[Dim " << dim.len << " " << dim.step << "]"); }
-
-template <auto v, int n>
-constexpr auto vdrop = []{
-    std::array<Dim, ra::size(v)-n> r;
-    for (int i=0; i<ra::size(r); ++i) { r[i] = v[n+i]; }
-    return r;
-}();
 
 constexpr bool
 is_c_order_dimv(auto const & dimv, bool step1=true)
@@ -52,7 +39,7 @@ constexpr bool
 is_c_order(auto const & v, bool step1=true) { return is_c_order_dimv(v.dimv, step1); }
 
 constexpr dim_t
-filldim(auto const & shape, auto & dimv)
+filldimv(auto const & shape, auto & dimv)
 {
     map(&Dim::len, dimv) = shape;
     dim_t s = 1;
@@ -69,7 +56,7 @@ filldim(auto const & shape, auto & dimv)
 }
 
 consteval auto
-default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldim(lv, dv); return dv; };
+default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldimv(lv, dv); return dv; };
 
 constexpr auto
 shape(auto const & v, auto && e)
@@ -217,8 +204,21 @@ indexer(Q const & q, P const & pp)
 // view iterators. TODO Take iterator like Ptr does and Views should, not raw pointers
 // --------------------
 
+template <auto v, int n>
+constexpr auto vdrop = []{
+    std::array<Dim, ra::size(v)-n> r;
+    for (int i=0; i<ra::size(r); ++i) { r[i] = v[n+i]; }
+    return r;
+}();
+
 template <class T, class Dimv> struct ViewSmall;
 template <class T, rank_t RANK=ANY> struct ViewBig;
+
+constexpr rank_t rank_sum(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a+b; }
+constexpr rank_t rank_diff(rank_t a, rank_t b) { return (ANY==a || ANY==b) ? ANY : a-b; }
+// cr>=0 is cell rank, -cr>0 is frame rank. TODO frame rank 0? maybe ra::len
+constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
+constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
 
 template <class P, class Dimv, class Spec>
 struct CellSmall
@@ -251,15 +251,15 @@ struct CellBig
 
     Dimv dimv;
     ViewBig<P, cellr> c;
-    [[no_unique_address]] Spec const dspec = {};
+    [[no_unique_address]] Spec const dspec;
     constexpr CellBig(P cp, Dimv const & dimv_, Spec dspec_=Spec {}): dimv(dimv_), dspec(dspec_)
     {
         c.cp = cp;
-        rank_t dcellr=rank_cell(ra::size(dimv), dspec), dframer=rank();
-        RA_CK(0<=dframer && 0<=dcellr, "Bad cell rank ", dcellr, " for full rank ", ssize(dimv), ").");
-        resize(c.dimv, dcellr);
-        for (int k=0; k<dcellr; ++k) {
-            c.dimv[k] = dimv[dframer+k];
+        rank_t dcell=rank_cell(ra::size(dimv), dspec), dframe=rank();
+        RA_CK(0<=dframe && 0<=dcell, "Bad cell rank ", dcell, " for full rank ", ssize(dimv), ").");
+        resize(c.dimv, dcell);
+        for (int k=0; k<dcell; ++k) {
+            c.dimv[k] = dimv[dframe+k];
         }
     }
 
@@ -276,7 +276,7 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spe
     using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>;
     using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len;
     using View = decltype(std::declval<Base>().c);
-    static_assert(cellr>=0 || cellr==ANY || framer>=0 || framer==ANY, "Bad cell/frame rank.");
+    static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
 
     RA_ASSIGNOPS_SELF(Cell)
     RA_ASSIGNOPS_DEFAULT_SET
@@ -474,11 +474,7 @@ struct ViewSmall
     {
         return ViewSmall<reconst<P>, Dimv>(cp);
     }
-    constexpr operator T & () const
-    {
-        static_assert(1==size(), "Bad scalar conversion.");
-        return cp[0];
-    }
+    constexpr operator T & () const { return to_scalar(*this); }
 };
 
 #if defined (__clang__)
@@ -518,8 +514,8 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     constexpr operator View () { return View(cp); }
     constexpr operator ViewConst () const { return ViewConst(data()); }
 
-    constexpr SmallArray() {}
     constexpr SmallArray(ra::none_t) {}
+    constexpr SmallArray() {}
 // T not is_scalar [ra44]
     constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); }
 // row-major ravel braces

@@ -114,7 +114,7 @@ R
 test_one_one_case(TestRecorder & tr, A const & a, B const & b)
 {
     R r1(GARBAGE);
-    Wedge<D, OA, OB>::product(a, b, r1);
+    Wedge<D, OA, OB>::prod(a, b, r1);
     cout << "[" << D << "/" << OA << "/" << OB << "] " << a << " ^ " << b << " -> " << r1 << endl;
     R r2(ra::wedge<D, OA, OB>(a, b));
     cout << "[" << D << "/" << OA << "/" << OB << "] " << a << " ^ " << b << " -> " << r2 << endl;
@@ -200,12 +200,12 @@ main()
         static_assert(ra::mp::check_idx<ra::mp::ref<c1, 0>, 0>::value, "bad");
     }
 
-    tr.section("Testing Wedge<>::product()");
+    tr.section("Testing Wedge<>::prod()");
     {
         real1 a(1);
         real1 b(3);
         real1 r(GARBAGE);
-        Wedge<1, 0, 0>::product(a, b, r);
+        Wedge<1, 0, 0>::prod(a, b, r);
         tr.info("[1/0/0] ", a, " ^ ", b, " -> ", r).test_eq(3, r[0]);
         real1 h(GARBAGE);
         hodgex<1, 0>(r, h);
@@ -216,7 +216,7 @@ main()
         real3 a {1, 0, 0};
         real3 b {0, 1, 0};
         real3 r(GARBAGE);
-        Wedge<3, 1, 1>::product(a, b, r);
+        Wedge<3, 1, 1>::prod(a, b, r);
         tr.info("[3/1/1] ", a, " ^ ", b, " -> ", r).test_eq(real3{0, 0, +1}, r); // +1, 0, 0 in lex. order.
         real3 h(GARBAGE);
         hodgex<3, 2>(r, h);
@@ -226,7 +226,7 @@ main()
         real3 a {0, 1, 0};
         real3 b {1, 0, 0};
         real3 r(GARBAGE);
-        Wedge<3, 1, 1>::product(a, b, r);
+        Wedge<3, 1, 1>::prod(a, b, r);
         tr.info("[3/1/1] ", a, " ^ ", b, " -> ", r).test_eq(real3{0, 0, -1}, r); // -1, 0, 0 in lex order.
         real3 h(GARBAGE);
         hodgex<3, 2>(r, h);
@@ -237,7 +237,7 @@ main()
         complex3 a {complex(0, 1), 0, 0};
         real3 b{0, 1, 0};
         complex3 r(GARBAGE);
-        Wedge<3, 1, 1>::product(a, b, r);
+        Wedge<3, 1, 1>::prod(a, b, r);
         tr.info("[3/1/1] ", a, " ^ ", b, " -> ", r).test_eq(complex3{0, 0, complex(0, 1)}, r); // +j, 0, 0 in lex. o.
         complex3 h(GARBAGE);
         hodgex<3, 2>(r, h);
@@ -248,7 +248,7 @@ main()
         real3 a {1, 0, 0};
         real3 b {0, 0, 2};
         real3 r(GARBAGE);
-        Wedge<3, 1, 1>::product(a, b, r);
+        Wedge<3, 1, 1>::prod(a, b, r);
         tr.info("[3/1/1] ", a, " ^ ", b, " -> ", r).test_eq(real3{0, -2, 0}, r); // 0, 2, 0 in lex order.
         real3 h(GARBAGE);
         hodgex<3, 2>(r, h);
@@ -258,7 +258,7 @@ main()
         real3 a {1, 0, 2};
         real3 b {1, 0, 2};
         real3 r(GARBAGE);
-        Wedge<3, 1, 1>::product(a, b, r);
+        Wedge<3, 1, 1>::prod(a, b, r);
         tr.info("[3/1/1] ", a, " ^ ", b, " -> ", r).test_eq(0., r);
         real3 h(GARBAGE);
         hodgex<3, 2>(r, h);
@@ -268,7 +268,7 @@ main()
         real3 a {0, 1, 0};
         real3 b {0, -1, 0};  // 0, 1, 0 in lex order.
         real1 r(GARBAGE);
-        Wedge<3, 1, 2>::product(a, b, r);
+        Wedge<3, 1, 2>::prod(a, b, r);
         tr.info("[3/1/2] ", a, " ^ ", b, " -> ", r).test_eq(-1, r[0]);
         real1 h(GARBAGE);
         hodgex<3, 3>(r, h);
@@ -284,7 +284,7 @@ main()
         real4 a {1, 0, 0, 0};
         real4 b {0, 0, 1, 0};
         real6 r(GARBAGE);
-        Wedge<4, 1, 1>::product(a, b, r);
+        Wedge<4, 1, 1>::prod(a, b, r);
         tr.info("[4/1/1] ", a, " ^ ", b, " -> ", r).test_eq(real6{0, 1, 0, 0, 0, 0}, r);
         real6 h(GARBAGE);
         hodgex<4, 2>(r, h);
@@ -297,7 +297,7 @@ main()
         real4 a {0, 0, 1, 0};
         real4 b {1, 0, 0, 0};
         real6 r(GARBAGE);
-        Wedge<4, 1, 1>::product(a, b, r);
+        Wedge<4, 1, 1>::prod(a, b, r);
         tr.info("[4/1/1] ", a, " ^ ", b, " -> ", r).test_eq(real6{0, -1, 0, 0, 0, 0}, r);
     }
     {
@@ -311,9 +311,9 @@ main()
         real6 a {1, 0, 0, 0, 0, 0};
         real6 b {0, 0, 0, 0, 0, 1};
         real1 r(GARBAGE);
-        Wedge<4, 2, 2>::product(a, b, r);
+        Wedge<4, 2, 2>::prod(a, b, r);
         tr.info("[4/2/2] ", a, " ^ ", b, " -> ", r).test_eq(1, r[0]);
-        Wedge<4, 2, 2>::product(b, a, r);
+        Wedge<4, 2, 2>::prod(b, a, r);
         tr.info("[4/2/2] ", a, " ^ ", b, " -> ", r).test_eq(1, r[0]);
     }
     tr.section("important as a case where a^a!=0, see DoCarmo1994, Ch. 1 after Prop. 2.");
@@ -321,7 +321,7 @@ main()
         real6 a {1, 0, 0, 0, 0, 1};
         real6 b {1, 0, 0, 0, 0, 1};
         real1 r(GARBAGE);
-        Wedge<4, 2, 2>::product(a, b, r);
+        Wedge<4, 2, 2>::prod(a, b, r);
         tr.info("[4/2/2] ", a, " ^ ", b, " -> ", r).test_eq(2, r[0]);
     }
     tr.section("important as a case where a^b is not dot(a, b) even though O(a)=D-O(b). This happens when O(a)==O(b), i.e. they have the same components");
@@ -329,7 +329,7 @@ main()
         real2 a {1, 0};
         real2 b {0, 1};
         real1 r(GARBAGE);
-        Wedge<2, 1, 1>::product(a, b, r);
+        Wedge<2, 1, 1>::prod(a, b, r);
         tr.info("[2/1/1] ", a, " ^ ", b, " -> ", r).test_eq(1, r[0]);
         real2 p{1, 2};
         real2 q(GARBAGE);
@@ -427,7 +427,8 @@ main()
     {
         real2 a { 1, 2 };
         real2 b { 3, 4 };
-        real2 p { 6, 5 };
+        real2 q { 6, 5 };
+        real2 const & p = q;
         tr.test_eq(-4, cross(real2(b-a), real2(p-a)));
     }
     return tr.summary();

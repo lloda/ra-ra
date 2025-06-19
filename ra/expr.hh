@@ -12,14 +12,8 @@
 #include <functional>
 #include "base.hh"
 
-
-// --------------------
-// error handling. To customize see examples/throw.cc.
-// --------------------
+// See examples/throw.cc to customize error handling.
 
-#if defined(RA_CK)
-  #error Error macro redefined
-#endif
 #if !defined(RA_CHECK)
   #define RA_CHECK 1 // tell users
 #endif
@@ -51,12 +45,8 @@
 
 namespace ra {
 
-
-// --------------------
-// assign ops for settable iterators. Might be different for e.g. Views.
-// --------------------
+// Assign ops for Iterators, might be different for Views. See local ASSIGNOPS elsewhere.
 
-// But see local ASSIGNOPS elsewhere.
 #define RA_ASSIGNOPS_LINE(OP)                                           \
     for_each([](auto && y, auto && x) { /* [ra5] */ RA_FW(y) OP RA_FW(x); }, *this, RA_FW(x))
 #define RA_ASSIGNOPS(OP) \
@@ -90,7 +80,7 @@ constexpr struct Len
     consteval static void mov(dim_t d) { len_outside_subscript_context(); }
 } len;
 
-template <class E> struct WLen;                                // defined in ply.hh.
+template <class E> struct WLen;                                // defined in ply.hh. FIXME C++ p2481
 template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FW(e)); };
 template <has_len E> constexpr bool is_special_def<E> = true;  // protect exprs with Len from reduction.
 
@@ -98,7 +88,7 @@ template <class I>
 struct Seq
 {
     I i;
-    static_assert(has_len<I> || std::is_arithmetic_v<I>); // hmm
+    static_assert(has_len<I> || std::is_arithmetic_v<I>);
     using difference_type = dim_t;
     using value_type = I;
     constexpr I operator*() const { return i; }
@@ -221,7 +211,8 @@ ptr(I && i, N && n=N {}, S && s=maybe_step<S>())
     }
 }
 
-template <class A> concept is_iota = requires (A a)
+template <class A>
+concept is_iota = requires (A a)
 {
     []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a);
     requires UNB!=a.nn; // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
@@ -243,14 +234,13 @@ reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 
 
 // ---------------------------
-// reframe and rank conjunction. Also iota as reframe(ptr(seq)).
+// reframe and rank conjunction.
 // ---------------------------
 
 // Reframe is transpose for general expressions. Like in transpose, give destination axis for each original axis.
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
 // If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
-// TODO Invalid for ANY, since Dest is compile time [ra7].
-// TODO Handle repated axes.
+// TODO Handle repeated axes. Handle ANY rank [ra7].
 
 template <dim_t N, class T> constexpr T samestep = N;
 template <dim_t N, class ... T> constexpr std::tuple<T ...> samestep<N, std::tuple<T ...>> = { samestep<N, T> ... };
@@ -304,7 +294,7 @@ struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
     constexpr void mov(auto const & s) { a.mov(s); }
 };
 
-// Optimize nop case. TODO If A is CellBig, etc. beat Dest on it.
+// Optimize nop case. TODO If A is View/Cell, etc. beat Dest on it.
 template <class A, class Dest>
 constexpr decltype(auto)
 reframe(A && a, Dest)
@@ -370,7 +360,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // --------------
 
 // TODO arbitrary exprs? runtime cr? ra::len in cr?
-template <int cr>
+template <int cr=0>
 constexpr auto
 iter(Slice auto && a) { return RA_FW(a).template iter<cr>(); }
 
@@ -391,9 +381,9 @@ start(is_scalar auto && t) { return ra::scalar(RA_FW(t)); }
 constexpr auto
 start(is_builtin_array auto && t);
 
-// CellBig / CellSmall won't retain rvalues [ra4].
+// Cell doesn't retain rvalues [ra4].
 constexpr auto
-start(Slice auto && t) { return iter<0>(RA_FW(t)); }
+start(Slice auto && t) { return iter(RA_FW(t)); }
 
 // iterators need resetting on each use [ra35].
 constexpr auto
@@ -585,14 +575,27 @@ agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 // map and pick
 // ---------------------------
 
-template <class E>
-constexpr decltype(auto) to_scalar(E && e)
+template <class A>
+constexpr decltype(auto)
+VAL(A && a)
+{
+    if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
+    else if constexpr (is_iterator<A>) { return *a; } // no need to start()
+    else if constexpr (requires { *ra::start(RA_FW(a)); }) { return *ra::start(RA_FW(a)); }
+    // else void
+}
+
+template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VAL(std::declval<A>()))>>;
+template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
+
+constexpr decltype(auto)
+to_scalar(auto && e)
 {
     if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
         static_assert(ANY==s, "Bad scalar conversion.");
-        RA_CK(1==size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
+        RA_CK(1==ra::size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
     }
-    return *e;
+    return VAL(e);
 }
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
