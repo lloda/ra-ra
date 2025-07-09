@@ -237,5 +237,13 @@ int main()
         c[1] = { {6, 7}, {4, 3}, {5, 9} };
         tr.test_eq(ra::Small<double, 2, 3, 2> { { {3, 0}, {2, 1}, {1, 2} }, { {6, 7}, {4, 3}, {5, 9} } }, a);
     }
+    tr.section("explode with 0 dims");
+    {
+        ra::Small<int, 1, 0> s;
+        auto z = ra::explode<ra::Small<int, 0>>(s);
+        tr.test_eq(1, rank(z));
+        tr.test_eq(1, z.len(0));
+        tr.test_eq(0, z[0].len(0));
+    }
     return tr.summary();
 }

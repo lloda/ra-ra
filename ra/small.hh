@@ -632,8 +632,8 @@ explode_dims(A const & av, B & bv)
     s *= size_s<sup_t>();
     for (int i=0; i<rb; ++i) {
         dim_t step = av[i].step;
-        RA_CK(0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
-        bv[i] = Dim { av[i].len, step/s };
+        RA_CK(0==s ? 0==step : 0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
+        bv[i] = Dim { av[i].len, 0==s ? 0 : step/s };
     }
 }
 
