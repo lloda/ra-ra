@@ -10,7 +10,6 @@
 #pragma once
 #include "small.hh"
 #include <memory>
-#include <complex> // for view ops
 
 namespace ra {
 
@@ -160,7 +159,7 @@ struct ViewBig
         if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
             return self.cp[self.select_loop(nullptr, 0, i ...)];
         } else if constexpr ((beatable<I>.rt && ...)) {
-            constexpr rank_t extended = (0 + ... + beatable<I>.add);
+            constexpr rank_t extended = (0 + ... + (beatable<I>.dst - beatable<I>.src));
             ViewBig<P, rank_sum(RANK, extended)> sub;
             rank_t subrank = self.rank()+extended;
             if constexpr (ANY==RANK) {
@@ -453,6 +452,7 @@ shared_borrowing(ViewBig<T *, RANK> & raw)
 
 // --------------------
 // concrete type from expr, container if rank>0, else value type, even unregistered.
+// FIXME another for concrete-or-view.
 // --------------------
 
 template <class E> struct concrete_type_;

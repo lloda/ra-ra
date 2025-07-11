@@ -39,6 +39,7 @@ checkbox [C-ct] flip TODO
     - [ ] bad uses of assert [ra17]
     - [X] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 (bad operator=) is cleared up. Cf [ra5].
   - [-] Features [3/17]
+    - [ ] generalize cat
     - [-] support std::format
       - [X] basic support
       - [X] ways to use the formatter without parsing, like ra::format_t { .option = value ... }.
@@ -124,7 +125,10 @@ checkbox [C-ct] flip TODO
       is that len_s lets me return ANY for some axes and finite for others and to do that with just
       len() would require len(integral constant) overloads possibly -- len(int k) cannot be static
       or not depending on k.
-    - [ ] Review Container constructors. Why do we need (&) when we have (const &)?
+    - [ ] Use if consteval to replace rank/rank_s/size/size_s with just rank/size.
+    - [X] Review Container constructors. Why do we need (&) when we have (const &)?
+      - <2025-07-24 Thu 11:35> was caused by auto && x constructor interfereing.
+        Fixed in 85653fd786c78e339f730699021ebdac39877012
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).
       - [ ] Appropriate ply. Possibly restrict it to rank 1.

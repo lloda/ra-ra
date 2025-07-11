@@ -36,35 +36,35 @@ wlen(Ln ln, E && e)
 template <>
 struct WLen<Len>
 {
-    constexpr static decltype(auto)
+    constexpr static auto
     f(auto ln, auto && e) { return Scalar {ln}; }
 };
 
 template <class Op, Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
 {
-    constexpr static decltype(auto)
+    constexpr static auto
     f(auto ln, auto && e) { return map_(RA_FW(e).op, wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
 };
 
 template <Iterator ... P, int ... I> requires (has_len<P> || ...)
 struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
 {
-    constexpr static decltype(auto)
+    constexpr static auto
     f(auto ln, auto && e) { return pick(wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
 };
 
 template <class I> requires (has_len<I>)
 struct WLen<Seq<I>>
 {
-    constexpr static decltype(auto)
+    constexpr static auto
     f(auto ln, auto && e) { return Seq { VAL(wlen(ln, RA_FW(e).i)) }; }
 };
 
 template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
 struct WLen<Ptr<I, N, S>>
 {
-    constexpr static decltype(auto)
+    constexpr static auto
     f(auto ln, auto && e) { return Ptr(wlen(ln, RA_FW(e).i), VAL(wlen(ln, RA_FW(e).n)), VAL(wlen(ln, RA_FW(e).s))); }
 };
 

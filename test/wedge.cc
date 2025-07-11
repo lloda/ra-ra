@@ -52,7 +52,7 @@ test_optimized_hodge_aux(TestRecorder & tr)
 // this is the property that u^(*u) = dot(u, u)*vol form.
         if (O==1) {
             real S = sum(sqr(u));
-// since the volume form and the 1-forms are always ordered lexicographically (0 1 2...) vs (0) (1) (2) ...
+// since the volume form and the 1-forms are always ordered lexically (0 1 2...) vs (0) (1) (2) ...
             tr.info("with O=1, S: ", S, " vs wedge(u, w): ", ra::wedge<N, O, N-O>(u, w))
                 .test_eq(S, ra::wedge<N, O, N-O>(u, w));
         } else if (O+1==N) {
@@ -243,7 +243,7 @@ main()
         hodgex<3, 2>(r, h);
         tr.info("hodge-star: ", h).test_eq(complex3{0, 0, complex(0, 1)}, h);
     }
-    tr.section("sign change in going from lexicographic -> our peculiar order");
+    tr.section("sign change in going from lexical -> our peculiar order");
     {
         real3 a {1, 0, 0};
         real3 b {0, 0, 2};

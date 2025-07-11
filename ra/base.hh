@@ -80,25 +80,19 @@ using nil = tuple<>;
 template <class A> constexpr int len = std::tuple_size_v<A>;
 template <class T> constexpr bool is_tuple = false;
 template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;
+template <class ... A> using append = decltype(std::tuple_cat(std::declval<A>() ...));
+template <class A, class B> using cons = append<std::tuple<A>, B>;
 
-// A is a nested list, I the indices at each level.
+// ref<A, I0, I ...> = ref<ref<A, I0>, I ...>
 template <class A, int ... I> struct ref_ { using type = A; };
 template <class A, int ... I> using ref = typename ref_<A, I ...>::type;
 template <class A, int I0, int ... I> struct ref_<A, I0, I ...> { using type = ref<std::tuple_element_t<I0, A>, I ...>; };
 template <class A> using first = ref<A, 0>;
 template <class A> using last = ref<A, len<A>-1>;
 
-template <class A, class B> struct cons_ { static_assert(is_tuple<B>); };
-template <class A0, class ... A> struct cons_<A0, tuple<A ...>> { using type = tuple<A0, A ...>; };
-template <class A, class B> using cons = typename cons_<A, B>::type;
-
 template <int n, int o, int s> struct iota_ { static_assert(n>0); using type = cons<ic_t<o>, typename iota_<n-1, o+s, s>::type>; };
 template <int o, int s> struct iota_<0, o, s> { using type = nil; };
 template <int n, int o=0, int s=1> using iota = typename iota_<n, o, s>::type;
-
-template <class A, class B> struct append_ { static_assert(is_tuple<A> && is_tuple<B>); };
-template <class ... A, class ... B> struct append_<tuple<A ...>, tuple<B ...>> { using type = tuple<A ..., B ...>; };
-template <class A, class B> using append = typename append_<A, B>::type;
 
 template <class A, class B> struct zip_ { static_assert(is_tuple<A> && is_tuple<B>); };
 template <class ... A, class ... B> struct zip_<tuple<A ...>, tuple<B ...>> { using type = tuple<tuple<A, B> ...>; };
@@ -293,12 +287,12 @@ struct default_init_allocator: public A
         using other = default_init_allocator<U, typename traits::template rebind_alloc<U>>;
     };
     template <class U>
-    void construct(U * ptr) noexcept (std::is_nothrow_default_constructible<U>::value)
+    constexpr void construct(U * ptr) noexcept (std::is_nothrow_default_constructible<U>::value)
     {
-        ::new(static_cast<void *>(ptr)) U;
+        ::new(static_cast<void *>(ptr)) U; // constexpr in c++26
     }
     template <class U, class... Args>
-    void construct(U * ptr, Args &&... args)
+    constexpr void construct(U * ptr, Args &&... args)
     {
         traits::construct(static_cast<A &>(*this), ptr, RA_FW(args)...);
     }

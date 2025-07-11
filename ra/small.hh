@@ -86,33 +86,33 @@ resize(auto & a, dim_t s)
 // slicing/indexing helpers
 // --------------------
 
-template <int n=UNB> struct dots_t { static_assert(n>=0 || UNB==n); };
+template <int n> struct dots_t { constexpr static int N=n; static_assert(n>=0 || UNB==n); };
 template <int n=UNB> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
-template <int n> struct insert_t { static_assert(n>=0); };
+template <int n> struct insert_t { constexpr static int N=n; static_assert(n>=0); };
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
-template <class I> constexpr bool is_scalar_index = is_ra_0<I>;
+template <class I> concept is_scalar_index = is_ra_0<I>;
 
 struct beatable_t
 {
     bool rt, ct; // beatable at all and statically
-    int src, dst, add; // axes on src, dst, and dst-src
+    int src, dst; // axes on src and dst
 };
 
 template <class I> constexpr beatable_t beatable_def
-    = { .rt=is_scalar_index<I>, .ct=is_scalar_index<I>, .src=1, .dst=0, .add=-1 };
+    = { .rt=is_scalar_index<I>, .ct=is_scalar_index<I>, .src=1, .dst=0 };
 
 template <int n> constexpr beatable_t beatable_def<dots_t<n>>
-    = { .rt=true, .ct = true, .src=n, .dst=n, .add=0 };
+    = { .rt=true, .ct=true, .src=n, .dst=n };
 
 template <int n> constexpr beatable_t beatable_def<insert_t<n>>
-    = { .rt=true, .ct = true, .src=0, .dst=n, .add=n };
+    = { .rt=true, .ct=true, .src=0, .dst=n };
 
 template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
     = { .rt=(UNB!=I::nn), .ct=std::decay_t<decltype(wlen(ic<1>, std::declval<I>()))>::constant,
-        .src=1, .dst=1, .add=0 };
+        .src=1, .dst=1 };
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
@@ -650,7 +650,6 @@ explode(cv_viewsmall auto && a)
     return ViewSmall<sup_t *, ic_t<bdimv>>(reinterpret_cast<sup_t *>(a.data()));
 }
 
-// TODO generalize
 constexpr auto
 cat(cv_viewsmall auto && a1_, cv_viewsmall auto && a2_)
 {
@@ -666,23 +665,13 @@ cat(cv_viewsmall auto && a1_, cv_viewsmall auto && a2_)
 constexpr auto
 cat(cv_viewsmall auto && a1_, is_scalar auto && a2_)
 {
-    decltype(auto) a1 = a1_.view();
-    static_assert(1==a1.rank(), "Bad ranks for cat.");
-    Small<std::common_type_t<decltype(a1[0]), decltype(a2_)>, ra::size(a1)+1> val;
-    std::copy(a1.begin(), a1.end(), val.begin());
-    val[ra::size(a1)] = a2_;
-    return val;
+    return cat(a1_, ViewSmall<decltype(&a2_), ic_t<std::array {Dim(1, 0)}>>(&a2_));
 }
 
 constexpr auto
 cat(is_scalar auto && a1_, cv_viewsmall auto && a2_)
 {
-    decltype(auto) a2 = a2_.view();
-    static_assert(1==a2.rank(), "Bad ranks for cat.");
-    Small<std::common_type_t<decltype(a1_), decltype(a2[0])>, 1+ra::size(a2)> val;
-    val[0] = a1_;
-    std::copy(a2.begin(), a2.end(), val.begin()+1);
-    return val;
+    return cat(ViewSmall<decltype(&a1_), ic_t<std::array {Dim(1, 0)}>>(&a1_), a2_);
 }
 
 

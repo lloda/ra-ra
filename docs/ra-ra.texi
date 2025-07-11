@@ -1139,7 +1139,7 @@ FIXME early
 
 The following is often useful.
 
-FIXME lexicographical compare etc.
+FIXME lexical_compare etc.
 
 @c ------------------------------------------------
 @node The rank conjunction
@@ -2883,13 +2883,13 @@ Return the minimum of the elements of @var{expr}. If @var{expr} is empty, return
 @anchor{x-early} @defun early expr default
 @var{expr} is an array expression that returns @code{std::optional<T>}. @var{expr} is traversed as by @code{for_each}. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, @var{default} is returned instead. If @code{default} is a reference, @code{early} will return its value. @c FIXME
 
-The following definition of elementwise @code{lexicographical_compare} relies on @code{early}.
+The following definition of elementwise @code{lexical_compare} relies on @code{early}.
 
 @example
 @verbatim
 template <class A, class B>
 inline bool
-lexicographical_compare(A && a, B && b)
+lexical_compare(A && a, B && b)
 {
     return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
                      std::forward<A>(a), std::forward<B>(b)),

@@ -86,5 +86,13 @@ int main()
         ra::Big<ra::Small<int, 2>, 1> I2 = { {1, 1}, {2, 2} };
         test(C, A, B, I1, I2);
     }
+    tr.section("Expr");
+    {
+        ra::Small<int, 4, 4> C = {{0, 0, 0, 0}, {0, 11, 0, 0}, {0, 0, 22, 0}, {0, 0, 0, 0}};
+        ra::Small<int, 4, 4> A = 0;
+        ra::Big<ra::Small<int, 1>, 1> I1 = { {2}, {0} };
+        ra::Big<ra::Small<int, 2>, 1> I2 = { {1, 1}, {2, 2} };
+        test(C, A, 10*ra::_0 + ra::_1, I1, I2);
+    }
     return tr.summary();
 }

@@ -1189,7 +1189,7 @@ inline auto op_reduce(A &amp;&amp; a)
 </p>
 <p>The following is often useful.
 </p>
-<p>FIXME lexicographical compare etc.
+<p>FIXME lexical_compare etc.
 </p>
 <hr>
 </div>
@@ -1851,7 +1851,7 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <li><a href="#Initialization-of-nested-types" accesskey="6">Initialization of nested types</a></li>
 <li><a href="#Chained-assignment" accesskey="7">Chained assignment</a></li>
 <li><a href="#Unregistered-scalar-types" accesskey="8">Unregistered scalar types</a></li>
-<li><a href="#The-cost-of-RA_005fDO_005fCHECK" accesskey="9">The cost of <code>RA_CHECK</code></a></li>
+<li><a href="#The-cost-of-RA_005fCHECK" accesskey="9">The cost of <code>RA_CHECK</code></a></li>
 </ul>
 <div class="section" id="Reuse-of-expression-objects">
 <h3 class="section">4.1 Reuse of expression objects</h3>
@@ -1963,7 +1963,7 @@ When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as 
 </li></ol>
 
 </div>
-<div class="section" id="The-cost-of-RA_005fDO_005fCHECK">
+<div class="section" id="The-cost-of-RA_005fCHECK">
 <h3 class="section">4.9 The cost of <code>RA_CHECK</code></h3>
 
 <p>FIXME
@@ -2896,12 +2896,12 @@ cout &lt;&lt; &quot;s: &quot; &lt;&lt; map([](auto &amp;&amp; a) { return sum(di
 <span id="x_002dearly"></span><dl class="def">
 <dt id="index-early-1"><span class="category">Function: </span><span><strong>early</strong> <em>expr default</em><a href='#index-early-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p><var>expr</var> is an array expression that returns <code>std::optional&lt;T&gt;</code>. <var>expr</var> is traversed as by <code>for_each</code>. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, <var>default</var> is returned instead. If <code>default</code> is a reference, <code>early</code> will return its value. </p>
-<p>The following definition of elementwise <code>lexicographical_compare</code> relies on <code>early</code>.
+<p>The following definition of elementwise <code>lexical_compare</code> relies on <code>early</code>.
 </p>
 <div class="example">
 <pre class="verbatim">template &lt;class A, class B&gt;
 inline bool
-lexicographical_compare(A &amp;&amp; a, B &amp;&amp; b)
+lexical_compare(A &amp;&amp; a, B &amp;&amp; b)
 {
     return early(map([](auto &amp;&amp; a, auto &amp;&amp; b) { return a==b ? std::nullopt : std::make_optional(a&lt;b); },
                      std::forward&lt;A&gt;(a), std::forward&lt;B&gt;(b)),

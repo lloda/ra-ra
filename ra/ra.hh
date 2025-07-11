@@ -295,7 +295,7 @@ template <class A, class I>
 constexpr auto
 at(A && a, I && i)
 {
-    return map([a = std::tuple<A>{RA_FW(a)}] (auto && i) -> decltype(auto) { return get<0>(a).at(i); }, RA_FW(i));
+    return map([&a](auto && i) -> decltype(auto) { return a.at(i); }, RA_FW(i));
 }
 
 
@@ -372,7 +372,7 @@ index(auto && a)
 }
 
 constexpr bool
-lexicographical_compare(auto && a, auto && b)
+lexical_compare(auto && a, auto && b)
 {
     return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
                      RA_FW(a), RA_FW(b)),
@@ -601,7 +601,7 @@ struct Wedge
     constexpr static int Na = binom(D, Oa);
     constexpr static int Nb = binom(D, Ob);
     constexpr static int Nr = binom(D, Or);
-// in lexicographic order. Can be used to sort Ca below with FindPermutation.
+// in lexical order. Can be used to sort Ca below with FindPermutation.
     using LexOrCa = mp::combs<mp::iota<D>, Oa>;
 // the actual components used, which are in lex. order only in some cases.
     using Ca = mp::choose<D, Oa>;
@@ -683,7 +683,7 @@ struct Hodge
 };
 
 // The order of components is taken from Wedge<D, O, D-O>; this works for whatever order is defined there.
-// With lexicographic order, component order is reversed, but signs vary.
+// With lexical order, component order is reversed, but signs vary.
 // With the order given by choose<>, fpw::where==i and fps::sign==+1 in hodge_aux(), always. Then hodge() becomes a free operation, (with one exception) and the next function hodge() can be used.
 template <int D, int O, class Va, class Vb>
 constexpr void

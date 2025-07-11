@@ -7,9 +7,8 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// See VanderBergen2012, Berland2006. Generally about automatic differentiation:
-// http://en.wikipedia.org/wiki/Automatic_differentiation
-// From the Taylor expansion of f(a) or f(a, b)...
+// See GriewankWalther2008, VanderBergen2012, Berland2006
+// From Taylor expansion of f(a), f(a, b) (FIXME) ...
 // f(a+εa') = f(a)+εa'f_a(a)
 // f(a+εa', b+εb') = f(a, b)+ε[a'f_a(a, b) b'f_b(a, b)]
 
@@ -141,7 +140,7 @@ constexpr bool isfinite(is_dual auto const & a)
 constexpr auto xi(is_dual auto const & a)
 { return dual(xi(a.re), xi(a.du)); }
 
-std::ostream &
+inline std::ostream &
 operator<<(std::ostream & o, is_dual auto const & a)
 { return o << "[" << a.re << " " << a.du << "]"; }
 

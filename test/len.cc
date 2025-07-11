@@ -92,9 +92,11 @@ int main()
     }
     tr.section("static len is preserved");
     {
+        tr.test_eq(5, ra::iota(ra::ic<5>, 1).len_s(0));
         tr.test_eq(5, wlen(ra::ic<5>, ra::iota(ra::len)).len_s(0));
+        // tr.test_eq(4, wlen(ra::ic<5>, ra::iota(ra::ic<ra::len-1>)).len_s(0)); // can't have map as template param
         // tr.test_eq(4, std::decay<decltype(*(wlen(ra::ic<5>, ra::len-ra::ic<1>)))>::type::value); // FIXME (*) wlen
-        // tr.test_eq(5, wlen(ra::ic<5>, ra::iota(ra::len-ra::ic<1>)).ronk()); // FIXME
+        // tr.test_eq(4, wlen(ra::ic<5>, ra::iota(ra::len-ra::ic<1>)).rank()); // FIXME
         // tr.test_eq(5, wlen(ra::ic<6>, ra::iota(ra::len-ra::ic<1>)).len_s(0)); // FIXME
     }
     tr.section("ra::len in ... in x.len(...)");
