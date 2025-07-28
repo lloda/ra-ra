@@ -275,5 +275,11 @@ int main()
         o << fmt(ra::format_t {}, pick);
         tr.test_eq(std::string("7"), o.str());
     }
+    tr.section("actual scalar");
+    {
+        std::ostringstream o;
+        o << fmt(ra::format_t {}, 99);
+        tr.test_eq(std::string("99"), o.str());
+    }
     return tr.summary();
 }

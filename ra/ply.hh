@@ -453,6 +453,9 @@ struct std::formatter<A>
 template <class A>
 struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
 {
-    std::formatter<std::decay_t<A>> fmt;
-    constexpr auto format(ra::Fmt<A> const & f, auto & ctx) const { return fmt.format(f.a, ctx, f.f); }
+    constexpr auto
+    format(ra::Fmt<A> const & f, auto & ctx) const
+    {
+        return std::formatter<decltype(ra::start(f.a))>().format(ra::start(f.a), ctx, f.f);
+    }
 };

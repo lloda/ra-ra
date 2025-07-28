@@ -68,7 +68,7 @@ int main()
                       auto test = [&](std::string ref, auto cr)
                                   {
                                       std::ostringstream o;
-                                      for_each([&o](auto && a) { o << a << "|"; }, iter<decltype(cr)::value>(a));
+                                      for_each([&o](auto && a) { o << a << "|"; }, iter<cr()>(a));
                                       tr.test_eq(ra::scalar(ref), ra::scalar(o.str()));
                                   };
                       test("1|2|3|4|5|6|", ra::int_c<-2>());

@@ -39,7 +39,8 @@ driver(T && t, int k)
 // ewv = expression-with-verb
 
 template <class V, class A, class B>
-void nested_wrank_demo(V && v, A && a, B && b)
+void
+nested_wrank_demo(V && v, A && a, B && b)
 {
     std::iota(a.begin(), a.end(), 10);
     std::iota(b.begin(), b.end(), 1);
@@ -169,15 +170,15 @@ int main()
         ra::Unique<real, 2> c({3, 4}, ra::none);
         ra::ply(ra::map_(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
-                               /* 11-[1 2 3 4] */ 10, 9, 8, 7,
-                               /* 12-[1 2 3 4] */ 11, 10, 9, 8 };
+            /* 11-[1 2 3 4] */ 10, 9, 8, 7,
+            /* 12-[1 2 3 4] */ 11, 10, 9, 8 };
         tr.test(std::equal(checkc34, checkc34+3*4, c.begin()));
         ra::Unique<real, 2> d34(ra::map_(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
         tr.test(std::equal(checkc34, checkc34+3*4, d34.begin()));
         real checkc43[3*4] = { /* [10 11 12]-1 */ 9, 10, 11,
-                               /* [10 11 12]-2 */ 8, 9, 10,
-                               /* [10 11 12]-3 */ 7, 8, 9,
-                               /* [10 11 12]-4 */ 6, 7, 8 };
+            /* [10 11 12]-2 */ 8, 9, 10,
+            /* [10 11 12]-3 */ 7, 8, 9,
+            /* [10 11 12]-4 */ 6, 7, 8 };
         ra::Unique<real, 2> d43(ra::map_(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
         tr.test(d43.len(0)==4 && d43.len(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
@@ -194,7 +195,7 @@ int main()
         real checkd[3*4] = { 1001, 1002, 1003, 1004,  1101, 1102, 1103, 1104,  1201, 1202, 1203, 1204 };
 // default auto is value, so need to speficy.
 #define MAP ra::map_(ra::wrank<0, 1>([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
-                      a.iter(), b.iter())
+                     a.iter(), b.iter())
         std::ostringstream os;
         os << MAP << endl;
         ra::Unique<real, 2> cc {};
@@ -259,43 +260,41 @@ int main()
         auto I = ra::iota(nx-2, 1);
         auto J = ra::iota(ny-2, 1);
 
-        constexpr ra::Small<real, 3, 3> mask = { 0, 1, 0,
-                                                 1, -4, 1,
-                                                 0, 1, 0 };
+        constexpr ra::Small<real, 3, 3> mask = { 0,1,0,  1,-4,1, 0,1,0 };
 
         real value = 1;
 
         auto f_raw = [&](ra::ViewBig<real *, 2> & A, ra::ViewBig<real *, 2> & Anext, ra::ViewBig<real *, 4> & Astencil)
-            {
-                for (int t=0; t<ts; ++t) {
-                    for (int i=1; i+1<nx; ++i) {
-                        for (int j=1; j+1<ny; ++j) {
-                            Anext(i, j) = -4*A(i, j)
+        {
+            for (int t=0; t<ts; ++t) {
+                for (int i=1; i+1<nx; ++i) {
+                    for (int j=1; j+1<ny; ++j) {
+                        Anext(i, j) = -4*A(i, j)
                             + A(i+1, j) + A(i, j+1)
                             + A(i-1, j) + A(i, j-1);
-                        }
                     }
-                    std::swap(A.cp, Anext.cp);
                 }
-            };
+                std::swap(A.cp, Anext.cp);
+            }
+        };
         auto f_sumprod = [&](ra::ViewBig<real *, 2> & A, ra::ViewBig<real *, 2> & Anext, ra::ViewBig<real *, 4> & Astencil)
-            {
-                for (int t=0; t!=ts; ++t) {
-                    Astencil.cp = A.data();
-                    Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
-                    Anext(I, J) += map(ra::wrank<2, 2>(std::multiplies<>()), Astencil, mask);
-                    std::swap(A.cp, Anext.cp);
-                }
-            };
+        {
+            for (int t=0; t!=ts; ++t) {
+                Astencil.cp = A.data();
+                Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
+                Anext(I, J) += map(ra::wrank<2, 2>(std::multiplies<>()), Astencil, mask);
+                std::swap(A.cp, Anext.cp);
+            }
+        };
         auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f)
-            {
-                A = value;
-                Anext = 0.;
+        {
+            A = value;
+            Anext = 0.;
 
-                f(A, Anext, Astencil);
+            f(A, Anext, Astencil);
 
-                tr.info(tag).test_rel(ref, A, 1e-11);
-            };
+            tr.info(tag).test_rel(ref, A, 1e-11);
+        };
 
         ra::Big<real, 2> Aref;
         ra::Big<real, 2> A({nx, ny}, 1.);
