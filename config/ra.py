@@ -23,7 +23,7 @@ def flags(sanitize=False):
         SANITIZE = []
     LINKFLAGS = SANITIZE
     return { 'LINKFLAGS': SANITIZE,
-             'CXXFLAGS': ['-std=c++2b', '-Wall', '-Werror', '-Wlogical-op',
+             'CXXFLAGS': ['-std=c++20', '-Wall', '-Werror', '-Wlogical-op',
                           '-fdiagnostics-color=always', '-Wno-unknown-pragmas',
                           '-Wno-error=strict-overflow', '-Werror=zero-as-null-pointer-constant',
                           #'-Wconversion',

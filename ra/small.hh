@@ -319,12 +319,15 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<T, Dimv, Spe
 
     constexpr decltype(auto) at(auto const & i) const requires (0==cellr) { return c.cp[longer(*this, i)]; }
     constexpr decltype(auto) at(auto const & i) const requires (0!=cellr) { ctype cc(c); cc.cp += longer(*this, i); return cc; }
+#pragma GCC diagnostic push // FIXME gcc11 on x86 in
+#pragma GCC diagnostic warning "-Warray-bounds"
     constexpr void adv(rank_t k, dim_t d) { c.cp += step(k)*d; }
     constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr ctype const & operator*() const requires (0!=cellr) { return c; }
     constexpr auto save() const { return c.cp; }
     constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
     constexpr void mov(dim_t d) { c.cp += d; }
+#pragma GCC diagnostic pop
 };
 
 
