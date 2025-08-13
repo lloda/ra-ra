@@ -117,9 +117,9 @@ struct ViewBig
     constexpr dim_t
     select(Dim * dim, int k, is_iota auto const & i) const
     {
-        RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i.i, " ", i.s, "] for len[", k, "]=", len(k), ".");
+        RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.cp.i, " ", i.s, "] for len[", k, "]=", len(k), ".");
         *dim = { .len = i.n, .step = step(k) * i.s };
-        return 0==i.n ? 0 : step(k)*i.i.i;
+        return 0==i.n ? 0 : step(k)*i.cp.i;
     }
     template <class I0, class ... I>
     constexpr dim_t

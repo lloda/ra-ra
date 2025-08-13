@@ -163,6 +163,8 @@ int main()
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");
         static_assert(ra::is_ra<ra::ViewBig<int *, 0>>, "bad is_ra View");
 
+        static_assert(ra::Slice<ra::Small<int, 1>>);
+        static_assert(ra::Slice<ra::Big<int, 2>>);
         static_assert(ra::is_ra<ra::Small<int, 1>>, "bad is_ra Small");
         static_assert(ra::is_ra<ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {1, 1}} >>>, "bad is_ra ViewSmall");
         static_assert(ra::is_ra<ra::Unique<int, 1>>, "bad is_ra Unique");

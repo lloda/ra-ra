@@ -49,7 +49,7 @@ int main()
         tr.test_eq(ra::iota(4, 1, 2), ra::Big<int, 1> {1, 3, 5, 7});
         {
             auto z = ra::iota(5, 1.5);
-            tr.info("iota with real org I").test_eq(1.5, z.i.i);
+            tr.info("iota with real org I").test_eq(1.5, z.cp.i);
             tr.info("iota with complex org I").test_eq(1.5+ra::start({0, 1, 2, 3, 4}), z);
         }
         {
@@ -80,11 +80,11 @@ int main()
                 auto k6 = optimize(ra::iota(5)-0.5);
                 tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-                tr.test_eq(org+1, k1.i.i);
-                tr.test_eq(org+1, k1.i.i);
-                tr.test_eq(org+1, k2.i.i);
-                tr.test_eq(org+1, k3.i.i);
-                tr.test_eq(org+1, k4.i.i);
+                tr.test_eq(org+1, k1.cp.i);
+                tr.test_eq(org+1, k1.cp.i);
+                tr.test_eq(org+1, k2.cp.i);
+                tr.test_eq(org+1, k3.cp.i);
+                tr.test_eq(org+1, k4.cp.i);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), j);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k1);
                 tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k2);
@@ -107,7 +107,7 @@ int main()
                 static_assert(ra::is_iota<decltype(k1)>);
                 tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-                tr.test_eq(-org, k1.i.i);
+                tr.test_eq(-org, k1.cp.i);
                 tr.test_eq(-ra::start({0, 1, 2, 3, 4}), j);
                 tr.test_eq(-ra::start({0, 1, 2, 3, 4}), k1);
             };
@@ -127,10 +127,10 @@ int main()
             auto k4 = optimize(2*ra::iota(5));
             tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-            tr.test_eq(0, k1.i.i);
-            tr.test_eq(0, k2.i.i);
-            tr.test_eq(0, k3.i.i);
-            tr.test_eq(0, k4.i.i);
+            tr.test_eq(0, k1.cp.i);
+            tr.test_eq(0, k2.cp.i);
+            tr.test_eq(0, k3.cp.i);
+            tr.test_eq(0, k4.cp.i);
             tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), j);
             tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k1);
             tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k2);

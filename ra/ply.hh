@@ -65,7 +65,7 @@ template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_l
 struct WLen<Ptr<I, N, S>>
 {
     constexpr static auto
-    f(auto ln, auto && e) { return Ptr(wlen(ln, RA_FW(e).i), VAL(wlen(ln, RA_FW(e).n)), VAL(wlen(ln, RA_FW(e).s))); }
+    f(auto ln, auto && e) { return Ptr(wlen(ln, RA_FW(e).cp), VAL(wlen(ln, RA_FW(e).n)), VAL(wlen(ln, RA_FW(e).s))); }
 };
 
 

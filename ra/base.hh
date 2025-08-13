@@ -60,10 +60,9 @@
 
 namespace ra {
 
-template <class T> constexpr bool is_constant = false;
-template <class T, T N> constexpr bool is_constant<std::integral_constant<T, N>> = true;
 template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
 template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
+template <class A> concept is_constant = requires (A a) { []<auto X>(ic_t<X> const &){}(a); };
 template <int ... I> using ilist_t = std::tuple<ic_t<I> ...>;
 template <int ... I> constexpr ilist_t<I ...> ilist {};
 
@@ -320,6 +319,7 @@ concept Slice = requires (A a)
 {
     { a.rank() } -> std::same_as<rank_t>;
     { a.iter() } -> Iterator;
+    { a.dimv };
 };
 
 
@@ -390,7 +390,7 @@ constexpr auto shape_s = []{
         return std::array<dim_t, 0> {};
     } else if constexpr (is_builtin_array<V>) {
         return std::apply([](auto ... i) { return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
-    } else if constexpr (requires  (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
+    } else if constexpr (requires (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
         return std::array { dim_t(std::tuple_size_v<V>) };
     } else if constexpr (is_fov<V> && requires { V::extent; }) {
         return std::array { std::dynamic_extent==V::extent ? ANY : dim_t(V::extent) };

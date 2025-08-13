@@ -62,7 +62,7 @@ namespace ra {
 
 
 // --------------------
-// terminal types: Len, Scalar, Ptr
+// terminal types
 // --------------------
 
 constexpr struct Len
@@ -135,6 +135,12 @@ scalar(C && c) { return Scalar<C> { RA_FW(c) }; }
 template <class N> constexpr int
 maybe_any = []{ if constexpr (is_constant<N>) { return N::value; } else { return ANY; } }();
 
+template <class V, class K> constexpr auto
+maybe_len(V const & v, K k)
+{
+    if constexpr (is_constant<K> && (ANY!=v.len_s(k))) { return ic<v.len_s(k)>; } else { return v.len(k); }
+}
+
 // Rank 1 iterator, atm used for fovs or iota. FIXME replace with ViewBig/ViewSmall.
 template <class I, class N, class S>
 struct Ptr final
@@ -146,12 +152,12 @@ struct Ptr final
     static_assert(0<=nn || ANY==nn || UNB==nn);
     constexpr static bool constant = is_constant<N> && is_constant<S>;
 
-    I i;
+    I cp;
     [[no_unique_address]] N const n = {};
     [[no_unique_address]] S const s = {};
     constexpr static S gets() requires (is_constant<S>) { return S {}; }
     constexpr I gets() const requires (!is_constant<S>) { return s; }
-    constexpr Ptr(I i, N n, S s): i(i), n(n), s(s)
+    constexpr Ptr(I i, N n, S s): cp(i), n(n), s(s)
     {
         if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
     }
@@ -169,14 +175,14 @@ struct Ptr final
     constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
     {
         RA_CK(UNB==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
-        return i[j[0]*s];
+        return cp[j[0]*s];
     }
-    constexpr decltype(auto) operator*() const { return *i; }
-    constexpr auto save() const { return i; }
-    constexpr void load(I ii) { i = ii; }
+    constexpr decltype(auto) operator*() const { return *cp; }
+    constexpr auto save() const { return cp; }
+    constexpr void load(I i) { cp = i; }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 (but not -O<3)
-    constexpr void mov(dim_t d) { std::ranges::advance(i, d); }
+    constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
 #pragma GCC diagnostic pop
 };
 
@@ -221,7 +227,7 @@ concept is_iota = requires (A a)
 constexpr bool
 inside(is_iota auto const & i, dim_t l)
 {
-    return (inside(i.i.i, l) && inside(i.i.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
+    return (inside(i.cp.i, l) && inside(i.cp.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
 }
 
 template <class I, class N, class S, class K=ic_t<dim_t(0)>>
@@ -229,7 +235,7 @@ constexpr auto
 reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
     static_assert(i.nn!=UNB, "Bad arguments to reverse(iota).");
-    return ptr(Seq { i.i.i+(i.n-1)*i.s }, i.n, [&i]{ if constexpr (is_constant<S>) return ic_t<dim_t(-S{})> {}; else return -i.s; }());
+    return ptr(Seq { i.cp.i+(i.n-1)*i.s }, i.n, [&i]{ if constexpr (is_constant<S>) return ic_t<dim_t(-S{})> {}; else return -i.s; }());
 }
 
 

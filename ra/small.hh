@@ -116,9 +116,9 @@ template <class I> requires (is_iota<I>) constexpr beatable_t beatable_def<I>
 
 template <class I> constexpr beatable_t beatable = beatable_def<std::decay_t<I>>;
 
-template <class II, int drop, class Op>
+template <class II, int drop>
 constexpr decltype(auto)
-from_partial(Op && op)
+from_partial(auto && op)
 {
     if constexpr (drop==mp::len<II>) {
         return RA_FW(op);
@@ -142,23 +142,12 @@ from(auto && a, auto && ... i)
     }
 }
 
-template <int k=0, class V>
-constexpr auto
-maybe_len(V const & v)
-{
-    if constexpr (ANY!=V::len_s(k)) {
-        return ic<V::len_s(k)>;
-    } else {
-        return v.len(k);
-    }
-}
-
 template <int N, class KK=mp::iota<N>> struct unbeat;
 template <int N, int ... k>
 struct unbeat<N, ilist_t<k ...>>
 {
     constexpr static decltype(auto)
-    op(auto && v, auto && ... i) { return from(RA_FW(v), wlen(maybe_len<k>(v), RA_FW(i)) ...); }
+    op(auto && v, auto && ... i) { return from(RA_FW(v), wlen(maybe_len(v, ic<k>), RA_FW(i)) ...); }
 };
 
 template <class Q, class P>
@@ -418,8 +407,8 @@ struct ViewSmall
     select(is_iota auto const & i)
     {
         static_assert((1>=i.n ? 1 : (i.s<0 ? -i.s : i.s)*(i.n-1)+1) <= len(k), "Bad index.");
-        RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.i.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
-        return 0==i.n ? 0 : step(k)*i.i.i;
+        RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.cp.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
+        return 0==i.n ? 0 : step(k)*i.cp.i;
     }
     template <int k, int n>
     constexpr static dim_t
