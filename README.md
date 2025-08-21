@@ -43,7 +43,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 **ra-ra** offers:
 
 * Array types with arbitrary compile time or runtime rank and shape.
-* Memory owning types as well as views over any piece of memory.
+* Memory owning types as well as views over memory and sequence views of any rank.
 * Compatibility with builtin arrays.
 * Compatibility with the standard library, including ranges, streams, and `<format>`.
 * Interoperability with other libraries and languages through transparent memory layout.
@@ -55,7 +55,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 * Argument list selection operators (`where` with bool selector, `pick` with integer selector).
 * Reshape, transpose, reverse, collapse/explode, stencils.
 * Arbitrary types as array elements, or as scalar operands.
-* Many predefined array operations. Adding yours is trivial.
+* Many predefined array operations, adding yours is trivial.
 * Configurable error handling.
 * As much `constexpr` as possible.
 

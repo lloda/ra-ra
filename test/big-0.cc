@@ -24,14 +24,14 @@ int main(int argc, char * * argv)
     TestRecorder tr;
     tr.section("predicates");
     {
-        ra::ViewBig<int *, 2> a;
+        ra::ViewBig<int *, 2> a; // uninitialized
         static_assert(ra::rank_s<decltype(a().iter<0>())>()==ra::rank_s<decltype(a().iter())>());
     }
     tr.section("constructors");
     {
-        tr.section("null View constructor");
+        tr.section("just cp constructor");
         {
-            ra::ViewBig<int *, 1> a;
+            ra::ViewBig<int *, 1> a(nullptr);
             tr.test(nullptr==a.data());
         }
         tr.section("regression with some shape arguments (fixed rank)");

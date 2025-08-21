@@ -15,7 +15,9 @@
 #include <iostream>
 #include <iomanip>
 #include "ra/test.hh"
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t, ra::all;

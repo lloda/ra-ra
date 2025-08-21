@@ -24,15 +24,15 @@ int main()
 
     cout << A << endl;
 
-// [ra] alternative I
+// [ra] alternative: explicit outer product
 
     cout << from(std::multiplies<float>(), x, y) << endl;
 
-// [ra] alternative II by axis insertion
+// [ra] alternative: axis insertion
 
     cout << (x * y(ra::insert<1>)) << endl;
 
-// [ra] alternative II by transposing
+// [ra] alternative transposing
 
     cout << (x * transpose(y, ra::ilist_t<1>{})) << endl;
 

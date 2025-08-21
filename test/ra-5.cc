@@ -26,10 +26,9 @@ int main()
         ra::Big<int, 1> b = { 2, 1 };
         ra::Big<int, 2> A({3, 5}, ra::_0 - ra::_1);
         ra::Big<int, 2> F({2, 5}, 0);
-
 // This creates View & CellBig on each call of A(b(0) ...) as the driver is b and A is handled as generic object with operator().
 // But I should be able to create a single CellBig and just bump a pointer as I move through b. Hmm.
-        iter<-1>(F) = b*A(b);
+        F = b*A(b);
         int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
         tr.test_eq(Fcheck, F);
     }
@@ -55,7 +54,7 @@ int main()
         ra::Small<int, 3, 5> A = ra::_0 - ra::_1;
         ra::Small<int, 2, 5> F = 0;
 
-        iter<-1>(F) = b*A(b);
+        F = b*A(b);
         int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
         tr.test_eq(Fcheck, F);
     }

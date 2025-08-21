@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Arrays, iterators.
 
-// (c) Daniel Llorens - 2013-2024
+// (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -32,7 +32,7 @@ int main()
         tr.test(every(ra::iota(4, 1)==ra::Big<int, 1> {1, 2, 3, 4}));
         tr.test(every(ra::iota(4, 1, 2)==ra::Big<int, 1> {1, 3, 5, 7}));
     }
-    // TODO actually whether unroll is avoided depends on ply(), have a way to require it [ra3]
+// TODO whether unroll is avoided depends on ply(), have a way to require it [ra3]
     tr.section("frame-matching, forbidding unroll");
     {
         ra::Big<int, 3> b ({3, 4, 2}, ra::none);
@@ -108,6 +108,13 @@ int main()
         auto z = concrete(ra::iota(n)*0.5);
         std::vector<double> t(n); for (int i=0; i<n; ++i) { t[i] = i*0.5; };
         tr.strict().test_eq(t, z);
+    }
+    tr.section("optimized by default");
+    {
+        auto i = ra::iota(3, 1, 2);
+        auto j = -i;
+        tr.test_eq(-2, j.s);
+        tr.strict().test_eq(ra::start({-1, -3, -5}), j);
     }
     return tr.summary();
 }

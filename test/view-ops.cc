@@ -15,8 +15,8 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder, ra::ilist;
 
-template <class A>
-void CheckReverse(TestRecorder & tr, A && a)
+void
+CheckReverse(TestRecorder & tr, auto && a)
 {
     std::iota(a.begin(), a.end(), 1);
     auto bd = reverse(a);
@@ -37,26 +37,22 @@ void CheckReverse(TestRecorder & tr, A && a)
                           13, 14, 15, 16,  9, 10, 11, 12,
                           21, 22, 23, 24,  17, 18, 19, 20 };
     tr.test(std::ranges::equal(check1, check1+24, b1.begin(), b1.end()));
-// FIXME ViewSmall doesn't support these subscripts
-    if constexpr (ra::ANY==size_s(a)) {
-        auto c1 = a(ra::dots<1>, ra::iota(ra::len, ra::len-1, -1));
-        tr.test_eq(b1, c1);
-    }
+// FIXME may not be ViewSmall even if a is
+    auto c1 = a(ra::dots<1>, ra::iota(ra::len, ra::len-1, -1)); //
+    tr.test_eq(b1, c1);
 
     auto b2 = reverse(a, ra::ic<2>);
     double check2[24] = { 4, 3, 2, 1,      8, 7, 6, 5,
                           12, 11, 10, 9,   16, 15, 14, 13,
                           20, 19, 18, 17,  24, 23, 22, 21 };
     tr.test(std::ranges::equal(check2, check2+24, b2.begin(), b2.end()));
-// FIXME ViewSmall doesn't support these subscripts
-    if constexpr (ra::ANY==size_s(a)) {
-        auto c2 = a(ra::dots<2>, ra::iota(ra::len, ra::len-1, -1));
-        tr.test_eq(b2, c2);
-    }
+// FIXME may not be ViewSmall even if a is
+    auto c2 = a(ra::dots<2>, ra::iota(ra::len, ra::len-1, -1));
+    tr.test_eq(b2, c2);
 }
 
-template <class A>
-void CheckTranspose1(TestRecorder & tr, A && a)
+void
+CheckTranspose1(TestRecorder & tr, auto && a)
 {
     {
         std::iota(a.begin(), a.end(), 1);

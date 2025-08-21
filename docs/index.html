@@ -468,7 +468,7 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 }
 </pre></div>
 
-<p>Using the right kind of container can result in better performance. Ct shapes do not need to be stored in memory, which matters when you have many small arrays. Ct shape or ct rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
+<p>Using the right kind of container can result in better performance. Compile time shapes do not need to be stored in memory, which matters when you have many small arrays. Compile time shape or compile time rank arrays are also safer to use; sometimes <code>ra::</code> will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 </p>
 <p>Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
 </p>
@@ -548,7 +548,7 @@ cout &lt;&lt; fmt(A, {.shape=ra::noshape, .sep0=&quot;|&quot;}) &lt;&lt; endl;
 <p>A <em>view</em> is similar to a container in that it points to actual data in memory. However, the view doesn&rsquo;t own that data and destroying the view won&rsquo;t affect it. For example:
 </p>
 <div class="example">
-<pre class="verbatim">ra::Big&lt;double&gt; c({2, 3}, 0.);     // a rt rank 2x3 array
+<pre class="verbatim">ra::Big&lt;double&gt; c({2, 3}, 0.);     // runtime rank 2x3 array
 {
     auto c1 = c(1);                // the second row of array c
     // c1 is destroyed here
@@ -580,7 +580,7 @@ ra::View&lt;int&gt; v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] steps [
 ra::View&lt;int&gt; v2({2, 3}, raw);           // same, default C (row-major) steps
 </pre></div>
 
-<p>Containers can be treated as views of the same kind (rt or ct) . If you declare a function
+<p>Containers can be treated as views of the same kind, that is, if you declare a function
 </p>
 <div class="example">
 <pre class="verbatim">void f(ra::View&lt;int, 3&gt; &amp; v);
@@ -588,8 +588,22 @@ ra::View&lt;int&gt; v2({2, 3}, raw);           // same, default C (row-major) st
 
 <p>you may pass it an object of type <code>ra::Big&lt;int, 3&gt;</code>.
 </p>
+<ul class="section-toc">
+<li><a href="#Sequence-views" accesskey="1">Sequence views</a></li>
+</ul>
+<hr>
+<div class="subsection" id="Sequence-views">
+<div class="header">
+<p>
+Up: <a href="#Containers-and-views" accesskey="u" rel="up">Containers and views</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<span id="Sequence-views-1"></span><h4 class="subsection">2.2.1 Sequence views</h4>
+
+<p>Generally, views are views over memory, and <code>view.data()</code> is a pointer to memory; specifically, the location of element <code>view(0, ...)</code>. However, it&rsquo;s possible to have views over the integer sequence <code>... -1, 0, 1, ...</code>. These views are read-only. The object produced by <a href="#x_002diota">iota</a> is of this kind. These objects can be used as any other view, but are especially useful when <a href="#Slicing">slicing</a>.
+</p>
 
 <hr>
+</div>
 </div>
 <div class="section" id="Array-operations">
 <div class="header">
@@ -824,14 +838,15 @@ b = map(a, i, j);
 
 <p>The latter is a form of sparse subscripting.
 </p>
-<p>Most array operations (e.g. <code>+</code>) are defined through <code>map</code> in this way. For example, <code>A+B+C</code> is defined as <code>map(+, A, B, C)</code> (or the equivalent <code>map(+, map(+, A, B), C)</code>). Not so for the subscripting operation:
+<p>Most array operations (e.g. <code>+</code>) are defined through <code>map</code> in this way. For example, <code>A+B+C</code> is defined as <code>map(+, A, B, C)</code> (or the equivalent <code>map(+, map(+, A, B), C)</code>).
+</p>
+<p>However, this is not how the subscripting operation is defined:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 2&gt; A {{1., 2.}, {3., 4.}};
 ra::Big&lt;int, 1&gt; i = {1, 0};
 ra::Big&lt;int, 1&gt; j = {0, 1};
-// {{A(i₀, j₀), A(i₀, j₁)}, {A(i₁, j₀), A(i₁, j₁)}}
-ra::Big&lt;double, 2&gt; b = A(i, j);
+ra::Big&lt;double, 2&gt; b = A(i, j); // {{A(i₀, j₀), A(i₀, j₁)}, {A(i₁, j₀), A(i₁, j₁)}}
 </pre><pre class="example">&rArr; b = {{3., 4.}, {1., 2.}}
 </pre></div>
 
@@ -1039,7 +1054,7 @@ cout &lt;&lt; (A * B(ra::insert&lt;A.rank()&gt;)) &lt;&lt; endl; // index elisio
 <span id="index-view_002c-rank-0"></span>
 <span id="index-rank_002c-runtime"></span>
 <span id="index-rank_002c-compile_002dtime"></span>
-<p>When the result of the subscripting operation would have rank 0, the type returned is the type of the view <em>element</em> and not a rank-0 view as long as the rank of the result can be determined at compile time. When that&rsquo;s not possible (for instance, the subscripted view has rt rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
+<p>When the result of the subscripting operation would have rank 0, the type returned is the type of the view <em>element</em> and not a rank-0 view as long as the rank of the result can be determined at compile time. When that&rsquo;s not possible (for instance, the subscripted view has runtime rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
 </p>
 <div class="example">
 <pre class="verbatim">using T = std::complex&lt;double&gt;;
@@ -1056,7 +1071,20 @@ cout &lt;&lt; f(b(0, 0)) &lt;&lt; endl; // ok, automatic conversion from View&lt
 // cout &lt;&lt; f(b(0)) &lt;&lt; endl; // runtime error, conversion failed since rt rank of b(0) is not 0
 </pre></div>
 
+<p>Generally, the result of <code>A(i, ...)</code> when <code>A</code> is a view, or equivalently <code><a href="#x_002dfrom"><code>from</code></a>(A, i ...)</code>, is itself be a view when
+</p><ul>
+<li> each of the <code>i ...</code> is <em>beatable</em>, that is, either
+<ul>
+<li> a scalar index, e.g. <code>4</code> or <code>ra::len-1</code>,
+</li><li> a finite size <a href="#Sequence-views">sequence view</a>, e.g. <code>ra::iota(4)</code>,
+</li><li> an <a href="#x_002dinsert"><code>insert_t</code></a> object,
+</li><li> or a <a href="#x_002ddots"><code>dots_t</code></a> object.
+</li></ul>
+</li><li> the rank can be determined at compile time to be non-zero.
+</li></ul>
 
+<p>If <em>neither</em> of these conditions is true, then the result of <code>from(A, i ...)</code> is an opaque expression object of the same kind that is produced by other array operations such as <code>A+A</code>.
+</p>
 <hr>
 </div>
 </div>
@@ -1327,7 +1355,7 @@ Next: <a href="#Compatibility" accesskey="n" rel="next">Compatibility</a>, Previ
 <li> <code>shape</code> (<code>shape_t</code>):
 Whether to print the shape of <var>expr</var> before <var>expr</var> itself.
 
-<p><code>shape_t</code> is <code>enum { defaultshape, noshape, withshape }</code>. The default is to print the shape if it is rt and not otherwise.
+<p><code>shape_t</code> is <code>enum { defaultshape, noshape, withshape }</code>. The default is to print the shape if it is runtime and not otherwise.
 </p></li><li> <code>sep0</code> (<code>std::string</code>) &ndash;
 Separator between 0-cells.
 </li><li> <code>sepn</code> (<code>std::string</code>) &ndash;
@@ -1471,11 +1499,11 @@ cout &lt;&lt; ra::sum(x) &lt;&lt; endl;
 <span id="index-built_002din-array"></span>
 <ul>
 <li> Built-in arrays
-produce an expression of positive rank and ct size.
+produce an expression of positive rank and compile time size.
 </li><li> <code>std::array</code>
-produces an expression of rank 1 and ct size.
+produces an expression of rank 1 and compile time size.
 </li><li> Other types conforming to <code>std::ranges::bidirectional_range</code>, such as <code>std::vector</code>, <code>std::string</code>, or <code>std::map</code>
-produce an expression of rank 1 and rt size.
+produce an expression of rank 1 and runtime size.
 </li></ul>
 
 <p>Raw pointers must be brought into <code>ra::</code> explicitly using the function <a href="#x_002dptr"><code>ptr</code></a>, which produces an expression of rank 1 and <em>undefined</em> size.
@@ -1871,7 +1899,7 @@ cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ??
 <h3 class="section">4.2 Assignment to views</h3>
 
 <p>FIXME
-With rt-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream <code>&gt;&gt;</code> container may work; do not rely on it.
+With runtime-shape containers (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream <code>&gt;&gt;</code> container may work; do not rely on it.
 </p>
 </div>
 <div class="section" id="View-of-const-vs-const-view">
@@ -2275,7 +2303,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <dt id="index-concrete-1"><span class="category">Function: </span><span><strong>concrete</strong> <em>a</em><a href='#index-concrete-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Convert the argument to a container or value type of the same shape as <var>a</var>.
 </p>
-<p>If the argument has rt or ct shape, it is the same for the result. Expressions with ct rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+<p>If the argument has runtime or compile time shape, it is the same for the result. Expressions with compile time rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 </p>
 
 </dd></dl>
@@ -2596,7 +2624,7 @@ auto z = reverse(a, ra::ic&lt;0&gt;); // z has static dimensions
 <dt id="index-swap-1"><span class="category">Function: </span><span><strong>swap</strong> <em>a b</em><a href='#index-swap-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Swap the contents of containers <var>a</var> and <var>b</var>.
 </p>
-<p>Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of ct rank, then both of them must have the same rank.
+<p>Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of compile time rank, then both of them must have the same rank.
 </p>
 <p>This function reuses <code>std::swap</code> for same-rank overloads, so it must not be qualified (i.e. use <code>swap(a, b)</code>, not <code>ra::swap(a, b)</code>).
 </p></dd></dl>
@@ -2823,7 +2851,7 @@ c += ra::scalar(x); // ok: scalar(x) has shape () and matches c.
 <span id="index-iter"></span>
 <span id="x_002diter"></span><dl class="def">
 <dt id="index-iter-1"><span class="category">Function: </span><span><strong>iter</strong> <em>&lt;k&gt; (view)</em><a href='#index-iter-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it&rsquo;s interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have rt or ct shape.
+<dd><p>Create iterator over the <var>k</var>-cells of <var>view</var>. If <var>k</var> is negative, it&rsquo;s interpreted as the negative of the frame rank. In the current version of <code>ra::</code>, <var>view</var> may have runtime or compile time shape.
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int, 2&gt; c {{1, 3, 2}, {7, 1, 3}};
@@ -3292,7 +3320,7 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
 <p>Examples given without context assume that one has declared <code>using std::cout;</code>, etc.</p>
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
-<p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
+<p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of runtime rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
 <p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>

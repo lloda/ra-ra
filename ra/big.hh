@@ -18,7 +18,7 @@ namespace ra {
 // Big view and containers
 // --------------------
 
-// nested braces for Big initializers, cf small_args in small.hh. FIXME Let any expr = braces.
+// cf small_args in small.hh. FIXME Let any expr = braces.
 
 template <class T, rank_t r> struct braces_ { using type = noarg; };
 template <class T, rank_t r> using braces = braces_<T, r>::type;
@@ -45,8 +45,8 @@ braces_shape(braces<T, r> const & l)
     return [&l]<int ... i>(ilist_t<i ...>){ return std::array { braces_len<i, T, r>(l) ... }; }(mp::iota<r>{});
 }
 
-// TODO Parameterize on Child having .data() so that there's only one pointer.
-// TODO Constructor checks (nonnegative lens, steps inside, etc.).
+// FIXME avoid duplicating cp, dimv from Container without being parent. Parameterize on Dimv, like Cell.
+// FIXME constructor checks (lens>=0, steps inside, etc.).
 template <class P, rank_t RANK>
 struct ViewBig
 {
@@ -64,7 +64,9 @@ struct ViewBig
     constexpr dim_t size() const { return ra::size(*this); }
     constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
-    constexpr ViewBig(): cp() {} // FIXME used by Container constructors
+    constexpr ViewBig() {} // used by Container constructors
+    constexpr explicit ViewBig(P cp_): cp(cp_) {} // used by slicers, esp. when P has_len
+    constexpr ViewBig(ViewBig const &) = default;
     constexpr ViewBig(Dimv const & dimv_, P cp_): dimv(dimv_), cp(cp_) {} // [ra36]
     constexpr ViewBig(auto const & s, P cp_): cp(cp_)
     {
@@ -76,8 +78,6 @@ struct ViewBig
         }
     }
     constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(start(s), cp_) {}
-// T not is_scalar [ra44]
-    constexpr ViewBig const & operator=(T const & t) const { start(*this) = ra::scalar(t); return *this; }
 // row-major ravel braces
     constexpr ViewBig const &
     operator=(std::initializer_list<T> const x) const requires (1!=RANK)
@@ -99,7 +99,8 @@ struct ViewBig
     }
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
-    constexpr ViewBig(ViewBig const &) = default;
+// T not is_scalar [ra44]
+    constexpr ViewBig const & operator=(T const & t) const { start(*this) = ra::scalar(t); return *this; }
 // cf RA_ASSIGNOPS_SELF [ra38] [ra34]
     ViewBig const & operator=(ViewBig const & x) const { start(*this) = x; return *this; }
 #define ASSIGNOPS(OP)                                                   \
@@ -107,90 +108,6 @@ struct ViewBig
     constexpr ViewBig const & operator OP (auto const & x) const { start(*this) OP x; return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
-
-    constexpr dim_t
-    select(Dim * dim, int k, dim_t i) const
-    {
-        RA_CK(inside(i, len(k)), "Bad index ", i, " for len[", k, "]=", len(k), ".");
-        return step(k)*i;
-    }
-    constexpr dim_t
-    select(Dim * dim, int k, is_iota auto const & i) const
-    {
-        RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.cp.i, " ", i.s, "] for len[", k, "]=", len(k), ".");
-        *dim = { .len = i.n, .step = step(k) * i.s };
-        return 0==i.n ? 0 : step(k)*i.cp.i;
-    }
-    template <class I0, class ... I>
-    constexpr dim_t
-    select_loop(Dim * dim, int k, I0 && i0, I && ... i) const
-    {
-        return select(dim, k, wlen(len(k), RA_FW(i0)))
-            + select_loop(dim + beatable<I0>.dst, k + beatable<I0>.src, RA_FW(i) ...);
-    }
-    template <int n, class ... I>
-    constexpr dim_t
-    select_loop(Dim * dim, int k, dots_t<n> i0, I && ... i) const
-    {
-        int nn = (UNB==n) ? (rank() - k - (0 + ... + beatable<I>.src)) : n;
-        for (Dim * end = dim+nn; dim!=end; ++dim, ++k) {
-            *dim = dimv[k];
-        }
-        return select_loop(dim, k, RA_FW(i) ...);
-    }
-    template <int n, class ... I>
-    constexpr dim_t
-    select_loop(Dim * dim, int k, insert_t<n> i0, I && ... i) const
-    {
-        for (Dim * end = dim+n; dim!=end; ++dim) {
-            *dim = { .len = UNB, .step = 0 };
-        }
-        return select_loop(dim, k, RA_FW(i) ...);
-    }
-    constexpr static dim_t
-    select_loop(Dim * dim, int k) { return 0; }
-
-    template <class ... I>
-    constexpr decltype(auto)
-    operator()(this auto && self, I && ... i)
-    {
-        constexpr int stretch = (0 + ... + (beatable<I>.dst==UNB));
-        static_assert(stretch<=1, "Cannot repeat stretch index.");
-        if constexpr ((0 + ... + is_scalar_index<I>)==RANK) {
-            return self.cp[self.select_loop(nullptr, 0, i ...)];
-        } else if constexpr ((beatable<I>.rt && ...)) {
-            constexpr rank_t extended = (0 + ... + (beatable<I>.dst - beatable<I>.src));
-            ViewBig<P, rank_sum(RANK, extended)> sub;
-            rank_t subrank = self.rank()+extended;
-            if constexpr (ANY==RANK) {
-                sub.dimv.resize(subrank);
-            }
-            sub.cp = self.cp + self.select_loop(sub.dimv.data(), 0, i ...);
-// fill rest of dim, skipping over beatable subscripts.
-            for (int k = (0==stretch ? (0 + ... + beatable<I>.dst) : subrank); k<subrank; ++k) {
-                sub.dimv[k] = self.dimv[k-extended];
-            }
-            return sub;
-// TODO partial beating
-        } else {
-// cf ViewSmall::operator()
-            return unbeat<sizeof...(I)>::op(RA_FW(self), RA_FW(i) ...);
-        }
-    }
-    constexpr decltype(auto)
-    operator[](this auto && self, auto && ... i) { return RA_FW(self)(RA_FW(i) ...); }
-
-    constexpr decltype(auto)
-    at(auto const & i) const
-    {
-// can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
-       constexpr rank_t crank = rank_diff(RANK, ra::size_s(i));
-       if constexpr (ANY==crank) {
-            return iter(rank()-ra::size(i)).at(i);
-        } else {
-            return iter<crank>().at(i);
-        }
-    }
     template <rank_t c=0> constexpr auto iter() const && { return Cell<P, Dimv, ic_t<c>>(cp, std::move(dimv)); }
     template <rank_t c=0> constexpr auto iter() const & { return Cell<P, Dimv const &, ic_t<c>>(cp, dimv); }
     constexpr auto iter(rank_t c) const && { return Cell<P, Dimv, dim_t>(cp, std::move(dimv), c); }
@@ -214,6 +131,9 @@ struct ViewBig
         return *reinterpret_cast<ViewBig<reconst<P>, RANK> const *>(this);
     }
     constexpr operator T & () const { return to_scalar(*this); }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) at(auto const & i) const { return at1(*this, i); }
 };
 
 template <class V>
@@ -348,58 +268,51 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
 // resize first axis or full shape. Only for some kinds of store.
     constexpr void resize(dim_t const s)
     {
-        static_assert(ANY==RANK || 0<RANK); RA_CK(0<rank());
+        if constexpr (ANY==RANK) { RA_CK(0<rank()); } else { static_assert(0<=RANK); }
         dimv[0].len = s;
-        store.resize(size());
-        cp = store.data();
+        store.resize(size()); cp = store.data();
     }
     constexpr void resize(dim_t const s, T const & t)
     {
         static_assert(ANY==RANK || 0<RANK); RA_CK(0<rank());
         dimv[0].len = s;
-        store.resize(size(), t);
-        cp = store.data();
+        store.resize(size(), t); cp = store.data();
     }
-    constexpr void resize(auto const & s) requires (rank_s(s) > 0)
+    constexpr void resize(auto const & s) requires (1==rank_s(s))
     {
-        ra::resize(dimv, start(s).len(0)); // [ra37] FIXME is View constructor
-        store.resize(filldimv(s, dimv));
-        cp = store.data();
+        ra::resize(dimv, 0==rank_s(s) ? 1 : ra::size(s));
+        store.resize(filldimv(s, dimv)); cp = store.data();
     }
 // template + RA_FW wouldn't work for push_back(brace-enclosed-list).
     constexpr void push_back(T && t)
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
+        if constexpr (ANY==RANK) { RA_CK(1==rank()); } else { static_assert(1==RANK); }
         store.push_back(std::move(t));
-        ++dimv[0].len;
-        cp = store.data();
+        ++dimv[0].len; cp = store.data();
     }
     constexpr void push_back(T const & t)
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
+        if constexpr (ANY==RANK) { RA_CK(1==rank()); } else { static_assert(1==RANK); }
         store.push_back(t);
-        ++dimv[0].len;
-        cp = store.data();
+        ++dimv[0].len; cp = store.data();
     }
     constexpr void emplace_back(auto && ... a)
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
+        if constexpr (ANY==RANK) { RA_CK(1==rank()); } else { static_assert(1==RANK); }
         store.emplace_back(RA_FW(a) ...);
-        ++dimv[0].len;
-        cp = store.data();
+        ++dimv[0].len; cp = store.data();
     }
     constexpr void pop_back()
     {
-        static_assert(ANY==RANK || 1==RANK); RA_CK(1==rank());
-        RA_CK(0<dimv[0].len, "Empty array trying to pop_back().");
+        if constexpr (ANY==RANK) { RA_CK(1==rank()); } else { static_assert(1==RANK); }
+        RA_CK(0<dimv[0].len, "Empty array pop_back().");
         --dimv[0].len;
         store.pop_back();
     }
     constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... a) { return RA_FW(self).view()(RA_FW(a) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... a) { return RA_FW(self).view()(RA_FW(a) ...); }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
     constexpr decltype(auto) at(this auto && self, auto const & i) { return RA_FW(self).view().at(i); }
-// always compact/row-major, so STL-like iterators can be raw pointers.
     constexpr auto begin(this auto && self) { assert(is_c_order(self.view())); return self.view().data(); }
     constexpr auto end(this auto && self) { return self.view().data()+self.size(); }
     template <rank_t c=0> constexpr auto iter(this auto && self) { if constexpr (1==RANK && 0==c) { return ptr(self.data(), self.size()); } else { return RA_FW(self).view().template iter<c>(); } }
@@ -451,8 +364,7 @@ shared_borrowing(ViewBig<T *, RANK> & raw)
 
 
 // --------------------
-// concrete type from expr, container if rank>0, else value type, even unregistered.
-// FIXME another for concrete-or-view.
+// container if rank>0, else value type, even unregistered. FIXME concrete-or-view.
 // --------------------
 
 template <class E> struct concrete_type_;

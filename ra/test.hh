@@ -65,7 +65,7 @@ struct TestRecorder
     void
     section(auto const & ... a)
     {
-        print(o, "\n", esc::bold, a ..., esc::unbold, "\n");
+        print(o, esc::bold, a ..., esc::unbold, "\n");
     }
     static std::string
     format_error(double e, char const * col = esc::yellow)
@@ -292,7 +292,7 @@ struct Benchmark
     static std::string
     report(Value const & bv, double scale=1., double u=1e-9)
     {
-        return std::format("{0:3f} {2} [{1:3f}]", avg(bv)/scale/u, stddev(bv)/scale/u,
+        return std::format("{0:3f} {2} [{1:.2f}]", avg(bv)/scale/u, stddev(bv)/avg(bv),
                            1e-9==u ? "ns" : 1e-6==u ? "us" : 1e-3==u ? "ms" : 1==u ? "s" : "?");
     }
     void

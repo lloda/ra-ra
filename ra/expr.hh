@@ -60,10 +60,7 @@ namespace ra {
     constexpr TYPE(TYPE && x) = default;                                \
     constexpr TYPE(TYPE const & x) = default;
 
-
-// --------------------
-// terminal types
-// --------------------
+// Contextual len: a unique object. See wlen in ply.hh.
 
 constexpr struct Len
 {
@@ -107,8 +104,9 @@ struct Seq
     constexpr bool operator==(Seq const & j) const = default;
 };
 
-// Rank-0 Iterator. Can be used on foreign objects, or to manipulate prefix matching.
-// We want f(scalar(C)) to be f(C) and not map(f, C), this is controlled by tomap/toreduce.
+// Rank-0 Iterator, to wrap foreign objects, or to manipulate prefix matching.
+// f(scalar(C)) should be f(C) and not map(f, C), this is controlled by tomap/toreduce.
+
 template <class C>
 struct Scalar final
 {
@@ -141,7 +139,14 @@ maybe_len(V const & v, K k)
     if constexpr (is_constant<K> && (ANY!=v.len_s(k))) { return ic<v.len_s(k)>; } else { return v.len(k); }
 }
 
-// Rank 1 iterator, atm used for fovs or iota. FIXME replace with ViewBig/ViewSmall.
+template <class S> consteval auto
+maybe_step()
+{
+    if constexpr (std::is_integral_v<S>) { return S(1); } else { static_assert(is_constant<S> && 1==S::value); return S {}; }
+}
+
+// Rank 1 iterator, for fovs or iota. FIXME replace with ViewBig/ViewSmall.
+
 template <class I, class N, class S>
 struct Ptr final
 {
@@ -181,23 +186,12 @@ struct Ptr final
     constexpr auto save() const { return cp; }
     constexpr void load(I i) { cp = i; }
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 (but not -O<3)
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 only
     constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
 #pragma GCC diagnostic pop
 };
 
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
-
-template <class S> consteval auto
-maybe_step()
-{
-    if constexpr (std::is_integral_v<S>) {
-        return S(1);
-    } else {
-        static_assert(is_constant<S> && 1==S::value);
-        return S {};
-    }
-}
 
 template <class I, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
@@ -224,12 +218,6 @@ concept is_iota = requires (A a)
     requires UNB!=a.nn; // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
 };
 
-constexpr bool
-inside(is_iota auto const & i, dim_t l)
-{
-    return (inside(i.cp.i, l) && inside(i.cp.i+(i.n-1)*i.s, l)) || (0==i.n /* don't bother */);
-}
-
 template <class I, class N, class S, class K=ic_t<dim_t(0)>>
 constexpr auto
 reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
@@ -245,7 +233,7 @@ reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 
 // Reframe is transpose for general expressions. Like in transpose, give destination axis for each original axis.
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
-// If not, then axis k of the reframed A is 'dead' and doesn't move the iterator.
+// Else axis k of the reframed A is 'dead' and doesn't move the iterator.
 // TODO Handle repeated axes. Handle ANY rank [ra7].
 
 template <dim_t N, class T> constexpr T samestep = N;
@@ -340,7 +328,7 @@ struct Framematch_def;
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, int skip=0>
 using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
 
-// Get a list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
+// Get list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
 template <class ... crank, class W, class ... Ti, class ... Ri, int skip>
 struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
@@ -491,8 +479,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr rank_t
     rank() const requires (ANY==rs)
     {
-        rank_t r = UNB; ((r = choose_rank(ra::rank(get<I>(t)), r)), ...); assert(ANY!=r); // not at rt
-        return r;
+        rank_t r = UNB; return ((r = choose_rank(ra::rank(get<I>(t)), r)), ...);
     }
     constexpr static dim_t
     len_s(int k, bool check=false)
@@ -523,8 +510,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
             }
             return s;
         };
-        dim_t s = UNB; (void)(((s = f(get<I>(t), s)) != MIS) && ...); assert(ANY!=s); // not at rt
-        return s;
+        dim_t s = UNB; (void)(((s = f(get<I>(t), s)) != MIS) && ...); return s;
     }
     constexpr bool
     keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<P>::keep(st, z, j); }  && ...))
@@ -536,7 +522,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     {
         return (std::decay_t<P>::keep(st, z, j) && ...);
     }
-// step/adv may call sub Iterators with k>= their rank, so they must return 0 in that case.
+// step/adv may call sub Iterators with k>= their rank, in that case they must return 0.
     constexpr auto
     step(int k) const requires (!(requires { std::decay_t<P>::step(k); } && ...))
     {

@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Operator overloads for expression templates, and root header.
+// ra-ra - Operator overloads for expression templates. Root header.
 
 // (c) Daniel Llorens - 2014-2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -131,10 +131,10 @@ template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FW(e); 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
 template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
 
-// FIXME iota.gets() vs p2781r2
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
+// FIXME iota.gets() vs p2781r2
+// FIXME handle & variants, handle view iota.
 
-// TODO something to handle the & variants...
 #define RA_IT(i) std::get<(i)>(e.t)
 template <is_iota I, iota_op J>
 constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
@@ -234,7 +234,7 @@ struct unaryplus
 
 #define DEF_NAMED_UNARY_OP(OP, OPNAME)                              \
     template <class A> requires (tomap<A>) constexpr auto           \
-        operator OP(A && a) { return map(OPNAME(), RA_FW(a)); }     \
+        operator OP(A && a) { return RA_OPT(map(OPNAME(), RA_FW(a))); } \
     template <class A> requires (toreduce<A>) constexpr auto        \
         operator OP(A && a) { return OP VAL(RA_FW(a)); }
 
@@ -276,26 +276,26 @@ FOR_EACH(DEF_GLOBAL, fma)
 #undef DEF_FWD
 #undef DEF_NAME
 
-template <class T, class A>
+template <class T>
 constexpr auto
-cast(A && a)
+cast(auto && a)
 {
     return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a));
 }
 
-template <class T, class ... A>
+template <class T>
 constexpr auto
-pack(A && ... a)
+pack(auto && ... a)
 {
     return map([](auto && ... a) { return T { RA_FW(a) ... }; }, RA_FW(a) ...);
 }
 
-// FIXME needs nested array for I, but iter<-1> should work
-template <class A, class I>
+// needs nested array for I, but one can use iter<-1> with rank 2
+template <class A>
 constexpr auto
-at(A && a, I && i)
+at(A && a, auto && i)
 {
-    return map([&a](auto && i) -> decltype(auto) { return a.at(i); }, RA_FW(i));
+    return map([a=std::tuple<A>(RA_FW(a))](auto && i) -> decltype(auto) { return std::get<0>(a).at(i); }, RA_FW(i));
 }
 
 

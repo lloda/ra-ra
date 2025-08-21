@@ -17,14 +17,16 @@ using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 using real = double;
 using ra::dim_t;
 
-// FIXME Bigd/Bigd at loop is an outlier
+// FIXME bigd/bigd & bigs/bigd at loop
 
-int main()
+int main(int argc, char * * argv)
 {
-    ra::TestRecorder tr(std::cout);
-
-    auto test = [&tr](auto && C, auto && I, int reps)
+    int reps = argc>1 ? std::stoi(argv[1]) : 1000;
+    std::println(cout, "reps = {}", reps);
+    ra::TestRecorder tr(cout);
+    auto test = [&tr](auto && C, auto && I, int reps, std::string tag)
     {
+        if ("warmup"!=tag) tr.section(tag);
         int M = C.len(0);
         int N = C.len(1);
         int O = I.len(0);
@@ -33,19 +35,18 @@ int main()
         I(ra::all, 1) = map([&](auto && i) { return i%N; }, ra::_0 + (std::rand() & 1));
 
         int ref0 = sum(at(C, iter<1>(I))), val0 = 0;
-
         Benchmark bm { reps, 3 };
-        auto report = [&](std::string const & tag, auto && bv)
+        auto report = [&](std::string const & stag, auto && bv)
         {
-            tr.info(Benchmark::report(bv, M*N), " ", tag)
-                .test_eq(val0, ref0);
+            if ("warmup"!=tag) tr.info(Benchmark::report(bv, M*N), " ", stag).test_eq(val0, ref0);
         };
 
         report("direct subscript",
                bm.run([&]{
                    int val = 0;
                    for (int i=0; i<O; ++i) {
-                       val += C(dim_t(I(i, 0)), dim_t(I(i, 1))); // conversions needed when I has runtime rank
+// conversion needed for var rank I
+                       val += C(ra::dim_t(I(i, 0)), ra::dim_t(I(i, 1)));
                    }
                    val0 = val;
                }));
@@ -63,56 +64,22 @@ int main()
                }));
     };
 
-    tr.section("Bigs/Bigs");
-    {
-        ra::Big<int, 2> C({1000, 4}, ra::none);
-        ra::Big<int, 2> I({1000, 2}, ra::none);
-        test(C, I, 100);
-    }
-    tr.section("Bigd/Bigd");
-    {
-        ra::Big<int> C({1000, 4}, ra::none);
-        ra::Big<int> I({1000, 2}, ra::none);
-        test(C, I, 100);
-    }
+    ra::Big<int, 2> bigsa({100, 4}, ra::none);
+    ra::Big<int> bigda({100, 4}, ra::none);
+    ra::Small<int, 100, 4> smola;
+    ra::Big<int, 2> bigsi({100, 4}, ra::none);
+    ra::Big<int> bigdi({100, 4}, ra::none);
+    ra::Small<int, 100, 4> smoli;
+    test(smola, smoli, reps*10, "warmup");
 // regression in b40c2d412be04c4c2b4758a332424c05257f71ff due to CellSmall copy ctor.
-    tr.section("Small/Small");
-    {
-        ra::Small<int, 10, 4> C;
-        ra::Small<int, 10, 2> I;
-        test(C, I, 10000);
-    }
-    tr.section("Bigd/Bigs");
-    {
-        ra::Big<int> C({1000, 4}, ra::none);
-        ra::Big<int, 2> I({1000, 2}, ra::none);
-        test(C, I, 100);
-    }
-    tr.section("Bigs/Bigd");
-    {
-        ra::Big<int, 2> C({1000, 4}, ra::none);
-        ra::Big<int> I({1000, 2}, ra::none);
-        test(C, I, 100);
-    }
-    tr.section("Bigs/Small");
-    {
-        ra::Big<int, 2> C({1000, 4}, ra::none);
-        ra::Small<int, 10, 2> I;
-        test(C, I, 1000);
-    }
-    tr.section("Bigd/Small");
-    {
-        ra::Big<int> C({1000, 4}, ra::none);
-        ra::Small<int, 10, 2> I;
-        test(C, I, 1000);
-    }
-// FIXME not supported atm bc small.at output type depends on the length of the subscript.
-    // tr.section("Small/Bigs");
-    // {
-    //     ra::Small<int, 10, 4> C;
-    //     ra::Big<int, 2> I({1000, 2}, ra::none);
-    //     test(C, I, 1000);
-    // }
-
+    test(smola, smoli, reps*10, "small/small");
+    test(bigsa, smoli, reps*10, "bigs/small");
+    test(bigda, smoli, reps*10, "bigd/small");
+    test(smola, bigsi, reps, "small/bigs");
+    test(bigsa, bigsi, reps, "bigs/bigs");
+    test(bigda, bigsi, reps, "bigd/bigs");
+    test(smola, bigdi, reps, "small/bigd");
+    test(bigsa, bigdi, reps, "bigs/bigd");
+    test(bigda, bigdi, reps, "bigd/bigd");
     return tr.summary();
 }

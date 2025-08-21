@@ -10,14 +10,9 @@ checkbox [C-ct] flip TODO
     - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
     - [ ] Invalid expressions that aren't caught by Match, either bc it makes assumptions, or bc
       Match isn't even involved. See checks.cc.
-    - [X] Before merging saveload [1/1]
-      - [X] Fix cellrank.cc: "using View::operator= on sliding view". For that, View::operator= have
-        to be const. That breaks a lot of things
-        - Fixed by duplicating operator= overloads on Container :-\ <2023-11-17 Fri 16:33>
     - [ ] const issues in View vs Container
       - [ ] conversion to const & op in ViewBig uses reinterpret_const
-    - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse
-      than indexed
+    - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse than indexed
       - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
       - Appears to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
       - Looks good in v20 in g++-11, but bad in 12/13. Bummer.
@@ -25,19 +20,12 @@ checkbox [C-ct] flip TODO
     - [ ] Small/Big unification
     - [ ] Forbid initialization from higher rank
       - Cf 'Initialization of nested types' in the manual.
-    - [X] size_s, rank_s in Ryn:: are broken [ra7]
-    - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
     - [ ] ambiguity / bad init in nested constructors [ra45]
     - [ ] ra::at(A, I) needs nested I, so the obvious ra::at(A, [i j]) doesn't work (although
       view.at([i j]) does). But I would get rid of view.at(i) if ra::at(view, i) worked the same
       way.
-    - [ ] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)`
-      will return a nested expression instead of preserving `A`'s rank [ra33]
-    - [ ] beatable subscripts are not beaten if mixed with non-beatable subscripts. E.g. in
-      A(vector, iota, vector) the iota isn't beaten. [ra33].
     - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] bad uses of assert [ra17]
-    - [X] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 (bad operator=) is cleared up. Cf [ra5].
   - [-] Features [3/17]
     - [ ] generalize cat
     - [-] support std::format
@@ -51,7 +39,6 @@ checkbox [C-ct] flip TODO
     - [ ] make iter work with w/rank.
     - [ ] make iter work with foreign vectors.
     - [ ] Can choose iteration order in plyers. Order is already explicit, just need to expose it.
-    - [X] Merge Ptr and Iota. Why need more than one rank 1 Iterator adaptor.
     - [-] Deduction guides, e.g. ra::Small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
       - [X] rank 1 SmallArray <2023-06-23 Fri 13:24> (not very useful)
       - [ ] rank >1 SmallArray
@@ -59,16 +46,6 @@ checkbox [C-ct] flip TODO
       - [ ] Big
     - [ ] Support ra::len in x in o.len(x).
     - [ ] Shape returns Small not std::array (for static rank expr).
-    - [X] Should be able to reshape iota (??). One idea is to generalize View (so View<iota>, etc.)
-      which is something that newra does. But as long as Container is parent of View, conversion of
-      (Container const &) into (View const &) forces us to have const/nonconst overloads in View
-      (instead of just relying on the constness of (View::p). This is just a mess when View::p isn't
-      a pointer.
-      - [X] Fix relationship between Container and View [4/4]
-        - [X] fwd const/nonconst overloads to View or ViewConst from here.
-        - [X] add const/nonconst casts of Container to View or ViewConst
-        - [X] remove const overloads from View::operator()
-        - [X] make View be View<pointer> and not View<value_type>
     - [ ] Remove inheritance relationship of Container on ViewBig
     - [ ] Should be able to turn ravel iterators (e.g. ViewBig::begin()) into array iterators. Ptr()
       doesn't work for that.
@@ -80,8 +57,6 @@ checkbox [C-ct] flip TODO
       enough. Only it kind of bothers me that they need their own Map-like types while on Views
       it's just a one time op. Propagating ops down Map into leaf Views (a kind of beating) would
       be better.
-    - [X] Support operator <=> <2020-09-15 Tue 13:50>
-      - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
     - [-] Magic subscript len
       - [X] For Big/View in beatable subscripts <2023-07-04 Tue 18:20>
       - [X] For Big/View in unbeatable subscripts <2023-07-05 Wed 12:34>
@@ -92,20 +67,6 @@ checkbox [C-ct] flip TODO
   - [-] Performance [2/4]
     - [ ] bench/bench-stencil* is weird.
     - [ ] Bigd cases in bench-at.
-    - [X] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
-      in case it gets modified, and then it isn't. Do we need Iterator::operator* ?
-    - [X] During traversal (ply) the pattern loc = save_location(it); move flat;
-      it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
-      so this would be cheap. The current design is that move flat can't modify it so it has to be a
-      new object. CellBig is one case where that is costly, because dimv has to be copied along with
-      the pointer to make up a View, even though dimv is constant all through traversal.
-  - [X] Error report, debugging [3/3]
-    - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/ra-12.cc
-      * This was fixed between v8 and v10, see examples/throw.cc.
-    - [X] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.hh:513 init<SS>(SS const & s).
-      - [X] for Container constructors
-      - [X] for Small constructors
-    - [X] General static check on prefix matching <2019-02-06 Wed 12:06>
   - [-] Building, tests [4/6]
     - [X] Build docs with cmake
     - [X] Support RA_USE_BLAS with cmake (linux)
@@ -126,9 +87,6 @@ checkbox [C-ct] flip TODO
       len() would require len(integral constant) overloads possibly -- len(int k) cannot be static
       or not depending on k.
     - [ ] Use if consteval to replace rank/rank_s/size/size_s with just rank/size.
-    - [X] Review Container constructors. Why do we need (&) when we have (const &)?
-      - <2025-07-24 Thu 11:35> was caused by auto && x constructor interfereing.
-        Fixed in 85653fd786c78e339f730699021ebdac39877012
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).
       - [ ] Appropriate ply. Possibly restrict it to rank 1.
@@ -139,7 +97,7 @@ checkbox [C-ct] flip TODO
 
 Some of these aren't bugs in the sense that I expect to solve them, but more like footnotes.
 
-* Numbered issues throughout the source [ra...]
+* Numbered issues through the source [ra..]
   1. [ ]
   2. [ ]
   3. [ ]
@@ -194,9 +152,10 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   30. [ ]
   31. [ ]
   32. [ ]
-  33. [ ] test/frame-old.cc, test/fromb.cc: When mixing beaten & unbeaten subscripts and the
+  33. [X] test/frame-old.cc, test/fromb.cc: When mixing beaten & unbeaten subscripts and the
       unbeaten subscripts go first, the result is a nested expression. This has to be fixed in the
-      view operator()s.
+      view operator()s. Fixed after rewrite of from() e9ed62aa3954dd2e3dc528c51da7269971f9c553
+      <2025-08-22 Fri>.
   34. [ ]
   35. [ ]
   36. [ ]
@@ -216,3 +175,48 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   46. [ ]
   47. [ ] ra/big.hh, test/const.cc, ra/view-ops.hh ...: Review constness in ra/view-ops.hh after the
       Big/ViewBig const fixes after 913d6b531801609cb61bb7f631ddf50de701a802.
+
+* Old bugs or issues
+  - [X] Before merging saveload [1/1]
+    - [X] Fix cellrank.cc: "using View::operator= on sliding view". For that, View::operator= have
+      to be const. That breaks a lot of things
+      - Fixed by duplicating operator= overloads on Container :-\ <2023-11-17 Fri 16:33>
+  - [X] size_s, rank_s in Ryn:: are broken [ra7]
+  - [X] broken with -DNDEBUG (95ac2014bfd86cbc27e3d151f55abaceef628de4 and by <2023-05-26 Fri 15:08> in CI)
+  - [X] subscripting inconsistencies; for example, if `A` is rank>1 and `i` is rank 1, then `A(i)`
+    will return a nested expression instead of preserving `A`'s rank [ra33]
+    - Fixed after rewrite of from() e9ed62aa3954dd2e3dc528c51da7269971f9c553 <2025-08-22 Fri>.
+  - [X] beatable subscripts are not beaten if mixed with non-beatable subscripts. E.g. in
+    A(vector, iota, vector) the iota isn't beaten. [ra33].
+    - Fixed after rewrite of from() e9ed62aa3954dd2e3dc528c51da7269971f9c553 <2025-08-22 Fri>.
+  - [X] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90745 (bad operator=) is cleared up. Cf [ra5].
+  - [X] Error report, debugging [3/3]
+    - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/ra-12.cc
+      * This was fixed between v8 and v10, see examples/throw.cc.
+    - [X] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.hh:513 init<SS>(SS const & s).
+      - [X] for Container constructors
+      - [X] for Small constructors
+    - [X] General static check on prefix matching <2019-02-06 Wed 12:06>
+  - [X] Should be able to reshape iota (??). One idea is to generalize View (so View<iota>, etc.)
+    which is something that newra does. But as long as Container is parent of View, conversion of
+    (Container const &) into (View const &) forces us to have const/nonconst overloads in View
+    (instead of just relying on the constness of (View::p). This is just a mess when View::p isn't
+    a pointer.
+    - [X] Fix relationship between Container and View [4/4]
+      - [X] fwd const/nonconst overloads to View or ViewConst from here.
+      - [X] add const/nonconst casts of Container to View or ViewConst
+      - [X] remove const overloads from View::operator()
+      - [X] make View be View<pointer> and not View<value_type>
+  - [X] Support operator <=> <2020-09-15 Tue 13:50>
+    - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
+  - [X] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
+    in case it gets modified, and then it isn't. Do we need Iterator::operator* ?
+  - [X] During traversal (ply) the pattern loc = save_location(it); move flat;
+    it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
+    so this would be cheap. The current design is that move flat can't modify it so it has to be a
+    new object. CellBig is one case where that is costly, because dimv has to be copied along with
+    the pointer to make up a View, even though dimv is constant all through traversal.
+  - [X] Review Container constructors. Why do we need (&) when we have (const &)?
+    - <2025-07-24 Thu 11:35> was caused by auto && x constructor interfereing.
+      Fixed in 85653fd786c78e339f730699021ebdac39877012
+  - [X] Merge Ptr and Iota. Why need more than one rank 1 Iterator adaptor.

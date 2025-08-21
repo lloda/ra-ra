@@ -304,7 +304,7 @@ concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
     { a.rank() } -> std::same_as<rank_t>;
     { std::decay_t<A>::len_s(k) } -> std::same_as<dim_t>;
-    { a.len(k) } -> std::same_as<dim_t>;
+    { a.len(k) }; // -> std::same_as<dim_t> or has_len;
     { a.adv(k, d) } -> std::same_as<void>;
     { a.step(k) };
     { a.keep(d, i, j) } -> std::same_as<bool>;

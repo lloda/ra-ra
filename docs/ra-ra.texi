@@ -354,9 +354,9 @@ For example:
 @end verbatim
 @end example
 
-Using the right kind of container can result in better performance. Ct shapes do not need to be stored in memory, which matters when you have many small arrays. Ct shape or ct rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
+Using the right kind of container can result in better performance. Compile time shapes do not need to be stored in memory, which matters when you have many small arrays. Compile time shape or compile time rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 
-Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of rt rank, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.}
+Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.}
 
 @c [ma111]
 @example
@@ -456,7 +456,7 @@ A @dfn{view} is similar to a container in that it points to actual data in memor
 
 @example
 @verbatim
-ra::Big<double> c({2, 3}, 0.);     // a rt rank 2x3 array
+ra::Big<double> c({2, 3}, 0.);     // runtime rank 2x3 array
 {
     auto c1 = c(1);                // the second row of array c
     // c1 is destroyed here
@@ -495,7 +495,7 @@ ra::View<int> v2({2, 3}, raw);           // same, default C (row-major) steps
 @end verbatim
 @end example
 
-Containers can be treated as views of the same kind (rt or ct) . If you declare a function
+Containers can be treated as views of the same kind, that is, if you declare a function
 
 @example
 @verbatim
@@ -504,6 +504,11 @@ void f(ra::View<int, 3> & v);
 @end example
 
 you may pass it an object of type @code{ra::Big<int, 3>}.
+
+@node Sequence views
+@subsection Sequence views
+
+Generally, views are views over memory, and @code{view.data()} is a pointer to memory; specifically, the location of element @code{view(0, ...)}. However, it's possible to have views over the integer sequence @code{... -1, 0, 1, ...}. These views are read-only. The object produced by @ref{x-iota,iota} is of this kind. These objects can be used as any other view, but are especially useful when @ref{Slicing,slicing}.
 
 
 @c ------------------------------------------------
@@ -756,15 +761,16 @@ b = map(a, i, j);
 
 The latter is a form of sparse subscripting.
 
-Most array operations (e.g. @code{+}) are defined through @code{map} in this way. For example, @code{A+B+C} is defined as @code{map(+, A, B, C)} (or the equivalent @code{map(+, map(+, A, B), C)}). Not so for the subscripting operation:
+Most array operations (e.g. @code{+}) are defined through @code{map} in this way. For example, @code{A+B+C} is defined as @code{map(+, A, B, C)} (or the equivalent @code{map(+, map(+, A, B), C)}).
+
+However, this is not how the subscripting operation is defined:
 
 @example
 @verbatim
 ra::Big<double, 2> A {{1., 2.}, {3., 4.}};
 ra::Big<int, 1> i = {1, 0};
 ra::Big<int, 1> j = {0, 1};
-// {{A(i₀, j₀), A(i₀, j₁)}, {A(i₁, j₀), A(i₁, j₁)}}
-ra::Big<double, 2> b = A(i, j);
+ra::Big<double, 2> b = A(i, j); // {{A(i₀, j₀), A(i₀, j₁)}, {A(i₁, j₀), A(i₁, j₁)}}
 @end verbatim
 @result{} b = @{@{3., 4.@}, @{1., 2.@}@}
 @end example
@@ -995,7 +1001,7 @@ cout << (A * B(ra::insert<A.rank()>)) << endl; // index elision + prefix matchin
 @cindex view, rank 0
 @cindex rank, runtime
 @cindex rank, compile-time
-When the result of the subscripting operation would have rank 0, the type returned is the type of the view @emph{element} and not a rank-0 view as long as the rank of the result can be determined at compile time. When that's not possible (for instance, the subscripted view has rt rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
+When the result of the subscripting operation would have rank 0, the type returned is the type of the view @emph{element} and not a rank-0 view as long as the rank of the result can be determined at compile time. When that's not possible (for instance, the subscripted view has runtime rank) then a rank-0 view is returned instead. An automatic conversion is defined for rank-0 views, but manual conversion may be needed in some contexts.
 
 @example
 @verbatim
@@ -1014,6 +1020,25 @@ cout << f(b(0, 0)) << endl; // ok, automatic conversion from View<T> to T &
 @end verbatim
 @end example
 
+Generally, the result of @code{A(i, ...)} when @code{A} is a view, or equivalently @code{@ref{x-from,@code{from}}(A, i ...)}, is itself be a view when
+@itemize
+@item
+each of the @code{i ...} is @emph{beatable}, that is, either
+@itemize
+@item
+a scalar index, e.g. @code{4} or @code{ra::len-1},
+@item
+a finite size @ref{Sequence views,sequence view}, e.g. @code{ra::iota(4)},
+@item
+an @ref{x-insert,@code{insert_t}} object,
+@item
+or a @ref{x-dots,@code{dots_t}} object.
+@end itemize
+@item
+the rank can be determined at compile time to be non-zero.
+@end itemize
+
+If @emph{neither} of these conditions is true, then the result of @code{from(A, i ...)} is an opaque expression object of the same kind that is produced by other array operations such as @code{A+A}.
 
 @c ------------------------------------------------
 @node Functions
@@ -1298,7 +1323,7 @@ The fields are as follows:
 @item @code{shape} (@code{shape_t}):
 Whether to print the shape of @var{expr} before @var{expr} itself.
 
-@code{shape_t} is @code{enum @{ defaultshape, noshape, withshape @}}. The default is to print the shape if it is rt and not otherwise.
+@code{shape_t} is @code{enum @{ defaultshape, noshape, withshape @}}. The default is to print the shape if it is runtime and not otherwise.
 @item @code{sep0} (@code{std::string}) --
 Separator between 0-cells.
 @item @code{sepn} (@code{std::string}) --
@@ -1449,11 +1474,11 @@ The following types are accepted as foreign types:
 @cindex built-in array
 @itemize
 @item Built-in arrays
-produce an expression of positive rank and ct size.
+produce an expression of positive rank and compile time size.
 @item @code{std::array}
-produces an expression of rank 1 and ct size.
+produces an expression of rank 1 and compile time size.
 @item Other types conforming to @code{std::ranges::bidirectional_range}, such as @code{std::vector}, @code{std::string}, or @code{std::map}
-produce an expression of rank 1 and rt size.
+produce an expression of rank 1 and runtime size.
 @end itemize
 
 Raw pointers must be brought into @code{ra::} explicitly using the function @ref{x-ptr,@code{ptr}}, which produces an expression of rank 1 and @emph{undefined} size.
@@ -1778,7 +1803,7 @@ They work as follows:
 
 @code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}, but note that @option{-DNDEBUG} will also disable any @code{assert}s that are a result of @code{RA_CHECK=1}.
 
-The performance cost of the runtime checks depends on the program. Without custom @code{RA_ASSERT}, @code{RA_CHECK=1} usually has an acceptable cost, but @code{RA_CHECK=2} is usually more expensive, because having the arguments around to print can prevent optimization. The default is @code{RA_CHECK=1}.
+The performance cost of the runtime checks depends on the program. Without custom @code{RA_ASSERT}, @code{RA_CHECK=1} usually has an acceptable cost, but @code{RA_CHECK=2} can be more expensive, because keeping the arguments around so they can be printed can prevent optimization. The default is @code{RA_CHECK=1}.
 
 The following example shows how errors might be reported depending on @code{RA_CHECK}.
 
@@ -1838,7 +1863,7 @@ cout << B(ll, ll) << endl; // ??
 @section Assignment to views
 
 FIXME
-With rt-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream @code{>>} container may work; do not rely on it.
+With runtime-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream @code{>>} container may work; do not rely on it.
 
 @section View of const vs const view
 
@@ -1923,10 +1948,6 @@ Item 1
 @item
 Item 2
 @end enumerate
-
-@section The cost of @code{RA_CHECK}
-
-FIXME
 
 @c ------------------------------------------------
 @node Internals
@@ -2204,7 +2225,7 @@ See also @ref{x-explode,@code{explode}}.
 @anchor{x-concrete} @defun concrete a
 Convert the argument to a container or value type of the same shape as @var{a}.
 
-If the argument has rt or ct shape, it is the same for the result. Expressions with ct rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+If the argument has runtime or compile time shape, it is the same for the result. Expressions with compile time rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
 
 @c FIXME example
 
@@ -2546,7 +2567,7 @@ This operation does not work on arbitrary array expressions yet. @c TODO FILL
 @anchor{x-swap} @defun swap a b
 Swap the contents of containers @var{a} and @var{b}.
 
-Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of ct rank, then both of them must have the same rank.
+Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of compile time rank, then both of them must have the same rank.
 
 This function reuses @code{std::swap} for same-rank overloads, so it must not be qualified (i.e. use @code{swap(a, b)}, not @code{ra::swap(a, b)}).
 @end defun
@@ -2806,7 +2827,7 @@ See also @ref{x-start,@code{start}}.
 
 @cindex @code{iter}
 @anchor{x-iter} @defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it's interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have rt or ct shape.
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it's interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have runtime or compile time shape.
 
 @example
 @verbatim

@@ -479,14 +479,14 @@ int main()
         {
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2, 1}}>> a0 = a(0);
-                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2, 1}}>> a1 = a(1);
+                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a0 = a(0);
+                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a1 = a(1);
                 a0 = a1;
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2, 1}}>> a0 = a(0);
+                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a0 = a(0);
                 a0 = a(1);
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }
