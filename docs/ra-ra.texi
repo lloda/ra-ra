@@ -11,8 +11,8 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 117.
 
-@set VERSION 28
-@set UPDATED 2024 March 20
+@set VERSION 31
+@set UPDATED 2025 September 09
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1035,7 +1035,7 @@ an @ref{x-insert,@code{insert_t}} object,
 or a @ref{x-dots,@code{dots_t}} object.
 @end itemize
 @item
-the rank can be determined at compile time to be non-zero.
+the rank cannot be determined to be zero at compile time.
 @end itemize
 
 If @emph{neither} of these conditions is true, then the result of @code{from(A, i ...)} is an opaque expression object of the same kind that is produced by other array operations such as @code{A+A}.

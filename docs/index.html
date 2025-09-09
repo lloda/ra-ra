@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- ra:: (version 28, updated 2024 March 20)
+<!-- ra:: (version 31, updated 2025 September 09)
 
 (c) Daniel Llorens 2005-2024
 
@@ -116,7 +116,7 @@ Next: <a href="#Overview" accesskey="n" rel="next">Overview</a> &nbsp; [<a href=
 </div>
 <span id="ra_003a_003a"></span><h1 class="top"><code>ra::</code></h1>
 
-<p><code>ra::</code> (version 28, updated 2024 March 20)
+<p><code>ra::</code> (version 31, updated 2025 September 09)
 </p>
 <p>(c) Daniel Llorens 2005&ndash;2024
 </p>
@@ -1080,7 +1080,7 @@ cout &lt;&lt; f(b(0, 0)) &lt;&lt; endl; // ok, automatic conversion from View&lt
 </li><li> an <a href="#x_002dinsert"><code>insert_t</code></a> object,
 </li><li> or a <a href="#x_002ddots"><code>dots_t</code></a> object.
 </li></ul>
-</li><li> the rank can be determined at compile time to be non-zero.
+</li><li> the rank cannot be determined to be zero at compile time.
 </li></ul>
 
 <p>If <em>neither</em> of these conditions is true, then the result of <code>from(A, i ...)</code> is an opaque expression object of the same kind that is produced by other array operations such as <code>A+A</code>.
@@ -1825,7 +1825,7 @@ must have one of the values 0, 1, or 2.
 
 <p><code>ra::</code> contains uses of <code>assert</code> for checking invariants or for sanity checks that are separate from uses of <code>RA_ASSERT</code>. Those can be disabled in the usual way with <samp>-DNDEBUG</samp>, but note that <samp>-DNDEBUG</samp> will also disable any <code>assert</code>s that are a result of <code>RA_CHECK=1</code>.
 </p>
-<p>The performance cost of the runtime checks depends on the program. Without custom <code>RA_ASSERT</code>, <code>RA_CHECK=1</code> usually has an acceptable cost, but <code>RA_CHECK=2</code> is usually more expensive, because having the arguments around to print can prevent optimization. The default is <code>RA_CHECK=1</code>.
+<p>The performance cost of the runtime checks depends on the program. Without custom <code>RA_ASSERT</code>, <code>RA_CHECK=1</code> usually has an acceptable cost, but <code>RA_CHECK=2</code> can be more expensive, because keeping the arguments around so they can be printed can prevent optimization. The default is <code>RA_CHECK=1</code>.
 </p>
 <p>The following example shows how errors might be reported depending on <code>RA_CHECK</code>.
 </p>
@@ -1879,7 +1879,6 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <li><a href="#Initialization-of-nested-types" accesskey="6">Initialization of nested types</a></li>
 <li><a href="#Chained-assignment" accesskey="7">Chained assignment</a></li>
 <li><a href="#Unregistered-scalar-types" accesskey="8">Unregistered scalar types</a></li>
-<li><a href="#The-cost-of-RA_005fCHECK" accesskey="9">The cost of <code>RA_CHECK</code></a></li>
 </ul>
 <div class="section" id="Reuse-of-expression-objects">
 <h3 class="section">4.1 Reuse of expression objects</h3>
@@ -1990,12 +1989,6 @@ When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as 
 </li><li> Item 2
 </li></ol>
 
-</div>
-<div class="section" id="The-cost-of-RA_005fCHECK">
-<h3 class="section">4.9 The cost of <code>RA_CHECK</code></h3>
-
-<p>FIXME
-</p>
 <hr>
 </div>
 </div>
@@ -2089,7 +2082,7 @@ Next: <a href="#Traversal" accesskey="n" rel="next">Traversal</a>, Previous: <a 
 
 <p>The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension <code>k</code>≥0, terms that have rank less or equal than <code>k</code> are ignored, following the prefix matching principle. Likewise terms where dimension <code>k</code> has undefined length (such as <code>iota()</code> or dimensions created with <code>insert</code>) are ignored. All the other terms must match.
 </p>
-<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v28) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
+<p>Then we select a order of traversal. <code>ra::</code> supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v31) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn&rsquo;t be relied upon). <code>ply_ravel</code> will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 </p>
 <p>Finally we select a traversal method. <code>ra::</code> has two traversal methods: <code>ply_fixed</code> can be used when the rank and the traversal order are known at compile time, and <code>ply_ravel</code> can be used in the general case.
 </p>
