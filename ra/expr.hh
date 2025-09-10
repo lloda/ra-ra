@@ -48,7 +48,7 @@ namespace ra {
 // Assign ops for Iterators, might be different for Views. See local ASSIGNOPS elsewhere.
 
 #define RA_ASSIGNOPS_LINE(OP)                                           \
-    for_each([](auto && y, auto && x) { /* [ra5] */ RA_FW(y) OP RA_FW(x); }, *this, RA_FW(x))
+    for_each([](auto && y, auto && x){ /* [ra5] */ RA_FW(y) OP RA_FW(x); }, *this, RA_FW(x))
 #define RA_ASSIGNOPS(OP) \
     constexpr void operator OP(auto && x) { RA_ASSIGNOPS_LINE(OP); }
 #define RA_ASSIGNOPS_DEFAULT_SET \
@@ -484,7 +484,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr static dim_t
     len_s(int k, bool check=false)
     {
-        auto f = [&k, &check]<class A>(dim_t s) {
+        auto f = [&k, &check]<class A>(dim_t s){
             if (constexpr rank_t r=rank_s<A>(); r<0 || k<r) {
                 dim_t sk = [&]{ if constexpr (is_match<A>) return A::len_s(k, check); else return A::len_s(k); }();
                 return (MIS==sk) ? MIS : check && (ANY==sk || ANY==s) ? ANY : choose_len(sk, s);
@@ -502,8 +502,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr dim_t
     len(int k) const requires (!(requires { std::decay_t<P>::len(k); } && ...))
     {
-        auto f = [&k](auto const & a, dim_t s)
-        {
+        auto f = [&k](auto const & a, dim_t s){
             if (k<ra::rank(a)) {
                 dim_t sk = a.len(k);
                 return (MIS==sk) ? MIS : choose_len(sk, s);

@@ -358,7 +358,7 @@ shared_borrowing(ViewBig<T *, RANK> & raw)
     Shared<T, RANK> a;
     a.dimv = raw.dimv;
     a.cp = raw.cp;
-    a.store = std::shared_ptr<T>(raw.data(), [](T *) {});
+    a.store = std::shared_ptr<T>(raw.data(), [](T *){});
     return a;
 }
 
@@ -456,7 +456,7 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
     }
     auto sa = shape(a);
 // FIXME should be able to reshape Scalar etc.
-    ViewBig<P, ra::size_s(sb)> b(map([](auto i) { return Dim { UNB, 0 }; }, ra::iota(ra::size(sb))), a.data());
+    ViewBig<P, ra::size_s(sb)> b(map([](auto i){ return Dim { UNB, 0 }; }, ra::iota(ra::size(sb))), a.data());
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
@@ -498,14 +498,14 @@ stencil(ViewBig<P, N> const & a, LO && lo, HI && hi)
     s.cp = a.data();
     ra::resize(s.dimv, 2*a.rank());
     RA_CK(every(lo>=0) && every(hi>=0), "Bad stencil bounds lo ", fmt(nstyle, lo), " hi ", fmt(nstyle, hi), ".");
-    for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
-             {
+    for_each([](auto & dims, auto && dima, auto && lo, auto && hi){
                  RA_CK(dima.len>=lo+hi, "Stencil is too large for array.");
                  dims = { dima.len-lo-hi, dima.step };
              },
              ptr(s.dimv.data()), a.dimv, lo, hi);
-    for_each([](auto & dims, auto && dima, auto && lo, auto && hi)
-             { dims = { lo+hi+1, dima.step }; },
+    for_each([](auto & dims, auto && dima, auto && lo, auto && hi) {
+                 dims = { lo+hi+1, dima.step };
+             },
              ptr(s.dimv.data()+a.rank()), a.dimv, lo, hi);
     return s;
 }
@@ -574,8 +574,8 @@ collapse(ViewBig<sup_t *, RANK> const & a)
     using sub_v = value_t<sub_t>;
     constexpr int subtype = sizeof(super_v)/sizeof(sub_t);
     constexpr int SUBR = rank_s<sup_t>() - rank_s<sub_t>();
-    static auto gstep = [](int i) { if constexpr (is_scalar<sup_t>) return 1; else return sup_t::step(i); };
-    static auto glen = [](int i) { if constexpr (is_scalar<sup_t>) return 1; else return sup_t::len(i); };
+    static auto gstep = [](int i){ if constexpr (is_scalar<sup_t>) return 1; else return sup_t::step(i); };
+    static auto glen = [](int i){ if constexpr (is_scalar<sup_t>) return 1; else return sup_t::len(i); };
     ViewBig<sub_t *, rank_sum(RANK, SUBR+int(subtype>1))> b;
     resize(b.dimv, a.rank()+SUBR+int(subtype>1));
     constexpr dim_t r = sizeof(sup_t)/sizeof(sub_t);

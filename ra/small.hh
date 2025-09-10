@@ -66,7 +66,7 @@ shape(auto const & v, auto && e)
         RA_CK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
         return v.len(k);
     } else {
-        return map([&v](auto && e) { return shape(v, e); }, wlen(ra::rank(v), RA_FW(e)));
+        return map([&v](auto && e){ return shape(v, e); }, wlen(ra::rank(v), RA_FW(e)));
     }
 }
 
@@ -488,7 +488,7 @@ template <class T, class Dimv> requires (requires { T(); } && (0<ssize(Dimv::val
 struct nested_arg<T, Dimv>
 {
     constexpr static auto n = ssize(Dimv::value)-1;
-    constexpr static auto s = std::apply([](auto ... i) { return std::array<dim_t, n> { Dimv::value[i].len ... }; }, mp::iota<n, 1> {});
+    constexpr static auto s = std::apply([](auto ... i){ return std::array<dim_t, n> { Dimv::value[i].len ... }; }, mp::iota<n, 1> {});
     using sub = std::conditional_t<0==n, T, SmallArray<T, ic_t<default_dims(s)>>>;
 };
 
@@ -510,7 +510,7 @@ struct ViewSmall
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
     constexpr P data() const { return cp; }
-    consteval static dim_t size() { return std::apply([](auto ... i) { return (i.len * ... * 1); }, dimv); }
+    consteval static dim_t size() { return std::apply([](auto ... i){ return (i.len * ... * 1); }, dimv); }
     consteval bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
     constexpr explicit ViewSmall(P cp_): cp(cp_) {}
@@ -565,7 +565,7 @@ start(is_builtin_array auto && t)
 {
     using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
     return ViewSmall<T *, ic_t<default_dims(ra::shape(t))>>(
-        [](this auto const & self, auto && t) {
+        [](this auto const & self, auto && t){
             using T = std::remove_cvref_t<decltype(t)>;
             if constexpr (1 < std::rank_v<T>) {
                 static_assert(0 < std::extent_v<T, 0>);
@@ -592,7 +592,7 @@ constexpr size_t align_req<T, N> = alignof(extvector<T, N>);
 template <class T, class Dimv, class ... nested_args>
 struct
 #if RA_OPT_SMALLVECTOR==1
-alignas(align_req<T, std::apply([](auto ... i) { return (i.len * ... * 1); }, Dimv::value)>)
+alignas(align_req<T, std::apply([](auto ... i){ return (i.len * ... * 1); }, Dimv::value)>)
 #endif
 SmallArray<T, Dimv, std::tuple<nested_args ...>>
 {
@@ -601,7 +601,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     constexpr static dim_t len(int k) { return dimv[k].len; }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
-    consteval static dim_t size() { return std::apply([](auto ... i) { return (i.len * ... * 1); }, dimv); }
+    consteval static dim_t size() { return std::apply([](auto ... i){ return (i.len * ... * 1); }, dimv); }
 
     T cp[size()];
     [[no_unique_address]] struct {} prevent_zero_size; // or reuse std::array

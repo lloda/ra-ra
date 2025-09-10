@@ -45,7 +45,7 @@ struct TestRecorder
     {
         using T = ncvalue_t<decltype(a)>;
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
-        return early(map([&c](auto const & a) { if (c<a) c=a; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; }, a), c);
+        return early(map([&c](auto const & a){ if (c<a) c=a; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; }, a), c);
     }
 
     enum verbose_t { QUIET, // as NOISY if failed, else no output
@@ -143,7 +143,7 @@ struct TestRecorder
     bool
     test_seq(auto && ref, auto && a, RA_CURRENT_LOC)
     {
-        return test_scomp(ref, a, [](auto && a, auto && b) { return a==b; }, "should be strictly ==", loc);
+        return test_scomp(ref, a, [](auto && a, auto && b){ return a==b; }, "should be strictly ==", loc);
     }
 
 // where() is used to match shapes if either REF or A don't't have one.
@@ -178,7 +178,7 @@ struct TestRecorder
     bool                                                                \
     NAME(auto && ref, auto && a, RA_CURRENT_LOC)                        \
     {                                                                   \
-        return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b) { return every(a OP b); }, \
+        return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b){ return every(a OP b); }, \
                          "should be " STRINGIZE(OP), loc);              \
     }
     RA_TEST_COMP(test_eq, ==)
@@ -340,16 +340,14 @@ struct Benchmark
     once_f(auto && g, auto && ... a)
     {
         clock::duration empty;
-        g([&](auto && f)
-          {
+        g([&](auto && f) {
               auto t0 = clock::now();
               empty = clock::now()-t0;
           }, RA_FW(a) ...);
 
         ra::Big<clock::duration, 1> times;
         for (int k=0; k<runs_; ++k) {
-            g([&](auto && f)
-              {
+            g([&](auto && f) {
                   auto t0 = clock::now();
                   for (int i=0; i<repeats_; ++i) { f(); }
                   clock::duration full = clock::now()-t0;
@@ -361,12 +359,12 @@ struct Benchmark
     auto
     run(auto && f, auto && ... a)
     {
-        return ra::concrete(ra::from([this, &f](auto && ... b) { return this->once(f, b ...); }, a ...));
+        return ra::concrete(ra::from([this, &f](auto && ... b){ return this->once(f, b ...); }, a ...));
     }
     auto
     run_f(auto && f, auto && ... a)
     {
-        return ra::concrete(ra::from([this, &f](auto && ... b) { return this->once_f(f, b ...); }, a ...));
+        return ra::concrete(ra::from([this, &f](auto && ... b){ return this->once_f(f, b ...); }, a ...));
     }
 };
 

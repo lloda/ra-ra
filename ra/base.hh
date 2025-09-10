@@ -304,7 +304,7 @@ concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
 {
     { a.rank() } -> std::same_as<rank_t>;
     { std::decay_t<A>::len_s(k) } -> std::same_as<dim_t>;
-    { a.len(k) }; // -> std::same_as<dim_t> or has_len;
+    { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
     { a.step(k) };
     { a.keep(d, i, j) } -> std::same_as<bool>;
@@ -389,7 +389,7 @@ constexpr auto shape_s = []{
     if constexpr (constexpr rank_t rs=rank_s<V>(); 0==rs) {
         return std::array<dim_t, 0> {};
     } else if constexpr (is_builtin_array<V>) {
-        return std::apply([](auto ... i) { return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
+        return std::apply([](auto ... i){ return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
     } else if constexpr (requires (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
         return std::array { dim_t(std::tuple_size_v<V>) };
     } else if constexpr (is_fov<V> && requires { V::extent; }) {
@@ -397,7 +397,7 @@ constexpr auto shape_s = []{
     } else if constexpr (is_fov<V>) {
         return std::array { ANY };
     } else {
-        return std::apply([](auto ... i) { return std::array { V::len_s(i) ... }; }, mp::iota<rs> {});
+        return std::apply([](auto ... i){ return std::array { V::len_s(i) ... }; }, mp::iota<rs> {});
     }
 }();
 
@@ -441,7 +441,7 @@ shape(V const & v)
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); 1==rs) {
         return std::array<dim_t, 1> { ra::size(v) };
     } else if constexpr (ANY!=rs) {
-        return std::apply([&v](auto ... i) { return std::array { v.len(i) ... }; }, mp::iota<rs> {});
+        return std::apply([&v](auto ... i){ return std::array { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         return std::ranges::to<vector_default_init<dim_t>>(
             std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k){ return v.len(k); }));

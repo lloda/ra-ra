@@ -287,7 +287,7 @@ template <class T>
 constexpr auto
 pack(auto && ... a)
 {
-    return map([](auto && ... a) { return T { RA_FW(a) ... }; }, RA_FW(a) ...);
+    return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...);
 }
 
 // needs nested array for I, but one can use iter<-1> with rank 2
@@ -353,20 +353,20 @@ FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
 constexpr bool
 any(auto && a)
 {
-    return early(map([](bool x) { return x ? std::make_optional(true) : std::nullopt; }, RA_FW(a)), false);
+    return early(map([](bool x){ return x ? std::make_optional(true) : std::nullopt; }, RA_FW(a)), false);
 }
 
 constexpr bool
 every(auto && a)
 {
-    return early(map([](bool x) { return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true);
+    return early(map([](bool x){ return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true);
 }
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
 constexpr dim_t
 index(auto && a)
 {
-    return early(map([](auto && a, auto && i) { return bool(a) ? std::make_optional(i) : std::nullopt; },
+    return early(map([](auto && a, auto && i){ return bool(a) ? std::make_optional(i) : std::nullopt; },
                      RA_FW(a), ra::iota(ra::start(a).len(0))),
                  ra::dim_t(-1));
 }
@@ -374,7 +374,7 @@ index(auto && a)
 constexpr bool
 lexical_compare(auto && a, auto && b)
 {
-    return early(map([](auto && a, auto && b) { return a==b ? std::nullopt : std::make_optional(a<b); },
+    return early(map([](auto && a, auto && b){ return a==b ? std::nullopt : std::make_optional(a<b); },
                      RA_FW(a), RA_FW(b)),
                  false);
 }
@@ -385,7 +385,7 @@ amin(auto && a)
     using std::min, std::numeric_limits;
     using T = ncvalue_t<decltype(a)>;
     T c = numeric_limits<T>::has_infinity ? numeric_limits<T>::infinity() : numeric_limits<T>::max();
-    for_each([&c](auto && a) { if (a<c) { c=a; } }, a);
+    for_each([&c](auto && a){ if (a<c) { c=a; } }, a);
     return c;
 }
 
@@ -395,7 +395,7 @@ amax(auto && a)
     using std::max, std::numeric_limits;
     using T = ncvalue_t<decltype(a)>;
     T c = numeric_limits<T>::has_infinity ? -numeric_limits<T>::infinity() : numeric_limits<T>::lowest();
-    for_each([&c](auto && a) { if (c<a) { c=a; } }, a);
+    for_each([&c](auto && a){ if (c<a) { c=a; } }, a);
     return c;
 }
 
@@ -408,7 +408,7 @@ refmin(A && a, Less && less = {})
     RA_CK(a.size()>0, "refmin requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
-    for_each([&less, &p](auto & a) { if (less(a, *p)) { p=&a; } }, s);
+    for_each([&less, &p](auto & a){ if (less(a, *p)) { p=&a; } }, s);
     return *p;
 }
 
@@ -419,7 +419,7 @@ refmax(A && a, Less && less = {})
     RA_CK(a.size()>0, "refmax requires nonempty argument.");
     decltype(auto) s = ra::start(a);
     auto p = &(*s);
-    for_each([&less, &p](auto & a) { if (less(*p, a)) { p=&a; } }, s);
+    for_each([&less, &p](auto & a){ if (less(*p, a)) { p=&a; } }, s);
     return *p;
 }
 
@@ -427,7 +427,7 @@ constexpr auto
 sum(auto && a)
 {
     auto c = concrete_type<ncvalue_t<decltype(a)>>(0);
-    for_each([&c](auto && a) { c+=a; }, a);
+    for_each([&c](auto && a){ c+=a; }, a);
     return c;
 }
 
@@ -435,7 +435,7 @@ constexpr auto
 prod(auto && a)
 {
     auto c = concrete_type<ncvalue_t<decltype(a)>>(1);
-    for_each([&c](auto && a) { c*=a; }, a);
+    for_each([&c](auto && a){ c*=a; }, a);
     return c;
 }
 
@@ -447,7 +447,7 @@ constexpr auto
 dot(auto && a, auto && b)
 {
     std::decay_t<decltype(VAL(a) * VAL(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { maybe_fma(a, b, c); }, RA_FW(a), RA_FW(b));
+    for_each([&c](auto && a, auto && b){ maybe_fma(a, b, c); }, RA_FW(a), RA_FW(b));
     return c;
 }
 
@@ -455,7 +455,7 @@ constexpr auto
 cdot(auto && a, auto && b)
 {
     std::decay_t<decltype(conj(VAL(a)) * VAL(b))> c(0.);
-    for_each([&c](auto && a, auto && b) { maybe_fma_conj(a, b, c); }, RA_FW(a), RA_FW(b));
+    for_each([&c](auto && a, auto && b){ maybe_fma_conj(a, b, c); }, RA_FW(a), RA_FW(b));
     return c;
 }
 
@@ -463,7 +463,7 @@ constexpr auto
 reduce_sqrm(auto && a)
 {
     std::decay_t<decltype(sqrm(VAL(a)))> c(0.);
-    for_each([&c](auto && a) { maybe_fma_sqrm(a, c); }, RA_FW(a));
+    for_each([&c](auto && a){ maybe_fma_sqrm(a, c); }, RA_FW(a));
     return c;
 }
 

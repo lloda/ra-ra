@@ -408,7 +408,7 @@ struct std::formatter<A>
         auto a = ra::start(a_);
         validate(a);
         auto sha = ra::shape(a);
-        assert(every(ra::start(sha)>=0));
+        for (int k=0; k<ra::size(sha); ++k) { assert(sha[k]>=0); } // no ops yet
         auto out = ctx.out();
 // always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
         if (fmt.shape==ra::withshape || (fmt.shape==ra::defaultshape && size_s(a)==ra::ANY)) {
