@@ -58,18 +58,6 @@ filldimv(auto const & shape, auto & dimv)
 consteval auto
 default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldimv(lv, dv); return dv; };
 
-constexpr auto
-shape(auto const & v, auto && e)
-{
-    if constexpr (is_scalar<decltype(e)>) {
-        dim_t k = wlen(ra::rank(v), RA_FW(e));
-        RA_CK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
-        return v.len(k);
-    } else {
-        return map([&v](auto && e){ return shape(v, e); }, wlen(ra::rank(v), RA_FW(e)));
-    }
-}
-
 constexpr void
 resize(auto & a, dim_t s)
 {
@@ -83,6 +71,196 @@ resize(auto & a, dim_t s)
 
 
 // --------------------
+// view iterators (FIXME maybe to expr.hh, with Ptr. These must come before start().)
+// --------------------
+
+template <auto v, int n>
+constexpr auto vdrop = []{
+    std::array<Dim, ra::size(v)-n> r;
+    for (int i=0; i<ra::size(r); ++i) { r[i] = v[n+i]; }
+    return r;
+}();
+
+template <class T, class Dimv> struct ViewSmall;
+template <class T, rank_t RANK=ANY> struct ViewBig;
+
+constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
+constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
+// cr>=0 is cell rank, -cr>0 is frame rank. TODO frame rank 0? maybe ra::len
+constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
+constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
+
+template <class P, class Dimv, class Spec>
+struct CellSmall
+{
+    constexpr static rank_t spec = maybe_any<Spec>;
+    constexpr static rank_t fullr = size_s(Dimv::value);
+    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
+    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
+
+    constexpr static auto dimv = Dimv::value;
+    ViewSmall<P, ic_t<vdrop<dimv, framer>>> c;
+    constexpr explicit CellSmall(P p): c { p } {}
+
+    consteval static rank_t rank() { return framer; }
+    constexpr static dim_t len(int k) { return dimv[k].len; }
+    constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
+    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
+};
+
+template <class P, class Dimv, class Spec>
+struct CellBig
+{
+    constexpr static rank_t spec = maybe_any<Spec>;
+    constexpr static rank_t fullr = size_s<Dimv>();
+    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
+    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
+
+    Dimv dimv;
+    ViewBig<P, cellr> c;
+    [[no_unique_address]] Spec const dspec;
+    constexpr CellBig(P cp, Dimv dimv_, Spec dspec_=Spec {}): dimv(dimv_), c(cp), dspec(dspec_)
+    {
+        rank_t dcell=rank_cell(ra::size(dimv), dspec), dframe=rank();
+        RA_CK(0<=dframe && 0<=dcell, "Bad cell rank ", dcell, " for full rank ", ssize(dimv), ").");
+        resize(c.dimv, dcell);
+        for (int k=0; k<dcell; ++k) {
+            c.dimv[k] = dimv[dframe+k];
+        }
+    }
+
+    consteval static rank_t rank() requires (ANY!=framer) { return framer; }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
+    constexpr dim_t len(int k) const { return dimv[k].len; }
+    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
+    constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
+};
+
+template <class P, class Dimv, class Spec>
+struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>
+{
+    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>;
+    using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::rank;
+    using View = decltype(std::declval<Base>().c);
+    static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
+
+    RA_ASSIGNOPS_SELF(Cell)
+    RA_ASSIGNOPS_DEFAULT_SET
+
+    constexpr auto
+    indexer(P cp, Iterator auto && p) const
+    {
+        if constexpr (ANY==rank_s(p)) {
+            RA_CK(1==ra::rank(p), "Bad rank ", ra::rank(p), " for subscript.");
+        } else {
+            static_assert(1==rank_s(p), "Bad rank for subscript.");
+        }
+        if constexpr (ANY==size_s(p) || ANY==framer) {
+            RA_CK(p.len(0) >= rank(), "Too few indices.");
+        } else {
+            static_assert(size_s(p) >= framer, "Too few indices.");
+        }
+        for (rank_t k=0; k<rank(); ++k, p.mov(p.step(0))) {
+            auto i = *p;
+            RA_CK(inside(i, len(k)) || (UNB==len(k) && 0==step(k)));
+            cp += i*step(k);
+        }
+        return cp;
+    }
+
+    constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
+    constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
+    constexpr decltype(auto) at(auto const & i) const requires (0==cellr) { return *indexer(c.cp, start(i)); }
+    constexpr auto at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(d.cp, start(i)); return d; }
+    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
+    constexpr View const & operator*() const requires (0!=cellr) { return c; }
+    constexpr operator decltype(c.cp[0]) () const { return to_scalar(*this); }
+    constexpr auto save() const { return c.cp; }
+    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
+    constexpr void mov(dim_t d) { c.cp += d; }
+};
+
+constexpr decltype(auto)
+at1(auto const & a, auto const & i)
+{
+// can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
+    if constexpr (constexpr rank_t crank = rank_diff(rank_s(a), ra::size_s(i)); ANY==crank) {
+        return a.template iter(rank(a)-ra::size(i)).at(i);
+    } else {
+        return a.template iter<crank>().at(i);
+    }
+}
+
+constexpr auto
+shape(auto const & v, auto && e)
+{
+    if constexpr (is_scalar<decltype(e)>) {
+        dim_t k = wlen(ra::rank(v), RA_FW(e));
+        RA_CK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
+        return v.len(k);
+    } else {
+        return map([&v](auto && e){ return shape(v, e); }, wlen(ra::rank(v), RA_FW(e)));
+    }
+}
+
+constexpr auto
+start(is_builtin_array auto && t)
+{
+    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
+    return Cell<T *, ic_t<default_dims(ra::shape(t))>, ic_t<0>>(
+        [](this auto const & self, auto && t){
+            using T = std::remove_cvref_t<decltype(t)>;
+            if constexpr (1 < std::rank_v<T>) {
+                static_assert(0 < std::extent_v<T, 0>);
+                return self(*std::data(t));
+            } else {
+                return std::data(t);
+            }
+        }(t));
+}
+
+
+// ---------------------
+// replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
+// ---------------------
+
+template <>
+struct WLen<Len>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return Scalar {ln}; }
+};
+
+template <class Op, Iterator ... P, int ... I> requires (has_len<P> || ...)
+struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return map_(RA_FW(e).op, wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
+};
+
+template <Iterator ... P, int ... I> requires (has_len<P> || ...)
+struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return pick(wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
+};
+
+template <class I> requires (has_len<I>)
+struct WLen<Seq<I>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return Seq { VAL(wlen(ln, e.i)) }; }
+};
+
+template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
+struct WLen<Ptr<I, N, S>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return Ptr(wlen(ln, e.cp), VAL(wlen(ln, e.n)), VAL(wlen(ln, e.s))); }
+};
+
+
+// --------------------
 // outer product / slicing
 // --------------------
 
@@ -92,9 +270,6 @@ constexpr auto all = dots<1>;
 
 template <int n> struct insert_t { constexpr static int N=n; static_assert(n>=0); };
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
-
-template <class T, class Dimv> struct ViewSmall;
-template <class T, rank_t RANK=ANY> struct ViewBig;
 
 template <int rank> constexpr auto
 ii(dim_t (&&len)[rank], dim_t o, dim_t (&&step)[rank])
@@ -351,125 +526,6 @@ from(A && a, auto && ...  i)
 }
 
 
-// --------------------
-// view iterators
-// --------------------
-
-template <auto v, int n>
-constexpr auto vdrop = []{
-    std::array<Dim, ra::size(v)-n> r;
-    for (int i=0; i<ra::size(r); ++i) { r[i] = v[n+i]; }
-    return r;
-}();
-
-constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
-constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
-// cr>=0 is cell rank, -cr>0 is frame rank. TODO frame rank 0? maybe ra::len
-constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
-constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
-
-template <class P, class Dimv, class Spec>
-struct CellSmall
-{
-    constexpr static rank_t spec = maybe_any<Spec>;
-    constexpr static rank_t fullr = size_s(Dimv::value);
-    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
-    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
-
-    constexpr static auto dimv = Dimv::value;
-    ViewSmall<P, ic_t<vdrop<dimv, framer>>> c;
-    constexpr explicit CellSmall(P p): c { p } {}
-
-    consteval static rank_t rank() { return framer; }
-    constexpr static dim_t len(int k) { return dimv[k].len; }
-    constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
-    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
-};
-
-template <class P, class Dimv, class Spec>
-struct CellBig
-{
-    constexpr static rank_t spec = maybe_any<Spec>;
-    constexpr static rank_t fullr = size_s<Dimv>();
-    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
-    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
-
-    Dimv dimv;
-    ViewBig<P, cellr> c;
-    [[no_unique_address]] Spec const dspec;
-    constexpr CellBig(P cp, Dimv dimv_, Spec dspec_=Spec {}): dimv(dimv_), c(cp), dspec(dspec_)
-    {
-        rank_t dcell=rank_cell(ra::size(dimv), dspec), dframe=rank();
-        RA_CK(0<=dframe && 0<=dcell, "Bad cell rank ", dcell, " for full rank ", ssize(dimv), ").");
-        resize(c.dimv, dcell);
-        for (int k=0; k<dcell; ++k) {
-            c.dimv[k] = dimv[dframe+k];
-        }
-    }
-
-    consteval static rank_t rank() requires (ANY!=framer) { return framer; }
-    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
-    constexpr dim_t len(int k) const { return dimv[k].len; }
-    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
-    constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
-};
-
-template <class P, class Dimv, class Spec>
-struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>
-{
-    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>;
-    using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::rank;
-    using View = decltype(std::declval<Base>().c);
-    static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
-
-    RA_ASSIGNOPS_SELF(Cell)
-    RA_ASSIGNOPS_DEFAULT_SET
-
-    constexpr auto
-    indexer(P cp, Iterator auto && p) const
-    {
-        if constexpr (ANY==rank_s(p)) {
-            RA_CK(1==ra::rank(p), "Bad rank ", ra::rank(p), " for subscript.");
-        } else {
-            static_assert(1==rank_s(p), "Bad rank for subscript.");
-        }
-        if constexpr (ANY==size_s(p) || ANY==framer) {
-            RA_CK(p.len(0) >= rank(), "Too few indices.");
-        } else {
-            static_assert(size_s(p) >= framer, "Too few indices.");
-        }
-        for (rank_t k=0; k<rank(); ++k, p.mov(p.step(0))) {
-            auto i = *p;
-            RA_CK(inside(i, len(k)) || (UNB==len(k) && 0==step(k)));
-            cp += i*step(k);
-        }
-        return cp;
-    }
-
-    constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
-    constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(auto) at(auto const & i) const requires (0==cellr) { return *indexer(c.cp, start(i)); }
-    constexpr auto at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(d.cp, start(i)); return d; }
-    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
-    constexpr View const & operator*() const requires (0!=cellr) { return c; }
-    constexpr operator decltype(c.cp[0]) () const { return to_scalar(*this); }
-    constexpr auto save() const { return c.cp; }
-    constexpr void load(decltype(c.cp) cp) { c.cp = cp; }
-    constexpr void mov(dim_t d) { c.cp += d; }
-};
-
-constexpr decltype(auto)
-at1(auto const & a, auto const & i)
-{
-// can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
-    if constexpr (constexpr rank_t crank = rank_diff(rank_s(a), ra::size_s(i)); ANY==crank) {
-        return a.template iter(rank(a)-ra::size(i)).at(i);
-    } else {
-        return a.template iter<crank>().at(i);
-    }
-}
-
-
 // ---------------------
 // Small view and containers
 // ---------------------
@@ -559,22 +615,6 @@ struct ViewSmall
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) at(auto const & i) const { return at1(*this, i); }
 };
-
-constexpr auto
-start(is_builtin_array auto && t)
-{
-    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
-    return ViewSmall<T *, ic_t<default_dims(ra::shape(t))>>(
-        [](this auto const & self, auto && t){
-            using T = std::remove_cvref_t<decltype(t)>;
-            if constexpr (1 < std::rank_v<T>) {
-                static_assert(0 < std::extent_v<T, 0>);
-                return self(*std::data(t));
-            } else {
-                return std::data(t);
-            }
-        }(t)).iter();
-}
 
 #if defined (__clang__)
 template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;

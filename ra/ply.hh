@@ -16,63 +16,6 @@
 
 namespace ra {
 
-
-// ---------------------
-// replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
-// ---------------------
-
-template <class Ln, class E>
-constexpr decltype(auto)
-wlen(Ln ln, E && e)
-{
-    static_assert(std::is_integral_v<Ln> || is_constant<Ln>);
-    if constexpr (has_len<E>) {
-        return WLen<std::decay_t<E>>::f(ln, RA_FW(e));
-    } else {
-        return RA_FW(e);
-    }
-}
-
-template <>
-struct WLen<Len>
-{
-    constexpr static auto
-    f(auto ln, auto && e) { return Scalar {ln}; }
-};
-
-template <class Op, Iterator ... P, int ... I> requires (has_len<P> || ...)
-struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
-{
-    constexpr static auto
-    f(auto ln, auto && e) { return map_(RA_FW(e).op, wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
-};
-
-template <Iterator ... P, int ... I> requires (has_len<P> || ...)
-struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
-{
-    constexpr static auto
-    f(auto ln, auto && e) { return pick(wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
-};
-
-template <class I> requires (has_len<I>)
-struct WLen<Seq<I>>
-{
-    constexpr static auto
-    f(auto ln, auto && e) { return Seq { VAL(wlen(ln, e.i)) }; }
-};
-
-template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
-struct WLen<Ptr<I, N, S>>
-{
-    constexpr static auto
-    f(auto ln, auto && e) { return Ptr(wlen(ln, e.cp), VAL(wlen(ln, e.n)), VAL(wlen(ln, e.s))); }
-};
-
-
-// --------------
-// ply
-// --------------
-
 struct Nop {};
 
 // run time order/rank.

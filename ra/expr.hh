@@ -60,7 +60,7 @@ namespace ra {
     constexpr TYPE(TYPE && x) = default;                                \
     constexpr TYPE(TYPE const & x) = default;
 
-// Contextual len: a unique object. See wlen in ply.hh.
+// Contextual len: a unique object. See wlen in small.hh.
 
 constexpr struct Len
 {
@@ -80,6 +80,20 @@ constexpr struct Len
 template <class E> struct WLen;                                // defined in ply.hh. FIXME C++ p2481
 template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FW(e)); };
 template <has_len E> constexpr bool is_special_def<E> = true;  // protect exprs with Len from reduction.
+
+template <class Ln, class E>
+constexpr decltype(auto)
+wlen(Ln ln, E && e)
+{
+    static_assert(std::is_integral_v<Ln> || is_constant<Ln>);
+    if constexpr (has_len<E>) {
+        return WLen<std::decay_t<E>>::f(ln, RA_FW(e));
+    } else {
+        return RA_FW(e);
+    }
+}
+
+// Sequence iterator.
 
 template <class I>
 struct Seq
