@@ -250,6 +250,11 @@ constexpr auto begin(is_ra auto && a) requires (requires { a.begin(); }) { stati
 constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.end(); }
 constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
 
+
+// ---------------------------
+// i/o
+// ---------------------------
+
 // fmt/ostream.h or https://stackoverflow.com/a/75738462
 struct ostream_formatter: std::formatter<std::basic_string_view<char>>
 {
@@ -261,11 +266,6 @@ struct ostream_formatter: std::formatter<std::basic_string_view<char>>
         return std::formatter<std::basic_string_view<char>, char>::format(ss.view(), ctx);
     }
 };
-
-
-// ---------------------------
-// i/o
-// ---------------------------
 
 template <class A>
 constexpr std::ostream &

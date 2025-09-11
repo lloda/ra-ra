@@ -20,6 +20,9 @@ int main()
         constexpr ra::Small<int, 7> a = { 0, 1, 2, 3, 4, 5, 6 };
         constexpr ra::Small<int, 7> v = map([&a](int i) { return a[i]*a[i]; }, ra::iota(7));
         tr.test_eq(v, sqr(a));
+// FIXME not really the place.
+        tr.test_eq(ra::ANY, decltype(a+ra::iota(7))::len_s(0, true));
+        tr.test_eq(7, decltype(a+ra::iota(7))::len_s(0, false));
     }
     return tr.summary();
 }

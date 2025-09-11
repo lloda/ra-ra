@@ -86,6 +86,7 @@ checkbox [C-ct] flip TODO
       is that len_s lets me return ANY for some axes and finite for others and to do that with just
       len() would require len(integral constant) overloads possibly -- len(int k) cannot be static
       or not depending on k.
+      - Looked at this again on <2025-09-19 Fri>, added Match::len(is_constant) overload.
     - [ ] Use if consteval to replace rank/rank_s/size/size_s with just rank/size.
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).

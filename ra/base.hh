@@ -20,8 +20,8 @@
 #include <cstdint>
 #include <utility>
 #include <algorithm>
-#include <type_traits>
 #include <functional>
+#include <type_traits>
 #include <source_location>
 
 #ifdef RA_AFTER_CHECK
@@ -53,7 +53,7 @@
 #define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
 #define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
 
-// FIMXE benchmark shows it's bad by default; probably requires optimizing also +=, etc.
+// FIMXE bench shows it's bad by default; maybe requires optimizing += etc.
 #ifndef RA_OPT_SMALLVECTOR
 #define RA_OPT_SMALLVECTOR 0
 #endif
@@ -286,14 +286,14 @@ struct default_init_allocator: public A
         using other = default_init_allocator<U, typename traits::template rebind_alloc<U>>;
     };
     template <class U>
-    constexpr void construct(U * ptr) noexcept (std::is_nothrow_default_constructible<U>::value)
+    constexpr void construct(U * p) noexcept (std::is_nothrow_default_constructible<U>::value)
     {
-        ::new(static_cast<void *>(ptr)) U; // constexpr in c++26
+        ::new(static_cast<void *>(p)) U; // constexpr in c++26
     }
     template <class U, class... Args>
-    constexpr void construct(U * ptr, Args &&... args)
+    constexpr void construct(U * p, Args &&... args)
     {
-        traits::construct(static_cast<A &>(*this), ptr, RA_FW(args)...);
+        traits::construct(static_cast<A &>(*this), p, RA_FW(args)...);
     }
 };
 
@@ -324,10 +324,10 @@ concept Slice = requires (A a)
 
 
 // --------------
-// type classification and introspection
+// type classification and properties
 // --------------
 
-// FIXME https://wg21.link/p2841r0 ?
+// FIXME c++26 p2841 ?
 #define RA_IS_DEF(NAME, PRED)                                           \
     template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
     template <class A> concept NAME = JOIN(NAME, _def)<std::decay_t< A >>;
@@ -431,7 +431,7 @@ size(V const & v)
     }
 }
 
-// Returns concrete types, value or const &. FIXME return ra:: types, but only if it's in all cases.
+// Do not return expr objects. FIXME return ra:: types, but only if it's in all cases.
 template <class V>
 constexpr decltype(auto)
 shape(V const & v)

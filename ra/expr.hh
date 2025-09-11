@@ -45,41 +45,42 @@
 
 namespace ra {
 
-// Assign ops for Iterators, might be different for Views. See local ASSIGNOPS elsewhere.
+// Assign ops for Iterators, might be different for Views.
 
 #define RA_ASSIGNOPS_LINE(OP)                                           \
     for_each([](auto && y, auto && x){ /* [ra5] */ RA_FW(y) OP RA_FW(x); }, *this, RA_FW(x))
-#define RA_ASSIGNOPS(OP) \
+#define RA_ASSIGNOPS(OP)                                                \
     constexpr void operator OP(auto && x) { RA_ASSIGNOPS_LINE(OP); }
-#define RA_ASSIGNOPS_DEFAULT_SET \
+#define RA_ASSIGNOPS_DEFAULT_SET                \
     FOR_EACH(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 // Restate for expression classes since a template doesn't replace the copy assignment op.
-#define RA_ASSIGNOPS_SELF(TYPE)                                         \
+#define RA_ASSIGNOPS_ITER(TYPE)                                         \
     constexpr TYPE & operator=(TYPE && x) { RA_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE & operator=(TYPE const & x) { RA_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE(TYPE && x) = default;                                \
-    constexpr TYPE(TYPE const & x) = default;
+    constexpr TYPE(TYPE const & x) = default;                           \
+    RA_ASSIGNOPS_DEFAULT_SET
 
-// Contextual len: a unique object. See wlen in small.hh.
+// Contextual len, a unique object. See wlen in small.hh.
 
 constexpr struct Len
 {
     consteval static rank_t rank() { return 0; }
-    [[noreturn]] consteval static void len_outside_subscript_context() { std::abort(); }
-    consteval static dim_t len_s(int k) { len_outside_subscript_context(); }
-    consteval static dim_t len(int k) { len_outside_subscript_context(); }
-    consteval static dim_t step(int k) { len_outside_subscript_context(); }
-    consteval static void adv(rank_t k, dim_t d) { len_outside_subscript_context(); }
-    consteval static bool keep(dim_t st, int z, int j) { len_outside_subscript_context(); }
-    consteval dim_t operator*() const { len_outside_subscript_context(); }
-    consteval static int save() { len_outside_subscript_context(); }
-    consteval static void load(int) { len_outside_subscript_context(); }
-    consteval static void mov(dim_t d) { len_outside_subscript_context(); }
+    [[noreturn]] consteval static void len_out_of_context() { std::abort(); }
+    consteval static dim_t len_s(int k) { len_out_of_context(); }
+    consteval static dim_t len(int k) { len_out_of_context(); }
+    consteval static dim_t step(int k) { len_out_of_context(); }
+    consteval static void adv(rank_t k, dim_t d) { len_out_of_context(); }
+    consteval static bool keep(dim_t st, int z, int j) { len_out_of_context(); }
+    consteval dim_t operator*() const { len_out_of_context(); }
+    consteval static int save() { len_out_of_context(); }
+    consteval static void load(int) { len_out_of_context(); }
+    consteval static void mov(dim_t d) { len_out_of_context(); }
 } len;
 
-template <class E> struct WLen;                                // defined in ply.hh. FIXME C++ p2481
+template <class E> struct WLen; // defined in ply.hh. FIXME C++ p2481
 template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FW(e)); };
-template <has_len E> constexpr bool is_special_def<E> = true;  // protect exprs with Len from reduction.
+template <has_len E> constexpr bool is_special_def<E> = true; // protect exprs with Len from reduction.
 
 template <class Ln, class E>
 constexpr decltype(auto)
@@ -92,6 +93,15 @@ wlen(Ln ln, E && e)
         return RA_FW(e);
     }
 }
+
+template <class N> constexpr int
+maybe_any = []{ if constexpr (is_constant<N>) { return N::value; } else { return ANY; } }();
+
+template <class S> constexpr S
+maybe_step = []{ if constexpr (is_constant<S>) { static_assert(1==S::value); return S{}; } else { return 1; } }();
+
+template <class K> constexpr auto
+maybe_len(auto const & v, K k) { if constexpr (is_constant<K> && (ANY!=v.len_s(k))) { return ic<v.len_s(k)>; } else { return v.len(k); } }
 
 // Sequence iterator.
 
@@ -132,7 +142,7 @@ struct Scalar final
     constexpr static dim_t step(int k) { return 0; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep(dim_t st, int z, int j) { return true; }
-    constexpr decltype(auto) at(auto && j) const { return c; }
+    constexpr decltype(auto) at(auto && i) const { return c; }
     constexpr C & operator*() requires (std::is_lvalue_reference_v<C>) { return c; } // [ra37]
     constexpr C const & operator*() requires (!std::is_lvalue_reference_v<C>) { return c; }
     constexpr C const & operator*() const { return c; } // [ra39]
@@ -144,61 +154,196 @@ struct Scalar final
 template <class C> constexpr auto
 scalar(C && c) { return Scalar<C> { RA_FW(c) }; }
 
-template <class N> constexpr int
-maybe_any = []{ if constexpr (is_constant<N>) { return N::value; } else { return ANY; } }();
+// making iterators (start)
 
-template <class V, class K> constexpr auto
-maybe_len(V const & v, K k)
+constexpr auto start(is_scalar auto && t) { return ra::scalar(RA_FW(t)); }
+
+// iterators need resetting on each use [ra35].
+constexpr auto start(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
+
+constexpr decltype(auto) start(is_iterator auto && a) { return RA_FW(a); }
+
+// Cell doesn't retain rvalues [ra4].
+constexpr auto start(Slice auto && t) { return RA_FW(t).iter(); }
+
+// TODO arbitrary exprs? runtime cr? ra::len in cr?
+template <int cr=0> constexpr auto iter(Slice auto && a) { return RA_FW(a).template iter<cr>(); }
+
+// forward decl.
+constexpr auto start(is_fov auto && t);
+
+constexpr auto start(is_builtin_array auto && t);
+
+template <class T> constexpr auto start(std::initializer_list<T> v);
+
+
+// --------------------
+// view iterators
+// --------------------
+
+constexpr auto
+indexer(auto & a, auto cp, Iterator auto && p)
 {
-    if constexpr (is_constant<K> && (ANY!=v.len_s(k))) { return ic<v.len_s(k)>; } else { return v.len(k); }
+    if constexpr (ANY==rank_s(p)) {
+        RA_CK(1==ra::rank(p), "Bad rank ", ra::rank(p), " for subscript.");
+    } else {
+        static_assert(1==rank_s(p), "Bad rank for subscript.");
+    }
+    if constexpr (ANY==size_s(p) || ANY==rank_s(a)) {
+        RA_CK(p.len(0) >= a.rank(), "Too few indices.");
+    } else {
+        static_assert(size_s(p) >= rank_s(a), "Too few indices.");
+    }
+    for (rank_t k=0; k<a.rank(); ++k, p.mov(p.step(0))) {
+        auto i = *p;
+        RA_CK(inside(i, a.len(k)) || UNB==a.len(k), "Bad i[", k, "]=", i, " for len", a.len(k));
+        std::ranges::advance(cp, i*a.step(k));
+    }
+    return cp;
 }
 
-template <class S> consteval auto
-maybe_step()
+// general case.
+
+struct Dim { dim_t len, step; };
+
+inline std::ostream &
+operator<<(std::ostream & o, Dim const & dim) { std::print(o, "[Dim {} {}]", dim.len, dim.step); return o; }
+
+constexpr dim_t
+filldimv(auto const & shape, auto & dimv)
 {
-    if constexpr (std::is_integral_v<S>) { return S(1); } else { static_assert(is_constant<S> && 1==S::value); return S {}; }
+    map(&Dim::len, dimv) = shape;
+    dim_t s = 1;
+    for (int k=ra::size(dimv); --k>=0;) {
+        dimv[k].step = s;
+        RA_CK(dimv[k].len>=0, "Bad len[", k, "] ", dimv[k].len, ".");
+// gcc 14.2, no warning with sanitizers
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
+        s *= dimv[k].len;
+#pragma GCC diagnostic pop
+    }
+    return s;
 }
 
-// Rank 1 iterator, for fovs or iota. FIXME replace with ViewBig/ViewSmall.
+consteval auto
+default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldimv(lv, dv); return dv; };
 
-template <class I, class N, class S>
+constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
+constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
+// cr>=0 is cell rank, -cr>0 is frame rank. TODO frame rank 0? maybe ra::len
+constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
+constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
+
+template <class T, class Dimv> struct ViewSmall;
+template <class T, rank_t RANK=ANY> struct ViewBig;
+
+template <class P, class Dimv, class Spec>
+struct CellSmall
+{
+    constexpr static rank_t spec = maybe_any<Spec>;
+    constexpr static rank_t fullr = size_s(Dimv::value);
+    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
+    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
+
+    constexpr static auto dimv = Dimv::value;
+    ViewSmall<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> { dimv[i+framer] ... }; }, mp::iota<cellr> {})>> c;
+    constexpr explicit CellSmall(P p): c { p } {}
+
+    consteval static rank_t rank() { return framer; }
+    constexpr static dim_t len(int k) { return dimv[k].len; }
+    constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
+    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
+};
+
+template <class P, class Dimv, class Spec>
+struct CellBig
+{
+    constexpr static rank_t spec = maybe_any<Spec>;
+    constexpr static rank_t fullr = size_s<Dimv>();
+    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
+    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
+
+    Dimv dimv;
+    ViewBig<P, cellr> c;
+    [[no_unique_address]] Spec const dspec;
+    constexpr explicit CellBig(P cp, Dimv dimv_, Spec dspec_=Spec {}): dimv(dimv_), c(cp), dspec(dspec_)
+    {
+        rank_t dcell=rank_cell(ra::size(dimv), dspec), dframe=rank();
+        RA_CK(0<=dframe && 0<=dcell, "Bad cell rank ", dcell, " for full rank ", ssize(dimv), ").");
+        if constexpr (ANY==size_s(c.dimv)) { c.dimv.resize(dcell); }
+        for (int k=0; k<dcell; ++k) {
+            c.dimv[k] = dimv[dframe+k];
+        }
+    }
+
+    consteval static rank_t rank() requires (ANY!=framer) { return framer; }
+    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
+    constexpr dim_t len(int k) const { return dimv[k].len; }
+    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
+    constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
+};
+
+template <class P, class Dimv, class Spec>
+struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>
+{
+    static_assert(has_len<P> || std::bidirectional_iterator<P>);
+    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>;
+    using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::rank;
+    using View = decltype(std::declval<Base>().c);
+    static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
+    RA_ASSIGNOPS_ITER(Cell)
+
+    constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
+    constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
+    constexpr decltype(auto) at(auto && i) const requires (0==cellr) { return *indexer(*this, c.cp, start(RA_FW(i))); }
+    constexpr auto at(auto && i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, start(RA_FW(i))); return d; }
+    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
+    constexpr View const & operator*() const requires (0!=cellr) { return c; }
+    constexpr operator decltype(c.cp[0]) () const { return to_scalar(*this); }
+    constexpr auto save() const { return c.cp; }
+    constexpr void load(P p) { c.cp = p; }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 only
+    constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
+#pragma GCC diagnostic pop
+};
+
+// rank 1 special case for fovs or iota. FIXME make Ptr a Slice with iter() -> Cell.
+
+template <class P, class N, class S>
 struct Ptr final
 {
+    static_assert(has_len<P> || std::bidirectional_iterator<P>);
     static_assert(has_len<N> || is_constant<N> || std::is_integral_v<N>);
     static_assert(has_len<S> || is_constant<S> || std::is_integral_v<S>);
-    static_assert(has_len<I> || std::bidirectional_iterator<I>);
     constexpr static dim_t nn = maybe_any<N>;
     static_assert(0<=nn || ANY==nn || UNB==nn);
     constexpr static bool constant = is_constant<N> && is_constant<S>;
 
-    I cp;
+    P cp;
     [[no_unique_address]] N const n = {};
     [[no_unique_address]] S const s = {};
-    constexpr static S gets() requires (is_constant<S>) { return S {}; }
-    constexpr I gets() const requires (!is_constant<S>) { return s; }
-    constexpr Ptr(I i, N n, S s): cp(i), n(n), s(s)
+    // struct { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; } dimv[1];
+    constexpr Ptr(P p, N n, S s): cp(p), n(n), s(s)
     {
         if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
     }
-    RA_ASSIGNOPS_SELF(Ptr)
-    RA_ASSIGNOPS_DEFAULT_SET
+    RA_ASSIGNOPS_ITER(Ptr)
+
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; }
-    constexpr static dim_t len(int k) requires (is_constant<N>) { return len_s(k); }
+    constexpr static dim_t len(int k) requires (is_constant<N>) { return nn; }
     constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
     constexpr static dim_t step(int k) requires (is_constant<S>) { return 0==k ? S {} : 0; }
     constexpr dim_t step(int k) const requires (!is_constant<S>) { return 0==k ? s : 0; }
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(auto) at(auto && j) const requires (std::random_access_iterator<I>)
-    {
-        RA_CK(UNB==nn || inside(j[0], n), "Bad index ", j[0], " for len[0]=", n, ".");
-        return cp[j[0]*s];
-    }
+    constexpr decltype(auto) at(auto && i) const { return *indexer(*this, cp, start(RA_FW(i))); }
     constexpr decltype(auto) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
-    constexpr void load(I i) { cp = i; }
+    constexpr void load(P p) { cp = p; }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 only
     constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
@@ -207,30 +352,23 @@ struct Ptr final
 
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
-template <class I, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
+template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
-ptr(I && i, N && n=N {}, S && s=maybe_step<S>())
+ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
 {
-    if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<I>>) {
+    if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<P>>) {
         static_assert(std::is_same_v<ic_t<dim_t(UNB)>, N>, "Object has own length.");
         static_assert(std::is_same_v<ic_t<dim_t(1)>, S>, "No step with deduced size.");
-        if constexpr (ANY==size_s(i)) {
-            return ptr(std::begin(RA_FW(i)), std::ssize(i), RA_FW(s));
+        if constexpr (ANY==size_s(p)) {
+            return ptr(std::begin(RA_FW(p)), std::ssize(p), RA_FW(s));
         } else {
-            return ptr(std::begin(RA_FW(i)), ic<size_s(i)>, RA_FW(s));
+            return ptr(std::begin(RA_FW(p)), ic<size_s(p)>, RA_FW(s));
         }
     } else {
-        static_assert(std::bidirectional_iterator<std::decay_t<I>>, "Bad type for ptr().");
-        return Ptr<std::decay_t<I>, sarg<N>, sarg<S>> { i, RA_FW(n), RA_FW(s) };
+        static_assert(std::bidirectional_iterator<std::decay_t<P>>, "Bad type for ptr().");
+        return Ptr<std::decay_t<P>, sarg<N>, sarg<S>> { p, RA_FW(n), RA_FW(s) };
     }
 }
-
-template <class A>
-concept is_iota = requires (A a)
-{
-    []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a);
-    requires UNB!=a.nn; // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
-};
 
 template <class I, class N, class S, class K=ic_t<dim_t(0)>>
 constexpr auto
@@ -238,6 +376,29 @@ reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
     static_assert(i.nn!=UNB, "Bad arguments to reverse(iota).");
     return ptr(Seq { i.cp.i+(i.n-1)*i.s }, i.n, [&i]{ if constexpr (is_constant<S>) return ic_t<dim_t(-S{})> {}; else return -i.s; }());
+}
+
+constexpr auto
+start(is_fov auto && t) { return ra::ptr(RA_FW(t)); }
+
+template <class T>
+constexpr auto
+start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
+
+constexpr auto
+start(is_builtin_array auto && t)
+{
+    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
+    return Cell<T *, ic_t<default_dims(ra::shape(t))>, ic_t<0>>(
+        [](this auto const & self, auto && t){
+            using T = std::remove_cvref_t<decltype(t)>;
+            if constexpr (1 < std::rank_v<T>) {
+                static_assert(0 < std::extent_v<T, 0>);
+                return self(*std::data(t));
+            } else {
+                return std::data(t);
+            }
+        }(t));
 }
 
 
@@ -316,9 +477,9 @@ reframe(A && a, Dest)
 
 template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
-iota(N && n=N {}, I && i=0, S && s=maybe_step<S>())
+iota(N && n=N {}, I && i=0, S && s=S(maybe_step<S>))
 {
-    return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) }, ilist_t<w>{});
+    return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) }, ilist_t<w> {});
 }
 
 #define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
@@ -363,44 +524,6 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 };
 
 
-// --------------
-// making Iterators
-// --------------
-
-// TODO arbitrary exprs? runtime cr? ra::len in cr?
-template <int cr=0>
-constexpr auto
-iter(Slice auto && a) { return RA_FW(a).template iter<cr>(); }
-
-constexpr void
-start(auto && t) { static_assert(false, "Cannot start() type."); }
-
-constexpr auto
-start(is_fov auto && t) { return ra::ptr(RA_FW(t)); }
-
-template <class T>
-constexpr auto
-start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
-
-constexpr auto
-start(is_scalar auto && t) { return ra::scalar(RA_FW(t)); }
-
-// implemented in small.hh.
-constexpr auto
-start(is_builtin_array auto && t);
-
-// Cell doesn't retain rvalues [ra4].
-constexpr auto
-start(Slice auto && t) { return iter(RA_FW(t)); }
-
-// iterators need resetting on each use [ra35].
-constexpr auto
-start(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
-
-constexpr decltype(auto)
-start(is_iterator auto && a) { return RA_FW(a); }
-
-
 // --------------------
 // prefix match
 // --------------------
@@ -426,21 +549,19 @@ tbc(int sofar)
             (void)(((sofar = tbc<TOP, std::decay_t<mp::ref<T, i>>>(sofar)) >= 0) && ...);
         } (mp::iota<mp::len<T>> {});
         return sofar;
+    } else if (int rt=rank_s<TOP>(), ra=rank_s<A>(); 0==rt || 0==ra) {
+        return sofar;
+    } else if (ANY==sofar || ANY==ra) {
+        return 1+sofar;
     } else {
-        if (int rt=rank_s<TOP>(), ra=rank_s<A>(); 0==rt || 0==ra) {
-            return sofar;
-        } else if (ANY==sofar || ANY==ra) {
-            return 1+sofar;
-        } else {
-            for (int k=0; k<ra; ++k) {
-                if (dim_t lt=TOP::len_s(k, true), la=A::len_s(k); MIS==lt) {
-                    return -1;
-                } else if (UNB!=la && UNB!=lt && (ANY==la || ANY==lt)) {
-                    return 1+sofar;
-                }
+        for (int k=0; k<ra; ++k) {
+            if (dim_t lt=TOP::len_s(k, true), la=A::len_s(k); MIS==lt) {
+                return -1;
+            } else if (UNB!=la && UNB!=lt && (ANY==la || ANY==lt)) {
+                return 1+sofar;
             }
-            return sofar;
         }
+        return sofar;
     }
 }
 
@@ -508,6 +629,12 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         dim_t s = UNB; (void)(((s = f.template operator()<std::decay_t<P>>(s)) != MIS) && ...);
         return s;
     }
+// try to provide static len(). We depend on len() for runtime check, so that requires that the check is static.
+    constexpr static dim_t
+    len(is_constant auto k) requires (ANY!=len_s(k, true))
+    {
+        return len_s(k);
+    }
     constexpr static dim_t
     len(int k) requires (requires { std::decay_t<P>::len(k); } && ...)
     {
@@ -572,7 +699,7 @@ constexpr bool
 agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op(FM::op(v), reframe(ra::start(t), mp::ref<typename FM::R, i>{}) ...);
+    return agree_op(FM::op(v), reframe(ra::start(t), mp::ref<typename FM::R, i> {}) ...);
 }
 
 
@@ -610,8 +737,7 @@ struct Map<Op, std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...
     using Match<std::tuple<P ...>>::t;
     Op op;
     constexpr Map(Op op_, P ... p_): Match<std::tuple<P ...>>(p_ ...), op(op_) {} // [ra1]
-    RA_ASSIGNOPS_SELF(Map)
-    RA_ASSIGNOPS_DEFAULT_SET
+    RA_ASSIGNOPS_ITER(Map)
     constexpr decltype(auto) at(auto const & j) const { return std::invoke(op, get<I>(t).at(j) ...); }
     constexpr decltype(auto) operator*() const { return std::invoke(op, *get<I>(t) ...); }
     constexpr operator decltype(std::invoke(op, *get<I>(t) ...)) () const { return to_scalar(*this); }
@@ -625,7 +751,7 @@ constexpr auto
 map_verb(ilist_t<i ...>, Op && op, P && ... p)
 {
     using FM = Framematch<Op, std::tuple<P ...>>;
-    return map_(FM::op(RA_FW(op)), reframe(RA_FW(p), mp::ref<typename FM::R, i>{}) ...);
+    return map_(FM::op(RA_FW(op)), reframe(RA_FW(p), mp::ref<typename FM::R, i> {}) ...);
 }
 
 constexpr auto
@@ -669,8 +795,7 @@ struct Pick<std::tuple<P ...>, ilist_t<I ...>>: public Match<std::tuple<P ...>>
 {
     using Match<std::tuple<P ...>>::t;
     constexpr Pick(P ... p_): Match<std::tuple<P ...>>(p_ ...) {} // [ra1]
-    RA_ASSIGNOPS_SELF(Pick)
-    RA_ASSIGNOPS_DEFAULT_SET
+    RA_ASSIGNOPS_ITER(Pick)
     constexpr decltype(auto) at(auto const & j) const { return pick_at(get<0>(t).at(j), t, j); }
     constexpr decltype(auto) operator*() const { return pick_star(*get<0>(t), t); }
     constexpr operator decltype(pick_star(*get<0>(t), t)) () const { return to_scalar(*this); }

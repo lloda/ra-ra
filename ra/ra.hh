@@ -132,8 +132,7 @@ template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FW(e); 
 template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
 
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
-// FIXME iota.gets() vs p2781r2
-// FIXME handle & variants, handle view iota.
+// FIXME p2781r2, handle & variants, handle view iota.
 
 #define RA_IT(i) std::get<(i)>(e.t)
 template <is_iota I, iota_op J>
@@ -548,7 +547,7 @@ template <class C, int D>
 struct anticomb
 {
     using EC = complement<C, D>;
-    static_assert((len<EC>)>=2, "can't correct this complement");
+    static_assert(2<=len<EC>, "can't correct this complement");
     constexpr static int sign = permsign<append<C, EC>, iota<D>>::value;
 // produce permutation of opposite sign if sign<0.
     using type = cons<ref<EC, (sign<0) ? 1 : 0>,

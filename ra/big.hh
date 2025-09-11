@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Arrays with dynamic lengths/strides, cf small.hh.
+// ra-ra - Views and containers with dynamic lengths and steps, cf small.hh.
 
 // (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -45,6 +45,17 @@ braces_shape(braces<T, r> const & l)
     return [&l]<int ... i>(ilist_t<i ...>){ return std::array { braces_len<i, T, r>(l) ... }; }(mp::iota<r>{});
 }
 
+constexpr void
+resize(auto & a, dim_t s)
+{
+    if constexpr (ANY==size_s(a)) {
+        RA_CK(s>=0, "Bad resize ", s, ".");
+        a.resize(s);
+    } else {
+        RA_CK(s==start(a).len(0) || UNB==s, "Bad resize ", s, ", need ", start(a).len(0), ".");
+    }
+}
+
 // FIXME avoid duplicating cp, dimv from Container without being parent. Parameterize on Dimv, like Cell.
 // FIXME constructor checks (lens>=0, steps inside, etc.).
 template <class P, rank_t RANK>
@@ -88,12 +99,14 @@ struct ViewBig
         return *this;
     }
 // nested braces
-    constexpr ViewBig const & operator=(braces<T, RANK> x) const requires (RANK!=ANY)
+    constexpr ViewBig const &
+    operator=(braces<T, RANK> x) const requires (RANK!=ANY)
     {
         ra::iter<-1>(*this) = x; return *this;
     }
 #define RA_BRACES_ANY(N)                                                \
-    constexpr ViewBig const & operator=(braces<T, N> x) const requires (RANK==ANY) \
+    constexpr ViewBig const &                                           \
+    operator=(braces<T, N> x) const requires (RANK==ANY)                \
     {                                                                   \
         ra::iter<-1>(*this) = x; return *this;                          \
     }
@@ -101,7 +114,7 @@ struct ViewBig
 #undef RA_BRACES_ANY
 // T not is_scalar [ra44]
     constexpr ViewBig const & operator=(T const & t) const { start(*this) = ra::scalar(t); return *this; }
-// cf RA_ASSIGNOPS_SELF [ra38] [ra34]
+// cf RA_ASSIGNOPS_ITER [ra38] [ra34]
     ViewBig const & operator=(ViewBig const & x) const { start(*this) = x; return *this; }
 #define ASSIGNOPS(OP)                                                   \
     constexpr ViewBig const & operator OP (Iterator auto && x) const { start(*this) OP RA_FW(x); return *this; } \

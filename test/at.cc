@@ -39,8 +39,7 @@ int main()
         }
 
         A = 0;
-        at(A, I2)
-            = map([&B](auto && i) -> decltype(auto) { return B.at(i); }, I2);
+        at(A, I2) = map([&B](auto && i) -> decltype(auto) { return B.at(i); }, I2);
         tr.test_eq(C, A);
 
         A = 0;
@@ -93,6 +92,12 @@ int main()
         ra::Big<ra::Small<int, 1>, 1> I1 = { {2}, {0} };
         ra::Big<ra::Small<int, 2>, 1> I2 = { {1, 1}, {2, 2} };
         test(C, A, 10*ra::_0 + ra::_1, I1, I2);
+    }
+    tr.section("Misc");
+    {
+        ra::Small<int, 4, 4> A = ra::_0 - ra::_1;
+        int i[2] = {1, 2};
+        tr.test_eq(-1, A.iter().at(i));
     }
     return tr.summary();
 }
