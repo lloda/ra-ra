@@ -143,10 +143,10 @@ struct ViewBig
     {
         return *reinterpret_cast<ViewBig<reconst<P>, RANK> const *>(this);
     }
-    constexpr operator T & () const { return to_scalar(*this); }
+    constexpr operator decltype(*cp) () const { return to_scalar(*this); }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return at1(*this, i); }
+    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
 };
 
 template <class V>

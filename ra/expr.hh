@@ -176,6 +176,29 @@ constexpr auto start(is_builtin_array auto && t);
 
 template <class T> constexpr auto start(std::initializer_list<T> v);
 
+template <class A>
+constexpr decltype(auto)
+VAL(A && a)
+{
+    if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
+    else if constexpr (is_iterator<A>) { return *a; } // no need to start()
+    else if constexpr (requires { *ra::start(RA_FW(a)); }) { return *ra::start(RA_FW(a)); }
+    // else void
+}
+
+template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VAL(std::declval<A>()))>>;
+template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
+
+constexpr decltype(auto)
+to_scalar(auto && e)
+{
+    if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
+        static_assert(ANY==s, "Bad scalar conversion.");
+        RA_CK(1==ra::size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
+    }
+    return VAL(e);
+}
+
 
 // --------------------
 // view iterators
@@ -293,14 +316,13 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spe
     using View = decltype(std::declval<Base>().c);
     static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
     RA_ASSIGNOPS_ITER(Cell)
-
     constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(auto) at(auto && i) const requires (0==cellr) { return *indexer(*this, c.cp, start(RA_FW(i))); }
-    constexpr auto at(auto && i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, start(RA_FW(i))); return d; }
-    constexpr decltype(auto) operator*() const requires (0==cellr) { return *(c.cp); }
+    constexpr decltype(*c.cp) at(auto && i) const requires (0==cellr) { return *indexer(*this, c.cp, start(RA_FW(i))); }
+    constexpr View at(auto && i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, start(RA_FW(i))); return d; }
+    constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr View const & operator*() const requires (0!=cellr) { return c; }
-    constexpr operator decltype(c.cp[0]) () const { return to_scalar(*this); }
+    constexpr operator decltype(*c.cp) () const { return to_scalar(*this); }
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp = p; }
 #pragma GCC diagnostic push
@@ -330,7 +352,6 @@ struct Ptr final
         if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
     }
     RA_ASSIGNOPS_ITER(Ptr)
-
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; }
     constexpr static dim_t len(int k) requires (is_constant<N>) { return nn; }
@@ -340,8 +361,8 @@ struct Ptr final
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(auto) at(auto && i) const { return *indexer(*this, cp, start(RA_FW(i))); }
-    constexpr decltype(auto) operator*() const { return *cp; }
+    constexpr decltype(*cp) at(auto && i) const { return *indexer(*this, cp, start(RA_FW(i))); } // iter's not view's
+    constexpr decltype(*cp) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
     constexpr void load(P p) { cp = p; }
 #pragma GCC diagnostic push
@@ -706,29 +727,6 @@ agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 // ---------------------------
 // map and pick
 // ---------------------------
-
-template <class A>
-constexpr decltype(auto)
-VAL(A && a)
-{
-    if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
-    else if constexpr (is_iterator<A>) { return *a; } // no need to start()
-    else if constexpr (requires { *ra::start(RA_FW(a)); }) { return *ra::start(RA_FW(a)); }
-    // else void
-}
-
-template <class A> using value_t = std::remove_volatile_t<std::remove_reference_t<decltype(VAL(std::declval<A>()))>>;
-template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
-
-constexpr decltype(auto)
-to_scalar(auto && e)
-{
-    if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
-        static_assert(ANY==s, "Bad scalar conversion.");
-        RA_CK(1==ra::size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
-    }
-    return VAL(e);
-}
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
 template <class Op, Iterator ... P, int ... I>

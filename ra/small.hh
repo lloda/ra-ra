@@ -338,7 +338,7 @@ from(A && a, auto && ...  i)
 }
 
 constexpr decltype(auto)
-at1(auto const & a, auto const & i)
+at_view(auto const & a, auto const & i)
 {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
     if constexpr (constexpr rank_t crank = rank_diff(rank_s(a), ra::size_s(i)); ANY==crank) {
@@ -454,10 +454,10 @@ struct ViewSmall
     {
         return ViewSmall<reconst<P>, Dimv>(cp);
     }
-    constexpr operator T & () const { return to_scalar(*this); }
+    constexpr operator decltype(*cp) () const { return to_scalar(*this); }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return at1(*this, i); }
+    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
 };
 
 #if defined (__clang__)

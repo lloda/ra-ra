@@ -12,10 +12,13 @@
 #include <string>
 #include <cstdlib>
 #include "ra/test.hh"
+#include "test/mpdebug.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 using real = double;
 using ra::dim_t;
+
+ra::TestRecorder tr(cout);
 
 // FIXME bigd/bigd & bigs/bigd at loop
 
@@ -23,10 +26,9 @@ int main(int argc, char * * argv)
 {
     int reps = argc>1 ? std::stoi(argv[1]) : 10000;
     std::println(cout, "reps = {}", reps);
-    ra::TestRecorder tr(cout);
     tr.section("rank 2");
     {
-        auto test2 = [&tr](auto && C, auto && I, int reps, std::string tag)
+        auto test2 = [](auto && C, auto && I, int reps, std::string tag)
         {
             if ("warmup"!=tag) tr.section(tag);
             int M = C.len(0);
@@ -86,11 +88,11 @@ int main(int argc, char * * argv)
     }
     tr.section("rank 1");
     {
-        auto test1 = [&tr](auto && C, auto && I, int reps, std::string tag)
+        auto test1 = [](auto && C, auto && I, int reps, std::string tag)
         {
             if ("warmup"!=tag) tr.section(tag);
-            int M = C.len(0);
-            int O = I.len(0);
+            int const M = C.len(0);
+            [[maybe_unused]] int const O = I.len(0);
             I(ra::all, 0) = map([&](auto && i) { return i%M; }, ra::_0 + (std::rand() & 1));
 
             int ref0 = sum(at(C, iter<1>(I))), val0 = 0;
@@ -114,14 +116,14 @@ int main(int argc, char * * argv)
                    }));
         };
 
-// especially Ptr, if it differs from ViewSmall/ViewBig
-        auto iotaa = ra::iota(100, 1, 4);
-        ra::Big<int, 1> bigsa({100}, 4*ra::_0);
-        ra::Big<int> bigda({100}, 4*ra::_0);
-        ra::Small<int, 100> smola = 4*ra::_0;
-        ra::Big<int, 2> bigsi({100, 1}, ra::none);
-        ra::Big<int> bigdi({100, 1}, ra::none);
-        ra::Small<int, 100, 1> smoli;
+        auto iotav = ra::ii({100}); // view.at(i) rank depends on i's size. That can be var rank which is a lot slower.
+        auto iotai = ra::iota(100); // iter.at(i) requires i's size to be iter's rank.
+        [[maybe_unused]] ra::Big<int, 1> bigsa({100}, 4*ra::_0);
+        [[maybe_unused]] ra::Big<int> bigda({100}, 4*ra::_0);
+        [[maybe_unused]] ra::Small<int, 100> smola = 4*ra::_0;
+        [[maybe_unused]] ra::Big<int, 2> bigsi({100, 1}, ra::none);
+        [[maybe_unused]] ra::Big<int> bigdi({100, 1}, ra::none);
+        [[maybe_unused]] ra::Small<int, 100, 1> smoli;
         test1(smola, smoli, reps, "warmup");
         test1(smola, smoli, reps, "small/small");
         test1(bigsa, smoli, reps, "bigs/small");
@@ -132,9 +134,12 @@ int main(int argc, char * * argv)
         test1(smola, bigdi, reps, "small/bigd");
         test1(bigsa, bigdi, reps, "bigs/bigd");
         test1(bigda, bigdi, reps, "bigd/bigd");
-        test1(iotaa, smoli, reps, "iota/small");
-        test1(iotaa, bigsi, reps, "iota/bigs");
-        test1(iotaa, bigdi, reps, "iota/bigd");
+        test1(iotav, smoli, reps, "iotv/small");
+        test1(iotav, bigsi, reps, "iotv/bigs");
+        test1(iotav, bigdi, reps, "iotv/bigd");
+        test1(iotai, smoli, reps, "ioti/small");
+        test1(iotai, bigsi, reps, "ioti/bigs");
+        test1(iotai, bigdi, reps, "ioti/bigd");
     }
     return tr.summary();
 }
