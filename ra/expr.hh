@@ -361,7 +361,7 @@ struct Ptr final
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*cp) at(auto && i) const { return *indexer(*this, cp, start(RA_FW(i))); } // iter's not view's
+    constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, start(i)); } // iter's not view's
     constexpr decltype(*cp) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
     constexpr void load(P p) { cp = p; }
