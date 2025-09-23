@@ -128,6 +128,17 @@ int main()
         }
         tr.info("ptr.at()").test_eq(10, x);
     }
+    tr.section("bad length to ptr()");
+    {
+        int x = 0;
+        try {
+            int p[] = {10, 20, 30};
+            tr.test_eq(-1, ra::ptr((int *)p, -1));
+        } catch (ra_error & e) {
+            x = 1;
+        }
+        tr.info("ptr len").test_eq(x, 1);
+    }
 
 
 // ------------------------------

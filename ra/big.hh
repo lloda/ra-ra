@@ -63,7 +63,7 @@ struct ViewBig
 {
     using T = std::remove_reference_t<decltype(*std::declval<P>())>;
     using Dimv = std::conditional_t<ANY==RANK, vector_default_init<Dim>, Small<Dim, ANY==RANK ? 0 : RANK>>;
-    Dimv dimv;
+    [[no_unique_address]] Dimv dimv;
     P cp;
 
     consteval static rank_t rank() requires (RANK!=ANY) { return RANK; }
@@ -100,16 +100,10 @@ struct ViewBig
     }
 // nested braces
     constexpr ViewBig const &
-    operator=(braces<T, RANK> x) const requires (RANK!=ANY)
-    {
-        ra::iter<-1>(*this) = x; return *this;
-    }
+    operator=(braces<T, RANK> x) const requires (RANK!=ANY) { ra::iter<-1>(*this) = x; return *this; }
 #define RA_BRACES_ANY(N)                                                \
     constexpr ViewBig const &                                           \
-    operator=(braces<T, N> x) const requires (RANK==ANY)                \
-    {                                                                   \
-        ra::iter<-1>(*this) = x; return *this;                          \
-    }
+    operator=(braces<T, N> x) const requires (RANK==ANY) { ra::iter<-1>(*this) = x; return *this; }
     FOR_EACH(RA_BRACES_ANY, 2, 3, 4);
 #undef RA_BRACES_ANY
 // T not is_scalar [ra44]
@@ -128,6 +122,15 @@ struct ViewBig
     constexpr auto begin() const { return STLIterator(iter<0>()); }
     constexpr decltype(auto) static end() { return std::default_sentinel; }
     constexpr decltype(auto) back() const { dim_t s=size(); RA_CK(s>0, "Bad back()."); return cp[s-1]; }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
+    constexpr operator decltype(*cp) () const { return to_scalar(*this); }
+// conversion to const, used by Container::view(). FIXME cf Small
+    constexpr operator ViewBig<reconst<P>, RANK> const & () const requires (!std::is_void_v<reconst<P>>)
+    {
+        return *reinterpret_cast<ViewBig<reconst<P>, RANK> const *>(this);
+    }
 // conversions from var rank to fixed rank
     template <rank_t R> requires (R==ANY && R!=RANK)
     constexpr ViewBig(ViewBig<P, R> const & x): dimv(x.dimv), cp(x.cp) {}
@@ -138,15 +141,6 @@ struct ViewBig
     constexpr ViewBig(ViewBig<P, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
     template <rank_t R> requires (R!=ANY && RANK==ANY && !std::is_void_v<unconst<P>>)
     constexpr ViewBig(ViewBig<unconst<P>, R> const & x): dimv(x.dimv.begin(), x.dimv.end()), cp(x.cp) {}
-// conversion to const, used by Container::view(). FIXME cf Small
-    constexpr operator ViewBig<reconst<P>, RANK> const & () const requires (!std::is_void_v<reconst<P>>)
-    {
-        return *reinterpret_cast<ViewBig<reconst<P>, RANK> const *>(this);
-    }
-    constexpr operator decltype(*cp) () const { return to_scalar(*this); }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
 };
 
 template <class V>

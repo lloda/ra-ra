@@ -318,13 +318,13 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spe
     RA_ASSIGNOPS_ITER(Cell)
     constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*c.cp) at(auto && i) const requires (0==cellr) { return *indexer(*this, c.cp, start(RA_FW(i))); }
-    constexpr View at(auto && i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, start(RA_FW(i))); return d; }
+    constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, start(i)); }
+    constexpr View at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, start(i)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr View const & operator*() const requires (0!=cellr) { return c; }
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); }
     constexpr auto save() const { return c.cp; }
-    constexpr void load(P p) { c.cp = p; }
+    constexpr void load(P p) { c.cp=p; }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 only
     constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
@@ -364,7 +364,7 @@ struct Ptr final
     constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, start(i)); } // iter's not view's
     constexpr decltype(*cp) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
-    constexpr void load(P p) { cp = p; }
+    constexpr void load(P p) { cp=p; }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 only
     constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
@@ -650,7 +650,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         dim_t s = UNB; (void)(((s = f.template operator()<std::decay_t<P>>(s)) != MIS) && ...);
         return s;
     }
-// try to provide static len(). We depend on len() for runtime check, so that requires that the check is static.
+// try to provide static len(). We depend on len() for runtime check, so we must know we won't need that.
     constexpr static dim_t
     len(is_constant auto k) requires (ANY!=len_s(k, true))
     {

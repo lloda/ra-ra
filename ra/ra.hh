@@ -302,7 +302,6 @@ at(A && a, auto && i)
 // selection / shortcutting
 // --------------------------------
 
-// ra::start are needed bc rank 0 converts to and from scalar, so ? can't pick the right (-> scalar) conversion.
 template <class T, class F> requires (toreduce<T, F>)
 constexpr decltype(auto)
 where(bool const w, T && t, F && f)

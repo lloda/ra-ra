@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - Tests for .at().
+// ra-ra/test - Tests for .at(), ra::at()
 
 // (c) Daniel Llorens - 2021
 // This library is free software; you can redistribute it and/or modify it under

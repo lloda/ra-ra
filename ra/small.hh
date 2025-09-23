@@ -341,10 +341,10 @@ constexpr decltype(auto)
 at_view(auto const & a, auto const & i)
 {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
-    if constexpr (constexpr rank_t crank = rank_diff(rank_s(a), ra::size_s(i)); ANY==crank) {
+    if constexpr (constexpr rank_t cr = rank_diff(rank_s(a), ra::size_s(i)); ANY==cr) {
         return a.template iter(rank(a)-ra::size(i)).at(i);
     } else {
-        return a.template iter<crank>().at(i);
+        return a.template iter<cr>().at(i);
     }
 }
 
@@ -405,7 +405,7 @@ struct ViewSmall
     constexpr static auto dimv = Dimv::value;
     P cp;
 
-    consteval static rank_t rank() { return ssize(dimv); }
+    consteval static rank_t rank() { return dimv.size(); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
@@ -450,14 +450,15 @@ struct ViewSmall
     constexpr auto end() const requires (is_c_order_dimv(dimv)) { return cp+size(); }
     constexpr static auto end() requires (!is_c_order_dimv(dimv)) { return std::default_sentinel; }
     constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
+    constexpr operator decltype(*cp) () const { return to_scalar(*this); }
+// conversion to const
     constexpr operator ViewSmall<reconst<P>, Dimv> () const requires (!std::is_void_v<reconst<P>>)
     {
         return ViewSmall<reconst<P>, Dimv>(cp);
     }
-    constexpr operator decltype(*cp) () const { return to_scalar(*this); }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
 };
 
 #if defined (__clang__)
