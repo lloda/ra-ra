@@ -1414,7 +1414,7 @@ cout &lt;&lt; fmt(ra::pstyle, A) &lt;&lt; endl;
   [7, 8, 9]]]
 </pre></div>
 
-<p><code>jstyle</code> is the only style parsed by <code>ra::operator&gt;&gt;(std::istream &amp;)</code>. See also <a href="#x_002dfmt">fmt</a>.
+<p><code>jstyle</code> is the only style parsed by <code>ra::operator&gt;&gt;(std::istream &amp;)</code>. See also <a href="#x_002dfmt"><code>fmt</code></a>.
 </p>
 <p>For <code>std::format</code>, the following specifiers are available:
 </p>
@@ -2267,7 +2267,55 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
     ra::Big&lt;int, 2&gt; B = at(A, i);
 </pre><pre class="example">  &rArr; B = {{101, 120}, {110, 121}}
 </pre></div>
+
+<p>See also <a href="#x_002dat_002dview"><code>at_view</code></a>.
+</p></dd></dl>
+
+<span id="index-at_005fview"></span>
+<span id="x_002dat_002dview"></span><dl class="def">
+<dt id="index-at_005fview-1"><span class="category">Function: </span><span><strong>at_view</strong> <em>slice indices</em><a href='#index-at_005fview-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd><p>Like <a href="#x_002dat"><code>at</code></a>, but the indices can be shorter than the rank of <var>slice</var>; in that case, return the corresponding prefix slice.
+</p>
+<div class="example">
+<pre class="verbatim">    ra::Big&lt;int, 2&gt; A = {{100, 101}, {110, 111}, {120, 121}};
+    cout &lt;&lt; at_view(A, ra::Small&lt;int, 0&gt; {}) &lt;&lt; endl;
+</pre><pre class="example">    -| {{100, 101}, {110, 111}, {120, 121}}
+</pre><pre class="verbatim">    cout &lt;&lt; at_view(A, ra::Small&lt;int, 1&gt; {2}) &lt;&lt; endl;
+</pre><pre class="example">    -| {120, 121}
+</pre><pre class="verbatim">    cout &lt;&lt; at_view(A, ra::Small&lt;int, 2&gt; {2, 0}) &lt;&lt; endl;
+</pre><pre class="example">    -| 120
+</pre></div>
+
+<p>In principle, this function makes <a href="#x_002dat"><code>at</code></a> redundant. We provide both because 1) <code>at_view</code> only works on slices, 2) if the length of <var>indices</var> is dynamic, <code>at_view</code> is forced to return a dynamic rank slice, which is a lot slower.
+</p>
+<div class="example">
+<pre class="verbatim">    ra::Big&lt;int, 2&gt; A = {{100, 101}, {110, 111}, {120, 121}};
+    ra::Big&lt;int, 2&gt; I = {{0, 1}, {2, 0}, {1, 0}};
+
+    // error if 2!=I.len(1). Iterates over scalars
+    cout &lt;&lt; at(A, I.iter&lt;1&gt;()) &lt;&lt; endl;
+</pre><pre class="example">    -|
+    3
+    101 120 110
+</pre><pre class="verbatim">    // L=I.len(1) can be 0, 1, 2. Iterates over dynamic rank (2-L)-views
+    cout &lt;&lt; at_view(A, I.iter&lt;1&gt;()) &lt;&lt; endl;
+</pre><pre class="example">    -|
+    3
+    0
+
+    101 0
+
+    120 0
+
+    110
+</pre></div>
+
+<p>This shows the default printing of dynamic rank arrays, which is to print the rank (0), then the shape (), then the contents. The first (3) is the shape of the overall expression, which is that of <code>I.iter&lt;1&gt;()</code> and has static rank 1.
+</p>
+<p>See also <a href="#x_002dat"><code>at</code></a>.
+</p>
 </dd></dl>
+
 
 <span id="index-begin"></span>
 <span id="x_002dbegin"></span><dl class="def">
@@ -3095,6 +3143,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td valign="top"><a href="#index-arity">arity</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-assert">assert</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Extension">Extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-at"><code>at</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-at_005fview"><code>at_view</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-begin"><code>begin</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

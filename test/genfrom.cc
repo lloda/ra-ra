@@ -17,10 +17,8 @@ RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.cp.i, " ", i.s, "] in l
 TODO
 * [ ] optimize() applies to ops with general iota
 * [ ] Ptr is a slice (but being slice and iterator at the same time is trouble).
-  - [ ] There is conceptual confusion about view vs iterator overall. For example, view.at() and
-    iter.at() behave differently (and ra::at(a, i) uses a.at). Maybe these should have different
-    names, because he flexibility in view.at() can be expensive. Also, from(a ...) requires view a,
-    but iotas are (currently) only iterators.
+  - [ ] There is conceptual confusion about view vs iterator overall. For example,
+        from(a ...) requires view a, but iotas are (currently) only iterators.
 * [ ] review '1-past is ok but 1-before is not' change in fromb.cc
 * [ ] index checks
   - [X] for scalar

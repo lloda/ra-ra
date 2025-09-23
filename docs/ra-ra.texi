@@ -1390,7 +1390,7 @@ cout << fmt(ra::pstyle, A) << endl;
 @end verbatim
 @end example
 
-@code{jstyle} is the only style parsed by @code{ra::operator>>(std::istream &)}. See also @ref{x-fmt,fmt}.
+@code{jstyle} is the only style parsed by @code{ra::operator>>(std::istream &)}. See also @ref{x-fmt,@code{fmt}}.
 
 For @code{std::format}, the following specifiers are available:
 
@@ -2191,7 +2191,7 @@ This differs from @ref{x-agree,@code{agree}} when @var{op} has non-zero argument
 Look up @var{expr} at each element of @var{indices}, which shall be a multi-index into @var{expr}.
 
 This can be used for sparse subscripting. For example:
-@example @c [ra30]
+@example @c [ma30]
 @verbatim
     ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
     ra::Big<ra::Small<int, 2>, 2> i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
@@ -2199,7 +2199,64 @@ This can be used for sparse subscripting. For example:
 @end verbatim
   @result{} B = @{@{101, 120@}, @{110, 121@}@}
 @end example
+
+See also @ref{x-at-view,@code{at_view}}.
 @end defun
+
+@cindex @code{at_view}
+@anchor{x-at-view} @defun at_view slice indices
+Like @ref{x-at,@code{at}}, but the indices can be shorter than the rank of @var{slice}; in that case, return the corresponding prefix slice.
+
+@example @c [ma31]
+@verbatim
+    ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
+    cout << at_view(A, ra::Small<int, 0> {}) << endl;
+@end verbatim
+    @print{} @{@{100, 101@}, @{110, 111@}, @{120, 121@}@}
+@verbatim
+    cout << at_view(A, ra::Small<int, 1> {2}) << endl;
+@end verbatim
+    @print{} @{120, 121@}
+@verbatim
+    cout << at_view(A, ra::Small<int, 2> {2, 0}) << endl;
+@end verbatim
+    @print{} 120
+@end example
+
+In principle, this function makes @ref{x-at,@code{at}} redundant. We provide both because 1) @code{at_view} only works on slices, 2) if the length of @var{indices} is dynamic, @code{at_view} is forced to return a dynamic rank slice, which is a lot slower.
+
+@example @c [ma32]
+@verbatim
+    ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
+    ra::Big<int, 2> I = {{0, 1}, {2, 0}, {1, 0}};
+
+    // error if 2!=I.len(1). Iterates over scalars
+    cout << at(A, I.iter<1>()) << endl;
+@end verbatim
+    @print{}
+    3
+    101 120 110
+@verbatim
+    // L=I.len(1) can be 0, 1, 2. Iterates over dynamic rank (2-L)-views
+    cout << at_view(A, I.iter<1>()) << endl;
+@end verbatim
+    @print{}
+    3
+    0
+
+    101 0
+
+    120 0
+
+    110
+@end example
+
+This shows the default printing of dynamic rank arrays, which is to print the rank (0), then the shape (), then the contents. The first (3) is the shape of the overall expression, which is that of @code{I.iter<1>()} and has static rank 1.
+
+See also @ref{x-at,@code{at}}.
+
+@end defun
+
 
 @cindex @code{begin}
 @anchor{x-begin} @defun begin expr

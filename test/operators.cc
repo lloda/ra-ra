@@ -26,14 +26,14 @@ int main()
     {
 #define DEF_TEST_UNARY_OP(OP)                                           \
         auto test = [&tr](auto token, auto x, auto y, auto && vx, auto && vy, real err) \
-            {                                                           \
-                using T = decltype(token);                              \
-                using TY = decltype(OP(std::declval<T>()));             \
-                tr.info("scalar-scalar").test_abs(OP(T(x)), TY(y), err); \
-                tr.info("array(0)-scalar").test_abs(OP(ra::Unique<T, 0>(x)), TY(y), err); \
-                tr.info("array(var)-scalar").test_abs(OP(ra::Unique<T>(x)), TY(y), err); \
-                tr.info("array(1)-array(1)").test_abs(OP(vx), vy, err); \
-            };
+        {                                                               \
+            using T = decltype(token);                                  \
+            using TY = decltype(OP(std::declval<T>()));                 \
+            tr.info("scalar-scalar").test_abs(OP(T(x)), TY(y), err);    \
+            tr.info("array(0)-scalar").test_abs(OP(ra::Unique<T, 0>(x)), TY(y), err); \
+            tr.info("array(var)-scalar").test_abs(OP(ra::Unique<T>(x)), TY(y), err); \
+            tr.info("array(1)-array(1)").test_abs(OP(vx), vy, err);     \
+        };
         {
             DEF_TEST_UNARY_OP(abs);
             test(int(), -3, 3, ra::Unique<int, 1>{1, -3, -2}, ra::Unique<int, 1>{1, 3, 2}, 0.);
@@ -65,7 +65,7 @@ int main()
 #pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
         tr.info("<=> a").test_eq(true, (2<=>1)>0);
         tr.info("<=> b").test_eq(ra::ptr((char const *)"+0-"),
-                                 map([](auto z) { return z>0 ? '+' : z<0 ? '-' : '0'; },
+                                 map([](auto z){ return z>0 ? '+' : z<0 ? '-' : '0'; },
                                      ra::Small<int, 3>{3, 4, 5} <=> ra::Small<double, 3>{2., 4., 6.}));
 #pragma GCC diagnostic pop
     }
@@ -73,20 +73,19 @@ int main()
     tr.section("check decay of rank 0 Containers/Slices w/ operators");
     {
         {
-            auto test = [&tr](auto && a)
-                {
-                    tr.test_eq(12, a*4.);
-                    auto b = a();
-                    static_assert(std::is_same_v<int, decltype(b)>, "unexpected b non-decay to real");
-                    static_assert(std::is_same_v<real, decltype(b*4.)>, "expected b decay to real");
-                    static_assert(std::is_same_v<real, decltype(4.*b)>, "expected b decay to real");
-                    tr.test_eq(12., b*4.);
-                    tr.test_eq(12., 4.*b);
-                    static_assert(std::is_same_v<real, decltype(a*4.)>, "expected a decay to real");
-                    static_assert(std::is_same_v<real, decltype(4.*a)>, "expected a decay to real");
-                    tr.test_eq(12., a*4.);
-                    tr.test_eq(12., 4.*a);
-                };
+            auto test = [&tr](auto && a){
+                tr.test_eq(12, a*4.);
+                auto b = a();
+                static_assert(std::is_same_v<int, decltype(b)>, "unexpected b non-decay to real");
+                static_assert(std::is_same_v<real, decltype(b*4.)>, "expected b decay to real");
+                static_assert(std::is_same_v<real, decltype(4.*b)>, "expected b decay to real");
+                tr.test_eq(12., b*4.);
+                tr.test_eq(12., 4.*b);
+                static_assert(std::is_same_v<real, decltype(a*4.)>, "expected a decay to real");
+                static_assert(std::is_same_v<real, decltype(4.*a)>, "expected a decay to real");
+                tr.test_eq(12., a*4.);
+                tr.test_eq(12., 4.*a);
+            };
             test(ra::Small<int>(3));
             test(ra::Unique<int, 0>({}, 3));
         }
@@ -127,7 +126,7 @@ int main()
         ra::Unique<int, 1> b({3}, { 10, 20, 30 });
 #define TESTSUM(arg)                                                   \
         tr.test_eq(arg, ra::Small<int, 3, 2> {11, 12, 23, 40, 35, 36});
-        TESTSUM(ra::map_([](int a, int b) { return a + b; }, a.iter(), b.iter()));
+        TESTSUM(ra::map_([](int a, int b){ return a + b; }, a.iter(), b.iter()));
         TESTSUM(a.iter() + b.iter());
         TESTSUM(a+b);
 #undef TESTSUM
@@ -147,7 +146,7 @@ int main()
                 tr.test_eq(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
             }
             {
-                auto a0 = a.at(ra::Small<int, 1> { 0 }); // BUG Not sure this is what I want
+                auto a0 = at_view(a, ra::Small<int, 1> { 0 }); // BUG Not sure this is what I want
                 tr.test_eq(ra::Small<real, 3>{.5, 1., 1.5}, 0.5*a0);
             }
         }
@@ -170,7 +169,7 @@ int main()
     {
         ra::Small<int, 3> a { 1, 2, 3 };
         ra::Small<int, 3> b { 1, 2, 4 };
-        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, ra::map_([](int a, int b) { return a + b; }, a.iter(), b.iter()));
+        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, ra::map_([](int a, int b){ return a + b; }, a.iter(), b.iter()));
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, (a.iter() + b.iter()));
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, a+b);
     }
@@ -198,7 +197,7 @@ int main()
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Small<int, 3, 2> ref {4, 5, 6, 23, 8, 9};
-        tr.test_eq(ref, ra::map_([](int a, int b) { return a + b; }, ra::start(a), ra::start(3)));
+        tr.test_eq(ref, ra::map_([](int a, int b){ return a + b; }, ra::start(a), ra::start(3)));
         tr.test_eq(ref, ra::start(a) + ra::start(3));
         tr.test_eq(ref, a+3);
     }
@@ -208,14 +207,13 @@ int main()
         real check0[6] = { 0, -1, 1, 0, 2, 1 };
         real check1[6] = { 4, 3, 5, 4, 6, 5 };
         real check2[6] = { 8, 6, 10, 8, 12, 10 };
-        auto test = [&](auto && a)
-            {
-                tr.test(std::equal(a.begin(), a.end(), check0));
-                a += 4;
-                tr.test(std::equal(a.begin(), a.end(), check1));
-                a += a;
-                tr.test(std::equal(a.begin(), a.end(), check2));
-            };
+        auto test = [&](auto && a){
+            tr.test(std::equal(a.begin(), a.end(), check0));
+            a += 4;
+            tr.test(std::equal(a.begin(), a.end(), check1));
+            a += a;
+            tr.test(std::equal(a.begin(), a.end(), check2));
+        };
         test(ra::Unique<int, 2>({3, 2}, ra::cast<int>(ra::_0-ra::_1)));
         test(ra::Small<int, 3, 2>(ra::cast<int>(ra::_0-ra::_1)));
     }
@@ -318,8 +316,7 @@ int main()
     {
         ra::Big<int, 3> a({10, 2, 2}, {0, 0, 1, 3, 0, 1, 3, 3, 0, 2, 3, 0, 3, 1, 2, 1, 1, 1, 3, 1, 0, 3, 2, 2, 2, 3, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 3, 0, 2, 1});
         ra::Big<int, 1> i = ra::iota(a.len(0));
-        std::sort(i.data(), i.data()+i.size(),
-                  [&a](int i, int j) { return lexical_compare(a(i), a(j)); });
+        std::sort(i.data(), i.data()+i.size(), [&a](int i, int j){ return lexical_compare(a(i), a(j)); });
         tr.test_eq(ra::start({0, 8, 1, 2, 5, 4, 7, 6, 9, 3}), i);
     }
     return tr.summary();

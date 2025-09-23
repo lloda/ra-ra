@@ -337,17 +337,6 @@ from(A && a, auto && ...  i)
     }
 }
 
-constexpr decltype(auto)
-at_view(auto const & a, auto const & i)
-{
-// can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
-    if constexpr (constexpr rank_t cr = rank_diff(rank_s(a), ra::size_s(i)); ANY==cr) {
-        return a.template iter(rank(a)-ra::size(i)).at(i);
-    } else {
-        return a.template iter<cr>().at(i);
-    }
-}
-
 
 // ---------------------
 // Small view and container
@@ -452,7 +441,7 @@ struct ViewSmall
     constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
+    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, start(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
 // conversion to const
     constexpr operator ViewSmall<reconst<P>, Dimv> () const requires (!std::is_void_v<reconst<P>>)

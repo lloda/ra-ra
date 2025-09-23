@@ -128,17 +128,17 @@ int main(int argc, char * * argv)
         test1(smola, smoli, reps, "small/small");
         test1(bigsa, smoli, reps, "bigs/small");
         test1(bigda, smoli, reps, "bigd/small");
+        test1(iotav, smoli, reps, "iotv/small");
+        test1(iotai, smoli, reps, "ioti/small");
         test1(smola, bigsi, reps, "small/bigs");
         test1(bigsa, bigsi, reps, "bigs/bigs");
         test1(bigda, bigsi, reps, "bigd/bigs");
+        test1(iotav, bigsi, reps, "iotv/bigs");
+        test1(iotai, bigsi, reps, "ioti/bigs");
         test1(smola, bigdi, reps, "small/bigd");
         test1(bigsa, bigdi, reps, "bigs/bigd");
         test1(bigda, bigdi, reps, "bigd/bigd");
-        test1(iotav, smoli, reps, "iotv/small");
-        test1(iotav, bigsi, reps, "iotv/bigs");
         test1(iotav, bigdi, reps, "iotv/bigd");
-        test1(iotai, smoli, reps, "ioti/small");
-        test1(iotai, bigsi, reps, "ioti/bigs");
         test1(iotai, bigdi, reps, "ioti/bigd");
     }
     return tr.summary();

@@ -203,26 +203,5 @@ int main()
         ra::Small<real, 4> a = ra::_0;
         tr.test_eq(a(ra::iota(2, 1)), Ureal<1> { 1, 2 });
     }
-// Indirection operator using list of coordinates.
-    tr.section("at() indirection");
-    {
-        ra::Big<int, 2> A({4, 4}, 0), B({4, 4}, 10*ra::_0 + ra::_1);
-        using coord = ra::Small<int, 2>;
-        ra::Big<coord, 1> I = { {1, 1}, {2, 2} };
-
-        at(A, I) = at(B, I);
-        tr.test_eq(ra::Big<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 0, 0}), A);
-
-// TODO this is why we need ops to have explicit rank.
-        at(A, ra::scalar(coord{3, 2})) = 99.;
-        tr.test_eq(ra::Big<int>({4, 4}, {0, 0, 0, 0, /**/ 0, 11, 0, 0,  /**/ 0, 0, 22, 0,  /**/  0, 0, 99, 0}), A);
-    }
-// From the manual [ra30]
-    {
-        ra::Big<int, 2> A = {{100, 101}, {110, 111}, {120, 121}};
-        ra::Big<ra::Small<int, 2>, 2> i = {{{0, 1}, {2, 0}}, {{1, 0}, {2, 1}}};
-        ra::Big<int, 2> B = at(A, i);
-        tr.test_eq(ra::Big<int, 2> {{101, 120}, {110, 121}}, at(A, i));
-    }
     return tr.summary();
 }

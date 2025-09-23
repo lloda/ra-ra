@@ -127,8 +127,8 @@ int main()
             auto k2 = s.at(i2);
             tr.test_eq(0, ra::rank(k2));
             tr.test_eq(check2[0], k2);
-            auto k1 = s.at(i1).begin(); tr.test(std::equal(check1, check1+2, k1));
-            auto k0 = s.at(i0).begin(); tr.test(std::equal(check0, check0+6, k0));
+            auto k1 = at_view(s, i1).begin(); tr.test(std::equal(check1, check1+2, k1));
+            auto k0 = at_view(s, i0).begin(); tr.test(std::equal(check0, check0+6, k0));
         }
         tr.section("with rank 1 subscripts");
         {

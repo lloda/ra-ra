@@ -289,12 +289,31 @@ pack(auto && ... a)
     return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...);
 }
 
-// needs nested array for I, but one can use iter<-1> with rank 2
 template <class A>
-constexpr auto
-at(A && a, auto && i)
+constexpr decltype(auto)
+at(A && a, auto const & i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
 {
-    return map([a=std::tuple<A>(RA_FW(a))](auto && i) -> decltype(auto) { return std::get<0>(a).at(i); }, RA_FW(i));
+    if constexpr (0==rank_s<decltype(VAL(i))>()) {
+        return a.at(i);
+    } else {
+        return map([a=std::tuple<A>(RA_FW(a))](auto && i) -> decltype(auto) { return at(std::get<0>(a), i); }, RA_FW(i));
+    }
+}
+
+template <Slice A>
+constexpr decltype(auto)
+at_view(A && a, auto && i)
+{
+    if constexpr (0==rank_s<decltype(VAL(i))>()) {
+// can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
+        if constexpr (constexpr rank_t cr = rank_diff(rank_s(a), ra::size_s(i)); ANY==cr) {
+            return a.template iter(rank(a)-ra::size(i)).at(i);
+        } else {
+            return a.template iter<cr>().at(i);
+        }
+    } else {
+        return map([a=std::tuple<A>(RA_FW(a))](auto && i) -> decltype(auto) { return at_view(std::get<0>(a), i); }, RA_FW(i));
+    }
 }
 
 
@@ -304,42 +323,28 @@ at(A && a, auto && i)
 
 template <class T, class F> requires (toreduce<T, F>)
 constexpr decltype(auto)
-where(bool const w, T && t, F && f)
-{
-    return w ? VAL(t) : VAL(f);
-}
+where(bool const w, T && t, F && f) { return w ? VAL(t) : VAL(f); }
+
 template <class W, class T, class F> requires (tomap<W, T, F>)
 constexpr auto
-where(W && w, T && t, F && f)
-{
-    return pick(cast<bool>(RA_FW(w)), RA_FW(f), RA_FW(t));
-}
+where(W && w, T && t, F && f) { return pick(cast<bool>(RA_FW(w)), RA_FW(f), RA_FW(t)); }
+
 // catch all for non-ra types.
 template <class T, class F> requires (!(tomap<T, F>) && !(toreduce<T, F>))
 constexpr decltype(auto)
-where(bool const w, T && t, F && f)
-{
-    return w ? t : f;
-}
+where(bool const w, T && t, F && f) { return w ? t : f; }
 
 template <class A, class B> requires (tomap<A, B>)
 constexpr auto
-operator &&(A && a, B && b)
-{
-    return where(RA_FW(a), cast<bool>(RA_FW(b)), false);
-}
+operator &&(A && a, B && b) { return where(RA_FW(a), cast<bool>(RA_FW(b)), false); }
+
 template <class A, class B> requires (tomap<A, B>)
 constexpr auto
-operator ||(A && a, B && b)
-{
-    return where(RA_FW(a), true, cast<bool>(RA_FW(b)));
-}
+operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<bool>(RA_FW(b))); }
+
 #define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
     template <class A, class B> requires (toreduce<A, B>)               \
-    constexpr auto operator OP(A && a, B && b)                          \
-    {                                                                   \
-        return VAL(a) OP VAL(b);                                        \
-    }
+    constexpr auto operator OP(A && a, B && b) { return VAL(a) OP VAL(b);  }
 FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
 #undef DEF_SHORTCIRCUIT_BINARY_OP
 

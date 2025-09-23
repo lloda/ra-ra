@@ -548,23 +548,23 @@ int main()
                 tr.test(std::ranges::equal(r0.begin(), r0.end(), rcheck, rcheck+6));
                 ra::Small<int, 0> i0 {};
                 tr.info("ra::Small<int, 0> rank").test_eq(1, i0.rank());
-                auto r0a = r.at(ra::Small<int, 0> {});
+                auto r0a = at_view(r, ra::Small<int, 0> {});
                 tr.info("fix size").test(std::ranges::equal(r0a.begin(), r0a.end(), rcheck, rcheck+6));
-                auto r0b = r.at(ra::Big<int, 1> {});
+                auto r0b = at_view(r, ra::Big<int, 1> {});
                 tr.info("fix rank").test(std::ranges::equal(r0b.begin(), r0b.end(), rcheck, rcheck+6));
-                auto r0c = r.at(0+ra::Big<int, 1> {});
+                auto r0c = at_view(r, 0+ra::Big<int, 1> {});
                 tr.info("fix rank expr").test(std::ranges::equal(r0c.begin(), r0c.end(), rcheck, rcheck+6));
-                auto r0d = r.at(0+ra::Big<int>({0}, {}));
+                auto r0d = at_view(r, 0+ra::Big<int>({0}, {}));
                 tr.info("r0d: [", r0d, "]").test(std::ranges::equal(r0d.begin(), r0d.end(), rcheck, rcheck+6));
             }
             {
                 double rcheck[2] = { 2, 5 };
                 auto r1 = r(1);
                 tr.test_eq(rcheck, r1);
-                tr.strict().test_eq(rcheck, r.at(ra::Small<int, 1> {1}));
-                tr.strict().test_eq(rcheck, r.at(ra::Big<int, 1> {1}));
-                tr.strict().test_eq(rcheck, r.at(0+ra::Big<int, 1> {1}));
-                tr.strict().test_eq(rcheck, r.at(0+ra::Big<int> {1}));
+                tr.strict().test_eq(rcheck, at_view(r, ra::Small<int, 1> {1}));
+                tr.strict().test_eq(rcheck, at_view(r, ra::Big<int, 1> {1}));
+                tr.strict().test_eq(rcheck, at_view(r, 0+ra::Big<int, 1> {1}));
+                tr.strict().test_eq(rcheck, at_view(r, 0+ra::Big<int> {1}));
             }
             {
                 auto r2 = r(1, 1);
@@ -604,7 +604,7 @@ int main()
 
             double rcheck0[6] = { 1, 4, 2, 5, 3, 6 };
             auto r0 = r();
-            auto r0a = r.at(ra::Small<int, 0> {});
+            auto r0a = at_view(r, ra::Small<int, 0> {});
             tr.test_eq(2, r0a.rank());
             tr.test_eq(2, r0.rank());
             cout << "r0" << endl;
@@ -614,7 +614,7 @@ int main()
 
             double rcheck1[2] = { 2, 5 };
             auto r1 = r(1);
-            auto r1a = r.at(ra::Small<int, 1> {1});
+            auto r1a = at_view(r, ra::Small<int, 1> {1});
             tr.test_eq(1, r1a.rank());
             tr.test_eq(1, r1.rank());
             cout << "r1" << endl;
@@ -624,7 +624,7 @@ int main()
 
             double rcheck2[1] = { 5 };
             auto r2 = r(1, 1);
-            auto r2a = r.at(ra::Small<int, 2> {1, 1});
+            auto r2a = at_view(r, ra::Small<int, 2> {1, 1});
             tr.test_eq(0, r2a.rank());
             cout << "r2" << endl;
             std::ranges::copy(r2.begin(), r2.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;

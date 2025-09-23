@@ -124,7 +124,7 @@ struct ViewBig
     constexpr decltype(auto) back() const { dim_t s=size(); RA_CK(s>0, "Bad back()."); return cp[s-1]; }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return at_view(*this, i); }
+    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, start(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
 // conversion to const, used by Container::view(). FIXME cf Small
     constexpr operator ViewBig<reconst<P>, RANK> const & () const requires (!std::is_void_v<reconst<P>>)
@@ -323,6 +323,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     constexpr auto begin(this auto && self) { assert(is_c_order(self.view())); return self.view().data(); }
     constexpr auto end(this auto && self) { return self.view().data()+self.size(); }
     template <rank_t c=0> constexpr auto iter(this auto && self) { if constexpr (1==RANK && 0==c) { return ptr(self.data(), self.size()); } else { return RA_FW(self).view().template iter<c>(); } }
+    constexpr auto iter(this auto && self, rank_t c) { return RA_FW(self).view().iter(c); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };

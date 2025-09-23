@@ -38,7 +38,7 @@ int main()
         ra::ViewBig<double *, 2> r { {{3, 1}, {2, 3}}, rpool };
         double rcheck[6] = { 1, 4, 2, 5, 3, 6 };
 // kinda... long
-        auto v = r.at(ra::Big<int>({0}, {}));
+        auto v = at_view(r, ra::Big<int>({0}, {}));
         tr.test(std::ranges::equal(std::ranges::subrange(rcheck, rcheck+6),
                                    std::ranges::subrange(v)));
     }
