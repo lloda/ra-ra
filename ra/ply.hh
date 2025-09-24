@@ -95,9 +95,9 @@ ply_ravel(A && a, Early && early = Nop {})
 
 // compile time order/rank.
 
-template <auto order, int k, int urank, class A, class S, class Early>
+template <auto order, int k, int urank, class S, class Early>
 constexpr auto
-subply(A & a, dim_t s, S const & ss0, Early & early)
+subply(Iterator auto & a, dim_t s, S const & ss0, Early & early)
 {
     if constexpr (k < urank) {
         auto place = a.save();
@@ -132,9 +132,9 @@ subply(A & a, dim_t s, S const & ss0, Early & early)
     }
 }
 
-template <Iterator A, class Early = Nop>
+template <class Early = Nop>
 constexpr decltype(auto)
-ply_fixed(A && a, Early && early = Nop {})
+ply_fixed(Iterator auto && a, Early && early = Nop {})
 {
     validate(a);
     constexpr rank_t rank = rank_s(a);
@@ -162,25 +162,21 @@ ply_fixed(A && a, Early && early = Nop {})
 
 // defaults.
 
-template <Iterator A, class Early = Nop>
+template <class Early = Nop>
 constexpr decltype(auto)
-ply(A && a, Early && early = Nop {})
+ply(Iterator auto && a, Early && early = Nop {})
 {
     if constexpr (ANY==size_s(a)) {
-        return ply_ravel(RA_FW(a), RA_FW(early));
+        return ply_ravel(a, early);
     } else {
-        return ply_fixed(RA_FW(a), RA_FW(early));
+        return ply_fixed(a, early);
     }
 }
 
-constexpr void
-for_each(auto && op, auto && ... a) { ply(map(RA_FW(op), RA_FW(a) ...)); }
+constexpr void for_each(auto && op, auto && ... a) { ply(map(op, a ...)); }
 
-template <class T> struct Default { T def; };
-template <class T> Default(T &&) -> Default<T>;
-
-constexpr decltype(auto)
-early(Iterator auto && a, auto && def) { return ply(RA_FW(a), Default { RA_FW(def) }); }
+template <class T> struct Default { T & def; };
+constexpr decltype(auto) early(Iterator auto && a, auto && def) { return ply(a, Default { def }); }
 
 
 // --------------------
