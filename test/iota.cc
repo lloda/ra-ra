@@ -116,5 +116,10 @@ int main()
         tr.test_eq(-2, j.s);
         tr.strict().test_eq(ra::start({-1, -3, -5}), j);
     }
+    tr.section("truncated sequence");
+    {
+        auto i = ra::ii({7, 7, 7}, uint8_t(0));
+        tr.strict().test_eq(ra::ii({7, 7, 7}) % 256, i);
+    }
     return tr.summary();
 }

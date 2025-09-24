@@ -156,12 +156,12 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
 {
     if constexpr (dobv) {
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.2 -DRA_CHECK=0 -O3
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14/15.2 -DRA_CHECK=0 -O3
         for (; ak<ra::rank(a); ++ak, ++bk) {
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Warray-bounds" // gcc14.3/15.2 --no-sanitize -O2 -O3
-#pragma GCC diagnostic warning "-Wstringop-overflow" // gcc14.3/15.2 --no-sanitize -O2 -O3
+#pragma GCC diagnostic warning "-Warray-bounds" // gcc14/15.2 --no-sanitize -O2 -O3
+#pragma GCC diagnostic warning "-Wstringop-overflow" // gcc14/15.2 --no-sanitize -O2 -O3
             bv[bk] = a.dimv[ak];
 #pragma GCC diagnostic pop
         }
@@ -426,13 +426,13 @@ struct ViewSmall
 // T not is_scalar [ra44]
     constexpr ViewSmall const & operator=(T const & t) const { start(*this)=ra::scalar(t); return *this; }
 // cf RA_ASSIGNOPS_ITER [ra38] [ra34]
-    ViewSmall const & operator=(ViewSmall const & x) const { start(*this) = x; return *this; }
+    ViewSmall const & operator=(ViewSmall const & x) const { start(*this)=x; return *this; }
 #define ASSIGNOPS(OP)                                                   \
     constexpr ViewSmall const & operator OP(Iterator auto && x) const { start(*this) OP RA_FW(x); return *this; } \
     constexpr ViewSmall const & operator OP(auto const & x) const { start(*this) OP x; return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
-    template <int s, int o=0> constexpr auto as() const { return from(*this, ra::iota(ra::ic<s>, o)); }
+    template <dim_t s, dim_t o=0> constexpr auto as() const { return from(*this, ra::iota(ic<s>, o)); }
     template <rank_t c=0> constexpr auto iter() const { return Cell<P, ic_t<dimv>, ic_t<c>>(cp); }
     constexpr auto iter(rank_t c) const { return Cell<P, decltype(dimv) const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { if constexpr (is_c_order_dimv(dimv)) return cp; else return STLIterator(iter()); }
@@ -503,8 +503,8 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     {
         view() = { x ... };
     }
-    constexpr SmallArray(auto const & x) { view() = x; }
-    constexpr SmallArray(Iterator auto && x) { view() = RA_FW(x); }
+    constexpr SmallArray(auto const & x) { view()=x; }
+    constexpr SmallArray(Iterator auto && x) { view()=RA_FW(x); }
 #define ASSIGNOPS(OP)                                                   \
     constexpr SmallArray & operator OP(auto const & x) { view() OP x; return *this; } \
     constexpr SmallArray & operator OP(Iterator auto && x) { view() OP RA_FW(x); return *this; }

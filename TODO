@@ -7,6 +7,7 @@ checkbox [C-ct] flip TODO
 
 * TODO [1/7]
   - [-] Bugs [5/16]
+    - [ ] We shouldn't need ra::iota(3, ra::dim_t(4)) to get iota to use Seq<dim_t> instead of Seq<int>.
     - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
     - [ ] Invalid expressions that aren't caught by Match, either bc it makes assumptions, or bc
       Match isn't even involved. See checks.cc.

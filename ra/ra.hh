@@ -223,6 +223,7 @@ DEF_NAMED_BINARY_OP(<, std::less<>)          DEF_NAMED_BINARY_OP(>=, std::greate
 DEF_NAMED_BINARY_OP(<=, std::less_equal<>)   DEF_NAMED_BINARY_OP(!=, std::not_equal_to<>)
 DEF_NAMED_BINARY_OP(|, std::bit_or<>)        DEF_NAMED_BINARY_OP(&, std::bit_and<>)
 DEF_NAMED_BINARY_OP(^, std::bit_xor<>)       DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
+DEF_NAMED_BINARY_OP(%, std::modulus<>)
 #undef DEF_NAMED_BINARY_OP
 
 // FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive

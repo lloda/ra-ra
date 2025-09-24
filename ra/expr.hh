@@ -105,7 +105,7 @@ maybe_len(auto const & v, K k) { if constexpr (is_constant<K> && (ANY!=v.len_s(k
 
 // Sequence iterator.
 
-template <class I>
+template <class I=dim_t>
 struct Seq
 {
     I i;
@@ -232,25 +232,33 @@ struct Dim { dim_t len, step; };
 inline std::ostream &
 operator<<(std::ostream & o, Dim const & dim) { std::print(o, "[Dim {} {}]", dim.len, dim.step); return o; }
 
-constexpr dim_t
-filldimv(auto const & shape, auto & dimv)
+constexpr void
+resize(auto & a, dim_t s)
 {
-    map(&Dim::len, dimv) = shape;
+    if constexpr (ANY==size_s(a)) {
+        RA_CK(s>=0, "Bad resize ", s, ".");
+        a.resize(s);
+    } else {
+        RA_CK(s==start(a).len(0) || UNB==s, "Bad resize ", s, ", need ", start(a).len(0), ".");
+    }
+}
+
+constexpr dim_t
+filldimv(Iterator auto && p, auto & dimv)
+{
+    ra::resize(dimv, 0==rank_s(p) ? 1 : ra::size(p)); // [ra37]
+    for (rank_t k=0; k<ra::size(dimv); ++k, p.mov(p.step(0))) { dimv[k].len = *p; }
     dim_t s = 1;
     for (int k=ra::size(dimv); --k>=0;) {
         dimv[k].step = s;
         RA_CK(dimv[k].len>=0, "Bad len[", k, "] ", dimv[k].len, ".");
-// gcc 14.2, no warning with sanitizers
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
         s *= dimv[k].len;
-#pragma GCC diagnostic pop
     }
     return s;
 }
 
 consteval auto
-default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldimv(lv, dv); return dv; };
+default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldimv(start(lv), dv); return dv; };
 
 constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
 constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
@@ -325,10 +333,7 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spe
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); }
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp=p; }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 only
     constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
-#pragma GCC diagnostic pop
 };
 
 // rank 1 special case for fovs or iota. FIXME make Ptr a Slice with iter() -> Cell.
@@ -365,10 +370,7 @@ struct Ptr final
     constexpr decltype(*cp) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
     constexpr void load(P p) { cp=p; }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14.3/15.1 -O3 only
     constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
-#pragma GCC diagnostic pop
 };
 
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
@@ -496,9 +498,10 @@ reframe(A && a, Dest)
     }
 }
 
+// I != dim_t may warn "-Waggressive-loop-optimizations" in std::advance(i, ...) in gcc14/15.1 -O3
 template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
-iota(N && n=N {}, I && i=0, S && s=S(maybe_step<S>))
+iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
 {
     return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) }, ilist_t<w> {});
 }

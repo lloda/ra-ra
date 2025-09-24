@@ -45,17 +45,6 @@ braces_shape(braces<T, r> const & l)
     return [&l]<int ... i>(ilist_t<i ...>){ return std::array { braces_len<i, T, r>(l) ... }; }(mp::iota<r>{});
 }
 
-constexpr void
-resize(auto & a, dim_t s)
-{
-    if constexpr (ANY==size_s(a)) {
-        RA_CK(s>=0, "Bad resize ", s, ".");
-        a.resize(s);
-    } else {
-        RA_CK(s==start(a).len(0) || UNB==s, "Bad resize ", s, ", need ", start(a).len(0), ".");
-    }
-}
-
 // FIXME avoid duplicating cp, dimv from Container without being parent. Parameterize on Dimv, like Cell.
 // FIXME constructor checks (lens>=0, steps inside, etc.).
 template <class P, rank_t RANK>
@@ -81,11 +70,11 @@ struct ViewBig
     constexpr ViewBig(Dimv const & dimv_, P cp_): dimv(dimv_), cp(cp_) {} // [ra36]
     constexpr ViewBig(auto const & s, P cp_): cp(cp_)
     {
-        ra::resize(dimv, ra::size(s)); // [ra37]
         if constexpr (std::is_convertible_v<value_t<decltype(s)>, Dim>) {
+            ra::resize(dimv, ra::size(s)); // [ra37]
             start(dimv) = s;
         } else {
-            filldimv(s, dimv);
+            filldimv(start(s), dimv);
         }
     }
     constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(start(s), cp_) {}
@@ -228,8 +217,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
         static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
         RA_CK(1==ra::rank(s), "Rank mismatch for init shape.");
         static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
-        ra::resize(dimv, ra::size(s)); // [ra37]
-        store = storage_traits<Store>::create(filldimv(s, dimv));
+        store = storage_traits<Store>::create(filldimv(start(s), dimv));
         cp = storage_traits<Store>::data(store);
     }
     constexpr void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
@@ -287,8 +275,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     }
     constexpr void resize(auto const & s) requires (1==rank_s(s))
     {
-        ra::resize(dimv, 0==rank_s(s) ? 1 : ra::size(s));
-        store.resize(filldimv(s, dimv)); cp = store.data();
+        store.resize(filldimv(start(s), dimv)); cp = store.data();
     }
 // template + RA_FW wouldn't work for push_back(brace-enclosed-list).
     constexpr void push_back(T && t)
@@ -470,7 +457,7 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
             RA_CK(is_c_order(a, false) && la>=lb, "Reshape with copy not implemented.");
 // FIXME ViewBig(SS const & s, T * p). Cf [ra37].
-            filldimv(sb, b.dimv);
+            filldimv(start(sb), b.dimv);
             for (int j=0; j!=b.rank(); ++j) {
                 b.dimv[j].step *= a.step(a.rank()-1);
             }

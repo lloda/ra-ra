@@ -461,7 +461,7 @@ int main()
     }
     tr.section("ViewSmall of Seq");
     {
-        ra::ViewSmall<ra::Seq<int>, ra::ic_t<std::array {ra::Dim {3, 2}, ra::Dim {2, 1}}>> a(ra::Seq {1});
+        ra::ViewSmall<ra::Seq<>, ra::ic_t<std::array {ra::Dim {3, 2}, ra::Dim {2, 1}}>> a(ra::Seq<> {1});
         std::println(cout, "{:c:2}\n", transpose(a));
         tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
     }

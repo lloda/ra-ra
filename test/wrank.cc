@@ -355,7 +355,7 @@ int main()
     }
     tr.section("Reframe as transpose");
     {
-        ra::ViewSmall<ra::Seq<int>, ra::ic_t<ra::default_dims(std::array<int, 3> {2, 3, 4})>> a(ra::Seq<int> {0});
+        ra::ViewSmall<ra::Seq<>, ra::ic_t<ra::default_dims(std::array<int, 3> {2, 3, 4})>> a(ra::Seq<> {0});
         auto test = [&](auto dest) { tr.strict().test_eq(transpose(a, dest), reframe(start(a), dest)); };
         test(ra::ilist_t<0, 1, 2> {});
         test(ra::ilist_t<1, 2, 0> {});
