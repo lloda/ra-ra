@@ -143,9 +143,7 @@ struct Scalar final
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) at(auto && i) const { return c; }
-    constexpr C & operator*() requires (std::is_lvalue_reference_v<C>) { return c; } // [ra37]
-    constexpr C const & operator*() requires (!std::is_lvalue_reference_v<C>) { return c; }
-    constexpr C const & operator*() const { return c; } // [ra39]
+    constexpr std::conditional_t<std::is_lvalue_reference_v<C>, C, C const &> operator*() const { return c; } // [ra24] [ra37] [ra39]
     consteval static int save() { return 0; }
     constexpr static void load(int) {}
     constexpr static void mov(dim_t d) {}
@@ -156,7 +154,7 @@ scalar(C && c) { return Scalar<C> { RA_FW(c) }; }
 
 // making iterators (start)
 
-constexpr auto start(is_scalar auto && t) { return ra::scalar(RA_FW(t)); }
+constexpr auto start(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
 
 // iterators need resetting on each use [ra35].
 constexpr auto start(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
@@ -164,17 +162,17 @@ constexpr auto start(is_iterator auto & a) requires (!(requires { []<class C>(Sc
 constexpr decltype(auto) start(is_iterator auto && a) { return RA_FW(a); }
 
 // Cell doesn't retain rvalues [ra4].
-constexpr auto start(Slice auto && t) { return RA_FW(t).iter(); }
+constexpr auto start(Slice auto && a) { return RA_FW(a).iter(); }
 
 // TODO arbitrary exprs? runtime cr? ra::len in cr?
 template <int cr=0> constexpr auto iter(Slice auto && a) { return RA_FW(a).template iter<cr>(); }
 
 // forward decl.
-constexpr auto start(is_fov auto && t);
+constexpr auto start(is_fov auto && a);
 
-constexpr auto start(is_builtin_array auto && t);
+constexpr auto start(is_builtin_array auto && a);
 
-template <class T> constexpr auto start(std::initializer_list<T> v);
+template <class T> constexpr auto start(std::initializer_list<T> a);
 
 template <class A>
 constexpr decltype(auto)
@@ -333,7 +331,10 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spe
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); }
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp=p; }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
     constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
+#pragma GCC diagnostic pop
 };
 
 // rank 1 special case for fovs or iota. FIXME make Ptr a Slice with iter() -> Cell.
@@ -370,7 +371,10 @@ struct Ptr final
     constexpr decltype(*cp) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
     constexpr void load(P p) { cp=p; }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
     constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
+#pragma GCC diagnostic pop
 };
 
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
@@ -402,26 +406,26 @@ reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 }
 
 constexpr auto
-start(is_fov auto && t) { return ra::ptr(RA_FW(t)); }
+start(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
 
 template <class T>
 constexpr auto
-start(std::initializer_list<T> v) { return ra::ptr(v.begin(), v.size()); }
+start(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
 
 constexpr auto
-start(is_builtin_array auto && t)
+start(is_builtin_array auto && a)
 {
-    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(t)>>; // preserve const
-    return Cell<T *, ic_t<default_dims(ra::shape(t))>, ic_t<0>>(
-        [](this auto const & self, auto && t){
-            using T = std::remove_cvref_t<decltype(t)>;
+    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(a)>>; // preserve const
+    return Cell<T *, ic_t<default_dims(ra::shape(a))>, ic_t<0>>(
+        [](this auto const & self, auto && a){
+            using T = std::remove_cvref_t<decltype(a)>;
             if constexpr (1 < std::rank_v<T>) {
                 static_assert(0 < std::extent_v<T, 0>);
-                return self(*std::data(t));
+                return self(*std::data(a));
             } else {
-                return std::data(t);
+                return std::data(a);
             }
-        }(t));
+        }(a));
 }
 
 
@@ -498,7 +502,6 @@ reframe(A && a, Dest)
     }
 }
 
-// I != dim_t may warn "-Waggressive-loop-optimizations" in std::advance(i, ...) in gcc14/15.1 -O3
 template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
 iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))

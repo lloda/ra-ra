@@ -100,7 +100,7 @@ checkbox [C-ct] flip TODO
 Some of these aren't bugs in the sense that I expect to solve them, but more like footnotes.
 
 * Numbered issues through the source [ra..]
-  1. [ ]
+  1. [ ] test/bug10.cc
   2. [ ]
   3. [ ]
   4. [ ] test/optimize.cc: Expression objects only keep pointers to data objects. This means that it
@@ -163,7 +163,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   36. [ ]
   37. [ ]
   38. [ ]
-  39. [ ] test/ra-7.cc: There's no reason to restart, since the Iterator methods are all static. So
+  39. [ ] test/ra-9.cc: There's no reason to restart, since the Iterator methods are all static. So
       start(ra::Scalar) just fwds. But that means that Scalar::c maintain constness, so a const
       overload is required for ScalarFlat::operator*.
   40. [ ]

@@ -421,7 +421,9 @@ struct ViewSmall
     operator=(sub (&&x)[have_braces ? (rank()>0 ? len(0) : 0) : 0]) const
         requires (have_braces && 0<rank() && 0<len(0) && (1!=rank() || 1!=len(0)))
     {
-        ra::iter<-1>(*this) = x; return *this;
+        ra::iter<-1>(*this) = x;
+        if !consteval { asm volatile("" ::: "memory"); } // patch for [ra01]
+        return *this;
     }
 // T not is_scalar [ra44]
     constexpr ViewSmall const & operator=(T const & t) const { start(*this)=ra::scalar(t); return *this; }
@@ -493,13 +495,13 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); }
 // row-major ravel braces
     constexpr SmallArray(T const & x0, std::convertible_to<T> auto const & ... x)
-    requires ((rank()>1) && (size()>1) && ((1+sizeof...(x))==size()))
+        requires ((rank()>1) && (size()>1) && ((1+sizeof...(x))==size()))
     {
         view() = { static_cast<T>(x0), static_cast<T>(x) ... };
     }
 // nested braces FIXME p1219??
     constexpr SmallArray(nested_args const & ... x)
-    requires ((0<rank() && 0!=len(0) && (1!=rank() || 1!=len(0))))
+        requires ((0<rank() && 0<len(0) && (1!=rank() || 1!=len(0))))
     {
         view() = { x ... };
     }
@@ -510,15 +512,14 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     constexpr SmallArray & operator OP(Iterator auto && x) { view() OP RA_FW(x); return *this; }
     FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
 #undef ASSIGNOPS
-
     template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FW(self).view().template as<s, o>(); }
+    template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FW(self).view().template iter<c>(); }
+    constexpr auto begin(this auto && self) { return self.view().begin(); }
+    constexpr auto end(this auto && self) { return self.view().end(); }
     constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
     constexpr decltype(auto) at(this auto && self, auto const & i) { return RA_FW(self).view().at(i); }
-    constexpr auto begin(this auto && self) { return self.view().begin(); }
-    constexpr auto end(this auto && self) { return self.view().end(); }
-    template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FW(self).view().template iter<c>(); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };
@@ -585,9 +586,9 @@ transpose(cv_viewsmall auto && a_, ilist_t<Iarg ...>)
     return ViewSmall<decltype(a.cp), ic_t<dst>>(a.data());
 }
 
-template <class sup_t, class T, class A, class B>
+template <class sup_t, class T>
 constexpr void
-explode_dims(A const & av, B & bv)
+explode_dims(auto const & av, auto & bv)
 {
     rank_t rb = ssize(bv);
     constexpr rank_t rs = rank_s<sup_t>();

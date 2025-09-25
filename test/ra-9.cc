@@ -34,6 +34,13 @@ int main()
         b = c + ra::scalar(int2 { 1, 0 });
         tr.test_eq(ra::Big<int2, 1> { {2, 0}, {3, 0}, {4, 0} }, b);
     }
+    tr.section("regression [ra39]");
+    {
+        ra::Big<ra::Small<int, 2>, 0> b = ra::scalar(ra::Small<int, 2> {3, 4});
+// this requires a const/nonconst overload in Scalar::Flat [ra39] because start(Scalar) just forwards.
+        ([&b](auto const & c) { b = c; })(ra::scalar(ra::Small<int, 2> {1, 2}));
+        tr.test_eq(ra::start({1, 2}), b());
+    }
     tr.section("regression [ra24]");
     {
         {
@@ -67,11 +74,11 @@ int main()
     }
     tr.section("regression [ra23]");
     {
-// This is just to show that it works the same way with 'scalar' = int as with 'scalar' = int2.
+// to show that it works the same way with 'scalar' = int as with 'scalar' = int2.
         int x = 2;
         ra::Big<int, 1> c { 3, 4 };
         ra::scalar(x) += c + ra::scalar(99);
-        tr.test_eq(2+3+99+4+99, x); // FIXME
+        tr.test_eq(2+3+99+4+99, x);
     }
     {
         int2 x {2, 0};

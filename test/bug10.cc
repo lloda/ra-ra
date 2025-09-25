@@ -13,16 +13,18 @@
 
 using std::cout;
 
-// FIXME Bug only shows up with all of: --no-sanitize -O3, no assert (1)
+// FIXME [ra01] bug only shows up with all of: --no-sanitize -O>2, no assert (1)
+// see the patch in ViewSmall(nested braces)
 
 int main()
 {
-    ra::Small<double, 2, 2> a = {{1, 2}, {4, 5}};
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wuninitialized" // !!
+    // ra::Small<double, 2, 2> a = {1, 2, 4, 5}; // ok
+    ra::Small<double, 2, 2> a = {{1, 2}, {4, 5}}; // not ok
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic warning "-Wuninitialized" // !!
     ra::Small<ra::Small<double, 2>, 2> b = ra::explode<ra::Small<double, 2>>(a);
-#pragma GCC diagnostic pop
+// #pragma GCC diagnostic pop
     // assert(a(0, 0)==b(0)(0)); // (1)
     println(cout, "b {:c:l}", b);
-    // assert(1==b(0)(0) && 2==b(0)(1) && 4==b(1)(0) && 5==b(1)(1));
+    assert(1==b(0)(0) && 2==b(0)(1) && 4==b(1)(0) && 5==b(1)(1));
 }

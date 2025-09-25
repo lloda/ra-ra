@@ -238,8 +238,8 @@ int main()
 // would be if (unusable with I=Seq) Ptr::operator= and constructor were removed
         // static_assert(std::is_aggregate_v<ra::Ptr<Seq<ra::dim_t>, ra::dim_t, ra::dim_t>>);
         static_assert(std::random_access_iterator<ra::Seq<ra::dim_t>>);
-        cout << ra::ptr(ra::Seq{0}, 10) << endl;
-        cout << ra::ptr(ra::Seq{3.}, 8) << endl;
+        cout << ra::ptr(ra::Seq {0}, 10) << endl;
+        cout << ra::ptr(ra::Seq {3.}, 8) << endl;
     }
     return tr.summary();
 }
