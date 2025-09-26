@@ -44,8 +44,7 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 
 * Array types with arbitrary compile time or runtime rank and shape.
 * Memory owning types as well as views over memory and sequence views of any rank.
-* Compatibility with builtin arrays.
-* Compatibility with the standard library, including ranges, streams, and `<format>`.
+* Compatibility with builtin arrays and the standard library, including ranges, streams, and `<format>`.
 * Interoperability with other libraries and languages through transparent memory layout.
 * Slicing with indices of arbitrary rank, axis skipping and insertion (e.g. for broadcasting), and contextual `len`.
 * Rank extension by prefix matching, as in APL/J, for functions of any number of arguments.

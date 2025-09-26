@@ -15,7 +15,7 @@
 RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.cp.i, " ", i.s, "] in len[", k, "]=", len(k), ".");
 
 TODO
-* [ ] optimize() applies to ops with general iota
+* [ ] opt() applies to ops with general iota
 * [ ] Ptr is a slice (but being slice and iterator at the same time is trouble).
   - [ ] There is conceptual confusion about view vs iterator overall. For example,
         from(a ...) requires view a, but iotas are (currently) only iterators.
@@ -43,13 +43,6 @@ TODO
 #include "test/mpdebug.hh"
 
 using std::println, std::cout, std::endl, std::flush;
-
-namespace ra {
-
-constexpr auto cadd(is_constant auto a, is_constant auto b) { return ic<a+b>; }
-constexpr auto cadd(dim_t a, dim_t b) { return a+b; }
-
-}; // namespace ra
 
 int main()
 {
@@ -381,6 +374,17 @@ int main()
         tr.strict().test_eq(c2-1, c3(ra::dots<2>, 0));
         tr.strict().test_eq(c2+0, c3(ra::dots<2>, 1));
         tr.strict().test_eq(c2+1, c3(ra::dots<2>, 2));
+    }
+    tr.section("regular iota is a slice");
+    {
+        auto i0 = ra::ii({7});
+        auto i1 = ra::iota(7);
+        println(cout, "i0 {:l} i1 {:l}", i0, i1);
+        println(cout, "i0(i1) {:l}", from(i0, i1));
+        tr.test_eq(0, from(i0, i1).cp.i);
+// FIXME
+        // println(cout, "i1(i0) {:l}", from(i1, i0));
+        // tr.test_eq(0, from(i1, i0).cp.i);
     }
     return tr.summary();
 }

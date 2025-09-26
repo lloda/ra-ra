@@ -167,7 +167,7 @@ int main()
             return y;
         };
 
-// optimize() plugs into the definition of operator*, etc. See ply_fixed [ra43].
+// opt() plugs into the definition of operator*, etc. See ply_fixed [ra43].
         auto f_small_op = [](auto && A, auto && B)
         {
             return sum(A*B);

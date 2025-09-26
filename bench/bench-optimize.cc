@@ -30,7 +30,7 @@ int main()
     {
         ra::Small<double, 4> a = 1 + ra::_0;
         ra::Small<double, 2, 4> b = 33 - ra::_1;
-        auto c = optimize(a + b(1));
+        auto c = opt(a + b(1));
         tr.info("optimization of view").test(std::is_same_v<decltype(c), ra::Small<double, 4>>);
         tr.test_eq(34, c);
     }
@@ -43,8 +43,8 @@ int main()
                 [&](auto & a, auto & b, auto & c)
                 {
                     for (int i=0; i<a.len(0); ++i) {
-                        c(i) = ra::optimize(a(i)+b(i));
-                        static_assert(std::is_same_v<decltype(optimize(a(i)+b(i))), Vec>); // making sure opt is on
+                        c(i) = ra::opt(a(i)+b(i));
+                        static_assert(std::is_same_v<decltype(opt(a(i)+b(i))), Vec>); // making sure opt is on
                     }
                 };
 

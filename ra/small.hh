@@ -76,8 +76,16 @@ constexpr auto all = dots<1>;
 template <int n> struct insert_t { constexpr static int N=n; static_assert(n>=0); };
 template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 
-template <int rank> constexpr auto
-ii(dim_t (&&len)[rank], dim_t o, dim_t (&&step)[rank])
+template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
+constexpr auto
+iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
+{
+    // return ViewSmall<Seq<sarg<I>>, ic_t<std::array {Dim(n, s)}>>(Seq {RA_FW(i)})(insert<w>); // FIXME optimize view<seq>
+    return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) }, ilist_t<w> {});
+}
+
+template <int rank, class T=dim_t> constexpr auto
+ii(dim_t (&&len)[rank], T o, dim_t (&&step)[rank])
 {
     return ViewBig<Seq<dim_t>, rank>(map([](dim_t len, dim_t step){ return Dim {len, step}; }, len, step), Seq<dim_t>{o});
 }
@@ -94,41 +102,24 @@ ii(ra::ilist_t<i ...>, T o=0)
     return ViewSmall<Seq<T>, ra::ic_t<ra::default_dims(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
 }
 
-template <class A>
-concept is_iota = requires (A a)
-{
-    []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a);
-    requires UNB!=a.nn; // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
-};
-
-template <class A>
-concept is_iota_static = requires (A a)
-{
-    []<class I, class Dimv>(ViewSmall<Seq<I>, Dimv> const &){}(a);
-    requires UNB!=ra::size(a); // exclude UNB from beating to let B=A(... i ...) use B's len. FIXME
-};
-
-template <class A>
-concept is_iota_dynamic = requires (A a)
-{
-    []<class I, rank_t RANK>(ViewBig<Seq<I>, RANK> const &){}(a);
-};
-
-template <class A> concept is_iota_any = is_iota_dynamic<A> || is_iota_static<A> || is_iota<A>;
-
+template <class A> concept is_iota = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); };
+template <class A> concept is_iota_static = requires (A a) { []<class I, class Dimv>(ViewSmall<Seq<I>, Dimv> const &){}(a); };
+template <class A> concept is_iota_dynamic = requires (A a) { []<class I, rank_t RANK>(ViewBig<Seq<I>, RANK> const &){}(a); };
+template <class A> concept is_iota_any = (is_iota<A> || is_iota_dynamic<A> || is_iota_static<A>);
 template <class I> concept is_scalar_index = is_ra_0<I>;
 
-// beaten, whole or piecewise. bv/ds are presized not to need push_back
+// beaten, whole or piecewise. Presize bv/ds not to need push_back
 
 template <class I> consteval bool
 beatable(I && i)
 {
-    return ((requires { []<int N>(dots_t<N>){}(i); }) || (requires { []<int N>(insert_t<N>){}(i); })
-            || is_scalar_index<I> || is_iota_any<I>);
+    return ((requires { []<int N>(dots_t<N>){}(i); }) || (requires { []<int N>(insert_t<N>){}(i); }) || is_scalar_index<I>
+// exclude to let B=A(... i ...) use B's len. FIXME
+            || (is_iota_any<I> && requires { requires UNB!=ra::size_s<I>(); }));
 }
 
-template <class I> consteval auto fsrc(I const &) { return 1; }
-template <class I> constexpr auto fdst(I const & i) { if constexpr (beatable(i)) { if consteval { return rank_s(i); } else { return rank(i); } } else { return 1; } }
+consteval auto fsrc(auto const &) { return 1; }
+constexpr auto fdst(auto const & i) { if constexpr (beatable(i)) { if consteval { return rank_s(i); } else { return rank(i); } } else { return 1; } }
 template <int n> consteval auto fsrc(dots_t<n> const &) { return n; }
 template <int n> consteval auto fdst(dots_t<n> const &) { return n; }
 template <int n> consteval auto fsrc(insert_t<n> const &) { return 0; }
@@ -182,16 +173,16 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak, I0 const & i0, au
             pl += i*a.step(ak);
         }
         ++ak;
-    } else if constexpr (is_iota_any<I0>) {
+    } else if constexpr (is_iota_any<I0> && beatable(i0)) {
         if constexpr (dobv || dopl) {
             auto const la = a.len(ak);
             for (int q=0; q<rank(i0); ++q) {
-                if constexpr (dobv) { bv[bk] = Dim { .len=wlen(la, i0).len(q), .step=wlen(la, i0).step(q)*a.step(ak) }; ++bk; }
+                if constexpr (dobv) { bv[bk] = Dim {.len=wlen(la, i0).len(q), .step=wlen(la, i0).step(q)*a.step(ak)}; ++bk; }
                 if constexpr (dopl) {
 // FIXME no wlen(view iota) yet so process .cp.i separately
                     auto const i = wlen(la, i0.cp.i);
                     RA_CK(([&, iz=wlen(la, i0)]{ return 0==iz.len(q) || (inside(i, la) && inside(i+(iz.len(q)-1)*iz.step(q), la)); }()),
-                          "Bad iota[", q, "] in len[", ak, "]=", la, ".");
+                          "Bad iota[", q, "] len ", wlen(la, i0).len(q), " step ", wlen(la, i0).step(q), " in len[", ak, "]=", la, ".");
                     pl += i*a.step(ak);
                 }
             }
@@ -247,7 +238,7 @@ frompl(auto pl, auto && a, auto const & ...  i)
 constexpr auto
 spacer(auto && b, auto && p, auto && q)
 {
-    return std::apply([&b](auto ... i){ return std::make_tuple(ra::iota(maybe_len(b, i)) ...); }, mp::iota<q-p, p>{});
+    return std::apply([&b](auto ... i){ return std::make_tuple(ra::iota(clen(b, i)) ...); }, mp::iota<q-p, p>{});
 }
 
 template <class I, int drop>
@@ -291,7 +282,6 @@ constexpr decltype(auto)
 from(A && a, auto && ...  i)
 {
     if constexpr (Slice<decltype(a)>) {
-        static_assert((0 + ... + (UNB==fdst(i)))<=1);
         constexpr int dsn = (0 + ... + int(!beatable(i)));
         if constexpr (constexpr int bn=frombrank_s(a, i ...); 0==bn) {
             return *frompl(a.cp, a, i ...);
@@ -452,6 +442,10 @@ struct ViewSmall
     }
 };
 
+#define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
+FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
+#undef DEF_TENSORINDEX
+
 #if defined (__clang__)
 template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
 #else
@@ -547,7 +541,7 @@ from_ravel(auto && b)
 constexpr void
 transpose_dims(auto const & s, auto const & src, auto & dst)
 {
-    std::ranges::fill(dst, Dim { UNB, 0 });
+    std::ranges::fill(dst, Dim {UNB, 0});
     for (int k=0; int sk: s) {
         dst[sk].step += src[k].step;
         dst[sk].len = dst[sk].len>=0 ? std::min(dst[sk].len, src[k].len) : src[k].len;
@@ -607,7 +601,7 @@ explode_dims(auto const & av, auto & bv)
     for (int i=0; i<rb; ++i) {
         dim_t step = av[i].step;
         RA_CK(0==s ? 0==step : 0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
-        bv[i] = Dim { av[i].len, 0==s ? 0 : step/s };
+        bv[i] = Dim {av[i].len, 0==s ? 0 : step/s};
     }
 }
 

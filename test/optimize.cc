@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - Check that ra::optimize() does what it's supposed to do.
+// ra-ra/test - Check that ra::opt() does what it's supposed to do.
 
 // (c) Daniel Llorens - 2014-2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -23,12 +23,12 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("optimizing static size Iotas");
     {
-        tr.test_eq(4, optimize(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)).nn);
-        tr.test_eq(4, optimize(ra::iota(4) + ra::iota(ra::int_c<4>(), 0, 2)).nn);
-        tr.test_eq(ra::start({0, 3, 6, 9}), optimize(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)));
-        tr.test_eq(4, optimize(ra::iota(ra::int_c<4>()) - ra::iota(4, 0, 2)).nn);
-        tr.test_eq(4, optimize(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)).nn);
-        tr.test_eq(ra::start({0, -1, -2, -3}), optimize(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)));
+        tr.test_eq(4, opt(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)).nn);
+        tr.test_eq(4, opt(ra::iota(4) + ra::iota(ra::int_c<4>(), 0, 2)).nn);
+        tr.test_eq(ra::start({0, 3, 6, 9}), opt(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)));
+        tr.test_eq(4, opt(ra::iota(ra::int_c<4>()) - ra::iota(4, 0, 2)).nn);
+        tr.test_eq(4, opt(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)).nn);
+        tr.test_eq(ra::start({0, -1, -2, -3}), opt(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)));
     }
     tr.section("iota ops, expr iotas WIP");
     {
@@ -37,11 +37,11 @@ int main()
 // works unopt bc Match avoid checking if has_len
         tr.test_eq(ra::iota(10, 0, 2), wlen(10, ra::iota(ra::len) + ra::iota(ra::len)));
 // works, but opt runs at + site, not after wlen (FIXME?)
-        tr.test_eq(ra::iota(10, 0, 2), optimize(wlen(10, ra::iota(ra::len) + ra::iota(ra::len))));
-// FIXME don't work, because optimize() can't determine the match-length of the result iota
-        // tr.info("+, naked").test(ra::is_iota<decltype(optimize(ra::iota(ra::len) + ra::iota(ra::len)))>);
-        // tr.info("+").test(ra::is_iota<decltype(wlen(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))))>);
-        // tr.test_eq(ra::iota(10, 0, 2), wlen(10, optimize(ra::iota(ra::len) + ra::iota(ra::len))));
+        tr.test_eq(ra::iota(10, 0, 2), opt(wlen(10, ra::iota(ra::len) + ra::iota(ra::len))));
+// FIXME don't work, because opt() can't determine the match-length of the result iota
+        // tr.info("+, naked").test(ra::is_iota<decltype(opt(ra::iota(ra::len) + ra::iota(ra::len)))>);
+        // tr.info("+").test(ra::is_iota<decltype(wlen(10, opt(ra::iota(ra::len) + ra::iota(ra::len))))>);
+        // tr.test_eq(ra::iota(10, 0, 2), wlen(10, opt(ra::iota(ra::len) + ra::iota(ra::len))));
     }
     tr.section("misc/sanity");
     {
@@ -54,8 +54,8 @@ int main()
         }
         {
             auto i = ra::iota(5);
-            auto l = optimize(i*i);
-            tr.info("optimize is nop by default").test_eq(ra::start({0, 1, 4, 9, 16}), l);
+            auto l = opt(i*i);
+            tr.info("opt is nop by default").test_eq(ra::start({0, 1, 4, 9, 16}), l);
         }
         {
             auto i = ra::iota(5);
@@ -71,13 +71,13 @@ int main()
             {
                 auto i = ra::iota(5, org);
                 auto j = i+1;
-                auto k1 = optimize(i+1);
+                auto k1 = opt(i+1);
                 static_assert(ra::is_iota<decltype(k1)>);
-                auto k2 = optimize(1+i);
-                auto k3 = optimize(ra::iota(5)+1);
-                auto k4 = optimize(1+ra::iota(5));
-                auto k5 = optimize(1.5+ra::iota(5));
-                auto k6 = optimize(ra::iota(5)-0.5);
+                auto k2 = opt(1+i);
+                auto k3 = opt(ra::iota(5)+1);
+                auto k4 = opt(1+ra::iota(5));
+                auto k5 = opt(1.5+ra::iota(5));
+                auto k6 = opt(ra::iota(5)-0.5);
                 tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
                 tr.test_eq(org+1, k1.cp.i);
@@ -103,7 +103,7 @@ int main()
             {
                 auto i = ra::iota(5, org);
                 auto j = -i;
-                auto k1 = optimize(-i);
+                auto k1 = opt(-i);
                 static_assert(ra::is_iota<decltype(k1)>);
                 tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
@@ -121,10 +121,10 @@ int main()
         {
             auto i = ra::iota(5, org);
             auto j = i*2;
-            auto k1 = optimize(i*2);
-            auto k2 = optimize(2*i);
-            auto k3 = optimize(ra::iota(5)*2);
-            auto k4 = optimize(2*ra::iota(5));
+            auto k1 = opt(i*2);
+            auto k2 = opt(2*i);
+            auto k3 = opt(ra::iota(5)*2);
+            auto k4 = opt(2*ra::iota(5));
             tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
             tr.test_eq(0, k1.cp.i);
@@ -142,31 +142,32 @@ int main()
         test(float(0));
     }
 #if RA_OPT_SMALLVECTOR==1
+    static_assert(ra::match_small<double, 4, ra::Cell<double *, ra::ic_t<std::array {ra::Dim(4, 1)}>, ra::ic_t<0>>>);
     tr.section("small vector ops through vector extensions");
     {
         using Vec = ra::Small<double, 4>;
         Vec const r {6, 8, 10, 12};
 
 // [ra4] Map holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter). So this example only works bc it's optimized.
-        auto x = optimize(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
+        auto x = opt(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
         tr.info("optimization rvalue terms").test(std::is_same_v<decltype(x), Vec>);
         tr.test_eq(r, x);
 
         Vec a {1, 2, 3, 4}, b {5, 6, 7, 8};
         auto y = a + b;
-        auto z = optimize(a + b);
+        auto z = opt(a + b);
         tr.info("optimization of lvalue terms").test(std::is_same_v<decltype(z), Vec>);
         tr.info("not optimized by default, yet").test(!std::is_same_v<decltype(y), Vec>);
         tr.test_eq(r, y);
         tr.test_eq(r, z);
 
-        auto q = optimize(a + r);
+        auto q = opt(a + r);
         tr.info("optimization of const lvalue terms").test(std::is_same_v<decltype(q), Vec>);
         tr.test_eq(ra::start({7, 10, 13, 16}), q);
 
         ra::Small<double, 4, 4> c = 1 + ra::_1;
 
-        auto d = optimize(c(0) + b);
+        auto d = opt(c(0) + b);
         tr.info("optimization of view").test(std::is_same_v<decltype(d), Vec>);
         tr.test_eq(r, d);
     }
@@ -174,7 +175,7 @@ int main()
     {
         ra::Small<double, 8> a = 1 + ra::_0;
         ra::Small<double, 4, 8> b = 33 - ra::_1;
-        auto c = optimize(a + b(3));
+        auto c = opt(a + b(3));
         tr.info("optimization of view").test(std::is_same_v<decltype(c), ra::Small<double, 8>>);
         tr.test_eq(34, c);
     }

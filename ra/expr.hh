@@ -94,14 +94,20 @@ wlen(Ln ln, E && e)
     }
 }
 
-template <class N> constexpr int
+template <class N> constexpr auto
 maybe_any = []{ if constexpr (is_constant<N>) { return N::value; } else { return ANY; } }();
 
 template <class S> constexpr S
 maybe_step = []{ if constexpr (is_constant<S>) { static_assert(1==S::value); return S{}; } else { return 1; } }();
 
 template <class K> constexpr auto
-maybe_len(auto const & v, K k) { if constexpr (is_constant<K> && (ANY!=v.len_s(k))) { return ic<v.len_s(k)>; } else { return v.len(k); } }
+clen(auto const & v, K k) { if constexpr (is_constant<K> && (ANY!=v.len_s(k))) return ic<v.len_s(k)>; else return v.len(k); }
+
+template <class A, class B> constexpr auto
+cadd(A a, B b) { if constexpr(is_constant<A> && is_constant<B>) return ic<a+b>; else return a+b; }
+
+template <class A, class B> constexpr auto
+csub(A a, B b) { if constexpr(is_constant<A> && is_constant<B>) return ic<a-b>; else return a-b; }
 
 // Sequence iterator.
 
@@ -255,8 +261,7 @@ filldimv(Iterator auto && p, auto & dimv)
     return s;
 }
 
-consteval auto
-default_dims(auto const & lv) { std::array<Dim, ra::size(lv)> dv; filldimv(start(lv), dv); return dv; };
+consteval auto default_dims(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(start(lv), dv); return dv; };
 
 constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
 constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
@@ -347,7 +352,6 @@ struct Ptr final
     static_assert(has_len<S> || is_constant<S> || std::is_integral_v<S>);
     constexpr static dim_t nn = maybe_any<N>;
     static_assert(0<=nn || ANY==nn || UNB==nn);
-    constexpr static bool constant = is_constant<N> && is_constant<S>;
 
     P cp;
     [[no_unique_address]] N const n = {};
@@ -367,7 +371,7 @@ struct Ptr final
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, start(i)); } // iter's not view's
+    constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, start(i)); }
     constexpr decltype(*cp) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
     constexpr void load(P p) { cp=p; }
@@ -402,14 +406,13 @@ constexpr auto
 reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
     static_assert(i.nn!=UNB, "Bad arguments to reverse(iota).");
-    return ptr(Seq { i.cp.i+(i.n-1)*i.s }, i.n, [&i]{ if constexpr (is_constant<S>) return ic_t<dim_t(-S{})> {}; else return -i.s; }());
+    return ptr(Seq { i.cp.i+(i.n-1)*i.s }, i.n, csub(ic<0>, i.s));
 }
 
 constexpr auto
 start(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
 
-template <class T>
-constexpr auto
+template <class T> constexpr auto
 start(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
 
 constexpr auto
@@ -502,26 +505,13 @@ reframe(A && a, Dest)
     }
 }
 
-template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
-constexpr auto
-iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
-{
-    return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) }, ilist_t<w> {});
-}
-
-#define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
-FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
-#undef DEF_TENSORINDEX
-
 template <class cranks, class Op> struct Verb final { Op op; };
 template <class A> concept is_verb = requires (A & a) { []<class cranks, class Op>(Verb<cranks, Op> &){}(a); };
 
-template <class cranks, class Op>
-constexpr auto
+template <class cranks, class Op> constexpr auto
 wrank(cranks, Op && op) { return Verb<cranks, Op> { RA_FW(op) }; }
 
-template <rank_t ... crank, class Op>
-constexpr auto
+template <rank_t ... crank, class Op> constexpr auto
 wrank(Op && op) { return Verb<ilist_t<crank ...>, Op> { RA_FW(op) }; }
 
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, int skip=0>
@@ -555,12 +545,12 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // prefix match
 // --------------------
 
-constexpr rank_t
-choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
-
 // finite before ANY before UNB, assumes neither is MIS.
 constexpr dim_t
 choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : UNB==a ? b : UNB==b ? a : b; }
+
+constexpr rank_t
+choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };

@@ -13,7 +13,7 @@
 #include <complex>
 
 #ifndef RA_OPT
-  #define RA_OPT optimize
+  #define RA_OPT opt
 #endif
 
 #if defined(RA_FMA)
@@ -23,7 +23,7 @@
   #define RA_FMA 0
 #endif
 
-// Enable ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
+// ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
 template <int A> constexpr void iter(ra::noarg);
 template <class T> constexpr void cast(ra::noarg);
 
@@ -32,8 +32,8 @@ template <class T> constexpr void cast(ra::noarg);
 // scalar overloads
 // ---------------------------
 
-// abs() needs no qualifying for ra:: types (ADL), shouldn't on pods either. FIXME maybe let user decide.
-// std::max/min are special, see DEF_NAME.
+// abs() needs no qualifying for ra:: types (ADL), shouldn't on pods either. std::max/min are special, see DEF_NAME.
+// FIXME let user decide?
 using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std::swap,
       std::isfinite, std::isinf, std::isnan, std::clamp, std::lerp, std::conj, std::expm1;
 
@@ -103,15 +103,13 @@ FOR_EACH(RA_FOR_TYPES, float, double)
     constexpr R norm2(C x)             { return hypot(x.real(), x.imag()); } \
     constexpr R norm2(C x, C y)        { return sqrt(sqrm(x, y)); }     \
     constexpr R rel_error(C a, C b)    { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
-    /* conj(a) * b + c */                                               \
     constexpr C fma_conj(C const & a, C const & b, C const & c)         \
-    {                                                                   \
+    { /* conj(a) * b + c */                                             \
         return C(fma(a.real(), b.real(), fma(a.imag(), b.imag(), c.real())), \
                  fma(a.real(), b.imag(), fma(-a.imag(), b.real(), c.imag()))); \
     }                                                                   \
-    /* conj(a) * b */                                                   \
     constexpr C mul_conj(C const & a, C const & b)                      \
-    {                                                                   \
+    { /* conj(a) * b */                                                 \
         return C(a.real()*b.real()+a.imag()*b.imag(),                   \
                  a.real()*b.imag()-a.imag()*b.real());                  \
     }
@@ -126,7 +124,7 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 // optimization pass over expression templates.
 // --------------------------------
 
-template <class E> constexpr decltype(auto) optimize(E && e) { return RA_FW(e); }
+template <class E> constexpr decltype(auto) opt(E && e) { return RA_FW(e); }
 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
 template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
@@ -134,55 +132,46 @@ template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalu
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
 // FIXME p2781r2, handle & variants, handle view iota.
 
-#define RA_IT(i) std::get<(i)>(e.t)
-template <is_iota I, iota_op J>
-constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(RA_IT(0).n, RA_IT(0).cp.i+RA_IT(1), RA_IT(0).s); }
+#define RA0 std::get<(0)>(e.t)
+#define RA1 std::get<(1)>(e.t)
+template <is_iota I, iota_op J> constexpr auto
+opt(Map<std::plus<>, std::tuple<I, J>> && e) { return ra::iota(RA0.n, RA0.cp.i+RA1, RA0.s); }
 
-template <iota_op I, is_iota J>
-constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(RA_IT(1).n, RA_IT(0)+RA_IT(1).cp.i, RA_IT(1).s); }
+template <iota_op I, is_iota J> constexpr auto
+opt(Map<std::plus<>, std::tuple<I, J>> && e) { return ra::iota(RA1.n, RA0+RA1.cp.i, RA1.s); }
 
-template <is_iota I, is_iota J>
-constexpr auto optimize(Map<std::plus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e, ic<0>), RA_IT(0).cp.i+RA_IT(1).cp.i, RA_IT(0).s+RA_IT(1).s); }
+template <is_iota I, is_iota J> constexpr auto
+opt(Map<std::plus<>, std::tuple<I, J>> && e) { return ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.s, RA1.s)); }
 
-template <is_iota I, iota_op J>
-constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(RA_IT(0).n, RA_IT(0).cp.i-RA_IT(1), RA_IT(0).s); }
+template <is_iota I, iota_op J> constexpr auto
+opt(Map<std::minus<>, std::tuple<I, J>> && e) { return ra::iota(RA0.n, RA0.cp.i-RA1, RA0.s); }
 
-template <iota_op I, is_iota J>
-constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(RA_IT(1).n, RA_IT(0)-RA_IT(1).cp.i, -RA_IT(1).s); }
+template <iota_op I, is_iota J> constexpr auto
+opt(Map<std::minus<>, std::tuple<I, J>> && e) { return ra::iota(RA1.n, RA0-RA1.cp.i, csub(ic<0>, RA1.s)); }
 
-template <is_iota I, is_iota J>
-constexpr auto optimize(Map<std::minus<>, std::tuple<I, J>> && e)
-{ return ra::iota(maybe_len(e, ic<0>), RA_IT(0).cp.i-RA_IT(1).cp.i, RA_IT(0).s-RA_IT(1).s); }
+template <is_iota I, is_iota J> constexpr auto
+opt(Map<std::minus<>, std::tuple<I, J>> && e) { return ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.s, RA1.s)); }
 
-template <is_iota I, iota_op J>
-constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(RA_IT(0).n, RA_IT(0).cp.i*RA_IT(1), RA_IT(0).s*RA_IT(1)); }
+template <is_iota I, iota_op J> constexpr auto
+opt(Map<std::multiplies<>, std::tuple<I, J>> && e) { return ra::iota(RA0.n, RA0.cp.i*RA1, RA0.s*RA1); }
 
-template <iota_op I, is_iota J>
-constexpr auto optimize(Map<std::multiplies<>, std::tuple<I, J>> && e)
-{ return ra::iota(RA_IT(1).n, RA_IT(0)*RA_IT(1).cp.i, RA_IT(0)*RA_IT(1).s); }
+template <iota_op I, is_iota J> constexpr auto
+opt(Map<std::multiplies<>, std::tuple<I, J>> && e) { return ra::iota(RA1.n, RA0*RA1.cp.i, RA0*RA1.s); }
 
-template <is_iota I>
-constexpr auto optimize(Map<std::negate<>, std::tuple<I>> && e)
-{ return ra::iota(RA_IT(0).n, -RA_IT(0).cp.i, -RA_IT(0).s); }
+template <is_iota I> constexpr auto
+opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RA0.n, -RA0.cp.i, csub(ic<0>, RA0.s)); }
 
 #if RA_OPT_SMALLVECTOR==1
 template <class T, dim_t N, class A> constexpr bool match_small =
-    std::is_same_v<std::decay_t<A>, Cell<T *, ic_t<std::array { Dim { N, 1 } }>, ic_t<0>>>
-    || std::is_same_v<std::decay_t<A>, Cell<T const *, ic_t<std::array { Dim { N, 1 } }>, ic_t<0>>>;
-static_assert(match_small<double, 4, Cell<double *, ic_t<std::array { Dim { 4, 1 } }>, ic_t<0>>>);
+    std::is_same_v<std::decay_t<A>, Cell<T *, ic_t<std::array {Dim(N, 1)}>, ic_t<0>>>
+    || std::is_same_v<std::decay_t<A>, Cell<T const *, ic_t<std::array {Dim(N, 1)}>, ic_t<0>>>;
 
 #define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
     template <class A, class B> requires (match_small<T, N, A> && match_small<T, N, B>) \
-    constexpr auto optimize(Map<NAME, std::tuple<A, B>> && e)           \
+    constexpr auto opt(Map<NAME, std::tuple<A, B>> && e)           \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
-        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((RA_IT(0).c.cp)) OP *(extvector<T, N> *)((RA_IT(1).c.cp)); \
+        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((RA0.c.cp)) OP *(extvector<T, N> *)((RA1.c.cp)); \
         return val;                                                     \
     }
 #define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)                                \
@@ -201,7 +190,8 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 #undef RA_OPT_SMALLVECTOR_OP_FUNS
 #undef RA_OPT_SMALLVECTOR_OP_OP
 #endif // RA_OPT_SMALLVECTOR
-#undef RA_IT
+#undef RA1
+#undef RA0
 
 
 // --------------------------------
@@ -209,7 +199,6 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 // --------------------------------
 
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit scalar conversion is also needed, and e.g. ra::View<complex, 0> * complex would fail.
-// The function objects are matched in optimize.hh.
 #define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
         operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FW(a), RA_FW(b))); } \
@@ -276,22 +265,19 @@ FOR_EACH(DEF_GLOBAL, fma)
 #undef DEF_FWD
 #undef DEF_NAME
 
-template <class T>
-constexpr auto
+template <class T> constexpr auto
 cast(auto && a)
 {
     return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a));
 }
 
-template <class T>
-constexpr auto
+template <class T> constexpr auto
 pack(auto && ... a)
 {
     return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...);
 }
 
-template <class A>
-constexpr decltype(auto)
+template <class A> constexpr decltype(auto)
 at(A && a, auto const & i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
 {
     if constexpr (0==rank_s<decltype(VAL(i))>()) {
@@ -301,8 +287,7 @@ at(A && a, auto const & i) requires (Slice<std::decay_t<A>> || Iterator<std::dec
     }
 }
 
-template <Slice A>
-constexpr decltype(auto)
+template <Slice A> constexpr decltype(auto)
 at_view(A && a, auto && i)
 {
     if constexpr (0==rank_s<decltype(VAL(i))>()) {
@@ -732,16 +717,14 @@ wedge(Va const & a, Vb const & b)
 constexpr auto
 cross(auto const & a, auto const & b) { return wedge<size_s(a), 1, 1>(a, b); }
 
-template <class V>
-constexpr auto
+template <class V> constexpr auto
 perp(V const & v)
 {
     static_assert(2==v.size(), "Dimension error.");
     return Small<std::decay_t<decltype(VAL(v))>, 2> {v[1], -v[0]};
 }
 
-template <class V, class U>
-constexpr auto
+template <class V, class U> constexpr auto
 perp(V const & v, U const & n)
 {
     if constexpr (is_scalar<U>) {
