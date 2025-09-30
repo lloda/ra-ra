@@ -124,7 +124,7 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 // optimization pass over expression templates.
 // --------------------------------
 
-template <class E> constexpr decltype(auto) opt(E && e) { return RA_FW(e); }
+constexpr decltype(auto) opt(auto && e) { return RA_FW(e); }
 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
 template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
@@ -134,29 +134,18 @@ template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalu
 
 #define RA0 std::get<(0)>(e.t)
 #define RA1 std::get<(1)>(e.t)
-template <is_iota I, iota_op J> constexpr auto
-opt(Map<std::plus<>, std::tuple<I, J>> && e) { return ra::iota(RA0.n, RA0.cp.i+RA1, RA0.s); }
+#define DEF_IOTA_BINOP(TI, TJ, OP, VAL) \
+    template <TI I, TJ J> constexpr auto opt(Map<OP, std::tuple<I, J>> && e) { return VAL; }
 
-template <iota_op I, is_iota J> constexpr auto
-opt(Map<std::plus<>, std::tuple<I, J>> && e) { return ra::iota(RA1.n, RA0+RA1.cp.i, RA1.s); }
-
-template <is_iota I, is_iota J> constexpr auto
-opt(Map<std::plus<>, std::tuple<I, J>> && e) { return ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.s, RA1.s)); }
-
-template <is_iota I, iota_op J> constexpr auto
-opt(Map<std::minus<>, std::tuple<I, J>> && e) { return ra::iota(RA0.n, RA0.cp.i-RA1, RA0.s); }
-
-template <iota_op I, is_iota J> constexpr auto
-opt(Map<std::minus<>, std::tuple<I, J>> && e) { return ra::iota(RA1.n, RA0-RA1.cp.i, csub(ic<0>, RA1.s)); }
-
-template <is_iota I, is_iota J> constexpr auto
-opt(Map<std::minus<>, std::tuple<I, J>> && e) { return ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.s, RA1.s)); }
-
-template <is_iota I, iota_op J> constexpr auto
-opt(Map<std::multiplies<>, std::tuple<I, J>> && e) { return ra::iota(RA0.n, RA0.cp.i*RA1, RA0.s*RA1); }
-
-template <iota_op I, is_iota J> constexpr auto
-opt(Map<std::multiplies<>, std::tuple<I, J>> && e) { return ra::iota(RA1.n, RA0*RA1.cp.i, RA0*RA1.s); }
+DEF_IOTA_BINOP(is_iota, iota_op, std::plus<>, ra::iota(RA0.n, RA0.cp.i+RA1, RA0.s))
+DEF_IOTA_BINOP(iota_op, is_iota, std::plus<>, ra::iota(RA1.n, RA0+RA1.cp.i, RA1.s))
+DEF_IOTA_BINOP(is_iota, is_iota, std::plus<>, ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.s, RA1.s)))
+DEF_IOTA_BINOP(is_iota, iota_op, std::minus<>, ra::iota(RA0.n, RA0.cp.i-RA1, RA0.s))
+DEF_IOTA_BINOP(iota_op, is_iota, std::minus<>, ra::iota(RA1.n, RA0-RA1.cp.i, csub(ic<0>, RA1.s)))
+DEF_IOTA_BINOP(is_iota, is_iota, std::minus<>, ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.s, RA1.s)))
+DEF_IOTA_BINOP(is_iota, iota_op, std::multiplies<>, ra::iota(RA0.n, RA0.cp.i*RA1, RA0.s*RA1))
+DEF_IOTA_BINOP(iota_op, is_iota, std::multiplies<>, ra::iota(RA1.n, RA0*RA1.cp.i, RA0*RA1.s))
+#undef DEF_IOTA_BINOP
 
 template <is_iota I> constexpr auto
 opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RA0.n, -RA0.cp.i, csub(ic<0>, RA0.s)); }
@@ -199,21 +188,18 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 // --------------------------------
 
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit scalar conversion is also needed, and e.g. ra::View<complex, 0> * complex would fail.
-#define DEF_NAMED_BINARY_OP(OP, OPNAME)                                 \
+#define DEF_BINOP(OP, OPNAME)                                 \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
         operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FW(a), RA_FW(b))); } \
     template <class A, class B> requires (toreduce<A, B>) constexpr auto \
         operator OP(A && a, B && b) { return VAL(RA_FW(a)) OP VAL(RA_FW(b)); }
 
-DEF_NAMED_BINARY_OP(+, std::plus<>)          DEF_NAMED_BINARY_OP(-, std::minus<>)
-DEF_NAMED_BINARY_OP(*, std::multiplies<>)    DEF_NAMED_BINARY_OP(/, std::divides<>)
-DEF_NAMED_BINARY_OP(==, std::equal_to<>)     DEF_NAMED_BINARY_OP(>, std::greater<>)
-DEF_NAMED_BINARY_OP(<, std::less<>)          DEF_NAMED_BINARY_OP(>=, std::greater_equal<>)
-DEF_NAMED_BINARY_OP(<=, std::less_equal<>)   DEF_NAMED_BINARY_OP(!=, std::not_equal_to<>)
-DEF_NAMED_BINARY_OP(|, std::bit_or<>)        DEF_NAMED_BINARY_OP(&, std::bit_and<>)
-DEF_NAMED_BINARY_OP(^, std::bit_xor<>)       DEF_NAMED_BINARY_OP(<=>, std::compare_three_way)
-DEF_NAMED_BINARY_OP(%, std::modulus<>)
-#undef DEF_NAMED_BINARY_OP
+DEF_BINOP(+, std::plus<>)     DEF_BINOP(-, std::minus<>)      DEF_BINOP(*, std::multiplies<>)
+DEF_BINOP(/, std::divides<>)  DEF_BINOP(==, std::equal_to<>)  DEF_BINOP(<=, std::less_equal<>)
+DEF_BINOP(<, std::less<>)     DEF_BINOP(>, std::greater<>)    DEF_BINOP(>=, std::greater_equal<>)
+DEF_BINOP(|, std::bit_or<>)   DEF_BINOP(&, std::bit_and<>)    DEF_BINOP(!=, std::not_equal_to<>)
+DEF_BINOP(^, std::bit_xor<>)  DEF_BINOP(%, std::modulus<>)    DEF_BINOP(<=>, std::compare_three_way)
+#undef DEF_BINOP
 
 // FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive
 struct unaryplus
@@ -221,16 +207,16 @@ struct unaryplus
     template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FW(t); }
 };
 
-#define DEF_NAMED_UNARY_OP(OP, OPNAME)                              \
-    template <class A> requires (tomap<A>) constexpr auto           \
+#define DEF_UNOP(OP, OPNAME)                                      \
+    template <class A> requires (tomap<A>) constexpr auto               \
         operator OP(A && a) { return RA_OPT(map(OPNAME(), RA_FW(a))); } \
-    template <class A> requires (toreduce<A>) constexpr auto        \
+    template <class A> requires (toreduce<A>) constexpr auto            \
         operator OP(A && a) { return OP VAL(RA_FW(a)); }
 
-DEF_NAMED_UNARY_OP(+, unaryplus)
-DEF_NAMED_UNARY_OP(-, std::negate<>)
-DEF_NAMED_UNARY_OP(!, std::logical_not<>)
-#undef DEF_NAMED_UNARY_OP
+DEF_UNOP(+, unaryplus)
+DEF_UNOP(-, std::negate<>)
+DEF_UNOP(!, std::logical_not<>)
+#undef DEF_UNOP
 
 // if OP(a) isn't found in ra::, deduction rank(0) -> scalar doesn't work. TODO Cf useret.cc, reexported.cc
 #define DEF_NAME(OP)                                                    \
@@ -328,11 +314,11 @@ template <class A, class B> requires (tomap<A, B>)
 constexpr auto
 operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<bool>(RA_FW(b))); }
 
-#define DEF_SHORTCIRCUIT_BINARY_OP(OP)                                  \
+#define DEF_SHORTCIRCUIT_BINOP(OP)                                  \
     template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto operator OP(A && a, B && b) { return VAL(a) OP VAL(b);  }
-FOR_EACH(DEF_SHORTCIRCUIT_BINARY_OP, &&, ||)
-#undef DEF_SHORTCIRCUIT_BINARY_OP
+FOR_EACH(DEF_SHORTCIRCUIT_BINOP, &&, ||)
+#undef DEF_SHORTCIRCUIT_BINOP
 
 
 // --------------------------------

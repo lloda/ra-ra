@@ -151,8 +151,8 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
         for (; ak<ra::rank(a); ++ak, ++bk) {
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Warray-bounds" // gcc14/15.2 --no-sanitize -O2 -O3
-#pragma GCC diagnostic warning "-Wstringop-overflow" // gcc14/15.2 --no-sanitize -O2 -O3
+#pragma GCC diagnostic warning "-Warray-bounds" // gcc14/15.2 -DRA_CHECK=0 --no-sanitize -O2 -O3
+#pragma GCC diagnostic warning "-Wstringop-overflow" // gcc14/15.2 -DRA_CHECK=0 --no-sanitize -O2 -O3
             bv[bk] = a.dimv[ak];
 #pragma GCC diagnostic pop
         }
@@ -473,9 +473,16 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     constexpr static dim_t step(int k) { return dimv[k].step; }
     consteval static dim_t size() { return std::apply([](auto ... i){ return (i.len * ... * 1); }, dimv); }
 
-    T cp[size()];
-    [[no_unique_address]] struct {} prevent_zero_size; // or reuse std::array
-    constexpr auto data(this auto && self) { return self.cp; }
+// from std::array
+    struct T0
+    {
+        [[noreturn]] constexpr T & operator[](size_t) const noexcept { abort(); }
+        constexpr explicit operator T*() const noexcept { return nullptr; }
+    };
+    [[no_unique_address]] std::conditional_t<0==size(), T0, T[size()]> cp;
+
+    constexpr T * data() { return (T *)cp; }
+    constexpr T const * data() const { return (T const *)cp; }
     using View = ViewSmall<T *, Dimv>;
     using ViewConst = ViewSmall<T const *, Dimv>;
     constexpr View view() { return View(data()); }

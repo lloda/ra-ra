@@ -103,14 +103,13 @@ int main()
         cout << sizeof(sample5) << endl;
         cout << sizeof(sample6) << endl;
     }
-    tr.section("sizeof for  Small");
+    tr.section("sizeof for Small");
     {
         tr.info("sizeof(ra::Small<double>)").test_eq(sizeof(double), sizeof(ra::Small<double>));
         tr.info("sizeof(ra::Small<double, 1>)").test_eq(sizeof(double), sizeof(ra::Small<double, 1>));
         tr.info("sizeof(ra::Small<double, 2>)").test_eq(2*sizeof(double), sizeof(ra::Small<double, 2>));
-// don't rely on these.
+// don't rely on this.
         tr.skip().info("sizeof(ra::Small<double, 0>)?").test_eq(0u, sizeof(ra::Small<double, 0>));
-        tr.skip().info("sizeof(ra::Small<double, 0>)?").test_eq(sizeof(double), sizeof(ra::Small<double, 0>));
     }
 // this needs some EBO grease in SmallArray, or using std::array as member instead of T[].
     tr.section("Small<T, 0> are allocatable");

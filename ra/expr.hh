@@ -104,10 +104,10 @@ template <class K> constexpr auto
 clen(auto const & v, K k) { if constexpr (is_constant<K> && (ANY!=v.len_s(k))) return ic<v.len_s(k)>; else return v.len(k); }
 
 template <class A, class B> constexpr auto
-cadd(A a, B b) { if constexpr(is_constant<A> && is_constant<B>) return ic<a+b>; else return a+b; }
+cadd(A a, B b) { if constexpr (is_constant<A> && is_constant<B>) return ic<a+b>; else return a+b; }
 
 template <class A, class B> constexpr auto
-csub(A a, B b) { if constexpr(is_constant<A> && is_constant<B>) return ic<a-b>; else return a-b; }
+csub(A a, B b) { if constexpr (is_constant<A> && is_constant<B>) return ic<a-b>; else return a-b; }
 
 // Sequence iterator.
 
@@ -229,8 +229,6 @@ indexer(auto & a, auto cp, Iterator auto && p)
     return cp;
 }
 
-// general case.
-
 struct Dim { dim_t len, step; };
 
 inline std::ostream &
@@ -272,17 +270,16 @@ constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ?
 template <class T, class Dimv> struct ViewSmall;
 template <class T, rank_t RANK=ANY> struct ViewBig;
 
-template <class P, class Dimv, class Spec>
+template <class P, class Dimv, class Cr>
 struct CellSmall
 {
-    constexpr static rank_t spec = maybe_any<Spec>;
-    constexpr static rank_t fullr = size_s(Dimv::value);
-    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
-    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
+    constexpr static rank_t cr = maybe_any<Cr>;
+    constexpr static rank_t cellr = is_constant<Cr> ? rank_cell(size_s(Dimv::value), cr) : ANY;
+    constexpr static rank_t framer = is_constant<Cr> ? rank_frame(size_s(Dimv::value), cr) : ANY;
 
     constexpr static auto dimv = Dimv::value;
-    ViewSmall<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> { dimv[i+framer] ... }; }, mp::iota<cellr> {})>> c;
-    constexpr explicit CellSmall(P p): c { p } {}
+    ViewSmall<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> {dimv[i+framer] ...}; }, mp::iota<cellr> {})>> c;
+    constexpr explicit CellSmall(P p): c {p} {}
 
     consteval static rank_t rank() { return framer; }
     constexpr static dim_t len(int k) { return dimv[k].len; }
@@ -290,39 +287,36 @@ struct CellSmall
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
 };
 
-template <class P, class Dimv, class Spec>
+template <class P, class Dimv, class Cr>
 struct CellBig
 {
-    constexpr static rank_t spec = maybe_any<Spec>;
-    constexpr static rank_t fullr = size_s<Dimv>();
-    constexpr static rank_t cellr = is_constant<Spec> ? rank_cell(fullr, spec) : ANY;
-    constexpr static rank_t framer = is_constant<Spec> ? rank_frame(fullr, spec) : ANY;
+    constexpr static rank_t cr = maybe_any<Cr>;
+    constexpr static rank_t cellr = is_constant<Cr> ? rank_cell(size_s<Dimv>(), cr) : ANY;
+    constexpr static rank_t framer = is_constant<Cr> ? rank_frame(size_s<Dimv>(), cr) : ANY;
 
-    Dimv dimv;
+    [[no_unique_address]] Dimv const dimv;
     ViewBig<P, cellr> c;
-    [[no_unique_address]] Spec const dspec;
-    constexpr explicit CellBig(P cp, Dimv dimv_, Spec dspec_=Spec {}): dimv(dimv_), c(cp), dspec(dspec_)
+    constexpr explicit CellBig(P cp, Dimv dimv_, Cr dcr=Cr {}): dimv(dimv_), c(cp)
     {
-        rank_t dcell=rank_cell(ra::size(dimv), dspec), dframe=rank();
-        RA_CK(0<=dframe && 0<=dcell, "Bad cell rank ", dcell, " for full rank ", ssize(dimv), ").");
-        if constexpr (ANY==size_s(c.dimv)) { c.dimv.resize(dcell); }
-        for (int k=0; k<dcell; ++k) {
-            c.dimv[k] = dimv[dframe+k];
-        }
+        rank_t dcell = rank_cell(ra::size(dimv), dcr);
+        if constexpr (ANY==cellr) { c.dimv.resize(dcell); }
+        rank_t dframe = rank(); // after setting c.dimv
+        RA_CK(0<=dframe && 0<=dcell, "Bad rank for cell ", dcell, " or frame ", dframe, ").");
+        if constexpr (0!=cellr) { for (int k=0; k<dcell; ++k) { c.dimv[k] = dimv[dframe+k]; } }
     }
 
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
-    constexpr rank_t rank() const requires (ANY==framer) { return rank_frame(ra::size(dimv), dspec); }
+    constexpr rank_t rank() const requires (ANY==framer) { return ra::size(dimv)-ra::size(c.dimv); }
     constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
     constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
 };
 
-template <class P, class Dimv, class Spec>
-struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>
+template <class P, class Dimv, class Cr>
+struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>, CellBig<P, Dimv, Cr>>
 {
     static_assert(has_len<P> || std::bidirectional_iterator<P>);
-    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Spec>, CellBig<P, Dimv, Spec>>;
+    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>, CellBig<P, Dimv, Cr>>;
     using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::rank;
     using View = decltype(std::declval<Base>().c);
     static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
@@ -718,11 +712,6 @@ agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
     using FM = Framematch<V, std::tuple<T ...>>;
     return agree_op(FM::op(v), reframe(ra::start(t), mp::ref<typename FM::R, i> {}) ...);
 }
-
-
-// ---------------------------
-// map and pick
-// ---------------------------
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
 template <class Op, Iterator ... P, int ... I>

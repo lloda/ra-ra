@@ -24,7 +24,7 @@ int main()
     }
     tr.section("unary ops");
     {
-#define DEF_TEST_UNARY_OP(OP)                                           \
+#define DEF_TEST_UNOP(OP)                                               \
         auto test = [&tr](auto token, auto x, auto y, auto && vx, auto && vy, real err) \
         {                                                               \
             using T = decltype(token);                                  \
@@ -35,27 +35,27 @@ int main()
             tr.info("array(1)-array(1)").test_abs(OP(vx), vy, err);     \
         };
         {
-            DEF_TEST_UNARY_OP(abs);
+            DEF_TEST_UNOP(abs);
             test(int(), -3, 3, ra::Unique<int, 1>{1, -3, -2}, ra::Unique<int, 1>{1, 3, 2}, 0.);
             test(real(), -3, 3, ra::Unique<real, 1>{1, -3, -2}, ra::Unique<real, 1>{1, 3, 2}, 0.);
             test(float(), -3, 3, ra::Unique<float, 1>{1, -3, -2}, ra::Unique<float, 1>{1, 3, 2}, 0.);
             test(complex(), -3, 3, ra::Unique<complex, 1>{1, -3, -2}, ra::Unique<complex, 1>{1, 3, 2}, 0.);
         }
-#define TEST_UNARY_OP_CR(OP, ri, ro, ci, co, err)                       \
+#define TEST_UNOP_CR(OP, ri, ro, ci, co, err)                           \
         {                                                               \
-            DEF_TEST_UNARY_OP(OP);                                      \
+            DEF_TEST_UNOP(OP);                                          \
             test(real(), ri, ro, ra::Unique<real, 1>{ri, ri, ri}, ra::Unique<complex, 1>{ro, ro, ro}, err); \
             test(complex(), ci, co, ra::Unique<complex, 1>{ci, ci}, ra::Unique<complex, 1>{co, co}, err); \
         }
-        TEST_UNARY_OP_CR(conj, 1., 1., complex(1., 2.), complex(1., -2), 0.);
-        TEST_UNARY_OP_CR(cos, 0., 1., complex(0, 0), complex(1., 0.), 0.);
-        TEST_UNARY_OP_CR(sin, 1.57079632679489661, 1., complex(1.57079632679489661, 0), complex(1., 0.), 0.);
-        TEST_UNARY_OP_CR(exp, 0., 1., complex(0, 0), complex(1., 0.), 0.);
-        TEST_UNARY_OP_CR(sqrt, 4., 2., complex(-1, 0), complex(0., 1.), 1e-16);
-        TEST_UNARY_OP_CR(ra::xi, 4., complex(0, 4.), complex(1., -2.), complex(2., 1.), 0.);
-#undef TEST_UNARY_OP_CR
-#undef DEF_TEST_UNARY_OP
-// TODO merge with DEF_TEST_UNARY_OP
+        TEST_UNOP_CR(conj, 1., 1., complex(1., 2.), complex(1., -2), 0.);
+        TEST_UNOP_CR(cos, 0., 1., complex(0, 0), complex(1., 0.), 0.);
+        TEST_UNOP_CR(sin, 1.57079632679489661, 1., complex(1.57079632679489661, 0), complex(1., 0.), 0.);
+        TEST_UNOP_CR(exp, 0., 1., complex(0, 0), complex(1., 0.), 0.);
+        TEST_UNOP_CR(sqrt, 4., 2., complex(-1, 0), complex(0., 1.), 1e-16);
+        TEST_UNOP_CR(ra::xi, 4., complex(0, 4.), complex(1., -2.), complex(2., 1.), 0.);
+#undef TEST_UNOP_CR
+#undef DEF_TEST_UNOP
+// TODO merge with DEF_TEST_UNOP
         tr.info("odd").test_eq(ra::Unique<bool, 1> {true, false, true, true}, odd(ra::Unique<int, 1> {1, 2, 3, -1}));
     }
     tr.section("binary ops");
