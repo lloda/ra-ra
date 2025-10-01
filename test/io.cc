@@ -199,7 +199,7 @@ int main()
         o << fmt(ra::nstyle, A);
         tr.test_eq(std::string("1 2\n3 4"), o.str());
     }
-    tr.section("[ra02a] printing Map");
+    tr.section("printing Map");
     {
         iocheck(tr.info("output of map (1)"),
                 ra::map_([](double i) { return -i; }, start(ra::Small<double, 3>{0, 1, 2})),
@@ -214,7 +214,7 @@ int main()
                 ra::map_([](int i) { return -i; }, a.iter()),
                 ra::Unique<int, 2>({2, 3}, { -1, -2, -3, -4, -5, -6 }));
     }
-    tr.section("[ra02b] printing array iterators");
+    tr.section("printing array iterators");
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 4, 5, 6 });
         iocheck(tr.info("output of array through its iterator"), a.iter(), a);
@@ -223,7 +223,7 @@ int main()
                 transpose(a, {1, 0}).iter(),
                 ra::Unique<int>({2, 3}, { 1, 3, 5, 2, 4, 6 }));
     }
-    tr.section("[ra02c] printing array iterators");
+    tr.section("printing array iterators");
     {
         ra::Small<int, 3, 2> a { 1, 2, 3, 4, 5, 6 };
         iocheck(tr.info("output of array through its iterator"), a.iter(), a);

@@ -67,9 +67,9 @@ int main()
         constexpr int k = k_;
         const int o = DA.len(k);
         if (o>=2) {
-            DA(HH<k>, iota(o-2, 1), HH<4-k>, k) = (A(HH<k>, iota(o-2, 2)) - A(HH<k>, iota(o-2, 0)));
-            DA(HH<k>, 0, HH<4-k>, k) = (A(HH<k>, 1) - A(HH<k>, o-1));
-            DA(HH<k>, o-1, HH<4-k>, k) = (A(HH<k>, 0) - A(HH<k>, o-2));
+            DA(HH<k>, iota(o-2, 1), HH<4-k>, k) = A(HH<k>, iota(o-2, 2)) - A(HH<k>, iota(o-2, 0));
+            DA(HH<k>, 0, HH<4-k>, k) = A(HH<k>, 1) - A(HH<k>, o-1);
+            DA(HH<k>, o-1, HH<4-k>, k) = A(HH<k>, 0) - A(HH<k>, o-2);
             DA(HH<5>, k) *= factor;
         }
     };

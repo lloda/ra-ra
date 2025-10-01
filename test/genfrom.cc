@@ -350,7 +350,7 @@ int main()
     tr.section("unbeaten ViewBig<... ANY> IIb");
     {
         auto i = ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}};
-        auto b = from(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({10, 2})), i, 0);
+        auto b = from(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({10, 2})), i, 0); // [ra03]
         ra::Small<int, 2, 3> c = b;
         println(cout, "c {:c}", c);
         tr.strict().test_eq(ra::Small<int, 2, 3> {{6, 4, 2}, {8, 10, 12}}, c);

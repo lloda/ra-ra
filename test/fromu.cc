@@ -98,13 +98,13 @@ int main()
             tr.info("a(rank0, rank1)").test_eq(ra::Small<real, 2>{9, 7}, from(a, 1, Vint{1, 0}));
             tr.info("a(rank1, rank0)").test_eq(ra::Small<real, 2>{9, 1}, from(a, Vint{1, 0}, ra::Small<int>(1)));
             tr.info("a(rank0, rank1)").test_eq(ra::Small<real, 2>{9, 7}, from(a, ra::Small<int>(1), Vint{1, 0}));
-// using .iter() wass necessary when mixed u/b weren't accepted. Now rank 0 are always beaten, so it doesn't matter.
+// needed .iter() when mixed u/b weren't accepted. Now rank 0 are always beaten, so it doesn't matter.
             tr.info("a(rank1, rank0)").test_eq(ra::Small<real, 2>{9, 1}, from(a, Vint{1, 0}, ra::Small<int>(1).iter()));
             tr.info("a(rank0, rank1)").test_eq(ra::Small<real, 2>{9, 7}, from(a, ra::Small<int>(1).iter(), Vint{1, 0}));
         };
         check_selection_unbeatable_2(Ureal<2>({2, 2}, {1, 2, 3, 4}));
         check_selection_unbeatable_2(ra::Small<real, 2, 2>({1, 2, 3, 4}));
-        check_selection_unbeatable_2(Ureal<>({2, 2}, {1, 2, 3, 4}));
+        check_selection_unbeatable_2(Ureal<>({2, 2}, {1, 2, 3, 4})); // [ra03]
     }
     tr.section("mixed scalar/unbeatable, 2D -> 1D");
     {

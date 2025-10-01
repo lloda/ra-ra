@@ -14,7 +14,7 @@
 using std::cout;
 
 // FIXME [ra01] bug only shows up with all of: --no-sanitize -O>2, no assert (1)
-// see the patch in ViewSmall(nested braces)
+// patched with a barrier in ViewSmall(nested braces)
 
 int main()
 {
