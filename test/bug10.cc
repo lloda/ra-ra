@@ -7,7 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-#include "ra/small.hh"
+#include "ra/arrays.hh"
 #include <iostream>
 #include "test/mpdebug.hh"
 

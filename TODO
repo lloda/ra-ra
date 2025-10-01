@@ -175,8 +175,6 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   44. [ ]
   45. [ ]
   46. [ ]
-  47. [ ] ra/big.hh, test/const.cc, ra/view-ops.hh ...: Review constness in ra/view-ops.hh after the
-      Big/ViewBig const fixes after 913d6b531801609cb61bb7f631ddf50de701a802.
 
 * Old bugs or issues
   - [X] Before merging saveload [1/1]
@@ -195,7 +193,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   - [X] Error report, debugging [3/3]
     - [X] Optionally throw instead of abort on bounds checks, etc. cf. test/ra-12.cc
       * This was fixed between v8 and v10, see examples/throw.cc.
-    - [X] Static check on Small constructors e.g. real3 {1, 2, 3}. Cf big.hh:513 init<SS>(SS const & s).
+    - [X] Static check on Small constructors e.g. real3 {1, 2, 3}.
       - [X] for Container constructors
       - [X] for Small constructors
     - [X] General static check on prefix matching <2019-02-06 Wed 12:06>

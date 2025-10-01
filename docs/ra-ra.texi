@@ -1985,10 +1985,8 @@ Generic macros, tuple library, basic types and concepts.
 Expression template nodes.
 @item @code{ply.hh} -
 Traversal, including I/O.
-@item @code{small.hh} -
-Array type with compile time dimensions.
-@item @code{big.hh} -
-Array type with run time dimensions.
+@item @code{arrays.hh} -
+Array types
 @item @code{ra.hh} -
 Functions and operators, main header.
 @item @code{test.hh} -

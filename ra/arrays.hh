@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Views and containers with dynamic lengths and steps, cf small.hh.
+// ra-ra - Views and containers
 
 // (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -8,17 +8,342 @@
 // later version.
 
 #pragma once
-#include "small.hh"
+#include "ply.hh"
 #include <memory>
 
 namespace ra {
+
+
+// ---------------------
+// Small view and container
+// ---------------------
+
+constexpr bool
+is_c_order_dimv(auto const & dimv, bool step1=true)
+{
+    bool steps = true;
+    dim_t s = 1;
+    int k = ra::size(dimv);
+    if (!step1) {
+        while (--k>=0 && 1==dimv[k].len) {}
+        if (k<=0) { return true; }
+        s = dimv[k].step*dimv[k].len;
+    }
+    while (--k>=0) {
+        steps = steps && (1==dimv[k].len || dimv[k].step==s);
+        s *= dimv[k].len;
+    }
+    return s==0 || steps;
+}
+
+constexpr bool
+is_c_order(auto const & v, bool step1=true) { return is_c_order_dimv(v.dimv, step1); }
+
+// cf braces_def for big views.
+
+template <class T, class Dimv> struct nested_arg { using sub = noarg; };
+template <class T, class Dimv> struct small_args { using nested = std::tuple<>; };
+template <class T, class Dimv> requires (0<ssize(Dimv::value))
+struct small_args<T, Dimv> { using nested = mp::makelist<Dimv::value[0].len, typename nested_arg<T, Dimv>::sub>; };
+
+template <class T, class Dimv, class nested_args = small_args<T, Dimv>::nested>
+struct SmallArray;
+
+template <class T, class Dimv> requires (requires { T(); } && (0<ssize(Dimv::value)))
+struct nested_arg<T, Dimv>
+{
+    constexpr static auto n = ssize(Dimv::value)-1;
+    constexpr static auto s = std::apply([](auto ... i){ return std::array<dim_t, n> { Dimv::value[i].len ... }; }, mp::iota<n, 1> {});
+    using sub = std::conditional_t<0==n, T, SmallArray<T, ic_t<default_dims(s)>>>;
+};
+
+template <class P> struct reconst_t { using type = void; };
+template <class P> struct unconst_t { using type = void; };
+template <class T> requires (!std::is_const_v<T>) struct reconst_t<T *> { using type = T const *; };
+template <class T> struct unconst_t<T const *> { using type = T *; };
+template <class P> using reconst = reconst_t<P>::type;
+template <class P> using unconst = unconst_t<P>::type;
+
+template <class P, class Dimv>
+struct ViewSmall
+{
+    constexpr static auto dimv = Dimv::value;
+    P cp;
+
+    consteval static rank_t rank() { return dimv.size(); }
+    constexpr static dim_t len(int k) { return dimv[k].len; }
+    constexpr static dim_t len_s(int k) { return len(k); }
+    constexpr static dim_t step(int k) { return dimv[k].step; }
+    constexpr P data() const { return cp; }
+    consteval static dim_t size() { return std::apply([](auto ... i){ return (i.len * ... * 1); }, dimv); }
+    consteval bool empty() const { return any(0==map(&Dim::len, dimv)); }
+
+    constexpr explicit ViewSmall(P cp_): cp(cp_) {}
+    constexpr ViewSmall(ViewSmall const & s) = default;
+    constexpr ViewSmall const & view() const { return *this; }
+// exclude T and sub constructors by making T & sub noarg
+    constexpr static bool have_braces = std::is_reference_v<decltype(*cp)>;
+    using T = std::conditional_t<have_braces, std::remove_reference_t<decltype(*cp)>, noarg>;
+    using sub = typename nested_arg<T, Dimv>::sub;
+// row-major ravel braces
+    constexpr ViewSmall const &
+    operator=(T (&&x)[have_braces ? size() : 0]) const
+        requires (have_braces && rank()>1 && size()>1)
+    {
+        std::ranges::copy(std::ranges::subrange(x), begin()); return *this;
+    }
+// nested braces
+    constexpr ViewSmall const &
+    operator=(sub (&&x)[have_braces ? (rank()>0 ? len(0) : 0) : 0]) const
+        requires (have_braces && 0<rank() && 0<len(0) && (1!=rank() || 1!=len(0)))
+    {
+        ra::iter<-1>(*this) = x;
+        if !consteval { asm volatile("" ::: "memory"); } // patch for [ra01]
+        return *this;
+    }
+// T not is_scalar [ra44]
+    constexpr ViewSmall const & operator=(T const & t) const { start(*this)=ra::scalar(t); return *this; }
+// cf RA_ASSIGNOPS_ITER [ra38] [ra34]
+    ViewSmall const & operator=(ViewSmall const & x) const { start(*this)=x; return *this; }
+#define ASSIGNOPS(OP)                                                   \
+    constexpr ViewSmall const & operator OP(Iterator auto && x) const { start(*this) OP RA_FW(x); return *this; } \
+    constexpr ViewSmall const & operator OP(auto const & x) const { start(*this) OP x; return *this; }
+    FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
+#undef ASSIGNOPS
+    template <dim_t s, dim_t o=0> constexpr auto as() const { return from(*this, ra::iota(ic<s>, o)); }
+    template <rank_t c=0> constexpr auto iter() const { return Cell<P, ic_t<dimv>, ic_t<c>>(cp); }
+    constexpr auto iter(rank_t c) const { return Cell<P, decltype(dimv) const &, dim_t>(cp, dimv, c); }
+    constexpr auto begin() const { if constexpr (is_c_order_dimv(dimv)) return cp; else return STLIterator(iter()); }
+    constexpr auto end() const requires (is_c_order_dimv(dimv)) { return cp+size(); }
+    constexpr static auto end() requires (!is_c_order_dimv(dimv)) { return std::default_sentinel; }
+    constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, start(i)); }
+    constexpr operator decltype(*cp) () const { return to_scalar(*this); }
+// conversion to const
+    constexpr operator ViewSmall<reconst<P>, Dimv> () const requires (!std::is_void_v<reconst<P>>)
+    {
+        return ViewSmall<reconst<P>, Dimv>(cp);
+    }
+};
+
+#define DEF_TENSORINDEX(w) constexpr auto JOIN(_, w) = iota<w>();
+FOR_EACH(DEF_TENSORINDEX, 0, 1, 2, 3, 4);
+#undef DEF_TENSORINDEX
+
+#if defined (__clang__)
+template <class T, int N> using extvector __attribute__((ext_vector_type(N))) = T;
+#else
+template <class T, int N> using extvector __attribute__((vector_size(N*sizeof(T)))) = T;
+#endif
+
+template <class T, size_t N> constexpr size_t align_req = alignof(T[N]);
+template <class Z, class ... T> constexpr static bool equals_any = (std::is_same_v<Z, T> || ...);
+template <class T, size_t N>
+requires (equals_any<T, char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long,
+          long long, unsigned long long, float, double> && 0<N && 0==(N & (N-1)))
+constexpr size_t align_req<T, N> = alignof(extvector<T, N>);
+
+template <class T, class Dimv, class ... nested_args>
+struct
+#if RA_OPT_SMALLVECTOR==1
+alignas(align_req<T, std::apply([](auto ... i){ return (i.len * ... * 1); }, Dimv::value)>)
+#endif
+SmallArray<T, Dimv, std::tuple<nested_args ...>>
+{
+    constexpr static auto dimv = Dimv::value;
+    consteval static rank_t rank() { return ssize(dimv); }
+    constexpr static dim_t len(int k) { return dimv[k].len; }
+    constexpr static dim_t len_s(int k) { return len(k); }
+    constexpr static dim_t step(int k) { return dimv[k].step; }
+    consteval static dim_t size() { return std::apply([](auto ... i){ return (i.len * ... * 1); }, dimv); }
+
+// from std::array
+    struct T0
+    {
+        [[noreturn]] constexpr T & operator[](size_t) const noexcept { abort(); }
+        constexpr explicit operator T*() const noexcept { return nullptr; }
+    };
+    [[no_unique_address]] std::conditional_t<0==size(), T0, T[size()]> cp;
+
+    constexpr T * data() { return (T *)cp; }
+    constexpr T const * data() const { return (T const *)cp; }
+    using View = ViewSmall<T *, Dimv>;
+    using ViewConst = ViewSmall<T const *, Dimv>;
+    constexpr View view() { return View(data()); }
+    constexpr ViewConst view() const { return ViewConst(data()); }
+    constexpr operator View () { return View(data()); }
+    constexpr operator ViewConst () const { return ViewConst(data()); }
+
+    constexpr SmallArray(ra::none_t) {}
+    constexpr SmallArray() {}
+// T not is_scalar [ra44]
+    constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); }
+// row-major ravel braces
+    constexpr SmallArray(T const & x0, std::convertible_to<T> auto const & ... x)
+        requires ((rank()>1) && (size()>1) && ((1+sizeof...(x))==size()))
+    {
+        view() = { static_cast<T>(x0), static_cast<T>(x) ... };
+    }
+// nested braces FIXME p1219??
+    constexpr SmallArray(nested_args const & ... x)
+        requires ((0<rank() && 0<len(0) && (1!=rank() || 1!=len(0))))
+    {
+        view() = { x ... };
+    }
+    constexpr SmallArray(auto const & x) { view()=x; }
+    constexpr SmallArray(Iterator auto && x) { view()=RA_FW(x); }
+#define ASSIGNOPS(OP)                                                   \
+    constexpr SmallArray & operator OP(auto const & x) { view() OP x; return *this; } \
+    constexpr SmallArray & operator OP(Iterator auto && x) { view() OP RA_FW(x); return *this; }
+    FOR_EACH(ASSIGNOPS, =, *=, +=, -=, /=)
+#undef ASSIGNOPS
+    template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FW(self).view().template as<s, o>(); }
+    template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FW(self).view().template iter<c>(); }
+    constexpr auto begin(this auto && self) { return self.view().begin(); }
+    constexpr auto end(this auto && self) { return self.view().end(); }
+    constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
+    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
+    constexpr decltype(auto) at(this auto && self, auto const & i) { return RA_FW(self).view().at(i); }
+    constexpr operator T & () { return view(); }
+    constexpr operator T const & () const { return view(); }
+};
+
+template <class T, dim_t ... lens>
+using Small = SmallArray<T, ic_t<default_dims(std::array<dim_t, sizeof...(lens)> {lens ...})>>;
+
+template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
+
+// FIXME ravel constructor
+template <class A>
+constexpr auto
+from_ravel(auto && b)
+{
+    A a;
+    RA_CK(1==ra::rank(b) && ra::size(b)==ra::size(a),
+          "Bad ravel argument [", fmt(nstyle, ra::shape(b)), "] expecting [", ra::size(a), "].");
+    std::ranges::copy(RA_FW(b), a.begin());
+    return a;
+}
+
+
+// --------------------
+// Small view ops
+// --------------------
+
+// FIXME Merge transpose & Reframe (beat reframe(view) into transpose(view)).
+constexpr void
+transpose_dims(auto const & s, auto const & src, auto & dst)
+{
+    std::ranges::fill(dst, Dim {UNB, 0});
+    for (int k=0; int sk: s) {
+        dst[sk].step += src[k].step;
+        dst[sk].len = dst[sk].len>=0 ? std::min(dst[sk].len, src[k].len) : src[k].len;
+        ++k;
+    }
+}
+
+RA_IS_DEF(cv_viewsmall, (std::is_convertible_v<A, ViewSmall<decltype(std::declval<A>().data()), ic_t<A::dimv>>>));
+
+template <class K=ic_t<0>>
+constexpr auto
+reverse(cv_viewsmall auto && a_, K k = K {})
+{
+    decltype(auto) a = a_.view();
+    using A = std::decay_t<decltype(a)>;
+    constexpr auto rdimv = [&]{
+        std::remove_const_t<decltype(A::dimv)> rdimv = A::dimv;
+        RA_CK(inside(k, ssize(rdimv)), "Bad axis ", K::value, " for rank ", ssize(rdimv), ".");
+        rdimv[k].step *= -1;
+        return rdimv;
+    }();
+    return ViewSmall<decltype(a.cp), ic_t<rdimv>>(0==rdimv[k].len ? a.cp : a.cp + rdimv[k].step*(1-rdimv[k].len));
+}
+
+template <int ... Iarg>
+constexpr auto
+transpose(cv_viewsmall auto && a_, ilist_t<Iarg ...>)
+{
+    decltype(auto) a = a_.view();
+    using A = std::decay_t<decltype(a)>;
+    constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
+    constexpr static auto src = A::dimv;
+    static_assert(ra::size(src)==ra::size(s), "Bad size for transposed axes list.");
+    constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
+    constexpr static auto dst = [&]{ std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
+    return ViewSmall<decltype(a.cp), ic_t<dst>>(a.data());
+}
+
+template <class sup_t, class T>
+constexpr void
+explode_dims(auto const & av, auto & bv)
+{
+    rank_t rb = ssize(bv);
+    constexpr rank_t rs = rank_s<sup_t>();
+    dim_t s = 1;
+    for (int i=rb+rs; i<ssize(av); ++i) {
+        RA_CK(av[i].step==s, "Subtype axes are not compact.");
+        s *= av[i].len;
+    }
+    RA_CK(s*sizeof(T)==sizeof(value_t<sup_t>), "Mismatched types.");
+    if constexpr (rs>0) {
+        for (int i=rb; i<rb+rs; ++i) {
+            RA_CK(sup_t::dimv[i-rb].len==av[i].len && s*sup_t::dimv[i-rb].step==av[i].step, "Mismatched axes.");
+        }
+    }
+    s *= size_s<sup_t>();
+    for (int i=0; i<rb; ++i) {
+        dim_t step = av[i].step;
+        RA_CK(0==s ? 0==step : 0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
+        bv[i] = Dim {av[i].len, 0==s ? 0 : step/s};
+    }
+}
+
+template <class sup_t>
+constexpr auto
+explode(cv_viewsmall auto && a)
+{
+    constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
+    constexpr static auto bdimv = [&a]{
+        std::array<Dim, ra::rank_s(a)-rank_s<sup_t>()-ru> bdimv;
+        explode_dims<sup_t, value_t<decltype(a)>>(a.dimv, bdimv);
+        return bdimv;
+    }();
+    return ViewSmall<sup_t *, ic_t<bdimv>>(reinterpret_cast<sup_t *>(a.data()));
+}
+
+constexpr auto
+cat(cv_viewsmall auto && a1_, cv_viewsmall auto && a2_)
+{
+    decltype(auto) a1 = a1_.view();
+    decltype(auto) a2 = a2_.view();
+    static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
+    Small<std::common_type_t<decltype(a1[0]), decltype(a2[0])>, ra::size(a1)+ra::size(a2)> val;
+    std::copy(a1.begin(), a1.end(), val.begin());
+    std::copy(a2.begin(), a2.end(), val.begin()+ra::size(a1));
+    return val;
+}
+
+constexpr auto
+cat(cv_viewsmall auto && a1_, is_scalar auto && a2_)
+{
+    return cat(a1_, ViewSmall<decltype(&a2_), ic_t<std::array {Dim(1, 0)}>>(&a2_));
+}
+
+constexpr auto
+cat(is_scalar auto && a1_, cv_viewsmall auto && a2_)
+{
+    return cat(ViewSmall<decltype(&a1_), ic_t<std::array {Dim(1, 0)}>>(&a1_), a2_);
+}
 
 
 // --------------------
 // Big view and containers
 // --------------------
 
-// cf small_args in small.hh. FIXME Let any expr = braces.
+// cf small_args. FIXME Let any expr = braces.
 
 template <class T, rank_t r> struct braces_ { using type = noarg; };
 template <class T, rank_t r> using braces = braces_<T, r>::type;

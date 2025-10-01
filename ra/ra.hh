@@ -8,7 +8,7 @@
 // later version.
 
 #pragma once
-#include "big.hh"
+#include "arrays.hh"
 #include <cmath>
 #include <complex>
 

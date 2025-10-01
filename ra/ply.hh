@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Expression traversal.
+// ra-ra - Expression traversal and slicer.
 
 // (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -398,3 +398,322 @@ struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
         return std::formatter<decltype(ra::start(f.a))>().format(ra::start(f.a), ctx, f.f);
     }
 };
+
+namespace ra {
+
+
+// ---------------------
+// replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
+// ---------------------
+
+template <>
+struct WLen<Len>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return Scalar {ln}; }
+};
+
+template <class Op, Iterator ... P, int ... I> requires (has_len<P> || ...)
+struct WLen<Map<Op, std::tuple<P ...>, ilist_t<I ...>>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return map_(RA_FW(e).op, wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
+};
+
+template <Iterator ... P, int ... I> requires (has_len<P> || ...)
+struct WLen<Pick<std::tuple<P ...>, ilist_t<I ...>>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return pick(wlen(ln, std::get<I>(RA_FW(e).t)) ...); }
+};
+
+template <class I> requires (has_len<I>)
+struct WLen<Seq<I>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return Seq { VAL(wlen(ln, e.i)) }; }
+};
+
+template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
+struct WLen<Ptr<I, N, S>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return Ptr(wlen(ln, e.cp), VAL(wlen(ln, e.n)), VAL(wlen(ln, e.s))); }
+};
+
+constexpr auto
+shape(auto const & v, auto && e)
+{
+    if constexpr (is_scalar<decltype(e)>) {
+        dim_t k = wlen(ra::rank(v), RA_FW(e));
+        RA_CK(inside(k, ra::rank(v)), "Bad axis ", k, " for rank ", ra::rank(v), ".");
+        return v.len(k);
+    } else {
+        return map([&v](auto && e){ return shape(v, e); }, wlen(ra::rank(v), RA_FW(e)));
+    }
+}
+
+
+// --------------------
+// outer product / slicing
+// --------------------
+
+template <int n> struct dots_t { constexpr static int N=n; static_assert(n>=0 || UNB==n); };
+template <int n=UNB> constexpr dots_t<n> dots = dots_t<n>();
+constexpr auto all = dots<1>;
+
+template <int n> struct insert_t { constexpr static int N=n; static_assert(n>=0); };
+template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
+
+template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
+constexpr auto
+iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
+{
+    // return ViewSmall<Seq<sarg<I>>, ic_t<std::array {Dim(n, s)}>>(Seq {RA_FW(i)})(insert<w>); // FIXME optimize view<seq>
+    return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) }, ilist_t<w> {});
+}
+
+template <int rank, class T=dim_t> constexpr auto
+ii(dim_t (&&len)[rank], T o, dim_t (&&step)[rank])
+{
+    return ViewBig<Seq<dim_t>, rank>(map([](dim_t len, dim_t step){ return Dim {len, step}; }, len, step), Seq<dim_t>{o});
+}
+
+template <int rank, class T=dim_t> constexpr auto
+ii(dim_t (&&len)[rank], T o=0)
+{
+    return ViewBig<Seq<T>, rank>(len, Seq<T>{o});
+}
+
+template <std::integral auto ... i, class T=dim_t> constexpr auto
+ii(ra::ilist_t<i ...>, T o=0)
+{
+    return ViewSmall<Seq<T>, ra::ic_t<ra::default_dims(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
+}
+
+template <class A> concept is_iota = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); };
+template <class A> concept is_iota_static = requires (A a) { []<class I, class Dimv>(ViewSmall<Seq<I>, Dimv> const &){}(a); };
+template <class A> concept is_iota_dynamic = requires (A a) { []<class I, rank_t RANK>(ViewBig<Seq<I>, RANK> const &){}(a); };
+template <class A> concept is_iota_any = (is_iota<A> || is_iota_dynamic<A> || is_iota_static<A>);
+template <class I> concept is_scalar_index = is_ra_0<I>;
+
+// beaten, whole or piecewise. Presize bv/ds not to need push_back
+
+template <class I> consteval bool
+beatable(I && i)
+{
+    return ((requires { []<int N>(dots_t<N>){}(i); }) || (requires { []<int N>(insert_t<N>){}(i); }) || is_scalar_index<I>
+// exclude to let B=A(... i ...) use B's len. FIXME
+            || (is_iota_any<I> && requires { requires UNB!=ra::size_s<I>(); }));
+}
+
+consteval auto fsrc(auto const &) { return 1; }
+constexpr auto fdst(auto const & i) { if constexpr (beatable(i)) { if consteval { return rank_s(i); } else { return rank(i); } } else { return 1; } }
+template <int n> consteval auto fsrc(dots_t<n> const &) { return n; }
+template <int n> consteval auto fdst(dots_t<n> const &) { return n; }
+template <int n> consteval auto fsrc(insert_t<n> const &) { return 0; }
+template <int n> consteval auto fdst(insert_t<n> const &) { return n; }
+
+consteval int
+frombrank_s(auto && a, auto && ...  i)
+{
+    static_assert((0 + ... + (UNB==fdst(i)))<=1);
+    constexpr int stretch = rank_s(a) - (0 + ... + (UNB==fsrc(i) ? 0 : fsrc(i)));
+    return ANY==rank_s(a) || ((ANY==fdst(i)) || ...) ? ANY : stretch + (0 + ... + (UNB==fdst(i) ? 0 : fdst(i)));
+}
+
+constexpr int
+frombrank(auto && a, auto && ...  i)
+{
+    static_assert((0 + ... + (UNB==fdst(i)))<=1);
+    int stretch = rank(a) - (0 + ... + (UNB==fsrc(i) ? 0 : fsrc(i)));
+    return stretch + (0 + ... + (UNB==fdst(i) ? 0 : fdst(i)));
+}
+
+template <bool dopl=true, bool dobv=true, bool dods=true>
+constexpr auto
+fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
+{
+    if constexpr (dobv) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // gcc14/15.2 -DRA_CHECK=0 -O3
+        for (; ak<ra::rank(a); ++ak, ++bk) {
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Warray-bounds" // gcc14/15.2 -DRA_CHECK=0 --no-sanitize -O2 -O3
+#pragma GCC diagnostic warning "-Wstringop-overflow" // gcc14/15.2 -DRA_CHECK=0 --no-sanitize -O2 -O3
+            bv[bk] = a.dimv[ak];
+#pragma GCC diagnostic pop
+        }
+    }
+    return pl;
+}
+
+template <bool dopl=true, bool dobv=true, bool dods=true, class I0>
+constexpr auto
+fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak, I0 const & i0, auto const & ...  i)
+{
+    if constexpr (is_scalar_index<I0>) {
+        if constexpr (dopl) {
+// FIXME need constant ak for la to maybe be constant. p2564? See also below
+            auto const la = a.len(ak);
+            dim_t const i = wlen(la, i0);
+            RA_CK(inside(i, la) || (UNB==la && 0==a.step(ak)), "Bad index ", i, " in len[", ak, "]=", la, ".");
+            pl += i*a.step(ak);
+        }
+        ++ak;
+    } else if constexpr (is_iota_any<I0> && beatable(i0)) {
+        if constexpr (dobv || dopl) {
+            auto const la = a.len(ak);
+            for (int q=0; q<rank(i0); ++q) {
+                if constexpr (dobv) { bv[bk] = Dim {.len=wlen(la, i0).len(q), .step=wlen(la, i0).step(q)*a.step(ak)}; ++bk; }
+                if constexpr (dopl) {
+// FIXME no wlen(view iota) yet so process .cp.i separately
+                    auto const i = wlen(la, i0.cp.i);
+                    RA_CK(([&, iz=wlen(la, i0)]{ return 0==iz.len(q) || (inside(i, la) && inside(i+(iz.len(q)-1)*iz.step(q), la)); }()),
+                          "Bad iota[", q, "] len ", wlen(la, i0).len(q), " step ", wlen(la, i0).step(q), " in len[", ak, "]=", la, ".");
+                    pl += i*a.step(ak);
+                }
+            }
+        } else if constexpr (dods) {
+            bk += rank(i0);
+        }
+        ++ak;
+    } else if constexpr (requires { []<int N>(dots_t<N>){}(i0); }) {
+        int const n = UNB!=i0.N ? i0.N : (ra::rank(a) - ak - (0 + ... + (UNB==fsrc(i) ? 0 : fsrc(i))));
+        for (int q=0; q<n; ++q) {
+            if constexpr (dobv) { bv[bk] = a.dimv[ak]; }
+            if constexpr (dobv || dods) { ++bk; }
+            ++ak;
+        }
+    } else if constexpr (requires { []<int N>(insert_t<N>){}(i0); }) {
+        for (int q=0; q<i0.N; ++q) {
+            if constexpr (dobv) { bv[bk] = Dim {.len=UNB, .step=0}; }
+            if constexpr (dobv || dods) { ++bk; }
+        }
+    } else {
+        if constexpr (dods) { *ds = bk; ++ds; }
+        if constexpr (dobv) { bv[bk] = a.dimv[ak]; }
+        if constexpr (dobv || dods) { ++bk; }
+        ++ak;
+    }
+    return fromb<dopl, dobv, dods>(pl, ds, bv, bk, a, ak, i ...);
+}
+
+constexpr auto
+frombv(auto const & a, auto const & ...  i)
+{
+    std::array<Dim, frombrank_s(a, i ...)> bv {};
+    fromb<0, 1, 0>(0, 0, bv, 0, a, 0, i ...);
+    return bv;
+}
+
+consteval auto
+fromds(auto const & a, auto const & ...  i)
+{
+    std::array<int, (0 + ... + int(!beatable(i)))> ds {};
+    fromb<0, 0, 1>(0, ds.data(), 0, 0, a, 0, i ...);
+    return ds;
+}
+
+constexpr auto
+frompl(auto pl, auto && a, auto const & ...  i)
+{
+    return fromb<1, 0, 0>(pl, 0, 0, 0, a, 0, i ...);
+}
+
+// unbeaten
+
+constexpr auto
+spacer(auto && b, auto && p, auto && q)
+{
+    return std::apply([&b](auto ... i){ return std::make_tuple(ra::iota(clen(b, i)) ...); }, mp::iota<q-p, p>{});
+}
+
+template <class I, int drop>
+constexpr decltype(auto)
+fromu_loop(auto && op)
+{
+    if constexpr (drop==mp::len<I>) {
+        return RA_FW(op);
+    } else {
+        return wrank(mp::append<mp::makelist<drop, ic_t<0>>, mp::drop<I, drop>> {},
+                     fromu_loop<I, drop+1>(RA_FW(op)));
+    }
+}
+
+template <class B>
+constexpr decltype(auto)
+fromu(B && b, auto && ds, auto && c, auto && ti)
+{
+    return std::apply([&b](auto && ... i){
+        return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(std::forward<B>(b)), RA_FW(i) ...);
+    }, std::tuple_cat(RA_FW(ti), spacer(b, ic<(0==c ? 0 : 1+ds()[c-1])>, ic<ra::size(b.dimv)>)));
+}
+
+constexpr decltype(auto)
+fromu(auto && b, auto && ds, auto && c, auto && ti, auto && i0, auto && ... i)
+{
+    if constexpr (beatable(i0)) {
+        return fromu(RA_FW(b), ds, c, RA_FW(ti), RA_FW(i) ...);
+    } else {
+        return fromu(RA_FW(b), ds, ic<c+1>,
+                     std::tuple_cat(RA_FW(ti), spacer(b, ic<(0==c ? 0 : 1+ds()[c-1])>, ic<ds()[c]>),
+                                    std::forward_as_tuple(wlen(b.len(ds()[c]), RA_FW(i0)))),
+                     RA_FW(i) ...);
+    }
+}
+
+// driver. Only forward to unbeaten part. Not all var rank cases are handled.
+
+template <class A>
+constexpr decltype(auto)
+from(A && a, auto && ...  i)
+{
+    if constexpr (Slice<decltype(a)>) {
+        constexpr int dsn = (0 + ... + int(!beatable(i)));
+        if constexpr (constexpr int bn=frombrank_s(a, i ...); 0==bn) {
+            return *frompl(a.cp, a, i ...);
+        } else if constexpr (ANY!=bn) {
+            auto beaten = [&]{
+// FIXME more cases could be ViewSmall
+                if constexpr (ANY!=ra::size_s(a) && ((!beatable(i) /* || has_len<decltype(i)> */ || ANY!=ra::size_s(i)) && ...)) {
+                    return ViewSmall<decltype(a.data()), ic_t<frombv(a, i ...)>>(frompl(a.cp, a, i ...));
+                } else {
+                    ViewBig<decltype(a.data()), bn> b;
+                    b.cp = fromb<1, 1, 0>(a.cp, 0, b.dimv, 0, a, 0, i ...);
+                    return b;
+                }
+            };
+            if constexpr (0==dsn) {
+                return beaten();
+            } else {
+                return fromu(beaten(), ic<fromds(a, i ...)>, ic<0>, std::tuple<> {}, RA_FW(i) ...);
+            }
+        } else if constexpr (int bn=frombrank(a, i ...); 0==dsn) {
+            ViewBig<decltype(a.data()), ANY> b;
+            b.cp = 0==bn ? frompl(a.cp, a, i ...) : (b.dimv.resize(bn), fromb<1, 1, 0>(a.cp, 0, b.dimv, 0, a, 0, i ...));
+            return b;
+// unbeaten on original rank
+        } else if constexpr (sizeof...(i)==dsn && sizeof...(i)==(0 + ... + (ANY!=rank_s(i)))) {
+            RA_CK(rank(a)==sizeof...(i), "Run time reframe rank(a) ", rank(a), " args ", sizeof...(i), ".");
+            return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(
+                         [a=std::tuple<A>(RA_FW(a))](auto && ... i) -> decltype(auto)
+                         { return *frompl(std::get<0>(a).cp, std::get<0>(a), i ...); }),
+                       RA_FW(i) ...);
+// unbeaten on beaten rank
+        } else {
+            RA_CK(dsn==bn, "Run time reframe dsn ", dsn, " bn ", bn, ".");
+            ViewBig<decltype(a.data()), dsn> b;
+            b.cp = fromb<1, 1, 0>(a.cp, 0, b.dimv, 0, a, 0, i ...);
+            return fromu(std::move(b), ic<std::apply([](auto ... i) { return std::array { int(i) ... }; }, mp::iota<dsn> {})>,
+                         ic<0>, std::tuple<> {}, RA_FW(i) ...);
+        }
+    } else if constexpr (0==sizeof...(i)) { // map(op) isn't defined
+        return RA_FW(a)();
+    } else {
+        return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(RA_FW(a)), RA_FW(i) ...);
+    }
+}
+
+} // namespace ra::

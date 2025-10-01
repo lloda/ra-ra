@@ -61,7 +61,7 @@ namespace ra {
     constexpr TYPE(TYPE const & x) = default;                           \
     RA_ASSIGNOPS_DEFAULT_SET
 
-// Contextual len, a unique object. See wlen in small.hh.
+// Contextual len, a unique object. See wlen in arrays.hh
 
 constexpr struct Len
 {
