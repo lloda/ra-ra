@@ -328,9 +328,7 @@ struct Benchmark
         ra::Big<clock::duration, 1> times;
         for (int k=0; k<runs_; ++k) {
             auto t0 = clock::now();
-            for (int i=0; i<repeats_; ++i) {
-                f(a ...);
-            }
+            for (int i=0; i<repeats_; ++i) { f(a ...); }
             clock::duration full = clock::now()-t0;
             times.push_back(lapse(empty, full));
         }
@@ -348,11 +346,11 @@ struct Benchmark
         ra::Big<clock::duration, 1> times;
         for (int k=0; k<runs_; ++k) {
             g([&](auto && f) {
-                  auto t0 = clock::now();
-                  for (int i=0; i<repeats_; ++i) { f(); }
-                  clock::duration full = clock::now()-t0;
-                  times.push_back(lapse(empty, full));
-              }, a ...);
+                auto t0 = clock::now();
+                for (int i=0; i<repeats_; ++i) { f(); }
+                clock::duration full = clock::now()-t0;
+                times.push_back(lapse(empty, full));
+            }, a ...);
         }
         return Value { name_, repeats_, empty, std::move(times) };
     }

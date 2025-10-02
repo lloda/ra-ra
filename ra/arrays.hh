@@ -15,7 +15,7 @@ namespace ra {
 
 
 // ---------------------
-// Small view and container
+// small view and container
 // ---------------------
 
 constexpr bool
@@ -147,7 +147,7 @@ constexpr size_t align_req<T, N> = alignof(extvector<T, N>);
 
 template <class T, class Dimv, class ... nested_args>
 struct
-#if RA_OPT_SMALLVECTOR==1
+#if RA_OPT_SMALL==1
 alignas(align_req<T, std::apply([](auto ... i){ return (i.len * ... * 1); }, Dimv::value)>)
 #endif
 SmallArray<T, Dimv, std::tuple<nested_args ...>>
@@ -230,117 +230,7 @@ from_ravel(auto && b)
 
 
 // --------------------
-// Small view ops
-// --------------------
-
-// FIXME Merge transpose & Reframe (beat reframe(view) into transpose(view)).
-constexpr void
-transpose_dims(auto const & s, auto const & src, auto & dst)
-{
-    std::ranges::fill(dst, Dim {UNB, 0});
-    for (int k=0; int sk: s) {
-        dst[sk].step += src[k].step;
-        dst[sk].len = dst[sk].len>=0 ? std::min(dst[sk].len, src[k].len) : src[k].len;
-        ++k;
-    }
-}
-
-RA_IS_DEF(cv_viewsmall, (std::is_convertible_v<A, ViewSmall<decltype(std::declval<A>().data()), ic_t<A::dimv>>>));
-
-template <class K=ic_t<0>>
-constexpr auto
-reverse(cv_viewsmall auto && a_, K k = K {})
-{
-    decltype(auto) a = a_.view();
-    using A = std::decay_t<decltype(a)>;
-    constexpr auto rdimv = [&]{
-        std::remove_const_t<decltype(A::dimv)> rdimv = A::dimv;
-        RA_CK(inside(k, ssize(rdimv)), "Bad axis ", K::value, " for rank ", ssize(rdimv), ".");
-        rdimv[k].step *= -1;
-        return rdimv;
-    }();
-    return ViewSmall<decltype(a.cp), ic_t<rdimv>>(0==rdimv[k].len ? a.cp : a.cp + rdimv[k].step*(1-rdimv[k].len));
-}
-
-template <int ... Iarg>
-constexpr auto
-transpose(cv_viewsmall auto && a_, ilist_t<Iarg ...>)
-{
-    decltype(auto) a = a_.view();
-    using A = std::decay_t<decltype(a)>;
-    constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
-    constexpr static auto src = A::dimv;
-    static_assert(ra::size(src)==ra::size(s), "Bad size for transposed axes list.");
-    constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
-    constexpr static auto dst = [&]{ std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
-    return ViewSmall<decltype(a.cp), ic_t<dst>>(a.data());
-}
-
-template <class sup_t, class T>
-constexpr void
-explode_dims(auto const & av, auto & bv)
-{
-    rank_t rb = ssize(bv);
-    constexpr rank_t rs = rank_s<sup_t>();
-    dim_t s = 1;
-    for (int i=rb+rs; i<ssize(av); ++i) {
-        RA_CK(av[i].step==s, "Subtype axes are not compact.");
-        s *= av[i].len;
-    }
-    RA_CK(s*sizeof(T)==sizeof(value_t<sup_t>), "Mismatched types.");
-    if constexpr (rs>0) {
-        for (int i=rb; i<rb+rs; ++i) {
-            RA_CK(sup_t::dimv[i-rb].len==av[i].len && s*sup_t::dimv[i-rb].step==av[i].step, "Mismatched axes.");
-        }
-    }
-    s *= size_s<sup_t>();
-    for (int i=0; i<rb; ++i) {
-        dim_t step = av[i].step;
-        RA_CK(0==s ? 0==step : 0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
-        bv[i] = Dim {av[i].len, 0==s ? 0 : step/s};
-    }
-}
-
-template <class sup_t>
-constexpr auto
-explode(cv_viewsmall auto && a)
-{
-    constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
-    constexpr static auto bdimv = [&a]{
-        std::array<Dim, ra::rank_s(a)-rank_s<sup_t>()-ru> bdimv;
-        explode_dims<sup_t, value_t<decltype(a)>>(a.dimv, bdimv);
-        return bdimv;
-    }();
-    return ViewSmall<sup_t *, ic_t<bdimv>>(reinterpret_cast<sup_t *>(a.data()));
-}
-
-constexpr auto
-cat(cv_viewsmall auto && a1_, cv_viewsmall auto && a2_)
-{
-    decltype(auto) a1 = a1_.view();
-    decltype(auto) a2 = a2_.view();
-    static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
-    Small<std::common_type_t<decltype(a1[0]), decltype(a2[0])>, ra::size(a1)+ra::size(a2)> val;
-    std::copy(a1.begin(), a1.end(), val.begin());
-    std::copy(a2.begin(), a2.end(), val.begin()+ra::size(a1));
-    return val;
-}
-
-constexpr auto
-cat(cv_viewsmall auto && a1_, is_scalar auto && a2_)
-{
-    return cat(a1_, ViewSmall<decltype(&a2_), ic_t<std::array {Dim(1, 0)}>>(&a2_));
-}
-
-constexpr auto
-cat(is_scalar auto && a1_, cv_viewsmall auto && a2_)
-{
-    return cat(ViewSmall<decltype(&a1_), ic_t<std::array {Dim(1, 0)}>>(&a1_), a2_);
-}
-
-
-// --------------------
-// Big view and containers
+// big view and containers
 // --------------------
 
 // cf small_args. FIXME Let any expr = braces.
@@ -724,8 +614,25 @@ with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s
 
 
 // --------------------
-// Big view ops
+// view ops
 // --------------------
+
+RA_IS_DEF(cv_viewsmall, (std::is_convertible_v<A, ViewSmall<decltype(std::declval<A>().data()), ic_t<A::dimv>>>));
+
+template <class K=ic_t<0>>
+constexpr auto
+reverse(cv_viewsmall auto && a_, K k = K {})
+{
+    decltype(auto) a = a_.view();
+    using A = std::decay_t<decltype(a)>;
+    constexpr auto rdimv = [&]{
+        std::remove_const_t<decltype(A::dimv)> rdimv = A::dimv;
+        RA_CK(inside(k, ssize(rdimv)), "Bad axis ", K::value, " for rank ", ssize(rdimv), ".");
+        rdimv[k].step *= -1;
+        return rdimv;
+    }();
+    return ViewSmall<decltype(a.cp), ic_t<rdimv>>(0==rdimv[k].len ? a.cp : a.cp + rdimv[k].step*(1-rdimv[k].len));
+}
 
 template <class P, rank_t RANK>
 constexpr auto
@@ -737,6 +644,149 @@ reverse(ViewBig<P, RANK> const & view, int k=0)
     dim.step *= -1;
     if (dim.len!=0) { r.cp += dim.step*(1-dim.len); }
     return r;
+}
+
+// FIXME Merge transpose & Reframe (beat reframe(view) into transpose(view)).
+constexpr void
+transpose_dims(auto const & s, auto const & src, auto & dst)
+{
+    std::ranges::fill(dst, Dim {UNB, 0});
+    for (int k=0; int sk: s) {
+        dst[sk].step += src[k].step;
+        dst[sk].len = dst[sk].len>=0 ? std::min(dst[sk].len, src[k].len) : src[k].len;
+        ++k;
+    }
+}
+
+template <int ... Iarg>
+constexpr auto
+transpose(cv_viewsmall auto && a_, ilist_t<Iarg ...>)
+{
+    decltype(auto) a = a_.view();
+    using A = std::decay_t<decltype(a)>;
+    constexpr static std::array<dim_t, sizeof...(Iarg)> s = { Iarg ... };
+    constexpr static auto src = A::dimv;
+    static_assert(ra::size(src)==ra::size(s), "Bad size for transposed axes list.");
+    constexpr static rank_t dstrank = (0==ra::size(s)) ? 0 : 1 + std::ranges::max(s);
+    constexpr static auto dst = [&]{ std::array<Dim, dstrank> dst; transpose_dims(s, src, dst); return dst; }();
+    return ViewSmall<decltype(a.cp), ic_t<dst>>(a.data());
+}
+
+// static transposed axes list, output rank is static.
+template <int ... I, class P, rank_t RANK>
+constexpr auto
+transpose(ViewBig<P, RANK> const & view, ilist_t<I ...>)
+{
+    if constexpr (ANY==RANK) {
+        RA_CK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
+    } else {
+        static_assert(ANY==RANK || RANK==sizeof...(I), "Bad rank."); // c++26
+    }
+    constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
+    constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s);
+    ViewBig<P, dstrank> r;
+    r.cp = view.data();
+    transpose_dims(s, view.dimv, r.dimv);
+    return r;
+}
+
+// dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
+template <class P, rank_t RANK, class S>
+constexpr ViewBig<P, ANY>
+transpose(ViewBig<P, RANK> const & view, S && s)
+{
+    RA_CK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
+    rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s); // FIXME amax(), but that's in ra.hh
+    ViewBig<P, ANY> r { decltype(r.dimv)(dstrank), view.data() };
+    transpose_dims(s, view.dimv, r.dimv);
+    return r;
+}
+
+template <class P, rank_t RANK, class dimtype, int N>
+constexpr ViewBig<P, ANY>
+transpose(ViewBig<P, RANK> const & view, dimtype const (&s)[N])
+{
+    return transpose(view, start(s));
+}
+
+constexpr decltype(auto)
+transpose(auto && a) { return transpose(RA_FW(a), ilist<1, 0>); }
+
+constexpr decltype(auto)
+diag(auto && a) { return transpose(RA_FW(a), ilist<0, 0>); };
+
+template <class sup_t, class T>
+constexpr void
+explode_dims(auto const & av, auto & bv)
+{
+    rank_t rb = ssize(bv);
+    constexpr rank_t rs = rank_s<sup_t>();
+    dim_t s = 1;
+    for (int i=rb+rs; i<ssize(av); ++i) {
+        RA_CK(av[i].step==s, "Subtype axes are not compact.");
+        s *= av[i].len;
+    }
+    RA_CK(s*sizeof(T)==sizeof(value_t<sup_t>), "Mismatched types.");
+    if constexpr (rs>0) {
+        for (int i=rb; i<rb+rs; ++i) {
+            RA_CK(sup_t::dimv[i-rb].len==av[i].len && s*sup_t::dimv[i-rb].step==av[i].step, "Mismatched axes.");
+        }
+    }
+    s *= size_s<sup_t>();
+    for (int i=0; i<rb; ++i) {
+        dim_t step = av[i].step;
+        RA_CK(0==s ? 0==step : 0==step % s, "Step [", i, "] = ", step, " doesn't match ", s, ".");
+        bv[i] = Dim {av[i].len, 0==s ? 0 : step/s};
+    }
+}
+
+template <class sup_t>
+constexpr auto
+explode(cv_viewsmall auto && a)
+{
+    constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
+    constexpr static auto bdimv = [&a]{
+        std::array<Dim, ra::rank_s(a)-rank_s<sup_t>()-ru> bdimv;
+        explode_dims<sup_t, value_t<decltype(a)>>(a.dimv, bdimv);
+        return bdimv;
+    }();
+    return ViewSmall<sup_t *, ic_t<bdimv>>(reinterpret_cast<sup_t *>(a.data()));
+}
+
+template <class sup_t, class T, rank_t RANK>
+constexpr auto
+explode(ViewBig<T *, RANK> const & a)
+{
+    constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
+    ViewBig<sup_t *, rank_sum(RANK, -rank_s<sup_t>()-ru)> b;
+    ra::resize(b.dimv, a.rank()-rank_s<sup_t>()-ru);
+    explode_dims<sup_t, T>(a.dimv, b.dimv);
+    b.cp = reinterpret_cast<sup_t *>(a.data());
+    return b;
+}
+
+constexpr auto
+cat(cv_viewsmall auto && a1_, cv_viewsmall auto && a2_)
+{
+    decltype(auto) a1 = a1_.view();
+    decltype(auto) a2 = a2_.view();
+    static_assert(1==a1.rank() && 1==a2.rank(), "Bad ranks for cat.");
+    Small<std::common_type_t<decltype(a1[0]), decltype(a2[0])>, ra::size(a1)+ra::size(a2)> val;
+    std::copy(a1.begin(), a1.end(), val.begin());
+    std::copy(a2.begin(), a2.end(), val.begin()+ra::size(a1));
+    return val;
+}
+
+constexpr auto
+cat(cv_viewsmall auto && a1_, is_scalar auto && a2_)
+{
+    return cat(a1_, ViewSmall<decltype(&a2_), ic_t<std::array {Dim(1, 0)}>>(&a2_));
+}
+
+constexpr auto
+cat(is_scalar auto && a1_, cv_viewsmall auto && a2_)
+{
+    return cat(ViewSmall<decltype(&a1_), ic_t<std::array {Dim(1, 0)}>>(&a1_), a2_);
 }
 
 template <class P, rank_t RANK>
@@ -828,61 +878,6 @@ stencil(ViewBig<P, N> const & a, LO && lo, HI && hi)
              },
              ptr(s.dimv.data()+a.rank()), a.dimv, lo, hi);
     return s;
-}
-
-// static transposed axes list, output rank is static.
-template <int ... I, class P, rank_t RANK>
-constexpr auto
-transpose(ViewBig<P, RANK> const & view, ilist_t<I ...>)
-{
-    if constexpr (ANY==RANK) {
-        RA_CK(view.rank()==sizeof...(I), "Bad rank ", view.rank(), " for ", sizeof...(I), " axes.");
-    } else {
-        static_assert(ANY==RANK || RANK==sizeof...(I), "Bad rank."); // c++26
-    }
-    constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
-    constexpr rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s);
-    ViewBig<P, dstrank> r;
-    r.cp = view.data();
-    transpose_dims(s, view.dimv, r.dimv);
-    return r;
-}
-
-// dynamic transposed axes list, output rank is dynamic. FIXME only some S are valid here.
-template <class P, rank_t RANK, class S>
-constexpr ViewBig<P, ANY>
-transpose(ViewBig<P, RANK> const & view, S && s)
-{
-    RA_CK(view.rank()==ra::size(s), "Bad rank ",  view.rank(), " for ", ra::size(s), " axes.");
-    rank_t dstrank = 0==ra::size(s) ? 0 : 1 + std::ranges::max(s); // FIXME amax(), but that's in ra.hh
-    ViewBig<P, ANY> r { decltype(r.dimv)(dstrank), view.data() };
-    transpose_dims(s, view.dimv, r.dimv);
-    return r;
-}
-
-template <class P, rank_t RANK, class dimtype, int N>
-constexpr ViewBig<P, ANY>
-transpose(ViewBig<P, RANK> const & view, dimtype const (&s)[N])
-{
-    return transpose(view, start(s));
-}
-
-constexpr decltype(auto)
-transpose(auto && a) { return transpose(RA_FW(a), ilist<1, 0>); }
-
-constexpr decltype(auto)
-diag(auto && a) { return transpose(RA_FW(a), ilist<0, 0>); };
-
-template <class sup_t, class T, rank_t RANK>
-constexpr auto
-explode(ViewBig<T *, RANK> const & a)
-{
-    constexpr static rank_t ru = sizeof(value_t<sup_t>)==sizeof(value_t<decltype(a)>) ? 0 : 1;
-    ViewBig<sup_t *, rank_sum(RANK, -rank_s<sup_t>()-ru)> b;
-    ra::resize(b.dimv, a.rank()-rank_s<sup_t>()-ru);
-    explode_dims<sup_t, T>(a.dimv, b.dimv);
-    b.cp = reinterpret_cast<sup_t *>(a.data());
-    return b;
 }
 
 // TODO Check that ranks below SUBR are compact. Version for Small.

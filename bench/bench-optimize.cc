@@ -8,10 +8,10 @@
 // later version.
 
 #define RA_OPT // disable so we can compare with (forced) and without
-#ifdef RA_OPT_SMALLVECTOR // bench requires 1 to be meaningful.
-#undef RA_OPT_SMALLVECTOR
+#ifdef RA_OPT_SMALL // bench requires 1 to be meaningful.
+#undef RA_OPT_SMALL
 #endif
-#define RA_OPT_SMALLVECTOR 1
+#define RA_OPT_SMALL 1
 
 #include <iostream>
 #include <iomanip>

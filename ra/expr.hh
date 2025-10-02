@@ -640,12 +640,6 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         dim_t s = UNB; (void)(((s = f.template operator()<std::decay_t<P>>(s)) != MIS) && ...);
         return s;
     }
-// try to provide static len(). We depend on len() for runtime check, so we must know we won't need that.
-    constexpr static dim_t
-    len(is_constant auto k) requires (ANY!=len_s(k, true))
-    {
-        return len_s(k);
-    }
     constexpr static dim_t
     len(int k) requires (requires { std::decay_t<P>::len(k); } && ...)
     {

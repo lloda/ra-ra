@@ -54,8 +54,8 @@
 #define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
 
 // FIMXE bench shows it's bad by default; maybe requires optimizing += etc.
-#ifndef RA_OPT_SMALLVECTOR
-#define RA_OPT_SMALLVECTOR 0
+#ifndef RA_OPT_SMALL
+#define RA_OPT_SMALL 0
 #endif
 
 namespace ra {
@@ -441,7 +441,7 @@ shape(V const & v)
     } else if constexpr (constexpr rank_t rs=rank_s<V>(); 1==rs) {
         return std::array<dim_t, 1> { ra::size(v) };
     } else if constexpr (ANY!=rs) {
-        return std::apply([&v](auto ... i){ return std::array { v.len(i) ... }; }, mp::iota<rs> {});
+        return std::apply([&v](auto ... i){ return std::array<dim_t, rs> { v.len(i) ... }; }, mp::iota<rs> {});
     } else {
         return std::ranges::to<vector_default_init<dim_t>>(
             std::ranges::iota_view { 0, rank(v) } | std::views::transform([&v](auto k){ return v.len(k); }));

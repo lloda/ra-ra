@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        cxxflags: ['"-O3 -std=c++23 -DRA_OPT_SMALLVECTOR=0"',
-                   '"-O3 -std=c++23 -DRA_OPT_SMALLVECTOR=1"',
+        cxxflags: ['"-O3 -std=c++23 -DRA_OPT_SMALL=0"',
+                   '"-O3 -std=c++23 -DRA_OPT_SMALL=1"',
                    '"-O3 -std=c++23 -DRA_CHECK=0 -DNDEBUG"']
     steps:
     - uses: actions/checkout@v4

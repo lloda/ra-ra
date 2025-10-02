@@ -8,12 +8,11 @@
 // later version.
 
 #define RA_OPT // disable so we can compare with (forced) and without
-#ifndef RA_OPT_SMALLVECTOR // test is for 1; forcing 0 skips that part of the test.
-#define RA_OPT_SMALLVECTOR 1
+#ifndef RA_OPT_SMALL // test is for 1; forcing 0 skips that part of the test.
+#define RA_OPT_SMALL 1
 #endif
 
 #include "ra/test.hh"
-#include "mpdebug.hh"
 
 using std::cout, std::endl, ra::TestRecorder;
 using complex = std::complex<double>;
@@ -23,12 +22,12 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("optimizing static size Iotas");
     {
-        tr.test_eq(4, opt(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)).nn);
-        tr.test_eq(4, opt(ra::iota(4) + ra::iota(ra::int_c<4>(), 0, 2)).nn);
-        tr.test_eq(ra::start({0, 3, 6, 9}), opt(ra::iota(ra::int_c<4>()) + ra::iota(4, 0, 2)));
-        tr.test_eq(4, opt(ra::iota(ra::int_c<4>()) - ra::iota(4, 0, 2)).nn);
-        tr.test_eq(4, opt(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)).nn);
-        tr.test_eq(ra::start({0, -1, -2, -3}), opt(ra::iota(4) - ra::iota(ra::int_c<4>(), 0, 2)));
+        tr.test_eq(4, opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)).nn);
+        tr.test_eq(4, opt(ra::iota(4) + ra::iota(ra::ic<4>, 0, 2)).nn);
+        tr.test_eq(ra::start({0, 3, 6, 9}), opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)));
+        tr.test_eq(4, opt(ra::iota(ra::ic<4>) - ra::iota(4, 0, 2)).nn);
+        tr.test_eq(4, opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)).nn);
+        tr.test_eq(ra::start({0, -1, -2, -3}), opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)));
     }
     tr.section("iota ops, expr iotas WIP");
     {
@@ -36,7 +35,7 @@ int main()
         tr.info("nop").test(ra::is_iota<decltype(wlen(10, ra::iota(ra::len)))>);
 // works unopt bc Match avoid checking if has_len
         tr.test_eq(ra::iota(10, 0, 2), wlen(10, ra::iota(ra::len) + ra::iota(ra::len)));
-// works, but opt runs at + site, not after wlen (FIXME?)
+// works, but opt runs at + site, not after wlen
         tr.test_eq(ra::iota(10, 0, 2), opt(wlen(10, ra::iota(ra::len) + ra::iota(ra::len))));
 // FIXME don't work, because opt() can't determine the match-length of the result iota
         // tr.info("+, naked").test(ra::is_iota<decltype(opt(ra::iota(ra::len) + ra::iota(ra::len)))>);
@@ -68,31 +67,31 @@ int main()
         static_assert(ra::iota_op<ra::Scalar<int>>);
         static_assert(ra::is_iota<decltype(ra::iota(10, long(10)))>);
         auto test = [&tr](auto && org)
-            {
-                auto i = ra::iota(5, org);
-                auto j = i+1;
-                auto k1 = opt(i+1);
-                static_assert(ra::is_iota<decltype(k1)>);
-                auto k2 = opt(1+i);
-                auto k3 = opt(ra::iota(5)+1);
-                auto k4 = opt(1+ra::iota(5));
-                auto k5 = opt(1.5+ra::iota(5));
-                auto k6 = opt(ra::iota(5)-0.5);
-                tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
+        {
+            auto i = ra::iota(5, org);
+            auto j = i+1;
+            auto k1 = opt(i+1);
+            static_assert(ra::is_iota<decltype(k1)>);
+            auto k2 = opt(1+i);
+            auto k3 = opt(ra::iota(5)+1);
+            auto k4 = opt(1+ra::iota(5));
+            auto k5 = opt(1.5+ra::iota(5));
+            auto k6 = opt(ra::iota(5)-0.5);
+            tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-                tr.test_eq(org+1, k1.cp.i);
-                tr.test_eq(org+1, k1.cp.i);
-                tr.test_eq(org+1, k2.cp.i);
-                tr.test_eq(org+1, k3.cp.i);
-                tr.test_eq(org+1, k4.cp.i);
-                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), j);
-                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k1);
-                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k2);
-                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k3);
-                tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k4);
-                tr.test_eq(1.5+ra::start({0, 1, 2, 3, 4}), k5);
-                tr.test_eq(ra::start({0, 1, 2, 3, 4})-0.5, k6);
-            };
+            tr.test_eq(org+1, k1.cp.i);
+            tr.test_eq(org+1, k1.cp.i);
+            tr.test_eq(org+1, k2.cp.i);
+            tr.test_eq(org+1, k3.cp.i);
+            tr.test_eq(org+1, k4.cp.i);
+            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), j);
+            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k1);
+            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k2);
+            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k3);
+            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k4);
+            tr.test_eq(1.5+ra::start({0, 1, 2, 3, 4}), k5);
+            tr.test_eq(ra::start({0, 1, 2, 3, 4})-0.5, k6);
+        };
         test(int(0));
         test(double(0));
         test(float(0));
@@ -100,17 +99,17 @@ int main()
     tr.section("iota ops, negate");
     {
         auto test = [&tr](auto && org)
-            {
-                auto i = ra::iota(5, org);
-                auto j = -i;
-                auto k1 = opt(-i);
-                static_assert(ra::is_iota<decltype(k1)>);
-                tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
+        {
+            auto i = ra::iota(5, org);
+            auto j = -i;
+            auto k1 = opt(-i);
+            static_assert(ra::is_iota<decltype(k1)>);
+            tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-                tr.test_eq(-org, k1.cp.i);
-                tr.test_eq(-ra::start({0, 1, 2, 3, 4}), j);
-                tr.test_eq(-ra::start({0, 1, 2, 3, 4}), k1);
-            };
+            tr.test_eq(-org, k1.cp.i);
+            tr.test_eq(-ra::start({0, 1, 2, 3, 4}), j);
+            tr.test_eq(-ra::start({0, 1, 2, 3, 4}), k1);
+        };
         test(int(0));
         test(double(0));
         test(float(0));
@@ -141,7 +140,7 @@ int main()
         test(double(0));
         test(float(0));
     }
-#if RA_OPT_SMALLVECTOR==1
+#if RA_OPT_SMALL==1
     static_assert(ra::match_small<double, 4, ra::Cell<double *, ra::ic_t<std::array {ra::Dim(4, 1)}>, ra::ic_t<0>>>);
     tr.section("small vector ops through vector extensions");
     {
@@ -179,6 +178,6 @@ int main()
         tr.info("optimization of view").test(std::is_same_v<decltype(c), ra::Small<double, 8>>);
         tr.test_eq(34, c);
     }
-#endif // RA_OPT_SMALLVECTOR==1
+#endif // RA_OPT_SMALL==1
     return tr.summary();
 }

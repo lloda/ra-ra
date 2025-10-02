@@ -127,6 +127,7 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 constexpr decltype(auto) opt(auto && e) { return RA_FW(e); }
 
 // FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
+// It's simpler to iota+iota directly, but going through expr(+, iota, iota) handles agreement & wlen.
 template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
 
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
@@ -134,51 +135,49 @@ template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalu
 
 #define RA0 std::get<(0)>(e.t)
 #define RA1 std::get<(1)>(e.t)
-#define DEF_IOTA_BINOP(TI, TJ, OP, VAL) \
-    template <TI I, TJ J> constexpr auto opt(Map<OP, std::tuple<I, J>> && e) { return VAL; }
+#define DEF_IOTA_BINOP(OP, A, B, VAL) \
+    template <A I, B J> constexpr auto opt(Map<OP, std::tuple<I, J>> && e) { return VAL; }
 
-DEF_IOTA_BINOP(is_iota, iota_op, std::plus<>, ra::iota(RA0.n, RA0.cp.i+RA1, RA0.s))
-DEF_IOTA_BINOP(iota_op, is_iota, std::plus<>, ra::iota(RA1.n, RA0+RA1.cp.i, RA1.s))
-DEF_IOTA_BINOP(is_iota, is_iota, std::plus<>, ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.s, RA1.s)))
-DEF_IOTA_BINOP(is_iota, iota_op, std::minus<>, ra::iota(RA0.n, RA0.cp.i-RA1, RA0.s))
-DEF_IOTA_BINOP(iota_op, is_iota, std::minus<>, ra::iota(RA1.n, RA0-RA1.cp.i, csub(ic<0>, RA1.s)))
-DEF_IOTA_BINOP(is_iota, is_iota, std::minus<>, ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.s, RA1.s)))
-DEF_IOTA_BINOP(is_iota, iota_op, std::multiplies<>, ra::iota(RA0.n, RA0.cp.i*RA1, RA0.s*RA1))
-DEF_IOTA_BINOP(iota_op, is_iota, std::multiplies<>, ra::iota(RA1.n, RA0*RA1.cp.i, RA0*RA1.s))
+DEF_IOTA_BINOP(std::plus<>,       is_iota, iota_op, ra::iota(RA0.n, RA0.cp.i+RA1, RA0.s))
+DEF_IOTA_BINOP(std::plus<>,       iota_op, is_iota, ra::iota(RA1.n, RA0+RA1.cp.i, RA1.s))
+DEF_IOTA_BINOP(std::plus<>,       is_iota, is_iota, ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.s, RA1.s)))
+DEF_IOTA_BINOP(std::minus<>,      is_iota, iota_op, ra::iota(RA0.n, RA0.cp.i-RA1, RA0.s))
+DEF_IOTA_BINOP(std::minus<>,      iota_op, is_iota, ra::iota(RA1.n, RA0-RA1.cp.i, csub(ic<0>, RA1.s)))
+DEF_IOTA_BINOP(std::minus<>,      is_iota, is_iota, ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.s, RA1.s)))
+DEF_IOTA_BINOP(std::multiplies<>, is_iota, iota_op, ra::iota(RA0.n, RA0.cp.i*RA1, RA0.s*RA1))
+DEF_IOTA_BINOP(std::multiplies<>, iota_op, is_iota, ra::iota(RA1.n, RA0*RA1.cp.i, RA0*RA1.s))
 #undef DEF_IOTA_BINOP
 
 template <is_iota I> constexpr auto
 opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RA0.n, -RA0.cp.i, csub(ic<0>, RA0.s)); }
 
-#if RA_OPT_SMALLVECTOR==1
+#if RA_OPT_SMALL==1
 template <class T, dim_t N, class A> constexpr bool match_small =
     std::is_same_v<std::decay_t<A>, Cell<T *, ic_t<std::array {Dim(N, 1)}>, ic_t<0>>>
     || std::is_same_v<std::decay_t<A>, Cell<T const *, ic_t<std::array {Dim(N, 1)}>, ic_t<0>>>;
 
-#define RA_OPT_SMALLVECTOR_OP(OP, NAME, T, N)                           \
+#define RA_OPT_SMALL_OP(OP, NAME, T, N)                                 \
     template <class A, class B> requires (match_small<T, N, A> && match_small<T, N, B>) \
-    constexpr auto opt(Map<NAME, std::tuple<A, B>> && e)           \
+    constexpr auto opt(Map<NAME, std::tuple<A, B>> && e)                \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
         *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((RA0.c.cp)) OP *(extvector<T, N> *)((RA1.c.cp)); \
         return val;                                                     \
     }
-#define RA_OPT_SMALLVECTOR_OP_FUNS(T, N)                                \
+#define RA_OPT_SMALL_OP_FUNS(T, N)                                \
     static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
-    RA_OPT_SMALLVECTOR_OP(+, std::plus<>, T, N)                         \
-    RA_OPT_SMALLVECTOR_OP(-, std::minus<>, T, N)                        \
-    RA_OPT_SMALLVECTOR_OP(/, std::divides<>, T, N)                      \
-    RA_OPT_SMALLVECTOR_OP(*, std::multiplies<>, T, N)
-#define RA_OPT_SMALLVECTOR_OP_SIZES(T)        \
-    RA_OPT_SMALLVECTOR_OP_FUNS(T, 2)          \
-    RA_OPT_SMALLVECTOR_OP_FUNS(T, 4)          \
-    RA_OPT_SMALLVECTOR_OP_FUNS(T, 8)
-FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
-
-#undef RA_OPT_SMALLVECTOR_OP_SIZES
-#undef RA_OPT_SMALLVECTOR_OP_FUNS
-#undef RA_OPT_SMALLVECTOR_OP_OP
-#endif // RA_OPT_SMALLVECTOR
+    RA_OPT_SMALL_OP(+, std::plus<>, T, N)                         \
+    RA_OPT_SMALL_OP(-, std::minus<>, T, N)                        \
+    RA_OPT_SMALL_OP(/, std::divides<>, T, N)                      \
+    RA_OPT_SMALL_OP(*, std::multiplies<>, T, N)
+#define RA_OPT_SMALL_OP_TYPES(N)        \
+    RA_OPT_SMALL_OP_FUNS(float, N)      \
+    RA_OPT_SMALL_OP_FUNS(double, N)
+FOR_EACH(RA_OPT_SMALL_OP_TYPES, 2, 4, 8)
+#undef RA_OPT_SMALL_OP_TYPES
+#undef RA_OPT_SMALL_OP_FUNS
+#undef RA_OPT_SMALL_OP
+#endif // RA_OPT_SMALL
 #undef RA1
 #undef RA0
 
@@ -188,7 +187,7 @@ FOR_EACH(RA_OPT_SMALLVECTOR_OP_SIZES, float, double)
 // --------------------------------
 
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit scalar conversion is also needed, and e.g. ra::View<complex, 0> * complex would fail.
-#define DEF_BINOP(OP, OPNAME)                                 \
+#define DEF_BINOP(OP, OPNAME)                                           \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
         operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FW(a), RA_FW(b))); } \
     template <class A, class B> requires (toreduce<A, B>) constexpr auto \
@@ -207,7 +206,7 @@ struct unaryplus
     template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FW(t); }
 };
 
-#define DEF_UNOP(OP, OPNAME)                                      \
+#define DEF_UNOP(OP, OPNAME)                                            \
     template <class A> requires (tomap<A>) constexpr auto               \
         operator OP(A && a) { return RA_OPT(map(OPNAME(), RA_FW(a))); } \
     template <class A> requires (toreduce<A>) constexpr auto            \
@@ -226,7 +225,7 @@ DEF_UNOP(!, std::logical_not<>)
         OP(A && ... a) { return OP(VAL(RA_FW(a)) ...); }
 #define DEF_FWD(QUALIFIED_OP, OP)                                       \
     template <class ... A> /* requires neither */ constexpr decltype(auto) \
-        OP(A && ... a) { return QUALIFIED_OP(RA_FW(a) ...); }          \
+        OP(A && ... a) { return QUALIFIED_OP(RA_FW(a) ...); }           \
     DEF_NAME(OP)
 #define DEF_USING(QUALIFIED_OP, OP)             \
     using QUALIFIED_OP;                         \
@@ -604,8 +603,9 @@ struct Wedge
             using Sb = mp::findcomb<Fb, Cb>;
             constexpr int sign = Sa::sign * Sb::sign * mp::permsign<mp::append<Fa0, Fb>, Xr>::value;
             static_assert(sign==+1 || sign==-1, "Bad sign in wedge term.");
-            auto aw = [&a]{ if constexpr (is_scalar<Va>) { static_assert(0==Sa::where); return a; } else { return a[Sa::where]; } }();
-            auto bw = [&b]{ if constexpr (is_scalar<Vb>) { static_assert(0==Sb::where); return b; } else { return b[Sb::where]; } }();
+            static_assert((!is_scalar<Va> || 0==Sa::where) && (!is_scalar<Vb> || 0==Sb::where));
+            auto aw = [&a]{ if constexpr (is_scalar<Va>) return a; else return a[Sa::where]; }();
+            auto bw = [&b]{ if constexpr (is_scalar<Vb>) return b; else return b[Sb::where]; }();
             return (decltype(aw)(sign))*aw*bw + term<Xr, mp::drop1<Fa>>(a, b);
         }
     }

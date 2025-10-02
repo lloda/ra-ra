@@ -318,7 +318,7 @@ The following @code{#define}s affect the behavior of @code{ra::}.
 
 If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
 
-@item @code{RA_OPT_SMALLVECTOR} (default 0)
+@item @code{RA_OPT_SMALL} (default 0)
 
 If 1, perform immediately certain operations on @code{ra::Small} objects, using small vector intrinsics. Currently this only works on @b{gcc} and doesn't necessarily result in improved performance.
 

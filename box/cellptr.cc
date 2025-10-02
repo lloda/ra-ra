@@ -9,13 +9,14 @@
 
 #include <iostream>
 #include "ra/test.hh"
+#include "test/mpdebug.hh"
 
 using std::cout, std::endl, std::flush;
 
 namespace ra {
 
 // both N & S can be has_len<N> || is_constant<N> || std::is_integral_v<N>.
-// [ ] fix CellPtr len/step/keep to be appropriately static or not
+// [ ] fix CellPtr len/step/keep to be appropriately static or not. Maybe have sdimv with ANYs where needed.
 
 template <class N, class S>
 struct SDim { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; };
@@ -37,6 +38,9 @@ int main()
         using S = ra::ic_t<1>;
         using P = ra::Seq<ra::dim_t>;
         ra::CellPtr<P, N, S> cptr(P {0}, std::array<ra::SDim<N, S>, 1> {ra::SDim<N, S> { .len=10 }});
+        // tr.test_eq(1, decltype(cptr)::step(0));
+        // tr.test_eq(ra::ANY, decltype(cptr)::len_s(0));
+        // tr.test_eq(10, cptr.len(0));
         cout << sizeof(cptr) << endl;
         cout << cptr << endl;
     }
@@ -46,6 +50,8 @@ int main()
         using S = ra::ic_t<2>;
         using P = ra::Seq<ra::dim_t>;
         ra::CellPtr<P, N, S> cptr(P {-9}, std::array<ra::SDim<N, S>, 1> {ra::SDim<N, S> {}});
+        // tr.test_eq(2, decltype(cptr)::step(0));
+        // tr.test_eq(4, decltype(cptr)::len(0));
         cout << sizeof(cptr) << endl;
         cout << cptr << endl;
     }
@@ -55,6 +61,7 @@ int main()
         using S = ra::ic_t<1>;
         using P = ra::Seq<ra::dim_t>;
         ra::CellPtr<P, N, S> cptr(P {0}, std::array<ra::SDim<N, S>, 1> {ra::SDim<N, S> {}});
+        // tr.test_eq(1, decltype(cptr)::step(0));
         cout << sizeof(cptr.dimv) << endl;
         cout << sizeof(cptr.c) << endl;
         cout << sizeof(cptr) << endl;
@@ -62,6 +69,12 @@ int main()
     tr.section("misc");
     {
         cout << sizeof(ra::ViewBig<int *, 0>) << endl;
+    }
+    tr.section("lens");
+    {
+        cout << ra::mp::type_name<decltype(ra::map(std::plus<>(), ra::iota(ra::ic<4>), ra::iota(4, 0, 2)).len(ra::ic<0>))>() << endl;
+// this is static 4 even though runtime check is still needed.
+        cout << ra::mp::type_name<decltype(ra::clen(ra::map(std::plus<>(), ra::iota(ra::ic<4>), ra::iota(5, 0, 2)), ra::ic<0>))>() << endl;
     }
     return tr.summary();
 }
