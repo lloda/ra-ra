@@ -12,7 +12,6 @@
 #include <iostream>
 #include <algorithm>
 #include "ra/test.hh"
-#include "ra/dual.hh"
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using real = double;
@@ -21,7 +20,7 @@ using ra::dual, ra::Dual;
 using ra::sqr, ra::fma;
 
 #define DEFINE_CASE(N,  F, DF)                                          \
-    struct JOIN(case, N)                                                \
+    struct RA_JOIN(case, N)                                                \
     {                                                                   \
         template <class X> static auto f(X x) { return (F); }           \
         template <class X> static auto df(X x) { return (DF); }         \

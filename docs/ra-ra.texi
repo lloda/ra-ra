@@ -300,13 +300,7 @@ int main()
    d|d
 @end example
 
-The following headers are @emph{not} included by default:
-@itemize
-@item @code{"ra/dual.hh"}:
-A dual number type for simple uses of automatic differentiation.
-@item @code{"ra/test.hh"}:
-Used by the test suite.
-@end itemize
+The header @code{"ra/test.hh"} is used by the test suite and is @emph{not} included by default.
 
 The header @code{"ra/base.hh"} can be used to configure @ref{Error handling}. You don't need to modify the header, but the configuration depends on including @code{"ra/base.hh"} before the rest of @code{ra::} in order to override the default handler. All other headers are for internal use by @code{ra::}.
 
@@ -1982,17 +1976,15 @@ The header structure of @code{ra::} is as follows.@c @footnote{Diagram generated
 @item @code{base.hh} -
 Generic macros, tuple library, basic types and concepts.
 @item @code{expr.hh} -
-Expression template nodes.
+Expression templates.
 @item @code{ply.hh} -
-Traversal, including I/O.
+Traversal, I/O, and slicing.
 @item @code{arrays.hh} -
-Array types
+Array types: views and containers.
 @item @code{ra.hh} -
-Functions and operators, main header.
+Overloads, wedge product, dual numbers, main header.
 @item @code{test.hh} -
 (accessory) Testing/benchmarking library.
-@item @code{dual.hh} -
-(accessory) Dual number type and operations.
 @end itemize
 
 @c @image{headers,4cm}

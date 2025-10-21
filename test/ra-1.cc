@@ -191,12 +191,12 @@ int main()
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
             plier(ra::map_(sum2, a.iter(), transpose(b, ilist_t<1, 0>{}).iter(), c.iter())); \
-            tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
+            tr.info(RA_STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }                                                               \
         {                                                               \
             std::fill(c.begin(), c.end(), 0);                           \
             plier(ra::map_(sum2, transpose(a, ilist_t<1, 0>{}).iter(), b.iter(), transpose(c, ilist_t<1, 0>{}).iter())); \
-            tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
+            tr.info(RA_STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
         }
         TEST(ply_ravel);
         TEST(ply_fixed);

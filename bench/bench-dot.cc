@@ -61,7 +61,7 @@ struct by_raw
 
 #define BY_PLY(NAME, INSIDE)                                        \
     struct NAME {                                                   \
-        constexpr static char const * name = STRINGIZE(NAME);       \
+        constexpr static char const * name = RA_STRINGIZE(NAME);       \
         template <class A, class B> real operator()(A && a, B && b) \
         {                                                           \
             real y(0.);                                             \
@@ -72,23 +72,23 @@ struct by_raw
 
 #define BY_PLY_TAGGED(PLYER)                                            \
     /* plain */                                                         \
-    BY_PLY(JOIN(by_1l_, PLYER),                                         \
+    BY_PLY(RA_JOIN(by_1l_, PLYER),                                         \
            ra::PLYER(ra::map([&y](real const a, real const b) { y += a*b; }, \
                              a, b)))                                    \
                                                                         \
     /* separate reduction */                                            \
-    BY_PLY(JOIN(by_2l_, PLYER),                                         \
+    BY_PLY(RA_JOIN(by_2l_, PLYER),                                         \
            ra::PLYER(ra::map([&y](real const a) { y += a; },            \
                              ra::map([](real const a, real const b) { return a*b; }, \
                                      a, b))))                           \
                                                                         \
     /* using trivial rank conjunction. FIXME requires static rank */    \
-    BY_PLY(JOIN(by_1w_, PLYER),                                         \
+    BY_PLY(RA_JOIN(by_1w_, PLYER),                                         \
            ra::PLYER(ra::map(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), \
                              a, b)))                                    \
                                                                         \
     /* separate reduction: using trivial rank conjunction. FIXME requires static rank */ \
-    BY_PLY(JOIN(by_2w_, PLYER),                                         \
+    BY_PLY(RA_JOIN(by_2w_, PLYER),                                         \
            ra::PLYER(ra::map(ra::wrank<0>([&y](real const a) { y += a; }), \
                              ra::map(ra::wrank<0, 0>([](real const a, real const b) { return a*b; }), \
                                      a, b))));
@@ -174,7 +174,7 @@ int main()
         };
 
 #define DEFINE_SMALL_PLY(name, plier)                                   \
-        auto JOIN(f_small_, plier) = [](auto && A, auto && B)           \
+        auto RA_JOIN(f_small_, plier) = [](auto && A, auto && B)           \
         {                                                               \
             real y = 0;                                                 \
             plier(ra::map([&y](real a, real b) { y += a*b; }, A, B));   \
@@ -233,9 +233,9 @@ int main()
         BENCH(by_raw);
     }
 #define BENCH_ALL                                                       \
-    FOR_EACH(BENCH, by_raw);                                            \
-    FOR_EACH(BENCH, by_1l_ply_ravel, by_2l_ply_ravel, by_1w_ply_ravel, by_2w_ply_ravel); \
-    FOR_EACH(BENCH, by_1l_ply_fixed, by_2l_ply_fixed, by_1w_ply_fixed, by_2w_ply_fixed);
+    RA_FE(BENCH, by_raw);                                            \
+    RA_FE(BENCH, by_1l_ply_ravel, by_2l_ply_ravel, by_1w_ply_ravel, by_2w_ply_ravel); \
+    RA_FE(BENCH, by_1l_ply_fixed, by_2l_ply_fixed, by_1w_ply_fixed, by_2w_ply_fixed);
 
     tr.section("ra:: wrapped std::vector<>");
     {

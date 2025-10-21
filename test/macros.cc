@@ -17,13 +17,13 @@ int main()
     int errors = 0;
     int a = 0;
 #define ADDTHIS(x) a += x;
-    FOR_EACH(ADDTHIS, 1, 2, 3);
+    RA_FE(ADDTHIS, 1, 2, 3);
     errors += (6!=a);
     a = 0;
-    FOR_EACH(ADDTHIS, 7, 0);
+    RA_FE(ADDTHIS, 7, 0);
     errors += (7!=a);
     a = 0;
-    FOR_EACH(ADDTHIS, 3);
+    RA_FE(ADDTHIS, 3);
     errors += (3!=a);
 #undef ADDTHIS
     std::cout << errors << " errors" << endl;

@@ -413,14 +413,8 @@ int main()
    d|d
 </pre></div>
 
-<p>The following headers are <em>not</em> included by default:
-</p><ul>
-<li> <code>&quot;ra/dual.hh&quot;</code>:
-A dual number type for simple uses of automatic differentiation.
-</li><li> <code>&quot;ra/test.hh&quot;</code>:
-Used by the test suite.
-</li></ul>
-
+<p>The header <code>&quot;ra/test.hh&quot;</code> is used by the test suite and is <em>not</em> included by default.
+</p>
 <p>The header <code>&quot;ra/base.hh&quot;</code> can be used to configure <a href="#Error-handling">Error handling</a>. You don&rsquo;t need to modify the header, but the configuration depends on including <code>&quot;ra/base.hh&quot;</code> before the rest of <code>ra::</code> in order to override the default handler. All other headers are for internal use by <code>ra::</code>.
 </p>
 <p>The following <code>#define</code>s affect the behavior of <code>ra::</code>.
@@ -2024,17 +2018,15 @@ Next: <a href="#Type-hierarchy" accesskey="n" rel="next">Type hierarchy</a>, Up:
 <li> <code>base.hh</code> -
 Generic macros, tuple library, basic types and concepts.
 </li><li> <code>expr.hh</code> -
-Expression template nodes.
+Expression templates.
 </li><li> <code>ply.hh</code> -
-Traversal, including I/O.
+Traversal, I/O, and slicing.
 </li><li> <code>arrays.hh</code> -
-Array types
+Array types: views and containers.
 </li><li> <code>ra.hh</code> -
-Functions and operators, main header.
+Overloads, wedge product, dual numbers, main header.
 </li><li> <code>test.hh</code> -
 (accessory) Testing/benchmarking library.
-</li><li> <code>dual.hh</code> -
-(accessory) Dual number type and operations.
 </li></ul>
 
 

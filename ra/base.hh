@@ -28,32 +28,32 @@
 #error Bad header include order! Do not include ra/base.hh after other ra:: headers.
 #endif
 
-#define STRINGIZE_( x ) #x
-#define STRINGIZE( x ) STRINGIZE_( x )
-#define JOIN_( x, y ) x##y
-#define JOIN( x, y ) JOIN_( x, y )
+#define RA_STRINGIZE_( x ) #x
+#define RA_STRINGIZE( x ) RA_STRINGIZE_( x )
+#define RA_JOIN_( x, y ) x##y
+#define RA_JOIN( x, y ) RA_JOIN_( x, y )
 #define RA_FW(a) std::forward<decltype(a)>(a)
 // see http://stackoverflow.com/a/1872506
-#define FOR_EACH_1(what, x, ...) what(x)
-#define FOR_EACH_2(what, x, ...) what(x) FOR_EACH_1(what, __VA_ARGS__)
-#define FOR_EACH_3(what, x, ...) what(x) FOR_EACH_2(what, __VA_ARGS__)
-#define FOR_EACH_4(what, x, ...) what(x) FOR_EACH_3(what, __VA_ARGS__)
-#define FOR_EACH_5(what, x, ...) what(x) FOR_EACH_4(what, __VA_ARGS__)
-#define FOR_EACH_6(what, x, ...) what(x) FOR_EACH_5(what, __VA_ARGS__)
-#define FOR_EACH_7(what, x, ...) what(x) FOR_EACH_6(what, __VA_ARGS__)
-#define FOR_EACH_8(what, x, ...) what(x) FOR_EACH_7(what, __VA_ARGS__)
-#define FOR_EACH_9(what, x, ...) what(x) FOR_EACH_8(what, __VA_ARGS__)
-#define FOR_EACH_10(what, x, ...) what(x) FOR_EACH_9(what, __VA_ARGS__)
-#define FOR_EACH_11(what, x, ...) what(x) FOR_EACH_10(what, __VA_ARGS__)
-#define FOR_EACH_12(what, x, ...) what(x) FOR_EACH_11(what, __VA_ARGS__)
-#define FOR_EACH_NARG(...) FOR_EACH_NARG_(__VA_ARGS__, FOR_EACH_RSEQ_N())
-#define FOR_EACH_NARG_(...) FOR_EACH_ARG_N(__VA_ARGS__)
-#define FOR_EACH_ARG_N(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, N, ...) N
-#define FOR_EACH_RSEQ_N() 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
-#define FOR_EACH_(N, what, ...) JOIN(FOR_EACH_, N)(what, __VA_ARGS__)
-#define FOR_EACH(what, ...) FOR_EACH_(FOR_EACH_NARG(__VA_ARGS__), what, __VA_ARGS__)
+#define RA_FE_1(w, x, ...) w(x)
+#define RA_FE_2(w, x, ...) w(x) RA_FE_1(w, __VA_ARGS__)
+#define RA_FE_3(w, x, ...) w(x) RA_FE_2(w, __VA_ARGS__)
+#define RA_FE_4(w, x, ...) w(x) RA_FE_3(w, __VA_ARGS__)
+#define RA_FE_5(w, x, ...) w(x) RA_FE_4(w, __VA_ARGS__)
+#define RA_FE_6(w, x, ...) w(x) RA_FE_5(w, __VA_ARGS__)
+#define RA_FE_7(w, x, ...) w(x) RA_FE_6(w, __VA_ARGS__)
+#define RA_FE_8(w, x, ...) w(x) RA_FE_7(w, __VA_ARGS__)
+#define RA_FE_9(w, x, ...) w(x) RA_FE_8(w, __VA_ARGS__)
+#define RA_FE_10(w, x, ...) w(x) RA_FE_9(w, __VA_ARGS__)
+#define RA_FE_11(w, x, ...) w(x) RA_FE_10(w, __VA_ARGS__)
+#define RA_FE_12(w, x, ...) w(x) RA_FE_11(w, __VA_ARGS__)
+#define RA_FE_NARG(...) RA_FE_NARG_(__VA_ARGS__, RA_FE_RSEQ_N())
+#define RA_FE_NARG_(...) RA_FE_ARG_N(__VA_ARGS__)
+#define RA_FE_ARG_N(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, N, ...) N
+#define RA_FE_RSEQ_N() 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
+#define RA_FE_(N, w, ...) RA_JOIN(RA_FE_, N)(w, __VA_ARGS__)
+#define RA_FE(w, ...) RA_FE_(RA_FE_NARG(__VA_ARGS__), w, __VA_ARGS__)
 
-// FIMXE bench shows it's bad by default; maybe requires optimizing += etc.
+// FIMXE bench shows it's bad; maybe requires optimizing += etc.
 #ifndef RA_OPT_SMALL
 #define RA_OPT_SMALL 0
 #endif
@@ -68,7 +68,7 @@ template <int ... I> constexpr ilist_t<I ...> ilist {};
 
 
 // ---------------------
-// tuple library
+// Tuple library.
 // ---------------------
 
 namespace mp {
@@ -250,11 +250,54 @@ template <class C> struct permsign<C, nil> { constexpr static int value = 0; };
 template <class R> struct permsign<nil, R> { constexpr static int value = 0; };
 template <class C, class O> struct permsign { constexpr static int value = permsignfound<index<C, first<O>>::value, C, O>; };
 
+template <class P, class Plist>
+struct findcomb
+{
+    template <class A> using match = ic_t<0 != permsign<P, A>::value>;
+    using ii = indexif<Plist, match>;
+    constexpr static int where = ii::value;
+    constexpr static int sign = (where>=0) ? permsign<P, typename ii::type>::value : 0;
+};
+
+// Combination aC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, aC] has the sign of [0, 1, ... Dim-1].
+template <class C, int D>
+struct anticomb
+{
+    using EC = complement<C, D>;
+    static_assert(2<=len<EC>, "can't correct this complement");
+    constexpr static int sign = permsign<append<C, EC>, iota<D>>::value;
+// produce permutation of opposite sign if sign<0.
+    using type = cons<ref<EC, (sign<0) ? 1 : 0>, cons<ref<EC, (sign<0) ? 0 : 1>, drop<EC, 2>>>;
+};
+
+template <class C, int D> struct mapanticomb;
+template <int D, class ... C>
+struct mapanticomb<std::tuple<C ...>, D>
+{
+    using type = std::tuple<typename anticomb<C, D>::type ...>;
+};
+
+template <int D, int O>
+struct choose_
+{
+    static_assert(D>=O, "Bad dimension or form order.");
+    using type = combs<iota<D>, O>;
+};
+
+template <int D, int O> using choose = typename choose_<D, O>::type;
+
+template <int D, int O> requires ((D>1) && (2*O>D))
+struct choose_<D, O>
+{
+    static_assert(D>=O, "Bad dimension or form order.");
+    using type = typename mapanticomb<choose<D, D-O>, D>::type;
+};
+
 } // namespace ra::mp
 
 
 // ---------------------
-// ra:: proper
+// Properly ra::.
 // ---------------------
 
 constexpr int VERSION = 31;
@@ -274,8 +317,8 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 constexpr bool any(bool const x) { return x; } // extended in ra.hh
 constexpr bool every(bool const x) { return x; }
 
-// adaptor that interposes construct() calls to convert value initialization into default initialization.
-// default storage for Big - see https://stackoverflow.com/a/21028912.
+// adaptor that inserts construct() calls to convert value init into default init. See https://stackoverflow.com/a/21028912
+// default storage for Big.
 template <class T, class A=std::allocator<T>>
 struct default_init_allocator: public A
 {
@@ -322,15 +365,10 @@ concept Slice = requires (A a)
     { a.dimv };
 };
 
-
-// --------------
-// type classification and properties
-// --------------
-
 // FIXME c++26 p2841 ?
 #define RA_IS_DEF(NAME, PRED)                                           \
-    template <class A> constexpr bool JOIN(NAME, _def) = requires { requires PRED; }; \
-    template <class A> concept NAME = JOIN(NAME, _def)<std::decay_t< A >>;
+    template <class A> constexpr bool RA_JOIN(NAME, _def) = requires { requires PRED; }; \
+    template <class A> concept NAME = RA_JOIN(NAME, _def)<std::decay_t< A >>;
 
 RA_IS_DEF(is_scalar, !std::is_pointer_v<A> && std::is_scalar_v<A> || is_constant<A>)
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
@@ -450,7 +488,7 @@ shape(V const & v)
 
 
 // --------------
-// format/print
+// Format and print, forwards (see ply.hh).
 // --------------
 
 enum shape_t { defaultshape, withshape, noshape };

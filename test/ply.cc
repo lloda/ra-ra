@@ -37,7 +37,7 @@ int main()
                 std::fill(c.begin(), c.end(), 0);                       \
                 plier(ra::map_([](real & c, real a, real b) { c = a-b; }, \
                                c.iter(), a.iter(), ra::scalar(3.0)));   \
-                tr.info(STRINGIZE(plier)).test(std::equal(check, check+6, c.begin()));  \
+                tr.info(RA_STRINGIZE(plier)).test(std::equal(check, check+6, c.begin()));  \
             }
             TEST(ply_ravel);
             TEST(ply_fixed);
@@ -110,11 +110,11 @@ int main()
 #define TEST(plier, id)                                                 \
             [&tr](auto && a, bool used)                                 \
             {                                                           \
-                tr.info(STRINGIZE(plier) "/" id)                        \
-                    .test((used || (a.begin()==a.end() && a.size()==0)) && STRINGIZE(plier) id " before"); \
+                tr.info(RA_STRINGIZE(plier) "/" id)                        \
+                    .test((used || (a.begin()==a.end() && a.size()==0)) && RA_STRINGIZE(plier) id " before"); \
                 Never check;                                            \
                 plier(ra::map_([&check](int a) { check = a; }, a.iter())); \
-                tr.info(STRINGIZE(plier) id " after")                   \
+                tr.info(RA_STRINGIZE(plier) id " after")                   \
                     .test(check.used()==used);                          \
             }
 
@@ -136,11 +136,11 @@ int main()
 #define TEST(plier, id)                                                 \
             [&tr](auto && a, bool used)                                 \
             {                                                           \
-                cout << STRINGIZE(plier) "/" id << endl;                \
-                tr.test((used || (a.len(0)==0 || a.len(1)==0)) && STRINGIZE(plier) id " before"); \
+                cout << RA_STRINGIZE(plier) "/" id << endl;                \
+                tr.test((used || (a.len(0)==0 || a.len(1)==0)) && RA_STRINGIZE(plier) id " before"); \
                 Never check;                                            \
                 plier(ra::map_([&check](int a) { check = a; }, a));     \
-                tr.test(check.used()==used && STRINGIZE(plier) id " after"); \
+                tr.test(check.used()==used && RA_STRINGIZE(plier) id " after"); \
             }
 #define TEST2(plier)                                                    \
             TEST(plier, "10")(ra::Unique<int, 1>({ 0 }, ra::none)+ra::Small<int, 0>(), false); \
@@ -283,11 +283,11 @@ int main()
             std::fill(c.begin(), c.end(), 0);                           \
             plier(map_([&](real & c, real a, real b) { c=a-b; },        \
                        c.iter(), a.iter(), b.iter()));                  \
-            tr.info(STRINGIZE(plier) " a-b").test(std::equal(check, check+24, c.begin())); \
+            tr.info(RA_STRINGIZE(plier) " a-b").test(std::equal(check, check+24, c.begin())); \
             std::fill(c.begin(), c.end(), 0);                           \
             plier(map_([](real & c, real a, real b) { c=b-a; },         \
                        c.iter(), b.iter(), a.iter()));                  \
-            tr.info(STRINGIZE(plier) " b-a").test(std::equal(check, check+24, c.begin()));
+            tr.info(RA_STRINGIZE(plier) " b-a").test(std::equal(check, check+24, c.begin()));
             TEST(ply_ravel);
             TEST(ply_fixed);
 #undef TEST
@@ -299,14 +299,14 @@ int main()
         ra::Unique<int, 1> b({3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
 #define TEST(plier)                                                     \
-        tr.section(STRINGIZE(plier));                                   \
+        tr.section(RA_STRINGIZE(plier));                                   \
         {                                                               \
             std::fill(b.begin(), b.end(), 0);                           \
             real check[3] = { 2, 3, 1 };                                \
             plier(map_([&a](int & b, int i) { b = a(i); }, b.iter(), ra::ptr(std::array {1, 2, 0}))); \
-            tr.info(STRINGIZE(plier) " std::array").test(std::equal(check, check+3, b.begin())); \
+            tr.info(RA_STRINGIZE(plier) " std::array").test(std::equal(check, check+3, b.begin())); \
             plier(map_([&a](int & b, int i) { b = a(i); }, b.iter(), ra::ptr(std::vector {1, 2, 0}))); \
-            tr.info(STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
+            tr.info(RA_STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
         }
         TEST(ply_ravel);
         TEST(ply_fixed);
@@ -331,7 +331,7 @@ int main()
             real c = 99;                                        \
             plier(ra::map_([&c](real a, real b) { c = 77; },    \
                            a.iter(), b.iter()));                \
-            tr.info(STRINGIZE(plier)).test(c==99);              \
+            tr.info(RA_STRINGIZE(plier)).test(c==99);              \
         }
         TEST(ply_ravel);
         TEST(ply_fixed);

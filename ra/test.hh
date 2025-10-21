@@ -179,7 +179,7 @@ struct TestRecorder
     NAME(auto && ref, auto && a, RA_CURRENT_LOC)                        \
     {                                                                   \
         return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b){ return every(a OP b); }, \
-                         "should be " STRINGIZE(OP), loc);              \
+                         "should be " RA_STRINGIZE(OP), loc);              \
     }
     RA_TEST_COMP(test_eq, ==)
     RA_TEST_COMP(test_lt, <)

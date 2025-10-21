@@ -45,7 +45,7 @@ ply_ravel(A && a, Early && early = Nop {})
 // find outermost compact dim.
     rank_t * ocd = order;
     dim_t ss = a.len(*ocd);
-#pragma GCC diagnostic push // gcc 14.2 with RA_CHECK=0 and -fno-sanitize=all
+#pragma GCC diagnostic push // gcc 14.2 RA_CHECK=0 --no-sanitize
 #pragma GCC diagnostic warning "-Warray-bounds"
     for (--rank, ++ocd; rank>0 && a.keep(ss, order[0], *ocd); --rank, ++ocd) {
         ss *= a.len(*ocd);
@@ -180,7 +180,7 @@ constexpr decltype(auto) early(Iterator auto && a, auto && def) { return ply(a, 
 
 
 // --------------------
-// input/'output' iterator adapter. FIXME maybe random for rank 1?
+// Input/'output' iterator adapter. FIXME maybe random for rank 1?
 // --------------------
 
 template <Iterator A>
@@ -248,7 +248,7 @@ constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { stati
 
 
 // ---------------------------
-// i/o
+// I/O
 // ---------------------------
 
 // fmt/ostream.h or https://stackoverflow.com/a/75738462
@@ -403,7 +403,7 @@ namespace ra {
 
 
 // ---------------------
-// replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
+// Replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
 // ---------------------
 
 template <>
@@ -455,7 +455,7 @@ shape(auto const & v, auto && e)
 
 
 // --------------------
-// outer product / slicing
+// Slicing and outer product.
 // --------------------
 
 template <int n> struct dots_t { constexpr static int N=n; static_assert(n>=0 || UNB==n); };
@@ -495,7 +495,7 @@ template <class A> concept is_iota = requires (A a) { []<class I, class N, class
 template <class A> concept is_iota_static = requires (A a) { []<class I, class Dimv>(ViewSmall<Seq<I>, Dimv> const &){}(a); };
 template <class A> concept is_iota_dynamic = requires (A a) { []<class I, rank_t RANK>(ViewBig<Seq<I>, RANK> const &){}(a); };
 template <class A> concept is_iota_any = (is_iota<A> || is_iota_dynamic<A> || is_iota_static<A>);
-template <class I> concept is_scalar_index = is_ra_0<I>;
+template <class A> concept is_scalar_index = is_ra_0<A>;
 
 // beaten, whole or piecewise. Presize bv/ds not to need push_back
 

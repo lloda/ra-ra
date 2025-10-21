@@ -32,7 +32,7 @@
             assert(cond /* FIXME show args */);                         \
         } else {                                                        \
             if (!(cond)) [[unlikely]] {                                 \
-                ra::print(std::cerr, "*** ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__, " ***") << std::endl; \
+                ra::print(std::cerr, "*** ra::", std::source_location::current(), " (" RA_STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__, " ***") << std::endl; \
                 std::abort();                                           \
             }                                                           \
         }                                                               \
@@ -49,17 +49,15 @@ namespace ra {
 
 #define RA_ASSIGNOPS_LINE(OP)                                           \
     for_each([](auto && y, auto && x){ /* [ra5] */ RA_FW(y) OP RA_FW(x); }, *this, RA_FW(x))
-#define RA_ASSIGNOPS(OP)                                                \
+#define RA_ASSIGNOPS_DEFAULT(OP)                                        \
     constexpr void operator OP(auto && x) { RA_ASSIGNOPS_LINE(OP); }
-#define RA_ASSIGNOPS_DEFAULT_SET                \
-    FOR_EACH(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 // Restate for expression classes since a template doesn't replace the copy assignment op.
 #define RA_ASSIGNOPS_ITER(TYPE)                                         \
     constexpr TYPE & operator=(TYPE && x) { RA_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE & operator=(TYPE const & x) { RA_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE(TYPE && x) = default;                                \
     constexpr TYPE(TYPE const & x) = default;                           \
-    RA_ASSIGNOPS_DEFAULT_SET
+    RA_FE(RA_ASSIGNOPS_DEFAULT, =, *=, +=, -=, /=)
 
 // Contextual len, a unique object. See wlen in arrays.hh
 
@@ -141,7 +139,7 @@ template <class C>
 struct Scalar final
 {
     C c;
-    RA_ASSIGNOPS_DEFAULT_SET
+    RA_FE(RA_ASSIGNOPS_DEFAULT, =, *=, +=, -=, /=)
     consteval static rank_t rank() { return 0; }
     constexpr static dim_t len_s(int k) { std::abort(); } // FIXME consteval cf Match::check_s
     constexpr static dim_t len(int k) { std::abort(); } // FIXME idem
@@ -158,7 +156,7 @@ struct Scalar final
 template <class C> constexpr auto
 scalar(C && c) { return Scalar<C> { RA_FW(c) }; }
 
-// making iterators (start)
+// Making iterators (start).
 
 constexpr auto start(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
 
@@ -205,7 +203,7 @@ to_scalar(auto && e)
 
 
 // --------------------
-// view iterators
+// View iterators.
 // --------------------
 
 constexpr auto
@@ -427,7 +425,7 @@ start(is_builtin_array auto && a)
 
 
 // ---------------------------
-// reframe and rank conjunction.
+// Reframe and rank conjunction.
 // ---------------------------
 
 // Reframe is transpose for general expressions. Like in transpose, give destination axis for each original axis.
@@ -536,7 +534,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 
 
 // --------------------
-// prefix match
+// Prefix match.
 // --------------------
 
 // finite before ANY before UNB, assumes neither is MIS.

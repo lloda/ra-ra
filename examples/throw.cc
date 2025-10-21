@@ -25,7 +25,7 @@ struct ra_error: public std::exception
 };
 
 #define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) [[unlikely]] throw ra_error("ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
+    { if (!( cond )) [[unlikely]] throw ra_error("ra::", std::source_location::current(), " (" RA_STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
 
 // The override will be in effect for the rest of ra::.
 

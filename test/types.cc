@@ -61,7 +61,7 @@ test_predicates(char const * type, TestRecorder & tr,
 struct Unreg { int x; };
 
 // prefer decltype(declval(...)) to https://stackoverflow.com/a/13842784 the latter drops const
-#define TESTPRED(A, ...) test_predicates <A> (STRINGIZE(A), tr __VA_OPT__(,) __VA_ARGS__)
+#define TESTPRED(A, ...) test_predicates <A> (RA_STRINGIZE(A), tr __VA_OPT__(,) __VA_ARGS__)
 
 int main()
 {

@@ -72,9 +72,9 @@ nested_wrank_demo(V && v, A && a, B && b)
             auto ewv = ra::map_(v, a.iter(), b.iter());
             cout << "shape(ewv): " << fmt(ra::nstyle, shape(ewv)) << endl;
 #define TEST(plier)                                                     \
-            cout << "\n\nusing " STRINGIZE(plier) " (ewv &):\n";        \
+            cout << "\n\nusing " RA_STRINGIZE(plier) " (ewv &):\n";        \
             ra::plier(ewv);                                             \
-            cout << "\n\nusing " STRINGIZE(plier) " ply (ewv &&):\n";   \
+            cout << "\n\nusing " RA_STRINGIZE(plier) " ply (ewv &&):\n";   \
             ra::plier(ra::map_(v, a.iter(), b.iter()));
             TEST(ply_ravel);
             TEST(ply_fixed);
@@ -300,7 +300,7 @@ int main()
         ra::Big<real, 2> A({nx, ny}, 1.);
         ra::Big<real, 2> Anext({nx, ny}, 0.);
         auto Astencil = stencil(A, 1, 1);
-#define BENCH(ref, op) bench(A, Anext, Astencil, ref, STRINGIZE(op), op);
+#define BENCH(ref, op) bench(A, Anext, Astencil, ref, RA_STRINGIZE(op), op);
         BENCH(A, f_raw);
         Aref = ra::Big<real, 2>(A);
         BENCH(Aref, f_sumprod);

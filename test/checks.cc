@@ -27,7 +27,7 @@ struct ra_error: public std::exception
 };
 
 #define RA_ASSERT( cond, ... )                                          \
-    { if (!( cond )) [[unlikely]] throw ra_error("ra::", std::source_location::current(), " (" STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
+    { if (!( cond )) [[unlikely]] throw ra_error("ra::", std::source_location::current(), " (" RA_STRINGIZE(cond) ") " __VA_OPT__(,) __VA_ARGS__); }
 // -------------------------------------
 
 #include "ra/test.hh"
@@ -301,7 +301,7 @@ int main()
             error = 1;
             s = e.s;
         }
-        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
+        tr.info("caught error L" RA_STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
 
 
@@ -325,7 +325,7 @@ int main()
             error = 1;
             s = e.s;
         }
-        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
+        tr.info("caught error L" RA_STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
     tr.section("frame matching should-be-error cases - dynamic rank. See frame-old.cc");
     {
@@ -344,7 +344,7 @@ int main()
             error = 1;
             s = e.s;
         }
-        tr.info("caught error L" STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
+        tr.info("caught error L" RA_STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
 #undef MAP
 
