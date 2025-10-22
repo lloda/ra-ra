@@ -13,7 +13,6 @@
 #include <iostream>
 #include "ra/test.hh"
 #include "mpdebug.hh"
-#include <stdfloat>
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 using ra::ilist_t, ra::mp::nil;
@@ -240,6 +239,11 @@ int main()
         static_assert(std::random_access_iterator<ra::Seq<ra::dim_t>>);
         cout << ra::ptr(ra::Seq {0}, 10) << endl;
         cout << ra::ptr(ra::Seq {3.}, 8) << endl;
+    }
+    tr.section("mixed float128/double ops");
+    {
+        tr.test_eq(9., real(std::complex<std::float128_t>(3.) * 3.));
+        tr.test_eq(9., real(std::complex<double>(3.) * std::float128_t(3.)));
     }
     return tr.summary();
 }

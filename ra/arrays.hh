@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Views and containers
+// ra-ra - Views and containers.
 
 // (c) Daniel Llorens - 2013-2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -12,11 +12,6 @@
 #include <memory>
 
 namespace ra {
-
-
-// ---------------------
-// Small view and container.
-// ---------------------
 
 constexpr bool
 is_c_order_dimv(auto const & dimv, bool step1=true)
@@ -38,6 +33,11 @@ is_c_order_dimv(auto const & dimv, bool step1=true)
 
 constexpr bool
 is_c_order(auto const & v, bool step1=true) { return is_c_order_dimv(v.dimv, step1); }
+
+
+// ---------------------
+// Small view and container.
+// ---------------------
 
 // cf braces_def for big views.
 
@@ -84,7 +84,6 @@ struct ViewSmall
 // exclude T and sub constructors by making T & sub noarg
     constexpr static bool have_braces = std::is_reference_v<decltype(*cp)>;
     using T = std::conditional_t<have_braces, std::remove_reference_t<decltype(*cp)>, noarg>;
-    using sub = typename nested_arg<T, Dimv>::sub;
 // row-major ravel braces
     constexpr ViewSmall const &
     operator=(T (&&x)[have_braces ? size() : 0]) const
@@ -92,6 +91,7 @@ struct ViewSmall
     {
         std::ranges::copy(std::ranges::subrange(x), begin()); return *this;
     }
+    using sub = typename nested_arg<T, Dimv>::sub;
 // nested braces
     constexpr ViewSmall const &
     operator=(sub (&&x)[have_braces ? (rank()>0 ? len(0) : 0) : 0]) const
@@ -265,7 +265,6 @@ braces_shape(braces<T, r> const & l)
 template <class P, rank_t RANK>
 struct ViewBig
 {
-    using T = std::remove_reference_t<decltype(*std::declval<P>())>;
     using Dimv = std::conditional_t<ANY==RANK, vector_default_init<Dim>, Small<Dim, ANY==RANK ? 0 : RANK>>;
     [[no_unique_address]] Dimv dimv;
     P cp;
@@ -293,6 +292,7 @@ struct ViewBig
         }
     }
     constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(start(s), cp_) {}
+    using T = std::remove_reference_t<decltype(*std::declval<P>())>;
 // row-major ravel braces
     constexpr ViewBig const &
     operator=(std::initializer_list<T> const x) const requires (1!=RANK)

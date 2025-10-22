@@ -54,17 +54,17 @@ int main()
         tr.info(msg).test(yes);
     }
 
-    tr.section("choose_len");
+    tr.section("common_len");
     {
-        using ra::MIS, ra::UNB, ra::ANY, ra::choose_len;
-        tr.test_eq(ANY, choose_len(UNB, ANY));
-        tr.test_eq(ANY, choose_len(ANY, UNB));
-        tr.test_eq(0,   choose_len(0, UNB));
-        tr.test_eq(0,   choose_len(UNB, 0));
-        tr.test_eq(0,   choose_len(0, ANY));
-        tr.test_eq(0,   choose_len(ANY, 0));
-        tr.test_eq(MIS, choose_len(1, 0));
-        tr.test_eq(0,   choose_len(0, 0));
+        using ra::MIS, ra::UNB, ra::ANY, ra::common_len;
+        tr.test_eq(ANY, common_len(UNB, ANY));
+        tr.test_eq(ANY, common_len(ANY, UNB));
+        tr.test_eq(0,   common_len(0, UNB));
+        tr.test_eq(0,   common_len(UNB, 0));
+        tr.test_eq(0,   common_len(0, ANY));
+        tr.test_eq(0,   common_len(ANY, 0));
+        tr.test_eq(MIS, common_len(1, 0));
+        tr.test_eq(0,   common_len(0, 0));
     }
 
 

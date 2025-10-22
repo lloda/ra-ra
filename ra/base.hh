@@ -303,7 +303,7 @@ struct choose_<D, O>
 constexpr int VERSION = 31;
 constexpr int ANY = -1944444444; // only static, meaning tbd at runtime
 constexpr int UNB = -1988888888; // unbounded, eg dead axes
-constexpr int MIS = -1922222222; // mismatch, only from choose_len
+constexpr int MIS = -1922222222; // mismatch, only from common_len
 
 using rank_t = int;
 using dim_t = std::ptrdiff_t;

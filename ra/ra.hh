@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Operator overloads for expression templates. Root header.
+// ra-ra - Overloads for expression templates, root header.
 
 // (c) Daniel Llorens - 2014-2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -32,6 +32,22 @@ template <class T> constexpr void cast(ra::noarg);
 // Scalar overloads.
 // ---------------------------
 
+#if defined(__STDCPP_FLOAT128_T__)
+    #include <stdfloat>
+#define RA_FLOATS float, double, std::float128_t
+#define RA_OP_QUAD_DOUBLE(OP, R, C)                                     \
+    constexpr C operator OP(C const & x, double y) { return x OP R(y); } \
+    constexpr C operator OP(double x, C const & y) { return R(x) OP y; } \
+    constexpr C operator OP(C const & x, std::complex<double> const & y) { return x OP C(y); } \
+    constexpr C operator OP(std::complex<double> const & x, C const & y) { return C(x) OP y; }
+#define RA_QUAD_DOUBLE(OP) RA_OP_QUAD_DOUBLE(OP, std::float128_t, std::complex<std::float128_t>)
+RA_FE(RA_QUAD_DOUBLE, +, -, /, *)
+#undef RA_QUAD_DOUBLE_OP
+#undef RA_OP_QUAD_DOUBLE_OP
+#else
+    #define RA_FLOATS float, double
+#endif
+
 // abs() needs no qualifying for ra:: types (ADL), shouldn't on pods either. FIXME let user decide?
 // std::max/min are special, see RA_NAME.
 using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std::swap,
@@ -45,15 +61,10 @@ using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std
         return std::complex<R>(fma(a.real(), b.real(), fma(-a.imag(), b.imag(), c.real())), \
                                fma(a.real(), b.imag(), fma(a.imag(), b.real(), c.imag()))); \
     }                                                                   \
-    constexpr R                                                         \
-    fma_sqrm(std::complex<R> const & a, R const & c)                    \
-    {                                                                   \
-        return fma(a.real(), a.real(), fma(a.imag(), a.imag(), c));     \
-    }                                                                   \
     constexpr bool isfinite(std::complex<R> z) { return isfinite(z.real()) && isfinite(z.imag()); } \
-    constexpr bool isnan(std::complex<R> z)    { return isnan(z.real()) || isnan(z.imag()); } \
-    constexpr bool isinf(std::complex<R> z)    { return (isinf(z.real()) || isinf(z.imag())) && !isnan(z); }
-RA_FE(RA_FLOAT, float, double)
+    constexpr bool isnan(std::complex<R> z) { return isnan(z.real()) || isnan(z.imag()); } \
+    constexpr bool isinf(std::complex<R> z) { return (isinf(z.real()) || isinf(z.imag())) && !isnan(z); }
+RA_FE(RA_FLOAT, RA_FLOATS)
 #undef RA_FLOAT
 
 namespace ra {
@@ -66,51 +77,47 @@ template <class T> requires (ra_is_real<T>) constexpr T amax(T const & x) { retu
 template <class T> requires (ra_is_real<T>) constexpr T amin(T const & x) { return x; }
 template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x)  { return x*x; }
 
-#define RA_FOR_TYPES(T)                                                 \
-    constexpr T arg(T x)                { return T(0); }                \
-    constexpr T mul_conj(T x, T y)      { return x*y; }                 \
-    constexpr T sqrm(T x)               { return sqr(x); }              \
-    constexpr T sqrm(T x, T y)          { return sqr(x-y); }            \
-    constexpr T dot(T x, T y)           { return x*y; }                 \
-    constexpr T fma_conj(T a, T b, T c) { return fma(a, b, c); }        \
-    constexpr T norm2(T x)              { return std::abs(x); }         \
-    constexpr T norm2(T x, T y)         { return std::abs(x-y); }       \
-    constexpr T rel_error(T a, T b)     { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
-    constexpr T const & real_part(T const & x) { return x; }            \
-    constexpr T & real_part(T & x)      { return x; }                   \
-    constexpr T imag_part(T x)          { return T(0); }
-RA_FE(RA_FOR_TYPES, float, double)
-#undef RA_FOR_TYPES
-
-// FIXME few still inline should eventually be constexpr.
 #define RA_FOR_TYPES(R, C)                                              \
-    inline R arg(C x)                  { return std::arg(x); }          \
-    constexpr C sqr(C x)               { return x*x; }                  \
-    constexpr C dot(C x, C y)          { return x*y; }                  \
-    constexpr C xi(R x)                { return C(0, x); }              \
-    constexpr C xi(C z)                { return C(-z.imag(), z.real()); } \
-    constexpr R real_part(C const & z) { return z.real(); }             \
-    constexpr R imag_part(C const & z) { return z.imag(); }             \
-    constexpr R & real_part(C & z)     { return std::bit_cast<R *>(&z)[0]; } \
-    constexpr R & imag_part(C & z)     { return std::bit_cast<R *>(&z)[1]; } \
-    constexpr R sqrm(C x)              { return sqr(x.real())+sqr(x.imag()); } \
-    constexpr R sqrm(C x, C y)         { return sqr(x.real()-y.real())+sqr(x.imag()-y.imag()); } \
-    constexpr R norm2(C x)             { return hypot(x.real(), x.imag()); } \
-    constexpr R norm2(C x, C y)        { return sqrt(sqrm(x, y)); }     \
-    constexpr R rel_error(C a, C b)    { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
-    constexpr C fma_conj(C const & a, C const & b, C const & c)         \
-    { /* conj(a) * b + c */                                             \
-        return C(fma(a.real(), b.real(), fma(a.imag(), b.imag(), c.real())), \
-                 fma(a.real(), b.imag(), fma(-a.imag(), b.real(), c.imag()))); \
-    }                                                                   \
+    constexpr R arg(R x) { return R(0); }                               \
+    inline /* FIXME constexpr */ R arg(C x) { return std::arg(x); }     \
+    constexpr C sqr(C x) { return x*x; }                                \
+    constexpr R sqrm(R x) { return sqr(x); }                            \
+    constexpr R sqrm(R x, R y) { return sqr(x-y); }                     \
+    constexpr R sqrm(C x) { return sqr(x.real())+sqr(x.imag()); }       \
+    constexpr R sqrm(C x, C y) { return sqr(x.real()-y.real())+sqr(x.imag()-y.imag()); } \
+    constexpr R norm2(R x) { return std::abs(x); }                      \
+    constexpr R norm2(R x, R y) { return std::abs(x-y); }               \
+    constexpr R norm2(C x) { return sqrt(sqrm(x)); }                    \
+    constexpr R norm2(C x, C y) { return sqrt(sqrm(x, y)); }            \
+    constexpr R dot(R x, R y) { return x*y; }                           \
+    constexpr C dot(C x, C y) { return x*y; }                           \
+    constexpr R mul_conj(R x, R y) { return x*y; } /* conj(a) * b */    \
     constexpr C mul_conj(C const & a, C const & b)                      \
-    { /* conj(a) * b */                                                 \
-        return C(a.real()*b.real()+a.imag()*b.imag(),                   \
-                 a.real()*b.imag()-a.imag()*b.real());                  \
-    }
-RA_FOR_TYPES(float, std::complex<float>)
-RA_FOR_TYPES(double, std::complex<double>)
+    {                                                                   \
+        return C(a.real()*b.real()+a.imag()*b.imag(),  a.real()*b.imag()-a.imag()*b.real()); \
+    }                                                                   \
+    constexpr R fma_conj(R a, R b, R c) { return fma(a, b, c); } /* conj(a) * b + c */ \
+    constexpr C fma_conj(C const & a, C const & b, C const & c)         \
+    {                                                                   \
+        return C(fma(a.real(), b.real(), fma(a.imag(), b.imag(), c.real())), fma(a.real(), b.imag(), fma(-a.imag(), b.real(), c.imag()))); \
+    }                                                                   \
+    constexpr R fma_sqrm(C const & a, R const & c) { return fma(a.real(), a.real(), fma(a.imag(), a.imag(), c)); } \
+    constexpr R rel_error(R a, R b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
+    constexpr R rel_error(C a, C b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
+    constexpr R const & real_part(R const & x) { return x; }            \
+    constexpr R & real_part(R & x) { return x; }                        \
+    constexpr R real_part(C const & z) { return z.real(); }             \
+    constexpr R & real_part(C & z) { return std::bit_cast<R *>(&z)[0]; } \
+    constexpr R imag_part(R x) { return R(0); }                         \
+    constexpr R imag_part(C const & z) { return z.imag(); }             \
+    constexpr R & imag_part(C & z) { return std::bit_cast<R *>(&z)[1]; } \
+    constexpr C xi(R x) { return C(0, x); }                             \
+    constexpr C xi(C z) { return C(-z.imag(), z.real()); }
+#define RA_FOR_FLOAT(R) RA_FOR_TYPES(R, std::complex<R>)
+RA_FE(RA_FOR_FLOAT, RA_FLOATS)
+#undef RA_FOR_FLOAT
 #undef RA_FOR_TYPES
+#undef RA_FLOATS
 
 template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 
@@ -182,34 +189,30 @@ RA_FE(RA_OPT_SMALL_OP_TYPES, 2, 4, 8)
 // --------------------------------
 
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit scalar conversion is also needed, and e.g. ra::View<complex, 0> * complex would fail.
-#define RA_BINOP(OP, OPNAME)                                           \
+#define RA_BINOP(OP, OPNAME)                                            \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
         operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FW(a), RA_FW(b))); } \
     template <class A, class B> requires (toreduce<A, B>) constexpr auto \
         operator OP(A && a, B && b) { return VAL(RA_FW(a)) OP VAL(RA_FW(b)); }
-
-RA_BINOP(+, std::plus<>)     RA_BINOP(-, std::minus<>)      RA_BINOP(*, std::multiplies<>)
-RA_BINOP(/, std::divides<>)  RA_BINOP(==, std::equal_to<>)  RA_BINOP(<=, std::less_equal<>)
-RA_BINOP(<, std::less<>)     RA_BINOP(>, std::greater<>)    RA_BINOP(>=, std::greater_equal<>)
-RA_BINOP(|, std::bit_or<>)   RA_BINOP(&, std::bit_and<>)    RA_BINOP(!=, std::not_equal_to<>)
-RA_BINOP(^, std::bit_xor<>)  RA_BINOP(%, std::modulus<>)    RA_BINOP(<=>, std::compare_three_way)
+RA_BINOP(+, std::plus<>)      RA_BINOP(-, std::minus<>)       RA_BINOP(*, std::multiplies<>)
+RA_BINOP(/, std::divides<>)   RA_BINOP(==, std::equal_to<>)   RA_BINOP(<=, std::less_equal<>)
+RA_BINOP(<, std::less<>)      RA_BINOP(>, std::greater<>)     RA_BINOP(>=, std::greater_equal<>)
+RA_BINOP(|, std::bit_or<>)    RA_BINOP(&, std::bit_and<>)     RA_BINOP(!=, std::not_equal_to<>)
+RA_BINOP(^, std::bit_xor<>)   RA_BINOP(%, std::modulus<>)     RA_BINOP(<=>, std::compare_three_way)
 #undef RA_BINOP
 
-// FIXME address sanitizer complains in bench-optimize.cc if we use std::identity. Maybe false positive
+// FIXME sanitizer complains in bench-optimize.cc with std::identity. Maybe false positive
 struct unaryplus
 {
     template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FW(t); }
 };
 
-#define RA_UNOP(OP, OPNAME)                                            \
+#define RA_UNOP(OP, OPNAME)                                             \
     template <class A> requires (tomap<A>) constexpr auto               \
         operator OP(A && a) { return RA_OPT(map(OPNAME(), RA_FW(a))); } \
     template <class A> requires (toreduce<A>) constexpr auto            \
         operator OP(A && a) { return OP VAL(RA_FW(a)); }
-
-RA_UNOP(+, unaryplus)
-RA_UNOP(-, std::negate<>)
-RA_UNOP(!, std::logical_not<>)
+RA_UNOP(+, unaryplus)         RA_UNOP(-, std::negate<>)       RA_UNOP(!, std::logical_not<>)
 #undef RA_UNOP
 
 // if OP(a) isn't found in ra::, deduction rank(0) -> scalar doesn't work. TODO Cf useret.cc, reexported.cc
@@ -287,29 +290,25 @@ at_view(A && a, auto && i)
 // --------------------------------
 
 template <class T, class F> requires (toreduce<T, F>)
-constexpr decltype(auto)
-where(bool const w, T && t, F && f) { return w ? VAL(t) : VAL(f); }
+constexpr decltype(auto) where(bool const w, T && t, F && f) { return w ? VAL(t) : VAL(f); }
 
 template <class W, class T, class F> requires (tomap<W, T, F>)
-constexpr auto
-where(W && w, T && t, F && f) { return pick(cast<bool>(RA_FW(w)), RA_FW(f), RA_FW(t)); }
+constexpr auto where(W && w, T && t, F && f) { return pick(cast<bool>(RA_FW(w)), RA_FW(f), RA_FW(t)); }
 
 // catch all for non-ra types.
 template <class T, class F> requires (!(tomap<T, F>) && !(toreduce<T, F>))
-constexpr decltype(auto)
-where(bool const w, T && t, F && f) { return w ? t : f; }
+constexpr decltype(auto) where(bool const w, T && t, F && f) { return w ? t : f; }
 
 template <class A, class B> requires (tomap<A, B>)
-constexpr auto
-operator &&(A && a, B && b) { return where(RA_FW(a), cast<bool>(RA_FW(b)), false); }
+constexpr auto operator &&(A && a, B && b) { return where(RA_FW(a), cast<bool>(RA_FW(b)), false); }
 
 template <class A, class B> requires (tomap<A, B>)
-constexpr auto
-operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<bool>(RA_FW(b))); }
+constexpr auto operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<bool>(RA_FW(b))); }
 
 #define RA_BINOP_SHORT(OP)                                              \
     template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto operator OP(A && a, B && b) { return VAL(a) OP VAL(b);  }
+
 RA_FE(RA_BINOP_SHORT, &&, ||)
 #undef RA_BINOP_SHORT
 
@@ -669,11 +668,11 @@ perp(V const & v, U const & n)
 
 
 // --------------------
-// Dual numbers for automatic differentiation (this section depends only on base.hh).
+// Dual numbers for automatic differentiation. This section depends only on base.hh.
 // --------------------
 
 // See GriewankWalther2008, VanderBergen2012, Berland2006
-// From Taylor expansion of f(a), f(a, b) (FIXME) ...
+// From Taylor expansion of f(a), f(a, b) ... FIXME
 // f(a+εa') = f(a)+εa'f_a(a)
 // f(a+εa', b+εb') = f(a, b)+ε[a'f_a(a, b) b'f_b(a, b)]
 
@@ -703,97 +702,38 @@ template <class A> concept is_dual = requires (A & a) { []<class T>(Dual<T> &){}
 
 constexpr auto dual(is_dual auto const & r) { return r; }
 template <class R> constexpr auto dual(R const & r) { return Dual<R> { r, 0. }; }
+template <class R, class D> constexpr auto dual(R const & r, D const & d) { return Dual<std::common_type_t<R, D>> { r, d }; }
 
-template <class R, class D>
-constexpr auto dual(R const & r, D const & d)
-{ return Dual<std::common_type_t<R, D>> { r, d }; }
+constexpr auto operator+(is_dual auto const & a) { return a; }
+constexpr auto operator+(is_dual auto const & a, is_dual auto const & b) { return dual(a.re+b.re, a.du+b.du); }
+constexpr auto operator+(is_dual auto const & a, auto const & b) { return dual(a.re+b, a.du); }
+constexpr auto operator+(auto const & a, is_dual auto const & b) { return dual(a+b.re, b.du); }
+constexpr auto operator-(is_dual auto const & a) { return dual(-a.re, -a.du); }
+constexpr auto operator-(is_dual auto const & a, is_dual auto const & b) { return dual(a.re-b.re, a.du-b.du); }
+constexpr auto operator-(is_dual auto const & a, auto const & b) { return dual(a.re-b, a.du); }
+constexpr auto operator-(auto const & a, is_dual auto const & b) { return dual(a-b.re, -b.du); }
+constexpr auto operator*(is_dual auto const & a, is_dual auto const & b) { return dual(a.re*b.re, a.re*b.du + a.du*b.re); }
+constexpr auto operator*(is_dual auto const & a, auto const & b) { return dual(a.re*b, a.du*b); }
+constexpr auto operator*(auto const & a, is_dual auto const & b) { return dual(a*b.re, a*b.du); }
+constexpr auto operator/(is_dual auto const & a, is_dual auto const & b) { return a*inv(b); }
+constexpr auto operator/(is_dual auto const & a, auto const & b) { return a*inv(dual(b)); }
+constexpr auto operator/(auto const & a, is_dual auto const & b) { return dual(a)*inv(b); }
 
-constexpr auto operator*(is_dual auto const & a, is_dual auto const & b)
-{ return dual(a.re*b.re, a.re*b.du + a.du*b.re); }
-
-constexpr auto operator*(auto const & a, is_dual auto const & b)
-{ return dual(a*b.re, a*b.du); }
-
-constexpr auto operator*(is_dual auto const & a, auto const & b)
-{ return dual(a.re*b, a.du*b); }
-
-constexpr auto fma(is_dual auto const & a, is_dual auto const & b, is_dual auto const & c)
-{ return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du))); }
-
-constexpr auto operator+(is_dual auto const & a, is_dual auto const & b)
-{ return dual(a.re+b.re, a.du+b.du); }
-
-constexpr auto operator+(auto const & a, is_dual auto const & b)
-{ return dual(a+b.re, b.du); }
-
-constexpr auto operator+(is_dual auto const & a, auto const & b)
-{ return dual(a.re+b, a.du); }
-
-constexpr auto operator-(is_dual auto const & a, is_dual auto const & b)
-{ return dual(a.re-b.re, a.du-b.du); }
-
-constexpr auto operator-(is_dual auto const & a, auto const & b)
-{ return dual(a.re-b, a.du); }
-
-constexpr auto operator-(auto const & a, is_dual auto const & b)
-{ return dual(a-b.re, -b.du); }
-
-constexpr auto operator-(is_dual auto const & a)
-{ return dual(-a.re, -a.du); }
-
-constexpr decltype(auto) operator+(is_dual auto const & a)
-{ return a; }
-
-constexpr auto sqr(is_dual auto const & a)
-{ return a*a; }
-
-constexpr auto inv(is_dual auto const & a)
-{ auto i = 1./a.re; return dual(i, -a.du*sqr(i)); }
-
-constexpr auto operator/(is_dual auto const & a, is_dual auto const & b)
-{ return a*inv(b); }
-
-constexpr auto operator/(is_dual auto const & a, auto const & b)
-{ return a*inv(dual(b)); }
-
-constexpr auto operator/(auto const & a, is_dual auto const & b)
-{ return dual(a)*inv(b); }
-
-constexpr auto cos(is_dual auto const & a)
-{ return dual(cos(a.re), -sin(a.re)*a.du); }
-
-constexpr auto sin(is_dual auto const & a)
-{ return dual(sin(a.re), +cos(a.re)*a.du); }
-
-constexpr auto cosh(is_dual auto const & a)
-{ return dual(cosh(a.re), +sinh(a.re)*a.du); }
-
-constexpr auto sinh(is_dual auto const & a)
-{ return dual(sinh(a.re), +cosh(a.re)*a.du); }
-
-constexpr auto tan(is_dual auto const & a)
-{ auto c = cos(a.du); return dual(tan(a.re), a.du/(c*c)); }
-
-constexpr auto exp(is_dual auto const & a)
-{ return dual(exp(a.re), +exp(a.re)*a.du); }
-
-constexpr auto pow(is_dual auto const & a, auto const & b)
-{ return dual(pow(a.re, b), +b*pow(a.re, b-1)*a.du); }
-
-constexpr auto log(is_dual auto const & a)
-{  return dual(log(a.re), +a.du/a.re); }
-
-constexpr auto sqrt(is_dual auto const & a)
-{ return dual(sqrt(a.re), +a.du/(2.*sqrt(a.re))); }
-
-constexpr auto abs(is_dual auto const & a)
-{ return abs(a.re); }
-
-constexpr bool isfinite(is_dual auto const & a)
-{ return isfinite(a.re) && isfinite(a.du); }
-
-constexpr auto xi(is_dual auto const & a)
-{ return dual(xi(a.re), xi(a.du)); }
+constexpr auto fma(is_dual auto const & a, is_dual auto const & b, is_dual auto const & c) { return dual(fma(a.re, b.re, c.re), fma(a.re, b.du, fma(a.du, b.re, c.du))); }
+constexpr auto sqr(is_dual auto const & a) { return a*a; }
+constexpr auto inv(is_dual auto const & a) { auto i = 1./a.re; return dual(i, -a.du*sqr(i)); }
+constexpr auto cos(is_dual auto const & a) { return dual(cos(a.re), -sin(a.re)*a.du); }
+constexpr auto sin(is_dual auto const & a) { return dual(sin(a.re), +cos(a.re)*a.du); }
+constexpr auto cosh(is_dual auto const & a) { return dual(cosh(a.re), +sinh(a.re)*a.du); }
+constexpr auto sinh(is_dual auto const & a) { return dual(sinh(a.re), +cosh(a.re)*a.du); }
+constexpr auto tan(is_dual auto const & a) { auto c = cos(a.du); return dual(tan(a.re), a.du/(c*c)); }
+constexpr auto exp(is_dual auto const & a) { return dual(exp(a.re), +exp(a.re)*a.du); }
+constexpr auto pow(is_dual auto const & a, auto const & b) { return dual(pow(a.re, b), +b*pow(a.re, b-1)*a.du); }
+constexpr auto log(is_dual auto const & a) {  return dual(log(a.re), +a.du/a.re); }
+constexpr auto sqrt(is_dual auto const & a) { return dual(sqrt(a.re), +a.du/(2.*sqrt(a.re))); }
+constexpr auto abs(is_dual auto const & a) { return abs(a.re); }
+constexpr bool isfinite(is_dual auto const & a) { return isfinite(a.re) && isfinite(a.du); }
+constexpr auto xi(is_dual auto const & a) { return dual(xi(a.re), xi(a.du)); }
 
 inline std::ostream &
 operator<<(std::ostream & o, is_dual auto const & a)
@@ -802,9 +742,7 @@ operator<<(std::ostream & o, is_dual auto const & a)
 std::istream &
 operator>>(std::istream & i, is_dual auto & a)
 {
-    char s;
-    i >> s;
-    if (s!='[') {
+    if (char s; i >> s, s!='[') {
         i.setstate(std::ios::failbit);
     } else {
         i >> a.re >> a.du >> s;

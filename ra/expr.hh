@@ -196,7 +196,7 @@ to_scalar(auto && e)
 {
     if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
         static_assert(ANY==s, "Bad scalar conversion.");
-        RA_CK(1==ra::size(e), "Bad scalar conversion from shape [", fmt(nstyle, ra::shape(e)), "].");
+        RA_CK(1==ra::size(e), "Bad scalar conversion from shape [", fmt(lstyle, ra::shape(e)), "].");
     }
     return VAL(e);
 }
@@ -404,7 +404,8 @@ reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 constexpr auto
 start(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
 
-template <class T> constexpr auto
+template <class T>
+constexpr auto
 start(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
 
 constexpr auto
@@ -445,7 +446,8 @@ struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
     constexpr static int orig(int k) { int r=-1; (void)((di==k && (r=i, 1)) || ...); return r; }
     constexpr static dim_t len_s(int k)
     {
-        int l=orig(k); return l>=0 ? std::decay_t<A>::len_s(l) : UNB;
+        int l=orig(k);
+        return l>=0 ? std::decay_t<A>::len_s(l) : UNB;
     }
     constexpr static dim_t
     len(int k) requires (requires { std::decay_t<A>::len(k); })
@@ -455,27 +457,32 @@ struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
     constexpr dim_t
     len(int k) const requires (!(requires { std::decay_t<A>::len(k); }))
     {
-        int l=orig(k); return l>=0 ? a.len(l) : UNB;
+        int l=orig(k);
+        return l>=0 ? a.len(l) : UNB;
     }
     constexpr static bool
     keep(dim_t st, int z, int j) requires (requires { std::decay_t<A>::keep(st, z, j); })
     {
-        int wz=orig(z), wj=orig(j); return wz>=0 && wj>=0 && std::decay_t<A>::keep(st, wz, wj);
+        int wz=orig(z), wj=orig(j);
+        return wz>=0 && wj>=0 && std::decay_t<A>::keep(st, wz, wj);
     }
     constexpr bool
     keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<A>::keep(st, z, j); }))
     {
-        int wz=orig(z), wj=orig(j); return wz>=0 && wj>=0 && a.keep(st, wz, wj);
+        int wz=orig(z), wj=orig(j);
+        return wz>=0 && wj>=0 && a.keep(st, wz, wj);
     }
     constexpr static auto
     step(int k) requires (requires { std::decay_t<A>::step(k); })
     {
-        int l=orig(k); return l>=0 ? std::decay_t<A>::step(l) : samestep<0, decltype(std::decay_t<A>::step(l))>;
+        int l=orig(k);
+        return l>=0 ? std::decay_t<A>::step(l) : samestep<0, decltype(std::decay_t<A>::step(l))>;
     }
     constexpr auto
     step(int k) const requires (!(requires { std::decay_t<A>::step(k); }))
     {
-        int l=orig(k); return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>;
+        int l=orig(k);
+        return l>=0 ? a.step(l) : samestep<0, decltype(a.step(l))>;
     }
     constexpr void adv(rank_t k, dim_t d) { if (int l=orig(k); l>=0) { a.adv(l, d); } }
     constexpr decltype(auto) at(auto const & j) const { return a.at(std::array<dim_t, sizeof...(i)> { j[di] ... }); }
@@ -538,11 +545,8 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // --------------------
 
 // finite before ANY before UNB, assumes neither is MIS.
-constexpr dim_t
-choose_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : UNB==a ? b : UNB==b ? a : b; }
-
-constexpr rank_t
-choose_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
+constexpr dim_t common_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : UNB==a ? b : UNB==b ? a : b; }
+constexpr rank_t common_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
 
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
@@ -554,7 +558,7 @@ tbc(int sofar)
 {
     if constexpr (is_match<A>) {
         using T = decltype(std::declval<A>().t);
-        [&sofar]<int ... i>(ilist_t<i ...>) {
+        [&sofar]<int ... i>(ilist_t<i ...>){
             (void)(((sofar = tbc<TOP, std::decay_t<mp::ref<T, i>>>(sofar)) >= 0) && ...);
         } (mp::iota<mp::len<T>> {});
         return sofar;
@@ -591,7 +595,7 @@ template <Iterator ... P, int ... I>
 struct Match<std::tuple<P ...>, ilist_t<I ...>>
 {
     std::tuple<P ...> t;
-    constexpr static rank_t rs = []{ rank_t r=UNB; return ((r=choose_rank(rank_s<P>(), r)), ...); }();
+    constexpr static rank_t rs = []{ rank_t r=UNB; return ((r=common_rank(rank_s<P>(), r)), ...); }();
     constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
 
 // 0: fail, 1: rt check, 2: pass
@@ -608,7 +612,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
                 if (len(k)<0) {
-                    RA_CK(allow, "Bad shapes ", fmt(lstyle, shape(get<I>(t))) ..., ".");
+                    RA_CK(allow, "Bad shapes ", fmt(lstyle, ra::shape(get<I>(t))) ..., ".");
                     return false;
                 }
             }
@@ -623,7 +627,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr rank_t
     rank() const requires (ANY==rs)
     {
-        rank_t r = UNB; return ((r = choose_rank(ra::rank(get<I>(t)), r)), ...);
+        rank_t r = UNB; return ((r = common_rank(ra::rank(get<I>(t)), r)), ...);
     }
     constexpr static dim_t
     len_s(int k, bool check=false)
@@ -631,7 +635,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         auto f = [&k, &check]<class A>(dim_t s){
             if (constexpr rank_t r=rank_s<A>(); r<0 || k<r) {
                 dim_t sk = [&]{ if constexpr (is_match<A>) return A::len_s(k, check); else return A::len_s(k); }();
-                return (MIS==sk) ? MIS : check && (ANY==sk || ANY==s) ? ANY : choose_len(sk, s);
+                return (MIS==sk) ? MIS : check && (ANY==sk || ANY==s) ? ANY : common_len(sk, s);
             }
             return s;
         };
@@ -649,7 +653,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         auto f = [&k](auto const & a, dim_t s){
             if (k<ra::rank(a)) {
                 dim_t sk = a.len(k);
-                return (MIS==sk) ? MIS : choose_len(sk, s);
+                return (MIS==sk) ? MIS : common_len(sk, s);
             }
             return s;
         };
