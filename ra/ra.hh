@@ -48,12 +48,11 @@ RA_FE(RA_QUAD_DOUBLE, +, -, /, *)
     #define RA_FLOATS float, double
 #endif
 
-// abs() needs no qualifying for ra:: types (ADL), shouldn't on pods either. FIXME let user decide?
-// std::max/min are special, see RA_NAME.
+// abs() works for ra:: types through ADL, should work on pods. std::max/min are special, see RA_NAME. FIXME let user decide?
 using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std::swap,
       std::isfinite, std::isinf, std::isnan, std::clamp, std::lerp, std::conj, std::expm1;
 
-#define RA_FLOAT(R)                                                     \
+#define RA_FOR_FLOAT(R)                                                 \
     constexpr R conj(R x) { return x; }                                 \
     constexpr std::complex<R>                                           \
     fma(std::complex<R> const & a, std::complex<R> const & b, std::complex<R> const & c) \
@@ -64,8 +63,8 @@ using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std
     constexpr bool isfinite(std::complex<R> z) { return isfinite(z.real()) && isfinite(z.imag()); } \
     constexpr bool isnan(std::complex<R> z) { return isnan(z.real()) || isnan(z.imag()); } \
     constexpr bool isinf(std::complex<R> z) { return (isinf(z.real()) || isinf(z.imag())) && !isnan(z); }
-RA_FE(RA_FLOAT, RA_FLOATS)
-#undef RA_FLOAT
+RA_FE(RA_FOR_FLOAT, RA_FLOATS)
+#undef RA_FOR_FLOAT
 
 namespace ra {
 
@@ -349,9 +348,8 @@ lexical_compare(auto && a, auto && b)
 constexpr auto
 amin(auto && a)
 {
-    using std::min, std::numeric_limits;
     using T = ncvalue_t<decltype(a)>;
-    T c = numeric_limits<T>::has_infinity ? numeric_limits<T>::infinity() : numeric_limits<T>::max();
+    T c = std::numeric_limits<T>::has_infinity ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::max();
     for_each([&c](auto && a){ if (a<c) { c=a; } }, a);
     return c;
 }
@@ -359,15 +357,14 @@ amin(auto && a)
 constexpr auto
 amax(auto && a)
 {
-    using std::max, std::numeric_limits;
     using T = ncvalue_t<decltype(a)>;
-    T c = numeric_limits<T>::has_infinity ? -numeric_limits<T>::infinity() : numeric_limits<T>::lowest();
+    T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
     for_each([&c](auto && a){ if (c<a) { c=a; } }, a);
     return c;
 }
 
 // FIXME encapsulate this kind of reference-reduction.
-// FIXME ply mechanism doesn't allow partial iteration (adv then continue).
+// FIXME ply doesn't allow partial iteration (adv then continue).
 template <class A, class Less = std::less<ncvalue_t<A>>>
 constexpr decltype(auto)
 refmin(A && a, Less && less = {})
@@ -510,7 +507,7 @@ binom(std::size_t n, std::size_t p)
     return v;
 }
 
-// We form the basis for the result (Cr) and split it in pieces for Oa and Ob; there are (D over Oa) ways. Then we see where and with which signs these pieces are in the bases for Oa (Ca) and Ob (Cb), and form the product.
+// Form the basis for the result (Cr) and split it in pieces for Oa and Ob; there are (D over Oa) ways. Then see where and with which signs these pieces are in the bases for Oa (Ca) and Ob (Cb), and form the product.
 template <int D, int Oa, int Ob>
 struct Wedge
 {
@@ -572,9 +569,7 @@ struct Hodge
     using LexOrCa = typename W::LexOrCa;
     constexpr static int Na = W::Na;
     constexpr static int Nb = W::Nb;
-// If 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used.
-// Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w,
-// and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
+// if 2*O=D, it is not possible to differentiate the bases by order and hodgex() must be used. Likewise, when O(N-O) is odd, Hodge from (2*O>D) to (2*O<D) change sign, since **w= -w, and the basis in the (2*O>D) case is selected to make Hodge(<)->Hodge(>) trivial; but can't do both!
     constexpr static bool trivial = 2*O!=D && ((2*O<D) || !ra::odd(O*(D-O)));
 
     template <int i=0>
@@ -586,8 +581,7 @@ struct Hodge
         if constexpr (i<Na) {
             using Cai = mp::ref<Ca, i>;
             static_assert(O==mp::len<Cai>);
-// sort Cai, because complement only accepts sorted combs.
-// ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
+// sort Cai, because complement only accepts sorted combs. ref<Cb, i> should be complementary to Cai, but I don't want to rely on that.
             using SCai = mp::ref<LexOrCa, mp::findcomb<Cai, LexOrCa>::where>;
             using CompCai = mp::complement<SCai, D>;
             static_assert(D-O==mp::len<CompCai>);
@@ -602,32 +596,31 @@ struct Hodge
 };
 
 // The order of components is taken from Wedge<D, O, D-O>; this works for whatever order is defined there.
-// With lexical order, component order is reversed, but signs vary.
-// With the order given by choose<>, fpw::where==i and fps::sign==+1 in hodge_aux(), always. Then hodge() becomes a free operation, (with one exception) and the next function hodge() can be used.
-template <int D, int O, class Va, class Vb>
+// With lexical order, component order is reversed, but signs vary. With the order given by choose<>, fpw::where==i and fps::sign==+1 in hodge_aux(), always. Then hodge() becomes a free operation, (with one exception) and the next function hodge() can be used.
+template <int D, int O>
 constexpr void
-hodgex(Va const & a, Vb & b) { Hodge<D, O>::hodge_aux(a, b); }
+hodgex(auto const & a, auto & b) { Hodge<D, O>::hodge_aux(a, b); }
 
-template <int D, int O, class Va, class Vb> requires (Hodge<D, O>::trivial)
+template <int D, int O> requires (Hodge<D, O>::trivial)
 constexpr void
-hodge(Va const & a, Vb & b) { static_assert(ra::size(a)==Hodge<D, O>::Na && ra::size(b)==Hodge<D, O>::Nb); b = a; }
+hodge(auto const & a, auto & b) { static_assert(ra::size(a)==Hodge<D, O>::Na && ra::size(b)==Hodge<D, O>::Nb); b = a; }
 
-template <int D, int O, class Va, class Vb> requires (!Hodge<D, O>::trivial)
+template <int D, int O> requires (!Hodge<D, O>::trivial)
 constexpr void
-hodge(Va const & a, Vb & b) { Hodge<D, O>::hodge_aux(a, b); }
+hodge(auto const & a, auto & b) { Hodge<D, O>::hodge_aux(a, b); }
 
-template <int D, int O, class Va> requires (Hodge<D, O>::trivial)
-constexpr Va const &
-hodge(Va const & a) { static_assert(ra::size(a)==Hodge<D, O>::Na, "error"); return a; }
+template <int D, int O> requires (Hodge<D, O>::trivial)
+constexpr auto const &
+hodge(auto const & a) { static_assert(ra::size(a)==Hodge<D, O>::Na, "error"); return a; }
 
-template <int D, int O, class Va> requires (!Hodge<D, O>::trivial)
-constexpr Va &
-hodge(Va & a) { Va b(a); hodgex<D, O>(b, a); return a; }
+template <int D, int O> requires (!Hodge<D, O>::trivial)
+constexpr auto &
+hodge(auto & a) { auto b(a); hodgex<D, O>(b, a); return a; }
 
 // FIXME concrete() isn't needed if a/b are already views.
-template <int D, int Oa, int Ob, class Va, class Vb, class Vr>
+template <int D, int Oa, int Ob>
 constexpr void
-wedge(Va const & a, Vb const & b, Vr & r) { Wedge<D, Oa, Ob>::prod(concrete(a), concrete(b), r); }
+wedge(auto const & a, auto const & b, auto & r) { Wedge<D, Oa, Ob>::prod(concrete(a), concrete(b), r); }
 
 template <int D, int Oa, int Ob, class Va, class Vb>
 constexpr auto
@@ -671,10 +664,8 @@ perp(V const & v, U const & n)
 // Dual numbers for automatic differentiation. This section depends only on base.hh.
 // --------------------
 
-// See GriewankWalther2008, VanderBergen2012, Berland2006
 // From Taylor expansion of f(a), f(a, b) ... FIXME
-// f(a+εa') = f(a)+εa'f_a(a)
-// f(a+εa', b+εb') = f(a, b)+ε[a'f_a(a, b) b'f_b(a, b)]
+// f(a+εa') = f(a)+εa'f_a(a); f(a+εa', b+εb') = f(a, b)+ε[a'f_a(a, b) b'f_b(a, b)]
 
 template <class T>
 struct Dual
@@ -736,19 +727,16 @@ constexpr bool isfinite(is_dual auto const & a) { return isfinite(a.re) && isfin
 constexpr auto xi(is_dual auto const & a) { return dual(xi(a.re), xi(a.du)); }
 
 inline std::ostream &
-operator<<(std::ostream & o, is_dual auto const & a)
-{ return o << "[" << a.re << " " << a.du << "]"; }
+operator<<(std::ostream & o, is_dual auto const & a) { return o << "[" << a.re << " " << a.du << "]"; }
 
-std::istream &
+inline std::istream &
 operator>>(std::istream & i, is_dual auto & a)
 {
     if (char s; i >> s, s!='[') {
         i.setstate(std::ios::failbit);
     } else {
         i >> a.re >> a.du >> s;
-        if (s!=']') {
-            i.setstate(std::ios::failbit);
-        }
+        if (s!=']') { i.setstate(std::ios::failbit); }
     }
     return i;
 }

@@ -14,7 +14,7 @@
 namespace ra {
 
 constexpr bool
-is_c_order_dimv(auto const & dimv, bool step1=true)
+c_order(auto const & dimv, bool step1=true)
 {
     bool steps = true;
     dim_t s = 1;
@@ -30,9 +30,6 @@ is_c_order_dimv(auto const & dimv, bool step1=true)
     }
     return s==0 || steps;
 }
-
-constexpr bool
-is_c_order(auto const & v, bool step1=true) { return is_c_order_dimv(v.dimv, step1); }
 
 
 // ---------------------
@@ -113,9 +110,9 @@ struct ViewSmall
     template <dim_t s, dim_t o=0> constexpr auto as() const { return from(*this, ra::iota(ic<s>, o)); }
     template <rank_t c=0> constexpr auto iter() const { return Cell<P, ic_t<dimv>, ic_t<c>>(cp); }
     constexpr auto iter(rank_t c) const { return Cell<P, decltype(dimv) const &, dim_t>(cp, dimv, c); }
-    constexpr auto begin() const { if constexpr (is_c_order_dimv(dimv)) return cp; else return STLIterator(iter()); }
-    constexpr auto end() const requires (is_c_order_dimv(dimv)) { return cp+size(); }
-    constexpr static auto end() requires (!is_c_order_dimv(dimv)) { return std::default_sentinel; }
+    constexpr auto begin() const { if constexpr (c_order(dimv)) return cp; else return STLIterator(iter()); }
+    constexpr auto end() const requires (c_order(dimv)) { return cp+size(); }
+    constexpr static auto end() requires (!c_order(dimv)) { return std::default_sentinel; }
     constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
@@ -522,7 +519,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
     constexpr decltype(auto) at(this auto && self, auto const & i) { return RA_FW(self).view().at(i); }
-    constexpr auto begin(this auto && self) { assert(is_c_order(self.view())); return self.view().data(); }
+    constexpr auto begin(this auto && self) { assert(c_order(self.view().dimv)); return self.view().data(); }
     constexpr auto end(this auto && self) { return self.view().data()+self.size(); }
     template <rank_t c=0> constexpr auto iter(this auto && self) { if constexpr (1==RANK && 0==c) { return ptr(self.data(), self.size()); } else { return RA_FW(self).view().template iter<c>(); } }
     constexpr auto iter(this auto && self, rank_t c) { return RA_FW(self).view().iter(c); }
@@ -588,8 +585,8 @@ struct concrete_type_<E> { using type = Big<ncvalue_t<E>, rank_s<E>()>; };
 template <class E> requires (0!=rank_s<E>() && ANY!=size_s<E>())
 struct concrete_type_<E> { using type = SmallArray<ncvalue_t<E>, ic_t<default_dims(shape_s<E>)>>; };
 
-template <class E> using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>), std::decay_t<E>,
-                                                            typename concrete_type_<E>::type>;
+template <class E>
+using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>), std::decay_t<E>, typename concrete_type_<E>::type>;
 
 template <class E> constexpr auto
 concrete(E && e) { return concrete_type<E>(RA_FW(e)); }
@@ -793,7 +790,7 @@ template <class P, rank_t RANK>
 constexpr ViewBig<P, 1>
 ravel_free(ViewBig<P, RANK> const & a)
 {
-    RA_CK(is_c_order(a, false));
+    RA_CK(c_order(a.dimv, false));
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
     ra::dim_t s = r<0 ? 1 : a.step(r);
@@ -830,7 +827,7 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
-            RA_CK(is_c_order(a, false) && la>=lb, "Reshape with copy not implemented.");
+            RA_CK(c_order(a.dimv, false) && la>=lb, "Reshape with copy not implemented.");
 // FIXME ViewBig(SS const & s, T * p). Cf [ra37].
             filldimv(start(sb), b.dimv);
             for (int j=0; j!=b.rank(); ++j) {

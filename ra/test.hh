@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Test/benchmarking library.
+// ra-ra - Testing and benchmarking.
 
 // (c) Daniel Llorens - 2012-2025
 // This library is free software; you can redisribute it and/or modify it under
@@ -38,7 +38,7 @@ struct TestRecorder
     constexpr static double QNAN = std::numeric_limits<double>::quiet_NaN();
     constexpr static double PINF = std::numeric_limits<double>::infinity();
 
-// ra::amax ignores nans like fmax does, we don't want that here.
+// ra::amax ignores nans and we don't want that here.
     __attribute__((optimize("-fno-finite-math-only")))
     static auto
     amax_strict(auto const & a)

@@ -1492,7 +1492,7 @@ ra::ptr(z) += p; // ok, shape is determined by foreign object p
 @end example
 
 @anchor{x-is-scalar}
-Some types are accepted automatically as scalars. These include non-pointer types for which @code{std::is_scalar_v} is true, like @code{char}, @code{int}, @code{double}, etc. as well as @code{std::complex<T>}. You can add your own types as scalar types with the following declaration:
+Some types are accepted automatically as scalars in mixed array/scalar operations. These include all types that satisfy @code{std::is_floating_point_v}, such as @code{double} or (if available) @code{std::float128_t}; @code{std::complex<T>} for any @code{T}; and non-pointer types that satisfy @code{std::is_scalar_v}, such as @code{char} or @code{int}. You can add your own types to this list with the following declaration:
 
 @quotation
 @verbatim
@@ -1651,7 +1651,7 @@ Unfortunately there are many libraries that don't accept arbitrary array paramet
 
 The most common case is that a library doesn't handle steps at all, and it only accepts unit step for rank 1 arrays, or packed row-major or column-major storage for higher rank arrays. In that case, you might be forced to copy your array before passing it along.
 
-@c FIXME using is_c_order, etc.
+@c FIXME using c_order, etc.
 
 @cindex BLAS
 Other libraries do accept steps, but not arbitrary ones. For example @url{https://www.netlib.org/blas}' @code{cblas_dgemm} has this prototype:

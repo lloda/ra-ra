@@ -90,8 +90,8 @@ int main()
             auto b = transpose(a, ra::Small<int, 0> {});
             tr.test_eq(0, b.rank());
             tr.test_eq(99, b());
-            tr.test(is_c_order(a));
-            tr.test(is_c_order(b));
+            tr.test(c_order(a.dimv));
+            tr.test(c_order(b.dimv));
         }
         {
             ra::Unique<double, 0> a({}, 99);
@@ -120,33 +120,30 @@ int main()
     }
     tr.section("transpose B");
     {
-        auto transpose_test = [&tr](auto && b)
-            {
-                tr.test_eq(1, b.rank());
-                tr.test_eq(2, b.size());
-                tr.test_eq(1, b[0]);
-                tr.test_eq(4, b[1]);
-            };
+        auto transpose_test = [&tr](auto && b){
+            tr.test_eq(1, b.rank());
+            tr.test_eq(2, b.size());
+            tr.test_eq(1, b[0]);
+            tr.test_eq(4, b[1]);
+        };
         ra::Unique<double> a({3, 2}, ra::_0*2 + ra::_1 + 1);
-        tr.test(is_c_order(a));
+        tr.test(c_order(a.dimv));
         transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
         transpose_test(transpose(a, ilist<0, 0>));                // dyn rank to static rank
         ra::Unique<double, 2> b({3, 2}, ra::_0*2 + ra::_1*1 + 1);
         transpose_test(transpose(b, ra::Small<int, 2> { 0, 0 })); // static rank to dyn rank
         transpose_test(transpose(b, ilist<0, 0>));                // static rank to static rank
         auto bt = transpose(b, ilist<0, 0>);
-        tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order(bt));
-        tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!is_c_order_dimv(bt.dimv));
+        tr.info("dimv ", bt.dimv, " step ", bt.step(0), " len ", bt.len(0)).test(!c_order(bt.dimv));
     }
     tr.section("transpose C");
     {
-        auto transpose_test = [&tr](auto && b)
-            {
-                tr.test_eq(1, b.rank());
-                tr.test_eq(2, b.size());
-                tr.test_eq(1, b[0]);
-                tr.test_eq(5, b[1]);
-            };
+        auto transpose_test = [&tr](auto && b){
+            tr.test_eq(1, b.rank());
+            tr.test_eq(2, b.size());
+            tr.test_eq(1, b[0]);
+            tr.test_eq(5, b[1]);
+        };
         ra::Unique<double> a({2, 3}, ra::_0*3 + ra::_1 + 1);
         transpose_test(transpose(a, ra::Small<int, 2> { 0, 0 })); // dyn rank to dyn rank
         transpose_test(transpose(a, ilist<0, 0>));                // dyn rank to static rank
@@ -156,13 +153,12 @@ int main()
     }
     tr.section("transpose D");
     {
-        auto transpose_test = [&tr](auto && b)
-            {
-                tr.test_eq(1, b.rank());
-                tr.test_eq(2, b.size());
-                tr.test_eq(1, b[0]);
-                tr.test_eq(5, b[1]);
-            };
+        auto transpose_test = [&tr](auto && b){
+            tr.test_eq(1, b.rank());
+            tr.test_eq(2, b.size());
+            tr.test_eq(1, b[0]);
+            tr.test_eq(5, b[1]);
+        };
         ra::Unique<double> a({2, 3}, ra::_0*3 + ra::_1 + 1);
         transpose_test(transpose(a, { 0, 0 })); // dyn rank to dyn rank
     }
@@ -198,22 +194,22 @@ int main()
     tr.section("free ravel?");
     {
         ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
-        tr.test(is_c_order(a, false));
+        tr.test(c_order(a.dimv, false));
         auto b = transpose(a, ilist<1, 0>);
-        tr.test(!is_c_order(b, false));
+        tr.test(!c_order(b.dimv, false));
     }
 // trailing singleton dimensions
     {
         ra::Unique<double, 2> a = {{1, 2, 3}, {4, 5, 6}};
         ra::ViewBig<double *, 2> c{{{2, 1}, {1, 3}}, a.data()};
-        tr.test(is_c_order(c, false));
+        tr.test(c_order(c.dimv, false));
         tr.test_eq(ra::Small<int, 2>{1, 2}, ravel_free(c));
     }
 // singleton dimensions elsewhere
     {
         ra::Unique<double, 1> a = ra::iota(30);
         ra::ViewBig<double *, 3> c{{{2, 10}, {1, 8}, {5, 2}}, a.data()};
-        tr.test(is_c_order(c, false));
+        tr.test(c_order(c.dimv, false));
         tr.test_eq(ra::iota(10, 0, 2), ravel_free(c));
     }
     return tr.summary();

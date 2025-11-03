@@ -1514,7 +1514,7 @@ ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start(
 ra::ptr(z) += p; // ok, shape is determined by foreign object p
 </pre></div>
 
-<span id="x_002dis_002dscalar"></span><p>Some types are accepted automatically as scalars. These include non-pointer types for which <code>std::is_scalar_v</code> is true, like <code>char</code>, <code>int</code>, <code>double</code>, etc. as well as <code>std::complex&lt;T&gt;</code>. You can add your own types as scalar types with the following declaration:
+<span id="x_002dis_002dscalar"></span><p>Some types are accepted automatically as scalars in mixed array/scalar operations. These include all types that satisfy <code>std::is_floating_point_v</code>, such as <code>double</code> or (if available) <code>std::float128_t</code>; <code>std::complex&lt;T&gt;</code> for any <code>T</code>; and non-pointer types that satisfy <code>std::is_scalar_v</code>, such as <code>char</code> or <code>int</code>. You can add your own types to this list with the following declaration:
 </p>
 <blockquote>
 <pre class="verbatim">template &lt;&gt; constexpr bool ra::is_scalar_def&lt;MYTYPE&gt; = true;
