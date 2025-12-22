@@ -8,9 +8,6 @@
 // later version.
 
 #include "ra/test.hh"
-#ifdef __STDCPP_FLOAT128_T__
-#include <stdfloat>
-#endif
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 

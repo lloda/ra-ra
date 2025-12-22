@@ -32,7 +32,8 @@ template <class T> constexpr void cast(ra::noarg);
 // Scalar overloads.
 // ---------------------------
 
-#if defined(__STDCPP_FLOAT128_T__)
+#define RA_FLOAT128 (1==__STDCPP_FLOAT128_T__ && defined(_GLIBCXX_HAVE_FLOAT128_MATH))
+#if RA_FLOAT128
     #include <stdfloat>
 #define RA_FLOATS float, double, std::float128_t
 #define RA_OP_QUAD_DOUBLE(OP, R, C)                                     \
@@ -46,7 +47,7 @@ RA_FE(RA_QUAD_DOUBLE, +, -, /, *)
 #undef RA_OP_QUAD_DOUBLE_OP
 #else
     #define RA_FLOATS float, double
-#endif
+#endif // RA_FLOAT128
 
 // abs() works for ra:: types through ADL, should work on pods. std::max/min are special, see RA_NAME. FIXME let user decide?
 using std::max, std::min, std::abs, std::fma, std::sqrt, std::pow, std::exp, std::swap,

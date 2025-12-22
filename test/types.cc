@@ -87,12 +87,12 @@ int main()
                  false, false, false, true, false);
         TESTPRED(std::complex<double>,
                  false, false, false, true, false);
-#ifdef __STDCPP_FLOAT128_T__
+#if RA_FLOAT128
         TESTPRED(std::float128_t,
                  false, false, false, true, false);
         TESTPRED(std::complex<std::float128_t>,
                  false, false, false, true, false);
-#endif // __STDCPP_FLOAT128_T__
+#endif // RA_FLOAT128
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()),
                  true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::Unique<int, 2>>()) const,
@@ -242,8 +242,12 @@ int main()
     }
     tr.section("mixed float128/double ops");
     {
+#if RA_FLOAT128
         tr.test_eq(9., real(std::complex<std::float128_t>(3.) * 3.));
         tr.test_eq(9., real(std::complex<double>(3.) * std::float128_t(3.)));
+#else
+        std::println(std::cout, "no float128_t support!");
+#endif // RA_FLOAT128
     }
     return tr.summary();
 }
