@@ -116,10 +116,10 @@ int main()
     }
     tr.section("TODO view iota also gets optimized");
     {
-        assert(ra::is_iota_any<decltype(ra::ii({3}))>);
-        assert(ra::is_iota_any<decltype(ra::iota(3, 1, 2))>);
+        assert(ra::is_iota<decltype(ra::ii({3}))>);
+        assert(ra::is_iota<decltype(ra::iota(3, 1, 2))>);
         cout << ra::opt(-ra::iota(3)).dimv[0].len << endl;
-// FIXME doesn't work because opt() works on Map and the leaves of that are Views' iterators which aren't is_iota_any, not the Views themselves which are.
+// FIXME doesn't work because opt() works on Map and the leaves of that are Views' iterators which aren't is_iota, not the Views themselves which are.
         // cout << ra::opt(-ra::ii({3})).dimv[0].len << endl;
     }
     tr.section("truncated sequence");

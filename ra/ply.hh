@@ -487,10 +487,10 @@ ii(ra::ilist_t<i ...>, T o=0)
     return ViewSmall<Seq<T>, ra::ic_t<ra::default_dims(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
 }
 
-template <class A> concept is_iota = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); };
+template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); };
 template <class A> concept is_iota_static = requires (A a) { []<class I, class Dimv>(ViewSmall<Seq<I>, Dimv> const &){}(a); };
 template <class A> concept is_iota_dynamic = requires (A a) { []<class I, rank_t RANK>(ViewBig<Seq<I>, RANK> const &){}(a); };
-template <class A> concept is_iota_any = (is_iota<A> || is_iota_dynamic<A> || is_iota_static<A>);
+template <class A> concept is_iota = (is_ptr<A> || is_iota_dynamic<A> || is_iota_static<A>);
 template <class A> concept is_scalar_index = is_ra_0<A>;
 
 // beaten, whole or piecewise. Presize bv/ds not to need push_back
@@ -500,7 +500,7 @@ beatable(I && i)
 {
     return ((requires { []<int N>(dots_t<N>){}(i); }) || (requires { []<int N>(insert_t<N>){}(i); }) || is_scalar_index<I>
 // exclude to let B=A(... i ...) use B's len. FIXME
-            || (is_iota_any<I> && requires { requires UNB!=ra::size_s<I>(); }));
+            || (is_iota<I> && requires { requires UNB!=ra::size_s<I>(); }));
 }
 
 consteval auto fsrc(auto const &) { return 1; }
@@ -558,7 +558,7 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak, I0 const & i0, au
             pl += i*a.step(ak);
         }
         ++ak;
-    } else if constexpr (is_iota_any<I0> && beatable(i0)) {
+    } else if constexpr (is_iota<I0> && beatable(i0)) {
         if constexpr (dobv || dopl) {
             auto const la = a.len(ak);
             for (int q=0; q<rank(i0); ++q) {

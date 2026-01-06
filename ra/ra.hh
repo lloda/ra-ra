@@ -140,17 +140,17 @@ template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalu
 #define RA_IOTA_BINOP(OP, A, B, VAL) \
     template <A I, B J> constexpr auto opt(Map<OP, std::tuple<I, J>> && e) { return VAL; }
 
-RA_IOTA_BINOP(std::plus<>,       is_iota_any, iota_op,     ra::iota(RA0.dimv[0].len, RA0.cp.i+RA1, RA0.dimv[0].step))
-RA_IOTA_BINOP(std::plus<>,       iota_op,     is_iota_any, ra::iota(RA1.dimv[0].len, RA0+RA1.cp.i, RA1.dimv[0].step))
-RA_IOTA_BINOP(std::plus<>,       is_iota_any, is_iota_any, ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.dimv[0].step, RA1.dimv[0].step)))
-RA_IOTA_BINOP(std::minus<>,      is_iota_any, iota_op,     ra::iota(RA0.dimv[0].len, RA0.cp.i-RA1, RA0.dimv[0].step))
-RA_IOTA_BINOP(std::minus<>,      iota_op,     is_iota_any, ra::iota(RA1.dimv[0].len, RA0-RA1.cp.i, csub(ic<0>, RA1.dimv[0].step)))
-RA_IOTA_BINOP(std::minus<>,      is_iota_any, is_iota_any, ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.dimv[0].step, RA1.dimv[0].step)))
-RA_IOTA_BINOP(std::multiplies<>, is_iota_any, iota_op,     ra::iota(RA0.dimv[0].len, RA0.cp.i*RA1, RA0.dimv[0].step*RA1))
-RA_IOTA_BINOP(std::multiplies<>, iota_op,     is_iota_any, ra::iota(RA1.dimv[0].len, RA0*RA1.cp.i, RA0*RA1.dimv[0].step))
+RA_IOTA_BINOP(std::plus<>,       is_iota, iota_op, ra::iota(RA0.dimv[0].len, RA0.cp.i+RA1, RA0.dimv[0].step))
+RA_IOTA_BINOP(std::plus<>,       iota_op, is_iota, ra::iota(RA1.dimv[0].len, RA0+RA1.cp.i, RA1.dimv[0].step))
+RA_IOTA_BINOP(std::plus<>,       is_iota, is_iota, ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.dimv[0].step, RA1.dimv[0].step)))
+RA_IOTA_BINOP(std::minus<>,      is_iota, iota_op, ra::iota(RA0.dimv[0].len, RA0.cp.i-RA1, RA0.dimv[0].step))
+RA_IOTA_BINOP(std::minus<>,      iota_op, is_iota, ra::iota(RA1.dimv[0].len, RA0-RA1.cp.i, csub(ic<0>, RA1.dimv[0].step)))
+RA_IOTA_BINOP(std::minus<>,      is_iota, is_iota, ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.dimv[0].step, RA1.dimv[0].step)))
+RA_IOTA_BINOP(std::multiplies<>, is_iota, iota_op, ra::iota(RA0.dimv[0].len, RA0.cp.i*RA1, RA0.dimv[0].step*RA1))
+RA_IOTA_BINOP(std::multiplies<>, iota_op, is_iota, ra::iota(RA1.dimv[0].len, RA0*RA1.cp.i, RA0*RA1.dimv[0].step))
 #undef RA_IOTA_BINOP
 
-template <is_iota_any I> constexpr auto
+template <is_iota I> constexpr auto
 opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RA0.dimv[0].len, -RA0.cp.i, csub(ic<0>, RA0.dimv[0].step)); }
 
 #if RA_OPT_SMALL==1
