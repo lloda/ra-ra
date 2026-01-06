@@ -19,7 +19,6 @@ namespace ra {
 struct Nop {};
 
 // run time order/rank.
-// step() must give 0 for k>=their own rank, to allow frame matching.
 
 template <Iterator A, class Early = Nop>
 constexpr auto
@@ -27,9 +26,8 @@ ply_ravel(A && a, Early && early = Nop {})
 {
     validate(a);
     rank_t rank = ra::rank(a);
-// must avoid 0-length vlas [ra40].
     if (0>=rank) {
-        if (0>rank) [[unlikely]] { std::abort(); }
+        assert(0==rank);
         if constexpr (requires {early.def;}) {
             return (*a).value_or(early.def);
         } else {
@@ -37,23 +35,22 @@ ply_ravel(A && a, Early && early = Nop {})
         }
     }
 // inside first. FIXME better heuristic - but first need a way to force row-major
-    rank_t order[rank];
+    struct z_t { rank_t order; dim_t sha, ind=0; };
+    thread_local std::vector<z_t> z(4);
+    z.resize(rank);
     for (rank_t i=0; i<rank; ++i) {
-        order[i] = rank-1-i;
+        z[i].order = rank-1-i;
     }
-    dim_t sha[rank], ind[rank] = {};
 // find outermost compact dim.
-    rank_t * ocd = order;
-    dim_t ss = a.len(*ocd);
-#pragma GCC diagnostic push // gcc 14.2 RA_CHECK=0 --no-sanitize
-#pragma GCC diagnostic warning "-Warray-bounds"
-    for (--rank, ++ocd; rank>0 && a.keep(ss, order[0], *ocd); --rank, ++ocd) {
-        ss *= a.len(*ocd);
+    auto ocd = z.begin();
+    dim_t ss = a.len(ocd->order);
+    for (--rank, ++ocd; rank>0 && a.keep(ss, z[0].order, ocd->order); --rank, ++ocd) {
+        ss *= a.len(ocd->order);
     }
     for (int k=0; k<rank; ++k) {
 // ss takes care of the raveled dimensions ss.
-        if (0>=(sha[k]=a.len(ocd[k]))) {
-            if (0>sha[k]) [[unlikely]] { std::abort(); }
+        if (0>=(z[k].sha=a.len(ocd[k].order))) {
+            assert(0==z[k].sha);
             if constexpr (requires {early.def;}) {
                 return early.def;
             } else {
@@ -61,7 +58,7 @@ ply_ravel(A && a, Early && early = Nop {})
             }
         }
     }
-    auto ss0 = a.step(order[0]);
+    auto ss0 = a.step(z[0].order);
     for (;;) {
         auto place = a.save();
         for (dim_t s=ss; --s>=0; a.mov(ss0)) {
@@ -81,16 +78,15 @@ ply_ravel(A && a, Early && early = Nop {})
                 } else {
                     return;
                 }
-            } else if (++ind[k]<sha[k]) {
-                a.adv(ocd[k], 1);
+            } else if (++z[k].ind<z[k].sha) {
+                a.adv(ocd[k].order, 1);
                 break;
             } else {
-                ind[k] = 0;
-                a.adv(ocd[k], 1-sha[k]);
+                z[k].ind = 0;
+                a.adv(ocd[k].order, 1-z[k].sha);
             }
         }
     }
-#pragma GCC diagnostic pop
 }
 
 // compile time order/rank.

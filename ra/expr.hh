@@ -305,8 +305,11 @@ struct CellBig
 
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
     constexpr rank_t rank() const requires (ANY==framer) { return ra::size(dimv)-ra::size(c.dimv); }
+#pragma GCC diagnostic push // test/bug83.cc gcc-14 RA_CHECK=0 --no-sanitize
+#pragma GCC diagnostic warning "-Warray-bounds"
     constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
+#pragma GCC diagnostic pop
     constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
 };
 
@@ -657,7 +660,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
             }
             return s;
         };
-        dim_t s = UNB; (void)(((s = f(get<I>(t), s)) != MIS) && ...); return s;
+        dim_t s = UNB; (void)((MIS!=(s = f(get<I>(t), s))) && ...); return s;
     }
     constexpr bool
     keep(dim_t st, int z, int j) const requires (!(requires { std::decay_t<P>::keep(st, z, j); }  && ...))
@@ -669,7 +672,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     {
         return (std::decay_t<P>::keep(st, z, j) && ...);
     }
-// step/adv may call sub Iterators with k>= their rank, in that case they must return 0.
+// step/adv may call sub Iterators with k>= their rank, in that case they must return 0 to allow for frame matching.
     constexpr auto
     step(int k) const requires (!(requires { std::decay_t<P>::step(k); } && ...))
     {
