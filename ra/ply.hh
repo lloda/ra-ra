@@ -434,7 +434,7 @@ template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_l
 struct WLen<Ptr<I, N, S>>
 {
     constexpr static auto
-    f(auto ln, auto && e) { return Ptr(wlen(ln, e.cp), VAL(wlen(ln, e.n)), VAL(wlen(ln, e.s))); }
+    f(auto ln, auto && e) { return Ptr(wlen(ln, e.cp), VAL(wlen(ln, e.dimv[0].len)), VAL(wlen(ln, e.dimv[0].step))); }
 };
 
 constexpr auto
@@ -538,7 +538,7 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
 #pragma GCC diagnostic push // gcc14/15 -DRA_CHECK=0 --no-sanitize -O2 -O3 [ra03]
 #pragma GCC diagnostic warning "-Warray-bounds"
 #pragma GCC diagnostic warning "-Wstringop-overflow"
-            bv[bk] = a.dimv[ak];
+            bv[bk] = { a.dimv[ak].len, a.dimv[ak].step }; // support Ptr
 #pragma GCC diagnostic pop
         }
     }

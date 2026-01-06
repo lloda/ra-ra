@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ek/box - Special object len
 
-// (c) Daniel Llorens - 2023
+// (c) Daniel Llorens - 2023-2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -70,9 +70,9 @@ int main()
     {
         static_assert(ra::has_len<decltype(ra::iota(ra::len+1, ra::len+ra::len))>);
         static_assert(std::is_integral_v<decltype(wlen(5, ra::iota(ra::len)).cp.i)>);
-        static_assert(std::is_integral_v<decltype(wlen(5, ra::iota(ra::len)).n)>);
+        static_assert(std::is_integral_v<decltype(wlen(5, ra::iota(ra::len)).dimv[0].len)>);
         static_assert(std::is_integral_v<decltype(wlen(10, ra::iota(ra::len+1, ra::len+ra::len)).cp.i)>);
-        static_assert(std::is_integral_v<decltype(wlen(10, ra::iota(ra::len+1, ra::len+ra::len)).n)>);
+        static_assert(std::is_integral_v<decltype(wlen(10, ra::iota(ra::len+1, ra::len+ra::len)).dimv[0].len)>);
         tr.test_eq(ra::iota(5), wlen(5, ra::iota(ra::len)));
         tr.test_eq(ra::iota(5, 5), wlen(5, ra::iota(ra::len, ra::len)));
         tr.test_eq(ra::iota(5, 20), wlen(10, ra::iota(5, ra::len+ra::len)));
@@ -85,8 +85,8 @@ int main()
         int aa[] = { 1, 2, 3, 4, 5, 6 };
         int * a = aa;
         static_assert(ra::has_len<decltype(ra::ptr(a, ra::len))>);
-        static_assert(std::is_integral_v<decltype(wlen(5, ra::ptr(a, ra::len)).n)>);
-        static_assert(std::is_integral_v<decltype(wlen(5, ra::ptr(a, ra::len-1)).n)>);
+        static_assert(std::is_integral_v<decltype(wlen(5, ra::ptr(a, ra::len)).dimv[0].len)>);
+        static_assert(std::is_integral_v<decltype(wlen(5, ra::ptr(a, ra::len-1)).dimv[0].len)>);
         tr.test_eq(ra::ptr(a, 5), wlen(5, ra::ptr(a, ra::len)));
         tr.info("len in step argument").test_eq(ra::ptr(a, 3)*2, wlen(6, ra::ptr(a+1, ra::len/2, ra::len/3)));
     }

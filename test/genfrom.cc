@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ek/box - A properly general version of view(...)
 
-// (c) Daniel Llorens - 2025
+// (c) Daniel Llorens - 2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -16,9 +16,7 @@ RA_CK(inside(i, len(k)), "Bad index iota [", i.n, " ", i.cp.i, " ", i.s, "] in l
 
 TODO
 * [ ] opt() applies to ops with general iota
-* [ ] Ptr is a slice (but being slice and iterator at the same time is trouble).
-  - [ ] There is conceptual confusion about view vs iterator overall. For example,
-        from(a ...) requires view a, but iotas are (currently) only iterators.
+* [X] Ptr is a slice (although being both slice and iterator is trouble).
 * [ ] review '1-past is ok but 1-before is not' change in fromb.cc
 * [ ] index checks
   - [X] for scalar
@@ -377,14 +375,15 @@ int main()
     }
     tr.section("regular iota is a slice");
     {
-        auto i0 = ra::ii({7});
-        auto i1 = ra::iota(7);
-        println(cout, "i0 {:l} i1 {:l}", i0, i1);
-        println(cout, "i0(i1) {:l}", from(i0, i1));
-        tr.test_eq(0, from(i0, i1).cp.i);
-// FIXME
-        // println(cout, "i1(i0) {:l}", from(i1, i0));
-        // tr.test_eq(0, from(i1, i0).cp.i);
+        auto a0 = ra::ii({7});
+        auto b1 = ra::iota(6);
+        println(cout, "a0 {:l} b1 {:l}", a0, b1);
+        println(cout, "a0(b1) {:l}", from(a0, b1));
+        tr.test_eq(0, from(a0, b1).cp.i);
+        auto b0 = ra::iota(7);
+        auto a1 = ra::ii({6});
+        println(cout, "b0(a1) {:l}", from(b0, a1));
+        tr.test_eq(0, from(b0, a1).cp.i);
     }
     return tr.summary();
 }

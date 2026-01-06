@@ -362,6 +362,7 @@ concept Slice = requires (A a)
 {
     { a.rank() } -> std::same_as<rank_t>;
     { a.iter() } -> Iterator;
+    { a.data() }; // -> has_len || std::bidirectional_iterator;
     { a.dimv };
 };
 

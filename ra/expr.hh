@@ -165,8 +165,8 @@ constexpr auto start(is_iterator auto & a) requires (!(requires { []<class C>(Sc
 
 constexpr decltype(auto) start(is_iterator auto && a) { return RA_FW(a); }
 
-// Cell doesn't retain rvalues [ra4].
-constexpr auto start(Slice auto && a) { return RA_FW(a).iter(); }
+// Cell doesn't retain rvalues [ra4]. If Slice is also iterator (Ptr), go as the latter.
+constexpr auto start(Slice auto && a) requires (!is_iterator<std::decay_t<decltype(a)>>) { return RA_FW(a).iter(); }
 
 // TODO arbitrary exprs? runtime cr? ra::len in cr?
 template <int cr=0> constexpr auto iter(Slice auto && a) { return RA_FW(a).template iter<cr>(); }
@@ -337,7 +337,7 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
 #pragma GCC diagnostic pop
 };
 
-// rank 1 special case for fovs or iota. FIXME make Ptr a Slice with iter() -> Cell.
+// rank 1 special case for fovs or iota, both Iterator and Slice. FIXME replace by View
 
 template <class P, class N, class S>
 struct Ptr final
@@ -349,20 +349,20 @@ struct Ptr final
     static_assert(0<=nn || ANY==nn || UNB==nn);
 
     P cp;
-    [[no_unique_address]] N const n = {};
-    [[no_unique_address]] S const s = {};
-    // struct { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; } dimv[1];
-    constexpr Ptr(P p, N n, S s): cp(p), n(n), s(s)
+    [[no_unique_address]] struct { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; } dimv[1];
+    constexpr Ptr(P p, N n, S s): cp(p), dimv { n, s }
     {
         if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
     }
     RA_ASSIGNOPS_ITER(Ptr)
+    template <rank_t c=0> constexpr auto iter() const { static_assert(0==c); return *this; }
+    constexpr auto data() const { return cp; }
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; }
     constexpr static dim_t len(int k) requires (is_constant<N>) { return nn; }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return n; }
+    constexpr dim_t len(int k) const requires (!is_constant<N>) { return dimv[0].len; }
     constexpr static dim_t step(int k) requires (is_constant<S>) { return 0==k ? S {} : 0; }
-    constexpr dim_t step(int k) const requires (!is_constant<S>) { return 0==k ? s : 0; }
+    constexpr dim_t step(int k) const requires (!is_constant<S>) { return 0==k ? dimv[0].step : 0; }
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
@@ -401,7 +401,7 @@ constexpr auto
 reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
     static_assert(i.nn!=UNB, "Bad arguments to reverse(iota).");
-    return ptr(Seq { i.cp.i+(i.n-1)*i.s }, i.n, csub(ic<0>, i.s));
+    return ptr(Seq { i.cp.i+(i.dimv[0].len-1)*i.dimv[0].step }, i.dimv[0].len, csub(ic<0>, i.dimv[0].step));
 }
 
 constexpr auto

@@ -20,7 +20,11 @@ using ra::ilist_t, ra::mp::nil;
 template <class A>
 void
 test_predicates(char const * type, TestRecorder & tr,
-                bool ra, bool slice, bool iterator, bool scalar, bool fov)
+                std::optional<bool> ra,
+                std::optional<bool> slice,
+                std::optional<bool> iterator,
+                std::optional<bool> scalar,
+                std::optional<bool> fov)
 {
     constexpr int width = 70;
     std::string s = type;
@@ -48,11 +52,11 @@ test_predicates(char const * type, TestRecorder & tr,
          << (std::ranges::range<A> ? "range " : "")
          << (std::is_const_v<A> ? "const " : "")
          << (std::is_lvalue_reference_v<A> ? "ref " : "") << endl;
-    tr.quiet().info(type).info("ra").test_eq(ra, ra::is_ra<A>);
-    tr.quiet().info(type).info("slice").test_eq(slice, ra::Slice<A>);
-    tr.quiet().info(type).info("Iterator").test_eq(iterator, ra::Iterator<A>);
-    tr.quiet().info(type).info("scalar").test_eq(scalar, ra::is_scalar<A>);
-    tr.quiet().info(type).info("fov").test_eq(fov, ra::is_fov<A>);
+    if (ra) tr.quiet().info(type).info("ra").test_eq(ra.value(), ra::is_ra<A>);
+    if (slice) tr.quiet().info(type).info("slice").test_eq(slice.value(), ra::Slice<A>);
+    if (iterator) tr.quiet().info(type).info("Iterator").test_eq(iterator.value(), ra::Iterator<A>);
+    if (scalar) tr.quiet().info(type).info("scalar").test_eq(scalar.value(), ra::is_scalar<A>);
+    if (fov) tr.quiet().info(type).info("fov").test_eq(fov.value(), ra::is_fov<A>);
     tr.quiet().info(type).info("std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>);
 }
 
@@ -104,17 +108,18 @@ int main()
         TESTPRED(decltype(ra::Unique<int, 2>().iter()),
                  true, false, true, false, false);
         static_assert(ra::Iterator<decltype(ra::Unique<int, 2>().iter())>);
+// this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
         TESTPRED(decltype(ra::Unique<int, 1>().iter()) &,
-                 true, false, true, false, false);
+                 true, std::nullopt, true, false, false);
         TESTPRED(decltype(ra::iota(5)),
-                 true, false, true, false, false);
+                 true, true, true, false, false);
         TESTPRED(decltype(ra::iota<0>()),
-                 true, false, true, false, false);
+                 true, true, true, false, false);
 // is_iterator by RA_IS_DEF, but not Iterator, since it cannot be traversed.
         TESTPRED(decltype(ra::iota<0>()) const,
-                 true, false, false, false, false);
+                 true, true, false, false, false);
         TESTPRED(decltype(ra::iota<0>()) &,
-                 true, false, true, false, false);
+                 true, true, true, false, false);
         TESTPRED(decltype(std::declval<ra::Small<int, 2>>()),
                  true, true, false, false, false);
         TESTPRED(decltype(ra::Small<int, 2>().iter()),
@@ -129,8 +134,9 @@ int main()
                  true, false, true, false, false);
         TESTPRED(std::vector<int>,
                  false, false, false, false, true);
+// this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
         TESTPRED(decltype(ra::start(std::vector<int> {})),
-                 true, false, true, false, false);
+                 true, std::nullopt, true, false, false);
         TESTPRED(int *,
                  false, false, false, false, false);
         TESTPRED(decltype(std::ranges::iota_view(-5, 10)),

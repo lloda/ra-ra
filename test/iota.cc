@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Arrays, iterators.
 
-// (c) Daniel Llorens - 2013-2025
+// (c) Daniel Llorens - 2013-2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -37,7 +37,6 @@ int main()
     {
         ra::Big<int, 3> b ({3, 4, 2}, ra::none);
         transpose(b, {0, 2, 1}) = ra::iota(3, 1);
-        cout << b << endl;
         tr.test(every(b(0)==1));
         tr.test(every(b(1)==2));
         tr.test(every(b(2)==3));
@@ -45,7 +44,6 @@ int main()
     {
         ra::Big<int, 3> b ({3, 4, 2}, ra::none);
         transpose(b, ra::ilist_t<0, 2, 1>{}) = ra::iota(3, 1);
-        cout << b << endl;
         tr.test(every(b(0)==1));
         tr.test(every(b(1)==2));
         tr.test(every(b(2)==3));
@@ -76,11 +74,11 @@ int main()
     {
         tr.test_eq(sizeof(ra::iota().cp), sizeof(ra::dim_t));
         tr.test_eq(sizeof(ra::iota(4, 0, 2).cp), sizeof(0));
-        tr.test_eq(sizeof(ra::iota().cp), sizeof(ra::iota()));
-        tr.test_eq(sizeof(ra::iota().cp), sizeof(ra::iota(ra::dim_c<4> {})));
+        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().cp), sizeof(ra::iota()));
+        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().cp), sizeof(ra::iota(ra::dim_c<4> {})));
 // sizeof might still be > sizeof(i) + sizeof(n) because of alignment
-        tr.test_eq(1, decltype(ra::iota(4).s)::value);
-        tr.test_eq(sizeof(ra::iota(4, 0, 2)), sizeof(ra::iota(4, 0, 2).cp) + sizeof(ra::iota(4, 0, 2).n) + sizeof(ra::iota(4, 0, 2).s));
+        tr.test_eq(1, decltype(ra::iota(4).dimv[0].step)::value);
+        tr.test_eq(sizeof(ra::iota(4, 0, 2)), sizeof(ra::iota(4, 0, 2).cp) + sizeof(ra::iota(4, 0, 2).dimv[0].len) + sizeof(ra::iota(4, 0, 2).dimv[0].step));
     }
     tr.section("iota simulation with ptr(iota_view)");
     {
@@ -91,7 +89,7 @@ int main()
         auto i = ra::iota(ra::dim_c<5> {}, 3, ra::dim_c<-2> {});
         auto ri = reverse(i);
         static_assert(5==size(ri));
-        static_assert(2==ri.s);
+        static_assert(2==ri.dimv[0].step);
         tr.strict().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
     }
     {
@@ -113,8 +111,16 @@ int main()
     {
         auto i = ra::iota(3, 1, 2);
         auto j = -i;
-        tr.test_eq(-2, j.s);
+        tr.test_eq(-2, j.dimv[0].step);
         tr.strict().test_eq(ra::start({-1, -3, -5}), j);
+    }
+    tr.section("TODO view iota also gets optimized");
+    {
+        assert(ra::is_iota_any<decltype(ra::ii({3}))>);
+        assert(ra::is_iota_any<decltype(ra::iota(3, 1, 2))>);
+        cout << ra::opt(-ra::iota(3)).dimv[0].len << endl;
+// FIXME doesn't work because opt() works on Map and the leaves of that are Views' iterators which aren't is_iota_any, not the Views themselves which are.
+        // cout << ra::opt(-ra::ii({3})).dimv[0].len << endl;
     }
     tr.section("truncated sequence");
     {
