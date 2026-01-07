@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Overloads for expression templates, root header.
 
-// (c) Daniel Llorens - 2014-2025
+// (c) Daniel Llorens - 2014-2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -128,30 +128,28 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 
 constexpr decltype(auto) opt(auto && e) { return RA_FW(e); }
 
-// FIXME only reduces iota exprs as operated on in ra.hh (operators), not a tree like wlen() does.
-// It's simpler to iota+iota directly, but going through expr(+, iota, iota) handles agreement & wlen.
-template <class X> concept iota_op = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
+// FIXME only reduces exprs as operated on in ra.hh (operators), not a tree like wlen() does.
+// It's simpler to seqv+seqv directly, but going through expr(+, seqv, seqv) handles agreement & wlen.
+template <class X> concept seqvop = ra::is_ra_0<X> && std::is_integral_v<ncvalue_t<X>>;
+template <class X> concept seqv1 = ra::is_iota<X> && 1==rank_s<X>();
 
-// qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
 // FIXME p2781r2, handle & variants, handle view<seq> (not ptr) as iota.
-
-#define RA0 std::get<(0)>(e.t)
-#define RA1 std::get<(1)>(e.t)
-#define RA_IOTA_BINOP(OP, A, B, VAL) \
+#define RAI(i) std::get<(i)>(e.t)
+#define RA_BINOP_I(OP, A, B, VAL) \
     template <A I, B J> constexpr auto opt(Map<OP, std::tuple<I, J>> && e) { return VAL; }
-
-RA_IOTA_BINOP(std::plus<>,       is_iota, iota_op, ra::iota(RA0.dimv[0].len, RA0.cp.i+RA1, RA0.dimv[0].step))
-RA_IOTA_BINOP(std::plus<>,       iota_op, is_iota, ra::iota(RA1.dimv[0].len, RA0+RA1.cp.i, RA1.dimv[0].step))
-RA_IOTA_BINOP(std::plus<>,       is_iota, is_iota, ra::iota(clen(e, ic<0>), RA0.cp.i+RA1.cp.i, cadd(RA0.dimv[0].step, RA1.dimv[0].step)))
-RA_IOTA_BINOP(std::minus<>,      is_iota, iota_op, ra::iota(RA0.dimv[0].len, RA0.cp.i-RA1, RA0.dimv[0].step))
-RA_IOTA_BINOP(std::minus<>,      iota_op, is_iota, ra::iota(RA1.dimv[0].len, RA0-RA1.cp.i, csub(ic<0>, RA1.dimv[0].step)))
-RA_IOTA_BINOP(std::minus<>,      is_iota, is_iota, ra::iota(clen(e, ic<0>), RA0.cp.i-RA1.cp.i, csub(RA0.dimv[0].step, RA1.dimv[0].step)))
-RA_IOTA_BINOP(std::multiplies<>, is_iota, iota_op, ra::iota(RA0.dimv[0].len, RA0.cp.i*RA1, RA0.dimv[0].step*RA1))
-RA_IOTA_BINOP(std::multiplies<>, iota_op, is_iota, ra::iota(RA1.dimv[0].len, RA0*RA1.cp.i, RA0*RA1.dimv[0].step))
-#undef RA_IOTA_BINOP
+// qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
+RA_BINOP_I(std::plus<>,       seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).cp.i+RAI(1), RAI(0).dimv[0].step))
+RA_BINOP_I(std::plus<>,       seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)+RAI(1).cp.i, RAI(1).dimv[0].step))
+RA_BINOP_I(std::plus<>,       seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).cp.i+RAI(1).cp.i, cadd(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
+RA_BINOP_I(std::minus<>,      seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).cp.i-RAI(1), RAI(0).dimv[0].step))
+RA_BINOP_I(std::minus<>,      seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)-RAI(1).cp.i, csub(ic<0>, RAI(1).dimv[0].step)))
+RA_BINOP_I(std::minus<>,      seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).cp.i-RAI(1).cp.i, csub(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
+RA_BINOP_I(std::multiplies<>, seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).cp.i*RAI(1), RAI(0).dimv[0].step*RAI(1)))
+RA_BINOP_I(std::multiplies<>, seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)*RAI(1).cp.i, RAI(0)*RAI(1).dimv[0].step))
+#undef RA_BINOP_I
 
 template <is_iota I> constexpr auto
-opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RA0.dimv[0].len, -RA0.cp.i, csub(ic<0>, RA0.dimv[0].step)); }
+opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RAI(0).dimv[0].len, -RAI(0).cp.i, csub(ic<0>, RAI(0).dimv[0].step)); }
 
 #if RA_OPT_SMALL==1
 template <class T, dim_t N, class A> constexpr bool match_small =
@@ -163,29 +161,28 @@ template <class T, dim_t N, class A> constexpr bool match_small =
     constexpr auto opt(Map<NAME, std::tuple<A, B>> && e)                \
     {                                                                   \
         alignas (alignof(extvector<T, N>)) ra::Small<T, N> val;         \
-        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((RA0.c.cp)) OP *(extvector<T, N> *)((RA1.c.cp)); \
+        *(extvector<T, N> *)(&val) = *(extvector<T, N> *)((RAI(0).c.cp)) OP *(extvector<T, N> *)((RAI(1).c.cp)); \
         return val;                                                     \
     }
-#define RA_OPT_SMALL_OP_FUNS(T, N)                                \
+#define RA_OPT_SMALL_OP_FUNS(T, N)                                      \
     static_assert(0==alignof(ra::Small<T, N>) % alignof(extvector<T, N>)); \
-    RA_OPT_SMALL_OP(+, std::plus<>, T, N)                         \
-    RA_OPT_SMALL_OP(-, std::minus<>, T, N)                        \
-    RA_OPT_SMALL_OP(/, std::divides<>, T, N)                      \
+    RA_OPT_SMALL_OP(+, std::plus<>, T, N)                               \
+    RA_OPT_SMALL_OP(-, std::minus<>, T, N)                              \
+    RA_OPT_SMALL_OP(/, std::divides<>, T, N)                            \
     RA_OPT_SMALL_OP(*, std::multiplies<>, T, N)
-#define RA_OPT_SMALL_OP_TYPES(N)        \
-    RA_OPT_SMALL_OP_FUNS(float, N)      \
+#define RA_OPT_SMALL_OP_TYPES(N)                \
+    RA_OPT_SMALL_OP_FUNS(float, N)              \
     RA_OPT_SMALL_OP_FUNS(double, N)
 RA_FE(RA_OPT_SMALL_OP_TYPES, 2, 4, 8)
 #undef RA_OPT_SMALL_OP_TYPES
 #undef RA_OPT_SMALL_OP_FUNS
 #undef RA_OPT_SMALL_OP
 #endif // RA_OPT_SMALL
-#undef RA1
-#undef RA0
+#undef RAI
 
 
 // --------------------------------
-// Array versions of operators and functions.
+// Array version of operators and functions.
 // --------------------------------
 
 // We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit scalar conversion is also needed, and e.g. ra::View<complex, 0> * complex would fail.
@@ -201,7 +198,7 @@ RA_BINOP(|, std::bit_or<>)    RA_BINOP(&, std::bit_and<>)     RA_BINOP(!=, std::
 RA_BINOP(^, std::bit_xor<>)   RA_BINOP(%, std::modulus<>)     RA_BINOP(<=>, std::compare_three_way)
 #undef RA_BINOP
 
-// FIXME sanitizer complains in bench-optimize.cc with std::identity. Maybe false positive
+// FIXME sanitizer complains in bench-optimize.cc with std::identity. False positive?
 struct unaryplus
 {
     template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FW(t); }
@@ -216,35 +213,29 @@ RA_UNOP(+, unaryplus)         RA_UNOP(-, std::negate<>)       RA_UNOP(!, std::lo
 #undef RA_UNOP
 
 // if OP(a) isn't found in ra::, deduction rank(0) -> scalar doesn't work. TODO Cf useret.cc, reexported.cc
-#define RA_NAME(OP)                                                    \
+#define RA_NAME(OP)                                                     \
     template <class ... A> requires (tomap<A ...>) constexpr auto       \
         OP(A && ... a) { return map([](auto && ... a) -> decltype(auto) { return OP(RA_FW(a) ...); }, RA_FW(a) ...); } \
     template <class ... A> requires (toreduce<A ...>) constexpr decltype(auto) \
         OP(A && ... a) { return OP(VAL(RA_FW(a)) ...); }
-#define RA_FWD(QUALIFIED_OP, OP)                                    \
-    template <class ... A> /* requires neither */ constexpr decltype(auto) \
-        OP(A && ... a) { return QUALIFIED_OP(RA_FW(a) ...); }           \
-    RA_NAME(OP)
-#define RA_USING(QUALIFIED_OP, OP)          \
-    using QUALIFIED_OP; RA_NAME(OP)
-
 RA_FE(RA_NAME, odd, arg, sqr, sqrm, real_part, imag_part, xi, rel_error)
 
-// can't RA_USING bc std::max will gobble ra:: objects if passed by const & (!)
+// don't use RA_USING bc std::max will gobble ra:: objects if passed by const & (!)
 // FIXME define own global max/min overloads for basic types. std::max seems too much of a special case to be usinged.
-#define RA_GLOBAL(f) RA_FWD(::f, f)
-RA_FE(RA_GLOBAL, max, min)
-#undef RA_GLOBAL
-
-// don't use RA_FWD for these bc we want to allow ADL, e.g. for exp(dual).
-#define RA_GLOBAL(f) RA_USING(::f, f)
-RA_FE(RA_GLOBAL, pow, conj, sqrt, exp, expm1, log, log1p, log10, isfinite, isnan, isinf, atan2)
-RA_FE(RA_GLOBAL, abs, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan, clamp, lerp)
-RA_FE(RA_GLOBAL, fma)
-#undef RA_GLOBAL
-
-#undef RA_USING
+#define RA_FWD(OP)                                                      \
+    template <class ... A> constexpr decltype(auto)                     \
+        OP(A && ... a) { return ::OP(RA_FW(a) ...); }                   \
+    RA_NAME(OP)
+RA_FE(RA_FWD, max, min)
 #undef RA_FWD
+
+// don't use RA_FWD bc we want to allow ADL, e.g. for exp(dual).
+#define RA_USING(OP) using ::OP; RA_NAME(OP)
+RA_FE(RA_USING, pow, conj, sqrt, exp, expm1, log, log1p, log10, isfinite, isnan, isinf, atan2)
+RA_FE(RA_USING, abs, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan, clamp, lerp)
+RA_FE(RA_USING, fma)
+#undef RA_USING
+
 #undef RA_NAME
 
 template <class T> constexpr auto
@@ -308,7 +299,6 @@ constexpr auto operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<b
 #define RA_BINOP_SHORT(OP)                                              \
     template <class A, class B> requires (toreduce<A, B>)               \
     constexpr auto operator OP(A && a, B && b) { return VAL(a) OP VAL(b);  }
-
 RA_FE(RA_BINOP_SHORT, &&, ||)
 #undef RA_BINOP_SHORT
 
@@ -446,7 +436,6 @@ normv(auto const & a)
 }
 
 // FIXME benchmark w/o allocation and do Small/Big versions if it's worth it (see bench-gemm.cc)
-
 constexpr void
 gemm(auto const & a, auto const & b, auto & c)
 {
@@ -508,7 +497,7 @@ binom(std::size_t n, std::size_t p)
     return v;
 }
 
-// Form the basis for the result (Cr) and split it in pieces for Oa and Ob; there are (D over Oa) ways. Then see where and with which signs these pieces are in the bases for Oa (Ca) and Ob (Cb), and form the product.
+// Form basis for result (Cr) and split it in pieces for Oa and Ob; there are (D over Oa) ways. Then see where and with which signs these pieces are in the bases for Oa (Ca) and Ob (Cb) to form the product.
 template <int D, int Oa, int Ob>
 struct Wedge
 {
@@ -559,7 +548,7 @@ struct Wedge
     }
 };
 
-// Euclidean space, only component shuffling.
+// Euclidean signature, only component shuffling.
 template <int D, int O>
 struct Hodge
 {

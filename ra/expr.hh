@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra - Expression templates with prefix matching.
 
-// (c) Daniel Llorens - 2011-2025
+// (c) Daniel Llorens - 2011-2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -38,7 +38,7 @@
         }                                                               \
     }
   #else
-    #error Bad value for RA_CHECK
+    #error Bad RA_CHECK
   #endif
 #endif
 #define RA_AFTER_CHECK Yes
@@ -107,7 +107,7 @@ cadd(A a, B b) { if constexpr (is_constant<A> && is_constant<B>) return ic<a+b>;
 template <class A, class B> constexpr auto
 csub(A a, B b) { if constexpr (is_constant<A> && is_constant<B>) return ic<a-b>; else return a-b; }
 
-// Sequence iterator.
+// Sequence iterator (as in std::).
 
 template <class I=dim_t>
 struct Seq
@@ -156,7 +156,7 @@ struct Scalar final
 template <class C> constexpr auto
 scalar(C && c) { return Scalar<C> { RA_FW(c) }; }
 
-// Making iterators (start).
+// Making Iterators (start).
 
 constexpr auto start(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
 
@@ -203,7 +203,7 @@ to_scalar(auto && e)
 
 
 // --------------------
-// View iterators.
+// View Iterators.
 // --------------------
 
 constexpr auto
@@ -337,7 +337,7 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
 #pragma GCC diagnostic pop
 };
 
-// rank 1 special case for fovs or iota, both Iterator and Slice. FIXME replace by View
+// rank 1 special case for fovs or iota, both Iterator and Slice. FIXME replace with View
 
 template <class P, class N, class S>
 struct Ptr final

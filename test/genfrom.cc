@@ -376,14 +376,14 @@ int main()
     tr.section("regular iota is a slice");
     {
         auto a0 = ra::ii({7});
-        auto b1 = ra::iota(6);
+        auto b1 = ra::iota(5, 1);
         println(cout, "a0 {:l} b1 {:l}", a0, b1);
         println(cout, "a0(b1) {:l}", from(a0, b1));
-        tr.test_eq(0, from(a0, b1).cp.i);
+        tr.test_eq(1, from(a0, b1).cp.i);
         auto b0 = ra::iota(7);
-        auto a1 = ra::ii({6});
+        auto a1 = ra::ii({5}, {1});
         println(cout, "b0(a1) {:l}", from(b0, a1));
-        tr.test_eq(0, from(b0, a1).cp.i);
+        tr.test_eq(1, from(b0, a1).cp.i);
     }
     return tr.summary();
 }

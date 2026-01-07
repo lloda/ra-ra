@@ -9,7 +9,7 @@
 
 #define RA_OPT // disable so we can compare with (forced) and without
 #ifndef RA_OPT_SMALL // test is for 1; forcing 0 skips that part of the test.
-#define RA_OPT_SMALL 1
+  #define RA_OPT_SMALL 1
 #endif
 
 #include "ra/test.hh"
@@ -64,8 +64,8 @@ int main()
     }
     tr.section("iota ops, plus");
     {
-        static_assert(ra::iota_op<ra::Scalar<int>>);
-        static_assert(ra::is_iota<decltype(ra::iota(10, long(10)))>);
+        static_assert(ra::seqvop<ra::Scalar<int>>);
+        static_assert(ra::seqv1<decltype(ra::iota(10, long(10)))>);
         auto test = [&tr](auto && org)
         {
             auto i = ra::iota(5, org);

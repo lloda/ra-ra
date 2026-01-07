@@ -1,4 +1,4 @@
-name: gcc-14 -fno-sanitize=all
+name: gcc-14 no sanitizers
 
 on:
   push:

@@ -86,7 +86,7 @@ Please see the TODO file for a concrete list of known issues.
 
 #### Motivation
 
-I do numerical work in C++, and I need support for array operations. The built-in array types that C++ inherits from C are very insufficient, so at the time of C++11 when I started writing **ra-ra**, a number of libraries where already available. However, most of these libraries seemed to support only vectors and matrices, or small objects for vector algebra.
+I do numerical work in C++, and I need support for array operations. The built-in array types that C++ inherits from C are very insufficient, so at the time of C++11 when I started writing **ra-ra**, a number of libraries were already available. However, most of these libraries seemed to support only vectors and matrices, or small objects for vector algebra.
 
 Blitz++ was a major inspiration as an early *generic* library. But it was a heroic feat to write such a library in C++ in the late 90s. Variadic templates, lambdas, perfect forwarding, etc. make things much easier, for the library writer as well as for the user.
 

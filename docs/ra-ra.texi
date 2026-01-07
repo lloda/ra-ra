@@ -208,7 +208,7 @@ In C++, a library is enough.
 @c @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
 Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{ViewSmall}, even though you could do it on a @code{View}; this was a bug.
+Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{ViewSmall}, even though you could do it on a @code{ViewBig}; this was a bug.
 
 Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view @code{B} into view @code{A}. To change view @code{A} instead (to treat @code{A} as a pointer) would be the default meaning of @code{A=B} for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
 
@@ -484,8 +484,8 @@ Views can point to anywhere in memory and that memory doesn't have to belong to 
 @example
 @verbatim
 int raw[6] = {1, 2, 3, 4, 5, 6};
-ra::View<int> v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] steps [3, 1]
-ra::View<int> v2({2, 3}, raw);           // same, default C (row-major) steps
+ra::ViewBig<int *> v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] steps [3, 1]
+ra::ViewBig<int *> v2({2, 3}, raw);           // same, default C (row-major) steps
 @end verbatim
 @end example
 
@@ -493,17 +493,30 @@ Containers can be treated as views of the same kind, that is, if you declare a f
 
 @example
 @verbatim
-void f(ra::View<int, 3> & v);
+void f(ra::ViewBig<int *, 3> & v);
 @end verbatim
 @end example
 
 you may pass it an object of type @code{ra::Big<int, 3>}.
 
+It's not normally necessary to create view objects explicitly. Instead, one creates them from containers or other views through operations such as @ref{Slicing,slicing}.
+
 @node Sequence views
 @subsection Sequence views
 
-Generally, views are views over memory, and @code{view.data()} is a pointer to memory; specifically, the location of element @code{view(0, ...)}. However, it's possible to have views over the integer sequence @code{... -1, 0, 1, ...}. These views are read-only. The object produced by @ref{x-iota,iota} is of this kind. These objects can be used as any other view, but are especially useful when @ref{Slicing,slicing}.
+Most views are views over memory, and @code{view.data()} is a pointer to memory; specifically, the location of element @code{view(0, ...)}. However, it's possible to have views over the integer sequence @code{... -1, 0, 1, ...}.
 
+@example
+@verbatim
+ra::ViewBig<ra::Seq<int>, 2> a({3, 2}, ra::Seq {1});
+std::println(cout, "{:c:2}\n", transpose(a));
+@end verbatim
+@print{}
+@{@{ 1,  3,  5@},
+ @{ 2,  4,  6@}@}
+@end example
+
+These views are read-only. They can be used as any other view, but are especially useful when @ref{Slicing,slicing}. The object produced by @ref{x-iota,iota} is of this kind. Just like with memory views, normally one doesn't create sequence views directly, but by manipulating the result of @code{iota} instead.
 
 @c ------------------------------------------------
 @node Array operations
@@ -787,13 +800,13 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 
 This supports the notion (@pxref{Rank polymorphism}) that a 3-array is also an 2-array where the elements are 1-arrays themselves, or a 1-array where the elements are 2-arrays. This important property is directly related to the mechanism of rank extension (@pxref{Rank extension}).
 
-Besides, when the subscripts @code{i, j, ...} are scalars or integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))} (@dfn{linear ranges}), the subscripting can be performed inmediately at constant cost, and without needing to construct an expression object. This optimization is called @ref{Drag along and beating,@dfn{beating}}.
+Besides, when the subscripts @code{i, j, ...} are scalars or integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}, the subscripting can be performed inmediately at constant cost, and without needing to construct an expression object. This optimization is called @ref{Drag along and beating,@dfn{beating}}.
 
-@code{ra::} isn't smart enough to know when an arbitrary expression might be a linear range, so the following special objects are provided:
+@code{ra::} isn't smart enough to know when an arbitrary expression might be a integer sequence of the appropriate form, so it has a special type for those, the @ref{Sequence views,sequence view}. The following function creates a rank-1 sequence view:
 
 @anchor{x-iota}
 @deffn @w{Special object} iota count [start:0 [step:1]]
-Create a linear range @code{start, start+step, ... start+step*(count-1)}.
+Create a rank-1 sequence view @code{start, start+step, ... start+step*(count-1)}.
 
 This can used anywhere an array expression is expected.
 
@@ -804,7 +817,7 @@ ra::Big<int, 1> a = ra::iota(4, 3 -2);
 @result{} a = @{3, 1, -1, -3@}
 @end example
 
-Here, @code{b} and @code{c} are @code{View}s (@pxref{Containers and views}).
+Here, @code{b} and @code{c} are @code{ViewBig}s (@pxref{Containers and views}).
 @example
 @verbatim
 ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
@@ -831,12 +844,12 @@ cout << (a + ra::_0 - ra::_1) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
 @end verbatim
 @end example
 
-When undefined length @code{iota()} is used as a subscript by itself, the result isn't a @code{View}. This allows @code{view(iota())} to match with expressions of different lengths, as in the following example.
+When undefined length @code{iota()} is used as a subscript by itself, the result isn't a view. This allows @code{view(iota())} to match with expressions of different lengths, as in the following example.
 @example
 @verbatim
 ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
 ra::Big<int, 1> b = {1, 2, 3};
-cout << (b + a(iota())) << endl; // a(iota()) is not a View
+cout << (b + a(iota())) << endl; // a(iota()) is not a view
 @end verbatim
 @print{} 3
 2 4 6
@@ -854,9 +867,9 @@ an expression of rank 1, representing the sequence @code{0, 1, 2}.
 
 @anchor{x-all}
 @deffn @w{Special object} all
-Create a linear range @code{0, 1, ... (nᵢ-1)} when used as a subscript at the @var{i}-th place of a subscripting expression. This might not be the @var{i}-th argument; see @ref{x-insert,@code{insert}}, @ref{x-dots,@code{dots}}.
+Create a linear sequence @code{0, 1, ... (nᵢ-1)} when used as a subscript at the @var{i}-th place of a subscripting expression. This might not be the @var{i}-th argument; see @ref{x-insert,@code{insert}}, @ref{x-dots,@code{dots}}.
 
-This object cannot stand alone as an array expression. All the examples below result in @code{View} objects:
+This object cannot stand alone as an array expression. All the examples below result in views:
 
 @example
 @verbatim
@@ -881,7 +894,7 @@ Equivalent to as many instances of @code{ra::all} as indicated by @code{n}, whic
 
 If @var{n} is defaulted (@code{dots<>}), all available places will be used; this can only be done once in a given subscript list.
 
-This object cannot stand alone as an array expression. All the examples below result in @code{View} objects:
+This object cannot stand alone as an array expression. All the examples below result in views:
 
 @example
 @verbatim
@@ -914,7 +927,7 @@ This is useful when writing rank-generic code, see @code{examples/maxwell.cc} in
 
 @end deffn
 
-The following special objects aren't related to linear ranges, but they are meant to be used in a subscript context. Using them in other contexts will result in a compile time error.
+The following special objects aren't related to linear sequences, but they are meant to be used in a subscript context. Using them in other contexts will result in a compile time error.
 
 @cindex @code{len}
 @cindex @code{end}, Octave/Matlab
@@ -951,7 +964,7 @@ auto b1 = b(ra::insert<1>, ra::len-1); // ra::len is a.len(0)
 @deffn @w{Special object} insert<n>
 Inserts @code{n} new axes at the subscript position. @code{n} must not be negative.
 
-The new axes have step 0 and undefined length, so they will match any length on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in @code{View} objects:
+The new axes have step 0 and undefined length, so they will match any length on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in views:
 
 @example
 @verbatim
@@ -981,7 +994,7 @@ cout << x(ra::all, ra::insert<2>) * a(insert<1>) << endl;
 
 @end deffn
 
-We were speaking earlier of the outer product of the subscripts with operator @code{A}. Here's a way to perform the actual outer product (with operator @code{*}) of two @code{Views}, through broadcasting. All three lines are equivalent. See @ref{x-from,@code{from}} for a more general way to compute outer products.
+We were speaking earlier of the outer product of the subscripts with operator @code{A}. Here's a way to perform the actual outer product (with operator @code{*}) of two views, through broadcasting. All three lines are equivalent. See @ref{x-from,@code{from}} for a more general way to compute outer products.
 @example
 @verbatim
 cout << (A(ra::dots<A.rank()>, ra::insert<B.rank()>) * B(ra::insert<A.rank()>, ra::dots<B.rank()>)) << endl;
@@ -1005,16 +1018,16 @@ Big<T, 2> a({2, 3}, 0); // ct rank
 Big<T> b({2, 3}, 0); // rt rank
 
 cout << a(0, 0).real_part() << endl; // ok, a(0, 0) returns complex &
-// cout << b(0, 0).real_part() << endl; // error, View<T> has no member real_part
+// cout << b(0, 0).real_part() << endl; // error, ViewBig<T *> has no member real_part
 cout << ((T &)(b(0, 0))).real_part() << endl; // ok, manual conversion to T &
 
-cout << f(b(0, 0)) << endl; // ok, automatic conversion from View<T> to T &
+cout << f(b(0, 0)) << endl; // ok, automatic conversion from ViewBig<T *> to T &
 // cout << f(a(0)) << endl; // compile time error, conversion failed since ct rank of a(0) is not 0
 // cout << f(b(0)) << endl; // runtime error, conversion failed since rt rank of b(0) is not 0
 @end verbatim
 @end example
 
-Generally, the result of @code{A(i, ...)} when @code{A} is a view, or equivalently @code{@ref{x-from,@code{from}}(A, i ...)}, is itself be a view when
+The result of @code{A(i, ...)} when @code{A} is a view, or equivalently @code{@ref{x-from,@code{from}}(A, i ...)}, is itself be a view when
 @itemize
 @item
 each of the @code{i ...} is @emph{beatable}, that is, either
@@ -1439,7 +1452,7 @@ Here @code{cs} applies to @code{Big}, @code{p} applies to @code{Small}, and @cod
 
 @cindex foreign type
 @anchor{x-foreign-type}
-@code{ra::} accepts certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Generally it is enough to mix the foreign type with a type from @code{ra::} and let deduction work.
+@code{ra::} accepts certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Most of the time it is enough to mix the foreign type with a type from @code{ra::} and let deduction work.
 
 @example
 @verbatim
@@ -1539,7 +1552,7 @@ For @ref{Containers and views,containers}, @code{ra::} @code{begin}/@code{end}/@
 @example @c [ma106]
 @verbatim
 ra::Big<int> x {3, 2, 1}; // x is a Container
-auto y = x(); // y is a View on x
+auto y = x(); // y is a view on x
 // std::sort(ra::begin(y), ra::end(y)); // error: begin(y) is not std::random_access_iterator
 std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major order
 @end verbatim
@@ -1589,7 +1602,7 @@ using complex = std::complex<double>;
 static_assert(sizeof(complex)==sizeof(fftw_complex));
 
 // forward DFT over the last r axes of a -> b
-void fftw(int r, ra::View<complex> const a, ra::View<complex> b)
+void fftw(int r, ra::ViewBig<complex *> const a, ra::ViewBig<complex *> b)
 {
     int const rank = a.rank();
     assert(r>0 && r<=rank);
@@ -1643,7 +1656,7 @@ Translating array descriptors from a foreign language should be fairly simple. F
 @cindex Python
 Numpy's C API has the type @url{https://docs.scipy.org/doc/numpy/reference/c-api.array.html,@code{PyArrayObject}} which can be used in the same way as Guile's @code{scm_t_array_handle} in the example above.
 
-It is usually simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has @url{https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector,@code{scm_take_xxx}}).
+It is simpler to let the foreign language handle the memory, even though there should be ways to transfer ownership (e.g. Guile has @url{https://www.gnu.org/software/guile/manual/html_node/SRFI_002d4-API.html#index-scm_005ftake_005ff64vector,@code{scm_take_xxx}}).
 
 @subsubsection The bad array citizen
 
@@ -1797,7 +1810,7 @@ They work as follows:
 
 @code{ra::} contains uses of @code{assert} for checking invariants or for sanity checks that are separate from uses of @code{RA_ASSERT}. Those can be disabled in the usual way with @option{-DNDEBUG}, but note that @option{-DNDEBUG} will also disable any @code{assert}s that are a result of @code{RA_CHECK=1}.
 
-The performance cost of the runtime checks depends on the program. Without custom @code{RA_ASSERT}, @code{RA_CHECK=1} usually has an acceptable cost, but @code{RA_CHECK=2} can be more expensive, because keeping the arguments around so they can be printed can prevent optimization. The default is @code{RA_CHECK=1}.
+The performance cost of the runtime checks depends on the program. Without custom @code{RA_ASSERT}, @code{RA_CHECK=1} is usually cheap, but @code{RA_CHECK=2} can be more expensive, because keeping the arguments around so they can be printed can prevent optimization. The default is @code{RA_CHECK=1}.
 
 The following example shows how errors might be reported depending on @code{RA_CHECK}.
 
@@ -1859,12 +1872,10 @@ cout << B(ll, ll) << endl; // ??
 FIXME
 With runtime-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream @code{>>} container may work; do not rely on it.
 
-@section View of const vs const view
+@section Passing view arguments by reference
 
 @c FIXME
-
 FIXME
-Passing view arguments by reference
 
 @section Rank extension in assignments
 
@@ -1932,7 +1943,7 @@ When @code{a=b=c} works, it operates as @code{b=c; a=b;} and not as an array exp
 @section Unregistered scalar types
 
 FIXME
-@code{View<T, N> x; x = T()} fails if @code{T} isn't registered as @code{is_scalar}.
+@code{ViewBig<T *, N> x(...); x = T()} fails if @code{T} isn't registered as @code{is_scalar}.
 
 @enumerate
 @item
@@ -2300,7 +2311,7 @@ In this example, a 2-rank view of scalars is converted to a 1-rank view of 3-vec
 @example
 @verbatim
     ra::Big<int, 2> A({2, 3}, ra::_0 - ra::_1);
-    ra::ViewBig<std::Small<int, 3>, 1> B = ra::explode<ra::Small<int, 3>>(A);
+    ra::ViewBig<std::Small<int, 3> *, 1> B = ra::explode<ra::Small<int, 3>>(A);
     std::println(cout, "A:\n{:p}\nB:\n{:p:l}", A, B);
 @end verbatim
   @print{}
@@ -2330,7 +2341,7 @@ B:
     using real = double;
     using complex = std::complex<double>;
     ra::Big<real, 3> A({2, 3, 2}, ra::_0 - ra::_1 + ra::_2);
-    ra::ViewBig<complex, 2> B = ra::explode<complex>(A);
+    ra::ViewBig<complex *, 2> B = ra::explode<complex>(A);
     std::println(cout, "A:\n{:p}\nB:\n{:p}", A, B);
 @end verbatim
   @print{}
