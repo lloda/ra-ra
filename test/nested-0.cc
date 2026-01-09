@@ -49,7 +49,7 @@ int main()
 // The problem with a(ra::all, i) here is that we probably want to leave the iteration on ra::all for last. Otherwise the indexing is redone for each rank-1 cell.
         Vec<int> i = {0, 3, 1, 2};
         Array<double, 2> a({4, 4}, ra::_0-ra::_1);
-        Array<double, 2> b = from([](auto && a, auto && i) -> decltype(auto) { return a(i); }, a.iter<1>(), start(i));
+        Array<double, 2> b = from([](auto && a, auto && i) -> decltype(auto) { return a(i); }, a.iter<1>(), ra::iter(i));
         tr.test_eq(a(0, i), b(0));
         tr.test_eq(a(1, i), b(1));
         tr.test_eq(a(2, i), b(2));

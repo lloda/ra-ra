@@ -49,7 +49,7 @@ main()
     {
         ra::Small<int, 2, 3, 4> a = (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1);
         ra::Small<int, 2, 3, 4, 5> b = (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1);
-#define MAP map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
+#define MAP map_([](auto && a, auto && b) { return a+b; }, ra::iter(a), ra::iter(b))
         tr.test_eq(4, MAP.rank());
         tr.test_eq(b.len(0), MAP.len(0));
         tr.test_eq(b.len(1), MAP.len(1));
@@ -69,7 +69,7 @@ main()
         ra::Small<int, 2, 3, 4> a = (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1);
         ra::Small<int, 2, 4, 4, 5> b = (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1);
 // properly fails to compile, which we cannot check at present [ra42]
-// #define MAP map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
+// #define MAP map_([](auto && a, auto && b) { return a+b; }, ra::iter(a), ra::iter(b))
 //         tr.test_eq(2*3*4*5, ra::size_s<decltype(MAP)>());
 //         tr.test_eq(3, MAP.len_s(1));
 // #undef MAP
@@ -80,7 +80,7 @@ main()
     {
         ra::Big<int, 3> a({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));
         ra::Big<int, 4> b({2, 3, 4, 5}, (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1));
-#define MAP map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
+#define MAP map_([](auto && a, auto && b) { return a+b; }, ra::iter(a), ra::iter(b))
         tr.test_eq(4, MAP.rank());
         tr.test_eq(b.len(0), MAP.len(0));
         tr.test_eq(b.len(1), MAP.len(1));
@@ -120,7 +120,7 @@ main()
         ra::Big<int> ad({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));
         ra::Big<int, 4> bs({2, 3, 4, 5}, (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1));
         ra::Big<int> bd({2, 3, 4, 5}, (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1));
-#define MAP(a, b) map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
+#define MAP(a, b) map_([](auto && a, auto && b) { return a+b; }, ra::iter(a), ra::iter(b))
         auto test = [&tr](auto tag, auto && a, auto && b)
                     {
                         tr.section(tag);
@@ -147,7 +147,7 @@ main()
     {
         ra::Big<int, 3> a({2, 3, 4}, (ra::_0+1)*100 + (ra::_1+1)*10 + (ra::_2+1));
         auto b = a(ra::all, ra::insert<1>, ra::iota(4, 0, 0));
-#define MAP(a, b) map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
+#define MAP(a, b) map_([](auto && a, auto && b) { return a+b; }, ra::iter(a), ra::iter(b))
         tr.test_eq(4, MAP(a, b).rank());
         tr.test_eq(b.len(0), MAP(a, b).len(0));
         tr.test_eq(a.len(1), MAP(a, b).len(1));
@@ -176,8 +176,8 @@ main()
     {
         ra::Big<int, 2> a({4, 3}, 10*ra::_1+100*ra::_0);
         ra::Big<int, 1> b({5}, ra::_0);
-        cout << ra::start(ra::shape(from([](auto && a, auto && b) { return a-b; }, a, b))) << endl;
-#define MAP(a, b) map_([](auto && a, auto && b) { return a-b; }, start(a(ra::dots<2>, ra::insert<1>)), start(b(ra::insert<2>, ra::dots<1>)))
+        cout << ra::iter(ra::shape(from([](auto && a, auto && b) { return a-b; }, a, b))) << endl;
+#define MAP(a, b) map_([](auto && a, auto && b) { return a-b; }, ra::iter(a(ra::dots<2>, ra::insert<1>)), ra::iter(b(ra::insert<2>, ra::dots<1>)))
         tr.test_eq(3, ra::rank_s<decltype(MAP(a, b))>());
         tr.test_eq(ra::ANY, MAP(a, b).len_s(0));
         tr.test_eq(ra::ANY, MAP(a, b).len_s(1));
@@ -192,7 +192,7 @@ main()
     tr.section("Map has operatorX=");
     {
         ra::Big<int, 2> a({4, 3}, 10*ra::_1+100*ra::_0);
-        map_([](auto & a) -> decltype(auto) { return a; }, start(a)) += 1;
+        map_([](auto & a) -> decltype(auto) { return a; }, ra::iter(a)) += 1;
         tr.test_eq(10*ra::_1 + 100*ra::_0 + 1, a);
     }
     tr.section("Compat with old Map, from ra-0.cc");
@@ -200,7 +200,7 @@ main()
         int p[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
         int * pp = &p[0]; // force pointer decay in case we ever enforce p's shape
         ra::ViewBig<int *> d(ra::pack<ra::Dim>(ra::Small<int, 3> {5, 1, 2}, ra::Small<int, 3> {1, 0, 5}), pp);
-#define MAP map_([](auto && a, auto && b) { return a==b; }, ra::_0*1 + ra::_1*0 + ra::_2*5 + 1, start(d))
+#define MAP map_([](auto && a, auto && b) { return a==b; }, ra::_0*1 + ra::_1*0 + ra::_2*5 + 1, ra::iter(d))
         tr.test(every(MAP));
         auto x = MAP;
         static_assert(ra::ANY==ra::size_s<decltype(x)>());

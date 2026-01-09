@@ -37,7 +37,7 @@ int main()
     ra::Big<int, 1> z = pick(where(x<0, 0, where(x==0, 1, 2)), x*3, 77, x*2);
 
     TestRecorder tr(std::cout, TestRecorder::NOISY);
-    tr.test_eq(ra::start({7, -12, -11, -10, -9, -8, 13}), y);
-    tr.test_eq(ra::start({-9, -6, -3, 77, 2, 4, 6}), z);
+    tr.test_eq(ra::iter({7, -12, -11, -10, -9, -8, 13}), y);
+    tr.test_eq(ra::iter({-9, -6, -3, 77, 2, 4, 6}), z);
     return tr.summary();
 }

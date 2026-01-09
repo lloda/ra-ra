@@ -28,7 +28,7 @@ int main()
             ply_ravel(ra::map_([](ra::ViewBig<real *, 1> const & x) { cout << x << endl; }, i));
         }
     }
-#define ARGa iter<1>(a)
+#define ARGa ra::iter<1>(a)
 #define ARGi ra::Small<int, 4> {1, 2, 3, 4}.iter()
 #define ARGd dump.iter()
     tr.section("ply on cell rank > 0");
@@ -164,7 +164,7 @@ int main()
     tr.section("FIXME ply_ravel with CellBig on VAR_RANK array [ra40]");
     {
         ra::Big<int> ad({5, 2}, ra::_0 - ra::_1);
-        auto ii = iter<1>(ad);
+        auto ii = ra::iter<1>(ad);
         auto ee = map([&](auto && a) { tr.test_eq(1, a.rank()); }, ii);
         ply(ee);
     }

@@ -233,7 +233,7 @@ struct STLIterator
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;
 
-constexpr auto begin(is_ra auto && a) { return STLIterator(ra::start(RA_FW(a))); }
+constexpr auto begin(is_ra auto && a) { return STLIterator(ra::iter(RA_FW(a))); }
 constexpr auto end(is_ra auto && a) { return std::default_sentinel; }
 constexpr auto range(is_ra auto && a) { return std::ranges::subrange(ra::begin(RA_FW(a)), std::default_sentinel); }
 
@@ -293,7 +293,7 @@ inline std::istream &
 operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
-        RA_CK(every(start(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
+        RA_CK(every(iter(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
         C cc(s, ra::none);
         swap(c, cc);
         for (auto & ci: c) { i >> ci; }
@@ -340,14 +340,14 @@ struct std::formatter<A>
     constexpr auto
     format(A const & a_, auto & ctx, ra::format_t const & fmt) const
     {
-        auto a = ra::start(a_);
+        auto a = ra::iter(a_);
         validate(a);
         auto sha = ra::shape(a);
         for (int k=0; k<ra::size(sha); ++k) { assert(sha[k]>=0); } // no ops yet
         auto out = ctx.out();
 // always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
         if (fmt.shape==ra::withshape || (fmt.shape==ra::defaultshape && size_s(a)==ra::ANY)) {
-            out = std::format_to(out, "{:d}\n", ra::start(sha));
+            out = std::format_to(out, "{:d}\n", ra::iter(sha));
         }
         ra::rank_t const rank = ra::rank(a);
         auto goin = [&](int k, auto & goin) -> void
@@ -391,7 +391,7 @@ struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
     constexpr auto
     format(ra::Fmt<A> const & f, auto & ctx) const
     {
-        return std::formatter<decltype(ra::start(f.a))>().format(ra::start(f.a), ctx, f.f);
+        return std::formatter<decltype(ra::iter(f.a))>().format(ra::iter(f.a), ctx, f.f);
     }
 };
 

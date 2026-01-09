@@ -1068,7 +1068,7 @@ EOF
 	exit ;;
     i*86:UNIX_SV:4.2MP:2.*)
 	# Unixware is an offshoot of SVR4, but it has its own version
-	# number series starting with 2...
+	# number series itering with 2...
 	# I am not positive that other SVR4 systems won't match this,
 	# I just have to hope.  -- rms.
 	# Use sysv4.2uw... so that sysv4* matches it.
@@ -1480,7 +1480,7 @@ exit 1
 
 # Local variables:
 # eval: (add-hook 'before-save-hook 'time-stamp)
-# time-stamp-start: "timestamp='"
+# time-stamp-iter: "timestamp='"
 # time-stamp-format: "%:y-%02m-%02d"
 # time-stamp-end: "'"
 # End:

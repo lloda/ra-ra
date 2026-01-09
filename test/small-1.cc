@@ -447,12 +447,12 @@ int main()
     {
         ra::Small<int, 3> s {1, 2, 3};
         s.iter() += 9;
-        tr.test_eq(ra::start({10, 11, 12}), s);
+        tr.test_eq(ra::iter({10, 11, 12}), s);
     }
     tr.section("deduction guides");
     {
         ra::SmallArray a {1, 2, 3}; // FIXME the deduction guide can't work for ra::Small
-        tr.test_eq(ra::start({1, 2, 3}), a);
+        tr.test_eq(ra::iter({1, 2, 3}), a);
     }
     tr.section("multidimensional []");
     {

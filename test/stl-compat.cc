@@ -64,7 +64,7 @@ int main()
     {
         ra::Big<int, 1> a = {1, 2, 3};
         ra::ptr(a.data()) = map([](auto const & a) { return -a; }, ra::iota(3, 1, 9));
-        tr.test_eq(ra::start({-1, -10, -19}), a);
+        tr.test_eq(ra::iter({-1, -10, -19}), a);
     }
     tr.section("ptr with other iterators");
     {
@@ -83,7 +83,7 @@ int main()
         char const * s = "hello";
         auto p = ra::ptr(s, std::integral_constant<int, 2> {});
         static_assert(2==ra::size(p)); // ok
-        tr.test_eq(ra::start({'h', 'e'}), p);
+        tr.test_eq(ra::iter({'h', 'e'}), p);
     }
     tr.section("check that begin() and end() match for empty views");
     {
@@ -94,8 +94,8 @@ int main()
     }
     tr.section("foreign vectors from std::");
     {
-        tr.info("adapted std::array has static size").test_eq(3, size_s(ra::start(std::array {1, 2, 0})));
-        tr.info("adapted std::vector has dynamic size").test_eq(ra::ANY, ra::size_s<decltype(ra::start(std::vector {1, 2, 0}))>());
+        tr.info("adapted std::array has static size").test_eq(3, size_s(ra::iter(std::array {1, 2, 0})));
+        tr.info("adapted std::vector has dynamic size").test_eq(ra::ANY, ra::size_s<decltype(ra::iter(std::vector {1, 2, 0}))>());
     }
     tr.section("std::string");
     {
@@ -106,9 +106,9 @@ int main()
     }
     tr.section("other std::ranges");
     {
-        tr.test_eq(15, size(ra::start(std::ranges::iota_view(-5, 10))));
+        tr.test_eq(15, size(ra::iter(std::ranges::iota_view(-5, 10))));
         tr.info("adapted std::ranges::iota_view has dynamic size")
-            .test_eq(ra::ANY, size_s(ra::start(std::ranges::iota_view(-5, 10))));
+            .test_eq(ra::ANY, size_s(ra::iter(std::ranges::iota_view(-5, 10))));
         tr.test_eq(ra::iota(15, -5), std::ranges::iota_view(-5, 10));
     }
     tr.section("STL predicates");
@@ -155,12 +155,12 @@ int main()
         ra::Big<char, 1> const & B = A;
         tr.test_seq(ra::begin(A), ra::begin(B));
         std::sort(ra::begin(A), ra::end(A));
-        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
+        tr.test_eq(ra::iter({'x', 'y', 'z'}), A);
     }
     {
         ra::Big<char, 1> A = {'x', 'z', 'y'};
         std::ranges::sort(ra::range(A));
-        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
+        tr.test_eq(ra::iter({'x', 'y', 'z'}), A);
     }
     tr.section("std::span");
     {

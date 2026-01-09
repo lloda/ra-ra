@@ -156,35 +156,28 @@ struct Scalar final
 template <class C> constexpr auto
 scalar(C && c) { return Scalar<C> { RA_FW(c) }; }
 
-// Making Iterators (start).
+// Making Iterators
 
-constexpr auto start(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
-
+constexpr auto iter(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
 // iterators need resetting on each use [ra35].
-constexpr auto start(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
-
-constexpr decltype(auto) start(is_iterator auto && a) { return RA_FW(a); }
-
+constexpr auto iter(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
+constexpr decltype(auto) iter(is_iterator auto && a) { return RA_FW(a); }
 // Cell doesn't retain rvalues [ra4]. If Slice is also iterator (Ptr), go as the latter.
-constexpr auto start(Slice auto && a) requires (!is_iterator<std::decay_t<decltype(a)>>) { return RA_FW(a).iter(); }
-
-// TODO arbitrary exprs? runtime cr? ra::len in cr?
-template <int cr=0> constexpr auto iter(Slice auto && a) { return RA_FW(a).template iter<cr>(); }
+// TODO any exprs? runtime cr? ra::len in cr?
+template <int cr=0> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>) { return RA_FW(a).template iter<cr>(); }
 
 // forward decl.
-constexpr auto start(is_fov auto && a);
-
-constexpr auto start(is_builtin_array auto && a);
-
-template <class T> constexpr auto start(std::initializer_list<T> a);
+constexpr auto iter(is_fov auto && a);
+constexpr auto iter(is_builtin_array auto && a);
+template <class T> constexpr auto iter(std::initializer_list<T> a);
 
 template <class A>
 constexpr decltype(auto)
 VAL(A && a)
 {
     if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
-    else if constexpr (is_iterator<A>) { return *a; } // no need to start()
-    else if constexpr (requires { *ra::start(RA_FW(a)); }) { return *ra::start(RA_FW(a)); }
+    else if constexpr (is_iterator<A>) { return *a; } // no need to iter()
+    else if constexpr (requires { *ra::iter(RA_FW(a)); }) { return *ra::iter(RA_FW(a)); }
     // else void
 }
 
@@ -239,7 +232,7 @@ resize(auto & a, dim_t s)
         RA_CK(s>=0, "Bad resize ", s, ".");
         a.resize(s);
     } else {
-        RA_CK(s==start(a).len(0) || UNB==s, "Bad resize ", s, ", need ", start(a).len(0), ".");
+        RA_CK(s==ra::iter(a).len(0) || UNB==s, "Bad resize ", s, ", need ", ra::iter(a).len(0), ".");
     }
 }
 
@@ -257,7 +250,7 @@ filldimv(Iterator auto && p, auto & dimv)
     return s;
 }
 
-consteval auto default_dims(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(start(lv), dv); return dv; };
+consteval auto default_dims(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(ra::iter(lv), dv); return dv; };
 
 constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
 constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
@@ -324,8 +317,8 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
     RA_ASSIGNOPS_ITER(Cell)
     constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, start(i)); }
-    constexpr View at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, start(i)); return d; }
+    constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(i)); }
+    constexpr View at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, ra::iter(i)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr View const & operator*() const requires (0!=cellr) { return c; }
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); }
@@ -366,7 +359,7 @@ struct Ptr final
     constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
     constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, start(i)); }
+    constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr decltype(*cp) operator*() const { return *cp; }
     constexpr auto save() const { return cp; }
     constexpr void load(P p) { cp=p; }
@@ -405,14 +398,14 @@ reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 }
 
 constexpr auto
-start(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
+iter(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
 
 template <class T>
 constexpr auto
-start(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
+iter(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
 
 constexpr auto
-start(is_builtin_array auto && a)
+iter(is_builtin_array auto && a)
 {
     using T = std::remove_all_extents_t<std::remove_reference_t<decltype(a)>>; // preserve const
     return Cell<T *, ic_t<default_dims(ra::shape(a))>, ic_t<0>>(
@@ -693,10 +686,10 @@ template <class ... P>
 Match(P && ... p) -> Match<std::tuple<P ...>>;
 
 constexpr bool
-agree(auto const & ... p) { return Match(ra::start(p) ...).check(); }
+agree(auto const & ... p) { return Match(ra::iter(p) ...).check(); }
 
 consteval int
-agree_s(auto const & ... p) { return decltype(Match(ra::start(p) ...))::check_s(); }
+agree_s(auto const & ... p) { return decltype(Match(ra::iter(p) ...))::check_s(); }
 
 constexpr bool
 agree_op(is_verb auto const & op, auto const & ... p) { return agree_verb(mp::iota<sizeof...(p)> {}, op, p ...); }
@@ -709,7 +702,7 @@ constexpr bool
 agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op(FM::op(v), reframe(ra::start(t), mp::ref<typename FM::R, i> {}) ...);
+    return agree_op(FM::op(v), reframe(ra::iter(t), mp::ref<typename FM::R, i> {}) ...);
 }
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
@@ -743,7 +736,7 @@ constexpr auto
 map_(auto && op, auto && ... p) { return Map(RA_FW(op), RA_FW(p) ...); }
 
 constexpr auto
-map(auto && op, auto && ... a) { return map_(RA_FW(op), start(RA_FW(a)) ...); }
+map(auto && op, auto && ... a) { return map_(RA_FW(op), ra::iter(RA_FW(a)) ...); }
 
 template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 
@@ -787,6 +780,6 @@ template <class ... P>
 Pick(P && ... p) -> Pick<std::tuple<P ...>>;
 
 constexpr auto
-pick(auto && ... p) { return Pick { start(RA_FW(p)) ... }; }
+pick(auto && ... p) { return Pick { ra::iter(RA_FW(p)) ... }; }
 
 } // namespace ra

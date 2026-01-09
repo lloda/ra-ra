@@ -112,7 +112,7 @@ int main()
         auto i = ra::iota(3, 1, 2);
         auto j = -i;
         tr.test_eq(-2, j.dimv[0].step);
-        tr.strict().test_eq(ra::start({-1, -3, -5}), j);
+        tr.strict().test_eq(ra::iter({-1, -3, -5}), j);
     }
     tr.section("TODO view iota also gets optimized");
     {

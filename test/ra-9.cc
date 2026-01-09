@@ -37,9 +37,9 @@ int main()
     tr.section("regression [ra39]");
     {
         ra::Big<ra::Small<int, 2>, 0> b = ra::scalar(ra::Small<int, 2> {3, 4});
-// this requires a const/nonconst overload in Scalar::Flat [ra39] because start(Scalar) just forwards.
+// this requires a const/nonconst overload in Scalar::Flat [ra39] because ra::iter(Scalar) just forwards.
         ([&b](auto const & c) { b = c; })(ra::scalar(ra::Small<int, 2> {1, 2}));
-        tr.test_eq(ra::start({1, 2}), b());
+        tr.test_eq(ra::iter({1, 2}), b());
     }
     tr.section("regression [ra24]");
     {
@@ -86,17 +86,17 @@ int main()
         ra::scalar(x) += c + ra::scalar(int2 { 1, 99 });
         tr.test_eq(int2{2, 0}+int2{1, 3}+int2{1, 99}+int2{2, 4}+int2{1, 99}, x);
     }
-    tr.section("ra::start() on foreign types");
+    tr.section("ra::iter() on foreign types");
     {
         auto ref = std::array<int, 4> {12, 77, 44, 1};
-        tr.test_eq(2, ra::map_([](int i) { return i; }, ra::start(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
-        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::start(std::array {12, 77, 44, 1})));
+        tr.test_eq(2, ra::map_([](int i) { return i; }, ra::iter(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
+        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::iter(std::array {12, 77, 44, 1})));
 // [ra1] used to need forward in Match/Map/Pick bc CTE in older gcc. But see bug83.cc.
-        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::start(ra::Big<int, 1> {12, 77, 44, 1})));
-        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::start(std::vector {12, 77, 44, 1})));
+        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::iter(ra::Big<int, 1> {12, 77, 44, 1})));
+        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::iter(std::vector {12, 77, 44, 1})));
         {
             int c = 0;
-            ply_ravel(ra::map_([&c](int i) { c += i; }, ra::start(ra::Unique<int, 1> {12, 77, 44, 1})));
+            ply_ravel(ra::map_([&c](int i) { c += i; }, ra::iter(ra::Unique<int, 1> {12, 77, 44, 1})));
             tr.test_eq(12+77+44+1, c);
         }
         {
@@ -112,15 +112,15 @@ int main()
         std::vector a2 = {1, 2};
 
         for_each([](auto && a, auto && b) { a = b; }, ra::ptr(a1), 99);
-        tr.test_eq(99, ra::start(a1));
+        tr.test_eq(99, ra::iter(a1));
     }
     tr.section("[ra35] - value");
     {
         auto fun1 = []{ return std::array {7, 2}; };
         auto fun2 = []{ return std::vector {5, 2}; };
 
-        tr.test_eq(ra::start({7, 2}), ra::ptr(fun1()));
-        tr.test_eq(ra::start({5, 2}), ra::ptr(fun2()));
+        tr.test_eq(ra::iter({7, 2}), ra::ptr(fun1()));
+        tr.test_eq(ra::iter({5, 2}), ra::ptr(fun2()));
     }
     tr.section("self assigment of ra::ptr");
     {

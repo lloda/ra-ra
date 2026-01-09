@@ -202,10 +202,10 @@ int main()
     tr.section("printing Map");
     {
         iocheck(tr.info("output of map (1)"),
-                ra::map_([](double i) { return -i; }, start(ra::Small<double, 3>{0, 1, 2})),
+                ra::map_([](double i) { return -i; }, iter(ra::Small<double, 3>{0, 1, 2})),
                 ra::Small<double, 3>{0, -1, -2});
         iocheck(tr.info("output of map (2)"),
-                ra::map_([](double i) { return -i; }, start(ra::Small<double, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
+                ra::map_([](double i) { return -i; }, iter(ra::Small<double, 3, 2, 3> (ra::_0 - ra::_1 + ra::_2))),
                 (ra::Small<double, 3, 2, 3> (-(ra::_0 - ra::_1 + ra::_2))));
     }
     {

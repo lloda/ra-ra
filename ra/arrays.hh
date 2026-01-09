@@ -99,12 +99,12 @@ struct ViewSmall
         return *this;
     }
 // T not is_scalar [ra44]
-    constexpr ViewSmall const & operator=(T const & t) const { start(*this)=ra::scalar(t); return *this; }
+    constexpr ViewSmall const & operator=(T const & t) const { ra::iter(*this)=ra::scalar(t); return *this; }
 // cf RA_ASSIGNOPS_ITER [ra38] [ra34]
-    ViewSmall const & operator=(ViewSmall const & x) const { start(*this)=x; return *this; }
+    ViewSmall const & operator=(ViewSmall const & x) const { ra::iter(*this)=x; return *this; }
 #define RA_ASSIGNOPS(OP)                                                   \
-    constexpr ViewSmall const & operator OP(Iterator auto && x) const { start(*this) OP RA_FW(x); return *this; } \
-    constexpr ViewSmall const & operator OP(auto const & x) const { start(*this) OP x; return *this; }
+    constexpr ViewSmall const & operator OP(Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; } \
+    constexpr ViewSmall const & operator OP(auto const & x) const { ra::iter(*this) OP x; return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
     template <dim_t s, dim_t o=0> constexpr auto as() const { return from(*this, ra::iota(ic<s>, o)); }
@@ -116,7 +116,7 @@ struct ViewSmall
     constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, start(i)); }
+    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
 // conversion to const
     constexpr operator ViewSmall<reconst<P>, Dimv> () const requires (!std::is_void_v<reconst<P>>)
@@ -283,12 +283,12 @@ struct ViewBig
     {
         if constexpr (std::is_convertible_v<value_t<decltype(s)>, Dim>) {
             ra::resize(dimv, ra::size(s)); // [ra37]
-            start(dimv) = s;
+            ra::iter(dimv) = s;
         } else {
-            filldimv(start(s), dimv);
+            filldimv(ra::iter(s), dimv);
         }
     }
-    constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(start(s), cp_) {}
+    constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(ra::iter(s), cp_) {}
     using T = std::remove_reference_t<decltype(*std::declval<P>())>;
 // row-major ravel braces
     constexpr ViewBig const &
@@ -308,12 +308,12 @@ struct ViewBig
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
 // T not is_scalar [ra44]
-    constexpr ViewBig const & operator=(T const & t) const { start(*this) = ra::scalar(t); return *this; }
+    constexpr ViewBig const & operator=(T const & t) const { ra::iter(*this) = ra::scalar(t); return *this; }
 // cf RA_ASSIGNOPS_ITER [ra38] [ra34]
-    ViewBig const & operator=(ViewBig const & x) const { start(*this) = x; return *this; }
+    ViewBig const & operator=(ViewBig const & x) const { ra::iter(*this) = x; return *this; }
 #define RA_ASSIGNOPS(OP)                                                \
-    constexpr ViewBig const & operator OP (Iterator auto && x) const { start(*this) OP RA_FW(x); return *this; } \
-    constexpr ViewBig const & operator OP (auto const & x) const { start(*this) OP x; return *this; }
+    constexpr ViewBig const & operator OP (Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; } \
+    constexpr ViewBig const & operator OP (auto const & x) const { ra::iter(*this) OP x; return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
     template <rank_t c=0> constexpr auto iter() const && { return Cell<P, Dimv, ic_t<c>>(cp, std::move(dimv)); }
@@ -325,7 +325,7 @@ struct ViewBig
     constexpr decltype(auto) back() const { dim_t s=size(); RA_CK(s>0, "Bad back()."); return cp[s-1]; }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, start(i)); }
+    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
 // conversion to const, used by Container::view(). FIXME cf Small
     constexpr operator ViewBig<reconst<P>, RANK> const & () const requires (!std::is_void_v<reconst<P>>)
@@ -429,7 +429,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
         static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
         RA_CK(1==ra::rank(s), "Rank mismatch for init shape.");
         static_assert(ANY==RANK || ANY==size_s(s) || RANK==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
-        store = storage_traits<Store>::create(filldimv(start(s), dimv));
+        store = storage_traits<Store>::create(filldimv(ra::iter(s), dimv));
         cp = storage_traits<Store>::data(store);
     }
     constexpr void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
@@ -487,7 +487,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     }
     constexpr void resize(auto const & s) requires (1==rank_s(s))
     {
-        store.resize(filldimv(start(s), dimv)); cp = store.data();
+        store.resize(filldimv(ra::iter(s), dimv)); cp = store.data();
     }
 // template + RA_FW wouldn't work for push_back(brace-enclosed-list).
     constexpr void push_back(T && t)
@@ -535,12 +535,12 @@ swap(Container<Store, RANKA> & a, Container<Store, RANKB> & b)
     if constexpr (ANY==RANKA) {
         RA_CK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
         decltype(b.dimv) c = a.dimv;
-        start(a.dimv) = b.dimv;
+        ra::iter(a.dimv) = b.dimv;
         std::swap(b.dimv, c);
     } else if constexpr (ANY==RANKB) {
         RA_CK(rank(a)==rank(b), "Mismatched ranks ", rank(a), " and ", rank(b), ".");
         decltype(a.dimv) c = b.dimv;
-        start(b.dimv) = a.dimv;
+        ra::iter(b.dimv) = a.dimv;
         std::swap(a.dimv, c);
     } else {
         static_assert(RANKA==RANKB);
@@ -607,7 +607,7 @@ template <class E, class S, class X> constexpr auto
 with_shape(S && s, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(RA_FW(s), RA_FW(x)); }
 
 template <class E, class S, class X> constexpr auto
-with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(start(s), RA_FW(x)); }
+with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(ra::iter(s), RA_FW(x)); }
 
 
 // --------------------
@@ -703,7 +703,7 @@ template <class P, rank_t RANK, class dimtype, int N>
 constexpr ViewBig<P, ANY>
 transpose(ViewBig<P, RANK> const & view, dimtype const (&s)[N])
 {
-    return transpose(view, start(s));
+    return transpose(view, ra::iter(s));
 }
 
 constexpr decltype(auto)
@@ -829,7 +829,7 @@ reshape(ViewBig<P, RANK> const & a, S && sb_)
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {
             RA_CK(c_order(a.dimv, false) && la>=lb, "Reshape with copy not implemented.");
 // FIXME ViewBig(SS const & s, T * p). Cf [ra37].
-            filldimv(start(sb), b.dimv);
+            filldimv(ra::iter(sb), b.dimv);
             for (int j=0; j!=b.rank(); ++j) {
                 b.dimv[j].step *= a.step(a.rank()-1);
             }
@@ -853,7 +853,7 @@ template <class P, rank_t RANK, class dimtype, int N>
 constexpr auto
 reshape(ViewBig<P, RANK> const & a, dimtype const (&s)[N])
 {
-    return reshape(a, start(s));
+    return reshape(a, ra::iter(s));
 }
 
 // lo: lower bounds, hi: upper bounds. The stencil indices are in [0 lo+1+hi] = [-lo +hi].

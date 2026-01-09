@@ -43,12 +43,12 @@ int main()
     auto draw = [&orbit, &c](auto && x, auto && t)
     {
         auto mapc = [](real x) { return clamp(int(round(25+x/5e5)), 0, 49); };
-// 1. TODO we still can't use iter<1> on an ET.
+// 1. TODO we still can't use ra::iter<1> on an ET.
         array<int, 2> xi = map(mapc, x);
-        at(orbit, iter<1>(xi(ra::all, ra::iota(2)))) = c;
+        at(orbit, ra::iter<1>(xi(ra::all, ra::iota(2)))) = c;
 // 2. alternative w/o temps
         for_each([&orbit, &mapc] (auto && x, auto && c) { orbit(mapc(x(0)), mapc(x(1))) = c; },
-                 iter<1>(x), c);
+                 ra::iter<1>(x), c);
         std::print(std::cout, "TIME IN HOURS {:.4f}{}\n", (t/3600.), fmt({.shape=ra::noshape, .sep0=""}, orbit));
     };
 
@@ -58,7 +58,7 @@ int main()
     for (int step=1; step<(12*15); ++step, t+=delta) {
 // RHS is rank 2 so we need to match on LHS. Either of these works, but the second needs a compact last axis.
 // TODO ideally [F = from(force, ra::iota(2), ra::iota(2));] would work #nestedarrays
-        // for_each([](auto && x, auto && y) { x = y; }, iter<1>(F), from(force, ra::iota(2), ra::iota(2)));
+        // for_each([](auto && x, auto && y) { x = y; }, ra::iter<1>(F), from(force, ra::iota(2), ra::iota(2)));
         ra::explode<real3>(F) = from(force, ra::iota(bodies), ra::iota(bodies));
 // match axes a[0, 1] with F[0, 2]; accumulate on F[1]. TODO proper reductions.
         a = 0.;

@@ -24,8 +24,8 @@ int main()
         int const a[3] = { 1, 2, 3 };
         auto b = ra::concrete(a);
         b = -b;
-        tr.test_eq(ra::start({1, 2, 3}), a);
-        tr.test_eq(ra::start({-1, -2, -3}), b);
+        tr.test_eq(ra::iter({1, 2, 3}), a);
+        tr.test_eq(ra::iter({-1, -2, -3}), b);
     }
     tr.section("scalars");
     {
@@ -87,7 +87,7 @@ int main()
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a+b, c);
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a+b));
-        cout << ra::start(c) << endl;
+        cout << ra::iter(c) << endl;
         tr.info(c.len(0)).test_eq(ra::Small<int, 1> {3}, ra::shape(c));
     }
     {
@@ -96,8 +96,8 @@ int main()
         tr.test_eq(1, rank(b));
         tr.test_eq(3, ra::size(b));
         b = {3, 4, 5};
-        tr.test_eq(ra::start({1, 2, 3}), a);
-        tr.test_eq(ra::start({3, 4, 5}), b);
+        tr.test_eq(ra::iter({1, 2, 3}), a);
+        tr.test_eq(ra::iter({3, 4, 5}), b);
     }
     tr.section("var size + fixed size");
     {
@@ -160,8 +160,8 @@ int main()
         tr.test(std::is_same_v<K, ra::Big<int, 1>>);
         tr.test(std::is_same_v<decltype(c), K>);
         tr.test_eq(a, c);
-        ra::start(a) = 99;
-        tr.test_eq(99, ra::start(a));
+        ra::iter(a) = 99;
+        tr.test_eq(99, ra::iter(a));
         tr.info("concrete() makes copies").test_eq(K {1, 2, 3}, c);
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(a));
         tr.test_eq(ra::Small<int, 1> {3}, ra::shape(c));

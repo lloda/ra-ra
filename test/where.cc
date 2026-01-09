@@ -77,8 +77,8 @@ int main()
     {
         std::array<double, 2> bb {1, 2};
         std::array<double, 2> cc {99, 99};
-        auto b = ra::start(bb);
-        auto c = ra::start(cc);
+        auto b = ra::iter(bb);
+        auto c = ra::iter(cc);
 
         cc[0] = cc[1] = 99;
 // pick_star

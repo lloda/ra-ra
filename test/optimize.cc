@@ -24,10 +24,10 @@ int main()
     {
         tr.test_eq(4, opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)).nn);
         tr.test_eq(4, opt(ra::iota(4) + ra::iota(ra::ic<4>, 0, 2)).nn);
-        tr.test_eq(ra::start({0, 3, 6, 9}), opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)));
+        tr.test_eq(ra::iter({0, 3, 6, 9}), opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)));
         tr.test_eq(4, opt(ra::iota(ra::ic<4>) - ra::iota(4, 0, 2)).nn);
         tr.test_eq(4, opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)).nn);
-        tr.test_eq(ra::start({0, -1, -2, -3}), opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)));
+        tr.test_eq(ra::iter({0, -1, -2, -3}), opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)));
     }
     tr.section("iota ops, expr iotas WIP");
     {
@@ -49,12 +49,12 @@ int main()
         {
             auto z = ra::iota(5, 1.5);
             tr.info("iota with real org I").test_eq(1.5, z.cp.i);
-            tr.info("iota with complex org I").test_eq(1.5+ra::start({0, 1, 2, 3, 4}), z);
+            tr.info("iota with complex org I").test_eq(1.5+ra::iter({0, 1, 2, 3, 4}), z);
         }
         {
             auto i = ra::iota(5);
             auto l = opt(i*i);
-            tr.info("opt is nop by default").test_eq(ra::start({0, 1, 4, 9, 16}), l);
+            tr.info("opt is nop by default").test_eq(ra::iter({0, 1, 4, 9, 16}), l);
         }
         {
             auto i = ra::iota(5);
@@ -84,13 +84,13 @@ int main()
             tr.test_eq(org+1, k2.cp.i);
             tr.test_eq(org+1, k3.cp.i);
             tr.test_eq(org+1, k4.cp.i);
-            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), j);
-            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k1);
-            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k2);
-            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k3);
-            tr.test_eq(1+ra::start({0, 1, 2, 3, 4}), k4);
-            tr.test_eq(1.5+ra::start({0, 1, 2, 3, 4}), k5);
-            tr.test_eq(ra::start({0, 1, 2, 3, 4})-0.5, k6);
+            tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), j);
+            tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), k1);
+            tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), k2);
+            tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), k3);
+            tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), k4);
+            tr.test_eq(1.5+ra::iter({0, 1, 2, 3, 4}), k5);
+            tr.test_eq(ra::iter({0, 1, 2, 3, 4})-0.5, k6);
         };
         test(int(0));
         test(double(0));
@@ -107,8 +107,8 @@ int main()
             tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
             tr.test_eq(-org, k1.cp.i);
-            tr.test_eq(-ra::start({0, 1, 2, 3, 4}), j);
-            tr.test_eq(-ra::start({0, 1, 2, 3, 4}), k1);
+            tr.test_eq(-ra::iter({0, 1, 2, 3, 4}), j);
+            tr.test_eq(-ra::iter({0, 1, 2, 3, 4}), k1);
         };
         test(int(0));
         test(double(0));
@@ -130,11 +130,11 @@ int main()
             tr.test_eq(0, k2.cp.i);
             tr.test_eq(0, k3.cp.i);
             tr.test_eq(0, k4.cp.i);
-            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), j);
-            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k1);
-            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k2);
-            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k3);
-            tr.test_eq(2*ra::start({0, 1, 2, 3, 4}), k4);
+            tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), j);
+            tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), k1);
+            tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), k2);
+            tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), k3);
+            tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), k4);
         };
         test(int(0));
         test(double(0));
@@ -147,7 +147,7 @@ int main()
         using Vec = ra::Small<double, 4>;
         Vec const r {6, 8, 10, 12};
 
-// [ra4] Map holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::start(iter). So this example only works bc it's optimized.
+// [ra4] Map holds iterators which hold pointers so auto y = Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8} would hold pointers to lost temps. This is revealed by gcc 6.2. Cf ra::iter(iter). So this example only works bc it's optimized.
         auto x = opt(Vec {1, 2, 3, 4} + Vec {5, 6, 7, 8});
         tr.info("optimization rvalue terms").test(std::is_same_v<decltype(x), Vec>);
         tr.test_eq(r, x);
@@ -162,7 +162,7 @@ int main()
 
         auto q = opt(a + r);
         tr.info("optimization of const lvalue terms").test(std::is_same_v<decltype(q), Vec>);
-        tr.test_eq(ra::start({7, 10, 13, 16}), q);
+        tr.test_eq(ra::iter({7, 10, 13, 16}), q);
 
         ra::Small<double, 4, 4> c = 1 + ra::_1;
 

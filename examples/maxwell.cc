@@ -89,7 +89,7 @@ int main()
 // an alternative without a temporary.
     tr.info("Lorentz test max div A (2)")
         .test_eq(0., amax(map([](auto && a) { return sum(a); },
-                              iter<1>(ra::transpose(DA, ra::ilist<0, 1, 2, 3, 4, 4>)))));
+                              ra::iter<1>(ra::transpose(DA, ra::ilist<0, 1, 2, 3, 4, 4>)))));
     tr.quiet().test_eq(0.3039588939177449, F(19, 0, 0, 0, 2, 1));
 
     auto show = [&tr, &delta](char const * name, int t, auto && F)

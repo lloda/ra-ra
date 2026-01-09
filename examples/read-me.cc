@@ -152,11 +152,11 @@ int main()
         ra::Big<char, 1> A = {'x', 'z', 'y'};
         std::sort(A.begin(), A.end());
         cout << "A: " << A << "\n\n";
-        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
+        tr.test_eq(ra::iter({'x', 'y', 'z'}), A);
         A = {'x', 'z', 'y'};
         std::sort(begin(A), end(A));
         cout << "A: " << A << "\n\n";
-        tr.test_eq(ra::start({'x', 'y', 'z'}), A);
+        tr.test_eq(ra::iter({'x', 'y', 'z'}), A);
     }
     {
         ra::Big<float, 2> B {{1, 2}, {3, 4}};

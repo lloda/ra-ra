@@ -56,7 +56,7 @@
 @c %%% Example
 
 @c %% \input texinfo   @c -*-texinfo-*-
-@c %% @comment %**start of header
+@c %% @comment %**iter of header
 @c %% @setfilename my-file-with-bib.info
 @c %% @settitle Texinfo with a Bibliography and References
 @c %%

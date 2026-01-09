@@ -33,10 +33,10 @@ int main()
         tr.test_eq(Fcheck, F);
     }
 // Why: if x(0) is a temp, as in here, CellBig needs a copy of x(0).dim.
-// This is achieved by forwarding in start() -> iter() -> View.iter().
+// This is achieved by forwarding in ra::iter() -> View.iter().
     tr.section("CellBig handling of temps");
     {
-        auto demo = [](auto & x) { return iter<0>(x(0)); };
+        auto demo = [](auto & x) { return ra::iter<0>(x(0)); };
 
         ra::Big<int, 2> A({3, 5}, 0);
         auto z = demo(A);
@@ -44,7 +44,7 @@ int main()
         tr.test_eq(false, std::is_reference_v<decltype(z.dimv)>);
 
         auto y = A(0);
-        auto yi = iter<0>(y);
+        auto yi = ra::iter<0>(y);
         tr.test_eq(true, std::is_reference_v<decltype(yi.dimv)>);
     }
 // On Small, the container and the view are separate objects, so we must make sure to forward any temporary views(). See ViewSmall::operator().
@@ -64,7 +64,7 @@ int main()
         auto const b = A();
         int x[6] = { 0, 0, 0, 0, 0, 0 };
         std::ranges::copy(b.begin(), b.end(), x);
-        tr.test_eq(3, ra::start(x));
+        tr.test_eq(3, ra::iter(x));
     }
     return tr.summary();
 }

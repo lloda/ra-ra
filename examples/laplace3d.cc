@@ -81,9 +81,9 @@ void mult(Matrix0bnd & A, V const & v, W & w)
     w = 0.;
     for_each([&](auto && E)
              {
-                 ra::start(E.reg1) = v(E.v);                // vector -> element
+                 ra::iter(E.reg1) = v(E.v);                // vector -> element
                  gemv(A.M, E.reg1, E.reg2);                 // element matrix
-                 // ra::start(E.reg2) = ra::gemv(A.M, E.reg1); // FIXME somewhat slower
+                 // ra::iter(E.reg2) = ra::gemv(A.M, E.reg1); // FIXME somewhat slower
                  w(E.v) += E.reg2;                          // element -> vector
              },
              A.E);

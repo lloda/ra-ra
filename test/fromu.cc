@@ -23,7 +23,7 @@ int main()
     tr.section("len in unbeatable subscript");
     {
         ra::Big<int, 1> a({10}, ra::_0);
-        tr.test_eq(ra::start({9, 8, 7, 6}), a(ra::len - std::array {1, 2, 3, 4}));
+        tr.test_eq(ra::iter({9, 8, 7, 6}), a(ra::len - std::array {1, 2, 3, 4}));
         ra::Big<int, 2> b({10, 10}, ra::_0-ra::_1);
         b(ra::len - std::array {1, 3, 4}) += 100;
         tr.test_eq(9 - ra::_0 + 100, b(9));
@@ -33,7 +33,7 @@ int main()
     tr.section("len in unbeatable subscript");
     {
         ra::Small<int, 10> a = ra::_0;
-        tr.test_eq(ra::start({9, 8, 7, 6}), a(ra::len - std::array {1, 2, 3, 4}));
+        tr.test_eq(ra::iter({9, 8, 7, 6}), a(ra::len - std::array {1, 2, 3, 4}));
         ra::Small<int, 10, 10> b = ra::_0-ra::_1;
         b(ra::len - std::array {1, 3, 4}) += 100;
         tr.test_eq(9 - ra::_0 + 100, b(9));
@@ -90,7 +90,7 @@ int main()
 // Note the difference with J amend, which requires x in (x m} y) ~ (y[m] = x) to be a suffix of y[m]; but we apply the general mechanism which is prefix matching.
             from(a, Vint {1, 0}, Vint {1, 0}) = CT2 {9, 7};
             tr.info("a([1 0], [1 0]) as lvalue, rank extend of right hand").test_eq(CT22 {7, 7, 9, 9}, a);
-// TODO Test cases with rank!=1, starting with this couple which should work the same.
+// TODO Test cases with rank!=1, itering with this couple which should work the same.
             std::cout << "-> " << from(a, Vint{1, 0}, 0) << std::endl;
             a = CT22 {4, 1, 7, 9};
 // mixed u/b cases.

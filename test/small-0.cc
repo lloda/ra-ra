@@ -36,7 +36,7 @@ int main()
     tr.section("Small isn't an aggregate so T; and T {}; are the same, unlike std::array");
     {
         std::array<int, 9> a; // default init, unlike {} which is aggregate init
-        cout << ra::start(a) << endl;
+        cout << ra::iter(a) << endl;
         ra::Small<int, 9> b; // default init, just like {}
         cout << b << endl;
         ra::Small<int, 3> c(ra::none); // if you want to be explicit
@@ -100,11 +100,11 @@ int main()
         A2 x2 = {{1, 2, 3}, {4, 5, 6}};
 
         tr.test_eq(2u, std::rank<A1>::value);
-        tr.test_eq(2, ra::start(x1).rank());
+        tr.test_eq(2, ra::iter(x1).rank());
         tr.test_eq(2u, std::rank<A2>::value);
-        tr.test_eq(2, ra::start(x2).rank());
+        tr.test_eq(2, ra::iter(x2).rank());
 
-        tr.test_eq(ra::start(x2), x1);
+        tr.test_eq(ra::iter(x2), x1);
     }
     tr.section("top level generics on builtin arrays");
     {
@@ -496,7 +496,7 @@ int main()
             ra::Small<double, 2> A = {1, 2};
             ra::Small<double, 2> X = {0, 0};
             X(ra::all) = A();
-            tr.test_eq(ra::start({1, 2}), X);
+            tr.test_eq(ra::iter({1, 2}), X);
         }
         tr.section("operator=(scalar) on non-unit steps");
         {

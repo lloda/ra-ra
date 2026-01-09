@@ -340,7 +340,7 @@ int main()
     tr.section("more pliers on scalar");
     {
         tr.test_eq(-99, ra::map([](auto && x) { return -x; }, ra::scalar(99)));
-        tr.test_eq(true, every(ra::map_([](auto && x) { return x>0; }, ra::start(99))));
+        tr.test_eq(true, every(ra::map_([](auto && x) { return x>0; }, ra::iter(99))));
     }
     return tr.summary();
 }

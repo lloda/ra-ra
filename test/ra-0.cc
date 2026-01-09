@@ -274,11 +274,11 @@ int main()
             {
                 tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, ra::shape(A));
                 tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(A.iter()));
-                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(iter<0>(A)));
-                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(iter<-2>(A)));
-                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, shape(iter<1>(A)));
-                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, shape(iter<-1>(A)));
-                tr.test_eq(ra::Small<ra::dim_t, 0> {}, shape(iter<2>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(ra::iter<0>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(ra::iter<-2>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, shape(ra::iter<1>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 1> {6}, shape(ra::iter<-1>(A)));
+                tr.test_eq(ra::Small<ra::dim_t, 0> {}, shape(ra::iter<2>(A)));
             };
         test(ra::Unique<double, 2>({6, 7}, ra::_0 - ra::_1));
         test(ra::Unique<double>({6, 7}, ra::_0 - ra::_1));
@@ -365,12 +365,12 @@ int main()
 // This requires the driverless xpr dyn(scalar, tensorindex) to be constructible.
         {
             int checkb[6] = { 3, 3, 4, 4, 5, 5 };
-            ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a+b; }, ra::scalar(3), start(ra::_0)));
+            ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a+b; }, ra::scalar(3), iter(ra::_0)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
         {
             int checkb[6] = { 0, -1, 1, 0, 2, 1 };
-            ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, start(ra::_0), start(ra::_1)));
+            ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, iter(ra::_0), iter(ra::_1)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
 // TODO Check this is an error (chosen driver is ra::iota<2>(), that can't drive) [ra42]

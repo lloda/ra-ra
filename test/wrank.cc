@@ -236,7 +236,7 @@ int main()
         ra::Big<real, 2> c1 = gemm(a, b);
 // matrix product as outer product + reduction (no reductions yet, so manually).
         {
-            ra::Big<real, 3> d = ra::map_(ra::wrank<1, 2>(ra::wrank<0, 1>(std::multiplies<>())), start(a), start(b));
+            ra::Big<real, 3> d = ra::map_(ra::wrank<1, 2>(ra::wrank<0, 1>(std::multiplies<>())), ra::iter(a), ra::iter(b));
             ra::Big<real, 2> c2({d.len(0), d.len(2)}, 0.);
             for (int k=0; k<d.len(1); ++k) {
                 c2 += d(ra::all, k, ra::all);
@@ -247,7 +247,7 @@ int main()
         {
             ra::Big<real, 2> c2({a.len(0), b.len(1)}, 0.);
             ra::ply(ra::map_(ra::wrank<1, 1, 2>(ra::wrank<1, 0, 1>([](auto & c, auto && a, auto && b) { c += a*b; })),
-                             start(c2), start(a), start(b)));
+                             ra::iter(c2), ra::iter(a), ra::iter(b)));
             tr.info("sum_k a(i,k)*b(k,j)").test_eq(c1, c2);
         }
     }
@@ -356,7 +356,7 @@ int main()
     tr.section("Reframe as transpose");
     {
         ra::ViewSmall<ra::Seq<>, ra::ic_t<ra::default_dims(std::array<int, 3> {2, 3, 4})>> a(ra::Seq<> {0});
-        auto test = [&](auto dest) { tr.strict().test_eq(transpose(a, dest), reframe(start(a), dest)); };
+        auto test = [&](auto dest) { tr.strict().test_eq(transpose(a, dest), reframe(ra::iter(a), dest)); };
         test(ra::ilist_t<0, 1, 2> {});
         test(ra::ilist_t<1, 2, 0> {});
         test(ra::ilist_t<2, 0, 1> {});

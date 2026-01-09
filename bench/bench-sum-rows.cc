@@ -19,75 +19,71 @@ int main()
     TestRecorder tr(cout);
     cout.precision(4);
 
-    auto bench =
-        [&tr](char const * tag, int m, int n, int reps, auto && f)
-        {
-            ra::Big<real, 2> a({m, n}, ra::_0 - ra::_1);
-            ra::Big<real, 1> ref({n}, 0);
-            iter<1>(ref) += iter<1>(a)*reps;
-            ra::Big<real, 1> c({n}, ra::none);
+    auto bench = [&tr](char const * tag, int m, int n, int reps, auto && f){
+        ra::Big<real, 2> a({m, n}, ra::_0 - ra::_1);
+        ra::Big<real, 1> ref({n}, 0);
+        ra::iter<1>(ref) += ra::iter<1>(a)*reps;
+        ra::Big<real, 1> c({n}, ra::none);
 
-            auto bv = Benchmark().repeats(reps).runs(3)
-                .once_f([&](auto && repeat) { c=0.; repeat([&]() { f(c, a); }); });
-            tr.info(Benchmark::report(bv, m*n), " ", tag)
-                .test_eq(ref, c);
-        };
+        auto bv = Benchmark().repeats(reps).runs(3)
+            .once_f([&](auto && repeat) { c=0.; repeat([&]() { f(c, a); }); });
+        tr.info(Benchmark::report(bv, m*n), " ", tag)
+            .test_eq(ref, c);
+    };
 
-    auto bench_all =
-        [&](int m, int n, int reps)
-        {
-            tr.section(m, " x ", n, " times ", reps);
-            bench("raw", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      real const * __restrict__ ap = a.data();
-                      real * __restrict__ cp = c.data();
-                      ra::dim_t const m = a.len(0);
-                      ra::dim_t const n = a.len(1);
-                      for (ra::dim_t i=0; i!=m; ++i) {
-                          for (ra::dim_t j=0; j!=n; ++j) {
-                              cp[j] += ap[i*n+j];
-                          }
+    auto bench_all = [&](int m, int n, int reps){
+        tr.section(m, " x ", n, " times ", reps);
+        bench("raw", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  real const * __restrict__ ap = a.data();
+                  real * __restrict__ cp = c.data();
+                  ra::dim_t const m = a.len(0);
+                  ra::dim_t const n = a.len(1);
+                  for (ra::dim_t i=0; i!=m; ++i) {
+                      for (ra::dim_t j=0; j!=n; ++j) {
+                          cp[j] += ap[i*n+j];
                       }
-                  });
-            bench("sideways", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      for (int j=0, jend=a.len(1); j<jend; ++j) {
-                          c(j) += sum(a(ra::all, j));
-                      }
-                  });
-            bench("accumrows", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      for_each([&c](auto && a) { c += a; }, iter<1>(a));
-                  });
-            bench("wrank1", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), c, a);
-                  });
-            bench("wrank2", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      for_each(ra::wrank<1, 1>(ra::wrank<0, 0>([](auto & c, auto a) { c += a; })), c, a);
-                  });
-            bench("accumscalar", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      ra::scalar(c) += iter<1>(a);
-                  });
-            bench("accumiter", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      iter<1>(c) += iter<1>(a);
-                  });
-            bench("frametransp", m, n, reps,
-                  [](auto & c, auto const & a)
-                  {
-                      c += transpose(a);
-                  });
-        };
+                  }
+              });
+        bench("sideways", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  for (int j=0, jend=a.len(1); j<jend; ++j) {
+                      c(j) += sum(a(ra::all, j));
+                  }
+              });
+        bench("accumrows", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  for_each([&c](auto && a) { c += a; }, ra::iter<1>(a));
+              });
+        bench("wrank1", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), c, a);
+              });
+        bench("wrank2", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  for_each(ra::wrank<1, 1>(ra::wrank<0, 0>([](auto & c, auto a) { c += a; })), c, a);
+              });
+        bench("accumscalar", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  ra::scalar(c) += ra::iter<1>(a);
+              });
+        bench("accumiter", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  ra::iter<1>(c) += ra::iter<1>(a);
+              });
+        bench("frametransp", m, n, reps,
+              [](auto & c, auto const & a)
+              {
+                  c += transpose(a);
+              });
+    };
 
     bench_all(1, 1000000, 20);
     bench_all(10, 100000, 20);

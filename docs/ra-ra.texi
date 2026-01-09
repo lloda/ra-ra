@@ -1,5 +1,5 @@
 @c -*- mode: texinfo; coding: utf-8 -*-
-@c %**start of header
+@c %**iter of header
 @setfilename ra-ra.info
 @documentencoding UTF-8
 @settitle ra:: — An array library for C++23
@@ -686,7 +686,7 @@ for_each([](auto && b) { /* b has shape (5 4 3) */ }, iter<3>(a));
 for_each([](auto && b) { /* b has shape (4 3) */ }, iter<2>(a));
 for_each([](auto && b) { /* b has shape (3) */ }, iter<1>(a));
 for_each([](auto && b) { /* b has shape () */ }, iter<0>(a)); // elements
-for_each([](auto && b) { /* b has shape () */ }, a); // same as iter<0>(a); default
+for_each([](auto && b) { /* b has shape () */ }, a); // same as iter<0>(a) or iter(a); default
 @end verbatim
 @end example
 
@@ -723,7 +723,7 @@ iter<1>(c) = iter<1>(a) * iter<1>(b); // multiply (each item of a) by (b)
 @result{} a = @{@{10, 40, 90@}, @{40, 100, 180@}@}
 @end example
 
-Note that in this case we cannot construct @code{c} directly from @code{iter<1>(a) * iter<1>(b)}, since the constructor for @code{ra::Big} matches its argument using (the equivalent of) @code{iter<0>(*this)}. See @ref{x-iter,@code{iter}} for more examples.
+Note that in this case we cannot construct @code{c} directly from @code{iter<1>(a) * iter<1>(b)}, since the constructor for @code{ra::Big} matches its argument using (the equivalent of) @code{iter<0>(*this)}. See @ref{x-iterk,@code{iter<cell rank>}} for more examples.
 
 Cell iteration is appropriate when the operations take naturally operands of rank > 0; for instance, the operation ‘determinant of a matrix’ is naturally of rank 2. When the operation is of rank 0, such as @code{*} above, there may be faster ways to rearrange shapes for matching (@pxref{The rank conjunction}).
 
@@ -805,8 +805,8 @@ Besides, when the subscripts @code{i, j, ...} are scalars or integer sequences o
 @code{ra::} isn't smart enough to know when an arbitrary expression might be a integer sequence of the appropriate form, so it has a special type for those, the @ref{Sequence views,sequence view}. The following function creates a rank-1 sequence view:
 
 @anchor{x-iota}
-@deffn @w{Special object} iota count [start:0 [step:1]]
-Create a rank-1 sequence view @code{start, start+step, ... start+step*(count-1)}.
+@deffn @w{Special object} iota count [iter:0 [step:1]]
+Create a rank-1 sequence view @code{iter, iter+step, ... iter+step*(count-1)}.
 
 This can used anywhere an array expression is expected.
 
@@ -1178,12 +1178,14 @@ FIXME lexical_compare etc.
 @section The rank conjunction
 @c ------------------------------------------------
 
-We have seen in @ref{Cell iteration} that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. With the @ref{x-iter,@code{iter<cell rank>}} construction, this ‘exploding’ is performed (notionally) on the argument; the operation of the array expression is applied blindly to these cells, whatever they turn out to be.
+We have seen in @ref{Cell iteration} that it is possible to treat an r-array as an array of lower rank with subarrays as its elements. The @ref{x-iterk,@code{iter<cell rank>}} operator performs this conceptual ‘exploding’ on views:
 
 @example
 @verbatim
+ra::Big<T, 2> A; // any rank ≥ 1
+...
 for_each(my_sort, iter<1>(A)); // (in ra::) my_sort is a regular function, cell rank must be given
-for_each(my_sort, iter<0>(A)); // (in ra::) error, bad cell rank
+for_each(my_sort, iter<0>(A)); // (in ra::) error, my_sort expects rank-1 argument
 @end verbatim
 @end example
 
@@ -1463,14 +1465,14 @@ cout << (x-y) << endl;
 @print{} -5 -3 -1
 @end example
 
-@cindex @code{start}
-Foreign types can be brought into @code{ra::} explicitly with the function @ref{x-start,@code{start}}.
+@cindex @code{iter}
+Foreign types can be brought into @code{ra::} explicitly with the function @ref{x-iter,@code{iter}}.
 
 @example
 @verbatim
 std::vector<int> x = {1, 2, 3};
 // cout << sum(x) << endl; // error, sum not found
-cout << sum(ra::start(x)) << endl;
+cout << sum(ra::iter(x)) << endl;
 cout << ra::sum(x) << endl;
 @end verbatim
 @print{} 6
@@ -1498,7 +1500,7 @@ int p[] = {1, 2, 3};
 int * z = p;
 ra::Big<int, 1> q {1, 2, 3};
 q += p; // ok, q is ra::, p is foreign object with shape info
-ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()
+ra::iter(p) += q; // can't redefine operator+=(int[]), foreign needs ra::iter()
 // z += q; // error: raw pointer needs ra::ptr()
 ra::ptr(z) += p; // ok, shape is determined by foreign object p
 @end verbatim
@@ -1537,7 +1539,7 @@ cout << std::ranges::count(range(A>3), true) << endl; // or sum(cast<int>(A>3))
 @result{} 5
 @end example
 
-One can create ranges from higher rank @code{ra::} iterators and thus use STL algorithms over cells of any rank, but note that in the current version of @code{ra::}, @ref{x-iter,@code{iter<k>()}} only works on views, not on general expressions.
+One can create ranges from higher rank @code{ra::} iterators and thus use STL algorithms over cells of any rank, but note that in the current version of @code{ra::}, @ref{x-iterk,@code{iter<cell rank>()}} only works on views, not on general expressions.
 
 @example @c [ma118]
 @verbatim
@@ -1606,7 +1608,7 @@ void fftw(int r, ra::ViewBig<complex *> const a, ra::ViewBig<complex *> b)
 {
     int const rank = a.rank();
     assert(r>0 && r<=rank);
-    assert(every(ra::start(shape(a))==shape(b)));
+    assert(every(ra::iter(shape(a))==shape(b)));
     fftw_iodim dims[r];
     fftw_iodim howmany_dims[rank-r];
     for (int i=0; i!=rank; ++i) {
@@ -1741,7 +1743,7 @@ but
 @verbatim
 struct U { int x; }
 U uu {11};
-for_each([](auto && x, auto && y) { cout << (x.x + y.y) << " "; }, w, uu); // error: can't find ra::start(U)
+for_each([](auto && x, auto && y) { cout << (x.x + y.y) << " "; }, w, uu); // error: can't find ra::iter(U)
 @end verbatim
 @end example
 
@@ -1855,7 +1857,7 @@ Some of these issues arise because @code{ra::} applies its principles systematic
 
 @section Reuse of expression objects
 
-Expression objects are meant to be used once. This applies to anything produced with @code{ra::map}, @code{ra::iter}, @code{ra::start}, or @code{ra::ptr}. Reuse errors are @emph{not} checked. For example:
+Expression objects are meant to be used once. This applies to anything produced with @code{ra::map}, @code{ra::iter}, or @code{ra::ptr}. Reuse errors are @emph{not} checked. For example:
 
 @example
 @verbatim
@@ -2018,7 +2020,7 @@ These are array views into data in memory, which may be writable. Any of the @b{
 
 @item @b{Iterator} --- @code{CellBig}, @code{CellSmall}, @code{Ptr}, @code{Scalar}, @code{Map}, @code{Pick}
 
-This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{start}. This is done automatically when those types are used in array expressions.
+This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{iter}. This is done automatically when those types are used in array expressions.
 
 @b{Iterator}s have two traversal functions: @code{.adv(k, d)}, moves the iterator along any dimension @var{k}, and @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a nested loop, especially if the inner dimensions of the loop are small.
 
@@ -2205,8 +2207,8 @@ See also @ref{x-at-view,@code{at_view}}.
 @end defun
 
 @cindex @code{at_view}
-@anchor{x-at-view} @defun at_view slice indices
-Like @ref{x-at,@code{at}}, but the indices can be shorter than the rank of @var{slice}; in that case, return the corresponding prefix slice.
+@anchor{x-at-view} @defun at_view view indices
+Like @ref{x-at,@code{at}}, but the indices can be shorter than the rank of @var{view}; in that case, return the corresponding prefix view.
 
 @example @c [ma31]
 @verbatim
@@ -2224,7 +2226,7 @@ Like @ref{x-at,@code{at}}, but the indices can be shorter than the rank of @var{
     @print{} 120
 @end example
 
-In principle, this function makes @ref{x-at,@code{at}} redundant. We provide both because 1) @code{at_view} only works on slices, 2) if the length of @var{indices} is dynamic, @code{at_view} is forced to return a dynamic rank slice, which is a lot slower.
+In principle, this function makes @ref{x-at,@code{at}} redundant. We provide both because 1) @code{at_view} only works on views, 2) if the length of @var{indices} is dynamic, @code{at_view} is forced to return a dynamic rank view, which is a lot slower.
 
 @example @c [ma32]
 @verbatim
@@ -2362,7 +2364,7 @@ B:
 
 @c TODO
 
-See also @ref{x-collapse,@code{collapse}}, @ref{x-iter,@code{iter}}.
+See also @ref{x-collapse,@code{collapse}}, @ref{x-iterk,@code{iter<cell rank>}}.
 @end defun
 
 @cindex @code{end}
@@ -2795,9 +2797,9 @@ static_assert(2==ra::size(p)); // p not constexpr, but still ok
 @end verbatim
 @end example
 
-@code{ra::ptr} is often equivalent to @ref{x-start,@code{start}}, and can be omitted in the same way, but raw pointers require @code{ra::ptr}.
+@code{ra::ptr} is often equivalent to @ref{x-iter,@code{iter}}, and can be omitted in the same way, but raw pointers require @code{ra::ptr}.
 
-See also @ref{x-start,@code{start}}, @ref{x-scalar,@code{scalar}}, @ref{x-iota,@code{iota}}.
+See also @ref{x-iter,@code{iter}}, @ref{x-scalar,@code{scalar}}, @ref{x-iota,@code{iota}}.
 
 @end deffn
 
@@ -2810,30 +2812,87 @@ See @ref{Using @code{ra::} types with the STL}.
 See also @ref{x-begin,@code{begin}}, @ref{x-end,@code{end}}.
 @end defun
 
-@cindex @code{start}
-@anchor{x-start} @defun start foreign_object
-Create array expression from @var{foreign_object}.
+@cindex @code{iter}
+@anchor{x-iter} @defun iter object
+Create array iterator from @var{object}.
 
-@var{foreign_object} can be a built-in array (e.g. @code{int[3][2]}), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or any object that @code{ra::} accepts as scalar (see @ref{x-is-scalar,@code{here}}).
+@var{objec} is usually a non-@code{ra::} object (‘foreign object’) that @code{ra::} recognizes as being arraylike, such as a built-in array (e.g. @code{int[3][2]}), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or anything that @code{ra::} accepts as a scalar (see @ref{x-is-scalar,@code{here}}).
 
 The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which only produces rank 0 expressions, or @ref{x-ptr,@code{ptr}}, which only produces rank 1 expressions.
 
-Generally one can mix these types with @code{ra::} expressions without needing @code{ra::start}, but sometimes this isn't possible, for example for operators that must be class members.
+@code{iter} also works on @code{ra::} arrays, but these are converted into array iterators automatically when used in @code{ra::} operations, so an explicit @code{iter} call is rarely needed. Even foreign objects are usually converted, but sometimes this isn't possible, for example with operators that must be class members.
 
 @example
 @verbatim
-std::vector<int> x = {1, 2, 3};
+std::vector<int> x = {1, 2, 3}; // foreign
 ra::Big<int, 1> y = {10, 20, 30};
-cout << (x+y) << endl; // same as ra::start(x)+y
-// x += y; // error: no match for operator+=
-ra::start(x) += y; // ok
+cout << (x+y) << endl; // same as ra::iter(x)+y
+y += x; // ok, ra:: object has required operator+=
+// x += y; // error, no match for operator+=
+ra::iter(x) += y; // ok
 @end verbatim
 @print{} 3
-  11 22 33
-  @result{} x = @{ 11, 22, 33 @}
+  12 24 36
+  @result{} x = @{ 12, 24, 36 @}
 @end example
 
-See also @ref{x-scalar,@code{scalar}}, @ref{x-ptr,@code{ptr}}.
+See also @ref{x-iterk,@code{iter<cell rank>}}, @ref{x-ptr,@code{ptr}}, @ref{x-scalar,@code{scalar}}.
+@end defun
+
+@anchor{x-iterk} @defun iter <k> view
+Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it's interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have runtime or compile time shape.
+
+@example
+@verbatim
+ra::Big<int, 2> c {{1, 3, 2}, {7, 1, 3}};
+cout << "max of each row: " << map([](auto && a) { return amax(a); }, iter<1>(c)) << endl;
+ra::Big<int, 1> m({3}, 0);
+scalar(m) = max(scalar(m), iter<1>(c));
+cout << "max of each column: " << m << endl;
+m = 0;
+for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
+cout << "max of each column again: " << m << endl;
+@end verbatim
+@print{} max of each row: 2
+   3 7
+   max of each column: 3
+   7 3 3
+   max of each column again: 3
+   7 3 3
+@end example
+
+@c [ma113]
+In the following example, @code{iter<cell rank>} emulates @ref{x-scalar,@code{scalar}}. Note that the empty shape () of @code{iter<1>(m)} matches the shape (3) of @code{iter<1>(c)}. Thus, each of the 1-cells of @code{c} matches against the single 1-cell of @code{m}.
+
+@example
+@verbatim
+m = 0;
+iter<1>(m) = max(iter<1>(m), iter<1>(c));
+cout << "max of each column yet again: " << m << endl;
+@end verbatim
+@print{} max of each column again: 3
+   7 3 3
+@end example
+
+The following example computes the trace of each of the items [(-1)-cells] of @code{c}. @c [ma104]
+
+@example
+@verbatim
+ra::Small<int, 3, 2, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
+cout << "c: " << c << endl;
+cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
+@end verbatim
+@print{} c: 0 -2
+   -1 -3
+   1 -1
+   0 -2
+   2 0
+   1 -1
+   s: -3 -1 -1
+@end  example
+
+@var{k} defaults to 0, so @code{iter<0>(x)} is equivalent to @ref{x-iter,@code{iter(x)}}, but not viceversa, because @code{iter<k>(x)} requires @var{x} to be a view.
+
 @end defun
 
 @cindex @code{scalar}
@@ -2847,7 +2906,7 @@ The primary use of this function is to bring a scalar object into the @code{ra::
 struct W { int x; }
 ra::Big<W, 1> w { {1}, {2}, {3} };
 
-// error: no matching function for call to start(W)
+// error: no matching function for call to iter(W)
 // for_each([](auto && a, auto && b) { cout << (a.x + b.x) << endl; }, w, W {7});
 
 // bring W into ra:: with ra::scalar
@@ -2880,62 +2939,7 @@ c(ra::iota(2)) += x; // c(ra::iota(2)) with shape (2) matches x with shape (2)
 @end example
 where the result is @{c(0)+x(0), c(1)+x(1), c(2)@}.
 
-See also @ref{x-start,@code{start}}.
-@end defun
-
-@cindex @code{iter}
-@anchor{x-iter} @defun iter <k> (view)
-Create iterator over the @var{k}-cells of @var{view}. If @var{k} is negative, it's interpreted as the negative of the frame rank. In the current version of @code{ra::}, @var{view} may have runtime or compile time shape.
-
-@example
-@verbatim
-ra::Big<int, 2> c {{1, 3, 2}, {7, 1, 3}};
-cout << "max of each row: " << map([](auto && a) { return amax(a); }, iter<1>(c)) << endl;
-ra::Big<int, 1> m({3}, 0);
-scalar(m) = max(scalar(m), iter<1>(c));
-cout << "max of each column: " << m << endl;
-m = 0;
-for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
-cout << "max of each column again: " << m << endl;
-@end verbatim
-@print{} max of each row: 2
-   3 7
-   max of each column: 3
-   7 3 3
-   max of each column again: 3
-   7 3 3
-@end example
-
-@c [ma113]
-In the following example, @code{iter} emulates @ref{x-scalar,@code{scalar}}. Note that the shape () of @code{iter<1>(m)} matches the shape (3) of @code{iter<1>(c)}. Thus, each of the 1-cells of @code{c} matches against the single 1-cell of @code{m}.
-
-@example
-@verbatim
-m = 0;
-iter<1>(m) = max(iter<1>(m), iter<1>(c));
-cout << "max of each column yet again: " << m << endl;
-@end verbatim
-@print{} max of each column again: 3
-   7 3 3
-@end example
-
-The following example computes the trace of each of the items [(-1)-cells] of @code{c}. @c [ma104]
-
-@example
-@verbatim
-ra::Small<int, 3, 2, 2> c = ra::_0 - ra::_1 - 2*ra::_2;
-cout << "c: " << c << endl;
-cout << "s: " << map([](auto && a) { return sum(diag(a)); }, iter<-1>(c)) << endl;
-@end verbatim
-@print{} c: 0 -2
-   -1 -3
-   1 -1
-   0 -2
-   2 0
-   1 -1
-   s: -3 -1 -1
-@end  example
-
+See also @ref{x-iter,@code{iter}}.
 @end defun
 
 @cindex @code{sum}

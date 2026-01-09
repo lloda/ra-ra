@@ -54,7 +54,7 @@ int main(int argc, char * * argv)
             ra::Big<int, 1> A = {1, 2};
             ra::Big<int, 1> X = {0, 0};
             X(ra::all) = A();
-            tr.test_eq(ra::start({1, 2}), X);
+            tr.test_eq(ra::iter({1, 2}), X);
         }
         tr.section("need for non-default View::operator=(View const & x) [ra34]");
         {
@@ -209,8 +209,8 @@ int main(int argc, char * * argv)
     tr.section("nested braces for nested type VI");
     {
         ra::Small<ra::Big<double, 1>, 2> g = { { 1 }, { 1, 2 } };
-        tr.test_eq(ra::start({1}), g[0]);
-        tr.test_eq(ra::start({1, 2}), g[1]);
+        tr.test_eq(ra::iter({1}), g[0]);
+        tr.test_eq(ra::iter({1, 2}), g[1]);
     }
     tr.section("more nested braces");
     {

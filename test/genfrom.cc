@@ -161,8 +161,8 @@ int main()
         constexpr auto a = ra::ii(ra::ilist<3, 6, 4>);
         auto b0 = from(a, ra::len-1, ra::iota(ra::ic<3>), ra::len/2);
         auto b1 = from(a, 2, ra::iota(ra::ic<3>), 2);
-        tr.test_eq(ra::start({50, 54, 58}), b0);
-        tr.test_eq(ra::start({50, 54, 58}), b1);
+        tr.test_eq(ra::iter({50, 54, 58}), b0);
+        tr.test_eq(ra::iter({50, 54, 58}), b1);
         tr.test_eq(3, b0.len_s(0));
         tr.test_eq(3, b1.len_s(0));
     }
@@ -172,8 +172,8 @@ int main()
 // FIXME forwarding :-/
         // auto b0 = from(a, 2, ra::Small<int, 2>{0, 1} + ra::len/2, 2);
         auto b1 = from(a, 2, ra::iota(ra::ic<2>, 2), 2);
-        tr.test_eq(ra::start({32, 35}), from(a, 2, ra::Small<int, 2>{0, 1} + ra::len/2, 2));
-        tr.test_eq(ra::start({32, 35}), b1);
+        tr.test_eq(ra::iter({32, 35}), from(a, 2, ra::Small<int, 2>{0, 1} + ra::len/2, 2));
+        tr.test_eq(ra::iter({32, 35}), b1);
         tr.test_eq(2, from(a, 2, ra::Small<int, 2>{0, 1} + ra::len/2, 2).len_s(0));
         tr.test_eq(2, b1.len_s(0));
     }
@@ -182,8 +182,8 @@ int main()
         constexpr auto a = ra::ii(ra::ilist<3, 4, 3>);
         auto b0 = from(a, 2, ra::iota(ra::len, 0), 2);
         auto b1 = from(a, 2, ra::iota(ra::ic<4>, 0), 2);
-        tr.test_eq(ra::start({26, 29, 32, 35}), b0);
-        tr.test_eq(ra::start({26, 29, 32, 35}), b1);
+        tr.test_eq(ra::iter({26, 29, 32, 35}), b0);
+        tr.test_eq(ra::iter({26, 29, 32, 35}), b1);
         tr.info("FIXME").skip().test_eq(4, b0.len_s(0));
         tr.test_eq(4, b1.len_s(0));
     }
@@ -200,8 +200,8 @@ int main()
         {
             auto b0 = from(a, 1, ra::iota(3), 2);
             auto b1 = from(a, 1, ra::ii({3}), 2);
-            tr.test_eq(ra::start({26, 30, 34}), b0);
-            tr.test_eq(ra::start({26, 30, 34}), b1);
+            tr.test_eq(ra::iter({26, 30, 34}), b0);
+            tr.test_eq(ra::iter({26, 30, 34}), b1);
             tr.test_eq(b0.dimv[0].len, b0.dimv[0].len);
             tr.test_eq(b0.dimv[0].step, b0.dimv[0].step);
         }

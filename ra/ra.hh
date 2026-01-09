@@ -324,7 +324,7 @@ constexpr dim_t
 index(auto && a)
 {
     return early(map([](auto && a, auto && i){ return bool(a) ? std::make_optional(i) : std::nullopt; },
-                     RA_FW(a), ra::iota(ra::start(a).len(0))),
+                     RA_FW(a), ra::iota(ra::iter(a).len(0))),
                  ra::dim_t(-1));
 }
 
@@ -361,7 +361,7 @@ constexpr decltype(auto)
 refmin(A && a, Less && less = {})
 {
     RA_CK(a.size()>0, "refmin requires nonempty argument.");
-    decltype(auto) s = ra::start(a);
+    decltype(auto) s = ra::iter(a);
     auto p = &(*s);
     for_each([&less, &p](auto & a){ if (less(a, *p)) { p=&a; } }, s);
     return *p;
@@ -372,7 +372,7 @@ constexpr decltype(auto)
 refmax(A && a, Less && less = {})
 {
     RA_CK(a.size()>0, "refmax requires nonempty argument.");
-    decltype(auto) s = ra::start(a);
+    decltype(auto) s = ra::iter(a);
     auto p = &(*s);
     for_each([&less, &p](auto & a){ if (less(*p, a)) { p=&a; } }, s);
     return *p;

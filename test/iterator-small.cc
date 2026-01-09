@@ -50,8 +50,8 @@ int main()
             auto b = transpose(a, ilist_t<1, 0>{});
 
             // we don't necessarily walk ind this way.
-            // tr.test_eq(ra::start({0, 0}), ra::start(b.begin().ind));
-            // tr.test_eq(ra::start({0, 1}), ra::start((++b.begin()).ind));
+            // tr.test_eq(ra::iter({0, 0}), ra::iter(b.begin().ind));
+            // tr.test_eq(ra::iter({0, 1}), ra::iter((++b.begin()).ind));
 
             tr.test(!std::is_same_v<int *, decltype(b.begin())>);
             int bref[6] = {1, 4, 2, 5, 3, 6};
@@ -68,7 +68,7 @@ int main()
                       auto test = [&](std::string ref, auto cr)
                                   {
                                       std::ostringstream o;
-                                      for_each([&o](auto && a) { o << a << "|"; }, iter<cr()>(a));
+                                      for_each([&o](auto && a) { o << a << "|"; }, ra::iter<cr()>(a));
                                       tr.test_eq(ra::scalar(ref), ra::scalar(o.str()));
                                   };
                       test("1|2|3|4|5|6|", ra::int_c<-2>());

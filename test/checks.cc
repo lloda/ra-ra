@@ -172,7 +172,7 @@ int main()
         ra::Big<int, 4> b({2, 4, 4, 5}, (ra::_0+1)*1000 + (ra::_1+1)*100 + (ra::_2+1)*10 + (ra::_3+1));
         tr.test_eq(1, agree_s(a, b));
         tr.test_eq(0, agree(a, b));
-#define MAP map_([](auto && a, auto && b) { return a+b; }, start(a), start(b))
+#define MAP map_([](auto && a, auto && b) { return a+b; }, ra::iter(a), ra::iter(b))
         int x = 0;
         try {
             cout << "CHECK " << MAP.check() << endl;
@@ -188,7 +188,7 @@ int main()
     {
         ra::Small<int, 2, 2> a;
         ra::Small<int, 3, 2> b;
-        cout << ra::Match(start(a), start(b)).len_s(0) << endl;
+        cout << ra::Match(ra::iter(a), ra::iter(b)).len_s(0) << endl;
         static_assert(0==agree_s(a, b));
         static_assert(0==agree_s(b, a));
     }
@@ -240,7 +240,7 @@ int main()
     }
     tr.section("dynamic terms in match, dynamic rank. See frame-new.cc");
     {
-        auto f2 = [](ra::Big<int, 2> const & a) { cout << ra::start(shape(a)) << endl; };
+        auto f2 = [](ra::Big<int, 2> const & a) { cout << ra::iter(shape(a)) << endl; };
         int error = 0;
         std::string s;
         try {

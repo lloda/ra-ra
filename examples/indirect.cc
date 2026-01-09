@@ -177,7 +177,7 @@ example6()
 {
     ra::Big<int, 1> v = { 1, 3, 4, 9, 15, 12, 0, 1, 15, 12, 0, 3, 4, 8 };
     constexpr char chmap[] = "0123456789ABCDEF";
-    cout << fmt({ .sep0="" }, map(ra::Big<char, 1>(chmap), v)) << endl; // FIXME make ra::start(chmap) work
+    cout << fmt({ .sep0="" }, map(ra::Big<char, 1>(chmap), v)) << endl; // FIXME make ra::iter(chmap) work
 }
 
 // from the manual on ra::iota()

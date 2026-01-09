@@ -19,25 +19,25 @@ int main()
     TestRecorder tr;
     tr.section("Tests for std:: types");
     {
-        tr.section("frame match ra::start on 1st axis");
+        tr.section("frame match ra::iter on 1st axis");
         {
             std::vector const a = { 1, 2, 3 };
-            ra::Big<int, 2> b ({3, 2}, ra::start(a));
+            ra::Big<int, 2> b ({3, 2}, ra::iter(a));
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
          }
 // TODO actually whether unroll is avoided depends on ply, have a way to require it [ra3]
-        tr.section("frame match ra::start on 1st axis, forbid unroll");
+        tr.section("frame match ra::iter on 1st axis, forbid unroll");
         {
             std::vector const a = { 1, 2, 3 };
             ra::Big<int, 3> b ({3, 4, 2}, ra::none);
-            transpose(b, {0, 2, 1}) = ra::start(a);
+            transpose(b, {0, 2, 1}) = ra::iter(a);
             tr.test_eq(a[0], b(0));
             tr.test_eq(a[1], b(1));
             tr.test_eq(a[2], b(2));
         }
-        tr.section("frame match ra::start on some axis other than 1st");
+        tr.section("frame match ra::iter on some axis other than 1st");
         {
             {
                 ra::Big<int, 1> const a = { 10, 20, 30 };
@@ -52,28 +52,28 @@ int main()
                 tr.test_eq(ra::Big<int, 2>({3, 2}, {11, 12, 21, 22, 31, 32}), c);
             }
         }
-        tr.section("= operators on ra::start");
+        tr.section("= operators on ra::iter");
         {
             std::vector a { 1, 2, 3 };
-            ra::start(a) *= 3;
-            tr.test_eq(ra::start(std::vector { 3, 6, 9 }), ra::start(a));
+            ra::iter(a) *= 3;
+            tr.test_eq(ra::iter(std::vector { 3, 6, 9 }), ra::iter(a));
         }
         tr.section("automatic conversion of foreign vectors in mixed ops");
         {
             std::vector a { 1, 2, 3 };
             ra::Big<int, 1> b { 10, 20, 30 };
-            tr.test_eq(ra::start({11, 22, 33}), a+b);
+            tr.test_eq(ra::iter({11, 22, 33}), a+b);
         }
     }
     tr.section("builtin arrays as foreign arrays");
     {
         int const a[] = {1, 2, 3};
-        tr.info("builtin array is enough to drive").test_eq(ra::start({1, 3, 5}), (ra::_0 + a));
+        tr.info("builtin array is enough to drive").test_eq(ra::iter({1, 3, 5}), (ra::_0 + a));
         int const b[][3] = {{1, 2, 3}, {4, 5, 6}};
         tr.info("builtin array handles 2 dimensions").test_eq(ra::Small<int, 2, 3>{1, 1, 1,  5, 5, 5}, (ra::_0 + b - ra::_1));
         int const c[2][2][2][2] = {{{{0, 1}, {2, 3}}, {{4, 5}, {6, 7}}}, {{{8, 9}, {10, 11}}, {{12, 13}, {14, 15}}}};
         tr.info("builtin array handles 4 dimensions").test_eq(ra::Small<int, 2, 2, 2, 2>(ra::_0*8 + ra::_1*4 + ra::_2*2 + ra::_3), c);
-        // ra::start(c) = 99; // FIXME test that this fails at ct.
+        // ra::iter(c) = 99; // FIXME test that this fails at ct.
     }
     tr.section("builtin arrays shape/size/rank");
     {
@@ -86,21 +86,21 @@ int main()
     }
 // shape on std:: types
     {
-        tr.test_eq(ra::start({3}), ra::shape(std::array<int, 3> {1, 2, 3}));
-        tr.test_eq(ra::start({4}), ra::shape(std::vector<int> {1, 2, 3, 4}));
+        tr.test_eq(ra::iter({3}), ra::shape(std::array<int, 3> {1, 2, 3}));
+        tr.test_eq(ra::iter({4}), ra::shape(std::vector<int> {1, 2, 3, 4}));
     }
 
     tr.section("operators take foreign types");
     {
         std::vector x = {1, 2, 3};
-        tr.test_eq(6, sum(ra::start(x)));
+        tr.test_eq(6, sum(ra::iter(x)));
         tr.test_eq(6, ra::sum(x));
     }
     tr.section("spot use of scalar");
     {
         struct W { int x; };
         ra::Big<W, 1> w = { {1}, {2} };
-        tr.test_eq(ra::start({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
+        tr.test_eq(ra::iter({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
         w() = W {3};
         tr.test_eq(3, map([](auto && a) { return a.x; }, w));
     }
@@ -113,13 +113,13 @@ int main()
         cout << ra::mp::type_name<decltype(o)>() << endl;
         cout << ra::mp::type_name<decltype(p)>() << endl;
         cout << ra::mp::type_name<decltype(q)>() << endl;
-        cout << ra::mp::type_name<decltype(ra::start(q))>() << endl;
+        cout << ra::mp::type_name<decltype(ra::iter(q))>() << endl;
         cout << ra::mp::type_name<std::remove_all_extents_t<decltype(q)>>() << endl;
     }
     {
         int o[2];
         static_assert(1==ra::rank(o));
-        static_assert(2==ra::start(o).len(0));
+        static_assert(2==ra::iter(o).len(0));
 
         int p[3][2];
         static_assert(2==ra::rank(p));
@@ -132,10 +132,10 @@ int main()
         static_assert(3==ra::shape(q)[1]);
         static_assert(2==ra::shape(q)[2]);
 
-        static_assert(3==ra::start(q).rank());
-        static_assert(4==ra::start(q).len(0));
-        static_assert(3==ra::start(q).len(1));
-        static_assert(2==ra::start(q).len(2));
+        static_assert(3==ra::iter(q).rank());
+        static_assert(4==ra::iter(q).len(0));
+        static_assert(3==ra::iter(q).len(1));
+        static_assert(2==ra::iter(q).len(2));
 
         int r[][2] = {{1, 2}, {3, 4}};
         static_assert(std::rank<decltype(r)>::value==2);
@@ -149,12 +149,12 @@ int main()
         int * z = p;
         ra::Big<int, 1> q {1, 2, 3};
         q += p; // ok, q is ra::, p is foreign object with size info
-        tr.test_eq(ra::start({2, 4, 6}), q);
-        ra::start(p) += q; // can't redefine operator+=(int[]), foreign needs ra::start()
-        tr.test_eq(ra::start({3, 6, 9}), p);
+        tr.test_eq(ra::iter({2, 4, 6}), q);
+        ra::iter(p) += q; // can't redefine operator+=(int[]), foreign needs ra::iter()
+        tr.test_eq(ra::iter({3, 6, 9}), p);
         // z += q; // error: raw pointer needs ra::ptr()
         ra::ptr(z) += p; // ok, size is determined by foreign object p
-        tr.test_eq(ra::start({6, 12, 18}), p);
+        tr.test_eq(ra::iter({6, 12, 18}), p);
     }
     tr.section("char arrays");
     {
@@ -163,8 +163,8 @@ int main()
             char hello[] = "hello";
             tr.test_eq(string("hello"), quote(hello)); // not ra:: types
             tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, quote(ra::scalar(hello)));
-            tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, ra::start(hello));
-            tr.test_eq(6, size_s(ra::start(hello)));
+            tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, ra::iter(hello));
+            tr.test_eq(6, size_s(ra::iter(hello)));
             tr.test_eq(6, size_s(ra::ptr(hello)));
             tr.test_eq(ra::ptr(string("hello\0")), ra::ptr((char *)hello)); // char by char
         }
@@ -173,7 +173,7 @@ int main()
             char const * hello = "hello";
             tr.test_eq(string("hello"), quote(hello));
             tr.test_eq(ra::scalar(string("hello")), ra::scalar(hello));
-            // cout << ra::start(hello) << endl; // error, cannot be start()ed
+            // cout << ra::iter(hello) << endl; // error, cannot be iter()ed
             // cout << ra::ptr(hello) << endl; // error, pointer has no size
         }
     }

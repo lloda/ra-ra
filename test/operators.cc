@@ -197,8 +197,8 @@ int main()
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 20, 5, 6 });
         ra::Small<int, 3, 2> ref {4, 5, 6, 23, 8, 9};
-        tr.test_eq(ref, ra::map_([](int a, int b){ return a + b; }, ra::start(a), ra::start(3)));
-        tr.test_eq(ref, ra::start(a) + ra::start(3));
+        tr.test_eq(ref, ra::map_([](int a, int b){ return a + b; }, ra::iter(a), ra::iter(3)));
+        tr.test_eq(ref, ra::iter(a) + ra::iter(3));
         tr.test_eq(ref, a+3);
     }
 // These are rather different because they have to be defined in-class.
@@ -266,7 +266,7 @@ int main()
         ra::Unique<int, 1> a({7}, 7);
         ra::Small<ra::dim_t, 3> i { 2, 3, 5 };
         ra::Small<int, 3> b { 22, 33, 55 };
-        ra::map_([&a](ra::dim_t i) -> decltype(auto) { return a(i); }, ra::start(i)) = b;
+        ra::map_([&a](ra::dim_t i) -> decltype(auto) { return a(i); }, ra::iter(i)) = b;
         int checka[] = { 7, 7, 22, 33, 7, 55, 7 };
         tr.test(std::equal(checka, checka+7, a.begin()));
     }
@@ -317,7 +317,7 @@ int main()
         ra::Big<int, 3> a({10, 2, 2}, {0, 0, 1, 3, 0, 1, 3, 3, 0, 2, 3, 0, 3, 1, 2, 1, 1, 1, 3, 1, 0, 3, 2, 2, 2, 3, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 3, 0, 2, 1});
         ra::Big<int, 1> i = ra::iota(a.len(0));
         std::sort(i.data(), i.data()+i.size(), [&a](int i, int j){ return lexical_compare(a(i), a(j)); });
-        tr.test_eq(ra::start({0, 8, 1, 2, 5, 4, 7, 6, 9, 3}), i);
+        tr.test_eq(ra::iter({0, 8, 1, 2, 5, 4, 7, 6, 9, 3}), i);
     }
     return tr.summary();
 }

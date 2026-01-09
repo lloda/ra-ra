@@ -52,7 +52,7 @@ far(real const f, ra::ViewBig<real *, 2> const & rr, ra::ViewBig<complex *, 3> &
             real23 opmn = transpose(op, ra::ilist_t<1, 0>{})*real2 { pn*std::pow(r[2], m-1), pn };
             gemm(dip, gemm(op, opmn), a);
         }
-    },  iter<1>(rr), iter<2>(ra::transpose(a, ra::ilist_t<1, 0, 2>{})));
+    },  ra::iter<1>(rr), ra::iter<2>(ra::transpose(a, ra::ilist_t<1, 0, 2>{})));
 }
 
 int main()

@@ -135,7 +135,7 @@ int main()
         TESTPRED(std::vector<int>,
                  false, false, false, false, true);
 // this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
-        TESTPRED(decltype(ra::start(std::vector<int> {})),
+        TESTPRED(decltype(ra::iter(std::vector<int> {})),
                  true, std::nullopt, true, false, false);
         TESTPRED(int *,
                  false, false, false, false, false);
@@ -176,7 +176,7 @@ int main()
         static_assert(ra::is_ra<ra::ViewBig<int *, 1>>, "bad is_ra View");
         static_assert(ra::is_ra<ra::ViewBig<int *>>, "bad is_ra View");
 
-        using Vector = decltype(ra::start({1, 2, 3}));
+        using Vector = decltype(ra::iter({1, 2, 3}));
         static_assert(ra::is_ra<decltype(ra::scalar(3))>, "bad is_ra Scalar");
         static_assert(ra::is_ra<Vector>, "bad is_ra Vector");
         static_assert(!ra::is_ra<int *>, "bad is_ra int *");
@@ -187,9 +187,9 @@ int main()
 
         static_assert(!ra::is_scalar<decltype(ra::scalar(3))>, "bad is_scalar Scalar");
         static_assert(!ra::is_scalar<Vector>, "bad is_scalar Scalar");
-        static_assert(!ra::is_scalar<decltype(ra::start(3))>, "bad is_scalar Scalar");
+        static_assert(!ra::is_scalar<decltype(ra::iter(3))>, "bad is_scalar Scalar");
         int a = 3;
-        static_assert(!ra::is_scalar<decltype(ra::start(a))>, "bad is_scalar Scalar");
+        static_assert(!ra::is_scalar<decltype(ra::iter(a))>, "bad is_scalar Scalar");
 // a regression.
         static_assert(ra::is_ra_0<ra::Scalar<int>>, "bad");
         static_assert(!ra::is_ra_pos<ra::Scalar<int>>, "bad");
@@ -221,21 +221,21 @@ int main()
     }
     tr.section("adaptors I");
     {
-        tr.test_eq(2, size_s(ra::start(std::array<int, 2> { 1, 2 })));
+        tr.test_eq(2, size_s(ra::iter(std::array<int, 2> { 1, 2 })));
         tr.test_eq(2, ra::size_s(std::array<int, 2> { 1, 2 }));
-        tr.test_eq(ra::ANY, ra::size_s(ra::start(std::vector<int> { 1, 2, 3})));
+        tr.test_eq(ra::ANY, ra::size_s(ra::iter(std::vector<int> { 1, 2, 3})));
         tr.test_eq(ra::ANY, ra::size_s(std::vector<int> { 1, 2, 3}));
-        tr.test_eq(2, ra::start(std::array<int, 2> { 1, 2 }).len_s(0));
-        tr.test_eq(ra::ANY, ra::start(std::vector<int> { 1, 2, 3 }).len_s(0));
-        tr.test_eq(1, ra::rank_s(ra::start(std::array<int, 2> { 1, 2 })));
-        tr.test_eq(1, ra::rank_s(ra::start(std::vector<int> { 1, 2, 3 })));
-        tr.test_eq(1, ra::start(std::array<int, 2> { 1, 2 }).rank());
-        tr.test_eq(1, ra::start(std::vector<int> { 1, 2, 3 }).rank());
+        tr.test_eq(2, ra::iter(std::array<int, 2> { 1, 2 }).len_s(0));
+        tr.test_eq(ra::ANY, ra::iter(std::vector<int> { 1, 2, 3 }).len_s(0));
+        tr.test_eq(1, ra::rank_s(ra::iter(std::array<int, 2> { 1, 2 })));
+        tr.test_eq(1, ra::rank_s(ra::iter(std::vector<int> { 1, 2, 3 })));
+        tr.test_eq(1, ra::iter(std::array<int, 2> { 1, 2 }).rank());
+        tr.test_eq(1, ra::iter(std::vector<int> { 1, 2, 3 }).rank());
     }
     tr.section("adaptors II");
     {
         static_assert(ra::is_iterator<decltype(ra::ptr(std::array { 1, 2 }))>);
-        static_assert(ra::is_iterator<decltype(ra::start(std::array { 1, 2 }))>);
+        static_assert(ra::is_iterator<decltype(ra::iter(std::array { 1, 2 }))>);
     }
     tr.section("compatibility");
     {

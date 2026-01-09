@@ -27,7 +27,7 @@ int main()
         b.push_back({1, 2});
 
         int2 check[1] = {{1, 2}};
-        tr.test_eq(check, ra::start(a));
+        tr.test_eq(check, ra::iter(a));
         tr.test_eq(check, b);
         tr.test_eq(check[0], b.back());
         tr.test_eq(int2 {1, 2}, b().back()); // back on views
@@ -49,7 +49,7 @@ int main()
             BigValueInit<int, 1> a = {1, 2, 3, 4, 5, 6};
             a.resize(3);
             a.resize(6);
-            tr.test_eq(ra::start({1, 2, 3, 0, 0, 0}), a);
+            tr.test_eq(ra::iter({1, 2, 3, 0, 0, 0}), a);
         }
     }
     tr.section("resize works on first dimension");
@@ -111,12 +111,12 @@ int main()
     tr.section("using shape as expr");
     {
         ra::Unique<double, 3> v({3, 2, 4}, ra::_0 + 15*ra::_1);
-        tr.test_eq(ra::start({3, 2}), ra::shape(v, ra::iota(2)));
-        tr.test_eq(ra::start({3, 2}), ra::shape(v, ra::iota(ra::len-1)));
-        tr.test_eq(ra::start({2, 4}), ra::shape(v, ra::iota(2, 1)));
-        tr.test_eq(ra::start({2, 4}), ra::shape(v, ra::iota(2, ra::len-2)));
+        tr.test_eq(ra::iter({3, 2}), ra::shape(v, ra::iota(2)));
+        tr.test_eq(ra::iter({3, 2}), ra::shape(v, ra::iota(ra::len-1)));
+        tr.test_eq(ra::iter({2, 4}), ra::shape(v, ra::iota(2, 1)));
+        tr.test_eq(ra::iter({2, 4}), ra::shape(v, ra::iota(2, ra::len-2)));
         ra::Small<int, 4> i = {0, 2, 1, 0};
-        tr.test_eq(ra::start({3, 4}), ra::shape(v, i(ra::iota(ra::len-2)))); // len is i's
+        tr.test_eq(ra::iter({3, 4}), ra::shape(v, i(ra::iota(ra::len-2)))); // len is i's
     }
     tr.section("casts from fixed rank View");
     {

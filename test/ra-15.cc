@@ -23,17 +23,17 @@ template <class C> constexpr auto scalar(C && c) { return Scalar<C> { std::forwa
 
 template <class T> requires (std::is_scalar_v<std::decay_t<T>>)
 constexpr decltype(auto)
-start(T && t) { return scalar(std::forward<T>(t)); }
+iter(T && t) { return scalar(std::forward<T>(t)); }
 
 template <class T>
 constexpr decltype(auto)
-start(Scalar<T> && t) { return std::forward<decltype(t)>(t); }
+iter(Scalar<T> && t) { return std::forward<decltype(t)>(t); }
 
 template <class A>
 constexpr decltype(auto)
 VAL(A && a)
 {
-    return *(start(std::forward<A>(a)));
+    return *(iter(std::forward<A>(a)));
 }
 
 template <class A, class B>

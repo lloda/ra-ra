@@ -169,7 +169,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   36. [ ]
   37. [ ]
   38. [ ] test/ra-9.cc: There's no reason to restart, since the Iterator methods are all static. So
-      start(ra::Scalar) just fwds. But that means that Scalar::c maintain constness, so a const
+      iter(ra::Scalar) just fwds. But that means that Scalar::c maintain constness, so a const
       overload is required for ScalarFlat::operator*.
   39. [ ]
   40. [ ]

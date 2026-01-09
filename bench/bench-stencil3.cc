@@ -72,7 +72,7 @@ struct f_stencil_explicit
         Anext(I, J, K) = map([](auto && A) { return -6*A(1, 1, 1)
                     + A(2, 1, 1) + A(1, 2, 1) + A(1, 1, 2)
                     + A(0, 1, 1) + A(1, 0, 1) + A(1, 1, 0); },
-            iter<3>(Astencil));
+            ra::iter<3>(Astencil));
         std::swap(A.cp, Anext.cp);
     };
 };
@@ -83,7 +83,7 @@ struct f_stencil_arrayop
     THEOP
     {
         Astencil.cp = A.data();
-        Anext(I, J, K) = map([](auto && s) { return sum(s*mask); }, iter<3>(Astencil));
+        Anext(I, J, K) = map([](auto && s) { return sum(s*mask); }, ra::iter<3>(Astencil));
         std::swap(A.cp, Anext.cp);
     };
 };

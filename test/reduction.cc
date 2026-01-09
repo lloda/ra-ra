@@ -223,15 +223,15 @@ int main()
     tr.section("reductions with amax");
     {
         ra::Big<int, 2> c({2, 3}, {1, 3, 2, 7, 1, 3});
-        tr.info("max of rows").test_eq(ra::Big<int, 1> {3, 7}, map([](auto && a) { return amax(a); }, iter<1>(c)));
+        tr.info("max of rows").test_eq(ra::Big<int, 1> {3, 7}, map([](auto && a) { return amax(a); }, ra::iter<1>(c)));
         ra::Big<int, 1> m({3}, 0);
-        scalar(m) = max(scalar(m), iter<1>(c)); // requires inner forward in ra.hh: DEF_NAME_OP
+        scalar(m) = max(scalar(m), ra::iter<1>(c)); // requires inner forward in ra.hh: DEF_NAME_OP
         tr.info("max of columns I").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
-        iter<1>(m) = max(iter<1>(m), iter<1>(c)); // FIXME
+        ra::iter<1>(m) = max(ra::iter<1>(m), ra::iter<1>(c)); // FIXME
         tr.info("max of columns III [ma113]").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         m = 0;
-        for_each([&m](auto && a) { m = max(m, a); }, iter<1>(c));
+        for_each([&m](auto && a) { m = max(m, a); }, ra::iter<1>(c));
         tr.info("max of columns II").test_eq(ra::Big<int, 1> {7, 3, 3}, m);
         ra::Big<double, 1> q({0}, {});
         tr.info("amax default").test_eq(std::numeric_limits<double>::infinity(), amin(q));
@@ -247,7 +247,7 @@ int main()
                 S x[4] = {1, 2, 3, 4};
                 ra::Small<T, 3, 4> a = ra::_0 - ra::_1;
                 R y[3] = {99, 99, 99};
-                ra::start(y) = ra::gemv(a, x);
+                ra::iter(y) = ra::gemv(a, x);
                 auto z = ra::gemv(a, x);
                 tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
                 tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
@@ -267,7 +267,7 @@ int main()
                 S x[4] = {1, 2, 3, 4};
                 ra::Small<T, 4, 3> a = ra::_1 - ra::_0;
                 R y[3] = {99, 99, 99};
-                ra::start(y) = ra::gevm(x, a);
+                ra::iter(y) = ra::gevm(x, a);
                 auto z = ra::gevm(x, a);
                 tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
                 tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);

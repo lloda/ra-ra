@@ -24,8 +24,8 @@ int main()
         tr.test_eq(b, ra);
 
         ra::Unique<double> A({2, 3}, 0);
-        tr.test_eq(ra::Small<ra::dim_t, 2> {2, 3}, shape(iter<-2>(A)));
-        tr.test_eq(ra::Small<ra::dim_t, 1> {2}, shape(iter<-1>(A)));
+        tr.test_eq(ra::Small<ra::dim_t, 2> {2, 3}, shape(ra::iter<-2>(A)));
+        tr.test_eq(ra::Small<ra::dim_t, 1> {2}, shape(ra::iter<-1>(A)));
 
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::Unique<double> u({3, 2}, pool);

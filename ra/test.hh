@@ -153,7 +153,7 @@ struct TestRecorder
         if (willstrict
             ? [&]{
                 if constexpr (ra::rank_s(a)==ra::rank_s(b) || ra::rank_s(a)==ANY || ra::rank_s(b)==ANY) {
-                    return ra::rank(a)==ra::rank(b) && every(ra::start(ra::shape(a))==ra::shape(b));
+                    return ra::rank(a)==ra::rank(b) && every(ra::iter(ra::shape(a))==ra::shape(b));
                 } else {
                     return false;
                 } }()
@@ -178,7 +178,7 @@ struct TestRecorder
     bool                                                                \
     NAME(auto && ref, auto && a, RA_CURRENT_LOC)                        \
     {                                                                   \
-        return test_comp(ra::start(ref), ra::start(a), [](auto && a, auto && b){ return every(a OP b); }, \
+        return test_comp(ra::iter(ref), ra::iter(a), [](auto && a, auto && b){ return every(a OP b); }, \
                          "should be " RA_STRINGIZE(OP), loc);              \
     }
     RA_TEST_COMP(test_eq, ==)
@@ -192,8 +192,8 @@ struct TestRecorder
     double
     test_rel(auto && ref_, auto && a_, double req, double level=0, RA_CURRENT_LOC)
     {
-        decltype(auto) ref = ra::start(ref_);
-        decltype(auto) a = ra::start(a_);
+        decltype(auto) ref = ra::iter(ref_);
+        decltype(auto) a = ra::iter(a_);
         double e = (level<=0)
             ? amax_strict(where(isfinite(ref),
                                 rel_error(ref, a),
@@ -218,8 +218,8 @@ struct TestRecorder
     double
     test_abs(auto && ref_, auto && a_, double req=0, RA_CURRENT_LOC)
     {
-        decltype(auto) ref = ra::start(ref_);
-        decltype(auto) a = ra::start(a_);
+        decltype(auto) ref = ra::iter(ref_);
+        decltype(auto) a = ra::iter(a_);
         double e = amax_strict(where(isfinite(ref),
                                      abs(ref-a),
                                      where(isinf(ref),
@@ -298,8 +298,8 @@ struct Benchmark
     void
     report(std::ostream & o, auto const & b, double frac)
     {
-        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), start(ra::map(avg, b)/frac));
-        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), start(ra::map(stddev, b)/frac));
+        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), iter(ra::map(avg, b)/frac));
+        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), iter(ra::map(stddev, b)/frac));
         infos = "";
     }
 

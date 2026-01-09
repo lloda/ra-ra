@@ -38,7 +38,7 @@ int main(int argc, char * * argv)
             I(ra::all, 0) = map([&](auto && i) { return i%M; }, ra::_0 + (std::rand() & 1));
             I(ra::all, 1) = map([&](auto && i) { return i%N; }, ra::_0 + (std::rand() & 1));
 
-            int ref0 = sum(at(C, iter<1>(I))), val0 = 0;
+            int ref0 = sum(at(C, ra::iter<1>(I))), val0 = 0;
             Benchmark bm { reps, 3 };
             auto report = [&](std::string const & stag, auto && bv)
             {
@@ -64,7 +64,7 @@ int main(int argc, char * * argv)
                    }));
             report("at op + iter",
                    bm.run([&]{
-                       val0 = sum(at(C, iter<1>(I)));
+                       val0 = sum(at(C, ra::iter<1>(I)));
                    }));
         };
 
@@ -95,7 +95,7 @@ int main(int argc, char * * argv)
             [[maybe_unused]] int const O = I.len(0);
             I(ra::all, 0) = map([&](auto && i) { return i%M; }, ra::_0 + (std::rand() & 1));
 
-            int ref0 = sum(at(C, iter<1>(I))), val0 = 0;
+            int ref0 = sum(at(C, ra::iter<1>(I))), val0 = 0;
             Benchmark bm { reps, 3 };
             auto report = [&](std::string const & stag, auto && bv)
             {
@@ -112,7 +112,7 @@ int main(int argc, char * * argv)
                    }));
             report("at op + iter",
                    bm.run([&]{
-                       val0 = sum(at(C, iter<1>(I)));
+                       val0 = sum(at(C, ra::iter<1>(I)));
                    }));
         };
 

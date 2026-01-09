@@ -60,7 +60,7 @@ int main()
             bench("accumcols", m, n, reps,
                   [](auto & c, auto const & a)
                   {
-                      for_each([](auto & c, auto && a) { c += sum(a); }, c, iter<1>(a));
+                      for_each([](auto & c, auto && a) { c += sum(a); }, c, ra::iter<1>(a));
                   });
             bench("wrank1", m, n, reps,
                   [](auto & c, auto const & a)
