@@ -68,17 +68,17 @@ int main()
     }
     tr.section("deduced types");
     {
-        tr.test(std::is_same_v<char, decltype(ra::iota(5, char(4)).cp.i)>);
+        tr.test(std::is_same_v<char, decltype(ra::iota(5, char(4)).data().i)>);
     }
     tr.section("ra::iota with static members");
     {
-        tr.test_eq(sizeof(ra::iota().cp), sizeof(ra::dim_t));
-        tr.test_eq(sizeof(ra::iota(4, 0, 2).cp), sizeof(0));
-        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().cp), sizeof(ra::iota()));
-        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().cp), sizeof(ra::iota(ra::dim_c<4> {})));
+        tr.test_eq(sizeof(ra::iota().data()), sizeof(ra::dim_t));
+        tr.test_eq(sizeof(ra::iota(4, 0, 2).data()), sizeof(0));
+        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().data()), sizeof(ra::iota()));
+        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().data()), sizeof(ra::iota(ra::dim_c<4> {})));
 // sizeof might still be > sizeof(i) + sizeof(n) because of alignment
         tr.test_eq(1, decltype(ra::iota(4).dimv[0].step)::value);
-        tr.test_eq(sizeof(ra::iota(4, 0, 2)), sizeof(ra::iota(4, 0, 2).cp) + sizeof(ra::iota(4, 0, 2).dimv[0].len) + sizeof(ra::iota(4, 0, 2).dimv[0].step));
+        tr.test_eq(sizeof(ra::iota(4, 0, 2)), sizeof(ra::iota(4, 0, 2).data()) + sizeof(ra::iota(4, 0, 2).dimv[0].len) + sizeof(ra::iota(4, 0, 2).dimv[0].step));
     }
     tr.section("iota simulation with ptr(iota_view)");
     {

@@ -161,7 +161,7 @@ struct TestRecorder
 
             bool c = every(ra::map(comp, a, b));
             test(c,
-                 RA_LAZYINFO(where(false, a, b), " (", where(true, a, b), " ", msg, ")"),
+                 RA_LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
                  RA_LAZYINFO(""),
                  loc);
             return c;

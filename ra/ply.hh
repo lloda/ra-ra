@@ -430,11 +430,11 @@ struct WLen<Seq<I>>
     f(auto ln, auto && e) { return Seq { VAL(wlen(ln, e.i)) }; }
 };
 
-template <class I, class N, class S> requires (has_len<I> || has_len<N> || has_len<S>)
-struct WLen<Ptr<I, N, S>>
+template <class P, class N, class S> requires (has_len<P> || has_len<N> || has_len<S>)
+struct WLen<Ptr<P, N, S>>
 {
     constexpr static auto
-    f(auto ln, auto && e) { return Ptr(wlen(ln, e.cp), VAL(wlen(ln, e.dimv[0].len)), VAL(wlen(ln, e.dimv[0].step))); }
+    f(auto ln, auto && e) { return ptr(wlen(ln, e.data()), VAL(wlen(ln, e.dimv[0].len)), VAL(wlen(ln, e.dimv[0].step))); }
 };
 
 constexpr auto
@@ -466,7 +466,7 @@ constexpr auto
 iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
 {
     // return ViewSmall<Seq<sarg<I>>, ic_t<std::array {Dim(n, s)}>>(Seq {RA_FW(i)})(insert<w>); // FIXME optimize view<seq>
-    return reframe(Ptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) }, ilist_t<w> {});
+    return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {});
 }
 
 template <int rank, class T=dim_t> constexpr auto
@@ -564,8 +564,8 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak, I0 const & i0, au
             for (int q=0; q<rank(i0); ++q) {
                 if constexpr (dobv) { bv[bk] = Dim {.len=wlen(la, i0).len(q), .step=wlen(la, i0).step(q)*a.step(ak)}; ++bk; }
                 if constexpr (dopl) {
-// FIXME no wlen(view iota) yet so process .cp.i separately
-                    auto const i = wlen(la, i0.cp.i);
+// FIXME no wlen(view iota) yet so process .data().i separately
+                    auto const i = wlen(la, i0.data().i);
                     RA_CK(([&, iz=wlen(la, i0)]{ return 0==iz.len(q) || (inside(i, la) && inside(i+(iz.len(q)-1)*iz.step(q), la)); }()),
                           "Bad iota[", q, "] len ", wlen(la, i0).len(q), " step ", wlen(la, i0).step(q), " in len[", ak, "]=", la, ".");
                     pl += i*a.step(ak);
@@ -669,15 +669,15 @@ from(A && a, auto && ...  i)
     if constexpr (Slice<decltype(a)>) {
         constexpr int dsn = (0 + ... + int(!beatable(i)));
         if constexpr (constexpr int bn=frombrank_s(a, i ...); 0==bn) {
-            return *frompl(a.cp, a, i ...);
+            return *frompl(a.data(), a, i ...);
         } else if constexpr (ANY!=bn) {
             auto beaten = [&]{
 // FIXME more cases could be ViewSmall
                 if constexpr (ANY!=ra::size_s(a) && ((!beatable(i) /* || has_len<decltype(i)> */ || ANY!=ra::size_s(i)) && ...)) {
-                    return ViewSmall<decltype(a.data()), ic_t<frombv(a, i ...)>>(frompl(a.cp, a, i ...));
+                    return ViewSmall<decltype(a.data()), ic_t<frombv(a, i ...)>>(frompl(a.data(), a, i ...));
                 } else {
                     ViewBig<decltype(a.data()), bn> b;
-                    b.cp = fromb<1, 1, 0>(a.cp, 0, b.dimv, 0, a, 0, i ...);
+                    b.cp = fromb<1, 1, 0>(a.data(), 0, b.dimv, 0, a, 0, i ...);
                     return b;
                 }
             };
@@ -688,7 +688,7 @@ from(A && a, auto && ...  i)
             }
         } else if constexpr (int bn=frombrank(a, i ...); 0==dsn) {
             ViewBig<decltype(a.data()), ANY> b;
-            b.cp = 0==bn ? frompl(a.cp, a, i ...) : (b.dimv.resize(bn), fromb<1, 1, 0>(a.cp, 0, b.dimv, 0, a, 0, i ...));
+            b.cp = 0==bn ? frompl(a.data(), a, i ...) : (b.dimv.resize(bn), fromb<1, 1, 0>(a.data(), 0, b.dimv, 0, a, 0, i ...));
             return b;
 // unbeaten on original rank
         } else if constexpr (sizeof...(i)==dsn && sizeof...(i)==(0 + ... + (ANY!=rank_s(i)))) {
@@ -701,7 +701,7 @@ from(A && a, auto && ...  i)
         } else {
             RA_CK(dsn==bn, "Run time reframe dsn ", dsn, " bn ", bn, ".");
             ViewBig<decltype(a.data()), dsn> b;
-            b.cp = fromb<1, 1, 0>(a.cp, 0, b.dimv, 0, a, 0, i ...);
+            b.cp = fromb<1, 1, 0>(a.data(), 0, b.dimv, 0, a, 0, i ...);
             return fromu(std::move(b), ic<std::apply([](auto ... i) { return std::array { int(i) ... }; }, mp::iota<dsn> {})>,
                          ic<0>, std::tuple<> {}, RA_FW(i) ...);
         }

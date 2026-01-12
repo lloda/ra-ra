@@ -113,7 +113,7 @@ int main()
         auto test = [&](auto org)
         {
             auto i = ra::iota(2, org);
-            static_assert(std::is_same_v<decltype(i.cp.i), decltype(org)>);
+            static_assert(std::is_same_v<decltype(i.data().i), decltype(org)>);
             auto b = a(i);
             tr.test_eq(2, b.dimv[0].len);
             tr.test_eq(4, b.dimv[1].len);

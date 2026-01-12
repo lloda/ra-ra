@@ -379,11 +379,12 @@ int main()
         auto b1 = ra::iota(5, 1);
         println(cout, "a0 {:l} b1 {:l}", a0, b1);
         println(cout, "a0(b1) {:l}", from(a0, b1));
-        tr.test_eq(1, from(a0, b1).cp.i);
+        tr.test_eq(1, from(a0, b1).data().i);
         auto b0 = ra::iota(7);
         auto a1 = ra::ii({5}, {1});
+        static_assert(ra::Slice<decltype(b0)>);
         println(cout, "b0(a1) {:l}", from(b0, a1));
-        tr.test_eq(1, from(b0, a1).cp.i);
+        tr.test_eq(1, from(b0, a1).data().i);
     }
     return tr.summary();
 }

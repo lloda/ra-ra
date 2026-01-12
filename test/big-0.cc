@@ -198,12 +198,15 @@ int main(int argc, char * * argv)
         ra::Small<ra::Big<int, 1>, 1> d = { {1, 2, 3} }; // ok
         tr.test_eq(ra::iota(3, 1), d(0));
 
+// requires that x NOT be convertible to int,  but expressions generally are convertible to their val type.
+// his is hacked away in Cell's conversion operator. FIXME probably not worth it.
         auto x = ra::iota(3, 1);
         ra::Small<ra::Big<int, 1>, 1> f = { {x} }; // ok; broken with { x }
         tr.test_eq(ra::iota(3, 1), f(0));
 
+// fails for the same reason.
         // ra::Small<int, 3> w = { 1, 2, 3 };
-        // ra::Small<ra::Big<int, 1>, 1> e = { w }; // broken with { w }, ct error with { {w} }
+        // ra::Small<ra::Big<int, 1>, 1> e = { {w} }; // broken with { w }, ct error with { {w} }
         // tr.test_eq(ra::iota(3, 1), e(0));
     }
     tr.section("nested braces for nested type VI");

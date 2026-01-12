@@ -48,16 +48,17 @@ test_predicates(char const * type, TestRecorder & tr,
          << (ra::Iterator<A> ? "iterator " : "")
          << (ra::is_scalar<A> ? "scalar " : "")
          << (ra::is_fov<A> ? "fov " : "")
-         << (ra::is_builtin_array<A> ? "builtinarray " : "")
+         << (ra::is_builtin<A> ? "builtinarray " : "")
          << (std::ranges::range<A> ? "range " : "")
          << (std::is_const_v<A> ? "const " : "")
          << (std::is_lvalue_reference_v<A> ? "ref " : "") << endl;
-    if (ra) tr.quiet().info(type).info("ra").test_eq(ra.value(), ra::is_ra<A>);
-    if (slice) tr.quiet().info(type).info("slice").test_eq(slice.value(), ra::Slice<A>);
-    if (iterator) tr.quiet().info(type).info("Iterator").test_eq(iterator.value(), ra::Iterator<A>);
-    if (scalar) tr.quiet().info(type).info("scalar").test_eq(scalar.value(), ra::is_scalar<A>);
-    if (fov) tr.quiet().info(type).info("fov").test_eq(fov.value(), ra::is_fov<A>);
-    tr.quiet().info(type).info("std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>);
+    std::string retype = ra::format(type, "(", ra::mp::type_name<A>(), ")");
+    if (ra) tr.quiet().info(retype, " ra").test_eq(ra.value(), ra::is_ra<A>);
+    if (slice) tr.quiet().info(retype, " slice").test_eq(slice.value(), ra::Slice<A>);
+    if (iterator) tr.quiet().info(retype, " Iterator").test_eq(iterator.value(), ra::Iterator<A>);
+    if (scalar) tr.quiet().info(retype, " scalar").test_eq(scalar.value(), ra::is_scalar<A>);
+    if (fov) tr.quiet().info(retype, " fov").test_eq(fov.value(), ra::is_fov<A>);
+    tr.quiet().info(retype, " std::ranges::range").test_eq(std::ranges::range<A>, std::ranges::range<A>);
 }
 
 // Not registered with is_scalar_def.
@@ -122,8 +123,9 @@ int main()
                  true, true, true, false, false);
         TESTPRED(decltype(std::declval<ra::Small<int, 2>>()),
                  true, true, false, false, false);
+// may be slice if iota is Cell, because we let some Cell be slice for the sake of iota.
         TESTPRED(decltype(ra::Small<int, 2>().iter()),
-                 true, false, true, false, false);
+                 true, std::nullopt, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2, 2>()()),
                  true, true, false, false, false);
         TESTPRED(decltype(ra::Small<int, 2, 2>().iter()),
@@ -203,12 +205,12 @@ int main()
         int const a[] = {1, 2, 3};
         int b[] = {1, 2, 3};
         int c[][2] = {{1, 2}, {4, 5}};
-        static_assert(ra::is_builtin_array<decltype(a) &>);
-        static_assert(ra::is_builtin_array<decltype(a)>);
-        static_assert(ra::is_builtin_array<decltype(b) &>);
-        static_assert(ra::is_builtin_array<decltype(b)>);
-        static_assert(ra::is_builtin_array<decltype(c) &>);
-        static_assert(ra::is_builtin_array<decltype(c)>);
+        static_assert(ra::is_builtin<decltype(a) &>);
+        static_assert(ra::is_builtin<decltype(a)>);
+        static_assert(ra::is_builtin<decltype(b) &>);
+        static_assert(ra::is_builtin<decltype(b)>);
+        static_assert(ra::is_builtin<decltype(c) &>);
+        static_assert(ra::is_builtin<decltype(c)>);
         tr.test_eq(1, ra::rank_s(a));
         tr.test_eq(1, ra::rank_s(b));
         tr.test_eq(2, ra::rank_s(c));

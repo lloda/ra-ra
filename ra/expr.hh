@@ -168,7 +168,7 @@ template <int cr=0> constexpr auto iter(Slice auto && a) requires (!is_iterator<
 
 // forward decl.
 constexpr auto iter(is_fov auto && a);
-constexpr auto iter(is_builtin_array auto && a);
+constexpr auto iter(is_builtin auto && a);
 template <class T> constexpr auto iter(std::initializer_list<T> a);
 
 template <class A>
@@ -274,6 +274,7 @@ struct CellSmall
 
     consteval static rank_t rank() { return framer; }
     constexpr static dim_t len(int k) { return dimv[k].len; }
+    constexpr static dim_t len_s(int k) { return dimv[k].len; }
     constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
     constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
 };
@@ -285,8 +286,9 @@ struct CellBig
     constexpr static rank_t cellr = is_constant<Cr> ? rank_cell(size_s<Dimv>(), cr) : ANY;
     constexpr static rank_t framer = is_constant<Cr> ? rank_frame(size_s<Dimv>(), cr) : ANY;
 
+    constexpr static Dimv const sdimv = {};
     [[no_unique_address]] Dimv const dimv;
-    ViewBig<P, cellr> c;
+    std::conditional_t<0==cellr, ViewSmall<P, ic_t<std::array<ra::Dim, 0> {}>>, ViewBig<P, cellr>> c; // FIXME
     constexpr explicit CellBig(P cp, Dimv dimv_, Cr dcr=Cr {}): dimv(dimv_), c(cp)
     {
         rank_t dcell = rank_cell(ra::size(dimv), dcr);
@@ -300,8 +302,11 @@ struct CellBig
     constexpr rank_t rank() const requires (ANY==framer) { return ra::size(dimv)-ra::size(c.dimv); }
 #pragma GCC diagnostic push // test/bug83.cc gcc-14 RA_CHECK=0 --no-sanitize
 #pragma GCC diagnostic warning "-Warray-bounds"
-    constexpr dim_t len(int k) const { return dimv[k].len; }
-    constexpr dim_t step(int k) const { return k<rank() ? dimv[k].step : 0; }
+    constexpr static dim_t len_s(int k) { if constexpr (is_constant<decltype(sdimv[k].len)>) return len(k); else return ANY; }
+    constexpr static dim_t len(auto k) requires (is_constant<decltype(sdimv[k].len)>) { return sdimv[k].len; }
+    constexpr dim_t len(int k) const requires (!is_constant<decltype(sdimv[k].len)>) { return dimv[k].len; }
+    constexpr static dim_t step(auto k) requires (is_constant<decltype(sdimv[k].step)>) { return k<rank() ? sdimv[k].step : 0; }
+    constexpr dim_t step(int k) const requires (!is_constant<decltype(sdimv[k].step)>) { return k<rank() ? dimv[k].step : 0; }
 #pragma GCC diagnostic pop
     constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
 };
@@ -311,17 +316,19 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
 {
     static_assert(has_len<P> || std::bidirectional_iterator<P>);
     using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>, CellBig<P, Dimv, Cr>>;
-    using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::rank;
+    using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::len_s, Base::rank;
     using View = decltype(std::declval<Base>().c);
     static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
+    constexpr auto data() const { return c.cp; }
     RA_ASSIGNOPS_ITER(Cell)
-    constexpr static dim_t len_s(int k) { if constexpr (is_constant<Dimv>) return len(k); else return ANY; }
+    template <rank_t c=0> constexpr auto iter() const requires (0==cellr && 1==framer) { static_assert(0==c); return *this; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(i)); }
     constexpr View at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, ra::iter(i)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr View const & operator*() const requires (0!=cellr) { return c; }
-    constexpr operator decltype(*c.cp) () const { return to_scalar(*this); }
+    constexpr static bool static_1 = framer>=0 && std::apply([](auto ... i){ return ((1==len_s(i)) && ...); }, mp::iota<(framer<0)?0:framer> {});
+    constexpr operator decltype(*c.cp) () const requires (0==cellr && static_1) /* [ra45 */ { return to_scalar(*this); }
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp=p; }
 #pragma GCC diagnostic push
@@ -331,6 +338,8 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
 };
 
 // rank 1 special case for fovs or iota, both Iterator and Slice. FIXME replace with View
+
+template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
 template <class P, class N, class S>
 struct Ptr final
@@ -343,10 +352,7 @@ struct Ptr final
 
     P cp;
     [[no_unique_address]] struct { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; } dimv[1];
-    constexpr Ptr(P p, N n, S s): cp(p), dimv { n, s }
-    {
-        if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
-    }
+    constexpr Ptr(P p, N n, S s): cp(p), dimv { n, s } {}
     RA_ASSIGNOPS_ITER(Ptr)
     template <rank_t c=0> constexpr auto iter() const { static_assert(0==c); return *this; }
     constexpr auto data() const { return cp; }
@@ -369,8 +375,6 @@ struct Ptr final
 #pragma GCC diagnostic pop
 };
 
-template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
-
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
 ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
@@ -384,7 +388,7 @@ ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
             return ptr(std::begin(RA_FW(p)), ic<size_s(p)>, RA_FW(s));
         }
     } else {
-        static_assert(std::bidirectional_iterator<std::decay_t<P>>, "Bad type for ptr().");
+        if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
         return Ptr<std::decay_t<P>, sarg<N>, sarg<S>> { p, RA_FW(n), RA_FW(s) };
     }
 }
@@ -393,19 +397,15 @@ template <class I, class N, class S, class K=ic_t<dim_t(0)>>
 constexpr auto
 reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
-    static_assert(i.nn!=UNB, "Bad arguments to reverse(iota).");
-    return ptr(Seq { i.cp.i+(i.dimv[0].len-1)*i.dimv[0].step }, i.dimv[0].len, csub(ic<0>, i.dimv[0].step));
+    static_assert(UNB!=i.len_s(0), "Bad arguments to reverse(iota).");
+    return ptr(Seq { i.data().i+(i.dimv[0].len-1)*i.dimv[0].step }, i.dimv[0].len, csub(ic<0>, i.dimv[0].step));
 }
 
-constexpr auto
-iter(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
-
-template <class T>
-constexpr auto
-iter(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
+constexpr auto iter(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
+template <class T> constexpr auto iter(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
 
 constexpr auto
-iter(is_builtin_array auto && a)
+iter(is_builtin auto && a)
 {
     using T = std::remove_all_extents_t<std::remove_reference_t<decltype(a)>>; // preserve const
     return Cell<T *, ic_t<default_dims(ra::shape(a))>, ic_t<0>>(

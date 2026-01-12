@@ -22,12 +22,13 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("optimizing static size Iotas");
     {
-        tr.test_eq(4, opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)).nn);
-        tr.test_eq(4, opt(ra::iota(4) + ra::iota(ra::ic<4>, 0, 2)).nn);
-        tr.test_eq(ra::iter({0, 3, 6, 9}), opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)));
-        tr.test_eq(4, opt(ra::iota(ra::ic<4>) - ra::iota(4, 0, 2)).nn);
-        tr.test_eq(4, opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)).nn);
+        auto check_static = [&](int n, auto && x) { tr.test_eq(n, x.dimv[0].len); tr.test_eq(n, size_s(x)); };
+        check_static(4, opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)));
+        check_static(4, opt(ra::iota(4) + ra::iota(ra::ic<4>, 0, 2)));
+        check_static(4, opt(ra::iota(ra::ic<4>) - ra::iota(4, 0, 2)));
+        check_static(4, opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)));
         tr.test_eq(ra::iter({0, -1, -2, -3}), opt(ra::iota(4) - ra::iota(ra::ic<4>, 0, 2)));
+        tr.test_eq(ra::iter({0, 3, 6, 9}), opt(ra::iota(ra::ic<4>) + ra::iota(4, 0, 2)));
     }
     tr.section("iota ops, expr iotas WIP");
     {
@@ -48,7 +49,7 @@ int main()
         tr.test_eq(ra::iota(4, 1, 2), ra::Big<int, 1> {1, 3, 5, 7});
         {
             auto z = ra::iota(5, 1.5);
-            tr.info("iota with real org I").test_eq(1.5, z.cp.i);
+            tr.info("iota with real org I").test_eq(1.5, z.data().i);
             tr.info("iota with complex org I").test_eq(1.5+ra::iter({0, 1, 2, 3, 4}), z);
         }
         {
@@ -79,11 +80,11 @@ int main()
             auto k6 = opt(ra::iota(5)-0.5);
             tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-            tr.test_eq(org+1, k1.cp.i);
-            tr.test_eq(org+1, k1.cp.i);
-            tr.test_eq(org+1, k2.cp.i);
-            tr.test_eq(org+1, k3.cp.i);
-            tr.test_eq(org+1, k4.cp.i);
+            tr.test_eq(org+1, k1.data().i);
+            tr.test_eq(org+1, k1.data().i);
+            tr.test_eq(org+1, k2.data().i);
+            tr.test_eq(org+1, k3.data().i);
+            tr.test_eq(org+1, k4.data().i);
             tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), j);
             tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), k1);
             tr.test_eq(1+ra::iter({0, 1, 2, 3, 4}), k2);
@@ -106,7 +107,7 @@ int main()
             static_assert(ra::is_iota<decltype(k1)>);
             tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-            tr.test_eq(-org, k1.cp.i);
+            tr.test_eq(-org, k1.data().i);
             tr.test_eq(-ra::iter({0, 1, 2, 3, 4}), j);
             tr.test_eq(-ra::iter({0, 1, 2, 3, 4}), k1);
         };
@@ -126,10 +127,10 @@ int main()
             auto k4 = opt(2*ra::iota(5));
             tr.info("not optimized w/ blank RA_OPT").test(!std::is_same_v<decltype(i), decltype(j)>);
 // it's actually a iota
-            tr.test_eq(0, k1.cp.i);
-            tr.test_eq(0, k2.cp.i);
-            tr.test_eq(0, k3.cp.i);
-            tr.test_eq(0, k4.cp.i);
+            tr.test_eq(0, k1.data().i);
+            tr.test_eq(0, k2.data().i);
+            tr.test_eq(0, k3.data().i);
+            tr.test_eq(0, k4.data().i);
             tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), j);
             tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), k1);
             tr.test_eq(2*ra::iter({0, 1, 2, 3, 4}), k2);

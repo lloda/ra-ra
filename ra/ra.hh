@@ -138,18 +138,18 @@ template <class X> concept seqv1 = ra::is_iota<X> && 1==rank_s<X>();
 #define RA_BINOP_I(OP, A, B, VAL) \
     template <A I, B J> constexpr auto opt(Map<OP, std::tuple<I, J>> && e) { return VAL; }
 // qualified ra::iota is necessary to avoid ADLing to std::iota (test/headers.cc).
-RA_BINOP_I(std::plus<>,       seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).cp.i+RAI(1), RAI(0).dimv[0].step))
-RA_BINOP_I(std::plus<>,       seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)+RAI(1).cp.i, RAI(1).dimv[0].step))
-RA_BINOP_I(std::plus<>,       seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).cp.i+RAI(1).cp.i, cadd(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
-RA_BINOP_I(std::minus<>,      seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).cp.i-RAI(1), RAI(0).dimv[0].step))
-RA_BINOP_I(std::minus<>,      seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)-RAI(1).cp.i, csub(ic<0>, RAI(1).dimv[0].step)))
-RA_BINOP_I(std::minus<>,      seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).cp.i-RAI(1).cp.i, csub(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
-RA_BINOP_I(std::multiplies<>, seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).cp.i*RAI(1), RAI(0).dimv[0].step*RAI(1)))
-RA_BINOP_I(std::multiplies<>, seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)*RAI(1).cp.i, RAI(0)*RAI(1).dimv[0].step))
+RA_BINOP_I(std::plus<>,       seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).data().i+RAI(1), RAI(0).dimv[0].step))
+RA_BINOP_I(std::plus<>,       seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)+RAI(1).data().i, RAI(1).dimv[0].step))
+RA_BINOP_I(std::plus<>,       seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).data().i+RAI(1).data().i, cadd(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
+RA_BINOP_I(std::minus<>,      seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).data().i-RAI(1), RAI(0).dimv[0].step))
+RA_BINOP_I(std::minus<>,      seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)-RAI(1).data().i, csub(ic<0>, RAI(1).dimv[0].step)))
+RA_BINOP_I(std::minus<>,      seqv1 , seqv1 , ra::iota(clen(e, ic<0>), RAI(0).data().i-RAI(1).data().i, csub(RAI(0).dimv[0].step, RAI(1).dimv[0].step)))
+RA_BINOP_I(std::multiplies<>, seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0).data().i*RAI(1), RAI(0).dimv[0].step*RAI(1)))
+RA_BINOP_I(std::multiplies<>, seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)*RAI(1).data().i, RAI(0)*RAI(1).dimv[0].step))
 #undef RA_BINOP_I
 
 template <is_iota I> constexpr auto
-opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RAI(0).dimv[0].len, -RAI(0).cp.i, csub(ic<0>, RAI(0).dimv[0].step)); }
+opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RAI(0).dimv[0].len, -RAI(0).data().i, csub(ic<0>, RAI(0).dimv[0].step)); }
 
 #if RA_OPT_SMALL==1
 template <class T, dim_t N, class A> constexpr bool match_small =

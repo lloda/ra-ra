@@ -379,15 +379,15 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 
 RA_IS_DEF(is_iterator, Iterator<A>)
 template <class A> concept is_ra = is_iterator<A> || Slice<A>;
-template <class A> concept is_builtin_array = std::is_array_v<std::remove_cvref_t<A>>;
-RA_IS_DEF(is_fov, !is_scalar<A> && !is_ra<A> && !is_builtin_array<A> && std::ranges::bidirectional_range<A>)
+template <class A> concept is_builtin = std::is_array_v<std::remove_cvref_t<A>>;
+RA_IS_DEF(is_fov, !is_scalar<A> && !is_ra<A> && !is_builtin<A> && std::ranges::bidirectional_range<A>)
 
 template <class VV> requires (!std::is_void_v<VV>)
 consteval rank_t
 rank_s()
 {
     using V = std::remove_cvref_t<VV>;
-    if constexpr (is_builtin_array<V>) {
+    if constexpr (is_builtin<V>) {
         return std::rank_v<V>;
     } else if constexpr (is_fov<V>) {
         return 1;
@@ -419,7 +419,7 @@ template <class A> concept is_ra_pos = is_ra<A> && 0!=rank_s<A>();
 template <class A> concept is_ra_0 = (is_ra<A> && 0==rank_s<A>()) || is_scalar<A>;
 RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
 template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_ra_0<A> && !is_special<A>) && ...);
-template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin_array<A>) && ...);
+template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin<A>) && ...);
 
 // Sometimes we can't do shape(std::declval<V>()) even for static shape :-/ FIXME
 template <class VV>
@@ -427,7 +427,7 @@ constexpr auto shape_s = []{
     using V = std::remove_cvref_t<VV>;
     if constexpr (constexpr rank_t rs=rank_s<V>(); 0==rs) {
         return std::array<dim_t, 0> {};
-    } else if constexpr (is_builtin_array<V>) {
+    } else if constexpr (is_builtin<V>) {
         return std::apply([](auto ... i){ return std::array { dim_t(std::extent_v<V, i>) ... }; }, mp::iota<rs> {});
     } else if constexpr (requires (V v) { []<class T, std::size_t N>(std::array<T, N> const &){}(v); }) {
         return std::array { dim_t(std::tuple_size_v<V>) };
@@ -448,7 +448,7 @@ size_s()
         return ANY;
     } else {
         dim_t s = 1;
-        for (dim_t len: shape_s<V>) { if (len>=0) s*=len; else return len; }; // ANY or UNB
+        for (dim_t len: shape_s<V>) { if (len>=0) s*=len; else return len; } // ANY or UNB
         return s;
     }
 }
