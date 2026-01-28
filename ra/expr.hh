@@ -319,17 +319,16 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
     using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::len_s, Base::rank;
     using View = decltype(std::declval<Base>().c);
     static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
-    constexpr auto data() const { return c.cp; }
     RA_ASSIGNOPS_ITER(Cell)
-// FIXME only for the sake of iota(), which needs to be both iterator and slice.
+// for the sake of iota(), which needs to be both iterator and slice. FIXME make iota() View not Cell.
     template <rank_t c=0> constexpr auto iter() const requires (0==cellr && 1==framer) { static_assert(0==c); return *this; }
+    constexpr auto data() const { return c.cp; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(i)); }
     constexpr View at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, ra::iter(i)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr View const & operator*() const requires (0!=cellr) { return c; }
-    constexpr static bool static_1 = framer>=0 && std::apply([](auto ... i){ return ((1==len_s(i)) && ...); }, mp::iota<(framer<0)?0:framer> {});
-    constexpr operator decltype(*c.cp) () const requires (0==cellr && static_1) /* [ra45 */ { return to_scalar(*this); }
+    constexpr operator decltype(*c.cp) () const { return to_scalar(*this); } /* [ra45] */
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp=p; }
 #pragma GCC diagnostic push
@@ -348,17 +347,12 @@ constexpr auto
 ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
 {
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<P>>) {
-        static_assert(std::is_same_v<ic_t<dim_t(UNB)>, N>, "Object has own length.");
-        static_assert(std::is_same_v<ic_t<dim_t(1)>, S>, "No step with deduced size.");
-        if constexpr (ANY==size_s(p)) {
-            return ptr(std::begin(RA_FW(p)), std::ssize(p), RA_FW(s));
-        } else {
-            return ptr(std::begin(RA_FW(p)), ic<size_s(p)>, RA_FW(s));
-        }
+        static_assert(std::is_same_v<ic_t<dim_t(UNB)>, N>, "Conflict with own length.");
+        static_assert(std::is_same_v<ic_t<dim_t(1)>, S>, "Deduced size means unit step.");
+        return ptr(std::begin(RA_FW(p)), [&p](){ if constexpr (ANY==size_s(p)) return ra::size(p); else return ic<size_s(p)>; }(), RA_FW(s));
     } else {
         if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
-        using Dim = ra::SDim<sarg<N>, sarg<S>>;
-        return Ptr<std::decay_t<P>, sarg<N>, sarg<S>> { p, {Dim {.len=RA_FW(n), .step=RA_FW(s) }}};
+        return Ptr<std::decay_t<P>, sarg<N>, sarg<S>> { p, {ra::SDim<sarg<N>, sarg<S>> {.len=RA_FW(n), .step=RA_FW(s) }}};
     }
 }
 
@@ -366,7 +360,7 @@ template <class I, class N, class S, class K=ic_t<dim_t(0)>>
 constexpr auto
 reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
 {
-    static_assert(UNB!=i.len_s(0), "Bad arguments to reverse(iota).");
+    static_assert(UNB!=i.len_s(0), "Bad arguments to reverse.");
     return ptr(Seq { i.data().i+(i.dimv[0].len-1)*i.dimv[0].step }, i.dimv[0].len, csub(ic<0>, i.dimv[0].step));
 }
 

@@ -538,7 +538,7 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
 #pragma GCC diagnostic push // gcc14/15 -DRA_CHECK=0 --no-sanitize -O2 -O3 [ra03]
 #pragma GCC diagnostic warning "-Warray-bounds"
 #pragma GCC diagnostic warning "-Wstringop-overflow"
-            bv[bk] = { a.dimv[ak].len, a.dimv[ak].step }; // support Ptr
+            bv[bk] = { a.dimv[ak].len, a.dimv[ak].step };
 #pragma GCC diagnostic pop
         }
     }

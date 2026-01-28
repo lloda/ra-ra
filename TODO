@@ -13,11 +13,6 @@ checkbox [C-ct] flip TODO
       Match isn't even involved. See checks.cc.
     - [ ] const issues in View vs Container
       - [ ] conversion to const & op in ViewBig uses reinterpret_const
-    - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse than indexed
-      - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
-      - Appears to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
-      - Looks good in v20 in g++-11, but bad in 12/13. Bummer.
-      - Investigated & resolved in e297ee0561a647065fb5b92880fe0f994340595c ss.
     - [ ] Small/Big unification
     - [ ] Forbid initialization from higher rank
       - Cf 'Initialization of nested types' in the manual.
@@ -32,10 +27,10 @@ checkbox [C-ct] flip TODO
   - [-] Features [0/15]
     - [ ] generalize cat
     - [-] support std::format
-      - [X] basic support
-      - [X] ways to use the formatter without parsing, like ra::format_t { .option = value ... }.
       - [ ] ellipsis feature, e.g. max width/max length.
       - [ ] formatting options for the shape (needed?)
+      - [X] ways to use the formatter without parsing, like ra::format_t { .option = value ... }.
+      - [X] basic support
     - [ ] compatibility with OpenMP, even if only for trivially parallel cases
           The way ply() works atm, with iterators, more or press precludes it.
     - [ ] support expr = braces for any expr, not just views.
@@ -43,15 +38,14 @@ checkbox [C-ct] flip TODO
     - [ ] make iter work with foreign vectors.
     - [ ] Can choose iteration order in plyers. Order is already explicit, just need to expose it.
     - [-] Deduction guides, e.g. ra::Small a = {{1, 2}, {3, 4}} ?! maybe rank 1 first
-      - [X] rank 1 SmallArray <2023-06-23 Fri 13:24> (not very useful)
       - [ ] rank >1 SmallArray
       - [ ] Small
       - [ ] Big
+      - [X] rank 1 SmallArray <2023-06-23 Fri 13:24> (not very useful)
     - [ ] Support ra::len in x in o.len(x).
     - [ ] Shape returns Small not std::array (for static rank expr).
     - [ ] Remove inheritance relationship of Container on ViewBig
-    - [ ] Should be able to turn ravel iterators (e.g. ViewBig::begin()) into array iterators. Ptr()
-      doesn't work for that.
+    - [ ] Should be able to turn ravel iterators (e.g. ViewBig::begin()) into array iterators.
       - This has become more feasible after changing the iterator interface from flat to saveload,
         main obstacle atm seems to be the need to support copy. <2023-11-20 Mon 12:45>
       - One can now create a ravel iterator from an Iterator <2023-11-28 Tue 16:37>
@@ -61,12 +55,12 @@ checkbox [C-ct] flip TODO
       it's just a one time op. Propagating ops down Map into leaf Views (a kind of beating) would
       be better.
     - [-] Magic subscript len
+      - [ ] Optimize iota(len...) + iota(len...)
       - [X] For Big/View in beatable subscripts <2023-07-04 Tue 18:20>
       - [X] For Big/View in unbeatable subscripts <2023-07-05 Wed 12:34>
       - [X] For Small/ViewSmall
         - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
         - [X] iota. But iota args need to integral constants for this to work.
-      - [ ] Optimize iota(len...) + iota(len...)
   - [-] Performance [0/2]
     - [ ] bench/bench-stencil* is weird.
     - [ ] Bigd cases in bench-at.
@@ -76,7 +70,7 @@ checkbox [C-ct] flip TODO
     - [X] Support RA_USE_BLAS with cmake (mac) <2018-12-07 Fri 16:33>
     - [X] TestRecorder.test_eq with mismatched shapes aborts. Should just fail the test. <2023-07-10 Mon 13:14>
       - We have had agree() for a while.
-    - [ ] Make cmake tests respect dependences and able to be run independently.
+    - [ ] Make cmake tests respect dependencies and able to be run independently.
     - [ ] Test for expected compilation errors (static_assert, etc) [ra42].
       - One idea (libc++?) is to fork() and check that child breaks.
   - [ ] Documentation [0/3]
@@ -225,3 +219,8 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
     - <2025-07-24 Thu 11:35> was caused by auto && x constructor interfereing.
       Fixed in 85653fd786c78e339f730699021ebdac39877012
   - [X] Merge Ptr and Iota. Why need more than one rank 1 Iterator adaptor.
+  - [X] ra::Small<real, 3, 3, 3>() benchmark in bench-dot.cc has op 10x worse than indexed
+    - Fixed in ca20c1678bb7aa43ccf6b4fe1b93ee9c742b1630. Yay!
+    - Appears to have regressed in 65076211eeeeecd8623877e3e3b5cc0a87af302c, although by a smaller factor. Bummer.
+    - Looks good in v20 in g++-11, but bad in 12/13. Bummer.
+    - Investigated & resolved in e297ee0561a647065fb5b92880fe0f994340595c ss.

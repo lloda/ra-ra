@@ -52,7 +52,7 @@ env.Prepend(CPPPATH=['..', '.'],
 tester = ra.to_test_ra(env, variant_dir)
 
 [tester(test)
- for test in ['at', 'bench', 'big-0', 'big-1', 'bug83', 'bug10', 'cellrank', 'checks', 'compatibility',
+ for test in ['at', 'bench', 'big-0', 'big-1', 'bug83', 'bug10', 'cellptr', 'cellrank', 'checks', 'compatibility',
               'concrete', 'const', 'constexpr', 'dual', 'early', 'explode-0', 'foreign', 'frame-new',
               'frame-old', 'fromb', 'fromu', 'genfrom', 'headers', 'io', 'iota', 'iterator-small', 'len',
               'list9', 'macros', 'mem-fn', 'ndebug', 'nested-0', 'operators', 'optimize',

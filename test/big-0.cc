@@ -78,7 +78,7 @@ int main(int argc, char * * argv)
         static_assert(!ctest3<int>);
         static_assert(!ctest4<int>);
 
-        // FIXME these errors depend on  static_assert so cannot be checked with requires.
+// FIXME these errors depend on static_assert so cannot be checked with requires.
         // ra::Big<T, 2> {3, 4}; // Invalid shape for rank
         // ra::Big<int, 2> (2, ra::none); // shape arg must have rank 1 for array rank>1
         // ra::Big<T, 2> {1, 2, 3, 4, 5, 6}; // bad deduced shape from content arg
@@ -198,13 +198,12 @@ int main(int argc, char * * argv)
         ra::Small<ra::Big<int, 1>, 1> d = { {1, 2, 3} }; // ok
         tr.test_eq(ra::iota(3, 1), d(0));
 
-// requires that x NOT be convertible to int,  but expressions generally are convertible to their val type.
-// his is hacked away in Cell's conversion operator. FIXME probably not worth it.
-        auto x = ra::iota(3, 1);
-        ra::Small<ra::Big<int, 1>, 1> f = { {x} }; // ok; broken with { x }
-        tr.test_eq(ra::iota(3, 1), f(0));
+// these fail because x/w is convertible to int. This used not to be the case for old Ptr / iota (so the 1st one worked), but if anything, it is the second that shouldn't be convertible, because the size is static and we exclude size_s!=1 from convertibility (maybe FIXME).
 
-// fails for the same reason.
+        // auto x = ra::iota(3, 1);
+        // ra::Small<ra::Big<int, 1>, 1> f = { {x} }; // broken with { x }, rt error with { {x} }
+        // tr.test_eq(ra::iota(3, 1), f(0));
+
         // ra::Small<int, 3> w = { 1, 2, 3 };
         // ra::Small<ra::Big<int, 1>, 1> e = { {w} }; // broken with { w }, ct error with { {w} }
         // tr.test_eq(ra::iota(3, 1), e(0));

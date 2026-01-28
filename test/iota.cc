@@ -74,8 +74,8 @@ int main()
     {
         tr.test_eq(sizeof(ra::iota().data()), sizeof(ra::dim_t));
         tr.test_eq(sizeof(ra::iota(4, 0, 2).data()), sizeof(0));
-        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().data()), sizeof(ra::iota()));
-        tr.info("not true when Ptr is slice").skip().test_eq(sizeof(ra::iota().data()), sizeof(ra::iota(ra::dim_c<4> {})));
+        tr.info("not when Ptr is Cell").skip().test_eq(sizeof(ra::iota().data()), sizeof(ra::iota()));
+        tr.info("not when Ptr is Cell").skip().test_eq(sizeof(ra::iota().data()), sizeof(ra::iota(ra::dim_c<4> {})));
 // sizeof might still be > sizeof(i) + sizeof(n) because of alignment
         tr.test_eq(1, decltype(ra::iota(4).dimv[0].step)::value);
         tr.test_eq(sizeof(ra::iota(4, 0, 2)), sizeof(ra::iota(4, 0, 2).data()) + sizeof(ra::iota(4, 0, 2).dimv[0].len) + sizeof(ra::iota(4, 0, 2).dimv[0].step));

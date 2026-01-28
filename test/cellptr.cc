@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/box - Special Dimv to let Cell<> replace Ptr
+// ra-ra/box - Replacement sandbox of Oldptr (old ptr/iota) by Cell (current)
 
-// (c) Daniel Llorens - 2025
+// (c) Daniel Llorens - 2025-2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -218,21 +218,6 @@ int main()
         tr.test(ra::Slice<decltype(ra::iota1(10))>);
         tr.test(ra::Slice<decltype(ra::iota2(10))>);
         tr.test(ra::Slice<decltype(ra::iota3(10))>);
-    }
-// 1st goes to constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); }, the other idk :-/
-    tr.section("regression from test/big-0");
-    {
-        auto x = ra::iota1(3, 1);
-        cout << "conv1 " << std::is_convertible_v<decltype(x), int> << endl;
-        ra::Small<ra::Big<int, 1>, 1> f = { {x} }; // ok; broken with { x }
-        tr.test_eq(ra::iota(3, 1), f(0));
-    }
-    {
-        auto x = ra::iota3(3, 1);
-        cout << "conv1 " << std::is_convertible_v<decltype(x), int> << endl;
-        cout << "static_1 " << decltype(x)::static_1 << endl;
-        ra::Small<ra::Big<int, 1>, 1> f = { {x} }; // ok; broken with { x }
-        tr.test_eq(ra::iota(3, 1), f(0));
     }
     return tr.summary();
 }
