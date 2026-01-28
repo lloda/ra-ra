@@ -321,6 +321,7 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
     static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
     constexpr auto data() const { return c.cp; }
     RA_ASSIGNOPS_ITER(Cell)
+// FIXME only for the sake of iota(), which needs to be both iterator and slice.
     template <rank_t c=0> constexpr auto iter() const requires (0==cellr && 1==framer) { static_assert(0==c); return *this; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(i)); }
@@ -337,43 +338,10 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
 #pragma GCC diagnostic pop
 };
 
-// rank 1 special case for fovs or iota, both Iterator and Slice. FIXME replace with View
-
 template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
-template <class P, class N, class S>
-struct Ptr final
-{
-    static_assert(has_len<P> || std::bidirectional_iterator<P>);
-    static_assert(has_len<N> || is_constant<N> || std::is_integral_v<N>);
-    static_assert(has_len<S> || is_constant<S> || std::is_integral_v<S>);
-    constexpr static dim_t nn = maybe_any<N>;
-    static_assert(0<=nn || ANY==nn || UNB==nn);
-
-    P cp;
-    [[no_unique_address]] struct { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; } dimv[1];
-    constexpr Ptr(P p, N n, S s): cp(p), dimv { n, s } {}
-    RA_ASSIGNOPS_ITER(Ptr)
-    template <rank_t c=0> constexpr auto iter() const { static_assert(0==c); return *this; }
-    constexpr auto data() const { return cp; }
-    consteval static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { return nn; }
-    constexpr static dim_t len(int k) requires (is_constant<N>) { return nn; }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return dimv[0].len; }
-    constexpr static dim_t step(int k) requires (is_constant<S>) { return 0==k ? S {} : 0; }
-    constexpr dim_t step(int k) const requires (!is_constant<S>) { return 0==k ? dimv[0].step : 0; }
-    constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
-    constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
-    constexpr decltype(*cp) operator*() const { return *cp; }
-    constexpr auto save() const { return cp; }
-    constexpr void load(P p) { cp=p; }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
-    constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
-#pragma GCC diagnostic pop
-};
+template <class N, class S> struct SDim { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; };
+template <class P, class N, class S> using Ptr = Cell<P, std::array<SDim<N, S>, 1>, ic_t<0>>;
 
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
@@ -389,7 +357,8 @@ ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
         }
     } else {
         if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
-        return Ptr<std::decay_t<P>, sarg<N>, sarg<S>> { p, RA_FW(n), RA_FW(s) };
+        using Dim = ra::SDim<sarg<N>, sarg<S>>;
+        return Ptr<std::decay_t<P>, sarg<N>, sarg<S>> { p, {Dim {.len=RA_FW(n), .step=RA_FW(s) }}};
     }
 }
 
