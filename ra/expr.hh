@@ -84,7 +84,7 @@ template <class Ln, class E>
 constexpr decltype(auto)
 wlen(Ln ln, E && e)
 {
-    static_assert(std::is_integral_v<Ln> || is_constant<Ln>);
+    static_assert(std::is_integral_v<Ln> || is_ctype<Ln>);
     if constexpr (has_len<E>) {
         return WLen<std::decay_t<E>>::f(ln, RA_FW(e));
     } else {
@@ -93,21 +93,21 @@ wlen(Ln ln, E && e)
 }
 
 template <class N> constexpr auto
-maybe_any = []{ if constexpr (is_constant<N>) { return N::value; } else { return ANY; } }();
+maybe_any = []{ if constexpr (is_ctype<N>) { return N::value; } else { return ANY; } }();
 
 template <class S> constexpr S
-maybe_step = []{ if constexpr (is_constant<S>) { static_assert(1==S::value); return S{}; } else { return 1; } }();
+maybe_step = []{ if constexpr (is_ctype<S>) { static_assert(1==S::value); return S{}; } else { return 1; } }();
 
 template <class K> constexpr auto
-clen(auto const & v, K k) { if constexpr (is_constant<K> && (ANY!=v.len_s(k))) return ic<v.len_s(k)>; else return v.len(k); }
+clen(auto const & v, K k) { if constexpr (is_ctype<K> && (ANY!=v.len_s(k))) return ic<v.len_s(k)>; else return v.len(k); }
 
 template <class A, class B> constexpr auto
-cadd(A a, B b) { if constexpr (is_constant<A> && is_constant<B>) return ic<a+b>; else return a+b; }
+cadd(A a, B b) { if constexpr (is_ctype<A> && is_ctype<B>) return ic<a+b>; else return a+b; }
 
 template <class A, class B> constexpr auto
-csub(A a, B b) { if constexpr (is_constant<A> && is_constant<B>) return ic<a-b>; else return a-b; }
+csub(A a, B b) { if constexpr (is_ctype<A> && is_ctype<B>) return ic<a-b>; else return a-b; }
 
-// Sequence iterator (as in std::).
+// Sequence stl-like iterator
 
 template <class I=dim_t>
 struct Seq
@@ -162,7 +162,7 @@ constexpr auto iter(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
 // iterators need resetting on each use [ra35].
 constexpr auto iter(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
 constexpr decltype(auto) iter(is_iterator auto && a) { return RA_FW(a); }
-// Cell doesn't retain rvalues [ra4]. If Slice is also iterator (Ptr), go as the latter.
+// Cell doesn't retain rvalues [ra4]. If both Slice and Iterator (Ptr), go as Iterator.
 // TODO any exprs? runtime cr? ra::len in cr?
 template <int cr=0> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>) { return RA_FW(a).template iter<cr>(); }
 
@@ -262,67 +262,59 @@ template <class T, class Dimv> struct ViewSmall;
 template <class T, rank_t RANK=ANY> struct ViewBig;
 
 template <class P, class Dimv, class Cr>
-struct CellSmall
+struct CellBase
 {
+    constexpr static Dimv const simv = {};
+    [[no_unique_address]] Dimv const dimv;
     constexpr static rank_t cr = maybe_any<Cr>;
-    constexpr static rank_t cellr = is_constant<Cr> ? rank_cell(size_s(Dimv::value), cr) : ANY;
-    constexpr static rank_t framer = is_constant<Cr> ? rank_frame(size_s(Dimv::value), cr) : ANY;
+    constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s<Dimv>(), cr) : ANY;
+    constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s<Dimv>(), cr) : ANY;
+    using View = std::conditional_t<0==cellr, ViewSmall<P, ic_t<std::array<Dim, 0> {}>>, ViewBig<P, cellr>>; // FIXME
+};
 
-    constexpr static auto dimv = Dimv::value;
-    ViewSmall<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> {dimv[i+framer] ...}; }, mp::iota<cellr> {})>> c;
-    constexpr explicit CellSmall(P p): c {p} {}
-
-    consteval static rank_t rank() { return framer; }
-    constexpr static dim_t len(int k) { return dimv[k].len; }
-    constexpr static dim_t len_s(int k) { return dimv[k].len; }
-    constexpr static dim_t step(int k) { return k<rank() ? dimv[k].step : 0; }
-    constexpr static bool keep(dim_t st, int z, int j) { return st*step(z)==step(j); }
+template <class P, is_ctype Dimv, class Cr>
+struct CellBase<P, Dimv, Cr>
+{
+    constexpr static auto simv = Dimv::value;
+    constexpr static auto dimv = simv;
+    constexpr static rank_t cr = maybe_any<Cr>;
+    constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s(simv), cr) : ANY;
+    constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s(simv), cr) : ANY;
+    using View = ViewSmall<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> {dimv[i+framer] ...}; }, mp::iota<cellr> {})>>;
 };
 
 template <class P, class Dimv, class Cr>
-struct CellBig
+struct Cell: public CellBase<P, Dimv, Cr>
 {
-    constexpr static rank_t cr = maybe_any<Cr>;
-    constexpr static rank_t cellr = is_constant<Cr> ? rank_cell(size_s<Dimv>(), cr) : ANY;
-    constexpr static rank_t framer = is_constant<Cr> ? rank_frame(size_s<Dimv>(), cr) : ANY;
-
-    constexpr static Dimv const sdimv = {};
-    [[no_unique_address]] Dimv const dimv;
-    std::conditional_t<0==cellr, ViewSmall<P, ic_t<std::array<ra::Dim, 0> {}>>, ViewBig<P, cellr>> c; // FIXME
-    constexpr explicit CellBig(P cp, Dimv dimv_, Cr dcr=Cr {}): dimv(dimv_), c(cp)
+    static_assert(has_len<P> || std::bidirectional_iterator<P>);
+    using Base = CellBase<P, Dimv, Cr>;
+    using Base::cellr, Base::framer, Base::simv, Base::dimv, typename Base::View;
+    static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
+    View c;
+    constexpr explicit Cell(P p) requires (is_ctype<Dimv>): c {p} {}
+    constexpr explicit Cell(P cp, Dimv dimv_, Cr dcr=Cr {}) requires (!is_ctype<Dimv>): Base { dimv_ }, c(cp)
     {
         rank_t dcell = rank_cell(ra::size(dimv), dcr);
         if constexpr (ANY==cellr) { c.dimv.resize(dcell); }
-        rank_t dframe = rank(); // after setting c.dimv
-        RA_CK(0<=dframe && 0<=dcell, "Bad rank for cell ", dcell, " or frame ", dframe, ").");
+        rank_t dframe = rank(); // after sizing c.dimv
+        RA_CK(0<=dframe && 0<=dcell, "Bad rank for cell ", dcell, " or frame ", dframe, ".");
         if constexpr (0!=cellr) { for (int k=0; k<dcell; ++k) { c.dimv[k] = dimv[dframe+k]; } }
     }
-
+    RA_ASSIGNOPS_ITER(Cell)
     consteval static rank_t rank() requires (ANY!=framer) { return framer; }
     constexpr rank_t rank() const requires (ANY==framer) { return ra::size(dimv)-ra::size(c.dimv); }
 #pragma GCC diagnostic push // test/bug83.cc gcc-14 RA_CHECK=0 --no-sanitize
 #pragma GCC diagnostic warning "-Warray-bounds"
-    constexpr static dim_t len_s(int k) { if constexpr (is_constant<decltype(sdimv[k].len)>) return len(k); else return ANY; }
-    constexpr static dim_t len(auto k) requires (is_constant<decltype(sdimv[k].len)>) { return sdimv[k].len; }
-    constexpr dim_t len(int k) const requires (!is_constant<decltype(sdimv[k].len)>) { return dimv[k].len; }
-    constexpr static dim_t step(auto k) requires (is_constant<decltype(sdimv[k].step)>) { return k<rank() ? sdimv[k].step : 0; }
-    constexpr dim_t step(int k) const requires (!is_constant<decltype(sdimv[k].step)>) { return k<rank() ? dimv[k].step : 0; }
+#define RAC(k, f) is_ctype<decltype(simv[k].f)>
+    constexpr static dim_t len_s(auto k) { if constexpr (is_ctype<Dimv> || RAC(k, len)) return len(k); else return ANY; }
+    constexpr static dim_t len(auto k) requires (is_ctype<Dimv> || RAC(k, len)) { return simv[k].len; }
+    constexpr dim_t len(int k) const requires (!(is_ctype<Dimv> || RAC(k, len))) { return dimv[k].len; }
+    constexpr static dim_t step(auto k) requires (is_ctype<Dimv> || RAC(k, step)) { return k<rank() ? simv[k].step : 0; }
+    constexpr dim_t step(int k) const requires (!(is_ctype<Dimv> || RAC(k, step))) { return k<rank() ? dimv[k].step : 0; }
+    constexpr static bool keep(dim_t st, auto z, auto j) requires (is_ctype<Dimv> || (RAC(z, step) && RAC(j, step))) { return st*step(z)==step(j); }
+    constexpr bool keep(dim_t st, int z, int j) const requires (!(is_ctype<Dimv> || (RAC(z, step) && RAC(j, step)))) { return st*step(z)==step(j); }
+#undef RAC
 #pragma GCC diagnostic pop
-    constexpr bool keep(dim_t st, int z, int j) const { return st*step(z)==step(j); }
-};
-
-template <class P, class Dimv, class Cr>
-struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>, CellBig<P, Dimv, Cr>>
-{
-    static_assert(has_len<P> || std::bidirectional_iterator<P>);
-    using Base = std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>, CellBig<P, Dimv, Cr>>;
-    using Base::Base, Base::cellr, Base::framer, Base::c, Base::step, Base::len, Base::len_s, Base::rank;
-    using View = decltype(std::declval<Base>().c);
-    static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
-    RA_ASSIGNOPS_ITER(Cell)
-// for the sake of iota(), which needs to be both iterator and slice. FIXME make iota() View not Cell.
-    template <rank_t c=0> constexpr auto iter() const requires (0==cellr && 1==framer) { static_assert(0==c); return *this; }
-    constexpr auto data() const { return c.cp; }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(i)); }
     constexpr View at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, ra::iter(i)); return d; }
@@ -335,9 +327,12 @@ struct Cell: public std::conditional_t<is_constant<Dimv>, CellSmall<P, Dimv, Cr>
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
     constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
 #pragma GCC diagnostic pop
+// for the sake of iota(), which needs to be both iterator and slice. FIXME make iota() View not Cell.
+    template <rank_t c=0> constexpr auto iter() const requires (0==cellr && 1==framer) { static_assert(0==c); return *this; }
+    constexpr auto data() const { return c.cp; }
 };
 
-template <class X> using sarg = std::conditional_t<is_constant<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
+template <class X> using sarg = std::conditional_t<is_ctype<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
 template <class N, class S> struct SDim { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; };
 template <class P, class N, class S> using Ptr = Cell<P, std::array<SDim<N, S>, 1>, ic_t<0>>;
@@ -452,7 +447,7 @@ struct Reframe<A, ilist_t<di ...>, ilist_t<i ...>>
 };
 
 // Optimize nop case. TODO If A is View/Cell, etc. beat Dest on it.
-template <class A, class Dest>
+template <Iterator A, class Dest>
 constexpr decltype(auto)
 reframe(A && a, Dest)
 {
@@ -493,7 +488,7 @@ struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::t
 template <class V, class ... Ti, class ... Ri, int skip>
 struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
-// TODO -crank::value when the actual verb rank is used (eg to use CellBig<... that_rank> instead of just begin()).
+// TODO -crank::value when the actual verb rank is used
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
     template <class U> constexpr static decltype(auto) op(U && v) { return RA_FW(v); }
 };

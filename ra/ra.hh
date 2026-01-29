@@ -275,11 +275,6 @@ at_view(A && a, auto && i)
     }
 }
 
-
-// --------------------------------
-// Selection / shortcutting.
-// --------------------------------
-
 template <class T, class F> requires (toreduce<T, F>)
 constexpr decltype(auto) where(bool const w, T && t, F && f) { return w ? VAL(t) : VAL(f); }
 

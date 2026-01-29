@@ -2018,9 +2018,9 @@ These are array types that own their data in one way or another.
 
 These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently.
 
-@item @b{Iterator} --- @code{CellBig}, @code{CellSmall}, @code{Ptr}, @code{Scalar}, @code{Map}, @code{Pick}
+@item @b{Iterator} --- @code{Cell}, @code{Scalar}, @code{Map}, @code{Pick}
 
-This is a traversable object. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{iter}. This is done automatically when those types are used in array expressions.
+These are traversable objects. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{iter}. This is done automatically when those types are used in array expressions.
 
 @b{Iterator}s have two traversal functions: @code{.adv(k, d)}, moves the iterator along any dimension @var{k}, and @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a nested loop, especially if the inner dimensions of the loop are small.
 

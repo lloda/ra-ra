@@ -62,7 +62,7 @@ namespace ra {
 
 template <auto V> using ic_t = std::integral_constant<std::remove_const_t<decltype(V)>, V>;
 template <auto V> constexpr std::integral_constant<std::remove_const_t<decltype(V)>, V> ic {};
-template <class A> concept is_constant = requires (A a) { []<auto X>(ic_t<X> const &){}(a); };
+template <class A> concept is_ctype = requires (A a) { []<auto X>(ic_t<X> const &){}(a); };
 template <int ... I> using ilist_t = std::tuple<ic_t<I> ...>;
 template <int ... I> constexpr ilist_t<I ...> ilist {};
 
@@ -371,7 +371,7 @@ concept Slice = requires (A a)
     template <class A> constexpr bool RA_JOIN(NAME, _def) = requires { requires PRED; }; \
     template <class A> concept NAME = RA_JOIN(NAME, _def)<std::decay_t< A >>;
 
-RA_IS_DEF(is_scalar, !std::is_pointer_v<A> && std::is_scalar_v<A> || is_constant<A>)
+RA_IS_DEF(is_scalar, !std::is_pointer_v<A> && std::is_scalar_v<A> || is_ctype<A>)
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;

@@ -8,7 +8,7 @@
 // later version.
 
 // Regression test for a bug ... caught first in fold_mat @ array.cc.
-// Caused by d139794396a0d51dc0c25b0b03b2a2ef0e2760b5 : Remove set() from CellBig, CellSmall.
+// Caused by d139794396a0d51dc0c25b0b03b2a2ef0e2760b5 : Remove set() from CellBig, CellSmall (now just Cell).
 
 #include <iostream>
 #include "ra/test.hh"
@@ -20,21 +20,21 @@ int main()
 {
     TestRecorder tr(std::cout);
     tr.section("looking into Small");
-// [ra14] A(b) which is from(A, b) can require CellBig to copy its source Dimv.
+// [ra14] A(b) which is from(A, b) can require Cell to copy its source Dimv.
     tr.section("Big");
     {
         ra::Big<int, 1> b = { 2, 1 };
         ra::Big<int, 2> A({3, 5}, ra::_0 - ra::_1);
         ra::Big<int, 2> F({2, 5}, 0);
-// This creates View & CellBig on each call of A(b(0) ...) as the driver is b and A is handled as generic object with operator().
-// But I should be able to create a single CellBig and just bump a pointer as I move through b. Hmm.
+// This creates View & Cell on each call of A(b(0) ...) as the driver is b and A is handled as generic object with operator().
+// But I should be able to create a single Cell and just bump a pointer as I move through b. Hmm.
         F = b*A(b);
         int Fcheck[2][5] = { {4, 2, 0, -2, -4}, {1, 0, -1, -2, -3} };
         tr.test_eq(Fcheck, F);
     }
-// Why: if x(0) is a temp, as in here, CellBig needs a copy of x(0).dim.
+// Why: if x(0) is a temp, as in here, Cell needs a copy of x(0).dim.
 // This is achieved by forwarding in ra::iter() -> View.iter().
-    tr.section("CellBig handling of temps");
+    tr.section("Handling of temps in Big/ViewBig iter");
     {
         auto demo = [](auto & x) { return ra::iter<0>(x(0)); };
 

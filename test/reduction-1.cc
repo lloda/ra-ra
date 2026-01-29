@@ -28,7 +28,7 @@ int main()
         m = 0;
         iter<1>(m) = max(iter<1>(m), iter<1>(c)); // works also
         tr.info("max of columns [ma113]").test_eq(ra::Big<double, 1> {7, 3, 3}, m);
-// using std::max within ra:: caused std::max() to grab T = View when CellBig returned View const &.
+// using std::max within ra:: caused std::max() to grab T = View when Cell returned View const &.
 // that's why ra::max is declared with DEF_NAME_OP_FWD.
         auto c1 = iter<1>(c);
         auto m1 = iter<1>(m);

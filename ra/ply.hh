@@ -399,7 +399,7 @@ namespace ra {
 
 
 // ---------------------
-// Replace Len in expr tree. VAL arguments that must be either is_constant or is_scalar.
+// Replace Len in expr tree. VAL arguments that must be either is_ctype or is_scalar.
 // ---------------------
 
 template <>

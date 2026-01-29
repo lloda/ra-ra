@@ -328,7 +328,7 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 <div class="subsection" id="Standard-C_002b_002b">
 <h4 class="subsection">1.5.1 Standard C++</h4>
 
-<p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These decay to pointers when you do nearly anything with them, don&rsquo;t know their own shape or rank at runtime, and are generally too limited.
+<p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code>int a[3][4]</code>. These ‘built-in arrays’ can only have compile time lengths, decay to pointers when you do nearly anything with them, and are generally too limited.
 </p>
 <p>The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: <code>&lt;array&gt;</code>, <code>&lt;vector&gt;</code> and <code>&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code>&lt;valarray&gt;</code> offers array operations for 1-arrays. <code>ra::</code> makes use of <code>&lt;array&gt;</code> and <code>&lt;vector&gt;</code> internally and for storage.
 </p>
@@ -2061,9 +2061,9 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 
 <p>These are array views into data in memory, which may be writable. Any of the <b>Container</b> types can be treated as a <b>View</b>, but one may also create <b>View</b>s into memory that has been allocated independently.
 </p>
-</li><li> <b>Iterator</b> &mdash; <code>CellBig</code>, <code>CellSmall</code>, <code>Ptr</code>, <code>Scalar</code>, <code>Map</code>, <code>Pick</code>
+</li><li> <b>Iterator</b> &mdash; <code>Cell</code>, <code>Scalar</code>, <code>Map</code>, <code>Pick</code>
 
-<p>This is a traversable object. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>iter</code>. This is done automatically when those types are used in array expressions.
+<p>These are traversable objects. <b>Iterator</b>s are accepted by all the array functions such as <code>map</code>, <code>for_each</code>, etc. <code>map</code> produces an <b>Iterator</b> itself, so most array expressions are <b>Iterator</b>s. <b>Iterator</b>s are created from <b>View</b>s and from certain foreign array-like types primarily through the function <code>iter</code>. This is done automatically when those types are used in array expressions.
 </p>
 <p><b>Iterator</b>s have two traversal functions: <code>.adv(k, d)</code>, moves the iterator along any dimension <var>k</var>, and <code>.mov(d)</code>, is used on linearized views of the array. The methods <code>len()</code>, <code>step()</code>, <code>keep()</code> are used to determine the extent of these linearized views. In this way, a loop involving <b>Iterator</b>s can have its inner loop unfolded, which is faster than a nested loop, especially if the inner dimensions of the loop are small.
 </p>

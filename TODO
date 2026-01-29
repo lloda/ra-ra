@@ -83,7 +83,7 @@ checkbox [C-ct] flip TODO
       is that len_s lets me return ANY for some axes and finite for others and to do that with just
       len() would require len(integral constant) overloads possibly -- len(int k) cannot be static
       or not depending on k.
-      - Looked at this again on <2025-09-19 Fri>, added Match::len(is_constant) overload.
+      - Looked at this again on <2025-09-19 Fri>, added Match::len(is_ctype) overload.
     - [ ] Use if consteval to replace rank/rank_s/size/size_s with just rank/size.
     - [ ] Support tuple as a kind of foreign vector
       - [ ] Iterator type for tuple (like Vector for std::vector).
@@ -123,8 +123,8 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
       be registered as scalar, but that clashes with how std::ranges sees it. OTOH we don't want
       format(std::string_view) to print it as a foreign vector, so we have an exception for it
       there. As things stand, you can register it as scalar or not.
-  13. [ ] CellBig needs to copy its Dimv in some cases, which also complicates ViewBig::iter<>. Problem
-      is demonstrated in ra-5.cc.
+  13. [ ] Cell needs to copy its Dimv in some dynamic cases, which also complicates
+      ViewBig::iter<>. Problem is demonstrated in ra-5.cc.
   14. [X] Conversion-to-scalar operators for dynamic-rank ViewBig(). I thought this could be
       https://wg21.link/cwg976 but gcc 14 doesn't fix it. There are two issues here, 1) why isn't
       const conversion enough and 2) ambiguity with Small's 'any' constructor (cf 'c++ converting
@@ -208,12 +208,12 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
       - [X] make View be View<pointer> and not View<value_type>
   - [X] Support operator <=> <2020-09-15 Tue 13:50>
     - https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96278 is annoying
-  - [X] `*(it.flat())` is inefficient for some it, eg CellBig, because we need to create/copy flat
-    in case it gets modified, and then it isn't. Do we need Iterator::operator* ?
+  - [X] `*(it.flat())` is inefficient for some it, eg dynamic dimv Cell, because we need to
+    create/copy flat in case it gets modified, and then it isn't. Do we need Iterator::operator* ?
   - [X] During traversal (ply) the pattern loc = save_location(it); move flat;
     it.set_location(loc); would allow flat to modify the original it. Loc is often just a pointer
     so this would be cheap. The current design is that move flat can't modify it so it has to be a
-    new object. CellBig is one case where that is costly, because dimv has to be copied along with
+    new object. Var rank Cell is one case where that is costly, because dimv has to be copied along with
     the pointer to make up a View, even though dimv is constant all through traversal.
   - [X] Review Container constructors. Why do we need (&) when we have (const &)?
     - <2025-07-24 Thu 11:35> was caused by auto && x constructor interfereing.

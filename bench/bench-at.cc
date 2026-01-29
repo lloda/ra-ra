@@ -75,7 +75,7 @@ int main(int argc, char * * argv)
         ra::Big<int> bigdi({100, 4}, ra::none);
         ra::Small<int, 100, 4> smoli;
         test2(smola, smoli, reps, "warmup");
-// regression in b40c2d412be04c4c2b4758a332424c05257f71ff due to CellSmall copy ctor.
+// regression in b40c2d412be04c4c2b4758a332424c05257f71ff due to copy ctor in static dimv Cell.
         test2(smola, smoli, reps, "small/small");
         test2(bigsa, smoli, reps, "bigs/small");
         test2(bigda, smoli, reps, "bigd/small");

@@ -212,8 +212,8 @@ int main()
         std::ranges::copy(r.begin(), r.end(), chk);
         tr.test(std::ranges::equal(pool, pool+6, r.begin(), r.end()));
     }
-    // some of these tests are disabled depending on CellBig::operator=.
-    tr.section("[ra11a] (skipped) CellBig operator= (from CellBig) does NOT copy contents");
+    // some of these tests are disabled depending on Cell::operator=.
+    tr.section("[ra11a] (skipped) Cell operator= does NOT copy contents");
     {
         double a[6] = { 0, 0, 0, 0, 0, 0 };
         double b[6] = { 1, 2, 3, 4, 5, 6 };
@@ -232,7 +232,7 @@ int main()
             tr.skip().test_eq(rb, aiter);
         }
     }
-    tr.section("[ra11b] CellBig operator= (from CellBig) DOES copy contents");
+    tr.section("[ra11b] Cell operator= DOES copy contents");
     {
         ra::Unique<double, 2> A({6, 7}, ra::_0 - ra::_1);
         ra::Unique<double, 2> AA({6, 7}, 0.);
@@ -240,7 +240,7 @@ int main()
         tr.test_eq(ra::_0 - ra::_1, AA);
         tr.test_eq(A, AA);
     }
-    tr.section("[ra11b] CellBig operator= (from CellBig) DOES copy contents");
+    tr.section("[ra11b] Cell operator= DOES copy contents");
     {
         ra::Small<double, 6, 7> A = ra::_0 - ra::_1;
         ra::Small<double, 6, 7> AA = 0.;

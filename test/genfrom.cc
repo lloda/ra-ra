@@ -308,7 +308,7 @@ int main()
     {
         auto i0 = ra::ic<2>;
         auto i1 = ra::ic<3>;
-        static_assert(ra::is_constant<decltype(ra::cadd(i0, i1))> && 5==ra::cadd(i0, i1));
+        static_assert(ra::is_ctype<decltype(ra::cadd(i0, i1))> && 5==ra::cadd(i0, i1));
     }
     tr.section("unbeaten ViewSmall<> (over rank)");
     {

@@ -37,8 +37,8 @@ template <class P, class N, class S>
 struct Oldptr final
 {
     static_assert(has_len<P> || std::bidirectional_iterator<P>);
-    static_assert(has_len<N> || is_constant<N> || std::is_integral_v<N>);
-    static_assert(has_len<S> || is_constant<S> || std::is_integral_v<S>);
+    static_assert(has_len<N> || is_ctype<N> || std::is_integral_v<N>);
+    static_assert(has_len<S> || is_ctype<S> || std::is_integral_v<S>);
     constexpr static dim_t nn = maybe_any<N>;
     static_assert(0<=nn || ANY==nn || UNB==nn);
 
@@ -50,12 +50,12 @@ struct Oldptr final
     constexpr auto data() const { return cp; }
     consteval static rank_t rank() { return 1; }
     constexpr static dim_t len_s(int k) { return nn; }
-    constexpr static dim_t len(int k) requires (is_constant<N>) { return nn; }
-    constexpr dim_t len(int k) const requires (!is_constant<N>) { return dimv[0].len; }
-    constexpr static dim_t step(int k) requires (is_constant<S>) { return 0==k ? S {} : 0; }
-    constexpr dim_t step(int k) const requires (!is_constant<S>) { return 0==k ? dimv[0].step : 0; }
-    constexpr static bool keep(dim_t st, int z, int j) requires (is_constant<S>) { return st*step(z)==step(j); }
-    constexpr bool keep(dim_t st, int z, int j) const requires (!is_constant<S>) { return st*step(z)==step(j); }
+    constexpr static dim_t len(int k) requires (is_ctype<N>) { return nn; }
+    constexpr dim_t len(int k) const requires (!is_ctype<N>) { return dimv[0].len; }
+    constexpr static dim_t step(int k) requires (is_ctype<S>) { return 0==k ? S {} : 0; }
+    constexpr dim_t step(int k) const requires (!is_ctype<S>) { return 0==k ? dimv[0].step : 0; }
+    constexpr static bool keep(dim_t st, int z, int j) requires (is_ctype<S>) { return st*step(z)==step(j); }
+    constexpr bool keep(dim_t st, int z, int j) const requires (!is_ctype<S>) { return st*step(z)==step(j); }
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr decltype(*cp) operator*() const { return *cp; }
