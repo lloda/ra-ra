@@ -243,161 +243,6 @@ constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_as
 constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
 
 
-// ---------------------------
-// I/O
-// ---------------------------
-
-// fmt/ostream.h or https://stackoverflow.com/a/75738462
-struct ostream_formatter: std::formatter<std::basic_string_view<char>>
-{
-    constexpr auto
-    format(auto const & value, auto & ctx) const
-    {
-        std::basic_stringstream<char> ss;
-        ss << value;
-        return std::formatter<std::basic_string_view<char>, char>::format(ss.view(), ctx);
-    }
-};
-
-template <class A>
-constexpr std::ostream &
-operator<<(std::ostream & o, Fmt<A> const & fa)
-{
-    std::print(o, "{}", fa);
-    return o;
-}
-
-template <class C> requires (ANY!=size_s<C>() && (is_ra<C> || is_fov<C>))
-inline std::istream &
-operator>>(std::istream & i, C & c)
-{
-    for (auto & ci: c) { i >> ci; }
-    return i;
-}
-
-template <class T, class A>
-inline std::istream &
-operator>>(std::istream & i, std::vector<T, A> & c)
-{
-    if (dim_t n; i >> n) {
-        RA_CK(n>=0, "Negative length in input [", n, "].");
-        std::vector<T, A> cc(n);
-        swap(c, cc);
-        for (auto & ci: c) { i >> ci; }
-    }
-    return i;
-}
-
-template <class C> requires (ANY==size_s<C>() && !std::is_convertible_v<C, std::string_view>)
-inline std::istream &
-operator>>(std::istream & i, C & c)
-{
-    if (decltype(shape(c)) s; i >> s) {
-        RA_CK(every(iter(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
-        C cc(s, ra::none);
-        swap(c, cc);
-        for (auto & ci: c) { i >> ci; }
-    }
-    return i;
-}
-
-} // namespace ra
-
-template <ra::is_array_formattable A>
-struct std::formatter<A>
-{
-    ra::format_t fmt;
-    std::conditional_t<std::formattable<ra::ncvalue_t<A>, char>,
-                       std::formatter<ra::ncvalue_t<A>>, ra::ostream_formatter> under;
-
-    constexpr auto
-    parse(auto & ctx)
-    {
-        auto i = ctx.begin();
-        for (; i!=ctx.end() && ':'!=*i && '}'!=*i; ++i) {
-            switch (*i) {
-            case 'j': fmt = ra::jstyle; break;
-            case 'c': fmt = ra::cstyle; break;
-            case 'l': fmt = ra::lstyle; break;
-            case 'p': fmt = ra::pstyle; break;
-            case 'a': fmt.align = true; break;
-            case 'e': fmt.align = false; break;
-            case 's': fmt.shape = ra::withshape; break;
-            case 'n': fmt.shape = ra::noshape; break;
-            case 'd': fmt.shape = ra::defaultshape; break;
-            default: throw std::format_error("Bad format for ra:: object.");
-            }
-        }
-        if (i!=ctx.end() && ':'==*i) {
-            ctx.advance_to(i+1);
-            i = under.parse(ctx);
-        }
-        if (i!=ctx.end() && '}'!=*i) {
-            throw std::format_error("Bad input while parsing format for ra:: object.");
-        }
-        return i;
-    }
-    constexpr auto
-    format(A const & a_, auto & ctx, ra::format_t const & fmt) const
-    {
-        auto a = ra::iter(a_);
-        validate(a);
-        auto sha = ra::shape(a);
-        for (int k=0; k<ra::size(sha); ++k) { assert(sha[k]>=0); } // no ops yet
-        auto out = ctx.out();
-// always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
-        if (fmt.shape==ra::withshape || (fmt.shape==ra::defaultshape && size_s(a)==ra::ANY)) {
-            out = std::format_to(out, "{:d}\n", ra::iter(sha));
-        }
-        ra::rank_t const rank = ra::rank(a);
-        auto goin = [&](int k, auto & goin) -> void
-        {
-            using std::ranges::copy;
-            if (k==rank) {
-                ctx.advance_to(under.format(*a, ctx));
-                out = ctx.out();
-            } else {
-                out = copy(fmt.open, out).out;
-                for (int i=0; i<sha[k]; ++i) {
-                    goin(k+1, goin);
-                    if (i+1<sha[k]) {
-                        a.adv(k, 1);
-                        out = copy((k==rank-1 ? fmt.sep0 : fmt.sepn), out).out;
-                        for (int i=0; i<std::max(0, rank-2-k); ++i) {
-                            out = copy(fmt.rep, out).out;
-                        }
-                        if (fmt.align && k<rank-1) {
-                            for (int i=0; i<(k+1)*ra::size(fmt.open); ++i) {
-                                *out++ = ' ';
-                            }
-                        }
-                    } else {
-                        a.adv(k, 1-sha[k]);
-                        break;
-                    }
-                }
-                out = copy(fmt.close, out).out;
-            }
-        };
-        goin(0, goin);
-        return out;
-    }
-    constexpr auto format(A const & a_, auto & ctx) const { return format(a_, ctx, fmt); }
-};
-
-template <class A>
-struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
-{
-    constexpr auto
-    format(ra::Fmt<A> const & f, auto & ctx) const
-    {
-        return std::formatter<decltype(ra::iter(f.a))>().format(ra::iter(f.a), ctx, f.f);
-    }
-};
-
-namespace ra {
-
-
 // ---------------------
 // Replace Len in expr tree. VAL arguments that must be either is_ctype or is_scalar.
 // ---------------------
@@ -712,4 +557,155 @@ from(A && a, auto && ...  i)
     }
 }
 
-} // namespace ra::
+
+// ---------------------------
+// I/O
+// ---------------------------
+
+// fmt/ostream.h or https://stackoverflow.com/a/75738462
+struct ostream_formatter: std::formatter<std::basic_string_view<char>>
+{
+    constexpr auto
+    format(auto const & value, auto & ctx) const
+    {
+        std::basic_stringstream<char> ss;
+        ss << value;
+        return std::formatter<std::basic_string_view<char>, char>::format(ss.view(), ctx);
+    }
+};
+
+template <class A>
+constexpr std::ostream &
+operator<<(std::ostream & o, Fmt<A> const & fa)
+{
+    std::print(o, "{}", fa);
+    return o;
+}
+
+template <class C> requires (ANY!=size_s<C>() && (is_ra<C> || is_fov<C>))
+inline std::istream &
+operator>>(std::istream & i, C & c)
+{
+    for (auto & ci: c) { i >> ci; }
+    return i;
+}
+
+template <class T, class A>
+inline std::istream &
+operator>>(std::istream & i, std::vector<T, A> & c)
+{
+    if (dim_t n; i >> n) {
+        RA_CK(n>=0, "Negative length in input [", n, "].");
+        std::vector<T, A> cc(n);
+        swap(c, cc);
+        for (auto & ci: c) { i >> ci; }
+    }
+    return i;
+}
+
+template <class C> requires (ANY==size_s<C>() && !std::is_convertible_v<C, std::string_view>)
+inline std::istream &
+operator>>(std::istream & i, C & c)
+{
+    if (decltype(shape(c)) s; i >> s) {
+        RA_CK(every(iter(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
+        C cc(s, ra::none);
+        swap(c, cc);
+        for (auto & ci: c) { i >> ci; }
+    }
+    return i;
+}
+
+} // namespace ra
+
+template <ra::is_array_formattable A>
+struct std::formatter<A>
+{
+    ra::format_t fmt;
+    std::conditional_t<std::formattable<ra::ncvalue_t<A>, char>,
+                       std::formatter<ra::ncvalue_t<A>>, ra::ostream_formatter> under;
+
+    constexpr auto
+    parse(auto & ctx)
+    {
+        auto i = ctx.begin();
+        for (; i!=ctx.end() && ':'!=*i && '}'!=*i; ++i) {
+            switch (*i) {
+            case 'j': fmt = ra::jstyle; break;
+            case 'c': fmt = ra::cstyle; break;
+            case 'l': fmt = ra::lstyle; break;
+            case 'p': fmt = ra::pstyle; break;
+            case 'a': fmt.align = true; break;
+            case 'e': fmt.align = false; break;
+            case 's': fmt.shape = ra::withshape; break;
+            case 'n': fmt.shape = ra::noshape; break;
+            case 'd': fmt.shape = ra::defaultshape; break;
+            default: throw std::format_error("Bad format for ra:: object.");
+            }
+        }
+        if (i!=ctx.end() && ':'==*i) {
+            ctx.advance_to(i+1);
+            i = under.parse(ctx);
+        }
+        if (i!=ctx.end() && '}'!=*i) {
+            throw std::format_error("Bad input while parsing format for ra:: object.");
+        }
+        return i;
+    }
+    constexpr auto
+    format(A const & a_, auto & ctx, ra::format_t const & fmt) const
+    {
+        auto a = ra::iter(a_);
+        validate(a);
+        auto sha = ra::shape(a);
+        for (int k=0; k<ra::size(sha); ++k) { assert(sha[k]>=0); } // no ops yet
+        auto out = ctx.out();
+// always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
+        if (fmt.shape==ra::withshape || (fmt.shape==ra::defaultshape && size_s(a)==ra::ANY)) {
+            out = std::format_to(out, "{:d}\n", ra::iter(sha));
+        }
+        ra::rank_t const rank = ra::rank(a);
+        auto goin = [&](int k, auto & goin) -> void
+        {
+            using std::ranges::copy;
+            if (k==rank) {
+                ctx.advance_to(under.format(*a, ctx));
+                out = ctx.out();
+            } else {
+                out = copy(fmt.open, out).out;
+                for (int i=0; i<sha[k]; ++i) {
+                    goin(k+1, goin);
+                    if (i+1<sha[k]) {
+                        a.adv(k, 1);
+                        out = copy((k==rank-1 ? fmt.sep0 : fmt.sepn), out).out;
+                        for (int i=0; i<std::max(0, rank-2-k); ++i) {
+                            out = copy(fmt.rep, out).out;
+                        }
+                        if (fmt.align && k<rank-1) {
+                            for (int i=0; i<(k+1)*ra::size(fmt.open); ++i) {
+                                *out++ = ' ';
+                            }
+                        }
+                    } else {
+                        a.adv(k, 1-sha[k]);
+                        break;
+                    }
+                }
+                out = copy(fmt.close, out).out;
+            }
+        };
+        goin(0, goin);
+        return out;
+    }
+    constexpr auto format(A const & a_, auto & ctx) const { return format(a_, ctx, fmt); }
+};
+
+template <class A>
+struct std::formatter<ra::Fmt<A>>: std::formatter<std::basic_string_view<char>>
+{
+    constexpr auto
+    format(ra::Fmt<A> const & f, auto & ctx) const
+    {
+        return std::formatter<decltype(ra::iter(f.a))>().format(ra::iter(f.a), ctx, f.f);
+    }
+};

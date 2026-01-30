@@ -42,21 +42,20 @@ Please check the manual online at [lloda.github.io/ra-ra](https://lloda.github.i
 
 **ra-ra** offers:
 
-* Array types with arbitrary compile time or runtime rank and shape.
-* Memory owning types as well as views over memory and sequence views of any rank.
-* Compatibility with builtin arrays and the standard library, including ranges, streams, and `<format>`.
-* Interoperability with other libraries and languages through transparent memory layout.
-* Slicing with indices of arbitrary rank, axis skipping and insertion (e.g. for broadcasting), and contextual `len`.
-* Rank extension by prefix matching, as in APL/J, for functions of any number of arguments.
-* Iterators over subarrays (cells) of any rank.
-* Rank conjunction as in J (compile time rank only), outer product operation.
-* Short-circuiting logical operators.
-* Argument list selection operators (`where` with bool selector, `pick` with integer selector).
-* Reshape, transpose, reverse, collapse/explode, stencils.
-* Arbitrary types as array elements, or as scalar operands.
-* Many predefined array operations, adding yours is trivial.
-* Configurable error handling.
-* As much `constexpr` as possible.
+* array types with arbitrary compile time or runtime rank and shape
+* memory owning types, views over memory, sequence views
+* compatibility with built-in arrays and with the standard library, including ranges, streams, and `<format>`
+* generalized slicing with indices of arbitrary rank and contextual `len`
+* rank extension by prefix matching, as in APL/J, for functions of any number of arguments
+* iterators over subarrays (cells) of any rank
+* rank conjunction as in J (compile time rank only), outer product operation
+* short-circuiting logical operators
+* operators to select from argument list using either bool or integer (`where`, `pick`)
+* view operations: reshape, transpose, reverse, collapse/explode, stencils
+* arbitrary types as array elements, or as scalar operands
+* many predefined array operations, adding yours is trivial
+* configurable error handling
+* as much `constexpr` as possible.
 
 Performance is competitive with hand written scalar (element by element) loops, but probably not with cache-tuned code such as your platform BLAS, or with code using SIMD. Please have a look at the benchmarks in [bench/](bench/).
 

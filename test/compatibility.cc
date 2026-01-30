@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Using builtin types and std:: together with ra::.
 
-// (c) Daniel Llorens - 2014, 2017
+// (c) Daniel Llorens - 2014, 2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -84,7 +84,7 @@ int main()
         tr.test_eq(4, int_c<ra::shape(a)[1]>::value);
         tr.test_eq(12, int_c<ra::size(a)>::value);
     }
-// shape on std:: types
+    tr.section("shape for std:: types");
     {
         tr.test_eq(ra::iter({3}), ra::shape(std::array<int, 3> {1, 2, 3}));
         tr.test_eq(ra::iter({4}), ra::shape(std::vector<int> {1, 2, 3, 4}));
@@ -96,10 +96,18 @@ int main()
         tr.test_eq(6, sum(ra::iter(x)));
         tr.test_eq(6, ra::sum(x));
     }
-    tr.section("spot use of scalar");
+    tr.section("spot use of scalar (big)");
     {
         struct W { int x; };
         ra::Big<W, 1> w = { {1}, {2} };
+        tr.test_eq(ra::iter({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
+        w() = W {3};
+        tr.test_eq(3, map([](auto && a) { return a.x; }, w));
+    }
+    tr.section("spot use of scalar (small)");
+    {
+        struct W { int x; };
+        ra::Small<W, 2> w = { {1}, {2} };
         tr.test_eq(ra::iter({8, 9}), map([](auto && a, auto && b) { return a.x + b.x; }, w, ra::scalar(W {7})));
         w() = W {3};
         tr.test_eq(3, map([](auto && a) { return a.x; }, w));

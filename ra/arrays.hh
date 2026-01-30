@@ -99,12 +99,12 @@ struct ViewSmall
         return *this;
     }
 // T not is_scalar [ra44]
-    constexpr ViewSmall const & operator=(T const & t) const { ra::iter(*this)=ra::scalar(t); return *this; }
+    constexpr ViewSmall const & operator=(T const & t) const { ra::iter(*this) = ra::scalar(t); return *this; }
 // cf RA_ASSIGNOPS_ITER [ra38] [ra34]
-    ViewSmall const & operator=(ViewSmall const & x) const { ra::iter(*this)=x; return *this; }
+    ViewSmall const & operator=(ViewSmall const & x) const { ra::iter(*this) = x; return *this; }
 #define RA_ASSIGNOPS(OP)                                                   \
-    constexpr ViewSmall const & operator OP(Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; } \
-    constexpr ViewSmall const & operator OP(auto const & x) const { ra::iter(*this) OP x; return *this; }
+    constexpr ViewSmall const & operator OP(auto const & x) const { ra::iter(*this) OP x; return *this; } \
+    constexpr ViewSmall const & operator OP(Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
     template <dim_t s, dim_t o=0> constexpr auto as() const { return from(*this, ra::iota(ic<s>, o)); }
@@ -164,7 +164,7 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     };
     [[no_unique_address]] std::conditional_t<0==size(), T0, T[size()]> cp;
 
-    constexpr T * data() { return (T *)cp; }
+    constexpr auto data() { return (T *)cp; }
     constexpr T const * data() const { return (T const *)cp; }
     using View = ViewSmall<T *, Dimv>;
     using ViewConst = ViewSmall<T const *, Dimv>;
@@ -189,8 +189,8 @@ SmallArray<T, Dimv, std::tuple<nested_args ...>>
     {
         view() = { x ... };
     }
-    constexpr SmallArray(auto const & x) { view()=x; }
-    constexpr SmallArray(Iterator auto && x) { view()=RA_FW(x); }
+    constexpr SmallArray(auto const & x) { view() = x; }
+    constexpr SmallArray(Iterator auto && x) { view() = RA_FW(x); }
 #define RA_ASSIGNOPS(OP)                                                \
     constexpr SmallArray & operator OP(auto const & x) { view() OP x; return *this; } \
     constexpr SmallArray & operator OP(Iterator auto && x) { view() OP RA_FW(x); return *this; }
@@ -312,8 +312,8 @@ struct ViewBig
 // cf RA_ASSIGNOPS_ITER [ra38] [ra34]
     ViewBig const & operator=(ViewBig const & x) const { ra::iter(*this) = x; return *this; }
 #define RA_ASSIGNOPS(OP)                                                \
-    constexpr ViewBig const & operator OP (Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; } \
-    constexpr ViewBig const & operator OP (auto const & x) const { ra::iter(*this) OP x; return *this; }
+    constexpr ViewBig const & operator OP (auto const & x) const { ra::iter(*this) OP x; return *this; } \
+    constexpr ViewBig const & operator OP (Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
     template <rank_t c=0> constexpr auto iter() const && { return Cell<P, Dimv, ic_t<c>>(cp, std::move(dimv)); }
@@ -410,10 +410,9 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
         dimv = w.dimv;
         cp = storage_traits<Store>::data(store);
     }
-// repeated bc of constness re. ViewBig
 #define RA_ASSIGNOPS(OP)                                                \
-    constexpr Container & operator OP (Iterator auto && x) { view() OP RA_FW(x); return *this; } \
-    constexpr Container & operator OP (auto const & x) { view() OP x; return *this; }
+    constexpr Container & operator OP (auto const & x) { view() OP x; return *this; } \
+    constexpr Container & operator OP (Iterator auto && x) { view() OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
     constexpr Container & operator=(std::initializer_list<T> const x) requires (1!=RANK) { view() = x; return *this; }
@@ -452,7 +451,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, RANK>
     RA_FE(RA_BRACES, 1, 2, 3, 4)
 #undef RA_BRACES
 
-// FIXME requires T to be copiable, which conflicts with the semantics of view_.operator=. store(x) avoids it for Big, but doesn't work for Unique. Should construct in place like std::vector does.
+// FIXME requires copyable Y, which conflicts with semantics of view_.operator=. store(x) avoids the conflict for Big, but not for Unique. Should construct in place like std::vector.
     constexpr void
     fill1(auto && xbegin, dim_t xsize)
     {

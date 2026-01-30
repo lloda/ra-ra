@@ -383,7 +383,7 @@ iter(is_builtin auto && a)
 // Reframe and rank conjunction.
 // ---------------------------
 
-// Reframe is transpose for general expressions. Like in transpose, give destination axis for each original axis.
+// Transpose for general expressions. Like in transpose, give destination axis for each original axis.
 // If li = k for some i, then axis k of the reframed A moves on axis i of the original iterator A.
 // Else axis k of the reframed A is 'dead' and doesn't move the iterator.
 // TODO Handle repeated axes. Handle ANY rank [ra7].

@@ -7,6 +7,11 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
+#if 0==RA_CHECK
+  #undef RA_CHECK
+#endif
+#define RA_CHECK 1 // required by 'regression from test/checks' below
+
 #include <iostream>
 #include "ra/base.hh"
 #include <exception>

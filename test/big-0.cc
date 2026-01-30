@@ -19,6 +19,8 @@ template <class T> constexpr bool ctest2 = requires { ra::Big<T, 2> ({2, 3, 1}, 
 template <class T> constexpr bool ctest3 = requires { ra::Big<T, 2> ({2, 3, 1}, ra::none); }; // bad shape for rank
 template <class T> constexpr bool ctest4 = requires { ra::Big<T, 0> ({3, 4}, 3.); }; // bad shape for rank
 
+struct test_type { int a; };
+
 int main(int argc, char * * argv)
 {
     TestRecorder tr;
@@ -290,6 +292,15 @@ int main(int argc, char * * argv)
         tr.test_eq(1, a);
         tr.test_eq(2, b);
         tr.test_eq(3, c);
+    }
+    tr.section("= scalar init with non-ra::scalar type"); // [ra44]
+    {
+        ra::Big<test_type, 1> a(2, test_type { 9 });
+        tr.test_eq(9, a[0].a);
+        tr.test_eq(9, a[1].a);
+        a = test_type { 3 };
+        tr.test_eq(3, a[0].a);
+        tr.test_eq(3, a[1].a);
     }
     return tr.summary();
 }
