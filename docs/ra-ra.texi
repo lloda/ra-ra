@@ -9,10 +9,10 @@
 @c http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0834r0.html
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0573r2.html
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
-@c References to source [ma··] or [ma···] current last is 117.
+@c References to source [ma··] or [ma···] current last is 118.
 
 @set VERSION 31
-@set UPDATED 2025 September 09
+@set UPDATED 2026 February 2
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -1027,7 +1027,7 @@ cout << f(b(0, 0)) << endl; // ok, automatic conversion from ViewBig<T *> to T &
 @end verbatim
 @end example
 
-The result of @code{A(i, ...)} when @code{A} is a view, or equivalently @code{@ref{x-from,@code{from}}(A, i ...)}, is itself be a view when
+The result of @code{A(i, ...)} when @code{A} is a view, or equivalently @code{@ref{x-from,@code{from}}(A, i ...)}, is itself a view when
 @itemize
 @item
 each of the @code{i ...} is @emph{beatable}, that is, either

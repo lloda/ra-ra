@@ -247,6 +247,18 @@ constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { stati
 // Replace Len in expr tree. VAL arguments that must be either is_ctype or is_scalar.
 // ---------------------
 
+template <class Ln, class E>
+constexpr decltype(auto)
+wlen(Ln ln, E && e)
+{
+    static_assert(std::is_integral_v<Ln> || is_ctype<Ln>);
+    if constexpr (has_len<E>) {
+        return WLen<std::decay_t<E>>::f(ln, RA_FW(e));
+    } else {
+        return RA_FW(e);
+    }
+}
+
 template <>
 struct WLen<Len>
 {

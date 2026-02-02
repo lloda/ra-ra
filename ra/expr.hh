@@ -59,39 +59,6 @@ namespace ra {
     constexpr TYPE(TYPE const & x) = default;                           \
     RA_FE(RA_ASSIGNOPS_DEFAULT, =, *=, +=, -=, /=)
 
-// Contextual len, a unique object. See wlen in arrays.hh
-
-constexpr struct Len
-{
-    consteval static rank_t rank() { return 0; }
-    [[noreturn]] consteval static void len_out_of_context() { std::abort(); }
-    consteval static dim_t len_s(int k) { len_out_of_context(); }
-    consteval static dim_t len(int k) { len_out_of_context(); }
-    consteval static dim_t step(int k) { len_out_of_context(); }
-    consteval static void adv(rank_t k, dim_t d) { len_out_of_context(); }
-    consteval static bool keep(dim_t st, int z, int j) { len_out_of_context(); }
-    consteval dim_t operator*() const { len_out_of_context(); }
-    consteval static int save() { len_out_of_context(); }
-    consteval static void load(int) { len_out_of_context(); }
-    consteval static void mov(dim_t d) { len_out_of_context(); }
-} len;
-
-template <class E> struct WLen; // defined in ply.hh. FIXME C++ p2481
-template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FW(e)); };
-template <has_len E> constexpr bool is_special_def<E> = true; // protect exprs with Len from reduction.
-
-template <class Ln, class E>
-constexpr decltype(auto)
-wlen(Ln ln, E && e)
-{
-    static_assert(std::is_integral_v<Ln> || is_ctype<Ln>);
-    if constexpr (has_len<E>) {
-        return WLen<std::decay_t<E>>::f(ln, RA_FW(e));
-    } else {
-        return RA_FW(e);
-    }
-}
-
 template <class N> constexpr auto
 maybe_any = []{ if constexpr (is_ctype<N>) { return N::value; } else { return ANY; } }();
 
@@ -147,7 +114,7 @@ struct Scalar final
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep(dim_t st, int z, int j) { return true; }
     constexpr decltype(auto) at(auto && i) const { return c; }
-    constexpr std::conditional_t<std::is_lvalue_reference_v<C>, C, C const &> operator*() const { return c; } // [ra24] [ra37] [ra39]
+    constexpr std::conditional_t<std::is_lvalue_reference_v<C>, C, C const &> operator*() const { return c; } // [ra24][ra37][ra39]
     consteval static int save() { return 0; }
     constexpr static void load(int) {}
     constexpr static void mov(dim_t d) {}
@@ -165,7 +132,6 @@ constexpr decltype(auto) iter(is_iterator auto && a) { return RA_FW(a); }
 // Cell doesn't retain rvalues [ra4]. If both Slice and Iterator (Ptr), go as Iterator.
 // TODO any exprs? runtime cr? ra::len in cr?
 template <int cr=0> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>) { return RA_FW(a).template iter<cr>(); }
-
 // forward decl.
 constexpr auto iter(is_fov auto && a);
 constexpr auto iter(is_builtin auto && a);

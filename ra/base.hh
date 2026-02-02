@@ -210,7 +210,7 @@ struct complement_sorted_list_<tuple<S0, S ...>, tuple<T0, T ...>>
     using type = cons<T0, complement_sorted_list<tuple<S0, S ...>, tuple<T ...>>>;
 };
 
-// Like complement_list where the second argument is [0 .. end-1].
+// Like complement_list where the second arg is [0 .. end-1].
 template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
 
 // Prepend element to each of a list of lists.
@@ -277,10 +277,9 @@ struct mapanticomb<std::tuple<C ...>, D>
     using type = std::tuple<typename anticomb<C, D>::type ...>;
 };
 
-template <int D, int O>
-struct choose_
+template <int D, int O> struct choose_
 {
-    static_assert(D>=O, "Bad dimension or form order.");
+    static_assert(D>=O, "Bad args to choose_.");
     using type = combs<iota<D>, O>;
 };
 
@@ -289,7 +288,7 @@ template <int D, int O> using choose = typename choose_<D, O>::type;
 template <int D, int O> requires ((D>1) && (2*O>D))
 struct choose_<D, O>
 {
-    static_assert(D>=O, "Bad dimension or form order.");
+    static_assert(D>=O, "Bad args to choose_.");
     using type = typename mapanticomb<choose<D, D-O>, D>::type;
 };
 
@@ -342,15 +341,41 @@ struct default_init_allocator: public A
 
 template <class T> using vector_default_init = std::vector<T, default_init_allocator<T>>;
 
+// FIXME c++26 p2841 ?
+#define RA_IS_DEF(NAME, PRED)                                           \
+    template <class A> constexpr bool RA_JOIN(NAME, _def) = requires { requires PRED; }; \
+    template <class A> concept NAME = RA_JOIN(NAME, _def)<std::decay_t< A >>;
+
+// Contextual len, a unique object.
+constexpr struct Len
+{
+    consteval static rank_t rank() { return 0; }
+    [[noreturn]] consteval static void len_out_of_context() { std::abort(); }
+    consteval static dim_t len_s(int k) { len_out_of_context(); }
+    consteval static dim_t len(int k) { len_out_of_context(); }
+    consteval static dim_t step(int k) { len_out_of_context(); }
+    consteval static void adv(rank_t k, dim_t d) { len_out_of_context(); }
+    consteval static bool keep(dim_t st, int z, int j) { len_out_of_context(); }
+    consteval dim_t operator*() const { len_out_of_context(); }
+    consteval static int save() { len_out_of_context(); }
+    consteval static void load(int) { len_out_of_context(); }
+    consteval static void mov(dim_t d) { len_out_of_context(); }
+} len;
+
+template <class E> struct WLen; // defined in ply.hh. FIXME C++ p2481
+template <class E> concept has_len = requires(int ln, E && e) { WLen<std::decay_t<E>>::f(ln, RA_FW(e)); };
+RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
+template <has_len E> constexpr bool is_special_def<E> = true;
+
 template <class A>
-concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i, rank_t j)
+concept Iterator = requires (A a, rank_t k, dim_t d, rank_t i)
 {
     { a.rank() } -> std::same_as<rank_t>;
     { std::decay_t<A>::len_s(k) } -> std::same_as<dim_t>;
     { a.len(k) } -> std::same_as<dim_t>;
     { a.adv(k, d) } -> std::same_as<void>;
     { a.step(k) };
-    { a.keep(d, i, j) } -> std::same_as<bool>;
+    { a.keep(d, k, i) } -> std::same_as<bool>;
     { a.save() };
     { a.load(std::declval<decltype(a.save())>()) } -> std::same_as<void>;
     { a.mov(d) } -> std::same_as<void>;
@@ -362,16 +387,12 @@ concept Slice = requires (A a)
 {
     { a.rank() } -> std::same_as<rank_t>;
     { a.iter() } -> Iterator;
-    { a.data() }; // -> has_len || std::bidirectional_iterator;
+    requires has_len<decltype(a.data())> || std::bidirectional_iterator<decltype(a.data())>;
     { a.dimv };
 };
 
-// FIXME c++26 p2841 ?
-#define RA_IS_DEF(NAME, PRED)                                           \
-    template <class A> constexpr bool RA_JOIN(NAME, _def) = requires { requires PRED; }; \
-    template <class A> concept NAME = RA_JOIN(NAME, _def)<std::decay_t< A >>;
-
-RA_IS_DEF(is_scalar, !std::is_pointer_v<A> && std::is_scalar_v<A> || is_ctype<A>)
+RA_IS_DEF(is_scalar, !std::is_pointer_v<A> && std::is_scalar_v<A>);
+template <class T, T v> constexpr bool is_scalar_def<std::integral_constant<T, v>> = is_scalar<T>;
 template <> constexpr bool is_scalar_def<std::strong_ordering> = true;
 template <> constexpr bool is_scalar_def<std::weak_ordering> = true;
 template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
@@ -414,10 +435,9 @@ rank(auto const & v)
     }
 }
 
-// all args rank 0 (apply immediately), but at least one ra:: (disambiguate scalar version).
+// All args rank 0 (apply immediately), but at least one ra:: (disambiguate scalar version).
 template <class A> concept is_ra_pos = is_ra<A> && 0!=rank_s<A>();
 template <class A> concept is_ra_0 = (is_ra<A> && 0==rank_s<A>()) || is_scalar<A>;
-RA_IS_DEF(is_special, false) // rank-0 types that we don't want reduced.
 template <class ... A> constexpr bool toreduce = (!is_scalar<A> || ...) && ((is_ra_0<A> && !is_special<A>) && ...);
 template <class ... A> constexpr bool tomap = ((is_ra_pos<A> || is_special<A>) || ...) && ((is_ra<A> || is_scalar<A> || is_fov<A> || is_builtin<A>) && ...);
 

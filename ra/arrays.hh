@@ -100,7 +100,7 @@ struct ViewSmall
     }
 // T not is_scalar [ra44]
     constexpr ViewSmall const & operator=(T const & t) const { ra::iter(*this) = ra::scalar(t); return *this; }
-// cf RA_ASSIGNOPS_ITER [ra38] [ra34]
+// cf RA_ASSIGNOPS_ITER [ra38][ra34]
     ViewSmall const & operator=(ViewSmall const & x) const { ra::iter(*this) = x; return *this; }
 #define RA_ASSIGNOPS(OP)                                                   \
     constexpr ViewSmall const & operator OP(auto const & x) const { ra::iter(*this) OP x; return *this; } \
@@ -309,7 +309,7 @@ struct ViewBig
 #undef RA_BRACES
 // T not is_scalar [ra44]
     constexpr ViewBig const & operator=(T const & t) const { ra::iter(*this) = ra::scalar(t); return *this; }
-// cf RA_ASSIGNOPS_ITER [ra38] [ra34]
+// cf RA_ASSIGNOPS_ITER [ra38][ra34]
     ViewBig const & operator=(ViewBig const & x) const { ra::iter(*this) = x; return *this; }
 #define RA_ASSIGNOPS(OP)                                                \
     constexpr ViewBig const & operator OP (auto const & x) const { ra::iter(*this) OP x; return *this; } \
