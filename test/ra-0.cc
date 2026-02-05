@@ -71,7 +71,7 @@ int main()
         {
             double aa[6] = { 1, 2, 3, 4, 5, 6 };
             aa[0] = 99;
-            ra::ViewBig<double *, 2> a { { {3, 2}, {2, 1}}, aa };
+            ra::ViewBig<double *, 2> a { {{3, 2}, {2, 1}}, aa };
             tr.test_eq(4., a(1, 1));
             tr.test_eq(99., a.data()[0]);
         }

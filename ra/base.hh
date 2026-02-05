@@ -299,7 +299,7 @@ struct choose_<D, O>
 // Properly ra::.
 // ---------------------
 
-constexpr int VERSION = 31;
+constexpr int VERSION = 32;
 constexpr int ANY = -1944444444; // only static, meaning tbd at runtime
 constexpr int UNB = -1988888888; // unbounded, eg dead axes
 constexpr int MIS = -1922222222; // mismatch, only from common_len

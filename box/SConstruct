@@ -50,7 +50,7 @@ env.Prepend(CPPPATH=['..', '.'],
             LINKFLAGS=raflags['LINKFLAGS'])
 
 [ra.to_test_ra(env, variant_dir)(example)
- for example in ['tuple-construct', 'iterator-as-ravel']]
+ for example in ['tuple-construct', 'iterator-as-ravel', 'view']]
 
 if not top['skip_summary']:
     atexit.register(lambda: ra.print_summary(GetBuildFailures, 'ra/box'))
