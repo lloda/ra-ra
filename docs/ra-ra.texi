@@ -486,6 +486,8 @@ Views can point to anywhere in memory and that memory doesn't have to belong to 
 int raw[6] = {1, 2, 3, 4, 5, 6};
 ra::ViewBig<int *> v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] steps [3, 1]
 ra::ViewBig<int *> v2({2, 3}, raw);           // same, default C (row-major) steps
+// ra::ViewBig<int *> v2({}, raw);            // bogus error: ambiguous dimensions
+ra::ViewBig<int *> v2(raw);                   // do this instead for rank-0 view
 @end verbatim
 @end example
 

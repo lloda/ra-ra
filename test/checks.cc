@@ -347,6 +347,5 @@ int main()
         tr.info("caught error L" RA_STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
     }
 #undef MAP
-
     return tr.summary();
 }

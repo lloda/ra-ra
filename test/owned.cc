@@ -19,16 +19,15 @@ int main()
     TestRecorder tr;
     tr.section("resize first dimension");
     {
-        auto test = [&tr](auto const & ref, auto & a, int newsize, int testsize)
-            {
-                a.resize(newsize);
-                tr.test_eq(ref.rank(), a.rank());
-                tr.test_eq(newsize, a.len(0));
-                for (int i=1; i<a.rank(); ++i) {
-                    tr.test_eq(ref.len(i), a.len(i));
-                }
-                tr.test_eq(ref(ra::iota(testsize)), a(ra::iota(testsize)));
-            };
+        auto test = [&tr](auto const & ref, auto & a, int newsize, int testsize){
+            a.resize(newsize);
+            tr.test_eq(ref.rank(), a.rank());
+            tr.test_eq(newsize, a.len(0));
+            for (int i=1; i<a.rank(); ++i) {
+                tr.test_eq(ref.len(i), a.len(i));
+            }
+            tr.test_eq(ref(ra::iota(testsize)), a(ra::iota(testsize)));
+        };
         tr.section("rank 2");
         {
             ra::Big<int, 2> a({5, 3}, ra::_0 - ra::_1);
@@ -69,18 +68,17 @@ int main()
     tr.section("push back");
     {
         real check[] = { 2, 3, 4, 7 };
-        auto test = [&tr, &check](auto && z)
-            {
-                tr.test_eq(0, z.len(0));
-                tr.test_eq(1, z.step(0));
-                for (int i=0; i<4; ++i) {
-                    z.push_back(check[i]);
-                    tr.test_eq(i+1, z.size());
-                    for (int j=0; j<=i; ++j) {
-                        tr.test_eq(check[j], z[j]);
-                    }
+        auto test = [&tr, &check](auto && z){
+            tr.test_eq(0, z.len(0));
+            tr.test_eq(1, z.step(0));
+            for (int i=0; i<4; ++i) {
+                z.push_back(check[i]);
+                tr.test_eq(i+1, z.size());
+                for (int j=0; j<=i; ++j) {
+                    tr.test_eq(check[j], z[j]);
                 }
-            };
+            }
+        };
         test(ra::Big<real, 1>());
         ra::Big<real> z = ra::Big<real, 1>();
         test(z);

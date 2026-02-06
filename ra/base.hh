@@ -534,8 +534,7 @@ template <class A> constexpr auto fmt(format_t f, A && a) { return Fmt<A> { f, R
 RA_IS_DEF(is_array_formattable, is_ra<A> || (is_fov<A> && !std::is_convertible_v<A, std::string_view>));
 
 constexpr std::ostream & operator<<(std::ostream & o, is_array_formattable auto && a) { return o << fmt({}, RA_FW(a)); }
-template <class T>
-constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> const & a) { return o << fmt({}, a); }
+template <class T> constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> a) { return o << fmt({}, a); }
 
 constexpr std::ostream &
 operator<<(std::ostream & o, std::source_location const & loc)

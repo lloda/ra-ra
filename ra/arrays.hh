@@ -261,7 +261,7 @@ braces_shape(braces<T, R> const & l)
 template <class P, rank_t R>
 struct ViewBig
 {
-    using Dimv = std::conditional_t<ANY==R, vector_default_init<Dim>, Small<Dim, ANY==R ? 0 : R>>;
+    using Dimv = std::conditional_t<ANY==R, vector_default_init<Dim>, std::array<Dim, ANY==R ? 0 : R>>;
     [[no_unique_address]] Dimv dimv;
     P cp;
     using T = std::remove_reference_t<decltype(*cp)>;
@@ -276,22 +276,16 @@ struct ViewBig
     constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
     constexpr ViewBig() {} // used by Container constructors
-    constexpr explicit ViewBig(P cp_): cp(cp_) {} // used by slicers, esp. when P has_len
+    constexpr explicit ViewBig(P cp_): cp(cp_) {} // empty dimv, but also uninit by slicers, esp. has_len<P>
     constexpr ViewBig(ViewBig const &) = default;
-    constexpr ViewBig(Dimv const & dimv_, P cp_): dimv(dimv_), cp(cp_) {} // [ra36]
-    constexpr ViewBig(auto const & s, P cp_): cp(cp_)
-    {
-        if constexpr (std::is_convertible_v<value_t<decltype(s)>, Dim>) {
-            ra::resize(dimv, ra::size(s)); // [ra37]
-            ra::iter(dimv) = s;
-        } else {
-            filldimv(ra::iter(s), dimv);
-        }
-    }
-    constexpr ViewBig(std::initializer_list<dim_t> s, P cp_): ViewBig(ra::iter(s), cp_) {}
+    constexpr ViewBig(auto const & s, P cp_) requires (requires { [](dim_t){}(VAL(s)); }): cp(cp_) { filldimv(ra::iter(s), dimv); }
+    constexpr ViewBig(auto const & s, P cp_): cp(cp_) { ra::resize(dimv, ra::size(s)); ra::iter(dimv) = s; } // [ra37]
+    template <class D> using dimbraces = std::conditional_t<R==ANY, std::initializer_list<D>, D (&&)[R==ANY?0:R]>;
+    constexpr ViewBig(dimbraces<dim_t> s, P cp_): ViewBig(ra::iter(s), cp_) {}
+    constexpr ViewBig(dimbraces<Dim> s, P cp_): ViewBig(ra::iter(s), cp_) {}
 // row-major ravel braces
     constexpr ViewBig const &
-    operator=(std::initializer_list<T> const x) const requires (1!=R)
+    operator=(std::initializer_list<T> x) const requires (1!=R)
     {
         auto xsize = ssize(x);
         RA_CK(size()==xsize, "Mismatched sizes ", size(), " ", xsize, ".");
@@ -299,17 +293,15 @@ struct ViewBig
         return *this;
     }
 // nested braces
-    constexpr ViewBig const &
-    operator=(braces<T, R> x) const requires (R!=ANY) { ra::iter<-1>(*this) = x; return *this; }
+    constexpr ViewBig const & operator=(braces<T, R> x) const requires (R!=ANY) { iter<-1>() = x; return *this; }
 #define RA_BRACES(N)                                                    \
-    constexpr ViewBig const &                                           \
-    operator=(braces<T, N> x) const requires (R==ANY) { ra::iter<-1>(*this) = x; return *this; }
+    constexpr ViewBig const & operator=(braces<T, N> x) const requires (R==ANY) { iter<-1>() = x; return *this; }
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
 // T not is_scalar [ra44]
-    constexpr ViewBig const & operator=(T const & t) const { ra::iter(*this) = ra::scalar(t); return *this; }
+    constexpr ViewBig const & operator=(T const & t) const { iter() = ra::scalar(t); return *this; }
 // cf RA_ASSIGNOPS_ITER [ra38][ra34]
-    ViewBig const & operator=(ViewBig const & x) const { ra::iter(*this) = x; return *this; }
+    ViewBig const & operator=(ViewBig const & x) const { iter() = x; return *this; }
 #define RA_ASSIGNOPS(OP)                                                \
     constexpr ViewBig const & operator OP (auto const & x) const { ra::iter(*this) OP x; return *this; } \
     constexpr ViewBig const & operator OP (Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; }
@@ -425,11 +417,12 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
         store = storage_traits<Store>::create(filldimv(ra::iter(s), dimv));
         cp = storage_traits<Store>::data(store);
     }
-    constexpr void init(dim_t s) { init(std::array {s}); } // scalar allowed as shape if rank is 1.
+    constexpr void init(dim_t s) { init(std::array {s}); } // allow scalar if rank is 1.
 
 // provided so that {} calls sharg constructor below.
-    constexpr Container(): View({Dim {0, 1}}, nullptr) {}
-    constexpr Container() requires (0==R): Container({}, none) {}
+    constexpr static auto zdims = std::apply([](auto ... i){ return std::array<Dim, (R==ANY)?1:R>{Dim{i*0, 1} ... }; }, mp::iota<(R==ANY)?1:R>{});
+    constexpr Container(): View(zdims, nullptr) {}
+    constexpr Container() requires (R==0): Container({}, none) {}
 
     using sharg = decltype(shape(std::declval<View>().iter()));
 // sharg overloads handle {...} arguments. Size check is at conversion if sharg is Small.

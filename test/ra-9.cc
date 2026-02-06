@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Regressions in array-in-ra::scalar.
 
-// (c) Daniel Llorens - 2017
+// (c) Daniel Llorens - 2017-2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -89,19 +89,19 @@ int main()
     tr.section("ra::iter() on foreign types");
     {
         auto ref = std::array<int, 4> {12, 77, 44, 1};
-        tr.test_eq(2, ra::map_([](int i) { return i; }, ra::iter(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
-        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::iter(std::array {12, 77, 44, 1})));
+        tr.test_eq(2, ra::map_([](int i){ return i; }, ra::iter(std::vector {1, 2, 3})).at(ra::Small<int, 1>{1}));
+        tr.test_eq(ref, ra::map_([](int i){ return i; }, ra::iter(std::array {12, 77, 44, 1})));
 // [ra1] used to need forward in Match/Map/Pick bc CTE in older gcc. But see bug83.cc.
-        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::iter(ra::Big<int, 1> {12, 77, 44, 1})));
-        tr.test_eq(ref, ra::map_([](int i) { return i; }, ra::iter(std::vector {12, 77, 44, 1})));
+        tr.test_eq(ref, ra::map_([](int i){ return i; }, ra::iter(ra::Big<int, 1> {12, 77, 44, 1})));
+        tr.test_eq(ref, ra::map_([](int i){ return i; }, ra::iter(std::vector {12, 77, 44, 1})));
         {
             int c = 0;
-            ply_ravel(ra::map_([&c](int i) { c += i; }, ra::iter(ra::Unique<int, 1> {12, 77, 44, 1})));
+            ply_ravel(ra::map_([&c](int i){ c += i; }, ra::iter(ra::Unique<int, 1> {12, 77, 44, 1})));
             tr.test_eq(12+77+44+1, c);
         }
         {
             int c = 0;
-            for_each([&c](int i) { c += i; }, ra::Unique<int, 1> {12, 77, 44, 1});
+            for_each([&c](int i){ c += i; }, ra::Unique<int, 1> {12, 77, 44, 1});
             tr.test_eq(12+77+44+1, c);
         }
     }
@@ -111,7 +111,7 @@ int main()
         std::array a1 = {1, 2};
         std::vector a2 = {1, 2};
 
-        for_each([](auto && a, auto && b) { a = b; }, ra::ptr(a1), 99);
+        for_each([](auto && a, auto && b){ a = b; }, ra::ptr(a1), 99);
         tr.test_eq(99, ra::iter(a1));
     }
     tr.section("[ra35] - value");
@@ -132,9 +132,9 @@ int main()
         tr.test_eq(1, a1[0]);
         tr.test_eq(11, a1[1]);
     }
-// This used to be supported, but it really made no sense. Now v0 is a read-only location so this will ct error [ra42]
+// This used to work, but it made no sense. Now v0 is a read-only location so this will ct error [ra42]
     // {
-    //     auto fun1 = [](int a) { return std::array {a, a+10}; };
+    //     auto fun1 = [](int a){ return std::array {a, a+10}; };
     //     auto v0 = ra::ptr(fun1(0));
     //     auto v1 = ra::ptr(fun1(1));
     //     v0 = v1;

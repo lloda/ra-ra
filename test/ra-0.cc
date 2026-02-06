@@ -15,8 +15,8 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
-template <class A>
-void CheckArrayOutput(TestRecorder & tr, A const & a, double * begin)
+void
+CheckArrayOutput(TestRecorder & tr, auto const & a, double * begin)
 {
     std::ostringstream o;
     o << a;
@@ -28,7 +28,8 @@ void CheckArrayOutput(TestRecorder & tr, A const & a, double * begin)
 }
 
 template <class A>
-void CheckArrayIO(TestRecorder & tr, A const & a, double * begin)
+void
+CheckArrayIO(TestRecorder & tr, A const & a, double * begin)
 {
     std::ostringstream o;
     o << a;
@@ -141,7 +142,7 @@ int main()
         auto rank0test0 = [](double & a) { a *= 2; };
         auto rank0test1 = [](double const & a) { return a*2; };
         double x { 99 };
-        ra::ViewBig<double *, 0> a { {}, &x };
+        ra::ViewBig<double *, 0> a (&x); // FIXME ({}, cp) is ambiguous; fixable here, but harder for var rank
         tr.test_eq(1, a.size());
 
 // ra::ViewBig<T *, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0.
@@ -704,11 +705,27 @@ int main()
             double check[4] = { 3, 1, 2, 3 };
             CheckArrayOutput(tr, r, check);
         }
+        tr.section("6b");
+        // {
+        //     int data[] = { 1, 2, 3, 4 };
+        //     ra::ViewBig<int *, 2> a({2, 2, 2}, data); // fails at compile time [ra41] test
+        //     tr.test(sizeof(a)>0);
+        // }
         tr.section("7");
         {
             double rpool[1] = { 88 };
-            ra::ViewBig<double *, 0> r { {}, rpool };
+            ra::ViewBig<double *, 0> r (rpool); // FIXME ({}, cp) is ambiguous; fixable here, but harder for var rank
             double check[1] = { 88 };
+            CheckArrayOutput(tr, r, check);
+            tr.test_eq(1, r.size());
+            // static_assert(sizeof(r)==sizeof(double *), "bad assumption"); [170]
+            tr.test_eq(88, r);
+        }
+        tr.section("7b");
+        {
+            double rpool[1] = { 88 };
+            ra::ViewBig<double *> r (rpool); // FIXME ({}, cp) is ambiguous
+            double check[2] = { 0, 88 };
             CheckArrayOutput(tr, r, check);
             tr.test_eq(1, r.size());
             // static_assert(sizeof(r)==sizeof(double *), "bad assumption"); [170]
@@ -740,6 +757,8 @@ int main()
             std::iota(check+4, check+4+24, 0);
             CheckArrayIO(tr, a, check);
         }
+
+
     }
     tr.section("ply - xpr types - Scalar");
     {
