@@ -56,10 +56,10 @@ int main()
     {
         cout << sizeof(std::array<ra::none_t, 9> {}) << endl;
         cout << sizeof(ra::none_t [9]) << endl;
-        cout << sizeof(ra::noarg [9]) << endl;
+        cout << sizeof(ra::noarg<> [9]) << endl;
         cout << sizeof(std::array<ra::none_t, 0> {}) << endl;
         cout << sizeof(ra::none_t [0]) << endl;
-        cout << sizeof(ra::noarg [0]) << endl;
+        cout << sizeof(ra::noarg<> [0]) << endl;
         cout << sizeof(ra::Small<int, 0>) << endl;
         cout << sizeof(ra::Small<ra::none_t, 0>) << endl;
         cout << sizeof(ra::Small<noargx, 0>) << endl;

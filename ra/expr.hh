@@ -317,14 +317,6 @@ ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
     }
 }
 
-template <class I, class N, class S, class K=ic_t<dim_t(0)>>
-constexpr auto
-reverse(Ptr<Seq<I>, N, S> const & i, K k = {})
-{
-    static_assert(UNB!=i.len_s(0), "Bad arguments to reverse.");
-    return ptr(Seq { i.data().i+(i.dimv[0].len-1)*i.dimv[0].step }, i.dimv[0].len, csub(ic<0>, i.dimv[0].step));
-}
-
 constexpr auto iter(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
 template <class T> constexpr auto iter(std::initializer_list<T> a) { return ra::ptr(a.begin(), a.size()); }
 

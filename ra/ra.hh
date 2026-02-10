@@ -24,8 +24,8 @@
 #endif
 
 // ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
-template <int A> constexpr void iter(ra::noarg);
-template <class T> constexpr void cast(ra::noarg);
+template <int A> constexpr void iter(ra::noarg<>);
+template <class T> constexpr void cast(ra::noarg<>);
 
 
 // ---------------------------

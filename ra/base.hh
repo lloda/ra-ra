@@ -310,7 +310,7 @@ static_assert(sizeof(rank_t)>=4 && sizeof(rank_t)>=sizeof(int) && sizeof(dim_t)>
 static_assert(std::is_signed_v<rank_t> && std::is_signed_v<dim_t>);
 
 constexpr struct none_t {} none; // in constructors: don't initialize
-struct noarg { noarg() = delete; }; // in constructors: don't instantiate
+template <class T=void> struct noarg { noarg() = delete; }; // in constructors: don't instantiate
 
 constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 constexpr bool any(bool const x) { return x; } // extended in ra.hh

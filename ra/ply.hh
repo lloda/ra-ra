@@ -345,9 +345,7 @@ ii(ra::ilist_t<i ...>, T o=0)
 }
 
 template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); };
-template <class A> concept is_iota_static = requires (A a) { []<class I, class Dimv>(ViewSmall<Seq<I>, Dimv> const &){}(a); };
-template <class A> concept is_iota_dynamic = requires (A a) { []<class I, rank_t RANK>(ViewBig<Seq<I>, RANK> const &){}(a); };
-template <class A> concept is_iota = (is_ptr<A> || is_iota_dynamic<A> || is_iota_static<A>);
+template <class A> concept is_iota = (Slice<A> && requires (A a) { []<class I>(Seq<I> const &){}(a.data()); });
 template <class A> concept is_scalar_index = is_ra_0<A>;
 
 // beaten, whole or piecewise. Presize bv/ds not to need push_back
