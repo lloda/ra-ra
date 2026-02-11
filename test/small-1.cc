@@ -73,7 +73,7 @@ int main()
     }
     tr.section("static step computation");
     {
-        auto dims = ra::default_dims(std::array<ra::dim_t, 3> {3, 4, 5});
+        auto dims = ra::c_dimv(std::array<ra::dim_t, 3> {3, 4, 5});
         tr.info("step 0").test_eq(20, dims[0].step);
         tr.info("step 1").test_eq(5, dims[1].step);
         tr.info("step 2").test_eq(1, dims[2].step);

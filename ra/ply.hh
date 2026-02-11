@@ -341,10 +341,10 @@ ii(dim_t (&&len)[rank], T o=0)
 template <std::integral auto ... i, class T=dim_t> constexpr auto
 ii(ra::ilist_t<i ...>, T o=0)
 {
-    return ViewSmall<Seq<T>, ra::ic_t<ra::default_dims(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
+    return ViewSmall<Seq<T>, ra::ic_t<c_dimv(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
 }
 
-template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); };
+template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); }; // FIXME
 template <class A> concept is_iota = (Slice<A> && requires (A a) { []<class I>(Seq<I> const &){}(a.data()); });
 template <class A> concept is_scalar_index = is_ra_0<A>;
 
@@ -354,7 +354,7 @@ template <class I> consteval bool
 beatable(I && i)
 {
     return ((requires { []<int N>(dots_t<N>){}(i); }) || (requires { []<int N>(insert_t<N>){}(i); }) || is_scalar_index<I>
-// exclude to let B=A(... i ...) use B's len. FIXME
+// so B=A(... i ...) uses B's len. FIXME
             || (is_iota<I> && requires { requires UNB!=ra::size_s<I>(); }));
 }
 

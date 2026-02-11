@@ -216,7 +216,7 @@ filldimv(Iterator auto && p, auto & dimv)
     return s;
 }
 
-consteval auto default_dims(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(ra::iter(lv), dv); return dv; };
+consteval auto c_dimv(auto lv) { std::array<Dim, ra::size(lv)> dimv; filldimv(ra::iter(lv), dimv); return dimv; };
 
 constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
 constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
@@ -324,7 +324,7 @@ constexpr auto
 iter(is_builtin auto && a)
 {
     using T = std::remove_all_extents_t<std::remove_reference_t<decltype(a)>>; // preserve const
-    return Cell<T *, ic_t<default_dims(ra::shape(a))>, ic_t<0>>(
+    return Cell<T *, ic_t<c_dimv(ra::shape(a))>, ic_t<0>>(
         [](this auto const & self, auto && a){
             using T = std::remove_cvref_t<decltype(a)>;
             if constexpr (1 < std::rank_v<T>) {
@@ -601,17 +601,10 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
 template <class ... P>
 Match(P && ... p) -> Match<std::tuple<P ...>>;
 
-constexpr bool
-agree(auto const & ... p) { return Match(ra::iter(p) ...).check(); }
-
-consteval int
-agree_s(auto const & ... p) { return decltype(Match(ra::iter(p) ...))::check_s(); }
-
-constexpr bool
-agree_op(is_verb auto const & op, auto const & ... p) { return agree_verb(mp::iota<sizeof...(p)> {}, op, p ...); }
-
-constexpr bool
-agree_op(auto const & op, auto const & ... p) { return agree(p ...); }
+constexpr bool agree(auto const & ... p) { return Match(ra::iter(p) ...).check(); }
+consteval int agree_s(auto const & ... p) { return decltype(Match(ra::iter(p) ...))::check_s(); }
+constexpr bool agree_op(is_verb auto const & op, auto const & ... p) { return agree_verb(mp::iota<sizeof...(p)> {}, op, p ...); }
+constexpr bool agree_op(auto const & op, auto const & ... p) { return agree(p ...); }
 
 template <class V, class ... T, int ... i>
 constexpr bool
@@ -645,14 +638,9 @@ map_verb(ilist_t<i ...>, Op && op, P && ... p)
     return map_(FM::op(RA_FW(op)), reframe(RA_FW(p), mp::ref<typename FM::R, i> {}) ...);
 }
 
-constexpr auto
-map_(is_verb auto && op, auto && ... p) { return map_verb(mp::iota<sizeof...(p)> {}, RA_FW(op), RA_FW(p) ...); }
-
-constexpr auto
-map_(auto && op, auto && ... p) { return Map(RA_FW(op), RA_FW(p) ...); }
-
-constexpr auto
-map(auto && op, auto && ... a) { return map_(RA_FW(op), ra::iter(RA_FW(a)) ...); }
+constexpr auto map_(is_verb auto && op, auto && ... p) { return map_verb(mp::iota<sizeof...(p)> {}, RA_FW(op), RA_FW(p) ...); }
+constexpr auto map_(auto && op, auto && ... p) { return Map(RA_FW(op), RA_FW(p) ...); }
+constexpr auto map(auto && op, auto && ... a) { return map_(RA_FW(op), ra::iter(RA_FW(a)) ...); }
 
 template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 

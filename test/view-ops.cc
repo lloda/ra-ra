@@ -177,12 +177,13 @@ int main()
         ra::Unique<double, 1> a({3}, {1, 2, 3});
         tr.test_eq(a-a(ra::insert<1>), a-transpose(a, ilist<1>));
     }
-// FIXME Small cannot have UNB sizes yet.
-    // tr.section("transpose K");
-    // {
-    //     ra::Small<double, 3> a = {1, 2, 3};
-    //     cout << transpose<1>(a) << endl;
-    // }
+    tr.section("transpose K");
+    {
+        ra::Small<double, 3> a = {1, 2, 3};
+        ra::Small<double, 3, 3> ref { {0, 1, 2}, {-1, 0, 1}, {-2, -1, 0} };
+        tr.strict().test_eq(ref, transpose(a, ilist<1>)-a);
+        tr.strict().test_eq(ref, from(a, ra::insert<1>)-a);
+    }
     tr.section("transpose Q [ma117]");
     {
         ra::Small<int, 2> axes = {0, 1};
