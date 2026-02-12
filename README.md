@@ -68,7 +68,7 @@ The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) 
 #### Notes
 
 * Both index and size types are signed. Index base is 0.
-* The default array order is C or row-major (last dimension changes fastest). You can make array views with other orders.
+* The default array order is C or row-major (last dimension changes first). You can make array views with other orders.
 * The subscripting operator is `()` or `[]`, indistinctly.
 * Indices are checked by default. Checks can be disabled with a compilation flag.
 

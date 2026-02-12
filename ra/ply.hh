@@ -650,16 +650,24 @@ struct std::formatter<A>
             case 's': fmt.shape = ra::withshape; break;
             case 'n': fmt.shape = ra::noshape; break;
             case 'd': fmt.shape = ra::defaultshape; break;
-            default: throw std::format_error("Bad format for ra:: object.");
+            case 'S': {
+                auto nexti = [&]{
+                    if (i==ctx.end()) { throw format_error("Format string ends early."); }
+                    return ++i;
+                };
+                auto read = [&]{
+                    if ('{'!=*nexti()) { throw std::format_error("Bad args for format :m."); }
+                    std::string s; while ('}'!=*nexti()) s+=*i; return s;
+                };
+                fmt.sep0 = read();
+                fmt.sepn = read();
+                break;
+            }
+            default: throw std::format_error("Bad format specifier.");
             }
         }
-        if (i!=ctx.end() && ':'==*i) {
-            ctx.advance_to(i+1);
-            i = under.parse(ctx);
-        }
-        if (i!=ctx.end() && '}'!=*i) {
-            throw std::format_error("Bad input while parsing format for ra:: object.");
-        }
+        if (i!=ctx.end() && ':'==*i) { ctx.advance_to(i+1); i = under.parse(ctx); }
+        if (i==ctx.end() || '}'!=*i) { throw std::format_error("Bad format."); }
         return i;
     }
     constexpr auto
@@ -675,21 +683,19 @@ struct std::formatter<A>
             out = std::format_to(out, "{:d}\n", ra::iter(sha));
         }
         ra::rank_t const rank = ra::rank(a);
-        auto goin = [&](int k, auto & goin) -> void
-        {
-            using std::ranges::copy;
+        auto goin = [&](int k, auto & goin) -> void {
             if (k==rank) {
                 ctx.advance_to(under.format(*a, ctx));
                 out = ctx.out();
             } else {
-                out = copy(fmt.open, out).out;
+                out = std::ranges::copy(fmt.open, out).out;
                 for (int i=0; i<sha[k]; ++i) {
                     goin(k+1, goin);
                     if (i+1<sha[k]) {
                         a.adv(k, 1);
-                        out = copy((k==rank-1 ? fmt.sep0 : fmt.sepn), out).out;
+                        out = std::ranges::copy((k==rank-1 ? fmt.sep0 : fmt.sepn), out).out;
                         for (int i=0; i<std::max(0, rank-2-k); ++i) {
-                            out = copy(fmt.rep, out).out;
+                            out = std::ranges::copy(fmt.rep, out).out;
                         }
                         if (fmt.align && k<rank-1) {
                             for (int i=0; i<(k+1)*ra::size(fmt.open); ++i) {
@@ -701,13 +707,13 @@ struct std::formatter<A>
                         break;
                     }
                 }
-                out = copy(fmt.close, out).out;
+                out = std::ranges::copy(fmt.close, out).out;
             }
         };
         goin(0, goin);
         return out;
     }
-    constexpr auto format(A const & a_, auto & ctx) const { return format(a_, ctx, fmt); }
+    constexpr auto format(A const & a, auto & ctx) const { return format(a, ctx, fmt); }
 };
 
 template <class A>

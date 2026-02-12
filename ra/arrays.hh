@@ -99,7 +99,7 @@ struct ViewSmall
 
     constexpr explicit ViewSmall(P cp_): cp(cp_) {}
     constexpr ViewSmall(ViewSmall const & s) = default;
-    template <class PP> constexpr ViewSmall(ViewSmall<PP, Dimv> const & x) requires (requires { ViewSmall(x.cp); }): ViewSmall(x.cp) {} // FIXME Slice
+    template <class Q> constexpr ViewSmall(ViewSmall<Q, Dimv> const & x) requires (requires { ViewSmall(x.cp); }): ViewSmall(x.cp) {} // FIXME Slice
 // braces, row major and nested
     constexpr ViewSmall const & operator=(T (&&x)[size()>1 ? size() : 0]) const
         requires (rank()>1 && size()>1)
@@ -277,6 +277,7 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
 #undef RA_ASSIGNOPS
     template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FW(self).view().template as<s, o>(); }
     template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FW(self).view().template iter<c>(); }
+    constexpr auto iter(this auto && self, rank_t c) { return RA_FW(self).view().template iter(c); }
     constexpr auto begin(this auto && self) { return self.view().begin(); }
     constexpr auto end(this auto && self) { return self.view().end(); }
     constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
@@ -336,13 +337,13 @@ template <class Store, rank_t R>
 struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
 {
     Store store;
-    constexpr auto data(this auto && self) { return self.view().data(); }
     using T = typename storage_traits<Store>::T;
     using View = ViewBig<T *, R>;
     using ViewConst = ViewBig<T const *, R>;
     constexpr ViewConst const & view() const { return *this; }
     constexpr View & view() { return *this; }
     using View::size, View::rank, View::dimv, View::cp;
+    constexpr auto data(this auto && self) { return self.view().data(); }
 
 // A(shape 2 3) = A-type [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-A-type [1 2 3] which uses View::operator=. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
 // TODO don't require copyable T in constructors, see fill1. That requires operator= to initialize, not update.
@@ -411,7 +412,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
     RA_FE(RA_BRACES, 1, 2, 3, 4)
 #undef RA_BRACES
 
-    // FIXME requires copyable Y, which conflicts with semantics of view_.operator=. store(x) avoids the conflict for Big, but not for Unique. Should construct in place like std::vector.
+// FIXME requires copyable Y, which conflicts with semantics of view_.operator=. store(x) avoids the conflict for Big, but not for Unique. Should construct in place like std::vector.
     constexpr void
     fill1(auto && xbegin, dim_t xsize)
     {

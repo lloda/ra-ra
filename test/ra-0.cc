@@ -796,5 +796,13 @@ int main()
         tr.test_eq(-2, v[0].a);
         tr.test_eq(-4, v[1].a);
     }
+    tr.section("shape_s");
+    {
+        ra::Big<int, 1> x = { 99, 99 };
+        constexpr auto xshas = ra::shape_s<decltype(x)>;
+        auto xshad = ra::shape(x);
+        tr.strict().test_eq(ra::iter({ra::ANY}), xshas);
+        tr.strict().test_eq(ra::iter({2}), xshad);
+    }
     return tr.summary();
 }

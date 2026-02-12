@@ -60,27 +60,23 @@ int main()
                 ++i;
             }
         }
-        tr.section("rank>0");
+        tr.section("cell rank");
         {
-            auto test_over
-                = [&](auto && a)
-                  {
-                      auto test = [&](std::string ref, auto cr)
-                                  {
-                                      std::ostringstream o;
-                                      for_each([&o](auto && a) { o << a << "|"; }, ra::iter<cr()>(a));
-                                      tr.test_eq(ra::scalar(ref), ra::scalar(o.str()));
-                                  };
-                      test("1|2|3|4|5|6|", ra::int_c<-2>());
-                      test("1 2 3|4 5 6|", ra::int_c<-1>());
-                      test("1|2|3|4|5|6|", ra::int_c<0>());
-                      test("1 2 3|4 5 6|", ra::int_c<1>());
-                      test("1 2 3\n4 5 6|", ra::int_c<2>());
-                  };
+            auto test_over = [&](auto && a){
+                auto test = [&](std::string ref, auto cr){
+                    tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}}", ra::iter<cr()>(a))));
+                    tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}:n}", a.iter(cr))));
+                };
+                test("1|2|3-4|5|6", ra::int_c<-2>());
+                test("1 2 3|4 5 6", ra::int_c<-1>());
+                test("1|2|3-4|5|6", ra::int_c<0>());
+                test("1 2 3|4 5 6", ra::int_c<1>());
+                test("1 2 3\n4 5 6", ra::int_c<2>());
+            };
             tr.section("default steps");
             test_over(ra::Small<int, 2, 3> {{1, 2, 3}, {4, 5, 6}});
             tr.section("non-default steps");
-            test_over(ra::transpose(ra::Small<int, 3, 2> {{1, 4}, {2, 5}, {3, 6}}, ilist_t<1, 0>{}));
+            test_over(ra::transpose(ra::Small<int, 3, 2> {{1, 4}, {2, 5}, {3, 6}}, ra::ilist<1, 0>));
         }
     }
     return tr.summary();

@@ -1384,7 +1384,7 @@ case d:
 @cindex @code{lstyle}
 @cindex @code{pstyle}
 
-The following predefined styles are named after popular languages: @code{jstyle}, @code{nstyle}, @code{cstyle}, @code{lstyle}, and @code{pstyle}. The default is @code{jstyle}; @code{nstyle} is like @code{jstyle} but with @code{.shape=noshape}.
+The following predefined styles are named after popular languages: @code{jstyle} (the default), @code{cstyle}, @code{lstyle}, and @code{pstyle}. There is also @code{nstyle} which is like @code{jstyle} but with @code{.shape=noshape}.
 
 @example
 @verbatim
@@ -1424,6 +1424,8 @@ Like @code{.shape=withshape}.
 Like @code{.shape=noshape}.
 @item @code{d} --
 Like @code{.shape=default}.
+@item @code{@verb{|S{a}{b}|}} --
+Like @code{.sep0=a} and @code{.sepn=b}. Both strings must be given. These strings cannot contain the character @verb{|}|}.
 @end itemize
 
 After a colon, the remainder of the format string is applied to the type of the element. For example:
