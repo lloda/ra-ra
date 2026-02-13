@@ -416,9 +416,8 @@ rank_s()
         return V::rank();
     } else if constexpr (requires (V v) { v.rank(); }) {
         return ANY;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
 template <class V> consteval rank_t rank_s(V const &) { return rank_s<V>(); }
@@ -464,13 +463,10 @@ template <class V> requires (!std::is_void_v<V>)
 consteval dim_t
 size_s()
 {
-    if constexpr (ANY==rank_s<V>()) {
-        return ANY;
-    } else {
-        dim_t s = 1;
-        for (dim_t len: shape_s<V>) { if (len>=0) s*=len; else return len; } // ANY or UNB
-        return s;
+    if constexpr (ANY!=rank_s<V>()) {
+        dim_t s=1; for (dim_t l: shape_s<V>) { if (l<0) return l; else s*=l; } return s;
     }
+    return ANY;
 }
 
 template <class V> consteval dim_t size_s(V const &) { return size_s<V>(); }
@@ -484,9 +480,7 @@ size(V const & v)
     } else if constexpr (is_fov<V>) {
         return std::ssize(v);
     } else {
-        dim_t s = 1;
-        for (rank_t k=0; k<rank(v); ++k) { s *= v.len(k); }
-        return s;
+        dim_t s=1; for (rank_t k=0; k<rank(v); ++k) { s *= v.len(k); } return s;
     }
 }
 
@@ -535,12 +529,7 @@ RA_IS_DEF(is_array_formattable, is_ra<A> || (is_fov<A> && !std::is_convertible_v
 
 constexpr std::ostream & operator<<(std::ostream & o, is_array_formattable auto && a) { return o << fmt({}, RA_FW(a)); }
 template <class T> constexpr std::ostream & operator<<(std::ostream & o, std::initializer_list<T> a) { return o << fmt({}, a); }
-
-constexpr std::ostream &
-operator<<(std::ostream & o, std::source_location const & loc)
-{
-    return o << loc.file_name() << ":" << loc.line() << "," << loc.column();
-}
+constexpr std::ostream & operator<<(std::ostream & o, std::source_location l) { return o << l.file_name() << ":" << l.line() << "," << l.column(); }
 
 constexpr void print1(auto & o, std::formattable<char> auto && a) { std::print(o, "{}", RA_FW(a)); }
 constexpr void print1(auto & o, auto && a) { o << RA_FW(a); }

@@ -181,6 +181,7 @@ int main()
     {
         ra::Small<double, 3> a = {1, 2, 3};
         ra::Small<double, 3, 3> ref { {0, 1, 2}, {-1, 0, 1}, {-2, -1, 0} };
+        tr.test_eq(ra::UNB, transpose(a, ilist<1>).size());
         tr.strict().test_eq(ref, transpose(a, ilist<1>)-a);
         tr.strict().test_eq(ref, from(a, ra::insert<1>)-a);
     }

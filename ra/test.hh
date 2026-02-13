@@ -85,11 +85,11 @@ struct TestRecorder
     TestRecorder & strict(bool s=true) { willstrict = s; return *this; }
     TestRecorder & expectfail(bool s=true) { willexpectfail = s; return *this; }
 
-#define RA_CURRENT_LOC std::source_location const loc = std::source_location::current()
+#define RA_LOC std::source_location const loc = std::source_location::current()
 #define RA_LAZYINFO(...) [&]{ return format(infos, (infos=="" ? "" : "; "), __VA_ARGS__); }
 
     void
-    test(bool c, auto && info_full, auto && info_min, RA_CURRENT_LOC)
+    test(bool c, auto && info_full, auto && info_min, RA_LOC)
     {
         switch (verbose) {
         case QUIET: {
@@ -123,32 +123,32 @@ struct TestRecorder
         willstrict = willskip = willexpectfail = false;
     }
     void
-    test(bool c, auto && info_full, RA_CURRENT_LOC)
+    test(bool c, auto && info_full, RA_LOC)
     {
         test(c, info_full, info_full, loc);
     }
     void
-    test(bool c, RA_CURRENT_LOC)
+    test(bool c, RA_LOC)
     {
         test(c, RA_LAZYINFO(""), loc);
     }
 
     bool
-    test_scomp(auto && a, auto && b, auto && comp, char const * msg, RA_CURRENT_LOC)
+    test_scomp(auto && a, auto && b, auto && comp, char const * msg, RA_LOC)
     {
         bool c = comp(a, b);
         test(c, RA_LAZYINFO(b, " (", msg, " ", a, ")"), RA_LAZYINFO(""), loc);
         return c;
     }
     bool
-    test_seq(auto && ref, auto && a, RA_CURRENT_LOC)
+    test_seq(auto && ref, auto && a, RA_LOC)
     {
         return test_scomp(ref, a, [](auto && a, auto && b){ return a==b; }, "should be strictly ==", loc);
     }
 
 // where() is used to match shapes if either REF or A don't't have one.
     bool
-    test_comp(auto && a, auto && b, auto && comp, char const * msg, RA_CURRENT_LOC)
+    test_comp(auto && a, auto && b, auto && comp, char const * msg, RA_LOC)
     {
         if (willstrict
             ? [&]{
@@ -176,7 +176,7 @@ struct TestRecorder
     }
 #define RA_TEST_COMP(NAME, OP)                                          \
     bool                                                                \
-    NAME(auto && ref, auto && a, RA_CURRENT_LOC)                        \
+    NAME(auto && ref, auto && a, RA_LOC)                        \
     {                                                                   \
         return test_comp(ra::iter(ref), ra::iter(a), [](auto && a, auto && b){ return every(a OP b); }, \
                          "should be " RA_STRINGIZE(OP), loc);              \
@@ -190,7 +190,7 @@ struct TestRecorder
 
     __attribute__((optimize("-fno-finite-math-only")))
     double
-    test_rel(auto && ref_, auto && a_, double req, double level=0, RA_CURRENT_LOC)
+    test_rel(auto && ref_, auto && a_, double req, double level=0, RA_LOC)
     {
         decltype(auto) ref = ra::iter(ref_);
         decltype(auto) a = ra::iter(a_);
@@ -216,7 +216,7 @@ struct TestRecorder
     }
     __attribute__((optimize("-fno-finite-math-only")))
     double
-    test_abs(auto && ref_, auto && a_, double req=0, RA_CURRENT_LOC)
+    test_abs(auto && ref_, auto && a_, double req=0, RA_LOC)
     {
         decltype(auto) ref = ra::iter(ref_);
         decltype(auto) a = ra::iter(a_);
@@ -232,7 +232,7 @@ struct TestRecorder
         return e;
     }
 
-#undef RA_CURRENT_LOC
+#undef RA_LOC
 #undef RA_LAZYINFO
 
     int

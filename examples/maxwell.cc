@@ -17,13 +17,12 @@
 #include <numbers>
 
 using real = double;
-template <class T, int rank> using array = ra::Big<T, rank>;
-auto H = ra::all;
+constexpr auto H = ra::all;
 template <int n> constexpr ra::dots_t<n> HH = ra::dots<n>;
 constexpr auto PI = std::numbers::pi_v<double>;
 
 using std::cout, std::endl, std::println;
-using ra::iota, ra::ic, ra::TestRecorder, ra::Benchmark;
+using ra::iota, ra::ic, ra::TestRecorder, ra::Benchmark, ra::Big;
 
 int main()
 {
@@ -31,17 +30,17 @@ int main()
 
     real delta = 1;
     int o=20, n=20, m=2, l=2;
-    array<real, 5> A({o, n, m, l, 4}, 0.);
-    array<real, 6> DA({o, n, m, l, 4, 4}, 0.);
-    array<real, 6> F({o, n, m, l, 4, 4}, 0.);
-    array<real, 4> divA({o, n, m, l}, 0.);
-    array<real, 4> X({n, m, l, 4}, 0.), Y({n, m, l, 4}, 0.);
+    Big<real, 5> A({o, n, m, l, 4}, 0.);
+    Big<real, 6> DA({o, n, m, l, 4, 4}, 0.);
+    Big<real, 6> F({o, n, m, l, 4, 4}, 0.);
+    Big<real, 4> divA({o, n, m, l}, 0.);
+    Big<real, 4> X({n, m, l, 4}, 0.), Y({n, m, l, 4}, 0.);
 
     A(0, H, H, H, 2) = -cos(iota(n)*(2*PI/n))/(2*PI/n);
     A(1, H, H, H, 2) = -cos((iota(n)-delta)*(2*PI/n))/(2*PI/n);
 
     auto t0 = Benchmark::clock::now();
-// FIXME this is painful without a roll operator, but we need a roll operator without temps.
+// FIXME painful without a roll operator, but we need a roll operator without temps.
     for (int t=1; t+1<o; ++t) {
 // X←(1⌽[0]A[T;;;;])+(1⌽[1]A[T;;;;])+(1⌽[2]A[T;;;;])
         X(iota(n-1)) = A(t, iota(n-1, 1));
@@ -80,11 +79,10 @@ int main()
     diff(ic<2>, -1/(2*delta));
     diff(ic<3>, -1/(2*delta));
     auto time_DA = Benchmark::clock::now()-t0;
-
     F = ra::transpose(DA, ra::ilist<0, 1, 2, 3, 5, 4>) - DA;
-
 // abuse shape matching to reduce last axis.
     divA += ra::transpose(DA, ra::ilist<0, 1, 2, 3, 4, 4>);
+
     tr.info("Lorentz test max div A (1)").test_eq(0., amax(divA));
 // an alternative without a temporary.
     tr.info("Lorentz test max div A (2)")
@@ -92,13 +90,12 @@ int main()
                               ra::iter<1>(ra::transpose(DA, ra::ilist<0, 1, 2, 3, 4, 4>)))));
     tr.quiet().test_eq(0.3039588939177449, F(19, 0, 0, 0, 2, 1));
 
-    auto show = [&tr, &delta](char const * name, int t, auto && F)
-        {
-            tr.quiet().test(amin(F)>=-1);
-            tr.quiet().test(amax(F)<=+1);
-            println(cout, "(0)={:10.8} t={}:", F(0), (t*delta));
-            for_each([](auto && F) { println(cout, "{}*", std::string(int(round(20*(clamp(F, -1., 1.)+1))), ' ')); }, F);
-        };
+    auto show = [&tr, &delta](char const * name, int t, auto && F){
+        tr.quiet().test(amin(F)>=-1);
+        tr.quiet().test(amax(F)<=+1);
+        println(cout, "(0)={:10.8} t={}:", F(0), (t*delta));
+        for_each([](auto && F) { println(cout, "{}*", std::string(int(round(20*(clamp(F, -1., 1.)+1))), ' ')); }, F);
+    };
 
     for (int t=0; t<o; ++t) {
         show("Ey", t, F(t, H, 0, 0, 2, 0));

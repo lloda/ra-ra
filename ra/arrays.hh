@@ -78,7 +78,7 @@ template <class T, rank_t R>
 constexpr auto
 braces_shape(braces<T, R> const & l)
 {
-    return [&l]<int ... i>(ilist_t<i ...>){ return std::array { braces_len<i, T, R>(l) ... }; }(mp::iota<R>{});
+    return std::apply([&l](auto ... i){ return std::array { braces_len<i, T, R>(l) ... }; }, mp::iota<R>{});
 }
 
 template <class P, class Dimv_>
@@ -94,8 +94,8 @@ struct ViewSmall
     constexpr static dim_t len(int k) { return dimv[k].len; }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
-    consteval static dim_t size() { return std::apply([](auto ... i){ return (i.len * ... * 1); }, dimv); }
-    consteval bool empty() const { return any(0==map(&Dim::len, dimv)); }
+    consteval static dim_t size() { dim_t s=1; for (Dim d: dimv) { if (d.len<0) return d.len; else s*=d.len; } return s; }
+    consteval static bool empty() { return any(0==map(&Dim::len, dimv)); }
 
     constexpr explicit ViewSmall(P cp_): cp(cp_) {}
     constexpr ViewSmall(ViewSmall const & s) = default;
@@ -147,7 +147,7 @@ struct ViewBig
     using T = std::remove_reference_t<decltype(*cp)>;
 
     consteval static rank_t rank() requires (R!=ANY) { return R; }
-    constexpr rank_t rank() const requires (R==ANY) { return rank_t(dimv.size()); }
+    constexpr rank_t rank() const requires (R==ANY) { return dimv.size(); }
     constexpr static dim_t len_s(int k) { return ANY; }
     constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return dimv[k].step; }
@@ -223,7 +223,7 @@ constexpr size_t align_req<T, N> = alignof(extvector<T, N>);
 template <class T, class Dimv_, class ... nested_args>
 struct
 #if RA_OPT_SMALL==1
-alignas(align_req<T, std::apply([](auto ... i){ return (i.len * ... * 1); }, Dimv_::value)>)
+alignas(align_req<T, std::apply([](auto ... d){ return (d.len * ... * 1); }, Dimv_::value)>)
 #endif
 SmallArray<T, Dimv_, std::tuple<nested_args ...>>
 {
