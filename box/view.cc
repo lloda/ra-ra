@@ -99,8 +99,7 @@ struct View: public ViewBase<Dimv>
         std::ranges::copy(std::ranges::subrange(x), begin()); return *this;
     }
     constexpr View const & operator=(braces<T, R> x) const requires (!CT && R!=ANY) { iter<-1>() = x; return *this; }
-#define RA_BRACES(N)                                                    \
-    constexpr View const & operator=(braces<T, N> x) const requires (!CT && R==ANY) { iter<-1>() = x; return *this; }
+#define RA_BRACES(N) constexpr View const & operator=(braces<T, N> x) const requires (!CT && R==ANY) { iter<-1>() = x; return *this; }
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
 // ---------
@@ -130,9 +129,8 @@ struct View: public ViewBase<Dimv>
 // either
 // T not is_scalar [ra44]
     constexpr View const & operator=(T const & t) const { ra::iter(*this) = ra::scalar(t); return *this; }
-// cf RA_ASSIGNOPS_ITER [ra38][ra34]
     View const & operator=(View const & x) const { ra::iter(*this) = x; return *this; }
-#define RA_ASSIGNOPS(OP)                                                   \
+#define RA_ASSIGNOPS(OP)                                                \
     constexpr View const & operator OP(auto const & x) const { ra::iter(*this) OP x; return *this; } \
     constexpr View const & operator OP(Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
@@ -152,6 +150,5 @@ template <class P, class Dimv> using ViewS = View<P, Dimv>;
 int main()
 {
     ra::TestRecorder tr;
-
     return tr.summary();
 }

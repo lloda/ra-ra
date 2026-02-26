@@ -51,7 +51,7 @@ namespace ra {
     for_each([](auto && y, auto && x){ /* [ra5] */ RA_FW(y) OP RA_FW(x); }, *this, RA_FW(x))
 #define RA_ASSIGNOPS_DEFAULT(OP)                                        \
     constexpr void operator OP(auto && x) { RA_ASSIGNOPS_LINE(OP); }
-// Restate for expression classes since a template doesn't replace the copy assignment op.
+// Restate for iterator classes since a template doesn't replace the copy assignment. Cf RA_ASSIGNOPS on views [ra34][ra38].
 #define RA_ASSIGNOPS_ITER(TYPE)                                         \
     constexpr TYPE & operator=(TYPE && x) { RA_ASSIGNOPS_LINE(=); return *this; } \
     constexpr TYPE & operator=(TYPE const & x) { RA_ASSIGNOPS_LINE(=); return *this; } \
@@ -60,13 +60,13 @@ namespace ra {
     RA_FE(RA_ASSIGNOPS_DEFAULT, =, *=, +=, -=, /=)
 
 template <class N> constexpr auto
-maybe_any = []{ if constexpr (is_ctype<N>) { return N::value; } else { return ANY; } }();
+maybe_any = []{ if constexpr (is_ctype<N>) return N::value; else return ANY; }();
 
 template <class S> constexpr S
-maybe_step = []{ if constexpr (is_ctype<S>) { static_assert(1==S::value); return S{}; } else { return 1; } }();
+maybe_step = []{ if constexpr (is_ctype<S>) { static_assert(1==S::value); return S{}; } else return 1; }();
 
 template <class K> constexpr auto
-clen(auto const & v, K k) { if constexpr (is_ctype<K> && (ANY!=v.len_s(k))) return ic<v.len_s(k)>; else return v.len(k); }
+clen(auto const & v, K k) { if constexpr (is_ctype<K> && ANY!=v.len_s(k)) return ic<v.len_s(k)>; else return v.len(k); }
 
 template <class A, class B> constexpr auto
 cadd(A a, B b) { if constexpr (is_ctype<A> && is_ctype<B>) return ic<a+b>; else return a+b; }

@@ -481,8 +481,11 @@ int main()
     tr.section("row-major assignment from initializer_list, rank 2");
     {
         ra::Unique<double, 2> a({3, 2}, ra::none);
+        std::cout << "A00" << std::endl;
         a = { 2, 3, 1, 4, 8, 9 };
+        std::cout << "A01" << std::endl;
         tr.test_eq(2, a(0, 0));
+        std::cout << "A02" << std::endl;
         tr.test_eq(3, a(0, 1));
         tr.test_eq(1, a(1, 0));
         tr.test_eq(4, a(1, 1));
