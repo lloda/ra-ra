@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Show what types conform to what type predicates.
 
-// (c) Daniel Llorens - 2016-2017
+// (c) Daniel Llorens - 2016-2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -256,6 +256,20 @@ int main()
 #else
         std::println(std::cout, "no float128_t support!");
 #endif // RA_FLOAT128
+    }
+    tr.section("zero rank arrays");
+    {
+        static_assert(ra::is_builtin<decltype((ra::dim_t[1]){})>);
+        static_assert(ra::is_builtin<decltype((ra::dim_t[0]){})>);
+        static_assert(1==ra::rank_s((ra::dim_t[1]){}));
+        static_assert(1==ra::rank_s((ra::dim_t[0]){}));
+        static_assert(1==ra::size_s((ra::dim_t[1]){}));
+        static_assert(0==ra::size_s((ra::dim_t[0]){}));
+        int z[0];
+        static_assert(1==ra::rank_s(z));
+        static_assert(0==ra::size_s(z));
+        static_assert(1==ra::rank(z));
+        static_assert(0==ra::size(z));
     }
     return tr.summary();
 }

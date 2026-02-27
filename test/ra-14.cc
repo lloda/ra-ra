@@ -21,6 +21,11 @@ int main()
     using int2 = ra::Small<int, 2>;
     tr.section("Values");
     {
+        tr.section("Rank 0 constructor");
+        {
+            ra::Big<int> a({}, ra::none);
+            tr.test_eq(0, rank(a));
+        }
         tr.section("From var rank 0 [ra15]");
         {
             ra::Big<int2> a({}, {{ 1, 2 }});

@@ -565,5 +565,15 @@ int main()
         cout << c << endl;
         cout << d << endl;
     }
+    tr.section("constructor from cells");
+    {
+        ra::Small<int, 4> a { 1, 2, 3, 4 };
+        ra::Small<int, 4> b { 3, 1, 4, 2 };
+        ra::Small<int, 3, 4> ref { { 1, 2, 3, 4 }, { 3, 1, 4, 2 }, { 1, 2, 3, 4 } };
+        ra::Small<int, 3, 4> c { a, b, a.view() };
+        tr.test_eq(ref, c);
+        auto d = [](auto && a, auto  && b, auto && c) { return ra::Small<int, 3, 4> { a, b, c }; }(a, b, a.view());
+        tr.test_eq(ref, d);
+    }
     return tr.summary();
 }

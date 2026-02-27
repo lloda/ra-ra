@@ -316,8 +316,7 @@ constexpr bool inside(dim_t i, dim_t b) { return 0<=i && i<b; }
 constexpr bool any(bool const x) { return x; } // extended in ra.hh
 constexpr bool every(bool const x) { return x; }
 
-// adaptor that inserts construct() calls to convert value init into default init. See https://stackoverflow.com/a/21028912
-// default storage for Big.
+// convert value init into default init (https://stackoverflow.com/a/21028912). Default storage for Big.
 template <class T, class A=std::allocator<T>>
 struct default_init_allocator: public A
 {
@@ -400,7 +399,8 @@ template <> constexpr bool is_scalar_def<std::partial_ordering> = true;
 
 RA_IS_DEF(is_iterator, Iterator<A>)
 template <class A> concept is_ra = is_iterator<A> || Slice<A>;
-template <class A> concept is_builtin = std::is_array_v<std::remove_cvref_t<A>>;
+template <class A> concept is_builtin_0 = requires (A & v) { []<class T>(T (&x)[0]){}(v); };
+template <class A> concept is_builtin = std::is_array_v<std::remove_cvref_t<A>> || is_builtin_0<A>;
 RA_IS_DEF(is_fov, !is_scalar<A> && !is_ra<A> && !is_builtin<A> && std::ranges::bidirectional_range<A>)
 
 template <class VV> requires (!std::is_void_v<VV>)
@@ -408,10 +408,10 @@ consteval rank_t
 rank_s()
 {
     using V = std::remove_cvref_t<VV>;
-    if constexpr (is_builtin<V>) {
-        return std::rank_v<V>;
-    } else if constexpr (is_fov<V>) {
+    if constexpr (is_builtin_0<V> || is_fov<V>) {
         return 1;
+    } else if constexpr (is_builtin<V>) {
+        return std::rank_v<V>;
     } else if constexpr (requires { V::rank(); }) {
         return V::rank();
     } else if constexpr (requires (V v) { v.rank(); }) {
