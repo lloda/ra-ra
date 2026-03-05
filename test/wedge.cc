@@ -167,11 +167,11 @@ main()
     {
         using la = ra::mp::iota<3>;
         using ca = ra::mp::combs<la, 1>;
-        using cc0 = ra::mp::anticomb<ra::mp::ref<ca, 0>, 3>::type;
+        using cc0 = ra::mp::anticomb<ra::mp::ref<ca, 0>, 3>;
         static_assert(ra::mp::check_idx<cc0, 1, 2>::value, "bad");
-        using cc1 = ra::mp::anticomb<ra::mp::ref<ca, 1>, 3>::type;
+        using cc1 = ra::mp::anticomb<ra::mp::ref<ca, 1>, 3>;
         static_assert(ra::mp::check_idx<cc1, 2, 0>::value, "bad");
-        using cc2 = ra::mp::anticomb<ra::mp::ref<ca, 2>, 3>::type;
+        using cc2 = ra::mp::anticomb<ra::mp::ref<ca, 2>, 3>;
         static_assert(ra::mp::check_idx<cc2, 0, 1>::value, "bad");
     }
 

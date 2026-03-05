@@ -203,20 +203,21 @@ resize(auto & a, dim_t s)
 }
 
 constexpr dim_t
-filldimv(Iterator auto && p, auto & dimv)
+filldimv(Iterator auto && p, auto & dv)
 {
-    ra::resize(dimv, 0==rank_s(p) ? 1 : ra::size(p)); // [ra37]
-    for (rank_t k=0; k<ra::size(dimv); ++k, p.mov(p.step(0))) { dimv[k].len = *p; }
+    ra::resize(dv, 0==rank_s(p) ? 1 : ra::size(p)); // [ra37]
+    for (rank_t k=0; k<ra::size(dv); ++k, p.mov(p.step(0))) { dv[k].len = *p; }
     dim_t s = 1;
-    for (int k=ra::size(dimv); --k>=0;) {
-        dimv[k].step = s;
-        RA_CK(dimv[k].len>=0, "Bad len[", k, "] ", dimv[k].len, ".");
-        s *= dimv[k].len;
+    for (int k=ra::size(dv); --k>=0;) {
+        dv[k].step = s;
+        RA_CK(dv[k].len>=0, "Bad len[", k, "] ", dv[k].len, ".");
+        s *= dv[k].len;
     }
     return s;
 }
 
-consteval auto c_dimv(auto lv) { std::array<Dim, ra::size(lv)> dimv; filldimv(ra::iter(lv), dimv); return dimv; };
+consteval auto c_dimv(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(ra::iter(lv), dv); return dv; };
+constexpr dim_t dimv_size(auto const & dv) { dim_t s=1; for (Dim d: dv) { if (d.len<0) return d.len; else s*=d.len; } return s; }
 
 constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
 constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }

@@ -80,7 +80,7 @@ template <class A> constexpr int len = std::tuple_size_v<A>;
 template <class T> constexpr bool is_tuple = false;
 template <class ... A> constexpr bool is_tuple<tuple<A ...>> = true;
 template <class ... A> using append = decltype(std::tuple_cat(std::declval<A>() ...));
-template <class A, class B> using cons = append<std::tuple<A>, B>;
+template <class A, class B> using cons = append<tuple<A>, B>;
 
 // ref<A, I0, I ...> = ref<ref<A, I0>, I ...>
 template <class A, int ... I> struct ref_ { using type = A; };
@@ -166,53 +166,6 @@ template <class A, class B> struct filter_ { using type = append<std::conditiona
 template <class B> struct filter_<nil, B> { using type = B; };
 template <class A, class B> using filter = typename filter_<A, B>::type;
 
-// Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
-template <class S, class T, class SS=S> struct complement_list_;
-template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
-// end of T.
-template <class S, class SS>
-struct complement_list_<S, nil, SS>
-{
-    using type = nil;
-};
-// end search on S, did not find.
-template <class T0, class ... T, class SS>
-struct complement_list_<nil, tuple<T0, T ...>, SS>
-{
-    using type = cons<T0, complement_list<SS, tuple<T ...>>>;
-};
-// end search on S, found.
-template <class F, class ... S, class ... T, class SS>
-struct complement_list_<tuple<F, S ...>, tuple<F, T ...>, SS>
-{
-    using type = complement_list<SS, tuple<T ...>>;
-};
-// keep searching on S.
-template <class S0, class ... S, class T0, class ... T, class SS>
-struct complement_list_<tuple<S0, S ...>, tuple<T0, T ...>, SS>
-{
-    using type = complement_list<tuple<S ...>, tuple<T0, T ...>, SS>;
-};
-
-// Like complement_list, but assume that both lists are sorted.
-template <class S, class T> struct complement_sorted_list_ { using type = nil; };
-template <class S, class T> using complement_sorted_list = typename complement_sorted_list_<S, T>::type;
-template <class T> struct complement_sorted_list_<nil, T> { using type = T; };
-template <class F, class ... S, class ... T>
-struct complement_sorted_list_<tuple<F, S ...>, tuple<F, T ...>>
-{
-    using type = complement_sorted_list<tuple<S ...>, tuple<T ...>>;
-};
-template <class S0, class ... S, class T0, class ... T>
-struct complement_sorted_list_<tuple<S0, S ...>, tuple<T0, T ...>>
-{
-    static_assert(T0::value<=S0::value, "Bad lists for complement_sorted_list<>.");
-    using type = cons<T0, complement_sorted_list<tuple<S0, S ...>, tuple<T ...>>>;
-};
-
-// Like complement_list where the second arg is [0 .. end-1].
-template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
-
 // Prepend element to each of a list of lists.
 template <class c, class A> struct mapcons_;
 template <class c, class A> using mapcons = typename mapcons_<c, A>::type;
@@ -227,6 +180,47 @@ template <class c, class ... A> struct mapprepend_<c, tuple<A ...>> { using type
 template <class A, class B> struct prodappend_ { using type = nil; };
 template <class A, class B> using prodappend = typename prodappend_<A, B>::type;
 template <class A0, class ... A, class B> struct prodappend_<tuple<A0, A ...>, B> { using type = append<mapprepend<A0, B>, prodappend<tuple<A ...>, B>>; };
+
+// These are used only with ilists, so decltype(... return T {}) is ok.
+
+// Remove from the second list the elements of the first list. None may have repeated elements, but they may be unsorted.
+template <class S, class T, class SS=S> struct complement_list_;
+template <class S, class T, class SS=S> using complement_list = typename complement_list_<S, T, SS>::type;
+template <class S, class T, class SS>
+struct complement_list_
+{
+    using type = decltype([]{
+        if constexpr (0==len<T>) {                                  // end of T.
+            return nil {};
+        } else if constexpr (0==len<S>) {                           // not found in S.
+            return cons<first<T>, complement_list<SS, drop1<T>>> {};
+        } else if constexpr (std::is_same_v<first<S>, first<T>>) {  // found in S.
+            return complement_list<SS, drop1<T>> {};
+        } else {                                                    // keep searching in S.
+            return complement_list<drop1<S>, T, SS> {};
+        }
+    }());
+};
+
+// Like complement_list, but both lists are sorted.
+template <class S, class T> struct complement_sorted_list_;
+template <class S, class T> using complement_sorted_list = typename complement_sorted_list_<S, T>::type;
+template <class S, class T>
+struct complement_sorted_list_
+{
+    using type = decltype([]{
+        if constexpr (0==len<S> || 0==len<T>) {
+            return T {};
+        } else if constexpr (std::is_same_v<first<S>, first<T>>) {
+            return complement_sorted_list<drop1<S>, drop1<T>> {};
+        } else {
+            static_assert(first<T>::value < first<S>::value, "Bad complement_sorted_list.");
+            return cons<first<T>, complement_sorted_list<S, drop1<T>>> {};
+        }
+    }());
+};
+
+template <class S, int end> using complement = complement_sorted_list<S, iota<end>>;
 
 // K-combinations of the N elements of list A.
 template <class A, int K> struct combs_;
@@ -248,7 +242,7 @@ template <class C, class R> constexpr int permsignfound<-1, C, R>  = 0;
 template <> struct permsign<nil, nil> { constexpr static int value = 1; };
 template <class C> struct permsign<C, nil> { constexpr static int value = 0; };
 template <class R> struct permsign<nil, R> { constexpr static int value = 0; };
-template <class C, class O> struct permsign { constexpr static int value = permsignfound<index<C, first<O>>::value, C, O>; };
+template <class C, class R> struct permsign { constexpr static int value = permsignfound<index<C, first<R>>::value, C, R>; };
 
 template <class P, class Plist>
 struct findcomb
@@ -261,36 +255,20 @@ struct findcomb
 
 // Combination aC complementary to C wrt [0, 1, ... Dim-1], permuted so [C, aC] has the sign of [0, 1, ... Dim-1].
 template <class C, int D>
-struct anticomb
-{
+using anticomb = decltype([]{
     using EC = complement<C, D>;
-    static_assert(2<=len<EC>, "can't correct this complement");
+    static_assert(2<=len<EC>, "Can't correct this complement.");
     constexpr static int sign = permsign<append<C, EC>, iota<D>>::value;
-// produce permutation of opposite sign if sign<0.
-    using type = cons<ref<EC, (sign<0) ? 1 : 0>, cons<ref<EC, (sign<0) ? 0 : 1>, drop<EC, 2>>>;
-};
+// permutation of opposite sign if sign<0.
+    return cons<ref<EC, sign<0 ? 1 : 0>, cons<ref<EC, (sign<0) ? 0 : 1>, drop<EC, 2>>> {};
+}());
 
-template <class C, int D> struct mapanticomb;
-template <int D, class ... C>
-struct mapanticomb<std::tuple<C ...>, D>
-{
-    using type = std::tuple<typename anticomb<C, D>::type ...>;
-};
+template <class T, int D> using mapanticomb = decltype([]<class ... C>(tuple<C ...>){ return tuple<anticomb<C, D> ...> {}; }(T {}));
 
-template <int D, int O> struct choose_
-{
-    static_assert(D>=O, "Bad args to choose_.");
-    using type = combs<iota<D>, O>;
-};
-
-template <int D, int O> using choose = typename choose_<D, O>::type;
-
-template <int D, int O> requires ((D>1) && (2*O>D))
-struct choose_<D, O>
-{
-    static_assert(D>=O, "Bad args to choose_.");
-    using type = typename mapanticomb<choose<D, D-O>, D>::type;
-};
+template <int D, int O> struct choose_;
+template <int D, int O> using choose = decltype([]{ static_assert(D>=O, "Bad choose."); return typename choose_<D, O>::type {}; }());
+template <int D, int O> requires (D>1 && 2*O>D) struct choose_<D, O> { using type = mapanticomb<choose<D, D-O>, D>; };
+template <int D, int O> requires (!(D>1 && 2*O>D)) struct choose_<D, O> { using type = combs<iota<D>, O>; };
 
 } // namespace ra::mp
 

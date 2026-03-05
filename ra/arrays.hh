@@ -46,7 +46,7 @@ struct small_args<T, Dimv> { using nested = mp::makelist<Dimv::value[0].len, typ
 template <class T, class Dimv, class nested_args = small_args<T, Dimv>::nested>
 struct SmallArray;
 
-template <class T, class Dimv> requires (requires { T(); } && (0<ssize(Dimv::value)))
+template <class T, class Dimv> requires (requires { T(); } && 0<ssize(Dimv::value) && 0<=dimv_size(Dimv::value))
 struct nested_arg<T, Dimv>
 {
     constexpr static auto n = ssize(Dimv::value)-1;
@@ -87,14 +87,13 @@ struct ViewSmall
     using Dimv = Dimv_;
     constexpr static auto dimv = Dimv::value;
     P cp;
-// exclude T and sub constructors by making T & sub noarg
-    using T = std::conditional_t<std::is_reference_v<decltype(*cp)>, std::remove_reference_t<decltype(*cp)>, noarg<>>;
+    using T = std::remove_reference_t<decltype(*cp)>;
 
     consteval static rank_t rank() { return dimv.size(); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
-    consteval static dim_t size() { dim_t s=1; for (Dim d: dimv) { if (d.len<0) return d.len; else s*=d.len; } return s; }
+    consteval static dim_t size() { return dimv_size(dimv); }
     consteval static bool empty() { return any(0==map(&Dim::len, dimv)); }
 
     constexpr explicit ViewSmall(P cp_): cp(cp_) {}
@@ -148,8 +147,7 @@ struct ViewBig
     constexpr static dim_t len_s(int k) { return ANY; }
     constexpr dim_t len(int k) const { return dimv[k].len; }
     constexpr dim_t step(int k) const { return dimv[k].step; }
-    constexpr auto data() const { return cp; }
-    constexpr dim_t size() const { return ra::size(*this); }
+    constexpr dim_t size() const { return dimv_size(dimv); }
     constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
 
     constexpr ViewBig() {} // used by Container constructors
@@ -182,12 +180,13 @@ struct ViewBig
     constexpr auto iter(rank_t c) const && { return Cell<P, Dimv, dim_t>(cp, std::move(dimv), c); }
     constexpr auto iter(rank_t c) const & { return Cell<P, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
-    constexpr decltype(auto) static end() { return std::default_sentinel; }
+    constexpr static auto end() { return std::default_sentinel; }
     constexpr decltype(auto) back() const { dim_t s=size(); RA_CK(s>0, "Bad back()."); return cp[s-1]; }
     constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
     constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
+    constexpr auto data() const { return cp; }
 // conversion to const, used by Container::view(). FIXME cf Small
     constexpr operator ViewBig<T const *, R> const & () const requires (std::is_same_v<P, std::remove_const_t<T> *>)
     {
