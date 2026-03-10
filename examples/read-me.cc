@@ -268,5 +268,18 @@ int main()
 // count rows with 0s in them
         tr.test_eq(2, std::ranges::count_if(range(iter<1>(A)), [](auto const & x) { return any(x==0); }));
     }
+    tr.section("Examples from manual [ma119]");
+    {
+        std::vector<double> bx {1, 2, 3, 4, 5, 6};
+        auto b = to_ravel(bx, ra::Big<double, 2>({3, 2}, ra::none));
+        tr.strict().test_eq(ra::Big<double, 2> {{1, 2}, {3, 4}, {5, 6}}, b);
+    }
+    tr.section("Examples from manual [ma120]");
+    {
+        std::array x {10, 20};
+        std::array y {1, 2, 3};
+        auto b = to_ravel(ra::from(std::plus<>(), x, y), ra::Big<double, 2>({3, 2}, ra::none));
+        tr.strict().test_eq(ra::Big<double, 2> {{11, 12}, {13, 21}, {22, 23}}, b);
+    }
     return tr.summary();
 }

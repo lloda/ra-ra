@@ -143,6 +143,9 @@ int main()
                  false, false, false, false, false);
         TESTPRED(decltype(std::ranges::iota_view(-5, 10)),
                  false, false, false, false, true);
+        double x[] = {1, 2, 3};
+        TESTPRED(decltype(std::views::counted(x, 3)),
+                 false, false, false, false, true);
 // std::string can be registered as is_scalar or not [ra13]. Use ra::ptr(std::string) or ra::scalar(std::string) to get the other behavior.
         if constexpr (ra::is_scalar<std::string>) {
             TESTPRED(std::string,

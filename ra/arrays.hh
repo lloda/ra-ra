@@ -31,12 +31,22 @@ c_order(auto const & dimv, bool step1=true)
     return s==0 || steps;
 }
 
+constexpr decltype(auto)
+to_ravel(auto && x, auto && b)
+{
+    if constexpr (ANY==ra::size_s(x) || ANY==ra::size_s(b)) {
+        RA_CK(ra::size(x)==ra::size(b), "Mismatched sizes ", ra::size(x), " [", fmt(nstyle, ra::shape(b)), "].");
+    } else {
+        static_assert(ra::size_s(x)==ra::size_s(b), "Mismatched sizes."); // c++26
+    }
+    std::ranges::copy(RA_FW(x), b.begin());
+    return RA_FW(b);
+}
+
 
 // ---------------------
 // Views
 // ---------------------
-
-// for ViewSmall
 
 template <class T, class Dimv> struct nested_arg { using sub = noarg<>; };
 template <class T, class Dimv> struct small_args { using nested = std::tuple<>; };
@@ -53,28 +63,6 @@ struct nested_arg<T, Dimv>
     constexpr static auto s = std::apply([](auto ... i){ return std::array<dim_t, n> { Dimv::value[i].len ... }; }, mp::iota<n, 1>{});
     using sub = std::conditional_t<0==n, T, SmallArray<T, ic_t<c_dimv(s)>>>;
 };
-
-// for ViewBig. FIXME Let any expr = braces.
-
-template <class T, rank_t R> struct braces_ { using type = T; };
-template <class T, rank_t R> using braces = braces_<T, R>::type;
-template <class T, rank_t R> requires (R>0) struct braces_<T, R> { using type = std::initializer_list<braces<T, R-1>>; };
-
-template <class T, rank_t R>
-constexpr auto
-braces_shape(braces<T, R> const & l)
-{
-    std::array<dim_t, R> s = {};
-    [&s](this auto const & self, auto RR, auto const & l){
-        if constexpr (RR>0) {
-            s[R-RR] = l.size();
-            if (l.size()>0) {
-                self(ic<RR-1>, *l.begin());
-            }
-        }
-    }(ic<R>, l);
-    return s;
-}
 
 template <class P, class Dimv_>
 struct ViewSmall
@@ -96,15 +84,10 @@ struct ViewSmall
     template <class Q> constexpr ViewSmall(ViewSmall<Q, Dimv> const & x) requires (requires { ViewSmall(x.cp); }): ViewSmall(x.cp) {} // FIXME Slice
     constexpr ViewSmall const & operator=(ViewSmall const & x) const { iter() = x; return *this; }
 // row major and nested
-    template <int N> constexpr ViewSmall const & operator=(T (&&x)[N]) const
-    {
-        static_assert(size()==N, "Mismatched sizes.");
-        std::ranges::copy(std::ranges::subrange(x), begin());
-        return *this;
-    }
+    template <int N> constexpr ViewSmall const & operator=(T (&&x)[N]) const { return to_ravel(RA_FW(x), *this); }
     template <int N> constexpr ViewSmall const & operator=(typename nested_arg<T, Dimv>::sub (&&x)[N]) const requires (1<rank() || 1!=len(0))
     {
-        ra::iter<-1>(*this) = x;
+        iter<-1>() = x;
         if !consteval { asm volatile("" ::: "memory"); } // patch for [ra01]
         return *this;
     }
@@ -127,6 +110,25 @@ struct ViewSmall
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
     constexpr auto data() const { return cp; }
 };
+
+// FIXME Let any expr = braces.
+template <class T, rank_t R> struct braces_ { using type = T; };
+template <class T, rank_t R> using braces = braces_<T, R>::type;
+template <class T, rank_t R> requires (R>0) struct braces_<T, R> { using type = std::initializer_list<braces<T, R-1>>; };
+
+template <class T, rank_t R>
+constexpr auto
+braces_shape(braces<T, R> const & l)
+{
+    std::array<dim_t, R> s = {};
+    [&s](this auto const & self, auto RR, auto const & l){
+        if constexpr (RR>0) {
+            s[R-RR] = l.size();
+            if (l.size()>0) self(ic<RR-1>, *l.begin());
+        }
+    }(ic<R>, l);
+    return s;
+}
 
 // FIXME avoid duplicating cp, dimv from Container without being parent. Parameterize on Dimv, like Cell.
 // FIXME constructor checks (lens>=0, steps inside, etc.).
@@ -156,13 +158,8 @@ struct ViewBig
     template <int N> constexpr ViewBig(Dim (&&s)[N], P cp): ViewBig(ra::iter(s), cp) {}
     constexpr ViewBig const & operator=(ViewBig const & x) const { iter() = x; return *this; }
 // row major and nested
-    template <int N> constexpr ViewBig const & operator=(T (&&x)[N]) const
-    {
-        RA_CK(size()==N, "Mismatched sizes ", size(), " ", N, ".");
-        std::ranges::copy(std::ranges::subrange(x), begin());
-        return *this;
-    }
-    constexpr ViewBig const & operator=(braces<T, R> x) const requires (R>1) { iter<-1>() = x; return *this; }
+    template <int N> constexpr ViewBig const & operator=(T (&&x)[N]) const { return to_ravel(RA_FW(x), *this); }
+    constexpr ViewBig const & operator=(braces<T, R> x) const requires (1<R) { iter<-1>() = x; return *this; }
 #define RA_BRACES(N) constexpr ViewBig const & operator=(braces<T, N> x) const requires (R==ANY) { iter<-1>() = x; return *this; }
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
@@ -276,18 +273,6 @@ using Small = SmallArray<T, ic_t<c_dimv(std::array<dim_t, sizeof...(lens)>{lens 
 
 template <class A0, class ... A> SmallArray(A0, A ...) -> Small<A0, 1+sizeof...(A)>;
 
-// FIXME ravel constructor
-template <class A>
-constexpr auto
-from_ravel(auto && b)
-{
-    A a;
-    RA_CK(1==ra::rank(b) && ra::size(b)==ra::size(a),
-          "Cannot ravel shape [", fmt(nstyle, ra::shape(b)), "] to [", ra::size(a), "].");
-    std::ranges::copy(RA_FW(b), a.begin());
-    return a;
-}
-
 template <class V>
 struct storage_traits
 {
@@ -316,6 +301,7 @@ struct storage_traits<std::shared_ptr<P>>
 };
 
 // FIXME avoid duplicating ViewBig::p. Avoid overhead with rank 1.
+// FIXME requires copyable T. store(x) avoids it for Big, but not for Unique. Should construct in place like std::vector.
 template <class Store, rank_t R>
 struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
 {
@@ -329,7 +315,6 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
     constexpr auto data(this auto && self) { return self.view().data(); }
 
 // A(shape 2 3) = A-type [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-A-type [1 2 3] which uses View::operator=. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
-// TODO don't require copyable T in constructors, see fill1. That requires operator= to initialize, not update.
     constexpr Container & operator=(Container && w)
     {
         store = std::move(w.store);
@@ -367,7 +352,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
 #undef RA_BRACES
 
     constexpr void
-    init(auto const & s) requires (0==rank_s(s) || 1==rank_s(s) || ANY==rank_s(s))
+    init(auto const & s)
     {
         static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
         RA_CK(0==ra::rank(s) || 1==ra::rank(s), "Rank mismatch for init shape ", ra::rank(s), ".");
@@ -375,10 +360,7 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
         store = storage_traits<Store>::create(filldimv(ra::iter(s), dimv));
         cp = storage_traits<Store>::data(store);
     }
-// FIXME requires copyable T. store(x) avoids it for Big, but not for Unique. Should construct in place like std::vector.
 // FIXME skip ravel-through-iterator if rank is 1.
-    constexpr void fill1(auto && xbegin) { std::ranges::copy_n(RA_FW(xbegin), size(), begin()); }
-
     constexpr static auto zdims = std::apply([](auto ... i){ return std::array<Dim, (R==ANY)?1:R>{Dim{i*0, 1} ... }; }, mp::iota<(R==ANY)?1:R>{});
     constexpr Container(): View(zdims, nullptr) {}
     constexpr Container() requires (R==0): Container({}, none) {}
@@ -390,19 +372,14 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
 // FIXME replace shape + row-major ravel by explicit it-is-ravel mark, also iter<n> initializers.
     constexpr Container(auto const & s, none_t) { init(s); }
     constexpr Container(auto const & s, auto const & x): Container(s, none) { view() = x; }
-    constexpr Container(auto const & s, std::initializer_list<T> x): Container(s, none) { fill1(x.begin()); }
+    constexpr Container(auto const & s, std::initializer_list<T> x): Container(s, none) { to_ravel(x, *this); }
 // sharg overloads handle {...} arguments.
     using sharg = decltype(shape(std::declval<View>()));
     constexpr Container(sharg const & s, none_t): Container(ra::iter(s), ra::none) {}
     constexpr Container(sharg const & s, auto const & x): Container(ra::iter(s), x) {}
     constexpr Container(sharg const & s, std::initializer_list<T> x): Container(ra::iter(s), x) {}
-// FIXME remove these two
-    constexpr Container(sharg const & s, auto * p): Container(ra::iter(s), none) { fill1(p); }
-    constexpr Container(sharg const & s, auto && p, dim_t psize): Container(ra::iter(s), none)
-    {
-        RA_CK(size()==psize, "Mismatched sizes ", size(), " ", psize, ".");
-        fill1(RA_FW(p));
-    }
+// FIXME maybe remove, cf to_ravel().
+    constexpr Container(sharg const & s, auto * p): Container(ra::iter(s), none) { std::ranges::copy_n(p, size(), begin()); }
 
 // resize first axis or full shape. Only for some kinds of store.
     constexpr void resize(dim_t const s)

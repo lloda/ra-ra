@@ -487,9 +487,9 @@ ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has shape [2 3], default initia
 ra::Big&lt;double&gt; c({2, 3}, a);         // c has shape [2 3], a is copied into c
 </pre></div>
 
-<p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code>1.</code> [which is ()] matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::none</code> can be used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container&rsquo;s elements.
+<p>The last example may result in an error if the shape of <code>a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code>1.</code>, which is (), matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a href="#Rank-extension">Rank extension</a>). The special value <code>ra::none</code> can be used to request <a href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container&rsquo;s elements.
 </p>
-<p>The shape argument can have rank 0 only for rank 1 arrays.
+<p>A scalar value is accepted as the shape of a rank 1 array.
 </p>
 <span id="index-none-1"></span>
 <span id="index-uninitialized-container-1"></span>
@@ -522,7 +522,14 @@ ra::Big&lt;double, 2&gt; c({3, 2}, cx); // *** WHO NOSE ***
 ra::SmallArray&lt;int, ra::ic_t&lt;dimv&gt;&gt; a {{1, 2, 3}, {4, 5, 6}}; //  stored column-major: 1 4 2 5 3 6
 </pre></div>
 
-<p>These produce compile time errors:
+<p>Use <a href="#x_002dto_002dravel"><code>to_ravel</code></a> to initialize the ravel with other kinds of arguments.
+</p>
+<div class="example">
+<pre class="verbatim">std::vector&lt;double&gt; bx {1, 2, 3, 4, 5, 6};
+auto b = to_ravel(bx, ra::Big&lt;double, 2&gt;({3, 2}, ra::none)); // b is ra::Big&lt;double, 2&gt;
+</pre></div>
+
+<p>These are compile time errors:
 </p>
 <div class="example">
 <pre class="verbatim">Big&lt;int, 2&gt; b = {1, 2, 3, 4};           // error: shape cannot be deduced from ravel
@@ -874,11 +881,11 @@ auto a10 = a(1, 0); // same as a(1, 0, ra::all)
 </p>
 <p>Besides, when the subscripts <code>i, j, ...</code> are scalars or integer sequences of the form <code>(o, o+s, ..., o+s*(n-1))</code>, the subscripting can be performed inmediately at constant cost, and without needing to construct an expression object. This optimization is called <a href="#Drag-along-and-beating"><em>beating</em></a>.
 </p>
-<p><code>ra::</code> isn&rsquo;t smart enough to know when an arbitrary expression might be a integer sequence of the appropriate form, so it has a special type for those, the <a href="#Sequence-views">sequence view</a>. The following function creates a rank-1 sequence view:
+<p><code>ra::</code> isn&rsquo;t smart enough to know when an arbitrary expression might be a integer sequence of the appropriate form, so it has a special type for those, the <a href="#Sequence-views">sequence view</a>. The following function creates a rank 1 sequence view:
 </p>
 <span id="x_002diota"></span><dl class="def">
 <dt id="index-iota"><span class="category">Special&nbsp;object<!-- /@w -->: </span><span><strong>iota</strong> <em>count [iter:0 [step:1]]</em><a href='#index-iota' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create a rank-1 sequence view <code>iter, iter+step, ... iter+step*(count-1)</code>.
+<dd><p>Create a rank 1 sequence view <code>iter, iter+step, ... iter+step*(count-1)</code>.
 </p>
 <p>This can used anywhere an array expression is expected.
 </p>
@@ -1242,7 +1249,7 @@ Next: <a href="#Formatted-I_002fO" accesskey="n" rel="next">Formatted I/O</a>, P
 <pre class="verbatim">ra::Big&lt;T, 2&gt; A; // any rank ≥ 1
 ...
 for_each(my_sort, iter&lt;1&gt;(A)); // (in ra::) my_sort is a regular function, cell rank must be given
-for_each(my_sort, iter&lt;0&gt;(A)); // (in ra::) error, my_sort expects rank-1 argument
+for_each(my_sort, iter&lt;0&gt;(A)); // (in ra::) error, my_sort expects rank 1 argument
 </pre></div>
 
 <p>The array language J has instead the concept of <em>verb rank</em>. Every function (or <em>verb</em>) has an associated cell rank for each of its arguments. Therefore <code>iter&lt;cell rank&gt;</code> is not needed.
@@ -1968,7 +1975,7 @@ Previous: <a href="#Performance-pitfalls-of-rank-extension" accesskey="p" rel="p
 <pre class="verbatim">ra::Big&lt;int2, 0&gt; b({}, int2 {1, 3}); // b = {int2 {3, 3}} (*)
 </pre></div>
 
-<p>What happens here is that rank-0 <code>b</code> is prefix matched to rank-1 <code>int2 {1, 3}</code> which results in two assignments, first <code>b</code> ← 1 and then <code>b</code> ← 3. Compare with
+<p>What happens here is that rank-0 <code>b</code> is prefix matched to rank 1 <code>int2 {1, 3}</code> which results in two assignments, first <code>b</code> ← 1 and then <code>b</code> ← 3. Compare with
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int2, 0&gt; b({}, ra::scalar(int2 {1, 3})); // b = {int2 {1, 3}}
@@ -2682,6 +2689,31 @@ auto z = reverse(a, ra::ic&lt;0&gt;); // z has static dimensions
     // as if (1) had b and (2) had a
 </pre></div>
 
+<span id="index-to_005fravel"></span>
+<span id="x_002dto_002dravel"></span><dl class="def">
+<dt id="index-to_005fravel-1"><span class="category">Function<!-- /@w -->: </span><span><strong>to_ravel</strong> <em>range view</em><a href='#index-to_005fravel-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Copy <var>range</var> to the ravel of <var>view</var>, then return <var>view</var>.
+</p>
+<p><var>range</var> may be any <code>std::ranges::input_range</code>, including <code>ra::</code> expressions.
+</p>
+<div class="example">
+<pre class="verbatim">        std::vector&lt;double&gt; bx {1, 2, 3, 4, 5, 6};
+        auto b = to_ravel(bx, ra::Big&lt;double, 2&gt;({3, 2}, ra::none));
+</pre><pre class="example">&rArr; b ≡ ra::Big&lt;double, 2&gt; {{1, 2}, {3, 4}, {5, 6}}
+</pre></div>
+
+<p>In the following example, the shape of <code>ra::from(std::plus&lt;&gt;(), x, y)</code> is <code>(3, 2)</code>, not <code>(2, 3)</code> — but only the sizes (6) need to match.
+</p>
+<div class="example">
+<pre class="verbatim">        std::array x {10, 20};
+        std::array y {1, 2, 3};
+        auto b = to_ravel(ra::from(std::plus&lt;&gt;(), x, y), ra::Big&lt;double, 2&gt;({3, 2}, ra::none));
+</pre><pre class="example">&rArr; b ≡ ra::Big&lt;double, 2&gt; {{11, 12}, {13, 21}, {22, 23}}
+</pre></div>
+
+</dd></dl>
+
 <span id="index-transpose"></span>
 <span id="x_002dtranspose"></span><dl class="def">
 <dt id="index-transpose-1"><span class="category">Function<!-- /@w -->: </span><span><strong>transpose</strong> <em>view axes</em><a href='#index-transpose-1' class='copiable-anchor'> &para;</a></span></dt>
@@ -2779,7 +2811,7 @@ auto z = reverse(a, ra::ic&lt;0&gt;); // z has static dimensions
 <span id="x_002dptr"></span><dl class="def">
 <dt id="index-ptr-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ptr</strong> <em>bidirectional_iterator [len [step]]</em><a href='#index-ptr-1' class='copiable-anchor'> &para;</a></span></dt>
 <dt id="index-ptr-2"><span class="category">Function<!-- /@w -->: </span><span><strong>ptr</strong> <em>bidirectional_range</em><a href='#index-ptr-2' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create rank-1 expression from foreign object.
+<dd><p>Create rank 1 expression from foreign object.
 </p>
 <p>If <code>len</code> is not given for <var>bidirectional_iterator</var>, the expression has undefined length, and needs to be matched with other expressions whose length is defined. <code>ra::</code> doesn&rsquo;t know what is actually accessible through the iterator, so be careful. For instance:
 </p>
@@ -3276,6 +3308,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-T">T</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-TensorIndex">TensorIndex</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-to_005fravel"><code>to_ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose"><code>transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-U">U</th><td></td><td></td></tr>
@@ -3370,9 +3403,9 @@ Previous: <a href="#Indices" accesskey="p" rel="prev">Indices</a>, Up: <a href="
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
 <p>The brace-list constructors of rank 2 and higher aren&rsquo;t supported on types of runtime rank, because in the C++ grammar, a nested initializer list doesn&rsquo;t always define a rank unambiguously.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
-<p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in the functions <code>ptr</code> or <code>vector</code>, respectively.</p>
+<p>You can still use pointers or <code>std::initializer_list</code>s for shape by wrapping them in <a href="#x_002dptr"><code>ptr</code></a> or <a href="#x_002diter"><code>iter</code></a> respectively.</p>
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
-<p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.</p>
+<p>The brace-list constructors aren&rsquo;t rank extending, because giving the ravel is incompatible with rank extension. You must give every element.</p>
 <h5><a id="FOOT8" href="#DOCF8">(8)</a></h5>
 <p>Prefix agreement is chosen for <code>ra::</code> because of the availability of a <a href="#The-rank-conjunction">rank conjunction</a> [<a href="#Sources">Ber87</a>]
  and <a href="#Cell-iteration">cell iterators of arbitrary rank</a>. This allows rank extension to be performed at multiple axes of an array expression.</p>

@@ -391,17 +391,17 @@ int main()
     tr.section("raveling constructor from iterators");
     {
         int AA[4] = { 1, 2, 3, 4 };
-        auto a = ra::from_ravel<ra::Small<int, 2, 2>>(std::ranges::subrange(AA, AA+4));
+        auto a = ra::to_ravel(std::ranges::subrange(AA, AA+4), ra::Small<int, 2, 2>{});
         tr.test_eq(1, a(0, 0));
         tr.test_eq(2, a(0, 1));
         tr.test_eq(3, a(1, 0));
         tr.test_eq(4, a(1, 1));
-        auto b = ra::from_ravel<ra::Small<int, 2, 2>>(AA);
+        auto b = ra::to_ravel(AA, ra::Small<int, 2, 2>{});
         tr.test_eq(1, b(0, 0));
         tr.test_eq(2, b(0, 1));
         tr.test_eq(3, b(1, 0));
         tr.test_eq(4, b(1, 1));
-        auto c = ra::from_ravel<ra::Small<int, 2, 2>>(ra::Small<int, 4> { 1, 2, 3, 4});
+        auto c = ra::to_ravel(ra::Small<int, 4> { 1, 2, 3, 4}, ra::Small<int, 2, 2>{});
         tr.test_eq(1, c(0, 0));
         tr.test_eq(2, c(0, 1));
         tr.test_eq(3, c(1, 0));

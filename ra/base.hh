@@ -379,7 +379,7 @@ RA_IS_DEF(is_iterator, Iterator<A>)
 template <class A> concept is_ra = is_iterator<A> || Slice<A>;
 template <class A> concept is_builtin_0 = requires (A & v) { []<class T>(T (&x)[0]){}(v); };
 template <class A> concept is_builtin = std::is_array_v<std::remove_cvref_t<A>> || is_builtin_0<A>;
-RA_IS_DEF(is_fov, !is_scalar<A> && !is_ra<A> && !is_builtin<A> && std::ranges::bidirectional_range<A>)
+RA_IS_DEF(is_fov, !is_scalar<A> && !is_ra<A> && !is_builtin<A> && std::ranges::range<A>)
 
 template <class VV> requires (!std::is_void_v<VV>)
 consteval rank_t

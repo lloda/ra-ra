@@ -323,7 +323,7 @@ int main()
         std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::ranges::equal(check, check+6, r.begin(), r.end()));
 
-        ra::Unique<double> u({3, 2}, r.begin(), r.size());
+        auto u = ra::to_ravel(r, ra::Unique<double>({3, 2}, ra::none));
         std::ranges::copy(u.begin(), u.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
         tr.test(std::equal(check, check+6, u.begin()));
 

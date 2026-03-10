@@ -378,9 +378,9 @@ ra::Big<double> c({2, 3}, a);         // c has shape [2 3], a is copied into c
 @end verbatim
 @end example
 
-The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.} [which is ()] matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
+The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.}, which is (), matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
 
-The shape argument can have rank 0 only for rank 1 arrays.
+A scalar value is accepted as the shape of a rank 1 array.
 
 @cindex @code{none}
 @cindex uninitialized container
@@ -393,7 +393,7 @@ ra::Big<int, 2> c(3, 0);   // error: bad length for shape
 @end verbatim
 @end example
 
-When the content argument is a pointer or a 1D brace list, it's handled especially, not for shape@footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in the functions @code{ptr} or @code{vector}, respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!@footnote{The brace-list constructors aren't rank extending, because giving the ravel is incompatible with rank extension. They are shape-strict —you must give every element.}
+When the content argument is a pointer or a 1D brace list, it's handled especially, not for shape@footnote{You can still use pointers or @code{std::initializer_list}s for shape by wrapping them in @ref{x-ptr,@code{ptr}} or @ref{x-iter,@code{iter}} respectively.}, but only as the (row-major) ravel of the content. The pointer constructor is unsafe —use at your own risk!@footnote{The brace-list constructors aren't rank extending, because giving the ravel is incompatible with rank extension. You must give every element.}
 
 @cindex order, column-major
 @example
@@ -423,7 +423,17 @@ ra::SmallArray<int, ra::ic_t<dimv>> a {{1, 2, 3}, {4, 5, 6}}; //  stored column-
 @end verbatim
 @end example
 
-These produce compile time errors:
+Use @ref{x-to-ravel,@code{to_ravel}} to initialize the ravel with arguments of other kinds.
+
+@c [ma119]
+@example
+@verbatim
+std::vector<double> bx {1, 2, 3, 4, 5, 6};
+auto b = to_ravel(bx, ra::Big<double, 2>({3, 2}, ra::none)); // b is ra::Big<double, 2>
+@end verbatim
+@end example
+
+These are compile time errors:
 
 @example
 @verbatim
@@ -804,11 +814,11 @@ This supports the notion (@pxref{Rank polymorphism}) that a 3-array is also an 2
 
 Besides, when the subscripts @code{i, j, ...} are scalars or integer sequences of the form @code{(o, o+s, ..., o+s*(n-1))}, the subscripting can be performed inmediately at constant cost, and without needing to construct an expression object. This optimization is called @ref{Drag along and beating,@dfn{beating}}.
 
-@code{ra::} isn't smart enough to know when an arbitrary expression might be a integer sequence of the appropriate form, so it has a special type for those, the @ref{Sequence views,sequence view}. The following function creates a rank-1 sequence view:
+@code{ra::} isn't smart enough to know when an arbitrary expression might be a integer sequence of the appropriate form, so it has a special type for those, the @ref{Sequence views,sequence view}. The following function creates a rank 1 sequence view:
 
 @anchor{x-iota}
 @deffn @w{Special object} iota count [iter:0 [step:1]]
-Create a rank-1 sequence view @code{iter, iter+step, ... iter+step*(count-1)}.
+Create a rank 1 sequence view @code{iter, iter+step, ... iter+step*(count-1)}.
 
 This can used anywhere an array expression is expected.
 
@@ -1187,7 +1197,7 @@ We have seen in @ref{Cell iteration} that it is possible to treat an r-array as 
 ra::Big<T, 2> A; // any rank ≥ 1
 ...
 for_each(my_sort, iter<1>(A)); // (in ra::) my_sort is a regular function, cell rank must be given
-for_each(my_sort, iter<0>(A)); // (in ra::) error, my_sort expects rank-1 argument
+for_each(my_sort, iter<0>(A)); // (in ra::) error, my_sort expects rank 1 argument
 @end verbatim
 @end example
 
@@ -1928,7 +1938,7 @@ ra::Big<int2, 0> b({}, int2 {1, 3}); // b = {int2 {3, 3}} (*)
 @end verbatim
 @end example
 
-What happens here is that rank-0 @code{b} is prefix matched to rank-1 @code{int2 @{1, 3@}} which results in two assignments, first @code{b} ← 1 and then @code{b} ← 3. Compare with
+What happens here is that rank-0 @code{b} is prefix matched to rank 1 @code{int2 @{1, 3@}} which results in two assignments, first @code{b} ← 1 and then @code{b} ← 3. Compare with
 
 @c [ma116]
 @example
@@ -2645,6 +2655,35 @@ This function reuses @code{std::swap} for same-rank overloads, so it must not be
 @end verbatim
 @end example
 
+@cindex @code{to_ravel}
+@anchor{x-to-ravel}
+@deffn @w{Function} to_ravel range view
+
+Copy @var{range} to the ravel of @var{view}, then return @var{view}.
+
+@var{range} may be any @code{std::ranges::input_range}, including @code{ra::} expressions.
+
+@example @c [ra119]
+@verbatim
+        std::vector<double> bx {1, 2, 3, 4, 5, 6};
+        auto b = to_ravel(bx, ra::Big<double, 2>({3, 2}, ra::none));
+@end verbatim
+@result{} b ≡ ra::Big<double, 2> @{@{1, 2@}, @{3, 4@}, @{5, 6@}@}
+@end example
+
+In the following example, the shape of @code{ra::from(std::plus<>(), x, y)} is @code{(3, 2)}, not @code{(2, 3)} — but only the sizes (6) need to match.
+
+@example @c [ra120]
+@verbatim
+        std::array x {10, 20};
+        std::array y {1, 2, 3};
+        auto b = to_ravel(ra::from(std::plus<>(), x, y), ra::Big<double, 2>({3, 2}, ra::none));
+@end verbatim
+@result{} b ≡ ra::Big<double, 2> @{@{11, 12@}, @{13, 21@}, @{22, 23@}@}
+@end example
+
+@end deffn
+
 @cindex @code{transpose}
 @anchor{x-transpose}
 @deffn @w{Function} transpose view axes
@@ -2763,7 +2802,7 @@ Wrap @var{op} using a rank conjunction (@pxref{The rank conjunction}).
 @anchor{x-ptr}
 @deffn @w{Function} ptr bidirectional_iterator [len [step]]
 @deffnx @w{Function} ptr bidirectional_range
-Create rank-1 expression from foreign object.
+Create rank 1 expression from foreign object.
 
 If @code{len} is not given for @var{bidirectional_iterator}, the expression has undefined length, and needs to be matched with other expressions whose length is defined. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
 

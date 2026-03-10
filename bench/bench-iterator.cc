@@ -24,12 +24,10 @@ int main()
     cout.precision(4);
     tr.section("rank 1");
     {
-        auto test1 = [&tr](char const * atag, auto && A, int N)
-        {
+        auto test1 = [&tr](char const * atag, auto && A, int N){
             auto s = ra::size(A);
             Benchmark bm { N, 3 };
-            auto report = [&](std::string const & tag, auto && bv)
-            {
+            auto report = [&](std::string const & tag, auto && bv){
                 tr.info(Benchmark::report(bv, s), " ", atag, " [", fmt(ra::nstyle, ra::shape(A)), "] ", tag)
                     .test_eq(ra::iota(s), A);
             };
@@ -64,13 +62,11 @@ int main()
     }
     tr.section("rank 2");
     {
-        auto test2 = [&tr](char const * atag, auto && A, int N)
-        {
+        auto test2 = [&tr](char const * atag, auto && A, int N){
             auto s = ra::size(A);
             Benchmark bm { N, 3 };
-            auto report = [&](std::string const & tag, auto && bv)
-            {
-                auto B = ra::Unique<real, 1>({s}, A.begin(), s);
+            auto report = [&](std::string const & tag, auto && bv){
+                auto B = to_ravel(A, ra::Unique<real, 1>({s}, ra::none));
                 tr.info(Benchmark::report(bv, s), " ", atag, " [", fmt(ra::nstyle, ra::shape(A)), "] ", tag)
                     .test_eq(ra::iota(s), B);
             };
