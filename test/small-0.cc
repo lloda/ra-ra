@@ -47,7 +47,7 @@ int main()
         std::array<int, 9> a = {1};
         tr.test_eq(1, a[0]);
         tr.test_eq(0, a[1]);
-        ra::Small<int, 9> b = {1};
+        ra::Small<int, 9> b = 1; // partial init such as = {1} is forbidden [ra12]
         tr.test_eq(1, b);
     }
     tr.section("predicates");
@@ -321,7 +321,7 @@ int main()
             ra::Small<int, 1, 2> b = {4, 3}; // ravel
             tr.test_eq(4, b(0, 0));
             tr.test_eq(3, b(0, 1));
-            ra::Small<int, 1, 2> c = {4}; // scalar
+            ra::Small<int, 1, 2> c = 4; // scalar
             tr.test_eq(4, c(0, 0));
             tr.test_eq(4, c(0, 1));
             // ra::Small<int, 1, 3> d = {4, 2}; // ravel // [ra42] FIXME cannot check ct errors yet

@@ -2663,7 +2663,7 @@ Copy @var{range} to the ravel of @var{view}, then return @var{view}.
 
 @var{range} may be any @code{std::ranges::input_range}, including @code{ra::} expressions.
 
-@example @c [ra119]
+@example @c [ma119]
 @verbatim
         std::vector<double> bx {1, 2, 3, 4, 5, 6};
         auto b = to_ravel(bx, ra::Big<double, 2>({3, 2}, ra::none));
@@ -2673,7 +2673,7 @@ Copy @var{range} to the ravel of @var{view}, then return @var{view}.
 
 In the following example, the shape of @code{ra::from(std::plus<>(), x, y)} is @code{(3, 2)}, not @code{(2, 3)} — but only the sizes (6) need to match.
 
-@example @c [ra120]
+@example @c [ma120]
 @verbatim
         std::array x {10, 20};
         std::array y {1, 2, 3};

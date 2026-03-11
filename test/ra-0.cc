@@ -177,7 +177,7 @@ int main()
             using double2x3 = ra::Small<double, 2, 3>;
             double2x3 r { 1, 2, 3, 4, 5, 6 };
             tr.test_eq(2, rank(r));
-// Not sure why Koenig doesn't work here, might be library defect [ra10].
+// Not sure why ADL doesn't work here, might be library defect [ra10].
             tr.test_eq(6, ra::size(r));
         }
         {

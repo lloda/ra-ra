@@ -48,20 +48,20 @@ to_ravel(auto && x, auto && b)
 // Views
 // ---------------------
 
-template <class T, class Dimv> struct nested_arg { using sub = noarg<>; };
-template <class T, class Dimv> struct small_args { using nested = std::tuple<>; };
-template <class T, class Dimv> requires (0<ssize(Dimv::value))
-struct small_args<T, Dimv> { using nested = mp::makelist<Dimv::value[0].len, typename nested_arg<T, Dimv>::sub>; };
+template <class T, class Dimv> struct nested_arg_ { using type = noarg<>; };
+template <class T, class Dimv> using nested_arg = typename nested_arg_<T, Dimv>::type;
+template <class T, class Dimv> struct small_args { using type = mp::makelist<Dimv::value[0].len, nested_arg<T, Dimv>>; };
+template <class T, class Dimv> requires (0==ssize(Dimv::value)) struct small_args<T, Dimv> { using type = std::tuple<>; };
 
-template <class T, class Dimv, class nested_args = small_args<T, Dimv>::nested>
+template <class T, class Dimv, class nested_args = small_args<T, Dimv>::type>
 struct SmallArray;
 
 template <class T, class Dimv> requires (requires { T(); } && 0<ssize(Dimv::value) && 0<=dimv_size(Dimv::value))
-struct nested_arg<T, Dimv>
+struct nested_arg_<T, Dimv>
 {
     constexpr static auto n = ssize(Dimv::value)-1;
     constexpr static auto s = std::apply([](auto ... i){ return std::array<dim_t, n> { Dimv::value[i].len ... }; }, mp::iota<n, 1>{});
-    using sub = std::conditional_t<0==n, T, SmallArray<T, ic_t<c_dimv(s)>>>;
+    using type = std::conditional_t<0==n, T, SmallArray<T, ic_t<c_dimv(s)>>>;
 };
 
 template <class P, class Dimv_>
@@ -83,9 +83,8 @@ struct ViewSmall
     constexpr ViewSmall(ViewSmall const & s) = default;
     template <class Q> constexpr ViewSmall(ViewSmall<Q, Dimv> const & x) requires (requires { ViewSmall(x.cp); }): ViewSmall(x.cp) {} // FIXME Slice
     constexpr ViewSmall const & operator=(ViewSmall const & x) const { iter() = x; return *this; }
-// row major and nested
-    template <int N> constexpr ViewSmall const & operator=(T (&&x)[N]) const { return to_ravel(RA_FW(x), *this); }
-    template <int N> constexpr ViewSmall const & operator=(typename nested_arg<T, Dimv>::sub (&&x)[N]) const requires (1<rank() || 1!=len(0))
+    template <int N> constexpr ViewSmall const & operator=(T (&&x)[N]) const { return to_ravel(RA_FW(x), *this); } // row major
+    template <int N> constexpr ViewSmall const & operator=(nested_arg<T, Dimv> (&&x)[N]) const requires (1<rank() || 1!=len(0)) // nested
     {
         iter<-1>() = x;
         if !consteval { asm volatile("" ::: "memory"); } // patch for [ra01]
@@ -157,9 +156,8 @@ struct ViewBig
     template <int N> constexpr ViewBig(dim_t (&&s)[N], P cp): ViewBig(ra::iter(s), cp) {}
     template <int N> constexpr ViewBig(Dim (&&s)[N], P cp): ViewBig(ra::iter(s), cp) {}
     constexpr ViewBig const & operator=(ViewBig const & x) const { iter() = x; return *this; }
-// row major and nested
-    template <int N> constexpr ViewBig const & operator=(T (&&x)[N]) const { return to_ravel(RA_FW(x), *this); }
-    constexpr ViewBig const & operator=(braces<T, R> x) const requires (1<R) { iter<-1>() = x; return *this; }
+    template <int N> constexpr ViewBig const & operator=(T (&&x)[N]) const { return to_ravel(RA_FW(x), *this); } // row major
+    constexpr ViewBig const & operator=(braces<T, R> x) const requires (1<R) { iter<-1>() = x; return *this; } // nested
 #define RA_BRACES(N) constexpr ViewBig const & operator=(braces<T, N> x) const requires (R==ANY) { iter<-1>() = x; return *this; }
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
@@ -238,15 +236,12 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
     constexpr operator View () { return View(data()); }
     constexpr operator ViewConst () const { return ViewConst(data()); }
 
-    constexpr SmallArray(ra::none_t) {}
     constexpr SmallArray() {}
-    constexpr SmallArray(T const & t) { std::ranges::fill(cp, t); } // [ra44]
-// row major and nested
-    constexpr SmallArray(T const & x0, std::convertible_to<T> auto const & ... x) requires (1+sizeof...(x)==size()) // FIXME p1219??
-    {
-        view() = { static_cast<T>(x0), static_cast<T>(x) ... };
-    }
-    constexpr SmallArray(nested_args const & ... x) requires (1!=rank() || 1!=len(0)) { view() = { x ... }; }
+    constexpr SmallArray(ra::none_t) {}
+    constexpr explicit (1!=size()) SmallArray(T const & t) { std::ranges::fill(cp, t); } // [ra12][ra44]
+// p1219??
+    constexpr SmallArray(std::convertible_to<T> auto const & ... x) requires (sizeof...(x)==size()) { view() = { static_cast<T>(x) ... }; } // row major
+    constexpr SmallArray(nested_args const & ... x) requires (1!=rank() || 1!=len(0)) { view() = { x ... }; } // nested
     constexpr SmallArray(auto const & x) { view() = x; }
     constexpr SmallArray(Iterator auto && x) { view() = RA_FW(x); }
 #define RA_ASSIGNOPS(OP)                                                \
@@ -350,16 +345,6 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
 #define RA_BRACES(N) constexpr Container & operator=(braces<T, N> x) requires (ANY==R) { view() = x; return *this; }
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
-
-    constexpr void
-    init(auto const & s)
-    {
-        static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
-        RA_CK(0==ra::rank(s) || 1==ra::rank(s), "Rank mismatch for init shape ", ra::rank(s), ".");
-        static_assert(ANY==R || ANY==size_s(s) || R==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
-        store = storage_traits<Store>::create(filldimv(ra::iter(s), dimv));
-        cp = storage_traits<Store>::data(store);
-    }
 // FIXME skip ravel-through-iterator if rank is 1.
     constexpr static auto zdims = std::apply([](auto ... i){ return std::array<Dim, (R==ANY)?1:R>{Dim{i*0, 1} ... }; }, mp::iota<(R==ANY)?1:R>{});
     constexpr Container(): View(zdims, nullptr) {}
@@ -370,7 +355,14 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
     RA_FE(RA_BRACES, 1, 2, 3, 4)
 #undef RA_BRACES
 // FIXME replace shape + row-major ravel by explicit it-is-ravel mark, also iter<n> initializers.
-    constexpr Container(auto const & s, none_t) { init(s); }
+    constexpr Container(auto const & s, none_t)
+    {
+        static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
+        RA_CK(0==ra::rank(s) || 1==ra::rank(s), "Rank mismatch for init shape ", ra::rank(s), ".");
+        static_assert(ANY==R || ANY==size_s(s) || R==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
+        store = storage_traits<Store>::create(filldimv(ra::iter(s), dimv));
+        cp = storage_traits<Store>::data(store);
+    }
     constexpr Container(auto const & s, auto const & x): Container(s, none) { view() = x; }
     constexpr Container(auto const & s, std::initializer_list<T> x): Container(s, none) { to_ravel(x, *this); }
 // sharg overloads handle {...} arguments.
