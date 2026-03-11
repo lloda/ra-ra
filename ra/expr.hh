@@ -326,11 +326,11 @@ iter(is_builtin auto && a)
 {
     using T = std::remove_all_extents_t<std::remove_reference_t<decltype(a)>>; // preserve const
     return Cell<T *, ic_t<c_dimv(ra::shape(a))>, ic_t<0>>(
-        [](this auto const & self, auto && a){
+        [](this auto const & sf, auto && a){
             using T = std::remove_cvref_t<decltype(a)>;
             if constexpr (1 < std::rank_v<T>) {
                 static_assert(0 < std::extent_v<T, 0>);
-                return self(*std::data(a));
+                return sf(*std::data(a));
             } else {
                 return std::data(a);
             }

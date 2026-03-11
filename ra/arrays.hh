@@ -50,10 +50,8 @@ to_ravel(auto && x, auto && b)
 
 template <class T, class Dimv> struct nested_arg_ { using type = noarg<>; };
 template <class T, class Dimv> using nested_arg = typename nested_arg_<T, Dimv>::type;
-template <class T, class Dimv> struct small_args { using type = mp::makelist<Dimv::value[0].len, nested_arg<T, Dimv>>; };
-template <class T, class Dimv> requires (0==ssize(Dimv::value)) struct small_args<T, Dimv> { using type = std::tuple<>; };
 
-template <class T, class Dimv, class nested_args = small_args<T, Dimv>::type>
+template <class T, class Dimv, class nested_args = mp::makelist<(0==ssize(Dimv::value) ? 0 : Dimv::value[0].len), nested_arg<T, Dimv>>>
 struct SmallArray;
 
 template <class T, class Dimv> requires (requires { T(); } && 0<ssize(Dimv::value) && 0<=dimv_size(Dimv::value))
@@ -71,6 +69,7 @@ struct ViewSmall
     constexpr static auto dimv = Dimv::value;
     P cp;
     using T = std::remove_reference_t<decltype(*cp)>;
+    constexpr auto data() const { return cp; }
 
     consteval static rank_t rank() { return dimv.size(); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
@@ -103,11 +102,10 @@ struct ViewSmall
     constexpr auto end() const requires (c_order(dimv)) { return cp+size(); }
     constexpr static auto end() requires (!c_order(dimv)) { return std::default_sentinel; }
     constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
-    constexpr auto data() const { return cp; }
 };
 
 // FIXME Let any expr = braces.
@@ -120,10 +118,10 @@ constexpr auto
 braces_shape(braces<T, R> const & l)
 {
     std::array<dim_t, R> s = {};
-    [&s](this auto const & self, auto RR, auto const & l){
+    [&s](this auto const & sf, auto RR, auto const & l){
         if constexpr (RR>0) {
             s[R-RR] = l.size();
-            if (l.size()>0) self(ic<RR-1>, *l.begin());
+            if (l.size()>0) sf(ic<RR-1>, *l.begin());
         }
     }(ic<R>, l);
     return s;
@@ -138,6 +136,7 @@ struct ViewBig
     [[no_unique_address]] Dimv dimv;
     P cp;
     using T = std::remove_reference_t<decltype(*cp)>;
+    constexpr auto data() const { return cp; }
 
     consteval static rank_t rank() requires (R!=ANY) { return R; }
     constexpr rank_t rank() const requires (R==ANY) { return dimv.size(); }
@@ -174,11 +173,10 @@ struct ViewBig
     constexpr auto begin() const { return STLIterator(iter<0>()); }
     constexpr static auto end() { return std::default_sentinel; }
     constexpr decltype(auto) back() const { dim_t s=size(); RA_CK(s>0, "Bad back()."); return cp[s-1]; }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
-    constexpr auto data() const { return cp; }
 // conversion to const, used by Container::view(). FIXME cf Small
     constexpr operator ViewBig<T const *, R> const & () const requires (std::is_same_v<P, std::remove_const_t<T> *>)
     {
@@ -207,7 +205,7 @@ constexpr size_t align_req<T, N> = alignof(extvector<T, N>);
 template <class T, class Dimv_, class ... nested_args>
 struct
 #if RA_OPT_SMALL==1
-alignas(align_req<T, std::apply([](auto ... d){ return (d.len * ... * 1); }, Dimv_::value)>)
+alignas(align_req<T, dimv_size(Dimv_::value)>)
 #endif
 SmallArray<T, Dimv_, std::tuple<nested_args ...>>
 {
@@ -217,8 +215,7 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
     constexpr static dim_t len(int k) { return dimv[k].len; }
     constexpr static dim_t len_s(int k) { return len(k); }
     constexpr static dim_t step(int k) { return dimv[k].step; }
-    consteval static dim_t size() { return std::apply([](auto ... i){ return (i.len * ... * 1); }, dimv); }
-
+    consteval static dim_t size() { return dimv_size(dimv); }
 // from std::array
     struct T0
     {
@@ -226,9 +223,9 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
         constexpr explicit operator T*() const noexcept { return nullptr; }
     };
     [[no_unique_address]] std::conditional_t<0==size(), T0, T[size()]> cp;
-
     constexpr auto data() { return (T *)cp; }
-    constexpr T const * data() const { return (T const *)cp; }
+    constexpr auto data() const { return (T const *)cp; }
+
     using View = ViewSmall<T *, Dimv>;
     using ViewConst = ViewSmall<T const *, Dimv>;
     constexpr View view() { return View(data()); }
@@ -250,15 +247,15 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
     constexpr decltype(auto) operator OP(Iterator auto && x) { iter() OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
-    template <int s, int o=0> constexpr decltype(auto) as(this auto && self) { return RA_FW(self).view().template as<s, o>(); }
-    template <rank_t c=0> constexpr auto iter(this auto && self) { return RA_FW(self).view().template iter<c>(); }
-    constexpr auto iter(this auto && self, rank_t c) { return RA_FW(self).view().template iter(c); }
-    constexpr auto begin(this auto && self) { return self.view().begin(); }
-    constexpr auto end(this auto && self) { return self.view().end(); }
-    constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
-    constexpr decltype(auto) at(this auto && self, auto const & i) { return RA_FW(self).view().at(i); }
+    template <int s, int o=0> constexpr decltype(auto) as(this auto && sf) { return RA_FW(sf).view().template as<s, o>(); }
+    template <rank_t c=0> constexpr auto iter(this auto && sf) { return RA_FW(sf).view().template iter<c>(); }
+    constexpr auto iter(this auto && sf, rank_t c) { return RA_FW(sf).view().template iter(c); }
+    constexpr auto begin(this auto && sf) { return sf.view().begin(); }
+    constexpr auto end(this auto && sf) { return sf.view().end(); }
+    constexpr decltype(auto) back(this auto && sf) { return RA_FW(sf).view().back(); }
+    constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
+    constexpr decltype(auto) at(this auto && sf, auto const & i) { return RA_FW(sf).view().at(i); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };
@@ -304,10 +301,10 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
     using T = typename storage_traits<Store>::T;
     using View = ViewBig<T *, R>;
     using ViewConst = ViewBig<T const *, R>;
-    constexpr ViewConst const & view() const { return *this; }
     constexpr View & view() { return *this; }
+    constexpr ViewConst const & view() const { return *this; }
     using View::size, View::rank, View::dimv, View::cp;
-    constexpr auto data(this auto && self) { return self.view().data(); }
+    constexpr auto data(this auto && sf) { return sf.view().data(); }
 
 // A(shape 2 3) = A-type [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-A-type [1 2 3] which uses View::operator=. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
     constexpr Container & operator=(Container && w)
@@ -410,14 +407,14 @@ struct Container: public ViewBig<typename storage_traits<Store>::T *, R>
         RA_CK(0<dimv[0].len, "Empty array pop_back().");
         --dimv[0].len; store.pop_back();
     }
-    constexpr decltype(auto) back(this auto && self) { return RA_FW(self).view().back(); }
-    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return RA_FW(self).view()(RA_FW(i) ...); }
-    constexpr decltype(auto) at(this auto && self, auto const & i) { return RA_FW(self).view().at(i); }
-    constexpr auto begin(this auto && self) { assert(c_order(self.view().dimv)); return self.view().data(); }
-    constexpr auto end(this auto && self) { return self.view().data()+self.size(); }
-    template <rank_t c=0> constexpr auto iter(this auto && self) { if constexpr (1==R && 0==c) return ptr(self.data(), self.size()); else return RA_FW(self).view().template iter<c>(); }
-    constexpr auto iter(this auto && self, rank_t c) { return RA_FW(self).view().iter(c); }
+    constexpr decltype(auto) back(this auto && sf) { return RA_FW(sf).view().back(); }
+    constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
+    constexpr decltype(auto) at(this auto && sf, auto const & i) { return RA_FW(sf).view().at(i); }
+    constexpr auto begin(this auto && sf) { assert(c_order(sf.view().dimv)); return sf.view().data(); }
+    constexpr auto end(this auto && sf) { return sf.view().data()+sf.size(); }
+    template <rank_t c=0> constexpr auto iter(this auto && sf) { if constexpr (1==R && 0==c) return ptr(sf.data(), sf.size()); else return RA_FW(sf).view().template iter<c>(); }
+    constexpr auto iter(this auto && sf, rank_t c) { return RA_FW(sf).view().iter(c); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };

@@ -135,8 +135,8 @@ struct View: public ViewBase<Dimv>
     constexpr View const & operator OP(Iterator auto && x) const { ra::iter(*this) OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
-    constexpr decltype(auto) operator()(this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
-    constexpr decltype(auto) operator[](this auto && self, auto && ... i) { return from(RA_FW(self), RA_FW(i) ...); }
+    constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
+    constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
     constexpr auto data() const { return cp; }
