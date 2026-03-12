@@ -12,17 +12,6 @@
 #include <cmath>
 #include <complex>
 
-#ifndef RA_OPT
-  #define RA_OPT opt
-#endif
-
-#if defined(RA_FMA)
-#elif defined(FP_FAST_FMA)
-  #define RA_FMA FP_FAST_FMA
-#else
-  #define RA_FMA 0
-#endif
-
 // ADL with explicit template args. See http://stackoverflow.com/questions/9838862.
 template <int A> constexpr void iter(ra::noarg<>);
 template <class T> constexpr void cast(ra::noarg<>);
@@ -125,6 +114,10 @@ template <class T> constexpr bool is_scalar_def<std::complex<T>> = true;
 // --------------------------------
 // Optimization pass over expression templates.
 // --------------------------------
+
+#ifndef RA_OPT
+  #define RA_OPT opt
+#endif
 
 constexpr decltype(auto) opt(auto && e) { return RA_FW(e); }
 
@@ -239,16 +232,10 @@ RA_FE(RA_USING, fma)
 #undef RA_NAME
 
 template <class T> constexpr auto
-cast(auto && a)
-{
-    return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a));
-}
+cast(auto && a) { return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a)); }
 
 template <class T> constexpr auto
-pack(auto && ... a)
-{
-    return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...);
-}
+pack(auto && ... a) { return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...); }
 
 template <class A> constexpr decltype(auto)
 at(A && a, auto const & i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
@@ -275,25 +262,25 @@ at_view(A && a, auto && i)
     }
 }
 
-template <class T, class F> requires (toreduce<T, F>)
-constexpr decltype(auto) where(bool const w, T && t, F && f) { return w ? VAL(t) : VAL(f); }
+template <class T, class F> requires (toreduce<T, F>) constexpr decltype(auto)
+where(bool const w, T && t, F && f) { return w ? VAL(t) : VAL(f); }
 
-template <class W, class T, class F> requires (tomap<W, T, F>)
-constexpr auto where(W && w, T && t, F && f) { return pick(cast<bool>(RA_FW(w)), RA_FW(f), RA_FW(t)); }
+template <class W, class T, class F> requires (tomap<W, T, F>) constexpr auto
+where(W && w, T && t, F && f) { return pick(cast<bool>(RA_FW(w)), RA_FW(f), RA_FW(t)); }
 
 // catch all for non-ra types.
-template <class T, class F> requires (!(tomap<T, F>) && !(toreduce<T, F>))
-constexpr decltype(auto) where(bool const w, T && t, F && f) { return w ? t : f; }
+template <class T, class F> requires (!(tomap<T, F>) && !(toreduce<T, F>)) constexpr decltype(auto)
+where(bool const w, T && t, F && f) { return w ? t : f; }
 
-template <class A, class B> requires (tomap<A, B>)
-constexpr auto operator &&(A && a, B && b) { return where(RA_FW(a), cast<bool>(RA_FW(b)), false); }
+template <class A, class B> requires (tomap<A, B>) constexpr auto
+operator &&(A && a, B && b) { return where(RA_FW(a), cast<bool>(RA_FW(b)), false); }
 
-template <class A, class B> requires (tomap<A, B>)
-constexpr auto operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<bool>(RA_FW(b))); }
+template <class A, class B> requires (tomap<A, B>) constexpr auto
+operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<bool>(RA_FW(b))); }
 
 #define RA_BINOP_SHORT(OP)                                              \
-    template <class A, class B> requires (toreduce<A, B>)               \
-    constexpr auto operator OP(A && a, B && b) { return VAL(a) OP VAL(b);  }
+    template <class A, class B> requires (toreduce<A, B>) constexpr auto \
+        operator OP(A && a, B && b) { return VAL(a) OP VAL(b);  }
 RA_FE(RA_BINOP_SHORT, &&, ||)
 #undef RA_BINOP_SHORT
 
@@ -388,6 +375,13 @@ prod(auto && a)
     for_each([&c](auto && a){ c*=a; }, a);
     return c;
 }
+
+#if defined(RA_FMA)
+#elif defined(FP_FAST_FMA)
+  #define RA_FMA FP_FAST_FMA
+#else
+  #define RA_FMA 0
+#endif
 
 constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_FMA) c=fma(a, b, c); else c+=a*b; }
 constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_FMA) c=fma_conj(a, b, c); else c+=conj(a)*b; }

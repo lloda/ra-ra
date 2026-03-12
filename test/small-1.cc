@@ -367,11 +367,9 @@ int main()
         tr.test_eq(3, a[1]);
         tr.test_eq(6, a[2]);
         tr.test_eq(6, a.back());
-    }
-    tr.section(".back() is last element not last item");
-    {
-        ra::Small<int2> b(ra::scalar(int2 {1, 3})); // cf [ma116]
-        tr.test_eq(int2 {1, 3}, b.back());
+        ra::Big<int, 2> b = ra::ii({3, 4});
+        tr.test_eq(8, b(ra::all, 0).back());
+        tr.test_eq(ra::iter({8, 9, 10, 11}), b.back()); // back() is last item
     }
 // TODO Replace with uniform subscripting (ra::iota).
     tr.section("compile time subscripting of ra::Small (as)");

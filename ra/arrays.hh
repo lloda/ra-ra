@@ -101,7 +101,7 @@ struct ViewSmall
     constexpr auto begin() const { if constexpr (c_order(dimv)) return cp; else return STLIterator(iter()); }
     constexpr auto end() const requires (c_order(dimv)) { return cp+size(); }
     constexpr static auto end() requires (!c_order(dimv)) { return std::default_sentinel; }
-    constexpr decltype(auto) back() const { static_assert(size()>0, "Bad back()."); return cp[size()-1]; }
+    constexpr decltype(auto) back(this auto && sf) { static_assert(size()>0, "Bad back()."); return RA_FW(sf)(len(0)-1); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
@@ -172,7 +172,7 @@ struct ViewBig
     constexpr auto iter(rank_t c) const & { return Cell<P, Dimv const &, dim_t>(cp, dimv, c); }
     constexpr auto begin() const { return STLIterator(iter<0>()); }
     constexpr static auto end() { return std::default_sentinel; }
-    constexpr decltype(auto) back() const { dim_t s=size(); RA_CK(s>0, "Bad back()."); return cp[s-1]; }
+    constexpr decltype(auto) back(this auto && sf) { return RA_FW(sf)(sf.len(0)-1); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
