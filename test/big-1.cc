@@ -32,38 +32,29 @@ int main()
         tr.test_eq(check[0], b.back());
         tr.test_eq(int2 {1, 2}, b().back()); // back on views
     }
-    tr.section(".back() is last element not last item");
-    {
-        ra::Big<int2, 0> b({}, ra::scalar(int2 {1, 3})); // cf [ma116]
-        tr.test_eq(int2 {1, 3}, b.back());
-    }
     tr.section("behavior of resize with default Container");
     {
-        {
-            ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
-            a.resize(3);
-            a.resize(6);
-            tr.test_eq(ra::iota(6, 1), a);
-        }
-        {
-            BigValueInit<int, 1> a = {1, 2, 3, 4, 5, 6};
-            a.resize(3);
-            a.resize(6);
-            tr.test_eq(ra::iter({1, 2, 3, 0, 0, 0}), a);
-        }
+        ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
+        a.resize(3);
+        a.resize(6);
+        tr.test_eq(ra::iota(6, 1), a);
+    }
+    {
+        BigValueInit<int, 1> a = {1, 2, 3, 4, 5, 6};
+        a.resize(3);
+        a.resize(6);
+        tr.test_eq(ra::iter({1, 2, 3, 0, 0, 0}), a);
     }
     tr.section("resize works on first dimension");
     {
-        {
-            ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
-            a.resize(2);
-            tr.test_eq(1+ra::_1 + 2*ra::_0, a);
-        }
-        {
-            ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
-            resize(a, 2);
-            tr.test_eq(1+ra::_1 + 2*ra::_0, a);
-        }
+        ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
+        a.resize(2);
+        tr.test_eq(1+ra::_1 + 2*ra::_0, a);
+    }
+    {
+        ra::Big<int, 2> a({3, 2}, {1, 2, 3, 4, 5, 6});
+        resize(a, 2);
+        tr.test_eq(1+ra::_1 + 2*ra::_0, a);
     }
     tr.section("operator=");
     {

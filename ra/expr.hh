@@ -225,8 +225,8 @@ constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY :
 constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
 constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
 
-template <class T, class Dimv> struct ViewSmall;
-template <class T, rank_t RANK=ANY> struct ViewBig;
+template <class P, class Dimv> struct ViewSmall;
+template <class P, rank_t RANK=ANY> struct ViewBig;
 
 template <class P, class Dimv, class Cr>
 struct CellBase
