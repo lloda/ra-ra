@@ -158,7 +158,7 @@ int main()
             for_each([](auto & c, auto a) { c += a; }, C, A);
             tr.test_eq(B, C);
         }
-// This depends on matching frames for += just as for any other op, which is at odds with e.g. amend.
+// This depends on matching frames for += just as for any other op, which is at odds with eg amend.
         {
             ra::Unique<real, 1> C({100}, 0.);
             C += A;

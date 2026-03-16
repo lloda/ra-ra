@@ -31,7 +31,7 @@ struct show
     static_assert(condition, "bad type");
 };
 
-// Prints value recursively, e.g. for int_c trees.
+// Prints value recursively, like for int_c trees.
 
 template <class A> struct print_ilist_t {};
 

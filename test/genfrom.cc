@@ -128,7 +128,7 @@ int main()
         tr.strict().test_eq(b3, from(b, 1, ra::dots<>, 1));
     };
 
-    tr.section("ViewSmall<>");
+    tr.section("View<, ic_t<...>>");
     {
         constexpr auto a = ra::ii(ra::ilist<3, 4>);
         static_assert(every(a0==a));
@@ -272,7 +272,7 @@ int main()
         from(c, ra::all, i1, i2, ra::all) = 0;
         tr.strict().test_eq(u1, c);
     }
-    tr.section("unbeaten ViewSmall<>");
+    tr.section("unbeaten constant dimv View<>");
     {
         auto a = ra::ii(ra::ilist<2, 3, 3, 2>);
         constexpr auto ds = fromds(a, ra::all, ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::all);
@@ -310,7 +310,7 @@ int main()
         auto i1 = ra::ic<3>;
         static_assert(ra::is_ctype<decltype(ra::cadd(i0, i1))> && 5==ra::cadd(i0, i1));
     }
-    tr.section("unbeaten ViewSmall<> (over rank)");
+    tr.section("unbeaten constant dimv View<> (over rank)");
     {
         auto a = ra::ii(ra::ilist<10>);
         ra::Small<int, 2, 3> b = from(a, ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}});

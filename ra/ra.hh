@@ -64,7 +64,7 @@ constexpr bool odd(unsigned int N) { return N & 1; }
 template <class T> constexpr bool ra_is_real = std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>;
 template <class T> requires (ra_is_real<T>) constexpr T amax(T const & x) { return x; }
 template <class T> requires (ra_is_real<T>) constexpr T amin(T const & x) { return x; }
-template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x)  { return x*x; }
+template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x) { return x*x; }
 
 #define RA_FOR_TYPES(R, C)                                              \
     constexpr R arg(R x) { return R(0); }                               \
@@ -83,7 +83,7 @@ template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x)  { retu
     constexpr R mul_conj(R x, R y) { return x*y; } /* conj(a) * b */    \
     constexpr C mul_conj(C const & a, C const & b)                      \
     {                                                                   \
-        return C(a.real()*b.real()+a.imag()*b.imag(),  a.real()*b.imag()-a.imag()*b.real()); \
+        return C(a.real()*b.real()+a.imag()*b.imag(), a.real()*b.imag()-a.imag()*b.real()); \
     }                                                                   \
     constexpr R fma_conj(R a, R b, R c) { return fma(a, b, c); } /* conj(a) * b + c */ \
     constexpr C fma_conj(C const & a, C const & b, C const & c)         \
@@ -178,7 +178,7 @@ RA_FE(RA_OPT_SMALL_OP_TYPES, 2, 4, 8)
 // Array version of operators and functions.
 // --------------------------------
 
-// We need zero/scalar specializations because the scalar/scalar operators maybe be templated (e.g. complex<>), so they won't be found when an implicit scalar conversion is also needed, and e.g. ra::View<complex, 0> * complex would fail.
+// We need zero/scalar specializations because the scalar/scalar operators maybe be templated (like complex<>), so they won't be found when an implicit scalar conversion is also needed, and eg ra::ViewBig<complex, 0> * complex would fail.
 #define RA_BINOP(OP, OPNAME)                                            \
     template <class A, class B> requires (tomap<A, B>) constexpr auto   \
         operator OP(A && a, B && b) { return RA_OPT(map(OPNAME(), RA_FW(a), RA_FW(b))); } \
@@ -213,16 +213,14 @@ RA_UNOP(+, unaryplus)         RA_UNOP(-, std::negate<>)       RA_UNOP(!, std::lo
         OP(A && ... a) { return OP(VAL(RA_FW(a)) ...); }
 RA_FE(RA_NAME, odd, arg, sqr, sqrm, real_part, imag_part, xi, rel_error)
 
-// don't use RA_USING bc std::max will gobble ra:: objects if passed by const & (!)
-// FIXME define own global max/min overloads for basic types. std::max seems too much of a special case to be usinged.
-#define RA_FWD(OP)                                                      \
-    template <class ... A> constexpr decltype(auto)                     \
-        OP(A && ... a) { return ::OP(RA_FW(a) ...); }                   \
-    RA_NAME(OP)
-RA_FE(RA_FWD, max, min)
-#undef RA_FWD
+// no RA_USING bc std::max will gobble ra:: objects if passed by const & (!)
+#define RA_FORWARD(OP)                                                      \
+    constexpr decltype(auto) OP(auto && ... a) { return ::OP(RA_FW(a) ...); } \
+    RA_NAME(ra::OP)
+RA_FE(RA_FORWARD, max, min)
+#undef RA_FORWARD
 
-// don't use RA_FWD bc we want to allow ADL, e.g. for exp(dual).
+// no RA_FORWARD bc we want to allow ADL, eg for exp(dual).
 #define RA_USING(OP) using ::OP; RA_NAME(OP)
 RA_FE(RA_USING, pow, conj, sqrt, exp, expm1, log, log1p, log10, isfinite, isnan, isinf, atan2)
 RA_FE(RA_USING, abs, sin, cos, tan, sinh, cosh, tanh, asin, acos, atan, clamp, lerp)
@@ -238,7 +236,7 @@ template <class T> constexpr auto
 pack(auto && ... a) { return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...); }
 
 template <class A> constexpr decltype(auto)
-at(A && a, auto const & i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
+at(A && a, auto && i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
 {
     if constexpr (0==rank_s<decltype(VAL(i))>()) {
         return a.at(i);
@@ -247,8 +245,8 @@ at(A && a, auto const & i) requires (Slice<std::decay_t<A>> || Iterator<std::dec
     }
 }
 
-template <Slice A> constexpr decltype(auto)
-at_view(A && a, auto && i)
+template <class A> constexpr decltype(auto)
+at_view(A && a, auto && i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
 {
     if constexpr (0==rank_s<decltype(VAL(i))>()) {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
@@ -457,7 +455,7 @@ gevm(auto const & a, auto const & b)
     return c;
 }
 
-// FIXME a must be a view, so it doesn't work with e.g. gemv(conj(a), b).
+// FIXME a must be a view, so it doesn't work with eg gemv(conj(a), b).
 constexpr auto
 gemv(auto const & a, auto const & b)
 {
@@ -565,7 +563,7 @@ struct Hodge
             using CompCai = mp::complement<SCai, D>;
             static_assert(D-O==mp::len<CompCai>);
             using fpw = mp::findcomb<CompCai, Cb>;
-// for the sign see e.g. DoCarmo1991 I.Ex 10.
+// for the sign see eg DoCarmo1991 I.Ex 10.
             using fps = mp::findcomb<mp::append<Cai, mp::ref<Cb, fpw::where>>, Cr>;
             static_assert(0!=fps::sign);
             b[fpw::where] = decltype(a[i])(fps::sign)*a[i];

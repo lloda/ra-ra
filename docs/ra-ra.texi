@@ -208,7 +208,7 @@ In C++, a library is enough.
 @c @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
 Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on a @code{ViewSmall}, even though you could do it on a @code{ViewBig}; this was a bug.
+Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on @code{View} with constant dimensions, even though you could do it on a @code{View} with runtime dimensions; this was a bug.
 
 Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view @code{B} into view @code{A}. To change view @code{A} instead (to treat @code{A} as a pointer) would be the default meaning of @code{A=B} for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
 
@@ -2028,7 +2028,7 @@ Some of the categories below are formalized as concepts, some are still informal
 
 These are array types that own their data in one way or another.
 
-@item @b{View} --- @code{ViewBig}, @code{ViewSmall}
+@item @b{View}
 
 These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently.
 

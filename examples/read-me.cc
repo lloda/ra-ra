@@ -65,8 +65,8 @@ int main()
         char cs[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
         ra::ViewBig<char *, 2> D1({2, 3}, cs);            // dynamic sizes and steps, C order
         ra::ViewBig<char *, 2> D2({{2, 1}, {3, 2}}, cs);  // dynamic sizes and steps, Fortran order.
-        ra::ViewSmall<char *, ra::ic_t<std::array {ra::Dim {2, 3}, ra::Dim {3, 1}}>> D3(cs); // static sizes & steps, C order.
-        ra::ViewSmall<char *, ra::ic_t<std::array {ra::Dim {2, 1}, ra::Dim {3, 2}}>> D4(cs); // static sizes & steps, Fortran order.
+        ra::View<char *, ra::ic_t<std::array {ra::Dim {2, 3}, ra::Dim {3, 1}}>> D3(cs); // static sizes & steps, C order.
+        ra::View<char *, ra::ic_t<std::array {ra::Dim {2, 1}, ra::Dim {3, 2}}>> D4(cs); // static sizes & steps, Fortran order.
 
         cout << "D1: " << D1 << "\n\n";
         cout << "D2: " << D2 << "\n\n";
@@ -123,7 +123,7 @@ int main()
         ra::Big<char, 3> A({2, 2, 2}, {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'});
         cout << "A: " << A << "\n\n";
 
-// these are all equivalent to e.g. A(:, 0, :) in Octave.
+// these are all equivalent to eg A(:, 0, :) in Octave.
         cout << "A1: " << A(ra::all, 0) << "\n\n";
         cout << "A2: " << A(ra::all, 0, ra::all) << "\n\n";
         cout << "A3: " << A(ra::all, 0, ra::dots<1>) << "\n\n";

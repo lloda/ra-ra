@@ -14,6 +14,8 @@ checkbox [C-ct] flip TODO
     - [ ] const issues in View vs Container
       - [ ] conversion to const & op in ViewBig uses reinterpret_const
     - [ ] Small/Big unification
+      - [ ] Unify small and big views
+      - [ ] Unify small and big containers
     - [ ] Forbid initialization from higher rank
       - Cf 'Initialization of nested types' in the manual.
     - [ ] ambiguity / bad init in nested constructors [ra45]
@@ -56,9 +58,9 @@ checkbox [C-ct] flip TODO
       be better.
     - [-] Magic subscript len
       - [ ] Optimize iota(len...) + iota(len...)
-      - [X] For Big/View in beatable subscripts <2023-07-04 Tue 18:20>
-      - [X] For Big/View in unbeatable subscripts <2023-07-05 Wed 12:34>
-      - [X] For Small/ViewSmall
+      - [X] For Big & its View in beatable subscripts <2023-07-04 Tue 18:20>
+      - [X] For Big & its View in unbeatable subscripts <2023-07-05 Wed 12:34>
+      - [X] For Small & its View
         - [X] Scalar / unbeatable <2023-08-04 Fri 14:18>
         - [X] iota. But iota args need to integral constants for this to work.
   - [-] Performance [0/2]
@@ -117,7 +119,7 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
      be ok.
   9. [ ] test/ra-0.cc: size(SmallArray) requires ra:: to avoid collision with std::size, but not
      size(Big) (??).
-  10. [ ]
+  10. [ ] size(ra array) is ambiguous between std::size() and ra::size().
   11. [ ]
   12. [ ] Forbid Small<T, (N>1)> a = {T{}}. This avoids a confusion with std::array<> which allows it.
   13. [ ] Cell needs to copy its Dimv in some dynamic cases, which also complicates

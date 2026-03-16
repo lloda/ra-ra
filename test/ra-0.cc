@@ -184,13 +184,13 @@ int main()
             double pool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::ViewBig<double *> r { {{3, 2}, {2, 1}}, pool };
             tr.test_eq(2, rank(r));
-            tr.test_eq(6, size(r));
+            tr.test_eq(6, ra::size(r));
         }
         {
             double pool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::ViewBig<double *, 2> r {{ra::Dim {3, 2}, ra::Dim {2, 1}}, pool };
             tr.test_eq(2, rank(r));
-            tr.test_eq(6, size(r));
+            tr.test_eq(6, ra::size(r));
         }
     }
     tr.section("iterator for View (I)");

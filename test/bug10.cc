@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ek/box - Bug copying viewsmall<small> to small<small> :-/
+// ek/box - Bug copying view<small, ic<...>> to small<small> :-/
 
 // (c) Daniel Llorens - 2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -14,7 +14,7 @@
 using std::cout;
 
 // FIXME [ra01] bug only shows up with all of: --no-sanitize -O>2, no assert (1)
-// patched with a barrier in ViewSmall(nested braces)
+// patched with a barrier in View<..., ic_t<...>>(nested braces)
 
 int main()
 {

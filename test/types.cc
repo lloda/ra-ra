@@ -82,7 +82,7 @@ int main()
         static_assert(std::is_same_v<ra::ncvalue_t<decltype(an)>, T>);
     }
     {
-        TESTPRED(decltype(std::declval<ra::ViewSmall<ra::Dim *, ra::ic_t<std::array { ra::Dim {3, 1} }>>>()),
+        TESTPRED(decltype(std::declval<ra::View<ra::Dim *, ra::ic_t<std::array { ra::Dim {3, 1} }>>>()),
                  true, true, false, false, false);
         TESTPRED(int,
                  false, false, false, true, false);
@@ -167,16 +167,16 @@ int main()
     {
         static_assert(ra::Slice<ra::ViewBig<int *, 0>>);
         static_assert(ra::Slice<ra::ViewBig<int *, 2>>);
-        static_assert(ra::Slice<ra::ViewSmall<int *, ra::ic_t<std::array<ra::Dim, 0> {} >>>);
+        static_assert(ra::Slice<ra::View<int *, ra::ic_t<std::array<ra::Dim, 0> {} >>>);
         static_assert(ra::is_ra<ra::Small<int>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::ViewSmall<int *, ra::ic_t<std::array<ra::Dim, 0> {} >>>, "bad is_ra ViewSmall");
+        static_assert(ra::is_ra<ra::View<int *, ra::ic_t<std::array<ra::Dim, 0> {} >>>, "bad is_ra for constant dimv View");
         static_assert(ra::is_ra<ra::Unique<int, 0>>, "bad is_ra Unique");
         static_assert(ra::is_ra<ra::ViewBig<int *, 0>>, "bad is_ra View");
 
         static_assert(ra::Slice<ra::Small<int, 1>>);
         static_assert(ra::Slice<ra::Big<int, 2>>);
         static_assert(ra::is_ra<ra::Small<int, 1>>, "bad is_ra Small");
-        static_assert(ra::is_ra<ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {1, 1}} >>>, "bad is_ra ViewSmall");
+        static_assert(ra::is_ra<ra::View<int *, ra::ic_t<std::array {ra::Dim {1, 1}} >>>, "bad is_ra for constant dimv View");
         static_assert(ra::is_ra<ra::Unique<int, 1>>, "bad is_ra Unique");
         static_assert(ra::is_ra<ra::ViewBig<int *, 1>>, "bad is_ra View");
         static_assert(ra::is_ra<ra::ViewBig<int *>>, "bad is_ra View");

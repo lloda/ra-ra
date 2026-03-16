@@ -95,7 +95,7 @@ int main()
             tr.test(std::equal(s1.begin(), s1.end(), check1));
             tr.test_eq(5, s(1, 1));
         }
-        tr.section("using ViewSmall as rvalue");
+        tr.section("using constant dimv View as rvalue");
         {
             ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
 // use as rvalue.
@@ -108,7 +108,7 @@ int main()
             ra::Small<double, 3, 2> z = s;
             z *= -1;
 
-// check that ViewSmall = ViewSmall copies contents, just as View = View.
+// check that View copies contents regardless whether dimv is constant or not.
             s(0) = z(2);
             s(1) = z(1);
             s(2) = z(0);
@@ -227,14 +227,14 @@ int main()
         test(a);
         test(b);
     }
-    tr.section("SmallArray converted to ViewSmall");
+    tr.section("SmallArray converted to constant dimv View");
     {
         ra::Small<double, 2, 3> a { 1, 2, 3, 4, 5, 6 };
-        ra::ViewSmall<double *, ic_t<std::array {Dim {2, 3}, Dim {3, 1}}>> b = a();
+        ra::View<double *, ic_t<std::array {Dim {2, 3}, Dim {3, 1}}>> b = a();
         tr.test_eq(a, b);
 // non-default steps (fortran / column major order).
         ra::SmallArray<double, ic_t<std::array {Dim {2, 1}, Dim {3, 2}}>> ax { 1, 2, 3, 4, 5, 6 };
-        ra::ViewSmall<double *, ic_t<std::array {Dim {2, 1}, Dim {3, 2}}>> bx = ax();
+        ra::View<double *, ic_t<std::array {Dim {2, 1}, Dim {3, 2}}>> bx = ax();
         tr.test_eq(a, ax);
         tr.test_eq(a, bx);
 // check iterators.
@@ -298,7 +298,7 @@ int main()
     tr.section("Small as value type in var-size array");
     {
         {
-// This pain with rank 0 arrays and ra::scalar can be avoided with ply; see e.g. grid_interp_n() in src/grid.cc.
+// This pain with rank 0 arrays and ra::scalar can be avoided with ply; see eg grid_interp_n() in src/grid.cc.
             ra::Unique<ra::Small<double, 2>, 1> b({4}, ra::scalar(ra::Small<double, 2> { 3., 1. }));
             tr.test_eq(3., b(0)(0));
             tr.test_eq(1., b(0)(1));
@@ -388,7 +388,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::ViewSmall<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
+            ra::View<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
             test_as(c, c.as<2>());
         }
         auto test_fra = [&tr](auto && a, auto && b)
@@ -405,7 +405,7 @@ int main()
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
             ra::Small<double, 6> b = { 1, 99, 2, 99, 3, 99 };
-            ra::ViewSmall<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
+            ra::View<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
         auto test_fra_rank_2 = [&tr](auto && a, auto && b)
@@ -420,7 +420,7 @@ int main()
             ra::Small<double, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());
             ra::Small<double, 6, 2> b = { 1, 2, 99, 99, 3, 4, 99, 99, 5, 6, 99, 99 };
-            ra::ViewSmall<double *, ic_t<std::array {Dim {3, 4}, Dim {2, 1}}>> c(b.data()); // TODO no syntax yet.
+            ra::View<double *, ic_t<std::array {Dim {3, 4}, Dim {2, 1}}>> c(b.data()); // TODO no syntax yet.
             test_fra_rank_2(c, c.as<2, 1>());
         }
     }
@@ -441,7 +441,7 @@ int main()
         // a = b; // TODO Check that this static fails
         cout << "a = b, a: " << a << endl;
     }
-// ASSIGNOPS for ViewSmall
+// ASSIGNOPS for constant dimv View
     {
         ra::Small<int, 3> s {1, 2, 3};
         s.iter() += 9;
@@ -457,18 +457,18 @@ int main()
         ra::Small<int, 3, 2, 4> a = ra::_0 + ra::_1 - ra::_2;
         tr.test_eq(a(ra::all, 0), a[ra::all, 0]);
     }
-    tr.section("ViewSmall of Seq");
+    tr.section("constant dimv View of Seq");
     {
-        ra::ViewSmall<ra::Seq<>, ra::ic_t<std::array {ra::Dim {3, 2}, ra::Dim {2, 1}}>> a(ra::Seq<> {1});
+        ra::View<ra::Seq<>, ra::ic_t<std::array {ra::Dim {3, 2}, ra::Dim {2, 1}}>> a(ra::Seq<> {1});
         std::println(cout, "{:c:2}\n", transpose(a));
         tr.test_eq(a, 1+ra::Small<int, 3, 2> {{0, 1}, {2, 3}, {4, 5}});
     }
-    tr.section("ViewSmall as iota<w>");
+    tr.section("constant dimv View as iota<w>");
 // in order to replace Ptr<>, we must support Len in View::P and View::Dimv.
     {
-        constexpr ra::ViewSmall<ra::Seq<ra::dim_t>, ra::ic_t<std::array {ra::Dim {ra::UNB, 1}}>>
+        constexpr ra::View<ra::Seq<ra::dim_t>, ra::ic_t<std::array {ra::Dim {ra::UNB, 1}}>>
             i0(ra::Seq<ra::dim_t> {0});
-        constexpr ra::ViewSmall<ra::Seq<ra::dim_t>, ra::ic_t<std::array {ra::Dim {ra::UNB, 0}, ra::Dim {ra::UNB, 1}}>>
+        constexpr ra::View<ra::Seq<ra::dim_t>, ra::ic_t<std::array {ra::Dim {ra::UNB, 0}, ra::Dim {ra::UNB, 1}}>>
             i1(ra::Seq<ra::dim_t> {0});
         tr.strict().test_eq(ra::Small<int, 3> {1, 3, 5}, i0 + ra::Small<int, 3> {1, 2, 3});
         ra::Big<ra::dim_t> p({3, 4}, i0 - i1);

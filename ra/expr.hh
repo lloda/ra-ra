@@ -225,8 +225,8 @@ constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY :
 constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? ANY : (r+cr); }
 constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
 
-template <class P, class Dimv> struct ViewSmall;
-template <class P, rank_t RANK=ANY> struct ViewBig;
+template <class P, class Dimv> struct View;
+template <class P, rank_t R=ANY> using ViewBig = View<P, std::conditional_t<ANY==R, vector_default_init<Dim>, std::array<Dim, ANY==R ? 0 : R>>>;
 
 template <class P, class Dimv, class Cr>
 struct CellBase
@@ -236,7 +236,7 @@ struct CellBase
     constexpr static rank_t cr = maybe_any<Cr>;
     constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s<Dimv>(), cr) : ANY;
     constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s<Dimv>(), cr) : ANY;
-    using View = std::conditional_t<0==cellr, ViewSmall<P, ic_t<std::array<Dim, 0> {}>>, ViewBig<P, cellr>>; // FIXME
+    using Vu = std::conditional_t<0==cellr, View<P, ic_t<std::array<Dim, 0> {}>>, ViewBig<P, cellr>>; // FIXME
 };
 
 template <class P, is_ctype Dimv, class Cr>
@@ -247,7 +247,7 @@ struct CellBase<P, Dimv, Cr>
     constexpr static rank_t cr = maybe_any<Cr>;
     constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s(simv), cr) : ANY;
     constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s(simv), cr) : ANY;
-    using View = ViewSmall<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> {dimv[i+framer] ...}; }, mp::iota<cellr> {})>>;
+    using Vu = View<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> {dimv[i+framer] ...}; }, mp::iota<cellr> {})>>;
 };
 
 template <class P, class Dimv, class Cr>
@@ -255,9 +255,9 @@ struct Cell: public CellBase<P, Dimv, Cr>
 {
     static_assert(has_len<P> || std::bidirectional_iterator<P>);
     using Base = CellBase<P, Dimv, Cr>;
-    using Base::cellr, Base::framer, Base::simv, Base::dimv, typename Base::View;
+    using Base::cellr, Base::framer, Base::simv, Base::dimv, typename Base::Vu;
     static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
-    View c;
+    Vu c;
     constexpr explicit Cell(P p) requires (is_ctype<Dimv>): c {p} {}
     constexpr explicit Cell(P cp, Dimv dimv_, Cr dcr=Cr {}) requires (!is_ctype<Dimv>): Base { dimv_ }, c(cp)
     {
@@ -284,9 +284,9 @@ struct Cell: public CellBase<P, Dimv, Cr>
 #pragma GCC diagnostic pop
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(i)); }
-    constexpr View at(auto const & i) const requires (0!=cellr) { View d(c); d.cp=indexer(*this, d.cp, ra::iter(i)); return d; }
+    constexpr Vu at(auto const & i) const requires (0!=cellr) { Vu d(c); d.cp=indexer(*this, d.cp, ra::iter(i)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
-    constexpr View const & operator*() const requires (0!=cellr) { return c; }
+    constexpr Vu const & operator*() const requires (0!=cellr) { return c; }
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); } /* [ra45] */
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp=p; }

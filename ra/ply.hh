@@ -7,7 +7,7 @@
 // Software Foundation; either version 3 of the License, or (at your option) any
 // later version.
 
-// TODO Parametrize traversal order, some ops (e.g. output, ravel) require specific orders.
+// TODO Parametrize traversal order, some ops (eg output, ravel) require specific orders.
 // TODO Better traversal. Tiling, etc. (see eval.cc in Blitz++). Unit step case?
 // TODO std::execution::xxx-policy TODO Validate output argument strides.
 
@@ -322,7 +322,7 @@ template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1
 constexpr auto
 iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
 {
-    // return ViewSmall<Seq<sarg<I>>, ic_t<std::array {Dim(n, s)}>>(Seq {RA_FW(i)})(insert<w>); // FIXME optimize view<seq>
+    // return View<Seq<sarg<I>>, ic_t<std::array {Dim(n, s)}>>(Seq {RA_FW(i)})(insert<w>); // FIXME optimize view<seq>
     return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {});
 }
 
@@ -341,7 +341,7 @@ ii(dim_t (&&len)[rank], T o=0)
 template <std::integral auto ... i, class T=dim_t> constexpr auto
 ii(ra::ilist_t<i ...>, T o=0)
 {
-    return ViewSmall<Seq<T>, ra::ic_t<c_dimv(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
+    return View<Seq<T>, ra::ic_t<c_dimv(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
 }
 
 template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); }; // FIXME
@@ -527,9 +527,9 @@ from(A && a, auto && ...  i)
             return *frompl(a.data(), a, i ...);
         } else if constexpr (ANY!=bn) {
             auto beaten = [&]{
-// FIXME more cases could be ViewSmall
+// FIXME more cases could have constant dimv
                 if constexpr (ANY!=ra::size_s(a) && ((!beatable(i) /* || has_len<decltype(i)> */ || ANY!=ra::size_s(i)) && ...)) {
-                    return ViewSmall<decltype(a.data()), ic_t<frombv(a, i ...)>>(frompl(a.data(), a, i ...));
+                    return View<decltype(a.data()), ic_t<frombv(a, i ...)>>(frompl(a.data(), a, i ...));
                 } else {
                     ViewBig<decltype(a.data()), bn> b;
                     b.cp = fromb<1, 1, 0>(a.data(), 0, b.dimv, 0, a, 0, i ...);

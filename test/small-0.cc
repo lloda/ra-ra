@@ -364,7 +364,7 @@ int main()
                                          {{41, 42}, {43, 44}, {45, 46}, {47, 48}}}};
         // FIXME reshape for Small or something! Big/View have these things.
         ra::Small<int, 2, 3, 4, 2> b = 0;
-        ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {48, 1}}>> c(b.data());
+        ra::View<int *, ra::ic_t<std::array {ra::Dim {48, 1}}>> c(b.data());
         c = ra::iota(48, 1);
         tr.test_eq(b, a);
         tr.test_eq(2, ra::shape(a, 0));
@@ -479,14 +479,14 @@ int main()
         {
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a0 = a(0);
-                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a1 = a(1);
+                ra::View<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a0 = a(0);
+                ra::View<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a1 = a(1);
                 a0 = a1;
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }
             {
                 ra::Small<int, 2, 2> a = {{1, 2}, {3, 4}};
-                ra::ViewSmall<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a0 = a(0);
+                ra::View<int *, ra::ic_t<std::array {ra::Dim {2l, 1l}}>> a0 = a(0);
                 a0 = a(1);
                 tr.test_eq(ra::Small<int, 2, 2> {{3, 4}, {3, 4}}, a);
             }
@@ -540,7 +540,7 @@ int main()
         auto vc = std::as_const(a).view();
         tr.test_seq(a.data(), vc.cp);
         static_assert(std::is_same_v<int const *, decltype(vc.cp)>);
-// needs ViewSmall::ViewConst conversion op
+// needs VuConst conversion op
         decltype(vc) vk = vn;
         tr.test_seq(a.data(), vk.cp);
         static_assert(std::is_same_v<int const *, decltype(vk.cp)>);

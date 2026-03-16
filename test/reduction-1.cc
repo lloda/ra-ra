@@ -19,7 +19,16 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr(std::cout);
-    tr.section("reductions with references I");
+    tr.section("reductions with references (-)");
+    {
+        ra::Big<real, 2> c = {{1, 3, 2}, {7, 1, 3}};
+        ra::Big<real, 1> m(2, 0);
+        c = max(c, m);
+        cout << c << endl;
+        m = max(c, m);
+        cout << m << endl;
+    }
+    tr.section("reductions with references (I)");
     {
         ra::Big<real, 2> c = {{1, 3, 2}, {7, 1, 3}};
         ra::Big<real, 1> m(3, 0);
@@ -34,7 +43,7 @@ int main()
         auto m1 = iter<1>(m);
         cout << ra::max(*c1, *m1) << endl;
     }
-    tr.section("reductions with references II");
+    tr.section("reductions with references (II)");
     {
         ra::Big<complex, 2> c = {{1, 3, 2}, {7, 1, 3}};
         ra::Big<complex, 1> m(3, 0);
@@ -51,7 +60,7 @@ int main()
         // real_part(iter<1>(m)) = real_part(iter<1>(c));
         // tr.info("max of columns [ma113]").test_eq(ra::Big<double, 1> {7, 1, 3}, m);
     }
-    tr.section("reductions with references III");
+    tr.section("reductions with references (III)");
     {
         ra::Big<int, 2> c = {{1, 3, 2}, {7, 1, 3}};
         ra::Big<int, 1> m(3, 0);
