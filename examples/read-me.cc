@@ -102,12 +102,12 @@ int main()
 // store the sum of A(i, j, ...) in B(i, j). All these are equivalent.
         B = 0; B += A;                                                           // default agreement matches prefixes
         for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A);            // default agreement matches prefixes
-        for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<1>());  // give cell rank
-        for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<-2>()); // give frame rank
+        for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, iter<1>(A));  // give cell rank
+        for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, iter<-2>(A)); // give frame rank
         cout << "B: " << B << "\n\n";
 
 // store the sum of A(i, ...) in B(i, j). The op is re-executed for each j, so don't do it this way.
-        for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, A.iter<2>()); // give cell rank
+        for_each([](auto && b, auto && a) { b = ra::sum(a); }, B, iter<2>(A)); // give cell rank
         cout << "B: " << B << "\n\n";
     }
     tr.section("A rank conjunction (only for static rank and somewhat fragile)");

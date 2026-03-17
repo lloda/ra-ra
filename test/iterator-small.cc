@@ -16,68 +16,66 @@ using std::cout, std::endl, std::flush, ra::TestRecorder, ra::ilist_t;
 int main()
 {
     TestRecorder tr;
+    tr.section("fiddling");
     {
-        tr.section("fiddling");
-        {
-            using A = ra::Small<int, 2, 3>;
-            A a = {{1, 2, 3}, {4, 5, 6}};
-            cout << a << endl;
+        using A = ra::Small<int, 2, 3>;
+        A a = {{1, 2, 3}, {4, 5, 6}};
+        cout << a << endl;
 
-            using AI0 = decltype(a.iter<0>());
-            cout << "AI0 " << std::is_same_v<int, AI0> << endl;
-            cout << AI0::rank() << endl;
+        using AI0 = decltype(iter<0>(a));
+        cout << "AI0 " << std::is_same_v<int, AI0> << endl;
+        cout << AI0::rank() << endl;
 
-            using AI1 = decltype(a.iter<1>());
-            cout << "AI1 " << std::is_same_v<int, AI1> << endl;
-            cout << AI1::rank() << endl;
+        using AI1 = decltype(iter<1>(a));
+        cout << "AI1 " << std::is_same_v<int, AI1> << endl;
+        cout << AI1::rank() << endl;
 
-            AI0 bi(a.data());
-            cout << bi.c.data() << endl;
+        AI0 bi(a.data());
+        cout << bi.c.data() << endl;
+    }
+    tr.section("STL style, should be a pointer for default steps");
+    {
+        using A = ra::Small<int, 2, 3>;
+        A a = {{1, 2, 3}, {4, 5, 6}};
+        tr.test(std::is_same_v<int *, decltype(a.begin())>);
+        for (int i=0; auto && ai: a) {
+            tr.test_eq(i+1, ai);
+            ++i;
         }
-        tr.section("STL style, should be a pointer for default steps");
-        {
-            using A = ra::Small<int, 2, 3>;
-            A a = {{1, 2, 3}, {4, 5, 6}};
-            tr.test(std::is_same_v<int *, decltype(a.begin())>);
-            for (int i=0; auto && ai: a) {
-                tr.test_eq(i+1, ai);
-                ++i;
-            }
-        }
-        tr.section("STL style with non-default steps");
-        {
-            ra::Small<int, 2, 3> a = {{1, 2, 3}, {4, 5, 6}};
-            auto b = transpose(a, ilist_t<1, 0>{});
+    }
+    tr.section("STL style with non-default steps");
+    {
+        ra::Small<int, 2, 3> a = {{1, 2, 3}, {4, 5, 6}};
+        auto b = transpose(a, ilist_t<1, 0>{});
 
-            // we don't necessarily walk ind this way.
-            // tr.test_eq(ra::iter({0, 0}), ra::iter(b.begin().ind));
-            // tr.test_eq(ra::iter({0, 1}), ra::iter((++b.begin()).ind));
+        // we don't necessarily walk ind this way.
+        // tr.test_eq(ra::iter({0, 0}), ra::iter(b.begin().ind));
+        // tr.test_eq(ra::iter({0, 1}), ra::iter((++b.begin()).ind));
 
-            tr.test(!std::is_same_v<int *, decltype(b.begin())>);
-            int bref[6] = {1, 4, 2, 5, 3, 6};
-            for (int i=0; auto && bi: b) {
-                tr.test_eq(bref[i], bi);
-                ++i;
-            }
+        tr.test(!std::is_same_v<int *, decltype(b.begin())>);
+        int bref[6] = {1, 4, 2, 5, 3, 6};
+        for (int i=0; auto && bi: b) {
+            tr.test_eq(bref[i], bi);
+            ++i;
         }
-        tr.section("cell rank");
-        {
-            auto test_over = [&](auto && a){
-                auto test = [&](std::string ref, auto cr){
-                    tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}}", ra::iter<cr()>(a))));
-                    tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}:n}", a.iter(cr))));
-                };
-                test("1|2|3-4|5|6", ra::int_c<-2>());
-                test("1 2 3|4 5 6", ra::int_c<-1>());
-                test("1|2|3-4|5|6", ra::int_c<0>());
-                test("1 2 3|4 5 6", ra::int_c<1>());
-                test("1 2 3\n4 5 6", ra::int_c<2>());
+    }
+    tr.section("cell rank");
+    {
+        auto test_over = [&](auto && a){
+            auto test = [&](std::string ref, auto cr){
+                tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}}", ra::iter<cr()>(a))));
+                tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}:n}", a.iter(ra::rank_t(cr)))));
             };
-            tr.section("default steps");
-            test_over(ra::Small<int, 2, 3> {{1, 2, 3}, {4, 5, 6}});
-            tr.section("non-default steps");
-            test_over(ra::transpose(ra::Small<int, 3, 2> {{1, 4}, {2, 5}, {3, 6}}, ra::ilist<1, 0>));
-        }
+            test("1|2|3-4|5|6", ra::int_c<-2>());
+            test("1 2 3|4 5 6", ra::int_c<-1>());
+            test("1|2|3-4|5|6", ra::int_c<0>());
+            test("1 2 3|4 5 6", ra::int_c<1>());
+            test("1 2 3\n4 5 6", ra::int_c<2>());
+        };
+        tr.section("default steps");
+        test_over(ra::Small<int, 2, 3> {{1, 2, 3}, {4, 5, 6}});
+        tr.section("non-default steps");
+        test_over(ra::transpose(ra::Small<int, 3, 2> {{1, 4}, {2, 5}, {3, 6}}, ra::ilist<1, 0>));
     }
     return tr.summary();
 }

@@ -132,12 +132,12 @@ int main()
         ra::Big<int, 2> I = {{0, 1}, {2, 0}, {1, 0}};
 
         // error if 2!=I.len(1). Iterates over scalars
-        println(cout, "{}", at(A, I.iter<1>()));
-        tr.strict().test_eq(ra::Small<int, 3> {101, 120, 110}, at(A, I.iter<1>()));
+        println(cout, "{}", at(A, iter<1>(I)));
+        tr.strict().test_eq(ra::Small<int, 3> {101, 120, 110}, at(A, iter<1>(I)));
 
         // L=I.len(1) can be 0, 1, 2. Iterates over dynamic rank (2-L)-views
-        println(cout, "{}", at_view(A, I.iter<1>()));
-        tr.strict().test_eq(ra::Small<int, 3> {101, 120, 110}, at_view(A, I.iter<1>()));
+        println(cout, "{}", at_view(A, iter<1>(I)));
+        tr.strict().test_eq(ra::Small<int, 3> {101, 120, 110}, at_view(A, iter<1>(I)));
     }
     return tr.summary();
 }

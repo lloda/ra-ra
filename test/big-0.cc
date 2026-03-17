@@ -27,7 +27,7 @@ int main(int argc, char * * argv)
     tr.section("predicates");
     {
         ra::ViewBig<int *, 2> a; // uninitialized
-        static_assert(ra::rank_s<decltype(a().iter<0>())>()==ra::rank_s<decltype(a().iter())>());
+        static_assert(ra::rank_s<decltype(iter<0>(a()))>()==ra::rank_s<decltype(iter(a()))>());
     }
     tr.section("constructors");
     {

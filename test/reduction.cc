@@ -23,13 +23,12 @@ int main()
     cout << "RA_FMA is " << RA_FMA << endl;
     tr.section("amax with different expr types");
     {
-        auto test_amax_expr = [&tr](auto && a, auto && b)
-            {
-                a = ra::Small<real, 2, 2> {1, 2, 9, -10};
-                tr.test_eq(amax(a), 9);
-                b = ra::Small<real, 2, 2> {1, 1, 1, 1};
-                tr.test_eq(amax(a+b), 10);
-            };
+        auto test_amax_expr = [&tr](auto && a, auto && b){
+            a = ra::Small<real, 2, 2> {1, 2, 9, -10};
+            tr.test_eq(amax(a), 9);
+            b = ra::Small<real, 2, 2> {1, 1, 1, 1};
+            tr.test_eq(amax(a+b), 10);
+        };
         test_amax_expr(ra::Unique<real, 2>({2, 2}, 0.), ra::Unique<real, 2>({2, 2}, 0.));
         test_amax_expr(ra::Small<real, 2, 2>(), ra::Small<real, 2, 2>());
 // failed in gcc 5.1 when amax() took its args by plain auto (now auto &&).
@@ -85,51 +84,48 @@ int main()
     }
     tr.section("reductions");
     {
-        auto test_dot = [](auto && test) // TODO Use this for other real reductions.
-            {
-                test(ra::Small<complex, 2>{1, 2}, ra::Small<real, 2>{3, 4});
-                test(ra::Small<real, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
-                test(ra::Small<real, 2>{1, 2}, ra::Small<real, 2>{3, 4});
-                test(ra::Small<complex, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
+        auto test_dot = [](auto && test){ // TODO Use this for other real reductions.
+            test(ra::Small<complex, 2>{1, 2}, ra::Small<real, 2>{3, 4});
+            test(ra::Small<real, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
+            test(ra::Small<real, 2>{1, 2}, ra::Small<real, 2>{3, 4});
+            test(ra::Small<complex, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
 
-                test(ra::Big<complex, 1>{1, 2}, ra::Big<real, 1>{3, 4});
-                test(ra::Big<real, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
-                test(ra::Big<real, 1>{1, 2}, ra::Big<real, 1>{3, 4});
-                test(ra::Big<complex, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
+            test(ra::Big<complex, 1>{1, 2}, ra::Big<real, 1>{3, 4});
+            test(ra::Big<real, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
+            test(ra::Big<real, 1>{1, 2}, ra::Big<real, 1>{3, 4});
+            test(ra::Big<complex, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
 
-                test(ra::Small<complex, 2>{1, 2}, ra::Big<real, 1>{3, 4});
-                test(ra::Small<real, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
-                test(ra::Small<real, 2>{1, 2}, ra::Big<real, 1>{3, 4});
-                test(ra::Small<complex, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
+            test(ra::Small<complex, 2>{1, 2}, ra::Big<real, 1>{3, 4});
+            test(ra::Small<real, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
+            test(ra::Small<real, 2>{1, 2}, ra::Big<real, 1>{3, 4});
+            test(ra::Small<complex, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
 
-                test(ra::Big<complex, 1>{1, 2}, ra::Small<real, 2>{3, 4});
-                test(ra::Big<real, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
-                test(ra::Big<real, 1>{1, 2}, ra::Small<real, 2>{3, 4});
-                test(ra::Big<complex, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
-            };
+            test(ra::Big<complex, 1>{1, 2}, ra::Small<real, 2>{3, 4});
+            test(ra::Big<real, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
+            test(ra::Big<real, 1>{1, 2}, ra::Small<real, 2>{3, 4});
+            test(ra::Big<complex, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
+        };
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(11., dot(a, b)); });
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(11., cdot(a, b)); });
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(sqrt(8.), norm2(a-b)); });
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(8., reduce_sqrm(a-b)); });
 
-        auto test_cdot = [](auto && test)
-            {
-                test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
-                test(ra::Big<complex, 1>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
-                test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Big<complex, 1>{complex(4, 5), 6});
-                test(ra::Big<complex, 1>{1, complex(2, 3)}, ra::Big<complex, 1>{complex(4, 5), 6});
-            };
+        auto test_cdot = [](auto && test){
+            test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
+            test(ra::Big<complex, 1>{1, complex(2, 3)}, ra::Small<complex, 2>{complex(4, 5), 6});
+            test(ra::Small<complex, 2>{1, complex(2, 3)}, ra::Big<complex, 1>{complex(4, 5), 6});
+            test(ra::Big<complex, 1>{1, complex(2, 3)}, ra::Big<complex, 1>{complex(4, 5), 6});
+        };
         complex value = conj(1.)*complex(4., 5.) + conj(complex(2., 3.))*6.;
         tr.test_eq(value, complex(16, -13));
         test_cdot([&tr](auto && a, auto && b) { tr.test_eq(complex(16., -13.), cdot(a, b)); });
         test_cdot([&tr](auto && a, auto && b) { tr.test_eq(sqrt(59.), norm2(a-b)); });
         test_cdot([&tr](auto && a, auto && b) { tr.test_eq(59., reduce_sqrm(a-b)); });
 
-        auto test_sum = [](auto && test)
-            {
-                test(ra::Small<complex, 2>{complex(4, 5), 6});
-                test(ra::Big<complex, 1>{complex(4, 5), 6});
-            };
+        auto test_sum = [](auto && test){
+            test(ra::Small<complex, 2>{complex(4, 5), 6});
+            test(ra::Big<complex, 1>{complex(4, 5), 6});
+        };
         test_sum([&tr](auto && a) { tr.test_eq(complex(10, 5), sum(a)); });
         test_sum([&tr](auto && a) { tr.test_eq(complex(24, 30), prod(a)); });
         test_sum([&tr](auto && a) { tr.test_eq(sqrt(41.), amax(abs(a))); });
@@ -152,7 +148,6 @@ int main()
         for (int i=0, iend=A.len(0); i<iend; ++i) {
             B(i) = sum(A(i));
         }
-
         {
             ra::Unique<real, 1> C({100}, 0.);
             for_each([](auto & c, auto a) { c += a; }, C, A);
@@ -193,10 +188,9 @@ int main()
         for (int j=0, jend=A.len(1); j<jend; ++j) {
             B(j) = sum(A(ra::all, j));
         }
-
         {
             ra::Unique<real, 1> C({111}, 0.);
-            for_each([&C](auto && a) { C += a; }, A.iter<1>());
+            for_each([&C](auto && a) { C += a; }, iter<1>(A));
             tr.info("rhs iterator of rank > 0").test_eq(B, C);
         }
         {
@@ -211,12 +205,12 @@ int main()
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
-            ra::scalar(C) += A.iter<1>();
+            ra::scalar(C) += iter<1>(A);
             tr.info("scalar() and iterators of rank > 0").test_eq(B, C);
         }
         {
             ra::Unique<real, 1> C({111}, 0.);
-            C.iter<1>() += A.iter<1>();
+            iter<1>(C) += iter<1>(A);
             tr.info("assign to iterators of rank > 0").test_eq(B, C);
         }
     }
@@ -239,19 +233,18 @@ int main()
     }
     tr.section("vector-matrix reductions");
     {
-        auto test = [&tr](auto t, auto s, auto r)
-            {
-                using T = decltype(t);
-                using S = decltype(s);
-                using R = decltype(r);
-                S x[4] = {1, 2, 3, 4};
-                ra::Small<T, 3, 4> a = ra::_0 - ra::_1;
-                R y[3] = {99, 99, 99};
-                ra::iter(y) = ra::gemv(a, x);
-                auto z = ra::gemv(a, x);
-                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
-                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
-            };
+        auto test = [&tr](auto t, auto s, auto r){
+            using T = decltype(t);
+            using S = decltype(s);
+            using R = decltype(r);
+            S x[4] = {1, 2, 3, 4};
+            ra::Small<T, 3, 4> a = ra::_0 - ra::_1;
+            R y[3] = {99, 99, 99};
+            ra::iter(y) = ra::gemv(a, x);
+            auto z = ra::gemv(a, x);
+            tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
+            tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
+        };
         test(double(0), double(0), double(0));
         test(std::complex<double>(0), std::complex<double>(0), std::complex<double>(0));
         test(int(0), int(0), int(0));
@@ -259,19 +252,18 @@ int main()
         test(double(0), int(0), double(0));
     }
     {
-        auto test = [&tr](auto t, auto s, auto r)
-            {
-                using T = decltype(t);
-                using S = decltype(s);
-                using R = decltype(r);
-                S x[4] = {1, 2, 3, 4};
-                ra::Small<T, 4, 3> a = ra::_1 - ra::_0;
-                R y[3] = {99, 99, 99};
-                ra::iter(y) = ra::gevm(x, a);
-                auto z = ra::gevm(x, a);
-                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
-                tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
-            };
+        auto test = [&tr](auto t, auto s, auto r){
+            using T = decltype(t);
+            using S = decltype(s);
+            using R = decltype(r);
+            S x[4] = {1, 2, 3, 4};
+            ra::Small<T, 4, 3> a = ra::_1 - ra::_0;
+            R y[3] = {99, 99, 99};
+            ra::iter(y) = ra::gevm(x, a);
+            auto z = ra::gevm(x, a);
+            tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, y);
+            tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
+        };
         test(double(0), double(0), double(0));
         test(std::complex<double>(0), std::complex<double>(0), std::complex<double>(0));
         test(int(0), int(0), int(0));

@@ -21,27 +21,25 @@ int main()
 {
     TestRecorder tr;
     tr.section("operators on nested arrays");
-    {
 // default init is required to make vector-of-vector, but I still want Vec {} to mean 'an empty vector' and not a default-init vector.
-        {
-            auto c = Vec<int> {};
-            tr.test_eq(0, c.len(0));
-            tr.test_eq(0, c.size());
-        }
-        {
-            auto c = Vec<Vec<int>> { {} , {1}, {1, 2} };
-            std::ostringstream os;
-            os << c;
-            std::istringstream is(os.str());
-            Vec<Vec<int>> d;
-            is >> d;
-            tr.test_eq(3, d.size());
-            tr.test_eq(d[0], Vec<int>{});
-            tr.test_eq(d[1], Vec<int>{1});
-            tr.test_eq(d[2], Vec<int>{1, 2});
+    {
+        auto c = Vec<int> {};
+        tr.test_eq(0, c.len(0));
+        tr.test_eq(0, c.size());
+    }
+    {
+        auto c = Vec<Vec<int>> { {} , {1}, {1, 2} };
+        std::ostringstream os;
+        os << c;
+        std::istringstream is(os.str());
+        Vec<Vec<int>> d;
+        is >> d;
+        tr.test_eq(3, d.size());
+        tr.test_eq(d[0], Vec<int>{});
+        tr.test_eq(d[1], Vec<int>{1});
+        tr.test_eq(d[2], Vec<int>{1, 2});
 // TODO Actually nested 'as if higher rank' should allow just (every(c==d)). This is explicit nesting.
-            tr.test(every(ra::map_([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
-        }
+        tr.test(every(ra::map_([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
     }
     tr.section("selector experiments");
     {
@@ -49,7 +47,7 @@ int main()
 // The problem with a(ra::all, i) here is that we probably want to leave the iteration on ra::all for last. Otherwise the indexing is redone for each rank-1 cell.
         Vec<int> i = {0, 3, 1, 2};
         Array<double, 2> a({4, 4}, ra::_0-ra::_1);
-        Array<double, 2> b = from([](auto && a, auto && i) -> decltype(auto) { return a(i); }, a.iter<1>(), ra::iter(i));
+        Array<double, 2> b = from([](auto && a, auto && i) -> decltype(auto) { return a(i); }, iter<1>(a), ra::iter(i));
         tr.test_eq(a(0, i), b(0));
         tr.test_eq(a(1, i), b(1));
         tr.test_eq(a(2, i), b(2));

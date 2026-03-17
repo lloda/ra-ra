@@ -23,7 +23,7 @@ int main()
         ra::Unique<real, 2> a({4, 3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
         {
-            auto i = a.iter<1>();
+            auto i = iter<1>(a);
             tr.test_eq(1, i.rank());
             ply_ravel(ra::map_([](ra::ViewBig<real *, 1> const & x) { cout << x << endl; }, i));
         }
@@ -44,7 +44,7 @@ int main()
                     d = a[0] + a[1] + a[2];
                 };
             ra::Small<real, 4> dump;
-            //             plier(ra::map_(f, a.iter<0>(), ARGa, ARGd));  // how the hell does this work,
+            //             plier(ra::map_(f, iter<0>(a), ARGa, ARGd));  // how the hell does this work,
 #define TEST(plier)                                             \
             dump = 0;                                           \
             cout << "-> explicit iterator" << endl;             \
@@ -52,11 +52,11 @@ int main()
             tr.test(std::equal(check, check+4, dump.begin()));  \
             dump = 0;                                           \
             cout << "-> iter<cell rank>()" << endl;             \
-            plier(ra::map_(f, ARGi, a.iter<1>(), ARGd));        \
+            plier(ra::map_(f, ARGi, iter<1>(a), ARGd));        \
             tr.test(std::equal(check, check+4, dump.begin()));  \
             dump = 0;                                           \
             cout << "-> iter<frame rank>()" << endl;            \
-            plier(ra::map_(f, ARGi, a.iter<-1>(), ARGd));       \
+            plier(ra::map_(f, ARGi, iter<-1>(a), ARGd));       \
             tr.test(std::equal(check, check+4, dump.begin()));
             TEST(ply_ravel);
             TEST(ply_fixed);
@@ -76,10 +76,10 @@ int main()
             plier(ra::map_(f, ARGa, ARGi, ARGd));            \
             tr.test(std::equal(check, check+4, dump.begin())); \
             dump = 0;                                           \
-            plier(ra::map_(f, a.iter<1>(), ARGi, ARGd));     \
+            plier(ra::map_(f, iter<1>(a), ARGi, ARGd));     \
             tr.test(std::equal(check, check+4, dump.begin())); \
             dump = 0;                                           \
-            plier(ra::map_(f, a.iter<-1>(), ARGi, ARGd));    \
+            plier(ra::map_(f, iter<-1>(a), ARGi, ARGd));    \
             tr.test(std::equal(check, check+4, dump.begin()));
             TEST(ply_ravel);
             TEST(ply_fixed);
@@ -129,11 +129,11 @@ int main()
         {
             auto f = [](real & a, real d) { a = d; };
             std::fill(a.begin(), a.end(), 0);
-            ply(map(f, a.iter<-1>(), dump.iter<0>()));
+            ply(map(f, iter<-1>(a), iter<0>(dump)));
             tr.test(std::equal(check, check+3, a.begin()));
 
             std::fill(a.begin(), a.end(), 0);
-            ply_ravel(map(f, a.iter<-1>(), dump.iter<0>()));
+            ply_ravel(map(f, iter<-1>(a), iter<0>(dump)));
             tr.test(std::equal(check, check+3, a.begin()));
         }
     }
@@ -148,18 +148,18 @@ int main()
         ra::Big<int, 2> as({5, 2}, ra::_0 - ra::_1);
         ra::Big<int, 2> b({5, 2}, (ra::_0 - ra::_1)*2);
 
-        tr.test_eq(1, as.iter<-1>().rank());
-        auto cellr = as.iter<-1>().cellr; tr.test_eq(1, cellr);
-        tr.test_eq(1, ad.iter<-1>().rank());
-        tr.test_eq(ra::ANY, ra::rank_s<decltype(ad.iter<-1>())>());
+        tr.test_eq(1, iter<-1>(as).rank());
+        auto cellr = iter<-1>(as).cellr; tr.test_eq(1, cellr);
+        tr.test_eq(1, iter<-1>(ad).rank());
+        tr.test_eq(ra::ANY, ra::rank_s<decltype(iter<-1>(ad))>());
         auto e = ra::map_([](auto const & a, auto const & b) { cout << (b-2*a) << endl; },
-                          ad.iter<-1>(), b.iter<-1>());
+                          iter<-1>(ad), iter<-1>(b));
         tr.test_eq(1, e.rank());
 
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
-                              as.iter<-1>(), b.iter<-1>()));
+                           iter<-1>(as), iter<-1>(b)));
         tr.test_eq(0., map([](auto const & a, auto const & b) { return sum(abs(b-2*a)); },
-                           ad.iter<-1>(), b.iter<-1>()));
+                           iter<-1>(ad), iter<-1>(b)));
     }
     tr.section("FIXME ply_ravel with Cell on VAR_RANK array [ra40]");
     {

@@ -322,7 +322,7 @@ template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1
 constexpr auto
 iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
 {
-    // return View<Seq<sarg<I>>, ic_t<std::array {Dim(n, s)}>>(Seq {RA_FW(i)})(insert<w>); // FIXME optimize view<seq>
+    // return ptrview(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s))(insert<w>);
     return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {});
 }
 

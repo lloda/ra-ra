@@ -363,7 +363,7 @@ template <class A>
 concept Slice = requires (A a)
 {
     { a.rank() } -> std::same_as<rank_t>;
-    { a.iter() } -> Iterator;
+    // { a.iter() } -> Iterator; // FIXME circularity in View/SmallArray
     requires has_len<decltype(a.data())> || std::bidirectional_iterator<decltype(a.data())>;
     { a.dimv };
 };

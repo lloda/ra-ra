@@ -237,7 +237,7 @@ int main()
     {
         ra::Unique<double, 2> A({6, 7}, ra::_0 - ra::_1);
         ra::Unique<double, 2> AA({6, 7}, 0.);
-        AA.iter<1>() = A.iter<1>();
+        iter<1>(AA) = iter<1>(A);
         tr.test_eq(ra::_0 - ra::_1, AA);
         tr.test_eq(A, AA);
     }
@@ -245,7 +245,7 @@ int main()
     {
         ra::Small<double, 6, 7> A = ra::_0 - ra::_1;
         ra::Small<double, 6, 7> AA = 0.;
-        AA.iter<1>() = A.iter<1>();
+        iter<1>(AA) = iter<1>(A);
         tr.test_eq(ra::_0 - ra::_1, AA);
         tr.test_eq(A, AA);
     }

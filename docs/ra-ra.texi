@@ -2248,14 +2248,14 @@ In principle, this function makes @ref{x-at,@code{at}} redundant. We provide bot
     ra::Big<int, 2> I = {{0, 1}, {2, 0}, {1, 0}};
 
     // error if 2!=I.len(1). Iterates over scalars
-    cout << at(A, I.iter<1>()) << endl;
+    cout << at(A, iter<1>(I)) << endl;
 @end verbatim
     @print{}
     3
     101 120 110
 @verbatim
     // L=I.len(1) can be 0, 1, 2. Iterates over dynamic rank (2-L)-views
-    cout << at_view(A, I.iter<1>()) << endl;
+    cout << at_view(A, iter<1>(I)) << endl;
 @end verbatim
     @print{}
     3
@@ -2268,7 +2268,7 @@ In principle, this function makes @ref{x-at,@code{at}} redundant. We provide bot
     110
 @end example
 
-This shows the default printing of dynamic rank arrays, which is to print the rank (0), then the shape (), then the contents. The first (3) is the shape of the overall expression, which is that of @code{I.iter<1>()} and has static rank 1.
+This shows the default printing of dynamic rank arrays, which is to print the rank (0), then the shape (), then the contents. The first (3) is the shape of the overall expression, which is that of @code{iter<1>(I)} and has static rank 1.
 
 See also @ref{x-at,@code{at}}.
 

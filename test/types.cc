@@ -106,8 +106,9 @@ int main()
                  true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::ViewBig<int *, 2>>()),
                  true, true, false, false, false);
+// only missing .iter() to be slice.
         TESTPRED(decltype(ra::Unique<int, 2>().iter()),
-                 true, false, true, false, false);
+                 true, std::nullopt, true, false, false);
         static_assert(ra::Iterator<decltype(ra::Unique<int, 2>().iter())>);
 // this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
         TESTPRED(decltype(ra::Unique<int, 1>().iter()) &,
@@ -128,8 +129,9 @@ int main()
                  true, std::nullopt, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2, 2>()()),
                  true, true, false, false, false);
+// only missing .iter() to be slice.
         TESTPRED(decltype(ra::Small<int, 2, 2>().iter()),
-                 true, false, true, false, false);
+                 true, std::nullopt, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2>()+3),
                  true, false, true, false, false);
         TESTPRED(decltype(3+ra::Big<int>()),
