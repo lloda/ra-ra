@@ -64,7 +64,7 @@ int main()
         auto test_over = [&](auto && a){
             auto test = [&](std::string ref, auto cr){
                 tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}}", ra::iter<cr()>(a))));
-                tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}:n}", a.iter(ra::rank_t(cr)))));
+                tr.test_eq(ra::scalar(ref), ra::scalar(std::format("{:nS{|}{-}:n}", iter(a, ra::rank_t(cr)))));
             };
             test("1|2|3-4|5|6", ra::int_c<-2>());
             test("1 2 3|4 5 6", ra::int_c<-1>());

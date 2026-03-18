@@ -251,9 +251,9 @@ at_view(A && a, auto && i) requires (Slice<std::decay_t<A>> || Iterator<std::dec
     if constexpr (0==rank_s<decltype(VAL(i))>()) {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
         if constexpr (constexpr rank_t cr = rank_diff(rank_s(a), ra::size_s(i)); ANY==cr) {
-            return a.template iter(rank(a)-ra::size(i)).at(i);
+            return iter(a, rank(a)-ra::size(i)).at(i);
         } else {
-            return a.template iter<cr>().at(i);
+            return iter<cr>(a).at(i);
         }
     } else {
         return map([a=std::tuple<A>(RA_FW(a))](auto && i) -> decltype(auto) { return at_view(std::get<0>(a), i); }, RA_FW(i));

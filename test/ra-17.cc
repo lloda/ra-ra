@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - View with custom dimv and generalized iter(Slice)
+// ra/test - View with custom dimv and generalized iter(Slice).
 
 // (c) Daniel Llorens - 2024-2025
 // This library is free software; you can redistribute it and/or modify it under
@@ -11,27 +11,6 @@
 #include "ra/test.hh"
 
 using std::cout, std::endl;
-
-namespace ra {
-
-template <class P, class Dimv, class Cr> Cell(P, Dimv &&, Cr) -> Cell<P, Dimv, Cr>;
-
-constexpr auto
-iter(Slice auto && s, auto c) requires (!is_iterator<decltype(s)>)
-{
-    using Dimv = std::decay_t<decltype(s)>::Dimv;
-    if constexpr (is_ctype<decltype(c)>) {
-        if constexpr (is_ctype<Dimv>) {
-            return Cell(s.data(), Dimv {}, c);
-        } else {
-            return Cell(s.data(), RA_FW(s).dimv, c);
-        }
-    } else {
-        return Cell(s.data(), RA_FW(s).dimv, rank_t(c));
-    }
-}
-
-} // namespace ra
 
 int main()
 {
@@ -65,6 +44,21 @@ int main()
         auto i = iter(v, ra::ic<0>);
         tr.test_eq(ra::iota(6, 1), i);
         static_assert(1==i.step(0));
+        static_assert(6==i.len(0));
+    }
+    {
+        ra::Big<int, 1> v = { 1, 2, 3, 4, 5, 6 };
+        static_assert(1==v.step(0));
+        auto i = iter(v, ra::ic<0>);
+        tr.test_eq(ra::iota(6, 1), i);
+        static_assert(1==i.step(0));
+        tr.test(&(v.dimv)==&(i.dimv));
+    }
+    {
+        ra::Big<int> v = { 1, 2, 3, 4, 5, 6 };
+        auto i = iter(v, ra::ic<0>);
+        tr.test_eq(ra::iota(6, 1), i);
+        tr.test(&(v.dimv)==&(i.dimv));
     }
     return tr.summary();
 }

@@ -74,7 +74,7 @@ cadd(A a, B b) { if constexpr (is_ctype<A> && is_ctype<B>) return ic<a+b>; else 
 template <class A, class B> constexpr auto
 csub(A a, B b) { if constexpr (is_ctype<A> && is_ctype<B>) return ic<a-b>; else return a-b; }
 
-// Sequence stl-like iterator
+// Sequence STL-like iterator.
 
 template <class I=dim_t>
 struct Seq
@@ -99,8 +99,8 @@ struct Seq
     constexpr bool operator==(Seq const & j) const = default;
 };
 
-// Rank-0 Iterator, to wrap foreign objects, or to manipulate prefix matching.
-// f(scalar(C)) should be f(C) and not map(f, C), this is controlled by tomap/toreduce.
+// Rank-0 Iterator to wrap foreign objects or to manipulate prefix matching.
+// f(scalar(C)) should be f(C) not map(f, C), see tomap/toreduce.
 
 template <class C>
 struct Scalar final
@@ -129,13 +129,10 @@ constexpr auto iter(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
 // iterators need resetting on each use [ra35].
 constexpr auto iter(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
 constexpr decltype(auto) iter(is_iterator auto && a) { return RA_FW(a); }
-// Cell doesn't retain rvalues [ra4]. If both Slice and Iterator (Ptr), go as Iterator.
-// TODO any exprs? runtime cr? ra::len in cr?
-template <int cr=0> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>) { return RA_FW(a).template iter<cr>(); }
 // forward decl.
+template <int cr=0> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>);
 constexpr auto iter(is_fov auto && a);
 constexpr auto iter(is_builtin auto && a);
-template <class T> constexpr auto iter(std::initializer_list<T> a);
 
 template <class A>
 constexpr decltype(auto)
@@ -209,7 +206,11 @@ filldimv(Iterator auto && p, auto & dv)
     for (rank_t k=0; k<ra::size(dv); ++k, p.mov(p.step(0))) { dv[k].len = *p; }
     dim_t s = 1;
     for (int k=ra::size(dv); --k>=0;) {
-        dv[k].step = s;
+        if constexpr (is_ctype<decltype(dv[k].step)>) {
+            RA_CK(s==dv[k].step);
+        } else {
+            dv[k].step = s;
+        }
         RA_CK(dv[k].len>=0, "Bad len[", k, "] ", dv[k].len, ".");
         s *= dv[k].len;
     }
@@ -261,7 +262,7 @@ struct Cell: public CellBase<P, Dimv, Cr>
     Vu c;
     constexpr explicit Cell(P cp) requires (CT): c(cp) {}
     constexpr explicit Cell(P cp, Dimv const & dimv_, Cr dcr=Cr {}) requires (CT): c(cp) { static_assert(is_ctype<Cr>); }
-    constexpr explicit Cell(P cp, Dimv const & dimv_, Cr dcr=Cr {}) requires (!CT): Base { dimv_ }, c(cp)
+    constexpr explicit Cell(P cp, Dimv dimv_, Cr dcr=Cr {}) requires (!CT): Base { dimv_ }, c(cp)
     {
         rank_t dcell = rank_cell(ra::size(dimv), dcr);
         if constexpr (ANY==cellr) { c.dimv.resize(dcell); }
@@ -300,11 +301,51 @@ struct Cell: public CellBase<P, Dimv, Cr>
     constexpr auto data() const { return c.cp; }
 };
 
-template <class X> using sarg = std::conditional_t<is_ctype<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
+template <class P, class Dimv, class Cr> Cell(P, Dimv &&, Cr) -> Cell<P, Dimv, Cr>;
 
-template <class N, class S> struct SDim { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; };
-template <class P, class N, class S> using Ptr = Cell<P, std::array<SDim<N, S>, 1>, ic_t<0>>;
+// Cell doesn't retain rvalues [ra4]. If both Slice and Iterator (Ptr), go as Iterator.
+// TODO any exprs? runtime cr? ra::len in cr?
+constexpr auto
+iter(Slice auto && s, auto c) requires (!is_iterator<decltype(s)>)
+{
+    using Dimv = std::decay_t<decltype(s)>::Dimv;
+    if constexpr (is_ctype<decltype(c)>) {
+        if constexpr (is_ctype<Dimv>) {
+            return Cell(s.data(), Dimv {}, c);
+        } else {
+            return Cell(s.data(), RA_FW(s).dimv, c);
+        }
+    } else {
+        return Cell(s.data(), RA_FW(s).dimv, rank_t(c));
+    }
+}
+
+template <int cr> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>) { return iter(RA_FW(a), ic<cr>); }
+
+template <class N, class S>
+struct SDim
+{
+    [[no_unique_address]] N len = {};
+    [[no_unique_address]] S step = {};
+    constexpr SDim & operator=(SDim const & a)
+    {
+        if constexpr (!is_ctype<N>) len=a.len;
+        if constexpr (!is_ctype<S>) step=a.step;
+        return *this;
+    }
+    constexpr SDim & operator=(Dim const & a)
+    {
+        if constexpr (!is_ctype<N>) len=a.len; else RA_CK(len==a.len);
+        if constexpr (!is_ctype<S>) step=a.step; else RA_CK(step==a.step);
+        return *this;
+    }
+    constexpr operator Dim () const { return Dim { .len=len, .step=step }; }
+};
+
 template <class P, class N, class S> using PtrView = View<P, std::array<SDim<N, S>, 1>>;
+template <class P, class N, class S> using Ptr = Cell<P, std::array<SDim<N, S>, 1>, ic_t<0>>;
+
+template <class X> using sarg = std::conditional_t<is_ctype<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
 
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
@@ -322,7 +363,7 @@ ptrview(P && p, N && n=N {}, S && s=S(maybe_step<S>))
 
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
-ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>)) { return ptrview(RA_FW(p), RA_FW(n), RA_FW(s)).iter(); }
+ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>)) { return iter(ptrview(RA_FW(p), RA_FW(n), RA_FW(s))); }
 
 constexpr auto iter(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
 template <class T> constexpr auto iter(std::initializer_list<T> a) { return ra::ptr(a); }
@@ -330,17 +371,16 @@ template <class T> constexpr auto iter(std::initializer_list<T> a) { return ra::
 constexpr auto
 iter(is_builtin auto && a)
 {
-    using T = std::remove_all_extents_t<std::remove_reference_t<decltype(a)>>;
-    return Cell<T *, ic_t<c_dimv(ra::shape(a))>, ic_t<0>>(
-        [](this auto const & sf, auto && a){
-            using T = std::remove_cvref_t<decltype(a)>;
-            if constexpr (1 < std::rank_v<T>) {
-                static_assert(0 < std::extent_v<T, 0>);
-                return sf(*std::data(a));
-            } else {
-                return std::data(a);
-            }
-        }(a));
+    auto p = [](this auto const & sf, auto && a){
+        using T = std::remove_cvref_t<decltype(a)>;
+        if constexpr (1 < std::rank_v<T>) {
+            static_assert(0 < std::extent_v<T, 0>);
+            return sf(*std::data(a));
+        } else {
+            return std::data(a);
+        }
+    }(a);
+    return Cell(p, ic<c_dimv(ra::shape(a))>, ic<0>);
 }
 
 
