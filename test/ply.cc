@@ -36,8 +36,8 @@ int main()
             {                                                           \
                 std::fill(c.begin(), c.end(), 0);                       \
                 plier(ra::map_([](real & c, real a, real b) { c = a-b; }, \
-                               c.iter(), a.iter(), ra::scalar(3.0)));   \
-                tr.info(RA_STRINGIZE(plier)).test(std::equal(check, check+6, c.begin()));  \
+                               iter(c), iter(a), ra::scalar(3.0)));     \
+                tr.info(RA_STRINGIZE(plier)).test(std::equal(check, check+6, c.begin())); \
             }
             TEST(ply_ravel);
             TEST(ply_fixed);
@@ -50,12 +50,12 @@ int main()
         {                                                               \
             ra::Small<int, 3> A {1, 2, 3};                              \
             ra::Small<int, 3> C {0, 0, 0};                              \
-            plier(ra::map_([](int a, int & c) { c = -a; }, A.iter(), C.iter())); \
+            plier(ra::map_([](int a, int & c){ c = -a; }, iter(A), iter(C))); \
             tr.test_eq(-1, C[0]);                                       \
             tr.test_eq(-2, C[1]);                                       \
             tr.test_eq(-3, C[2]);                                       \
             ra::Small<int, 3> B {+1, -2, +3};                           \
-            plier(ra::map_([](int a, int b, int & c) { c = a*b; }, A.iter(), B.iter(), C.iter())); \
+            plier(ra::map_([](int a, int b, int & c){ c = a*b; }, iter(A), iter(B), iter(C))); \
             tr.test_eq(+1, C[0]);                                       \
             tr.test_eq(-4, C[1]);                                       \
             tr.test_eq(+9, C[2]);                                       \
@@ -73,7 +73,7 @@ int main()
 #define TEST(plier)                                                     \
             {                                                           \
                 std::iota(c.begin(), c.end(), 99);                      \
-                plier(ra::map_([](int a, int b, int & c) { c = a-b; }, a.iter(), b.iter(), c.iter())); \
+                plier(ra::map_([](int a, int b, int & c){ c = a-b; }, iter(a), iter(b), iter(c))); \
                 for (int ci: c) { tr.test_eq(0, ci); }                  \
             }
             TEST(ply_ravel);
@@ -86,15 +86,14 @@ int main()
         {
             real check[1] = {4};
 #define TEST(plier)                                                     \
-            [&tr, &check](auto && a, auto && c)                         \
-            {                                                           \
+            [&tr, &check](auto && a, auto && c){                        \
                 std::iota(a.begin(), a.end(), 7);                       \
                 std::fill(c.begin(), c.end(), 0);                       \
                 plier(ra::map_([](real & c, real a, real b) { c = a-b; }, \
-                               c.iter(), a.iter(), ra::scalar(3.0)));   \
-                tr.test(std::equal(check, check+1, c.begin()));        \
+                               iter(c), iter(a), ra::scalar(3.0)));     \
+                tr.test(std::equal(check, check+1, c.begin()));         \
             }
-#define TEST2(plier) \
+#define TEST2(plier)                                                    \
             TEST(plier)(ra::Unique<real, 0>({}, ra::none), ra::Unique<real, 0>({}, ra::none)); \
             TEST(plier)(ra::Small<real> {}, ra::Small<real> {});        \
             TEST(plier)(ra::Small<real> {}, ra::Unique<real, 0>({}, ra::none));
@@ -108,16 +107,14 @@ int main()
     {
         {
 #define TEST(plier, id)                                                 \
-            [&tr](auto && a, bool used)                                 \
-            {                                                           \
-                tr.info(RA_STRINGIZE(plier) "/" id)                        \
-                    .test((used || (a.begin()==a.end() && a.size()==0)) && RA_STRINGIZE(plier) id " before"); \
+            [&tr](auto && a, bool used){                                \
+                tr.info(RA_STRINGIZE(plier) "/" id)                     \
+                .test((used || (a.begin()==a.end() && a.size()==0)) && RA_STRINGIZE(plier) id " before"); \
                 Never check;                                            \
-                plier(ra::map_([&check](int a) { check = a; }, a.iter())); \
-                tr.info(RA_STRINGIZE(plier) id " after")                   \
-                    .test(check.used()==used);                          \
+                plier(ra::map_([&check](int a) { check = a; }, iter(a))); \
+                tr.info(RA_STRINGIZE(plier) id " after")                \
+                .test(check.used()==used);                              \
             }
-
 #define TEST2(plier)                                                    \
             TEST(plier, "00")(ra::Small<int, 0> {}, false);             \
             TEST(plier, "01")(ra::Unique<int, 1>({ 0 }, ra::none), false); \
@@ -134,9 +131,8 @@ int main()
 #undef TEST
 // With ra::Map, non-slices.
 #define TEST(plier, id)                                                 \
-            [&tr](auto && a, bool used)                                 \
-            {                                                           \
-                cout << RA_STRINGIZE(plier) "/" id << endl;                \
+            [&tr](auto && a, bool used){                                \
+                cout << RA_STRINGIZE(plier) "/" id << endl;             \
                 tr.test((used || (a.len(0)==0 || a.len(1)==0)) && RA_STRINGIZE(plier) id " before"); \
                 Never check;                                            \
                 plier(ra::map_([&check](int a) { check = a; }, a));     \
@@ -161,11 +157,10 @@ int main()
 // TODO Check.
         auto print = [](real a) { cout << a << " "; };
         {
-            auto test = [&](auto && a)
-                {
-                    ra::ply_ravel(ra::map_(print, a.iter())); cout << endl;
-                    ra::ply_fixed(ra::map_(print, a.iter())); cout << endl;
-                };
+            auto test = [&](auto && a){
+                ra::ply_ravel(ra::map_(print, iter(a))); cout << endl;
+                ra::ply_fixed(ra::map_(print, iter(a))); cout << endl;
+            };
             ra::Unique<real, 3> a(std::vector<ra::dim_t> {1, 2, 3}, ra::none);
             std::iota(a.begin(), a.end(), 0);
             test(a);
@@ -173,10 +168,9 @@ int main()
         }
 // TODO See Map::CAN_DRIVE in expr.hh. Doesn't generally work with Unique<ANY> because Map needs to pick a driving argument statically. However, it does work when there's only one argument, since ply_ravel() is rank-dynamic.
         {
-            auto test = [&](auto && a)
-                {
-                    ra::ply_ravel(ra::map_(print, a.iter())); cout << endl;
-                };
+            auto test = [&](auto && a){
+                ra::ply_ravel(ra::map_(print, iter(a))); cout << endl;
+            };
             ra::Unique<real> a(std::vector<ra::dim_t> {1, 2, 3}, ra::none);
             std::iota(a.begin(), a.end(), 0);
             test(a);
@@ -204,7 +198,7 @@ int main()
         tr.section("construction of var rank <- lower rank Map I");
         {
             ra::Unique<real, 1> b ({3}, {1, 2, 3});
-            ra::Unique<real> a ({3, 2}, b.iter());
+            ra::Unique<real> a ({3, 2}, iter(b));
             tr.test_eq(1, a(0, 0));
             tr.test_eq(1, a(0, 1));
             tr.test_eq(2, a(1, 0));
@@ -216,7 +210,7 @@ int main()
         {
             ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});
             cout << "b: " << b << endl;
-            ra::Unique<real> a ({3, 2, 4}, b.iter());
+            ra::Unique<real> a ({3, 2, 4}, iter(b));
             cout << "a: " << a << endl;
             for (int i=0; i<3; ++i) {
                 for (int j=0; j<2; ++j) {
@@ -230,7 +224,7 @@ int main()
         tr.section("construction of var rank <- lower rank Map III (var rank)");
         {
             ra::Unique<real> b ({3}, {1, 2, 3});
-            ra::Unique<real> a ({3, 2}, b.iter());
+            ra::Unique<real> a ({3, 2}, iter(b));
             tr.test_eq(1, a(0, 0));
             tr.test_eq(1, a(0, 1));
             tr.test_eq(2, a(1, 0));
@@ -243,7 +237,7 @@ int main()
         // {
         //     ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});
         //     cout << "b: " << b << endl;
-        //     ra::Unique<real> a ({4}, b.iter());
+        //     ra::Unique<real> a ({4}, iter(b));
         //     cout << "a: " << a << endl;
         // }
     }
@@ -251,11 +245,11 @@ int main()
     tr.section("cf plying with and without driver (error)");
     {
         ra::Unique<real, 1> a({3}, ra::none);
-        ply_ravel(map_([](real & a, int b) { a = b; }, a.iter(), ra::scalar(7)));
+        ply_ravel(map_([](real & a, int b){ a = b; }, iter(a), ra::scalar(7)));
         tr.test_eq(7, a[0]);
         tr.test_eq(7, a[1]);
         tr.test_eq(7, a[2]);
-        ply(map_([](real & a, int b) { a = b; }, a.iter(), ra::iota<0>()));
+        ply(map_([](real & a, int b){ a = b; }, iter(a), ra::iota<0>()));
         tr.test_eq(0, a[0]);
         tr.test_eq(1, a[1]);
         tr.test_eq(2, a[2]);
@@ -269,24 +263,24 @@ int main()
         ra::Unique<real, 2> b({ 3, 2 }, ra::none);
         ra::Unique<real, 3> c({ 3, 2, 4 }, ra::none);
         real check[24] = { 0, 1, 2, 3,     3, 4, 5, 6,      6, 7, 8, 9,
-                           9, 10, 11, 12,  12, 13, 14, 15,  15, 16, 17, 18 };
+            9, 10, 11, 12,  12, 13, 14, 15,  15, 16, 17, 18 };
         std::iota(a.begin(), a.end(), 1);
         std::iota(b.begin(), b.end(), 1);
         {
-            ra::Unique<real, 3> c0(map_([](real a, real b) { return a-b; }, a.iter(), b.iter()));
+            ra::Unique<real, 3> c0(map_([](real a, real b){ return a-b; }, iter(a), iter(b)));
             tr.test(std::equal(check, check+24, c0.begin()));
-            ra::Unique<real, 3> c1(map_([](real a, real b) { return b-a; }, b.iter(), a.iter()));
+            ra::Unique<real, 3> c1(map_([](real a, real b){ return b-a; }, iter(b), iter(a)));
             tr.test(std::equal(check, check+24, c1.begin()));
         }
         {
 #define TEST(plier)                                                     \
             std::fill(c.begin(), c.end(), 0);                           \
             plier(map_([&](real & c, real a, real b) { c=a-b; },        \
-                       c.iter(), a.iter(), b.iter()));                  \
+                       iter(c), iter(a), iter(b)));                     \
             tr.info(RA_STRINGIZE(plier) " a-b").test(std::equal(check, check+24, c.begin())); \
             std::fill(c.begin(), c.end(), 0);                           \
             plier(map_([](real & c, real a, real b) { c=b-a; },         \
-                       c.iter(), b.iter(), a.iter()));                  \
+                       iter(c), iter(b), iter(a)));                     \
             tr.info(RA_STRINGIZE(plier) " b-a").test(std::equal(check, check+24, c.begin()));
             TEST(ply_ravel);
             TEST(ply_fixed);
@@ -299,13 +293,13 @@ int main()
         ra::Unique<int, 1> b({3}, ra::none);
         std::iota(a.begin(), a.end(), 1);
 #define TEST(plier)                                                     \
-        tr.section(RA_STRINGIZE(plier));                                   \
+        tr.section(RA_STRINGIZE(plier));                                \
         {                                                               \
             std::fill(b.begin(), b.end(), 0);                           \
             real check[3] = { 2, 3, 1 };                                \
-            plier(map_([&a](int & b, int i) { b = a(i); }, b.iter(), ra::ptr(std::array {1, 2, 0}))); \
+            plier(map_([&a](int & b, int i) { b = a(i); }, iter(b), ra::ptr(std::array {1, 2, 0}))); \
             tr.info(RA_STRINGIZE(plier) " std::array").test(std::equal(check, check+3, b.begin())); \
-            plier(map_([&a](int & b, int i) { b = a(i); }, b.iter(), ra::ptr(std::vector {1, 2, 0}))); \
+            plier(map_([&a](int & b, int i) { b = a(i); }, iter(b), ra::ptr(std::vector {1, 2, 0}))); \
             tr.info(RA_STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
         }
         TEST(ply_ravel);
@@ -330,8 +324,8 @@ int main()
         {                                                       \
             real c = 99;                                        \
             plier(ra::map_([&c](real a, real b) { c = 77; },    \
-                           a.iter(), b.iter()));                \
-            tr.info(RA_STRINGIZE(plier)).test(c==99);              \
+                           iter(a), iter(b)));                  \
+            tr.info(RA_STRINGIZE(plier)).test(c==99);           \
         }
         TEST(ply_ravel);
         TEST(ply_fixed);

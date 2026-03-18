@@ -211,30 +211,30 @@ int main()
     {
         ra::Unique<int, 2> a({2, 3}, { 1, 2, 3, 4, 5, 6 });
         iocheck(tr.info("output of map (3)"),
-                ra::map_([](int i) { return -i; }, a.iter()),
+                ra::map_([](int i) { return -i; }, iter(a)),
                 ra::Unique<int, 2>({2, 3}, { -1, -2, -3, -4, -5, -6 }));
     }
     tr.section("printing array iterators");
     {
         ra::Unique<int, 2> a({3, 2}, { 1, 2, 3, 4, 5, 6 });
-        iocheck(tr.info("output of array through its iterator"), a.iter(), a);
+        iocheck(tr.info("output of array through its iterator"), iter(a), a);
 // note that transpose(..., {1, 0}) will have dynamic rank, so the type expected from read must also.
         iocheck(tr.info("output of transposed array through its iterator"),
-                transpose(a, {1, 0}).iter(),
+                iter(transpose(a, {1, 0})),
                 ra::Unique<int>({2, 3}, { 1, 3, 5, 2, 4, 6 }));
     }
     tr.section("printing array iterators");
     {
         ra::Small<int, 3, 2> a { 1, 2, 3, 4, 5, 6 };
-        iocheck(tr.info("output of array through its iterator"), a.iter(), a);
+        iocheck(tr.info("output of array through its iterator"), iter(a), a);
         iocheck(tr.info("output of transposed array through its iterator"),
-                transpose(a, ra::ilist_t<1, 0> {}).iter(),
+                iter(transpose(a, ra::ilist_t<1, 0> {})),
                 ra::Small<int, 2, 3> { 1, 3, 5, 2, 4, 6 });
     }
     tr.section("IO can handle undef len iota, too");
     {
         iocheck(tr.info("output of map (1)"),
-                ra::map_([](double i, auto j) { return -i*double(j); }, ra::Small<double, 3>{0, 1, 2}.iter(), ra::iota<0>()),
+                ra::map_([](double i, auto j) { return -i*double(j); }, iter(ra::Small<double, 3>{0, 1, 2}), ra::iota<0>()),
                 ra::Small<double, 3>{0, -1, -4});
     }
     tr.section("IO of var rank map");

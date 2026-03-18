@@ -34,12 +34,12 @@ int main()
         std::iota(a.begin(), a.end(), 1);
         std::fill(c.begin(), c.end(), 0);
         ply(map_([](real & c, real a, int b) { c = a-(b+1); },
-                 c.iter(), a.iter(), ra::iter(ra::_0)));
+                 iter(c), iter(a), ra::iter(ra::_0)));
         tr.test_eq(check, c);
 
         std::fill(c.begin(), c.end(), 0);
         ply(map_([](real & c, int a, real b) { c = b-(a+1); },
-                 c.iter(), ra::iter(ra::_0), a.iter()));
+                 iter(c), ra::iter(ra::_0), iter(a)));
         tr.test_eq(check, c);
     }
     tr.section("frame matching - Unique/undef-len-iota - undef-len-iota can't be driving arg");
@@ -51,23 +51,23 @@ int main()
         std::iota(a.begin(), a.end(), 1);
         std::fill(c.begin(), c.end(), 0);
         ply(map_([](real a, int b, real & c) { c = a-(b+1); },
-                 a.iter(), ra::iter(ra::_1), c.iter()));
+                 iter(a), ra::iter(ra::_1), iter(c)));
         tr.test_eq(check, c);
 
         std::fill(c.begin(), c.end(), 0);
         ply(map_([](int a, real b, real & c) { c = b-(a+1); },
-                 ra::iter(ra::_1), a.iter(), c.iter()));
+                 ra::iter(ra::_1), iter(a), iter(c)));
         tr.test_eq(check, c);
     }
 #define TEST(plier)                                         \
     std::fill(c.begin(), c.end(), 0);                       \
     plier(map_([](real & c, real a, real b) { c = a-b; },   \
-               c.iter(), a.iter(), b.iter()));              \
+               iter(c), iter(a), iter(b)));                 \
     tr.test_eq(check, c);                                   \
                                                             \
     std::fill(c.begin(), c.end(), 0);                       \
     plier(map_([](real & c, real a, real b) { c = b-a; },   \
-               c.iter(), b.iter(), a.iter()));              \
+               iter(c), iter(b), iter(a)));                 \
     tr.test_eq(check, c);
 
     tr.section("frame matching - Unique/Unique");
@@ -110,7 +110,7 @@ int main()
         ra::Unique<real, 1> b {1., 2.};
 // note that b-c has no driver, but all that matters is that the full expression does.
         auto e = map_([](real & a, real bc) { a = bc; },
-                      a.iter(), map_([](real b, real c) { return b-c; },  b.iter(), ra::iter(ra::_1)));
+                      iter(a), map_([](real b, real c) { return b-c; },  iter(b), ra::iter(ra::_1)));
         ply(e);
         tr.test_eq(1, a(0, 0));
         tr.test_eq(0, a(0, 1));

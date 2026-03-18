@@ -25,8 +25,7 @@ int main()
     tr.section("unary ops");
     {
 #define DEF_TEST_UNOP(OP)                                               \
-        auto test = [&tr](auto token, auto x, auto y, auto && vx, auto && vy, real err) \
-        {                                                               \
+        auto test = [&tr](auto token, auto x, auto y, auto && vx, auto && vy, real err){                                                               \
             using T = decltype(token);                                  \
             using TY = decltype(OP(std::declval<T>()));                 \
             tr.info("scalar-scalar").test_abs(OP(T(x)), TY(y), err);    \
@@ -126,8 +125,8 @@ int main()
         ra::Unique<int, 1> b({3}, { 10, 20, 30 });
 #define TESTSUM(arg)                                                   \
         tr.test_eq(arg, ra::Small<int, 3, 2> {11, 12, 23, 40, 35, 36});
-        TESTSUM(ra::map_([](int a, int b){ return a + b; }, a.iter(), b.iter()));
-        TESTSUM(a.iter() + b.iter());
+        TESTSUM(ra::map_([](int a, int b){ return a + b; }, iter(a), iter(b)));
+        TESTSUM(iter(a) + iter(b));
         TESTSUM(a+b);
 #undef TESTSUM
 #define TESTEQ(arg)                                                   \
@@ -169,8 +168,8 @@ int main()
     {
         ra::Small<int, 3> a { 1, 2, 3 };
         ra::Small<int, 3> b { 1, 2, 4 };
-        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, ra::map_([](int a, int b){ return a + b; }, a.iter(), b.iter()));
-        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, (a.iter() + b.iter()));
+        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, ra::map_([](int a, int b){ return a + b; }, iter(a), iter(b)));
+        tr.test_eq(ra::Small<int, 3> {2, 4, 7}, (iter(a) + iter(b)));
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, a+b);
     }
 
@@ -180,7 +179,7 @@ int main()
 // TODO Systematic init-from-expr tests (every expr type vs every container type)
             ra::Unique<int, 1> a({3}, { 1, 2, 3 });
             ra::Unique<int, 1> b({3}, { 10, 20, 30 });
-            ra::Unique<int, 1> c(a.iter() + b.iter());
+            ra::Unique<int, 1> c(iter(a) + iter(b));
             tr.test_eq(ra::Small<int, 3> {11, 22, 33}, c);
         }
         {

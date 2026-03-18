@@ -97,7 +97,7 @@ int main()
     {
         ra::Small<int, 4, 4> A = ra::_0 - ra::_1;
         int i[2] = {1, 2};
-        tr.test_eq(-1, A.iter().at(i));
+        tr.test_eq(-1, iter(A).at(i));
     }
     tr.section("Misc II");
     {

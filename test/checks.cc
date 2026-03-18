@@ -309,7 +309,7 @@ int main()
 // see test/frame-old.cc
 // ------------------------------
 
-#define MAP ra::map_(plus2double_print, a.iter(), b.iter())
+#define MAP ra::map_(plus2double_print, iter(a), iter(b))
     tr.section("frame matching should-be-error cases. See frame-old.cc");
     {
         ra::Unique<double, 1> a({3}, 10);
@@ -335,8 +335,8 @@ int main()
         int error = 0;
         string s;
         try {
-            std::cout << "A: " << a.iter().len(0) << endl;
-            std::cout << "B: " << b.iter().len(0) << endl;
+            std::cout << "A: " << iter(a).len(0) << endl;
+            std::cout << "B: " << iter(b).len(0) << endl;
             tr.info("dynamic test is needed").test_eq(1, decltype(MAP)::check_s());
             tr.test(!agree(a, b));
             ply_ravel(MAP);

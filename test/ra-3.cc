@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Assignment.
 
-// (c) Daniel Llorens - 2013, 2014
+// (c) Daniel Llorens - 2013, 2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -49,7 +49,7 @@ int main()
         {
             ra::Unique<real, 1> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, ra::scalar(99));
-            a  = b.iter();
+            a  = iter(b);
             tr.test_eq(1, a(0, 0));
             tr.test_eq(1, a(0, 1));
             tr.test_eq(2, a(1, 0));
@@ -61,7 +61,7 @@ int main()
         {
             ra::Unique<real, 2> b ({3, 2}, {1, 2, 3, 4, 5, 6});
             ra::Unique<real> a ({3, 2, 4}, ra::scalar(99));
-            a  = b.iter();
+            a  = iter(b);
             for (int i=0; i<3; ++i) {
                 for (int j=0; j<2; ++j) {
                     tr.test_eq(i*2+j+1, b(i, j));
@@ -76,7 +76,7 @@ int main()
         {
             ra::Unique<real> b ({3}, {1, 2, 3});
             ra::Unique<real> a ({3, 2}, ra::scalar(99));
-            a = b.iter();
+            a = iter(b);
             tr.test_eq(1, a(0, 0));
             tr.test_eq(1, a(0, 1));
             tr.test_eq(2, a(1, 0));
@@ -90,7 +90,7 @@ int main()
         //     ra::Unique<real> b ({3, 2}, {1, 2, 3, 4, 5, 6});
         //     cout << "b: " << b << endl;
         //     ra::Unique<real> a ({4}, ra::scalar(99));
-        //     a = b.iter();
+        //     a = iter(b);
         //     cout << "a: " << a << endl;
         // }
     }

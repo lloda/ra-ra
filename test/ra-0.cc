@@ -198,7 +198,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::ViewBig<double *> r { {{3, 2}, {2, 1}}, pool };
-        auto it = r.iter();
+        auto it = iter(r);
         tr.test_seq(r.data(), it.c.data());
         std::ranges::copy(r.begin(), r.end(), chk);
         tr.test(std::ranges::equal(pool, pool+6, r.begin(), r.end()));
@@ -208,7 +208,7 @@ int main()
         double chk[6] = { 0, 0, 0, 0, 0, 0 };
         double pool[6] = { 1, 2, 3, 4, 5, 6 };
         ra::ViewBig<double *, 1> r { { ra::Dim {6, 1}}, pool };
-        auto it = r.iter();
+        auto it = iter(r);
         tr.test_seq(r.data(), it.c.data());
         std::ranges::copy(r.begin(), r.end(), chk);
         tr.test(std::ranges::equal(pool, pool+6, r.begin(), r.end()));
@@ -220,15 +220,15 @@ int main()
         double b[6] = { 1, 2, 3, 4, 5, 6 };
         ra::ViewBig<double *> ra { {{3, 2}, {2, 1}}, a };
         ra::ViewBig<double *> rb { {{3, 2}, {2, 1}}, b };
-        auto aiter = ra.iter();
+        auto aiter = iter(ra);
         {
-            auto biter = rb.iter();
+            auto biter = iter(rb);
             aiter = biter;
             tr.skip().test_eq(0, ra);
             tr.skip().test_eq(rb, aiter);
         }
         {
-            aiter = rb.iter();
+            aiter = iter(rb);
             tr.skip().test_eq(0, ra);
             tr.skip().test_eq(rb, aiter);
         }
@@ -269,12 +269,12 @@ int main()
     //         tr.test(std::ranges::equal(rb.begin(), rb.end(), aiter, rb.end())); // aiter changed
     //     }
     // }
-    tr.section("shape of .iter()");
+    tr.section("shape of iter()");
     {
         auto test = [&tr](auto && A)
             {
                 tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, ra::shape(A));
-                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(A.iter()));
+                tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(iter(A)));
                 tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(ra::iter<0>(A)));
                 tr.test_eq(ra::Small<ra::dim_t, 2> {6, 7}, shape(ra::iter<-2>(A)));
                 tr.test_eq(ra::Small<ra::dim_t, 1> {6}, shape(ra::iter<1>(A)));

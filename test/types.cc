@@ -106,12 +106,12 @@ int main()
                  true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::ViewBig<int *, 2>>()),
                  true, true, false, false, false);
-// only missing .iter() to be slice.
-        TESTPRED(decltype(ra::Unique<int, 2>().iter()),
+// double Iterator/Slice
+        TESTPRED(decltype(iter(ra::Unique<int, 2>())),
                  true, std::nullopt, true, false, false);
-        static_assert(ra::Iterator<decltype(ra::Unique<int, 2>().iter())>);
+        static_assert(ra::Iterator<decltype(iter(ra::Unique<int, 2>()))>);
 // this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
-        TESTPRED(decltype(ra::Unique<int, 1>().iter()) &,
+        TESTPRED(decltype(iter(ra::Unique<int, 1>())) &,
                  true, std::nullopt, true, false, false);
         TESTPRED(decltype(ra::iota(5)),
                  true, true, true, false, false);
@@ -125,12 +125,12 @@ int main()
         TESTPRED(decltype(std::declval<ra::Small<int, 2>>()),
                  true, true, false, false, false);
 // may be slice if iota is Cell, because we let some Cell be slice for the sake of iota.
-        TESTPRED(decltype(ra::Small<int, 2>().iter()),
+        TESTPRED(decltype(iter(ra::Small<int, 2>())),
                  true, std::nullopt, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2, 2>()()),
                  true, true, false, false, false);
-// only missing .iter() to be slice.
-        TESTPRED(decltype(ra::Small<int, 2, 2>().iter()),
+// double Iterator/Slice
+        TESTPRED(decltype(iter(ra::Small<int, 2, 2>())),
                  true, std::nullopt, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2>()+3),
                  true, false, true, false, false);

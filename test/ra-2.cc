@@ -1,7 +1,7 @@
 // -*- mode: c++; coding: utf-8 -*-
 // ra-ra/test - Positive cell rank.
 
-// (c) Daniel Llorens - 2013, 2025
+// (c) Daniel Llorens - 2013, 2026
 // This library is free software; you can redistribute it and/or modify it under
 // the terms of the GNU Lesser General Public License as published by the Free
 // Software Foundation; either version 3 of the License, or (at your option) any
@@ -29,8 +29,8 @@ int main()
         }
     }
 #define ARGa ra::iter<1>(a)
-#define ARGi ra::Small<int, 4> {1, 2, 3, 4}.iter()
-#define ARGd dump.iter()
+#define ARGi iter(ra::Small<int, 4> {1, 2, 3, 4})
+#define ARGd iter(dump)
     tr.section("ply on cell rank > 0");
     {
         ra::Unique<real, 2> a({4, 3}, ra::none);

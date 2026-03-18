@@ -50,7 +50,7 @@ int main()
         println(cout, "\nii([3, 4], -3, [1, 10])\n{:c}", ra::ii({3, 4}, -3, {1, 10}));
         println(cout, "\nii(<3, 4>)\n{:c}", ra::ii(ra::ilist<3, 4>));
         tr.test(ra::is_scalar_index<decltype(ra::Small<int>(1))>);
-        tr.test(ra::is_scalar_index<decltype(ra::Small<int>(1).iter())>);
+        tr.test(ra::is_scalar_index<decltype(iter(ra::Small<int>(1)))>);
     }
 
     constexpr ra::Small<int, 3, 4> a0 = {{0, 1, 2, 3}, {4, 5, 6, 7}, {8, 9, 10, 11}};

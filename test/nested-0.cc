@@ -39,7 +39,7 @@ int main()
         tr.test_eq(d[1], Vec<int>{1});
         tr.test_eq(d[2], Vec<int>{1, 2});
 // TODO Actually nested 'as if higher rank' should allow just (every(c==d)). This is explicit nesting.
-        tr.test(every(ra::map_([](auto & c, auto & d) { return every(c==d); }, c.iter(), d.iter())));
+        tr.test(every(ra::map_([](auto & c, auto & d) { return every(c==d); }, iter(c), iter(d))));
     }
     tr.section("selector experiments");
     {
@@ -52,7 +52,7 @@ int main()
         tr.test_eq(a(1, i), b(1));
         tr.test_eq(a(2, i), b(2));
         tr.test_eq(a(3, i), b(3));
-// The problem with a(i) = a(i, ra::all) is that a(i) returns a nested expression, so it isn't equivalent to a(i, [0 1 ...]), and if we want to write it as a rank 2 expression, we can't use from() as above because the iterator we want is a(i).iter(), it depends on i.
+// The problem with a(i) = a(i, ra::all) is that a(i) returns a nested expression, so it isn't equivalent to a(i, [0 1 ...]), and if we want to write it as a rank 2 expression, we can't use from() as above because the iterator we want is iter(a(i)), it depends on i.
 // So ...
     }
     tr.section("copying btw arrays nested in the same way");

@@ -45,11 +45,11 @@ nested_wrank_demo(V && v, A && a, B && b)
     std::iota(a.begin(), a.end(), 10);
     std::iota(b.begin(), b.end(), 1);
     {
-        using FM = ra::Framematch<V, tuple<decltype(a.iter()), decltype(b.iter())>>;
+        using FM = ra::Framematch<V, tuple<decltype(iter(a)), decltype(iter(b))>>;
         cout << "width of fm: " << ra::mp::len<typename FM::R> << endl;
         cout << ra::mp::print_ilist_t<typename FM::R> {} << endl;
-        auto af0 = reframe(a.iter(), ra::mp::ref<typename FM::R, 0>{});
-        auto af1 = reframe(b.iter(), ra::mp::ref<typename FM::R, 1>{});
+        auto af0 = reframe(iter(a), ra::mp::ref<typename FM::R, 0>{});
+        auto af1 = reframe(iter(b), ra::mp::ref<typename FM::R, 1>{});
         cout << "af0: " << sizeof(af0) << endl;
         cout << "af1: " << sizeof(af1) << endl;
         {
@@ -68,14 +68,14 @@ nested_wrank_demo(V && v, A && a, B && b)
             ra::ply_ravel(ra::map_(FM::op(v), af0, af1));
         }
         {
-            // cout << ra::mp::show<decltype(ra::map_(v, a.iter(), b.iter()))>::value << endl;
-            auto ewv = ra::map_(v, a.iter(), b.iter());
+            // cout << ra::mp::show<decltype(ra::map_(v, iter(a), iter(b)))>::value << endl;
+            auto ewv = ra::map_(v, iter(a), iter(b));
             cout << "shape(ewv): " << fmt(ra::nstyle, shape(ewv)) << endl;
 #define TEST(plier)                                                     \
             cout << "\n\nusing " RA_STRINGIZE(plier) " (ewv &):\n";        \
             ra::plier(ewv);                                             \
             cout << "\n\nusing " RA_STRINGIZE(plier) " ply (ewv &&):\n";   \
-            ra::plier(ra::map_(v, a.iter(), b.iter()));
+            ra::plier(ra::map_(v, iter(a), iter(b)));
             TEST(ply_ravel);
             TEST(ply_fixed);
         }
@@ -105,11 +105,11 @@ int main()
         auto plus2real_print = [](real a, real b) { cout << (a - b) << " "; };
         {
             auto v = ra::wrank<0, 2>(plus2real_print);
-            using FM = ra::Framematch<decltype(v), tuple<decltype(a.iter()), decltype(b.iter())>>;
+            using FM = ra::Framematch<decltype(v), tuple<decltype(iter(a)), decltype(iter(b))>>;
             cout << "width of fm: " << ra::mp::len<FM::R> << endl;
             cout << ra::mp::print_ilist_t<FM::R> {} << endl;
-            auto af0 = reframe(a.iter(), ra::mp::ref<FM::R, 0>{});
-            auto af1 = reframe(b.iter(), ra::mp::ref<FM::R, 1>{});
+            auto af0 = reframe(iter(a), ra::mp::ref<FM::R, 0>{});
+            auto af1 = reframe(iter(b), ra::mp::ref<FM::R, 1>{});
             cout << "af0: " << sizeof(af0) << endl;
             cout << "af1: " << sizeof(af1) << endl;
             auto ewv = ra::map_(FM::op(v), af0, af1);
@@ -168,18 +168,18 @@ int main()
         std::iota(a.begin(), a.end(), 10);
         std::iota(b.begin(), b.end(), 1);
         ra::Unique<real, 2> c({3, 4}, ra::none);
-        ra::ply(ra::map_(ra::wrank<1, 0, 1>(minus2real), c.iter(), a.iter(), b.iter()));
+        ra::ply(ra::map_(ra::wrank<1, 0, 1>(minus2real), iter(c), iter(a), iter(b)));
         real checkc34[3*4] = { /* 10-[1 2 3 4] */ 9, 8, 7, 6,
             /* 11-[1 2 3 4] */ 10, 9, 8, 7,
             /* 12-[1 2 3 4] */ 11, 10, 9, 8 };
         tr.test(std::equal(checkc34, checkc34+3*4, c.begin()));
-        ra::Unique<real, 2> d34(ra::map_(ra::wrank<0, 1>(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d34(ra::map_(ra::wrank<0, 1>(std::minus<real>()), iter(a), iter(b)));
         tr.test(std::equal(checkc34, checkc34+3*4, d34.begin()));
         real checkc43[3*4] = { /* [10 11 12]-1 */ 9, 10, 11,
             /* [10 11 12]-2 */ 8, 9, 10,
             /* [10 11 12]-3 */ 7, 8, 9,
             /* [10 11 12]-4 */ 6, 7, 8 };
-        ra::Unique<real, 2> d43(ra::map_(ra::wrank<1, 0>(std::minus<real>()), a.iter(), b.iter()));
+        ra::Unique<real, 2> d43(ra::map_(ra::wrank<1, 0>(std::minus<real>()), iter(a), iter(b)));
         tr.test(d43.len(0)==4 && d43.len(1)==3);
         tr.test(std::equal(checkc43, checkc43+3*4, d43.begin()));
     }
@@ -195,7 +195,7 @@ int main()
         real checkd[3*4] = { 1001, 1002, 1003, 1004,  1101, 1102, 1103, 1104,  1201, 1202, 1203, 1204 };
 // default auto is value, so need to speficy.
 #define MAP ra::map_(ra::wrank<0, 1>([&c](int a, int b) -> decltype(auto) { return c(a, b); } ), \
-                     a.iter(), b.iter())
+                     iter(a), iter(b))
         std::ostringstream os;
         os << MAP << endl;
         ra::Unique<real, 2> cc {};
@@ -224,9 +224,9 @@ int main()
         ra::Unique<real, 3> a({2, 2, 2}, 1.);
         ra::Unique<real, 3> b({2, 2, 2}, 2.);
         real y = 0;
-        auto e = ra::map_(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter());
+        auto e = ra::map_(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), iter(a), iter(b));
         static_assert(3==e.rank(), "bad rank in static rank expr");
-        ra::ply_ravel(ra::map_(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), a.iter(), b.iter()));
+        ra::ply_ravel(ra::map_(ra::wrank<0, 0>([&y](real const a, real const b) { y += a*b; }), iter(a), iter(b)));
         tr.test_eq(16, y);
     }
     tr.section("outer product variants");
