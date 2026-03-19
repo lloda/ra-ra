@@ -70,6 +70,7 @@ struct Unreg { int x; };
 int main()
 {
     TestRecorder tr(std::cout, TestRecorder::NOISY);
+    static_assert(ra::is_ctype<ra::ic_t<0> &>);
     {
         using T = std::chrono::duration<long int, std::ratio<1, 1000000000>>;
         ra::Big<T, 1> a;

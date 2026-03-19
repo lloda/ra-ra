@@ -322,7 +322,7 @@ template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1
 constexpr auto
 iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
 {
-    // return ptrview(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s))(insert<w>);
+    // return viewptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)); // for w=0 mostly works, not quite
     return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {});
 }
 
@@ -393,7 +393,7 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
 #pragma GCC diagnostic push // gcc14/15 -DRA_CHECK=0 --no-sanitize -O2 -O3 [ra03]
 #pragma GCC diagnostic warning "-Warray-bounds"
 #pragma GCC diagnostic warning "-Wstringop-overflow"
-            bv[bk] = { a.dimv[ak].len, a.dimv[ak].step };
+            bv[bk] = a.dimv[ak];
 #pragma GCC diagnostic pop
         }
     }

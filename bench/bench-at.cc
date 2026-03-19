@@ -58,7 +58,7 @@ int main(int argc, char * * argv)
                    bm.run([&]{
                        int val = 0;
                        for (int i=0; i<O; ++i) {
-                           val += C.at(I(i));
+                           val += at(C, I(i));
                        }
                        val0 = val;
                    }));
@@ -106,7 +106,7 @@ int main(int argc, char * * argv)
                    bm.run([&]{
                        int val = 0;
                        for (int i=0; i<O; ++i) {
-                           val += C.at(I(i));
+                           val += at(C, I(i));
                        }
                        val0 = val;
                    }));
@@ -115,9 +115,11 @@ int main(int argc, char * * argv)
                        val0 = sum(at(C, ra::iter<1>(I)));
                    }));
         };
-
-        auto iotav = ra::ii({100}); // view.at(i) rank depends on i's size. That can be var rank which is a lot slower.
-        auto iotai = ra::iota(100); // iter.at(i) requires i's size to be iter's rank.
+// at(i) can be a lot slower if i is var rank. FIXME But these are both static rank.
+        auto iotav = ra::ii({100});
+        static_assert(1==rank(iotav));
+        auto iotai = ra::iota(100);
+        static_assert(1==rank(iotai));
         [[maybe_unused]] ra::Big<int, 1> bigsa({100}, 4*ra::_0);
         [[maybe_unused]] ra::Big<int> bigda({100}, 4*ra::_0);
         [[maybe_unused]] ra::Small<int, 100> smola = 4*ra::_0;

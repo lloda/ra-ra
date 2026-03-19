@@ -239,22 +239,23 @@ template <class A> constexpr decltype(auto)
 at(A && a, auto && i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
 {
     if constexpr (0==rank_s<decltype(VAL(i))>()) {
-        return a.at(i);
+        if constexpr (Slice<std::decay_t<A>>) {
+            return *indexer(RA_FW(a), a.data(), iter(i));
+        } else {
+            return RA_FW(a).at(i);
+        }
     } else {
         return map([a=std::tuple<A>(RA_FW(a))](auto && i) -> decltype(auto) { return at(std::get<0>(a), i); }, RA_FW(i));
     }
 }
 
 template <class A> constexpr decltype(auto)
-at_view(A && a, auto && i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
+at_view(A && a, auto && i) requires (Slice<std::decay_t<A>>)
 {
     if constexpr (0==rank_s<decltype(VAL(i))>()) {
 // can't say 'frame rank 0' so -size wouldn't work. FIXME What about ra::len
-        if constexpr (constexpr rank_t cr = rank_diff(rank_s(a), ra::size_s(i)); ANY==cr) {
-            return iter(a, rank(a)-ra::size(i)).at(i);
-        } else {
-            return iter<cr>(a).at(i);
-        }
+        constexpr rank_t cr = rank_diff(rank_s(a), ra::size_s(i));
+        return iter(RA_FW(a), [&]{ if constexpr (ANY==cr) return rank(a)-ra::size(i); else return ic<cr>; }()).at(i);
     } else {
         return map([a=std::tuple<A>(RA_FW(a))](auto && i) -> decltype(auto) { return at_view(std::get<0>(a), i); }, RA_FW(i));
     }

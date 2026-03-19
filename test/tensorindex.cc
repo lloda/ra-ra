@@ -59,12 +59,9 @@ int main()
     {
         ra::Big<float, 2> x({4, 3}, 0);
         ra::Big<float, 2> y({4, 3}, i-j);
-        for_each([&](auto i, auto j, auto forsize)
-                 {
-                     tr.info("i ", i, " j ", j)
-                         .test_eq((x + i - j).at(std::array {i, j}),
-                                  y.at(std::array {i, j}));
-                 }, i, j, x);
+        for_each([&](auto i, auto j, auto forsize){
+            tr.info("i ", i, " j ", j).test_eq(at((x + i - j), std::array {i, j}), at(y, std::array {i, j}));
+        }, i, j, x);
     }
 
     return tr.summary();

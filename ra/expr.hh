@@ -113,7 +113,7 @@ struct Scalar final
     constexpr static dim_t step(int k) { return 0; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep(dim_t st, int z, int j) { return true; }
-    constexpr decltype(auto) at(auto && i) const { return c; }
+    constexpr decltype(auto) at(auto const & j) const { return c; }
     constexpr std::conditional_t<std::is_lvalue_reference_v<C>, C, C const &> operator*() const { return c; } // [ra24][ra37][ra39]
     consteval static int save() { return 0; }
     constexpr static void load(int) {}
@@ -163,7 +163,7 @@ to_scalar(auto && e)
 // --------------------
 
 constexpr auto
-indexer(auto & a, auto cp, Iterator auto && p)
+indexer(auto const & a, auto cp, Iterator auto && p)
 {
     if constexpr (ANY==rank_s(p)) {
         RA_CK(1==ra::rank(p), "Bad rank ", ra::rank(p), " for subscript.");
@@ -248,7 +248,7 @@ struct CellBase<P, Dimv, Cr>
     constexpr static rank_t cr = maybe_any<Cr>;
     constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s(simv), cr) : ANY;
     constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s(simv), cr) : ANY;
-    using Vu = View<P, ic_t<std::apply([](auto ... i){ return std::array<Dim, cellr> {dimv[i+framer] ...}; }, mp::iota<cellr> {})>>;
+    using Vu = View<P, ic_t<std::apply([](auto ... i){ return std::array<std::decay_t<decltype(dimv[0])>, cellr>{dimv[i+framer] ...}; }, mp::iota<cellr> {})>>;
 };
 
 template <class P, class Dimv, class Cr>
@@ -286,8 +286,8 @@ struct Cell: public CellBase<P, Dimv, Cr>
 #undef RAC
 #pragma GCC diagnostic pop
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*c.cp) at(auto const & i) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(i)); }
-    constexpr Vu at(auto const & i) const requires (0!=cellr) { Vu d(c); d.cp=indexer(*this, d.cp, ra::iter(i)); return d; }
+    constexpr decltype(*c.cp) at(auto const & j) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(j)); }
+    constexpr Vu at(auto const & j) const requires (0!=cellr) { Vu d(c); d.cp=indexer(*this, d.cp, ra::iter(j)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr Vu const & operator*() const requires (0!=cellr) { return c; }
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); } /* [ra45] */
@@ -297,11 +297,10 @@ struct Cell: public CellBase<P, Dimv, Cr>
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
     constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
 #pragma GCC diagnostic pop
-// for the sake of iota(), which needs to be both Iterator and Slice. FIXME make iota() View not Cell.
-    constexpr auto data() const { return c.cp; }
+    constexpr auto data() const { return c.cp; } // iota() must be Iterator *and* Slice. FIXME iota() be Slice alone.
 };
 
-template <class P, class Dimv, class Cr> Cell(P, Dimv &&, Cr) -> Cell<P, Dimv, Cr>;
+template <class P, class Dimv, class Cr> Cell(P, Dimv &&, Cr) -> Cell<P, Dimv, std::conditional_t<is_ctype<Cr>, Cr, rank_t>>;
 
 // Cell doesn't retain rvalues [ra4]. If both Slice and Iterator (Ptr), go as Iterator.
 // TODO any exprs? runtime cr? ra::len in cr?
@@ -309,14 +308,10 @@ constexpr auto
 iter(Slice auto && s, auto c) requires (!is_iterator<decltype(s)>)
 {
     using Dimv = std::decay_t<decltype(s)>::Dimv;
-    if constexpr (is_ctype<decltype(c)>) {
-        if constexpr (is_ctype<Dimv>) {
-            return Cell(s.data(), Dimv {}, c);
-        } else {
-            return Cell(s.data(), RA_FW(s).dimv, c);
-        }
+    if constexpr (is_ctype<decltype(c)> && is_ctype<Dimv>) {
+        return Cell(s.data(), Dimv {}, c);
     } else {
-        return Cell(s.data(), RA_FW(s).dimv, rank_t(c));
+        return Cell(s.data(), RA_FW(s).dimv, c);
     }
 }
 
@@ -342,28 +337,28 @@ struct SDim
     constexpr operator Dim () const { return Dim { .len=len, .step=step }; }
 };
 
-template <class P, class N, class S> using PtrView = View<P, std::array<SDim<N, S>, 1>>;
+template <class P, class N, class S> using ViewPtr = View<P, std::array<SDim<N, S>, 1>>;
 template <class P, class N, class S> using Ptr = Cell<P, std::array<SDim<N, S>, 1>, ic_t<0>>;
 
-template <class X> using sarg = std::conditional_t<is_ctype<std::decay_t<X>> || is_scalar<X>, std::decay_t<X>, X>;
+template <class X> using sarg = std::conditional_t<is_ctype<X> || is_scalar<X>, std::decay_t<X>, X>;
 
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
-ptrview(P && p, N && n=N {}, S && s=S(maybe_step<S>))
+viewptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
 {
     if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<P>>) {
         static_assert(std::is_same_v<ic_t<dim_t(UNB)>, N>, "Conflict with own length.");
         static_assert(std::is_same_v<ic_t<dim_t(1)>, S>, "Deduced size means unit step.");
-        return ptrview(std::begin(RA_FW(p)), [&p](){ if constexpr (ANY==size_s(p)) return ra::size(p); else return ic<size_s(p)>; }(), RA_FW(s));
+        return viewptr(std::begin(RA_FW(p)), [&p](){ if constexpr (ANY==size_s(p)) return ra::size(p); else return ic<size_s(p)>; }(), RA_FW(s));
     } else {
         if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
-        return PtrView<std::decay_t<P>, sarg<N>, sarg<S>>(std::array { SDim<sarg<N>, sarg<S>> { .len=RA_FW(n), .step=RA_FW(s) } }, RA_FW(p));
+        return ViewPtr<std::decay_t<P>, sarg<N>, sarg<S>>(std::array { SDim<sarg<N>, sarg<S>> { .len=RA_FW(n), .step=RA_FW(s) } }, RA_FW(p));
     }
 }
 
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
-ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>)) { return iter(ptrview(RA_FW(p), RA_FW(n), RA_FW(s))); }
+ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>)) { return iter(viewptr(RA_FW(p), RA_FW(n), RA_FW(s))); }
 
 constexpr auto iter(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
 template <class T> constexpr auto iter(std::initializer_list<T> a) { return ra::ptr(a); }

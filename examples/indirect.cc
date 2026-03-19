@@ -32,11 +32,11 @@ example1()
     // In ra::, both sides of = must agree in shape. E.g. if A has rank 1, then I and B must agree in shape (not A and B).
     // Also, the selector () is outer product (to index two axes, you need two arguments). The 'coord' selector is at().
     // So this is the most direct translation. Note the -> decltype(auto) to construct a reference expr.
-    map([&A](auto && c) -> decltype(auto) { return A.at(c); }, I)
-        = map([&B](auto && c) { return B.at(c); }, I);
+    map([&A](auto && c) -> decltype(auto) { return at(A, c); }, I)
+        = map([&B](auto && c) { return at(B, c); }, I);
 
     // More reasonably
-    for_each([&A, &B](auto && c) { A.at(c) = B.at(c); }, I);
+    for_each([&A, &B](auto && c) { at(A, c) = at(B, c); }, I);
 
     // There is an array op for at(). See also example5 below.
     at(A, I) = at(B, I);

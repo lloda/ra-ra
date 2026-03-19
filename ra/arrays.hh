@@ -156,13 +156,12 @@ struct View: public ViewBase<Dimv_>
     constexpr decltype(auto) operator OP(Iterator auto && x) const { iter(*this) OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
-    constexpr auto begin() const { if constexpr ((CT && c_order(simv)) || (1==R && 1==RAC(0, step))) return cp; else return STLIterator(iter()); }
+    constexpr auto begin() const { if constexpr ((CT && c_order(simv)) || (1==R && 1==RAC(0, step))) return cp; else return STLIterator(iter(*this)); }
     constexpr auto end() const requires ((CT && c_order(simv)) || (1==R && 1==RAC(0, step))) { return cp+size(); }
     constexpr static auto end() requires (!(CT && c_order(simv)) && !(1==R && 1==RAC(0, step))) { return std::default_sentinel; }
     constexpr decltype(auto) back(this auto && sf) { static_assert(!CT || len_s(0)>0, "Bad back()."); return RA_FW(sf)(sf.len(0)-1); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
-    constexpr decltype(auto) at(auto const & i) const { return *indexer(*this, cp, iter(i)); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
 #undef RAC
 };
@@ -236,7 +235,6 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
     constexpr decltype(auto) back(this auto && sf) { return RA_FW(sf).view().back(); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
-    constexpr decltype(auto) at(this auto && sf, auto const & i) { return RA_FW(sf).view().at(i); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };
@@ -259,7 +257,7 @@ template <class P>
 struct storage_traits<std::unique_ptr<P>>
 {
     using V = std::unique_ptr<P>;
-    using T = std::decay_t<decltype(*std::declval<V>().get())>;
+    using T = std::remove_reference_t<decltype(*std::declval<V>().get())>;
     constexpr static auto create(dim_t n) { RA_CK(0<=n, "Bad size ", n, "."); return V(new T[n]); }
     constexpr static auto data(auto & v) { return v.get(); }
 };
@@ -268,7 +266,7 @@ template <class P>
 struct storage_traits<std::shared_ptr<P>>
 {
     using V = std::shared_ptr<P>;
-    using T = std::decay_t<decltype(*std::declval<V>().get())>;
+    using T = std::remove_reference_t<decltype(*std::declval<V>().get())>;
     constexpr static auto create(dim_t n) { RA_CK(0<=n, "Bad size ", n, "."); return V(new T[n], std::default_delete<T[]>()); }
     constexpr static auto data(auto & v) { return v.get(); }
 };
@@ -277,13 +275,13 @@ struct storage_traits<std::shared_ptr<P>>
 // FIXME requires copyable T. store(x) avoids it for Big, but not for Unique. Should construct in place like std::vector.
 template <class Store, rank_t R>
 struct Container: public std::conditional_t<1==R,
-                                            PtrView<typename storage_traits<Store>::T *, dim_t, ic_t<dim_t(1)>>,
+                                            ViewPtr<typename storage_traits<Store>::T *, dim_t, ic_t<dim_t(1)>>,
                                             ViewBig<typename storage_traits<Store>::T *, R>>
 {
     Store store;
     using T = typename storage_traits<Store>::T;
-    using Vu = std::conditional_t<1==R, PtrView<T *, dim_t, ic_t<dim_t(1)>>, ViewBig<T *, R>>;
-    using VuConst = std::conditional_t<1==R, PtrView<T const *, dim_t, ic_t<dim_t(1)>>, ViewBig<T const *, R>>;
+    using Vu = std::conditional_t<1==R, ViewPtr<T *, dim_t, ic_t<dim_t(1)>>, ViewBig<T *, R>>;
+    using VuConst = std::conditional_t<1==R, ViewPtr<T const *, dim_t, ic_t<dim_t(1)>>, ViewBig<T const *, R>>;
     constexpr Vu & view() { return *this; }
     constexpr VuConst const & view() const { return *this; }
     using typename Vu::Dimv;
@@ -360,7 +358,7 @@ struct Container: public std::conditional_t<1==R,
     }
     constexpr void resize(dim_t const s, T const & t)
     {
-        static_assert(ANY==R || 0<R); RA_CK(0<rank());
+        if constexpr (ANY==R) { RA_CK(0<rank()); } else { static_assert(0<R); }
         dimv[0].len = s; store.resize(size(), t); cp = store.data();
     }
     constexpr void resize(auto const & s) requires (1==rank_s(s))
@@ -389,12 +387,11 @@ struct Container: public std::conditional_t<1==R,
         RA_CK(0<dimv[0].len, "Empty array pop_back().");
         --dimv[0].len; store.pop_back();
     }
+    constexpr auto begin(this auto && sf) { return sf.view().data(); }
+    constexpr auto end(this auto && sf) { return sf.view().data()+sf.size(); }
     constexpr decltype(auto) back(this auto && sf) { return RA_FW(sf).view().back(); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return RA_FW(sf).view()(RA_FW(i) ...); }
-    constexpr decltype(auto) at(this auto && sf, auto const & i) { return RA_FW(sf).view().at(i); }
-    constexpr auto begin(this auto && sf) { assert(c_order(sf.view().dimv)); return sf.view().data(); }
-    constexpr auto end(this auto && sf) { return sf.view().data()+sf.size(); }
     constexpr operator T & () { return view(); }
     constexpr operator T const & () const { return view(); }
 };

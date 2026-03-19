@@ -124,7 +124,7 @@ int main()
             double check2[1] = { 5 };
             double check1[2] = { 2, 5 };
             double check0[6] = { 1, 4, 2, 5, 3, 6 };
-            auto k2 = s.at(i2);
+            auto k2 = at(s, i2);
             tr.test_eq(0, ra::rank(k2));
             tr.test_eq(check2[0], k2);
             auto k1 = at_view(s, i1).begin(); tr.test(std::equal(check1, check1+2, k1));
@@ -155,12 +155,12 @@ int main()
             tr.test_eq(5, s(ra::all, 1)(1));
             tr.test_eq(6, s(ra::all, 1)(2));
             using I0 = ra::Small<ra::dim_t, 1>;
-            tr.test_eq(1, s(ra::all, 0).at(I0 {0}));
-            tr.test_eq(2, s(ra::all, 0).at(I0 {1}));
-            tr.test_eq(3, s(ra::all, 0).at(I0 {2}));
-            tr.test_eq(4, s(ra::all, 1).at(I0 {0}));
-            tr.test_eq(5, s(ra::all, 1).at(I0 {1}));
-            tr.test_eq(6, s(ra::all, 1).at(I0 {2}));
+            tr.test_eq(1, at(s(ra::all, 0), I0 {0}));
+            tr.test_eq(2, at(s(ra::all, 0), I0 {1}));
+            tr.test_eq(3, at(s(ra::all, 0), I0 {2}));
+            tr.test_eq(4, at(s(ra::all, 1), I0 {0}));
+            tr.test_eq(5, at(s(ra::all, 1), I0 {1}));
+            tr.test_eq(6, at(s(ra::all, 1), I0 {2}));
         }
         tr.section("with rank 1 subscripts, result rank > 1");
         {

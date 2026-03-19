@@ -249,7 +249,7 @@ int main()
         tr.test_eq(7, a[0]);
         tr.test_eq(7, a[1]);
         tr.test_eq(7, a[2]);
-        ply(map_([](real & a, int b){ a = b; }, iter(a), ra::iota<0>()));
+        ply(map_([](real & a, int b){ a = b; }, iter(a), iter(ra::iota<0>())));
         tr.test_eq(0, a[0]);
         tr.test_eq(1, a[1]);
         tr.test_eq(2, a[2]);

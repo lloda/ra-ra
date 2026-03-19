@@ -156,7 +156,7 @@ int main()
                 tr.test_eq(0.5, 0.5*a0);
             }
             {
-                auto a0 = a.at(ra::Small<int, 1> { 0 }); // BUG Not sure this is what I want, see above
+                auto a0 = at(a, ra::Small<int, 1> { 0 }); // BUG Not sure this is what I want, see above
                 tr.test_eq(2.1, 2.1*a0);
                 tr.test_eq(0.5, 0.5*a0);
                 tr.test_eq(0.5, complex(0.5)*a0);

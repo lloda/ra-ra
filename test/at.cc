@@ -16,16 +16,24 @@ using std::cout, std::endl;
 int main()
 {
     ra::TestRecorder tr(std::cout);
-
+    tr.section("demo");
+    {
+        ra::Small<double, 3, 2> s { 1, 4, 2, 5, 3, 6 };
+// must give as many indices as rank
+        tr.test_eq(5, at(s, std::array<int, 2>{1, 1}));
+        tr.test_eq(5, at(iter(s), std::array<int, 2>{1, 1}));
+// may give shorter, views only
+        tr.test_eq(ra::iter({2, 5}), at_view(s, std::array<int, 1>{1}));
+    }
     auto test = [&](auto && C, auto && A, auto && B, auto && I1, auto && I2)
     {
         A = 0;
-        map([&A](auto && i) -> decltype(auto) { return A.at(i); }, I2)
-            = map([&B](auto && i) -> decltype(auto) { return B.at(i); }, I2);
+        map([&A](auto && i) -> decltype(auto) { return at(A, i); }, I2)
+            = map([&B](auto && i) -> decltype(auto) { return at(B, i); }, I2);
         tr.test_eq(C, A);
 
         A = 0;
-        map([&A](auto && i) -> decltype(auto) { return A.at(i); }, I2)
+        map([&A](auto && i) -> decltype(auto) { return at(A, i); }, I2)
             = at(B, I2);
         tr.test_eq(C, A);
 
@@ -33,13 +41,13 @@ int main()
         using int2 = ra::Small<int, 2>;
         for (int i=0; i<C.len(0); ++i) {
             for (int j=0; j<C.len(1); ++j) {
-                tr.test_eq(C(i, j), C.at(std::array {i, j}));
-                tr.test_eq(C(i, j), C.at(int2 {i, 0} + int2 {0, j}));
+                tr.test_eq(C(i, j), at(C, std::array {i, j}));
+                tr.test_eq(C(i, j), at(C, int2 {i, 0} + int2 {0, j}));
             }
         }
 
         A = 0;
-        at(A, I2) = map([&B](auto && i) -> decltype(auto) { return B.at(i); }, I2);
+        at(A, I2) = map([&B](auto && i) -> decltype(auto) { return at(B, i); }, I2);
         tr.test_eq(C, A);
 
         A = 0;

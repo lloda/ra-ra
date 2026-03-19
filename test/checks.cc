@@ -76,7 +76,7 @@ int main()
     {
         std::string msg;
         try {
-            cout << ra::iota(10).at(std::array {11}) << endl;
+            cout << at(ra::iota(10), std::array {11}) << endl;
         } catch (ra_error & e) {
             msg = e.what();
         }

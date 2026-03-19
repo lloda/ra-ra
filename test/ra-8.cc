@@ -53,8 +53,8 @@ int main()
         using coord = ra::Small<int, 2>;
         ra::Big<coord, 1> I = { coord{1, 1}, coord{2, 2} };
 
-        map([&A](auto && c) -> decltype(auto) { return A.at(c); }, I)
-            = map([&B](auto && c) { return B.at(c); }, I);
+        map([&A](auto && c) -> decltype(auto) { return at(A, c); }, I)
+            = map([&B](auto && c) { return at(B, c); }, I);
         tr.test_eq(Ureal<2>({4, 4}, {0, 0, 0, 0,  0, 11, 0, 0,  0, 0, 22, 0,  0, 0, 0, 0}), A);
     }
     return tr.summary();

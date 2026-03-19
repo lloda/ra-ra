@@ -244,7 +244,7 @@ int main(int argc, char * * argv)
     {
         ra::Big<double, 2> a({3, 3}, ra::_0 + 10*ra::_1);
         std::array<int, 2> b = {2, 2};
-        tr.test_eq(22, a.at(b));
+        tr.test_eq(22, at(a, b));
     }
     tr.section("default constructor of var rank");
     {

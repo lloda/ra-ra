@@ -573,10 +573,10 @@ int main()
             {
                 auto r2 = r(1, 1);
                 tr.test_eq(5, r2);
-                tr.info("r2a 1)").test_eq(5, r.at(ra::Small<int, 2> {1, 1}));
-                tr.info("r2a 2)").test_eq(5, r.at(ra::Big<int, 1> {1, 1}));
-                tr.info("r2a 3)").test_eq(5, r.at(0+ra::Big<int, 1> {1, 1}));
-                tr.info("r2a 4)").test_eq(5, r.at(0+ra::Big<int> {1, 1}));
+                tr.info("r2a 1)").test_eq(5, at(r, ra::Small<int, 2> {1, 1}));
+                tr.info("r2a 2)").test_eq(5, at(r, ra::Big<int, 1> {1, 1}));
+                tr.info("r2a 3)").test_eq(5, at(r, 0+ra::Big<int, 1> {1, 1}));
+                tr.info("r2a 4)").test_eq(5, at(r, 0+ra::Big<int> {1, 1}));
             }
         }
         // TODO Subscript a rank>1 array, multiple selectors, mixed beatable & unbeatable selectors.

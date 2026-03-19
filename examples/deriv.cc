@@ -63,7 +63,8 @@ int main()
 
     // Now calculate the root mean square approximation error:
     // [ra] TODO don't have mean() yet
-    double error = sqrt(sum(sqr(y2(I) - y2exact(I)))/size(I));
+    // [ra] FIXME bad looking ambiguity in size(I)
+    double error = sqrt(sum(sqr(y2(I) - y2exact(I)))/ra::size(I));
 
     // Display a few elements from the vectors.
     // This range constructor means elements 1 to 91 in increments
