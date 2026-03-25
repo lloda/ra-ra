@@ -120,21 +120,18 @@ int main()
         tr.test_eq(a.len(2), b.len(2));
         tr.test(every(a==b));
 
-        auto test = [&tr](ra::ViewBig<double *, 3> a, double * p)
-                    {
-                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
-                        tr.test(p==a.data());
-                    };
-        auto test_const = [&tr](ra::ViewBig<double const *, 3> a, double * p)
-                    {
-                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
-                        tr.test(p==a.data());
-                    };
-        auto test_const_ref = [&tr](ra::ViewBig<double const *, 3> const & a, double * p)
-                    {
-                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
-                        tr.test(p==a.data());
-                    };
+        auto test = [&tr](ra::ViewBig<double *, 3> a, double * p){
+            tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+            tr.test(p==a.data());
+        };
+        auto test_const = [&tr](ra::ViewBig<double const *, 3> a, double * p){
+            tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+            tr.test(p==a.data());
+        };
+        auto test_const_ref = [&tr](ra::ViewBig<double const *, 3> const & a, double * p){
+            tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+            tr.test(p==a.data());
+        };
         test(b, b.data()); // var rank to fixed rank
         test_const(b, b.data()); // non-const to const, var rank to fixed rank
         test_const_ref(a(), a.data()); // non-const to const, keeping fixed rank
@@ -150,21 +147,18 @@ int main()
         tr.test_eq(a.len(2), b.len(2));
         tr.test(every(a==b));
 
-        auto test = [&tr](ra::ViewBig<double *> a, double * p)
-                    {
-                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
-                        tr.test(p==a.data());
-                    };
-        auto test_const = [&tr](ra::ViewBig<double const *> a, double * p)
-                    {
-                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
-                        tr.test(p==a.data());
-                    };
-        auto test_const_ref = [&tr](ra::ViewBig<double const *> const & a, double * p)
-                    {
-                        tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
-                        tr.test(p==a.data());
-                    };
+        auto test = [&tr](ra::ViewBig<double *> a, double * p){
+            tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+            tr.test(p==a.data());
+        };
+        auto test_const = [&tr](ra::ViewBig<double const *> a, double * p){
+            tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+            tr.test(p==a.data());
+        };
+        auto test_const_ref = [&tr](ra::ViewBig<double const *> const & a, double * p){
+            tr.test_eq(ra::Small<int, 3> {3, 2, 4}, shape(a));
+            tr.test(p==a.data());
+        };
         test(b, b.data()); // fixed rank to var rank
         test_const(b, b.data()); // non-const to const, fixed rank to var rank
         test_const_ref(a, a.data()); // non-const to const, keeping var rank
@@ -183,10 +177,8 @@ int main()
     tr.section("ViewBig as iota<w>");
 // in order to replace Ptr<>, we must support Len both in P and in Dimv.
     {
-        constexpr ra::ViewBig<ra::Seq<ra::dim_t>, 1>
-            i0({{ra::UNB, 1}}, ra::Seq<ra::dim_t> {0});
-        constexpr ra::ViewBig<ra::Seq<ra::dim_t>, 2>
-            i1({{ra::UNB, 0}, {ra::UNB, 1}}, ra::Seq<ra::dim_t> {0});
+        constexpr ra::ViewBig<ra::Seq<ra::dim_t>, 1> i0({{ra::UNB, 1}}, ra::Seq<ra::dim_t> {0});
+        constexpr ra::ViewBig<ra::Seq<ra::dim_t>, 2> i1({{ra::UNB, 0}, {ra::UNB, 1}}, ra::Seq<ra::dim_t> {0});
         tr.strict().test_eq(ra::Small<int, 3> {1, 3, 5}, i0 + ra::Small<int, 3> {1, 2, 3});
         ra::Big<ra::dim_t> p({3, 4}, i0 - i1);
         tr.strict().test_eq(ra::Big<ra::dim_t, 2> {{0, -1, -2, -3}, {1, 0, -1, -2}, {2, 1, 0, -1}}, p);

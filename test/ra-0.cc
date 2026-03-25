@@ -53,7 +53,7 @@ CheckArrayIO(TestRecorder & tr, A const & a, double * begin)
 
 int main()
 {
-    TestRecorder tr(std::cout);
+    TestRecorder tr(cout);
     tr.section("expr len_s doesn't depend on operand order");
     {
         ra::Small<int, 4> a = ra::_0;
@@ -82,7 +82,6 @@ int main()
             ra::ViewBig<double *> a = { {{10, 2}, {2, 1}}, aa };
             tr.test_eq(10, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.data()(3, 4): " << a.data()[19] << endl;
             tr.test_eq(77, a.data()[19]);
         }
         {
@@ -95,7 +94,6 @@ int main()
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.data()(3, 4): " << a.data()[9] << endl;
             tr.test_eq(77, a.data()[9]);
         }
         {
@@ -108,7 +106,6 @@ int main()
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.data()(3, 4): " << a.data()[9] << endl;
             tr.test_eq(88, a.data()[9]);
         }
         {
@@ -121,7 +118,6 @@ int main()
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
-            cout << "a.data()(3, 4): " << a.data()[9] << endl;
             tr.test_eq(99, a.data()[9]);
         }
     }
@@ -142,7 +138,7 @@ int main()
         auto rank0test0 = [](double & a) { a *= 2; };
         auto rank0test1 = [](double const & a) { return a*2; };
         double x { 99 };
-        ra::ViewBig<double *, 0> a (&x); // FIXME ({}, cp) is ambiguous; fixable here, but harder for var rank
+        ra::ViewBig<double *, 0> a ({}, &x);
         tr.test_eq(1, a.size());
 
 // ra::ViewBig<T *, 0> contains a pointer to T plus the dope vector of type Small<Dim, 0>. But after I put the data of Small in Small itself instead of in SmallBase, sizeof(Small<T, 0>) is no longer 0.
@@ -335,13 +331,11 @@ int main()
         // construct Small from pointers / iterators. These still work by prefix match.
         // use std::copy() after construction for row major fill.
         double rrcheck[6] = { 1, 1, 2, 2, 3, 3 };
-        auto check_ptr
-            = [&](auto && rr)
-              {
-                  ra::Small<double, 3, 2> z(ra::ptr(rr));
-                  std::copy(z.begin(), z.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
-                  tr.test(std::equal(rrcheck, rrcheck+6, z.begin()));
-              };
+        auto check_ptr = [&](auto && rr){
+            ra::Small<double, 3, 2> z(ra::ptr(rr));
+            std::copy(z.begin(), z.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
+            tr.test(std::equal(rrcheck, rrcheck+6, z.begin()));
+        };
         {
             std::vector<double> rr { 1, 2, 3, 4, 5, 6 };
             check_ptr(rr.begin());
@@ -413,7 +407,6 @@ int main()
         tr.test_eq(1, b.size());
         tr.test_eq(44, b());
         b = 55.;
-        cout << "b: " << b << endl;
 // see above for b.rank().
         tr.test_eq(0, b.rank());
         tr.test_eq(1, b.size());
@@ -481,11 +474,8 @@ int main()
     tr.section("row-major assignment from initializer_list, rank 2");
     {
         ra::Unique<double, 2> a({3, 2}, ra::none);
-        std::cout << "A00" << std::endl;
         a = { 2, 3, 1, 4, 8, 9 };
-        std::cout << "A01" << std::endl;
         tr.test_eq(2, a(0, 0));
-        std::cout << "A02" << std::endl;
         tr.test_eq(3, a(0, 1));
         tr.test_eq(1, a(1, 0));
         tr.test_eq(4, a(1, 1));
@@ -544,7 +534,6 @@ int main()
         {
             double rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::ViewBig<double *, 2> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
-            cout << "org" << endl;
             std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             {
                 double rcheck[6] = { 1, 4, 2, 5, 3, 6 };
@@ -584,14 +573,12 @@ int main()
         {
             ra::Unique<double, 1> a = {1, 2, 3, 4};
             ra::Unique<int, 1> i = {3, 1, 2};
-            cout << a(i) << endl;
             ra::Unique<double, 1> ai = a(i);
             tr.test_eq(i.size(), ai.size());
             tr.test_eq(a[i[0]], ai[0]);
             tr.test_eq(a[i[1]], ai[1]);
             tr.test_eq(a[i[2]], ai[2]);
             a(i) = ra::Unique<double, 1> {7, 8, 9};
-            cout << a << endl;
             tr.test_eq(4, a.size());
             tr.test_eq(1, a[0]);
             tr.test_eq(a[i[0]], 7);
@@ -603,7 +590,6 @@ int main()
             double rpool[6] = { 1, 2, 3, 4, 5, 6 };
             ra::ViewBig<double *> r { {ra::Dim {3, 1}, ra::Dim {2, 3}}, rpool };
             tr.test_eq(2, r.rank());
-            cout << "org" << endl;
             std::ranges::copy(r.begin(), r.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
 
             double rcheck0[6] = { 1, 4, 2, 5, 3, 6 };
@@ -611,7 +597,6 @@ int main()
             auto r0a = at_view(r, ra::Small<int, 0> {});
             tr.test_eq(2, r0a.rank());
             tr.test_eq(2, r0.rank());
-            cout << "r0" << endl;
             std::ranges::copy(r0.begin(), r0.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             tr.test(std::ranges::equal(r0.begin(), r0.end(), rcheck0, rcheck0+6));
             tr.test(std::ranges::equal(r0a.begin(), r0a.end(), rcheck0, rcheck0+6));
@@ -621,7 +606,6 @@ int main()
             auto r1a = at_view(r, ra::Small<int, 1> {1});
             tr.test_eq(1, r1a.rank());
             tr.test_eq(1, r1.rank());
-            cout << "r1" << endl;
             std::ranges::copy(r1.begin(), r1.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             tr.test(std::ranges::equal(r1.begin(), r1.end(), rcheck1, rcheck1+2));
             tr.test(std::ranges::equal(r1a.begin(), r1a.end(), rcheck1, rcheck1+2));
@@ -630,7 +614,6 @@ int main()
             auto r2 = r(1, 1);
             auto r2a = at_view(r, ra::Small<int, 2> {1, 1});
             tr.test_eq(0, r2a.rank());
-            cout << "r2" << endl;
             std::ranges::copy(r2.begin(), r2.end(), std::ostream_iterator<double>(cout, " ")); cout << endl;
             tr.test(std::ranges::equal(r2.begin(), r2.end(), rcheck2, rcheck2+1));
             tr.test(std::ranges::equal(r2a.begin(), r2a.end(), rcheck2, rcheck2+1));
@@ -717,7 +700,7 @@ int main()
         tr.section("7");
         {
             double rpool[1] = { 88 };
-            ra::ViewBig<double *, 0> r (rpool); // FIXME ({}, cp) is ambiguous; fixable here, but harder for var rank
+            ra::ViewBig<double *, 0> r ({}, rpool);
             double check[1] = { 88 };
             CheckArrayOutput(tr, r, check);
             tr.test_eq(1, r.size());
@@ -727,7 +710,7 @@ int main()
         tr.section("7b");
         {
             double rpool[1] = { 88 };
-            ra::ViewBig<double *> r (rpool); // FIXME ({}, cp) is ambiguous
+            ra::ViewBig<double *> r ({}, rpool);
             double check[2] = { 0, 88 };
             CheckArrayOutput(tr, r, check);
             tr.test_eq(1, r.size());

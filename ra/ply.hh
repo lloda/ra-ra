@@ -550,7 +550,7 @@ from(A && a, auto && ...  i)
             RA_CK(rank(a)==sizeof...(i), "Run time reframe rank(a) ", rank(a), " args ", sizeof...(i), ".");
             return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(
                          [a=std::tuple<A>(RA_FW(a))](auto && ... i) -> decltype(auto)
-                         { return *frompl(std::get<0>(a).cp, std::get<0>(a), i ...); }),
+                         { return *frompl(std::get<0>(a).data(), std::get<0>(a), i ...); }),
                        RA_FW(i) ...);
 // unbeaten on beaten rank
         } else {

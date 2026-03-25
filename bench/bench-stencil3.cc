@@ -119,18 +119,16 @@ int main()
     std::random_device rand;
     real value = rand();
 
-    auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f)
-        {
-            auto bv = Benchmark().repeats(ts).runs(3)
-                .once_f([&](auto && repeat)
-                        {
-                            Anext = 0.;
-                            A = value;
-                            repeat([&]() { f(A, Anext, Astencil); });
-                        });
-            tr.info(Benchmark::report(bv, A.size()), " ", tag)
-                .test_rel(ref, A, 1e-11);
-        };
+    auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f){
+        auto bv = Benchmark().repeats(ts).runs(3)
+            .once_f([&](auto && repeat){
+                Anext = 0.;
+                A = value;
+                repeat([&]() { f(A, Anext, Astencil); });
+            });
+        tr.info(Benchmark::report(bv, A.size()), " ", tag)
+            .test_rel(ref, A, 1e-11);
+    };
 
     ra::Big<real, 3> Aref;
 

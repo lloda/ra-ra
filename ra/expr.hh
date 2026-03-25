@@ -171,9 +171,9 @@ indexer(auto const & a, auto cp, Iterator auto && p)
         static_assert(1==rank_s(p), "Bad rank for subscript.");
     }
     if constexpr (ANY==size_s(p) || ANY==rank_s(a)) {
-        RA_CK(p.len(0) >= a.rank(), "Too few indices.");
+        RA_CK(p.len(0)>=a.rank(), "Too few indices ", p.len(0), ", need at least ", a.rank(), ".");
     } else {
-        static_assert(size_s(p) >= rank_s(a), "Too few indices.");
+        static_assert(size_s(p)>=rank_s(a), "Too few indices.");
     }
     for (rank_t k=0; k<a.rank(); ++k, p.mov(p.step(0))) {
         auto i = *p;
@@ -184,25 +184,30 @@ indexer(auto const & a, auto cp, Iterator auto && p)
 }
 
 struct Dim { dim_t len, step; };
-
-inline std::ostream &
-operator<<(std::ostream & o, Dim const & dim) { std::print(o, "[Dim {} {}]", dim.len, dim.step); return o; }
+inline std::ostream & operator<<(std::ostream & o, Dim const & d) { std::print(o, "[Dim {} {}]", d.len, d.step); return o; }
 
 constexpr void
-resize(auto & a, dim_t s)
+resize(auto & a, auto s)
 {
     if constexpr (ANY==size_s(a)) {
-        RA_CK(s>=0, "Bad resize ", s, ".");
+        RA_CK(s>=0, "Bad size ", s, ".");
         a.resize(s);
+    } else if constexpr (is_ctype<decltype(s)>) {
+        static_assert(s==iter(a).len(0) || UNB==s, "Bad size."); // c++26
     } else {
-        RA_CK(s==ra::iter(a).len(0) || UNB==s, "Bad resize ", s, ", need ", ra::iter(a).len(0), ".");
+        RA_CK(s==iter(a).len(0) || UNB==s, "Bad size ", s, ", need ", iter(a).len(0), ".");
     }
 }
 
 constexpr dim_t
 filldimv(Iterator auto && p, auto & dv)
 {
-    ra::resize(dv, 0==rank_s(p) ? 1 : ra::size(p)); // [ra37]
+    if constexpr (ANY==rank_s(p)) {
+        RA_CK(0==rank(p) || 1==rank(p), "Bad rank for dims ", ra::rank(p), ".");
+    } else {
+        static_assert(0==rank_s(p) || 1==rank_s(p), "Bad rank for dims.");
+    }
+    ra::resize(dv, [&]{ if constexpr (ANY==size_s(p)) return ra::size(p); else return ic<size_s(p)>; }());
     for (rank_t k=0; k<ra::size(dv); ++k, p.mov(p.step(0))) { dv[k].len = *p; }
     dim_t s = 1;
     for (int k=ra::size(dv); --k>=0;) {
@@ -302,8 +307,7 @@ struct Cell: public CellBase<P, Dimv, Cr>
 
 template <class P, class Dimv, class Cr> Cell(P, Dimv &&, Cr) -> Cell<P, Dimv, std::conditional_t<is_ctype<Cr>, Cr, rank_t>>;
 
-// Cell doesn't retain rvalues [ra4]. If both Slice and Iterator (Ptr), go as Iterator.
-// TODO any exprs? runtime cr? ra::len in cr?
+// If both Slice and Iterator (Ptr), go as Iterator. TODO any exprs? runtime cr? ra::len in cr?
 constexpr auto
 iter(Slice auto && s, auto c) requires (!is_iterator<decltype(s)>)
 {

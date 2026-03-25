@@ -28,20 +28,18 @@ int main(int argc, char * * argv)
     std::println(cout, "reps = {}", reps);
     tr.section("rank 2");
     {
-        auto test2 = [](auto && C, auto && I, int reps, std::string tag)
-        {
+        auto test2 = [](auto && C, auto && I, int reps, std::string tag){
             if ("warmup"!=tag) tr.section(tag);
             int M = C.len(0);
             int N = C.len(1);
             int O = I.len(0);
             C = 4*ra::_0 + ra::_1;
-            I(ra::all, 0) = map([&](auto && i) { return i%M; }, ra::_0 + (std::rand() & 1));
-            I(ra::all, 1) = map([&](auto && i) { return i%N; }, ra::_0 + (std::rand() & 1));
+            I(ra::all, 0) = map([&](auto && i){ return i%M; }, ra::_0 + (std::rand() & 1));
+            I(ra::all, 1) = map([&](auto && i){ return i%N; }, ra::_0 + (std::rand() & 1));
 
             int ref0 = sum(at(C, ra::iter<1>(I))), val0 = 0;
             Benchmark bm { reps, 3 };
-            auto report = [&](std::string const & stag, auto && bv)
-            {
+            auto report = [&](std::string const & stag, auto && bv){
                 if ("warmup"!=tag) tr.info(Benchmark::report(bv, M*N), " ", stag).test_eq(val0, ref0);
             };
 
@@ -88,8 +86,7 @@ int main(int argc, char * * argv)
     }
     tr.section("rank 1");
     {
-        auto test1 = [](auto && C, auto && I, int reps, std::string tag)
-        {
+        auto test1 = [](auto && C, auto && I, int reps, std::string tag){
             if ("warmup"!=tag) tr.section(tag);
             int const M = C.len(0);
             [[maybe_unused]] int const O = I.len(0);
@@ -97,11 +94,9 @@ int main(int argc, char * * argv)
 
             int ref0 = sum(at(C, ra::iter<1>(I))), val0 = 0;
             Benchmark bm { reps, 3 };
-            auto report = [&](std::string const & stag, auto && bv)
-            {
+            auto report = [&](std::string const & stag, auto && bv){
                 if ("warmup"!=tag) tr.info(Benchmark::report(bv, M), " ", stag).test_eq(val0, ref0);
             };
-
             report("at member + loop",
                    bm.run([&]{
                        int val = 0;

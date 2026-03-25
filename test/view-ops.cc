@@ -214,5 +214,36 @@ int main()
         tr.test(c_order(c.dimv, false));
         tr.test_eq(ra::iota(10, 0, 2), ravel_free(c));
     }
+    tr.section("View conversions");
+    {
+        ra::Big<int> a = ra::iota(4);
+        using Va [[maybe_unused]] = ra::ViewPtr<int *, ra::dim_t, ra::ic_t<ra::dim_t(1)>>;
+        using Vb [[maybe_unused]] = ra::ViewBig<int *, 1>;
+        using Vc [[maybe_unused]] = ra::ViewBig<int *, ra::ANY>;
+        {
+            Va va = a;
+            Vb vb = va;
+            Vc vc = va;
+            tr.test_eq(a, va);
+            tr.test_eq(a, vb);
+            tr.test_eq(a, vc);
+        }
+        {
+            Vb vb = a;
+            Va va = vb;
+            Vc vc = vb;
+            tr.test_eq(a, va);
+            tr.test_eq(a, vb);
+            tr.test_eq(a, vc);
+        }
+        {
+            Vc vc = a;
+            Va va = vc;
+            Vb vb = vc;
+            tr.test_eq(a, va);
+            tr.test_eq(a, vb);
+            tr.test_eq(a, vc);
+        }
+    }
     return tr.summary();
 }

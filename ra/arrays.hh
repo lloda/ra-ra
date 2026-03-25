@@ -106,48 +106,45 @@ struct View: public ViewBase<Dimv_>
     P cp;
     using T = std::remove_reference_t<decltype(*cp)>;
     constexpr auto data() const { return cp; }
-#define RAC(k, f) is_ctype<decltype(simv[k].f)>
+#define RAC(k, f) (CT || is_ctype<decltype(simv[k].f)>)
     constexpr static rank_t R = ra::size_s<decltype(dimv)>();
     consteval static rank_t rank() requires (R!=ANY) { return R; }
     constexpr rank_t rank() const requires (R==ANY) { return dimv.size(); }
-    constexpr static dim_t len_s(auto k) { if constexpr (CT || RAC(k, len)) return len(k); else return ANY; }
-    constexpr static dim_t len(auto k) requires (CT || RAC(k, len)) { return simv[k].len; }
-    constexpr dim_t len(int k) const requires (!(CT || RAC(k, len))) { return dimv[k].len; }
-    constexpr static dim_t step(auto k) requires (CT || RAC(k, step)) { return simv[k].step; }
-    constexpr dim_t step(int k) const requires (!(CT || RAC(k, step))) { return dimv[k].step; }
+    constexpr static dim_t len_s(auto k) { if constexpr (RAC(k, len)) return len(k); else return ANY; }
+    constexpr static dim_t len(auto k) requires (RAC(k, len)) { return simv[k].len; }
+    constexpr dim_t len(int k) const requires (!(RAC(k, len))) { return dimv[k].len; }
+    constexpr static dim_t step(auto k) requires (RAC(k, step)) { return simv[k].step; }
+    constexpr dim_t step(int k) const requires (!(RAC(k, step))) { return dimv[k].step; }
     consteval static dim_t size() requires (CT) { return dimv_size(simv); }
     consteval static bool empty() requires (CT) { return any(0==map(&Dim::len, simv)); }
     constexpr dim_t size() const requires (!CT) { return dimv_size(dimv); }
     constexpr bool empty() const requires (!CT) { return any(0==map(&Dim::len, dimv)); }
-// only !CT
     constexpr View() requires (!CT) {} // used by Container constructors
-    constexpr View(Dimv dimv, P cp) requires (!CT): ViewBase<Dimv>(dimv), cp(cp) {} // when dimv cannot be assigned later
-    constexpr View(Slice auto const & x) requires (!CT) && (requires { View(x.dimv, x.cp); }): View(x.dimv, x.cp) {}
-    constexpr View(auto const & s, P cp) requires (!CT) && (requires { [](dim_t){}(VAL(s)); }): cp(cp) { filldimv(iter(s), dimv); }
-    constexpr View(auto const & s, P cp) requires (!CT) && (requires { [](Dim){}(VAL(s)); }): cp(cp) { resize(dimv, ra::size(s)); iter(dimv) = s; } // [ra37]
+    constexpr View(Dimv && dimv, P cp) requires (!CT): ViewBase<Dimv>(std::move(dimv)), cp(cp) {} // cannot assign dimv later
+    constexpr View(Dimv const & dimv, P cp) requires (!CT): ViewBase<Dimv>(dimv), cp(cp) {} // cannot assign dimv later
+    constexpr View(Slice auto && x) requires requires { View(RA_FW(x).dimv, x.data()); }: View(RA_FW(x).dimv, x.data()) {}
+    constexpr View(auto const & s, P cp) requires (!CT) && requires { [](dim_t){}(VAL(s)); }: cp(cp) { filldimv(iter(s), dimv); }
+    constexpr View(auto const & s, P cp) requires (!CT) && requires { [](Dim){}(VAL(s)); }: cp(cp) { resize(dimv, ra::size(s)); iter(dimv) = s; } // [ra37]
     template <int N> constexpr View(dim_t (&&s)[N], P cp) requires (!CT): View(iter(s), cp) {}
     template <int N> constexpr View(Dim (&&s)[N], P cp) requires (!CT): View(iter(s), cp) {}
+    constexpr explicit View(P cp): cp(cp) {} // empty dimv, but also uninit by slicers, esp. has_len<P>
+    constexpr View(View &&) noexcept = default;
+    constexpr View(View const &) = default;
+// conversion to const is done differently for (!CT) (conversion op) vs CT (constructor).
+    using U = std::remove_const_t<T>;
+    constexpr operator View<T const *, Dimv> const & () const requires (!CT && std::is_same_v<P, U *>) { return *reinterpret_cast<View<T const *, Dimv> const *>(this); }
+    constexpr View(View<U *, Dimv> const & x) requires (CT && std::is_same_v<P, T const *>): View(x.cp) {}
+
     constexpr View const & operator=(braces<T, R> x) const requires (!CT && 1<R) { iter<-1>(*this) = x; return *this; } // nested
 #define RA_BRACES(N) constexpr View const & operator=(braces<T, N> x) const requires (!CT && R==ANY) { iter<-1>(*this) = x; return *this; }
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
-// conversion to const, used by Container::view(). FIXME cf Small
-    constexpr operator View<T const *, Dimv> const & () const requires (!CT && std::is_same_v<P, std::remove_const_t<T> *>)
-    {
-        return *reinterpret_cast<View<T const *, Dimv> const *>(this);
-    }
-// only CT
-    template <class Q> constexpr View(View<Q, Dimv> const & x) requires (CT) && (requires { View(x.cp); }): View(x.cp) {} // FIXME Slice
     template <int N> constexpr View const & operator=(nested_arg<T, Dimv> (&&x)[N]) const requires (CT && 1<R || 1!=len_s(0)) // nested
     {
         iter<-1>(*this) = x;
         if !consteval { asm volatile("" ::: "memory"); } // patch for [ra01]
         return *this;
     }
-    template <dim_t s, dim_t o=0> constexpr auto as() const requires (CT) { return from(*this, ra::iota(ic<s>, o)); }
-// common
-    constexpr explicit View(P cp): cp(cp) {} // empty dimv, but also uninit by slicers, esp. has_len<P>
-    constexpr View(View const &) = default;
     constexpr View const & operator=(View const & x) const { iter(*this) = x; return *this; }
     template <int N> constexpr View const & operator=(T (&&x)[N]) const { return to_ravel(RA_FW(x), *this); } // row major
 #define RA_ASSIGNOPS(OP)                                                \
@@ -156,13 +153,14 @@ struct View: public ViewBase<Dimv_>
     constexpr decltype(auto) operator OP(Iterator auto && x) const { iter(*this) OP RA_FW(x); return *this; }
     RA_FE(RA_ASSIGNOPS, =, *=, +=, -=, /=)
 #undef RA_ASSIGNOPS
-    constexpr auto begin() const { if constexpr ((CT && c_order(simv)) || (1==R && 1==RAC(0, step))) return cp; else return STLIterator(iter(*this)); }
-    constexpr auto end() const requires ((CT && c_order(simv)) || (1==R && 1==RAC(0, step))) { return cp+size(); }
-    constexpr static auto end() requires (!(CT && c_order(simv)) && !(1==R && 1==RAC(0, step))) { return std::default_sentinel; }
+    constexpr auto begin() const { if constexpr ((CT && c_order(simv)) || (1==R && 1==simv[0].step)) return cp; else return STLIterator(iter(*this)); }
+    constexpr auto end() const requires ((CT && c_order(simv)) || (1==R && 1==simv[0].step)) { return cp+size(); }
+    constexpr static auto end() requires (!(CT && c_order(simv)) && !(1==R && 1==simv[0].step)) { return std::default_sentinel; }
     constexpr decltype(auto) back(this auto && sf) { static_assert(!CT || len_s(0)>0, "Bad back()."); return RA_FW(sf)(sf.len(0)-1); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
+    template <dim_t s, dim_t o=0> constexpr auto as() const requires (CT) { return from(*this, ra::iota(ic<s>, o)); }
 #undef RAC
 };
 
@@ -216,7 +214,7 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
     constexpr operator VuConst () const { return VuConst(data()); }
 
     constexpr SmallArray() {}
-    constexpr SmallArray(ra::none_t) {}
+    constexpr SmallArray(none_t) {}
     constexpr explicit (1!=size()) SmallArray(T const & t) { std::ranges::fill(cp, t); } // [ra12][ra44]
 // p1219??
     constexpr SmallArray(std::convertible_to<T> auto const & ... x) requires (sizeof...(x)==size()) { view() = { static_cast<T>(x) ... }; } // row major
@@ -271,8 +269,8 @@ struct storage_traits<std::shared_ptr<P>>
     constexpr static auto data(auto & v) { return v.get(); }
 };
 
-// FIXME avoid duplicating ViewBig::p. Avoid overhead with rank 1.
-// FIXME requires copyable T. store(x) avoids it for Big, but not for Unique. Should construct in place like std::vector.
+// FIXME Avoid duplicating ViewBig::p. Avoid overhead with rank 1.
+// FIXME Requires copyable T. store(x) avoids it for Big, but not for Unique. Should construct in place like std::vector.
 template <class Store, rank_t R>
 struct Container: public std::conditional_t<1==R,
                                             ViewPtr<typename storage_traits<Store>::T *, dim_t, ic_t<dim_t(1)>>,
@@ -282,13 +280,13 @@ struct Container: public std::conditional_t<1==R,
     using T = typename storage_traits<Store>::T;
     using Vu = std::conditional_t<1==R, ViewPtr<T *, dim_t, ic_t<dim_t(1)>>, ViewBig<T *, R>>;
     using VuConst = std::conditional_t<1==R, ViewPtr<T const *, dim_t, ic_t<dim_t(1)>>, ViewBig<T const *, R>>;
-    constexpr Vu & view() { return *this; }
+    constexpr Vu const & view() { return *this; } // cp can still be changed through conversion to base [ra18]
     constexpr VuConst const & view() const { return *this; }
     using typename Vu::Dimv;
     using Vu::size, Vu::rank, Vu::dimv, Vu::cp;
-    constexpr auto data(this auto && sf) { return sf.view().data(); }
+    constexpr auto data(this auto && sf) { /* assert(sf.cp==sf.store.data()); */ return sf.view().data(); }
 // A(shape 2 3) = A-type [1 2 3] initializes, so it doesn't behave as A(shape 2 3) = not-A-type [1 2 3] which uses Vu::operator=. This is used by operator>>(std::istream &, Container &). See test/ownership.cc [ra20].
-    constexpr Container & operator=(Container && w)
+    constexpr Container & operator=(Container && w) noexcept
     {
         store = std::move(w.store);
         dimv = std::move(w.dimv);
@@ -302,7 +300,7 @@ struct Container: public std::conditional_t<1==R,
         cp = storage_traits<Store>::data(store);
         return *this;
     }
-    constexpr Container(Container && w): store(std::move(w.store))
+    constexpr Container(Container && w) noexcept: store(std::move(w.store))
     {
         dimv = std::move(w.dimv);
         cp = storage_traits<Store>::data(store);
@@ -323,32 +321,25 @@ struct Container: public std::conditional_t<1==R,
 #define RA_BRACES(N) constexpr Container & operator=(braces<T, N> x) requires (ANY==R) { view() = x; return *this; }
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
-// FIXME skip ravel-through-iterator if rank is 1.
     constexpr static auto zdims = std::apply([](auto ... i){ return std::array<Dim, (R==ANY)?1:R>{Dim{i*0, 1} ... }; }, mp::iota<(R==ANY)?1:R>{});
     constexpr Container(): Vu(zdims, nullptr) {}
-    constexpr Container() requires (R==0): Container({}, none) {}
-    constexpr Container(auto const & x): Container(ra::shape(x), ra::none) { view() = x; }
-    constexpr Container(braces<T, R> x) requires (R>=1): Container(braces_shape<T, R>(x), ra::none) { view() = x; }
-#define RA_BRACES(N) constexpr Container(braces<T, N> x) requires (R==ANY): Container(braces_shape<T, N>(x), ra::none) { view() = x; }
+    constexpr Container() requires (0==R): Container({}, none) {}
+    constexpr Container(auto const & x): Container(ra::shape(x), x) {}
+    constexpr Container(braces<T, R> x) requires (R>=1): Container(braces_shape<T, R>(x), x) {}
+#define RA_BRACES(N) constexpr Container(braces<T, N> x) requires (R==ANY): Container(braces_shape<T, N>(x), x) {}
     RA_FE(RA_BRACES, 1, 2, 3, 4)
 #undef RA_BRACES
-// FIXME replace shape + row-major ravel by explicit it-is-ravel mark, also iter<n> initializers.
-    constexpr Container(auto const & s, none_t)
+    constexpr Container(auto && s, none_t)
     {
-        static_assert(!std::is_convertible_v<value_t<decltype(s)>, Dim>);
-        RA_CK(0==ra::rank(s) || 1==ra::rank(s), "Rank mismatch for init shape ", ra::rank(s), ".");
-        static_assert(ANY==R || ANY==size_s(s) || R==size_s(s) || UNB==size_s(s), "Bad shape for rank.");
-        store = storage_traits<Store>::create(filldimv(iter(s), dimv));
+        store = storage_traits<Store>::create(filldimv(iter(RA_FW(s)), dimv));
         cp = storage_traits<Store>::data(store);
     }
-    constexpr Container(auto const & s, auto const & x): Container(s, none) { view() = x; }
-    constexpr Container(auto const & s, std::initializer_list<T> x): Container(s, none) { to_ravel(x, *this); }
+    constexpr Container(auto && s, auto const & x): Container(RA_FW(s), none) { view() = x; }
+    constexpr Container(auto && s, std::initializer_list<T> x): Container(RA_FW(s), none) { to_ravel(x, *this); }
 // sharg overloads handle {...} arguments.
     using sharg = decltype(shape(std::declval<Vu>()));
-    constexpr Container(sharg const & s, none_t): Container(iter(s), ra::none) {}
     constexpr Container(sharg const & s, auto const & x): Container(iter(s), x) {}
     constexpr Container(sharg const & s, std::initializer_list<T> x): Container(iter(s), x) {}
-// FIXME maybe remove, cf to_ravel().
     constexpr Container(sharg const & s, auto * p): Container(iter(s), none) { std::ranges::copy_n(p, size(), begin()); }
 // resize first axis or full shape. Only for some kinds of store.
     constexpr void resize(dim_t const s)
@@ -565,12 +556,12 @@ cat(auto && a1, auto && a2) requires (ra::size_s(a1)>=0 && ra::size_s(a2)>=0)
 }
 
 constexpr auto
-ravel_free(Slice auto && a)
+ravel_free(Slice auto const & a)
 {
     RA_CK(c_order(a.dimv, false), "View cannot be raveled.");
     int r = a.rank()-1;
     for (; r>=0 && a.len(r)==1; --r) {}
-    return ViewBig<decltype(a.data()), 1>({{ra::size(a), r<0 ? 1 : a.step(r)}}, a.cp);
+    return ViewBig<decltype(a.data()), 1>({{ra::size(a), r<0 ? 1 : a.step(r)}}, a.data());
 }
 
 inline auto

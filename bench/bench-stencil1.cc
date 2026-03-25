@@ -87,7 +87,7 @@ struct f_sumprod2
 {
     THEOP
     {
-        Astencil.cp = A.data();
+        Astencil.cp = A.data(); // FIXME shouldn't allow with Big's cp [ra18]
         Anext(I) = 0;
         ply_fixed(map(ra::wrank<0, 1, 1>([](auto && A, auto && B, auto && C) { A += B*C; }), Anext(I), Astencil, mask));
         std::swap(A.cp, Anext.cp);
@@ -101,18 +101,16 @@ int main()
     std::random_device rand;
     real value = rand();
 
-    auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f)
-                 {
-                     auto bv = Benchmark().repeats(ts).runs(3)
-                         .once_f([&](auto && repeat)
-                                 {
-                                     Anext = 0.;
-                                     A = value;
-                                     repeat([&]() { f(A, Anext, Astencil); });
-                                 });
-                     tr.info(Benchmark::report(bv, A.size()), " ", tag)
-                         .test_rel(ref, A, 1e-11);
-                 };
+    auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f){
+        auto bv = Benchmark().repeats(ts).runs(3)
+            .once_f([&](auto && repeat){
+                Anext = 0.;
+                A = value;
+                repeat([&]() { f(A, Anext, Astencil); });
+            });
+        tr.info(Benchmark::report(bv, A.size()), " ", tag)
+            .test_rel(ref, A, 1e-11);
+    };
 
     ra::Big<real, 1> Aref;
 
@@ -120,29 +118,35 @@ int main()
     {
         ra::Big<real, 1> A({nx}, 1.);
         ra::Big<real, 1> Anext({nx}, 0.);
-        auto Astencil = stencil(A, 1, 1);
-        ra::print(cout, "Astencil ", fmt({ .sep0 = "|" }, Astencil(0, ra::dots<1>))) << endl;
-#define BENCH(ref, op) bench(A, Anext, Astencil, ref, RA_STRINGIZE(op), op {});
-        BENCH(A, f_raw);
+        auto V = A.view();
+        auto Vnext = Anext.view();
+        auto Vstencil = stencil(A, 1, 1);
+        ra::print(cout, "stencil ", fmt({ .sep0 = "|" }, Vstencil(0, ra::dots<1>))) << endl;
+#define BENCH(ref, op) bench(V, Vnext, Vstencil, ref, RA_STRINGIZE(op), op {});
+        BENCH(V, f_raw);
         Aref = ra::Big<real, 1>(A);
-        BENCH(Aref, f_slices);
-        BENCH(Aref, f_stencil_explicit);
-        BENCH(Aref, f_stencil_arrayop);
-        BENCH(Aref, f_sumprod);
-        BENCH(Aref, f_sumprod2);
+        auto Vref = Aref.view();
+        BENCH(Vref, f_slices);
+        BENCH(Vref, f_stencil_explicit);
+        BENCH(Vref, f_stencil_arrayop);
+        BENCH(Vref, f_sumprod);
+        BENCH(Vref, f_sumprod2);
 #undef BENCH
     }
     tr.section("dynamic rank");
     {
-        ra::Big<real> B({nx}, 1.);
-        ra::Big<real> Bnext({nx}, 0.);
-        auto Bstencil = stencil(B, 1, 1);
-        ra::print(cout, "Bstencil ", fmt({ .sep0 = "|" }, Bstencil(0, ra::dots<1>))) << endl;
-#define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, RA_STRINGIZE(op), op {});
-        // BENCH(Aref, f_raw); // TODO very slow
-        BENCH(Aref, f_slices);
-        BENCH(Aref, f_stencil_explicit);
-        BENCH(Aref, f_stencil_arrayop);
+        ra::Big<real> A({nx}, 1.);
+        ra::Big<real> Anext({nx}, 0.);
+        auto V = A.view();
+        auto Vnext = Anext.view();
+        auto Vstencil = stencil(A, 1, 1);
+        ra::print(cout, "stencil ", fmt({ .sep0 = "|" }, Vstencil(0, ra::dots<1>))) << endl;
+#define BENCH(ref, op) bench(V, Vnext, Vstencil, ref, RA_STRINGIZE(op), op {});
+        auto Vref = Aref.view();
+        BENCH(Vref, f_raw); // TODO very slow
+        BENCH(Vref, f_slices);
+        BENCH(Vref, f_stencil_explicit);
+        BENCH(Vref, f_stencil_arrayop);
 #undef BENCH
     }
     return tr.summary();
