@@ -329,18 +329,18 @@ struct Container: public std::conditional_t<1==R,
 #define RA_BRACES(N) constexpr Container(braces<T, N> x) requires (R==ANY): Container(braces_shape<T, N>(x), x) {}
     RA_FE(RA_BRACES, 1, 2, 3, 4)
 #undef RA_BRACES
-    constexpr Container(auto && s, none_t)
+    constexpr Container(auto && s, auto const & x)
     {
         store = storage_traits<Store>::create(filldimv(iter(RA_FW(s)), dimv));
         cp = storage_traits<Store>::data(store);
+        if constexpr (!(requires { none_t(x); })) { view() = x; }
     }
-    constexpr Container(auto && s, auto const & x): Container(RA_FW(s), none) { view() = x; }
     constexpr Container(auto && s, std::initializer_list<T> x): Container(RA_FW(s), none) { to_ravel(x, *this); }
-// sharg overloads handle {...} arguments.
-    using sharg = decltype(shape(std::declval<Vu>()));
-    constexpr Container(sharg const & s, auto const & x): Container(iter(s), x) {}
-    constexpr Container(sharg const & s, std::initializer_list<T> x): Container(iter(s), x) {}
-    constexpr Container(sharg const & s, auto * p): Container(iter(s), none) { std::ranges::copy_n(p, size(), begin()); }
+    constexpr Container(std::array<dim_t, 0> s, auto const & x): Container(iter(s), x) {};
+    constexpr Container(std::array<dim_t, 0> s, std::initializer_list<T> x): Container(iter(s), x) {}
+    template <int N> constexpr Container(dim_t (&&s)[N], auto const & x): Container(iter(s), x) {}
+    template <int N> constexpr Container(dim_t (&&s)[N], std::initializer_list<T> x): Container(iter(s), x) {}
+    template <int N> constexpr Container(dim_t (&&s)[N], auto * p): Container(iter(s), none) { std::ranges::copy_n(p, size(), begin()); }
 // resize first axis or full shape. Only for some kinds of store.
     constexpr void resize(dim_t const s)
     {

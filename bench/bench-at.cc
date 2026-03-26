@@ -47,8 +47,7 @@ int main(int argc, char * * argv)
                    bm.run([&]{
                        int val = 0;
                        for (int i=0; i<O; ++i) {
-// conversion needed for var rank I
-                           val += C(ra::dim_t(I(i, 0)), ra::dim_t(I(i, 1)));
+                           val += C(ra::dim_t(I(i, 0)), ra::dim_t(I(i, 1))); // need convert for var rank I
                        }
                        val0 = val;
                    }));

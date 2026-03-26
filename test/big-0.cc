@@ -14,16 +14,29 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
-template <class T> constexpr bool ctest1 = requires { ra::Big<T, 2> ({2, 3, 1}, 99); }; // bad shape for rank
-template <class T> constexpr bool ctest2 = requires { ra::Big<T, 2> ({2, 3, 1}, {1, 2, 3, 4, 5, 6}); }; // bad shape for rank
-template <class T> constexpr bool ctest3 = requires { ra::Big<T, 2> ({2, 3, 1}, ra::none); }; // bad shape for rank
-template <class T> constexpr bool ctest4 = requires { ra::Big<T, 0> ({3, 4}, 3.); }; // bad shape for rank
-
 struct test_type { int a; };
 
 int main(int argc, char * * argv)
 {
     TestRecorder tr;
+    tr.section("should-fail constructors [ra42]");
+    {
+// FIXME these errors depend on static_assert.
+        // ra::Big<int, 2> {3, 4}; // Invalid shape for rank
+        // ra::Big<int, 2> (2, ra::none); // shape arg must have rank 1 for array rank>1
+        // ra::Big<int, 2> {1, 2, 3, 4, 5, 6}; // bad deduced shape from content arg
+        // ra::Big<int, 2> (ra::Small<int, 3>{2, 3, 4}, 99.); // bad shape for rank
+// FIXME too many dims was requires-checkable when constructors took std::array<dim, N> for shape, but that allowed too few dims.
+        // ra::Big<int, 2> ({2, 3, 1}, 99); // too many dims
+        // ra::Big<int, 2> ({2, 3, 1}, {1, 2, 3, 4, 5, 6}); // too many dims
+        // ra::Big<int, 2> ({2, 3, 1}, ra::none); // too many dims
+        // ra::Big<int, 0> ({3, 4}, 3.); // too many dims
+// FIXME also on views
+        // ra::ViewBig<int *, 2> ({2}, nullptr); // too few dims
+        // ra::ViewBig<int *, 2> ({2, 3, 4}, nullptr); // too many dims
+        // ra::ViewBig<int *, 2> (4, nullptr); // bad rank (really too few dims)
+        // ra::ViewBig<int *, 1> (ra::Small<int, 1, 1>{{1}}, nullptr); // bad rank
+    }
     tr.section("predicates");
     {
         ra::ViewBig<int *, 2> a; // uninitialized
@@ -72,19 +85,6 @@ int main(int argc, char * * argv)
             tr.test_eq(3, a.len(0));
             tr.test_eq(2, a.len(1));
         }
-    }
-    tr.section("should-fail constructors");
-    {
-        static_assert(!ctest1<int>);
-        static_assert(!ctest2<int>);
-        static_assert(!ctest3<int>);
-        static_assert(!ctest4<int>);
-
-// FIXME these errors depend on static_assert so cannot be checked with requires.
-        // ra::Big<T, 2> {3, 4}; // Invalid shape for rank
-        // ra::Big<int, 2> (2, ra::none); // shape arg must have rank 1 for array rank>1
-        // ra::Big<T, 2> {1, 2, 3, 4, 5, 6}; // bad deduced shape from content arg
-        // ra::Big<T, 2> (ra::Small<int, 3>{2, 3, 4}, 99.); // bad shape for rank
     }
     tr.section("any rank 1 expression for the shape argument");
     {
@@ -263,11 +263,15 @@ int main(int argc, char * * argv)
         ra::Big<int, 1> b(4, ra::_0);
         tr.test_eq(ra::iota(4), b);
     }
+// size cannot be 0 so store must always be allocated.
     tr.section("default constructor for ct rank 0 Container");
     {
-        ra::Big<int, 0> a = {}; // uninitialized
-        a = 3;
-        tr.test_eq(3, a);
+        ra::Big<int, 0> b; // uninitialized
+        b = 3;
+        tr.test_eq(3, b);
+// FIXME on c++26 with constexpr new do
+        // constexpr int y = []{ ra::Big<int, 0> a; a = 3; return a(); }(); // uninitialized
+        // tr.test_eq(3, y);
     }
     tr.section("scalar constructor for rt rank 0 Container");
     {
@@ -301,6 +305,15 @@ int main(int argc, char * * argv)
         a = test_type { 3 };
         tr.test_eq(3, a[0].a);
         tr.test_eq(3, a[1].a);
+    }
+    tr.section("View from container");
+    {
+        ra::Big<int, 1> a({3}, 0);
+        auto b = a();
+        tr.info("new view").test(&a.cp!=&b.cp);
+// FIXME disallow access to Container::cp to preserve the invariant cp=store.data() [ra18]
+        auto const & c = a.view();
+        tr.info("same view").test(&a.cp==&c.cp);
     }
     return tr.summary();
 }
