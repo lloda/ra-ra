@@ -60,9 +60,9 @@ gemm4(auto && a, auto && b, auto & c)
 // variants of the defaults, should be slower if the default is well picked.
 // -------------------
 
-template <class A, class B, class C>
+template <class P>
 inline void
-gemm_block(ra::ViewBig<A, 2> const & a, ra::ViewBig<B, 2> const & b, ra::ViewBig<C, 2> c)
+gemm_block(ra::ViewBig<P, 2> const & a, ra::ViewBig<P, 2> const & b, ra::ViewBig<P, 2> const & c)
 {
     dim_t const m = a.len(0);
     dim_t const p = a.len(1);
@@ -166,7 +166,7 @@ lead_and_order(A const & a, int & ld, CBLAS_ORDER & order)
 
 template <class P>
 void
-gemm_blas(ra::ViewBig<P, 2> const & A, ra::ViewBig<P, 2> const & B, ra::ViewBig<P, 2> C)
+gemm_blas(ra::ViewBig<P, 2> const & A, ra::ViewBig<P, 2> const & B, ra::ViewBig<P, 2> const & C)
 {
     CBLAS_TRANSPOSE ta = CblasNoTrans;
     CBLAS_TRANSPOSE tb = CblasNoTrans;
@@ -202,8 +202,7 @@ int main()
     TestRecorder tr(std::cout);
     cout << "RA_FMA is " << RA_FMA << endl;
 
-    auto gemm_k = [&](auto const & a, auto const & b, auto & c)
-    {
+    auto gemm_k = [&](auto const & a, auto const & b, auto & c){
         dim_t const M = a.len(0);
         dim_t const N = b.len(1);
         for (dim_t i=0; i<M; ++i) {
@@ -214,23 +213,24 @@ int main()
         return c;
     };
 
-    auto bench_all = [&](int k, int m, int p, int n, int reps)
-    {
-        auto bench = [&](auto && f, char const * tag, real rerr=0)
-        {
+    auto bench_all = [&](int k, int m, int p, int n, int reps){
+        auto bench = [&](auto && f, char const * tag, real rerr=0){
             ra::Big<real, 2> a({m, p}, ra::_0-ra::_1);
             ra::Big<real, 2> b({p, n}, ra::_1-2*ra::_0);
             ra::Big<real, 2> ref = gemm(a, b);
             ra::Big<real, 2> c({m, n}, 0.);
+            auto as = a();
+            auto bs = b();
+            auto cs = c();
 
-            auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
+            auto bv = Benchmark().repeats(reps).runs(3).run([&]{ f(as, bs, cs); });
             tr.info(Benchmark::report(bv, m*n*p), " ", tag)
                 .test_rel(ref, c, rerr);
         };
 
         tr.section(m, " (", p, ") ", n, " times ", reps);
-#define ZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c) { c = 0; GEMM(a, b, c); }
-#define NOTZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c) { GEMM(a, b, c); }
+#define ZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c){ c = 0; GEMM(a, b, c); }
+#define NOTZEROFIRST(GEMM) [&](auto const & a, auto const & b, auto & c){ GEMM(a, b, c); }
 // some variants are too slow to check with larger arrays.
         if (k>2) {
             bench(NOTZEROFIRST(gemm_k), "k");

@@ -217,13 +217,16 @@ int main()
     tr.section("View conversions");
     {
         ra::Big<int> a = ra::iota(4);
+        static_assert(ra::Slice<decltype(a)>);
         using Va [[maybe_unused]] = ra::ViewPtr<int *, ra::dim_t, ra::ic_t<ra::dim_t(1)>>;
         using Vb [[maybe_unused]] = ra::ViewBig<int *, 1>;
         using Vc [[maybe_unused]] = ra::ViewBig<int *, ra::ANY>;
         {
-            Va va = a;
+            Va va1(a.dimv, a.data());
+            Va va(a);
             Vb vb = va;
             Vc vc = va;
+            tr.test_eq(a, va1);
             tr.test_eq(a, va);
             tr.test_eq(a, vb);
             tr.test_eq(a, vc);

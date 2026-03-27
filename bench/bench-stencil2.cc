@@ -130,29 +130,35 @@ int main()
     {
         ra::Big<real, 2> A({nx, ny}, 1.);
         ra::Big<real, 2> Anext({nx, ny}, 0.);
-        auto Astencil = stencil(A, 1, 1);
-        ra::print(cout, "Astencil ", fmt({ .sep0 = "|" }, Astencil(0, 0, ra::dots<2>))) << endl;
-#define BENCH(ref, op) bench(A, Anext, Astencil, ref, RA_STRINGIZE(op), op {});
+        auto V = A.view();
+        auto Vnext = Anext.view();
+        auto Vstencil = stencil(A, 1, 1);
+        ra::print(cout, "stencil ", fmt({ .sep0 = "|" }, Vstencil(0, 0, ra::dots<2>))) << endl;
+#define BENCH(ref, op) bench(V, Vnext, Vstencil, ref, RA_STRINGIZE(op), op {});
         BENCH(A, f_raw);
         Aref = ra::Big<real, 2>(A);
-        BENCH(Aref, f_slices);
-        BENCH(Aref, f_stencil_explicit);
-        BENCH(Aref, f_stencil_arrayop);
-        BENCH(Aref, f_sumprod);
-        BENCH(Aref, f_sumprod2);
+        auto Vref = Aref.view();
+        BENCH(Vref, f_slices);
+        BENCH(Vref, f_stencil_explicit);
+        BENCH(Vref, f_stencil_arrayop);
+        BENCH(Vref, f_sumprod);
+        BENCH(Vref, f_sumprod2);
 #undef BENCH
     }
     tr.section("dynamic rank");
     {
-        ra::Big<real> B({nx, ny}, 1.);
-        ra::Big<real> Bnext({nx, ny}, 0.);
-        auto Bstencil = stencil(B, 1, 1);
-        ra::print(cout, "Bstencil ", fmt({ .sep0 = "|" }, Bstencil(0, 0, ra::dots<2>))) << endl;
-#define BENCH(ref, op) bench(B, Bnext, Bstencil, ref, RA_STRINGIZE(op), op {});
-        // BENCH(Aref, f_raw); // TODO very slow
-        BENCH(Aref, f_slices);
-        BENCH(Aref, f_stencil_explicit);
-        BENCH(Aref, f_stencil_arrayop);
+        ra::Big<real> A({nx, ny}, 1.);
+        ra::Big<real> Anext({nx, ny}, 0.);
+        auto V = A.view();
+        auto Vnext = Anext.view();
+        auto Vstencil = stencil(A, 1, 1);
+        ra::print(cout, "stencil ", fmt({ .sep0 = "|" }, Vstencil(0, 0, ra::dots<2>))) << endl;
+#define BENCH(ref, op) bench(V, Vnext, Vstencil, ref, RA_STRINGIZE(op), op {});
+        auto Vref = Aref.view();
+        // BENCH(Vref, f_raw); // TODO very slow
+        BENCH(Vref, f_slices);
+        BENCH(Vref, f_stencil_explicit);
+        BENCH(Vref, f_stencil_arrayop);
 #undef BENCH
     }
     return tr.summary();

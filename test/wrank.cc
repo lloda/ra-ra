@@ -264,8 +264,7 @@ int main()
 
         real value = 1;
 
-        auto f_raw = [&](ra::ViewBig<real *, 2> & A, ra::ViewBig<real *, 2> & Anext, ra::ViewBig<real *, 4> & Astencil)
-        {
+        auto f_raw = [&](auto & A, auto & Anext, auto & Astencil){
             for (int t=0; t<ts; ++t) {
                 for (int i=1; i+1<nx; ++i) {
                     for (int j=1; j+1<ny; ++j) {
@@ -277,8 +276,7 @@ int main()
                 std::swap(A.cp, Anext.cp);
             }
         };
-        auto f_sumprod = [&](ra::ViewBig<real *, 2> & A, ra::ViewBig<real *, 2> & Anext, ra::ViewBig<real *, 4> & Astencil)
-        {
+        auto f_sumprod = [&](auto & A, auto & Anext, auto & Astencil){
             for (int t=0; t!=ts; ++t) {
                 Astencil.cp = A.data();
                 Anext(I, J) = 0; // TODO miss notation for sum-of-axes without preparing destination...
@@ -286,24 +284,25 @@ int main()
                 std::swap(A.cp, Anext.cp);
             }
         };
-        auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f)
-        {
-            A = value;
+        auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f){
             Anext = 0.;
-
+            A = value;
             f(A, Anext, Astencil);
-
             tr.info(tag).test_rel(ref, A, 1e-11);
         };
 
         ra::Big<real, 2> Aref;
         ra::Big<real, 2> A({nx, ny}, 1.);
         ra::Big<real, 2> Anext({nx, ny}, 0.);
-        auto Astencil = stencil(A, 1, 1);
-#define BENCH(ref, op) bench(A, Anext, Astencil, ref, RA_STRINGIZE(op), op);
-        BENCH(A, f_raw);
+
+        auto V = A.view();
+        auto Vnext = Anext.view();
+        auto Vstencil = stencil(A, 1, 1);
+#define BENCH(ref, op) bench(V, Vnext, Vstencil, ref, RA_STRINGIZE(op), op);
+        BENCH(V, f_raw);
         Aref = ra::Big<real, 2>(A);
-        BENCH(Aref, f_sumprod);
+        auto Vref = Aref.view();
+        BENCH(Vref, f_sumprod);
     }
     tr.section("iota with dead axes");
     {

@@ -42,8 +42,7 @@ int main()
     }
     tr.section("unbeatable, 1D");
     {
-        auto check_selection_unbeatable_1 = [&tr](auto && a)
-        {
+        auto check_selection_unbeatable_1 = [&tr](auto && a){
             using CT = ra::Small<real, 4>;
 
             tr.info("a(i ...)").test_eq(CT {a[3], a[2], a[0], a[1]}, a(Vint {3, 2, 0, 1}));
@@ -68,8 +67,7 @@ int main()
     }
     tr.section("unbeatable, 2D");
     {
-        auto check_selection_unbeatable_2 = [&tr](auto && a)
-        {
+        auto check_selection_unbeatable_2 = [&tr](auto && a){
             using CT22 = ra::Small<real, 2, 2>;
             using CT2 = ra::Small<real, 2>;
 
@@ -108,8 +106,7 @@ int main()
     }
     tr.section("mixed scalar/unbeatable, 2D -> 1D");
     {
-        auto check_selection_unbeatable_mixed = [&tr](auto && a)
-        {
+        auto check_selection_unbeatable_mixed = [&tr](auto && a){
             using CT2 = ra::Small<real, 2>;
             tr.info("from(a [0 1], 1)").test_eq(CT2 {a(0, 1), a(1, 1)}, from(a, Vint {0, 1}, 1));
             tr.info("from(a [1 0], 1)").test_eq(CT2 {a(1, 1), a(0, 1)}, from(a, Vint {1, 0}, 1));

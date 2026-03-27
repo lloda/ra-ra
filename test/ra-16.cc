@@ -40,7 +40,7 @@ ra::Big<complex, 3> a({20, 1, 3}, 0.);
 ra::Big<complex, 2> dip({20, 2}, 1.);
 
 void
-far(real const f, ra::ViewBig<real *, 2> const & rr, ra::ViewBig<complex *, 3> & a)
+far(real const f, ra::ViewBig<real *, 2> const & rr, ra::ViewBig<complex *, 3> const & a)
 {
     real A = 1., m = .5, n = .4;
     for_each([&](auto && r, auto & a) {

@@ -87,10 +87,8 @@ int main()
         {
             auto pp = std::unique_ptr<double []>(new double[10]);
             pp[9] = 77;
-            double * p = pp.get();
             ra::Unique<double> a {};
             a.store = std::move(pp);
-            a.cp = p;
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
@@ -99,10 +97,8 @@ int main()
         {
             auto pp = std::shared_ptr<double>(new double[10], std::default_delete<double[]>());
             pp.get()[9] = 88;
-            double * p = pp.get();
             ra::Shared<double> a {};
             a.store = pp;
-            a.cp = p;
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);
@@ -111,10 +107,8 @@ int main()
         {
             decltype(std::declval<ra::Big<double>>().store) pp(10);
             pp[9] = 99;
-            double * p = pp.data();
             ra::Big<double> a {};
             a.store = pp;
-            a.cp = p;
             a.dimv = {{5, 2}, {2, 1}};
             tr.test_eq(5, a.dimv[0].len);
             tr.test_eq(2, a.dimv[1].len);

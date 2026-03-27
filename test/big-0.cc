@@ -85,6 +85,12 @@ int main(int argc, char * * argv)
             tr.test_eq(3, a.len(0));
             tr.test_eq(2, a.len(1));
         }
+        tr.section("= scalar");
+        {
+            ra::Big<double> a({3, 1}, ra::none);
+            a = 3;
+            tr.test_eq(3, a);
+        }
     }
     tr.section("any rank 1 expression for the shape argument");
     {
@@ -305,15 +311,6 @@ int main(int argc, char * * argv)
         a = test_type { 3 };
         tr.test_eq(3, a[0].a);
         tr.test_eq(3, a[1].a);
-    }
-    tr.section("View from container");
-    {
-        ra::Big<int, 1> a({3}, 0);
-        auto b = a();
-        tr.info("new view").test(&a.cp!=&b.cp);
-// FIXME disallow access to Container::cp to preserve the invariant cp=store.data() [ra18]
-        auto const & c = a.view();
-        tr.info("same view").test(&a.cp==&c.cp);
     }
     return tr.summary();
 }
