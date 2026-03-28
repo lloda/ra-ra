@@ -92,6 +92,15 @@ int main()
         tr.test(aa.empty());
         tr.test(a.begin()==a.end());
     }
+    tr.section("empty()/size() corner case");
+    {
+        ra::Big<int, 1> a = {};
+        ra::Big<int, 1> b = { 1, 2, 3 };
+        tr.test(a.empty());
+        tr.test(!b.empty());
+        tr.test_eq(0, a.size());
+        tr.test_eq(3, b.size());
+    }
     tr.section("foreign vectors from std::");
     {
         tr.info("adapted std::array has static size").test_eq(3, size_s(ra::iter(std::array {1, 2, 0})));

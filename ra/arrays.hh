@@ -116,9 +116,9 @@ struct View: public ViewBase<Dimv_>
     constexpr static dim_t step(auto k) requires (RAC(k, step)) { return simv[k].step; }
     constexpr dim_t step(int k) const requires (!(RAC(k, step))) { return dimv[k].step; }
     consteval static dim_t size() requires (CT) { return dimv_size(simv); }
-    consteval static bool empty() requires (CT) { return any(0==map(&Dim::len, simv)); }
+    consteval static bool empty() requires (CT) { return dimv_empty(simv); }
     constexpr dim_t size() const requires (!CT) { return dimv_size(dimv); }
-    constexpr bool empty() const requires (!CT) { return any(0==map(&Dim::len, dimv)); }
+    constexpr bool empty() const requires (!CT) { return dimv_empty(dimv); }
     constexpr View() requires (!CT) {} // used by Container constructors
     constexpr View(Dimv && dimv, P cp) requires (!CT && !std::is_reference_v<Dimv>): ViewBase<Dimv>(std::move(dimv)), cp(cp) {} // cannot assign dimv later
     constexpr View(Dimv const & dimv, P cp) requires (!CT): ViewBase<Dimv>(dimv), cp(cp) {} // cannot assign dimv later
@@ -280,7 +280,7 @@ struct Container
     constexpr static dim_t step(auto k) requires (RAC(k, step)) { return simv[k].step; }
     constexpr dim_t step(int k) const requires (!(RAC(k, step))) { return dimv[k].step; }
     constexpr dim_t size() const { return dimv_size(dimv); }
-    constexpr bool empty() const { return any(0==map(&Dim::len, dimv)); }
+    constexpr bool empty() const { return dimv_empty(dimv); }
 #undef RAC
     constexpr auto data(this auto && sf) { return storage_traits<Store>::data(sf.store); }
     constexpr auto view() { return View<T *, Dimv const &>(dimv, data()); }
@@ -367,7 +367,7 @@ shared_borrowing(Slice auto & s)
     using T = value_t<decltype(s)>;
     Shared<T, rank_s(s)> a;
     a.store = std::shared_ptr<T>(s.data(), [](T *){});
-    a.dimv = s.dimv;
+    if constexpr (1==rank_s(s)) { a.dimv[0] = s.dimv[0]; } else { a.dimv = s.dimv; } // [Dimv] = [SDim] etc.
     return a;
 }
 

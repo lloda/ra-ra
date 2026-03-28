@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - View with custom dimv and generalized iter(Slice).
+// ra/test - View with custom dimv and iter(general Slice).
 
 // (c) Daniel Llorens - 2026
 // This library is free software; you can redistribute it and/or modify it under
@@ -12,9 +12,29 @@
 
 using std::cout, std::endl;
 
+template <class P, int R>
+auto ctad(ra::ViewBig<P, R> const & a)
+{
+    return std::make_tuple<sizeof(std::remove_pointer_t<P>), R>;
+}
+
 int main()
 {
     ra::TestRecorder tr(std::cout);
+#if 0 // FIXME
+    tr.section("CTAD for ViewBig");
+    {
+        ra::Big<float, 1> a({10}, 0.);
+        auto [xa, ya] = ctad(a());
+        tr.test_eq(sizeof(float), xa);
+        tr.test_eq(1, ya);
+        ra::Big<double, 2> b({3, 3}, 0.);
+        auto [xb, yb] = ctad(b());
+        tr.test_eq(sizeof(double), xb);
+        tr.test_eq(2, yb);
+    }
+#endif
+    tr.section("Custom dimv and iter(general Slice)");
     {
         int x[6] = { 1, 2, 3, 4, 5, 6 };
         auto v = ra::viewptr(x);

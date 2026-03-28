@@ -223,7 +223,8 @@ filldimv(Iterator auto && p, auto & dv)
 }
 
 consteval auto c_dimv(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(ra::iter(lv), dv); return dv; };
-constexpr dim_t dimv_size(auto const & dv) { dim_t s=1; for (Dim d: dv) { if (d.len<0) return d.len; else s*=d.len; } return s; }
+constexpr dim_t dimv_size(auto const & dv) { dim_t s=1; for (auto const & d: dv) { if (d.len<0) return d.len; else s*=d.len; } return s; }
+constexpr bool dimv_empty(auto const & dv) { for (auto const & d: dv) { if (0==d.len) return true; } return false; }
 
 constexpr rank_t rank_sum(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a+b; }
 constexpr rank_t rank_diff(rank_t a, rank_t b) { return ANY==a || ANY==b ? ANY : a-b; }
