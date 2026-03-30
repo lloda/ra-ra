@@ -89,7 +89,7 @@ int main(int argc, char * * argv)
             if ("warmup"!=tag) tr.section(tag);
             int const M = C.len(0);
             [[maybe_unused]] int const O = I.len(0);
-            I(ra::all, 0) = map([&](auto && i) { return i%M; }, ra::_0 + (std::rand() & 1));
+            I(ra::all, 0) = map([&](auto && i){ return i%M; }, ra::_0 + (std::rand() & 1));
 
             int ref0 = sum(at(C, ra::iter<1>(I))), val0 = 0;
             Benchmark bm { reps, 3 };

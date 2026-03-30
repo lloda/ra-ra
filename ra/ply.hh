@@ -515,7 +515,7 @@ fromu(auto && b, auto && ds, auto && c, auto && ti, auto && i0, auto && ... i)
     }
 }
 
-// driver. Only forward to unbeaten part. Not all var rank cases are handled.
+// only forward to unbeaten part. Not all var rank cases are handled.
 
 template <class A>
 constexpr decltype(auto)

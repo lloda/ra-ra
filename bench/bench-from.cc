@@ -37,7 +37,7 @@ rank1_test(auto A_, int Asize, int Isize, int Istep, int N)
     auto BB = B.data();
     auto ref = ra::iota(Isize)*Istep;
     Benchmark bm { N, nbm };
-    auto report = [&](std::string const & tag, auto && fun) { top_report(bm, tag, ref, B, fun); };
+    auto report = [&](std::string const & tag, auto && fun){ top_report(bm, tag, ref, B, fun); };
 
     report("indexing on raw pointers", [&]{
         for (int i=0; i<Isize; ++i) {
@@ -48,7 +48,7 @@ rank1_test(auto A_, int Asize, int Isize, int Istep, int N)
         B = A(I);
     });
     report("write out the indexing loop", [&]{
-        for_each([&A](auto & b, auto i) { b = A(i); }, B, I);
+        for_each([&A](auto & b, auto i){ b = A(i); }, B, I);
     });
     report("loop on scalar selection", [&]{
         for (int i=0; i<Isize; ++i) {
@@ -70,7 +70,7 @@ rank1_11_test(auto A_, int Asize, int Isize, int Istep, int N)
     auto BB = B.data();
     auto ref = Istep*(ra::_0 + ra::_1);
     Benchmark bm { N, 3 };
-    auto report = [&](std::string const & tag, auto && fun) { top_report(bm, tag, ref, B, fun); };
+    auto report = [&](std::string const & tag, auto && fun){ top_report(bm, tag, ref, B, fun); };
 
     report("2D indexing on raw pointers", [&]{
         for (int i=0; i<Isize; ++i) {
@@ -97,7 +97,7 @@ rank1_111_test(auto A_, int Asize, int Isize, int Istep, int N)
     auto BB = B.data();
     auto ref = Istep*(10000*ra::_0 + 100*ra::_1 + 1*ra::_2);
     Benchmark bm { N, 3 };
-    auto report = [&](std::string const & tag, auto && fun) { top_report(bm, tag, ref, B, fun); };
+    auto report = [&](std::string const & tag, auto && fun){ top_report(bm, tag, ref, B, fun); };
 
     report("3D indexing on raw pointers", [&]{
         for (int i=0; i<Isize; ++i) {
@@ -126,7 +126,7 @@ rank1_1111_test(auto A_, int Asize, int Isize, int Istep, int N)
     auto BB = B.data();
     auto ref = Istep*(1000000*ra::_0 + 10000*ra::_1 + 100*ra::_2 + 1*ra::_3);
     Benchmark bm { N, 3 };
-    auto report = [&](std::string const & tag, auto && fun) { top_report(bm, tag, ref, B, fun); };
+    auto report = [&](std::string const & tag, auto && fun){ top_report(bm, tag, ref, B, fun); };
 
     report("4D indexing on raw pointers", [&]{
         for (int i=0; i<Isize; ++i) {

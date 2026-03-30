@@ -53,18 +53,17 @@ int main()
         }
         tr.info(msg).test(yes);
     }
-
-    tr.section("common_len");
+    tr.section("colen");
     {
-        using ra::MIS, ra::UNB, ra::ANY, ra::common_len;
-        tr.test_eq(ANY, common_len(UNB, ANY));
-        tr.test_eq(ANY, common_len(ANY, UNB));
-        tr.test_eq(0,   common_len(0, UNB));
-        tr.test_eq(0,   common_len(UNB, 0));
-        tr.test_eq(0,   common_len(0, ANY));
-        tr.test_eq(0,   common_len(ANY, 0));
-        tr.test_eq(MIS, common_len(1, 0));
-        tr.test_eq(0,   common_len(0, 0));
+        using ra::MIS, ra::UNB, ra::ANY, ra::colen;
+        tr.test_eq(ANY, colen(UNB, ANY));
+        tr.test_eq(ANY, colen(ANY, UNB));
+        tr.test_eq(0,   colen(0, UNB));
+        tr.test_eq(0,   colen(UNB, 0));
+        tr.test_eq(0,   colen(0, ANY));
+        tr.test_eq(0,   colen(ANY, 0));
+        tr.test_eq(MIS, colen(1, 0));
+        tr.test_eq(0,   colen(0, 0));
     }
 
 

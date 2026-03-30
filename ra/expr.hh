@@ -140,7 +140,7 @@ VAL(A && a)
 {
     if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
     else if constexpr (is_iterator<A>) { return *a; } // no need to iter()
-    else if constexpr (requires { *ra::iter(RA_FW(a)); }) { return *ra::iter(RA_FW(a)); }
+    else if constexpr (requires { *iter(RA_FW(a)); }) { return *iter(RA_FW(a)); }
     // else void
 }
 
@@ -222,7 +222,7 @@ filldimv(Iterator auto && p, auto & dv)
     return s;
 }
 
-consteval auto c_dimv(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(ra::iter(lv), dv); return dv; };
+consteval auto c_dimv(auto lv) { std::array<Dim, ra::size(lv)> dv; filldimv(iter(lv), dv); return dv; };
 constexpr dim_t dimv_size(auto const & dv) { dim_t s=1; for (auto const & d: dv) { if (d.len<0) return d.len; else s*=d.len; } return s; }
 constexpr bool dimv_empty(auto const & dv) { for (auto const & d: dv) { if (0==d.len) return true; } return false; }
 
@@ -292,8 +292,8 @@ struct Cell: public CellBase<P, Dimv, Cr>
 #undef RAC
 #pragma GCC diagnostic pop
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*c.cp) at(auto const & j) const requires (0==cellr) { return *indexer(*this, c.cp, ra::iter(j)); }
-    constexpr Vu at(auto const & j) const requires (0!=cellr) { Vu d(c); d.cp=indexer(*this, d.cp, ra::iter(j)); return d; }
+    constexpr decltype(*c.cp) at(auto const & j) const requires (0==cellr) { return *indexer(*this, c.cp, iter(j)); }
+    constexpr Vu at(auto const & j) const requires (0!=cellr) { Vu d(c); d.cp=indexer(*this, d.cp, iter(j)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
     constexpr Vu const & operator*() const requires (0!=cellr) { return c; }
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); } /* [ra45] */
@@ -503,10 +503,6 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 // Prefix match.
 // --------------------
 
-// finite before ANY before UNB, assumes neither is MIS.
-constexpr dim_t common_len(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : UNB==a ? b : UNB==b ? a : b; }
-constexpr rank_t common_rank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
-
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
 
@@ -519,7 +515,7 @@ tbc(int sofar)
         using T = decltype(std::declval<A>().t);
         [&sofar]<int ... i>(ilist_t<i ...>){
             (void)(((sofar = tbc<TOP, std::decay_t<mp::ref<T, i>>>(sofar)) >= 0) && ...);
-        } (mp::iota<mp::len<T>> {});
+        }(mp::iota<mp::len<T>> {});
         return sofar;
     } else if (int rt=rank_s<TOP>(), ra=rank_s<A>(); 0==rt || 0==ra) {
         return sofar;
@@ -550,12 +546,16 @@ validate(A const & a, U allow_unb = {})
     }
 }
 
+// finite before ANY before UNB, assumes neither is MIS.
+constexpr dim_t colen(dim_t a, dim_t b) { return a>=0 ? (a==b ? a : b>=0 ? MIS : a) : UNB==a ? b : UNB==b ? a : b; }
+constexpr rank_t corank(rank_t a, rank_t b) { return ANY==a ? a : ANY==b ? b : a>=0 ? (b>=0 ? std::max(a, b) : a) : b; }
+
 template <Iterator ... P, int ... I>
 struct Match<std::tuple<P ...>, ilist_t<I ...>>
 {
     std::tuple<P ...> t;
-    constexpr static rank_t rs = []{ rank_t r=UNB; return ((r=common_rank(rank_s<P>(), r)), ...); }();
     constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
+    constexpr static rank_t rs = []{ rank_t r=UNB; return ((r=corank(rank_s<P>(), r)), ...); }();
 
 // 0: fail, 1: rt check, 2: pass
     consteval static int
@@ -586,7 +586,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     constexpr rank_t
     rank() const requires (ANY==rs)
     {
-        rank_t r = UNB; return ((r = common_rank(ra::rank(get<I>(t)), r)), ...);
+        rank_t r = UNB; return ((r = corank(ra::rank(get<I>(t)), r)), ...);
     }
     constexpr static dim_t
     len_s(int k, bool check=false)
@@ -594,7 +594,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         auto f = [&k, &check]<class A>(dim_t s){
             if (constexpr rank_t r=rank_s<A>(); r<0 || k<r) {
                 dim_t sk = [&]{ if constexpr (is_match<A>) return A::len_s(k, check); else return A::len_s(k); }();
-                return (MIS==sk) ? MIS : check && (ANY==sk || ANY==s) ? ANY : common_len(sk, s);
+                return (MIS==sk) ? MIS : check && (ANY==sk || ANY==s) ? ANY : colen(sk, s);
             }
             return s;
         };
@@ -612,7 +612,7 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         auto f = [&k](auto const & a, dim_t s){
             if (k<ra::rank(a)) {
                 dim_t sk = a.len(k);
-                return (MIS==sk) ? MIS : common_len(sk, s);
+                return (MIS==sk) ? MIS : colen(sk, s);
             }
             return s;
         };
@@ -648,8 +648,8 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
 template <class ... P>
 Match(P && ... p) -> Match<std::tuple<P ...>>;
 
-constexpr bool agree(auto const & ... p) { return Match(ra::iter(p) ...).check(); }
-consteval int agree_s(auto const & ... p) { return decltype(Match(ra::iter(p) ...))::check_s(); }
+constexpr bool agree(auto const & ... p) { return Match(iter(p) ...).check(); }
+consteval int agree_s(auto const & ... p) { return decltype(Match(iter(p) ...))::check_s(); }
 constexpr bool agree_op(is_verb auto const & op, auto const & ... p) { return agree_verb(mp::iota<sizeof...(p)> {}, op, p ...); }
 constexpr bool agree_op(auto const & op, auto const & ... p) { return agree(p ...); }
 
@@ -658,7 +658,7 @@ constexpr bool
 agree_verb(ilist_t<i ...>, V const & v, T const & ... t)
 {
     using FM = Framematch<V, std::tuple<T ...>>;
-    return agree_op(FM::op(v), reframe(ra::iter(t), mp::ref<typename FM::R, i> {}) ...);
+    return agree_op(FM::op(v), reframe(iter(t), mp::ref<typename FM::R, i> {}) ...);
 }
 
 template <class Op, class T, class K=mp::iota<mp::len<T>>> struct Map;
@@ -687,7 +687,7 @@ map_verb(ilist_t<i ...>, Op && op, P && ... p)
 
 constexpr auto map_(is_verb auto && op, auto && ... p) { return map_verb(mp::iota<sizeof...(p)> {}, RA_FW(op), RA_FW(p) ...); }
 constexpr auto map_(auto && op, auto && ... p) { return Map(RA_FW(op), RA_FW(p) ...); }
-constexpr auto map(auto && op, auto && ... a) { return map_(RA_FW(op), ra::iter(RA_FW(a)) ...); }
+constexpr auto map(auto && op, auto && ... a) { return map_(RA_FW(op), iter(RA_FW(a)) ...); }
 
 template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 
@@ -731,6 +731,6 @@ template <class ... P>
 Pick(P && ... p) -> Pick<std::tuple<P ...>>;
 
 constexpr auto
-pick(auto && ... p) { return Pick { ra::iter(RA_FW(p)) ... }; }
+pick(auto && ... p) { return Pick { iter(RA_FW(p)) ... }; }
 
 } // namespace ra

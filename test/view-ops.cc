@@ -248,5 +248,25 @@ int main()
             tr.test_eq(a, vc);
         }
     }
+    tr.section("Constness demo [ma121]");
+    {
+        ra::Big<int, 2> a = {{1, 2}, {3, 4}};
+        a(1, 1) = 9; // ok
+        ra::ViewBig<int *, 2> va0 = a; // ok
+        va0(1, 1) = 8; // ok
+        ra::ViewBig<int *, 2> const va1 = a; // ok
+        va1(1, 1) = 7; // ok
+        ra::ViewBig<int const *, 2> va2 = a; // ok
+        // va2(1, 1) = 8; // error
+        tr.test_eq(ra::Big<int, 2>({{1, 2}, {3, 7}}), va2);
+
+        ra::Big<int, 2> const b = {{1, 2}, {3, 4}};
+        // b(1, 1) = 9; // error
+        // ra::ViewBig<int *, 2> bv0 = b; // error
+        // ra::ViewBig<int *, 2> const bv1 = b; // error
+        ra::ViewBig<int const *, 2> bv2 = b; // ok
+        // bv2(1, 1) = 9; // error
+        tr.test_eq(ra::Big<int, 2>({{1, 2}, {3, 4}}), bv2);
+    }
     return tr.summary();
 }

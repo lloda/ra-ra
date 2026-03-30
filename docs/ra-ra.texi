@@ -513,6 +513,47 @@ you may pass it an object of type @code{ra::Big<int, 3>}.
 
 It's not normally necessary to create view objects explicitly. Instead, one creates them from containers or other views through operations such as @ref{Slicing,slicing}.
 
+@node The meaning of @code{const}
+@subsection The meaning of @code{const}
+
+In C++, a pointer may itself be const, but point to data which is not const. The constness of views is like that; the contents of a @code{const} container are themselves const, but the contents of a @code{const} view need not be. The analogy is
+
+@multitable @columnfractions .45 .1 .45
+@item @code{ra::ViewBig<T *>} @tab @ @ @ ~ @tab @code{T *}
+@item @code{ra::ViewBig<T *> const} @tab @ @ @ ~ @tab @code{T * const}
+@item @code{ra::ViewBig<T const *>} @tab @ @ @ ~ @tab @code{T const *}
+@end multitable
+
+while
+
+@multitable @columnfractions .45 .1 .45
+@item @code{ra::Big<T>} @tab @ @ @ ~ @tab @code{T}
+@item @code{ra::Big<T> const} @tab @ @ @ ~ @tab @code{T const}
+@item @code{ra::Big<T const>} @tab @ @ @ ~ @tab @code{T const}
+@end multitable
+
+For example: @c [ma120]
+
+@example
+@verbatim
+ra::Big<int, 2> a = {{1, 2}, {3, 4}};
+a(1, 1) = 9; // ok
+ra::ViewBig<int *, 2> va0 = a; // ok
+va0(1, 1) = 8; // ok
+ra::ViewBig<int *, 2> const va1 = a; // ok
+va1(1, 1) = 7; // ok
+ra::ViewBig<int const *, 2> va2 = a; // ok
+va2(1, 1) = 8; // error
+
+ra::Big<int, 2> const b = {{1, 2}, {3, 4}};
+b(1, 1) = 9; // error
+ra::ViewBig<int *, 2> bv0 = b; // error
+ra::ViewBig<int *, 2> const bv1 = b; // error
+ra::ViewBig<int const *, 2> bv2 = b; // ok
+bv2(1, 1) = 9; // error
+@end verbatim
+@end example
+
 @node Sequence views
 @subsection Sequence views
 
