@@ -229,12 +229,6 @@ RA_FE(RA_USING, fma)
 
 #undef RA_NAME
 
-template <class T> constexpr auto
-cast(auto && a) { return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a)); }
-
-template <class T> constexpr auto
-pack(auto && ... a) { return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...); }
-
 template <class A> constexpr decltype(auto)
 at(A && a, auto && i) requires (Slice<std::decay_t<A>> || Iterator<std::decay_t<A>>)
 {
@@ -277,11 +271,11 @@ operator &&(A && a, B && b) { return where(RA_FW(a), cast<bool>(RA_FW(b)), false
 template <class A, class B> requires (tomap<A, B>) constexpr auto
 operator ||(A && a, B && b) { return where(RA_FW(a), true, cast<bool>(RA_FW(b))); }
 
-#define RA_BINOP_SHORT(OP)                                              \
-    template <class A, class B> requires (toreduce<A, B>) constexpr auto \
-        operator OP(A && a, B && b) { return VAL(a) OP VAL(b);  }
-RA_FE(RA_BINOP_SHORT, &&, ||)
-#undef RA_BINOP_SHORT
+template <class A, class B> requires (toreduce<A, B>) constexpr auto
+operator &&(A && a, B && b) { return VAL(a) && VAL(b);  }
+
+template <class A, class B> requires (toreduce<A, B>) constexpr auto
+operator ||(A && a, B && b) { return VAL(a) || VAL(b);  }
 
 
 // --------------------------------
@@ -289,16 +283,10 @@ RA_FE(RA_BINOP_SHORT, &&, ||)
 // --------------------------------
 
 constexpr bool
-any(auto && a)
-{
-    return early(map([](bool x){ return x ? std::make_optional(true) : std::nullopt; }, RA_FW(a)), false);
-}
+any(auto && a) { return early(map([](bool x){ return x ? std::make_optional(true) : std::nullopt; }, RA_FW(a)), false); }
 
 constexpr bool
-every(auto && a)
-{
-    return early(map([](bool x){ return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true);
-}
+every(auto && a) { return early(map([](bool x){ return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true); }
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
 constexpr dim_t
@@ -386,6 +374,9 @@ constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_FMA)
 constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_FMA) c=fma_conj(a, b, c); else c+=conj(a)*b; }
 constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_FMA) c=fma_sqrm(a, c); else c+=sqrm(a); }
 
+constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
+constexpr auto normv(auto const & a) { auto b = concrete(a); return b /= norm2(b); }
+
 constexpr auto
 dot(auto && a, auto && b)
 {
@@ -408,19 +399,6 @@ reduce_sqrm(auto && a)
     std::decay_t<decltype(sqrm(VAL(a)))> c(0.);
     for_each([&c](auto && a){ maybe_fma_sqrm(a, c); }, RA_FW(a));
     return c;
-}
-
-constexpr auto
-norm2(auto && a)
-{
-    return std::sqrt(reduce_sqrm(a));
-}
-
-constexpr auto
-normv(auto const & a)
-{
-    auto b = concrete(a);
-    return b /= norm2(b);
 }
 
 // FIXME benchmark w/o allocation and do Small/Big versions if it's worth it (see bench-gemm.cc)

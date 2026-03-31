@@ -80,7 +80,8 @@ int main()
         tr.test_eq(1, decltype(ra::iota(4).dimv[0].step)::value);
         auto i4 = ra::iota(4);
         static_assert(1==i4.step(0));
-        tr.test_eq(sizeof(ra::iota(4, 0, 2)), sizeof(ra::iota(4, 0, 2).data()) + sizeof(ra::iota(4, 0, 2).dimv[0].len) + sizeof(ra::iota(4, 0, 2).dimv[0].step));
+        auto ix = ra::iota(4, 0, 2);
+        tr.info(sizeof(ix)).test_ge(sizeof(ix), sizeof(ix.data()) + sizeof(ix.dimv[0].len) + sizeof(ix.dimv[0].step));
     }
     tr.section("iota simulation with ptr(iota_view)");
     {

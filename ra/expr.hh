@@ -233,39 +233,49 @@ constexpr rank_t rank_cell(rank_t r, rank_t cr) { return cr>=0 ? cr : r==ANY ? A
 constexpr rank_t rank_frame(rank_t r, rank_t cr) { return r==ANY ? ANY : cr>=0 ? (r-cr) : -cr; }
 
 template <class P, class Dimv> struct View;
-template <class P, rank_t R=ANY> using ViewBig = View<P, std::conditional_t<ANY==R, vector_default_init<Dim>, std::array<Dim, ANY==R ? 0 : R>>>;
+template <rank_t R> using BigDimv = std::conditional_t<ANY==R, vector_default_init<Dim>, std::array<Dim, ANY==R?0:R>>;
+template <class P, rank_t R=ANY> using ViewBig = View<P, BigDimv<R>>;
 
-template <class P, class Dimv, class Cr>
-struct CellBase
+template <class Dimv>
+struct ViewBase
 {
     constexpr static std::remove_reference_t<Dimv> const simv = {};
-    [[no_unique_address]] Dimv const dimv;
-    constexpr static rank_t cr = maybe_any<Cr>;
-    constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s<Dimv>(), cr) : ANY;
-    constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s<Dimv>(), cr) : ANY;
-    using Vu = std::conditional_t<0==cellr, View<P, ic_t<std::array<Dim, 0> {}>>, ViewBig<P, cellr>>; // FIXME
+    [[no_unique_address]] Dimv dimv;
 };
 
-template <class P, is_ctype Dimv, class Cr>
-struct CellBase<P, Dimv, Cr>
+template <is_ctype Dimv>
+struct ViewBase<Dimv>
 {
     constexpr static auto simv = Dimv::value;
     constexpr static auto dimv = simv;
-    constexpr static rank_t cr = maybe_any<Cr>;
-    constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s(simv), cr) : ANY;
-    constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s(simv), cr) : ANY;
-    using Vu = View<P, ic_t<std::apply([](auto ... i){ return std::array<std::decay_t<decltype(dimv[0])>, cellr>{dimv[i+framer] ...}; }, mp::iota<cellr> {})>>;
+};
+
+template <class P, class Dimv, class Cr>
+struct CellBase: public ViewBase<Dimv>
+{
+    constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s<Dimv>(), maybe_any<Cr>) : ANY;
+    constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s<Dimv>(), maybe_any<Cr>) : ANY;
+    using CellDimv = std::conditional_t<0==cellr, ic_t<std::array<Dim, 0> {}>, BigDimv<cellr>>;
+};
+
+template <class P, is_ctype Dimv, class Cr>
+struct CellBase<P, Dimv, Cr>: public ViewBase<Dimv>
+{
+    using ViewBase<Dimv>::simv;
+    constexpr static rank_t cellr = is_ctype<Cr> ? rank_cell(size_s(simv), maybe_any<Cr>) : ANY;
+    constexpr static rank_t framer = is_ctype<Cr> ? rank_frame(size_s(simv), maybe_any<Cr>) : ANY;
+    using CellDimv = ic_t<std::apply([](auto ... i){ return std::array<std::decay_t<decltype(simv[0])>, cellr>{simv[i+framer] ...}; }, mp::iota<cellr> {})>;
 };
 
 template <class P, class Dimv, class Cr>
 struct Cell: public CellBase<P, Dimv, Cr>
 {
-    constexpr static bool CT = is_ctype<Dimv>;
     static_assert(has_len<P> || std::bidirectional_iterator<P>);
     using Base = CellBase<P, Dimv, Cr>;
-    using Base::cellr, Base::framer, Base::simv, Base::dimv, typename Base::Vu;
+    using Base::cellr, Base::framer, Base::simv, Base::dimv, typename Base::CellDimv;
     static_assert((cellr>=0 || cellr==ANY) && (framer>=0 || framer==ANY), "Bad cell/frame ranks.");
-    Vu c;
+    View<P, CellDimv> c;
+    constexpr static bool CT = is_ctype<Dimv>;
     constexpr explicit Cell(P cp) requires (CT): c(cp) {}
     constexpr explicit Cell(P cp, Dimv const & dimv_, Cr dcr=Cr {}) requires (CT): c(cp) { static_assert(is_ctype<Cr>); }
     constexpr explicit Cell(P cp, Dimv dimv_, Cr dcr=Cr {}) requires (!CT): Base { dimv_ }, c(cp)
@@ -281,21 +291,21 @@ struct Cell: public CellBase<P, Dimv, Cr>
     constexpr rank_t rank() const requires (ANY==framer) { return ra::size(dimv)-ra::size(c.dimv); }
 #pragma GCC diagnostic push // test/bug83.cc gcc-14 RA_CHECK=0 --no-sanitize
 #pragma GCC diagnostic warning "-Warray-bounds"
-#define RAC(k, f) is_ctype<decltype(simv[k].f)>
-    constexpr static dim_t len_s(auto k) { if constexpr (CT || RAC(k, len)) return len(k); else return ANY; }
-    constexpr static dim_t len(auto k) requires (CT || RAC(k, len)) { return simv[k].len; }
-    constexpr dim_t len(int k) const requires (!(CT || RAC(k, len))) { return dimv[k].len; }
-    constexpr static dim_t step(auto k) requires (CT || RAC(k, step)) { return k<rank() ? simv[k].step : 0; }
-    constexpr dim_t step(int k) const requires (!(CT || RAC(k, step))) { return k<rank() ? dimv[k].step : 0; }
-    constexpr static bool keep(dim_t st, auto z, auto j) requires (CT || (RAC(z, step) && RAC(j, step))) { return st*step(z)==step(j); }
-    constexpr bool keep(dim_t st, int z, int j) const requires (!(CT || (RAC(z, step) && RAC(j, step)))) { return st*step(z)==step(j); }
+#define RAC(k, f) (CT || 0==framer || is_ctype<decltype(simv[k].f)>)
+    constexpr static dim_t len_s(auto k) { if constexpr (RAC(k, len)) return len(k); else return ANY; }
+    constexpr static dim_t len(auto k) requires (RAC(k, len)) { return simv[k].len; }
+    constexpr dim_t len(int k) const requires (!(RAC(k, len))) { return dimv[k].len; }
+    constexpr static dim_t step(auto k) requires (RAC(k, step)) { return k<rank() ? simv[k].step : 0; }
+    constexpr dim_t step(int k) const requires (!(RAC(k, step))) { return k<rank() ? dimv[k].step : 0; }
+    constexpr static bool keep(dim_t st, auto z, auto j) requires (RAC(z, step) && RAC(j, step)) { return st*step(z)==step(j); }
+    constexpr bool keep(dim_t st, int z, int j) const requires (!(RAC(z, step) && RAC(j, step))) { return st*step(z)==step(j); }
 #undef RAC
 #pragma GCC diagnostic pop
     constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
     constexpr decltype(*c.cp) at(auto const & j) const requires (0==cellr) { return *indexer(*this, c.cp, iter(j)); }
-    constexpr Vu at(auto const & j) const requires (0!=cellr) { Vu d(c); d.cp=indexer(*this, d.cp, iter(j)); return d; }
+    constexpr auto at(auto const & j) const requires (0!=cellr) { decltype(c) d(c); d.cp=indexer(*this, d.cp, iter(j)); return d; }
     constexpr decltype(*c.cp) operator*() const requires (0==cellr) { return *(c.cp); }
-    constexpr Vu const & operator*() const requires (0!=cellr) { return c; }
+    constexpr auto const & operator*() const requires (0!=cellr) { return c; }
     constexpr operator decltype(*c.cp) () const { return to_scalar(*this); } /* [ra45] */
     constexpr auto save() const { return c.cp; }
     constexpr void load(P p) { c.cp=p; }
@@ -688,6 +698,12 @@ map_verb(ilist_t<i ...>, Op && op, P && ... p)
 constexpr auto map_(is_verb auto && op, auto && ... p) { return map_verb(mp::iota<sizeof...(p)> {}, RA_FW(op), RA_FW(p) ...); }
 constexpr auto map_(auto && op, auto && ... p) { return Map(RA_FW(op), RA_FW(p) ...); }
 constexpr auto map(auto && op, auto && ... a) { return map_(RA_FW(op), iter(RA_FW(a)) ...); }
+
+template <class T> constexpr auto
+cast(auto && a) { return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a)); }
+
+template <class T> constexpr auto
+pack(auto && ... a) { return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...); }
 
 template <class J> struct type_at { template <class P> using type = decltype(std::declval<P>().at(std::declval<J>())); };
 

@@ -122,16 +122,8 @@ struct TestRecorder
         ++total;
         willstrict = willskip = willexpectfail = false;
     }
-    void
-    test(bool c, auto && info_full, RA_LOC)
-    {
-        test(c, info_full, info_full, loc);
-    }
-    void
-    test(bool c, RA_LOC)
-    {
-        test(c, RA_LAZYINFO(""), loc);
-    }
+    void test(bool c, auto && info_full, RA_LOC) { test(c, info_full, info_full, loc); }
+    void test(bool c, RA_LOC) { test(c, RA_LAZYINFO(""), loc); }
 
     bool
     test_scomp(auto && a, auto && b, auto && comp, char const * msg, RA_LOC)
@@ -161,7 +153,7 @@ struct TestRecorder
 
             bool c = every(ra::map(comp, a, b));
             test(c,
-                 RA_LAZYINFO(where(false, a, b), " (", msg, " ", where(true, a, b), ")"),
+                 RA_LAZYINFO("ref: ", where(true, a, b), " ", msg, " result: ", where(false, a, b)),
                  RA_LAZYINFO(""),
                  loc);
             return c;
@@ -176,10 +168,10 @@ struct TestRecorder
     }
 #define RA_TEST_COMP(NAME, OP)                                          \
     bool                                                                \
-    NAME(auto && ref, auto && a, RA_LOC)                        \
+    NAME(auto && ref, auto && a, RA_LOC)                                \
     {                                                                   \
         return test_comp(ra::iter(ref), ra::iter(a), [](auto && a, auto && b){ return every(a OP b); }, \
-                         "should be " RA_STRINGIZE(OP), loc);              \
+                         "should be " RA_STRINGIZE(OP), loc);           \
     }
     RA_TEST_COMP(test_eq, ==)
     RA_TEST_COMP(test_lt, <)

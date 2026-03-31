@@ -63,8 +63,7 @@ int main()
         cout << sizeof(ra::Small<int, 0>) << endl;
         cout << sizeof(ra::Small<ra::none_t, 0>) << endl;
         cout << sizeof(ra::Small<noargx, 0>) << endl;
-// the following tests were broken at some point because Small had a fixed empty base class, so nesting Smalls created multiples of these which added useless padding. Not a fan of the rule but w/e - the base class wasn't doing all that much.
-// See
+// the following tests were broken at some point because Small had a fixed empty base class, so nesting Smalls created multiples of these which added useless padding. So I removed the base class, which wasn't doing all that much.
         {
             using nest = ra::Small<ra::Small<int, 2>, 2>;
             cout << "nest " << sizeof(nest) << " " << alignof(nest) << endl;

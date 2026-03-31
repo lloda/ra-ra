@@ -322,20 +322,20 @@ template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1
 constexpr auto
 iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
 {
-    // return viewptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)); // for w=0 mostly works, not quite
+    // return viewptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)); // FIXME for w=0 mostly works, not quite
     return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {});
 }
 
-template <int rank, class T=dim_t> constexpr auto
-ii(dim_t (&&len)[rank], T o, dim_t (&&step)[rank])
+template <int R, class T=dim_t> constexpr auto
+ii(dim_t (&&len)[R], T o, dim_t (&&step)[R])
 {
-    return ViewBig<Seq<dim_t>, rank>(map([](dim_t len, dim_t step){ return Dim {len, step}; }, len, step), Seq<dim_t>{o});
+    return ViewBig<Seq<dim_t>, R>(pack<Dim>(len, step), Seq<dim_t>{o});
 }
 
-template <int rank, class T=dim_t> constexpr auto
-ii(dim_t (&&len)[rank], T o=0)
+template <int R, class T=dim_t> constexpr auto
+ii(dim_t (&&len)[R], T o=0)
 {
-    return ViewBig<Seq<T>, rank>(len, Seq<T>{o});
+    return ViewBig<Seq<T>, R>(len, Seq<T>{o});
 }
 
 template <std::integral auto ... i, class T=dim_t> constexpr auto

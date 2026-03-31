@@ -81,33 +81,14 @@ braces_shape(braces<T, R> const & l)
     return s;
 }
 
-template <class Dimv>
-struct ViewBase
-{
-    constexpr static std::remove_reference_t<Dimv> const simv = {};
-    [[no_unique_address]] Dimv dimv;
-};
-
-template <is_ctype Dimv>
-struct ViewBase<Dimv>
-{
-    constexpr static auto simv = Dimv::value;
-    constexpr static auto dimv = simv;
-};
-
-// FIXME constructor checks (lens>=0, steps inside, etc.).
-// FIXME use for constant step iota(), rather than Ptr (which is Cell).
 template <class P, class Dimv_>
 struct View: public ViewBase<Dimv_>
 {
     using Dimv = Dimv_;
     using ViewBase<Dimv_>::dimv, ViewBase<Dimv_>::simv;
     constexpr static bool CT = is_ctype<Dimv>;
-    P cp;
-    using T = std::remove_reference_t<decltype(*cp)>;
-    constexpr auto data() const { return cp; }
-#define RAC(k, f) (CT || is_ctype<decltype(simv[k].f)>)
     constexpr static rank_t R = ra::size_s<decltype(dimv)>();
+#define RAC(k, f) (CT || 0==R || is_ctype<decltype(simv[k].f)>)
     consteval static rank_t rank() requires (R!=ANY) { return R; }
     constexpr rank_t rank() const requires (R==ANY) { return dimv.size(); }
     constexpr static dim_t len_s(auto k) { if constexpr (RAC(k, len)) return len(k); else return ANY; }
@@ -115,13 +96,18 @@ struct View: public ViewBase<Dimv_>
     constexpr dim_t len(int k) const requires (!(RAC(k, len))) { return dimv[k].len; }
     constexpr static dim_t step(auto k) requires (RAC(k, step)) { return simv[k].step; }
     constexpr dim_t step(int k) const requires (!(RAC(k, step))) { return dimv[k].step; }
-    consteval static dim_t size() requires (CT) { return dimv_size(simv); }
-    consteval static bool empty() requires (CT) { return dimv_empty(simv); }
-    constexpr dim_t size() const requires (!CT) { return dimv_size(dimv); }
-    constexpr bool empty() const requires (!CT) { return dimv_empty(dimv); }
+    consteval static dim_t size() requires (CT || 0==R) { return dimv_size(simv); }
+    consteval static bool empty() requires (CT || 0==R) { return dimv_empty(simv); }
+    constexpr dim_t size() const requires (!(CT || 0==R)) { return dimv_size(dimv); }
+    constexpr bool empty() const requires (!(CT || 0==R)) { return dimv_empty(dimv); }
+#undef RAC
+    P cp;
+    using T = std::remove_reference_t<decltype(*cp)>;
+    constexpr auto data() const { return cp; }
+// FIXME constructor checks (lens>=0, steps inside, etc.).
     constexpr View() requires (!CT) {} // used by Container constructors
-    constexpr View(Dimv && dimv, P cp) requires (!CT && !std::is_reference_v<Dimv>): ViewBase<Dimv>(std::move(dimv)), cp(cp) {} // cannot assign dimv later
-    constexpr View(Dimv const & dimv, P cp) requires (!CT): ViewBase<Dimv>(dimv), cp(cp) {} // cannot assign dimv later
+    constexpr View(Dimv && dimv, P cp) requires (!CT && !std::is_reference_v<Dimv>): ViewBase<Dimv>{std::move(dimv)}, cp(cp) {} // cannot assign dimv later
+    constexpr View(Dimv const & dimv, P cp) requires (!CT): ViewBase<Dimv>{dimv}, cp(cp) {} // cannot assign dimv later
     constexpr View(Slice auto && x) requires requires { View(RA_FW(x).dimv, x.data()); }: View(RA_FW(x).dimv, x.data()) {}
     constexpr View(auto const & s, P cp) requires (!CT) && requires { [](dim_t){}(VAL(s)); }: cp(cp) { filldimv(iter(s), dimv); }
     constexpr View(auto const & s, P cp) requires (!CT) && requires { [](Dim){}(VAL(s)); }: cp(cp) { resize(dimv, ra::size(s)); iter(dimv) = s; } // [ra37]
@@ -156,7 +142,6 @@ struct View: public ViewBase<Dimv_>
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
     template <dim_t s, dim_t o=0> constexpr auto as() const requires (CT) { return from(*this, ra::iota(ic<s>, o)); }
-#undef RAC
 // conversion to const is done differently for (!CT) (conversion op -> &) vs CT (constructor > value, which is just *).
     using U = std::remove_const_t<T>;
     constexpr operator View<T const *, Dimv> const & () const requires (!CT && std::is_same_v<P, U *>) { return *reinterpret_cast<View<T const *, Dimv> const *>(this); }
@@ -266,12 +251,10 @@ struct storage_traits<std::shared_ptr<P>>
 template <class Store, rank_t R>
 struct Container
 {
-    Store store;
-    using Dimv = std::conditional_t<1==R, std::array<SDim<dim_t, ic_t<1>>, 1>, std::conditional_t<ANY==R, vector_default_init<Dim>, std::array<Dim, ANY==R ? 0 : R>>>;
+    using Dimv = std::conditional_t<1==R, std::array<SDim<dim_t, ic_t<1>>, 1>, BigDimv<R>>;
     Dimv dimv;
-    constexpr static std::remove_reference_t<Dimv> const simv = {};
-    using T = typename storage_traits<Store>::T;
-#define RAC(k, f) is_ctype<decltype(simv[k].f)>
+    constexpr static Dimv const simv = {};
+#define RAC(k, f) (0==R || is_ctype<decltype(simv[k].f)>)
     consteval static rank_t rank() requires (R!=ANY) { return R; }
     constexpr rank_t rank() const requires (R==ANY) { return dimv.size(); }
     constexpr static dim_t len_s(auto k) { if constexpr (RAC(k, len)) return len(k); else return ANY; }
@@ -282,6 +265,8 @@ struct Container
     constexpr dim_t size() const { return dimv_size(dimv); }
     constexpr bool empty() const { return dimv_empty(dimv); }
 #undef RAC
+    Store store;
+    using T = typename storage_traits<Store>::T;
     constexpr auto data(this auto && sf) { return storage_traits<Store>::data(sf.store); }
     constexpr auto view() { return View<T *, Dimv const &>(dimv, data()); }
     constexpr auto view() const { return View<T const *, Dimv const &>(dimv, data()); }
@@ -298,7 +283,7 @@ struct Container
     RA_FE(RA_BRACES, 2, 3, 4);
 #undef RA_BRACES
     constexpr static Dimv zdimv = []{ Dimv dv; for(auto & dim: dv) dim=Dim {0, 1}; return dv; }();
-    constexpr Container() requires (R>0): dimv(zdimv) {}
+    constexpr Container() requires (R>0): dimv {zdimv} {}
     constexpr Container() requires (R==ANY): dimv {{0, 1}} {}
     constexpr Container() requires (0==R): Container({}, none) {}
     constexpr Container(auto const & x): Container(ra::shape(x), x) {}
