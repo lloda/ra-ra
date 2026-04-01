@@ -12,7 +12,7 @@
 @c References to source [ma··] or [ma···] current last is 118.
 
 @set VERSION 31
-@set UPDATED 2026 February 2
+@set UPDATED 2026 April 1
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
@@ -282,15 +282,15 @@ A compiler with C++23 support is required. For the current version this means at
 
 Here is a minimal program@footnote{Examples given without context assume that one has declared @code{using std::cout;}, etc.}:
 
-@example @c readme.cc [ma101]
+@example @c read-me.cc [ma101]
 @verbatim
 #include "ra/ra.hh"
-#include <iostream>
+#include <cstdio>
 
 int main()
 {
     ra::Big<char, 2> A({2, 5}, "helloworld");
-    std::cout << fmt({.shape=ra::noshape, .sep0="|"}, transpose(A)) << std::endl;
+    std::print(stdout, "{:nS{|}{\n}}\n", transpose(A)); // see Formatted output
 }
 @end verbatim
 @print{} h|w
@@ -310,7 +310,7 @@ The following @code{#define}s affect the behavior of @code{ra::}.
 @c FIXME The flag should only apply to dynamic checks.
 @item @code{RA_CHECK} (default 1)
 
-If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; int i = 10; a[i] = 0;}). See @ref{Error handling}.
+If 1, check shape agreement (e.g. @code{Big<int, 1> @{2, 3@} + Big<int, 1> @{1, 2, 3@}}) and random array accesses (e.g. @code{Small<int, 2> a = 0; a[10] = 0;}). See @ref{Error handling}.
 
 @item @code{RA_OPT_SMALL} (default 0)
 
@@ -333,24 +333,30 @@ If 1, use @code{fma} in certain array reductions such as @ref{x-dot,@code{dot}},
 @cindex ct
 @cindex runtime
 @cindex rt
-There are three kinds of containers (ct: compile-time, rt: runtime): 1) ct size, 2) ct rank/rt shape, and 3) rt rank; rt rank implies rt shape. Some rt size arrays can be resized but rt rank arrays cannot normally have their rank changed. Instead, you create a new container or view with the rank you want.
+There are three kinds of containers:
 
-For example:
+@itemize
+@item compile time shape,
+@item compile time rank and run time shape,
+@item run time rank.
+@end itemize
+
+In this example, all the containers have the same shape:
 
 @example
 @verbatim
 {
-    ra::Small<double, 2, 3> a(0.);     // a ct size 2x3 array
-    ra::Big<double, 2> b({2, 3}, 0.);  // a rt size 2x3 array
-    ra::Big<double> c({2, 3}, 0.);     // a rt rank 2x3 array
-    // a, b, c destroyed at end of scope
+    ra::Small<double, 2, 3> a(0.);     // compile time shape
+    ra::Big<double, 2> b({2, 3}, 0.);  // compile time rank & run time shape
+    ra::Big<double> c({2, 3}, 0.);     // run time rank
+    // a, b, c destroyed here
 }
 @end verbatim
 @end example
 
 Using the right kind of container can result in better performance. Compile time shapes do not need to be stored in memory, which matters when you have many small arrays. Compile time shape or compile time rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 
-Container constructors come in two forms. The first form takes a single argument which is copied into the new container. This argument provides shape information if the container type requires it.@footnote{The brace-list constructors of rank 2 and higher aren't supported on types of runtime rank, because in the C++ grammar, a nested initializer list doesn't always define a rank unambiguously.}
+Container constructors come in two forms. The first form takes a @emph{single} argument which is copied into the new container. The shape of the argument must be compatible with the container's type.
 
 @c [ma111]
 @example
@@ -358,15 +364,15 @@ Container constructors come in two forms. The first form takes a single argument
 using ra::Small, ra::Big;
 Small<int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
 Big<int, 2> a1 = {{1, 2}, {3, 4}};      // explicit contents
-Small<int, 2, 2> a2 = {{1, 2}};         // error: bad shape
+Small<int, 2, 2> a2 = {{7, 8}};         // error: shape [1 2] but container's is [2 2]
 Small<int, 2, 2> b = 7;                 // 7 is copied into b
-Small<int, 2, 2> c = a;                 // the contents of a are copied into c
+Small<int, 2, 2> c = a;                 // contents of a are copied into c
 Big<int> d = a;                         // d takes the shape of a and a is copied into d
-Big<int> e = 0;                         // e is a 0-array with one element f()==0.
+Big<int> e = 0;                         // e is a 0-array with one element e()==0.
 @end verbatim
 @end example
 
-The second form takes two arguments, one giving the shape, the second the contents.
+The second form takes @emph{two} arguments, one giving the shape, the second the contents.
 
 @cindex @code{none}
 @cindex uninitialized container
@@ -378,7 +384,7 @@ ra::Big<double> c({2, 3}, a);         // c has shape [2 3], a is copied into c
 @end verbatim
 @end example
 
-The last example may result in an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.}, which is (), matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
+The last example may be an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.}, which is (), matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
 
 A scalar value is accepted as the shape of a rank 1 array.
 
@@ -386,10 +392,11 @@ A scalar value is accepted as the shape of a rank 1 array.
 @cindex uninitialized container
 @example
 @verbatim
-ra::Big<int> c(3, 0);      // ok {0, 0, 0}, same as ra::Big<int> c({3}, 0)
-ra::Big<int, 1> c(3, 0);   // ok {0, 0, 0}, same as ra::Big<int, 1> c({3}, 0)
-ra::Big<int, 2> c({3}, 0); // error: bad length for shape
-ra::Big<int, 2> c(3, 0);   // error: bad length for shape
+ra::Big<int> c(3, 0);          // ok {0, 0, 0}, same as ra::Big<int> c({3}, 0)
+ra::Big<int, 1> c(3, 0);       // ok {0, 0, 0}, same as ra::Big<int, 1> c({3}, 0)
+ra::Big<int, 2> c({3}, 0);     // error: bad length 1 for shape, need 2
+ra::Big<int, 2> c(3, 0);       // error: bad length 1 for shape, need 2
+ra::Big<int, 2> c({3, 4}, 0);  // ok
 @end verbatim
 @end example
 
@@ -411,7 +418,7 @@ double bx[6] = {1, 2, 3, 4, 5, 6}
 ra::Big<double, 2> b({3, 2}, bx); // {{1, 2}, {3, 4}, {5, 6}}
 
 double cx[4] = {1, 2, 3, 4}
-ra::Big<double, 2> c({3, 2}, cx); // *** WHO NOSE ***
+ra::Big<double, 2> c({3, 2}, cx); // undefined
 @end verbatim
 @end example
 
@@ -431,6 +438,7 @@ Use @ref{x-to-ravel,@code{to_ravel}} to initialize the ravel with arguments of o
 std::vector<double> bx {1, 2, 3, 4, 5, 6};
 auto b = to_ravel(bx, ra::Big<double, 2>({3, 2}, ra::none)); // b is ra::Big<double, 2>
 @end verbatim
+@result{} b = @{@{1, 2@}, @{3, 4@}, @{5, 6@}@}
 @end example
 
 These are compile time errors:
@@ -501,11 +509,11 @@ ra::ViewBig<int *> v2(raw);                   // do this instead for rank-0 view
 @end verbatim
 @end example
 
-Containers can be treated as views of the same kind, that is, if you declare a function
+Containers can be converted to views of the same kind, that is, if you declare a function
 
 @example
 @verbatim
-void f(ra::ViewBig<int *, 3> & v);
+void f(ra::ViewBig<int *, 3> const & v);
 @end verbatim
 @end example
 
@@ -1354,8 +1362,8 @@ Note that @code{wrank} cannot be used to transpose axes in general.
 I hope that in the future something like @code{C(i, j) += A(i, k)*B(k, j)}, where @code{i, j, k} are special objects, can be automatically translated to the requisite combination of @code{wrank} and perhaps also @ref{x-transpose,@code{transpose}}. For the time being, you have to align or transpose the axes yourself.
 
 @c ------------------------------------------------
-@node Formatted I/O
-@section Formatted I/O
+@node Formatted output
+@section Formatted output
 @c ------------------------------------------------
 
 @code{ra::} supports both iostreams and @code{std::format}.
@@ -2466,7 +2474,7 @@ std::print(stdout, "{}\n", fmt({.sep0="|"}, ra::Small<int, 2> { 2, 3 }));
 @print{} 2|3
 @end example
 
-See also @ref{Formatted I/O}.
+See also @ref{Formatted output}.
 @end defun
 
 @cindex @code{from}
@@ -2497,7 +2505,7 @@ For example:
   @result{} Aij = @{@{6, 5@}, @{4, 3@}@}
 @end example
 
-The last example is more or less how @code{A(i, j)} is implemented for arbitrary subscripts (@pxref{The rank conjunction}).
+When @var{op} is a view, @code{from(op, ...)} is equivalent to @code{op(...)}, and so the result of @code{from(op, ...)} might also be a view depending on the types of the other arguments (see @ref{Slicing,Slicing}).
 
 @end defun
 
@@ -2606,7 +2614,7 @@ Create an array expression that selects the first of @var{expr} ... if @var{sele
 This function cannot be defined using @ref{x-map,@code{map}}, because @code{map} looks up each one of its argument expressions before calling @var{op}.
 
 For example:
-@example @c cf examples/readme.cc [ma100].
+@example @c cf examples/read-me.cc [ma100].
 @verbatim
     ra::Small<int, 3> s {2, 1, 0};
     ra::Small<double, 3> z = pick(s, s*s, s+s, sqrt(s));

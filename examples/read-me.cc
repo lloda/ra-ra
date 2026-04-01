@@ -174,6 +174,7 @@ int main()
     {
         ra::Big<char, 2> A({2, 5}, "helloworld");
         std::cout << fmt({ .shape=ra::noshape, .sep0="|" }, transpose(A)) << std::endl;
+        std::print(stdout, "{:nS{|}{\n}}\n", transpose(A)); // alt
     }
     {
         ra::Big<char const *, 1> A = {"hello", "array", "world"};
