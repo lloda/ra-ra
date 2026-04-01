@@ -323,7 +323,7 @@ constexpr auto
 iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
 {
     // return viewptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)); // FIXME for w=0 mostly works, not quite
-    return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {});
+    return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {}); // FIXME make distinct tindex<>
 }
 
 template <int R, class T=dim_t> constexpr auto
@@ -341,10 +341,9 @@ ii(dim_t (&&len)[R], T o=0)
 template <std::integral auto ... i, class T=dim_t> constexpr auto
 ii(ra::ilist_t<i ...>, T o=0)
 {
-    return View<Seq<T>, ra::ic_t<c_dimv(std::array<ra::dim_t, sizeof...(i)>{i...})>>(Seq<T>{o});
+    return View<Seq<T>, ra::ic_t<c_dimv(std::array {dim_t(i) ...})>>(Seq<T>{o});
 }
 
-template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); }; // FIXME
 template <class A> concept is_iota = (Slice<A> && requires (A a) { []<class I>(Seq<I> const &){}(a.data()); });
 template <class A> concept is_scalar_index = is_ra_0<A>;
 

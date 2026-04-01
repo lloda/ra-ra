@@ -483,29 +483,26 @@ template <rank_t ... crank, class Op> constexpr auto
 wrank(Op && op) { return Verb<ilist_t<crank ...>, Op> { RA_FW(op) }; }
 
 template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, int skip=0>
-struct Framematch_def;
-
-template <class V, class T, class R=mp::makelist<mp::len<T>, mp::nil>, int skip=0>
-using Framematch = Framematch_def<std::decay_t<V>, T, R, skip>;
+struct Framematch;
 
 // Get list (per argument) of lists of live axes. The last frame match is handled by standard prefix matching.
 template <class ... crank, class W, class ... Ti, class ... Ri, int skip>
-struct Framematch_def<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
+struct Framematch<Verb<std::tuple<crank ...>, W>, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
 // TODO crank negative, inf.
     constexpr static std::array<int, sizeof...(Ti)> live { (rank_s<Ti>() - mp::len<Ri> - crank::value) ... };
     using frameaxes = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri> - crank::value), skip>> ...>;
     using FM = Framematch<W, std::tuple<Ti ...>, frameaxes, skip + std::ranges::max(live)>;
     using R = typename FM::R;
-    template <class U> constexpr static decltype(auto) op(U && v) { return FM::op(RA_FW(v).op); } // cf [ra31]
+    constexpr static decltype(auto) op(auto && v) { return FM::op(RA_FW(v).op); } // cf [ra31]
 };
 
 template <class V, class ... Ti, class ... Ri, int skip>
-struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
+struct Framematch<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 {
 // TODO -crank::value when the actual verb rank is used
     using R = std::tuple<mp::append<Ri, mp::iota<(rank_s<Ti>() - mp::len<Ri>), skip>> ...>;
-    template <class U> constexpr static decltype(auto) op(U && v) { return RA_FW(v); }
+    constexpr static decltype(auto) op(auto && v) { return RA_FW(v); }
 };
 
 
@@ -516,7 +513,7 @@ struct Framematch_def<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
 
-// need runtime check if there's more than one leaf with ANY size.
+// need runtime check if there's more than one leaf with size ANY.
 template <class TOP, class A=TOP>
 consteval int
 tbc(int sofar)
@@ -691,7 +688,7 @@ template <class Op, class ... P, int ... i>
 constexpr auto
 map_verb(ilist_t<i ...>, Op && op, P && ... p)
 {
-    using FM = Framematch<Op, std::tuple<P ...>>;
+    using FM = Framematch<std::decay_t<Op>, std::tuple<P ...>>;
     return map_(FM::op(RA_FW(op)), reframe(RA_FW(p), mp::ref<typename FM::R, i> {}) ...);
 }
 
@@ -700,7 +697,7 @@ constexpr auto map_(auto && op, auto && ... p) { return Map(RA_FW(op), RA_FW(p) 
 constexpr auto map(auto && op, auto && ... a) { return map_(RA_FW(op), iter(RA_FW(a)) ...); }
 
 template <class T> constexpr auto
-cast(auto && a) { return map([](auto && b) -> decltype(auto) { return T(b); }, RA_FW(a)); }
+cast(auto && ... a) { return map([](auto && ... a) -> decltype(auto) { return T(RA_FW(a) ...); }, RA_FW(a) ...); }
 
 template <class T> constexpr auto
 pack(auto && ... a) { return map([](auto && ... a){ return T { RA_FW(a) ... }; }, RA_FW(a) ...); }

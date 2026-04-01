@@ -2333,8 +2333,10 @@ See also @ref{x-end,@code{end}}, @ref{x-range,@code{range}}.
 @end defun
 
 @cindex @code{cast}
-@anchor{x-cast} @defun cast <type> expr
-Create an array expression that casts @var{expr} into @var{type}.
+@anchor{x-cast} @defun cast <type> expr ...
+Create an array expression that constructs or casts to @var{type} from @var{expr} ...
+
+See also @ref{x-pack,@code{pack}}.
 @end defun
 
 @cindex @code{collapse}
@@ -2599,12 +2601,13 @@ ra::map(&A::a, v) = -ra::map(&A::b, v); // pointer to member
 Operations defined on scalar arguments are usually extended to higher rank arguments through @code{op(i ...)} ≡ @code{map(op, i ...)}, but note that @ref{x-subscript-outer-product,this is not the case} when @var{op} is a view.
 
 See also @ref{x-for_each,@code{for_each}}.
-
 @end defun
 
 @cindex @code{pack}
 @anchor{x-pack} @defun pack <type> expr ...
 Create an array expression that brace-constructs @var{type} from @var{expr} ...
+
+See also @ref{x-cast,@code{cast}}.
 @end defun
 
 @cindex @code{pick}

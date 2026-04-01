@@ -6,6 +6,7 @@
 
 #include "ra/ra.hh"
 #include <iostream>
+#include <complex>
 
 using std::cout, std::endl;
 
@@ -29,6 +30,9 @@ int main()
 
     C = A / ra::cast<float>(B);
     cout << C << endl;
+
+// cast can take multiple arguments.
+    cout << ra::cast<std::complex<float>>(C, -C) << endl;
 
     return 0;
 }

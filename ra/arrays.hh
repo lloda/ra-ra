@@ -409,7 +409,7 @@ template <class K=ic_t<0>>
 constexpr auto
 reverse(Slice auto && a, K k = K {})
 {
-    if constexpr (is_ptr<decltype(a)>) {
+    if constexpr (1==rank_s(a) && requires { []<class I>(Seq<I> const &){}(a.data()); }) {
         static_assert(UNB!=a.len_s(0), "Bad arguments to reverse.");
         return ptr(Seq { a.data().i+(a.dimv[0].len-1)*a.dimv[0].step }, a.dimv[0].len, csub(ic<0>, a.dimv[0].step));
     } else if constexpr (is_ctype<typename std::decay_t<decltype(a)>::Dimv>) {

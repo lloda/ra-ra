@@ -120,6 +120,8 @@ iota3(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
     return ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s));
 }
 
+template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); }; // FIXME
+
 } // namespace ra
 
 int main()
