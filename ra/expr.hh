@@ -125,12 +125,12 @@ scalar(C && c) { return Scalar<C> { RA_FW(c) }; }
 
 // Making Iterators
 
+// iterators need resetting on use [ra35].
 constexpr auto iter(is_scalar auto && a) { return ra::scalar(RA_FW(a)); }
-// iterators need resetting on each use [ra35].
 constexpr auto iter(is_iterator auto & a) requires (!(requires { []<class C>(Scalar<C> &){}(a); })) { return a; }
 constexpr decltype(auto) iter(is_iterator auto && a) { return RA_FW(a); }
 // forward decl.
-template <int cr=0> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>);
+template <int cr=0> constexpr auto iter(Slice auto && a);
 constexpr auto iter(is_fov auto && a);
 constexpr auto iter(is_builtin auto && a);
 
@@ -313,15 +313,15 @@ struct Cell: public CellBase<P, Dimv, Cr>
 #pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
     constexpr void mov(dim_t d) { std::ranges::advance(c.cp, d); }
 #pragma GCC diagnostic pop
-    constexpr auto data() const { return c.cp; } // iota() must be Iterator *and* Slice. FIXME iota() be Slice alone.
 };
 
 template <class P, class Dimv, class Cr> Cell(P, Dimv &&, Cr) -> Cell<P, Dimv, std::conditional_t<is_ctype<Cr>, Cr, rank_t>>;
 
-// If both Slice and Iterator (Ptr), go as Iterator. TODO any exprs? runtime cr? ra::len in cr?
+// TODO any exprs? runtime cr? ra::len in cr?
 constexpr auto
-iter(Slice auto && s, auto c) requires (!is_iterator<decltype(s)>)
+iter(Slice auto && s, auto c)
 {
+    static_assert(!is_iterator<decltype(s)>);
     using Dimv = std::decay_t<decltype(s)>::Dimv;
     if constexpr (is_ctype<decltype(c)> && is_ctype<Dimv>) {
         return Cell(s.data(), Dimv {}, c);
@@ -330,7 +330,7 @@ iter(Slice auto && s, auto c) requires (!is_iterator<decltype(s)>)
     }
 }
 
-template <int cr> constexpr auto iter(Slice auto && a) requires (!is_iterator<decltype(a)>) { return iter(RA_FW(a), ic<cr>); }
+template <int cr> constexpr auto iter(Slice auto && a) { return iter(RA_FW(a), ic<cr>); }
 
 template <class N, class S>
 struct SDim

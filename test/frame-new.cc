@@ -210,16 +210,12 @@ main()
 #undef MAP
     tr.section("UNB on any len_s(k) means size_s() is UNB");
     {
-        using order = ra::ilist_t<0, 1>;
-        using T0 = ra::Map<std::multiplies<void>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>, order>;
-        ra::dim_t s0 = ra::size_s<T0>();
-        using T1 = ra::Map<std::multiplies<void>, std::tuple<decltype(ra::iota<1>()), ra::Scalar<int>>, order>;
-        ra::dim_t s1 = ra::size_s<T1>();
-        using T2 = ra::Map<std::multiplies<void>, std::tuple<decltype(ra::iota<2>()), ra::Scalar<int>>, order>;
-        ra::dim_t s2 = ra::size_s<T2>();
-        tr.test_eq(ra::UNB, s0);
-        tr.test_eq(ra::UNB, s1);
-        tr.test_eq(ra::UNB, s2);
+        using T0 = decltype(map(std::multiplies<void> {}, ra::tindex<0>, 1));
+        using T1 = decltype(map(std::multiplies<void> {}, ra::tindex<1>, 1));
+        using T2 = decltype(map(std::multiplies<void> {}, ra::tindex<2>, 1));
+        tr.test_eq(ra::UNB, ra::size_s<T0>());
+        tr.test_eq(ra::UNB, ra::size_s<T1>());
+        tr.test_eq(ra::UNB, ra::size_s<T2>());
     }
     return tr.summary();
 }

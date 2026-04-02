@@ -46,9 +46,9 @@ int main()
 {
     ra::TestRecorder tr(cout);
     {
-        println(cout, "\nii([3, 4])\n{:c}", ra::ii({3, 4}));
-        println(cout, "\nii([3, 4], -3, [1, 10])\n{:c}", ra::ii({3, 4}, -3, {1, 10}));
-        println(cout, "\nii(<3, 4>)\n{:c}", ra::ii(ra::ilist<3, 4>));
+        println(cout, "\nii([3, 4])\n{:c}", ra::iota({3, 4}));
+        println(cout, "\nii([3, 4], -3, [1, 10])\n{:c}", ra::iota({3, 4}, -3, {1, 10}));
+        println(cout, "\nii(<3, 4>)\n{:c}", ra::iota(ra::ilist<3, 4>));
         tr.test(ra::is_scalar_index<decltype(ra::Small<int>(1))>);
         tr.test(ra::is_scalar_index<decltype(iter(ra::Small<int>(1)))>);
     }
@@ -85,13 +85,13 @@ int main()
     auto testrank0 = [&](bool s, auto && a)
     {
         tr.info("rank0").test_eq(rank(a0), rank_maybe(s, a));
-        tr.test_eq(rank(a1), rank_maybe(s, a, ra::ii({2}), ra::ii({3})));
-        tr.test_eq(rank(a2), rank_maybe(s, a, 1, ra::ii({3})));
-        tr.test_eq(rank(a3), rank_maybe(s, a, ra::ii({2}), 1));
+        tr.test_eq(rank(a1), rank_maybe(s, a, ra::iota({2}), ra::iota({3})));
+        tr.test_eq(rank(a2), rank_maybe(s, a, 1, ra::iota({3})));
+        tr.test_eq(rank(a3), rank_maybe(s, a, ra::iota({2}), 1));
         tr.test_eq(rank(a4), rank_maybe(s, a, 1, 1));
         tr.test_eq(rank(a5), rank_maybe(s, a, 1));
-        tr.test_eq(rank(a6), rank_maybe(s, a, ra::ii({2})));
-        tr.test_eq(rank(a7), rank_maybe(s, a, ra::all, ra::ii({2, 2})));
+        tr.test_eq(rank(a6), rank_maybe(s, a, ra::iota({2})));
+        tr.test_eq(rank(a7), rank_maybe(s, a, ra::all, ra::iota({2, 2})));
         tr.test_eq(rank(a8), rank_maybe(s, a, ra::dots<1>, 1));
         tr.test_eq(rank(a9), rank_maybe(s, a, 1, ra::dots<1>));
     };
@@ -106,13 +106,13 @@ int main()
     auto testa0 = [&](auto && a)
     {
         tr.strict().info("a0").test_eq(a0, from(a));
-        tr.strict().test_eq(a1, from(a, ra::ii({2}), ra::ii({3})));
-        tr.strict().test_eq(a2, from(a, 1, ra::ii({3})));
-        tr.strict().test_eq(a3, from(a, ra::ii({2}), 1));
+        tr.strict().test_eq(a1, from(a, ra::iota({2}), ra::iota({3})));
+        tr.strict().test_eq(a2, from(a, 1, ra::iota({3})));
+        tr.strict().test_eq(a3, from(a, ra::iota({2}), 1));
         tr.strict().test_eq(a4, from(a, 1, 1));
         tr.strict().test_eq(a5, from(a, 1));
-        tr.strict().test_eq(a6, from(a, ra::ii({2})));
-        tr.strict().test_eq(a7, from(a, ra::all, ra::ii({2, 2})));
+        tr.strict().test_eq(a6, from(a, ra::iota({2})));
+        tr.strict().test_eq(a7, from(a, ra::all, ra::iota({2, 2})));
         tr.strict().test_eq(a8, from(a, ra::dots<1>, 1));
         tr.strict().test_eq(a9, from(a, 1, ra::dots<1>));
         tr.strict().test_eq(aA, shape(from(a, ra::dots<1>, ra::insert<1>)));
@@ -130,35 +130,35 @@ int main()
 
     tr.section("View<, ic_t<...>>");
     {
-        constexpr auto a = ra::ii(ra::ilist<3, 4>);
+        constexpr auto a = ra::iota(ra::ilist<3, 4>);
         static_assert(every(a0==a));
         testrank0(true, a);
-        testrank1(true, ra::ii(ra::ilist<3, 2, 3>));
+        testrank1(true, ra::iota(ra::ilist<3, 2, 3>));
         testa0(a);
-        testa1(ra::ii(ra::ilist<3, 2, 3>));
+        testa1(ra::iota(ra::ilist<3, 2, 3>));
     }
     tr.section("ViewBig<... RANK>");
     {
-        constexpr auto a = ra::ii({3, 4});
+        constexpr auto a = ra::iota({3, 4});
         static_assert(every(a0==a));
         testrank0(true, a);
-        testrank1(true, ra::ii({3, 2, 3}));
+        testrank1(true, ra::iota({3, 2, 3}));
         testa0(a);
-        testa1(ra::ii({3, 2, 3}));
+        testa1(ra::iota({3, 2, 3}));
     }
     tr.section("ViewBig<... ANY>");
     {
-        /* constexpr FIXME */ auto a = ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({3, 4}));
+        /* constexpr FIXME */ auto a = ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::iota({3, 4}));
         // static_assert(every(a0==a)); // FIXME
         testa0(a);
         // testrank0(a); // FIXME only static
-        testa1(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({3, 2, 3})));
+        testa1(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::iota({3, 2, 3})));
         testrank0(false, a);
-        testrank1(false, ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({3, 2, 3})));
+        testrank1(false, ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::iota({3, 2, 3})));
     }
     tr.section("len in scalar");
     {
-        constexpr auto a = ra::ii(ra::ilist<3, 6, 4>);
+        constexpr auto a = ra::iota(ra::ilist<3, 6, 4>);
         auto b0 = from(a, ra::len-1, ra::iota(ra::ic<3>), ra::len/2);
         auto b1 = from(a, 2, ra::iota(ra::ic<3>), 2);
         tr.test_eq(ra::iter({50, 54, 58}), b0);
@@ -168,7 +168,7 @@ int main()
     }
     tr.section("len in unbeaten subscript");
     {
-        constexpr auto a = ra::ii(ra::ilist<3, 4, 3>);
+        constexpr auto a = ra::iota(ra::ilist<3, 4, 3>);
 // FIXME forwarding :-/
         // auto b0 = from(a, 2, ra::Small<int, 2>{0, 1} + ra::len/2, 2);
         auto b1 = from(a, 2, ra::iota(ra::ic<2>, 2), 2);
@@ -179,7 +179,7 @@ int main()
     }
     tr.section("len in ptr-iota");
     {
-        constexpr auto a = ra::ii(ra::ilist<3, 4, 3>);
+        constexpr auto a = ra::iota(ra::ilist<3, 4, 3>);
         auto b0 = from(a, 2, ra::iota(ra::len, 0), 2);
         auto b1 = from(a, 2, ra::iota(ra::ic<4>, 0), 2);
         tr.test_eq(ra::iter({26, 29, 32, 35}), b0);
@@ -189,25 +189,25 @@ int main()
     }
     tr.section("len in view-iota (only in cp)");
     {
-        auto b = ra::ii({20});
-        tr.strict().test_eq(ra::iota(10, 10), b(ra::ii({10}, ra::len-10)));
-        auto a = ra::ii({10}, ra::len-10);
+        auto b = ra::iota({20});
+        tr.strict().test_eq(ra::iota(10, 10), b(ra::iota({10}, ra::len-10)));
+        auto a = ra::iota({10}, ra::len-10);
         tr.strict().test_eq(ra::iota(10, 10), b(a));
     }
     tr.section("Ptr works as rank 1 iota");
     {
-        constexpr auto a = ra::ii(ra::ilist<3, 6, 4>);
+        constexpr auto a = ra::iota(ra::ilist<3, 6, 4>);
         {
             auto b0 = from(a, 1, ra::iota(3), 2);
-            auto b1 = from(a, 1, ra::ii({3}), 2);
+            auto b1 = from(a, 1, ra::iota({3}), 2);
             tr.test_eq(ra::iter({26, 30, 34}), b0);
             tr.test_eq(ra::iter({26, 30, 34}), b1);
             tr.test_eq(b0.dimv[0].len, b0.dimv[0].len);
             tr.test_eq(b0.dimv[0].step, b0.dimv[0].step);
         }
         {
-            auto b0 = from(a, 1, ra::iota(ra::ic<3>), ra::ii(ra::ilist<2>));
-            auto b1 = from(a, 1, ra::ii(ra::ilist<3>), ra::iota(ra::ic<2>));
+            auto b0 = from(a, 1, ra::iota(ra::ic<3>), ra::iota(ra::ilist<2>));
+            auto b1 = from(a, 1, ra::iota(ra::ilist<3>), ra::iota(ra::ic<2>));
             tr.test_eq(ra::Small<int, 3, 2> {{24, 25}, {28, 29}, {32, 33}}, b0);
             tr.test_eq(ra::Small<int, 3, 2> {{24, 25}, {28, 29}, {32, 33}}, b1);
             constexpr ra::dim_t l0 = b0.len(0);
@@ -226,7 +226,7 @@ int main()
     }
     tr.section("unbeaten ViewBig<... RANK> (c)");
     {
-        constexpr auto a = ra::ii({2, 3, 3, 2});
+        constexpr auto a = ra::iota({2, 3, 3, 2});
         constexpr auto ds = fromds(a, ra::all, ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::all);
         constexpr auto bv = frombv(a, ra::all, ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::all);
 // FIXME maybe forwarding issue (apparent with sanitizers on)
@@ -244,7 +244,7 @@ int main()
     }
     tr.section("unbeaten ViewBig<... RANK> (c) pure");
     {
-        constexpr auto a = ra::ii({2, 3});
+        constexpr auto a = ra::iota({2, 3});
         constexpr auto ds = fromds(a, ra::Small<int, 2> {1, 0}, ra::Small<int, 2> {2, 1});
         constexpr auto bv = frombv(a, ra::Small<int, 2> {1, 0}, ra::Small<int, 2> {2, 1});
         auto i0 = ra::Small<int, 2> {1, 0};
@@ -255,7 +255,7 @@ int main()
     }
     tr.section("unbeaten ViewBig<... RANK> (nc)");
     {
-        auto a = ra::ii({2, 3, 3, 2});
+        auto a = ra::iota({2, 3, 3, 2});
         constexpr auto ds = fromds(a, ra::all, ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::all);
         auto bv = frombv(a, ra::all, ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::all);
         println(cout, "ds {:c} bv {:c}", ds, bv);
@@ -274,7 +274,7 @@ int main()
     }
     tr.section("unbeaten constant dimv View<>");
     {
-        auto a = ra::ii(ra::ilist<2, 3, 3, 2>);
+        auto a = ra::iota(ra::ilist<2, 3, 3, 2>);
         constexpr auto ds = fromds(a, ra::all, ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::all);
         constexpr auto bv = frombv(a, ra::all, ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::all);
         println(cout, "ds {:c} bv {:c}", ds, bv);
@@ -298,10 +298,10 @@ int main()
     }
     tr.section("small from big");
     {
-        auto a = ra::ii({2, 3, 3, 2});
-        constexpr auto ds = fromds(a, ra::ii(ra::ilist<2>), ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::ii(ra::ilist<2>));
+        auto a = ra::iota({2, 3, 3, 2});
+        constexpr auto ds = fromds(a, ra::iota(ra::ilist<2>), ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::iota(ra::ilist<2>));
 // FIXME ev. constexpr
-        auto bv = frombv(a, ra::ii(ra::ilist<2>), ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::ii(ra::ilist<2>));
+        auto bv = frombv(a, ra::iota(ra::ilist<2>), ra::Small<int, 2> {0, 2}, ra::Small<int, 2> {0, 2}, ra::iota(ra::ilist<2>));
         println(cout, "ds {:c} bv {:c}", ds, bv);
     }
     tr.section("sanity");
@@ -312,20 +312,20 @@ int main()
     }
     tr.section("unbeaten constant dimv View<> (over rank)");
     {
-        auto a = ra::ii(ra::ilist<10>);
+        auto a = ra::iota(ra::ilist<10>);
         ra::Small<int, 2, 3> b = from(a, ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}});
         tr.strict().test_eq(ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}}, b);
     }
     tr.section("unbeaten ViewBig<... RANK> (over rank)");
     {
-        auto a = ra::ViewBig<ra::Seq<ra::dim_t>, 1>(ra::ii({10}));
+        auto a = ra::ViewBig<ra::Seq<ra::dim_t>, 1>(ra::iota({10}));
         ra::Small<int, 2, 3> b = from(a, ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}});
         tr.strict().test_eq(ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}}, b);
     }
 // general ANY cases don't work but two that do are: 1) all unbeaten, match rank
     tr.section("unbeaten ViewBig<... ANY> I");
     {
-        auto a = ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({2, 3}));
+        auto a = ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::iota({2, 3}));
         auto i0 = ra::Small<int, 2> {1, 0};
         auto i1 = ra::Small<int, 2> {2, 1};
         std::vector<ra::Dim> bv(ra::frombrank(a, i0, i1));
@@ -340,7 +340,7 @@ int main()
     tr.section("unbeaten ViewBig<... ANY> IIa");
     {
         auto i = ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}};
-        auto b = from(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({10})), i);
+        auto b = from(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::iota({10})), i);
         ra::Small<int, 2, 3> c = b;
         println(cout, "c {:c}", c);
         tr.strict().test_eq(ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}}, c);
@@ -348,7 +348,7 @@ int main()
     tr.section("unbeaten ViewBig<... ANY> IIb");
     {
         auto i = ra::Small<int, 2, 3> {{3, 2, 1}, {4, 5, 6}};
-        auto b = from(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::ii({10, 2})), i, 0); // [ra03]
+        auto b = from(ra::ViewBig<ra::Seq<ra::dim_t>, ra::ANY>(ra::iota({10, 2})), i, 0); // [ra03]
         ra::Small<int, 2, 3> c = b;
         println(cout, "c {:c}", c);
         tr.strict().test_eq(ra::Small<int, 2, 3> {{6, 4, 2}, {8, 10, 12}}, c);
@@ -375,13 +375,13 @@ int main()
     }
     tr.section("regular iota is a slice");
     {
-        auto a0 = ra::ii({7});
+        auto a0 = ra::iota({7});
         auto b1 = ra::iota(5, 1);
         println(cout, "a0 {:l} b1 {:l}", a0, b1);
         println(cout, "a0(b1) {:l}", from(a0, b1));
         tr.test_eq(1, from(a0, b1).data().i);
         auto b0 = ra::iota(7);
-        auto a1 = ra::ii({5}, {1});
+        auto a1 = ra::iota({5}, {1});
         static_assert(ra::Slice<decltype(b0)>);
         println(cout, "b0(a1) {:l}", from(b0, a1));
         tr.test_eq(1, from(b0, a1).data().i);

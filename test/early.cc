@@ -16,17 +16,15 @@ int main()
     TestRecorder tr(std::cout);
     tr.section("early with rank 0");
     {
-        {
-            ra::Big<int, 0> a = 99;
-            tr.test(ra::any(a==99));
-            tr.test(ra::every(a==99));
-        }
-        {
-            ra::Big<int> a = 99;
-            tr.test_eq(0, a.rank());
-            tr.test(ra::any(a==99));
-            tr.test(ra::every(a==99));
-        }
+        ra::Big<int, 0> a = 99;
+        tr.test(ra::any(a==99));
+        tr.test(ra::every(a==99));
+    }
+    {
+        ra::Big<int> a = 99;
+        tr.test_eq(0, a.rank());
+        tr.test(ra::any(a==99));
+        tr.test(ra::every(a==99));
     }
     tr.section("early with static lens");
     {

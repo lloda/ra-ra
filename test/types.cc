@@ -71,6 +71,7 @@ int main()
 {
     TestRecorder tr(std::cout, TestRecorder::NOISY);
     static_assert(ra::is_ctype<ra::ic_t<0> &>);
+    constexpr auto maybe = std::nullopt;
     {
         using T = std::chrono::duration<long int, std::ratio<1, 1000000000>>;
         ra::Big<T, 1> a;
@@ -83,6 +84,7 @@ int main()
         static_assert(std::is_same_v<ra::ncvalue_t<decltype(an)>, T>);
     }
     {
+// ra slice iterator scalar fov
         TESTPRED(decltype(std::declval<ra::View<ra::Dim *, ra::ic_t<std::array { ra::Dim {3, 1} }>>>()),
                  true, true, false, false, false);
         TESTPRED(int,
@@ -109,30 +111,31 @@ int main()
                  true, true, false, false, false);
 // double Iterator/Slice
         TESTPRED(decltype(iter(ra::Unique<int, 2>())),
-                 true, std::nullopt, true, false, false);
+                 true, maybe, true, false, false);
         static_assert(ra::Iterator<decltype(iter(ra::Unique<int, 2>()))>);
 // this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
         TESTPRED(decltype(iter(ra::Unique<int, 1>())) &,
-                 true, std::nullopt, true, false, false);
+                 true, maybe, true, false, false);
         TESTPRED(decltype(ra::iota(5)),
-                 true, true, true, false, false);
-        TESTPRED(decltype(ra::iota<0>()),
-                 true, true, true, false, false);
-// is_iterator by RA_IS_DEF, but not Iterator, since it cannot be traversed.
-        TESTPRED(decltype(ra::iota<0>()) const,
-                 true, true, false, false, false);
-        TESTPRED(decltype(ra::iota<0>()) &,
-                 true, true, true, false, false);
+                 true, true, maybe, false, false);
+// is_iterator by RA_IS_DEF, but not Iterator, since it cannot be traversed. FIXME eventually won't be view
+        TESTPRED(decltype(ra::tindex<0>),
+                 true, maybe, maybe, false, false);
+        TESTPRED(decltype(ra::tindex<0>) const,
+                 true, maybe, maybe, false, false);
+        TESTPRED(decltype(ra::tindex<0>) &,
+                 true, maybe, maybe, false, false);
+
         TESTPRED(decltype(std::declval<ra::Small<int, 2>>()),
                  true, true, false, false, false);
 // may be slice if iota is Cell, because we let some Cell be slice for the sake of iota.
         TESTPRED(decltype(iter(ra::Small<int, 2>())),
-                 true, std::nullopt, true, false, false);
+                 true, maybe, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2, 2>()()),
                  true, true, false, false, false);
 // double Iterator/Slice
         TESTPRED(decltype(iter(ra::Small<int, 2, 2>())),
-                 true, std::nullopt, true, false, false);
+                 true, maybe, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2>()+3),
                  true, false, true, false, false);
         TESTPRED(decltype(3+ra::Big<int>()),
@@ -141,7 +144,7 @@ int main()
                  false, false, false, false, true);
 // this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
         TESTPRED(decltype(ra::iter(std::vector<int> {})),
-                 true, std::nullopt, true, false, false);
+                 true, maybe, true, false, false);
         TESTPRED(int *,
                  false, false, false, false, false);
         TESTPRED(decltype(std::ranges::iota_view(-5, 10)),
@@ -201,9 +204,9 @@ int main()
 // a regression.
         static_assert(ra::is_ra_0<ra::Scalar<int>>, "bad");
         static_assert(!ra::is_ra_pos<ra::Scalar<int>>, "bad");
-        static_assert(!ra::is_ra_0<decltype(ra::iota<0>())>, "bad");
-        static_assert(ra::is_ra_pos<decltype(ra::iota<0>())>, "bad");
-        static_assert(ra::is_ra_pos<ra::Map<std::multiplies<>, std::tuple<decltype(ra::iota<0>()), ra::Scalar<int>>>>, "bad");
+        static_assert(!ra::is_ra_0<decltype(ra::tindex<0>)>, "bad");
+        static_assert(ra::is_ra_pos<decltype(ra::tindex<0>)>, "bad");
+        static_assert(ra::is_ra_pos<decltype(ra::map(std::multiplies<> {}, ra::tindex<0>, 0))>, "bad");
         static_assert(ra::is_ra_pos<ra::Pick<std::tuple<Vector, Vector, Vector>>>, "bad");
     }
     tr.section("builtin arrays");

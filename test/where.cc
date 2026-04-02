@@ -161,7 +161,7 @@ int main()
     }
     tr.section("where with rvalue iota<n>(), fails to compile with g++ 5.2 -Os, gives wrong result with -O0");
     {
-        tr.test_eq(ra::Small<int, 2> {0, 1}, ra::where(ra::Unique<bool, 1> { true, false }, ra::iota<0>(), ra::iota<0>()));
+        tr.test_eq(ra::Small<int, 2> {0, 1}, ra::where(ra::Unique<bool, 1> { true, false }, ra::tindex<0>, ra::tindex<0>));
         tr.test_eq(ra::Unique<int, 1> { 0, 2 }, ra::where(ra::Unique<bool, 1> { true, false }, 3*ra::_0, 2*ra::_0));
     }
     tr.section("&& and || are short-circuiting");

@@ -22,11 +22,10 @@ int main()
     TestRecorder tr;
     tr.section("straight");
     {
-        auto f = [](auto && a, auto && b)
-                 {
-                     std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-                     return a+b;
-                 };
+        auto f = [](auto && a, auto && b){
+            std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+            return a+b;
+        };
         auto b = Benchmark {/* repeats */ 100, /* runs */ 10};
 
         auto vala = b.run(f, 1, 2);
@@ -38,13 +37,12 @@ int main()
     }
     tr.section("fixture");
     {
-        auto g = [](auto && repeat, auto && a, auto && b)
-                 {
-                     /* do stuff */
-                     repeat([&]() { std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-                             return a+b; });
-                     /* do stuff */
-                 };
+        auto g = [](auto && repeat, auto && a, auto && b){
+            /* do stuff */
+            repeat([&]() { std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+                    return a+b; });
+            /* do stuff */
+        };
         auto b = Benchmark {/* repeats */ 100, /* runs */ 10};
 
         auto vala = b.run_f(g, 1, 2);

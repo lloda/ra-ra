@@ -249,12 +249,12 @@ int main()
         tr.test_eq(7, a[0]);
         tr.test_eq(7, a[1]);
         tr.test_eq(7, a[2]);
-        ply(map_([](real & a, int b){ a = b; }, iter(a), iter(ra::iota<0>())));
+        ply(map_([](real & a, int b){ a = b; }, iter(a), iter(ra::tindex<0>)));
         tr.test_eq(0, a[0]);
         tr.test_eq(1, a[1]);
         tr.test_eq(2, a[2]);
 // TODO Check that these give ct error. Not clear that the second one should...
-        // ply(map_([](int b) { cout << b << endl; }, ra::iota<0>()));
+        // ply(map_([](int b) { cout << b << endl; }, ra::tindex<0>()));
         // ply(map_([](int b) { cout << b << endl; }, ra::scalar(3)));
     }
     tr.section("traversal - rank matching - Unique/Unique 1");

@@ -141,7 +141,7 @@ struct View: public ViewBase<Dimv_>
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr operator decltype(*cp) () const { return to_scalar(*this); }
-    template <dim_t s, dim_t o=0> constexpr auto as() const requires (CT) { return from(*this, ra::iota(ic<s>, o)); }
+    template <dim_t s, dim_t o=0> constexpr auto as() const requires (CT) { return from(*this, iota(ic<s>, o)); }
 // conversion to const is done differently for (!CT) (conversion op -> &) vs CT (constructor > value, which is just *).
     using U = std::remove_const_t<T>;
     constexpr operator View<T const *, Dimv> const & () const requires (!CT && std::is_same_v<P, U *>) { return *reinterpret_cast<View<T const *, Dimv> const *>(this); }
@@ -356,9 +356,10 @@ shared_borrowing(Slice auto & s)
     return a;
 }
 
-#define RA_TENSORINDEX(w) constexpr auto RA_JOIN(_, w) = iota<w>();
-RA_FE(RA_TENSORINDEX, 0, 1, 2, 3, 4);
-#undef RA_TENSORINDEX
+template <int w> constexpr auto tindex = reframe(iter(iota()), ilist_t<w> {});
+#define RA_TINDEX(w) constexpr auto RA_JOIN(_, w) = tindex<w>;
+RA_FE(RA_TINDEX, 0, 1, 2, 3, 4);
+#undef RA_TINDEX
 
 
 // --------------------
@@ -411,7 +412,7 @@ reverse(Slice auto && a, K k = K {})
 {
     if constexpr (1==rank_s(a) && requires { []<class I>(Seq<I> const &){}(a.data()); }) {
         static_assert(UNB!=a.len_s(0), "Bad arguments to reverse.");
-        return ptr(Seq { a.data().i+(a.dimv[0].len-1)*a.dimv[0].step }, a.dimv[0].len, csub(ic<0>, a.dimv[0].step));
+        return viewptr(Seq { a.data().i+(a.dimv[0].len-1)*a.dimv[0].step }, a.dimv[0].len, csub(ic<0>, a.dimv[0].step));
     } else if constexpr (is_ctype<typename std::decay_t<decltype(a)>::Dimv>) {
         constexpr auto dimv = [&]{
             RA_CK(inside(k, a.rank()), "Bad axis ", k, " for rank ", a.rank(), ".");
@@ -519,7 +520,7 @@ reshape(Slice auto && a, auto && sb_)
     }
     auto sa = shape(a);
 // FIXME should be able to reshape Scalar etc.
-    ViewBig<decltype(a.data()), ra::size_s(sb)> b(map([](auto i){ return Dim { UNB, 0 }; }, ra::iota(ra::size(sb))), a.data());
+    ViewBig<decltype(a.data()), ra::size_s(sb)> b(map([](auto i){ return Dim { UNB, 0 }; }, iota(ra::size(sb))), a.data());
     rank_t i = 0;
     for (; i<a.rank() && i<b.rank(); ++i) {
         if (sa[a.rank()-i-1]!=sb[b.rank()-i-1]) {

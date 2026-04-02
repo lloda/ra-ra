@@ -20,54 +20,47 @@ int main()
     TestRecorder tr(cout);
     cout.precision(4);
 
-    auto bench = [&tr](auto && f, auto A_, char const * tag, int size, int reps)
-        {
-            using A = decltype(A_);
-            A a({size}, ra::none);
+    auto bench = [&tr](auto && f, auto A_, char const * tag, int size, int reps){
+        using A = decltype(A_);
+        A a({size}, ra::none);
 
-            Benchmark bm { reps, 3 };
-            auto bv = bm.run([&]() { f(a, size); });
-            tr.info(Benchmark::report(bv, size), " ", tag)
-                .test_eq(ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.)), a);
-        };
+        Benchmark bm { reps, 3 };
+        auto bv = bm.run([&]() { f(a, size); });
+        tr.info(Benchmark::report(bv, size), " ", tag)
+            .test_eq(ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.)), a);
+    };
 
-    auto f_raw = [](auto & a, int size)
-        {
-            real * p = reinterpret_cast<real *>(a.data());
-            for (ra::dim_t i=0; i!=size; ++i, p+=2) {
-                p[0] = i;
-                p[1] = size-i;
-            }
-        };
-    auto f_reim = [](auto & a, int size)
-        {
-            real_part(a) = ra::iota(size);
-            imag_part(a) = size-ra::iota(size);
-        };
-    auto f_collapse = [](auto & a, int size)
-        {
-            auto areim = ra::collapse<real>(a);
-            areim(ra::all, 0) = ra::iota(size);
-            areim(ra::all, 1) = size-ra::iota(size);
-        };
-    auto f_pack = [](auto & a, int size)
-        {
-            a = ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.));
-        };
-    auto f_xi = [](auto & a, int size)
-        {
-            a = ra::iota(size, 0.) + xi(size-ra::iota(size, 0.));
-        };
+    auto f_raw = [](auto & a, int size){
+        real * p = reinterpret_cast<real *>(a.data());
+        for (ra::dim_t i=0; i!=size; ++i, p+=2) {
+            p[0] = i;
+            p[1] = size-i;
+        }
+    };
+    auto f_reim = [](auto & a, int size){
+        real_part(a) = ra::iota(size);
+        imag_part(a) = size-ra::iota(size);
+    };
+    auto f_collapse = [](auto & a, int size){
+        auto areim = ra::collapse<real>(a);
+        areim(ra::all, 0) = ra::iota(size);
+        areim(ra::all, 1) = size-ra::iota(size);
+    };
+    auto f_pack = [](auto & a, int size){
+        a = ra::pack<complex>(ra::iota(size, 0.), size-ra::iota(size, 0.));
+    };
+    auto f_xi = [](auto & a, int size){
+        a = ra::iota(size, 0.) + xi(size-ra::iota(size, 0.));
+    };
 
-    auto bench_all = [&](auto A_, int size, int n)
-        {
-            tr.section("size ", size, ", n ", n);
-            bench(f_raw, A_, "raw", size, n);
-            bench(f_reim, A_, "re/im", size, n);
-            bench(f_collapse, A_, "collapse", size, n);
-            bench(f_pack, A_, "pack", size, n);
-            bench(f_xi, A_, "xi", size, n);
-        };
+    auto bench_all = [&](auto A_, int size, int n){
+        tr.section("size ", size, ", n ", n);
+        bench(f_raw, A_, "raw", size, n);
+        bench(f_reim, A_, "re/im", size, n);
+        bench(f_collapse, A_, "collapse", size, n);
+        bench(f_pack, A_, "pack", size, n);
+        bench(f_xi, A_, "xi", size, n);
+    };
 
     bench_all(ra::Big<complex, 1>(), 10, 1000000);
     bench_all(ra::Big<complex, 1>(), 100, 100000);

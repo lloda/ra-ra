@@ -142,8 +142,8 @@ int main()
 // set elements.
     auto i = ra::iota(n);
     ply(from([&](auto i, auto j, auto k, auto v)
-         {  E(pos(n, i, j, k)).v[v] = pos(n+1, i+ISF[v][0], j+ISF[v][1], k+ISF[v][2]); },
-         i, i, i, ra::iota(8)));
+             {  E(pos(n, i, j, k)).v[v] = pos(n+1, i+ISF[v][0], j+ISF[v][1], k+ISF[v][2]); },
+             i, i, i, ra::iota(8)));
 
 // set boundaries (points on edges and corners multiple times --doesn't matter).
     int k = 0;

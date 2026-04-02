@@ -17,8 +17,8 @@ int main()
     x = { 1, 2, 3, 4 };
     y = { 1, 0, 0, -1 };
 
-    constexpr auto i = ra::iota<0>();
-    constexpr auto j = ra::iota<1>();
+    constexpr auto i = ra::tindex<0>;
+    constexpr auto j = ra::tindex<1>;
 
     A = x(i) * y(j);
 

@@ -11,17 +11,14 @@ checkbox [C-ct] flip TODO
     - [ ] Fix reduction-1.cc: "real_part(iter<1>(m)) = real_part(iter<1>(c))"
     - [ ] Invalid expressions that aren't caught by Match, either bc it makes assumptions, or bc
       Match isn't even involved. See checks.cc.
-    - [ ] const issues in View vs Container
-      - [ ] conversion to const & op in ViewBig uses reinterpret_const
+    - [ ] conversion to const & op in ViewBig uses reinterpret_const
     - [ ] Small/Big unification
-      - [ ] Unify small and big views
+      - [X] Unify small and big views
       - [ ] Unify small and big containers
     - [ ] Forbid initialization from higher rank
       - Cf 'Initialization of nested types' in the manual.
     - [ ] ambiguity / bad init in nested constructors [ra45]
-    - [ ] ra::at(A, I) needs nested I, so the obvious ra::at(A, [i j]) doesn't work (although
-      view.at([i j]) does). But I would get rid of view.at(i) if ra::at(view, i) worked the same
-      way.
+    - [ ] ra::at(A, I) needs nested I, so the obvious ra::at(A, [i j]) doesn't work.
     - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] bad uses of assert [ra17]
     - [ ] poor shape mismatch report, e.g. [1 2] vs [2] produces 'len[0] is -192...' (magic number for MISS)

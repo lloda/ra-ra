@@ -234,7 +234,7 @@ int main()
     tr.section("IO can handle undef len iota, too");
     {
         iocheck(tr.info("output of map (1)"),
-                ra::map_([](double i, auto j) { return -i*double(j); }, iter(ra::Small<double, 3>{0, 1, 2}), iter(ra::iota<0>())),
+                ra::map_([](double i, auto j) { return -i*double(j); }, iter(ra::Small<double, 3>{0, 1, 2}), iter(ra::tindex<0>)),
                 ra::Small<double, 3>{0, -1, -4});
     }
     tr.section("IO of var rank map");

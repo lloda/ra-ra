@@ -66,9 +66,8 @@ int main()
     tr.section("iota ops, plus");
     {
         static_assert(ra::seqvop<ra::Scalar<int>>);
-        static_assert(ra::seqv1<decltype(ra::iota(10, long(10)))>);
-        auto test = [&tr](auto && org)
-        {
+        static_assert(ra::seqv1<decltype(iter(ra::iota(10, long(10))))>);
+        auto test = [&tr](auto && org){
             auto i = ra::iota(5, org);
             auto j = i+1;
             auto k1 = opt(i+1);

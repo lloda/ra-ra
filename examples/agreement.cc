@@ -59,8 +59,8 @@ int main()
     // shape. Therefore they need to be accompanied by some other expression
     // that does have a shape, or the overall expression is not valid.
     {
-        constexpr auto i = ra::iota<0>();
-        constexpr auto j = ra::iota<1>();
+        constexpr auto i = ra::tindex<0>;
+        constexpr auto j = ra::tindex<1>;
     // That's why you can do
         ra::Big<float, 2> X({3, 4}, i-j);
         cout << "\ni-j: " << X << endl;

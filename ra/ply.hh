@@ -291,7 +291,14 @@ template <class P, class N, class S> requires (has_len<P> || has_len<N> || has_l
 struct WLen<Ptr<P, N, S>>
 {
     constexpr static auto
-    f(auto ln, auto && e) { return ptr(wlen(ln, e.data()), VAL(wlen(ln, e.dimv[0].len)), VAL(wlen(ln, e.dimv[0].step))); }
+    f(auto ln, auto && e) { return ptr(wlen(ln, e.c.cp), VAL(wlen(ln, e.dimv[0].len)), VAL(wlen(ln, e.dimv[0].step))); }
+};
+
+template <class P, class N, class S> requires (has_len<P> || has_len<N> || has_len<S>)
+struct WLen<ViewPtr<P, N, S>>
+{
+    constexpr static auto
+    f(auto ln, auto && e) { return viewptr(wlen(ln, e.data()), VAL(wlen(ln, e.dimv[0].len)), VAL(wlen(ln, e.dimv[0].step))); }
 };
 
 constexpr auto
@@ -311,50 +318,34 @@ shape(auto const & v, auto && e)
 // Slicing and outer product.
 // --------------------
 
+template <int n> struct insert_t { constexpr static int N=n; static_assert(n>=0); };
+template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
 template <int n> struct dots_t { constexpr static int N=n; static_assert(n>=0 || UNB==n); };
 template <int n=UNB> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
-template <int n> struct insert_t { constexpr static int N=n; static_assert(n>=0); };
-template <int n=1> constexpr insert_t<n> insert = insert_t<n>();
-
-template <int w=0, class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
-constexpr auto
-iota(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
-{
-    // return viewptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)); // FIXME for w=0 mostly works, not quite
-    return reframe(ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s)), ilist_t<w> {}); // FIXME make distinct tindex<>
-}
+template <class T=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>> constexpr auto
+iota(N && n=N {}, T && o=T(0), S && s=S(maybe_step<S>)) { return viewptr(Seq<sarg<T>>(RA_FW(o)), RA_FW(n), RA_FW(s)); }
 
 template <int R, class T=dim_t> constexpr auto
-ii(dim_t (&&len)[R], T o, dim_t (&&step)[R])
-{
-    return ViewBig<Seq<dim_t>, R>(pack<Dim>(len, step), Seq<dim_t>{o});
-}
+iota(dim_t (&&len)[R], T o, dim_t (&&step)[R]) { return ViewBig<Seq<T>, R>(pack<Dim>(len, step), Seq<T>{o}); }
 
 template <int R, class T=dim_t> constexpr auto
-ii(dim_t (&&len)[R], T o=0)
-{
-    return ViewBig<Seq<T>, R>(len, Seq<T>{o});
-}
+iota(dim_t (&&len)[R], T o=0) { return ViewBig<Seq<T>, R>(len, Seq<T>{o}); }
 
 template <std::integral auto ... i, class T=dim_t> constexpr auto
-ii(ra::ilist_t<i ...>, T o=0)
-{
-    return View<Seq<T>, ra::ic_t<c_dimv(std::array {dim_t(i) ...})>>(Seq<T>{o});
-}
-
-template <class A> concept is_iota = (Slice<A> && requires (A a) { []<class I>(Seq<I> const &){}(a.data()); });
-template <class A> concept is_scalar_index = is_ra_0<A>;
+iota(ra::ilist_t<i ...>, T o=0) { return View<Seq<T>, ra::ic_t<c_dimv(std::array {dim_t(i) ...})>>(Seq<T>{o}); }
 
 // beaten, whole or piecewise. Presize bv/ds not to need push_back
+
+template <class A> concept is_iota = (Slice<A> && requires (A a) { []<class T>(Seq<T> const &){}(a.data()); });
+template <class A> concept is_scalar_index = is_ra_0<A>;
 
 template <class I> consteval bool
 beatable(I && i)
 {
-    return ((requires { []<int N>(dots_t<N>){}(i); }) || (requires { []<int N>(insert_t<N>){}(i); }) || is_scalar_index<I>
-// so B=A(... i ...) uses B's len. FIXME
-            || (is_iota<I> && requires { requires UNB!=ra::size_s<I>(); }));
+    return (requires { []<int N>(dots_t<N>){}(i); }) || (requires { []<int N>(insert_t<N>){}(i); }) || is_scalar_index<I>
+            || (is_iota<I> && UNB!=ra::size_s<I>()); // exclude UNB so B=A(... i ...) uses B's len. FIXME
 }
 
 consteval auto fsrc(auto const &) { return 1; }

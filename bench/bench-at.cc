@@ -110,7 +110,7 @@ int main(int argc, char * * argv)
                    }));
         };
 // at(i) can be a lot slower if i is var rank. FIXME But these are both static rank.
-        auto iotav = ra::ii({100});
+        auto iotav = ra::iota({100});
         static_assert(1==rank(iotav));
         auto iotai = ra::iota(100);
         static_assert(1==rank(iotai));

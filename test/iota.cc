@@ -17,7 +17,7 @@ using std::cout, std::endl, std::flush, ra::TestRecorder;
 int main()
 {
     TestRecorder tr(std::cout);
-    static_assert(ra::Iterator<decltype(ra::iota(10))>, "bad type pred for iota");
+    static_assert(ra::Slice<decltype(ra::iota(10))>, "bad type pred for iota");
     tr.section("straight cases");
     {
         ra::Big<int, 1> a = ra::iota(4, 1);
@@ -91,18 +91,23 @@ int main()
     {
         auto i = ra::iota(ra::dim_c<5> {}, 3, ra::dim_c<-2> {});
         auto ri = reverse(i);
-        static_assert(5==size(ri));
+        static_assert(ra::is_iota<decltype(ri)>);
+        static_assert(5==ra::size(ri));
         static_assert(2==ri.dimv[0].step);
         static_assert(2==ri.step(0));
         tr.strict().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
     }
     {
         auto i = ra::iota(ra::dim_c<5> {}, 3, -2);
-        tr.strict().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
+        auto ri = reverse(i);
+        static_assert(ra::is_iota<decltype(ri)>);
+        tr.strict().test_eq(reverse(ra::Big<int, 1>(i)), ri);
     }
     {
         auto i = ra::iota(5, 3, -2);
-        tr.strict().test_eq(reverse(ra::Big<int, 1>(i)), reverse(i));
+        auto ri = reverse(i);
+        static_assert(ra::is_iota<decltype(ri)>);
+        tr.strict().test_eq(reverse(ra::Big<int, 1>(i)), ri);
     }
     tr.section("in real expressions I");
     {
@@ -120,16 +125,24 @@ int main()
     }
     tr.section("TODO view iota also gets optimized");
     {
-        assert(ra::is_iota<decltype(ra::ii({3}))>);
-        assert(ra::is_iota<decltype(ra::iota(3, 1, 2))>);
+        tr.test(ra::is_iota<decltype(ra::iota({3}))>);
+        tr.test(ra::is_iota<decltype(ra::iota(3, 1, 2))>);
         cout << ra::opt(-ra::iota(3)).dimv[0].len << endl;
 // FIXME doesn't work because opt() works on Map and the leaves of that are Views' iterators which aren't is_iota, not the Views themselves which are.
-        // cout << ra::opt(-ra::ii({3})).dimv[0].len << endl;
+        // cout << ra::opt(-ra::iota({3})).dimv[0].len << endl;
+    }
+    tr.section("iota() is a view and can be sliced directly.");
+    {
+        auto v = ra::iota(9, 3)(ra::iota(3, 1, 2)); // [3 4 5 6 7 8...]([1 3 5])
+        tr.strict().test_eq(ra::iter({4, 6, 8}), v);
+        tr.info("result is a view in the usual conditions").test_eq(4, v.data()[0]);
+        tr.test_eq(2, v.step(0));
+        tr.test_eq(3, v.len(0));
     }
     tr.section("truncated sequence");
     {
-        auto i = ra::ii({7, 7, 7}, uint8_t(0));
-        tr.strict().test_eq(ra::ii({7, 7, 7}) % 256, i);
+        auto i = ra::iota({7, 7, 7}, uint8_t(0));
+        tr.strict().test_eq(ra::iota({7, 7, 7}) % 256, i);
     }
     return tr.summary();
 }

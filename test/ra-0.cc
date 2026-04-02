@@ -362,14 +362,14 @@ int main()
             ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, iter(ra::_0), iter(ra::_1)));
             tr.test(std::equal(checkb, checkb+6, b.begin()));
         }
-// TODO Check this is an error (chosen driver is ra::iota<2>(), that can't drive) [ra42]
+// TODO Check this is an error (chosen driver is ra::tindex<2>, that can't drive) [ra42]
         // {
-        //     ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
+        //     ra::Unique<int, 2> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, ra::tindex<2>, ra::tindex<1>));
         //     cout << b << endl;
         // }
 // TODO Could this be made to bomb at compile time? [ra42]
         // {
-        //     ra::Unique<int> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, ra::iota<2>(), ra::iota<1>()));
+        //     ra::Unique<int> b({3, 2}, ra::map_([](int a, int b) { return a-b; }, ra::tindex<2>, ra::tindex<1>));
         //     cout << b << endl;
         // }
     }

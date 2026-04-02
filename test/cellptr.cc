@@ -113,13 +113,6 @@ iota2(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
     return oldptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s));
 }
 
-template <class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
-constexpr auto
-iota3(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
-{
-    return ptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s));
-}
-
 template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); }; // FIXME
 
 } // namespace ra
@@ -224,7 +217,7 @@ int main()
     {
         tr.test(ra::Slice<decltype(ra::iota1(10))>);
         tr.test(ra::Slice<decltype(ra::iota2(10))>);
-        tr.test(ra::Slice<decltype(ra::iota3(10))>);
+        tr.test(ra::Slice<decltype(ra::iota(10))>);
     }
     return tr.summary();
 }

@@ -12,12 +12,12 @@
 @c References to source [ma··] or [ma···] current last is 118.
 
 @set VERSION 31
-@set UPDATED 2026 April 1
+@set UPDATED 2026 April 2
 
 @copying
 @code{ra::} (version @value{VERSION}, updated @value{UPDATED})
 
-(c) Daniel Llorens 2005--2024
+(c) Daniel Llorens 2005--2026
 
 @smalldisplay
 Permission is granted to copy, distribute and/or modify this document
@@ -865,11 +865,19 @@ Besides, when the subscripts @code{i, j, ...} are scalars or integer sequences o
 
 @code{ra::} isn't smart enough to know when an arbitrary expression might be a integer sequence of the appropriate form, so it has a special type for those, the @ref{Sequence views,sequence view}. The following function creates a rank 1 sequence view:
 
+@cindex TensorIndex
 @anchor{x-iota}
-@deffn @w{Special object} iota count [iter:0 [step:1]]
-Create a rank 1 sequence view @code{iter, iter+step, ... iter+step*(count-1)}.
+@anchor{x-tindex}
+@deffn @w{Function} iota [count:@code{UNB} [org:0 [step:1]]]
+@deffnx @w{Function} tindex<k>
 
-This can used anywhere an array expression is expected.
+These functions are closely related.
+
+@code{iota(count, org, step)} creates a rank-1 @ref{Sequence views,sequence view} [@var{org}, @var{org}+@var{step}, ... @var{org}+@var{step}*(@var{count}-1)]. The default @var{count} results in an unbounded sequence [0, 1, ...].
+
+@code{tindex<k>} creates an iterator over the unbounded sequence [0, 1, ...] at array index @var{k}. The rank of this expression is @var{k}+1.
+
+Either can be used anywhere an array expression is expected. @code{iota(...)} is also a view and so it can be subscripted in the usual way.
 
 @example
 @verbatim
@@ -878,7 +886,22 @@ ra::Big<int, 1> a = ra::iota(4, 3 -2);
 @result{} a = @{3, 1, -1, -3@}
 @end example
 
-Here, @code{b} and @code{c} are @code{ViewBig}s (@pxref{Containers and views}).
+@example
+@verbatim
+ra::Big<int, 2> a({3, 3}, 10*ra::tindex<0> + ra::tindex<1>)
+@end verbatim
+@result{} a = @{@{0, 1, 2@}, @{10, 11, 12@}, @{20, 21, 22@}@}
+@end example
+
+@example
+@verbatim
+auto i = ra::iota(10, 1); // [1 2 3 4 5 6 7 8 9 10]
+auto j = i(ra::iota(3, 2, 2)); // i([2 4 5])
+@end verbatim
+@result{} j = @{3, 5, 7@}
+@end example
+
+@code{j} above is a view, just like @code{b} and @code{c} in the following (@pxref{Containers and views}).
 @example
 @verbatim
 ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
@@ -889,23 +912,7 @@ auto c = a(iota(3, 3));
 @result{} a = @{4, 5, 6@}
 @end example
 
-@cindex TensorIndex
-@code{iota()} by itself is an expression of rank 1 and undefined length. It must be used with other terms whose lengths are defined, so that the overall shape of the array expression can be determined. In general, @code{iota<n>()} is an array expression of rank @code{n}+1 that represents the @code{n}-th index of an array expression. This is similar to Blitz++'s @code{TensorIndex}.
-
-@code{ra::} offers the shortcut @code{ra::_0} for @code{ra::iota<0>()}, etc.
-
-@example
-@verbatim
-ra::Big<int, 1> v = {1, 2, 3};
-cout << (v - ra::_0) << endl; // { 1-0, 2-1, 3-2 }
-// cout << (ra::_0) << endl; // error: undefined length
-// cout << (v - ra::_1) << endl; // error: undefined length on axis 1
-ra::Big<int, 2> a({3, 2}, 0);
-cout << (a + ra::_0 - ra::_1) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
-@end verbatim
-@end example
-
-When undefined length @code{iota()} is used as a subscript by itself, the result isn't a view. This allows @code{view(iota())} to match with expressions of different lengths, as in the following example.
+However, when unbounded expressions are used as subscripts, the result isn't a view. This allows @code{view(iota())} to match with expressions of different lengths, as in the following example. @c FIXME
 @example
 @verbatim
 ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
@@ -916,13 +923,20 @@ cout << (b + a(iota())) << endl; // a(iota()) is not a view
 2 4 6
 @end example
 
-Note the difference between
-@itemize
-@item @code{ra::iota<3>()} —
-an expression of rank 4 and undefined length, representing a linear sequence over the tensor index of axis 3
-@item @code{ra::iota(3)} ≡ @code{ra::iota<0>(3)} —
-an expression of rank 1, representing the sequence @code{0, 1, 2}.
-@end itemize
+Unbounded expressions such as @code{iota()} cannot be traversed by themselves, but must be combined with other terms so that the overall expression is bounded. @code{tindex<k>} can be interpreted as representing the @code{k}-th index of an array expression. This is similar to Blitz++'s @code{TensorIndex}. For the 0-th index, @code{tindex<0>} and @code{iota()} are equivalent.
+
+@example
+@verbatim
+ra::Big<int, 1> v = {1, 2, 3};
+cout << (v - ra::tindex<0>) << endl; // { 1-0, 2-1, 3-2 }
+// cout << (ra::tindex<0>) << endl; // error: undefined length
+// cout << (v - ra::tindex<1>) << endl; // error: undefined length on axis 1
+ra::Big<int, 2> a({3, 2}, 0);
+cout << (a + ra::tindex<0> - ra::tindex<1>) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
+@end verbatim
+@end example
+
+@code{ra::} offers the shortcuts @code{ra::_0}, @code{ra::_1}, ... for @code{ra::tindex<0>}, @code{ra::tindex<1>}, ...
 
 @end deffn
 

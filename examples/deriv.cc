@@ -12,7 +12,7 @@ using std::cout, std::endl, std::flush;
 using Array1D = ra::Big<double, 1>;
 
 // "index placeholder" which represents the array index for the first axis in a multidimensional expression.
-constexpr auto i = ra::iota<0>();
+constexpr auto i = ra::tindex<0>;
 
 int main()
 {

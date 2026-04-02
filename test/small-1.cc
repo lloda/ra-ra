@@ -367,23 +367,22 @@ int main()
         tr.test_eq(3, a[1]);
         tr.test_eq(6, a[2]);
         tr.test_eq(6, a.back());
-        ra::Big<int, 2> b = ra::ii({3, 4});
+        ra::Big<int, 2> b = ra::iota({3, 4});
         tr.test_eq(8, b(ra::all, 0).back());
         tr.test_eq(ra::iter({8, 9, 10, 11}), b.back()); // back() is last item
     }
 // TODO Replace with uniform subscripting (ra::iota).
     tr.section("compile time subscripting of ra::Small (as)");
     {
-        auto test_as = [&tr](auto && a, auto && b)
-            {
-                tr.test_eq(2, b.size());
-                tr.test_eq(1, b[0]);
-                tr.test_eq(2, b[1]);
-                b = { 7, 8 };
-                tr.test_eq(7, a[0]);
-                tr.test_eq(8, a[1]);
-                tr.test_eq(3, a[2]);
-            };
+        auto test_as = [&tr](auto && a, auto && b){
+            tr.test_eq(2, b.size());
+            tr.test_eq(1, b[0]);
+            tr.test_eq(2, b[1]);
+            b = { 7, 8 };
+            tr.test_eq(7, a[0]);
+            tr.test_eq(8, a[1]);
+            tr.test_eq(3, a[2]);
+        };
         {
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_as(a, a.as<2>());
@@ -391,16 +390,15 @@ int main()
             ra::View<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
             test_as(c, c.as<2>());
         }
-        auto test_fra = [&tr](auto && a, auto && b)
-            {
-                tr.test_eq(2, b.size());
-                tr.test_eq(2, b[0]);
-                tr.test_eq(3, b[1]);
-                b = { 7, 8 };
-                tr.test_eq(1, a[0]);
-                tr.test_eq(7, a[1]);
-                tr.test_eq(8, a[2]);
-            };
+        auto test_fra = [&tr](auto && a, auto && b){
+            tr.test_eq(2, b.size());
+            tr.test_eq(2, b[0]);
+            tr.test_eq(3, b[1]);
+            b = { 7, 8 };
+            tr.test_eq(1, a[0]);
+            tr.test_eq(7, a[1]);
+            tr.test_eq(8, a[2]);
+        };
         {
             ra::Small<double, 3> a = { 1, 2, 3 };
             test_fra(a, a.as<2, 1>());
@@ -408,14 +406,13 @@ int main()
             ra::View<double *, ic_t<std::array {Dim {3, 2}}>> c(b.data()); // TODO no syntax yet.
             test_fra(c, c.as<2, 1>());
         }
-        auto test_fra_rank_2 = [&tr](auto && a, auto && b)
-            {
-                tr.test_eq(2, b.len(0));
-                tr.test_eq(2, b.len(1));
-                tr.test_eq(ra::Small<double, 2, 2> { 3, 4, 5, 6 }, b);
-                b = ra::Small<double, 2, 2> { 13, 14, 15, 16 };
-                tr.test_eq(ra::Small<double, 3, 2> { 1, 2, 13, 14, 15, 16 }, a);
-            };
+        auto test_fra_rank_2 = [&tr](auto && a, auto && b){
+            tr.test_eq(2, b.len(0));
+            tr.test_eq(2, b.len(1));
+            tr.test_eq(ra::Small<double, 2, 2> { 3, 4, 5, 6 }, b);
+            b = ra::Small<double, 2, 2> { 13, 14, 15, 16 };
+            tr.test_eq(ra::Small<double, 3, 2> { 1, 2, 13, 14, 15, 16 }, a);
+        };
         {
             ra::Small<double, 3, 2> a = { 1, 2, 3, 4, 5, 6 };
             test_fra_rank_2(a, a.as<2, 1>());

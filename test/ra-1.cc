@@ -132,8 +132,8 @@ int main()
         using A2of2 = ra::Unique<int2, 2>;
         auto sum2 = [](int2 const i, int2 const j, int2 & x) { x = { i[0]+j[0], i[1]+j[1] }; };
         A2of2 A({2, 3}, { int2{1,1}, int2{2,2}, int2{3,3}, int2{4,4}, int2{5,5}, int2{6,6} });
-        ply(ra::map_([](int2 & a, int i, int j) { int k = i*3+j; a = {k, k}; },
-                     iter(A), ra::iota<0>(), ra::iota<1>()));
+        ply(ra::map([](int2 & a, int i, int j) { int k = i*3+j; a = {k, k}; },
+                    iter(A), ra::tindex<0>, ra::tindex<1>));
         A2of2 B({2, 3}, ra::scalar(int2 {0, 0}));
         cout << "A: " << A << endl;
         cout << "B: " << B << endl;

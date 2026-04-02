@@ -141,7 +141,7 @@ RA_BINOP_I(std::multiplies<>, seqv1 , seqvop, ra::iota(RAI(0).dimv[0].len, RAI(0
 RA_BINOP_I(std::multiplies<>, seqvop, seqv1 , ra::iota(RAI(1).dimv[0].len, RAI(0)*RAI(1).c.cp.i, RAI(0)*RAI(1).dimv[0].step))
 #undef RA_BINOP_I
 
-template <is_iota I> constexpr auto
+template <seqv1 I> constexpr auto
 opt(Map<std::negate<>, std::tuple<I>> && e) { return ra::iota(RAI(0).dimv[0].len, -RAI(0).c.cp.i, csub(ic<0>, RAI(0).dimv[0].step)); }
 
 #if RA_OPT_SMALL==1

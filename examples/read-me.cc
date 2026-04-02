@@ -92,9 +92,9 @@ int main()
     }
     tr.section("Iterators over cells of arbitrary rank");
     {
-        constexpr auto i = ra::iota<0>();
-        constexpr auto j = ra::iota<1>();
-        constexpr auto k = ra::iota<2>();
+        constexpr auto i = ra::tindex<0>;
+        constexpr auto j = ra::tindex<1>;
+        constexpr auto k = ra::tindex<2>;
         ra::Big<float, 3> A({2, 3, 4}, i+j+k);
         ra::Big<float, 2> B({2, 3}, 0);
         cout << "A: " << A << "\n\n";
