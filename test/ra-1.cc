@@ -164,7 +164,7 @@ int main()
     {
         ra::Unique<int, 1> A({ 6 }, ra::none);
         std::iota(A.begin(), A.end(), 1);
-        ra::Unique<int, 1> B { {6}, ra::scalar(99) };
+        ra::Unique<int, 1> B({6}, 99);
         auto copy = [](int & b, int const a) { b = a; return b; };
         ply(ra::map_(copy, iter(B), iter(A)));
         for (int i=0; i<6; ++i) {
@@ -207,7 +207,7 @@ int main()
     {                                                           \
         A1 a({ 6 }, ra::none);                                  \
         std::iota(a.begin(), a.end(), 1);                       \
-        A1 b { {6}, ra::scalar(99) };                           \
+        A1 b({ 6 }, 99);                                        \
         auto copy = [](int & b, int const a) { b = a; };        \
         plier(ra::map_(copy, iter(b), iter(a)));                \
         cout << flush;                                          \

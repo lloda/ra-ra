@@ -139,7 +139,7 @@ constexpr decltype(auto)
 VAL(A && a)
 {
     if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
-    else if constexpr (is_iterator<A>) { return *a; } // no need to iter()
+    else if constexpr (is_iterator<A>) { return *RA_FW(a); } // already
     else if constexpr (requires { *iter(RA_FW(a)); }) { return *iter(RA_FW(a)); }
     // else void
 }
@@ -150,8 +150,8 @@ template <class A> using ncvalue_t = std::remove_const_t<value_t<A>>;
 constexpr decltype(auto)
 to_scalar(auto && e)
 {
-    if constexpr (constexpr dim_t s=size_s(e); 1!=s) {
-        static_assert(ANY==s, "Bad scalar conversion.");
+    if constexpr (1!=size_s(e)) {
+        static_assert(ANY==size_s(e), "Bad scalar conversion.");
         RA_CK(1==ra::size(e), "Bad scalar conversion from shape [", fmt(lstyle, ra::shape(e)), "].");
     }
     return VAL(e);
@@ -165,19 +165,17 @@ to_scalar(auto && e)
 constexpr auto
 indexer(auto const & a, auto cp, Iterator auto && p)
 {
-    if constexpr (ANY==rank_s(p)) {
+    if constexpr (1!=rank_s(p)) {
+        static_assert(ANY==rank_s(p), "Bad rank for subscript."); // c++26
         RA_CK(1==ra::rank(p), "Bad rank ", ra::rank(p), " for subscript.");
-    } else {
-        static_assert(1==rank_s(p), "Bad rank for subscript.");
     }
-    if constexpr (ANY==size_s(p) || ANY==rank_s(a)) {
+    if constexpr (rank_s(a)==ANY || p.len_s(0)<rank_s(a)) {
+        static_assert(ANY==p.len_s(0) || ANY==rank_s(a), "Too few indices."); // c++26
         RA_CK(p.len(0)>=a.rank(), "Too few indices ", p.len(0), ", need at least ", a.rank(), ".");
-    } else {
-        static_assert(size_s(p)>=rank_s(a), "Too few indices.");
     }
     for (rank_t k=0; k<a.rank(); ++k, p.mov(p.step(0))) {
         auto i = *p;
-        RA_CK(inside(i, a.len(k)) || UNB==a.len(k), "Bad i[", k, "]=", i, " for len", a.len(k));
+        RA_CK(inside(i, a.len(k)) || UNB==a.len(k), "Bad i[", k, "]=", i, " for len", a.len(k), ".");
         std::ranges::advance(cp, i*a.step(k));
     }
     return cp;
@@ -202,10 +200,9 @@ resize(auto & a, auto s)
 constexpr dim_t
 filldimv(Iterator auto && p, auto & dv)
 {
-    if constexpr (ANY==rank_s(p)) {
+    if constexpr (0!=rank_s(p) && 1!=rank_s(p)) {
+        static_assert(ANY==rank_s(p), "Bad rank for dims."); // c++26
         RA_CK(0==rank(p) || 1==rank(p), "Bad rank for dims ", ra::rank(p), ".");
-    } else {
-        static_assert(0==rank_s(p) || 1==rank_s(p), "Bad rank for dims.");
     }
     ra::resize(dv, [&]{ if constexpr (ANY==size_s(p)) return ra::size(p); else return ic<size_s(p)>; }());
     for (rank_t k=0; k<ra::size(dv); ++k, p.mov(p.step(0))) { dv[k].len = *p; }

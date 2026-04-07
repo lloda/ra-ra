@@ -71,7 +71,7 @@ int main()
 // see test/iota.cc
 // ------------------------------
 
-    tr.section("ot of range with iota");
+    tr.section("out of range with iota");
     {
         std::string msg;
         try {
@@ -93,6 +93,18 @@ int main()
         try {
             ra::Small<int, 10> a = ra::_0;
             cout << a(ra::iota(ra::int_c<1>(), 10)) << endl;
+        } catch (ra_error & e) {
+            msg = e.what();
+        }
+        tr.info(msg).test(0<msg.size());
+    }
+    tr.section("corner case requires Scalar<C> convert to C");
+    {
+        std::string msg;
+        ra::Big<int, 2> A({3, 4}, 0);
+        try {
+            A(ra::all, ra::len) = 1; // [ra17]
+            cout << A << endl;
         } catch (ra_error & e) {
             msg = e.what();
         }

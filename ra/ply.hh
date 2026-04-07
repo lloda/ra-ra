@@ -398,7 +398,7 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak, I0 const & i0, au
         if constexpr (dopl) {
 // FIXME need constant ak for la to maybe be constant. p2564? See also below
             auto const la = a.len(ak);
-            dim_t const i = wlen(la, i0);
+            dim_t const i = VAL(wlen(la, i0)); // [ra17]
             RA_CK(inside(i, la) || (UNB==la && 0==a.step(ak)), "Bad index ", i, " in len[", ak, "]=", la, ".");
             pl += i*a.step(ak);
         }
