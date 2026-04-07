@@ -14,21 +14,16 @@
 #include "ra/test.hh"
 #include "test/mpdebug.hh"
 
-using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
-using real = double;
-using ra::dim_t;
-
-ra::TestRecorder tr(cout);
-
-// FIXME bigd/bigd & bigs/bigd at loop
+using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark, ra::dim_t;
 
 int main(int argc, char * * argv)
 {
+    ra::TestRecorder tr(cout);
     int reps = argc>1 ? std::stoi(argv[1]) : 10000;
     std::println(cout, "reps = {}", reps);
     tr.section("rank 2");
     {
-        auto test2 = [](auto && C, auto && I, int reps, std::string tag){
+        auto test2 = [&tr](auto && C, auto && I, int reps, std::string tag){
             if ("warmup"!=tag) tr.section(tag);
             int M = C.len(0);
             int N = C.len(1);
@@ -85,7 +80,7 @@ int main(int argc, char * * argv)
     }
     tr.section("rank 1");
     {
-        auto test1 = [](auto && C, auto && I, int reps, std::string tag){
+        auto test1 = [&tr](auto && C, auto && I, int reps, std::string tag){
             if ("warmup"!=tag) tr.section(tag);
             int const M = C.len(0);
             [[maybe_unused]] int const O = I.len(0);
@@ -114,12 +109,12 @@ int main(int argc, char * * argv)
         static_assert(1==rank(iotav));
         auto iotai = ra::iota(100);
         static_assert(1==rank(iotai));
-        [[maybe_unused]] ra::Big<int, 1> bigsa({100}, 4*ra::_0);
-        [[maybe_unused]] ra::Big<int> bigda({100}, 4*ra::_0);
-        [[maybe_unused]] ra::Small<int, 100> smola = 4*ra::_0;
-        [[maybe_unused]] ra::Big<int, 2> bigsi({100, 1}, ra::none);
-        [[maybe_unused]] ra::Big<int> bigdi({100, 1}, ra::none);
-        [[maybe_unused]] ra::Small<int, 100, 1> smoli;
+        ra::Big<int, 1> bigsa({100}, 4*ra::_0);
+        ra::Big<int> bigda({100}, 4*ra::_0);
+        ra::Small<int, 100> smola = 4*ra::_0;
+        ra::Big<int, 2> bigsi({100, 1}, ra::none);
+        ra::Big<int> bigdi({100, 1}, ra::none);
+        ra::Small<int, 100, 1> smoli;
         test1(smola, smoli, reps, "warmup");
         test1(smola, smoli, reps, "small/small");
         test1(bigsa, smoli, reps, "bigs/small");

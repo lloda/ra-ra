@@ -79,7 +79,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 @cindex length
 @cindex rank
 @cindex shape
-A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list of all the @dfn{lengths} (n₀, n₁, ... nᵣ₋₁) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
+A multidimensional array is a data structure whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list of all the @dfn{lengths} (n₀, n₁, ... nᵣ₋₁) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
 
 Often we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.@footnote{@c
 @cindex arity
@@ -179,7 +179,7 @@ These two fundamental array optimizations are described in @mybibcite{Abr70}.
 
 @dfn{Drag-along} is the process that delays evaluation of array operations. Expression templates can be seen as an implementation of drag-along. Drag-along isn't an optimization in and of itself; it simply preserves the necessary information up to the point where the expression can be executed efficiently.
 
-@dfn{Beating} is the implementation of certain array operations on the array @ref{Containers and views,view} descriptor instead of on the array contents. For example, if @code{A} is a 1-array, one can implement @ref{x-reverse,@code{reverse(A, 0)}} by negating the @ref{x-steps,step} and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as @ref{x-iota,@code{1+iota(3, 0)}} can be beaten into @code{iota(3, 1)}, and this can enable further optimizations.
+@dfn{Beating} is the implementation of certain array operations on the array @ref{Arrays and views,view} descriptor instead of on the array contents. For example, if @code{A} is a 1-array, one can implement @ref{x-reverse,@code{reverse(A, 0)}} by negating the @ref{x-steps,step} and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as @ref{x-iota,@code{1+iota(3, 0)}} can be beaten into @code{iota(3, 1)}, and this can enable further optimizations.
 
 @c ------------------------------------------------
 @node Why C++
@@ -208,11 +208,11 @@ In C++, a library is enough.
 @c @cindex J # TODO makeinfo can't handle an entry appearing more than once (it creates multiple entries in the index).
 Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. @code{ra::} supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 
-Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on @code{View} with constant dimensions, even though you could do it on a @code{View} with runtime dimensions; this was a bug.
+Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. @code{ra::} offers a few different types of views and arrays, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn't create a higher rank iterator on @code{View} with constant dimensions, even though you could do it on a @code{View} with runtime dimensions; this was a bug.
 
-Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view @code{B} into view @code{A}. To change view @code{A} instead (to treat @code{A} as a pointer) would be the default meaning of @code{A=B} for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren't) is more important.
+Sometimes consistency requires a choice. For example, given array views A and B, @code{A=B} copies the contents of view @code{B} into view @code{A}. To change view @code{A} instead (to treat @code{A} as a pointer) would be the default meaning of @code{A=B} for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and arrays (which ‘are’ their contents in a sense that views aren't) is more important.
 
-Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding it. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn't hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
+Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding it. Manipulating the steps directly is often useful. An array consists of storage and a view and that isn't hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
 
 That isn't to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably usable syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you'll be able to guarantee that an array is stored in compact columns, or that the real parts are interleaved with the imaginary parts.
 
@@ -229,7 +229,7 @@ Since the C++ standard library doesn't offer a standard multidimensional array t
 
 The C++ language offers multidimensional arrays as a legacy feature from C, e.g. @code{int a[3][4]}. These ‘built-in arrays’ can only have compile time lengths, decay to pointers when you do nearly anything with them, and are generally too limited.
 
-The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. @code{ra::} makes use of @code{<array>} and @code{<vector>} internally and for storage.
+The C++ standard library also offers a number of contiguous storage arrays that can be used as 1-arrays: @code{<array>}, @code{<vector>} and @code{<valarray>}. Neither supports higher ranks out of the box, but @code{<valarray>} offers array operations for 1-arrays. @code{ra::} makes use of @code{<array>} and @code{<vector>} internally and for storage.
 
 @code{ra::} accepts built-in arrays and standard library types as array objects (@pxref{Compatibility}).
 
@@ -239,7 +239,7 @@ Blitz++ @mybibcite{bli17} pioneered the use of expression templates in C++. It s
 
 However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 
-One important difference between Blitz++ and @code{ra::} is that Blitz++'s arrays were reference counted. @code{ra::} doesn't do any memory management on its own: the default container (data-owning) types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (@code{ra::} declares a type using @code{std::shared_ptr}), but this is not the default.
+One important difference between Blitz++ and @code{ra::} is that Blitz++'s arrays were reference counted. @code{ra::} doesn't do memory management on its own: the default array types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (@code{ra::} declares a type using @code{std::shared_ptr}), but this is not the default.
 
 @subsection Other C++ libraries
 
@@ -258,7 +258,7 @@ This is an extended exposition of the features of @code{ra::} and is probably be
 
 @menu
 * Using the library::          @code{ra::} is a header-only library.
-* Containers and views::       Data objects.
+* Arrays and views::           Data objects.
 * Array operations::           Building and traversing expressions.
 * Rank extension::             How array operands are matched.
 * Cell iteration::             At any rank.
@@ -321,19 +321,19 @@ If 1, perform immediately certain operations on @code{ra::Small} objects, using 
 If 1, use @code{fma} in certain array reductions such as @ref{x-dot,@code{dot}}, @ref{x-gemm,@code{gemm}}, etc.
 @end itemize
 
-@cindex container
+@cindex array
 @c ------------------------------------------------
-@node Containers and views
-@section Containers and views
+@node Arrays and views
+@section Arrays and views
 @c ------------------------------------------------
 
-@code{ra::} offers two kinds of data objects. The first kind, the @dfn{container}, owns its data. Creating a container uses up memory and destroying it causes that memory to be freed.
+@code{ra::} offers two kinds of data objects. The first kind, the @dfn{array}, owns its data. Creating an array uses up memory and destroying it causes that memory to be freed.
 
 @cindex compile-time
 @cindex ct
 @cindex runtime
 @cindex rt
-There are three kinds of containers:
+There are three kinds of arrays:
 
 @itemize
 @item compile time shape,
@@ -341,7 +341,7 @@ There are three kinds of containers:
 @item run time rank.
 @end itemize
 
-In this example, all the containers have the same shape:
+In this example, all the arrays have the same shape:
 
 @example
 @verbatim
@@ -354,9 +354,9 @@ In this example, all the containers have the same shape:
 @end verbatim
 @end example
 
-Using the right kind of container can result in better performance. Compile time shapes do not need to be stored in memory, which matters when you have many small arrays. Compile time shape or compile time rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
+Using the right kind of array can result in better performance. Compile time shapes do not need to be stored in memory, which matters when you have many small arrays. Compile time shape or compile time rank arrays are also safer to use; sometimes @code{ra::} will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 
-Container constructors come in two forms. The first form takes a @emph{single} argument which is copied into the new container. The shape of the argument must be compatible with the container's type.
+Array constructors come in two forms. The first form takes a @emph{single} argument which is copied into the new array. The shape of the argument must be compatible with the array's type.
 
 @c [ma111]
 @example
@@ -364,7 +364,7 @@ Container constructors come in two forms. The first form takes a @emph{single} a
 using ra::Small, ra::Big;
 Small<int, 2, 2> a = {{1, 2}, {3, 4}};  // explicit contents
 Big<int, 2> a1 = {{1, 2}, {3, 4}};      // explicit contents
-Small<int, 2, 2> a2 = {{7, 8}};         // error: shape [1 2] but container's is [2 2]
+Small<int, 2, 2> a2 = {{7, 8}};         // error: shape [1 2] but array's is [2 2]
 Small<int, 2, 2> b = 7;                 // 7 is copied into b
 Small<int, 2, 2> c = a;                 // contents of a are copied into c
 Big<int> d = a;                         // d takes the shape of a and a is copied into d
@@ -375,7 +375,7 @@ Big<int> e = 0;                         // e is a 0-array with one element e()==
 The second form takes @emph{two} arguments, one giving the shape, the second the contents.
 
 @cindex @code{none}
-@cindex uninitialized container
+@cindex uninitialized array
 @example
 @verbatim
 ra::Big<double, 2> a({2, 3}, 1.);     // a has shape [2 3], filled with 1.
@@ -384,12 +384,12 @@ ra::Big<double> c({2, 3}, a);         // c has shape [2 3], a is copied into c
 @end verbatim
 @end example
 
-The last example may be an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.}, which is (), matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the container's elements.
+The last example may be an error if the shape of @code{a} and (2,@w{ }3) don't match. Here the shape of @code{1.}, which is (), matches (2,@w{ }3) by a mechanism of rank extension (@pxref{Rank extension}). The special value @code{ra::none} can be used to request @url{https://en.cppreference.com/w/cpp/language/default_initialization, default initialization} of the array's elements.
 
 A scalar value is accepted as the shape of a rank 1 array.
 
 @cindex @code{none}
-@cindex uninitialized container
+@cindex uninitialized array
 @example
 @verbatim
 ra::Big<int> c(3, 0);          // ok {0, 0, 0}, same as ra::Big<int> c({3}, 0)
@@ -464,7 +464,7 @@ cout << fmt(A, {.shape=ra::noshape, .sep0="|"}) << endl;
 @end example
 
 @cindex view
-A @dfn{view} is similar to a container in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
+A @dfn{view} is similar to an array in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
 
 @example
 @verbatim
@@ -477,7 +477,7 @@ cout << c(1, 1) << endl;           // ok
 @end verbatim
 @end example
 
-The data accessed through a view is the data of the ‘root’ container, so modifying the former will be reflected in the latter.
+The data accessed through a view is the data of the ‘root’ array, so modifying the former will be reflected in the latter.
 
 @example
 @verbatim
@@ -487,7 +487,7 @@ c1(2) = 9.;                        // c(1, 2) = 9.
 @end verbatim
 @end example
 
-Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. @code{ra::} has the usual functions that operate on views:
+Just as for arrays, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. @code{ra::} has the usual functions that operate on views:
 
 @example
 @verbatim
@@ -497,7 +497,7 @@ auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 @end verbatim
 @end example
 
-Views can point to anywhere in memory and that memory doesn't have to belong to an @code{ra::} container. For example:
+Views can point to anywhere in memory and that memory doesn't have to belong to an @code{ra::} array. For example:
 
 @example
 @verbatim
@@ -509,7 +509,7 @@ ra::ViewBig<int *> v2(raw);                   // do this instead for rank-0 view
 @end verbatim
 @end example
 
-Containers can be converted to views of the same kind, that is, if you declare a function
+Arrays can be converted to views of the same kind, that is, if you declare a function
 
 @example
 @verbatim
@@ -519,12 +519,12 @@ void f(ra::ViewBig<int *, 3> const & v);
 
 you may pass it an object of type @code{ra::Big<int, 3>}.
 
-It's not normally necessary to create view objects explicitly. Instead, one creates them from containers or other views through operations such as @ref{Slicing,slicing}.
+It's not normally necessary to create view objects explicitly. Instead, one creates them from arrays or other views through operations such as @ref{Slicing,slicing}.
 
 @node The meaning of @code{const}
 @subsection The meaning of @code{const}
 
-In C++, a pointer may itself be const, but point to data which is not const. The constness of views is like that; the contents of a @code{const} container are themselves const, but the contents of a @code{const} view need not be. The analogy is
+In C++, a pointer may itself be const, but point to data which is not const. The constness of views is like that; the contents of a @code{const} array are themselves const, but the contents of a @code{const} view need not be. The analogy is
 
 @multitable @columnfractions .45 .1 .45
 @item @code{ra::ViewBig<T *>} @tab @ @ @ ~ @tab @code{T *}
@@ -901,7 +901,7 @@ auto j = i(ra::iota(3, 2, 2)); // i([2 4 5])
 @result{} j = @{3, 5, 7@}
 @end example
 
-@code{j} above is a view, just like @code{b} and @code{c} in the following (@pxref{Containers and views}).
+@code{j} above is a view, just like @code{b} and @code{c} in the following (@pxref{Arrays and views}).
 @example
 @verbatim
 ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
@@ -1626,11 +1626,11 @@ cout << std::ranges::count_if(range(iter<1>(A)), [](auto const & x) { return any
 @result{} 2
 @end example
 
-For @ref{Containers and views,containers}, @code{ra::} @code{begin}/@code{end}/@code{range} provide random access iterators and ranges, which is handy for functions such as @code{std::sort}. These could be provided for general expressions, but they wouldn't be efficient for ranks above 1, and I haven't implemented them. The container @code{std::random_access_iterator}s that are provided are in fact raw pointers.
+For @ref{Arrays and views,arrays}, @code{ra::} @code{begin}/@code{end}/@code{range} provide random access iterators and ranges, which is handy for functions such as @code{std::sort}. These could be provided for general expressions, but they wouldn't be efficient for ranks above 1, and I haven't implemented them. The array @code{std::random_access_iterator}s that are provided are in fact raw pointers.
 
 @example @c [ma106]
 @verbatim
-ra::Big<int> x {3, 2, 1}; // x is a Container
+ra::Big<int> x {3, 2, 1}; // x is an array
 auto y = x(); // y is a view on x
 // std::sort(ra::begin(y), ra::end(y)); // error: begin(y) is not std::random_access_iterator
 std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major order
@@ -1949,7 +1949,7 @@ cout << B(ll, ll) << endl; // ??
 @section Assignment to views
 
 FIXME
-With runtime-shape containers (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream @code{>>} container may work; do not rely on it.
+With runtime-shape arrays (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream @code{>>} array may work; do not rely on it.
 
 @section Passing view arguments by reference
 
@@ -2038,7 +2038,7 @@ Item 2
 @chapter Internals
 @c ------------------------------------------------
 
-@code{ra::} has two main components: a set of container classes, and the expression template mechanism. The container classes provide leaves for the expression template trees, and the container classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
+@code{ra::} has two main components: a set of array classes, and the expression template mechanism. The array classes provide leaves for the expression template trees, and the array classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
 
 @menu
 * Header structure::
@@ -2070,7 +2070,7 @@ Expression templates.
 @item @code{ply.hh} -
 Traversal, I/O, and slicing.
 @item @code{arrays.hh} -
-Array types: views and containers.
+Array types: views and arrays.
 @item @code{ra.hh} -
 Overloads, wedge product, dual numbers, main header.
 @item @code{test.hh} -
@@ -2087,13 +2087,13 @@ Overloads, wedge product, dual numbers, main header.
 Some of the categories below are formalized as concepts, some are still informal.
 
 @itemize
-@item @b{Container} --- @code{Big}, @code{Shared}, @code{Unique}, @code{Small}
+@item @b{Array} --- @code{Big}, @code{Shared}, @code{Unique}, @code{Small}
 
 These are array types that own their data in one way or another.
 
 @item @b{View}
 
-These are array views into data in memory, which may be writable. Any of the @b{Container} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently.
+These are array views into data in memory, which may be writable. Any of the @b{Array} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently.
 
 @item @b{Iterator} --- @code{Cell}, @code{Scalar}, @code{Map}, @code{Pick}
 
@@ -2361,9 +2361,9 @@ See also @ref{x-explode,@code{explode}}.
 
 @cindex @code{concrete}
 @anchor{x-concrete} @defun concrete a
-Convert the argument to a container or value type of the same shape as @var{a}.
+Convert the argument to an array or value type of the same shape as @var{a}.
 
-If the argument has runtime or compile time shape, it is the same for the result. Expressions with compile time rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+If the argument has runtime or compile time shape, it is the same for the result. Expressions with compile time rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare an array beforehand, or compute the appropiate type.
 
 @c FIXME example
 
@@ -2527,7 +2527,7 @@ When @var{op} is a view, @code{from(op, ...)} is equivalent to @code{op(...)}, a
 
 @cindex @code{gemm}
 @anchor{x-gemm} @defun gemm a b
-Compute matrix-matrix product of expressions @var{a} and @var{b}. This function returns a container.
+Compute matrix-matrix product of expressions @var{a} and @var{b}. This function returns an array.
 
 @c TODO
 
@@ -2538,7 +2538,7 @@ See also @ref{x-gemv,@code{gemv}}, @ref{x-gevm,@code{gevm}}.
 
 @cindex @code{gemv}
 @anchor{x-gemv} @defun gemv a b
-Compute matrix-vector product of expressions @var{a} and @var{b}. This function returns a container.
+Compute matrix-vector product of expressions @var{a} and @var{b}. This function returns an array.
 
 @c TODO
 
@@ -2549,7 +2549,7 @@ See also @ref{x-gemm,@code{gemm}}, @ref{x-gevm,@code{gevm}}.
 
 @cindex @code{gevm}
 @anchor{x-gevm} @defun gevm a b
-Compute vector-matrix product of expressions @var{a} and @var{b}. This function returns a container.
+Compute vector-matrix product of expressions @var{a} and @var{b}. This function returns an array.
 
 @c TODO
 
@@ -2704,9 +2704,9 @@ This operation does not work on arbitrary array expressions yet. @c TODO FILL
 
 @cindex @code{swap}
 @anchor{x-swap} @defun swap a b
-Swap the contents of containers @var{a} and @var{b}.
+Swap the contents of arrays @var{a} and @var{b}.
 
-Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of compile time rank, then both of them must have the same rank.
+Both arrays must be of the same storage type. The arrays may have different shapes, but if at least one of them is of compile time rank, then both of them must have the same rank.
 
 This function reuses @code{std::swap} for same-rank overloads, so it must not be qualified (i.e. use @code{swap(a, b)}, not @code{ra::swap(a, b)}).
 @end defun
@@ -3132,7 +3132,7 @@ Compute @code{(0+1j)} times @var{expr}.
 @cindex @code{none}
 @anchor{x-none}
 @deffn @w{Special object} {none}
-Pass @code{none} to container constructors to indicate that the contents shouldn't be initialized. This is appropriate when the initialization you have in mind doesn't fit in a constructor argument. For example:
+Pass @code{none} to array constructors to indicate that the contents shouldn't be initialized. This is appropriate when the initialization you have in mind doesn't fit in a constructor argument. For example:
 
 @example
 @verbatim

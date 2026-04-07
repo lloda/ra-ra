@@ -69,7 +69,7 @@ tester = ra.to_test_ra(env, variant_dir)
                'bench-stencil1', 'bench-stencil2', 'bench-stencil3',
                'bench-optimize', 'bench-tensorindex',
                'bench-iterator', 'bench-at',
-               'bench-dot'
+               'bench-dot', 'bench-sb'
            ]]
 
 if not top['skip_summary']:

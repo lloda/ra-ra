@@ -160,7 +160,7 @@ Next: <a href="#Usage" accesskey="n" rel="next">Usage</a>, Previous: <a href="#T
 <a class="index-entry-id" id="index-length"></a>
 <a class="index-entry-id" id="index-rank"></a>
 <a class="index-entry-id" id="index-shape"></a>
-<p>A multidimensional array is a container whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em class="dfn">rank</em> of the array, and the list of all the <em class="dfn">lengths</em> (n₀, n₁, ... nᵣ₋₁) is the <em class="dfn">shape</em> of the array. We speak of a rank-<em class="math tex2jax_process">\(r\)</em> array or of an <em class="math tex2jax_process">\(r\)</em>-array.
+<p>A multidimensional array is a data structure whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [0, n₀), [0, n₁), ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em class="dfn">rank</em> of the array, and the list of all the <em class="dfn">lengths</em> (n₀, n₁, ... nᵣ₋₁) is the <em class="dfn">shape</em> of the array. We speak of a rank-<em class="math tex2jax_process">\(r\)</em> array or of an <em class="math tex2jax_process">\(r\)</em>-array.
 </p>
 <p>Often we deal with multidimensional <em class="emph">expressions</em> where the elements aren&rsquo;t stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain.<a class="footnote" id="DOCF2" href="#FOOT2"><sup>2</sup></a>
 </p>
@@ -264,7 +264,7 @@ Next: <a href="#Why-C_002b_002b" accesskey="n" rel="next">Why C++</a>, Previous:
 </p>
 <p><em class="dfn">Drag-along</em> is the process that delays evaluation of array operations. Expression templates can be seen as an implementation of drag-along. Drag-along isn&rsquo;t an optimization in and of itself; it simply preserves the necessary information up to the point where the expression can be executed efficiently.
 </p>
-<p><em class="dfn">Beating</em> is the implementation of certain array operations on the array <a class="ref" href="#Containers-and-views">view</a> descriptor instead of on the array contents. For example, if <code class="code">A</code> is a 1-array, one can implement <a class="ref" href="#x_002dreverse"><code class="code">reverse(A, 0)</code></a> by negating the <a class="ref" href="#x_002dsteps">step</a> and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as <a class="ref" href="#x_002diota"><code class="code">1+iota(3, 0)</code></a> can be beaten into <code class="code">iota(3, 1)</code>, and this can enable further optimizations.
+<p><em class="dfn">Beating</em> is the implementation of certain array operations on the array <a class="ref" href="#Arrays-and-views">view</a> descriptor instead of on the array contents. For example, if <code class="code">A</code> is a 1-array, one can implement <a class="ref" href="#x_002dreverse"><code class="code">reverse(A, 0)</code></a> by negating the <a class="ref" href="#x_002dsteps">step</a> and moving the offset to the other end of the array, without having to move any elements. More generally, beating applies to any function-of-indices (generator) that can take the place of an array in an array expression. For instance, an expression such as <a class="ref" href="#x_002diota"><code class="code">1+iota(3, 0)</code></a> can be beaten into <code class="code">iota(3, 1)</code>, and this can enable further optimizations.
 </p>
 <hr>
 </div>
@@ -303,11 +303,11 @@ Next: <a href="#Other-libraries" accesskey="n" rel="next">Other array libraries<
 </p>
 <p>Generality is achieved by removing arbitrary restrictions and by adopting the rank extension mechanism of J. <code class="code">ra::</code> supports array operations with an arbitrary number of arguments. Any of the arguments in an array expression can be read from or written to. Arrays or array expressions can be of any rank. Slicing operations work for subscripts of any rank, as in APL. You can use your own types as array elements.
 </p>
-<p>Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. <code class="code">ra::</code> offers a few different types of views and containers, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn&rsquo;t create a higher rank iterator on <code class="code">View</code> with constant dimensions, even though you could do it on a <code class="code">View</code> with runtime dimensions; this was a bug.
+<p>Consistency is achieved by having a clear set of concepts and having the realizations of those concepts adhere to the concept as closely as possible. <code class="code">ra::</code> offers a few different types of views and arrays, but it should be possible to use them interchangeably whenever it makes sense. For example, it used to be the case that you couldn&rsquo;t create a higher rank iterator on <code class="code">View</code> with constant dimensions, even though you could do it on a <code class="code">View</code> with runtime dimensions; this was a bug.
 </p>
-<p>Sometimes consistency requires a choice. For example, given array views A and B, <code class="code">A=B</code> copies the contents of view <code class="code">B</code> into view <code class="code">A</code>. To change view <code class="code">A</code> instead (to treat <code class="code">A</code> as a pointer) would be the default meaning of <code class="code">A=B</code> for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and containers (which ‘are’ their contents in a sense that views aren&rsquo;t) is more important.
+<p>Sometimes consistency requires a choice. For example, given array views A and B, <code class="code">A=B</code> copies the contents of view <code class="code">B</code> into view <code class="code">A</code>. To change view <code class="code">A</code> instead (to treat <code class="code">A</code> as a pointer) would be the default meaning of <code class="code">A=B</code> for C++ types, and result in better consistency with the rest of the language, but I have decided that having consistency between views and arrays (which ‘are’ their contents in a sense that views aren&rsquo;t) is more important.
 </p>
-<p>Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding it. Manipulating the steps directly is often useful. A container consists of storage and a view and that isn&rsquo;t hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
+<p>Transparency is achieved by avoiding unnecessary abstraction. An array view consists of a pointer and a list of steps and I see no point in hiding it. Manipulating the steps directly is often useful. An array consists of storage and a view and that isn&rsquo;t hidden either. Some of the types have an obscure implementation but I consider that a defect. Ideally you should be able to rewrite expressions on the fly, or plug in your own traversal methods or storage handling.
 </p>
 <p>That isn&rsquo;t to mean that you need to be in command of a lot of internal detail to be able to use the library. I hope to have provided a high level interface to most operations and a reasonably usable syntax. However, transparency is critical to achieve interoperation with external libraries and languages. When you need to, you&rsquo;ll be able to guarantee that an array is stored in compact columns, or that the real parts are interleaved with the imaginary parts.
 </p>
@@ -335,7 +335,7 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 
 <p>The C++ language offers multidimensional arrays as a legacy feature from C, e.g. <code class="code">int a[3][4]</code>. These ‘built-in arrays’ can only have compile time lengths, decay to pointers when you do nearly anything with them, and are generally too limited.
 </p>
-<p>The C++ standard library also offers a number of contiguous storage containers that can be used as 1-arrays: <code class="code">&lt;array&gt;</code>, <code class="code">&lt;vector&gt;</code> and <code class="code">&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code class="code">&lt;valarray&gt;</code> offers array operations for 1-arrays. <code class="code">ra::</code> makes use of <code class="code">&lt;array&gt;</code> and <code class="code">&lt;vector&gt;</code> internally and for storage.
+<p>The C++ standard library also offers a number of contiguous storage arrays that can be used as 1-arrays: <code class="code">&lt;array&gt;</code>, <code class="code">&lt;vector&gt;</code> and <code class="code">&lt;valarray&gt;</code>. Neither supports higher ranks out of the box, but <code class="code">&lt;valarray&gt;</code> offers array operations for 1-arrays. <code class="code">ra::</code> makes use of <code class="code">&lt;array&gt;</code> and <code class="code">&lt;vector&gt;</code> internally and for storage.
 </p>
 <p><code class="code">ra::</code> accepts built-in arrays and standard library types as array objects (see <a class="pxref" href="#Compatibility">Compatibility</a>).
 </p>
@@ -348,7 +348,7 @@ Previous: <a href="#Guidelines" accesskey="p" rel="prev">Guidelines</a>, Up: <a 
 </p>
 <p>However, the implementation had to fight the limitations of C++98, and it offered no general rank extension mechanism.
 </p>
-<p>One important difference between Blitz++ and <code class="code">ra::</code> is that Blitz++&rsquo;s arrays were reference counted. <code class="code">ra::</code> doesn&rsquo;t do any memory management on its own: the default container (data-owning) types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (<code class="code">ra::</code> declares a type using <code class="code">std::shared_ptr</code>), but this is not the default.
+<p>One important difference between Blitz++ and <code class="code">ra::</code> is that Blitz++&rsquo;s arrays were reference counted. <code class="code">ra::</code> doesn&rsquo;t do memory management on its own: the default array types are values, and views are distinct types. You can select your own storage for the data-owning objects, including reference-counted storage (<code class="code">ra::</code> declares a type using <code class="code">std::shared_ptr</code>), but this is not the default.
 </p>
 </div>
 <div class="subsection-level-extent" id="Other-C_002b_002b-libraries">
@@ -376,7 +376,7 @@ Next: <a href="#Extras" accesskey="n" rel="next">Extras</a>, Previous: <a href="
 
 <ul class="mini-toc">
 <li><a href="#Using-the-library" accesskey="1">Using <code class="code">ra::</code></a></li>
-<li><a href="#Containers-and-views" accesskey="2">Containers and views</a></li>
+<li><a href="#Arrays-and-views" accesskey="2">Arrays and views</a></li>
 <li><a href="#Array-operations" accesskey="3">Array operations</a></li>
 <li><a href="#Rank-extension" accesskey="4">Rank extension</a></li>
 <li><a href="#Cell-iteration" accesskey="5">Cell iteration</a></li>
@@ -392,7 +392,7 @@ Next: <a href="#Extras" accesskey="n" rel="next">Extras</a>, Previous: <a href="
 <div class="section-level-extent" id="Using-the-library">
 <div class="nav-panel">
 <p>
-Next: <a href="#Containers-and-views" accesskey="n" rel="next">Containers and views</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Arrays-and-views" accesskey="n" rel="next">Arrays and views</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <h3 class="section" id="Using-ra_003a_003a"><span>2.1 Using <code class="code">ra::</code><a class="copiable-link" href="#Using-ra_003a_003a"> &para;</a></span></h3>
 
@@ -438,23 +438,23 @@ int main()
 <p>If 1, use <code class="code">fma</code> in certain array reductions such as <a class="ref" href="#x_002ddot"><code class="code">dot</code></a>, <a class="ref" href="#x_002dgemm"><code class="code">gemm</code></a>, etc.
 </p></li></ul>
 
-<a class="index-entry-id" id="index-container"></a>
+<a class="index-entry-id" id="index-array"></a>
 <hr>
 </div>
-<div class="section-level-extent" id="Containers-and-views">
+<div class="section-level-extent" id="Arrays-and-views">
 <div class="nav-panel">
 <p>
 Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>, Previous: <a href="#Using-the-library" accesskey="p" rel="prev">Using <code class="code">ra::</code></a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<h3 class="section" id="Containers-and-views-1"><span>2.2 Containers and views<a class="copiable-link" href="#Containers-and-views-1"> &para;</a></span></h3>
+<h3 class="section" id="Arrays-and-views-1"><span>2.2 Arrays and views<a class="copiable-link" href="#Arrays-and-views-1"> &para;</a></span></h3>
 
-<p><code class="code">ra::</code> offers two kinds of data objects. The first kind, the <em class="dfn">container</em>, owns its data. Creating a container uses up memory and destroying it causes that memory to be freed.
+<p><code class="code">ra::</code> offers two kinds of data objects. The first kind, the <em class="dfn">array</em>, owns its data. Creating an array uses up memory and destroying it causes that memory to be freed.
 </p>
 <a class="index-entry-id" id="index-compile_002dtime"></a>
 <a class="index-entry-id" id="index-ct"></a>
 <a class="index-entry-id" id="index-runtime"></a>
 <a class="index-entry-id" id="index-rt"></a>
-<p>There are three kinds of containers:
+<p>There are three kinds of arrays:
 </p>
 <ul class="itemize mark-bullet">
 <li>compile time shape,
@@ -462,7 +462,7 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 </li><li>run time rank.
 </li></ul>
 
-<p>In this example, all the containers have the same shape:
+<p>In this example, all the arrays have the same shape:
 </p>
 <div class="example">
 <pre class="verbatim">{
@@ -473,15 +473,15 @@ Next: <a href="#Array-operations" accesskey="n" rel="next">Array operations</a>,
 }
 </pre></div>
 
-<p>Using the right kind of container can result in better performance. Compile time shapes do not need to be stored in memory, which matters when you have many small arrays. Compile time shape or compile time rank arrays are also safer to use; sometimes <code class="code">ra::</code> will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
+<p>Using the right kind of array can result in better performance. Compile time shapes do not need to be stored in memory, which matters when you have many small arrays. Compile time shape or compile time rank arrays are also safer to use; sometimes <code class="code">ra::</code> will be able to detect errors in the shapes or ranks of array operands at compile time, if the appropriate types are used.
 </p>
-<p>Container constructors come in two forms. The first form takes a <em class="emph">single</em> argument which is copied into the new container. The shape of the argument must be compatible with the container&rsquo;s type.
+<p>Array constructors come in two forms. The first form takes a <em class="emph">single</em> argument which is copied into the new array. The shape of the argument must be compatible with the array&rsquo;s type.
 </p>
 <div class="example">
 <pre class="verbatim">using ra::Small, ra::Big;
 Small&lt;int, 2, 2&gt; a = {{1, 2}, {3, 4}};  // explicit contents
 Big&lt;int, 2&gt; a1 = {{1, 2}, {3, 4}};      // explicit contents
-Small&lt;int, 2, 2&gt; a2 = {{7, 8}};         // error: shape [1 2] but container's is [2 2]
+Small&lt;int, 2, 2&gt; a2 = {{7, 8}};         // error: shape [1 2] but array's is [2 2]
 Small&lt;int, 2, 2&gt; b = 7;                 // 7 is copied into b
 Small&lt;int, 2, 2&gt; c = a;                 // contents of a are copied into c
 Big&lt;int&gt; d = a;                         // d takes the shape of a and a is copied into d
@@ -491,19 +491,19 @@ Big&lt;int&gt; e = 0;                         // e is a 0-array with one element
 <p>The second form takes <em class="emph">two</em> arguments, one giving the shape, the second the contents.
 </p>
 <a class="index-entry-id" id="index-none"></a>
-<a class="index-entry-id" id="index-uninitialized-container"></a>
+<a class="index-entry-id" id="index-uninitialized-array"></a>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double, 2&gt; a({2, 3}, 1.);     // a has shape [2 3], filled with 1.
 ra::Big&lt;double&gt; b({2, 3}, ra::none);  // b has shape [2 3], default initialized
 ra::Big&lt;double&gt; c({2, 3}, a);         // c has shape [2 3], a is copied into c
 </pre></div>
 
-<p>The last example may be an error if the shape of <code class="code">a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code class="code">1.</code>, which is (), matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a class="pxref" href="#Rank-extension">Rank extension</a>). The special value <code class="code">ra::none</code> can be used to request <a class="url" href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the container&rsquo;s elements.
+<p>The last example may be an error if the shape of <code class="code">a</code> and (2,&nbsp;<!-- /@w -->3) don&rsquo;t match. Here the shape of <code class="code">1.</code>, which is (), matches (2,&nbsp;<!-- /@w -->3) by a mechanism of rank extension (see <a class="pxref" href="#Rank-extension">Rank extension</a>). The special value <code class="code">ra::none</code> can be used to request <a class="url" href="https://en.cppreference.com/w/cpp/language/default_initialization">default initialization</a> of the array&rsquo;s elements.
 </p>
 <p>A scalar value is accepted as the shape of a rank 1 array.
 </p>
 <a class="index-entry-id" id="index-none-1"></a>
-<a class="index-entry-id" id="index-uninitialized-container-1"></a>
+<a class="index-entry-id" id="index-uninitialized-array-1"></a>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;int&gt; c(3, 0);          // ok {0, 0, 0}, same as ra::Big&lt;int&gt; c({3}, 0)
 ra::Big&lt;int, 1&gt; c(3, 0);       // ok {0, 0, 0}, same as ra::Big&lt;int, 1&gt; c({3}, 0)
@@ -559,7 +559,7 @@ cout &lt;&lt; fmt(A, {.shape=ra::noshape, .sep0=&quot;|&quot;}) &lt;&lt; endl;
 </pre></div>
 
 <a class="index-entry-id" id="index-view"></a>
-<p>A <em class="dfn">view</em> is similar to a container in that it points to actual data in memory. However, the view doesn&rsquo;t own that data and destroying the view won&rsquo;t affect it. For example:
+<p>A <em class="dfn">view</em> is similar to an array in that it points to actual data in memory. However, the view doesn&rsquo;t own that data and destroying the view won&rsquo;t affect it. For example:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double&gt; c({2, 3}, 0.);     // runtime rank 2x3 array
@@ -570,7 +570,7 @@ cout &lt;&lt; fmt(A, {.shape=ra::noshape, .sep0=&quot;|&quot;}) &lt;&lt; endl;
 cout &lt;&lt; c(1, 1) &lt;&lt; endl;           // ok
 </pre></div>
 
-<p>The data accessed through a view is the data of the ‘root’ container, so modifying the former will be reflected in the latter.
+<p>The data accessed through a view is the data of the ‘root’ array, so modifying the former will be reflected in the latter.
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double&gt; c({2, 3}, 0.);
@@ -578,7 +578,7 @@ auto c1 = c(1);
 c1(2) = 9.;                        // c(1, 2) = 9.
 </pre></div>
 
-<p>Just as for containers, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. <code class="code">ra::</code> has the usual functions that operate on views:
+<p>Just as for arrays, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. <code class="code">ra::</code> has the usual functions that operate on views:
 </p>
 <div class="example">
 <pre class="verbatim">ra::Big&lt;double&gt; c {{1, 2, 3}, {4, 5, 6}};
@@ -586,7 +586,7 @@ auto ct = transpose(c); // {{1, 4}, {2, 5}, {3, 6}}
 auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 </pre></div>
 
-<p>Views can point to anywhere in memory and that memory doesn&rsquo;t have to belong to an <code class="code">ra::</code> container. For example:
+<p>Views can point to anywhere in memory and that memory doesn&rsquo;t have to belong to an <code class="code">ra::</code> array. For example:
 </p>
 <div class="example">
 <pre class="verbatim">int raw[6] = {1, 2, 3, 4, 5, 6};
@@ -596,7 +596,7 @@ ra::ViewBig&lt;int *&gt; v2({2, 3}, raw);           // same, default C (row-majo
 ra::ViewBig&lt;int *&gt; v2(raw);                   // do this instead for rank-0 view
 </pre></div>
 
-<p>Containers can be converted to views of the same kind, that is, if you declare a function
+<p>Arrays can be converted to views of the same kind, that is, if you declare a function
 </p>
 <div class="example">
 <pre class="verbatim">void f(ra::ViewBig&lt;int *, 3&gt; const &amp; v);
@@ -604,7 +604,7 @@ ra::ViewBig&lt;int *&gt; v2(raw);                   // do this instead for rank-
 
 <p>you may pass it an object of type <code class="code">ra::Big&lt;int, 3&gt;</code>.
 </p>
-<p>It&rsquo;s not normally necessary to create view objects explicitly. Instead, one creates them from containers or other views through operations such as <a class="ref" href="#Slicing">slicing</a>.
+<p>It&rsquo;s not normally necessary to create view objects explicitly. Instead, one creates them from arrays or other views through operations such as <a class="ref" href="#Slicing">slicing</a>.
 </p>
 <ul class="mini-toc">
 <li><a href="#The-meaning-of-const" accesskey="1">The meaning of <code class="code">const</code></a></li>
@@ -614,11 +614,11 @@ ra::ViewBig&lt;int *&gt; v2(raw);                   // do this instead for rank-
 <div class="subsection-level-extent" id="The-meaning-of-const">
 <div class="nav-panel">
 <p>
-Next: <a href="#Sequence-views" accesskey="n" rel="next">Sequence views</a>, Up: <a href="#Containers-and-views" accesskey="u" rel="up">Containers and views</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Sequence-views" accesskey="n" rel="next">Sequence views</a>, Up: <a href="#Arrays-and-views" accesskey="u" rel="up">Arrays and views</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <h4 class="subsection" id="The-meaning-of-const-1"><span>2.2.1 The meaning of <code class="code">const</code><a class="copiable-link" href="#The-meaning-of-const-1"> &para;</a></span></h4>
 
-<p>In C++, a pointer may itself be const, but point to data which is not const. The constness of views is like that; the contents of a <code class="code">const</code> container are themselves const, but the contents of a <code class="code">const</code> view need not be. The analogy is
+<p>In C++, a pointer may itself be const, but point to data which is not const. The constness of views is like that; the contents of a <code class="code">const</code> array are themselves const, but the contents of a <code class="code">const</code> view need not be. The analogy is
 </p>
 <table class="multitable">
 <tbody><tr><td width="45%"><code class="code">ra::ViewBig&lt;T *&gt;</code></td><td width="10%">&nbsp;&nbsp;&nbsp;~</td><td width="45%"><code class="code">T *</code></td></tr>
@@ -660,7 +660,7 @@ bv2(1, 1) = 9; // error
 <div class="subsection-level-extent" id="Sequence-views">
 <div class="nav-panel">
 <p>
-Previous: <a href="#The-meaning-of-const" accesskey="p" rel="prev">The meaning of <code class="code">const</code></a>, Up: <a href="#Containers-and-views" accesskey="u" rel="up">Containers and views</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Previous: <a href="#The-meaning-of-const" accesskey="p" rel="prev">The meaning of <code class="code">const</code></a>, Up: <a href="#Arrays-and-views" accesskey="u" rel="up">Arrays and views</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <h4 class="subsection" id="Sequence-views-1"><span>2.2.2 Sequence views<a class="copiable-link" href="#Sequence-views-1"> &para;</a></span></h4>
 
@@ -682,7 +682,7 @@ std::println(cout, &quot;{:c:2}\n&quot;, transpose(a));
 <div class="section-level-extent" id="Array-operations">
 <div class="nav-panel">
 <p>
-Next: <a href="#Rank-extension" accesskey="n" rel="next">Rank extension</a>, Previous: <a href="#Containers-and-views" accesskey="p" rel="prev">Containers and views</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Rank-extension" accesskey="n" rel="next">Rank extension</a>, Previous: <a href="#Arrays-and-views" accesskey="p" rel="prev">Arrays and views</a>, Up: <a href="#Usage" accesskey="u" rel="up">Usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <h3 class="section" id="Array-operations-1"><span>2.3 Array operations<a class="copiable-link" href="#Array-operations-1"> &para;</a></span></h3>
 
@@ -972,7 +972,7 @@ auto j = i(ra::iota(3, 2, 2)); // i([2 4 5])
 </pre><pre class="example-preformatted">&rArr; j = {3, 5, 7}
 </pre></div>
 
-<p><code class="code">j</code> above is a view, just like <code class="code">b</code> and <code class="code">c</code> in the following (see <a class="pxref" href="#Containers-and-views">Containers and views</a>).
+<p><code class="code">j</code> above is a view, just like <code class="code">b</code> and <code class="code">c</code> in the following (see <a class="pxref" href="#Arrays-and-views">Arrays and views</a>).
 </p><div class="example">
 <pre class="verbatim">ra::Big&lt;int, 1&gt; a = {1, 2, 3, 4, 5, 6};
 auto b = a(iota(3));
@@ -1646,10 +1646,10 @@ cout &lt;&lt; std::ranges::count_if(range(iter&lt;1&gt;(A)), [](auto const &amp;
 </pre><pre class="example-preformatted">&rArr; 2
 </pre></div>
 
-<p>For <a class="ref" href="#Containers-and-views">containers</a>, <code class="code">ra::</code> <code class="code">begin</code>/<code class="code">end</code>/<code class="code">range</code> provide random access iterators and ranges, which is handy for functions such as <code class="code">std::sort</code>. These could be provided for general expressions, but they wouldn&rsquo;t be efficient for ranks above 1, and I haven&rsquo;t implemented them. The container <code class="code">std::random_access_iterator</code>s that are provided are in fact raw pointers.
+<p>For <a class="ref" href="#Arrays-and-views">arrays</a>, <code class="code">ra::</code> <code class="code">begin</code>/<code class="code">end</code>/<code class="code">range</code> provide random access iterators and ranges, which is handy for functions such as <code class="code">std::sort</code>. These could be provided for general expressions, but they wouldn&rsquo;t be efficient for ranks above 1, and I haven&rsquo;t implemented them. The array <code class="code">std::random_access_iterator</code>s that are provided are in fact raw pointers.
 </p>
 <div class="example">
-<pre class="verbatim">ra::Big&lt;int&gt; x {3, 2, 1}; // x is a Container
+<pre class="verbatim">ra::Big&lt;int&gt; x {3, 2, 1}; // x is an array
 auto y = x(); // y is a view on x
 // std::sort(ra::begin(y), ra::end(y)); // error: begin(y) is not std::random_access_iterator
 std::sort(ra::begin(x), ra::end(x)); // ok, we know x is stored in row-major order
@@ -1984,7 +1984,7 @@ cout &lt;&lt; B(ll, ll) &lt;&lt; endl; // ??
 <h3 class="section"><span>4.2 Assignment to views<a class="copiable-link" href="#Assignment-to-views"> &para;</a></span></h3>
 
 <p>FIXME
-With runtime-shape containers (e.g. <code class="code">Big</code>), <code class="code">operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code class="code">View::operator=</code> and is there only so that istream <code class="code">&gt;&gt;</code> container may work; do not rely on it.
+With runtime-shape arrays (e.g. <code class="code">Big</code>), <code class="code">operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code class="code">View::operator=</code> and is there only so that istream <code class="code">&gt;&gt;</code> array may work; do not rely on it.
 </p>
 </div>
 <div class="section-level-extent" id="Passing-view-arguments-by-reference">
@@ -2083,7 +2083,7 @@ Next: <a href="#The-future" accesskey="n" rel="next">The future</a>, Previous: <
 </div>
 <h2 class="chapter" id="Internals-1"><span>5 Internals<a class="copiable-link" href="#Internals-1"> &para;</a></span></h2>
 
-<p><code class="code">ra::</code> has two main components: a set of container classes, and the expression template mechanism. The container classes provide leaves for the expression template trees, and the container classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
+<p><code class="code">ra::</code> has two main components: a set of array classes, and the expression template mechanism. The array classes provide leaves for the expression template trees, and the array classes also make some use of the expression template mechanism internally (e.g. in the selection operator, or for initialization).
 </p>
 
 <ul class="mini-toc">
@@ -2112,7 +2112,7 @@ Expression templates.
 </li><li><code class="code">ply.hh</code> -
 Traversal, I/O, and slicing.
 </li><li><code class="code">arrays.hh</code> -
-Array types: views and containers.
+Array types: views and arrays.
 </li><li><code class="code">ra.hh</code> -
 Overloads, wedge product, dual numbers, main header.
 </li><li><code class="code">test.hh</code> -
@@ -2132,13 +2132,13 @@ Next: <a href="#Term-agreement" accesskey="n" rel="next">Term agreement</a>, Pre
 <p>Some of the categories below are formalized as concepts, some are still informal.
 </p>
 <ul class="itemize mark-bullet">
-<li><b class="b">Container</b> &mdash; <code class="code">Big</code>, <code class="code">Shared</code>, <code class="code">Unique</code>, <code class="code">Small</code>
+<li><b class="b">Array</b> &mdash; <code class="code">Big</code>, <code class="code">Shared</code>, <code class="code">Unique</code>, <code class="code">Small</code>
 
 <p>These are array types that own their data in one way or another.
 </p>
 </li><li><b class="b">View</b>
 
-<p>These are array views into data in memory, which may be writable. Any of the <b class="b">Container</b> types can be treated as a <b class="b">View</b>, but one may also create <b class="b">View</b>s into memory that has been allocated independently.
+<p>These are array views into data in memory, which may be writable. Any of the <b class="b">Array</b> types can be treated as a <b class="b">View</b>, but one may also create <b class="b">View</b>s into memory that has been allocated independently.
 </p>
 </li><li><b class="b">Iterator</b> &mdash; <code class="code">Cell</code>, <code class="code">Scalar</code>, <code class="code">Map</code>, <code class="code">Pick</code>
 
@@ -2423,9 +2423,9 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a class="index-entry-id" id="index-concrete"></a>
 <a class="anchor" id="x_002dconcrete"></a><dl class="first-deffn first-defun-alias-first-deffn def-block">
 <dt class="deffn defun-alias-deffn def-line" id="index-concrete-1"><span class="category-def">Function: </span><span><strong class="def-name">concrete</strong> <var class="def-var-arguments">a</var><a class="copiable-link" href="#index-concrete-1"> &para;</a></span></dt>
-<dd><p>Convert the argument to a container or value type of the same shape as <var class="var">a</var>.
+<dd><p>Convert the argument to an array or value type of the same shape as <var class="var">a</var>.
 </p>
-<p>If the argument has runtime or compile time shape, it is the same for the result. Expressions with compile time rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare a container beforehand, or compute the appropiate type.
+<p>If the argument has runtime or compile time shape, it is the same for the result. Expressions with compile time rank 0 are converted to the value type. The main use of this function is to obtain a modifiable copy of an array expression without having to prepare an array beforehand, or compute the appropiate type.
 </p>
 
 </dd></dl>
@@ -2577,7 +2577,7 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 <a class="index-entry-id" id="index-gemm"></a>
 <a class="anchor" id="x_002dgemm"></a><dl class="first-deffn first-defun-alias-first-deffn def-block">
 <dt class="deffn defun-alias-deffn def-line" id="index-gemm-1"><span class="category-def">Function: </span><span><strong class="def-name">gemm</strong> <var class="def-var-arguments">a b</var><a class="copiable-link" href="#index-gemm-1"> &para;</a></span></dt>
-<dd><p>Compute matrix-matrix product of expressions <var class="var">a</var> and <var class="var">b</var>. This function returns a container.
+<dd><p>Compute matrix-matrix product of expressions <var class="var">a</var> and <var class="var">b</var>. This function returns an array.
 </p>
 
 <p>See <a class="ref" href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
@@ -2588,7 +2588,7 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 <a class="index-entry-id" id="index-gemv"></a>
 <a class="anchor" id="x_002dgemv"></a><dl class="first-deffn first-defun-alias-first-deffn def-block">
 <dt class="deffn defun-alias-deffn def-line" id="index-gemv-1"><span class="category-def">Function: </span><span><strong class="def-name">gemv</strong> <var class="def-var-arguments">a b</var><a class="copiable-link" href="#index-gemv-1"> &para;</a></span></dt>
-<dd><p>Compute matrix-vector product of expressions <var class="var">a</var> and <var class="var">b</var>. This function returns a container.
+<dd><p>Compute matrix-vector product of expressions <var class="var">a</var> and <var class="var">b</var>. This function returns an array.
 </p>
 
 <p>See <a class="ref" href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
@@ -2599,7 +2599,7 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 <a class="index-entry-id" id="index-gevm"></a>
 <a class="anchor" id="x_002dgevm"></a><dl class="first-deffn first-defun-alias-first-deffn def-block">
 <dt class="deffn defun-alias-deffn def-line" id="index-gevm-1"><span class="category-def">Function: </span><span><strong class="def-name">gevm</strong> <var class="def-var-arguments">a b</var><a class="copiable-link" href="#index-gevm-1"> &para;</a></span></dt>
-<dd><p>Compute vector-matrix product of expressions <var class="var">a</var> and <var class="var">b</var>. This function returns a container.
+<dd><p>Compute vector-matrix product of expressions <var class="var">a</var> and <var class="var">b</var>. This function returns an array.
 </p>
 
 <p>See <a class="ref" href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
@@ -2745,9 +2745,9 @@ auto z = reverse(a, ra::ic&lt;0&gt;); // z has static dimensions
 <a class="index-entry-id" id="index-swap"></a>
 <a class="anchor" id="x_002dswap"></a><dl class="first-deffn first-defun-alias-first-deffn def-block">
 <dt class="deffn defun-alias-deffn def-line" id="index-swap-1"><span class="category-def">Function: </span><span><strong class="def-name">swap</strong> <var class="def-var-arguments">a b</var><a class="copiable-link" href="#index-swap-1"> &para;</a></span></dt>
-<dd><p>Swap the contents of containers <var class="var">a</var> and <var class="var">b</var>.
+<dd><p>Swap the contents of arrays <var class="var">a</var> and <var class="var">b</var>.
 </p>
-<p>Both containers must be of the same storage type. The containers may have different shapes, but if at least one of them is of compile time rank, then both of them must have the same rank.
+<p>Both arrays must be of the same storage type. The arrays may have different shapes, but if at least one of them is of compile time rank, then both of them must have the same rank.
 </p>
 <p>This function reuses <code class="code">std::swap</code> for same-rank overloads, so it must not be qualified (i.e. use <code class="code">swap(a, b)</code>, not <code class="code">ra::swap(a, b)</code>).
 </p></dd></dl>
@@ -3137,7 +3137,7 @@ lexical_compare(A &amp;&amp; a, B &amp;&amp; b)
 <a class="index-entry-id" id="index-none-2"></a>
 <a class="anchor" id="x_002dnone"></a><dl class="first-deffn def-block">
 <dt class="deffn def-line" id="index-none-3"><span class="category-def">Special&nbsp;object<!-- /@w -->: </span><span><strong class="def-name">none</strong><a class="copiable-link" href="#index-none-3"> &para;</a></span></dt>
-<dd><p>Pass <code class="code">none</code> to container constructors to indicate that the contents shouldn&rsquo;t be initialized. This is appropriate when the initialization you have in mind doesn&rsquo;t fit in a constructor argument. For example:
+<dd><p>Pass <code class="code">none</code> to array constructors to indicate that the contents shouldn&rsquo;t be initialized. This is appropriate when the initialization you have in mind doesn&rsquo;t fit in a constructor argument. For example:
 </p>
 <div class="example">
 <pre class="verbatim">void foreign_initializer(int m, int n, double *);
@@ -3252,6 +3252,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td class="printindex-index-entry"><a href="#index-any"><code class="code">any</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-APL">APL</a></td><td class="printindex-index-section"><a href="#Why-C_002b_002b">Why C++</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-arity">arity</a></td><td class="printindex-index-section"><a href="#Overview">Overview</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-array">array</a></td><td class="printindex-index-section"><a href="#Using-the-library">Using the library</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-assert">assert</a></td><td class="printindex-index-section"><a href="#Extension">Extension</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-at"><code class="code">at</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-at_005fview"><code class="code">at_view</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
@@ -3271,12 +3272,11 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td class="printindex-index-entry"><a href="#index-cast"><code class="code">cast</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-cell">cell</a></td><td class="printindex-index-section"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-collapse"><code class="code">collapse</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-compile_002dtime">compile-time</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-compile_002dtime">compile-time</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-concrete"><code class="code">concrete</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-conj"><code class="code">conj</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-container">container</a></td><td class="printindex-index-section"><a href="#Using-the-library">Using the library</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-cstyle"><code class="code">cstyle</code></a></td><td class="printindex-index-section"><a href="#Formatted-output">Formatted output</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-ct">ct</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-ct">ct</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
 <tr><td colspan="3"><hr></td></tr>
 <tr><th id="Indices_cp_letter-D">D</th></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-diag"><code class="code">diag</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
@@ -3327,8 +3327,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td class="printindex-index-entry"><a href="#index-Masking">Masking</a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="3"><hr></td></tr>
 <tr><th id="Indices_cp_letter-N">N</th></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-none"><code class="code">none</code></a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-none-1"><code class="code">none</code></a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-none"><code class="code">none</code></a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-none-1"><code class="code">none</code></a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-none-2"><code class="code">none</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-nstyle"><code class="code">nstyle</code></a></td><td class="printindex-index-section"><a href="#Formatted-output">Formatted output</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-Numpy">Numpy</a></td><td class="printindex-index-section"><a href="#Rank-extension">Rank extension</a></td></tr>
@@ -3337,7 +3337,7 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td colspan="3"><hr></td></tr>
 <tr><th id="Indices_cp_letter-O">O</th></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-OpenGL">OpenGL</a></td><td class="printindex-index-section"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code class="code">ra::</code> types with the STL</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-order_002c-column_002dmajor">order, column-major</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-order_002c-column_002dmajor">order, column-major</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-order_002c-row_002dmajor">order, row-major</a></td><td class="printindex-index-section"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-other-libraries_002c-interfacing-with">other libraries, interfacing with</a></td><td class="printindex-index-section"><a href="#Using-ra_003a_003a-types-with-the-STL">Using <code class="code">ra::</code> types with the STL</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-overload-set">overload set</a></td><td class="printindex-index-section"><a href="#Extension">Extension</a></td></tr>
@@ -3360,8 +3360,8 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td class="printindex-index-entry"><a href="#index-real_005fpart"><code class="code">real_part</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-rel_005ferror"><code class="code">rel_error</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-reverse"><code class="code">reverse</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-rt">rt</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-runtime">runtime</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-rt">rt</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-runtime">runtime</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
 <tr><td colspan="3"><hr></td></tr>
 <tr><th id="Indices_cp_letter-S">S</th></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-scalar"><code class="code">scalar</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
@@ -3384,11 +3384,11 @@ Next: <a href="#Notes" accesskey="n" rel="next">Notes</a>, Previous: <a href="#S
 <tr><td></td><td class="printindex-index-entry"><a href="#index-transpose"><code class="code">transpose</code></a></td><td class="printindex-index-section"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="3"><hr></td></tr>
 <tr><th id="Indices_cp_letter-U">U</th></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-uninitialized-container">uninitialized container</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-uninitialized-container-1">uninitialized container</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-uninitialized-array">uninitialized array</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-uninitialized-array-1">uninitialized array</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
 <tr><td colspan="3"><hr></td></tr>
 <tr><th id="Indices_cp_letter-V">V</th></tr>
-<tr><td></td><td class="printindex-index-entry"><a href="#index-view">view</a></td><td class="printindex-index-section"><a href="#Containers-and-views">Containers and views</a></td></tr>
+<tr><td></td><td class="printindex-index-entry"><a href="#index-view">view</a></td><td class="printindex-index-section"><a href="#Arrays-and-views">Arrays and views</a></td></tr>
 <tr><td></td><td class="printindex-index-entry"><a href="#index-view_002c-rank-0">view, rank 0</a></td><td class="printindex-index-section"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td colspan="3"><hr></td></tr>
 <tr><th id="Indices_cp_letter-W">W</th></tr>
