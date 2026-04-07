@@ -284,5 +284,12 @@ int main()
         CheckPly<A2>(tr, "(i)", reverse(reverse(A, ra::ic<0>), ra::ic<1>), B);
         CheckPly<A2>(tr, "(j)", reverse(reverse(A, ra::ic<0>), ra::ic<1>), reverse(reverse(B, ra::ic<0>), ra::ic<1>));
     }
+    tr.section("reverse of default container preserves static step.");
+    {
+        ra::Big<int, 1> a = {1, 2, 3};
+        auto z = reverse(a); // NOT constexpr
+        static_assert(-1==decltype(z)::simv[0].step);
+        static_assert(-1==z.step(0));
+    }
     return tr.summary();
 }

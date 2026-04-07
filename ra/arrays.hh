@@ -175,6 +175,7 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
 {
     using Dimv = Dimv_;
     constexpr static auto dimv = Dimv::value;
+    constexpr static auto simv = Dimv::value;
     consteval static rank_t rank() { return ssize(dimv); }
     constexpr static dim_t len(int k) { return dimv[k].len; }
     constexpr static dim_t len_s(int k) { return len(k); }
@@ -411,24 +412,21 @@ template <class K=ic_t<0>>
 constexpr auto
 reverse(Slice auto && a, K k = K {})
 {
-    if constexpr (1==rank_s(a) && requires { []<class I>(Seq<I> const &){}(a.data()); }) {
-        static_assert(UNB!=a.len_s(0), "Bad arguments to reverse.");
-        return viewptr(Seq { a.data().i+(a.dimv[0].len-1)*a.dimv[0].step }, a.dimv[0].len, csub(ic<0>, a.dimv[0].step));
-    } else if constexpr (is_ctype<typename std::decay_t<decltype(a)>::Dimv>) {
-        constexpr auto dimv = [&]{
-            RA_CK(inside(k, a.rank()), "Bad axis ", k, " for rank ", a.rank(), ".");
-            auto dimv = a.dimv;
-            dimv[k].step *= -1;
-            return dimv;
-        }();
-        return View<decltype(a.data()), ic_t<dimv>>(a.data() + (0==dimv[k].len ? 0 : dimv[k].step*(1-dimv[k].len)));
+    if constexpr (rank_s(a)>=0 && is_ctype<K>) {
+        static_assert(inside(k, rank_s(a)));
+        static_assert(UNB!=a.len_s(k), "Cannot reverse unbounded len.");
     } else {
-        RA_CK(inside(k, a.rank()), "Bad axis ", k, " for rank ", a.rank(), ".");
-        ViewBig<decltype(a.data()), rank_s(a)> r = a;
-        auto & dim = r.dimv[k];
-        dim.step *= -1;
-        r.cp += 0==dim.len ? 0 : dim.step*(1-dim.len);
-        return r;
+        RA_CK(UNB!=a.len(k), "Cannot reverse unbounded axis ", k, ".");
+        RA_CK(inside(k, rank(a)), "Bad axis ", k, " for rank ", rank(a), ".");
+    }
+    constexpr auto revp = [](auto const & ak){ return 0==ak.len ? 0 : ak.step*(ak.len-1); };
+    constexpr auto revd = [](auto const & av, auto k){ BigDimv<ra::size_s<decltype(av)>()> dv=av; dv[k].step *= -1; return dv; };
+    if constexpr (1==rank_s(a) && !std::is_same_v<std::decay_t<decltype(a.simv[0])>, Dim>) {
+        return viewptr(a.data() + revp(a.dimv[0]), a.dimv[0].len, csub(ic<0>, a.dimv[0].step));
+    } else if constexpr (is_ctype<typename std::decay_t<decltype(a)>::Dimv>) {
+        return View<decltype(a.data()), ic_t<revd(a.dimv, k)>>(a.data() + ic<revp(a.dimv[k])>);
+    } else {
+        return ViewBig<decltype(a.data()), rank_s(a)>(revd(a.dimv, k), a.data() + revp(a.dimv[k]));
     }
 }
 
