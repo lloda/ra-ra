@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/box - Replacement sandbox of Oldptr (old ptr/iota) by Cell (current)
+// ra-ra/test - Tests about Ptr
 
 // (c) Daniel Llorens - 2025-2026
 // This library is free software; you can redistribute it and/or modify it under
@@ -37,81 +37,6 @@ struct ra_error: public std::exception
 using std::cout, std::endl, std::flush;
 
 namespace ra {
-
-template <class P, class N, class S>
-struct Oldptr final
-{
-    static_assert(has_len<P> || std::bidirectional_iterator<P>);
-    static_assert(has_len<N> || is_ctype<N> || std::is_integral_v<N>);
-    static_assert(has_len<S> || is_ctype<S> || std::is_integral_v<S>);
-    constexpr static dim_t nn = maybe_any<N>;
-    static_assert(0<=nn || ANY==nn || UNB==nn);
-
-    P cp;
-    [[no_unique_address]] struct { [[no_unique_address]] N const len = {}; [[no_unique_address]] S const step = {}; } dimv[1];
-    constexpr Oldptr(P p, N n, S s): cp(p), dimv { n, s } {}
-    RA_ASSIGNOPS_ITER(Oldptr)
-    template <rank_t c=0> constexpr auto iter() const { static_assert(0==c); return *this; }
-    constexpr auto data() const { return cp; }
-    consteval static rank_t rank() { return 1; }
-    constexpr static dim_t len_s(int k) { return nn; }
-    constexpr static dim_t len(int k) requires (is_ctype<N>) { return nn; }
-    constexpr dim_t len(int k) const requires (!is_ctype<N>) { return dimv[0].len; }
-    constexpr static dim_t step(int k) requires (is_ctype<S>) { return 0==k ? S {} : 0; }
-    constexpr dim_t step(int k) const requires (!is_ctype<S>) { return 0==k ? dimv[0].step : 0; }
-    constexpr static bool keep(dim_t st, int z, int j) requires (is_ctype<S>) { return st*step(z)==step(j); }
-    constexpr bool keep(dim_t st, int z, int j) const requires (!is_ctype<S>) { return st*step(z)==step(j); }
-    constexpr void adv(rank_t k, dim_t d) { mov(step(k)*d); }
-    constexpr decltype(*cp) at(auto const & i) const { return *indexer(*this, cp, ra::iter(i)); }
-    constexpr decltype(*cp) operator*() const { return *cp; }
-    constexpr auto save() const { return cp; }
-    constexpr void load(P p) { cp=p; }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Waggressive-loop-optimizations" // Seq<!=dim_t> in gcc14/15 -O3
-    constexpr void mov(dim_t d) { std::ranges::advance(cp, d); }
-#pragma GCC diagnostic pop
-};
-
-template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
-constexpr auto
-oldptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
-{
-    if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<P>>) {
-        static_assert(std::is_same_v<ic_t<dim_t(UNB)>, N>, "Object has own length.");
-        static_assert(std::is_same_v<ic_t<dim_t(1)>, S>, "No step with deduced size.");
-        if constexpr (ANY==size_s(p)) {
-            return oldptr(std::begin(RA_FW(p)), std::ssize(p), RA_FW(s));
-        } else {
-            return oldptr(std::begin(RA_FW(p)), ic<size_s(p)>, RA_FW(s));
-        }
-    } else {
-        if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Oldptr length ", n, "."); }
-        return Oldptr<std::decay_t<P>, sarg<N>, sarg<S>> { p, RA_FW(n), RA_FW(s) };
-    }
-}
-
-template <class P, class N, class S> requires (has_len<P> || has_len<N> || has_len<S>)
-struct WLen<Oldptr<P, N, S>>
-{
-    constexpr static auto
-    f(auto ln, auto && e) { return oldptr(wlen(ln, e.data()), VAL(wlen(ln, e.dimv[0].len)), VAL(wlen(ln, e.dimv[0].step))); }
-};
-
-template <class A> concept is_oldptr = requires (A a) { []<class I, class N, class S>(Oldptr<Seq<I>, N, S> const &){}(a); };
-
-template <class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
-constexpr auto
-iota1(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
-{
-    return Oldptr<Seq<sarg<I>>, sarg<N>, sarg<S>> { {RA_FW(i)}, RA_FW(n), RA_FW(s) };
-}
-
-template <class I=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
-constexpr auto
-iota2(N && n=N {}, I && i=dim_t(0), S && s=S(maybe_step<S>))
-{
-    return oldptr(Seq<sarg<I>>(RA_FW(i)), RA_FW(n), RA_FW(s));
-}
 
 template <class A> concept is_ptr = requires (A a) { []<class I, class N, class S>(Ptr<Seq<I>, N, S> const &){}(a); }; // FIXME
 
@@ -192,11 +117,6 @@ int main()
         tr.test_eq(6, size_s(ra::iter(hello)));
         tr.test_eq(6, size_s(ra::ptr(hello)));
     }
-    tr.section("what about iota");
-    {
-        std::cout << ra::mp::type_name<decltype(ra::iota1(ra::len, ra::len*0))>() << std::endl;
-        std::cout << ra::mp::type_name<decltype(ra::iota2(ra::len, ra::len*0))>() << std::endl;
-    }
     tr.section("regression from test/stl-compat");
     {
         tr.info("adapted std::array has static size").test_eq(3, size_s(ra::ptr(std::array {1, 2, 0})));
@@ -215,8 +135,6 @@ int main()
     }
     tr.section("iota must be slice");
     {
-        tr.test(ra::Slice<decltype(ra::iota1(10))>);
-        tr.test(ra::Slice<decltype(ra::iota2(10))>);
         tr.test(ra::Slice<decltype(ra::iota(10))>);
     }
     return tr.summary();

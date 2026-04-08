@@ -109,39 +109,27 @@ int main()
                  true, true, false, false, false);
         TESTPRED(decltype(std::declval<ra::ViewBig<int *, 2>>()),
                  true, true, false, false, false);
-// double Iterator/Slice
         TESTPRED(decltype(iter(ra::Unique<int, 2>())),
-                 true, maybe, true, false, false);
+                 true, false, true, false, false);
         static_assert(ra::Iterator<decltype(iter(ra::Unique<int, 2>()))>);
-// this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
         TESTPRED(decltype(iter(ra::Unique<int, 1>())) &,
-                 true, maybe, true, false, false);
-        TESTPRED(decltype(ra::iota(5)),
-                 true, true, maybe, false, false);
-// is_iterator by RA_IS_DEF, but not Iterator, since it cannot be traversed. FIXME eventually won't be view
-        TESTPRED(decltype(ra::tindex<0>),
-                 true, maybe, maybe, false, false);
-        TESTPRED(decltype(ra::tindex<0>) const,
-                 true, maybe, maybe, false, false);
-        TESTPRED(decltype(ra::tindex<0>) &,
-                 true, maybe, maybe, false, false);
-
+                 true, false, true, false, false);
         TESTPRED(decltype(std::declval<ra::Small<int, 2>>()),
                  true, true, false, false, false);
-// may be slice if iota is Cell, because we let some Cell be slice for the sake of iota.
         TESTPRED(decltype(iter(ra::Small<int, 2>())),
-                 true, maybe, true, false, false);
+                 true, false, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2, 2>()()),
                  true, true, false, false, false);
-// double Iterator/Slice
         TESTPRED(decltype(iter(ra::Small<int, 2, 2>())),
-                 true, maybe, true, false, false);
+                 true, false, true, false, false);
         TESTPRED(decltype(ra::Small<int, 2>()+3),
                  true, false, true, false, false);
         TESTPRED(decltype(3+ra::Big<int>()),
                  true, false, true, false, false);
         TESTPRED(std::vector<int>,
                  false, false, false, false, true);
+        TESTPRED(decltype(ra::iota(5)),
+                 true, true, false, false, false);
 // this iter is Ptr, but it'll be used as iter and we don't care if it's also slice.
         TESTPRED(decltype(ra::iter(std::vector<int> {})),
                  true, maybe, true, false, false);
@@ -168,6 +156,13 @@ int main()
                  false, false, false, false, false);
         TESTPRED(decltype("cstring"),
                  false, false, false, false, false);
+// is_iterator by RA_IS_DEF, but not Iterator, since it cannot be traversed.
+        TESTPRED(decltype(ra::tindex<0>),
+                 true, false, maybe, false, false);
+        TESTPRED(decltype(ra::tindex<0>) const,
+                 true, false, maybe, false, false);
+        TESTPRED(decltype(ra::tindex<0>) &,
+                 true, false, maybe, false, false);
     }
     tr.section("establish meaning of selectors (TODO / convert to TestRecorder)");
     {

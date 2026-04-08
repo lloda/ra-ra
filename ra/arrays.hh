@@ -459,7 +459,7 @@ transpose(Slice auto && a, auto && s)
     }
 }
 
-template <int ... I> constexpr auto transpose(Slice auto && a, ilist_t<I ...>) { return transpose(RA_FW(a), ic<std::array<dim_t, sizeof...(I)> { I ... }>); }
+template <int ... I> constexpr auto transpose(Slice auto && a, ilist_t<I ...>) { return transpose(RA_FW(a), ic<std::array<dim_t, sizeof...(I)> {I ...}>); }
 template <class T, int N> constexpr auto transpose(Slice auto && a, T (&&s)[N]) { return transpose(RA_FW(a), iter(s)); }
 constexpr auto transpose(Slice auto && a) { return transpose(RA_FW(a), ilist<1, 0>); }
 constexpr auto diag(Slice auto && a) { return transpose(RA_FW(a), ilist<0, 0>); };

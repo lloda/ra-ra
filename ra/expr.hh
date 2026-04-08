@@ -318,7 +318,6 @@ template <class P, class Dimv, class Cr> Cell(P, Dimv &&, Cr) -> Cell<P, Dimv, s
 constexpr auto
 iter(Slice auto && s, auto c)
 {
-    static_assert(!is_iterator<decltype(s)>);
     using Dimv = std::decay_t<decltype(s)>::Dimv;
     if constexpr (is_ctype<decltype(c)> && is_ctype<Dimv>) {
         return Cell(s.data(), Dimv {}, c);
