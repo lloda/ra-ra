@@ -286,8 +286,11 @@ int main()
     }
     tr.section("reverse of default container preserves static step.");
     {
+ // NOT constexpr
         ra::Big<int, 1> a = {1, 2, 3};
-        auto z = reverse(a); // NOT constexpr
+        static_assert(+1==decltype(a)::simv[0].step);
+        static_assert(+1==a.step(0));
+        auto z = reverse(a);
         static_assert(-1==decltype(z)::simv[0].step);
         static_assert(-1==z.step(0));
     }

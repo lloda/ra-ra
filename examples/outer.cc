@@ -32,7 +32,7 @@ int main()
 
     cout << (x * y(ra::insert<1>)) << endl;
 
-// [ra] alternative transposing
+// [ra] alternative: transposing
 
     cout << (x * transpose(y, ra::ilist_t<1>{})) << endl;
 

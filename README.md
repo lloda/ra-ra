@@ -61,7 +61,7 @@ Performance is competitive with hand written scalar (element by element) loops, 
 
 #### Building the tests and the benchmarks
 
-**ra-ra** is header-only and only depends on the standard library. A C++23 compiler is required. At the moment I test with gcc 14. If you can test with Clang, please let me know.
+**ra-ra** is header-only and only depends on the standard library. A C++23 compiler is required.
 
 The test suite in [test/](test/) runs under either SCons (`CXXFLAGS=-O3 scons`) or CMake (`CXXFLAGS=-O3 cmake . && make && make test`). Running the test suite will also build and run the [examples](examples/) and the [benchmarks](bench/). Check the manual for options.
 

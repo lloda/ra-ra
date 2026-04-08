@@ -413,14 +413,14 @@ constexpr auto
 reverse(Slice auto && a, K k = K {})
 {
     if constexpr (rank_s(a)>=0 && is_ctype<K>) {
-        static_assert(inside(k, rank_s(a)));
-        static_assert(UNB!=a.len_s(k), "Cannot reverse unbounded len.");
+        static_assert(inside(k, rank_s(a)), "Bad axis for rank.");
+        static_assert(UNB!=a.len_s(k), "Cannot reverse unbounded axis.");
     } else {
         RA_CK(UNB!=a.len(k), "Cannot reverse unbounded axis ", k, ".");
         RA_CK(inside(k, rank(a)), "Bad axis ", k, " for rank ", rank(a), ".");
     }
     constexpr auto revp = [](auto const & ak){ return 0==ak.len ? 0 : ak.step*(ak.len-1); };
-    constexpr auto revd = [](auto const & av, auto k){ BigDimv<ra::size_s<decltype(av)>()> dv=av; dv[k].step *= -1; return dv; };
+    constexpr auto revd = [](auto const & av, auto k){ auto dv=av; dv[k].step *= -1; return dv; };
     if constexpr (1==rank_s(a) && !std::is_same_v<std::decay_t<decltype(a.simv[0])>, Dim>) {
         return viewptr(a.data() + revp(a.dimv[0]), a.dimv[0].len, csub(ic<0>, a.dimv[0].step));
     } else if constexpr (is_ctype<typename std::decay_t<decltype(a)>::Dimv>) {
@@ -444,33 +444,22 @@ transpose_dims(auto const & s, auto const & src, auto & dst)
     }
 }
 
-// static transposed axes list, output rank is static.
-template <int ... I>
-constexpr auto
-transpose(Slice auto && a, ilist_t<I ...>)
-{
-    constexpr std::array<dim_t, sizeof...(I)> s = { I ... };
-    constexpr rank_t rank = 0==ra::size(s) ? 0 : 1+std::ranges::max(s);
-    if constexpr (is_ctype<typename std::decay_t<decltype(a)>::Dimv>) {
-        constexpr auto r = [&]{ std::array<Dim, rank> r; transpose_dims(s, a.dimv, r); return r; }();
-        return View<decltype(a.data()), ic_t<r>>(a.data());
-    } else {
-        ViewBig<decltype(a.data()), rank> r(a.data());
-        transpose_dims(s, a.dimv, r.dimv);
-        return r;
-    }
-}
-
-// dynamic transposed axes list, output rank is dynamic.
 constexpr auto
 transpose(Slice auto && a, auto && s)
 {
-    rank_t rank = 0==ra::size(s) ? 0 : 1+std::ranges::max(s); // no amax() yet
-    ViewBig<decltype(a.data()), ANY> r { decltype(r.dimv)(rank), a.data() };
-    transpose_dims(s, a.dimv, r.dimv);
-    return r;
+    constexpr auto trank = [](auto const & s){ return 0==ra::size(s) ? 0 : 1+std::ranges::max(s); };
+    constexpr auto tdimv = [](auto const & s, auto const & a, auto && r){ transpose_dims(s, a.dimv, r); return std::move(r); };
+    if constexpr (!is_ctype<decltype(s)>) {
+        using V = ViewBig<decltype(a.data()), ANY>;
+        return V(tdimv(s, a, decltype(V::dimv)(trank(s))), a.data());
+    } else if constexpr (is_ctype<typename std::decay_t<decltype(a)>::Dimv>) {
+        return View<decltype(a.data()), ic_t<tdimv(s.value, a, std::array<Dim, trank(s.value)> {})>>(a.data());
+    } else {
+        return ViewBig<decltype(a.data()), trank(s.value)>(tdimv(s.value, a, std::array<Dim, trank(s.value)> {}), a.data());
+    }
 }
 
+template <int ... I> constexpr auto transpose(Slice auto && a, ilist_t<I ...>) { return transpose(RA_FW(a), ic<std::array<dim_t, sizeof...(I)> { I ... }>); }
 template <class T, int N> constexpr auto transpose(Slice auto && a, T (&&s)[N]) { return transpose(RA_FW(a), iter(s)); }
 constexpr auto transpose(Slice auto && a) { return transpose(RA_FW(a), ilist<1, 0>); }
 constexpr auto diag(Slice auto && a) { return transpose(RA_FW(a), ilist<0, 0>); };
