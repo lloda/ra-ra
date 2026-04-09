@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - Tests specific to Container, constructors.
+// ra-ra/test - Tests specific to Array, constructors.
 
 // (c) Daniel Llorens - 2017-2023
 // This library is free software; you can redistribute it and/or modify it under
@@ -270,7 +270,7 @@ int main(int argc, char * * argv)
         tr.test_eq(ra::iota(4), b);
     }
 // size cannot be 0 so store must always be allocated.
-    tr.section("default constructor for ct rank 0 Container");
+    tr.section("default constructor for ct rank 0 array");
     {
         ra::Big<int, 0> b; // uninitialized
         b = 3;
@@ -279,7 +279,7 @@ int main(int argc, char * * argv)
         // constexpr int y = []{ ra::Big<int, 0> a; a = 3; return a(); }(); // uninitialized
         // tr.test_eq(3, y);
     }
-    tr.section("scalar constructor for rt rank 0 Container");
+    tr.section("scalar constructor for rt rank 0 array");
     {
         ra::Big<int> a(4);
         tr.test_eq(4, a);

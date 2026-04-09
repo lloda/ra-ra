@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra/test - Tests specific to Container.
+// ra-ra/test - Tests specific to Array.
 
 // (c) Daniel Llorens - 2017, 2019
 // This library is free software; you can redistribute it and/or modify it under
@@ -13,8 +13,14 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
-template <class T, ra::rank_t RANK=ra::ANY> using BigValueInit = ra::Container<std::vector<T>, RANK>;
+template <class T, ra::rank_t R=ra::ANY> using BigValueInit = ra::Array<std::vector<T>, ra::BigDim1<R>>;
 using int2 = ra::Small<int, 2>;
+
+namespace ra {
+
+bool operator==(Dim const & a, Dim const & b) { return a.len==b.len && a.step==b.step; }
+
+} // namespace ra
 
 int main()
 {
@@ -32,7 +38,7 @@ int main()
         tr.test_eq(check[0], b.back());
         tr.test_eq(int2 {1, 2}, b().back()); // back on views
     }
-    tr.section("behavior of resize with default Container");
+    tr.section("behavior of resize with default Array");
     {
         ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
         a.resize(3);
@@ -63,41 +69,22 @@ int main()
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
         a = {{{4, 5, 6}, {7, 8, 9}}}; // braced :-/
         tr.test_eq(ra::iota(6, 4), ra::ptr(a.data()));
-        // a = {{4, 5}, {7, 8}}; // operator= works as view (so this fails), but cannot verify [ra42].
+        // a = {{4, 5}, {7, 8}}; // error; see checks.cc
         // tr.test_eq(a, ra::Small<int, 2, 2> {{4, 5}, {7, 8}});
     }
-    tr.section("behavior of forced Fortran array");
+    tr.section("forced Fortran array");
     {
-        ra::Big<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5});
-        ra::Big<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5});
-        auto c = transpose(ra::ViewBig<int *, 2>({3, 2}, a.data()), {1, 0});
+        ra::Big<int, 2> a ({2, 3}, {0, 1, 2, 3, 4, 5}); // is Array
+        ra::Big<int, 2> b ({2, 3}, {0, 1, 2, 3, 4, 5}); // is Array
+        auto c = transpose(ra::ViewBig<int *, 2>({3, 2}, a.data()), {1, 0}); // is View
         ra::iter(a.dimv) = c.dimv;
-        for (int k=0; k!=c.rank(); ++k) {
-            std::cout << "CSTRIDE " << k << " " << c.step(k) << std::endl;
-            std::cout << "CLEN " << k << " " << c.len(k) << std::endl;
-        }
-        cout << endl;
-        for (int k=0; k!=a.rank(); ++k) {
-            std::cout << "ASTRIDE " << k << " " << a.step(k) << std::endl;
-            std::cout << "ALEN " << k << " " << a.len(k) << std::endl;
-        }
-        cout << endl;
-        c = b;
-// FIXME this clobbers the steps of a, which is surprising -> Container should behave as View. Or, what happens to a shouldn't depend on the container vs view-ness of b.
+        tr.strict().test_eq(a, c);
+// beware that Array A; A = Array constructs A, but A = (not Array) doesn't and is like A() = (not Array).
+// FIXME not happy with this quirk, but I don't have a better solution.
+        a() = b;
+        tr.test_eq(a.dimv, c.dimv);
         a = b;
-        for (int k=0; k!=c.rank(); ++k) {
-            std::cout << "CSTRIDE " << k << " " << c.step(k) << std::endl;
-            std::cout << "CLEN " << k << " " << c.len(k) << std::endl;
-        }
-        cout << endl;
-        for (int k=0; k!=a.rank(); ++k) {
-            std::cout << "ASTRIDE " << k << " " << a.step(k) << std::endl;
-            std::cout << "ALEN " << k << " " << a.len(k) << std::endl;
-        }
-        cout << endl;
-        std::cout << "a: " << a << std::endl;
-        std::cout << "b: " << b << std::endl;
-        std::cout << "c: " << c << std::endl;
+        tr.test_eq(a.dimv, b.dimv);
     }
     tr.section("using shape as expr");
     {

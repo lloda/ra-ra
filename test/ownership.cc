@@ -14,7 +14,7 @@ using std::cout, std::endl, ra::TestRecorder;
 using real = double;
 
 // TODO Test construction both by-value and by-ref, and between types.
-// TODO Maybe I want Container/View<T> const and Container/View<T const> to behave differently....
+// TODO Maybe I want Array/View<T> const and Array/View<T const> to behave differently....
 int main()
 {
     real const check99[5] = {99, 99, 99, 99, 99};
@@ -60,10 +60,10 @@ int main()
             tr.test(p.data()!=c.data());
             tr.test(std::equal(check99, check99+5, p.begin()));
         }
-        auto test_container_assigment_op =
+        auto test_array_assigment_op =
             [&]<class T>(T type, char const * tag)
             {
-                tr.section("Container operator=(Container) replaces, unlike View [ra20] ", tag);
+                tr.section("Array operator=(Array) replaces, unlike View [ra20] ", tag);
                 {
                     T o({5}, 11.);
                     T const p({5}, 99.);
@@ -93,8 +93,8 @@ int main()
                     tr.test(std::equal(check11, check11+5, c.begin())); // was moved
                 }
             };
-        test_container_assigment_op(ra::Big<real, 1>(), "static rank");
-        test_container_assigment_op(ra::Big<real>(), "dynamic rank");
+        test_array_assigment_op(ra::Big<real, 1>(), "static rank");
+        test_array_assigment_op(ra::Big<real>(), "dynamic rank");
     }
     tr.section("Shared");
     {

@@ -69,7 +69,7 @@ int main()
 #pragma GCC diagnostic pop
     }
 
-    tr.section("check decay of rank 0 Containers/Slices w/ operators");
+    tr.section("check decay of rank 0 Arrays/Slices w/ operators");
     {
         {
             auto test = [&tr](auto && a){
@@ -173,10 +173,10 @@ int main()
         tr.test_eq(ra::Small<int, 3> {2, 4, 7}, a+b);
     }
 
-    tr.section("constructors from Map"); // TODO For all other Container types.
+    tr.section("constructors from Map"); // TODO For all other Array types.
     {
         {
-// TODO Systematic init-from-expr tests (every expr type vs every container type)
+// TODO Systematic init-from-expr tests (every expr type vs every array type)
             ra::Unique<int, 1> a({3}, { 1, 2, 3 });
             ra::Unique<int, 1> b({3}, { 10, 20, 30 });
             ra::Unique<int, 1> c(iter(a) + iter(b));
@@ -242,7 +242,7 @@ int main()
         tr.test_eq(ra::Small<real, 3> {0., 2., 4.}, a);
         tr.test_eq(ra::Small<int, 3> {1, 3, 5}, b);
     }
-    tr.section("operator= for View, Container. Cf test/ownership.cc");
+    tr.section("operator= for View, Array. Cf test/ownership.cc");
     {
         real check5[6] = { 5, 5, 5, 5, 5, 5 };
         real check9[6] = { 9, 9, 9, 9, 9, 9 };

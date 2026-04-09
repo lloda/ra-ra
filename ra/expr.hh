@@ -353,6 +353,7 @@ template <class P, class N, class S> using Ptr = Cell<P, std::array<SDim<N, S>, 
 
 template <class X> using sarg = std::conditional_t<is_ctype<X> || is_scalar<X>, std::decay_t<X>, X>;
 
+// FIXME let P be builtin of any rank; iter(builtin) works, but views are more useful.
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
 viewptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
@@ -509,43 +510,21 @@ struct Framematch<V, std::tuple<Ti ...>, std::tuple<Ri ...>, skip>
 template <class T, class K=mp::iota<mp::len<T>>> struct Match;
 template <class A> concept is_match = requires (A a) { []<class T>(Match<T> const &){}(a); };
 
-// need runtime check if there's more than one leaf with size ANY.
-template <class TOP, class A=TOP>
-consteval int
-tbc(int sofar)
-{
-    if constexpr (is_match<A>) {
-        using T = decltype(std::declval<A>().t);
-        [&sofar]<int ... i>(ilist_t<i ...>){
-            (void)(((sofar = tbc<TOP, std::decay_t<mp::ref<T, i>>>(sofar)) >= 0) && ...);
-        }(mp::iota<mp::len<T>> {});
-        return sofar;
-    } else if (int rt=rank_s<TOP>(), ra=rank_s<A>(); 0==rt || 0==ra) {
-        return sofar;
-    } else if (ANY==sofar || ANY==ra) {
-        return 1+sofar;
-    } else {
-        for (int k=0; k<ra; ++k) {
-            if (dim_t lt=TOP::len_s(k, true), la=A::len_s(k); MIS==lt) {
-                return -1;
-            } else if (UNB!=la && UNB!=lt && (ANY==la || ANY==lt)) {
-                return 1+sofar;
-            }
-        }
-        return sofar;
-    }
-}
-
-template <class A, class U = ic_t<false>>
+template <Iterator A>
 constexpr void
-validate(A const & a, U allow_unb = {})
+validate(A const & a)
 {
     static_assert(!has_len<A>, "Stray ra::len.");
-    static_assert(allow_unb || ra::UNB!=ra::size_s<A>(), "Undefined size.");
+    static_assert(UNB!=size_s<A>(), "Unbounded size.");
     static_assert(0<=rank_s(a) || ANY==rank_s(a), "Undefined rank.");
     if constexpr (is_match<A>) {
         static_assert(0!=a.check_s(), "Bad shapes."); // FIXME c++26
         a.check(false);
+    } else {
+// FIXME wb Reframe(Match(...)) ?
+        if constexpr (ANY==size_s<A>()) {
+            RA_CK(0<=ra::size(a), "Unbounded size.");
+        }
     }
 }
 
@@ -559,13 +538,24 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     std::tuple<P ...> t;
     constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
     constexpr static rank_t rs = []{ rank_t r=UNB; return ((r=corank(rank_s<P>(), r)), ...); }();
+    static_assert(ANY==rs || 0<=rs);
 
 // 0: fail, 1: rt check, 2: pass
     consteval static int
     check_s()
     {
-        int sofar = tbc<Match>(0);
-        return 0>sofar ? 0 : 2>sofar ? 2 : 1;
+        if (rs==ANY) {
+            return 1;
+        }
+        int val = 0;
+        for (int k=0; k<rs; ++k) {
+            if (dim_t l=len_s(k, true); MIS==l || UNB==l) {
+                return 0;
+            } else if (ANY==l) {
+                ++val;
+            }
+        }
+        return 0==val ? 2 : 1;
     }
     constexpr bool
     check(bool allow=true) const
@@ -574,12 +564,12 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
         if constexpr (1==c) {
             for (int k=0; k<rank(); ++k) {
                 if (len(k)<0) {
-                    RA_CK(allow, "Bad shapes ", fmt(lstyle, ra::shape(get<I>(t))) ..., ".");
+                    RA_CK(allow, "Bad shapes ", std::format("{:l}", ra::shape(get<I>(t))) ..., ".");
                     return false;
                 }
             }
         }
-        return !(0==c);
+        return 0!=c;
     }
     consteval static rank_t
     rank() requires (ANY!=rs)

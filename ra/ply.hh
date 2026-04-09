@@ -50,7 +50,6 @@ ply_ravel(A && a, Early && early = Nop {})
     for (int k=0; k<rank; ++k) {
 // ss takes care of the raveled dimensions ss.
         if (0>=(z[k].sha=a.len(ocd[k].order))) {
-            assert(0==z[k].sha);
             if constexpr (requires {early.def;}) {
                 return early.def;
             } else {
@@ -189,7 +188,7 @@ struct STLIterator
     std::decay_t<decltype(ra::shape(a))> ind; // concrete type
     bool over;
 
-    STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) { validate(a, ic<true>); }
+    STLIterator(A a_): a(a_), ind(ra::shape(a_)), over(0==ra::size(a)) { validate(a); }
     constexpr STLIterator(STLIterator &&) = default;
     constexpr STLIterator(STLIterator const &) = delete;
     constexpr STLIterator & operator=(STLIterator &&) = default;
@@ -233,14 +232,13 @@ struct STLIterator
 
 template <class A> STLIterator(A &&) -> STLIterator<A>;
 
-constexpr auto begin(is_ra auto && a) { return STLIterator(ra::iter(RA_FW(a))); }
-constexpr auto end(is_ra auto && a) { return std::default_sentinel; }
-constexpr auto range(is_ra auto && a) { return std::ranges::subrange(ra::begin(RA_FW(a)), std::default_sentinel); }
-
+constexpr auto begin(is_ra auto && a) requires (UNB!=ra::size_s(a)) { return STLIterator(ra::iter(RA_FW(a))); }
+constexpr auto end(is_ra auto && a) requires (UNB!=ra::size_s(a)) { return std::default_sentinel; }
+constexpr auto range(is_ra auto && a) requires (UNB!=ra::size_s(a)) { return std::ranges::subrange(ra::begin(RA_FW(a)), std::default_sentinel); }
 // unqualified might find .begin() anyway through std::begin etc (!)
-constexpr auto begin(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.begin(); }
-constexpr auto end(is_ra auto && a) requires (requires { a.end(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return a.end(); }
-constexpr auto range(is_ra auto && a) requires (requires { a.begin(); }) { static_assert(std::is_lvalue_reference_v<decltype(a)>); return std::ranges::subrange(a.begin(), a.end()); }
+constexpr auto begin(is_ra auto & a) requires (UNB!=ra::size_s(a) && requires { a.begin(); }) { return a.begin(); }
+constexpr auto end(is_ra auto & a) requires (UNB!=ra::size_s(a) && requires { a.end(); }) { return a.end(); }
+constexpr auto range(is_ra auto & a) requires (UNB!=ra::size_s(a) && requires { a.begin(); }) { return std::ranges::subrange(a.begin(), a.end()); }
 
 
 // ---------------------
@@ -336,7 +334,7 @@ iota(dim_t (&&len)[R], T o=0) { return ViewBig<Seq<T>, R>(len, Seq<T>{o}); }
 template <std::integral auto ... i, class T=dim_t> constexpr auto
 iota(ra::ilist_t<i ...>, T o=0) { return View<Seq<T>, ra::ic_t<c_dimv(std::array {dim_t(i) ...})>>(Seq<T>{o}); }
 
-// beaten, whole or piecewise. Presize bv/ds not to need push_back
+// beaten, whole or piecewise.
 
 template <class A> concept is_iota = (Slice<A> && requires (A a) { []<class T>(Seq<T> const &){}(a.data()); });
 template <class A> concept is_scalar_index = is_ra_0<A>;
@@ -666,7 +664,6 @@ struct std::formatter<A>
         auto a = ra::iter(a_);
         validate(a);
         auto sha = ra::shape(a);
-        for (int k=0; k<ra::size(sha); ++k) { assert(sha[k]>=0); } // no ops yet
         auto out = ctx.out();
 // always print shape with defaultshape to avoid recursion on shape(shape(...)) = [1].
         if (fmt.shape==ra::withshape || (fmt.shape==ra::defaultshape && size_s(a)==ra::ANY)) {

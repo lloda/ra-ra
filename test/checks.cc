@@ -38,13 +38,12 @@ using ra::int_c, ra::ilist_t;
 
 int main()
 {
-    cout << "******* " << RA_CHECK << "******" << endl;
     TestRecorder tr(std::cout);
     tr.section("bad cell rank");
     {
         bool yes = false;
         ra::Big<int> a0 = 0;
-        std::string msg;
+        string msg;
         try {
             std::cout << ra::iter<1>(a0) << std::endl;
         } catch (ra_error & e) {
@@ -73,7 +72,7 @@ int main()
 
     tr.section("out of range with iota");
     {
-        std::string msg;
+        string msg;
         try {
             cout << at(ra::iota(10), std::array {11}) << endl;
         } catch (ra_error & e) {
@@ -89,7 +88,7 @@ int main()
 
     tr.section("out of range with iota subscripts");
     {
-        std::string msg;
+        string msg;
         try {
             ra::Small<int, 10> a = ra::_0;
             cout << a(ra::iota(ra::int_c<1>(), 10)) << endl;
@@ -100,7 +99,7 @@ int main()
     }
     tr.section("corner case requires Scalar<C> convert to C");
     {
-        std::string msg;
+        string msg;
         ra::Big<int, 2> A({3, 4}, 0);
         try {
             A(ra::all, ra::len) = 1; // [ra17]
@@ -153,29 +152,65 @@ int main()
 
 
 // ------------------------------
-// FIXME checking at Match isn't enough, and ply() doesn't check nicely
+// unbounded cases
 // ------------------------------
-/*
-    ra::Big<double> z(10, 0.);
-    auto w = z(ra::insert<1>, ra::all);
-// causes abort() in ply(). Checks are skipped bc there's only one positive rank arg
-    w *= -1;
-// causes abort() in ply(). Checks are skipped bc there's only one argument
-    for_each([](auto & w) { w *= -1; }, -w) ;
-// causes abort() in ply(). Checks are skipped bc no expr is built.
-    for_each([](auto & w) { w *= -1; }, w) ;
-    std::cout << w << std::endl;
-*/
+// These must be checked even when Match isn't involved. Before v33 we depended on ply or std::formatter to catch them, but now validate() handles them.
 
+    tr.section("unbounded cases");
+    {
+        ra::Big<double> z(10, 0.);
+        auto w = z(ra::insert<1>, ra::all);
+        {
+            string s;
+            int x  = 0;
+            try {
+                w *= -1;
+            } catch (ra_error & e) {
+                s = e.s;
+                x = 1;
+            }
+            tr.info("ply check I (", s).test_eq(x, 1);
+        }
+        {
+            string s;
+            int x  = 0;
+            try {
+                for_each([](auto & w) { w *= -1; }, w) ;
+            } catch (ra_error & e) {
+                s = e.s;
+                x = 1;
+            }
+            tr.info("ply check II (", s).test_eq(x, 1);
+        }
+        {
+            string s;
+            int x  = 0;
+            try {
+                cout << w << endl;
+            } catch (ra_error & e) {
+                s = e.s;
+                x = 1;
+            }
+            tr.info("output check (", s).test_eq(x, 1);
+        }
+    }
 
 // ------------------------------
 // see test/frame-new.cc
 // ------------------------------
 
     tr.section("static match in dynamic case");
+// even if agreement is static, must still check for unbounded lens
     {
         ra::Big<int> a({2, 3, 4}, 0);
-        tr.test_eq(2, agree_s(a, 99));
+        tr.test_eq(1, agree_s(a, 99)); // FIXME actually it's not possible for Big to have unbounded lens :p
+        tr.test_eq(true, agree(a, 99));
+    }
+    {
+        ra::Big<double> z(10, 0.);
+        auto w = z(ra::insert<1>, ra::all);
+        tr.test_eq(1, agree_s(w, 99));
+        tr.test_eq(false, agree(w, 99));
     }
     tr.section("dynamic (implicit) match");
     {
@@ -186,12 +221,13 @@ int main()
 #define MAP map_([](auto && a, auto && b) { return a+b; }, ra::iter(a), ra::iter(b))
         int x = 0;
         try {
-            cout << "CHECK " << MAP.check() << endl;
-            cout << MAP << endl; // check happens here
+            assert(0==MAP.check());
             x = 1;
+            cout << MAP << endl; // check happens here
+            x = 2;
         } catch (ra_error & e) {
         }
-        tr.test_eq(0, x);
+        tr.test_eq(1, x);
 #undef MAP
     }
 // If the size of an expression is static, dynamic checks may still need to be run if any of the terms of the expression has dynamic size. This is checked in Match::check_s().
@@ -199,7 +235,7 @@ int main()
     {
         ra::Small<int, 2, 2> a;
         ra::Small<int, 3, 2> b;
-        cout << ra::Match(ra::iter(a), ra::iter(b)).len_s(0) << endl;
+        tr.test_eq(ra::MIS, ra::Match(ra::iter(a), ra::iter(b)).len_s(0));
         static_assert(0==agree_s(a, b));
         static_assert(0==agree_s(b, a));
     }
@@ -229,19 +265,21 @@ int main()
     {
         ra::Small<int> a;
         ra::Big<int, 1> b({1}, 77);
-        tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(2, agree_s(a, b));
-        tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(2, agree_s(b, a));
+// even if agreement is static, must still check for unbounded lens
+        tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(1, agree_s(a, b));
+        tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(1, agree_s(b, a));
     }
     tr.section("dynamic terms in match, static rank");
     {
         int error = 0;
-        std::string s;
+        string s;
+        ra::Small<int, 2> a {2, 3};
+        ra::Big<int, 1> b({1}, 77);
+        static_assert(2==decltype(a+b)::len_s(0));
+        static_assert(1==decltype(a+b)::check_s());
+        tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(1, decltype(a+b)::check_s());
+        tr.test(!agree(a, b));
         try {
-            ra::Small<int, 2> a {2, 3};
-            ra::Big<int, 1> b({1}, 77);
-            static_assert(2==decltype(a+b)::len_s(0));
-            tr.info("with rank ", ra::rank_s<decltype(a+b)>()).test_eq(1, decltype(a+b)::check_s());
-            tr.test(!agree(a, b));
             a = b;
         } catch (ra_error & e) {
             error = 1;
@@ -253,7 +291,7 @@ int main()
     {
         auto f2 = [](ra::Big<int, 2> const & a) { cout << ra::iter(shape(a)) << endl; };
         int error = 0;
-        std::string s;
+        string s;
         try {
             ra::Big<int> a {};
 // flag the error when casting rank-0 to rank-2 array. FIXME check that copying is still possible.
@@ -317,6 +355,25 @@ int main()
 
 
 // ------------------------------
+// see test/big-1.cc
+// ------------------------------
+
+    tr.section("Array = not Array doesn't construct Array");
+    {
+        ra::Big<int, 2> a = {{0, 1, 2}, {3, 4, 5}};
+        int error = 0;
+        string s;
+        try {
+            a = {{4, 5}, {7, 8}}; // runtime error; see checks.cc
+        } catch (ra_error & e) {
+            error = 1;
+            s = e.s;
+        }
+        tr.info("caught error L" RA_STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
+    }
+
+
+// ------------------------------
 // see test/frame-old.cc
 // ------------------------------
 
@@ -346,13 +403,12 @@ int main()
         int error = 0;
         string s;
         try {
-            std::cout << "A: " << iter(a).len(0) << endl;
-            std::cout << "B: " << iter(b).len(0) << endl;
             tr.info("dynamic test is needed").test_eq(1, decltype(MAP)::check_s());
             tr.test(!agree(a, b));
-            ply_ravel(MAP);
-        } catch (ra_error & e) {
             error = 1;
+            ply_ravel(MAP);
+            error = 2;
+        } catch (ra_error & e) {
             s = e.s;
         }
         tr.info("caught error L" RA_STRINGIZE(__LINE__) ": ", s).test_eq(1, error);

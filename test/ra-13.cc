@@ -15,7 +15,7 @@
 
 using std::cout, std::endl, std::flush, ra::TestRecorder;
 
-// Originally from ra-0.cc, but triggered need for fixes in Container::init() for gcc 10.1.
+// Originally from ra-0.cc, but triggered need for fixes in Array::init() for gcc 10.1.
 
 int main()
 {

@@ -321,10 +321,10 @@ struct Array
     constexpr operator T const & () const { return view(); }
 };
 
-template <class Store, rank_t R=ANY> using Container = Array<Store, std::conditional_t<1==R, std::array<SDim<dim_t, ic_t<1>>, 1>, BigDimv<R>>>;
-template <class T, rank_t R=ANY> using Big = Container<vector_default_init<T>, R>;
-template <class T, rank_t R=ANY> using Unique = Container<std::unique_ptr<T []>, R>;
-template <class T, rank_t R=ANY> using Shared = Container<std::shared_ptr<T>, R>;
+template <rank_t R=ANY> using BigDim1 = std::conditional_t<1==R, std::array<SDim<dim_t, ic_t<1>>, 1>, BigDimv<R>>;
+template <class T, rank_t R=ANY> using Big = Array<vector_default_init<T>, BigDim1<R>>;
+template <class T, rank_t R=ANY> using Unique = Array<std::unique_ptr<T []>, BigDim1<R>>;
+template <class T, rank_t R=ANY> using Shared = Array<std::shared_ptr<T>, BigDim1<R>>;
 
 // rely on std::swap; else ambiguous
 template <class Store, class DA, class DB> requires (!std::is_same_v<DA, DB>)
