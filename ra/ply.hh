@@ -323,7 +323,7 @@ template <int n=UNB> constexpr dots_t<n> dots = dots_t<n>();
 constexpr auto all = dots<1>;
 
 template <class T=dim_t, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>> constexpr auto
-iota(N && n=N {}, T && o=T(0), S && s=S(maybe_step<S>)) { return viewptr(Seq<sarg<T>>(RA_FW(o)), RA_FW(n), RA_FW(s)); }
+iota(N n=N {}, T o=T(0), S s=S(maybe_step<S>)) { return viewptr(Seq<T>(o), n, s); }
 
 template <int R, class T=dim_t> constexpr auto
 iota(dim_t (&&len)[R], T o, dim_t (&&step)[R]) { return ViewBig<Seq<T>, R>(pack<Dim>(len, step), Seq<T>{o}); }

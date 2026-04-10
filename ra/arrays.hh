@@ -113,7 +113,7 @@ struct View: public ViewBase<Dimv_>
     constexpr View(auto const & s, P cp) requires (!CT) && requires { [](Dim){}(VAL(s)); }: cp(cp) { resize(dimv, ra::size(s)); iter(dimv) = s; } // [ra37]
     template <int N> constexpr View(dim_t (&&s)[N], P cp) requires (!CT): View(iter(s), cp) {}
     template <int N> constexpr View(Dim (&&s)[N], P cp) requires (!CT): View(iter(s), cp) {}
-    constexpr explicit View(P cp): cp(cp) {} // empty dimv, but also uninit by slicers, esp. has_len<P>
+    constexpr explicit View(P cp): cp(cp) {} // empty dimv if !CT, but also uninit by slicers, esp. has_len<P>
     constexpr View(View &&) noexcept = default; // must declare bc Dimv may be a reference.
     constexpr View(View const &) = default;
     constexpr View const & operator=(braces<T, R> x) const requires (!CT && 1<R) { iter<-1>(*this) = x; return *this; } // nested

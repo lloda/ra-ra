@@ -17,7 +17,7 @@ int main(int argc, char * * argv)
     {
         int ap[6] = {0, 1, 2, 3, 4, 5};
         ra::ViewBig<int *> a({6}, ap);
-        tr.test_eq(ra::ptr(ap), a);
+        tr.test_eq(ra::iter(ap), a);
     }
     return tr.summary();
 }

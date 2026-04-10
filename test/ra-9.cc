@@ -111,7 +111,7 @@ int main()
         std::array a1 = {1, 2};
         std::vector a2 = {1, 2};
 
-        for_each([](auto && a, auto && b){ a = b; }, ra::ptr(a1), 99);
+        ra::for_each([](auto && a, auto && b){ a = b; }, a1, 99);
         tr.test_eq(99, ra::iter(a1));
     }
     tr.section("[ra35] - value");
@@ -119,14 +119,14 @@ int main()
         auto fun1 = []{ return std::array {7, 2}; };
         auto fun2 = []{ return std::vector {5, 2}; };
 
-        tr.test_eq(ra::iter({7, 2}), ra::ptr(fun1()));
-        tr.test_eq(ra::iter({5, 2}), ra::ptr(fun2()));
+        tr.test_eq(ra::iter({7, 2}), ra::iter(fun1()));
+        tr.test_eq(ra::iter({5, 2}), ra::iter(fun2()));
     }
     tr.section("self assigment of ra::ptr");
     {
         auto a0 = std::array {0, 10};
         auto a1 = std::array {1, 11};
-        ra::ptr(a0) = ra::ptr(a1);
+        ra::iter(a0) = ra::iter(a1);
         tr.test_eq(1, a0[0]);
         tr.test_eq(11, a0[1]);
         tr.test_eq(1, a1[0]);

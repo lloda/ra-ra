@@ -107,20 +107,19 @@ int main()
         tr.test_eq(ra::ptr(a, 5), wlen(5, ra::ptr(a, ra::len)));
         tr.info("len in step argument").test_eq(ra::ptr(a, 3)*2, wlen(6, ra::ptr(a+1, ra::len/2, ra::len/3)));
     }
-    tr.section("iota simulation with ptr(iota_view)");
+    tr.section("iota simulation with iota_view");
     {
-        tr.strict().test_eq(ra::iota(10, 0, 3), ra::ptr(std::ranges::iota_view(0, 10))*3);
+        tr.strict().test_eq(ra::iota(10, 0, 3), ra::iter(std::ranges::iota_view(0, 10))*3);
     }
     tr.section("regression from test/compatibility");
     {
         char hello[] = "hello";
         tr.test_eq(6, size_s(ra::iter(hello)));
-        tr.test_eq(6, size_s(ra::ptr(hello)));
     }
     tr.section("regression from test/stl-compat");
     {
-        tr.info("adapted std::array has static size").test_eq(3, size_s(ra::ptr(std::array {1, 2, 0})));
-        tr.info("adapted std::array has static size").test_eq(3, ra::ptr(std::array {1, 2, 0}).len_s(0));
+        tr.info("adapted std::array has static size").test_eq(3, size_s(ra::iter(std::array {1, 2, 0})));
+        tr.info("adapted std::array has static size").test_eq(3, ra::iter(std::array {1, 2, 0}).len_s(0));
     }
     tr.section("regression from test/checks");
     {

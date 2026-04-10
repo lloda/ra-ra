@@ -83,9 +83,9 @@ int main()
         auto ix = ra::iota(4, 0, 2);
         tr.info(sizeof(ix)).test_ge(sizeof(ix), sizeof(ix.data()) + sizeof(ix.dimv[0].len) + sizeof(ix.dimv[0].step));
     }
-    tr.section("iota simulation with ptr(iota_view)");
+    tr.section("iota simulation with iota_view");
     {
-        tr.strict().test_eq(ra::iota(10, 0, 3), ra::ptr(std::ranges::iota_view(0, 10))*3);
+        tr.strict().test_eq(ra::iota(10, 0, 3), ra::iter(std::ranges::iota_view(0, 10))*3);
     }
     tr.section("reverse(iota)");
     {

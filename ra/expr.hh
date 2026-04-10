@@ -351,44 +351,41 @@ struct SDim
 template <class P, class N, class S> using ViewPtr = View<P, std::array<SDim<N, S>, 1>>;
 template <class P, class N, class S> using Ptr = Cell<P, std::array<SDim<N, S>, 1>, ic_t<0>>;
 
-template <class X> using sarg = std::conditional_t<is_ctype<X> || is_scalar<X>, std::decay_t<X>, X>;
-
-// FIXME let P be builtin of any rank; iter(builtin) works, but views are more useful.
 template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
 constexpr auto
-viewptr(P && p, N && n=N {}, S && s=S(maybe_step<S>))
+viewptr(P && p, N n=N {}, S s=S(maybe_step<S>))
 {
-    if constexpr (std::ranges::bidirectional_range<std::remove_reference_t<P>>) {
-        static_assert(std::is_same_v<ic_t<dim_t(UNB)>, N>, "Conflict with own length.");
-        static_assert(std::is_same_v<ic_t<dim_t(1)>, S>, "Deduced size means unit step.");
-        return viewptr(std::begin(RA_FW(p)), [&p](){ if constexpr (ANY==size_s(p)) return ra::size(p); else return ic<size_s(p)>; }(), RA_FW(s));
+    if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad length ", n, "."); }
+    return ViewPtr<std::decay_t<P>, N, S>(std::array { SDim<N, S> {.len=n, .step=s} }, RA_FW(p));
+}
+
+template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
+constexpr auto
+ptr(P && p, N n=N {}, S s=S(maybe_step<S>)) { return iter(viewptr(RA_FW(p), n, s)); }
+
+constexpr auto
+view(std::ranges::bidirectional_range auto && a)
+{
+    if constexpr (is_builtin<decltype(a)>) {
+        auto p = [](this auto const & sf, auto && a){
+            if constexpr (1 < std::rank_v<std::remove_cvref_t<decltype(a)>>) {
+                return sf(*std::data(a));
+            } else {
+                return std::data(a);
+            }
+        }(a);
+        return View<decltype(p), ic_t<c_dimv(ra::shape(a))>>(p);
+    } else if constexpr (ANY==size_s(a)) {
+        return viewptr(std::begin(RA_FW(a)), ra::size(a), ic<1>);
     } else {
-        if constexpr (std::is_integral_v<N>) { RA_CK(n>=0, "Bad Ptr length ", n, "."); }
-        return ViewPtr<std::decay_t<P>, sarg<N>, sarg<S>>(std::array { SDim<sarg<N>, sarg<S>> { .len=RA_FW(n), .step=RA_FW(s) } }, RA_FW(p));
+        return viewptr(std::begin(RA_FW(a)), ic<size_s(a)>, ic<1>);
     }
 }
 
-template <class P, class N=ic_t<dim_t(UNB)>, class S=ic_t<dim_t(1)>>
-constexpr auto
-ptr(P && p, N && n=N {}, S && s=S(maybe_step<S>)) { return iter(viewptr(RA_FW(p), RA_FW(n), RA_FW(s))); }
-
-constexpr auto iter(is_fov auto && a) { return ra::ptr(RA_FW(a)); }
-template <class T> constexpr auto iter(std::initializer_list<T> a) { return ra::ptr(a); }
-
-constexpr auto
-iter(is_builtin auto && a)
-{
-    auto p = [](this auto const & sf, auto && a){
-        using T = std::remove_cvref_t<decltype(a)>;
-        if constexpr (1 < std::rank_v<T>) {
-            static_assert(0 < std::extent_v<T, 0>);
-            return sf(*std::data(a));
-        } else {
-            return std::data(a);
-        }
-    }(a);
-    return Cell(p, ic<c_dimv(ra::shape(a))>, ic<0>);
-}
+// FIXME iter() only needs bidir but view() would need random if we actually used it. So this is ugly.
+constexpr auto iter(is_fov auto && a) { return iter(view(RA_FW(a))); }
+template <class T> constexpr auto iter(std::initializer_list<T> const & a) { return iter(view(a)); }
+constexpr auto iter(is_builtin auto && a) { return iter(view(RA_FW(a))); }
 
 
 // ---------------------------

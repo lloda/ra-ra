@@ -104,8 +104,7 @@ int main()
             tr.test_eq(6, C[2]);                                        \
         }
 #define TEST2(plier)                                                    \
-        TEST(plier, iter(B), iter(C))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 }); \
-        TEST(plier, ra::ptr(B), ra::ptr(C))(std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
+        TEST(plier, iter(B), iter(C))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
         TEST2(ply_ravel)
         TEST2(ply_fixed)
 #undef TEST2
@@ -122,8 +121,9 @@ int main()
             tr.test_eq(4, C[1]);                                        \
             tr.test_eq(9, C[2]);                                        \
         }
-        TEST(ply_ravel, iter(B), iter(C), iter(int3 {1, 2, 3}))(int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
-        TEST(ply_ravel, ra::ptr(B), ra::ptr(C), ra::ptr(std_int3 {{1, 2, 3}}))
+        TEST(ply_ravel, iter(B), iter(C), iter(int3 {1, 2, 3}))
+            (int3 { 1, 2, 3 }, int3 { 77, 88, 99 });
+        TEST(ply_ravel, ra::iter(B), ra::iter(C), ra::iter(std_int3 {{1, 2, 3}}))
             (std_int3 {{ 1, 2, 3 }}, std_int3 {{ 77, 88, 99 }});
 #undef TEST
     }

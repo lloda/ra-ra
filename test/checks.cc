@@ -120,7 +120,7 @@ int main()
         int x = 0;
         try {
             int p[] = {10, 20, 30};
-            tr.test_eq(p[2], ra::ptr(p).at(std::array {2}));
+            tr.test_eq(p[2], ra::iter(p).at(std::array {2}));
             x = 1;
             tr.test_eq(p[2], ra::ptr((int *)p, ra::int_c<2>{}).at(std::array {2}));
             x = 2;
@@ -346,6 +346,27 @@ int main()
         try {
             double x = val[0];
             cout << "x " << x << " (!)" << endl;
+        } catch (ra_error & e) {
+            error = 1;
+            s = e.s;
+        }
+        tr.info("caught error L" RA_STRINGIZE(__LINE__) ": ", s).test_eq(1, error);
+    }
+
+
+// ------------------------------
+// see examples/indirect.cc:example7
+// ------------------------------
+
+    tr.section("error with unbounded indices");
+    {
+        ra::Big<int, 1> a = {1, 2, 3, 4};
+        ra::Big<int, 1> b = {1, 2, 3, 4, 5};
+        int error = 0;
+        string s;
+        try {
+// a(iota()) has undefined length, so (b+...) has the length of b. This can result in out of bounds error if b is shorter than a.
+            tr.test(every(b + a(ra::iota()))>0);
         } catch (ra_error & e) {
             error = 1;
             s = e.s;

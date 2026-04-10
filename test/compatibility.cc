@@ -173,8 +173,7 @@ int main()
             tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, quote(ra::scalar(hello)));
             tr.test_eq(std::vector<char> {'h', 'e', 'l', 'l', 'o', 0}, ra::iter(hello));
             tr.test_eq(6, size_s(ra::iter(hello)));
-            tr.test_eq(6, size_s(ra::ptr(hello)));
-            tr.test_eq(ra::ptr(string("hello\0")), ra::ptr((char *)hello)); // char by char
+            tr.test_eq(ra::iter(string("hello\0")), ra::ptr((char *)hello)); // char by char
         }
         cout << endl;
         {

@@ -704,6 +704,16 @@ int main()
         tr.section("7b");
         {
             double rpool[1] = { 88 };
+            ra::ViewBig<double *, 0> r (rpool); // good for rank 0, since dimv is empty
+            double check[1] = { 88 };
+            CheckArrayOutput(tr, r, check);
+            tr.test_eq(1, r.size());
+            // static_assert(sizeof(r)==sizeof(double *), "bad assumption"); [170]
+            tr.test_eq(88, r);
+        }
+        tr.section("7c");
+        {
+            double rpool[1] = { 88 };
             ra::ViewBig<double *> r ({}, rpool);
             double check[2] = { 0, 88 };
             CheckArrayOutput(tr, r, check);

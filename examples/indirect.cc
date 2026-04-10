@@ -29,7 +29,8 @@ example1()
     ra::Big<coord, 1> I = { {1, 1}, {2, 2} };
 
     // Blitz++ had A[I] = B.
-    // In ra::, both sides of = must agree in shape. E.g. if A has rank 1, then I and B must agree in shape (not A and B).
+    // In ra::, both sides of = must agree in shape.
+    // E.g. if A has rank 1, then the shape of A[I] is the same as that of I, so I and B must agree in shape (not A and B).
     // Also, the selector () is outer product (to index two axes, you need two arguments). The 'coord' selector is at().
     // So this is the most direct translation. Note the -> decltype(auto) to construct a reference expr.
     map([&A](auto && c) -> decltype(auto) { return at(A, c); }, I)
@@ -177,8 +178,8 @@ example6()
 {
     ra::Big<int, 1> v = { 1, 3, 4, 9, 15, 12, 0, 1, 15, 12, 0, 3, 4, 8 };
     constexpr char chmap[] = "0123456789ABCDEF";
-// viewptr can make a view over a 'foreign vector' such as an array. That can be subscripted as usual.
-    cout << fmt({ .sep0="" }, ra::viewptr(chmap)(v)) << endl;
+// you can make a view over a 'foreign vector' such as an array. That can be subscripted as usual.
+    cout << fmt({ .sep0="" }, ra::view(chmap)(v)) << endl;
 }
 
 // from the manual on ra::iota()
@@ -187,7 +188,8 @@ example7()
 {
     ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
     ra::Big<int, 1> b = {1, 2, 3};
-    cout << (b + a(ra::iota())) << endl; // a(iota()) has undefined length
+// a(iota()) has undefined length, so (b+...) has the length of b. It is an error if a is shorter than b.
+    cout << (b + a(ra::iota())) << endl;
 }
 
 int main()

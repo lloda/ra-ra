@@ -297,9 +297,9 @@ int main()
         {                                                               \
             std::fill(b.begin(), b.end(), 0);                           \
             real check[3] = { 2, 3, 1 };                                \
-            plier(map_([&a](int & b, int i) { b = a(i); }, iter(b), ra::ptr(std::array {1, 2, 0}))); \
+            plier(map_([&a](int & b, int i) { b = a(i); }, iter(b), ra::iter(std::array {1, 2, 0}))); \
             tr.info(RA_STRINGIZE(plier) " std::array").test(std::equal(check, check+3, b.begin())); \
-            plier(map_([&a](int & b, int i) { b = a(i); }, iter(b), ra::ptr(std::vector {1, 2, 0}))); \
+            plier(map_([&a](int & b, int i) { b = a(i); }, iter(b), ra::iter(std::vector {1, 2, 0}))); \
             tr.info(RA_STRINGIZE(plier) " std::vector").test(std::equal(check, check+3, b.begin())); \
         }
         TEST(ply_ravel);

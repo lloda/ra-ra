@@ -11,7 +11,7 @@
 @c http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0356r2.html
 @c References to source [ma··] or [ma···] current last is 118.
 
-@set VERSION 31
+@set VERSION 32
 @set UPDATED 2026 April 2
 
 @copying
@@ -464,27 +464,18 @@ cout << fmt(A, {.shape=ra::noshape, .sep0="|"}) << endl;
 @end example
 
 @cindex view
-A @dfn{view} is similar to an array in that it points to actual data in memory. However, the view doesn't own that data and destroying the view won't affect it. For example:
+A @dfn{view} is to an array like a pointer is to a value; a way to access data without owning it. For example:
 
 @example
 @verbatim
 ra::Big<double> c({2, 3}, 0.);     // runtime rank 2x3 array
 {
-    auto c1 = c(1);                // the second row of array c
+    auto c1 = c(1);                // second row of array c
+    c1 = 7;
     // c1 is destroyed here
 }
-cout << c(1, 1) << endl;           // ok
 @end verbatim
-@end example
-
-The data accessed through a view is the data of the ‘root’ array, so modifying the former will be reflected in the latter.
-
-@example
-@verbatim
-ra::Big<double> c({2, 3}, 0.);
-auto c1 = c(1);
-c1(2) = 9.;                        // c(1, 2) = 9.
-@end verbatim
+@result{} c = @{@{0, 1, 2@}, @{7, 7, 7@}@}
 @end example
 
 Just as for arrays, there are separate types of views depending on whether the shape is known at compile time, the rank is known at compile time but the shape is not, or neither the shape nor the rank are known at compile time. @code{ra::} has the usual functions that operate on views:
@@ -497,15 +488,15 @@ auto cr = reverse(c, 0); // {{4, 5, 6}, {1, 2, 3}}
 @end verbatim
 @end example
 
-Views can point to anywhere in memory and that memory doesn't have to belong to an @code{ra::} array. For example:
+Views can point to anywhere in memory. For example:
 
 @example
 @verbatim
 int raw[6] = {1, 2, 3, 4, 5, 6};
 ra::ViewBig<int *> v1({{2, 3}, {3, 1}}, raw); // view with shape [2, 3] steps [3, 1]
 ra::ViewBig<int *> v2({2, 3}, raw);           // same, default C (row-major) steps
-// ra::ViewBig<int *> v2({}, raw);            // bogus error: ambiguous dimensions
-ra::ViewBig<int *> v2(raw);                   // do this instead for rank-0 view
+ra::ViewBig<int *> v2({}, raw);               // rank-0 view
+ra::ViewBig<int *> v2(raw);                   // also rank-0 view
 @end verbatim
 @end example
 
@@ -713,7 +704,7 @@ b += transpose(a, ra::ilist<0, 1, 1>); // b(i) = ∑ⱼ a(i, j, j)
 @cindex broadcasting, singleton, newaxis
 An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. Other array systems offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example, in the way it's implemented in Numpy @mybibcite{num17}, an array of shape [A B 1 D] will match an array of shape [A B C D]. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. You can think of prefix agreement as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 
-A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size mismatch, it isn't obvious why 1≠2 shouldn't be. To avoid this problem, @code{ra::} supports broadcasting with undefined length axes (see @ref{x-insert,@code{insert}}).
+A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size mismatch, it isn't obvious why 1≠2 shouldn't be. To avoid this problem, @code{ra::} supports broadcasting with unbounded length axes (see @ref{x-insert,@code{insert}}).
 
 @example
 @verbatim
@@ -929,8 +920,8 @@ Unbounded expressions such as @code{iota()} cannot be traversed by themselves, b
 @verbatim
 ra::Big<int, 1> v = {1, 2, 3};
 cout << (v - ra::tindex<0>) << endl; // { 1-0, 2-1, 3-2 }
-// cout << (ra::tindex<0>) << endl; // error: undefined length
-// cout << (v - ra::tindex<1>) << endl; // error: undefined length on axis 1
+// cout << (ra::tindex<0>) << endl; // error: unbounded length
+// cout << (v - ra::tindex<1>) << endl; // error: unbounded length on axis 1
 ra::Big<int, 2> a({3, 2}, 0);
 cout << (a + ra::tindex<0> - ra::tindex<1>) << endl; // {{0, -1, -2}, {1, 0, -1}, {2, 1, 0}}
 @end verbatim
@@ -1039,12 +1030,12 @@ auto b1 = b(ra::insert<1>, ra::len-1); // ra::len is a.len(0)
 @deffn @w{Special object} insert<n>
 Inserts @code{n} new axes at the subscript position. @code{n} must not be negative.
 
-The new axes have step 0 and undefined length, so they will match any length on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in views:
+The new axes have step 0 and unbounded length, so they will match any length on those axes by repeating items. @code{insert} objects cannot stand alone as an array expression. The examples below result in views:
 
 @example
 @verbatim
 auto h = a(insert<0>); // same as (1)
-auto k = a(insert<1>); // shape [undefined, 3, 2]
+auto k = a(insert<1>); // shape [unbounded, 3, 2]
 @end verbatim
 @end example
 
@@ -1529,8 +1520,8 @@ Here @code{cs} applies to @code{Big}, @code{p} applies to @code{Small}, and @cod
 
 @subsection Using other C and C++ types with @code{ra::}
 
-@cindex foreign type
 @anchor{x-foreign-type}
+@cindex foreign type
 @code{ra::} accepts certain types from outside @code{ra::} (@dfn{foreign types}) as array expressions. Most of the time it is enough to mix the foreign type with a type from @code{ra::} and let deduction work.
 
 @example
@@ -1543,14 +1534,18 @@ cout << (x-y) << endl;
 @end example
 
 @cindex @code{iter}
-Foreign types can be brought into @code{ra::} explicitly with the function @ref{x-iter,@code{iter}}.
+Where necessary, foreign types can be brought into @code{ra::} with the function @ref{x-iter,@code{iter}}.
 
 @example
 @verbatim
-std::vector<int> x = {1, 2, 3};
+std::vector<int> x = {1, 2, 3}; // not in ra::
+
 // cout << sum(x) << endl; // error, sum not found
-cout << sum(ra::iter(x)) << endl;
-cout << ra::sum(x) << endl;
+cout << sum(ra::iter(x)) << endl; // ok, ra::sum found through ADL
+cout << ra::sum(x) << endl; // ok, implicit iter()
+
+// x += 99; // error, no such op in std::vector
+ra::iter(x) += 99; // ok
 @end verbatim
 @print{} 6
 @end example
@@ -1567,19 +1562,19 @@ produces an expression of rank 1 and compile time size.
 produce an expression of rank 1 and runtime size.
 @end itemize
 
-Raw pointers must be brought into @code{ra::} explicitly using the function @ref{x-ptr,@code{ptr}}, which produces an expression of rank 1 and @emph{undefined} size.
-
-Compare:
+Iterators, including raw pointers, can be converted to array expressions of rank 1 using the function @ref{x-ptr,@code{ptr}}. This conversion must always be explicit. Compare:
 
 @example @c [ma106]
 @verbatim
 int p[] = {1, 2, 3};
-int * z = p;
+int * z = p; // erase length
 ra::Big<int, 1> q {1, 2, 3};
 q += p; // ok, q is ra::, p is foreign object with shape info
-ra::iter(p) += q; // can't redefine operator+=(int[]), foreign needs ra::iter()
-// z += q; // error: raw pointer needs ra::ptr()
+// q += z; // error, bad type
+// q += ra::iter(p); // error, bad type for iter()
+q += ra::ptr(p); // ok, shape is determined by q
 ra::ptr(z) += p; // ok, shape is determined by foreign object p
+ra::ptr(z, 3) += p; // ok, shapes must agree
 @end verbatim
 @end example
 
@@ -1597,7 +1592,7 @@ Otherwise, you can bring a scalar object into @code{ra::} on the spot, with the 
 @node Using @code{ra::} types with the STL
 @subsection Using @code{ra::} types with the STL
 
-STL compatible input/output iterators and ranges can be obtained from general @code{ra::} expressions through the functions @ref{x-begin,@code{begin}}, @ref{x-end,@code{end}}, and @ref{x-range,@code{range}}. These objects traverse the elements of the expression (0-cells) in row major order.@footnote{Unqualified @code{begin()} would find @code{std::begin} through ADL since @code{Big} is parameterized by @code{std::vector}. This still works since @code{std::begin} forwards to @code{A.begin()}. It's up to you if you want to rely on such things.}
+STL-compatible input/output iterators and ranges can be obtained from general @code{ra::} expressions through the functions @ref{x-begin,@code{begin}}, @ref{x-end,@code{end}}, and @ref{x-range,@code{range}}. These objects traverse the elements of the expression (0-cells) in row major order.@footnote{Unqualified @code{begin()} would find @code{std::begin} through ADL since @code{Big} is parameterized by @code{std::vector}. This still works since @code{std::begin} forwards to @code{A.begin()}. It's up to you if you want to rely on such things.}
 
 @example @c [ma118]
 @verbatim
@@ -1932,20 +1927,6 @@ You can redefine @code{RA_ASSERT} to something that is more appropriate for your
 
 Some of these issues arise because @code{ra::} applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 
-@section Reuse of expression objects
-
-Expression objects are meant to be used once. This applies to anything produced with @code{ra::map}, @code{ra::iter}, or @code{ra::ptr}. Reuse errors are @emph{not} checked. For example:
-
-@example
-@verbatim
-ra::Big<int, 2> B({3, 3}, ra::_1 + ra::_0*3); // {{0 1 2} {3 4 5} {6 7 8}}
-std::array<int, 2> l = { 1, 2 };
-cout << B(ra::ptr(l), ra::ptr(l)) << endl; // ok => {{4 5} {7 8}}
-auto ll = ra::ptr(l);
-cout << B(ll, ll) << endl; // ??
-@end verbatim
-@end example
-
 @section Assignment to views
 
 FIXME
@@ -2093,11 +2074,11 @@ These are array types that own their data in one way or another.
 
 @item @b{View}
 
-These are array views into data in memory, which may be writable. Any of the @b{Array} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently.
+These are array types that don't own their data. Any of the @b{Array} types can be treated as a @b{View}, but one may also create @b{View}s into memory that has been allocated independently, or into generalized sequences.
 
 @item @b{Iterator} --- @code{Cell}, @code{Scalar}, @code{Map}, @code{Pick}
 
-These are traversable objects. @b{Iterator}s are accepted by all the array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{View}s and from certain foreign array-like types primarily through the function @code{iter}. This is done automatically when those types are used in array expressions.
+These are traversable objects. @b{Iterator}s are accepted by all array functions such as @code{map}, @code{for_each}, etc. @code{map} produces an @b{Iterator} itself, so most array expressions are @b{Iterator}s. @b{Iterator}s are created from @b{Array}s and @b{View}s and from certain foreign array-like types, primarily through the function @code{iter}. This is done automatically when those types are used in array expressions.
 
 @b{Iterator}s have two traversal functions: @code{.adv(k, d)}, moves the iterator along any dimension @var{k}, and @code{.mov(d)}, is used on linearized views of the array. The methods @code{len()}, @code{step()}, @code{keep()} are used to determine the extent of these linearized views. In this way, a loop involving @b{Iterator}s can have its inner loop unfolded, which is faster than a nested loop, especially if the inner dimensions of the loop are small.
 
@@ -2111,7 +2092,7 @@ These are traversable objects. @b{Iterator}s are accepted by all the array funct
 @section Term agreement
 @c ------------------------------------------------
 
-The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has undefined length (such as @code{iota()} or dimensions created with @code{insert}) are ignored. All the other terms must match.
+The execution of an expression template begins with the determination of its shape — the length of each of its dimensions. This is done recursively by traversing the terms of the expression. For a given dimension @code{k}≥0, terms that have rank less or equal than @code{k} are ignored, following the prefix matching principle. Likewise terms where dimension @code{k} has unbounded length (such as @code{iota()} or dimensions created with @code{insert}) are ignored. All the other terms must match.
 
 Then we select a order of traversal. @code{ra::} supports ‘array’ orders, meaning that the dimensions are sorted in a certain way from outermost to innermost and a full dimension is traversed before one advances on the dimension outside. However, currently (v@value{VERSION}) there is no heuristic to choose a dimension order, so traversal always happens in row-major order (which shouldn't be relied upon). @code{ply_ravel} will unroll as many innermost dimensions as it can, and in some cases traversal will be executed as a flat loop.
 
@@ -2866,10 +2847,9 @@ Wrap @var{op} using a rank conjunction (@pxref{The rank conjunction}).
 @cindex @code{ptr}
 @anchor{x-ptr}
 @deffn @w{Function} ptr bidirectional_iterator [len [step]]
-@deffnx @w{Function} ptr bidirectional_range
-Create rank 1 expression from foreign object.
+Create rank 1 expression from @var{bidirectional_iterator}.
 
-If @code{len} is not given for @var{bidirectional_iterator}, the expression has undefined length, and needs to be matched with other expressions whose length is defined. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
+If @var{len} is not given for @var{bidirectional_iterator}, the expression has unbounded length, and needs to be matched with other expressions whose length is finite. @code{ra::} doesn't know what is actually accessible through the iterator, so be careful. For instance:
 
 @example
 @verbatim
@@ -2879,18 +2859,18 @@ ra::Big<int, 1> v3 {1, 2, 3};
 ra::Big<int, 1> v4 {1, 2, 3, 4};
 v3 += ra::ptr(p); // ok, shape (3): v3 = {2, 4, 6}
 v4 += ra::ptr(p); // undefined, shape (4): bad access to p[3]
-// cout << (ra::ptr(p)+ra::iota()) << endl; // ct error, expression has undefined shape
+// cout << (ra::ptr(p)+ra::iota()) << endl; // compilation error, unbounded
 cout << (ra::ptr(p, 3)+ra::iota()) << endl; // ok, prints { 1, 3, 5 }
 cout << (ra::ptr(p, 4)+ra::iota()) << endl; // undefined, bad access at p[4]
 @end verbatim
 @end example
 
-Of course in this example one could simply have used @code{pp} instead of @code{ra::ptr(p)}, since the array type retains shape information.
+In this example one could simply have used @code{pp} instead of @code{ra::ptr(p)}, since the array type retains shape information.
 
 @example
 @verbatim
 v3 += pp; // ok, shapes match
-v4 += pp; // error checked by ra::, shape clash (4) += (3)
+v4 += pp; // error, shape clash (4) += (3)
 cout << (pp + ra::iota()) << endl; // ok, shape from pp
 @end verbatim
 @end example
@@ -2900,12 +2880,10 @@ cout << (pp + ra::iota()) << endl; // ok, shape from pp
 @example
 @verbatim
 char const * s = "hello";
-auto p = ra::ptr(s, std::integral_constant<int, 2> {});
+auto p = ra::ptr(s, std::integral_constant<int, 2> {}); // p is "he"
 static_assert(2==ra::size(p)); // p not constexpr, but still ok
 @end verbatim
 @end example
-
-@code{ra::ptr} is often equivalent to @ref{x-iter,@code{iter}}, and can be omitted in the same way, but raw pointers require @code{ra::ptr}.
 
 See also @ref{x-iter,@code{iter}}, @ref{x-scalar,@code{scalar}}, @ref{x-iota,@code{iota}}.
 
@@ -2924,11 +2902,11 @@ See also @ref{x-begin,@code{begin}}, @ref{x-end,@code{end}}.
 @anchor{x-iter} @defun iter object
 Create array iterator from @var{object}.
 
-@var{objec} is usually a non-@code{ra::} object (‘foreign object’) that @code{ra::} recognizes as being arraylike, such as a built-in array (e.g. @code{int[3][2]}), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or anything that @code{ra::} accepts as a scalar (see @ref{x-is-scalar,@code{here}}).
+@var{object} is usually a non-@code{ra::} object (‘foreign object’) that @code{ra::} recognizes as being arraylike, such as a built-in array (e.g. @code{int[3][2]}), a @code{std::random_access_range} type (including @code{std::vector} or @code{std::array}, @pxref{Compatibility}), an initializer list, or anything that @code{ra::} accepts as a scalar (see @ref{x-is-scalar,@code{here}}).
 
-The resulting expresion has shape according to the original object. Compare this with @ref{x-scalar,@code{scalar}}, which only produces rank 0 expressions, or @ref{x-ptr,@code{ptr}}, which only produces rank 1 expressions.
+The shape of the array iterator depends on the original object. Compare this with @ref{x-scalar,@code{scalar}}, which only produces rank 0 iterators, or @ref{x-ptr,@code{ptr}}, which only produces rank 1 iterators.
 
-@code{iter} also works on @code{ra::} arrays, but these are converted into array iterators automatically when used in @code{ra::} operations, so an explicit @code{iter} call is rarely needed. Even foreign objects are usually converted, but sometimes this isn't possible, for example with operators that must be class members.
+@code{iter} also works on @code{ra::} arrays or views, but these are converted into array iterators automatically when used in @code{ra::} operations, so an explicit @code{iter} call is rarely needed. Even foreign objects are usually converted, but sometimes this isn't possible, for example with operators that must be class members.
 
 @example
 @verbatim
@@ -3143,6 +3121,59 @@ foreign_initializer(2, 3, b.data());
 @end example
 
 @end deffn
+
+@cindex @code{view}
+@anchor{x-view}
+@deffn @w{Function} view random_access_range
+@deffnx @w{Function} view builtin_array
+Create view from the argument. The shape of the view is determined by the argument.
+
+@example
+@verbatim
+std::array<int, 3> a = {1, 2, 3};
+static_assert(3==view(a).len(0)); // shape of a is static
+
+std::vector<int, 3> b = {1, 2, 3};
+assert(3==view(b).len(0)); // shape of a is dynamic
+@end verbatim
+@end example
+
+Generally you can rely on @ref{x-foreign-type,implicit conversion} in order to use foreign types with @code{ra::}. Use @code{view} when you need some of the facilities of views, such as generalized subscripting.
+
+@example
+@verbatim
+int c[3][2] = {{1,2},{3,4},{5,6}};
+auto vc = view(c);
+static_assert(2==rank(vc));
+view(c)(ra::all, 1) = 9;
+@end verbatim
+  @result{} c = @{ @{1, 9@}, @{3, 9@}, @{5, 9@} @}
+@end example
+
+See also @ref{x-viewptr,@code{viewptr}}, @ref{x-iter,@code{iter}}, @ref{x-ptr,@code{ptr}}.
+
+@end deffn
+
+@cindex @code{viewptr}
+@anchor{x-viewptr}
+@deffn @w{Function} viewptr random_access_iterator [len [step]]
+Create rank 1 view from @var{random_access_iterator}.
+
+This function is much like @ref{x-ptr,@code{ptr}}, except that it creates a view instead of an array iterator. Use @code{viewptr} when you need one of the facilities of views, such as generalized subscripting.
+
+@example
+@verbatim
+int a[] = {1, 2, 3};
+int * p = a; // erase length
+std::println(cout, "{:p}", viewptr(p)(ra::iota(2, 1)));
+@end verbatim
+@print{} [2, 3]
+@end example
+
+See also @ref{x-view,@code{view}}, @ref{x-iter,@code{iter}}, @ref{x-ptr,@code{ptr}}.
+
+@end deffn
+
 
 @c ------------------------------------------------
 @node @mybibnode{}

@@ -240,7 +240,6 @@ int main()
     }
     tr.section("adaptors II");
     {
-        static_assert(ra::is_iterator<decltype(ra::ptr(std::array { 1, 2 }))>);
         static_assert(ra::is_iterator<decltype(ra::iter(std::array { 1, 2 }))>);
     }
     tr.section("compatibility");

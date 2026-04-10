@@ -48,13 +48,15 @@ int main()
     tr.section("raw pointers");
     {
         ra::Big<int, 1> a = {1, 2, 3};
-        int b[] = { +1, -1, +1 };
+        int b_[] = { +1, -1, +1 };
+        int * b = b_;
         tr.test_eq(ra::Small<int, 3> {2, 1, 4}, a + ra::ptr(b));
         ra::ptr(b) = ra::Small<int, 3> {7, 4, 5};
         tr.test_eq(ra::Small<int, 3> {7, 4, 5}, ra::ptr(b));
 
-        int cp[3] = {1, 2, 3};
-        // ra::Big<int, 1> c({3}, &cp[0]); // forbidden, confusing for higher rank c (pointer matches as rank 1).
+        int cp_[3] = {1, 2, 3};
+        int * cp = cp_;
+        // ra::Big<int, 1> c({3}, &cp[0]); // forbidden, confusing for higher rank c (pointer matches as rank 1) FIXME
         ra::Big<int, 1> c({3}, ra::ptr(cp));
         tr.test_eq(ra::Small<int, 3> {1, 2, 3}, c);
         ra::Big<int, 1> d(3, ra::ptr(cp)); // alt shape
@@ -110,7 +112,7 @@ int main()
     {
         tr.info("std::string is is_foreign_vector unless registered as is_scalar")
             .test_eq(ra::is_scalar<std::string> ? 0 : 1, ra::rank_s<decltype(std::string("hello"))>());
-        tr.info("explicit adaption to rank 1 is possible").test_eq(5, size(ra::ptr(std::string("hello"))));
+        tr.info("explicit adaption to rank 1 is possible").test_eq(5, size(ra::iter(std::string("hello"))));
         tr.info("note the difference with a char array").test_eq(6, ra::size("hello"));
     }
     tr.section("other std::ranges");
@@ -182,8 +184,28 @@ int main()
     {
         std::map<int, float> m;
         for (int i=0; i<9; ++i) { m[i] = -i; }
-        tr.test_eq(9, ra::size(ra::ptr(m)));
-        for_each([&](auto const & m) { tr.test_eq(-m.first, m.second); }, ra::ptr(m));
+        tr.test_eq(9, ra::size(ra::iter(m)));
+        for_each([&](auto const & m) { tr.test_eq(-m.first, m.second); }, ra::iter(m));
+    }
+    tr.section("view(builtin)");
+    {
+        int x[3][2] = {{0,1},{2,3},{4,5}};
+        auto vx = ra::view(x);
+        tr.strict().test_eq(ra::Small<int, 3, 2>{{0,1},{2,3},{4,5}}, vx);
+        tr.test_eq(2, rank_s(vx));
+        tr.test_eq(3, vx.len_s(0));
+        tr.test_eq(2, vx.len_s(1));
+        vx(ra::all, 1) = 9;
+        tr.strict().test_eq(ra::Small<int, 3, 2>{{0,9},{2,9},{4,9}}, x);
+    }
+    tr.section("view(foreign range)");
+    {
+        std::vector<int> x = {1, 2, 3};
+        auto vx = ra::view(x);
+        tr.test_eq(1, rank_s(vx));
+        tr.test_eq(3, vx.len(0));
+        vx(ra::iota(2, 1)) = 4;
+        tr.strict().test_eq(ra::Small<int, 3>{1, 4, 4}, x);
     }
     return tr.summary();
 }

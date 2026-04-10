@@ -37,7 +37,7 @@ int main()
     tr.section("Custom dimv and iter(general Slice)");
     {
         int x[6] = { 1, 2, 3, 4, 5, 6 };
-        auto v = ra::viewptr(x);
+        auto v = ra::view(x);
         static_assert(1==v.step(0));
         tr.test_eq(6, v.len(0));
         tr.test_eq(ra::iota(6, 1), v);
@@ -47,14 +47,14 @@ int main()
     }
     {
         int x[6] = { 1, 2, 3, 4, 5, 6 };
-        auto const v = ra::viewptr(x);
+        auto const v = ra::view(x);
         auto i = iter(v, ra::ic<0>);
         tr.test_eq(ra::iota(6, 1), i);
         static_assert(1==i.step(0));
     }
     {
         int x[6] = { 1, 2, 3, 4, 5, 6 };
-        auto v = ra::viewptr(x);
+        auto v = ra::view(x);
         auto i = iter(v, ra::ic<0>);
         tr.test_eq(ra::iota(6, 1), i);
         static_assert(1==i.step(0));
