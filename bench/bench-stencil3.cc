@@ -120,7 +120,7 @@ int main()
     real value = rand();
 
     auto bench = [&](auto & A, auto & Anext, auto & Astencil, auto && ref, auto && tag, auto && f){
-        auto bv = Benchmark().repeats(ts).runs(3)
+        auto bv = Benchmark().reps(ts).runs(3)
             .once_f([&](auto && repeat){
                 Anext = 0.;
                 A = value;

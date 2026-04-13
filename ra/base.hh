@@ -302,7 +302,7 @@ struct default_init_allocator: public A
     template <class U>
     struct rebind
     {
-        using other = default_init_allocator<U, typename traits::template rebind_alloc<U>>;
+        using other = default_init_allocator<U, typename traits::template rebind_alloc<U>>; // traits is just ...<U, A>
     };
     template <class U>
     constexpr void construct(U * p) noexcept (std::is_nothrow_default_constructible<U>::value)

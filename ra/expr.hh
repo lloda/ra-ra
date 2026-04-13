@@ -108,8 +108,8 @@ struct Scalar final
     C c;
     RA_FE(RA_ASSIGNOPS_DEFAULT, =, *=, +=, -=, /=)
     consteval static rank_t rank() { return 0; }
-    constexpr static dim_t len_s(int k) { std::abort(); } // FIXME consteval cf Match::check_s
-    constexpr static dim_t len(int k) { std::abort(); } // FIXME idem
+    constexpr static dim_t len_s(int k) { std::abort(); }
+    constexpr static dim_t len(int k) { std::abort(); }
     constexpr static dim_t step(int k) { return 0; }
     constexpr static void adv(rank_t k, dim_t d) {}
     constexpr static bool keep(dim_t st, int z, int j) { return true; }
@@ -138,7 +138,7 @@ template <class A>
 constexpr decltype(auto)
 VAL(A && a)
 {
-    if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra8]
+    if constexpr (is_scalar<A>) { return RA_FW(a); } // [ra22]
     else if constexpr (is_iterator<A>) { return *RA_FW(a); } // already
     else if constexpr (requires { *iter(RA_FW(a)); }) { return *iter(RA_FW(a)); }
     // else void
@@ -167,7 +167,7 @@ indexer(auto const & a, auto cp, Iterator auto && p)
 {
     if constexpr (1!=rank_s(p)) {
         static_assert(ANY==rank_s(p), "Bad rank for subscript."); // c++26
-        RA_CK(1==ra::rank(p), "Bad rank ", ra::rank(p), " for subscript.");
+        RA_CK(1==rank(p), "Bad rank ", rank(p), " for subscript.");
     }
     if constexpr (rank_s(a)==ANY || p.len_s(0)<rank_s(a)) {
         static_assert(ANY==p.len_s(0) || ANY==rank_s(a), "Too few indices."); // c++26
@@ -202,7 +202,7 @@ filldimv(Iterator auto && p, auto & dv)
 {
     if constexpr (0!=rank_s(p) && 1!=rank_s(p)) {
         static_assert(ANY==rank_s(p), "Bad rank for dims."); // c++26
-        RA_CK(0==rank(p) || 1==rank(p), "Bad rank for dims ", ra::rank(p), ".");
+        RA_CK(0==rank(p) || 1==rank(p), "Bad rank for dims ", rank(p), ".");
     }
     ra::resize(dv, [&]{ if constexpr (ANY==size_s(p)) return ra::size(p); else return ic<size_s(p)>; }());
     for (rank_t k=0; k<ra::size(dv); ++k, p.mov(p.step(0))) { dv[k].len = *p; }
@@ -384,8 +384,8 @@ view(std::ranges::bidirectional_range auto && a)
 
 // FIXME iter() only needs bidir but view() would need random if we actually used it. So this is ugly.
 constexpr auto iter(is_fov auto && a) { return iter(view(RA_FW(a))); }
-template <class T> constexpr auto iter(std::initializer_list<T> const & a) { return iter(view(a)); }
 constexpr auto iter(is_builtin auto && a) { return iter(view(RA_FW(a))); }
+template <class T> constexpr auto iter(std::initializer_list<T> const & a) { return iter(view(a)); }
 
 
 // ---------------------------
@@ -513,9 +513,12 @@ validate(A const & a)
 {
     static_assert(!has_len<A>, "Stray ra::len.");
     static_assert(UNB!=size_s<A>(), "Unbounded size.");
-    static_assert(0<=rank_s(a) || ANY==rank_s(a), "Undefined rank.");
+    if constexpr (0>rank_s(a)) {
+        static_assert(ANY==rank_s(a), "Bad rank."); // c++26
+        RA_CK(rank(a)>=0, "Bad rank ", rank(a), ".");
+    }
     if constexpr (is_match<A>) {
-        static_assert(0!=a.check_s(), "Bad shapes."); // FIXME c++26
+        static_assert(0!=a.check_s(), "Bad shapes."); // c++26
         a.check(false);
     } else {
 // FIXME wb Reframe(Match(...)) ?
@@ -535,8 +538,6 @@ struct Match<std::tuple<P ...>, ilist_t<I ...>>
     std::tuple<P ...> t;
     constexpr Match(P ... p_): t(p_ ...) {} // [ra1]
     constexpr static rank_t rs = []{ rank_t r=UNB; return ((r=corank(rank_s<P>(), r)), ...); }();
-    static_assert(ANY==rs || 0<=rs);
-
 // 0: fail, 1: rt check, 2: pass
     consteval static int
     check_s()

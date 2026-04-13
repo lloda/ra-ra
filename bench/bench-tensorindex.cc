@@ -49,7 +49,7 @@ int main()
         tr.test_eq(499500000, fa());
         tr.test_eq(499500000, fb());
 
-        auto bench = Benchmark {/* repeats */ 30, /* runs */ 30};
+        auto bench = Benchmark {/* reps */ 30, /* runs */ 30};
 
         bench.info("vala").report(std::cout, bench.run(fa), 1e-6);
         bench.info("valb").report(std::cout, bench.run(fb), 1e-6);

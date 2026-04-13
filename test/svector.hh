@@ -1,6 +1,6 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra-ra - Basic dynamic size vector that isn't foreign
-// From https://github.com/KonanM/vector. Removed rebinding support...
+// ra-ra/test - Vector with SBO.
+// From https://github.com/KonanM/vector.
 
 #pragma once
 #include <cstddef>
@@ -20,14 +20,13 @@ struct sb_alloc
     bool used = false;
 
     using value_type = T;
-// must set these three values, which are responsible for the correct handling of the move assignment operator.
+// must set these two values, which are responsible for the correct handling of the move assignment operator.
     using propagate_on_container_move_assignment = std::false_type;
     using propagate_on_container_swap = std::false_type;
-    using is_always_equal = std::false_type;
     template <class U> struct rebind { using other = sb_alloc<U, N>; };
 
     constexpr sb_alloc() noexcept = default;
-    template <class U> constexpr sb_alloc(sb_alloc<U, N> const &) noexcept {}
+    template <class U> constexpr sb_alloc(sb_alloc<U, N> const &) noexcept {} // hmm
 // don't copy the small buffer for the copy/move constructors, as that is done through the vector.
     constexpr sb_alloc(sb_alloc const & s) noexcept : used(s.used) {}
     constexpr sb_alloc & operator=(sb_alloc const & s) noexcept { used = s.used; return *this; }
@@ -37,19 +36,15 @@ struct sb_alloc
     [[nodiscard]] constexpr T *
     allocate(size_t const n)
     {
-        used = (n <= N);
-        if (used) {
-            return buffer;
-        } else {
-            return alloc.allocate(n);
-        }
+        return (used = n<=N) ? buffer : alloc.allocate(n);
     }
     constexpr void
     deallocate(void * p, const size_t n)
     {
-        used = false;
         if (buffer!=p) {
             alloc.deallocate(static_cast<T *>(p), n);
+        } else {
+            used = false;
         }
     }
 // when propagate_on_container_move_assignment is false and this comparison returns false, an elementwise move is done instead of just taking over the memory. So the comparison has to return false when the small buffer is active.
@@ -73,7 +68,7 @@ struct svector: public std::vector<T, sb_alloc<T, N>>
         V::operator=(std::move(v));
         return *this;
     }
-    constexpr explicit svector(size_t count): svector() { V::resize(count); } // hmm
+    constexpr explicit svector(size_t count): svector() { V::resize(count); }
     constexpr svector(size_t count, T const & value): svector() { V::assign(count, value); }
     template <class It> constexpr svector(It first, It last): svector() { V::insert(V::begin(), first, last); }
     constexpr svector(std::initializer_list<T> init): svector() { V::insert(V::begin(), init); }

@@ -49,6 +49,14 @@ int main(int argc, char * * argv)
             ra::ViewBig<int *, 1> a(nullptr);
             tr.test(nullptr==a.data());
         }
+        tr.section("type trouble");
+        {
+            using clock = ra::Benchmark::clock;
+            ra::Big<clock::duration, 1> times({10}, ra::none);
+            auto t0 = clock::now();
+            times[0] = clock::now()-t0; ;
+            tr.test_le(0, std::chrono::duration<float, std::ratio<1, 1>>(times[0]).count());
+        }
         tr.section("regression with some shape arguments (fixed rank)");
         {
             ra::Big<int, 1> sizes = {5};
@@ -135,7 +143,7 @@ int main(int argc, char * * argv)
             a = {{5, 6, 7}, {8, 9, 10}};
             tr.test_eq(ra::scalar(ap), ra::scalar(a.data()));
             tr.test_eq(ra::iota(6, 5), ra::ptr(a.data()));
-// uses nested_braces_r constructor, so a's storage is NOT preserved. Don't rely on this either way
+// uses nested_braces_r constructor, so a's storage is NOT preserved. Don't rely on this either way FIXME nasty, would be better to forbid
             a = {{{4, 5, 6}, {7, 8, 9}}};
             tr.skip().test_eq(ra::scalar(ap), ra::scalar(a.data()));
             tr.test_eq(2, a.len(0));

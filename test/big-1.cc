@@ -38,7 +38,7 @@ int main()
         tr.test_eq(check[0], b.back());
         tr.test_eq(int2 {1, 2}, b().back()); // back on views
     }
-    tr.section("behavior of resize with default Array");
+    tr.section("behavior of resize with default Array (using vector_default_init)");
     {
         ra::Big<int, 1> a = {1, 2, 3, 4, 5, 6};
         a.resize(3);

@@ -17,7 +17,7 @@ using complex = std::complex<double>;
 int main()
 {
     TestRecorder tr;
-    tr.section("[ra8]");
+    tr.section("[ra22]");
     {
         constexpr int z = 1 + ra::scalar(2);
         tr.test_eq(3, z);

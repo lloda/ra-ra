@@ -63,7 +63,7 @@ int main()
                 b = -ra::_0 -1;
                 c = 99;
 
-                auto bv = Benchmark().repeats(reps).runs(3).run([&]() { f(a, b, c); });
+                auto bv = Benchmark().reps(reps).runs(3).run([&]() { f(a, b, c); });
                 tr.info(Benchmark::report(bv, m), " ", tag)
                     .test(true);
             };

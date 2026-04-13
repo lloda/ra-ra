@@ -114,7 +114,7 @@ struct View: public ViewBase<Dimv_>
     template <int N> constexpr View(dim_t (&&s)[N], P cp) requires (!CT): View(iter(s), cp) {}
     template <int N> constexpr View(Dim (&&s)[N], P cp) requires (!CT): View(iter(s), cp) {}
     constexpr explicit View(P cp): cp(cp) {} // empty dimv if !CT, but also uninit by slicers, esp. has_len<P>
-    constexpr View(View &&) noexcept = default; // must declare bc Dimv may be a reference.
+    constexpr View(View &&) = default; // must declare bc Dimv may be a reference.
     constexpr View(View const &) = default;
     constexpr View const & operator=(braces<T, R> x) const requires (!CT && 1<R) { iter<-1>(*this) = x; return *this; } // nested
 #define RA_BRACES(N) constexpr View const & operator=(braces<T, N> x) const requires (!CT && R==ANY) { iter<-1>(*this) = x; return *this; }
@@ -212,8 +212,8 @@ SmallArray<T, Dimv_, std::tuple<nested_args ...>>
     constexpr decltype(auto) back(this auto && sf) { return RA_FW(sf).view().back(); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
-    constexpr operator T & () { return view(); }
-    constexpr operator T const & () const { return view(); }
+    constexpr operator T & () { return to_scalar(*this); }
+    constexpr operator T const & () const { return to_scalar(*this); }
 };
 
 template <class T, dim_t ... lens>
@@ -317,8 +317,8 @@ struct Array
     constexpr decltype(auto) back(this auto && sf) { return RA_FW(sf).view().back(); }
     constexpr decltype(auto) operator()(this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
     constexpr decltype(auto) operator[](this auto && sf, auto && ... i) { return from(RA_FW(sf), RA_FW(i) ...); }
-    constexpr operator T & () { return view(); }
-    constexpr operator T const & () const { return view(); }
+    constexpr operator T & () { return to_scalar(*this); }
+    constexpr operator T const & () const { return to_scalar(*this); }
 };
 
 template <rank_t R=ANY> using BigDim1 = std::conditional_t<1==R, std::array<SDim<dim_t, ic_t<1>>, 1>, BigDimv<R>>;

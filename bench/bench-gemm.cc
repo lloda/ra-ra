@@ -223,7 +223,7 @@ int main()
             auto bs = b();
             auto cs = c();
 
-            auto bv = Benchmark().repeats(reps).runs(3).run([&]{ f(as, bs, cs); });
+            auto bv = Benchmark().reps(reps).runs(3).run([&]{ f(as, bs, cs); });
             tr.info(Benchmark::report(bv, m*n*p), " ", tag)
                 .test_rel(ref, c, rerr);
         };

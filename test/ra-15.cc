@@ -1,5 +1,5 @@
 // -*- mode: c++; coding: utf-8 -*-
-// ra/test - Godbolted version of [ra8] (cf operators.cc)
+// ra/test - Godbolted version of [ra22] (cf operators.cc)
 
 // (c) Daniel Llorens - 2023
 // This library is free software; you can redistribute it and/or modify it under

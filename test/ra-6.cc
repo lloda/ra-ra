@@ -32,7 +32,7 @@ int main()
     ra::Small<int, 2> k { 1, 2 };
     auto l = std::array<int, 2> { 1, 2 };
     auto ll = ra::iter(l);
-    // auto ll = ra::ptr(std::array<int, 2> { 1, 2 }); // FIXME find a way to forbid this [ra9]
+    // auto ll = ra::iter(std::array<int, 2> { 1, 2 }); // FIXME find a way to forbid this [ra8]. Forbidding the copy constructor breaks many things
 
     cout << "X0: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, i, i, i) << endl;
     cout << "X1: " << ra::from([](int i, int j, int k) { return ra::Small<int, 3>{i, j, k}; }, j, j, j) << endl;

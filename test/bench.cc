@@ -26,7 +26,7 @@ int main()
             std::this_thread::sleep_for(std::chrono::nanoseconds(1));
             return a+b;
         };
-        auto b = Benchmark {/* repeats */ 100, /* runs */ 10};
+        auto b = Benchmark {/* reps */ 100, /* runs */ 10};
 
         auto vala = b.run(f, 1, 2);
         cout << "empty: " << (ra::size(vala)==0) << endl;
@@ -43,7 +43,7 @@ int main()
                     return a+b; });
             /* do stuff */
         };
-        auto b = Benchmark {/* repeats */ 100, /* runs */ 10};
+        auto b = Benchmark {/* reps */ 100, /* runs */ 10};
 
         auto vala = b.run_f(g, 1, 2);
         cout << "empty: " << (ra::size(vala)==0) << endl;

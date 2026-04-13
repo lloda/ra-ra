@@ -35,7 +35,7 @@ int main()
 {
     Benchmark bm = Benchmark().runs(3);
     report(4,
-           bm.name("real4 raw").repeats(N*prod(S1)/4)
+           bm.name("real4 raw").reps(N*prod(S1)/4)
            .run_f([&](auto && repeat)
                   {
                       real4 A(7.), B(3.);
@@ -47,7 +47,7 @@ int main()
                       });
                   }));
     report(4,
-           bm.name("real4 expr").repeats(N*prod(S1)/4)
+           bm.name("real4 expr").reps(N*prod(S1)/4)
            .run_f([&](auto && repeat)
                   {
                       real4 A(7.), B(3.);
@@ -57,7 +57,7 @@ int main()
                       });
                   }));
     report(prod(S1),
-           bm.name("C array raw").repeats(N)
+           bm.name("C array raw").reps(N)
            .run_f([&](auto && repeat)
                   {
                       ra::Unique<real, 1> A(S1, 7.);
@@ -92,9 +92,9 @@ int main()
     {
         ra::Unique<real, 1> A(S1, 7.);
         ra::Unique<real, 1> B(S1, 3.);
-        report(prod(S1), bm.name("ra::Unique<1> ply nested 1").repeats(N).once_f(traversal, A, B));
-        report(prod(S1), bm.name("ra::Unique<1> ply nested 2").repeats(N).once_f(traversal2, A, B));
-        report(prod(S1), bm.name("ra::Unique<1> raw").repeats(N)
+        report(prod(S1), bm.name("ra::Unique<1> ply nested 1").reps(N).once_f(traversal, A, B));
+        report(prod(S1), bm.name("ra::Unique<1> ply nested 2").reps(N).once_f(traversal2, A, B));
+        report(prod(S1), bm.name("ra::Unique<1> raw").reps(N)
                .once_f([&](auto && repeat)
                        {
                            y = 0.;
@@ -108,9 +108,9 @@ int main()
     {
         ra::Unique<real, 2> A(S2, 7.);
         ra::Unique<real, 2> B(S2, 3.);
-        report(prod(S2), bm.name("ra::Unique<2> ply nested 1").repeats(N).once_f(traversal, A, B));
-        report(prod(S2), bm.name("ra::Unique<2> ply nested 2").repeats(N).once_f(traversal2, A, B));
-        report(prod(S2), bm.name("ra::Unique<2> raw").repeats(N)
+        report(prod(S2), bm.name("ra::Unique<2> ply nested 1").reps(N).once_f(traversal, A, B));
+        report(prod(S2), bm.name("ra::Unique<2> ply nested 2").reps(N).once_f(traversal2, A, B));
+        report(prod(S2), bm.name("ra::Unique<2> raw").reps(N)
                .once_f([&](auto && repeat)
                        {
                          y = 0.;
@@ -126,9 +126,9 @@ int main()
     {
         ra::Unique<real, 3> A(S3, 7.);
         ra::Unique<real, 3> B(S3, 3.);
-        report(prod(S3), bm.name("ra::Unique<3> ply nested 1").repeats(N).once_f(traversal, A, B));
-        report(prod(S3), bm.name("ra::Unique<3> ply nested 2").repeats(N).once_f(traversal2, A, B));
-        report(prod(S3), bm.name("ra::Unique<3> raw").repeats(N)
+        report(prod(S3), bm.name("ra::Unique<3> ply nested 1").reps(N).once_f(traversal, A, B));
+        report(prod(S3), bm.name("ra::Unique<3> ply nested 2").reps(N).once_f(traversal2, A, B));
+        report(prod(S3), bm.name("ra::Unique<3> raw").reps(N)
                .once_f([&](auto && repeat)
                        {
                            y = 0.;

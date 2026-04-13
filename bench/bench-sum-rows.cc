@@ -25,7 +25,7 @@ int main()
         ra::iter<1>(ref) += ra::iter<1>(a)*reps;
         ra::Big<real, 1> c({n}, ra::none);
 
-        auto bv = Benchmark().repeats(reps).runs(3)
+        auto bv = Benchmark().reps(reps).runs(3)
             .once_f([&](auto && repeat) { c=0.; repeat([&]() { f(c, a); }); });
         tr.info(Benchmark::report(bv, m*n), " ", tag)
             .test_eq(ref, c);
@@ -34,8 +34,7 @@ int main()
     auto bench_all = [&](int m, int n, int reps){
         tr.section(m, " x ", n, " times ", reps);
         bench("raw", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   real const * __restrict__ ap = a.data();
                   real * __restrict__ cp = c.data();
                   ra::dim_t const m = a.len(0);
@@ -47,40 +46,33 @@ int main()
                   }
               });
         bench("sideways", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   for (int j=0, jend=a.len(1); j<jend; ++j) {
                       c(j) += sum(a(ra::all, j));
                   }
               });
         bench("accumrows", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   for_each([&c](auto && a) { c += a; }, ra::iter<1>(a));
               });
         bench("wrank1", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), c, a);
               });
         bench("wrank2", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   for_each(ra::wrank<1, 1>(ra::wrank<0, 0>([](auto & c, auto a) { c += a; })), c, a);
               });
         bench("accumscalar", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   ra::scalar(c) += ra::iter<1>(a);
               });
         bench("accumiter", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   ra::iter<1>(c) += ra::iter<1>(a);
               });
         bench("frametransp", m, n, reps,
-              [](auto & c, auto const & a)
-              {
+              [](auto & c, auto const & a){
                   c += transpose(a);
               });
     };

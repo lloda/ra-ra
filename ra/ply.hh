@@ -20,14 +20,13 @@ struct Nop {};
 
 // run time order/rank.
 
-template <Iterator A, class Early = Nop>
+template <class Early = Nop>
 constexpr auto
-ply_ravel(A && a, Early && early = Nop {})
+ply_ravel(Iterator auto && a, Early && early = Nop {})
 {
     validate(a);
     rank_t rank = ra::rank(a);
-    if (0>=rank) {
-        assert(0==rank);
+    if (0==rank) {
         if constexpr (requires {early.def;}) {
             return (*a).value_or(early.def);
         } else {
@@ -134,8 +133,6 @@ ply_fixed(Iterator auto && a, Early && early = Nop {})
     validate(a);
     constexpr rank_t rank = rank_s(a);
     static_assert(0<=rank, "ply_fixed requires static rank");
-// inside first. FIXME better heuristic - but first need a way to force row-major
-    constexpr auto order = std::apply([](auto ... i){ return std::array<int, rank>{(rank-1-i) ...}; }, mp::iota<rank>{});
     if constexpr (0==rank) {
         if constexpr (requires {early.def;}) {
             return (*a).value_or(early.def);
@@ -143,9 +140,11 @@ ply_fixed(Iterator auto && a, Early && early = Nop {})
             *a; return;
         }
     } else {
+// inside first. FIXME better heuristic - but first need a way to force row-major
+        constexpr auto order = std::apply([](auto ... i){ return std::array<int, rank>{(rank-1-i) ...}; }, mp::iota<rank>{});
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Warray-bounds"
-    auto ss0 = a.step(order[0]); // gcc 14.1 with RA_CHECK=0 and sanitizer on
+        auto ss0 = a.step(order[0]); // gcc 14.1 with RA_CHECK=0 and sanitizer on
 #pragma GCC diagnostic pop
         if constexpr (requires {early.def;}) {
             return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
@@ -162,16 +161,16 @@ constexpr decltype(auto)
 ply(Iterator auto && a, Early && early = Nop {})
 {
     if constexpr (ANY==size_s(a)) {
-        return ply_ravel(a, early);
+        return ply_ravel(RA_FW(a), early);
     } else {
-        return ply_fixed(a, early);
+        return ply_fixed(RA_FW(a), early);
     }
 }
 
-constexpr void for_each(auto && op, auto && ... a) { ply(map(op, a ...)); }
+constexpr void for_each(auto && op, auto && ... a) { ply(map(RA_FW(op), RA_FW(a) ...)); }
 
-template <class T> struct Default { T & def; };
-constexpr decltype(auto) early(Iterator auto && a, auto && def) { return ply(a, Default { def }); }
+template <class T> struct Default { T const & def; };
+constexpr decltype(auto) early(Iterator auto && a, auto && def) { return ply(RA_FW(a), Default { def }); }
 
 
 // --------------------

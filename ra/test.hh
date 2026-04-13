@@ -266,20 +266,20 @@ struct Benchmark
     struct Value
     {
         std::string name;
-        int repeats;
+        int reps;
         clock::duration empty;
-        ra::Big<clock::duration, 1> times;
+        std::vector<clock::duration> times;
     };
 
     static double
     avg(Value const & bv)
     {
-        return toseconds(sum(bv.times))/bv.repeats/bv.times.size();
+        return toseconds(sum(bv.times))/bv.reps/bv.times.size();
     }
     static double
     stddev(Value const & bv)
     {
-        return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.repeats-avg(bv)))/bv.times.size());
+        return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.reps-avg(bv)))/bv.times.size());
     }
     static std::string
     report(Value const & bv, double scale=1., double u=1e-9)
@@ -295,7 +295,7 @@ struct Benchmark
         infos = "";
     }
 
-    int repeats_ = 1, runs_ = 1;
+    int reps_ = 1, runs_ = 1;
     std::string const name_ = "";
     std::string infos = "";
 
@@ -307,9 +307,9 @@ struct Benchmark
         return *this;
     }
 
-    Benchmark name(std::string name_) { return Benchmark { repeats_, runs_, name_, "" }; }
-    Benchmark repeats(int repeats_) { return Benchmark { repeats_, runs_, name_, "" }; }
-    Benchmark runs(int runs_) { return Benchmark { repeats_, runs_, name_, "" }; }
+    Benchmark name(std::string name_) { return Benchmark { reps_, runs_, name_, "" }; }
+    Benchmark reps(int reps_) { return Benchmark { reps_, runs_, name_, "" }; }
+    Benchmark runs(int runs_) { return Benchmark { reps_, runs_, name_, "" }; }
 
     auto
     once(auto && f, auto && ... a)
@@ -317,14 +317,14 @@ struct Benchmark
         auto t0 = clock::now();
         clock::duration empty = clock::now()-t0;
 
-        ra::Big<clock::duration, 1> times;
+        std::vector<clock::duration> times;
         for (int k=0; k<runs_; ++k) {
             auto t0 = clock::now();
-            for (int i=0; i<repeats_; ++i) { f(a ...); }
+            for (int i=0; i<reps_; ++i) { f(a ...); }
             clock::duration full = clock::now()-t0;
             times.push_back(lapse(empty, full));
         }
-        return Value { name_, repeats_, empty, std::move(times) };
+        return Value { name_, reps_, empty, std::move(times) };
     }
     auto
     once_f(auto && g, auto && ... a)
@@ -335,16 +335,16 @@ struct Benchmark
               empty = clock::now()-t0;
           }, a ...);
 
-        ra::Big<clock::duration, 1> times;
+        std::vector<clock::duration> times;
         for (int k=0; k<runs_; ++k) {
             g([&](auto && f) {
                 auto t0 = clock::now();
-                for (int i=0; i<repeats_; ++i) { f(); }
+                for (int i=0; i<reps_; ++i) { f(); }
                 clock::duration full = clock::now()-t0;
                 times.push_back(lapse(empty, full));
             }, a ...);
         }
-        return Value { name_, repeats_, empty, std::move(times) };
+        return Value { name_, reps_, empty, std::move(times) };
     }
     auto
     run(auto && f, auto && ... a)

@@ -110,9 +110,8 @@ Some of these aren't bugs in the sense that I expect to solve them, but more lik
   6. [ ]
   7. [X] test/operators.cc: Some simple expressions with scalars fail in VAL(). The patch in ra.hh
      triggers the address sanitizer in test/ra-9.cc.
-  8. [ ] test/ra-6.cc: ra::Ptr doesn't hold copies. This enables restarting (see [ra39]), so
-     ra::ptr(temp) must only be used as temp. Really forbidding auto ll = ra::ptr(lvalue) would also
-     be ok.
+  8. [ ] test/ra-6.cc: Copying iterators enables restarting (see [ra39]), but also allows danging-ref
+     errors if the pointee is temp. Ideally only those only should be uncopiable.
   9. [ ] test/ra-0.cc: size(SmallArray) requires ra:: to avoid collision with std::size, but not
      size(Big) (??).
   10. [ ] size(ra array) is ambiguous between std::size() and ra::size().

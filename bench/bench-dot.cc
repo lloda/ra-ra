@@ -118,7 +118,7 @@ int main()
             decltype(s) A(a);
             decltype(s) B(b);
             real y(0.);
-            auto bv = Benchmark().repeats(reps).runs(3).run([&]() { y += f(A, B); });
+            auto bv = Benchmark().reps(reps).runs(3).run([&]() { y += f(A, B); });
             tr.info(Benchmark::report(bv, M), " ", tag)
                 .test_rel(a*b*M*reps*3, y, rspec);
         };
@@ -211,7 +211,7 @@ int main()
     auto bench = [&tr](auto && a, auto && b, auto && ref, real rspec, int reps, auto && f)
     {
         real x = 0.;
-        auto bv = Benchmark().repeats(reps).runs(3).run([&]() { x += f(a, b); });
+        auto bv = Benchmark().reps(reps).runs(3).run([&]() { x += f(a, b); });
         tr.info(Benchmark::report(bv), " ", f.name)
             .test_rel(ref*3, x, rspec);
     };
