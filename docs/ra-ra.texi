@@ -606,8 +606,7 @@ T d = 0;
 for_each([](auto && a, auto && b, auto && d) { d = a+b; },
          a, b, d); // same as (1)
 for_each([](auto && ab, auto && d) { d = ab; },
-         map([](auto && a, auto && b) { return a+b; },
-             a, b),
+         map([](auto && a, auto && b) { return a+b; }, a, b),
          d); // same as (1)
 @end verbatim
 @end example
@@ -2561,7 +2560,7 @@ See also @ref{x-real_part,@code{real_part}}.
 
 @cindex @code{map}
 @anchor{x-map} @defun map op expr ...
-Create an array expression that applies callable @var{op} to @var{expr} ...
+Create an array expression that applies @var{op} to @var{expr} ...
 
 For example:
 @example
@@ -3050,7 +3049,7 @@ Return the minimum of the elements of @var{expr}. If @var{expr} is empty, return
 
 @cindex @code{early}
 @anchor{x-early} @defun early expr default
-@var{expr} is an array expression that returns @code{std::optional<T>}. @var{expr} is traversed as by @code{for_each}. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, @var{default} is returned instead. If @code{default} is a reference, @code{early} will return its value. @c FIXME
+@var{expr} is an expression that returns @code{std::optional<T>}. @var{expr} is traversed as by @code{for_each}. If the optional ever contains a value, traversal stops and that value is returned. If traversal is completed, @var{default} is returned. @code{early} cannot return references. @c FIXME
 
 The following definition of elementwise @code{lexical_compare} relies on @code{early}.
 

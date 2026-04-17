@@ -16,21 +16,19 @@
 
 namespace ra {
 
-struct Nop {};
-
 // run time order/rank.
 
-template <class Early = Nop>
+template <class Early = none_t>
 constexpr auto
-ply_ravel(Iterator auto && a, Early && early = Nop {})
+ply_ravel(Iterator auto && a, Early const & early = none)
 {
     validate(a);
     rank_t rank = ra::rank(a);
     if (0==rank) {
-        if constexpr (requires {early.def;}) {
-            return (*a).value_or(early.def);
-        } else {
+        if constexpr (requires { none_t(early); }) {
             *a; return;
+        } else {
+            return (*a).value_or(early);
         }
     }
 // inside first. FIXME better heuristic - but first need a way to force row-major
@@ -49,10 +47,10 @@ ply_ravel(Iterator auto && a, Early && early = Nop {})
     for (int k=0; k<rank; ++k) {
 // ss takes care of the raveled dimensions ss.
         if (0>=(z[k].sha=a.len(ocd[k].order))) {
-            if constexpr (requires {early.def;}) {
-                return early.def;
-            } else {
+            if constexpr (requires { none_t(early); }) {
                 return;
+            } else {
+                return early;
             }
         }
     }
@@ -60,21 +58,21 @@ ply_ravel(Iterator auto && a, Early && early = Nop {})
     for (;;) {
         auto place = a.save();
         for (dim_t s=ss; --s>=0; a.mov(ss0)) {
-            if constexpr (requires {early.def;}) {
+            if constexpr (requires { none_t(early); }) {
+                *a;
+            } else {
                 if (auto stop = *a) {
                     return stop.value();
                 }
-            } else {
-                *a;
             }
         }
         a.load(place); // FIXME wasted if k=0. Cf test/iota.cc
         for (int k=0; ; ++k) {
             if (k>=rank) {
-                if constexpr (requires {early.def;}) {
-                    return early.def;
-                } else {
+                if constexpr (requires { none_t(early); }) {
                     return;
+                } else {
+                    return early;
                 }
             } else if (++z[k].ind<z[k].sha) {
                 a.adv(ocd[k].order, 1);
@@ -91,53 +89,53 @@ ply_ravel(Iterator auto && a, Early && early = Nop {})
 
 template <auto order, int k, int urank, class S, class Early>
 constexpr auto
-subply(Iterator auto & a, dim_t s, S const & ss0, Early & early)
+subply(Iterator auto & a, dim_t s, S const & ss0, Early const & early)
 {
     if constexpr (k < urank) {
         auto place = a.save();
         for (; --s>=0; a.mov(ss0)) {
-            if constexpr (requires {early.def;}) {
+            if constexpr (requires { none_t(early); }) {
+                *a;
+            } else {
                 if (auto stop = *a) {
                     return stop;
                 }
-            } else {
-                *a;
             }
         }
         a.load(place); // FIXME wasted if k was 0 at the top
     } else {
         dim_t size = a.len(order[k]); // TODO precompute above
         for (dim_t i=0; i<size; ++i) {
-            if constexpr (requires {early.def;}) {
+            if constexpr (requires { none_t(early); }) {
+                subply<order, k-1, urank>(a, s, ss0, early);
+            } else {
                 if (auto stop = subply<order, k-1, urank>(a, s, ss0, early)) {
                     return stop;
                 }
-            } else {
-                subply<order, k-1, urank>(a, s, ss0, early);
             }
             a.adv(order[k], 1);
         }
         a.adv(order[k], -size);
     }
-    if constexpr (requires {early.def;}) {
-        return static_cast<decltype(*a)>(std::nullopt);
-    } else {
+    if constexpr (requires { none_t(early); }) {
         return;
+    } else {
+        return static_cast<decltype(*a)>(std::nullopt);
     }
 }
 
-template <class Early = Nop>
-constexpr decltype(auto)
-ply_fixed(Iterator auto && a, Early && early = Nop {})
+template <class Early = none_t>
+constexpr auto
+ply_fixed(Iterator auto && a, Early const & early = none)
 {
     validate(a);
     constexpr rank_t rank = rank_s(a);
     static_assert(0<=rank, "ply_fixed requires static rank");
     if constexpr (0==rank) {
-        if constexpr (requires {early.def;}) {
-            return (*a).value_or(early.def);
-        } else {
+        if constexpr (requires { none_t(early); }) {
             *a; return;
+        } else {
+            return (*a).value_or(early);
         }
     } else {
 // inside first. FIXME better heuristic - but first need a way to force row-major
@@ -146,19 +144,19 @@ ply_fixed(Iterator auto && a, Early && early = Nop {})
 #pragma GCC diagnostic warning "-Warray-bounds"
         auto ss0 = a.step(order[0]); // gcc 14.1 with RA_CHECK=0 and sanitizer on
 #pragma GCC diagnostic pop
-        if constexpr (requires {early.def;}) {
-            return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early.def);
-        } else {
+        if constexpr (requires { none_t(early); }) {
             subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early);
+        } else {
+            return (subply<order, rank-1, 1>(a, a.len(order[0]), ss0, early)).value_or(early);
         }
     }
 }
 
 // defaults.
 
-template <class Early = Nop>
-constexpr decltype(auto)
-ply(Iterator auto && a, Early && early = Nop {})
+template <class Early = none_t>
+constexpr auto
+ply(Iterator auto && a, Early const & early = none)
 {
     if constexpr (ANY==size_s(a)) {
         return ply_ravel(RA_FW(a), early);
@@ -168,9 +166,7 @@ ply(Iterator auto && a, Early && early = Nop {})
 }
 
 constexpr void for_each(auto && op, auto && ... a) { ply(map(RA_FW(op), RA_FW(a) ...)); }
-
-template <class T> struct Default { T const & def; };
-constexpr decltype(auto) early(Iterator auto && a, auto && def) { return ply(RA_FW(a), Default { def }); }
+constexpr auto early(Iterator auto && a, auto const & def) { return ply(RA_FW(a), def); }
 
 
 // --------------------
@@ -606,7 +602,7 @@ operator>>(std::istream & i, C & c)
 {
     if (decltype(shape(c)) s; i >> s) {
         RA_CK(every(iter(s)>=0), "Negative length in input [", ra::fmt(nstyle, s), "].");
-        C cc(s, ra::none);
+        C cc(s, none);
         swap(c, cc);
         for (auto & ci: c) { i >> ci; }
     }

@@ -61,5 +61,11 @@ int main()
         tr.test(!ra::any(odd(a)));
         tr.test(ra::every(!odd(a)));
     }
+    tr.section("index");
+    {
+        ra::Big<int, 1> a = { 1, 3, -1, 9 };
+        tr.test_eq(2, ra::index(a<0));
+        tr.test_eq(-1, ra::index(a>10));
+    }
     return tr.summary();
 }
