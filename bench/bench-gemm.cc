@@ -70,15 +70,15 @@ gemm_block(ra::ViewBig<P, 2> const & a, ra::ViewBig<P, 2> const & b, ra::ViewBig
 // terminal, using reduce_k, see below
     if (max(m, max(p, n))<=64) {
         gemm(a, b, c);
-// split a's rows
+// split m
     } else if (m>=max(p, n)) {
         gemm_block(a(ra::iota(m/2)), b, c(ra::iota(m/2)));
         gemm_block(a(ra::iota(m-m/2, m/2)), b, c(ra::iota(m-m/2, m/2)));
-// split b's columns
+// split n
     } else if (n>=max(m, p)) {
         gemm_block(a, b(all, ra::iota(n/2)), c(all, ra::iota(n/2)));
         gemm_block(a, b(all, ra::iota(n-n/2, n/2)), c(all, ra::iota(n-n/2, n/2)));
-// split a's columns and b's rows
+// split p
     } else {
         gemm_block(a(all, ra::iota(p/2)), b(ra::iota(p/2)), c);
         gemm_block(a(all, ra::iota(p-p/2, p/2)), b(ra::iota(p-p/2, p/2)), c);
@@ -214,6 +214,7 @@ int main()
     };
 
     auto bench_all = [&](int k, int m, int p, int n, int reps){
+        std::vector<Benchmark::Value> v;
         auto bench = [&](auto && f, char const * tag, real rerr=0){
             ra::Big<real, 2> a({m, p}, ra::_0-ra::_1);
             ra::Big<real, 2> b({p, n}, ra::_1-2*ra::_0);
@@ -222,10 +223,9 @@ int main()
             auto as = a();
             auto bs = b();
             auto cs = c();
-
-            auto bv = Benchmark().reps(reps).runs(3).run([&]{ f(as, bs, cs); });
-            tr.info(Benchmark::report(bv, m*n*p), " ", tag)
-                .test_rel(ref, c, rerr);
+            auto bv = Benchmark().name(tag).reps(reps).runs(3).run([&]{ f(as, bs, cs); });
+            tr.info(Benchmark::report(bv, m*n*p), " ", tag).test_rel(ref, c, rerr);
+            v.push_back(bv);
         };
 
         tr.section(m, " (", p, ") ", n, " times ", reps);
@@ -252,6 +252,8 @@ int main()
         bench(ZEROFIRST(gemm_blas), "blas", 100*std::numeric_limits<real>::epsilon()); // ahem
 #endif
         bench(ZEROFIRST(gemm), "default");
+        std::println(std::cout, "  Best is: {}{}{}{}.", ra::esc::cyan, ra::esc::bold,
+                     std::ranges::min_element(v, [](auto & a, auto & b){ return a.avg<b.avg; })->name, ra::esc::reset);
     };
 
     bench_all(3, 4, 4, 4, 100);

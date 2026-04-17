@@ -70,46 +70,58 @@ int main()
     };
 
     auto bench_all = [&](int k, int m, int n, int reps){
-        auto bench_mv = [&tr, &m, &n, &reps](auto && f, char const * tag, trans_t t){
+        auto bench_mv = [&tr, &m, &n, &reps](auto & v, auto && f, char const * tag, trans_t t){
             ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
             auto a = t==TRANS ? transpose(aa) : aa();
             ra::Big<real, 1> b({a.len(1)}, 1-2*ra::_0);
             ra::Big<real, 1> ref = gemv(a, b);
             ra::Big<real, 1> c;
 
-            auto bv = Benchmark().reps(reps).runs(3).run([&]{ c = f(a, b); });
-            tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]")
-                .test_eq(ref, c);
+            auto bv = Benchmark().name(tag).reps(reps).runs(3).run([&]{ c = f(a, b); });
+            tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]").test_eq(ref, c);
+            v.push_back(bv);
         };
 
-        auto bench_vm = [&tr, &m, &n, &reps](auto && f, char const * tag, trans_t t){
+        auto bench_vm = [&tr, &m, &n, &reps](auto & v, auto && f, char const * tag, trans_t t){
             ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
             auto a = t==TRANS ? transpose(aa) : aa();
             ra::Big<real, 1> b({a.len(0)}, 1-2*ra::_0);
             ra::Big<real, 1> ref = gevm(b, a);
             ra::Big<real, 1> c;
 
-            auto bv = Benchmark().reps(reps).runs(4).run([&]{ c = f(b, a); });
-            tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]")
-                .test_eq(ref, c);
+            auto bv = Benchmark().name(tag).reps(reps).runs(4).run([&]{ c = f(b, a); });
+            tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]").test_eq(ref, c);
+            v.push_back(bv);
         };
 
         tr.section(m, " x ", n, " times ", reps);
+// FIXME average TRANS & NOTRANS.
+        auto report = [&](auto const & v){
+            std::println(std::cout, "  Best is: {}{}{}{}.", ra::esc::cyan, ra::esc::bold,
+                         std::ranges::min_element(v, [](auto & a, auto & b){ return a.avg<b.avg; })->name, ra::esc::reset);
+        };
 // some variants are way too slow to check with larger arrays.
         if (k>0) {
-            bench_mv(gemv_i, "mv i", NOTRANS);
-            bench_mv(gemv_i, "mv i", TRANS);
-            bench_mv(gemv_j, "mv j", NOTRANS);
-            bench_mv(gemv_j, "mv j", TRANS);
-            bench_mv([&](auto const & a, auto const & b){ return gemv(a, b); }, "mv default", NOTRANS);
-            bench_mv([&](auto const & a, auto const & b){ return gemv(a, b); }, "mv default", TRANS);
-
-            bench_vm(gevm_i, "vm i", NOTRANS);
-            bench_vm(gevm_i, "vm i", TRANS);
-            bench_vm(gevm_j, "vm j", NOTRANS);
-            bench_vm(gevm_j, "vm j", TRANS);
-            bench_vm([&](auto const & a, auto const & b){ return gevm(a, b); }, "vm default", NOTRANS);
-            bench_vm([&](auto const & a, auto const & b){ return gevm(a, b); }, "vm default", TRANS);
+            {
+                std::vector<Benchmark::Value> v;
+                bench_mv(v, gemv_i, "mv i", NOTRANS);
+                bench_mv(v, gemv_i, "mv i", TRANS);
+                bench_mv(v, gemv_j, "mv j", NOTRANS);
+                bench_mv(v, gemv_j, "mv j", TRANS);
+                bench_mv(v, [&](auto const & a, auto const & b){ return gemv(a, b); }, "mv default", NOTRANS);
+                bench_mv(v, [&](auto const & a, auto const & b){ return gemv(a, b); }, "mv default", TRANS);
+                report(v);
+            }
+            {
+                std::vector<Benchmark::Value> v;
+                bench_vm(v, gevm_i, "vm i", NOTRANS);
+                bench_vm(v, gevm_i, "vm i", TRANS);
+                bench_vm(v, gevm_j, "vm j", NOTRANS);
+                bench_vm(v, gevm_j, "vm j", TRANS);
+                bench_vm(v, [&](auto const & a, auto const & b){ return gevm(a, b); }, "vm default", NOTRANS);
+                bench_vm(v, [&](auto const & a, auto const & b){ return gevm(a, b); }, "vm default", TRANS);
+                report(v);
+            }
         }
     };
 

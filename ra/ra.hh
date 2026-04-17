@@ -283,10 +283,16 @@ operator ||(A && a, B && b) { return VAL(a) || VAL(b);  }
 // --------------------------------
 
 constexpr bool
-any(auto && a) { return early(map([](bool x){ return x ? std::make_optional(true) : std::nullopt; }, RA_FW(a)), false); }
+any(auto && a)
+{
+    return early(map([](bool x){ return x ? std::make_optional(true) : std::nullopt; }, RA_FW(a)), false);
+}
 
 constexpr bool
-every(auto && a) { return early(map([](bool x){ return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true); }
+every(auto && a)
+{
+    return early(map([](bool x){ return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true);
+}
 
 // FIXME variable rank? see J 'index of' (x i. y), etc.
 constexpr dim_t
@@ -401,23 +407,36 @@ reduce_sqrm(auto && a)
     return c;
 }
 
-// FIXME benchmark w/o allocation and do Small/Big versions if it's worth it (see bench-gemm.cc)
+// FIXME Allow eg gemv(conj(a), b). But a(...) requires view.
+
 constexpr void
 gemm(auto const & a, auto const & b, auto & c)
 {
-    dim_t K=a.len(1);
-    for (int k=0; k<K; ++k) {
+    for (int k=0; k<a.len(1); ++k) {
         c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma
+    }
+}
+
+constexpr void
+gevm(auto const & a, auto const & b, auto & c)
+{
+    for (int i=0; i<b.len(0); ++i) {
+        maybe_fma(a[i], b(i), c);
+    }
+}
+
+constexpr void
+gemv(auto const & a, auto const & b, auto & c)
+{
+    for (int j=0; j<a.len(1); ++j) {
+        maybe_fma(a(all, j), b[j], c);
     }
 }
 
 constexpr auto
 gemm(auto const & a, auto const & b)
 {
-    dim_t M=a.len(0), N=b.len(1);
-    using T = decltype(VAL(a)*VAL(b));
-    using MMTYPE = decltype(from(std::multiplies<>(), a(all, 0), b(0)));
-    auto c = with_shape<MMTYPE>({M, N}, T());
+    auto c = with_shape<decltype(from(std::multiplies<>(), a(all, 0), b(0)))>({a.len(0), b.len(1)}, decltype(VAL(a)*VAL(b))());
     gemm(a, b, c);
     return c;
 }
@@ -425,25 +444,16 @@ gemm(auto const & a, auto const & b)
 constexpr auto
 gevm(auto const & a, auto const & b)
 {
-    dim_t M=b.len(0), N=b.len(1);
-    using T = decltype(VAL(a)*VAL(b));
-    auto c = with_shape<decltype(a[0]*b(0))>({N}, T());
-    for (int i=0; i<M; ++i) {
-        maybe_fma(a[i], b(i), c);
-    }
+    auto c = with_shape<decltype(a[0]*b(0))>({b.len(1)}, decltype(VAL(a)*VAL(b))());
+    gevm(a, b, c);
     return c;
 }
 
-// FIXME a must be a view, so it doesn't work with eg gemv(conj(a), b).
 constexpr auto
 gemv(auto const & a, auto const & b)
 {
-    dim_t M=a.len(0), N=a.len(1);
-    using T = decltype(VAL(a)*VAL(b));
-    auto c = with_shape<decltype(a(all, 0)*b[0])>({M}, T());
-    for (int j=0; j<N; ++j) {
-        maybe_fma(a(all, j), b[j], c);
-    }
+    auto c = with_shape<decltype(a(all, 0)*b[0])>({a.len(0)}, decltype(VAL(a)*VAL(b))());
+    gemv(a, b, c);
     return c;
 }
 

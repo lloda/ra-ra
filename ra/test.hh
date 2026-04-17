@@ -251,47 +251,30 @@ struct Benchmark
     using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
                                      std::chrono::high_resolution_clock,
                                      std::chrono::steady_clock>;
-
-    static clock::duration
-    lapse(clock::duration empty, clock::duration full)
-    {
-        return (full>empty) ? full-empty : full;
-    }
-    static double
-    toseconds(clock::duration const & t)
-    {
-        return std::chrono::duration<float, std::ratio<1, 1>>(t).count();
-    }
+    using dur_t = clock::duration;
+    static dur_t lapse(dur_t empty, dur_t full) { return (full>empty) ? full-empty : full; }
+    static double toseconds(dur_t const & t) { return std::chrono::duration<float, std::ratio<1, 1>>(t).count(); }
 
     struct Value
     {
         std::string name;
         int reps;
-        clock::duration empty;
-        std::vector<clock::duration> times;
+        double avg, stddev;
     };
 
-    static double
-    avg(Value const & bv)
-    {
-        return toseconds(sum(bv.times))/bv.reps/bv.times.size();
-    }
-    static double
-    stddev(Value const & bv)
-    {
-        return sqrt(sum(sqr(ra::map(toseconds, bv.times)/bv.reps-avg(bv)))/bv.times.size());
-    }
+    static double avg(auto const & t) { return sum(t)/t.size(); }
+    static double stddev(auto const & t, double m) { return 2>t.size() ? 0 : sqrt(sum(sqr(iter(t)-m))/(t.size()-1)); }
+
     static std::string
-    report(Value const & bv, double scale=1., double u=1e-9)
+    report(Value const & v, double scale=1., double u=1e-9)
     {
-        return std::format("{0:3f} {2} [{1:.2f}]", avg(bv)/scale/u, stddev(bv)/avg(bv),
+        return std::format("{0:3f} {2} [{1:.2f}]", v.avg/scale/u, v.stddev/v.avg,
                            1e-9==u ? "ns" : 1e-6==u ? "us" : 1e-3==u ? "ms" : 1==u ? "s" : "?");
     }
     void
-    report(std::ostream & o, auto const & b, double frac)
+    report(std::ostream & o, auto const & v, double frac)
     {
-        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), iter(ra::map(avg, b)/frac));
-        std::println(o, "{}{::4.2}", (infos=="" ? "" : infos + " : "), iter(ra::map(stddev, b)/frac));
+        std::println(o, "{}{:n:.2f}", (infos=="" ? "" : infos + " : "), iter(ra::map(&Value::avg, v)/frac));
         infos = "";
     }
 
@@ -303,7 +286,7 @@ struct Benchmark
     info(auto && ... a)
     {
         bool empty = (infos=="");
-        infos += format(ra::esc::plain, (empty ? "" : "; "), a ..., ra::esc::plain);
+        infos += format(esc::plain, (empty ? "" : "; "), a ..., esc::plain);
         return *this;
     }
 
@@ -315,47 +298,40 @@ struct Benchmark
     once(auto && f, auto && ... a)
     {
         auto t0 = clock::now();
-        clock::duration empty = clock::now()-t0;
+        dur_t empty = clock::now()-t0;
 
-        std::vector<clock::duration> times;
+        std::vector<double> secs;
         for (int k=0; k<runs_; ++k) {
             auto t0 = clock::now();
             for (int i=0; i<reps_; ++i) { f(a ...); }
-            clock::duration full = clock::now()-t0;
-            times.push_back(lapse(empty, full));
+            secs.push_back(toseconds(lapse(empty, clock::now()-t0)));
         }
-        return Value { name_, reps_, empty, std::move(times) };
+        double m = avg(secs);
+        return Value { name_, reps_, m/reps_, stddev(secs, m)/reps_ };
     }
     auto
     once_f(auto && g, auto && ... a)
     {
-        clock::duration empty;
+        dur_t empty;
         g([&](auto && f) {
               auto t0 = clock::now();
               empty = clock::now()-t0;
           }, a ...);
 
-        std::vector<clock::duration> times;
+        std::vector<double> secs;
         for (int k=0; k<runs_; ++k) {
             g([&](auto && f) {
                 auto t0 = clock::now();
                 for (int i=0; i<reps_; ++i) { f(); }
-                clock::duration full = clock::now()-t0;
-                times.push_back(lapse(empty, full));
+                secs.push_back(toseconds(lapse(empty, clock::now()-t0)));
             }, a ...);
         }
-        return Value { name_, reps_, empty, std::move(times) };
+        double m = avg(secs);
+        return Value { name_, reps_, m/reps_, stddev(secs, m)/reps_ };
     }
-    auto
-    run(auto && f, auto && ... a)
-    {
-        return ra::concrete(ra::from([this, &f](auto && ... b){ return this->once(f, b ...); }, a ...));
-    }
-    auto
-    run_f(auto && f, auto && ... a)
-    {
-        return ra::concrete(ra::from([this, &f](auto && ... b){ return this->once_f(f, b ...); }, a ...));
-    }
+
+    auto run(auto && f, auto && ... a) { return concrete(from([this, &f](auto && ... b){ return this->once(f, b ...); }, a ...)); }
+    auto run_f(auto && f, auto && ... a) { return concrete(from([this, &f](auto && ... b){ return this->once_f(f, b ...); }, a ...)); }
 };
 
 template <> constexpr bool is_scalar_def<Benchmark::Value> = true;

@@ -53,12 +53,12 @@ int main()
     TestRecorder tr(std::cout);
     static_assert(std::formattable<Yes, char>);
     static_assert(!std::formattable<No, char>);
-    std::print(stdout, "a number {:015.9}\n", std::numbers::pi_v<double>);
-    std::print(stdout, "a Yes {}\n", Yes { 3 });
+    std::print(stdout, "number {:015.9}\n", std::numbers::pi_v<double>);
+    std::print(stdout, "Yes {}\n", Yes { 3 });
 
-    std::print(stdout, "a small of Yes {:}\n", ra::Small<Yes, 2> {Yes{1}, Yes{2}});
-    std::print(stdout, "a small of No {:}\n", ra::Small<No, 2> {No{1}, No{2}});
-    std::print(stdout, "a small of complex {:}\n", ra::Small<std::complex<double>, 2> {{1, -1}, {-1, 1}});
+    std::print(stdout, "small of Yes {:}\n", ra::Small<Yes, 2> {Yes{1}, Yes{2}});
+    std::print(stdout, "small of No {:}\n", ra::Small<No, 2> {No{1}, No{2}});
+    std::print(stdout, "small of complex {:}\n", ra::Small<std::complex<double>, 2> {{1, -1}, {-1, 1}});
     if constexpr (std::formattable<std::complex<double>, char>) {
         std::print(stdout, "a complex {}\n", std::complex {1, -1});
     } else {
@@ -68,17 +68,26 @@ int main()
     tr.test_seq("No1 No2", std::format("{}", ra::Small<No, 2> {No{1}, No{2}}));
     tr.test_seq("(1,-1) (-1,1)", std::format("{}", ra::Small<std::complex<double>, 2> {{1, -1}, {-1, 1}}));
 
-    std::print(stdout, "a small {:}\n", ra::Small<ra::dim_t, 1> {1});
-    std::print(stdout, "a small {:}\n", ra::Small<int, 3> {1, 2, 3});
-    std::print(stdout, "a small {::}\n", ra::Small<int, 3> {1, 2, 3});
-    std::print(stdout, "a small {::9}\n", ra::Small<int, 3> {1, 2, 3});
-    std::print(stdout, "a small {::<9}\n", ra::Small<int, 3> {1, 2, 3});
-    std::print(stdout, "a big\n{::7}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big\n{:s:7}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big\n{:p:5}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big\n{:pe:5}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big\n{::5}\n", ra::Big<int>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big(small)\n{:cs:p:06.3f}\n", ra::Big<double2>({3, 4}, ra::_0 + ra::_1));
-    std::print(stdout, "a big\n{}\n", ra::fmt(ra::cstyle, ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1)));
+    std::print(stdout, "small {:}\n", ra::Small<ra::dim_t, 1> {1});
+    std::print(stdout, "small {:}\n", ra::Small<int, 3> {1, 2, 3});
+    std::print(stdout, "small {::}\n", ra::Small<int, 3> {1, 2, 3});
+    std::print(stdout, "small {::9}\n", ra::Small<int, 3> {1, 2, 3});
+    std::print(stdout, "small {::<9}\n", ra::Small<int, 3> {1, 2, 3});
+    std::print(stdout, "big\n{::7}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "big\n{:s:7}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "big\n{:p:5}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "big\n{:pe:5}\n", ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "big\n{::5}\n", ra::Big<int>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "big(small)\n{:cs:p:06.3f}\n", ra::Big<double2>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "big\n{}\n", ra::fmt(ra::cstyle, ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1)));
+
+    std::print(stdout, "expr\n{}\n", 1+ra::Big<int>({3, 4}, ra::_0 + ra::_1));
+    std::print(stdout, "nested expr\n{:p:l}\n", scalar(int2{+1, -1})+ra::Big<int2>({3, 4}, ra::_0 + ra::_1));
+
+    // BUG
+    // auto f = [](int i){ return ra::Small<double, 2>{1+i, 3+i}; };
+    // ra::Big<int, 1> a = {1, 2, 3};
+    // std::cout << map(f, a)*2 << std::endl;
+
     return tr.summary();
 }

@@ -17,6 +17,16 @@
 
 using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 
+// FIXME use mad instead
+inline double
+median(auto & t)
+{
+    if (t.empty()) { return 0; }
+    size_t n = t.size()/2;
+    std::ranges::nth_element(t, t.begin()+n);
+    return t.size()^1 ? t[n] : (std::ranges::nth_element(t, t.begin()+n-1), (t[n]+t[n-1])/2.);
+}
+
 int main()
 {
     TestRecorder tr;
