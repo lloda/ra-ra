@@ -21,7 +21,6 @@
 
 using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t, ra::all;
-using real = double;
 
 void
 gemm1(auto && a, auto && b, auto & c)
@@ -187,9 +186,9 @@ gemm_blas(ra::ViewBig<P, 2> const & A, ra::ViewBig<P, 2> const & B, ra::ViewBig<
     }
     if (C.size()>0) {
         if constexpr (std::is_same_v<P, double *>) {
-            cblas_dgemm(orderc, ta, tb, C.len(0), C.len(1), K, real(1.), A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
+            cblas_dgemm(orderc, ta, tb, C.len(0), C.len(1), K, 1., A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
         } else if constexpr (std::is_same_v<P, float *>) {
-            cblas_sgemm(orderc, ta, tb, C.len(0), C.len(1), K, real(1.), A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
+            cblas_sgemm(orderc, ta, tb, C.len(0), C.len(1), K, 1., A.data(), lda, B.data(), ldb, 0, C.data(), ldc);
         } else {
             static_assert(false, "Bad type for BLAS");
         }
@@ -215,11 +214,11 @@ int main()
 
     auto bench_all = [&](int k, int m, int p, int n, int reps){
         std::vector<Benchmark::Value> v;
-        auto bench = [&](auto && f, char const * tag, real rerr=0){
-            ra::Big<real, 2> a({m, p}, ra::_0-ra::_1);
-            ra::Big<real, 2> b({p, n}, ra::_1-2*ra::_0);
-            ra::Big<real, 2> ref = gemm(a, b);
-            ra::Big<real, 2> c({m, n}, 0.);
+        auto bench = [&](auto && f, char const * tag, double rerr=0){
+            ra::Big<double, 2> a({m, p}, ra::_0-ra::_1);
+            ra::Big<double, 2> b({p, n}, ra::_1-2*ra::_0);
+            ra::Big<double, 2> ref = gemm(a, b);
+            ra::Big<double, 2> c({m, n}, 0.);
             auto as = a();
             auto bs = b();
             auto cs = c();
@@ -236,12 +235,12 @@ int main()
             bench(NOTZEROFIRST(gemm_k), "k");
         }
         if (k>0) {
-            bench(ZEROFIRST((gemm_k_raw<real *,  real const *>)), "k_raw");
-            bench(ZEROFIRST((gemm_k_raw<real * __restrict__,  real const * __restrict__>)), "k_raw_restrict");
+            bench(ZEROFIRST((gemm_k_raw<double *,  double const *>)), "k_raw");
+            bench(ZEROFIRST((gemm_k_raw<double * __restrict__,  double const * __restrict__>)), "k_raw_restrict");
         }
         if (k>0) {
-            bench(ZEROFIRST((gemm_ij_raw<real *,  real const *>)), "ij_raw");
-            bench(ZEROFIRST((gemm_ij_raw<real * __restrict__,  real const * __restrict__>)), "ij_raw_restrict");
+            bench(ZEROFIRST((gemm_ij_raw<double *,  double const *>)), "ij_raw");
+            bench(ZEROFIRST((gemm_ij_raw<double * __restrict__,  double const * __restrict__>)), "ij_raw_restrict");
         }
         bench(ZEROFIRST(gemm_block), "block");
         bench(ZEROFIRST(gemm1), "gemm1");
@@ -249,7 +248,7 @@ int main()
         bench(ZEROFIRST(gemm3), "gemm3");
         bench(ZEROFIRST(gemm4), "gemm4");
 #if RA_USE_BLAS==1
-        bench(ZEROFIRST(gemm_blas), "blas", 100*std::numeric_limits<real>::epsilon()); // ahem
+        bench(ZEROFIRST(gemm_blas), "blas", 100*std::numeric_limits<double>::epsilon()); // ahem
 #endif
         bench(ZEROFIRST(gemm), "default");
         std::println(std::cout, "  Best is: {}{}{}{}.", ra::esc::cyan, ra::esc::bold,

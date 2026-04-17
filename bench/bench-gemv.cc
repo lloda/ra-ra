@@ -17,8 +17,6 @@
 using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 using ra::Small, ra::ViewBig, ra::Unique;
 
-using real = double;
-
 // -------------------
 // variants of the defaults, should be slower if the default is well picked.
 // TODO compare with external GEMV/GEVM
@@ -71,11 +69,11 @@ int main()
 
     auto bench_all = [&](int k, int m, int n, int reps){
         auto bench_mv = [&tr, &m, &n, &reps](auto & v, auto && f, char const * tag, trans_t t){
-            ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
+            ra::Big<double, 2> aa({m, n}, ra::_0-ra::_1);
             auto a = t==TRANS ? transpose(aa) : aa();
-            ra::Big<real, 1> b({a.len(1)}, 1-2*ra::_0);
-            ra::Big<real, 1> ref = gemv(a, b);
-            ra::Big<real, 1> c;
+            ra::Big<double, 1> b({a.len(1)}, 1-2*ra::_0);
+            ra::Big<double, 1> ref = gemv(a, b);
+            ra::Big<double, 1> c;
 
             auto bv = Benchmark().name(tag).reps(reps).runs(3).run([&]{ c = f(a, b); });
             tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]").test_eq(ref, c);
@@ -83,11 +81,11 @@ int main()
         };
 
         auto bench_vm = [&tr, &m, &n, &reps](auto & v, auto && f, char const * tag, trans_t t){
-            ra::Big<real, 2> aa({m, n}, ra::_0-ra::_1);
+            ra::Big<double, 2> aa({m, n}, ra::_0-ra::_1);
             auto a = t==TRANS ? transpose(aa) : aa();
-            ra::Big<real, 1> b({a.len(0)}, 1-2*ra::_0);
-            ra::Big<real, 1> ref = gevm(b, a);
-            ra::Big<real, 1> c;
+            ra::Big<double, 1> b({a.len(0)}, 1-2*ra::_0);
+            ra::Big<double, 1> ref = gevm(b, a);
+            ra::Big<double, 1> c;
 
             auto bv = Benchmark().name(tag).reps(reps).runs(4).run([&]{ c = f(b, a); });
             tr.info(Benchmark::report(bv, m*n), " ", tag, t==TRANS ? " [T]" : " [N]").test_eq(ref, c);

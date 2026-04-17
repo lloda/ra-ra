@@ -80,14 +80,8 @@ int main()
     std::print(stdout, "big\n{::5}\n", ra::Big<int>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "big(small)\n{:cs:p:06.3f}\n", ra::Big<double2>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "big\n{}\n", ra::fmt(ra::cstyle, ra::Big<int, 2>({3, 4}, ra::_0 + ra::_1)));
-
     std::print(stdout, "expr\n{}\n", 1+ra::Big<int>({3, 4}, ra::_0 + ra::_1));
     std::print(stdout, "nested expr\n{:p:l}\n", scalar(int2{+1, -1})+ra::Big<int2>({3, 4}, ra::_0 + ra::_1));
-
-    // BUG
-    // auto f = [](int i){ return ra::Small<double, 2>{1+i, 3+i}; };
-    // ra::Big<int, 1> a = {1, 2, 3};
-    // std::cout << map(f, a)*2 << std::endl;
 
     return tr.summary();
 }
