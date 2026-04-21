@@ -316,7 +316,7 @@ amin(auto && a)
 {
     using T = ncvalue_t<decltype(a)>;
     T c = std::numeric_limits<T>::has_infinity ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::max();
-    for_each([&c](auto && a){ if (a<c) { c=a; } }, a);
+    for_each([&c](auto && a){ if (a<c) { c=a; } }, RA_FW(a));
     return c;
 }
 
@@ -325,7 +325,7 @@ amax(auto && a)
 {
     using T = ncvalue_t<decltype(a)>;
     T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
-    for_each([&c](auto && a){ if (c<a) { c=a; } }, a);
+    for_each([&c](auto && a){ if (c<a) { c=a; } }, RA_FW(a));
     return c;
 }
 
@@ -356,16 +356,16 @@ refmax(A && a, Less && less = {})
 constexpr auto
 sum(auto && a)
 {
-    auto c = concrete_type<ncvalue_t<decltype(a)>>(0);
-    for_each([&c](auto && a){ c+=a; }, a);
+    auto c = ncvalue_t<decltype(a)>(0);
+    for_each([&c](auto && a){ c+=a; }, RA_FW(a));
     return c;
 }
 
 constexpr auto
 prod(auto && a)
 {
-    auto c = concrete_type<ncvalue_t<decltype(a)>>(1);
-    for_each([&c](auto && a){ c*=a; }, a);
+    auto c = ncvalue_t<decltype(a)>(1);
+    for_each([&c](auto && a){ c*=a; }, RA_FW(a));
     return c;
 }
 
@@ -376,9 +376,10 @@ prod(auto && a)
   #define RA_FMA 0
 #endif
 
-constexpr void maybe_fma(auto && a, auto && b, auto & c) { if constexpr (RA_FMA) c=fma(a, b, c); else c+=a*b; }
-constexpr void maybe_fma_conj(auto && a, auto && b, auto & c) { if constexpr (RA_FMA) c=fma_conj(a, b, c); else c+=conj(a)*b; }
-constexpr void maybe_fma_sqrm(auto && a, auto & c) { if constexpr (RA_FMA) c=fma_sqrm(a, c); else c+=sqrm(a); }
+// FIXME tends to be slower, should par/simd before (see ply).
+constexpr void maybe_fma(auto && a, auto && b, auto && c) { if constexpr (RA_FMA) c=fma(a, b, c); else c+=a*b; }
+constexpr void maybe_fma_conj(auto && a, auto && b, auto && c) { if constexpr (RA_FMA) c=fma_conj(a, b, c); else c+=conj(a)*b; }
+constexpr void maybe_fma_sqrm(auto && a, auto && c) { if constexpr (RA_FMA) c=fma_sqrm(a, c); else c+=sqrm(a); }
 
 constexpr auto norm2(auto && a) { return std::sqrt(reduce_sqrm(a)); }
 constexpr auto normv(auto const & a) { auto b = concrete(a); return b /= norm2(b); }
@@ -386,7 +387,7 @@ constexpr auto normv(auto const & a) { auto b = concrete(a); return b /= norm2(b
 constexpr auto
 dot(auto && a, auto && b)
 {
-    std::decay_t<decltype(VAL(a) * VAL(b))> c(0.);
+    auto c = decltype(VAL(a) * VAL(b))();
     for_each([&c](auto && a, auto && b){ maybe_fma(a, b, c); }, RA_FW(a), RA_FW(b));
     return c;
 }
@@ -394,7 +395,7 @@ dot(auto && a, auto && b)
 constexpr auto
 cdot(auto && a, auto && b)
 {
-    std::decay_t<decltype(conj(VAL(a)) * VAL(b))> c(0.);
+    auto c = decltype(conj(VAL(a)) * VAL(b))();
     for_each([&c](auto && a, auto && b){ maybe_fma_conj(a, b, c); }, RA_FW(a), RA_FW(b));
     return c;
 }
@@ -402,59 +403,64 @@ cdot(auto && a, auto && b)
 constexpr auto
 reduce_sqrm(auto && a)
 {
-    std::decay_t<decltype(sqrm(VAL(a)))> c(0.);
+    auto c = decltype(sqrm(VAL(a)))();
     for_each([&c](auto && a){ maybe_fma_sqrm(a, c); }, RA_FW(a));
     return c;
 }
 
-// FIXME Allow eg gemv(conj(a), b). But a(...) requires view.
-
-constexpr void
-gemm(auto const & a, auto const & b, auto & c)
+constexpr decltype(auto)
+gemm(auto const & a, auto const & b, auto && c)
 {
-    for (int k=0; k<a.len(1); ++k) {
-        c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma
+    if constexpr (Slice<decltype(c)>) {
+        c(all, insert<1>) += a * b(insert<1>);
+    } else {
+        iter(c) += a(all, insert<1>) * transpose(b, ilist<2, 1>);
     }
+    return RA_FW(c);
 }
 
-constexpr void
-gevm(auto const & a, auto const & b, auto & c)
+constexpr decltype(auto)
+gemv(auto const & a, auto const & b, auto && c)
 {
-    for (int i=0; i<b.len(0); ++i) {
-        maybe_fma(a[i], b(i), c);
+    if constexpr (Slice<decltype(b)>) {
+        c += a * b(insert<1>);
+    } else if constexpr (Slice<decltype(c)>) {
+        c(insert<1>) += transpose(a) * b;
+    } else {
+        for_each([&](auto && a, auto && b) { iter(c) += a * b; }, iter<1>(transpose(a)), b);
     }
+    return RA_FW(c);
 }
 
-constexpr void
-gemv(auto const & a, auto const & b, auto & c)
+constexpr decltype(auto)
+gevm(auto const & a, auto const & b, auto && c)
 {
-    for (int j=0; j<a.len(1); ++j) {
-        maybe_fma(a(all, j), b[j], c);
+    if constexpr (Slice<decltype(c)>) {
+        c(insert<1>) += a * b;
+    } else if constexpr (Slice<decltype(a)>) {
+        c += a(insert<1>) * transpose(b);
+    } else {
+        for_each([&](auto && a, auto && b) { iter(c) += a * b; }, a, iter<1>(b));
     }
+    return RA_FW(c);
 }
 
 constexpr auto
 gemm(auto const & a, auto const & b)
 {
-    auto c = with_shape<decltype(from(std::multiplies<>(), a(all, 0), b(0)))>({a.len(0), b.len(1)}, decltype(VAL(a)*VAL(b))());
-    gemm(a, b, c);
-    return c;
-}
-
-constexpr auto
-gevm(auto const & a, auto const & b)
-{
-    auto c = with_shape<decltype(a[0]*b(0))>({b.len(1)}, decltype(VAL(a)*VAL(b))());
-    gevm(a, b, c);
-    return c;
+    return gemm(a, b, with_shape<a.len_s(0), b.len_s(1)>(iter({a.len(0), b.len(1)}), decltype(VAL(a)*VAL(b))()));
 }
 
 constexpr auto
 gemv(auto const & a, auto const & b)
 {
-    auto c = with_shape<decltype(a(all, 0)*b[0])>({a.len(0)}, decltype(VAL(a)*VAL(b))());
-    gemv(a, b, c);
-    return c;
+    return gemv(a, b, with_shape<a.len_s(0)>(iter({a.len(0)}), decltype(VAL(a)*VAL(b))()));
+}
+
+constexpr auto
+gevm(auto const & a, auto const & b)
+{
+    return gevm(a, b, with_shape<b.len_s(1)>(iter({b.len(1)}), decltype(VAL(a)*VAL(b))()));
 }
 
 

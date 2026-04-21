@@ -245,7 +245,7 @@ struct TestRecorder
     }
 };
 
-// TODO measure empty loops, better reporting. Let benchmarked functions return results
+// TODO Better reporting. Let benchmarked functions return results. Pick report unit automatically
 struct Benchmark
 {
     using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
@@ -264,12 +264,12 @@ struct Benchmark
 
     static double avg(auto const & t) { return sum(t)/t.size(); }
     static double stddev(auto const & t, double m) { return 2>t.size() ? 0 : sqrt(sum(sqr(iter(t)-m))/(t.size()-1)); }
+    static char const * unit(double u) { return 1e-9==u ? "ns" : 1e-6==u ? "us" : 1e-3==u ? "ms" : 1==u ? "s" : "?"; }
 
     static std::string
     report(Value const & v, double scale=1., double u=1e-9)
     {
-        return std::format("{0:3f} {2} [{1:.2f}]", v.avg/scale/u, v.stddev/v.avg,
-                           1e-9==u ? "ns" : 1e-6==u ? "us" : 1e-3==u ? "ms" : 1==u ? "s" : "?");
+        return std::format("{0:.3f} {2} [{1:.2f}]", v.avg/scale/u, v.stddev/v.avg, unit(u));
     }
     void
     report(std::ostream & o, auto const & v, double frac)
@@ -285,38 +285,19 @@ struct Benchmark
     Benchmark &
     info(auto && ... a)
     {
-        bool empty = (infos=="");
-        infos += format(esc::plain, (empty ? "" : "; "), a ..., esc::plain);
+        infos += format(esc::plain, ((infos=="") ? "" : "; "), a ..., esc::plain);
         return *this;
     }
 
-    Benchmark name(std::string name_) { return Benchmark { reps_, runs_, name_, "" }; }
-    Benchmark reps(int reps_) { return Benchmark { reps_, runs_, name_, "" }; }
-    Benchmark runs(int runs_) { return Benchmark { reps_, runs_, name_, "" }; }
+    Benchmark reps(int reps_) { return Benchmark { reps_, runs_, name_ }; }
+    Benchmark runs(int runs_) { return Benchmark { reps_, runs_, name_ }; }
+    Benchmark name(std::string name_) { return Benchmark { reps_, runs_, name_ }; }
 
-    auto
-    once(auto && f, auto && ... a)
-    {
-        auto t0 = clock::now();
-        dur_t empty = clock::now()-t0;
-
-        std::vector<double> secs;
-        for (int k=0; k<runs_; ++k) {
-            auto t0 = clock::now();
-            for (int i=0; i<reps_; ++i) { f(a ...); }
-            secs.push_back(toseconds(lapse(empty, clock::now()-t0)));
-        }
-        double m = avg(secs);
-        return Value { name_, reps_, m/reps_, stddev(secs, m)/reps_ };
-    }
     auto
     once_f(auto && g, auto && ... a)
     {
         dur_t empty;
-        g([&](auto && f) {
-              auto t0 = clock::now();
-              empty = clock::now()-t0;
-          }, a ...);
+        g([&](auto && f) { auto t0 = clock::now(); empty = clock::now()-t0; }, a ...);
 
         std::vector<double> secs;
         for (int k=0; k<runs_; ++k) {
@@ -330,6 +311,7 @@ struct Benchmark
         return Value { name_, reps_, m/reps_, stddev(secs, m)/reps_ };
     }
 
+    auto once(auto && f, auto && ... a) { return once_f([&](auto && repeat, auto && ... a){ repeat([&]{ f(a ...); }); }, a ...); }
     auto run(auto && f, auto && ... a) { return concrete(from([this, &f](auto && ... b){ return this->once(f, b ...); }, a ...)); }
     auto run_f(auto && f, auto && ... a) { return concrete(from([this, &f](auto && ... b){ return this->once_f(f, b ...); }, a ...)); }
 };

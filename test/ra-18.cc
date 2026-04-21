@@ -18,15 +18,16 @@ using std::cout, std::endl;
 int main()
 {
     ra::TestRecorder tr(std::cout);
-
-    auto f = [](int i){ return ra::Small<double, 2>{1+i, 3+i}; };
-    ra::Big<int, 1> a = {1};
-    tr.section("ok");
-    cout << map(f, a) << endl;
-    tr.section("ok");
-    cout << map([](auto const & x) { return concrete(x*2); }, map(f, a)) << endl;
-    tr.section("bug");
-    cout << *(map(f, a)*2) << endl; // <----- the bug skip -gfi /opt skip -gfi /usr
-
+    tr.section("the bug");
+    {
+        auto f = [](int i){ return ra::Small<double, 2>{1+i, 3+i}; };
+        ra::Big<int, 1> a = {1};
+        tr.section("ok");
+        cout << map(f, a) << endl;
+        tr.section("ok");
+        cout << map([](auto const & x) { return concrete(x*2); }, map(f, a)) << endl;
+        tr.section("bug");
+        cout << *(map(f, a)*2) << endl; // <----- the bug skip -gfi /opt skip -gfi /usr
+    }
     return tr.summary();
 }

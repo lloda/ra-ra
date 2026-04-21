@@ -37,7 +37,7 @@ c2s2(real3 const c)
 
 ra::Big<real, 2> rr = { { 0., 0., 1. } };
 ra::Big<complex, 3> a({20, 1, 3}, 0.);
-ra::Big<complex, 2> dip({20, 2}, 1.);
+ra::Big<complex, 2> dip({20, 3}, 1.);
 
 void
 far(real const f, ra::ViewBig<real *, 2> const & rr, ra::ViewBig<complex *, 3> const & a)

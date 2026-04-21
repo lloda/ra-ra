@@ -22,8 +22,6 @@ using std::cout, std::endl, std::flush, ra::TestRecorder, ra::Benchmark;
 
 constexpr auto PI = std::numbers::pi_v<double>;
 
-Benchmark::clock::duration tmul(0);
-
 double const d23=2./3., d16=-1./6., d00=0.;
 double const d827=8./27., d427=4./27., d227=2./27., d127=1./27.;
 double const SM[8][8] = { {d23, d00, d16, d00, d00, d16, d16, d16},
@@ -42,7 +40,6 @@ double const MM[8][8] = { {d827, d427, d227, d427, d427, d227, d127, d227},
                           {d227, d427, d227, d127, d427, d827, d427, d227},
                           {d127, d227, d427, d227, d227, d427, d827, d427},
                           {d227, d127, d227, d427, d427, d227, d427, d827} };
-
 int const ISF[8][3] = { {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
                         {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1} };
 
@@ -60,36 +57,29 @@ struct Matrix0bnd
     ra::Big<int, 1> & B;       // indices of boundary elements.
 };
 
-template <class A, class V, class W>
-void gemv(A const & a, V const & v, W & w)
+void
+mult0(Matrix0bnd & A, auto const & v, auto & w)
 {
-    auto pa = a.data();
-    for (int i=0; i<a.len(0); ++i) {
-        double tmp=0.;
-        for (int j=0; j<a.len(1); ++j) {
-            tmp += pa[j*a.len(1)+i]*v[j];
-            // tmp += a(i, j)*v[j]; // FIXME is a 1/3 slower; maybe what makes ra::gemv slower overall
-        }
-        w[i] = tmp;
-    }
-}
-
-template <class V, class W>
-void mult(Matrix0bnd & A, V const & v, W & w)
-{
-    auto t0 = Benchmark::clock::now();
     w = 0.;
-    for_each([&](auto && E)
-             {
-                 ra::iter(E.reg1) = v(E.v);                // vector -> element
-                 gemv(A.M, E.reg1, E.reg2);                 // element matrix
-                 // ra::iter(E.reg2) = ra::gemv(A.M, E.reg1); // FIXME somewhat slower
-                 w(E.v) += E.reg2;                          // element -> vector
-             },
-             A.E);
+// slower at -O3 :-/
+    for_each([&](auto && E){ gemv(A.M, v(E.v), w(E.v)); }, A.E); // w(E.v) += A.m · E.reg1
     w(A.B) = 0; // set boundary
     w *= A.h;   // scale factor
-    tmul += Benchmark::clock::now()-t0;
+}
+
+void
+mult1(Matrix0bnd & A, auto const & v, auto & w)
+{
+    w = 0.;
+// faster at -O3
+    for_each([&](auto && E){
+        ra::iter(E.reg1) = v(E.v);
+        ra::iter(E.reg2) = 0;
+        gemv(A.M, E.reg1, E.reg2);
+        w(E.v) += E.reg2;
+    }, A.E);
+    w(A.B) = 0; // set boundary
+    w *= A.h;   // scale factor
 }
 
 struct StiffMatrix: Matrix0bnd
@@ -104,17 +94,17 @@ struct MassMatrix: Matrix0bnd
         : Matrix0bnd { MM, h*h*h, E, B } {};
 };
 
-inline int pos(int n, int i, int j, int k)
+constexpr int pos(int n, int i, int j, int k)
 {
     return n*(n*i + j) + k;
 }
 
 // CosCosCosSolution, CosCosCos in [-1, 1]^3
-double g(double x, double y, double z)
+inline double g(double x, double y, double z)
 {
     return cos(.5*PI*x)*cos(.5*PI*y)*cos(.5*PI*z);
 }
-double f(double x, double y, double z)
+inline double f(double x, double y, double z)
 {
     return .25*3.*PI*PI*cos(.5*PI*x)*cos(.5*PI*y)*cos(.5*PI*z);
 }
@@ -122,8 +112,6 @@ double f(double x, double y, double z)
 int main()
 {
     TestRecorder tr(std::cout);
-
-    auto t0 = Benchmark::clock::now();
 
     int n = 50;
     double EPS = 1e-5;
@@ -158,33 +146,38 @@ int main()
         }
     }
 
-    ra::Big<double, 1> b({(n+1)*(n+1)*(n+1)}, 0.); // right hand side
-    ra::Big<double, 1> x({(n+1)*(n+1)*(n+1)}, 0.); // solution vector
-
+    auto bench = [&](auto && mult){
+        auto t0 = Benchmark::clock::now();
+        ra::Big<double, 1> b({(n+1)*(n+1)*(n+1)}, 0.); // right hand side
+        ra::Big<double, 1> x({(n+1)*(n+1)*(n+1)}, 0.); // solution vector
 // set right side.
-    ra::Big<double, 1> aux = map([](auto && Vi) { return f(Vi[0], Vi[1], Vi[2]); }, V);
-
+        ra::Big<double, 1> aux = map([](auto && Vi) { return f(Vi[0], Vi[1], Vi[2]); }, V);
 // integral ~ product with mass matrix.
-    MassMatrix MM(h, E, B);
-    mult(MM, aux, b);
-
+        MassMatrix MM(h, E, B);
+        auto t1 = Benchmark::clock::now();
+        mult(MM, aux, b);
+        auto tmul = Benchmark::clock::now()-t1;
 // solve.
-    StiffMatrix SM(h, E, B);
-    ra::Big<double, 2> work({3, (n+1)*(n+1)*(n+1)}, ra::none);
-    auto t1 = Benchmark::clock::now();
-    int its = cghs(SM, b, x, work, EPS);
-    auto tsolve = Benchmark::clock::now()-t1;
-
+        StiffMatrix SM(h, E, B);
+        ra::Big<double, 2> work({3, (n+1)*(n+1)*(n+1)}, ra::none);
+        t1 = Benchmark::clock::now();
+        int its = cghs(mult, SM, b, x, work, EPS);
+        auto tsolve = Benchmark::clock::now()-t1;
 // compare with exact solution.
-    ra::Big<double, 1> c = map([](auto && Vi) { return g(Vi[0], Vi[1], Vi[2]); }, V);
-    double err = amax(abs(c-x));
+        ra::Big<double, 1> c = map([](auto && Vi) { return g(Vi[0], Vi[1], Vi[2]); }, V);
+        double err = amax(abs(c-x));
 
-    auto ttot = Benchmark::clock::now()-t0;
-    cout << "total time " << Benchmark::toseconds(ttot)/1e-3 << " " << "ms" << endl;
-    cout << "solve time " << Benchmark::toseconds(tsolve)/1e-3 << " " << "ms" << endl;
-    cout << "mul time " << Benchmark::toseconds(tmul)/1e-3 << " " << "ms" << endl;
+        auto ttot = Benchmark::clock::now()-t0;
+        cout << "total time " << Benchmark::toseconds(ttot)/1e-3 << " " << "ms" << endl;
+        cout << "solve time " << Benchmark::toseconds(tsolve)/1e-3 << " " << "ms" << endl;
+        cout << "mul time " << Benchmark::toseconds(tmul)/1e-3 << " " << "ms" << endl;
 
-    tr.info("err ", err).test_le(err, 0.00033);
-    tr.info("its ", its).test_le(its, 1);
+        tr.info("err ", err).test_le(err, 0.00033);
+        tr.info("its ", its).test_le(its, 1);
+    };
+
+    bench([](auto & ... a) { return mult0(a ...); });
+    bench([](auto & ... a) { return mult1(a ...); });
+
     return tr.summary();
 }

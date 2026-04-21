@@ -265,52 +265,126 @@ int main()
             tr.test_eq(ra::Small<R, 3> {-20, -10, 0}, z);
         };
         test(double(0), double(0), double(0));
-        test(std::complex<double>(0), std::complex<double>(0), std::complex<double>(0));
+        test(std::complex(0.), std::complex(0.), std::complex(0.));
         test(int(0), int(0), int(0));
         test(int(0), double(0), double(0));
         test(double(0), int(0), double(0));
     }
-    tr.section("gemm with dynamic shape, corner case");
+    tr.section("gemm");
     {
-        ra::Big<double, 2> A({0, 0}, 2.);
-        ra::Big<double, 2> B({0, 0}, 3.);
-        auto C = gemm(A, B);
-        tr.test_eq(0, C.len(0));
-        tr.test_eq(0, C.len(1));
+        tr.section("gemm with dynamic shape, corner case");
+        {
+            ra::Big<double, 2> A({0, 0}, 2.);
+            ra::Big<double, 2> B({0, 0}, 3.);
+            auto C = gemm(A, B);
+            tr.test_eq(0, C.len(0));
+            tr.test_eq(0, C.len(1));
+        }
+        tr.section("gemm with dynamic shape");
+        {
+            ra::Big<complex, 2> A({3, 2}, 2.);
+            ra::Big<complex, 2> B({2, 4}, 3.);
+            auto C = gemm(A, B);
+            tr.test_eq(3, C.len(0));
+            tr.test_eq(4, C.len(1));
+            tr.test_eq(12., C);
+        }
+        tr.section("gemm with non-slice A");
+        {
+            ra::Small<complex, 3, 2> A = std::complex(2., -1.);
+            ra::Small<complex, 2, 4> B = 3.;
+            auto C = gemm(real_part(A), B);
+            tr.test_eq(3, C.len_s(0));
+            tr.test_eq(4, C.len_s(1));
+            tr.test_eq(12., C);
+        }
+        tr.section("gemm with non-slice C");
+        {
+            ra::Big<complex, 2> A({3, 2}, 2.);
+            ra::Big<complex, 2> B({2, 4}, 3.);
+            ra::Big<complex, 2> C({3, 4}, 1.);
+            gemm(A, B, iter(C));
+            tr.test_eq(1+12., C);
+        }
+        tr.section("gemm with static shape");
+        {
+            ra::Small<double, 3, 2> A = 2;
+            ra::Small<double, 2, 4> B = 3;
+            auto C = gemm(A, B);
+            tr.test_eq(3, C.len_s(0));
+            tr.test_eq(4, C.len_s(1));
+            tr.test_eq(12, C);
+        }
     }
-    tr.section("gemm with dynamic shape");
+    tr.section("gemv");
     {
-        ra::Big<complex, 2> A({3, 2}, 2.);
-        ra::Big<complex, 2> B({2, 4}, 3.);
-        auto C = gemm(A, B);
-        tr.test_eq(3, C.len(0));
-        tr.test_eq(4, C.len(1));
-        tr.test_eq(12., C);
+        tr.section("gemv with static shape");
+        {
+            ra::Small<double, 3, 2> A = 2;
+            ra::Small<complex, 2> B = 3;
+            auto C = gemv(A, B);
+            tr.test_eq(3, C.len_s(0));
+            tr.test_eq(12., C);
+        }
+        tr.section("gemv with non-slice C");
+        {
+            ra::Small<double, 3, 2> A = 2;
+            ra::Small<double, 2> B = 3;
+            ra::Small<double, 3> C = 1;
+            gemv(A, B, iter(C));
+            tr.test_eq(1+12, C);
+        }
+        tr.section("gemv with non-slice B");
+        {
+            ra::Small<double, 3, 2> A = 2;
+            ra::Small<double, 2> B = 3;
+            auto C = gemv(A, iter(B));
+            tr.test_eq(3, C.len_s(0));
+            tr.test_eq(12, C);
+        }
+        tr.section("gemv with non-slice B & C");
+        {
+            ra::Small<double, 3, 2> A = 2;
+            ra::Small<double, 2> B = 3;
+            ra::Small<double, 3> C = 1;
+            gemv(A, iter(B), iter(C));
+            tr.test_eq(1+12, C);
+        }
     }
-    tr.section("gemm with static shape");
+    tr.section("gevm");
     {
-        ra::Small<double, 3, 2> A = 2;
-        ra::Small<double, 2, 4> B = 3;
-        auto C = gemm(A, B);
-        tr.test_eq(3, C.len_s(0));
-        tr.test_eq(4, C.len_s(1));
-        tr.test_eq(12, C);
-    }
-    tr.section("gemv with static shape");
-    {
-        ra::Small<double, 3, 2> A = 2;
-        ra::Small<double, 2> B = 3;
-        auto C = gemv(A, B);
-        tr.test_eq(3, C.len_s(0));
-        tr.test_eq(12, C);
-    }
-    tr.section("gevm with static shape");
-    {
-        ra::Small<double, 2> A = 3;
-        ra::Small<double, 2, 3> B = 2;
-        auto C = gevm(A, B);
-        tr.test_eq(3, C.len_s(0));
-        tr.test_eq(12, C);
+        tr.section("gevm with static shape");
+        {
+            ra::Small<complex, 2> A = 3;
+            ra::Small<double, 2, 3> B = 2;
+            auto C = gevm(A, B);
+            tr.test_eq(3, C.len_s(0));
+            tr.test_eq(12., C);
+        }
+        tr.section("gevm with non-slice C");
+        {
+            ra::Small<double, 2> A = 3;
+            ra::Small<double, 2, 3> B = 2;
+            ra::Small<double, 3> C = 1;
+            gevm(A, B, iter(C));
+            tr.test_eq(1+12., C);
+        }
+        tr.section("gevm with non-slice A");
+        {
+            ra::Small<double, 2> A = 3;
+            ra::Small<double, 2, 3> B = 2;
+            ra::Small<double, 3> C = 1;
+            gevm(iter(A), B, C);
+            tr.test_eq(1+12., C);
+        }
+        tr.section("gevm with non-slice A & C");
+        {
+            ra::Small<double, 2> A = 3;
+            ra::Small<double, 2, 3> B = 2;
+            ra::Small<double, 3> C = 1;
+            gevm(iter(A), B, iter(C));
+            tr.test_eq(1+12., C);
+        }
     }
     tr.section("reference reductions");
     {

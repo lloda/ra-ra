@@ -111,8 +111,7 @@ int main()
     ref = a*b*S1[0]*N;
 
     {
-        auto bench = [&tr](char const * tag, auto s, auto && ref, int reps, auto && f)
-        {
+        auto bench = [&tr](char const * tag, auto s, auto && ref, int reps, auto && f){
             rspec = 1e-2;
             constexpr int M = ra::size(s);
             decltype(s) A(a);
@@ -123,8 +122,7 @@ int main()
                 .test_rel(a*b*M*reps*3, y, rspec);
         };
 
-        auto f_small_indexed_1 = [](auto && A, auto && B)
-        {
+        auto f_small_indexed_1 = [](auto && A, auto && B){
             real y = 0;
             for (int j=0; j!=A.size(); ++j) {
                 y += A(j)*B(j);
@@ -132,8 +130,7 @@ int main()
             return y;
         };
 
-        auto f_small_indexed_2 = [](auto && A, auto && B)
-        {
+        auto f_small_indexed_2 = [](auto && A, auto && B){
             real y = 0;
             for (int i=0; i!=A.len(0); ++i) {
                 for (int j=0; j!=A.len(1); ++j) {
@@ -143,8 +140,7 @@ int main()
             return y;
         };
 
-        auto f_small_indexed_3 = [](auto && A, auto && B)
-        {
+        auto f_small_indexed_3 = [](auto && A, auto && B){
             real y = 0;
             for (int i=0; i!=A.len(0); ++i) {
                 for (int j=0; j!=A.len(1); ++j) {
@@ -156,8 +152,7 @@ int main()
             return y;
         };
 
-        auto f_small_indexed_raw = [](auto && A, auto && B)
-        {
+        auto f_small_indexed_raw = [](auto && A, auto && B){
             real * a = A.data();
             real * b = B.data();
             real y = 0;
@@ -174,8 +169,7 @@ int main()
         };
 
 #define DEFINE_SMALL_PLY(name, plier)                                   \
-        auto RA_JOIN(f_small_, plier) = [](auto && A, auto && B)           \
-        {                                                               \
+        auto RA_JOIN(f_small_, plier) = [](auto && A, auto && B){       \
             real y = 0;                                                 \
             plier(ra::map([&y](real a, real b) { y += a*b; }, A, B));   \
             return y;                                                   \
@@ -184,8 +178,7 @@ int main()
         DEFINE_SMALL_PLY(ply_fixed, ply_fixed);
         DEFINE_SMALL_PLY(ply, ply);
 
-        auto bench_all = [&](auto s, auto && f_small_indexed)
-        {
+        auto bench_all = [&](auto s, auto && f_small_indexed){
             constexpr int M = ra::size(s);
             tr.section("small <", ra::shape(s), ">");
             auto extra = [&]() { return int(double(std::rand())*100/RAND_MAX); };
@@ -208,8 +201,7 @@ int main()
     }
 
     rspec = 2e-11;
-    auto bench = [&tr](auto && a, auto && b, auto && ref, real rspec, int reps, auto && f)
-    {
+    auto bench = [&tr](auto && a, auto && b, auto && ref, real rspec, int reps, auto && f){
         real x = 0.;
         auto bv = Benchmark().reps(reps).runs(3).run([&]() { x += f(a, b); });
         tr.info(Benchmark::report(bv), " ", f.name)

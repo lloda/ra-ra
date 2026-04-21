@@ -30,6 +30,25 @@ median(auto & t)
 int main()
 {
     TestRecorder tr;
+    tr.section("fixture");
+    {
+        auto g = [](auto && repeat, auto && a, auto && b){
+            /* set up */
+            repeat([&]{
+                std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+                return a+b;
+            });
+            /* tear down */
+        };
+        auto b = Benchmark {/* reps */ 100, /* runs */ 10};
+
+        auto vala = b.run_f(g, 1, 2);
+        cout << "empty: " << (ra::size(vala)==0) << endl;
+        b.report(std::cout, vala, 1e-9);
+
+        auto valb = b.run_f(g, ra::iota(3), ra::iota(10, 3));
+        b.report(std::cout, valb, 1e-9);
+    }
     tr.section("straight");
     {
         auto f = [](auto && a, auto && b){
@@ -43,23 +62,6 @@ int main()
         b.report(std::cout, vala, 1e-9);
 
         auto valb = b.run(f, ra::iota(3), ra::iota(10, 3));
-        b.report(std::cout, valb, 1e-9);
-    }
-    tr.section("fixture");
-    {
-        auto g = [](auto && repeat, auto && a, auto && b){
-            /* do stuff */
-            repeat([&]() { std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-                    return a+b; });
-            /* do stuff */
-        };
-        auto b = Benchmark {/* reps */ 100, /* runs */ 10};
-
-        auto vala = b.run_f(g, 1, 2);
-        cout << "empty: " << (ra::size(vala)==0) << endl;
-        b.report(std::cout, vala, 1e-9);
-
-        auto valb = b.run_f(g, ra::iota(3), ra::iota(10, 3));
         b.report(std::cout, valb, 1e-9);
     }
     return tr.summary();

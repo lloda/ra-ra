@@ -29,6 +29,19 @@ int main()
     TestRecorder tr(std::cout);
     cout << "RA_FMA is " << RA_FMA << endl;
 
+// this is faster for small matrices, so maybe indexer() has some overhead :-/
+    auto gemv_0 = [&](auto const & a, auto const & b){
+        int const M = a.len(0);
+        ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, 0.);
+        auto pa = a.data();
+        for (int i=0; i<M; ++i) {
+            for (int j=0; j<a.len(1); ++j) {
+                c[i] += pa[j*a.step(1) + a.step(0)*i]*b[j];
+            }
+        }
+        return c;
+    };
+
     auto gemv_i = [&](auto const & a, auto const & b){
         int const M = a.len(0);
         ra::Big<decltype(a(0, 0)*b(0)), 1> c({M}, ra::none);
@@ -94,30 +107,32 @@ int main()
 
         tr.section(m, " x ", n, " times ", reps);
 // FIXME average TRANS & NOTRANS.
-        auto report = [&](auto const & v){
-            std::println(std::cout, "  Best is: {}{}{}{}.", ra::esc::cyan, ra::esc::bold,
-                         std::ranges::min_element(v, [](auto & a, auto & b){ return a.avg<b.avg; })->name, ra::esc::reset);
+        auto report = [&](auto & v){
+            std::ranges::sort(v, [](auto & a, auto & b){ return a.avg<b.avg; });
+            std::println(std::cout, "Best > {}{}{:nS{ / }{}}{}.", ra::esc::cyan, ra::esc::bold, map(&Benchmark::Value::name, v), ra::esc::reset);
         };
 // some variants are way too slow to check with larger arrays.
         if (k>0) {
             {
                 std::vector<Benchmark::Value> v;
-                bench_mv(v, gemv_i, "mv i", NOTRANS);
-                bench_mv(v, gemv_i, "mv i", TRANS);
-                bench_mv(v, gemv_j, "mv j", NOTRANS);
-                bench_mv(v, gemv_j, "mv j", TRANS);
-                bench_mv(v, [&](auto const & a, auto const & b){ return gemv(a, b); }, "mv default", NOTRANS);
-                bench_mv(v, [&](auto const & a, auto const & b){ return gemv(a, b); }, "mv default", TRANS);
+                bench_mv(v, gemv_0, "0N", NOTRANS);
+                bench_mv(v, gemv_0, "0T", TRANS);
+                bench_mv(v, gemv_i, "iN", NOTRANS);
+                bench_mv(v, gemv_i, "iT", TRANS);
+                bench_mv(v, gemv_j, "jN", NOTRANS);
+                bench_mv(v, gemv_j, "jT", TRANS);
+                bench_mv(v, [](auto const & a, auto const & b){ return gemv(a, b); }, "defaultN", NOTRANS);
+                bench_mv(v, [](auto const & a, auto const & b){ return gemv(a, b); }, "defaultT", TRANS);
                 report(v);
             }
             {
                 std::vector<Benchmark::Value> v;
-                bench_vm(v, gevm_i, "vm i", NOTRANS);
-                bench_vm(v, gevm_i, "vm i", TRANS);
-                bench_vm(v, gevm_j, "vm j", NOTRANS);
-                bench_vm(v, gevm_j, "vm j", TRANS);
-                bench_vm(v, [&](auto const & a, auto const & b){ return gevm(a, b); }, "vm default", NOTRANS);
-                bench_vm(v, [&](auto const & a, auto const & b){ return gevm(a, b); }, "vm default", TRANS);
+                bench_vm(v, gevm_i, "iN", NOTRANS);
+                bench_vm(v, gevm_i, "iT", TRANS);
+                bench_vm(v, gevm_j, "jN", NOTRANS);
+                bench_vm(v, gevm_j, "jT", TRANS);
+                bench_vm(v, [](auto const & a, auto const & b){ return gevm(a, b); }, "defaultN", NOTRANS);
+                bench_vm(v, [](auto const & a, auto const & b){ return gevm(a, b); }, "defaultT", TRANS);
                 report(v);
             }
         }

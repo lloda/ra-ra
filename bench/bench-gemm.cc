@@ -23,29 +23,21 @@ using std::cout, std::endl, ra::TestRecorder, ra::Benchmark;
 using ra::Small, ra::ViewBig, ra::Unique, ra::dim_t, ra::all;
 
 void
-gemm1(auto && a, auto && b, auto & c)
+gemm1(auto const & a, auto const & b, auto & c)
 {
-    for_each(ra::wrank<1, 2, 1>(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto & c) { ra::maybe_fma(a, b, c); })),
+    for_each(ra::wrank<1, 2, 1>(ra::wrank<0, 1, 1>([](auto const & a, auto const & b, auto & c){ ra::maybe_fma(a, b, c); })),
              RA_FW(a), RA_FW(b), RA_FW(c));
 }
 void
-gemm2(auto && a, auto && b, auto & c)
+gemm2(auto const & a, auto const & b, auto & c)
 {
     dim_t K=a.len(1);
     for (int k=0; k<K; ++k) {
-        c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma
+        for_each(ra::wrank<0, 1, 1>([](auto const & a, auto const & b, auto & c){ ra::maybe_fma(a, b, c); }), a(all, k), b(k), c);
     }
 }
 void
-gemm3(auto && a, auto && b, auto & c)
-{
-    dim_t K=a.len(1);
-    for (int k=0; k<K; ++k) {
-        for_each(ra::wrank<0, 1, 1>([](auto && a, auto && b, auto & c) { ra::maybe_fma(a, b, c); }), a(all, k), b(k), c);
-    }
-}
-void
-gemm4(auto && a, auto && b, auto & c)
+gemm3(auto const & a, auto const & b, auto & c)
 {
     dim_t M=a.len(0), N=b.len(1);
     for (int i=0; i<M; ++i) {
@@ -53,6 +45,24 @@ gemm4(auto && a, auto && b, auto & c)
             c(i, j) = dot(a(i), b(all, j));
         }
     }
+}
+void
+gemm4(auto const & a, auto const & b, auto & c)
+{
+    dim_t K=a.len(1);
+    for (int k=0; k<K; ++k) {
+        c += from(std::multiplies<>(), a(all, k), b(k)); // FIXME fma
+    }
+}
+void
+gemm5(auto const & a, auto const & b, auto & c)
+{
+    c(ra::all, ra::insert<1>) += a * b(ra::insert<1>);
+}
+void
+gemm6(auto const & a, auto const & b, auto & c)
+{
+    maybe_fma(a, b(ra::insert<1>), c(ra::all, ra::insert<1>));
 }
 
 // -------------------
@@ -236,23 +246,25 @@ int main()
         }
         if (k>0) {
             bench(ZEROFIRST((gemm_k_raw<double *,  double const *>)), "k_raw");
-            bench(ZEROFIRST((gemm_k_raw<double * __restrict__,  double const * __restrict__>)), "k_raw_restrict");
+            bench(ZEROFIRST((gemm_k_raw<double * __restrict__,  double const * __restrict__>)), "k_raw_res");
         }
         if (k>0) {
             bench(ZEROFIRST((gemm_ij_raw<double *,  double const *>)), "ij_raw");
-            bench(ZEROFIRST((gemm_ij_raw<double * __restrict__,  double const * __restrict__>)), "ij_raw_restrict");
+            bench(ZEROFIRST((gemm_ij_raw<double * __restrict__,  double const * __restrict__>)), "ij_raw_res");
         }
         bench(ZEROFIRST(gemm_block), "block");
         bench(ZEROFIRST(gemm1), "gemm1");
         bench(ZEROFIRST(gemm2), "gemm2");
         bench(ZEROFIRST(gemm3), "gemm3");
         bench(ZEROFIRST(gemm4), "gemm4");
+        bench(ZEROFIRST(gemm5), "gemm5");
+        bench(ZEROFIRST(gemm6), "gemm6");
 #if RA_USE_BLAS==1
         bench(ZEROFIRST(gemm_blas), "blas", 100*std::numeric_limits<double>::epsilon()); // ahem
 #endif
         bench(ZEROFIRST(gemm), "default");
-        std::println(std::cout, "  Best is: {}{}{}{}.", ra::esc::cyan, ra::esc::bold,
-                     std::ranges::min_element(v, [](auto & a, auto & b){ return a.avg<b.avg; })->name, ra::esc::reset);
+        std::ranges::sort(v, [](auto & a, auto & b){ return a.avg<b.avg; });
+        std::println(std::cout, "Best > {}{}{:nS{ / }{}}{}.", ra::esc::cyan, ra::esc::bold, map(&Benchmark::Value::name, v), ra::esc::reset);
     };
 
     bench_all(3, 4, 4, 4, 100);

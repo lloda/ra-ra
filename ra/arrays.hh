@@ -371,7 +371,7 @@ RA_FE(RA_TINDEX, 0, 1, 2, 3, 4);
 template <class E> struct concrete_type_;
 
 template <class E> requires (0==rank_s<E>())
-struct concrete_type_<E> { using type = ncvalue_t<E>; };
+struct concrete_type_<E> { using type = std::conditional_t<is_ra<E>, ncvalue_t<E>, std::decay_t<E>>; };
 
 template <class E> requires (ANY==size_s<E>())
 struct concrete_type_<E> { using type = Big<ncvalue_t<E>, rank_s<E>()>; };
@@ -380,28 +380,25 @@ template <class E> requires (0!=rank_s<E>() && ANY!=size_s<E>())
 struct concrete_type_<E> { using type = SmallArray<ncvalue_t<E>, ic_t<c_dimv(shape_s<E>)>>; };
 
 template <class E>
-using concrete_type = std::conditional_t<(0==rank_s<E>() && !is_ra<E>), std::decay_t<E>, typename concrete_type_<E>::type>;
+using concrete_type = typename concrete_type_<E>::type;
 
 template <class E> constexpr auto
 concrete(E && e) { return concrete_type<E>(RA_FW(e)); }
 
 template <class E, class ... X> constexpr auto
-with_same_shape(E && e, X && ... x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FW(x) ...); }
+copy_shape(E && e, X && ... x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FW(x) ...); }
 
 template <class E> constexpr auto
-with_same_shape(E && e) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), none); }
+copy_shape(E && e) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), none); }
 
 template <class E, class X> constexpr auto
-with_same_shape(E && e, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), RA_FW(x)); }
+copy_shape(E && e, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(ra::shape(e), RA_FW(x)); }
 
-template <class E, class S, class X> constexpr auto
-with_shape(S && s, X && x) requires (ANY!=size_s<E>()) { return concrete_type<E>(RA_FW(x)); }
+template <dim_t ... S> constexpr auto
+with_shape(auto && s, auto && x) requires ((S==ANY) || ...) { return Big<ncvalue_t<decltype(x)>, sizeof...(S)>(RA_FW(s), RA_FW(x)); }
 
-template <class E, class S, class X> constexpr auto
-with_shape(S && s, X && x) requires (ANY==size_s<E>()) { return concrete_type<E>(RA_FW(s), RA_FW(x)); }
-
-template <class E, class S, class X> constexpr auto
-with_shape(std::initializer_list<S> && s, X && x) { return with_shape<E>(iter(s), RA_FW(x)); }
+template <dim_t ... S> constexpr auto
+with_shape(auto && s, auto && x) requires (!((S==ANY) || ...)) { return Small<ncvalue_t<decltype(x)>, S ...>(RA_FW(x)); }
 
 
 // --------------------

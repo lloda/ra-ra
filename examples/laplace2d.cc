@@ -8,7 +8,7 @@
 // later version.
 
 // Adapted from lsolver/laplace2d.cc by Christian Badura, 1998/05.
-// FIXME mult() benchmarks well against the Cish original, but cghs dominates
+// FIXME mult() benchmarks close to the Cish original, but cghs dominates
 // the computation and we do much worse against BLAS.
 
 // FIXME ASCII plot like the APL examples do.
@@ -39,8 +39,8 @@ void mult(StiffMat const & A, V const & v, W & w)
 
 struct MassMat { double h; };
 
-template <class V, class W>
-void mult(MassMat const & M, V const & v, W & w)
+void
+mult(MassMat const & M, auto const & v, auto & w)
 {
     auto t0 = Benchmark::clock::now();
     auto i = ra::iota(v.len(0)-2, 1);
@@ -59,7 +59,8 @@ inline double g(double x, double y)
     return sin(2.*PI*x)*sin(2.*PI*y);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     TestRecorder tr(std::cout);
     auto t0 = Benchmark::clock::now();
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 
     mult(mm, w, b);
     ra::Big<double, 3> work({3, N+1, N+1}, ra::none);
-    int its = cghs(sm, b, u, work, EPS);
+    int its = cghs([](auto & ... a) { return mult(a ...); }, sm, b, u, work, EPS);
     double max = amax(abs(u-v));
 
     auto ttot = Benchmark::clock::now()-t0;

@@ -698,8 +698,7 @@ T c = map([](auto &amp;&amp; a, auto &amp;&amp; b) { return a+b; }, a, b); // (1
 for_each([](auto &amp;&amp; a, auto &amp;&amp; b, auto &amp;&amp; d) { d = a+b; },
          a, b, d); // same as (1)
 for_each([](auto &amp;&amp; ab, auto &amp;&amp; d) { d = ab; },
-         map([](auto &amp;&amp; a, auto &amp;&amp; b) { return a+b; },
-             a, b),
+         map([](auto &amp;&amp; a, auto &amp;&amp; b) { return a+b; }, a, b),
          d); // same as (1)
 </pre></div>
 
@@ -2551,8 +2550,12 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 
 <span id="index-gemm"></span>
 <span id="x_002dgemm"></span><dl class="def">
-<dt id="index-gemm-1"><span class="category">Function: </span><span><strong>gemm</strong> <em>a b</em><a href='#index-gemm-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Compute matrix-matrix product of expressions <var>a</var> and <var>b</var>. This function returns an array.
+<dt id="index-gemm-1"><span class="category">Function<!-- /@w -->: </span><span><strong>gemm</strong> <em>a b</em><a href='#index-gemm-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-gemm-2"><span class="category">Function<!-- /@w -->: </span><span><strong>gemm</strong> <em>a b c</em><a href='#index-gemm-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Compute matrix-matrix product of expressions <var>a</var> and <var>b</var>. The result is either copied to <var>c</var>, or returned as an array.
+</p>
+<p>Currently, either <var>a</var> and <var>b</var> must be views, or <var>b</var> and <var>c</var> must be views; the other argument can be a general expression.
 </p>
 
 <p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
@@ -2562,8 +2565,12 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 
 <span id="index-gemv"></span>
 <span id="x_002dgemv"></span><dl class="def">
-<dt id="index-gemv-1"><span class="category">Function: </span><span><strong>gemv</strong> <em>a b</em><a href='#index-gemv-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Compute matrix-vector product of expressions <var>a</var> and <var>b</var>. This function returns an array.
+<dt id="index-gemv-1"><span class="category">Function<!-- /@w -->: </span><span><strong>gemv</strong> <em>a b</em><a href='#index-gemv-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-gemv-2"><span class="category">Function<!-- /@w -->: </span><span><strong>gemv</strong> <em>a b c</em><a href='#index-gemv-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Compute matrix-vector product of expressions <var>a</var> and <var>b</var>. The result is either copied to <var>c</var>, or returned as an array.
+</p>
+<p>Currently, one of <var>a</var> or <var>b</var> must be views; the other arguments can be general expressions.
 </p>
 
 <p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
@@ -2573,8 +2580,12 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 
 <span id="index-gevm"></span>
 <span id="x_002dgevm"></span><dl class="def">
-<dt id="index-gevm-1"><span class="category">Function: </span><span><strong>gevm</strong> <em>a b</em><a href='#index-gevm-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Compute vector-matrix product of expressions <var>a</var> and <var>b</var>. This function returns an array.
+<dt id="index-gevm-1"><span class="category">Function<!-- /@w -->: </span><span><strong>gevm</strong> <em>a b</em><a href='#index-gevm-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-gevm-2"><span class="category">Function<!-- /@w -->: </span><span><strong>gevm</strong> <em>a b c</em><a href='#index-gevm-2' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Compute vector-matrix product of expressions <var>a</var> and <var>b</var>. The result is either copied to <var>c</var>, or returned as an array.
+</p>
+<p>Currently, one of <var>b</var> or <var>c</var> must be views; the other arguments can be general expressions.
 </p>
 
 <p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
@@ -2603,7 +2614,7 @@ cout &lt;&lt; A &lt;&lt; endl;
 <span id="index-map"></span>
 <span id="x_002dmap"></span><dl class="def">
 <dt id="index-map-1"><span class="category">Function: </span><span><strong>map</strong> <em>op expr ...</em><a href='#index-map-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Create an array expression that applies callable <var>op</var> to <var>expr</var> ...
+<dd><p>Create an array expression that applies <var>op</var> to <var>expr</var> ...
 </p>
 <p>For example:
 </p><div class="example">
@@ -3045,7 +3056,7 @@ c += ra::scalar(x); // ok: scalar(x) has shape () and matches c.
 <span id="index-early"></span>
 <span id="x_002dearly"></span><dl class="def">
 <dt id="index-early-1"><span class="category">Function: </span><span><strong>early</strong> <em>expr default</em><a href='#index-early-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p><var>expr</var> is an array expression that returns <code>std::optional&lt;T&gt;</code>. <var>expr</var> is traversed as by <code>for_each</code>. If the optional ever contains a value, traversal stops and that value is returned. If traversal ends, <var>default</var> is returned instead. If <code>default</code> is a reference, <code>early</code> will return its value. </p>
+<dd><p><var>expr</var> is an expression that returns <code>std::optional&lt;T&gt;</code>. <var>expr</var> is traversed as by <code>for_each</code>. If the optional ever contains a value, traversal stops and that value is returned. If traversal is completed, <var>default</var> is returned. <code>early</code> cannot return references. </p>
 <p>The following definition of elementwise <code>lexical_compare</code> relies on <code>early</code>.
 </p>
 <div class="example">

@@ -14,7 +14,7 @@
 
 template <class A, class B, class X, class W>
 inline int
-cghs(A & a, B const & b, X & x, W & work, double eps)
+cghs(auto && mult, A & a, B const & b, X & x, W & work, double eps)
 {
     using ra::sqr;
 

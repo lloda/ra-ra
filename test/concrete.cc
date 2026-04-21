@@ -92,7 +92,7 @@ int main()
     }
     {
         ra::Big<int, 1> a = {1, 2, 3};
-        auto b = ra::with_same_shape(a);
+        auto b = ra::copy_shape(a);
         tr.test_eq(1, rank(b));
         tr.test_eq(3, ra::size(b));
         b = {3, 4, 5};
@@ -169,7 +169,7 @@ int main()
     tr.section("concrete on scalar");
     {
         int a = 9;
-        auto b = ra::with_same_shape(a, 8);
+        auto b = ra::copy_shape(a, 8);
         tr.test_eq(8, b);
         tr.test_eq(9, a);
         b = 7;
@@ -179,7 +179,7 @@ int main()
     tr.section("concrete on scalar");
     {
         int a = 9;
-        auto b = ra::with_same_shape(a);
+        auto b = ra::copy_shape(a);
         b = 7;
         tr.test_eq(7, b);
         tr.test_eq(9, a);

@@ -2506,37 +2506,52 @@ When @var{op} is a view, @code{from(op, ...)} is equivalent to @code{op(...)}, a
 @end defun
 
 @cindex @code{gemm}
-@anchor{x-gemm} @defun gemm a b
-Compute matrix-matrix product of expressions @var{a} and @var{b}. This function returns an array.
+@anchor{x-gemm}
+@deffn @w{Function} gemm a b
+@deffnx @w{Function} gemm a b c
+
+Compute matrix-matrix product of expressions @var{a} and @var{b}. The result is either copied to @var{c}, or returned as an array.
+
+Currently, either @var{a} and @var{b} must be views, or @var{b} and @var{c} must be views; the other argument can be a general expression.
 
 @c TODO
 
 See @ref{Performance pitfalls of rank extension}.
 
 See also @ref{x-gemv,@code{gemv}}, @ref{x-gevm,@code{gevm}}.
-@end defun
+@end deffn
 
 @cindex @code{gemv}
-@anchor{x-gemv} @defun gemv a b
-Compute matrix-vector product of expressions @var{a} and @var{b}. This function returns an array.
+@anchor{x-gemv}
+@deffn @w{Function} gemv a b
+@deffnx @w{Function} gemv a b c
+
+Compute matrix-vector product of expressions @var{a} and @var{b}. The result is either copied to @var{c}, or returned as an array.
+
+Currently, one of @var{a} or @var{b} must be views; the other arguments can be general expressions.
 
 @c TODO
 
 See @ref{Performance pitfalls of rank extension}.
 
 See also @ref{x-gemm,@code{gemm}}, @ref{x-gevm,@code{gevm}}.
-@end defun
+@end deffn
 
 @cindex @code{gevm}
-@anchor{x-gevm} @defun gevm a b
-Compute vector-matrix product of expressions @var{a} and @var{b}. This function returns an array.
+@anchor{x-gevm}
+@deffn @w{Function} gevm a b
+@deffnx @w{Function} gevm a b c
+
+Compute vector-matrix product of expressions @var{a} and @var{b}. The result is either copied to @var{c}, or returned as an array.
+
+Currently, one of @var{b} or @var{c} must be views; the other arguments can be general expressions.
 
 @c TODO
 
 See @ref{Performance pitfalls of rank extension}.
 
 See also @ref{x-gemm,@code{gemm}}, @ref{x-gemv,@code{gemv}}.
-@end defun
+@end deffn
 
 @cindex @code{imag_part}
 @anchor{x-imag_part} @defun imag_part
