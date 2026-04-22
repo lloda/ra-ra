@@ -1321,7 +1321,7 @@ for_each(my_sort, iter&lt;0&gt;(A)); // (in ra::) error, my_sort expects rank 1 
 <pre class="verbatim">ra::Big&lt;int, 1&gt; a = {1, 2, 3};
 ra::Big&lt;int, 1&gt; b = {40, 50};
 ra::Big&lt;int, 2&gt; axb = map(ra::wrank&lt;0, 1&gt;([](auto &amp;&amp; a, auto &amp;&amp; b) { return a*b; }),
-                            a, b)
+                          a, b)
 </pre><pre class="example">&rArr; axb = {{40, 80, 120}, {50, 100, 150}}
 </pre></div>
 
@@ -2555,12 +2555,24 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 <dd>
 <p>Compute matrix-matrix product of expressions <var>a</var> and <var>b</var>. The result is either copied to <var>c</var>, or returned as an array.
 </p>
-<p>Currently, either <var>a</var> and <var>b</var> must be views, or <var>b</var> and <var>c</var> must be views; the other argument can be a general expression.
+<p>Currently, either <var>a</var> and <var>b</var> must be views, or <var>b</var> and <var>c</var> must be views; the other argument can be a general expression. Like other uses of broadcasting, this is subject to a <a href="#Performance-pitfalls-of-rank-extension">performance pitfall</a>. For example in
 </p>
+<div class="example">
+<pre class="verbatim">    ra::Big&lt;double, 2&gt; a({M, P}, ...);
+    ra::Big&lt;double, 2&gt; b({P, N}, ...);
+    ra::Big&lt;double, 2&gt; c({M, N}, ...);
+    auto f = [](double a) { ... };
+    gemm(f(a), b, c);
+</pre></div>
 
-<p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
+<p><code>f</code> is called <em class='tex2jax_process'>\(M\cdot P\cdot N\)</em> times, even though only <em class='tex2jax_process'>\(M\cdot P\)</em> calls are needed if <code>f</code> is side effect free. If <code>f</code> is expensive, it might be better to precompute <code>f(a)</code>, or to avoid broadcasting <code>a</code> by specifying the traversal order. For example
 </p>
-<p>See also <a href="#x_002dgemv"><code>gemv</code></a>, <a href="#x_002dgevm"><code>gevm</code></a>.
+<div class="example">
+<pre class="verbatim">    for_each([](auto &amp;&amp; A, auto &amp;&amp; B, auto &amp;&amp; C){ /* A is scalar here */ C += f(A) * B; },
+             A, iter&lt;1&gt;(B(insert&lt;1&gt;)), iter&lt;1&gt;(C(all, insert&lt;1&gt;)));
+</pre></div>
+
+<p>See also <a href="#x_002dgemv"><code>gemv</code></a>, <a href="#x_002dgevm"><code>gevm</code></a>, <a href="#The-rank-conjunction">The rank conjunction</a>.
 </p></dd></dl>
 
 <span id="index-gemv"></span>
@@ -2570,10 +2582,7 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 <dd>
 <p>Compute matrix-vector product of expressions <var>a</var> and <var>b</var>. The result is either copied to <var>c</var>, or returned as an array.
 </p>
-<p>Currently, one of <var>a</var> or <var>b</var> must be views; the other arguments can be general expressions.
-</p>
-
-<p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
+<p>Currently, either <var>a</var> or <var>b</var> must be a view; the other arguments can be general expressions.
 </p>
 <p>See also <a href="#x_002dgemm"><code>gemm</code></a>, <a href="#x_002dgevm"><code>gevm</code></a>.
 </p></dd></dl>
@@ -2585,10 +2594,7 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 <dd>
 <p>Compute vector-matrix product of expressions <var>a</var> and <var>b</var>. The result is either copied to <var>c</var>, or returned as an array.
 </p>
-<p>Currently, one of <var>b</var> or <var>c</var> must be views; the other arguments can be general expressions.
-</p>
-
-<p>See <a href="#Performance-pitfalls-of-rank-extension">Performance pitfalls of rank extension</a>.
+<p>Currently, either <var>b</var> or <var>c</var> must be a view; the other arguments can be general expressions.
 </p>
 <p>See also <a href="#x_002dgemm"><code>gemm</code></a>, <a href="#x_002dgemv"><code>gemv</code></a>.
 </p></dd></dl>

@@ -192,10 +192,7 @@ RA_BINOP(^, std::bit_xor<>)   RA_BINOP(%, std::modulus<>)     RA_BINOP(<=>, std:
 #undef RA_BINOP
 
 // FIXME sanitizer complains in bench-optimize.cc with std::identity. False positive?
-struct unaryplus
-{
-    template <class T> constexpr static auto operator()(T && t) noexcept { return RA_FW(t); }
-};
+struct unaryplus { constexpr static auto operator()(auto && t) noexcept { return RA_FW(t); } };
 
 #define RA_UNOP(OP, OPNAME)                                             \
     template <class A> requires (tomap<A>) constexpr auto               \

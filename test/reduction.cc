@@ -13,7 +13,6 @@
 #include "mpdebug.hh"
 
 using std::cout, std::endl, std::flush, std::tuple, ra::TestRecorder;
-using real = double;
 using complex = std::complex<double>;
 using ra::sqrm;
 
@@ -24,20 +23,20 @@ int main()
     tr.section("amax with different expr types");
     {
         auto test_amax_expr = [&tr](auto && a, auto && b){
-            a = ra::Small<real, 2, 2> {1, 2, 9, -10};
+            a = ra::Small<double, 2, 2> {1, 2, 9, -10};
             tr.test_eq(amax(a), 9);
-            b = ra::Small<real, 2, 2> {1, 1, 1, 1};
+            b = ra::Small<double, 2, 2> {1, 1, 1, 1};
             tr.test_eq(amax(a+b), 10);
         };
-        test_amax_expr(ra::Unique<real, 2>({2, 2}, 0.), ra::Unique<real, 2>({2, 2}, 0.));
-        test_amax_expr(ra::Small<real, 2, 2>(), ra::Small<real, 2, 2>());
+        test_amax_expr(ra::Unique<double, 2>({2, 2}, 0.), ra::Unique<double, 2>({2, 2}, 0.));
+        test_amax_expr(ra::Small<double, 2, 2>(), ra::Small<double, 2, 2>());
 // failed in gcc 5.1 when amax() took its args by plain auto (now auto &&).
-        test_amax_expr(ra::Unique<real, 2>({2, 2}, 0.), ra::Small<real, 2, 2>());
+        test_amax_expr(ra::Unique<double, 2>({2, 2}, 0.), ra::Small<double, 2, 2>());
     }
     tr.section("every / any");
     {
-        tr.test(every(ra::Unique<real, 2>({4, 4}, 10+ra::_0-ra::_1)));
-        tr.test(any(ra::Unique<real, 2>({4, 4}, ra::_0-ra::_1)));
+        tr.test(every(ra::Unique<double, 2>({4, 4}, 10+ra::_0-ra::_1)));
+        tr.test(any(ra::Unique<double, 2>({4, 4}, ra::_0-ra::_1)));
         tr.test(ra::every(true));
         tr.test(!ra::every(false));
         tr.test(ra::any(true));
@@ -55,7 +54,7 @@ int main()
     }
     tr.section("norm2");
     {
-        ra::Small<real, 2> a {1, 2};
+        ra::Small<double, 2> a {1, 2};
         tr.test_abs(std::sqrt(5.), norm2(a), 1e-15);
         ra::Small<float, 2> b {1, 2};
         tr.test_abs(std::sqrt(5.f), norm2(b), 4e-8);
@@ -69,40 +68,40 @@ int main()
     }
     tr.section("normv");
     {
-        ra::Small<real, 2> a {1, 2};
-        ra::Small<real, 2> b;
+        ra::Small<double, 2> a {1, 2};
+        ra::Small<double, 2> b;
 
         b = normv(a);
         cout << "normv of lvalue: " << b << endl;
         tr.test_eq(b[0], 1./sqrt(5));
         tr.test_eq(b[1], 2./sqrt(5));
 
-        b = normv(ra::Small<real, 2> {2, 1});
+        b = normv(ra::Small<double, 2> {2, 1});
         cout << "normv of rvalue: "<< b << endl;
         tr.test_eq(b[0], 2./sqrt(5));
         tr.test_eq(b[1], 1./sqrt(5));
     }
     tr.section("reductions");
     {
-        auto test_dot = [](auto && test){ // TODO Use this for other real reductions.
-            test(ra::Small<complex, 2>{1, 2}, ra::Small<real, 2>{3, 4});
-            test(ra::Small<real, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
-            test(ra::Small<real, 2>{1, 2}, ra::Small<real, 2>{3, 4});
+        auto test_dot = [](auto && test){ // TODO Use this for other double reductions.
+            test(ra::Small<complex, 2>{1, 2}, ra::Small<double, 2>{3, 4});
+            test(ra::Small<double, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
+            test(ra::Small<double, 2>{1, 2}, ra::Small<double, 2>{3, 4});
             test(ra::Small<complex, 2>{1, 2}, ra::Small<complex, 2>{3, 4});
 
-            test(ra::Big<complex, 1>{1, 2}, ra::Big<real, 1>{3, 4});
-            test(ra::Big<real, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
-            test(ra::Big<real, 1>{1, 2}, ra::Big<real, 1>{3, 4});
+            test(ra::Big<complex, 1>{1, 2}, ra::Big<double, 1>{3, 4});
+            test(ra::Big<double, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
+            test(ra::Big<double, 1>{1, 2}, ra::Big<double, 1>{3, 4});
             test(ra::Big<complex, 1>{1, 2}, ra::Big<complex, 1>{3, 4});
 
-            test(ra::Small<complex, 2>{1, 2}, ra::Big<real, 1>{3, 4});
-            test(ra::Small<real, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
-            test(ra::Small<real, 2>{1, 2}, ra::Big<real, 1>{3, 4});
+            test(ra::Small<complex, 2>{1, 2}, ra::Big<double, 1>{3, 4});
+            test(ra::Small<double, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
+            test(ra::Small<double, 2>{1, 2}, ra::Big<double, 1>{3, 4});
             test(ra::Small<complex, 2>{1, 2}, ra::Big<complex, 1>{3, 4});
 
-            test(ra::Big<complex, 1>{1, 2}, ra::Small<real, 2>{3, 4});
-            test(ra::Big<real, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
-            test(ra::Big<real, 1>{1, 2}, ra::Small<real, 2>{3, 4});
+            test(ra::Big<complex, 1>{1, 2}, ra::Small<double, 2>{3, 4});
+            test(ra::Big<double, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
+            test(ra::Big<double, 1>{1, 2}, ra::Small<double, 2>{3, 4});
             test(ra::Big<complex, 1>{1, 2}, ra::Small<complex, 2>{3, 4});
         };
         test_dot([&tr](auto && a, auto && b) { tr.test_eq(11., dot(a, b)); });
@@ -133,83 +132,83 @@ int main()
     }
     tr.section("amax/amin ignore NaN");
     {
-        constexpr real QNAN = std::numeric_limits<real>::quiet_NaN();
-        tr.test_eq(std::numeric_limits<real>::lowest(), std::max(std::numeric_limits<real>::lowest(), QNAN));
-        tr.test_eq(-std::numeric_limits<real>::infinity(), amax(ra::Small<real, 3>(QNAN)));
-        tr.test_eq(std::numeric_limits<real>::infinity(), amin(ra::Small<real, 3>(QNAN)));
+        constexpr double QNAN = std::numeric_limits<double>::quiet_NaN();
+        tr.test_eq(std::numeric_limits<double>::lowest(), std::max(std::numeric_limits<double>::lowest(), QNAN));
+        tr.test_eq(-std::numeric_limits<double>::infinity(), amax(ra::Small<double, 3>(QNAN)));
+        tr.test_eq(std::numeric_limits<double>::infinity(), amin(ra::Small<double, 3>(QNAN)));
     }
 
 // TODO these reductions require a destination argument; there are no exprs really.
     tr.section("to sum columns in crude ways");
     {
-        ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
+        ra::Unique<double, 2> A({100, 111}, ra::_0 - ra::_1);
 
-        ra::Unique<real, 1> B({100}, 0.);
+        ra::Unique<double, 1> B({100}, 0.);
         for (int i=0, iend=A.len(0); i<iend; ++i) {
             B(i) = sum(A(i));
         }
         {
-            ra::Unique<real, 1> C({100}, 0.);
+            ra::Unique<double, 1> C({100}, 0.);
             for_each([](auto & c, auto a) { c += a; }, C, A);
             tr.test_eq(B, C);
         }
 // This depends on matching frames for += just as for any other op, which is at odds with eg amend.
         {
-            ra::Unique<real, 1> C({100}, 0.);
+            ra::Unique<double, 1> C({100}, 0.);
             C += A;
             tr.test_eq(B, C);
         }
 // Same as above.
         {
-            ra::Unique<real, 1> C({100}, 0.);
+            ra::Unique<double, 1> C({100}, 0.);
             C =  C + A;
             tr.test_eq(B, C);
         }
 // It cannot work with a lhs scalar value since += must be a class member, but it will work with a rank 0 array or with ra::Scalar.
         {
-            ra::Unique<real, 0> C({}, 0.);
+            ra::Unique<double, 0> C({}, 0.);
             C += A(0);
             tr.test_eq(B(0), C);
-            real c(0.);
+            double c(0.);
             ra::scalar(c) += A(0);
             tr.test_eq(B(0), c);
         }
 // This will fail because the assumed driver (ANY) has lower actual rank than the other argument. TODO check that it fails.
         // {
-        //     ra::Unique<real, 2> A({2, 3}, {1, 2, 3, 4 ,5, 6});
-        //     ra::Unique<real> C({}, 0.);
+        //     ra::Unique<double, 2> A({2, 3}, {1, 2, 3, 4 ,5, 6});
+        //     ra::Unique<double> C({}, 0.);
         //     C += A(0);
         // }
     }
     tr.section("to sum rows in crude ways");
     {
-        ra::Unique<real, 2> A({100, 111}, ra::_0 - ra::_1);
-        ra::Unique<real, 1> B({111}, 0.);
+        ra::Unique<double, 2> A({100, 111}, ra::_0 - ra::_1);
+        ra::Unique<double, 1> B({111}, 0.);
         for (int j=0, jend=A.len(1); j<jend; ++j) {
             B(j) = sum(A(ra::all, j));
         }
         {
-            ra::Unique<real, 1> C({111}, 0.);
+            ra::Unique<double, 1> C({111}, 0.);
             for_each([&C](auto && a) { C += a; }, iter<1>(A));
             tr.info("rhs iterator of rank > 0").test_eq(B, C);
         }
         {
-            ra::Unique<real, 1> C({111}, 0.);
+            ra::Unique<double, 1> C({111}, 0.);
             for_each(ra::wrank<1, 1>([](auto & c, auto && a) { c += a; }), C, A);
             tr.info("rank conjuction").test_eq(B, C);
         }
         {
-            ra::Unique<real, 1> C({111}, 0.);
+            ra::Unique<double, 1> C({111}, 0.);
             for_each(ra::wrank<1, 1>(ra::wrank<0, 0>([](auto & c, auto a) { c += a; })), C, A);
             tr.info("double rank conjunction").test_eq(B, C);
         }
         {
-            ra::Unique<real, 1> C({111}, 0.);
+            ra::Unique<double, 1> C({111}, 0.);
             ra::scalar(C) += iter<1>(A);
             tr.info("scalar() and iterators of rank > 0").test_eq(B, C);
         }
         {
-            ra::Unique<real, 1> C({111}, 0.);
+            ra::Unique<double, 1> C({111}, 0.);
             iter<1>(C) += iter<1>(A);
             tr.info("assign to iterators of rank > 0").test_eq(B, C);
         }
@@ -293,10 +292,18 @@ int main()
         {
             ra::Small<complex, 3, 2> A = std::complex(2., -1.);
             ra::Small<complex, 2, 4> B = 3.;
-            auto C = gemm(real_part(A), B);
+            int n = 0;
+            auto f = [&](complex a){ ++n; return real(a); };
+            auto C = gemm(map(f, A), B);
             tr.test_eq(3, C.len_s(0));
             tr.test_eq(4, C.len_s(1));
             tr.test_eq(12., C);
+            tr.test_eq(A.len_s(0)*A.len_s(1)*B.len_s(1), n);
+// only compute f once per A
+            C = 0; n = 0;
+            for_each([&](auto && A, auto && B, auto && C){ C += f(A) * B; }, A, iter<1>(B(ra::insert<1>)), iter<1>(C(ra::all, ra::insert<1>)));
+            tr.test_eq(12., C);
+            tr.test_eq(A.len_s(0)*A.len_s(1), n);
         }
         tr.section("gemm with non-slice C");
         {

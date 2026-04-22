@@ -8,11 +8,8 @@
 // later version.
 
 #pragma once
-#include <string>
-#include <iomanip>
 #include <iostream>
 #include <chrono>
-#include <ctime>
 #include "ra.hh"
 
 namespace ra {
@@ -299,12 +296,12 @@ struct Benchmark
         dur_t empty;
         g([&](auto && f) { auto t0 = clock::now(); empty = clock::now()-t0; }, a ...);
 
-        std::vector<double> secs;
-        for (int k=0; k<runs_; ++k) {
+        std::vector<double> secs(runs_);
+        for (auto & sec: secs) {
             g([&](auto && f) {
                 auto t0 = clock::now();
                 for (int i=0; i<reps_; ++i) { f(); }
-                secs.push_back(toseconds(lapse(empty, clock::now()-t0)));
+                sec = toseconds(lapse(empty, clock::now()-t0));
             }, a ...);
         }
         double m = avg(secs);

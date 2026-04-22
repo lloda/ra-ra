@@ -1276,7 +1276,7 @@ A standard example is ‘outer product’.
 ra::Big<int, 1> a = {1, 2, 3};
 ra::Big<int, 1> b = {40, 50};
 ra::Big<int, 2> axb = map(ra::wrank<0, 1>([](auto && a, auto && b) { return a*b; }),
-                            a, b)
+                          a, b)
 @end verbatim
 @result{} axb = @{@{40, 80, 120@}, @{50, 100, 150@}@}
 @end example
@@ -2512,13 +2512,28 @@ When @var{op} is a view, @code{from(op, ...)} is equivalent to @code{op(...)}, a
 
 Compute matrix-matrix product of expressions @var{a} and @var{b}. The result is either copied to @var{c}, or returned as an array.
 
-Currently, either @var{a} and @var{b} must be views, or @var{b} and @var{c} must be views; the other argument can be a general expression.
+Currently, either @var{a} and @var{b} must be views, or @var{b} and @var{c} must be views; the other argument can be a general expression. Like other uses of broadcasting, this is subject to a @ref{Performance pitfalls of rank extension,performance pitfall}. For example in
 
-@c TODO
+@example
+@verbatim
+    ra::Big<double, 2> a({M, P}, ...);
+    ra::Big<double, 2> b({P, N}, ...);
+    ra::Big<double, 2> c({M, N}, ...);
+    auto f = [](double a) { ... };
+    gemm(f(a), b, c);
+@end verbatim
+@end example
 
-See @ref{Performance pitfalls of rank extension}.
+@code{f} is called @math{M\cdot P\cdot N} times, even though only @math{M\cdot P} calls are needed if @code{f} is side effect free. If @code{f} is expensive, it might be better to precompute @code{f(a)}, or to avoid broadcasting @code{a} by specifying the traversal order. For example
 
-See also @ref{x-gemv,@code{gemv}}, @ref{x-gevm,@code{gevm}}.
+@example
+@verbatim
+    for_each([](auto && A, auto && B, auto && C){ /* A is scalar here */ C += f(A) * B; },
+             A, iter<1>(B(insert<1>)), iter<1>(C(all, insert<1>)));
+@end verbatim
+@end example
+
+See also @ref{x-gemv,@code{gemv}}, @ref{x-gevm,@code{gevm}}, @ref{The rank conjunction}.
 @end deffn
 
 @cindex @code{gemv}
@@ -2528,11 +2543,7 @@ See also @ref{x-gemv,@code{gemv}}, @ref{x-gevm,@code{gevm}}.
 
 Compute matrix-vector product of expressions @var{a} and @var{b}. The result is either copied to @var{c}, or returned as an array.
 
-Currently, one of @var{a} or @var{b} must be views; the other arguments can be general expressions.
-
-@c TODO
-
-See @ref{Performance pitfalls of rank extension}.
+Currently, either @var{a} or @var{b} must be a view; the other arguments can be general expressions.
 
 See also @ref{x-gemm,@code{gemm}}, @ref{x-gevm,@code{gevm}}.
 @end deffn
@@ -2544,11 +2555,7 @@ See also @ref{x-gemm,@code{gemm}}, @ref{x-gevm,@code{gevm}}.
 
 Compute vector-matrix product of expressions @var{a} and @var{b}. The result is either copied to @var{c}, or returned as an array.
 
-Currently, one of @var{b} or @var{c} must be views; the other arguments can be general expressions.
-
-@c TODO
-
-See @ref{Performance pitfalls of rank extension}.
+Currently, either @var{b} or @var{c} must be a view; the other arguments can be general expressions.
 
 See also @ref{x-gemm,@code{gemm}}, @ref{x-gemv,@code{gemv}}.
 @end deffn

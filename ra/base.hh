@@ -14,7 +14,7 @@
 #include <vector>
 #include <format>
 #include <limits>
-#include <iosfwd> // for format, ss.
+#include <string>
 #include <sstream>
 #include <version>
 #include <cstdint>
