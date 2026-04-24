@@ -55,8 +55,8 @@ int main()
         tr.test_eq(C, A);
 
         A = 0;
-        at(A, I2) = at(B+1, I2);
-        tr.test_eq(at(C, I2)+1, at(A, I2));
+        at(A, I2) = at(auto(B)+1, I2);
+        tr.test_eq(at(C, I2)+1, at(auto(A), I2));
 
         tr.test_eq(35, sum(at(A, I2)));
         tr.test_eq(276, prod(at(A, I2)));

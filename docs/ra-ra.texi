@@ -2520,16 +2520,18 @@ Currently, either @var{a} and @var{b} must be views, or @var{b} and @var{c} must
     ra::Big<double, 2> b({P, N}, ...);
     ra::Big<double, 2> c({M, N}, ...);
     auto f = [](double a) { ... };
-    gemm(f(a), b, c);
+    gemm(map(f, a), b, c);
 @end verbatim
 @end example
 
-@code{f} is called @math{M\cdot P\cdot N} times, even though only @math{M\cdot P} calls are needed if @code{f} is side effect free. If @code{f} is expensive, it might be better to precompute @code{f(a)}, or to avoid broadcasting @code{a} by specifying the traversal order. For example
+@code{f} is called @math{M\cdot P\cdot N} times, even though only @math{M\cdot P} calls are needed if @code{f} is side effect free.
+
+If @code{f} is expensive, it might be better to precompute @code{f(a)}, or to avoid broadcasting @code{a} by specifying the traversal order. For example
 
 @example
 @verbatim
     for_each([](auto && A, auto && B, auto && C){ /* A is scalar here */ C += f(A) * B; },
-             A, iter<1>(B(insert<1>)), iter<1>(C(all, insert<1>)));
+             a, iter<1>(b(insert<1>)), iter<1>(c(all, insert<1>)));
 @end verbatim
 @end example
 

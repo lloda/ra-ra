@@ -55,15 +55,22 @@ int main()
         tr.test(!ra::any(odd(a)));
         tr.test(ra::every(!odd(a)));
     }
-    tr.section("early with var rank");
+    tr.section("early with dynamic rank");
     {
         ra::Big<int> a = ra::iota(9)*2;
         tr.test(!ra::any(odd(a)));
         tr.test(ra::every(!odd(a)));
     }
-    tr.section("index");
+    tr.section("index with dynamic size");
     {
         ra::Big<int, 1> a = { 1, 3, -1, 9 };
+        tr.test_eq(2, ra::index(a<0));
+        tr.test_eq(-1, ra::index(a>10));
+    }
+    tr.section("index with static size");
+    {
+        ra::Small<int, 4> a = { 1, 3, -1, 9 };
+        cout << ra::index(a<0) << endl;
         tr.test_eq(2, ra::index(a<0));
         tr.test_eq(-1, ra::index(a>10));
     }

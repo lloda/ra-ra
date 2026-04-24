@@ -99,8 +99,7 @@ struct Seq
     constexpr bool operator==(Seq const & j) const = default;
 };
 
-// Rank-0 Iterator to wrap foreign objects or to manipulate prefix matching.
-// f(scalar(C)) should be f(C) not map(f, C), see tomap/toreduce.
+// Rank-0 Iterator, to wrap foreign scalars or manipulate prefix matching. f(scalar(C)) should be f(C) not map(f, C), see tomap/toreduce.
 
 template <class C>
 struct Scalar final
@@ -382,7 +381,7 @@ view(std::ranges::bidirectional_range auto && a)
     }
 }
 
-// FIXME iter() only needs bidir but view() would need random if we actually used it. So this is ugly.
+// FIXME iter() only needs bidir but view() would need random if we actually used it.
 constexpr auto iter(is_fov auto && a) { return iter(view(RA_FW(a))); }
 constexpr auto iter(is_builtin auto && a) { return iter(view(RA_FW(a))); }
 template <class T> constexpr auto iter(std::initializer_list<T> const & a) { return iter(view(a)); }
@@ -520,11 +519,9 @@ validate(A const & a)
     if constexpr (is_match<A>) {
         static_assert(0!=a.check_s(), "Bad shapes."); // c++26
         a.check(false);
-    } else {
+    } else if constexpr (ANY==size_s<A>()) {
 // FIXME wb Reframe(Match(...)) ?
-        if constexpr (ANY==size_s<A>()) {
-            RA_CK(0<=ra::size(a), "Unbounded size.");
-        }
+        RA_CK(0<=ra::size(a), "Unbounded size.");
     }
 }
 

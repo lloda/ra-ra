@@ -2562,14 +2562,16 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
     ra::Big&lt;double, 2&gt; b({P, N}, ...);
     ra::Big&lt;double, 2&gt; c({M, N}, ...);
     auto f = [](double a) { ... };
-    gemm(f(a), b, c);
+    gemm(map(f, a), b, c);
 </pre></div>
 
-<p><code>f</code> is called <em class='tex2jax_process'>\(M\cdot P\cdot N\)</em> times, even though only <em class='tex2jax_process'>\(M\cdot P\)</em> calls are needed if <code>f</code> is side effect free. If <code>f</code> is expensive, it might be better to precompute <code>f(a)</code>, or to avoid broadcasting <code>a</code> by specifying the traversal order. For example
+<p><code>f</code> is called <em class='tex2jax_process'>\(M\cdot P\cdot N\)</em> times, even though only <em class='tex2jax_process'>\(M\cdot P\)</em> calls are needed if <code>f</code> is side effect free.
+</p>
+<p>If <code>f</code> is expensive, it might be better to precompute <code>f(a)</code>, or to avoid broadcasting <code>a</code> by specifying the traversal order. For example
 </p>
 <div class="example">
 <pre class="verbatim">    for_each([](auto &amp;&amp; A, auto &amp;&amp; B, auto &amp;&amp; C){ /* A is scalar here */ C += f(A) * B; },
-             A, iter&lt;1&gt;(B(insert&lt;1&gt;)), iter&lt;1&gt;(C(all, insert&lt;1&gt;)));
+             a, iter&lt;1&gt;(b(insert&lt;1&gt;)), iter&lt;1&gt;(c(all, insert&lt;1&gt;)));
 </pre></div>
 
 <p>See also <a href="#x_002dgemv"><code>gemv</code></a>, <a href="#x_002dgevm"><code>gevm</code></a>, <a href="#The-rank-conjunction">The rank conjunction</a>.
