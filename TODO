@@ -24,6 +24,12 @@ checkbox [C-ct] flip TODO
       instead of e.g. 'len[0] MISS 1 vs 2'.
   - [-] Features [0/15]
     - [ ] generalize cat
+    - [ ] allocation
+      - [ ] Make Array allocator aware. Instead of Big/Shared/Unique, have just Array and let users
+        wrap that in unique_ptr/shared_ptr if they want.
+      - [ ] Document allocation in concrete().
+      - [ ] Document allocation in ply_ravel() for var rank. Ideally avoid it entirely for fixed
+        rank.
     - [-] support std::format
       - [ ] ellipsis feature, e.g. max width/max length.
       - [ ] formatting options for the shape (needed?)

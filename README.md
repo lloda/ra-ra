@@ -101,7 +101,6 @@ I want **ra-ra** to remain simple. I try not to second-guess the compiler and I 
 #### Links
 
 * [Towards a standard for a C++ multi-dimensional array library for scientific applications](http://www.met.reading.ac.uk/clouds/cpp_arrays/) Reviews C++ array libraries, including **ra-ra** (2020-08)
-* [libsimdpp](https://github.com/p12tic/libsimdpp) C++ SIMD library
 * [J for C programmers](http://www.jsoftware.com/help/jforc/contents.htm) Array programming concepts
 * [GNU APL](https://www.gnu.org/software/apl/)
 * [Fortran wiki](http://fortranwiki.org/fortran/show/diff/HomePage)

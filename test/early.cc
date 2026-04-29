@@ -74,5 +74,11 @@ int main()
         tr.test_eq(2, ra::index(a<0));
         tr.test_eq(-1, ra::index(a>10));
     }
+    tr.section("index() with rank > 1 checks elements but only returns first index");
+    {
+        ra::Big<int, 2> a = { {1, 3}, {-1, 9} };
+        tr.test_eq(1, ra::index(a<0));
+        tr.test_eq(-1, ra::index(a>10));
+    }
     return tr.summary();
 }

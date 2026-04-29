@@ -1926,15 +1926,62 @@ You can redefine @code{RA_ASSERT} to something that is more appropriate for your
 
 Some of these issues arise because @code{ra::} applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 
-@section Assignment to views
+@section In assignment, arrays are like views, except when they aren't
 
-FIXME
-With runtime-shape arrays (e.g. @code{Big}), @code{operator=} replaces the left hand side instead of writing over its contents. This behavior is inconsistent with @code{View::operator=} and is there only so that istream @code{>>} array may work; do not rely on it.
+For a view @code{v}, @code{v = x; } always means to replace the contents of @code{v} with those of @code{x}, never to change @code{v} itself.
 
-@section Passing view arguments by reference
+For dynamic-shape arrays (e.g. @code{Big}), that is also true @emph{except} when the operands are of the same type.
 
-@c FIXME
-FIXME
+@example
+@verbatim
+ra::Big<int, 2> a = {{1, 2}, {3 4}};
+auto p = a.data();
+a = {{1, 2}, {3 4}}; // only contents change
+assert(p==a.data());  // ok
+a() = ra::Big<int, 2>({{1, 2}, {3 4}}); // only contents change
+assert(p==a.data());  // ok
+a = ra::Big<int, 2>({{1, 2}, {3 4}}); // a is new array!
+assert(p==a.data()); // ? probably not
+@end verbatim
+@end example
+
+Arrays with static size always behave like views in assignment.
+
+@section Returning expressions from functions
+
+Array expressions only keep pointers to data. If that data goes out of scope the pointers will be left dangling.
+
+@example
+@verbatim
+cout << "ok ... " << []{ return concrete(Small<int, 3> {4, 5, 6} * 3); }() << endl; // return Small, ok
+cout << "ub ... " << []{ return Small<int, 3> {4, 5, 6} * 3; }() << endl; // return array expr, not ok
+@end verbatim
+@print{}
+ok ... 12 15 18
+ub ... 1419229928 98298 13194888
+@end example
+
+Sanitizers should catch this error.
+
+@section Passing view arguments to functions
+
+When you declare a function that modifies the contents of a view but not the view itself, you can use
+
+@example
+@verbatim
+void f(ViewBig<float, 2> const & v) { ... }
+@end verbatim
+@end example
+
+because this can easily be obtained from arrays (e.g. @code{a()} if @code{a} is @code{Big<float, 2>}). If you need a generic view type, use
+
+@example
+@verbatim
+void f(Slice auto && a) requires (...) { ... }
+@end verbatim
+@end example
+
+If you use @code{auto const &} and pass an array, you won't be able to modify the contents, because on an array, unlike on a view, @code{const} applies to the contents.
 
 @section Rank extension in assignments
 
@@ -1958,7 +2005,7 @@ ra::scalar(a) += 3 + ra::Small<int, 3> {4, 5, 6}; // 0 + 3 + 4 + 5 + 6
   @result{} a = 18
 @end example
 
-@node Performance pitfalls of rank extension
+@anchor{x-perf0}
 @section Performance pitfalls of rank extension
 
 In the following example where @code{b} has its shape extended from (3) to (3, 4), @code{f} is called 12 times, even though only 3 calls are needed if @code{f} doesn't have side effects. In such cases it might be preferrable to write the outer loop explicitly, or to do some precomputation.
@@ -1971,7 +2018,6 @@ ra::Big<int, 2> c = map(f, b) + a;
 @end verbatim
 @end example
 
-@node Initialization of nested types
 @section Initialization of nested types
 
 This doesn't do what you probably think it does.
@@ -2512,7 +2558,7 @@ When @var{op} is a view, @code{from(op, ...)} is equivalent to @code{op(...)}, a
 
 Compute matrix-matrix product of expressions @var{a} and @var{b}. The result is either copied to @var{c}, or returned as an array.
 
-Currently, either @var{a} and @var{b} must be views, or @var{b} and @var{c} must be views; the other argument can be a general expression. Like other uses of broadcasting, this is subject to a @ref{Performance pitfalls of rank extension,performance pitfall}. For example in
+Currently, either @var{a} and @var{b} must be views, or @var{b} and @var{c} must be views; the other argument can be a general expression. Like other uses of broadcasting, this is subject to a @ref{x-perf0,performance pitfall}. For example in
 
 @example
 @verbatim

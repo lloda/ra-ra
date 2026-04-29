@@ -1946,29 +1946,72 @@ Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a 
 <p>Some of these issues arise because <code>ra::</code> applies its principles systematically, which can have surprising results. Still others are the result of unfortunate compromises. And a few are just bugs.
 </p>
 <ul class="section-toc">
-<li><a href="#Assignment-to-views" accesskey="1">Assignment to views</a></li>
-<li><a href="#Passing-view-arguments-by-reference" accesskey="2">Passing view arguments by reference</a></li>
-<li><a href="#Rank-extension-in-assignments" accesskey="3">Rank extension in assignments</a></li>
-<li><a href="#Performance-pitfalls-of-rank-extension" accesskey="4">Performance pitfalls of rank extension</a></li>
-<li><a href="#Initialization-of-nested-types" accesskey="5">Initialization of nested types</a></li>
-<li><a href="#Chained-assignment" accesskey="6">Chained assignment</a></li>
-<li><a href="#Unregistered-scalar-types" accesskey="7">Unregistered scalar types</a></li>
+<li><a href="#In-assignment_002c-arrays-are-like-views_002c-except-when-they-aren_0027t" accesskey="1">In assignment, arrays are like views, except when they aren&rsquo;t</a></li>
+<li><a href="#Returning-expressions-from-functions" accesskey="2">Returning expressions from functions</a></li>
+<li><a href="#Passing-view-arguments-to-functions" accesskey="3">Passing view arguments to functions</a></li>
+<li><a href="#Rank-extension-in-assignments" accesskey="4">Rank extension in assignments</a></li>
+<li><a href="#Performance-pitfalls-of-rank-extension" accesskey="5">Performance pitfalls of rank extension</a></li>
+<li><a href="#Initialization-of-nested-types" accesskey="6">Initialization of nested types</a></li>
+<li><a href="#Chained-assignment" accesskey="7">Chained assignment</a></li>
+<li><a href="#Unregistered-scalar-types" accesskey="8">Unregistered scalar types</a></li>
 </ul>
-<div class="section" id="Assignment-to-views">
-<h3 class="section">4.1 Assignment to views</h3>
+<div class="section" id="In-assignment_002c-arrays-are-like-views_002c-except-when-they-aren_0027t">
+<h3 class="section">4.1 In assignment, arrays are like views, except when they aren&rsquo;t</h3>
 
-<p>FIXME
-With runtime-shape arrays (e.g. <code>Big</code>), <code>operator=</code> replaces the left hand side instead of writing over its contents. This behavior is inconsistent with <code>View::operator=</code> and is there only so that istream <code>&gt;&gt;</code> array may work; do not rely on it.
+<p>For a view <code>v</code>, <code>v = x; </code> always means to replace the contents of <code>v</code> with those of <code>x</code>, never to change <code>v</code> itself.
+</p>
+<p>For dynamic-shape arrays (e.g. <code>Big</code>), that is also true <em>except</em> when the operands are of the same type.
+</p>
+<div class="example">
+<pre class="verbatim">ra::Big&lt;int, 2&gt; a = {{1, 2}, {3 4}};
+auto p = a.data();
+a = {{1, 2}, {3 4}}; // only contents change
+assert(p==a.data());  // ok
+a() = ra::Big&lt;int, 2&gt;({{1, 2}, {3 4}}); // only contents change
+assert(p==a.data());  // ok
+a = ra::Big&lt;int, 2&gt;({{1, 2}, {3 4}}); // a is new array!
+assert(p==a.data()); // ? probably not
+</pre></div>
+
+<p>Arrays with static size always behave like views in assignment.
 </p>
 </div>
-<div class="section" id="Passing-view-arguments-by-reference">
-<h3 class="section">4.2 Passing view arguments by reference</h3>
+<div class="section" id="Returning-expressions-from-functions">
+<h3 class="section">4.2 Returning expressions from functions</h3>
 
-<p>FIXME
+<p>Array expressions only keep pointers to data. If that data goes out of scope the pointers will be left dangling.
+</p>
+<div class="example">
+<pre class="verbatim">cout &lt;&lt; &quot;ok ... &quot; &lt;&lt; []{ return concrete(Small&lt;int, 3&gt; {4, 5, 6} * 3); }() &lt;&lt; endl; // return Small, ok
+cout &lt;&lt; &quot;ub ... &quot; &lt;&lt; []{ return Small&lt;int, 3&gt; {4, 5, 6} * 3; }() &lt;&lt; endl; // return array expr, not ok
+</pre><pre class="example">-|
+ok ... 12 15 18
+ub ... 1419229928 98298 13194888
+</pre></div>
+
+<p>Sanitizers should catch this error.
+</p>
+</div>
+<div class="section" id="Passing-view-arguments-to-functions">
+<h3 class="section">4.3 Passing view arguments to functions</h3>
+
+<p>When you declare a function that modifies the contents of a view but not the view itself, you can use
+</p>
+<div class="example">
+<pre class="verbatim">void f(ViewBig&lt;float, 2&gt; const &amp; v) { ... }
+</pre></div>
+
+<p>because this can easily be obtained from arrays (e.g. <code>a()</code> if <code>a</code> is <code>Big&lt;float, 2&gt;</code>). If you need a generic view type, use
+</p>
+<div class="example">
+<pre class="verbatim">void f(Slice auto &amp;&amp; a) requires (...) { ... }
+</pre></div>
+
+<p>If you use <code>auto const &amp;</code> and pass an array, you won&rsquo;t be able to modify the contents, because on an array, unlike on a view, <code>const</code> applies to the contents.
 </p>
 </div>
 <div class="section" id="Rank-extension-in-assignments">
-<h3 class="section">4.3 Rank extension in assignments</h3>
+<h3 class="section">4.4 Rank extension in assignments</h3>
 
 <p>Assignment of an expression onto another expression of lower rank may not do what you expect. This example matches <code>a</code> and 3 [both of shape ()] with a vector of shape (3). This is equivalent to <code>{a=3+4; a=3+5; a=3+6;}</code>. You may get a different result depending on traversal order.
 </p>
@@ -1986,14 +2029,9 @@ ra::scalar(a) += 3 + ra::Small&lt;int, 3&gt; {4, 5, 6}; // 0 + 3 + 4 + 5 + 6
 </pre><pre class="example">  &rArr; a = 18
 </pre></div>
 
-<hr>
-</div>
+<span id="x_002dperf0"></span></div>
 <div class="section" id="Performance-pitfalls-of-rank-extension">
-<div class="header">
-<p>
-Next: <a href="#Initialization-of-nested-types" accesskey="n" rel="next">Initialization of nested types</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
-</div>
-<span id="Performance-pitfalls-of-rank-extension-1"></span><h3 class="section">4.4 Performance pitfalls of rank extension</h3>
+<h3 class="section">4.5 Performance pitfalls of rank extension</h3>
 
 <p>In the following example where <code>b</code> has its shape extended from (3) to (3, 4), <code>f</code> is called 12 times, even though only 3 calls are needed if <code>f</code> doesn&rsquo;t have side effects. In such cases it might be preferrable to write the outer loop explicitly, or to do some precomputation.
 </p>
@@ -2003,14 +2041,9 @@ ra::Big&lt;int, 1&gt; b = {1, 2, 3};
 ra::Big&lt;int, 2&gt; c = map(f, b) + a;
 </pre></div>
 
-<hr>
 </div>
 <div class="section" id="Initialization-of-nested-types">
-<div class="header">
-<p>
-Previous: <a href="#Performance-pitfalls-of-rank-extension" accesskey="p" rel="prev">Performance pitfalls of rank extension</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
-</div>
-<span id="Initialization-of-nested-types-1"></span><h3 class="section">4.5 Initialization of nested types</h3>
+<h3 class="section">4.6 Initialization of nested types</h3>
 
 <p>This doesn&rsquo;t do what you probably think it does.
 </p><div class="example">
@@ -2029,14 +2062,14 @@ Previous: <a href="#Performance-pitfalls-of-rank-extension" accesskey="p" rel="p
 </p>
 </div>
 <div class="section" id="Chained-assignment">
-<h3 class="section">4.6 Chained assignment</h3>
+<h3 class="section">4.7 Chained assignment</h3>
 
 <p>FIXME
 When <code>a=b=c</code> works, it operates as <code>b=c; a=b;</code> and not as an array expression.
 </p>
 </div>
 <div class="section" id="Unregistered-scalar-types">
-<h3 class="section">4.7 Unregistered scalar types</h3>
+<h3 class="section">4.8 Unregistered scalar types</h3>
 
 <p>FIXME
 <code>ViewBig&lt;T *, N&gt; x(...); x = T()</code> fails if <code>T</code> isn&rsquo;t registered as <code>is_scalar</code>.
@@ -2555,7 +2588,7 @@ for_each([&amp;s](auto &amp;&amp; a) { s+=a; }, ra::Small&lt;double, 1&gt; {1., 
 <dd>
 <p>Compute matrix-matrix product of expressions <var>a</var> and <var>b</var>. The result is either copied to <var>c</var>, or returned as an array.
 </p>
-<p>Currently, either <var>a</var> and <var>b</var> must be views, or <var>b</var> and <var>c</var> must be views; the other argument can be a general expression. Like other uses of broadcasting, this is subject to a <a href="#Performance-pitfalls-of-rank-extension">performance pitfall</a>. For example in
+<p>Currently, either <var>a</var> and <var>b</var> must be views, or <var>b</var> and <var>c</var> must be views; the other argument can be a general expression. Like other uses of broadcasting, this is subject to a <a href="#x_002dperf0">performance pitfall</a>. For example in
 </p>
 <div class="example">
 <pre class="verbatim">    ra::Big&lt;double, 2&gt; a({M, P}, ...);

@@ -133,6 +133,7 @@ gemm_ij_raw(auto const & a, auto const & b, auto & c)
 }
 
 #if RA_USE_BLAS==1
+// CXXFLAGS="-DRA_USE_BLAS=1 -O3 -DRA_CHECK=0" LINKFLAGS=-lblas scons -j30 -k --no-sanitize bench/bench-gemm.test
 
 extern "C" {
 #include <cblas.h>

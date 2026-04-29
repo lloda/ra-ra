@@ -16,6 +16,7 @@
 #include <iostream>
 #include <iomanip>
 #include "ra/test.hh"
+#include "test/mpdebug.hh"
 
 using std::cout, std::endl;
 using ra::TestRecorder, ra::Benchmark, ra::Small, ra::ViewBig, ra::Unique;
@@ -38,15 +39,18 @@ int main()
     auto bench_type = [&](auto v){
         using Vec = decltype(v);
         auto sum_opt = [&](auto & a, auto & b, auto & c){
+            static_assert(std::is_same_v<decltype(opt(a(0)+b(0))), Vec>); // making sure opt is on
             for (int i=0; i<a.len(0); ++i) {
                 c(i) = ra::opt(a(i)+b(i));
-                static_assert(std::is_same_v<decltype(opt(a(i)+b(i))), Vec>); // making sure opt is on
             }
         };
         auto sum_unopt = [&](auto & a, auto & b, auto & c){
             for (int i=0; i<a.len(0); ++i) {
                 c(i) = a(i)+b(i);
             }
+        };
+        auto sum_ply = [&](auto & a, auto & b, auto & c){
+            c = a+b;
         };
         auto bench_all = [&](int reps, int m){
             auto bench = [&tr, &m, &reps](auto && f, char const * tag){
@@ -64,22 +68,23 @@ int main()
                 c = 99;
 
                 auto bv = Benchmark().reps(reps).runs(3).run([&]() { f(a, b, c); });
-                tr.info(Benchmark::report(bv, m), " ", tag)
-                    .test(true);
+                tr.info(Benchmark::report(bv, m), " ", tag).test(true);
             };
-            tr.section("[", (std::is_same_v<float, std::decay_t<decltype(std::declval<Vec>()[0])>> ? "float" : "double"),
-                       " x ", Vec::size(), "] block of ", m, " times ", reps);
+            tr.section("[", ra::mp::type_name<decltype(v[0])>(), " x ", Vec::size(), "] block of ", m, " times ", reps);
             bench(sum_opt, "opt");
             bench(sum_unopt, "unopt");
+            bench(sum_ply, "ply");
         };
-        bench_all(50000, 10);
-        bench_all(50000, 100);
         bench_all(50000, 1000);
     };
+    static_assert(ra::align_req<int, 4> == alignof(ra::Small<int, 4>));
+    bench_type(ra::Small<int32_t, 2> {});
     bench_type(ra::Small<float, 2> {});
     bench_type(ra::Small<double, 2> {});
+    bench_type(ra::Small<int32_t, 4> {});
     bench_type(ra::Small<float, 4> {});
     bench_type(ra::Small<double, 4> {});
+    bench_type(ra::Small<int32_t, 8> {});
     bench_type(ra::Small<float, 8> {});
     bench_type(ra::Small<double, 8> {});
     return tr.summary();

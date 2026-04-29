@@ -60,11 +60,9 @@ namespace ra {
 
 constexpr bool odd(unsigned int N) { return N & 1; }
 
-// As array op; special definitions for rank 0.
-template <class T> constexpr bool ra_is_real = std::numeric_limits<T>::is_integer || std::is_floating_point_v<T>;
-template <class T> requires (ra_is_real<T>) constexpr T amax(T const & x) { return x; }
-template <class T> requires (ra_is_real<T>) constexpr T amin(T const & x) { return x; }
-template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x) { return x*x; }
+template <class T> requires (std::is_arithmetic_v<T>) constexpr T amax(T const & x) { return x; }
+template <class T> requires (std::is_arithmetic_v<T>) constexpr T amin(T const & x) { return x; }
+template <class T> requires (std::is_arithmetic_v<T>) constexpr T sqr(T const & x) { return x*x; }
 
 #define RA_FOR_TYPES(R, C)                                              \
     constexpr R arg(R x) { return R(0); }                               \
@@ -91,8 +89,8 @@ template <class T> requires (ra_is_real<T>) constexpr T sqr(T const & x) { retur
         return C(fma(a.real(), b.real(), fma(a.imag(), b.imag(), c.real())), fma(a.real(), b.imag(), fma(-a.imag(), b.real(), c.imag()))); \
     }                                                                   \
     constexpr R fma_sqrm(C const & a, R const & c) { return fma(a.real(), a.real(), fma(a.imag(), a.imag(), c)); } \
-    constexpr R rel_error(R a, R b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
-    constexpr R rel_error(C a, C b) { auto den = (abs(a)+abs(b)); return den==0 ? 0. : 2.*norm2(a, b)/den; } \
+    constexpr R rel_error(R a, R b) { auto D = (abs(a)+abs(b)); return D==0 ? 0. : 2.*norm2(a, b)/D; } \
+    constexpr R rel_error(C a, C b) { auto D = (abs(a)+abs(b)); return D==0 ? 0. : 2.*norm2(a, b)/D; } \
     constexpr R const & real_part(R const & x) { return x; }            \
     constexpr R & real_part(R & x) { return x; }                        \
     constexpr R real_part(C const & z) { return z.real(); }             \
@@ -164,6 +162,7 @@ template <class T, dim_t N, class A> constexpr bool match_small =
     RA_OPT_SMALL_OP(/, std::divides<>, T, N)                            \
     RA_OPT_SMALL_OP(*, std::multiplies<>, T, N)
 #define RA_OPT_SMALL_OP_TYPES(N)                \
+    RA_OPT_SMALL_OP_FUNS(int32_t, N)            \
     RA_OPT_SMALL_OP_FUNS(float, N)              \
     RA_OPT_SMALL_OP_FUNS(double, N)
 RA_FE(RA_OPT_SMALL_OP_TYPES, 2, 4, 8)
@@ -289,20 +288,18 @@ every(auto && a)
     return early(map([](bool x){ return !x ? std::make_optional(false) : std::nullopt; }, RA_FW(a)), true);
 }
 
-// FIXME variable rank? see J 'index of' (x i. y), etc.
+// FIXME only returns 1st index. Variable rank? see J 'index of' (x i. y), etc.
 constexpr dim_t
 index(auto && a)
 {
-    return early(map([](auto && a, auto && i){ return bool(a) ? std::make_optional(i) : std::nullopt; },
-                     RA_FW(a), ra::iota(ra::iter(a).len(0))),
+    return early(map([](auto && a, auto && i){ return a ? std::make_optional(i) : std::nullopt; }, RA_FW(a), ra::iota()),
                  ra::dim_t(-1));
 }
 
 constexpr bool
 lexical_compare(auto && a, auto && b)
 {
-    return early(map([](auto && a, auto && b){ return a==b ? std::nullopt : std::make_optional(a<b); },
-                     RA_FW(a), RA_FW(b)),
+    return early(map([](auto && a, auto && b){ return a==b ? std::nullopt : std::make_optional(a<b); }, RA_FW(a), RA_FW(b)),
                  false);
 }
 

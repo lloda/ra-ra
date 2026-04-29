@@ -385,7 +385,7 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak)
 
 template <bool dopl=true, bool dobv=true, bool dods=true, class I0>
 constexpr auto
-fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak, I0 const & i0, auto const & ...  i)
+fromb(auto pl, auto ds, auto && bv, int bk, Slice auto const & a, int ak, I0 const & i0, auto const & ...  i)
 {
     if constexpr (is_scalar_index<I0>) {
         if constexpr (dopl) {
@@ -435,7 +435,7 @@ fromb(auto pl, auto ds, auto && bv, int bk, auto && a, int ak, I0 const & i0, au
 }
 
 constexpr auto
-frombv(auto const & a, auto const & ...  i)
+frombv(Slice auto const & a, auto const & ...  i)
 {
     std::array<Dim, frombrank_s(a, i ...)> bv {};
     fromb<0, 1, 0>(0, 0, bv, 0, a, 0, i ...);
@@ -443,7 +443,7 @@ frombv(auto const & a, auto const & ...  i)
 }
 
 consteval auto
-fromds(auto const & a, auto const & ...  i)
+fromds(Slice auto const & a, auto const & ...  i)
 {
     std::array<int, (0 + ... + int(!beatable(i)))> ds {};
     fromb<0, 0, 1>(0, ds.data(), 0, 0, a, 0, i ...);
@@ -451,7 +451,7 @@ fromds(auto const & a, auto const & ...  i)
 }
 
 constexpr auto
-frompl(auto pl, auto && a, auto const & ...  i)
+frompl(auto pl, Slice auto const & a, auto const & ...  i)
 {
     return fromb<1, 0, 0>(pl, 0, 0, 0, a, 0, i ...);
 }
@@ -482,7 +482,7 @@ fromu(B && b, auto && ds, auto && c, auto && ti)
 {
     return std::apply([&b](auto && ... i){
         return map(fromu_loop<mp::tuple<ic_t<rank_s(i)> ...>, 1>(std::forward<B>(b)), RA_FW(i) ...);
-    }, std::tuple_cat(RA_FW(ti), spacer(b, ic<(0==c ? 0 : 1+ds()[c-1])>, ic<ra::size(b.dimv)>)));
+    }, std::tuple_cat(RA_FW(ti), spacer(b, ic<(0==c ? 0 : 1+ds()[c-1])>, ic<rank(b)>)));
 }
 
 constexpr decltype(auto)
