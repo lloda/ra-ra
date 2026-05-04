@@ -35,7 +35,7 @@ struct TestRecorder
     constexpr static double QNAN = std::numeric_limits<double>::quiet_NaN();
     constexpr static double PINF = std::numeric_limits<double>::infinity();
 
-// ra::amax ignores nans and we don't want that here.
+// don't ignore nan here like ra::amax does
     __attribute__((optimize("-fno-finite-math-only")))
     static auto
     amax_strict(auto const & a)
@@ -241,7 +241,7 @@ struct TestRecorder
     }
 };
 
-// TODO Better reporting. Let benchmarked functions return results. Pick report unit automatically
+// TODO Better reporting. Let benchmarked functions return results. Auto pick report unit
 struct Benchmark
 {
     using clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
@@ -255,22 +255,29 @@ struct Benchmark
     {
         std::string name;
         int reps;
-        double avg, stddev;
+        double med, mad;
     };
 
-    static double avg(auto const & t) { return sum(t)/t.size(); }
-    static double stddev(auto const & t, double m) { return 2>t.size() ? 0 : sqrt(sum(sqr(iter(t)-m))/(t.size()-1)); }
+    static double
+    median(auto & t)
+    {
+        if (t.empty()) { return 0; }
+        size_t n = t.size()/2;
+        std::ranges::nth_element(t, t.begin()+n);
+        return t.size()^1 ? t[n] : (std::ranges::nth_element(t, t.begin()+n-1), (t[n]+t[n-1])/2.);
+    }
+
     static char const * unit(double u) { return 1e-9==u ? "ns" : 1e-6==u ? "us" : 1e-3==u ? "ms" : 1==u ? "s" : "?"; }
 
     static std::string
     report(Value const & v, double scale=1., double u=1e-9)
     {
-        return std::format("{0:.3f} {2} [{1:.2f}]", v.avg/scale/u, v.stddev/v.avg, unit(u));
+        return std::format("{:.3f} {} [{:.2f}]", v.med/scale/u, unit(u), v.mad/v.med);
     }
     void
     report(std::ostream & o, auto const & v, double frac)
     {
-        std::println(o, "{}{:n:.2f}", (infos=="" ? "" : infos + " : "), iter(ra::map(&Value::avg, v)/frac));
+        std::println(o, "{}{:n:.2f}", (infos=="" ? "" : infos + " : "), iter(ra::map(&Value::med, v)/frac));
         infos = "";
     }
 
@@ -303,10 +310,10 @@ struct Benchmark
                 sec = toseconds(lapse(empty, clock::now()-t0));
             }, a ...);
         }
-        double m = avg(secs);
-        return Value { name_, reps_, m/reps_, stddev(secs, m)/reps_ };
+        double med = median(secs);
+        iter(secs) -= med;
+        return Value { name_, reps_, med/reps_, median(secs)/reps_ };
     }
-
     auto once(auto && f, auto && ... a) { return once_f([&](auto && repeat, auto && ... a){ repeat([&]{ f(a ...); }); }, a ...); }
     auto run(auto && f, auto && ... a) { return concrete(from([this, &f](auto && ... b){ return this->once(f, b ...); }, a ...)); }
     auto run_f(auto && f, auto && ... a) { return concrete(from([this, &f](auto && ... b){ return this->once_f(f, b ...); }, a ...)); }

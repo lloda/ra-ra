@@ -108,7 +108,7 @@ int main()
         tr.section(m, " x ", n, " times ", reps);
 // FIXME average TRANS & NOTRANS.
         auto report = [&](auto & v){
-            std::ranges::sort(v, [](auto & a, auto & b){ return a.avg<b.avg; });
+            std::ranges::sort(v, [](auto & a, auto & b){ return a.med<b.med; });
             std::println(std::cout, "Best > {}{}{:nS{ / }{}}{}.", ra::esc::cyan, ra::esc::bold, map(&Benchmark::Value::name, v), ra::esc::reset);
         };
 // some variants are way too slow to check with larger arrays.

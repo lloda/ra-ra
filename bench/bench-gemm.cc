@@ -264,7 +264,7 @@ int main()
         bench(ZEROFIRST(gemm_blas), "blas", 100*std::numeric_limits<double>::epsilon()); // ahem
 #endif
         bench(ZEROFIRST(gemm), "default");
-        std::ranges::sort(v, [](auto & a, auto & b){ return a.avg<b.avg; });
+        std::ranges::sort(v, [](auto & a, auto & b){ return a.med<b.med; });
         std::println(std::cout, "Best > {}{}{:nS{ / }{}}{}.", ra::esc::cyan, ra::esc::bold, map(&Benchmark::Value::name, v), ra::esc::reset);
     };
 

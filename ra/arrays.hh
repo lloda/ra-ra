@@ -631,7 +631,7 @@ stencil(Slice auto && a, auto && lo, auto && hi)
 
 } // namespace ra
 
-// gcc 16.1 ff. Ambiguity bc these are std::range but use a custom formatter.
+// gcc 16 ff. Ambiguity bc these are std::range but use a custom formatter.
 
 #if __cpp_lib_print >= 202403L
 #define RA_NONLOCK_PRINT(X) \

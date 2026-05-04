@@ -23,7 +23,8 @@ template <class T, auto dims_>
 struct Brray
 {
     constexpr static auto dims = dims_;
-    constexpr static rank_t R = []{ if constexpr (std::is_integral_v<decltype(dims)>) return dims; else return dims.size(); }();
+    constexpr bool dynamic = std::is_integral_v<decltype(dims)>;
+    constexpr static rank_t R = []{ if constexpr (dynamic) return dims; else return dims.size(); }();
 
 // from std::array
     // struct T0
