@@ -630,3 +630,13 @@ stencil(Slice auto && a, auto && lo, auto && hi)
 }
 
 } // namespace ra
+
+// gcc 16.1 ff. Ambiguity bc these are std::range but use a custom formatter.
+
+#if __cpp_lib_print >= 202403L
+#define RA_NONLOCK_PRINT(X) \
+template <class ... A> constexpr bool std::enable_nonlocking_formatter_optimization<X<A ...>> \
+  = std::enable_nonlocking_formatter_optimization<ra::ncvalue_t<X<A ...>>>;
+RA_FE(RA_NONLOCK_PRINT, ra::Array, ra::SmallArray);
+#undef RA_NONLOCK_PRINT
+#endif

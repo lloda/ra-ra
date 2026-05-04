@@ -145,8 +145,7 @@ struct TestRecorder
                     return ra::rank(a)==ra::rank(b) && every(ra::iter(ra::shape(a))==ra::shape(b));
                 } else {
                     return false;
-                } }()
-            : agree_op(comp, a, b)) {
+                } }() : agree_op(comp, a, b)) {
 
             bool c = every(ra::map(comp, a, b));
             test(c,
