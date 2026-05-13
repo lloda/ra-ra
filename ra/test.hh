@@ -42,7 +42,7 @@ struct TestRecorder
     {
         using T = ncvalue_t<decltype(a)>;
         T c = std::numeric_limits<T>::has_infinity ? -std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
-        return early(map([&c](auto const & a){ if (c<a) c=a; return isnan(a) ? std::make_optional(QNAN*a) : std::nullopt; }, a), c);
+        return early(map([&c](auto const & a){ if (c<a) c=a; return isnan(a) ? std::make_optional(T(QNAN)) : std::nullopt; }, a), c);
     }
 
     enum verbose_t { QUIET, // as NOISY if failed, else no output
@@ -177,22 +177,19 @@ struct TestRecorder
 #undef RA_TEST_COMP
 
     __attribute__((optimize("-fno-finite-math-only")))
+    static double
+    nanny(auto && ref, auto && a, auto && err)
+    {
+        return abs(amax_strict(where(isfinite(ref), RA_FW(err),
+                                     where(isinf(ref), where(ref==a, 0., PINF),
+                                           where(isnan(a), 0., PINF)))));
+    }
     double
     test_rel(auto && ref_, auto && a_, double req, double level=0, RA_LOC)
     {
         decltype(auto) ref = ra::iter(ref_);
         decltype(auto) a = ra::iter(a_);
-        double e = (level<=0)
-            ? amax_strict(where(isfinite(ref),
-                                rel_error(ref, a),
-                                where(isinf(ref),
-                                      where(ref==a, 0., PINF),
-                                      where(isnan(a), 0., PINF))))
-            : amax_strict(where(isfinite(ref),
-                                abs(ref-a)/level,
-                                where(isinf(ref),
-                                      where(ref==a, 0., PINF),
-                                      where(isnan(a), 0., PINF))));
+        double e = (level<=0) ? nanny(ref, a, rel_error(ref, a)) : nanny(ref, a, abs(ref-a)/level);
         test(e<=req,
              RA_LAZYINFO("rerr (", esc::yellow, "ref", esc::reset, ": ", ref, esc::yellow, ", got", esc::reset,
                          ": ", a, ") = ", format_error(e), (level<=0 ? "" : format(" (level ", level, ")")),
@@ -202,17 +199,12 @@ struct TestRecorder
              loc);
         return e;
     }
-    __attribute__((optimize("-fno-finite-math-only")))
     double
     test_abs(auto && ref_, auto && a_, double req=0, RA_LOC)
     {
         decltype(auto) ref = ra::iter(ref_);
         decltype(auto) a = ra::iter(a_);
-        double e = amax_strict(where(isfinite(ref),
-                                     abs(ref-a),
-                                     where(isinf(ref),
-                                           where(ref==a, 0., PINF),
-                                           where(isnan(a), 0., PINF))));
+        double e = nanny(ref, a, abs(ref-a));
         test(e<=req,
              RA_LAZYINFO("aerr (ref: ", ref, ", got: ", a, ") = ", format_error(e), ", req. ", req),
              RA_LAZYINFO("aerr: ", format_error(e), ", req. ", req),

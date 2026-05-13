@@ -22,6 +22,7 @@ checkbox [C-ct] flip TODO
     - [ ] be namespace clean except for possibly the scalar block in ra.hh. Document exactly what is exported to ::.
     - [ ] poor shape mismatch report, e.g. [1 2] vs [2] produces 'len[0] is -192...' (magic number for MISS)
       instead of e.g. 'len[0] MISS 1 vs 2'.
+    - [ ] flags __attribute__((optimize("-fno-finite-math-only"))) in test.hh don't seem to do anything (check test/test.hh with -ffast-math).
   - [-] Features [0/15]
     - [ ] generalize cat
     - [ ] allocation
